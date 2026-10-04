@@ -5,8 +5,6 @@ import {
   Headphones,
   ListMusic,
   MicVocal,
-  Pause,
-  Play,
   Repeat,
   Repeat1,
   Shuffle,
@@ -39,6 +37,7 @@ import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
+import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -581,13 +580,9 @@ onUnmounted(() => {
           title="上一首"
           @click="playPrevious"
         />
-        <UiIconButton
-          :icon="state.isPlaying ? Pause : Play"
+        <PlaybackPrimaryButton
+          :playing="state.isPlaying"
           :disabled="!state.track"
-          :label="state.isPlaying ? '暫停' : '播放'"
-          shape="circle"
-          size="lg"
-          variant="accent"
           @click="toggle"
         />
         <UiButton

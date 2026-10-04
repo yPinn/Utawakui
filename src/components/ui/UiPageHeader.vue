@@ -26,7 +26,7 @@ defineProps({
 .ui-page-header {
   display: flex;
   flex-direction: column;
-  margin-bottom: var(--ui-space-4);
+  gap: var(--ui-space-1);
 }
 
 .ui-page-header__row {
@@ -51,7 +51,7 @@ defineProps({
 }
 
 .ui-page-header__description {
-  margin: var(--ui-space-1) 0 0;
+  margin: 0;
   max-width: 70ch;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);

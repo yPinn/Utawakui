@@ -45,6 +45,7 @@ function closeDock() {
 }
 
 .app-right-dock-header__identity {
+  flex: 1 1 auto;
   min-width: 0;
   display: grid;
   gap: var(--ui-side-panel-list-gap);

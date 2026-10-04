@@ -7,11 +7,15 @@ function readSource(path) {
 
 const queueSource = readSource('../queue/QueuePanel.vue');
 const contextSource = readSource('../playlists/TrackContextPanel.vue');
+const sessionSource = readSource(
+  '../performance-session/PerformanceSessionPanel.vue',
+);
 
 describe('AppRightDockPanel production adoption', () => {
   it.each([
     ['QueuePanel', queueSource],
     ['TrackContextPanel', contextSource],
+    ['PerformanceSessionPanel', sessionSource],
   ])(
     '%s delegates shared Dock geometry and scrolling to the compound',
     (_, source) => {
@@ -35,5 +39,19 @@ describe('AppRightDockPanel production adoption', () => {
       /heading="目前播放"[\s\S]*?<UiTrackRow[\s\S]*?:track="currentTrack"/u,
     );
     expect(contextSource).not.toMatch(/:tracks="\[currentTrack\]"/u);
+  });
+
+  it('uses shared sections for the session groups without a local separator recipe', () => {
+    expect(sessionSource).toContain(
+      "import AppRightDockSection from '../layout/AppRightDockSection.vue';",
+    );
+    expect(sessionSource.match(/<AppRightDockSection/gu)).toHaveLength(2);
+    expect(sessionSource).toContain('heading="待唱安排"');
+    expect(sessionSource).toContain(
+      ':heading="`目前選取的${selectedCollectionKindLabel}`"',
+    );
+    expect(sessionSource).toContain('divided');
+    expect(sessionSource).not.toContain('UiSeparator');
+    expect(sessionSource).not.toContain('<section');
   });
 });

@@ -133,8 +133,7 @@ const downloadDirUnavailableMessage = computed(() =>
 // inlined here since this is the only settings row (so far) that needs a
 // menu but isn't a dependency workflow item.
 const isDownloadDirMenuOpen = shallowRef(false);
-const downloadDirMenuX = shallowRef(0);
-const downloadDirMenuY = shallowRef(0);
+const downloadDirMenuAnchorEl = shallowRef(null);
 const downloadDirMenuItems = computed(() => [
   { id: 'choose', icon: FolderOpen, label: '選擇其他資料夾', value: 'choose' },
   {
@@ -152,14 +151,13 @@ function openCommunityDiscord() {
 
 function openDownloadDirMenu(event) {
   event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  downloadDirMenuX.value = rect.right;
-  downloadDirMenuY.value = rect.bottom + 4;
+  downloadDirMenuAnchorEl.value = event.currentTarget;
   isDownloadDirMenuOpen.value = true;
 }
 
 function closeDownloadDirMenu() {
   isDownloadDirMenuOpen.value = false;
+  downloadDirMenuAnchorEl.value = null;
 }
 
 function handleDownloadDirMenuSelect(actionId) {
@@ -482,10 +480,8 @@ onUnmounted(() => {
                 />
                 <UiContextMenu
                   :open="isDownloadDirMenuOpen"
-                  :x="downloadDirMenuX"
-                  :y="downloadDirMenuY"
+                  :anchor-el="downloadDirMenuAnchorEl"
                   :width="184"
-                  align-x="right"
                   :items="downloadDirMenuItems"
                   empty-text="沒有可用的操作"
                   @select="handleDownloadDirMenuSelect"

@@ -123,7 +123,7 @@ function densityProps(layer, density) {
       <header class="demo-progress-subsection__header">
         <h5>尺寸與內容結構</h5>
         <p>
-          Standard／Compact 都使用既有 8px 進度軌；候選版採 2px
+          Standard／Compact 都使用 8px 進度軌與 2px
           細圓角。標籤可換行，數值保持對齊。
         </p>
       </header>

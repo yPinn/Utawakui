@@ -189,29 +189,24 @@ onUnmounted(() => setCurrentMarker(false));
   <div class="demo-modal-specimen">
     <dl class="demo-modal-specimen__summary" aria-label="Modal shell 規格">
       <div>
-        <dt>{{ isCandidate ? '尺寸' : '現行命名' }}</dt>
-        <dd v-if="isCandidate">
+        <dt>{{ isCandidate ? '尺寸' : '相容命名' }}</dt>
+        <dd>
           Small · 384px／max 560px · Medium · 512px／max 720px · Large ·
           768px／max 800px
         </dd>
-        <dd v-else>default · 420px／notice · 640px／wide · 720px</dd>
+        <dd v-if="!isCandidate">default／notice／wide 保留相容命名</dd>
       </div>
       <div>
         <dt>安全邊界</dt>
-        <dd v-if="isCandidate">Min 0 · Standard 24px／Compact 16px</dd>
-        <dd v-else>Min 0 · Viewport − 48px</dd>
+        <dd>Min 0 · Standard 24px／Compact 16px</dd>
       </div>
       <div>
         <dt>內容結構</dt>
-        <dd v-if="isCandidate">Header／Body／Footer · Body-only scroll</dd>
-        <dd v-else>整個 shell 一起捲動；actions 由 caller 排列</dd>
+        <dd>Header／Body／Footer · Body-only scroll</dd>
       </div>
       <div>
         <dt>捲動基準</dt>
-        <dd v-if="isCandidate">
-          Medium scroll baseline · 45rem／720px ceiling
-        </dd>
-        <dd v-else>由整個 Current shell 的內容高度決定</dd>
+        <dd>Medium scroll baseline · 45rem／720px ceiling</dd>
       </div>
     </dl>
 
@@ -223,7 +218,8 @@ onUnmounted(() => setCurrentMarker(false));
           情境；實際內容仍由 caller 組成。
         </p>
         <p v-else>
-          正式 UiModal 的 default／notice／wide，保留現行排列與捲動真相。
+          正式 UiModal 已採用相同 shell 幾何；保留 public size 名稱與既有
+          focus／dismissal 行為。
         </p>
       </header>
 
@@ -282,8 +278,8 @@ onUnmounted(() => setCurrentMarker(false));
           scroll、重新開啟回頂、文字選取與固定 header／footer。
         </template>
         <template v-else>
-          Current 背景頁仍在互動樹中，page 未 inert；窄高時 header 與 close
-          會離開 viewport。
+          Current 已固定 header／footer 並只捲動 body；因尚未切換 native dialog
+          top layer，背景頁尚未 inert。
         </template>
       </component>
     </section>
@@ -370,19 +366,16 @@ onUnmounted(() => setCurrentMarker(false));
             </section>
           </div>
         </article>
-
-        <div
-          v-if="!isCandidate && hasFooter"
-          class="demo-modal-sample__current-actions"
-        >
-          <UiButton variant="ghost" @click="closeModal">取消</UiButton>
-          <UiButton variant="accent" @click="finishAction">完成</UiButton>
-        </div>
       </div>
 
-      <template v-if="isCandidate && hasFooter" #footer>
-        <UiButton variant="secondary" @click="closeModal"> 取消 </UiButton>
-        <UiButton variant="accent" @click="finishAction"> 完成 </UiButton>
+      <template v-if="hasFooter" #footer>
+        <UiButton
+          :variant="isCandidate ? 'secondary' : 'ghost'"
+          @click="closeModal"
+        >
+          取消
+        </UiButton>
+        <UiButton variant="accent" @click="finishAction">完成</UiButton>
       </template>
     </component>
   </div>
@@ -468,8 +461,7 @@ onUnmounted(() => setCurrentMarker(false));
 
 .demo-modal-specimen__sizes,
 .demo-modal-specimen__cases,
-.demo-modal-specimen__options,
-.demo-modal-sample__current-actions {
+.demo-modal-specimen__options {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -495,8 +487,7 @@ onUnmounted(() => setCurrentMarker(false));
 }
 
 .demo-modal-specimen__sizes,
-.demo-modal-specimen__cases,
-.demo-modal-sample__current-actions {
+.demo-modal-specimen__cases {
   gap: var(--ui-space-2);
 }
 
@@ -582,11 +573,6 @@ onUnmounted(() => setCurrentMarker(false));
 
 .demo-modal-case-reading__section p {
   color: var(--ui-color-text-muted);
-}
-
-.demo-modal-sample__current-actions {
-  justify-content: flex-end;
-  padding-block-start: var(--ui-space-2);
 }
 
 @container (min-width: 42rem) {

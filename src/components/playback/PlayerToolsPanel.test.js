@@ -31,6 +31,20 @@ function renderPanel(props = {}) {
 }
 
 describe('PlayerToolsPanel process tab', () => {
+  it('uses the shared equal-width tabs with three linked tabpanels', () => {
+    expect(componentSource).toContain('<UiTabs');
+    expect(componentSource).toContain('distribution="equal"');
+    expect(componentSource).not.toContain('role="tablist"');
+    expect(componentSource).not.toContain('class="player-tools__tab"');
+    expect(componentSource.match(/role="tabpanel"/g)).toHaveLength(3);
+    for (const id of ['adjust', 'live', 'process']) {
+      expect(componentSource).toContain(`id="player-tools-${id}-panel"`);
+      expect(componentSource).toContain(
+        `aria-labelledby="player-tools-${id}-tab"`,
+      );
+    }
+  });
+
   it('forwards the shared control preset id without treating it as a DOM event', () => {
     expect(componentSource).toMatch(
       /function handleSeparationPresetChange\(presetId\)\s*\{[^}]*emit\('selectSeparationPreset', presetId\)/s,

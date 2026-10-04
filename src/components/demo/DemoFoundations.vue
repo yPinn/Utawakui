@@ -184,7 +184,7 @@ const SYSTEM_COLOR_SWATCHES = [
 
       <div
         v-else-if="section.key === 'page-header'"
-        class="demo-sample-surface"
+        class="demo-sample-surface demo-sample-surface--page-header"
       >
         <UiPageHeader title="歌曲資料">
           <template #actions>
@@ -370,8 +370,9 @@ const SYSTEM_COLOR_SWATCHES = [
   color: inherit;
 }
 
-.demo-sample-surface :deep(.ui-page-header) {
-  margin-bottom: var(--ui-space-3);
+.demo-sample-surface--page-header {
+  display: grid;
+  gap: var(--ui-space-3);
 }
 
 .demo-separator-samples,

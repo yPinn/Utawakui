@@ -95,10 +95,15 @@ describe('F8 action-menu comparison', () => {
     expect(appearanceSource).toContain('--ui-menu-item-height: 2rem');
   });
 
-  it('only forwards teleported root attributes to the Candidate contract', () => {
-    expect(layerSource).toContain('v-bind="menuRootAttributes"');
+  it('shares direction and naming while keeping Candidate id and Current anchor contracts separate', () => {
+    expect(layerSource).toContain('v-bind="menuComponentAttributes"');
     expect(layerSource).toMatch(
-      /props\.layer\.key === 'candidate'[\s\S]*id: menuId\.value,[\s\S]*dir: menu\.value\.dir,[\s\S]*'aria-label': menu\.value\.label,[\s\S]*: \{\}/,
+      /props\.layer\.key === 'candidate' \? \{ id: menuId\.value \} : \{\}[\s\S]*dir: menu\.value\.dir,[\s\S]*'aria-label': menu\.value\.label/,
     );
+    expect(layerSource).toMatch(
+      /props\.layer\.key === 'current'[\s\S]*anchorEl: menu\.value\.anchorEl,[\s\S]*: \{ x: menu\.value\.x, y: menu\.value\.y \}/,
+    );
+    expect(layerSource).toContain('openMenuAt(specimen, 0, 0');
+    expect(layerSource).not.toContain('openMenuAt(specimen, rect.left');
   });
 });

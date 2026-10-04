@@ -10,7 +10,7 @@ const LAYERS = Object.freeze([
   {
     key: 'current',
     title: '現行 UiModal',
-    note: '使用正式元件與 active-token 快照；保留 default／notice／wide、整面捲動與既有焦點行為。',
+    note: '正式元件已採 raised shell＋on-raised 欄位層級；保留 default／notice／wide 相容命名與既有焦點行為。',
   },
 ]);
 </script>
@@ -109,7 +109,6 @@ const LAYERS = Object.freeze([
   --ui-space-8: 4rem;
   --ui-border-width: 1px;
   --ui-radius-md: 0.375rem;
-  --ui-radius: var(--ui-radius-md);
   --ui-radius-lg: 0.5rem;
   --ui-font-family-base:
     'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
@@ -134,6 +133,10 @@ const LAYERS = Object.freeze([
   --ui-field-radius: 0.375rem;
   --ui-field-bg: #344046;
   --ui-field-bg-hover: #3a464c;
+  --ui-field-bg-readonly: #30383e;
+  --ui-field-bg-on-raised: var(--ui-color-surface);
+  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
   --ui-field-fg: #f7f1e7;
   --ui-field-placeholder: #aeb8b6;
   --ui-field-border: #3c4749;
@@ -142,11 +145,18 @@ const LAYERS = Object.freeze([
   --ui-focus-width: 2px;
   --ui-focus-offset: 2px;
   --ui-opacity-disabled: 0.5;
-  --ui-modal-width-default: 26.25rem;
-  --ui-modal-width-notice: 40rem;
-  --ui-modal-width-wide: 45rem;
+  --ui-modal-inline-size-small: 24rem;
+  --ui-modal-inline-size-medium: 32rem;
+  --ui-modal-inline-size-large: 48rem;
+  --ui-modal-max-block-size-small: 35rem;
+  --ui-modal-max-block-size-medium: 45rem;
+  --ui-modal-max-block-size-large: 50rem;
+  --ui-modal-viewport-inset: 1.5rem;
+  --ui-modal-content-inset: 1.5rem;
+  --ui-modal-section-gap: 1rem;
+  --ui-modal-footer-inset-block: 0.75rem;
   --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
-  --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 28%);
+  --ui-shadow-dialog: 0 1rem 2.5rem rgb(0 0 0 / 42%);
   --ui-z-dialog: 200;
 }
 
@@ -173,12 +183,13 @@ const LAYERS = Object.freeze([
   --ui-color-warning-soft: color-mix(in srgb, #b78336 18%, transparent);
   --ui-field-bg: #edf2ef;
   --ui-field-bg-hover: #e4ece8;
+  --ui-field-bg-readonly: #fff;
   --ui-field-fg: #1f2328;
   --ui-field-placeholder: #69747a;
   --ui-field-border: #d8ded9;
   --ui-field-border-hover: #b9c4c0;
   --ui-field-border-invalid: #bd5961;
-  --ui-shadow-overlay: 0 1rem 2.375rem rgb(31 35 40 / 16%);
+  --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
 }
 
 @media (max-width: 48rem) {

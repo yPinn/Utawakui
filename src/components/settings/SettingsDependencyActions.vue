@@ -11,8 +11,7 @@ const props = defineProps({
 const emit = defineEmits(['primaryAction', 'advancedAction']);
 
 const isMenuOpen = shallowRef(false);
-const menuX = shallowRef(0);
-const menuY = shallowRef(0);
+const menuAnchorEl = shallowRef(null);
 
 const menuItems = computed(() =>
   (props.item.advancedActions ?? []).map((action) =>
@@ -31,14 +30,13 @@ const menuLabel = computed(() => `${props.item.title || props.item.name}選項`)
 
 function openMenu(event) {
   event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  menuX.value = rect.right;
-  menuY.value = rect.bottom + 4;
+  menuAnchorEl.value = event.currentTarget;
   isMenuOpen.value = true;
 }
 
 function closeMenu() {
   isMenuOpen.value = false;
+  menuAnchorEl.value = null;
 }
 
 function handleMenuSelect(actionId) {
@@ -72,10 +70,8 @@ function handleMenuSelect(actionId) {
 
     <UiContextMenu
       :open="isMenuOpen"
-      :x="menuX"
-      :y="menuY"
+      :anchor-el="menuAnchorEl"
       :width="184"
-      align-x="right"
       :items="menuItems"
       empty-text="沒有可用的進階操作"
       @select="handleMenuSelect"

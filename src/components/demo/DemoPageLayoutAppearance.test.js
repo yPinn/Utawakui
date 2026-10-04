@@ -16,6 +16,10 @@ const folderPageSource = readFileSync(
   new URL('../layout/AppFolderPage.vue', import.meta.url),
   'utf8',
 );
+const contentFieldSource = readFileSync(
+  new URL('../layout/AppFolderContentField.vue', import.meta.url),
+  'utf8',
+);
 const v2Tokens = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
@@ -26,18 +30,20 @@ describe('DemoPageLayoutAppearance', () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
     const tabPosition = html.indexOf('app-folder-layout__navigation');
     const shellPosition = html.indexOf('app-folder-layout__perimeter');
-    const headerPosition = html.indexOf('app-folder-page__header');
     const scrollPosition = html.indexOf('app-folder-page__scroll');
+    const collectionTitlePosition = html.indexOf(
+      'class="library-entity-dossier__title"',
+    );
 
     expect(tabPosition).toBeGreaterThan(-1);
     expect(shellPosition).toBeGreaterThan(tabPosition);
-    expect(headerPosition).toBeGreaterThan(-1);
-    expect(scrollPosition).toBeGreaterThan(headerPosition);
+    expect(scrollPosition).toBeGreaterThan(shellPosition);
+    expect(collectionTitlePosition).toBeGreaterThan(scrollPosition);
     expect(html).toContain('aria-label="Folder 頁面"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('夏季 Cover 工作集');
-    expect(html).toContain('工作集摘要');
-    expect(html).toContain('素材狀態');
+    expect(html).toContain('專輯資料');
+    expect(html).toContain('專輯曲目');
     expect(html).toContain('app-folder-page__body--document');
     expect(source).toContain(
       "import AppFolderLayout from '../layout/AppFolderLayout.vue'",
@@ -55,11 +61,11 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).not.toContain('artifactDefinitions');
     expect(html).not.toContain('可移動參考物件');
     expect(html).not.toContain('重設物件位置');
-    expect(html).toContain('工作集摘要');
+    expect(source).toContain('工作集摘要');
     expect(html).toContain('Folder 外觀色屬於元件，內容保持中性。');
-    expect(html).toContain('曲目');
-    expect(html).toContain('待確認');
-    expect(html).toContain('已完成');
+    expect(source).toContain('曲目');
+    expect(source).toContain('待確認');
+    expect(source).toContain('已完成');
     expect(html).not.toContain('ownership');
     expect(html).not.toContain('AppArchiveFrame');
     expect(html).not.toContain('UiPageHeader');
@@ -126,7 +132,60 @@ describe('DemoPageLayoutAppearance', () => {
     expect(folderLayoutSource).toContain('container-type: inline-size');
     expect(folderLayoutSource).toContain('container-name: app-folder-layout');
     expect(source).toContain('<AppFolderPage');
+    expect(source).toContain(
+      "import AppFolderContentField from '../layout/AppFolderContentField.vue'",
+    );
+    expect(source).toContain('<AppFolderContentField');
+    expect(source).toContain('<SetlistCollectionHeader');
+    expect(source).toContain('<SetlistPlaylistTable');
+    expect(source).toContain('<SetlistAlbumSupportingContent');
+    expect(source).toContain('@select-album="selectDemoAlbum"');
+    expect(source).toContain('const demoSelectedAlbumId = shallowRef(');
+    expect(source).toContain('const demoRelatedAlbums = computed(');
+    expect(source.indexOf('</AppFolderContentField>')).toBeLessThan(
+      source.indexOf('<SetlistAlbumSupportingContent'),
+    );
+    expect(contentFieldSource).toContain(
+      'background: var(--ui-folder-content-background)',
+    );
     expect(source).not.toContain('<UiScrollRegion');
+  });
+
+  it('reuses the production collection header and track table for the Setlist specimen', () => {
+    expect(source).toContain(
+      "import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue'",
+    );
+    expect(source).toContain(
+      "import SetlistPlaylistTable from '../playlists/SetlistPlaylistTable.vue'",
+    );
+    expect(source).toContain('v-if="activeFolder.id === \'setlist\'"');
+    expect(source).toContain(':title-id="specimenTitleId"');
+    expect(source).toContain(':entries="visibleDemoAlbumEntries"');
+    expect(source).toContain(':is-album="true"');
+    expect(source).toContain(':playing="demoCollectionPlaying"');
+    expect(source).toContain(':shuffle-active="demoCollectionShuffle"');
+    expect(source).toContain('@toggle-playback="toggleDemoCollectionPlayback"');
+    expect(source).toContain('@toggle-shuffle="toggleDemoCollectionShuffle"');
+    expect(source).not.toContain('useCollectionPlayback');
+    expect(source).toContain(
+      '<template v-if="activeFolder.id !== \'setlist\'" #header>',
+    );
+    expect(source).toContain('工作集摘要');
+    expect(source).toContain('同步歌詞工作區');
+    expect(source).toContain('直播輸出工作區');
+    expect(source).toContain('素材匯入工作區');
+  });
+
+  it('keeps primary specimen sections at the page heading level', () => {
+    for (const id of [
+      'overviewTitleId',
+      'materialsTitleId',
+      'nextTitleId',
+      'notesTitleId',
+    ]) {
+      expect(source).toContain(`<h2 :id="${id}">`);
+      expect(source).not.toContain(`<h3 :id="${id}">`);
+    }
   });
 
   it('treats folder choices as global page navigation instead of local tabpanels', async () => {
@@ -165,6 +224,9 @@ describe('DemoPageLayoutAppearance', () => {
     );
     expect(v2Tokens).toContain(
       '--ui-folder-page-background: var(--ui-color-surface);',
+    );
+    expect(v2Tokens).toContain(
+      '--ui-folder-content-background: var(--ui-color-canvas);',
     );
     expect(v2Tokens).toContain(
       '--ui-color-folder-primary: var(--ui-palette-indigo-700);',
@@ -372,7 +434,7 @@ describe('DemoPageLayoutAppearance', () => {
       /\.app-folder-layout__destination\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
     );
     expect(source).toMatch(
-      /\.demo-page-layout__section-heading h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-lg\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,
+      /\.demo-page-layout__section-heading h2\s*\{[^}]*font-size:\s*var\(--ui-font-size-lg\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,
     );
     expect(source).toMatch(
       /\.demo-page-layout__section-heading p\s*\{[^}]*font-size:\s*var\(--ui-font-size-md\);[^}]*line-height:\s*var\(--ui-line-height-body\);/su,

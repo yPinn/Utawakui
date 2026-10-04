@@ -33,8 +33,7 @@ const emit = defineEmits([
 // to a developer); refresh/open-folder/clear are advanced/support actions,
 // same split as SettingsDependencyActions.vue's primary + Ellipsis menu.
 const isMenuOpen = shallowRef(false);
-const menuX = shallowRef(0);
-const menuY = shallowRef(0);
+const menuAnchorEl = shallowRef(null);
 
 const menuItems = computed(() => [
   {
@@ -58,14 +57,13 @@ const menuItems = computed(() => [
 
 function openMenu(event) {
   event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  menuX.value = rect.right;
-  menuY.value = rect.bottom + 4;
+  menuAnchorEl.value = event.currentTarget;
   isMenuOpen.value = true;
 }
 
 function closeMenu() {
   isMenuOpen.value = false;
+  menuAnchorEl.value = null;
 }
 
 function handleMenuSelect(actionId) {
@@ -112,10 +110,8 @@ function handleMenuSelect(actionId) {
 
     <UiContextMenu
       :open="isMenuOpen"
-      :x="menuX"
-      :y="menuY"
+      :anchor-el="menuAnchorEl"
       :width="184"
-      align-x="right"
       :items="menuItems"
       @select="handleMenuSelect"
       @close="closeMenu"

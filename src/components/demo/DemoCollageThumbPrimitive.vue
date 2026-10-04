@@ -104,8 +104,9 @@ const DENSITY_CONTEXTS = [
 const CONSUMER_SIZES = [
   { size: 40, label: 'Sidebar · 40px' },
   { size: 88, label: 'Dossier · 88px' },
-  { size: 120, label: 'Details modal · 120px' },
+  { size: 120, label: 'Context panel · 120px' },
   { size: 136, label: 'Setlist header · 136px' },
+  { size: 160, label: 'Details modal · 160px' },
   { size: 280, label: 'Context inspector · 280px' },
 ];
 
@@ -156,7 +157,7 @@ const LANGUAGE_TRACKS = [
           零首與無曲目縮圖共用單一空位置；一首使用完整方形；二至三首進入四格並保留安靜空格，空格不重複顯示音符；四首以上只取收到順序的前四首。四格模式的四個格位各自保持正方形。
         </p>
         <p v-else>
-          現行版零首會顯示四個空格圖示；其餘狀態維持前四首拼貼，但目前未固定兩列高度，仍可能依來源圖片比例形成不等高格位。
+          現行版零首會顯示四個空格圖示；其餘狀態維持前四首拼貼，四個格位已固定為等寬等高。
         </p>
       </header>
 

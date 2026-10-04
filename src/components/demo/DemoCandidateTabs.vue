@@ -65,7 +65,6 @@ const attrs = useAttrs();
 
 .demo-candidate-tabs :deep(.ui-tabs--bar) {
   width: 100%;
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .demo-candidate-tabs :deep(.ui-tabs__tab) {

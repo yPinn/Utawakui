@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onUnmounted, ref, shallowRef } from 'vue';
+import { computed, onUnmounted, shallowRef } from 'vue';
 import {
   Check,
   Copy,
@@ -146,8 +146,9 @@ const MENU_SETS = Object.freeze({
 const menuComponent = computed(() =>
   props.layer.key === 'candidate' ? DemoCandidateActionMenu : UiContextMenu,
 );
-const menu = ref({
+const menu = shallowRef({
   open: false,
+  anchorEl: null,
   x: 0,
   y: 0,
   width: 220,
@@ -167,7 +168,7 @@ const coverageHeadingId = computed(
 const boundaryNote = computed(() =>
   props.layer.key === 'candidate'
     ? '內部捲動保持展開；外部捲動關閉。子選單與父項目對齊，依文字方向選側並在 viewport 邊界翻面。'
-    : 'Current 保留正式元件的捲動、子選單偏移與碰撞真值，供 Candidate 對照。',
+    : 'Current 使用正式元件真值：按鈕上下翻向，右鍵限制在安全邊界，子選單依文字方向換側。',
 );
 const anatomyLines = computed(() =>
   props.layer.key === 'candidate'
@@ -186,15 +187,24 @@ const menuId = computed(() => `action-menu-${props.layer.key}-popup`);
 const controlledMenuId = computed(() =>
   props.layer.key === 'candidate' ? menuId.value : undefined,
 );
-const menuRootAttributes = computed(() =>
-  props.layer.key === 'candidate'
+const menuRootAttributes = computed(() => ({
+  ...(props.layer.key === 'candidate' ? { id: menuId.value } : {}),
+  dir: menu.value.dir,
+  'aria-label': menu.value.label,
+}));
+const menuPositionProps = computed(() =>
+  props.layer.key === 'current'
     ? {
-        id: menuId.value,
-        dir: menu.value.dir,
-        'aria-label': menu.value.label,
+        anchorEl: menu.value.anchorEl,
+        x: menu.value.x,
+        y: menu.value.y,
       }
-    : {},
+    : { x: menu.value.x, y: menu.value.y },
 );
+const menuComponentAttributes = computed(() => ({
+  ...menuRootAttributes.value,
+  ...menuPositionProps.value,
+}));
 
 function setCurrentMarker(isOpen) {
   if (
@@ -224,11 +234,17 @@ function itemsForLayer(specimen, items) {
   );
 }
 
-function openMenuAt(specimen, x, y, { dir, trigger = specimen } = {}) {
+function openMenuAt(
+  specimen,
+  x,
+  y,
+  { anchorEl = null, dir, trigger = specimen } = {},
+) {
   const definition = MENU_SETS[specimen];
   setCurrentMarker(true);
   menu.value = {
     open: true,
+    anchorEl,
     x: Math.round(x),
     y: Math.round(y),
     width: definition.width,
@@ -242,8 +258,8 @@ function openMenuAt(specimen, x, y, { dir, trigger = specimen } = {}) {
 
 function openFromControl(event, specimen = 'general') {
   event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  openMenuAt(specimen, rect.left, rect.bottom + 4, {
+  openMenuAt(specimen, 0, 0, {
+    anchorEl: event.currentTarget,
     trigger: specimen === 'settings' ? 'more' : specimen,
   });
 }
@@ -282,7 +298,7 @@ function openAtViewportEdge(event) {
 
 function closeMenu() {
   setCurrentMarker(false);
-  menu.value = { ...menu.value, open: false };
+  menu.value = { ...menu.value, open: false, anchorEl: null };
 }
 
 function handleSelect(value, item) {
@@ -420,10 +436,8 @@ onUnmounted(() => setCurrentMarker(false));
 
     <component
       :is="menuComponent"
-      v-bind="menuRootAttributes"
+      v-bind="menuComponentAttributes"
       :open="menu.open"
-      :x="menu.x"
-      :y="menu.y"
       :width="menu.width"
       :items="menu.items"
       :empty-text="menu.emptyText"

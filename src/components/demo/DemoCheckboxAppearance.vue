@@ -48,9 +48,9 @@ const STATES = [
       ['complete', 'false'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['complete', 'Native empty'],
-      ['complete', 'Label'],
+      ['complete', '36px row'],
+      ['complete', 'Empty box'],
+      ['complete', 'Full row'],
       ['base', '—'],
       ['complete', 'false'],
     ],
@@ -67,9 +67,9 @@ const STATES = [
       ['complete', 'true'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['complete', 'Native check'],
-      ['complete', 'Label'],
+      ['complete', '36px row'],
+      ['complete', 'Check'],
+      ['complete', 'Full row'],
       ['base', '—'],
       ['complete', 'true'],
     ],
@@ -87,11 +87,11 @@ const STATES = [
       ['complete', 'mixed'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['pending', 'No public state'],
-      ['complete', 'Label'],
+      ['complete', '36px row'],
+      ['complete', 'Minus'],
+      ['complete', 'Full row'],
       ['base', '—'],
-      ['pending', 'Caller DOM'],
+      ['complete', 'mixed'],
     ],
   },
   {
@@ -106,9 +106,9 @@ const STATES = [
       ['complete', ':hover'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['pending', 'Native only'],
-      ['complete', 'Label'],
+      ['complete', '36px row'],
+      ['complete', 'Accent border'],
+      ['complete', 'Full row'],
       ['base', '—'],
       ['complete', ':hover'],
     ],
@@ -119,15 +119,15 @@ const STATES = [
     value: true,
     candidate: [
       ['complete', '36px row'],
-      ['complete', 'Indigo ring'],
+      ['complete', 'Focus ring'],
       ['complete', 'Full row'],
       ['base', '—'],
       ['complete', 'Keyboard'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['complete', 'Coral ring'],
-      ['complete', 'Label'],
+      ['complete', '36px row'],
+      ['complete', 'Focus ring'],
+      ['complete', 'Full row'],
       ['base', '—'],
       ['complete', 'Keyboard'],
     ],
@@ -146,8 +146,8 @@ const STATES = [
       ['complete', 'aria-invalid'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['pending', 'No border style'],
+      ['complete', '36px row'],
+      ['complete', 'Danger border'],
       ['complete', 'Required label'],
       ['complete', 'Error'],
       ['complete', 'aria-invalid'],
@@ -166,8 +166,8 @@ const STATES = [
       ['complete', 'required'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['complete', 'Native empty'],
+      ['complete', '36px row'],
+      ['base', 'Empty box'],
       ['complete', 'Marker'],
       ['base', 'Pristine'],
       ['complete', 'required'],
@@ -186,9 +186,9 @@ const STATES = [
       ['complete', 'disabled'],
     ],
     current: [
-      ['pending', 'Intrinsic'],
-      ['complete', '50% input'],
-      ['pending', 'Label full tone'],
+      ['complete', '36px row'],
+      ['complete', '50% row'],
+      ['complete', 'Not allowed'],
       ['base', '—'],
       ['complete', 'disabled'],
     ],
@@ -207,10 +207,9 @@ const LAYERS = [
   {
     key: 'candidate',
     className: 'demo-checkbox-layer--candidate',
-    title: 'Token v2 候選 Checkbox',
-    note: 'Native input 擁有互動；project-owned indicator 與 full-row target 只處理可見契約。',
-    geometryNote:
-      'Visual indicator 固定 16px；Candidate target 隨離散 density 映射。',
+    title: '核准 Candidate Checkbox',
+    note: '保留核准標本，供正式元件回歸比對。',
+    geometryNote: 'Visual indicator 固定 16px；target 隨離散 density 映射。',
     contracts: [
       'Visual indicator · 16 CSS px',
       'Target · full label row',
@@ -225,17 +224,20 @@ const LAYERS = [
   {
     key: 'current',
     className: 'demo-checkbox-layer--current',
-    title: '現行 UiCheckbox',
-    note: '16px Windows native checkbox；列高由文字 intrinsic size 決定，沒有 component target floor。',
+    title: '正式 UiCheckbox · 已採用',
+    note: 'Native input 保留語意；正式 indicator、full-row target與狀態外觀已統一。',
     geometryNote:
-      'Native input／indicator 皆為 16px；label 可點，但間隙與整列沒有 target floor。',
+      'Visual indicator 固定 16px；Standard／Compact target由正式 density控制。',
     contracts: [
-      'Native input／indicator · 16 CSS px',
-      'Target · input＋associated label',
-      'Width · intrinsic content',
+      'Visual indicator · 16 CSS px',
+      'Target · full label row',
+      'Width · content／parent-owned',
     ],
     component: UiCheckbox,
-    sizes: [['active', 'Current · intrinsic inline row']],
+    sizes: [
+      ['standard', 'Standard target · 36 CSS px'],
+      ['compact', 'Compact target · 32 CSS px'],
+    ],
   },
 ];
 
@@ -252,7 +254,7 @@ const values = reactive(
         states: Object.fromEntries(
           STATES.map((state) => [state.key, state.value]),
         ),
-        mixed: layer.key === 'candidate',
+        mixed: true,
         validationHint: false,
         validationError: false,
       },
@@ -269,7 +271,7 @@ function coverageFor(layer, state) {
   <div class="demo-checkbox-appearance">
     <p class="demo-checkbox-appearance__intro">
       <strong>Checkbox 支援 Boolean／mixed，且沒有 readonly。</strong>
-      Candidate 保留 native input，並擴大整列命中區。
+      正式元件保留 native input，並以 project-owned indicator 擴大整列命中區。
     </p>
 
     <section
@@ -339,7 +341,7 @@ function coverageFor(layer, state) {
               ><span>{{
                 layer.key === 'candidate'
                   ? 'Native input · full label-row hit target'
-                  : 'Native input · 16px hit target'
+                  : 'Native input · full label-row hit target'
               }}</span>
             </li>
             <li data-checkbox-anatomy="indicator">
@@ -347,7 +349,7 @@ function coverageFor(layer, state) {
               ><span>{{
                 layer.key === 'candidate'
                   ? 'Project-owned 16px Check／Minus'
-                  : 'Current Windows native checkbox'
+                  : 'Project-owned 16px Check／Minus'
               }}</span>
             </li>
             <li data-checkbox-anatomy="label">
@@ -406,11 +408,7 @@ function coverageFor(layer, state) {
               :id="`demo-checkbox-${layer.key}-state-${state.key}`"
               v-model="values[layer.key].states[state.key]"
               :label="state.label"
-              :indeterminate="
-                layer.key === 'candidate' &&
-                state.indeterminate &&
-                values[layer.key].mixed
-              "
+              :indeterminate="state.indeterminate && values[layer.key].mixed"
               :invalid="state.invalid"
               :error="state.error"
               :required="state.required || state.invalid"
@@ -648,10 +646,12 @@ function coverageFor(layer, state) {
 
 .demo-checkbox-size--standard {
   --demo-checkbox-target-size: 2.25rem;
+  --ui-control-height: 2.25rem;
 }
 
 .demo-checkbox-size--compact {
   --demo-checkbox-target-size: 2rem;
+  --ui-control-height: 2rem;
 }
 
 .demo-checkbox-anatomy {
@@ -699,7 +699,7 @@ function coverageFor(layer, state) {
   :deep(.demo-candidate-checkbox__indicator),
 .demo-checkbox-layer--current
   .demo-checkbox-state[data-checkbox-state='focus']
-  :deep(.ui-checkbox) {
+  :deep(.ui-checkbox__indicator) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
@@ -784,7 +784,16 @@ function coverageFor(layer, state) {
     'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
     -apple-system, sans-serif;
   --ui-checkbox-size: 1rem;
+  --ui-control-height: 2.25rem;
+  --ui-border-width: 1px;
+  --ui-radius-sm: 0.25rem;
+  --ui-motion-duration-feedback: 100ms;
+  --ui-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ui-color-surface-raised: #30383e;
+  --ui-color-surface-hover: #344046;
+  --ui-color-border-strong: #586568;
   --ui-color-accent: #55a2a7;
+  --ui-color-accent-contrast: #102326;
   --ui-color-focus: #dd7a64;
   --ui-color-danger: #dd7078;
   --ui-color-text: #f7f1e7;
@@ -794,7 +803,11 @@ function coverageFor(layer, state) {
 
 :global(:root[data-ui-theme='light'] .demo-checkbox-layer--current) {
   color-scheme: light;
+  --ui-color-surface-raised: #fff;
+  --ui-color-surface-hover: #edf2ef;
+  --ui-color-border-strong: #b9c4c0;
   --ui-color-accent: #2f777c;
+  --ui-color-accent-contrast: #fffdfa;
   --ui-color-focus: #d26a45;
   --ui-color-danger: #bd5961;
   --ui-color-text: #1f2328;

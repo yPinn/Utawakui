@@ -126,6 +126,9 @@ describe('DemoTabsAppearance', () => {
     expect(candidateSource).toContain('min-width: 0;');
     expect(candidateSource).toContain('max-width: 100%;');
     expect(candidateSource).toContain('width: fit-content;');
+    expect(candidateSource).not.toMatch(
+      /\.demo-candidate-tabs :deep\(\.ui-tabs--bar\)\s*\{[^}]*border-block-end:/su,
+    );
     expect(currentSource).toContain('<UiScrollRegion');
     expect(candidateSource).not.toContain('overflow-x: auto;');
     expect(candidateSource).not.toMatch(/max-width:\s*\d+(?:\.\d+)?rem/u);

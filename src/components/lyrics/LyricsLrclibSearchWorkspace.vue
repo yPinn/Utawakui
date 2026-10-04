@@ -475,11 +475,16 @@ function toggleCandidate(candidate) {
 
 <style scoped>
 .lyrics-lrclib-search {
+  --lyrics-lrclib-search-focus-safe-inset: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+
   max-height: calc(100vh - var(--ui-space-8) - var(--ui-space-8));
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: var(--ui-space-3);
-  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: var(--lyrics-lrclib-search-focus-safe-inset);
   -webkit-user-select: none;
   user-select: none;
 }

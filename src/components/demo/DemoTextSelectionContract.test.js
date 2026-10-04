@@ -7,6 +7,8 @@ function read(relativePath) {
 
 const adoptedButtonSource = read('../ui/UiButton.vue');
 const adoptedTextButtonSource = read('../ui/UiTextButton.vue');
+const adoptedCheckboxSource = read('../ui/UiCheckbox.vue');
+const adoptedProgressSource = read('../ui/UiProgress.vue');
 const candidateTabsSource = read('./DemoCandidateTabs.vue');
 const candidateChipSource = read('./DemoCandidateChip.vue');
 const candidateCheckboxSource = read('./DemoCandidateCheckbox.vue');
@@ -24,7 +26,6 @@ const uiTextareaSource = read('../ui/UiTextarea.vue');
 const currentSources = [
   read('../ui/UiTabs.vue'),
   read('../ui/UiChip.vue'),
-  read('../ui/UiProgress.vue'),
   read('../ui/UiMarqueeText.vue'),
 ];
 const reviewContract = read(
@@ -63,12 +64,17 @@ describe('Token v2 Candidate text selection contract', () => {
       candidateCheckboxSource,
       '\\.demo-candidate-checkbox :deep\\(\\.ui-field__label--inline\\)',
     );
+    expectNoneRule(
+      adoptedCheckboxSource,
+      '\\.ui-checkbox-field :deep\\(\\.ui-field__label--inline\\)',
+    );
     expect(formalRangeSource).toMatch(
       /@scope \(\[data-ui-system='v2'\]\)[\s\S]*?\.ui-range :deep\(\.ui-field__label\)\s*\{[^}]*-webkit-user-select: none;[^}]*user-select: none;/su,
     );
     expectV2NoneRule(formalRangeSource, '\\.ui-range__value');
     expectV2NoneRule(formalRangeControlSource, '\\.ui-range-control');
     expectNoneRule(candidateProgressSource, '\\.demo-candidate-progress__copy');
+    expectNoneRule(adoptedProgressSource, '\\.ui-progress__copy');
   });
 
   it('keeps user data and explanatory content selectable', () => {

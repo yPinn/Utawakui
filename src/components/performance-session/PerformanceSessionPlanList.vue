@@ -20,8 +20,7 @@ const props = defineProps({
 const emit = defineEmits(['select', 'move', 'duplicate', 'remove']);
 
 const menuOpen = shallowRef(false);
-const menuX = shallowRef(0);
-const menuY = shallowRef(0);
+const menuAnchorEl = shallowRef(null);
 const menuItemId = shallowRef(null);
 
 const activeMenuItem = computed(() =>
@@ -81,14 +80,13 @@ function statusPresentation(item) {
 
 function closeMenu() {
   menuOpen.value = false;
+  menuAnchorEl.value = null;
 }
 
 function openMenu(event, itemId) {
   if (props.saving) return;
   event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  menuX.value = rect.right;
-  menuY.value = rect.bottom + 4;
+  menuAnchorEl.value = event.currentTarget;
   menuItemId.value = itemId;
   menuOpen.value = true;
 }
@@ -190,10 +188,8 @@ watch(
 
   <UiContextMenu
     :open="menuOpen"
-    :x="menuX"
-    :y="menuY"
+    :anchor-el="menuAnchorEl"
     :width="208"
-    align-x="right"
     :aria-label="
       activeMenuIndex >= 0 ? `第 ${activeMenuIndex + 1} 首操作` : '待唱操作'
     "

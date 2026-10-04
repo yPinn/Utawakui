@@ -22,6 +22,10 @@ function expectNoneRule(source, selectorPattern) {
 }
 
 describe('BGM player Token v2 layout contract', () => {
+  it('shares the large-surface radius role with other major shell surfaces', () => {
+    expect(playerSource).toContain('radius="lg"');
+  });
+
   it('lets the shared scroll layout own content inset and scrollbar reserve', () => {
     expect(pickerSource).toContain(
       "import UiScrollLayout from '../ui/UiScrollLayout.vue'",

@@ -1,7 +1,11 @@
 <script setup>
 import { computed, shallowRef, useId } from 'vue';
+import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import AppFolderLayout from '../layout/AppFolderLayout.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
+import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue';
+import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue';
+import SetlistPlaylistTable from '../playlists/SetlistPlaylistTable.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -9,6 +13,11 @@ import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 const previewMode = shallowRef('wide');
 const contentMode = shallowRef('overflow');
 const activeFolderId = shallowRef('setlist');
+const demoSearchQuery = shallowRef('');
+const demoSort = shallowRef({ key: null, direction: 'asc' });
+const demoCollectionPlaying = shallowRef(false);
+const demoCollectionShuffle = shallowRef(false);
+const emptyTrackIds = new Set();
 const instanceId = useId();
 const specimenTitleId = `demo-page-layout-specimen-title-${instanceId}`;
 const overviewTitleId = `demo-page-layout-overview-title-${instanceId}`;
@@ -59,18 +68,213 @@ const materialRows = [
   { name: '同步歌詞', detail: 'LRC · 繁體中文', state: '已完成' },
   { name: '封面影像', detail: 'PNG · 3000 × 3000', state: '需補充' },
 ];
+const demoAlbums = [
+  {
+    id: 'demo-album-current',
+    name: '夏季 Cover 工作集',
+    coverUrl: '',
+    tracks: [
+      {
+        id: 'demo-track-current-1',
+        title: '目不轉睛',
+        artist: '王以太',
+        duration: 221,
+      },
+      {
+        id: 'demo-track-current-2',
+        title: '危險派對',
+        artist: '王以太',
+        duration: 198,
+      },
+      {
+        id: 'demo-track-current-3',
+        title: '別怕變老',
+        artist: '王以太',
+        duration: 246,
+      },
+      {
+        id: 'demo-track-current-4',
+        title: '人間天堂',
+        artist: '王以太',
+        duration: 205,
+      },
+      {
+        id: 'demo-track-current-5',
+        title: '山羊',
+        artist: '王以太',
+        duration: 149,
+      },
+      {
+        id: 'demo-track-current-6',
+        title: 'Feel Alive',
+        artist: '王以太',
+        duration: 329,
+      },
+    ],
+    releaseYear: 2024,
+    trackCount: 12,
+    durationLabel: '29 分',
+    description: '本機曲庫中的專輯資料與演出準備內容。',
+  },
+  {
+    id: 'demo-album-1',
+    name: '演說家',
+    coverUrl: '',
+    tracks: [
+      {
+        id: 'demo-track-1',
+        title: '目不轉睛',
+        artist: '王以太',
+        duration: 221,
+      },
+    ],
+    releaseYear: 2018,
+    trackCount: 11,
+    durationLabel: '36 分',
+    description: '本機曲庫中的專輯資料。',
+  },
+  {
+    id: 'demo-album-2',
+    name: 'Love Me Later',
+    coverUrl: '',
+    tracks: [
+      {
+        id: 'demo-track-2',
+        title: '別怕變老',
+        artist: '王以太',
+        duration: 246,
+      },
+    ],
+    releaseYear: 2021,
+    trackCount: 10,
+    durationLabel: '32 分',
+    description: '本機曲庫中的專輯資料。',
+  },
+  {
+    id: 'demo-album-3',
+    name: '幸存者的負罪感',
+    coverUrl: '',
+    tracks: [
+      {
+        id: 'demo-track-3',
+        title: '危險派對',
+        artist: '王以太',
+        duration: 198,
+      },
+    ],
+    releaseYear: 2024,
+    trackCount: 9,
+    durationLabel: '31 分',
+    description: '本機曲庫中的專輯資料。',
+  },
+];
+const demoSelectedAlbumId = shallowRef('demo-album-current');
+const selectedDemoAlbum = computed(
+  () =>
+    demoAlbums.find((album) => album.id === demoSelectedAlbumId.value) ??
+    demoAlbums[0],
+);
+const demoRelatedAlbums = computed(() =>
+  demoAlbums.filter((album) => album.id !== demoSelectedAlbumId.value),
+);
+const demoAlbumMeta = computed(
+  () =>
+    `${selectedDemoAlbum.value.releaseYear} · ${selectedDemoAlbum.value.trackCount} 首曲目 · ${selectedDemoAlbum.value.durationLabel}`,
+);
+const visibleDemoAlbumEntries = computed(() => {
+  const query = demoSearchQuery.value.trim().toLocaleLowerCase();
+  const limit = contentMode.value === 'short' ? 3 : Number.POSITIVE_INFINITY;
+  const entries = selectedDemoAlbum.value.tracks
+    .filter((track) =>
+      [track.title, track.artist].some((value) =>
+        value?.toLocaleLowerCase().includes(query),
+      ),
+    )
+    .map((track, playlistIndex) => ({
+      track,
+      playlistIndex,
+      visibleIndex: playlistIndex,
+      addedAt: `2026-08-${String(29 - playlistIndex).padStart(2, '0')}T00:00:00.000Z`,
+    }));
+
+  const { key, direction } = demoSort.value;
+  if (key) {
+    const multiplier = direction === 'desc' ? -1 : 1;
+    entries.sort((left, right) => {
+      if (key === 'duration') {
+        return (left.track.duration - right.track.duration) * multiplier;
+      }
+      if (key === 'addedAt') {
+        return left.addedAt.localeCompare(right.addedAt) * multiplier;
+      }
+      return left.track.title.localeCompare(right.track.title) * multiplier;
+    });
+  }
+
+  return entries.slice(0, limit).map((entry, visibleIndex) => ({
+    ...entry,
+    visibleIndex,
+  }));
+});
+const demoArtistSummary = {
+  albumCount: 4,
+  trackCount: 38,
+  yearStart: 2018,
+  yearEnd: 2024,
+};
+const demoAddToPlaylistItems = [
+  { key: 'demo-target-1', label: '直播準備', value: 'demo-target-1' },
+  { key: 'demo-target-2', label: 'Cover 待唱', value: 'demo-target-2' },
+];
+const demoCollectionMoreItems = [
+  { key: 'edit', label: '編輯詳細資料', value: 'edit' },
+  { key: 'convert', label: '轉為播放清單', value: 'convert' },
+  { key: 'divider', separator: true },
+  { key: 'remove', label: '移除', value: 'remove', danger: true },
+];
 
 const previewClasses = computed(() => ({
   'demo-page-layout__preview--narrow': previewMode.value === 'narrow',
 }));
-const activeFolder = computed(
-  () =>
+const activeFolder = computed(() => {
+  const definition =
     folderDefinitions.find((page) => page.id === activeFolderId.value) ??
-    folderDefinitions[0],
-);
+    folderDefinitions[0];
+  if (definition.id !== 'setlist') return definition;
+  return {
+    ...definition,
+    title: selectedDemoAlbum.value.name,
+    description: `王以太 · ${selectedDemoAlbum.value.releaseYear} · ${selectedDemoAlbum.value.trackCount} 首曲目`,
+  };
+});
 
 function selectFolder(pageId) {
   activeFolderId.value = pageId;
+}
+
+function selectDemoAlbum(albumId) {
+  if (demoAlbums.some((album) => album.id === albumId)) {
+    demoSelectedAlbumId.value = albumId;
+  }
+}
+
+function toggleDemoSort(key) {
+  demoSort.value = {
+    key,
+    direction:
+      demoSort.value.key === key && demoSort.value.direction === 'asc'
+        ? 'desc'
+        : 'asc',
+  };
+}
+
+function toggleDemoCollectionPlayback() {
+  demoCollectionPlaying.value = !demoCollectionPlaying.value;
+}
+
+function toggleDemoCollectionShuffle() {
+  demoCollectionShuffle.value = !demoCollectionShuffle.value;
+  demoCollectionPlaying.value = true;
 }
 </script>
 
@@ -116,10 +320,11 @@ function selectFolder(pageId) {
         >
           <AppFolderPage
             mode="document"
+            :document-key="`${activeFolder.id}:${demoSelectedAlbumId}`"
             :body-label="activeFolder.title + '內容'"
             :aria-labelledby="specimenTitleId"
           >
-            <template #header>
+            <template v-if="activeFolder.id !== 'setlist'" #header>
               <UiPageHeader
                 :title="activeFolder.title"
                 :title-id="specimenTitleId"
@@ -135,81 +340,125 @@ function selectFolder(pageId) {
               </UiPageHeader>
             </template>
 
-            <div class="demo-page-layout__sections">
-              <section
-                class="demo-page-layout__section"
-                :aria-labelledby="overviewTitleId"
-              >
-                <header class="demo-page-layout__section-heading">
-                  <h3 :id="overviewTitleId">工作集摘要</h3>
-                  <p>12 首曲目，3 項待確認。</p>
-                </header>
-                <dl class="demo-page-layout__facts">
-                  <div>
-                    <dt>曲目</dt>
-                    <dd>12 首</dd>
-                  </div>
-                  <div>
-                    <dt>待確認</dt>
-                    <dd>3 項</dd>
-                  </div>
-                  <div>
-                    <dt>已完成</dt>
-                    <dd>9 項</dd>
-                  </div>
-                </dl>
-                <aside class="demo-page-layout__summary-note">
-                  先處理待確認素材，再檢查輸出。
-                </aside>
-              </section>
+            <template v-if="activeFolder.id === 'setlist'">
+              <SetlistCollectionHeader
+                v-model:search-query="demoSearchQuery"
+                entity-kind="album"
+                :title="selectedDemoAlbum.name"
+                :title-id="specimenTitleId"
+                artist="王以太"
+                :meta="demoAlbumMeta"
+                :cover-tracks="selectedDemoAlbum.tracks"
+                :cover-url="selectedDemoAlbum.coverUrl"
+                :description="selectedDemoAlbum.description"
+                :playing="demoCollectionPlaying"
+                :shuffle-active="demoCollectionShuffle"
+                :can-play="selectedDemoAlbum.tracks.length > 0"
+                :can-shuffle="selectedDemoAlbum.tracks.length > 1"
+                :can-add-to-queue="selectedDemoAlbum.tracks.length > 0"
+                :can-add-to-playlist="selectedDemoAlbum.tracks.length > 0"
+                :add-to-playlist-items="demoAddToPlaylistItems"
+                :more-items="demoCollectionMoreItems"
+                @toggle-playback="toggleDemoCollectionPlayback"
+                @toggle-shuffle="toggleDemoCollectionShuffle"
+              />
 
-              <section
-                v-if="contentMode === 'overflow'"
-                class="demo-page-layout__section"
-                :aria-labelledby="materialsTitleId"
-              >
-                <header class="demo-page-layout__section-heading">
-                  <h3 :id="materialsTitleId">素材狀態</h3>
-                </header>
-                <ul class="demo-page-layout__material-list">
-                  <li v-for="material in materialRows" :key="material.name">
-                    <span class="demo-page-layout__material-copy">
-                      <strong>{{ material.name }}</strong>
-                      <span>{{ material.detail }}</span>
-                    </span>
-                    <span class="demo-page-layout__material-state">
-                      {{ material.state }}
-                    </span>
-                  </li>
-                </ul>
-              </section>
+              <AppFolderContentField aria-label="專輯曲目">
+                <SetlistPlaylistTable
+                  :entries="visibleDemoAlbumEntries"
+                  :sort="demoSort"
+                  :is-album="true"
+                  :can-drag="false"
+                  :jumpable-track-ids="emptyTrackIds"
+                  @toggle-sort="toggleDemoSort"
+                />
+              </AppFolderContentField>
 
-              <section
-                v-if="contentMode === 'overflow'"
-                class="demo-page-layout__section"
-                :aria-labelledby="nextTitleId"
-              >
-                <header class="demo-page-layout__section-heading">
-                  <h3 :id="nextTitleId">接續工作</h3>
-                </header>
-                <ol class="demo-page-layout__steps">
-                  <li>確認伴奏版本與主唱錄音採樣率。</li>
-                  <li>校正歌詞時間軸並完成演出提示。</li>
-                  <li>檢查直播版型與 Cover 輸出尺寸。</li>
-                </ol>
-              </section>
+              <SetlistAlbumSupportingContent
+                artist="王以太"
+                :related-albums="demoRelatedAlbums"
+                :summary="demoArtistSummary"
+                @select-album="selectDemoAlbum"
+              />
+            </template>
 
-              <section
-                v-if="contentMode === 'overflow'"
-                class="demo-page-layout__section"
-                :aria-labelledby="notesTitleId"
-              >
-                <header class="demo-page-layout__section-heading">
-                  <h3 :id="notesTitleId">版面檢查</h3>
-                  <p>標題固定，內容獨立捲動。</p>
-                </header>
-              </section>
-            </div>
+            <AppFolderContentField v-else aria-label="可展開內容範圍">
+              <div class="demo-page-layout__sections">
+                <section
+                  class="demo-page-layout__section"
+                  :aria-labelledby="overviewTitleId"
+                >
+                  <header class="demo-page-layout__section-heading">
+                    <h2 :id="overviewTitleId">工作集摘要</h2>
+                    <p>12 首曲目，3 項待確認。</p>
+                  </header>
+                  <dl class="demo-page-layout__facts">
+                    <div>
+                      <dt>曲目</dt>
+                      <dd>12 首</dd>
+                    </div>
+                    <div>
+                      <dt>待確認</dt>
+                      <dd>3 項</dd>
+                    </div>
+                    <div>
+                      <dt>已完成</dt>
+                      <dd>9 項</dd>
+                    </div>
+                  </dl>
+                  <aside class="demo-page-layout__summary-note">
+                    先處理待確認素材，再檢查輸出。
+                  </aside>
+                </section>
+
+                <section
+                  v-if="contentMode === 'overflow'"
+                  class="demo-page-layout__section"
+                  :aria-labelledby="materialsTitleId"
+                >
+                  <header class="demo-page-layout__section-heading">
+                    <h2 :id="materialsTitleId">素材狀態</h2>
+                  </header>
+                  <ul class="demo-page-layout__material-list">
+                    <li v-for="material in materialRows" :key="material.name">
+                      <span class="demo-page-layout__material-copy">
+                        <strong>{{ material.name }}</strong>
+                        <span>{{ material.detail }}</span>
+                      </span>
+                      <span class="demo-page-layout__material-state">
+                        {{ material.state }}
+                      </span>
+                    </li>
+                  </ul>
+                </section>
+
+                <section
+                  v-if="contentMode === 'overflow'"
+                  class="demo-page-layout__section"
+                  :aria-labelledby="nextTitleId"
+                >
+                  <header class="demo-page-layout__section-heading">
+                    <h2 :id="nextTitleId">接續工作</h2>
+                  </header>
+                  <ol class="demo-page-layout__steps">
+                    <li>確認伴奏版本與主唱錄音採樣率。</li>
+                    <li>校正歌詞時間軸並完成演出提示。</li>
+                    <li>檢查直播版型與 Cover 輸出尺寸。</li>
+                  </ol>
+                </section>
+
+                <section
+                  v-if="contentMode === 'overflow'"
+                  class="demo-page-layout__section"
+                  :aria-labelledby="notesTitleId"
+                >
+                  <header class="demo-page-layout__section-heading">
+                    <h2 :id="notesTitleId">版面檢查</h2>
+                    <p>標題固定，內容獨立捲動。</p>
+                  </header>
+                </section>
+              </div>
+            </AppFolderContentField>
           </AppFolderPage>
         </AppFolderLayout>
       </div>
@@ -317,12 +566,12 @@ function selectFolder(pageId) {
   gap: var(--ui-folder-heading-gap);
 }
 
-.demo-page-layout__section-heading h3,
+.demo-page-layout__section-heading h2,
 .demo-page-layout__section-heading p {
   margin: 0;
 }
 
-.demo-page-layout__section-heading h3 {
+.demo-page-layout__section-heading h2 {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-semibold);

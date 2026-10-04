@@ -283,6 +283,20 @@ describe('online lyrics search modal contract', () => {
     );
   });
 
+  it('extends the workspace clip boundary for its top-start focus ring', () => {
+    const workspace = source('./LyricsLrclibSearchWorkspace.vue');
+
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search\s*\{[\s\S]*?--lyrics-lrclib-search-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
+    );
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search\s*\{[^}]*overflow:\s*clip;[^}]*overflow-clip-margin:\s*var\(--lyrics-lrclib-search-focus-safe-inset\);/su,
+    );
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search__toolbar\s*\{[\s\S]*?display:\s*flex;/u,
+    );
+  });
+
   it('lets untimed preview rows replace the timestamp grid without a specificity conflict', () => {
     const row = source('./LyricsLrclibCandidateRow.vue');
 

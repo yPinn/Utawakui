@@ -90,7 +90,7 @@ describe('AppRightDockHeader', () => {
 
   it('keeps Dock title and context on distinct semantic type tiers', () => {
     expect(source).toMatch(
-      /\.app-right-dock-header__identity\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-side-panel-list-gap\);/su,
+      /\.app-right-dock-header__identity\s*\{[^}]*flex:\s*1 1 auto;[^}]*min-width:\s*0;[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-side-panel-list-gap\);/su,
     );
     expect(source).toMatch(
       /\.app-right-dock-header h2\s*\{[^}]*font-size:\s*var\(--ui-font-size-lg\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,

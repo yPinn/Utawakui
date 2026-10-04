@@ -19,6 +19,7 @@ import PlayerBarPanel from './PlayerBarPanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiTabs from '../ui/UiTabs.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -62,9 +63,9 @@ const {
 } = useMetronome();
 
 const tabItems = [
-  { key: 'adjust', label: '調整' },
-  { key: 'live', label: '演出' },
-  { key: 'process', label: '處理' },
+  { id: 'adjust', label: '調整' },
+  { id: 'live', label: '演出' },
+  { id: 'process', label: '處理' },
 ];
 
 const metronomeSummary = computed(
@@ -107,25 +108,24 @@ function handleSeparationPresetChange(presetId) {
     close-label="關閉演出工具"
     @close="emit('close')"
   >
-    <div class="player-tools__tabs" role="tablist" aria-label="工具分組">
-      <button
-        v-for="tab in tabItems"
-        :key="tab.key"
-        type="button"
-        class="player-tools__tab"
-        :class="{ 'player-tools__tab--active': activeTab === tab.key }"
-        role="tab"
-        :aria-selected="activeTab === tab.key"
-        @click="setActiveTab(tab.key)"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+    <UiTabs
+      class="player-tools__tabs"
+      :items="tabItems"
+      :active-id="activeTab"
+      aria-label="工具分組"
+      tab-id-prefix="player-tools"
+      panel-id-prefix="player-tools"
+      distribution="equal"
+      @update:active-id="setActiveTab"
+    />
 
     <section
       v-show="activeTab === 'live'"
+      id="player-tools-live-panel"
       class="player-tools__section"
-      aria-label="演出工具"
+      role="tabpanel"
+      aria-labelledby="player-tools-live-tab"
+      tabindex="0"
     >
       <div class="player-tools__meter-card">
         <div class="player-tools__row-header">
@@ -261,8 +261,11 @@ function handleSeparationPresetChange(presetId) {
 
     <section
       v-show="activeTab === 'adjust'"
+      id="player-tools-adjust-panel"
       class="player-tools__section"
-      aria-label="播放調整"
+      role="tabpanel"
+      aria-labelledby="player-tools-adjust-tab"
+      tabindex="0"
     >
       <div
         v-for="row in pitchTempoRows"
@@ -375,8 +378,11 @@ function handleSeparationPresetChange(presetId) {
 
     <section
       v-show="activeTab === 'process'"
+      id="player-tools-process-panel"
       class="player-tools__section"
-      aria-label="音訊處理"
+      role="tabpanel"
+      aria-labelledby="player-tools-process-tab"
+      tabindex="0"
     >
       <div class="player-tools__process-item player-tools__process-card">
         <div class="player-tools__row-header">
@@ -424,13 +430,8 @@ function handleSeparationPresetChange(presetId) {
 
 <style scoped>
 .player-tools__tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
+  width: 100%;
   margin-bottom: var(--ui-space-3);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
 }
 
 .visually-hidden {
@@ -443,33 +444,6 @@ function handleSeparationPresetChange(presetId) {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.player-tools__tab {
-  min-height: var(--ui-control-height);
-  border: 0;
-  border-radius: var(--ui-radius-sm);
-  background: transparent;
-  color: var(--ui-color-text-muted);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-  cursor: pointer;
-}
-
-.player-tools__tab:hover {
-  color: var(--ui-color-text);
-}
-
-.player-tools__tab--active {
-  background: var(--ui-color-surface-selected);
-  color: var(--ui-color-text);
-}
-
-.player-tools__tab:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .player-tools__section {
@@ -673,7 +647,7 @@ function handleSeparationPresetChange(presetId) {
 }
 
 /* Five fixed guide-vocal stops (see PlayerBar.vue's GUIDE_VOCAL_STOPS) —
-   equal-width buttons, same grid approach as .player-tools__tabs above.
+   equal-width buttons keep the fixed stops evenly distributed.
    margin-bottom matches .player-tools__row-header's, so the slider below
    sits the same distance from the stops as the stops do from the header —
    without it, only the header→stops gap exists and the row reads

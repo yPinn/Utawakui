@@ -62,8 +62,8 @@ describe('DemoCheckboxAppearance', () => {
 
     expect(candidateIndex).toBeGreaterThanOrEqual(0);
     expect(currentIndex).toBeGreaterThan(candidateIndex);
-    expect(html).toContain('Token v2 候選 Checkbox');
-    expect(html).toContain('現行 UiCheckbox');
+    expect(html).toContain('核准 Candidate Checkbox');
+    expect(html).toContain('正式 UiCheckbox · 已採用');
 
     const sequence = [
       '尺寸與 target geometry',
@@ -89,20 +89,17 @@ describe('DemoCheckboxAppearance', () => {
     }
   });
 
-  it('visualizes 36 and 32 CSS px Candidate rows against the Current intrinsic row', async () => {
+  it('visualizes the approved 36 and 32 CSS px targets in Candidate and production', async () => {
     const html = await renderToString(createSSRApp(DemoCheckboxAppearance));
 
-    for (const size of ['standard', 'compact', 'active']) {
+    for (const size of ['standard', 'compact']) {
       expect(html).toContain(`data-checkbox-size="${size}"`);
     }
     expect(html).toContain('Standard target · 36 CSS px');
     expect(html).toContain('Compact target · 32 CSS px');
-    expect(html).toContain('Current · intrinsic inline row');
     expect(html).toContain('Visual indicator · 16 CSS px');
-    expect(html).toContain('Native input／indicator · 16 CSS px');
     expect(html).toContain('Target · full label row');
-    expect(html).toContain('Target · input＋associated label');
-    expect(html).toContain('Width · intrinsic content');
+    expect(html).toContain('Width · content／parent-owned');
     expect(componentSource).toContain(
       '.demo-checkbox-size--standard {\n  --demo-checkbox-target-size: 2.25rem;',
     );
@@ -132,7 +129,6 @@ describe('DemoCheckboxAppearance', () => {
     }
     expect(html).toContain('Native input · full label-row hit target');
     expect(html).toContain('Project-owned 16px Check／Minus');
-    expect(html).toContain('Current Windows native checkbox');
     expect(candidateSource).toContain('type="checkbox"');
     expect(candidateSource).toContain('inset: 0;');
     expect(candidateSource).toContain('opacity: 0;');
@@ -140,7 +136,7 @@ describe('DemoCheckboxAppearance', () => {
     expect(candidateSource).toContain(
       "import { Check, Minus } from '../../icons/index.js';",
     );
-    expect(checkboxSource).not.toContain('appearance: none;');
+    expect(checkboxSource).toContain('class="ui-checkbox__indicator"');
   });
 
   it('keeps an accessible square target when a compound owner hides the visible label', async () => {
@@ -222,7 +218,6 @@ describe('DemoCheckboxAppearance', () => {
     const inputById = (id) =>
       findAll(root, (node) => node.type === 'input' && node.props.id === id)[0];
     const uncheckedId = 'demo-checkbox-candidate-state-unchecked';
-    const mixedId = 'demo-checkbox-candidate-state-indeterminate';
 
     const unchecked = inputById(uncheckedId);
     expect(unchecked.props.checked).toBe(false);
@@ -230,14 +225,17 @@ describe('DemoCheckboxAppearance', () => {
     await nextTick();
     expect(inputById(uncheckedId).props.checked).toBe(true);
 
-    const mixed = inputById(mixedId);
-    expect(mixed.props.indeterminate).toBe(true);
-    expect(mixed.props['aria-checked']).toBe('mixed');
-    trigger(mixed, 'onChange', { target: { checked: true } });
-    await nextTick();
-    expect(inputById(mixedId).props.checked).toBe(true);
-    expect(inputById(mixedId).props.indeterminate).toBe(false);
-    expect(inputById(mixedId).props['aria-checked']).toBeUndefined();
+    for (const layer of ['candidate', 'current']) {
+      const mixedId = `demo-checkbox-${layer}-state-indeterminate`;
+      const mixed = inputById(mixedId);
+      expect(mixed.props.indeterminate).toBe(true);
+      expect(mixed.props['aria-checked']).toBe('mixed');
+      trigger(mixed, 'onChange', { target: { checked: true } });
+      await nextTick();
+      expect(inputById(mixedId).props.checked).toBe(true);
+      expect(inputById(mixedId).props.indeterminate).toBe(false);
+      expect(inputById(mixedId).props['aria-checked']).toBeUndefined();
+    }
     expect(
       inputById('demo-checkbox-candidate-state-required').props.required,
     ).toBe(true);

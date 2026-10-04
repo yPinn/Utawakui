@@ -13,6 +13,11 @@ const props = defineProps({
     default: 'panel',
     validator: (value) => ['panel', 'bar'].includes(value),
   },
+  distribution: {
+    type: String,
+    default: 'content',
+    validator: (value) => ['content', 'equal'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update:activeId']);
@@ -79,7 +84,7 @@ function moveFocus(item, event) {
 <template>
   <div
     class="ui-tabs"
-    :class="`ui-tabs--${variant}`"
+    :class="[`ui-tabs--${variant}`, `ui-tabs--${distribution}`]"
     role="tablist"
     :aria-label="ariaLabel"
   >
@@ -127,6 +132,24 @@ function moveFocus(item, event) {
   gap: var(--ui-space-1);
 }
 
+.ui-tabs--equal {
+  display: block;
+  width: 100%;
+}
+
+.ui-tabs--equal .ui-tabs__scroll {
+  width: 100%;
+}
+
+.ui-tabs--equal .ui-tabs__scroll :deep(.ui-tabs__list) {
+  width: 100%;
+}
+
+.ui-tabs--equal .ui-tabs__tab {
+  flex: 1 1 0;
+  justify-content: center;
+}
+
 .ui-tabs--panel {
   display: inline-block;
   padding: var(--ui-space-1);
@@ -135,8 +158,13 @@ function moveFocus(item, event) {
   background: var(--ui-color-canvas);
 }
 
+.ui-tabs--bar {
+  display: block;
+  width: 100%;
+}
+
 .ui-tabs--bar .ui-tabs__scroll :deep(.ui-tabs__list) {
-  gap: var(--ui-space-4);
+  gap: 0;
 }
 
 .ui-tabs__tab {
@@ -183,24 +211,31 @@ function moveFocus(item, event) {
 
 .ui-tabs--bar .ui-tabs__tab {
   position: relative;
-  padding-inline: 0;
-  border-radius: 0;
+  min-inline-size: var(--ui-control-height);
+  justify-content: center;
+  padding-inline: var(--ui-space-3);
+  border-radius: var(--ui-radius-sm) var(--ui-radius-sm) 0 0;
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
-.ui-tabs--bar .ui-tabs__tab:hover:not(:disabled),
 .ui-tabs--bar .ui-tabs__tab.is-active {
   background: transparent;
-  color: var(--ui-color-text);
+  color: var(--ui-color-accent);
+}
+
+.ui-tabs--bar .ui-tabs__tab.is-active:hover:not(:disabled) {
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-accent-hover);
 }
 
 .ui-tabs--bar .ui-tabs__tab.is-active::after {
   content: '';
   position: absolute;
-  right: 0;
+  right: var(--ui-space-2);
   bottom: 0;
-  left: 0;
+  left: var(--ui-space-2);
   height: var(--ui-drag-indicator-width);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-accent);
+  border-radius: var(--ui-radius-pill) var(--ui-radius-pill) 0 0;
+  background: currentColor;
 }
 </style>

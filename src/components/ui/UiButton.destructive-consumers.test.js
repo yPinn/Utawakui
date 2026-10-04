@@ -14,12 +14,6 @@ describe('UiButton destructive consumers', () => {
       '../../views/SetlistView.vue',
     ],
     [
-      'playlist deletion',
-      '../playlists/SetlistPlaylistHeader.vue',
-      '@click="emit(\'delete\')"',
-      '../../composables/usePlaylistActions.js',
-    ],
-    [
       'lyrics source deletion',
       '../lyrics/LyricsSourceManagerModal.vue',
       '@click="handleDelete(source)"',
@@ -49,6 +43,16 @@ describe('UiButton destructive consumers', () => {
       expect(source(confirmationPath)).toContain('window.confirm');
     },
   );
+
+  it('keeps collection deletion in a danger menu item with confirmation in its action owner', () => {
+    const setlist = source('../../views/SetlistView.vue');
+    expect(setlist).toMatch(
+      /key: 'delete',[\s\S]*?danger: true,[\s\S]*?action: PLAYLIST_MENU_ACTIONS\.delete/u,
+    );
+    expect(source('../../composables/usePlaylistActions.js')).toContain(
+      'window.confirm',
+    );
+  });
 
   it('does not relabel reversible clearing or transport stop as destructive', () => {
     expect(source('../queue/QueuePanel.vue')).not.toContain('intent="danger"');

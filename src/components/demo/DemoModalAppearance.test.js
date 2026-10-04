@@ -36,11 +36,10 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
       'Medium scroll baseline · 45rem／720px ceiling',
     );
     expect(layerSource).toMatch(/不綁定 production\s+情境/);
-    expect(layerSource).toContain('Viewport − 48px');
-    expect(layerSource).toContain('整個 shell 一起捲動');
-    expect(layerSource).toContain('page 未 inert');
-    expect(layerSource).toContain('Current 背景頁仍在互動樹中');
-    expect(layerSource).toMatch(/header 與 close\s+會離開\s+viewport/);
+    expect(layerSource).toContain('default／notice／wide 保留相容命名');
+    expect(layerSource).toContain('Standard 24px／Compact 16px');
+    expect(layerSource).toContain('Header／Body／Footer · Body-only scroll');
+    expect(layerSource).toContain('背景頁尚未 inert');
     expect(layerSource).toContain('繁體中文、日本語、한국어 and English');
     expect(layerSource).toContain("title: '確認內容'");
     expect(layerSource).toContain("title: '提供補充內容'");
@@ -65,7 +64,9 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
       "import DemoCandidateSelect from './DemoCandidateSelect.vue'",
     );
     expect(layerSource).toContain("import UiButton from '../ui/UiButton.vue'");
-    expect(layerSource).toContain('<UiButton variant="secondary"');
+    expect(layerSource).toContain(
+      ":variant=\"isCandidate ? 'secondary' : 'ghost'\"",
+    );
     expect(layerSource).toContain(
       "import UiCheckbox from '../ui/UiCheckbox.vue'",
     );
@@ -132,12 +133,14 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
     expect(appearanceSource).toContain('--ui-color-surface: #292f35');
     expect(appearanceSource).toContain('--ui-color-surface-raised: #30383e');
     expect(appearanceSource).toContain('--ui-field-bg: #344046');
+    expect(appearanceSource).toContain('--ui-shadow-dialog: 0 1rem 2.5rem');
+    expect(appearanceSource).toContain('--ui-modal-inline-size-small: 24rem');
+    expect(appearanceSource).toContain('--ui-modal-inline-size-medium: 32rem');
+    expect(appearanceSource).toContain('--ui-modal-inline-size-large: 48rem');
     expect(appearanceSource).toContain(
-      '--ui-shadow-overlay: 0 0.75rem 1.875rem',
+      '--ui-modal-max-block-size-small: 35rem',
     );
-    expect(appearanceSource).toContain('--ui-modal-width-default: 26.25rem');
-    expect(appearanceSource).toContain('--ui-modal-width-notice: 40rem');
-    expect(appearanceSource).toContain('--ui-modal-width-wide: 45rem');
+    expect(appearanceSource).toContain('--ui-modal-content-inset: 1.5rem');
     expect(appearanceSource).toContain("[data-ui-theme='light']");
     expect(appearanceSource).toContain('--ui-color-surface: #fffdfa');
     expect(appearanceSource).toContain('--ui-color-surface-raised: #fff');
@@ -146,7 +149,9 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
     expect(appearanceSource).toContain('--ui-color-accent: #327a7f');
     expect(appearanceSource).toContain('--ui-color-info: #4d8793');
     expect(appearanceSource).toContain('--ui-color-warning: #b78336');
-    expect(appearanceSource).not.toContain('--ui-field-bg-on-raised');
+    expect(appearanceSource).toContain(
+      '--ui-field-bg-on-raised: var(--ui-color-surface)',
+    );
   });
 
   it('defines semantic field surfaces for controls nested on a raised Candidate shell', () => {

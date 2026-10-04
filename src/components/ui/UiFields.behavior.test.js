@@ -205,9 +205,22 @@ describe('shared field accessibility and data flow', () => {
       checkboxMount.root,
       (node) => node.type === 'input' && node.props.type === 'checkbox',
     )[0];
+    const indicator = findAll(checkboxMount.root, (node) =>
+      String(node.props.class || '').includes('ui-checkbox__indicator'),
+    )[0];
 
     expect(checkbox.props['aria-checked']).toBe('mixed');
     expect(checkbox.props['aria-label']).toBe('選取搜尋結果');
+    expect(String(checkbox.props.class)).toContain('ui-checkbox__native');
+    expect(checkbox.props.indeterminate).toBe(true);
+    expect(indicator.props['aria-hidden']).toBe('true');
+    expect(
+      findAll(checkboxMount.root, (node) => node.type === 'label').some(
+        (node) =>
+          node.props.for === 'select-visible' &&
+          textContent(node).includes('選取搜尋結果'),
+      ),
+    ).toBe(true);
     checkboxMount.app.unmount();
   });
 
@@ -232,6 +245,7 @@ describe('shared field accessibility and data flow', () => {
 
     const indeterminate = mount(UiProgress, {
       label: '正在準備',
+      valueText: '準備中',
       indeterminate: true,
     });
     const busy = findAll(
@@ -239,7 +253,9 @@ describe('shared field accessibility and data flow', () => {
       (node) => node.type === 'progress',
     )[0];
     expect(busy.props.value).toBeUndefined();
-    expect(busy.props['aria-busy']).toBe(true);
+    expect(busy.props['aria-valuetext']).toBeUndefined();
+    expect(busy.props['aria-busy']).toBeUndefined();
+    expect(textContent(indeterminate.root)).not.toContain('準備中');
     indeterminate.app.unmount();
   });
 });

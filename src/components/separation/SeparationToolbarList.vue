@@ -56,14 +56,11 @@ function openItemMenu(item, event) {
   event.preventDefault?.();
   event.stopPropagation?.();
   const fromButton = event.type === 'click';
-  const rect = fromButton
-    ? event.currentTarget?.getBoundingClientRect?.()
-    : null;
   itemMenu.value = {
     item,
-    x: rect?.right ?? event.clientX ?? 0,
-    y: rect ? rect.bottom + 4 : (event.clientY ?? 0),
-    alignX: rect ? 'right' : 'left',
+    anchorEl: fromButton ? event.currentTarget : null,
+    x: fromButton ? 0 : (event.clientX ?? 0),
+    y: fromButton ? 0 : (event.clientY ?? 0),
   };
 }
 
@@ -315,10 +312,10 @@ function dragItem(item) {
 
     <UiContextMenu
       :open="Boolean(itemMenu)"
+      :anchor-el="itemMenu?.anchorEl ?? null"
       :x="itemMenu?.x ?? 0"
       :y="itemMenu?.y ?? 0"
       :width="176"
-      :align-x="itemMenu?.alignX ?? 'left'"
       aria-label="伴奏處理操作"
       :items="menuItems"
       @select="handleMenuSelect"

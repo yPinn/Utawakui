@@ -19,13 +19,9 @@ import UiSearchBox from '../ui/UiSearchBox.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  anchorEl: { type: Object, default: null },
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
-  alignX: {
-    type: String,
-    default: 'left',
-    validator: (value) => ['left', 'right'].includes(value),
-  },
   track: { type: Object, default: null },
   context: {
     type: String,
@@ -166,9 +162,9 @@ function forwardSelect(value, item) {
 <template>
   <UiContextMenu
     :open="open"
+    :anchor-el="anchorEl"
     :x="x"
     :y="y"
-    :align-x="alignX"
     :items="items"
     aria-label="曲目操作"
     empty-text="沒有可用的操作"

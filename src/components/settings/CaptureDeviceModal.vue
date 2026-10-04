@@ -208,6 +208,10 @@ function choose(deviceId) {
 
 <style scoped>
 .capture-device-modal {
+  --capture-device-modal-focus-safe-inset: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+
   display: grid;
   gap: var(--ui-space-3);
 }
@@ -244,7 +248,8 @@ function choose(deviceId) {
   display: grid;
   gap: var(--ui-space-1);
   margin: 0;
-  padding: 0;
+  padding: var(--capture-device-modal-focus-safe-inset);
+  scroll-padding: var(--capture-device-modal-focus-safe-inset);
   list-style: none;
 }
 

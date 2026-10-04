@@ -35,7 +35,38 @@ function clamp(value, minimum, maximum) {
   return Math.min(Math.max(minimum, value), Math.max(minimum, maximum));
 }
 
-export function anchoredFloatingPosition({
+function inlineAlignmentLeft({ anchor, width, alignment, direction }) {
+  if (!alignment) return anchor.left + (anchor.width - width) / 2;
+  const alignRight =
+    direction === 'rtl' ? alignment === 'start' : alignment === 'end';
+  return alignRight ? anchor.right - width : anchor.left;
+}
+
+function blockAlignmentTop({ anchor, height, alignment }) {
+  if (alignment === 'start') return anchor.top;
+  if (alignment === 'end') return anchor.bottom - height;
+  return anchor.top + (anchor.height - height) / 2;
+}
+
+function resolvedSide({
+  preferred,
+  alternate,
+  preferredAvailable,
+  alternateAvailable,
+  required,
+}) {
+  if (required <= preferredAvailable) return preferred;
+  if (required <= alternateAvailable) return alternate;
+  return alternateAvailable > preferredAvailable ? alternate : preferred;
+}
+
+function physicalInlineSide(side, direction) {
+  const logicalStartIsLeft = direction !== 'rtl';
+  if (side === 'start') return logicalStartIsLeft ? 'left' : 'right';
+  return logicalStartIsLeft ? 'right' : 'left';
+}
+
+export function anchoredFloatingLayout({
   anchor,
   surface,
   viewport,
@@ -44,63 +75,84 @@ export function anchoredFloatingPosition({
   gap,
   inset,
 }) {
-  const side = placement.split('-')[0];
+  const requestedSide = placement.split('-')[0];
   const alignment = placement.split('-')[1];
-  let left = anchor.left + (anchor.width - surface.width) / 2;
-  let top = anchor.top - surface.height - gap;
+  const viewportWidth = Math.max(0, viewport.width - inset * 2);
+  let width = Math.min(surface.width, viewportWidth);
+  let left;
+  let top;
+  let side;
 
-  if (side === 'top' || side === 'bottom') {
+  if (requestedSide === 'top' || requestedSide === 'bottom') {
     const above = anchor.top - surface.height - gap;
     const below = anchor.bottom + gap;
-    if (
-      side === 'top' &&
-      above < inset &&
-      below + surface.height <= viewport.height - inset
-    ) {
-      top = below;
-    } else if (
-      side === 'bottom' &&
-      below + surface.height > viewport.height - inset &&
-      above >= inset
-    ) {
-      top = above;
-    } else {
-      top = side === 'top' ? above : below;
-    }
-  }
-
-  if (side === 'start' || side === 'end') {
-    const logicalStartIsLeft = direction !== 'rtl';
-    const preferLeft =
-      side === 'start' ? logicalStartIsLeft : !logicalStartIsLeft;
-    const leftSide = anchor.left - surface.width - gap;
+    const aboveAvailable = Math.max(0, anchor.top - gap - inset);
+    const belowAvailable = Math.max(
+      0,
+      viewport.height - inset - anchor.bottom - gap,
+    );
+    const alternate = requestedSide === 'top' ? 'bottom' : 'top';
+    side = resolvedSide({
+      preferred: requestedSide,
+      alternate,
+      preferredAvailable:
+        requestedSide === 'top' ? aboveAvailable : belowAvailable,
+      alternateAvailable:
+        requestedSide === 'top' ? belowAvailable : aboveAvailable,
+      required: surface.height,
+    });
+    top = side === 'top' ? above : below;
+    left = inlineAlignmentLeft({ anchor, width, alignment, direction });
+  } else {
+    const preferred = physicalInlineSide(requestedSide, direction);
+    const alternate = preferred === 'left' ? 'right' : 'left';
+    const leftAvailable = Math.max(0, anchor.left - gap - inset);
+    const rightAvailable = Math.max(
+      0,
+      viewport.width - inset - anchor.right - gap,
+    );
+    side = resolvedSide({
+      preferred,
+      alternate,
+      preferredAvailable: preferred === 'left' ? leftAvailable : rightAvailable,
+      alternateAvailable: preferred === 'left' ? rightAvailable : leftAvailable,
+      required: width,
+    });
+    const available = side === 'left' ? leftAvailable : rightAvailable;
+    width = Math.min(width, available);
+    const leftSide = anchor.left - width - gap;
     const rightSide = anchor.right + gap;
-    if (
-      preferLeft &&
-      leftSide < inset &&
-      rightSide + surface.width <= viewport.width - inset
-    ) {
-      left = rightSide;
-    } else if (
-      !preferLeft &&
-      rightSide + surface.width > viewport.width - inset &&
-      leftSide >= inset
-    ) {
-      left = leftSide;
-    } else {
-      left = preferLeft ? leftSide : rightSide;
-    }
-    top = anchor.top + (anchor.height - surface.height) / 2;
-  }
-
-  if (alignment) {
-    const alignRight =
-      direction === 'rtl' ? alignment === 'start' : alignment === 'end';
-    left = alignRight ? anchor.right - surface.width : anchor.left;
+    left = side === 'left' ? leftSide : rightSide;
+    top = blockAlignmentTop({
+      anchor,
+      height: surface.height,
+      alignment,
+    });
   }
 
   return {
-    left: clamp(left, inset, viewport.width - surface.width - inset),
+    left: clamp(left, inset, viewport.width - width - inset),
     top: clamp(top, inset, viewport.height - surface.height - inset),
+    side,
+    width,
+  };
+}
+
+export function anchoredFloatingPosition(options) {
+  const { left, top } = anchoredFloatingLayout(options);
+  return { left, top };
+}
+
+export function pointFloatingPosition({
+  point,
+  surface,
+  viewport,
+  direction = 'ltr',
+  inset,
+}) {
+  const logicalStart = direction === 'rtl' ? point.x - surface.width : point.x;
+  return {
+    left: clamp(logicalStart, inset, viewport.width - surface.width - inset),
+    top: clamp(point.y, inset, viewport.height - surface.height - inset),
   };
 }

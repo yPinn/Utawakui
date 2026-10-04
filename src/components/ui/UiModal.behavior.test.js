@@ -296,10 +296,12 @@ describe('UiModal behavior', () => {
     const scrollRegion = findAll(body, (node) =>
       String(node.props?.class || '').includes('ui-modal__body'),
     )[0];
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
     const footer = findAll(body, (node) =>
       String(node.props?.class || '').includes('ui-modal__footer'),
     )[0];
 
+    expect(String(dialog.props.class)).toContain('ui-modal--with-footer');
     expect(footer).toBeDefined();
     expect(footer.parent).toBe(scrollRegion.parent);
     expect(findAll(scrollRegion, (node) => node === footer)).toHaveLength(0);

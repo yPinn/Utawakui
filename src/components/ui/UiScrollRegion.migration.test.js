@@ -83,10 +83,6 @@ const batchThreeConsumers = [
     source: readSource('../output/ObsSlotWorkbench.vue'),
   },
   {
-    name: 'output tabs',
-    source: readSource('../output/ObsOutputTabs.vue'),
-  },
-  {
     name: 'output split layout',
     source: readSource('../output/ObsOutputSplitLayout.vue'),
   },
@@ -232,8 +228,8 @@ describe('UiScrollRegion production migration', () => {
     const referenceSource = batchThreeConsumers[1].source;
     const benchmarkSource = batchThreeConsumers[2].source;
     const providerFormSource = batchThreeConsumers[5].source;
-    const splitLayoutSource = batchThreeConsumers[10].source;
-    const demoSource = batchThreeConsumers[11].source;
+    const splitLayoutSource = batchThreeConsumers[9].source;
+    const demoSource = batchThreeConsumers[10].source;
 
     expect(
       referenceSource.indexOf('class="reference-annotation__case-header"'),
@@ -258,12 +254,13 @@ describe('UiScrollRegion production migration', () => {
     );
   });
 
-  it('delegates lyrics provider strata overflow to the shared tabs primitive', () => {
+  it('delegates lyrics provider strata overflow to the shared segmented primitive', () => {
     const strataSource = readSource(
       '../lyrics-provider/LyricsProviderReviewStrata.vue',
     );
 
-    expect(strataSource).toContain('<UiTabs');
+    expect(strataSource).toContain('<UiSegmentedControl');
+    expect(strataSource).not.toContain('<UiTabs');
     expect(strataSource).not.toMatch(/overflow(?:-x|-y)?:\s*(?:auto|scroll);/u);
   });
 

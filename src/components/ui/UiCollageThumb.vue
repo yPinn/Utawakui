@@ -2,7 +2,7 @@
 // Collection cover: a set coverUrl always wins. Otherwise playlists tile up to 4
 // member tracks into a 2x2 collage, but albums never do (one release, one cover;
 // see canCollage below) and show the first track full-size. The single source of
-// truth for how a playlist/album looks: SetlistPlaylistHeader.vue (136px hero)
+// truth for how a playlist/album looks: LibraryEntityDossier.vue (136px dossier)
 // and PlaylistSidebarRow.vue (40px row) both render through it, since separate
 // implementations had drifted apart.
 import { computed } from 'vue';
@@ -40,7 +40,7 @@ const hasArtwork = computed(
     displayTracks.value.some((track) => track.thumbnailUrl),
 );
 // Scales with `size` so the same markup reads correctly at both the 136px
-// hero and the 40px sidebar row — a fixed pixel value only ever looked
+// dossier and the 40px sidebar row — a fixed pixel value only ever looked
 // right at one of the two sizes.
 const cellIconSize = computed(() => Math.max(10, Math.round(props.size / 5.5)));
 const singleIconSize = computed(() =>
@@ -119,7 +119,8 @@ const singleIconSize = computed(() =>
   position: relative;
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   overflow: hidden;
   border-radius: var(--ui-collage-thumb-radius, var(--ui-radius-sm));
   background: var(--ui-collage-thumb-bg, var(--ui-color-canvas));

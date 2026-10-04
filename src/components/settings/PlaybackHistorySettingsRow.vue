@@ -15,8 +15,7 @@ const props = defineProps({
 
 const emit = defineEmits(['clear']);
 const isMenuOpen = shallowRef(false);
-const menuX = shallowRef(0);
-const menuY = shallowRef(0);
+const menuAnchorEl = shallowRef(null);
 
 const valueLabel = computed(() => {
   if (props.isLoading) return '讀取中';
@@ -43,14 +42,13 @@ const menuItems = computed(() => [
 
 function openMenu(event) {
   event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  menuX.value = rect.right;
-  menuY.value = rect.bottom + 4;
+  menuAnchorEl.value = event.currentTarget;
   isMenuOpen.value = true;
 }
 
 function closeMenu() {
   isMenuOpen.value = false;
+  menuAnchorEl.value = null;
 }
 
 function handleMenuSelect(actionId) {
@@ -82,10 +80,8 @@ function handleMenuSelect(actionId) {
 
     <UiContextMenu
       :open="isMenuOpen"
-      :x="menuX"
-      :y="menuY"
+      :anchor-el="menuAnchorEl"
       :width="184"
-      align-x="right"
       aria-label="播放紀錄操作"
       :items="menuItems"
       @select="handleMenuSelect"

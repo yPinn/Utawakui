@@ -3,7 +3,7 @@ import {
   computed,
   onMounted,
   onUnmounted,
-  ref,
+  shallowRef,
   useSlots,
   useTemplateRef,
   watch,
@@ -11,6 +11,11 @@ import {
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
 import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
+import {
+  anchoredFloatingLayout,
+  customLengthPixels,
+  pointFloatingPosition,
+} from './floatingPosition.js';
 import UiScrollRegion from './UiScrollRegion.vue';
 
 const overlayHost = useUiOverlayHost();
@@ -20,10 +25,11 @@ const props = defineProps({
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
   width: { type: Number, default: 220 },
-  alignX: {
+  anchorEl: { type: Object, default: null },
+  dir: {
     type: String,
-    default: 'left',
-    validator: (value) => ['left', 'right'].includes(value),
+    default: 'auto',
+    validator: (value) => ['auto', 'ltr', 'rtl'].includes(value),
   },
   emptyText: { type: String, default: '' },
   ariaLabel: { type: String, default: '操作選單' },
@@ -44,9 +50,9 @@ const SUBMENU_GAP_REM = 0.25;
 
 const menuRef = useTemplateRef('menu');
 const submenuRef = useTemplateRef('submenu');
-const position = ref({ x: props.x, y: props.y });
-const activeSubmenuKey = ref(null);
-const menuScrollTop = ref(0);
+const position = shallowRef({ x: props.x, y: props.y, side: 'pointer' });
+const activeSubmenuKey = shallowRef(null);
+const menuScrollTop = shallowRef(0);
 const menuWidth = computed(() => props.width);
 const rootItemRefs = new Map();
 let focusOrigin = null;
@@ -61,32 +67,11 @@ const menuStyle = computed(() => ({
   width: `${menuWidth.value}px`,
 }));
 
-function remPixels(value) {
-  if (typeof window === 'undefined') return value * 16;
-  const rootSize = Number.parseFloat(
-    window.getComputedStyle(document.documentElement).fontSize,
-  );
-  return value * (Number.isFinite(rootSize) ? rootSize : 16);
-}
-
-function customLengthPixels(name, fallbackRem, seen = new Set()) {
-  if (typeof window === 'undefined' || seen.has(name)) {
-    return remPixels(fallbackRem);
-  }
-  seen.add(name);
-  const value = window
-    .getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
-  const reference = value.match(/^var\((--ui-[\w-]+)\)$/)?.[1];
-  if (reference) return customLengthPixels(reference, fallbackRem, seen);
-
-  const amount = Number.parseFloat(value);
-  if (!Number.isFinite(amount)) return remPixels(fallbackRem);
-  if (value.endsWith('rem')) return remPixels(amount);
-  if (value.endsWith('px')) return amount;
-  return remPixels(fallbackRem);
-}
+const rootPlacement = computed(() =>
+  props.anchorEl && position.value.side !== 'pointer'
+    ? `${position.value.side}-end`
+    : 'pointer',
+);
 
 function menuRowHeightPixels() {
   return customLengthPixels('--ui-menu-item-height', 2);
@@ -122,18 +107,33 @@ function submenuFallbackTop(scrollTop) {
   return position.value.y + offset - scrollTop;
 }
 
-const submenuStyle = computed(() => {
-  if (!activeSubmenuItem.value) return {};
+function resolvedDirection() {
+  if (props.dir !== 'auto') return props.dir;
+  if (typeof window === 'undefined') return 'ltr';
+  const target = props.anchorEl ?? menuViewport() ?? menuRoot();
+  return window.getComputedStyle(target).direction === 'rtl' ? 'rtl' : 'ltr';
+}
+
+const submenuPlacement = computed(() => {
+  if (!activeSubmenuItem.value) return null;
+  const direction = resolvedDirection();
   if (typeof window === 'undefined') {
     return {
-      left: `${position.value.x + menuWidth.value + remPixels(SUBMENU_GAP_REM)}px`,
-      top: `${position.value.y}px`,
-      width: `${activeSubmenuWidth.value}px`,
+      left:
+        direction === 'rtl'
+          ? position.value.x - activeSubmenuWidth.value
+          : position.value.x + menuWidth.value,
+      top: position.value.y,
+      side: direction === 'rtl' ? 'left' : 'right',
+      width: activeSubmenuWidth.value,
     };
   }
 
-  const margin = remPixels(VIEWPORT_MARGIN_REM);
-  const gap = remPixels(SUBMENU_GAP_REM);
+  const margin = customLengthPixels(
+    '--ui-floating-viewport-inset',
+    VIEWPORT_MARGIN_REM,
+  );
+  const gap = customLengthPixels('--ui-space-1', SUBMENU_GAP_REM);
   const scrollTop = menuScrollTop.value;
   const rootRect = measuredRect(menuRoot());
   const parentRect = measuredRect(
@@ -144,34 +144,43 @@ const submenuStyle = computed(() => {
     submenuRect?.height ?? estimateSubmenuHeight(activeSubmenuItem.value);
   const rootLeft = rootRect?.left ?? position.value.x;
   const rootRight = rootRect?.right ?? position.value.x + menuWidth.value;
-  const desiredWidth = activeSubmenuWidth.value;
-  const rightAvailable = Math.max(
-    0,
-    window.innerWidth - margin - rootRight - gap,
-  );
-  const leftAvailable = Math.max(0, rootLeft - margin - gap);
-  let width = desiredWidth;
-  let x = rootRight + gap;
+  const anchorTop = parentRect?.top ?? submenuFallbackTop(scrollTop);
+  const anchorHeight = parentRect?.height ?? menuRowHeightPixels();
 
-  if (desiredWidth <= rightAvailable) {
-    x = rootRight + gap;
-  } else if (desiredWidth <= leftAvailable) {
-    x = rootLeft - gap - desiredWidth;
-  } else if (leftAvailable >= rightAvailable) {
-    width = Math.min(desiredWidth, leftAvailable);
-    x = rootLeft - gap - width;
-  } else {
-    width = Math.min(desiredWidth, rightAvailable);
-  }
-  const maxY = window.innerHeight - submenuHeight - margin;
-  const anchorY = parentRect?.top ?? submenuFallbackTop(scrollTop);
+  return anchoredFloatingLayout({
+    anchor: {
+      left: rootLeft,
+      right: rootRight,
+      top: anchorTop,
+      bottom: anchorTop + anchorHeight,
+      width: rootRight - rootLeft,
+      height: anchorHeight,
+    },
+    surface: {
+      width: activeSubmenuWidth.value,
+      height: submenuHeight,
+    },
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+    placement: 'end-start',
+    direction,
+    gap,
+    inset: margin,
+  });
+});
 
+const submenuStyle = computed(() => {
+  const placement = submenuPlacement.value;
+  if (!placement) return {};
   return {
-    left: `${x}px`,
-    top: `${Math.max(margin, Math.min(anchorY, maxY))}px`,
-    width: `${width}px`,
+    left: `${placement.left}px`,
+    top: `${placement.top}px`,
+    width: `${placement.width}px`,
   };
 });
+
+const submenuOpensLeft = computed(
+  () => submenuPlacement.value?.side === 'left',
+);
 
 function itemKey(item) {
   return item.key ?? item.label ?? item.value;
@@ -186,8 +195,9 @@ function setRootItemRef(item, element) {
 function estimateMenuHeight() {
   const itemCount = Math.max(1, props.items.length);
   return Math.min(
-    remPixels(MAX_MENU_HEIGHT_REM),
-    remPixels(MENU_PADDING_BLOCK_REM) + itemCount * menuRowHeightPixels(),
+    customLengthPixels('--ui-menu-max-block-size', MAX_MENU_HEIGHT_REM),
+    customLengthPixels('--ui-menu-padding-block', MENU_PADDING_BLOCK_REM) +
+      itemCount * menuRowHeightPixels(),
   );
 }
 
@@ -196,41 +206,58 @@ function estimateSubmenuHeight(item) {
     Number(Boolean(slots['submenu-leading'])) +
     Number(Boolean(slots['submenu-trailing']));
   return Math.min(
-    remPixels(MAX_MENU_HEIGHT_REM),
-    remPixels(MENU_PADDING_BLOCK_REM) +
+    customLengthPixels('--ui-menu-max-block-size', MAX_MENU_HEIGHT_REM),
+    customLengthPixels('--ui-menu-padding-block', MENU_PADDING_BLOCK_REM) +
       Math.max(1, (item.children?.length ?? 0) + slotRows) *
         menuRowHeightPixels(),
   );
 }
 
-function preferredX(width) {
-  return props.alignX === 'right' ? props.x - width : props.x;
-}
-
 function clampPosition() {
   if (typeof window === 'undefined') {
-    position.value = { x: preferredX(menuWidth.value), y: props.y };
+    position.value = { x: props.x, y: props.y, side: 'pointer' };
     return;
   }
 
   const rect = menuRoot()?.getBoundingClientRect();
   const width = rect?.width ?? menuWidth.value;
   const menuHeight = rect?.height ?? estimateMenuHeight();
-  const margin = remPixels(VIEWPORT_MARGIN_REM);
-  const maxX = window.innerWidth - width - margin;
-  const maxY = window.innerHeight - menuHeight - margin;
-  const x = preferredX(width);
+  const margin = customLengthPixels(
+    '--ui-floating-viewport-inset',
+    VIEWPORT_MARGIN_REM,
+  );
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  const surface = { width, height: menuHeight };
+  const anchor = props.anchorEl?.getBoundingClientRect?.();
 
-  position.value = {
-    x: Math.max(margin, Math.min(x, maxX)),
-    y: Math.max(margin, Math.min(props.y, maxY)),
-  };
+  if (anchor) {
+    const layout = anchoredFloatingLayout({
+      anchor,
+      surface,
+      viewport,
+      placement: 'bottom-end',
+      direction: resolvedDirection(),
+      gap: customLengthPixels('--ui-space-1', SUBMENU_GAP_REM),
+      inset: margin,
+    });
+    position.value = { x: layout.left, y: layout.top, side: layout.side };
+    return;
+  }
+
+  const pointer = pointFloatingPosition({
+    point: { x: props.x, y: props.y },
+    surface,
+    viewport,
+    direction: resolvedDirection(),
+    inset: margin,
+  });
+  position.value = { x: pointer.left, y: pointer.top, side: 'pointer' };
 }
 
 function scheduleClamp() {
   activeSubmenuKey.value = null;
   menuScrollTop.value = 0;
-  position.value = { x: preferredX(menuWidth.value), y: props.y };
+  position.value = { x: props.x, y: props.y, side: 'pointer' };
   if (!props.open) return;
 
   if (typeof window === 'undefined') {
@@ -238,6 +265,11 @@ function scheduleClamp() {
     return;
   }
 
+  window.requestAnimationFrame(clampPosition);
+}
+
+function onWindowResize() {
+  if (!props.open || typeof window === 'undefined') return;
   window.requestAnimationFrame(clampPosition);
 }
 
@@ -343,7 +375,8 @@ watch(
     () => props.x,
     () => props.y,
     () => props.width,
-    () => props.alignX,
+    () => props.anchorEl,
+    () => props.dir,
     () => props.items.length,
   ],
   scheduleClamp,
@@ -355,6 +388,7 @@ onMounted(() => {
   window.addEventListener('click', onWindowClick);
   window.addEventListener('keydown', onWindowKeydown);
   window.addEventListener('scroll', onWindowScroll, true);
+  window.addEventListener('resize', onWindowResize);
 });
 
 onUnmounted(() => {
@@ -363,6 +397,7 @@ onUnmounted(() => {
   window.removeEventListener('click', onWindowClick);
   window.removeEventListener('keydown', onWindowKeydown);
   window.removeEventListener('scroll', onWindowScroll, true);
+  window.removeEventListener('resize', onWindowResize);
 });
 </script>
 
@@ -375,6 +410,8 @@ onUnmounted(() => {
       axis="vertical"
       viewport-class="ui-context-menu__viewport"
       :style="menuStyle"
+      :dir="props.dir === 'auto' ? undefined : props.dir"
+      :data-placement="rootPlacement"
       role="menu"
       :aria-label="ariaLabel"
       @click.stop
@@ -429,6 +466,10 @@ onUnmounted(() => {
             <ChevronRight
               v-if="item.children?.length"
               class="ui-context-menu__chevron"
+              :class="{
+                'ui-context-menu__chevron--reverse':
+                  itemKey(item) === activeSubmenuKey && submenuOpensLeft,
+              }"
               :size="ICON_SIZE"
             />
           </span>
@@ -442,6 +483,8 @@ onUnmounted(() => {
         axis="vertical"
         viewport-class="ui-context-menu__viewport"
         :style="submenuStyle"
+        :dir="props.dir === 'auto' ? undefined : props.dir"
+        :data-side="submenuPlacement?.side"
         role="menu"
         :aria-label="`${activeSubmenuItem.label}目的地`"
         @click.stop
@@ -493,8 +536,14 @@ onUnmounted(() => {
 .ui-context-menu {
   position: fixed;
   z-index: var(--ui-z-popover);
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: calc(100vw - (2 * var(--ui-floating-viewport-inset)));
   /* Keep 20rem aligned with MAX_MENU_HEIGHT_REM in the script block. */
-  max-height: min(20rem, calc(100vh - 1rem));
+  max-block-size: min(
+    20rem,
+    calc(100vh - (2 * var(--ui-floating-viewport-inset)))
+  );
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
@@ -584,6 +633,10 @@ onUnmounted(() => {
 .ui-context-menu__icon,
 .ui-context-menu__chevron {
   display: block;
+}
+
+.ui-context-menu__chevron--reverse {
+  transform: scaleX(-1);
 }
 
 .ui-context-menu__text {

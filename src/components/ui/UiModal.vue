@@ -150,7 +150,10 @@ onUnmounted(() => {
         class="ui-modal"
         :class="[
           `ui-modal--${size}`,
-          { 'ui-modal--fixed-height': fixedHeight },
+          {
+            'ui-modal--fixed-height': fixedHeight,
+            'ui-modal--with-footer': Boolean($slots.footer),
+          },
         ]"
         role="dialog"
         tabindex="-1"
@@ -184,67 +187,116 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--ui-space-5);
+  box-sizing: border-box;
+  padding: var(--ui-modal-viewport-inset);
   background: var(--ui-color-overlay-scrim);
 }
 
 .ui-modal {
-  width: min(var(--ui-modal-inline-size-small), 100%);
-  max-height: calc(100vh - var(--ui-space-8));
+  --ui-modal-inline-size: var(--ui-modal-inline-size-small);
+  --ui-modal-max-block-size: var(--ui-modal-max-block-size-small);
+  --ui-modal-focus-safe-inset: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-field-bg: var(--ui-field-bg-on-raised);
+  --ui-field-bg-hover: var(--ui-field-bg-hover-on-raised);
+  --ui-field-bg-readonly: var(--ui-field-bg-readonly-on-raised);
+
+  box-sizing: border-box;
+  container-type: inline-size;
+  inline-size: min(
+    var(--ui-modal-inline-size),
+    calc(100dvw - (var(--ui-modal-viewport-inset) * 2))
+  );
+  min-inline-size: 0;
+  max-inline-size: calc(100dvw - (var(--ui-modal-viewport-inset) * 2));
+  max-block-size: min(
+    var(--ui-modal-max-block-size),
+    calc(100dvh - (var(--ui-modal-viewport-inset) * 2))
+  );
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
-  background: var(--ui-color-surface);
+  background: var(--ui-color-surface-raised);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
-  box-shadow: var(--ui-shadow-overlay);
+  box-shadow: var(--ui-shadow-dialog);
 }
 
 .ui-modal__body {
-  min-height: 0;
+  min-inline-size: 0;
+  min-block-size: 0;
 }
 
 .ui-modal__body :deep(.ui-modal__body-viewport) {
-  padding: 0 var(--ui-space-5) var(--ui-space-5);
+  padding: var(--ui-modal-focus-safe-inset) var(--ui-modal-content-inset)
+    var(--ui-modal-content-inset);
+  scroll-padding-block: var(--ui-modal-focus-safe-inset);
+  overscroll-behavior: contain;
+}
+
+.ui-modal--with-footer .ui-modal__body :deep(.ui-modal__body-viewport) {
+  padding-block-end: var(--ui-modal-section-gap);
 }
 
 .ui-modal__footer {
+  min-inline-size: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--ui-space-2);
-  padding: var(--ui-space-3) var(--ui-space-5) var(--ui-space-4);
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
-  background: var(--ui-color-surface);
+  padding: var(--ui-modal-footer-inset-block) var(--ui-modal-content-inset);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .ui-modal--notice {
-  width: min(var(--ui-modal-inline-size-medium), 100%);
+  --ui-modal-inline-size: var(--ui-modal-inline-size-medium);
+  --ui-modal-max-block-size: var(--ui-modal-max-block-size-medium);
 }
 
 .ui-modal--wide {
-  width: min(var(--ui-modal-inline-size-large), 100%);
+  --ui-modal-inline-size: var(--ui-modal-inline-size-large);
+  --ui-modal-max-block-size: var(--ui-modal-max-block-size-large);
 }
 
 .ui-modal--fixed-height {
-  height: min(44rem, calc(100dvh - var(--ui-space-8)));
+  block-size: min(
+    var(--ui-modal-max-block-size),
+    calc(100dvh - (var(--ui-modal-viewport-inset) * 2))
+  );
 }
 
 .ui-modal__header {
+  min-inline-size: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--ui-space-3);
-  margin-bottom: var(--ui-space-4);
-  padding: var(--ui-space-5) var(--ui-space-5) 0;
+  gap: var(--ui-modal-section-gap);
+  padding: var(--ui-modal-content-inset) var(--ui-modal-content-inset)
+    max(
+      0rem,
+      calc(var(--ui-modal-section-gap) - var(--ui-modal-focus-safe-inset))
+    );
 }
 
 /* Headline tier — DESIGN.md names modal titles explicitly. */
 .ui-modal__title {
+  min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-xl);
   font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 22.5rem) {
+  .ui-modal__footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    justify-content: stretch;
+  }
 }
 </style>

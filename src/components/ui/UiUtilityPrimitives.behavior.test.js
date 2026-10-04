@@ -15,6 +15,11 @@ import {
   trigger,
 } from './uiTestHost.js';
 
+const uiPageHeaderSource = readFileSync(
+  new URL('./UiPageHeader.vue', import.meta.url),
+  'utf8',
+);
+
 for (const [component, filename] of [
   [UiDisclosure, './UiDisclosure.vue'],
   [UiRadioGroup, './UiRadioGroup.vue'],
@@ -35,6 +40,15 @@ describe('UiKbd', () => {
 });
 
 describe('UiPageHeader', () => {
+  it('leaves external spacing to the caller layout', () => {
+    const rootRule = uiPageHeaderSource.match(
+      /\.ui-page-header\s*\{([\s\S]*?)\n\}/u,
+    )?.[1];
+
+    expect(rootRule).toBeTruthy();
+    expect(rootRule).not.toMatch(/margin(?:-block|-bottom)?\s*:/u);
+  });
+
   it('binds titleId to the heading and omits the description paragraph when unslotted', async () => {
     const html = await renderToString(
       createSSRApp({ render: () => h(UiPageHeader, { title: '歌曲資料' }) }),

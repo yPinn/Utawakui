@@ -21,6 +21,10 @@ const props = defineProps({
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
   actionLabel: { type: String, default: undefined },
+  // Opt-in only: some interactive rows are commands rather than selectable
+  // items, so pressed semantics must never be inferred from `active` alone.
+  selectionAction: { type: Boolean, default: false },
+  actionDescription: { type: String, default: undefined },
   // Lets a caller show its own duration inside #trail (e.g. after other
   // trailing badges) instead of the default duration-then-trail order.
   hideDuration: { type: Boolean, default: false },
@@ -103,6 +107,8 @@ function handleActionKeydown(event) {
       type="button"
       class="ui-track__action"
       :aria-label="resolvedActionLabel"
+      :aria-description="selectionAction ? actionDescription : undefined"
+      :aria-pressed="selectionAction ? active : undefined"
       @click="emit('rowClick', $event)"
       @dblclick="emit('rowDblclick', $event)"
       @keydown="handleActionKeydown"

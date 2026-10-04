@@ -65,6 +65,18 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(extrasSource).toContain('tooltip-suffix=" (M)"');
   });
 
+  it('reuses the shared primary playback control instead of restating its recipe', () => {
+    expect(componentSource).toContain(
+      "import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue'",
+    );
+    expect(componentSource).toContain(
+      '<PlaybackPrimaryButton\n          :playing="state.isPlaying"',
+    );
+    expect(componentSource).not.toMatch(
+      /<UiIconButton[\s\S]*?:icon="state\.isPlaying \? Pause : Play"/u,
+    );
+  });
+
   it('keeps the four leading actions on one equivalent visual primitive', () => {
     for (const iconName of [
       'Cable',

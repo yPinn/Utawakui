@@ -6,8 +6,8 @@ import DemoProgressPrimitive from './DemoProgressPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 UiProgress · 進度指示器',
-    note: '用標籤、可選數值與進度軌說明工作進度；結果、後續操作與畫面更新由所在功能處理。',
+    title: '核准 Candidate UiProgress',
+    note: '保留核准標本，供正式元件回歸比對。',
     component: DemoCandidateProgress,
     densities: [
       ['standard', 'Standard · 8 CSS px'],
@@ -16,8 +16,8 @@ const LAYERS = [
   },
   {
     key: 'current',
-    title: '現行 UiProgress',
-    note: '以現行樣式呈現 8px 圓角進度軌、單行截斷標籤與不確定進度的相容行為，不套用候選版外觀。',
+    title: '正式 UiProgress · 已採用',
+    note: '8px track、2px radius、自然換行與 reduced-motion-safe 不確定進度已統一。',
     component: UiProgress,
     densities: [['active', 'Current · 8 CSS px']],
   },
@@ -114,6 +114,7 @@ const LAYERS = [
   --ui-space-5: 1.5rem;
   --ui-space-6: 2rem;
   --ui-border-width: 1px;
+  --ui-radius-xs: 0.125rem;
   --ui-radius-sm: 0.25rem;
   --ui-radius-md: 0.375rem;
   --ui-radius-pill: 999rem;
@@ -134,6 +135,8 @@ const LAYERS = [
   --ui-color-text-muted: #aeb8b6;
   --ui-color-border: #3c4749;
   --ui-color-accent: #55a2a7;
+  --ui-color-info: #7fb8bd;
+  --ui-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
 :global(:root[data-ui-theme='light'] .demo-progress-layer--current) {
@@ -145,6 +148,7 @@ const LAYERS = [
   --ui-color-text-muted: #69747a;
   --ui-color-border: #d8ded9;
   --ui-color-accent: #327a7f;
+  --ui-color-info: #4d8793;
 }
 
 @container (max-width: 48rem) {

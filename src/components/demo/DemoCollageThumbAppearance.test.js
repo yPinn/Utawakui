@@ -52,9 +52,7 @@ const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
 const dossierSource = readSource('../playlists/StudioLibraryDossierHeader.vue');
 const inspectorSource = readSource('../playlists/TrackContextPanel.vue');
-const setlistHeaderSource = readSource(
-  '../playlists/SetlistPlaylistHeader.vue',
-);
+const setlistHeaderSource = readSource('../playlists/LibraryEntityDossier.vue');
 const sidebarRowSource = readSource('../playlists/PlaylistSidebarRow.vue');
 const detailsModalSource = readSource('../playlists/PlaylistDetailsModal.vue');
 const uiConstantsSource = readSource('../../constants/ui.js');
@@ -383,7 +381,7 @@ describe('DemoCollageThumbAppearance', () => {
     for (const density of ['standard', 'compact']) {
       expect(html).toContain(`data-collage-density="${density}"`);
     }
-    for (const recipe of ['40', '88', '120', '136', '280']) {
+    for (const recipe of ['40', '88', '120', '136', '160', '280']) {
       expect(html).toContain(`data-collage-size="${recipe}"`);
     }
     expect(candidateSource).not.toMatch(/minWidth|maxWidth|density/u);
@@ -392,7 +390,7 @@ describe('DemoCollageThumbAppearance', () => {
     );
     expect(sidebarRowSource).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
     expect(dossierSource).toContain(':size="88"');
-    expect(detailsModalSource).toContain(':size="120"');
+    expect(detailsModalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
     expect(setlistHeaderSource).toContain(':size="136"');
     // F8 retains the reviewed 280px comparison specimen. The playback-context
     // panel uses the established details-modal cover size; shell resizing no
@@ -432,7 +430,7 @@ describe('DemoCollageThumbAppearance', () => {
     );
   });
 
-  it('keeps every Candidate 2x2 member slot square', async () => {
+  it('keeps every Candidate and Current 2x2 member slot square', async () => {
     const html = await renderToString(createSSRApp(DemoCollageThumbAppearance));
     const text = visibleText(html);
 
@@ -441,6 +439,12 @@ describe('DemoCollageThumbAppearance', () => {
       'grid-template-columns: repeat(2, minmax(0, 1fr));',
     );
     expect(candidateSource).toContain(
+      'grid-template-rows: repeat(2, minmax(0, 1fr));',
+    );
+    expect(currentSource).toContain(
+      'grid-template-columns: repeat(2, minmax(0, 1fr));',
+    );
+    expect(currentSource).toContain(
       'grid-template-rows: repeat(2, minmax(0, 1fr));',
     );
     expect(primitiveSource).toContain('class="demo-collage-thumb-count-meta"');
@@ -545,7 +549,7 @@ describe('DemoCollageThumbAppearance', () => {
       '`UiCollageThumb` 表示一個集合的封面位置與 optional 2×2 collage',
     );
     expect(reviewContract).toContain(
-      'Current consumer 尺寸為 40／88／120／136／280px',
+      'Current production consumer 尺寸為 40／88／120／136／160px',
     );
     expect(reviewContract).toContain(
       '共用同一個 track-identity fallback artwork resolver',

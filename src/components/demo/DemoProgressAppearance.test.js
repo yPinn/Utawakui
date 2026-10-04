@@ -228,7 +228,7 @@ describe('DemoProgressAppearance', () => {
     expect(primitiveSource).toContain('aria-live="polite"');
     expect(html).toContain('所在區域決定 aria-busy');
     expect(html).toContain('只在重要階段更新狀態文字');
-    expect(currentSource).toContain(':aria-busy="indeterminate || undefined"');
+    expect(currentSource).not.toContain('aria-busy');
   });
 
   it('keeps visible examples concise and free of background implementation terms', async () => {
@@ -250,6 +250,7 @@ describe('DemoProgressAppearance', () => {
     );
     expect(appearanceSource).toContain('.demo-progress-layer--current');
     expect(appearanceSource).toContain('--ui-progress-track-size: 0.5rem;');
+    expect(appearanceSource).toContain('--ui-radius-xs: 0.125rem;');
     expect(appearanceSource).toContain('--ui-radius-pill: 999rem;');
     expect(appearanceSource).toContain('--ui-color-surface-hover: #344046;');
     expect(appearanceSource).toContain('--ui-color-accent: #55a2a7;');
@@ -257,6 +258,7 @@ describe('DemoProgressAppearance', () => {
       ":global(:root[data-ui-theme='light'] .demo-progress-layer--current)",
     );
     expect(currentSource).not.toContain('demo-candidate-progress');
+    expect(currentSource).toContain('border-radius: var(--ui-radius-xs);');
     expect(candidateSource).not.toContain('#344046');
     expect(candidateSource).not.toContain('#55a2a7');
   });
