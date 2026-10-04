@@ -364,6 +364,24 @@ describe('Music Analysis workbench', () => {
     expect(harness.workbench.canAnalyze.value).toBe(true);
   });
 
+  it('refreshes the selected result and routes cancellation to an active batch', async () => {
+    const harness = createHarness();
+    await harness.workbench.initialize();
+
+    await harness.workbench.refreshSelectedTrack();
+    expect(harness.signalOwner.loadForTrack).toHaveBeenLastCalledWith(
+      'track-1',
+    );
+
+    harness.workbench.batch.toggleTrack('track-1');
+    await harness.workbench.startBatchAnalysis();
+    expect(harness.workbench.phaseLabel.value).toBe('批次分析');
+
+    await expect(harness.workbench.cancelAnalysis()).resolves.toBe(true);
+    expect(harness.bridge.cancelMusicStructureBatch).toHaveBeenCalledOnce();
+    expect(harness.workbench.state.phase).toBe('cancelling');
+  });
+
   it('clears a transient polling error after status reconciliation recovers', async () => {
     const harness = createHarness();
     harness.bridge.getTrackMusicStructureAnalysisStatus

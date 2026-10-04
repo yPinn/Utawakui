@@ -86,10 +86,13 @@ describe('Music Analysis capability owner', () => {
     expect(harness.unsubscribe).toHaveBeenCalledOnce();
   });
 
-  it('maps prepare and remove failures without leaking private errors', async () => {
+  it('maps maintenance failures without leaking private errors', async () => {
     const harness = createHarness();
     harness.bridge.prepareMusicStructureCapability.mockRejectedValue(
       new Error('C:\\private\\runtime'),
+    );
+    harness.bridge.repairMusicStructureCapability.mockRejectedValue(
+      new Error('private repair command'),
     );
     harness.bridge.removeMusicStructureCapability.mockRejectedValue(
       new Error('EPERM'),
@@ -99,10 +102,36 @@ describe('Music Analysis capability owner', () => {
     expect(harness.state.capabilityError).toBe(
       '分析功能安裝未完成，請檢查網路連線後再試一次。',
     );
+    await expect(harness.owner.repair()).resolves.toBeNull();
+    expect(harness.state.capabilityError).toBe(
+      '分析功能修復未完成，請再試一次。',
+    );
     await expect(harness.owner.remove()).resolves.toBeNull();
     expect(harness.state.capabilityError).toBe(
       '分析功能移除未完成，請再試一次。',
     );
+  });
+
+  it('projects successful install and removal results without stale progress', async () => {
+    const harness = createHarness();
+    const installed = { status: 'ready', installed: true };
+    const removed = { status: 'missing', installed: false };
+    harness.bridge.prepareMusicStructureCapability.mockResolvedValue(installed);
+    harness.bridge.removeMusicStructureCapability.mockResolvedValue(removed);
+
+    await expect(harness.owner.prepare()).resolves.toBe(installed);
+    expect(harness.capability.value).toBe(installed);
+    expect(harness.state.capabilityProgress).toEqual({
+      stage: 'ready',
+      percent: 100,
+    });
+    expect(harness.owner.ready.value).toBe(true);
+
+    await expect(harness.owner.remove()).resolves.toBe(removed);
+    expect(harness.capability.value).toBe(removed);
+    expect(harness.state.capabilityProgress).toBeNull();
+    expect(harness.owner.ready.value).toBe(false);
+    expect(harness.owner.busy.value).toBe(false);
   });
 
   it('blocks maintenance while a batch is active or a method is unavailable', async () => {
