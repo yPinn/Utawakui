@@ -118,17 +118,25 @@ Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live�
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
-layout family 是 registered v2 surface。Setlist、Performance Session workspace、Import、Lyrics、
-Output 與各自 local overlay host 使用完整 v2 boundary。Import 維持 document mode 與 Folder page 的唯一 page scroll，
-provider preview 只有 track list 使用 bounded internal scroll。Setlist 開啟場次準備時，`AppFolderPage` 由 document mode 切為
-workspace mode，再進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
+layout family 是 registered v2 surface。`SetlistPage.vue`、`OutputPage.vue` 與 `ImportPage.vue` 是 route-level page composition owners。
+`SetlistPage.vue` 以完整 Setlist v2 boundary 包住 `AppFolderPage`，把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同演出者專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`ImportPage.vue` 同樣以完整 Import v2 boundary 包住 page composition，將「匯入」identity 放在 fixed header，
+將本機匯入、provider 搜尋、候選、進度與錯誤狀態留在唯一 document scroll body；provider preview 只有 track list 使用 bounded internal scroll。
+`OutputPage.vue` 擁有 Output／local overlay host 的完整 v2 boundary；`ObsOutputWorkspace`
+把工作台／模板庫／輸出設定放在 `AppFolderPage` fixed header，不再增加重複的可見頁名。
+Lyrics 與 local overlay host 同樣使用完整 v2 boundary。
+Setlist 開啟場次準備時，`SetlistPage` 將 `AppFolderPage` 由 document mode 切為 workspace mode，再進入
+`performance-session-workspace` boundary；`PerformanceSessionWorkspace`
 與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
 `PerformanceSessionPanel` 維持 Right Dock 的 v2 projection recipe，不嵌入 workspace editor 或形成
 重複 feature boundary。Lyrics 固定使用 workspace mode，Folder page 不建立 document scroll；
 `LyricsDocumentPanel`、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。Output
 同樣使用 workspace mode；Workbench stage／inspector、Gallery grid／detail 與 runtime Settings
-各自擁有 bounded scroll，控制台 feature stylesheet 與 public `overlay/` 的 `--ovl-*` runtime 互不
-匯入。Settings 由
+各自擁有 bounded scroll。Workbench 的 Widget 尺寸由 preview option caption 單一表達，Lyrics
+固定尺寸留在 preview footer；inspector 只保留模板 identity、短暫 save feedback、runtime status、
+error 與實際設定，模板描述留在 Gallery。Lyrics preview 以可用寬、高較小者縮放完整 16:9 畫布；
+`app-folder-layout` 小於 40rem 時，Workbench 以 2:1、Gallery 以 1:1 切成上下兩個 bounded pane，
+不新增 page-level scroll。控制台 feature stylesheet 與 public `overlay/` 的
+`--ovl-*` runtime 互不匯入。Settings 由
 Titlebar direct action 進入 shell-level `AppUtilityPage`，不屬於 Folder destination。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
@@ -316,6 +324,7 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | 資料                                  | 權威 owner                        | 投影／持久化                                                        |
 | ------------------------------------- | --------------------------------- | ------------------------------------------------------------------- |
 | Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                 |
+| Track added time                      | Main library/import boundary      | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影 |
 | Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                        |
 | Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費                   |
 | Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                |
