@@ -69,11 +69,7 @@ function selectMenuAction(value) {
         :icon="Shuffle"
         :active="shuffleActive"
         :disabled="!canShuffle"
-        :label="
-          shuffleActive
-            ? `關閉${entityLabel}隨機播放`
-            : `隨機播放${entityLabel}`
-        "
+        :label="`隨機播放${entityLabel}`"
         :aria-pressed="shuffleActive"
         @click="emit('toggleShuffle')"
       />

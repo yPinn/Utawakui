@@ -135,7 +135,10 @@ const closeDecision = useWindowCloseDecision();
 const trayNavigation = useTrayNavigation();
 const playbackHistory = usePlaybackHistory();
 const playbackResume = usePlaybackResume();
-Promise.all([playbackResume.initialize(), playbackHistory.initialize()]);
+void Promise.allSettled([
+  playbackResume.initialize(),
+  playbackHistory.initialize(),
+]);
 onUnmounted(() => {
   closeDecision.dispose();
   trayNavigation.dispose();
