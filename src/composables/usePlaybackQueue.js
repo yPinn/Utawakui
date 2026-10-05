@@ -273,8 +273,9 @@ function restoreResumeState(snapshot, currentTrackId, libraryTracks) {
   const orderIds = Array.isArray(snapshot?.orderIds)
     ? snapshot.orderIds.filter((trackId) => sourceIds.has(trackId))
     : [];
+  const orderedIds = new Set(orderIds);
   for (const track of sourceTracks) {
-    if (!orderIds.includes(track.id)) orderIds.push(track.id);
+    if (!orderedIds.has(track.id)) orderIds.push(track.id);
   }
 
   state.tracks = sourceTracks;

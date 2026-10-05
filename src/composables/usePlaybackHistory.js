@@ -71,10 +71,17 @@ function initialize() {
   if (initializationPromise) return initializationPromise;
   initializationPromise = (async () => {
     subscribeToPlayback();
+    const bridge =
+      typeof window !== 'undefined' && window.Utawakui ? window.Utawakui : null;
+    // History entries do not depend on the library scan; overlap them.
+    const historyRequest = bridge
+      ? Promise.resolve().then(() => bridge.getRecentPlaybackHistory())
+      : null;
+    historyRequest?.catch(() => {});
     await initializeLibrary();
-    if (typeof window !== 'undefined' && window.Utawakui) {
+    if (bridge) {
       try {
-        state.entries = await window.Utawakui.getRecentPlaybackHistory();
+        state.entries = await historyRequest;
         state.error = null;
       } catch {
         state.error = '最近播放紀錄暫時無法讀取。';

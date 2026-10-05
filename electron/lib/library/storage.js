@@ -201,9 +201,12 @@ function cleanupSeparationStorage(
 
   const removed = [];
   let freedBytes = 0;
+  // Usage and protection inputs may be thunks: both read files, and most
+  // policy checks return above without needing them.
+  const resolve = (value) => (typeof value === 'function' ? value() : value);
   const candidates = listSeparationCandidates(libraryDir, {
-    lastPlayedAtByTrackId,
-    protectedTrackIds,
+    lastPlayedAtByTrackId: resolve(lastPlayedAtByTrackId),
+    protectedTrackIds: resolve(protectedTrackIds),
   });
   for (const candidate of candidates) {
     if (freedBytes >= bytesToFree) break;
@@ -250,16 +253,15 @@ function createLibraryStorageService({
   }
 
   function cleanup(policy, options = {}) {
-    const protectedTrackIds = [
-      ...new Set([
-        ...getProtectedTrackIds(),
-        ...(options.protectedTrackIds || []),
-      ]),
-    ];
     const result = cleanupSeparationStorage(resolveLibraryDir(), {
       limitBytes: policy.separationLimitBytes,
-      lastPlayedAtByTrackId: getLastPlayedAtByTrackId(),
-      protectedTrackIds,
+      lastPlayedAtByTrackId: getLastPlayedAtByTrackId,
+      protectedTrackIds: () => [
+        ...new Set([
+          ...getProtectedTrackIds(),
+          ...(options.protectedTrackIds || []),
+        ]),
+      ],
       statfsSync,
     });
     if (result.removed.length > 0) notifyLibraryUpdated();

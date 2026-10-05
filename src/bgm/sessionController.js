@@ -105,10 +105,16 @@ export function createBgmSessionController({
         syncDeckSource,
         { immediate: true },
       ),
+      // Only these fields drive the projector; OBS pushes a new `observed`
+      // object on every status tick (timecodes included).
       watch(
-        () => obs.state.observed,
-        (observed) => queueSessionModeProjection(observed),
-        { deep: true, immediate: true },
+        () => [
+          obs.state.observed?.lifecycle,
+          obs.state.observed?.streaming?.active,
+          obs.state.observed?.recording?.active,
+        ],
+        () => queueSessionModeProjection(obs.state.observed),
+        { immediate: true },
       ),
       watch(
         () => deck.state.playbackPhase,

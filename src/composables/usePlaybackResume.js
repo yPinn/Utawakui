@@ -61,10 +61,17 @@ function startPersistenceWatch() {
 function initialize() {
   if (initializationPromise) return initializationPromise;
   initializationPromise = (async () => {
+    const bridge =
+      typeof window !== 'undefined' && window.Utawakui ? window.Utawakui : null;
+    // The snapshot read does not depend on the library scan; overlap them.
+    const snapshotRequest = bridge
+      ? Promise.resolve().then(() => bridge.getPlaybackResumeSnapshot())
+      : null;
+    snapshotRequest?.catch(() => {});
     await initializeLibrary();
-    if (typeof window !== 'undefined' && window.Utawakui) {
+    if (bridge) {
       try {
-        const snapshot = await window.Utawakui.getPlaybackResumeSnapshot();
+        const snapshot = await snapshotRequest;
         if (snapshot?.currentTrackId) {
           const restoredTrack = restoreResumeState(
             snapshot.queue,
@@ -80,7 +87,7 @@ function initialize() {
               playbackMode: snapshot.playbackMode,
             });
           } else {
-            await window.Utawakui.savePlaybackResumeSnapshot(null);
+            await bridge.savePlaybackResumeSnapshot(null);
           }
         }
         state.error = null;

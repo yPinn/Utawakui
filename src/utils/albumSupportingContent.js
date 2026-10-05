@@ -30,20 +30,20 @@ export function deriveAlbumSupportingContent({
   if (!artistKey) return null;
 
   const matchingAlbums = (Array.isArray(albumEntries) ? albumEntries : [])
-    .filter(({ collection, tracks }) => {
-      if (collection?.kind !== 'album') return false;
-      return normalizedArtist(deriveAlbumSummary(tracks).artist) === artistKey;
-    })
-    .map(({ collection, tracks }) => {
-      const summary = deriveAlbumSummary(tracks);
-      return {
-        id: collection.id,
-        name: collection.name || '(未命名專輯)',
-        coverUrl: collection.coverUrl ?? '',
-        tracks,
-        releaseYear: validReleaseYear(summary.releaseYear),
-      };
-    });
+    .filter(({ collection }) => collection?.kind === 'album')
+    .map(({ collection, tracks }) => ({
+      collection,
+      tracks,
+      summary: deriveAlbumSummary(tracks),
+    }))
+    .filter(({ summary }) => normalizedArtist(summary.artist) === artistKey)
+    .map(({ collection, tracks, summary }) => ({
+      id: collection.id,
+      name: collection.name || '(未命名專輯)',
+      coverUrl: collection.coverUrl ?? '',
+      tracks,
+      releaseYear: validReleaseYear(summary.releaseYear),
+    }));
 
   const relatedAlbums = matchingAlbums
     .filter((album) => album.id !== selectedAlbumId)

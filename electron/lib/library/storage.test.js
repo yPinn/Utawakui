@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cleanupSeparationStorage,
   createLibraryStorageService,
@@ -241,5 +241,34 @@ describe('library storage', () => {
       }).removed,
     ).toEqual([{ trackId: 'track-a', recipeId: 'quick', bytes: 8 }]);
     expect(notificationCount).toBe(1);
+  });
+
+  it('does not read usage or protection inputs when nothing needs freeing', () => {
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-storage-lazy-'),
+    );
+    try {
+      addSeparation(root, 'track-a', 'general', 4, '2026-01-01T00:00:00.000Z');
+      const getLastPlayedAtByTrackId = vi.fn(() => ({}));
+      const getProtectedTrackIds = vi.fn(() => []);
+      const service = createLibraryStorageService({
+        resolveLibraryDir: () => root,
+        getLastPlayedAtByTrackId,
+        getProtectedTrackIds,
+        statfsSync: () => ({
+          bavail: storageValues.maximumReserveBytes * 2,
+          bsize: 1,
+          blocks: storageValues.maximumReserveBytes * 4,
+        }),
+      });
+
+      expect(
+        service.cleanup({ separationLimitBytes: 1_000_000 }).removed,
+      ).toEqual([]);
+      expect(getLastPlayedAtByTrackId).not.toHaveBeenCalled();
+      expect(getProtectedTrackIds).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
