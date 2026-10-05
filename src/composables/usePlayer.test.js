@@ -993,6 +993,31 @@ describe('playback persistence events', () => {
     expect(player.state.currentTime).toBe(37.25);
   });
 
+  it('does not carry a restored position over to a different track', async () => {
+    const player = await loadPlayer();
+    player.restorePlaybackState({
+      track: {
+        id: 'track-missing',
+        title: 'Missing',
+        url: 'utawakui-media://track/track-missing/audio.wav',
+      },
+      positionSeconds: 90,
+    });
+    // The restored file never reaches loadedmetadata (for example it is gone).
+    MockAudio.latest.dispatch('error');
+
+    await player.playTrack({
+      id: 'track-next',
+      title: 'Next',
+      url: 'utawakui-media://track/track-next/audio.wav',
+    });
+    MockAudio.latest.currentTime = 0;
+    MockAudio.latest.duration = 200;
+    MockAudio.latest.dispatch('loadedmetadata');
+
+    expect(MockAudio.latest.currentTime).toBe(0);
+  });
+
   it('uses safe paused defaults when restoring without optional transport values', async () => {
     const player = await loadPlayer();
     expect(player.restorePlaybackState()).toBe(false);

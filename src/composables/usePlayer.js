@@ -234,6 +234,7 @@ function handleLoadedMetadata() {
 }
 
 function handleError() {
+  pendingRestorePosition = null;
   state.error = reportPlayerError(
     audio.error,
     'media',
@@ -300,6 +301,7 @@ async function playTrack(track) {
   state.currentTime = 0;
   state.duration = 0;
   lastObservedCurrentTime = 0;
+  pendingRestorePosition = null;
   resetTrackAudioControls();
   routeAudioGraph(Boolean(track.usesSeparatedAudio));
   audio.src = track.url;
@@ -415,6 +417,7 @@ function clearTrack(trackId = null) {
   state.duration = 0;
   state.error = null;
   lastObservedCurrentTime = 0;
+  pendingRestorePosition = null;
   resetTrackAudioControls();
   return true;
 }
