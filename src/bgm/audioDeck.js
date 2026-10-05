@@ -191,7 +191,9 @@ export function createBgmAudioDeck({
     return Boolean(sourceUrl);
   }
 
-  async function playFromZero() {
+  // Starts playback at zero gain from the current position; fadeIn() brings
+  // the level up.
+  async function startSilent() {
     if (!sourceUrl || disposed) return false;
     const candidate = invalidateTransition();
     settlePendingPlaying(false);
@@ -350,7 +352,7 @@ export function createBgmAudioDeck({
     state,
     configure,
     load,
-    playFromZero,
+    startSilent,
     fadeIn,
     fadeOutAndPause,
     cut,

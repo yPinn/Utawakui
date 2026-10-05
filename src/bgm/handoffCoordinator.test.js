@@ -14,7 +14,7 @@ function createHarness(overrides = {}) {
   let time = 0;
   const deck = {
     hasSource: vi.fn(() => true),
-    playFromZero: vi.fn(async () => true),
+    startSilent: vi.fn(async () => true),
     fadeIn: vi.fn(async () => true),
     fadeOutAndPause: vi.fn(async () => true),
     cut: vi.fn(() => true),
@@ -55,7 +55,7 @@ describe('BGM handoff coordinator', () => {
     let time = 0;
     const deck = {
       hasSource: vi.fn(() => true),
-      playFromZero: vi.fn(async () => true),
+      startSilent: vi.fn(async () => true),
       fadeIn: vi.fn(async () => true),
       fadeOutAndPause: vi.fn(async () => true),
       cut: vi.fn(),
@@ -84,7 +84,7 @@ describe('BGM handoff coordinator', () => {
 
     expect(coordinator.state.sessionMode).toBe('live');
     expect(coordinator.state.phase).toBe('idle');
-    expect(deck.playFromZero).not.toHaveBeenCalled();
+    expect(deck.startSilent).not.toHaveBeenCalled();
   });
 
   it('starts BGM only from explicit user intent in any session mode', async () => {
@@ -92,7 +92,7 @@ describe('BGM handoff coordinator', () => {
 
     await expect(coordinator.requestBgmPlay()).resolves.toBe(true);
 
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(deck.fadeIn).toHaveBeenCalledWith(1.5);
     expect(coordinator.state.phase).toBe('bgm-playing');
     expect(coordinator.state.audibleLane).toBe('bgm');
@@ -106,7 +106,7 @@ describe('BGM handoff coordinator', () => {
     expect(coordinator.state.phase).toBe('track-active');
     expect(coordinator.state.bgmRequested).toBe(false);
     expect(coordinator.state.restorePending).toBe(true);
-    expect(deck.playFromZero).not.toHaveBeenCalled();
+    expect(deck.startSilent).not.toHaveBeenCalled();
   });
 
   it('does not add fade or pre-roll when no BGM handoff is needed', async () => {
@@ -192,7 +192,7 @@ describe('BGM handoff coordinator', () => {
     const deck = {
       hasSource: () => true,
       fadeOutAndPause: vi.fn(async () => true),
-      playFromZero: vi.fn(async () => true),
+      startSilent: vi.fn(async () => true),
       fadeIn: vi.fn(async () => true),
       cut: vi.fn(),
     };
@@ -325,13 +325,13 @@ describe('BGM handoff coordinator', () => {
     await coordinator.requestBgmPlay();
     await coordinator.beforePerformanceStart();
     coordinator.notifyPerformancePlaying();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
     wait.mockClear();
 
     await coordinator.notifyPerformanceEnded();
 
     expect(wait).toHaveBeenCalledWith(2000);
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(deck.fadeIn).toHaveBeenCalledWith(1.5);
     expect(coordinator.state.phase).toBe('bgm-playing');
     expect(coordinator.state.bgmRequested).toBe(true);
@@ -352,7 +352,7 @@ describe('BGM handoff coordinator', () => {
     await coordinator.requestBgmPlay();
     await coordinator.beforePerformanceStart();
     coordinator.notifyPerformancePlaying();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
 
     const restorePromise = coordinator.notifyPerformanceEnded();
     expect(coordinator.state.phase).toBe('postroll-silence');
@@ -361,11 +361,11 @@ describe('BGM handoff coordinator', () => {
     expect(coordinator.state.phase).toBe('postroll-silence');
     expect(coordinator.state.bgmRequested).toBe(false);
     expect(coordinator.state.restorePending).toBe(true);
-    expect(deck.playFromZero).not.toHaveBeenCalled();
+    expect(deck.startSilent).not.toHaveBeenCalled();
 
     postRoll.resolve();
     await expect(restorePromise).resolves.toBe(true);
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
   });
 
   it('uses the same stop, silence, and restore handoff while offline', async () => {
@@ -375,13 +375,13 @@ describe('BGM handoff coordinator', () => {
 
     await coordinator.beforePerformanceStart();
     coordinator.notifyPerformancePlaying();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
     wait.mockClear();
     await coordinator.notifyPerformanceEnded();
 
     expect(deck.fadeOutAndPause).toHaveBeenCalledWith(1);
     expect(wait).toHaveBeenCalledWith(2000);
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(deck.fadeIn).toHaveBeenCalledWith(1.5);
     expect(coordinator.state.phase).toBe('bgm-playing');
     expect(coordinator.state.audibleLane).toBe('bgm');
@@ -392,13 +392,13 @@ describe('BGM handoff coordinator', () => {
     await coordinator.updateSessionMode('live');
     await coordinator.requestBgmPlay();
     await coordinator.beforePerformanceStart();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
     wait.mockClear();
 
     await coordinator.notifyPerformanceEnded();
 
     expect(wait).not.toHaveBeenCalled();
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(coordinator.state.phase).toBe('bgm-playing');
   });
 
@@ -408,16 +408,16 @@ describe('BGM handoff coordinator', () => {
     await coordinator.requestBgmPlay();
     await coordinator.beforePerformanceStart();
     coordinator.notifyPerformancePlaying();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
 
     expect(coordinator.notifyPerformanceInterrupted('pause')).toBe(true);
-    expect(deck.playFromZero).not.toHaveBeenCalled();
+    expect(deck.startSilent).not.toHaveBeenCalled();
     expect(coordinator.state.phase).toBe('track-paused');
     expect(coordinator.state.audibleLane).toBeNull();
     expect(coordinator.state.restorePending).toBe(true);
 
     await expect(coordinator.requestBgmPlay()).resolves.toBe(true);
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(deck.fadeIn).toHaveBeenLastCalledWith(1.5);
     expect(coordinator.state.phase).toBe('bgm-playing');
     expect(coordinator.state.audibleLane).toBe('bgm');
@@ -427,14 +427,14 @@ describe('BGM handoff coordinator', () => {
     const { coordinator, deck } = createHarness();
     await coordinator.requestBgmPlay();
     await coordinator.beforePerformanceStart();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
 
     expect(coordinator.notifyPerformanceInterrupted('pause')).toBe(true);
     expect(coordinator.state.phase).toBe('track-paused');
     expect(coordinator.state.audibleLane).toBeNull();
 
     await expect(coordinator.requestBgmPlay()).resolves.toBe(true);
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(coordinator.state.phase).toBe('bgm-playing');
   });
 
@@ -447,7 +447,7 @@ describe('BGM handoff coordinator', () => {
       expect(coordinator.notifyPerformanceInterrupted(reason)).toBe(true);
       await expect(coordinator.requestBgmPlay()).resolves.toBe(true);
 
-      expect(deck.playFromZero).not.toHaveBeenCalled();
+      expect(deck.startSilent).not.toHaveBeenCalled();
       expect(coordinator.state.phase).toBe('track-active');
       expect(coordinator.state.audibleLane).toBe('performance');
       expect(coordinator.state.restorePending).toBe(true);
@@ -511,13 +511,13 @@ describe('BGM handoff coordinator', () => {
     await coordinator.requestBgmPlay();
     await coordinator.beforePerformanceStart();
     coordinator.notifyPerformancePlaying();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
 
     await coordinator.requestBgmPause();
     expect(coordinator.state.phase).toBe('track-active');
     expect(coordinator.state.audibleLane).toBe('performance');
     await coordinator.notifyPerformanceEnded();
-    expect(deck.playFromZero).not.toHaveBeenCalled();
+    expect(deck.startSilent).not.toHaveBeenCalled();
     expect(coordinator.state.phase).toBe('manual-hold');
   });
 
@@ -554,7 +554,7 @@ describe('BGM handoff coordinator', () => {
     const replaceSource = vi.fn(async () => {});
     await coordinator.requestBgmPlay();
     deck.fadeOutAndPause.mockClear();
-    deck.playFromZero.mockClear();
+    deck.startSilent.mockClear();
     deck.fadeIn.mockClear();
 
     await expect(coordinator.replaceBgmSource(replaceSource)).resolves.toBe(
@@ -563,7 +563,7 @@ describe('BGM handoff coordinator', () => {
 
     expect(deck.fadeOutAndPause).toHaveBeenCalledWith(1);
     expect(replaceSource).toHaveBeenCalledOnce();
-    expect(deck.playFromZero).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
     expect(deck.fadeIn).toHaveBeenCalledWith(1.5);
     expect(coordinator.state.phase).toBe('bgm-playing');
   });

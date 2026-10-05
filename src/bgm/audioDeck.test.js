@@ -91,7 +91,7 @@ describe('BGM audio deck', () => {
 
     expect(deck.state.isDimmed).toBe(false);
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     audio.dispatch('playing');
     await playPromise;
     await deck.fadeIn(0);
@@ -139,7 +139,7 @@ describe('BGM audio deck', () => {
     deck.load('utawakui-media://track/bgm/audio.wav');
 
     let settled = false;
-    const playPromise = deck.playFromZero().then((value) => {
+    const playPromise = deck.startSilent().then((value) => {
       settled = true;
       return value;
     });
@@ -159,7 +159,7 @@ describe('BGM audio deck', () => {
     const wait = vi.fn(() => deferred.promise);
     const { audio, context, deck, gain } = createHarness({ wait });
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     audio.dispatch('playing');
     await playPromise;
     gain.gain.value = 0.5;
@@ -184,7 +184,7 @@ describe('BGM audio deck', () => {
       .mockResolvedValue(undefined);
     const { audio, deck } = createHarness({ wait });
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     audio.dispatch('playing');
     await playPromise;
 
@@ -202,7 +202,7 @@ describe('BGM audio deck', () => {
     context.resume.mockImplementation(() => resume.promise);
     deck.load('utawakui-media://track/bgm/audio.wav');
 
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     await vi.waitFor(() => expect(context.resume).toHaveBeenCalledOnce());
     await expect(deck.fadeOutAndPause(1)).resolves.toBe(true);
     resume.resolve();
@@ -215,7 +215,7 @@ describe('BGM audio deck', () => {
   it('rejects a late playing event after an emergency cut', async () => {
     const { audio, deck } = createHarness();
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
 
     deck.cut();
     audio.dispatch('playing');
@@ -236,7 +236,7 @@ describe('BGM audio deck', () => {
       dimReleaseMs: 600,
     });
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     audio.dispatch('playing');
     await playPromise;
 
@@ -265,7 +265,7 @@ describe('BGM audio deck', () => {
   it('cuts the gain immediately when the media element fails during playback', async () => {
     const { audio, deck, gain } = createHarness();
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     audio.dispatch('playing');
     await playPromise;
     gain.gain.value = 0.5;
@@ -283,7 +283,7 @@ describe('BGM audio deck', () => {
   it('cuts synchronously, records bounded errors, and tears down listeners', async () => {
     const { audio, context, deck, gain, source } = createHarness();
     deck.load('utawakui-media://track/bgm/audio.wav');
-    const playPromise = deck.playFromZero();
+    const playPromise = deck.startSilent();
     audio.dispatch('playing');
     await playPromise;
 

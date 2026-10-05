@@ -121,7 +121,7 @@ export function createBgmHandoffCoordinator({
     state.phase = 'bgm-playing';
     state.restorePending = false;
     state.audibleLane = null;
-    const didStart = await deck.playFromZero();
+    const didStart = await deck.startSilent();
     if (!didStart || !isCurrent(candidate)) return false;
 
     state.audibleLane = 'bgm';
