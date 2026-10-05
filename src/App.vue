@@ -57,6 +57,7 @@ import { usePerformanceSessionWorkspace } from './composables/usePerformanceSess
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 import { measureInteractionToNextPaint } from './utils/interactionPerformance.js';
+import { hasOpenTransientOverlay } from './utils/transientOverlay.js';
 import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
 
@@ -353,7 +354,7 @@ function handleRightDockKeydown(event) {
     event.key !== 'Escape' ||
     event.defaultPrevented ||
     !rightDockExpanded.value ||
-    event.target?.closest?.('dialog[open]')
+    hasOpenTransientOverlay()
   ) {
     return;
   }

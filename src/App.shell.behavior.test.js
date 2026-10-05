@@ -221,4 +221,12 @@ describe('App shell right Dock', () => {
       /@media \(max-width: 70rem\)[\s\S]*\.shell__dock\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/u,
     );
   });
+  it('keeps Escape with an open modal or menu instead of also closing the dock', () => {
+    const handler = source.slice(
+      source.indexOf('function handleRightDockKeydown'),
+      source.indexOf('onMounted(() => document.addEventListener'),
+    );
+    expect(handler).toContain('hasOpenTransientOverlay()');
+    expect(handler).not.toContain('dialog[open]');
+  });
 });
