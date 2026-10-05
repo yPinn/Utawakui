@@ -448,10 +448,49 @@ describe('library metadata maintenance handlers', () => {
       }),
     ).resolves.toEqual({ status: 'ok', candidates: [] });
     expect(requireFeatureGate).toHaveBeenCalledWith(FEATURE_IDS.PROVIDER_FLOW);
-    expect(artworkDiscoveryService.search).toHaveBeenCalledWith(track, {
-      title: 'Edited query',
-      artist: 'Artist',
+    expect(artworkDiscoveryService.search).toHaveBeenCalledWith(
+      track,
+      { title: 'Edited query', artist: 'Artist' },
+      { signal: expect.any(AbortSignal) },
+    );
+  });
+
+  it('aborts an in-flight artwork search on request and reports it as cancelled', async () => {
+    let capturedSignal;
+    const artworkDiscoveryService = {
+      search: vi.fn(
+        (track, edits, { signal }) =>
+          new Promise((resolve) => {
+            capturedSignal = signal;
+            signal.addEventListener('abort', () =>
+              resolve({ status: 'error', reason: 'provider-unavailable' }),
+            );
+          }),
+      ),
+    };
+    const handlers = registerHandlers({
+      artworkDiscoveryService,
+      listLibraryTracks: vi.fn().mockReturnValue([{ id: 'track-1' }]),
     });
+
+    const pending = handlers.get('library:search-track-artwork')(
+      null,
+      'track-1',
+      {},
+    );
+    await Promise.resolve();
+    expect(
+      handlers.get('library:cancel-track-artwork-search')(null, 'track-1'),
+    ).toBe(true);
+
+    await expect(pending).resolves.toEqual({
+      status: 'error',
+      reason: 'cancelled',
+    });
+    expect(capturedSignal.aborted).toBe(true);
+    expect(
+      handlers.get('library:cancel-track-artwork-search')(null, 'track-1'),
+    ).toBe(false);
   });
 
   it('records private provider context while returning only the coarse public reason', async () => {

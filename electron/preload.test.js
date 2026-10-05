@@ -65,6 +65,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:choose-track-artwork',
   'library:clear-track-artwork',
   'library:apply-track-artwork',
+  'library:cancel-track-artwork-search',
   'library:delete-track',
   'library:import-audio-files',
   'library:list',

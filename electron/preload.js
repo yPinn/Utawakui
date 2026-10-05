@@ -525,6 +525,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('library:clear-track-artwork', trackId),
   searchTrackArtwork: (trackId, edits) =>
     ipcRenderer.invoke('library:search-track-artwork', trackId, edits),
+  cancelTrackArtworkSearch: (trackId) =>
+    ipcRenderer.invoke('library:cancel-track-artwork-search', trackId),
   loadTrackArtworkPreview: (trackId, candidateId) =>
     ipcRenderer.invoke(
       'library:load-track-artwork-preview',

@@ -417,6 +417,10 @@ function registerLibraryHandlers({
     return updated || track;
   });
 
+  // One in-flight search per track; the renderer can abort it so a slow
+  // provider never traps the editor.
+  const artworkSearches = new Map();
+
   ipcMain.handle(
     'library:search-track-artwork',
     async (event, trackId, edits = {}) => {
@@ -426,7 +430,10 @@ function registerLibraryHandlers({
         (candidate) => candidate.id === trackId,
       );
       if (!track) return { status: 'error', reason: 'track-unavailable' };
-      return runDiagnosticIpcOperation(
+      artworkSearches.get(trackId)?.abort();
+      const controller = new AbortController();
+      artworkSearches.set(trackId, controller);
+      const result = await runDiagnosticIpcOperation(
         {
           recordDiagnostic,
           diagnostic: {
@@ -441,10 +448,26 @@ function registerLibraryHandlers({
             context: { retryable: true },
           },
         },
-        () => resolvedArtworkDiscoveryService.search(track, edits),
-      );
+        () =>
+          resolvedArtworkDiscoveryService.search(track, edits, {
+            signal: controller.signal,
+          }),
+      ).finally(() => {
+        if (artworkSearches.get(trackId) === controller) {
+          artworkSearches.delete(trackId);
+        }
+      });
+      return controller.signal.aborted
+        ? { status: 'error', reason: 'cancelled' }
+        : result;
     },
   );
+
+  ipcMain.handle('library:cancel-track-artwork-search', (event, trackId) => {
+    const controller = artworkSearches.get(trackId);
+    controller?.abort();
+    return Boolean(controller);
+  });
 
   ipcMain.handle(
     'library:load-track-artwork-preview',

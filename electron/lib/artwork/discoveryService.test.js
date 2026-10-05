@@ -207,6 +207,28 @@ describe('artwork discovery service', () => {
     expect(lookupFront.mock.calls.length).toBeLessThanOrEqual(24);
   });
 
+  it('stops querying and stays silent when the search is aborted mid-flight', async () => {
+    const controller = new AbortController();
+    const onProviderFailure = vi.fn();
+    const searchRecordings = vi.fn(async () => {
+      controller.abort();
+      return { status: 'error', reason: 'timeout' };
+    });
+    const searchReleaseGroups = vi.fn();
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: { searchRecordings, searchReleaseGroups },
+      coverArtClient: { lookupFront: vi.fn() },
+      onProviderFailure,
+    });
+
+    await expect(
+      service.search(track, {}, { signal: controller.signal }),
+    ).resolves.toEqual({ status: 'error', reason: 'cancelled' });
+    expect(searchRecordings).toHaveBeenCalledOnce();
+    expect(searchReleaseGroups).not.toHaveBeenCalled();
+    expect(onProviderFailure).not.toHaveBeenCalled();
+  });
+
   it('reports provider unavailable when CAA fails after MusicBrainz succeeds', async () => {
     const onProviderFailure = vi.fn();
     const service = createArtworkDiscoveryService({

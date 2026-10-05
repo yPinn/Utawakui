@@ -69,6 +69,20 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.isArtworkSearching = false;
   }
 
+  // Aborts the main-side lookup and orphans its late result: the generation
+  // bump makes searchArtwork() discard whatever it resolves with.
+  function cancelArtworkSearch() {
+    if (!state.isArtworkSearching) return;
+    const trackId = state.track?.id;
+    invalidateArtworkResults();
+    state.isArtworkSearching = false;
+    if (trackId) {
+      Promise.resolve(
+        window.Utawakui?.cancelTrackArtworkSearch?.(trackId),
+      ).catch(() => {});
+    }
+  }
+
   function reset() {
     resetArtworkSearch();
     state.track = null;
@@ -88,9 +102,8 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function close() {
-    if (state.isSaving || state.isArtworkSaving || state.isArtworkSearching) {
-      return;
-    }
+    if (state.isSaving || state.isArtworkSaving) return;
+    cancelArtworkSearch();
     reset();
   }
 
@@ -119,7 +132,8 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function closeArtworkSearch() {
-    if (state.isArtworkSearching || state.isArtworkSaving) return;
+    if (state.isArtworkSaving) return;
+    cancelArtworkSearch();
     resetArtworkSearch();
   }
 
@@ -234,12 +248,14 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.isArtworkSearching = true;
     state.error = null;
     invalidateArtworkResults();
+    const generation = artworkPreviewGeneration;
     try {
       const result = await window.Utawakui.searchTrackArtwork(state.track.id, {
         title: state.titleDraft,
         artist: state.artistDraft,
         album: state.artworkQuery.album,
       });
+      if (generation !== artworkPreviewGeneration) return null;
       if (result?.status !== 'ok') {
         state.error = artworkFailure(
           result,
@@ -260,7 +276,6 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
         state.artworkCandidates.find((candidate) => candidate.recommended)
           ?.id || null;
       state.artworkSearchCompleted = true;
-      const generation = artworkPreviewGeneration;
       void loadArtworkPreviews(
         state.track.id,
         state.artworkCandidates,
@@ -268,6 +283,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       );
       return state.artworkCandidates;
     } catch (err) {
+      if (generation !== artworkPreviewGeneration) return null;
       state.error = reportMetadataError(
         err,
         'search-artwork',
@@ -275,7 +291,9 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       );
       return null;
     } finally {
-      state.isArtworkSearching = false;
+      if (generation === artworkPreviewGeneration) {
+        state.isArtworkSearching = false;
+      }
     }
   }
 

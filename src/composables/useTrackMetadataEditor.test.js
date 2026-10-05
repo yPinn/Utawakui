@@ -5,6 +5,7 @@ let updateTrackMetadataMock;
 let searchTrackArtworkMock;
 let loadTrackArtworkPreviewMock;
 let applyTrackArtworkMock;
+let cancelTrackArtworkSearchMock;
 
 function deferred() {
   let resolve;
@@ -19,12 +20,14 @@ beforeEach(() => {
   searchTrackArtworkMock = vi.fn();
   loadTrackArtworkPreviewMock = vi.fn();
   applyTrackArtworkMock = vi.fn();
+  cancelTrackArtworkSearchMock = vi.fn().mockResolvedValue(true);
   vi.stubGlobal('window', {
     Utawakui: {
       updateTrackMetadata: updateTrackMetadataMock,
       searchTrackArtwork: searchTrackArtworkMock,
       loadTrackArtworkPreview: loadTrackArtworkPreviewMock,
       applyTrackArtwork: applyTrackArtworkMock,
+      cancelTrackArtworkSearch: cancelTrackArtworkSearchMock,
       getFeatureConfirmations: vi.fn().mockResolvedValue({
         [FEATURE_IDS.PROVIDER_FLOW]: {
           enabled: true,
@@ -204,6 +207,50 @@ describe('useTrackMetadataEditor', () => {
     expect(editor.state.selectedArtworkCandidateId).toBe('candidate-1');
     expect(updateTrackMetadataMock).not.toHaveBeenCalled();
     expect(applyTrackArtworkMock).not.toHaveBeenCalled();
+  });
+
+  it('lets the editor close while a search is running and ignores its late result', async () => {
+    const pending = deferred();
+    searchTrackArtworkMock.mockReturnValue(pending.promise);
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Title', thumbnailUrl: 'x://cover' });
+    editor.openArtworkSearch();
+
+    const search = editor.searchArtwork();
+    await vi.waitFor(() => expect(editor.state.isArtworkSearching).toBe(true));
+
+    editor.close();
+
+    expect(cancelTrackArtworkSearchMock).toHaveBeenCalledWith('track-1');
+    expect(editor.state.track).toBe(null);
+    expect(editor.state.isArtworkSearching).toBe(false);
+
+    pending.resolve({
+      status: 'ok',
+      candidates: [{ id: 'late', recommended: true }],
+    });
+    await expect(search).resolves.toBe(null);
+    expect(editor.state.artworkCandidates).toEqual([]);
+    expect(editor.state.error).toBe(null);
+  });
+
+  it('cancels a running search when the artwork workspace is dismissed', async () => {
+    searchTrackArtworkMock.mockReturnValue(new Promise(() => {}));
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Title', thumbnailUrl: 'x://cover' });
+    editor.openArtworkSearch();
+    void editor.searchArtwork();
+    await vi.waitFor(() => expect(editor.state.isArtworkSearching).toBe(true));
+
+    editor.closeArtworkSearch();
+
+    expect(cancelTrackArtworkSearchMock).toHaveBeenCalledWith('track-1');
+    expect(editor.state.artworkSearchOpen).toBe(false);
+    expect(editor.state.isArtworkSearching).toBe(false);
   });
 
   it('keeps provider failures actionable without exposing technical service details', async () => {

@@ -341,7 +341,10 @@ function createArtworkDiscoveryService(options = {}) {
       );
     }
 
+    const isCancelled = () => requestOptions.signal?.aborted === true;
+
     variantLoop: for (const variant of variants) {
+      if (isCancelled()) break;
       const query = {
         title: variant.title.value,
         artist: variant.artist?.value,
@@ -365,10 +368,15 @@ function createArtworkDiscoveryService(options = {}) {
         },
       ];
       for (const stage of stages) {
-        if (targetReached() || coverLookupCount >= MAX_RAW_PROPOSALS) {
+        if (
+          isCancelled() ||
+          targetReached() ||
+          coverLookupCount >= MAX_RAW_PROPOSALS
+        ) {
           break variantLoop;
         }
         const result = await stage.search();
+        if (isCancelled()) break variantLoop;
         if (result.status === 'error') {
           noteProviderFailure(stage.failureStage, result);
           endpointErrors += 1;
@@ -380,6 +388,7 @@ function createArtworkDiscoveryService(options = {}) {
       if (rankedCandidates().length > 0) break variantLoop;
     }
 
+    if (isCancelled()) return { status: 'error', reason: 'cancelled' };
     const ranked = rankedCandidates();
     if (ranked.length === 0 && sawProviderError) {
       notifyProviderFailure();
