@@ -1,6 +1,9 @@
 import { reactive, readonly, watch } from 'vue';
 import { toPlayableTrack } from '../utils/playableTrack.js';
-import { buildPlaybackResumeIntent } from '../utils/playbackResumeIntent.js';
+import {
+  buildPlaybackResumeIntent,
+  resumeWatchSources,
+} from '../utils/playbackResumeIntent.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
@@ -49,9 +52,10 @@ function schedulePersist() {
 }
 
 function startPersistenceWatch() {
-  stopPersistenceWatch ??= watch(currentIntent, schedulePersist, {
-    deep: true,
-  });
+  stopPersistenceWatch ??= watch(
+    () => resumeWatchSources({ playerState, queueState }),
+    schedulePersist,
+  );
 }
 
 function initialize() {

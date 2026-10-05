@@ -57,6 +57,11 @@ const OPERATION_ERRORS = Object.freeze({
   },
 });
 
+// A full library scan costs milliseconds per hundred tracks, so reorder-style
+// edits reuse a very recent scan; anything that can depend on new tracks
+// (get, append, relink, replace) always rescans and refreshes the cache.
+const TRACKS_REUSE_MS = 3_000;
+
 const VALIDATION_CONTEXT_KEYS = new Set([
   'currentSourceName',
   'itemCount',
@@ -91,13 +96,27 @@ function registerPerformanceSessionPlanHandlers({
   listLibraryTracks = listTracks,
   createStore = ({ directory }) =>
     createPerformanceSessionPlanStore({ directory }),
+  now = Date.now,
 }) {
-  function operationContext() {
+  let scan = null;
+
+  function operationContext({ reuseRecentScan = false } = {}) {
     const directory = resolveDownloadDir(getConfig());
-    const tracks = listLibraryTracks(directory);
+    const reusable =
+      reuseRecentScan &&
+      scan?.directory === directory &&
+      now() - scan.at < TRACKS_REUSE_MS;
+    if (!reusable) {
+      const tracks = listLibraryTracks(directory);
+      scan = {
+        directory,
+        at: now(),
+        tracksById: new Map(tracks.map((track) => [track.id, track])),
+      };
+    }
     return {
       directory,
-      tracksById: new Map(tracks.map((track) => [track.id, track])),
+      tracksById: scan.tracksById,
       store: createStore({ directory }),
     };
   }
@@ -206,7 +225,7 @@ function registerPerformanceSessionPlanHandlers({
 
   ipcMain.handle('performance-session-plan:move-item', async (_event, intent) =>
     run('move', () => {
-      const { store, tracksById } = operationContext();
+      const { store, tracksById } = operationContext({ reuseRecentScan: true });
       return store.moveItem(intent, tracksById);
     }),
   );
@@ -215,7 +234,9 @@ function registerPerformanceSessionPlanHandlers({
     'performance-session-plan:duplicate-item',
     async (_event, itemId) =>
       run('duplicate', () => {
-        const { store, tracksById } = operationContext();
+        const { store, tracksById } = operationContext({
+          reuseRecentScan: true,
+        });
         return store.duplicateItem(itemId, tracksById);
       }),
   );
@@ -224,7 +245,9 @@ function registerPerformanceSessionPlanHandlers({
     'performance-session-plan:remove-item',
     async (_event, itemId) =>
       run('remove', () => {
-        const { store, tracksById } = operationContext();
+        const { store, tracksById } = operationContext({
+          reuseRecentScan: true,
+        });
         return store.removeItem(itemId, tracksById);
       }),
   );
@@ -233,14 +256,16 @@ function registerPerformanceSessionPlanHandlers({
     'performance-session-plan:set-review-cursor',
     async (_event, itemId) =>
       run('cursor', () => {
-        const { store, tracksById } = operationContext();
+        const { store, tracksById } = operationContext({
+          reuseRecentScan: true,
+        });
         return store.setReviewCursor(itemId, tracksById);
       }),
   );
 
   ipcMain.handle('performance-session-plan:clear', async () =>
     run('clear', () => {
-      const { store, tracksById } = operationContext();
+      const { store, tracksById } = operationContext({ reuseRecentScan: true });
       return store.clear(tracksById);
     }),
   );

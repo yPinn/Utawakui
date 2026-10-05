@@ -49,3 +49,25 @@ export function buildPlaybackResumeIntent({ playerState, queueState }) {
     },
   };
 }
+
+// Reactive dependencies of the persisted snapshot, by reference only. Watching
+// these (instead of rebuilding the whole intent on every playback tick) keeps
+// the position tick O(1); queue lists are only ever reassigned, never mutated.
+export function resumeWatchSources({ playerState, queueState }) {
+  return [
+    playerState.track?.id,
+    playerState.currentTime,
+    playerState.volume,
+    playerState.isMuted,
+    playerState.playbackMode,
+    queueState.tracks,
+    queueState.queuedTracks,
+    queueState.historyEntries,
+    queueState.currentIsSource,
+    queueState.lastSourceTrackId,
+    queueState.sourceName,
+    queueState.sourceId,
+    queueState.isShuffle,
+    queueState.orderIds,
+  ];
+}

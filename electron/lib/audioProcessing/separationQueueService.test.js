@@ -112,6 +112,33 @@ describe('separation queue service', () => {
     expect(harness.runTrack).toHaveBeenCalledTimes(1);
   });
 
+  it('coalesces rapid progress ticks but always emits stage changes', async () => {
+    let clock = 0;
+    const harness = createHarness({ now: () => clock });
+    harness.service.enqueue({ trackIds: ['track-1'], recipeId: 'general' });
+    await flush();
+    const baseline = harness.updates.length;
+
+    const { onProgress } = harness.runs[0];
+    onProgress({ stage: 'separating', percent: 1 });
+    const afterStage = harness.updates.length;
+    for (let percent = 2; percent < 30; percent += 1) {
+      clock += 5;
+      onProgress({ stage: 'separating', percent });
+    }
+    expect(harness.updates.length).toBeLessThanOrEqual(afterStage + 1);
+    expect(afterStage).toBeGreaterThan(baseline);
+    expect(harness.service.getStatus().queue.items[0].percent).toBe(29);
+
+    clock += 300;
+    onProgress({ stage: 'separating', percent: 40 });
+    onProgress({ stage: 'finishing', percent: 41 });
+    expect(harness.updates.at(-1).queue.items[0]).toMatchObject({
+      stage: 'finishing',
+      percent: 41,
+    });
+  });
+
   it('skips a current result by default and still processes the next item', async () => {
     const harness = createHarness({
       hasCurrentResult: vi.fn(async ({ trackId }) => trackId === 'current'),

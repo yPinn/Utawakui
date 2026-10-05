@@ -11,6 +11,9 @@ const TERMINAL_ITEM_STATUSES = new Set([
   'failed',
   'cancelled',
 ]);
+// Every emit carries the whole (up to 500 item) queue, so progress ticks are
+// coalesced; stage changes and status transitions always emit immediately.
+const PROGRESS_EMIT_INTERVAL_MS = 250;
 const CLEARABLE_ITEM_STATUSES = new Set(['completed', 'skipped']);
 
 function hasControlCharacters(value) {
@@ -77,6 +80,7 @@ function createSeparationQueueService({
   createItemId,
   onUpdate = () => {},
   scheduleTask = queueMicrotask,
+  now = Date.now,
 }) {
   if (
     typeof resolveRecipe !== 'function' ||
@@ -95,6 +99,7 @@ function createSeparationQueueService({
   let activeItemId = null;
   let draining = false;
   let drainScheduled = false;
+  let lastProgressEmitAt = -Infinity;
 
   function snapshot() {
     if (items.length === 0) return { queue: null };
@@ -203,12 +208,21 @@ function createSeparationQueueService({
               recipeId: entry.recipeId,
               onProgress: (progress) => {
                 if (entry.status !== 'running') return;
+                const previousStage = entry.stage;
                 if (typeof progress?.stage === 'string') {
                   entry.stage = progress.stage.slice(0, 64);
                 }
                 if (Number.isFinite(progress?.percent)) {
                   entry.percent = Math.min(100, Math.max(0, progress.percent));
                 }
+                const tick = now();
+                if (
+                  entry.stage === previousStage &&
+                  tick - lastProgressEmitAt < PROGRESS_EMIT_INTERVAL_MS
+                ) {
+                  return;
+                }
+                lastProgressEmitAt = tick;
                 emitUpdate();
               },
             });

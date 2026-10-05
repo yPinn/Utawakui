@@ -236,6 +236,30 @@ describe('registerPerformanceSessionPlanHandlers', () => {
     }
   });
 
+  it('reuses one recent library scan for reorder edits but rescans for reads and links', async () => {
+    let clock = 1_000;
+    const listLibraryTracks = vi.fn(() => [{ id: 't-1', title: 'One' }]);
+    const { handlers } = register({ listLibraryTracks, now: () => clock });
+
+    await handlers.get('performance-session-plan:get')(null);
+    await handlers.get('performance-session-plan:move-item')(null, {
+      itemId: 'a',
+      offset: 1,
+    });
+    await handlers.get('performance-session-plan:set-review-cursor')(null, 'a');
+    expect(listLibraryTracks).toHaveBeenCalledTimes(1);
+
+    await handlers.get('performance-session-plan:append-library-track')(
+      null,
+      't-1',
+    );
+    expect(listLibraryTracks).toHaveBeenCalledTimes(2);
+
+    clock += 5_000;
+    await handlers.get('performance-session-plan:remove-item')(null, 'a');
+    expect(listLibraryTracks).toHaveBeenCalledTimes(3);
+  });
+
   it('records operational failures and exposes only a safe public AppError', async () => {
     const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
     const { handlers } = register({
