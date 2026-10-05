@@ -273,6 +273,11 @@ function createSeparationQueueService({
           entry.recipeId === recipe.id,
       );
       if (existing) {
+        // An explicit regenerate request must not be absorbed by earlier
+        // queued work that would skip a current result.
+        if (regenerate && existing.status === 'pending') {
+          existing.regenerate = true;
+        }
         itemIds.push(existing.itemId);
         continue;
       }

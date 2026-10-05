@@ -90,6 +90,28 @@ describe('separation queue service', () => {
     });
   });
 
+  it('upgrades a still-pending duplicate when regeneration is requested later', async () => {
+    const harness = createHarness();
+    harness.hasCurrentResult.mockResolvedValue(true);
+    harness.service.pause();
+
+    const first = harness.service.enqueue({
+      trackIds: ['track-1'],
+      recipeId: 'general',
+    });
+    const second = harness.service.enqueue({
+      trackIds: ['track-1'],
+      recipeId: 'general',
+      regenerate: true,
+    });
+    expect(second.itemIds).toEqual(first.itemIds);
+
+    harness.service.resume();
+    await flush();
+
+    expect(harness.runTrack).toHaveBeenCalledTimes(1);
+  });
+
   it('skips a current result by default and still processes the next item', async () => {
     const harness = createHarness({
       hasCurrentResult: vi.fn(async ({ trackId }) => trackId === 'current'),
