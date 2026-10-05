@@ -4,9 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const { isSafeTrackId } = require('./library/paths');
+const limits = require('../../shared/playbackPersistenceValues.json');
 
 const PLAYBACK_HISTORY_LIMIT = 50;
-const PLAYBACK_QUEUE_LIMIT = 500;
+const PLAYBACK_QUEUE_LIMIT = limits.queueLimit;
 const PLAYBACK_PERSISTENCE_VERSION = 1;
 const MAX_TRACK_ID_LENGTH = 255;
 const MAX_SOURCE_TEXT_LENGTH = 255;
