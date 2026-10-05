@@ -35,6 +35,12 @@ const {
   enforceLibraryStoragePolicySafely,
 } = require('./libraryStorageHandlers');
 
+const SOURCE_UNAVAILABLE_CODE = 'SEPARATION_SOURCE_UNAVAILABLE';
+
+function sourceUnavailableError(message) {
+  return Object.assign(new Error(message), { code: SOURCE_UNAVAILABLE_CODE });
+}
+
 function registerSeparationHandlers({
   ipcMain,
   getConfig,
@@ -70,12 +76,14 @@ function registerSeparationHandlers({
     prepareJob: async ({ trackId, recipe }) => {
       const dir = resolveDownloadDir(getConfig());
       const track = findSeparationTrackRecord(dir, trackId);
-      if (!track) throw new Error(`unknown track id: ${trackId}`);
+      if (!track) throw sourceUnavailableError(`unknown track id: ${trackId}`);
 
       const outputDir = resolveSeparationsOutputDir(dir, trackId);
       if (!outputDir) throw new Error('invalid track id');
       const inputPath = resolveSeparationInputAudioPath(dir, track.id);
-      if (!inputPath) throw new Error(`missing audio for track id: ${trackId}`);
+      if (!inputPath) {
+        throw sourceUnavailableError(`missing audio for track id: ${trackId}`);
+      }
 
       // Preparation remains an explicit Settings action. Runs only verify the
       // paths here, so starting a job never hides a download from a livestream.
@@ -157,6 +165,9 @@ function registerSeparationHandlers({
       // the execution boundary, but keep this expected control flow outside
       // the operational diagnostic wrapper.
       requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+      // The public error replaces the cause's message, so keep the one
+      // distinction the queue shows (source missing vs. processing failed).
+      let sourceUnavailable = false;
       return runDiagnosticIpcOperation(
         {
           recordDiagnostic,
@@ -174,17 +185,23 @@ function registerSeparationHandlers({
           },
         },
         async () => {
-          const result = await service.run({
-            trackId,
-            recipeId,
-            onProgress: (progress) => {
-              getMainWindow()?.webContents.send(
-                'separation:progress',
-                progress,
-              );
-              onProgress(progress);
-            },
-          });
+          let result;
+          try {
+            result = await service.run({
+              trackId,
+              recipeId,
+              onProgress: (progress) => {
+                getMainWindow()?.webContents.send(
+                  'separation:progress',
+                  progress,
+                );
+                onProgress(progress);
+              },
+            });
+          } catch (error) {
+            sourceUnavailable = error?.code === SOURCE_UNAVAILABLE_CODE;
+            throw error;
+          }
           const protectedTrackIds =
             queueService
               .getStatus()
@@ -202,7 +219,10 @@ function registerSeparationHandlers({
           notifyLibraryUpdated();
           return result;
         },
-      );
+      ).catch((error) => {
+        if (sourceUnavailable) error.failureReason = 'source-unavailable';
+        throw error;
+      });
     },
     cancelActiveTrack: () => service.cancelActiveJob(),
     onUpdate: (status) => {

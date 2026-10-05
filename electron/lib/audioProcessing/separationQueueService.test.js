@@ -139,6 +139,31 @@ describe('separation queue service', () => {
     });
   });
 
+  it('classifies failures by structured reason, not by message wording', async () => {
+    const failures = [
+      Object.assign(new Error('public wording'), {
+        failureReason: 'source-unavailable',
+      }),
+      new Error('network request cancelled by the remote host'),
+    ];
+    const harness = createHarness({
+      runTrack: vi.fn(async () => {
+        throw failures.shift();
+      }),
+    });
+
+    harness.service.enqueue({
+      trackIds: ['gone', 'flaky'],
+      recipeId: 'general',
+    });
+    await flush();
+
+    expect(harness.service.getStatus().queue.items).toMatchObject([
+      { trackId: 'gone', status: 'failed', reason: 'source-unavailable' },
+      { trackId: 'flaky', status: 'failed', reason: 'processing-failed' },
+    ]);
+  });
+
   it('skips a current result by default and still processes the next item', async () => {
     const harness = createHarness({
       hasCurrentResult: vi.fn(async ({ trackId }) => trackId === 'current'),

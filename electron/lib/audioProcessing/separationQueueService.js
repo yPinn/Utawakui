@@ -14,6 +14,7 @@ const TERMINAL_ITEM_STATUSES = new Set([
 // Every emit carries the whole (up to 500 item) queue, so progress ticks are
 // coalesced; stage changes and status transitions always emit immediately.
 const PROGRESS_EMIT_INTERVAL_MS = 250;
+const CANCELLED_MESSAGE = 'audio-processing job cancelled';
 const CLEARABLE_ITEM_STATUSES = new Set(['completed', 'skipped']);
 
 function hasControlCharacters(value) {
@@ -158,9 +159,7 @@ function createSeparationQueueService({
           result: entry.result,
         });
       } else {
-        waiter.reject(
-          entry.error ?? new Error('audio-processing job cancelled'),
-        );
+        waiter.reject(entry.error ?? new Error(CANCELLED_MESSAGE));
       }
     }
   }
@@ -194,7 +193,7 @@ function createSeparationQueueService({
                 recipeId: entry.recipeId,
               });
           if (entry.cancelRequested) {
-            throw new Error('audio-processing job cancelled');
+            throw new Error(CANCELLED_MESSAGE);
           }
           if (currentResult) {
             entry.status = 'skipped';
@@ -231,16 +230,14 @@ function createSeparationQueueService({
           }
         } catch (error) {
           entry.error = error;
-          if (
-            entry.cancelRequested ||
-            String(error?.message).includes('cancelled')
-          ) {
+          if (entry.cancelRequested || error?.message === CANCELLED_MESSAGE) {
             entry.status = 'cancelled';
           } else {
             entry.status = 'failed';
-            entry.reason = String(error?.message).includes('missing audio')
-              ? 'source-unavailable'
-              : 'processing-failed';
+            entry.reason =
+              error?.failureReason === 'source-unavailable'
+                ? 'source-unavailable'
+                : 'processing-failed';
           }
           delete entry.percent;
           delete entry.stage;
@@ -327,9 +324,7 @@ function createSeparationQueueService({
           result: entry.result,
         });
       }
-      return Promise.reject(
-        entry.error ?? new Error('audio-processing job cancelled'),
-      );
+      return Promise.reject(entry.error ?? new Error(CANCELLED_MESSAGE));
     }
     return new Promise((resolve, reject) => {
       entry.waiters.push({ resolve, reject });
@@ -390,7 +385,7 @@ function createSeparationQueueService({
     }
     if (entry.status === 'pending') {
       entry.status = 'cancelled';
-      entry.error = new Error('audio-processing job cancelled');
+      entry.error = new Error(CANCELLED_MESSAGE);
       settleWaiters(entry);
     }
     items = items.filter((candidate) => candidate !== entry);
