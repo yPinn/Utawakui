@@ -191,6 +191,7 @@ const diagnosticsService = createDiagnosticsService({
   appVersion: app.getVersion(),
   electronVersion: process.versions.electron,
 });
+const recordDiagnostic = (event) => diagnosticsService.record(event);
 const runtimeDiagnosticsLogger = createRuntimeDiagnosticsLogger({
   service: diagnosticsService,
 });
@@ -273,7 +274,7 @@ const rendererRecoveryController = createRendererRecoveryController({
     app.quit();
   },
   quitApp: () => app.quit(),
-  recordDiagnostic: (event) => diagnosticsService.record(event),
+  recordDiagnostic,
 });
 
 const obsPowerSaveBlockerSync = createObsPowerSaveBlocker({ powerSaveBlocker });
@@ -413,7 +414,7 @@ if (!gotSingleInstanceLock) {
         windowCloseDecisionBridge.requestDecision(mainWindow, options),
       persistWindowCloseBehavior: (behavior) =>
         configState.updateConfig({ windowCloseBehavior: behavior }),
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
     app.once('will-quit', () => windowCloseDecisionBridge?.destroy());
     recordMainMilestone('config-ready');
@@ -722,7 +723,7 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       storage: libraryStorageService,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerMediaProtocol({
@@ -801,7 +802,7 @@ if (!gotSingleInstanceLock) {
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
       enforceLibraryStoragePolicy,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerLyricsHandlers({
@@ -814,7 +815,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       lyricsAcquisitionService,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerMusicStructureHandlers({
@@ -839,21 +840,21 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerPerformanceSessionPlanHandlers({
       ipcMain,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerBgmStandbyPlanHandlers({
       ipcMain,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerImportHandlers({
@@ -867,7 +868,7 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
       enforceLibraryStoragePolicy,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerSeparationHandlers({
@@ -881,7 +882,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
       onQueueUpdate: windowState.setSeparationQueueStatus,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
       enforceLibraryStoragePolicy,
     });
 
@@ -891,7 +892,7 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
       resourcesPath: isPackagedRuntime ? process.resourcesPath : null,
     });
 
@@ -906,7 +907,7 @@ if (!gotSingleInstanceLock) {
       validateDownloadDir: configState.validateDownloadDir,
       getMainWindow: windowState.getMainWindow,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
       titlebarColors: windowState.TITLEBAR_COLORS,
       applyAppUpdateAutoCheck: (enabled) =>
         appUpdateService.setAutoCheckEnabled(enabled),
@@ -918,13 +919,13 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerExternalNavigationHandlers({
       ipcMain,
       openExternal: (url) => shell.openExternal(url),
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     registerProviderDiscoveryHandlers({
@@ -932,7 +933,7 @@ if (!gotSingleInstanceLock) {
       openExternal: (url) => shell.openExternal(url),
       requireFeatureGate,
       featureIds: FEATURE_IDS,
-      recordDiagnostic: (event) => diagnosticsService.record(event),
+      recordDiagnostic,
     });
 
     if (windowState.isDev) {
@@ -945,7 +946,7 @@ if (!gotSingleInstanceLock) {
       registerLyricsProviderCorpusReviewHandlers({
         ipcMain,
         enabled: true,
-        recordDiagnostic: (event) => diagnosticsService.record(event),
+        recordDiagnostic,
         writeClipboardText: (value) => clipboard.writeText(value),
         openExternal: (url) => shell.openExternal(url),
         service: createLyricsProviderCorpusReviewService({

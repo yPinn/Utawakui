@@ -4,7 +4,10 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
-const { isSafeTrackId } = require('./library/paths');
+const {
+  isBoundedTrackId: isBoundedLibraryTrackId,
+} = require('./library/paths');
+const { hasControlCharacters } = require('./textGuards');
 
 const PERFORMANCE_SESSION_PLAN_FILENAME = 'performance-session-plan.json';
 const PERFORMANCE_SESSION_PLAN_VERSION = 1;
@@ -61,13 +64,6 @@ function validationError(code, field = null, context = undefined) {
   });
 }
 
-function hasControlCharacters(value) {
-  return [...value].some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint <= 0x1f || codePoint === 0x7f;
-  });
-}
-
 function isBoundedId(value) {
   return (
     typeof value === 'string' &&
@@ -78,9 +74,7 @@ function isBoundedId(value) {
 }
 
 function isBoundedTrackId(value) {
-  return (
-    isBoundedId(value) && isSafeTrackId(value) && !hasControlCharacters(value)
-  );
+  return isBoundedLibraryTrackId(value, PERFORMANCE_SESSION_PLAN_ID_LIMIT);
 }
 
 function normalizeDisplayTitle(value) {
@@ -267,17 +261,6 @@ function normalizeDocument(value) {
   };
 }
 
-function cloneDocument(document) {
-  return {
-    ...document,
-    source: document.source ? { ...document.source } : null,
-    items: document.items.map((item) => ({
-      ...item,
-      sourceSnapshot: item.sourceSnapshot ? { ...item.sourceSnapshot } : null,
-    })),
-  };
-}
-
 function normalizeTracksById(value) {
   if (value instanceof Map) return value;
   if (!Array.isArray(value)) return new Map();
@@ -404,7 +387,8 @@ function createPerformanceSessionPlanStore({
   }
 
   function mutate(mutator) {
-    const document = cloneDocument(load());
+    // load() always returns a freshly parsed or empty document.
+    const document = load();
     const changed = mutator(document) !== false;
     if (changed) {
       document.updatedAt = now().toISOString();

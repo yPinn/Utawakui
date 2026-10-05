@@ -165,9 +165,6 @@ function registerSeparationHandlers({
       // the execution boundary, but keep this expected control flow outside
       // the operational diagnostic wrapper.
       requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
-      // The public error replaces the cause's message, so keep the one
-      // distinction the queue shows (source missing vs. processing failed).
-      let sourceUnavailable = false;
       return runDiagnosticIpcOperation(
         {
           recordDiagnostic,
@@ -177,6 +174,10 @@ function registerSeparationHandlers({
             code: 'SEPARATION_RUN_FAILED',
             context: { presetId: recipeId },
           },
+          classifyError: (error) =>
+            error?.code === SOURCE_UNAVAILABLE_CODE
+              ? { failureReason: 'source-unavailable' }
+              : undefined,
           publicError: {
             code: 'SEPARATION_RUN_FAILED',
             title: '伴奏準備未完成',
@@ -185,23 +186,17 @@ function registerSeparationHandlers({
           },
         },
         async () => {
-          let result;
-          try {
-            result = await service.run({
-              trackId,
-              recipeId,
-              onProgress: (progress) => {
-                getMainWindow()?.webContents.send(
-                  'separation:progress',
-                  progress,
-                );
-                onProgress(progress);
-              },
-            });
-          } catch (error) {
-            sourceUnavailable = error?.code === SOURCE_UNAVAILABLE_CODE;
-            throw error;
-          }
+          const result = await service.run({
+            trackId,
+            recipeId,
+            onProgress: (progress) => {
+              getMainWindow()?.webContents.send(
+                'separation:progress',
+                progress,
+              );
+              onProgress(progress);
+            },
+          });
           const protectedTrackIds =
             queueService
               .getStatus()
@@ -219,10 +214,7 @@ function registerSeparationHandlers({
           notifyLibraryUpdated();
           return result;
         },
-      ).catch((error) => {
-        if (sourceUnavailable) error.failureReason = 'source-unavailable';
-        throw error;
-      });
+      );
     },
     cancelActiveTrack: () => service.cancelActiveJob(),
     onUpdate: (status) => {

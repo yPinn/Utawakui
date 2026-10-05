@@ -1,5 +1,9 @@
 'use strict';
 
+const {
+  MBID_RE,
+  isMusicBrainzSourcePage,
+} = require('../musicbrainz/identifiers');
 const fs = require('fs');
 const path = require('path');
 const {
@@ -20,8 +24,6 @@ const {
 const { findTrackRecord } = require('./tracks');
 
 const MAX_ARTWORK_BYTES = 10 * 1024 * 1024;
-const MBID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
 function deleteArtworkProvenance(trackDir) {
   const provenancePath = path.join(trackDir, ARTWORK_PROVENANCE_FILENAME);
@@ -66,28 +68,14 @@ function normalizeArtworkProvenance(value) {
   ) {
     return null;
   }
-  let sourcePage;
-  try {
-    sourcePage = new URL(value.sourcePage);
-  } catch {
-    return null;
-  }
-  if (
-    sourcePage.protocol !== 'https:' ||
-    sourcePage.hostname !== 'musicbrainz.org' ||
-    !/^\/(?:recording|release-group|release)\/[0-9a-f-]+$/iu.test(
-      sourcePage.pathname,
-    )
-  ) {
-    return null;
-  }
+  if (!isMusicBrainzSourcePage(value.sourcePage)) return null;
   return {
     schemaVersion: 1,
     source: 'cover-art-archive',
     provider: 'musicbrainz',
     ...ids,
     selectedAt: new Date(value.selectedAt).toISOString(),
-    sourcePage: sourcePage.href,
+    sourcePage: new URL(value.sourcePage).href,
   };
 }
 

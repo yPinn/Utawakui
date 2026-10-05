@@ -1,5 +1,6 @@
 'use strict';
 
+const { MBID_RE } = require('../musicbrainz/identifiers');
 const packageMetadata = require('../../../package.json');
 const { readBoundedText } = require('../lrclib/client.js');
 
@@ -11,8 +12,6 @@ const MAX_CACHE_ENTRIES = 128;
 const MAX_IMAGES = 50;
 const MAX_REDIRECTS = 3;
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-const MBID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const directScheduler = Object.freeze({
   schedule(operation, options = {}) {
     if (options.signal?.aborted) {

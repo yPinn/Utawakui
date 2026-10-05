@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../lib/appError.js';
-import { runDiagnosticIpcOperation } from './ipcErrorBoundary.js';
+import {
+  createPlanIpcRunner,
+  runDiagnosticIpcOperation,
+} from './ipcErrorBoundary.js';
 
 describe('runDiagnosticIpcOperation', () => {
   it('records the original private error in main and throws a safe public error', async () => {
@@ -68,5 +71,62 @@ describe('runDiagnosticIpcOperation', () => {
 
     expect(thrown.message).not.toContain('diagnosticRecorded');
     expect(thrown.message).not.toContain('private failure');
+  });
+
+  it('keeps an internal classification of the cause without serializing it', async () => {
+    const thrown = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic: vi.fn(() => ({ ok: true })),
+        diagnostic: { source: 'separation', operation: 'run', code: 'X' },
+        publicError: { code: 'X', message: '公開訊息' },
+        classifyError: (error) =>
+          error.code === 'SOURCE'
+            ? { failureReason: 'source-unavailable' }
+            : undefined,
+      },
+      () =>
+        Promise.reject(Object.assign(new Error('private'), { code: 'SOURCE' })),
+    ).catch((error) => error);
+
+    expect(thrown.failureReason).toBe('source-unavailable');
+    expect(thrown.message).not.toContain('source-unavailable');
+    expect(thrown.message).not.toContain('private');
+  });
+
+  it('returns validation results through the plan runner without diagnostics', async () => {
+    const recordDiagnostic = vi.fn();
+    const run = createPlanIpcRunner({
+      source: 'plan',
+      operationErrors: {
+        get: { code: 'PLAN_GET_FAILED', title: 't', message: 'm' },
+      },
+      isValidationError: (error) => error.name === 'Validation',
+      validationContextKeys: ['itemCount'],
+      recordDiagnostic,
+    });
+
+    await expect(run('get', () => ({ items: [] }))).resolves.toEqual({
+      ok: true,
+      plan: { items: [] },
+    });
+    await expect(
+      run('get', () => {
+        throw Object.assign(new Error('bad'), {
+          name: 'Validation',
+          code: 'BAD',
+          field: 'x',
+          context: { itemCount: 3, privatePath: 'private' },
+        });
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      error: {
+        code: 'BAD',
+        field: 'x',
+        message: 'bad',
+        context: { itemCount: 3 },
+      },
+    });
+    expect(recordDiagnostic).not.toHaveBeenCalled();
   });
 });

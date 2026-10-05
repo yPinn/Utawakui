@@ -7,7 +7,7 @@ const {
   createPerformanceSessionPlanStore,
   isPerformanceSessionPlanValidationError,
 } = require('../lib/performanceSessionPlan');
-const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const { createPlanIpcRunner } = require('./ipcErrorBoundary');
 
 const OPERATION_ERRORS = Object.freeze({
   get: {
@@ -62,30 +62,11 @@ const OPERATION_ERRORS = Object.freeze({
 // (get, append, relink, replace) always rescans and refreshes the cache.
 const TRACKS_REUSE_MS = 3_000;
 
-const VALIDATION_CONTEXT_KEYS = new Set([
+const VALIDATION_CONTEXT_KEYS = Object.freeze([
   'currentSourceName',
   'itemCount',
   'updatedAt',
 ]);
-
-function publicValidationResult(error) {
-  const context = error.context
-    ? Object.fromEntries(
-        Object.entries(error.context).filter(([key]) =>
-          VALIDATION_CONTEXT_KEYS.has(key),
-        ),
-      )
-    : undefined;
-  return {
-    ok: false,
-    error: {
-      code: error.code,
-      field: error.field,
-      message: error.message,
-      ...(context && Object.keys(context).length > 0 ? { context } : {}),
-    },
-  };
-}
 
 function registerPerformanceSessionPlanHandlers({
   ipcMain,
@@ -121,34 +102,25 @@ function registerPerformanceSessionPlanHandlers({
     };
   }
 
-  async function run(operation, work) {
-    try {
-      return { ok: true, plan: await work() };
-    } catch (error) {
-      if (isPerformanceSessionPlanValidationError(error)) {
-        return publicValidationResult(error);
-      }
-      const presentation = OPERATION_ERRORS[operation];
-      return runDiagnosticIpcOperation(
-        {
-          recordDiagnostic,
-          diagnostic: {
-            source: 'performance-session-plan',
-            operation,
-            code: presentation.code,
-          },
-          publicError: {
-            code: presentation.code,
-            title: presentation.title,
-            message: presentation.message,
-            context: { retryable: true },
-          },
-        },
-        () => {
-          throw error;
-        },
-      );
-    }
+  const run = createPlanIpcRunner({
+    source: 'performance-session-plan',
+    operationErrors: OPERATION_ERRORS,
+    isValidationError: isPerformanceSessionPlanValidationError,
+    validationContextKeys: VALIDATION_CONTEXT_KEYS,
+    recordDiagnostic,
+  });
+
+  // Every store mutation takes `(argument, tracksById)`; reorder-style edits
+  // may reuse a recent scan.
+  function registerMutation(channel, operation, method, options = {}) {
+    ipcMain.handle(channel, async (_event, argument) =>
+      run(operation, () => {
+        const { store, tracksById } = operationContext({
+          reuseRecentScan: options.reuseRecentScan === true,
+        });
+        return store[method](argument, tracksById);
+      }),
+    );
   }
 
   ipcMain.handle('performance-session-plan:get', async () =>
@@ -187,81 +159,40 @@ function registerPerformanceSessionPlanHandlers({
       }),
   );
 
-  ipcMain.handle(
-    'performance-session-plan:append-library-track',
-    async (_event, trackId) =>
-      run('append', () => {
-        const { store, tracksById } = operationContext();
-        return store.appendLibraryTrack(trackId, tracksById);
-      }),
-  );
-
-  ipcMain.handle(
-    'performance-session-plan:append-manual-item',
-    async (_event, intent) =>
-      run('append', () => {
-        const { store, tracksById } = operationContext();
-        return store.appendManualItem(intent, tracksById);
-      }),
-  );
-
-  ipcMain.handle(
-    'performance-session-plan:append-placeholders',
-    async (_event, text) =>
-      run('append', () => {
-        const { store, tracksById } = operationContext();
-        return store.appendPlaceholders(text, tracksById);
-      }),
-  );
-
-  ipcMain.handle(
-    'performance-session-plan:update-item',
-    async (_event, intent) =>
-      run('update', () => {
-        const { store, tracksById } = operationContext();
-        return store.updateItem(intent, tracksById);
-      }),
-  );
-
-  ipcMain.handle('performance-session-plan:move-item', async (_event, intent) =>
-    run('move', () => {
-      const { store, tracksById } = operationContext({ reuseRecentScan: true });
-      return store.moveItem(intent, tracksById);
-    }),
-  );
-
-  ipcMain.handle(
-    'performance-session-plan:duplicate-item',
-    async (_event, itemId) =>
-      run('duplicate', () => {
-        const { store, tracksById } = operationContext({
-          reuseRecentScan: true,
-        });
-        return store.duplicateItem(itemId, tracksById);
-      }),
-  );
-
-  ipcMain.handle(
-    'performance-session-plan:remove-item',
-    async (_event, itemId) =>
-      run('remove', () => {
-        const { store, tracksById } = operationContext({
-          reuseRecentScan: true,
-        });
-        return store.removeItem(itemId, tracksById);
-      }),
-  );
-
-  ipcMain.handle(
-    'performance-session-plan:set-review-cursor',
-    async (_event, itemId) =>
-      run('cursor', () => {
-        const { store, tracksById } = operationContext({
-          reuseRecentScan: true,
-        });
-        return store.setReviewCursor(itemId, tracksById);
-      }),
-  );
+  for (const [channel, operation, method, reuseRecentScan] of [
+    [
+      'performance-session-plan:append-library-track',
+      'append',
+      'appendLibraryTrack',
+    ],
+    [
+      'performance-session-plan:append-manual-item',
+      'append',
+      'appendManualItem',
+    ],
+    [
+      'performance-session-plan:append-placeholders',
+      'append',
+      'appendPlaceholders',
+    ],
+    ['performance-session-plan:update-item', 'update', 'updateItem'],
+    ['performance-session-plan:move-item', 'move', 'moveItem', true],
+    [
+      'performance-session-plan:duplicate-item',
+      'duplicate',
+      'duplicateItem',
+      true,
+    ],
+    ['performance-session-plan:remove-item', 'remove', 'removeItem', true],
+    [
+      'performance-session-plan:set-review-cursor',
+      'cursor',
+      'setReviewCursor',
+      true,
+    ],
+  ]) {
+    registerMutation(channel, operation, method, { reuseRecentScan });
+  }
 
   ipcMain.handle('performance-session-plan:clear', async () =>
     run('clear', () => {

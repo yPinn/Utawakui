@@ -3,34 +3,19 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
-const { isSafeTrackId } = require('./library/paths');
+const { isBoundedTrackId } = require('./library/paths');
+const { hasControlCharacters } = require('./textGuards');
 const limits = require('../../shared/playbackPersistenceValues.json');
 
 const PLAYBACK_HISTORY_LIMIT = 50;
 const PLAYBACK_QUEUE_LIMIT = limits.queueLimit;
 const PLAYBACK_PERSISTENCE_VERSION = 1;
-const MAX_TRACK_ID_LENGTH = 255;
 const MAX_SOURCE_TEXT_LENGTH = 255;
 const MAX_RESUME_POSITION_SECONDS = 7 * 24 * 60 * 60;
 const PLAYBACK_MODES = new Set(['sequence', 'repeat-list', 'repeat-one']);
 const HISTORY_FILENAME = 'playback-history.json';
 const RESUME_FILENAME = 'playback-resume.json';
 const USAGE_FILENAME = 'playback-usage.json';
-
-function hasControlCharacters(value) {
-  return [...value].some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint <= 0x1f || codePoint === 0x7f;
-  });
-}
-
-function isBoundedTrackId(value) {
-  return (
-    isSafeTrackId(value) &&
-    value.length <= MAX_TRACK_ID_LENGTH &&
-    !hasControlCharacters(value)
-  );
-}
 
 function validateTrackId(value) {
   if (!isBoundedTrackId(value)) throw new Error('invalid playback track id');

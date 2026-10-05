@@ -1,5 +1,7 @@
 'use strict';
 
+const { MBID_RE } = require('./identifiers');
+const { hasControlCharacters } = require('../textGuards');
 const packageMetadata = require('../../../package.json');
 const { readBoundedText } = require('../lrclib/client.js');
 const {
@@ -16,8 +18,6 @@ const DEFAULT_SEARCH_LIMIT = 8;
 const MAX_PROVIDER_RECORDS = 25;
 const MAX_QUERY_CHARS = 200;
 const MAX_CACHE_ENTRIES = 64;
-const MBID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const LUCENE_SPECIAL_RE = /([+\-&|!(){}[\]^"~*?:\\/])/gu;
 
 const sharedMusicBrainzScheduler = createProviderRequestScheduler({
@@ -28,21 +28,13 @@ function buildMusicBrainzUserAgent() {
   return `Utawakui/${packageMetadata.version} (${MUSICBRAINZ_PROJECT_URL})`;
 }
 
-function containsControlCharacter(value) {
-  for (const character of value) {
-    const code = character.codePointAt(0);
-    if (code <= 31 || code === 127) return true;
-  }
-  return false;
-}
-
 function validText(value, required = false) {
   if (value === undefined || value === null) return !required;
   return (
     typeof value === 'string' &&
     (!required || value.trim().length > 0) &&
     value.length <= MAX_QUERY_CHARS &&
-    !containsControlCharacter(value)
+    !hasControlCharacters(value)
   );
 }
 
@@ -112,7 +104,7 @@ function artistCreditText(value) {
     if (
       typeof joinPhrase === 'string' &&
       joinPhrase.length <= 30 &&
-      !containsControlCharacter(joinPhrase)
+      !hasControlCharacters(joinPhrase)
     ) {
       text += joinPhrase;
     }

@@ -1,6 +1,7 @@
 'use strict';
 
-const { isSafeTrackId } = require('../library/paths');
+const { isBoundedTrackId } = require('../library/paths');
+const { hasControlCharacters } = require('../textGuards');
 
 const MAX_QUEUE_ITEMS = 500;
 const ACTIVE_ITEM_STATUSES = new Set(['checking', 'running']);
@@ -16,13 +17,6 @@ const TERMINAL_ITEM_STATUSES = new Set([
 const PROGRESS_EMIT_INTERVAL_MS = 250;
 const CANCELLED_MESSAGE = 'audio-processing job cancelled';
 const CLEARABLE_ITEM_STATUSES = new Set(['completed', 'skipped']);
-
-function hasControlCharacters(value) {
-  return [...value].some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint <= 0x1f || codePoint === 0x7f;
-  });
-}
 
 function safeBoundedId(value, maxLength) {
   return (
@@ -44,11 +38,7 @@ function validateTrackIds(value) {
   const unique = [];
   const seen = new Set();
   for (const trackId of value) {
-    if (
-      !isSafeTrackId(trackId) ||
-      trackId.length > 255 ||
-      hasControlCharacters(trackId)
-    ) {
+    if (!isBoundedTrackId(trackId)) {
       throw new Error('invalid separation queue track ids');
     }
     if (seen.has(trackId)) continue;

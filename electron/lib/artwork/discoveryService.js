@@ -1,9 +1,11 @@
 'use strict';
 
+const { hasControlCharacters } = require('../textGuards');
 const { randomUUID } = require('crypto');
 const { createCoverArtArchiveClient } = require('../coverArtArchive/client.js');
 const { writeTrackArtworkBuffer } = require('../library/trackArtwork.js');
 const { createMusicBrainzClient } = require('../musicbrainz/client.js');
+const { musicBrainzEntityUrl } = require('../musicbrainz/identifiers.js');
 const { buildIdentityProfile } = require('../musicIdentity/profiles.js');
 const {
   buildIdentityQueryVariants,
@@ -41,20 +43,12 @@ const PROVIDER_FAILURE_REASONS = new Set([
   'unexpected-error',
 ]);
 
-function containsControlCharacter(value) {
-  for (const character of value) {
-    const code = character.codePointAt(0);
-    if (code <= 31 || code === 127) return true;
-  }
-  return false;
-}
-
 function validEdit(value) {
   return (
     value === undefined ||
     (typeof value === 'string' &&
       value.length <= MAX_QUERY_CHARS &&
-      !containsControlCharacter(value))
+      !hasControlCharacters(value))
   );
 }
 
@@ -450,7 +444,10 @@ function createArtworkDiscoveryService(options = {}) {
       signal: requestOptions.signal,
     });
     if (result.status === 'error') return result;
-    const sourcePage = `https://musicbrainz.org/${candidate.entityType}/${candidate.entityId}`;
+    const sourcePage = musicBrainzEntityUrl(
+      candidate.entityType,
+      candidate.entityId,
+    );
     const filename = writeArtwork(
       dir,
       trackId,
@@ -476,7 +473,7 @@ function createArtworkDiscoveryService(options = {}) {
   function sourcePage(trackId, candidateId) {
     const candidate = resolveCandidate(trackId, candidateId);
     return candidate
-      ? `https://musicbrainz.org/${candidate.entityType}/${candidate.entityId}`
+      ? musicBrainzEntityUrl(candidate.entityType, candidate.entityId)
       : null;
   }
 

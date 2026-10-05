@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { hasControlCharacters } = require('../textGuards');
 const {
   AUDIO_EXTENSIONS,
   IMAGE_EXTENSIONS,
@@ -67,6 +68,16 @@ function isSafeTrackId(trackId) {
   if (trackId === '.' || trackId === '..') return false;
   if (/^[A-Za-z]:/.test(trackId)) return false;
   return !path.isAbsolute(trackId) && !path.win32.isAbsolute(trackId);
+}
+
+// Track ids that cross IPC or persistence: safe as a path segment, bounded,
+// and free of control characters.
+function isBoundedTrackId(value, maxLength = 255) {
+  return (
+    isSafeTrackId(value) &&
+    value.length <= maxLength &&
+    !hasControlCharacters(value)
+  );
 }
 
 function resolveChildPath(root, childName) {
@@ -172,6 +183,7 @@ module.exports = {
   compareFilenames,
   trackIdFromFilename,
   isSafeTrackId,
+  isBoundedTrackId,
   resolveChildPath,
   resolveTrackDir,
   findFirstFile,

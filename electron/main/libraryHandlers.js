@@ -28,19 +28,7 @@ const {
   createArtworkDiscoveryService,
 } = require('../lib/artwork/discoveryService');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
-
-function isMusicBrainzSourcePage(value) {
-  try {
-    const url = new URL(value);
-    return (
-      url.protocol === 'https:' &&
-      url.hostname === 'musicbrainz.org' &&
-      /^\/(?:recording|release-group|release)\/[0-9a-f-]+$/iu.test(url.pathname)
-    );
-  } catch {
-    return false;
-  }
-}
+const { isMusicBrainzSourcePage } = require('../lib/musicbrainz/identifiers');
 
 async function backfillTrackInfoWithLyricsFallback(
   videoId,

@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../lib/thumbarIcons');
-const { isSafeTrackId } = require('../lib/library/paths');
+const { isBoundedTrackId } = require('../lib/library/paths');
 const {
   projectSeparationTaskbarProgress,
 } = require('./separationTaskbarProgress');
@@ -95,12 +95,7 @@ let separationTaskbarProgress = projectSeparationTaskbarProgress({
 });
 
 function normalizePlaybackTrackId(value) {
-  if (!isSafeTrackId(value) || value.length > 255) return null;
-  const hasControlCharacter = [...value].some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint <= 0x1f || codePoint === 0x7f;
-  });
-  return hasControlCharacter ? null : value;
+  return isBoundedTrackId(value) ? value : null;
 }
 
 function getCurrentPlaybackTrackId() {
