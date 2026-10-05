@@ -1,6 +1,6 @@
 import { deriveAlbumSummary } from './albumSummary.js';
 import { formatLongDuration } from './format.js';
-import { playlistDisplayName } from './playlistMenu.js';
+import { libraryViewTitle, playlistDisplayName } from './playlistMenu.js';
 import {
   sortSetlistLibraryTracks,
   sortSetlistLocalTracks,
@@ -61,7 +61,7 @@ function collectionIdentity(selectedPlaylist, libraryView) {
   return {
     collectionType: 'library',
     kindLabel: '本機曲庫',
-    title: libraryView === 'local' ? '本機曲目' : '全部曲目',
+    title: libraryViewTitle(libraryView),
   };
 }
 

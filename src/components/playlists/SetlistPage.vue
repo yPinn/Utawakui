@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { usePerformanceSessionWorkspace } from '../../composables/usePerformanceSessionWorkspace.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { libraryViewTitle } from '../../utils/playlistMenu.js';
 import SetlistView from '../../views/SetlistView.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
@@ -18,9 +19,7 @@ const pageMode = computed(() =>
 const showLibraryHeader = computed(
   () => !performanceSessionWorkspace.isOpen.value && !selectedPlaylist.value,
 );
-const pageTitle = computed(() =>
-  playlistState.libraryView === 'local' ? '本機曲目' : '全部曲目',
-);
+const pageTitle = computed(() => libraryViewTitle(playlistState.libraryView));
 const documentKey = computed(
   () => selectedPlaylist.value?.id ?? `library:${playlistState.libraryView}`,
 );

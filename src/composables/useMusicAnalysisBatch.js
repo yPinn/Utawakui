@@ -1,4 +1,5 @@
 import { computed, readonly, shallowRef } from 'vue';
+import { boundedCount, safeId } from '../utils/ipcPayloadGuards.js';
 
 const MAX_BATCH_TRACKS = 500;
 const BATCH_STATUSES = new Set([
@@ -18,32 +19,10 @@ const ITEM_STATUSES = new Set([
 ]);
 const ITEM_REASONS = new Set(['analysis-failed', 'unavailable-source']);
 
-function hasControlCharacters(value) {
-  return [...value].some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint <= 0x1f || codePoint === 0x7f;
-  });
-}
-
-function safeTrackId(value) {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= 255 &&
-    !value.includes('/') &&
-    !value.includes('\\') &&
-    !hasControlCharacters(value)
-  );
-}
-
-function boundedCount(value, total) {
-  return Number.isSafeInteger(value) && value >= 0 && value <= total;
-}
-
 function normalizeItem(value) {
   if (
     !value ||
-    !safeTrackId(value.trackId) ||
+    !safeId(value.trackId, 255) ||
     !ITEM_STATUSES.has(value.status)
   ) {
     return null;
@@ -110,7 +89,7 @@ function normalizeBatchStatus(payload) {
   }
   if (
     value.activeTrackId !== null &&
-    (!safeTrackId(value.activeTrackId) ||
+    (!safeId(value.activeTrackId, 255) ||
       !items.some(({ trackId }) => trackId === value.activeTrackId))
   ) {
     throw new Error('invalid music analysis batch status');

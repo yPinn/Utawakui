@@ -30,6 +30,11 @@ export function playlistDisplayName(playlist) {
   return playlist?.name || '(未命名歌單)';
 }
 
+// Title of the library destination shown when no collection is selected.
+export function libraryViewTitle(libraryView) {
+  return libraryView === 'local' ? '本機曲目' : '全部曲目';
+}
+
 // Playlists selectable as an "add to X" target: albums are always excluded
 // (their membership is read-only). excludeId drops the playlist itself
 // (PlaylistSidebar's "merge into another playlist" menu); excludeTrackId

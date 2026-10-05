@@ -1,4 +1,9 @@
 import { computed, readonly, shallowRef } from 'vue';
+import {
+  boundedCount,
+  hasControlCharacters,
+  safeId,
+} from '../utils/ipcPayloadGuards.js';
 
 const MAX_QUEUE_ITEMS = 500;
 const QUEUE_STATUSES = new Set(['idle', 'running', 'pausing', 'paused']);
@@ -14,28 +19,6 @@ const ITEM_STATUSES = new Set([
 const ACTIVE_ITEM_STATUSES = new Set(['checking', 'running']);
 const ITEM_REASONS = new Set(['source-unavailable', 'processing-failed']);
 const RECIPE_IDS = new Set(['quick', 'general']);
-
-function hasControlCharacters(value) {
-  return [...value].some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint <= 0x1f || codePoint === 0x7f;
-  });
-}
-
-function safeId(value, maxLength) {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= maxLength &&
-    !value.includes('/') &&
-    !value.includes('\\') &&
-    !hasControlCharacters(value)
-  );
-}
-
-function boundedCount(value, total) {
-  return Number.isSafeInteger(value) && value >= 0 && value <= total;
-}
 
 function normalizeItem(value) {
   if (

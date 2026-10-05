@@ -45,8 +45,8 @@ describe('UiButton destructive consumers', () => {
   );
 
   it('keeps collection deletion in a danger menu item with confirmation in its action owner', () => {
-    const setlist = source('../../views/SetlistView.vue');
-    expect(setlist).toMatch(
+    const collectionMenu = source('../../utils/collectionMenuItems.js');
+    expect(collectionMenu).toMatch(
       /key: 'delete',[\s\S]*?danger: true,[\s\S]*?action: PLAYLIST_MENU_ACTIONS\.delete/u,
     );
     expect(source('../../composables/usePlaylistActions.js')).toContain(

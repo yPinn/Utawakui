@@ -1,30 +1,26 @@
 <script setup>
 // Nav rows are bespoke; UiButton semantics do not match this full-row list.
 import {
-  Disc3,
   FolderOpen,
   FolderPlus,
   ICON_SIZE,
   Library,
   ListEnd,
-  ListMusic,
   ListPlus,
-  Pencil,
   Plus,
   Search,
-  Trash2,
 } from '../../icons/index.js';
 import { computed, ref, shallowRef } from 'vue';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
-import { deriveAlbumSummary } from '../../utils/albumSummary.js';
-import {
-  PLAYLIST_MENU_ACTIONS,
-  collectionAddToPlaylistItems,
-} from '../../utils/playlistMenu.js';
+import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
+import {
+  addToPlaylistMenuItem,
+  collectionManageMenuItems,
+} from '../../utils/collectionMenuItems.js';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 
@@ -96,7 +92,7 @@ const hasSearchQuery = computed(() => normalizedSearchQuery.value.length > 0);
 // Album subtitle uses derived artist; mixed playlists show kind only.
 function subtitleFor(playlist) {
   if (playlist.kind !== 'album') return '播放清單';
-  const { artist } = deriveAlbumSummary(memberTracksFor(playlist));
+  const artist = orderedPlaylists.value.albumArtistById.get(playlist.id);
   return artist ? `專輯・${artist}` : '專輯';
 }
 
@@ -156,13 +152,6 @@ function createCollectionItems() {
   ];
 }
 
-// Albums are excluded because their membership is read-only.
-function addToPlaylistChildren(playlist) {
-  return collectionAddToPlaylistItems(state.playlists, playlist.id).map(
-    (item) => (item.key === 'create-playlist' ? { ...item, icon: Plus } : item),
-  );
-}
-
 const menuItems = computed(() => {
   const context = menuContext.value;
   if (!context) return [];
@@ -189,48 +178,14 @@ const menuItems = computed(() => {
   // `children` entirely rather than showing a disabled trigger that still
   // pops an empty submenu.
   if (playlist.trackIds.length > 0) {
-    items.push({
-      key: 'add-to-playlist',
-      label: '新增至別的播放清單',
-      icon: ListPlus,
-      children: addToPlaylistChildren(playlist),
-      submenuWidth: 240,
-    });
+    items.push(
+      addToPlaylistMenuItem(state.playlists, playlist, '新增至別的播放清單'),
+    );
   }
 
   items.push(
     { key: 'manage-divider', separator: true },
-    {
-      key: 'edit-details',
-      label: '編輯詳細資料',
-      icon: Pencil,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.editDetails,
-        playlistId: playlist.id,
-      },
-    },
-    {
-      key: 'convert-kind',
-      label: isAlbum ? '轉為播放清單' : '轉為專輯',
-      icon: isAlbum ? ListMusic : Disc3,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.convertKind,
-        playlistId: playlist.id,
-      },
-    },
-    {
-      key: 'delete',
-      // An album isn't something the user authored — "移除" (remove from
-      // your library), not "刪除" (delete), matches the same distinction
-      // Spotify draws between a saved album and a playlist you own.
-      label: isAlbum ? '移除' : '刪除',
-      icon: Trash2,
-      danger: true,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.delete,
-        playlistId: playlist.id,
-      },
-    },
+    ...collectionManageMenuItems(playlist),
   );
 
   // Global "create a new one" actions, unrelated to the specific row being

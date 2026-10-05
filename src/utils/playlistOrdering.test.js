@@ -105,10 +105,28 @@ describe('orderPlaylistsForDisplay', () => {
     expect(orderPlaylistsForDisplay([], new Map())).toEqual({
       playlistItems: [],
       albumItems: [],
+      albumArtistById: new Map(),
     });
     expect(orderPlaylistsForDisplay(undefined, undefined)).toEqual({
       playlistItems: [],
       albumItems: [],
+      albumArtistById: new Map(),
     });
+  });
+
+  it('exposes the derived album artist used for ordering', () => {
+    const tracksById = new Map([['t1', { id: 't1', artist: 'Aimer' }]]);
+    const { albumArtistById } = orderPlaylistsForDisplay(
+      [
+        { id: 'a1', kind: 'album', name: 'A', trackIds: ['t1'] },
+        { id: 'a2', kind: 'album', name: 'B', trackIds: [] },
+        { id: 'p1', kind: 'playlist', name: 'P', trackIds: ['t1'] },
+      ],
+      tracksById,
+    );
+    expect([...albumArtistById]).toEqual([
+      ['a2', ''],
+      ['a1', 'Aimer'],
+    ]);
   });
 });

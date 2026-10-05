@@ -135,12 +135,7 @@ function addPlaylistToQueue(playlistId) {
   const playlist = playlistState.playlists.find(
     (item) => item.id === playlistId,
   );
-  if (!playlist) return;
-
-  for (const trackId of playlist.trackIds) {
-    const track = tracksById.value.get(trackId);
-    if (track) enqueueTrack(track);
-  }
+  for (const track of resolvePlaylistTracks(playlist)) enqueueTrack(track);
 }
 
 async function handlePlaylistMenuAction(value) {

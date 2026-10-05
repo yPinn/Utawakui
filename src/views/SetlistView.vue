@@ -1,13 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
-import {
-  Disc3,
-  ListMusic,
-  ListPlus,
-  Pencil,
-  Plus,
-  Trash2,
-} from '../icons/index.js';
+import { Trash2 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useCollectionPlayback } from '../composables/useCollectionPlayback.js';
@@ -20,6 +13,11 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
+import {
+  addToPlaylistChildren,
+  addToPlaylistMenuItem,
+  collectionManageMenuItems,
+} from '../utils/collectionMenuItems.js';
 import AppFolderContentField from '../components/layout/AppFolderContentField.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue';
@@ -33,9 +31,8 @@ import UiNotice from '../components/ui/UiNotice.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatLongDuration } from '../utils/format.js';
 import {
-  PLAYLIST_MENU_ACTIONS,
   TRACK_MENU_ACTIONS,
-  collectionAddToPlaylistItems,
+  libraryViewTitle,
   playlistDisplayName,
 } from '../utils/playlistMenu.js';
 import {
@@ -158,9 +155,6 @@ const collectionPlaybackTracks = computed(() =>
   orderedPlaylistEntries.value.map(({ track }) => track),
 );
 
-// UiCollageThumb.vue does its own first-4 slicing — passed the full list so
-// it stays the single place deciding how many tracks a collage shows.
-const playlistCoverTracks = computed(() => playlistTracks.value);
 const playlistCoverUrl = computed(() => selectedPlaylist.value?.coverUrl ?? '');
 const playlistDescription = computed(
   () => selectedPlaylist.value?.description ?? '',
@@ -214,9 +208,7 @@ const playlistArtist = computed(() => albumSummary.value.artist ?? '');
 const pageTitle = computed(() =>
   selectedPlaylist.value
     ? playlistDisplayName(selectedPlaylist.value)
-    : isLocalLibraryView.value
-      ? '本機曲目'
-      : '全部曲目',
+    : libraryViewTitle(playlistState.libraryView),
 );
 
 const selectedCollectionPlaybackContext = computed(() => ({
@@ -231,66 +223,31 @@ const selectedCollectionShuffleActive = computed(() =>
   collectionPlayback.isShuffleActive(selectedPlaylist.value?.id),
 );
 
-const addToPlaylistItems = computed(() => {
-  const playlist = selectedPlaylist.value;
-  if (!playlist) return [];
-  return collectionAddToPlaylistItems(playlistState.playlists, playlist.id).map(
-    (item) => (item.key === 'create-playlist' ? { ...item, icon: Plus } : item),
-  );
-});
+const addToPlaylistItems = computed(() =>
+  selectedPlaylist.value
+    ? addToPlaylistChildren(playlistState.playlists, selectedPlaylist.value.id)
+    : [],
+);
 
 const collectionMoreItems = computed(() => {
   const playlist = selectedPlaylist.value;
   if (!playlist) return [];
-  const isAlbum = playlist.kind === 'album';
-  const items = [];
-
-  if (playlistTracks.value.length > 0) {
-    items.push({
-      key: 'add-to-playlist',
-      label: isAlbum ? '新增專輯至播放清單' : '新增至別的播放清單',
-      icon: ListPlus,
-      children: addToPlaylistItems.value,
-      submenuWidth: 240,
-    });
-  }
-
-  items.push(
-    ...(items.length > 0 ? [{ key: 'manage-divider', separator: true }] : []),
-    {
-      key: 'edit-details',
-      label: '編輯詳細資料',
-      icon: Pencil,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.editDetails,
-        playlistId: playlist.id,
-      },
-    },
-    {
-      key: 'convert-kind',
-      label: isAlbum ? '轉為播放清單' : '轉為專輯',
-      icon: isAlbum ? ListMusic : Disc3,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.convertKind,
-        playlistId: playlist.id,
-      },
-    },
-    {
-      key: 'delete',
-      label: isAlbum ? '移除' : '刪除',
-      icon: Trash2,
-      danger: true,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.delete,
-        playlistId: playlist.id,
-      },
-    },
-  );
-  return items;
+  const manageItems = collectionManageMenuItems(playlist);
+  if (playlistTracks.value.length === 0) return manageItems;
+  const addLabel =
+    playlist.kind === 'album' ? '新增專輯至播放清單' : '新增至別的播放清單';
+  return [
+    addToPlaylistMenuItem(playlistState.playlists, playlist, addLabel),
+    { key: 'manage-divider', separator: true },
+    ...manageItems,
+  ];
 });
 
 const canDragPlaylistRows = computed(
-  () => playlistSort.value.key === null && !isAlbumSelected.value,
+  () =>
+    Boolean(selectedPlaylist.value) &&
+    playlistSort.value.key === null &&
+    !isAlbumSelected.value,
 );
 const queuedTrackIds = computed(() =>
   queueState.queuedTracks.map((track) => track.id),
@@ -323,16 +280,9 @@ const contentFieldVariant = computed(() => {
   ) {
     return 'state';
   }
-  if (mode.value === 'all') {
-    return visibleTracks.value.length === 0 ? 'state' : 'content';
-  }
-  if (
-    playlistTracks.value.length === 0 ||
-    visiblePlaylistEntries.value.length === 0
-  ) {
-    return 'state';
-  }
-  return 'content';
+  const rows =
+    mode.value === 'all' ? visibleTracks.value : visiblePlaylistEntries.value;
+  return rows.length > 0 ? 'content' : 'state';
 });
 
 // Selecting a different playlist/library-view (both now live in the shared
@@ -475,10 +425,6 @@ function reorderTrack(draggedId, targetId, position) {
   setPlaylistTracksAction(playlist.id, next);
 }
 
-function canDragThisPlaylistRow() {
-  return Boolean(selectedPlaylist.value) && canDragPlaylistRows.value;
-}
-
 const {
   draggingId: draggingTrackId,
   dropTargetId: dropTargetTrackId,
@@ -490,7 +436,7 @@ const {
   clearDragState,
 } = useDragReorder({
   onReorder: reorderTrack,
-  canDrag: canDragThisPlaylistRow,
+  canDrag: () => canDragPlaylistRows.value,
 });
 
 // closeAddMenu() is a caller-side side effect (dismiss any open context
@@ -500,7 +446,7 @@ const {
 // order (closing the menu on a rejected drag start would be an observable
 // behavior change, not a pure refactor).
 function startDrag(track, event) {
-  if (!canDragThisPlaylistRow()) {
+  if (!canDragPlaylistRows.value) {
     event.preventDefault();
     return;
   }
@@ -580,7 +526,7 @@ onMounted(async () => {
             :title="pageTitle"
             :artist="playlistArtist"
             :meta="playlistMeta"
-            :cover-tracks="playlistCoverTracks"
+            :cover-tracks="playlistTracks"
             :cover-url="playlistCoverUrl"
             :description="playlistDescription"
             :playing="selectedCollectionIsPlaying"

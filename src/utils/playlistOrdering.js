@@ -45,6 +45,10 @@ export function orderPlaylistsForDisplay(playlists, tracksById) {
     });
   });
   const albumItems = withSummary.map((entry) => entry.playlist);
+  // Exposed so callers can label albums without re-deriving each summary.
+  const albumArtistById = new Map(
+    withSummary.map((entry) => [entry.playlist.id, entry.artist]),
+  );
 
-  return { playlistItems, albumItems };
+  return { playlistItems, albumItems, albumArtistById };
 }

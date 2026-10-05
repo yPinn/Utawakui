@@ -15,6 +15,7 @@ const props = defineProps({
   titleId: { type: String, default: 'collection-title' },
   artist: { type: String, default: '' },
   meta: { type: String, default: '' },
+  // Full list: UiCollageThumb alone decides how many tracks a collage shows.
   coverTracks: { type: Array, default: () => [] },
   coverUrl: { type: String, default: '' },
   description: { type: String, default: '' },

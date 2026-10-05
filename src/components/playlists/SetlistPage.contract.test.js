@@ -59,8 +59,8 @@ describe('Setlist page composition', () => {
   it('uses the bounded field variant only for loading, error, and empty states', () => {
     expect(viewSource).toContain('const contentFieldVariant = computed(');
     expect(viewSource).toContain(':variant="contentFieldVariant"');
-    expect(viewSource).toContain("return 'state'");
-    expect(viewSource).toContain("return 'content'");
+    expect(viewSource).toContain("'state'");
+    expect(viewSource).toContain("'content'");
   });
 
   it('routes Setlist through its page owner instead of the generic page wrapper', () => {
