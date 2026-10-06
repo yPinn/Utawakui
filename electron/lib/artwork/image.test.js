@@ -66,6 +66,35 @@ describe('artwork image validation', () => {
     expect(fetch.mock.calls[0][1].redirect).toBe('manual');
   });
 
+  it('applies a consumer allowlist to the first URL and every redirect', async () => {
+    const isAllowedUrl = (value) =>
+      new URL(value).hostname === 'yt3.googleusercontent.com';
+    const fetch = vi.fn().mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { Location: 'https://coverartarchive.org/front.png' },
+      }),
+    );
+
+    await expect(
+      downloadValidatedArtwork('https://coverartarchive.org/release/x/front', {
+        fetch,
+        isAllowedUrl,
+      }),
+    ).resolves.toEqual({ status: 'error', reason: 'url-not-allowed' });
+    await expect(
+      downloadValidatedArtwork('https://yt3.googleusercontent.com/avatar', {
+        fetch,
+        isAllowedUrl,
+      }),
+    ).resolves.toEqual({ status: 'error', reason: 'redirect-not-allowed' });
+    await expect(
+      downloadValidatedArtwork('https://yt3.googleusercontent.com/avatar', {
+        fetch,
+      }),
+    ).resolves.toEqual({ status: 'error', reason: 'url-not-allowed' });
+  });
+
   it('rejects disallowed redirects, MIME mismatch, unsafe dimensions, and declared oversize bodies', async () => {
     const disallowed = vi.fn().mockResolvedValue(
       new Response(null, {

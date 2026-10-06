@@ -369,6 +369,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: (options) => ipcRenderer.invoke('library:list', options),
+  getArtistIndex: () => ipcRenderer.invoke('library:get-artist-index'),
+  resolveArtistPhoto: (artistId) =>
+    ipcRenderer.invoke('library:resolve-artist-photo', artistId),
+  chooseArtistPhoto: (artistId) =>
+    ipcRenderer.invoke('library:choose-artist-photo', artistId),
+  clearArtistPhoto: (artistId) =>
+    ipcRenderer.invoke('library:clear-artist-photo', artistId),
   getLibraryStorage: () => ipcRenderer.invoke('library-storage:get'),
   setLibraryStoragePolicy: (policy) =>
     ipcRenderer.invoke(

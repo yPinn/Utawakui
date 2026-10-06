@@ -172,7 +172,10 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
   if (typeof fetchFn !== 'function') {
     return { status: 'error', reason: 'fetch-unavailable' };
   }
-  if (!isAllowedCoverArtUrl(urlValue)) {
+  // Each consumer passes its own fixed host allowlist; every redirect hop is
+  // checked against the same predicate.
+  const isAllowedUrl = options.isAllowedUrl ?? isAllowedCoverArtUrl;
+  if (!isAllowedUrl(urlValue)) {
     return { status: 'error', reason: 'url-not-allowed' };
   }
   const timeoutMs = options.timeoutMs ?? DEFAULT_IMAGE_TIMEOUT_MS;
@@ -220,7 +223,7 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
       } catch {
         return { status: 'error', reason: 'invalid-redirect' };
       }
-      if (!isAllowedCoverArtUrl(nextUrl.href)) {
+      if (!isAllowedUrl(nextUrl.href)) {
         return { status: 'error', reason: 'redirect-not-allowed' };
       }
       currentUrl = nextUrl;
@@ -260,5 +263,6 @@ module.exports = {
   MAX_ARTWORK_PIXELS,
   MIN_ARTWORK_DIMENSION,
   downloadValidatedArtwork,
+  hasValidArtworkDimensions: validDimensions,
   inspectArtworkImage,
 };

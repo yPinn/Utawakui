@@ -27,6 +27,11 @@ const { isFeatureGateEnabled } = require('../lib/featureGates');
 const {
   createArtworkDiscoveryService,
 } = require('../lib/artwork/discoveryService');
+const { createArtistIndexCache } = require('../lib/artists/artistIndex');
+const {
+  createArtistPhotoService,
+} = require('../lib/artists/artistPhotoService');
+const { isArtistId } = require('../lib/artists/artistPhotos');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const { isMusicBrainzSourcePage } = require('../lib/musicbrainz/identifiers');
 
@@ -99,6 +104,8 @@ function registerLibraryHandlers({
   createArtworkService = createArtworkDiscoveryService,
   enqueueMusicAnalysis = () => false,
   enforceLibraryStoragePolicy = async () => undefined,
+  artistIndexCache = createArtistIndexCache(),
+  artistPhotoService = createArtistPhotoService({ artistIndexCache }),
   recordDiagnostic,
 }) {
   const resolvedArtworkDiscoveryService =
@@ -172,6 +179,99 @@ function registerLibraryHandlers({
         });
     }
     return tracks;
+  });
+
+  // Derived, read-only artist grouping (ADR 0022); never triggers backfill.
+  ipcMain.handle('library:get-artist-index', async () => {
+    const dir = resolveDownloadDir(getConfig());
+    return artistIndexCache.getIndex(dir, listLibraryTracks(dir));
+  });
+
+  // Automatic artist photo from the artist's official YouTube channel. A closed
+  // provider gate is an expected state, not a diagnostic failure.
+  ipcMain.handle('library:resolve-artist-photo', async (event, artistId) => {
+    if (!isArtistId(artistId)) {
+      return { status: 'error', reason: 'invalid-artist' };
+    }
+    if (!isFeatureGateEnabled(getConfig(), featureIds.PROVIDER_FLOW)) {
+      return { status: 'disabled' };
+    }
+    const dir = resolveDownloadDir(getConfig());
+    try {
+      return await artistPhotoService.resolveFromChannel(
+        dir,
+        listLibraryTracks(dir),
+        artistId,
+        { getRunner: getProviderRunner },
+      );
+    } catch (error) {
+      try {
+        recordDiagnostic?.({
+          process: 'main',
+          level: 'warning',
+          source: 'artist-photo',
+          operation: 'resolve',
+          code: 'ARTIST_PHOTO_RESOLVE_FAILED',
+          error,
+        });
+      } catch {
+        // Diagnostics are fail-open and must not block the artist page.
+      }
+      return { status: 'unavailable', reason: 'provider-unavailable' };
+    }
+  });
+
+  ipcMain.handle('library:choose-artist-photo', async (event, artistId) => {
+    if (!isArtistId(artistId)) {
+      return { status: 'error', reason: 'invalid-artist' };
+    }
+    const dir = resolveDownloadDir(getConfig());
+    const result = await dialog.showOpenDialog(getMainWindow(), {
+      properties: ['openFile'],
+      filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+    });
+    if (result.canceled || !result.filePaths[0]) return { status: 'cancelled' };
+    return runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'artist-photo',
+          operation: 'choose',
+          code: 'ARTIST_PHOTO_CHOOSE_FAILED',
+        },
+        publicError: {
+          code: 'ARTIST_PHOTO_CHOOSE_FAILED',
+          title: '藝人照片無法更新',
+          message: '這張圖片無法作為藝人照片，請換一張再試。',
+          context: { retryable: true },
+        },
+      },
+      () => artistPhotoService.chooseLocal(dir, artistId, result.filePaths[0]),
+    );
+  });
+
+  ipcMain.handle('library:clear-artist-photo', async (event, artistId) => {
+    if (!isArtistId(artistId)) {
+      return { status: 'error', reason: 'invalid-artist' };
+    }
+    const dir = resolveDownloadDir(getConfig());
+    return runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'artist-photo',
+          operation: 'clear',
+          code: 'ARTIST_PHOTO_CLEAR_FAILED',
+        },
+        publicError: {
+          code: 'ARTIST_PHOTO_CLEAR_FAILED',
+          title: '藝人照片無法移除',
+          message: '目前無法移除這張藝人照片，請再試一次。',
+          context: { retryable: true },
+        },
+      },
+      () => artistPhotoService.clear(dir, artistId),
+    );
   });
 
   // Manual, user-triggered offline maintenance. It re-projects saved provider

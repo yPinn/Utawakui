@@ -1,8 +1,44 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import {
   extractMetadataFields,
   extractMetadataMaintenanceFields,
+  extractPerformerCredits,
 } from './ytdlpInfo.js';
+
+const creditCorpus = JSON.parse(
+  readFileSync(
+    new URL('./fixtures/artistCredits/credit-corpus.json', import.meta.url),
+    'utf8',
+  ),
+);
+
+// Locks the current library artist projection before ADR 0022 builds on it.
+describe('artist credit corpus', () => {
+  it.each(creditCorpus.cases.map((entry) => [entry.id, entry]))(
+    '%s projects the recorded library artist',
+    (_id, entry) => {
+      expect(extractMetadataFields(entry.info).artist).toBe(
+        entry.expected.libraryArtist,
+      );
+    },
+  );
+
+  // phase-6 cases record a target attribution that is not implemented yet.
+  it.each(
+    creditCorpus.cases
+      .filter((entry) => !entry.tags.includes('phase-6'))
+      .map((entry) => [entry.id, entry]),
+  )('%s keeps ordered performer parts', (_id, entry) => {
+    expect(extractPerformerCredits(entry.info)).toEqual(
+      entry.expected.performers,
+    );
+  });
+
+  it('returns no parts when the info has no artist evidence', () => {
+    expect(extractPerformerCredits({ title: 'Untitled' })).toEqual([]);
+  });
+});
 
 describe('extractMetadataFields', () => {
   it('returns the normalized projection beside the previous provider projection for maintenance', () => {

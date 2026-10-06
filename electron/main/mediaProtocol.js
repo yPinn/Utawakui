@@ -7,6 +7,7 @@ const {
   resolveSeparationResultPath,
   resolveTrackPath,
 } = require('../lib/library');
+const { resolveArtistPhotoPath } = require('../lib/artists/artistPhotos');
 const { MEDIA_SCHEME } = require('./mediaScheme');
 
 // Serves local audio files to the sandboxed renderer (nodeIntegration:
@@ -15,7 +16,8 @@ const { MEDIA_SCHEME } = require('./mediaScheme');
 // (`<trackId>/<assetFilename>`, resolveTrackAssetPath) or a 3-segment
 // separation-result request (`<trackId>/separations/<presetId>.wav`,
 // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
-// cover image (resolvePlaylistCoverPath); 'local' resolves legacy
+// cover image (resolvePlaylistCoverPath); 'artist-photo' resolves the one
+// recorded artist photo (resolveArtistPhotoPath); 'local' resolves legacy
 // pre-migration audio through resolveTrackPath. Every hostname and segment
 // count is allowlisted before a filesystem resolver sees it.
 function notFoundResponse() {
@@ -40,6 +42,7 @@ function registerMediaProtocol({
   resolveSeparationResultPath:
     resolveSeparationPath = resolveSeparationResultPath,
   resolveTrackPath: resolveLegacyTrackPath = resolveTrackPath,
+  resolveArtistPhotoPath: resolvePhotoPath = resolveArtistPhotoPath,
 }) {
   protocol.handle(MEDIA_SCHEME, (request) => {
     const url = new URL(request.url);
@@ -69,6 +72,10 @@ function registerMediaProtocol({
       if (segments.length !== 2) return notFoundResponse();
       const [playlistId, coverFilename] = segments;
       filePath = resolveCoverPath(dir, playlistId, coverFilename);
+    } else if (url.hostname === 'artist-photo') {
+      if (segments.length !== 2) return notFoundResponse();
+      const [artistId, photoFilename] = segments;
+      filePath = resolvePhotoPath(dir, artistId, photoFilename);
     } else if (url.hostname === 'local') {
       if (segments.length !== 1) return notFoundResponse();
       filePath = resolveLegacyTrackPath(dir, segments[0]);

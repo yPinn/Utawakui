@@ -120,6 +120,141 @@ describe('library metadata maintenance handlers', () => {
     expect(runLibraryBackfill).not.toHaveBeenCalled();
   });
 
+  it('derives the artist index from the current library without backfill', async () => {
+    const tracks = [{ id: 'a', artist: 'Aimer' }];
+    const listLibraryTracks = vi.fn().mockReturnValue(tracks);
+    const runLibraryBackfill = vi.fn().mockResolvedValue(0);
+    const index = { artists: [], trackArtistIds: {} };
+    const artistIndexCache = { getIndex: vi.fn().mockResolvedValue(index) };
+    const handlers = registerHandlers({
+      listLibraryTracks,
+      runLibraryBackfill,
+      artistIndexCache,
+    });
+
+    await expect(handlers.get('library:get-artist-index')()).resolves.toBe(
+      index,
+    );
+    expect(artistIndexCache.getIndex).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+    );
+    expect(runLibraryBackfill).not.toHaveBeenCalled();
+  });
+
+  it('resolves artist photos only for valid ids behind the provider gate', async () => {
+    const tracks = [{ id: 'a', artist: 'Ado' }];
+    const artistPhotoService = {
+      resolveFromChannel: vi
+        .fn()
+        .mockResolvedValue({ status: 'ok', changed: true }),
+    };
+    const getProviderRunner = vi.fn();
+    const handlers = registerHandlers({
+      listLibraryTracks: vi.fn().mockReturnValue(tracks),
+      artistPhotoService,
+      getProviderRunner,
+    });
+    const resolve = handlers.get('library:resolve-artist-photo');
+
+    await expect(resolve(null, '../escape')).resolves.toEqual({
+      status: 'error',
+      reason: 'invalid-artist',
+    });
+    await expect(resolve(null, 'artist-0123456789abcdef')).resolves.toEqual({
+      status: 'ok',
+      changed: true,
+    });
+    expect(artistPhotoService.resolveFromChannel).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+      'artist-0123456789abcdef',
+      { getRunner: getProviderRunner },
+    );
+
+    const closed = registerHandlers({
+      artistPhotoService,
+      getConfig: () => ({}),
+    });
+    await expect(
+      closed.get('library:resolve-artist-photo')(
+        null,
+        'artist-0123456789abcdef',
+      ),
+    ).resolves.toEqual({ status: 'disabled' });
+    expect(artistPhotoService.resolveFromChannel).toHaveBeenCalledTimes(1);
+  });
+
+  it('records an unexpected photo failure server-side with a bounded result', async () => {
+    const recordDiagnostic = vi.fn();
+    const handlers = registerHandlers({
+      recordDiagnostic,
+      artistPhotoService: {
+        resolveFromChannel: vi
+          .fn()
+          .mockRejectedValue(new Error('EACCES /private/library')),
+      },
+    });
+    await expect(
+      handlers.get('library:resolve-artist-photo')(
+        null,
+        'artist-0123456789abcdef',
+      ),
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'provider-unavailable',
+    });
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'artist-photo',
+        code: 'ARTIST_PHOTO_RESOLVE_FAILED',
+      }),
+    );
+  });
+
+  it('chooses and clears artist photos through main-owned paths', async () => {
+    const artistPhotoService = {
+      chooseLocal: vi.fn().mockReturnValue({ status: 'ok', changed: true }),
+      clear: vi.fn().mockReturnValue({ status: 'ok', changed: true }),
+    };
+    const dialog = {
+      showOpenDialog: vi
+        .fn()
+        .mockResolvedValueOnce({ canceled: true, filePaths: [] })
+        .mockResolvedValueOnce({
+          canceled: false,
+          filePaths: ['C:\\pictures\\ado.png'],
+        }),
+    };
+    const handlers = registerHandlers({ artistPhotoService, dialog });
+    const choose = handlers.get('library:choose-artist-photo');
+
+    await expect(choose(null, 'artist-0123456789abcdef')).resolves.toEqual({
+      status: 'cancelled',
+    });
+    await expect(choose(null, 'artist-0123456789abcdef')).resolves.toEqual({
+      status: 'ok',
+      changed: true,
+    });
+    expect(artistPhotoService.chooseLocal).toHaveBeenCalledWith(
+      'library-dir',
+      'artist-0123456789abcdef',
+      'C:\\pictures\\ado.png',
+    );
+    await expect(choose(null, 'C:\\evil')).resolves.toEqual({
+      status: 'error',
+      reason: 'invalid-artist',
+    });
+    expect(dialog.showOpenDialog).toHaveBeenCalledTimes(2);
+
+    await expect(
+      handlers.get('library:clear-artist-photo')(
+        null,
+        'artist-0123456789abcdef',
+      ),
+    ).resolves.toEqual({ status: 'ok', changed: true });
+  });
+
   it('does not project an unavailable library as an empty track list', async () => {
     const failure = new Error('library unavailable');
     const listLibraryTracks = vi.fn().mockReturnValue([]);

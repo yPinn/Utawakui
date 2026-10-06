@@ -6,6 +6,7 @@ const library = vi.hoisted(() => ({
   resolveSeparationResultPath: vi.fn(),
   resolveTrackAssetPath: vi.fn(),
   resolveTrackPath: vi.fn(),
+  resolveArtistPhotoPath: vi.fn(),
 }));
 
 vi.mock('../lib/library', () => library);
@@ -32,6 +33,7 @@ function setup() {
     resolveSeparationResultPath: library.resolveSeparationResultPath,
     resolveTrackAssetPath: library.resolveTrackAssetPath,
     resolveTrackPath: library.resolveTrackPath,
+    resolveArtistPhotoPath: library.resolveArtistPhotoPath,
   });
   return { getConfig, handler, protocol, resolveDownloadDir };
 }
@@ -54,6 +56,7 @@ beforeEach(() => {
   );
   library.resolvePlaylistCoverPath.mockReturnValue('E:\\Library\\cover.webp');
   library.resolveTrackPath.mockReturnValue('E:\\Library\\legacy.mp3');
+  library.resolveArtistPhotoPath.mockReturnValue('E:\\Library\\photo.jpg');
 });
 
 describe('registerMediaProtocol', () => {
@@ -105,6 +108,17 @@ describe('registerMediaProtocol', () => {
       'cover art.webp',
     );
 
+    handler(
+      request(
+        'utawakui-media://artist-photo/artist-0123456789abcdef/photo.jpg?v=1',
+      ),
+    );
+    expect(library.resolveArtistPhotoPath).toHaveBeenCalledWith(
+      'E:\\Library',
+      'artist-0123456789abcdef',
+      'photo.jpg',
+    );
+
     handler(request('utawakui-media://local/legacy%20song.mp3'));
     expect(library.resolveTrackPath).toHaveBeenCalledWith(
       'E:\\Library',
@@ -117,6 +131,8 @@ describe('registerMediaProtocol', () => {
     'utawakui-media://track/id/audio.wav/ignored',
     'utawakui-media://track/id/separations/preset.wav/ignored',
     'utawakui-media://playlist-cover/id/cover.webp/ignored',
+    'utawakui-media://artist-photo/artist-0123456789abcdef',
+    'utawakui-media://artist-photo/id/photo.jpg/ignored',
     'utawakui-media://local/file.mp3/ignored',
     'utawakui-media://track/%E0%A4%A/audio.wav',
   ])('fails closed for a non-allowlisted route: %s', (url) => {
@@ -129,6 +145,7 @@ describe('registerMediaProtocol', () => {
     expect(library.resolveSeparationResultPath).not.toHaveBeenCalled();
     expect(library.resolvePlaylistCoverPath).not.toHaveBeenCalled();
     expect(library.resolveTrackPath).not.toHaveBeenCalled();
+    expect(library.resolveArtistPhotoPath).not.toHaveBeenCalled();
     expect(library.buildRangeResponse).not.toHaveBeenCalled();
   });
 
