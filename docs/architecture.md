@@ -478,6 +478,14 @@ pause 投影 `track-paused` 並恢復手動 BGM Play，但不自動播放；buff
 performance lane lock。BGM 不進 Queue、history、resume、Output、SMTC 或 taskbar transport；OBS capture
 routing 尚未由 App 擁有，完整決策見 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
 
+同一 coordinator 也仲裁第三條、最低優先的曲目試聽 lane：`acquirePreview()` 回傳可被搶占的 lease，
+`audibleLane` 值域含 `preview`；演唱 start、BGM play、session 進入 record／live 都會先搶占試聽，
+試聽持有 lane 時不做任何自動 BGM 恢復。`useBgmSession` 的 `acquirePreviewLane()` 先以
+`usePlayer.cancelPendingStart()` 丟棄待開始的演唱並 pause，再交給 coordinator；record／live 期間
+直接拒絕且不碰演唱播放器。試聽 owner 是 `useTrackPreview.js`（自有 audio element，播放原始音訊、
+只監聽），`TrackPreviewOverlay.vue` 只投影狀態並以 `track-preview` surface 提供自己的 overlay host，
+入口在 CollectionActionRail，由 `SetlistView.vue` 接線，見 [曲目試聽契約](contracts/track-preview.md)。
+
 節拍器由 `useMetronome.js` 擁有 session state，並以獨立 AudioContext 與 lookahead
 scheduler 發聲，不接入 player monitor／capture graph。`useMetronomeTrackTempo.js` 是唯一
 曲目分析接線：只接受既有 confidence gate 通過的 tempo，且在節拍器停止、使用者尚未

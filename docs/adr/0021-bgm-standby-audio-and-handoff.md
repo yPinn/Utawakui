@@ -4,6 +4,8 @@
 
 Accepted; first monitor slice implemented (2026-10-02), with inactive preflight audition clarified on 2026-10-03. The implementation covers one persisted local-library BGM source, a single looping monitor deck, a logical BGM gain bus, OBS-derived session projection, cancellable handoff, and one shell-owned standalone BGM player. OBS capture routing, confirmed-performance history commit, and audible timeline acceptance remain follow-up gates.
 
+Amended 2026-10-06: the coordinator also arbitrates a third, lowest-priority track-preview lane. Any performance start, BGM play, or active session preempts the preview lease, and no automatic BGM restore may sound while a preview holds the lane. The single pre-start hook is unchanged. See the [track preview contract](../contracts/track-preview.md).
+
 ## Context
 
 Utawakui already has one renderer-owned performance player. `usePlayer.js` owns its HTML audio element and playback events, while `usePlayerAudioGraph.js` owns accompaniment／guide-vocal routing, monitor output, optional capture output, pitch processing, and graph teardown. PlayerBar, Queue, Lyrics, Output, SMTC, taskbar controls, playback history, and resume all consume that single owner.

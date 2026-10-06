@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { ImagePlus, Trash2 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useArtistIndex } from '../composables/useArtistIndex.js';
+import { useBgmSession } from '../composables/useBgmSession.js';
 import { useCollectionPlayback } from '../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { useLibrary } from '../composables/useLibrary.js';
@@ -11,7 +12,9 @@ import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylistActions } from '../composables/usePlaylistActions.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
+import { usePerformanceSessionPlan } from '../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
+import { useTrackPreview } from '../composables/useTrackPreview.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
 import {
@@ -24,6 +27,7 @@ import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue';
 import SetlistCollectionHeader from '../components/playlists/SetlistCollectionHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
+import TrackPreviewOverlay from '../components/playlists/TrackPreviewOverlay.vue';
 import PerformanceSessionWorkspace from '../components/performance-session/PerformanceSessionWorkspace.vue';
 import TrackActionMenu from '../components/track/TrackActionMenu.vue';
 import TrackArtistCredits from '../components/track/TrackArtistCredits.vue';
@@ -88,6 +92,9 @@ const {
   clearPhoto: clearArtistPhoto,
 } = useArtistIndex();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
+const performanceSessionPlan = usePerformanceSessionPlan();
+const trackPreview = useTrackPreview();
+const { handoffState: bgmHandoffState } = useBgmSession();
 
 // Transient UI mode stays local; mutations persist immediately.
 const deleteError = ref(null);
@@ -430,6 +437,7 @@ watch(
     selectedTrackId.value = null;
     closeAddMenu();
     clearDragState();
+    trackPreview.close();
   },
 );
 
@@ -511,11 +519,11 @@ function closeAddMenu() {
 
 async function handleTrackMenuSelect(value) {
   const track = addMenu.value?.track;
-  if (!track) {
-    closeAddMenu();
-    return;
-  }
+  if (track) await applyTrackMenuAction(track, value);
+  closeAddMenu();
+}
 
+async function applyTrackMenuAction(track, value) {
   if (value.action === TRACK_MENU_ACTIONS.createPlaylist) {
     const playlist = await createPlaylistAction();
     if (playlist) addTrackToPlaylist(playlist.id, track.id);
@@ -531,9 +539,47 @@ async function handleTrackMenuSelect(value) {
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
     jumpToAlbum(track);
   }
-
-  closeAddMenu();
 }
+
+const sessionTrackIds = computed(() =>
+  performanceSessionPlan.state.plan.items
+    .map((item) => item.trackId)
+    .filter(Boolean),
+);
+
+// The preview follows the visible (searched) order and starts at the selection.
+function openTrackPreview() {
+  const tracks = visiblePlaylistEntries.value.map(({ track }) => track);
+  const startIndex = Math.max(
+    0,
+    tracks.findIndex((track) => track.id === selectedTrackId.value),
+  );
+  performanceSessionPlan.initialize();
+  trackPreview.open({ title: pageTitle.value, tracks, startIndex });
+}
+
+// The preview lane never sounds while recording or live (track-preview contract).
+const previewBlockedReason = computed(() =>
+  bgmHandoffState.sessionMode === 'inactive' ? '' : '錄影或直播中無法使用',
+);
+
+function playFromPreview(track) {
+  trackPreview.close();
+  activateTrack(track);
+}
+
+// Editing or leaving for an album needs the page underneath, not the preview.
+const PREVIEW_CLOSING_ACTIONS = new Set([
+  TRACK_MENU_ACTIONS.editMetadata,
+  TRACK_MENU_ACTIONS.goToAlbum,
+]);
+
+function handlePreviewMenuSelect(value, track) {
+  if (PREVIEW_CLOSING_ACTIONS.has(value.action)) trackPreview.close();
+  applyTrackMenuAction(track, value);
+}
+
+onUnmounted(() => trackPreview.close());
 
 function reorderTrack(draggedId, targetId, position) {
   const playlist = selectedPlaylist.value;
@@ -633,6 +679,30 @@ onMounted(async () => {
       @update-artist="trackMetadataEditor.setArtistDraft"
     />
 
+    <TrackPreviewOverlay
+      :open="trackPreview.state.isOpen"
+      :title="trackPreview.state.title"
+      :tracks="trackPreview.state.tracks"
+      :index="trackPreview.state.index"
+      :status="trackPreview.state.status"
+      :blocked-reason="trackPreview.state.blockedReason"
+      :segment="trackPreview.state.segment"
+      :current-time="trackPreview.state.currentTime"
+      :muted="trackPreview.state.isMuted"
+      :playlists="playlistState.playlists"
+      :current-track-id="state.track?.id ?? ''"
+      :queued-track-ids="queuedTrackIds"
+      :session-track-ids="sessionTrackIds"
+      @close="trackPreview.close"
+      @select="trackPreview.select"
+      @toggle="trackPreview.toggle"
+      @mute="trackPreview.setMuted"
+      @play-track="playFromPreview"
+      @add-to-queue="enqueueTrack"
+      @add-to-session="performanceSessionPlan.appendLibraryTrack($event.id)"
+      @menu-select="handlePreviewMenuSelect"
+    />
+
     <div class="setlist-view__main">
       <AppSurfaceBoundary
         v-if="performanceSessionWorkspace.isOpen.value"
@@ -666,12 +736,15 @@ onMounted(async () => {
             :can-play="playlistTracks.length > 0"
             :can-shuffle="queueState.tracks.length > 1"
             :can-add-to-queue="playlistTracks.length > 0"
+            :can-preview="visiblePlaylistEntries.length > 0"
+            :preview-blocked-reason="previewBlockedReason"
             :can-add-to-playlist="playlistTracks.length > 0"
             :add-to-playlist-items="addToPlaylistItems"
             :more-items="collectionMoreItems"
             @toggle-playback="toggleSelectedCollectionPlayback"
             @toggle-shuffle="toggleShuffle"
             @add-to-queue="enqueueSelectedCollection"
+            @preview="openTrackPreview"
             @open-edit-details="openEditDetails"
             @menu-action="handleCollectionMenuAction"
             @select-artist="openAlbumArtist"

@@ -60,6 +60,21 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     surfaceId: 'setlist-overlay',
     system: 'v2',
   }),
+  'track-preview': createSurfaceDefinition({
+    entryOwner: 'src/components/playlists/TrackPreviewOverlay.vue',
+    overlayHostId: 'track-preview-overlay',
+    parentSurfaceId: 'app-shell',
+    renderer: 'main',
+    surfaceId: 'track-preview',
+    system: 'v2',
+  }),
+  'track-preview-overlay': createSurfaceDefinition({
+    entryOwner: 'src/components/playlists/TrackPreviewOverlay.vue',
+    parentSurfaceId: 'track-preview',
+    renderer: 'main',
+    surfaceId: 'track-preview-overlay',
+    system: 'v2',
+  }),
   'performance-session-workspace': createSurfaceDefinition({
     entryOwner: 'src/views/SetlistView.vue',
     overlayHostId: 'performance-session-workspace-overlay',

@@ -136,7 +136,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Integrations：[adapter contract](contracts/integration-adapter-contract.md)。
 - Playback：[播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)、
   [演出場次準備契約](contracts/performance-session-preparation.md)、
-  [BGM 待機播放契約](contracts/bgm-standby-lane.md)。
+  [BGM 待機播放契約](contracts/bgm-standby-lane.md)、
+  [曲目試聽契約](contracts/track-preview.md)。
 - Library：[曲庫空間管理契約](contracts/library-storage-management.md)。
 - Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。

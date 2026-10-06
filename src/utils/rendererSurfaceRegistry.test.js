@@ -181,6 +181,19 @@ describe('renderer surface registry', () => {
     expect(rendererRootSurfaceId(null)).toBeNull();
   });
 
+  it('gives the track preview dialog its own overlay host for nested menus', () => {
+    expect(UI_SURFACE_REGISTRY['track-preview']).toMatchObject({
+      entryOwner: 'src/components/playlists/TrackPreviewOverlay.vue',
+      overlayHostId: 'track-preview-overlay',
+      parentSurfaceId: 'app-shell',
+      surfaceId: 'track-preview',
+    });
+    expect(registeredOverlayHostAttributes('track-preview')).toMatchObject({
+      id: 'track-preview-overlay',
+      'data-ui-surface': 'track-preview-overlay',
+    });
+  });
+
   it('registers review surfaces and their local overlay hosts as explicit boundaries', () => {
     expect(registeredSurfaceAttributes('visual-review')).toEqual({
       'data-ui-renderer': 'main',

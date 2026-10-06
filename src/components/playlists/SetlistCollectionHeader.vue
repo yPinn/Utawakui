@@ -34,6 +34,8 @@ const props = defineProps({
   canPlay: { type: Boolean, default: false },
   canShuffle: { type: Boolean, default: false },
   canAddToQueue: { type: Boolean, default: false },
+  canPreview: { type: Boolean, default: false },
+  previewBlockedReason: { type: String, default: '' },
   canAddToPlaylist: { type: Boolean, default: false },
   addToPlaylistItems: { type: Array, default: () => [] },
   moreItems: { type: Array, default: () => [] },
@@ -44,6 +46,7 @@ const emit = defineEmits([
   'togglePlayback',
   'toggleShuffle',
   'addToQueue',
+  'preview',
   'openEditDetails',
   'menuAction',
   'selectArtist',
@@ -180,12 +183,15 @@ function handleMenuAction(value) {
       :can-play="canPlay"
       :can-shuffle="canShuffle"
       :can-add-to-queue="canAddToQueue"
+      :can-preview="canPreview"
+      :preview-blocked-reason="previewBlockedReason"
       :entity-action="entityAction"
       :more-items="moreItems"
       :search-query="searchQuery"
       @toggle-playback="emit('togglePlayback')"
       @toggle-shuffle="emit('toggleShuffle')"
       @add-to-queue="emit('addToQueue')"
+      @preview="emit('preview')"
       @entity-action="activateEntityAction"
       @menu-action="handleMenuAction"
       @update:search-query="emit('update:searchQuery', $event)"

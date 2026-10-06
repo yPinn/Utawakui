@@ -1,6 +1,6 @@
 <script setup>
 import { shallowRef } from 'vue';
-import { Ellipsis, ListEnd, Shuffle } from '../../icons/index.js';
+import { Ellipsis, Headphones, ListEnd, Shuffle } from '../../icons/index.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -13,6 +13,9 @@ const props = defineProps({
   canPlay: { type: Boolean, default: false },
   canShuffle: { type: Boolean, default: false },
   canAddToQueue: { type: Boolean, default: false },
+  canPreview: { type: Boolean, default: false },
+  // Set while recording／live: the preview would be silent, so it backs off.
+  previewBlockedReason: { type: String, default: '' },
   entityAction: { type: Object, default: null },
   moreItems: { type: Array, default: () => [] },
   searchQuery: { type: String, default: '' },
@@ -22,6 +25,7 @@ const emit = defineEmits([
   'togglePlayback',
   'toggleShuffle',
   'addToQueue',
+  'preview',
   'entityAction',
   'menuAction',
   'update:searchQuery',
@@ -64,6 +68,16 @@ function selectMenuAction(value) {
         :play-label="`播放${entityLabel}`"
         :pause-label="`暫停${entityLabel}`"
         @click="emit('togglePlayback')"
+      />
+      <UiIconButton
+        :icon="Headphones"
+        :disabled="!canPreview || Boolean(previewBlockedReason)"
+        :label="
+          previewBlockedReason
+            ? `試聽${entityLabel}（${previewBlockedReason}）`
+            : `試聽${entityLabel}`
+        "
+        @click="emit('preview')"
       />
       <UiIconButton
         :icon="Shuffle"

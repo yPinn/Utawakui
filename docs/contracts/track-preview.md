@@ -1,0 +1,175 @@
+# 曲目試聽契約
+
+> 狀態：lane 仲裁（Step 1）與試聽 player／overlay／入口（P1）已實作；同步歌詞卡、音量條與封面主色（P2）尚未實作。
+
+本契約定義 album／artist／playlist 頁的「曲目試聽」：使用者在全視窗 modal 中逐首聽
+一段精華片段，用來快速篩選歌曲並加入佇列、播放清單或場次草稿。它是只供本機監聽的
+預覽，不是一般播放、不是 BGM，也不是演出。
+
+## 現有可聽來源盤點
+
+加入試聽前，App 內只有下列三個實際產生聲音的 owner。開發工具（音樂分析 reference
+annotation、歌詞 timing editor）重用演唱播放器，不是獨立來源。
+
+| 來源       | Owner                                                                   | 輸出路由                                                         | 狀態                                                                                                                                                                                                 | 互斥關係                                     |
+| ---------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| 演唱播放器 | `src/composables/usePlayer.js`＋`player/usePlayerAudioGraph.js`         | 系統預設 monitor；另可經 capture graph 送往使用者選定的 OBS sink | `playbackPhase`：`idle`／`buffering`／`playing`／`paused`／`seeking`／`ended`／`error`                                                                                                               | 經 `registerBeforePlaybackStart` 與 BGM 互斥 |
+| BGM deck   | `src/bgm/audioDeck.js`＋`handoffCoordinator.js`＋`sessionController.js` | 只送系統預設 monitor                                             | coordinator `phase`：`idle`／`bgm-playing`／`stopping-bgm`／`manual-hold`／`track-preroll`／`track-active`／`track-paused`／`postroll-silence`／`error`；`audibleLane`：`performance`／`bgm`／`null` | 由 coordinator 仲裁；演唱優先                |
+| 節拍器     | `src/utils/metronomeClickEngine.js`＋`useMetronome.js`                  | 獨立 AudioContext，只送系統預設 monitor                          | `isRunning`                                                                                                                                                                                          | 不屬於 lane，可與演唱或 BGM 同時發聲         |
+
+演唱播放器的狀態另有下列訂閱者；任何寫入演唱播放器 state 的行為都會同時觸發它們：
+Output projection（Now Playing／Lyrics／Setlist）、由 projection 推導換歌的 OBS session
+history、最近播放（`onPlaybackProgress`／`onEnded`）、PlayerBar Queue 自動下一首
+（`onEnded`）、BGM handoff（`onPlaying`／`onPaused`／`onEnded`／`onStopped`）、SMTC、
+taskbar、視窗標題、啟動恢復、節拍器自動 BPM、歌詞與 Self-View。
+
+### 盤點發現
+
+1. **Pre-start gate 只有一個槽位。** `registerBeforePlaybackStart` 直接覆寫單一
+   `beforePlaybackStartListener`，現由 BGM `sessionController` 佔用。試聽若再註冊會靜默
+   取代 BGM 仲裁，因此不得註冊第二個 listener。
+2. **互斥邏輯分散在 BGM 內部。** 目前「同時最多一條 lane 可聽」只以
+   performance↔bgm 兩兩規則實作於 `handoffCoordinator`；`audibleLane` 是唯一能回答
+   「現在誰在出聲」的狀態，但它屬於 BGM 模組。
+3. **系統預設 monitor 不等於安全。** BGM、節拍器與試聽都只送預設 monitor；若 OBS
+   以桌面音訊擷取預設裝置，這些聲音都會進入直播。BGM 已以 session mode 約束此風險，
+   節拍器尚未約束（不在本契約範圍）。
+
+## 可聽 lane 規則
+
+- 互斥 lane 擴充為 `performance`、`bgm`、`preview` 三條；任一時刻最多一條可聽。
+  節拍器維持輔助來源，不加入 lane，但試聽期間必須停止（見下方進入順序）。
+- 自動路徑的優先序：`performance` > `bgm` > `preview`。演唱或 BGM 的任何開始意圖都會
+  先結束試聽；任何自動 BGM 恢復都不得在試聽持有 lane 時發聲。
+- 開啟試聽本身是使用者的明確意圖，等同按下演唱與 BGM 的暫停：它會取消仍在 pre-roll
+  等待的演唱開始，但不會在 `record`／`live` 期間發生（見進入順序第 1 步）。
+- 仲裁的單一事實來源是 BGM coordinator 的 `audibleLane`，值域擴充 `preview`。
+  Pre-start gate 維持單一 listener：coordinator 的 `beforePerformanceStart()` 開頭先搶占
+  試聽，因此不需要第二個 listener，也不新增第二個仲裁器。
+- Coordinator 只認識 lease：`acquirePreview({ onPreempt })` 回傳 `{ release }` 或 `null`；
+  被搶占時呼叫 `onPreempt`，由試聽 owner 自行停止 element。對外入口是 BGM session
+  controller 的 `acquirePreviewLane()`。
+
+## 試聽狀態機
+
+```text
+closed ──open──▶ acquiring ──granted──▶ playing ⇄ paused
+   ▲                 │                    │
+   │              blocked                 ├─ segment end → advance（下一張卡）
+   │                 │                    │
+   └──── releasing ◀─┴──── close／preempted ┘
+```
+
+| 狀態                | 意義                                                             |
+| ------------------- | ---------------------------------------------------------------- |
+| `closed`            | 無試聽 element source，不持有 lane                               |
+| `acquiring`         | 正在讓演唱暫停、BGM 淡出、節拍器停止；可被取消                   |
+| `blocked`           | session mode 非 `inactive`，或來源無法播放；modal 可瀏覽但不發聲 |
+| `playing`／`paused` | 持有 `preview` lane；pause 仍持有 lane，避免 BGM 被意外恢復      |
+| `releasing`         | 停止並清空試聽 element，釋放 lane                                |
+
+`acquiring` 使用 generation token；關閉 modal、切換卡片或被搶占時，舊的 acquire
+結果一律丟棄，與 coordinator 既有 `nextGeneration()` 模式一致。
+
+## 進入順序（acquire）
+
+1. **檢查 session mode。** `sessionMode` 不是 `inactive`（`record`／`live`／`reconnecting`）
+   時回傳 `null` 並進入 `blocked`；此時不得碰演唱播放器，避免暫停正在進行的演出。不提供覆寫。
+2. **取消待開始的演唱。** `usePlayer.cancelPendingStart()` 遞增 start revision，靜默丟棄
+   仍在 pre-start gate 等待的 `playTrack`／`play`，不發出 terminal stop。
+3. **暫停演唱播放器。** 呼叫既有 `pause()`。演唱播放器保留 track、`src` 與 position，
+   不卸載、不改 Queue。`pause` 事件是非同步的，coordinator 在 acquire 時直接把
+   performance 標為 paused，晚到的 `notifyPerformanceInterrupted` 不會覆寫 lane。
+4. **靜音 BGM。** Coordinator 遞增 generation（取消 post-roll／pre-roll 等待與進行中的
+   BGM start），清除 `performanceHandoffPending`；若 BGM 可聽或 requested，以正常
+   fade-out 停止並清除 `bgmRequested`／`restorePending`。BGM 原本就安靜時保留
+   `restorePending`，讓之後的演唱結束仍可依原意圖恢復 BGM。
+5. **套用延後的 BGM 換源。** Acquire 淡出期間的 `replaceBgmSource` 會延後，淡出完成後套用。
+6. **停止節拍器。** 試聽 owner 在 lane 取得後呼叫 `stop()`。
+7. generation 仍有效時記錄 `audibleLane = 'preview'`；phase 投影為 `track-paused`
+   （有暫停中的演唱）或 `manual-hold`，試聽 element 才開始播放。
+
+## 退出順序（release）
+
+- 關閉 modal、Esc、或 App 失去試聽 surface 時：停止試聽 element、清空 `src`、釋放 lane。
+- **不自動恢復任何來源。** 演唱播放器維持暫停在原 track／position（因為從未卸載，
+  不需要另存 snapshot）；BGM 維持 `manual-hold`；節拍器維持停止。理由與啟動恢復契約
+  一致：恢復發聲必須來自使用者的新意圖。
+- 試聽內的「從這首開始播放」先完成 release，再呼叫演唱播放器 `playTrack`，從此刻起才
+  是正式播放並產生所有正常副作用。
+
+## 被搶占（preemption）
+
+下列任一意圖發生時，coordinator 同步呼叫 `onPreempt` 並釋放 lane，試聽 owner 立即
+cut（不 fade），原意圖再繼續：
+
+- 演唱播放器任何 start／resume 路徑（PlayerBar、鍵盤、SMTC、taskbar、Queue、場次）——
+  經 `beforePerformanceStart()`；`notifyPerformancePlaying()` 也會防禦性搶占。
+- BGM `requestBgmPlay()`——在設定 `bgmRequested` 前先結束試聽。
+- Session mode 變成 `record`／`live`／`reconnecting`。
+- Coordinator `dispose()`。
+
+Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳 `null`。
+
+## 試聽持有 lane 時的防護
+
+- `notifyPerformanceEnded()`（例如曲目被刪除觸發的 `cleared`）只重設 performance
+  旗標，不啟動 BGM、不改 `restorePending` 與 lane。
+- `requestBgmPause()`（含 Emergency Cut）只清除 BGM 意圖，不改 lane；deck 已停止。
+- `replaceBgmSource()` 在 BGM 未 requested 時只換源，不恢復播放。
+- `usePlayer.syncCurrentTrack()` 在曲庫更新換 URL 時，若 start revision 已被取消就不恢復播放。
+
+## 試聽 owner 與 overlay
+
+- Owner 是 `src/composables/useTrackPreview.js`（module-scope 單例，自有 audio element）；
+  `TrackPreviewOverlay.vue` 只投影狀態並送出意圖，不 import 演唱播放器。
+- 入口：album／artist／playlist 頁 CollectionActionRail 的「試聽」按鈕，位於隨機播放之後。
+  曲目清單是目前可見（套用搜尋後）的順序，從選取中的曲目開始，否則從第一首。
+- 播放曲目原始 `track.url`；`toPlayableTrack()` 會換成分離結果的 stems URL，試聽不使用。
+- 音量在開啟時沿用演唱播放器目前音量，之後不回寫；靜音只作用於試聽 element。
+- 按鍵以 window capture listener 處理，只在焦點位於試聽 dialog 內時作用：↑／↓ 換卡、Space
+  播放／暫停（焦點在按鈕上時交給按鈕）、M 靜音；其他按鍵也 `stopPropagation`，不傳到全域快捷鍵，
+  避免改到演唱播放器的音量、靜音或移調。Esc、Tab 與焦點交給 `UiModal`；F 鍵放行，換頁會
+  unmount 並 release。「更多」選單開啟時鍵盤交給選單。
+- 滾輪在卡片區每 450ms 最多換一張。
+- 視窗隱藏（縮到 tray 或最小化）時暫停但保留 lane；關閉 overlay、換 collection 或
+  SetlistView unmount 時 release。
+- 卡片動作：從這首開始播放（先 release，再以可見清單建立 Queue 並正式播放）、加入佇列、
+  加入場次草稿（已在佇列／草稿時停用）、更多（TrackActionMenu；編輯資訊與前往專輯會先關閉試聽）。
+- 外框使用共用 `UiModal`（`wide`）；`UiModal` 一律掛到所屬 renderer root 的 overlay host，遮罩因此蓋過 Folder 分頁與 Right Dock（見 Token v2 完整替換契約）。UiContextMenu 的 z-index 低於 dialog，teleport 到 surface host
+  會被蓋住，因此 modal 內容以 `track-preview` surface 提供自己的 overlay host，選單只在開啟時
+  mount（host 此時才在 document 內），畫在 dialog 的 stacking context 內。
+- `UiModal` 的 Teleport 使用 `defer`：SetlistView 與 setlist host 在同一輪 mount，host 尚未插入
+  document，未 defer 時目標為 null，第一次開啟就會讓 Vue patch 崩潰並凍結頁面。
+- 播放錯誤以 `TRACK_PREVIEW_PLAYBACK_FAILED` 記錄並跳到下一首；整份清單都失敗時停在錯誤狀態。
+
+## 副作用邊界
+
+試聽 element 不訂閱也不寫入：演唱播放器 state、Queue、最近播放、`playback-usage.json`、
+啟動恢復、Output projection、OBS session history、SMTC、taskbar、視窗標題、節拍器 BPM、
+歌詞 workspace 與 Self-View。
+
+- 只播放曲目原始音訊，不使用分離結果，不套用 pitch／tempo／guide vocal，不接 capture graph。
+- 媒體經既有 `utawakui-media:` track-id allowlist resolver 取得。
+- 試聽音量為獨立 session 狀態，預設沿用演唱播放器目前音量的值，但不回寫。
+
+## 精華片段
+
+- 起點：曲目有 M2 結果時取第一個 `chorus` section 的起點；否則取時長 30%。
+- 長度：預設 30 秒，不超過曲目結尾；片段結束自動前進到下一張卡。
+- 不因試聽觸發分析、歌詞取得或任何背景工作。
+
+## 驗收
+
+- 演唱播放中開啟試聽：演唱暫停於原位置；關閉後 PlayerBar 顯示原曲與原位置，最近播放
+  無新增，OBS Now Playing 與 session history 不變。
+- BGM 播放中開啟試聽：BGM 淡出至 `manual-hold`；關閉後不自動恢復。
+- 試聽中按 PlayerBar 播放或媒體鍵：試聽立即停止，演唱經既有 BGM handoff 正常開始。
+- 試聽中按 BGM 播放：試聽立即停止，BGM 正常 fade-in。
+- `record`／`live` 期間開啟：不發聲並顯示原因；試聽中進入 `record`／`live`：立即停止。
+- 任何時刻 `audibleLane` 最多一個值，且與實際發聲來源一致。
+- 演唱 pre-roll 進行中開啟試聽：演唱不會在試聽中開始；關閉後按 BGM 播放可正常發聲。
+- 試聽中按 ↑／↓／M：只影響試聽，演唱播放器音量與靜音不變。
+- 「更多」選單顯示在 overlay 上方且可用鍵盤操作。
+- 單元測試覆蓋 acquire／release／preemption、generation 取消與每一條防護（已實作：
+  `handoffCoordinator.test.js`、`sessionController.test.js`、`usePlayer.test.js`）。

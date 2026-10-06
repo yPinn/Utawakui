@@ -10,13 +10,15 @@ describe('CollectionActionRail', () => {
   it('keeps the stable core action order and search outside the command group', () => {
     const playbackIndex = source.indexOf('<PlaybackPrimaryButton');
     const shuffleIndex = source.indexOf(':icon="Shuffle"');
+    const previewIndex = source.indexOf(':icon="Headphones"');
     const queueIndex = source.indexOf(':icon="ListEnd"');
     const extensionIndex = source.indexOf('collection-action-rail__extension');
     const moreIndex = source.indexOf(':icon="Ellipsis"');
     const searchIndex = source.indexOf('<UiSearchBox');
 
     expect(playbackIndex).toBeGreaterThan(-1);
-    expect(shuffleIndex).toBeGreaterThan(playbackIndex);
+    expect(previewIndex).toBeGreaterThan(playbackIndex);
+    expect(shuffleIndex).toBeGreaterThan(previewIndex);
     expect(queueIndex).toBeGreaterThan(shuffleIndex);
     expect(extensionIndex).toBeGreaterThan(queueIndex);
     expect(moreIndex).toBeGreaterThan(extensionIndex);
@@ -28,6 +30,7 @@ describe('CollectionActionRail', () => {
       'canPlay',
       'canShuffle',
       'canAddToQueue',
+      'canPreview',
       'entityAction',
       'moreItems',
     ]) {
@@ -37,5 +40,13 @@ describe('CollectionActionRail', () => {
     expect(source).toContain("emit('togglePlayback')");
     expect(source).toContain("emit('toggleShuffle')");
     expect(source).toContain("emit('addToQueue')");
+    expect(source).toContain("emit('preview')");
+  });
+
+  it('backs the preview entry off while recording or live', () => {
+    expect(source).toContain(
+      ':disabled="!canPreview || Boolean(previewBlockedReason)"',
+    );
+    expect(source).toContain('（${previewBlockedReason}）');
   });
 });
