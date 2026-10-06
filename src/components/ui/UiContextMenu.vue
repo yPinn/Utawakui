@@ -69,7 +69,7 @@ const menuStyle = computed(() => ({
 
 const rootPlacement = computed(() =>
   props.anchorEl && position.value.side !== 'pointer'
-    ? `${position.value.side}-end`
+    ? `${position.value.side}-${position.value.alignment}`
     : 'pointer',
 );
 
@@ -230,17 +230,25 @@ function clampPosition() {
   const surface = { width, height: menuHeight };
   const anchor = props.anchorEl?.getBoundingClientRect?.();
 
+  // Like submenus, root menus open toward logical inline-end and mirror only
+  // when that side cannot fit: a button menu aligns to the trigger's start edge.
   if (anchor) {
     const layout = anchoredFloatingLayout({
       anchor,
       surface,
       viewport,
-      placement: 'bottom-end',
+      placement: 'bottom-start',
       direction: resolvedDirection(),
       gap: customLengthPixels('--ui-space-1', SUBMENU_GAP_REM),
       inset: margin,
+      flipAlignment: true,
     });
-    position.value = { x: layout.left, y: layout.top, side: layout.side };
+    position.value = {
+      x: layout.left,
+      y: layout.top,
+      side: layout.side,
+      alignment: layout.alignment,
+    };
     return;
   }
 
@@ -250,6 +258,7 @@ function clampPosition() {
     viewport,
     direction: resolvedDirection(),
     inset: margin,
+    flipInline: true,
   });
   position.value = { x: pointer.left, y: pointer.top, side: 'pointer' };
 }

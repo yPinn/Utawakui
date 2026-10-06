@@ -187,7 +187,7 @@ describe('UiContextMenu positioning', () => {
     return { app, root };
   }
 
-  it('keeps a pointer menu at logical top-start and clamps every viewport edge', async () => {
+  it('mirrors a pointer menu to the pointer start side when inline-end cannot fit', async () => {
     const { app } = await mountMenu({ x: 310, y: 230, width: 220 }, () => {
       menuRoots()[0].rect = {
         left: 0,
@@ -200,13 +200,14 @@ describe('UiContextMenu positioning', () => {
     });
     const menu = menuRoots()[0];
 
-    expect(menu.props.style.left).toBe('92px');
+    // 310 + 220 overflows the right edge, so the menu ends at the pointer.
+    expect(menu.props.style.left).toBe('90px');
     expect(menu.props.style.top).toBe('192px');
     expect(menu.props['data-placement']).toBe('pointer');
     app.unmount();
   });
 
-  it('flips a button menu from bottom-end to top-end without overlapping its trigger', async () => {
+  it('aligns a button menu to the trigger start edge when the right side fits', async () => {
     window.innerWidth = 500;
     window.innerHeight = 400;
     const anchorEl = hostNode('button');
@@ -230,9 +231,39 @@ describe('UiContextMenu positioning', () => {
     });
     const menu = menuRoots()[0];
 
-    expect(menu.props.style.left).toBe('260px');
+    expect(menu.props.style.left).toBe('300px');
     expect(menu.props.style.top).toBe('266px');
-    expect(menu.props['data-placement']).toBe('top-end');
+    expect(menu.props['data-placement']).toBe('top-start');
+    app.unmount();
+  });
+
+  it('aligns a button menu to the trigger end edge only when the right side cannot fit', async () => {
+    window.innerWidth = 500;
+    window.innerHeight = 400;
+    const anchorEl = hostNode('button');
+    anchorEl.rect = {
+      top: 100,
+      right: 480,
+      bottom: 132,
+      left: 448,
+      width: 32,
+      height: 32,
+    };
+    const { app } = await mountMenu({ anchorEl, width: 120 }, () => {
+      menuRoots()[0].rect = {
+        left: 0,
+        top: 0,
+        right: 120,
+        bottom: 80,
+        width: 120,
+        height: 80,
+      };
+    });
+    const menu = menuRoots()[0];
+
+    expect(menu.props.style.left).toBe('360px');
+    expect(menu.props.style.top).toBe('136px');
+    expect(menu.props['data-placement']).toBe('bottom-end');
     app.unmount();
   });
 

@@ -197,7 +197,13 @@ describe('context-menu floating geometry', () => {
         gap: 4,
         inset: 8,
       }),
-    ).toEqual({ left: 260, top: 266, side: 'top', width: 120 });
+    ).toEqual({
+      left: 260,
+      top: 266,
+      side: 'top',
+      alignment: 'end',
+      width: 120,
+    });
 
     expect(
       anchoredFloatingLayout({
@@ -216,7 +222,13 @@ describe('context-menu floating geometry', () => {
         gap: 4,
         inset: 8,
       }),
-    ).toEqual({ left: 300, top: 144, side: 'bottom', width: 120 });
+    ).toEqual({
+      left: 300,
+      top: 144,
+      side: 'bottom',
+      alignment: 'end',
+      width: 120,
+    });
   });
 
   it('opens a submenu toward logical inline-end and mirrors when that side cannot fit', () => {
@@ -239,7 +251,13 @@ describe('context-menu floating geometry', () => {
         gap: 4,
         inset: 8,
       }),
-    ).toEqual({ left: 324, top: 140, side: 'right', width: 120 });
+    ).toEqual({
+      left: 324,
+      top: 140,
+      side: 'right',
+      alignment: 'start',
+      width: 120,
+    });
 
     expect(
       anchoredFloatingLayout({
@@ -258,7 +276,13 @@ describe('context-menu floating geometry', () => {
         gap: 4,
         inset: 8,
       }),
-    ).toEqual({ left: 136, top: 160, side: 'left', width: 120 });
+    ).toEqual({
+      left: 136,
+      top: 160,
+      side: 'left',
+      alignment: 'start',
+      width: 120,
+    });
 
     expect(
       anchoredFloatingLayout({
@@ -277,7 +301,13 @@ describe('context-menu floating geometry', () => {
         gap: 4,
         inset: 8,
       }),
-    ).toEqual({ left: 176, top: 140, side: 'left', width: 120 });
+    ).toEqual({
+      left: 176,
+      top: 140,
+      side: 'left',
+      alignment: 'start',
+      width: 120,
+    });
   });
 
   it('chooses the wider submenu side and shrinks only when neither side fits', () => {
@@ -298,6 +328,126 @@ describe('context-menu floating geometry', () => {
         gap: 4,
         inset: 8,
       }),
-    ).toEqual({ left: 8, top: 140, side: 'left', width: 168 });
+    ).toEqual({
+      left: 8,
+      top: 140,
+      side: 'left',
+      alignment: 'start',
+      width: 168,
+    });
+  });
+});
+
+describe('root menu inline flipping', () => {
+  const viewport = { width: 500, height: 400 };
+  const surface = { width: 120, height: 80 };
+  const anchorAt = (left) => ({
+    top: 100,
+    bottom: 132,
+    left,
+    right: left + 32,
+    width: 32,
+    height: 32,
+  });
+
+  it('aligns a button menu to the trigger start while the inline-end side fits', () => {
+    expect(
+      anchoredFloatingLayout({
+        anchor: anchorAt(200),
+        surface,
+        viewport,
+        placement: 'bottom-start',
+        direction: 'ltr',
+        gap: 4,
+        inset: 8,
+        flipAlignment: true,
+      }),
+    ).toEqual({
+      left: 200,
+      top: 136,
+      side: 'bottom',
+      alignment: 'start',
+      width: 120,
+    });
+  });
+
+  it('mirrors to the trigger end only when the start alignment would overflow', () => {
+    expect(
+      anchoredFloatingLayout({
+        anchor: anchorAt(440),
+        surface,
+        viewport,
+        placement: 'bottom-start',
+        direction: 'ltr',
+        gap: 4,
+        inset: 8,
+        flipAlignment: true,
+      }),
+    ).toMatchObject({ left: 352, alignment: 'end' });
+
+    expect(
+      anchoredFloatingLayout({
+        anchor: anchorAt(440),
+        surface,
+        viewport,
+        placement: 'bottom-start',
+        direction: 'ltr',
+        gap: 4,
+        inset: 8,
+      }),
+    ).toMatchObject({ left: 372, alignment: 'start' });
+  });
+
+  it('prefers the logical start in RTL and mirrors toward the right edge', () => {
+    expect(
+      anchoredFloatingLayout({
+        anchor: anchorAt(200),
+        surface,
+        viewport,
+        placement: 'bottom-start',
+        direction: 'rtl',
+        gap: 4,
+        inset: 8,
+        flipAlignment: true,
+      }),
+    ).toMatchObject({ left: 112, alignment: 'start' });
+
+    expect(
+      anchoredFloatingLayout({
+        anchor: anchorAt(20),
+        surface,
+        viewport,
+        placement: 'bottom-start',
+        direction: 'rtl',
+        gap: 4,
+        inset: 8,
+        flipAlignment: true,
+      }),
+    ).toMatchObject({ left: 20, alignment: 'end' });
+  });
+
+  it('opens a pointer menu toward inline-end and mirrors only when needed', () => {
+    const point = (x) =>
+      pointFloatingPosition({
+        point: { x, y: 100 },
+        surface,
+        viewport,
+        direction: 'ltr',
+        inset: 8,
+        flipInline: true,
+      });
+    expect(point(200)).toEqual({ left: 200, top: 100 });
+    expect(point(450)).toEqual({ left: 330, top: 100 });
+
+    expect(
+      pointFloatingPosition({
+        point: { x: 60, y: 100 },
+        surface,
+        viewport,
+        direction: 'rtl',
+        inset: 8,
+        flipInline: true,
+      }),
+    ).toEqual({ left: 60, top: 100 });
   });
 });

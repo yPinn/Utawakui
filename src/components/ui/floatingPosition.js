@@ -66,6 +66,34 @@ function physicalInlineSide(side, direction) {
   return logicalStartIsLeft ? 'right' : 'left';
 }
 
+// With flipAlignment, a start／end-aligned block placement keeps its preferred
+// inline alignment while it fits, and mirrors only when the other one does.
+function resolvedInlineAlignment({
+  anchor,
+  width,
+  alignment,
+  direction,
+  viewport,
+  inset,
+  flipAlignment,
+}) {
+  if (!flipAlignment || (alignment !== 'start' && alignment !== 'end')) {
+    return alignment;
+  }
+  const fits = (candidate) => {
+    const left = inlineAlignmentLeft({
+      anchor,
+      width,
+      alignment: candidate,
+      direction,
+    });
+    return left >= inset && left + width <= viewport.width - inset;
+  };
+  if (fits(alignment)) return alignment;
+  const alternate = alignment === 'start' ? 'end' : 'start';
+  return fits(alternate) ? alternate : alignment;
+}
+
 export function anchoredFloatingLayout({
   anchor,
   surface,
@@ -74,9 +102,10 @@ export function anchoredFloatingLayout({
   direction = 'ltr',
   gap,
   inset,
+  flipAlignment = false,
 }) {
   const requestedSide = placement.split('-')[0];
-  const alignment = placement.split('-')[1];
+  let alignment = placement.split('-')[1];
   const viewportWidth = Math.max(0, viewport.width - inset * 2);
   let width = Math.min(surface.width, viewportWidth);
   let left;
@@ -102,6 +131,15 @@ export function anchoredFloatingLayout({
       required: surface.height,
     });
     top = side === 'top' ? above : below;
+    alignment = resolvedInlineAlignment({
+      anchor,
+      width,
+      alignment,
+      direction,
+      viewport,
+      inset,
+      flipAlignment,
+    });
     left = inlineAlignmentLeft({ anchor, width, alignment, direction });
   } else {
     const preferred = physicalInlineSide(requestedSide, direction);
@@ -134,6 +172,7 @@ export function anchoredFloatingLayout({
     left: clamp(left, inset, viewport.width - width - inset),
     top: clamp(top, inset, viewport.height - surface.height - inset),
     side,
+    alignment,
     width,
   };
 }
@@ -143,14 +182,25 @@ export function anchoredFloatingPosition(options) {
   return { left, top };
 }
 
+// With flipInline, a pointer menu opens toward logical inline-end of the
+// pointer and mirrors to the other side only when that side fits.
 export function pointFloatingPosition({
   point,
   surface,
   viewport,
   direction = 'ltr',
   inset,
+  flipInline = false,
 }) {
-  const logicalStart = direction === 'rtl' ? point.x - surface.width : point.x;
+  const towardRight = point.x;
+  const towardLeft = point.x - surface.width;
+  const fits = (left) =>
+    left >= inset && left + surface.width <= viewport.width - inset;
+  let logicalStart = direction === 'rtl' ? towardLeft : towardRight;
+  if (flipInline && !fits(logicalStart)) {
+    const mirrored = direction === 'rtl' ? towardRight : towardLeft;
+    if (fits(mirrored)) logicalStart = mirrored;
+  }
   return {
     left: clamp(logicalStart, inset, viewport.width - surface.width - inset),
     top: clamp(point.y, inset, viewport.height - surface.height - inset),

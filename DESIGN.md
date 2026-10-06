@@ -477,6 +477,14 @@ and Ellipsis plus pointer context-menu open the same concise action menu. The
 menu trigger is excluded from drag start. This reuse does not import Queue's
 selection, double-click playback, or artwork-control semantics.
 
+Action menus (`UiContextMenu`) open toward logical inline-end, like their
+submenus. A button-anchored menu aligns to the trigger's start edge and grows
+toward inline-end; it aligns to the trigger's end edge only when inline-end
+cannot fit and the mirrored alignment can. A pointer menu likewise opens on the
+pointer's inline-end side and mirrors to end at the pointer only when needed.
+Vertically the menu prefers below the trigger and flips above when it cannot
+fit. RTL mirrors every inline rule.
+
 | Surface                     | Direction | Rule                                                        |
 | --------------------------- | --------- | ----------------------------------------------------------- |
 | Playlist sidebar            | Spotify   | Compact rows, clear selected state, no large cards.         |
