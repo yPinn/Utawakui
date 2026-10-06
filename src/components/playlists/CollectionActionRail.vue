@@ -1,6 +1,11 @@
 <script setup>
 import { shallowRef } from 'vue';
-import { Ellipsis, Headphones, ListEnd, Shuffle } from '../../icons/index.js';
+import {
+  Ellipsis,
+  GalleryVerticalEnd,
+  ListEnd,
+  Shuffle,
+} from '../../icons/index.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -70,7 +75,7 @@ function selectMenuAction(value) {
         @click="emit('togglePlayback')"
       />
       <UiIconButton
-        :icon="Headphones"
+        :icon="GalleryVerticalEnd"
         :disabled="!canPreview || Boolean(previewBlockedReason)"
         :label="
           previewBlockedReason

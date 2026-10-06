@@ -11,8 +11,16 @@ const props = defineProps({
   track: { type: Object, required: true },
 });
 
+// `navigate` lets a host surface (e.g. a dialog) dismiss itself first.
+const emit = defineEmits(['navigate']);
+
 const { state: artistIndexState } = useArtistIndex();
 const { jumpToArtist } = useAlbumNavigation();
+
+function openArtist(artistId) {
+  emit('navigate', artistId);
+  jumpToArtist(artistId);
+}
 
 const links = computed(() => {
   const paired = artistCreditLinks(props.track, artistIndexState.index);
@@ -32,7 +40,7 @@ const links = computed(() => {
         :text="link.text"
         overflow="ellipsis"
         :aria-label="`前往藝人：${link.text}`"
-        @click="jumpToArtist(link.artistId)"
+        @click="openArtist(link.artistId)"
         @dblclick.stop
       />
       <span v-else class="track-artist-credits__text">{{ link.text }}</span>

@@ -10,7 +10,10 @@ describe('CollectionActionRail', () => {
   it('keeps the stable core action order and search outside the command group', () => {
     const playbackIndex = source.indexOf('<PlaybackPrimaryButton');
     const shuffleIndex = source.indexOf(':icon="Shuffle"');
-    const previewIndex = source.indexOf(':icon="Headphones"');
+    // Highlight preview has its own glyph; Headphones means the monitor
+    // output device elsewhere in the app.
+    const previewIndex = source.indexOf(':icon="GalleryVerticalEnd"');
+    expect(source).not.toContain('Headphones');
     const queueIndex = source.indexOf(':icon="ListEnd"');
     const extensionIndex = source.indexOf('collection-action-rail__extension');
     const moreIndex = source.indexOf(':icon="Ellipsis"');

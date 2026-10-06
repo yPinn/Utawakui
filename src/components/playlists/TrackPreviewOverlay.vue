@@ -4,23 +4,27 @@
 // player. Its own overlay host keeps the nested menu above the dialog.
 import { computed, onUnmounted, shallowRef, useTemplateRef, watch } from 'vue';
 import {
+  ChevronDown,
+  ChevronUp,
   Ellipsis,
-  ListOrdered,
   ListEnd,
-  SkipBack,
-  SkipForward,
   Volume2,
   VolumeX,
 } from '../../icons/index.js';
+import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { loadArtworkTone } from '../../utils/artworkTone.js';
 import { resolvePreviewKeyIntent } from '../../utils/trackPreviewKeys.js';
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
-import UiButton from '../ui/UiButton.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiProgress from '../ui/UiProgress.vue';
+import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
@@ -36,22 +40,27 @@ const props = defineProps({
   playlists: { type: Array, default: () => [] },
   currentTrackId: { type: String, default: '' },
   queuedTrackIds: { type: Array, default: () => [] },
-  sessionTrackIds: { type: Array, default: () => [] },
+  // The row right-click options for this track, so both menus match.
+  menuOptions: {
+    type: Object,
+    default: () => ({ removeFromPlaylistId: '', canGoToAlbum: false }),
+  },
 });
 
 const emit = defineEmits([
   'close',
   'select',
-  'toggle',
   'mute',
   'playTrack',
   'addToQueue',
-  'addToSession',
   'menuSelect',
+  'navigate',
 ]);
 
 const contentRef = useTemplateRef('content');
-const menuAnchorEl = shallowRef(null);
+// The row right-click menu, anchored to the more button or to the pointer
+// when the cover is right-clicked.
+const menu = shallowRef(null);
 let lastWheelAt = 0;
 
 const WHEEL_STEP_INTERVAL_MS = 450;
@@ -68,7 +77,6 @@ const BLOCKED_NOTICES = Object.freeze({
 const track = computed(() => props.tracks[props.index] ?? null);
 const previousTrack = computed(() => props.tracks[props.index - 1] ?? null);
 const nextTrack = computed(() => props.tracks[props.index + 1] ?? null);
-const isPlaying = computed(() => props.status === 'playing');
 const statusNotice = computed(() => {
   if (props.status === 'error') {
     return { tone: 'danger', message: '這些曲目目前都無法試聽。' };
@@ -86,23 +94,43 @@ const segmentElapsed = computed(() =>
       )
     : 0,
 );
-const segmentLabel = computed(() =>
-  props.segment?.source === 'chorus' ? '副歌片段' : '預估片段',
+// Title and artist credits open their pages like PlayerBar; the dialog is
+// dismissed first so the page is not left behind it.
+const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const trackAlbum = computed(() => albumForTrack(track.value));
+const albumCtaLabel = computed(() =>
+  trackAlbum.value
+    ? `${track.value.title}，前往專輯：${trackAlbum.value.name || '未命名專輯'}`
+    : '',
 );
+
+function openAlbum() {
+  const selected = track.value;
+  if (!selected || !trackAlbum.value) return;
+  emit('navigate');
+  jumpToAlbum(selected);
+}
+
+// The cover's material colour tints the dialog surface. The last tone stays
+// until the next cover resolves, so a switch crossfades.
+const tone = shallowRef(null);
+let toneRequest = 0;
+watch(
+  () => track.value?.thumbnailUrl,
+  async (url) => {
+    const request = ++toneRequest;
+    const next = await loadArtworkTone(url);
+    if (request === toneRequest) tone.value = next;
+  },
+  { immediate: true },
+);
+
 const isQueued = computed(
   () =>
     Boolean(track.value) &&
     (props.currentTrackId === track.value.id ||
       props.queuedTrackIds.includes(track.value.id)),
 );
-const isInSession = computed(
-  () => Boolean(track.value) && props.sessionTrackIds.includes(track.value.id),
-);
-
-function formatSeconds(seconds) {
-  const whole = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
 
 function select(offset) {
   const target = props.index + offset;
@@ -110,11 +138,20 @@ function select(offset) {
 }
 
 function closeMenu() {
-  menuAnchorEl.value = null;
+  menu.value = null;
 }
 
+// Stops the opening click so the menu's own window listener, attached as it
+// mounts mid-dispatch, does not read it as an outside click and close.
 function openMenu(event) {
-  menuAnchorEl.value = event.currentTarget;
+  event.stopPropagation();
+  menu.value = { anchorEl: event.currentTarget, x: 0, y: 0 };
+}
+
+function openMenuAtPointer(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  menu.value = { anchorEl: null, x: event.clientX, y: event.clientY };
 }
 
 function selectMenuAction(value) {
@@ -124,7 +161,7 @@ function selectMenuAction(value) {
 }
 
 function handleWheel(event) {
-  if (menuAnchorEl.value || Math.abs(event.deltaY) < 1) return;
+  if (menu.value || Math.abs(event.deltaY) < 1) return;
   event.preventDefault();
   if (event.timeStamp - lastWheelAt < WHEEL_STEP_INTERVAL_MS) return;
   lastWheelAt = event.timeStamp;
@@ -134,14 +171,13 @@ function handleWheel(event) {
 const KEY_ACTIONS = {
   next: () => select(1),
   previous: () => select(-1),
-  toggle: () => emit('toggle'),
   mute: () => emit('mute', !props.muted),
 };
 
 // Window capture runs before the global shortcuts, so preview keys never
 // reach the performance player. UiModal still owns Escape, Tab and focus.
 function handleKeydown(event) {
-  if (menuAnchorEl.value) return;
+  if (menu.value) return;
   const dialog = contentRef.value?.closest?.('[role="dialog"]');
   if (!dialog?.contains(event.target)) return;
   const { intent, isolate } = resolvePreviewKeyIntent(event);
@@ -184,16 +220,73 @@ onUnmounted(() => setKeyboardListener(false));
 <template>
   <UiModal
     :open="open"
-    :title="`試聽：${title}`"
+    :title="title"
     size="wide"
+    :tint="tone"
     @close="emit('close')"
   >
+    <!-- Session-wide preview tools live in the modal's header tool area. -->
+    <template v-if="track" #header-actions>
+      <UiIconButton
+        :icon="muted ? VolumeX : Volume2"
+        :label="muted ? '取消試聽靜音' : '試聽靜音'"
+        :title="muted ? '取消試聽靜音' : '試聽靜音'"
+        tooltip-suffix=" (M)"
+        tooltip-placement="bottom"
+        :aria-pressed="muted"
+        @click="emit('mute', !muted)"
+      />
+    </template>
     <AppSurfaceBoundary
       surface-id="track-preview"
       tag="div"
       class="track-preview-surface"
     >
       <div v-if="track" ref="content" class="track-preview">
+        <!-- Conventional feed order: now-playing, media, then one edge
+             column; the free width splits into equal spaces between them. -->
+        <div class="track-preview__content">
+          <section class="track-preview__identity" aria-live="polite">
+            <!-- Only the title slides; the artist line just updates. -->
+            <div class="track-preview__identity-switch">
+              <Transition :name="switchTransition">
+                <h3 :key="track.id" class="track-preview__title">
+                  <UiTextButton
+                    v-if="trackAlbum"
+                    class="track-preview__title-link"
+                    :text="track.title"
+                    overflow="clamp"
+                    :aria-label="albumCtaLabel"
+                    @click="openAlbum"
+                  />
+                  <span v-else class="track-preview__title-text">
+                    {{ track.title }}
+                  </span>
+                </h3>
+              </Transition>
+            </div>
+            <p v-if="track.artist" class="track-preview__meta">
+              <TrackArtistCredits :track="track" @navigate="emit('navigate')" />
+            </p>
+          </section>
+
+          <UiProgress
+            v-if="segment"
+            class="track-preview__progress"
+            label="試聽進度"
+            label-hidden
+            :value="segmentElapsed"
+            :max="segmentLength || 1"
+          />
+
+          <UiNotice
+            v-if="statusNotice"
+            :tone="statusNotice.tone"
+            :message="statusNotice.message"
+            compact
+          />
+        </div>
+
         <!-- Neighbours peek as fixed slices; the wheel steps through them. -->
         <div
           class="track-preview__stage"
@@ -214,10 +307,20 @@ onUnmounted(() => setKeyboardListener(false));
                 @click="select(-1)"
               >
                 <UiTrackThumb :track="previousTrack" size="100%" />
+                <UiArtworkOverlay>
+                  <span
+                    class="track-preview__peek-shade track-preview__peek-shade--previous"
+                    aria-hidden="true"
+                  ></span>
+                </UiArtworkOverlay>
               </button>
             </Transition>
           </span>
-          <span class="track-preview__artwork">
+          <span
+            class="track-preview__artwork"
+            data-artwork-reveal-scope
+            @contextmenu="openMenuAtPointer"
+          >
             <Transition :name="switchTransition">
               <UiTrackThumb
                 :key="track.id"
@@ -228,6 +331,23 @@ onUnmounted(() => setKeyboardListener(false));
                 font-size="var(--ui-font-size-xl)"
               />
             </Transition>
+            <!-- Leaving the preview for real playback sits on the cover like
+                   a feed card, revealed on hover or keyboard focus; the
+                   preview itself has no play／pause. -->
+            <UiArtworkOverlay>
+              <UiArtworkReveal>
+                <span
+                  class="track-preview__play-scrim"
+                  aria-hidden="true"
+                ></span>
+              </UiArtworkReveal>
+            </UiArtworkOverlay>
+            <UiArtworkReveal class="track-preview__play">
+              <PlaybackPrimaryButton
+                play-label="從這首開始播放"
+                @click="emit('playTrack', track)"
+              />
+            </UiArtworkReveal>
           </span>
           <span class="track-preview__peek-slot track-preview__peek-slot--next">
             <Transition :name="switchTransition">
@@ -241,118 +361,81 @@ onUnmounted(() => setKeyboardListener(false));
                 @click="select(1)"
               >
                 <UiTrackThumb :track="nextTrack" size="100%" />
+                <UiArtworkOverlay>
+                  <span
+                    class="track-preview__peek-shade track-preview__peek-shade--next"
+                    aria-hidden="true"
+                  ></span>
+                </UiArtworkOverlay>
               </button>
             </Transition>
           </span>
         </div>
 
-        <div class="track-preview__content">
-          <section class="track-preview__identity" aria-live="polite">
-            <p class="track-preview__meta">
-              {{ index + 1 }} / {{ tracks.length }}
-            </p>
-            <div class="track-preview__identity-switch">
-              <Transition :name="switchTransition">
-                <div :key="track.id" class="track-preview__identity-text">
-                  <h3 class="track-preview__title">{{ track.title }}</h3>
-                  <p v-if="track.artist" class="track-preview__meta">
-                    {{ track.artist }}
-                  </p>
-                </div>
-              </Transition>
-            </div>
-          </section>
-
-          <UiProgress
-            v-if="segment"
-            :label="segmentLabel"
-            :value="segmentElapsed"
-            :max="segmentLength || 1"
-            :value-text="`${formatSeconds(segmentElapsed)} / ${formatSeconds(segmentLength)}`"
-          />
-
-          <div class="track-preview__transport">
+        <!-- One edge column holds two units: track actions centred on the
+             cover, and feed stepping at its foot. -->
+        <div class="track-preview__edge">
+          <!-- Track actions are the row right-click menu itself plus one
+             shortcut taken from it, never a preview-only action. -->
+          <div class="track-preview__rail" aria-label="曲目操作">
             <UiIconButton
-              :icon="SkipBack"
-              label="上一首"
-              tooltip-suffix=" (↑)"
-              :disabled="!previousTrack"
-              @click="select(-1)"
-            />
-            <PlaybackPrimaryButton
-              :playing="isPlaying"
-              :play-label="`試聽：${track.title}`"
-              :pause-label="`暫停試聽：${track.title}`"
-              @click="emit('toggle')"
+              :icon="Ellipsis"
+              label="更多操作"
+              aria-haspopup="menu"
+              :aria-expanded="menu?.anchorEl ? 'true' : 'false'"
+              @click="openMenu"
             />
             <UiIconButton
-              :icon="SkipForward"
-              label="下一首"
-              tooltip-suffix=" (↓)"
-              :disabled="!nextTrack"
-              @click="select(1)"
-            />
-            <UiIconButton
-              class="track-preview__mute"
-              :icon="muted ? VolumeX : Volume2"
-              :label="muted ? '取消試聽靜音' : '試聽靜音'"
-              :title="muted ? '取消試聽靜音' : '試聽靜音'"
-              tooltip-suffix=" (M)"
-              :aria-pressed="muted"
-              @click="emit('mute', !muted)"
+              :icon="ListEnd"
+              :label="isQueued ? '已在佇列' : '加入佇列'"
+              :disabled="isQueued"
+              @click="emit('addToQueue', track)"
             />
           </div>
 
-          <UiNotice
-            v-if="statusNotice"
-            :tone="statusNotice.tone"
-            :message="statusNotice.message"
-            compact
-          />
+          <!-- Feed stepping is the main preview control: its own outer corner
+             at the live control size, apart from the track actions. -->
+          <div class="track-preview__skips">
+            <UiIconButton
+              :icon="ChevronUp"
+              label="上一首"
+              size="lg"
+              tooltip-suffix=" (↑)"
+              tooltip-placement="start"
+              :disabled="!previousTrack"
+              @click="select(-1)"
+            />
+            <UiIconButton
+              :icon="ChevronDown"
+              label="下一首"
+              size="lg"
+              tooltip-suffix=" (↓)"
+              tooltip-placement="start"
+              :disabled="!nextTrack"
+              @click="select(1)"
+            />
+          </div>
         </div>
       </div>
 
       <!-- Mounted only once open: its Teleport targets this dialog's own
            host, which is not in the document while the dialog mounts. -->
       <TrackActionMenu
-        v-if="menuAnchorEl"
-        :open="Boolean(menuAnchorEl)"
-        :anchor-el="menuAnchorEl"
+        v-if="menu"
+        :open="Boolean(menu)"
+        :anchor-el="menu.anchorEl"
+        :x="menu.x"
+        :y="menu.y"
         :track="track"
         :playlists="playlists"
         :current-track-id="currentTrackId"
         :queued-track-ids="queuedTrackIds"
+        :remove-from-playlist-id="menuOptions.removeFromPlaylistId"
+        :can-go-to-album="menuOptions.canGoToAlbum"
         @select="selectMenuAction"
         @close="closeMenu"
       />
     </AppSurfaceBoundary>
-
-    <template v-if="track" #footer>
-      <div class="track-preview__actions" aria-label="曲目操作">
-        <UiIconButton
-          :icon="ListEnd"
-          :label="isQueued ? '已在佇列' : '加入佇列'"
-          :disabled="isQueued"
-          @click="emit('addToQueue', track)"
-        />
-        <UiIconButton
-          :icon="ListOrdered"
-          :label="isInSession ? '已在場次草稿' : '加入場次草稿'"
-          :disabled="isInSession"
-          @click="emit('addToSession', track)"
-        />
-        <UiIconButton
-          :icon="Ellipsis"
-          label="更多操作"
-          aria-haspopup="menu"
-          :aria-expanded="menuAnchorEl ? 'true' : 'false'"
-          @click="openMenu"
-        />
-      </div>
-      <UiButton variant="accent" @click="emit('playTrack', track)">
-        從這首開始播放
-      </UiButton>
-    </template>
   </UiModal>
 </template>
 
@@ -362,34 +445,78 @@ onUnmounted(() => setKeyboardListener(false));
   background: transparent;
 }
 
-/* Mirrors LibraryEntityDossier: artwork first, metadata beside it. */
+/* Conventional feed order: now-playing, the media, then one edge column for
+   track actions and feed stepping. */
 .track-preview {
-  --track-preview-artwork-size: 15rem;
+  --track-preview-artwork-size: 20rem;
   --track-preview-peek-size: 2.5rem;
-  --track-preview-peek-opacity: 0.4;
+  --track-preview-peek-scale: 0.7;
+  --track-preview-info-size: 15rem;
 
   min-inline-size: 0;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: var(--ui-space-5);
+  /* Equal flexible spaces before the copy, between copy and cover, and
+     between cover and edge, so the cover sits evenly between its
+     neighbours; none shrinks below the section gap. */
+  grid-template-columns:
+    minmax(var(--ui-modal-section-gap), 1fr) var(--track-preview-info-size)
+    minmax(var(--ui-modal-section-gap), 1fr) max-content
+    minmax(var(--ui-modal-section-gap), 1fr) max-content;
+  grid-template-areas: '. info . media . edge';
   align-items: center;
 }
 
+.track-preview__edge {
+  grid-area: edge;
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+}
+
+.track-preview__rail,
+.track-preview__skips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+}
+
+/* Spans the column so it centres on the cover, not on the space above the
+   stepping unit. */
+.track-preview__rail {
+  grid-row: 1 / -1;
+  align-self: center;
+}
+
+.track-preview__skips {
+  grid-row: 2;
+  align-self: end;
+}
+
 .track-preview__stage {
+  grid-area: media;
   display: grid;
   grid-template-rows:
     var(--track-preview-peek-size) auto
     var(--track-preview-peek-size);
   justify-items: center;
   gap: var(--ui-space-2);
-  overflow: hidden;
+  /* Peeks only slide vertically, so only that axis clips; cover shadows
+     stay whole at the sides. */
+  overflow-x: visible;
+  overflow-y: clip;
 }
 
+/* Covers lift off the tinted surface with the shared overlay shadow. Each
+   frame isolates its own stack, so the overlay plane and corner control
+   z-indexes never compete with the rest of the dialog. */
 .track-preview__artwork,
 .track-preview__peek {
+  isolation: isolate;
   overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
+  box-shadow: var(--ui-shadow-overlay);
 }
 
 .track-preview__artwork {
@@ -397,7 +524,36 @@ onUnmounted(() => setKeyboardListener(false));
   grid-row: 2;
   display: grid;
   inline-size: var(--track-preview-artwork-size);
+  max-inline-size: 100%;
   aspect-ratio: 1;
+}
+
+/* Real playback starts from the cover's corner, like a feed card; corner
+   controls sit above the shared artwork overlay plane. */
+.track-preview__play {
+  position: absolute;
+  z-index: 3;
+  inset-block-end: var(--ui-space-2);
+  inset-inline-end: var(--ui-space-2);
+}
+
+/* A tight corner vignette, not a full darken: the cover stays the focus
+   while the button gets a calmer ground. */
+.track-preview__play-scrim {
+  background: radial-gradient(
+    circle at 100% 100%,
+    var(--ui-color-overlay-scrim),
+    transparent 40%
+  );
+  pointer-events: none;
+}
+
+.track-preview__play-scrim:dir(rtl) {
+  background: radial-gradient(
+    circle at 0% 100%,
+    var(--ui-color-overlay-scrim),
+    transparent 40%
+  );
 }
 
 /* The artwork frame clips a full-height slide between covers. */
@@ -405,20 +561,45 @@ onUnmounted(() => setKeyboardListener(false));
   --track-preview-switch-offset: 100%;
 }
 
+/* Neighbours sit one clear tier below the current cover: smaller, shaded and
+   clipped to an edge slice. */
 .track-preview__peek {
   --track-preview-switch-offset: var(--track-preview-peek-size);
 
-  inline-size: calc(var(--track-preview-artwork-size) * 0.8);
+  inline-size: calc(
+    var(--track-preview-artwork-size) * var(--track-preview-peek-scale)
+  );
+  position: relative;
   aspect-ratio: 1;
   padding: 0;
   background: none;
-  opacity: var(--track-preview-peek-opacity);
   cursor: pointer;
+}
+
+/* Neighbours recede behind a scrim that deepens toward their outer edge;
+   it eases off on hover to show they can be picked. */
+.track-preview__peek-shade {
   transition: opacity var(--ui-motion-duration-fast)
     var(--ui-motion-easing-standard);
 }
 
-.track-preview__peek:hover {
+.track-preview__peek-shade--previous {
+  background: linear-gradient(
+    to bottom,
+    var(--ui-color-overlay-scrim-active),
+    var(--ui-color-overlay-scrim)
+  );
+}
+
+.track-preview__peek-shade--next {
+  background: linear-gradient(
+    to top,
+    var(--ui-color-overlay-scrim-active),
+    var(--ui-color-overlay-scrim)
+  );
+}
+
+.track-preview__peek:hover .track-preview__peek-shade {
   opacity: var(--ui-opacity-muted);
 }
 
@@ -439,17 +620,28 @@ onUnmounted(() => setKeyboardListener(false));
   align-items: start;
 }
 
-/* Tight identity group, then progress and transport as separate beats. */
+/* Now-playing centres against the cover in its fixed info lane. */
 .track-preview__content {
+  grid-area: info;
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-4);
+  justify-items: start;
+  gap: var(--ui-modal-section-gap);
 }
 
 .track-preview__identity {
   min-inline-size: 0;
+  justify-self: stretch;
   display: grid;
   gap: var(--ui-space-1);
+}
+
+/* Feed chrome: wheel, repeated clicks and drags never select the cover area
+   or the switching title copy; the status notice stays selectable. */
+.track-preview__stage,
+.track-preview__identity {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .track-preview__identity-switch {
@@ -458,53 +650,48 @@ onUnmounted(() => setKeyboardListener(false));
   display: grid;
 }
 
-.track-preview__identity-text {
-  --track-preview-switch-offset: var(--ui-space-2);
-
-  min-inline-size: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
 .track-preview__meta {
   margin: 0;
   overflow: hidden;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-variant-numeric: tabular-nums;
   line-height: var(--ui-line-height-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Cover, then the title one step above the dialog's own title, then a small
+   artist line: clear tiers. */
 .track-preview__title {
-  display: -webkit-box;
+  --track-preview-switch-offset: var(--ui-space-2);
+
+  min-inline-size: 0;
   margin: 0;
-  overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-font-size-2xl);
+  font-weight: var(--ui-font-weight-bold);
+  /* Display leading is too tight: the clamp would clip the last line's
+     hover underline. */
   line-height: var(--ui-line-height-title);
+}
+
+/* Plain titles clamp like UiTextButton's clamp overflow. */
+.track-preview__title-text {
+  display: -webkit-box;
+  overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.track-preview__transport {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
+/* UiTextButton leaves font-weight to its caller. */
+.track-preview__title-link {
+  font-weight: inherit;
 }
 
-.track-preview__mute {
-  margin-inline-start: auto;
-}
-
-/* Secondary actions start the footer; the primary action stays at its end. */
-.track-preview__actions {
-  display: flex;
-  gap: var(--ui-space-1);
-  margin-inline-end: auto;
+/* The bar spans the info lane, which is what bounds its length. */
+.track-preview__progress {
+  justify-self: stretch;
 }
 
 /* Track switches share the standard timing token, which reduced motion
@@ -550,10 +737,18 @@ onUnmounted(() => setKeyboardListener(false));
   transform: translateY(calc(-1 * var(--track-preview-switch-offset)));
 }
 
-/* Narrow dialogs stack the artwork above the metadata and drop the peeks. */
-@container (max-width: 34rem) {
+/* Spaces 3 × 1 + info 15 + cover 20 + edge 2.75 + modal insets 3
+   = 43.75rem; below that the cover leads, the copy moves under it and the
+   peeks drop. */
+@container (max-width: 44rem) {
   .track-preview {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns:
+      minmax(0, var(--track-preview-artwork-size))
+      max-content;
+    grid-template-areas:
+      'media edge'
+      'info info';
+    gap: var(--ui-modal-section-gap);
   }
 
   .track-preview__stage {

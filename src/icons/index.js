@@ -26,6 +26,7 @@ export {
   ExternalLink,
   FolderOpen,
   FolderPlus,
+  GalleryVerticalEnd,
   GripVertical,
   Grid2X2,
   Headphones,

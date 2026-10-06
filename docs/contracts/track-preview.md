@@ -1,9 +1,9 @@
 # 曲目試聽契約
 
-> 狀態：lane 仲裁（Step 1）與試聽 player／overlay／入口（P1）已實作；同步歌詞卡、音量條與封面主色（P2）尚未實作。
+> 狀態：lane 仲裁（Step 1）與試聽 player／overlay／入口（P1）已實作；封面主色背景已實作；同步歌詞卡與音量條（P2）尚未實作。
 
 本契約定義 album／artist／playlist 頁的「曲目試聽」：使用者在全視窗 modal 中逐首聽
-一段精華片段，用來快速篩選歌曲並加入佇列、播放清單或場次草稿。它是只供本機監聽的
+一段精華片段，用來快速篩選歌曲並以曲目右鍵選單的同一組動作加入佇列或播放清單。它是只供本機監聽的
 預覽，不是一般播放、不是 BGM，也不是演出。
 
 ## 現有可聽來源盤點
@@ -55,7 +55,7 @@ taskbar、視窗標題、啟動恢復、節拍器自動 BPM、歌詞與 Self-Vie
 ```text
 closed ──open──▶ acquiring ──granted──▶ playing ⇄ paused
    ▲                 │                    │
-   │              blocked                 ├─ segment end → advance（下一張卡）
+   │              blocked                 ├─ segment end → replay（同一片段）
    │                 │                    │
    └──── releasing ◀─┴──── close／preempted ┘
 ```
@@ -125,17 +125,25 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
   `TrackPreviewOverlay.vue` 只投影狀態並送出意圖，不 import 演唱播放器。
 - 入口：album／artist／playlist 頁 CollectionActionRail 的「試聽」按鈕，位於隨機播放之後。
   曲目清單是目前可見（套用搜尋後）的順序，從選取中的曲目開始，否則從第一首。
+  Artist 頁與 album 頁區隔：可見曲目每次開啟時隨機排序，選取中的曲目固定為第一首，
+  未選取時整份隨機；album／playlist 維持清單順序。
 - 播放曲目原始 `track.url`；`toPlayableTrack()` 會換成分離結果的 stems URL，試聽不使用。
 - 音量在開啟時沿用演唱播放器目前音量，之後不回寫；靜音只作用於試聽 element。
-- 按鍵以 window capture listener 處理，只在焦點位於試聽 dialog 內時作用：↑／↓ 換卡、Space
-  播放／暫停（焦點在按鈕上時交給按鈕）、M 靜音；其他按鍵也 `stopPropagation`，不傳到全域快捷鍵，
+- 按鍵以 window capture listener 處理，只在焦點位於試聽 dialog 內時作用：↑／↓ 換卡、M 靜音；試聽沒有任何
+  播放／暫停入口（不提供按鈕、點封面或 Space），換到哪張卡就播放哪張，只有 lane 拒絕（錄影／直播）
+  時維持靜音；Space 仍被攔下，不傳到演唱播放器；其他按鍵也 `stopPropagation`，不傳到全域快捷鍵，
   避免改到演唱播放器的音量、靜音或移調。Esc、Tab 與焦點交給 `UiModal`；F 鍵放行，換頁會
   unmount 並 release。「更多」選單開啟時鍵盤交給選單。
 - 滾輪在卡片區每 450ms 最多換一張。
-- 視窗隱藏（縮到 tray 或最小化）時暫停但保留 lane；關閉 overlay、換 collection 或
+- 視窗失焦（切到其他視窗）或隱藏（縮到 tray 或最小化）時暫停但保留 lane；焦點回來時只自動續播
+  這種失焦造成的暫停，使用者暫停、被搶占或換卡後的暫停不會自動續播；關閉 overlay、換 collection 或
   SetlistView unmount 時 release。
-- 卡片動作：從這首開始播放（先 release，再以可見清單建立 Queue 並正式播放）、加入佇列、
-  加入場次草稿（已在佇列／草稿時停用）、更多（TrackActionMenu；編輯資訊與前往專輯會先關閉試聽）。
+- 卡片動作依工作區分組，不使用 modal footer：封面旁直排的曲目操作就是曲目列右鍵選單本身
+  （更多＝`TrackActionMenu`，與該列右鍵傳入同一份 per-track 選項：從播放清單移除、前往專輯），
+  加上取自該選單的「加入佇列」捷徑；不提供右鍵選單沒有的試聽專屬動作。編輯資訊與前往專輯會先
+  關閉試聽。版面依慣例為「目前播放資訊＋媒體（置中成一組）｜一條邊欄」：資訊欄固定 15rem（窄於封面，讓這組有餘寬置中、資訊內縮），含歌名、藝人與進度；正式播放鈕在封面右下角，只在 hover 或鍵盤焦點時出現（`UiArtworkReveal`，無障礙名稱「從這首開始播放」；先 release，再以可見清單建立 Queue 並正式播放）；邊欄內含兩個單位：對齊封面中央的曲目操作，以及在底部、live 尺寸的上一首／下一首；整個視窗表面以封面主色透過 `UiModal` 的 `tint` 淡入（只用於表面，不改變文字或控制項顏色）；封面 hover 時另有角落暗角襯托播放鈕；靜音放在 `UiModal` 標題列的工具區。換卡時只有歌名做方向滑動，藝人列直接更新。在目前封面按右鍵，會在指標位置開啟同一份右鍵選單；選單觸發點須停止開啟用的點擊冒泡，否則選單掛載時註冊的 window 點擊監聽會把它當成外部點擊而立即關閉。
+- 歌名與藝人沿用 PlayerBar 的 CTA：有所屬專輯時歌名前往專輯，可配對的藝人 credit 前往藝人頁
+  （`TrackArtistCredits`）；無專輯或無法配對時維持純文字。兩者都先關閉試聽再切換頁面。
 - 外框使用共用 `UiModal`（`wide`）；`UiModal` 一律掛到所屬 renderer root 的 overlay host，遮罩因此蓋過 Folder 分頁與 Right Dock（見 Token v2 完整替換契約）。UiContextMenu 的 z-index 低於 dialog，teleport 到 surface host
   會被蓋住，因此 modal 內容以 `track-preview` surface 提供自己的 overlay host，選單只在開啟時
   mount（host 此時才在 document 內），畫在 dialog 的 stacking context 內。
@@ -155,8 +163,22 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
 
 ## 精華片段
 
-- 起點：曲目有 M2 結果時取第一個 `chorus` section 的起點；否則取時長 30%。
-- 長度：預設 30 秒，不超過曲目結尾；片段結束自動前進到下一張卡。
+- 目標點依序取：M2 第一個 `chorus` section 起點 → 逐行時間歌詞推估的副歌起點 →
+  時長 30%。每一層都可缺，讀取失敗安靜退回下一層，不記錄診斷。
+- 歌詞推估只讀偏好來源的既有檔案與逐行時間（不需逐字）：正規化後以 bigram 相似度
+  ≥0.8 容許小改詞，取重複次數 × 行數最高的連續 2–4 行段落，並取其落在全曲 15% 之後
+  的第一次出現；時間戳無效或未遞增、涵蓋未達全曲一半、或起點超過 75% 時不採用。
+  起點依來源 `offsetMs` 換回音訊時間。
+- 進入緩衝一律套用：取目標點前 1–5 秒內最晚的高信心（≥0.5）小節起點，否則目標點前
+  2 秒；再滑入曲長內。開始播放時試聽 element 音量以 300ms 淡入。
+- 長度：預設 30 秒，不超過曲目結尾；片段結束（含碰到檔案結尾）後從片段起點重播同一首，換卡一律由
+  使用者操作。只有無法播放的曲目會自動跳到下一張。
+- 進度顯示：播放中試聽 owner 每個 animation frame 讀取試聽 element 的 `currentTime`，
+  避免 `timeupdate` 約 4Hz 在 30 秒片段上逐格跳動；片段結束判定仍由 `timeupdate` 負責。
+  暫停、載入下一首或關閉時停止讀取，modal 的 progress 不另加補間。
+- 畫面只顯示無文字的片段進度條（accessible name「試聽進度」）；不顯示片段如何選出
+  （副歌／估算等來源），也不顯示片段起訖或已播放的具體時間。`segment.source` 只供
+  owner 內部使用。
 - 不因試聽觸發分析、歌詞取得或任何背景工作。
 
 ## 驗收

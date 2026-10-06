@@ -12,7 +12,6 @@ import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylistActions } from '../composables/usePlaylistActions.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import { usePerformanceSessionPlan } from '../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useTrackPreview } from '../composables/useTrackPreview.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
@@ -49,6 +48,7 @@ import { toPlayableTrack } from '../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../utils/albumSummary.js';
 import { deriveAlbumSupportingContent } from '../utils/albumSupportingContent.js';
 import { deriveArtistPage } from '../utils/artistPage.js';
+import { shufflePreviewTracks } from '../utils/trackPreviewOrder.js';
 import {
   sortSetlistLibraryTracks,
   sortSetlistLocalTracks,
@@ -92,7 +92,6 @@ const {
   clearPhoto: clearArtistPhoto,
 } = useArtistIndex();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
-const performanceSessionPlan = usePerformanceSessionPlan();
 const trackPreview = useTrackPreview();
 const { handoffState: bgmHandoffState } = useBgmSession();
 
@@ -389,21 +388,20 @@ const canDragPlaylistRows = computed(
 const queuedTrackIds = computed(() =>
   queueState.queuedTracks.map((track) => track.id),
 );
-const addMenuRemoveFromPlaylistId = computed(() => {
-  const track = addMenu.value?.track;
-  if (
-    track &&
+// Row right-click and the preview's menu offer the same items per track.
+function trackMenuOptions(track) {
+  const inEditablePlaylist =
+    Boolean(track) &&
     !isAlbumSelected.value &&
-    selectedPlaylist.value?.trackIds.includes(track.id)
-  ) {
-    return selectedPlaylist.value.id;
-  }
-  return '';
-});
-const addMenuCanGoToAlbum = computed(() => {
-  const track = addMenu.value?.track;
-  return Boolean(track && !isAlbumSelected.value && albumForTrack(track));
-});
+    Boolean(selectedPlaylist.value?.trackIds.includes(track.id));
+  return {
+    removeFromPlaylistId: inEditablePlaylist ? selectedPlaylist.value.id : '',
+    canGoToAlbum: Boolean(
+      track && !isAlbumSelected.value && albumForTrack(track),
+    ),
+  };
+}
+const addMenuOptions = computed(() => trackMenuOptions(addMenu.value?.track));
 
 const pageError = computed(() => playlistState.error || deleteError.value);
 const visibleTracksEmptyText = computed(() =>
@@ -541,20 +539,21 @@ async function applyTrackMenuAction(track, value) {
   }
 }
 
-const sessionTrackIds = computed(() =>
-  performanceSessionPlan.state.plan.items
-    .map((item) => item.trackId)
-    .filter(Boolean),
+const previewMenuOptions = computed(() =>
+  trackMenuOptions(trackPreview.state.tracks[trackPreview.state.index]),
 );
 
-// The preview follows the visible (searched) order and starts at the selection.
+// The preview starts at the selection and follows the visible (searched)
+// order; artist pages shuffle so they differ from the album view.
 function openTrackPreview() {
-  const tracks = visiblePlaylistEntries.value.map(({ track }) => track);
+  const visibleTracks = visiblePlaylistEntries.value.map(({ track }) => track);
+  const tracks = isArtistSelected.value
+    ? shufflePreviewTracks(visibleTracks, { pinnedId: selectedTrackId.value })
+    : visibleTracks;
   const startIndex = Math.max(
     0,
     tracks.findIndex((track) => track.id === selectedTrackId.value),
   );
-  performanceSessionPlan.initialize();
   trackPreview.open({ title: pageTitle.value, tracks, startIndex });
 }
 
@@ -692,14 +691,13 @@ onMounted(async () => {
       :playlists="playlistState.playlists"
       :current-track-id="state.track?.id ?? ''"
       :queued-track-ids="queuedTrackIds"
-      :session-track-ids="sessionTrackIds"
+      :menu-options="previewMenuOptions"
       @close="trackPreview.close"
+      @navigate="trackPreview.close"
       @select="trackPreview.select"
-      @toggle="trackPreview.toggle"
       @mute="trackPreview.setMuted"
       @play-track="playFromPreview"
       @add-to-queue="enqueueTrack"
-      @add-to-session="performanceSessionPlan.appendLibraryTrack($event.id)"
       @menu-select="handlePreviewMenuSelect"
     />
 
@@ -891,8 +889,8 @@ onMounted(async () => {
           :playlists="playlistState.playlists"
           :current-track-id="state.track?.id ?? ''"
           :queued-track-ids="queuedTrackIds"
-          :remove-from-playlist-id="addMenuRemoveFromPlaylistId"
-          :can-go-to-album="addMenuCanGoToAlbum"
+          :remove-from-playlist-id="addMenuOptions.removeFromPlaylistId"
+          :can-go-to-album="addMenuOptions.canGoToAlbum"
           @select="handleTrackMenuSelect"
           @close="closeAddMenu"
         />
