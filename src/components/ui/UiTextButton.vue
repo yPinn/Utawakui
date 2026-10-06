@@ -2,7 +2,7 @@
 // Wraps overflow text in a real <button> so a caller can make it its own
 // click target, separate from a row's primary action. Marquee remains the
 // default; high-volume surfaces can opt into static ellipsis to avoid one
-// ResizeObserver and animation lane per row.
+// ResizeObserver and animation lane per row, and headlines into a clamp.
 import { computed } from 'vue';
 import UiMarqueeText from './UiMarqueeText.vue';
 
@@ -12,7 +12,7 @@ const props = defineProps({
   overflow: {
     type: String,
     default: 'marquee',
-    validator: (value) => ['marquee', 'ellipsis'].includes(value),
+    validator: (value) => ['marquee', 'ellipsis', 'clamp'].includes(value),
   },
 });
 
@@ -28,7 +28,12 @@ const displayText = computed(() => String(props.text ?? ''));
     @click.stop="emit('click', $event)"
   >
     <UiMarqueeText v-if="overflow === 'marquee'" :text="displayText" />
-    <span v-else class="ui-text-btn__text" :title="displayText">
+    <span
+      v-else
+      class="ui-text-btn__text"
+      :class="{ 'ui-text-btn__text--clamp': overflow === 'clamp' }"
+      :title="displayText"
+    >
       {{ displayText }}
     </span>
   </button>
@@ -79,6 +84,17 @@ const displayText = computed(() => String(props.text ?? ''));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Headline callers wrap to two lines instead of one. The clip hides line
+   three, so callers need title leading or looser to keep the last line's
+   underline inside the box. */
+.ui-text-btn__text--clamp {
+  display: -webkit-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* Targets UiMarqueeText's own text span directly — it's inline-block, and

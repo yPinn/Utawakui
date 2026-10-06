@@ -20,6 +20,7 @@ import {
 import { rendererRootSurfaceId } from '../../utils/rendererSurfaceRegistry.js';
 import UiIconButton from './UiIconButton.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
+import UiSeparator from './UiSeparator.vue';
 
 // A surface host can sit inside another stacking context (the Folder page
 // beneath its tabs and the Right Dock), so the modal and its tooltips mount on
@@ -45,6 +46,9 @@ const props = defineProps({
     validator: (value) => ['default', 'notice', 'wide'].includes(value),
   },
   fixedHeight: { type: Boolean, default: false },
+  // Optional content colour (e.g. a cover's) washed in from the end edge.
+  // Material colour only: it never recolours text, controls or accent.
+  tint: { type: String, default: null },
 });
 
 const emit = defineEmits(['close']);
@@ -166,8 +170,10 @@ onUnmounted(() => {
           {
             'ui-modal--fixed-height': fixedHeight,
             'ui-modal--with-footer': Boolean($slots.footer),
+            'ui-modal--tinted': Boolean(tint),
           },
         ]"
+        :style="tint ? { '--ui-modal-tint': tint } : undefined"
         role="dialog"
         tabindex="-1"
         aria-modal="true"
@@ -175,7 +181,20 @@ onUnmounted(() => {
       >
         <div class="ui-modal__header">
           <h2 class="ui-modal__title">{{ title }}</h2>
-          <UiIconButton :icon="X" label="關閉" @click="close" />
+          <!-- Optional caller tools stay ahead of the default close, split by
+               one separator so closing never reads as one of them. -->
+          <div class="ui-modal__header-end">
+            <template v-if="$slots['header-actions']">
+              <div class="ui-modal__header-actions">
+                <slot name="header-actions" />
+              </div>
+              <UiSeparator
+                orientation="vertical"
+                class="ui-modal__header-separator"
+              />
+            </template>
+            <UiIconButton :icon="X" label="關閉" @click="close" />
+          </div>
         </div>
         <UiScrollRegion
           class="ui-modal__body"
@@ -231,9 +250,39 @@ onUnmounted(() => {
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   background: var(--ui-color-surface-raised);
+  transition: --ui-modal-tint var(--ui-motion-duration-slow)
+    var(--ui-motion-easing-standard);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-dialog);
+}
+
+/* Registered so a tint change crossfades instead of jumping. */
+@property --ui-modal-tint {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+/* The tint fades out before the start side, where titles and copy read on
+   the neutral surface. Its lightness is capped first, so even a pale cover
+   at this strength keeps end-side controls in contrast. */
+.ui-modal--tinted {
+  --ui-modal-tint-ground: oklch(from var(--ui-modal-tint) min(l, 0.55) c h);
+
+  background-image: radial-gradient(
+    ellipse 90% 140% at 100% 50%,
+    color-mix(in oklab, var(--ui-modal-tint-ground) 55%, transparent),
+    transparent
+  );
+}
+
+.ui-modal--tinted:dir(rtl) {
+  background-image: radial-gradient(
+    ellipse 90% 140% at 0% 50%,
+    color-mix(in oklab, var(--ui-modal-tint-ground) 55%, transparent),
+    transparent
+  );
 }
 
 .ui-modal__body {
@@ -294,6 +343,18 @@ onUnmounted(() => {
 }
 
 /* Headline tier — DESIGN.md names modal titles explicitly. */
+.ui-modal__header-end,
+.ui-modal__header-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.ui-modal__header-separator {
+  margin-block: var(--ui-space-2);
+}
+
 .ui-modal__title {
   min-inline-size: 0;
   margin: 0;

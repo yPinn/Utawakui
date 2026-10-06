@@ -347,6 +347,26 @@ describe('DemoTextButtonAppearance', () => {
     mounted.app.unmount();
   });
 
+  it('lets headline callers clamp static text without mounting marquee work', () => {
+    const mounted = mount(UiTextButton, {
+      text: 'A deliberately long headline title',
+      overflow: 'clamp',
+    });
+    const marquee = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-marquee'),
+    );
+    const clampText = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-text-btn__text--clamp'),
+    )[0];
+
+    expect(marquee).toHaveLength(0);
+    expect(textContent(clampText)).toBe('A deliberately long headline title');
+    expect(currentSource).toMatch(
+      /\.ui-text-btn__text--clamp\s*\{[\s\S]*?-webkit-line-clamp:\s*2;/u,
+    );
+    mounted.app.unmount();
+  });
+
   it('lists real destination recipes separately and leaves geometry and navigation with parents', async () => {
     const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
 

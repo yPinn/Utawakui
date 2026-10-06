@@ -7,6 +7,37 @@ const modalSource = readFileSync(
 );
 
 describe('UiModal appearance contract', () => {
+  it('offers an optional header tool area split from close by one separator', () => {
+    // Without tools the header is unchanged: title and close only.
+    expect(modalSource).toMatch(
+      /<template v-if="\$slots\['header-actions'\]">\s*<div class="ui-modal__header-actions">\s*<slot name="header-actions" \/>\s*<\/div>\s*<UiSeparator\s+orientation="vertical"/u,
+    );
+    // Close stays last, after the tools and their separator.
+    expect(modalSource).toMatch(
+      /<\/template>\s*<UiIconButton :icon="X" label="關閉" @click="close" \/>/u,
+    );
+  });
+
+  it('offers an optional material tint washed in from the end edge', () => {
+    expect(modalSource).toContain('tint: { type: String, default: null }');
+    expect(modalSource).toMatch(
+      /:style="tint \? \{ '--ui-modal-tint': tint \} : undefined"/u,
+    );
+    // Registered so a tint change crossfades on the standard motion token.
+    expect(modalSource).toMatch(
+      /@property --ui-modal-tint \{\s*syntax: '<color>';/u,
+    );
+    expect(modalSource).toMatch(
+      /transition: --ui-modal-tint var\(--ui-motion-duration-slow\)/u,
+    );
+    // Lightness-capped, then washed in strongly from the end edge and faded
+    // toward the start side; mirrored for RTL.
+    expect(modalSource).toMatch(
+      /\.ui-modal--tinted \{\s*--ui-modal-tint-ground: oklch\(from var\(--ui-modal-tint\) min\(l, 0\.55\) c h\);\s*background-image: radial-gradient\(\s*ellipse 90% 140% at 100% 50%,\s*color-mix\(in oklab, var\(--ui-modal-tint-ground\) 55%, transparent\)/u,
+    );
+    expect(modalSource).toContain('.ui-modal--tinted:dir(rtl)');
+  });
+
   it('maps every public size to the reviewed inline and block-size tokens', () => {
     expect(modalSource).toMatch(
       /\.ui-modal\s*\{[\s\S]*?--ui-modal-inline-size:\s*var\(--ui-modal-inline-size-small\);[\s\S]*?--ui-modal-max-block-size:\s*var\(--ui-modal-max-block-size-small\);/u,

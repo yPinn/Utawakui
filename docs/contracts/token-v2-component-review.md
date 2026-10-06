@@ -33,7 +33,7 @@ F8 的 Candidate／Current、ARIA、尺寸與元件責任屬 owner 檢查所需�
 
 ## 2026-10-05 production adoption 補記
 
-- 正式 `UiProgress` 已採用核准 Candidate contract：8px track、`--ui-radius-xs`、Info activity role、自然換行 copy，以及 reduced-motion-safe indeterminate segment。Native progress 保留 name／value；region busy 與 milestone announcement 仍由流程 owner 負責。
+- 正式 `UiProgress` 已採用核准 Candidate contract：8px track、`--ui-radius-xs`、Info activity role、自然換行 copy，以及 reduced-motion-safe indeterminate segment。Native progress 保留 name／value；region busy 與 milestone announcement 仍由流程 owner 負責。Determinate fill 由 `aria-hidden` 圖層繪製，數值增加時以 `--ui-motion-duration-slow` 平移、減少時直接跳回，reduced motion 不補間；更新間隔小於 200ms 視為連續串流（例如播放位置），由元件自行改為直接跟隨，不提供 caller 端覆寫。可見數值與 native value 一律即時呈現真實值。`labelHidden` 沿用 Field／Checkbox 慣例，只移除可見 copy lane，native progress 仍以 `label` 作 accessible name。
 - 正式 `UiCheckbox` 已採用核准 Candidate contract：Standard／Compact 36／32px full-row target、16px project-owned Check／Minus、`--ui-radius-sm` indicator、多行首行對齊與整列 disabled。單一 native input 繼續擁有互動、focus、required、disabled、Boolean／mixed 與 ARIA 語意；consumer public props／events 未變。
 - F8 的 Candidate 標本繼續作歷史回歸證據；Current layer 已改為投影上述正式 adoption，不再描述 pill progress 或 Windows native checkbox 舊外觀。
 - Control-panel 與 public Overlay 仍維持不同 token namespace。Live Stage artwork card 的既有 raw radius 已映射至 `--ovl-primitive-radius-md`，沒有引入 `--ui-*` 依賴。
@@ -339,6 +339,8 @@ Text Action 標本，並已完成本階段 owner 可視確認：
 
 2026-09-27 production adoption note：Right Dock Queue 的長清單效能需求形成了先前型錄階段尚未存在的 bounded use case。正式 `UiTextButton` 因此保留 marquee 預設，另接受 `overflow="ellipsis"`，讓高列數 caller 跳過逐列 `ResizeObserver`／motion；此選項只改 overflow recipe，不建立 appearance、速度或動畫時機變體。Candidate 仍維持原已審查契約。
 
+2026-10-07 production adoption note：曲目試聽 modal 的歌名 CTA 需要與純文字標題相同的兩行截斷。正式 `UiTextButton` 另接受 `overflow="clamp"`（固定兩行；裁切會切到最後一行的 hover 底線，caller 行高至少需為 `--ui-line-height-title`，display 行高不適用），同樣只改 overflow recipe；hover／focus 底線、focus ring、`click.stop` 與 caller typography 規則不變，caller 不得再自寫 text-link 樣式。
+
 ## 已完成階段：UiTabs Candidate／Current 檢查
 
 Text Action 已完成 owner 可視確認；依 owner 指示只向下進入 Navigation 的
@@ -641,6 +643,9 @@ action menu。F8 已建立本階段 Candidate／Current 標本並完成 owner ch
 11. Candidate 只存在 development-only F8；正式 `UiModal`、active `tokens.css`、十一個 production consumer及其內容排列均未修改。Current 的非 native top layer、背景 page 未 inert、整個 shell 捲動、header／close 可能離開 viewport與 focus／accessible-name差距只記為後續 migration audit，不在 F8 反向改正式 component。
 12. 2026-10-05 正式 `UiModal` 已採用核准的 Small／Medium／Large inline 與 max-block geometry、Standard／Compact viewport／content／section／footer spacing、raised shell、on-raised Field aliases、fixed header／optional footer與 body-only scroll；public `default`／`notice`／`wide` 名稱維持相容。`PlaylistDetailsModal` 是首個完整 consumer：改用正式 Text Field／Textarea、fixed footer及單一 caller-owned 160px cover recipe。Native dialog top layer、背景 inert與 visible-title `aria-labelledby` 仍留在後續 focus／ARIA migration，不由本次 layout adoption 假裝完成。
 
+13. 2026-10-07 owner 決定：正式 `UiModal` 另提供可選的 `header-actions` slot，讓 caller 依需求在標題列建立工具區；工具區固定位於預設關閉鈕之前，兩者以一條垂直 `UiSeparator` 隔開，避免關閉被讀成工具之一。未提供 slot 時標題列維持原本的標題＋關閉，不留空白或分隔線。首個使用者是曲目試聽的靜音。
+14. 2026-10-07 owner 決定：正式 `UiModal` 另提供可選的 `tint`（CSS color），把內容的材質色（例如封面主色）從媒體所在的 end 側以 radial wash 鋪上視窗表面：先把顏色亮度限制在 OKLCH L ≤ 0.55（淺色封面也不會讓 end 側控制項失去對比），再以 55% 強度向 start 側淡出回中性底色，RTL 鏡像；以已註冊的 `--ui-modal-tint` 在 `--ui-motion-duration-slow` 交叉淡化。依 Material Color Rule，它只改表面，不改文字、控制項、強調色或狀態色；未提供時外觀不變。首個使用者是曲目試聽。
+
 ## 已記錄決定與後續 gate
 
 F8 已完成 Foundation 至 UiModal 的全部 30 個原始 component comparison sections。
@@ -705,7 +710,7 @@ token-compatible primitives。
 | Text selection ownership      | Candidate 操作／狀態 chrome 明確不可選取；輸入、Readonly、Hint／Error、Inline Notice、診斷及流程結果句保持可選取；Current 保留 active truth                                                                                                                      | Candidate 補強已完成；production adoption 待後續                                         |
 | Progress naming／ownership    | 保留 `UiProgress` 作有標籤的原子進度指示器；結果、task controls、region busy、milestone announcement 與 lifecycle 都由流程 owner 負責                                                                                                                            | —                                                                                        |
 | Progress size／content        | Candidate／Current 皆為 8px track；Candidate 使用 2px radius、自然換行 label 與 tabular value，寬度由 parent 擁有                                                                                                                                                | —                                                                                        |
-| Progress state／motion        | Determinate 覆蓋 0／partial／complete／custom max；indeterminate 省略 value 並以 reduced-motion-safe 的 Info segment 表示                                                                                                                                        | —                                                                                        |
+| Progress state／motion        | Determinate 覆蓋 0／partial／complete／custom max；indeterminate 省略 value 並以 reduced-motion-safe 的 Info segment 表示；determinate fill 只在增加時補間                                                                                                       | —                                                                                        |
 | Progress ARIA                 | Native progress 擁有 name／value；Candidate 不自行設定 status／live／busy，Current indeterminate `aria-busy` 留作 compatibility audit                                                                                                                            | —                                                                                        |
 | Marquee naming／ownership     | 保留 `UiMarqueeText` 作單行 overflow motion；量測／travel／reduced motion 歸 primitive，寬度／typography／interaction／announcement 歸 owner                                                                                                                     | —                                                                                        |
 | Marquee trigger／motion       | Candidate 以 11rem 預覽列明示觸發，fine-pointer hover／interactive owner focus 後 0.2s single reveal；1.8–5s 移至末端停留，離開重設、再次進入重播                                                                                                                | —                                                                                        |

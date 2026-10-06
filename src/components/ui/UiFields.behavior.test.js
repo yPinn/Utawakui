@@ -1,4 +1,4 @@
-import { nextTick } from 'vue';
+import { nextTick, reactive } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiCheckbox from './UiCheckbox.vue';
 import UiField from './UiField.vue';
@@ -256,6 +256,90 @@ describe('shared field accessibility and data flow', () => {
     expect(busy.props['aria-valuetext']).toBeUndefined();
     expect(busy.props['aria-busy']).toBeUndefined();
     expect(textContent(indeterminate.root)).not.toContain('準備中');
+    expect(
+      findAll(indeterminate.root, (node) =>
+        String(node.props.class ?? '').includes('ui-progress__fill'),
+      ),
+    ).toHaveLength(0);
     indeterminate.app.unmount();
+  });
+
+  it('can drop the visible copy while keeping the accessible name', () => {
+    const { app, root } = mount(UiProgress, {
+      label: '試聽進度',
+      labelHidden: true,
+      value: 3,
+      max: 30,
+      valueText: '0:03',
+    });
+    const progress = findAll(root, (node) => node.type === 'progress')[0];
+
+    expect(progress.props['aria-label']).toBe('試聽進度');
+    expect(textContent(root)).toBe('');
+    app.unmount();
+  });
+
+  it('paints a hidden fill that glides sparse steps and snaps back', async () => {
+    let now = 0;
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const props = reactive({ label: '分析進度', value: 20, max: 80 });
+    const { app, root } = mount(UiProgress, props);
+    const fill = () =>
+      findAll(root, (node) =>
+        String(node.props.class ?? '').includes('ui-progress__fill'),
+      )[0];
+    const step = async (value, atMs) => {
+      now = atMs;
+      props.value = value;
+      await nextTick();
+    };
+
+    expect(fill().props['aria-hidden']).toBe('true');
+    expect(fill().props.style).toMatchObject({ '--ui-progress-ratio': 0.25 });
+
+    await step(60, 1000);
+    expect(fill().props.style).toMatchObject({ '--ui-progress-ratio': 0.75 });
+    expect(fill().props.class).not.toContain('is-snapping');
+
+    await step(0, 2000);
+    expect(fill().props.style).toMatchObject({ '--ui-progress-ratio': 0 });
+    expect(fill().props.class).toContain('is-snapping');
+
+    await step(200, 3000);
+    expect(fill().props.style).toMatchObject({ '--ui-progress-ratio': 1 });
+    expect(fill().props.class).not.toContain('is-snapping');
+    app.unmount();
+    clock.mockRestore();
+  });
+
+  it('follows a continuous stream of updates without easing', async () => {
+    let now = 0;
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const props = reactive({ label: '試聽進度', value: 0, max: 30 });
+    const { app, root } = mount(UiProgress, props);
+    const fill = () =>
+      findAll(root, (node) =>
+        String(node.props.class ?? '').includes('ui-progress__fill'),
+      )[0];
+
+    // Frame-rate updates are already smooth; easing would only lag.
+    for (const [value, atMs] of [
+      [1, 1000],
+      [1.016, 1016],
+      [1.032, 1032],
+    ]) {
+      now = atMs;
+      props.value = value;
+      await nextTick();
+    }
+    expect(fill().props.class).toContain('is-snapping');
+
+    // A later sparse step glides again.
+    now = 2000;
+    props.value = 10;
+    await nextTick();
+    expect(fill().props.class).not.toContain('is-snapping');
+    app.unmount();
+    clock.mockRestore();
   });
 });
