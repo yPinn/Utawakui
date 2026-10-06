@@ -330,7 +330,9 @@ onBeforeUnmount(() => {
     </template>
   </UiField>
 
-  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
+  <!-- Deferred: an always-mounted overlay can mount in the same pass as its
+       surface host, before that host is in the document. -->
+  <Teleport defer :to="overlayHost || undefined" :disabled="!overlayHost">
     <UiScrollRegion
       v-if="isOpen"
       :id="listboxId"

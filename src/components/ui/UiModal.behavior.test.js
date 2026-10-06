@@ -45,6 +45,7 @@ function hostNode(type, text = '') {
 }
 
 let body;
+const namedHosts = new Map();
 const renderer = createRenderer({
   patchProp(element, key, _previousValue, nextValue) {
     element.props[key] = nextValue;
@@ -83,7 +84,8 @@ const renderer = createRenderer({
     return siblings[siblings.indexOf(node) + 1] ?? null;
   },
   querySelector(selector) {
-    return selector === 'body' ? body : null;
+    if (selector === 'body') return body;
+    return namedHosts.get(selector) ?? null;
   },
   setScopeId() {},
   cloneNode(node) {
@@ -307,5 +309,40 @@ describe('UiModal behavior', () => {
     expect(findAll(scrollRegion, (node) => node === footer)).toHaveLength(0);
 
     app.unmount();
+  });
+
+  it('mounts on the renderer root host and hands it to its content', async () => {
+    const shellHost = hostNode('div');
+    const setlistHost = hostNode('div');
+    namedHosts.set('#app-shell-overlay', shellHost);
+    namedHosts.set('#setlist-overlay', setlistHost);
+    let contentHost = null;
+    const Content = {
+      setup() {
+        contentHost = Vue.inject(UI_OVERLAY_HOST_KEY);
+        return () => h('p', '內容');
+      },
+    };
+    const Root = {
+      setup: () => () =>
+        h(UiModal, { open: true, title: '曲目資訊' }, () => h(Content)),
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, '#setlist-overlay');
+    app.mount(root);
+    await nextTick();
+
+    expect(
+      findAll(shellHost, (node) => node.props?.role === 'dialog'),
+    ).toHaveLength(1);
+    expect(
+      findAll(setlistHost, (node) => node.props?.role === 'dialog'),
+    ).toHaveLength(0);
+    expect(contentHost).toBe('#app-shell-overlay');
+
+    app.unmount();
+    namedHosts.clear();
   });
 });

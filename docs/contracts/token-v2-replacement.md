@@ -283,7 +283,7 @@ Scope contract：
 2. V2 boundary 載入 legacy-token invalidation layer，將所有尚存 T1-only names 設為 guaranteed-invalid custom-property value。若 migrated code 引用舊名稱，畫面與測試必須失敗，不能從 v1 ancestor 繼承。
 3. 只有 machine-readable surface registry 內的 root 可以改變 `data-ui-system`。不得在單一 button、row、modal body 或 page fragment 建立 v1 island。
 4. 一條 DOM path 在 transition 中最多改變一次 visual system；允許 v2 shell 暫時承載完整 v1 child surface，不允許 v2 → v1 → v2 的交錯 nesting。
-5. Teleport／portal 必須進入與觸發 owner 相同 system 的 surface-local overlay host。Global notification 與 shell menu host 屬 shell；feature modal 屬該 feature 或其同系統 overlay surface。
+5. Teleport／portal 必須進入與觸發 owner 相同 system 的 surface-local overlay host。Global notification 與 shell menu host 屬 shell；feature modal 一律進入所屬 renderer root（main 為 App Shell、Performer 為 performer）的同系統 overlay host，因為 feature surface host 可能位於 Folder page 等 stacking context 內，遮罩會被 Folder 分頁與 Right Dock 蓋過。
 6. `base.css` 保持 system-neutral。任何消費 visual token 的 base rule 必須移至 registered system scope 或正式 component recipe；`body`、全域 range accent 與 range focus 不得繼續引用 `--ui-*`。
 7. Theme／density／motion 是 metadata，不是 system selector。Scoped token entry 以 ancestor metadata 投影到 descendant surface，例如 `:root[data-ui-theme='light'] [data-ui-system='v2']`；不得把 `data-ui-system` 寫回 document root。`:lang()` 與 truly cross-system 的 reduced-motion behavior 可以保持 document-wide，但 system-specific motion values 仍由 surface token graph 提供。
 
@@ -321,18 +321,18 @@ Shared component contract 同時要求：
 
 Vue Teleport 保留 logical component tree，因此 surface provider 可以用 provide／inject 向 primitive 提供 target host；實際 DOM destination 仍必須是 registry 中與 trigger owner 關聯的 overlay surface。
 
-| Primitive／surface        | Pre-activation target | Registered target owner                |
-| ------------------------- | --------------------- | -------------------------------------- |
-| `UiTooltipSurface`        | `body`                | Trigger 所屬 surface 的 overlay host   |
-| `UiCombobox`              | `body`                | Trigger 所屬 surface 的 overlay host   |
-| `UiContextMenu`           | `body`                | Trigger 所屬 surface 的 overlay host   |
-| `UiModal`                 | `body`                | Feature owner 或其同 system modal host |
-| `UiNotificationHost`      | `body`                | App Shell global overlay host          |
-| `UiPopover`               | `body`                | Trigger 所屬 surface 的 overlay host   |
-| `DemoCandidateActionMenu` | `body`                | F8 specimen surface host               |
-| `DemoCandidateModal`      | `body`                | F8 specimen surface host               |
+| Primitive／surface        | Pre-activation target | Registered target owner                                                     |
+| ------------------------- | --------------------- | --------------------------------------------------------------------------- |
+| `UiTooltipSurface`        | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `UiCombobox`              | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `UiContextMenu`           | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `UiModal`                 | `body`                | 注入 host 所屬 renderer root 的 overlay host；同一 host 再提供給 modal 內容 |
+| `UiNotificationHost`      | `body`                | App Shell global overlay host                                               |
+| `UiPopover`               | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `DemoCandidateActionMenu` | `body`                | F8 specimen surface host                                                    |
+| `DemoCandidateModal`      | `body`                | F8 specimen surface host                                                    |
 
-Host resolver 由 renderer／surface composition 提供，primitive 內部解析，不要求每個 caller 傳 DOM selector。Host 必須在 overlay 開啟前存在，帶有自己的 `data-ui-surface`／`data-ui-system` registry identity，並保留 viewport escape、focus trap／return、dismissal、stack order 與既有 module-level modal ordering。Production primitive 不得在 host 缺失時靜默回退 `body`；測試 harness 如需 fallback，必須顯式註冊。Global shell notification／menu 與 feature modal 可以使用不同 host，但同一 overlay stack 的 z-order 規則只有一份。
+Host resolver 由 renderer／surface composition 提供，primitive 內部解析，不要求每個 caller 傳 DOM selector。常駐掛載的 overlay primitive 必須使用 `<Teleport defer>`（或只在開啟時掛載 Teleport）：feature 與其 surface host 常在同一輪 mount，host 尚未插入 document，未 defer 的 Teleport 會保留 null target，首次開啟即讓 Vue patch 崩潰；`overlayTeleportDefer.test.js` 守住此規則。Host 必須在 overlay 開啟前存在，帶有自己的 `data-ui-surface`／`data-ui-system` registry identity，並保留 viewport escape、focus trap／return、dismissal、stack order 與既有 module-level modal ordering。Production primitive 不得在 host 缺失時靜默回退 `body`；測試 harness 如需 fallback，必須顯式註冊。Global shell notification／menu 與 feature modal 可以使用不同 host，但同一 overlay stack 的 z-order 規則只有一份。
 
 ## Migration infrastructure（歷史，Phase 6 已退役）
 

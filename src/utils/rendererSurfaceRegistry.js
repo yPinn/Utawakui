@@ -243,6 +243,21 @@ export function registeredOverlayHostSelector(surfaceId) {
   return `#${registeredOverlayHostAttributes(surfaceId).id}`;
 }
 
+// Window-level layers (modals) must escape any surface stacking context, so
+// they mount on the renderer root that owns the injected surface host.
+export function rendererRootSurfaceId(overlayHostSelector) {
+  let current = Object.values(UI_SURFACE_REGISTRY).find(
+    (definition) =>
+      definition.overlayHostId &&
+      `#${definition.overlayHostId}` === overlayHostSelector,
+  );
+  if (!current) return null;
+  while (current.parentSurfaceId) {
+    current = surfaceDefinition(current.parentSurfaceId);
+  }
+  return current.overlayHostId ? current.surfaceId : null;
+}
+
 export function registerRendererSurfaceRoot(
   renderer,
   documentRef = globalThis.document,

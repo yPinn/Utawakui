@@ -13,11 +13,22 @@ const openModalStack = [];
 // content can contain drafts; only explicit close controls may discard them.
 import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
-import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
+import {
+  provideUiOverlayHost,
+  useUiOverlayHost,
+} from '../../composables/useUiOverlayHost.js';
+import { rendererRootSurfaceId } from '../../utils/rendererSurfaceRegistry.js';
 import UiIconButton from './UiIconButton.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
 
-const overlayHost = useUiOverlayHost();
+// A surface host can sit inside another stacking context (the Folder page
+// beneath its tabs and the Right Dock), so the modal and its tooltips mount on
+// the renderer root instead. Without a known root it stays on the given host.
+const surfaceHost = useUiOverlayHost();
+const rootSurfaceId = surfaceHost ? rendererRootSurfaceId(surfaceHost) : null;
+const overlayHost = rootSurfaceId
+  ? provideUiOverlayHost(rootSurfaceId)
+  : surfaceHost;
 
 // Multiple app-level workflows can legitimately overlap (for example, the
 // close decision arriving while an announcement is open). Keep keyboard
@@ -143,7 +154,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
+  <!-- Deferred: a modal can mount in the same pass as the host it targets,
+       before that host is in the document. -->
+  <Teleport defer :to="overlayHost || undefined" :disabled="!overlayHost">
     <div v-if="open" class="ui-modal-backdrop">
       <div
         ref="dialog"

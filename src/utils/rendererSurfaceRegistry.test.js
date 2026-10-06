@@ -6,6 +6,7 @@ import {
   registeredOverlayHostAttributes,
   registeredOverlayHostSelector,
   registeredSurfaceAttributes,
+  rendererRootSurfaceId,
 } from './rendererSurfaceRegistry.js';
 
 function createDocument({ rootDataset = {}, documentDataset = {} } = {}) {
@@ -166,6 +167,18 @@ describe('renderer surface registry', () => {
       'data-ui-surface': 'performance-session-workspace-overlay',
       'data-ui-system': 'v2',
     });
+  });
+
+  it('resolves any registered overlay host to its renderer root', () => {
+    expect(rendererRootSurfaceId('#setlist-overlay')).toBe('app-shell');
+    expect(rendererRootSurfaceId('#lyrics-overlay')).toBe('app-shell');
+    expect(
+      rendererRootSurfaceId('#performance-session-workspace-overlay'),
+    ).toBe('app-shell');
+    expect(rendererRootSurfaceId('#app-shell-overlay')).toBe('app-shell');
+    expect(rendererRootSurfaceId('#performer-overlay')).toBe('performer');
+    expect(rendererRootSurfaceId('#unknown-overlay')).toBeNull();
+    expect(rendererRootSurfaceId(null)).toBeNull();
   });
 
   it('registers review surfaces and their local overlay hosts as explicit boundaries', () => {

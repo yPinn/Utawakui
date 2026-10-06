@@ -155,7 +155,9 @@ onBeforeUnmount(() => {
   <span ref="anchor" class="ui-popover__anchor">
     <slot name="trigger" :open="props.open" :trigger-props="triggerProps" />
   </span>
-  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
+  <!-- Deferred: an always-mounted overlay can mount in the same pass as its
+       surface host, before that host is in the document. -->
+  <Teleport defer :to="overlayHost || undefined" :disabled="!overlayHost">
     <section
       v-if="props.open"
       :id="panelId"
