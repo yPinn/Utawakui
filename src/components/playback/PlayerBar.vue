@@ -38,6 +38,7 @@ import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
 import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -556,7 +557,7 @@ onUnmounted(() => {
             :text="state.track.title"
           />
           <span v-if="state.track.artist" class="player-bar__track-artist">
-            {{ state.track.artist }}
+            <TrackArtistCredits :track="state.track" />
           </span>
         </template>
       </div>

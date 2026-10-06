@@ -207,10 +207,18 @@ MusicBrainz source page；不保存完整 provider response 或遠端 image URL�
 所有 managed tracks。Artwork search edits 與 metadata drafts 分離，不會因查詢或套用封面修改
 title／artist／album。
 
+## Artist organization consumer
+
+[ADR 0022](../adr/0022-artist-identity-and-organization.md) 是 artist organization 的決策來源。第一階段的
+`electron/lib/artists/artistIndex.js` 只消費 `normalizeForCompare()` 作 Tier A 分組鍵，以及
+`ytdlpInfo.extractPerformerCredits()` 的有序演出者 parts；它不使用 `splitArtistNames()`，不重新拆分扁平
+artist 字串，也不持久化任何 identity。分組鍵與 artist id 都是可重新計算的 in-memory 值。
+
 ## Persistence boundary
 
 目前 filesystem 仍是 track existence authority，`library.json` 只保存既有 scalar metadata。
-本契約不建立 `identity.json`、alias graph、artist entity 或 database table。
+本契約不建立 `identity.json`、alias graph、artist entity 或 database table；ADR 0022 後續階段的
+`artists.json` 由該 ADR 定義。
 
 若未來要持久化 identity，必須先以 ADR 決定 versioned sidecar 或 SQLite migration boundary、
 stable IDs、provenance、user-confirmed merge／split、undo 與 locale display policy。未完成該決策前，

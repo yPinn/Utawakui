@@ -157,10 +157,10 @@ describe('SetlistPlaylistTable selection and activation', () => {
     app.unmount();
   });
 
-  it('only lets a real album destination intercept the row action hit area', () => {
+  it('only lets real album and artist destinations intercept the row action hit area', () => {
     expect(source).toContain('playlist-track__title--destination');
     expect(source).toMatch(
-      /\.playlist-track__title--destination\s*\{[^}]*pointer-events:\s*auto;/su,
+      /\.playlist-track__title--destination,\s*\.playlist-track__subtitle :deep\(\.track-artist-credits__link\)\s*\{[^}]*pointer-events:\s*auto;/su,
     );
     expect(source).not.toMatch(
       /\.playlist-track__title\s*\{[^}]*pointer-events:\s*auto;/su,
@@ -180,7 +180,7 @@ describe('SetlistPlaylistTable selection and activation', () => {
   it('removes the empty drag track from the album layout without changing row behavior', () => {
     expect(source).toContain("'playlist-table--album': isAlbum");
     expect(source).toContain(
-      ":aria-label=\"isAlbum ? '專輯曲目' : '播放清單曲目'\"",
+      ":aria-label=\"label || (isAlbum ? '專輯曲目' : '播放清單曲目')\"",
     );
     expect(source).toMatch(
       /\.playlist-table--album \.playlist-table__head,[\s\S]*?\.playlist-table--album \.playlist-track\s*\{[^}]*grid-template-columns:\s*3ch minmax\(0, 2fr\) minmax\(120px, 1fr\) 64px;/u,
@@ -191,5 +191,46 @@ describe('SetlistPlaylistTable selection and activation', () => {
     expect(source).toContain("emit('selectTrack', track)");
     expect(source).toContain("emit('activateTrack', track)");
     expect(source).toContain("emit('toggleSort', column.key)");
+  });
+
+  it('omits the artist line entirely on artist pages, including collaborations', () => {
+    const viewSource = readFileSync(
+      new URL('../../views/SetlistView.vue', import.meta.url),
+      'utf8',
+    );
+    expect(source).toMatch(
+      /<TrackArtistCredits\s+v-if="track\.artist && !hideArtist"\s+class="playlist-track__subtitle"\s+:track="track"\s*\/>/u,
+    );
+    expect(source).toContain('hideArtist: { type: Boolean, default: false }');
+    expect(viewSource).toContain(':hide-artist="isArtistSelected"');
+  });
+
+  it('keeps thumbnails but hides the drag handle on read-only reference lists', () => {
+    const { app, root } = mountTable({ readOnly: true, label: '藝人曲目' });
+    const table = findAll(root, (node) =>
+      classIncludes(node, 'playlist-table'),
+    );
+    const drags = findAll(root, (node) =>
+      classIncludes(node, 'playlist-track__drag'),
+    );
+    const thumbs = findAll(root, (node) =>
+      classIncludes(node, 'playlist-track__thumb'),
+    );
+
+    expect(table[0].props['aria-label']).toBe('藝人曲目');
+    expect(drags).toHaveLength(2);
+    expect(drags.every((node) => node.props.title === undefined)).toBe(true);
+    expect(thumbs).toHaveLength(2);
+    expect(source).toContain('v-if="!isAlbum && !readOnly"');
+    app.unmount();
+
+    const playlist = mountTable();
+    const playlistDrags = findAll(playlist.root, (node) =>
+      classIncludes(node, 'playlist-track__drag'),
+    );
+    expect(playlistDrags.every((node) => node.props.title === '拖曳排序')).toBe(
+      true,
+    );
+    playlist.app.unmount();
   });
 });

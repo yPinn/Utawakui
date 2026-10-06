@@ -4,12 +4,7 @@ import { createCollectionPlaybackController } from '../utils/collectionPlaybackC
 
 export function useCollectionPlayback() {
   const { state: playerState, play, pause, playTrack } = usePlayer();
-  const {
-    state: queueState,
-    setQueue,
-    toggleShuffle,
-    enqueueTrack,
-  } = usePlaybackQueue();
+  const { state: queueState, setQueue, enqueueTrack } = usePlaybackQueue();
 
   return createCollectionPlaybackController({
     playerState,
@@ -18,7 +13,6 @@ export function useCollectionPlayback() {
     pause,
     playTrack,
     setQueue,
-    toggleShuffle,
     enqueueTrack,
   });
 }

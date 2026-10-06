@@ -12,8 +12,14 @@ describe('ArtworkSearchResults behavior contract', () => {
     expect(source).toContain('role="radio"');
     expect(source).toContain(':aria-checked=');
     expect(source).toContain('candidate.previewLoading');
-    expect(source).toContain('class="artwork-results__loading"');
-    expect(source).toContain('role="status"');
+    // Loading status comes from the shared UiArtworkLoading (role="status").
+    expect(source).toContain(
+      '<template v-if="candidate.previewLoading" #overlay>',
+    );
+    expect(source).toContain(
+      '<UiArtworkLoading :label="`${display.title}封面載入中`" />',
+    );
+    expect(source).not.toMatch(/@keyframes|artwork-results__loading/u);
     expect(source).not.toContain('UiSkeleton');
     expect(source).toContain("emit('select', candidate.id)");
   });

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { projectArtworkCandidate } from '../../utils/artworkCandidateDisplay.js';
 import UiChip from '../ui/UiChip.vue';
+import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
@@ -51,16 +52,8 @@ const displayCandidates = computed(() =>
           :decorative="false"
           :aria-label="`${display.title}封面`"
         >
-          <template #overlay>
-            <span
-              v-if="candidate.previewLoading"
-              class="artwork-results__loading"
-              role="status"
-            >
-              <span class="ui-visually-hidden">
-                {{ display.title }}封面載入中
-              </span>
-            </span>
+          <template v-if="candidate.previewLoading" #overlay>
+            <UiArtworkLoading :label="`${display.title}封面載入中`" />
           </template>
         </UiTrackThumb>
 
@@ -133,30 +126,6 @@ const displayCandidates = computed(() =>
 
 .artwork-results__thumb {
   border: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.artwork-results__loading {
-  position: absolute;
-  inset: 0;
-  background: var(--ui-color-surface-hover);
-  opacity: 0.72;
-  animation: artwork-results-loading 1.4s ease-in-out infinite alternate;
-}
-
-@keyframes artwork-results-loading {
-  to {
-    opacity: 0.38;
-  }
-}
-
-:global(:root[data-ui-motion='reduced']) .artwork-results__loading {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .artwork-results__loading {
-    animation: none;
-  }
 }
 
 .artwork-results__copy {

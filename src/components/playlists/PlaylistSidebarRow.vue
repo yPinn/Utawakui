@@ -4,8 +4,9 @@
 // is playlist-only, so those props/events simply go unused (default false)
 // for album rows instead of forking the template.
 import { computed } from 'vue';
-import { Pause, Play } from '../../icons/index.js';
+import { Pause, Play, UserRound } from '../../icons/index.js';
 import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
@@ -39,6 +40,9 @@ const emit = defineEmits([
 ]);
 
 const playlistDisplayName = computed(() => props.playlist.name || '未命名歌單');
+// Artist rows (ADR 0022) use a round single cover so the collapsed rail still
+// tells them apart from square album covers.
+const isArtist = computed(() => props.playlist.kind === 'artist');
 const selectLabel = computed(() => `選取 ${playlistDisplayName.value}`);
 const playbackLabel = computed(
   () => `${props.playing ? '暫停' : '播放'} ${playlistDisplayName.value}`,
@@ -104,9 +108,11 @@ function toggleFromArtwork(event) {
   <div
     v-bind="collectionTooltipTriggerProps"
     class="playlist-sidebar-row"
+    data-artwork-reveal-scope
     :class="{
       'playlist-sidebar-row--active': active,
       'playlist-sidebar-row--current': activeSource,
+      'playlist-sidebar-row--artist': isArtist,
       'playlist-sidebar-row--dragging': dragging,
       'playlist-sidebar-row--drop-before': dropBefore,
       'playlist-sidebar-row--drop-after': dropAfter,
@@ -138,23 +144,27 @@ function toggleFromArtwork(event) {
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
       :tracks="coverTracks"
-      :can-collage="playlist.kind !== 'album'"
+      :can-collage="playlist.kind !== 'album' && !isArtist"
+      :radius="isArtist ? 'var(--ui-radius-pill)' : undefined"
+      :empty-icon="isArtist ? UserRound : null"
       :size="PLAYLIST_ROW_THUMB_SIZE"
       color="var(--ui-color-text-muted)"
       :uppercase="false"
       :decorative="false"
     >
       <template #overlay>
-        <UiIconButton
-          :icon="playing ? Pause : Play"
-          class="playlist-sidebar-row__play"
-          :label="playbackLabel"
-          fill
-          shape="inherit"
-          variant="overlay"
-          @click.stop="toggleFromArtwork"
-          @dblclick.stop
-        />
+        <UiArtworkReveal>
+          <UiIconButton
+            :icon="playing ? Pause : Play"
+            class="playlist-sidebar-row__play"
+            :label="playbackLabel"
+            fill
+            stretch
+            variant="overlay"
+            @click.stop="toggleFromArtwork"
+            @dblclick.stop
+          />
+        </UiArtworkReveal>
       </template>
     </UiCollageThumb>
     <span class="playlist-sidebar-row__info">
@@ -281,31 +291,10 @@ function toggleFromArtwork(event) {
   color: var(--ui-color-accent);
 }
 
-/* Hidden by default, revealed on row hover/keyboard focus only — same idea
-   as Spotify's cover-art hover play button. No longer forced visible for
-   the active-playback-source row: --ui-color-current on
-   .playlist-sidebar-row__name now carries that "identifiable at a glance"
-   job, so the mask can stay a pure hover affordance. Semi-transparent black
-   works as an overlay over any thumbnail image regardless of the app's own
-   light/dark theme, so it isn't themed off --ui-* tokens. */
-.playlist-sidebar-row__play {
-  width: 100%;
-  height: 100%;
-  flex: 1 1 auto;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
-}
-
-/* The whole row reveals the playback affordance on pointer hover, matching
-   Right Dock rows. Keyboard focus reveals it only when the playback button
-   itself owns focus: focusing the select action must not imply that Enter
-   will play. */
-.playlist-sidebar-row:hover .playlist-sidebar-row__play,
-.playlist-sidebar-row__play:focus-visible {
-  opacity: 1;
-}
+/* The play control is a pure hover affordance: UiArtworkOverlay owns its
+   geometry and UiArtworkReveal shows it on row hover (data-artwork-reveal-scope)
+   or when the button itself has keyboard focus. Focusing the select action
+   does not reveal it, so Enter there never implies playback. */
 
 .playlist-sidebar-row__thumb,
 .playlist-sidebar-row__info {
@@ -405,7 +394,9 @@ function toggleFromArtwork(event) {
     box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent);
   }
 
-  .playlist-sidebar-row--current .playlist-sidebar-row__thumb::after {
+  /* Round artist covers do not carry the current-source dot. */
+  .playlist-sidebar-row--current:not(.playlist-sidebar-row--artist)
+    .playlist-sidebar-row__thumb::after {
     content: '';
     position: absolute;
     right: var(--ui-space-1);
@@ -418,14 +409,12 @@ function toggleFromArtwork(event) {
   }
 }
 
-:global(:root[data-ui-motion='reduced']) .playlist-sidebar-row__info,
-:global(:root[data-ui-motion='reduced']) .playlist-sidebar-row__play {
+:global(:root[data-ui-motion='reduced'] .playlist-sidebar-row__info) {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .playlist-sidebar-row__info,
-  .playlist-sidebar-row__play {
+  .playlist-sidebar-row__info {
     transition: none;
   }
 }

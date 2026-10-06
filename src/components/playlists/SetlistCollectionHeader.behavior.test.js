@@ -59,6 +59,116 @@ describe('SetlistCollectionHeader', () => {
     expect(source).toContain("emit('menuAction', value)");
   });
 
+  it('renders artist pages as a round, read-only reference without an extension action', async () => {
+    const html = await renderHeader({
+      entityKind: 'artist',
+      title: 'YOASOBI',
+      artist: '',
+      description: '',
+      meta: '18 首曲目 · 3 張專輯 · 2019–2024',
+    });
+
+    expect(html).toContain('藝人資料');
+    expect(html).toContain('library-entity-dossier__artwork--round');
+    expect(html).toContain('播放此藝人');
+    expect(html).toContain('選擇藝人照片');
+    expect(html).not.toContain('將專輯新增至播放清單');
+    expect(html).not.toContain('編輯播放清單詳細資料');
+    expect(source).toContain("emit('choosePhoto')");
+  });
+
+  it('makes the whole round avatar the photo action and invites an upload when empty', async () => {
+    const artist = {
+      entityKind: 'artist',
+      title: 'YOASOBI',
+      artist: '',
+      description: '',
+    };
+    const empty = await renderHeader(artist);
+    const withPhoto = await renderHeader({
+      ...artist,
+      coverUrl:
+        'utawakui-media://artist-photo/artist-0123456789abcdef/photo.jpg',
+    });
+
+    expect(empty).toContain('setlist-collection-header__photo-action--empty');
+    expect(empty).not.toContain('新增照片');
+    expect(withPhoto).not.toContain(
+      'setlist-collection-header__photo-action--empty',
+    );
+    expect(withPhoto).toContain('更換照片');
+    expect(withPhoto).toContain('aria-label="選擇藝人照片"');
+    // Fill and clip come from the dossier's shared overlay plane.
+    expect(source).toContain(
+      'v-else-if="entityKind === \'artist\'" #artwork-overlay',
+    );
+    expect(source).not.toMatch(
+      /\.setlist-collection-header__photo-action\s*\{[^}]*(?:position:|inset:|border-radius:)/su,
+    );
+    // With a photo the action reveals through UiArtworkReveal; the empty
+    // avatar keeps its add glyph visible in a plain wrapper.
+    expect(source).toContain(':is="coverUrl ? UiArtworkReveal : \'span\'"');
+    expect(empty).not.toContain('ui-artwork-reveal');
+    expect(withPhoto).toContain('ui-artwork-reveal');
+    expect(source).not.toMatch(
+      /\.setlist-collection-header__photo-action\s*\{[^}]*opacity:/su,
+    );
+  });
+
+  it('replaces the empty avatar text with one centered add glyph and a tooltip', async () => {
+    const html = await renderHeader({
+      entityKind: 'artist',
+      title: 'YOASOBI',
+      artist: '',
+      description: '',
+    });
+    const button = html.slice(
+      html.indexOf('setlist-collection-header__photo-action'),
+      html.indexOf(
+        '</button>',
+        html.indexOf('setlist-collection-header__photo-action'),
+      ),
+    );
+
+    expect(button).toContain('lucide-user-round-plus');
+    expect(button).not.toContain('setlist-collection-header__photo-label');
+    expect(source).toContain('v-bind="photoTooltipTriggerProps"');
+    expect(source).toMatch(
+      /useTooltip\(\{[\s\S]*?text: '選擇藝人照片',[\s\S]*?disabled: computed\(\(\) => Boolean\(props\.coverUrl\)\),/u,
+    );
+    expect(source).not.toContain("from '../ui/UiTooltip.vue'");
+    expect(source).not.toMatch(
+      /\.setlist-collection-header__photo-action--empty\s*\{[^}]*justify-content:\s*flex-end/su,
+    );
+    expect(source).toMatch(
+      /\.library-entity-dossier__artwork:has\(\s*\.setlist-collection-header__photo-action--empty\s*\)\s*\.ui-collage-thumb__single-empty\s*\)\s*\{\s*visibility:\s*hidden;/su,
+    );
+  });
+
+  it('keeps the dossier hairline outside the artwork so it stays centered', () => {
+    const dossierSource = readFileSync(
+      new URL('./LibraryEntityDossier.vue', import.meta.url),
+      'utf8',
+    );
+    expect(dossierSource).toMatch(
+      /\.library-entity-dossier__artwork\s*\{[^}]*box-sizing:\s*content-box;/su,
+    );
+    expect(dossierSource).not.toMatch(
+      /\.library-entity-dossier__artwork\s*\{[^}]*width:\s*136px;/su,
+    );
+    expect(dossierSource).toContain(
+      'grid-template-columns: max-content minmax(0, 1fr);',
+    );
+  });
+
+  it('links the album artist to the artist page when a label is provided', async () => {
+    const linked = await renderHeader({ artistLinkLabel: '前往藝人：艾熱' });
+    const plain = await renderHeader();
+
+    expect(linked).toContain('aria-label="前往藝人：艾熱"');
+    expect(plain).not.toContain('library-entity-dossier__artist-link');
+  });
+
   it('keeps domain state in the parent and exposes explicit intent events', () => {
     for (const event of [
       'togglePlayback',
@@ -66,6 +176,7 @@ describe('SetlistCollectionHeader', () => {
       'addToQueue',
       'openEditDetails',
       'menuAction',
+      'selectArtist',
       'update:searchQuery',
     ]) {
       expect(source).toContain(`'${event}'`);

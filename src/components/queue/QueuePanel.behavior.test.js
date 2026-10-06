@@ -52,9 +52,13 @@ function compileScopedStyles(sourceText, filename) {
     .join('\n');
 }
 
-const artworkCueCss = compileScopedStyles(
-  artworkCueSource,
-  'RightDockTrackArtworkCue.vue',
+const artworkRevealSource = readFileSync(
+  new URL('../ui/UiArtworkReveal.vue', import.meta.url),
+  'utf8',
+);
+const artworkRevealCss = compileScopedStyles(
+  artworkRevealSource,
+  'UiArtworkReveal.vue',
 );
 const menuButtonCss = compileScopedStyles(
   menuButtonSource,
@@ -298,15 +302,13 @@ describe('QueuePanel shared Dock content', () => {
     expect(rowSource).not.toContain('queue-track__artwork-cue');
     expect(rowSource).not.toContain('queue-track__menu');
     expect(recentSource).not.toContain('recent-playback__artwork-cue');
-    expect(artworkCueSource).toMatch(
-      /\.right-dock-track__artwork-cue\s*\{[^}]*z-index:\s*2;[^}]*opacity:\s*0;/su,
+    // Geometry comes from UiTrackRow's UiArtworkOverlay; the reveal comes from
+    // UiArtworkReveal with the row as a focus-within reveal scope.
+    expect(artworkCueSource).toContain('<UiArtworkReveal>');
+    expect(rowSource).toContain('data-artwork-reveal-scope="focus-within"');
+    expect(artworkCueSource).not.toMatch(
+      /\.right-dock-track__artwork-cue\s*\{[^}]*(?:position:|inset:|z-index:|border-radius:|opacity:|transition:)/su,
     );
-    for (const revealSelector of [
-      ':global(.right-dock-track:hover .right-dock-track__artwork-cue)',
-      ':global(.right-dock-track:focus-within .right-dock-track__artwork-cue)',
-    ]) {
-      expect(artworkCueSource).toContain(revealSelector);
-    }
     expect(menuButtonSource).toMatch(
       /\.right-dock-track__menu\s*\{[^}]*opacity:\s*0;[^}]*visibility:\s*hidden;[^}]*pointer-events:\s*none;/su,
     );
@@ -321,11 +323,13 @@ describe('QueuePanel shared Dock content', () => {
   });
 
   it('keeps the reveal target intact after Vue compiles scoped styles', () => {
-    expect(artworkCueCss).toMatch(
-      /\.right-dock-track:hover\s+\.right-dock-track__artwork-cue/u,
+    // Vue drops anything after :global(x), so the scope selectors must still
+    // reach .ui-artwork-reveal itself after compilation.
+    expect(artworkRevealCss).toMatch(
+      /\[data-artwork-reveal-scope\]:hover\s+\.ui-artwork-reveal/u,
     );
-    expect(artworkCueCss).toMatch(
-      /\.right-dock-track:focus-within\s+\.right-dock-track__artwork-cue/u,
+    expect(artworkRevealCss).toMatch(
+      /\[data-artwork-reveal-scope='focus-within'\]:focus-within\s+\.ui-artwork-reveal/u,
     );
     expect(menuButtonCss).toMatch(
       /\.right-dock-track:hover\s+\.right-dock-track__menu/u,
@@ -336,9 +340,12 @@ describe('QueuePanel shared Dock content', () => {
     expect(menuButtonCss).toMatch(
       /\.right-dock-track--menu-open\s+\.right-dock-track__menu/u,
     );
-    expect(artworkCueCss).toMatch(
-      /:root\[data-ui-motion=['"]reduced['"]\]\s+\.right-dock-track__artwork-cue/u,
+    // Reduced motion: the shared reveal times on --ui-motion-duration-fast,
+    // which tokens.css zeroes for both the manual and the OS preference.
+    expect(artworkRevealCss).toMatch(
+      /transition:\s*opacity var\(--ui-motion-duration-fast\)/u,
     );
+    expect(artworkRevealSource).not.toContain('--ui-motion-duration-feedback');
     expect(menuButtonCss).toMatch(
       /:root\[data-ui-motion=['"]reduced['"]\]\s+\.right-dock-track__menu/u,
     );

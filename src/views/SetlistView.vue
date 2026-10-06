@@ -1,8 +1,9 @@
 <script setup>
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
-import { Trash2 } from '../icons/index.js';
+import { ImagePlus, Trash2 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
+import { useArtistIndex } from '../composables/useArtistIndex.js';
 import { useCollectionPlayback } from '../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { useLibrary } from '../composables/useLibrary.js';
@@ -25,6 +26,7 @@ import SetlistCollectionHeader from '../components/playlists/SetlistCollectionHe
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
 import PerformanceSessionWorkspace from '../components/performance-session/PerformanceSessionWorkspace.vue';
 import TrackActionMenu from '../components/track/TrackActionMenu.vue';
+import TrackArtistCredits from '../components/track/TrackArtistCredits.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
@@ -42,6 +44,7 @@ import {
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../utils/albumSummary.js';
 import { deriveAlbumSupportingContent } from '../utils/albumSupportingContent.js';
+import { deriveArtistPage } from '../utils/artistPage.js';
 import {
   sortSetlistLibraryTracks,
   sortSetlistLocalTracks,
@@ -51,6 +54,7 @@ const { state, playTrack, clearTrack } = usePlayer();
 const { recordError } = useAppDiagnostics();
 const {
   state: libraryState,
+  tracksById: libraryTracksById,
   initialize: initializeLibrary,
   refresh: refreshLibrary,
 } = useLibrary();
@@ -59,6 +63,7 @@ const {
   setQueue,
   enqueueTrack,
   removeTrack: removeTrackFromQueue,
+  toggleShuffle,
 } = usePlaybackQueue();
 // Rename playlist actions to avoid colliding with file deletion helpers.
 const {
@@ -66,6 +71,7 @@ const {
   selectedPlaylist,
   create: createPlaylistAction,
   select: selectPlaylistAction,
+  selectArtist,
   addTrack: addTrackToPlaylist,
   removeTrack: removeTrackFromPlaylist,
   setTracks: setPlaylistTracksAction,
@@ -74,6 +80,13 @@ const { resolvePlaylistTracks, openEditDetails, handlePlaylistMenuAction } =
   usePlaylistActions();
 const collectionPlayback = useCollectionPlayback();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const {
+  state: artistIndexState,
+  ensureLoaded: ensureArtistIndex,
+  resolvePhotos: resolveArtistPhotos,
+  choosePhoto: chooseArtistPhoto,
+  clearPhoto: clearArtistPhoto,
+} = useArtistIndex();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 
 // Transient UI mode stays local; mutations persist immediately.
@@ -89,19 +102,48 @@ const playlistSort = ref({ key: null, direction: 'asc' });
 const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
 
 const mode = computed(() => {
-  if (!selectedPlaylist.value) return 'all';
-  return selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist';
+  if (selectedPlaylist.value) {
+    return selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist';
+  }
+  return playlistState.selectedArtistId ? 'artist' : 'all';
 });
 const isLocalLibraryView = computed(
-  () => !selectedPlaylist.value && playlistState.libraryView === 'local',
+  () => mode.value === 'all' && playlistState.libraryView === 'local',
 );
 
 // Album track membership/order is read-only — see playlists.js's
 // PLAYLIST_KINDS comment. Rename/delete/play/sort still apply to both.
 const isAlbumSelected = computed(() => mode.value === 'album');
+// Artist pages are derived read-only references (ADR 0022).
+const isArtistSelected = computed(() => mode.value === 'artist');
+
+const albumEntries = computed(() =>
+  playlistState.playlists
+    .filter((playlist) => playlist.kind === 'album')
+    .map((collection) => ({
+      collection,
+      tracks: resolvePlaylistTracks(collection),
+    })),
+);
+const artistPage = computed(() =>
+  isArtistSelected.value
+    ? deriveArtistPage({
+        artistId: playlistState.selectedArtistId,
+        artistIndex: artistIndexState.index,
+        albumEntries: albumEntries.value,
+        tracksById: libraryTracksById.value,
+      })
+    : null,
+);
+// Queue/history source of the open collection: playlist, album or artist.
+const collectionSourceId = computed(
+  () => selectedPlaylist.value?.id ?? artistPage.value?.id ?? null,
+);
 
 const playlistTracks = computed(() =>
-  resolvePlaylistTracks(selectedPlaylist.value),
+  isArtistSelected.value
+    ? (artistPage.value?.tracks ?? [])
+    : resolvePlaylistTracks(selectedPlaylist.value),
 );
 
 // Empty inside an album's own page — jumping to itself would be a no-op.
@@ -137,10 +179,13 @@ const visibleTracks = computed(() =>
   libraryViewTracks.value.filter(matchesSearch),
 );
 const orderedPlaylistEntries = computed(() => {
+  // Artist pages have no membership date; show when the track entered the library.
   const entries = playlistTracks.value.map((track, playlistIndex) => ({
     track,
     playlistIndex,
-    addedAt: selectedPlaylist.value?.addedAt?.[track.id],
+    addedAt: isArtistSelected.value
+      ? track.importedAt
+      : selectedPlaylist.value?.addedAt?.[track.id],
   }));
 
   return sortPlaylistEntries(entries, playlistSort.value);
@@ -156,6 +201,15 @@ const collectionPlaybackTracks = computed(() =>
 );
 
 const playlistCoverUrl = computed(() => selectedPlaylist.value?.coverUrl ?? '');
+// Artist pages show the artist photo or the person placeholder, never an album.
+const collectionCoverUrl = computed(() =>
+  isArtistSelected.value
+    ? (artistPage.value?.photoUrl ?? '')
+    : playlistCoverUrl.value,
+);
+const collectionCoverTracks = computed(() =>
+  isArtistSelected.value ? [] : playlistTracks.value,
+);
 const playlistDescription = computed(
   () => selectedPlaylist.value?.description ?? '',
 );
@@ -174,13 +228,13 @@ const albumSummary = computed(() =>
     ? deriveAlbumSummary(playlistTracks.value)
     : { artist: undefined, releaseYear: undefined },
 );
-const albumEntries = computed(() =>
-  playlistState.playlists
-    .filter((playlist) => playlist.kind === 'album')
-    .map((collection) => ({
-      collection,
-      tracks: resolvePlaylistTracks(collection),
-    })),
+// Album and artist pages are artist-aware surfaces, so they request the index.
+watch(
+  mode,
+  (current) => {
+    if (current === 'album' || current === 'artist') ensureArtistIndex();
+  },
+  { immediate: true },
 );
 const albumSupportingContent = computed(() => {
   if (!isAlbumSelected.value || !selectedPlaylist.value) return null;
@@ -189,6 +243,7 @@ const albumSupportingContent = computed(() => {
     selectedTracks: playlistTracks.value,
     albumEntries: albumEntries.value,
     libraryTracks: libraryState.tracks,
+    artistIndex: artistIndexState.index,
   });
 });
 
@@ -198,30 +253,79 @@ const playlistMeta = computed(() => {
   const countLine = duration
     ? `${count} 首曲目，${duration}`
     : `${count} 首曲目`;
+  if (isArtistSelected.value) {
+    const page = artistPage.value;
+    const parts = [countLine];
+    if (page?.albums.length) parts.push(`${page.albums.length} 張專輯`);
+    if (page?.yearStart) {
+      parts.push(
+        page.yearEnd && page.yearEnd !== page.yearStart
+          ? `${page.yearStart}–${page.yearEnd}`
+          : String(page.yearStart),
+      );
+    }
+    return parts.join(' · ');
+  }
   if (!isAlbumSelected.value) return countLine;
 
   const { releaseYear } = albumSummary.value;
   return releaseYear ? `${releaseYear} · ${countLine}` : countLine;
 });
-const playlistArtist = computed(() => albumSummary.value.artist ?? '');
-
-const pageTitle = computed(() =>
-  selectedPlaylist.value
-    ? playlistDisplayName(selectedPlaylist.value)
-    : libraryViewTitle(playlistState.libraryView),
+// The album header names its artist from the shared index once it is loaded.
+const playlistArtist = computed(
+  () => albumSupportingContent.value?.artist ?? albumSummary.value.artist ?? '',
+);
+const playlistArtistLinkLabel = computed(() =>
+  albumSupportingContent.value
+    ? `前往藝人：${albumSupportingContent.value.artist}`
+    : '',
 );
 
+const pageTitle = computed(() => {
+  if (selectedPlaylist.value)
+    return playlistDisplayName(selectedPlaylist.value);
+  if (isArtistSelected.value) return artistPage.value?.name ?? '藝人';
+  return libraryViewTitle(playlistState.libraryView);
+});
+
 const selectedCollectionPlaybackContext = computed(() => ({
-  sourceId: selectedPlaylist.value?.id ?? '',
+  sourceId: collectionSourceId.value ?? '',
   sourceName: pageTitle.value,
   tracks: collectionPlaybackTracks.value,
 }));
 const selectedCollectionIsPlaying = computed(() =>
-  collectionPlayback.isPlaying(selectedPlaylist.value?.id),
+  collectionPlayback.isPlaying(collectionSourceId.value),
 );
-const selectedCollectionShuffleActive = computed(() =>
-  collectionPlayback.isShuffleActive(selectedPlaylist.value?.id),
+
+function openAlbumArtist() {
+  const artistId = albumSupportingContent.value?.artistId;
+  if (artistId) selectArtist(artistId);
+}
+
+// An opened artist page asks for its photo too, including unlisted artists.
+watch(
+  () =>
+    isArtistSelected.value && artistPage.value && !artistPage.value.photoUrl
+      ? artistPage.value.id
+      : null,
+  (artistId) => {
+    if (artistId) resolveArtistPhotos([artistId]);
+  },
 );
+
+function chooseSelectedArtistPhoto() {
+  if (artistPage.value) chooseArtistPhoto(artistPage.value.id);
+}
+
+function handleCollectionMenuAction(value) {
+  if (value?.action === ARTIST_PHOTO_ACTIONS.choose) {
+    chooseSelectedArtistPhoto();
+  } else if (value?.action === ARTIST_PHOTO_ACTIONS.clear) {
+    if (artistPage.value) clearArtistPhoto(artistPage.value.id);
+  } else {
+    handlePlaylistMenuAction(value);
+  }
+}
 
 const addToPlaylistItems = computed(() =>
   selectedPlaylist.value
@@ -229,7 +333,33 @@ const addToPlaylistItems = computed(() =>
     : [],
 );
 
+const ARTIST_PHOTO_ACTIONS = Object.freeze({
+  choose: 'choose-artist-photo',
+  clear: 'clear-artist-photo',
+});
+
 const collectionMoreItems = computed(() => {
+  if (isArtistSelected.value) {
+    if (!artistPage.value) return [];
+    return [
+      {
+        key: ARTIST_PHOTO_ACTIONS.choose,
+        label: '選擇藝人照片',
+        icon: ImagePlus,
+        value: { action: ARTIST_PHOTO_ACTIONS.choose },
+      },
+      ...(artistPage.value.photoUrl
+        ? [
+            {
+              key: ARTIST_PHOTO_ACTIONS.clear,
+              label: '移除藝人照片',
+              icon: Trash2,
+              value: { action: ARTIST_PHOTO_ACTIONS.clear },
+            },
+          ]
+        : []),
+    ];
+  }
   const playlist = selectedPlaylist.value;
   if (!playlist) return [];
   const manageItems = collectionManageMenuItems(playlist);
@@ -291,7 +421,11 @@ const contentFieldVariant = computed(() => {
 // area — it must not touch the edit-details modal, which AppPlaylistSidebar
 // owns independently.
 watch(
-  [() => selectedPlaylist.value?.id, () => playlistState.libraryView],
+  [
+    () => selectedPlaylist.value?.id,
+    () => playlistState.selectedArtistId,
+    () => playlistState.libraryView,
+  ],
   () => {
     selectedTrackId.value = null;
     closeAddMenu();
@@ -300,7 +434,7 @@ watch(
 );
 
 function currentVisibleQueueTracks() {
-  if (!selectedPlaylist.value) return visibleTracks.value;
+  if (mode.value === 'all') return visibleTracks.value;
   return visiblePlaylistEntries.value.map(({ track }) => track);
 }
 
@@ -314,19 +448,13 @@ function activateTrack(track) {
   selectTrack(track);
   setQueue(queueTracks, track.id, {
     sourceName: pageTitle.value,
-    sourceId: selectedPlaylist.value?.id ?? null,
+    sourceId: collectionSourceId.value,
   });
   playTrack(toPlayableTrack(track));
 }
 
 function toggleSelectedCollectionPlayback() {
   collectionPlayback.togglePlayback(selectedCollectionPlaybackContext.value);
-}
-
-function toggleSelectedCollectionShuffle() {
-  collectionPlayback.toggleCollectionShuffle(
-    selectedCollectionPlaybackContext.value,
-  );
 }
 
 function enqueueSelectedCollection() {
@@ -519,29 +647,35 @@ onMounted(async () => {
       </AppSurfaceBoundary>
 
       <template v-else>
-        <div v-if="selectedPlaylist" class="setlist-view__collection-header">
+        <div
+          v-if="selectedPlaylist || isArtistSelected"
+          class="setlist-view__collection-header"
+        >
           <SetlistCollectionHeader
             v-model:search-query="searchQuery"
             :entity-kind="mode"
             :title="pageTitle"
             :artist="playlistArtist"
+            :artist-link-label="playlistArtistLinkLabel"
             :meta="playlistMeta"
-            :cover-tracks="playlistTracks"
-            :cover-url="playlistCoverUrl"
+            :cover-tracks="collectionCoverTracks"
+            :cover-url="collectionCoverUrl"
             :description="playlistDescription"
             :playing="selectedCollectionIsPlaying"
-            :shuffle-active="selectedCollectionShuffleActive"
+            :shuffle-active="queueState.isShuffle"
             :can-play="playlistTracks.length > 0"
-            :can-shuffle="playlistTracks.length > 1"
+            :can-shuffle="queueState.tracks.length > 1"
             :can-add-to-queue="playlistTracks.length > 0"
             :can-add-to-playlist="playlistTracks.length > 0"
             :add-to-playlist-items="addToPlaylistItems"
             :more-items="collectionMoreItems"
             @toggle-playback="toggleSelectedCollectionPlayback"
-            @toggle-shuffle="toggleSelectedCollectionShuffle"
+            @toggle-shuffle="toggleShuffle"
             @add-to-queue="enqueueSelectedCollection"
             @open-edit-details="openEditDetails"
-            @menu-action="handlePlaylistMenuAction"
+            @menu-action="handleCollectionMenuAction"
+            @select-artist="openAlbumArtist"
+            @choose-photo="chooseSelectedArtistPhoto"
           />
         </div>
 
@@ -595,6 +729,9 @@ onMounted(async () => {
                   @title-click="jumpToAlbum(track)"
                   @contextmenu="openAddMenu(track, $event)"
                 >
+                  <template #artist>
+                    <TrackArtistCredits :track="track" />
+                  </template>
                   <template #trail>
                     <div class="row-actions" @click.stop @dblclick.stop>
                       <UiButton
@@ -611,7 +748,15 @@ onMounted(async () => {
             </template>
 
             <template v-else>
-              <UiHint v-if="playlistTracks.length === 0">
+              <UiHint v-if="isArtistSelected && !artistPage" role="status">
+                載入中…
+              </UiHint>
+              <UiHint
+                v-else-if="isArtistSelected && playlistTracks.length === 0"
+              >
+                沒有曲目。
+              </UiHint>
+              <UiHint v-else-if="playlistTracks.length === 0">
                 這個歌單還沒有曲目。從任一曲目列右鍵加入。
               </UiHint>
               <UiHint v-else-if="visiblePlaylistEntries.length === 0">
@@ -622,6 +767,9 @@ onMounted(async () => {
                 :entries="visiblePlaylistEntries"
                 :sort="playlistSort"
                 :is-album="isAlbumSelected"
+                :read-only="isArtistSelected"
+                :label="isArtistSelected ? '藝人曲目' : ''"
+                :hide-artist="isArtistSelected"
                 :can-drag="canDragPlaylistRows"
                 :selected-track-id="selectedTrackId"
                 :current-track-id="state.track?.id"
@@ -649,6 +797,16 @@ onMounted(async () => {
           :artist="albumSupportingContent.artist"
           :related-albums="albumSupportingContent.relatedAlbums"
           :summary="albumSupportingContent.summary"
+          can-open-artist
+          @select-album="selectPlaylistAction"
+          @select-artist="openAlbumArtist"
+        />
+
+        <SetlistAlbumSupportingContent
+          v-else-if="artistPage && artistPage.albums.length > 0"
+          :artist="artistPage.name"
+          :related-albums="artistPage.albums"
+          albums-title="專輯"
           @select-album="selectPlaylistAction"
         />
 

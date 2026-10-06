@@ -10,6 +10,7 @@ import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 
 // align: 'end' keeps duration header/body columns right-aligned together.
 const SORT_COLUMNS = [
@@ -25,6 +26,12 @@ const props = defineProps({
   // the same cover art (already shown once in the dossier above), so a
   // per-row thumbnail column would just repeat it 10+ times for nothing.
   isAlbum: { type: Boolean, default: false },
+  // Reference lists (artist pages) keep thumbnails but have no drag handle.
+  readOnly: { type: Boolean, default: false },
+  label: { type: String, default: '' },
+  // Artist pages: every row shares the artist, so the artist line is omitted
+  // (collaborators remain discoverable from each track's album).
+  hideArtist: { type: Boolean, default: false },
   canDrag: { type: Boolean, default: false },
   selectedTrackId: { type: String, default: null },
   currentTrackId: { type: String, default: null },
@@ -64,7 +71,7 @@ function sortLabel(key, label) {
   <div
     class="playlist-table"
     :class="{ 'playlist-table--album': isAlbum }"
-    :aria-label="isAlbum ? '專輯曲目' : '播放清單曲目'"
+    :aria-label="label || (isAlbum ? '專輯曲目' : '播放清單曲目')"
   >
     <div class="playlist-table__head">
       <span class="playlist-table__drag"></span>
@@ -136,12 +143,16 @@ function sortLabel(key, label) {
         <span
           class="playlist-track__drag"
           :class="{ 'playlist-track__drag--interactive': canDrag }"
-          :title="isAlbum ? undefined : '拖曳排序'"
+          :title="isAlbum || readOnly ? undefined : '拖曳排序'"
           aria-hidden="true"
           @click.stop
           @dblclick.stop
         >
-          <GripVertical v-if="!isAlbum" :size="ICON_SIZE" aria-hidden="true" />
+          <GripVertical
+            v-if="!isAlbum && !readOnly"
+            :size="ICON_SIZE"
+            aria-hidden="true"
+          />
         </span>
         <span class="playlist-track__index">{{ visibleIndex + 1 }}</span>
         <span class="playlist-track__main">
@@ -165,9 +176,11 @@ function sortLabel(key, label) {
               class="playlist-track__title"
               :text="track.title"
             />
-            <span v-if="track.artist" class="playlist-track__subtitle">
-              {{ track.artist }}
-            </span>
+            <TrackArtistCredits
+              v-if="track.artist && !hideArtist"
+              class="playlist-track__subtitle"
+              :track="track"
+            />
           </span>
         </span>
         <span class="playlist-track__added">
@@ -393,7 +406,8 @@ function sortLabel(key, label) {
   pointer-events: none;
 }
 
-.playlist-track__title--destination {
+.playlist-track__title--destination,
+.playlist-track__subtitle :deep(.track-artist-credits__link) {
   position: relative;
   z-index: 1;
   pointer-events: auto;

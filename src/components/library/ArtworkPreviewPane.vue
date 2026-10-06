@@ -4,6 +4,7 @@ import { ImagePlus, Search, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
@@ -57,14 +58,8 @@ const previewTrack = computed(() =>
             : '尚未設定封面'
       "
     >
-      <template #overlay>
-        <span
-          v-if="candidate?.previewLoading"
-          class="artwork-preview__loading"
-          role="status"
-        >
-          <span class="ui-visually-hidden">候選封面載入中</span>
-        </span>
+      <template v-if="candidate?.previewLoading" #overlay>
+        <UiArtworkLoading label="候選封面載入中" />
       </template>
     </UiTrackThumb>
 
@@ -138,30 +133,6 @@ const previewTrack = computed(() =>
   align-self: center;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
-}
-
-.artwork-preview__loading {
-  position: absolute;
-  inset: 0;
-  background: var(--ui-color-surface-hover);
-  opacity: 0.72;
-  animation: artwork-preview-loading 1.4s ease-in-out infinite alternate;
-}
-
-@keyframes artwork-preview-loading {
-  to {
-    opacity: 0.38;
-  }
-}
-
-:global(:root[data-ui-motion='reduced']) .artwork-preview__loading {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .artwork-preview__loading {
-    animation: none;
-  }
 }
 
 .artwork-preview__actions {

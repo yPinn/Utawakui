@@ -81,7 +81,7 @@ const artistSummaryText = computed(() => {
 });
 
 function formatUpcomingTrackMetadata(track) {
-  const artist = track.artist || '未知演出者';
+  const artist = track.artist || '未知演唱者';
   if (!Number.isFinite(track.duration)) return artist;
   return `${artist} · ${formatDuration(track.duration)}`;
 }

@@ -1,6 +1,15 @@
 <script setup>
 import { computed } from 'vue';
-import { ListPlus, Pencil } from '../../icons/index.js';
+import {
+  ICON_SIZE,
+  ImagePlus,
+  ListPlus,
+  Pencil,
+  UserRoundPlus,
+} from '../../icons/index.js';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import { useTooltip } from '../ui/useTooltip.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import CollectionActionRail from './CollectionActionRail.vue';
 import LibraryEntityDossier from './LibraryEntityDossier.vue';
@@ -9,11 +18,12 @@ const props = defineProps({
   entityKind: {
     type: String,
     required: true,
-    validator: (value) => ['playlist', 'album'].includes(value),
+    validator: (value) => ['playlist', 'album', 'artist'].includes(value),
   },
   title: { type: String, required: true },
   titleId: { type: String, default: 'collection-title' },
   artist: { type: String, default: '' },
+  artistLinkLabel: { type: String, default: '' },
   meta: { type: String, default: '' },
   // Full list: UiCollageThumb alone decides how many tracks a collage shows.
   coverTracks: { type: Array, default: () => [] },
@@ -36,29 +46,55 @@ const emit = defineEmits([
   'addToQueue',
   'openEditDetails',
   'menuAction',
+  'selectArtist',
+  'choosePhoto',
   'update:searchQuery',
 ]);
 
-const isAlbum = computed(() => props.entityKind === 'album');
-const entityLabel = computed(() => (isAlbum.value ? '此專輯' : '此播放清單'));
-const entityAction = computed(() =>
-  isAlbum.value
-    ? {
-        icon: ListPlus,
-        label: '將專輯新增至播放清單',
-        disabled:
-          !props.canAddToPlaylist || props.addToPlaylistItems.length === 0,
-        menuItems: props.addToPlaylistItems,
-      }
-    : {
-        icon: Pencil,
-        label: '編輯播放清單詳細資料',
-        disabled: false,
-      },
-);
+// Matches UiCollageThumb's empty glyph at 136px (size / 2.5).
+const EMPTY_PHOTO_GLYPH_SIZE = 54;
+
+// The empty avatar has no visible text, so it names itself on hover／focus.
+const {
+  open: photoTooltipOpen,
+  position: photoTooltipPosition,
+  setTooltip: setPhotoTooltip,
+  tooltipId: photoTooltipId,
+  triggerProps: photoTooltipTriggerProps,
+} = useTooltip({
+  text: '選擇藝人照片',
+  placement: 'top',
+  disabled: computed(() => Boolean(props.coverUrl)),
+  describedBy: false,
+});
+
+const ENTITY_LABEL_BY_KIND = Object.freeze({
+  album: '此專輯',
+  artist: '此藝人',
+  playlist: '此播放清單',
+});
+const entityLabel = computed(() => ENTITY_LABEL_BY_KIND[props.entityKind]);
+// Artist pages are read-only references with no entity-specific action.
+const entityAction = computed(() => {
+  if (props.entityKind === 'artist') return null;
+  if (props.entityKind === 'album') {
+    return {
+      icon: ListPlus,
+      label: '將專輯新增至播放清單',
+      disabled:
+        !props.canAddToPlaylist || props.addToPlaylistItems.length === 0,
+      menuItems: props.addToPlaylistItems,
+    };
+  }
+  return {
+    icon: Pencil,
+    label: '編輯播放清單詳細資料',
+    disabled: false,
+  };
+});
 
 function activateEntityAction() {
-  if (!isAlbum.value) emit('openEditDetails');
+  if (props.entityKind === 'playlist') emit('openEditDetails');
 }
 
 function handleMenuAction(value) {
@@ -73,18 +109,66 @@ function handleMenuAction(value) {
       :title="title"
       :title-id="titleId"
       :artist="artist"
+      :artist-link-label="artistLinkLabel"
       :meta="meta"
       :cover-tracks="coverTracks"
       :cover-url="coverUrl"
       :description="description"
+      @select-artist="emit('selectArtist')"
     >
       <template v-if="entityKind === 'playlist'" #artwork-action>
-        <UiIconButton
-          :icon="Pencil"
-          class="setlist-collection-header__cover-edit"
-          label="編輯播放清單詳細資料"
-          variant="overlay"
-          @click="emit('openEditDetails')"
+        <UiArtworkReveal class="setlist-collection-header__cover-edit">
+          <UiIconButton
+            :icon="Pencil"
+            label="編輯播放清單詳細資料"
+            variant="overlay"
+            @click="emit('openEditDetails')"
+          />
+        </UiArtworkReveal>
+      </template>
+      <!-- The whole round avatar is the photo action: a corner button would be
+           clipped by the circle. With a photo it reveals on hover; empty, one
+           centered add glyph plus tooltip stays visible. -->
+      <template v-else-if="entityKind === 'artist'" #artwork-overlay>
+        <component
+          :is="coverUrl ? UiArtworkReveal : 'span'"
+          :class="{ 'setlist-collection-header__photo-static': !coverUrl }"
+        >
+          <button
+            v-bind="photoTooltipTriggerProps"
+            type="button"
+            class="setlist-collection-header__photo-action"
+            :class="{
+              'setlist-collection-header__photo-action--empty': !coverUrl,
+            }"
+            aria-label="選擇藝人照片"
+            @click="emit('choosePhoto')"
+          >
+            <template v-if="coverUrl">
+              <ImagePlus
+                :size="ICON_SIZE"
+                class="setlist-collection-header__photo-icon"
+                aria-hidden="true"
+              />
+              <span class="setlist-collection-header__photo-label">
+                更換照片
+              </span>
+            </template>
+            <UserRoundPlus
+              v-else
+              :size="EMPTY_PHOTO_GLYPH_SIZE"
+              class="setlist-collection-header__photo-icon"
+              aria-hidden="true"
+            />
+          </button>
+        </component>
+        <UiTooltipSurface
+          :open="photoTooltipOpen"
+          text="選擇藝人照片"
+          :tooltip-id="photoTooltipId"
+          :position="photoTooltipPosition"
+          placement="top"
+          :set-element="setPhotoTooltip"
         />
       </template>
     </LibraryEntityDossier>
@@ -116,20 +200,74 @@ function handleMenuAction(value) {
   gap: var(--ui-space-4);
 }
 
+/* Corner control: positioned here, revealed by UiArtworkReveal with the
+   dossier artwork as its focus-within scope. */
 .setlist-collection-header__cover-edit {
   position: absolute;
   right: var(--ui-space-2);
   bottom: var(--ui-space-2);
-  opacity: 0;
-  transition: opacity var(--ui-motion-duration-fast)
+}
+
+/* The empty avatar's always-visible wrapper stretches like UiArtworkReveal. */
+.setlist-collection-header__photo-static {
+  display: grid;
+}
+
+/* Sized and clipped by the dossier's UiArtworkOverlay plane; revealed by
+   UiArtworkReveal when a photo exists. */
+.setlist-collection-header__photo-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-1);
+  padding: 0;
+  border: 0;
+  background: var(--ui-color-overlay-scrim);
+  color: var(--ui-color-overlay-contrast);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--ui-motion-duration-fast)
     var(--ui-motion-easing-standard);
 }
 
-:deep(.library-entity-dossier__artwork:hover)
-  .setlist-collection-header__cover-edit,
-:deep(.library-entity-dossier__artwork:focus-within)
-  .setlist-collection-header__cover-edit,
-.setlist-collection-header__cover-edit:focus-visible {
-  opacity: 1;
+.setlist-collection-header__photo-action:active {
+  background: var(--ui-color-overlay-scrim-active);
+}
+
+.setlist-collection-header__photo-action:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+}
+
+.setlist-collection-header__photo-label {
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+/* An empty avatar keeps the invitation visible as one centered add glyph, so
+   the thumbnail's own placeholder glyph is hidden beneath it. */
+.setlist-collection-header__photo-action--empty {
+  background: transparent;
+  color: var(--ui-color-text-muted);
+}
+
+:deep(
+  .library-entity-dossier__artwork:has(
+      .setlist-collection-header__photo-action--empty
+    )
+    .ui-collage-thumb__single-empty
+) {
+  visibility: hidden;
+}
+
+.setlist-collection-header__photo-action--empty:hover {
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text);
+}
+
+.setlist-collection-header__photo-action--empty:active {
+  background: var(--ui-color-surface-active);
 }
 </style>

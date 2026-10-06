@@ -210,7 +210,15 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'track-thumb',
         title: '曲目縮圖',
-        components: ['UiTrackThumb'],
+        // Shared artwork overlay layers: UiArtworkOverlay is the full-cover
+        // plane inside every artwork host; UiArtworkReveal is the hover／focus
+        // reveal recipe; UiArtworkLoading is the loading shimmer.
+        components: [
+          'UiTrackThumb',
+          'UiArtworkOverlay',
+          'UiArtworkReveal',
+          'UiArtworkLoading',
+        ],
       },
       {
         key: 'collage-thumb',

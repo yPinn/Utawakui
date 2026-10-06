@@ -6,6 +6,8 @@
 // metadata, not user-authored; see LibraryEntityDossier.vue).
 import { shallowRef, watch } from 'vue';
 import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -62,7 +64,7 @@ function save() {
     @close="emit('close')"
   >
     <div class="playlist-details" :style="playlistDetailsStyle">
-      <div class="playlist-details__cover">
+      <div class="playlist-details__cover" data-artwork-reveal-scope>
         <UiCollageThumb
           :cover-url="coverUrl"
           :tracks="coverTracks"
@@ -70,24 +72,31 @@ function save() {
           :size="PLAYLIST_DETAILS_COVER_SIZE"
         />
         <template v-if="!isAlbum">
-          <button
-            type="button"
-            class="playlist-details__cover-edit"
-            aria-label="選擇相片"
-            title="選擇相片"
-            @click="emit('chooseCover')"
-          >
-            <Pencil :size="ICON_SIZE" aria-hidden="true" />
-            <span>選擇相片</span>
-          </button>
-          <UiIconButton
+          <UiArtworkOverlay>
+            <UiArtworkReveal>
+              <button
+                type="button"
+                class="playlist-details__cover-edit"
+                aria-label="選擇相片"
+                title="選擇相片"
+                @click="emit('chooseCover')"
+              >
+                <Pencil :size="ICON_SIZE" aria-hidden="true" />
+                <span>選擇相片</span>
+              </button>
+            </UiArtworkReveal>
+          </UiArtworkOverlay>
+          <UiArtworkReveal
             v-if="coverUrl"
-            :icon="X"
             class="playlist-details__cover-clear"
-            label="移除自訂封面"
-            variant="overlay"
-            @click="emit('clearCover')"
-          />
+          >
+            <UiIconButton
+              :icon="X"
+              label="移除自訂封面"
+              variant="overlay"
+              @click="emit('clearCover')"
+            />
+          </UiArtworkReveal>
         </template>
       </div>
 
@@ -148,26 +157,11 @@ function save() {
   overflow: hidden;
 }
 
-/* Same hover-reveal idiom as the hero's own cover overlay (see
-   SetlistCollectionHeader.vue) — this is its consolidated replacement, not a
-   second independent implementation of the same interaction. */
-.playlist-details__cover-edit,
-.playlist-details__cover-clear {
-  position: absolute;
-  opacity: 0;
-  transition: opacity var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
-}
+/* Both cover controls reveal through UiArtworkReveal on cover hover
+   (data-artwork-reveal-scope) or their own keyboard focus. */
 
-.playlist-details__cover:hover .playlist-details__cover-edit,
-.playlist-details__cover:hover .playlist-details__cover-clear,
-.playlist-details__cover-edit:focus-visible,
-.playlist-details__cover-clear:focus-visible {
-  opacity: 1;
-}
-
+/* Sized and clipped by UiArtworkOverlay. */
 .playlist-details__cover-edit {
-  inset: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -185,7 +179,10 @@ function save() {
   outline-offset: var(--ui-focus-offset-inset);
 }
 
+/* Corner control: positioned by the cover, outside the overlay plane. */
 .playlist-details__cover-clear {
+  position: absolute;
+  z-index: 3;
   right: var(--ui-space-2);
   top: var(--ui-space-2);
 }

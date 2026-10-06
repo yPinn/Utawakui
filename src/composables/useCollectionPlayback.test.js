@@ -5,6 +5,7 @@ function createHarness({
   sourceId = null,
   isPlaying = false,
   isShuffle = false,
+  random = () => 0,
 } = {}) {
   const playerState = { isPlaying };
   const queueState = { sourceId, isShuffle };
@@ -16,15 +17,13 @@ function createHarness({
       queueState.sourceId = options.sourceId;
       calls.lastQueue = { tracks, currentTrackId, options };
     }),
-    toggleShuffle: vi.fn(() => {
-      queueState.isShuffle = !queueState.isShuffle;
-    }),
     enqueueTrack: vi.fn(),
   };
   const controller = createCollectionPlaybackController({
     playerState,
     queueState,
     ...calls,
+    random,
   });
   return { controller, playerState, queueState, calls };
 }
@@ -73,22 +72,20 @@ describe('collection playback controller', () => {
     expect(calls.playTrack).toHaveBeenCalledWith(tracks[0]);
   });
 
-  it('starts an inactive collection in shuffle and only projects shuffle for its source', () => {
-    const { controller, calls, queueState } = createHarness({
+  it('plays an inactive collection from a random track when shuffle is already on', () => {
+    const { controller, calls } = createHarness({
       sourceId: 'another-source',
+      isShuffle: true,
+      random: () => 0.5,
     });
 
-    controller.toggleCollectionShuffle(collection);
+    controller.togglePlayback(collection);
 
-    expect(calls.setQueue).toHaveBeenCalledWith(tracks, 'a', {
+    expect(calls.setQueue).toHaveBeenCalledWith(tracks, 'b', {
       sourceId: 'collection-1',
       sourceName: 'Collection 1',
     });
-    expect(calls.toggleShuffle).toHaveBeenCalledOnce();
-    expect(calls.playTrack).toHaveBeenCalledWith(tracks[0]);
-    expect(queueState.isShuffle).toBe(true);
-    expect(controller.isShuffleActive('collection-1')).toBe(true);
-    expect(controller.isShuffleActive('another-source')).toBe(false);
+    expect(calls.playTrack).toHaveBeenCalledWith(tracks[1]);
   });
 
   it('adds every valid member to the interrupt queue without changing playback', () => {
@@ -108,13 +105,11 @@ describe('collection playback controller', () => {
     const { controller, calls } = createHarness();
 
     controller.togglePlayback({ ...collection, tracks: [] });
-    controller.toggleCollectionShuffle({ ...collection, tracks: [] });
     controller.enqueueCollection({ ...collection, tracks: [] });
 
     expect(calls.play).not.toHaveBeenCalled();
     expect(calls.pause).not.toHaveBeenCalled();
     expect(calls.setQueue).not.toHaveBeenCalled();
-    expect(calls.toggleShuffle).not.toHaveBeenCalled();
     expect(calls.enqueueTrack).not.toHaveBeenCalled();
   });
 });

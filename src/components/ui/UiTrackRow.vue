@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
 import UiTextButton from './UiTextButton.vue';
+import UiArtworkOverlay from './UiArtworkOverlay.vue';
 import UiTrackThumb from './UiTrackThumb.vue';
 
 // Either pass a whole `track` object or the flat props individually — the
@@ -136,7 +137,9 @@ function handleActionKeydown(event) {
         :loading="thumbLoading"
         :decoding="thumbDecoding"
       />
-      <slot name="artworkOverlay" />
+      <UiArtworkOverlay v-if="$slots.artworkOverlay">
+        <slot name="artworkOverlay" />
+      </UiArtworkOverlay>
     </button>
     <UiTrackThumb
       v-else
@@ -172,9 +175,11 @@ function handleActionKeydown(event) {
       >
         {{ displayTitle }}
       </span>
-      <span v-if="displayArtist" class="ui-track__artist">{{
-        displayArtist
-      }}</span>
+      <!-- Callers may replace the artist line content (e.g. per-artist
+           destinations); the lane, typography and row semantics stay here. -->
+      <span v-if="displayArtist" class="ui-track__artist">
+        <slot name="artist">{{ displayArtist }}</slot>
+      </span>
     </div>
     <span v-if="displayDuration && !hideDuration" class="ui-track__duration">{{
       formatDuration(displayDuration)

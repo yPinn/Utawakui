@@ -136,6 +136,15 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(artistRule).toMatch(/white-space:\s*nowrap/);
   });
 
+  it('links the now-playing artists through the shared credits inside the clipped line', () => {
+    expect(componentSource).toMatch(
+      /<span v-if="state\.track\.artist" class="player-bar__track-artist">\s*<TrackArtistCredits :track="state\.track" \/>\s*<\/span>/u,
+    );
+    expect(componentSource).not.toMatch(
+      /<TrackArtistCredits[^>]*current-artist-id/u,
+    );
+  });
+
   it('delegates only playback Queue visibility to the shell-owned right Dock', () => {
     expect(componentSource).toContain(
       "const emit = defineEmits(['artworkActivate', 'queueActivate']);",

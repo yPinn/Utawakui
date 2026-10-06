@@ -1,19 +1,31 @@
 <script setup>
+import { UserRound } from '../../icons/index.js';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiTextButton from '../ui/UiTextButton.vue';
 
 defineProps({
   entityKind: {
     type: String,
     required: true,
-    validator: (value) => ['playlist', 'album'].includes(value),
+    validator: (value) => ['playlist', 'album', 'artist'].includes(value),
   },
   title: { type: String, required: true },
   titleId: { type: String, default: 'collection-title' },
   artist: { type: String, default: '' },
+  artistLinkLabel: { type: String, default: '' },
   meta: { type: String, default: '' },
   coverTracks: { type: Array, default: () => [] },
   coverUrl: { type: String, default: '' },
   description: { type: String, default: '' },
+});
+
+const emit = defineEmits(['selectArtist']);
+
+const MARKER_BY_KIND = Object.freeze({
+  album: '專輯資料',
+  artist: '藝人資料',
+  playlist: '播放清單資料',
 });
 </script>
 
@@ -27,23 +39,45 @@ defineProps({
 
     <div class="library-entity-dossier__sheet">
       <span class="library-entity-dossier__marker">
-        {{ entityKind === 'album' ? '專輯資料' : '播放清單資料' }}
+        {{ MARKER_BY_KIND[entityKind] }}
       </span>
 
       <div class="library-entity-dossier__body">
-        <div class="library-entity-dossier__artwork">
+        <div
+          class="library-entity-dossier__artwork"
+          data-artwork-reveal-scope="focus-within"
+          :class="{
+            'library-entity-dossier__artwork--round': entityKind === 'artist',
+          }"
+        >
           <UiCollageThumb
             :cover-url="coverUrl"
             :tracks="coverTracks"
             :can-collage="entityKind === 'playlist'"
             :size="136"
+            :radius="
+              entityKind === 'artist' ? 'var(--ui-radius-pill)' : undefined
+            "
+            :empty-icon="entityKind === 'artist' ? UserRound : null"
           />
+          <!-- Full-cover content (scrims, cover actions) shares the artwork
+               overlay plane; corner controls use #artwork-action. -->
+          <UiArtworkOverlay v-if="$slots['artwork-overlay']">
+            <slot name="artwork-overlay" />
+          </UiArtworkOverlay>
           <slot name="artwork-action" />
         </div>
 
         <div class="library-entity-dossier__content">
           <p v-if="artist" class="library-entity-dossier__artist">
-            {{ artist }}
+            <UiTextButton
+              v-if="artistLinkLabel"
+              class="library-entity-dossier__artist-link"
+              :text="artist"
+              :aria-label="artistLinkLabel"
+              @click="emit('selectArtist')"
+            />
+            <template v-else>{{ artist }}</template>
           </p>
           <p v-if="meta" class="library-entity-dossier__meta">{{ meta }}</p>
           <p v-if="description" class="library-entity-dossier__description">
@@ -104,19 +138,30 @@ defineProps({
 .library-entity-dossier__body {
   min-width: 0;
   display: grid;
-  grid-template-columns: 136px minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: var(--ui-space-5);
   align-items: end;
   padding: var(--ui-space-5);
 }
 
+/* The hairline wraps the 136px artwork instead of eating into it, so the
+   artwork (and a round artist avatar's glyph) stays exactly centered. */
 .library-entity-dossier__artwork {
   position: relative;
-  width: 136px;
-  aspect-ratio: 1;
+  box-sizing: content-box;
+  justify-self: start;
   overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
+}
+
+.library-entity-dossier__artwork--round {
+  border-radius: var(--ui-radius-pill);
+}
+
+/* UiTextButton leaves font-weight to its caller. */
+.library-entity-dossier__artist-link {
+  font-weight: inherit;
 }
 
 .library-entity-dossier__content {

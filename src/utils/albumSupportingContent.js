@@ -1,21 +1,8 @@
 import { deriveAlbumSummary } from './albumSummary.js';
-
-function normalizedArtist(value) {
-  return String(value ?? '')
-    .trim()
-    .toLocaleLowerCase();
-}
+import { albumArtistId, albumsForArtist } from './artistCollections.js';
 
 function validReleaseYear(value) {
   return Number.isInteger(value) && value > 0 ? value : undefined;
-}
-
-function uniqueTracksById(tracks) {
-  const byId = new Map();
-  for (const track of tracks) {
-    if (track?.id && !byId.has(track.id)) byId.set(track.id, track);
-  }
-  return [...byId.values()];
 }
 
 export function deriveAlbumSupportingContent({
@@ -23,27 +10,24 @@ export function deriveAlbumSupportingContent({
   selectedTracks,
   albumEntries,
   libraryTracks,
+  artistIndex,
 }) {
-  const selectedSummary = deriveAlbumSummary(selectedTracks);
-  const artist = String(selectedSummary.artist ?? '').trim();
-  const artistKey = normalizedArtist(artist);
-  if (!artistKey) return null;
+  const trackArtistIds = artistIndex?.trackArtistIds;
+  const artistId = albumArtistId(selectedTracks, trackArtistIds);
+  const artist = artistIndex?.artists?.find((entry) => entry.id === artistId);
+  if (!artist) return null;
 
-  const matchingAlbums = (Array.isArray(albumEntries) ? albumEntries : [])
-    .filter(({ collection }) => collection?.kind === 'album')
-    .map(({ collection, tracks }) => ({
-      collection,
-      tracks,
-      summary: deriveAlbumSummary(tracks),
-    }))
-    .filter(({ summary }) => normalizedArtist(summary.artist) === artistKey)
-    .map(({ collection, tracks, summary }) => ({
-      id: collection.id,
-      name: collection.name || '(未命名專輯)',
-      coverUrl: collection.coverUrl ?? '',
-      tracks,
-      releaseYear: validReleaseYear(summary.releaseYear),
-    }));
+  const matchingAlbums = albumsForArtist(
+    artistId,
+    albumEntries,
+    trackArtistIds,
+  ).map(({ collection, tracks }) => ({
+    id: collection.id,
+    name: collection.name || '(未命名專輯)',
+    coverUrl: collection.coverUrl ?? '',
+    tracks,
+    releaseYear: validReleaseYear(deriveAlbumSummary(tracks).releaseYear),
+  }));
 
   const relatedAlbums = matchingAlbums
     .filter((album) => album.id !== selectedAlbumId)
@@ -53,17 +37,25 @@ export function deriveAlbumSupportingContent({
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
 
-  const artistTracks = uniqueTracksById([
-    ...(Array.isArray(libraryTracks) ? libraryTracks : []),
-    ...(Array.isArray(selectedTracks) ? selectedTracks : []),
-  ]).filter((track) => normalizedArtist(track.artist) === artistKey);
+  const tracksById = new Map(
+    [
+      ...(Array.isArray(libraryTracks) ? libraryTracks : []),
+      ...(Array.isArray(selectedTracks) ? selectedTracks : []),
+    ]
+      .filter((track) => track?.id)
+      .map((track) => [track.id, track]),
+  );
+  const artistTracks = artist.trackIds
+    .map((id) => tracksById.get(id))
+    .filter(Boolean);
   const releaseYears = artistTracks
     .map((track) => validReleaseYear(track.releaseYear))
     .filter((year) => year !== undefined)
     .sort((a, b) => a - b);
 
   return {
-    artist,
+    artistId: artist.id,
+    artist: artist.name,
     relatedAlbums,
     summary: {
       albumCount: matchingAlbums.length,

@@ -33,7 +33,10 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source.match(/@contextmenu="openGlobalMenu"/gu)).toHaveLength(3);
     expect(
       source.match(/@contextmenu="openPlaylistMenu\(playlist, \$event\)"/gu),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
+    expect(source).toContain(
+      '@contextmenu="openPlaylistMenu(entry.item, $event)"',
+    );
     expect(source).toContain("label: '建立播放清單'");
     expect(source).toContain("label: '建立資料夾'");
     expect(source).toMatch(
@@ -171,9 +174,45 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
   });
 
+  it('mixes albums and artists in one reference tier after playlists and loads it after the library', () => {
+    const playlistsAt = source.indexOf(
+      'v-for="playlist in visiblePlaylistItems"',
+    );
+    const referenceAt = source.indexOf(
+      'v-for="entry in visibleReferenceEntries"',
+    );
+    expect(playlistsAt).toBeLessThan(referenceAt);
+    expect(source).not.toContain('v-for="playlist in visibleAlbumItems"');
+    expect(source).not.toContain('v-for="artist in visibleArtistItems"');
+    expect(source.match(/class="playlist-sidebar__divider"/gu)).toHaveLength(2);
+    expect(source).toContain('orderReferenceItems({');
+    expect(source).toContain("if (entry.kind === 'artist') return '藝人';");
+    expect(source).toMatch(
+      /watch\(\s*\(\) => props\.tracksById\.size > 0,[\s\S]*?setTimeout\(ensureArtistIndex, 0\)/u,
+    );
+    expect(source).toContain('@contextmenu="suppressArtistMenu"');
+    expect(source).not.toMatch(/draggable[^\n]*artist/u);
+  });
+
+  it('does not mark a library view current while an artist page is open', () => {
+    expect(source).toMatch(
+      /const isLibraryViewActive = \(view\) =>\s*state\.selectedId === null &&\s*state\.selectedArtistId === null &&/u,
+    );
+    expect(source).not.toContain(
+      "state.selectedId === null && libraryView === 'all'",
+    );
+  });
+
   it('reveals playback from the row hover or the playback button focus without mislabeling row focus', () => {
+    // Hover-only scope: row focus (the select action) must not reveal play;
+    // UiArtworkReveal still reveals on the play button's own keyboard focus.
     expect(rowSource).toMatch(
-      /\.playlist-sidebar-row:hover \.playlist-sidebar-row__play,[\s\S]*?\.playlist-sidebar-row__play:focus-visible\s*\{[^}]*opacity:\s*1;/u,
+      /class="playlist-sidebar-row"\s+data-artwork-reveal-scope\s/u,
+    );
+    expect(rowSource).not.toContain('data-artwork-reveal-scope="focus-within"');
+    expect(rowSource).toMatch(/<UiArtworkReveal>\s*<UiIconButton/u);
+    expect(rowSource).not.toMatch(
+      /\.playlist-sidebar-row__play\s*\{[^}]*opacity:/u,
     );
     expect(rowSource).not.toContain(
       '.playlist-sidebar-row__select:focus-visible\n  ~ .playlist-sidebar-row__thumb',

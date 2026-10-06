@@ -12,6 +12,8 @@ const state = reactive({
   // 'all' | 'local'. Shared (not view-local) so the persistent
   // AppPlaylistSidebar can drive it from any tab.
   libraryView: 'all',
+  // Derived artist reference page (ADR 0022); exclusive with selectedId.
+  selectedArtistId: null,
   error: null,
 });
 const { recordError } = useAppDiagnostics();
@@ -112,6 +114,12 @@ if (import.meta.hot) {
 
 function select(id) {
   state.selectedId = id;
+  state.selectedArtistId = null;
+}
+
+function selectArtist(id) {
+  state.selectedId = null;
+  state.selectedArtistId = id || null;
 }
 
 function setLibraryView(view) {
@@ -124,7 +132,7 @@ async function create(name) {
     '建立歌單失敗',
   );
   const created = playlists?.[playlists.length - 1];
-  if (created) state.selectedId = created.id;
+  if (created) select(created.id);
   return created ?? null;
 }
 
@@ -331,6 +339,7 @@ export function usePlaylists() {
     initialize,
     selectedPlaylist,
     select,
+    selectArtist,
     setLibraryView,
     create,
     rename,

@@ -2,6 +2,7 @@
 // Track thumbnail square: image, or initial-letter fallback, or a custom
 // fallback via the default slot when there's no track at all.
 import { getTrackInitial } from '../../utils/trackDisplay.js';
+import UiArtworkOverlay from './UiArtworkOverlay.vue';
 
 defineProps({
   track: { type: Object, default: undefined },
@@ -56,7 +57,9 @@ function toCssLength(value) {
     />
     <span v-else-if="track">{{ getTrackInitial(track) }}</span>
     <slot v-else />
-    <slot name="overlay" />
+    <UiArtworkOverlay v-if="$slots.overlay">
+      <slot name="overlay" />
+    </UiArtworkOverlay>
   </span>
 </template>
 

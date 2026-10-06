@@ -146,6 +146,29 @@ describe('selectedPlaylist', () => {
   });
 });
 
+describe('selectArtist', () => {
+  it('keeps artist and collection selection mutually exclusive', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    const { state, select, selectArtist, selectedPlaylist } =
+      await loadPlaylists();
+
+    select('p1');
+    selectArtist('artist-0123456789abcdef');
+    expect(state.selectedId).toBe(null);
+    expect(selectedPlaylist.value).toBe(null);
+    expect(state.selectedArtistId).toBe('artist-0123456789abcdef');
+
+    select('p1');
+    expect(state.selectedArtistId).toBe(null);
+
+    selectArtist('artist-0123456789abcdef');
+    select(null);
+    expect(state.selectedArtistId).toBe(null);
+  });
+});
+
 describe('addTrack', () => {
   it('is a no-op (no IPC call) when the track is already a member', async () => {
     listPlaylistsMock.mockResolvedValue([

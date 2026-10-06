@@ -161,7 +161,7 @@ const {
           <UiSearchBox
             v-model="searchQuery"
             label="搜尋目前集合"
-            placeholder="搜尋曲目或演出者"
+            placeholder="搜尋曲目或演唱者"
           />
           <div
             v-if="collectionType === 'playlist' && isOrderDirty"
@@ -205,7 +205,7 @@ const {
           role="status"
         >
           <strong>找不到符合條件的曲目</strong>
-          <span>清除搜尋，或改用曲名、演出者與檔案名稱查找。</span>
+          <span>清除搜尋，或改用曲名、演唱者與檔案名稱查找。</span>
         </div>
         <StudioLibraryTrackTable
           v-else

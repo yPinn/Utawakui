@@ -68,6 +68,7 @@ function handleDragEnd(event) {
 <template>
   <UiTrackRow
     class="queue-track right-dock-track"
+    data-artwork-reveal-scope="focus-within"
     :class="{ 'right-dock-track--menu-open': menuOpen }"
     :track="track"
     :active="active"

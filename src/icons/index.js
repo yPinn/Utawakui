@@ -77,6 +77,8 @@ export {
   Tag,
   Trash2,
   Type,
+  UserRound,
+  UserRoundPlus,
   Video,
   Volume2,
   VolumeX,

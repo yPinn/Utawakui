@@ -2,11 +2,12 @@ import { computed } from 'vue';
 import { usePlaylists } from './usePlaylists.js';
 import { useAppView } from './useAppView.js';
 import { albumPlaylistByTrackId } from '../utils/albumMembership.js';
+import { isArtistSourceId } from '../utils/artistPage.js';
 
 // Combines usePlaylists.js (membership + selection) and useAppView.js (tab
 // switching) so callers get one jumpToAlbum() instead of wiring both.
 export function useAlbumNavigation() {
-  const { state, select } = usePlaylists();
+  const { state, select, selectArtist } = usePlaylists();
   const { setActiveView } = useAppView();
 
   const albumByTrackId = computed(() =>
@@ -29,11 +30,19 @@ export function useAlbumNavigation() {
   // For a caller that already has the target playlist/album id directly
   // (e.g. QueuePanel.vue's "下一首來自" section, via usePlaybackQueue's
   // sourceId) instead of deriving it from a track's album membership.
+  // Queue/history sources may also be derived artist pages.
   function jumpToPlaylist(id) {
     if (!id) return;
-    select(id);
+    if (isArtistSourceId(id)) selectArtist(id);
+    else select(id);
     setActiveView('setlist');
   }
 
-  return { albumForTrack, jumpToAlbum, jumpToPlaylist };
+  function jumpToArtist(id) {
+    if (!isArtistSourceId(id)) return;
+    selectArtist(id);
+    setActiveView('setlist');
+  }
+
+  return { albumForTrack, jumpToAlbum, jumpToArtist, jumpToPlaylist };
 }

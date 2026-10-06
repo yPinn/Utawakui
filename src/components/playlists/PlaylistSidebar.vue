@@ -10,10 +10,16 @@ import {
   Plus,
   Search,
 } from '../../icons/index.js';
-import { computed, ref, shallowRef } from 'vue';
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import {
+  deriveArtistPage,
+  listSidebarArtists,
+  orderReferenceItems,
+} from '../../utils/artistPage.js';
 import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
@@ -31,8 +37,13 @@ const props = defineProps({
   compact: { type: Boolean, default: false },
 });
 
-const { state, select, create, reorderPlaylist } = usePlaylists();
+const { state, select, selectArtist, create, reorderPlaylist } = usePlaylists();
 const collectionPlayback = useCollectionPlayback();
+const {
+  state: artistIndexState,
+  ensureLoaded: ensureArtistIndex,
+  resolvePhotos: resolveArtistPhotos,
+} = useArtistIndex();
 
 const emit = defineEmits([
   'activateSetlist',
@@ -122,9 +133,108 @@ const visiblePlaylistItems = computed(() =>
 const visibleAlbumItems = computed(() =>
   albumItems.value.filter(playlistMatchesSearch),
 );
+// Artists section (ADR 0022): requested once the library list exists, at idle,
+// so the derived index adds no work to app startup.
+let artistIndexTimer = null;
+watch(
+  () => props.tracksById.size > 0,
+  (hasTracks) => {
+    if (!hasTracks || artistIndexTimer !== null) return;
+    artistIndexTimer = setTimeout(ensureArtistIndex, 0);
+  },
+  { immediate: true },
+);
+onBeforeUnmount(() => clearTimeout(artistIndexTimer));
+
+const albumEntries = computed(() =>
+  state.playlists
+    .filter((playlist) => playlist.kind === 'album')
+    .map((collection) => ({ collection, tracks: memberTracksFor(collection) })),
+);
+const visibleArtistItems = computed(() =>
+  listSidebarArtists({
+    artistIndex: artistIndexState.index,
+    albumEntries: albumEntries.value,
+    tracksById: props.tracksById,
+    query: normalizedSearchQuery.value,
+  }).map((artist) => ({ ...artist, kind: 'artist' })),
+);
+
+// Listed artists without a photo ask main for their channel avatar.
+watch(
+  () =>
+    listSidebarArtists({
+      artistIndex: artistIndexState.index,
+      albumEntries: albumEntries.value,
+      tracksById: props.tracksById,
+    })
+      .filter((artist) => !artist.photoUrl)
+      .map((artist) => artist.id)
+      .join('\n'),
+  (missing) => {
+    if (missing) resolveArtistPhotos(missing.split('\n'));
+  },
+  { immediate: true },
+);
+
+// Albums and artists share one read-only reference tier, grouped by artist.
+const visibleReferenceEntries = computed(() =>
+  orderReferenceItems({
+    albumItems: visibleAlbumItems.value,
+    artistItems: visibleArtistItems.value,
+    artistIndex: artistIndexState.index,
+    tracksById: props.tracksById,
+    fallbackAlbumArtistById: orderedPlaylists.value.albumArtistById,
+  }),
+);
+
+function referenceSubtitle(entry) {
+  if (entry.kind === 'artist') return '藝人';
+  return entry.groupName ? `專輯・${entry.groupName}` : '專輯';
+}
+
+function artistTracksFor(artist) {
+  return (
+    deriveArtistPage({
+      artistId: artist.id,
+      artistIndex: artistIndexState.index,
+      albumEntries: albumEntries.value,
+      tracksById: props.tracksById,
+    })?.tracks ?? []
+  );
+}
+
+function toggleArtistPlayback(artist, event) {
+  event.stopPropagation();
+  collectionPlayback.togglePlayback({
+    tracks: artistTracksFor(artist),
+    sourceName: artist.name,
+    sourceId: artist.id,
+  });
+}
+
+function selectArtistRow(id) {
+  closePlaylistMenu();
+  selectArtist(id);
+  emit('activateSetlist');
+}
+
+// Artist rows are read-only references with no collection menu.
+function suppressArtistMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+const isLibraryViewActive = (view) =>
+  state.selectedId === null &&
+  state.selectedArtistId === null &&
+  props.libraryView === view;
+
 const hasVisibleCollectionItems = computed(
   () =>
-    visiblePlaylistItems.value.length > 0 || visibleAlbumItems.value.length > 0,
+    visiblePlaylistItems.value.length > 0 ||
+    visibleAlbumItems.value.length > 0 ||
+    visibleArtistItems.value.length > 0,
 );
 
 const menuContext = ref(null);
@@ -341,14 +451,9 @@ function startDrag(playlist, event) {
           class="playlist-sidebar__item"
           aria-label="全部曲目"
           :class="{
-            'playlist-sidebar__item--active':
-              state.selectedId === null && libraryView === 'all',
+            'playlist-sidebar__item--active': isLibraryViewActive('all'),
           }"
-          :aria-current="
-            state.selectedId === null && libraryView === 'all'
-              ? 'page'
-              : undefined
-          "
+          :aria-current="isLibraryViewActive('all') ? 'page' : undefined"
           title="全部曲目"
           @click="selectLibraryView('all')"
           @contextmenu="openGlobalMenu"
@@ -373,14 +478,9 @@ function startDrag(playlist, event) {
           class="playlist-sidebar__item"
           aria-label="本機曲目"
           :class="{
-            'playlist-sidebar__item--active':
-              state.selectedId === null && libraryView === 'local',
+            'playlist-sidebar__item--active': isLibraryViewActive('local'),
           }"
-          :aria-current="
-            state.selectedId === null && libraryView === 'local'
-              ? 'page'
-              : undefined
-          "
+          :aria-current="isLibraryViewActive('local') ? 'page' : undefined"
           title="本機曲目"
           @click="selectLibraryView('local')"
           @contextmenu="openGlobalMenu"
@@ -436,25 +536,45 @@ function startDrag(playlist, event) {
         />
 
         <hr
-          v-if="visiblePlaylistItems.length > 0 && visibleAlbumItems.length > 0"
+          v-if="
+            visiblePlaylistItems.length > 0 &&
+            visibleReferenceEntries.length > 0
+          "
           class="playlist-sidebar__divider"
         />
 
-        <PlaylistSidebarRow
-          v-for="playlist in visibleAlbumItems"
-          :key="playlist.id"
-          :playlist="playlist"
-          :cover-url="playlist.coverUrl"
-          :cover-tracks="coverTracksFor(playlist)"
-          :subtitle="subtitleFor(playlist)"
-          :compact="compact"
-          :active="playlist.id === state.selectedId"
-          :active-source="isActiveSource(playlist)"
-          :playing="isPlayingThis(playlist)"
-          @select="selectPlaylist(playlist.id)"
-          @contextmenu="openPlaylistMenu(playlist, $event)"
-          @toggle-playback="togglePlayback(playlist, $event)"
-        />
+        <template
+          v-for="entry in visibleReferenceEntries"
+          :key="`${entry.kind}:${entry.item.id}`"
+        >
+          <PlaylistSidebarRow
+            v-if="entry.kind === 'artist'"
+            :playlist="entry.item"
+            :cover-url="entry.item.photoUrl"
+            :subtitle="referenceSubtitle(entry)"
+            :compact="compact"
+            :active="entry.item.id === state.selectedArtistId"
+            :active-source="collectionPlayback.isActiveSource(entry.item.id)"
+            :playing="collectionPlayback.isPlaying(entry.item.id)"
+            @select="selectArtistRow(entry.item.id)"
+            @contextmenu="suppressArtistMenu"
+            @toggle-playback="toggleArtistPlayback(entry.item, $event)"
+          />
+          <PlaylistSidebarRow
+            v-else
+            :playlist="entry.item"
+            :cover-url="entry.item.coverUrl"
+            :cover-tracks="coverTracksFor(entry.item)"
+            :subtitle="referenceSubtitle(entry)"
+            :compact="compact"
+            :active="entry.item.id === state.selectedId"
+            :active-source="isActiveSource(entry.item)"
+            :playing="isPlayingThis(entry.item)"
+            @select="selectPlaylist(entry.item.id)"
+            @contextmenu="openPlaylistMenu(entry.item, $event)"
+            @toggle-playback="togglePlayback(entry.item, $event)"
+          />
+        </template>
 
         <p
           v-if="hasSearchQuery && !hasVisibleCollectionItems"
@@ -892,10 +1012,11 @@ function startDrag(playlist, event) {
   }
 }
 
-:global(:root[data-ui-motion='reduced']) .playlist-sidebar__toolbar-expanded,
-:global(:root[data-ui-motion='reduced'])
-  .playlist-sidebar__toolbar-action--compact,
-:global(:root[data-ui-motion='reduced']) .playlist-sidebar__info {
+:global(:root[data-ui-motion='reduced'] .playlist-sidebar__toolbar-expanded),
+:global(
+  :root[data-ui-motion='reduced'] .playlist-sidebar__toolbar-action--compact
+),
+:global(:root[data-ui-motion='reduced'] .playlist-sidebar__info) {
   transition: none;
 }
 

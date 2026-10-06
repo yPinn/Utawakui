@@ -59,15 +59,17 @@ describe('SetlistView track interaction owner', () => {
     expect(source).toContain('<SetlistCollectionHeader');
     expect(source).toContain(':playing="selectedCollectionIsPlaying"');
     expect(source).toContain(
-      ':shuffle-active="selectedCollectionShuffleActive"',
-    );
-    expect(source).toContain(
       '@toggle-playback="toggleSelectedCollectionPlayback"',
     );
-    expect(source).toContain(
-      '@toggle-shuffle="toggleSelectedCollectionShuffle"',
-    );
+    // Header shuffle is the PlayerBar toggle: same state, guard and action.
+    expect(source).toContain(':shuffle-active="queueState.isShuffle"');
+    expect(source).toContain(':can-shuffle="queueState.tracks.length > 1"');
+    expect(source).toContain('@toggle-shuffle="toggleShuffle"');
     expect(source).toContain('@add-to-queue="enqueueSelectedCollection"');
-    expect(source).toContain('@menu-action="handlePlaylistMenuAction"');
+    expect(source).toContain('@menu-action="handleCollectionMenuAction"');
+    expect(source).toMatch(
+      /function handleCollectionMenuAction\(value\) \{[\s\S]*?else \{\s*handlePlaylistMenuAction\(value\);/u,
+    );
+    expect(source).toContain('@choose-photo="chooseSelectedArtistPhoto"');
   });
 });

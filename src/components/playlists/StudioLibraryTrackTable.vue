@@ -183,7 +183,7 @@ function sortLabel({ key, label }) {
           />
           <span class="studio-track-row__copy">
             <strong>{{ track.title }}</strong>
-            <small>{{ track.artist || '未知演出者' }}</small>
+            <small>{{ track.artist || '未知演唱者' }}</small>
           </span>
         </span>
         <span class="studio-track-row__source">

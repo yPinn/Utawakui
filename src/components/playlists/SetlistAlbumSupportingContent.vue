@@ -1,5 +1,6 @@
 <script setup>
 import { computed, useId } from 'vue';
+import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 
 const RELATED_ALBUM_COVER_SIZE = 96;
@@ -7,14 +8,18 @@ const RELATED_ALBUM_COVER_SIZE = 96;
 const props = defineProps({
   artist: { type: String, required: true },
   relatedAlbums: { type: Array, default: () => [] },
-  summary: { type: Object, required: true },
+  // Artist pages reuse the album grid under their own heading, without summary.
+  albumsTitle: { type: String, default: '' },
+  summary: { type: Object, default: null },
+  canOpenArtist: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['selectAlbum']);
+const emit = defineEmits(['selectAlbum', 'selectArtist']);
 const instanceId = useId();
 const relatedTitleId = `setlist-related-albums-${instanceId}`;
 const summaryTitleId = `setlist-artist-summary-${instanceId}`;
 const yearLabel = computed(() => {
+  if (!props.summary) return '';
   const { yearStart, yearEnd } = props.summary;
   if (!yearStart) return '';
   return yearEnd && yearEnd !== yearStart
@@ -34,7 +39,9 @@ function selectAlbum(album) {
       class="setlist-album-supporting__section"
       :aria-labelledby="relatedTitleId"
     >
-      <h2 :id="relatedTitleId">更多來自{{ artist }}的專輯</h2>
+      <h2 :id="relatedTitleId">
+        {{ albumsTitle || `更多來自${artist}的專輯` }}
+      </h2>
       <ul class="setlist-album-supporting__albums">
         <li v-for="album in relatedAlbums" :key="album.id">
           <button
@@ -59,10 +66,21 @@ function selectAlbum(album) {
     </section>
 
     <section
+      v-if="summary"
       class="setlist-album-supporting__section"
       :aria-labelledby="summaryTitleId"
     >
-      <h2 :id="summaryTitleId">演出者曲庫摘要</h2>
+      <div class="setlist-album-supporting__summary-heading">
+        <h2 :id="summaryTitleId">藝人曲庫摘要</h2>
+        <UiButton
+          v-if="canOpenArtist"
+          variant="secondary"
+          :aria-label="`查看藝人：${artist}`"
+          @click="emit('selectArtist')"
+        >
+          查看藝人
+        </UiButton>
+      </div>
       <p class="setlist-album-supporting__summary-copy">
         以下僅統計目前本機曲庫中標記為{{ artist }}的內容。
       </p>
@@ -108,6 +126,13 @@ function selectAlbum(album) {
   font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
+}
+
+.setlist-album-supporting__summary-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-3);
 }
 
 .setlist-album-supporting__albums {

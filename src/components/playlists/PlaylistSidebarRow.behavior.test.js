@@ -9,6 +9,8 @@ import {
   textContent,
   trigger,
 } from '../ui/uiTestHost.js';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
@@ -16,6 +18,8 @@ import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 
 for (const [component, filename] of [
   [PlaylistSidebarRow, './PlaylistSidebarRow.vue'],
+  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
+  [UiArtworkReveal, '../ui/UiArtworkReveal.vue'],
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
@@ -80,6 +84,53 @@ describe('PlaylistSidebarRow aligned collection interaction', () => {
     expect(thumb.props.style.width).toBe('40px');
     expect(thumb.props.style.height).toBe('40px');
     mounted.app.unmount();
+  });
+
+  it('renders artist rows with one round cover instead of a collage', () => {
+    const mounted = mount(PlaylistSidebarRow, {
+      playlist: { id: 'artist-0123456789abcdef', kind: 'artist', name: 'Eve' },
+      coverTracks: [
+        { id: 'a', title: 'A', thumbnailUrl: 'thumb-a' },
+        { id: 'b', title: 'B', thumbnailUrl: 'thumb-b' },
+      ],
+      subtitle: '藝人・2 首',
+    });
+    const thumb = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-collage-thumb'),
+    )[0];
+    const cells = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-collage-thumb__cell'),
+    );
+
+    expect(thumb.props.style['--ui-collage-thumb-radius']).toBe(
+      'var(--ui-radius-pill)',
+    );
+    expect(cells).toHaveLength(0);
+    mounted.app.unmount();
+  });
+
+  it('falls back to the person glyph instead of an album cover for artists', () => {
+    expect(source).toContain(':empty-icon="isArtist ? UserRound : null"');
+    const mounted = mount(PlaylistSidebarRow, {
+      playlist: { id: 'artist-0123456789abcdef', kind: 'artist', name: 'Eve' },
+      subtitle: '藝人',
+    });
+    const images = findAll(mounted.root, (node) => node.type === 'img');
+    const empty = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes(
+        'ui-collage-thumb__single-empty',
+      ),
+    );
+    expect(images).toHaveLength(0);
+    expect(empty).toHaveLength(1);
+    mounted.app.unmount();
+  });
+
+  it('keeps the compact current-source dot off artist rows', () => {
+    expect(source).toMatch(
+      /\.playlist-sidebar-row--current:not\(\.playlist-sidebar-row--artist\)\s+\.playlist-sidebar-row__thumb::after\s*\{/u,
+    );
+    expect(source).toContain("'playlist-sidebar-row--artist': isArtist");
   });
 
   it('renders a stable ellipsis label without delayed marquee measurement', () => {

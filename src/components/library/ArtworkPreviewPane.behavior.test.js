@@ -12,8 +12,12 @@ describe('ArtworkPreviewPane behavior contract', () => {
     expect(source).toContain('候選預覽');
     expect(source).toContain('尚未套用');
     expect(source).toContain('套用這張封面');
-    expect(source).toContain('class="artwork-preview__loading"');
-    expect(source).toContain('role="status"');
+    // Loading status comes from the shared UiArtworkLoading (role="status").
+    expect(source).toContain(
+      '<template v-if="candidate?.previewLoading" #overlay>',
+    );
+    expect(source).toContain('<UiArtworkLoading label="候選封面載入中" />');
+    expect(source).not.toMatch(/@keyframes|artwork-preview__loading/u);
     expect(source).not.toContain('UiSkeleton');
     expect(source).toContain("emit('apply')");
   });

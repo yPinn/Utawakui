@@ -37,9 +37,9 @@ describe('SetlistAlbumSupportingContent', () => {
 
     expect(html).toContain('更多來自王以太的專輯');
     expect(html).toContain('aria-label="開啟專輯：演說家"');
-    expect(html).toContain('演出者曲庫摘要');
+    expect(html).toContain('藝人曲庫摘要');
     expect(html.indexOf('更多來自王以太的專輯')).toBeLessThan(
-      html.indexOf('演出者曲庫摘要'),
+      html.indexOf('藝人曲庫摘要'),
     );
     expect(html).toContain('18 首曲目');
     expect(html).toContain('2 張專輯');
@@ -64,9 +64,53 @@ describe('SetlistAlbumSupportingContent', () => {
     );
 
     expect(html).not.toContain('更多來自王以太的專輯');
-    expect(html).toContain('演出者曲庫摘要');
+    expect(html).toContain('藝人曲庫摘要');
     expect(html).toContain('1 首曲目');
     expect(html).toContain('1 張專輯');
+  });
+
+  it('offers the artist page from the album summary only when asked', async () => {
+    const render = (canOpenArtist) =>
+      renderToString(
+        createSSRApp({
+          render: () =>
+            h(SetlistAlbumSupportingContent, {
+              artist: '王以太',
+              summary: { trackCount: 1, albumCount: 1 },
+              canOpenArtist,
+            }),
+        }),
+      );
+
+    expect(await render(true)).toContain('aria-label="查看藝人：王以太"');
+    expect(await render(false)).not.toContain('查看藝人');
+    expect(source).toContain("emit('selectArtist')");
+  });
+
+  it('reuses the album grid on artist pages under its own heading', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(SetlistAlbumSupportingContent, {
+            artist: 'YOASOBI',
+            albumsTitle: '專輯',
+            relatedAlbums: [
+              {
+                id: 'album-a',
+                name: 'THE BOOK',
+                coverUrl: '',
+                tracks: [],
+                releaseYear: 2021,
+              },
+            ],
+          }),
+      }),
+    );
+
+    expect(html).toContain('專輯');
+    expect(html).not.toContain('更多來自YOASOBI的專輯');
+    expect(html).not.toContain('藝人曲庫摘要');
+    expect(html).toContain('aria-label="開啟專輯：THE BOOK"');
   });
 
   it('uses one flat supporting region instead of card chrome', () => {

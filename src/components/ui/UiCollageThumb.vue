@@ -8,6 +8,7 @@
 import { computed } from 'vue';
 import { Music2 } from '../../icons/index.js';
 import { getTrackInitial } from '../../utils/trackDisplay.js';
+import UiArtworkOverlay from './UiArtworkOverlay.vue';
 
 const props = defineProps({
   coverUrl: { type: String, default: '' },
@@ -24,6 +25,8 @@ const props = defineProps({
   // False when the root shouldn't be aria-hidden — e.g. it wraps a real
   // interactive overlay control (same convention as UiTrackThumb.vue).
   decorative: { type: Boolean, default: true },
+  // Glyph for an empty single cover, e.g. a person for artists without a photo.
+  emptyIcon: { type: [Object, Function], default: null },
 });
 
 const displayTracks = computed(() =>
@@ -82,7 +85,11 @@ const singleIconSize = computed(() =>
         {{ getTrackInitial(singleTrack) }}
       </span>
       <span v-else class="ui-collage-thumb__single-empty">
-        <Music2 :size="singleIconSize" aria-hidden="true" />
+        <component
+          :is="emptyIcon || Music2"
+          :size="singleIconSize"
+          aria-hidden="true"
+        />
       </span>
     </template>
     <template v-else>
@@ -108,9 +115,9 @@ const singleIconSize = computed(() =>
         <Music2 :size="cellIconSize" aria-hidden="true" />
       </span>
     </template>
-    <span v-if="$slots.overlay" class="ui-collage-thumb__overlay">
+    <UiArtworkOverlay v-if="$slots.overlay">
       <slot name="overlay" />
-    </span>
+    </UiArtworkOverlay>
   </span>
 </template>
 
@@ -145,22 +152,6 @@ const singleIconSize = computed(() =>
     var(--ui-color-surface) 100%
   );
   box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
-}
-
-.ui-collage-thumb__overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.ui-collage-thumb__overlay :deep(*) {
-  pointer-events: auto;
 }
 
 .ui-collage-thumb__custom-image {

@@ -111,6 +111,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0019](adr/0019-signalsmith-stretch-pitch-transpose.md)                | Proposed／已實作                 | Pitch transpose 已改用 Signalsmith Stretch；程式與單元測試完成，仍待實際聽感驗收。                                                                |
 | [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                                  |
 | [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                               |
+| [0022](adr/0022-artist-identity-and-organization.md)                   | 已接受／未實作                   | Artist 與 album 同為唯讀參照、以演唱 credit 分組；第一階段為衍生 artist 頁與 MusicBrainz 顯示名稱，合併／tag／翻唱歸屬後續。                      |
 
 ## 常用文件
 
@@ -149,6 +150,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Governance：[legal compliance](governance/legal-compliance.md)。
 - Research：[競品調查（2026-09-25）](research/competitive-research.md)、
   [線上封面來源與跨語言 identity 評估（2026-09-27）](research/online-artwork-provider-evaluation-2026-09-27.md)、
+  [MusicBrainz artist 覆蓋率實測（2026-10-05）](research/musicbrainz-artist-coverage-2026-10-05.md)、
+  [演出者照片來源實測（2026-10-05）](research/artist-photo-sources-2026-10-05.md)、
   [BPM normalization study](research/music-analysis-bpm-normalization-2026-08-28.md)、
   [Visual System Discovery](research/visual-system-discovery-2026-08-25.md)、
   [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、
