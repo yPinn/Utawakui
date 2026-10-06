@@ -483,7 +483,7 @@ routing 尚未由 App 擁有，完整決策見 [ADR 0021](adr/0021-bgm-standby-a
 試聽持有 lane 時不做任何自動 BGM 恢復。`useBgmSession` 的 `acquirePreviewLane()` 先以
 `usePlayer.cancelPendingStart()` 丟棄待開始的演唱並 pause，再交給 coordinator；record／live 期間
 直接拒絕且不碰演唱播放器。試聽 owner 是 `useTrackPreview.js`（自有 audio element，播放原始音訊、
-只監聽），`TrackPreviewOverlay.vue` 只投影狀態並以 `track-preview` surface 提供自己的 overlay host，
+只監聽；選段時唯讀既有的 music-structure sidecar 與偏好歌詞來源，皆為可缺的輔助訊號），`TrackPreviewOverlay.vue` 只投影狀態並以 `track-preview` surface 提供自己的 overlay host，
 入口在 CollectionActionRail，由 `SetlistView.vue` 接線，見 [曲目試聽契約](contracts/track-preview.md)。
 
 節拍器由 `useMetronome.js` 擁有 session state，並以獨立 AudioContext 與 lookahead

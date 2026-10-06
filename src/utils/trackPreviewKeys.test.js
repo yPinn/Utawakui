@@ -10,10 +10,9 @@ function key(name, extra = {}) {
 }
 
 describe('resolvePreviewKeyIntent', () => {
-  it('maps navigation, playback and mute keys', () => {
+  it('maps navigation and mute keys', () => {
     expect(key('ArrowDown')).toEqual({ intent: 'next', isolate: true });
     expect(key('ArrowUp')).toEqual({ intent: 'previous', isolate: true });
-    expect(key(' ')).toEqual({ intent: 'toggle', isolate: true });
     expect(key('m').intent).toBe('mute');
     expect(key('M').intent).toBe('mute');
   });
@@ -23,7 +22,8 @@ describe('resolvePreviewKeyIntent', () => {
     expect(key('Tab')).toEqual({ intent: null, isolate: false });
   });
 
-  it('leaves Space to a focused button', () => {
+  it('has no play／pause key but keeps Space from the performance player', () => {
+    expect(key(' ')).toEqual({ intent: null, isolate: true });
     expect(key(' ', { target: onButton })).toEqual({
       intent: null,
       isolate: true,

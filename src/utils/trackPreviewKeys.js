@@ -9,11 +9,11 @@ export function resolvePreviewKeyIntent(event) {
     return { intent: null, isolate: true };
   }
 
-  const onControl = Boolean(event.target?.closest?.('button'));
+  // A preview has no play／pause: Space only stays away from the
+  // performance player's global shortcut.
   const intents = {
     ArrowDown: 'next',
     ArrowUp: 'previous',
-    ' ': onControl ? null : 'toggle',
     m: 'mute',
     M: 'mute',
   };
