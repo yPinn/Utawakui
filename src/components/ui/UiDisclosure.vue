@@ -95,7 +95,7 @@ function handleToggle(event) {
   user-select: text;
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-disclosure__indicator {
+:global(:root[data-ui-motion='reduced'] .ui-disclosure__indicator) {
   transition: none;
 }
 

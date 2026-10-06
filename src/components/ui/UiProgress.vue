@@ -127,9 +127,11 @@ defineProps({
   }
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-progress__track:indeterminate,
-:global(:root[data-ui-motion='reduced'])
-  .ui-progress__track:indeterminate::-webkit-progress-bar {
+:global(:root[data-ui-motion='reduced'] .ui-progress__track:indeterminate),
+:global(
+  :root[data-ui-motion='reduced']
+    .ui-progress__track:indeterminate::-webkit-progress-bar
+) {
   animation: none;
   background-position: 50% 0;
 }

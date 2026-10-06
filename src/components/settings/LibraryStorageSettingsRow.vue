@@ -268,7 +268,7 @@ function updatePolicy(fields) {
   }
 }
 
-:global(:root[data-ui-motion='reduced']) .library-storage__indicator {
+:global(:root[data-ui-motion='reduced'] .library-storage__indicator) {
   transition: none;
 }
 

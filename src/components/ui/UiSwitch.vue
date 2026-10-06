@@ -146,8 +146,8 @@ defineExpose({ focus });
   cursor: not-allowed;
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-switch__thumb,
-:global(:root[data-ui-motion='reduced']) .ui-switch__track {
+:global(:root[data-ui-motion='reduced'] .ui-switch__thumb),
+:global(:root[data-ui-motion='reduced'] .ui-switch__track) {
   transition: none;
 }
 

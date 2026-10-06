@@ -731,7 +731,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     visibility 0s linear 0s;
 }
 
-:global(:root[data-ui-motion='reduced']) .shell__dock-surface {
+:global(:root[data-ui-motion='reduced'] .shell__dock-surface) {
   transition: none;
 }
 

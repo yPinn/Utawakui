@@ -528,9 +528,11 @@ function stateProps(state, variant) {
   background: var(--ui-color-overlay-scrim-active);
 }
 
-:global(.demo-icon-button-layer--current)
-  .demo-icon-button-state[data-icon-button-state='pressed']
-  :deep(.ui-icon-btn--accent) {
+:global(
+  .demo-icon-button-layer--current
+    .demo-icon-button-state[data-icon-button-state='pressed']
+    .ui-icon-btn--accent
+) {
   background: var(--ui-color-accent-hover);
 }
 

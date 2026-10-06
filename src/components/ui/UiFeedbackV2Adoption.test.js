@@ -16,8 +16,9 @@ describe('shared feedback Token v2 adoption', () => {
     expect(progressSource).not.toContain('accent-color:');
     expect(progressSource).toContain('v-if="valueText && !indeterminate"');
     expect(progressSource).toContain('@keyframes ui-progress-indeterminate');
+    // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
     expect(progressSource).toContain(
-      ":global(:root[data-ui-motion='reduced'])",
+      ":global(:root[data-ui-motion='reduced'] .ui-progress__track:indeterminate)",
     );
     expect(progressSource).toContain('@media (prefers-reduced-motion: reduce)');
     expect(progressSource).not.toContain('aria-busy');

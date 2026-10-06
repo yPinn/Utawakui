@@ -208,7 +208,7 @@ function select(item) {
   overflow-wrap: anywhere;
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-radio-group__indicator::after {
+:global(:root[data-ui-motion='reduced'] .ui-radio-group__indicator::after) {
   transition: none;
 }
 

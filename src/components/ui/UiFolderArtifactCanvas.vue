@@ -471,7 +471,7 @@ defineExpose({ reset });
   outline-offset: var(--ui-focus-offset);
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-folder-artifact-canvas__item {
+:global(:root[data-ui-motion='reduced'] .ui-folder-artifact-canvas__item) {
   transition: none;
 }
 

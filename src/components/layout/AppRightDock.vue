@@ -223,8 +223,8 @@ function handleResizeKeydown(event) {
   background: var(--ui-color-focus);
 }
 
-:global(:root[data-ui-motion='reduced']) .app-right-dock__content,
-:global(:root[data-ui-motion='reduced']) .app-right-dock__handle::after {
+:global(:root[data-ui-motion='reduced'] .app-right-dock__content),
+:global(:root[data-ui-motion='reduced'] .app-right-dock__handle::after) {
   transition: none;
 }
 

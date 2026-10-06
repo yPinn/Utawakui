@@ -254,7 +254,7 @@ onBeforeUnmount(() => {
   );
 }
 
-:global(:root[data-ui-motion='reduced']) .demo-candidate-notification-host {
+:global(:root[data-ui-motion='reduced'] .demo-candidate-notification-host) {
   transition: none;
 }
 

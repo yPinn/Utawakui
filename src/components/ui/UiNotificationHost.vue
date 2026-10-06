@@ -406,7 +406,7 @@ onBeforeUnmount(() => {
   opacity: 0;
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-notification-host__item {
+:global(:root[data-ui-motion='reduced'] .ui-notification-host__item) {
   --ui-notification-motion-y: 0;
 
   opacity: 1;

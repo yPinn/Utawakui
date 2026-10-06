@@ -169,8 +169,9 @@ describe('DemoMarqueeTextAppearance', () => {
   });
 
   it('stops motion for both reduced-motion signals', () => {
+    // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
     expect(candidateSource).toContain(
-      ":global(:root[data-ui-motion='reduced'])",
+      ":global(:root[data-ui-motion='reduced'] .demo-candidate-marquee--overflow)",
     );
     expect(candidateSource).toContain(
       '@media (prefers-reduced-motion: reduce)',

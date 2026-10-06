@@ -150,8 +150,9 @@ describe('DemoProgressAppearance', () => {
     expect(candidateSource).toMatch(
       /\.demo-candidate-progress__track:indeterminate\s*\{[\s\S]*animation:/u,
     );
-    expect(candidateSource).toContain(
-      ":global(:root[data-ui-motion='reduced'])",
+    // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
+    expect(candidateSource).toMatch(
+      /:global\(\s*:root\[data-ui-motion='reduced'\]\s+\.demo-candidate-progress__track:indeterminate\s*\)/u,
     );
     expect(candidateSource).toContain(
       '@media (prefers-reduced-motion: reduce)',

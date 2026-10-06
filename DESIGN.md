@@ -563,6 +563,8 @@ Add new global CSS files only when the purpose is real and shared. Likely future
 
 Component-specific styling stays inside Vue SFC `<style scoped>` blocks unless it becomes a reusable primitive or global rule.
 
+Inside a scoped block, write a selector that depends on root or ancestor state entirely inside `:global()`, for example `:global(:root[data-ui-motion='reduced'] .x)`. Vue compiles `:global(x) .y` to just `x`, so the rule silently lands on `x` (often the document root) instead of `.y`; `src/scopedGlobalSelectors.test.js` rejects that form. Transitions timed with `--ui-motion-duration-fast`／`standard`／`slow` need no reduced-motion rule at all, because `tokens.css` zeroes those durations for both the manual and the OS preference.
+
 The document root remains the authority for theme／density／motion／language metadata and literal platform `color-scheme`, but it is not a visual-system root. Main and Performer register their full-viewport `#app` surface before Vue mount; nested recipes resolve from the nearest registered v2 boundary and Teleport content resolves through that surface's overlay host. The completed transition record and stable boundary contract live in [Token v2 完整替換契約](docs/contracts/token-v2-replacement.md).
 
 A component whose CSS outgrows its SFC may split it into sibling files imported with `<style scoped src="./Name.part.css">`, as `ObsTemplateMockup.vue` does. Keep the files beside the SFC (relative `url()` paths stay valid) and follow these rules:

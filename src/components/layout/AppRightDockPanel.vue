@@ -113,7 +113,7 @@ defineExpose({ scrollTo });
   gap: var(--ui-right-dock-section-gap);
 }
 
-:global(:root[data-ui-motion='reduced']) .app-right-dock-panel__chrome {
+:global(:root[data-ui-motion='reduced'] .app-right-dock-panel__chrome) {
   transition: none;
 }
 

@@ -325,14 +325,16 @@ watch(displayText, async () => {
   }
 }
 
-:global(:root[data-ui-motion='reduced']) .demo-candidate-marquee--overflow {
+:global(:root[data-ui-motion='reduced'] .demo-candidate-marquee--overflow) {
   -webkit-mask-image: none;
   mask-image: none;
 }
 
-:global(:root[data-ui-motion='reduced'])
-  .demo-candidate-marquee--overflow
-  .demo-candidate-marquee__text {
+:global(
+  :root[data-ui-motion='reduced']
+    .demo-candidate-marquee--overflow
+    .demo-candidate-marquee__text
+) {
   max-inline-size: 100%;
   padding-inline-end: 0;
   animation: none !important;

@@ -91,7 +91,7 @@ const props = defineProps({
   }
 }
 
-:global(:root[data-ui-motion='reduced']) .ui-skeleton__shape {
+:global(:root[data-ui-motion='reduced'] .ui-skeleton__shape) {
   animation: none;
 }
 
