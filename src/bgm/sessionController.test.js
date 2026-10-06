@@ -82,6 +82,8 @@ function createHarness() {
   let endedListener;
   let stoppedListener;
   const player = {
+    cancelPendingStart: vi.fn(),
+    pause: vi.fn(),
     registerBeforePlaybackStart: vi.fn((listener) => {
       preStartHook = listener;
       return vi.fn();
@@ -133,6 +135,7 @@ function createHarness() {
     }),
     requestBgmPlay: vi.fn(async () => true),
     requestBgmPause: vi.fn(async () => true),
+    acquirePreview: vi.fn(async () => ({ release: vi.fn() })),
     replaceBgmSource: vi.fn(async (replaceSource) => {
       replaceSource();
       return true;
@@ -373,5 +376,35 @@ describe('BGM session controller', () => {
       'utawakui-media://track/bgm-track/audio.wav',
       expect.any(Object),
     );
+  });
+
+  it('drops a gated start and pauses the performance before acquiring a preview', async () => {
+    const { controller, coordinator, player } = createHarness();
+    const order = [];
+    player.cancelPendingStart.mockImplementation(() => order.push('cancel'));
+    player.pause.mockImplementation(() => order.push('pause'));
+    coordinator.acquirePreview.mockImplementation(async () => {
+      order.push('acquire');
+      return { release: vi.fn() };
+    });
+    const onPreempt = vi.fn();
+
+    await expect(
+      controller.acquirePreviewLane({ onPreempt }),
+    ).resolves.not.toBeNull();
+
+    expect(order).toEqual(['cancel', 'pause', 'acquire']);
+    expect(coordinator.acquirePreview).toHaveBeenCalledWith({ onPreempt });
+  });
+
+  it('leaves a recording or live performance untouched when preview is blocked', async () => {
+    const { controller, coordinator, handoffState, player } = createHarness();
+    handoffState.sessionMode = 'live';
+
+    await expect(controller.acquirePreviewLane()).resolves.toBeNull();
+
+    expect(player.cancelPendingStart).not.toHaveBeenCalled();
+    expect(player.pause).not.toHaveBeenCalled();
+    expect(coordinator.acquirePreview).not.toHaveBeenCalled();
   });
 });

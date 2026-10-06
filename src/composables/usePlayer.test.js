@@ -246,6 +246,7 @@ describe('guide vocal defaults', () => {
     expect(Object.keys(player).sort()).toEqual(
       [
         'applyCaptureDevice',
+        'cancelPendingStart',
         'clearTrack',
         'cyclePlaybackMode',
         'onEnded',
@@ -740,6 +741,27 @@ describe('mix and transport controls', () => {
     expect(MockAudio.latest.play).toHaveBeenCalledOnce();
   });
 
+  it('silently drops a gated start when the pending start is cancelled', async () => {
+    const player = await loadPlayer();
+    const gate = createDeferred();
+    const stopped = vi.fn();
+    player.onStopped(stopped);
+    player.registerBeforePlaybackStart(() => gate.promise);
+
+    const request = player.playTrack({
+      id: 'track-cancelled',
+      title: 'Cancelled',
+      url: 'utawakui-media://track/track-cancelled/audio.wav',
+    });
+    player.cancelPendingStart();
+    gate.resolve(true);
+
+    await expect(request).resolves.toBe(false);
+    expect(player.state.track).toBeNull();
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    expect(stopped).not.toHaveBeenCalled();
+  });
+
   it('stops the current performance before waiting on a new track handoff', async () => {
     const player = await loadPlayer();
     const gate = createDeferred();
@@ -887,6 +909,45 @@ describe('library synchronization', () => {
     expect(player.state.captureGuideVocalOn).toBe(true);
     expect(player.state.captureGuideVocalValue).toBe(0.3);
     expect(MockAudio.latest.play).toHaveBeenCalledOnce();
+  });
+
+  it('does not resume a reloaded URL after the pending start is cancelled', async () => {
+    let libraryUpdated;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        listTracks: vi.fn().mockResolvedValue([
+          {
+            id: 'track-sync',
+            title: 'Updated title',
+            url: 'utawakui-media://track/track-sync/audio-v2.wav',
+          },
+        ]),
+        onLibraryUpdated: vi.fn((listener) => {
+          libraryUpdated = listener;
+          return vi.fn();
+        }),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({
+      id: 'track-sync',
+      title: 'Original title',
+      url: 'utawakui-media://track/track-sync/audio.wav',
+    });
+    MockAudio.latest.dispatch('playing');
+    MockAudio.latest.play.mockClear();
+    const resumeGate = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('', resumeGate);
+
+    const reload = libraryUpdated();
+    await vi.waitFor(() =>
+      expect(MockAudio.latest.src).toContain('/audio-v2.wav'),
+    );
+    player.cancelPendingStart();
+    resumeGate.resolve();
+    await reload;
+
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
   });
 
   it('publishes a terminal stop when an active library reload cannot resume', async () => {

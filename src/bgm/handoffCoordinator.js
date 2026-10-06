@@ -38,6 +38,8 @@ export function createBgmHandoffCoordinator({
   let performanceHandoffPending = false;
   let activePerformanceStop = null;
   let deferredSourceReplacement = null;
+  let previewLease = null;
+  let previewAcquisition = null;
   let disposed = false;
 
   function isCurrent(candidate) {
@@ -108,6 +110,68 @@ export function createBgmHandoffCoordinator({
     return false;
   }
 
+  // Track preview is the lowest-priority audible lane: any performance or BGM
+  // start intent ends it first, and no automatic BGM restore may override it.
+  function preemptPreview() {
+    const lease = previewLease;
+    if (!lease) return false;
+    previewLease = null;
+    if (state.audibleLane === 'preview') state.audibleLane = null;
+    lease.onPreempt?.();
+    return true;
+  }
+
+  function releasePreview(lease) {
+    if (previewLease !== lease) return false;
+    previewLease = null;
+    if (state.audibleLane === 'preview') state.audibleLane = null;
+    return true;
+  }
+
+  // The caller has already dropped the player's pending start and paused it;
+  // the asynchronous pause event must not clear the granted preview lane.
+  async function acquirePreview({ onPreempt } = {}) {
+    if (disposed || state.sessionMode !== 'inactive') return null;
+    preemptPreview();
+
+    const candidate = nextGeneration();
+    activePerformanceStop?.resolve(false);
+    activePerformanceStop = null;
+    performanceHandoffPending = false;
+    if (performanceActive) {
+      performanceActive = false;
+      performancePaused = true;
+    }
+    state.error = null;
+
+    const bgmAudible =
+      state.bgmRequested ||
+      state.audibleLane === 'bgm' ||
+      state.phase === 'bgm-playing' ||
+      state.phase === 'stopping-bgm';
+    previewAcquisition = candidate;
+    try {
+      if (bgmAudible) {
+        state.bgmRequested = false;
+        state.restorePending = false;
+        state.phase = 'stopping-bgm';
+        await deck.fadeOutAndPause(snapshotSettings().fadeOutSeconds);
+        if (!isCurrent(candidate)) return null;
+      }
+      await flushDeferredSourceReplacement();
+      if (!isCurrent(candidate)) return null;
+    } finally {
+      if (previewAcquisition === candidate) previewAcquisition = null;
+    }
+
+    if (performancePaused) state.phase = 'track-paused';
+    else if (state.phase !== 'idle') state.phase = 'manual-hold';
+    state.audibleLane = 'preview';
+    const lease = { onPreempt };
+    previewLease = lease;
+    return { release: () => releasePreview(lease) };
+  }
+
   async function startRequestedBgm(candidate, settings) {
     if (
       !isCurrent(candidate) ||
@@ -138,7 +202,10 @@ export function createBgmHandoffCoordinator({
     const previousMode = state.sessionMode;
     state.sessionMode = nextMode;
 
-    if (nextMode !== 'inactive') return true;
+    if (nextMode !== 'inactive') {
+      preemptPreview();
+      return true;
+    }
     if (!ACTIVE_SESSION_MODES.has(previousMode)) return true;
 
     const candidate = nextGeneration();
@@ -166,6 +233,7 @@ export function createBgmHandoffCoordinator({
 
   async function requestBgmPlay() {
     state.error = null;
+    preemptPreview();
 
     if (
       performanceActive ||
@@ -180,6 +248,11 @@ export function createBgmHandoffCoordinator({
     const candidate = nextGeneration();
     state.bgmRequested = true;
     state.restorePending = false;
+    // A source change deferred by a cancelled preview acquisition lands first.
+    if (deferredSourceReplacement) {
+      await flushDeferredSourceReplacement();
+      if (!isCurrent(candidate)) return false;
+    }
     if (!deck.hasSource()) {
       state.bgmRequested = false;
       state.phase = 'error';
@@ -203,6 +276,11 @@ export function createBgmHandoffCoordinator({
       return true;
     }
 
+    if (previewLease || previewAcquisition) {
+      if (immediate) deck.cut();
+      return true;
+    }
+
     const candidate = nextGeneration();
     state.phase = 'stopping-bgm';
 
@@ -216,6 +294,7 @@ export function createBgmHandoffCoordinator({
   }
 
   async function beforePerformanceStart() {
+    preemptPreview();
     const needsHandoff =
       !performanceActive &&
       (state.bgmRequested ||
@@ -263,7 +342,10 @@ export function createBgmHandoffCoordinator({
   }
 
   async function replaceBgmSource(replaceSource) {
-    if (performanceHandoffPending && state.phase === 'stopping-bgm') {
+    if (
+      previewAcquisition ||
+      (performanceHandoffPending && state.phase === 'stopping-bgm')
+    ) {
       return deferSourceReplacement(replaceSource);
     }
 
@@ -295,6 +377,7 @@ export function createBgmHandoffCoordinator({
   }
 
   function notifyPerformancePlaying() {
+    preemptPreview();
     performanceHandoffPending = false;
     activePerformanceStop = null;
     performanceActive = true;
@@ -336,6 +419,7 @@ export function createBgmHandoffCoordinator({
     activePerformanceStop = null;
     performanceActive = false;
     performancePaused = false;
+    if (previewLease || previewAcquisition) return false;
 
     if (
       !wasPerformanceActive &&
@@ -390,6 +474,7 @@ export function createBgmHandoffCoordinator({
   function dispose() {
     disposed = true;
     nextGeneration();
+    preemptPreview();
     performancePaused = false;
     performanceHandoffPending = false;
     activePerformanceStop?.resolve(false);
@@ -405,6 +490,7 @@ export function createBgmHandoffCoordinator({
     updateSessionMode,
     requestBgmPlay,
     requestBgmPause,
+    acquirePreview,
     replaceBgmSource,
     beforePerformanceStart,
     notifyPerformancePlaying,

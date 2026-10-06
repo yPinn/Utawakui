@@ -597,3 +597,207 @@ describe('BGM handoff coordinator', () => {
     );
   });
 });
+
+describe('track preview lane', () => {
+  it('fades audible BGM out and never restores it after release', async () => {
+    const { coordinator, deck } = createHarness();
+    await coordinator.requestBgmPlay();
+    deck.startSilent.mockClear();
+
+    const lease = await coordinator.acquirePreview();
+
+    expect(deck.fadeOutAndPause).toHaveBeenCalledWith(1);
+    expect(coordinator.state).toEqual(
+      expect.objectContaining({
+        audibleLane: 'preview',
+        phase: 'manual-hold',
+        bgmRequested: false,
+        restorePending: false,
+      }),
+    );
+
+    expect(lease.release()).toBe(true);
+    expect(lease.release()).toBe(false);
+    expect(coordinator.state.audibleLane).toBeNull();
+    expect(deck.startSilent).not.toHaveBeenCalled();
+  });
+
+  it('is blocked while a recording or live session is active', async () => {
+    const { coordinator, deck } = createHarness();
+    await coordinator.updateSessionMode('record');
+
+    await expect(coordinator.acquirePreview()).resolves.toBeNull();
+    expect(deck.fadeOutAndPause).not.toHaveBeenCalled();
+    expect(coordinator.state.audibleLane).toBeNull();
+  });
+
+  it('is preempted when a session becomes active', async () => {
+    const { coordinator } = createHarness();
+    const onPreempt = vi.fn();
+    await coordinator.acquirePreview({ onPreempt });
+
+    await coordinator.updateSessionMode('live');
+
+    expect(onPreempt).toHaveBeenCalledOnce();
+    expect(coordinator.state.audibleLane).toBeNull();
+  });
+
+  it('cancels a pending post-roll restore', async () => {
+    const postRoll = createDeferred();
+    const { coordinator, deck } = createHarness({
+      wait: vi.fn(() => postRoll.promise),
+      settings: { preRollSeconds: 0 },
+    });
+    await coordinator.requestBgmPlay();
+    await coordinator.beforePerformanceStart();
+    coordinator.notifyPerformancePlaying();
+    deck.startSilent.mockClear();
+
+    const restore = coordinator.notifyPerformanceEnded();
+    expect(coordinator.state.phase).toBe('postroll-silence');
+    await coordinator.acquirePreview();
+    postRoll.resolve();
+
+    await expect(restore).resolves.toBe(false);
+    expect(deck.startSilent).not.toHaveBeenCalled();
+    expect(coordinator.state.audibleLane).toBe('preview');
+  });
+
+  async function acquireDuringPreRoll() {
+    const preRoll = createDeferred();
+    const harness = createHarness({ wait: vi.fn(() => preRoll.promise) });
+    const { coordinator } = harness;
+    await coordinator.requestBgmPlay();
+    const start = coordinator.beforePerformanceStart();
+    await vi.waitFor(() =>
+      expect(coordinator.state.phase).toBe('track-preroll'),
+    );
+
+    const lease = await coordinator.acquirePreview();
+    preRoll.resolve();
+    await expect(start).resolves.toBe(false);
+    expect(coordinator.state.audibleLane).toBe('preview');
+    harness.deck.startSilent.mockClear();
+    return { ...harness, lease };
+  }
+
+  it('cancels a performance pre-roll without leaving the handoff pending', async () => {
+    const { coordinator, deck, lease } = await acquireDuringPreRoll();
+
+    lease.release();
+    await expect(coordinator.requestBgmPlay()).resolves.toBe(true);
+
+    expect(deck.startSilent).toHaveBeenCalledOnce();
+    expect(coordinator.state.audibleLane).toBe('bgm');
+  });
+
+  it('ignores a terminal stop from the cancelled start', async () => {
+    const { coordinator, deck } = await acquireDuringPreRoll();
+
+    await expect(coordinator.notifyPerformanceEnded()).resolves.toBe(false);
+
+    expect(deck.startSilent).not.toHaveBeenCalled();
+    expect(coordinator.state).toEqual(
+      expect.objectContaining({
+        audibleLane: 'preview',
+        bgmRequested: false,
+        restorePending: true,
+      }),
+    );
+  });
+
+  it('keeps the lane when the late performance pause event arrives', async () => {
+    const { coordinator } = createHarness();
+    await coordinator.beforePerformanceStart();
+    coordinator.notifyPerformancePlaying();
+
+    await coordinator.acquirePreview();
+    coordinator.notifyPerformanceInterrupted('pause');
+
+    expect(coordinator.state.audibleLane).toBe('preview');
+    expect(coordinator.state.phase).toBe('track-paused');
+  });
+
+  it('is preempted by a performance start before the BGM handoff', async () => {
+    const { coordinator, deck } = createHarness();
+    const onPreempt = vi.fn();
+    await coordinator.acquirePreview({ onPreempt });
+
+    await expect(coordinator.beforePerformanceStart()).resolves.toBe(true);
+    expect(onPreempt).toHaveBeenCalledOnce();
+    expect(deck.fadeOutAndPause).not.toHaveBeenCalled();
+
+    coordinator.notifyPerformancePlaying();
+    expect(coordinator.state.audibleLane).toBe('performance');
+  });
+
+  it('is preempted by an explicit BGM play', async () => {
+    const { coordinator, deck } = createHarness();
+    const onPreempt = vi.fn();
+    await coordinator.acquirePreview({ onPreempt });
+
+    await expect(coordinator.requestBgmPlay()).resolves.toBe(true);
+
+    expect(onPreempt).toHaveBeenCalledOnce();
+    expect(deck.startSilent).toHaveBeenCalledOnce();
+    expect(coordinator.state.audibleLane).toBe('bgm');
+  });
+
+  it('keeps the lane through a BGM pause request', async () => {
+    const { coordinator, deck } = createHarness();
+    await coordinator.acquirePreview();
+
+    await expect(
+      coordinator.requestBgmPause({ immediate: true }),
+    ).resolves.toBe(true);
+
+    expect(deck.cut).toHaveBeenCalledOnce();
+    expect(coordinator.state.audibleLane).toBe('preview');
+  });
+
+  it('defers a BGM source change until the acquisition fade completes', async () => {
+    const fade = createDeferred();
+    const { coordinator } = createHarness({
+      deck: { fadeOutAndPause: vi.fn(() => fade.promise) },
+    });
+    await coordinator.requestBgmPlay();
+    const replaceSource = vi.fn();
+
+    const acquisition = coordinator.acquirePreview();
+    const replacement = coordinator.replaceBgmSource(replaceSource);
+    expect(replaceSource).not.toHaveBeenCalled();
+
+    fade.resolve(true);
+    await expect(acquisition).resolves.not.toBeNull();
+    await expect(replacement).resolves.toBe(true);
+    expect(replaceSource).toHaveBeenCalledOnce();
+    expect(coordinator.state.audibleLane).toBe('preview');
+  });
+
+  it('drops an acquisition that a newer start intent overtakes', async () => {
+    const fade = createDeferred();
+    const { coordinator } = createHarness({
+      deck: { fadeOutAndPause: vi.fn(() => fade.promise) },
+    });
+    await coordinator.requestBgmPlay();
+
+    const acquisition = coordinator.acquirePreview();
+    const start = coordinator.beforePerformanceStart();
+    fade.resolve(true);
+
+    await expect(acquisition).resolves.toBeNull();
+    await expect(start).resolves.toBe(true);
+    expect(coordinator.state.audibleLane).not.toBe('preview');
+  });
+
+  it('preempts the preview on dispose', async () => {
+    const { coordinator } = createHarness();
+    const onPreempt = vi.fn();
+    await coordinator.acquirePreview({ onPreempt });
+
+    coordinator.dispose();
+
+    expect(onPreempt).toHaveBeenCalledOnce();
+    expect(coordinator.state.audibleLane).toBeNull();
+  });
+});

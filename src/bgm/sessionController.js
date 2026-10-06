@@ -192,6 +192,15 @@ export function createBgmSessionController({
     return result;
   }
 
+  // A blocked preview must leave a live performance untouched; otherwise drop
+  // any gated start and pause the performance before BGM is silenced.
+  async function acquirePreviewLane(options) {
+    if (coordinator.state.sessionMode !== 'inactive') return null;
+    player.cancelPendingStart();
+    player.pause();
+    return coordinator.acquirePreview(options);
+  }
+
   function setDimmed(isDimmed) {
     deck.setDimmed(isDimmed);
   }
@@ -229,6 +238,7 @@ export function createBgmSessionController({
     playBgm,
     pauseBgm,
     emergencyCut,
+    acquirePreviewLane,
     seekBgm,
     commitBgmPosition,
     setDimmed,

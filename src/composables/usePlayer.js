@@ -387,6 +387,11 @@ function pause() {
   audio.pause();
 }
 
+// Drops a start still awaiting the gate or graph resume, with no terminal stop.
+function cancelPendingStart() {
+  playbackStartRequestRevision += 1;
+}
+
 function toggle() {
   if (state.isPlaying) return pause();
   return play();
@@ -450,8 +455,10 @@ async function syncCurrentTrack(options) {
   restoreCaptureGuideVocalState(captureGuideOn, captureGuideValue);
   seek(resumeTime);
   if (wasPlaying) {
+    const requestRevision = playbackStartRequestRevision;
     try {
       await audioGraph.resume();
+      if (requestRevision !== playbackStartRequestRevision) return;
       await audio.play();
     } catch (error) {
       state.error = reportPlayerError(
@@ -491,25 +498,17 @@ function toggleRepeat() {
   cyclePlaybackMode();
 }
 
-function onEnded(listener) {
-  endedListeners.add(listener);
-  return () => endedListeners.delete(listener);
+function subscribe(listeners, listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
-function onPlaying(listener) {
-  playingListeners.add(listener);
-  return () => playingListeners.delete(listener);
-}
-
-function onPaused(listener) {
-  pausedListeners.add(listener);
-  return () => pausedListeners.delete(listener);
-}
-
-function onStopped(listener) {
-  stoppedListeners.add(listener);
-  return () => stoppedListeners.delete(listener);
-}
+const onEnded = (listener) => subscribe(endedListeners, listener);
+const onPlaying = (listener) => subscribe(playingListeners, listener);
+const onPaused = (listener) => subscribe(pausedListeners, listener);
+const onStopped = (listener) => subscribe(stoppedListeners, listener);
+const onPlaybackProgress = (listener) =>
+  subscribe(playbackProgressListeners, listener);
 
 function registerBeforePlaybackStart(listener) {
   beforePlaybackStartListener = listener;
@@ -518,11 +517,6 @@ function registerBeforePlaybackStart(listener) {
       beforePlaybackStartListener = null;
     }
   };
-}
-
-function onPlaybackProgress(listener) {
-  playbackProgressListeners.add(listener);
-  return () => playbackProgressListeners.delete(listener);
 }
 
 export function cleanupPlayerResources() {
@@ -562,6 +556,7 @@ export function usePlayer() {
     restorePlaybackState,
     play,
     pause,
+    cancelPendingStart,
     toggle,
     seek,
     restartTrack,
