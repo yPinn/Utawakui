@@ -11,7 +11,7 @@ appId: com.utawakui.app
 productName: Utawakui
 # Keep packaging deterministic even if a developer checkout has an older
 # Electron distribution locked by a running dev session.
-electronVersion: 43.7.7
+electronVersion: 43.7.8
 # Must equal APP_NAME / app.setName() in electron/main.js — this is the
 # folder name under app.getPath('userData'). A mismatch here silently moves
 # config.json and the downloaded .onnx models out from under an existing

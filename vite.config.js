@@ -54,7 +54,7 @@ module.exports = defineConfig({
       'shared/**/*.test.js',
       'src/**/*.test.js',
     ],
-    exclude: ['coverage/**', 'dist/**', 'node_modules/**'],
+    exclude: ['coverage/**', 'dist/**', '**/node_modules/**'],
     coverage: {
       // v8 (the default) double-counts electron/lib CJS files that are both
       // `import`-ed by their own test file and `require()`-d by another

@@ -32,9 +32,9 @@ describe('release dependency security contract', () => {
   });
 
   it('overrides markdownlint-cli2 to a patched smol-toml release', () => {
-    expect(packageJson.overrides?.['smol-toml']).toBe('1.8.0');
+    expect(packageJson.overrides?.['smol-toml']).toBe('1.9.0');
     expect(packageLock.packages['node_modules/smol-toml'].version).toBe(
-      '1.8.0',
+      '1.9.0',
     );
   });
 });

@@ -58,8 +58,8 @@ describe('feedback production deployment contract', () => {
   });
 
   it('uses one reproducible Wrangler v4 version in metadata and runbook', () => {
-    expect(relayPackage.devDependencies.wrangler).toBe('4.131.2');
-    expect(relayReadme).toContain('wrangler@4.131.2');
+    expect(relayPackage.devDependencies.wrangler).toBe('4.148.0');
+    expect(relayReadme).toContain('wrangler@4.148.0');
     expect(relayReadme).not.toContain('wrangler@3.90.0');
   });
 
@@ -69,7 +69,7 @@ describe('feedback production deployment contract', () => {
 
     const lock = JSON.parse(readFileSync(lockUrl, 'utf8'));
     expect(lock.lockfileVersion).toBe(3);
-    expect(lock.packages[''].devDependencies.wrangler).toBe('4.131.2');
-    expect(lock.packages['node_modules/wrangler'].version).toBe('4.131.2');
+    expect(lock.packages[''].devDependencies.wrangler).toBe('4.148.0');
+    expect(lock.packages['node_modules/wrangler'].version).toBe('4.148.0');
   });
 });

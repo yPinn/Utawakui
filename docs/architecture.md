@@ -709,7 +709,7 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 ## Packaging Boundary
 
 - `dist/` 是 Vite renderer output；`overlay/` 不進入 Vite bundle。
-- 封裝固定使用 Electron 43.7.7，並關閉 Node options environment 與 Node CLI inspect
+- 封裝固定使用 Electron 43.7.8，並關閉 Node options environment 與 Node CLI inspect
   fuses、開啟 embedded ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給
   ADR 0005 的 yt-dlp EJS runtime；`GrantFileProtocolExtraPrivileges` 暫時保留給主
   renderer 的 `file://` 載入。兩者都要在替代 runtime／app-owned scheme 完成後才能關閉。

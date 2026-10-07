@@ -23,7 +23,7 @@ describe('UiCollageThumb empty glyph', () => {
   it('keeps the Music glyph as the default no-identity placeholder', async () => {
     const html = await render({});
     expect(html).toContain('ui-collage-thumb__single-empty');
-    expect(html).toContain('lucide-music2');
+    expect(html).toContain('lucide-music-2');
     expect(html).not.toContain('data-glyph');
   });
 
@@ -31,7 +31,7 @@ describe('UiCollageThumb empty glyph', () => {
     const html = await render({ emptyIcon: PersonGlyph });
     expect(html).toContain('data-glyph="person"');
     expect(html).toContain('width="54"');
-    expect(html).not.toContain('lucide-music2');
+    expect(html).not.toContain('lucide-music-2');
   });
 
   it('never shows the glyph once there is artwork', async () => {
