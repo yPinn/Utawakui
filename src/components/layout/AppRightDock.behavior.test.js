@@ -146,7 +146,7 @@ describe('AppRightDock', () => {
     app.unmount();
   });
 
-  it('turns the collapsed rail into an explicit restore action', () => {
+  it('turns the collapsed local boundary into an explicit restore action', () => {
     const onExpand = vi.fn();
     const { app, root } = mount(AppRightDock, {
       expanded: false,
@@ -179,10 +179,17 @@ describe('AppRightDock', () => {
     app.unmount();
   });
 
-  it('keeps the collapsed rail geometry while anchoring a normal control at the lower right', () => {
+  it('shrinks the collapsed root to the lower-right restore control boundary', () => {
     expect(source).toMatch(
-      /\.app-right-dock--collapsed\s*\{[^}]*width:\s*var\(--ui-right-dock-rail-width\);/su,
+      /\.app-right-dock\s*\{[^}]*pointer-events:\s*auto;/su,
     );
+    expect(source).toMatch(
+      /\.app-right-dock--expanded\s*\{[^}]*width:\s*var\(--ui-right-dock-width\);[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/su,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock--collapsed\s*\{[^}]*width:\s*var\(--ui-right-dock-rail-width\);[^}]*height:\s*calc\(var\(--ui-icon-button-size-lg\) \+ var\(--ui-space-1\)\);/su,
+    );
+    expect(source).not.toMatch(/\.app-right-dock\s*\{[^}]*height:\s*100%;/su);
     expect(source).toMatch(
       /\.app-right-dock__expand\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*0;[^}]*inset-block-end:\s*var\(--ui-space-1\);/su,
     );

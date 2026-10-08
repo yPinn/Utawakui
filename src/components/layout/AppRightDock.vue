@@ -121,18 +121,20 @@ function handleResizeKeydown(event) {
   width: var(--ui-right-dock-rail-width);
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
   color: var(--ui-color-text);
   flex-direction: column;
+  pointer-events: auto;
 }
 
 .app-right-dock--expanded {
   width: var(--ui-right-dock-width);
+  height: 100%;
+  overflow: hidden;
 }
 
 .app-right-dock--collapsed {
   width: var(--ui-right-dock-rail-width);
+  height: calc(var(--ui-icon-button-size-lg) + var(--ui-space-1));
 }
 
 .app-right-dock.app-right-dock--collapsed {

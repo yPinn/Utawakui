@@ -21,9 +21,31 @@ describe('TrackContextActions', () => {
     );
     expect(source).toContain('variant="overlay"');
     expect(source).toContain('label="歌曲選項"');
-    expect(source).toContain('context="current"');
+    expect(source).toContain(':context="context"');
     expect(source).toContain('@select="handleTrackMenuSelect"');
     expect(source).toContain('@close="closeTrackMenu"');
+  });
+
+  it('adapts the same menu controller to overlay and Right Dock row triggers', () => {
+    const source = readFileSync(
+      new URL('./TrackContextActions.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      "validator: (value) => ['current', 'queued', 'source'].includes(value)",
+    );
+    expect(source).toContain(
+      "validator: (value) => ['overlay', 'row'].includes(value)",
+    );
+    expect(source).toContain(
+      "import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';",
+    );
+    expect(source).toContain('v-if="trigger === \'overlay\'"');
+    expect(source).toContain(':menu-open="Boolean(trackMenu)"');
+    expect(source).toContain('defineExpose({ open: openTrackMenu });');
+    expect(source).toContain("emit('openChange', true)");
+    expect(source).toContain("emit('openChange', false)");
   });
 
   it('reuses current queue, playlist, album, and metadata authorities without adding transport controls', () => {
@@ -38,9 +60,11 @@ describe('TrackContextActions', () => {
       'TRACK_MENU_ACTIONS.addToPlaylist',
       'TRACK_MENU_ACTIONS.editMetadata',
       'TRACK_MENU_ACTIONS.goToAlbum',
+      'TRACK_MENU_ACTIONS.removeFromQueue',
     ]) {
       expect(source).toContain(action);
     }
+    expect(source).toContain('removeQueuedTrack(track.id)');
     expect(source).toContain('usePlaybackQueue()');
     expect(source).toContain('usePlaylists()');
     expect(source).toContain('useAlbumNavigation()');

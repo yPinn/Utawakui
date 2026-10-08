@@ -10,6 +10,7 @@ const props = defineProps({
   track: { type: Object, required: true },
   active: { type: Boolean, default: false },
   current: { type: Boolean, default: false },
+  interactive: { type: Boolean, default: true },
   draggable: { type: Boolean, default: false },
   menuOpen: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
@@ -76,9 +77,11 @@ function handleDragEnd(event) {
     :track="track"
     :active="active"
     :current="current"
-    interactive
-    activate-on-enter
-    :action-label="`選取：${track.title}`"
+    :interactive="interactive"
+    state-surface
+    :state-surface-active="menuOpen"
+    :activate-on-enter="interactive"
+    :action-label="interactive ? `選取：${track.title}` : undefined"
     artwork-clickable
     :artwork-label="artworkActionLabel"
     hide-duration
@@ -86,9 +89,9 @@ function handleDragEnd(event) {
     thumb-loading="lazy"
     thumb-decoding="async"
     :draggable="draggable"
-    @row-click="emit('select', track)"
-    @row-dblclick="emit('activate', track)"
-    @activate="emit('activate', track)"
+    @row-click="interactive && emit('select', track)"
+    @row-dblclick="interactive && emit('activate', track)"
+    @activate="interactive && emit('activate', track)"
     @artwork-click="emit('togglePlayback', track)"
     @contextmenu.prevent.stop="emit('openMenu', { track, event: $event })"
     @pointerdown="handlePointerDown"
@@ -110,11 +113,13 @@ function handleDragEnd(event) {
       />
     </template>
     <template #trail>
-      <RightDockTrackMenuButton
-        :track-title="track.title"
-        :menu-open="menuOpen"
-        @open="emit('openMenu', { track, event: $event })"
-      />
+      <slot name="trail">
+        <RightDockTrackMenuButton
+          :track-title="track.title"
+          :menu-open="menuOpen"
+          @open="emit('openMenu', { track, event: $event })"
+        />
+      </slot>
     </template>
     <template #overlay>
       <UiSeparator

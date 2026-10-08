@@ -8,15 +8,33 @@ import { useTrackMetadataEditor } from '../../composables/useTrackMetadataEditor
 import { Ellipsis } from '../../icons/index.js';
 import { TRACK_MENU_ACTIONS } from '../../utils/playlistMenu.js';
 import TrackMetadataModal from '../library/TrackMetadataModal.vue';
+import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 
 const props = defineProps({
   track: { type: Object, required: true },
+  context: {
+    type: String,
+    default: 'current',
+    validator: (value) => ['current', 'queued', 'source'].includes(value),
+  },
+  trigger: {
+    type: String,
+    default: 'overlay',
+    validator: (value) => ['overlay', 'row'].includes(value),
+  },
 });
 
+const emit = defineEmits(['openChange']);
+
 const { refresh: refreshLibrary } = useLibrary();
-const { state: queueState, queuedTracks, enqueueTrack } = usePlaybackQueue();
+const {
+  state: queueState,
+  queuedTracks,
+  enqueueTrack,
+  removeQueuedTrack,
+} = usePlaybackQueue();
 const {
   state: playlistState,
   create: createPlaylist,
@@ -30,18 +48,32 @@ const queuedTrackIds = computed(() =>
   queuedTracks.value.map((track) => track.id),
 );
 const canGoToAlbum = computed(() => Boolean(albumForTrack(props.track)));
+const menuCurrentTrackId = computed(() =>
+  props.context === 'current'
+    ? (props.track?.id ?? '')
+    : (queueState.currentTrackId ?? ''),
+);
 
 function openTrackMenu(event) {
-  event.preventDefault();
-  event.stopPropagation();
-  trackMenu.value = { anchorEl: event.currentTarget };
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const fromButton = event?.type === 'click';
+  trackMenu.value = {
+    anchorEl: fromButton ? (event.currentTarget ?? null) : null,
+    x: fromButton ? 0 : (event?.clientX ?? 0),
+    y: fromButton ? 0 : (event?.clientY ?? 0),
+  };
+  emit('openChange', true);
 }
 
 function closeTrackMenu() {
   trackMenu.value = null;
+  emit('openChange', false);
 }
 
-watch(() => props.track?.id, closeTrackMenu);
+watch([() => props.track?.id, () => props.context], closeTrackMenu);
+
+defineExpose({ open: openTrackMenu });
 
 async function handleTrackMenuSelect(value) {
   const track = props.track;
@@ -55,6 +87,8 @@ async function handleTrackMenuSelect(value) {
     if (playlist) addTrackToPlaylist(playlist.id, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToQueue) {
     enqueueTrack(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.removeFromQueue) {
+    removeQueuedTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
@@ -70,6 +104,7 @@ async function handleTrackMenuSelect(value) {
 <template>
   <div class="track-context-actions">
     <UiIconButton
+      v-if="trigger === 'overlay'"
       :icon="Ellipsis"
       label="歌曲選項"
       variant="overlay"
@@ -78,15 +113,23 @@ async function handleTrackMenuSelect(value) {
       :aria-expanded="Boolean(trackMenu)"
       @click="openTrackMenu"
     />
+    <RightDockTrackMenuButton
+      v-else
+      :track-title="track.title"
+      :menu-open="Boolean(trackMenu)"
+      @open="openTrackMenu"
+    />
 
     <TrackActionMenu
       v-if="trackMenu"
       :open="Boolean(trackMenu)"
       :anchor-el="trackMenu?.anchorEl ?? null"
+      :x="trackMenu?.x ?? 0"
+      :y="trackMenu?.y ?? 0"
       :track="track"
-      context="current"
+      :context="context"
       :playlists="playlistState.playlists"
-      :current-track-id="track.id ?? queueState.currentTrackId ?? ''"
+      :current-track-id="menuCurrentTrackId"
       :queued-track-ids="queuedTrackIds"
       :can-go-to-album="canGoToAlbum"
       @select="handleTrackMenuSelect"

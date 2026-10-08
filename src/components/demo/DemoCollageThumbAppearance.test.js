@@ -52,7 +52,9 @@ const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
 const dossierSource = readSource('../playlists/StudioLibraryDossierHeader.vue');
 const inspectorSource = readSource('../playlists/TrackContextPanel.vue');
+const artistPreviewSource = readSource('../playlists/TrackArtistPreview.vue');
 const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
+const queueTrackButtonSource = readSource('../queue/QueueTrackButton.vue');
 const setlistHeaderSource = readSource('../playlists/LibraryEntityDossier.vue');
 const sidebarRowSource = readSource('../playlists/PlaylistSidebarRow.vue');
 const detailsModalSource = readSource('../playlists/PlaylistDetailsModal.vue');
@@ -393,15 +395,17 @@ describe('DemoCollageThumbAppearance', () => {
     expect(dossierSource).toContain(':size="88"');
     expect(detailsModalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
     expect(setlistHeaderSource).toContain(':size="136"');
-    // F8 retains the reviewed 280px comparison specimen. The playback-context
-    // panel uses the established details-modal cover size; shell resizing no
-    // longer changes child component recipes.
-    expect(inspectorSource).toContain('UiCollageThumb');
-    expect(inspectorSource).toContain(':size="COLLECTION_COVER_SIZE"');
-    expect(inspectorSource).toContain('COLLECTION_COVER_SIZE = 120;');
+    // F8 retains the reviewed 280px comparison specimen. Playback Info no
+    // longer repeats a source cover block; the Artist preview keeps its
+    // caller-owned compact collage recipe.
+    expect(inspectorSource).not.toContain('UiCollageThumb');
+    expect(inspectorSource).not.toContain('COLLECTION_COVER_SIZE');
+    expect(artistPreviewSource).toContain('UiCollageThumb');
+    expect(artistPreviewSource).toContain(':size="64"');
     expect(inspectorSource).not.toContain('useStudioLibraryInspectorWidth');
     expect(inspectorSource).not.toContain('UiTrackRow');
-    expect(queuePreviewSource).toContain('UiTrackRow');
+    expect(queuePreviewSource).toContain('QueueTrackButton');
+    expect(queueTrackButtonSource).toContain('UiTrackRow');
     expect(activeTokenSource).toContain(
       '--ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);',
     );

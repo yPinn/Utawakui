@@ -100,9 +100,6 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain('role="tabpanel"');
     expect(source).not.toContain('queue-panel__chrome--scrolled');
     expect(source).not.toContain('@scroll="updateScrollState"');
-    expect(dockPanelSource).toMatch(
-      /\.app-right-dock-panel__chrome--scrolled\s*\{[^}]*backdrop-filter:\s*blur\(var\(--ui-right-dock-sticky-blur\)\);[^}]*box-shadow:\s*var\(--ui-right-dock-sticky-shadow\);/su,
-    );
   });
 
   it('keeps Queue row media lazy without changing row paint geometry', () => {
@@ -176,6 +173,12 @@ describe('QueuePanel shared Dock content', () => {
     expect(trackRowSource).toMatch(
       /\.ui-track--interactive:not\(\.ui-track--active\):hover::before\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
     );
+    expect(trackRowSource).toContain(
+      '.ui-track--state-surface:not(.ui-track--active):focus-within::before,',
+    );
+    expect(trackRowSource).toMatch(
+      /\.ui-track--state-surface:not\(\.ui-track--active\):hover::before,[\s\S]*?background:\s*var\(--ui-color-surface-hover\);/u,
+    );
     expect(trackRowSource).toMatch(
       /\.ui-track--active::before\s*\{[^}]*background:\s*var\(--ui-track-row-selected-surface\);/su,
     );
@@ -184,10 +187,9 @@ describe('QueuePanel shared Dock content', () => {
     expect(panelCss).not.toMatch(
       /\.queue-panel[^{}]*\.right-dock-track:not\(\.ui-track--active\):hover::before/u,
     );
-    expect(panelCss).toMatch(
+    expect(panelCss).not.toMatch(
       /\.queue-panel[^{}]*\.right-dock-track:not\(\.ui-track--active\):focus-within::before/u,
     );
-    expect(panelCss).toMatch(/background:\s*var\(--ui-color-surface-hover\);/u);
   });
 
   it('keeps the source destination on the shared hover/focus underline contract without clipping its paint', () => {
@@ -224,7 +226,9 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain('@activate-track="playQueuedTrack(');
     expect(sectionSource).toContain(':active="track.id === selectedTrackId"');
     expect(sectionSource).toContain("'activateTrack'");
-    expect(rowSource).toContain('@row-dblclick="emit(\'activate\', track)"');
+    expect(rowSource).toContain(
+      '@row-dblclick="interactive && emit(\'activate\', track)"',
+    );
     expect(rowSource).toContain(
       '@artwork-click="emit(\'togglePlayback\', track)"',
     );

@@ -64,13 +64,6 @@ describe('Right Dock compiled render contracts', () => {
         filename: 'current.flac',
       },
       queueSourceName: '深夜練唱清單',
-      collection: {
-        name: '深夜練唱清單',
-        description: '睡前慢歌',
-        coverUrl: '',
-        canCollage: true,
-        tracks: [],
-      },
       upcomingTracks: Array.from({ length: 4 }, (_, index) => ({
         id: `next-${index}`,
         title: `下一首 ${index + 1}`,
@@ -85,26 +78,18 @@ describe('Right Dock compiled render contracts', () => {
         artist: '',
         filename: 'minimal.bin',
       },
-      collection: {
-        name: '未命名集合',
-        description: '',
-        coverUrl: '',
-        canCollage: false,
-        tracks: [],
-      },
       upcomingTracks: [],
     });
     const empty = await render(TrackContextPanel, {
       currentTrack: null,
       queueSourceName: '',
-      collection: null,
       upcomingTracks: [],
     });
 
-    expect(populated).toContain('睡前慢歌');
-    expect(populated).toContain('4 首');
-    expect(populated).toContain('下一首 3');
-    expect(populated).not.toContain('下一首 4');
+    expect(populated).not.toContain('播放來源');
+    expect(populated).not.toContain('共 4 首');
+    expect(populated).toContain('下一首 1');
+    expect(populated).not.toContain('下一首 2');
     expect(minimal).toContain('無附加資料');
     expect(minimal).not.toContain('睡前慢歌');
     expect(empty).toContain('目前沒有播放中的歌曲');

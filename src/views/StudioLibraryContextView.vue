@@ -3,27 +3,34 @@ import { computed } from 'vue';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppView } from '../composables/useAppView.js';
 import { useArtistIndex } from '../composables/useArtistIndex.js';
+import { useCurrentTrackLyricsPreview } from '../composables/useCurrentTrackLyricsPreview.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { useLyrics } from '../composables/useLyrics.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { isArtistSourceId } from '../utils/artistPage.js';
+import { toPlayableTrack } from '../utils/playableTrack.js';
 import { playlistDisplayName } from '../utils/playlistMenu.js';
 import {
   createLocalArtistSummary,
-  createTrackLyricsPreview,
   createTrackReadiness,
 } from '../utils/trackContextPresentation.js';
 import TrackContextPanel from '../components/playlists/TrackContextPanel.vue';
 
 const emit = defineEmits(['close', 'openQueue']);
 
-const { state: playerState } = usePlayer();
+const {
+  state: playerState,
+  playTrack,
+  toggle: togglePlayerPlayback,
+} = usePlayer();
 const {
   state: queueState,
   currentTrack: queueCurrentTrack,
+  queuedTracks,
   upcomingTracks,
+  setCurrentTrack,
 } = usePlaybackQueue();
 const { state: libraryState } = useLibrary();
 const { state: playlistsState } = usePlaylists();
@@ -32,12 +39,7 @@ const { setActiveView } = useAppView();
 const { state: artistIndexState, ensureLoaded: ensureArtistIndex } =
   useArtistIndex();
 ensureArtistIndex();
-const {
-  selectedTrack: selectedLyricsTrack,
-  selectedSource: selectedLyricsSource,
-  lyricLines,
-  activeLineIndex,
-} = useLyrics();
+const { lyricsTextVariant } = useLyrics();
 
 // The audio element-backed player state is the currently playing authority.
 // Queue state supplies the same identity before playback starts and owns every
@@ -45,6 +47,23 @@ const {
 const currentTrack = computed(
   () => playerState.track ?? queueCurrentTrack.value ?? null,
 );
+const currentLyricsTrack = computed(() => {
+  const track = currentTrack.value;
+  if (!track?.id) return null;
+  return (
+    libraryState.tracks.find((candidate) => candidate.id === track.id) ?? track
+  );
+});
+const {
+  preview: lyricsPreview,
+  document: lyricsDocument,
+  isLoading: lyricsLoading,
+  error: lyricsError,
+} = useCurrentTrackLyricsPreview({
+  currentTrack: currentLyricsTrack,
+  playerState,
+  textVariant: lyricsTextVariant,
+});
 
 const queueSourcePlaylist = computed(() =>
   playlistsState.playlists.find(
@@ -57,6 +76,9 @@ const queueSourceName = computed(
     (queueSourcePlaylist.value
       ? playlistDisplayName(queueSourcePlaylist.value)
       : ''),
+);
+const queuedTrackIds = computed(() =>
+  queuedTracks.value.map((track) => track.id),
 );
 
 const queueSourceDestination = computed(() => {
@@ -92,37 +114,19 @@ function openArtist() {
   jumpToArtist(artistSummary.value.artistId);
 }
 
-// Only rendered when playback started from a real playlist/album — playing
-// from the general library view (no queueState.sourceId) keeps today's
-// behavior with no collection card, rather than inventing a "library" identity
-// the Inspector doesn't otherwise need to know about.
-const activeCollection = computed(() => {
-  const playlist = queueSourcePlaylist.value;
-  if (!playlist) return null;
+function activateUpcomingTrack(track) {
+  const source = !queuedTrackIds.value.includes(track.id);
+  setCurrentTrack(track.id, { source });
+  playTrack(toPlayableTrack(track));
+}
 
-  const tracksById = new Map(
-    libraryState.tracks.map((track) => [track.id, track]),
-  );
-  return {
-    name: playlistDisplayName(playlist),
-    description: playlist.description ?? '',
-    coverUrl: playlist.coverUrl ?? '',
-    canCollage: playlist.kind !== 'album',
-    tracks: playlist.trackIds
-      .map((trackId) => tracksById.get(trackId))
-      .filter(Boolean),
-  };
-});
-
-const lyricsPreview = computed(() =>
-  createTrackLyricsPreview({
-    currentTrackId: currentTrack.value?.id ?? null,
-    selectedTrackId: selectedLyricsTrack.value?.id ?? null,
-    activeLineIndex: activeLineIndex.value,
-    lines: lyricLines.value,
-    source: selectedLyricsSource.value,
-  }),
-);
+function toggleUpcomingTrackPlayback(track) {
+  if (playerState.track?.id === track.id) {
+    togglePlayerPlayback();
+    return;
+  }
+  activateUpcomingTrack(track);
+}
 
 const artistSummary = computed(() =>
   createLocalArtistSummary(
@@ -132,7 +136,13 @@ const artistSummary = computed(() =>
   ),
 );
 
-const readiness = computed(() => createTrackReadiness(currentTrack.value));
+const readiness = computed(() =>
+  createTrackReadiness(currentLyricsTrack.value, {
+    document: lyricsDocument.value,
+    isLoading: lyricsLoading.value,
+    error: lyricsError.value,
+  }),
+);
 </script>
 
 <template>
@@ -142,14 +152,18 @@ const readiness = computed(() => createTrackReadiness(currentTrack.value));
     :source-navigable="Boolean(queueSourceDestination)"
     :source-link-label="queueSourceLinkLabel"
     :upcoming-tracks="upcomingTracks"
-    :collection="activeCollection"
+    :queued-track-ids="queuedTrackIds"
+    :playing-track-id="playerState.track?.id ?? ''"
+    :player-playing="playerState.isPlaying"
     :lyrics-preview="lyricsPreview"
+    :lyrics-loading="lyricsLoading"
     :artist-summary="artistSummary"
     :readiness="readiness"
     @navigate-source="navigateToQueueSource"
     @open-artist="openArtist"
     @open-lyrics="openLyrics"
     @open-queue="emit('openQueue')"
+    @toggle-queue-track-playback="toggleUpcomingTrackPlayback"
     @close="emit('close')"
   />
 </template>

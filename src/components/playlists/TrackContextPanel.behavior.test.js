@@ -1,15 +1,25 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+
+const artworkTone = vi.hoisted(() => ({
+  load: vi.fn(async () => null),
+}));
+
+vi.mock('../../utils/artworkTone.js', () => ({
+  loadArtworkTone: artworkTone.load,
+}));
+
 import TrackContextPanel from './TrackContextPanel.vue';
 import TrackContextActions from './TrackContextActions.vue';
 import TrackArtistPreview from './TrackArtistPreview.vue';
 import TrackContextHero from './TrackContextHero.vue';
 import TrackLyricsPreview from './TrackLyricsPreview.vue';
 import TrackQueuePreview from './TrackQueuePreview.vue';
+import TrackCapabilityItem from './TrackCapabilityItem.vue';
+import TrackCapabilityMatrix from './TrackCapabilityMatrix.vue';
 import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
-import UiChip from '../ui/UiChip.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
@@ -19,10 +29,15 @@ import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
+import QueueTrackButton from '../queue/QueueTrackButton.vue';
+import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
+import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';
 import {
   attachClientRender,
   findAll,
@@ -38,10 +53,11 @@ for (const [component, filename] of [
   [TrackContextHero, './TrackContextHero.vue'],
   [TrackLyricsPreview, './TrackLyricsPreview.vue'],
   [TrackQueuePreview, './TrackQueuePreview.vue'],
+  [TrackCapabilityItem, './TrackCapabilityItem.vue'],
+  [TrackCapabilityMatrix, './TrackCapabilityMatrix.vue'],
   [AppRightDockHeader, '../layout/AppRightDockHeader.vue'],
   [AppRightDockPanel, '../layout/AppRightDockPanel.vue'],
   [AppRightDockSection, '../layout/AppRightDockSection.vue'],
-  [UiChip, '../ui/UiChip.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
@@ -51,10 +67,15 @@ for (const [component, filename] of [
   [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiSeparator, '../ui/UiSeparator.vue'],
+  [UiStatusIcon, '../ui/UiStatusIcon.vue'],
   [UiTextButton, '../ui/UiTextButton.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+  [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
+  [QueueTrackButton, '../queue/QueueTrackButton.vue'],
+  [RightDockTrackArtworkCue, '../queue/RightDockTrackArtworkCue.vue'],
+  [RightDockTrackMenuButton, '../queue/RightDockTrackMenuButton.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -104,8 +125,20 @@ const artistSummary = {
 };
 
 const readiness = [
-  { id: 'lyrics', label: '歌詞可用', tone: 'success' },
-  { id: 'separation', label: '尚無分離素材', tone: 'muted' },
+  {
+    id: 'lyrics',
+    label: '歌詞',
+    status: '逐行同步',
+    tone: 'success',
+    description: '歌詞包含逐行時間，可跟隨播放進度。',
+  },
+  {
+    id: 'separation',
+    label: '人聲分離',
+    status: '尚未準備',
+    tone: 'muted',
+    description: '尚未產生伴奏與導唱聲道素材。',
+  },
 ];
 
 function mountPanel(overrides = {}) {
@@ -114,12 +147,16 @@ function mountPanel(overrides = {}) {
   const onOpenArtist = vi.fn();
   const onOpenLyrics = vi.fn();
   const onOpenQueue = vi.fn();
+  const onToggleQueueTrackPlayback = vi.fn();
   const mounted = mount(TrackContextPanel, {
     currentTrack,
     queueSourceName: '深夜練唱清單',
     sourceNavigable: true,
     sourceLinkLabel: '前往播放清單：深夜練唱清單',
     upcomingTracks,
+    queuedTrackIds: ['track-2'],
+    playingTrackId: currentTrack.id,
+    playerPlaying: true,
     lyricsPreview,
     artistSummary,
     readiness,
@@ -128,6 +165,7 @@ function mountPanel(overrides = {}) {
     onOpenArtist,
     onOpenLyrics,
     onOpenQueue,
+    onToggleQueueTrackPlayback,
     ...overrides,
   });
   return {
@@ -137,10 +175,67 @@ function mountPanel(overrides = {}) {
     onOpenArtist,
     onOpenLyrics,
     onOpenQueue,
+    onToggleQueueTrackPlayback,
   };
 }
 
 describe('TrackContextPanel', () => {
+  it('moves the playlist destination into the one-row Dock header', () => {
+    const { app, root, onClose, onNavigateSource } = mountPanel();
+    const header = findAll(root, (node) => node.type === 'header')[0];
+    const hero = findAll(root, (node) => node.type === 'article')[0];
+    const sourceLink = findAll(
+      header,
+      (node) => node.type === 'button' && textContent(node) === '深夜練唱清單',
+    )[0];
+
+    expect(findAll(header, (node) => node.type === 'h2')).toHaveLength(0);
+    expect(textContent(header)).toContain('深夜練唱清單');
+    expect(textContent(hero)).not.toContain('深夜練唱清單');
+    expect(sourceLink.props['aria-label']).toBe('前往播放清單：深夜練唱清單');
+    trigger(sourceLink, 'onClick', { stopPropagation: vi.fn() });
+    expect(onNavigateSource).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
+    app.unmount();
+  });
+
+  it('uses the Queue header type rhythm for the playlist identity CTA', () => {
+    const source = readFileSync(
+      new URL('./TrackContextPanel.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain('<template #identity>');
+    expect(source).toContain('overflow="ellipsis"');
+    expect(source).toMatch(
+      /\.studio-context-inspector__source-identity\s*\{[^}]*min-block-size:\s*var\(--ui-control-height\);[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*color:\s*var\(--ui-color-text\);[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+    );
+    expect(source).toMatch(
+      /\.studio-context-inspector__source-identity\s*\{[^}]*padding-inline-start:\s*var\(--ui-space-2\);/su,
+    );
+    expect(source).not.toContain(':subtitle="queueContextLabel"');
+  });
+
+  it('keeps a non-navigable queue context in the same header lane', () => {
+    const { app, root, onNavigateSource } = mountPanel({
+      queueSourceName: '',
+      sourceNavigable: false,
+      sourceLinkLabel: '',
+    });
+    const header = findAll(root, (node) => node.type === 'header')[0];
+    const hero = findAll(root, (node) => node.type === 'article')[0];
+    const queueLinks = findAll(
+      header,
+      (node) => node.type === 'button' && textContent(node) === '目前佇列',
+    );
+
+    expect(textContent(header)).toContain('目前佇列');
+    expect(textContent(hero)).not.toContain('目前佇列');
+    expect(queueLinks).toHaveLength(0);
+    expect(onNavigateSource).not.toHaveBeenCalled();
+    app.unmount();
+  });
+
   it('delegates Dock frame geometry to the shared panel and section primitives', () => {
     const source = readFileSync(
       new URL('./TrackContextPanel.vue', import.meta.url),
@@ -161,14 +256,49 @@ describe('TrackContextPanel', () => {
   });
 
   it('lets the shared section body own subgroup spacing instead of stacking child margins', () => {
-    const source = readFileSync(
-      new URL('./TrackContextPanel.vue', import.meta.url),
-      'utf8',
-    );
+    const spacingSources = [
+      './TrackContextPanel.vue',
+      './TrackContextHero.vue',
+      './TrackLyricsPreview.vue',
+      './TrackArtistPreview.vue',
+      './TrackQueuePreview.vue',
+      './TrackCapabilityItem.vue',
+      './TrackCapabilityMatrix.vue',
+    ].map((path) => [
+      path,
+      readFileSync(new URL(path, import.meta.url), 'utf8'),
+    ]);
+    const source = spacingSources[0][1];
 
     expect(source).not.toMatch(
       /\.studio-context-inspector__(?:lyrics-source|collection-cover|readiness)\s*\{[^}]*margin-(?:top|bottom):/su,
     );
+
+    for (const [path, componentSource] of spacingSources) {
+      const rawSpacingValues = [
+        ...componentSource.matchAll(
+          /(?:^|\n)\s*(?:margin|padding|gap)(?:-[\w-]+)?\s*:\s*([^;]+);/gu,
+        ),
+      ]
+        .map(([, value]) => value.trim())
+        .filter((value) => !/^0(?:\s+0)*$/u.test(value))
+        .filter((value) => !value.includes('var('));
+
+      expect(rawSpacingValues, path).toEqual([]);
+    }
+
+    expect(source.match(/gap:\s*var\(--ui-space-2\);/gu)).toHaveLength(2);
+    expect(spacingSources[1][1]).toContain('padding: var(--ui-space-4);');
+    expect(spacingSources[2][1]).toContain('gap: var(--ui-space-2);');
+    expect(spacingSources[3][1]).toContain('gap: var(--ui-space-3);');
+    expect(spacingSources[3][1]).toContain('gap: var(--ui-space-1);');
+    expect(spacingSources[4][1]).toContain('gap: var(--ui-track-list-gap);');
+    expect(
+      spacingSources[5][1].match(/gap:\s*var\(--ui-space-2\);/gu),
+    ).toHaveLength(1);
+    expect(
+      spacingSources[6][1].match(/gap:\s*var\(--ui-space-2\);/gu),
+    ).toHaveLength(2);
   });
 
   it('prevents accidental selection across passive playback copy', () => {
@@ -178,6 +308,7 @@ describe('TrackContextPanel', () => {
       './TrackLyricsPreview.vue',
       './TrackArtistPreview.vue',
       './TrackQueuePreview.vue',
+      './TrackCapabilityMatrix.vue',
     ].map((path) => [
       path,
       readFileSync(new URL(path, import.meta.url), 'utf8'),
@@ -188,9 +319,13 @@ describe('TrackContextPanel', () => {
       expect(source, path).toContain('-webkit-user-select: none;');
       expect(source, path).toMatch(/\n\s*user-select:\s*none;/u);
     }
+
+    expect(passiveCopySources[0][1]).toMatch(
+      /\.studio-context-inspector__source-identity\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
+    );
   });
 
-  it('uses the feature Hero for the current identity and Track Row only for queue previews', () => {
+  it('uses the feature Hero for the current identity and the Queue row adapter only for the next preview', () => {
     const source = readFileSync(
       new URL('./TrackContextPanel.vue', import.meta.url),
       'utf8',
@@ -201,16 +336,17 @@ describe('TrackContextPanel', () => {
     );
 
     expect(source).not.toContain('<UiTrackRow');
-    expect(queueSource.match(/<UiTrackRow/gu)).toHaveLength(1);
+    expect(queueSource).not.toContain('<UiTrackRow');
+    expect(queueSource.match(/<QueueTrackButton/gu)).toHaveLength(1);
     expect(source).toContain('<TrackQueuePreview');
     expect(source).toContain('<TrackContextHero');
     expect(source).toContain('<TrackContextActions');
     expect(source).toContain(':track="currentTrack"');
     expect(source).not.toMatch(/:tracks="\[currentTrack\]"/u);
-    expect(source).toContain('UiCollageThumb');
+    expect(source).not.toContain('UiCollageThumb');
   });
 
-  it('renders the current identity as an artwork-led Hero with explicit source and More targets', () => {
+  it('renders an artwork-led Hero with the source in header and More on artwork', () => {
     const { app, root, onClose, onNavigateSource } = mountPanel();
     const panel = findAll(
       root,
@@ -223,8 +359,9 @@ describe('TrackContextPanel', () => {
     const currentThumb = findAll(hero, (node) =>
       String(node.props?.class ?? '').includes('ui-track-thumb'),
     )[0];
+    const header = findAll(root, (node) => node.type === 'header')[0];
     const sourceLink = findAll(
-      hero,
+      header,
       (node) => node.type === 'button' && textContent(node) === '深夜練唱清單',
     )[0];
     const moreAction = findAll(
@@ -238,11 +375,12 @@ describe('TrackContextPanel', () => {
 
     expect(panel).toBeTruthy();
     expect(textContent(root)).toContain('深夜練唱清單');
+    expect(textContent(hero)).not.toContain('深夜練唱清單');
     expect(textContent(root)).toContain('目前播放的歌曲');
     expect(textContent(root)).toContain('真實演出者');
     expect(textContent(root)).toContain('來源專輯');
     expect(textContent(root)).toContain('4:12');
-    expect(textContent(root)).toContain('本機 FLAC');
+    expect(textContent(root)).not.toContain('本機 FLAC');
     expect(moreAction).toBeTruthy();
     expect(currentThumb.props.style).toMatchObject({
       width: '100%',
@@ -256,7 +394,7 @@ describe('TrackContextPanel', () => {
   });
 
   it('renders lyrics as a contained destination with one explicit workspace CTA', () => {
-    const { app, root, onOpenLyrics } = mountPanel();
+    const { app, root, onClose, onOpenLyrics } = mountPanel();
     const lyricsSection = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('track-lyrics-preview'),
     )[0];
@@ -273,23 +411,65 @@ describe('TrackContextPanel', () => {
     expect(textContent(lyricsSection)).toContain('歌詞預覽');
     expect(textContent(lyricsSection)).toContain('正在播放的歌詞');
     expect(textContent(lyricsSection)).toContain('接下來的一行');
-    expect(textContent(lyricsSection)).toContain('手動匯入 / 演出修訂版');
-    expect(openLyrics.props.class).toContain('ui-btn--secondary');
+    expect(textContent(lyricsSection)).not.toContain('手動匯入 / 演出修訂版');
+    expect(openLyrics.props.class).toContain('ui-btn--ghost');
     trigger(openLyrics, 'onClick');
     expect(onOpenLyrics).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
     app.unmount();
   });
 
-  it('wraps every non-Hero playback group in contained blocks without dividers', () => {
+  it('keeps the lyrics block mounted and the same size while content is loading', () => {
     const { app, root } = mountPanel({
-      collection: {
-        name: '深夜練唱清單',
-        description: '睡前放鬆用的慢歌',
-        coverUrl: '',
-        canCollage: true,
-        tracks: [],
-      },
+      lyricsPreview: null,
+      lyricsLoading: true,
     });
+    const lyricsSection = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('track-lyrics-preview'),
+    )[0];
+
+    expect(lyricsSection).toBeTruthy();
+    expect(lyricsSection.props['aria-busy']).toBe('true');
+    expect(textContent(lyricsSection)).toContain('歌詞預覽');
+    expect(textContent(lyricsSection)).toContain('開啟歌詞');
+    expect(textContent(lyricsSection)).not.toContain('正在播放的歌詞');
+    app.unmount();
+  });
+
+  it('omits the lyrics block after missing or empty content is confirmed', () => {
+    const { app, root } = mountPanel({
+      lyricsPreview: null,
+      lyricsLoading: false,
+    });
+    const lyricsSections = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('track-lyrics-preview'),
+    );
+
+    expect(lyricsSections).toHaveLength(0);
+    expect(textContent(root)).not.toContain('歌詞預覽');
+    expect(textContent(root)).not.toContain('開啟歌詞');
+    app.unmount();
+  });
+
+  it('hands the current album artwork to the lyrics atmosphere owner', () => {
+    const source = readFileSync(
+      new URL('./TrackContextPanel.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toMatch(
+      /<TrackLyricsPreview[\s\S]*?:artwork-url="currentTrack\?\.thumbnailUrl \?\? ''"/u,
+    );
+    expect(source).toContain(':loading="lyricsLoading"');
+    const viewSource = readFileSync(
+      new URL('../../views/StudioLibraryContextView.vue', import.meta.url),
+      'utf8',
+    );
+    expect(viewSource).toContain(':lyrics-loading="lyricsLoading"');
+  });
+
+  it('wraps every non-Hero playback group in contained blocks without dividers', () => {
+    const { app, root } = mountPanel();
     const sections = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('app-right-dock-section '),
     );
@@ -299,7 +479,7 @@ describe('TrackContextPanel', () => {
       ),
     );
 
-    expect(sections).toHaveLength(5);
+    expect(sections).toHaveLength(4);
     expect(
       sections.every((section) =>
         String(section.props.class).includes(
@@ -312,7 +492,7 @@ describe('TrackContextPanel', () => {
   });
 
   it('renders truthful local artist context with an explicit artist destination', () => {
-    const { app, root, onOpenArtist } = mountPanel();
+    const { app, root, onClose, onOpenArtist } = mountPanel();
     const artistSection = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('track-artist-preview'),
     )[0];
@@ -331,15 +511,17 @@ describe('TrackContextPanel', () => {
 
     expect(textContent(artistSection)).toContain('藝人');
     expect(textContent(artistSection)).toContain('真實演出者');
-    expect(textContent(artistSection)).toContain('本機收錄 4 首 · 2 張專輯');
+    expect(textContent(artistSection)).toContain('本機 4 首 · 2 張專輯');
+    expect(textContent(artistSection)).not.toContain('本機收錄');
     expect(photo).toBeTruthy();
     expect(artistCta.props.class).toContain('ui-btn--ghost');
     trigger(artistCta, 'onClick');
     expect(onOpenArtist).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
     app.unmount();
   });
 
-  it('projects a bounded read-only queue in playback order', () => {
+  it('projects only the actual next track with Queue affordances and no total count', () => {
     const longQueue = Array.from({ length: 1000 }, (_, index) => ({
       id: `track-${index + 10}`,
       title: `Queue track ${index + 1}`,
@@ -347,9 +529,11 @@ describe('TrackContextPanel', () => {
       duration: 180,
       thumbnailUrl: `utawakui-media://track/${index + 10}/thumbnail.jpg`,
     }));
-    const { app, root, onOpenQueue } = mountPanel({
-      upcomingTracks: longQueue,
-    });
+    const { app, root, onClose, onOpenQueue, onToggleQueueTrackPlayback } =
+      mountPanel({
+        upcomingTracks: longQueue,
+        queuedTrackIds: [longQueue[0].id],
+      });
     const items = findAll(root, (node) =>
       String(node.props?.class ?? '').includes(
         'studio-context-inspector__queue-item',
@@ -359,13 +543,22 @@ describe('TrackContextPanel', () => {
       root,
       (node) => node.type === 'img' && node.props.loading === 'lazy',
     );
-    const queueButtons = items.flatMap((item) =>
-      findAll(item, (node) => node.type === 'button'),
-    );
     const queueList = findAll(
       root,
       (node) =>
-        node.type === 'ol' && node.props['aria-label']?.includes('共 1000 首'),
+        node.type === 'ol' &&
+        node.props['aria-label'] === '下一首：Queue track 1',
+    )[0];
+    const artworkAction = findAll(
+      items[0],
+      (node) =>
+        node.type === 'button' && textContent(node) === '播放：Queue track 1',
+    )[0];
+    const menuAction = findAll(
+      items[0],
+      (node) =>
+        node.type === 'button' &&
+        textContent(node) === 'Queue track 1的更多選項',
     )[0];
     const openQueue = findAll(
       root,
@@ -374,15 +567,21 @@ describe('TrackContextPanel', () => {
     )[0];
     const text = textContent(root);
 
-    expect(items).toHaveLength(3);
-    expect(lazyImages).toHaveLength(3);
+    expect(items).toHaveLength(1);
+    expect(String(items[0].props.class)).toContain('ui-track--state-surface');
+    expect(String(items[0].props.class)).not.toContain('ui-track--interactive');
+    expect(lazyImages).toHaveLength(1);
     expect(queueList).toBeTruthy();
     expect(text).toContain('Queue track 1');
-    expect(text).toContain('Queue track 3');
-    expect(text).not.toContain('Queue track 4');
-    expect(queueButtons).toHaveLength(0);
+    expect(text).not.toContain('Queue track 2');
+    expect(text).not.toContain('共 1000 首');
+    expect(artworkAction).toBeTruthy();
+    expect(menuAction).toBeTruthy();
+    trigger(artworkAction, 'onClick', { stopPropagation: vi.fn() });
+    expect(onToggleQueueTrackPlayback).toHaveBeenCalledWith(longQueue[0]);
     trigger(openQueue, 'onClick');
     expect(onOpenQueue).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -395,7 +594,7 @@ describe('TrackContextPanel', () => {
 
     expect(textContent(root)).toContain('目前沒有播放中的歌曲');
     expect(textContent(root)).not.toContain('歌詞預覽');
-    expect(textContent(root)).not.toContain('接下來');
+    expect(textContent(root)).not.toContain('下一首');
     expect(textContent(root)).not.toContain('播放來源');
     expect(
       findAll(root, (node) =>
@@ -408,44 +607,61 @@ describe('TrackContextPanel', () => {
   });
 
   it('orders truthful sections by playback priority', () => {
-    const { app, root } = mountPanel({
-      collection: {
-        name: '深夜練唱清單',
-        description: '睡前放鬆用的慢歌',
-        coverUrl: '',
-        canCollage: true,
-        tracks: [],
-      },
-    });
+    const { app, root } = mountPanel();
     const headings = findAll(root, (node) => node.type === 'h3').map(
       textContent,
     );
 
-    expect(headings).toEqual([
-      '歌詞預覽',
-      '藝人',
-      '接下來',
-      '曲目資訊',
-      '播放來源',
-    ]);
+    expect(headings).toEqual(['歌詞預覽', '藝人', '下一首', '曲目資訊']);
     app.unmount();
   });
 
-  it('shows projected lyric, local artist, and readiness data without unsupported claims', () => {
+  it('shows track facts and a visible natural-language capability matrix', () => {
     const { app, root } = mountPanel();
     const text = textContent(root);
+    const capabilityItems = findAll(root, (node) => node.type === 'li').filter(
+      (node) =>
+        String(node.props?.class ?? '').includes(
+          'track-capability-matrix__item',
+        ),
+    );
+    const internalDividers = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes(
+        'studio-context-inspector__details-divider',
+      ),
+    );
+    const factLabels = findAll(root, (node) => node.type === 'dt').map(
+      textContent,
+    );
 
     expect(text).toContain('正在播放的歌詞');
     expect(text).toContain('接下來的一行');
-    expect(text).toContain('手動匯入 / 演出修訂版');
-    expect(text).toContain('本機收錄 4 首 · 2 張專輯');
-    expect(text).toContain('歌詞可用');
-    expect(text).toContain('尚無分離素材');
+    expect(text).not.toContain('手動匯入 / 演出修訂版');
+    expect(text).toContain('本機 4 首 · 2 張專輯');
+    expect(text).toContain('歌詞');
+    expect(text).toContain('逐行同步');
+    expect(text).toContain('人聲分離');
+    expect(text).toContain('尚未準備');
+    expect(factLabels).toEqual(['專輯', '長度']);
+    expect(factLabels).not.toContain('來源');
+    expect(capabilityItems).toHaveLength(2);
+    expect(internalDividers).toHaveLength(1);
     expect(text).not.toMatch(/追蹤|粉絲|Biography|Follow|製作人|作曲/u);
     app.unmount();
   });
 
-  it('keeps the collection identity fixed and passes through collage policy', () => {
+  it('reserves collapse for the explicit close control instead of navigation CTAs', () => {
+    const source = readFileSync(
+      new URL('./TrackContextPanel.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).not.toContain('@navigate="emit(\'close\')"');
+    expect(source).not.toContain('@navigate-artist="emit(\'close\')"');
+    expect(source).toContain('@close="emit(\'close\')"');
+  });
+
+  it('does not duplicate the header source identity as a playback-source block', () => {
     const { app, root } = mountPanel({
       collection: {
         name: '深夜練唱清單',
@@ -455,17 +671,8 @@ describe('TrackContextPanel', () => {
         tracks: [],
       },
     });
-    const cover = findAll(root, (node) =>
-      String(node.props?.class ?? '').includes(
-        'studio-context-inspector__collection-cover',
-      ),
-    )[0];
-
-    expect(textContent(root)).toContain('睡前放鬆用的慢歌');
-    expect(cover.props.style).toMatchObject({
-      width: '120px',
-      height: '120px',
-    });
+    expect(textContent(root)).not.toContain('播放來源');
+    expect(textContent(root)).not.toContain('睡前放鬆用的慢歌');
     app.unmount();
   });
 

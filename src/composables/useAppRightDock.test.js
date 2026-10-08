@@ -167,7 +167,7 @@ describe('useAppRightDock', () => {
     expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_METADATA);
   });
 
-  it('restores the last removed surface from the collapsed rail', async () => {
+  it('restores the last removed surface from the collapsed restore control', async () => {
     const { RIGHT_DOCK_SURFACE_QUEUE, useAppRightDock } =
       await import('./useAppRightDock.js');
     const dock = useAppRightDock();

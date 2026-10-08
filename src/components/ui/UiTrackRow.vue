@@ -20,6 +20,11 @@ const props = defineProps({
   // shared quiet selection surface.
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
+  // A compound row may contain independently focusable actions without making
+  // the entire row one action. Keep its group feedback separate from
+  // `interactive`, which owns the full-row button and selection contract.
+  stateSurface: { type: Boolean, default: false },
+  stateSurfaceActive: { type: Boolean, default: false },
   actionLabel: { type: String, default: undefined },
   // Opt-in only: some interactive rows are commands rather than selectable
   // items, so pressed semantics must never be inferred from `active` alone.
@@ -99,6 +104,8 @@ function handleActionKeydown(event) {
       'ui-track--active': active,
       'ui-track--current': current,
       'ui-track--interactive': interactive,
+      'ui-track--state-surface': stateSurface,
+      'ui-track--state-surface-active': stateSurfaceActive,
     }"
     :aria-current="current ? 'true' : undefined"
   >
@@ -248,7 +255,17 @@ function handleActionKeydown(event) {
   background: var(--ui-color-surface-hover);
 }
 
+.ui-track--state-surface:not(.ui-track--active):hover::before,
+.ui-track--state-surface:not(.ui-track--active):focus-within::before,
+.ui-track--state-surface-active:not(.ui-track--active)::before {
+  background: var(--ui-color-surface-hover);
+}
+
 .ui-track--interactive:has(.ui-track__action:active)::before {
+  background: var(--ui-color-surface-active);
+}
+
+.ui-track--state-surface:has(button:active)::before {
   background: var(--ui-color-surface-active);
 }
 

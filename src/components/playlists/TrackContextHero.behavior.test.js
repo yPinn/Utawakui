@@ -1,13 +1,13 @@
-import { h } from 'vue';
 import { readFileSync } from 'node:fs';
-import { describe, expect, it, vi } from 'vitest';
-import TrackContextHero from './TrackContextHero.vue';
+import { h } from 'vue';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import {
   attachClientRender,
   findAll,
@@ -15,6 +15,26 @@ import {
   textContent,
   trigger,
 } from '../ui/uiTestHost.js';
+
+const navigation = vi.hoisted(() => ({
+  albums: new Map(),
+  jumpToAlbum: vi.fn(),
+  jumpToArtist: vi.fn(),
+}));
+const artistIndexState = vi.hoisted(() => ({ index: null }));
+
+vi.mock('../../composables/useAlbumNavigation.js', () => ({
+  useAlbumNavigation: () => ({
+    albumForTrack: (candidate) => navigation.albums.get(candidate?.id) ?? null,
+    jumpToAlbum: navigation.jumpToAlbum,
+    jumpToArtist: navigation.jumpToArtist,
+  }),
+}));
+vi.mock('../../composables/useArtistIndex.js', () => ({
+  useArtistIndex: () => ({ state: artistIndexState }),
+}));
+
+const { default: TrackContextHero } = await import('./TrackContextHero.vue');
 
 for (const [component, filename] of [
   [TrackContextHero, './TrackContextHero.vue'],
@@ -24,6 +44,7 @@ for (const [component, filename] of [
   [UiTextButton, '../ui/UiTextButton.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+  [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -35,26 +56,29 @@ const track = {
   thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
 };
 
+beforeEach(() => {
+  navigation.albums = new Map([
+    [track.id, { id: 'album-1', name: '來源專輯' }],
+  ]);
+  navigation.jumpToAlbum.mockReset();
+  navigation.jumpToArtist.mockReset();
+  artistIndexState.index = {
+    artists: [],
+    trackArtistIds: { [track.id]: ['artist-1'] },
+  };
+});
+
 describe('TrackContextHero', () => {
-  it('renders one artwork-led identity with an explicit source destination', () => {
-    const onNavigateSource = vi.fn();
+  it('keeps artwork focused on track identity instead of repeating the source destination', () => {
     const { app, root } = mount(
       TrackContextHero,
       {
         track,
-        sourceName: '深夜練唱清單',
-        sourceLinkLabel: '前往播放清單：深夜練唱清單',
-        sourceNavigable: true,
-        onNavigateSource,
       },
       {
         actions: () => h('button', { type: 'button' }, '歌曲選項'),
       },
     );
-    const sourceLink = findAll(
-      root,
-      (node) => node.type === 'button' && textContent(node) === '深夜練唱清單',
-    )[0];
     const artwork = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('ui-track-thumb'),
     )[0];
@@ -62,34 +86,59 @@ describe('TrackContextHero', () => {
     expect(textContent(root)).toContain(track.title);
     expect(textContent(root)).toContain(track.artist);
     expect(textContent(root)).toContain('歌曲選項');
-    expect(sourceLink.props['aria-label']).toBe('前往播放清單：深夜練唱清單');
+    expect(textContent(root)).not.toContain('深夜練唱清單');
     expect(artwork.props.style).toMatchObject({
       width: '100%',
       height: '100%',
     });
-
-    trigger(sourceLink, 'onClick', { stopPropagation: vi.fn() });
-    expect(onNavigateSource).toHaveBeenCalledOnce();
     app.unmount();
   });
 
-  it('keeps an unknown queue source truthful and non-interactive', () => {
-    const onNavigateSource = vi.fn();
+  it('links verified album and artist destinations without emitting Dock close intent', () => {
+    const calls = [];
+    navigation.jumpToAlbum.mockImplementation(() => calls.push('album'));
+    navigation.jumpToArtist.mockImplementation(() => calls.push('artist'));
+    const { app, root } = mount(TrackContextHero, {
+      track,
+    });
+    const albumCta = findAll(
+      root,
+      (node) =>
+        node.type === 'button' &&
+        node.props['aria-label'] === `${track.title}，前往專輯：來源專輯`,
+    )[0];
+    const artistCta = findAll(
+      root,
+      (node) =>
+        node.type === 'button' &&
+        node.props['aria-label'] === `前往藝人：${track.artist}`,
+    )[0];
+
+    expect(albumCta).toBeTruthy();
+    expect(artistCta).toBeTruthy();
+    trigger(albumCta, 'onClick', { stopPropagation: vi.fn() });
+    trigger(artistCta, 'onClick', { stopPropagation: vi.fn() });
+    expect(calls).toEqual(['album', 'artist']);
+    app.unmount();
+  });
+
+  it('keeps unresolved destinations as plain identity text', () => {
+    const source = readFileSync(
+      new URL('./TrackContextHero.vue', import.meta.url),
+      'utf8',
+    );
+    navigation.albums.clear();
+    artistIndexState.index = { artists: [], trackArtistIds: {} };
     const { app, root } = mount(TrackContextHero, {
       track: { id: 'track-2', title: '準備播放', artist: '' },
-      sourceName: '目前佇列',
-      sourceNavigable: false,
-      onNavigateSource,
     });
-    const sourceLinks = findAll(
-      root,
-      (node) => node.type === 'button' && textContent(node) === '目前佇列',
-    );
+    const links = findAll(root, (node) => node.type === 'button');
 
-    expect(textContent(root)).toContain('目前佇列');
     expect(textContent(root)).toContain('未知演唱者');
-    expect(sourceLinks).toHaveLength(0);
-    expect(onNavigateSource).not.toHaveBeenCalled();
+    expect(links).toHaveLength(0);
+    expect(source).not.toContain('sourceName');
+    expect(source).not.toContain('sourceNavigable');
+    expect(source).not.toContain('navigateSource');
     app.unmount();
   });
 

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { nextTick } from 'vue';
+import { h, nextTick, shallowRef } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import AppRightDockHeader from './AppRightDockHeader.vue';
 import AppRightDockPanel from './AppRightDockPanel.vue';
@@ -23,6 +23,10 @@ const panelSource = readFileSync(
 );
 const sectionSource = readFileSync(
   new URL('./AppRightDockSection.vue', import.meta.url),
+  'utf8',
+);
+const tokenSource = readFileSync(
+  new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
 
@@ -126,6 +130,62 @@ describe('AppRightDockPanel', () => {
     );
     app.unmount();
   });
+
+  it('keeps the viewport as scroll-state authority during imperative scrolling', async () => {
+    const panelRef = shallowRef(null);
+    const TestHost = {
+      setup: () => () =>
+        h(
+          AppRightDockPanel,
+          {
+            ref: panelRef,
+            title: '播放清單',
+            closeLabel: '關閉播放清單',
+          },
+          { default: () => 'Queue content' },
+        ),
+    };
+    const { app, root } = mount(TestHost);
+    const chrome = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('app-right-dock-panel__chrome'),
+    )[0];
+    const viewport = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('ui-scroll-region__viewport'),
+    )[0];
+    viewport.scrollTo = vi.fn();
+
+    trigger(viewport, 'onScroll', { currentTarget: { scrollTop: 12 } });
+    await nextTick();
+    expect(String(chrome.props.class)).toContain(
+      'app-right-dock-panel__chrome--scrolled',
+    );
+
+    panelRef.value.scrollTo({ top: 0, behavior: 'smooth' });
+    await nextTick();
+    expect(viewport.scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'smooth',
+    });
+    expect(String(chrome.props.class)).toContain(
+      'app-right-dock-panel__chrome--scrolled',
+    );
+
+    trigger(viewport, 'onScroll', { currentTarget: { scrollTop: 0 } });
+    await nextTick();
+    expect(String(chrome.props.class)).not.toContain(
+      'app-right-dock-panel__chrome--scrolled',
+    );
+    app.unmount();
+  });
+
+  it('owns the complete scroll-elevation visual recipe', () => {
+    expect(panelSource).toMatch(
+      /\.app-right-dock-panel__chrome--scrolled\s*\{[^}]*backdrop-filter:\s*blur\(var\(--ui-right-dock-sticky-blur\)\);[^}]*box-shadow:\s*var\(--ui-right-dock-sticky-shadow\);/su,
+    );
+    expect(tokenSource).toContain('--ui-right-dock-sticky-background:');
+    expect(tokenSource).toContain('--ui-right-dock-sticky-blur: 0.75rem;');
+    expect(tokenSource).toContain('--ui-right-dock-sticky-shadow:');
+  });
 });
 
 describe('AppRightDockSection', () => {
@@ -171,8 +231,26 @@ describe('AppRightDockSection', () => {
   });
 
   it('owns header/body rhythm while the parent owns spacing between sections', () => {
+    expect(tokenSource).toContain(
+      '--ui-right-dock-content-inset: var(--ui-side-panel-content-inset);',
+    );
+    expect(tokenSource).toContain(
+      '--ui-right-dock-section-gap: var(--ui-side-panel-section-gap);',
+    );
+    expect(tokenSource).toContain(
+      '--ui-right-dock-content-gap: var(--ui-side-panel-content-gap);',
+    );
+    expect(tokenSource).toContain(
+      '--ui-right-dock-section-surface-padding: var(--ui-space-3);',
+    );
+    expect(sectionSource).toMatch(
+      /\.app-right-dock-section--contained\s*\{[^}]*padding:\s*var\(--ui-right-dock-section-surface-padding\);/su,
+    );
     expect(sectionSource).toMatch(
       /\.app-right-dock-section\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-right-dock-content-gap\);/su,
+    );
+    expect(sectionSource).toMatch(
+      /\.app-right-dock-section__header\s*\{[^}]*gap:\s*var\(--ui-right-dock-content-gap\);/su,
     );
     expect(sectionSource).toMatch(
       /\.app-right-dock-section__body\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-right-dock-content-gap\);/su,

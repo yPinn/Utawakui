@@ -6,7 +6,7 @@ import {
 } from './trackContextPresentation.js';
 
 describe('track context presentation', () => {
-  it('projects the active lyric and its next readable line for the current track', () => {
+  it('projects the active lyric plus two following lines for the fixed preview', () => {
     expect(
       createTrackLyricsPreview({
         currentTrackId: 'track-1',
@@ -16,6 +16,7 @@ describe('track context presentation', () => {
           { lineId: 'line-0', text: 'Earlier' },
           { lineId: 'line-1', text: 'Current line' },
           { lineId: 'line-2', text: 'Next line' },
+          { lineId: 'line-3', text: 'Faded line' },
         ],
         source: { kind: 'manual', label: '演出修訂版' },
       }),
@@ -23,6 +24,7 @@ describe('track context presentation', () => {
       lines: [
         { id: 'line-1', text: 'Current line', active: true },
         { id: 'line-2', text: 'Next line', active: false },
+        { id: 'line-3', text: 'Faded line', active: false },
       ],
       sourceLabel: '手動匯入 / 演出修訂版',
     });
@@ -39,17 +41,37 @@ describe('track context presentation', () => {
     ).toBeNull();
   });
 
-  it('uses the first two non-empty lines before playback has an active line', () => {
+  it('uses the first three non-empty lines for a prepared or untimed preview', () => {
     expect(
       createTrackLyricsPreview({
         currentTrackId: 'track-1',
         selectedTrackId: 'track-1',
         activeLineIndex: -1,
-        lines: [{ text: '  ' }, { text: 'First' }, { text: 'Second' }],
+        lines: [
+          { text: '  ' },
+          { text: 'First' },
+          { text: 'Second' },
+          { text: 'Third' },
+        ],
       })?.lines,
     ).toEqual([
       { id: 'line-1', text: 'First', active: true },
       { id: 'line-2', text: 'Second', active: false },
+      { id: 'line-3', text: 'Third', active: false },
+    ]);
+  });
+
+  it('preloads the first readable lines before a timed cue starts', () => {
+    expect(
+      createTrackLyricsPreview({
+        currentTrackId: 'track-1',
+        selectedTrackId: 'track-1',
+        activeLineIndex: -1,
+        lines: [{ text: 'Opening line' }, { text: 'Next line' }],
+      })?.lines,
+    ).toEqual([
+      { id: 'line-0', text: 'Opening line', active: true },
+      { id: 'line-1', text: 'Next line', active: false },
     ]);
   });
 
@@ -116,15 +138,35 @@ describe('track context presentation', () => {
     });
   });
 
-  it('reports only readiness that exists in the local track contract', () => {
+  it('projects local track capabilities in natural language without overstating playback state', () => {
     expect(
-      createTrackReadiness({
-        lyrics: { status: 'available', sources: [{ filename: 'main.lrc' }] },
-        hasSeparation: true,
-      }),
+      createTrackReadiness(
+        {
+          lyrics: { status: 'available', sources: [{ filename: 'main.lrc' }] },
+          hasSeparation: true,
+        },
+        {
+          document: {
+            granularity: 'T1',
+            lines: [{ lineId: 'line-1', text: 'Current line', startMs: 0 }],
+          },
+        },
+      ),
     ).toEqual([
-      { id: 'lyrics', label: '歌詞可用', tone: 'success' },
-      { id: 'separation', label: '分離素材可用', tone: 'success' },
+      {
+        id: 'lyrics',
+        label: '歌詞',
+        status: '逐行同步',
+        tone: 'success',
+        description: '歌詞包含逐行時間，可跟隨播放進度。',
+      },
+      {
+        id: 'separation',
+        label: '人聲分離',
+        status: '素材已準備',
+        tone: 'success',
+        description: '伴奏與導唱聲道素材已準備。',
+      },
     ]);
 
     expect(
@@ -133,8 +175,77 @@ describe('track context presentation', () => {
         hasSeparation: false,
       }),
     ).toEqual([
-      { id: 'lyrics', label: '尚無歌詞', tone: 'muted' },
-      { id: 'separation', label: '尚無分離素材', tone: 'muted' },
+      {
+        id: 'lyrics',
+        label: '歌詞',
+        status: '尚未取得',
+        tone: 'muted',
+        description: '目前沒有可用歌詞素材。',
+      },
+      {
+        id: 'separation',
+        label: '人聲分離',
+        status: '尚未準備',
+        tone: 'muted',
+        description: '尚未產生伴奏與導唱聲道素材。',
+      },
     ]);
+  });
+
+  it.each([
+    {
+      granularity: 'T0',
+      lines: [{ lineId: 'line-1', text: 'Plain lyric' }],
+      expected: '純文字',
+    },
+    {
+      granularity: 'T2',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: 'Fully timed',
+          segments: [{ segmentId: 'segment-1', text: 'Fully', startMs: 0 }],
+        },
+      ],
+      expected: '完整逐字同步',
+    },
+    {
+      granularity: 'T2',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: 'Partly timed',
+          segments: [{ segmentId: 'segment-1', text: 'Partly', startMs: 0 }],
+        },
+        { lineId: 'line-2', text: 'Line timing only', startMs: 1000 },
+      ],
+      expected: '部分逐字同步',
+    },
+  ])(
+    'describes $expected lyrics without exposing internal tier names',
+    ({ granularity, lines, expected }) => {
+      const [lyrics] = createTrackReadiness(
+        { lyrics: { status: 'available' } },
+        { document: { granularity, lines } },
+      );
+
+      expect(lyrics.status).toBe(expected);
+      expect(lyrics.status).not.toMatch(/T[0-2]/u);
+    },
+  );
+
+  it('keeps asynchronous lyric states truthful while the document is unavailable', () => {
+    expect(
+      createTrackReadiness(
+        { lyrics: { status: 'available' } },
+        { isLoading: true },
+      )[0],
+    ).toMatchObject({ status: '讀取中', tone: 'info' });
+    expect(
+      createTrackReadiness(
+        { lyrics: { status: 'available' } },
+        { error: new Error('private detail') },
+      )[0],
+    ).toMatchObject({ status: '暫時無法讀取', tone: 'danger' });
   });
 });

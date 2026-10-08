@@ -20,13 +20,6 @@ function updateScrollState(event) {
 
 function scrollTo(...args) {
   scrollRegion.value?.scrollTo(...args);
-  const [first, second] = args;
-  if (
-    (typeof first === 'object' && first?.top === 0) ||
-    (first === 0 && second === 0)
-  ) {
-    hasScrolled.value = false;
-  }
 }
 
 defineExpose({ scrollTo });

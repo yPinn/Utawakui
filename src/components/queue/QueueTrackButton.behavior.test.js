@@ -37,6 +37,10 @@ const source = readFileSync(
   new URL('./QueueTrackButton.vue', import.meta.url),
   'utf8',
 );
+const rowSource = readFileSync(
+  new URL('../ui/UiTrackRow.vue', import.meta.url),
+  'utf8',
+);
 
 function render(props) {
   return renderToString(
@@ -58,6 +62,7 @@ describe('QueueTrackButton standard Track Row adapter', () => {
 
     expect(html).toContain('<li');
     expect(html).toContain('ui-track--interactive');
+    expect(html).toContain('ui-track--state-surface');
     expect(html).toContain('ui-track--active');
     expect(html).toContain('ui-track--current');
     expect(html).not.toContain('<li role="button"');
@@ -218,6 +223,43 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     mounted.app.unmount();
   });
 
+  it('can keep preview rows passive while preserving artwork, artist, and caller-owned actions', () => {
+    const togglePlayback = vi.fn();
+    const mounted = mount(
+      QueueTrackButton,
+      {
+        track,
+        interactive: false,
+        onTogglePlayback: togglePlayback,
+      },
+      {
+        trail: () => h('button', { type: 'button' }, 'Preview options'),
+      },
+    );
+    const row = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('queue-track'),
+    )[0];
+    const buttons = findAll(row, (node) => node.type === 'button');
+    const artworkButton = buttons.find((node) =>
+      String(node.props?.class ?? '').includes('ui-track__artwork-action'),
+    );
+
+    expect(String(row.props.class)).not.toContain('ui-track--interactive');
+    expect(String(row.props.class)).toContain('ui-track--state-surface');
+    expect(
+      buttons.some((node) =>
+        String(node.props?.class ?? '').includes('ui-track__action'),
+      ),
+    ).toBe(false);
+    expect(textContent(row)).toContain(track.artist);
+    expect(textContent(row)).toContain('Preview options');
+    expect(textContent(row)).not.toContain(`${track.title}的更多選項`);
+
+    trigger(artworkButton, 'onClick', { stopPropagation: vi.fn() });
+    expect(togglePlayback).toHaveBeenCalledWith(track);
+    mounted.app.unmount();
+  });
+
   it('keeps drag icons out while the whole reorderable row stays draggable', async () => {
     const html = await render({
       track,
@@ -257,10 +299,25 @@ describe('QueueTrackButton standard Track Row adapter', () => {
 
     expect(menuButton.props['aria-expanded']).toBe('true');
     expect(String(row.props.class)).toContain('right-dock-track--menu-open');
+    expect(String(row.props.class)).toContain('ui-track--state-surface-active');
     trigger(row, 'onContextmenu', event);
     expect(event.preventDefault).toHaveBeenCalledOnce();
     expect(event.stopPropagation).toHaveBeenCalledOnce();
     expect(openMenu).toHaveBeenCalledWith({ track, event });
     mounted.app.unmount();
+  });
+
+  it('separates compound action feedback from whole-row interaction', () => {
+    expect(source).toContain('state-surface');
+    expect(source).toContain(':state-surface-active="menuOpen"');
+    expect(rowSource).toMatch(
+      /\.ui-track--state-surface:not\(\.ui-track--active\):hover::before/u,
+    );
+    expect(rowSource).toMatch(
+      /\.ui-track--state-surface:not\(\.ui-track--active\):focus-within::before/u,
+    );
+    expect(rowSource).toMatch(
+      /\.ui-track--state-surface-active:not\(\.ui-track--active\)::before/u,
+    );
   });
 });

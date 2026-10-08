@@ -1,17 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
-import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import TrackArtistPreview from './TrackArtistPreview.vue';
+import TrackCapabilityMatrix from './TrackCapabilityMatrix.vue';
 import TrackContextActions from './TrackContextActions.vue';
 import TrackContextHero from './TrackContextHero.vue';
 import TrackLyricsPreview from './TrackLyricsPreview.vue';
 import TrackQueuePreview from './TrackQueuePreview.vue';
-import UiChip from '../ui/UiChip.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
+import UiTextButton from '../ui/UiTextButton.vue';
 
 const props = defineProps({
   currentTrack: { type: Object, default: null },
@@ -19,8 +19,11 @@ const props = defineProps({
   sourceLinkLabel: { type: String, default: '' },
   sourceNavigable: { type: Boolean, default: false },
   upcomingTracks: { type: Array, default: () => [] },
-  collection: { type: Object, default: null },
+  queuedTrackIds: { type: Array, default: () => [] },
+  playingTrackId: { type: String, default: '' },
+  playerPlaying: { type: Boolean, default: false },
   lyricsPreview: { type: Object, default: null },
+  lyricsLoading: { type: Boolean, default: false },
   artistSummary: { type: Object, default: null },
   readiness: { type: Array, default: () => [] },
 });
@@ -31,9 +34,8 @@ const emit = defineEmits([
   'openArtist',
   'openLyrics',
   'openQueue',
+  'toggleQueueTrackPlayback',
 ]);
-
-const COLLECTION_COVER_SIZE = 120;
 
 const queueContextLabel = computed(() => {
   if (props.queueSourceName) return props.queueSourceName;
@@ -62,11 +64,6 @@ const currentTrackFacts = computed(() => {
       value: formatDuration(props.currentTrack.duration),
     });
   }
-  facts.push({
-    id: 'source',
-    label: '來源',
-    value: formatStudioTrackSource(props.currentTrack),
-  });
   return facts;
 });
 </script>
@@ -75,19 +72,27 @@ const currentTrackFacts = computed(() => {
   <AppRightDockPanel
     class="studio-context-inspector"
     title="播放資訊"
-    :subtitle="queueContextLabel"
     close-label="關閉播放資訊"
     aria-label="播放資訊"
     @close="emit('close')"
   >
-    <TrackContextHero
-      v-if="currentTrack"
-      :track="currentTrack"
-      :source-name="queueContextLabel"
-      :source-link-label="sourceLinkLabel"
-      :source-navigable="sourceNavigable"
-      @navigate-source="emit('navigateSource')"
-    >
+    <template #identity>
+      <div class="studio-context-inspector__source-identity">
+        <UiTextButton
+          v-if="sourceNavigable"
+          class="studio-context-inspector__source-link"
+          :text="queueContextLabel"
+          :aria-label="sourceLinkLabel"
+          overflow="ellipsis"
+          @click="emit('navigateSource')"
+        />
+        <span v-else class="studio-context-inspector__source-label">
+          {{ queueContextLabel }}
+        </span>
+      </div>
+    </template>
+
+    <TrackContextHero v-if="currentTrack" :track="currentTrack">
       <template #actions>
         <TrackContextActions :track="currentTrack" />
       </template>
@@ -103,8 +108,10 @@ const currentTrackFacts = computed(() => {
     </AppRightDockSection>
 
     <TrackLyricsPreview
-      v-if="lyricsPreview?.lines?.length"
+      v-if="currentTrack && (lyricsLoading || lyricsPreview?.lines?.length)"
       :preview="lyricsPreview"
+      :artwork-url="currentTrack?.thumbnailUrl ?? ''"
+      :loading="lyricsLoading"
       @open="emit('openLyrics')"
     />
 
@@ -117,7 +124,11 @@ const currentTrackFacts = computed(() => {
     <TrackQueuePreview
       v-if="upcomingTracks.length > 0"
       :tracks="upcomingTracks"
+      :queued-track-ids="queuedTrackIds"
+      :playing-track-id="playingTrackId"
+      :player-playing="playerPlaying"
       @open="emit('openQueue')"
+      @toggle-playback="emit('toggleQueueTrackPlayback', $event)"
     />
 
     <AppRightDockSection
@@ -132,94 +143,53 @@ const currentTrackFacts = computed(() => {
           <dd>{{ fact.value }}</dd>
         </div>
       </dl>
-      <ul
-        v-if="readiness.length > 0"
-        class="studio-context-inspector__readiness"
-        aria-label="素材狀態"
-      >
-        <li v-for="item in readiness" :key="item.id">
-          <UiChip :tone="item.tone">{{ item.label }}</UiChip>
-        </li>
-      </ul>
-    </AppRightDockSection>
-
-    <AppRightDockSection
-      v-if="collection"
-      class="studio-context-inspector__section studio-context-inspector__collection"
-      heading="播放來源"
-      appearance="contained"
-    >
-      <UiCollageThumb
-        class="studio-context-inspector__collection-cover"
-        :cover-url="collection.coverUrl"
-        :tracks="collection.tracks"
-        :can-collage="collection.canCollage"
-        :size="COLLECTION_COVER_SIZE"
+      <UiSeparator
+        v-if="currentTrackFacts.length > 0 && readiness.length > 0"
+        class="studio-context-inspector__details-divider"
+        decorative
       />
-      <div class="studio-context-inspector__collection-copy">
-        <h4>{{ collection.name }}</h4>
-        <p v-if="collection.description">{{ collection.description }}</p>
-      </div>
+      <TrackCapabilityMatrix v-if="readiness.length > 0" :items="readiness" />
     </AppRightDockSection>
   </AppRightDockPanel>
 </template>
 
 <style scoped>
-.studio-context-inspector__collection,
-.studio-context-inspector__collection-copy,
-.studio-context-inspector__details {
+.studio-context-inspector__details,
+.studio-context-inspector__source-identity,
+.studio-context-inspector__source-link,
+.studio-context-inspector__source-label {
   min-width: 0;
 }
 
-.studio-context-inspector__collection h4,
-.studio-context-inspector__collection p,
-.studio-context-inspector__details dl,
-.studio-context-inspector__details dt,
-.studio-context-inspector__details dd,
-.studio-context-inspector__readiness {
-  margin: 0;
-}
-
-.studio-context-inspector__collection p {
-  color: var(--ui-color-text-muted);
+.studio-context-inspector__source-identity {
+  min-block-size: var(--ui-control-height);
+  display: flex;
+  align-items: center;
+  padding-inline-start: var(--ui-space-2);
+  color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
-}
-
-.studio-context-inspector__collection :deep(.app-right-dock-section__body) {
-  justify-items: start;
-}
-
-.studio-context-inspector__collection-cover {
-  box-shadow: var(--ui-shadow-contact);
-}
-
-.studio-context-inspector__collection-copy {
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.studio-context-inspector__collection h4 {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  line-height: var(--ui-line-height-label);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.studio-context-inspector__source-link,
+.studio-context-inspector__source-label {
+  max-width: 100%;
+}
+
+.studio-context-inspector__source-label {
+  display: block;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.studio-context-inspector__collection p {
-  max-inline-size: 32ch;
-  font-weight: var(--ui-font-weight-regular);
-  text-wrap: pretty;
-  overflow-wrap: anywhere;
-}
-
-.studio-context-inspector__readiness {
+.studio-context-inspector__details dl,
+.studio-context-inspector__details dt,
+.studio-context-inspector__details dd {
   margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
 .studio-context-inspector__details dl {
@@ -252,20 +222,7 @@ const currentTrackFacts = computed(() => {
   white-space: nowrap;
 }
 
-.studio-context-inspector__readiness {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-}
-
-.studio-context-inspector__section :deep(.ui-chip) {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.studio-context-inspector :deep(.app-right-dock-header p),
 .studio-context-inspector__section :deep(.ui-hint),
-.studio-context-inspector__collection-copy,
 .studio-context-inspector__details dd {
   -webkit-user-select: none;
   user-select: none;

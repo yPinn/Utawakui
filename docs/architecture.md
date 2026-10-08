@@ -87,9 +87,10 @@ header、單一 scroll owner 與 content inset；播放 queue authority 仍由
 main-owned separation queue 持有，實際進度與錯誤權威不移入 Renderer。工具列模式的名稱、順序
 與預設值由 Lyrics 同用的 `separationPresets.js` recipe catalog 投影；批次完成數屬於 header 摘要，
 目前歌曲百分比只由鄰接的單曲 progress 顯示一次。Right
-Dock 的 expanded resize width、desktop reserved bay、compact overlay、Escape 與 focus restoration
+Dock 的 expanded resize width、persistent desktop reserved bay、compact overlay、Escape 與 focus restoration
 屬於 shell，不得回流到 PlayerBar 或 playlist component。Pointer／keyboard resize separator 只在
-expanded state 掛載；collapsed rail 不保留全高 resize hit target 或 value semantics。
+expanded state 掛載；collapsed restore control 只保留按鈕局部邊界，不保留全高 rail、resize hit target
+或 value semantics。Shell-owned bay仍維持workspace幾何，但其空白wrapper不承接pointer hit testing。
 Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
 tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
 只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow

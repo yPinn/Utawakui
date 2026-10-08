@@ -48,6 +48,7 @@ describe('App shell right Dock', () => {
     expect(source).toContain('class="shell__main shell__main--with-dock"');
     expect(source).toContain('class="shell__workspace"');
     expect(source).toContain('class="shell__dock"');
+    expect(source).toContain("'shell__dock--collapsed': !rightDockExpanded");
     expect(source).toContain('<AppRightDock');
     expect(source).toContain('<QueuePanel');
     expect(source).toContain('<PerformanceSessionPanel');
@@ -136,7 +137,7 @@ describe('App shell right Dock', () => {
       /<div[^>]*class="shell__bgm-boundary"[\s\S]*?<BgmPlayer[\s\S]*?<\/div>/u,
     );
     expect(source).toMatch(
-      /<main class="shell__main shell__main--with-dock">[\s\S]*?class="shell__bgm-boundary"[\s\S]*?class="shell__dock"[\s\S]*?<\/main>/u,
+      /<main[\s\S]*?class="shell__main shell__main--with-dock"[\s\S]*?class="shell__bgm-boundary"[\s\S]*?class="shell__dock"[\s\S]*?<\/main>/u,
     );
     expect(source).toMatch(
       /\.shell__main\s*\{[^}]*position:\s*relative;[^}]*min-width:\s*0;[^}]*min-height:\s*0;/su,
@@ -163,13 +164,20 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('--ui-bgm-player-min-inline-size:');
   });
 
-  it('reserves the shared desktop bay inside the 8px shell perimeter', () => {
+  it('reserves the desktop Dock bay while keeping the collapsed control boundary local', () => {
     expect(source).toContain('<div class="shell__workspace">');
     expect(source).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );
+    expect(source).not.toContain('.shell__main--dock-expanded');
     expect(source).toMatch(
-      /\.shell__dock\s*\{[^}]*justify-content:\s*flex-end;[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
+      /\.shell__dock\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*pointer-events:\s*none;[^}]*\}/su,
+    );
+    expect(source).toMatch(
+      /\.shell__dock--collapsed\s*\{[^}]*align-items:\s*flex-end;[^}]*\}/su,
+    );
+    expect(source).not.toMatch(
+      /\.shell__dock--collapsed\s*\{[^}]*position:\s*absolute;/su,
     );
     expect(source).toMatch(
       /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
@@ -238,7 +246,7 @@ describe('App shell right Dock', () => {
     expect(source).toContain('utawakui:right-dock:queue-toggle');
   });
 
-  it('returns the bay to an end-aligned overlay at the shared compact breakpoint', () => {
+  it('returns the reserved bay to a local-width overlay at the compact breakpoint', () => {
     expect(source).toMatch(
       /@media \(max-width: 70rem\)[\s\S]*\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);[^}]*gap:\s*0;[^}]*\}/u,
     );

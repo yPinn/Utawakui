@@ -56,7 +56,7 @@ const headingId = `app-right-dock-section-heading-${useId()}`;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ui-space-2);
+  gap: var(--ui-right-dock-content-gap);
 }
 
 .app-right-dock-section__header h3 {

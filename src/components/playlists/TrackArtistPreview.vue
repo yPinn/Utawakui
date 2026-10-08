@@ -14,7 +14,7 @@ const emit = defineEmits(['open']);
 const summaryText = computed(() => {
   const album =
     props.summary.albumCount > 0 ? ` · ${props.summary.albumCount} 張專輯` : '';
-  return `本機收錄 ${props.summary.trackCount} 首${album}`;
+  return `本機 ${props.summary.trackCount} 首${album}`;
 });
 </script>
 

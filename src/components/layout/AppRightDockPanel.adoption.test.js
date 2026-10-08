@@ -11,12 +11,16 @@ const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
 const sessionSource = readSource(
   '../performance-session/PerformanceSessionPanel.vue',
 );
+const separationQueueSource = readSource(
+  '../separation/SeparationQueuePanel.vue',
+);
 
 describe('AppRightDockPanel production adoption', () => {
   it.each([
     ['QueuePanel', queueSource],
     ['TrackContextPanel', contextSource],
     ['PerformanceSessionPanel', sessionSource],
+    ['SeparationQueuePanel', separationQueueSource],
   ])(
     '%s delegates shared Dock geometry and scrolling to the compound',
     (_, source) => {
@@ -27,6 +31,9 @@ describe('AppRightDockPanel production adoption', () => {
       expect(source).not.toContain('AppRightDockHeader');
       expect(source).not.toContain('UiScrollRegion');
       expect(source).not.toContain('--ui-right-dock-');
+      expect(source).not.toContain('hasScrolled');
+      expect(source).not.toContain('updateScrollState');
+      expect(source).not.toContain('chrome--scrolled');
     },
   );
 
@@ -46,7 +53,8 @@ describe('AppRightDockPanel production adoption', () => {
     expect(contextSource).toContain('<TrackArtistPreview');
     expect(contextSource).toContain('<TrackQueuePreview');
     expect(contextSource).not.toContain('<UiTrackRow');
-    expect(queuePreviewSource.match(/<UiTrackRow/gu)).toHaveLength(1);
+    expect(queuePreviewSource).not.toContain('<UiTrackRow');
+    expect(queuePreviewSource.match(/<QueueTrackButton/gu)).toHaveLength(1);
     expect(contextSource).not.toMatch(/:tracks="\[currentTrack\]"/u);
   });
 

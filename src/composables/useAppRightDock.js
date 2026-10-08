@@ -57,8 +57,8 @@ function hideSurface(surface) {
     return;
   }
 
-  // Remember the last removed surface so the collapsed rail and resize axis
-  // can restore it bidirectionally without inventing a new default.
+  // Remember the last removed surface so the collapsed restore control can
+  // reopen it without inventing a new default.
   lastSurface.value = surface;
   isExpanded.value = false;
 }

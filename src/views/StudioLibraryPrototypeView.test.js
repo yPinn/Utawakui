@@ -153,11 +153,23 @@ describe('StudioLibraryPrototypeView development integration', () => {
       ':source-link-label="queueSourceLinkLabel"',
     );
     expect(contextSource).toContain('@navigate-source="navigateToQueueSource"');
+    expect(contextSource).not.toContain('activeCollection');
+    expect(contextSource).not.toContain(':collection="');
     expect(contextSource).toContain(
       "import { useAppView } from '../composables/useAppView.js';",
     );
     expect(contextSource).toContain("setActiveView('lyrics')");
     expect(contextSource).toContain('@open-lyrics="openLyrics"');
+    expect(contextSource).toContain(
+      "import { useCurrentTrackLyricsPreview } from '../composables/useCurrentTrackLyricsPreview.js';",
+    );
+    expect(contextSource).toContain('useCurrentTrackLyricsPreview({');
+    expect(contextSource).toContain('document: lyricsDocument');
+    expect(contextSource).toContain('isLoading: lyricsLoading');
+    expect(contextSource).toContain('error: lyricsError');
+    expect(contextSource).toContain('currentTrack: currentLyricsTrack');
+    expect(contextSource).not.toContain('selectedLyricsTrack');
+    expect(contextSource).not.toContain('selectedLyricsSource');
     expect(contextSource).toContain(
       "import { useArtistIndex } from '../composables/useArtistIndex.js';",
     );
@@ -171,6 +183,28 @@ describe('StudioLibraryPrototypeView development integration', () => {
     );
     expect(contextSource).toContain('@open-queue="emit(\'openQueue\')"');
     expect(contextSource).toContain(':upcoming-tracks="upcomingTracks"');
+    expect(contextSource).toContain(
+      "import { toPlayableTrack } from '../utils/playableTrack.js';",
+    );
+    expect(contextSource).toContain('queuedTracks');
+    expect(contextSource).toContain('setCurrentTrack');
+    expect(contextSource).toContain('playTrack');
+    expect(contextSource).toContain('toggle: togglePlayerPlayback');
+    expect(contextSource).toContain('const queuedTrackIds = computed');
+    expect(contextSource).toContain(
+      'function toggleUpcomingTrackPlayback(track)',
+    );
+    expect(contextSource).toContain('playerState.track?.id === track.id');
+    expect(contextSource).toContain('setCurrentTrack(track.id, { source })');
+    expect(contextSource).toContain('playTrack(toPlayableTrack(track))');
+    expect(contextSource).toContain(':queued-track-ids="queuedTrackIds"');
+    expect(contextSource).toContain(
+      ':playing-track-id="playerState.track?.id ?? \'\'"',
+    );
+    expect(contextSource).toContain(':player-playing="playerState.isPlaying"');
+    expect(contextSource).toContain(
+      '@toggle-queue-track-playback="toggleUpcomingTrackPlayback"',
+    );
     expect(contextSource).not.toContain('createStudioLibraryPresentation');
     expect(contextSource).not.toContain('selectedPlaylist');
     expect(contextSource).not.toMatch(
@@ -191,7 +225,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(dossierSource).not.toContain('StudioLibraryMetadataRail');
   });
 
-  it('keeps the compact context plane temporary while preserving a full-height collapsed rail', () => {
+  it('keeps the compact context plane temporary without a full-height collapsed rail', () => {
     expect(appSource).toContain('position: absolute');
     expect(appSource).toContain('@media (max-width: 70rem)');
     expect(folderLayoutSource).not.toContain('@media (max-width: 70rem)');
@@ -202,6 +236,13 @@ describe('StudioLibraryPrototypeView development integration', () => {
     );
     expect(rightDockSource).toContain('.app-right-dock--collapsed');
     expect(rightDockSource).toContain('var(--ui-right-dock-rail-width)');
+    expect(rightDockSource).toMatch(
+      /\.app-right-dock--collapsed\s*\{[^}]*height:\s*calc\(var\(--ui-icon-button-size-lg\) \+ var\(--ui-space-1\)\);/su,
+    );
+    expect(rightDockSource).not.toMatch(
+      /\.app-right-dock\s*\{[^}]*height:\s*100%;/su,
+    );
+    expect(appSource).toContain("'shell__dock--collapsed': !rightDockExpanded");
     expect(inspectorSource).not.toContain(
       '.studio-context-inspector--collapsed',
     );

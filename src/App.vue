@@ -468,7 +468,12 @@ useKeyboardShortcuts({ internalViewShortcuts });
           @request-close="closeBgmPlayer"
         />
       </div>
-      <div class="shell__dock">
+      <div
+        class="shell__dock"
+        :class="{
+          'shell__dock--collapsed': !rightDockExpanded,
+        }"
+      >
         <AppRightDock
           :expanded="rightDockExpanded"
           :label="rightDockLabel"
@@ -643,9 +648,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
 }
 
 .shell__main--with-dock {
-  /* Queue and metadata are surfaces in one shell-owned plane. Reserve the
-     complete desktop bay so foreground changes and folding never reflow the
-     active workspace. */
+  /* Keep the Dock bay structural in both states so folding does not reflow the
+     active workspace. The collapsed component itself remains button-sized. */
   grid-template-columns: minmax(0, 1fr) var(--ui-right-dock-width);
   gap: var(--ui-space-3);
 }
@@ -694,6 +698,14 @@ useKeyboardShortcuts({ internalViewShortcuts });
      PlayerBar. This matching top inset makes the right plane independent of
      the workspace's taller archive-tab baseline, just like the Sidebar. */
   padding-top: var(--ui-shell-content-inset-block);
+  /* The wrapper owns layout only. It must not become an invisible hit target
+     above the collapsed restore control. AppRightDock opts its real boundary
+     back into pointer handling. */
+  pointer-events: none;
+}
+
+.shell__dock--collapsed {
+  align-items: flex-end;
 }
 
 .shell__dock-surface {
