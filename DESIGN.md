@@ -891,6 +891,25 @@ and are shared across Output slots and templates, but selecting a Swatch still a
 only to the field where it was invoked. Look, template defaults, LUT concepts, and the
 app-wide `UiColorField` primitive do not consume this Palette.
 
+The raw Hex editor presents those preferences as one compact Color Shelf below the
+current-color／Hex control. Common Colors stay first and Recent Swatches second; each
+source is bounded by the shared eight-color preference capacity and keeps a stable
+four-column／two-row footprint so repeated choices retain their position in the narrow
+inspector. The Shelf header owns the explicit add／remove／full action, while each source
+rail owns only selection. A selected Swatch uses a nested well border and `aria-pressed`
+instead of covering the color with a large check. The current-color trigger remains a
+native `input[type='color']`; its OS／Chromium picker paints as system top-layer content
+and may temporarily cover inspector content, so Output does not clip, restyle, or replace
+that popup. Classic Paint is a reference for fixed-palette density and clear current-state
+framing only: the control continues to use Utawakui field tokens, focus rings, theme
+colors, typography, and spacing rather than importing a retro or modern Paint skin.
+
+Output spatial position stays a feature-level three-by-three radio grid rather than a
+global UI primitive. Its intrinsic footprint includes every option, gap, padding, and
+border; the visible selected name is centered below the grid instead of consuming a
+second inline track beside it. This keeps the control inside the narrow inspector and
+leaves the shared setting row as the sole owner of label／control column alignment.
+
 The shared appearance schema owns the inspector hierarchy: Color Treatment, Custom
 Color when supported, Typography, Readability, Background, Layout, Motion, then
 Content Visibility. Templates omit empty groups but cannot redefine their relative
@@ -905,7 +924,10 @@ the shared schema; a template with no controls also omits the appearance reset
 action.
 
 Live Stage alone pilots local font selection. Its font control is a searchable
-select-only combobox: the committed family name remains in control-panel UI type,
+combobox: clicking the closed field opens the complete available list and highlights
+the committed family, then brings that option back into the nearest visible portion
+of the list; only text the operator actually types activates filtering. The committed
+family name remains in control-panel UI type,
 while a separate Traditional Chinese／Korean／Japanese／Latin sample uses the
 candidate family in both the closed control and rich options. Bundled presets stay
 visible before any permission request. The app never scans at startup; an explicit

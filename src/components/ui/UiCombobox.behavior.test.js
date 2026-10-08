@@ -92,6 +92,53 @@ describe('UiCombobox', () => {
     app.unmount();
   });
 
+  it('opens from a pointer click and highlights the selected option', async () => {
+    const { app, root } = mount(UiCombobox, {
+      id: 'lyrics-source',
+      label: '歌詞來源',
+      modelValue: 'netease',
+      items: ITEMS,
+    });
+    const control = input(root);
+
+    trigger(control, 'onClick');
+    await nextTick();
+
+    expect(control.props['aria-expanded']).toBe(true);
+    expect(control.props['aria-activedescendant']).toBe(
+      'lyrics-source-option-netease',
+    );
+    expect(options()).toHaveLength(4);
+    app.unmount();
+  });
+
+  it('brings the committed selection back into view when reopened', async () => {
+    const selectedOption = { scrollIntoView: vi.fn() };
+    document.getElementById = vi.fn((id) =>
+      id === 'lyrics-source-option-better-lyrics' ? selectedOption : null,
+    );
+    const { app, root } = mount(UiCombobox, {
+      id: 'lyrics-source',
+      label: '歌詞來源',
+      modelValue: 'better-lyrics',
+      items: ITEMS,
+    });
+    const control = input(root);
+
+    trigger(control, 'onClick');
+    await nextTick();
+    await nextTick();
+
+    expect(document.getElementById).toHaveBeenCalledWith(
+      'lyrics-source-option-better-lyrics',
+    );
+    expect(selectedOption.scrollIntoView).toHaveBeenCalledWith({
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    app.unmount();
+  });
+
   it('opens and filters the list as the user types', async () => {
     const { app, root } = mount(UiCombobox, {
       id: 'lyrics-source',

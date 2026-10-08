@@ -52,6 +52,7 @@ const { claim, release } = useContextMenuGate();
 const inputRef = useTemplateRef('input');
 const listboxRef = useTemplateRef('listbox');
 const query = shallowRef('');
+const isFiltering = shallowRef(false);
 const isOpen = shallowRef(false);
 const highlightedIndex = shallowRef(-1);
 const position = shallowRef({ left: '0px', top: '0px', width: '0px' });
@@ -65,7 +66,7 @@ const selectedItem = computed(() =>
   props.items.find((item) => String(item.value) === String(props.modelValue)),
 );
 const filteredItems = computed(() => {
-  const needle = query.value.trim().toLowerCase();
+  const needle = isFiltering.value ? query.value.trim().toLowerCase() : '';
   if (!needle) return props.items;
   return props.items.filter((item) =>
     String(item.searchText ?? item.label)
@@ -82,6 +83,25 @@ const activeOptionId = computed(() => {
   return item ? optionId(item) : undefined;
 });
 
+watch(
+  [isOpen, activeOptionId],
+  ([open, optionIdValue]) => {
+    if (
+      !open ||
+      !optionIdValue ||
+      typeof document === 'undefined' ||
+      typeof document.getElementById !== 'function'
+    ) {
+      return;
+    }
+    document.getElementById(optionIdValue)?.scrollIntoView?.({
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  },
+  { flush: 'post' },
+);
+
 function firstEnabledIndex() {
   return filteredItems.value.findIndex((item) => !item.disabled);
 }
@@ -94,6 +114,7 @@ function lastEnabledIndex() {
 }
 
 function syncQueryFromModel() {
+  isFiltering.value = false;
   query.value = selectedItem.value ? String(selectedItem.value.label) : '';
 }
 
@@ -166,6 +187,7 @@ function closeList({ revertQuery = false } = {}) {
 function selectItem(item) {
   if (item.disabled) return;
   emit('update:modelValue', item.value);
+  isFiltering.value = false;
   query.value = String(item.label);
   closeList();
   inputRef.value?.focus();
@@ -193,9 +215,14 @@ function commitHighlighted() {
 }
 
 function onInput(event) {
+  isFiltering.value = true;
   query.value = event.target.value;
   ensureOpen();
   highlightedIndex.value = firstEnabledIndex();
+}
+
+function onClick() {
+  if (!isOpen.value) openWithSelection();
 }
 
 function onKeydown(event) {
@@ -319,6 +346,7 @@ onBeforeUnmount(() => {
           :aria-activedescendant="activeOptionId"
           :aria-describedby="describedBy"
           :aria-invalid="fieldInvalid || undefined"
+          @click="onClick"
           @input="onInput"
           @keydown="onKeydown"
           @blur="onBlur"

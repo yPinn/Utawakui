@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import ObsPositionPicker from './ObsPositionPicker.vue';
@@ -79,5 +80,26 @@ describe('ObsPositionPicker', () => {
     expect(update).toHaveBeenCalledWith('top-right');
     expect(options[2].focus).toHaveBeenCalledOnce();
     app.unmount();
+  });
+
+  it('keeps the complete grid and visible value in one narrow-column footprint', () => {
+    const source = readFileSync(
+      new URL('./ObsPositionPicker.vue', import.meta.url),
+      'utf8',
+    );
+    const styles = source.match(/<style scoped>([\s\S]*)<\/style>/u)?.[1] ?? '';
+
+    expect(styles).toMatch(
+      /\.obs-position-picker\s*\{[^}]*inline-size:\s*fit-content[^}]*max-inline-size:\s*100%[^}]*justify-items:\s*center/su,
+    );
+    expect(styles).toMatch(
+      /\.obs-position-picker__grid\s*\{[^}]*inline-size:\s*fit-content/su,
+    );
+    expect(styles).not.toContain(
+      'inline-size: calc(var(--ui-control-height) * 3)',
+    );
+    expect(styles).toMatch(
+      /\.obs-position-picker__value\s*\{[^}]*inline-size:\s*100%[^}]*text-align:\s*center/su,
+    );
   });
 });

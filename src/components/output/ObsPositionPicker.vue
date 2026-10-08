@@ -131,14 +131,16 @@ function moveFocus(choice, event) {
 <style scoped>
 .obs-position-picker {
   min-width: 0;
+  inline-size: fit-content;
+  max-inline-size: 100%;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ui-space-2);
+  justify-items: center;
+  gap: var(--ui-space-1);
 }
 
 .obs-position-picker__grid {
-  inline-size: calc(var(--ui-control-height) * 3);
+  inline-size: fit-content;
+  max-inline-size: 100%;
   display: grid;
   grid-template-columns: repeat(3, var(--ui-control-height));
   gap: var(--ui-space-1);
@@ -194,8 +196,10 @@ function moveFocus(choice, event) {
 
 .obs-position-picker__value {
   min-width: 0;
+  inline-size: 100%;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-label);
+  text-align: center;
 }
 </style>

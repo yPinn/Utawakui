@@ -6,6 +6,7 @@ import {
   normalizeOutputSavedColors,
 } from '../../../shared/outputColorPreferences.mjs';
 import ObsColorSwatchRail from './ObsColorSwatchRail.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiColorField from '../ui/UiColorField.vue';
 
 const props = defineProps({
@@ -34,9 +35,9 @@ const savedPaletteIsFull = computed(
     !currentIsSaved.value,
 );
 const savedActionLabel = computed(() => {
-  if (currentIsSaved.value) return '移除';
-  if (savedPaletteIsFull.value) return '已滿';
-  return '加入';
+  if (currentIsSaved.value) return '移除常用';
+  if (savedPaletteIsFull.value) return '常用已滿';
+  return '加入常用';
 });
 const savedActionAriaLabel = computed(() => {
   const color = normalizedValue.value.toUpperCase();
@@ -69,30 +70,48 @@ function toggleSavedColor() {
       @commit="emit('commit', $event)"
     />
 
-    <ObsColorSwatchRail
-      label="常用色"
-      aria-label="Output 常用色票"
-      source="saved"
-      :colors="normalizedSavedColors"
-      :model-value="normalizedValue"
-      empty-label="尚未加入"
-      :action-label="savedActionLabel"
-      :action-aria-label="savedActionAriaLabel"
-      :action-disabled="savedPaletteIsFull"
-      :action-pressed="currentIsSaved"
-      @select="selectColor"
-      @action="toggleSavedColor"
-    />
+    <div
+      class="obs-output-color-field__shelf"
+      role="group"
+      aria-label="Output 色票"
+    >
+      <div class="obs-output-color-field__shelf-header">
+        <span class="obs-output-color-field__shelf-title">色票</span>
+        <UiButton
+          class="obs-output-color-field__shelf-action"
+          variant="ghost"
+          :disabled="savedPaletteIsFull"
+          :active="currentIsSaved"
+          :aria-label="savedActionAriaLabel"
+          :aria-pressed="currentIsSaved"
+          @click="toggleSavedColor"
+        >
+          {{ savedActionLabel }}
+        </UiButton>
+      </div>
 
-    <ObsColorSwatchRail
-      v-if="normalizedRecentColors.length > 0"
-      label="最近色票"
-      aria-label="最近使用色票"
-      source="recent"
-      :colors="normalizedRecentColors"
-      :model-value="normalizedValue"
-      @select="selectColor"
-    />
+      <ObsColorSwatchRail
+        label="常用"
+        selection-label="常用色票"
+        aria-label="Output 常用色票"
+        source="saved"
+        :colors="normalizedSavedColors"
+        :model-value="normalizedValue"
+        empty-label="尚未加入"
+        @select="selectColor"
+      />
+
+      <ObsColorSwatchRail
+        v-if="normalizedRecentColors.length > 0"
+        label="最近"
+        selection-label="最近色票"
+        aria-label="最近使用色票"
+        source="recent"
+        :colors="normalizedRecentColors"
+        :model-value="normalizedValue"
+        @select="selectColor"
+      />
+    </div>
   </div>
 </template>
 
@@ -101,5 +120,36 @@ function toggleSavedColor() {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-2);
+}
+
+.obs-output-color-field__shelf {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.obs-output-color-field__shelf-header {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+}
+
+.obs-output-color-field__shelf-title {
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.obs-output-color-field__shelf-action {
+  min-height: calc(var(--ui-control-height) - var(--ui-space-2));
+  padding-block: 0;
+  border-radius: var(--ui-radius-sm);
+}
+
+.obs-output-color-field__shelf-action:disabled {
+  opacity: 1;
 }
 </style>

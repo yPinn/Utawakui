@@ -1,47 +1,48 @@
 <script setup>
-import { Check, ICON_SIZE } from '../../icons/index.js';
-import UiButton from '../ui/UiButton.vue';
+import { computed } from 'vue';
+import {
+  MAX_OUTPUT_RECENT_COLORS,
+  MAX_OUTPUT_SAVED_COLORS,
+} from '../../../shared/outputColorPreferences.mjs';
 
-defineProps({
+const COLOR_LIMIT_BY_SOURCE = Object.freeze({
+  recent: MAX_OUTPUT_RECENT_COLORS,
+  saved: MAX_OUTPUT_SAVED_COLORS,
+});
+
+const props = defineProps({
   label: { type: String, required: true },
+  selectionLabel: { type: String, default: '' },
   ariaLabel: { type: String, required: true },
-  source: { type: String, required: true },
+  source: {
+    type: String,
+    required: true,
+    validator: (value) => ['recent', 'saved'].includes(value),
+  },
   colors: { type: Array, default: () => [] },
   modelValue: { type: String, required: true },
   emptyLabel: { type: String, default: '' },
-  actionLabel: { type: String, default: '' },
-  actionAriaLabel: { type: String, default: '' },
-  actionDisabled: { type: Boolean, default: false },
-  actionPressed: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['select', 'action']);
+const emit = defineEmits(['select']);
+const visibleColors = computed(() =>
+  props.colors.slice(0, COLOR_LIMIT_BY_SOURCE[props.source] ?? 0),
+);
 </script>
 
 <template>
   <div class="obs-color-swatch-rail" role="group" :aria-label="ariaLabel">
-    <div class="obs-color-swatch-rail__header">
-      <span class="obs-color-swatch-rail__label">{{ label }}</span>
-      <UiButton
-        v-if="actionLabel"
-        class="obs-color-swatch-rail__action"
-        variant="ghost"
-        :disabled="actionDisabled"
-        :active="actionPressed"
-        :aria-label="actionAriaLabel"
-        :aria-pressed="actionPressed"
-        @click="emit('action')"
-      >
-        {{ actionLabel }}
-      </UiButton>
-    </div>
+    <span class="obs-color-swatch-rail__label">{{ label }}</span>
 
-    <span v-if="colors.length === 0" class="obs-color-swatch-rail__empty">
+    <span
+      v-if="visibleColors.length === 0"
+      class="obs-color-swatch-rail__empty"
+    >
       {{ emptyLabel }}
     </span>
     <div v-else class="obs-color-swatch-rail__swatches">
       <button
-        v-for="color in colors"
+        v-for="color in visibleColors"
         :key="color"
         type="button"
         class="obs-color-swatch-rail__swatch"
@@ -52,71 +53,54 @@ const emit = defineEmits(['select', 'action']);
         :data-color="color"
         :data-color-source="source"
         :title="color.toUpperCase()"
-        :aria-label="`套用${label} ${color.toUpperCase()}`"
+        :aria-label="`套用${selectionLabel || label} ${color.toUpperCase()}`"
         :aria-pressed="color === modelValue"
         @click="emit('select', color)"
-      >
-        <span
-          v-if="color === modelValue"
-          class="obs-color-swatch-rail__selected-indicator"
-          aria-hidden="true"
-        >
-          <Check :size="ICON_SIZE" />
-        </span>
-      </button>
+      ></button>
     </div>
   </div>
 </template>
 
 <style scoped>
 .obs-color-swatch-rail {
+  --obs-output-color-swatch-size: calc(
+    var(--ui-control-height) - var(--ui-space-2)
+  );
+
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-1);
-}
-
-.obs-color-swatch-rail__header {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
   gap: var(--ui-space-2);
 }
 
 .obs-color-swatch-rail__label,
 .obs-color-swatch-rail__empty {
+  min-height: var(--obs-output-color-swatch-size);
+  display: flex;
+  align-items: center;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-label);
 }
 
-.obs-color-swatch-rail__action {
-  min-height: var(--ui-control-height);
-  flex: 0 0 auto;
-}
-
 .obs-color-swatch-rail__empty {
-  min-height: var(--ui-control-height);
-  display: flex;
-  align-items: center;
+  min-width: 0;
 }
 
 .obs-color-swatch-rail__swatches {
   min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-1);
+  display: grid;
+  grid-template-columns: repeat(4, var(--obs-output-color-swatch-size));
+  gap: var(--ui-space-2);
 }
 
 .obs-color-swatch-rail__swatch {
-  position: relative;
-  inline-size: var(--ui-control-height);
-  block-size: var(--ui-control-height);
-  padding: var(--ui-space-1);
-  display: grid;
-  place-items: center;
+  inline-size: var(--obs-output-color-swatch-size);
+  block-size: var(--obs-output-color-swatch-size);
+  padding: var(--ui-border-width);
   border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-xs);
   background: var(--obs-output-swatch-color);
   background-clip: content-box;
   cursor: pointer;
@@ -128,20 +112,22 @@ const emit = defineEmits(['select', 'action']);
 
 .obs-color-swatch-rail__swatch--selected {
   border-color: var(--ui-color-accent);
-}
-
-.obs-color-swatch-rail__selected-indicator {
-  inline-size: calc(var(--ui-control-height) - var(--ui-space-3));
-  block-size: calc(var(--ui-control-height) - var(--ui-space-3));
-  display: grid;
-  place-items: center;
-  border-radius: var(--ui-radius-xs);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
+  box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-canvas);
 }
 
 .obs-color-swatch-rail__swatch:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+@media (forced-colors: active) {
+  .obs-color-swatch-rail__swatch--selected {
+    outline: var(--ui-border-width) solid Highlight;
+    outline-offset: var(--ui-focus-offset-inset);
+  }
+
+  .obs-color-swatch-rail__swatch:focus-visible {
+    outline-color: Highlight;
+  }
 }
 </style>

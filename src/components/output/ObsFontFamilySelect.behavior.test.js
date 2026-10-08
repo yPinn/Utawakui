@@ -98,6 +98,33 @@ describe('ObsFontFamilySelect', () => {
     app.unmount();
   });
 
+  it('opens preset font options when the field is clicked', async () => {
+    const { app, root } = mount(ObsFontFamilySelect, {
+      id: 'output-appearance-fontFamily',
+      label: '字型',
+      modelValue: 'sans',
+      options: OPTIONS,
+    });
+    const control = combobox(root);
+
+    trigger(control, 'onClick');
+    await nextTick();
+
+    expect(control.props['aria-expanded']).toBe(true);
+    const presetOptions = findAll(
+      body,
+      (node) =>
+        node.props?.role === 'option' &&
+        findAll(node, (child) => child.props?.['data-font-source'] === 'preset')
+          .length > 0,
+    );
+    expect(presetOptions).toHaveLength(OPTIONS.length);
+    expect(textContent(presetOptions[0])).toContain(
+      '舞台 · 무대 · ステージ · Stage 123',
+    );
+    app.unmount();
+  });
+
   it('loads local fonts only after the explicit action and previews each option', async () => {
     const { app, root } = mount(ObsFontFamilySelect, {
       id: 'output-appearance-fontFamily',
