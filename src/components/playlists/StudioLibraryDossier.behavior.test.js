@@ -225,9 +225,13 @@ describe('Studio Library native Controlled Dossier', () => {
       /\.studio-track-row--current\s*\{[^}]*background:/su,
     );
     expect(trackTableSource).not.toContain('--ui-color-current-soft');
-    expect(trackTableSource).toMatch(
-      /\.studio-track-row--selected\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--ui-color-text\) 8%, transparent\);[^}]*box-shadow:/su,
+    const selectedRule = trackTableSource.match(
+      /\.studio-track-row--selected\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+    expect(selectedRule).toContain(
+      'background: var(--ui-track-row-selected-surface);',
     );
+    expect(selectedRule).not.toContain('box-shadow');
     expect(trackTableSource).toMatch(
       /\.studio-track-row--current \.studio-track-row__index,[\s\S]*?\.studio-track-row--current \.studio-track-row__copy strong\s*\{[^}]*color:\s*var\(--ui-color-current\);/u,
     );

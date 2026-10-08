@@ -115,13 +115,6 @@ function handleResizeKeydown(event) {
     --ui-right-dock-track-row-state-surface-outset-inline
   );
   --ui-track-row-radius: var(--ui-right-dock-track-row-radius);
-  /* Right Dock selection is a quiet disclosure state, not a brand fill. */
-  --ui-track-row-selected-surface: color-mix(
-    in srgb,
-    var(--ui-color-text) 8%,
-    transparent
-  );
-  --ui-track-row-active-shadow: none;
 
   position: relative;
   display: flex;

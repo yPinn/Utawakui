@@ -375,9 +375,7 @@ function sortLabel({ key, label }) {
 }
 
 .studio-track-row--selected {
-  background: color-mix(in srgb, var(--ui-color-text) 8%, transparent);
-  box-shadow: inset calc(var(--ui-border-width) * 2) 0 0
-    var(--ui-color-border-strong);
+  background: var(--ui-track-row-selected-surface);
 }
 
 .studio-track-row--current .studio-track-row__index,

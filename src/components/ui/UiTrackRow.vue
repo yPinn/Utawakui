@@ -18,7 +18,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   // Currently playing — deliberately separate from `active` (selected).
   // Title-only coral cue shared by standard rows and Queue, not the filled
-  // surface-selected background.
+  // shared quiet selection surface.
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
   actionLabel: { type: String, default: undefined },
@@ -229,11 +229,7 @@ function handleActionKeydown(event) {
 }
 
 .ui-track--active::before {
-  background: var(
-    --ui-track-row-selected-surface,
-    var(--ui-color-surface-selected)
-  );
-  box-shadow: var(--ui-track-row-active-shadow, var(--ui-row-active-shadow));
+  background: var(--ui-track-row-selected-surface);
 }
 
 .ui-track__action {

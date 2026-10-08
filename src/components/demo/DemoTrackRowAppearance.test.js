@@ -498,10 +498,13 @@ describe('DemoTrackRowAppearance', () => {
       '--ui-color-surface-hover: #344046;',
       '--ui-color-surface-selected: #25474a;',
       '--ui-color-current: #dd7a64;',
-      '--ui-row-active-shadow: inset 3px 0 0 #55a2a7;',
     ]) {
       expect(appearanceSource).toContain(declaration);
     }
+    expect(appearanceSource).toContain(
+      '--ui-track-row-selected-surface: color-mix(',
+    );
+    expect(appearanceSource).not.toContain('--ui-row-active-shadow');
     expect(appearanceSource).toContain(
       ":global(:root[data-ui-theme='light'] .demo-track-row-layer--current)",
     );

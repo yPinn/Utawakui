@@ -134,8 +134,12 @@ const LAYERS = [
   --ui-track-row-gap: 0.5rem;
   --ui-track-row-padding-block: 0.25rem;
   --ui-track-row-padding-inline: 0.75rem;
+  --ui-track-row-selected-surface: color-mix(
+    in srgb,
+    var(--ui-color-text) 8%,
+    transparent
+  );
   --ui-track-list-gap: 0.25rem;
-  --ui-row-active-shadow: inset 3px 0 0 #55a2a7;
   --ui-color-canvas: #1f2328;
   --ui-color-surface: #292f35;
   --ui-color-surface-raised: #30383e;
@@ -159,7 +163,6 @@ const LAYERS = [
 
 :global(:root[data-ui-theme='light'] .demo-track-row-layer--current) {
   color-scheme: light;
-  --ui-row-active-shadow: inset 3px 0 0 #327a7f;
   --ui-color-canvas: #f7f1e7;
   --ui-color-surface: #fffdfa;
   --ui-color-surface-raised: #fff;
