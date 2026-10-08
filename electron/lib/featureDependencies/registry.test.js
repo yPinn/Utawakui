@@ -29,7 +29,7 @@ describe('feature dependency product units', () => {
     }
   });
 
-  it('treats the provider runtime as one atomic four-artifact unit', () => {
+  it('treats yt-dlp and anonymous YT Music lookup as one atomic provider runtime', () => {
     const providerUnits = getFeatureDependencies().filter(
       (dependency) => dependency.featureId === FEATURE_IDS.PROVIDER_FLOW,
     );
@@ -41,8 +41,47 @@ describe('feature dependency product units', () => {
       platform: 'win32',
     });
     expect(providerUnits[0].artifacts.map((artifact) => artifact.role)).toEqual(
-      ['python-embed', 'yt-dlp-wheel', 'bgutil-provider-exe', 'bgutil-plugin'],
+      [
+        'python-embed',
+        'yt-dlp-wheel',
+        'ytmusicapi-wheel',
+        'requests-wheel',
+        'urllib3-wheel',
+        'certifi-wheel',
+        'charset-normalizer-wheel',
+        'idna-wheel',
+        'bgutil-provider-exe',
+        'bgutil-plugin',
+      ],
     );
+    expect(
+      providerUnits[0].artifacts
+        .filter((artifact) => artifact.role.endsWith('-wheel'))
+        .every(
+          (artifact) =>
+            typeof artifact.sha256 === 'string' &&
+            artifact.sha256.length === 64 &&
+            Number.isSafeInteger(artifact.expectedSize) &&
+            artifact.expectedSize > 0,
+        ),
+    ).toBe(true);
+    expect(
+      providerUnits[0].artifacts.every(
+        (artifact) =>
+          typeof artifact.license === 'string' &&
+          artifact.license.length > 0 &&
+          /^https:\/\//u.test(artifact.licenseUrl),
+      ),
+    ).toBe(true);
+    expect(
+      providerUnits[0].artifacts
+        .filter((artifact) => artifact.role.startsWith('bgutil-'))
+        .every(
+          (artifact) =>
+            artifact.downloadUrl.includes('/releases/download/v0.8.1/') &&
+            !artifact.downloadUrl.includes('/releases/latest/'),
+        ),
+    ).toBe(true);
   });
 
   it('keeps FFmpeg and each active model as independent audio units', () => {

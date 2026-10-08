@@ -104,14 +104,14 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作                       | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                             |
 | [0013](adr/0013-external-integration-planes.md)                        | 部分實作                         | Browser Source 是支援基線；唯讀 OBS WebSocket adapter 已實作，Spout2 Lyrics sender 為 Windows x64 實驗性原型；寫入式 automation 尚未開放。        |
 | [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research             | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                            |
-| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作                           | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                       |
+| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作                           | YT Music Songs 優先、YouTube 補足的錄音 discovery；另允許單一受限、匿名、人工確認的缺圖 artist-photo Innertube 例外。                             |
 | [0016](adr/0016-user-feedback-intake.md)                               | 已實作                           | 錯誤回報／功能請求／體驗意見／內容問題共用一套預覽後送出流程；relay 獨立部署，不進封裝安裝檔。                                                    |
 | [0017](adr/0017-directml-execution-provider-for-mdx-separation.md)     | 已接受／已實作                   | `quick`／`general` 預設嘗試 DirectML GPU acceleration，失敗時自動改走 CPU；Windows x64 封裝版驗收已完成。                                         |
 | [0018](adr/0018-signed-update-manifest.md)                             | 已接受／待 production activation | Exact artifact binding、多簽章 rotation 與 package／sign／publish 分權已完成；目前僅有 development public key，production gate 明確關閉。         |
 | [0019](adr/0019-signalsmith-stretch-pitch-transpose.md)                | Proposed／已實作                 | Pitch transpose 已改用 Signalsmith Stretch；程式與單元測試完成，仍待實際聽感驗收。                                                                |
 | [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                                  |
 | [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                               |
-| [0022](adr/0022-artist-identity-and-organization.md)                   | 已接受／未實作                   | Artist 與 album 同為唯讀參照、以演唱 credit 分組；第一階段為衍生 artist 頁與 MusicBrainz 顯示名稱，合併／tag／翻唱歸屬後續。                      |
+| [0022](adr/0022-artist-identity-and-organization.md)                   | 主路徑已實作                     | Artist／album 唯讀參照、衍生 artist 頁、官方頻道頭像與缺圖 YT Music 人工候選已建立；MusicBrainz 名稱與合併等後續。                                |
 
 ## 常用文件
 
@@ -139,7 +139,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [BGM 待機播放契約](contracts/bgm-standby-lane.md)、
   [曲目試聽契約](contracts/track-preview.md)。
 - Library：[曲庫空間管理契約](contracts/library-storage-management.md)。
-- Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)。
+- Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)、
+  [artist photo provider contract](contracts/artist-photo-provider.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。
 - Operations：[diagnostics rollout](operations/diagnostics-rollout.md)、
   [startup baseline](operations/startup-performance-baseline.md)、

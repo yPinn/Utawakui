@@ -130,7 +130,106 @@ function makeDependency(archive) {
   };
 }
 
+const PROVIDER_ARTIFACT_KEYS = Object.freeze({
+  'python-embed': 'python',
+  'yt-dlp-wheel': 'ytdlp',
+  'ytmusicapi-wheel': 'ytmusicapi',
+  'requests-wheel': 'requests',
+  'urllib3-wheel': 'urllib3',
+  'certifi-wheel': 'certifi',
+  'charset-normalizer-wheel': 'charsetNormalizer',
+  'idna-wheel': 'idna',
+  'bgutil-provider-exe': 'provider',
+  'bgutil-plugin': 'plugin',
+});
+
+const PROVIDER_WHEEL_PACKAGES = Object.freeze([
+  ['ytmusicapi-wheel', 'ytmusicapi'],
+  ['requests-wheel', 'requests'],
+  ['urllib3-wheel', 'urllib3'],
+  ['certifi-wheel', 'certifi'],
+  ['charset-normalizer-wheel', 'charset_normalizer'],
+  ['idna-wheel', 'idna'],
+]);
+
+function makeProviderRuntimeBuffers() {
+  return {
+    python: Buffer.from('python zip'),
+    ytdlp: Buffer.from('yt-dlp wheel'),
+    ytmusicapi: Buffer.from('ytmusicapi wheel'),
+    requests: Buffer.from('requests wheel'),
+    urllib3: Buffer.from('urllib3 wheel'),
+    certifi: Buffer.from('certifi wheel'),
+    charsetNormalizer: Buffer.from('charset-normalizer wheel'),
+    idna: Buffer.from('idna wheel'),
+    provider: Buffer.from('provider exe'),
+    plugin: Buffer.from('plugin zip'),
+  };
+}
+
+function getProviderArtifactBuffer(artifact, buffers) {
+  const key = PROVIDER_ARTIFACT_KEYS[artifact.role];
+  if (!key || !buffers[key]) {
+    throw new Error(`unexpected provider artifact: ${artifact.role}`);
+  }
+  return buffers[key];
+}
+
+function createProviderFetch(dependency, buffers) {
+  return vi.fn(async (url) => {
+    const artifact = dependency.artifacts.find(
+      (item) => item.downloadUrl === url,
+    );
+    if (!artifact) throw new Error(`unexpected url: ${url}`);
+    return {
+      ok: true,
+      arrayBuffer: () =>
+        Promise.resolve(
+          arrayBufferFrom(getProviderArtifactBuffer(artifact, buffers)),
+        ),
+    };
+  });
+}
+
+function createProviderExtractor() {
+  return vi.fn(async (_archivePath, destinationDir, artifact) => {
+    if (artifact.role === 'python-embed') {
+      fs.writeFileSync(path.join(destinationDir, 'python.exe'), 'python');
+      fs.writeFileSync(
+        path.join(destinationDir, 'python314._pth'),
+        ['python314.zip', '.', '#import site', ''].join('\n'),
+      );
+    }
+    if (artifact.role === 'yt-dlp-wheel') {
+      fs.mkdirSync(path.join(destinationDir, 'yt_dlp'), { recursive: true });
+    }
+    const wheelPackage = PROVIDER_WHEEL_PACKAGES.find(
+      ([role]) => role === artifact.role,
+    )?.[1];
+    if (wheelPackage) {
+      fs.mkdirSync(path.join(destinationDir, wheelPackage), {
+        recursive: true,
+      });
+    }
+    if (artifact.role === 'bgutil-plugin') {
+      fs.mkdirSync(path.join(destinationDir, 'yt_dlp_plugins', 'extractor'), {
+        recursive: true,
+      });
+    }
+  });
+}
+
 function makeProviderRuntimeDependency(buffers) {
+  const makeArtifact = (role, name, key) => ({
+    role,
+    name,
+    version: 'test',
+    license: 'MIT',
+    licenseUrl: `https://example.test/${role}/license`,
+    sourceUrl: `https://example.test/${role}`,
+    downloadUrl: `https://example.test/${role}.zip`,
+    sha256: sha256(buffers[key]),
+  });
   return {
     id: 'yt-dlp-provider-tool',
     featureId: 'provider-flow',
@@ -144,38 +243,20 @@ function makeProviderRuntimeDependency(buffers) {
     sourceUrl: 'https://example.test/source',
     executableRelativePath: 'python/python.exe',
     artifacts: [
-      {
-        role: 'python-embed',
-        name: 'Python',
-        version: 'test',
-        sourceUrl: 'https://example.test/python',
-        downloadUrl: 'https://example.test/python.zip',
-        sha256: sha256(buffers.python),
-      },
-      {
-        role: 'yt-dlp-wheel',
-        name: 'yt-dlp',
-        version: 'test',
-        sourceUrl: 'https://example.test/ytdlp',
-        downloadUrl: 'https://example.test/yt-dlp.whl',
-        sha256: sha256(buffers.ytdlp),
-      },
-      {
-        role: 'bgutil-provider-exe',
-        name: 'bgutil exe',
-        version: 'test',
-        sourceUrl: 'https://example.test/bgutil',
-        downloadUrl: 'https://example.test/bgutil.exe',
-        sha256: sha256(buffers.provider),
-      },
-      {
-        role: 'bgutil-plugin',
-        name: 'bgutil plugin',
-        version: 'test',
-        sourceUrl: 'https://example.test/plugin',
-        downloadUrl: 'https://example.test/plugin.zip',
-        sha256: sha256(buffers.plugin),
-      },
+      makeArtifact('python-embed', 'Python', 'python'),
+      makeArtifact('yt-dlp-wheel', 'yt-dlp', 'ytdlp'),
+      makeArtifact('ytmusicapi-wheel', 'ytmusicapi', 'ytmusicapi'),
+      makeArtifact('requests-wheel', 'requests', 'requests'),
+      makeArtifact('urllib3-wheel', 'urllib3', 'urllib3'),
+      makeArtifact('certifi-wheel', 'certifi', 'certifi'),
+      makeArtifact(
+        'charset-normalizer-wheel',
+        'charset-normalizer',
+        'charsetNormalizer',
+      ),
+      makeArtifact('idna-wheel', 'idna', 'idna'),
+      makeArtifact('bgutil-provider-exe', 'bgutil exe', 'provider'),
+      makeArtifact('bgutil-plugin', 'bgutil plugin', 'plugin'),
     ],
   };
 }
@@ -755,55 +836,10 @@ describe('yt-dlp feature dependency', () => {
 
   it('downloads, verifies, extracts, and records the Python provider runtime', async () => {
     const userDataDir = makeTempDir();
-    const buffers = {
-      python: Buffer.from('python zip'),
-      ytdlp: Buffer.from('yt-dlp wheel'),
-      provider: Buffer.from('provider exe'),
-      plugin: Buffer.from('plugin zip'),
-    };
+    const buffers = makeProviderRuntimeBuffers();
     const dependency = makeProviderRuntimeDependency(buffers);
-    const fetchImpl = vi.fn(async (url) => {
-      const artifact = dependency.artifacts.find(
-        (item) => item.downloadUrl === url,
-      );
-      if (!artifact) throw new Error(`unexpected url: ${url}`);
-      const key =
-        artifact.role === 'python-embed'
-          ? 'python'
-          : artifact.role === 'yt-dlp-wheel'
-            ? 'ytdlp'
-            : artifact.role === 'bgutil-provider-exe'
-              ? 'provider'
-              : 'plugin';
-      return {
-        ok: true,
-        arrayBuffer: () => Promise.resolve(arrayBufferFrom(buffers[key])),
-      };
-    });
-    const extractArchive = vi.fn(
-      async (_archivePath, destinationDir, artifact) => {
-        if (artifact.role === 'python-embed') {
-          fs.writeFileSync(path.join(destinationDir, 'python.exe'), 'python');
-          fs.writeFileSync(
-            path.join(destinationDir, 'python314._pth'),
-            ['python314.zip', '.', '#import site', ''].join('\n'),
-          );
-        }
-        if (artifact.role === 'yt-dlp-wheel') {
-          fs.mkdirSync(path.join(destinationDir, 'yt_dlp'), {
-            recursive: true,
-          });
-        }
-        if (artifact.role === 'bgutil-plugin') {
-          fs.mkdirSync(
-            path.join(destinationDir, 'yt_dlp_plugins', 'extractor'),
-            {
-              recursive: true,
-            },
-          );
-        }
-      },
-    );
+    const fetchImpl = createProviderFetch(dependency, buffers);
+    const extractArchive = createProviderExtractor();
 
     const paths = await ensureYtdlpDependency(userDataDir, {
       dependency,
@@ -819,6 +855,12 @@ describe('yt-dlp feature dependency', () => {
     expect(fs.existsSync(path.join(paths.sitePackagesDir, 'yt_dlp'))).toBe(
       true,
     );
+    for (const [, packageDir] of PROVIDER_WHEEL_PACKAGES) {
+      expect(fs.existsSync(path.join(paths.sitePackagesDir, packageDir))).toBe(
+        true,
+      );
+    }
+    expect(fetchImpl).toHaveBeenCalledTimes(dependency.artifacts.length);
     expect(fs.existsSync(paths.bgutilProviderPath)).toBe(true);
     expect(
       fs.existsSync(
@@ -849,31 +891,9 @@ describe('yt-dlp feature dependency', () => {
 
   it('rejects a provider runtime install when extraction does not produce required artifacts', async () => {
     const userDataDir = makeTempDir();
-    const buffers = {
-      python: Buffer.from('python zip'),
-      ytdlp: Buffer.from('yt-dlp wheel'),
-      provider: Buffer.from('provider exe'),
-      plugin: Buffer.from('plugin zip'),
-    };
+    const buffers = makeProviderRuntimeBuffers();
     const dependency = makeProviderRuntimeDependency(buffers);
-    const fetchImpl = vi.fn(async (url) => {
-      const artifact = dependency.artifacts.find(
-        (item) => item.downloadUrl === url,
-      );
-      if (!artifact) throw new Error(`unexpected url: ${url}`);
-      const buffer =
-        artifact.role === 'python-embed'
-          ? buffers.python
-          : artifact.role === 'yt-dlp-wheel'
-            ? buffers.ytdlp
-            : artifact.role === 'bgutil-provider-exe'
-              ? buffers.provider
-              : buffers.plugin;
-      return {
-        ok: true,
-        arrayBuffer: () => Promise.resolve(arrayBufferFrom(buffer)),
-      };
-    });
+    const fetchImpl = createProviderFetch(dependency, buffers);
     const extractArchive = vi.fn(async () => {});
     const paths = getYtdlpPaths(userDataDir, dependency);
 
@@ -891,53 +911,10 @@ describe('yt-dlp feature dependency', () => {
 
   it('removes only the managed Python provider runtime folder', async () => {
     const userDataDir = makeTempDir();
-    const buffers = {
-      python: Buffer.from('python zip'),
-      ytdlp: Buffer.from('yt-dlp wheel'),
-      provider: Buffer.from('provider exe'),
-      plugin: Buffer.from('plugin zip'),
-    };
+    const buffers = makeProviderRuntimeBuffers();
     const dependency = makeProviderRuntimeDependency(buffers);
-    const fetchImpl = vi.fn(async (url) => {
-      const artifact = dependency.artifacts.find(
-        (item) => item.downloadUrl === url,
-      );
-      if (!artifact) throw new Error(`unexpected url: ${url}`);
-      const buffer =
-        artifact.role === 'python-embed'
-          ? buffers.python
-          : artifact.role === 'yt-dlp-wheel'
-            ? buffers.ytdlp
-            : artifact.role === 'bgutil-provider-exe'
-              ? buffers.provider
-              : buffers.plugin;
-      return {
-        ok: true,
-        arrayBuffer: () => Promise.resolve(arrayBufferFrom(buffer)),
-      };
-    });
-    const extractArchive = vi.fn(
-      async (_archivePath, destinationDir, artifact) => {
-        if (artifact.role === 'python-embed') {
-          fs.writeFileSync(path.join(destinationDir, 'python.exe'), 'python');
-          fs.writeFileSync(
-            path.join(destinationDir, 'python314._pth'),
-            ['python314.zip', '.', '#import site', ''].join('\n'),
-          );
-        }
-        if (artifact.role === 'yt-dlp-wheel') {
-          fs.mkdirSync(path.join(destinationDir, 'yt_dlp'), {
-            recursive: true,
-          });
-        }
-        if (artifact.role === 'bgutil-plugin') {
-          fs.mkdirSync(
-            path.join(destinationDir, 'yt_dlp_plugins', 'extractor'),
-            { recursive: true },
-          );
-        }
-      },
-    );
+    const fetchImpl = createProviderFetch(dependency, buffers);
+    const extractArchive = createProviderExtractor();
 
     await ensureYtdlpDependency(userDataDir, {
       dependency,
@@ -1023,6 +1000,11 @@ describe('yt-dlp feature dependency', () => {
     fs.mkdirSync(path.join(paths.sitePackagesDir, 'yt_dlp'), {
       recursive: true,
     });
+    for (const [, packageDir] of PROVIDER_WHEEL_PACKAGES) {
+      fs.mkdirSync(path.join(paths.sitePackagesDir, packageDir), {
+        recursive: true,
+      });
+    }
     fs.mkdirSync(path.join(paths.pluginPackageDir, 'yt_dlp_plugins'), {
       recursive: true,
     });
@@ -1087,12 +1069,7 @@ describe('yt-dlp feature dependency', () => {
   it('reports an installed provider runtime as updateable when its manifest version is older', () => {
     const userDataDir = makeTempDir();
     const dependency = {
-      ...makeProviderRuntimeDependency({
-        python: Buffer.from('python zip'),
-        ytdlp: Buffer.from('yt-dlp wheel'),
-        provider: Buffer.from('provider exe'),
-        plugin: Buffer.from('plugin zip'),
-      }),
+      ...makeProviderRuntimeDependency(makeProviderRuntimeBuffers()),
       version: 'provider-current',
     };
     const paths = getYtdlpPaths(userDataDir, dependency);
@@ -1100,6 +1077,11 @@ describe('yt-dlp feature dependency', () => {
     fs.mkdirSync(path.join(paths.sitePackagesDir, 'yt_dlp'), {
       recursive: true,
     });
+    for (const [, packageDir] of PROVIDER_WHEEL_PACKAGES) {
+      fs.mkdirSync(path.join(paths.sitePackagesDir, packageDir), {
+        recursive: true,
+      });
+    }
     fs.mkdirSync(path.join(paths.pluginPackageDir, 'yt_dlp_plugins'), {
       recursive: true,
     });

@@ -5,6 +5,7 @@ import { describe, expect, it, afterEach } from 'vitest';
 import {
   getProviderRuntimePaths,
   isProviderRuntimeInstalled,
+  resolveArtistPhotoYtMusicWorkerPath,
   writePythonPathConfig,
 } from './providerRuntime.js';
 
@@ -62,6 +63,36 @@ describe('getProviderRuntimePaths', () => {
   });
 });
 
+describe('resolveArtistPhotoYtMusicWorkerPath', () => {
+  it('derives fixed dev and packaged worker paths and requires the resource', () => {
+    expect(
+      resolveArtistPhotoYtMusicWorkerPath({
+        isPackaged: false,
+        appPath: 'C:\\app',
+        resourcesPath: 'C:\\ignored',
+        existsSync: () => true,
+      }),
+    ).toBe('C:\\app\\resources\\provider\\artist_photo_ytmusic_worker.py');
+    expect(
+      resolveArtistPhotoYtMusicWorkerPath({
+        isPackaged: true,
+        appPath: 'C:\\ignored',
+        resourcesPath: 'C:\\installed\\resources',
+        existsSync: () => true,
+      }),
+    ).toBe(
+      'C:\\installed\\resources\\provider\\artist_photo_ytmusic_worker.py',
+    );
+    expect(() =>
+      resolveArtistPhotoYtMusicWorkerPath({
+        isPackaged: true,
+        resourcesPath: 'C:\\installed\\resources',
+        existsSync: () => false,
+      }),
+    ).toThrow(/worker.*missing/i);
+  });
+});
+
 describe('writePythonPathConfig', () => {
   it('adds Lib/site-packages to the embeddable Python path file without enabling user site packages', () => {
     const root = makeTempDir();
@@ -85,13 +116,25 @@ describe('writePythonPathConfig', () => {
 });
 
 describe('isProviderRuntimeInstalled', () => {
-  it('requires python, yt-dlp package, plugin package, provider exe, and manifest', () => {
+  it('requires the complete yt-dlp and YT Music Python package closure', () => {
     const root = makeTempDir();
     const paths = getProviderRuntimePaths(root);
     fs.mkdirSync(path.dirname(paths.pythonPath), { recursive: true });
     fs.mkdirSync(path.join(paths.sitePackagesDir, 'yt_dlp'), {
       recursive: true,
     });
+    for (const packageName of [
+      'ytmusicapi',
+      'requests',
+      'urllib3',
+      'certifi',
+      'charset_normalizer',
+      'idna',
+    ]) {
+      fs.mkdirSync(path.join(paths.sitePackagesDir, packageName), {
+        recursive: true,
+      });
+    }
     fs.mkdirSync(
       path.join(
         paths.pluginParentDir,
@@ -106,6 +149,11 @@ describe('isProviderRuntimeInstalled', () => {
     fs.writeFileSync(paths.manifestPath, '{}');
 
     expect(isProviderRuntimeInstalled(paths)).toBe(true);
+    fs.rmSync(path.join(paths.sitePackagesDir, 'ytmusicapi'), {
+      recursive: true,
+      force: true,
+    });
+    expect(isProviderRuntimeInstalled(paths)).toBe(false);
   });
 
   it('returns false when any required provider runtime artifact is missing', () => {

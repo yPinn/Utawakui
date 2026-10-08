@@ -78,6 +78,8 @@ describe('dependency manifests and notices', () => {
           role: 'runtime',
           name: 'Runtime',
           version: '3.14',
+          license: 'Python-2.0',
+          licenseUrl: 'https://example.test/runtime-license',
           sourceUrl: 'https://example.test/runtime-source',
           downloadUrl: 'https://example.test/runtime',
           sha256: 'runtime-sha',
@@ -101,6 +103,8 @@ describe('dependency manifests and notices', () => {
           role: 'runtime',
           name: 'Runtime',
           version: '3.14',
+          license: 'Python-2.0',
+          licenseUrl: 'https://example.test/runtime-license',
           sourceUrl: 'https://example.test/runtime-source',
           downloadUrl: 'https://example.test/runtime',
           sha256: 'runtime-sha',
@@ -117,6 +121,9 @@ describe('dependency manifests and notices', () => {
     writeDependencyNotices(dir, dependency);
     expect(fs.readFileSync(path.join(dir, 'SOURCE.txt'), 'utf8')).toContain(
       'Bundled source: resources/tool.exe',
+    );
+    expect(fs.readFileSync(path.join(dir, 'LICENSE.txt'), 'utf8')).toContain(
+      'Runtime 3.14 — Python-2.0 — https://example.test/runtime-license',
     );
   });
 

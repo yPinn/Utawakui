@@ -100,9 +100,9 @@ asarUnpack:
   # Its platform binding and DLL dependencies must resolve from the real disk.
   - node_modules/@napolab/texture-bridge*/**/*
 
-# App-owned host and Refined policy workers only. The independent Python/PyTorch
-# runtime and every model remain explicit, removable downloads under userData;
-# none is bundled into the base installer.
+# App-owned workers only. Provider Python and the independent Audio Python /
+# PyTorch runtime remain explicit, removable downloads under userData; no
+# interpreter, provider package, or model is bundled into the base installer.
 extraResources:
   - from: resources/audio-processing/audio_python_worker.py
     to: audio-processing/audio_python_worker.py
@@ -120,6 +120,8 @@ extraResources:
     to: audio-processing/analysis-beat-this-py314-lock.json
   - from: resources/audio-processing/audio-python-runtime-3.14.7.json
     to: audio-processing/audio-python-runtime-3.14.7.json
+  - from: resources/provider/artist_photo_ytmusic_worker.py
+    to: provider/artist_photo_ytmusic_worker.py
 
 win:
   target:

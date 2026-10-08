@@ -38,6 +38,22 @@ function writeDependencyNotices(installDir, dependency) {
     [
       `${dependency.name} is distributed under ${dependency.license}.`,
       `See ${dependency.licenseUrl} and ${dependency.sourceUrl} for upstream licensing details.`,
+      ...(Array.isArray(dependency.artifacts) && dependency.artifacts.length > 0
+        ? [
+            '',
+            'Managed runtime components:',
+            ...dependency.artifacts.map((artifact) => {
+              const identity = [artifact.name, artifact.version]
+                .filter(Boolean)
+                .join(' ');
+              const license = artifact.license ? ` — ${artifact.license}` : '';
+              const licenseUrl = artifact.licenseUrl
+                ? ` — ${artifact.licenseUrl}`
+                : '';
+              return `${identity}${license}${licenseUrl}`;
+            }),
+          ]
+        : []),
       '',
     ].join('\n'),
   );
@@ -58,6 +74,8 @@ function writeDependencyManifest(manifestPath, dependency, options = {}) {
             role: artifact.role,
             name: artifact.name,
             version: artifact.version,
+            ...(artifact.license ? { license: artifact.license } : {}),
+            ...(artifact.licenseUrl ? { licenseUrl: artifact.licenseUrl } : {}),
             sourceUrl: artifact.sourceUrl,
             downloadUrl: artifact.downloadUrl,
             sha256: artifact.sha256,

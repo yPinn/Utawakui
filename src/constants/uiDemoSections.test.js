@@ -102,9 +102,7 @@ describe('UI demo component order', () => {
     for (const key of [
       'kbd',
       'color-field',
-      'radio-group',
       'disclosure',
-      'skeleton',
       'notification-host',
       'tooltip',
       'switch',
@@ -123,6 +121,8 @@ describe('UI demo component order', () => {
       'stack',
       'surface',
       'segmented-control',
+      'radio-group',
+      'skeleton',
       'popover',
       'combobox',
     ]) {

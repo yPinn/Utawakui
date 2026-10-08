@@ -9,6 +9,10 @@ const PROVIDER_RUNTIME_VERSION_DIRNAME = 'current';
 const PYTHON_DIRNAME = 'python';
 const SITE_PACKAGES_RELATIVE_PATH = path.join('Lib', 'site-packages');
 const BGUTIL_PLUGIN_DIRNAME = 'bgutil-ytdlp-pot-provider-rs';
+const ARTIST_PHOTO_YTMUSIC_WORKER_RELATIVE_PATH = path.join(
+  'provider',
+  'artist_photo_ytmusic_worker.py',
+);
 
 function getPathApi(filePath) {
   if (path.posix.isAbsolute(filePath)) return path.posix;
@@ -44,6 +48,30 @@ function getProviderRuntimePaths(userDataDir) {
       PROVIDER_RUNTIME_VERSION_DIRNAME,
     ),
   );
+}
+
+function resolveArtistPhotoYtMusicWorkerPath({
+  isPackaged,
+  resourcesPath,
+  appPath,
+  existsSync = fs.existsSync,
+}) {
+  const rootPath = isPackaged
+    ? resourcesPath
+    : typeof appPath === 'string'
+      ? getPathApi(appPath).join(appPath, 'resources')
+      : null;
+  if (!rootPath || !getPathApi(rootPath).isAbsolute(rootPath)) {
+    throw new Error('missing artist photo YT Music worker resource root');
+  }
+  const workerPath = getPathApi(rootPath).join(
+    rootPath,
+    ...ARTIST_PHOTO_YTMUSIC_WORKER_RELATIVE_PATH.split(/[\\/]/u),
+  );
+  if (!existsSync(workerPath)) {
+    throw new Error('artist photo YT Music worker is missing');
+  }
+  return workerPath;
 }
 
 function findPythonPathFile(paths) {
@@ -84,6 +112,15 @@ function getMissingProviderRuntimeArtifacts(paths, options = {}) {
   const checks = [
     ['python executable', paths.pythonPath],
     ['yt-dlp package', path.join(paths.sitePackagesDir, 'yt_dlp')],
+    ['ytmusicapi package', path.join(paths.sitePackagesDir, 'ytmusicapi')],
+    ['requests package', path.join(paths.sitePackagesDir, 'requests')],
+    ['urllib3 package', path.join(paths.sitePackagesDir, 'urllib3')],
+    ['certifi package', path.join(paths.sitePackagesDir, 'certifi')],
+    [
+      'charset-normalizer package',
+      path.join(paths.sitePackagesDir, 'charset_normalizer'),
+    ],
+    ['idna package', path.join(paths.sitePackagesDir, 'idna')],
     [
       'bgutil plugin package',
       path.join(paths.pluginPackageDir, 'yt_dlp_plugins'),
@@ -116,11 +153,13 @@ function ensureBgutilPluginPackageMarkers(paths) {
 }
 
 module.exports = {
+  ARTIST_PHOTO_YTMUSIC_WORKER_RELATIVE_PATH,
   BGUTIL_PLUGIN_DIRNAME,
   buildProviderRuntimePaths,
   ensureBgutilPluginPackageMarkers,
   getMissingProviderRuntimeArtifacts,
   getProviderRuntimePaths,
   isProviderRuntimeInstalled,
+  resolveArtistPhotoYtMusicWorkerPath,
   writePythonPathConfig,
 };

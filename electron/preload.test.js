@@ -62,6 +62,8 @@ const MAIN_INVOKE_CHANNELS = [
   'feedback:export-fallback',
   'feedback:submit',
   'import:resolve-source',
+  'library:apply-artist-photo-candidate',
+  'library:cancel-artist-photo-candidates',
   'library:choose-track-artwork',
   'library:clear-track-artwork',
   'library:apply-track-artwork',
@@ -72,10 +74,12 @@ const MAIN_INVOKE_CHANNELS = [
   'library:get-artist-index',
   'library:import-audio-files',
   'library:list',
+  'library:load-artist-photo-candidate-preview',
   'library:load-track-artwork-preview',
   'library:open-track-artwork-source',
   'library:refresh-metadata',
   'library:resolve-artist-photo',
+  'library:search-artist-photo-candidates',
   'library:search-track-artwork',
   'library:update-track-metadata',
   'library-storage:cleanup',
@@ -316,6 +320,43 @@ describe('main preload bridge', () => {
       'main.lrc',
       identity,
     );
+  });
+
+  it('forwards only artist and opaque candidate ids for online artist photos', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.searchArtistPhotoCandidates(
+      'artist-0123456789abcdef',
+      'https://example.test/private',
+    );
+    bridge.cancelArtistPhotoCandidates('artist-0123456789abcdef', {
+      query: 'private',
+    });
+    bridge.loadArtistPhotoCandidatePreview(
+      'artist-0123456789abcdef',
+      'candidate_abcdefghijklmn',
+      'https://yt3.googleusercontent.com/private',
+    );
+    bridge.applyArtistPhotoCandidate(
+      'artist-0123456789abcdef',
+      'candidate_abcdefghijklmn',
+      { path: 'C:\\private' },
+    );
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['library:search-artist-photo-candidates', 'artist-0123456789abcdef'],
+      ['library:cancel-artist-photo-candidates', 'artist-0123456789abcdef'],
+      [
+        'library:load-artist-photo-candidate-preview',
+        'artist-0123456789abcdef',
+        'candidate_abcdefghijklmn',
+      ],
+      [
+        'library:apply-artist-photo-candidate',
+        'artist-0123456789abcdef',
+        'candidate_abcdefghijklmn',
+      ],
+    ]);
   });
 
   it('exposes only fixed invoke, send, and subscription channels', async () => {

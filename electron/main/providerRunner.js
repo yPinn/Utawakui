@@ -2,6 +2,12 @@
 
 const { getPreparedYtdlpPath } = require('../lib/featureDependencies');
 const {
+  resolveArtistPhotoYtMusicWorkerPath,
+} = require('../lib/providerRuntime');
+const {
+  runYtMusicArtistPhotoWorker,
+} = require('../lib/artists/ytMusicArtistPhotoRunner');
+const {
   createBgutilProviderServer,
   findAvailableLoopbackPort,
 } = require('../lib/bgutilProviderServer');
@@ -9,21 +15,45 @@ const { createPythonYtdlpRunner } = require('../lib/pythonYtdlp');
 
 const DEFAULT_BGUTIL_PROVIDER_PORT = 4417;
 
-function createProviderRunnerManager({ userDataDir, app }) {
+function createProviderRunnerManager({
+  userDataDir,
+  app,
+  isPackaged = false,
+  resourcesPath = process.resourcesPath,
+  getRuntimePaths = getPreparedYtdlpPath,
+  resolveArtistWorker = resolveArtistPhotoYtMusicWorkerPath,
+  runArtistWorker = runYtMusicArtistPhotoWorker,
+  findPort = findAvailableLoopbackPort,
+  createBgutilServer = createBgutilProviderServer,
+  createYtdlpRunner = createPythonYtdlpRunner,
+}) {
   let bgutilServer = null;
   let runner = null;
+  let stopped = false;
+  const activeArtistWorkers = new Set();
+  const activeArtistWorkerTasks = new Set();
+  let quitBarrier = null;
+  let quitReady = false;
 
   async function getRunner() {
+    if (stopped) throw new Error('provider runner manager stopped');
     if (runner) return runner;
 
-    const runtimePaths = getPreparedYtdlpPath(userDataDir);
-    const port = await findAvailableLoopbackPort(DEFAULT_BGUTIL_PROVIDER_PORT);
-    bgutilServer = createBgutilProviderServer({
+    const runtimePaths = getRuntimePaths(userDataDir);
+    const port = await findPort(DEFAULT_BGUTIL_PROVIDER_PORT);
+    if (stopped) throw new Error('provider runner manager stopped');
+    bgutilServer = createBgutilServer({
       executablePath: runtimePaths.bgutilProviderPath,
       port,
     });
-    const { baseUrl } = await bgutilServer.start();
-    runner = createPythonYtdlpRunner({
+    const startingServer = bgutilServer;
+    const { baseUrl } = await startingServer.start();
+    if (stopped) {
+      startingServer.stop();
+      if (bgutilServer === startingServer) bgutilServer = null;
+      throw new Error('provider runner manager stopped');
+    }
+    runner = createYtdlpRunner({
       pythonPath: runtimePaths.pythonPath,
       pluginDirs: runtimePaths.pluginParentDir,
       cacheDir: runtimePaths.cacheDir,
@@ -33,15 +63,72 @@ function createProviderRunnerManager({ userDataDir, app }) {
     return runner;
   }
 
+  async function runArtistPhotoWorker(request, options = {}) {
+    if (stopped) return { status: 'error', reason: 'cancelled' };
+    const runtimePaths = getRuntimePaths(userDataDir);
+    const workerPath = resolveArtistWorker({
+      isPackaged,
+      resourcesPath,
+      appPath: app?.getAppPath?.(),
+    });
+    const controller = new AbortController();
+    const abortWorker = () => controller.abort(options.signal?.reason);
+    if (options.signal?.aborted) abortWorker();
+    else options.signal?.addEventListener('abort', abortWorker, { once: true });
+    activeArtistWorkers.add(controller);
+    let workerTask;
+    try {
+      workerTask = Promise.resolve(
+        runArtistWorker({
+          pythonPath: runtimePaths.pythonPath,
+          workerPath,
+          request,
+          signal: controller.signal,
+        }),
+      );
+      activeArtistWorkerTasks.add(workerTask);
+      return await workerTask;
+    } finally {
+      if (workerTask) activeArtistWorkerTasks.delete(workerTask);
+      activeArtistWorkers.delete(controller);
+      options.signal?.removeEventListener('abort', abortWorker);
+    }
+  }
+
   function stop() {
+    stopped = true;
+    for (const controller of activeArtistWorkers) controller.abort();
+    activeArtistWorkers.clear();
     bgutilServer?.stop();
     bgutilServer = null;
     runner = null;
   }
 
-  app?.on?.('before-quit', stop);
+  function handleBeforeQuit(event) {
+    if (quitReady) return;
 
-  return { getRunner, stop };
+    stop();
+    const pendingTasks = [...activeArtistWorkerTasks];
+    if (
+      pendingTasks.length === 0 ||
+      typeof event?.preventDefault !== 'function'
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (quitBarrier) return;
+
+    quitBarrier = Promise.allSettled(pendingTasks).finally(() => {
+      quitReady = true;
+      quitBarrier = null;
+      app?.quit?.();
+    });
+  }
+
+  app?.on?.('before-quit', handleBeforeQuit);
+
+  return { getRunner, runArtistPhotoWorker, stop };
 }
 
 module.exports = { createProviderRunnerManager };

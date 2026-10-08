@@ -93,4 +93,28 @@ describe('SetlistView track interaction owner', () => {
       source.match(/@play-album="toggleSupportingAlbumPlayback"/gu),
     ).toHaveLength(2);
   });
+
+  it('offers explicit YT Music photo candidates only for an artist without a photo', () => {
+    expect(source).toContain(
+      "import ArtistPhotoCandidateModal from '../components/artists/ArtistPhotoCandidateModal.vue'",
+    );
+    expect(source).toContain(
+      "import { useArtistPhotoCandidates } from '../composables/useArtistPhotoCandidates.js'",
+    );
+    expect(source).toMatch(
+      /!artistPage\.value\.photoUrl[\s\S]*?ARTIST_PHOTO_ACTIONS\.searchOnline/u,
+    );
+    expect(source).toContain("label: '搜尋線上藝人照片'");
+    expect(source).toMatch(
+      /ARTIST_PHOTO_ACTIONS\.searchOnline[\s\S]*?artistPhotoCandidates\.openForArtist\(artistPage\.value\)/u,
+    );
+    expect(source).toContain('<ArtistPhotoCandidateModal');
+    expect(source).toContain(
+      '@select-candidate="artistPhotoCandidates.selectCandidate"',
+    );
+    expect(source).toContain('@confirm="artistPhotoCandidates.applySelected"');
+    expect(source).not.toMatch(
+      /resolveArtistPhotos\([\s\S]*?searchArtistPhotoCandidates/u,
+    );
+  });
 });

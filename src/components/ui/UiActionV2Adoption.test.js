@@ -41,10 +41,12 @@ describe('Token v2 shared primitive adoption', () => {
       'surface',
       'combobox',
       'range',
+      'radio-group',
       'buttons',
       'icon-buttons',
       'text-button',
       'segmented-control',
+      'skeleton',
       'popover',
     ]);
   });

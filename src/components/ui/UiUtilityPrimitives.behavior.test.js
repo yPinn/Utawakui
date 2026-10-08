@@ -189,4 +189,43 @@ describe('UiRadioGroup', () => {
     await nextTick();
     expect(onUpdate).toHaveBeenCalledWith('dark');
   });
+
+  it('offers a shared tile appearance without taking ownership of rich option content', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            UiRadioGroup,
+            {
+              name: 'photo-choice',
+              legend: '選擇照片',
+              items,
+              modelValue: 'dark',
+              appearance: 'tiles',
+            },
+            {
+              label: ({ item }) =>
+                h('span', { class: 'rich-option-content' }, item.label),
+            },
+          ),
+      }),
+    );
+    const source = readFileSync(
+      new URL('./UiRadioGroup.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(html).toContain('ui-radio-group--tiles');
+    expect(html).toContain('rich-option-content');
+    expect(source).toContain('.ui-radio-group--tiles .ui-radio-group__options');
+    expect(source).toMatch(
+      /\.ui-radio-group--tiles\s+\.ui-radio-group__option:hover:not\(\.ui-radio-group__option--disabled\):not\(\s*\.ui-radio-group__option--checked\s*\)/u,
+    );
+    expect(source).toContain(
+      '.ui-radio-group__option:has(.ui-radio-group__input:focus-visible)',
+    );
+    expect(source).toMatch(
+      /\.ui-radio-group--tiles \.ui-radio-group__option--checked\s*\{[^}]*background:\s*var\(--ui-color-surface-selected\);/u,
+    );
+  });
 });

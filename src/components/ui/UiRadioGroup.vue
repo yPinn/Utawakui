@@ -9,6 +9,11 @@ const props = defineProps({
     default: 'vertical',
     validator: (value) => ['horizontal', 'vertical'].includes(value),
   },
+  appearance: {
+    type: String,
+    default: 'list',
+    validator: (value) => ['list', 'tiles'].includes(value),
+  },
   disabled: { type: Boolean, default: false },
   legendHidden: { type: Boolean, default: false },
 });
@@ -27,7 +32,10 @@ function select(item) {
 <template>
   <fieldset
     class="ui-radio-group"
-    :class="`ui-radio-group--${props.orientation}`"
+    :class="[
+      `ui-radio-group--${props.orientation}`,
+      `ui-radio-group--${props.appearance}`,
+    ]"
     :disabled="props.disabled"
   >
     <legend
@@ -117,6 +125,18 @@ function select(item) {
   flex-wrap: wrap;
 }
 
+/* Rich choices keep their content caller-owned while this primitive retains
+   radio semantics, indicator, states and the option surface. The caller may
+   map the responsive column tracks and gap without reaching into anatomy. */
+.ui-radio-group--tiles .ui-radio-group__options {
+  display: grid;
+  grid-template-columns: var(
+    --ui-radio-group-option-columns,
+    repeat(auto-fit, minmax(min(100%, 12rem), 1fr))
+  );
+  gap: var(--ui-radio-group-option-gap, var(--ui-space-3));
+}
+
 .ui-radio-group__option {
   position: relative;
   min-width: 0;
@@ -134,11 +154,34 @@ function select(item) {
   user-select: none;
 }
 
-.ui-radio-group__option:hover:not(.ui-radio-group__option--disabled) {
+.ui-radio-group--tiles .ui-radio-group__option {
+  align-content: start;
+  align-items: start;
+  padding: var(--ui-space-3);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface-raised);
+}
+
+.ui-radio-group__option:hover:not(.ui-radio-group__option--disabled):not(
+    .ui-radio-group__option--checked
+  ) {
   background: var(--ui-color-surface-hover);
 }
 
+.ui-radio-group--tiles
+  .ui-radio-group__option:hover:not(.ui-radio-group__option--disabled):not(
+    .ui-radio-group__option--checked
+  ) {
+  border-color: var(--ui-color-border-strong);
+}
+
 .ui-radio-group__option--checked {
+  background: var(--ui-color-surface-selected);
+}
+
+.ui-radio-group--tiles .ui-radio-group__option--checked {
+  border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-selected);
 }
 
@@ -158,6 +201,18 @@ function select(item) {
 .ui-radio-group__input:focus-visible + .ui-radio-group__indicator {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-radio-group--tiles
+  .ui-radio-group__option:has(.ui-radio-group__input:focus-visible) {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
+.ui-radio-group--tiles
+  .ui-radio-group__input:focus-visible
+  + .ui-radio-group__indicator {
+  outline: 0;
 }
 
 .ui-radio-group__indicator {
@@ -193,6 +248,10 @@ function select(item) {
   min-width: 0;
   display: grid;
   gap: calc(var(--ui-space-1) / 2);
+}
+
+.ui-radio-group--tiles .ui-radio-group__copy {
+  grid-column: 1 / -1;
 }
 
 .ui-radio-group__label {

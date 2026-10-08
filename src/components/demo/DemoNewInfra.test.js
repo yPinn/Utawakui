@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { UI_DEMO_ADOPTED_SECTION_KEYS } from '../../constants/uiDemoSections.js';
 
 function readSource(file) {
   return readFileSync(new URL(file, import.meta.url), 'utf8');
@@ -74,7 +75,7 @@ describe('new shared infra catalogue registration', () => {
     ['./DemoFeedback.vue', 'UiSkeleton', 'skeleton'],
     ['./DemoFeedback.vue', 'UiNotificationHost', 'notification-host'],
     ['./DemoOverlays.vue', 'UiTooltip', 'tooltip'],
-  ])('renders %s in its pending catalogue section', (file, component, key) => {
+  ])('renders %s in its catalogue section', (file, component, key) => {
     const source = readSource(file);
 
     expect(source).toContain(
@@ -87,9 +88,7 @@ describe('new shared infra catalogue registration', () => {
   it('keeps the pending infra batch isolated from production consumers', () => {
     const pendingComponents = [
       'UiKbd',
-      'UiSkeleton',
       'UiDisclosure',
-      'UiRadioGroup',
       'UiTooltip',
       'UiNotificationHost',
       'UiSwitch',
@@ -106,12 +105,12 @@ describe('new shared infra catalogue registration', () => {
     expect(imports).toEqual([]);
   });
 
-  it('records UiCombobox as adopted production infrastructure', () => {
-    const source = readSource('../../constants/uiDemoSections.js');
-
-    expect(source).toMatch(
-      /key: 'combobox',[\s\S]*?components: \['UiCombobox'\],[\s\S]*?adopted: true,/u,
-    );
+  it.each([
+    ['radio-group', 'UiRadioGroup'],
+    ['skeleton', 'UiSkeleton'],
+    ['combobox', 'UiCombobox'],
+  ])('records %s as adopted production infrastructure', (key) => {
+    expect(UI_DEMO_ADOPTED_SECTION_KEYS).toContain(key);
   });
 
   it('uses the popover interactive-panel anatomy in its catalogue sample', () => {

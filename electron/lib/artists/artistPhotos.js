@@ -10,11 +10,17 @@ const { isChannelId } = require('./channelAvatar');
 // <library>/artists/<artistId>/photo.<ext> plus photo.json provenance.
 const ARTISTS_DIRNAME = 'artists';
 const PROVENANCE_FILENAME = 'photo.json';
-const PROVENANCE_SCHEMA_VERSION = 1;
+const LEGACY_PROVENANCE_SCHEMA_VERSION = 1;
+const PROVENANCE_SCHEMA_VERSION = 2;
 const ARTIST_ID_RE = /^artist-[0-9a-f]{16}$/u;
 const PHOTO_FILENAME_RE = /^photo\.(?:jpg|png|webp)$/u;
 const PHOTO_EXTENSIONS = new Set(['.jpg', '.png', '.webp']);
-const PHOTO_SOURCES = new Set(['youtube-channel', 'local-file']);
+const LEGACY_PHOTO_SOURCES = new Set(['youtube-channel', 'local-file']);
+const PHOTO_SOURCES = new Set([...LEGACY_PHOTO_SOURCES, 'youtube-music']);
+const YOUTUBE_MUSIC_SELECTIONS = new Set([
+  'automatic-evidence',
+  'user-confirmed',
+]);
 const MAX_LISTED_ARTISTS = 5000;
 
 function isArtistId(value) {
@@ -31,11 +37,19 @@ function readProvenance(artistDir) {
     const data = JSON.parse(
       fs.readFileSync(path.join(artistDir, PROVENANCE_FILENAME), 'utf8'),
     );
+    const isLegacy =
+      data?.schemaVersion === LEGACY_PROVENANCE_SCHEMA_VERSION &&
+      LEGACY_PHOTO_SOURCES.has(data.source);
+    const isCurrent =
+      data?.schemaVersion === PROVENANCE_SCHEMA_VERSION &&
+      PHOTO_SOURCES.has(data.source);
     if (
-      data?.schemaVersion !== PROVENANCE_SCHEMA_VERSION ||
+      (!isLegacy && !isCurrent) ||
       !PHOTO_FILENAME_RE.test(data.filename) ||
-      !PHOTO_SOURCES.has(data.source) ||
-      Number.isNaN(Date.parse(data.acceptedAt))
+      Number.isNaN(Date.parse(data.acceptedAt)) ||
+      (data.source === 'youtube-channel' && !isChannelId(data.channelId)) ||
+      (data.source === 'youtube-music' &&
+        !YOUTUBE_MUSIC_SELECTIONS.has(data.selection))
     ) {
       return null;
     }
@@ -93,7 +107,7 @@ function listArtistPhotoUrls(dir) {
 function writeArtistPhoto(
   dir,
   artistId,
-  { buffer, extension, source, channelId, now = new Date() },
+  { buffer, extension, source, channelId, selection, now = new Date() },
 ) {
   const artistDir = resolveArtistDir(dir, artistId);
   if (!artistDir) throw new Error('invalid artist id');
@@ -101,6 +115,9 @@ function writeArtistPhoto(
   if (!PHOTO_SOURCES.has(source)) throw new Error('invalid photo source');
   if (source === 'youtube-channel' && !isChannelId(channelId)) {
     throw new Error('invalid channel id');
+  }
+  if (source === 'youtube-music' && !YOUTUBE_MUSIC_SELECTIONS.has(selection)) {
+    throw new Error('invalid photo selection');
   }
 
   fs.mkdirSync(artistDir, { recursive: true });
@@ -116,6 +133,7 @@ function writeArtistPhoto(
     filename,
     source,
     ...(source === 'youtube-channel' ? { channelId } : {}),
+    ...(source === 'youtube-music' ? { selection } : {}),
     acceptedAt: now.toISOString(),
   });
   return readArtistPhoto(dir, artistId);
@@ -144,7 +162,8 @@ function isArtistPhotoRemoved(dir, artistId) {
       fs.readFileSync(path.join(artistDir, PROVENANCE_FILENAME), 'utf8'),
     );
     return (
-      data?.schemaVersion === PROVENANCE_SCHEMA_VERSION &&
+      (data?.schemaVersion === LEGACY_PROVENANCE_SCHEMA_VERSION ||
+        data?.schemaVersion === PROVENANCE_SCHEMA_VERSION) &&
       data.status === 'removed'
     );
   } catch {

@@ -102,13 +102,19 @@ These items are not bundled into the installer by default. Utawakui prepares
 them under user data only after the corresponding feature is enabled and the
 user chooses to prepare the dependency.
 
-| Feature dependency             | License / notice boundary                                                                                                                                                          | Source / license reference                                                |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Python embeddable runtime      | Python Software Foundation License. Keep Python source/license reference with the prepared runtime.                                                                                | <https://docs.python.org/3/license.html>                                  |
-| `yt-dlp` Python wheel          | GPL-3.0-or-later provider tool. The tool license does not grant rights to downloaded media.                                                                                        | <https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE>                    |
-| `bgutil-ytdlp-pot-provider-rs` | Unlicense according to the project dependency manifest. Re-check upstream before release.                                                                                          | <https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs>                |
-| FFmpeg Gyan essentials build   | Manifest currently treats the managed build as GPL-3.0. FFmpeg licensing depends on build configuration; re-check the resolved build and its bundled license files before release. | <https://ffmpeg.org/legal.html>                                           |
-| UVR MDX-Net ONNX models        | Manifest currently marks selected models as MIT with UVR credit. Re-check model source, license, and attribution before release.                                                   | <https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models> |
+| Feature dependency                   | License / notice boundary                                                                                                                                                          | Source / license reference                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Python 3.14.7 embeddable runtime     | Python-2.0 (PSF License Version 2). Keep Python source/license reference with the prepared runtime.                                                                                | <https://docs.python.org/3.14/license.html>                                   |
+| `yt-dlp` 2026.08.19 Python wheel     | Unlicense. The tool license does not grant rights to downloaded media.                                                                                                             | <https://github.com/yt-dlp/yt-dlp/blob/2026.08.19/LICENSE>                    |
+| `ytmusicapi` 1.12.3                  | MIT; anonymous private-Innertube artist-photo worker dependency.                                                                                                                   | <https://github.com/sigma67/ytmusicapi/blob/1.12.3/LICENSE>                   |
+| `requests` 2.34.2                    | Apache-2.0; HTTP client used by ytmusicapi.                                                                                                                                        | <https://github.com/psf/requests/blob/v2.34.2/LICENSE>                        |
+| `urllib3` 2.8.0                      | MIT; Requests transport dependency.                                                                                                                                                | <https://github.com/urllib3/urllib3/blob/2.8.0/LICENSE.txt>                   |
+| `certifi` 2026.7.22                  | MPL-2.0; CA bundle used by Requests.                                                                                                                                               | <https://github.com/certifi/python-certifi/blob/2026.07.22/LICENSE>           |
+| `charset-normalizer` 3.5.2           | MIT; Requests text-decoding dependency.                                                                                                                                            | <https://github.com/jawah/charset_normalizer/blob/3.5.2/LICENSE>              |
+| `idna` 3.20                          | BSD-3-Clause; Requests internationalized-domain dependency.                                                                                                                        | <https://github.com/kjd/idna/blob/v3.20/LICENSE.md>                           |
+| `bgutil-ytdlp-pot-provider-rs` 0.8.1 | GPL-3.0-or-later for the local sidecar and yt-dlp plugin pair.                                                                                                                     | <https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE> |
+| FFmpeg Gyan essentials build         | Manifest currently treats the managed build as GPL-3.0. FFmpeg licensing depends on build configuration; re-check the resolved build and its bundled license files before release. | <https://ffmpeg.org/legal.html>                                               |
+| UVR MDX-Net ONNX models              | Manifest currently marks selected models as MIT with UVR credit. Re-check model source, license, and attribution before release.                                                   | <https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models>     |
 
 The app writes `SOURCE.txt`, `LICENSE.txt`, and `manifest.json` beside each
 prepared managed dependency. Those files should be treated as the per-install
@@ -130,7 +136,8 @@ Before publishing a binary release:
   Spout2／SpoutDX BSD-2-Clause `THIRD-PARTY-NOTICES` file.
 - Confirm the `signalsmith-stretch` version and MIT notice text stay in sync
   with the exact bundled version.
-- Re-check app-managed FFmpeg, yt-dlp, bgutil, Python, and UVR model license
+- Re-check app-managed FFmpeg, yt-dlp, ytmusicapi／Requests closure, bgutil,
+  Python, and UVR model license
   metadata at the resolved version used for that release.
 - Do not describe third-party provider tools or media workflows as granting any
   rights to songs, lyrics, artwork, recordings, streams, or VODs.

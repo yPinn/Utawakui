@@ -3,7 +3,7 @@
 ## Status
 
 Accepted and implemented (2026-09-02; YT Music-first discovery update
-2026-09-03).
+2026-09-03; restricted artist-photo lookup exception 2026-10-08).
 
 ## Context
 
@@ -29,6 +29,14 @@ metadata must not become the final timing authority.
   yt-dlp.
 - Keep the provider flow behind `provider-flow` and the app-managed yt-dlp runtime.
   Local file import remains independent and always available.
+- Permit one narrow private Innertube exception for missing artist photos. An
+  explicit artist-page action may run the app-owned anonymous YT Music worker
+  through the prepared Provider runtime. Main derives the bounded artist name
+  and at most three recording／channel observations; Renderer cannot provide a
+  query, URL, browse id, authentication state or provider option. The worker
+  uses no cookies, OAuth or browser session, returns at most three normalized
+  observations, and never forwards raw provider responses across the Main
+  boundary. This exception is not a general discovery transport.
 - Keep native recording-first results as the primary discovery surface. Prefer the
   YT Music Songs section for structured track／artist／album／duration evidence and
   retain ordinary YouTube search for coverage and alternate versions. Resolve
@@ -67,8 +75,9 @@ metadata must not become the final timing authority.
 - Embedding YouTube Music as the primary search UI or persisting a Google account
   session inside Electron. A signed-out, memory-partitioned `WebContentsView` may
   be reconsidered only as a removable technical spike, not as an acquisition UI.
-- DOM scraping, private Innertube endpoints, or renderer-owned authenticated
-  provider sessions.
+- DOM scraping, general-purpose private Innertube access, or renderer-owned
+  authenticated provider sessions. The bounded anonymous artist-photo
+  candidate exception above does not authorize any of these broader paths.
 - Requiring YouTube Data API credentials or an Utawakui backend for first-party
   discovery.
 - Automatically downloading the first result without operator review.
@@ -88,3 +97,10 @@ no Electron cookie／account boundary and has no access to the browser result;
 paste-back remains an explicit operator action. Account playlists and cross-platform
 track mapping remain separate future capabilities with their own authentication,
 terms, and failure boundaries.
+
+The artist-photo exception inherits private-schema drift and rate-limit risk.
+It therefore remains candidate-first: normalized images are downloaded and
+validated by Main, then require explicit user selection. Automatic apply stays
+disabled until the separate cross-time／locale drift gate passes, and any future
+requirement for login, cookies, CAPTCHA handling or a wider image-host allowlist
+stops adoption rather than expanding the trust boundary.

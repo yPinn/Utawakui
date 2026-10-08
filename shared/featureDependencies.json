@@ -8,9 +8,9 @@
       "platform": "win32",
       "arch": "x64",
       "name": "線上來源下載工具",
-      "version": "python-3.14.7-ytdlp-2026.08.19-bgutil-rs-0.8.1",
-      "displayVersion": "yt-dlp 2026.08.19 + bgutil 0.8.1",
-      "license": "Python Software Foundation License + Unlicense + GPL-3.0-or-later provider",
+      "version": "python-3.14.7-ytdlp-2026.08.19-ytmusicapi-1.12.3-bgutil-rs-0.8.1",
+      "displayVersion": "yt-dlp 2026.08.19 + YT Music 1.12.3 + bgutil 0.8.1",
+      "license": "Python Software Foundation License + Unlicense + MIT + Apache-2.0 + BSD-3-Clause + MPL-2.0 + GPL-3.0-or-later provider",
       "licenseUrl": "https://github.com/yt-dlp/yt-dlp#licensing",
       "sourceUrl": "https://github.com/yt-dlp/yt-dlp",
       "executableRelativePath": "python/python.exe",
@@ -23,7 +23,9 @@
           "downloadUrl": "https://www.python.org/ftp/python/3.14.7/python-3.14.7-embed-amd64.zip",
           "sha256": "d297e5ff019966817ad8502465176139f2d3d840fa4ed84b13bed399a6ab1f15",
           "expectedSize": 12673227,
-          "maxDownloadSize": 16777216
+          "maxDownloadSize": 16777216,
+          "license": "Python-2.0",
+          "licenseUrl": "https://docs.python.org/3.14/license.html"
         },
         {
           "role": "yt-dlp-wheel",
@@ -33,27 +35,105 @@
           "downloadUrl": "https://files.pythonhosted.org/packages/69/b2/8cd1613f56eed7ceb64fbd4df3f1c01246bfb098e6f398228bafda22b80b/yt_dlp-2026.8.19-py3-none-any.whl",
           "sha256": "1d57897e94c6665a0a6f9bc54b34e584284e32c034ffab3a7df25d8f7b24eedf",
           "expectedSize": 3185533,
-          "maxDownloadSize": 8388608
+          "maxDownloadSize": 8388608,
+          "license": "Unlicense",
+          "licenseUrl": "https://github.com/yt-dlp/yt-dlp/blob/2026.08.19/LICENSE"
+        },
+        {
+          "role": "ytmusicapi-wheel",
+          "name": "ytmusicapi Python wheel",
+          "version": "1.12.3",
+          "sourceUrl": "https://github.com/sigma67/ytmusicapi",
+          "downloadUrl": "https://files.pythonhosted.org/packages/29/ad/6d471ea9d81e1f59a4d01badda21e7f3f508b94ed171c677b6547b292f73/ytmusicapi-1.12.3-py3-none-any.whl",
+          "sha256": "f65db840907a43ca23b29bd563951a1e390fbe2089d7aa4ddbe2043824b2acd9",
+          "expectedSize": 111241,
+          "maxDownloadSize": 1048576,
+          "license": "MIT",
+          "licenseUrl": "https://github.com/sigma67/ytmusicapi/blob/1.12.3/LICENSE"
+        },
+        {
+          "role": "requests-wheel",
+          "name": "Requests Python wheel",
+          "version": "2.34.2",
+          "sourceUrl": "https://github.com/psf/requests",
+          "downloadUrl": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+          "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+          "expectedSize": 73075,
+          "maxDownloadSize": 1048576,
+          "license": "Apache-2.0",
+          "licenseUrl": "https://github.com/psf/requests/blob/v2.34.2/LICENSE"
+        },
+        {
+          "role": "urllib3-wheel",
+          "name": "urllib3 Python wheel",
+          "version": "2.8.0",
+          "sourceUrl": "https://github.com/urllib3/urllib3",
+          "downloadUrl": "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl",
+          "sha256": "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3",
+          "expectedSize": 135717,
+          "maxDownloadSize": 1048576,
+          "license": "MIT",
+          "licenseUrl": "https://github.com/urllib3/urllib3/blob/2.8.0/LICENSE.txt"
+        },
+        {
+          "role": "certifi-wheel",
+          "name": "certifi Python wheel",
+          "version": "2026.7.22",
+          "sourceUrl": "https://github.com/certifi/python-certifi",
+          "downloadUrl": "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl",
+          "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+          "expectedSize": 136983,
+          "maxDownloadSize": 1048576,
+          "license": "MPL-2.0",
+          "licenseUrl": "https://github.com/certifi/python-certifi/blob/2026.07.22/LICENSE"
+        },
+        {
+          "role": "charset-normalizer-wheel",
+          "name": "charset-normalizer Python wheel",
+          "version": "3.5.2",
+          "sourceUrl": "https://github.com/jawah/charset_normalizer",
+          "downloadUrl": "https://files.pythonhosted.org/packages/d1/78/5ed86f743d4bc350db307e7636419a0a5ee1d91806d30c7f667bd5c80dae/charset_normalizer-3.5.2-cp314-cp314-win_amd64.whl",
+          "sha256": "e4e81e09c1578b8df602e3db08b0b3ea0a6947ad612f52bf8dc5ea8d47691f0c",
+          "expectedSize": 210965,
+          "maxDownloadSize": 1048576,
+          "license": "MIT",
+          "licenseUrl": "https://github.com/jawah/charset_normalizer/blob/3.5.2/LICENSE"
+        },
+        {
+          "role": "idna-wheel",
+          "name": "idna Python wheel",
+          "version": "3.20",
+          "sourceUrl": "https://github.com/kjd/idna",
+          "downloadUrl": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl",
+          "sha256": "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c",
+          "expectedSize": 69583,
+          "maxDownloadSize": 1048576,
+          "license": "BSD-3-Clause",
+          "licenseUrl": "https://github.com/kjd/idna/blob/v3.20/LICENSE.md"
         },
         {
           "role": "bgutil-provider-exe",
           "name": "bgutil Rust PO-token provider",
           "version": "0.8.1",
           "sourceUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs",
-          "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-pot-windows-x86_64.exe",
+          "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/download/v0.8.1/bgutil-pot-windows-x86_64.exe",
           "sha256": "25d6b05c79176aa792454c3d1727922ca47e56cf11cb1e866615d751819b14a0",
           "expectedSize": 45795328,
-          "maxDownloadSize": 67108864
+          "maxDownloadSize": 67108864,
+          "license": "GPL-3.0-or-later",
+          "licenseUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE"
         },
         {
           "role": "bgutil-plugin",
           "name": "bgutil Rust yt-dlp plugin",
           "version": "0.8.1",
           "sourceUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs",
-          "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-ytdlp-pot-provider-rs.zip",
+          "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/download/v0.8.1/bgutil-ytdlp-pot-provider-rs.zip",
           "sha256": "99fd83b98fa93b193d6a3b69dc74410d76e7a2b889868c54d16121cac9060344",
           "expectedSize": 6253,
-          "maxDownloadSize": 1048576
+          "maxDownloadSize": 1048576,
+          "license": "GPL-3.0-or-later",
+          "licenseUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE"
         }
       ]
     },

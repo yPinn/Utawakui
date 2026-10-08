@@ -13,6 +13,7 @@
 | 來源                                  | 涵蓋（21 位） | 圖片性質                                               | 取得方式                                                                   | 判定                            |
 | ------------------------------------- | ------------- | ------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------- |
 | YouTube 演出者頻道頭像                | 18            | 演出者自己設定的形象圖，也是 YT Music 演出者頁顯示的圖 | App-managed yt-dlp 讀頻道 `/featured` 分頁的 `avatar_uncropped`（900×900） | 第一順位自動來源                |
+| YT Music artist 候選（Phase 0）       | Top-3 49／54  | Artist search 的方形頭像；實測為 120×120               | 匿名 `ytmusicapi 1.12.3` 的受限單次 worker，Main 驗證後預覽                | 只作缺圖人工候選                |
 | Wikidata P18（經 MusicBrainz）        | 約 7          | Commons 自由授權，多為演唱會或活動照                   | MusicBrainz artist `url-rels` → Wikidata → Commons                         | 待 MusicBrainz 查詢落地後的候選 |
 | 本機選圖                              | 全部          | 使用者自選                                             | 與曲目封面相同的選圖流程                                                   | 永遠可用、優先於自動來源        |
 | Spotify／Apple／fanart.tv／TheAudioDB | —             | —                                                      | —                                                                          | 理由同封面研究，不採用          |
@@ -33,12 +34,35 @@
 - 2 筆是 MusicBrainz 連錯人造成的假命中，再次說明名稱完全吻合不足以自動連結。
 - 授權最清楚，但照片多為演唱會或活動照，作為頭像的辨識度不一定好。
 
+### YT Music Phase 0 追加實測（2026-10-08）
+
+- 先測試 app-managed yt-dlp：flat artist search 只能取得 browse id，non-flat
+  browse 則是 Topic uploads／橫式影片縮圖，無法作為 artist portrait。
+- 在 owner 明確授權 54 個 artist 名稱匿名查詢後，`ytmusicapi 1.12.3`
+  完成 54／54，無 partial／operational failure，P95 為 4211 ms。126 個
+  portrait 全為 120×120，host 只出現 `yt3.googleusercontent.com`、
+  `yt3.ggpht.com`與 `lh3.googleusercontent.com`。`get_artist()` header 是 banner，
+  不可當作 portrait。
+- 獨立人工複核為 Top-1 46／54（85.19%）、Top-3 49／54（90.74%）。
+  因 Top-3 低於原定 95% gate，且尚未完成跨日／locale drift，不得作為
+  主要自動來源。生產第一階段因此只建立最多三張的人工候選。
+- 生產實作重用同一個 strict policy owner，但 auto apply 保持關閉。必須在
+  48–72 小時內三個時點、兩個 locale 的每次複測都維持 zero wrong auto，
+  才能重新提案。7 天追蹤是發布前後的非阻塞穩定性觀察。
+- `dist:dir` 後以 packaged worker 對 `艾熱AIR` 做一次無 recordings 的匿名
+  smoke，取得三筆候選；因缺少 recording／channel evidence 且繁簡名稱不視為
+  exact，strict auto 正確 abstain。首輪同時暴露 Windows CP950 無法輸出簡體
+  provider 名稱，worker 改為固定 UTF-8 byte protocol 後同一查詢成功。
+
 ## 權利邊界
 
 頻道頭像是演出者在 YouTube 上公開的形象圖，與現有 yt-dlp 縮圖相同，取得不代表 Utawakui 確認了任何使用權利。下載後只作本機控制台的顯示，不自動進入 OBS Output；現有 legal guidance 仍然適用。
+YT Music 候選也不改變這個判定：公開可取得與本機快取不是照片授權或平台穩定性保證。
 
 ## 結論
 
 - 自動來源採 YouTube 官方頻道頭像，條件是演出者為第一署名且頻道名稱不是 Topic。
+- YT Music private Innertube 只作缺圖時、artist 頁明確動作觸發的人工候選；
+  不登入、不使用 cookies／OAuth，不在 sidebar 或啟動時背景送出名稱。
 - 沒有照片時顯示通用人像圖示，不再借用專輯封面。
 - Wikidata 圖片留待 MusicBrainz 查詢實作後，作為手動候選。

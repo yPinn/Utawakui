@@ -212,6 +212,172 @@ describe('library metadata maintenance handlers', () => {
     );
   });
 
+  it('keeps YT Music candidate intents gated, id-only, and main-derived', async () => {
+    const tracks = [{ id: 'a', artist: 'Ado' }];
+    const artistPhotoCandidateService = {
+      search: vi.fn().mockResolvedValue({
+        status: 'ok',
+        candidates: [{ candidateId: 'candidate_abcdefghijklmn', name: 'Ado' }],
+      }),
+      cancel: vi.fn().mockReturnValue({ status: 'ok' }),
+      loadPreview: vi.fn().mockResolvedValue({
+        status: 'ok',
+        candidateId: 'candidate_abcdefghijklmn',
+        image: { mimeType: 'image/png', buffer: Buffer.from('preview') },
+      }),
+      apply: vi.fn().mockResolvedValue({ status: 'ok', changed: true }),
+    };
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      listLibraryTracks: vi.fn().mockReturnValue(tracks),
+      artistPhotoCandidateService,
+      notifyLibraryUpdated,
+    });
+    const artistId = 'artist-0123456789abcdef';
+    const candidateId = 'candidate_abcdefghijklmn';
+
+    await expect(
+      handlers.get('library:search-artist-photo-candidates')(null, artistId),
+    ).resolves.toMatchObject({ status: 'ok' });
+    expect(artistPhotoCandidateService.search).toHaveBeenCalledWith(
+      'library-dir',
+      expect.any(Function),
+      artistId,
+    );
+    expect(artistPhotoCandidateService.search.mock.calls[0][1]()).toBe(tracks);
+    await expect(
+      handlers.get('library:cancel-artist-photo-candidates')(null, artistId),
+    ).resolves.toEqual({ status: 'ok' });
+    expect(artistPhotoCandidateService.cancel).toHaveBeenCalledWith(
+      artistId,
+      'library-dir',
+    );
+    await expect(
+      handlers.get('library:load-artist-photo-candidate-preview')(
+        null,
+        artistId,
+        candidateId,
+      ),
+    ).resolves.toMatchObject({ status: 'ok' });
+    expect(artistPhotoCandidateService.loadPreview).toHaveBeenCalledWith(
+      'library-dir',
+      artistId,
+      candidateId,
+    );
+    await expect(
+      handlers.get('library:apply-artist-photo-candidate')(
+        null,
+        artistId,
+        candidateId,
+      ),
+    ).resolves.toEqual({ status: 'ok', changed: true });
+    expect(artistPhotoCandidateService.apply).toHaveBeenCalledWith(
+      'library-dir',
+      expect.any(Function),
+      artistId,
+      candidateId,
+    );
+    expect(artistPhotoCandidateService.apply.mock.calls[0][1]()).toBe(tracks);
+    expect(notifyLibraryUpdated).toHaveBeenCalledWith({
+      allowProviderBackfill: false,
+    });
+
+    for (const channel of [
+      'library:search-artist-photo-candidates',
+      'library:cancel-artist-photo-candidates',
+    ]) {
+      await expect(handlers.get(channel)(null, '../escape')).resolves.toEqual({
+        status: 'error',
+        reason: 'invalid-artist',
+      });
+    }
+    await expect(
+      handlers.get('library:load-artist-photo-candidate-preview')(
+        null,
+        artistId,
+        'https://example.test/private',
+      ),
+    ).resolves.toEqual({
+      status: 'error',
+      reason: 'candidate-unavailable',
+    });
+  });
+
+  it('rechecks the provider gate for every YT Music candidate intent', async () => {
+    const artistPhotoCandidateService = {
+      search: vi.fn(),
+      cancel: vi.fn(),
+      loadPreview: vi.fn(),
+      apply: vi.fn(),
+    };
+    const handlers = registerHandlers({
+      artistPhotoCandidateService,
+      getConfig: () => ({}),
+    });
+    const artistId = 'artist-0123456789abcdef';
+    const candidateId = 'candidate_abcdefghijklmn';
+
+    await expect(
+      handlers.get('library:search-artist-photo-candidates')(null, artistId),
+    ).resolves.toEqual({ status: 'disabled' });
+    await expect(
+      handlers.get('library:cancel-artist-photo-candidates')(null, artistId),
+    ).resolves.toEqual({ status: 'disabled' });
+    await expect(
+      handlers.get('library:load-artist-photo-candidate-preview')(
+        null,
+        artistId,
+        candidateId,
+      ),
+    ).resolves.toEqual({ status: 'disabled' });
+    await expect(
+      handlers.get('library:apply-artist-photo-candidate')(
+        null,
+        artistId,
+        candidateId,
+      ),
+    ).resolves.toEqual({ status: 'disabled' });
+    expect(artistPhotoCandidateService.search).not.toHaveBeenCalled();
+    expect(artistPhotoCandidateService.cancel).not.toHaveBeenCalled();
+    expect(artistPhotoCandidateService.loadPreview).not.toHaveBeenCalled();
+    expect(artistPhotoCandidateService.apply).not.toHaveBeenCalled();
+  });
+
+  it('records unexpected YT Music candidate failures without exposing private context', async () => {
+    const recordDiagnostic = vi.fn();
+    const artistPhotoCandidateService = {
+      search: vi
+        .fn()
+        .mockRejectedValue(new Error('artist=secret C:\\private\\worker.py')),
+      cancel: vi.fn(),
+      loadPreview: vi.fn(),
+      apply: vi.fn(),
+    };
+    const handlers = registerHandlers({
+      artistPhotoCandidateService,
+      recordDiagnostic,
+    });
+
+    const result = await handlers.get('library:search-artist-photo-candidates')(
+      null,
+      'artist-0123456789abcdef',
+    );
+
+    expect(result).toEqual({
+      status: 'error',
+      reason: 'provider-unavailable',
+    });
+    expect(JSON.stringify(result)).not.toMatch(/secret|private|worker\.py/i);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'artist-photo',
+        operation: 'candidate-search',
+        code: 'ARTIST_PHOTO_CANDIDATE_FAILED',
+        error: expect.any(Error),
+      }),
+    );
+  });
+
   it('chooses and clears artist photos through main-owned paths', async () => {
     const artistPhotoService = {
       chooseLocal: vi.fn().mockReturnValue({ status: 'ok', changed: true }),

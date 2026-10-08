@@ -29,7 +29,7 @@ describe('runtime configuration boundaries', () => {
     }
   });
 
-  it('packages only fixed app-owned Audio Python workers and catalogs', () => {
+  it('packages only fixed app-owned Python workers and Audio catalogs', () => {
     const builder = yaml.load(read('electron-builder.yml'), {
       schema: yaml.JSON_SCHEMA,
     });
@@ -44,6 +44,7 @@ describe('runtime configuration boundaries', () => {
       'resources/audio-processing/analysis-beat-this-final0-model.json',
       'resources/audio-processing/analysis-beat-this-py314-lock.json',
       'resources/audio-processing/audio-python-runtime-3.14.7.json',
+      'resources/provider/artist_photo_ytmusic_worker.py',
     ]);
     expect(JSON.stringify(builder.files)).not.toMatch(
       /tasks|\.models|\.tmp|\.venv|uv-cache/i,

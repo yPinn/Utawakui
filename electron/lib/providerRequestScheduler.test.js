@@ -75,4 +75,92 @@ describe('createProviderRequestScheduler', () => {
       scheduler.schedule(async () => undefined, { signal }),
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
+
+  it('rejects new work when the bounded pending queue is full', async () => {
+    let releaseFirst;
+    const firstGate = new Promise((resolve) => {
+      releaseFirst = resolve;
+    });
+    const scheduler = createProviderRequestScheduler({
+      intervalMs: 0,
+      maxPending: 2,
+    });
+    const first = scheduler.schedule(() => firstGate);
+    const secondOperation = vi.fn(async () => 'second');
+    const second = scheduler.schedule(secondOperation);
+
+    await expect(
+      scheduler.schedule(async () => 'overflow'),
+    ).rejects.toMatchObject({ name: 'QueueFullError' });
+
+    releaseFirst('first');
+    await expect(first).resolves.toBe('first');
+    await expect(second).resolves.toBe('second');
+    expect(secondOperation).toHaveBeenCalledOnce();
+
+    await expect(scheduler.schedule(async () => 'recovered')).resolves.toBe(
+      'recovered',
+    );
+  });
+
+  it('releases bounded queue capacity immediately when queued work is aborted', async () => {
+    let releaseFirst;
+    const firstGate = new Promise((resolve) => {
+      releaseFirst = resolve;
+    });
+    const scheduler = createProviderRequestScheduler({
+      intervalMs: 0,
+      maxPending: 2,
+    });
+    const first = scheduler.schedule(() => firstGate);
+    const controller = new AbortController();
+    const cancelledOperation = vi.fn();
+    const cancelled = scheduler.schedule(cancelledOperation, {
+      signal: controller.signal,
+    });
+    await expect(
+      scheduler.schedule(async () => 'blocked'),
+    ).rejects.toMatchObject({ name: 'QueueFullError' });
+
+    controller.abort();
+    const replacement = scheduler.schedule(async () => 'replacement');
+    releaseFirst('first');
+
+    await expect(first).resolves.toBe('first');
+    await expect(cancelled).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(replacement).resolves.toBe('replacement');
+    expect(cancelledOperation).not.toHaveBeenCalled();
+  });
+
+  it('removes and settles aborted queue nodes while the head remains blocked', async () => {
+    let releaseFirst;
+    const firstGate = new Promise((resolve) => {
+      releaseFirst = resolve;
+    });
+    const scheduler = createProviderRequestScheduler({
+      intervalMs: 0,
+      maxPending: 2,
+    });
+    const first = scheduler.schedule(() => firstGate);
+
+    for (let index = 0; index < 100; index += 1) {
+      const controller = new AbortController();
+      const cancelled = scheduler.schedule(async () => index, {
+        signal: controller.signal,
+      });
+      controller.abort();
+      const outcome = await Promise.race([
+        cancelled.catch((error) => error.name),
+        new Promise((resolve) =>
+          setTimeout(() => resolve('still-pending'), 10),
+        ),
+      ]);
+      expect(outcome).toBe('AbortError');
+    }
+
+    const replacement = scheduler.schedule(async () => 'replacement');
+    releaseFirst('first');
+    await expect(first).resolves.toBe('first');
+    await expect(replacement).resolves.toBe('replacement');
+  });
 });

@@ -615,6 +615,8 @@ if (!gotSingleInstanceLock) {
     const providerRunnerManager = createProviderRunnerManager({
       app,
       userDataDir: app.getPath('userData'),
+      isPackaged: isPackagedRuntime,
+      resourcesPath: process.resourcesPath,
     });
     const appUpdateService = createAppUpdateService({
       currentVersion: app.getVersion(),
@@ -799,6 +801,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       openExternal: (url) => shell.openExternal(url),
       getProviderRunner: providerRunnerManager.getRunner,
+      runArtistPhotoWorker: providerRunnerManager.runArtistPhotoWorker,
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
       enforceLibraryStoragePolicy,

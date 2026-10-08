@@ -10,6 +10,7 @@ module.exports = [
     ignores: [
       'coverage/**',
       'dist/**',
+      '.tmp/**',
       'release/**',
       'node_modules/**',
       'tasks/**',

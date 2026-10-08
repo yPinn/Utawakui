@@ -341,27 +341,27 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 
 ## 權威狀態與資料
 
-| 資料                                  | 權威 owner                        | 投影／持久化                                                               |
-| ------------------------------------- | --------------------------------- | -------------------------------------------------------------------------- |
-| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                        |
-| Track added time                      | Main library/import boundary      | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影        |
-| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                               |
-| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費                          |
-| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                       |
-| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用                         |
-| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate                               |
-| Performance session current draft     | Main session plan store           | Library root bounded JSON；Renderer 提交 ids／labels／intent               |
-| BGM standby preparation               | Main BGM plan store               | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent        |
-| BGM transport／handoff                | Renderer BGM deck／coordinator    | HTML audio events、logical gain bus 與 readonly UI projection              |
-| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent                                   |
-| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent                                     |
-| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy                           |
-| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments                              |
-| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent                                    |
-| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記                                 |
-| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                              |
-| Derived artist index                  | Main artist index cache           | 唯讀投影；Renderer 只取 opaque artist id、顯示名稱與 track ids             |
-| Artist photos                         | Main artist photo service         | `artists/<artistId>/` sidecar；Renderer 只送 artist id 與選圖／移除 intent |
+| 資料                                  | 權威 owner                        | 投影／持久化                                                                                   |
+| ------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                                            |
+| Track added time                      | Main library/import boundary      | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影                            |
+| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                                                   |
+| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費                                              |
+| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                                           |
+| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用                                             |
+| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate                                                   |
+| Performance session current draft     | Main session plan store           | Library root bounded JSON；Renderer 提交 ids／labels／intent                                   |
+| BGM standby preparation               | Main BGM plan store               | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent                            |
+| BGM transport／handoff                | Renderer BGM deck／coordinator    | HTML audio events、logical gain bus 與 readonly UI projection                                  |
+| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent                                                       |
+| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent                                                         |
+| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy                                               |
+| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments                                                  |
+| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent                                                        |
+| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記                                                     |
+| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                                                  |
+| Derived artist index                  | Main artist index cache           | 唯讀投影；Renderer 只取 opaque artist id、顯示名稱與 track ids                                 |
+| Artist photos                         | Main artist photo services        | `artists/<artistId>/` sidecar；Renderer 只送 artist id／candidate id 與選圖／移除／候選 intent |
 
 Artist organization（[ADR 0022](adr/0022-artist-identity-and-organization.md)）的第一階段由
 `electron/lib/artists/artistIndex.js` 擁有：依 `ytdlpInfo.extractPerformerCredits()` 的有序演出者
@@ -382,6 +382,18 @@ Sidebar 參照區以 `orderReferenceItems()` 依藝人名稱混排專輯與藝�
 標記，自動查詢不再寫回。Renderer 只透過 `utawakui-media://artist-photo/<artistId>/<filename>` 讀取，
 該路由由 `artistPhotos.resolveArtistPhotoPath()` 比對 provenance 記錄的唯一檔名。沒有照片時顯示人像圖示，
 不借用專輯封面。
+
+缺圖 artist 頁的明確「搜尋線上藝人照片」動作由
+`electron/lib/artists/artistPhotoCandidateService.js` 擁有。Main 從 artist index 推導名稱與最多三筆
+first-credit recording／channel evidence，以 app-owned `resources/provider/artist_photo_ytmusic_worker.py`
+在已準備的 Provider Python 中做一次 anonymous YT Music lookup。Service 全局串行查詢、使用短期
+opaque candidate session，限定三個圖片 host 並重新驗證 redirect。Renderer 只得到 candidate id／名稱
+與驗證後的 bytes，以 blob URL 預覽；不得到 remote URL／browse id／worker response。Apply 會重建目前
+artist context 指紋，並在下載前後重查現有照片，因此本機／官方照片在 race 中優先。這條路徑
+目前一律 `user-confirmed`；strict auto policy 保持關閉，要等 48–72 小時、三個時點／兩個 locale
+drift gate 通過。`artistPhotos.js` 對新照片寫入 schema v2，只保存 allowlisted source／acceptance／
+時間與 source-specific bounded evidence，並繼續讀取 v1。完整邊界見
+[artist photo provider contract](contracts/artist-photo-provider.md)。
 
 Lyrics、provider import、artwork discovery 與未來 artist／album organization 共用
 `electron/lib/musicIdentity/` 的 provider-neutral observations 與逐軸 evidence。這個純 domain

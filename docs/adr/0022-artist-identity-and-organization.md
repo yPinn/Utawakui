@@ -3,7 +3,9 @@
 ## Status
 
 Accepted (2026-10-05). Implemented on 2026-10-05: the derived index, the sidebar
-artists section and the artist page; visible Electron acceptance is pending.
+artists section and the artist page. The official-channel artist photo path and
+the explicit YT Music candidate fallback were implemented by 2026-10-08;
+visible Electron acceptance and the YT Music drift gate are pending.
 MusicBrainz display-name resolution is not implemented yet. The owner selected MusicBrainz as the
 external artist identity authority; the remaining sections define the local
 model that consumes it.
@@ -99,10 +101,13 @@ Played keep plain artist text.
 ### Artist photos
 
 Artist rows and pages show an artist photo, never a borrowed album cover
-([research](../research/artist-photo-sources-2026-10-05.md)). Precedence:
+([research](../research/artist-photo-sources-2026-10-05.md)). Resolution and
+precedence are:
 
 1. A user-selected local image.
-2. The artist's official YouTube channel avatar. The channel is the majority
+2. An already accepted local sidecar image. A user removal marker is also
+   authoritative and blocks every automatic resolver.
+3. The artist's official YouTube channel avatar. The channel is the majority
    `channel_id` among tracks where the artist is the first credited part, and only
    when that track sidecar's channel name does not end in "- Topic", because
    Topic channels use an album cover as their avatar. Main reads it with the
@@ -110,7 +115,13 @@ Artist rows and pages show an artist photo, never a borrowed album cover
    HTTPS `yt3.googleusercontent.com`／`yt3.ggpht.com` images through the existing
    validated image download (redirect re-check, size, magic bytes, MIME,
    dimensions).
-3. A generic person icon on a round surface. No initials and no album cover.
+4. If the official-channel path still leaves the artist without a photo, an
+   explicit 「搜尋線上藝人照片」 action may request up to three anonymous YT Music
+   artist candidates. Main derives the artist name and up to three first-credit
+   recording／channel observations. The user must inspect a downloaded,
+   validated preview and choose one; no result is applied automatically in this
+   phase.
+5. A generic person icon on a round surface. No initials and no album cover.
 
 Avatar resolution is gated by `provider-flow`, like provider metadata backfill.
 While the gate is on, the renderer asks main to resolve missing photos for the
@@ -118,15 +129,32 @@ artists listed in the sidebar, one at a time and at most once per artist per app
 session; opening an artist page also asks for that artist. Main derives the
 channel itself; the renderer sends only the opaque artist id. A YouTube photo is
 applied automatically because it comes from the artist's own channel; the user
-can replace it with a local image or remove it at any time.
+can replace it with a local image or remove it at any time. YT Music lookup is
+never started by sidebar traversal, startup or this automatic channel resolver.
+It runs only from the artist-page action, and sends the derived artist name to
+the external provider only at that point.
 
 Photos are the first persisted artist data: `<library>/artists/<artistId>/` holds
-`photo.<ext>` and `photo.json` (schema version, `youtube-channel` or `local-file`
-source, channel id for YouTube photos, accepted time). No remote image URL is
-stored. Renderer media uses the allowlisted `utawakui-media://artist-photo/`
+`photo.<ext>` and `photo.json`. New writes use schema version 2 with an allowlisted
+source (`youtube-channel`, `youtube-music` or `local-file`), acceptance
+(`automatic-evidence` or `user-confirmed`), accepted time and only the bounded
+source evidence needed by the current source. No artist name, remote image URL,
+YT Music browse／entity id or worker response is stored; schema version 1 remains
+readable. Renderer media uses the allowlisted `utawakui-media://artist-photo/`
 route. Because artist ids derive from the comparison key, a future normalizer
 change must migrate these directories together with the credit-key re-key.
 Wikidata images become a manual candidate once MusicBrainz resolution exists.
+
+The YT Music worker is an anonymous, app-owned, one-request process inside the
+same prepared Provider runtime. Search, preview and apply use short-lived opaque
+candidate ids; Renderer receives only display names and validated bytes, never
+remote URLs. Main serializes lookup, bounds retry, opens a global cooldown on
+429 or repeated operational failures, rechecks the feature gate and current
+artist evidence on every apply, and lets a local／official photo that wins a race
+remain authoritative. Strict automatic apply is a separate future policy: it
+requires zero wrong auto decisions across at least three runs over 48–72 hours
+and two locales. Until that gate passes, even a unique high-evidence match stays
+user-confirmed.
 
 ### Grouping basis: performing credit
 

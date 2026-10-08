@@ -6,10 +6,12 @@ const path = require('node:path');
 const { normalizeForCompare } = require('../musicIdentity/text');
 const { resolveTrackDir } = require('../library/paths');
 const { extractPerformerCredits } = require('../ytdlpInfo');
+const { VIDEO_ID_RE } = require('../youtube');
 const { listArtistPhotoUrls } = require('./artistPhotos');
 const { isChannelId, isTopicChannelName } = require('./channelAvatar');
 
 const READ_CONCURRENCY = 8;
+const MAX_PHOTO_SEARCH_RECORDINGS = 3;
 
 function creditKey(part) {
   return (
@@ -85,6 +87,10 @@ async function readSidecarTrackFacts(dir, trackId) {
     if (!info || typeof info !== 'object') return null;
     return {
       parts: extractPerformerCredits(info),
+      videoId:
+        typeof info.id === 'string' && VIDEO_ID_RE.test(info.id)
+          ? info.id
+          : null,
       channelId: isChannelId(info.channel_id) ? info.channel_id : null,
       channelName: typeof info.channel === 'string' ? info.channel : '',
     };
@@ -125,7 +131,7 @@ function createArtistIndexCache({
   let cachedDir = null;
   let factsByCacheKey = new Map();
 
-  async function loadFacts(dir, tracks) {
+  async function loadFacts(dir, tracks, options = {}) {
     if (dir !== cachedDir) {
       cachedDir = dir;
       factsByCacheKey = new Map();
@@ -134,7 +140,9 @@ function createArtistIndexCache({
     const cacheKeyFor = (track) => `${track.id}\u0000${track.artist ?? ''}`;
     const missing = list.filter(
       (track) =>
-        track?.id && track.artist && !factsByCacheKey.has(cacheKeyFor(track)),
+        track?.id &&
+        track.artist &&
+        (options.fresh === true || !factsByCacheKey.has(cacheKeyFor(track))),
     );
     for (let start = 0; start < missing.length; start += READ_CONCURRENCY) {
       const batch = missing.slice(start, start + READ_CONCURRENCY);
@@ -180,7 +188,27 @@ function createArtistIndexCache({
     return photoChannelFor(artistId, index, factsByTrackId);
   }
 
-  return { getIndex, getPhotoChannel };
+  async function getPhotoSearchContext(dir, tracks, artistId, options = {}) {
+    const { index, factsByTrackId } = await loadFacts(dir, tracks, options);
+    const artist = index.artists.find((entry) => entry.id === artistId);
+    if (!artist) return null;
+    const recordings = [];
+    for (const trackId of artist.trackIds) {
+      const facts = factsByTrackId.get(trackId);
+      if (!facts?.videoId) continue;
+      recordings.push({
+        videoId: facts.videoId,
+        channelId:
+          index.trackArtistIds[trackId]?.[0] === artistId
+            ? (facts.channelId ?? null)
+            : null,
+      });
+      if (recordings.length >= MAX_PHOTO_SEARCH_RECORDINGS) break;
+    }
+    return { artistName: artist.name, recordings };
+  }
+
+  return { getIndex, getPhotoChannel, getPhotoSearchContext };
 }
 
 module.exports = {

@@ -376,6 +376,22 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getArtistIndex: () => ipcRenderer.invoke('library:get-artist-index'),
   resolveArtistPhoto: (artistId) =>
     ipcRenderer.invoke('library:resolve-artist-photo', artistId),
+  searchArtistPhotoCandidates: (artistId) =>
+    ipcRenderer.invoke('library:search-artist-photo-candidates', artistId),
+  cancelArtistPhotoCandidates: (artistId) =>
+    ipcRenderer.invoke('library:cancel-artist-photo-candidates', artistId),
+  loadArtistPhotoCandidatePreview: (artistId, candidateId) =>
+    ipcRenderer.invoke(
+      'library:load-artist-photo-candidate-preview',
+      artistId,
+      candidateId,
+    ),
+  applyArtistPhotoCandidate: (artistId, candidateId) =>
+    ipcRenderer.invoke(
+      'library:apply-artist-photo-candidate',
+      artistId,
+      candidateId,
+    ),
   chooseArtistPhoto: (artistId) =>
     ipcRenderer.invoke('library:choose-artist-photo', artistId),
   clearArtistPhoto: (artistId) =>

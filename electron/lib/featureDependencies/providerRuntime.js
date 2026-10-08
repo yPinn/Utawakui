@@ -21,6 +21,15 @@ const {
   writeDependencyNotices,
 } = require('./manifests');
 
+const YTMUSIC_WHEEL_ROLES = Object.freeze([
+  'ytmusicapi-wheel',
+  'requests-wheel',
+  'urllib3-wheel',
+  'certifi-wheel',
+  'charset-normalizer-wheel',
+  'idna-wheel',
+]);
+
 function requireDependencyArtifact(dependency, role) {
   const artifact = dependency.artifacts?.find((item) => item.role === role);
   if (!artifact) {
@@ -103,6 +112,17 @@ async function installProviderRuntimeArtifacts(
     ...options,
     extractArchive: options.extractWheel || options.extractArchive,
   });
+
+  for (const role of YTMUSIC_WHEEL_ROLES) {
+    const artifact = requireDependencyArtifact(dependency, role);
+    emitProgress(options, { stage: 'downloading' });
+    const wheel = await downloadVerifiedArtifact(artifact, options);
+    emitProgress(options, { stage: 'installing' });
+    await extractZipBuffer(wheel, paths.sitePackagesDir, artifact, {
+      ...options,
+      extractArchive: options.extractWheel || options.extractArchive,
+    });
+  }
 
   emitProgress(options, { stage: 'downloading' });
   const providerExe = await downloadVerifiedArtifact(providerArtifact, options);

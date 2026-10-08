@@ -1,9 +1,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { ImagePlus, Trash2 } from '../icons/index.js';
+import { ImagePlus, Search, Trash2 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useArtistIndex } from '../composables/useArtistIndex.js';
+import { useArtistPhotoCandidates } from '../composables/useArtistPhotoCandidates.js';
 import { useBgmSession } from '../composables/useBgmSession.js';
 import { useCollectionPlayback } from '../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
@@ -15,6 +16,7 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useTrackPreview } from '../composables/useTrackPreview.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
+import ArtistPhotoCandidateModal from '../components/artists/ArtistPhotoCandidateModal.vue';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
 import LibraryTrackTable from '../components/library/LibraryTrackTable.vue';
 import {
@@ -84,10 +86,14 @@ const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const {
   state: artistIndexState,
   ensureLoaded: ensureArtistIndex,
+  refresh: refreshArtistIndex,
   resolvePhotos: resolveArtistPhotos,
   choosePhoto: chooseArtistPhoto,
   clearPhoto: clearArtistPhoto,
 } = useArtistIndex();
+const artistPhotoCandidates = useArtistPhotoCandidates({
+  refreshArtistIndex,
+});
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 const trackPreview = useTrackPreview();
 const { handoffState: bgmHandoffState } = useBgmSession();
@@ -351,6 +357,10 @@ function chooseSelectedArtistPhoto() {
 function handleCollectionMenuAction(value) {
   if (value?.action === ARTIST_PHOTO_ACTIONS.choose) {
     chooseSelectedArtistPhoto();
+  } else if (value?.action === ARTIST_PHOTO_ACTIONS.searchOnline) {
+    if (artistPage.value) {
+      artistPhotoCandidates.openForArtist(artistPage.value);
+    }
   } else if (value?.action === ARTIST_PHOTO_ACTIONS.clear) {
     if (artistPage.value) clearArtistPhoto(artistPage.value.id);
   } else {
@@ -366,6 +376,7 @@ const addToPlaylistItems = computed(() =>
 
 const ARTIST_PHOTO_ACTIONS = Object.freeze({
   choose: 'choose-artist-photo',
+  searchOnline: 'search-online-artist-photo',
   clear: 'clear-artist-photo',
 });
 
@@ -379,6 +390,16 @@ const collectionMoreItems = computed(() => {
         icon: ImagePlus,
         value: { action: ARTIST_PHOTO_ACTIONS.choose },
       },
+      ...(!artistPage.value.photoUrl
+        ? [
+            {
+              key: ARTIST_PHOTO_ACTIONS.searchOnline,
+              label: '搜尋線上藝人照片',
+              icon: Search,
+              value: { action: ARTIST_PHOTO_ACTIONS.searchOnline },
+            },
+          ]
+        : []),
       ...(artistPage.value.photoUrl
         ? [
             {
@@ -464,6 +485,7 @@ watch(
   ],
   () => {
     selectedTrackId.value = null;
+    artistPhotoCandidates.close();
     closeAddMenu();
     clearDragState();
     trackPreview.close();
@@ -747,6 +769,19 @@ onMounted(async () => {
       @apply-artwork="trackMetadataEditor.applySelectedArtwork"
       @update-title="trackMetadataEditor.setTitleDraft"
       @update-artist="trackMetadataEditor.setArtistDraft"
+    />
+
+    <ArtistPhotoCandidateModal
+      :open="artistPhotoCandidates.state.open"
+      :artist-name="artistPhotoCandidates.state.artistName"
+      :status="artistPhotoCandidates.state.status"
+      :candidates="artistPhotoCandidates.state.candidates"
+      :selected-candidate-id="artistPhotoCandidates.state.selectedCandidateId"
+      :error="artistPhotoCandidates.state.error"
+      @close="artistPhotoCandidates.close"
+      @retry="artistPhotoCandidates.retry"
+      @select-candidate="artistPhotoCandidates.selectCandidate"
+      @confirm="artistPhotoCandidates.applySelected"
     />
 
     <TrackPreviewOverlay

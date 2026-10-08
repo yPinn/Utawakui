@@ -54,7 +54,7 @@ describe('artist photo storage', () => {
       ),
     );
     expect(provenance).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       filename: 'photo.jpg',
       source: 'youtube-channel',
       channelId: CHANNEL_ID,
@@ -90,6 +90,60 @@ describe('artist photo storage', () => {
     expect(readArtistPhoto(dir, ARTIST_ID).source).toBe('local-file');
   });
 
+  it('writes user-confirmed YouTube Music provenance without remote data', () => {
+    const photo = writeArtistPhoto(dir, ARTIST_ID, {
+      buffer: Buffer.from('webp'),
+      extension: '.webp',
+      source: 'youtube-music',
+      selection: 'user-confirmed',
+      now: NOW,
+    });
+
+    expect(photo).toEqual({
+      filename: 'photo.webp',
+      source: 'youtube-music',
+      acceptedAt: NOW.toISOString(),
+    });
+    const provenance = JSON.parse(
+      fs.readFileSync(
+        path.join(dir, 'artists', ARTIST_ID, 'photo.json'),
+        'utf8',
+      ),
+    );
+    expect(provenance).toEqual({
+      schemaVersion: 2,
+      filename: 'photo.webp',
+      source: 'youtube-music',
+      selection: 'user-confirmed',
+      acceptedAt: NOW.toISOString(),
+    });
+    expect(JSON.stringify(provenance)).not.toMatch(
+      /https?:|browse|entity|private/i,
+    );
+  });
+
+  it('continues reading valid v1 local and channel provenance', () => {
+    const artistDir = path.join(dir, 'artists', ARTIST_ID);
+    fs.mkdirSync(artistDir, { recursive: true });
+    fs.writeFileSync(path.join(artistDir, 'photo.jpg'), 'legacy');
+    fs.writeFileSync(
+      path.join(artistDir, 'photo.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        filename: 'photo.jpg',
+        source: 'youtube-channel',
+        channelId: CHANNEL_ID,
+        acceptedAt: NOW.toISOString(),
+      }),
+    );
+
+    expect(readArtistPhoto(dir, ARTIST_ID)).toEqual({
+      filename: 'photo.jpg',
+      source: 'youtube-channel',
+      acceptedAt: NOW.toISOString(),
+    });
+  });
+
   it('rejects invalid writes before touching the filesystem', () => {
     expect(() =>
       writeArtistPhoto(dir, ARTIST_ID, {
@@ -106,6 +160,13 @@ describe('artist photo storage', () => {
         channelId: 'not-a-channel',
       }),
     ).toThrow('invalid channel id');
+    expect(() =>
+      writeArtistPhoto(dir, ARTIST_ID, {
+        buffer: Buffer.from('x'),
+        extension: '.jpg',
+        source: 'youtube-music',
+      }),
+    ).toThrow('invalid photo selection');
     expect(fs.existsSync(path.join(dir, 'artists'))).toBe(false);
   });
 
@@ -160,5 +221,12 @@ describe('artist photo storage', () => {
       now: NOW,
     });
     expect(isArtistPhotoRemoved(dir, ARTIST_ID)).toBe(false);
+    const provenance = JSON.parse(
+      fs.readFileSync(
+        path.join(dir, 'artists', ARTIST_ID, 'photo.json'),
+        'utf8',
+      ),
+    );
+    expect(provenance.schemaVersion).toBe(2);
   });
 });

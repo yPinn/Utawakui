@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "artist-photo-private-synthetic-v1",
+  "cases": [
+    {
+      "caseId": "listed-current",
+      "listed": true,
+      "currentPhotoPresent": true,
+      "artistName": "PRIVATE ARTIST CURRENT",
+      "recordings": [
+        {
+          "videoId": "AAAAAAAAAAA",
+          "title": "PRIVATE TITLE CURRENT",
+          "channelId": "UCAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      ]
+    },
+    {
+      "caseId": "listed-recovery-one",
+      "listed": true,
+      "currentPhotoPresent": false,
+      "artistName": "PRIVATE ARTIST RECOVERY ONE",
+      "recordings": [
+        {
+          "videoId": "BBBBBBBBBBB",
+          "title": "PRIVATE TITLE RECOVERY ONE",
+          "channelId": "UCBBBBBBBBBBBBBBBBBBBBBB"
+        },
+        {
+          "videoId": "EEEEEEEEEEE",
+          "title": "PRIVATE TITLE RECOVERY ONE SECOND",
+          "channelId": "UCBBBBBBBBBBBBBBBBBBBBBB"
+        }
+      ]
+    },
+    {
+      "caseId": "listed-recovery-two",
+      "listed": true,
+      "currentPhotoPresent": false,
+      "artistName": "PRIVATE ARTIST RECOVERY TWO",
+      "recordings": [
+        {
+          "videoId": "CCCCCCCCCCC",
+          "title": "PRIVATE TITLE RECOVERY TWO",
+          "channelId": null
+        }
+      ]
+    },
+    {
+      "caseId": "catalog-miss",
+      "listed": false,
+      "currentPhotoPresent": false,
+      "artistName": "PRIVATE ARTIST MISS",
+      "recordings": []
+    }
+  ]
+}

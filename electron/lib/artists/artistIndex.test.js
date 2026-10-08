@@ -204,6 +204,108 @@ describe('photo channel derivation', () => {
   });
 });
 
+describe('photo search evidence derivation', () => {
+  it('returns a deterministic bounded context without trusting renderer metadata', async () => {
+    const tracks = [
+      { id: 'a', artist: 'Ado' },
+      { id: 'b', artist: 'Guest, Ado' },
+      { id: 'c', artist: 'Ado' },
+      { id: 'd', artist: 'Ado' },
+    ];
+    const facts = {
+      a: {
+        parts: ['Ado'],
+        videoId: 'AAAAAAAAAAA',
+        channelId: ADO_CHANNEL,
+        channelName: 'Ado',
+      },
+      b: {
+        parts: ['Guest', 'Ado'],
+        videoId: 'BBBBBBBBBBB',
+        channelId: TOPIC_CHANNEL,
+        channelName: 'Guest',
+      },
+      c: {
+        parts: ['Ado'],
+        videoId: 'CCCCCCCCCCC',
+        channelId: ADO_CHANNEL,
+        channelName: 'Ado',
+      },
+      d: {
+        parts: ['Ado'],
+        videoId: 'DDDDDDDDDDD',
+        channelId: ADO_CHANNEL,
+        channelName: 'Ado',
+      },
+    };
+    const { cache } = cacheWith(facts);
+    const index = await cache.getIndex('/lib', tracks);
+    const artistId = byName(index, 'Ado').id;
+
+    await expect(
+      cache.getPhotoSearchContext('/lib', tracks, artistId),
+    ).resolves.toEqual({
+      artistName: 'Ado',
+      recordings: [
+        { videoId: 'AAAAAAAAAAA', channelId: ADO_CHANNEL },
+        { videoId: 'BBBBBBBBBBB', channelId: null },
+        { videoId: 'CCCCCCCCCCC', channelId: ADO_CHANNEL },
+      ],
+    });
+  });
+
+  it('returns null for unknown artists and omits malformed provider ids', async () => {
+    const tracks = [{ id: 'local-track', artist: 'Ado' }];
+    const { cache } = cacheWith({
+      'local-track': {
+        parts: ['Ado'],
+        videoId: null,
+        channelId: null,
+        channelName: '',
+      },
+    });
+    const index = await cache.getIndex('/lib', tracks);
+    await expect(
+      cache.getPhotoSearchContext('/lib', tracks, index.artists[0].id),
+    ).resolves.toEqual({ artistName: 'Ado', recordings: [] });
+    await expect(
+      cache.getPhotoSearchContext('/lib', tracks, 'artist-ffffffffffffffff'),
+    ).resolves.toBe(null);
+  });
+
+  it('can bypass cached sidecar facts for the final apply verification', async () => {
+    const tracks = [{ id: 'a', artist: 'Ado' }];
+    const facts = {
+      a: {
+        parts: ['Ado'],
+        videoId: 'AAAAAAAAAAA',
+        channelId: ADO_CHANNEL,
+        channelName: 'Ado',
+      },
+    };
+    const { cache, readFacts } = cacheWith(facts);
+    const index = await cache.getIndex('/lib', tracks);
+    const artistId = index.artists[0].id;
+    facts.a = {
+      ...facts.a,
+      channelId: TOPIC_CHANNEL,
+      channelName: 'Ado alternate',
+    };
+
+    await expect(
+      cache.getPhotoSearchContext('/lib', tracks, artistId),
+    ).resolves.toMatchObject({
+      recordings: [{ channelId: ADO_CHANNEL }],
+    });
+    await expect(
+      cache.getPhotoSearchContext('/lib', tracks, artistId, { fresh: true }),
+    ).resolves.toMatchObject({
+      recordings: [{ channelId: TOPIC_CHANNEL }],
+    });
+    expect(readFacts).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('readSidecarTrackFacts', () => {
   let dir;
 
@@ -219,6 +321,7 @@ describe('readSidecarTrackFacts', () => {
     fs.writeFileSync(
       path.join(trackDir, 'info.json'),
       JSON.stringify({
+        id: 'abcdefghijk',
         title: 'Blue Blood',
         track: 'Blue Blood',
         artists: ['IVE', 'Nick Hahn'],
@@ -230,6 +333,7 @@ describe('readSidecarTrackFacts', () => {
     );
     await expect(readSidecarTrackFacts(dir, 'abcdefghijk')).resolves.toEqual({
       parts: ['IVE'],
+      videoId: 'abcdefghijk',
       channelId: ADO_CHANNEL,
       channelName: 'IVE',
     });
@@ -245,6 +349,7 @@ describe('readSidecarTrackFacts', () => {
     );
     await expect(readSidecarTrackFacts(dir, 'abcdefghijk')).resolves.toEqual({
       parts: ['Eve'],
+      videoId: null,
       channelId: null,
       channelName: '',
     });
