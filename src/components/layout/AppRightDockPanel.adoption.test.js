@@ -7,6 +7,7 @@ function readSource(path) {
 
 const queueSource = readSource('../queue/QueuePanel.vue');
 const contextSource = readSource('../playlists/TrackContextPanel.vue');
+const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
 const sessionSource = readSource(
   '../performance-session/PerformanceSessionPanel.vue',
 );
@@ -29,15 +30,23 @@ describe('AppRightDockPanel production adoption', () => {
     },
   );
 
-  it('uses flat shared sections and Track Row for the playback identity', () => {
+  it('uses feature-owned playback sections below the media Hero', () => {
     expect(contextSource).toContain(
       "import AppRightDockSection from '../layout/AppRightDockSection.vue';",
     );
     expect(contextSource).not.toContain('TrackContextBlock');
     expect(contextSource).not.toContain('useStudioLibraryInspectorWidth');
-    expect(contextSource).toMatch(
-      /heading="目前播放"[\s\S]*?<UiTrackRow[\s\S]*?:track="currentTrack"/u,
+    expect(contextSource).toContain(
+      "import TrackContextHero from './TrackContextHero.vue';",
     );
+    expect(contextSource).toMatch(
+      /<TrackContextHero[\s\S]*?:track="currentTrack"/u,
+    );
+    expect(contextSource).toContain('<TrackLyricsPreview');
+    expect(contextSource).toContain('<TrackArtistPreview');
+    expect(contextSource).toContain('<TrackQueuePreview');
+    expect(contextSource).not.toContain('<UiTrackRow');
+    expect(queuePreviewSource.match(/<UiTrackRow/gu)).toHaveLength(1);
     expect(contextSource).not.toMatch(/:tracks="\[currentTrack\]"/u);
   });
 

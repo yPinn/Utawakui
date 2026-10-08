@@ -26,6 +26,8 @@ import QueuePanel from './components/queue/QueuePanel.vue';
 import PerformanceSessionPanel from './components/performance-session/PerformanceSessionPanel.vue';
 import SetlistPage from './components/playlists/SetlistPage.vue';
 import { useAppView } from './composables/useAppView.js';
+import { usePlaybackQueue } from './composables/usePlaybackQueue.js';
+import { usePlayer } from './composables/usePlayer.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
@@ -76,6 +78,9 @@ const ImportPage = defineAsyncComponent(
 const SettingsView = defineAsyncComponent(
   () => import('./views/SettingsView.vue'),
 );
+const PlaybackInfoContextView = defineAsyncComponent(
+  () => import('./views/StudioLibraryContextView.vue'),
+);
 
 // These workbenches are development aids, not user-facing product pages.
 // Keeping their imports inside a compile-time DEV branch lets Vite omit the
@@ -101,15 +106,6 @@ const internalViews = internalWorkbenchesEnabled
       'visual-system': defineAsyncComponent(
         () => import('./views/VisualSystemView.vue'),
       ),
-    }
-  : {};
-const internalContextDefinitions = internalWorkbenchesEnabled
-  ? {
-      'visual-system': {
-        component: defineAsyncComponent(
-          () => import('./views/StudioLibraryContextView.vue'),
-        ),
-      },
     }
   : {};
 // Ordered by current workflow/usage priority: Music Analysis is the most
@@ -176,6 +172,8 @@ const { width: sidebarWidth } = useSidebarWidth();
 const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
+const { state: playerState } = usePlayer();
+const { currentTrack: queueCurrentTrack } = usePlaybackQueue();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
 const BGM_PLAYER_ID = 'app-bgm-player';
 const bgmPlayerExpanded = ref(false);
@@ -215,22 +213,13 @@ function leaveSettings() {
     document.querySelector('[data-app-settings-trigger]')?.focus?.();
   });
 }
-// The Studio Library inspector only makes sense while VisualSystemView is
-// actually showing its Studio Library sub-mode, not its Demo sub-mode.
 const { mode: visualReviewMode } = useVisualReviewMode();
-const activeContextDefinition = computed(() => {
-  if (
-    activeView.value === 'visual-system' &&
-    visualReviewMode.value !== 'studio-library'
-  ) {
-    return null;
-  }
-  return internalContextDefinitions[activeView.value] ?? null;
-});
-const activeContextView = computed(
-  () => activeContextDefinition.value?.component ?? null,
+// Playback Info belongs to the persistent player/queue context, not the
+// current workspace page. The audio-backed player remains authoritative once
+// playback begins; Queue supplies the prepared track before that handoff.
+const playbackInfoAvailable = computed(() =>
+  Boolean(playerState.track ?? queueCurrentTrack.value),
 );
-const activeContextAvailable = computed(() => Boolean(activeContextView.value));
 const metadataSurfaceActive = computed(
   () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_METADATA,
 );
@@ -256,7 +245,7 @@ const restorableDockSurface = computed(
   () =>
     rightDock.topSurface.value ??
     rightDock.lastSurface.value ??
-    (activeContextAvailable.value
+    (playbackInfoAvailable.value
       ? RIGHT_DOCK_SURFACE_METADATA
       : RIGHT_DOCK_SURFACE_QUEUE),
 );
@@ -288,6 +277,7 @@ function restoreRightDockFocus() {
 }
 
 function toggleMetadataSurface() {
+  if (!playbackInfoAvailable.value) return;
   rememberRightDockTrigger();
   rightDock.toggleSurface(RIGHT_DOCK_SURFACE_METADATA);
 }
@@ -367,7 +357,7 @@ function handleRightDockKeydown(event) {
 }
 
 watch(
-  activeContextAvailable,
+  playbackInfoAvailable,
   (available) => {
     if (!available) rightDock.forgetSurface(RIGHT_DOCK_SURFACE_METADATA);
   },
@@ -488,9 +478,9 @@ useKeyboardShortcuts({ internalViewShortcuts });
           @toggle-expanded="toggleRightDockExpanded"
         >
           <component
-            :is="activeContextView"
+            :is="PlaybackInfoContextView"
             v-if="
-              activeContextView &&
+              playbackInfoAvailable &&
               rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_METADATA]
             "
             class="shell__dock-surface"
@@ -500,6 +490,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
             :aria-hidden="!metadataExpanded"
             :inert="!metadataExpanded"
             @close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"
+            @open-queue="toggleQueueSurface"
           />
           <QueuePanel
             v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_QUEUE]"
@@ -528,7 +519,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     </main>
     <PlayerBar
       class="shell__player"
-      :artwork-expandable="activeContextAvailable"
+      :artwork-expandable="playbackInfoAvailable"
       :artwork-expanded="metadataExpanded"
       :artwork-controls="RIGHT_DOCK_CONTENT_ID"
       :queue-expanded="queueExpanded"
@@ -620,8 +611,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
      bounded to the row instead of forcing the row to grow around it. */
   min-height: 0;
   /* The Sidebar is its own inset plane rather than a continuation of the
-     tabbed dossier baseline. The shared shell-panel token keeps its block
-     breathing room aligned with Right Dock in production and Token v2. */
+     tabbed dossier baseline. The shared shell-edge token keeps its block
+     perimeter aligned with Right Dock in production and Token v2. */
   padding-block: var(--ui-shell-content-inset-block);
   /* Matches .shell__main's own padding-right below — both are the shell's
      outermost edge insets (window edge to sidebar/main+context), kept to
@@ -699,7 +690,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
   justify-content: flex-end;
   min-width: 0;
   min-height: 0;
-  /* The shell's shared bottom padding already leaves the panel inset above
+  /* The shell's shared bottom padding already leaves the outer inset above
      PlayerBar. This matching top inset makes the right plane independent of
      the workspace's taller archive-tab baseline, just like the Sidebar. */
   padding-top: var(--ui-shell-content-inset-block);

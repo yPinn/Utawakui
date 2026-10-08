@@ -56,13 +56,27 @@ export function createTrackLyricsPreview({
   };
 }
 
-export function createLocalArtistSummary(currentTrack, libraryTracks) {
+export function createLocalArtistSummary(
+  currentTrack,
+  libraryTracks,
+  artistIndex = null,
+) {
   const name = String(currentTrack?.artist ?? '').trim();
   const identity = normalizedArtist(name);
   if (!identity) return null;
 
+  const artistIds = artistIndex?.trackArtistIds?.[currentTrack?.id];
+  const indexedArtist =
+    Array.isArray(artistIds) && artistIds.length === 1
+      ? artistIndex?.artists?.find((artist) => artist.id === artistIds[0])
+      : null;
+  const indexedTrackIds = indexedArtist
+    ? new Set(indexedArtist.trackIds)
+    : null;
   const tracks = (Array.isArray(libraryTracks) ? libraryTracks : []).filter(
-    (track) => normalizedArtist(track?.artist) === identity,
+    (track) =>
+      indexedTrackIds?.has(track?.id) ??
+      normalizedArtist(track?.artist) === identity,
   );
   if (tracks.length === 0) return null;
 
@@ -70,7 +84,13 @@ export function createLocalArtistSummary(currentTrack, libraryTracks) {
     tracks.map((track) => String(track?.album ?? '').trim()).filter(Boolean),
   );
   return {
-    name,
+    ...(indexedArtist
+      ? {
+          artistId: indexedArtist.id,
+          photoUrl: indexedArtist.photoUrl ?? '',
+        }
+      : {}),
+    name: indexedArtist?.name ?? name,
     trackCount: tracks.length,
     albumCount: albums.size,
     tracks,

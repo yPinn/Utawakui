@@ -146,6 +146,27 @@ describe('AppRightDockSection', () => {
     expect(textContent(root)).toContain('Track rows');
     expect(separator.props['aria-hidden']).toBe('true');
     expect(String(section.props.class)).not.toContain('ui-surface');
+    expect(String(section.props.class)).toContain(
+      'app-right-dock-section--plain',
+    );
+    app.unmount();
+  });
+
+  it('offers a contained block without coupling it to divider semantics', () => {
+    const { app, root } = mount(
+      AppRightDockSection,
+      { heading: '曲目資訊', appearance: 'contained' },
+      { default: () => 'Track facts' },
+    );
+    const section = findAll(root, (node) => node.type === 'section')[0];
+    const separators = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('ui-separator'),
+    );
+
+    expect(String(section.props.class)).toContain(
+      'app-right-dock-section--contained',
+    );
+    expect(separators).toHaveLength(0);
     app.unmount();
   });
 

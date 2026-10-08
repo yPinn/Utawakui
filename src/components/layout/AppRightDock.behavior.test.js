@@ -286,9 +286,8 @@ describe('AppRightDock', () => {
     expect(trackRowSource).toContain(
       'border-radius: var(--ui-track-row-radius, var(--ui-radius-md));',
     );
-    expect(source).toContain('--ui-track-row-selected-surface: color-mix(');
-    expect(source).toContain('var(--ui-color-text) 8%');
-    expect(source).toContain('--ui-track-row-active-shadow: none;');
+    expect(source).not.toContain('--ui-track-row-selected-surface');
+    expect(source).not.toContain('--ui-track-row-active-shadow');
     expect(source).not.toContain('--ui-sidebar-row-min-height');
     expect(source).not.toContain('--ui-sidebar-artwork-size');
   });

@@ -137,21 +137,51 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(contextSource).not.toContain('useStudioLibraryInspector');
     expect(contextSource).toContain('usePlaybackQueue');
     expect(contextSource).toContain('<TrackContextPanel');
-    expect(contextSource).toContain("const emit = defineEmits(['close'])");
+    expect(contextSource).toContain(
+      "const emit = defineEmits(['close', 'openQueue']);",
+    );
     expect(contextSource).toContain('@close="emit(\'close\')"');
     expect(contextSource).toContain(':current-track="currentTrack"');
     expect(contextSource).toContain(':queue-source-name="queueSourceName"');
+    expect(contextSource).toContain('const queueSourceDestination = computed');
+    expect(contextSource).toContain('const queueSourceLinkLabel = computed');
+    expect(contextSource).toContain('function navigateToQueueSource()');
+    expect(contextSource).toContain(
+      ':source-navigable="Boolean(queueSourceDestination)"',
+    );
+    expect(contextSource).toContain(
+      ':source-link-label="queueSourceLinkLabel"',
+    );
+    expect(contextSource).toContain('@navigate-source="navigateToQueueSource"');
+    expect(contextSource).toContain(
+      "import { useAppView } from '../composables/useAppView.js';",
+    );
+    expect(contextSource).toContain("setActiveView('lyrics')");
+    expect(contextSource).toContain('@open-lyrics="openLyrics"');
+    expect(contextSource).toContain(
+      "import { useArtistIndex } from '../composables/useArtistIndex.js';",
+    );
+    expect(contextSource).toContain('ensureArtistIndex();');
+    expect(contextSource).toContain('@open-artist="openArtist"');
+    expect(contextSource).toContain(
+      'jumpToArtist(artistSummary.value.artistId)',
+    );
+    expect(contextSource).toContain(
+      "const emit = defineEmits(['close', 'openQueue']);",
+    );
+    expect(contextSource).toContain('@open-queue="emit(\'openQueue\')"');
     expect(contextSource).toContain(':upcoming-tracks="upcomingTracks"');
     expect(contextSource).not.toContain('createStudioLibraryPresentation');
     expect(contextSource).not.toContain('selectedPlaylist');
     expect(contextSource).not.toMatch(
       /collection-title|cover-url|can-collage|:facts=/u,
     );
-    expect(appSource).toContain('internalContextDefinitions');
+    expect(appSource).toContain('PlaybackInfoContextView');
+    expect(appSource).not.toContain('internalContextDefinitions');
     expect(appSource).toContain('class="shell__workspace"');
     expect(appSource).toContain('class="shell__dock"');
     expect(appSource).toContain('<AppRightDock');
-    expect(appSource).toContain(':is="activeContextView"');
+    expect(appSource).toContain(':is="PlaybackInfoContextView"');
     expect(appSource).toContain(
       '@close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"',
     );
@@ -178,13 +208,14 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(inspectorSource).not.toContain('margin-block: auto');
   });
 
-  it('toggles the external context from PlayerBar artwork only while that context exists', () => {
+  it('toggles playback info from PlayerBar artwork only while track data exists', () => {
     expect(playerBarSource).toContain('PlayerBarArtwork');
     expect(playerBarSource).toContain("'artworkActivate'");
-    expect(appSource).toContain(':artwork-expandable="activeContextAvailable"');
+    expect(appSource).toContain(':artwork-expandable="playbackInfoAvailable"');
     expect(appSource).toContain(':artwork-expanded="metadataExpanded"');
     expect(appSource).toContain(':artwork-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(appSource).toContain('@artwork-activate="toggleMetadataSurface"');
+    expect(appSource).toContain('if (!playbackInfoAvailable.value) return;');
     expect(appSource).toContain('useAppRightDock');
     expect(appSource).not.toContain(
       "import { useStudioLibraryInspector } from './composables/useStudioLibraryInspector.js';",

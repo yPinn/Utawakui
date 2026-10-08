@@ -84,6 +84,38 @@ describe('track context presentation', () => {
     });
   });
 
+  it('uses the artist index for a stable destination, photo, and membership', () => {
+    expect(
+      createLocalArtistSummary(
+        { id: 'current', artist: 'SmoovLee' },
+        [
+          { id: '1', artist: 'SmoovLee', album: 'Night' },
+          { id: '2', artist: 'SmoovLee, Guest', album: 'Dawn' },
+          { id: 'other', artist: 'Other', album: 'Elsewhere' },
+        ],
+        {
+          artists: [
+            {
+              id: 'artist-1234567890abcdef',
+              name: 'SmoovLee',
+              photoUrl: 'utawakui-media://artist/photo.jpg',
+              trackIds: ['1', '2'],
+            },
+          ],
+          trackArtistIds: {
+            current: ['artist-1234567890abcdef'],
+          },
+        },
+      ),
+    ).toMatchObject({
+      artistId: 'artist-1234567890abcdef',
+      name: 'SmoovLee',
+      photoUrl: 'utawakui-media://artist/photo.jpg',
+      trackCount: 2,
+      albumCount: 2,
+    });
+  });
+
   it('reports only readiness that exists in the local track contract', () => {
     expect(
       createTrackReadiness({

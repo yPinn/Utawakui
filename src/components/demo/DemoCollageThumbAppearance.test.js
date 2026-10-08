@@ -52,6 +52,7 @@ const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
 const dossierSource = readSource('../playlists/StudioLibraryDossierHeader.vue');
 const inspectorSource = readSource('../playlists/TrackContextPanel.vue');
+const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
 const setlistHeaderSource = readSource('../playlists/LibraryEntityDossier.vue');
 const sidebarRowSource = readSource('../playlists/PlaylistSidebarRow.vue');
 const detailsModalSource = readSource('../playlists/PlaylistDetailsModal.vue');
@@ -399,7 +400,8 @@ describe('DemoCollageThumbAppearance', () => {
     expect(inspectorSource).toContain(':size="COLLECTION_COVER_SIZE"');
     expect(inspectorSource).toContain('COLLECTION_COVER_SIZE = 120;');
     expect(inspectorSource).not.toContain('useStudioLibraryInspectorWidth');
-    expect(inspectorSource).toContain('UiTrackRow');
+    expect(inspectorSource).not.toContain('UiTrackRow');
+    expect(queuePreviewSource).toContain('UiTrackRow');
     expect(activeTokenSource).toContain(
       '--ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);',
     );

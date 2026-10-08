@@ -2,16 +2,25 @@
 import { useId } from 'vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 
-defineProps({
+const props = defineProps({
   heading: { type: String, required: true },
   divided: { type: Boolean, default: false },
+  appearance: {
+    type: String,
+    default: 'plain',
+    validator: (value) => ['plain', 'contained'].includes(value),
+  },
 });
 
 const headingId = `app-right-dock-section-heading-${useId()}`;
 </script>
 
 <template>
-  <section class="app-right-dock-section" :aria-labelledby="headingId">
+  <section
+    class="app-right-dock-section"
+    :class="`app-right-dock-section--${props.appearance}`"
+    :aria-labelledby="headingId"
+  >
     <UiSeparator
       v-if="divided"
       class="app-right-dock-section__divider"
@@ -34,6 +43,12 @@ const headingId = `app-right-dock-section-heading-${useId()}`;
   min-inline-size: 0;
   display: grid;
   gap: var(--ui-right-dock-content-gap);
+}
+
+.app-right-dock-section--contained {
+  padding: var(--ui-right-dock-section-surface-padding);
+  border-radius: var(--ui-right-dock-section-surface-radius);
+  background: var(--ui-right-dock-section-surface-background);
 }
 
 .app-right-dock-section__header {

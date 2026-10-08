@@ -59,6 +59,30 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('#context');
   });
 
+  it('keeps playback info production-available and gates its PlayerBar entry by track data', () => {
+    expect(source).toContain(
+      'const PlaybackInfoContextView = defineAsyncComponent(',
+    );
+    expect(source).toContain(
+      "() => import('./views/StudioLibraryContextView.vue')",
+    );
+    expect(source).toContain(
+      "import { usePlayer } from './composables/usePlayer.js';",
+    );
+    expect(source).toContain(
+      "import { usePlaybackQueue } from './composables/usePlaybackQueue.js';",
+    );
+    expect(source).toContain('const playbackInfoAvailable = computed(');
+    expect(source).toContain(
+      'Boolean(playerState.track ?? queueCurrentTrack.value)',
+    );
+    expect(source).toContain(':is="PlaybackInfoContextView"');
+    expect(source).toContain(':artwork-expandable="playbackInfoAvailable"');
+    expect(source).toContain('if (!playbackInfoAvailable.value) return;');
+    expect(source).toContain('watch(\n  playbackInfoAvailable,');
+    expect(source).not.toContain('internalContextDefinitions');
+  });
+
   it('places one standalone BGM player outside PlayerBar and Right Dock presentation ownership', () => {
     expect(source).toContain(
       "import BgmPlayer from './components/bgm/BgmPlayer.vue';",
@@ -139,7 +163,7 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('--ui-bgm-player-min-inline-size:');
   });
 
-  it('reserves the shared desktop bay and reuses the 16px shell panel inset', () => {
+  it('reserves the shared desktop bay inside the 8px shell perimeter', () => {
     expect(source).toContain('<div class="shell__workspace">');
     expect(source).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
@@ -169,6 +193,7 @@ describe('App shell right Dock', () => {
     expect(source).toContain(':queue-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).toContain('@artwork-activate="toggleMetadataSurface"');
     expect(source).toContain('@queue-activate="toggleQueueSurface"');
+    expect(source).toContain('@open-queue="toggleQueueSurface"');
     expect(source).not.toContain(':separation-expanded');
     expect(source).not.toContain('@open-separation');
     expect(source).not.toContain('openSeparationSurface');
