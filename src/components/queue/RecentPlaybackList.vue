@@ -18,6 +18,7 @@ const emit = defineEmits([
   'selectEntry',
   'activateEntry',
   'toggleEntryPlayback',
+  'artistNavigate',
   'openTrackMenu',
 ]);
 
@@ -60,6 +61,7 @@ function openTrackMenu(entry, payload) {
         @select="emit('selectEntry', entry)"
         @activate="emit('activateEntry', entry)"
         @toggle-playback="emit('toggleEntryPlayback', entry)"
+        @navigate-artist="emit('artistNavigate', $event)"
         @open-menu="openTrackMenu(entry, $event)"
       />
     </ul>

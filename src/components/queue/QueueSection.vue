@@ -36,6 +36,7 @@ const emit = defineEmits([
   'activateTrack',
   'toggleTrackPlayback',
   'sectionTitleClick',
+  'artistNavigate',
   'trackDragStart',
   'trackDragOver',
   'trackDragLeave',
@@ -64,7 +65,12 @@ function openTrackMenu(track, payload) {
         <span v-if="titlePrefix" class="queue-section__title-prefix">{{
           titlePrefix
         }}</span>
-        <span class="queue-section__title-text">
+        <span
+          class="queue-section__title-text"
+          :class="{
+            'queue-section__title-text--destination': titleJumpable,
+          }"
+        >
           <UiTextButton
             v-if="titleJumpable"
             class="queue-section__source-link"
@@ -101,6 +107,7 @@ function openTrackMenu(track, payload) {
         @select="emit('selectTrack', $event)"
         @activate="emit('activateTrack', $event)"
         @toggle-playback="emit('toggleTrackPlayback', $event)"
+        @navigate-artist="emit('artistNavigate', $event)"
         @open-menu="openTrackMenu(track, $event)"
         @drag-start="emit('trackDragStart', track, $event)"
         @drag-over="emit('trackDragOver', track, $event)"
@@ -116,6 +123,7 @@ function openTrackMenu(track, payload) {
 .queue-section {
   display: grid;
   gap: var(--ui-side-panel-content-gap);
+  min-width: 0;
 }
 
 .queue-section__header {
@@ -123,6 +131,7 @@ function openTrackMenu(track, payload) {
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-3);
+  min-width: 0;
 }
 
 .queue-section__title {
@@ -151,9 +160,13 @@ function openTrackMenu(track, payload) {
   white-space: nowrap;
 }
 
+.queue-section__title-text--destination {
+  overflow: visible;
+}
+
 .queue-section__source-link :deep(.ui-text-btn__text) {
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
+  padding-block-end: 0.18em;
+  margin-block-end: -0.18em;
 }
 
 .queue-section__list {

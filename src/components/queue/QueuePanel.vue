@@ -325,6 +325,7 @@ const {
           @select-track="selectQueueTrack"
           @activate-track="playCurrentTrack"
           @toggle-track-playback="toggleCurrentTrackPlayback"
+          @artist-navigate="emit('close')"
           @open-track-menu="openTrackMenu"
         />
 
@@ -346,6 +347,7 @@ const {
           @toggle-track-playback="
             toggleQueuedTrackPlayback($event, { source: false })
           "
+          @artist-navigate="emit('close')"
           @open-track-menu="openTrackMenu"
           @track-drag-start="startQueuedDrag"
           @track-drag-over="updateQueuedDropTarget"
@@ -379,6 +381,7 @@ const {
           @toggle-track-playback="
             toggleQueuedTrackPlayback($event, { source: true })
           "
+          @artist-navigate="emit('close')"
           @open-track-menu="openTrackMenu"
           @section-title-click="jumpToUpcomingSource"
           @track-drag-start="startSourceDrag"
@@ -410,6 +413,7 @@ const {
         @select-entry="selectRecentEntry"
         @activate-entry="activateRecentEntry"
         @toggle-entry-playback="toggleRecentEntryPlayback"
+        @artist-navigate="emit('close')"
         @open-track-menu="openTrackMenu"
       />
     </div>

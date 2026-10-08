@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
@@ -6,6 +7,7 @@ import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
 import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
 import {
@@ -24,11 +26,17 @@ for (const [component, filename] of [
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiSeparator, '../ui/UiSeparator.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+  [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
   [RightDockTrackArtworkCue, './RightDockTrackArtworkCue.vue'],
   [RightDockTrackMenuButton, './RightDockTrackMenuButton.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
+
+const source = readFileSync(
+  new URL('./QueueTrackButton.vue', import.meta.url),
+  'utf8',
+);
 
 function render(props) {
   return renderToString(
@@ -72,6 +80,19 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     expect(html).toContain('aria-haspopup="menu"');
     expect(html).toContain('aria-expanded="false"');
     expect(html).not.toContain('調整順序：');
+  });
+
+  it('uses the shared artist credit CTA without giving it to row or drag actions', () => {
+    expect(source).toContain(
+      "import TrackArtistCredits from '../track/TrackArtistCredits.vue';",
+    );
+    expect(source).toContain('<template #artist>');
+    expect(source).toContain(':track="track"');
+    expect(source).toContain('@navigate="emit(\'navigateArtist\', $event)"');
+    expect(source).toContain("'navigateArtist'");
+    expect(source).toContain(
+      "'.ui-icon-btn, .ui-text-btn, .ui-track__artwork-action'",
+    );
   });
 
   it('projects player state into matching artwork play and pause affordances', async () => {
@@ -169,7 +190,9 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     const nestedActionPointerEvent = {
       target: {
         closest: vi.fn((selector) =>
-          selector === '.ui-icon-btn, .ui-track__artwork-action' ? {} : null,
+          selector === '.ui-icon-btn, .ui-text-btn, .ui-track__artwork-action'
+            ? {}
+            : null,
         ),
       },
     };

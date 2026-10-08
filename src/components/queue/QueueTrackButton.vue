@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
 import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
 
@@ -23,6 +24,7 @@ const emit = defineEmits([
   'select',
   'activate',
   'togglePlayback',
+  'navigateArtist',
   'openMenu',
   'dragStart',
   'dragOver',
@@ -35,7 +37,8 @@ const artworkActionLabel = computed(
   () => `${props.playing ? '暫停' : '播放'}：${props.track.title}`,
 );
 
-const DRAG_EXCLUDED_ACTIONS = '.ui-icon-btn, .ui-track__artwork-action';
+const DRAG_EXCLUDED_ACTIONS =
+  '.ui-icon-btn, .ui-text-btn, .ui-track__artwork-action';
 let dragStartedFromAction = false;
 
 function isExcludedDragTarget(target) {
@@ -99,6 +102,12 @@ function handleDragEnd(event) {
   >
     <template #artworkOverlay>
       <RightDockTrackArtworkCue :playing="playing" />
+    </template>
+    <template #artist>
+      <TrackArtistCredits
+        :track="track"
+        @navigate="emit('navigateArtist', $event)"
+      />
     </template>
     <template #trail>
       <RightDockTrackMenuButton

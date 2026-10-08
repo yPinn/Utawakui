@@ -177,8 +177,10 @@ describe('QueuePanel shared Dock content', () => {
       /\.ui-track--interactive:not\(\.ui-track--active\):hover::before\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
     );
     expect(trackRowSource).toMatch(
-      /\.ui-track--active::before\s*\{[^}]*background:\s*var\(\s*--ui-track-row-selected-surface,\s*var\(--ui-color-surface-selected\)\s*\);[^}]*box-shadow:\s*var\(\s*--ui-track-row-active-shadow,\s*var\(--ui-row-active-shadow\)\s*\);/su,
+      /\.ui-track--active::before\s*\{[^}]*background:\s*var\(--ui-track-row-selected-surface\);/su,
     );
+    expect(trackRowSource).not.toContain('--ui-row-active-shadow');
+    expect(trackRowSource).not.toContain('--ui-track-row-active-shadow');
     expect(panelCss).not.toMatch(
       /\.queue-panel[^{}]*\.right-dock-track:not\(\.ui-track--active\):hover::before/u,
     );
@@ -188,14 +190,33 @@ describe('QueuePanel shared Dock content', () => {
     expect(panelCss).toMatch(/background:\s*var\(--ui-color-surface-hover\);/u);
   });
 
-  it('keeps the source destination visibly underlined at rest', () => {
+  it('keeps the source destination on the shared hover/focus underline contract without clipping its paint', () => {
     expect(sectionSource).toContain('class="queue-section__source-link"');
+    expect(sectionSource).toMatch(/\.queue-section\s*\{[^}]*min-width:\s*0;/su);
     expect(sectionSource).toMatch(
-      /\.queue-section__source-link :deep\(\.ui-text-btn__text\)\s*\{[^}]*text-decoration:\s*underline;[^}]*text-underline-offset:\s*0\.18em;/su,
+      /\.queue-section__header\s*\{[^}]*min-width:\s*0;/su,
+    );
+    expect(sectionSource).toContain(
+      "'queue-section__title-text--destination': titleJumpable",
+    );
+    expect(sectionSource).toMatch(
+      /\.queue-section__title-text--destination\s*\{[^}]*overflow:\s*visible;/su,
+    );
+    expect(sectionSource).toMatch(
+      /\.queue-section__source-link :deep\(\.ui-text-btn__text\)\s*\{[^}]*padding-block-end:\s*0\.18em;[^}]*margin-block-end:\s*-0\.18em;/su,
+    );
+    expect(sectionSource).not.toMatch(
+      /\.queue-section__source-link :deep\(\.ui-text-btn__text\)\s*\{[^}]*text-decoration:/su,
+    );
+    expect(sectionCss).toMatch(
+      /\.queue-section__source-link\[data-v-right-dock-test-0\]\s+\.ui-text-btn__text\s*\{[^}]*padding-block-end:\s*0\.18em;[^}]*margin-block-end:\s*-0\.18em;/su,
+    );
+    expect(sectionCss).not.toMatch(
+      /\.queue-section__source-link\[data-v-right-dock-test-0\]\s+\.ui-text-btn__text\s*\{[^}]*text-decoration:/su,
     );
   });
 
-  it('separates selection from playback and keeps track metadata non-navigational', () => {
+  it('separates selection from playback while artist credits remain independent destinations', () => {
     expect(source).toContain('shallowRef');
     expect(source).toContain('const selectedTrackId = shallowRef(null);');
     expect(source).toContain('@select-track="selectQueueTrack"');
@@ -209,6 +230,26 @@ describe('QueuePanel shared Dock content', () => {
     );
     expect(rowSource).not.toContain('title-clickable');
     expect(rowSource).not.toContain('titleClick');
+    expect(rowSource).toContain(
+      "import TrackArtistCredits from '../track/TrackArtistCredits.vue';",
+    );
+    expect(rowSource).toContain('<template #artist>');
+    expect(rowSource).toContain('<TrackArtistCredits');
+    expect(rowSource).toContain('@navigate="emit(\'navigateArtist\', $event)"');
+    expect(rowSource).toContain(
+      "'.ui-icon-btn, .ui-text-btn, .ui-track__artwork-action'",
+    );
+    expect(sectionSource).toContain("'artistNavigate'");
+    expect(sectionSource).toContain(
+      '@navigate-artist="emit(\'artistNavigate\', $event)"',
+    );
+    expect(recentSource).toContain("'artistNavigate'");
+    expect(recentSource).toContain(
+      '@navigate-artist="emit(\'artistNavigate\', $event)"',
+    );
+    expect(source.match(/@artist-navigate="emit\('close'\)"/gu)).toHaveLength(
+      4,
+    );
     expect(source).not.toContain('jumpFromQueue');
     expect(source).not.toContain('jumpableTrackIds');
     expect(source).not.toContain('albumPlaylistByTrackId');

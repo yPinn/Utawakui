@@ -69,6 +69,10 @@ describe('RecentPlaybackList', () => {
     expect(source).toContain(':draggable="false"');
     expect(source).toContain('@select="emit(\'selectEntry\', entry)"');
     expect(source).toContain('@activate="emit(\'activateEntry\', entry)"');
+    expect(source).toContain("'artistNavigate'");
+    expect(source).toContain(
+      '@navigate-artist="emit(\'artistNavigate\', $event)"',
+    );
     expect(source).not.toContain('@drag-start');
     expect(source).not.toContain('@drag-over');
     expect(source).not.toContain('@drag-leave');
