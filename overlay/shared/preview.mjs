@@ -13,11 +13,20 @@ export function inspectionBackdrop(location) {
   return INSPECTION_BACKDROPS.has(value) ? value : '';
 }
 
+export function inspectionGuideVisible(location) {
+  return new URLSearchParams(location?.search ?? '').get('guide') !== '0';
+}
+
 export function applyPreviewCanvas(document, options = {}) {
   const root = document?.documentElement;
   if (!root) return;
   if (options.previewMode === true) root.dataset.overlayPreview = 'true';
-  if (options.workbenchMode === true) root.dataset.overlayWorkbench = 'true';
+  if (options.workbenchMode === true) {
+    root.dataset.overlayWorkbench = 'true';
+    root.dataset.overlayGuide = inspectionGuideVisible(options.location)
+      ? 'true'
+      : 'false';
+  }
   const backdrop = inspectionBackdrop(options.location);
   if (backdrop) root.dataset.overlayBackdrop = backdrop;
 }

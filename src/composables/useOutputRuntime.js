@@ -3,6 +3,7 @@ import { FEATURE_IDS } from '../constants/featureGates.js';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
 import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
+import { createOutputPreferencesController } from './output/useOutputPreferences.js';
 import { useOutputProjectionPublisher } from './output/useOutputProjectionPublisher.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
@@ -55,6 +56,7 @@ const state = reactive({
   },
   suggestedPorts: [],
   slots: {},
+  preferences: { recentColors: [], savedColors: [] },
   slotsLoaded: false,
   isStarting: false,
   isStopping: false,
@@ -62,6 +64,7 @@ const state = reactive({
   isSavingSlot: false,
   isLoadingSettings: false,
   isSavingSettings: false,
+  preferenceError: '',
   error: '',
 });
 
@@ -119,11 +122,38 @@ async function surfaceStatusError(
   return false;
 }
 
+const preferencesController = createOutputPreferencesController({
+  getRecentColors: () => state.preferences.recentColors,
+  setRecentColors: (recentColors) => {
+    state.preferences = { ...state.preferences, recentColors };
+  },
+  getSavedColors: () => state.preferences.savedColors,
+  setSavedColors: (savedColors) => {
+    state.preferences = { ...state.preferences, savedColors };
+  },
+  setError: (message) => {
+    state.preferenceError = message;
+  },
+  persistRecentColors: (recentColors) =>
+    bridgeMethod('updateOutputRecentColors')(recentColors),
+  persistSavedColors: (savedColors) =>
+    bridgeMethod('updateOutputSavedColors')(savedColors),
+  reportError: (error, preference) =>
+    reportOutputError(
+      error,
+      preference === 'saved' ? 'save-color-palette' : 'save-color-history',
+      preference === 'saved'
+        ? '常用色票未儲存，重新開啟後可能不會保留。'
+        : '最近色票未儲存，重新開啟後可能不會保留。',
+    ),
+});
+
 function applySlots(document = {}) {
   state.slots =
     typeof document.slots === 'object' && document.slots !== null
       ? { ...document.slots }
       : {};
+  preferencesController.apply(document);
   state.slotsLoaded = true;
 }
 
@@ -406,6 +436,8 @@ export function useOutputRuntime() {
     stop,
     loadSlots,
     saveOutputSlot,
+    saveRecentColor: preferencesController.saveRecentColor,
+    toggleSavedColor: preferencesController.toggleSavedColor,
     saveSlotSettings,
     saveTemplateSelection,
   };

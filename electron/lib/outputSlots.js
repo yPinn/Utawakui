@@ -8,6 +8,10 @@ const {
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   sanitizeOutputAppearanceSetting,
 } = require('../../shared/outputAppearance.mjs');
+const {
+  normalizeOutputRecentColors,
+  normalizeOutputSavedColors,
+} = require('../../shared/outputColorPreferences.mjs');
 const OUTPUT_CAPTURE_VALUES = require('../../shared/outputCaptureValues.json');
 const OUTPUT_TEMPLATE_VALUES = require('../../shared/outputTemplateValues.json');
 const {
@@ -15,7 +19,7 @@ const {
 } = require('../../shared/presentation/lyricsPresentationPolicies.mjs');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
-const OUTPUT_SLOTS_VERSION = 2;
+const OUTPUT_SLOTS_VERSION = 3;
 const MAX_STYLE_SET_IDS = 32;
 const MAX_SETTINGS = 100;
 const MAX_ID_LENGTH = 100;
@@ -71,7 +75,9 @@ function sanitizeSettings(value, templateId) {
       continue;
     }
     if (Object.hasOwn(OUTPUT_APPEARANCE_DEFAULTS, key)) {
-      const normalized = sanitizeOutputAppearanceSetting(key, setting);
+      const normalized = sanitizeOutputAppearanceSetting(key, setting, {
+        templateId,
+      });
       if (normalized !== undefined) entries.push([key, normalized]);
       continue;
     }
@@ -144,7 +150,16 @@ function normalizeDocument(value) {
       });
     slots[slot.id] = normalized;
   }
-  return { version: OUTPUT_SLOTS_VERSION, slots };
+  return {
+    version: OUTPUT_SLOTS_VERSION,
+    slots,
+    preferences: {
+      recentColors: normalizeOutputRecentColors(
+        value?.preferences?.recentColors,
+      ),
+      savedColors: normalizeOutputSavedColors(value?.preferences?.savedColors),
+    },
+  };
 }
 
 function migrateV1Document(value) {
@@ -165,6 +180,10 @@ function migrateV1Document(value) {
     if (normalized) slots[kind] = normalized;
   }
   return normalizeDocument({ slots });
+}
+
+function migrateV2Document(value) {
+  return normalizeDocument(value);
 }
 
 function writeOutputSlots(dir, document) {
@@ -209,6 +228,12 @@ function loadOutputSlots(dir) {
     writeOutputSlots(dir, migrated);
     return migrated;
   }
+  if (data.version === 2 && data.slots) {
+    const migrated = migrateV2Document(data);
+    fs.copyFileSync(filePath, `${filePath}.v2-${Date.now()}.bak`);
+    writeOutputSlots(dir, migrated);
+    return migrated;
+  }
   if (data.version !== OUTPUT_SLOTS_VERSION || !data.slots) {
     backupCorrupted(filePath);
     return emptyDocument();
@@ -228,6 +253,29 @@ function upsertOutputSlot(dir, kind, value) {
   const document = loadOutputSlots(dir);
   return saveOutputSlots(dir, {
     slots: { ...document.slots, [kind]: slot },
+    preferences: document.preferences,
+  });
+}
+
+function setOutputRecentColors(dir, recentColors) {
+  const document = loadOutputSlots(dir);
+  return saveOutputSlots(dir, {
+    slots: document.slots,
+    preferences: {
+      ...document.preferences,
+      recentColors,
+    },
+  });
+}
+
+function setOutputSavedColors(dir, savedColors) {
+  const document = loadOutputSlots(dir);
+  return saveOutputSlots(dir, {
+    slots: document.slots,
+    preferences: {
+      ...document.preferences,
+      savedColors,
+    },
   });
 }
 
@@ -237,5 +285,7 @@ module.exports = {
   OUTPUT_SLOTS_VERSION,
   sanitizeOutputSlot,
   saveOutputSlots,
+  setOutputRecentColors,
+  setOutputSavedColors,
   upsertOutputSlot,
 };

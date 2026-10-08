@@ -28,142 +28,386 @@
     --ovl-user-widget-padding-inline: var(--ovl-primitive-space-6);
     --ovl-user-line-width: 28ch;
     --ovl-user-panel-width: 64rem;
+    --ovl-look-amount: 100%;
+    --ovl-color-ink: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ink),
+      var(--ovl-look-color-ink, var(--ovl-primitive-color-ink))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-paper: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-paper),
+      var(--ovl-look-color-paper, var(--ovl-primitive-color-paper))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-text-primary: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-paper),
+      var(--ovl-look-color-text-primary, var(--ovl-primitive-color-paper))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-text-secondary: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-mist),
+      var(--ovl-look-color-text-secondary, var(--ovl-primitive-color-mist))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-current: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-coral),
+      var(--ovl-look-color-current, var(--ovl-primitive-color-coral))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-surface: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-surface),
+      var(--ovl-look-color-surface, var(--ovl-primitive-color-surface))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-surface-soft: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-surface-soft),
+      var(
+          --ovl-look-color-surface-soft,
+          var(--ovl-primitive-color-surface-soft)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-outline: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-outline),
+      var(--ovl-look-color-outline, var(--ovl-primitive-color-outline))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-divider: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-divider),
+      var(--ovl-look-color-divider, var(--ovl-primitive-color-divider))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-current-surface: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-current-surface),
+      var(
+          --ovl-look-color-current-surface,
+          var(--ovl-primitive-color-current-surface)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-mark-surface: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-mark-surface),
+      var(
+          --ovl-look-color-mark-surface,
+          var(--ovl-primitive-color-mark-surface)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-stroke-strong: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-stroke-strong),
+      var(
+          --ovl-look-color-stroke-strong,
+          var(--ovl-primitive-color-stroke-strong)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-stroke-soft: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-stroke-soft),
+      var(--ovl-look-color-stroke-soft, var(--ovl-primitive-color-stroke-soft))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-fill-unsung: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-fill-unsung),
+      var(
+          --ovl-look-color-ktv-fill-unsung,
+          var(--ovl-primitive-color-ktv-fill-unsung)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-fill-solo: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-fill-solo),
+      var(
+          --ovl-look-color-ktv-fill-solo,
+          var(--ovl-primitive-color-ktv-fill-solo)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-fill-male: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-fill-male),
+      var(
+          --ovl-look-color-ktv-fill-male,
+          var(--ovl-primitive-color-ktv-fill-male)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-fill-female: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-fill-female),
+      var(
+          --ovl-look-color-ktv-fill-female,
+          var(--ovl-primitive-color-ktv-fill-female)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-fill-group: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-fill-group),
+      var(
+          --ovl-look-color-ktv-fill-group,
+          var(--ovl-primitive-color-ktv-fill-group)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-stroke-unsung: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-stroke-unsung),
+      var(
+          --ovl-look-color-ktv-stroke-unsung,
+          var(--ovl-primitive-color-ktv-stroke-unsung)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ktv-stroke-sung: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ktv-stroke-sung),
+      var(
+          --ovl-look-color-ktv-stroke-sung,
+          var(--ovl-primitive-color-ktv-stroke-sung)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-ink: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-ink),
+      var(--ovl-look-color-kinetic-ink, var(--ovl-primitive-color-kinetic-ink))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-paper: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-paper),
+      var(
+          --ovl-look-color-kinetic-paper,
+          var(--ovl-primitive-color-kinetic-paper)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-yellow: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-yellow),
+      var(
+          --ovl-look-color-kinetic-yellow,
+          var(--ovl-primitive-color-kinetic-yellow)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-red: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-red),
+      var(--ovl-look-color-kinetic-red, var(--ovl-primitive-color-kinetic-red))
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-ochre: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-ochre),
+      var(
+          --ovl-look-color-kinetic-ochre,
+          var(--ovl-primitive-color-kinetic-ochre)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-cyan: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-cyan),
+      var(
+          --ovl-look-color-kinetic-cyan,
+          var(--ovl-primitive-color-kinetic-cyan)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-magenta: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-magenta),
+      var(
+          --ovl-look-color-kinetic-magenta,
+          var(--ovl-primitive-color-kinetic-magenta)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-candy-deep: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-candy-deep),
+      var(
+          --ovl-look-color-kinetic-candy-deep,
+          var(--ovl-primitive-color-kinetic-candy-deep)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-kinetic-candy-light: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-kinetic-candy-light),
+      var(
+          --ovl-look-color-kinetic-candy-light,
+          var(--ovl-primitive-color-kinetic-candy-light)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ornate-paper: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ornate-paper),
+      var(
+          --ovl-look-color-ornate-paper,
+          var(--ovl-primitive-color-ornate-paper)
+        )
+        var(--ovl-look-amount)
+    );
+    --ovl-color-ornate-echo: color-mix(
+      in srgb,
+      var(--ovl-primitive-color-ornate-echo),
+      var(--ovl-look-color-ornate-echo, var(--ovl-primitive-color-ornate-echo))
+        var(--ovl-look-amount)
+    );
   }
 
   :root[data-ovl-palette='warm'] {
-    --ovl-color-ink: #211711;
-    --ovl-color-paper: #fff4df;
-    --ovl-color-text-primary: #fff4df;
-    --ovl-color-text-secondary: #e7caa8;
-    --ovl-color-current: #ff8b68;
-    --ovl-color-surface: rgb(33 23 17 / 94%);
-    --ovl-color-surface-soft: rgb(33 23 17 / 72%);
-    --ovl-color-outline: rgb(255 244 223 / 38%);
-    --ovl-color-divider: rgb(255 244 223 / 24%);
-    --ovl-color-current-surface: rgb(255 139 104 / 22%);
-    --ovl-color-mark-surface: rgb(255 244 223 / 14%);
-    --ovl-color-stroke-strong: #211711;
-    --ovl-color-stroke-soft: rgb(33 23 17 / 82%);
-    --ovl-color-ktv-fill-unsung: #fff4df;
-    --ovl-color-ktv-fill-solo: #ffba63;
-    --ovl-color-ktv-fill-male: #74c9ff;
-    --ovl-color-ktv-fill-female: #ff99b8;
-    --ovl-color-ktv-fill-group: #97e0aa;
-    --ovl-color-ktv-stroke-unsung: #211711;
-    --ovl-color-ktv-stroke-sung: #fff4df;
-    --ovl-color-kinetic-ink: #211711;
-    --ovl-color-kinetic-paper: #fff4df;
-    --ovl-color-kinetic-yellow: #ffc85a;
-    --ovl-color-kinetic-red: #ff725c;
-    --ovl-color-kinetic-ochre: #b86f2e;
-    --ovl-color-kinetic-cyan: #69d8df;
-    --ovl-color-kinetic-magenta: #ef7ca8;
-    --ovl-color-kinetic-candy-deep: #ff765f;
-    --ovl-color-kinetic-candy-light: #ffd37a;
-    --ovl-color-ornate-paper: #fff4df;
-    --ovl-color-ornate-echo: #c79f7e;
+    --ovl-look-color-ink: #211711;
+    --ovl-look-color-paper: #fff4df;
+    --ovl-look-color-text-primary: #fff4df;
+    --ovl-look-color-text-secondary: #e7caa8;
+    --ovl-look-color-current: #ff8b68;
+    --ovl-look-color-surface: rgb(33 23 17 / 94%);
+    --ovl-look-color-surface-soft: rgb(33 23 17 / 72%);
+    --ovl-look-color-outline: rgb(255 244 223 / 38%);
+    --ovl-look-color-divider: rgb(255 244 223 / 24%);
+    --ovl-look-color-current-surface: rgb(255 139 104 / 22%);
+    --ovl-look-color-mark-surface: rgb(255 244 223 / 14%);
+    --ovl-look-color-stroke-strong: #211711;
+    --ovl-look-color-stroke-soft: rgb(33 23 17 / 82%);
+    --ovl-look-color-ktv-fill-unsung: #fff4df;
+    --ovl-look-color-ktv-fill-solo: #ffba63;
+    --ovl-look-color-ktv-fill-male: #74c9ff;
+    --ovl-look-color-ktv-fill-female: #ff99b8;
+    --ovl-look-color-ktv-fill-group: #97e0aa;
+    --ovl-look-color-ktv-stroke-unsung: #211711;
+    --ovl-look-color-ktv-stroke-sung: #fff4df;
+    --ovl-look-color-kinetic-ink: #211711;
+    --ovl-look-color-kinetic-paper: #fff4df;
+    --ovl-look-color-kinetic-yellow: #ffc85a;
+    --ovl-look-color-kinetic-red: #ff725c;
+    --ovl-look-color-kinetic-ochre: #b86f2e;
+    --ovl-look-color-kinetic-cyan: #69d8df;
+    --ovl-look-color-kinetic-magenta: #ef7ca8;
+    --ovl-look-color-kinetic-candy-deep: #ff765f;
+    --ovl-look-color-kinetic-candy-light: #ffd37a;
+    --ovl-look-color-ornate-paper: #fff4df;
+    --ovl-look-color-ornate-echo: #c79f7e;
   }
 
   :root[data-ovl-palette='cool'] {
-    --ovl-color-ink: #0c1821;
-    --ovl-color-paper: #eef9ff;
-    --ovl-color-text-primary: #eef9ff;
-    --ovl-color-text-secondary: #bdd9e8;
-    --ovl-color-current: #66d8e8;
-    --ovl-color-surface: rgb(12 24 33 / 94%);
-    --ovl-color-surface-soft: rgb(12 24 33 / 72%);
-    --ovl-color-outline: rgb(238 249 255 / 38%);
-    --ovl-color-divider: rgb(238 249 255 / 24%);
-    --ovl-color-current-surface: rgb(102 216 232 / 22%);
-    --ovl-color-mark-surface: rgb(238 249 255 / 14%);
-    --ovl-color-stroke-strong: #0c1821;
-    --ovl-color-stroke-soft: rgb(12 24 33 / 82%);
-    --ovl-color-ktv-fill-unsung: #eef9ff;
-    --ovl-color-ktv-fill-solo: #76e4ee;
-    --ovl-color-ktv-fill-male: #70aaff;
-    --ovl-color-ktv-fill-female: #e293ff;
-    --ovl-color-ktv-fill-group: #75e2b3;
-    --ovl-color-ktv-stroke-unsung: #0c1821;
-    --ovl-color-ktv-stroke-sung: #eef9ff;
-    --ovl-color-kinetic-ink: #0c1821;
-    --ovl-color-kinetic-paper: #eef9ff;
-    --ovl-color-kinetic-yellow: #82e8f2;
-    --ovl-color-kinetic-red: #8a9eff;
-    --ovl-color-kinetic-ochre: #4c84b9;
-    --ovl-color-kinetic-cyan: #66d8e8;
-    --ovl-color-kinetic-magenta: #c18cf0;
-    --ovl-color-kinetic-candy-deep: #608de8;
-    --ovl-color-kinetic-candy-light: #8ce9ed;
-    --ovl-color-ornate-paper: #eef9ff;
-    --ovl-color-ornate-echo: #8bb8ce;
+    --ovl-look-color-ink: #0c1821;
+    --ovl-look-color-paper: #eef9ff;
+    --ovl-look-color-text-primary: #eef9ff;
+    --ovl-look-color-text-secondary: #bdd9e8;
+    --ovl-look-color-current: #66d8e8;
+    --ovl-look-color-surface: rgb(12 24 33 / 94%);
+    --ovl-look-color-surface-soft: rgb(12 24 33 / 72%);
+    --ovl-look-color-outline: rgb(238 249 255 / 38%);
+    --ovl-look-color-divider: rgb(238 249 255 / 24%);
+    --ovl-look-color-current-surface: rgb(102 216 232 / 22%);
+    --ovl-look-color-mark-surface: rgb(238 249 255 / 14%);
+    --ovl-look-color-stroke-strong: #0c1821;
+    --ovl-look-color-stroke-soft: rgb(12 24 33 / 82%);
+    --ovl-look-color-ktv-fill-unsung: #eef9ff;
+    --ovl-look-color-ktv-fill-solo: #76e4ee;
+    --ovl-look-color-ktv-fill-male: #70aaff;
+    --ovl-look-color-ktv-fill-female: #e293ff;
+    --ovl-look-color-ktv-fill-group: #75e2b3;
+    --ovl-look-color-ktv-stroke-unsung: #0c1821;
+    --ovl-look-color-ktv-stroke-sung: #eef9ff;
+    --ovl-look-color-kinetic-ink: #0c1821;
+    --ovl-look-color-kinetic-paper: #eef9ff;
+    --ovl-look-color-kinetic-yellow: #82e8f2;
+    --ovl-look-color-kinetic-red: #8a9eff;
+    --ovl-look-color-kinetic-ochre: #4c84b9;
+    --ovl-look-color-kinetic-cyan: #66d8e8;
+    --ovl-look-color-kinetic-magenta: #c18cf0;
+    --ovl-look-color-kinetic-candy-deep: #608de8;
+    --ovl-look-color-kinetic-candy-light: #8ce9ed;
+    --ovl-look-color-ornate-paper: #eef9ff;
+    --ovl-look-color-ornate-echo: #8bb8ce;
   }
 
   :root[data-ovl-palette='monochrome'] {
-    --ovl-color-ink: #0d0d0f;
-    --ovl-color-paper: #fafafa;
-    --ovl-color-text-primary: #fafafa;
-    --ovl-color-text-secondary: #d0d0d4;
-    --ovl-color-current: #b8b8be;
-    --ovl-color-surface: rgb(13 13 15 / 94%);
-    --ovl-color-surface-soft: rgb(13 13 15 / 72%);
-    --ovl-color-outline: rgb(250 250 250 / 40%);
-    --ovl-color-divider: rgb(250 250 250 / 25%);
-    --ovl-color-current-surface: rgb(250 250 250 / 18%);
-    --ovl-color-mark-surface: rgb(250 250 250 / 13%);
-    --ovl-color-stroke-strong: #0d0d0f;
-    --ovl-color-stroke-soft: rgb(13 13 15 / 84%);
-    --ovl-color-ktv-fill-unsung: #fafafa;
-    --ovl-color-ktv-fill-solo: #b8b8be;
-    --ovl-color-ktv-fill-male: #d8d8dc;
-    --ovl-color-ktv-fill-female: #a8a8ae;
-    --ovl-color-ktv-fill-group: #c4c4c9;
-    --ovl-color-ktv-stroke-unsung: #0d0d0f;
-    --ovl-color-ktv-stroke-sung: #fafafa;
-    --ovl-color-kinetic-ink: #0d0d0f;
-    --ovl-color-kinetic-paper: #fafafa;
-    --ovl-color-kinetic-yellow: #d8d8dc;
-    --ovl-color-kinetic-red: #a4a4aa;
-    --ovl-color-kinetic-ochre: #7d7d84;
-    --ovl-color-kinetic-cyan: #c8c8cd;
-    --ovl-color-kinetic-magenta: #9999a0;
-    --ovl-color-kinetic-candy-deep: #8c8c93;
-    --ovl-color-kinetic-candy-light: #dedee1;
-    --ovl-color-ornate-paper: #fafafa;
-    --ovl-color-ornate-echo: #9d9da3;
+    --ovl-look-color-ink: #0d0d0f;
+    --ovl-look-color-paper: #fafafa;
+    --ovl-look-color-text-primary: #fafafa;
+    --ovl-look-color-text-secondary: #d0d0d4;
+    --ovl-look-color-current: #b8b8be;
+    --ovl-look-color-surface: rgb(13 13 15 / 94%);
+    --ovl-look-color-surface-soft: rgb(13 13 15 / 72%);
+    --ovl-look-color-outline: rgb(250 250 250 / 40%);
+    --ovl-look-color-divider: rgb(250 250 250 / 25%);
+    --ovl-look-color-current-surface: rgb(250 250 250 / 18%);
+    --ovl-look-color-mark-surface: rgb(250 250 250 / 13%);
+    --ovl-look-color-stroke-strong: #0d0d0f;
+    --ovl-look-color-stroke-soft: rgb(13 13 15 / 84%);
+    --ovl-look-color-ktv-fill-unsung: #fafafa;
+    --ovl-look-color-ktv-fill-solo: #b8b8be;
+    --ovl-look-color-ktv-fill-male: #d8d8dc;
+    --ovl-look-color-ktv-fill-female: #a8a8ae;
+    --ovl-look-color-ktv-fill-group: #c4c4c9;
+    --ovl-look-color-ktv-stroke-unsung: #0d0d0f;
+    --ovl-look-color-ktv-stroke-sung: #fafafa;
+    --ovl-look-color-kinetic-ink: #0d0d0f;
+    --ovl-look-color-kinetic-paper: #fafafa;
+    --ovl-look-color-kinetic-yellow: #d8d8dc;
+    --ovl-look-color-kinetic-red: #a4a4aa;
+    --ovl-look-color-kinetic-ochre: #7d7d84;
+    --ovl-look-color-kinetic-cyan: #c8c8cd;
+    --ovl-look-color-kinetic-magenta: #9999a0;
+    --ovl-look-color-kinetic-candy-deep: #8c8c93;
+    --ovl-look-color-kinetic-candy-light: #dedee1;
+    --ovl-look-color-ornate-paper: #fafafa;
+    --ovl-look-color-ornate-echo: #9d9da3;
   }
 
   :root[data-ovl-palette='high-contrast'] {
-    --ovl-color-ink: #000000;
-    --ovl-color-paper: #ffffff;
-    --ovl-color-text-primary: #ffffff;
-    --ovl-color-text-secondary: #ffffff;
-    --ovl-color-current: #ffe100;
-    --ovl-color-surface: #000000;
-    --ovl-color-surface-soft: rgb(0 0 0 / 88%);
-    --ovl-color-outline: #ffffff;
-    --ovl-color-divider: rgb(255 255 255 / 58%);
-    --ovl-color-current-surface: rgb(255 225 0 / 28%);
-    --ovl-color-mark-surface: rgb(255 255 255 / 20%);
-    --ovl-color-stroke-strong: #000000;
-    --ovl-color-stroke-soft: #000000;
-    --ovl-color-ktv-fill-unsung: #ffffff;
-    --ovl-color-ktv-fill-solo: #ffe100;
-    --ovl-color-ktv-fill-male: #00d8ff;
-    --ovl-color-ktv-fill-female: #ff70d0;
-    --ovl-color-ktv-fill-group: #9cff57;
-    --ovl-color-ktv-stroke-unsung: #000000;
-    --ovl-color-ktv-stroke-sung: #000000;
-    --ovl-color-kinetic-ink: #000000;
-    --ovl-color-kinetic-paper: #ffffff;
-    --ovl-color-kinetic-yellow: #ffe100;
-    --ovl-color-kinetic-red: #ff6159;
-    --ovl-color-kinetic-ochre: #ff9d00;
-    --ovl-color-kinetic-cyan: #00d8ff;
-    --ovl-color-kinetic-magenta: #ff70d0;
-    --ovl-color-kinetic-candy-deep: #ff6159;
-    --ovl-color-kinetic-candy-light: #ffe100;
-    --ovl-color-ornate-paper: #ffffff;
-    --ovl-color-ornate-echo: #ffe100;
+    --ovl-look-color-ink: #000000;
+    --ovl-look-color-paper: #ffffff;
+    --ovl-look-color-text-primary: #ffffff;
+    --ovl-look-color-text-secondary: #ffffff;
+    --ovl-look-color-current: #ffe100;
+    --ovl-look-color-surface: #000000;
+    --ovl-look-color-surface-soft: rgb(0 0 0 / 88%);
+    --ovl-look-color-outline: #ffffff;
+    --ovl-look-color-divider: rgb(255 255 255 / 58%);
+    --ovl-look-color-current-surface: rgb(255 225 0 / 28%);
+    --ovl-look-color-mark-surface: rgb(255 255 255 / 20%);
+    --ovl-look-color-stroke-strong: #000000;
+    --ovl-look-color-stroke-soft: #000000;
+    --ovl-look-color-ktv-fill-unsung: #ffffff;
+    --ovl-look-color-ktv-fill-solo: #ffe100;
+    --ovl-look-color-ktv-fill-male: #00d8ff;
+    --ovl-look-color-ktv-fill-female: #ff70d0;
+    --ovl-look-color-ktv-fill-group: #9cff57;
+    --ovl-look-color-ktv-stroke-unsung: #000000;
+    --ovl-look-color-ktv-stroke-sung: #000000;
+    --ovl-look-color-kinetic-ink: #000000;
+    --ovl-look-color-kinetic-paper: #ffffff;
+    --ovl-look-color-kinetic-yellow: #ffe100;
+    --ovl-look-color-kinetic-red: #ff6159;
+    --ovl-look-color-kinetic-ochre: #ff9d00;
+    --ovl-look-color-kinetic-cyan: #00d8ff;
+    --ovl-look-color-kinetic-magenta: #ff70d0;
+    --ovl-look-color-kinetic-candy-deep: #ff6159;
+    --ovl-look-color-kinetic-candy-light: #ffe100;
+    --ovl-look-color-ornate-paper: #ffffff;
+    --ovl-look-color-ornate-echo: #ffe100;
   }
 
   :root[data-ovl-font='serif'] {
@@ -173,6 +417,11 @@
   :root[data-ovl-font='rounded'] {
     --ovl-user-font-family:
       'Arial Rounded MT Bold', 'Yu Gothic UI', 'Microsoft JhengHei', sans-serif;
+  }
+
+  :root[data-ovl-font='local'] {
+    --ovl-user-font-family:
+      var(--ovl-user-local-font-family), var(--ovl-font-ui);
   }
 
   :root[data-ovl-font='ornate'] {

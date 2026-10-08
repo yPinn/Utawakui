@@ -134,6 +134,9 @@ Setlist 開啟場次準備時，`SetlistPage` 將 `AppFolderPage` 由 document m
 各自擁有 bounded scroll。Workbench 的 Widget 尺寸由 preview option caption 單一表達，Lyrics
 固定尺寸留在 preview footer；inspector 只保留模板 identity、短暫 save feedback、runtime status、
 error 與實際設定，模板描述留在 Gallery。Lyrics preview 以可用寬、高較小者縮放完整 16:9 畫布；
+inspection composition 依 runtime 狀態維持單一 owner：服務未啟動時由控制台 frame 繪製，live
+cross-origin iframe 存在時由 iframe 內的 bounded Workbench query 繪製人物參考與
+checker／dark／light；copied route 不帶這些參數；
 `app-folder-layout` 小於 40rem 時，Workbench 以 2:1、Gallery 以 1:1 切成上下兩個 bounded pane，
 不新增 page-level scroll。控制台 feature stylesheet 與 public `overlay/` 的
 `--ovl-*` runtime 互不匯入。Settings 由
@@ -216,16 +219,32 @@ presentation profile 與 availability，非 Lyrics 不依賴該 profile。固定
 appearance key，Renderer 依模板欄位 metadata 建立 control，Browser Source 則在套用前再次 normalize；enum 只進
 root dataset，顏色只接受六位 hex，位置 offset clamp 後才進 `--ovl-*`。這層不依賴控制台
 Token v2，Overlay semantic token 也不回頭消費 `--ui-*`。
-所有可用模板都以 `paletteId` 取得同一組 bounded semantic palette 選項；Browser Source 的
-appearance layer 只重映射 text／surface／stroke／KTV／Kinetic／Manga／Ornate 等既有角色，不覆寫
-模板 DOM 或 timing。Workbench 依 `groupOrder`／`order` 固定以色彩、文字、可讀性、背景、版面、
-動態、內容顯示排序，空群組省略；間距密度、內容寬度與文字對比仍只在具有實際 CSS consumer 的
-模板公開。Ornate 的 raw hex 欄位是 palette 後的進階角色 override，不是全模板共用色票入口。
+所有可用模板都以既有 persisted `paletteId` 取得同一組 bounded semantic Look 選項；使用者可見名稱與
+component vocabulary 採影像調色慣用的 Look，避免與 raw Hex 色票混淆。`lookAmount` 是 0–100 的 bounded
+range，Browser Source appearance layer 以 `color-mix()` 從模板原始角色混合到 Look 的
+text／surface／stroke／KTV／Kinetic／Manga／Ornate 目標角色，不對完成畫面做 opacity 或 LUT 處理，
+也不覆寫模板 DOM 或 timing。Renderer 以帶代表色票的 select-only combobox 呈現 Look；方向鍵瀏覽不寫入，
+只有 click／Enter 選取才進 autosave，Escape 保留原值。共享 appearance schema 擁有群組 metadata，
+Workbench 依 `groupOrder`／`order` 固定以色彩處理、自訂色彩、文字、
+可讀性、背景、版面、動態、內容顯示排序，空群組省略；間距密度、內容寬度與文字對比仍只在具有實際
+CSS consumer 的模板公開。Ornate 的 raw Hex 欄位是 Look 後的進階角色 override；最近色票是
+Output workspace MRU preference；最多八格的常用色則是同一 preference boundary 內的穩定
+user-managed Palette。兩者跨 Output slot／模板與重啟共用，但 renderer 仍由目前 raw Hex 欄位
+發出明確 apply／commit intent，不建立全域 active-field state。常用色滿額時不靜默淘汰舊色；
+Look、模板預設、LUT 與 app-wide `UiColorField` 不讀取這些 preference，Overlay schema 也不持有它們。
+Live Stage 額外以 `allowLocalFonts` 宣告本機字體 capability。Renderer 只在使用者按下
+載入動作後呼叫 Local Font Access，Electron permission handler 也只允許 trusted main frame
+的 `local-fonts`；公開 Overlay、Spout 與 nested frame 不取得列舉能力。可持久化值是經共享
+schema 驗證的 `{ source, family, postscriptName, style }` record，不接受 path、URL 或任意 CSS；
+renderer IPC payload builder 也只對 `fontFamily` 放行這個驗證後物件，其他 nested setting
+繼續拒絕。Browser Source 不列舉字體，只把已正規化 family 寫入單一 quoted `--ovl-*`
+custom property，並保留 Overlay UI stack fallback。重啟或換電腦後須由使用者重新載入清單
+才能確認可用性；缺少時控制台標示不可用，公開輸出則安全回退。
 歌詞呈現策略則由 `lyricsPresentationPolicies.mjs` 另行擁有；它不是 appearance 欄位，也不借用
 尚未實作的 Style Set。現行只有 Live Stage 宣告轉播精簡、平衡分行與忠實原文三個 bounded
 policy，slot persistence 依 template capability 驗證，Workbench 將它排入「內容顯示」群組，
 仍與 appearance normalization 分開。
-Renderer 的 `useOutputAppearanceAutosave` 將 Workbench 完整 scalar snapshot 以 350ms
+Renderer 的 `useOutputAppearanceAutosave` 將 Workbench 完整 bounded settings snapshot 以 350ms
 debounce、single-flight 與 latest-wins 規則送入既有 slot persistence boundary；切頁、切換
 Output kind 或套用模板前必須 flush，失敗則保留本地 draft 與 retry payload。Persistence
 回傳只在狀態重新成為 saved 後同步經正規化的 slot，不得用較舊的 in-flight response 覆蓋

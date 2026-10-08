@@ -141,10 +141,31 @@ beforeEach(() => {
         sourceSynchronization: 'ready',
       },
     })),
-    listOutputSlots: vi.fn(async () => ({ version: 2, slots: {} })),
+    listOutputSlots: vi.fn(async () => ({
+      version: 3,
+      slots: {},
+      preferences: {
+        recentColors: ['#112233'],
+        savedColors: ['#445566'],
+      },
+    })),
     upsertOutputSlot: vi.fn(async (kind, slot) => ({
-      version: 2,
+      version: 3,
       slots: { [kind]: slot },
+      preferences: {
+        recentColors: ['#112233'],
+        savedColors: ['#445566'],
+      },
+    })),
+    updateOutputRecentColors: vi.fn(async (colors) => ({
+      version: 3,
+      slots: {},
+      preferences: { recentColors: colors, savedColors: ['#445566'] },
+    })),
+    updateOutputSavedColors: vi.fn(async (colors) => ({
+      version: 3,
+      slots: {},
+      preferences: { recentColors: ['#112233'], savedColors: colors },
     })),
   };
   vi.stubGlobal('window', { Utawakui: bridge });
@@ -224,11 +245,13 @@ it('preserves the exact public runtime API', async () => {
     'refreshSettings',
     'refreshStatus',
     'saveOutputSlot',
+    'saveRecentColor',
     'saveSlotSettings',
     'saveTemplateSelection',
     'start',
     'state',
     'stop',
+    'toggleSavedColor',
     'updateSettings',
   ]);
 });
@@ -1192,6 +1215,63 @@ describe('output runtime actions', () => {
         settings: { alignment: 'center' },
       }),
     );
+  });
+
+  it('loads and persists one shared bounded recent-color history', async () => {
+    const runtime = await loadRuntime();
+
+    await runtime.loadSlots();
+    expect(runtime.state.preferences.recentColors).toEqual(['#112233']);
+
+    await expect(runtime.saveRecentColor('#AABBCC')).resolves.toBe(true);
+    expect(bridge.updateOutputRecentColors).toHaveBeenCalledWith([
+      '#aabbcc',
+      '#112233',
+    ]);
+    expect(runtime.state.preferences.recentColors).toEqual([
+      '#aabbcc',
+      '#112233',
+    ]);
+
+    await expect(runtime.saveRecentColor('not-a-color')).resolves.toBe(false);
+    expect(bridge.updateOutputRecentColors).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads and toggles one Output-wide saved palette without reordering it as recent history', async () => {
+    const runtime = await loadRuntime();
+
+    await runtime.loadSlots();
+    expect(runtime.state.preferences.savedColors).toEqual(['#445566']);
+
+    await expect(runtime.toggleSavedColor('#AABBCC')).resolves.toBe(true);
+    expect(bridge.updateOutputSavedColors).toHaveBeenCalledWith([
+      '#445566',
+      '#aabbcc',
+    ]);
+    expect(runtime.state.preferences.savedColors).toEqual([
+      '#445566',
+      '#aabbcc',
+    ]);
+    expect(bridge.updateOutputRecentColors).not.toHaveBeenCalled();
+  });
+
+  it('rolls back an unpersisted recent color so the same commit can retry', async () => {
+    const runtime = await loadRuntime();
+    await runtime.loadSlots();
+    bridge.updateOutputRecentColors.mockRejectedValueOnce(
+      new Error('color history write failed'),
+    );
+
+    await expect(runtime.saveRecentColor('#AABBCC')).resolves.toBe(false);
+    expect(runtime.state.preferences.recentColors).toEqual(['#112233']);
+    expect(runtime.state.preferenceError).toBeTruthy();
+
+    await expect(runtime.saveRecentColor('#AABBCC')).resolves.toBe(true);
+    expect(bridge.updateOutputRecentColors).toHaveBeenCalledTimes(2);
+    expect(runtime.state.preferences.recentColors).toEqual([
+      '#aabbcc',
+      '#112233',
+    ]);
   });
 
   it('surfaces bounded failures and port suggestions without throwing', async () => {

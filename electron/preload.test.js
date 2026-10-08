@@ -123,6 +123,8 @@ const MAIN_INVOKE_CHANNELS = [
   'obs:get-status',
   'obs:update-settings',
   'output-slots:list',
+  'output-slots:set-recent-colors',
+  'output-slots:set-saved-colors',
   'output-slots:upsert',
   'output:connect-source',
   'output:copy-url',
@@ -450,6 +452,23 @@ describe('main preload bridge', () => {
     )[1];
     listener({ sender: 'private-web-contents' }, { progress: 0.5 });
     expect(callback).toHaveBeenCalledWith({ progress: 0.5 });
+
+    bridge.updateOutputRecentColors(
+      ['#aabbcc', '#112233'],
+      'E:\\private\\colors.json',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'output-slots:set-recent-colors',
+      ['#aabbcc', '#112233'],
+    );
+    bridge.updateOutputSavedColors(
+      ['#445566', '#aabbcc'],
+      'E:\\private\\palette.json',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'output-slots:set-saved-colors',
+      ['#445566', '#aabbcc'],
+    );
 
     const queueCallback = vi.fn();
     const cleanupQueue = bridge.onSeparationQueueProgress(queueCallback);

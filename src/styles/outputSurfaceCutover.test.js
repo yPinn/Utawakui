@@ -149,9 +149,6 @@ describe('Output Token v2 surface cutover', () => {
     }
 
     expect(outputFeatureSource).toContain(
-      '--ui-output-preview-stage-fallback:',
-    );
-    expect(outputFeatureSource).toContain(
       '--ui-output-settings-column-min-width:',
     );
     expect(settingsSource).toContain('var(--ui-checkbox-size)');

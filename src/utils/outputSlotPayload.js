@@ -1,16 +1,25 @@
+import { sanitizeOutputLocalFont } from '../../shared/outputAppearance.mjs';
+
 function cloneScalarSettings(settings) {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
     return {};
   }
 
   return Object.fromEntries(
-    Object.entries(settings).filter(([, value]) => {
-      return (
+    Object.entries(settings).flatMap(([key, value]) => {
+      if (
         typeof value === 'string' ||
         typeof value === 'boolean' ||
         value === null ||
         (typeof value === 'number' && Number.isFinite(value))
-      );
+      ) {
+        return [[key, value]];
+      }
+      if (key === 'fontFamily') {
+        const localFont = sanitizeOutputLocalFont(value);
+        if (localFont) return [[key, localFont]];
+      }
+      return [];
     }),
   );
 }

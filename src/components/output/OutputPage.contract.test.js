@@ -31,6 +31,14 @@ describe('Output page composition contract', () => {
       /<template\s+#header>[\s\S]*?<UiTabs[\s\S]*?@update:active-id="selectPage"/u,
     );
     expect(workspaceSource).toContain('await appearanceAutosave.flush()');
+    expect(workspaceSource).toContain(':preview-backdrop="previewBackdrop"');
+    expect(workspaceSource).toContain(':show-lyrics-guide="showLyricsGuide"');
+    expect(workspaceSource).toContain(
+      '@update:preview-backdrop="selectPreviewBackdrop"',
+    );
+    expect(workspaceSource).toContain(
+      '@update:show-lyrics-guide="setLyricsGuideVisible"',
+    );
     expect(workspaceSource).not.toContain('obs-output-workspace__modebar');
   });
 

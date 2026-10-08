@@ -15,7 +15,7 @@ import {
   shallowRef,
   useTemplateRef,
 } from 'vue';
-import { Copy, Grid2X2, Moon, Sun } from '../../icons/index.js';
+import { Copy, Grid2X2, Moon, Sun, UserRound } from '../../icons/index.js';
 import streamerPreviewImage from '../../assets/workbench-streamer-guide.png';
 import {
   calculateCapturePreviewScale,
@@ -32,15 +32,25 @@ const props = defineProps({
   supportedCaptureSizes: { type: Array, default: () => [] },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
+  previewBackdrop: {
+    type: String,
+    default: 'checker',
+    validator: (value) => ['checker', 'dark', 'light'].includes(value),
+  },
+  showLyricsGuide: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['update:captureSize', 'refreshProjection']);
+const emit = defineEmits([
+  'update:captureSize',
+  'update:previewBackdrop',
+  'update:showLyricsGuide',
+  'refreshProjection',
+]);
 
 const previewReloadToken = claimPreviewReloadToken();
 const copyState = shallowRef('idle');
 const previewStage = useTemplateRef('previewStage');
 const previewScale = shallowRef(1);
-const previewBackdrop = shallowRef('checker');
 const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width;
 const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height;
 const PREVIEW_BACKDROPS = Object.freeze([
@@ -66,9 +76,10 @@ const inspectionUrl = computed(() => {
     url.searchParams.set('workbench', '1');
     // Opt-in lyrics diagnostics: keep them out of production preview iframes.
     if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');
-    url.searchParams.set('backdrop', previewBackdrop.value);
+    url.searchParams.set('backdrop', props.previewBackdrop);
+    url.searchParams.set('guide', props.showLyricsGuide ? '1' : '0');
   } else {
-    url.searchParams.set('backdrop', previewBackdrop.value);
+    url.searchParams.set('backdrop', props.previewBackdrop);
   }
   url.searchParams.set('reload', previewReloadToken);
   return url.toString();
@@ -140,7 +151,7 @@ onBeforeUnmount(() => {
         :style="previewFrameStyle"
       >
         <ObsStreamerPreview
-          v-if="!hasRuntimeTemplate"
+          v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"
           :src="streamerPreviewImage"
         />
         <iframe
@@ -202,6 +213,14 @@ onBeforeUnmount(() => {
         </p>
       </div>
       <div class="obs-overlay-preview__actions">
+        <UiIconButton
+          v-if="isLyrics"
+          :icon="UserRound"
+          :label="showLyricsGuide ? '隱藏人物參考' : '顯示人物參考'"
+          :active="showLyricsGuide"
+          :aria-pressed="showLyricsGuide"
+          @click="emit('update:showLyricsGuide', !showLyricsGuide)"
+        />
         <div
           class="obs-overlay-preview__backdrops"
           role="group"
@@ -214,7 +233,7 @@ onBeforeUnmount(() => {
             :label="backdrop.label"
             :active="previewBackdrop === backdrop.id"
             :aria-pressed="previewBackdrop === backdrop.id"
-            @click="previewBackdrop = backdrop.id"
+            @click="emit('update:previewBackdrop', backdrop.id)"
           />
         </div>
         <UiIconButton
@@ -295,22 +314,23 @@ onBeforeUnmount(() => {
   gap: var(--ui-space-2);
   min-width: 0;
   padding: var(--ui-space-4);
-  background: var(--ui-color-canvas);
-}
-
-.obs-overlay-preview__frame[data-tone='stage'] .obs-overlay-preview__fallback {
-  background: var(--ui-output-preview-stage-fallback);
-}
-
-.obs-overlay-preview__frame[data-tone='lyrics'] .obs-overlay-preview__fallback {
-  background: var(--ui-color-surface-selected);
+  background: transparent;
 }
 
 .obs-overlay-preview__fallback-title {
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
   font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .obs-overlay-preview__fallback-line {

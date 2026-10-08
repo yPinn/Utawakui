@@ -87,14 +87,52 @@ defineProps({
 }
 
 .obs-output-split-layout__side {
+  --ui-output-side-visual-inset-start: var(--ui-space-4);
+  --ui-output-side-visual-inset-end: var(--ui-space-3);
+  --ui-output-side-focus-safe-inset: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-output-side-scrollbar-visual-reserve: calc(
+    var(--ui-scrollbar-lane-size) - var(--ui-scrollbar-thumb-inset)
+  );
+  --ui-output-side-content-inset-start: max(
+    var(--ui-output-side-visual-inset-start),
+    var(--ui-output-side-focus-safe-inset)
+  );
+  --ui-output-side-content-inset-end: calc(
+    max(
+        var(--ui-output-side-visual-inset-end),
+        var(--ui-output-side-scrollbar-visual-reserve)
+      ) +
+      var(--ui-output-side-focus-safe-inset)
+  );
+
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  padding-inline: var(--ui-space-4) var(--ui-space-3);
+  padding-inline: 0;
   border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.obs-output-split-layout__side-header,
+.obs-output-split-layout__side-footer {
+  min-inline-size: 0;
+  padding-inline: var(--ui-output-side-content-inset-start)
+    var(--ui-output-side-content-inset-end);
 }
 
 .obs-output-split-layout__side-scroll {
   min-height: 0;
+}
+
+.obs-output-split-layout__side-scroll
+  :deep(.obs-output-split-layout__side-viewport) {
+  padding-inline: var(--ui-output-side-content-inset-start)
+    var(--ui-output-side-content-inset-end);
+  padding-block-end: var(--ui-output-side-focus-safe-inset);
+  scroll-padding: var(--ui-output-side-focus-safe-inset)
+    var(--ui-output-side-content-inset-end)
+    var(--ui-output-side-focus-safe-inset)
+    var(--ui-output-side-content-inset-start);
 }
 
 .obs-output-split-layout--side-detail
@@ -128,8 +166,10 @@ defineProps({
   }
 
   .obs-output-split-layout__side {
+    --ui-output-side-visual-inset-start: 0rem;
+    --ui-output-side-visual-inset-end: 0rem;
+
     padding-block-start: var(--ui-space-4);
-    padding-inline: 0;
     border-block-start: var(--ui-border-width) solid var(--ui-color-border);
     border-inline-start: 0;
   }

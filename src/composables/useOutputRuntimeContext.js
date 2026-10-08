@@ -21,6 +21,10 @@ const unavailableState = Object.freeze({
   }),
   suggestedPorts: Object.freeze([]),
   slots: Object.freeze({}),
+  preferences: Object.freeze({
+    recentColors: Object.freeze([]),
+    savedColors: Object.freeze([]),
+  }),
   slotsLoaded: false,
   isStarting: false,
   isStopping: false,
@@ -28,6 +32,7 @@ const unavailableState = Object.freeze({
   isSavingSlot: false,
   isLoadingSettings: false,
   isSavingSettings: false,
+  preferenceError: '',
   error: '',
 });
 
@@ -40,6 +45,8 @@ const unavailableRuntime = Object.freeze({
   updateSettings: async () => false,
   loadSlots: async () => false,
   saveOutputSlot: async () => false,
+  saveRecentColor: async () => false,
+  toggleSavedColor: async () => false,
   saveSlotSettings: async () => false,
   saveTemplateSelection: async () => false,
 });

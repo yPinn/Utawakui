@@ -39,9 +39,13 @@ const availableKindIds = computed(() =>
 const {
   activePage,
   activeKind,
+  previewBackdrop,
+  showLyricsGuide,
   selectPage: rememberPage,
   selectKind: rememberKind,
   ensureAvailableKind,
+  selectPreviewBackdrop,
+  setLyricsGuideVisible,
 } = useOutputWorkspaceNavigation();
 const browsedPresetIds = reactive(
   Object.fromEntries(
@@ -59,8 +63,10 @@ const {
   start: startOutput,
   stop: stopOutput,
   loadSlots,
+  saveRecentColor,
   saveSlotSettings,
   saveTemplateSelection,
+  toggleSavedColor,
   updateSettings,
 } = useOutputRuntimeContext();
 const appearanceAutosave = useOutputAppearanceAutosave({
@@ -246,10 +252,18 @@ onBeforeUnmount(() => {
           :output-status="outputState.status"
           :preview-url="workbenchUrls.previewUrl"
           :obs-url="workbenchUrls.obsUrl"
-          :output-error="outputState.error"
+          :preview-backdrop="previewBackdrop"
+          :show-lyrics-guide="showLyricsGuide"
+          :output-error="outputState.error || outputState.preferenceError"
+          :recent-colors="outputState.preferences.recentColors"
+          :saved-colors="outputState.preferences.savedColors"
           :save-status="appearanceSaveStatus"
           @update:active-kind="selectKind"
+          @update:preview-backdrop="selectPreviewBackdrop"
+          @update:show-lyrics-guide="setLyricsGuideVisible"
           @change-settings="queueAppearanceSave"
+          @commit-color="saveRecentColor"
+          @toggle-saved-color="toggleSavedColor"
           @retry-save="appearanceAutosave.retry"
           @open-gallery="selectPage('gallery')"
           @refresh-projection="refreshProjection"

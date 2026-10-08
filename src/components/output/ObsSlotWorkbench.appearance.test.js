@@ -41,6 +41,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       'queue-board',
       [
         'paletteId',
+        'lookAmount',
         'fontFamily',
         'fontScale',
         'fontWeight',
@@ -53,6 +54,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       'now-next',
       [
         'paletteId',
+        'lookAmount',
         'fontFamily',
         'fontScale',
         'fontWeight',
@@ -64,12 +66,12 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     ],
     [
       'art-card',
-      ['paletteId', 'fontFamily', 'fontScale', 'fontWeight'],
+      ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
       ['alignment', 'surface'],
     ],
     [
       'cover-player',
-      ['paletteId', 'fontScale', 'fontWeight', 'surface'],
+      ['paletteId', 'lookAmount', 'fontScale', 'fontWeight', 'surface'],
       ['fontFamily', 'alignment'],
     ],
   ])(
@@ -129,7 +131,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                   control: 'select',
                   group: 'content',
                   groupLabel: '內容顯示',
-                  groupOrder: 70,
+                  groupOrder: 80,
                   order: 10,
                   defaultValue: 'balanced-lines',
                   options: [{ id: 'balanced-lines', label: '平衡分行' }],
@@ -140,7 +142,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
           }),
       }),
     );
-    const labels = ['色彩', '文字', '可讀性', '背景', '版面', '內容顯示'];
+    const labels = ['色彩處理', '文字', '可讀性', '背景', '版面', '內容顯示'];
 
     for (let index = 1; index < labels.length; index += 1) {
       expect(html.indexOf(`>${labels[index - 1]}</h3>`)).toBeLessThan(
@@ -425,6 +427,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 outputAppearanceFieldsForTemplate('ornate-vertical'),
             },
             activeKind: 'lyrics',
+            recentColors: ['#112233', '#aabbcc'],
+            savedColors: ['#445566', '#778899'],
             outputSlot: {
               templateId: 'ornate-vertical',
               settings: {
@@ -442,13 +446,19 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       }),
     );
 
-    expect(html).toContain('文字顏色');
+    expect(html).toContain('自訂色彩');
+    expect(html).toContain('文字色');
     expect(html).toContain('藝術墨影');
     expect(html).toContain('顯示位置');
     expect(html).toContain('水平微調');
     expect(html).toContain('垂直微調');
     expect(html).toContain('type="color"');
     expect(html).toContain('type="range"');
+    expect(html).toContain('aria-label="最近使用色票"');
+    expect(html).toContain('aria-label="Output 常用色票"');
+    expect(html).toContain('data-color-source="saved"');
+    expect(html).toContain('aria-label="顯示位置"');
+    expect(html).not.toContain('<select id="output-appearance-positionAnchor"');
     expect(html).toContain('恢復模板預設');
     expect(html).toMatch(
       /<select id="output-appearance-fontFamily"[^>]*value="ornate"/,

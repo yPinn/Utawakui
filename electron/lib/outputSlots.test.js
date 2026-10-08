@@ -6,6 +6,8 @@ import {
   loadOutputSlots,
   OUTPUT_SLOTS_FILENAME,
   saveOutputSlots,
+  setOutputRecentColors,
+  setOutputSavedColors,
   upsertOutputSlot,
 } from './outputSlots.js';
 
@@ -22,9 +24,13 @@ describe('outputSlots', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('returns an empty v2 document when overlays.json is missing', () => {
+  it('returns an empty v3 document when overlays.json is missing', () => {
     const document = loadOutputSlots(dir);
-    expect(document.version).toBe(2);
+    expect(document.version).toBe(3);
+    expect(document.preferences).toEqual({
+      recentColors: [],
+      savedColors: [],
+    });
     expect(Object.keys(document.slots)).toEqual([
       'setlist',
       'lyrics',
@@ -59,7 +65,8 @@ describe('outputSlots', () => {
     });
 
     expect(saved).toMatchObject({
-      version: 2,
+      version: 3,
+      preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
           templateId: 'now-next',
@@ -98,7 +105,8 @@ describe('outputSlots', () => {
     );
 
     expect(loadOutputSlots(dir)).toMatchObject({
-      version: 2,
+      version: 3,
+      preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
           templateId: 'now-next',
@@ -122,10 +130,42 @@ describe('outputSlots', () => {
         .readdirSync(dir)
         .some((name) => /^overlays\.json\.v1-.*\.bak$/.test(name)),
     ).toBe(true);
-    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).version).toBe(2);
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).version).toBe(3);
+  });
+
+  it('migrates v2 slots to v3 preferences without losing slot settings', () => {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        slots: {
+          lyrics: {
+            templateId: 'ornate-vertical',
+            settings: { textColor: '#ABCDEF', captureSize: 'full' },
+          },
+        },
+      }),
+    );
+
+    expect(loadOutputSlots(dir)).toMatchObject({
+      version: 3,
+      preferences: { recentColors: [], savedColors: [] },
+      slots: {
+        lyrics: {
+          templateId: 'ornate-vertical',
+          settings: { textColor: '#abcdef', captureSize: 'full' },
+        },
+      },
+    });
+    expect(
+      fs
+        .readdirSync(dir)
+        .some((name) => /^overlays\.json\.v2-.*\.bak$/.test(name)),
+    ).toBe(true);
   });
 
   it('upserts only the addressed kind and rejects cross-kind templates', () => {
+    setOutputRecentColors(dir, ['#112233']);
     upsertOutputSlot(dir, 'lyrics', {
       templateId: 'focus-line',
       settings: { alignment: 'center' },
@@ -149,9 +189,46 @@ describe('outputSlots', () => {
         settings: { alignment: 'right' },
       },
     });
+    expect(loadOutputSlots(dir).preferences.recentColors).toEqual(['#112233']);
     expect(() =>
       upsertOutputSlot(dir, 'lyrics', { templateId: 'queue-board' }),
     ).toThrow('Invalid output slot');
+  });
+
+  it('persists only a bounded normalized recent-color preference list', () => {
+    const saved = setOutputRecentColors(dir, [
+      '#AABBCC',
+      '#aabbcc',
+      '#112233',
+      'url(private)',
+      '#445566',
+    ]);
+
+    expect(saved.preferences.recentColors).toEqual([
+      '#aabbcc',
+      '#112233',
+      '#445566',
+    ]);
+    expect(loadOutputSlots(dir)).toEqual(saved);
+    expect(saved.slots.lyrics.templateId).toBe('focus-line');
+  });
+
+  it('persists a bounded saved palette without changing recent colors or slots', () => {
+    setOutputRecentColors(dir, ['#112233']);
+
+    const saved = setOutputSavedColors(dir, [
+      '#AABBCC',
+      '#aabbcc',
+      '#445566',
+      'url(private)',
+    ]);
+
+    expect(saved.preferences).toEqual({
+      recentColors: ['#112233'],
+      savedColors: ['#aabbcc', '#445566'],
+    });
+    expect(loadOutputSlots(dir)).toEqual(saved);
+    expect(saved.slots.lyrics.templateId).toBe('focus-line');
   });
 
   it('round-trips bundled Lyrics template ids with appearance settings', () => {
@@ -197,6 +274,30 @@ describe('outputSlots', () => {
         settings: { captureSize: 'full' },
       }),
     ).not.toThrow();
+  });
+
+  it('persists a bounded local font only for the Live Stage capability', () => {
+    const localFont = {
+      source: 'local',
+      family: 'Noto Sans CJK TC',
+      postscriptName: 'NotoSansCJKtc-Regular',
+      style: 'Regular',
+    };
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'live-stage',
+      settings: { fontFamily: localFont, captureSize: 'full' },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings.fontFamily).toEqual(
+      localFont,
+    );
+
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'focus-line',
+      settings: { fontFamily: localFont, captureSize: 'full' },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
+      'fontFamily',
+    );
   });
 
   it('bounds the independent Live Stage presentation policy setting', () => {
@@ -334,7 +435,7 @@ describe('outputSlots', () => {
         .filter((name) => name.startsWith('overlays.json.corrupted-')),
     ).toHaveLength(1);
 
-    fs.writeFileSync(filePath, JSON.stringify({ version: 3, slots: {} }));
+    fs.writeFileSync(filePath, JSON.stringify({ version: 4, slots: {} }));
     expect(() => loadOutputSlots(dir)).toThrow(/newer overlays/i);
   });
 });

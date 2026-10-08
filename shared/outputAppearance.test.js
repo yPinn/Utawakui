@@ -1,16 +1,38 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OUTPUT_APPEARANCE_GROUPS,
   normalizeOutputAppearance,
   outputAppearanceFieldsForTemplate,
   sanitizeOutputAppearanceSetting,
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  const localFont = {
+    source: 'local',
+    family: 'Noto Sans CJK TC',
+    postscriptName: 'NotoSansCJKtc-Regular',
+    style: 'Regular',
+  };
+
+  it('defines the inspector hierarchy once in common-to-specific order', () => {
+    expect(OUTPUT_APPEARANCE_GROUPS).toEqual([
+      { id: 'color-treatment', label: '色彩處理', order: 10 },
+      { id: 'custom-color', label: '自訂色彩', order: 20 },
+      { id: 'typography', label: '文字', order: 30 },
+      { id: 'readability', label: '可讀性', order: 40 },
+      { id: 'surface', label: '背景', order: 50 },
+      { id: 'layout', label: '版面', order: 60 },
+      { id: 'motion', label: '動態', order: 70 },
+      { id: 'content', label: '內容顯示', order: 80 },
+    ]);
+  });
+
   it('exposes the bounded safe-appearance fields for Ornate Vertical', () => {
     const fields = outputAppearanceFieldsForTemplate('ornate-vertical');
 
     expect(fields.map((field) => field.key)).toEqual([
       'paletteId',
+      'lookAmount',
       'textColor',
       'accentColor',
       'fontFamily',
@@ -27,9 +49,27 @@ describe('output appearance schema', () => {
         { id: 'antique', label: '古典明朝（GenEi Antique）' },
       ],
     });
+    expect(fields.find((field) => field.key === 'fontScale')).toMatchObject({
+      control: 'select',
+      editor: 'font-scale',
+    });
+    expect(
+      fields.find((field) => field.key === 'positionAnchor'),
+    ).toMatchObject({
+      control: 'select',
+      editor: 'position-grid',
+    });
     expect(fields.find((field) => field.key === 'textColor')).toMatchObject({
       control: 'color',
       defaultValue: '#fff8ec',
+    });
+    expect(fields.find((field) => field.key === 'lookAmount')).toMatchObject({
+      control: 'range',
+      defaultValue: 100,
+      min: 0,
+      max: 100,
+      step: 5,
+      unit: '%',
     });
     expect(
       fields.find((field) => field.key === 'positionOffsetX'),
@@ -91,6 +131,7 @@ describe('output appearance schema', () => {
       }),
     ).toEqual({
       paletteId: 'original',
+      lookAmount: 100,
       fontFamily: 'sans',
       fontScale: 'large',
       fontWeight: 'semibold',
@@ -132,6 +173,7 @@ describe('output appearance schema', () => {
 
   it('validates recognized values without rejecting unrelated scalar settings', () => {
     expect(sanitizeOutputAppearanceSetting('paletteId', 'cool')).toBe('cool');
+    expect(sanitizeOutputAppearanceSetting('lookAmount', 73)).toBe(75);
     expect(
       sanitizeOutputAppearanceSetting('contrastStyle', 'strong-outline'),
     ).toBe('strong-outline');
@@ -182,12 +224,73 @@ describe('output appearance schema', () => {
     });
   });
 
+  it('opens local font selection only for the Live Stage pilot', () => {
+    const liveStageFont = outputAppearanceFieldsForTemplate('live-stage').find(
+      ({ key }) => key === 'fontFamily',
+    );
+    const focusLineFont = outputAppearanceFieldsForTemplate('focus-line').find(
+      ({ key }) => key === 'fontFamily',
+    );
+
+    expect(liveStageFont).toMatchObject({
+      editor: 'font-family',
+      allowLocalFonts: true,
+      options: [
+        { id: 'sans', label: '無襯線' },
+        { id: 'serif', label: '襯線' },
+        { id: 'rounded', label: '圓體' },
+      ],
+    });
+    expect(focusLineFont).not.toHaveProperty('allowLocalFonts', true);
+    expect(focusLineFont.editor).not.toBe('font-family');
+  });
+
+  it('sanitizes a bounded local font descriptor without accepting paths or CSS', () => {
+    expect(sanitizeOutputAppearanceSetting('fontFamily', localFont)).toEqual(
+      localFont,
+    );
+    expect(
+      sanitizeOutputAppearanceSetting('fontFamily', {
+        ...localFont,
+        family: 'url(https://example.invalid/font.woff2)',
+      }),
+    ).toBeUndefined();
+    expect(
+      sanitizeOutputAppearanceSetting('fontFamily', {
+        ...localFont,
+        postscriptName: 'C:\\private\\font.ttf',
+      }),
+    ).toBeUndefined();
+  });
+
+  it('keeps a local font only on templates that declare the capability', () => {
+    expect(
+      normalizeOutputAppearance(
+        { fontFamily: localFont },
+        { templateId: 'live-stage' },
+      ).fontFamily,
+    ).toEqual(localFont);
+    expect(
+      normalizeOutputAppearance(
+        { fontFamily: localFont },
+        { templateId: 'focus-line' },
+      ).fontFamily,
+    ).toBe('serif');
+    expect(
+      normalizeOutputAppearance(
+        { fontFamily: localFont },
+        { templateId: 'kinetic-pop' },
+      ).fontFamily,
+    ).toBe('sans');
+  });
+
   it('exposes only appearance controls consumed by each non-Lyrics template', () => {
     const keysFor = (templateId) =>
       outputAppearanceFieldsForTemplate(templateId).map(({ key }) => key);
 
     expect(keysFor('queue-board')).toEqual([
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
@@ -196,6 +299,7 @@ describe('output appearance schema', () => {
     ]);
     expect(keysFor('now-next')).toEqual([
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
@@ -205,12 +309,14 @@ describe('output appearance schema', () => {
     ]);
     expect(keysFor('art-card')).toEqual([
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
     ]);
     expect(keysFor('cover-player')).toEqual([
       'paletteId',
+      'lookAmount',
       'fontScale',
       'fontWeight',
       'surface',
@@ -222,6 +328,7 @@ describe('output appearance schema', () => {
 
     expect(fields.map(({ key }) => key)).toEqual([
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
@@ -232,7 +339,8 @@ describe('output appearance schema', () => {
       'contentWidth',
     ]);
     expect(fields.map(({ group }) => group)).toEqual([
-      'color',
+      'color-treatment',
+      'color-treatment',
       'typography',
       'typography',
       'typography',
@@ -243,7 +351,7 @@ describe('output appearance schema', () => {
       'layout',
     ]);
     expect(fields.map(({ groupOrder }) => groupOrder)).toEqual([
-      10, 20, 20, 20, 30, 40, 50, 50, 50,
+      10, 10, 30, 30, 30, 40, 50, 60, 60, 60,
     ]);
   });
 
@@ -259,11 +367,14 @@ describe('output appearance schema', () => {
     'ornate-vertical',
     'manga-frame',
     'live-stage',
-  ])('offers an effective semantic palette for %s', (templateId) => {
+  ])('offers an effective semantic Look for %s', (templateId) => {
     expect(outputAppearanceFieldsForTemplate(templateId)[0]).toMatchObject({
       key: 'paletteId',
-      group: 'color',
-      groupLabel: '色彩',
+      control: 'select',
+      editor: 'look',
+      group: 'color-treatment',
+      groupLabel: '色彩處理',
+      label: 'Look',
       defaultValue: 'original',
       options: [
         { id: 'original', label: '模板原色' },

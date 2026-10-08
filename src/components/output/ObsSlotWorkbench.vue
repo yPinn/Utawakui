@@ -1,7 +1,10 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, shallowRef, watch } from 'vue';
 import { Palette } from '../../icons/index.js';
-import { sanitizeOutputAppearanceSetting } from '../../../shared/outputAppearance.mjs';
+import {
+  isOutputLocalFont,
+  sanitizeOutputAppearanceSetting,
+} from '../../../shared/outputAppearance.mjs';
 import { normalizeLyricsPresentationPolicyId } from '../../../shared/presentation/lyricsPresentationPolicies.mjs';
 import {
   normalizeCaptureSizeId,
@@ -23,7 +26,11 @@ const props = defineProps({
   outputStatus: { type: Object, default: () => ({ running: false }) },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
+  previewBackdrop: { type: String, default: 'checker' },
+  showLyricsGuide: { type: Boolean, default: true },
   outputError: { type: String, default: '' },
+  recentColors: { type: Array, default: () => [] },
+  savedColors: { type: Array, default: () => [] },
   saveStatus: {
     type: String,
     default: 'saved',
@@ -34,7 +41,11 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:activeKind',
+  'update:previewBackdrop',
+  'update:showLyricsGuide',
   'changeSettings',
+  'commitColor',
+  'toggleSavedColor',
   'retrySave',
   'openGallery',
   'refreshProjection',
@@ -112,13 +123,16 @@ function normalizedControlValue(field, settings) {
   const storedValue = sanitizeOutputAppearanceSetting(
     field.key,
     settings?.[field.key],
+    { templateId: templateId.value },
   );
   const allowedValues = Array.isArray(field.options)
     ? new Set(field.options.map((option) => option.id))
     : null;
   if (
     storedValue !== undefined &&
-    (!allowedValues || allowedValues.has(storedValue))
+    (isOutputLocalFont(storedValue) ||
+      !allowedValues ||
+      allowedValues.has(storedValue))
   ) {
     return storedValue;
   }
@@ -246,7 +260,11 @@ function resetAppearance() {
             :supported-capture-sizes="supportedCaptureSizes"
             :preview-url="previewUrl"
             :obs-url="obsUrl"
+            :preview-backdrop="previewBackdrop"
+            :show-lyrics-guide="showLyricsGuide"
             @update:capture-size="updateCaptureSize"
+            @update:preview-backdrop="emit('update:previewBackdrop', $event)"
+            @update:show-lyrics-guide="emit('update:showLyricsGuide', $event)"
             @refresh-projection="emit('refreshProjection')"
           />
         </UiScrollRegion>
@@ -291,8 +309,15 @@ function resetAppearance() {
             :key="field.key"
             :field="field"
             :model-value="draft[field.key]"
+            :recent-colors="recentColors"
+            :saved-colors="savedColors"
+            :disabled="
+              field.key === 'lookAmount' && draft.paletteId === 'original'
+            "
             @update:model-value="updateAppearanceField(field, $event)"
             @commit="commitSettings"
+            @commit-color="emit('commitColor', $event)"
+            @toggle-saved-color="emit('toggleSavedColor', $event)"
           />
         </div>
       </section>

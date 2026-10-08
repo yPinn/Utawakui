@@ -1,6 +1,11 @@
 'use strict';
 
-const { loadOutputSlots, upsertOutputSlot } = require('../lib/outputSlots');
+const {
+  loadOutputSlots,
+  setOutputRecentColors,
+  setOutputSavedColors,
+  upsertOutputSlot,
+} = require('../lib/outputSlots');
 const { isValidOutputRuntime } = require('../lib/config');
 const {
   findAvailableOutputPorts,
@@ -145,6 +150,14 @@ function registerOutputHandlers({
 
   ipcMain.handle('output-slots:upsert', async (event, kind, slot) => {
     return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));
+  });
+
+  ipcMain.handle('output-slots:set-recent-colors', async (event, colors) => {
+    return setOutputRecentColors(outputDir(), colors);
+  });
+
+  ipcMain.handle('output-slots:set-saved-colors', async (event, colors) => {
+    return setOutputSavedColors(outputDir(), colors);
   });
 }
 

@@ -27,22 +27,31 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
   'queue-board': [
     'paletteId',
+    'lookAmount',
     'fontFamily',
     'fontScale',
     'fontWeight',
     'surface',
     'spacingDensity',
   ],
-  'karaoke-stack': ['paletteId', 'fontScale'],
-  'live-stage': ['paletteId', 'fontFamily', 'fontScale', 'contrastStyle'],
+  'karaoke-stack': ['paletteId', 'lookAmount', 'fontScale'],
+  'live-stage': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
+    'fontScale',
+    'contrastStyle',
+  ],
   'kinetic-pop': [
     'paletteId',
+    'lookAmount',
     'fontScale',
     'kineticMaterial',
     'kineticArrangement',
   ],
   'ornate-vertical': [
     'paletteId',
+    'lookAmount',
     'textColor',
     'accentColor',
     'fontFamily',
@@ -53,6 +62,7 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
   ],
   'manga-frame': [
     'paletteId',
+    'lookAmount',
     'fontFamily',
     'fontScale',
     'fontWeight',
@@ -60,6 +70,7 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
   ],
   'quiet-caption': [
     'paletteId',
+    'lookAmount',
     'fontFamily',
     'fontScale',
     'fontWeight',
@@ -71,6 +82,7 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
   ],
   'focus-line': [
     'paletteId',
+    'lookAmount',
     'fontFamily',
     'fontScale',
     'fontWeight',
@@ -81,9 +93,16 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'contentWidth',
   ],
   'reading-aid': [],
-  'art-card': ['paletteId', 'fontFamily', 'fontScale', 'fontWeight'],
+  'art-card': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+  ],
   'now-next': [
     'paletteId',
+    'lookAmount',
     'fontFamily',
     'fontScale',
     'fontWeight',
@@ -91,7 +110,13 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'alignment',
     'spacingDensity',
   ],
-  'cover-player': ['paletteId', 'fontScale', 'fontWeight', 'surface'],
+  'cover-player': [
+    'paletteId',
+    'lookAmount',
+    'fontScale',
+    'fontWeight',
+    'surface',
+  ],
 });
 
 function graphemeCount(value) {
@@ -241,6 +266,7 @@ describe('output template registry', () => {
 
     expect(liveStage.appearanceFields.map(({ key }) => key)).toEqual([
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'contrastStyle',
@@ -250,7 +276,7 @@ describe('output template registry', () => {
         key: 'lyricsPresentationPolicyId',
         label: '歌詞呈現策略',
         groupLabel: '內容顯示',
-        groupOrder: 70,
+        groupOrder: 80,
         defaultValue: 'broadcast-compact',
         options: [
           { id: 'broadcast-compact', label: '轉播精簡' },
@@ -396,7 +422,7 @@ describe('output template registry', () => {
         layoutLabel: '錯位雙行',
         motionLabel: '逐字掃色',
       },
-      editableAppearanceKeys: ['paletteId', 'fontScale'],
+      editableAppearanceKeys: ['paletteId', 'lookAmount', 'fontScale'],
       detail: expect.stringContaining('提示點先行倒數'),
       settings: expect.arrayContaining([
         { label: '顯示', value: '上列靠左、下列靠右' },
@@ -453,6 +479,7 @@ describe('output template registry', () => {
       },
       editableAppearanceKeys: [
         'paletteId',
+        'lookAmount',
         'fontScale',
         'kineticMaterial',
         'kineticArrangement',
@@ -479,6 +506,7 @@ describe('output template registry', () => {
       ]),
       editableAppearanceKeys: [
         'paletteId',
+        'lookAmount',
         'textColor',
         'accentColor',
         'fontFamily',

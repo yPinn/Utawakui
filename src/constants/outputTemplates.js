@@ -1,6 +1,7 @@
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import {
   OUTPUT_APPEARANCE_DEFAULTS,
+  OUTPUT_APPEARANCE_GROUPS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   outputAppearanceFieldsForTemplate,
 } from '../../shared/outputAppearance.mjs';
@@ -393,6 +394,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
 ];
 
 const EMPTY_PRESENTATION_FIELDS = Object.freeze([]);
+const CONTENT_CONFIGURATION_GROUP = OUTPUT_APPEARANCE_GROUPS.find(
+  (group) => group.id === 'content',
+);
 
 function presentationFieldsForTemplate(templateId) {
   const options = lyricsPresentationPolicyOptionsForTemplate(templateId);
@@ -403,9 +407,9 @@ function presentationFieldsForTemplate(templateId) {
       label: '歌詞呈現策略',
       control: 'select',
       settingKind: 'lyrics-presentation',
-      group: 'content',
-      groupLabel: '內容顯示',
-      groupOrder: 70,
+      group: CONTENT_CONFIGURATION_GROUP.id,
+      groupLabel: CONTENT_CONFIGURATION_GROUP.label,
+      groupOrder: CONTENT_CONFIGURATION_GROUP.order,
       order: 20,
       defaultValue: normalizeLyricsPresentationPolicyId(templateId),
       options: Object.freeze(options.map((option) => Object.freeze(option))),

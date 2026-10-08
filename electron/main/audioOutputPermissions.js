@@ -21,7 +21,7 @@ function isAudioOutputPermissionAllowed(
   getAllowedSender,
 ) {
   return (
-    permission === 'speaker-selection' &&
+    ['speaker-selection', 'local-fonts'].includes(permission) &&
     isTrustedMainFrame(webContents, details, getAllowedSender)
   );
 }

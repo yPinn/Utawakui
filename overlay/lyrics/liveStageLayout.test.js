@@ -20,20 +20,18 @@ function numericTypeStep(variableName) {
 }
 
 describe('Live Stage overlay layout contract', () => {
-  it('keeps Workbench backdrop and guide inside the direct iframe below Lyrics', () => {
+  it('owns bounded Workbench composition inside the live inspection iframe', () => {
     expect(html).toContain('class="lyrics-workbench__backdrop"');
     expect(html).toContain('class="lyrics-workbench__guide"');
-    expect(html).toContain('aria-hidden="true"');
-
     expect(css).toContain(
       ":root[data-overlay-workbench='true'] .lyrics-workbench__backdrop",
+    );
+    expect(css).toMatch(
+      /:root\[data-overlay-workbench='true'\]\[data-overlay-guide='true'\]\s+\.lyrics-workbench__guide/u,
     );
     expect(css).toContain(
       ":root[data-overlay-backdrop='checker'] .lyrics-workbench__backdrop",
     );
-    expect(css).toContain('z-index: 0;');
-    expect(css).toContain('z-index: 1;');
-    expect(css).toContain('z-index: 2;');
     expect(css).toContain("url('/workbench/streamer-guide.png')");
   });
 

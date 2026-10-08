@@ -54,8 +54,7 @@
     pointer-events: none;
   }
 
-  :root[data-overlay-workbench='true'] .lyrics-workbench__backdrop,
-  :root[data-overlay-workbench='true'] .lyrics-workbench__guide {
+  :root[data-overlay-workbench='true'] .lyrics-workbench__backdrop {
     display: block;
   }
 
@@ -88,12 +87,17 @@
     user-select: none;
   }
 
+  :root[data-overlay-workbench='true'][data-overlay-guide='true']
+    .lyrics-workbench__guide {
+    display: block;
+  }
+
   .lyrics-workbench__guide-region {
     position: absolute;
     inset: calc(100% / 3) calc(100% / 3) 0;
   }
 
-  :root[data-overlay-workbench='true'] .lyrics-workbench__guide-region::before {
+  .lyrics-workbench__guide-region::before {
     position: absolute;
     inset: 0;
     content: '';

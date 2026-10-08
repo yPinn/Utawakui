@@ -3,11 +3,15 @@ defineProps({
   controlId: { type: String, required: true },
   label: { type: String, required: true },
   labelsControl: { type: Boolean, default: true },
+  alignStart: { type: Boolean, default: false },
 });
 </script>
 
 <template>
-  <div class="obs-appearance-control-row">
+  <div
+    class="obs-appearance-control-row"
+    :class="{ 'obs-appearance-control-row--align-start': alignStart }"
+  >
     <label
       v-if="labelsControl"
       class="obs-appearance-control-row__label"
@@ -47,5 +51,13 @@ defineProps({
 
 .obs-appearance-control-row__control {
   min-width: 0;
+}
+
+.obs-appearance-control-row--align-start {
+  align-items: start;
+}
+
+.obs-appearance-control-row--align-start .obs-appearance-control-row__label {
+  padding-block-start: var(--ui-space-2);
 }
 </style>

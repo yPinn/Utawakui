@@ -51,6 +51,8 @@ describe('output handlers', () => {
     );
     expect(server.setOverlaySlots).not.toHaveBeenCalled();
     expect(ipcMain.handlers.has('output-slots:list')).toBe(true);
+    expect(ipcMain.handlers.has('output-slots:set-recent-colors')).toBe(true);
+    expect(ipcMain.handlers.has('output-slots:set-saved-colors')).toBe(true);
   });
 
   it('gates start and publish while source connect, status, and stop stay recoverable', async () => {
@@ -125,7 +127,8 @@ describe('output handlers', () => {
     });
 
     expect(await ipcMain.handlers.get('output-slots:list')()).toMatchObject({
-      version: 2,
+      version: 3,
+      preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': { templateId: 'now-next' },
         setlist: { templateId: 'queue-board' },
@@ -161,6 +164,24 @@ describe('output handlers', () => {
       },
     });
     expect(setOverlaySlots).toHaveBeenLastCalledWith(saved.slots);
+
+    const preferences = await ipcMain.handlers.get(
+      'output-slots:set-recent-colors',
+    )(null, ['#AABBCC', '#aabbcc', '#112233', 'private-value']);
+    expect(preferences.preferences.recentColors).toEqual([
+      '#aabbcc',
+      '#112233',
+    ]);
+    expect(preferences.slots).toEqual(saved.slots);
+
+    const savedPalette = await ipcMain.handlers.get(
+      'output-slots:set-saved-colors',
+    )(null, ['#AABBCC', '#aabbcc', '#445566', 'private-value']);
+    expect(savedPalette.preferences).toEqual({
+      recentColors: ['#aabbcc', '#112233'],
+      savedColors: ['#aabbcc', '#445566'],
+    });
+    expect(savedPalette.slots).toEqual(saved.slots);
   });
 
   it('reads and updates validated machine-local runtime settings', async () => {

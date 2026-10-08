@@ -856,21 +856,45 @@ effective controls. Inspector group headings use the 14px semibold Label role, f
 labels and status use the 14px regular Caption role, and group boundaries—not every
 field row—own visual separation. Overlay artwork typography remains independent.
 The Lyrics preview scales against both available width and height, so its complete 16:9
-frame remains visible in a bounded stage. Below the 40rem Folder container threshold,
+frame remains visible in a bounded stage. Its control-panel frame is the sole inspection
+composition owner while the runtime is unavailable; once the live cross-origin iframe is
+present, that inspection iframe owns checker／dark／light and the optional performer guide
+through bounded Workbench-only query state. The copied Browser Source URL contains neither.
+Below the 40rem Folder container threshold,
 Workbench stacks preview／inspector at 2:1 while Gallery uses 1:1 for catalog／detail;
 each pane retains its own Scroll Region and the page still has no vertical scroll owner.
+The inspector moves its visible inline inset into that Scroll Region's actual viewport:
+the inline end reserves both the overlay scrollbar lane and the shared outward focus-ring
+outset, so full-width fields never paint beneath the rail or lose keyboard focus edges.
 
 Appearance controls are template-effective rather than slot-wide. Every available
-template exposes a bounded semantic palette: Template Original, Warm Stage, Cool
-Stage, Monochrome, and High Contrast. The palette remaps the roles actually used by
-each template, including KTV role fills, Kinetic Pop materials, Manga ink／paper,
-and general text／surface colors; it is not a raw theme object. Ornate Vertical
-keeps its explicit text and ink-echo color pickers as advanced overrides, while a
-non-original palette supplies those roles whenever the colors remain at their
-template defaults.
+template exposes a bounded color-grading-style Look: Template Original, Warm Stage,
+Cool Stage, Monochrome, and High Contrast. The persisted compatibility key remains
+`paletteId`, but the operator-facing control and component vocabulary use `Look`.
+The Look field is a compact select-only combobox: its closed trigger keeps the
+selected name and three representative role Swatches visible, while the popup
+lists the same previews in the established option order. Arrow keys only browse;
+click／Enter commits and Escape preserves the previous Look, so exploring the
+list does not create autosave noise.
+Each non-original Look remaps the roles actually used by the template, including KTV
+role fills, Kinetic Pop materials, Manga ink／paper, and general text／surface colors;
+it is not a raw theme object or a LUT. `lookAmount` blends the complete semantic role
+pairs from Template Original at 0% to the selected Look at 100%, rather than reducing
+the finished Overlay opacity. Amount stays visible but disabled for Template Original
+with an explicit reason. Ornate Vertical keeps its raw Hex text and ink-echo Swatches
+under a separate Custom Color group; a non-original Look supplies those roles whenever
+the colors remain at their template defaults. Each raw Hex field projects the same
+Output-workspace color preferences without becoming their state owner: Recent Swatches
+are an eight-entry MRU, while Common Colors are an eight-entry stable user-managed
+Palette with explicit add／remove actions and no silent eviction. Both survive restart
+and are shared across Output slots and templates, but selecting a Swatch still applies
+only to the field where it was invoked. Look, template defaults, LUT concepts, and the
+app-wide `UiColorField` primitive do not consume this Palette.
 
-The inspector always orders fields as Color, Typography, Readability, Background,
-Layout, Motion, then Content Visibility, omitting empty groups. `queue-board` and
+The shared appearance schema owns the inspector hierarchy: Color Treatment, Custom
+Color when supported, Typography, Readability, Background, Layout, Motion, then
+Content Visibility. Templates omit empty groups but cannot redefine their relative
+order. `queue-board` and
 `now-next` additionally expose spacing density; `quiet-caption` and `focus-line`
 expose text contrast, spacing density, and content width. Existing font, alignment,
 surface-opacity preset, furigana, Kinetic material／arrangement, and Ornate position
@@ -879,6 +903,17 @@ fixed by an artwork layout stay absent instead of presenting settings with no
 visible effect. Every registered template receives its appearance metadata from
 the shared schema; a template with no controls also omits the appearance reset
 action.
+
+Live Stage alone pilots local font selection. Its font control is a searchable
+select-only combobox: the committed family name remains in control-panel UI type,
+while a separate Traditional Chinese／Korean／Japanese／Latin sample uses the
+candidate family in both the closed control and rich options. Bundled presets stay
+visible before any permission request. The app never scans at startup; an explicit
+`載入本機字體` action requests access and reports loading, ready, unsupported,
+denied, or retryable failure. Local selections show a concise public-output rights
+notice. A saved family is marked unavailable only after a completed catalog check,
+then the Overlay falls back to its safe UI stack. Fixed-artwork templates keep their
+bundled font contract and do not inherit this capability.
 
 The `live-stage` Lyrics template follows an original K-pop broadcast hierarchy on
 the fixed 1920×1080 canvas. Top chrome shares the 6.25%／5% horizontal safe anchors

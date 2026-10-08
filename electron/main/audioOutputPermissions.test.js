@@ -38,6 +38,26 @@ describe('audio output permissions', () => {
     ).toBe(true);
   });
 
+  it('allows explicit local font access only in the trusted main frame', () => {
+    const { allowedSender, requestHandler, checkHandler } = createHarness();
+    const callback = vi.fn();
+    const details = { isMainFrame: true, requestingUrl: appUrl };
+
+    requestHandler(allowedSender, 'local-fonts', callback, details);
+
+    expect(callback).toHaveBeenCalledWith(true);
+    expect(checkHandler(allowedSender, 'local-fonts', appUrl, details)).toBe(
+      true,
+    );
+
+    const nestedCallback = vi.fn();
+    requestHandler(allowedSender, 'local-fonts', nestedCallback, {
+      ...details,
+      isMainFrame: false,
+    });
+    expect(nestedCallback).toHaveBeenCalledWith(false);
+  });
+
   it('rejects speaker selection outside the trusted main frame', () => {
     const { allowedSender, requestHandler, checkHandler } = createHarness();
     const cases = [

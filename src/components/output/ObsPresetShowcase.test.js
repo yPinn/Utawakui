@@ -56,6 +56,10 @@ const appearanceFieldSource = readFileSync(
   fileURLToPath(new URL('./ObsAppearanceField.vue', import.meta.url)),
   'utf8',
 );
+const outputColorFieldSource = readFileSync(
+  fileURLToPath(new URL('./ObsOutputColorField.vue', import.meta.url)),
+  'utf8',
+);
 const settingsSource = readFileSync(
   fileURLToPath(new URL('./ObsOutputSettings.vue', import.meta.url)),
   'utf8',
@@ -338,7 +342,10 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
     expect(previewSource).toContain('ObsWidgetCapturePreview');
     expect(previewSource).toContain('v-if="isLyrics"');
-    expect(previewSource).toContain('v-if="!hasRuntimeTemplate"');
+    expect(previewSource).toContain(
+      'v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"',
+    );
+    expect(previewSource).toContain("'隱藏人物參考' : '顯示人物參考'");
     expect(previewSource).toContain(':src="streamerPreviewImage"');
     expect(widgetCapturePreviewSource).toContain('gridTemplateColumns');
     expect(widgetCapturePreviewSource).toContain('supportedCaptureSizes');
@@ -358,7 +365,13 @@ describe('OBS output workspace layout contract', () => {
     );
 
     expect(compactSplitLayoutSource).toContain(
-      'padding-inline: var(--ui-space-4) var(--ui-space-3)',
+      '--ui-output-side-visual-inset-start: var(--ui-space-4)',
+    );
+    expect(compactSplitLayoutSource).toContain(
+      '--ui-output-side-visual-inset-end: var(--ui-space-3)',
+    );
+    expect(compactSplitLayoutSource).toContain(
+      'padding-inline: var(--ui-output-side-content-inset-start) var(--ui-output-side-content-inset-end)',
     );
     expect(workbenchSource).toContain('ObsAppearanceField');
     expect(workbenchSource).toContain(':field="field"');
@@ -366,8 +379,14 @@ describe('OBS output workspace layout contract', () => {
       'const controlId = computed(() => `output-appearance-${props.field.key}`)',
     );
     expect(appearanceFieldSource).toContain('<UiSelect');
-    expect(appearanceFieldSource).toContain('<UiColorField');
-    expect(appearanceFieldSource).toContain('label-hidden');
+    expect(appearanceFieldSource).toContain('<ObsOutputColorField');
+    expect(outputColorFieldSource).toContain('<UiColorField');
+    expect(outputColorFieldSource).toContain('label-hidden');
+    expect(workbenchSource).toContain(':saved-colors="savedColors"');
+    expect(workspaceSource).toContain(
+      ':saved-colors="outputState.preferences.savedColors"',
+    );
+    expect(workspaceSource).toContain('@toggle-saved-color="toggleSavedColor"');
     expect(appearanceFieldSource).not.toContain('<select');
     expect(appearanceFieldSource).not.toContain('type="color"');
     expect(appearanceControlRowSource).toContain('<slot />');
@@ -455,9 +474,10 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).toContain(
       'var(--ui-output-settings-column-min-width)',
     );
-    expect(settingsViewSource).toContain(
-      'var(--settings-view-column-min-width)',
+    expect(settingsViewSource).not.toContain(
+      '--settings-view-column-min-width',
     );
+    expect(settingsViewSource).toContain('class="settings-view__panel"');
     expect(settingsSource).toContain('var(--ui-checkbox-size)');
     expect(tokenSource).not.toContain('--ui-settings-column-min-width:');
     expect(tokenSource).not.toContain('--ui-settings-checkbox-size:');

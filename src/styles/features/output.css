@@ -30,8 +30,25 @@
   --ui-output-template-thumb-group-gap: var(--ui-space-2);
   --ui-output-setting-label-width-min: 4rem; /* compact setting label column */
 
+  /* Representative full-strength Look swatches for the control-panel picker.
+     These preview the bounded Output palettes without importing Overlay tokens. */
+  --ui-output-look-original-ink: #111417;
+  --ui-output-look-original-paper: #fffdfa;
+  --ui-output-look-original-accent: #d26a45;
+  --ui-output-look-warm-ink: #211711;
+  --ui-output-look-warm-paper: #fff4df;
+  --ui-output-look-warm-accent: #ff8b68;
+  --ui-output-look-cool-ink: #0c1821;
+  --ui-output-look-cool-paper: #eef9ff;
+  --ui-output-look-cool-accent: #66d8e8;
+  --ui-output-look-monochrome-ink: #0d0d0f;
+  --ui-output-look-monochrome-paper: #fafafa;
+  --ui-output-look-monochrome-accent: #b8b8be;
+  --ui-output-look-contrast-ink: #000000;
+  --ui-output-look-contrast-paper: #ffffff;
+  --ui-output-look-contrast-accent: #ffe100;
+
   /* Gallery mockups and iframe-failure states remain feature-owned artwork. */
-  --ui-output-preview-stage-fallback: #4a332e;
   --ui-output-preview-canvas: #14191d;
   --ui-output-preview-stage-canvas: #19252a;
   --ui-output-preview-lyrics-canvas: #162426;
@@ -95,8 +112,4 @@
   --ui-output-preview-aspect-ratio: 16 / 9;
   --ui-output-preview-cycle-duration: 4.8s;
   --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-:root[data-ui-theme='light'] [data-ui-system] {
-  --ui-output-preview-stage-fallback: #f1d9cc;
 }

@@ -12,12 +12,17 @@ const workbenchPreviewSource = readFileSync(
 );
 
 describe('Workbench streamer preview', () => {
-  it('keeps the renderer guide only as the no-runtime fallback', () => {
+  it('uses the renderer guide only for the no-runtime fallback', () => {
     expect(workbenchPreviewSource).toContain(
       "import streamerPreviewImage from '../../assets/workbench-streamer-guide.png'",
     );
     expect(workbenchPreviewSource).toContain('<ObsStreamerPreview');
-    expect(workbenchPreviewSource).toContain('v-if="!hasRuntimeTemplate"');
+    expect(workbenchPreviewSource).toContain(
+      'v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"',
+    );
+    expect(workbenchPreviewSource).toContain(
+      '@click="emit(\'update:showLyricsGuide\', !showLyricsGuide)"',
+    );
     expect(workbenchPreviewSource).toContain(':src="streamerPreviewImage"');
     expect(workbenchPreviewSource).toContain(
       "url.pathname = '/overlay/lyrics';",

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyPreviewCanvas,
   inspectionBackdrop,
+  inspectionGuideVisible,
   isPreviewMode,
   isWorkbenchMode,
   withPreviewFallback,
@@ -30,6 +31,7 @@ describe('overlay preview fallback', () => {
     expect(document.documentElement.dataset.overlayPreview).toBe('true');
     expect(document.documentElement.dataset.overlayWorkbench).toBe('true');
     expect(document.documentElement.dataset.overlayBackdrop).toBe('checker');
+    expect(document.documentElement.dataset.overlayGuide).toBe('true');
   });
 
   it('allows only local inspection backdrop ids', () => {
@@ -38,6 +40,15 @@ describe('overlay preview fallback', () => {
     expect(inspectionBackdrop({ search: '?backdrop=light' })).toBe('light');
     expect(inspectionBackdrop({ search: '?backdrop=provider-value' })).toBe('');
     expect(inspectionBackdrop({ search: '' })).toBe('');
+  });
+
+  it('keeps the Workbench guide visible by default and accepts only the explicit hide value', () => {
+    expect(inspectionGuideVisible({ search: '?guide=1' })).toBe(true);
+    expect(inspectionGuideVisible({ search: '?guide=0' })).toBe(false);
+    expect(inspectionGuideVisible({ search: '?guide=provider-value' })).toBe(
+      true,
+    );
+    expect(inspectionGuideVisible({ search: '' })).toBe(true);
   });
 
   it('uses demo content only when preview mode receives an empty live frame', () => {

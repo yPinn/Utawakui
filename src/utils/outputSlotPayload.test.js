@@ -44,4 +44,25 @@ describe('buildOutputSlotPayload', () => {
     expect(payload.settings).toEqual({ valid: null });
     expect(() => structuredClone(payload)).not.toThrow();
   });
+
+  it('copies only a validated local font descriptor across IPC', () => {
+    const localFont = {
+      source: 'local',
+      family: 'Noto Sans CJK TC',
+      postscriptName: 'NotoSansCJKtc-Regular',
+      style: 'Regular',
+    };
+    const payload = buildOutputSlotPayload(
+      reactive({
+        templateId: 'live-stage',
+        settings: {
+          fontFamily: localFont,
+          arbitraryObject: { nested: true },
+        },
+      }),
+    );
+
+    expect(payload.settings).toEqual({ fontFamily: localFont });
+    expect(() => structuredClone(payload)).not.toThrow();
+  });
 });

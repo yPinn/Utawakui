@@ -1,18 +1,37 @@
 <script setup>
 import { computed } from 'vue';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
-import UiColorField from '../ui/UiColorField.vue';
+import ObsFontFamilySelect from './ObsFontFamilySelect.vue';
+import ObsLookSelect from './ObsLookSelect.vue';
+import ObsOutputColorField from './ObsOutputColorField.vue';
+import ObsPositionPicker from './ObsPositionPicker.vue';
+import ObsSegmentedAppearanceChoice from './ObsSegmentedAppearanceChoice.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
   field: { type: Object, required: true },
-  modelValue: { type: [String, Number], required: true },
+  modelValue: { type: [String, Number, Object], required: true },
+  recentColors: { type: Array, default: () => [] },
+  savedColors: { type: Array, default: () => [] },
+  disabled: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:modelValue', 'commit']);
+const emit = defineEmits([
+  'update:modelValue',
+  'commit',
+  'commitColor',
+  'toggleSavedColor',
+]);
 
 const controlId = computed(() => `output-appearance-${props.field.key}`);
+const controlHintId = computed(() => `${controlId.value}-hint`);
+const editor = computed(() => props.field.editor ?? props.field.control);
+const disabledHint = computed(() =>
+  props.disabled && props.field.key === 'lookAmount'
+    ? '選擇 Look 後可調整'
+    : '',
+);
 const selectOptions = computed(() =>
   (props.field.options ?? []).map((option) => ({
     value: option.id,
@@ -22,7 +41,7 @@ const selectOptions = computed(() =>
 );
 function formatRangeValue(value) {
   const numericValue = Number(value);
-  const prefix = numericValue > 0 ? '+' : '';
+  const prefix = props.field.signed && numericValue > 0 ? '+' : '';
   return `${prefix}${numericValue}${props.field.unit ?? ''}`;
 }
 
@@ -34,12 +53,17 @@ const valueText = computed(() => {
   return formatRangeValue(props.modelValue);
 });
 
-function updateString(value) {
+function updateValue(value) {
   emit('update:modelValue', value);
 }
 
 function updateNumber(value) {
   emit('update:modelValue', value);
+}
+
+function commitColor(value) {
+  emit('commit');
+  emit('commitColor', value);
 }
 </script>
 
@@ -48,46 +72,103 @@ function updateNumber(value) {
     :control-id="controlId"
     :label="field.label"
     :labels-control="field.control === 'range'"
+    :align-start="
+      editor === 'position-grid' ||
+      editor === 'font-family' ||
+      field.control === 'color'
+    "
   >
+    <ObsLookSelect
+      v-if="editor === 'look'"
+      :id="controlId"
+      :label="field.label"
+      :model-value="String(modelValue)"
+      :options="field.options"
+      @update:model-value="updateValue"
+    />
+
+    <ObsFontFamilySelect
+      v-else-if="editor === 'font-family'"
+      :id="controlId"
+      :label="field.label"
+      :model-value="modelValue"
+      :options="field.options"
+      @update:model-value="updateValue"
+    />
+
+    <ObsPositionPicker
+      v-else-if="editor === 'position-grid'"
+      :id="controlId"
+      :label="field.label"
+      :model-value="String(modelValue)"
+      :options="field.options"
+      @update:model-value="updateValue"
+    />
+
+    <ObsSegmentedAppearanceChoice
+      v-else-if="['alignment', 'font-scale'].includes(editor)"
+      :id="controlId"
+      :label="field.label"
+      :editor="editor"
+      :model-value="String(modelValue)"
+      :options="field.options"
+      @update:model-value="updateValue"
+    />
+
     <UiSelect
-      v-if="field.control === 'select'"
+      v-else-if="field.control === 'select'"
       :id="controlId"
       :label="field.label"
       :model-value="modelValue"
       :options="selectOptions"
       label-hidden
-      @update:model-value="updateString"
+      @update:model-value="updateValue"
     />
 
-    <UiColorField
+    <ObsOutputColorField
       v-else-if="field.control === 'color'"
       :id="controlId"
       :label="field.label"
       :model-value="String(modelValue)"
-      label-hidden
-      @update:model-value="updateString"
-      @commit="emit('commit')"
+      :recent-colors="recentColors"
+      :saved-colors="savedColors"
+      @update:model-value="updateValue"
+      @commit="commitColor"
+      @toggle-saved-color="emit('toggleSavedColor', $event)"
     />
 
     <div
       v-else-if="field.control === 'range'"
-      class="obs-appearance-field__compound obs-appearance-field__compound--range"
+      class="obs-appearance-field__range-stack"
     >
-      <UiRangeControl
-        :id="controlId"
-        class="obs-appearance-field__range"
-        :model-value="Number(modelValue)"
-        :min="field.min"
-        :max="field.max"
-        :step="field.step"
-        :value-text="valueText"
-        :format-value="formatRangeValue"
-        @update:model-value="updateNumber"
-        @change="emit('commit')"
-      />
-      <output class="obs-appearance-field__value" :for="controlId">
-        {{ valueText }}
-      </output>
+      <div
+        class="obs-appearance-field__compound obs-appearance-field__compound--range"
+      >
+        <UiRangeControl
+          :id="controlId"
+          class="obs-appearance-field__range"
+          :model-value="Number(modelValue)"
+          :min="field.min"
+          :max="field.max"
+          :step="field.step"
+          :disabled="disabled"
+          :aria-describedby="disabledHint ? controlHintId : undefined"
+          :value-text="valueText"
+          :format-value="formatRangeValue"
+          @update:model-value="updateNumber"
+          @change="emit('commit')"
+        />
+        <output class="obs-appearance-field__value" :for="controlId">
+          {{ valueText }}
+        </output>
+      </div>
+      <p
+        v-if="disabledHint"
+        :id="controlHintId"
+        class="obs-appearance-field__hint"
+      >
+        {{ disabledHint }}
+      </p>
     </div>
   </ObsAppearanceControlRow>
 </template>
@@ -105,6 +186,12 @@ function updateNumber(value) {
   grid-template-columns: minmax(7rem, 1fr) 3.5rem;
 }
 
+.obs-appearance-field__range-stack {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
 .obs-appearance-field__range {
   min-inline-size: 0;
   inline-size: 100%;
@@ -115,5 +202,12 @@ function updateNumber(value) {
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
+}
+
+.obs-appearance-field__hint {
+  margin: 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
 }
 </style>

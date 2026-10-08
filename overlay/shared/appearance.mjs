@@ -1,7 +1,9 @@
 import {
+  isOutputLocalFont,
   normalizeOutputAppearance,
   OUTPUT_APPEARANCE_DEFAULTS,
   outputAppearanceOptionIds,
+  outputLocalFontCssValue,
 } from '../../shared/outputAppearance.mjs';
 
 export const OVERLAY_APPEARANCE_DEFAULTS = OUTPUT_APPEARANCE_DEFAULTS;
@@ -19,7 +21,8 @@ export function applyOverlayAppearance(document, slot) {
   });
 
   root.dataset.ovlPalette = appearance.paletteId;
-  root.dataset.ovlFont = appearance.fontFamily;
+  const localFont = isOutputLocalFont(appearance.fontFamily);
+  root.dataset.ovlFont = localFont ? 'local' : appearance.fontFamily;
   root.dataset.ovlScale = appearance.fontScale;
   root.dataset.ovlWeight = appearance.fontWeight;
   root.dataset.ovlAlign = appearance.alignment;
@@ -48,6 +51,15 @@ export function applyOverlayAppearance(document, slot) {
 
   root.style?.setProperty?.('--ovl-user-text-color', textColor);
   root.style?.setProperty?.('--ovl-user-accent-color', accentColor);
+  if (localFont) {
+    root.style?.setProperty?.(
+      '--ovl-user-local-font-family',
+      outputLocalFontCssValue(appearance.fontFamily),
+    );
+  } else {
+    root.style?.removeProperty?.('--ovl-user-local-font-family');
+  }
+  root.style?.setProperty?.('--ovl-look-amount', `${appearance.lookAmount}%`);
   root.style?.setProperty?.(
     '--ovl-user-position-x',
     `${appearance.positionOffsetX}%`,

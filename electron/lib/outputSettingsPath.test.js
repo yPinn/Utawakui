@@ -33,6 +33,7 @@ const DATASET_TARGETS = Object.freeze({
 
 const STYLE_TARGETS = Object.freeze({
   accentColor: ['--ovl-user-accent-color', ''],
+  lookAmount: ['--ovl-look-amount', '%'],
   positionOffsetX: ['--ovl-user-position-x', '%'],
   positionOffsetY: ['--ovl-user-position-y', '%'],
   textColor: ['--ovl-user-text-color', ''],
@@ -46,7 +47,9 @@ function nonDefaultValue(field) {
     );
   }
   if (field.control === 'color') return '#123456';
-  if (field.control === 'range') return field.max;
+  if (field.control === 'range') {
+    return field.max === field.defaultValue ? field.min : field.max;
+  }
   throw new Error(`No test value for ${field.key}`);
 }
 

@@ -109,10 +109,12 @@ all compatible templates. Locked invariants are never exported or made editable.
 The current fixed-route implementation keeps that definition in
 `shared/outputAppearance.mjs`. Electron validates recognized persisted values at
 the storage boundary, the Renderer derives controls from each template's field
-list, and Browser Source normalizes again before projecting enum ids or validated
-colors and bounded offsets to `--ovl-*`. Every available built-in template exposes
-the same bounded semantic palette ids while retaining template-owned role mapping.
-Safe controls are ordered by Color, Typography, Readability, Background, Layout,
+list, and Browser Source normalizes again before projecting enum ids, bounded Look
+Amount, validated colors and bounded offsets to `--ovl-*`. Every available built-in
+template exposes the same bounded semantic Look ids while retaining the persisted
+`paletteId` compatibility key and template-owned role mapping. Look Amount blends
+complete semantic roles and is not a LUT or finished-layer opacity control. Safe
+controls are ordered by Color Treatment, Custom Color, Typography, Readability, Background, Layout,
 Motion, and Content Visibility metadata; empty groups are not rendered. Spacing
 density, content width, and text contrast are exposed only by templates with a
 verified consumer. Ornate Vertical additionally exposes two bundled font roles,
