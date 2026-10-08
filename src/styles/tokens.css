@@ -210,9 +210,7 @@
   --ui-inspector-width: var(--ui-right-dock-width);
   --ui-inspector-rail-width: var(--ui-right-dock-rail-width);
   --ui-shell-gutter: 0.75rem;
-  --ui-player-padding-block: calc(
-    (var(--ui-player-bar-height) - var(--ui-track-artwork-size-prominent)) / 2
-  );
+  --ui-player-padding-block-end: var(--ui-shell-content-inset-block);
   --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
   --ui-player-leading-padding-inline: calc(
     var(--ui-shell-leading-artwork-centerline) - 1.5rem

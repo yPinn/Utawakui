@@ -736,13 +736,13 @@ onUnmounted(() => {
     minmax(0, var(--ui-player-center-max-inline-size))
     minmax(var(--ui-player-side-reserve-inline-size), 1fr);
   align-items: center;
-  /* The center stack is taller than the artwork-derived content box.
-     Center the grid row so it overflows equally instead of creating a
-     document scrollbar that would move the viewport midpoint. */
+  /* The transparent bar reads as one plane with the Shell inset above it.
+     Reserving the matching inset below balances that combined plane while
+     keeping all three grid columns on the same vertical axis. */
   align-content: center;
   column-gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
-  padding-block: var(--ui-player-padding-block);
+  padding-block: 0 var(--ui-player-padding-block-end);
   /* Symmetric root gutters keep the center track on the viewport midpoint.
      The leading track adds only the optical delta to the artwork axis. */
   padding-inline: var(--ui-player-padding-inline);

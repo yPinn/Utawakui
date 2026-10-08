@@ -193,12 +193,17 @@ describe('PlayerBar responsive metadata layout', () => {
     const compactBlock = tokenSource.match(
       /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([^}]*)\}/su,
     )?.[1];
+    const playerBarRule = cssRule(componentSource, '.player-bar');
 
     expect(tokenSource).toContain('--ui-player-bar-height: 4.75rem');
     expect(compactBlock).toBeDefined();
     expect(compactBlock).not.toContain('--ui-player-bar-height');
-    expect(tokenSource).toMatch(
-      /--ui-player-padding-block:\s*calc\(\s*\(var\(--ui-player-bar-height\) - var\(--ui-track-artwork-size-prominent\)\) \/ 2\s*\);/u,
+    expect(tokenSource).toContain(
+      '--ui-player-padding-block-end: var(--ui-shell-content-inset-block);',
+    );
+    expect(tokenSource).not.toContain('--ui-player-padding-block:');
+    expect(playerBarRule).toMatch(
+      /padding-block:\s*0\s+var\(--ui-player-padding-block-end\)/u,
     );
   });
 
