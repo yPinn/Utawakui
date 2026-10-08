@@ -48,6 +48,7 @@ function registerConfigHandlers({
   notifyLibraryUpdated,
   recordDiagnostic,
   titlebarColors,
+  applyPerformerUiTheme = () => undefined,
   applyAppUpdateAutoCheck = () => undefined,
   applyWindowCloseBehavior = () => undefined,
 }) {
@@ -164,6 +165,7 @@ function registerConfigHandlers({
           win.setTitleBarOverlay(titlebarColors[theme]);
           win.setBackgroundColor(titlebarColors[theme].color);
         }
+        applyPerformerUiTheme(theme);
         return getConfig().uiTheme;
       },
     );

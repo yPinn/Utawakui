@@ -80,6 +80,7 @@ describe('coverage policy', () => {
     'overlay/shared/state.mjs',
     'src/composables/useStudioLibraryInspectorWidth.js',
     'src/icons/index.js',
+    'src/utils/performerView.js',
   ])('marks re-export-only module %s as coverage-neutral', (file) => {
     expect(classifyAppSource(file)).toEqual({
       status: 'coverage-neutral',

@@ -29,6 +29,10 @@ const {
 const {
   isWindowCloseBehavior,
 } = require('../../shared/windowCloseBehaviorContract.mjs');
+const {
+  normalizePerformerReadingScale,
+} = require('../../shared/performerViewContract.mjs');
+const { normalizePerformerWindowBounds } = require('./performerWindowBounds');
 const storageValues = require('../../shared/libraryStorageValues.json');
 
 const CURRENT_VERSION = 3;
@@ -45,6 +49,8 @@ const DEFAULTS = {
   downloadDir: null,
   featureConfirmations: {},
   uiTheme: 'dark',
+  performerReadingScale: 'desk',
+  performerWindowBounds: null,
   sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width
   // Audio output device id for the capture (OBS-facing) mix — see
   // usePlayer.js's capture chain. null means the feature is off; the
@@ -254,6 +260,12 @@ function loadConfig(configPath) {
       data.featureConfirmations,
     ),
     uiTheme: UI_THEMES.includes(data.uiTheme) ? data.uiTheme : DEFAULTS.uiTheme,
+    performerReadingScale: normalizePerformerReadingScale(
+      data.performerReadingScale,
+    ),
+    performerWindowBounds: normalizePerformerWindowBounds(
+      data.performerWindowBounds,
+    ),
     sidebarWidth: normalizeSidebarWidth(data.sidebarWidth),
     captureDeviceId:
       typeof data.captureDeviceId === 'string' &&

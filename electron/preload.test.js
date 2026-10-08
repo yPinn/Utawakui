@@ -208,6 +208,7 @@ const MAIN_EVENT_CHANNELS = [
   'music-structure:capability-progress',
   'obs:status',
   'performer-view:status',
+  'performer-view:lyrics-offset-intent',
   'player:command',
   'separation:progress',
   'separation:queue-progress',
@@ -957,22 +958,26 @@ describe('performer preload bridge', () => {
       [
         'diagnostics:record-renderer',
         'performer-view:close',
+        'performer-view:adjust-lyrics-offset',
+        'performer-view:get-reading-scale',
         'performer-view:get-snapshot',
         'performer-view:get-status',
         'performer-view:minimize',
+        'performer-view:set-reading-scale',
         'performer-view:toggle-always-on-top',
         'performer-view:toggle-full-screen',
       ].sort(),
     );
     expect(uniqueChannels(electron.ipcRenderer.on)).toEqual([
       'performer-view:snapshot',
+      'performer-view:ui-theme',
       'performer-view:window-state',
     ]);
     expect(electron.ipcRenderer.send).not.toHaveBeenCalled();
     expect(bridge).not.toHaveProperty('ipcRenderer');
 
     for (const cleanup of cleanups) cleanup();
-    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledTimes(2);
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledTimes(3);
   });
 
   it('defaults unknown themes and forwards event payloads without event objects', async () => {
@@ -992,6 +997,32 @@ describe('performer preload bridge', () => {
     cleanup();
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'performer-view:snapshot',
+      listener,
+    );
+  });
+
+  it('forwards only canonical live theme payloads', async () => {
+    const bridge = await loadBridge(
+      './performerPreload.js',
+      'UtawakuiPerformer',
+    );
+    const callback = vi.fn();
+    const cleanup = bridge.onUiTheme(callback);
+    const listener = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'performer-view:ui-theme',
+    )[1];
+
+    listener({ sender: 'private-web-contents' }, 'sepia');
+    listener({ sender: 'private-web-contents' }, { theme: 'light' });
+    expect(callback).not.toHaveBeenCalled();
+
+    listener({ sender: 'private-web-contents' }, 'light');
+    listener({ sender: 'private-web-contents' }, 'dark');
+    expect(callback.mock.calls).toEqual([['light'], ['dark']]);
+
+    cleanup();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
+      'performer-view:ui-theme',
       listener,
     );
   });

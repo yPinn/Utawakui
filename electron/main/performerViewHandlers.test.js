@@ -48,4 +48,54 @@ describe('performer view handlers', () => {
     expect(manager.minimize).toHaveBeenCalledOnce();
     expect(manager.close).toHaveBeenCalledOnce();
   });
+
+  it('relays only bounded lyrics intents and persists a valid reading scale', () => {
+    const ipcMain = createIpcMain();
+    const manager = {
+      publish: vi.fn(),
+      open: vi.fn(),
+      getStatus: vi.fn(),
+      getSnapshot: vi.fn(),
+      close: vi.fn(),
+      minimize: vi.fn(),
+      toggleFullScreen: vi.fn(),
+      toggleAlwaysOnTop: vi.fn(),
+    };
+    const sendLyricsOffsetIntent = vi.fn(() => true);
+    const getConfig = vi.fn(() => ({ performerReadingScale: 'stage' }));
+    const updateConfig = vi.fn((value) => value);
+    registerPerformerViewHandlers({
+      ipcMain,
+      manager,
+      sendLyricsOffsetIntent,
+      getConfig,
+      updateConfig,
+    });
+
+    const intent = { action: 'delay', revision: 4, trackId: 'track-1' };
+    expect(
+      ipcMain.handlers.get('performer-view:adjust-lyrics-offset')(null, intent),
+    ).toBe(true);
+    expect(sendLyricsOffsetIntent).toHaveBeenCalledWith(intent);
+    expect(ipcMain.handlers.get('performer-view:get-reading-scale')()).toBe(
+      'stage',
+    );
+    expect(
+      ipcMain.handlers.get('performer-view:set-reading-scale')(null, 'near'),
+    ).toBe('near');
+    expect(updateConfig).toHaveBeenCalledWith({
+      performerReadingScale: 'near',
+    });
+
+    expect(() =>
+      ipcMain.handlers.get('performer-view:adjust-lyrics-offset')(null, {
+        action: 'seek',
+        revision: 4,
+        trackId: 'track-1',
+      }),
+    ).toThrow('Invalid performer lyrics offset intent');
+    expect(() =>
+      ipcMain.handlers.get('performer-view:set-reading-scale')(null, 'giant'),
+    ).toThrow('Invalid performer reading scale');
+  });
 });

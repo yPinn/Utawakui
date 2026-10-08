@@ -4,40 +4,17 @@ const {
   createEmptyPerformerSnapshot,
   parsePerformerSnapshot,
 } = require('../lib/performerSnapshot');
+const {
+  MIN_PERFORMER_WINDOW_BOUNDS,
+  fitPerformerWindowBounds,
+  normalizePerformerWindowBounds,
+} = require('../lib/performerWindowBounds');
 const { hardenWebContentsNavigation } = require('./webContentsSecurity');
 
-const DEFAULT_BOUNDS = Object.freeze({ width: 960, height: 460 });
-const MIN_BOUNDS = Object.freeze({ width: 800, height: 360 });
-const WORK_AREA_MARGIN = 32;
+const BOUNDS_PERSIST_DEBOUNCE_MS = 300;
 
-function fitInitialBounds(workArea) {
-  if (
-    !workArea ||
-    !Number.isFinite(workArea.x) ||
-    !Number.isFinite(workArea.y) ||
-    !Number.isFinite(workArea.width) ||
-    !Number.isFinite(workArea.height) ||
-    workArea.width <= 0 ||
-    workArea.height <= 0
-  ) {
-    return DEFAULT_BOUNDS;
-  }
-
-  const width = Math.max(
-    MIN_BOUNDS.width,
-    Math.min(DEFAULT_BOUNDS.width, workArea.width - WORK_AREA_MARGIN * 2),
-  );
-  const height = Math.max(
-    MIN_BOUNDS.height,
-    Math.min(DEFAULT_BOUNDS.height, workArea.height - WORK_AREA_MARGIN * 2),
-  );
-
-  return {
-    x: workArea.x + Math.max(0, Math.floor((workArea.width - width) / 2)),
-    y: workArea.y + Math.max(0, Math.floor((workArea.height - height) / 2)),
-    width,
-    height,
-  };
+function isUiTheme(value) {
+  return value === 'light' || value === 'dark';
 }
 
 function createPerformerWindowManager(options) {
@@ -48,13 +25,18 @@ function createPerformerWindowManager(options) {
     pagePath,
     preloadPath,
     getDisplayWorkArea = () => null,
+    getPersistedBounds = () => null,
     getUiTheme = () => 'dark',
+    persistBounds = () => {},
+    onBoundsPersistenceError = () => {},
     publishStatus = () => {},
   } = options;
 
   let performerWindow = null;
   let latestSnapshot = createEmptyPerformerSnapshot();
   let lastBounds = null;
+  let lastPersistedBounds = null;
+  let boundsPersistTimer = null;
   let alwaysOnTop = false;
 
   function liveWindow() {
@@ -82,10 +64,56 @@ function createPerformerWindowManager(options) {
     return status;
   }
 
+  function boundsKey(bounds) {
+    return bounds
+      ? `${bounds.x}:${bounds.y}:${bounds.width}:${bounds.height}`
+      : '';
+  }
+
   function rememberBounds() {
     const window = liveWindow();
-    if (!window || window.isFullScreen() || window.isMaximized()) return;
-    lastBounds = window.getBounds();
+    if (!window || window.isFullScreen() || window.isMaximized()) return false;
+    const nextBounds = normalizePerformerWindowBounds(window.getBounds());
+    if (!nextBounds) return false;
+    lastBounds = nextBounds;
+    return true;
+  }
+
+  function cancelBoundsPersistence() {
+    if (boundsPersistTimer === null) return;
+    clearTimeout(boundsPersistTimer);
+    boundsPersistTimer = null;
+  }
+
+  function persistRememberedBounds() {
+    cancelBoundsPersistence();
+    if (
+      !lastBounds ||
+      boundsKey(lastBounds) === boundsKey(lastPersistedBounds)
+    ) {
+      return false;
+    }
+    try {
+      persistBounds({ ...lastBounds });
+      lastPersistedBounds = { ...lastBounds };
+      return true;
+    } catch (error) {
+      onBoundsPersistenceError(error);
+      return false;
+    }
+  }
+
+  function scheduleBoundsPersistence() {
+    cancelBoundsPersistence();
+    boundsPersistTimer = setTimeout(
+      persistRememberedBounds,
+      BOUNDS_PERSIST_DEBOUNCE_MS,
+    );
+    boundsPersistTimer.unref?.();
+  }
+
+  function rememberAndScheduleBounds() {
+    if (rememberBounds()) scheduleBoundsPersistence();
   }
 
   function sendLatestSnapshot() {
@@ -95,15 +123,33 @@ function createPerformerWindowManager(options) {
     return true;
   }
 
+  function applyUiTheme(theme) {
+    if (!isUiTheme(theme)) return false;
+    const window = liveWindow();
+    if (!window) return false;
+    window.setBackgroundColor(theme === 'light' ? '#e8e4dd' : '#191a1e');
+    window.webContents.send('performer-view:ui-theme', theme);
+    return true;
+  }
+
   function createWindow() {
     const initialTheme = getUiTheme() === 'light' ? 'light' : 'dark';
-    const bounds = lastBounds ?? fitInitialBounds(getDisplayWorkArea());
+    const persistedBounds =
+      normalizePerformerWindowBounds(getPersistedBounds());
+    if (!lastPersistedBounds && persistedBounds) {
+      lastPersistedBounds = { ...persistedBounds };
+    }
+    const candidateBounds = lastBounds ?? persistedBounds;
+    const bounds = fitPerformerWindowBounds(
+      candidateBounds,
+      getDisplayWorkArea(candidateBounds),
+    );
     const window = new BrowserWindow({
       ...bounds,
-      minWidth: MIN_BOUNDS.width,
-      minHeight: MIN_BOUNDS.height,
+      minWidth: MIN_PERFORMER_WINDOW_BOUNDS.width,
+      minHeight: MIN_PERFORMER_WINDOW_BOUNDS.height,
       backgroundColor: initialTheme === 'light' ? '#e8e4dd' : '#191a1e',
-      title: 'Utawakui Performer View',
+      title: 'Utawakui 提詞器',
       show: false,
       frame: false,
       autoHideMenuBar: true,
@@ -134,16 +180,22 @@ function createPerformerWindowManager(options) {
     });
     window.webContents.on('did-finish-load', () => {
       sendLatestSnapshot();
+      applyUiTheme(getUiTheme() === 'light' ? 'light' : 'dark');
       emitStatus();
     });
     hardenWebContentsNavigation(window.webContents, {
       isAllowedNavigation: (url) => url === window.webContents.getURL(),
     });
-    window.on('move', rememberBounds);
-    window.on('resize', rememberBounds);
+    window.on('move', rememberAndScheduleBounds);
+    window.on('resize', rememberAndScheduleBounds);
+    window.on('close', () => {
+      rememberBounds();
+      persistRememberedBounds();
+    });
     window.on('enter-full-screen', emitStatus);
     window.on('leave-full-screen', emitStatus);
     window.on('closed', () => {
+      cancelBoundsPersistence();
       if (performerWindow === window) performerWindow = null;
       publishStatus(getStatus());
     });
@@ -167,6 +219,7 @@ function createPerformerWindowManager(options) {
     const window = liveWindow();
     if (!window) return getStatus();
     rememberBounds();
+    persistRememberedBounds();
     window.close();
     return getStatus();
   }
@@ -180,7 +233,12 @@ function createPerformerWindowManager(options) {
   function toggleFullScreen() {
     const window = liveWindow();
     if (!window) return getStatus();
-    window.setFullScreen(!window.isFullScreen());
+    const nextFullScreen = !window.isFullScreen();
+    if (nextFullScreen) {
+      rememberBounds();
+      persistRememberedBounds();
+    }
+    window.setFullScreen(nextFullScreen);
     return emitStatus();
   }
 
@@ -204,6 +262,7 @@ function createPerformerWindowManager(options) {
   }
 
   return {
+    applyUiTheme,
     attachMainWindow,
     close,
     getSnapshot: () => latestSnapshot,
@@ -217,4 +276,7 @@ function createPerformerWindowManager(options) {
   };
 }
 
-module.exports = { createPerformerWindowManager };
+module.exports = {
+  BOUNDS_PERSIST_DEBOUNCE_MS,
+  createPerformerWindowManager,
+};

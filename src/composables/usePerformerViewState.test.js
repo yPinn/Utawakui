@@ -54,6 +54,9 @@ describe('usePerformerViewState', () => {
         fullScreen: false,
         alwaysOnTop: false,
       }),
+      getReadingScale: vi.fn().mockResolvedValue('stage'),
+      setReadingScale: vi.fn().mockResolvedValue('near'),
+      adjustLyricsOffset: vi.fn().mockResolvedValue(true),
       close: vi.fn().mockResolvedValue({ open: false }),
       minimize: vi.fn().mockResolvedValue({ open: true }),
       toggleAlwaysOnTop: vi.fn().mockResolvedValue({
@@ -140,6 +143,67 @@ describe('usePerformerViewState', () => {
       fullScreen: false,
       alwaysOnTop: false,
     });
+  });
+
+  it('persists reading scale and sends sync intent from the displayed revision', async () => {
+    bridge.getSnapshot.mockResolvedValue({
+      state: {
+        revision: 9,
+        playback: {
+          status: 'paused',
+          track: { id: 'track-1', title: 'Song' },
+        },
+        lyrics: { trackId: 'track-1', lines: [] },
+      },
+      controls: {
+        lyricsOffset: { available: true, saving: false, error: '' },
+      },
+    });
+    const state = usePerformerViewState();
+    await lifecycle.mounted[0]();
+
+    expect(state.readingScale.value).toBe('stage');
+    await state.setReadingScale('near');
+    expect(bridge.setReadingScale).toHaveBeenCalledWith('near');
+    expect(state.readingScale.value).toBe('near');
+
+    await state.adjustLyricsOffset('delay');
+    expect(bridge.adjustLyricsOffset).toHaveBeenCalledWith({
+      action: 'delay',
+      revision: 9,
+      trackId: 'track-1',
+    });
+  });
+
+  it('fails closed for missing or stale sync context and rolls back scale errors', async () => {
+    const state = usePerformerViewState();
+    await lifecycle.mounted[0]();
+
+    expect(await state.adjustLyricsOffset('advance')).toBe(false);
+    expect(bridge.adjustLyricsOffset).not.toHaveBeenCalled();
+
+    bridge.setReadingScale.mockRejectedValueOnce(
+      new Error('C:\\private\\config.json'),
+    );
+    expect(await state.setReadingScale('near')).toBe(false);
+    expect(state.readingScale.value).toBe('stage');
+    expect(state.error.value).toBe('閱讀距離設定未儲存，請再試一次。');
+
+    snapshotListener({
+      state: {
+        revision: 10,
+        playback: {
+          status: 'paused',
+          track: { id: 'track-1', title: 'Song' },
+        },
+        lyrics: { trackId: 'track-1', lines: [] },
+      },
+    });
+    bridge.adjustLyricsOffset.mockResolvedValueOnce(false);
+    expect(await state.adjustLyricsOffset('advance')).toBe(false);
+    expect(state.error.value).toBe(
+      '主控制台目前無法套用同步調整，請再試一次。',
+    );
   });
 
   it('refreshes the projected frame at the next lyrics boundary', async () => {

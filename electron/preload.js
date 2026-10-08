@@ -350,6 +350,15 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('performer-view:status', listener);
     return () => ipcRenderer.removeListener('performer-view:status', listener);
   },
+  onPerformerLyricsOffsetIntent: (callback) => {
+    const listener = (event, intent) => callback(intent);
+    ipcRenderer.on('performer-view:lyrics-offset-intent', listener);
+    return () =>
+      ipcRenderer.removeListener(
+        'performer-view:lyrics-offset-intent',
+        listener,
+      );
+  },
   listOutputSlots: () => ipcRenderer.invoke('output-slots:list'),
   upsertOutputSlot: (kind, slot) =>
     ipcRenderer.invoke('output-slots:upsert', kind, slot),

@@ -1,6 +1,7 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { alignReadings } from '../utils/lyrics.js';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
+import { applyPerformerLyricsOffsetIntent } from '../utils/performerOffsetIntent.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLyrics } from './useLyrics.js';
@@ -18,6 +19,9 @@ const {
   selectedSource: lyricsSource,
   lyricLines,
   activeLineIndex,
+  adjustOffset,
+  resetOffset,
+  retryOffsetSave,
 } = useLyrics();
 const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
 const { recordError } = useAppDiagnostics();
@@ -33,8 +37,11 @@ const state = reactive({
 let initialized = false;
 let revision = 0;
 let unsubscribeStatus = null;
+let unsubscribeLyricsOffsetIntent = null;
 let stopProjectionWatch = null;
 let stopReadingWatch = null;
+const publishedContexts = new Map();
+const MAX_PUBLISHED_CONTEXTS = 12;
 
 function bridgeMethod(name) {
   const method =
@@ -87,6 +94,7 @@ function projectionInput() {
       lines: lyricLines.value,
       activeLineIndex: activeLineIndex.value,
       offsetSeconds: lyricsState.offsetSeconds,
+      offsetSave: lyricsState.offsetSave,
     },
     readings: { lines: alignedReadings.value },
   };
@@ -101,7 +109,7 @@ const projectedState = computed(() =>
 
 function currentSnapshot() {
   revision += 1;
-  return {
+  const snapshot = {
     ...projectedState.value,
     state: {
       ...projectedState.value.state,
@@ -109,6 +117,30 @@ function currentSnapshot() {
       generatedAt: new Date().toISOString(),
     },
   };
+  publishedContexts.set(revision, currentLyricsContext());
+  while (publishedContexts.size > MAX_PUBLISHED_CONTEXTS) {
+    publishedContexts.delete(publishedContexts.keys().next().value);
+  }
+  return snapshot;
+}
+
+function currentLyricsContext() {
+  return {
+    playerTrackId: playerState.track?.id ?? null,
+    lyricsTrackId: lyricsTrack.value?.id ?? null,
+    sourceFilename: lyricsSource.value?.filename ?? null,
+  };
+}
+
+function handleLyricsOffsetIntent(intent) {
+  return applyPerformerLyricsOffsetIntent(intent, {
+    getPublishedContext: (publishedRevision) =>
+      publishedContexts.get(publishedRevision) ?? null,
+    getCurrentContext: currentLyricsContext,
+    adjustOffset,
+    resetOffset,
+    retryOffsetSave,
+  });
 }
 
 const publisher = createLatestAsyncPublisher(
@@ -164,6 +196,10 @@ async function initialize() {
   if (typeof window.Utawakui?.onPerformerViewStatus === 'function') {
     unsubscribeStatus = window.Utawakui.onPerformerViewStatus(applyStatus);
   }
+  if (typeof window.Utawakui?.onPerformerLyricsOffsetIntent === 'function') {
+    unsubscribeLyricsOffsetIntent =
+      window.Utawakui.onPerformerLyricsOffsetIntent(handleLyricsOffsetIntent);
+  }
   stopProjectionWatch = watch(projectedState, () => {
     if (state.open) publisher.request(currentSnapshot());
   });
@@ -179,6 +215,7 @@ async function initialize() {
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unsubscribeStatus?.();
+    unsubscribeLyricsOffsetIntent?.();
     stopProjectionWatch?.();
     stopReadingWatch?.();
   });

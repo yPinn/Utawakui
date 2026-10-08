@@ -60,6 +60,7 @@ function register(overrides = {}) {
   const recordDiagnostic = vi.fn(() => ({ ok: true }));
   const applyAppUpdateAutoCheck = vi.fn();
   const applyWindowCloseBehavior = vi.fn();
+  const applyPerformerUiTheme = vi.fn();
   const titlebarColors = {
     dark: { color: '#101010', symbolColor: '#ffffff' },
     light: { color: '#ffffff', symbolColor: '#101010' },
@@ -78,6 +79,7 @@ function register(overrides = {}) {
     recordDiagnostic,
     applyAppUpdateAutoCheck,
     applyWindowCloseBehavior,
+    applyPerformerUiTheme,
     titlebarColors,
     ...overrides,
   };
@@ -323,7 +325,8 @@ describe('registerConfigHandlers', () => {
   });
 
   it('persists a valid theme and updates an available main window', async () => {
-    const { ipcMain, mainWindow, updateConfig } = register();
+    const { ipcMain, mainWindow, updateConfig, applyPerformerUiTheme } =
+      register();
 
     await expect(
       ipcMain.handlers.get('config:set-ui-theme')(null, 'light'),
@@ -334,10 +337,25 @@ describe('registerConfigHandlers', () => {
       symbolColor: '#101010',
     });
     expect(mainWindow.setBackgroundColor).toHaveBeenCalledWith('#ffffff');
+    expect(applyPerformerUiTheme).toHaveBeenCalledWith('light');
   });
 
   it('persists a valid theme without requiring a main window', async () => {
-    const { ipcMain, updateConfig } = register({ getMainWindow: () => null });
+    const { ipcMain, updateConfig, applyPerformerUiTheme } = register({
+      getMainWindow: () => null,
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:set-ui-theme')(null, 'light'),
+    ).resolves.toBe('light');
+    expect(updateConfig).toHaveBeenCalledWith({ uiTheme: 'light' });
+    expect(applyPerformerUiTheme).toHaveBeenCalledWith('light');
+  });
+
+  it('persists a valid theme without requiring a Performer apply callback', async () => {
+    const { ipcMain, updateConfig } = register({
+      applyPerformerUiTheme: undefined,
+    });
 
     await expect(
       ipcMain.handlers.get('config:set-ui-theme')(null, 'light'),
@@ -348,7 +366,8 @@ describe('registerConfigHandlers', () => {
   it.each(['unknown', '__proto__', null, { theme: 'dark' }])(
     'rejects invalid theme input without reflection',
     async (theme) => {
-      const { ipcMain, updateConfig, recordDiagnostic } = register();
+      const { ipcMain, updateConfig, recordDiagnostic, applyPerformerUiTheme } =
+        register();
 
       const thrown = await ipcMain.handlers
         .get('config:set-ui-theme')(null, theme)
@@ -357,6 +376,7 @@ describe('registerConfigHandlers', () => {
       expect(thrown.message).toContain('UI_THEME_INVALID');
       expect(thrown.message).not.toContain('__proto__');
       expect(updateConfig).not.toHaveBeenCalled();
+      expect(applyPerformerUiTheme).not.toHaveBeenCalled();
       expect(recordDiagnostic).not.toHaveBeenCalled();
     },
   );

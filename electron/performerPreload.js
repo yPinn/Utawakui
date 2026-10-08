@@ -7,12 +7,32 @@ function readInitialUiTheme() {
   return arg?.slice('--ui-theme='.length) === 'light' ? 'light' : 'dark';
 }
 
+function isUiTheme(value) {
+  return value === 'light' || value === 'dark';
+}
+
+function lyricsOffsetIntent(value) {
+  return {
+    action: value?.action,
+    revision: value?.revision,
+    trackId: value?.trackId,
+  };
+}
+
 contextBridge.exposeInMainWorld('UtawakuiPerformer', {
   recordDiagnostic: (event) =>
     ipcRenderer.invoke('diagnostics:record-renderer', event),
   initialUiTheme: readInitialUiTheme(),
   getSnapshot: () => ipcRenderer.invoke('performer-view:get-snapshot'),
   getWindowState: () => ipcRenderer.invoke('performer-view:get-status'),
+  adjustLyricsOffset: (intent) =>
+    ipcRenderer.invoke(
+      'performer-view:adjust-lyrics-offset',
+      lyricsOffsetIntent(intent),
+    ),
+  getReadingScale: () => ipcRenderer.invoke('performer-view:get-reading-scale'),
+  setReadingScale: (scale) =>
+    ipcRenderer.invoke('performer-view:set-reading-scale', scale),
   close: () => ipcRenderer.invoke('performer-view:close'),
   minimize: () => ipcRenderer.invoke('performer-view:minimize'),
   toggleFullScreen: () =>
@@ -24,6 +44,14 @@ contextBridge.exposeInMainWorld('UtawakuiPerformer', {
     ipcRenderer.on('performer-view:snapshot', listener);
     return () =>
       ipcRenderer.removeListener('performer-view:snapshot', listener);
+  },
+  onUiTheme: (callback) => {
+    const listener = (event, theme) => {
+      if (isUiTheme(theme)) callback(theme);
+    };
+    ipcRenderer.on('performer-view:ui-theme', listener);
+    return () =>
+      ipcRenderer.removeListener('performer-view:ui-theme', listener);
   },
   onWindowState: (callback) => {
     const listener = (event, state) => callback(state);

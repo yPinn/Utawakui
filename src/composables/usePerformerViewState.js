@@ -1,6 +1,7 @@
 import { computed, onMounted, onUnmounted, reactive, shallowRef } from 'vue';
 import { nextLyricsBoundaryDelayMs } from '../../shared/presentation/state.mjs';
-import { selectPerformerFrame } from '../utils/performerView.js';
+import { normalizePerformerReadingScale } from '../../shared/performerViewContract.mjs';
+import { selectPerformerFrame } from '../../shared/presentation/performerFrame.mjs';
 import { normalizeAppError } from '../utils/appErrors.js';
 
 export function usePerformerViewState() {
@@ -12,6 +13,7 @@ export function usePerformerViewState() {
     alwaysOnTop: false,
   });
   const error = shallowRef('');
+  const readingScale = shallowRef('desk');
 
   let boundaryTimer = null;
   let unsubscribeSnapshot = null;
@@ -104,12 +106,60 @@ export function usePerformerViewState() {
     }
   }
 
+  async function setReadingScale(value) {
+    const nextScale = normalizePerformerReadingScale(value);
+    const previousScale = readingScale.value;
+    readingScale.value = nextScale;
+    try {
+      readingScale.value = normalizePerformerReadingScale(
+        await bridgeMethod('setReadingScale')(nextScale),
+      );
+      error.value = '';
+      return true;
+    } catch (cause) {
+      readingScale.value = previousScale;
+      error.value = reportError(
+        cause,
+        'set-reading-scale',
+        '閱讀距離設定未儲存，請再試一次。',
+      );
+      return false;
+    }
+  }
+
+  async function adjustLyricsOffset(action) {
+    const displayedFrame = frame.value;
+    if (!displayedFrame.trackId) return false;
+    try {
+      const accepted = await bridgeMethod('adjustLyricsOffset')({
+        action,
+        revision: displayedFrame.revision,
+        trackId: displayedFrame.trackId,
+      });
+      if (accepted !== true) {
+        throw new Error('Performer lyrics context is stale');
+      }
+      error.value = '';
+      return true;
+    } catch (cause) {
+      error.value = reportError(
+        cause,
+        'adjust-lyrics-offset',
+        '主控制台目前無法套用同步調整，請再試一次。',
+      );
+      return false;
+    }
+  }
+
   onMounted(async () => {
     try {
       unsubscribeSnapshot = bridgeMethod('onSnapshot')(applySnapshot);
       unsubscribeWindowState = bridgeMethod('onWindowState')(applyWindowState);
       applySnapshot(await bridgeMethod('getSnapshot')());
       applyWindowState(await bridgeMethod('getWindowState')());
+      readingScale.value = normalizePerformerReadingScale(
+        await bridgeMethod('getReadingScale')(),
+      );
     } catch (cause) {
       error.value = reportError(
         cause,
@@ -128,9 +178,12 @@ export function usePerformerViewState() {
   return {
     error,
     frame,
+    readingScale,
     windowState,
+    adjustLyricsOffset,
     close: () => runWindowCommand('close'),
     minimize: () => runWindowCommand('minimize'),
+    setReadingScale,
     toggleAlwaysOnTop: () => runWindowCommand('toggleAlwaysOnTop'),
     toggleFullScreen: () => runWindowCommand('toggleFullScreen'),
   };

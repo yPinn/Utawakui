@@ -20,8 +20,13 @@ describe('projectPerformerSnapshot', () => {
         },
         lyrics: {
           trackId: 'track-1',
+          source: { filename: 'song.lrc', language: 'ja' },
           lines: [{ text: '夜に駆ける', start: 2, end: 4 }],
           activeLineIndex: 0,
+          offsetSave: {
+            isSaving: true,
+            error: '同步調整未儲存，請再試一次。',
+          },
         },
         readings: {
           lines: [
@@ -37,7 +42,7 @@ describe('projectPerformerSnapshot', () => {
     );
 
     expect(result).toMatchObject({
-      version: 1,
+      version: 2,
       state: {
         revision: 3,
         displayDelayMs: 0,
@@ -59,6 +64,13 @@ describe('projectPerformerSnapshot', () => {
           },
         ],
       },
+      controls: {
+        lyricsOffset: {
+          available: true,
+          saving: true,
+          error: '同步調整未儲存，請再試一次。',
+        },
+      },
     });
   });
 
@@ -74,5 +86,23 @@ describe('projectPerformerSnapshot', () => {
     });
 
     expect(result.readings.lines).toEqual([null]);
+  });
+
+  it('fails closed when the active lyrics source cannot own an offset', () => {
+    const result = projectPerformerSnapshot({
+      player: { track: { id: 'track-1', title: 'Song' } },
+      lyrics: {
+        trackId: 'track-1',
+        source: null,
+        lines: [{ text: 'line' }],
+        offsetSave: { isSaving: true, error: 'private failure' },
+      },
+    });
+
+    expect(result.controls.lyricsOffset).toEqual({
+      available: false,
+      saving: false,
+      error: '',
+    });
   });
 });

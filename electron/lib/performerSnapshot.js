@@ -6,6 +6,7 @@ const outputValues = require('../../shared/outputContractValues.json');
 
 const MAX_TEXT_LENGTH = 2000;
 const MAX_TRACK_ID_LENGTH = 200;
+const MAX_PUBLIC_ERROR_LENGTH = 240;
 
 function invalid(path, reason) {
   throw new TypeError(`Invalid performer snapshot ${path}: ${reason}`);
@@ -33,6 +34,19 @@ function number(value, path, { min, max } = {}) {
   if (min !== undefined && value < min)
     invalid(path, `must be at least ${min}`);
   if (max !== undefined && value > max) invalid(path, `must be at most ${max}`);
+  return value;
+}
+
+function boolean(value, path) {
+  if (typeof value !== 'boolean') invalid(path, 'expected a boolean');
+  return value;
+}
+
+function boundedString(value, path, maxLength) {
+  if (typeof value !== 'string') invalid(path, 'expected a string');
+  if (value.length > maxLength) {
+    invalid(path, `must contain at most ${maxLength} characters`);
+  }
   return value;
 }
 
@@ -115,6 +129,28 @@ function parseAdjustments(value) {
   };
 }
 
+function parseControls(value) {
+  const controls = record(value, 'controls');
+  const lyricsOffset = record(controls.lyricsOffset, 'controls.lyricsOffset');
+  const available = boolean(
+    lyricsOffset.available,
+    'controls.lyricsOffset.available',
+  );
+  const saving = boolean(lyricsOffset.saving, 'controls.lyricsOffset.saving');
+  const error = boundedString(
+    lyricsOffset.error,
+    'controls.lyricsOffset.error',
+    MAX_PUBLIC_ERROR_LENGTH,
+  );
+  if (!available && (saving || error)) {
+    invalid(
+      'controls.lyricsOffset',
+      'unavailable controls cannot be saving or expose an error',
+    );
+  }
+  return { lyricsOffset: { available, saving, error } };
+}
+
 function parsePerformerSnapshot(value) {
   const snapshot = record(value, 'root');
   if (snapshot.version !== performerValues.stateVersion) {
@@ -129,6 +165,7 @@ function parsePerformerSnapshot(value) {
     state,
     adjustments: parseAdjustments(snapshot.adjustments),
     readings: parseReadings(snapshot.readings, state.lyrics),
+    controls: parseControls(snapshot.controls),
   };
 }
 
@@ -163,6 +200,9 @@ function createEmptyPerformerSnapshot(options = {}) {
       tempoRate: 1,
     },
     readings: { trackId: null, lines: [] },
+    controls: {
+      lyricsOffset: { available: false, saving: false, error: '' },
+    },
   });
 }
 

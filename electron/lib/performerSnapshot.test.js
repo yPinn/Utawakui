@@ -39,6 +39,13 @@ function snapshot() {
       },
     ],
   };
+  value.controls = {
+    lyricsOffset: {
+      available: true,
+      saving: false,
+      error: '',
+    },
+  };
   return value;
 }
 
@@ -49,9 +56,12 @@ describe('performer snapshot contract', () => {
         generatedAt: '2026-08-22T00:00:00.000Z',
       }),
     ).toMatchObject({
-      version: 1,
+      version: 2,
       state: { displayDelayMs: 0, playback: { status: 'idle' } },
       readings: { trackId: null, lines: [] },
+      controls: {
+        lyricsOffset: { available: false, saving: false, error: '' },
+      },
     });
   });
 
@@ -68,6 +78,20 @@ describe('performer snapshot contract', () => {
     stale.readings.lines[0].text = 'different';
     expect(() => parsePerformerSnapshot(stale)).toThrow(
       'must match the lyric line',
+    );
+  });
+
+  it('rejects malformed or overlong sync-control state', () => {
+    const malformed = snapshot();
+    malformed.controls.lyricsOffset.available = 'yes';
+    expect(() => parsePerformerSnapshot(malformed)).toThrow(
+      'controls.lyricsOffset.available',
+    );
+
+    const unbounded = snapshot();
+    unbounded.controls.lyricsOffset.error = 'x'.repeat(241);
+    expect(() => parsePerformerSnapshot(unbounded)).toThrow(
+      'controls.lyricsOffset.error',
     );
   });
 });

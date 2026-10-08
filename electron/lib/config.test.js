@@ -32,6 +32,8 @@ describe('config', () => {
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'dark',
+      performerReadingScale: 'desk',
+      performerWindowBounds: null,
       sidebarWidth: 256,
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
@@ -63,6 +65,32 @@ describe('config', () => {
     expect(loadConfig(configPath).downloadDir).toBe('/some/path');
   });
 
+  it('round-trips a valid performer reading scale and normalizes invalid data', () => {
+    saveConfig(configPath, { performerReadingScale: 'stage' });
+    expect(loadConfig(configPath).performerReadingScale).toBe('stage');
+
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 3, performerReadingScale: 'giant' }),
+    );
+    expect(loadConfig(configPath).performerReadingScale).toBe('desk');
+  });
+
+  it('round-trips bounded performer window geometry and rejects invalid data', () => {
+    const bounds = { x: -1280, y: 48, width: 1280, height: 720 };
+    saveConfig(configPath, { performerWindowBounds: bounds });
+    expect(loadConfig(configPath).performerWindowBounds).toEqual(bounds);
+
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        version: 3,
+        performerWindowBounds: { x: 0, y: 0, width: 799, height: 360 },
+      }),
+    );
+    expect(loadConfig(configPath).performerWindowBounds).toBe(null);
+  });
+
   it('leaves no leftover .tmp file after a normal save', () => {
     saveConfig(configPath, { downloadDir: '/some/path' });
     expect(fs.existsSync(`${configPath}.tmp`)).toBe(false);
@@ -88,6 +116,8 @@ describe('config', () => {
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'dark',
+      performerReadingScale: 'desk',
+      performerWindowBounds: null,
       sidebarWidth: 256,
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,

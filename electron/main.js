@@ -769,13 +769,26 @@ if (!gotSingleInstanceLock) {
       devUrl: 'http://localhost:5173/performer-view.html',
       pagePath: path.join(__dirname, '..', 'dist', 'performer-view.html'),
       preloadPath: path.join(__dirname, 'performerPreload.js'),
-      getDisplayWorkArea: () => {
+      getPersistedBounds: () => configState.getConfig().performerWindowBounds,
+      persistBounds: (bounds) =>
+        configState.updateConfig({ performerWindowBounds: bounds }),
+      getDisplayWorkArea: (bounds) => {
+        if (bounds) return screen.getDisplayMatching(bounds).workArea;
         const mainWindow = windowState.getMainWindow();
         if (!mainWindow?.isDestroyed()) {
           return screen.getDisplayMatching(mainWindow.getBounds()).workArea;
         }
         return screen.getPrimaryDisplay().workArea;
       },
+      onBoundsPersistenceError: (error) =>
+        recordDiagnostic({
+          level: 'error',
+          source: 'performer-window',
+          operation: 'persist-bounds',
+          code: 'PERFORMER_WINDOW_BOUNDS_PERSIST_FAILED',
+          message: 'Failed to persist Performer window bounds',
+          error,
+        }),
       getUiTheme: () => configState.getConfig().uiTheme,
       publishStatus: (status) => {
         const mainWindow = windowState.getMainWindow();
@@ -787,6 +800,17 @@ if (!gotSingleInstanceLock) {
     registerPerformerViewHandlers({
       ipcMain,
       manager: performerWindowManager,
+      sendLyricsOffsetIntent: (intent) => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow || mainWindow.isDestroyed()) return false;
+        mainWindow.webContents.send(
+          'performer-view:lyrics-offset-intent',
+          intent,
+        );
+        return true;
+      },
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
     });
 
     registerLibraryHandlers({
@@ -912,6 +936,8 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       recordDiagnostic,
       titlebarColors: windowState.TITLEBAR_COLORS,
+      applyPerformerUiTheme: (theme) =>
+        performerWindowManager?.applyUiTheme(theme),
       applyAppUpdateAutoCheck: (enabled) =>
         appUpdateService.setAutoCheckEnabled(enabled),
       applyWindowCloseBehavior: (behavior) =>

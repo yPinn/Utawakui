@@ -27,6 +27,30 @@ function projectReadingLine(line, lyricText) {
   };
 }
 
+const MAX_PUBLIC_ERROR_LENGTH = 240;
+
+function projectLyricsOffsetControls(input, state) {
+  const available = Boolean(
+    state.lyrics.synced === true &&
+    state.lyrics.trackId &&
+    state.lyrics.trackId === state.playback.track?.id &&
+    typeof input.lyrics?.source?.filename === 'string' &&
+    input.lyrics.source.filename.length > 0,
+  );
+  if (!available) {
+    return { available: false, saving: false, error: '' };
+  }
+  const error =
+    typeof input.lyrics?.offsetSave?.error === 'string'
+      ? input.lyrics.offsetSave.error.slice(0, MAX_PUBLIC_ERROR_LENGTH)
+      : '';
+  return {
+    available: true,
+    saving: input.lyrics?.offsetSave?.isSaving === true,
+    error,
+  };
+}
+
 export function projectPerformerSnapshot(input = {}, options = {}) {
   const state = projectOutputSnapshot(
     {
@@ -61,6 +85,9 @@ export function projectPerformerSnapshot(input = {}, options = {}) {
       lines: state.lyrics.lines.map((line, index) =>
         projectReadingLine(readingLines[index], line.text),
       ),
+    },
+    controls: {
+      lyricsOffset: projectLyricsOffsetControls(input, state),
     },
   };
 }

@@ -19,6 +19,7 @@ class FakeWindow extends EventEmitter {
     this.webContents = new FakeWebContents();
     this.destroyed = false;
     this.fullScreen = false;
+    this.maximized = false;
     this.alwaysOnTop = false;
     this.bounds = {
       x: options.x ?? 20,
@@ -32,7 +33,7 @@ class FakeWindow extends EventEmitter {
   isDestroyed = () => this.destroyed;
   isFullScreen = () => this.fullScreen;
   isAlwaysOnTop = () => this.alwaysOnTop;
-  isMaximized = () => false;
+  isMaximized = () => this.maximized;
   isMinimized = () => false;
   getBounds = () => ({ ...this.bounds });
   loadURL = vi.fn();
@@ -44,10 +45,12 @@ class FakeWindow extends EventEmitter {
   setAlwaysOnTop = vi.fn((value) => {
     this.alwaysOnTop = value;
   });
+  setBackgroundColor = vi.fn();
   setFullScreen = vi.fn((value) => {
     this.fullScreen = value;
   });
   close = vi.fn(() => {
+    this.emit('close');
     this.emit('closed');
     this.destroyed = true;
   });
@@ -85,7 +88,10 @@ describe('performer window manager', () => {
       webviewTag: false,
       devTools: true,
     });
-    expect(window.options).toMatchObject({ backgroundColor: '#191a1e' });
+    expect(window.options).toMatchObject({
+      backgroundColor: '#191a1e',
+      title: 'Utawakui 提詞器',
+    });
     expect(window.options.webPreferences.additionalArguments).toEqual([
       '--ui-theme=dark',
     ]);
@@ -93,6 +99,10 @@ describe('performer window manager', () => {
     expect(window.webContents.send).toHaveBeenCalledWith(
       'performer-view:snapshot',
       snapshot,
+    );
+    expect(window.webContents.send).toHaveBeenCalledWith(
+      'performer-view:ui-theme',
+      'dark',
     );
     expect(publishStatus).toHaveBeenCalledWith(
       expect.objectContaining({ open: true }),
@@ -141,12 +151,63 @@ describe('performer window manager', () => {
 
     expect(FakeWindow.instances[0].options).toMatchObject({
       x: 260,
-      y: 210,
+      y: 170,
       width: 960,
-      height: 460,
+      height: 540,
       minWidth: 800,
       minHeight: 360,
     });
+  });
+
+  it('restores persisted geometry and saves only settled normal bounds', () => {
+    vi.useFakeTimers();
+    try {
+      FakeWindow.instances = [];
+      const storedBounds = { x: 2200, y: 100, width: 1280, height: 720 };
+      const persistBounds = vi.fn();
+      const getDisplayWorkArea = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      const manager = createPerformerWindowManager({
+        BrowserWindow: FakeWindow,
+        isDev: false,
+        devUrl: '',
+        pagePath: 'dist/performer-view.html',
+        preloadPath: 'performerPreload.js',
+        getPersistedBounds: () => storedBounds,
+        getDisplayWorkArea,
+        persistBounds,
+      });
+
+      manager.open();
+      const window = FakeWindow.instances[0];
+      expect(getDisplayWorkArea).toHaveBeenCalledWith(storedBounds);
+      expect(window.options).toMatchObject(storedBounds);
+
+      const nextBounds = { x: 2240, y: 120, width: 1360, height: 768 };
+      window.bounds = nextBounds;
+      window.emit('resize');
+      expect(persistBounds).not.toHaveBeenCalled();
+      vi.runAllTimers();
+      expect(persistBounds).toHaveBeenCalledOnce();
+      expect(persistBounds).toHaveBeenLastCalledWith(nextBounds);
+
+      window.fullScreen = true;
+      window.bounds = { x: 1920, y: 0, width: 1920, height: 1080 };
+      window.emit('resize');
+      vi.runAllTimers();
+      expect(persistBounds).toHaveBeenCalledOnce();
+
+      window.fullScreen = false;
+      window.bounds = nextBounds;
+      manager.close();
+      expect(persistBounds).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('matches the light native substrate to the v2 renderer canvas', () => {
@@ -168,5 +229,32 @@ describe('performer window manager', () => {
     expect(
       FakeWindow.instances[0].options.webPreferences.additionalArguments,
     ).toEqual(['--ui-theme=light']);
+  });
+
+  it('applies a live theme to the native substrate and renderer', () => {
+    FakeWindow.instances = [];
+    let uiTheme = 'dark';
+    const manager = createPerformerWindowManager({
+      BrowserWindow: FakeWindow,
+      isDev: false,
+      devUrl: '',
+      pagePath: 'dist/performer-view.html',
+      preloadPath: 'performerPreload.js',
+      getUiTheme: () => uiTheme,
+    });
+
+    manager.open();
+    const window = FakeWindow.instances[0];
+    uiTheme = 'light';
+
+    expect(manager.applyUiTheme('light')).toBe(true);
+    expect(window.setBackgroundColor).toHaveBeenCalledWith('#e8e4dd');
+    expect(window.webContents.send).toHaveBeenCalledWith(
+      'performer-view:ui-theme',
+      'light',
+    );
+
+    expect(manager.applyUiTheme('sepia')).toBe(false);
+    expect(window.setBackgroundColor).toHaveBeenCalledTimes(1);
   });
 });
