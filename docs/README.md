@@ -125,6 +125,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [Better Lyrics cache acquisition](contracts/betterlyrics-acquisition-contract.md)、
   [NetEase isolated validation (historical)](contracts/netease-isolated-technical-validation.md)、
   [Musixmatch reserve adapter](contracts/musixmatch-reserve-adapter.md)。
+- Performer：[提詞與窄域控制契約](contracts/performer-prompter-contract.md)。
 - Output：[runtime hardening](contracts/output-runtime-hardening.md)、
   [asset security](contracts/overlay-asset-security.md)、
   [pack model](contracts/overlay-pack-contract.md)。

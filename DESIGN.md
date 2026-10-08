@@ -411,7 +411,7 @@ Limits:
 
 - Keep three stable titlebar zones: start-side passive app health, a flexible draggable reserve, and end-side persistent session state followed by global utilities. Session state may grow toward the center, but the utility buttons remain right-anchored and never shift when OBS connects or a value changes.
 - The trailing sequence is fixed by live-operating scope: passive `LIVE` then `REC`, the session disclosure, operational companion window, accompaniment work list, appearance preference, then the Settings destination at the terminal edge. The controls share the Ghost app-surface recipe; open-window／current states add selected paint without turning one-shot actions into toggles.
-- Global utility icons describe the function rather than its container: the ordered session plan uses `ListOrdered`, the live current／next lyric companion window uses `PictureInPicture2` with「提詞視窗」copy, and accompaniment work uses `AudioWaveform`. Do not substitute generic checklist, screen-upload or queue icons that make these controls read as task verification, casting or a second playback Queue.
+- Global utility icons describe the function rather than its container: the ordered session plan uses `ListOrdered`, the live current／next lyric companion uses `PictureInPicture2` with「提詞器」copy, and accompaniment work uses `AudioWaveform`. Do not substitute generic checklist, screen-upload or queue icons that make these controls read as task verification, casting or a second playback Queue.
 - PlayerBar trailing actions follow the listening-flow sequence: optional guide output (`Cable`), current-song Lyrics (`MicVocal`) then Queue (`ListMusic`), performance tools (`SlidersHorizontal`), and Volume. Preserve the optional guide action as a reserved edge slot so capability changes do not shift the centered transport; use the shared icon-button primitive and a uniform 4px gap across adjacent trailing controls without decorative separators. Queue and performance tools are disclosure controls: selected paint means their surface is open, while a separate passive marker and concise tooltip may indicate an active performance function.
 - The accompaniment work list uses a compact, viewport-bounded Popover with one internal Scroll Region. Its header owns aggregate completed／total count; the active song row keeps identity plus the overflow action, while its adjacent `UiProgress` owns the single visible item percentage. Mode options, order, and default reuse the same separation recipe catalog as Lyrics; feature surfaces must not substitute near-synonym labels.
 - A titlebar status must be global across feature pages, continuously valid, glanceable without sentence-level reading, and useful during live operation. OBS LIVE／REC qualifies. CPU／RAM may remain a muted app-health projection with semantic color only at thresholds; normal samples do not generate notifications.
@@ -1071,12 +1071,28 @@ Component folders are grouped by product role, not by current visual style. Exis
 - `src/components/internal-tools/`: dev-only Operations／Evaluation navigation and composition shell; domain state remains in each feature owner.
 - `src/components/lyrics-provider/`: private provider-corpus review surfaces; not the ordinary Lyrics product workflow.
 - `src/components/output/`: OBS Output Gallery, Workbench, preview, slot, and appearance surfaces.
-- `src/components/performer/`: Performer Self-View stage, lyric cue, and window toolbar surfaces.
+- `src/components/performer/`: Performer prompter surface, lyric cue, bounded sync／display controls, and Electron-only window toolbar.
 - `src/components/separation/`: vocal-separation recipe and result controls that are not persistent playback chrome.
 - `src/components/settings/`: app configuration, dependency, diagnostics, update, and device settings surfaces.
 - `src/components/ui/`: low-level primitives only, such as buttons, menus, text rows, status icons, and typography helpers.
 
 Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` only when it can be reused without knowing about tracks, playlists, providers, lyrics, playback, or OBS.
+
+### Performer Prompter Surface
+
+`PerformerSurface` is the reusable reading composition. Product mode (`prompter`／`remote`／`combined`) and reading distance (`near`／`desk`／`stage`) are separate explicit inputs; viewport width may reflow a mode but must not change its meaning or infer viewing distance. The Electron titlebar remains shell chrome outside the surface.
+
+The Performer is a reading instrument, not an information dashboard. The current lyric is the only high-salience layer; its reading aid follows at lower contrast, the next lyric and its reading aid recede again, and track metadata／sync／reading controls form quiet edge chrome. Do not restore outlined status chips, full-width section dividers, decorative surfaces, or empty placeholders merely to preserve the previous layout. Optional context such as the next track is absent when there is no real value.
+
+The surface owns a named size container and applies queries to its inner layout. Use existing `UiButton` and `UiSegmentedControl` behavior, `--ui-*` foundation／semantic roles, then the `--ui-performer-*` feature aliases for cue scale, reading scale, line measure, gap, and action target. Near／desk／stage use 72rem／64rem／56rem line measures and 16px／24px／32px comfortable cue gaps respectively; the distance-specific gap applies only at the 30rem comfortable-height tier, while shorter surfaces return to 16px. Coarse-pointer actions use `--ui-control-height-live`; desktop retains normal control density. Safe-area padding and a scrollable cue region keep the same component viable as a future mobile prompter, but they do not imply a mobile network transport.
+
+The default Electron prompter is 960×540 so the primary cue stack has real vertical breathing room between quiet top／bottom chrome; 800×360 is its safety minimum, not a visible preset. At 30rem surface height and above, perimeter、major row and current／next cue spacing move to the comfortable tier; 24rem and below remains compact. Do not create breathing room with absolute offsets, hidden controls or a larger type scale.
+
+Reading distance and native window geometry are independent authorities. Switching near／desk／stage changes typography, line measure and cue rhythm but never resizes or moves the BrowserWindow; fullscreen remains an explicit shell action. Electron main persists only validated normal bounds, debounces move／resize writes, flushes on close, and re-fits restored bounds to the current display work area with a 32px visible margin. Renderer code does not send geometry, and fullscreen／maximized dimensions never replace the saved normal bounds.
+
+The Performer surface is live-reading and control chrome, so it explicitly prevents text selection with prefixed and standard `user-select: none`. Keep that ownership at the surface boundary: do not turn it into a global reset or apply it to the editable Lyrics workspace, OBS Overlay, or public error notices outside the surface. Native button and radiogroup focus／keyboard semantics remain intact.
+
+Performer sync controls are intentionally narrow: delay 0.1 seconds, reset, advance 0.1 seconds, and retry a failed save. They show offset, disabled, saving, and bounded public error states, remain visible without hover, and emit intent only. Playback, queue, source selection, timing authoring, filename, and arbitrary offset entry do not belong in this surface. The full authority, reuse-tier, RWD specimen, and future mobile boundary are defined by [Performer 提詞與窄域控制契約](docs/contracts/performer-prompter-contract.md).
 
 ### Buttons
 

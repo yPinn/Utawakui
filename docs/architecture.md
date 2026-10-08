@@ -6,20 +6,27 @@ contracts 與 tests 管理。
 
 ## Runtime Ownership
 
-| Runtime                                               | 責任                                                                                        | 不可持有                                                        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Electron main (`electron/main/`)                      | Window lifecycle、IPC trust boundary、feature gate enforcement、local services、diagnostics | Renderer reactive state、client-provided filesystem paths       |
-| Pure main libraries (`electron/lib/`)                 | Filesystem、provider、processing、dependency 與 sidecar logic                               | BrowserWindow lifecycle、renderer presentation                  |
-| Preload (`electron/preload.js`)                       | Intent-based、固定 channel 的窄 IPC bridge；部分 dev-only channel 依 flag 條件註冊          | Node API passthrough、任意 channel 或 path API                  |
-| Renderer (`src/`)                                     | Vue UI、interaction、player／queue／lyrics owners                                           | Node／Electron import、dependency URL、model 或 executable path |
-| Performer window (`electron/main/performerWindow.js`) | 第二個 sandboxed BrowserWindow：Self-View 呈現、獨立 preload、snapshot 讀取                 | Core playback／queue／lyrics 權威狀態                           |
-| Shared (`shared/`)                                    | Scalar JSON contracts 與純 cross-runtime presentation projections                           | Filesystem、Electron、browser globals、mutable service state    |
-| Browser Source (`overlay/`)                           | OBS delivery adapters、DOM rendering 與獨立 visual tokens                                   | Control-panel tokens、canonical product-state ownership         |
-| Spout helper (`electron/main/spoutHelperEntry.js`)    | Windows offscreen Lyrics surface、native Spout sender、texture release                      | Core state、renderer IPC、Spout receiver ownership              |
+| Runtime                                               | 責任                                                                                                                                 | 不可持有                                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Electron main (`electron/main/`)                      | Window lifecycle、IPC trust boundary、feature gate enforcement、local services、diagnostics                                          | Renderer reactive state、client-provided filesystem paths                                |
+| Pure main libraries (`electron/lib/`)                 | Filesystem、provider、processing、dependency 與 sidecar logic                                                                        | BrowserWindow lifecycle、renderer presentation                                           |
+| Preload (`electron/preload.js`)                       | Intent-based、固定 channel 的窄 IPC bridge；部分 dev-only channel 依 flag 條件註冊                                                   | Node API passthrough、任意 channel 或 path API                                           |
+| Renderer (`src/`)                                     | Vue UI、interaction、player／queue／lyrics owners                                                                                    | Node／Electron import、dependency URL、model 或 executable path                          |
+| Performer window (`electron/main/performerWindow.js`) | 第二個 sandboxed BrowserWindow：Self-View 呈現、獨立 preload、snapshot 讀取、bounded lyrics offset intent 與 normal bounds lifecycle | Core playback／queue／lyrics 權威狀態、lyrics source identity、renderer-derived geometry |
+| Shared (`shared/`)                                    | Scalar JSON contracts 與純 cross-runtime presentation projections                                                                    | Filesystem、Electron、browser globals、mutable service state                             |
+| Browser Source (`overlay/`)                           | OBS delivery adapters、DOM rendering 與獨立 visual tokens                                                                            | Control-panel tokens、canonical product-state ownership                                  |
+| Spout helper (`electron/main/spoutHelperEntry.js`)    | Windows offscreen Lyrics surface、native Spout sender、texture release                                                               | Core state、renderer IPC、Spout receiver ownership                                       |
 
 `electron/main.js` 是 composition root：設定 app identity、註冊 privileged scheme、建立
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
 隱藏依賴，也不彼此直接協調；跨 domain 流程由 composition root 建立的 service 負責。
+
+Performer window geometry 由 main-owned config 與 window manager 共同持有。Config 只接受
+bounded `{ x, y, width, height }` normal bounds；window manager 對 move／resize 做 debounce、
+在 close flush，並排除 fullscreen／maximized geometry。建立視窗時由 composition root 注入
+Electron `screen` work area，window manager 再以 32px margin 將保存值 fit 回目前 display；
+沒有有效保存值時使用 960×540 並相對主視窗所在 display 置中。Reading-scale intent 不進入
+這條 geometry 路徑，renderer 也沒有 bounds IPC。
 
 `electron/entry.js` 保持 dependency-free process dispatcher；main composition root 與 Spout
 helper bootstrap 各自在 ready／建立任何 `BrowserWindow` 前呼叫 `app.enableSandbox()`。
@@ -37,8 +44,10 @@ content 例外；DevTools 只在 main／Performer 的明確 development launch �
 
 Raw Electron `ipcMain` 只在 composition root 交給
 `electron/main/ipcSenderPolicy.js`。所有未特別列出的 channel 預設只接受目前主視窗的
-main frame；Performer 只獲得自身 window controls，snapshot／status 與 renderer diagnostic
-三組明確 shared capability。驗證同時比對 `event.sender`、`event.senderFrame` 與 owner
+main frame；Performer 只獲得自身 window controls、snapshot／status、renderer diagnostic、
+三段 reading-scale preference 與固定 lyrics offset action。後兩者是明確 Performer-only
+capability；offset intent 只允許 action、revision 與 track id，main 驗證後轉送主 renderer，
+不得包含來源 filename、路徑或任意 offset。驗證同時比對 `event.sender`、`event.senderFrame` 與 owner
 `webContents.mainFrame`，所以同一視窗內的 subframe 也不繼承 preload capability。拒絕事件
 只記錄一次 bounded channel／capability／kind，不跨 IPC 暴露 URL 或 frame details。
 
@@ -341,27 +350,27 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 
 ## 權威狀態與資料
 
-| 資料                                  | 權威 owner                        | 投影／持久化                                                                                   |
-| ------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                                            |
-| Track added time                      | Main library/import boundary      | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影                            |
-| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                                                   |
-| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費                                              |
-| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                                           |
-| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用                                             |
-| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate                                                   |
-| Performance session current draft     | Main session plan store           | Library root bounded JSON；Renderer 提交 ids／labels／intent                                   |
-| BGM standby preparation               | Main BGM plan store               | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent                            |
-| BGM transport／handoff                | Renderer BGM deck／coordinator    | HTML audio events、logical gain bus 與 readonly UI projection                                  |
-| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent                                                       |
-| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent                                                         |
-| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy                                               |
-| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments                                                  |
-| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent                                                        |
-| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記                                                     |
-| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                                                  |
-| Derived artist index                  | Main artist index cache           | 唯讀投影；Renderer 只取 opaque artist id、顯示名稱與 track ids                                 |
-| Artist photos                         | Main artist photo services        | `artists/<artistId>/` sidecar；Renderer 只送 artist id／candidate id 與選圖／移除／候選 intent |
+| 資料                                  | 權威 owner                        | 投影／持久化                                                                                                                           |
+| ------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                                                                                    |
+| Track added time                      | Main library/import boundary      | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影                                                                    |
+| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                                                                                           |
+| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費；Self-View 同步微調經 revision／track／source stale guard 回到既有 `useLyrics` owner |
+| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                                                                                   |
+| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用                                                                                     |
+| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate                                                                                           |
+| Performance session current draft     | Main session plan store           | Library root bounded JSON；Renderer 提交 ids／labels／intent                                                                           |
+| BGM standby preparation               | Main BGM plan store               | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent                                                                    |
+| BGM transport／handoff                | Renderer BGM deck／coordinator    | HTML audio events、logical gain bus 與 readonly UI projection                                                                          |
+| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent                                                                                               |
+| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent                                                                                                 |
+| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy                                                                                       |
+| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments                                                                                          |
+| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent                                                                                                |
+| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記                                                                                             |
+| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                                                                                          |
+| Derived artist index                  | Main artist index cache           | 唯讀投影；Renderer 只取 opaque artist id、顯示名稱與 track ids                                                                         |
+| Artist photos                         | Main artist photo services        | `artists/<artistId>/` sidecar；Renderer 只送 artist id／candidate id 與選圖／移除／候選 intent                                         |
 
 Artist organization（[ADR 0022](adr/0022-artist-identity-and-organization.md)）的第一階段由
 `electron/lib/artists/artistIndex.js` 擁有：依 `ytdlpInfo.extractPerformerCredits()` 的有序演出者
