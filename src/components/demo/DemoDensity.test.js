@@ -120,8 +120,8 @@ const densityContracts = [
     '--ui-player-bar-height',
     '4.75rem',
     76,
-    '4.25rem',
-    68,
+    '4.75rem',
+    76,
   ],
   ['panel-inset', 'Panel inset', '--ui-panel-inset', '1rem', 16, '0.75rem', 12],
   [
@@ -238,7 +238,6 @@ describe('DemoDensity', () => {
       '3.25rem',
       '2.5rem',
       '4.75rem',
-      '4.25rem',
       '5rem',
       '1rem',
       '0.75rem',
@@ -278,6 +277,10 @@ describe('DemoDensity', () => {
         key === 'right-dock-artwork' ||
         key === 'right-dock-inset'
       ) {
+        continue;
+      }
+      if (key === 'player-bar') {
+        expect(compactBlock).not.toContain(token);
         continue;
       }
       const sourceValue =

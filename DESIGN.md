@@ -465,11 +465,18 @@ viewport-clamped and keep one internal scroll owner. This is native-state
 adaptation, not viewport inference.
 
 PlayerBar trailing controls are the second explicit production opt-in. Standard／
-maximized／full-screen uses 36px icon actions and a 96px Volume range;
-Compact／windowed uses 32px icon actions and an 80px range. Adjacent controls use
+maximized／full-screen uses 36px icon actions and a 112px Volume range;
+Compact／windowed uses 32px icon actions and a 96px range. Adjacent controls use
 a uniform 4px gap. Volume keeps its exact percentage in `aria-valuetext` but does
-not render a persistent numeric label; the recovered width lengthens the range
-while reducing the trailing region's total footprint.
+not render a persistent numeric label; its dedicated semantic width keeps the
+visible track practical without coupling it to the generic range primitive.
+The PlayerBar shell remains 76px high in both densities because the 44px live
+transport plus progress stack does not shrink in Compact; density changes its
+routine actions and Volume width without removing the stack's outer spacing.
+The center column uses equal semantic side reserves so the transport and
+progress midpoint remains the viewport midpoint in both densities. At the
+`960 × 650` minimum, the center progress width yields before fixed actions or
+Volume controls, while the DOM and keyboard order remain track, playback, tools.
 
 Pending accompaniment rows reuse Queue's list interaction grammar: the whole
 row is draggable, an Accent `UiSeparator` marks the before／after destination,
@@ -512,7 +519,7 @@ Primary control heights:
 | Live icon button           | `2.75rem` (44 CSS px)           | Separates primary playback from routine toolbar actions. |
 | Menu item / context action | `2rem` (32 CSS px)              | Easier target without wasting vertical scan space.       |
 | Track row                  | `3.25rem` (52 CSS px)           | Enough for title + artist and compact artwork.           |
-| Player bar                 | `4.25rem` (68 CSS px)           | Preserves persistent transport and artwork.              |
+| Player bar                 | `4.75rem` (76 CSS px)           | Preserves persistent transport and artwork.              |
 
 These CSS-pixel equivalents assume a `16px` root and 100% Chromium zoom. Treat the rem values as implementation targets when refreshing tokens and components. A future touch-first surface can introduce touch-specific component tokens without shrinking the desktop hard floors.
 

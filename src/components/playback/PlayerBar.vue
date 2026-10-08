@@ -138,9 +138,8 @@ const currentTrackAlbumCtaLabel = computed(() => {
 });
 
 const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
-// Kept mounted (visibility:hidden, not v-if) — .player-bar__extras is a
-// fixed-width column now, so this appearing/disappearing would shift the
-// centered transport column. See its CSS.
+// Kept mounted (visibility:hidden, not v-if) so the trailing controls and
+// their balanced grid reserve stay stable when this capability changes.
 const canQuickToggleCaptureGuideVocal = computed(
   () => showGuideVocal.value && Boolean(state.captureDeviceId),
 );
@@ -731,21 +730,23 @@ onUnmounted(() => {
 <style scoped>
 .player-bar {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns:
+    minmax(var(--ui-player-side-reserve-inline-size), 1fr)
+    minmax(0, var(--ui-player-center-max-inline-size))
+    minmax(var(--ui-player-side-reserve-inline-size), 1fr);
   align-items: center;
-  /* Track/extras are fixed-width; on wide windows they can sum to less
-     than the bar's full width. space-between keeps them flush against the
-     edges instead of stranding leftover space after the last column. */
-  justify-content: space-between;
-  gap: var(--ui-space-4);
+  /* The center stack is taller than the artwork-derived content box.
+     Center the grid row so it overflows equally instead of creating a
+     document scrollbar that would move the viewport midpoint. */
+  align-content: center;
+  column-gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
   padding-block: var(--ui-player-padding-block);
-  /* Asymmetric — the artwork consumes the shell-owned leading axis while
-     the end side keeps the shared window-edge gutter. */
-  padding-inline-start: var(--ui-player-leading-padding-inline);
-  padding-inline-end: var(--ui-player-padding-inline);
-  background: var(--ui-color-surface);
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
+  /* Symmetric root gutters keep the center track on the viewport midpoint.
+     The leading track adds only the optical delta to the artwork axis. */
+  padding-inline: var(--ui-player-padding-inline);
+  background: transparent;
   /* Otherwise dragging a slider triggers native text selection, which can
      swallow a click on a nearby button instead of registering it. */
   user-select: none;
@@ -760,12 +761,13 @@ onUnmounted(() => {
 }
 
 .player-bar__track {
-  /* Now-playing is a player concern, so collapsing the independent playlist
-     sidebar must not collapse this region around the artwork. It may yield
-     some width to the center column, but keeps enough room for readable
-     single-line metadata. */
-  flex: 0 1 var(--ui-player-track-inline-size);
+  grid-column: 1;
+  justify-self: start;
+  width: var(--ui-player-track-inline-size);
   min-width: var(--ui-player-track-min-inline-size);
+  margin-inline-start: calc(
+    var(--ui-player-leading-padding-inline) - var(--ui-player-padding-inline)
+  );
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
@@ -849,12 +851,10 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* The only column that grows: now-playing can shrink only to its readable
-   minimum, while extras remain fixed to their controls. */
 .player-bar__center {
-  flex: 1 1 auto;
+  grid-column: 2;
+  width: 100%;
   min-width: 0;
-  max-width: var(--ui-player-center-max-inline-size);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -903,13 +903,12 @@ onUnmounted(() => {
 .player-bar__extras {
   --ui-icon-button-size-override: var(--ui-player-action-size);
 
+  grid-column: 3;
+  justify-self: end;
+  width: var(--ui-player-extras-inline-size);
   display: flex;
   align-items: center;
   gap: var(--ui-player-group-gap);
-  /* Fixed to its own content width, like .player-bar__track — icon
-     buttons and a volume slider have nothing to truncate, so this side
-     must never be squeezed narrower than it needs. */
-  flex: 0 0 auto;
   justify-content: flex-end;
 }
 
@@ -932,14 +931,13 @@ onUnmounted(() => {
   width: var(--ui-space-2);
   height: var(--ui-space-2);
   pointer-events: none;
-  border: var(--ui-border-width) solid var(--ui-color-surface);
+  border: var(--ui-border-width) solid var(--ui-color-canvas);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-accent);
 }
 
-/* visibility:hidden, not display:none — keeps the slot's layout box so
-   .player-bar__extras's width (and the centered column beside it) never
-   changes when canQuickToggleCaptureGuideVocal flips. */
+/* visibility:hidden, not display:none — keeps the trailing reserve stable
+   when canQuickToggleCaptureGuideVocal flips. */
 .player-bar__extras-slot--hidden {
   visibility: hidden;
 }

@@ -116,9 +116,9 @@ const DENSITY_CONTRACTS = [
     token: '--ui-player-bar-height',
     standard: '4.75rem',
     standardPx: 76,
-    compact: '4.25rem',
-    compactPx: 68,
-    rule: '離散縮減',
+    compact: '4.75rem',
+    compactPx: 76,
+    rule: '固定高度',
     shape: 'height',
   },
   {

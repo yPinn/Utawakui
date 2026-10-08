@@ -6,6 +6,10 @@ const componentSource = readFileSync(
   new URL('./PlayerBar.vue', import.meta.url),
   'utf8',
 );
+const panelSource = readFileSync(
+  new URL('./PlayerBarPanel.vue', import.meta.url),
+  'utf8',
+);
 const tokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
@@ -27,6 +31,22 @@ function iconButtonSource(iconName) {
 }
 
 describe('PlayerBar responsive metadata layout', () => {
+  it('lets the persistent bar share the app canvas without a divider while the floating panel keeps its surface', () => {
+    const playerBarRule = cssRule(componentSource, '.player-bar');
+    const toolsMarkerRule = cssRule(
+      componentSource,
+      '.player-bar__tools-marker',
+    );
+    const panelRule = cssRule(panelSource, '.player-bar-panel');
+
+    expect(playerBarRule).toContain('background: transparent');
+    expect(playerBarRule).not.toContain('border-top:');
+    expect(toolsMarkerRule).toContain(
+      'border: var(--ui-border-width) solid var(--ui-color-canvas)',
+    );
+    expect(panelRule).toContain('background: var(--ui-color-surface)');
+  });
+
   it('orders right-side tools by conditional guide output, playback context, tools, then volume', () => {
     const extrasStart = componentSource.indexOf('class="player-bar__extras"');
     const extrasEnd = componentSource.indexOf('<PlayerToolsPanel', extrasStart);
@@ -116,6 +136,72 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(trackRule).not.toContain('--ui-playlist-sidebar-width');
   });
 
+  it('uses balanced grid side reserves to keep playback at the viewport midpoint', () => {
+    const playerBarRule = cssRule(componentSource, '.player-bar');
+    const trackRule = cssRule(componentSource, '.player-bar__track');
+    const centerRule = cssRule(componentSource, '.player-bar__center');
+    const extrasRule = cssRule(componentSource, '.player-bar__extras');
+
+    expect(playerBarRule).toContain('display: grid');
+    expect(playerBarRule).toMatch(
+      /grid-template-columns:\s*minmax\(\s*var\(--ui-player-side-reserve-inline-size\),\s*1fr\s*\)\s*minmax\(\s*0,\s*var\(--ui-player-center-max-inline-size\)\s*\)\s*minmax\(\s*var\(--ui-player-side-reserve-inline-size\),\s*1fr\s*\)/u,
+    );
+    expect(playerBarRule).toContain(
+      'padding-inline: var(--ui-player-padding-inline)',
+    );
+    expect(playerBarRule).toContain('align-content: center');
+    expect(playerBarRule).not.toContain('justify-content: space-between');
+
+    expect(trackRule).toContain('grid-column: 1');
+    expect(trackRule).toContain('justify-self: start');
+    expect(trackRule).toContain('width: var(--ui-player-track-inline-size)');
+    expect(trackRule).toContain('margin-inline-start: calc(');
+    expect(trackRule).toContain('var(--ui-player-leading-padding-inline)');
+    expect(trackRule).toContain('var(--ui-player-padding-inline)');
+
+    expect(centerRule).toContain('grid-column: 2');
+    expect(centerRule).toContain('width: 100%');
+    expect(centerRule).not.toMatch(/position:\s*absolute/u);
+    expect(centerRule).not.toContain('transform:');
+
+    expect(extrasRule).toContain('grid-column: 3');
+    expect(extrasRule).toContain('justify-self: end');
+    expect(extrasRule).toContain('width: var(--ui-player-extras-inline-size)');
+
+    const extrasToken = tokenSource.match(
+      /--ui-player-extras-inline-size:\s*calc\([\s\S]*?var\(--ui-player-volume-inline-size\)[\s\S]*?var\(--ui-player-action-size\)[\s\S]*?var\(--ui-player-action-gap\)[\s\S]*?var\(--ui-player-group-gap\)[\s\S]*?\);/u,
+    )?.[0];
+    expect(extrasToken).toBeDefined();
+    expect(extrasToken?.match(/var\(--ui-player-action-size\)/gu)).toHaveLength(
+      5,
+    );
+    expect(extrasToken?.match(/var\(--ui-player-action-gap\)/gu)).toHaveLength(
+      2,
+    );
+    expect(extrasToken?.match(/var\(--ui-player-group-gap\)/gu)).toHaveLength(
+      3,
+    );
+    expect(tokenSource).toMatch(
+      /--ui-player-side-reserve-inline-size:\s*max\([\s\S]*?var\(--ui-player-track-inline-size\)[\s\S]*?var\(--ui-player-extras-inline-size\)[\s\S]*?\);/u,
+    );
+    expect(tokenSource).toMatch(
+      /:root\[data-ui-density='compact'\][\s\S]*?--ui-player-volume-inline-size:\s*6rem/u,
+    );
+  });
+
+  it('keeps the persistent bar tall enough for the transport stack in both densities', () => {
+    const compactBlock = tokenSource.match(
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([^}]*)\}/su,
+    )?.[1];
+
+    expect(tokenSource).toContain('--ui-player-bar-height: 4.75rem');
+    expect(compactBlock).toBeDefined();
+    expect(compactBlock).not.toContain('--ui-player-bar-height');
+    expect(tokenSource).toMatch(
+      /--ui-player-padding-block:\s*calc\(\s*\(var\(--ui-player-bar-height\) - var\(--ui-track-artwork-size-prominent\)\) \/ 2\s*\);/u,
+    );
+  });
+
   it('aligns artwork to a shell-owned axis without consuming Playlist geometry', () => {
     expect(tokenSource).toContain('--ui-shell-leading-artwork-centerline:');
     expect(tokenSource).toMatch(
@@ -190,6 +276,7 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(volumeRangeRule).toContain(
       'width: var(--ui-player-volume-inline-size)',
     );
+    expect(tokenSource).toContain('--ui-player-volume-inline-size: 7rem');
     expect(componentSource).toContain('UiRangeControl');
     expect(tokenSource).toContain('--ui-player-action-size:');
     expect(tokenSource).toContain('--ui-player-action-gap:');

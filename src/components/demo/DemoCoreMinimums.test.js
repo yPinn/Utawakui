@@ -51,7 +51,7 @@ const groupedContracts = [
   [
     'structure',
     '內容結構',
-    '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 48 · Player 68',
+    '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 48 · Player 76',
   ],
   ['optical', '光學邊界', 'Focus 2 CSS px · Drag 2 CSS px'],
 ];
@@ -99,7 +99,7 @@ describe('DemoCoreMinimums', () => {
     expect(html).toContain('Standard');
     expect(html).toContain('Compact');
     expect(html).toContain(
-      '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 52 · Player 68',
+      '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 52 · Player 76',
     );
     expect(html).not.toContain('<table');
   });
