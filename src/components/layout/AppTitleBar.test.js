@@ -117,8 +117,9 @@ describe('AppTitleBar', () => {
     expect(source).toContain('PictureInPicture2,');
     expect(source).not.toContain('Captions,');
     expect(source).toContain(
-      "performerState.open ? '切換到提詞視窗' : '開啟提詞視窗'",
+      "performerState.open ? '切換到提詞器' : '開啟提詞器'",
     );
+    expect(source).not.toContain('提詞視窗');
     expect(source).not.toContain('MonitorUp,');
     expect(source).not.toContain('表演者畫面');
     expect(source).toContain(':active="performerState.open"');

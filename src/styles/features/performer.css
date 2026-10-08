@@ -1,5 +1,19 @@
 [data-ui-system] {
-  --ui-performer-lyrics-max-width: 72rem;
-  --ui-performer-lyric-current-font-size: 2.5rem;
+  --ui-performer-lyrics-max-width-near: 72rem;
+  --ui-performer-lyrics-max-width-desk: 64rem;
+  --ui-performer-lyrics-max-width-stage: 56rem;
+  --ui-performer-cue-current-size-near: 2rem;
+  --ui-performer-cue-current-size-desk: 2.5rem;
+  --ui-performer-cue-current-size-stage: 3.5rem;
+  --ui-performer-cue-next-size-near: var(--ui-font-size-lg);
+  --ui-performer-cue-next-size-desk: var(--ui-font-size-xl);
+  --ui-performer-cue-next-size-stage: var(--ui-font-size-2xl);
+  --ui-performer-reading-size-near: var(--ui-font-size-sm);
+  --ui-performer-reading-size-desk: var(--ui-font-size-md);
+  --ui-performer-reading-size-stage: var(--ui-font-size-lg);
+  --ui-performer-cue-gap-comfortable-near: var(--ui-space-4);
+  --ui-performer-cue-gap-comfortable-desk: var(--ui-space-5);
+  --ui-performer-cue-gap-comfortable-stage: var(--ui-space-6);
   --ui-performer-ruby-font-size: 55%;
+  --ui-performer-action-min-block-size: var(--ui-control-height);
 }

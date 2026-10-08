@@ -1,5 +1,5 @@
 <script setup>
-import PerformerStage from '../components/performer/PerformerStage.vue';
+import PerformerSurface from '../components/performer/PerformerSurface.vue';
 import PerformerWindowToolbar from '../components/performer/PerformerWindowToolbar.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
 import { usePerformerViewState } from '../composables/usePerformerViewState.js';
@@ -14,9 +14,12 @@ const performerOverlayHostAttributes =
 const {
   error,
   frame,
+  readingScale,
   windowState,
+  adjustLyricsOffset,
   close,
   minimize,
+  setReadingScale,
   toggleAlwaysOnTop,
   toggleFullScreen,
 } = usePerformerViewState();
@@ -33,7 +36,13 @@ const {
       @toggle-always-on-top="toggleAlwaysOnTop"
       @toggle-full-screen="toggleFullScreen"
     />
-    <PerformerStage :frame="frame" />
+    <PerformerSurface
+      :frame="frame"
+      mode="prompter"
+      :reading-scale="readingScale"
+      @sync-action="adjustLyricsOffset"
+      @update:reading-scale="setReadingScale"
+    />
     <UiNotice
       v-if="error"
       class="performer-app__error"

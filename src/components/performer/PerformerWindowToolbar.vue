@@ -19,7 +19,7 @@ defineEmits([
   <header class="performer-toolbar">
     <div class="performer-toolbar__identity">
       <span class="performer-toolbar__mark" aria-hidden="true" />
-      <span>Performer View</span>
+      <span>提詞器</span>
     </div>
     <div class="performer-toolbar__controls">
       <UiIconButton

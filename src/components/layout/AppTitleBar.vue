@@ -78,7 +78,7 @@ const label = computed(() =>
   isLight.value ? '切換為深色主題' : '切換為淺色主題',
 );
 const performerLabel = computed(() =>
-  performerState.open ? '切換到提詞視窗' : '開啟提詞視窗',
+  performerState.open ? '切換到提詞器' : '開啟提詞器',
 );
 const settingsLabel = computed(() =>
   props.updateAvailable ? '設定（有可用更新）' : '設定',

@@ -17,6 +17,7 @@ const hasRuby = computed(() =>
     v-if="line"
     class="performer-lyric-cue"
     :class="{ 'performer-lyric-cue--current': current }"
+    :data-cue-priority="current ? 'primary' : 'secondary'"
   >
     <p class="performer-lyric-cue__text">
       <template v-if="hasRuby">
@@ -39,7 +40,7 @@ const hasRuby = computed(() =>
 <style scoped>
 .performer-lyric-cue {
   min-width: 0;
-  color: var(--ui-color-text-muted);
+  color: var(--ui-color-text-subtle);
   text-align: center;
 }
 
@@ -50,8 +51,8 @@ const hasRuby = computed(() =>
 }
 
 .performer-lyric-cue__text {
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-performer-cue-next-font-size);
+  font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-body);
 }
 
@@ -60,46 +61,30 @@ const hasRuby = computed(() =>
 }
 
 .performer-lyric-cue--current .performer-lyric-cue__text {
-  font-size: var(--ui-performer-lyric-current-font-size);
+  font-size: var(--ui-performer-cue-current-font-size);
   font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-body);
 }
 
 .performer-lyric-cue__reading {
   margin-top: var(--ui-space-2);
-  color: var(--ui-color-accent);
-  font-size: var(--ui-font-size-md);
+  color: var(--ui-color-text-subtle);
+  font-size: var(--ui-performer-reading-font-size);
   line-height: var(--ui-line-height-body);
 }
 
 .performer-lyric-cue--current .performer-lyric-cue__reading {
-  font-size: var(--ui-font-size-lg);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-performer-reading-font-size);
 }
 
 .performer-lyric-cue rt {
-  color: var(--ui-color-accent);
+  color: var(--ui-color-text-subtle);
   font-size: var(--ui-performer-ruby-font-size);
   font-weight: var(--ui-font-weight-regular);
 }
 
-@media (max-height: 400px) {
-  .performer-lyric-cue__text {
-    font-size: var(--ui-font-size-md);
-    line-height: var(--ui-line-height-title);
-  }
-
-  .performer-lyric-cue--current .performer-lyric-cue__text {
-    font-size: var(--ui-font-size-2xl);
-    line-height: var(--ui-line-height-caption);
-  }
-
-  .performer-lyric-cue__reading {
-    margin-top: var(--ui-space-1);
-    font-size: var(--ui-font-size-sm);
-  }
-
-  .performer-lyric-cue--current .performer-lyric-cue__reading {
-    font-size: var(--ui-font-size-md);
-  }
+.performer-lyric-cue--current rt {
+  color: var(--ui-color-accent);
 }
 </style>
