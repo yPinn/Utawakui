@@ -68,7 +68,9 @@ const filteredItems = computed(() => {
   const needle = query.value.trim().toLowerCase();
   if (!needle) return props.items;
   return props.items.filter((item) =>
-    String(item.label).toLowerCase().includes(needle),
+    String(item.searchText ?? item.label)
+      .toLowerCase()
+      .includes(needle),
   );
 });
 function optionId(item) {
@@ -369,7 +371,16 @@ onBeforeUnmount(() => {
         @mousedown.prevent
         @click="selectItem(item)"
       >
-        {{ item.label }}
+        <slot
+          name="option"
+          :item="item"
+          :selected="
+            Boolean(selectedItem) &&
+            String(item.value) === String(selectedItem.value)
+          "
+        >
+          {{ item.label }}
+        </slot>
       </li>
     </UiScrollRegion>
   </Teleport>

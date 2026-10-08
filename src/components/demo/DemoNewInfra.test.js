@@ -94,7 +94,6 @@ describe('new shared infra catalogue registration', () => {
       'UiNotificationHost',
       'UiSwitch',
       'UiBreadcrumb',
-      'UiCombobox',
     ];
     const imports = productionSources(
       new URL('../../', import.meta.url),
@@ -105,6 +104,14 @@ describe('new shared infra catalogue registration', () => {
     );
 
     expect(imports).toEqual([]);
+  });
+
+  it('records UiCombobox as adopted production infrastructure', () => {
+    const source = readSource('../../constants/uiDemoSections.js');
+
+    expect(source).toMatch(
+      /key: 'combobox',[\s\S]*?components: \['UiCombobox'\],[\s\S]*?adopted: true,/u,
+    );
   });
 
   it('uses the popover interactive-panel anatomy in its catalogue sample', () => {

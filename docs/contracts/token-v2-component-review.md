@@ -299,10 +299,16 @@ Candidate／Current 對照流程，直接建立底層契約與 focused tests。�
 | `UiBreadcrumb` | Caller 提供 `items`（含 `id`／`label`／可選 `href`／`disabled`），陣列最後一項自動視為目前位置，渲染為不可互動的 `aria-current="page"`；其餘項目依是否提供 `href` 渲染 native `a` 或 `button`，導覽或 `select` intent 由 caller 擁有。尺寸與互動比照 `UiTextButton`（文字本身是次要目的地），不套用 `UiButton` 的 `--ui-control-height` 區塊 floor。中段省略號收合刻意不做——沒有既有 composable 可重用，超出寬度時與 `UiTabs`／`UiSegmentedControl` 一致改用 native 水平捲動，留待真的有 consumer 需要再補。                                                                                                                                                                                         |
 | `UiCombobox`   | 本專案第一個 `aria-activedescendant`／`role="listbox"` pattern；焦點全程留在 native text input，清單只用 pointer 或 `aria-activedescendant` 互動，不搬真實 DOM focus。範圍刻意收斂：只做「既有清單打字過濾＋選一個值」，不支援自由輸入新值、不做非同步搜尋。骨架比照 `UiSelect`（組合 `UiField`、`defineExpose({ focus })`）；下拉定位重用 `floatingPosition.js` 的 `anchoredFloatingPosition`，寬度對齊與可視高度收窄寫在元件內部，不改動共用 helper；單開協調重用既有 `useContextMenuGate`，與 ContextMenu／ActionMenu 共用同一個全域浮層閘門；清單選項高度重用 `--ui-menu-item-height`，與 `UiContextMenu` 同一個 token。失焦或 Escape 時若目前輸入文字未對應到已選值，還原成上次已提交的 label。 |
 
+2026-10-07 `UiCombobox` 由 Output Live Stage 字型選擇完成第一個 production
+adoption。Primitive 只新增 optional rich-option slot 與 caller-provided search text，
+原有單值、鍵盤、dismissal、floating geometry 與 focus ownership 不變；字體 sample、
+Local Font Access、來源狀態、授權提示與 persisted descriptor 全由 Output feature owner
+組合，不進入通用 primitive。
+
 外觀自訂的應用邏輯屬 feature composition，而不是 infra：
 
 - Appearance Customization Panel 組合欄位控制，連接 `shared/outputAppearance.mjs` 的 field registry、group／order、defaults、boundaries 與 persistence。
-- Palette Selector 組合 swatch／選單並連接既有 `paletteId` 與 template compatibility；「選預設 palette」與「輸入任意 hex」是不同 feature intent。
+- Look Selector 是 feature-scoped select-only combobox：收合值與 popup option 都顯示代表色預覽，方向鍵只瀏覽、click／Enter 才提交既有 persisted `paletteId`，Escape 保留原值；Amount 使用正式 `UiRangeControl`，模板原色時保留欄位但明確 disabled。單一 raw Hex 是 Swatch，多個 Swatches 的收藏才是 Palette；兩者都不與 Look 或未實作的 LUT 混稱。
 - Copy action 等正式 consumer 出現後，才在對應 feature folder 包裝既有 `useClipboardFeedback`；不新增通用 infra Copy Button。
 
 明確不新增 Spinner（`UiStatusIcon spinning` 已涵蓋）、Badge（`UiChip` 已涵蓋）、

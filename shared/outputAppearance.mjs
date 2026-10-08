@@ -1,16 +1,41 @@
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 3;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 5;
+
+export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
+  Object.freeze({ id: 'color-treatment', label: '色彩處理', order: 10 }),
+  Object.freeze({ id: 'custom-color', label: '自訂色彩', order: 20 }),
+  Object.freeze({ id: 'typography', label: '文字', order: 30 }),
+  Object.freeze({ id: 'readability', label: '可讀性', order: 40 }),
+  Object.freeze({ id: 'surface', label: '背景', order: 50 }),
+  Object.freeze({ id: 'layout', label: '版面', order: 60 }),
+  Object.freeze({ id: 'motion', label: '動態', order: 70 }),
+  Object.freeze({ id: 'content', label: '內容顯示', order: 80 }),
+]);
 
 const COLOR_RE = /^#[0-9a-f]{6}$/iu;
+const MAX_LOCAL_FONT_NAME_LENGTH = 160;
+const UNSAFE_LOCAL_FONT_NAME_RE = /[\\/;{}<>]|(?:url|var)\s*\(/iu;
+const GROUP_MAP = new Map(
+  OUTPUT_APPEARANCE_GROUPS.map((group) => [group.id, group]),
+);
+
+function fieldDefinition(groupId, definition) {
+  const group = GROUP_MAP.get(groupId);
+  if (!group) throw new Error(`Unknown output appearance group: ${groupId}`);
+  return {
+    ...definition,
+    group: group.id,
+    groupLabel: group.label,
+    groupOrder: group.order,
+  };
+}
 
 const FIELD_DEFINITIONS = [
-  {
+  fieldDefinition('color-treatment', {
     key: 'paletteId',
-    group: 'color',
-    groupLabel: '色彩',
-    groupOrder: 10,
     order: 10,
-    label: '色盤',
+    label: 'Look',
     control: 'select',
+    editor: 'look',
     defaultValue: 'original',
     options: [
       { id: 'original', label: '模板原色' },
@@ -19,12 +44,20 @@ const FIELD_DEFINITIONS = [
       { id: 'monochrome', label: '黑白' },
       { id: 'high-contrast', label: '高對比' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('color-treatment', {
+    key: 'lookAmount',
+    order: 20,
+    label: '強度',
+    control: 'range',
+    defaultValue: 100,
+    min: 0,
+    max: 100,
+    step: 5,
+    unit: '%',
+  }),
+  fieldDefinition('typography', {
     key: 'fontFamily',
-    group: 'typography',
-    groupLabel: '文字',
-    groupOrder: 20,
     order: 10,
     label: '字型',
     control: 'select',
@@ -36,27 +69,22 @@ const FIELD_DEFINITIONS = [
       { id: 'ornate', label: '華麗明朝（Hina Mincho）' },
       { id: 'antique', label: '古典明朝（GenEi Antique）' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('typography', {
     key: 'fontScale',
-    group: 'typography',
-    groupLabel: '文字',
-    groupOrder: 20,
     order: 20,
     label: '字級',
     control: 'select',
+    editor: 'font-scale',
     defaultValue: 'medium',
     options: [
       { id: 'small', label: '小' },
       { id: 'medium', label: '標準' },
       { id: 'large', label: '大' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('typography', {
     key: 'fontWeight',
-    group: 'typography',
-    groupLabel: '文字',
-    groupOrder: 20,
     order: 30,
     label: '字重',
     control: 'select',
@@ -66,12 +94,9 @@ const FIELD_DEFINITIONS = [
       { id: 'semibold', label: '中粗' },
       { id: 'bold', label: '粗體' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('readability', {
     key: 'contrastStyle',
-    group: 'readability',
-    groupLabel: '可讀性',
-    groupOrder: 30,
     order: 10,
     label: '文字對比',
     control: 'select',
@@ -81,27 +106,22 @@ const FIELD_DEFINITIONS = [
       { id: 'balanced', label: '標準描邊' },
       { id: 'strong-outline', label: '強描邊' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'alignment',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 10,
     label: '對齊',
     control: 'select',
+    editor: 'alignment',
     defaultValue: 'left',
     options: [
       { id: 'left', label: '靠左' },
       { id: 'center', label: '置中' },
       { id: 'right', label: '靠右' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('surface', {
     key: 'surface',
-    group: 'surface',
-    groupLabel: '背景',
-    groupOrder: 40,
     order: 10,
     label: '背景透明度',
     control: 'select',
@@ -111,12 +131,9 @@ const FIELD_DEFINITIONS = [
       { id: 'soft', label: '半透明' },
       { id: 'solid', label: '實底' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('content', {
     key: 'furigana',
-    group: 'content',
-    groupLabel: '內容顯示',
-    groupOrder: 70,
     order: 10,
     label: '假名標音',
     control: 'select',
@@ -125,12 +142,9 @@ const FIELD_DEFINITIONS = [
       { id: 'auto', label: '有資料時顯示' },
       { id: 'off', label: '關閉' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('readability', {
     key: 'kineticMaterial',
-    group: 'readability',
-    groupLabel: '可讀性',
-    groupOrder: 30,
     order: 20,
     label: '文字材質',
     control: 'select',
@@ -141,12 +155,9 @@ const FIELD_DEFINITIONS = [
       { id: 'chromatic-depth', label: '樣式 3｜右下錯位' },
       { id: 'cycle', label: '三款依句序切換' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'kineticArrangement',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 20,
     label: '文字排列',
     control: 'select',
@@ -155,35 +166,27 @@ const FIELD_DEFINITIONS = [
       { id: 'straight', label: '端正' },
       { id: 'subtle-offset', label: '些微偏移' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('custom-color', {
     key: 'textColor',
-    group: 'color',
-    groupLabel: '色彩',
-    groupOrder: 10,
-    order: 20,
-    label: '文字顏色',
+    order: 10,
+    label: '文字色',
     control: 'color',
     defaultValue: '#fff8ec',
-  },
-  {
+  }),
+  fieldDefinition('custom-color', {
     key: 'accentColor',
-    group: 'color',
-    groupLabel: '色彩',
-    groupOrder: 10,
-    order: 30,
+    order: 20,
     label: '藝術墨影',
     control: 'color',
     defaultValue: '#ffffff',
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'positionAnchor',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 30,
     label: '顯示位置',
     control: 'select',
+    editor: 'position-grid',
     defaultValue: 'center-right',
     options: [
       { id: 'top-left', label: '左上' },
@@ -196,40 +199,33 @@ const FIELD_DEFINITIONS = [
       { id: 'bottom-center', label: '中下' },
       { id: 'bottom-right', label: '右下' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'positionOffsetX',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 40,
     label: '水平微調',
     control: 'range',
+    signed: true,
     defaultValue: 0,
     min: -12,
     max: 12,
     step: 1,
     unit: '%',
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'positionOffsetY',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 50,
     label: '垂直微調',
     control: 'range',
+    signed: true,
     defaultValue: 0,
     min: -25,
     max: 25,
     step: 1,
     unit: '%',
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'spacingDensity',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 60,
     label: '間距',
     control: 'select',
@@ -239,12 +235,9 @@ const FIELD_DEFINITIONS = [
       { id: 'normal', label: '標準' },
       { id: 'relaxed', label: '寬鬆' },
     ],
-  },
-  {
+  }),
+  fieldDefinition('layout', {
     key: 'contentWidth',
-    group: 'layout',
-    groupLabel: '版面',
-    groupOrder: 50,
     order: 70,
     label: '內容寬度',
     control: 'select',
@@ -254,12 +247,13 @@ const FIELD_DEFINITIONS = [
       { id: 'standard', label: '標準' },
       { id: 'wide', label: '寬' },
     ],
-  },
+  }),
 ];
 
 const FIELD_MAP = new Map(FIELD_DEFINITIONS.map((field) => [field.key, field]));
 const BASIC_APPEARANCE_KEYS = Object.freeze([
   'paletteId',
+  'lookAmount',
   'fontFamily',
   'fontScale',
   'fontWeight',
@@ -303,6 +297,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
   'now-next': {
     keys: [
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
@@ -313,16 +308,17 @@ const TEMPLATE_CONFIGS = Object.freeze({
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'art-card': {
-    keys: ['paletteId', 'fontFamily', 'fontScale', 'fontWeight'],
+    keys: ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'cover-player': {
-    keys: ['paletteId', 'fontScale', 'fontWeight', 'surface'],
+    keys: ['paletteId', 'lookAmount', 'fontScale', 'fontWeight', 'surface'],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'queue-board': {
     keys: [
       'paletteId',
+      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
@@ -340,14 +336,21 @@ const TEMPLATE_CONFIGS = Object.freeze({
     fields: LYRICS_FIELD_DEFAULTS,
   },
   'karaoke-stack': {
-    keys: ['paletteId', 'fontScale'],
+    keys: ['paletteId', 'lookAmount', 'fontScale'],
   },
   'kinetic-pop': {
-    keys: ['paletteId', 'fontScale', 'kineticMaterial', 'kineticArrangement'],
+    keys: [
+      'paletteId',
+      'lookAmount',
+      'fontScale',
+      'kineticMaterial',
+      'kineticArrangement',
+    ],
   },
   'ornate-vertical': {
     keys: [
       'paletteId',
+      'lookAmount',
       'textColor',
       'accentColor',
       'fontFamily',
@@ -365,7 +368,14 @@ const TEMPLATE_CONFIGS = Object.freeze({
     },
   },
   'manga-frame': {
-    keys: ['paletteId', 'fontFamily', 'fontScale', 'fontWeight', 'furigana'],
+    keys: [
+      'paletteId',
+      'lookAmount',
+      'fontFamily',
+      'fontScale',
+      'fontWeight',
+      'furigana',
+    ],
     fields: {
       fontFamily: { defaultValue: 'serif' },
       fontScale: { defaultValue: 'medium' },
@@ -374,9 +384,19 @@ const TEMPLATE_CONFIGS = Object.freeze({
     },
   },
   'live-stage': {
-    keys: ['paletteId', 'fontFamily', 'fontScale', 'contrastStyle'],
+    keys: [
+      'paletteId',
+      'lookAmount',
+      'fontFamily',
+      'fontScale',
+      'contrastStyle',
+    ],
     fields: {
-      fontFamily: { defaultValue: 'sans' },
+      fontFamily: {
+        defaultValue: 'sans',
+        editor: 'font-family',
+        allowLocalFonts: true,
+      },
       fontScale: { defaultValue: 'medium' },
     },
   },
@@ -414,6 +434,49 @@ function sanitizedRangeValue(field, value) {
   return Number((field.min + steps * field.step).toFixed(6));
 }
 
+function sanitizedLocalFontName(value) {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().normalize('NFC');
+  const hasControlCharacter = [...normalized].some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint <= 0x1f || codePoint === 0x7f;
+  });
+  if (
+    !normalized ||
+    normalized.length > MAX_LOCAL_FONT_NAME_LENGTH ||
+    hasControlCharacter ||
+    UNSAFE_LOCAL_FONT_NAME_RE.test(normalized)
+  ) {
+    return undefined;
+  }
+  return normalized;
+}
+
+export function sanitizeOutputLocalFont(value) {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    Array.isArray(value) ||
+    value.source !== 'local'
+  ) {
+    return undefined;
+  }
+  const family = sanitizedLocalFontName(value.family);
+  const postscriptName = sanitizedLocalFontName(value.postscriptName);
+  const style = sanitizedLocalFontName(value.style ?? 'Regular');
+  if (!family || !postscriptName || !style) return undefined;
+  return { source: 'local', family, postscriptName, style };
+}
+
+export function isOutputLocalFont(value) {
+  return sanitizeOutputLocalFont(value) !== undefined;
+}
+
+export function outputLocalFontCssValue(value) {
+  const normalized = sanitizeOutputLocalFont(value);
+  return normalized ? JSON.stringify(normalized.family) : undefined;
+}
+
 export const OUTPUT_APPEARANCE_FIELDS = Object.freeze(
   FIELD_DEFINITIONS.map((field) => Object.freeze(cloneField(field))),
 );
@@ -427,6 +490,7 @@ export const OUTPUT_APPEARANCE_DEFAULTS = Object.freeze(
 export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   'now-playing': Object.freeze({
     paletteId: 'original',
+    lookAmount: 100,
     fontFamily: 'sans',
     fontScale: 'medium',
     fontWeight: 'bold',
@@ -441,6 +505,7 @@ export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   }),
   setlist: Object.freeze({
     paletteId: 'original',
+    lookAmount: 100,
     fontFamily: 'sans',
     fontScale: 'medium',
     fontWeight: 'semibold',
@@ -455,6 +520,7 @@ export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   }),
   lyrics: Object.freeze({
     paletteId: 'original',
+    lookAmount: 100,
     fontFamily: 'serif',
     fontScale: 'medium',
     fontWeight: 'bold',
@@ -469,21 +535,39 @@ export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   }),
 });
 
-export function sanitizeOutputAppearanceSetting(key, value) {
-  const field = FIELD_MAP.get(key);
-  if (!field) return undefined;
-  if (field.control === 'select') {
-    return field.options.some((option) => option.id === value)
+export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
+  const baseField = FIELD_MAP.get(key);
+  if (!baseField) return undefined;
+  let sanitized;
+  if (baseField.control === 'select') {
+    if (key === 'fontFamily') {
+      const localFont = sanitizeOutputLocalFont(value);
+      if (localFont) sanitized = localFont;
+    }
+    sanitized ??= baseField.options.some((option) => option.id === value)
       ? value
       : undefined;
+  } else if (baseField.control === 'color') {
+    sanitized =
+      typeof value === 'string' && COLOR_RE.test(value)
+        ? value.toLowerCase()
+        : undefined;
+  } else if (baseField.control === 'range') {
+    sanitized = sanitizedRangeValue(baseField, value);
   }
-  if (field.control === 'color') {
-    return typeof value === 'string' && COLOR_RE.test(value)
-      ? value.toLowerCase()
-      : undefined;
+
+  if (
+    sanitized === undefined ||
+    !options.templateId ||
+    !isOutputLocalFont(sanitized)
+  ) {
+    return sanitized;
   }
-  if (field.control === 'range') return sanitizedRangeValue(field, value);
-  return undefined;
+  const field = outputAppearanceFieldsForTemplate(options.templateId).find(
+    (candidate) => candidate.key === key,
+  );
+  if (!field) return undefined;
+  return field.allowLocalFonts === true ? sanitized : undefined;
 }
 
 export function outputAppearanceFieldsForTemplate(templateId) {
@@ -520,13 +604,14 @@ export function normalizeOutputAppearance(settings = {}, options = {}) {
       ? sanitizeOutputAppearanceSetting(
           baseField.key,
           settings?.[baseField.key],
+          templateId ? { templateId } : undefined,
         )
       : undefined;
-    if (
-      sanitized !== undefined &&
-      (!field.options ||
-        field.options.some((option) => option.id === sanitized))
-    ) {
+    const allowsSanitizedValue = isOutputLocalFont(sanitized)
+      ? true
+      : !field.options ||
+        field.options.some((option) => option.id === sanitized);
+    if (sanitized !== undefined && allowsSanitizedValue) {
       normalized[baseField.key] = sanitized;
     } else {
       normalized[baseField.key] = field.defaultValue;

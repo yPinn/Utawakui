@@ -109,7 +109,6 @@ describe('UI demo component order', () => {
       'tooltip',
       'switch',
       'breadcrumb',
-      'combobox',
     ]) {
       expect(
         UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
@@ -125,6 +124,7 @@ describe('UI demo component order', () => {
       'surface',
       'segmented-control',
       'popover',
+      'combobox',
     ]) {
       expect(
         UI_DEMO_GROUPS.flatMap((group) => group.sections).find(

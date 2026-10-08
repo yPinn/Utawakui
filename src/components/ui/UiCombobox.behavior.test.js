@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { nextTick } from 'vue';
+import { h, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiCombobox from './UiCombobox.vue';
 import UiField from './UiField.vue';
@@ -283,6 +283,41 @@ describe('UiCombobox', () => {
 
     expect(emptyMessage()).toBeDefined();
     expect(options()).toHaveLength(0);
+    app.unmount();
+  });
+
+  it('lets a feature render rich option content without changing selection behavior', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(
+      UiCombobox,
+      {
+        id: 'font-family',
+        label: '字型',
+        modelValue: '',
+        items: ITEMS,
+        'onUpdate:modelValue': update,
+      },
+      {
+        option: ({ item }) =>
+          h(
+            'span',
+            { 'data-rich-option': String(item.value) },
+            `預覽 ${item.label}`,
+          ),
+      },
+    );
+    const control = input(root);
+
+    trigger(control, 'onInput', { target: { value: '' } });
+    await nextTick();
+
+    const richOptions = findAll(
+      body,
+      (node) => node.props?.['data-rich-option'],
+    );
+    expect(richOptions).toHaveLength(4);
+    trigger(options()[0], 'onClick');
+    expect(update).toHaveBeenCalledWith('lrclib');
     app.unmount();
   });
 

@@ -39,6 +39,7 @@ describe('Token v2 shared primitive adoption', () => {
       'separator',
       'stack',
       'surface',
+      'combobox',
       'range',
       'buttons',
       'icon-buttons',

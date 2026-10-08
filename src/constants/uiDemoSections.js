@@ -85,7 +85,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'combobox',
         title: '可搜尋選單',
         components: ['UiCombobox'],
-        reviewed: false,
+        adopted: true,
       },
       {
         key: 'checkbox',
