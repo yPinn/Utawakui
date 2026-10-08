@@ -1,10 +1,9 @@
 <script setup>
 // Shared full-cover plane for anything drawn over artwork (scrims, playback
-// cues, loading shimmer, full-cover actions). The host artwork box owns the
-// clip (overflow + radius); this plane bleeds one hairline past it so that clip
-// is the only antialiased edge, and stretches its content, which therefore
-// needs no size, inset or radius of its own. Corner controls are not
-// full-cover content and stay outside this plane.
+// cues, loading shimmer, full-cover actions). Mount it inside the artwork's
+// .ui-artwork-composite layer so it composites with the image before the one
+// radius clip; it bleeds a hairline past the box and stretches its content,
+// which needs no size, inset or radius. Corner controls stay outside it.
 </script>
 
 <template>

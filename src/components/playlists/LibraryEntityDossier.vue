@@ -1,6 +1,5 @@
 <script setup>
 import { UserRound } from '../../icons/index.js';
-import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 
@@ -40,21 +39,23 @@ const MARKER_BY_KIND = Object.freeze({
             'library-entity-dossier__artwork--round': entityKind === 'artist',
           }"
         >
+          <!-- The bordered frame is the single radius clip, so the thumb and
+               its overlay plane composite inside it without their own radius.
+               Full-cover content (scrims, cover actions) shares the overlay
+               plane; corner controls use #artwork-action. -->
           <UiCollageThumb
             :cover-url="coverUrl"
             :tracks="coverTracks"
             :can-collage="entityKind === 'playlist'"
             :size="136"
-            :radius="
-              entityKind === 'artist' ? 'var(--ui-radius-pill)' : undefined
-            "
+            radius="0"
             :empty-icon="entityKind === 'artist' ? UserRound : null"
-          />
-          <!-- Full-cover content (scrims, cover actions) shares the artwork
-               overlay plane; corner controls use #artwork-action. -->
-          <UiArtworkOverlay v-if="$slots['artwork-overlay']">
-            <slot name="artwork-overlay" />
-          </UiArtworkOverlay>
+            :decorative="!$slots['artwork-overlay']"
+          >
+            <template v-if="$slots['artwork-overlay']" #overlay>
+              <slot name="artwork-overlay" />
+            </template>
+          </UiCollageThumb>
           <slot name="artwork-action" />
         </div>
 
@@ -141,6 +142,8 @@ const MARKER_BY_KIND = Object.freeze({
   overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
+  /* Border-coloured ground keeps the clipped corner AA from opening a seam. */
+  background: var(--ui-color-border);
 }
 
 .library-entity-dossier__artwork--round {

@@ -51,6 +51,12 @@ textarea {
   display: contents;
 }
 
+/* Rounded-artwork inner layer: the no-op mask composites its layers before the
+   owner's radius clip, so corners anti-alias once (no per-layer fringe). */
+.ui-artwork-composite {
+  mask-image: linear-gradient(#000 0 0);
+}
+
 .ui-visually-hidden {
   position: absolute;
   width: 1px;

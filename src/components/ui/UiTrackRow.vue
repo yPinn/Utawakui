@@ -5,7 +5,6 @@ import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
 import UiTextButton from './UiTextButton.vue';
-import UiArtworkOverlay from './UiArtworkOverlay.vue';
 import UiTrackThumb from './UiTrackThumb.vue';
 
 // Either pass a whole `track` object or the flat props individually — the
@@ -136,10 +135,11 @@ function handleActionKeydown(event) {
         size="var(--ui-track-row-thumb-size)"
         :loading="thumbLoading"
         :decoding="thumbDecoding"
-      />
-      <UiArtworkOverlay v-if="$slots.artworkOverlay">
-        <slot name="artworkOverlay" />
-      </UiArtworkOverlay>
+      >
+        <template v-if="$slots.artworkOverlay" #overlay>
+          <slot name="artworkOverlay" />
+        </template>
+      </UiTrackThumb>
     </button>
     <UiTrackThumb
       v-else
@@ -281,8 +281,8 @@ function handleActionKeydown(event) {
   height: var(--ui-track-row-thumb-size);
   flex: 0 0 var(--ui-track-row-thumb-size);
   padding: 0;
-  overflow: hidden;
   border: 0;
+  /* Shapes the focus ring only; UiTrackThumb owns the artwork clip. */
   border-radius: var(--ui-radius-sm);
   background: transparent;
   color: inherit;

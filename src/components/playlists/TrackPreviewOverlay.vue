@@ -306,13 +306,14 @@ onUnmounted(() => setKeyboardListener(false));
                 tabindex="-1"
                 @click="select(-1)"
               >
-                <UiTrackThumb :track="previousTrack" size="100%" />
-                <UiArtworkOverlay>
-                  <span
-                    class="track-preview__peek-shade track-preview__peek-shade--previous"
-                    aria-hidden="true"
-                  ></span>
-                </UiArtworkOverlay>
+                <UiTrackThumb :track="previousTrack" size="100%" radius="0">
+                  <template #overlay>
+                    <span
+                      class="track-preview__peek-shade track-preview__peek-shade--previous"
+                      aria-hidden="true"
+                    ></span>
+                  </template>
+                </UiTrackThumb>
               </button>
             </Transition>
           </span>
@@ -321,27 +322,31 @@ onUnmounted(() => setKeyboardListener(false));
             data-artwork-reveal-scope
             @contextmenu="openMenuAtPointer"
           >
-            <Transition :name="switchTransition">
-              <UiTrackThumb
-                :key="track.id"
-                class="track-preview__artwork-image"
-                :track="track"
-                size="100%"
-                radius="0"
-                font-size="var(--ui-font-size-xl)"
-              />
-            </Transition>
-            <!-- Leaving the preview for real playback sits on the cover like
+            <!-- Switching covers and the scrim composite as one layer under
+                 the frame's radius clip. -->
+            <span class="track-preview__artwork-layers ui-artwork-composite">
+              <Transition :name="switchTransition">
+                <UiTrackThumb
+                  :key="track.id"
+                  class="track-preview__artwork-image"
+                  :track="track"
+                  size="100%"
+                  radius="0"
+                  font-size="var(--ui-font-size-xl)"
+                />
+              </Transition>
+              <!-- Leaving the preview for real playback sits on the cover like
                    a feed card, revealed on hover or keyboard focus; the
                    preview itself has no play／pause. -->
-            <UiArtworkOverlay>
-              <UiArtworkReveal>
-                <span
-                  class="track-preview__play-scrim"
-                  aria-hidden="true"
-                ></span>
-              </UiArtworkReveal>
-            </UiArtworkOverlay>
+              <UiArtworkOverlay>
+                <UiArtworkReveal>
+                  <span
+                    class="track-preview__play-scrim"
+                    aria-hidden="true"
+                  ></span>
+                </UiArtworkReveal>
+              </UiArtworkOverlay>
+            </span>
             <UiArtworkReveal class="track-preview__play">
               <PlaybackPrimaryButton
                 play-label="從這首開始播放"
@@ -360,13 +365,14 @@ onUnmounted(() => setKeyboardListener(false));
                 tabindex="-1"
                 @click="select(1)"
               >
-                <UiTrackThumb :track="nextTrack" size="100%" />
-                <UiArtworkOverlay>
-                  <span
-                    class="track-preview__peek-shade track-preview__peek-shade--next"
-                    aria-hidden="true"
-                  ></span>
-                </UiArtworkOverlay>
+                <UiTrackThumb :track="nextTrack" size="100%" radius="0">
+                  <template #overlay>
+                    <span
+                      class="track-preview__peek-shade track-preview__peek-shade--next"
+                      aria-hidden="true"
+                    ></span>
+                  </template>
+                </UiTrackThumb>
               </button>
             </Transition>
           </span>
@@ -516,6 +522,9 @@ onUnmounted(() => setKeyboardListener(false));
   overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
+  /* Border-coloured ground: the clipped cover's corner AA blends into the
+     hairline instead of letting the dialog show through a seam. */
+  background: var(--ui-color-border);
   box-shadow: var(--ui-shadow-overlay);
 }
 
@@ -556,6 +565,12 @@ onUnmounted(() => setKeyboardListener(false));
   );
 }
 
+.track-preview__artwork-layers {
+  position: absolute;
+  inset: 0;
+  display: grid;
+}
+
 /* The artwork frame clips a full-height slide between covers. */
 .track-preview__artwork-image {
   --track-preview-switch-offset: 100%;
@@ -572,7 +587,6 @@ onUnmounted(() => setKeyboardListener(false));
   position: relative;
   aspect-ratio: 1;
   padding: 0;
-  background: none;
   cursor: pointer;
 }
 

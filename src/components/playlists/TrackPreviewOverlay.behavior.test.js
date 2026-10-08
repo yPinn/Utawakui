@@ -332,12 +332,12 @@ describe('TrackPreviewOverlay', () => {
 
   it('shades and lifts the neighbours with shared overlay tokens', () => {
     const styles = source.slice(source.indexOf('<style scoped>'));
-    // A scrim in the shared overlay plane, deepest at each outer edge.
+    // A scrim in the thumb's overlay plane, deepest at each outer edge.
     expect(source).toMatch(
-      /<UiArtworkOverlay>\s*<span\s+class="track-preview__peek-shade track-preview__peek-shade--previous"/u,
+      /<template #overlay>\s*<span\s+class="track-preview__peek-shade track-preview__peek-shade--previous"/u,
     );
     expect(source).toMatch(
-      /<UiArtworkOverlay>\s*<span\s+class="track-preview__peek-shade track-preview__peek-shade--next"/u,
+      /<template #overlay>\s*<span\s+class="track-preview__peek-shade track-preview__peek-shade--next"/u,
     );
     expect(styles).toMatch(
       /\.track-preview__peek-shade--previous \{\s*background: linear-gradient\(\s*to bottom,\s*var\(--ui-color-overlay-scrim-active\),\s*var\(--ui-color-overlay-scrim\)/u,

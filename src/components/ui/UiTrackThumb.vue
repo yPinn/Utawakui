@@ -46,20 +46,22 @@ function toCssLength(value) {
       '--ui-track-thumb-transform': uppercase ? 'uppercase' : 'none',
     }"
   >
-    <img
-      v-if="track?.thumbnailUrl"
-      class="ui-track-thumb__image"
-      :src="track.thumbnailUrl"
-      alt=""
-      :loading="loading"
-      :decoding="decoding"
-      draggable="false"
-    />
-    <span v-else-if="track">{{ getTrackInitial(track) }}</span>
-    <slot v-else />
-    <UiArtworkOverlay v-if="$slots.overlay">
-      <slot name="overlay" />
-    </UiArtworkOverlay>
+    <span class="ui-track-thumb__layers ui-artwork-composite">
+      <img
+        v-if="track?.thumbnailUrl"
+        class="ui-track-thumb__image"
+        :src="track.thumbnailUrl"
+        alt=""
+        :loading="loading"
+        :decoding="decoding"
+        draggable="false"
+      />
+      <span v-else-if="track">{{ getTrackInitial(track) }}</span>
+      <slot v-else />
+      <UiArtworkOverlay v-if="$slots.overlay">
+        <slot name="overlay" />
+      </UiArtworkOverlay>
+    </span>
   </span>
 </template>
 
@@ -72,10 +74,7 @@ function toCssLength(value) {
   position: relative;
   flex: 0 0 auto;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border-radius: var(--ui-track-thumb-radius, var(--ui-radius-sm));
-  background: var(--ui-track-thumb-bg, var(--ui-color-surface-hover));
   color: var(--ui-track-thumb-color, var(--ui-color-text));
   font-size: var(--ui-track-thumb-font-size, var(--ui-font-size-sm));
   font-weight: var(--ui-font-weight-semibold);
@@ -83,6 +82,19 @@ function toCssLength(value) {
   overflow: hidden;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+/* The root is the only radius clip; background, image and overlay composite
+   here first (see .ui-artwork-composite). */
+.ui-track-thumb__layers {
+  /* In flow, so the root keeps its original size and baseline. */
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ui-track-thumb-bg, var(--ui-color-surface-hover));
 }
 
 .ui-track-thumb__image {

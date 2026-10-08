@@ -38,16 +38,16 @@ describe('UiArtworkOverlay', () => {
     );
   });
 
-  it('is the single overlay plane for every artwork host', () => {
+  it('is mounted only inside composite artwork layers', () => {
     for (const host of [
       '../ui/UiCollageThumb.vue',
       '../ui/UiTrackThumb.vue',
-      '../ui/UiTrackRow.vue',
-      '../playlists/LibraryEntityDossier.vue',
-      '../playlists/PlaylistDetailsModal.vue',
+      '../playlists/TrackPreviewOverlay.vue',
     ]) {
       const hostSource = readFileSync(new URL(host, import.meta.url), 'utf8');
-      expect(hostSource, host).toContain('<UiArtworkOverlay');
+      expect(hostSource, host).toMatch(
+        /ui-artwork-composite"[^>]*>[\s\S]*?<UiArtworkOverlay/u,
+      );
     }
   });
 });

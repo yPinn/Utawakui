@@ -66,58 +66,60 @@ const singleIconSize = computed(() =>
       '--ui-collage-thumb-transform': uppercase ? 'uppercase' : 'none',
     }"
   >
-    <img
-      v-if="coverUrl"
-      class="ui-collage-thumb__custom-image"
-      :src="coverUrl"
-      alt=""
-      draggable="false"
-    />
-    <template v-else-if="!canCollage">
+    <span class="ui-collage-thumb__layers ui-artwork-composite">
       <img
-        v-if="singleTrack?.thumbnailUrl"
+        v-if="coverUrl"
         class="ui-collage-thumb__custom-image"
-        :src="singleTrack.thumbnailUrl"
+        :src="coverUrl"
         alt=""
         draggable="false"
       />
-      <span v-else-if="singleTrack" class="ui-collage-thumb__single-initial">
-        {{ getTrackInitial(singleTrack) }}
-      </span>
-      <span v-else class="ui-collage-thumb__single-empty">
-        <component
-          :is="emptyIcon || Music2"
-          :size="singleIconSize"
-          aria-hidden="true"
-        />
-      </span>
-    </template>
-    <template v-else>
-      <span
-        v-for="track in displayTracks"
-        :key="track.id"
-        class="ui-collage-thumb__cell"
-      >
+      <template v-else-if="!canCollage">
         <img
-          v-if="track.thumbnailUrl"
-          class="ui-collage-thumb__image"
-          :src="track.thumbnailUrl"
+          v-if="singleTrack?.thumbnailUrl"
+          class="ui-collage-thumb__custom-image"
+          :src="singleTrack.thumbnailUrl"
           alt=""
           draggable="false"
         />
-        <span v-else>{{ getTrackInitial(track) }}</span>
-      </span>
-      <span
-        v-for="index in emptySlotCount"
-        :key="`empty-${index}`"
-        class="ui-collage-thumb__cell ui-collage-thumb__cell--empty"
-      >
-        <Music2 :size="cellIconSize" aria-hidden="true" />
-      </span>
-    </template>
-    <UiArtworkOverlay v-if="$slots.overlay">
-      <slot name="overlay" />
-    </UiArtworkOverlay>
+        <span v-else-if="singleTrack" class="ui-collage-thumb__single-initial">
+          {{ getTrackInitial(singleTrack) }}
+        </span>
+        <span v-else class="ui-collage-thumb__single-empty">
+          <component
+            :is="emptyIcon || Music2"
+            :size="singleIconSize"
+            aria-hidden="true"
+          />
+        </span>
+      </template>
+      <template v-else>
+        <span
+          v-for="track in displayTracks"
+          :key="track.id"
+          class="ui-collage-thumb__cell"
+        >
+          <img
+            v-if="track.thumbnailUrl"
+            class="ui-collage-thumb__image"
+            :src="track.thumbnailUrl"
+            alt=""
+            draggable="false"
+          />
+          <span v-else>{{ getTrackInitial(track) }}</span>
+        </span>
+        <span
+          v-for="index in emptySlotCount"
+          :key="`empty-${index}`"
+          class="ui-collage-thumb__cell ui-collage-thumb__cell--empty"
+        >
+          <Music2 :size="cellIconSize" aria-hidden="true" />
+        </span>
+      </template>
+      <UiArtworkOverlay v-if="$slots.overlay">
+        <slot name="overlay" />
+      </UiArtworkOverlay>
+    </span>
   </span>
 </template>
 
@@ -125,12 +127,10 @@ const singleIconSize = computed(() =>
 .ui-collage-thumb {
   position: relative;
   flex: 0 0 auto;
+  /* Block-level: an inline root adds a line-box strut below it in block frames. */
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
   overflow: hidden;
   border-radius: var(--ui-collage-thumb-radius, var(--ui-radius-sm));
-  background: var(--ui-collage-thumb-bg, var(--ui-color-canvas));
   /* Set once here, not re-read per descendant (see below) — plain
      inheritance is what lets a caller-scope selector (e.g.
      .playlist-sidebar-row--active .playlist-sidebar-row__thumb) override
@@ -145,7 +145,23 @@ const singleIconSize = computed(() =>
   -webkit-user-drag: none;
 }
 
-.ui-collage-thumb--folder {
+/* The root is the only radius clip; background, artwork and overlay composite
+   here first (see .ui-artwork-composite). */
+.ui-collage-thumb__layers {
+  /* In flow, filling the root's single grid cell, so size and baseline hold. */
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  background: var(--ui-collage-thumb-bg, var(--ui-color-canvas));
+}
+
+/* No artwork: the hairline ring is the edge itself, so it follows the radius
+   (a square ring clipped round leaves stray segments). */
+.ui-collage-thumb--folder .ui-collage-thumb__layers {
+  border-radius: inherit;
   background: linear-gradient(
     180deg,
     var(--ui-color-surface-raised) 0%,

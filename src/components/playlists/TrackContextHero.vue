@@ -68,9 +68,9 @@ const accessibleLabel = computed(
 .track-context-hero {
   min-inline-size: 0;
   aspect-ratio: 1;
+  /* Shapes the shadow only; the artwork thumb is the single radius clip. */
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-contact);
-  overflow: hidden;
 }
 
 .track-context-hero__artwork {

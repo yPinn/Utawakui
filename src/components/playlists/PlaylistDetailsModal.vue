@@ -6,7 +6,6 @@
 // metadata, not user-authored; see LibraryEntityDossier.vue).
 import { shallowRef, watch } from 'vue';
 import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
-import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -70,9 +69,9 @@ function save() {
           :tracks="coverTracks"
           :can-collage="!isAlbum"
           :size="PLAYLIST_DETAILS_COVER_SIZE"
-        />
-        <template v-if="!isAlbum">
-          <UiArtworkOverlay>
+          :decorative="isAlbum"
+        >
+          <template v-if="!isAlbum" #overlay>
             <UiArtworkReveal>
               <button
                 type="button"
@@ -85,7 +84,9 @@ function save() {
                 <span>選擇相片</span>
               </button>
             </UiArtworkReveal>
-          </UiArtworkOverlay>
+          </template>
+        </UiCollageThumb>
+        <template v-if="!isAlbum">
           <UiArtworkReveal
             v-if="coverUrl"
             class="playlist-details__cover-clear"
@@ -148,19 +149,17 @@ function save() {
   gap: var(--ui-modal-section-gap);
 }
 
-/* Artwork tier — DESIGN.md's "dense thumbnails and artwork" radius. */
+/* Positions the corner control; UiCollageThumb owns the artwork radius clip. */
 .playlist-details__cover {
   position: relative;
   inline-size: var(--playlist-details-cover-size);
   block-size: var(--playlist-details-cover-size);
-  border-radius: var(--ui-radius-sm);
-  overflow: hidden;
 }
 
 /* Both cover controls reveal through UiArtworkReveal on cover hover
    (data-artwork-reveal-scope) or their own keyboard focus. */
 
-/* Sized and clipped by UiArtworkOverlay. */
+/* Sized by UiArtworkOverlay inside UiCollageThumb. */
 .playlist-details__cover-edit {
   display: inline-flex;
   align-items: center;
