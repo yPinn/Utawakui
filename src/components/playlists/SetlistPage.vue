@@ -17,11 +17,17 @@ const pageMode = computed(() =>
   performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document',
 );
 const showLibraryHeader = computed(
-  () => !performanceSessionWorkspace.isOpen.value && !selectedPlaylist.value,
+  () =>
+    !performanceSessionWorkspace.isOpen.value &&
+    !selectedPlaylist.value &&
+    !playlistState.selectedArtistId,
 );
 const pageTitle = computed(() => libraryViewTitle(playlistState.libraryView));
 const documentKey = computed(
-  () => selectedPlaylist.value?.id ?? `library:${playlistState.libraryView}`,
+  () =>
+    selectedPlaylist.value?.id ??
+    playlistState.selectedArtistId ??
+    `library:${playlistState.libraryView}`,
 );
 </script>
 

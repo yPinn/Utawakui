@@ -8,12 +8,6 @@ function source(relativePath) {
 describe('UiButton destructive consumers', () => {
   it.each([
     [
-      'library track deletion',
-      '../../views/SetlistView.vue',
-      '@click="removeTrack(track)"',
-      '../../views/SetlistView.vue',
-    ],
-    [
       'lyrics source deletion',
       '../lyrics/LyricsSourceManagerModal.vue',
       '@click="handleDelete(source)"',
@@ -43,6 +37,16 @@ describe('UiButton destructive consumers', () => {
       expect(source(confirmationPath)).toContain('window.confirm');
     },
   );
+
+  it('keeps library track deletion in the shared danger menu with confirmation in Setlist', () => {
+    const trackMenu = source('../track/TrackActionMenu.vue');
+    expect(trackMenu).toMatch(
+      /key: 'delete-track',[\s\S]*?danger: true,[\s\S]*?action: TRACK_MENU_ACTIONS\.deleteTrack/u,
+    );
+    const setlist = source('../../views/SetlistView.vue');
+    expect(setlist).toContain('TRACK_MENU_ACTIONS.deleteTrack');
+    expect(setlist).toContain('window.confirm');
+  });
 
   it('keeps collection deletion in a danger menu item with confirmation in its action owner', () => {
     const collectionMenu = source('../../utils/collectionMenuItems.js');

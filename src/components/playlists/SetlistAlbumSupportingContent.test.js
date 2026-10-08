@@ -35,10 +35,10 @@ describe('SetlistAlbumSupportingContent', () => {
       }),
     );
 
-    expect(html).toContain('更多來自王以太的專輯');
+    expect(html).toContain('更多來自 王以太 的內容');
     expect(html).toContain('aria-label="開啟專輯：演說家"');
     expect(html).toContain('藝人曲庫摘要');
-    expect(html.indexOf('更多來自王以太的專輯')).toBeLessThan(
+    expect(html.indexOf('更多來自 王以太 的內容')).toBeLessThan(
       html.indexOf('藝人曲庫摘要'),
     );
     expect(html).toContain('18 首曲目');
@@ -63,7 +63,7 @@ describe('SetlistAlbumSupportingContent', () => {
       }),
     );
 
-    expect(html).not.toContain('更多來自王以太的專輯');
+    expect(html).not.toContain('更多來自 王以太 的內容');
     expect(html).toContain('藝人曲庫摘要');
     expect(html).toContain('1 首曲目');
     expect(html).toContain('1 張專輯');
@@ -108,17 +108,44 @@ describe('SetlistAlbumSupportingContent', () => {
     );
 
     expect(html).toContain('專輯');
-    expect(html).not.toContain('更多來自YOASOBI的專輯');
+    expect(html).not.toContain('更多來自 YOASOBI 的內容');
     expect(html).not.toContain('藝人曲庫摘要');
     expect(html).toContain('aria-label="開啟專輯：THE BOOK"');
   });
 
-  it('uses one flat supporting region instead of card chrome', () => {
-    expect(source).toContain("emit('selectAlbum', album.id)");
-    expect(source).not.toMatch(/box-shadow\s*:/u);
-    expect(source).not.toMatch(/border-radius\s*:/u);
-    expect(source).not.toMatch(
-      /background:\s*var\(--ui-color-surface-raised\)/u,
+  it('projects the active album as Pause and keeps inactive albums as Play', async () => {
+    const render = (playingAlbumId = '') =>
+      renderToString(
+        createSSRApp({
+          render: () =>
+            h(SetlistAlbumSupportingContent, {
+              artist: 'YOASOBI',
+              relatedAlbums: [
+                {
+                  id: 'album-a',
+                  name: 'THE BOOK',
+                  coverUrl: '',
+                  tracks: [{ id: 'track-a', title: '群青' }],
+                  releaseYear: 2021,
+                },
+              ],
+              playingAlbumId,
+            }),
+        }),
+      );
+
+    expect(await render()).toContain('播放專輯：THE BOOK');
+    expect(await render('album-a')).toContain('暫停專輯：THE BOOK');
+  });
+
+  it('delegates each repeated item to the shared supporting-content card', () => {
+    expect(source).toContain(
+      "import SetlistAlbumCard from './SetlistAlbumCard.vue'",
     );
+    expect(source).toContain('<SetlistAlbumCard');
+    expect(source).toContain('@select="emit(\'selectAlbum\', $event)"');
+    expect(source).toContain(':playing="album.id === playingAlbumId"');
+    expect(source).toContain('@play="emit(\'playAlbum\', $event)"');
+    expect(source).not.toContain('RELATED_ALBUM_COVER_SIZE');
   });
 });

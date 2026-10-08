@@ -1,9 +1,7 @@
 <script setup>
 import { computed, useId } from 'vue';
 import UiButton from '../ui/UiButton.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
-
-const RELATED_ALBUM_COVER_SIZE = 96;
+import SetlistAlbumCard from './SetlistAlbumCard.vue';
 
 const props = defineProps({
   artist: { type: String, required: true },
@@ -12,12 +10,14 @@ const props = defineProps({
   albumsTitle: { type: String, default: '' },
   summary: { type: Object, default: null },
   canOpenArtist: { type: Boolean, default: false },
+  playingAlbumId: { type: String, default: '' },
 });
 
-const emit = defineEmits(['selectAlbum', 'selectArtist']);
+const emit = defineEmits(['selectAlbum', 'playAlbum', 'selectArtist']);
 const instanceId = useId();
 const relatedTitleId = `setlist-related-albums-${instanceId}`;
 const summaryTitleId = `setlist-artist-summary-${instanceId}`;
+const defaultAlbumsTitle = computed(() => `更多來自 ${props.artist} 的內容`);
 const yearLabel = computed(() => {
   if (!props.summary) return '';
   const { yearStart, yearEnd } = props.summary;
@@ -26,10 +26,6 @@ const yearLabel = computed(() => {
     ? `${yearStart}–${yearEnd}`
     : String(yearStart);
 });
-
-function selectAlbum(album) {
-  emit('selectAlbum', album.id);
-}
 </script>
 
 <template>
@@ -40,27 +36,20 @@ function selectAlbum(album) {
       :aria-labelledby="relatedTitleId"
     >
       <h2 :id="relatedTitleId">
-        {{ albumsTitle || `更多來自${artist}的專輯` }}
+        {{ albumsTitle || defaultAlbumsTitle }}
       </h2>
       <ul class="setlist-album-supporting__albums">
-        <li v-for="album in relatedAlbums" :key="album.id">
-          <button
-            type="button"
-            class="setlist-album-supporting__album"
-            :aria-label="`開啟專輯：${album.name}`"
-            @click="selectAlbum(album)"
-          >
-            <UiCollageThumb
-              :cover-url="album.coverUrl"
-              :tracks="album.tracks"
-              :can-collage="false"
-              :size="RELATED_ALBUM_COVER_SIZE"
-            />
-            <span class="setlist-album-supporting__album-copy">
-              <strong>{{ album.name }}</strong>
-              <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
-            </span>
-          </button>
+        <li
+          v-for="album in relatedAlbums"
+          :key="album.id"
+          class="setlist-album-supporting__album-item"
+        >
+          <SetlistAlbumCard
+            :album="album"
+            :playing="album.id === playingAlbumId"
+            @select="emit('selectAlbum', $event)"
+            @play="emit('playAlbum', $event)"
+          />
         </li>
       </ul>
     </section>
@@ -140,56 +129,15 @@ function selectAlbum(album) {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(6rem, 8rem));
+  grid-template-columns: repeat(auto-fill, 10rem);
   gap: var(--ui-space-4);
   list-style: none;
 }
 
-.setlist-album-supporting__album {
+.setlist-album-supporting__album-item {
   min-inline-size: 0;
-  padding: 0;
-  display: grid;
-  justify-items: start;
-  gap: var(--ui-space-2);
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
 }
 
-.setlist-album-supporting__album:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.setlist-album-supporting__album:hover strong {
-  color: var(--ui-color-accent);
-}
-
-.setlist-album-supporting__album-copy {
-  min-inline-size: 0;
-  max-inline-size: 100%;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.setlist-album-supporting__album-copy strong,
-.setlist-album-supporting__album-copy span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.setlist-album-supporting__album-copy strong {
-  max-inline-size: 100%;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-}
-
-.setlist-album-supporting__album-copy span,
 .setlist-album-supporting__summary-copy,
 .setlist-album-supporting__facts dt {
   color: var(--ui-color-text-muted);

@@ -17,6 +17,7 @@ const demoSearchQuery = shallowRef('');
 const demoSort = shallowRef({ key: null, direction: 'asc' });
 const demoCollectionPlaying = shallowRef(false);
 const demoCollectionShuffle = shallowRef(false);
+const demoSupportingAlbumPlayingId = shallowRef('');
 const emptyTrackIds = new Set();
 const instanceId = useId();
 const specimenTitleId = `demo-page-layout-specimen-title-${instanceId}`;
@@ -272,6 +273,11 @@ function toggleDemoCollectionPlayback() {
   demoCollectionPlaying.value = !demoCollectionPlaying.value;
 }
 
+function toggleDemoSupportingAlbumPlayback(albumId) {
+  demoSupportingAlbumPlayingId.value =
+    demoSupportingAlbumPlayingId.value === albumId ? '' : albumId;
+}
+
 function toggleDemoCollectionShuffle() {
   demoCollectionShuffle.value = !demoCollectionShuffle.value;
   demoCollectionPlaying.value = true;
@@ -378,7 +384,9 @@ function toggleDemoCollectionShuffle() {
                 artist="王以太"
                 :related-albums="demoRelatedAlbums"
                 :summary="demoArtistSummary"
+                :playing-album-id="demoSupportingAlbumPlayingId"
                 @select-album="selectDemoAlbum"
+                @play-album="toggleDemoSupportingAlbumPlayback"
               />
             </template>
 

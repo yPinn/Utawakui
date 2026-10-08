@@ -78,10 +78,16 @@ describe('Setlist page composition', () => {
     expect(pageSource).toContain(
       "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
     );
-    expect(pageSource).toContain(
-      '!performanceSessionWorkspace.isOpen.value && !selectedPlaylist.value',
-    );
     expect(pageSource).toContain('const documentKey = computed(');
     expect(pageSource).toContain(':document-key="documentKey"');
+  });
+
+  it('shows the fixed library header only when no collection entity is selected', () => {
+    expect(pageSource).toMatch(
+      /const showLibraryHeader = computed\(\s*\(\) =>\s*!performanceSessionWorkspace\.isOpen\.value &&\s*!selectedPlaylist\.value &&\s*!playlistState\.selectedArtistId,\s*\);/u,
+    );
+    expect(pageSource).toMatch(
+      /selectedPlaylist\.value\?\.id \?\?\s*playlistState\.selectedArtistId \?\?\s*`library:/u,
+    );
   });
 });

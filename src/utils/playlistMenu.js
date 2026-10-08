@@ -24,6 +24,7 @@ export const TRACK_MENU_ACTIONS = {
   editMetadata: 'edit-metadata',
   removeFromPlaylist: 'remove-from-playlist',
   goToAlbum: 'go-to-album',
+  deleteTrack: 'delete-track',
 };
 
 export function playlistDisplayName(playlist) {

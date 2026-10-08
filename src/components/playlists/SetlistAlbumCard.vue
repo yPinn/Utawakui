@@ -1,0 +1,143 @@
+<script setup>
+import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
+
+const ALBUM_ARTWORK_SIZE = 136;
+
+const props = defineProps({
+  album: { type: Object, required: true },
+  playing: { type: Boolean, default: false },
+});
+
+const emit = defineEmits(['select', 'play']);
+
+function selectAlbum() {
+  emit('select', props.album.id);
+}
+
+function playAlbum(event) {
+  event.stopPropagation();
+  emit('play', props.album.id);
+}
+</script>
+
+<template>
+  <div class="setlist-album-card" data-artwork-reveal-scope="focus-within">
+    <button
+      type="button"
+      class="setlist-album-card__open"
+      :aria-label="`開啟專輯：${album.name}`"
+      @click="selectAlbum"
+    />
+    <UiCollageThumb
+      class="setlist-album-card__artwork"
+      :cover-url="album.coverUrl"
+      :tracks="album.tracks"
+      :can-collage="false"
+      :size="ALBUM_ARTWORK_SIZE"
+    />
+    <UiArtworkReveal class="setlist-album-card__play">
+      <PlaybackPrimaryButton
+        :playing="playing"
+        :play-label="`播放專輯：${album.name}`"
+        :pause-label="`暫停專輯：${album.name}`"
+        @click="playAlbum"
+      />
+    </UiArtworkReveal>
+    <span class="setlist-album-card__copy">
+      <strong>{{ album.name }}</strong>
+      <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
+    </span>
+  </div>
+</template>
+
+<style scoped>
+.setlist-album-card {
+  position: relative;
+  min-inline-size: 0;
+  inline-size: 100%;
+  padding: var(--ui-space-3);
+  display: grid;
+  grid-template-rows: max-content max-content;
+  justify-items: stretch;
+  gap: var(--ui-space-2);
+  border-radius: var(--ui-radius-md);
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  text-align: start;
+  transition: background-color var(--ui-motion-duration-feedback)
+    var(--ui-motion-easing-standard);
+}
+
+.setlist-album-card:hover,
+.setlist-album-card:focus-within {
+  background: var(--ui-color-surface-hover);
+}
+
+.setlist-album-card:has(.setlist-album-card__open:active) {
+  background: var(--ui-color-surface-active);
+}
+
+.setlist-album-card:has(.setlist-album-card__open:focus-visible) {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+}
+
+.setlist-album-card__artwork,
+.setlist-album-card__open {
+  grid-area: 1 / 1;
+}
+
+.setlist-album-card__open {
+  z-index: 1;
+  grid-area: 1 / 1 / 3 / 2;
+  align-self: stretch;
+  justify-self: stretch;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.setlist-album-card__play {
+  z-index: 2;
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: end;
+  margin: var(--ui-space-2);
+}
+
+.setlist-album-card__play :deep(.ui-icon-btn) {
+  box-shadow: var(--ui-shadow-overlay);
+}
+
+.setlist-album-card__copy {
+  grid-area: 2 / 1;
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.setlist-album-card__copy strong,
+.setlist-album-card__copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setlist-album-card__copy strong {
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.setlist-album-card__copy span {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
+}
+</style>

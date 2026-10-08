@@ -10,33 +10,43 @@ describe('SetlistView track interaction owner', () => {
   it('owns transient selection separately from current playback', () => {
     expect(source).toContain('const selectedTrackId = shallowRef(null);');
     expect(source).toContain('function selectTrack(track)');
-    expect(source).toContain(':active="selectedTrackId === track.id"');
     expect(source).toContain(':selected-track-id="selectedTrackId"');
-    expect(source).toContain('selection-action');
+    expect(source).toContain(
+      "import LibraryTrackTable from '../components/library/LibraryTrackTable.vue'",
+    );
+    expect(source).not.toContain('UiTrackRow');
   });
 
   it('separates row selection from pointer and keyboard activation', () => {
-    expect(source).toContain('@row-click="selectTrack(track)"');
-    expect(source).toContain('@row-dblclick="activateTrack(track)"');
-    expect(source).toContain('@activate="activateTrack(track)"');
     expect(source).toContain('@select-track="selectTrack"');
     expect(source).toContain('@activate-track="activateTrack"');
     expect(source).not.toContain('@click="playRow(track)"');
     expect(source).not.toContain('@select-track="playRow"');
   });
 
-  it('keeps the destructive child action outside double-click activation', () => {
-    expect(source).toContain(
-      '<div class="row-actions" @click.stop @dblclick.stop>',
-    );
+  it('routes destructive library actions through the shared trailing menu', () => {
+    expect(source).toContain(':can-delete="addMenuOptions.canDelete"');
+    expect(source).toContain('TRACK_MENU_ACTIONS.deleteTrack');
+    expect(source).not.toContain('@click="removeTrack(track)"');
   });
 
   it('builds playback from the current visible order in every library mode', () => {
     expect(source).toMatch(
-      /function currentVisibleQueueTracks\(\)[\s\S]*?visibleTracks\.value[\s\S]*?visiblePlaylistEntries\.value\.map/u,
+      /function currentVisibleQueueTracks\(\)[\s\S]*?visibleTableEntries\.value\.map/u,
     );
     expect(source).toMatch(
       /function activateTrack\(track\)[\s\S]*?currentVisibleQueueTracks\(\)[\s\S]*?setQueue\(queueTracks, track\.id/u,
+    );
+  });
+
+  it('uses one canonical table and disables custom reorder while filtering', () => {
+    expect(source).toContain('<LibraryTrackTable');
+    expect(source).toContain(':entries="visibleTableEntries"');
+    expect(source).toContain("mode.value === 'all' ? 'library' : mode.value");
+    expect(source).toContain(':variant="tableVariant"');
+    expect(source).toContain('@move-track="movePlaylistTrack"');
+    expect(source).toMatch(
+      /const canDragPlaylistRows = computed\([\s\S]*?mode\.value === 'playlist'[\s\S]*?!normalizedSearchQuery\.value[\s\S]*?playlistSort\.value\.key === null/u,
     );
   });
 
@@ -71,5 +81,16 @@ describe('SetlistView track interaction owner', () => {
       /function handleCollectionMenuAction\(value\) \{[\s\S]*?else \{\s*handlePlaylistMenuAction\(value\);/u,
     );
     expect(source).toContain('@choose-photo="chooseSelectedArtistPhoto"');
+  });
+
+  it('routes supporting album playback through authoritative membership without navigating', () => {
+    expect(source).toContain('const playingSupportingAlbumId = computed(() =>');
+    expect(source).toMatch(
+      /function toggleSupportingAlbumPlayback\(albumId\)[\s\S]*?albumEntries\.value\.find\([\s\S]*?collection\.id === albumId[\s\S]*?collectionPlayback\.togglePlayback\(\{[\s\S]*?sourceId: entry\.collection\.id,[\s\S]*?sourceName: playlistDisplayName\(entry\.collection\),[\s\S]*?tracks: entry\.tracks,/u,
+    );
+    expect(source).toContain(':playing-album-id="playingSupportingAlbumId"');
+    expect(
+      source.match(/@play-album="toggleSupportingAlbumPlayback"/gu),
+    ).toHaveLength(2);
   });
 });

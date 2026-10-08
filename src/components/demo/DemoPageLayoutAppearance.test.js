@@ -151,6 +151,19 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).not.toContain('<UiScrollRegion');
   });
 
+  it('keeps supporting-card playback visible and independent in the production specimen', () => {
+    expect(source).toContain(
+      "const demoSupportingAlbumPlayingId = shallowRef('');",
+    );
+    expect(source).toContain(
+      'function toggleDemoSupportingAlbumPlayback(albumId)',
+    );
+    expect(source).toContain(
+      ':playing-album-id="demoSupportingAlbumPlayingId"',
+    );
+    expect(source).toContain('@play-album="toggleDemoSupportingAlbumPlayback"');
+  });
+
   it('reuses the production collection header and track table for the Setlist specimen', () => {
     expect(source).toContain(
       "import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue'",

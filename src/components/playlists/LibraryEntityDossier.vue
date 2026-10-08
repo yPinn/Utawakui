@@ -31,17 +31,7 @@ const MARKER_BY_KIND = Object.freeze({
 
 <template>
   <section class="library-entity-dossier" :aria-labelledby="titleId">
-    <header class="library-entity-dossier__heading">
-      <h1 :id="titleId" class="library-entity-dossier__title">
-        {{ title }}
-      </h1>
-    </header>
-
     <div class="library-entity-dossier__sheet">
-      <span class="library-entity-dossier__marker">
-        {{ MARKER_BY_KIND[entityKind] }}
-      </span>
-
       <div class="library-entity-dossier__body">
         <div
           class="library-entity-dossier__artwork"
@@ -69,20 +59,32 @@ const MARKER_BY_KIND = Object.freeze({
         </div>
 
         <div class="library-entity-dossier__content">
-          <p v-if="artist" class="library-entity-dossier__artist">
-            <UiTextButton
-              v-if="artistLinkLabel"
-              class="library-entity-dossier__artist-link"
-              :text="artist"
-              :aria-label="artistLinkLabel"
-              @click="emit('selectArtist')"
-            />
-            <template v-else>{{ artist }}</template>
-          </p>
-          <p v-if="meta" class="library-entity-dossier__meta">{{ meta }}</p>
-          <p v-if="description" class="library-entity-dossier__description">
-            {{ description }}
-          </p>
+          <span class="library-entity-dossier__marker">
+            {{ MARKER_BY_KIND[entityKind] }}
+          </span>
+          <h1 :id="titleId" class="library-entity-dossier__title">
+            {{ title }}
+          </h1>
+
+          <div
+            v-if="artist || meta || description"
+            class="library-entity-dossier__details"
+          >
+            <p v-if="artist" class="library-entity-dossier__artist">
+              <UiTextButton
+                v-if="artistLinkLabel"
+                class="library-entity-dossier__artist-link"
+                :text="artist"
+                :aria-label="artistLinkLabel"
+                @click="emit('selectArtist')"
+              />
+              <template v-else>{{ artist }}</template>
+            </p>
+            <p v-if="meta" class="library-entity-dossier__meta">{{ meta }}</p>
+            <p v-if="description" class="library-entity-dossier__description">
+              {{ description }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -92,13 +94,6 @@ const MARKER_BY_KIND = Object.freeze({
 <style scoped>
 .library-entity-dossier {
   min-width: 0;
-  display: grid;
-  gap: var(--ui-space-4);
-}
-
-.library-entity-dossier__heading {
-  min-width: 0;
-  padding-block-start: var(--ui-space-2);
 }
 
 .library-entity-dossier__title {
@@ -121,14 +116,7 @@ const MARKER_BY_KIND = Object.freeze({
 }
 
 .library-entity-dossier__marker {
-  display: inline-flex;
-  min-height: var(--ui-space-6);
-  align-items: center;
-  padding-inline: var(--ui-space-3);
-  border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
-  border-end-end-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface);
+  display: block;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
@@ -169,6 +157,12 @@ const MARKER_BY_KIND = Object.freeze({
   display: grid;
   align-content: end;
   gap: var(--ui-space-2);
+}
+
+.library-entity-dossier__details {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
 }
 
 .library-entity-dossier__artist,

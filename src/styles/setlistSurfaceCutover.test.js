@@ -13,9 +13,7 @@ const headerSource = readSource(
 const dossierSource = readSource(
   '../components/playlists/LibraryEntityDossier.vue',
 );
-const tableSource = readSource(
-  '../components/playlists/SetlistPlaylistTable.vue',
-);
+const tableSource = readSource('../components/library/LibraryTrackTable.vue');
 const studioTableSource = readSource(
   '../components/playlists/StudioLibraryTrackTable.vue',
 );
@@ -87,8 +85,12 @@ describe('Setlist Token v2 surface cutover', () => {
     expect(headerSource).toContain('var(--ui-motion-duration-fast)');
     expect(headerSource).toContain('var(--ui-motion-easing-standard)');
     expect(tableSource).toContain('var(--ui-radius-md)');
-    expect(studioTableSource).toContain(
-      'color-mix(in srgb, var(--ui-color-text) 8%, transparent)',
-    );
+    for (const source of [tableSource, studioTableSource]) {
+      expect(source).toContain(
+        'background: var(--ui-track-row-selected-surface);',
+      );
+      expect(source).not.toContain('--ui-row-active-shadow');
+      expect(source).not.toContain('--ui-track-row-active-shadow');
+    }
   });
 });

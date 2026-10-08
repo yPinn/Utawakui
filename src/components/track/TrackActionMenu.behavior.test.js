@@ -272,6 +272,28 @@ describe('TrackActionMenu behavior model', () => {
     queuedMenu.app.unmount();
   });
 
+  it('adds the destructive library action only when the owner allows it', () => {
+    const defaultMenu = mount(TrackActionMenu, {
+      open: true,
+      track,
+      playlists,
+    });
+    expect(textContent(body)).not.toContain('刪除曲目');
+    defaultMenu.app.unmount();
+
+    body.children = [];
+    const libraryMenu = mount(TrackActionMenu, {
+      open: true,
+      track,
+      playlists,
+      canDelete: true,
+    });
+    const deleteButton = buttonByText('刪除曲目');
+    expect(deleteButton).toBeDefined();
+    expect(deleteButton.props.class).toContain('ui-context-menu__item--danger');
+    libraryMenu.app.unmount();
+  });
+
   it('opens a searchable destination picker while keeping create visible', async () => {
     const onSelect = vi.fn();
     const mounted = mount(TrackActionMenu, {

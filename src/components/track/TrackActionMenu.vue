@@ -7,6 +7,7 @@ import {
   ListPlus,
   Pencil,
   Plus,
+  Trash2,
 } from '../../icons/index.js';
 import {
   TRACK_MENU_ACTIONS,
@@ -34,6 +35,7 @@ const props = defineProps({
   queuedTrackIds: { type: Array, default: () => [] },
   removeFromPlaylistId: { type: String, default: '' },
   canGoToAlbum: { type: Boolean, default: false },
+  canDelete: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['select', 'close']);
@@ -144,6 +146,18 @@ const items = computed(() => {
         label: '前往專輯',
         icon: Disc3,
         value: { action: TRACK_MENU_ACTIONS.goToAlbum },
+      },
+    );
+  }
+  if (props.canDelete) {
+    menuItems.push(
+      { key: 'delete-divider', separator: true },
+      {
+        key: 'delete-track',
+        label: '刪除曲目',
+        icon: Trash2,
+        danger: true,
+        value: { action: TRACK_MENU_ACTIONS.deleteTrack },
       },
     );
   }
