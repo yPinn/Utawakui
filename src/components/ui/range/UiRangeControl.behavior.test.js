@@ -107,6 +107,80 @@ describe('UiRangeControl', () => {
     app.unmount();
   });
 
+  it('resets an enabled range to its caller-owned default on context-menu intent', () => {
+    const update = vi.fn();
+    const reset = vi.fn();
+    const { app, root } = mount(UiRangeControl, {
+      id: 'formal-resettable',
+      modelValue: 70,
+      min: 0,
+      max: 100,
+      step: 5,
+      defaultValue: 50,
+      onReset: reset,
+      'onUpdate:modelValue': update,
+    });
+    const input = findAll(root, (node) => node.props.type === 'range')[0];
+    const event = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    };
+
+    trigger(input, 'onContextmenu', event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(event.stopPropagation).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledWith(50);
+    expect(reset).toHaveBeenCalledWith(50);
+    app.unmount();
+  });
+
+  it('preserves the native context menu without a default and while disabled', () => {
+    const update = vi.fn();
+    const reset = vi.fn();
+    const noDefault = mount(UiRangeControl, {
+      modelValue: 70,
+      onReset: reset,
+      'onUpdate:modelValue': update,
+    });
+    const noDefaultInput = findAll(
+      noDefault.root,
+      (node) => node.props.type === 'range',
+    )[0];
+    const noDefaultEvent = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    };
+
+    trigger(noDefaultInput, 'onContextmenu', noDefaultEvent);
+    expect(noDefaultEvent.preventDefault).not.toHaveBeenCalled();
+    expect(noDefaultEvent.stopPropagation).not.toHaveBeenCalled();
+    noDefault.app.unmount();
+
+    const disabled = mount(UiRangeControl, {
+      modelValue: 70,
+      defaultValue: 50,
+      disabled: true,
+      onReset: reset,
+      'onUpdate:modelValue': update,
+    });
+    const disabledInput = findAll(
+      disabled.root,
+      (node) => node.props.type === 'range',
+    )[0];
+    const disabledEvent = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    };
+
+    trigger(disabledInput, 'onContextmenu', disabledEvent);
+    expect(disabledEvent.preventDefault).not.toHaveBeenCalled();
+    expect(disabledEvent.stopPropagation).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(reset).not.toHaveBeenCalled();
+    disabled.app.unmount();
+  });
+
   it('previews a step-aligned formatted pointer value without changing the model', async () => {
     const update = vi.fn();
     const { app, root } = mount(UiRangeControl, {

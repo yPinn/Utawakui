@@ -13,6 +13,7 @@ defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
   step: { type: Number, default: 1 },
+  defaultValue: { type: Number, default: undefined },
   marks: { type: Array, default: () => [] },
   valueText: { type: String, default: '' },
   formatValue: { type: Function, default: null },
@@ -23,7 +24,7 @@ defineProps({
   labelHidden: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'reset']);
 const attrs = useAttrs();
 const rangeRef = useTemplateRef('range');
 
@@ -61,6 +62,7 @@ defineExpose({ focus });
           :min="min"
           :max="max"
           :step="step"
+          :default-value="defaultValue"
           :marks="marks"
           :value-text="valueText"
           :format-value="formatValue"
@@ -68,6 +70,7 @@ defineExpose({ focus });
           :invalid="fieldInvalid"
           :aria-describedby="describedBy"
           @update:model-value="updateValue"
+          @reset="emit('reset', $event)"
         />
         <output v-if="valueText" class="ui-range__value" :for="id">
           {{ valueText }}

@@ -193,6 +193,33 @@ describe('shared field accessibility and data flow', () => {
     rangeMount.app.unmount();
   });
 
+  it('projects the optional range default and reset intent through the field compound', () => {
+    const update = vi.fn();
+    const reset = vi.fn();
+    const { app, root } = mount(UiRange, {
+      id: 'balance',
+      label: '平衡',
+      modelValue: 25,
+      min: -100,
+      max: 100,
+      step: 5,
+      defaultValue: 0,
+      onReset: reset,
+      'onUpdate:modelValue': update,
+    });
+    const range = findAll(root, (node) => node.props.type === 'range')[0];
+    const event = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    };
+
+    trigger(range, 'onContextmenu', event);
+
+    expect(update).toHaveBeenCalledWith(0);
+    expect(reset).toHaveBeenCalledWith(0);
+    app.unmount();
+  });
+
   it('projects a mixed checkbox state without losing its accessible label', () => {
     const checkboxMount = mount(UiCheckbox, {
       id: 'select-visible',

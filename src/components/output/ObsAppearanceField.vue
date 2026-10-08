@@ -151,12 +151,14 @@ function commitColor(value) {
           :min="field.min"
           :max="field.max"
           :step="field.step"
+          :default-value="field.defaultValue"
           :disabled="disabled"
           :aria-describedby="disabledHint ? controlHintId : undefined"
           :value-text="valueText"
           :format-value="formatRangeValue"
           @update:model-value="updateNumber"
           @change="emit('commit')"
+          @reset="emit('commit')"
         />
         <output class="obs-appearance-field__value" :for="controlId">
           {{ valueText }}

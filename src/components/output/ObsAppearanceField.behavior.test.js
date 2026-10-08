@@ -154,6 +154,7 @@ describe('ObsAppearanceField', () => {
         key: 'positionOffsetX',
         label: '水平微調',
         control: 'range',
+        defaultValue: 0,
         min: -12,
         max: 12,
         step: 1,
@@ -170,14 +171,21 @@ describe('ObsAppearanceField', () => {
     )[0];
     trigger(range, 'onInput', { target: { valueAsNumber: -3 } });
     trigger(range, 'onChange');
+    const resetEvent = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    };
+    trigger(range, 'onContextmenu', resetEvent);
     expect(range.props).toMatchObject({
       min: -12,
       max: 12,
       step: 1,
       'aria-valuetext': '+4%',
     });
-    expect(rangeUpdate).toHaveBeenCalledWith(-3);
-    expect(rangeCommit).toHaveBeenCalledTimes(1);
+    expect(rangeUpdate).toHaveBeenNthCalledWith(1, -3);
+    expect(rangeUpdate).toHaveBeenNthCalledWith(2, 0);
+    expect(rangeCommit).toHaveBeenCalledTimes(2);
+    expect(resetEvent.preventDefault).toHaveBeenCalledOnce();
     rangeMount.app.unmount();
   });
 

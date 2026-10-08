@@ -23,6 +23,7 @@ const props = defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
   step: { type: Number, default: 1 },
+  defaultValue: { type: Number, default: undefined },
   marks: { type: Array, default: () => [] },
   valueText: { type: String, default: '' },
   formatValue: { type: Function, default: null },
@@ -30,7 +31,7 @@ const props = defineProps({
   invalid: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'reset']);
 const attrs = useAttrs();
 const rangeRef = useTemplateRef('range');
 const previewTooltipRef = shallowRef(null);
@@ -172,6 +173,18 @@ function updateValue(event) {
   emit('update:modelValue', value);
 }
 
+function resetToDefault(event) {
+  if (props.disabled || !Number.isFinite(props.defaultValue)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  hidePreview();
+  const value = snapPreviewValue(props.defaultValue);
+  if (Object.is(value, props.modelValue)) return;
+  emit('update:modelValue', value);
+  emit('reset', value);
+}
+
 function focus() {
   rangeRef.value?.focus();
 }
@@ -211,6 +224,7 @@ defineExpose({ focus });
       @pointerleave="hidePreview"
       @pointercancel="hidePreview"
       @input="updateValue"
+      @contextmenu="resetToDefault"
     />
     <span class="ui-range-control__track" aria-hidden="true">
       <span class="ui-range-control__fill"></span>

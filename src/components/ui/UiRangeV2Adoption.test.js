@@ -10,6 +10,7 @@ const playerBarSource = read('../playback/PlayerBar.vue');
 const playerToolsSource = read('../playback/PlayerToolsPanel.vue');
 const obsAppearanceSource = read('../output/ObsAppearanceField.vue');
 const demoSource = read('../demo/DemoRangeAppearance.vue');
+const playerOwnerSource = read('../../composables/usePlayer.js');
 const tokensSource = read('../../styles/tokens.css');
 
 describe('Token v2 Range formal adoption', () => {
@@ -60,6 +61,30 @@ describe('Token v2 Range formal adoption', () => {
       ':format-value="row.formatSliderValue"',
     );
     expect(obsAppearanceSource).toContain(':format-value="formatRangeValue"');
+  });
+
+  it('opts canonical performance adjustments into reset without changing transport sliders', () => {
+    expect(
+      playerToolsSource.match(/:default-value="row\.defaultValue"/gu),
+    ).toHaveLength(2);
+    expect(playerOwnerSource).toMatch(
+      /export\s*\{[^}]*PLAYER_AUDIO_DEFAULTS[^}]*\}/su,
+    );
+
+    for (const mapping of [
+      'defaultValue: PLAYER_AUDIO_DEFAULTS.monitorGuideVocalLevel',
+      'defaultValue: PLAYER_AUDIO_DEFAULTS.captureGuideVocalLevel',
+      'defaultValue: PLAYER_AUDIO_DEFAULTS.transposeSemitones',
+      'defaultValue: PLAYER_AUDIO_DEFAULTS.pitchCents',
+      'defaultValue: PLAYER_AUDIO_DEFAULTS.tempoRate',
+    ]) {
+      expect(playerBarSource).toContain(mapping);
+    }
+
+    expect(playerBarSource.match(/defaultValue:/gu)).toHaveLength(5);
+    expect(playerBarSource).not.toMatch(
+      /player-bar__(?:progress|volume)-range[\s\S]{0,240}:default-value=/u,
+    );
   });
 
   it('limits the custom track and interaction thumb to the v2 component scope', () => {
