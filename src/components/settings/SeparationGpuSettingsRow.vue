@@ -18,14 +18,13 @@ const emit = defineEmits(['setGpuAcceleration']);
     <SettingsActionRow
       :icon="Cpu"
       title="人聲分離"
-      value="嘗試以 GPU 加速 quick／general 分離"
-      tooltip="偵測不到相容 GPU 或加速失敗時，自動退回 CPU。"
+      tooltip="無法使用 GPU 時，會自動改用 CPU。"
       variant="subtle"
     >
       <template #actions>
         <UiCheckbox
           id="separation-gpu-acceleration"
-          label="GPU 加速（建議）"
+          label="GPU 加速"
           aria-label="使用 GPU 加速人聲分離"
           :model-value="gpuAcceleration"
           :disabled="preferenceBusy"

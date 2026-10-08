@@ -33,16 +33,17 @@ async function renderRow(props = {}) {
 }
 
 describe('MusicAnalysisSettingsRow', () => {
-  it('shows a concise purpose and automatic option without capacity or model details', async () => {
+  it('keeps the title and automatic option on one line while preserving the local-processing note', async () => {
     const html = await renderRow();
 
     expect(html).toContain('BPM 分析');
-    expect(html).toContain('產生 BPM 與節拍資料');
-    expect(html).toContain('本機 BPM／節拍');
+    expect(html).toContain('title="在本機分析 BPM 與節拍，不會上傳歌曲。"');
     expect(html).toContain('自動分析');
     expect(html).toContain('aria-label="匯入歌曲後自動分析 BPM 與節拍"');
     expect(html).toContain('checked');
     expect(html).toContain('BPM 分析選項');
+    expect(html).not.toContain('settings-action-row__value');
+    expect(html).not.toContain('產生 BPM 與節拍資料');
     expect(html).not.toContain('約 152 MB');
     expect(html).not.toContain('約 532 MB');
     expect(html).not.toContain('匯入後自動分析');

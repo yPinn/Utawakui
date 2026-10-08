@@ -16,13 +16,17 @@ async function renderRow(props = {}) {
 }
 
 describe('SeparationGpuSettingsRow', () => {
-  it('shows the GPU acceleration option, checked by default', async () => {
+  it('keeps the GPU option on one line and moves fallback detail to the tooltip', async () => {
     const html = await renderRow();
 
     expect(html).toContain('人聲分離');
-    expect(html).toContain('GPU 加速（建議）');
+    expect(html).toContain('>GPU 加速 <!----></label>');
+    expect(html).toContain('title="無法使用 GPU 時，會自動改用 CPU。"');
     expect(html).toContain('aria-label="使用 GPU 加速人聲分離"');
     expect(html).toContain('checked');
+    expect(html).not.toContain('settings-action-row__value');
+    expect(html).not.toContain('quick／general');
+    expect(html).not.toContain('（建議）');
   });
 
   it('renders unchecked when the preference is off', async () => {

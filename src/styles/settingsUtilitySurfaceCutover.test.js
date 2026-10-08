@@ -111,12 +111,13 @@ describe('Settings Utility Token v2 surface cutover', () => {
   });
 
   it('keeps page and separation geometry with their actual component owners', () => {
-    expect(settingsViewSource).toContain(
-      '--settings-view-column-min-width: 22rem',
+    expect(settingsViewSource).toMatch(
+      /\.settings-view\s*\{(?=[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\))[^}]*\}/su,
     );
-    expect(settingsViewSource).toContain(
-      '--settings-view-column-gap: var(--ui-space-4)',
-    );
+    expect(settingsViewSource).toContain('<UiTabs');
+    expect(settingsViewSource).toContain('class="settings-view__panel"');
+    expect(settingsViewSource).not.toContain('settings-view__grid');
+    expect(settingsViewSource).not.toContain('settings-view__column');
 
     const separationSource = readSource(
       '../components/separation/SeparationPresetControl.vue',
@@ -131,6 +132,7 @@ describe('Settings Utility Token v2 surface cutover', () => {
       'SettingsBlock',
       'SettingsActionRow',
       'SettingsFeatureGateRow',
+      'UiTabs',
       'AudioOutputSettingsBlock',
       'ObsIntegrationSettingsBlock',
       'CaptureDeviceModal',
@@ -140,6 +142,6 @@ describe('Settings Utility Token v2 surface cutover', () => {
     ]) {
       expect(settingsViewSource, component).toContain(`<${component}`);
     }
-    expect(settingsViewSource).toContain('v-for="gate in featureGateRows"');
+    expect(settingsViewSource).toContain('v-for="gate in group.gates"');
   });
 });

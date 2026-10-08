@@ -187,12 +187,12 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
       ...dependency,
       title,
       description: isFfmpeg
-        ? '讓 Utawakui 讀取不同音訊格式，供人聲分離與音訊處理使用。'
+        ? '供本機音訊處理使用。'
         : isYtdlp
-          ? '用來把你選定的外部來源保存到本機曲庫。'
+          ? '將選定來源儲存到本機曲庫。'
           : isModel
-            ? '下載後即可在產生人聲分離結果時使用。'
-            : '此功能需要先下載的工具或資料。',
+            ? '供本機人聲分離使用。'
+            : '需先下載。',
       value: dependencyValueLabel(current),
       status,
       statusTone: progress
@@ -308,7 +308,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
     if (enablingFeatureId.value === gate.id || featureGateState.isSaving) {
       return '處理中';
     }
-    return '啟用';
+    return '查看並啟用';
   }
 
   function isGateActionDisabled(gate) {

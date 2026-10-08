@@ -5,6 +5,12 @@ const source = readFileSync(
   new URL('./SettingsView.vue', import.meta.url),
   'utf8',
 );
+const basicPanelStart = source.indexOf('id="settings-basic-panel"');
+const optionalPanelStart = source.indexOf('id="settings-optional-panel"');
+const supportPanelStart = source.indexOf('id="settings-support-panel"');
+const basicPanelSource = source.slice(basicPanelStart, optionalPanelStart);
+const optionalPanelSource = source.slice(optionalPanelStart, supportPanelStart);
+const supportPanelSource = source.slice(supportPanelStart);
 const applicationSectionStart = source.indexOf(
   '<SettingsBlock title="應用程式">',
 );
@@ -31,30 +37,62 @@ const supportSource = source.slice(
 );
 
 describe('SettingsView version and maintenance sections', () => {
-  it('delegates the page heading to the utility frame and keeps five flat categories', () => {
+  it('delegates the page heading to the utility frame and exposes three top-level tabs', () => {
     expect(source).not.toContain('<h1 class="settings-view__title">設定</h1>');
     expect(source).not.toContain('settings-view__header');
     expect(source).not.toContain('settings-view__column-header');
-    expect(source).not.toContain(
-      '<section class="settings-view__column" aria-label=',
+    expect(source).toContain(
+      "import UiTabs from '../components/ui/UiTabs.vue';",
     );
-    expect(source).not.toContain('aria-label="一般設定"');
-    expect(source).not.toContain('aria-label="功能與下載"');
-    expect(source).not.toContain('本機設定');
-    expect(source).not.toContain('功能與下載項目');
-    expect(source).toContain('<SettingsBlock title="曲庫與儲存">');
-    expect(source).toContain('<AudioOutputSettingsBlock');
-    expect(source).toContain('<SettingsBlock title="應用程式">');
-    expect(source).toContain('<SettingsBlock title="支援與維護">');
-    expect(source).toMatch(/<SettingsBlock\s+title="功能與相依能力"/u);
+    expect(source).toContain("{ id: 'basic', label: '基本設定' }");
+    expect(source).toContain("{ id: 'optional', label: '選用功能' }");
+    expect(source).toContain("{ id: 'support', label: '支援與維護' }");
+    expect(source).toContain('aria-label="設定分類"');
+    expect(source).toContain('tab-id-prefix="settings"');
+    expect(source).toContain('panel-id-prefix="settings"');
+    expect(source).toContain('variant="bar"');
+    expect(source).toContain('role="tabpanel"');
+    expect(source).toContain('id="settings-basic-panel"');
+    expect(source).toContain('id="settings-optional-panel"');
+    expect(source).toContain('id="settings-support-panel"');
   });
 
-  it('describes optional downloads in user-facing terms', () => {
-    expect(source).toMatch(/<SettingsBlock\s+title="功能與相依能力"/);
-    expect(source).toContain('額外元件只在需要時下載。');
-    expect(source).not.toContain('工具與模型會列在下方');
-    expect(source).toContain('<MusicAnalysisSettingsRow');
-    expect(source).toContain('FEATURE_IDS.AUDIO_PROCESSING_FLOW');
+  it('keeps core, optional, and support content in their intended panels', () => {
+    expect(basicPanelStart).toBeGreaterThan(-1);
+    expect(optionalPanelStart).toBeGreaterThan(basicPanelStart);
+    expect(supportPanelStart).toBeGreaterThan(optionalPanelStart);
+
+    expect(basicPanelSource).toContain('<SettingsBlock title="曲庫與儲存">');
+    expect(basicPanelSource).toContain('<AudioOutputSettingsBlock');
+    expect(basicPanelSource).toContain('<SettingsBlock title="應用程式">');
+    expect(basicPanelSource).not.toContain('<SettingsFeatureGateRow');
+    expect(basicPanelSource).not.toContain('<FeedbackReportSettingsRow');
+
+    expect(optionalPanelSource).toContain('<SettingsFeatureGateRow');
+    expect(optionalPanelSource).toContain('<MusicAnalysisSettingsRow');
+    expect(optionalPanelSource).toContain('<ObsIntegrationSettingsBlock');
+    expect(optionalPanelSource).not.toContain('<AppUpdateSettingsRow');
+
+    expect(supportPanelSource).toContain('<FeedbackReportSettingsRow');
+    expect(supportPanelSource).toContain('<DiagnosticsSettingsRow');
+    expect(supportPanelSource).not.toContain('<SettingsFeatureGateRow');
+  });
+
+  it('explains the optional boundary once and groups gates by user-facing purpose', () => {
+    expect(source).toContain('使用前請閱讀各功能說明，再選擇是否啟用。');
+    expect(source).toContain("title: '來源與內容'");
+    expect(source).toContain("title: '本機音訊處理'");
+    expect(source).toContain("title: '公開輸出與 OBS'");
+    expect(optionalPanelSource).toContain(
+      'v-for="group in optionalFeatureGroups"',
+    );
+    expect(source).not.toContain('enabledGateCount');
+    expect(source).not.toContain('額外元件只在需要時下載。');
+  });
+
+  it('opens setup requests on the optional-features tab', () => {
+    expect(source).toContain('featureGateAccessState.request?.featureId');
+    expect(source).toContain("activeSettingsTab.value = 'optional'");
   });
 
   it('keeps library location recovery copy short and actionable', () => {

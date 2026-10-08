@@ -121,7 +121,7 @@ describe('UiScrollRegion production migration', () => {
       'viewport-class="settings-view__viewport"',
     );
     expect(settingsSource).toMatch(
-      /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*minmax\(0, 1fr\);/su,
+      /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
     );
     expect(utilitySource).toMatch(
       /\.app-utility-page\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,

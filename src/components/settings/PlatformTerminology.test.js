@@ -50,8 +50,9 @@ describe('platform terminology', () => {
 
     expect(lyrics.body.join('\n')).not.toMatch(/或 OBS/);
     expect(publicOutput.summary).not.toContain('向 OBS 提供');
-    expect(publicOutput.summary).toContain('本機 Browser Source');
+    expect(publicOutput.summary).toContain('Browser Source');
+    expect(publicOutput.summary).not.toContain('OBS');
     expect(obs.title).toContain('OBS');
-    expect(obs.summary).toContain('OBS WebSocket');
+    expect(obs.summary).toContain('OBS');
   });
 });

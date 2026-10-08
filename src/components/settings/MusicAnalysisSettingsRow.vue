@@ -82,10 +82,9 @@ function handleAdvancedAction({ action }) {
     <SettingsActionRow
       :icon="Cpu"
       title="BPM 分析"
-      value="產生 BPM 與節拍資料"
       :status="status"
       :status-tone="statusTone"
-      tooltip="本機 BPM／節拍；歌曲不會上傳。"
+      tooltip="在本機分析 BPM 與節拍，不會上傳歌曲。"
       variant="subtle"
     >
       <template #actions>

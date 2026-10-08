@@ -123,7 +123,7 @@ describe('useFeatureGatePresentation', () => {
       enabled: false,
     });
     const outputRow = findGateRow(presentation, 'public-output-flow');
-    expect(presentation.gateActionLabel(outputRow)).toBe('啟用');
+    expect(presentation.gateActionLabel(outputRow)).toBe('查看並啟用');
     expect(presentation.isGateActionDisabled(outputRow)).toBe(false);
   });
 
@@ -213,6 +213,19 @@ describe('useFeatureGatePresentation', () => {
       findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-inst-hq-4')
         .value,
     ).toBe('產生人聲分離結果時使用');
+
+    expect(
+      findItem(presentation, 'provider-flow', 'yt-dlp-provider-tool')
+        .description,
+    ).toBe('將選定來源儲存到本機曲庫。');
+    expect(
+      findItem(presentation, 'audio-processing-flow', 'ffmpeg-gyan-essentials')
+        .description,
+    ).toBe('供本機音訊處理使用。');
+    expect(
+      findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-kara-2')
+        .description,
+    ).toBe('供本機人聲分離使用。');
   });
 
   it('defaults to a warning tone with only the refresh advanced action when nothing is installed', async () => {
@@ -429,7 +442,7 @@ describe('useFeatureGatePresentation', () => {
       'yt-dlp-provider-tool',
     );
     expect(item.value).not.toMatch(/yt-dlp|GPL|Unlicense|PSF|2026|bgutil/i);
-    expect(item.description).toBe('用來把你選定的外部來源保存到本機曲庫。');
+    expect(item.description).toBe('將選定來源儲存到本機曲庫。');
   });
 
   it('keeps provider runtime reinstall in the advanced menu once installed', async () => {

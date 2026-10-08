@@ -96,7 +96,6 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
         :key="item.id"
         :icon="item.icon"
         :title="item.title || item.name"
-        :value="item.value"
         :status="item.status"
         :status-tone="item.statusTone"
         :tooltip="item.description"

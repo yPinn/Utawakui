@@ -7,7 +7,7 @@
       "category": "provider",
       "confirmLabel": "啟用匯入",
       "cancelLabel": "取消",
-      "summary": "搜尋外部候選來源，並將選定的媒體保存至本機曲庫。",
+      "summary": "搜尋外部來源並匯入本機曲庫。",
       "body": [
         "使用外部來源前，請確認來源平台允許下載、快取或保存。",
         "匯入的音訊、封面及相關資料，仍須依素材授權範圍使用。",
@@ -20,7 +20,7 @@
       "category": "lyrics",
       "confirmLabel": "啟用歌詞",
       "cancelLabel": "取消",
-      "summary": "搜尋並保存外部歌詞或字幕資料。",
+      "summary": "搜尋並保存外部歌詞或字幕。",
       "body": [
         "歌詞與字幕可能受獨立權利保護；取得資料不代表可以公開顯示。",
         "公開顯示於直播、錄影、VOD 或其他輸出前，請確認授權範圍涵蓋該用途。",
@@ -33,7 +33,7 @@
       "category": "audio-processing",
       "confirmLabel": "啟用處理",
       "cancelLabel": "取消",
-      "summary": "在本機進行 BPM／節拍分析、人聲分離，以及音高或速度處理。",
+      "summary": "在本機進行 BPM 分析、人聲分離與音高／速度調整。",
       "body": [
         "處理只在這台電腦執行，歌曲不會上傳；過程可能建立分析資料或新的本機音訊檔案。",
         "公開播放、錄製或散布處理結果前，請確認原始音源及處理用途均獲允許。",
@@ -47,7 +47,7 @@
       "category": "public-output",
       "confirmLabel": "啟用輸出",
       "cancelLabel": "取消",
-      "summary": "透過本機 Browser Source，提供曲目、佇列與歌詞畫面。",
+      "summary": "以 Browser Source 顯示曲目、佇列與歌詞。",
       "body": [
         "輸出的歌詞、封面及曲目資訊，可能出現在直播、錄影或 VOD 中。",
         "啟用前，請確認素材授權與平台規範涵蓋公開展示、傳輸及錄製。",
@@ -61,7 +61,7 @@
       "category": "obs-integration",
       "confirmLabel": "啟用連線",
       "cancelLabel": "取消",
-      "summary": "透過 OBS WebSocket 讀取直播／錄影狀態與時間戳，用於場次記錄。",
+      "summary": "讀取 OBS 狀態與時間戳，建立場次記錄。",
       "body": [
         "需要在 OBS 開啟 WebSocket 伺服器並設定密碼；密碼僅加密保存於本機安全儲存區。",
         "此功能僅讀取狀態，不會建立、變更或控制 OBS 場景。",

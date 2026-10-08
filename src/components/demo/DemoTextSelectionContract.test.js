@@ -66,7 +66,7 @@ describe('Token v2 Candidate text selection contract', () => {
     );
     expectNoneRule(
       adoptedCheckboxSource,
-      '\\.ui-checkbox-field :deep\\(\\.ui-field__label--inline\\)',
+      '\\.ui-checkbox-field:not\\(\\.has-hidden-label\\) :deep\\(\\.ui-field__label--inline\\)',
     );
     expect(formalRangeSource).toMatch(
       /@scope \(\[data-ui-system='v2'\]\)[\s\S]*?\.ui-range :deep\(\.ui-field__label\)\s*\{[^}]*-webkit-user-select: none;[^}]*user-select: none;/su,

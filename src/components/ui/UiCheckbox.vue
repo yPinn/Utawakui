@@ -78,6 +78,7 @@ defineExpose({ focus });
 <style scoped>
 .ui-checkbox-field {
   --ui-checkbox-resolved-target-size: var(--ui-control-height);
+  --ui-checkbox-label-optical-offset: 1px;
 }
 
 .ui-checkbox-field.has-hidden-label {
@@ -100,15 +101,16 @@ defineExpose({ focus });
   align-items: start;
 }
 
-.ui-checkbox-field :deep(.ui-field__label--inline) {
+.ui-checkbox-field:not(.has-hidden-label) :deep(.ui-field__label--inline) {
   box-sizing: border-box;
   min-width: 0;
   padding-block: max(
-    var(--ui-space-0),
+    0rem,
     calc((var(--ui-checkbox-resolved-target-size) - 1lh) / 2)
   );
   overflow-wrap: anywhere;
   cursor: pointer;
+  transform: translateY(var(--ui-checkbox-label-optical-offset));
   -webkit-user-select: none;
   user-select: none;
 }

@@ -90,7 +90,7 @@ describe('featureGates', () => {
     for (const gate of gates) {
       expect(gate.noticeVersion).toBe('feature-notice-v3');
       expect(gate.cancelLabel).toBe('取消');
-      expect(gate.summary.length).toBeLessThanOrEqual(40);
+      expect(gate.summary.length).toBeLessThanOrEqual(28);
       expect(gate.summary.endsWith('。')).toBe(true);
       expect(gate.body.length).toBeGreaterThanOrEqual(3);
       expect(gate.body.length).toBeLessThanOrEqual(4);
@@ -99,6 +99,14 @@ describe('featureGates', () => {
         'Utawakui 不會驗證素材授權；啟用紀錄僅保存在本機。',
       );
     }
+
+    expect(gates.map((gate) => gate.summary)).toEqual([
+      '搜尋外部來源並匯入本機曲庫。',
+      '搜尋並保存外部歌詞或字幕。',
+      '在本機進行 BPM 分析、人聲分離與音高／速度調整。',
+      '以 Browser Source 顯示曲目、佇列與歌詞。',
+      '讀取 OBS 狀態與時間戳，建立場次記錄。',
+    ]);
 
     expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
       '來源平台',
@@ -110,7 +118,7 @@ describe('featureGates', () => {
       getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
     ).toContain('FFmpeg（GPLv3）');
     expect(getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).summary).toContain(
-      'BPM／節拍分析',
+      'BPM 分析',
     );
     expect(
       getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
