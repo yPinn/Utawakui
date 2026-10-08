@@ -168,9 +168,12 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(406);
+    expect(uniqueNames.size).toBe(411);
     expect(uniqueNames).toContain('--ui-folder-content-background');
     expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
+    expect(uniqueNames).toContain('--ui-right-dock-section-surface-background');
+    expect(uniqueNames).toContain('--ui-right-dock-section-surface-padding');
+    expect(uniqueNames).toContain('--ui-right-dock-section-surface-radius');
     for (const name of [
       '--ui-bgm-player-min-inline-size',
       '--ui-bgm-player-inline-size',
@@ -348,10 +351,17 @@ describe('Studio Library workspace prototype isolation', () => {
         '--ui-focus-offset-inset',
         '--ui-focus-width',
         '--ui-folder-tab-label-optical-offset',
-        '--ui-row-active-shadow',
         '--ui-switch-thumb-inset',
       ].sort(),
     );
+  });
+
+  it('owns one quiet selected surface for every track row consumer', () => {
+    expect(tokens).toMatch(
+      /--ui-track-row-selected-surface:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-text\) 8%,\s*transparent\s*\);/su,
+    );
+    expect(tokens).not.toContain('--ui-row-active-shadow');
+    expect(tokens).not.toContain('--ui-track-row-active-shadow');
   });
 
   it('expresses radius and control targets as rem contracts in the design guide', () => {
@@ -362,7 +372,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(designGuide).toContain('`2rem`–`2.25rem` (32–36 CSS px)');
     expect(designGuide).toContain('| Live icon button');
     expect(designGuide).toContain('`2.75rem` (44 CSS px)');
-    expect(designGuide).toContain('`4.25rem` (68 CSS px)');
+    expect(designGuide).toContain('`4.75rem` (76 CSS px)');
   });
 
   it('keeps the Spotify-informed shell anchors and dossier anatomy', () => {
@@ -390,16 +400,30 @@ describe('Studio Library workspace prototype isolation', () => {
     );
   });
 
-  it('keeps the shared 16px shell panel inset owned by the production token layer', () => {
+  it('keeps one 8px perimeter around every shell surface', () => {
+    expect(tokens).toContain(
+      '--ui-shell-content-inset-block: var(--ui-shell-edge-inset-inline);',
+    );
+    expect(tokens).toContain(
+      '--ui-shell-edge-inset-inline: var(--ui-space-2);',
+    );
+    expect(tokens).toContain('--ui-panel-inset: 1rem;');
+    expect(tokens).toContain('--ui-panel-inset: 0.75rem;');
     expect(app).toMatch(
       /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(app).toMatch(
       /\.shell__workspace\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
+    expect(app).toMatch(
+      /\.shell__main\s*\{[^}]*padding-left:\s*var\(--ui-space-3\);[^}]*padding-right:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/su,
+    );
+    expect(app).toMatch(
+      /\.shell__main--with-dock\s*\{[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
+    );
     expect(tokens).not.toContain('--ui-shell-sidebar-inset-block');
     expect(tokens).not.toContain('--ui-shell-panel-inset-block');
-    expect(designGuide).toContain('same `1rem` block inset as Sidebar');
+    expect(designGuide).toContain('one `0.5rem` outer inset on all four sides');
   });
 
   it('offers a dossier-only embed while Vue activates the scoped entries', () => {

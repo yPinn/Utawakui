@@ -85,8 +85,8 @@ describe('useUiDensity', () => {
 
     expect(compactBlock).toContain('--ui-control-height: 2rem');
     expect(compactBlock).toContain('--ui-track-row-min-height: 2.75rem');
-    expect(compactBlock).toContain('--ui-player-bar-height: 4.25rem');
-    expect(compactBlock).toContain('--ui-player-volume-inline-size: 5rem');
+    expect(compactBlock).not.toContain('--ui-player-bar-height');
+    expect(compactBlock).toContain('--ui-player-volume-inline-size: 6rem');
     expect(compactBlock).not.toContain('--ui-font-size-');
     expect(compactBlock).not.toContain('--ui-line-height-');
     expect(tokensSource).not.toContain("[data-ui-system='v1']");

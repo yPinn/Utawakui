@@ -142,7 +142,7 @@
   --ui-player-bar-height: 4.75rem;
   --ui-panel-inset: 1rem;
   --ui-window-titlebar-block-size: 2.5rem;
-  --ui-shell-content-inset-block: var(--ui-panel-inset);
+  --ui-shell-content-inset-block: var(--ui-shell-edge-inset-inline);
   --ui-shell-edge-inset-inline: var(--ui-space-2);
   --ui-shell-leading-artwork-centerline: calc(
     var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
@@ -190,6 +190,9 @@
   --ui-right-dock-content-inset: var(--ui-side-panel-content-inset);
   --ui-right-dock-section-gap: var(--ui-side-panel-section-gap);
   --ui-right-dock-content-gap: var(--ui-side-panel-content-gap);
+  --ui-right-dock-section-surface-background: var(--ui-color-surface-raised);
+  --ui-right-dock-section-surface-padding: var(--ui-space-3);
+  --ui-right-dock-section-surface-radius: var(--ui-radius-lg);
   --ui-right-dock-track-row-min-height: 3.25rem;
   --ui-right-dock-track-artwork-size: 2.5rem;
   --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
@@ -220,7 +223,23 @@
   --ui-player-action-size: var(--ui-control-height);
   --ui-player-action-gap: var(--ui-space-1);
   --ui-player-group-gap: var(--ui-space-1);
-  --ui-player-volume-inline-size: 6rem;
+  --ui-player-volume-inline-size: 7rem;
+  --ui-player-extras-inline-size: calc(
+    var(--ui-player-volume-inline-size) + var(--ui-player-action-size) +
+      var(--ui-player-action-size) + var(--ui-player-action-size) +
+      var(--ui-player-action-size) + var(--ui-player-action-size) +
+      var(--ui-player-action-gap) + var(--ui-player-action-gap) +
+      var(--ui-player-group-gap) + var(--ui-player-group-gap) +
+      var(--ui-player-group-gap)
+  );
+  --ui-player-side-reserve-inline-size: max(
+    calc(
+      var(--ui-player-track-inline-size) +
+        var(--ui-player-leading-padding-inline) -
+        var(--ui-player-padding-inline)
+    ),
+    var(--ui-player-extras-inline-size)
+  );
   --ui-player-panel-edge-offset: var(--ui-space-3);
   --ui-player-panel-padding: var(--ui-space-3);
   --ui-player-panel-inline-size: 22.5rem;
@@ -549,8 +568,12 @@
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
   --ui-track-row-state-surface-outset-inline: 0;
+  --ui-track-row-selected-surface: color-mix(
+    in srgb,
+    var(--ui-color-text) 8%,
+    transparent
+  );
   --ui-track-list-gap: var(--ui-space-1);
-  --ui-row-active-shadow: inset 2px 0 0 var(--ui-color-accent);
   --ui-playlist-row-state-surface-outset-inline: var(
     --ui-side-panel-row-state-surface-outset-inline
   );
@@ -568,8 +591,7 @@
   --ui-track-row-min-height: 2.75rem;
   --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
   --ui-list-header-height: 2rem;
-  --ui-player-bar-height: 4.25rem;
-  --ui-player-volume-inline-size: 5rem;
+  --ui-player-volume-inline-size: 6rem;
   --ui-panel-inset: 0.75rem;
   --ui-shell-gutter: 0.5rem;
   --ui-modal-viewport-inset: var(--ui-space-4);
