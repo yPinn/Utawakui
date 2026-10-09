@@ -1,7 +1,7 @@
 /* Scoped control-panel token system. OBS Overlay tokens remain independent in
  * overlay/shared/tokens.css. */
 
-[data-ui-system='v2'] {
+[data-ui-system='v2'][data-ui-surface-root='true'] {
   /* Primitive colors: value-based names only. */
   --ui-palette-neutral-50: #f3f3f4;
   --ui-palette-neutral-100: #e2e2e4;
@@ -247,6 +247,27 @@
   );
   --ui-player-tools-beat-block-size: var(--ui-space-1);
   --ui-player-tools-meter-control-block-size: 3.5rem;
+  --ui-folder-interior-background-setlist: color-mix(
+    in srgb,
+    var(--ui-color-folder-primary) 12%,
+    var(--ui-color-surface)
+  );
+  --ui-folder-interior-background-lyrics: color-mix(
+    in srgb,
+    var(--ui-color-folder-secondary) 12%,
+    var(--ui-color-surface)
+  );
+  --ui-folder-interior-background-output: color-mix(
+    in srgb,
+    var(--ui-color-folder-tertiary) 12%,
+    var(--ui-color-surface)
+  );
+  --ui-folder-interior-background-import: color-mix(
+    in srgb,
+    var(--ui-color-folder-neutral) 12%,
+    var(--ui-color-surface)
+  );
+  --ui-folder-sheet-background: var(--ui-color-surface);
   --ui-folder-layout-background: var(--ui-color-folder-primary);
   --ui-folder-page-background: var(--ui-color-surface);
   --ui-folder-content-background: var(--ui-color-canvas);
@@ -336,6 +357,7 @@
 
   /* Semantic colors: components should prefer these purpose-based aliases. */
   --ui-color-scheme: dark;
+  --ui-color-shell-substrate: var(--ui-palette-neutral-950);
   --ui-color-canvas: var(--ui-palette-neutral-950);
   --ui-color-surface: var(--ui-palette-neutral-900);
   --ui-color-surface-raised: var(--ui-palette-neutral-800);
@@ -349,6 +371,17 @@
 
   --ui-color-border: var(--ui-palette-neutral-700);
   --ui-color-border-strong: var(--ui-palette-neutral-500);
+  --ui-color-control-boundary: var(--ui-palette-neutral-500);
+
+  /* Persistent operator chrome is a regional semantic, not the global theme. */
+  --ui-color-chrome-surface: var(--ui-palette-neutral-900);
+  --ui-color-chrome-surface-raised: var(--ui-palette-neutral-800);
+  --ui-color-chrome-surface-hover: var(--ui-palette-neutral-700);
+  --ui-color-chrome-surface-active: var(--ui-palette-neutral-600);
+  --ui-color-chrome-surface-selected: var(--ui-palette-indigo-900);
+  --ui-color-chrome-text: var(--ui-palette-warm-neutral-100);
+  --ui-color-chrome-text-muted: var(--ui-palette-neutral-300);
+  --ui-color-chrome-border: var(--ui-palette-neutral-700);
 
   --ui-color-accent: var(--ui-palette-indigo-400);
   --ui-color-accent-hover: var(--ui-palette-indigo-300);
@@ -360,6 +393,14 @@
     var(--ui-color-accent-contrast) 75%,
     var(--ui-color-accent)
   );
+  --ui-color-entry: var(--ui-palette-indigo-500);
+  --ui-color-entry-foreground: var(--ui-palette-warm-neutral-100);
+  --ui-color-entry-selected-indicator: var(--ui-palette-warm-neutral-100);
+  --ui-color-command-surface: var(--ui-palette-neutral-800);
+  --ui-color-command-surface-hover: var(--ui-palette-indigo-900);
+  --ui-color-command-surface-active: var(--ui-palette-indigo-800);
+  --ui-color-command-foreground: var(--ui-palette-indigo-300);
+  --ui-color-command-border: var(--ui-palette-indigo-300);
   --ui-color-focus: var(--ui-palette-indigo-300);
   --ui-color-current: var(--ui-palette-indigo-300);
   --ui-color-current-soft: var(--ui-color-accent-soft);
@@ -415,6 +456,11 @@
   --ui-color-folder-primary: var(--ui-palette-indigo-700);
   --ui-color-folder-secondary: var(--ui-palette-plum-700);
   --ui-color-folder-tertiary: var(--ui-palette-olive-700);
+  --ui-color-folder-neutral: var(--ui-palette-warm-neutral-700);
+  --ui-color-folder-primary-foreground: var(--ui-palette-warm-neutral-100);
+  --ui-color-folder-secondary-foreground: var(--ui-palette-warm-neutral-100);
+  --ui-color-folder-tertiary-foreground: var(--ui-palette-warm-neutral-100);
+  --ui-color-folder-neutral-foreground: var(--ui-palette-warm-neutral-100);
   --ui-color-paper: var(--ui-palette-warm-neutral-300);
   --ui-color-paper-text: var(--ui-palette-neutral-900);
 
@@ -583,8 +629,13 @@
   font-size: var(--ui-font-size-md);
 }
 
+[data-ui-system='v2'][data-ui-surface-root='true'][data-ui-surface='app-shell'] {
+  background: var(--ui-color-shell-substrate);
+}
+
 /* Compact is a discrete remap, not a multiplier or a smaller type ramp. */
-:root[data-ui-density='compact'] [data-ui-system='v2'] {
+:root[data-ui-density='compact']
+  [data-ui-system='v2'][data-ui-surface-root='true'] {
   --ui-control-height: 2rem;
   --ui-track-row-min-height: 2.75rem;
   --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
@@ -599,14 +650,15 @@
 }
 
 /* A manual preference may only reduce motion; it cannot override the OS choice. */
-:root[data-ui-motion='reduced'] [data-ui-system='v2'] {
+:root[data-ui-motion='reduced']
+  [data-ui-system='v2'][data-ui-surface-root='true'] {
   --ui-motion-duration-fast: 0ms;
   --ui-motion-duration-standard: 0ms;
   --ui-motion-duration-slow: 0ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-ui-system='v2'] {
+  [data-ui-system='v2'][data-ui-surface-root='true'] {
     --ui-motion-duration-fast: 0ms;
     --ui-motion-duration-standard: 0ms;
     --ui-motion-duration-slow: 0ms;
@@ -628,17 +680,19 @@
 }
 
 /* Light is a semantic remap of the same primitives, not a color inversion. */
-:root[data-ui-theme='light'] [data-ui-system='v2'] {
+:root[data-ui-theme='light']
+  [data-ui-system='v2'][data-ui-surface-root='true'] {
   --ui-color-scheme: light;
   --ui-shadow-contact: 0 0.125rem 0.375rem rgb(39 41 40 / 10%);
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(39 41 40 / 18%);
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
   --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(39 41 40 / 24%);
 
-  --ui-color-canvas: var(--ui-palette-warm-neutral-200);
+  --ui-color-shell-substrate: var(--ui-palette-neutral-950);
+  --ui-color-canvas: var(--ui-palette-warm-neutral-300);
   --ui-color-surface: var(--ui-palette-warm-neutral-100);
   --ui-color-surface-raised: var(--ui-palette-warm-neutral-50);
-  --ui-color-surface-hover: var(--ui-palette-neutral-100);
+  --ui-color-surface-hover: var(--ui-palette-warm-neutral-300);
   --ui-color-surface-active: var(--ui-palette-neutral-200);
   --ui-color-surface-selected: var(--ui-palette-indigo-100);
 
@@ -646,8 +700,18 @@
   --ui-color-text-muted: var(--ui-palette-neutral-600);
   --ui-color-text-subtle: var(--ui-palette-neutral-500);
 
-  --ui-color-border: var(--ui-palette-neutral-200);
+  --ui-color-border: var(--ui-palette-warm-neutral-400);
   --ui-color-border-strong: var(--ui-palette-neutral-400);
+  --ui-color-control-boundary: var(--ui-palette-neutral-500);
+
+  --ui-color-chrome-surface: var(--ui-palette-neutral-900);
+  --ui-color-chrome-surface-raised: var(--ui-palette-neutral-800);
+  --ui-color-chrome-surface-hover: var(--ui-palette-neutral-700);
+  --ui-color-chrome-surface-active: var(--ui-palette-neutral-600);
+  --ui-color-chrome-surface-selected: var(--ui-palette-indigo-900);
+  --ui-color-chrome-text: var(--ui-palette-warm-neutral-100);
+  --ui-color-chrome-text-muted: var(--ui-palette-neutral-300);
+  --ui-color-chrome-border: var(--ui-palette-neutral-700);
 
   --ui-color-accent: var(--ui-palette-indigo-700);
   --ui-color-accent-hover: var(--ui-palette-indigo-800);
@@ -693,9 +757,170 @@
     transparent
   );
 
-  --ui-color-folder-primary: var(--ui-palette-indigo-400);
-  --ui-color-folder-secondary: var(--ui-palette-plum-200);
-  --ui-color-folder-tertiary: var(--ui-palette-olive-200);
+  --ui-color-folder-primary: var(--ui-palette-indigo-600);
+  --ui-color-folder-secondary: var(--ui-palette-plum-300);
+  --ui-color-folder-tertiary: var(--ui-palette-olive-300);
+  --ui-color-folder-neutral: var(--ui-palette-warm-neutral-400);
+  --ui-color-folder-primary-foreground: var(--ui-palette-warm-neutral-100);
+  --ui-color-folder-secondary-foreground: var(--ui-palette-neutral-900);
+  --ui-color-folder-tertiary-foreground: var(--ui-palette-neutral-900);
+  --ui-color-folder-neutral-foreground: var(--ui-palette-neutral-900);
   --ui-color-paper: var(--ui-palette-warm-neutral-50);
   --ui-color-paper-text: var(--ui-palette-neutral-900);
+
+  --ui-folder-interior-background-setlist: color-mix(
+    in srgb,
+    var(--ui-color-folder-primary) 24%,
+    var(--ui-color-paper)
+  );
+  --ui-folder-interior-background-lyrics: color-mix(
+    in srgb,
+    var(--ui-color-folder-secondary) 24%,
+    var(--ui-color-paper)
+  );
+  --ui-folder-interior-background-output: color-mix(
+    in srgb,
+    var(--ui-color-folder-tertiary) 24%,
+    var(--ui-color-paper)
+  );
+  --ui-folder-interior-background-import: color-mix(
+    in srgb,
+    var(--ui-color-folder-neutral) 24%,
+    var(--ui-color-paper)
+  );
+  --ui-folder-sheet-background: var(--ui-color-paper);
+}
+
+/* Persistent shell chrome is a local dark instrument in both themes. The
+ * boundary remaps shared semantics so descendants keep their normal variants,
+ * focus behavior, status meanings, and native control scheme. */
+[data-ui-system='v2'] [data-ui-region='chrome'] {
+  color-scheme: dark;
+  --ui-color-scheme: dark;
+  --ui-color-canvas: var(--ui-color-chrome-surface);
+  --ui-color-surface: var(--ui-color-chrome-surface);
+  --ui-color-surface-raised: var(--ui-color-chrome-surface-raised);
+  --ui-color-surface-hover: var(--ui-color-chrome-surface-hover);
+  --ui-color-surface-active: var(--ui-color-chrome-surface-active);
+  --ui-color-surface-selected: var(--ui-color-chrome-surface-selected);
+  --ui-color-text: var(--ui-color-chrome-text);
+  --ui-color-text-muted: var(--ui-color-chrome-text-muted);
+  --ui-color-text-subtle: var(--ui-palette-neutral-400);
+  --ui-color-border: var(--ui-color-chrome-border);
+  --ui-color-border-strong: var(--ui-palette-neutral-500);
+  --ui-color-control-boundary: var(--ui-palette-neutral-500);
+
+  --ui-color-accent: var(--ui-palette-indigo-400);
+  --ui-color-accent-hover: var(--ui-palette-indigo-300);
+  --ui-color-accent-active: var(--ui-palette-indigo-500);
+  --ui-color-accent-soft: var(--ui-palette-indigo-900);
+  --ui-color-accent-contrast: var(--ui-palette-neutral-950);
+  --ui-color-accent-contrast-muted: color-mix(
+    in srgb,
+    var(--ui-color-accent-contrast) 75%,
+    var(--ui-color-accent)
+  );
+  --ui-color-focus: var(--ui-palette-indigo-300);
+  --ui-color-current: var(--ui-palette-indigo-300);
+  --ui-color-current-soft: var(--ui-color-accent-soft);
+
+  --ui-color-neutral: var(--ui-palette-cool-gray-300);
+  --ui-color-info: var(--ui-palette-sky-400);
+  --ui-color-success: var(--ui-palette-green-400);
+  --ui-color-warning: var(--ui-palette-amber-400);
+  --ui-color-live: var(--ui-palette-red-400);
+  --ui-color-danger: var(--ui-palette-red-400);
+  --ui-color-danger-contrast: var(--ui-palette-neutral-950);
+  --ui-color-status-contrast: var(--ui-palette-neutral-950);
+  --ui-color-status-outline: var(--ui-color-text);
+  --ui-color-neutral-soft: color-mix(
+    in srgb,
+    var(--ui-color-neutral) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-info-soft: color-mix(
+    in srgb,
+    var(--ui-color-info) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-success-soft: color-mix(
+    in srgb,
+    var(--ui-color-success) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-warning-soft: color-mix(
+    in srgb,
+    var(--ui-color-warning) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-live-soft: color-mix(
+    in srgb,
+    var(--ui-color-live) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-danger-soft: color-mix(
+    in srgb,
+    var(--ui-color-danger) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-gated: var(--ui-color-warning);
+  --ui-color-gated-bg: var(--ui-color-warning-soft);
+
+  --ui-field-bg: var(--ui-color-surface-raised);
+  --ui-field-bg-hover: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly: var(--ui-color-surface);
+  --ui-field-bg-on-raised: var(--ui-color-surface);
+  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
+  --ui-field-fg: var(--ui-color-text);
+  --ui-field-placeholder: var(--ui-color-text-muted);
+  --ui-field-border: var(--ui-color-border);
+  --ui-field-border-hover: var(--ui-color-border-strong);
+  --ui-field-border-invalid: var(--ui-color-danger);
+  --ui-button-danger-text: var(--ui-color-danger);
+  --ui-button-danger-border: var(--ui-color-danger);
+  --ui-button-danger-surface-hover: var(--ui-color-danger-soft);
+  --ui-button-danger-surface-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 24%,
+    var(--ui-color-surface)
+  );
+  --ui-button-danger-fill: var(--ui-color-danger);
+  --ui-button-danger-fill-hover: color-mix(
+    in srgb,
+    var(--ui-color-danger) 94%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-fill-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 88%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-contrast: var(--ui-color-danger-contrast);
+  --ui-button-danger-contrast-muted: color-mix(
+    in srgb,
+    var(--ui-color-danger-contrast) 75%,
+    var(--ui-color-danger)
+  );
+  --ui-sidebar-row-selected-bg: var(--ui-color-surface-selected);
+  --ui-track-row-selected-surface: color-mix(
+    in srgb,
+    var(--ui-color-text) 8%,
+    transparent
+  );
+  --ui-range-track: var(--ui-color-text-subtle);
+  --ui-range-fill: var(--ui-color-text);
+  --ui-range-fill-hover: var(--ui-color-accent);
+  --ui-range-fill-active: var(--ui-color-accent-active);
+  --ui-range-thumb: var(--ui-color-text);
+  --ui-range-thumb-border: var(--ui-color-canvas);
+  --ui-range-focus: var(--ui-color-focus);
+  --ui-range-invalid: var(--ui-color-danger);
+  --ui-range-stop: var(--ui-color-canvas);
+  --ui-range-value: var(--ui-color-text-muted);
+  --ui-scrollbar-thumb: var(--ui-color-text-subtle);
+  --ui-scrollbar-thumb-hover: var(--ui-color-text-muted);
+  --ui-scrollbar-thumb-active: var(--ui-color-text);
+
+  color: var(--ui-color-text);
 }

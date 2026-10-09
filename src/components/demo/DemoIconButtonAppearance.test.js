@@ -199,9 +199,9 @@ describe('DemoIconButtonAppearance', () => {
       ).toHaveLength(2);
     }
     expect(html.match(/data-icon-button-coverage-matrix/gu)).toHaveLength(2);
-    expect(html).toContain('Ghost／Accent／Overlay');
+    expect(html).toContain('Ghost／Accent／Command／Overlay');
     expect(html).toContain(
-      'Ghost／Accent／Overlay 保持完整 hover 與 pressed contract。',
+      'Ghost／Accent／Command／Overlay 保持完整 hover 與 pressed contract。',
     );
     expect(candidateSource).toContain(
       '.ui-icon-btn--overlay:not(:disabled):hover',
@@ -211,6 +211,12 @@ describe('DemoIconButtonAppearance', () => {
     );
     expect(candidateSource).toContain(
       '.ui-icon-btn--accent:not(:disabled):active',
+    );
+    expect(candidateSource).toContain(
+      '.ui-icon-btn--command:not(:disabled):hover',
+    );
+    expect(candidateSource).toContain(
+      '.ui-icon-btn--command:not(:disabled):active',
     );
     expect(currentSource).toContain(
       '.ui-icon-btn--overlay:not(:disabled):active',
@@ -306,7 +312,7 @@ describe('DemoIconButtonAppearance', () => {
     expect(html).toContain('icon · required；fixed 16-unit decorative glyph');
     expect(html).toContain('label · required accessible name');
     expect(html).toContain('title · optional；defaults to label');
-    expect(html).toContain('variant · ghost／accent／overlay');
+    expect(html).toContain('variant · ghost／accent／command／overlay');
     expect(html).toContain('size · md／lg；density owns routine md');
     expect(html).toContain('shape · square／circle／inherit');
     expect(html).toContain(

@@ -88,6 +88,32 @@ describe('Persistent App Shell Token v2 cutover', () => {
     }
   });
 
+  it('scopes Ink chrome to the four persistent shell owners', () => {
+    const tokens = readSource('./tokens.css');
+    const owners = [
+      ['../components/layout/AppTitleBar.vue', 'app-title-bar'],
+      ['../components/layout/AppPlaylistSidebar.vue', 'app-playlist-sidebar'],
+      ['../components/playback/PlayerBar.vue', 'player-bar'],
+      ['../components/layout/AppRightDock.vue', 'app-right-dock'],
+    ];
+
+    for (const [path, className] of owners) {
+      const source = readSource(path);
+      expect(source).toContain(`class="${className}"`);
+      expect(source).toContain('data-ui-region="chrome"');
+    }
+
+    expect(tokens).toMatch(
+      /\[data-ui-system='v2'\] \[data-ui-region='chrome'\]\s*\{[^}]*color-scheme:\s*dark;[^}]*--ui-color-surface:\s*var\(--ui-color-chrome-surface\);[^}]*--ui-color-text:\s*var\(--ui-color-chrome-text\);/su,
+    );
+    expect(tokens).toMatch(
+      /\[data-ui-system='v2'\] \[data-ui-region='chrome'\][\s\S]*?--ui-range-track:\s*var\(--ui-color-text-subtle\);/u,
+    );
+    expect(readSource('../components/playback/PlayerBar.vue')).toMatch(
+      /\.player-bar\s*\{[^}]*background:\s*transparent;/su,
+    );
+  });
+
   it('removes every T1-only reference from the persistent shell slice', () => {
     for (const path of shellSources) {
       const source = readSource(path);

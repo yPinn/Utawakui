@@ -48,6 +48,33 @@ describe('renderer surface registry', () => {
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.performer)).toBe(true);
   });
 
+  it('marks only renderer and standalone prototype roots as paint owners', () => {
+    for (const surfaceId of [
+      'app-shell',
+      'performer',
+      'component-lab',
+      'studio-library-prototype',
+    ]) {
+      expect(registeredSurfaceAttributes(surfaceId)).toMatchObject({
+        'data-ui-surface-root': 'true',
+      });
+    }
+
+    for (const surfaceId of [
+      'app-folder',
+      'setlist',
+      'lyrics',
+      'output',
+      'import',
+      'app-utility',
+      'app-shell-overlay',
+    ]) {
+      expect(registeredSurfaceAttributes(surfaceId)).not.toHaveProperty(
+        'data-ui-surface-root',
+      );
+    }
+  });
+
   it('registers the Folder layout and Utility as sibling v2 surfaces', () => {
     expect(UI_SURFACE_REGISTRY['app-folder']).toMatchObject({
       entryOwner: 'src/App.vue',
@@ -238,6 +265,7 @@ describe('renderer surface registry', () => {
       expect(root.dataset).toEqual({
         uiRenderer: renderer,
         uiSurface: surfaceId,
+        uiSurfaceRoot: 'true',
         uiSystem: system,
       });
       expect(documentRef.documentElement.dataset.uiSystem).toBeUndefined();
@@ -249,6 +277,7 @@ describe('renderer surface registry', () => {
       rootDataset: {
         uiRenderer: 'main',
         uiSurface: 'app-shell',
+        uiSurfaceRoot: 'true',
         uiSystem: 'v2',
       },
     });
@@ -328,6 +357,15 @@ describe('renderer surface registry', () => {
           createDocument({ rootDataset: { uiSystem: 'v1' } }),
         ),
       'Renderer main mount root has conflicting data-ui-system',
+    ],
+    [
+      'a conflicting paint owner',
+      () =>
+        registerRendererSurfaceRoot(
+          'main',
+          createDocument({ rootDataset: { uiSurfaceRoot: 'false' } }),
+        ),
+      'Renderer main mount root has conflicting data-ui-surface-root',
     ],
     [
       'a conflicting renderer owner',

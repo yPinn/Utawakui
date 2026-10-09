@@ -269,10 +269,15 @@ function restoreRightDockFocus() {
   returnFocusTarget = null;
   nextTick(() => {
     const fallbackTarget = document.querySelector(
-      `[aria-controls="${RIGHT_DOCK_CONTENT_ID}"][aria-expanded="false"]`,
+      '.app-right-dock__expand[aria-expanded="false"]',
     );
-    const target =
-      requestedTarget?.isConnected === false ? fallbackTarget : requestedTarget;
+    const requestedTargetBecameHidden =
+      !requestedTarget ||
+      requestedTarget.isConnected === false ||
+      requestedTarget.closest?.('[inert]');
+    const target = requestedTargetBecameHidden
+      ? fallbackTarget
+      : requestedTarget;
     target?.focus?.();
   });
 }
@@ -319,6 +324,11 @@ function closeDockSurface(surface) {
   rightDock.hideSurface(surface);
 }
 
+function collapseRightDock() {
+  returnFocusTarget = null;
+  rightDock.setExpanded(false);
+}
+
 function expandRightDock() {
   rememberRightDockTrigger();
   if (rightDock.hasSurfaces.value) {
@@ -330,16 +340,9 @@ function expandRightDock() {
 
 function toggleRightDockExpanded() {
   if (rightDockExpanded.value) {
-    rememberRightDockTrigger();
-    rightDock.setExpanded(false);
+    collapseRightDock();
   } else {
     expandRightDock();
-  }
-}
-
-function closeTopDockSurface() {
-  if (rightDock.topSurface.value) {
-    closeDockSurface(rightDock.topSurface.value);
   }
 }
 
@@ -354,7 +357,7 @@ function handleRightDockKeydown(event) {
   }
 
   event.preventDefault();
-  closeTopDockSurface();
+  collapseRightDock();
 }
 
 watch(
@@ -495,7 +498,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
             }"
             :aria-hidden="!metadataExpanded"
             :inert="!metadataExpanded"
-            @close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"
+            @collapse="collapseRightDock"
             @open-queue="toggleQueueSurface"
           />
           <QueuePanel
@@ -507,6 +510,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
             :active="queueExpanded"
             :aria-hidden="!queueExpanded"
             :inert="!queueExpanded"
+            @collapse="collapseRightDock"
             @close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"
           />
           <PerformanceSessionPanel
@@ -517,7 +521,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
             }"
             :aria-hidden="!sessionExpanded"
             :inert="!sessionExpanded"
-            @close="closeDockSurface(RIGHT_DOCK_SURFACE_SESSION)"
+            @collapse="collapseRightDock"
             @open-preparation="openSessionPreparation"
           />
         </AppRightDock>
@@ -598,6 +602,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
   height: 100%;
   /* Prevent 1fr content from forcing the fixed shell wider than viewport. */
   min-width: 0;
+  background: var(--ui-color-shell-substrate);
 }
 
 .shell__titlebar {

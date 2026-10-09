@@ -74,8 +74,8 @@ describe('QueuePanel shared Dock content', () => {
       "import AppRightDockPanel from '../layout/AppRightDockPanel.vue';",
     );
     expect(source).toContain('title="播放清單"');
-    expect(source).toContain('close-label="關閉播放佇列"');
-    expect(source).toContain('@close="emit(\'close\')"');
+    expect(source).toContain('collapse-label="摺疊播放佇列"');
+    expect(source).toContain('@collapse="emit(\'collapse\')"');
     expect(source).not.toContain('AppRightDockHeader');
     expect(source).not.toContain('class="queue-panel__header"');
     expect(source).not.toContain('PlayerBarPanel');

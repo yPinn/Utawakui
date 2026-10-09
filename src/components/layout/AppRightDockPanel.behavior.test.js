@@ -72,14 +72,14 @@ describe('AppRightDockPanel', () => {
   });
 
   it('owns one labelled panel, fixed header, and vertical scroll viewport', () => {
-    const onClose = vi.fn();
+    const onCollapse = vi.fn();
     const { app, root } = mount(
       AppRightDockPanel,
       {
         title: '播放資訊',
         subtitle: '目前佇列',
-        closeLabel: '關閉播放資訊',
-        onClose,
+        collapseLabel: '摺疊播放資訊',
+        onCollapse,
       },
       {
         identity: () => 'Identity controls',
@@ -90,17 +90,17 @@ describe('AppRightDockPanel', () => {
     const viewports = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('ui-scroll-region__viewport'),
     );
-    const close = findAll(
+    const collapse = findAll(
       root,
-      (node) => node.type === 'button' && textContent(node) === '關閉播放資訊',
+      (node) => node.type === 'button' && textContent(node) === '摺疊播放資訊',
     )[0];
 
     expect(panel.props['aria-label']).toBe('播放資訊');
     expect(textContent(root)).toContain('Identity controls');
     expect(textContent(root)).toContain('Panel content');
     expect(viewports).toHaveLength(1);
-    trigger(close, 'onClick');
-    expect(onClose).toHaveBeenCalledOnce();
+    trigger(collapse, 'onClick');
+    expect(onCollapse).toHaveBeenCalledOnce();
     app.unmount();
   });
 
@@ -109,7 +109,7 @@ describe('AppRightDockPanel', () => {
       AppRightDockPanel,
       {
         title: '播放清單',
-        closeLabel: '關閉播放清單',
+        collapseLabel: '摺疊播放清單',
       },
       { default: () => 'Queue content' },
     );
@@ -140,7 +140,7 @@ describe('AppRightDockPanel', () => {
           {
             ref: panelRef,
             title: '播放清單',
-            closeLabel: '關閉播放清單',
+            collapseLabel: '摺疊播放清單',
           },
           { default: () => 'Queue content' },
         ),

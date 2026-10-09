@@ -76,11 +76,11 @@ describe('useUiDensity', () => {
 
   it('uses one compact geometry remap without creating another type ramp', () => {
     expect(tokensSource).toContain(
-      ":root[data-ui-density='compact'] [data-ui-system='v2']",
+      ":root[data-ui-density='compact']\n  [data-ui-system='v2'][data-ui-surface-root='true']",
     );
 
     const compactBlock = tokensSource.match(
-      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([^}]*)\}/su,
+      /:root\[data-ui-density='compact'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([^}]*)\}/su,
     )?.[1];
 
     expect(compactBlock).toContain('--ui-control-height: 2rem');

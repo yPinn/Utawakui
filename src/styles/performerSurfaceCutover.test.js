@@ -143,7 +143,7 @@ describe('Performer renderer Token v2 cutover', () => {
 
   it('keeps the native substrate synchronized with the v2 canvas palette', () => {
     expect(performerWindowSource).toContain(
-      "backgroundColor: initialTheme === 'light' ? '#e8e4dd' : '#191a1e'",
+      "backgroundColor: initialTheme === 'light' ? '#dad7d0' : '#191a1e'",
     );
     expect(performerWindowSource).toContain(
       'additionalArguments: [`--ui-theme=${initialTheme}`]',

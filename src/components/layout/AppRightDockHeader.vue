@@ -1,17 +1,17 @@
 <script setup>
-import { X } from '../../icons/index.js';
+import { PanelRightClose } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 
 defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: '' },
-  closeLabel: { type: String, required: true },
+  collapseLabel: { type: String, required: true },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['collapse']);
 
-function closeDock() {
-  emit('close');
+function collapseDock() {
+  emit('collapse');
 }
 </script>
 
@@ -24,11 +24,12 @@ function closeDock() {
       </slot>
     </div>
     <UiIconButton
-      class="app-right-dock-header__close"
-      :icon="X"
-      :label="closeLabel"
+      class="app-right-dock-header__collapse"
+      :icon="PanelRightClose"
+      :label="collapseLabel"
       size="md"
-      @click="closeDock"
+      tooltip-placement="bottom"
+      @click="collapseDock"
     />
   </header>
 </template>

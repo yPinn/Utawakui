@@ -12,7 +12,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
-const emit = defineEmits(['close', 'openPreparation']);
+const emit = defineEmits(['collapse', 'openPreparation']);
 const { confirm: confirmAction } = useAppConfirmation();
 const {
   state,
@@ -99,8 +99,8 @@ async function prepareSelectedCollection() {
   <AppRightDockPanel
     title="場次"
     subtitle="錄製／直播待唱"
-    close-label="關閉場次"
-    @close="emit('close')"
+    collapse-label="摺疊場次"
+    @collapse="emit('collapse')"
   >
     <UiNotice
       v-if="state.error"

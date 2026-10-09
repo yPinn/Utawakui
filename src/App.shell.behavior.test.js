@@ -4,6 +4,15 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./App.vue', import.meta.url), 'utf8');
 
 describe('App shell right Dock', () => {
+  it('uses a dedicated dark substrate around the light Folder surface', () => {
+    expect(source).toMatch(
+      /\.shell\s*\{[^}]*background:\s*var\(--ui-color-shell-substrate\);/su,
+    );
+    expect(source).not.toMatch(
+      /\.shell\s*\{[^}]*background:\s*var\(--ui-color-canvas\);/su,
+    );
+  });
+
   it('projects expanded Right Dock width without coupling it to collapsed geometry', () => {
     expect(source).toContain('useAppRightDockWidth');
     expect(source).toContain("'--ui-right-dock-width':");
@@ -115,7 +124,7 @@ describe('App shell right Dock', () => {
     );
     const dockExpandHandler = source.slice(
       source.indexOf('function expandRightDock'),
-      source.indexOf('function closeTopDockSurface'),
+      source.indexOf('function handleRightDockKeydown'),
     );
 
     expect(dockTriggerHandlers).not.toContain(
@@ -207,14 +216,16 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('openSeparationSurface');
     expect(source).not.toContain(':separation-controls=');
     expect(source).not.toContain('@separation-activate=');
-    expect(source).toContain(
-      '@close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"',
-    );
+    expect(source.match(/@collapse="collapseRightDock"/gu)).toHaveLength(3);
     expect(source).toContain(
       '@close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"',
     );
+    expect(source).toMatch(
+      /function collapseRightDock\(\)\s*\{[^}]*rightDock\.setExpanded\(false\);/su,
+    );
+    expect(source).toContain("requestedTarget.closest?.('[inert]')");
     expect(source).toContain(
-      '@close="closeDockSurface(RIGHT_DOCK_SURFACE_SESSION)"',
+      '\'.app-right-dock__expand[aria-expanded="false"]\'',
     );
   });
 

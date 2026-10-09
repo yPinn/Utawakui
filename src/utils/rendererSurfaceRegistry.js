@@ -236,11 +236,15 @@ function surfaceDefinition(surfaceId) {
 
 export function registeredSurfaceAttributes(surfaceId) {
   const definition = surfaceDefinition(surfaceId);
-  return Object.freeze({
+  const attributes = {
     'data-ui-renderer': definition.renderer,
     'data-ui-surface': definition.surfaceId,
     'data-ui-system': definition.system,
-  });
+  };
+  if (definition.parentSurfaceId === null) {
+    attributes['data-ui-surface-root'] = 'true';
+  }
+  return Object.freeze(attributes);
 }
 
 export function registeredOverlayHostAttributes(surfaceId) {
@@ -271,6 +275,20 @@ export function rendererRootSurfaceId(overlayHostSelector) {
     current = surfaceDefinition(current.parentSurfaceId);
   }
   return current.overlayHostId ? current.surfaceId : null;
+}
+
+function registerDatasetValue(root, renderer, datasetKey, expected) {
+  const current = root.dataset[datasetKey];
+  if (current !== undefined && current !== expected) {
+    const attribute = datasetKey.replace(
+      /[A-Z]/g,
+      (character) => `-${character.toLowerCase()}`,
+    );
+    throw new Error(
+      `Renderer ${renderer} mount root has conflicting data-${attribute}`,
+    );
+  }
+  root.dataset[datasetKey] = expected;
 }
 
 export function registerRendererSurfaceRoot(
@@ -304,19 +322,9 @@ export function registerRendererSurfaceRoot(
   }
 
   for (const [datasetKey, definitionKey] of DATASET_FIELDS) {
-    const expected = definition[definitionKey];
-    const current = root.dataset[datasetKey];
-    if (current !== undefined && current !== expected) {
-      const attribute = datasetKey.replace(
-        /[A-Z]/g,
-        (character) => `-${character.toLowerCase()}`,
-      );
-      throw new Error(
-        `Renderer ${renderer} mount root has conflicting data-${attribute}`,
-      );
-    }
-    root.dataset[datasetKey] = expected;
+    registerDatasetValue(root, renderer, datasetKey, definition[definitionKey]);
   }
+  registerDatasetValue(root, renderer, 'uiSurfaceRoot', 'true');
 
   return root;
 }

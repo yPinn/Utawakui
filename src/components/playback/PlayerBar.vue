@@ -520,7 +520,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="player-bar" role="region" aria-label="播放控制列">
+  <div
+    class="player-bar"
+    data-ui-region="chrome"
+    role="region"
+    aria-label="播放控制列"
+  >
     <UiNotice
       v-if="state.error"
       class="player-bar__notice"

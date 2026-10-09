@@ -33,13 +33,23 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(411);
+    expect(names.size).toBe(439);
     expect(names).toContain('--ui-folder-content-background');
     expect(names).toContain('--ui-folder-content-state-min-block-size');
+    expect(names).toContain('--ui-folder-interior-background-setlist');
+    expect(names).toContain('--ui-folder-interior-background-lyrics');
+    expect(names).toContain('--ui-folder-interior-background-output');
+    expect(names).toContain('--ui-folder-interior-background-import');
+    expect(names).toContain('--ui-folder-sheet-background');
+    for (const role of ['primary', 'secondary', 'tertiary', 'neutral']) {
+      expect(names).toContain(`--ui-color-folder-${role}-foreground`);
+    }
     expect(names).toContain('--ui-right-dock-section-surface-background');
     expect(names).toContain('--ui-right-dock-section-surface-padding');
     expect(names).toContain('--ui-right-dock-section-surface-radius');
-    expect(tokens).toContain("[data-ui-system='v2'] {");
+    expect(tokens).toContain(
+      "[data-ui-system='v2'][data-ui-surface-root='true'] {",
+    );
     expect(tokens).not.toContain("[data-ui-system='v1']");
     for (const path of retiredPaths) {
       expect(existsSync(resolve(root, path)), path).toBe(false);

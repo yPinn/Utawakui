@@ -28,7 +28,10 @@ import {
   collectionManageMenuItems,
 } from '../../utils/collectionMenuItems.js';
 import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import { useTooltip } from '../ui/useTooltip.js';
 
 const props = defineProps({
   // Passed from SetlistView to avoid a duplicate library subscription.
@@ -50,6 +53,32 @@ const emit = defineEmits([
   'libraryViewSelect',
   'playlistAction',
 ]);
+
+const {
+  open: allTracksTooltipOpen,
+  position: allTracksTooltipPosition,
+  setTooltip: setAllTracksTooltip,
+  tooltipId: allTracksTooltipId,
+  triggerProps: allTracksTooltipTriggerProps,
+} = useTooltip({
+  text: '全部曲目',
+  placement: 'end',
+  disabled: computed(() => !props.compact),
+  describedBy: false,
+});
+
+const {
+  open: localTracksTooltipOpen,
+  position: localTracksTooltipPosition,
+  setTooltip: setLocalTracksTooltip,
+  tooltipId: localTracksTooltipId,
+  triggerProps: localTracksTooltipTriggerProps,
+} = useTooltip({
+  text: '本機曲目',
+  placement: 'end',
+  disabled: computed(() => !props.compact),
+  describedBy: false,
+});
 
 // A custom cover (album's own official artwork, or a playlist's manually
 // uploaded one — see LibraryEntityDossier.vue) always wins; otherwise the
@@ -404,7 +433,7 @@ function startDrag(playlist, event) {
   <nav class="playlist-sidebar" aria-label="播放清單篩選與集合">
     <div class="playlist-sidebar__toolbar">
       <div class="playlist-sidebar__toolbar-expanded">
-        <div class="playlist-sidebar__search" title="搜尋歌單、專輯或曲目">
+        <div class="playlist-sidebar__search">
           <span class="playlist-sidebar__search-icon-slot" aria-hidden="true">
             <Search class="playlist-sidebar__search-icon" :size="ICON_SIZE" />
           </span>
@@ -416,25 +445,99 @@ function startDrag(playlist, event) {
             placeholder="搜尋"
           />
         </div>
-        <button
-          type="button"
+        <UiIconButton
           class="playlist-sidebar__toolbar-action"
-          aria-label="新增歌單"
-          title="新增歌單"
+          :icon="Plus"
+          label="新增歌單"
+          variant="command"
           @click="createPlaylist"
-        >
-          <Plus :size="ICON_SIZE" aria-hidden="true" />
-        </button>
+        />
       </div>
-      <button
-        type="button"
+      <UiIconButton
         class="playlist-sidebar__toolbar-action playlist-sidebar__toolbar-action--compact"
-        aria-label="新增歌單"
-        title="新增歌單"
+        :icon="Plus"
+        label="新增歌單"
+        variant="command"
         @click="createPlaylist"
+      />
+    </div>
+
+    <div class="playlist-sidebar__fixed-navigation">
+      <button
+        v-bind="allTracksTooltipTriggerProps"
+        type="button"
+        class="playlist-sidebar__item"
+        aria-label="全部曲目"
+        :class="{
+          'playlist-sidebar__item--active': isLibraryViewActive('all'),
+        }"
+        :aria-current="isLibraryViewActive('all') ? 'page' : undefined"
+        @click="selectLibraryView('all')"
+        @contextmenu="openGlobalMenu"
       >
-        <Plus :size="ICON_SIZE" aria-hidden="true" />
+        <span
+          class="playlist-sidebar__item-state-surface"
+          aria-hidden="true"
+        ></span>
+        <span
+          class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
+          aria-hidden="true"
+        >
+          <Library :size="ICON_SIZE" aria-hidden="true" />
+        </span>
+        <span class="playlist-sidebar__info">
+          <span class="playlist-sidebar__label">全部曲目</span>
+        </span>
+        <UiTooltipSurface
+          :open="allTracksTooltipOpen"
+          text="全部曲目"
+          :tooltip-id="allTracksTooltipId"
+          :position="allTracksTooltipPosition"
+          placement="end"
+          :set-element="setAllTracksTooltip"
+        />
       </button>
+
+      <button
+        v-bind="localTracksTooltipTriggerProps"
+        type="button"
+        class="playlist-sidebar__item"
+        aria-label="本機曲目"
+        :class="{
+          'playlist-sidebar__item--active': isLibraryViewActive('local'),
+        }"
+        :aria-current="isLibraryViewActive('local') ? 'page' : undefined"
+        @click="selectLibraryView('local')"
+        @contextmenu="openGlobalMenu"
+      >
+        <span
+          class="playlist-sidebar__item-state-surface"
+          aria-hidden="true"
+        ></span>
+        <span
+          class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
+          aria-hidden="true"
+        >
+          <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
+        </span>
+        <span class="playlist-sidebar__info">
+          <span class="playlist-sidebar__label">本機曲目</span>
+        </span>
+        <UiTooltipSurface
+          :open="localTracksTooltipOpen"
+          text="本機曲目"
+          :tooltip-id="localTracksTooltipId"
+          :position="localTracksTooltipPosition"
+          placement="end"
+          :set-element="setLocalTracksTooltip"
+        />
+      </button>
+
+      <hr
+        v-if="hasVisibleCollectionItems"
+        class="playlist-sidebar__divider"
+        aria-hidden="true"
+      />
     </div>
 
     <UiScrollLayout
@@ -442,70 +545,10 @@ function startDrag(playlist, event) {
       axis="vertical"
       :scrollbar-visibility="compact ? 'hidden' : 'auto'"
       tabindex="0"
-      aria-label="播放清單內容"
+      aria-label="播放清單與參照內容"
       @contextmenu="openGlobalMenu"
     >
       <div class="playlist-sidebar__list">
-        <button
-          type="button"
-          class="playlist-sidebar__item"
-          aria-label="全部曲目"
-          :class="{
-            'playlist-sidebar__item--active': isLibraryViewActive('all'),
-          }"
-          :aria-current="isLibraryViewActive('all') ? 'page' : undefined"
-          title="全部曲目"
-          @click="selectLibraryView('all')"
-          @contextmenu="openGlobalMenu"
-        >
-          <span
-            class="playlist-sidebar__item-state-surface"
-            aria-hidden="true"
-          ></span>
-          <span
-            class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
-            aria-hidden="true"
-          >
-            <Library :size="ICON_SIZE" aria-hidden="true" />
-          </span>
-          <span class="playlist-sidebar__info">
-            <span class="playlist-sidebar__label">全部曲目</span>
-          </span>
-        </button>
-
-        <button
-          type="button"
-          class="playlist-sidebar__item"
-          aria-label="本機曲目"
-          :class="{
-            'playlist-sidebar__item--active': isLibraryViewActive('local'),
-          }"
-          :aria-current="isLibraryViewActive('local') ? 'page' : undefined"
-          title="本機曲目"
-          @click="selectLibraryView('local')"
-          @contextmenu="openGlobalMenu"
-        >
-          <span
-            class="playlist-sidebar__item-state-surface"
-            aria-hidden="true"
-          ></span>
-          <span
-            class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
-            aria-hidden="true"
-          >
-            <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
-          </span>
-          <span class="playlist-sidebar__info">
-            <span class="playlist-sidebar__label">本機曲目</span>
-          </span>
-        </button>
-
-        <hr
-          v-if="hasVisibleCollectionItems"
-          class="playlist-sidebar__divider"
-          aria-hidden="true"
-        />
-
         <PlaylistSidebarRow
           v-for="playlist in visiblePlaylistItems"
           :key="playlist.id"
@@ -598,12 +641,28 @@ function startDrag(playlist, event) {
 
 <style scoped>
 .playlist-sidebar {
+  --ui-playlist-navigation-plate-background: var(--ui-color-entry);
+  --ui-playlist-navigation-plate-foreground: var(--ui-color-entry-foreground);
+  --ui-playlist-navigation-active-indicator: var(
+    --ui-color-entry-selected-indicator
+  );
+
   box-sizing: border-box;
   display: flex;
   min-height: 0;
   height: 100%;
   flex-direction: column;
   padding-block-start: var(--ui-playlist-sidebar-padding-block);
+}
+
+.playlist-sidebar__fixed-navigation {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--ui-playlist-list-gap);
+  margin-block-start: var(--ui-playlist-list-gap);
+  margin-inline-start: var(--ui-playlist-sidebar-padding-inline);
+  margin-inline-end: var(--ui-playlist-row-state-surface-outset-inline);
 }
 
 .playlist-sidebar__scroll {
@@ -786,25 +845,7 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__toolbar-action {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: var(--ui-sidebar-toolbar-control-size);
-  height: var(--ui-sidebar-toolbar-control-size);
-  padding: 0;
-  border: var(--ui-border-width) solid transparent;
-  border-radius: var(--ui-radius-sm);
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface-hover) 88%,
-    var(--ui-color-text)
-  );
-  color: var(--ui-color-text-muted);
-  line-height: var(--ui-line-height-label);
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
+  --ui-icon-button-size-override: var(--ui-sidebar-toolbar-control-size);
 }
 
 .playlist-sidebar__toolbar-expanded,
@@ -841,17 +882,6 @@ function startDrag(playlist, event) {
   pointer-events: none;
 }
 
-.playlist-sidebar__toolbar-action:hover {
-  border-color: var(--ui-color-border);
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-}
-
-.playlist-sidebar__toolbar-action:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
 .playlist-sidebar__thumb {
   position: relative;
   z-index: 1;
@@ -873,28 +903,18 @@ function startDrag(playlist, event) {
   overflow: hidden;
 }
 
-.playlist-sidebar__item--active .playlist-sidebar__thumb {
-  color: var(--ui-color-accent);
-}
-
-/* Default library entries act like generated covers, not outline buttons. */
+/* Fixed library functions use a stable filled entry plate. The row owns hover
+   and pressed paint; the plate only adds a selected-state indicator. */
 .playlist-sidebar__thumb--accent {
   border: var(--ui-border-width) solid transparent;
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+  background: var(--ui-playlist-navigation-plate-background);
+  color: var(--ui-playlist-navigation-plate-foreground);
 }
 
-.playlist-sidebar__item:hover .playlist-sidebar__thumb--accent {
-  background: var(--ui-color-accent-hover);
-  color: var(--ui-color-accent-contrast);
-}
-
-/* Selected accent rows keep the cover visible without becoming a second tab. */
 .playlist-sidebar__item--active
   .playlist-sidebar__thumb.playlist-sidebar__thumb--accent {
-  background: var(--ui-color-accent-hover);
-  color: var(--ui-color-accent-contrast);
-  opacity: 1;
+  box-shadow: 0 0 0 var(--ui-focus-width)
+    var(--ui-playlist-navigation-active-indicator);
 }
 
 .playlist-sidebar__info {
@@ -932,6 +952,10 @@ function startDrag(playlist, event) {
    .playlist-sidebar-row__info rule — see that file's comment for why the
    threshold is a literal px value instead of a custom property. */
 @container (width < 256px) {
+  .playlist-sidebar__fixed-navigation {
+    margin-inline: var(--ui-playlist-sidebar-padding-inline-compact);
+  }
+
   .playlist-sidebar__scroll {
     --ui-scroll-layout-padding-inline-start: var(
       --ui-playlist-sidebar-padding-inline-compact
@@ -1005,10 +1029,6 @@ function startDrag(playlist, event) {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
-  }
-
-  .playlist-sidebar__item--active .playlist-sidebar__thumb {
-    box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent);
   }
 }
 

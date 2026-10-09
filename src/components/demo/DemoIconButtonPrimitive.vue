@@ -16,7 +16,7 @@ defineProps({
 const ANATOMY = [
   ['glyph', '1', '固定 16-unit decorative glyph；不隨 target 放大。'],
   ['target', '2', 'md／lg target 尺寸與 glyph 分責。'],
-  ['appearance', '3', 'ghost／accent／overlay 只處理視覺層級。'],
+  ['appearance', '3', 'ghost／accent／command／overlay 只處理視覺層級。'],
   ['shape', '4', 'square · routine toolbar；circle · primary transport。'],
   [
     'stretch',
@@ -55,26 +55,76 @@ const STATES = [
 
 const COVERAGE = {
   candidate: [
-    ['default', 'Transparent／muted', 'Accent fill', '55% scrim'],
-    ['hover', 'Hover surface', 'Accent hover', '68% scrim'],
-    ['pressed', 'Active surface', 'Accent active', '78% scrim'],
-    ['focus-visible', 'Indigo ring', 'Indigo ring', 'Indigo ring'],
-    ['active toggle', 'Selected＋accent', 'Accent fill', 'Caller-defined'],
+    [
+      'default',
+      'Transparent／muted',
+      'Accent fill',
+      'Command outline',
+      '55% scrim',
+    ],
+    ['hover', 'Hover surface', 'Accent hover', 'Command hover', '68% scrim'],
+    [
+      'pressed',
+      'Active surface',
+      'Accent active',
+      'Command active',
+      '78% scrim',
+    ],
+    [
+      'focus-visible',
+      'Indigo ring',
+      'Indigo ring',
+      'Indigo ring',
+      'Indigo ring',
+    ],
+    [
+      'active toggle',
+      'Selected＋accent',
+      'Accent fill',
+      'Caller-defined',
+      'Caller-defined',
+    ],
     [
       'disabled',
+      'Native disabled＋50%',
       'Native disabled＋50%',
       'Native disabled＋50%',
       'Native disabled＋50%',
     ],
   ],
   current: [
-    ['default', 'Transparent／muted', 'Accent fill', '55% scrim'],
-    ['hover', 'Hover surface', 'Accent hover', 'Same as default'],
-    ['pressed', 'Active surface', 'Same as hover', 'Same as default'],
-    ['focus-visible', 'Coral ring', 'Coral ring', 'Coral ring'],
-    ['active toggle', 'Selected＋accent', 'Accent fill', 'Caller-defined'],
+    [
+      'default',
+      'Transparent／muted',
+      'Accent fill',
+      'Command outline',
+      '55% scrim',
+    ],
+    [
+      'hover',
+      'Hover surface',
+      'Accent hover',
+      'Command hover',
+      'Same as default',
+    ],
+    [
+      'pressed',
+      'Active surface',
+      'Same as hover',
+      'Command active',
+      'Same as default',
+    ],
+    ['focus-visible', 'Coral ring', 'Coral ring', 'Coral ring', 'Coral ring'],
+    [
+      'active toggle',
+      'Selected＋accent',
+      'Accent fill',
+      'Caller-defined',
+      'Caller-defined',
+    ],
     [
       'disabled',
+      'Native disabled＋50%',
       'Native disabled＋50%',
       'Native disabled＋50%',
       'Native disabled＋50%',
@@ -84,7 +134,14 @@ const COVERAGE = {
 
 function stateProps(state, variant) {
   return {
-    icon: variant === 'ghost' ? Repeat : variant === 'accent' ? Play : Ellipsis,
+    icon:
+      variant === 'ghost'
+        ? Repeat
+        : variant === 'accent'
+          ? Play
+          : variant === 'command'
+            ? Download
+            : Ellipsis,
     label: `${variant} ${state}`,
     variant,
     active: state === 'active',
@@ -213,6 +270,10 @@ function stateProps(state, variant) {
               :is="layer.component"
               v-bind="stateProps(state[0], 'accent')"
             />
+            <component
+              :is="layer.component"
+              v-bind="stateProps(state[0], 'command')"
+            />
             <span class="demo-icon-button-state__overlay">
               <component
                 :is="layer.component"
@@ -235,6 +296,7 @@ function stateProps(state, variant) {
               <th>State</th>
               <th>Ghost</th>
               <th>Accent</th>
+              <th>Command</th>
               <th>Overlay</th>
             </tr>
           </thead>
@@ -244,6 +306,7 @@ function stateProps(state, variant) {
               <td>{{ row[1] }}</td>
               <td>{{ row[2] }}</td>
               <td>{{ row[3] }}</td>
+              <td>{{ row[4] }}</td>
             </tr>
           </tbody>
         </table>
@@ -297,8 +360,8 @@ function stateProps(state, variant) {
         <div>
           <dt>Appearance</dt>
           <dd>
-            variant · ghost／accent／overlay<br />size · md／lg；density owns
-            routine md<br />shape · square／circle／inherit
+            variant · ghost／accent／command／overlay<br />size ·
+            md／lg；density owns routine md<br />shape · square／circle／inherit
           </dd>
         </div>
         <div>
@@ -502,6 +565,11 @@ function stateProps(state, variant) {
 }
 
 .demo-icon-button-state[data-icon-button-state='hover']
+  :deep(.ui-icon-btn--command) {
+  background: var(--ui-color-command-surface-hover);
+}
+
+.demo-icon-button-state[data-icon-button-state='hover']
   :deep(.ui-icon-btn--overlay) {
   background: var(--ui-color-overlay-scrim-hover);
 }
@@ -521,6 +589,11 @@ function stateProps(state, variant) {
 .demo-icon-button-state[data-icon-button-state='pressed']
   :deep(.ui-icon-btn--accent) {
   background: var(--ui-color-accent-active);
+}
+
+.demo-icon-button-state[data-icon-button-state='pressed']
+  :deep(.ui-icon-btn--command) {
+  background: var(--ui-color-command-surface-active);
 }
 
 .demo-icon-button-state[data-icon-button-state='pressed']

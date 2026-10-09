@@ -224,7 +224,7 @@ describe('performer window manager', () => {
     manager.open();
 
     expect(FakeWindow.instances[0].options).toMatchObject({
-      backgroundColor: '#e8e4dd',
+      backgroundColor: '#dad7d0',
     });
     expect(
       FakeWindow.instances[0].options.webPreferences.additionalArguments,
@@ -248,7 +248,7 @@ describe('performer window manager', () => {
     uiTheme = 'light';
 
     expect(manager.applyUiTheme('light')).toBe(true);
-    expect(window.setBackgroundColor).toHaveBeenCalledWith('#e8e4dd');
+    expect(window.setBackgroundColor).toHaveBeenCalledWith('#dad7d0');
     expect(window.webContents.send).toHaveBeenCalledWith(
       'performer-view:ui-theme',
       'light',

@@ -42,11 +42,11 @@ describe('Right Dock compiled render contracts', () => {
     const withSubtitle = await render(AppRightDockHeader, {
       title: '播放資訊',
       subtitle: '深夜練唱清單',
-      closeLabel: '關閉播放資訊',
+      collapseLabel: '摺疊播放資訊',
     });
     const titleOnly = await render(AppRightDockHeader, {
       title: '佇列',
-      closeLabel: '關閉播放佇列',
+      collapseLabel: '摺疊播放佇列',
     });
 
     expect(withSubtitle).toContain('深夜練唱清單');

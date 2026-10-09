@@ -70,6 +70,7 @@ function navigate(destinationId, event) {
           'app-folder-layout__destination--active':
             destination.id === activeDestination,
         }"
+        :data-folder-destination="destination.id"
         :data-app-workflow-trigger="destination.id"
         :aria-current="
           destination.id === activeDestination ? 'page' : undefined
@@ -91,6 +92,10 @@ function navigate(destinationId, event) {
 
 <style scoped>
 .app-folder-layout {
+  --ui-folder-layout-background: var(--ui-color-folder-primary);
+  --ui-folder-page-background: var(--ui-folder-interior-background-setlist);
+  --ui-folder-content-background: var(--ui-folder-sheet-background);
+
   min-width: 0;
   min-height: 0;
   height: 100%;
@@ -100,6 +105,21 @@ function navigate(destinationId, event) {
   container-name: app-folder-layout;
   -webkit-user-select: none;
   user-select: none;
+}
+
+.app-folder-layout[data-active-destination='lyrics'] {
+  --ui-folder-layout-background: var(--ui-color-folder-secondary);
+  --ui-folder-page-background: var(--ui-folder-interior-background-lyrics);
+}
+
+.app-folder-layout[data-active-destination='output'] {
+  --ui-folder-layout-background: var(--ui-color-folder-tertiary);
+  --ui-folder-page-background: var(--ui-folder-interior-background-output);
+}
+
+.app-folder-layout[data-active-destination='import'] {
+  --ui-folder-layout-background: var(--ui-color-folder-neutral);
+  --ui-folder-page-background: var(--ui-folder-interior-background-import);
 }
 
 .app-folder-layout__shape-definition {
@@ -139,6 +159,26 @@ function navigate(destinationId, event) {
   scroll-padding-inline: var(--ui-folder-perimeter);
 }
 
+.app-folder-layout__destination[data-folder-destination='setlist'] {
+  --ui-folder-tab-material: var(--ui-color-folder-primary);
+  --ui-folder-tab-foreground: var(--ui-color-folder-primary-foreground);
+}
+
+.app-folder-layout__destination[data-folder-destination='lyrics'] {
+  --ui-folder-tab-material: var(--ui-color-folder-secondary);
+  --ui-folder-tab-foreground: var(--ui-color-folder-secondary-foreground);
+}
+
+.app-folder-layout__destination[data-folder-destination='output'] {
+  --ui-folder-tab-material: var(--ui-color-folder-tertiary);
+  --ui-folder-tab-foreground: var(--ui-color-folder-tertiary-foreground);
+}
+
+.app-folder-layout__destination[data-folder-destination='import'] {
+  --ui-folder-tab-material: var(--ui-color-folder-neutral);
+  --ui-folder-tab-foreground: var(--ui-color-folder-neutral-foreground);
+}
+
 .app-folder-layout__destination {
   position: relative;
   isolation: isolate;
@@ -154,7 +194,7 @@ function navigate(destinationId, event) {
   overflow: hidden;
   border: 0;
   background: transparent;
-  color: var(--ui-color-text-muted);
+  color: var(--ui-folder-tab-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
@@ -170,7 +210,7 @@ function navigate(destinationId, event) {
   z-index: -1;
   inset: 0;
   clip-path: var(--ui-folder-tab-shape);
-  background: var(--ui-color-surface-raised);
+  background: var(--ui-folder-tab-material);
   transform: translateY(var(--ui-folder-tab-rest-offset));
   transition:
     transform var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
@@ -179,16 +219,20 @@ function navigate(destinationId, event) {
 }
 
 .app-folder-layout__destination:hover {
-  color: var(--ui-color-text);
+  color: var(--ui-folder-tab-foreground);
 }
 
 .app-folder-layout__destination:hover::before {
-  background: var(--ui-color-surface-hover);
+  background: color-mix(
+    in srgb,
+    var(--ui-folder-tab-material) 88%,
+    var(--ui-folder-tab-foreground)
+  );
 }
 
 .app-folder-layout__destination--active {
   z-index: 3;
-  color: var(--ui-color-text);
+  color: var(--ui-folder-tab-foreground);
 }
 
 .app-folder-layout__destination--active::before,

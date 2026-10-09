@@ -264,7 +264,7 @@ describe('DemoDensity', () => {
 
   it('keeps compact as a discrete remap and preserves safety floors', () => {
     const compactBlock = tokenSource.match(
-      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/u,
+      /:root\[data-ui-density='compact'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([\s\S]*?)\n\}/u,
     )?.[1];
 
     for (const [key, , token, , , compact] of densityContracts) {

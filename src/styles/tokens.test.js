@@ -22,6 +22,13 @@ const script = readFileSync(
   ),
   'utf8',
 );
+const prototypeCapture = readFileSync(
+  new URL(
+    '../../prototypes/studio-library-workspace/capture-app/index.js',
+    import.meta.url,
+  ),
+  'utf8',
+);
 const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../main.js', import.meta.url), 'utf8');
 const performerMain = readFileSync(
@@ -45,15 +52,25 @@ const designGuide = readFileSync(
   new URL('../../DESIGN.md', import.meta.url),
   'utf8',
 );
+const rootTokenSelector = "[data-ui-system='v2'][data-ui-surface-root='true']";
+const lightTokenSelector = `:root[data-ui-theme='light'] ${rootTokenSelector}`;
+const chromeTokenSelector = "[data-ui-system='v2'] [data-ui-region='chrome']";
 
 function tokenBlock(selector) {
-  const start = tokens.indexOf(`${selector} {`);
-  const bodyStart = tokens.indexOf('{', start) + 1;
-  const bodyEnd = tokens.indexOf('\n}', bodyStart);
+  const selectorPattern = selector
+    .trim()
+    .split(/\s+/u)
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
+    .join('\\s+');
+  const body =
+    tokens.match(
+      new RegExp(`${selectorPattern}\\s*\\{([\\s\\S]*?)\\n\\}`, 'u'),
+    )?.[1] ?? '';
   return Object.fromEntries(
-    [
-      ...tokens.slice(bodyStart, bodyEnd).matchAll(/(--[\w-]+):\s*([^;]+);/g),
-    ].map(([, name, value]) => [name, value.trim()]),
+    [...body.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(([, name, value]) => [
+      name,
+      value.trim(),
+    ]),
   );
 }
 
@@ -149,11 +166,120 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(script).toContain("params.get('clean') === '1'");
   });
 
+  it('keeps the Ink-framed Paper palette explicit and prototype-only', () => {
+    expect(script).toContain("params.get('palette') === 'ink-paper'");
+    expect(script).toContain("root.dataset.prototypePalette = 'ink-paper'");
+    expect(script).toContain('delete root.dataset.prototypePalette');
+    expect(css).toContain(
+      ":root[data-ui-theme='light'][data-prototype-palette='ink-paper']",
+    );
+    expect(css).toMatch(
+      /data-prototype-palette='ink-paper'[\s\S]*?--ui-color-canvas:\s*var\(--ui-palette-warm-neutral-300\);/u,
+    );
+    expect(css).toMatch(
+      /data-prototype-palette='ink-paper'[\s\S]*?--ui-color-folder-primary:\s*var\(--ui-palette-indigo-600\);/u,
+    );
+    expect(css).toMatch(
+      /data-prototype-palette='ink-paper'[\s\S]*?:is\(\.titlebar, \.sidebar, \.player-bar\)[\s\S]*?--ui-color-surface:\s*var\(--ui-palette-neutral-900\);/u,
+    );
+    expect(css).toMatch(
+      /:is\(\.titlebar, \.sidebar, \.player-bar\)\s*\{[^}]*color:\s*var\(--ui-color-text\);/su,
+    );
+    expect(prototypeCapture).toContain(
+      "name: 'review/studio-library-ink-paper-1440x810.png'",
+    );
+    expect(prototypeCapture).toContain("palette: 'ink-paper'");
+    expect(prototypeCapture).toContain(
+      "url.searchParams.set('palette', variant.palette)",
+    );
+    expect(prototypeCapture).toContain('app.disableHardwareAcceleration();');
+  });
+
   it('records the narrow reflow and both reduced-motion paths', () => {
     expect(css).toContain('@media (max-width: 60rem)');
     expect(css).toContain(":root[data-ui-motion='reduced']");
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toMatch(/\.metadata-rail\s*\{[^}]*border-left:/s);
+  });
+
+  it('keeps Ink-framed Paper regional and gives every Folder a tinted interior', () => {
+    for (const token of [
+      '--ui-color-chrome-surface',
+      '--ui-color-chrome-surface-raised',
+      '--ui-color-chrome-surface-hover',
+      '--ui-color-chrome-surface-active',
+      '--ui-color-chrome-surface-selected',
+      '--ui-color-chrome-text',
+      '--ui-color-chrome-text-muted',
+      '--ui-color-chrome-border',
+      '--ui-color-shell-substrate',
+      '--ui-color-control-boundary',
+      '--ui-color-folder-neutral',
+      '--ui-color-folder-primary-foreground',
+      '--ui-color-folder-secondary-foreground',
+      '--ui-color-folder-tertiary-foreground',
+      '--ui-color-folder-neutral-foreground',
+      '--ui-folder-interior-background-setlist',
+      '--ui-folder-interior-background-lyrics',
+      '--ui-folder-interior-background-output',
+      '--ui-folder-interior-background-import',
+      '--ui-folder-sheet-background',
+    ]) {
+      expect(tokens).toContain(`${token}:`);
+    }
+
+    expect(tokens).toMatch(
+      /:root\[data-ui-theme='light'\][\s\S]*?--ui-color-chrome-surface:\s*var\(--ui-palette-neutral-900\);/u,
+    );
+    expect(tokens).toMatch(
+      /:root\[data-ui-theme='light'\][\s\S]*?--ui-folder-interior-background-setlist:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-folder-primary\) 24%,\s*var\(--ui-color-paper\)\s*\);/u,
+    );
+    expect(tokens).toMatch(
+      /:root\[data-ui-theme='light'\][\s\S]*?--ui-folder-sheet-background:\s*var\(--ui-color-paper\);/u,
+    );
+    expect(tokens).toContain(
+      '--ui-folder-page-background: var(--ui-color-surface);',
+    );
+    expect(tokens).not.toMatch(
+      /--ui-color-(?:canvas|surface|accent):\s*var\(--ui-color-folder/u,
+    );
+  });
+
+  it('adopts the approved warm-paper light hierarchy without using Folder color globally', () => {
+    const light = tokenBlock(lightTokenSelector);
+
+    expect(light['--ui-color-canvas']).toBe(
+      'var(--ui-palette-warm-neutral-300)',
+    );
+    expect(light['--ui-color-shell-substrate']).toBe(
+      'var(--ui-palette-neutral-950)',
+    );
+    expect(light['--ui-color-surface-hover']).toBe(
+      'var(--ui-palette-warm-neutral-300)',
+    );
+    expect(light['--ui-color-surface-selected']).toBe(
+      'var(--ui-palette-indigo-100)',
+    );
+    expect(light['--ui-color-border']).toBe(
+      'var(--ui-palette-warm-neutral-400)',
+    );
+    expect(light['--ui-color-folder-primary']).toBe(
+      'var(--ui-palette-indigo-600)',
+    );
+    expect(light['--ui-color-folder-secondary']).toBe(
+      'var(--ui-palette-plum-300)',
+    );
+    expect(light['--ui-color-folder-tertiary']).toBe(
+      'var(--ui-palette-olive-300)',
+    );
+    expect(light['--ui-color-folder-primary-foreground']).toBe(
+      'var(--ui-palette-warm-neutral-100)',
+    );
+    for (const role of ['secondary', 'tertiary', 'neutral']) {
+      expect(light[`--ui-color-folder-${role}-foreground`]).toBe(
+        'var(--ui-palette-neutral-900)',
+      );
+    }
   });
 
   it('keeps the adopted token graph complete and intentionally bounded', () => {
@@ -168,7 +294,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(411);
+    expect(uniqueNames.size).toBe(439);
     expect(uniqueNames).toContain('--ui-folder-content-background');
     expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-background');
@@ -293,10 +419,8 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it('keeps current in the accent family without collapsing live and danger semantics', () => {
-    const dark = tokenBlock("[data-ui-system='v2']");
-    const light = tokenBlock(
-      ":root[data-ui-theme='light'] [data-ui-system='v2']",
-    );
+    const dark = tokenBlock(rootTokenSelector);
+    const light = tokenBlock(lightTokenSelector);
 
     expect(dark['--ui-color-current']).toBe('var(--ui-palette-indigo-300)');
     expect(dark['--ui-color-current-soft']).toBe('var(--ui-color-accent-soft)');
@@ -392,7 +516,7 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it('keeps the desktop Inspector bay aligned with the current draggable maximum', () => {
-    const candidate = tokenBlock("[data-ui-system='v2']");
+    const candidate = tokenBlock(rootTokenSelector);
 
     expect(candidate['--ui-right-dock-width']).toBe('17.5rem');
     expect(candidate['--ui-inspector-width']).toBe(
@@ -447,11 +571,11 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it.each([
-    ['dark', "[data-ui-system='v2']"],
-    ['light', ":root[data-ui-theme='light'] [data-ui-system='v2']"],
+    ['dark', rootTokenSelector],
+    ['light', lightTokenSelector],
   ])('keeps essential %s semantic text pairs at WCAG AA', (_, selector) => {
     const definitions = {
-      ...tokenBlock("[data-ui-system='v2']"),
+      ...tokenBlock(rootTokenSelector),
       ...(selector.includes("data-ui-theme='light'")
         ? tokenBlock(selector)
         : {}),
@@ -471,6 +595,12 @@ describe('Studio Library workspace prototype isolation', () => {
       ['--ui-color-danger-contrast', '--ui-color-danger'],
       ['--ui-color-paper-text', '--ui-color-paper'],
     ];
+    for (const role of ['primary', 'secondary', 'tertiary', 'neutral']) {
+      pairs.push([
+        `--ui-color-folder-${role}-foreground`,
+        `--ui-color-folder-${role}`,
+      ]);
+    }
     for (const status of [
       '--ui-color-neutral',
       '--ui-color-info',
@@ -496,12 +626,72 @@ describe('Studio Library workspace prototype isolation', () => {
     }
   });
 
+  it('keeps Chrome navigation entries distinct from their container and glyph', () => {
+    const definitions = {
+      ...tokenBlock(rootTokenSelector),
+      ...tokenBlock(chromeTokenSelector),
+    };
+
+    expect(
+      contrastRatio(
+        resolveColor('--ui-color-entry', definitions),
+        resolveColor('--ui-color-surface', definitions),
+      ),
+      'navigation-entry plate on Chrome surface',
+    ).toBeGreaterThanOrEqual(3);
+
+    expect(
+      contrastRatio(
+        resolveColor('--ui-color-entry-foreground', definitions),
+        resolveColor('--ui-color-entry', definitions),
+      ),
+      'navigation-entry glyph and active indicator on plate',
+    ).toBeGreaterThanOrEqual(3);
+
+    expect(
+      contrastRatio(
+        resolveColor('--ui-color-entry-selected-indicator', definitions),
+        resolveColor('--ui-color-entry', definitions),
+      ),
+      'navigation-entry selected indicator on plate',
+    ).toBeGreaterThanOrEqual(3);
+  });
+
+  it('keeps Chrome commands visibly bounded through every painted state', () => {
+    const definitions = {
+      ...tokenBlock(rootTokenSelector),
+      ...tokenBlock(chromeTokenSelector),
+    };
+
+    expect(
+      contrastRatio(
+        resolveColor('--ui-color-command-border', definitions),
+        resolveColor('--ui-color-surface', definitions),
+      ),
+      'Chrome command boundary on Chrome surface',
+    ).toBeGreaterThanOrEqual(3);
+
+    for (const surface of [
+      '--ui-color-command-surface',
+      '--ui-color-command-surface-hover',
+      '--ui-color-command-surface-active',
+    ]) {
+      expect(
+        contrastRatio(
+          resolveColor('--ui-color-command-foreground', definitions),
+          resolveColor(surface, definitions),
+        ),
+        `Chrome command glyph on ${surface}`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it.each([
-    ['dark', "[data-ui-system='v2']"],
-    ['light', ":root[data-ui-theme='light'] [data-ui-system='v2']"],
+    ['dark', rootTokenSelector],
+    ['light', lightTokenSelector],
   ])('keeps %s destructive button fills at WCAG AA', (_, selector) => {
     const definitions = {
-      ...tokenBlock("[data-ui-system='v2']"),
+      ...tokenBlock(rootTokenSelector),
       ...(selector.includes("data-ui-theme='light'")
         ? tokenBlock(selector)
         : {}),
@@ -523,13 +713,13 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it.each([
-    ['dark', "[data-ui-system='v2']"],
-    ['light', ":root[data-ui-theme='light'] [data-ui-system='v2']"],
+    ['dark', rootTokenSelector],
+    ['light', lightTokenSelector],
   ])(
     'keeps the default %s scrollbar thumb distinguishable from app surfaces',
     (_, selector) => {
       const definitions = {
-        ...tokenBlock("[data-ui-system='v2']"),
+        ...tokenBlock(rootTokenSelector),
         ...(selector.includes("data-ui-theme='light'")
           ? tokenBlock(selector)
           : {}),

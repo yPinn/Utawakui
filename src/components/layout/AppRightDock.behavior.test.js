@@ -146,6 +146,36 @@ describe('AppRightDock', () => {
     app.unmount();
   });
 
+  it('uses the persistent Chrome semantic boundary in both Dock states', () => {
+    for (const expanded of [true, false]) {
+      const { app, root } = mount(AppRightDock, {
+        expanded,
+        label: '播放資訊',
+        contentId: 'app-right-dock-content',
+      });
+      const aside = findAll(root, (node) => node.type === 'aside')[0];
+
+      expect(aside.props['data-ui-region']).toBe('chrome');
+      app.unmount();
+    }
+
+    expect(source).toMatch(
+      /<UiSurface[\s\S]*?data-ui-region="chrome"[\s\S]*?tag="aside"/u,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock\.app-right-dock--collapsed\s*\{[^}]*background:\s*transparent;/su,
+    );
+  });
+
+  it('re-resolves Dock paint aliases inside the Chrome boundary', () => {
+    expect(source).toMatch(
+      /\.app-right-dock\s*\{[^}]*--ui-right-dock-section-surface-background:\s*var\(\s*--ui-color-surface-raised\s*\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock\s*\{[^}]*--ui-right-dock-sticky-background:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-surface\) 88%,\s*transparent\s*\);/su,
+    );
+  });
+
   it('turns the collapsed local boundary into an explicit restore action', () => {
     const onExpand = vi.fn();
     const { app, root } = mount(AppRightDock, {
@@ -171,8 +201,11 @@ describe('AppRightDock', () => {
     expect(content.props['aria-hidden']).toBe(true);
     expect(expand.props['aria-controls']).toBe('app-right-dock-content');
     expect(expand.props['aria-expanded']).toBe(false);
-    expect(String(expand.props.class)).toContain('ui-icon-btn--lg');
-    expect(String(expand.props.class)).toContain('ui-icon-btn--accent');
+    expect(String(expand.props.class)).toContain('ui-icon-btn--md');
+    expect(String(expand.props.class)).toContain('ui-icon-btn--command');
+    expect(String(expand.props.class)).not.toContain('ui-icon-btn--ghost');
+    expect(String(expand.props.class)).not.toContain('ui-icon-btn--active');
+    expect(String(expand.props.class)).not.toContain('ui-icon-btn--entry');
     expect(String(expand.props.class)).not.toContain('ui-icon-btn--stretch');
     trigger(expand, 'onClick');
     expect(onExpand).toHaveBeenCalledOnce();
@@ -187,11 +220,11 @@ describe('AppRightDock', () => {
       /\.app-right-dock--expanded\s*\{[^}]*width:\s*var\(--ui-right-dock-width\);[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/su,
     );
     expect(source).toMatch(
-      /\.app-right-dock--collapsed\s*\{[^}]*width:\s*var\(--ui-right-dock-rail-width\);[^}]*height:\s*calc\(var\(--ui-icon-button-size-lg\) \+ var\(--ui-space-1\)\);/su,
+      /\.app-right-dock--collapsed\s*\{[^}]*width:\s*var\(--ui-right-dock-rail-width\);[^}]*height:\s*calc\(var\(--ui-right-dock-rail-width\) \+ var\(--ui-space-1\)\);/su,
     );
     expect(source).not.toMatch(/\.app-right-dock\s*\{[^}]*height:\s*100%;/su);
     expect(source).toMatch(
-      /\.app-right-dock__expand\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*0;[^}]*inset-block-end:\s*var\(--ui-space-1\);/su,
+      /\.app-right-dock__expand\s*\{[^}]*--ui-icon-button-size-override:\s*var\(--ui-right-dock-rail-width\);[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*0;[^}]*inset-block-end:\s*var\(--ui-space-1\);/su,
     );
     expect(source).toMatch(
       /\.app-right-dock\.app-right-dock--collapsed\s*\{[^}]*overflow:\s*clip;[^}]*overflow-clip-margin:\s*var\(--ui-space-2\);/su,
@@ -263,7 +296,7 @@ describe('AppRightDock', () => {
     }
 
     const compactBlock = v2TokenSource.match(
-      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/u,
+      /:root\[data-ui-density='compact'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([\s\S]*?)\n\}/u,
     )?.[1];
     expect(compactBlock).not.toContain('--ui-right-dock-content-inset');
     expect(compactBlock).not.toContain('--ui-right-dock-track-row-min-height');

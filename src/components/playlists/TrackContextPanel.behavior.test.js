@@ -142,7 +142,7 @@ const readiness = [
 ];
 
 function mountPanel(overrides = {}) {
-  const onClose = vi.fn();
+  const onCollapse = vi.fn();
   const onNavigateSource = vi.fn();
   const onOpenArtist = vi.fn();
   const onOpenLyrics = vi.fn();
@@ -160,7 +160,7 @@ function mountPanel(overrides = {}) {
     lyricsPreview,
     artistSummary,
     readiness,
-    onClose,
+    onCollapse,
     onNavigateSource,
     onOpenArtist,
     onOpenLyrics,
@@ -170,7 +170,7 @@ function mountPanel(overrides = {}) {
   });
   return {
     ...mounted,
-    onClose,
+    onCollapse,
     onNavigateSource,
     onOpenArtist,
     onOpenLyrics,
@@ -181,7 +181,7 @@ function mountPanel(overrides = {}) {
 
 describe('TrackContextPanel', () => {
   it('moves the playlist destination into the one-row Dock header', () => {
-    const { app, root, onClose, onNavigateSource } = mountPanel();
+    const { app, root, onCollapse, onNavigateSource } = mountPanel();
     const header = findAll(root, (node) => node.type === 'header')[0];
     const hero = findAll(root, (node) => node.type === 'article')[0];
     const sourceLink = findAll(
@@ -195,7 +195,7 @@ describe('TrackContextPanel', () => {
     expect(sourceLink.props['aria-label']).toBe('前往播放清單：深夜練唱清單');
     trigger(sourceLink, 'onClick', { stopPropagation: vi.fn() });
     expect(onNavigateSource).toHaveBeenCalledOnce();
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onCollapse).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -347,7 +347,7 @@ describe('TrackContextPanel', () => {
   });
 
   it('renders an artwork-led Hero with the source in header and More on artwork', () => {
-    const { app, root, onClose, onNavigateSource } = mountPanel();
+    const { app, root, onCollapse, onNavigateSource } = mountPanel();
     const panel = findAll(
       root,
       (node) =>
@@ -368,9 +368,9 @@ describe('TrackContextPanel', () => {
       hero,
       (node) => node.type === 'button' && textContent(node) === '歌曲選項',
     )[0];
-    const close = findAll(
+    const collapse = findAll(
       root,
-      (node) => node.type === 'button' && textContent(node) === '關閉播放資訊',
+      (node) => node.type === 'button' && textContent(node) === '摺疊播放資訊',
     )[0];
 
     expect(panel).toBeTruthy();
@@ -388,13 +388,13 @@ describe('TrackContextPanel', () => {
     });
     trigger(sourceLink, 'onClick', { stopPropagation: vi.fn() });
     expect(onNavigateSource).toHaveBeenCalledOnce();
-    trigger(close, 'onClick');
-    expect(onClose).toHaveBeenCalledOnce();
+    trigger(collapse, 'onClick');
+    expect(onCollapse).toHaveBeenCalledOnce();
     app.unmount();
   });
 
   it('renders lyrics as a contained destination with one explicit workspace CTA', () => {
-    const { app, root, onClose, onOpenLyrics } = mountPanel();
+    const { app, root, onCollapse, onOpenLyrics } = mountPanel();
     const lyricsSection = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('track-lyrics-preview'),
     )[0];
@@ -415,7 +415,7 @@ describe('TrackContextPanel', () => {
     expect(openLyrics.props.class).toContain('ui-btn--ghost');
     trigger(openLyrics, 'onClick');
     expect(onOpenLyrics).toHaveBeenCalledOnce();
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onCollapse).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -492,7 +492,7 @@ describe('TrackContextPanel', () => {
   });
 
   it('renders truthful local artist context with an explicit artist destination', () => {
-    const { app, root, onClose, onOpenArtist } = mountPanel();
+    const { app, root, onCollapse, onOpenArtist } = mountPanel();
     const artistSection = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('track-artist-preview'),
     )[0];
@@ -517,7 +517,7 @@ describe('TrackContextPanel', () => {
     expect(artistCta.props.class).toContain('ui-btn--ghost');
     trigger(artistCta, 'onClick');
     expect(onOpenArtist).toHaveBeenCalledOnce();
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onCollapse).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -529,7 +529,7 @@ describe('TrackContextPanel', () => {
       duration: 180,
       thumbnailUrl: `utawakui-media://track/${index + 10}/thumbnail.jpg`,
     }));
-    const { app, root, onClose, onOpenQueue, onToggleQueueTrackPlayback } =
+    const { app, root, onCollapse, onOpenQueue, onToggleQueueTrackPlayback } =
       mountPanel({
         upcomingTracks: longQueue,
         queuedTrackIds: [longQueue[0].id],
@@ -581,7 +581,7 @@ describe('TrackContextPanel', () => {
     expect(onToggleQueueTrackPlayback).toHaveBeenCalledWith(longQueue[0]);
     trigger(openQueue, 'onClick');
     expect(onOpenQueue).toHaveBeenCalledOnce();
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onCollapse).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -650,15 +650,15 @@ describe('TrackContextPanel', () => {
     app.unmount();
   });
 
-  it('reserves collapse for the explicit close control instead of navigation CTAs', () => {
+  it('reserves collapse for the explicit disclosure control instead of navigation CTAs', () => {
     const source = readFileSync(
       new URL('./TrackContextPanel.vue', import.meta.url),
       'utf8',
     );
 
-    expect(source).not.toContain('@navigate="emit(\'close\')"');
-    expect(source).not.toContain('@navigate-artist="emit(\'close\')"');
-    expect(source).toContain('@close="emit(\'close\')"');
+    expect(source).not.toContain('@navigate="emit(\'collapse\')"');
+    expect(source).not.toContain('@navigate-artist="emit(\'collapse\')"');
+    expect(source).toContain('@collapse="emit(\'collapse\')"');
   });
 
   it('does not duplicate the header source identity as a playback-source block', () => {

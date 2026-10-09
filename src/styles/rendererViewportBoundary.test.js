@@ -10,6 +10,9 @@ const mainEntry = readSource('../main.js');
 const performerEntry = readSource('../performer-main.js');
 const mainHtml = readSource('../../index.html');
 const performerHtml = readSource('../../performer-view.html');
+const studioPrototype = readSource(
+  '../../prototypes/studio-library-workspace/index.html',
+);
 const windowState = readSource('../../electron/main/windowState.js');
 const performerWindow = readSource('../../electron/main/performerWindow.js');
 
@@ -62,8 +65,11 @@ describe('renderer viewport boundary', () => {
     const rootBlock = cssBlock(':root');
     const lightRootBlock = cssBlock(":root[data-ui-theme='light']");
     const bodyBlock = cssBlock('body');
-    const surfaceBlock = tokens.match(
-      /^\[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/mu,
+    const rootSurfaceBlock = tokens.match(
+      /^\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([\s\S]*?)\n\}/mu,
+    )?.[1];
+    const shellRootBlock = tokens.match(
+      /^\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\[data-ui-surface='app-shell'\]\s*\{([^}]*)\}/mu,
     )?.[1];
 
     expect(rootBlock).toContain('color-scheme: dark');
@@ -73,44 +79,54 @@ describe('renderer viewport boundary', () => {
     expect(bodyBlock).toContain('color: CanvasText');
     expect(bodyBlock).not.toContain('var(--ui-');
     expect(baseStyles).not.toContain('var(--ui-');
-    expect(surfaceBlock).toContain('background: var(--ui-color-canvas)');
-    expect(surfaceBlock).toContain('color: var(--ui-color-text)');
-    expect(surfaceBlock).toContain('font-family: var(--ui-font-family-base)');
-    expect(surfaceBlock).toContain('font-size: var(--ui-font-size-md)');
+    expect(tokens).not.toMatch(/^\[data-ui-system='v2'\]\s*\{/mu);
+    expect(rootSurfaceBlock).toContain('background: var(--ui-color-canvas)');
+    expect(rootSurfaceBlock).toContain('color: var(--ui-color-text)');
+    expect(rootSurfaceBlock).toContain(
+      'font-family: var(--ui-font-family-base)',
+    );
+    expect(rootSurfaceBlock).toContain('font-size: var(--ui-font-size-md)');
+    expect(shellRootBlock).toContain(
+      'background: var(--ui-color-shell-substrate)',
+    );
+    expect(studioPrototype).toContain('data-ui-surface-root="true"');
   });
 
-  it('keeps each native window substrate synchronized with its registered renderer canvas', () => {
-    const mainDarkCanvas = tokens.match(
+  it('keeps native chrome and substrates synchronized with their renderer roles', () => {
+    const shellSubstrate = tokens.match(
       /--ui-palette-neutral-950:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const mainLightCanvas = tokens.match(
-      /--ui-palette-warm-neutral-200:\s*(#[\da-f]{6});/iu,
+    const performerLightCanvas = tokens.match(
+      /--ui-palette-warm-neutral-300:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const mainDarkText = tokens.match(
+    const chromeText = tokens.match(
       /--ui-palette-warm-neutral-100:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const mainLightText = tokens.match(
+    const chromeSurface = tokens.match(
       /--ui-palette-neutral-900:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    expect(mainDarkCanvas).toBe('#191a1e');
-    expect(mainLightCanvas).toBe('#e8e4dd');
-    expect(mainDarkText).toBe('#f3f1ec');
-    expect(mainLightText).toBe('#272928');
+    expect(shellSubstrate).toBe('#191a1e');
+    expect(performerLightCanvas).toBe('#dad7d0');
+    expect(chromeText).toBe('#f3f1ec');
+    expect(chromeSurface).toBe('#272928');
     expect(tokens).toContain(
-      '--ui-color-canvas: var(--ui-palette-neutral-950)',
+      '--ui-color-shell-substrate: var(--ui-palette-neutral-950)',
     );
     expect(tokens).toMatch(
-      /:root\[data-ui-theme='light'\] \[data-ui-system='v2'\][\s\S]*?--ui-color-canvas:\s*var\(--ui-palette-warm-neutral-200\);/u,
+      /:root\[data-ui-theme='light'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\][\s\S]*?--ui-color-shell-substrate:\s*var\(--ui-palette-neutral-950\);/u,
     );
     expect(windowState).toContain(
-      `dark: { color: '${mainDarkCanvas}', symbolColor: '${mainDarkText}' }`,
+      `color: '${chromeSurface}',\n    symbolColor: '${chromeText}',\n    backgroundColor: '${shellSubstrate}'`,
     );
+    expect(windowState.match(/backgroundColor: '#191a1e'/gu)).toHaveLength(2);
+    expect(windowState.match(/color: '#272928'/gu)).toHaveLength(2);
+    expect(windowState.match(/symbolColor: '#f3f1ec'/gu)).toHaveLength(2);
     expect(windowState).toContain(
-      `light: { color: '${mainLightCanvas}', symbolColor: '${mainLightText}' }`,
+      'const { backgroundColor, ...titleBarOverlay } = titlebarColors;',
     );
     expect(windowState).toContain('height: 40');
     expect(performerWindow).toContain(
-      `initialTheme === 'light' ? '${mainLightCanvas}' : '${mainDarkCanvas}'`,
+      `initialTheme === 'light' ? '${performerLightCanvas}' : '${shellSubstrate}'`,
     );
   });
 });

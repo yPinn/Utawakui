@@ -24,7 +24,7 @@ defineProps({
   active: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'collapse']);
 
 const {
   state: playerState,
@@ -235,9 +235,9 @@ const {
     ref="dockPanel"
     class="queue-panel"
     title="播放清單"
-    close-label="關閉播放佇列"
+    collapse-label="摺疊播放佇列"
     aria-label="播放清單"
-    @close="emit('close')"
+    @collapse="emit('collapse')"
   >
     <template #overlay>
       <TrackMetadataModal

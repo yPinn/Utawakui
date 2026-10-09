@@ -37,6 +37,17 @@ describe('AppRightDockPanel production adoption', () => {
     },
   );
 
+  it.each([
+    ['QueuePanel', queueSource, '摺疊播放佇列'],
+    ['TrackContextPanel', contextSource, '摺疊播放資訊'],
+    ['PerformanceSessionPanel', sessionSource, '摺疊場次'],
+    ['SeparationQueuePanel', separationQueueSource, '摺疊伴奏處理'],
+  ])('%s forwards the shared Dock collapse contract', (_, source, label) => {
+    expect(source).toContain(`collapse-label="${label}"`);
+    expect(source).toContain('@collapse="emit(\'collapse\')"');
+    expect(source).not.toContain('close-label=');
+  });
+
   it('uses feature-owned playback sections below the media Hero', () => {
     expect(contextSource).toContain(
       "import AppRightDockSection from '../layout/AppRightDockSection.vue';",

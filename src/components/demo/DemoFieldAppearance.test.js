@@ -346,13 +346,13 @@ describe('DemoFieldAppearance', () => {
     const html = await renderToString(createSSRApp(DemoFieldAppearance));
     const candidateDark = declarationsFor(
       tokenSource,
-      "[data-ui-system='v2'] {",
+      "[data-ui-system='v2'][data-ui-surface-root='true'] {",
     );
     const candidateLight = {
       ...candidateDark,
       ...declarationsFor(
         tokenSource,
-        ":root[data-ui-theme='light'] [data-ui-system='v2'] {",
+        ":root[data-ui-theme='light']\n  [data-ui-system='v2'][data-ui-surface-root='true'] {",
       ),
     };
     const currentDark = declarationsFor(

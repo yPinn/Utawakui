@@ -6,11 +6,11 @@ import UiScrollLayout from '../ui/UiScrollLayout.vue';
 const props = defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: '' },
-  closeLabel: { type: String, required: true },
+  collapseLabel: { type: String, required: true },
   ariaLabel: { type: String, default: '' },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['collapse']);
 const scrollRegion = useTemplateRef('scrollRegion');
 const hasScrolled = shallowRef(false);
 
@@ -38,8 +38,8 @@ defineExpose({ scrollTo });
       <AppRightDockHeader
         :title="props.title"
         :subtitle="props.subtitle"
-        :close-label="props.closeLabel"
-        @close="emit('close')"
+        :collapse-label="props.collapseLabel"
+        @collapse="emit('collapse')"
       >
         <template v-if="$slots.identity" #identity>
           <slot name="identity" />

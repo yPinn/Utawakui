@@ -36,12 +36,21 @@ const iconPath = path.join(
   'app-icon.ico',
 );
 
-// Keep in sync with --ui-color-canvas / --ui-color-text in tokens.css —
-// these paint the native Windows overlay buttons, which useTheme.js can't
-// reach. Also read by electron/main/configHandlers.js's config:set-ui-theme.
+// Keep the native Windows overlay continuous with persistent chrome and the
+// BrowserWindow substrate continuous with --ui-color-shell-substrate. These
+// surfaces sit outside Vue and useTheme.js cannot paint them. Also read by
+// electron/main/configHandlers.js's config:set-ui-theme.
 const TITLEBAR_COLORS = {
-  dark: { color: '#191a1e', symbolColor: '#f3f1ec' },
-  light: { color: '#e8e4dd', symbolColor: '#272928' },
+  dark: {
+    color: '#272928',
+    symbolColor: '#f3f1ec',
+    backgroundColor: '#191a1e',
+  },
+  light: {
+    color: '#272928',
+    symbolColor: '#f3f1ec',
+    backgroundColor: '#191a1e',
+  },
 };
 
 function getAppUserModelId() {
@@ -200,17 +209,17 @@ function createMainWindow(
   options = {},
 ) {
   const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.dark;
+  const { backgroundColor, ...titleBarOverlay } = titlebarColors;
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 850,
     minWidth: 960,
     minHeight: 650,
-    backgroundColor: titlebarColors.color,
+    backgroundColor,
     titleBarStyle: 'hidden',
     // Keep in sync with --ui-window-titlebar-block-size in tokens.css.
     titleBarOverlay: {
-      color: titlebarColors.color,
-      symbolColor: titlebarColors.symbolColor,
+      ...titleBarOverlay,
       height: 40,
     },
     title: APP_NAME,

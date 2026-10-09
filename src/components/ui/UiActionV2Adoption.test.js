@@ -47,6 +47,7 @@ describe('Token v2 shared primitive adoption', () => {
       'text-button',
       'segmented-control',
       'skeleton',
+      'tooltip',
       'popover',
     ]);
   });
@@ -78,6 +79,23 @@ describe('Token v2 shared primitive adoption', () => {
     );
   });
 
+  it('provides one bounded Chrome command variant with complete feedback', () => {
+    expect(iconButtonSource).toContain(
+      "['ghost', 'accent', 'command', 'overlay'].includes(value)",
+    );
+    expect(iconButtonSource).toContain('.ui-icon-btn--command {');
+    expect(iconButtonSource).toContain(
+      '.ui-icon-btn--command:not(:disabled):hover',
+    );
+    expect(iconButtonSource).toContain(
+      '.ui-icon-btn--command:not(:disabled):active',
+    );
+    expect(iconButtonSource).toMatch(
+      /\.ui-icon-btn--command\s*\{[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-color-command-border\);[^}]*background:\s*var\(--ui-color-command-surface\);[^}]*color:\s*var\(--ui-color-command-foreground\);/su,
+    );
+    expect(iconButtonSource).not.toContain('.ui-icon-btn--entry');
+  });
+
   it('adopts Text Button disabled and selection affordances without taking caller typography', () => {
     expect(textButtonSource).toContain('-webkit-user-select: none;');
     expect(textButtonSource).toContain('user-select: none;');
@@ -107,6 +125,14 @@ describe('Token v2 shared primitive adoption', () => {
   it('defines every adopted interaction token in the production scope', () => {
     for (const token of [
       '--ui-color-accent-active',
+      '--ui-color-entry',
+      '--ui-color-entry-foreground',
+      '--ui-color-entry-selected-indicator',
+      '--ui-color-command-surface',
+      '--ui-color-command-surface-hover',
+      '--ui-color-command-surface-active',
+      '--ui-color-command-foreground',
+      '--ui-color-command-border',
       '--ui-color-overlay-scrim-hover',
       '--ui-color-overlay-scrim-active',
     ]) {

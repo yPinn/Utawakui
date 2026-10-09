@@ -72,7 +72,11 @@ async function handleResizeKeydown(event) {
 </script>
 
 <template>
-  <nav class="app-playlist-sidebar" aria-label="播放清單">
+  <nav
+    class="app-playlist-sidebar"
+    data-ui-region="chrome"
+    aria-label="播放清單"
+  >
     <PlaylistSidebar
       id="app-playlist-sidebar-content"
       class="app-playlist-sidebar__content"

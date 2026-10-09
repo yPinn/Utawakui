@@ -18,6 +18,16 @@ const tokenSource = readFileSync(
   new URL('../styles/tokens.css', import.meta.url),
   'utf8',
 );
+const darkTokenBlock = tokenSource.match(
+  /^\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([\s\S]*?)\n\}/mu,
+)?.[1];
+const lightTokenBlock = tokenSource.match(
+  /:root\[data-ui-theme='light'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([\s\S]*?)\n\}/u,
+)?.[1];
+
+if (!darkTokenBlock || !lightTokenBlock) {
+  throw new Error('Expected dark and light root token blocks');
+}
 
 const folderTabMix = componentSource.match(
   /\.demo-folder-swatch__tab[\s\S]*?color-mix\([\s\S]*?var\((--[^)]+)\) (\d+)%/,
@@ -27,18 +37,17 @@ const folderTabOverlayToken = folderTabMix[1];
 const folderTabAmount = Number(folderTabMix[2]) / 100;
 
 function resolveThemeValues(token) {
-  const semanticMatches = [
-    ...tokenSource.matchAll(
-      new RegExp(`${token}:\\s*var\\((--[^)]+)\\);`, 'g'),
-    ),
-  ];
-  if (semanticMatches.length !== 2) {
-    throw new Error(`Expected dark and light mappings for ${token}`);
-  }
-
   return Object.fromEntries(
-    ['dark', 'light'].map((theme, index) => {
-      const primitiveToken = semanticMatches[index][1];
+    [
+      ['dark', darkTokenBlock],
+      ['light', lightTokenBlock],
+    ].map(([theme, tokenBlock]) => {
+      const primitiveToken = tokenBlock.match(
+        new RegExp(`${token}:\\s*var\\((--[^)]+)\\);`, 'u'),
+      )?.[1];
+      if (!primitiveToken) {
+        throw new Error(`Expected ${theme} mapping for ${token}`);
+      }
       const primitiveValue = tokenSource.match(
         new RegExp(`${primitiveToken}:\\s*(#[\\da-f]{6});`, 'i'),
       )?.[1];

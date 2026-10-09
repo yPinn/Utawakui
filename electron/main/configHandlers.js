@@ -162,8 +162,9 @@ function registerConfigHandlers({
         updateConfig({ uiTheme: theme });
         const win = getMainWindow();
         if (win) {
-          win.setTitleBarOverlay(titlebarColors[theme]);
-          win.setBackgroundColor(titlebarColors[theme].color);
+          const { backgroundColor, ...titleBarOverlay } = titlebarColors[theme];
+          win.setTitleBarOverlay(titleBarOverlay);
+          win.setBackgroundColor(backgroundColor);
         }
         applyPerformerUiTheme(theme);
         return getConfig().uiTheme;

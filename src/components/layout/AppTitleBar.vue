@@ -115,7 +115,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
 </script>
 
 <template>
-  <header class="app-title-bar">
+  <header class="app-title-bar" data-ui-region="chrome">
     <!-- CPU/RAM come from useAppUsage.js (electron/main/appUsageService.js
          samples app.getAppMetrics() every few seconds, plus Python/FFmpeg's
          own process tree while a heavy job like vocal separation is running

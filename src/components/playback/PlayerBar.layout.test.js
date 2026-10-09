@@ -191,7 +191,7 @@ describe('PlayerBar responsive metadata layout', () => {
 
   it('keeps the persistent bar tall enough for the transport stack in both densities', () => {
     const compactBlock = tokenSource.match(
-      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([^}]*)\}/su,
+      /:root\[data-ui-density='compact'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{([^}]*)\}/su,
     )?.[1];
     const playerBarRule = cssRule(componentSource, '.player-bar');
 

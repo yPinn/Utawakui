@@ -25,7 +25,7 @@ describe('PerformanceSessionPanel', () => {
 
   it('opens the existing full preparation workspace instead of embedding its editor', () => {
     expect(source).toContain(
-      "const emit = defineEmits(['close', 'openPreparation'])",
+      "const emit = defineEmits(['collapse', 'openPreparation'])",
     );
     expect(source).toContain("emit('openPreparation')");
     expect(source).toContain('AppRightDockPanel');

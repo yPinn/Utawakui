@@ -19,7 +19,8 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'ghost',
-    validator: (value) => ['ghost', 'accent', 'overlay'].includes(value),
+    validator: (value) =>
+      ['ghost', 'accent', 'command', 'overlay'].includes(value),
   },
   size: {
     type: String,
@@ -120,6 +121,14 @@ function buttonAttrs(triggerProps) {
     background: var(--ui-color-accent-active);
   }
 
+  .ui-icon-btn--command:not(:disabled):hover {
+    background: var(--ui-color-command-surface-hover);
+  }
+
+  .ui-icon-btn--command:not(:disabled):active {
+    background: var(--ui-color-command-surface-active);
+  }
+
   .ui-icon-btn--overlay:not(:disabled):hover {
     background: var(--ui-color-overlay-scrim-hover);
   }
@@ -201,6 +210,13 @@ function buttonAttrs(triggerProps) {
 
 .ui-icon-btn--accent:not(:disabled):hover {
   background: var(--ui-color-accent-hover);
+}
+
+.ui-icon-btn--command {
+  border: var(--ui-border-width) solid var(--ui-color-command-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-command-surface);
+  color: var(--ui-color-command-foreground);
 }
 
 .ui-icon-btn--overlay {

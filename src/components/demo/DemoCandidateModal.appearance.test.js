@@ -71,7 +71,7 @@ describe('DemoCandidateModal appearance contract', () => {
     );
     const compactTokens =
       tokenSource.match(
-        /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{[\s\S]*?\n\}/,
+        /:root\[data-ui-density='compact'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{[\s\S]*?\n\}/,
       )?.[0] ?? '';
     expect(compactTokens).toContain(
       '--ui-modal-viewport-inset: var(--ui-space-4)',

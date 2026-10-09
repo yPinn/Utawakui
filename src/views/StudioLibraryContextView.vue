@@ -18,7 +18,7 @@ import {
 } from '../utils/trackContextPresentation.js';
 import TrackContextPanel from '../components/playlists/TrackContextPanel.vue';
 
-const emit = defineEmits(['close', 'openQueue']);
+const emit = defineEmits(['collapse', 'openQueue']);
 
 const {
   state: playerState,
@@ -164,6 +164,6 @@ const readiness = computed(() =>
     @open-lyrics="openLyrics"
     @open-queue="emit('openQueue')"
     @toggle-queue-track-playback="toggleUpcomingTrackPlayback"
-    @close="emit('close')"
+    @collapse="emit('collapse')"
   />
 </template>

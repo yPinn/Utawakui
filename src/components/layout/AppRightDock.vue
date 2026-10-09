@@ -46,6 +46,7 @@ function handleResizeKeydown(event) {
 
 <template>
   <UiSurface
+    data-ui-region="chrome"
     tag="aside"
     class="app-right-dock"
     :class="{
@@ -74,8 +75,8 @@ function handleResizeKeydown(event) {
       :label="expandLabel"
       :aria-expanded="false"
       :aria-controls="contentId"
-      variant="accent"
-      size="lg"
+      variant="command"
+      size="md"
       tooltip-placement="start"
       @click="emit('expand')"
     />
@@ -105,6 +106,16 @@ function handleResizeKeydown(event) {
 
 <style scoped>
 .app-right-dock {
+  /* These aliases are first composed at the renderer root. Re-compose them
+     inside the regional owner so Chrome foregrounds never sit on a Light
+     section or sticky surface inherited from that root. */
+  --ui-right-dock-section-surface-background: var(--ui-color-surface-raised);
+  --ui-right-dock-sticky-background: color-mix(
+    in srgb,
+    var(--ui-color-surface) 88%,
+    transparent
+  );
+
   /* The Dock is a fixed-density content boundary. Keep the generic Track
      Row mapping available everywhere else while Queue, Recent, and Metadata
      share 52/40 geometry plus the Sidebar-aligned 4px row inset/state plate. */
@@ -134,7 +145,7 @@ function handleResizeKeydown(event) {
 
 .app-right-dock--collapsed {
   width: var(--ui-right-dock-rail-width);
-  height: calc(var(--ui-icon-button-size-lg) + var(--ui-space-1));
+  height: calc(var(--ui-right-dock-rail-width) + var(--ui-space-1));
 }
 
 .app-right-dock.app-right-dock--collapsed {
@@ -148,6 +159,8 @@ function handleResizeKeydown(event) {
 }
 
 .app-right-dock__expand {
+  --ui-icon-button-size-override: var(--ui-right-dock-rail-width);
+
   position: absolute;
   z-index: 2;
   inset-inline-end: 0;

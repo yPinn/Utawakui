@@ -227,7 +227,7 @@ describe('DemoPageLayoutAppearance', () => {
   it('uses one restrained indigo material for every workflow tab instead of indexed reference colors', () => {
     const light =
       v2Tokens.match(
-        /:root\[data-ui-theme='light'\] \[data-ui-system='v2'\]\s*\{[\s\S]*?\n\}/u,
+        /:root\[data-ui-theme='light'\]\s+\[data-ui-system='v2'\]\[data-ui-surface-root='true'\]\s*\{[\s\S]*?\n\}/u,
       )?.[0] ?? '';
 
     expect(source).not.toContain('FOLDER_REFERENCE_SWATCHES');
@@ -245,7 +245,7 @@ describe('DemoPageLayoutAppearance', () => {
       '--ui-color-folder-primary: var(--ui-palette-indigo-700);',
     );
     expect(light).toContain(
-      '--ui-color-folder-primary: var(--ui-palette-indigo-400);',
+      '--ui-color-folder-primary: var(--ui-palette-indigo-600);',
     );
   });
 

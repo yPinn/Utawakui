@@ -71,6 +71,26 @@ describe('Folder layout family cutover', () => {
     expect(tokens).not.toContain('--ui-folder-selected-ring');
   });
 
+  it('lets destination Folder aliases cross structural v2 boundaries', () => {
+    const tokens = readSource('./tokens.css');
+    const boundary = readSource('../components/layout/AppSurfaceBoundary.vue');
+    const folderLayout = readSource('../components/layout/AppFolderLayout.vue');
+
+    expect(tokens).toContain(
+      "[data-ui-system='v2'][data-ui-surface-root='true'] {",
+    );
+    expect(tokens).not.toMatch(/^\[data-ui-system='v2'\]\s*\{/mu);
+    expect(boundary).not.toMatch(
+      /\.app-surface-boundary\s*\{[^}]*background\s*:/su,
+    );
+    expect(folderLayout).toContain(
+      '--ui-folder-page-background: var(--ui-folder-interior-background-setlist)',
+    );
+    expect(folderLayout).toContain(
+      '--ui-folder-page-background: var(--ui-folder-interior-background-import)',
+    );
+  });
+
   it('keeps every feature behind a registered surface and overlay host', () => {
     const registry = readSource('../utils/rendererSurfaceRegistry.js');
     const app = readSource('../App.vue');

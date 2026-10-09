@@ -62,8 +62,16 @@ function register(overrides = {}) {
   const applyWindowCloseBehavior = vi.fn();
   const applyPerformerUiTheme = vi.fn();
   const titlebarColors = {
-    dark: { color: '#101010', symbolColor: '#ffffff' },
-    light: { color: '#ffffff', symbolColor: '#101010' },
+    dark: {
+      color: '#202020',
+      symbolColor: '#f4f4f4',
+      backgroundColor: '#101010',
+    },
+    light: {
+      color: '#202020',
+      symbolColor: '#f4f4f4',
+      backgroundColor: '#101010',
+    },
   };
   const dependencies = {
     ipcMain,
@@ -333,10 +341,10 @@ describe('registerConfigHandlers', () => {
     ).resolves.toBe('light');
     expect(updateConfig).toHaveBeenCalledWith({ uiTheme: 'light' });
     expect(mainWindow.setTitleBarOverlay).toHaveBeenCalledWith({
-      color: '#ffffff',
-      symbolColor: '#101010',
+      color: '#202020',
+      symbolColor: '#f4f4f4',
     });
-    expect(mainWindow.setBackgroundColor).toHaveBeenCalledWith('#ffffff');
+    expect(mainWindow.setBackgroundColor).toHaveBeenCalledWith('#101010');
     expect(applyPerformerUiTheme).toHaveBeenCalledWith('light');
   });
 

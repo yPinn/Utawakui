@@ -138,9 +138,9 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(contextSource).toContain('usePlaybackQueue');
     expect(contextSource).toContain('<TrackContextPanel');
     expect(contextSource).toContain(
-      "const emit = defineEmits(['close', 'openQueue']);",
+      "const emit = defineEmits(['collapse', 'openQueue']);",
     );
-    expect(contextSource).toContain('@close="emit(\'close\')"');
+    expect(contextSource).toContain('@collapse="emit(\'collapse\')"');
     expect(contextSource).toContain(':current-track="currentTrack"');
     expect(contextSource).toContain(':queue-source-name="queueSourceName"');
     expect(contextSource).toContain('const queueSourceDestination = computed');
@@ -179,7 +179,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
       'jumpToArtist(artistSummary.value.artistId)',
     );
     expect(contextSource).toContain(
-      "const emit = defineEmits(['close', 'openQueue']);",
+      "const emit = defineEmits(['collapse', 'openQueue']);",
     );
     expect(contextSource).toContain('@open-queue="emit(\'openQueue\')"');
     expect(contextSource).toContain(':upcoming-tracks="upcomingTracks"');
@@ -216,9 +216,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(appSource).toContain('class="shell__dock"');
     expect(appSource).toContain('<AppRightDock');
     expect(appSource).toContain(':is="PlaybackInfoContextView"');
-    expect(appSource).toContain(
-      '@close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"',
-    );
+    expect(appSource).toContain('@collapse="collapseRightDock"');
     expect(appSource).not.toContain('#context');
     expect(folderLayoutSource).not.toContain('<slot name="context" />');
     expect(folderLayoutSource).not.toContain('app-archive-frame__context');
@@ -237,7 +235,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(rightDockSource).toContain('.app-right-dock--collapsed');
     expect(rightDockSource).toContain('var(--ui-right-dock-rail-width)');
     expect(rightDockSource).toMatch(
-      /\.app-right-dock--collapsed\s*\{[^}]*height:\s*calc\(var\(--ui-icon-button-size-lg\) \+ var\(--ui-space-1\)\);/su,
+      /\.app-right-dock--collapsed\s*\{[^}]*height:\s*calc\(var\(--ui-right-dock-rail-width\) \+ var\(--ui-space-1\)\);/su,
     );
     expect(rightDockSource).not.toMatch(
       /\.app-right-dock\s*\{[^}]*height:\s*100%;/su,
@@ -264,11 +262,11 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(contextSource).not.toContain('defineExpose');
   });
 
-  it('dismisses the temporary Inspector with Escape and returns focus to its opener', () => {
+  it('folds the temporary Inspector with Escape and returns focus to its disclosure', () => {
     expect(appSource).toContain("event.key !== 'Escape'");
     expect(appSource).toContain('document.activeElement');
     expect(appSource).toContain('returnFocusTarget');
-    expect(appSource).toContain('closeTopDockSurface()');
+    expect(appSource).toContain('collapseRightDock()');
     expect(appSource).toContain('nextTick');
     expect(appSource).toContain(
       "removeEventListener('keydown', handleRightDockKeydown)",

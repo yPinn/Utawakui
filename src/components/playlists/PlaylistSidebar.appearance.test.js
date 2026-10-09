@@ -44,7 +44,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
   });
 
-  it('keeps toolbar chrome fixed while only the collection list owns scrolling', () => {
+  it('keeps commands and global destinations fixed while only collections own scrolling', () => {
     expect(source).toContain(
       "import UiScrollLayout from '../ui/UiScrollLayout.vue'",
     );
@@ -53,12 +53,22 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).toContain(
       ":scrollbar-visibility=\"compact ? 'hidden' : 'auto'\"",
     );
-    expect(source.indexOf('class="playlist-sidebar__toolbar"')).toBeLessThan(
-      source.indexOf('<UiScrollLayout'),
+    const toolbarAt = source.indexOf('class="playlist-sidebar__toolbar"');
+    const fixedNavigationAt = source.indexOf(
+      'class="playlist-sidebar__fixed-navigation"',
     );
-    expect(source.indexOf('<UiScrollLayout')).toBeLessThan(
-      source.indexOf('class="playlist-sidebar__item"'),
+    const allTracksAt = source.indexOf('aria-label="全部曲目"');
+    const localTracksAt = source.indexOf('aria-label="本機曲目"');
+    const scrollAt = source.indexOf('<UiScrollLayout');
+    const collectionsAt = source.indexOf(
+      'v-for="playlist in visiblePlaylistItems"',
     );
+
+    expect(toolbarAt).toBeLessThan(fixedNavigationAt);
+    expect(fixedNavigationAt).toBeLessThan(allTracksAt);
+    expect(allTracksAt).toBeLessThan(localTracksAt);
+    expect(localTracksAt).toBeLessThan(scrollAt);
+    expect(scrollAt).toBeLessThan(collectionsAt);
     for (const [layoutRole, featureRole] of [
       ['block-start', 'list-gap'],
       ['block-end', 'sidebar-padding-block'],
@@ -81,6 +91,9 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
     expect(source).toMatch(
       /\.playlist-sidebar__toolbar\s*\{[^}]*margin-inline:\s*var\(--ui-playlist-sidebar-padding-inline\);/su,
+    );
+    expect(source).toMatch(
+      /\.playlist-sidebar__fixed-navigation\s*\{[^}]*margin-inline-start:\s*var\(--ui-playlist-sidebar-padding-inline\);[^}]*margin-inline-end:\s*var\(--ui-playlist-row-state-surface-outset-inline\);/su,
     );
     expect(source).not.toMatch(
       /\.playlist-sidebar__toolbar\s*\{[^}]*margin-block-start:/su,
@@ -172,6 +185,67 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(rowSource).toMatch(
       /\.playlist-sidebar-row:has\(\.playlist-sidebar-row__select:active\)\s+\.playlist-sidebar-row__state-surface\s*\{[^}]*background:\s*var\(--ui-color-surface-active\);/su,
     );
+  });
+
+  it('keeps filled functional-entry plates distinct while the row owns interaction state', () => {
+    expect(source).toMatch(
+      /\.playlist-sidebar\s*\{[^}]*--ui-playlist-navigation-plate-background:\s*var\(\s*--ui-color-entry\s*\);[^}]*--ui-playlist-navigation-plate-foreground:\s*var\(\s*--ui-color-entry-foreground\s*\);[^}]*--ui-playlist-navigation-active-indicator:\s*var\(\s*--ui-color-entry-selected-indicator\s*\);/su,
+    );
+    expect(source).toMatch(
+      /\.playlist-sidebar__thumb--accent\s*\{[^}]*background:\s*var\(--ui-playlist-navigation-plate-background\);[^}]*color:\s*var\(--ui-playlist-navigation-plate-foreground\);/su,
+    );
+    expect(source).not.toMatch(
+      /\.playlist-sidebar__item:hover\s+\.playlist-sidebar__thumb--accent/u,
+    );
+    expect(source).not.toMatch(
+      /\.playlist-sidebar__item:active\s+\.playlist-sidebar__thumb--accent/u,
+    );
+  });
+
+  it('uses the shared command primitive for both expanded and compact create actions', () => {
+    expect(source).toContain(
+      "import UiIconButton from '../ui/UiIconButton.vue';",
+    );
+    expect(source.match(/<UiIconButton/gu)).toHaveLength(2);
+    expect(source.match(/variant="command"/gu)).toHaveLength(2);
+    expect(source).not.toContain('variant="entry"');
+    expect(source.match(/:icon="Plus"/gu)).toHaveLength(2);
+    expect(source.match(/label="新增歌單"/gu)).toHaveLength(2);
+    expect(source).not.toMatch(
+      /<button[\s\S]*?class="playlist-sidebar__toolbar-action/u,
+    );
+    expect(source).toMatch(
+      /\.playlist-sidebar__toolbar-action\s*\{[^}]*--ui-icon-button-size-override:\s*var\(--ui-sidebar-toolbar-control-size\);/su,
+    );
+  });
+
+  it('uses one accessible active plate indicator in expanded and compact geometry', () => {
+    expect(source).toMatch(
+      /\.playlist-sidebar__item--active\s+\.playlist-sidebar__thumb\.playlist-sidebar__thumb--accent\s*\{[^}]*box-shadow:\s*0 0 0 var\(--ui-focus-width\)\s+var\(--ui-playlist-navigation-active-indicator\);/su,
+    );
+    expect(
+      source.match(/--ui-playlist-navigation-active-indicator\)/gu),
+    ).toHaveLength(1);
+    expect(source).not.toMatch(
+      /@container \(width < 256px\)[\s\S]*?\.playlist-sidebar__item--active\s+\.playlist-sidebar__thumb\s*\{[^}]*box-shadow:/u,
+    );
+  });
+
+  it('uses app-owned end-side tooltips only while fixed navigation is compact', () => {
+    expect(source).toContain(
+      "import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';",
+    );
+    expect(source).toContain(
+      "import { useTooltip } from '../ui/useTooltip.js';",
+    );
+    expect(source.match(/useTooltip\(\{/gu)).toHaveLength(2);
+    expect(
+      source.match(/disabled: computed\(\(\) => !props\.compact\)/gu),
+    ).toHaveLength(2);
+    expect(source.match(/placement: 'end'/gu)).toHaveLength(2);
+    expect(source.match(/<UiTooltipSurface/gu)).toHaveLength(2);
+    expect(source.match(/placement="end"/gu)).toHaveLength(2);
+    expect(source).not.toMatch(/\stitle="/u);
   });
 
   it('mixes albums and artists in one reference tier after playlists and loads it after the library', () => {

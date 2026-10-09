@@ -26,35 +26,43 @@ for (const [component, filename] of [
 }
 
 describe('AppRightDockHeader', () => {
-  it('owns the shared title, optional context, divider, and close action', () => {
-    const onClose = vi.fn();
+  it('owns the shared title, optional context, divider, and inward collapse action', () => {
+    const onCollapse = vi.fn();
     const { app, root } = mount(AppRightDockHeader, {
       title: '播放資訊',
       subtitle: '深夜練唱清單',
-      closeLabel: '關閉播放資訊',
-      onClose,
+      collapseLabel: '摺疊播放資訊',
+      onCollapse,
     });
     const header = findAll(root, (node) => node.type === 'header')[0];
     const heading = findAll(root, (node) => node.type === 'h2')[0];
     const subtitle = findAll(root, (node) => node.type === 'p')[0];
-    const close = findAll(
+    const collapse = findAll(
       root,
-      (node) => node.type === 'button' && textContent(node) === '關閉播放資訊',
+      (node) => node.type === 'button' && textContent(node) === '摺疊播放資訊',
     )[0];
 
     expect(String(header.props.class)).toContain('app-right-dock-header');
     expect(textContent(heading)).toBe('播放資訊');
     expect(textContent(subtitle)).toBe('深夜練唱清單');
-    expect(String(close.props.class)).toContain('app-right-dock-header__close');
-    trigger(close, 'onClick');
-    expect(onClose).toHaveBeenCalledOnce();
+    expect(String(collapse.props.class)).toContain(
+      'app-right-dock-header__collapse',
+    );
+    expect(source).toContain(
+      "import { PanelRightClose } from '../../icons/index.js';",
+    );
+    expect(source).toContain(':icon="PanelRightClose"');
+    expect(source).toContain('tooltip-placement="bottom"');
+    expect(source).not.toMatch(/import\s*\{[^}]*\bX\b[^}]*\}/u);
+    trigger(collapse, 'onClick');
+    expect(onCollapse).toHaveBeenCalledOnce();
     app.unmount();
   });
 
   it('does not reserve a subtitle line for title-only Queue chrome', () => {
     const { app, root } = mount(AppRightDockHeader, {
       title: '佇列',
-      closeLabel: '關閉播放佇列',
+      collapseLabel: '摺疊播放佇列',
     });
 
     expect(findAll(root, (node) => node.type === 'p')).toHaveLength(0);
@@ -62,29 +70,29 @@ describe('AppRightDockHeader', () => {
     app.unmount();
   });
 
-  it('accepts caller-owned identity chrome while preserving the shared close action', () => {
-    const onClose = vi.fn();
+  it('accepts caller-owned identity chrome while preserving the shared collapse action', () => {
+    const onCollapse = vi.fn();
     const { app, root } = mount(
       AppRightDockHeader,
       {
         title: '播放清單',
-        closeLabel: '關閉播放清單',
-        onClose,
+        collapseLabel: '摺疊播放清單',
+        onCollapse,
       },
       {
         identity: () => h('div', { role: 'tablist' }, '佇列 最近播放'),
       },
     );
     const tablist = findAll(root, (node) => node.props.role === 'tablist')[0];
-    const close = findAll(
+    const collapse = findAll(
       root,
-      (node) => node.type === 'button' && textContent(node) === '關閉播放清單',
+      (node) => node.type === 'button' && textContent(node) === '摺疊播放清單',
     )[0];
 
     expect(textContent(tablist)).toBe('佇列 最近播放');
     expect(findAll(root, (node) => node.type === 'h2')).toHaveLength(0);
-    trigger(close, 'onClick');
-    expect(onClose).toHaveBeenCalledOnce();
+    trigger(collapse, 'onClick');
+    expect(onCollapse).toHaveBeenCalledOnce();
     app.unmount();
   });
 

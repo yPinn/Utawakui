@@ -29,7 +29,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  'close',
+  'collapse',
   'navigateSource',
   'openArtist',
   'openLyrics',
@@ -72,9 +72,9 @@ const currentTrackFacts = computed(() => {
   <AppRightDockPanel
     class="studio-context-inspector"
     title="播放資訊"
-    close-label="關閉播放資訊"
+    collapse-label="摺疊播放資訊"
     aria-label="播放資訊"
-    @close="emit('close')"
+    @collapse="emit('collapse')"
   >
     <template #identity>
       <div class="studio-context-inspector__source-identity">

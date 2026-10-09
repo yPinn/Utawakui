@@ -13,7 +13,8 @@ const LAYERS = [
     actionComponent: UiButton,
     actionVariant: 'secondary',
     fieldNote: 'Candidate 同列 control boxes · 36／32px',
-    stateNote: 'Ghost／Accent／Overlay 皆有 authored hover 與 pressed。',
+    stateNote:
+      'Ghost／Accent／Command／Overlay 皆有 authored hover 與 pressed。',
     sizes: [
       ['candidate-standard', 'standard', 'md', 'Standard routine · 36 CSS px'],
       ['candidate-compact', 'compact', 'md', 'Compact routine · 32 CSS px'],
@@ -33,7 +34,8 @@ const LAYERS = [
     actionComponent: UiButton,
     actionVariant: 'ghost',
     fieldNote: 'Current icon 32px／Field＋Button 30px',
-    stateNote: 'Ghost／Accent／Overlay 保持完整 hover 與 pressed contract。',
+    stateNote:
+      'Ghost／Accent／Command／Overlay 保持完整 hover 與 pressed contract。',
     sizes: [
       ['current-md', 'current-md', 'md', 'Current md · 32 CSS px'],
       ['current-lg', 'current-lg', 'lg', 'Current lg · 44 CSS px'],

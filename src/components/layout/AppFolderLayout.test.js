@@ -34,6 +34,35 @@ describe('AppFolderLayout', () => {
     expect(html.indexOf('Lyrics')).toBeLessThan(html.indexOf('Output'));
     expect(html.indexOf('Output')).toBeLessThan(html.indexOf('Import'));
     expect(html).toContain('Feature body');
+    for (const destination of ['setlist', 'lyrics', 'output', 'import']) {
+      expect(html).toContain(`data-folder-destination="${destination}"`);
+    }
+  });
+
+  it('gives every Folder tab its destination material and contrast foreground', () => {
+    for (const [destination, material] of [
+      ['setlist', 'primary'],
+      ['lyrics', 'secondary'],
+      ['output', 'tertiary'],
+      ['import', 'neutral'],
+    ]) {
+      expect(source).toMatch(
+        new RegExp(
+          `\\.app-folder-layout__destination\\[data-folder-destination='${destination}'\\]\\s*\\{[^}]*--ui-folder-tab-material:\\s*var\\(--ui-color-folder-${material}\\);[^}]*--ui-folder-tab-foreground:\\s*var\\(--ui-color-folder-${material}-foreground\\);`,
+          'su',
+        ),
+      );
+    }
+
+    expect(source).toMatch(
+      /\.app-folder-layout__destination\s*\{[^}]*color:\s*var\(--ui-folder-tab-foreground\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-folder-layout__destination::before\s*\{[^}]*background:\s*var\(--ui-folder-tab-material\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-folder-layout__destination--active\s*\{[^}]*color:\s*var\(--ui-folder-tab-foreground\);/su,
+    );
   });
 
   it('keeps Folder material and tab motion inside the formal layout owner', () => {
@@ -54,6 +83,28 @@ describe('AppFolderLayout', () => {
     expect(source).not.toContain('candidateView');
     expect(source).not.toContain('data-ui-candidate-view');
     expect(source).not.toContain('Archive');
+  });
+
+  it('maps destination color to the Folder interior without recoloring the global canvas', () => {
+    expect(source).toMatch(
+      /\.app-folder-layout\s*\{[^}]*--ui-folder-layout-background:\s*var\(--ui-color-folder-primary\);[^}]*--ui-folder-page-background:\s*var\(\s*--ui-folder-interior-background-setlist\s*\);[^}]*--ui-folder-content-background:\s*var\(--ui-folder-sheet-background\);/su,
+    );
+
+    for (const [destination, material] of [
+      ['lyrics', 'secondary'],
+      ['output', 'tertiary'],
+      ['import', 'neutral'],
+    ]) {
+      expect(source).toMatch(
+        new RegExp(
+          `\\.app-folder-layout\\[data-active-destination='${destination}'\\]\\s*\\{[^}]*--ui-folder-layout-background:\\s*var\\(--ui-color-folder-${material}\\);[^}]*--ui-folder-page-background:\\s*var\\(--ui-folder-interior-background-${destination}\\);`,
+          'su',
+        ),
+      );
+    }
+
+    expect(source).not.toContain('--ui-color-canvas:');
+    expect(source).not.toContain('--ui-color-accent:');
   });
 
   it('uses the shared large-surface radius for every visible exterior corner', () => {

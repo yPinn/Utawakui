@@ -127,7 +127,7 @@ function createPerformerWindowManager(options) {
     if (!isUiTheme(theme)) return false;
     const window = liveWindow();
     if (!window) return false;
-    window.setBackgroundColor(theme === 'light' ? '#e8e4dd' : '#191a1e');
+    window.setBackgroundColor(theme === 'light' ? '#dad7d0' : '#191a1e');
     window.webContents.send('performer-view:ui-theme', theme);
     return true;
   }
@@ -148,7 +148,7 @@ function createPerformerWindowManager(options) {
       ...bounds,
       minWidth: MIN_PERFORMER_WINDOW_BOUNDS.width,
       minHeight: MIN_PERFORMER_WINDOW_BOUNDS.height,
-      backgroundColor: initialTheme === 'light' ? '#e8e4dd' : '#191a1e',
+      backgroundColor: initialTheme === 'light' ? '#dad7d0' : '#191a1e',
       title: 'Utawakui 提詞器',
       show: false,
       frame: false,
