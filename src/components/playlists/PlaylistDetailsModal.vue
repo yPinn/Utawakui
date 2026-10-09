@@ -10,9 +10,11 @@ import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const PLAYLIST_DETAILS_COVER_SIZE = 160;
 const playlistDetailsStyle = Object.freeze({
@@ -26,6 +28,7 @@ const props = defineProps({
   description: { type: String, default: '' },
   coverUrl: { type: String, default: '' },
   coverTracks: { type: Array, default: () => [] },
+  saving: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close', 'save', 'chooseCover', 'clearCover']);
@@ -48,10 +51,16 @@ watch(
 );
 
 function save() {
+  if (props.saving) return;
   emit('save', {
     name: nameDraft.value.trim() || props.name,
     description: descriptionDraft.value,
   });
+}
+
+function cancel() {
+  if (props.saving) return;
+  emit('close');
 }
 </script>
 
@@ -60,7 +69,8 @@ function save() {
     :open="open"
     title="編輯詳細資料"
     size="notice"
-    @close="emit('close')"
+    :close-disabled="saving"
+    @close="cancel"
   >
     <div class="playlist-details" :style="playlistDetailsStyle">
       <div class="playlist-details__cover" data-artwork-reveal-scope>
@@ -73,16 +83,21 @@ function save() {
         >
           <template v-if="!isAlbum" #overlay>
             <UiArtworkReveal>
-              <button
-                type="button"
-                class="playlist-details__cover-edit"
-                aria-label="選擇相片"
-                title="選擇相片"
-                @click="emit('chooseCover')"
-              >
-                <Pencil :size="ICON_SIZE" aria-hidden="true" />
-                <span>選擇相片</span>
-              </button>
+              <UiTooltip text="選擇相片">
+                <template #trigger="{ triggerProps }">
+                  <button
+                    v-bind="triggerProps"
+                    type="button"
+                    class="playlist-details__cover-edit"
+                    aria-label="選擇相片"
+                    :disabled="saving"
+                    @click="emit('chooseCover')"
+                  >
+                    <Pencil :size="ICON_SIZE" aria-hidden="true" />
+                    <span>選擇相片</span>
+                  </button>
+                </template>
+              </UiTooltip>
             </UiArtworkReveal>
           </template>
         </UiCollageThumb>
@@ -95,6 +110,7 @@ function save() {
               :icon="X"
               label="移除自訂封面"
               variant="overlay"
+              :disabled="saving"
               @click="emit('clearCover')"
             />
           </UiArtworkReveal>
@@ -109,6 +125,7 @@ function save() {
           label="名稱"
           label-hidden
           :maxlength="200"
+          :disabled="saving"
           @keydown.enter="save"
         />
 
@@ -121,6 +138,7 @@ function save() {
           label-hidden
           :rows="3"
           :maxlength="500"
+          :disabled="saving"
           placeholder="新增說明"
         />
         <p
@@ -129,11 +147,25 @@ function save() {
         >
           {{ description }}
         </p>
+        <UiHint v-if="!isAlbum">
+          封面變更會立即套用；取消只會放棄尚未儲存的名稱與說明。
+        </UiHint>
       </div>
     </div>
 
     <template #footer>
-      <UiButton variant="accent" @click="save">儲存</UiButton>
+      <UiButton variant="secondary" :disabled="saving" @click="cancel">
+        取消
+      </UiButton>
+      <UiButton
+        variant="accent"
+        :loading="saving"
+        loading-label="儲存中"
+        :disabled="saving"
+        @click="save"
+      >
+        儲存
+      </UiButton>
     </template>
   </UiModal>
 </template>

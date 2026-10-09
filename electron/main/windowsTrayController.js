@@ -24,6 +24,7 @@ function createWindowsTrayController({
   appName = 'Utawakui',
   initialBehavior = 'ask',
   requestCloseDecision = null,
+  presentCloseError = null,
   getActiveBackgroundWork = () => null,
   persistWindowCloseBehavior = async () => undefined,
   recordDiagnostic = () => undefined,
@@ -137,6 +138,18 @@ function createWindowsTrayController({
       error,
     });
     if (!canActOnPrompt(sourceWindow)) return;
+    if (typeof presentCloseError === 'function') {
+      try {
+        const presented = await presentCloseError(sourceWindow, {
+          title: message,
+          message: detail,
+        });
+        if (presented === true) return;
+      } catch {
+        // Fall through to the native recovery surface if the healthy-renderer
+        // presentation becomes unavailable during this recovered request.
+      }
+    }
     try {
       await dialog.showMessageBox(sourceWindow, {
         type: 'error',

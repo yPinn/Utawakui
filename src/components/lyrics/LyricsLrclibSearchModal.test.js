@@ -36,7 +36,7 @@ describe('online lyrics search modal contract', () => {
     expect(manager).not.toContain('同時搜尋可用來源');
     expect(manager).not.toContain('只有完整有效的逐字時間');
     expect(manager).toMatch(
-      /function handleModalClose\(\) \{\s+activeView\.value = 'sources';\s+emit\('close'\);/,
+      /function handleModalClose\(\) \{\s+activeView\.value = 'sources';\s+pendingDeleteSource\.value = null;\s+emit\('close'\);/u,
     );
     expect(panel).toContain("emit('openSearch')");
     expect(panel).not.toContain('description');

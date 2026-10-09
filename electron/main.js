@@ -412,6 +412,8 @@ if (!gotSingleInstanceLock) {
       getActiveBackgroundWork: windowState.getActiveBackgroundWork,
       requestCloseDecision: (mainWindow, options) =>
         windowCloseDecisionBridge.requestDecision(mainWindow, options),
+      presentCloseError: (mainWindow, payload) =>
+        windowCloseDecisionBridge.presentError(mainWindow, payload),
       persistWindowCloseBehavior: (behavior) =>
         configState.updateConfig({ windowCloseBehavior: behavior }),
       recordDiagnostic,

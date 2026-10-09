@@ -62,6 +62,12 @@ const selectedArtworkCandidate = computed(
 const fieldsDisabled = computed(
   () => props.saving || props.artworkSaving || props.artworkSearching,
 );
+const closeDisabled = computed(() => props.saving || props.artworkSaving);
+
+function cancel() {
+  if (closeDisabled.value) return;
+  emit('close');
+}
 
 watch(
   () => props.artworkSearchOpen,
@@ -77,23 +83,28 @@ watch(
     title="編輯資訊"
     size="wide"
     fixed-height
-    @close="emit('close')"
+    :close-disabled="closeDisabled"
+    @close="cancel"
   >
     <template #default>
       <div class="track-metadata">
-        <ArtworkPreviewPane
-          class="track-metadata__preview"
-          :current-track="currentTrack"
-          :candidate="selectedArtworkCandidate"
-          :search-open="artworkSearchOpen"
-          :disabled="saving || artworkSaving"
-          :artwork-saving="artworkSaving"
-          :artwork-searching="artworkSearching"
-          @choose="emit('chooseThumbnail')"
-          @clear="emit('clearThumbnail')"
-          @open-search="emit('openArtworkSearch')"
-          @apply="emit('applyArtwork')"
-        />
+        <div class="track-metadata__preview">
+          <ArtworkPreviewPane
+            :current-track="currentTrack"
+            :candidate="selectedArtworkCandidate"
+            :search-open="artworkSearchOpen"
+            :disabled="saving || artworkSaving"
+            :artwork-saving="artworkSaving"
+            :artwork-searching="artworkSearching"
+            @choose="emit('chooseThumbnail')"
+            @clear="emit('clearThumbnail')"
+            @open-search="emit('openArtworkSearch')"
+            @apply="emit('applyArtwork')"
+          />
+          <UiHint>
+            從電腦選擇、移除或套用候選封面會立即生效；取消只放棄尚未儲存的歌名與演唱者。
+          </UiHint>
+        </div>
 
         <div class="track-metadata__workspace">
           <section
@@ -227,8 +238,13 @@ watch(
     </template>
 
     <template #footer>
+      <UiButton variant="secondary" :disabled="closeDisabled" @click="cancel">
+        取消
+      </UiButton>
       <UiButton
         variant="accent"
+        :loading="saving"
+        loading-label="儲存中"
         :disabled="fieldsDisabled"
         @click="emit('save')"
       >
@@ -251,6 +267,8 @@ watch(
   position: sticky;
   top: 0;
   align-self: start;
+  display: grid;
+  gap: var(--ui-space-2);
 }
 
 .track-metadata__workspace,

@@ -21,6 +21,9 @@ describe('Windows tray main-process composition', () => {
     expect(source).toContain(
       'windowCloseDecisionBridge.requestDecision(mainWindow, options)',
     );
+    expect(source).toContain(
+      'windowCloseDecisionBridge.presentError(mainWindow, payload)',
+    );
   });
 
   it('restores a hidden window for a second launch and applies live behavior changes', () => {

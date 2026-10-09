@@ -11,22 +11,40 @@ const props = defineProps({
   isResponding: { type: Boolean, default: false },
   pendingAction: { type: String, default: '' },
   activeWork: { type: String, default: '' },
+  presentation: { type: String, default: 'decision' },
+  errorTitle: { type: String, default: '' },
   error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'decision', 'update:remember']);
 const hasActiveSeparation = computed(() => props.activeWork === 'separation');
+const isErrorPresentation = computed(() => props.presentation === 'error');
+const modalTitle = computed(() =>
+  isErrorPresentation.value
+    ? props.errorTitle || '關閉操作未完成'
+    : hasActiveSeparation.value
+      ? '伴奏處理中'
+      : '關閉 Utawakui',
+);
 </script>
 
 <template>
   <UiModal
     :open="open"
-    :title="hasActiveSeparation ? '伴奏處理中' : '關閉 Utawakui'"
+    :title="modalTitle"
     size="notice"
     @close="emit('close')"
   >
     <div class="window-close-decision">
-      <div class="window-close-decision__copy">
+      <UiNotice
+        v-if="isErrorPresentation"
+        tone="danger"
+        :title="errorTitle"
+        :message="error"
+        compact
+      />
+
+      <div v-else class="window-close-decision__copy">
         <p class="window-close-decision__question">
           {{
             hasActiveSeparation
@@ -44,7 +62,7 @@ const hasActiveSeparation = computed(() => props.activeWork === 'separation');
       </div>
 
       <UiCheckbox
-        v-if="!hasActiveSeparation"
+        v-if="!isErrorPresentation && !hasActiveSeparation"
         id="window-close-remember"
         :model-value="remember"
         label="記住我的選擇"
@@ -53,7 +71,7 @@ const hasActiveSeparation = computed(() => props.activeWork === 'separation');
       />
 
       <UiNotice
-        v-if="error"
+        v-if="!isErrorPresentation && error"
         tone="danger"
         title="關閉操作未完成"
         :message="error"
@@ -61,10 +79,22 @@ const hasActiveSeparation = computed(() => props.activeWork === 'separation');
       />
 
       <div class="window-close-decision__actions">
-        <UiButton :disabled="isResponding" @click="emit('close')">
+        <UiButton
+          v-if="isErrorPresentation"
+          variant="accent"
+          @click="emit('close')"
+        >
+          知道了
+        </UiButton>
+        <UiButton
+          v-if="!isErrorPresentation"
+          :disabled="isResponding"
+          @click="emit('close')"
+        >
           取消
         </UiButton>
         <UiButton
+          v-if="!isErrorPresentation"
           :intent="hasActiveSeparation ? 'danger' : 'neutral'"
           :disabled="isResponding"
           :loading="pendingAction === 'quit'"
@@ -74,6 +104,7 @@ const hasActiveSeparation = computed(() => props.activeWork === 'separation');
           {{ hasActiveSeparation ? '停止並結束' : '完全結束' }}
         </UiButton>
         <UiButton
+          v-if="!isErrorPresentation"
           variant="accent"
           :disabled="isResponding"
           :loading="pendingAction === 'tray'"

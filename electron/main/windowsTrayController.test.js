@@ -322,6 +322,29 @@ describe('windowsTrayController', () => {
     expect(Tray.mock.results[0].value.destroy).toHaveBeenCalledOnce();
   });
 
+  it('uses the app-owned error presentation while the renderer is healthy', async () => {
+    const privateError = new Error('failed E:\\private\\config.json');
+    const presentCloseError = vi.fn().mockResolvedValue(true);
+    const { controller, dialog } = createHarness({
+      persistWindowCloseBehavior: vi.fn().mockRejectedValue(privateError),
+      presentCloseError,
+      requestCloseDecision: vi
+        .fn()
+        .mockResolvedValue({ action: 'quit', remember: true }),
+    });
+    const win = createWindowDouble();
+    controller.attachWindow(win);
+
+    win.emit('close', closeEvent());
+    await flushCloseDecision();
+
+    expect(presentCloseError).toHaveBeenCalledWith(win, {
+      title: '無法儲存關閉行為',
+      message: '視窗仍保持開啟，請稍後再試，或在設定頁重新選擇。',
+    });
+    expect(dialog.showMessageBox).not.toHaveBeenCalled();
+  });
+
   it('keeps the window visible when one-shot tray creation fails', async () => {
     const privateError = new Error('private shell icon failure');
     const failingTray = vi.fn(function Tray() {

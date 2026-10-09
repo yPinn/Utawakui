@@ -100,6 +100,29 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).not.toContain('儲存變更');
   });
 
+  it('offers an explicit cancel before save and locks close paths only during writes', () => {
+    const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
+    const cancelIndex = footer.indexOf('取消');
+    const saveIndex = footer.indexOf('儲存歌曲資料');
+
+    expect(cancelIndex).toBeGreaterThan(-1);
+    expect(saveIndex).toBeGreaterThan(cancelIndex);
+    expect(footer).toMatch(
+      /<UiButton[^>]*variant="secondary"[^>]*@click="cancel"[^>]*>\s*取消/u,
+    );
+    expect(modalSource).toContain('@close="cancel"');
+    expect(modalSource).toContain(':close-disabled="closeDisabled"');
+    expect(modalSource).toContain(
+      'const closeDisabled = computed(() => props.saving || props.artworkSaving);',
+    );
+  });
+
+  it('makes the independent artwork commit boundary explicit', () => {
+    expect(modalSource).toContain(
+      '從電腦選擇、移除或套用候選封面會立即生效；取消只放棄尚未儲存的歌名與演唱者。',
+    );
+  });
+
   it('allows locally-created blob URLs without permitting remote artwork hotlinks', () => {
     expect(appHtml).toMatch(/img-src [^;]*\bblob:/u);
     expect(appHtml).not.toMatch(/img-src [^;]*https:\/\/archive\.org/u);

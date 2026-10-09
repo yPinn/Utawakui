@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { ListOrdered, ListPlus, Plus } from '../../icons/index.js';
+import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { playlistDisplayName } from '../../utils/playlistMenu.js';
@@ -12,6 +13,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 const emit = defineEmits(['close', 'openPreparation']);
+const { confirm: confirmAction } = useAppConfirmation();
 const {
   state,
   initialize,
@@ -51,9 +53,13 @@ async function prepareSelectedCollection() {
   await initialize();
   let replaceCurrent = hasDraft.value;
   if (replaceCurrent) {
-    const confirmed = window.confirm(
-      `確定要用「${selectedCollectionLabel.value}」取代「${sourceLabel.value}」嗎？`,
-    );
+    const confirmed = await confirmAction({
+      title: '取代場次草稿？',
+      message: `「${selectedCollectionLabel.value}」會取代「${sourceLabel.value}」的待唱安排。`,
+      detail: '目前草稿的手動調整會遺失。',
+      confirmLabel: '取代草稿',
+      intent: 'danger',
+    });
     if (!confirmed) return;
   }
 
@@ -70,9 +76,13 @@ async function prepareSelectedCollection() {
     !replaceCurrent &&
     state.validationError?.code === 'SESSION_PLAN_REPLACE_REQUIRED'
   ) {
-    replaceCurrent = window.confirm(
-      '目前已有另一份場次草稿。要用目前選取的來源取代嗎？',
-    );
+    replaceCurrent = await confirmAction({
+      title: '取代另一份場次草稿？',
+      message: '目前已有另一份場次草稿。',
+      detail: '取代後，原草稿的手動調整會遺失。',
+      confirmLabel: '取代草稿',
+      intent: 'danger',
+    });
     if (replaceCurrent) {
       prepared = await replacePerformanceSessionPlanFromCollection(
         collection.id,

@@ -213,6 +213,36 @@ describe('UiModal behavior', () => {
     app.unmount();
   });
 
+  it('disables every close path while a caller-owned commit is in progress', async () => {
+    const close = vi.fn();
+    const Root = {
+      setup: () => () =>
+        h(UiModal, {
+          open: true,
+          title: '儲存中',
+          closeDisabled: true,
+          onClose: close,
+        }),
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(root);
+    await nextTick();
+
+    const closeButton = findAll(
+      body,
+      (node) => node.type === 'button' && textContent(node) === '關閉',
+    )[0];
+    expect(closeButton.props.disabled).toBe(true);
+    closeButton.props.onClick();
+    listeners.get('keydown')[0]({ key: 'Escape' });
+
+    expect(close).not.toHaveBeenCalled();
+    app.unmount();
+  });
+
   it('lets only the top-most modal handle Escape when dialogs overlap', async () => {
     const closeFirst = vi.fn();
     const closeSecond = vi.fn();
@@ -272,6 +302,36 @@ describe('UiModal behavior', () => {
       'ui-modal--fixed-height',
     );
     expect(String(dialogs[1].props.class)).toContain('ui-modal--fixed-height');
+
+    app.unmount();
+  });
+
+  it('disables text selection only when the caller opts into a decision surface', async () => {
+    const Root = {
+      setup: () => () => [
+        h(UiModal, {
+          open: true,
+          title: '一般內容',
+        }),
+        h(UiModal, {
+          open: true,
+          title: '確認操作',
+          selectable: false,
+        }),
+      ],
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(root);
+    await nextTick();
+
+    const dialogs = findAll(body, (node) => node.props?.role === 'dialog');
+    expect(String(dialogs[0].props.class)).not.toContain(
+      'ui-modal--select-none',
+    );
+    expect(String(dialogs[1].props.class)).toContain('ui-modal--select-none');
 
     app.unmount();
   });

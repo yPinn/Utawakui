@@ -10,6 +10,8 @@ export function useWindowCloseDecision() {
     isResponding: false,
     pendingAction: '',
     activeWork: '',
+    presentation: 'decision',
+    errorTitle: '',
     error: '',
   });
   const bridge =
@@ -20,6 +22,7 @@ export function useWindowCloseDecision() {
   let disposed = false;
   let unsubscribeRequest = () => undefined;
   let unsubscribeDismiss = () => undefined;
+  let unsubscribeError = () => undefined;
 
   function clearRequest() {
     activeRequestId = null;
@@ -29,6 +32,8 @@ export function useWindowCloseDecision() {
     state.isResponding = false;
     state.pendingAction = '';
     state.activeWork = '';
+    state.presentation = 'decision';
+    state.errorTitle = '';
     state.error = '';
   }
 
@@ -65,6 +70,8 @@ export function useWindowCloseDecision() {
     state.remember = false;
     state.isResponding = false;
     state.pendingAction = '';
+    state.presentation = 'decision';
+    state.errorTitle = '';
     state.error = '';
     state.open = true;
   }
@@ -79,6 +86,22 @@ export function useWindowCloseDecision() {
     }
     requestGeneration += 1;
     clearRequest();
+  }
+
+  function handleError(payload) {
+    if (
+      disposed ||
+      typeof payload?.title !== 'string' ||
+      typeof payload?.message !== 'string'
+    ) {
+      return;
+    }
+    requestGeneration += 1;
+    clearRequest();
+    state.presentation = 'error';
+    state.errorTitle = payload.title;
+    state.error = payload.message;
+    state.open = true;
   }
 
   function setRemember(value) {
@@ -129,6 +152,14 @@ export function useWindowCloseDecision() {
     return respond('cancel');
   }
 
+  async function close() {
+    if (state.presentation === 'error') {
+      clearRequest();
+      return true;
+    }
+    return cancel();
+  }
+
   if (
     bridge?.onWindowCloseRequest &&
     bridge?.onWindowCloseDismiss &&
@@ -138,6 +169,9 @@ export function useWindowCloseDecision() {
     unsubscribeRequest = bridge.onWindowCloseRequest(handleRequest);
     unsubscribeDismiss = bridge.onWindowCloseDismiss(handleDismiss);
   }
+  if (bridge?.onWindowCloseError) {
+    unsubscribeError = bridge.onWindowCloseError(handleError);
+  }
 
   function dispose() {
     if (disposed) return;
@@ -145,12 +179,14 @@ export function useWindowCloseDecision() {
     requestGeneration += 1;
     unsubscribeRequest();
     unsubscribeDismiss();
+    unsubscribeError();
     clearRequest();
   }
 
   return {
     state: readonly(state),
     cancel,
+    close,
     dispose,
     respond,
     setRemember,

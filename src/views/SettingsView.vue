@@ -45,6 +45,7 @@ import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useFeedbackReport } from '../composables/useFeedbackReport.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useAppAnnouncement } from '../composables/useAppAnnouncement.js';
+import { useAppConfirmation } from '../composables/useAppConfirmation.js';
 import { useAppInfo } from '../composables/useAppInfo.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
@@ -102,6 +103,7 @@ const { recordError, recentRecords: recentDiagnosticRecords } =
   useAppDiagnostics();
 const feedback = useFeedbackReport();
 const announcement = useAppAnnouncement();
+const { confirm: confirmAction } = useAppConfirmation();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
   state: appUpdateState,
@@ -336,34 +338,48 @@ async function refreshSettingsState() {
 }
 
 async function handleRemoveMusicAnalysis() {
-  const confirmed =
-    typeof window === 'undefined' ||
-    window.confirm('移除 BPM 分析元件？歌曲與既有分析資料都會保留。');
+  const confirmed = await confirmAction({
+    title: '移除 BPM 分析元件？',
+    message: '這台電腦上的 BPM 分析元件會被移除。',
+    detail: '歌曲與既有分析資料都會保留，之後可以重新準備。',
+    confirmLabel: '移除元件',
+    intent: 'danger',
+  });
   if (!confirmed) return;
 
   await musicAnalysisSettings.remove();
 }
 
 async function handleClearObsPassword() {
-  const confirmed =
-    typeof window === 'undefined' ||
-    window.confirm('移除這台電腦上已儲存的 OBS 密碼？');
+  const confirmed = await confirmAction({
+    title: '移除 OBS 密碼？',
+    message: '這台電腦上已儲存的 OBS WebSocket 密碼會被移除。',
+    detail: '下次連線時需要重新輸入密碼。',
+    confirmLabel: '移除密碼',
+    intent: 'danger',
+  });
   if (confirmed) await obsIntegrationSettings.clearPassword();
 }
 
 async function handleClearDiagnostics() {
-  const confirmed =
-    typeof window === 'undefined' ||
-    window.confirm('清除這台電腦上的錯誤紀錄？');
+  const confirmed = await confirmAction({
+    title: '清除錯誤紀錄？',
+    message: '這台電腦上已儲存的錯誤紀錄會被清除。',
+    detail: '此動作無法復原。',
+    confirmLabel: '清除紀錄',
+    intent: 'danger',
+  });
   if (confirmed) await clearDiagnostics();
 }
 
 async function handleClearPlaybackHistory() {
-  const confirmed =
-    typeof window === 'undefined' ||
-    window.confirm(
-      '清除這台電腦上的最近播放紀錄？這不會影響播放佇列、歌單、OBS 場次紀錄或錯誤紀錄。',
-    );
+  const confirmed = await confirmAction({
+    title: '清除最近播放紀錄？',
+    message: '這台電腦上的最近播放紀錄會被清除。',
+    detail: '這不會影響播放佇列、播放清單、OBS 場次紀錄或錯誤紀錄。',
+    confirmLabel: '清除播放紀錄',
+    intent: 'danger',
+  });
   if (!confirmed) return;
 
   isClearingPlaybackHistory.value = true;
@@ -375,9 +391,13 @@ async function handleClearPlaybackHistory() {
 }
 
 async function handleCleanupLibraryStorage() {
-  const confirmed =
-    typeof window === 'undefined' ||
-    window.confirm('清理去人聲版本？歌曲保留。');
+  const confirmed = await confirmAction({
+    title: '清理去人聲版本？',
+    message: '已產生的去人聲音訊會被清除。',
+    detail: '原始歌曲會保留，之後可以重新產生。',
+    confirmLabel: '清理版本',
+    intent: 'danger',
+  });
   if (confirmed) await libraryStorage.cleanup();
 }
 
@@ -448,9 +468,13 @@ async function handleWorkflowItemAdvancedAction({ item, action }) {
 
   if (action === DEPENDENCY_ADVANCED_ACTIONS.REMOVE) {
     const itemTitle = item.title || item.name;
-    const confirmed =
-      typeof window === 'undefined' ||
-      window.confirm(`移除「${itemTitle}」？需要時可重新準備。`);
+    const confirmed = await confirmAction({
+      title: `移除「${itemTitle}」？`,
+      message: '這台電腦上的功能元件會被移除。',
+      detail: '需要時可以重新準備。',
+      confirmLabel: '移除元件',
+      intent: 'danger',
+    });
     if (!confirmed) return;
     await removeDependency(item.id);
     await refreshDependencyStatus();

@@ -215,6 +215,7 @@ const MAIN_EVENT_CHANNELS = [
   'spout-output:status',
   'ui-density:changed',
   'window-close:dismiss',
+  'window-close:error',
   'window-close:request',
 ].sort();
 
@@ -537,9 +538,11 @@ describe('main preload bridge', () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     const requestCallback = vi.fn();
     const dismissCallback = vi.fn();
+    const errorCallback = vi.fn();
     const navigationCallback = vi.fn();
     bridge.onWindowCloseRequest(requestCallback);
     bridge.onWindowCloseDismiss(dismissCallback);
+    bridge.onWindowCloseError(errorCallback);
     bridge.onAppNavigation(navigationCallback);
 
     const listeners = new Map(
@@ -567,6 +570,14 @@ describe('main preload bridge', () => {
       { sender: 'private' },
       { requestId: '11111111-1111-4111-8111-111111111111' },
     );
+    listeners.get('window-close:error')(
+      { sender: 'private' },
+      { title: '錯誤', message: '說明', privatePath: 'E:\\private' },
+    );
+    listeners.get('window-close:error')(
+      { sender: 'private' },
+      { title: '無法在背景執行', message: '視窗會保持開啟。' },
+    );
     listeners.get('app:navigate')({ sender: 'private' }, 'library');
     listeners.get('app:navigate')({ sender: 'private' }, 'settings');
 
@@ -576,6 +587,11 @@ describe('main preload bridge', () => {
       activeWork: 'separation',
     });
     expect(dismissCallback).toHaveBeenCalledTimes(1);
+    expect(errorCallback).toHaveBeenCalledOnce();
+    expect(errorCallback).toHaveBeenCalledWith({
+      title: '無法在背景執行',
+      message: '視窗會保持開啟。',
+    });
     expect(navigationCallback).toHaveBeenCalledWith('settings');
 
     await bridge.presentWindowCloseRequest(

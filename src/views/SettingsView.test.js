@@ -112,9 +112,10 @@ describe('SettingsView version and maintenance sections', () => {
     expect(librarySource).toContain(':record-count="recentItems.length"');
     expect(librarySource).toContain('@clear="handleClearPlaybackHistory"');
     expect(source).toContain('initializePlaybackHistory();');
-    expect(source).toContain('window.confirm(');
+    expect(source).toContain('useAppConfirmation');
+    expect(source).toContain("title: '清除最近播放紀錄？'");
     expect(source).toContain(
-      '清除這台電腦上的最近播放紀錄？這不會影響播放佇列、歌單、OBS 場次紀錄或錯誤紀錄。',
+      '這不會影響播放佇列、播放清單、OBS 場次紀錄或錯誤紀錄。',
     );
   });
 
@@ -132,7 +133,8 @@ describe('SettingsView version and maintenance sections', () => {
     expect(librarySource).toContain('@cleanup="handleCleanupLibraryStorage"');
     expect(source).toContain('libraryStorage.initialize();');
     expect(source).toContain('libraryStorage.dispose');
-    expect(source).toContain('清理去人聲版本？歌曲保留。');
+    expect(source).toContain("title: '清理去人聲版本？'");
+    expect(source).toContain('原始歌曲會保留，之後可以重新產生。');
   });
 
   it('nests BPM controls inside the audio-processing feature row', () => {
@@ -232,20 +234,19 @@ describe('SettingsView version and maintenance sections', () => {
   });
 
   it('describes the destructive confirmation as clearing error records', () => {
-    expect(source).toContain("window.confirm('清除這台電腦上的錯誤紀錄？')");
+    expect(source).toContain("title: '清除錯誤紀錄？'");
+    expect(source).toContain("confirmLabel: '清除紀錄'");
   });
 
   it('confirms BPM component removal without exposing storage details', () => {
-    expect(source).toContain(
-      "window.confirm('移除 BPM 分析元件？歌曲與既有分析資料都會保留。')",
-    );
+    expect(source).toContain("title: '移除 BPM 分析元件？'");
+    expect(source).toContain('歌曲與既有分析資料都會保留');
     expect(source).toContain('@remove="handleRemoveMusicAnalysis"');
   });
 
   it('requires confirmation before removing the stored OBS password', () => {
-    expect(source).toContain(
-      "window.confirm('移除這台電腦上已儲存的 OBS 密碼？')",
-    );
+    expect(source).toContain("title: '移除 OBS 密碼？'");
+    expect(source).toContain("confirmLabel: '移除密碼'");
     expect(source).toContain(':feature-enabled="gate.enabled"');
     expect(source).toMatch(
       /gate\.enabled \|\|\s+obsIntegrationSettings\.hasStoredPassword\.value/,

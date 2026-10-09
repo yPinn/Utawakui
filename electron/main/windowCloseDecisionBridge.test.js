@@ -39,6 +39,28 @@ function createHarness(overrides = {}) {
 }
 
 describe('windowCloseDecisionBridge', () => {
+  it('presents only bounded close errors to the trusted renderer', () => {
+    const { bridge, win } = createHarness();
+
+    expect(
+      bridge.presentError(win, {
+        title: '  無法在背景執行  ',
+        message: '  系統匣目前無法建立，視窗會保持開啟。  ',
+        privatePath: 'E:\\private\\tray.ico',
+      }),
+    ).toBe(true);
+    expect(win.webContents.send).toHaveBeenCalledWith('window-close:error', {
+      title: '無法在背景執行',
+      message: '系統匣目前無法建立，視窗會保持開啟。',
+    });
+    expect(JSON.stringify(win.webContents.send.mock.calls)).not.toContain(
+      'private',
+    );
+    expect(bridge.presentError({}, { title: '錯誤', message: '說明' })).toBe(
+      false,
+    );
+  });
+
   it('accepts one exact decision only after the trusted renderer presents it', async () => {
     const { bridge, ipcMain, win } = createHarness();
     const decisionPromise = bridge.requestDecision(win);

@@ -43,6 +43,21 @@ describe('WindowCloseDecisionModal', () => {
     expect(html).toContain('disabled');
   });
 
+  it('renders a terminal close error as a notice with one acknowledgement action', async () => {
+    const html = await renderModal({
+      open: true,
+      presentation: 'error',
+      errorTitle: '無法在背景執行',
+      error: '系統匣目前無法建立，視窗會保持開啟。',
+    });
+
+    expect(html).toContain('無法在背景執行');
+    expect(html).toContain('系統匣目前無法建立，視窗會保持開啟。');
+    expect(html).toContain('知道了');
+    expect(html).not.toContain('完全結束');
+    expect(html).not.toContain('記住我的選擇');
+  });
+
   it('makes stopping active accompaniment work explicit and one-shot', async () => {
     const html = await renderModal({
       open: true,

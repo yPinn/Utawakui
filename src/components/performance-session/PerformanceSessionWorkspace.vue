@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, shallowRef } from 'vue';
 import { ArrowLeft, Plus, Trash2 } from '../../icons/index.js';
+import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -19,6 +20,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+const { confirm: confirmAction } = useAppConfirmation();
 const {
   state,
   selectedItem,
@@ -116,22 +118,30 @@ function relinkSelected(fields) {
   relinkItem(selectedItem.value.itemId, fields);
 }
 
-function confirmRemoveItem(itemId) {
+async function confirmRemoveItem(itemId) {
   const item = state.plan.items.find(
     (candidate) => candidate.itemId === itemId,
   );
   if (!item) return;
-  const confirmed = window.confirm(
-    `確定要從待唱移除「${item.displayTitle}」嗎？這只會移除本場安排，不會刪除曲庫歌曲。`,
-  );
+  const confirmed = await confirmAction({
+    title: '從待唱移除這首歌？',
+    message: `「${item.displayTitle}」會從這份場次安排移除。`,
+    detail: '這不會刪除曲庫中的歌曲。',
+    confirmLabel: '從待唱移除',
+    intent: 'danger',
+  });
   if (confirmed) removeItem(itemId);
 }
 
-function clearDraft() {
+async function clearDraft() {
   if (!hasItems.value) return;
-  const confirmed = window.confirm(
-    '確定要清除目前的場次草稿嗎？這不會刪除曲庫或播放清單。',
-  );
+  const confirmed = await confirmAction({
+    title: '清除場次草稿？',
+    message: '目前待唱安排中的所有項目會被清除。',
+    detail: '這不會刪除曲庫歌曲或播放清單。',
+    confirmLabel: '清除草稿',
+    intent: 'danger',
+  });
   if (confirmed) clear();
 }
 </script>

@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 import { useLibrary } from './useLibrary.js';
+import { useAppConfirmation } from './useAppConfirmation.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylists } from './usePlaylists.js';
 import {
@@ -25,12 +26,14 @@ const {
 } = usePlaylists();
 const { tracksById } = useLibrary();
 const { enqueueTrack } = usePlaybackQueue();
+const { confirm: confirmAction } = useAppConfirmation();
 
 // Independent of selectedPlaylist — editing must not require first
 // navigating into that playlist/album's own page (right-clicking any
 // sidebar row opens the modal for that row without changing what the main
 // content area is currently showing).
 const editDetailsPlaylistId = ref(null);
+const editDetailsIsSaving = ref(false);
 
 // The join itself is the "ghost trackId" filter — a track deleted outside
 // the app just silently drops out, per tracks.js's orphan doctrine. Shared
@@ -72,6 +75,7 @@ const editDetailsDescription = computed(
 // changes (choose/clear) still commit immediately on click since that's
 // already an async IPC round-trip independent of the form's Save button.
 function openEditDetails() {
+  if (editDetailsIsSaving.value) return;
   if (!selectedPlaylist.value) return;
   editDetailsPlaylistId.value = selectedPlaylist.value.id;
 }
@@ -80,6 +84,7 @@ function openEditDetails() {
 // selected/viewed. Editing must not force navigation to it, so this only
 // sets the independent edit-details target, never select().
 function startPlaylistEditDetails(playlistId) {
+  if (editDetailsIsSaving.value) return;
   const playlist = playlistState.playlists.find(
     (item) => item.id === playlistId,
   );
@@ -88,45 +93,69 @@ function startPlaylistEditDetails(playlistId) {
 }
 
 function closeEditDetailsModal() {
+  if (editDetailsIsSaving.value) return;
   editDetailsPlaylistId.value = null;
 }
 
-function saveEditDetails({ name, description }) {
+async function saveEditDetails({ name, description }) {
+  if (editDetailsIsSaving.value) return;
   const playlist = editDetailsPlaylist.value;
   if (!playlist) return;
-  if (name && name !== playlist.name) {
-    renamePlaylistAction(playlist.id, name);
+  editDetailsIsSaving.value = true;
+  try {
+    if (name && name !== playlist.name) {
+      await renamePlaylistAction(playlist.id, name);
+    }
+    if (description !== playlist.description) {
+      await setPlaylistDescriptionAction(playlist.id, description);
+    }
+    editDetailsPlaylistId.value = null;
+  } finally {
+    editDetailsIsSaving.value = false;
   }
-  if (description !== playlist.description) {
-    setPlaylistDescriptionAction(playlist.id, description);
+}
+
+async function chooseCover() {
+  if (editDetailsIsSaving.value) return;
+  const playlist = editDetailsPlaylist.value;
+  if (!playlist) return;
+  editDetailsIsSaving.value = true;
+  try {
+    await setPlaylistCoverAction(playlist.id);
+  } finally {
+    editDetailsIsSaving.value = false;
   }
-  editDetailsPlaylistId.value = null;
 }
 
-function chooseCover() {
+async function clearCover() {
+  if (editDetailsIsSaving.value) return;
   const playlist = editDetailsPlaylist.value;
   if (!playlist) return;
-  setPlaylistCoverAction(playlist.id);
+  editDetailsIsSaving.value = true;
+  try {
+    await clearPlaylistCoverAction(playlist.id);
+  } finally {
+    editDetailsIsSaving.value = false;
+  }
 }
 
-function clearCover() {
-  const playlist = editDetailsPlaylist.value;
-  if (!playlist) return;
-  clearPlaylistCoverAction(playlist.id);
-}
-
-// window.confirm (not prompt — Electron doesn't support prompt) states
-// explicitly that this doesn't touch the audio files, since that's the
-// first fear an operator will have about a "delete" on a track list page.
-function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
+// State explicitly that this doesn't touch audio files, since that's the first
+// fear an operator will have about a delete action on a track-list page.
+async function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
   if (!playlist) return;
   const isAlbum = playlist.kind === 'album';
   const name = playlistDisplayName(playlist);
-  const confirmed = window.confirm(
-    isAlbum
-      ? `確定要移除專輯「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會移除這個專輯,且無法復原。`
-      : `確定要刪除歌單「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會刪除這個歌單,且無法復原。`,
-  );
+  const collectionType = isAlbum ? '專輯' : '播放清單';
+  const action = isAlbum ? '移除專輯' : '刪除播放清單';
+  const confirmed = await confirmAction({
+    title: `${action}？`,
+    subject: name,
+    meta: `${playlist.trackIds.length} 首曲目`,
+    message: `只會移除${collectionType}，不會刪除音檔。`,
+    detail: '刪除後無法復原。',
+    confirmLabel: action,
+    intent: 'danger',
+  });
   if (!confirmed) return;
   removePlaylistAction(playlist.id);
 }
@@ -167,7 +196,7 @@ async function handlePlaylistMenuAction(value) {
   } else if (value.action === PLAYLIST_MENU_ACTIONS.editDetails) {
     startPlaylistEditDetails(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.delete) {
-    confirmDeletePlaylist(playlist);
+    await confirmDeletePlaylist(playlist);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.convertKind) {
     setPlaylistKindAction(
       playlist.id,
@@ -183,6 +212,7 @@ export function usePlaylistActions() {
     editDetailsCoverTracks,
     editDetailsCoverUrl,
     editDetailsDescription,
+    editDetailsIsSaving,
     resolvePlaylistTracks,
     openEditDetails,
     closeEditDetailsModal,

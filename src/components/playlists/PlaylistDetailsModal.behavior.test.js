@@ -5,6 +5,14 @@ const modalSource = readFileSync(
   new URL('./PlaylistDetailsModal.vue', import.meta.url),
   'utf8',
 );
+const actionSource = readFileSync(
+  new URL('../../composables/usePlaylistActions.js', import.meta.url),
+  'utf8',
+);
+const sidebarSource = readFileSync(
+  new URL('../layout/AppPlaylistSidebar.vue', import.meta.url),
+  'utf8',
+);
 
 describe('PlaylistDetailsModal component contract', () => {
   it('uses formal fields and keeps the save action in the modal footer', () => {
@@ -62,5 +70,29 @@ describe('PlaylistDetailsModal component contract', () => {
     expect(modalSource).toMatch(/<UiTextarea[\s\S]*?v-if="!isAlbum"/u);
     expect(modalSource).toContain('v-else-if="description"');
     expect(modalSource).toContain(':can-collage="!isAlbum"');
+  });
+
+  it('offers an explicit cancel before save and shares it with X and Escape', () => {
+    const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
+    const cancelIndex = footer.indexOf('取消');
+    const saveIndex = footer.indexOf('儲存');
+
+    expect(cancelIndex).toBeGreaterThan(-1);
+    expect(saveIndex).toBeGreaterThan(cancelIndex);
+    expect(footer).toMatch(
+      /<UiButton[^>]*variant="secondary"[^>]*@click="cancel"[^>]*>\s*取消/u,
+    );
+    expect(modalSource).toContain('@close="cancel"');
+    expect(modalSource).toContain(':close-disabled="saving"');
+    expect(modalSource).toContain(':disabled="saving"');
+  });
+
+  it('states the immediate cover boundary and keeps one saving owner around playlist writes', () => {
+    expect(modalSource).toContain(
+      '封面變更會立即套用；取消只會放棄尚未儲存的名稱與說明。',
+    );
+    expect(actionSource).toContain('editDetailsIsSaving');
+    expect(actionSource).toContain('if (editDetailsIsSaving.value) return;');
+    expect(sidebarSource).toContain(':saving="editDetailsIsSaving"');
   });
 });

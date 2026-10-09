@@ -5,6 +5,7 @@ const REQUEST_ID = '11111111-1111-4111-8111-111111111111';
 function createBridge(overrides = {}) {
   let requestListener;
   let dismissListener;
+  let errorListener;
   const bridge = {
     onWindowCloseRequest: vi.fn((listener) => {
       requestListener = listener;
@@ -12,6 +13,10 @@ function createBridge(overrides = {}) {
     }),
     onWindowCloseDismiss: vi.fn((listener) => {
       dismissListener = listener;
+      return vi.fn();
+    }),
+    onWindowCloseError: vi.fn((listener) => {
+      errorListener = listener;
       return vi.fn();
     }),
     presentWindowCloseRequest: vi.fn().mockResolvedValue(true),
@@ -22,6 +27,9 @@ function createBridge(overrides = {}) {
     bridge,
     dismiss(payload) {
       return dismissListener(payload);
+    },
+    error(payload) {
+      return errorListener(payload);
     },
     request(payload) {
       return requestListener(payload);
@@ -119,6 +127,27 @@ describe('useWindowCloseDecision', () => {
     expect(controller.state.isResponding).toBe(false);
   });
 
+  it('opens a terminal app-owned error notice without close-decision actions', async () => {
+    const harness = createBridge();
+    const controller = await loadDecisionController(harness.bridge);
+
+    harness.error({
+      title: '無法在背景執行',
+      message: '系統匣目前無法建立，視窗會保持開啟。',
+    });
+
+    expect(controller.state).toMatchObject({
+      open: true,
+      presentation: 'error',
+      errorTitle: '無法在背景執行',
+      error: '系統匣目前無法建立，視窗會保持開啟。',
+    });
+
+    await expect(controller.close()).resolves.toBe(true);
+    expect(controller.state.open).toBe(false);
+    expect(harness.bridge.respondWindowCloseRequest).not.toHaveBeenCalled();
+  });
+
   it('does not open a stale request rejected by main and honors dismissal', async () => {
     const harness = createBridge({
       presentWindowCloseRequest: vi.fn().mockResolvedValue(false),
@@ -138,6 +167,7 @@ describe('useWindowCloseDecision', () => {
   it('unsubscribes both fixed listeners on disposal', async () => {
     const unsubscribeRequest = vi.fn();
     const unsubscribeDismiss = vi.fn();
+    const unsubscribeError = vi.fn();
     const harness = createBridge({
       onWindowCloseRequest: vi.fn((listener) => {
         harness.request = listener;
@@ -147,6 +177,10 @@ describe('useWindowCloseDecision', () => {
         harness.dismiss = listener;
         return unsubscribeDismiss;
       }),
+      onWindowCloseError: vi.fn((listener) => {
+        harness.error = listener;
+        return unsubscribeError;
+      }),
     });
     const controller = await loadDecisionController(harness.bridge);
 
@@ -155,5 +189,6 @@ describe('useWindowCloseDecision', () => {
 
     expect(unsubscribeRequest).toHaveBeenCalledOnce();
     expect(unsubscribeDismiss).toHaveBeenCalledOnce();
+    expect(unsubscribeError).toHaveBeenCalledOnce();
   });
 });

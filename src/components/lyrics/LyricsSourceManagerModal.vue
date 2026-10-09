@@ -33,6 +33,8 @@ const betterLyricsPanelRef = useTemplateRef('betterLyricsPanelRef');
 const isManualImportOpen = ref(false);
 const editingFilename = ref(null);
 const labelDraft = ref('');
+const pendingDeleteSource = ref(null);
+const isDeletingSource = ref(false);
 const sourceTiers = ref(new Map());
 let sourceTierRequestId = 0;
 const PROVIDERS = Object.freeze({
@@ -53,7 +55,10 @@ const modalTitle = computed(() =>
 watch(
   () => props.open,
   (open) => {
-    if (!open) activeView.value = 'sources';
+    if (!open) {
+      activeView.value = 'sources';
+      pendingDeleteSource.value = null;
+    }
   },
 );
 
@@ -90,6 +95,7 @@ async function returnToSources() {
 
 function handleModalClose() {
   activeView.value = 'sources';
+  pendingDeleteSource.value = null;
   emit('close');
 }
 
@@ -107,12 +113,26 @@ async function commitEdit(filename) {
   editingFilename.value = null;
 }
 
-async function handleDelete(source) {
-  const confirmed = window.confirm(
-    `確定要刪除這個歌詞來源（${formatLyricsSourceLabel(source)}）嗎？此動作無法復原。`,
-  );
-  if (!confirmed) return;
-  await deleteSource(source.filename);
+function handleDelete(source) {
+  editingFilename.value = null;
+  pendingDeleteSource.value = source;
+}
+
+function cancelDelete() {
+  if (isDeletingSource.value) return;
+  pendingDeleteSource.value = null;
+}
+
+async function confirmDelete() {
+  const source = pendingDeleteSource.value;
+  if (!source || isDeletingSource.value) return;
+  isDeletingSource.value = true;
+  try {
+    await deleteSource(source.filename);
+    pendingDeleteSource.value = null;
+  } finally {
+    isDeletingSource.value = false;
+  }
 }
 
 function sourceOffsetMs(source) {
@@ -199,7 +219,32 @@ function sourceTierLabel(source) {
             :key="source.filename"
             class="lyrics-source-manager__row"
           >
-            <template v-if="editingFilename === source.filename">
+            <template v-if="pendingDeleteSource?.filename === source.filename">
+              <div class="lyrics-source-manager__delete-copy">
+                <strong>刪除這個歌詞來源？</strong>
+                <span>
+                  {{ formatLyricsSourceLabel(source) }}
+                  會被刪除，此動作無法復原。
+                </span>
+              </div>
+              <UiButton
+                variant="secondary"
+                :disabled="isDeletingSource"
+                @click="cancelDelete"
+              >
+                取消刪除
+              </UiButton>
+              <UiButton
+                variant="accent"
+                intent="danger"
+                :loading="isDeletingSource"
+                loading-label="刪除中"
+                @click="confirmDelete"
+              >
+                確認刪除歌詞來源
+              </UiButton>
+            </template>
+            <template v-else-if="editingFilename === source.filename">
               <input
                 v-model="labelDraft"
                 class="lyrics-source-manager__input"
@@ -406,6 +451,20 @@ function sourceTierLabel(source) {
   flex-shrink: 0;
   align-items: center;
   gap: var(--ui-space-1);
+}
+
+.lyrics-source-manager__delete-copy {
+  display: grid;
+  flex: 1;
+  gap: var(--ui-space-1);
+  min-width: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-body);
+}
+
+.lyrics-source-manager__delete-copy span {
+  color: var(--ui-color-text-muted);
 }
 
 .lyrics-source-manager__input {

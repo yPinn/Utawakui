@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { ImagePlus, Search, Trash2 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
+import { useAppConfirmation } from '../composables/useAppConfirmation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useArtistIndex } from '../composables/useArtistIndex.js';
 import { useArtistPhotoCandidates } from '../composables/useArtistPhotoCandidates.js';
@@ -54,6 +55,7 @@ import {
 } from '../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
+const { confirm: confirmAction } = useAppConfirmation();
 const { recordError } = useAppDiagnostics();
 const {
   state: libraryState,
@@ -543,9 +545,13 @@ function togglePlaylistSort(key) {
 // refreshes itself via the existing library:updated subscription, not a
 // manual reload here.
 async function removeTrack(track) {
-  const confirmed = window.confirm(
-    `確定要刪除「${track.title}」嗎?此動作會一併刪除原始檔案、去人聲版本,並將此曲目從所有歌單中移除,且無法復原。`,
-  );
+  const confirmed = await confirmAction({
+    title: '刪除曲目？',
+    message: `「${track.title}」會從曲庫及所有播放清單移除。`,
+    detail: '原始檔案與去人聲版本也會刪除，此動作無法復原。',
+    confirmLabel: '刪除曲目',
+    intent: 'danger',
+  });
   if (!confirmed) return;
   clearTrack(track.id);
   deleteError.value = null;

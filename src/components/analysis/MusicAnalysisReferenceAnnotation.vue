@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { useMusicAnalysisReferenceAnnotation } from '../../composables/useMusicAnalysisReferenceAnnotation.js';
 import { createMusicStructureSignals } from '../../composables/useMusicStructureSignals.js';
@@ -18,6 +19,7 @@ import UiTrackRow from '../ui/UiTrackRow.vue';
 import MusicAnalysisReferenceEditor from './MusicAnalysisReferenceEditor.vue';
 
 const annotation = useMusicAnalysisReferenceAnnotation();
+const { confirm: confirmAction } = useAppConfirmation();
 const library = useLibrary();
 const player = usePlayer();
 const structureSignals = createMusicStructureSignals();
@@ -159,13 +161,16 @@ function retryErrorAction() {
   else openWorklist();
 }
 
-function openWorklist() {
-  if (
-    annotation.dirty.value &&
-    typeof window !== 'undefined' &&
-    !window.confirm('目前有尚未儲存的人工標註，仍要更換工作集？')
-  ) {
-    return;
+async function openWorklist() {
+  if (annotation.dirty.value) {
+    const confirmed = await confirmAction({
+      title: '捨棄未儲存的標註？',
+      message: '目前工作集有尚未儲存的人工標註。',
+      detail: '更換工作集後，這些變更會遺失。',
+      confirmLabel: '捨棄並更換',
+      intent: 'danger',
+    });
+    if (!confirmed) return;
   }
   annotation.open();
 }

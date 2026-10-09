@@ -46,6 +46,8 @@ const props = defineProps({
     validator: (value) => ['default', 'notice', 'wide'].includes(value),
   },
   fixedHeight: { type: Boolean, default: false },
+  closeDisabled: { type: Boolean, default: false },
+  selectable: { type: Boolean, default: true },
   // Optional content colour (e.g. a cover's) washed in from the end edge.
   // Material colour only: it never recolours text, controls or accent.
   tint: { type: String, default: null },
@@ -75,6 +77,7 @@ function isTopModal() {
 }
 
 function close() {
+  if (props.closeDisabled) return;
   emit('close');
 }
 
@@ -171,6 +174,7 @@ onUnmounted(() => {
             'ui-modal--fixed-height': fixedHeight,
             'ui-modal--with-footer': Boolean($slots.footer),
             'ui-modal--tinted': Boolean(tint),
+            'ui-modal--select-none': !selectable,
           },
         ]"
         :style="tint ? { '--ui-modal-tint': tint } : undefined"
@@ -193,7 +197,12 @@ onUnmounted(() => {
                 class="ui-modal__header-separator"
               />
             </template>
-            <UiIconButton :icon="X" label="關閉" @click="close" />
+            <UiIconButton
+              :icon="X"
+              label="關閉"
+              :disabled="closeDisabled"
+              @click="close"
+            />
           </div>
         </div>
         <UiScrollRegion
@@ -283,6 +292,11 @@ onUnmounted(() => {
     color-mix(in oklab, var(--ui-modal-tint-ground) 55%, transparent),
     transparent
   );
+}
+
+.ui-modal--select-none {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .ui-modal__body {

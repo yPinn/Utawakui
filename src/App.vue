@@ -18,6 +18,7 @@ import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppUtilityPage from './components/layout/AppUtilityPage.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
+import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import BgmPlayer from './components/bgm/BgmPlayer.vue';
 import UiNotice from './components/ui/UiNotice.vue';
@@ -544,14 +545,17 @@ useKeyboardShortcuts({ internalViewShortcuts });
     />
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
+    <AppConfirmationModal />
     <WindowCloseDecisionModal
       :open="closeDecision.state.open"
       :remember="closeDecision.state.remember"
       :is-responding="closeDecision.state.isResponding"
       :pending-action="closeDecision.state.pendingAction"
       :active-work="closeDecision.state.activeWork"
+      :presentation="closeDecision.state.presentation"
+      :error-title="closeDecision.state.errorTitle"
       :error="closeDecision.state.error"
-      @close="closeDecision.cancel"
+      @close="closeDecision.close"
       @decision="closeDecision.respond"
       @update:remember="closeDecision.setRemember"
     />

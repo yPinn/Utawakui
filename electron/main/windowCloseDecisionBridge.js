@@ -8,6 +8,8 @@ const PRESENT_CHANNEL = 'window-close:present';
 const RESPOND_CHANNEL = 'window-close:respond';
 const REQUEST_CHANNEL = 'window-close:request';
 const DISMISS_CHANNEL = 'window-close:dismiss';
+const ERROR_CHANNEL = 'window-close:error';
+const ERROR_COPY_LIMITS = Object.freeze({ title: 120, message: 500 });
 
 function bridgeError(code) {
   return Object.assign(new Error(code), { code });
@@ -28,6 +30,18 @@ function isCloseDecisionPayload(value) {
   if (!CLOSE_ACTIONS.has(value.action)) return false;
   if (typeof value.remember !== 'boolean') return false;
   return value.action !== 'cancel' || value.remember === false;
+}
+
+function boundedText(value, limit) {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, limit);
+}
+
+function normalizeErrorPayload(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const title = boundedText(value.title, ERROR_COPY_LIMITS.title);
+  const message = boundedText(value.message, ERROR_COPY_LIMITS.message);
+  return title && message ? { title, message } : null;
 }
 
 // Main owns request identity and renderer lifecycle. The renderer can only
@@ -183,6 +197,28 @@ function createWindowCloseDecisionBridge({
     return promise;
   }
 
+  function presentError(sourceWindow, payload) {
+    const errorPayload = normalizeErrorPayload(payload);
+    if (
+      destroyed ||
+      !errorPayload ||
+      !sourceWindow ||
+      sourceWindow !== getAllowedWindow() ||
+      sourceWindow.isDestroyed?.() ||
+      !sourceWindow.webContents ||
+      typeof sourceWindow.webContents.send !== 'function' ||
+      sourceWindow.webContents.isDestroyed?.()
+    ) {
+      return false;
+    }
+    try {
+      sourceWindow.webContents.send(ERROR_CHANNEL, errorPayload);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function destroy() {
     if (destroyed) return;
     destroyed = true;
@@ -191,7 +227,7 @@ function createWindowCloseDecisionBridge({
     ipcMain.removeHandler(RESPOND_CHANNEL);
   }
 
-  return { destroy, requestDecision };
+  return { destroy, presentError, requestDecision };
 }
 
 module.exports = { createWindowCloseDecisionBridge };

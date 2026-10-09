@@ -14,7 +14,7 @@ describe('UiModal appearance contract', () => {
     );
     // Close stays last, after the tools and their separator.
     expect(modalSource).toMatch(
-      /<\/template>\s*<UiIconButton :icon="X" label="關閉" @click="close" \/>/u,
+      /<\/template>\s*<UiIconButton\s+:icon="X"\s+label="關閉"\s+:disabled="closeDisabled"\s+@click="close"\s*\/>/u,
     );
   });
 
@@ -75,6 +75,16 @@ describe('UiModal appearance contract', () => {
       'padding: var(--ui-modal-footer-inset-block) var(--ui-modal-content-inset);',
     );
     expect(modalSource).not.toContain('box-shadow: var(--ui-shadow-overlay);');
+  });
+
+  it('keeps text selection available by default and scopes select-none to opted-in dialogs', () => {
+    expect(modalSource).toContain(
+      'selectable: { type: Boolean, default: true }',
+    );
+    expect(modalSource).toContain("'ui-modal--select-none': !selectable");
+    expect(modalSource).toMatch(
+      /\.ui-modal--select-none\s*\{[\s\S]*?-webkit-user-select:\s*none;[\s\S]*?user-select:\s*none;/u,
+    );
   });
 
   it('reserves a complete focus ring inside the body scrollport without changing section rhythm', () => {

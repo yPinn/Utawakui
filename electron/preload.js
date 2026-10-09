@@ -56,6 +56,22 @@ function isWindowCloseRequest(value) {
   );
 }
 
+function isWindowCloseError(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = Object.keys(value).sort();
+  return Boolean(
+    keys.length === 2 &&
+    keys[0] === 'message' &&
+    keys[1] === 'title' &&
+    typeof value.title === 'string' &&
+    value.title.length > 0 &&
+    value.title.length <= 120 &&
+    typeof value.message === 'string' &&
+    value.message.length > 0 &&
+    value.message.length <= 500,
+  );
+}
+
 function playbackSourceIntent(value) {
   return {
     sourceId: value?.sourceId ?? null,
@@ -274,6 +290,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
     };
     ipcRenderer.on('window-close:dismiss', listener);
     return () => ipcRenderer.removeListener('window-close:dismiss', listener);
+  },
+  onWindowCloseError: (callback) => {
+    const listener = (event, payload) => {
+      if (isWindowCloseError(payload)) callback(payload);
+    };
+    ipcRenderer.on('window-close:error', listener);
+    return () => ipcRenderer.removeListener('window-close:error', listener);
   },
   onAppNavigation: (callback) => {
     const listener = (event, view) => {

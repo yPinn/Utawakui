@@ -29,6 +29,7 @@ const {
   editDetailsCoverTracks,
   editDetailsCoverUrl,
   editDetailsDescription,
+  editDetailsIsSaving,
   closeEditDetailsModal,
   saveEditDetails,
   chooseCover,
@@ -117,6 +118,7 @@ async function handleResizeKeydown(event) {
       :description="editDetailsDescription"
       :cover-url="editDetailsCoverUrl"
       :cover-tracks="editDetailsCoverTracks"
+      :saving="editDetailsIsSaving"
       @close="closeEditDetailsModal"
       @save="saveEditDetails"
       @choose-cover="chooseCover"

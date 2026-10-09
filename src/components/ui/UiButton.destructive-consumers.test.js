@@ -12,16 +12,18 @@ describe('UiButton destructive consumers', () => {
       '../lyrics/LyricsSourceManagerModal.vue',
       '@click="handleDelete(source)"',
       '../lyrics/LyricsSourceManagerModal.vue',
+      'pendingDeleteSource',
     ],
     [
       'session draft clearing',
       '../performance-session/PerformanceSessionWorkspace.vue',
       '@click="clearDraft"',
       '../performance-session/PerformanceSessionWorkspace.vue',
+      'useAppConfirmation',
     ],
   ])(
     'marks %s without changing its confirmation owner',
-    (_, path, action, confirmationPath) => {
+    (_, path, action, confirmationPath, confirmationEvidence) => {
       const component = source(path);
       const buttonStart = component.lastIndexOf(
         '<UiButton',
@@ -34,7 +36,8 @@ describe('UiButton destructive consumers', () => {
 
       expect(button).toContain('intent="danger"');
       expect(component).toContain(action);
-      expect(source(confirmationPath)).toContain('window.confirm');
+      expect(source(confirmationPath)).toContain(confirmationEvidence);
+      expect(source(confirmationPath)).not.toContain('window.confirm');
     },
   );
 
@@ -45,7 +48,8 @@ describe('UiButton destructive consumers', () => {
     );
     const setlist = source('../../views/SetlistView.vue');
     expect(setlist).toContain('TRACK_MENU_ACTIONS.deleteTrack');
-    expect(setlist).toContain('window.confirm');
+    expect(setlist).toContain('useAppConfirmation');
+    expect(setlist).not.toContain('window.confirm');
   });
 
   it('keeps collection deletion in a danger menu item with confirmation in its action owner', () => {
@@ -53,9 +57,9 @@ describe('UiButton destructive consumers', () => {
     expect(collectionMenu).toMatch(
       /key: 'delete',[\s\S]*?danger: true,[\s\S]*?action: PLAYLIST_MENU_ACTIONS\.delete/u,
     );
-    expect(source('../../composables/usePlaylistActions.js')).toContain(
-      'window.confirm',
-    );
+    const playlistActions = source('../../composables/usePlaylistActions.js');
+    expect(playlistActions).toContain('useAppConfirmation');
+    expect(playlistActions).not.toContain('window.confirm');
   });
 
   it('does not relabel reversible clearing or transport stop as destructive', () => {
