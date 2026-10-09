@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -17,22 +18,25 @@ const actionLabel = computed(() =>
 </script>
 
 <template>
-  <button
-    v-if="expandable"
-    type="button"
-    class="player-bar-artwork player-bar-artwork--interactive"
-    :aria-label="actionLabel"
-    :title="actionLabel"
-    :aria-expanded="expanded"
-    :aria-controls="controls"
-    @click="emit('activate')"
-  >
-    <UiTrackThumb
-      :track="track"
-      :size="PLAYER_BAR_ARTWORK_SIZE"
-      font-size="var(--ui-font-size-lg)"
-    />
-  </button>
+  <UiTooltip v-if="expandable" :text="actionLabel">
+    <template #trigger="{ triggerProps }">
+      <button
+        v-bind="triggerProps"
+        type="button"
+        class="player-bar-artwork player-bar-artwork--interactive"
+        :aria-label="actionLabel"
+        :aria-expanded="expanded"
+        :aria-controls="controls"
+        @click="emit('activate')"
+      >
+        <UiTrackThumb
+          :track="track"
+          :size="PLAYER_BAR_ARTWORK_SIZE"
+          font-size="var(--ui-font-size-lg)"
+        />
+      </button>
+    </template>
+  </UiTooltip>
   <UiTrackThumb
     v-else
     class="player-bar-artwork"

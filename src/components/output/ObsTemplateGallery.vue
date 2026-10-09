@@ -8,6 +8,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTabs from '../ui/UiTabs.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
@@ -139,43 +140,52 @@ function applyPreset(preset) {
             :aria-labelledby="`output-kind-${activeGroup.kind}-tab`"
           >
             <div class="obs-template-gallery__grid">
-              <button
+              <UiTooltip
                 v-for="preset in activeGroup.templates"
                 :key="preset.id"
-                type="button"
-                class="obs-template-thumb"
-                :class="{
-                  'obs-template-thumb--active':
-                    preset.id === selectedPreset?.id,
-                }"
-                :aria-pressed="preset.id === selectedPreset?.id"
-                title="查看模板預覽"
-                @click="selectPreset(preset.id)"
-                @dblclick="applyPreset(preset)"
+                text="查看模板預覽"
               >
-                <ObsTemplateThumbnail :preset="preset" :scene="previewScene" />
-                <div class="obs-template-thumb__body">
-                  <span class="obs-template-thumb__name">
-                    {{ preset.name }}
-                  </span>
-                  <UiChip
-                    v-if="preset.availability"
-                    :tone="preset.availability.tone ?? 'muted'"
+                <template #trigger="{ triggerProps }">
+                  <button
+                    v-bind="triggerProps"
+                    type="button"
+                    class="obs-template-thumb"
+                    :class="{
+                      'obs-template-thumb--active':
+                        preset.id === selectedPreset?.id,
+                    }"
+                    :aria-pressed="preset.id === selectedPreset?.id"
+                    @click="selectPreset(preset.id)"
+                    @dblclick="applyPreset(preset)"
                   >
-                    {{ preset.availability.label }}
-                  </UiChip>
-                  <Check
-                    v-if="preset.id === appliedPresetIds[preset.kind]"
-                    :size="ICON_SIZE"
-                    aria-label="已套用"
-                  />
-                </div>
-                <div class="obs-template-thumb__meta">
-                  <span>{{ preset.preview.layoutLabel }}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{{ preset.preview.motionLabel }}</span>
-                </div>
-              </button>
+                    <ObsTemplateThumbnail
+                      :preset="preset"
+                      :scene="previewScene"
+                    />
+                    <div class="obs-template-thumb__body">
+                      <span class="obs-template-thumb__name">
+                        {{ preset.name }}
+                      </span>
+                      <UiChip
+                        v-if="preset.availability"
+                        :tone="preset.availability.tone ?? 'muted'"
+                      >
+                        {{ preset.availability.label }}
+                      </UiChip>
+                      <Check
+                        v-if="preset.id === appliedPresetIds[preset.kind]"
+                        :size="ICON_SIZE"
+                        aria-label="已套用"
+                      />
+                    </div>
+                    <div class="obs-template-thumb__meta">
+                      <span>{{ preset.preview.layoutLabel }}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{{ preset.preview.motionLabel }}</span>
+                    </div>
+                  </button>
+                </template>
+              </UiTooltip>
             </div>
           </UiScrollRegion>
         </div>

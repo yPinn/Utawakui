@@ -2,6 +2,7 @@
 import { BadgeCheck, ICON_SIZE } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 defineProps({
   hasTrack: { type: Boolean, default: false },
@@ -26,22 +27,26 @@ function handlePresetChange(event) {
   <div class="separation-preset-control" role="group" :aria-label="label">
     <div class="separation-preset-control__row">
       <span class="separation-preset-control__label">{{ label }}</span>
-      <select
-        class="separation-preset-control__select"
-        :value="selectedPresetId"
-        :disabled="!hasTrack || inFlight"
-        aria-label="伴奏處理模式"
-        :title="presetTitle"
-        @change="handlePresetChange"
-      >
-        <option
-          v-for="preset in presetOptions"
-          :key="preset.id"
-          :value="preset.id"
-        >
-          {{ preset.label }}
-        </option>
-      </select>
+      <UiTooltip :text="presetTitle" :disabled="!presetTitle">
+        <template #trigger="{ triggerProps }">
+          <select
+            v-bind="triggerProps"
+            class="separation-preset-control__select"
+            :value="selectedPresetId"
+            :disabled="!hasTrack || inFlight"
+            aria-label="伴奏處理模式"
+            @change="handlePresetChange"
+          >
+            <option
+              v-for="preset in presetOptions"
+              :key="preset.id"
+              :value="preset.id"
+            >
+              {{ preset.label }}
+            </option>
+          </select>
+        </template>
+      </UiTooltip>
 
       <span
         v-if="inFlight"
@@ -51,15 +56,22 @@ function handlePresetChange(event) {
       >
         {{ progressPercent }}%
       </span>
-      <span
+      <UiTooltip
         v-else-if="hasResult"
-        class="separation-preset-control__state separation-preset-control__state--complete"
-        role="status"
-        aria-label="此模式已產生"
-        title="此模式已產生；切換模式可查看其他結果"
+        text="此模式已產生；切換模式可查看其他結果"
       >
-        <BadgeCheck :size="ICON_SIZE" aria-hidden="true" />
-      </span>
+        <template #trigger="{ triggerProps }">
+          <span
+            v-bind="triggerProps"
+            class="separation-preset-control__state separation-preset-control__state--complete"
+            role="status"
+            tabindex="0"
+            aria-label="此模式已產生；切換模式可查看其他結果"
+          >
+            <BadgeCheck :size="ICON_SIZE" aria-hidden="true" />
+          </span>
+        </template>
+      </UiTooltip>
       <UiButton
         v-else
         class="separation-preset-control__action"

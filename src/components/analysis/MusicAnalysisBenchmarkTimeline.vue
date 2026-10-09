@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 import {
   benchmarkM2Presentation,
   benchmarkPlayheadPercent,
@@ -51,27 +52,34 @@ function seekTo(section) {
       role="group"
       aria-label="預測段落時間軸"
     >
-      <button
+      <UiTooltip
         v-for="section in projectedSections"
         :key="section.key"
-        class="benchmark-timeline__segment"
-        :class="[
-          `benchmark-timeline__segment--${section.role}`,
-          { 'benchmark-timeline__segment--low': section.lowConfidence },
-        ]"
-        type="button"
-        :style="{
-          left: `${section.startPercent}%`,
-          width: `${section.widthPercent}%`,
-        }"
-        :aria-label="section.ariaLabel"
-        :title="section.ariaLabel"
-        @click="seekTo(section)"
+        :text="section.ariaLabel"
+        placement="bottom"
       >
-        <span v-if="section.showInsideLabel" aria-hidden="true">
-          {{ section.roleLabel }}
-        </span>
-      </button>
+        <template #trigger="{ triggerProps }">
+          <button
+            v-bind="triggerProps"
+            class="benchmark-timeline__segment"
+            :class="[
+              `benchmark-timeline__segment--${section.role}`,
+              { 'benchmark-timeline__segment--low': section.lowConfidence },
+            ]"
+            type="button"
+            :style="{
+              left: `${section.startPercent}%`,
+              width: `${section.widthPercent}%`,
+            }"
+            :aria-label="section.ariaLabel"
+            @click="seekTo(section)"
+          >
+            <span v-if="section.showInsideLabel" aria-hidden="true">
+              {{ section.roleLabel }}
+            </span>
+          </button>
+        </template>
+      </UiTooltip>
       <span
         class="benchmark-timeline__playhead"
         :style="{ left: `${playheadPercent}%` }"

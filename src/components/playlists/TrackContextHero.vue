@@ -4,6 +4,7 @@ import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -50,22 +51,28 @@ function openAlbum() {
                 overflow="clamp"
                 @click="openAlbum"
               />
-              <p
+              <UiOverflowTooltip
                 v-else
+                as="p"
                 class="track-context-hero__title track-context-hero__title-text"
-                :title="track.title"
+                :text="track.title || '未命名曲目'"
               >
                 {{ track.title || '未命名曲目' }}
-              </p>
+              </UiOverflowTooltip>
               <TrackArtistCredits
                 v-if="track.artist"
                 class="track-context-hero__artist"
                 :track="track"
                 :title="artistName"
               />
-              <p v-else class="track-context-hero__artist" :title="artistName">
+              <UiOverflowTooltip
+                v-else
+                as="p"
+                class="track-context-hero__artist"
+                :text="artistName"
+              >
                 {{ artistName }}
-              </p>
+              </UiOverflowTooltip>
             </div>
             <div v-if="$slots.actions" class="track-context-hero__actions">
               <slot name="actions" />

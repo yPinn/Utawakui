@@ -17,7 +17,7 @@ const LAYERS = [
   {
     key: 'current',
     title: '現行 UiMarqueeText',
-    note: '以現行樣式呈現：過長文字載入後會自動往返，短文字也會保留完整內容提示。',
+    note: '以現行樣式呈現：過長文字載入後會自動往返，只有實際溢位時才顯示完整內容提示。',
     component: UiMarqueeText,
     densities: [['active', 'Current · 外層 8px inset']],
   },

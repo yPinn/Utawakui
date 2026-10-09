@@ -46,7 +46,7 @@ const CONTENT_ITEMS = [
           只有過長的單行文字才需要移動；指向文字或聚焦所在操作時顯示完整內容。
         </p>
         <p v-else>
-          過長的單行文字會自動往返移動；短文字保持靜態，兩者都保留完整內容提示。
+          過長的單行文字會自動往返移動；短文字保持靜態，只有實際溢位時才顯示完整內容提示。
         </p>
       </header>
 
@@ -193,7 +193,7 @@ const CONTENT_ITEMS = [
           <div class="demo-marquee-frame">
             <component
               :is="layer.component"
-              text="保留單行省略與完整內容提示，不強制移動"
+              text="溢位時保留完整內容提示，不強制移動"
             />
           </div>
         </article>
@@ -215,7 +215,7 @@ const CONTENT_ITEMS = [
         <span>text · String 或 Number</span>
         <span>原生屬性套用到外層</span>
         <span v-if="layer.key === 'candidate'">溢位時提供完整內容</span>
-        <span v-else>所有文字保留完整內容提示</span>
+        <span v-else>溢位時提供完整內容提示</span>
         <span>所在區域擁有寬度與操作語意</span>
         <span>不新增速度、狀態、字級或宣告屬性</span>
       </div>

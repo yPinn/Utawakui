@@ -14,6 +14,7 @@ const props = defineProps({
   delayMs: { type: Number, default: 500 },
   closeDelayMs: { type: Number, default: 100 },
   disabled: { type: Boolean, default: false },
+  describedBy: { type: Boolean, default: true },
 });
 
 const { open, position, setTooltip, tooltipId, triggerProps } = useTooltip({
@@ -22,7 +23,7 @@ const { open, position, setTooltip, tooltipId, triggerProps } = useTooltip({
   delayMs: computed(() => props.delayMs),
   closeDelayMs: computed(() => props.closeDelayMs),
   disabled: computed(() => props.disabled),
-  describedBy: true,
+  describedBy: computed(() => props.describedBy),
 });
 </script>
 

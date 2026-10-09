@@ -5,6 +5,8 @@ import ObsOutputColorField from './ObsOutputColorField.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiColorField from '../ui/UiColorField.vue';
 import UiField from '../ui/UiField.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -26,6 +28,12 @@ attachClientRender(
 attachClientRender(UiButton, '../ui/UiButton.vue', import.meta.url);
 attachClientRender(UiColorField, '../ui/UiColorField.vue', import.meta.url);
 attachClientRender(UiField, '../ui/UiField.vue', import.meta.url);
+attachClientRender(UiTooltip, '../ui/UiTooltip.vue', import.meta.url);
+attachClientRender(
+  UiTooltipSurface,
+  '../ui/tooltip/UiTooltipSurface.vue',
+  import.meta.url,
+);
 
 describe('ObsOutputColorField', () => {
   it('keeps saved and recent colors in one compact Output shelf', () => {
@@ -116,8 +124,8 @@ describe('ObsOutputColorField', () => {
     expect(swatches[0].props).toMatchObject({
       'aria-label': '套用最近色票 #AABBCC',
       'aria-pressed': true,
-      title: '#AABBCC',
     });
+    expect(swatches[0].props.title).toBeUndefined();
     trigger(swatches[1], 'onClick');
     expect(update).toHaveBeenCalledWith('#112233');
     expect(commit).toHaveBeenCalledWith('#112233');

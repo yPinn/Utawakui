@@ -20,6 +20,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 import UiTabs from '../ui/UiTabs.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -329,10 +330,23 @@ function handleSeparationPresetChange(presetId) {
           class="player-tools__adjust-row"
         >
           <div class="player-tools__row-header">
-            <span class="player-tools__label" :title="row.deviceName">
-              <component :is="row.icon" :size="ICON_SIZE" aria-hidden="true" />
-              {{ row.label }}
-            </span>
+            <UiTooltip :text="row.deviceName">
+              <template #trigger="{ triggerProps }">
+                <span
+                  v-bind="triggerProps"
+                  class="player-tools__label"
+                  tabindex="0"
+                  :aria-label="`${row.label}：${row.deviceName}`"
+                >
+                  <component
+                    :is="row.icon"
+                    :size="ICON_SIZE"
+                    aria-hidden="true"
+                  />
+                  {{ row.label }}
+                </span>
+              </template>
+            </UiTooltip>
             <span class="player-tools__value">{{ row.value }}</span>
             <UiButton
               :icon="row.onIcon"

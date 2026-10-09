@@ -2,7 +2,6 @@ import {
   computed,
   nextTick,
   onBeforeUnmount,
-  onMounted,
   shallowRef,
   toValue,
   useId,
@@ -33,13 +32,14 @@ export function useTooltip(options) {
       : {}),
     onPointerenter: scheduleShow,
     onPointerleave: scheduleHide,
-    onFocusin: show,
+    onFocusin: handleFocusin,
     onFocusout: scheduleHide,
     onKeydown: handleKeydown,
   }));
 
   let openTimer;
   let closeTimer;
+  let viewportListenersAttached = false;
 
   function canShow() {
     return !toValue(options.disabled) && Boolean(toValue(options.text));
@@ -78,11 +78,37 @@ export function useTooltip(options) {
     position.value = { left: `${left}px`, top: `${top}px` };
   }
 
+  function attachViewportListeners() {
+    if (viewportListenersAttached || typeof window === 'undefined') return;
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    viewportListenersAttached = true;
+  }
+
+  function removeViewportListeners() {
+    if (!viewportListenersAttached || typeof window === 'undefined') return;
+    window.removeEventListener('resize', updatePosition);
+    window.removeEventListener('scroll', updatePosition, true);
+    viewportListenersAttached = false;
+  }
+
   function show() {
     if (!canShow()) return;
     clearTimeout(closeTimer);
+    attachViewportListeners();
     open.value = true;
     nextTick(updatePosition);
+  }
+
+  function handleFocusin(event) {
+    const focusTarget = event?.target ?? event?.currentTarget;
+    if (
+      typeof focusTarget?.matches === 'function' &&
+      !focusTarget.matches(':focus-visible')
+    ) {
+      return;
+    }
+    show();
   }
 
   function scheduleShow(event) {
@@ -96,6 +122,7 @@ export function useTooltip(options) {
     closeTimer = setTimeout(
       () => {
         open.value = false;
+        removeViewportListeners();
       },
       Math.max(0, toValue(options.closeDelayMs) ?? 100),
     );
@@ -104,6 +131,7 @@ export function useTooltip(options) {
   function hideNow() {
     clearTimers();
     open.value = false;
+    removeViewportListeners();
   }
 
   function handleKeydown(event) {
@@ -116,17 +144,9 @@ export function useTooltip(options) {
     if (!available) hideNow();
   });
 
-  onMounted(() => {
-    if (typeof window === 'undefined') return;
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-  });
-
   onBeforeUnmount(() => {
     clearTimers();
-    if (typeof window === 'undefined') return;
-    window.removeEventListener('resize', updatePosition);
-    window.removeEventListener('scroll', updatePosition, true);
+    removeViewportListeners();
   });
 
   return {

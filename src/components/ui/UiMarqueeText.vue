@@ -6,12 +6,18 @@ import {
   onUnmounted,
   ref,
   shallowRef,
+  useAttrs,
   watch,
 } from 'vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
+import { useTooltip } from './useTooltip.js';
 
 const props = defineProps({
   text: { type: [String, Number], default: '' },
+  tooltipEnabled: { type: Boolean, default: true },
 });
+defineOptions({ inheritAttrs: false });
+const attrs = useAttrs();
 
 // Trailing gap the scrolling text leaves before it reverses — the CSS
 // padding-right must equal this exactly for the marquee's travel distance
@@ -25,6 +31,25 @@ const isOverflowing = shallowRef(false);
 const distance = shallowRef(0);
 
 const displayText = computed(() => String(props.text ?? ''));
+const tooltipDisabled = computed(
+  () => !props.tooltipEnabled || !isOverflowing.value || !displayText.value,
+);
+const {
+  open: tooltipOpen,
+  position: tooltipPosition,
+  setTooltip,
+  tooltipId,
+  triggerProps: tooltipTriggerProps,
+} = useTooltip({
+  text: displayText,
+  placement: 'top',
+  disabled: tooltipDisabled,
+  describedBy: true,
+});
+const rootProps = computed(() => ({
+  ...attrs,
+  ...tooltipTriggerProps.value,
+}));
 const marqueeDuration = computed(() => {
   const seconds = distance.value / 26 + 4;
   return `${Math.min(16, Math.max(7, seconds)).toFixed(2)}s`;
@@ -37,6 +62,11 @@ const marqueeStyle = computed(() => ({
 
 let resizeObserver;
 let frameId = 0;
+
+function setRoot(value) {
+  rootRef.value = value?.$el ?? value;
+  tooltipTriggerProps.value.ref(value);
+}
 
 function measure() {
   cancelAnimationFrame(frameId);
@@ -92,14 +122,22 @@ watch(displayText, async () => {
 
 <template>
   <span
-    ref="rootRef"
+    v-bind="rootProps"
+    :ref="setRoot"
     class="ui-marquee"
     :class="{ 'ui-marquee--overflow': isOverflowing }"
     :style="marqueeStyle"
-    :title="displayText"
   >
     <span ref="textRef" class="ui-marquee__text">{{ displayText }}</span>
   </span>
+  <UiTooltipSurface
+    :open="tooltipOpen"
+    :text="displayText"
+    :tooltip-id="tooltipId"
+    :position="tooltipPosition"
+    placement="top"
+    :set-element="setTooltip"
+  />
 </template>
 
 <style scoped>

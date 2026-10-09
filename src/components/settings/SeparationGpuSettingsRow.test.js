@@ -21,7 +21,8 @@ describe('SeparationGpuSettingsRow', () => {
 
     expect(html).toContain('人聲分離');
     expect(html).toContain('>GPU 加速 <!----></label>');
-    expect(html).toContain('title="無法使用 GPU 時，會自動改用 CPU。"');
+    expect(html).toContain('無法使用 GPU 時，會自動改用 CPU。');
+    expect(html).not.toContain('title="無法使用 GPU 時，會自動改用 CPU。"');
     expect(html).toContain('aria-label="使用 GPU 加速人聲分離"');
     expect(html).toContain('checked');
     expect(html).not.toContain('settings-action-row__value');

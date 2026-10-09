@@ -6,6 +6,8 @@ import { ICON_SIZE } from '../../icons/index.js';
 import DemoInputs from './DemoInputs.vue';
 import DemoSearchBoxAppearance from './DemoSearchBoxAppearance.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -19,6 +21,12 @@ attachClientRender(
   import.meta.url,
 );
 attachClientRender(UiSearchBox, '../ui/UiSearchBox.vue', import.meta.url);
+attachClientRender(UiTooltip, '../ui/UiTooltip.vue', import.meta.url);
+attachClientRender(
+  UiTooltipSurface,
+  '../ui/tooltip/UiTooltipSurface.vue',
+  import.meta.url,
+);
 
 const componentSource = readFileSync(
   new URL('./DemoSearchBoxAppearance.vue', import.meta.url),

@@ -5,6 +5,7 @@ import {
   describeOutputSourceStatus,
 } from '../../utils/outputRuntimeStatus.js';
 import UiNotice from '../ui/UiNotice.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
   outputStatus: { type: Object, default: () => ({ running: false }) },
@@ -22,36 +23,47 @@ const clientStatus = computed(() =>
 <template>
   <section class="obs-output-runtime-status" aria-label="輸出狀態">
     <dl class="obs-output-runtime-status__signals">
-      <div
-        class="obs-output-runtime-status__signal"
-        :title="sourceStatus.detail"
-      >
-        <dt>
-          <span
-            class="obs-output-runtime-status__dot"
-            :data-tone="sourceStatus.tone"
-            aria-hidden="true"
-          />
-          資料
-        </dt>
-        <dd>{{ sourceStatus.label }}</dd>
-      </div>
+      <UiTooltip :text="sourceStatus.detail" placement="bottom">
+        <template #trigger="{ triggerProps }">
+          <div
+            v-bind="triggerProps"
+            class="obs-output-runtime-status__signal"
+            tabindex="0"
+            :aria-label="`資料：${sourceStatus.label}。${sourceStatus.detail}`"
+          >
+            <dt>
+              <span
+                class="obs-output-runtime-status__dot"
+                :data-tone="sourceStatus.tone"
+                aria-hidden="true"
+              />
+              資料
+            </dt>
+            <dd>{{ sourceStatus.label }}</dd>
+          </div>
+        </template>
+      </UiTooltip>
 
-      <div
-        class="obs-output-runtime-status__signal"
-        :title="clientStatus.detail"
-        :aria-label="`Browser Source：${clientStatus.label}。${clientStatus.detail}`"
-      >
-        <dt>
-          <span
-            class="obs-output-runtime-status__dot"
-            :data-tone="clientStatus.tone"
-            aria-hidden="true"
-          />
-          來源
-        </dt>
-        <dd>{{ clientStatus.label }}</dd>
-      </div>
+      <UiTooltip :text="clientStatus.detail" placement="bottom">
+        <template #trigger="{ triggerProps }">
+          <div
+            v-bind="triggerProps"
+            class="obs-output-runtime-status__signal"
+            tabindex="0"
+            :aria-label="`Browser Source：${clientStatus.label}。${clientStatus.detail}`"
+          >
+            <dt>
+              <span
+                class="obs-output-runtime-status__dot"
+                :data-tone="clientStatus.tone"
+                aria-hidden="true"
+              />
+              來源
+            </dt>
+            <dd>{{ clientStatus.label }}</dd>
+          </div>
+        </template>
+      </UiTooltip>
     </dl>
 
     <UiNotice

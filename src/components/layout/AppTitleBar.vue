@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue';
 import SeparationToolbarPopover from '../separation/SeparationToolbarPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 import {
   Cpu,
   ICON_SIZE,
@@ -130,51 +131,58 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
          presentation-location decision this row implements — PlayerBar had
          no room left, so this moved to the titlebar instead. -->
     <div class="app-title-bar__status">
-      <div
-        class="app-title-bar__resources"
-        role="group"
-        aria-label="Utawakui 資源使用率"
-        title="僅 Utawakui 自身（人聲分離執行中含子程序），非整台電腦"
+      <UiTooltip
+        text="僅 Utawakui 自身（人聲分離執行中含子程序），非整台電腦"
+        placement="bottom"
       >
-        <span class="app-title-bar__resource">
-          <Cpu
-            class="app-title-bar__resource-icon"
-            :size="ICON_SIZE"
-            aria-hidden="true"
-          />
-          <span class="app-title-bar__resource-label">CPU</span>
-          <span
-            class="app-title-bar__resource-value"
-            :class="
-              resourceToneClass(
-                appUsageState.cpuPercent,
-                CPU_WARNING_PERCENT,
-                CPU_DANGER_PERCENT,
-              )
-            "
-            >{{ formatResourcePercent(appUsageState.cpuPercent) }}</span
+        <template #trigger="{ triggerProps }">
+          <div
+            v-bind="triggerProps"
+            class="app-title-bar__resources"
+            role="group"
+            aria-label="Utawakui 資源使用率；僅含自身程序"
           >
-        </span>
-        <span class="app-title-bar__resource">
-          <MemoryStick
-            class="app-title-bar__resource-icon"
-            :size="ICON_SIZE"
-            aria-hidden="true"
-          />
-          <span class="app-title-bar__resource-label">RAM</span>
-          <span
-            class="app-title-bar__resource-value"
-            :class="
-              resourceToneClass(
-                appUsageState.ramPercent,
-                RAM_WARNING_PERCENT,
-                RAM_DANGER_PERCENT,
-              )
-            "
-            >{{ formatResourcePercent(appUsageState.ramPercent) }}</span
-          >
-        </span>
-      </div>
+            <span class="app-title-bar__resource">
+              <Cpu
+                class="app-title-bar__resource-icon"
+                :size="ICON_SIZE"
+                aria-hidden="true"
+              />
+              <span class="app-title-bar__resource-label">CPU</span>
+              <span
+                class="app-title-bar__resource-value"
+                :class="
+                  resourceToneClass(
+                    appUsageState.cpuPercent,
+                    CPU_WARNING_PERCENT,
+                    CPU_DANGER_PERCENT,
+                  )
+                "
+                >{{ formatResourcePercent(appUsageState.cpuPercent) }}</span
+              >
+            </span>
+            <span class="app-title-bar__resource">
+              <MemoryStick
+                class="app-title-bar__resource-icon"
+                :size="ICON_SIZE"
+                aria-hidden="true"
+              />
+              <span class="app-title-bar__resource-label">RAM</span>
+              <span
+                class="app-title-bar__resource-value"
+                :class="
+                  resourceToneClass(
+                    appUsageState.ramPercent,
+                    RAM_WARNING_PERCENT,
+                    RAM_DANGER_PERCENT,
+                  )
+                "
+                >{{ formatResourcePercent(appUsageState.ramPercent) }}</span
+              >
+            </span>
+          </div>
+        </template>
+      </UiTooltip>
     </div>
 
     <div class="app-title-bar__trailing">

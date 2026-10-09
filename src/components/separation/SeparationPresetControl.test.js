@@ -80,7 +80,7 @@ describe('SeparationPresetControl', () => {
   it('uses an icon-only checked state after generation', async () => {
     const html = await renderControl({ hasResult: true });
 
-    expect(html).toContain('aria-label="此模式已產生"');
+    expect(html).toContain('aria-label="此模式已產生；切換模式可查看其他結果"');
     expect(html).not.toMatch(/>已產生<\/span>/);
     expect(html).not.toContain('aria-label="產生伴奏"');
   });

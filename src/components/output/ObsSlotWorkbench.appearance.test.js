@@ -224,7 +224,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       }),
     );
 
-    expect(html).toMatch(/obs-slot-workbench__reset" disabled/);
+    expect(html).toMatch(
+      /<button(?=[^>]*class="[^"]*obs-slot-workbench__reset)(?=[^>]*\sdisabled(?:\s|>))[^>]*>/u,
+    );
   });
 
   it('hides controls that a fixed-identity template does not support', async () => {

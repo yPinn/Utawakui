@@ -4,6 +4,7 @@ import { UserRound } from '../../icons/index.js';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 
 const props = defineProps({
   summary: { type: Object, required: true },
@@ -38,7 +39,9 @@ const summaryText = computed(() => {
         :empty-icon="UserRound"
       />
       <div class="track-artist-preview__copy">
-        <h4 :title="summary.name">{{ summary.name }}</h4>
+        <UiOverflowTooltip as="h4" :text="summary.name">
+          {{ summary.name }}
+        </UiOverflowTooltip>
         <p>{{ summaryText }}</p>
       </div>
     </div>

@@ -31,6 +31,7 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
@@ -69,6 +70,7 @@ for (const [component, filename] of [
   [UiSeparator, '../ui/UiSeparator.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
   [UiTextButton, '../ui/UiTextButton.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],

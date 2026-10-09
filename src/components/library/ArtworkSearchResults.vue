@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { projectArtworkCandidate } from '../../utils/artworkCandidateDisplay.js';
 import UiChip from '../ui/UiChip.vue';
 import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
@@ -59,16 +60,22 @@ const displayCandidates = computed(() =>
 
         <span class="artwork-results__copy">
           <span class="artwork-results__heading">
-            <span class="artwork-results__title" :title="display.title">
+            <UiOverflowTooltip
+              class="artwork-results__title"
+              :text="display.title"
+            >
               {{ display.title }}
-            </span>
+            </UiOverflowTooltip>
             <UiChip :tone="display.decisionTone">
               {{ display.decisionLabel }}
             </UiChip>
           </span>
-          <span class="artwork-results__artist" :title="display.artist">
+          <UiOverflowTooltip
+            class="artwork-results__artist"
+            :text="display.artist"
+          >
             {{ display.artist }}
-          </span>
+          </UiOverflowTooltip>
           <span class="artwork-results__meta">{{ display.releaseMeta }}</span>
           <span v-if="display.reason" class="artwork-results__reason">
             {{ display.reason }}

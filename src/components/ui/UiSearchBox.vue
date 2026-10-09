@@ -5,6 +5,7 @@
 import { computed, useAttrs, useId } from 'vue';
 import { ICON_SIZE, Search, X } from '../../icons/index.js';
 import { nativeControlAttrs } from './fieldAttrs.js';
+import UiTooltip from './UiTooltip.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -48,17 +49,20 @@ function clear() {
         :disabled="disabled"
         @input="emit('update:modelValue', $event.target.value)"
       />
-      <button
-        v-if="modelValue"
-        type="button"
-        class="ui-search-box__clear"
-        aria-label="清除搜尋"
-        title="清除搜尋"
-        :disabled="disabled"
-        @click="clear"
-      >
-        <X :size="ICON_SIZE" aria-hidden="true" />
-      </button>
+      <UiTooltip v-if="modelValue" text="清除搜尋">
+        <template #trigger="{ triggerProps }">
+          <button
+            v-bind="triggerProps"
+            type="button"
+            class="ui-search-box__clear"
+            aria-label="清除搜尋"
+            :disabled="disabled"
+            @click="clear"
+          >
+            <X :size="ICON_SIZE" aria-hidden="true" />
+          </button>
+        </template>
+      </UiTooltip>
     </div>
   </div>
 </template>

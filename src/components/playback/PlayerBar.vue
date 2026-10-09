@@ -44,6 +44,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 defineProps({
@@ -548,19 +549,23 @@ onUnmounted(() => {
       />
       <div class="player-bar__track-copy">
         <template v-if="state.track">
-          <button
-            v-if="currentTrackAlbum"
-            type="button"
-            class="player-bar__track-title player-bar__track-title-button"
-            :aria-label="currentTrackAlbumCtaLabel"
-            :title="currentTrackAlbumCtaLabel"
-            @click="jumpToCurrentTrackAlbum"
-          >
-            <UiMarqueeText
-              class="player-bar__track-title-marquee"
-              :text="state.track.title"
-            />
-          </button>
+          <UiTooltip v-if="currentTrackAlbum" :text="currentTrackAlbumCtaLabel">
+            <template #trigger="{ triggerProps }">
+              <button
+                v-bind="triggerProps"
+                type="button"
+                class="player-bar__track-title player-bar__track-title-button"
+                :aria-label="currentTrackAlbumCtaLabel"
+                @click="jumpToCurrentTrackAlbum"
+              >
+                <UiMarqueeText
+                  class="player-bar__track-title-marquee"
+                  :text="state.track.title"
+                  :tooltip-enabled="false"
+                />
+              </button>
+            </template>
+          </UiTooltip>
           <UiMarqueeText
             v-else
             class="player-bar__track-title"

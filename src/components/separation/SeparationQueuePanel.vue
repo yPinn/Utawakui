@@ -32,7 +32,7 @@ defineProps({
   active: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['collapse']);
 const { tracksById } = useLibrary();
 const { openSettings } = useAppView();
 
@@ -102,9 +102,9 @@ onUnmounted(dispose);
     class="separation-queue-panel"
     title="伴奏處理"
     :subtitle="subtitle"
-    close-label="關閉伴奏處理"
+    collapse-label="摺疊伴奏處理"
     aria-label="伴奏處理"
-    @close="emit('close')"
+    @collapse="emit('collapse')"
   >
     <section class="separation-queue-panel__setup" aria-label="加入歌曲">
       <UiSelect

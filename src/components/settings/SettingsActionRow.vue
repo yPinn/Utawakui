@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 import { ICON_SIZE } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
   icon: { type: [Object, Function], default: null },
@@ -29,34 +31,48 @@ const resolvedTitleTag = computed(
 </script>
 
 <template>
-  <div
-    class="settings-action-row"
-    :class="`settings-action-row--${variant}`"
-    :title="tooltip || description || value || title"
-  >
-    <div v-if="icon" class="settings-action-row__icon" aria-hidden="true">
-      <component :is="icon" :size="ICON_SIZE" />
-    </div>
+  <UiTooltip :text="tooltip" :disabled="!tooltip" :described-by="false">
+    <template #trigger="{ triggerProps }">
+      <div
+        v-bind="triggerProps"
+        class="settings-action-row"
+        :class="`settings-action-row--${variant}`"
+        :role="tooltip ? 'group' : undefined"
+        :aria-label="tooltip ? `${title}。${tooltip}` : undefined"
+      >
+        <div v-if="icon" class="settings-action-row__icon" aria-hidden="true">
+          <component :is="icon" :size="ICON_SIZE" />
+        </div>
 
-    <div class="settings-action-row__copy">
-      <div class="settings-action-row__heading">
-        <component :is="resolvedTitleTag" class="settings-action-row__title">
-          {{ title }}
-        </component>
-        <UiChip v-if="status" :tone="statusTone">{{ status }}</UiChip>
+        <div class="settings-action-row__copy">
+          <div class="settings-action-row__heading">
+            <component
+              :is="resolvedTitleTag"
+              class="settings-action-row__title"
+            >
+              {{ title }}
+            </component>
+            <UiChip v-if="status" :tone="statusTone">{{ status }}</UiChip>
+          </div>
+          <p v-if="description" class="settings-action-row__description">
+            {{ description }}
+          </p>
+          <UiOverflowTooltip
+            v-if="value"
+            as="p"
+            class="settings-action-row__value"
+            :text="value"
+          >
+            {{ value }}
+          </UiOverflowTooltip>
+        </div>
+
+        <div v-if="$slots.actions" class="settings-action-row__actions">
+          <slot name="actions" />
+        </div>
       </div>
-      <p v-if="description" class="settings-action-row__description">
-        {{ description }}
-      </p>
-      <p v-if="value" class="settings-action-row__value" :title="value">
-        {{ value }}
-      </p>
-    </div>
-
-    <div v-if="$slots.actions" class="settings-action-row__actions">
-      <slot name="actions" />
-    </div>
-  </div>
+    </template>
+  </UiTooltip>
 </template>
 
 <style scoped>

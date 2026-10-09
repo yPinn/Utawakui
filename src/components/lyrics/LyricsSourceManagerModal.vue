@@ -13,6 +13,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import LyricsLrclibSearchPanel from './LyricsLrclibSearchPanel.vue';
 import LyricsLrclibSearchWorkspace from './LyricsLrclibSearchWorkspace.vue';
 import LyricsManualImportPanel from './LyricsManualImportPanel.vue';
@@ -273,14 +274,14 @@ function sourceTierLabel(source) {
                 class="lyrics-source-manager__row-meta"
                 :aria-label="`${describeLyricsSourceTier(sourceTiers.get(source.filename))}，時間偏移 ${formatLyricsSourceOffset(sourceOffsetMs(source))}`"
               >
-                <span
+                <UiOverflowTooltip
                   class="lyrics-source-manager__row-tier"
-                  :title="
+                  :text="
                     describeLyricsSourceTier(sourceTiers.get(source.filename))
                   "
                 >
                   {{ sourceTierLabel(source) }}
-                </span>
+                </UiOverflowTooltip>
                 <span class="lyrics-source-manager__row-offset">
                   {{ formatLyricsSourceOffset(sourceOffsetMs(source)) }}
                 </span>

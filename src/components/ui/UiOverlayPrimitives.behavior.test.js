@@ -152,6 +152,27 @@ describe('UiTooltip', () => {
     );
   });
 
+  it('stays closed when pointer-driven focus restoration is not focus-visible', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '展開播放資訊' },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '展開'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    trigger(button, 'onFocusin', {
+      target: { matches: vi.fn(() => false) },
+    });
+    await nextTick();
+
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    mounted.app.unmount();
+  });
+
   it('renders optional collection detail as a separate secondary line', async () => {
     const mounted = mount(
       UiTooltip,
@@ -219,6 +240,104 @@ describe('UiTooltip', () => {
 
     disabled.value = true;
     await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    mounted.app.unmount();
+  });
+
+  it('subscribes to viewport movement only while a tooltip is open', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '視窗邊界提示' },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    expect(windowListeners.has('resize')).toBe(false);
+    expect(windowListeners.has('scroll')).toBe(false);
+
+    trigger(button, 'onFocusin');
+    await nextTick();
+    expect(windowListeners.has('resize')).toBe(true);
+    expect(windowListeners.has('scroll')).toBe(true);
+
+    trigger(button, 'onKeydown', {
+      key: 'Escape',
+      stopPropagation: vi.fn(),
+    });
+    await nextTick();
+    expect(windowListeners.has('resize')).toBe(false);
+    expect(windowListeners.has('scroll')).toBe(false);
+    mounted.app.unmount();
+  });
+});
+
+describe('UiButton tooltip composition', () => {
+  it('keeps the real button as its single root and replaces native title with the shared tooltip', async () => {
+    const onClick = vi.fn();
+    const mounted = mount(
+      UiButton,
+      {
+        icon: RefreshCw,
+        title: '重新整理型錄資料',
+        tooltipPlacement: 'end',
+        class: 'catalogue-refresh',
+        'data-control': 'catalogue-refresh',
+        'aria-label': '重新整理',
+        onClick,
+      },
+      { default: () => '重新整理' },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    expect(String(button.props.class)).toContain('catalogue-refresh');
+    expect(button.props).toMatchObject({
+      type: 'button',
+      'data-control': 'catalogue-refresh',
+      'aria-label': '重新整理',
+    });
+    expect(button.props.title).toBeUndefined();
+    expect(button.props.tooltipPlacement).toBeUndefined();
+
+    trigger(button, 'onClick');
+    expect(onClick).toHaveBeenCalledOnce();
+
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    await nextTick();
+    let tooltip = findAll(body, (node) => node.props.role === 'tooltip')[0];
+    expect(textContent(tooltip)).toBe('重新整理型錄資料');
+    expect(tooltip.props['data-placement']).toBe('end');
+
+    trigger(button, 'onKeydown', {
+      key: 'Escape',
+      stopPropagation: vi.fn(),
+    });
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+
+    trigger(button, 'onFocusin');
+    await nextTick();
+    tooltip = findAll(body, (node) => node.props.role === 'tooltip')[0];
+    expect(textContent(tooltip)).toBe('重新整理型錄資料');
+    mounted.app.unmount();
+  });
+
+  it('stays silent when no tooltip copy is supplied', async () => {
+    const mounted = mount(UiButton, null, { default: () => '完成' });
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.runAllTimersAsync();
+    trigger(button, 'onFocusin');
+    await nextTick();
+
+    expect(button.props.title).toBeUndefined();
     expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
       0,
     );

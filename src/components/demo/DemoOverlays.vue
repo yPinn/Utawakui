@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import UiButton from '../ui/UiButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import DemoActionMenuAppearance from './DemoActionMenuAppearance.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
@@ -34,6 +35,10 @@ const popoverOpen = ref(false);
             <UiButton v-bind="triggerProps">重新整理</UiButton>
           </template>
         </UiTooltip>
+        <UiOverflowTooltip
+          class="demo-overflow-tooltip"
+          text="只有實際截斷時才顯示完整名稱"
+        />
         <p class="demo-sample-caption">
           Tooltip只補充描述，不能承載互動或取代可見control label。
         </p>
@@ -63,6 +68,16 @@ const popoverOpen = ref(false);
     </DemoCatalogueSection>
   </div>
 </template>
+
+<style scoped>
+.demo-overflow-tooltip {
+  display: block;
+  max-inline-size: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
 
 <style scoped>
 .demo-overlays {

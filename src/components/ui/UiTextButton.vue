@@ -5,6 +5,7 @@
 // ResizeObserver and animation lane per row, and headlines into a clamp.
 import { computed } from 'vue';
 import UiMarqueeText from './UiMarqueeText.vue';
+import UiOverflowTooltip from './UiOverflowTooltip.vue';
 
 const props = defineProps({
   text: { type: [String, Number], default: '' },
@@ -28,14 +29,14 @@ const displayText = computed(() => String(props.text ?? ''));
     @click.stop="emit('click', $event)"
   >
     <UiMarqueeText v-if="overflow === 'marquee'" :text="displayText" />
-    <span
+    <UiOverflowTooltip
       v-else
       class="ui-text-btn__text"
       :class="{ 'ui-text-btn__text--clamp': overflow === 'clamp' }"
-      :title="displayText"
+      :text="displayText"
     >
       {{ displayText }}
-    </span>
+    </UiOverflowTooltip>
   </button>
 </template>
 
@@ -97,12 +98,12 @@ const displayText = computed(() => String(props.text ?? ''));
   -webkit-line-clamp: 2;
 }
 
-/* Targets UiMarqueeText's own text span directly — it's inline-block, and
-   text-decoration set on this button wouldn't paint into it otherwise. */
+/* Both overflow owners are child components. Reach their painted text roots
+   explicitly so inserting a Tooltip wrapper cannot sever hover/focus paint. */
 .ui-text-btn:not(:disabled):hover :deep(.ui-marquee__text),
 .ui-text-btn:focus-visible :deep(.ui-marquee__text),
-.ui-text-btn:not(:disabled):hover .ui-text-btn__text,
-.ui-text-btn:focus-visible .ui-text-btn__text {
+.ui-text-btn:not(:disabled):hover :deep(.ui-text-btn__text),
+.ui-text-btn:focus-visible :deep(.ui-text-btn__text) {
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }

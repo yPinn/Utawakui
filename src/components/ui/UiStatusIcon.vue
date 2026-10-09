@@ -1,8 +1,13 @@
 <script setup>
 // Small circular status badge for repeated row-trailing states.
+import { computed, useAttrs } from 'vue';
 import { ICON_SIZE } from '../../icons/index.js';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
+import { useTooltip } from './useTooltip.js';
 
-defineProps({
+defineOptions({ inheritAttrs: false });
+
+const props = defineProps({
   icon: { type: [Object, Function], required: true },
   // Existing callers use muted/accent/danger/text/highlight; the rest are
   // already styled (see the tone rules below) for when new states need them.
@@ -27,14 +32,26 @@ defineProps({
   label: { type: String, required: true },
   decorative: { type: Boolean, default: false },
 });
+const attrs = useAttrs();
+
+const { open, position, setTooltip, tooltipId, triggerProps } = useTooltip({
+  text: computed(() => props.label),
+  placement: 'top',
+  disabled: computed(() => props.decorative),
+  describedBy: true,
+});
+const rootProps = computed(() => ({
+  ...attrs,
+  ...triggerProps.value,
+}));
 </script>
 
 <template>
   <span
+    v-bind="rootProps"
     class="ui-status-icon"
     :class="`ui-status-icon--${tone}`"
     :role="decorative ? undefined : 'img'"
-    :title="decorative ? undefined : label"
     :aria-label="decorative ? undefined : label"
     :aria-hidden="decorative ? 'true' : undefined"
   >
@@ -46,6 +63,14 @@ defineProps({
       aria-hidden="true"
     />
   </span>
+  <UiTooltipSurface
+    :open="open"
+    :text="label"
+    :tooltip-id="tooltipId"
+    :position="position"
+    placement="top"
+    :set-element="setTooltip"
+  />
 </template>
 
 <style scoped>

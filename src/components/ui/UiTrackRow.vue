@@ -4,6 +4,7 @@
 import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
+import UiOverflowTooltip from './UiOverflowTooltip.vue';
 import UiTextButton from './UiTextButton.vue';
 import UiTrackThumb from './UiTrackThumb.vue';
 
@@ -175,13 +176,13 @@ function handleActionKeydown(event) {
         class="ui-track__title"
         :text="displayTitle"
       />
-      <span
+      <UiOverflowTooltip
         v-else
         class="ui-track__title ui-track__title-text"
-        :title="displayTitle"
+        :text="displayTitle"
       >
         {{ displayTitle }}
-      </span>
+      </UiOverflowTooltip>
       <!-- Callers may replace the artist line content (e.g. per-artist
            destinations); the lane, typography and row semantics stay here. -->
       <span v-if="displayArtist" class="ui-track__artist">

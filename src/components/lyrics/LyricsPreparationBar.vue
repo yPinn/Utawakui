@@ -42,10 +42,7 @@ function handleLyricsTextVariantChange(event) {
 <template>
   <section class="lyrics-preparation" aria-label="閱讀與預先設定">
     <div class="lyrics-preparation__row">
-      <div
-        class="lyrics-preparation__group lyrics-preparation__group--source"
-        title="歌詞來源"
-      >
+      <div class="lyrics-preparation__group lyrics-preparation__group--source">
         <span class="lyrics-preparation__label">來源</span>
         <select
           class="lyrics-preparation__select lyrics-preparation__source-select"
@@ -74,11 +71,7 @@ function handleLyricsTextVariantChange(event) {
         </UiButton>
       </div>
 
-      <div
-        v-if="showsLyricsTextVariant"
-        class="lyrics-preparation__group"
-        title="歌詞文字顯示"
-      >
+      <div v-if="showsLyricsTextVariant" class="lyrics-preparation__group">
         <span class="lyrics-preparation__label">文字</span>
         <select
           class="lyrics-preparation__select lyrics-preparation__text-select"
@@ -91,11 +84,7 @@ function handleLyricsTextVariantChange(event) {
         </select>
       </div>
 
-      <div
-        v-if="showsReadingAid"
-        class="lyrics-preparation__group"
-        title="讀音顯示"
-      >
+      <div v-if="showsReadingAid" class="lyrics-preparation__group">
         <span class="lyrics-preparation__label">讀音</span>
         <select
           class="lyrics-preparation__select lyrics-preparation__reading-select"
@@ -111,7 +100,7 @@ function handleLyricsTextVariantChange(event) {
         </select>
       </div>
 
-      <div class="lyrics-preparation__group" title="歌詞字級">
+      <div class="lyrics-preparation__group">
         <span class="lyrics-preparation__label">字級</span>
         <div
           class="lyrics-preparation__stepper"

@@ -94,7 +94,12 @@ describe('DemoMarqueeTextAppearance', () => {
     expect(candidateSource).toContain('overflow > 1');
     expect(candidateSource).toContain('text-overflow: ellipsis;');
     expect(candidateSource).not.toContain(':title="displayText"');
-    expect(currentSource).toContain(':title="displayText"');
+    expect(currentSource).toContain('tooltipDisabled');
+    expect(currentSource).toContain(
+      'tooltipEnabled: { type: Boolean, default: true }',
+    );
+    expect(currentSource).toContain('!props.tooltipEnabled');
+    expect(currentSource).not.toContain(':title="displayText"');
   });
 
   it('uses controlled one-pass reveal instead of unattended infinite motion', () => {

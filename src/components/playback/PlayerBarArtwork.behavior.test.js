@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -11,6 +13,8 @@ import {
 for (const [component, filename] of [
   [PlayerBarArtwork, './PlayerBarArtwork.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
+  [UiTooltip, '../ui/UiTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

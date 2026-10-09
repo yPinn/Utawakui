@@ -11,7 +11,7 @@ const LAYERS = [
     component: UiTextButton,
     appearanceContract: '預設無底線 · hover／focus-visible underline',
     overflowNote: '溢位沿用 UiMarqueeText；reduced motion 回到單行省略。',
-    overflowContract: 'UiMarqueeText owns overflow／title／reduced motion',
+    overflowContract: 'UiMarqueeText owns overflow／tooltip／reduced motion',
     recipeProps: {},
     stateNote:
       'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',

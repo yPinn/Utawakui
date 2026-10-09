@@ -4,6 +4,7 @@ import {
   MAX_OUTPUT_RECENT_COLORS,
   MAX_OUTPUT_SAVED_COLORS,
 } from '../../../shared/outputColorPreferences.mjs';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const COLOR_LIMIT_BY_SOURCE = Object.freeze({
   recent: MAX_OUTPUT_RECENT_COLORS,
@@ -41,22 +42,28 @@ const visibleColors = computed(() =>
       {{ emptyLabel }}
     </span>
     <div v-else class="obs-color-swatch-rail__swatches">
-      <button
+      <UiTooltip
         v-for="color in visibleColors"
         :key="color"
-        type="button"
-        class="obs-color-swatch-rail__swatch"
-        :class="{
-          'obs-color-swatch-rail__swatch--selected': color === modelValue,
-        }"
-        :style="{ '--obs-output-swatch-color': color }"
-        :data-color="color"
-        :data-color-source="source"
-        :title="color.toUpperCase()"
-        :aria-label="`套用${selectionLabel || label} ${color.toUpperCase()}`"
-        :aria-pressed="color === modelValue"
-        @click="emit('select', color)"
-      ></button>
+        :text="color.toUpperCase()"
+      >
+        <template #trigger="{ triggerProps }">
+          <button
+            v-bind="triggerProps"
+            type="button"
+            class="obs-color-swatch-rail__swatch"
+            :class="{
+              'obs-color-swatch-rail__swatch--selected': color === modelValue,
+            }"
+            :style="{ '--obs-output-swatch-color': color }"
+            :data-color="color"
+            :data-color-source="source"
+            :aria-label="`套用${selectionLabel || label} ${color.toUpperCase()}`"
+            :aria-pressed="color === modelValue"
+            @click="emit('select', color)"
+          ></button>
+        </template>
+      </UiTooltip>
     </div>
   </div>
 </template>

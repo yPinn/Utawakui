@@ -1,10 +1,22 @@
 <script setup>
-// `disabled`/`aria-*`/`title`/`@click` reach the root <button> via Vue's
-// attribute fallthrough, so they aren't declared as props.
+// `aria-*`/`@click` and other native button attributes still reach the root
+// button. `title` is deliberately owned here so operator-facing hints use the
+// shared app tooltip instead of Chromium's native tooltip.
+import { computed, mergeProps, useAttrs } from 'vue';
 import { ICON_SIZE, Loader2 } from '../../icons/index.js';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
+import { isTooltipPlacement, useTooltip } from './useTooltip.js';
 
-defineProps({
+defineOptions({ inheritAttrs: false });
+
+const props = defineProps({
   icon: { type: [Object, Function], default: null },
+  title: { type: String, default: '' },
+  tooltipPlacement: {
+    type: String,
+    default: 'top',
+    validator: isTooltipPlacement,
+  },
   type: {
     type: String,
     default: 'button',
@@ -25,10 +37,33 @@ defineProps({
   loading: { type: Boolean, default: false },
   loadingLabel: { type: String, default: '處理中' },
 });
+
+const attrs = useAttrs();
+const tooltipText = computed(() => props.title);
+const hasOwnedTooltip = computed(() => Boolean(tooltipText.value));
+const {
+  open: tooltipOpen,
+  position: tooltipPosition,
+  setTooltip,
+  tooltipId,
+  triggerProps,
+} = useTooltip({
+  text: tooltipText,
+  placement: computed(() => props.tooltipPlacement),
+  disabled: computed(() => !hasOwnedTooltip.value),
+  describedBy: false,
+});
+
+function buttonAttrs(tooltipTriggerProps) {
+  return hasOwnedTooltip.value
+    ? mergeProps(attrs, tooltipTriggerProps)
+    : { ...attrs };
+}
 </script>
 
 <template>
   <button
+    v-bind="buttonAttrs(triggerProps)"
     :type="type"
     class="ui-btn"
     :disabled="disabled || loading"
@@ -58,6 +93,14 @@ defineProps({
     />
     <span v-if="loading" class="ui-btn__label">{{ loadingLabel }}</span>
     <span v-else-if="$slots.default" class="ui-btn__label"><slot /></span>
+    <UiTooltipSurface
+      :open="tooltipOpen"
+      :text="tooltipText"
+      :tooltip-id="tooltipId"
+      :position="tooltipPosition"
+      :placement="tooltipPlacement"
+      :set-element="setTooltip"
+    />
   </button>
 </template>
 

@@ -4,6 +4,8 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -53,6 +55,8 @@ for (const [component, filename] of [
   [DemoTextButtonAppearance, './DemoTextButtonAppearance.vue'],
   [UiTextButton, '../ui/UiTextButton.vue'],
   [UiMarqueeText, '../ui/UiMarqueeText.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -222,6 +226,12 @@ describe('DemoTextButtonAppearance', () => {
     expect(candidateSource).toMatch(
       /\.ui-text-btn:not\(:disabled\):hover[\s\S]*?\.ui-text-btn:focus-visible[\s\S]*?\{[^}]*text-decoration:\s*underline;/su,
     );
+    expect(candidateSource).toContain(
+      '.ui-text-btn:not(:disabled):hover :deep(.ui-text-btn__text)',
+    );
+    expect(candidateSource).toContain(
+      '.ui-text-btn:focus-visible :deep(.ui-text-btn__text)',
+    );
     expect(candidateSource).not.toMatch(
       /\.demo-candidate-text-btn\s+:deep\(\.ui-marquee__text\)[\s\S]*?\{[^}]*text-decoration-line:\s*underline;/su,
     );
@@ -343,7 +353,7 @@ describe('DemoTextButtonAppearance', () => {
 
     expect(marquee).toHaveLength(0);
     expect(textContent(staticText)).toBe('A deliberately long queue title');
-    expect(staticText.props.title).toBe('A deliberately long queue title');
+    expect(staticText.props.title).toBeUndefined();
     mounted.app.unmount();
   });
 
@@ -404,7 +414,7 @@ describe('DemoTextButtonAppearance', () => {
     );
     expect(html).toContain('click event · propagation stopped at root');
     expect(html).toContain(
-      'UiMarqueeText owns overflow／title／reduced motion',
+      'UiMarqueeText owns overflow／tooltip／reduced motion',
     );
     expect(html).toContain(
       'overflow=&quot;ellipsis&quot; skips observer／motion work',

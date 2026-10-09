@@ -103,7 +103,7 @@ describe('PlayerToolsPanel process tab', () => {
       separationHasResult: true,
     });
 
-    expect(html).toContain('aria-label="此模式已產生"');
+    expect(html).toContain('aria-label="此模式已產生；切換模式可查看其他結果"');
     expect(html).not.toMatch(/>已產生<\/span>/);
     expect(html).not.toContain('重新產生');
     // The <select> stays enabled so the user can switch to a preset that

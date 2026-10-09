@@ -22,6 +22,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const FFMPEG_DEPENDENCY_ID = 'ffmpeg-gyan-essentials';
 const managedDependency = FEATURE_DEPENDENCIES.find(
@@ -177,71 +178,83 @@ async function chooseManaged() {
 
       <ul class="ffmpeg-source-modal__list">
         <li>
-          <button
-            type="button"
-            class="ffmpeg-source-modal__row"
-            :class="{
-              'ffmpeg-source-modal__row--active': currentSource === 'system',
-            }"
-            :disabled="!isSystemSelectable || isBusy"
-            :title="systemSourceDetail"
-            @click="chooseSystem"
-          >
-            <Settings :size="ICON_SIZE" aria-hidden="true" />
-            <span class="ffmpeg-source-modal__label-group">
-              <span class="ffmpeg-source-modal__label">使用系統 FFmpeg</span>
-              <span class="ffmpeg-source-modal__caption">
-                {{ systemSourceCaption }}
-              </span>
-            </span>
-            <UiStatusIcon
-              v-if="currentSource === 'system'"
-              :icon="Check"
-              tone="accent"
-              label="使用中"
-            />
-            <UiStatusIcon
-              v-else-if="isDetecting || isSwitching"
-              :icon="Loader2"
-              spinning
-              label="處理中"
-            />
-            <UiStatusIcon
-              v-else-if="detection && !detection.ok"
-              :icon="CircleAlert"
-              tone="warning"
-              label="無法使用"
-            />
-          </button>
+          <UiTooltip :text="systemSourceDetail">
+            <template #trigger="{ triggerProps }">
+              <button
+                v-bind="triggerProps"
+                type="button"
+                class="ffmpeg-source-modal__row"
+                :class="{
+                  'ffmpeg-source-modal__row--active':
+                    currentSource === 'system',
+                }"
+                :disabled="!isSystemSelectable || isBusy"
+                @click="chooseSystem"
+              >
+                <Settings :size="ICON_SIZE" aria-hidden="true" />
+                <span class="ffmpeg-source-modal__label-group">
+                  <span class="ffmpeg-source-modal__label"
+                    >使用系統 FFmpeg</span
+                  >
+                  <span class="ffmpeg-source-modal__caption">
+                    {{ systemSourceCaption }}
+                  </span>
+                </span>
+                <UiStatusIcon
+                  v-if="currentSource === 'system'"
+                  :icon="Check"
+                  tone="accent"
+                  label="使用中"
+                />
+                <UiStatusIcon
+                  v-else-if="isDetecting || isSwitching"
+                  :icon="Loader2"
+                  spinning
+                  label="處理中"
+                />
+                <UiStatusIcon
+                  v-else-if="detection && !detection.ok"
+                  :icon="CircleAlert"
+                  tone="warning"
+                  label="無法使用"
+                />
+              </button>
+            </template>
+          </UiTooltip>
         </li>
 
         <li>
-          <button
-            type="button"
-            class="ffmpeg-source-modal__row"
-            :class="{
-              'ffmpeg-source-modal__row--active': currentSource === 'managed',
-            }"
-            :disabled="isBusy"
-            :title="managedSourceDetail"
-            @click="chooseManaged"
-          >
-            <Download :size="ICON_SIZE" aria-hidden="true" />
-            <span class="ffmpeg-source-modal__label-group">
-              <span class="ffmpeg-source-modal__label"
-                >使用 Utawakui 管理的版本</span
+          <UiTooltip :text="managedSourceDetail">
+            <template #trigger="{ triggerProps }">
+              <button
+                v-bind="triggerProps"
+                type="button"
+                class="ffmpeg-source-modal__row"
+                :class="{
+                  'ffmpeg-source-modal__row--active':
+                    currentSource === 'managed',
+                }"
+                :disabled="isBusy"
+                @click="chooseManaged"
               >
-              <span class="ffmpeg-source-modal__caption">
-                {{ managedSourceCaption }}
-              </span>
-            </span>
-            <UiStatusIcon
-              v-if="currentSource === 'managed'"
-              :icon="Check"
-              tone="accent"
-              label="使用中"
-            />
-          </button>
+                <Download :size="ICON_SIZE" aria-hidden="true" />
+                <span class="ffmpeg-source-modal__label-group">
+                  <span class="ffmpeg-source-modal__label"
+                    >使用 Utawakui 管理的版本</span
+                  >
+                  <span class="ffmpeg-source-modal__caption">
+                    {{ managedSourceCaption }}
+                  </span>
+                </span>
+                <UiStatusIcon
+                  v-if="currentSource === 'managed'"
+                  :icon="Check"
+                  tone="accent"
+                  label="使用中"
+                />
+              </button>
+            </template>
+          </UiTooltip>
         </li>
       </ul>
 

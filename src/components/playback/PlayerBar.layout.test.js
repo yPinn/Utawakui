@@ -31,7 +31,25 @@ function iconButtonSource(iconName) {
 }
 
 describe('PlayerBar responsive metadata layout', () => {
-  it('lets the persistent bar share the app canvas without a divider while the floating panel keeps its surface', () => {
+  it('keeps the album action as the only tooltip owner for its nested marquee', () => {
+    const albumActionStart = componentSource.indexOf(
+      '<UiTooltip v-if="currentTrackAlbum"',
+    );
+    const albumActionEnd = componentSource.indexOf(
+      '</UiTooltip>',
+      albumActionStart,
+    );
+    const albumActionSource = componentSource.slice(
+      albumActionStart,
+      albumActionEnd,
+    );
+
+    expect(albumActionStart).toBeGreaterThan(-1);
+    expect(albumActionSource).toContain(':tooltip-enabled="false"');
+    expect(albumActionSource).toContain(':text="state.track.title"');
+  });
+
+  it('shares the Shell substrate without a divider while the floating panel keeps its surface', () => {
     const playerBarRule = cssRule(componentSource, '.player-bar');
     const toolsMarkerRule = cssRule(
       componentSource,

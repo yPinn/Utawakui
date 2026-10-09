@@ -75,6 +75,7 @@ describe('new shared infra catalogue registration', () => {
     ['./DemoFeedback.vue', 'UiSkeleton', 'skeleton'],
     ['./DemoFeedback.vue', 'UiNotificationHost', 'notification-host'],
     ['./DemoOverlays.vue', 'UiTooltip', 'tooltip'],
+    ['./DemoOverlays.vue', 'UiOverflowTooltip', 'tooltip'],
   ])('renders %s in its catalogue section', (file, component, key) => {
     const source = readSource(file);
 
@@ -89,7 +90,6 @@ describe('new shared infra catalogue registration', () => {
     const pendingComponents = [
       'UiKbd',
       'UiDisclosure',
-      'UiTooltip',
       'UiNotificationHost',
       'UiSwitch',
       'UiBreadcrumb',
@@ -109,6 +109,7 @@ describe('new shared infra catalogue registration', () => {
     ['radio-group', 'UiRadioGroup'],
     ['skeleton', 'UiSkeleton'],
     ['combobox', 'UiCombobox'],
+    ['tooltip', 'UiTooltip'],
   ])('records %s as adopted production infrastructure', (key) => {
     expect(UI_DEMO_ADOPTED_SECTION_KEYS).toContain(key);
   });

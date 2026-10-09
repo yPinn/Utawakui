@@ -17,6 +17,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
 
@@ -49,6 +50,7 @@ attachClientRender(UiIconButton, '../ui/UiIconButton.vue');
 attachClientRender(UiNotice, '../ui/UiNotice.vue');
 attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue');
 attachClientRender(UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue');
+attachClientRender(UiTooltip, '../ui/UiTooltip.vue');
 
 function hostNode(type, text = '') {
   return { type, text, props: {}, children: [], parent: null };
@@ -473,15 +475,15 @@ describe('Lyrics workspace control contracts', () => {
     findByProp(root, 'aria-label', '歌詞來源').props.onChange({
       target: { value: 'main.lrc' },
     });
-    findByProp(root, 'title', '管理歌詞來源').props.onClick();
+    findByProp(root, 'aria-label', '管理歌詞來源').props.onClick();
     findByProp(root, 'aria-label', '讀音顯示').props.onChange({
       target: { value: 'furigana' },
     });
     expect(nodeText(root)).not.toContain('已自動套用');
-    expect(findByProp(root, 'title', '重新建立讀音資料')).toBeUndefined();
-    expect(findByProp(root, 'title', '重試建立讀音資料')).toBeUndefined();
-    findByProp(root, 'title', '縮小歌詞').props.onClick();
-    findByProp(root, 'title', '放大歌詞').props.onClick();
+    expect(findByProp(root, 'aria-label', '重新建立讀音資料')).toBeUndefined();
+    expect(findByProp(root, 'aria-label', '重試建立讀音資料')).toBeUndefined();
+    findByProp(root, 'aria-label', '縮小歌詞').props.onClick();
+    findByProp(root, 'aria-label', '放大歌詞').props.onClick();
 
     expect(handlers.source).toHaveBeenCalledWith('main.lrc');
     expect(handlers.manage).toHaveBeenCalledOnce();
@@ -545,8 +547,8 @@ describe('Lyrics workspace control contracts', () => {
       onResetOffset: resetOffset,
     });
 
-    findByProp(header.root, 'title', '選擇歌詞曲目').props.onClick();
-    findByProp(header.root, 'title', '重新掃描歌詞').props.onClick();
+    findByProp(header.root, 'aria-label', '選擇歌詞曲目').props.onClick();
+    findByProp(header.root, 'aria-label', '重新掃描歌詞').props.onClick();
     findByProp(header.root, 'aria-label', '伴奏處理模式').props.onChange({
       target: { value: 'quick' },
     });
@@ -724,9 +726,9 @@ describe('LyricsWorkspace event wiring', () => {
     );
     expect(generateReading).not.toHaveBeenCalled();
 
-    findByProp(root, 'title', '選擇歌詞曲目').props.onClick();
-    findByProp(root, 'title', '重新掃描歌詞').props.onClick();
-    findByProp(root, 'title', '管理歌詞來源').props.onClick();
+    findByProp(root, 'aria-label', '選擇歌詞曲目').props.onClick();
+    findByProp(root, 'aria-label', '重新掃描歌詞').props.onClick();
+    findByProp(root, 'aria-label', '管理歌詞來源').props.onClick();
     findByProp(root, 'aria-label', '歌詞來源').props.onChange({
       target: { value: 'main.lrc' },
     });
@@ -744,19 +746,25 @@ describe('LyricsWorkspace event wiring', () => {
     findByProp(root, 'aria-label', '讀音顯示').props.onChange({
       target: { value: 'furigana' },
     });
-    findByProp(root, 'title', '縮小歌詞').props.onClick();
+    findByProp(root, 'aria-label', '縮小歌詞').props.onClick();
     await nextTick();
-    expect(findByProp(root, 'title', '縮小歌詞').props.disabled).toBe(true);
-    findByProp(root, 'title', '放大歌詞').props.onClick();
-    findByProp(root, 'title', '放大歌詞').props.onClick();
+    expect(findByProp(root, 'aria-label', '縮小歌詞').props.disabled).toBe(
+      true,
+    );
+    findByProp(root, 'aria-label', '放大歌詞').props.onClick();
+    findByProp(root, 'aria-label', '放大歌詞').props.onClick();
     await nextTick();
-    expect(findByProp(root, 'title', '放大歌詞').props.disabled).toBe(true);
+    expect(findByProp(root, 'aria-label', '放大歌詞').props.disabled).toBe(
+      true,
+    );
     findByProp(root, 'aria-label', '伴奏處理模式').props.onChange({
       target: { value: 'high-quality' },
     });
     await nextTick();
     expect(separate).not.toHaveBeenCalled();
-    expect(findByProp(root, 'aria-label', '此模式已產生')).toBeTruthy();
+    expect(
+      findByProp(root, 'aria-label', '此模式已產生；切換模式可查看其他結果'),
+    ).toBeTruthy();
     findByProp(root, 'aria-label', '伴奏處理模式').props.onChange({
       target: { value: 'quick' },
     });

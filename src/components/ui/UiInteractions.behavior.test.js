@@ -9,6 +9,7 @@ import UiStatusIcon from './UiStatusIcon.vue';
 import UiTabs from './UiTabs.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
+import UiTooltip from './UiTooltip.vue';
 import { Volume2 } from '../../icons/index.js';
 import {
   attachClientRender,
@@ -27,6 +28,7 @@ for (const [component, filename] of [
   [UiTabs, './UiTabs.vue'],
   [UiScrollRegion, './UiScrollRegion.vue'],
   [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
+  [UiTooltip, './UiTooltip.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

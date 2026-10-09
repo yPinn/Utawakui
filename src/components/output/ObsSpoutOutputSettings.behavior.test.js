@@ -5,6 +5,9 @@ import SettingsBlock from '../settings/SettingsBlock.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -20,6 +23,9 @@ for (const [component, filename] of [
   [UiButton, '../ui/UiButton.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
+  [UiTooltip, '../ui/UiTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

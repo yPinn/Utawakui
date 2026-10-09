@@ -248,8 +248,9 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'tooltip',
         title: '工具提示',
-        components: ['UiTooltip'],
+        components: ['UiTooltip', 'UiOverflowTooltip'],
         reviewed: false,
+        adopted: true,
       },
       {
         key: 'popover',

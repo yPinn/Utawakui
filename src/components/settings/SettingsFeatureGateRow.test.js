@@ -69,7 +69,8 @@ describe('SettingsFeatureGateRow', () => {
     );
 
     expect(html).toContain('人聲分離模型（快速）');
-    expect(html).toContain('title="供本機人聲分離使用。"');
+    expect(html).toContain('供本機人聲分離使用。');
+    expect(html).not.toContain('title="供本機人聲分離使用。"');
     expect(html).not.toContain('settings-action-row__value');
     expect(html).not.toContain('產生人聲分離結果時使用');
   });
