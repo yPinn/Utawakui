@@ -2115,3 +2115,56 @@ body.is-dossier-embed .dossier {
     opacity: 0.72;
   }
 }
+
+/* Prototype-only review palette. Production Token v2 remains unchanged until
+   the owner accepts this regional light-theme composition. */
+:root[data-ui-theme='light'][data-prototype-palette='ink-paper']
+  .prototype-surface {
+  --ui-color-canvas: var(--ui-palette-warm-neutral-300);
+  --ui-color-surface: var(--ui-palette-warm-neutral-100);
+  --ui-color-surface-raised: var(--ui-palette-warm-neutral-50);
+  --ui-color-surface-hover: var(--ui-palette-warm-neutral-300);
+  --ui-color-surface-active: var(--ui-palette-neutral-200);
+  --ui-color-surface-selected: var(--ui-palette-indigo-200);
+  --ui-color-border: var(--ui-palette-warm-neutral-400);
+  --ui-color-border-strong: var(--ui-palette-neutral-400);
+  --ui-color-accent-soft: var(--ui-palette-indigo-200);
+  --ui-color-folder-primary: var(--ui-palette-indigo-600);
+  --ui-color-folder-secondary: var(--ui-palette-plum-300);
+  --ui-color-folder-tertiary: var(--ui-palette-olive-300);
+}
+
+:root[data-ui-theme='light'][data-prototype-palette='ink-paper']
+  .prototype-surface
+  :is(.titlebar, .sidebar, .player-bar) {
+  color-scheme: dark;
+  color: var(--ui-color-text);
+  --ui-color-scheme: dark;
+  --ui-color-canvas: var(--ui-palette-neutral-950);
+  --ui-color-surface: var(--ui-palette-neutral-900);
+  --ui-color-surface-raised: var(--ui-palette-neutral-800);
+  --ui-color-surface-hover: var(--ui-palette-neutral-700);
+  --ui-color-surface-active: var(--ui-palette-neutral-600);
+  --ui-color-surface-selected: var(--ui-palette-indigo-900);
+  --ui-color-text: var(--ui-palette-warm-neutral-100);
+  --ui-color-text-muted: var(--ui-palette-neutral-300);
+  --ui-color-text-subtle: var(--ui-palette-neutral-400);
+  --ui-color-border: var(--ui-palette-neutral-700);
+  --ui-color-border-strong: var(--ui-palette-neutral-500);
+  --ui-color-accent: var(--ui-palette-indigo-400);
+  --ui-color-accent-hover: var(--ui-palette-indigo-300);
+  --ui-color-accent-active: var(--ui-palette-indigo-500);
+  --ui-color-accent-soft: var(--ui-palette-indigo-900);
+  --ui-color-accent-contrast: var(--ui-palette-neutral-950);
+  --ui-color-focus: var(--ui-palette-indigo-300);
+  --ui-color-current: var(--ui-palette-indigo-300);
+  --ui-color-current-soft: var(--ui-palette-indigo-900);
+  --ui-color-neutral: var(--ui-palette-cool-gray-300);
+  --ui-color-info: var(--ui-palette-sky-400);
+  --ui-color-success: var(--ui-palette-green-400);
+  --ui-color-warning: var(--ui-palette-amber-400);
+  --ui-color-live: var(--ui-palette-red-400);
+  --ui-color-danger: var(--ui-palette-red-400);
+  --ui-color-danger-contrast: var(--ui-palette-neutral-950);
+  --ui-color-status-contrast: var(--ui-palette-neutral-950);
+}

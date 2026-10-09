@@ -91,6 +91,11 @@ function setTheme(value) {
   document.querySelector('[data-control="theme"]').value = value;
 }
 
+function setPrototypePalette(value) {
+  if (value === 'ink-paper') root.dataset.prototypePalette = 'ink-paper';
+  else delete root.dataset.prototypePalette;
+}
+
 window.addEventListener('message', (event) => {
   if (
     event.source !== window.parent ||
@@ -920,6 +925,9 @@ document.addEventListener('keydown', (event) => {
 });
 
 setTheme(params.get('theme') === 'light' ? 'light' : 'dark');
+setPrototypePalette(
+  params.get('palette') === 'ink-paper' ? 'ink-paper' : 'default',
+);
 setDensity(params.get('density') === 'compact' ? 'compact' : 'standard');
 setMotion(params.get('motion') === 'reduced' ? 'reduced' : 'default');
 setScenario(params.get('scenario') ?? 'populated');

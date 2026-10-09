@@ -30,6 +30,14 @@ const variants = [
     density: 'standard',
   },
   {
+    name: 'review/studio-library-ink-paper-1440x810.png',
+    width: 1440,
+    height: 810,
+    theme: 'light',
+    palette: 'ink-paper',
+    density: 'standard',
+  },
+  {
     name: 'studio-library-dark-960x650.png',
     width: 960,
     height: 650,
@@ -47,6 +55,7 @@ const variants = [
 
 let captureInProgress = true;
 
+app.disableHardwareAcceleration();
 app.setPath('userData', captureDataDir);
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
 app.commandLine.appendSwitch(
@@ -232,7 +241,12 @@ async function captureVariant(variant) {
     useContentSize: true,
     frame: false,
     show: false,
-    backgroundColor: variant.theme === 'light' ? '#e8e4dd' : '#191a1e',
+    backgroundColor:
+      variant.palette === 'ink-paper'
+        ? '#dad7d0'
+        : variant.theme === 'light'
+          ? '#e8e4dd'
+          : '#191a1e',
     webPreferences: {
       backgroundThrottling: false,
       contextIsolation: true,
@@ -245,6 +259,7 @@ async function captureVariant(variant) {
   const url = new URL(entryUrl.href);
   url.searchParams.set('clean', '1');
   url.searchParams.set('theme', variant.theme);
+  if (variant.palette) url.searchParams.set('palette', variant.palette);
   url.searchParams.set('density', variant.density);
   url.searchParams.set('motion', 'reduced');
   url.searchParams.set('scenario', 'populated');
@@ -254,6 +269,7 @@ async function captureVariant(variant) {
   await waitForStablePaint(window);
   const image = await window.webContents.capturePage();
   const outputPath = path.join(outputDir, variant.name);
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, image.toPNG());
   console.log(`captured ${outputPath}`);
   if (variant === variants[0]) {
