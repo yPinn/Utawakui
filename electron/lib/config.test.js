@@ -31,7 +31,7 @@ describe('config', () => {
       version: 3,
       downloadDir: null,
       featureConfirmations: {},
-      uiTheme: 'dark',
+      uiTheme: 'light',
       performerReadingScale: 'desk',
       performerWindowBounds: null,
       sidebarWidth: 256,
@@ -115,7 +115,7 @@ describe('config', () => {
       version: 3,
       downloadDir: null,
       featureConfirmations: {},
-      uiTheme: 'dark',
+      uiTheme: 'light',
       performerReadingScale: 'desk',
       performerWindowBounds: null,
       sidebarWidth: 256,
@@ -203,11 +203,16 @@ describe('config', () => {
     expect(loadConfig(configPath).uiTheme).toBe('light');
   });
 
-  it('invalid uiTheme falls back to dark', () => {
+  it('invalid uiTheme falls back to light', () => {
     fs.writeFileSync(
       configPath,
       JSON.stringify({ version: 1, uiTheme: 'sepia' }),
     );
+    expect(loadConfig(configPath).uiTheme).toBe('light');
+  });
+
+  it('preserves an explicitly saved dark theme', () => {
+    saveConfig(configPath, { uiTheme: 'dark' });
     expect(loadConfig(configPath).uiTheme).toBe('dark');
   });
 

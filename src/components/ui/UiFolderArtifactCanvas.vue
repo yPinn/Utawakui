@@ -11,7 +11,9 @@ import {
 } from 'vue';
 import {
   clampFolderArtifactPosition,
+  getFolderArtifactAnchor,
   moveFolderArtifactFromKeyboard,
+  projectFolderArtifactPosition,
 } from '../../utils/folderArtifactGeometry.js';
 import { Pin } from '../../icons/index.js';
 import UiIconButton from './UiIconButton.vue';
@@ -20,18 +22,23 @@ const props = defineProps({
   artifacts: { type: Array, default: () => [] },
   label: { type: String, default: '可移動物件' },
   minimumVisibleSize: { type: Number, default: 48 },
+  material: {
+    type: String,
+    default: 'document',
+    validator: (value) => ['document', 'folder'].includes(value),
+  },
 });
 
 const emit = defineEmits(['layoutChange', 'pinChange', 'activate']);
 
 const clampBounds = shallowRef(null);
 const itemElements = new Map();
+const anchors = new Map();
 const positions = reactive({});
 const pinnedArtifactIds = reactive(new Set());
 const activeArtifactId = shallowRef(null);
 const instructionId = `folder-artifact-instructions-${useId()}`;
 const isReady = ref(false);
-let highestZ = 0;
 let dragSession = null;
 let resizeObserver = null;
 let reclampFrame = null;
@@ -42,6 +49,7 @@ function ensurePositions() {
   for (const id of Object.keys(positions)) {
     if (!activeIds.has(id)) {
       delete positions[id];
+      anchors.delete(id);
       pinnedArtifactIds.delete(id);
     }
   }
@@ -49,10 +57,6 @@ function ensurePositions() {
     if (positions[artifact.id]) return;
     positions[artifact.id] = { x: 0, y: 0, z: index + 1 };
   });
-  highestZ = Math.max(
-    0,
-    ...Object.values(positions).map((position) => position.z),
-  );
 }
 
 ensurePositions();
@@ -86,6 +90,15 @@ function artifactRotation(id) {
   return props.artifacts.find((artifact) => artifact.id === id)?.rotation ?? 0;
 }
 
+function artifactGeometry(id) {
+  return {
+    itemSize: elementSize(itemElements.get(id)),
+    canvasSize: canvasSize(),
+    minimumVisibleSize: props.minimumVisibleSize,
+    rotation: artifactRotation(id),
+  };
+}
+
 function clampPosition(id, position) {
   return clampFolderArtifactPosition(
     position,
@@ -96,12 +109,19 @@ function clampPosition(id, position) {
   );
 }
 
-function applyPosition(id, nextPosition, notify = true) {
+function applyPosition(
+  id,
+  nextPosition,
+  { notify = true, updateAnchor = true } = {},
+) {
   const current = positions[id];
   if (!current) return;
   const bounded = clampPosition(id, nextPosition);
   current.x = bounded.x;
   current.y = bounded.y;
+  if (updateAnchor) {
+    anchors.set(id, getFolderArtifactAnchor(bounded, artifactGeometry(id)));
+  }
   if (notify) {
     emit('layoutChange', {
       id,
@@ -114,14 +134,13 @@ function resetArtifact(id) {
   const artifact = props.artifacts.find((candidate) => candidate.id === id);
   const current = positions[id];
   if (!artifact || !current) return;
-  const bounds = canvasSize();
-  const item = elementSize(itemElements.get(id));
-  const availableWidth = Math.max(0, bounds.width - item.width);
-  const availableHeight = Math.max(0, bounds.height - item.height);
-  applyPosition(id, {
-    x: availableWidth * Math.min(1, Math.max(0, artifact.initialX ?? 0)),
-    y: availableHeight * Math.min(1, Math.max(0, artifact.initialY ?? 0)),
-  });
+  const geometry = artifactGeometry(id);
+  const initialPosition = projectFolderArtifactPosition(
+    { x: artifact.initialX ?? 0, y: artifact.initialY ?? 0 },
+    geometry,
+  );
+  anchors.set(id, getFolderArtifactAnchor(initialPosition, geometry));
+  applyPosition(id, initialPosition, { updateAnchor: false });
 }
 
 function reset() {
@@ -130,15 +149,23 @@ function reset() {
     if (positions[artifact.id]) positions[artifact.id].z = index + 1;
     resetArtifact(artifact.id);
   });
-  highestZ = props.artifacts.length;
   isReady.value = true;
 }
 
+function normalizeArtifactStack(frontId) {
+  const orderedIds = Object.entries(positions)
+    .sort(([, left], [, right]) => left.z - right.z)
+    .map(([id]) => id)
+    .filter((id) => id !== frontId);
+  if (positions[frontId]) orderedIds.push(frontId);
+  orderedIds.forEach((id, index) => {
+    positions[id].z = index + 1;
+  });
+}
+
 function bringToFront(id) {
-  const current = positions[id];
-  if (!current) return;
-  highestZ += 1;
-  current.z = highestZ;
+  if (!positions[id]) return;
+  normalizeArtifactStack(id);
 }
 
 function isArtifactPinned(id) {
@@ -268,7 +295,18 @@ function scheduleReclamp() {
     reclampFrame = null;
     props.artifacts.forEach((artifact) => {
       const current = positions[artifact.id];
-      if (current) applyPosition(artifact.id, current, false);
+      if (!current) return;
+      const anchor =
+        anchors.get(artifact.id) ??
+        getFolderArtifactAnchor(current, artifactGeometry(artifact.id));
+      const projected = projectFolderArtifactPosition(
+        anchor,
+        artifactGeometry(artifact.id),
+      );
+      applyPosition(artifact.id, projected, {
+        notify: false,
+        updateAnchor: false,
+      });
     });
   };
   if (typeof requestAnimationFrame === 'function') {
@@ -310,7 +348,10 @@ defineExpose({ reset });
 <template>
   <div
     class="ui-folder-artifact-canvas"
-    :class="{ 'ui-folder-artifact-canvas--ready': isReady }"
+    :class="{
+      'ui-folder-artifact-canvas--ready': isReady,
+      'ui-folder-artifact-canvas--folder': props.material === 'folder',
+    }"
     role="region"
     :aria-label="label"
   >
@@ -394,9 +435,25 @@ defineExpose({ reset });
   background: var(--ui-folder-artifact-sheet-bg);
 }
 
+.ui-folder-artifact-canvas--folder {
+  min-height: 0;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+  background: transparent;
+}
+
+.ui-folder-artifact-canvas--folder .ui-folder-artifact-canvas__sheet {
+  display: none;
+}
+
 .ui-folder-artifact-canvas__bounds {
   position: absolute;
   inset: var(--ui-folder-artifact-safe-inset);
+}
+
+.ui-folder-artifact-canvas--folder .ui-folder-artifact-canvas__bounds {
+  inset: 0;
 }
 
 .ui-folder-artifact-canvas__item {
@@ -405,6 +462,7 @@ defineExpose({ reset });
   inset: 0 auto auto 0;
   max-width: calc(100% - var(--ui-space-4));
   cursor: grab;
+  pointer-events: auto;
   touch-action: none;
   visibility: hidden;
   transform: translate3d(

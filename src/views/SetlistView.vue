@@ -15,6 +15,7 @@ import { usePlaylistActions } from '../composables/usePlaylistActions.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
+import { useSetlistAlbumContext } from '../composables/useSetlistAlbumContext.js';
 import { useTrackPreview } from '../composables/useTrackPreview.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import ArtistPhotoCandidateModal from '../components/artists/ArtistPhotoCandidateModal.vue';
@@ -46,7 +47,6 @@ import {
 } from '../utils/playlistSort.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../utils/albumSummary.js';
-import { deriveAlbumSupportingContent } from '../utils/albumSupportingContent.js';
 import { deriveArtistPage } from '../utils/artistPage.js';
 import { shufflePreviewTracks } from '../utils/trackPreviewOrder.js';
 import {
@@ -128,14 +128,7 @@ const isAlbumSelected = computed(() => mode.value === 'album');
 // Artist pages are derived read-only references (ADR 0022).
 const isArtistSelected = computed(() => mode.value === 'artist');
 
-const albumEntries = computed(() =>
-  playlistState.playlists
-    .filter((playlist) => playlist.kind === 'album')
-    .map((collection) => ({
-      collection,
-      tracks: resolvePlaylistTracks(collection),
-    })),
-);
+const { albumEntries, albumSupportingContent } = useSetlistAlbumContext();
 const artistPage = computed(() =>
   isArtistSelected.value
     ? deriveArtistPage({
@@ -267,17 +260,6 @@ watch(
   },
   { immediate: true },
 );
-const albumSupportingContent = computed(() => {
-  if (!isAlbumSelected.value || !selectedPlaylist.value) return null;
-  return deriveAlbumSupportingContent({
-    selectedAlbumId: selectedPlaylist.value.id,
-    selectedTracks: playlistTracks.value,
-    albumEntries: albumEntries.value,
-    libraryTracks: libraryState.tracks,
-    artistIndex: artistIndexState.index,
-  });
-});
-
 const playlistMeta = computed(() => {
   const count = playlistTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);
@@ -925,15 +907,12 @@ onMounted(async () => {
         </AppFolderContentField>
 
         <SetlistAlbumSupportingContent
-          v-if="albumSupportingContent"
+          v-if="albumSupportingContent?.relatedAlbums.length > 0"
           :artist="albumSupportingContent.artist"
           :related-albums="albumSupportingContent.relatedAlbums"
-          :summary="albumSupportingContent.summary"
           :playing-album-id="playingSupportingAlbumId"
-          can-open-artist
           @select-album="selectPlaylistAction"
           @play-album="toggleSupportingAlbumPlayback"
-          @select-artist="openAlbumArtist"
         />
 
         <SetlistAlbumSupportingContent

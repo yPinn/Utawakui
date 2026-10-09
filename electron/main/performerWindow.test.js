@@ -231,6 +231,26 @@ describe('performer window manager', () => {
     ).toEqual(['--ui-theme=light']);
   });
 
+  it('defaults an unconfigured performer window to the light theme', () => {
+    FakeWindow.instances = [];
+    const manager = createPerformerWindowManager({
+      BrowserWindow: FakeWindow,
+      isDev: false,
+      devUrl: '',
+      pagePath: 'dist/performer-view.html',
+      preloadPath: 'performerPreload.js',
+    });
+
+    manager.open();
+
+    expect(FakeWindow.instances[0].options).toMatchObject({
+      backgroundColor: '#dad7d0',
+    });
+    expect(
+      FakeWindow.instances[0].options.webPreferences.additionalArguments,
+    ).toEqual(['--ui-theme=light']);
+  });
+
   it('applies a live theme to the native substrate and renderer', () => {
     FakeWindow.instances = [];
     let uiTheme = 'dark';

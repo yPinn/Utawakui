@@ -35,9 +35,9 @@ describe('Import Token v2 surface cutover', () => {
     );
   });
 
-  it('uses Folder-owned outer inset and flat top-level source sections', () => {
-    expect(folderPageSource).toContain(
-      '--ui-scroll-layout-padding-block-start: var(--ui-folder-document-inset);',
+  it('uses the Folder paper inset and flat top-level source sections', () => {
+    expect(folderPageSource).toMatch(
+      /\.app-folder-page__body--document\s*\{[^}]*padding-block-start:\s*var\(--ui-folder-document-inset\);/su,
     );
     expect(importSource).toMatch(
       /\.import-view\s*\{[^}]*gap:\s*var\(--ui-folder-section-gap\);/su,

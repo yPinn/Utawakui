@@ -7,6 +7,8 @@ import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingCo
 import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue';
 import SetlistPlaylistTable from '../playlists/SetlistPlaylistTable.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
+import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 
@@ -217,12 +219,17 @@ const visibleDemoAlbumEntries = computed(() => {
     visibleIndex,
   }));
 });
-const demoArtistSummary = {
-  albumCount: 4,
-  trackCount: 38,
-  yearStart: 2018,
-  yearEnd: 2024,
-};
+const demoArtistSummaryBody = '38 首曲目 · 4 張專輯 · 2018–2024';
+const demoFolderArtifacts = [
+  {
+    id: 'artist-summary',
+    kind: 'note',
+    label: '藝人曲庫摘要',
+    initialX: 0.12,
+    initialY: 0.78,
+    rotation: -1.5,
+  },
+];
 const demoAddToPlaylistItems = [
   { key: 'demo-target-1', label: '直播準備', value: 'demo-target-1' },
   { key: 'demo-target-2', label: 'Cover 待唱', value: 'demo-target-2' },
@@ -383,7 +390,6 @@ function toggleDemoCollectionShuffle() {
               <SetlistAlbumSupportingContent
                 artist="王以太"
                 :related-albums="demoRelatedAlbums"
-                :summary="demoArtistSummary"
                 :playing-album-id="demoSupportingAlbumPlayingId"
                 @select-album="selectDemoAlbum"
                 @play-album="toggleDemoSupportingAlbumPlayback"
@@ -467,6 +473,23 @@ function toggleDemoCollectionShuffle() {
                 </section>
               </div>
             </AppFolderContentField>
+
+            <template v-if="activeFolder.id === 'setlist'" #floating>
+              <UiFolderArtifactCanvas
+                :artifacts="demoFolderArtifacts"
+                material="folder"
+                label="Folder 延伸摘要"
+              >
+                <template #default="{ artifact }">
+                  <UiFolderArtifact
+                    :kind="artifact.kind"
+                    eyebrow="王以太"
+                    title="藝人曲庫摘要"
+                    :body="demoArtistSummaryBody"
+                  />
+                </template>
+              </UiFolderArtifactCanvas>
+            </template>
           </AppFolderPage>
         </AppFolderLayout>
       </div>

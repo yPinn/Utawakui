@@ -2,14 +2,17 @@
 import { computed, ref } from 'vue';
 import { usePerformanceSessionWorkspace } from '../../composables/usePerformanceSessionWorkspace.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
 import { libraryViewTitle } from '../../utils/playlistMenu.js';
 import SetlistView from '../../views/SetlistView.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import SetlistArtistSummaryArtifact from './SetlistArtistSummaryArtifact.vue';
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();
+const { albumSupportingContent } = useSetlistAlbumContext();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 const searchQuery = ref('');
 
@@ -47,6 +50,13 @@ const documentKey = computed(
       </template>
 
       <SetlistView v-model:search-query="searchQuery" />
+
+      <template v-if="albumSupportingContent" #floating>
+        <SetlistArtistSummaryArtifact
+          :artist="albumSupportingContent.artist"
+          :summary="albumSupportingContent.summary"
+        />
+      </template>
     </AppFolderPage>
   </AppSurfaceBoundary>
 </template>

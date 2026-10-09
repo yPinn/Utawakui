@@ -84,11 +84,9 @@ describe('Folder layout family cutover', () => {
       /\.app-surface-boundary\s*\{[^}]*background\s*:/su,
     );
     expect(folderLayout).toContain(
-      '--ui-folder-page-background: var(--ui-folder-interior-background-setlist)',
+      '--ui-folder-page-background: var(--ui-folder-sheet-background)',
     );
-    expect(folderLayout).toContain(
-      '--ui-folder-page-background: var(--ui-folder-interior-background-import)',
-    );
+    expect(folderLayout).not.toContain('--ui-folder-interior-background');
   });
 
   it('keeps every feature behind a registered surface and overlay host', () => {

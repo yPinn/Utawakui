@@ -6,8 +6,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 // lets the renderer paint the persisted theme on first frame, no async wait.
 function readInitialUiTheme() {
   const arg = process.argv.find((a) => a.startsWith('--ui-theme='));
-  const theme = arg ? arg.slice('--ui-theme='.length) : 'dark';
-  return theme === 'light' ? 'light' : 'dark';
+  const theme = arg ? arg.slice('--ui-theme='.length) : 'light';
+  return theme === 'dark' ? 'dark' : 'light';
 }
 
 // BrowserWindow starts restored, so main can synchronously seed compact before

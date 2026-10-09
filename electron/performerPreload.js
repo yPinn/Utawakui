@@ -4,7 +4,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 function readInitialUiTheme() {
   const arg = process.argv.find((value) => value.startsWith('--ui-theme='));
-  return arg?.slice('--ui-theme='.length) === 'light' ? 'light' : 'dark';
+  return arg?.slice('--ui-theme='.length) === 'dark' ? 'dark' : 'light';
 }
 
 function isUiTheme(value) {

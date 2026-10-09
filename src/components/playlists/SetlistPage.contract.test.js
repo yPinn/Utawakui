@@ -48,12 +48,50 @@ describe('Setlist page composition', () => {
     expect(viewSource).toContain(
       "import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue'",
     );
-    expect(viewSource).toContain('const albumSupportingContent = computed(');
+    expect(viewSource).toContain(
+      'const { albumEntries, albumSupportingContent } = useSetlistAlbumContext()',
+    );
     expect(viewSource).toContain('<SetlistAlbumSupportingContent');
     expect(viewSource.indexOf('</AppFolderContentField>')).toBeLessThan(
       viewSource.indexOf('<SetlistAlbumSupportingContent'),
     );
     expect(viewSource).toContain('@select-album="selectPlaylistAction"');
+  });
+
+  it('projects the selected album summary on the Folder-wide floating plane', () => {
+    expect(pageSource).toContain(
+      "import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js'",
+    );
+    expect(pageSource).toContain(
+      "import SetlistArtistSummaryArtifact from './SetlistArtistSummaryArtifact.vue'",
+    );
+    expect(pageSource).toContain(
+      'const { albumSupportingContent } = useSetlistAlbumContext()',
+    );
+    expect(pageSource).toMatch(
+      /<template\s+v-if="albumSupportingContent"\s+#floating>[\s\S]*?<SetlistArtistSummaryArtifact\s+:artist="albumSupportingContent\.artist"\s+:summary="albumSupportingContent\.summary"/u,
+    );
+    expect(pageSource.indexOf('#floating')).toBeGreaterThan(
+      pageSource.indexOf('<SetlistView'),
+    );
+    expect(pageSource).not.toContain('#extension');
+  });
+
+  it('shares one album context projection while keeping related albums on paper', () => {
+    expect(viewSource).toContain(
+      "import { useSetlistAlbumContext } from '../composables/useSetlistAlbumContext.js'",
+    );
+    expect(viewSource).toContain(
+      'const { albumEntries, albumSupportingContent } = useSetlistAlbumContext()',
+    );
+    expect(viewSource).toContain(
+      'v-if="albumSupportingContent?.relatedAlbums.length > 0"',
+    );
+    expect(viewSource).not.toContain(
+      ':summary="albumSupportingContent.summary"',
+    );
+    expect(viewSource).toContain('@select-artist="openAlbumArtist"');
+    expect(viewSource).toContain('@play-album="toggleSupportingAlbumPlayback"');
   });
 
   it('uses the bounded field variant only for loading, error, and empty states', () => {

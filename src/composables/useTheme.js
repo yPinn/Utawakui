@@ -2,7 +2,9 @@ import { ref } from 'vue';
 
 // Module-scope singleton, same pattern as useAppView.js/usePlayer.js — one
 // theme applies to the whole shell, not per-component state.
-const theme = ref(window.Utawakui?.initialUiTheme ?? 'dark');
+const theme = ref(
+  window.Utawakui?.initialUiTheme === 'dark' ? 'dark' : 'light',
+);
 
 function applyTheme() {
   // Set explicitly for both values (not just light) so the active theme is
@@ -12,7 +14,7 @@ function applyTheme() {
 
 // Applied at module load, before any component mounts, so the first paint
 // already matches the persisted theme — main.js passes it via
-// preload.js's initialUiTheme specifically to avoid a dark-then-light flash.
+// preload.js's initialUiTheme specifically to avoid a theme mismatch flash.
 applyTheme();
 
 async function toggleTheme() {

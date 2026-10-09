@@ -5,7 +5,7 @@ function isUiTheme(value) {
 export function installPerformerUiTheme({ bridge, root }) {
   root.dataset.uiTheme = isUiTheme(bridge?.initialUiTheme)
     ? bridge.initialUiTheme
-    : 'dark';
+    : 'light';
 
   if (typeof bridge?.onUiTheme !== 'function') return undefined;
   return bridge.onUiTheme((theme) => {

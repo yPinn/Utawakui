@@ -85,9 +85,9 @@ describe('AppFolderLayout', () => {
     expect(source).not.toContain('Archive');
   });
 
-  it('maps destination color to the Folder interior without recoloring the global canvas', () => {
+  it('maps destination color only to the Folder exterior', () => {
     expect(source).toMatch(
-      /\.app-folder-layout\s*\{[^}]*--ui-folder-layout-background:\s*var\(--ui-color-folder-primary\);[^}]*--ui-folder-page-background:\s*var\(\s*--ui-folder-interior-background-setlist\s*\);[^}]*--ui-folder-content-background:\s*var\(--ui-folder-sheet-background\);/su,
+      /\.app-folder-layout\s*\{[^}]*--ui-folder-layout-background:\s*var\(--ui-color-folder-primary\);[^}]*--ui-folder-page-background:\s*var\(\s*--ui-folder-sheet-background\s*\);[^}]*--ui-folder-content-background:\s*transparent;/su,
     );
 
     for (const [destination, material] of [
@@ -97,14 +97,36 @@ describe('AppFolderLayout', () => {
     ]) {
       expect(source).toMatch(
         new RegExp(
-          `\\.app-folder-layout\\[data-active-destination='${destination}'\\]\\s*\\{[^}]*--ui-folder-layout-background:\\s*var\\(--ui-color-folder-${material}\\);[^}]*--ui-folder-page-background:\\s*var\\(--ui-folder-interior-background-${destination}\\);`,
+          `\\.app-folder-layout\\[data-active-destination='${destination}'\\]\\s*\\{[^}]*--ui-folder-layout-background:\\s*var\\(--ui-color-folder-${material}\\);[^}]*\\}`,
           'su',
         ),
       );
     }
 
+    expect(source).not.toContain('--ui-folder-interior-background');
     expect(source).not.toContain('--ui-color-canvas:');
     expect(source).not.toContain('--ui-color-accent:');
+  });
+
+  it('defines one continuous paper with printed ledger rules', () => {
+    const layoutRule = source.match(
+      /\.app-folder-layout\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+
+    expect(layoutRule).toContain(
+      '--ui-folder-page-background: var(--ui-folder-sheet-background);',
+    );
+    expect(layoutRule).toContain(
+      '--ui-folder-dossier-background: transparent;',
+    );
+    expect(layoutRule).toContain('--ui-folder-ledger-background: transparent;');
+    expect(layoutRule).toContain(
+      '--ui-folder-content-background: transparent;',
+    );
+    expect(layoutRule).not.toContain('--ui-folder-dossier-border');
+    expect(layoutRule).toContain('--ui-folder-ledger-rule: color-mix(');
+    expect(layoutRule).toContain('--ui-folder-ledger-rule-strong: color-mix(');
+    expect(layoutRule).not.toContain('background-image');
   });
 
   it('uses the shared large-surface radius for every visible exterior corner', () => {

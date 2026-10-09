@@ -203,12 +203,12 @@ function registerPlayerStateHandler(ipcMain) {
 }
 
 function createMainWindow(
-  initialTheme = 'dark',
+  initialTheme = 'light',
   initialSidebarWidth = 256,
   initialCaptureDeviceId = null,
   options = {},
 ) {
-  const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.dark;
+  const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.light;
   const { backgroundColor, ...titleBarOverlay } = titlebarColors;
   mainWindow = new BrowserWindow({
     width: 1280,

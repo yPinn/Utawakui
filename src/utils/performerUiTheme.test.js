@@ -24,12 +24,12 @@ describe('installPerformerUiTheme', () => {
     expect(root.dataset.uiTheme).toBe('dark');
   });
 
-  it('defaults an unavailable or invalid bridge to dark', () => {
+  it('defaults an unavailable or invalid bridge to light', () => {
     const root = { dataset: {} };
 
     expect(installPerformerUiTheme({ bridge: undefined, root })).toBe(
       undefined,
     );
-    expect(root.dataset.uiTheme).toBe('dark');
+    expect(root.dataset.uiTheme).toBe('light');
   });
 });

@@ -247,27 +247,17 @@
   );
   --ui-player-tools-beat-block-size: var(--ui-space-1);
   --ui-player-tools-meter-control-block-size: 3.5rem;
-  --ui-folder-interior-background-setlist: color-mix(
-    in srgb,
-    var(--ui-color-folder-primary) 12%,
-    var(--ui-color-surface)
-  );
-  --ui-folder-interior-background-lyrics: color-mix(
-    in srgb,
-    var(--ui-color-folder-secondary) 12%,
-    var(--ui-color-surface)
-  );
-  --ui-folder-interior-background-output: color-mix(
-    in srgb,
-    var(--ui-color-folder-tertiary) 12%,
-    var(--ui-color-surface)
-  );
-  --ui-folder-interior-background-import: color-mix(
-    in srgb,
-    var(--ui-color-folder-neutral) 12%,
-    var(--ui-color-surface)
-  );
   --ui-folder-sheet-background: var(--ui-color-surface);
+  --ui-folder-sheet-frame-block-end-gap: var(--ui-space-5);
+  --ui-folder-sheet-binding-gutter: var(--ui-space-6);
+  --ui-folder-sheet-hole-size: var(--ui-space-3);
+  --ui-folder-sheet-hole-edge-inset: var(--ui-space-3);
+  --ui-folder-sheet-hole-rail-block-size: 24rem;
+  --ui-folder-sheet-binding-field-max-block-size: 36rem;
+  --ui-folder-sheet-scrollbar-gap: var(--ui-space-1);
+  --ui-folder-sheet-min-block-size: 30rem;
+  --ui-folder-sheet-max-inline-size: 72rem;
+  --ui-folder-extension-block-inset: var(--ui-space-6);
   --ui-folder-layout-background: var(--ui-color-folder-primary);
   --ui-folder-page-background: var(--ui-color-surface);
   --ui-folder-content-background: var(--ui-color-canvas);
@@ -296,6 +286,11 @@
   --ui-folder-section-gap: var(--ui-space-4);
   --ui-folder-heading-gap: var(--ui-space-1);
   --ui-folder-artifact-canvas-min-height: 24rem;
+  --ui-folder-artifact-folder-min-height: calc(
+    var(--ui-folder-artifact-canvas-min-height) +
+      var(--ui-folder-extension-block-inset) +
+      var(--ui-folder-extension-block-inset)
+  );
   --ui-folder-artifact-safe-inset: calc(
     var(--ui-focus-width) + var(--ui-focus-offset) + var(--ui-border-width)
   );
@@ -768,26 +763,6 @@
   --ui-color-paper: var(--ui-palette-warm-neutral-50);
   --ui-color-paper-text: var(--ui-palette-neutral-900);
 
-  --ui-folder-interior-background-setlist: color-mix(
-    in srgb,
-    var(--ui-color-folder-primary) 24%,
-    var(--ui-color-paper)
-  );
-  --ui-folder-interior-background-lyrics: color-mix(
-    in srgb,
-    var(--ui-color-folder-secondary) 24%,
-    var(--ui-color-paper)
-  );
-  --ui-folder-interior-background-output: color-mix(
-    in srgb,
-    var(--ui-color-folder-tertiary) 24%,
-    var(--ui-color-paper)
-  );
-  --ui-folder-interior-background-import: color-mix(
-    in srgb,
-    var(--ui-color-folder-neutral) 24%,
-    var(--ui-color-paper)
-  );
   --ui-folder-sheet-background: var(--ui-color-paper);
 }
 

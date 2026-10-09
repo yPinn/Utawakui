@@ -34,6 +34,21 @@ function axisRange(itemLength, containerLength, minimumVisible) {
   };
 }
 
+function normalizedRatio(value) {
+  return clamp(Number.isFinite(value) ? value : 0, 0, 1);
+}
+
+function projectAxis(ratio, minimum, maximum) {
+  return minimum + (maximum - minimum) * normalizedRatio(ratio);
+}
+
+function normalizeAxis(value, minimum, maximum) {
+  if (maximum <= minimum) return 0;
+  return normalizedRatio(
+    (finiteCoordinate(value) - minimum) / (maximum - minimum),
+  );
+}
+
 export function getBoundedSurfaceVisualBounds(itemSize, rotation = 0) {
   const width = finiteNonNegative(itemSize?.width);
   const height = finiteNonNegative(itemSize?.height);
@@ -52,8 +67,7 @@ export function getBoundedSurfaceVisualBounds(itemSize, rotation = 0) {
   };
 }
 
-export function clampBoundedSurfacePosition(
-  position,
+export function getBoundedSurfacePositionBounds(
   itemSize,
   containerSize,
   minimumVisibleSize = DEFAULT_MINIMUM_VISIBLE_SIZE,
@@ -73,15 +87,70 @@ export function clampBoundedSurfacePosition(
     containerHeight,
     minimumVisible,
   );
-  const visualX = finiteCoordinate(position?.x) + visualBounds.offsetX;
-  const visualY = finiteCoordinate(position?.y) + visualBounds.offsetY;
 
   return {
-    x:
-      clamp(visualX, horizontal.minimum, horizontal.maximum) -
-      visualBounds.offsetX,
-    y:
-      clamp(visualY, vertical.minimum, vertical.maximum) - visualBounds.offsetY,
+    minimumX: horizontal.minimum - visualBounds.offsetX,
+    maximumX: horizontal.maximum - visualBounds.offsetX,
+    minimumY: vertical.minimum - visualBounds.offsetY,
+    maximumY: vertical.maximum - visualBounds.offsetY,
+  };
+}
+
+export function projectBoundedSurfacePosition(
+  anchor,
+  itemSize,
+  containerSize,
+  minimumVisibleSize = DEFAULT_MINIMUM_VISIBLE_SIZE,
+  rotation = 0,
+) {
+  const bounds = getBoundedSurfacePositionBounds(
+    itemSize,
+    containerSize,
+    minimumVisibleSize,
+    rotation,
+  );
+  return {
+    x: projectAxis(anchor?.x, bounds.minimumX, bounds.maximumX),
+    y: projectAxis(anchor?.y, bounds.minimumY, bounds.maximumY),
+  };
+}
+
+export function getBoundedSurfaceAnchor(
+  position,
+  itemSize,
+  containerSize,
+  minimumVisibleSize = DEFAULT_MINIMUM_VISIBLE_SIZE,
+  rotation = 0,
+) {
+  const bounds = getBoundedSurfacePositionBounds(
+    itemSize,
+    containerSize,
+    minimumVisibleSize,
+    rotation,
+  );
+  return {
+    x: normalizeAxis(position?.x, bounds.minimumX, bounds.maximumX),
+    y: normalizeAxis(position?.y, bounds.minimumY, bounds.maximumY),
+  };
+}
+
+export function clampBoundedSurfacePosition(
+  position,
+  itemSize,
+  containerSize,
+  minimumVisibleSize = DEFAULT_MINIMUM_VISIBLE_SIZE,
+  rotation = 0,
+) {
+  const bounds = getBoundedSurfacePositionBounds(
+    itemSize,
+    containerSize,
+    minimumVisibleSize,
+    rotation,
+  );
+
+  return {
+    x: clamp(finiteCoordinate(position?.x), bounds.minimumX, bounds.maximumX),
+    y: clamp(finiteCoordinate(position?.y), bounds.minimumY, bounds.maximumY),
   };
 }
 

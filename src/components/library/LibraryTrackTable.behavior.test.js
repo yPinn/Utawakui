@@ -86,6 +86,31 @@ function rowRoles(row) {
 }
 
 describe('LibraryTrackTable canonical grid', () => {
+  it('forms one continuous ledger sheet with functional row rules', () => {
+    const headerRule = source.match(
+      /\.library-track-table__header\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+    const bodyRule = source.match(
+      /\.library-track-table__body\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+    const rowRule = [
+      ...source.matchAll(/^\.library-track-row\s*\{(?<body>[\s\S]*?)\n\}/gmu),
+    ]
+      .map((match) => match.groups?.body ?? '')
+      .find((body) => body.includes('min-height:'));
+
+    expect(headerRule).toMatch(
+      /border-bottom:\s*var\(--ui-border-width\) solid\s*var\(--ui-folder-ledger-rule-strong,\s*var\(--ui-color-border\)\);/u,
+    );
+    expect(bodyRule).toContain('gap: 0;');
+    expect(bodyRule).toContain('padding: 0;');
+    expect(rowRule).toMatch(
+      /border-bottom:\s*var\(--ui-border-width\) solid\s*var\(--ui-folder-ledger-rule,\s*var\(--ui-color-border\)\);/u,
+    );
+    expect(rowRule).toContain('border-radius: 0;');
+    expect(source).not.toContain('background-image:');
+  });
+
   it('uses the same semantic column sequence for header and rows', () => {
     const { app, root } = mountTable();
     const header = findAll(root, (node) =>

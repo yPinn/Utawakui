@@ -84,7 +84,8 @@ describe('Setlist Token v2 surface cutover', () => {
     expect(dossierSource).toContain('var(--ui-font-weight-semibold)');
     expect(headerSource).toContain('var(--ui-motion-duration-fast)');
     expect(headerSource).toContain('var(--ui-motion-easing-standard)');
-    expect(tableSource).toContain('var(--ui-radius-md)');
+    expect(tableSource).toContain('border-radius: 0;');
+    expect(tableSource).toContain('var(--ui-folder-ledger-rule');
     for (const source of [tableSource, studioTableSource]) {
       expect(source).toContain(
         'background: var(--ui-track-row-selected-surface);',

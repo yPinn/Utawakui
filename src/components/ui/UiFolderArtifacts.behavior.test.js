@@ -52,6 +52,40 @@ const artifacts = [
 ];
 
 describe('UiFolderArtifactCanvas', () => {
+  it('can reveal parent Folder material without painting a second sheet', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            UiFolderArtifactCanvas,
+            { artifacts: [artifacts[1]], material: 'folder' },
+            {
+              default: ({ artifact }) =>
+                h(UiFolderArtifact, {
+                  kind: artifact.kind,
+                  title: artifact.label,
+                }),
+            },
+          ),
+      }),
+    );
+
+    expect(html).toContain('ui-folder-artifact-canvas--folder');
+    expect(canvasSource).toContain("['document', 'folder']");
+    expect(canvasSource).toMatch(
+      /\.ui-folder-artifact-canvas--folder\s*\{[^}]*background:\s*transparent;/su,
+    );
+    expect(canvasSource).toMatch(
+      /\.ui-folder-artifact-canvas--folder\s+\.ui-folder-artifact-canvas__sheet\s*\{[^}]*display:\s*none;/su,
+    );
+    expect(canvasSource).toMatch(
+      /\.ui-folder-artifact-canvas--folder\s*\{[^}]*min-height:\s*0;[^}]*block-size:\s*100%;[^}]*overflow:\s*visible;[^}]*pointer-events:\s*none;/su,
+    );
+    expect(canvasSource).toMatch(
+      /\.ui-folder-artifact-canvas__item\s*\{[^}]*pointer-events:\s*auto;/su,
+    );
+  });
+
   it('renders one keyboard-focusable movable group per artifact with shared instructions', async () => {
     const html = await renderToString(
       createSSRApp({
@@ -177,6 +211,12 @@ describe('UiFolderArtifactCanvas', () => {
     );
     expect(canvasSource).toContain('elementSize(clampBounds.value)');
     expect(canvasSource).toContain('resizeObserver.observe(clampBounds.value)');
+    expect(canvasSource).toContain('getFolderArtifactAnchor');
+    expect(canvasSource).toContain('projectFolderArtifactPosition');
+    expect(canvasSource).toContain('const anchors = new Map()');
+    expect(canvasSource).toMatch(
+      /function scheduleReclamp\(\)[\s\S]*?projectFolderArtifactPosition\([\s\S]*?anchor,[\s\S]*?artifactGeometry\(artifact\.id\),[\s\S]*?\)/u,
+    );
     expect(canvasSource).toMatch(
       /clampFolderArtifactPosition\([\s\S]*?props\.minimumVisibleSize,[\s\S]*?artifactRotation\(id\),[\s\S]*?\)/u,
     );
@@ -184,10 +224,22 @@ describe('UiFolderArtifactCanvas', () => {
       /\.ui-folder-artifact-canvas__bounds\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*var\(--ui-folder-artifact-safe-inset\);/su,
     );
     expect(canvasSource).toMatch(
+      /\.ui-folder-artifact-canvas--folder\s+\.ui-folder-artifact-canvas__bounds\s*\{[^}]*inset:\s*0;/su,
+    );
+    expect(canvasSource).toMatch(
       /\.ui-folder-artifact-canvas\s*\{[^}]*overflow:\s*hidden;/su,
     );
     expect(activeTokensSource).toMatch(
       /--ui-folder-artifact-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\+\s*var\(--ui-border-width\)\s*\);/u,
+    );
+    expect(activeTokensSource).toMatch(
+      /--ui-folder-artifact-folder-min-height:\s*calc\([\s\S]*?--ui-folder-artifact-canvas-min-height[\s\S]*?--ui-folder-extension-block-inset[\s\S]*?--ui-folder-extension-block-inset[\s\S]*?\);/u,
+    );
+    expect(canvasSource).toMatch(
+      /\.ui-folder-artifact-canvas--folder\s*\{[^}]*min-height:\s*0;[^}]*block-size:\s*100%;/su,
+    );
+    expect(canvasSource).not.toMatch(
+      /\.ui-folder-artifact-canvas--folder\s*\{[^}]*min-height:\s*var\(--ui-folder-artifact-folder-min-height\);/su,
     );
     expect(canvasSource).toContain('translate3d(');
     expect(canvasSource).toContain('transform-origin: center');
@@ -196,6 +248,8 @@ describe('UiFolderArtifactCanvas', () => {
   });
 
   it('keeps artifacts below fixed chrome and removes lift motion when requested', () => {
+    expect(canvasSource).toContain('function normalizeArtifactStack(frontId)');
+    expect(canvasSource).not.toContain('highestZ += 1');
     expect(canvasSource).toMatch(
       /\.ui-folder-artifact-canvas__item\s*\{[^}]*z-index:\s*var\(--ui-folder-artifact-z\);/su,
     );

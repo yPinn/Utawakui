@@ -1,6 +1,7 @@
 <script setup>
 import { nextTick, useTemplateRef, watch } from 'vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import AppLooseLeafEdge from './AppLooseLeafEdge.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -34,26 +35,52 @@ watch(
     :data-page-mode="props.mode"
     tabindex="-1"
   >
-    <header v-if="$slots.header" class="app-folder-page__header">
-      <slot name="header" />
-    </header>
-
     <UiScrollLayout
       v-if="props.mode === 'document'"
       ref="scrollLayout"
       class="app-folder-page__scroll"
       axis="vertical"
-      viewport-class="app-folder-page__body app-folder-page__body--document"
-      content-style="block-size: 100%; display: flex; flex-direction: column"
+      viewport-class="app-folder-page__viewport"
+      content-class="app-folder-page__document"
       role="region"
       :aria-label="props.bodyLabel"
       tabindex="0"
     >
-      <slot />
+      <div class="app-folder-page__sheet">
+        <AppLooseLeafEdge />
+
+        <header v-if="$slots.header" class="app-folder-page__header">
+          <slot name="header" />
+        </header>
+
+        <div class="app-folder-page__body app-folder-page__body--document">
+          <slot />
+        </div>
+      </div>
+
+      <div
+        v-if="$slots.extension || $slots.floating"
+        class="app-folder-page__extension"
+        :class="{
+          'app-folder-page__extension--floating': $slots.floating,
+        }"
+      >
+        <slot name="extension" />
+      </div>
+
+      <div v-if="$slots.floating" class="app-folder-page__floating">
+        <slot name="floating" />
+      </div>
     </UiScrollLayout>
-    <div v-else class="app-folder-page__body app-folder-page__body--workspace">
-      <slot />
-    </div>
+    <template v-else>
+      <header v-if="$slots.header" class="app-folder-page__header">
+        <slot name="header" />
+      </header>
+
+      <div class="app-folder-page__body app-folder-page__body--workspace">
+        <slot />
+      </div>
+    </template>
   </section>
 </template>
 
@@ -66,12 +93,16 @@ watch(
   grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   border-radius: var(--ui-radius-xs);
-  background: var(--ui-folder-page-background);
+  background: transparent;
   color: var(--ui-color-text);
   outline: none;
 }
 
-.app-folder-page--with-header {
+.app-folder-page[data-page-mode='workspace'] {
+  background: var(--ui-folder-page-background);
+}
+
+.app-folder-page--with-header[data-page-mode='workspace'] {
   grid-template-rows: auto minmax(0, 1fr);
 }
 
@@ -86,6 +117,12 @@ watch(
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
+.app-folder-page__sheet .app-folder-page__header {
+  padding-inline-start: calc(
+    var(--ui-folder-document-inset) + var(--ui-folder-sheet-binding-gutter)
+  );
+}
+
 .app-folder-page__header :deep(.ui-page-header) {
   margin-bottom: 0;
 }
@@ -96,20 +133,76 @@ watch(
 }
 
 .app-folder-page__scroll {
-  --ui-scroll-layout-padding-block-start: var(--ui-folder-document-inset);
   --ui-scroll-layout-padding-block-end: var(
-    --ui-folder-document-block-end-inset
+    --ui-folder-sheet-frame-block-end-gap
   );
-  --ui-scroll-layout-padding-inline-start: var(--ui-folder-document-inset);
-  --ui-scroll-layout-padding-inline-end: var(--ui-folder-document-inset);
+  --ui-scroll-layout-padding-inline-end: var(--ui-folder-sheet-scrollbar-gap);
 
   min-height: 0;
   height: 100%;
 }
 
+:deep(.app-folder-page__document) {
+  position: relative;
+  block-size: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: max-content max-content;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.app-folder-page__sheet {
+  position: relative;
+  z-index: 0;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  inline-size: 100%;
+  max-inline-size: var(--ui-folder-sheet-max-inline-size);
+  min-block-size: max(100%, var(--ui-folder-sheet-min-block-size));
+  overflow: hidden;
+  border-radius: var(--ui-radius-xs);
+  background: var(--ui-folder-page-background);
+  color: var(--ui-color-text);
+}
+
+.app-folder-page__extension {
+  position: relative;
+  grid-column: 1;
+  grid-row: 2;
+  z-index: 0;
+  min-width: 0;
+  overflow: visible;
+}
+
+.app-folder-page__extension--floating {
+  min-block-size: var(--ui-folder-artifact-folder-min-height);
+}
+
+.app-folder-page__floating {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / 3;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
 .app-folder-page__body {
   box-sizing: border-box;
   min-width: 0;
+}
+
+.app-folder-page__body--document {
+  padding-block-start: var(--ui-folder-document-inset);
+  padding-block-end: var(--ui-folder-document-block-end-inset);
+  padding-inline-start: calc(
+    var(--ui-folder-document-inset) + var(--ui-folder-sheet-binding-gutter)
+  );
+  padding-inline-end: var(--ui-folder-document-inset);
 }
 
 .app-folder-page__body--workspace {
@@ -124,6 +217,10 @@ watch(
     --ui-folder-document-inset: var(--ui-space-4);
     --ui-folder-document-block-end-inset: var(--ui-space-5);
     --ui-folder-section-gap: var(--ui-space-3);
+    --ui-folder-sheet-frame-block-end-gap: var(--ui-space-3);
+    --ui-folder-sheet-binding-gutter: var(--ui-space-5);
+    --ui-folder-sheet-hole-size: var(--ui-space-2);
+    --ui-folder-sheet-hole-edge-inset: var(--ui-space-2);
   }
 
   .app-folder-page__header :deep(.ui-page-header__row) {

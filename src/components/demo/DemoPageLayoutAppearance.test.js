@@ -53,13 +53,20 @@ describe('DemoPageLayoutAppearance', () => {
     );
   });
 
-  it('keeps the layout evidence without engineering annotations or decorative artifacts', async () => {
+  it('keeps the layout evidence concise while reusing one Folder summary artifact', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(source).not.toContain('UiFolderArtifact');
+    expect(source).toContain(
+      "import UiFolderArtifact from '../ui/UiFolderArtifact.vue'",
+    );
+    expect(source).toContain(
+      "import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue'",
+    );
     expect(source).not.toContain('folderArtifactStack');
-    expect(source).not.toContain('artifactDefinitions');
-    expect(html).not.toContain('可移動參考物件');
+    expect(source).toContain('const demoFolderArtifacts = [');
+    expect(html).toContain('aria-label="Folder 延伸摘要"');
+    expect(html).toContain('藝人曲庫摘要');
+    expect(html).toContain('38 首曲目 · 4 張專輯 · 2018–2024');
     expect(html).not.toContain('重設物件位置');
     expect(source).toContain('工作集摘要');
     expect(html).toContain('Folder 外觀色屬於元件，內容保持中性。');
@@ -70,6 +77,20 @@ describe('DemoPageLayoutAppearance', () => {
     expect(html).not.toContain('AppArchiveFrame');
     expect(html).not.toContain('UiPageHeader');
     expect(html).not.toContain('Feature content');
+  });
+
+  it('moves the artist summary onto the Folder-wide floating plane without duplicating it', () => {
+    expect(source).not.toContain(':summary="demoArtistSummary"');
+    expect(source).toContain(
+      '<template v-if="activeFolder.id === \'setlist\'" #floating>',
+    );
+    expect(source).toContain('<UiFolderArtifactCanvas');
+    expect(source).toContain('material="folder"');
+    expect(source).toContain('<UiFolderArtifact');
+    expect(source.indexOf('#floating')).toBeGreaterThan(
+      source.indexOf('<SetlistAlbumSupportingContent'),
+    );
+    expect(source).not.toContain('#extension');
   });
 
   it('removes migration status from the visible layout preview', async () => {
@@ -122,13 +143,15 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source.match(/contentMode === 'overflow'/gu)).toHaveLength(3);
   });
 
-  it('uses one bounded document scroll owner and content-driven section collapse', () => {
+  it('uses one bounded paper sheet inside the Folder scroll owner', () => {
     expect(folderPageSource).toMatch(
-      /\.app-folder-page--with-header\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);/su,
+      /\.app-folder-page--with-header\[data-page-mode='workspace'\]\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);/su,
     );
     expect(folderPageSource).toMatch(
       /\.app-folder-page__scroll\s*\{[^}]*min-height:\s*0;[^}]*height:\s*100%;/su,
     );
+    expect(folderPageSource).toContain('<div class="app-folder-page__sheet">');
+    expect(folderPageSource).toContain('<AppLooseLeafEdge />');
     expect(folderLayoutSource).toContain('container-type: inline-size');
     expect(folderLayoutSource).toContain('container-name: app-folder-layout');
     expect(source).toContain('<AppFolderPage');

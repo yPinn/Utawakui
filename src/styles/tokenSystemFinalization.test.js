@@ -33,14 +33,30 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(439);
+    expect(names.size).toBe(446);
     expect(names).toContain('--ui-folder-content-background');
     expect(names).toContain('--ui-folder-content-state-min-block-size');
-    expect(names).toContain('--ui-folder-interior-background-setlist');
-    expect(names).toContain('--ui-folder-interior-background-lyrics');
-    expect(names).toContain('--ui-folder-interior-background-output');
-    expect(names).toContain('--ui-folder-interior-background-import');
     expect(names).toContain('--ui-folder-sheet-background');
+    expect(names).toContain('--ui-folder-sheet-frame-block-end-gap');
+    expect(names).toContain('--ui-folder-sheet-binding-gutter');
+    expect(names).toContain('--ui-folder-sheet-hole-size');
+    expect(names).toContain('--ui-folder-sheet-hole-edge-inset');
+    expect(names).toContain('--ui-folder-sheet-hole-rail-block-size');
+    expect(names).toContain('--ui-folder-sheet-binding-field-max-block-size');
+    expect(names).not.toContain('--ui-folder-sheet-hole-rail-offset');
+    expect(names).toContain('--ui-folder-sheet-scrollbar-gap');
+    expect(names).toContain('--ui-folder-sheet-min-block-size');
+    expect(names).toContain('--ui-folder-sheet-max-inline-size');
+    expect(names).toContain('--ui-folder-extension-block-inset');
+    expect(names).toContain('--ui-folder-artifact-folder-min-height');
+    expect([...names]).not.toEqual(
+      expect.arrayContaining([
+        '--ui-folder-interior-background-setlist',
+        '--ui-folder-interior-background-lyrics',
+        '--ui-folder-interior-background-output',
+        '--ui-folder-interior-background-import',
+      ]),
+    );
     for (const role of ['primary', 'secondary', 'tertiary', 'neutral']) {
       expect(names).toContain(`--ui-color-folder-${role}-foreground`);
     }

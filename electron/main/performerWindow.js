@@ -26,7 +26,7 @@ function createPerformerWindowManager(options) {
     preloadPath,
     getDisplayWorkArea = () => null,
     getPersistedBounds = () => null,
-    getUiTheme = () => 'dark',
+    getUiTheme = () => 'light',
     persistBounds = () => {},
     onBoundsPersistenceError = () => {},
     publishStatus = () => {},
@@ -133,7 +133,7 @@ function createPerformerWindowManager(options) {
   }
 
   function createWindow() {
-    const initialTheme = getUiTheme() === 'light' ? 'light' : 'dark';
+    const initialTheme = getUiTheme() === 'dark' ? 'dark' : 'light';
     const persistedBounds =
       normalizePerformerWindowBounds(getPersistedBounds());
     if (!lastPersistedBounds && persistedBounds) {
@@ -180,7 +180,7 @@ function createPerformerWindowManager(options) {
     });
     window.webContents.on('did-finish-load', () => {
       sendLatestSnapshot();
-      applyUiTheme(getUiTheme() === 'light' ? 'light' : 'dark');
+      applyUiTheme(getUiTheme() === 'dark' ? 'dark' : 'light');
       emitStatus();
     });
     hardenWebContentsNavigation(window.webContents, {

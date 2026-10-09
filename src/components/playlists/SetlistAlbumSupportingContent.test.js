@@ -10,7 +10,7 @@ const source = readFileSync(
 );
 
 describe('SetlistAlbumSupportingContent', () => {
-  it('renders local related albums before the artist library summary', async () => {
+  it('renders local related albums as paper supporting content', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
@@ -25,66 +25,28 @@ describe('SetlistAlbumSupportingContent', () => {
                 releaseYear: 2018,
               },
             ],
-            summary: {
-              albumCount: 2,
-              trackCount: 18,
-              yearStart: 2018,
-              yearEnd: 2024,
-            },
           }),
       }),
     );
 
     expect(html).toContain('更多來自 王以太 的內容');
     expect(html).toContain('aria-label="開啟專輯：演說家"');
-    expect(html).toContain('藝人曲庫摘要');
-    expect(html.indexOf('更多來自 王以太 的內容')).toBeLessThan(
-      html.indexOf('藝人曲庫摘要'),
-    );
-    expect(html).toContain('18 首曲目');
-    expect(html).toContain('2 張專輯');
-    expect(html).toContain('2018–2024');
+    expect(html).not.toContain('藝人曲庫摘要');
   });
 
-  it('keeps the local artist summary when no related album is available', async () => {
+  it('renders no placeholder when no related album is available', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
           h(SetlistAlbumSupportingContent, {
             artist: '王以太',
             relatedAlbums: [],
-            summary: {
-              trackCount: 1,
-              albumCount: 1,
-              yearStart: 2024,
-              yearEnd: 2024,
-            },
           }),
       }),
     );
 
     expect(html).not.toContain('更多來自 王以太 的內容');
-    expect(html).toContain('藝人曲庫摘要');
-    expect(html).toContain('1 首曲目');
-    expect(html).toContain('1 張專輯');
-  });
-
-  it('offers the artist page from the album summary only when asked', async () => {
-    const render = (canOpenArtist) =>
-      renderToString(
-        createSSRApp({
-          render: () =>
-            h(SetlistAlbumSupportingContent, {
-              artist: '王以太',
-              summary: { trackCount: 1, albumCount: 1 },
-              canOpenArtist,
-            }),
-        }),
-      );
-
-    expect(await render(true)).toContain('aria-label="查看藝人：王以太"');
-    expect(await render(false)).not.toContain('查看藝人');
-    expect(source).toContain("emit('selectArtist')");
+    expect(html).not.toContain('藝人曲庫摘要');
   });
 
   it('reuses the album grid on artist pages under its own heading', async () => {
@@ -147,5 +109,8 @@ describe('SetlistAlbumSupportingContent', () => {
     expect(source).toContain(':playing="album.id === playingAlbumId"');
     expect(source).toContain('@play="emit(\'playAlbum\', $event)"');
     expect(source).not.toContain('RELATED_ALBUM_COVER_SIZE');
+    expect(source).not.toContain('summary');
+    expect(source).not.toContain('UiButton');
+    expect(source).not.toContain("emit('selectArtist')");
   });
 });

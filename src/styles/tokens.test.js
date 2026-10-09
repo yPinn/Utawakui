@@ -202,7 +202,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(css).toMatch(/\.metadata-rail\s*\{[^}]*border-left:/s);
   });
 
-  it('keeps Ink-framed Paper regional and gives every Folder a tinted interior', () => {
+  it('keeps Ink-framed Paper regional and gives every Folder one paper interior', () => {
     for (const token of [
       '--ui-color-chrome-surface',
       '--ui-color-chrome-surface-raised',
@@ -219,21 +219,27 @@ describe('Studio Library workspace prototype isolation', () => {
       '--ui-color-folder-secondary-foreground',
       '--ui-color-folder-tertiary-foreground',
       '--ui-color-folder-neutral-foreground',
-      '--ui-folder-interior-background-setlist',
-      '--ui-folder-interior-background-lyrics',
-      '--ui-folder-interior-background-output',
-      '--ui-folder-interior-background-import',
       '--ui-folder-sheet-background',
+      '--ui-folder-sheet-frame-block-end-gap',
+      '--ui-folder-sheet-binding-gutter',
+      '--ui-folder-sheet-hole-size',
+      '--ui-folder-sheet-hole-edge-inset',
+      '--ui-folder-sheet-hole-rail-block-size',
+      '--ui-folder-sheet-binding-field-max-block-size',
+      '--ui-folder-sheet-scrollbar-gap',
+      '--ui-folder-sheet-min-block-size',
+      '--ui-folder-sheet-max-inline-size',
+      '--ui-folder-extension-block-inset',
     ]) {
       expect(tokens).toContain(`${token}:`);
     }
 
+    expect(tokens).not.toContain('--ui-folder-sheet-hole-rail-offset:');
+
     expect(tokens).toMatch(
       /:root\[data-ui-theme='light'\][\s\S]*?--ui-color-chrome-surface:\s*var\(--ui-palette-neutral-900\);/u,
     );
-    expect(tokens).toMatch(
-      /:root\[data-ui-theme='light'\][\s\S]*?--ui-folder-interior-background-setlist:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-folder-primary\) 24%,\s*var\(--ui-color-paper\)\s*\);/u,
-    );
+    expect(tokens).not.toContain('--ui-folder-interior-background');
     expect(tokens).toMatch(
       /:root\[data-ui-theme='light'\][\s\S]*?--ui-folder-sheet-background:\s*var\(--ui-color-paper\);/u,
     );
@@ -294,9 +300,10 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(439);
+    expect(uniqueNames.size).toBe(446);
     expect(uniqueNames).toContain('--ui-folder-content-background');
     expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
+    expect(uniqueNames).toContain('--ui-folder-artifact-folder-min-height');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-background');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-padding');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-radius');

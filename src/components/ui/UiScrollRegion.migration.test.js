@@ -108,10 +108,13 @@ describe('UiScrollRegion production migration', () => {
     const utilitySource = readSource('../layout/AppUtilityPage.vue');
 
     expect(folderPageSource).toMatch(
-      /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
+      /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-end:/su,
     );
     expect(folderPageSource).not.toMatch(
       /\.app-folder-page__body\s*\{[^}]*padding(?:-|:)/su,
+    );
+    expect(folderPageSource).toMatch(
+      /\.app-folder-page__body--document\s*\{[^}]*padding-block-start:/su,
     );
     expect(sidebarSource).toMatch(
       /\.playlist-sidebar__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,

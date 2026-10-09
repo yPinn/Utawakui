@@ -261,7 +261,7 @@ describe('main preload bridge', () => {
       '--capture-device-id=',
     ]);
     expect(defaults).toMatchObject({
-      initialUiTheme: 'dark',
+      initialUiTheme: 'light',
       initialUiDensity: 'compact',
       initialSidebarWidth: 256,
       initialCaptureDeviceId: null,
@@ -1002,7 +1002,7 @@ describe('performer preload bridge', () => {
       'UtawakuiPerformer',
       ['--ui-theme=blue'],
     );
-    expect(bridge.initialUiTheme).toBe('dark');
+    expect(bridge.initialUiTheme).toBe('light');
 
     const callback = vi.fn();
     const cleanup = bridge.onSnapshot(callback);

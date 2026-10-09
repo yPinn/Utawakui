@@ -48,7 +48,7 @@ const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
   featureConfirmations: {},
-  uiTheme: 'dark',
+  uiTheme: 'light',
   performerReadingScale: 'desk',
   performerWindowBounds: null,
   sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width

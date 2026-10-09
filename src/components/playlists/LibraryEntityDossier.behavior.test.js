@@ -28,6 +28,19 @@ async function renderDossier(overrides = {}) {
 }
 
 describe('LibraryEntityDossier', () => {
+  it('is a header region on the continuous Folder paper', () => {
+    const sheetRule = source.match(
+      /\.library-entity-dossier__sheet\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+
+    expect(sheetRule).toContain(
+      'background: var(--ui-folder-dossier-background, transparent);',
+    );
+    expect(sheetRule).toContain('border: 0;');
+    expect(sheetRule).toContain('border-radius: 0;');
+    expect(sheetRule).not.toContain('box-shadow');
+  });
+
   it('keeps marker, title, relation, meta, and description in one identity column', async () => {
     const html = await renderDossier();
     const contentStart = html.indexOf('library-entity-dossier__content');

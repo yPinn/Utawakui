@@ -353,7 +353,8 @@ function sortLabel(key, label) {
   min-height: var(--ui-list-header-height);
   padding-inline: var(--ui-track-row-padding-inline);
   color: var(--ui-color-text-muted);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+  border-bottom: var(--ui-border-width) solid
+    var(--ui-folder-ledger-rule-strong, var(--ui-color-border));
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
@@ -399,9 +400,9 @@ function sortLabel(key, label) {
 .library-track-table__body {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-track-list-gap);
+  gap: 0;
   margin: 0;
-  padding: var(--ui-space-1) 0 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -410,7 +411,9 @@ function sortLabel(key, label) {
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   color: var(--ui-color-text);
-  border-radius: var(--ui-radius-md);
+  border-bottom: var(--ui-border-width) solid
+    var(--ui-folder-ledger-rule, var(--ui-color-border));
+  border-radius: 0;
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-label);
 }

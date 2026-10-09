@@ -170,6 +170,16 @@ describe('windowState security boundary', () => {
     );
   });
 
+  it('defaults an unconfigured main window to the light first-paint theme', async () => {
+    const { module, windowDouble } = await loadWindowState();
+
+    module.createMainWindow();
+
+    expect(windowDouble.options.webPreferences.additionalArguments).toContain(
+      '--ui-theme=light',
+    );
+  });
+
   it('projects compact for windowed mode and standard for maximized or full-screen mode', async () => {
     const { module, windowDouble } = await loadWindowState();
     module.createMainWindow();

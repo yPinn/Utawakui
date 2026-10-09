@@ -111,9 +111,9 @@ const MARKER_BY_KIND = Object.freeze({
 .library-entity-dossier__sheet {
   min-width: 0;
   overflow: hidden;
-  background: var(--ui-color-surface-raised);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
+  background: var(--ui-folder-dossier-background, transparent);
+  border: 0;
+  border-radius: 0;
 }
 
 .library-entity-dossier__marker {

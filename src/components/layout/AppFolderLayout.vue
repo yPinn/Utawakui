@@ -93,8 +93,30 @@ function navigate(destinationId, event) {
 <style scoped>
 .app-folder-layout {
   --ui-folder-layout-background: var(--ui-color-folder-primary);
-  --ui-folder-page-background: var(--ui-folder-interior-background-setlist);
-  --ui-folder-content-background: var(--ui-folder-sheet-background);
+  --ui-folder-page-background: var(--ui-folder-sheet-background);
+  --ui-folder-dossier-background: transparent;
+  --ui-folder-ledger-background: transparent;
+  --ui-folder-sheet-margin-rule: color-mix(
+    in srgb,
+    var(--ui-folder-layout-background) 22%,
+    var(--ui-color-border)
+  );
+  --ui-folder-sheet-hole-rim: color-mix(
+    in srgb,
+    var(--ui-color-text) 22%,
+    transparent
+  );
+  --ui-folder-ledger-rule: color-mix(
+    in srgb,
+    var(--ui-folder-layout-background) 12%,
+    var(--ui-color-border)
+  );
+  --ui-folder-ledger-rule-strong: color-mix(
+    in srgb,
+    var(--ui-folder-layout-background) 28%,
+    var(--ui-color-border-strong)
+  );
+  --ui-folder-content-background: transparent;
 
   min-width: 0;
   min-height: 0;
@@ -109,17 +131,14 @@ function navigate(destinationId, event) {
 
 .app-folder-layout[data-active-destination='lyrics'] {
   --ui-folder-layout-background: var(--ui-color-folder-secondary);
-  --ui-folder-page-background: var(--ui-folder-interior-background-lyrics);
 }
 
 .app-folder-layout[data-active-destination='output'] {
   --ui-folder-layout-background: var(--ui-color-folder-tertiary);
-  --ui-folder-page-background: var(--ui-folder-interior-background-output);
 }
 
 .app-folder-layout[data-active-destination='import'] {
   --ui-folder-layout-background: var(--ui-color-folder-neutral);
-  --ui-folder-page-background: var(--ui-folder-interior-background-import);
 }
 
 .app-folder-layout__shape-definition {

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   clampFolderArtifactPosition,
+  getFolderArtifactAnchor,
+  getFolderArtifactPositionBounds,
   getFolderArtifactVisualBounds,
   moveFolderArtifactFromKeyboard,
+  projectFolderArtifactPosition,
 } from './folderArtifactGeometry.js';
 
 describe('folder artifact geometry', () => {
@@ -98,6 +101,73 @@ describe('folder artifact geometry', () => {
         Number.NaN,
       ),
     ).toEqual({ x: 0, y: 0 });
+  });
+
+  it('projects normalized anchors through the rotation-aware legal range', () => {
+    const geometry = {
+      itemSize: { width: 240, height: 160 },
+      canvasSize: { width: 800, height: 420 },
+      minimumVisibleSize: 48,
+      rotation: 30,
+    };
+
+    const bounds = getFolderArtifactPositionBounds(geometry);
+    expect(bounds.minimumX).toBeCloseTo(23.923, 4);
+    expect(bounds.maximumX).toBeCloseTo(536.07695, 4);
+    expect(bounds.minimumY).toBeCloseTo(49.282, 4);
+    expect(bounds.maximumY).toBeCloseTo(210.71797, 4);
+
+    const position = projectFolderArtifactPosition(
+      { x: 0.25, y: 0.75 },
+      geometry,
+    );
+    const projectedAnchor = getFolderArtifactAnchor(position, geometry);
+    expect(projectedAnchor.x).toBeCloseTo(0.25);
+    expect(projectedAnchor.y).toBeCloseTo(0.75);
+  });
+
+  it('reprojects the same relative anchor when the Folder boundary resizes', () => {
+    const itemSize = { width: 240, height: 160 };
+    const compact = {
+      itemSize,
+      canvasSize: { width: 800, height: 420 },
+    };
+    const expanded = {
+      itemSize,
+      canvasSize: { width: 1120, height: 600 },
+    };
+    const anchor = { x: 0.75, y: 0.25 };
+
+    expect(projectFolderArtifactPosition(anchor, compact)).toEqual({
+      x: 420,
+      y: 65,
+    });
+    expect(projectFolderArtifactPosition(anchor, expanded)).toEqual({
+      x: 660,
+      y: 110,
+    });
+  });
+
+  it('normalizes anchors across an oversized artifact range', () => {
+    const geometry = {
+      itemSize: { width: 500, height: 540 },
+      canvasSize: { width: 320, height: 300 },
+      minimumVisibleSize: 48,
+    };
+
+    expect(projectFolderArtifactPosition({ x: 0, y: 1 }, geometry)).toEqual({
+      x: -452,
+      y: 252,
+    });
+    const midpoint = projectFolderArtifactPosition(
+      { x: 0.5, y: 0.5 },
+      geometry,
+    );
+    expect(midpoint).toEqual({ x: -90, y: -120 });
+    expect(getFolderArtifactAnchor(midpoint, geometry)).toEqual({
+      x: 0.5,
+      y: 0.5,
+    });
   });
 
   it('moves by the normal or accelerated keyboard step and clamps the result', () => {
