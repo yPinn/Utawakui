@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue';
 import {
-  CircleAlert,
   Clock,
   ICON_SIZE,
   MicVocal,
@@ -22,7 +21,7 @@ import UiRangeControl from '../ui/range/UiRangeControl.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 
-const props = defineProps({
+defineProps({
   open: { type: Boolean, default: false },
   activeTab: {
     type: String,
@@ -65,15 +64,12 @@ const {
 
 const tabItems = [
   { id: 'adjust', label: '調整' },
-  { id: 'live', label: '演出' },
-  { id: 'process', label: '處理' },
+  { id: 'live', label: '節拍器' },
+  { id: 'process', label: '伴奏' },
 ];
 
-const metronomeSummary = computed(
-  () => `${metronome.bpm} BPM / ${metronome.beatsPerBar}/4`,
-);
 const tapStatusLabel = computed(() =>
-  metronome.tapCount > 0 ? `已點擊 ${metronome.tapCount} 次` : '依節奏點擊',
+  metronome.tapCount > 0 ? `已點擊 ${metronome.tapCount} 次` : '',
 );
 function formatConfidence(value) {
   return Number.isFinite(value) ? `${Math.round(value * 100)}%` : '—';
@@ -83,13 +79,6 @@ const trackTempoHint = computed(() =>
     ? `已套用曲目估算 BPM · 節拍信心 ${formatConfidence(metronome.bpmSourceConfidence)}`
     : '',
 );
-const panelStatus = computed(() => {
-  if (props.activeTab === 'adjust') {
-    return 'Transpose / Pitch / Speed / Guide Vocal';
-  }
-  if (props.activeTab === 'process') return '音訊處理流程';
-  return metronomeSummary.value;
-});
 function setActiveTab(key) {
   emit('update:activeTab', key);
 }
@@ -104,7 +93,6 @@ function handleSeparationPresetChange(presetId) {
   <PlayerBarPanel
     :open="open"
     title="演出工具"
-    :status="panelStatus"
     aria-label="演出工具"
     close-label="關閉演出工具"
     @close="emit('close')"
@@ -128,15 +116,12 @@ function handleSeparationPresetChange(presetId) {
       aria-labelledby="player-tools-live-tab"
       tabindex="0"
     >
-      <div class="player-tools__meter-card">
+      <div class="player-tools__card">
         <div class="player-tools__row-header">
           <span class="player-tools__label">
             <Clock :size="ICON_SIZE" aria-hidden="true" />
             節拍器
           </span>
-          <UiChip :tone="metronome.isRunning ? 'accent' : 'muted'">
-            {{ metronome.isRunning ? 'On' : 'Off' }}
-          </UiChip>
           <UiButton
             :icon="metronome.soundEnabled ? Volume2 : VolumeX"
             :active="metronome.soundEnabled"
@@ -212,7 +197,7 @@ function handleSeparationPresetChange(presetId) {
             </div>
           </div>
           <div class="player-tools__stepper">
-            <span class="player-tools__stepper-label">Beat</span>
+            <span class="player-tools__stepper-label">拍數</span>
             <div class="player-tools__stepper-controls">
               <UiButton
                 :icon="Minus"
@@ -237,8 +222,10 @@ function handleSeparationPresetChange(presetId) {
 
         <div class="player-tools__tap-row">
           <div class="player-tools__row-header">
-            <span class="player-tools__label">Tap Tempo</span>
-            <span class="player-tools__value">{{ tapStatusLabel }}</span>
+            <span class="player-tools__label">點擊測速</span>
+            <span v-if="tapStatusLabel" class="player-tools__value">{{
+              tapStatusLabel
+            }}</span>
             <UiButton
               :icon="RotateCcw"
               :disabled="metronome.tapCount === 0"
@@ -250,10 +237,9 @@ function handleSeparationPresetChange(presetId) {
           <UiButton
             variant="accent"
             class="player-tools__tap-button"
-            title="跟著節奏點擊"
             @click="tapTempo()"
           >
-            Tap
+            點擊
           </UiButton>
           <p class="player-tools__description">跟著節奏連續點擊 2 次以上</p>
         </div>
@@ -268,62 +254,63 @@ function handleSeparationPresetChange(presetId) {
       aria-labelledby="player-tools-adjust-tab"
       tabindex="0"
     >
-      <div
-        v-for="row in pitchTempoRows"
-        :key="row.key"
-        class="player-tools__adjust-row"
-      >
-        <div class="player-tools__row-header">
-          <span class="player-tools__label">{{ row.label }}</span>
-          <span class="player-tools__value"
-            >{{ row.value
-            }}<span
-              v-if="row.secondaryValue"
-              class="player-tools__value-secondary"
-              >{{ row.secondaryValue }}</span
-            ></span
-          >
-          <UiButton
-            :icon="RotateCcw"
-            :disabled="row.resetDisabled"
-            :aria-label="row.resetTitle"
-            :title="row.resetTitle"
-            @click="row.onReset"
-          />
-        </div>
-        <div class="player-tools__control">
-          <UiButton
-            :icon="Minus"
-            :disabled="row.minusDisabled"
-            :aria-label="row.minusLabel"
-            :title="row.minusTitle"
-            @click="row.onMinus"
-          />
-          <UiRangeControl
-            class="player-tools__range"
-            :model-value="row.sliderValue"
-            :default-value="row.defaultValue"
-            :min="row.min"
-            :max="row.max"
-            :step="row.step"
-            :disabled="!hasTrack"
-            :value-text="row.value"
-            :format-value="row.formatSliderValue"
-            :aria-label="row.sliderLabel"
-            @update:model-value="row.onSliderInput"
-          />
-          <UiButton
-            :icon="Plus"
-            :disabled="row.plusDisabled"
-            :aria-label="row.plusLabel"
-            :title="row.plusTitle"
-            @click="row.onPlus"
-          />
+      <div class="player-tools__card">
+        <div
+          v-for="row in pitchTempoRows"
+          :key="row.key"
+          class="player-tools__adjust-row"
+        >
+          <div class="player-tools__row-header">
+            <span class="player-tools__label">{{ row.label }}</span>
+            <span class="player-tools__value"
+              >{{ row.value
+              }}<span
+                v-if="row.secondaryValue"
+                class="player-tools__value-secondary"
+                >{{ row.secondaryValue }}</span
+              ></span
+            >
+            <UiButton
+              :icon="RotateCcw"
+              :disabled="row.resetDisabled"
+              :aria-label="row.resetTitle"
+              :title="row.resetTitle"
+              @click="row.onReset"
+            />
+          </div>
+          <div class="player-tools__control">
+            <UiButton
+              :icon="Minus"
+              :disabled="row.minusDisabled"
+              :aria-label="row.minusLabel"
+              :title="row.minusTitle"
+              @click="row.onMinus"
+            />
+            <UiRangeControl
+              class="player-tools__range"
+              :model-value="row.sliderValue"
+              :default-value="row.defaultValue"
+              :min="row.min"
+              :max="row.max"
+              :step="row.step"
+              :disabled="!hasTrack"
+              :value-text="row.value"
+              :format-value="row.formatSliderValue"
+              :aria-label="row.sliderLabel"
+              @update:model-value="row.onSliderInput"
+            />
+            <UiButton
+              :icon="Plus"
+              :disabled="row.plusDisabled"
+              :aria-label="row.plusLabel"
+              :title="row.plusTitle"
+              @click="row.onPlus"
+            />
+          </div>
         </div>
       </div>
 
-      <template v-if="guideVocalVisible">
-        <hr class="player-tools__section-divider" />
+      <div v-if="guideVocalVisible" class="player-tools__card">
         <div
           v-for="row in guideVocalRows"
           :key="row.key"
@@ -389,7 +376,7 @@ function handleSeparationPresetChange(presetId) {
             />
           </div>
         </div>
-      </template>
+      </div>
     </section>
 
     <section
@@ -400,7 +387,7 @@ function handleSeparationPresetChange(presetId) {
       aria-labelledby="player-tools-process-tab"
       tabindex="0"
     >
-      <div class="player-tools__process-item player-tools__process-card">
+      <div class="player-tools__card player-tools__process-card">
         <div class="player-tools__row-header">
           <span class="player-tools__label">
             <MicVocal :size="ICON_SIZE" aria-hidden="true" />
@@ -427,19 +414,6 @@ function handleSeparationPresetChange(presetId) {
           @generate="emit('generateSeparation')"
         />
       </div>
-
-      <div
-        class="player-tools__process-item player-tools__process-row player-tools__process-row--disabled"
-      >
-        <div class="player-tools__process-copy">
-          <span class="player-tools__label">
-            <CircleAlert :size="ICON_SIZE" aria-hidden="true" />
-            Render Cache
-          </span>
-          <span class="player-tools__description">Pitch / Tempo 預先算製</span>
-        </div>
-        <UiChip tone="muted">待實作</UiChip>
-      </div>
     </section>
   </PlayerBarPanel>
 </template>
@@ -448,6 +422,11 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__tabs {
   width: 100%;
   margin-bottom: var(--ui-space-3);
+}
+
+.player-tools__tabs.ui-tabs--panel {
+  border-color: transparent;
+  background: var(--ui-color-surface-raised);
 }
 
 .visually-hidden {
@@ -468,21 +447,17 @@ function handleSeparationPresetChange(presetId) {
   gap: var(--ui-space-3);
 }
 
-.player-tools__meter-card {
+/* Same raised-section grammar as the right dock metadata sections. */
+.player-tools__card {
   padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-}
-
-.player-tools__row-header,
-.player-tools__process-row {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface-raised);
 }
 
 .player-tools__row-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
   margin-bottom: var(--ui-space-2);
 }
 
@@ -496,19 +471,6 @@ function handleSeparationPresetChange(presetId) {
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
-}
-
-/* Separates the adjust tab's two distinct row categories (guide-vocal
-   blend vs. pitch/tempo) without a fourth tab (a tab just for 1-2 rows
-   would cost more clicks than it buys clarity for a performer adjusting
-   mid-song) or a text caption (the row content underneath is already
-   self-explanatory — a label here would just repeat what the icons and
-   row labels already say). Same border-token/spacing-token divider
-   pattern as PlaylistSidebar.vue's .playlist-sidebar__divider. */
-.player-tools__section-divider {
-  margin: var(--ui-space-3) 0;
-  border: none;
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .player-tools__metro-toggle {
@@ -679,13 +641,6 @@ function handleSeparationPresetChange(presetId) {
   justify-content: center;
 }
 
-.player-tools__process-item {
-  padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-}
-
 .player-tools__process-card {
   display: grid;
   gap: var(--ui-space-1);
@@ -695,24 +650,8 @@ function handleSeparationPresetChange(presetId) {
   margin-top: var(--ui-space-2);
 }
 
-.player-tools__process-row {
-  justify-content: space-between;
-}
-
 .player-tools__process-card .player-tools__row-header {
   margin-bottom: 0;
-}
-
-.player-tools__process-copy {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.player-tools__process-row--disabled {
-  opacity: var(--ui-opacity-muted);
-  background: transparent;
 }
 
 .player-tools__process-track {

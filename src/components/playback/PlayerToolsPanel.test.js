@@ -59,16 +59,12 @@ describe('PlayerToolsPanel process tab', () => {
     expect(componentSource).not.toMatch(/flex:\s*1\s+1\s+calc\(/s);
   });
 
-  it('uses the same framed process-item foundation for active and future operations', () => {
-    expect(componentSource.match(/player-tools__process-item/g)).toHaveLength(
-      3,
-    );
+  it('uses the right dock raised-section grammar for every tool card', () => {
+    expect(componentSource.match(/class="player-tools__card/g)).toHaveLength(4);
     expect(componentSource).toMatch(
-      /\.player-tools__process-item\s*\{[^}]*padding:\s*var\(--ui-space-3\)[^}]*border:\s*var\(--ui-border-width\)\s+solid\s+var\(--ui-color-border\)/s,
+      /\.player-tools__card\s*\{[^}]*padding:\s*var\(--ui-space-3\)[^}]*border-radius:\s*var\(--ui-radius-lg\)[^}]*background:\s*var\(--ui-color-surface-raised\)/s,
     );
-    expect(componentSource).toMatch(
-      /\.player-tools__process-copy\s*\{[^}]*display:\s*grid[^}]*gap:\s*var\(--ui-space-1\)/s,
-    );
+    expect(componentSource).not.toContain('player-tools__section-divider');
   });
 
   it('renders vocal separation controls for the current track', async () => {
@@ -113,11 +109,11 @@ describe('PlayerToolsPanel process tab', () => {
     expect(html).not.toContain('aria-label="產生伴奏"');
   });
 
-  it('keeps render cache clearly marked as not implemented', async () => {
+  it('does not surface unimplemented render cache placeholders', async () => {
     const html = await renderPanel();
 
     expect(html).toContain('請先載入歌曲');
-    expect(html).toContain('Render Cache');
-    expect(html).toContain('待實作');
+    expect(html).not.toContain('Render Cache');
+    expect(html).not.toContain('待實作');
   });
 });

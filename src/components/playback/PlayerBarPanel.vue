@@ -33,7 +33,11 @@ const emit = defineEmits(['close']);
       />
     </header>
 
-    <UiScrollRegion class="player-bar-panel__body" axis="both">
+    <UiScrollRegion
+      class="player-bar-panel__body"
+      viewport-class="player-bar-panel__viewport"
+      axis="both"
+    >
       <slot />
     </UiScrollRegion>
   </aside>
@@ -71,7 +75,8 @@ const emit = defineEmits(['close']);
   min-height: 0;
 }
 
-.player-bar-panel__body :deep(.ui-scroll-region__viewport) {
+/* Scoped to this panel's own viewport; nested scroll regions keep their padding. */
+.player-bar-panel__body :deep(.player-bar-panel__viewport) {
   padding: 0 var(--ui-player-panel-padding) var(--ui-player-panel-padding);
 }
 

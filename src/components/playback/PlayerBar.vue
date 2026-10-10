@@ -159,15 +159,13 @@ const captureDeviceLabel = computed(() => {
   return shortenDeviceLabel(device?.label) || '擷取裝置';
 });
 
-const transposeLabel = computed(() =>
-  state.transposeSemitones > 0
-    ? `+${state.transposeSemitones}`
-    : `${state.transposeSemitones}`,
+const transposeLabel = computed(
+  () =>
+    `${state.transposeSemitones > 0 ? '+' : ''}${state.transposeSemitones} 半音`,
 );
-// Spelled out, not "¢" — reads unambiguously as a pitch unit, not
-// currency, and stays visually distinct from transposeLabel's integer.
+// Spelled out as 音分, not "¢" — reads unambiguously as a pitch unit.
 const pitchCentsLabel = computed(
-  () => `${state.pitchCents > 0 ? '+' : ''}${state.pitchCents} cents`,
+  () => `${state.pitchCents > 0 ? '+' : ''}${state.pitchCents} 音分`,
 );
 // A4 (440Hz) shifted by the cents offset — the reference tuning musicians
 // actually tune to. Reflects pitchCents only; Transpose has its own row.
@@ -370,7 +368,7 @@ const guideVocalRows = computed(() => {
 const pitchTempoRows = computed(() => [
   {
     key: 'transpose',
-    label: 'Transpose',
+    label: '變調',
     value: transposeLabel.value,
     secondaryValue: null,
     resetDisabled: !state.track || state.transposeSemitones === 0,
@@ -388,7 +386,7 @@ const pitchTempoRows = computed(() => [
     step: 1,
     sliderLabel: '變調(半音)',
     formatSliderValue: (value) =>
-      Number(value) > 0 ? `+${Number(value)}` : `${Number(value)}`,
+      `${Number(value) > 0 ? '+' : ''}${Number(value)} 半音`,
     onSliderInput: (value) => setTransposeSemitones(Number(value)),
     plusDisabled:
       !state.track || state.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.max,
@@ -398,7 +396,7 @@ const pitchTempoRows = computed(() => [
   },
   {
     key: 'pitch',
-    label: 'Pitch',
+    label: '音高微調',
     value: pitchCentsLabel.value,
     secondaryValue: `· ${pitchReferenceHz.value} Hz`,
     resetDisabled: !state.track || state.pitchCents === 0,
@@ -415,7 +413,7 @@ const pitchTempoRows = computed(() => [
     step: 1,
     sliderLabel: '音高(音分微調)',
     formatSliderValue: (value) =>
-      `${Number(value) > 0 ? '+' : ''}${Number(value)} cents`,
+      `${Number(value) > 0 ? '+' : ''}${Number(value)} 音分`,
     onSliderInput: (value) => setPitchCents(Number(value)),
     plusDisabled: !state.track || state.pitchCents >= PITCH_CENTS_RANGE.max,
     plusLabel: '音高微調提高',
@@ -424,7 +422,7 @@ const pitchTempoRows = computed(() => [
   },
   {
     key: 'tempo',
-    label: 'Speed',
+    label: '變速',
     value: tempoLabel.value,
     secondaryValue: null,
     resetDisabled: !state.track || state.tempoRate === 1,

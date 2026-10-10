@@ -238,7 +238,7 @@
     ),
     var(--ui-player-extras-inline-size)
   );
-  --ui-player-panel-edge-offset: var(--ui-space-3);
+  --ui-player-panel-edge-offset: var(--ui-shell-edge-inset-inline);
   --ui-player-panel-padding: var(--ui-space-3);
   --ui-player-panel-inline-size: 22.5rem;
   --ui-player-panel-max-block-size: 40rem;
