@@ -150,11 +150,25 @@ function folderPageLayoutIntent(value) {
   };
 }
 
+function folderPageNoteContent(value) {
+  return {
+    title: typeof value?.title === 'string' ? value.title.slice(0, 80) : '',
+    text: typeof value?.text === 'string' ? value.text.slice(0, 2000) : '',
+  };
+}
+
+function folderPageNoteCreateIntent(value) {
+  return {
+    page: folderPageIdentityIntent(value?.page),
+    ...folderPageNoteContent(value),
+  };
+}
+
 function folderPageNoteIntent(value) {
   return {
     page: folderPageIdentityIntent(value?.page),
     key: value?.key,
-    text: typeof value?.text === 'string' ? value.text.slice(0, 2000) : '',
+    ...folderPageNoteContent(value),
   };
 }
 
@@ -494,10 +508,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
       'folder-page-objects:choose-photo',
       folderPageIdentityIntent(page),
     ),
-  createFolderPageNote: (page) =>
+  createFolderPageNote: (intent) =>
     ipcRenderer.invoke(
       'folder-page-objects:create-note',
-      folderPageIdentityIntent(page),
+      folderPageNoteCreateIntent(intent),
     ),
   updateFolderPageNote: (intent) =>
     ipcRenderer.invoke(

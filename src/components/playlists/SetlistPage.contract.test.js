@@ -122,12 +122,17 @@ describe('Setlist page composition', () => {
     expect(viewSource).not.toContain('<slot name="page-tools"></slot>');
   });
 
-  it('opens new notes for editing, discards empty ones, and confirms removal', () => {
+  it('creates and edits notes through the editor modal and confirms removal', () => {
+    // A note exists only after its editor saves; no blank card is created.
     expect(pageSource).toMatch(
-      /function selectAddAction[\s\S]*?folderObjects\.addNote\(\)[\s\S]*?editingNoteKey\.value = key/u,
+      /function selectAddAction[\s\S]*?type === 'note'[\s\S]*?noteEditor\.value = \{ key: null \};[\s\S]*?return;/u,
     );
     expect(pageSource).toMatch(
-      /function commitNote[\s\S]*?text\.trim\(\) === ''[\s\S]*?folderObjects\.remove\(key\)[\s\S]*?folderObjects\.updateNoteText\(key, text\.trimEnd\(\)\)/u,
+      /async function saveNote[\s\S]*?folderObjects\.updateNote\(editor\.key, content\)[\s\S]*?folderObjects\.addNote\(content\)/u,
+    );
+    expect(pageSource).toContain('@edit-note="openNoteEditor"');
+    expect(pageSource).toMatch(
+      /<AppFolderNoteEditorModal[\s\S]*?:open="Boolean\(noteEditor\)"[\s\S]*?:mode="noteEditor\?\.key \? 'edit' : 'create'"[\s\S]*?@save="saveNote"/u,
     );
     expect(pageSource).toMatch(
       /async function confirmRemoveObject[\s\S]*?confirmation\.confirm\([\s\S]*?intent: 'danger'[\s\S]*?folderObjects\.remove\(key\)/u,
@@ -136,7 +141,7 @@ describe('Setlist page composition', () => {
       /function toggleAddMenu\(event\) \{\s*event\.stopPropagation\(\);/u,
     );
     expect(pageSource).toContain('@click="toggleAddMenu"');
-    expect(pageSource).toContain('v-model:editing-key="editingNoteKey"');
+    expect(pageSource).not.toContain('editingNoteKey');
     expect(pageSource).toContain(':fresh-keys="folderObjects.freshKeys.value"');
     expect(pageSource).toContain('@remove="confirmRemoveObject"');
   });

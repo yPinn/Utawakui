@@ -147,25 +147,25 @@ describe('SetlistFolderArtifactLayer', () => {
     expect(source).toContain('const OBJECT_RENDERERS = Object.freeze({');
   });
 
-  it('edits user notes in place and offers per-type context menu actions', async () => {
+  it('edits user notes from the context menu only and renders their title', async () => {
     const note = {
       ...photo({ pinned: false }),
       key: 'note:22222222-2222-4222-8222-222222222222',
       type: 'note',
+      title: '安可',
       text: '安可曲備忘',
     };
-    const html = await render({
-      objects: [note],
-      editingKey: note.key,
-    });
+    const html = await render({ objects: [note] });
 
-    expect(html).toContain('class="ui-textarea ui-textarea--bare"');
-    expect(html).toMatch(
-      /<label[^>]*for="folder-artifact-editor-[^"]+"[^>]*>[\s\S]*?便條內容/u,
-    );
-    expect(html).toContain('頁面便條，按 Enter 或空白鍵編輯便條');
+    expect(html).not.toContain('ui-textarea');
+    expect(html).not.toContain('按 Enter 或空白鍵編輯便條');
+    expect(html).toMatch(/<h4[^>]*>安可<\/h4>/u);
+    expect(html).toContain('頁面便條：安可');
     expect(source).toMatch(
-      /function handleActivate[\s\S]*?item\?\.type === 'photo'[\s\S]*?isUserNote\(item\)\) editingKey\.value = id/u,
+      /function handleActivate\(id\) \{\s*if \(findItem\(id\)\?\.type === 'photo'\) emit\('activate', id\);\s*\}/u,
+    );
+    expect(source).toContain(
+      "else if (action === 'edit') emit('editNote', id);",
     );
     expect(source).toMatch(
       /item\.type === 'photo'[\s\S]*?label: '展開照片'[\s\S]*?label: '從頁面移除'[\s\S]*?danger: true/u,
@@ -204,7 +204,7 @@ describe('SetlistFolderArtifactLayer', () => {
 
   it('routes every layout, pin, and stack change as one entry batch keyed by object', () => {
     expect(source).toContain(
-      "defineEmits(['layoutChange', 'activate', 'noteCommit', 'remove'])",
+      "defineEmits(['layoutChange', 'activate', 'editNote', 'remove'])",
     );
     expect(source).toMatch(
       /function handleLayoutChange[\s\S]*?\{\s*immediate: false,\s*\}/u,

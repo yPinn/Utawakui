@@ -513,7 +513,12 @@ describe('main preload bridge', () => {
       executable: 'private.exe',
     });
     bridge.saveFolderPageLayout();
-    bridge.createFolderPageNote({ ...page, text: 'private' });
+    bridge.createFolderPageNote({
+      page,
+      title: 't'.repeat(90),
+      text: 'private',
+      sourcePath: 'private.txt',
+    });
     bridge.updateFolderPageNote({
       page,
       key: 'note:note-1',
@@ -523,15 +528,15 @@ describe('main preload bridge', () => {
     bridge.updateFolderPageNote({ page, key: 'note:note-1', text: 42 });
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:create-note',
-      page,
+      { page, title: 't'.repeat(80), text: 'private' },
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:update-note',
-      { page, key: 'note:note-1', text: 'x'.repeat(2000) },
+      { page, key: 'note:note-1', title: '', text: 'x'.repeat(2000) },
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:update-note',
-      { page, key: 'note:note-1', text: '' },
+      { page, key: 'note:note-1', title: '', text: '' },
     );
     bridge.removeFolderPageObject({
       page,

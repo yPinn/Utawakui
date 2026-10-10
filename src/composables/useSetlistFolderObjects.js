@@ -215,8 +215,8 @@ export function createSetlistFolderObjects(options = {}) {
     }
   }
 
-  // Returns the new note key so the caller can open it for editing.
-  async function addNote() {
+  // Creates a note from saved editor content; returns its key or null.
+  async function addNote(content) {
     if (
       !page.value ||
       state.adding ||
@@ -229,7 +229,11 @@ export function createSetlistFolderObjects(options = {}) {
     state.adding = true;
     state.error = '';
     try {
-      const note = await bridge.createFolderPageNote(activePage);
+      const note = await bridge.createFolderPageNote({
+        page: activePage,
+        title: content?.title ?? '',
+        text: content?.text ?? '',
+      });
       if (!isActivePage(activePage) || !note?.key) return null;
       freshKeys.value = [...freshKeys.value, note.key];
       setObjects([...objects.value, note]);
@@ -242,9 +246,12 @@ export function createSetlistFolderObjects(options = {}) {
     }
   }
 
-  async function updateNoteText(key, text) {
+  async function updateNote(key, content) {
+    const title = content?.title ?? '';
+    const text = content?.text ?? '';
     if (
       !page.value ||
+      typeof title !== 'string' ||
       typeof text !== 'string' ||
       typeof bridge?.updateFolderPageNote !== 'function'
     ) {
@@ -252,10 +259,10 @@ export function createSetlistFolderObjects(options = {}) {
     }
     const activePage = { ...page.value };
     objects.value = objects.value.map((object) =>
-      object.key === key ? { ...object, text } : object,
+      object.key === key ? { ...object, title, text } : object,
     );
     try {
-      await bridge.updateFolderPageNote({ page: activePage, key, text });
+      await bridge.updateFolderPageNote({ page: activePage, key, title, text });
       return true;
     } catch {
       state.error = '目前無法儲存頁面便條。';
@@ -316,7 +323,7 @@ export function createSetlistFolderObjects(options = {}) {
     load,
     addPhoto,
     addNote,
-    updateNoteText,
+    updateNote,
     saveLayout,
     remove,
     flush,

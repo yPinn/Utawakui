@@ -51,7 +51,7 @@ function register(overrides = {}) {
     listObjects: vi.fn(() => [photo()]),
     addPhoto: vi.fn(() => photo()),
     addNote: vi.fn(() => ({ key: 'note:note-1', type: 'note', text: '' })),
-    updateNoteText: vi.fn(() => ({ key: 'note:note-1', text: '備忘' })),
+    updateNote: vi.fn(() => ({ key: 'note:note-1', text: '備忘' })),
     saveLayout: vi.fn(() => [photo({ pinned: true })]),
     removeObject: vi.fn(() => true),
     ...overrides,
@@ -121,24 +121,33 @@ describe('registerFolderPageObjectHandlers', () => {
     expect(dependencies.addPhoto).not.toHaveBeenCalled();
   });
 
-  it('creates notes and updates only bounded note text', async () => {
+  it('creates and updates notes with only title and text content', async () => {
     const page = { kind: 'album', id: 'album-1' };
     const { dependencies, handlers } = register();
 
-    await handlers.get('folder-page-objects:create-note')(null, page);
+    await handlers.get('folder-page-objects:create-note')(null, {
+      page,
+      title: '安可',
+      text: '最後一首',
+      sourcePath: 'C:\\private.txt',
+    });
     await handlers.get('folder-page-objects:update-note')(null, {
       page,
       key: 'note:note-1',
+      title: '',
       text: '備忘',
       sourcePath: 'C:\\private.txt',
     });
 
-    expect(dependencies.addNote).toHaveBeenCalledWith('library-dir', page);
-    expect(dependencies.updateNoteText).toHaveBeenCalledWith(
+    expect(dependencies.addNote).toHaveBeenCalledWith('library-dir', page, {
+      title: '安可',
+      text: '最後一首',
+    });
+    expect(dependencies.updateNote).toHaveBeenCalledWith(
       'library-dir',
       page,
       'note:note-1',
-      '備忘',
+      { title: '', text: '備忘' },
     );
   });
 
@@ -265,7 +274,7 @@ describe('registerFolderPageObjectHandlers', () => {
       'FOLDER_PAGE_OBJECT_NOTE_FAILED',
     ],
     [
-      'updateNoteText',
+      'updateNote',
       'folder-page-objects:update-note',
       'FOLDER_PAGE_OBJECT_NOTE_FAILED',
     ],
@@ -290,8 +299,7 @@ describe('registerFolderPageObjectHandlers', () => {
     const page = { kind: 'playlist', id: 'playlist-1' };
     const args =
       channel === 'folder-page-objects:list' ||
-      channel === 'folder-page-objects:choose-photo' ||
-      channel === 'folder-page-objects:create-note'
+      channel === 'folder-page-objects:choose-photo'
         ? [page]
         : [{ page, key: 'photo:asset-1', entries: [] }];
 

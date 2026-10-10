@@ -70,13 +70,14 @@ const OBJECT_RENDERERS = Object.freeze({
           },
         }
       : {
+          // Editing opens from the context menu only, so a click on an
+          // overlapping note never starts an edit by accident.
           kind: 'note',
-          label: '頁面便條',
-          activatable: true,
-          activationLabel: '編輯便條',
+          label: item.title ? `頁面便條：${item.title}` : '頁面便條',
           props: {
+            title: item.title ?? '',
+            titleLang: contentLangAttribute(item.title ?? ''),
             body: item.text ?? '',
-            editLabel: '便條內容',
             paper: item.paper ?? 'tissue',
             material: NOTE_MATERIAL,
             texture: noteTexture(item.key),
@@ -91,8 +92,7 @@ const props = defineProps({
   freshKeys: { type: Array, default: () => [] },
 });
 
-const editingKey = defineModel('editingKey', { type: String, default: null });
-const emit = defineEmits(['layoutChange', 'activate', 'noteCommit', 'remove']);
+const emit = defineEmits(['layoutChange', 'activate', 'editNote', 'remove']);
 const canvas = useTemplateRef('canvas');
 const menu = shallowRef(null);
 
@@ -166,7 +166,6 @@ const artifacts = computed(() =>
       initialPinned: item.pinned === true,
       initialZ: index + 1,
       rotation: item.rotation ?? 0,
-      editing: item.key === editingKey.value,
       autoPlace: props.freshKeys.includes(item.key),
     };
   }),
@@ -219,14 +218,7 @@ function isUserNote(item) {
 }
 
 function handleActivate(id) {
-  const item = findItem(id);
-  if (item?.type === 'photo') emit('activate', id);
-  else if (isUserNote(item)) editingKey.value = id;
-}
-
-function commitNote(key, text) {
-  if (editingKey.value === key) editingKey.value = null;
-  emit('noteCommit', key, text);
+  if (findItem(id)?.type === 'photo') emit('activate', id);
 }
 
 const menuItems = computed(() => {
@@ -279,7 +271,7 @@ function selectMenuAction(action) {
   closeMenu();
   if (!id) return;
   if (action === 'open') emit('activate', id);
-  else if (action === 'edit') editingKey.value = id;
+  else if (action === 'edit') emit('editNote', id);
   else if (action === 'pin') canvas.value?.togglePinById(id);
   else if (action === 'remove') emit('remove', id);
 }
@@ -298,12 +290,7 @@ function selectMenuAction(action) {
     @contextmenu="openMenu"
   >
     <template #default="{ artifact }">
-      <UiFolderArtifact
-        :kind="artifact.kind"
-        v-bind="artifact.props"
-        :editing="artifact.editing"
-        @commit="commitNote(artifact.id, $event)"
-      />
+      <UiFolderArtifact :kind="artifact.kind" v-bind="artifact.props" />
     </template>
   </UiFolderArtifactCanvas>
   <UiContextMenu

@@ -8,6 +8,7 @@ const {
   FOLDER_PAGE_OBJECTS_FILENAME,
   FOLDER_PAGE_USER_OBJECT_LIMIT,
   MAX_NOTE_TEXT_LENGTH,
+  MAX_NOTE_TITLE_LENGTH,
   NOTE_PAPERS,
   PHOTO_FRAMES,
   addFolderPageNote,
@@ -18,7 +19,7 @@ const {
   removeFolderPageObject,
   resolveFolderPageAssetPath,
   saveFolderPageLayout,
-  updateFolderPageNoteText,
+  updateFolderPageNote,
   validateFolderPageIdentity,
 } = folderPageObjects;
 
@@ -497,16 +498,21 @@ describe('folder page objects', () => {
     ).toBe(true);
   });
 
-  it('creates blank user notes on the shared slot grid and bounds their text', () => {
+  it('creates user notes only from saved content on the shared slot grid', () => {
     addFolderPagePhoto(directory, page, sourcePath, {
       id: PHOTO_ID,
       random: () => 0.5,
     });
-    const note = addFolderPageNote(directory, page, {
-      id: SECOND_PHOTO_ID,
-      now: new Date('2026-10-10T02:00:00.000Z'),
-      random: () => 0.5,
-    });
+    const note = addFolderPageNote(
+      directory,
+      page,
+      { title: '安可', text: '最後一首' },
+      {
+        id: SECOND_PHOTO_ID,
+        now: new Date('2026-10-10T02:00:00.000Z'),
+        random: () => 0.5,
+      },
+    );
 
     expect(note).toEqual({
       key: `note:${SECOND_PHOTO_ID}`,
@@ -518,40 +524,69 @@ describe('folder page objects', () => {
       rotation: 1.75,
       order: 2,
       createdAt: '2026-10-10T02:00:00.000Z',
-      text: '',
+      title: '安可',
+      text: '最後一首',
       paper: 'canary',
     });
+    expect(() =>
+      addFolderPageNote(directory, page, { title: '  ', text: '' }),
+    ).toThrow();
+    expect(() =>
+      addFolderPageNote(directory, page, {
+        title: 'x'.repeat(MAX_NOTE_TITLE_LENGTH + 1),
+        text: 'ok',
+      }),
+    ).toThrow();
 
-    const updated = updateFolderPageNoteText(
-      directory,
-      page,
-      note.key,
-      '安可曲備忘',
-    );
+    const updated = updateFolderPageNote(directory, page, note.key, {
+      title: '',
+      text: '安可曲備忘',
+    });
+    expect(updated.title).toBe('');
     expect(updated.text).toBe('安可曲備忘');
     expect(updated.paper).toBe('canary');
     expect(listFolderPageObjects(directory, page)[1].text).toBe('安可曲備忘');
 
     expect(() =>
-      updateFolderPageNoteText(
-        directory,
-        page,
-        note.key,
-        'x'.repeat(MAX_NOTE_TEXT_LENGTH + 1),
-      ),
+      updateFolderPageNote(directory, page, note.key, {
+        text: 'x'.repeat(MAX_NOTE_TEXT_LENGTH + 1),
+      }),
     ).toThrow();
     expect(() =>
-      updateFolderPageNoteText(directory, page, `photo:${PHOTO_ID}`, 'x'),
+      updateFolderPageNote(directory, page, note.key, { title: '', text: ' ' }),
     ).toThrow();
     expect(() =>
-      updateFolderPageNoteText(
+      updateFolderPageNote(directory, page, `photo:${PHOTO_ID}`, { text: 'x' }),
+    ).toThrow();
+    expect(() =>
+      updateFolderPageNote(
         directory,
         { kind: 'playlist', id: 'playlist-2' },
         note.key,
-        'x',
+        { text: 'x' },
       ),
     ).toThrow();
     expect(removeFolderPageObject(directory, page, note.key)).toBe(true);
+  });
+
+  it('reads notes saved before titles existed as untitled', () => {
+    const note = addFolderPageNote(
+      directory,
+      page,
+      { text: '舊便條' },
+      { id: PHOTO_ID },
+    );
+    const manifest = readManifest(directory);
+    delete manifest.objects[0].payload.title;
+    fs.writeFileSync(
+      path.join(directory, FOLDER_PAGE_OBJECTS_FILENAME),
+      JSON.stringify(manifest),
+    );
+    expect(listFolderPageObjects(directory, page)[0]).toMatchObject({
+      key: note.key,
+      title: '',
+      text: '舊便條',
+    });
   });
 
   it('picks a bounded paper per note once and derives a stable stock for legacy notes', () => {
@@ -562,14 +597,24 @@ describe('folder page objects', () => {
       'kraft',
       'ruled',
     ]);
-    const first = addFolderPageNote(directory, page, {
-      id: PHOTO_ID,
-      random: () => 0,
-    });
-    const last = addFolderPageNote(directory, page, {
-      id: SECOND_PHOTO_ID,
-      random: () => 0.999,
-    });
+    const first = addFolderPageNote(
+      directory,
+      page,
+      { text: '便條' },
+      {
+        id: PHOTO_ID,
+        random: () => 0,
+      },
+    );
+    const last = addFolderPageNote(
+      directory,
+      page,
+      { text: '便條' },
+      {
+        id: SECOND_PHOTO_ID,
+        random: () => 0.999,
+      },
+    );
     expect([first.paper, last.paper]).toEqual(['periwinkle', 'ruled']);
 
     const manifest = readManifest(directory);
@@ -621,11 +666,16 @@ describe('folder page objects', () => {
 
   it('counts notes toward the shared user object limit', () => {
     for (let index = 0; index < FOLDER_PAGE_USER_OBJECT_LIMIT; index += 1) {
-      addFolderPageNote(directory, page, {
-        id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
-      });
+      addFolderPageNote(
+        directory,
+        page,
+        { text: '便條' },
+        {
+          id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+        },
+      );
     }
-    expect(() => addFolderPageNote(directory, page)).toThrow(
+    expect(() => addFolderPageNote(directory, page, { text: '便條' })).toThrow(
       expect.objectContaining({ code: 'FOLDER_PAGE_OBJECT_LIMIT_REACHED' }),
     );
     expect(() => addFolderPagePhoto(directory, page, sourcePath)).toThrow(

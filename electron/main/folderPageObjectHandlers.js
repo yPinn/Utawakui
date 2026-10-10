@@ -8,7 +8,7 @@ const {
   listFolderPageObjects,
   removeFolderPageObject,
   saveFolderPageLayout,
-  updateFolderPageNoteText,
+  updateFolderPageNote,
   validateFolderPageIdentity,
 } = require('../lib/library/folderPageObjects');
 const { listTracks } = require('../lib/library');
@@ -102,7 +102,7 @@ function registerFolderPageObjectHandlers({
   listObjects = listFolderPageObjects,
   addPhoto = addFolderPagePhoto,
   addNote = addFolderPageNote,
-  updateNoteText = updateFolderPageNoteText,
+  updateNote = updateFolderPageNote,
   saveLayout = saveFolderPageLayout,
   removeObject = removeFolderPageObject,
 }) {
@@ -167,9 +167,11 @@ function registerFolderPageObjectHandlers({
 
   ipcMain.handle(
     'folder-page-objects:create-note',
-    async (event, pageValue) => {
-      const { directory, page } = await resolvePage(pageValue, 'note');
-      return withBoundary('note', () => addNote(directory, page));
+    async (event, intent = {}) => {
+      const { directory, page } = await resolvePage(intent.page, 'note');
+      return withBoundary('note', () =>
+        addNote(directory, page, { title: intent.title, text: intent.text }),
+      );
     },
   );
 
@@ -178,7 +180,10 @@ function registerFolderPageObjectHandlers({
     async (event, intent = {}) => {
       const { directory, page } = await resolvePage(intent.page, 'note');
       return withBoundary('note', () =>
-        updateNoteText(directory, page, intent.key, intent.text),
+        updateNote(directory, page, intent.key, {
+          title: intent.title,
+          text: intent.text,
+        }),
       );
     },
   );

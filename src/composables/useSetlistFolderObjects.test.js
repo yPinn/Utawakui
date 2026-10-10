@@ -232,26 +232,33 @@ describe('createSetlistFolderObjects', () => {
     ]);
   });
 
-  it('creates a blank note, returns its key, and saves committed text', async () => {
+  it('creates a note from saved content and updates title and text together', async () => {
     const api = bridge();
     const owner = createSetlistFolderObjects({ bridge: api });
     await owner.load(playlistPage);
 
-    await expect(owner.addNote()).resolves.toBe('note:note-1');
+    await expect(
+      owner.addNote({ title: '安可', text: '最後一首' }),
+    ).resolves.toBe('note:note-1');
     expect(owner.freshKeys.value).toEqual(['note:note-1']);
-    expect(api.createFolderPageNote).toHaveBeenCalledWith(playlistPage);
-    await expect(owner.updateNoteText('note:note-1', '安可曲')).resolves.toBe(
-      true,
-    );
-    expect(owner.objects.value[0].text).toBe('安可曲');
+    expect(api.createFolderPageNote).toHaveBeenCalledWith({
+      page: playlistPage,
+      title: '安可',
+      text: '最後一首',
+    });
+    await expect(
+      owner.updateNote('note:note-1', { title: '', text: '安可曲' }),
+    ).resolves.toBe(true);
+    expect(owner.objects.value[0]).toMatchObject({ title: '', text: '安可曲' });
     expect(api.updateFolderPageNote).toHaveBeenCalledWith({
       page: playlistPage,
       key: 'note:note-1',
+      title: '',
       text: '安可曲',
     });
 
     api.createFolderPageNote.mockRejectedValueOnce(new Error('disk'));
-    await expect(owner.addNote()).resolves.toBe(null);
+    await expect(owner.addNote({ text: 'x' })).resolves.toBe(null);
     expect(owner.error.value).toBe('目前無法新增頁面便條。');
   });
 

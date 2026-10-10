@@ -23,6 +23,7 @@ const MAX_LAYER_ORDER = 1_000;
 const MAX_LAYOUT_BATCH_SIZE = 64;
 const MAX_OBJECT_ROTATION = 5;
 const MAX_NOTE_TEXT_LENGTH = 2_000;
+const MAX_NOTE_TITLE_LENGTH = 80;
 // Paper stocks a new user note may be printed on; picked once at creation.
 const NOTE_PAPERS = Object.freeze([
   'periwinkle',
@@ -97,7 +98,9 @@ const OBJECT_TYPES = Object.freeze({
       const paper = NOTE_PAPERS.includes(payload.paper)
         ? payload.paper
         : paperForKey(key);
-      return { text: payload.text, paper };
+      // Notes saved before titles existed read as untitled.
+      const title = isNoteTitle(payload.title) ? payload.title : '';
+      return { title, text: payload.text, paper };
     },
   }),
 });
@@ -425,6 +428,7 @@ function projectObject(object) {
     );
     projection.frame = object.payload.frame;
   } else if (object.type === 'note' && object.source === 'user') {
+    projection.title = object.payload.title;
     projection.text = object.payload.text;
     projection.paper = object.payload.paper;
   }
@@ -568,8 +572,28 @@ function addFolderPagePhoto(directory, pageValue, sourcePath, options = {}) {
   return projectObject(photo);
 }
 
-function addFolderPageNote(directory, pageValue, options = {}) {
+function isNoteTitle(value) {
+  return typeof value === 'string' && value.length <= MAX_NOTE_TITLE_LENGTH;
+}
+
+// A note is created only from saved editor content; empty notes never exist.
+function requireNoteContent(content) {
+  const title = content?.title ?? '';
+  const text = content?.text ?? '';
+  if (
+    !isNoteTitle(title) ||
+    typeof text !== 'string' ||
+    text.length > MAX_NOTE_TEXT_LENGTH ||
+    (title.trim() === '' && text.trim() === '')
+  ) {
+    throw validationError('Invalid page note content.');
+  }
+  return { title, text };
+}
+
+function addFolderPageNote(directory, pageValue, content, options = {}) {
   const page = requirePage(pageValue);
+  const { title, text } = requireNoteContent(content);
   const objects = loadObjects(directory);
   const random =
     typeof options.random === 'function' ? options.random : Math.random;
@@ -577,22 +601,19 @@ function addFolderPageNote(directory, pageValue, options = {}) {
     objects,
     page,
     'note',
-    { text: '', paper: pickStock(NOTE_PAPERS, random) },
+    { title, text, paper: pickStock(NOTE_PAPERS, random) },
     { ...options, random },
   );
   writeManifest(directory, [...objects, note]);
   return projectObject(note);
 }
 
-function updateFolderPageNoteText(directory, pageValue, key, text) {
+function updateFolderPageNote(directory, pageValue, key, content) {
   const page = requirePage(pageValue);
-  if (
-    parseObjectKey(key)?.type !== 'note' ||
-    typeof text !== 'string' ||
-    text.length > MAX_NOTE_TEXT_LENGTH
-  ) {
-    throw validationError('Invalid page note text.');
+  if (parseObjectKey(key)?.type !== 'note') {
+    throw validationError('Invalid page note.');
   }
+  const { title, text } = requireNoteContent(content);
   const objects = loadObjects(directory);
   const index = objects.findIndex(
     (object) => object.key === key && samePage(object.page, page),
@@ -600,7 +621,7 @@ function updateFolderPageNoteText(directory, pageValue, key, text) {
   if (index < 0) throw validationError('Page note not found.');
   objects[index] = {
     ...objects[index],
-    payload: { ...objects[index].payload, text },
+    payload: { ...objects[index].payload, title, text },
   };
   writeManifest(directory, objects);
   return projectObject(objects[index]);
@@ -726,6 +747,7 @@ module.exports = {
   FOLDER_PAGE_OBJECTS_FILENAME,
   FOLDER_PAGE_USER_OBJECT_LIMIT,
   MAX_NOTE_TEXT_LENGTH,
+  MAX_NOTE_TITLE_LENGTH,
   NOTE_PAPERS,
   PHOTO_FRAMES,
   addFolderPageNote,
@@ -736,6 +758,6 @@ module.exports = {
   removeFolderPageObject,
   resolveFolderPageAssetPath,
   saveFolderPageLayout,
-  updateFolderPageNoteText,
+  updateFolderPageNote,
   validateFolderPageIdentity,
 };

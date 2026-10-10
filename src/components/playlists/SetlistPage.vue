@@ -20,6 +20,7 @@ import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
 import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue';
 
@@ -28,7 +29,9 @@ const { albumSupportingContent } = useSetlistAlbumContext();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 const folderObjects = useSetlistFolderObjects();
 const confirmation = useAppConfirmation();
-const editingNoteKey = ref(null);
+// null when closed; { key } edits an existing note, { key: null } creates.
+const noteEditor = shallowRef(null);
+const noteEditorSaving = ref(false);
 const addMenuOpen = ref(false);
 const ADD_MENU_ITEMS = Object.freeze([
   Object.freeze({
@@ -111,7 +114,7 @@ watch(
     await folderObjects.flush();
     previewOpen.value = false;
     selectedAsset.value = null;
-    editingNoteKey.value = null;
+    noteEditor.value = null;
     addMenuOpen.value = false;
     focusAddButtonAfterPreviewClose = false;
     await folderObjects.load(page);
@@ -131,20 +134,43 @@ function toggleAddMenu(event) {
 
 async function selectAddAction(type) {
   addMenuOpen.value = false;
-  const key =
-    type === 'photo'
-      ? await folderObjects.addPhoto()
-      : await folderObjects.addNote();
-  if (key && type === 'note') editingNoteKey.value = key;
-}
-
-// A note left empty is discarded instead of kept as a blank card.
-function commitNote(key, text) {
-  if (text.trim() === '') {
-    void folderObjects.remove(key);
+  // A note is created only when its editor saves, never as a blank card.
+  if (type === 'note') {
+    noteEditor.value = { key: null };
     return;
   }
-  void folderObjects.updateNoteText(key, text.trimEnd());
+  await folderObjects.addPhoto();
+}
+
+const editedNote = computed(() =>
+  noteEditor.value?.key
+    ? (folderObjects.objects.value.find(
+        (object) => object.key === noteEditor.value.key,
+      ) ?? null)
+    : null,
+);
+
+function openNoteEditor(key) {
+  noteEditor.value = { key };
+}
+
+function closeNoteEditor() {
+  if (noteEditorSaving.value) return;
+  noteEditor.value = null;
+}
+
+async function saveNote(content) {
+  const editor = noteEditor.value;
+  if (!editor || noteEditorSaving.value) return;
+  noteEditorSaving.value = true;
+  try {
+    const saved = editor.key
+      ? await folderObjects.updateNote(editor.key, content)
+      : Boolean(await folderObjects.addNote(content));
+    if (saved) noteEditor.value = null;
+  } finally {
+    noteEditorSaving.value = false;
+  }
 }
 
 async function confirmRemoveObject(key) {
@@ -230,13 +256,12 @@ onBeforeUnmount(() => {
       <template v-if="showFolderArtifacts" #floating>
         <SetlistFolderArtifactLayer
           :key="folderPageKey"
-          v-model:editing-key="editingNoteKey"
           :objects="folderObjects.objects.value"
           :summary="artistSummary"
           :fresh-keys="folderObjects.freshKeys.value"
           @layout-change="handleArtifactLayout"
           @activate="openAsset"
-          @note-commit="commitNote"
+          @edit-note="openNoteEditor"
           @remove="confirmRemoveObject"
         />
       </template>
@@ -267,6 +292,17 @@ onBeforeUnmount(() => {
         />
       </template>
     </AppFolderPage>
+
+    <AppFolderNoteEditorModal
+      :open="Boolean(noteEditor)"
+      :mode="noteEditor?.key ? 'edit' : 'create'"
+      :title="editedNote?.title ?? ''"
+      :text="editedNote?.text ?? ''"
+      :paper="editedNote?.paper ?? 'tissue'"
+      :saving="noteEditorSaving"
+      @close="closeNoteEditor"
+      @save="saveNote"
+    />
 
     <FolderAssetPreviewModal
       :open="previewOpen"
