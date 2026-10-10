@@ -1,5 +1,6 @@
 <script setup>
 import {
+  computed,
   nextTick,
   onBeforeUnmount,
   onMounted,
@@ -44,6 +45,14 @@ const itemElements = new Map();
 const placements = new Map();
 const pendingAutoPlacements = new Set();
 const positions = reactive({});
+// Active paint sits one above the finite rebased order, never a fixed cap.
+const activeLayer = computed(
+  () =>
+    Math.max(
+      props.artifacts.length,
+      ...Object.values(positions).map((position) => position.z),
+    ) + 1,
+);
 const pinnedArtifactIds = reactive(new Set());
 const activeArtifactId = shallowRef(null);
 const instructionId = `folder-artifact-instructions-${useId()}`;
@@ -545,6 +554,7 @@ defineExpose({ reset, togglePinById });
       'ui-folder-artifact-canvas--ready': isReady,
       'ui-folder-artifact-canvas--folder': props.material === 'folder',
     }"
+    :style="{ '--ui-folder-artifact-z-active': activeLayer }"
     role="region"
     :aria-label="label"
   >
@@ -627,7 +637,7 @@ defineExpose({ reset, togglePinById });
 
 .ui-folder-artifact-canvas__sheet {
   position: absolute;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   inset: var(--ui-folder-artifact-sheet-inset-block)
     var(--ui-folder-artifact-sheet-inset-inline);
   border: var(--ui-border-width) solid var(--ui-color-border);
@@ -718,7 +728,7 @@ defineExpose({ reset, togglePinById });
 
 .ui-folder-artifact-canvas__pin {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset: var(--ui-space-2) var(--ui-space-2) auto auto;
   opacity: 0;
   pointer-events: none;

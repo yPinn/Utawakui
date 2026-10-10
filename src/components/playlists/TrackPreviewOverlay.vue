@@ -541,7 +541,7 @@ onUnmounted(() => setKeyboardListener(false));
    controls sit above the shared artwork overlay plane. */
 .track-preview__play {
   position: absolute;
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   inset-block-end: var(--ui-space-2);
   inset-inline-end: var(--ui-space-2);
 }

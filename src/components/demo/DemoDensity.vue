@@ -609,7 +609,7 @@ const CANDIDATE_ROWS = DENSITY_CONTRACTS.map((contract) => ({
 
 .demo-density__specimen {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   flex: none;
   box-sizing: border-box;
   background: var(--ui-color-surface-active);

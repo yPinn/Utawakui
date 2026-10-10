@@ -16,7 +16,7 @@
 .ui-artwork-overlay {
   position: absolute;
   inset: calc(-1 * var(--ui-border-width));
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   display: grid;
   pointer-events: none;
 }

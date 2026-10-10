@@ -635,7 +635,8 @@ Control-panel token categories:
 | Shadow      | `--ui-shadow-*`      | `--ui-shadow-overlay`       |
 | Opacity     | `--ui-opacity-*`     | `--ui-opacity-disabled`     |
 | Motion      | `--ui-motion-*`      | `--ui-motion-duration-fast` |
-| Z-index     | `--ui-z-*`           | `--ui-z-dropdown`           |
+| Z-index     | `--ui-z-*`           | `--ui-z-popover`            |
+| Local layer | `--ui-layer-*`       | `--ui-layer-raised`         |
 | Dimensions  | `--ui-*-height`      | `--ui-control-height`       |
 
 Deprecated text-size aliases should not be reintroduced; current component CSS should use `--ui-font-size-*`.
@@ -1059,6 +1060,13 @@ Naming here is this project's own semantic roles, not a literal port of any plat
 ## Elevation
 
 Utawakui should be flat by default and layered by tone before shadow. Depth exists to clarify stacking order: menus over panels, dialogs over content, tooltips over controls.
+
+### Stacking Layers
+
+- **Global layers** (`--ui-z-*`): sticky 10, floating 15, popover 20, backdrop 30, dialog 40, toast 50, tooltip 60, drag 70. Only shell chrome and teleported overlays use them; `floating` is for persistent shell panels such as the BGM player, so menus always paint above it.
+- **Local layers** (`--ui-layer-*`): behind -1, base 0, raised 1, overlay 2, indicator 3, focus 4. They resolve against the nearest owner that isolates its stacking context (`isolation: isolate`); a repeated row or control isolates its own root so inner values never compete with siblings. A row that must paint over a neighbour (a drop target) raises itself, not its inner indicator.
+- **Literal values:** every `z-index` uses one of these tokens or a runtime-derived component variable such as the finite Folder artifact order; `src/styles/zIndexLayers.test.js` enforces it.
+- **Overlay hosts:** a surface's overlay host must sit outside every content stacking context between it and the renderer root. The Folder perimeter therefore creates none, `AppFolderPage` isolates its own content, and a child surface nested in an isolated region (the Performance Session workspace inside the Setlist document) mounts its host beside the parent's via `AppSurfaceBoundary` `childHosts`／`detachedHost`.
 
 ### Shadow Vocabulary
 

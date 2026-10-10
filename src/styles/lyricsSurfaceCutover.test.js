@@ -61,7 +61,7 @@ describe('Lyrics Token v2 surface cutover', () => {
     }
 
     expect(workspaceSource).toContain('var(--ui-radius-md)');
-    expect(documentSource).toContain('var(--ui-z-popover)');
+    expect(documentSource).toContain('var(--ui-layer-overlay)');
     expect(documentSource).toContain('var(--ui-radius-md)');
     expect(
       productionLyricsSources.find(

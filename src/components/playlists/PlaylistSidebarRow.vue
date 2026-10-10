@@ -194,6 +194,7 @@ function toggleFromArtwork(event) {
 <style scoped>
 .playlist-sidebar-row {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: var(--ui-sidebar-row-gap);
@@ -217,7 +218,7 @@ function toggleFromArtwork(event) {
 .playlist-sidebar-row__select {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -228,7 +229,7 @@ function toggleFromArtwork(event) {
   position: absolute;
   inset-block: 0;
   inset-inline: calc(-1 * var(--ui-playlist-row-state-surface-outset-inline));
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   border: var(--ui-border-width) solid transparent;
   border-radius: inherit;
   background: transparent;
@@ -247,10 +248,16 @@ function toggleFromArtwork(event) {
   opacity: var(--ui-opacity-dragging);
 }
 
+/* The drop target rises so its gap indicator stays above the neighbour row. */
+.playlist-sidebar-row--drop-before,
+.playlist-sidebar-row--drop-after {
+  z-index: var(--ui-layer-raised);
+}
+
 .playlist-sidebar-row__drop-indicator {
   position: absolute;
   inset-inline: 0;
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   pointer-events: none;
 }
 
@@ -299,7 +306,7 @@ function toggleFromArtwork(event) {
 .playlist-sidebar-row__thumb,
 .playlist-sidebar-row__info {
   position: relative;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
 }
 
 .playlist-sidebar-row__info {

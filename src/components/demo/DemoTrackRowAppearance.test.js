@@ -393,10 +393,10 @@ describe('DemoTrackRowAppearance', () => {
 
   it('keeps selectable metadata above the row action and wires ordinary text clicks to visible feedback', () => {
     expect(candidateSource).toMatch(
-      /\.demo-candidate-track-row__action\s*\{[\s\S]*?z-index:\s*0;/u,
+      /\.demo-candidate-track-row__action\s*\{[\s\S]*?z-index:\s*var\(--ui-layer-base\);/u,
     );
     expect(candidateSource).toMatch(
-      /\.demo-candidate-track-row__info,[\s\S]*?\{[\s\S]*?z-index:\s*1;/u,
+      /\.demo-candidate-track-row__info,[\s\S]*?\{[\s\S]*?z-index:\s*var\(--ui-layer-raised\);/u,
     );
     expect(candidateSource).toContain('@click="activateFromRowContent"');
     expect(candidateSource).toMatch(

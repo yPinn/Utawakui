@@ -402,7 +402,7 @@ onUnmounted(() => {
 .reference-editor__beat {
   position: absolute;
   inset-block: 0;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   width: var(--ui-border-width);
   background: color-mix(in srgb, var(--ui-color-text-muted) 38%, transparent);
   pointer-events: none;
@@ -415,7 +415,7 @@ onUnmounted(() => {
 
 .reference-editor__segment {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   min-width: 1px;
   overflow: hidden;
   border: 0;
@@ -448,7 +448,7 @@ onUnmounted(() => {
   inset-block: 0;
   width: var(--ui-focus-width);
   background: var(--ui-color-current);
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   pointer-events: none;
 }
 

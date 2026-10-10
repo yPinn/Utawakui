@@ -233,7 +233,7 @@ defineExpose({ focus });
 
 .demo-candidate-select__value-tooltip {
   position: absolute;
-  z-index: var(--ui-z-tooltip);
+  z-index: var(--ui-layer-overlay);
   inset-block-end: calc(100% + var(--ui-space-2));
   inset-inline: 0;
   padding: var(--ui-space-2);

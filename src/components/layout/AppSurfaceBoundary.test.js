@@ -58,4 +58,36 @@ describe('AppSurfaceBoundary', () => {
     expect(host.props['data-ui-system']).toBe('v2');
     app.unmount();
   });
+
+  it('mounts a detached child host beside its parent host', () => {
+    const { app, root } = mount(
+      AppSurfaceBoundary,
+      { surfaceId: 'setlist', childHosts: ['performance-session-workspace'] },
+      {
+        default: () =>
+          h(AppSurfaceBoundary, {
+            surfaceId: 'performance-session-workspace',
+            detachedHost: true,
+          }),
+      },
+    );
+    const hostIds = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('ui-overlay-host'),
+    ).map((node) => node.props.id);
+
+    expect(hostIds).toEqual([
+      'setlist-overlay',
+      'performance-session-workspace-overlay',
+    ]);
+    app.unmount();
+  });
+
+  it('rejects a child host that the registry does not parent here', () => {
+    expect(() =>
+      mount(AppSurfaceBoundary, {
+        surfaceId: 'lyrics',
+        childHosts: ['performance-session-workspace'],
+      }),
+    ).toThrow(/not a child of lyrics/u);
+  });
 });

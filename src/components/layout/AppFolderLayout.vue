@@ -150,7 +150,7 @@ function navigate(destinationId, event) {
 .app-folder-layout__navigation {
   position: relative;
   isolation: isolate;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   min-width: 0;
   block-size: var(--ui-folder-tab-height-active);
   margin-bottom: calc(-1 * var(--ui-folder-tab-cover-size));
@@ -159,7 +159,7 @@ function navigate(destinationId, event) {
 .app-folder-layout__navigation::after {
   content: '';
   position: absolute;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   inset-inline: 0;
   inset-block-end: 0;
   block-size: var(--ui-folder-tab-cover-size);
@@ -201,7 +201,7 @@ function navigate(destinationId, event) {
 .app-folder-layout__destination {
   position: relative;
   isolation: isolate;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   min-width: var(--ui-folder-tab-min-inline-size);
   block-size: var(--ui-folder-tab-height-active);
   flex: 0 0 auto;
@@ -226,7 +226,7 @@ function navigate(destinationId, event) {
 .app-folder-layout__destination::before {
   content: '';
   position: absolute;
-  z-index: -1;
+  z-index: var(--ui-layer-behind);
   inset: 0;
   clip-path: var(--ui-folder-tab-shape);
   background: var(--ui-folder-tab-material);
@@ -250,7 +250,7 @@ function navigate(destinationId, event) {
 }
 
 .app-folder-layout__destination--active {
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   color: var(--ui-folder-tab-foreground);
 }
 
@@ -262,7 +262,7 @@ function navigate(destinationId, event) {
 
 .app-folder-layout__destination-label {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   min-width: 0;
   max-width: 100%;
   block-size: var(--ui-folder-tab-label-block-size);
@@ -282,14 +282,14 @@ function navigate(destinationId, event) {
 }
 
 .app-folder-layout__destination:focus-visible {
-  z-index: 4;
+  z-index: var(--ui-layer-focus);
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .app-folder-layout__perimeter {
+  /* No stacking context: feature overlay hosts inside must reach global layers. */
   position: relative;
-  z-index: 1;
   min-width: 0;
   min-height: 0;
   height: 100%;

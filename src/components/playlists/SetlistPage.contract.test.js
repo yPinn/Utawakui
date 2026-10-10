@@ -21,16 +21,16 @@ describe('Setlist page composition', () => {
       "import AppFolderPage from '../layout/AppFolderPage.vue'",
     );
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist">\s*<AppFolderPage\s+:mode="pageMode"/u,
+      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>\s*<AppFolderPage\s+:mode="pageMode"/u,
     );
     expect(pageSource).toMatch(
       /<template\s+v-if="showLibraryHeader"\s+#header>[\s\S]*?<UiPageHeader[\s\S]*?<UiSearchBox/u,
     );
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist">[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
+      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
     );
     expect(pageSource).not.toMatch(
-      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist">/u,
+      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>/u,
     );
   });
 

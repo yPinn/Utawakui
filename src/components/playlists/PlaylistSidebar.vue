@@ -705,6 +705,7 @@ function startDrag(playlist, event) {
    row shape) but are intentionally independent, not a shared name. */
 .playlist-sidebar__item {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: var(--ui-sidebar-row-gap);
@@ -728,7 +729,7 @@ function startDrag(playlist, event) {
   position: absolute;
   inset-block: 0;
   inset-inline: calc(-1 * var(--ui-playlist-row-state-surface-outset-inline));
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   border: var(--ui-border-width) solid transparent;
   border-radius: inherit;
   background: transparent;
@@ -884,7 +885,7 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__thumb {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -919,7 +920,7 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__info {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   flex: 1;
   display: flex;
   flex-direction: column;

@@ -67,6 +67,7 @@ defineExpose({ focus });
 <style scoped>
 .ui-switch {
   position: relative;
+  isolation: isolate;
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -74,7 +75,7 @@ defineExpose({ focus });
 
 .ui-switch__native {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset: 0;
   width: 100%;
   height: 100%;

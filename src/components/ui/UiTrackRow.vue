@@ -222,7 +222,7 @@ function handleActionKeydown(event) {
   position: absolute;
   inset-block: 0;
   inset-inline: calc(-1 * var(--ui-track-row-state-surface-outset-inline));
-  z-index: -1;
+  z-index: var(--ui-layer-behind);
   border-radius: inherit;
   background: transparent;
   pointer-events: none;
@@ -243,7 +243,7 @@ function handleActionKeydown(event) {
 .ui-track__action {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   padding: 0;
   border: 0;
   border-radius: inherit;
@@ -282,7 +282,7 @@ function handleActionKeydown(event) {
 .ui-track__duration,
 .ui-track__trail {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .ui-track__lead,

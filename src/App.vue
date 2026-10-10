@@ -445,15 +445,17 @@ useKeyboardShortcuts({ internalViewShortcuts });
               :is="views[activeView]"
               v-if="activeViewOwnsFolderPage"
             />
-            <AppFolderPage v-else mode="workspace">
-              <AppSurfaceBoundary
-                v-if="activeFolderFeatureSurface"
-                :key="activeFolderFeatureSurface"
-                :surface-id="activeFolderFeatureSurface"
-              >
+            <AppSurfaceBoundary
+              v-else-if="activeFolderFeatureSurface"
+              :key="activeFolderFeatureSurface"
+              :surface-id="activeFolderFeatureSurface"
+            >
+              <AppFolderPage mode="workspace">
                 <component :is="views[activeView]" />
-              </AppSurfaceBoundary>
-              <component :is="views[activeView]" v-else />
+              </AppFolderPage>
+            </AppSurfaceBoundary>
+            <AppFolderPage v-else mode="workspace">
+              <component :is="views[activeView]" />
             </AppFolderPage>
           </AppFolderLayout>
         </AppSurfaceBoundary>
@@ -671,7 +673,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
 
 .shell__bgm-boundary {
   position: absolute;
-  z-index: var(--ui-z-popover);
+  z-index: var(--ui-z-floating);
   inset-block-start: var(--ui-shell-content-inset-block);
   inset-block-end: var(--ui-shell-content-inset-block);
   inset-inline-start: var(--ui-shell-edge-inset-inline);

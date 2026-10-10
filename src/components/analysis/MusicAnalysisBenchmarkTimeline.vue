@@ -194,7 +194,7 @@ function seekTo(section) {
 }
 
 .benchmark-timeline__segment:focus-visible {
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
@@ -245,7 +245,7 @@ function seekTo(section) {
 
 .benchmark-timeline__playhead {
   position: absolute;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   inset-block: 0;
   width: 2px;
   background: var(--ui-color-text);

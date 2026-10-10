@@ -173,7 +173,7 @@ async function handleResizeKeydown(event) {
   /* Sits above the scrollable content and the titlebar's own drag region
      (see AppTitleBar.vue) so a drag starting right at the sidebar's edge
      always hits this, not the content behind it. */
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   touch-action: none;
 }
 

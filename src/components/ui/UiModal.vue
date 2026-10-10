@@ -505,7 +505,7 @@ onUnmounted(() => {
   position: static;
   grid-column: 2;
   grid-row: 1;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   align-self: start;
   align-items: center;
   justify-content: flex-end;

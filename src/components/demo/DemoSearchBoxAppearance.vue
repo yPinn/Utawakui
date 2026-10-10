@@ -1062,7 +1062,7 @@ function coverageFor(layer, state, index) {
 .demo-search-layer--candidate :deep(.ui-search-box__clear)::before {
   content: '';
   position: absolute;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   inset-block: var(--ui-border-width);
   inset-inline: 0 var(--ui-border-width);
   border-start-end-radius: calc(
@@ -1075,7 +1075,7 @@ function coverageFor(layer, state, index) {
 
 .demo-search-layer--candidate :deep(.ui-search-box__clear > svg) {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .demo-search-layer--candidate

@@ -161,7 +161,7 @@ function activateFromRowContent(event) {
 
 .demo-candidate-track-row__action {
   position: absolute;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   inset: 0;
   padding: 0;
   border: 0;
@@ -198,7 +198,7 @@ function activateFromRowContent(event) {
 .demo-candidate-track-row__duration,
 .demo-candidate-track-row__trail {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .demo-candidate-track-row.is-interactive .demo-candidate-track-row__thumb,

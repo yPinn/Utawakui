@@ -660,7 +660,7 @@ onUnmounted(() => {
 }
 
 .demo-action-menu--submenu {
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .demo-action-menu__item {

@@ -184,6 +184,7 @@ function cancel() {
 /* Positions the corner control; UiCollageThumb owns the artwork radius clip. */
 .playlist-details__cover {
   position: relative;
+  isolation: isolate;
   inline-size: var(--playlist-details-cover-size);
   block-size: var(--playlist-details-cover-size);
 }
@@ -213,7 +214,7 @@ function cancel() {
 /* Corner control: positioned by the cover, outside the overlay plane. */
 .playlist-details__cover-clear {
   position: absolute;
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   right: var(--ui-space-2);
   top: var(--ui-space-2);
 }

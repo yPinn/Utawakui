@@ -171,7 +171,7 @@ defineProps({
 .demo-text-button-track-row > button {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   padding: 0;
   border: 0;
   border-radius: inherit;
@@ -205,7 +205,7 @@ defineProps({
 
 .demo-text-button-track-row__title {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   color: var(--ui-color-text);
   font-weight: var(--ui-font-weight-semibold);
 }

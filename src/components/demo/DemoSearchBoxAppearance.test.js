@@ -194,10 +194,10 @@ describe('DemoSearchBoxAppearance', () => {
       );
     }
     expect(componentSource).toMatch(
-      /\.demo-search-layer--candidate :deep\(\.ui-search-box__clear\)::before\s*\{[\s\S]*?content: '';[\s\S]*?z-index: 0;[\s\S]*?inset-block: var\(--ui-border-width\);[\s\S]*?inset-inline: 0 var\(--ui-border-width\);[\s\S]*?border-start-end-radius: calc\([\s\S]*?var\(--ui-field-radius\) - var\(--ui-border-width\)[\s\S]*?border-end-end-radius: calc\([\s\S]*?var\(--ui-field-radius\) - var\(--ui-border-width\)[\s\S]*?pointer-events: none;[\s\S]*?\}/u,
+      /\.demo-search-layer--candidate :deep\(\.ui-search-box__clear\)::before\s*\{[\s\S]*?content: '';[\s\S]*?z-index: var\(--ui-layer-base\);[\s\S]*?inset-block: var\(--ui-border-width\);[\s\S]*?inset-inline: 0 var\(--ui-border-width\);[\s\S]*?border-start-end-radius: calc\([\s\S]*?var\(--ui-field-radius\) - var\(--ui-border-width\)[\s\S]*?border-end-end-radius: calc\([\s\S]*?var\(--ui-field-radius\) - var\(--ui-border-width\)[\s\S]*?pointer-events: none;[\s\S]*?\}/u,
     );
     expect(componentSource).toMatch(
-      /\.demo-search-layer--candidate :deep\(\.ui-search-box__clear > svg\)\s*\{[\s\S]*?position: relative;[\s\S]*?z-index: 1;[\s\S]*?\}/u,
+      /\.demo-search-layer--candidate :deep\(\.ui-search-box__clear > svg\)\s*\{[\s\S]*?position: relative;[\s\S]*?z-index: var\(--ui-layer-raised\);[\s\S]*?\}/u,
     );
     expect(componentSource).toMatch(
       /\.demo-search-layer--candidate\s+:deep\(\.ui-search-box__input::-webkit-search-cancel-button\)\s*\{/u,

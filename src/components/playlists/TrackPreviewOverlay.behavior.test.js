@@ -244,7 +244,9 @@ describe('TrackPreviewOverlay', () => {
     expect(source).toMatch(
       /\.track-preview__play-scrim \{\s*background: radial-gradient\(\s*circle at 100% 100%,\s*var\(--ui-color-overlay-scrim\)/u,
     );
-    expect(source).toMatch(/\.track-preview__play \{[^}]*z-index: 3;/u);
+    expect(source).toMatch(
+      /\.track-preview__play \{[^}]*z-index: var\(--ui-layer-indicator\);/u,
+    );
     // It appears only on hover or keyboard focus, through the shared reveal.
     expect(cover).toMatch(
       /^class="track-preview__artwork"\s+data-artwork-reveal-scope\b/u,

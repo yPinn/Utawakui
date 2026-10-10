@@ -88,6 +88,8 @@ watch(
 
 <style scoped>
 .app-folder-page {
+  /* Contains page-local layers; overlay hosts stay outside as siblings. */
+  isolation: isolate;
   min-width: 0;
   min-height: 0;
   height: 100%;
@@ -156,7 +158,7 @@ watch(
 
 .app-folder-page__sheet {
   position: relative;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
@@ -173,7 +175,7 @@ watch(
   position: relative;
   grid-column: 1;
   grid-row: 2;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   min-width: 0;
   overflow: visible;
 }
@@ -186,7 +188,7 @@ watch(
   position: relative;
   grid-column: 1;
   grid-row: 1 / 3;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   min-width: 0;
   min-height: 0;
   overflow: visible;
@@ -195,7 +197,7 @@ watch(
 
 .app-folder-page__tools {
   position: relative;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   box-sizing: border-box;
   min-width: 0;
   display: flex;

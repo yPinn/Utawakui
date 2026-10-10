@@ -100,7 +100,7 @@
 
 .obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
   .obs-template-mockup__kinetic-unit::before {
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   color: var(--ui-output-preview-kinetic-paper);
   -webkit-text-fill-color: var(--ui-output-preview-kinetic-paper);
   -webkit-text-stroke: 0.03em var(--ui-output-preview-kinetic-paper);
@@ -110,7 +110,7 @@
 
 .obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
   .obs-template-mockup__kinetic-unit::after {
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   color: var(--ui-output-preview-kinetic-red);
   background: linear-gradient(
     to bottom left,

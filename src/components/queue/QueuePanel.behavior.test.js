@@ -168,7 +168,7 @@ describe('QueuePanel shared Dock content', () => {
   it('separates Track Row content inset from its hover and selected surface', () => {
     expect(trackRowSource).toContain('isolation: isolate;');
     expect(trackRowSource).toMatch(
-      /\.ui-track::before\s*\{[^}]*inset-inline:\s*calc\(\s*-1\s*\*\s*var\(--ui-track-row-state-surface-outset-inline\)\s*\);[^}]*z-index:\s*-1;/su,
+      /\.ui-track::before\s*\{[^}]*inset-inline:\s*calc\(\s*-1\s*\*\s*var\(--ui-track-row-state-surface-outset-inline\)\s*\);[^}]*z-index:\s*var\(--ui-layer-behind\);/su,
     );
     expect(trackRowSource).toMatch(
       /\.ui-track--interactive:not\(\.ui-track--active\):hover::before\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,

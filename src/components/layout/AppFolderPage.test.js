@@ -103,7 +103,7 @@ describe('AppFolderPage', () => {
       'v-if="$slots.extension || $slots.floating || $slots[\'folder-tools\']"',
     );
     expect(source).toMatch(
-      /\.app-folder-page__extension\s*\{[^}]*position:\s*relative;[^}]*grid-row:\s*2;[^}]*z-index:\s*0;/su,
+      /\.app-folder-page__extension\s*\{[^}]*position:\s*relative;[^}]*grid-row:\s*2;[^}]*z-index:\s*var\(--ui-layer-base\);/su,
     );
     expect(source).not.toMatch(
       /\.app-folder-page__extension\s*\{[^}]*overflow:\s*(?:clip|hidden);/su,
@@ -131,7 +131,7 @@ describe('AppFolderPage', () => {
       /:deep\(\.app-folder-page__document\)\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*max-content max-content;[^}]*isolation:\s*isolate;/su,
     );
     expect(source).toMatch(
-      /\.app-folder-page__floating\s*\{[^}]*grid-row:\s*1 \/ 3;[^}]*z-index:\s*1;[^}]*overflow:\s*visible;[^}]*pointer-events:\s*none;/su,
+      /\.app-folder-page__floating\s*\{[^}]*grid-row:\s*1 \/ 3;[^}]*z-index:\s*var\(--ui-layer-raised\);[^}]*overflow:\s*visible;[^}]*pointer-events:\s*none;/su,
     );
     expect(source).toMatch(
       /\.app-folder-page__extension--floating\s*\{[^}]*min-block-size:\s*var\(--ui-folder-artifact-folder-min-height\);/su,
@@ -162,10 +162,10 @@ describe('AppFolderPage', () => {
       /:deep\(\.app-folder-page__document\)\s*\{[^}]*grid-template-rows:\s*max-content max-content;/su,
     );
     expect(source).toMatch(
-      /\.app-folder-page__tools\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*0;[^}]*justify-content:\s*flex-end;[^}]*margin-block-start:\s*var\(--ui-space-2\);[^}]*padding-inline-end:\s*var\(--ui-folder-document-inset\);/su,
+      /\.app-folder-page__tools\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*var\(--ui-layer-base\);[^}]*justify-content:\s*flex-end;[^}]*margin-block-start:\s*var\(--ui-space-2\);[^}]*padding-inline-end:\s*var\(--ui-folder-document-inset\);/su,
     );
     expect(source).toMatch(
-      /\.app-folder-page__floating\s*\{[^}]*z-index:\s*1;/su,
+      /\.app-folder-page__floating\s*\{[^}]*z-index:\s*var\(--ui-layer-raised\);/su,
     );
     const toolsRule =
       source.match(/\.app-folder-page__tools\s*\{[^}]*\}/su)?.[0] ?? '';

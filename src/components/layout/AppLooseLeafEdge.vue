@@ -15,7 +15,7 @@
 <style scoped>
 .app-loose-leaf-edge {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset-block: 0;
   inset-inline-start: 0;
   inline-size: var(--ui-folder-sheet-binding-gutter);

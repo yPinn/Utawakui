@@ -216,7 +216,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppSurfaceBoundary surface-id="setlist">
+  <AppSurfaceBoundary
+    surface-id="setlist"
+    :child-hosts="['performance-session-workspace']"
+  >
     <AppFolderPage
       :mode="pageMode"
       :document-key="documentKey"

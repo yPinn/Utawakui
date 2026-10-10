@@ -384,7 +384,7 @@ watch(
 
 .ui-scroll-region__viewport {
   position: relative;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   min-inline-size: 0;
   min-block-size: 0;
   inline-size: 100%;
@@ -421,7 +421,7 @@ watch(
 
 .ui-scroll-region__rail {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   border-radius: var(--ui-scrollbar-radius);
   background: var(--ui-scrollbar-track);
   opacity: 0;

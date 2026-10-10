@@ -395,7 +395,7 @@ describe('DemoTextButtonAppearance', () => {
     expect(html).toContain('Cell owns available width／metadata columns');
     expect(html).toContain('幾何與導覽由 parent 擁有。');
     expect(recipesSource).toContain('position: absolute;');
-    expect(recipesSource).toContain('z-index: 1;');
+    expect(recipesSource).toContain('z-index: var(--ui-layer-raised);');
     expect(recipesSource).toContain('@container (max-width: 34rem)');
     expect(recipesSource).toContain('v-bind="layer.recipeProps"');
     expect(componentSource.match(/recipeProps: \{\}/gu)).toHaveLength(2);

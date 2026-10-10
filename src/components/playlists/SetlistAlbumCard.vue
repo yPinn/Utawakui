@@ -55,6 +55,7 @@ function playAlbum(event) {
 <style scoped>
 .setlist-album-card {
   position: relative;
+  isolation: isolate;
   min-inline-size: 0;
   inline-size: 100%;
   padding: var(--ui-space-3);
@@ -91,7 +92,7 @@ function playAlbum(event) {
 }
 
 .setlist-album-card__open {
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   grid-area: 1 / 1 / 3 / 2;
   align-self: stretch;
   justify-self: stretch;
@@ -104,7 +105,7 @@ function playAlbum(event) {
 }
 
 .setlist-album-card__play {
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   grid-area: 1 / 1;
   align-self: end;
   justify-self: end;

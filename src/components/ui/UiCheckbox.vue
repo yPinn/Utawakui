@@ -131,7 +131,7 @@ defineExpose({ focus });
 
 .ui-checkbox__native {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset: 0;
   width: 100%;
   height: 100%;

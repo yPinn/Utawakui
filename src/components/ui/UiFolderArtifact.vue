@@ -379,7 +379,7 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact__stack-layer {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset: 0 auto auto 0;
   box-sizing: border-box;
   width: 78%;
@@ -409,7 +409,7 @@ function handleStackLayerKeydown(layer, event) {
 }
 
 .ui-folder-artifact__stack-layer--front {
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   transform: translate3d(
       var(--ui-folder-artifact-stack-front-x),
       var(--ui-folder-artifact-stack-front-y),
@@ -420,7 +420,7 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact__stack-position {
   position: absolute;
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   inset: var(--ui-space-2) var(--ui-space-2) auto auto;
   padding: var(--ui-space-1) var(--ui-space-2);
   border-radius: var(--ui-radius-xs);

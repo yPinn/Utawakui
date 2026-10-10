@@ -396,16 +396,16 @@ describe('DemoPageLayoutAppearance', () => {
 
   it('layers inactive tabs behind a folder-colored cover rail and the active tab', () => {
     expect(folderLayoutSource).toMatch(
-      /\.app-folder-layout__navigation::after\s*\{[^}]*z-index:\s*2;[^}]*block-size:\s*var\(--ui-folder-tab-cover-size\);[^}]*background:\s*var\(--ui-folder-layout-background\);/su,
+      /\.app-folder-layout__navigation::after\s*\{[^}]*z-index:\s*var\(--ui-layer-overlay\);[^}]*block-size:\s*var\(--ui-folder-tab-cover-size\);[^}]*background:\s*var\(--ui-folder-layout-background\);/su,
     );
     expect(folderLayoutSource).toMatch(
-      /\.app-folder-layout__destination\s*\{[^}]*z-index:\s*1;/su,
+      /\.app-folder-layout__destination\s*\{[^}]*z-index:\s*var\(--ui-layer-raised\);/su,
     );
     expect(folderLayoutSource).toMatch(
-      /\.app-folder-layout__destination--active\s*\{[^}]*z-index:\s*3;/su,
+      /\.app-folder-layout__destination--active\s*\{[^}]*z-index:\s*var\(--ui-layer-indicator\);/su,
     );
     expect(folderLayoutSource).toMatch(
-      /\.app-folder-layout__destination:focus-visible\s*\{[^}]*z-index:\s*4;/su,
+      /\.app-folder-layout__destination:focus-visible\s*\{[^}]*z-index:\s*var\(--ui-layer-focus\);/su,
     );
   });
 

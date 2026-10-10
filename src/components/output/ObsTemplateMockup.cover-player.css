@@ -57,7 +57,7 @@
 
 .obs-template-mockup__vinyl-deck-light {
   position: absolute;
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   inset-inline-end: 8%;
   inset-block-end: 8%;
   width: var(--ui-space-3);
@@ -190,7 +190,7 @@
 
 .obs-template-mockup__vinyl-record-grooves {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset: 7%;
   border: var(--ui-border-width) solid var(--ui-output-preview-vinyl-dark);
   border-radius: 50%;
@@ -212,7 +212,7 @@
 
 .obs-template-mockup__vinyl-label {
   position: relative;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   width: 31%;
   aspect-ratio: 1;
   display: grid;
@@ -239,7 +239,7 @@
 
 .obs-template-mockup__vinyl-tonearm {
   position: absolute;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   inset-inline-end: 2%;
   inset-block-start: 8%;
   width: 30%;
@@ -378,7 +378,7 @@
 .obs-template-mockup[data-template-id='art-card']
   .obs-template-mockup__vinyl-sleeve {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   width: 100%;
   aspect-ratio: 1;
   container-type: inline-size;
@@ -392,7 +392,7 @@
 .obs-template-mockup__vinyl-sleeve::before,
 .obs-template-mockup__vinyl-sleeve::after {
   position: absolute;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   inset: 0;
   pointer-events: none;
   content: '';
@@ -452,7 +452,7 @@
 }
 
 .obs-template-mockup__vinyl-copy {
-  z-index: 3;
+  z-index: var(--ui-layer-indicator);
   display: grid;
   align-content: end;
   gap: var(--ui-output-template-thumb-tight-gap);

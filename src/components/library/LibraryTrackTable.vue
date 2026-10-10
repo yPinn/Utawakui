@@ -408,6 +408,7 @@ function sortLabel(key, label) {
 
 .library-track-row {
   position: relative;
+  isolation: isolate;
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   color: var(--ui-color-text);
@@ -420,7 +421,7 @@ function sortLabel(key, label) {
 
 .library-track-row__action {
   position: absolute;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   inset: 0;
   padding: 0;
   background: transparent;
@@ -481,7 +482,7 @@ function sortLabel(key, label) {
 .library-track-row__duration,
 .library-track-row__actions {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .library-track-row__reorder-cell,
@@ -519,7 +520,7 @@ function sortLabel(key, label) {
 .library-track-row__title--destination,
 .library-track-row__subtitle :deep(.track-artist-credits__link) {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   pointer-events: auto;
 }
 

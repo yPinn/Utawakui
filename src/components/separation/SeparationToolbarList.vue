@@ -413,7 +413,7 @@ function dragItem(item) {
 .separation-toolbar-list__drop-indicator {
   position: absolute;
   inset-inline: 0;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   pointer-events: none;
 }
 

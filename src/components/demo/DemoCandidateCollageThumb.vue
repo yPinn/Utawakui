@@ -166,7 +166,7 @@ function handleCoverImageError() {
 .demo-candidate-collage-thumb__overlay {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   display: flex;
   align-items: center;
   justify-content: center;

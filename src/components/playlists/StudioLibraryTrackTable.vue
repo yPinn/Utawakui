@@ -227,7 +227,7 @@ function sortLabel({ key, label }) {
 
 .studio-track-table__header {
   position: sticky;
-  z-index: var(--ui-z-sticky);
+  z-index: var(--ui-layer-overlay);
   top: 0;
   min-height: var(--ui-list-header-height);
   padding: 0 var(--ui-space-2);
@@ -243,7 +243,7 @@ function sortLabel({ key, label }) {
 
 .studio-track-row__action {
   position: absolute;
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   inset: 0;
   padding: 0;
   background: transparent;
@@ -269,7 +269,7 @@ function sortLabel({ key, label }) {
 .studio-track-row__source,
 .studio-track-row__duration {
   position: relative;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .studio-track-row__index,
@@ -337,6 +337,7 @@ function sortLabel({ key, label }) {
 
 .studio-track-row {
   position: relative;
+  isolation: isolate;
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-space-1) var(--ui-space-2);
   color: var(--ui-color-text-muted);

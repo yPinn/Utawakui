@@ -290,6 +290,7 @@ defineExpose({ focus });
 @scope ([data-ui-system='v2']) to ([data-ui-system]) {
   .ui-range-control {
     position: relative;
+    isolation: isolate;
     height: var(--ui-range-target-size, var(--ui-control-height));
     -webkit-user-select: none;
     user-select: none;
@@ -297,7 +298,7 @@ defineExpose({ focus });
 
   .ui-range-control__native {
     position: absolute;
-    z-index: 1;
+    z-index: var(--ui-layer-raised);
     inset: 0;
     height: 100%;
     appearance: none;

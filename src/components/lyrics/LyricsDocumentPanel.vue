@@ -341,7 +341,7 @@ watch(
   bottom: calc(
     var(--ui-space-4) + var(--ui-lyrics-live-control-height) + var(--ui-space-2)
   );
-  z-index: var(--ui-z-popover);
+  z-index: var(--ui-layer-overlay);
   box-shadow: var(--ui-shadow-overlay);
 }
 .lyrics-preview--font-compact .lyrics-line__button {

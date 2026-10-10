@@ -62,6 +62,7 @@ defineExpose({ scrollTo });
 
 <style scoped>
 .app-right-dock-panel {
+  isolation: isolate;
   display: flex;
   min-inline-size: 0;
   min-block-size: 0;
@@ -72,7 +73,7 @@ defineExpose({ scrollTo });
 
 .app-right-dock-panel__chrome {
   position: relative;
-  z-index: var(--ui-z-sticky);
+  z-index: var(--ui-layer-overlay);
   background: var(--ui-right-dock-sticky-background);
   transition:
     box-shadow var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),

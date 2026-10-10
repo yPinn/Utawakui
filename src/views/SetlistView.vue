@@ -801,6 +801,7 @@ onMounted(async () => {
         surface-id="performance-session-workspace"
         class="setlist-view__session-boundary"
         tag="div"
+        detached-host
       >
         <PerformanceSessionWorkspace
           :tracks="libraryState.tracks"

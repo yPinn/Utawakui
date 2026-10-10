@@ -468,7 +468,7 @@ const SELECT_OPTIONS = [
 
 .demo-validation-flow__step > b {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset-block-start: 50%;
   inset-inline-end: calc(var(--ui-space-3) * -1);
   width: var(--ui-space-3);

@@ -72,7 +72,7 @@ function resetLyricsOffset() {
   position: absolute;
   right: var(--ui-space-4);
   bottom: var(--ui-space-4);
-  z-index: var(--ui-z-popover);
+  z-index: var(--ui-layer-overlay);
   display: grid;
   justify-items: end;
   gap: var(--ui-space-2);

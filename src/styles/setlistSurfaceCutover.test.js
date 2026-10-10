@@ -22,7 +22,7 @@ describe('Setlist Token v2 surface cutover', () => {
   it('keeps Setlist in the Folder document mode and leaves page scrolling with AppFolderPage', () => {
     expect(appSource).toContain('setlist: SetlistPage');
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist">\s*<AppFolderPage\s+:mode="pageMode"/u,
+      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>\s*<AppFolderPage\s+:mode="pageMode"/u,
     );
     expect(pageSource).toContain(
       "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
@@ -39,6 +39,11 @@ describe('Setlist Token v2 surface cutover', () => {
     expect(setlistSource).toMatch(
       /<AppSurfaceBoundary\s+v-if="performanceSessionWorkspace\.isOpen\.value"\s+surface-id="performance-session-workspace"/u,
     );
+    // Its host mounts beside the Setlist host, outside the scroll document's
+    // stacking context.
+    expect(setlistSource).toMatch(
+      /surface-id="performance-session-workspace"[^>]*detached-host/u,
+    );
     expect(setlistSource).toMatch(
       /<AppSurfaceBoundary[\s\S]*?<PerformanceSessionWorkspace[\s\S]*?<\/AppSurfaceBoundary>/u,
     );
@@ -49,10 +54,10 @@ describe('Setlist Token v2 surface cutover', () => {
 
   it('keeps Setlist-owned modal and action menu inside the Setlist feature owner', () => {
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist">[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView[\s\S]*?<\/AppFolderPage>[\s\S]*?<\/AppSurfaceBoundary>/u,
+      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView[\s\S]*?<\/AppFolderPage>[\s\S]*?<\/AppSurfaceBoundary>/u,
     );
     expect(pageSource).not.toMatch(
-      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist">/u,
+      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>/u,
     );
     expect(setlistSource).toContain('<TrackMetadataModal');
     expect(setlistSource).toContain('<TrackActionMenu');

@@ -568,7 +568,7 @@ onUnmounted(() => {
 }
 
 .ui-context-menu--submenu {
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
 }
 
 .ui-context-menu__empty {

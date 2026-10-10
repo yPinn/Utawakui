@@ -140,7 +140,7 @@ const previewLines = computed(() => {
 }
 
 .ornate-preview__unit[data-emphasis='keyword'] {
-  z-index: 0;
+  z-index: var(--ui-layer-base);
   color: var(--ui-output-preview-ornate-paper);
   font-size: inherit;
   line-height: inherit;
@@ -148,7 +148,7 @@ const previewLines = computed(() => {
 
 .ornate-preview__unit[data-emphasis='keyword']::before {
   position: absolute;
-  z-index: -1;
+  z-index: var(--ui-layer-behind);
   inset: 0;
   content: attr(data-text);
   color: var(--ui-output-preview-ornate-echo);

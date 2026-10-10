@@ -136,7 +136,7 @@ function handleDragEnd(event) {
 .queue-track__drop-indicator {
   position: absolute;
   inset-inline: 0;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   pointer-events: none;
 }
 

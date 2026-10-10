@@ -162,7 +162,7 @@ function handleResizeKeydown(event) {
   --ui-icon-button-size-override: var(--ui-right-dock-rail-width);
 
   position: absolute;
-  z-index: 2;
+  z-index: var(--ui-layer-overlay);
   inset-inline-end: 0;
   inset-block-end: var(--ui-space-1);
 }
@@ -197,7 +197,7 @@ function handleResizeKeydown(event) {
 
 .app-right-dock__handle {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset-block: 0;
   inset-inline-start: calc(var(--ui-resize-handle-hit-size) / -2);
   inline-size: var(--ui-resize-handle-hit-size);

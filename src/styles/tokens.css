@@ -353,21 +353,29 @@
   --ui-folder-artifact-shadow: 0 0.75rem 1.5rem -0.75rem rgb(0 0 0 / 38%);
   --ui-folder-artifact-drag-shadow: 0 0.75rem 1rem rgb(0 0 0 / 28%);
   --ui-folder-artifact-drag-scale: 1.0125;
-  --ui-folder-artifact-z-active: 100;
 
   /* Flat archival elevation: shadows indicate real overlap only. */
   --ui-shadow-contact: none;
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 32%);
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(0 0 0 / 42%);
 
-  /* Global semantic layers; component internals use local 0/1/2 values. */
+  /* Global semantic layers: only shell chrome and teleported overlays. */
   --ui-z-sticky: 10;
+  --ui-z-floating: 15;
   --ui-z-popover: 20;
   --ui-z-backdrop: 30;
   --ui-z-dialog: 40;
   --ui-z-toast: 50;
   --ui-z-tooltip: 60;
   --ui-z-drag: 70;
+
+  /* Local layers: valid only inside an owner that isolates its stacking context. */
+  --ui-layer-behind: -1;
+  --ui-layer-base: 0;
+  --ui-layer-raised: 1;
+  --ui-layer-overlay: 2;
+  --ui-layer-indicator: 3;
+  --ui-layer-focus: 4;
 
   /* Purpose-based motion timing; components map behavior without aliasing it. */
   --ui-motion-duration-feedback: 100ms;
