@@ -1,5 +1,7 @@
 <script setup>
-import { computed, useId } from 'vue';
+import { computed } from 'vue';
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
+import AppFolderSection from '../layout/AppFolderSection.vue';
 import SetlistAlbumCard from './SetlistAlbumCard.vue';
 
 const props = defineProps({
@@ -10,21 +12,24 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['selectAlbum', 'playAlbum']);
-const instanceId = useId();
-const relatedTitleId = `setlist-related-albums-${instanceId}`;
-const defaultAlbumsTitle = computed(() => `更多來自 ${props.artist} 的內容`);
+const sectionTitle = computed(
+  () => props.albumsTitle || `更多來自 ${props.artist} 的內容`,
+);
+// Only the default title embeds the artist name, which is user content.
+const sectionTitleLang = computed(() =>
+  props.albumsTitle ? undefined : contentLangAttribute(props.artist),
+);
+const albumCountLabel = computed(() => `${props.relatedAlbums.length} 張`);
 </script>
 
 <template>
   <div class="setlist-album-supporting" aria-label="專輯延伸內容">
-    <section
+    <AppFolderSection
       v-if="relatedAlbums.length > 0"
-      class="setlist-album-supporting__section"
-      :aria-labelledby="relatedTitleId"
+      :title="sectionTitle"
+      :title-lang="sectionTitleLang"
+      :meta="albumCountLabel"
     >
-      <h2 :id="relatedTitleId">
-        {{ albumsTitle || defaultAlbumsTitle }}
-      </h2>
       <ul class="setlist-album-supporting__albums">
         <li
           v-for="album in relatedAlbums"
@@ -39,7 +44,7 @@ const defaultAlbumsTitle = computed(() => `更多來自 ${props.artist} 的內�
           />
         </li>
       </ul>
-    </section>
+    </AppFolderSection>
   </div>
 </template>
 
@@ -49,23 +54,6 @@ const defaultAlbumsTitle = computed(() => `更多來自 ${props.artist} 的內�
   display: grid;
   gap: var(--ui-space-6);
   padding-block-start: var(--ui-space-6);
-}
-
-.setlist-album-supporting__section {
-  min-inline-size: 0;
-  display: grid;
-  gap: var(--ui-space-3);
-}
-
-.setlist-album-supporting__section h2 {
-  margin: 0;
-}
-
-.setlist-album-supporting__section h2 {
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
 }
 
 .setlist-album-supporting__albums {
