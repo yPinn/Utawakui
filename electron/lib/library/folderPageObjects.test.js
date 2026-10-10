@@ -126,7 +126,7 @@ describe('folder page objects', () => {
       page,
       placement: { region: 'bottom', anchor: { x: 0.06, y: 0.19 } },
       pinned: false,
-      rotation: -3.25,
+      rotation: -0.75,
       order: 1,
       createdAt: '2026-10-10T01:00:00.000Z',
       imageUrl: `utawakui-media://folder-asset/${PHOTO_ID}/image.png`,
@@ -164,7 +164,7 @@ describe('folder page objects', () => {
       { region: 'bottom', anchor: { x: 0.9, y: 0.15 } },
       { region: 'bottom', anchor: { x: 0.1, y: 0.5 } },
     ]);
-    expect(photos.every((photo) => photo.rotation === 1.75)).toBe(true);
+    expect(photos.every((photo) => photo.rotation === 0.75)).toBe(true);
     expect(photos.map((photo) => photo.order)).toEqual([2, 3, 4, 5, 6]);
   });
 
@@ -293,7 +293,7 @@ describe('folder page objects', () => {
       summaryEntry({ rotation: 3, type: 'note' }),
     ]);
 
-    expect(saved.rotation).toBe(-3.25);
+    expect(saved.rotation).toBe(-0.75);
     expect(summary.rotation).toBe(-1.5);
   });
 
@@ -521,7 +521,7 @@ describe('folder page objects', () => {
       page,
       placement: { region: 'bottom', anchor: { x: 0.37, y: 0.15 } },
       pinned: false,
-      rotation: 1.75,
+      rotation: 0.75,
       order: 2,
       createdAt: '2026-10-10T02:00:00.000Z',
       title: '安可',
@@ -634,6 +634,27 @@ describe('folder page objects', () => {
     expect(
       listFolderPageObjects(directory, page).map((object) => object.paper),
     ).toEqual(derived);
+  });
+
+  it('leans new objects 0.75°–4° either way instead of a fixed set', () => {
+    const lean = (value, id) =>
+      addFolderPageNote(
+        directory,
+        page,
+        { text: '便條' },
+        {
+          id,
+          random: () => value,
+        },
+      ).rotation;
+    const rotations = [0, 0.25, 0.4999, 0.5, 0.75, 0.9999].map((value, index) =>
+      lean(value, `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`),
+    );
+    expect(rotations).toEqual([-0.75, -2.4, -4, 0.75, 2.4, 4]);
+    for (const rotation of rotations) {
+      expect(Math.abs(rotation)).toBeGreaterThanOrEqual(0.75);
+      expect(Math.abs(rotation)).toBeLessThanOrEqual(4);
+    }
   });
 
   it('picks a print stock per photo once and derives a stable frame for legacy photos', () => {

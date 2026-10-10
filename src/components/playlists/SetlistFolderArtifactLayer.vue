@@ -2,6 +2,7 @@
 import { computed, shallowRef, useTemplateRef } from 'vue';
 import { Maximize2, Pencil, Pin, PinOff, Trash2 } from '../../icons/index.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
+import { folderStationeryFor } from '../../utils/folderStationery.js';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
@@ -28,19 +29,6 @@ function keyHash(key) {
 // Stable per-key grain so a note keeps its texture across renders and restarts.
 function noteTexture(key) {
   return keyHash(key) % NOTE_TEXTURE_COUNT;
-}
-
-// About one in three user objects carries stationery: tape on photos, a
-// torn edge on notes. The data card is an index card, so it is always clipped.
-const STATIONERY_SHARE = 3;
-function stationeryFor(item) {
-  if (item.source === 'derived') return { stationery: 'clip' };
-  const hash = keyHash(item.key);
-  if (hash % STATIONERY_SHARE !== 0) return { stationery: 'none' };
-  return {
-    stationery: item.type === 'photo' ? 'tape' : 'torn',
-    stationeryVariant: Math.floor(hash / STATIONERY_SHARE) % 2,
-  };
 }
 
 // Rendering per object type; unknown types (e.g. pdf, embed) stay hidden.
@@ -161,7 +149,7 @@ const artifacts = computed(() =>
     return {
       id: item.key,
       ...rendered,
-      props: { ...rendered.props, ...stationeryFor(item) },
+      props: { ...rendered.props, ...folderStationeryFor(item) },
       initialPlacement: item.placement,
       initialPinned: item.pinned === true,
       initialZ: index + 1,

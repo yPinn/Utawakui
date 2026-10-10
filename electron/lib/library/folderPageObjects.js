@@ -59,7 +59,8 @@ function pickStock(stocks, random) {
   ];
 }
 const INITIAL_ANCHOR_JITTER = 0.04;
-const INITIAL_ROTATIONS = Object.freeze([-3.25, -1.75, 1.75, 3.25]);
+// New objects lean a little, never squarely: either way, 0.75°–4°.
+const INITIAL_ROTATION_RANGE = Object.freeze([0.75, 4]);
 // New user objects land on a 4×3 grid inside the bottom Folder region.
 const INITIAL_SLOT_X = Object.freeze([0.1, 0.37, 0.63, 0.9]);
 const INITIAL_SLOT_Y = Object.freeze([0.15, 0.5, 0.85]);
@@ -474,13 +475,16 @@ function initialPose(slotIndex, random) {
     x: roundedNormalized(INITIAL_SLOT_X[column] + jitter()),
     y: roundedNormalized(INITIAL_SLOT_Y[row] + jitter()),
   };
-  const rotationIndex = Math.min(
-    INITIAL_ROTATIONS.length - 1,
-    Math.floor(randomUnit(random) * INITIAL_ROTATIONS.length),
-  );
+  // One draw picks the side and the lean, so the random sequence is unchanged.
+  const lean = randomUnit(random);
+  const [minRotation, maxRotation] = INITIAL_ROTATION_RANGE;
+  const magnitude =
+    minRotation + ((lean % 0.5) / 0.5) * (maxRotation - minRotation);
+  // Round the size before the sign so both sides land on the same 0.05° steps.
+  const rotation = ((lean < 0.5 ? -1 : 1) * Math.round(magnitude * 20)) / 20;
   return {
     placement: { region: 'bottom', anchor },
-    rotation: INITIAL_ROTATIONS[rotationIndex],
+    rotation,
   };
 }
 

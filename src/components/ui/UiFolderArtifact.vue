@@ -60,7 +60,15 @@ const props = defineProps({
     default: 'none',
     validator: (value) => ['none', 'clip', 'tape', 'torn'].includes(value),
   },
-  stationeryVariant: { type: Number, default: 0 },
+  // Per-object geometry from folderStationeryFor(): CSS variables, tape
+  // strips and the torn side.
+  stationeryStyle: { type: Object, default: () => ({}) },
+  stationeryStrips: { type: Array, default: () => [] },
+  stationerySide: {
+    type: String,
+    default: 'bottom',
+    validator: (value) => ['top', 'bottom'].includes(value),
+  },
   // Data-card rows: [{ label, value, lang? }].
   fields: { type: Array, default: () => [] },
   editing: { type: Boolean, default: false },
@@ -161,16 +169,36 @@ function handleStackLayerKeydown(layer, event) {
     :data-paper="kind === 'note' ? paper : undefined"
     :data-photo-frame="kind === 'photo' ? frame : undefined"
     :data-stationery="stationery === 'none' ? undefined : stationery"
-    :data-stationery-variant="
-      stationery === 'torn' ? stationeryVariant % 2 : undefined
-    "
+    :data-stationery-side="stationery === 'torn' ? stationerySide : undefined"
+    :style="stationery === 'none' ? undefined : stationeryStyle"
   >
-    <span
-      v-if="stationery === 'clip' || stationery === 'tape'"
-      class="ui-folder-artifact__stationery"
-      :class="`ui-folder-artifact__stationery--${stationery}`"
-      aria-hidden="true"
-    ></span>
+    <!-- A clip straddles the top edge: its back loop sits behind the paper
+         (faint through translucent notes), its front loop on the paper. -->
+    <template v-if="stationery === 'clip'">
+      <span
+        class="ui-folder-artifact__stationery ui-folder-artifact__stationery--clip-back"
+        aria-hidden="true"
+      ></span>
+      <span
+        class="ui-folder-artifact__stationery ui-folder-artifact__stationery--clip-front"
+        aria-hidden="true"
+      ></span>
+    </template>
+    <template v-else-if="stationery === 'tape'">
+      <span
+        v-for="(strip, index) in stationeryStrips"
+        :key="index"
+        class="ui-folder-artifact__stationery ui-folder-artifact__stationery--tape"
+        :style="{
+          '--ui-folder-stationery-tape-x': strip.x,
+          '--ui-folder-stationery-tape-angle': strip.angle,
+          '--ui-folder-stationery-tape-length': strip.length,
+          '--ui-folder-stationery-tape-tint': strip.tint,
+          '--ui-folder-stationery-tape-edge': strip.edge,
+        }"
+        aria-hidden="true"
+      ></span>
+    </template>
     <template v-if="kind === 'photo'">
       <UiPhotoFrame v-if="src" :src="src" :alt="alt" fit="cover" filtered />
       <slot v-else></slot>
@@ -276,34 +304,58 @@ function handleStackLayerKeydown(layer, event) {
   pointer-events: none;
 }
 
-.ui-folder-artifact__stationery--clip {
+/* The clip box: 35% rises above the top edge, the rest lies on the paper. */
+.ui-folder-artifact__stationery--clip-back,
+.ui-folder-artifact__stationery--clip-front {
   inline-size: var(--ui-space-4);
   block-size: var(--ui-space-7);
-  /* Rises above the card so its overlap stays inside the note padding. */
-  inset-block-start: calc(-1 * var(--ui-space-6));
-  inset-inline-start: var(--ui-space-5);
+  inset-block-start: calc(-0.35 * var(--ui-space-7));
+  inset-inline-start: var(--ui-folder-stationery-clip-x, 50%);
+  transform: translateX(-50%)
+    rotate(var(--ui-folder-stationery-clip-angle, 0deg));
+  transform-origin: 50% 35%;
+}
+
+/* Paints behind the paper in the object's own stacking context. */
+.ui-folder-artifact__stationery--clip-back {
+  z-index: var(--ui-layer-behind);
+  background: color-mix(
+    in srgb,
+    var(--ui-folder-stationery-clip-color) 78%,
+    var(--ui-color-text)
+  );
+  mask: url('../../assets/folder-stationery/paperclip-back.svg?no-inline')
+    center / contain no-repeat;
+}
+
+.ui-folder-artifact__stationery--clip-front {
   background: var(--ui-folder-stationery-clip-color);
-  mask: url('../../assets/folder-stationery/paperclip.svg?no-inline') center /
-    contain no-repeat;
+  mask: url('../../assets/folder-stationery/paperclip-front.svg?no-inline')
+    center / contain no-repeat;
 }
 
 .ui-folder-artifact__stationery--tape {
-  inline-size: var(--ui-space-8);
+  inline-size: var(--ui-folder-stationery-tape-length, var(--ui-space-8));
   block-size: var(--ui-space-5);
-  inset-block-start: calc(-1 * var(--ui-space-3));
-  inset-inline-start: 50%;
-  background: var(--ui-folder-stationery-tape-bg);
-  box-shadow: var(--ui-folder-stationery-tape-shadow);
-  transform: translateX(-50%) rotate(-4deg);
+  inset-block-start: calc(-0.5 * var(--ui-space-5));
+  inset-inline-start: var(--ui-folder-stationery-tape-x, 50%);
+  background: var(--ui-folder-stationery-tape-tint);
+  clip-path: var(--ui-folder-stationery-tape-edge, none);
+  filter: drop-shadow(var(--ui-folder-stationery-tape-shadow));
+  transform: translateX(-50%)
+    rotate(var(--ui-folder-stationery-tape-angle, 0deg));
 }
 
 .ui-folder-artifact--note[data-stationery='torn'] {
-  padding-block-end: calc(var(--ui-space-5) + var(--ui-space-3));
-  clip-path: var(--ui-folder-stationery-edge-torn-a);
+  clip-path: var(--ui-folder-stationery-edge, none);
 }
 
-.ui-folder-artifact--note[data-stationery='torn'][data-stationery-variant='1'] {
-  clip-path: var(--ui-folder-stationery-edge-torn-b);
+.ui-folder-artifact--note[data-stationery-side='bottom'] {
+  padding-block-end: calc(var(--ui-space-5) + var(--ui-space-3));
+}
+
+.ui-folder-artifact--note[data-stationery-side='top'] {
+  padding-block-start: calc(var(--ui-space-5) + var(--ui-space-3));
 }
 
 /* A dark archival print: same frame mechanics, restated tokens only. */
