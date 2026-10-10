@@ -13,16 +13,13 @@ import { useSetlistFolderObjects } from '../../composables/useSetlistFolderObjec
 import { usePerformanceSessionWorkspace } from '../../composables/usePerformanceSessionWorkspace.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
-import { libraryViewTitle } from '../../utils/playlistMenu.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
 import SetlistView from '../../views/SetlistView.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
-import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiSearchBox from '../ui/UiSearchBox.vue';
 import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue';
 
@@ -56,13 +53,6 @@ let focusAddButtonAfterPreviewClose = false;
 const pageMode = computed(() =>
   performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document',
 );
-const showLibraryHeader = computed(
-  () =>
-    !performanceSessionWorkspace.isOpen.value &&
-    !selectedPlaylist.value &&
-    !playlistState.selectedArtistId,
-);
-const pageTitle = computed(() => libraryViewTitle(playlistState.libraryView));
 const documentKey = computed(
   () =>
     selectedPlaylist.value?.id ??
@@ -225,14 +215,6 @@ onBeforeUnmount(() => {
       :document-key="documentKey"
       body-label="曲目內容"
     >
-      <template v-if="showLibraryHeader" #header>
-        <UiPageHeader :title="pageTitle">
-          <template #actions>
-            <UiSearchBox v-model="searchQuery" />
-          </template>
-        </UiPageHeader>
-      </template>
-
       <UiNotice
         v-if="folderPageIdentity && folderObjects.error.value"
         tone="danger"

@@ -33,7 +33,7 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(467);
+    expect(names.size).toBe(468);
     expect(names).toContain('--ui-folder-content-background');
     expect(names).toContain('--ui-folder-content-state-min-block-size');
     expect(names).toContain('--ui-folder-sheet-background');

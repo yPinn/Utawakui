@@ -16,16 +16,16 @@ describe('Setlist page composition', () => {
     expect(pageSource).not.toContain('artistSummaryLayout');
   });
 
-  it('owns one AppFolderPage with a fixed library header and feature body', () => {
+  it('owns one AppFolderPage with the feature body and no page header', () => {
     expect(pageSource).toContain(
       "import AppFolderPage from '../layout/AppFolderPage.vue'",
     );
     expect(pageSource).toMatch(
       /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>\s*<AppFolderPage\s+:mode="pageMode"/u,
     );
-    expect(pageSource).toMatch(
-      /<template\s+v-if="showLibraryHeader"\s+#header>[\s\S]*?<UiPageHeader[\s\S]*?<UiSearchBox/u,
-    );
+    expect(pageSource).not.toContain('#header');
+    expect(pageSource).not.toContain('UiPageHeader');
+    expect(pageSource).not.toContain('UiSearchBox');
     expect(pageSource).toMatch(
       /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
     );
@@ -196,9 +196,14 @@ describe('Setlist page composition', () => {
     expect(pageSource).toContain(':document-key="documentKey"');
   });
 
-  it('shows the fixed library header only when no collection entity is selected', () => {
-    expect(pageSource).toMatch(
-      /const showLibraryHeader = computed\(\s*\(\) =>\s*!performanceSessionWorkspace\.isOpen\.value &&\s*!selectedPlaylist\.value &&\s*!playlistState\.selectedArtistId,\s*\);/u,
+  // Spotify-style: library views use the same dossier header as collections.
+  it('gives every library view the collection dossier header', () => {
+    expect(pageSource).not.toContain('showLibraryHeader');
+    expect(viewSource).toContain(
+      `:entity-kind="mode === 'all' ? 'library' : mode"`,
+    );
+    expect(viewSource).toMatch(
+      /if \(mode\.value === 'all'\) return `library:\$\{playlistState\.libraryView\}`;/u,
     );
     expect(pageSource).toMatch(
       /selectedPlaylist\.value\?\.id \?\?\s*playlistState\.selectedArtistId \?\?\s*`library:/u,

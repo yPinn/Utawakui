@@ -180,10 +180,10 @@ const selectedDemoAlbum = computed(
 const demoRelatedAlbums = computed(() =>
   demoAlbums.filter((album) => album.id !== demoSelectedAlbumId.value),
 );
-const demoAlbumMeta = computed(
-  () =>
-    `${selectedDemoAlbum.value.releaseYear} · ${selectedDemoAlbum.value.trackCount} 首曲目 · ${selectedDemoAlbum.value.durationLabel}`,
-);
+const demoAlbumFields = computed(() => [
+  String(selectedDemoAlbum.value.releaseYear),
+  `${selectedDemoAlbum.value.trackCount} 首曲目，${selectedDemoAlbum.value.durationLabel}`,
+]);
 const visibleDemoAlbumEntries = computed(() => {
   const query = demoSearchQuery.value.trim().toLocaleLowerCase();
   const limit = contentMode.value === 'short' ? 3 : Number.POSITIVE_INFINITY;
@@ -359,7 +359,7 @@ function toggleDemoCollectionShuffle() {
                 :title="selectedDemoAlbum.name"
                 :title-id="specimenTitleId"
                 artist="王以太"
-                :meta="demoAlbumMeta"
+                :fields="demoAlbumFields"
                 :cover-tracks="selectedDemoAlbum.tracks"
                 :cover-url="selectedDemoAlbum.coverUrl"
                 :description="selectedDemoAlbum.description"

@@ -18,7 +18,7 @@ async function renderHeader(overrides = {}) {
           title: 'AIR·艾熱',
           titleId: 'album-title-test',
           artist: '艾熱',
-          meta: '2018 · 9 首曲目 · 29 分',
+          fields: ['2018', '9 首曲目，29 分'],
           description: '本機曲庫中的專輯資料。',
           canPlay: true,
           canShuffle: true,
@@ -41,9 +41,9 @@ describe('SetlistCollectionHeader', () => {
     );
     expect(html).toContain('id="album-title-test"');
     expect(html).toContain('aria-labelledby="album-title-test"');
-    expect(html).toContain('專輯資料');
+    expect(html).toMatch(/app-folder-dossier__marker[^>]*>\s*專輯\s*</u);
     expect(html).toContain('艾熱');
-    expect(html).toContain('2018 · 9 首曲目 · 29 分');
+    expect(html).toContain('9 首曲目，29 分');
   });
 
   it('assigns playlist edit and album add-to-playlist as different extension actions', async () => {
@@ -65,11 +65,11 @@ describe('SetlistCollectionHeader', () => {
       title: 'YOASOBI',
       artist: '',
       description: '',
-      meta: '18 首曲目 · 3 張專輯 · 2019–2024',
+      fields: ['18 首曲目', '3 張專輯', '2019–2024'],
     });
 
-    expect(html).toContain('藝人資料');
-    expect(html).toContain('library-entity-dossier__artwork--round');
+    expect(html).toMatch(/app-folder-dossier__marker[^>]*>\s*藝人\s*</u);
+    expect(html).toContain('app-folder-dossier__artwork--round');
     expect(html).toContain('播放此藝人');
     expect(html).toContain('選擇藝人照片');
     expect(html).not.toContain('將專輯新增至播放清單');
@@ -141,20 +141,20 @@ describe('SetlistCollectionHeader', () => {
       /\.setlist-collection-header__photo-action--empty\s*\{[^}]*justify-content:\s*flex-end/su,
     );
     expect(source).toMatch(
-      /\.library-entity-dossier__artwork:has\(\s*\.setlist-collection-header__photo-action--empty\s*\)\s*\.ui-collage-thumb__single-empty\s*\)\s*\{\s*visibility:\s*hidden;/su,
+      /\.app-folder-dossier__artwork:has\(\s*\.setlist-collection-header__photo-action--empty\s*\)\s*\.ui-collage-thumb__single-empty\s*\)\s*\{\s*visibility:\s*hidden;/su,
     );
   });
 
   it('keeps the dossier hairline outside the artwork so it stays centered', () => {
     const dossierSource = readFileSync(
-      new URL('./LibraryEntityDossier.vue', import.meta.url),
+      new URL('../layout/AppFolderDossier.vue', import.meta.url),
       'utf8',
     );
     expect(dossierSource).toMatch(
-      /\.library-entity-dossier__artwork\s*\{[^}]*box-sizing:\s*content-box;/su,
+      /\.app-folder-dossier__artwork\s*\{[^}]*box-sizing:\s*content-box;/su,
     );
     expect(dossierSource).not.toMatch(
-      /\.library-entity-dossier__artwork\s*\{[^}]*width:\s*136px;/su,
+      /\.app-folder-dossier__artwork\s*\{[^}]*width:\s*136px;/su,
     );
     expect(dossierSource).toContain(
       'grid-template-columns: max-content minmax(0, 1fr);',

@@ -18,13 +18,15 @@ const props = defineProps({
   entityKind: {
     type: String,
     required: true,
-    validator: (value) => ['playlist', 'album', 'artist'].includes(value),
+    validator: (value) =>
+      ['library', 'playlist', 'album', 'artist'].includes(value),
   },
+  libraryView: { type: String, default: 'all' },
   title: { type: String, required: true },
   titleId: { type: String, default: 'collection-title' },
   artist: { type: String, default: '' },
   artistLinkLabel: { type: String, default: '' },
-  meta: { type: String, default: '' },
+  fields: { type: Array, default: () => [] },
   // Full list: UiCollageThumb alone decides how many tracks a collage shows.
   coverTracks: { type: Array, default: () => [] },
   coverUrl: { type: String, default: '' },
@@ -73,13 +75,16 @@ const {
 
 const ENTITY_LABEL_BY_KIND = Object.freeze({
   album: '此專輯',
+  library: '這些曲目',
   artist: '此藝人',
   playlist: '此播放清單',
 });
 const entityLabel = computed(() => ENTITY_LABEL_BY_KIND[props.entityKind]);
 // Artist pages are read-only references with no entity-specific action.
 const entityAction = computed(() => {
-  if (props.entityKind === 'artist') return null;
+  if (props.entityKind === 'artist' || props.entityKind === 'library') {
+    return null;
+  }
   if (props.entityKind === 'album') {
     return {
       icon: ListPlus,
@@ -109,11 +114,12 @@ function handleMenuAction(value) {
   <section class="setlist-collection-header">
     <LibraryEntityDossier
       :entity-kind="entityKind"
+      :library-view="libraryView"
       :title="title"
       :title-id="titleId"
       :artist="artist"
       :artist-link-label="artistLinkLabel"
-      :meta="meta"
+      :fields="fields"
       :cover-tracks="coverTracks"
       :cover-url="coverUrl"
       :description="description"
@@ -260,7 +266,7 @@ function handleMenuAction(value) {
 }
 
 :deep(
-  .library-entity-dossier__artwork:has(
+  .app-folder-dossier__artwork:has(
       .setlist-collection-header__photo-action--empty
     )
     .ui-collage-thumb__single-empty

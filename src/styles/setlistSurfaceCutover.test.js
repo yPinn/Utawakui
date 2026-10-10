@@ -10,9 +10,7 @@ const setlistSource = readSource('../views/SetlistView.vue');
 const headerSource = readSource(
   '../components/playlists/SetlistCollectionHeader.vue',
 );
-const dossierSource = readSource(
-  '../components/playlists/LibraryEntityDossier.vue',
-);
+const dossierSource = readSource('../components/layout/AppFolderDossier.vue');
 const tableSource = readSource('../components/library/LibraryTrackTable.vue');
 const studioTableSource = readSource(
   '../components/playlists/StudioLibraryTrackTable.vue',

@@ -394,7 +394,12 @@ describe('DemoCollageThumbAppearance', () => {
     expect(sidebarRowSource).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
     expect(dossierSource).toContain(':size="88"');
     expect(detailsModalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
-    expect(setlistHeaderSource).toContain(':size="136"');
+    expect(setlistHeaderSource).toContain(
+      ':size="FOLDER_DOSSIER_ARTWORK_SIZE"',
+    );
+    expect(uiConstantsSource).toContain(
+      'export const FOLDER_DOSSIER_ARTWORK_SIZE = 136;',
+    );
     // F8 retains the reviewed 280px comparison specimen. Playback Info no
     // longer repeats a source cover block; the Artist preview keeps its
     // caller-owned compact collage recipe.

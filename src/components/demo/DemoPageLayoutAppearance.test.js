@@ -32,7 +32,7 @@ describe('DemoPageLayoutAppearance', () => {
     const shellPosition = html.indexOf('app-folder-layout__perimeter');
     const scrollPosition = html.indexOf('app-folder-page__scroll');
     const collectionTitlePosition = html.indexOf(
-      'class="library-entity-dossier__title"',
+      'class="app-folder-dossier__title"',
     );
 
     expect(tabPosition).toBeGreaterThan(-1);
@@ -42,7 +42,9 @@ describe('DemoPageLayoutAppearance', () => {
     expect(html).toContain('aria-label="Folder 頁面"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('夏季 Cover 工作集');
-    expect(html).toContain('專輯資料');
+    expect(html).toMatch(
+      /class="app-folder-dossier__marker"[^>]*>\s*專輯\s*</u,
+    );
     expect(html).toContain('專輯曲目');
     expect(html).toContain('app-folder-page__body--document');
     expect(source).toContain(

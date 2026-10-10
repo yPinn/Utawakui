@@ -140,9 +140,12 @@ const artistPage = computed(() =>
     : null,
 );
 // Queue/history source of the open collection: playlist, album or artist.
-const collectionSourceId = computed(
-  () => selectedPlaylist.value?.id ?? artistPage.value?.id ?? null,
-);
+// Library views are collections too; the prefix never collides with
+// playlist UUIDs or artist ids in the shared queue/history namespace.
+const collectionSourceId = computed(() => {
+  if (mode.value === 'all') return `library:${playlistState.libraryView}`;
+  return selectedPlaylist.value?.id ?? artistPage.value?.id ?? null;
+});
 
 const playlistTracks = computed(() =>
   isArtistSelected.value
@@ -220,8 +223,14 @@ const tableContextLabel = computed(() =>
 const tableVariant = computed(() =>
   mode.value === 'all' ? 'library' : mode.value,
 );
+// Header actions act on the whole page, independent of the search filter.
+const headerTracks = computed(() =>
+  mode.value === 'all' ? libraryViewTracks.value : playlistTracks.value,
+);
 const collectionPlaybackTracks = computed(() =>
-  orderedPlaylistEntries.value.map(({ track }) => track),
+  mode.value === 'all'
+    ? libraryViewTracks.value
+    : orderedPlaylistEntries.value.map(({ track }) => track),
 );
 
 const playlistCoverUrl = computed(() => selectedPlaylist.value?.coverUrl ?? '');
@@ -238,7 +247,7 @@ const playlistDescription = computed(
   () => selectedPlaylist.value?.description ?? '',
 );
 const playlistTotalDuration = computed(() =>
-  playlistTracks.value.reduce(
+  headerTracks.value.reduce(
     (total, track) =>
       Number.isFinite(track.duration) ? total + track.duration : total,
     0,
@@ -260,29 +269,29 @@ watch(
   },
   { immediate: true },
 );
-const playlistMeta = computed(() => {
-  const count = playlistTracks.value.length;
+const headerFields = computed(() => {
+  const count = headerTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);
   const countLine = duration
     ? `${count} 首曲目，${duration}`
     : `${count} 首曲目`;
   if (isArtistSelected.value) {
     const page = artistPage.value;
-    const parts = [countLine];
-    if (page?.albums.length) parts.push(`${page.albums.length} 張專輯`);
+    const fields = [countLine];
+    if (page?.albums.length) fields.push(`${page.albums.length} 張專輯`);
     if (page?.yearStart) {
-      parts.push(
+      fields.push(
         page.yearEnd && page.yearEnd !== page.yearStart
           ? `${page.yearStart}–${page.yearEnd}`
           : String(page.yearStart),
       );
     }
-    return parts.join(' · ');
+    return fields;
   }
-  if (!isAlbumSelected.value) return countLine;
-
-  const { releaseYear } = albumSummary.value;
-  return releaseYear ? `${releaseYear} · ${countLine}` : countLine;
+  const releaseYear = isAlbumSelected.value
+    ? albumSummary.value.releaseYear
+    : undefined;
+  return releaseYear ? [String(releaseYear), countLine] : [countLine];
 });
 // The album header names its artist from the shared index once it is loaded.
 const playlistArtist = computed(
@@ -606,7 +615,7 @@ const previewMenuOptions = computed(() =>
 // The preview starts at the selection and follows the visible (searched)
 // order; artist pages shuffle so they differ from the album view.
 function openTrackPreview() {
-  const visibleTracks = visiblePlaylistEntries.value.map(({ track }) => track);
+  const visibleTracks = visibleTableEntries.value.map(({ track }) => track);
   const tracks = isArtistSelected.value
     ? shufflePreviewTracks(visibleTracks, { pinnedId: selectedTrackId.value })
     : visibleTracks;
@@ -810,26 +819,24 @@ onMounted(async () => {
       </AppSurfaceBoundary>
 
       <template v-else>
-        <div
-          v-if="selectedPlaylist || isArtistSelected"
-          class="setlist-view__collection-header"
-        >
+        <div class="setlist-view__collection-header">
           <SetlistCollectionHeader
             v-model:search-query="searchQuery"
-            :entity-kind="mode"
+            :entity-kind="mode === 'all' ? 'library' : mode"
+            :library-view="playlistState.libraryView"
             :title="pageTitle"
             :artist="playlistArtist"
             :artist-link-label="playlistArtistLinkLabel"
-            :meta="playlistMeta"
+            :fields="headerFields"
             :cover-tracks="collectionCoverTracks"
             :cover-url="collectionCoverUrl"
             :description="playlistDescription"
             :playing="selectedCollectionIsPlaying"
             :shuffle-active="queueState.isShuffle"
-            :can-play="playlistTracks.length > 0"
+            :can-play="headerTracks.length > 0"
             :can-shuffle="queueState.tracks.length > 1"
-            :can-add-to-queue="playlistTracks.length > 0"
-            :can-preview="visiblePlaylistEntries.length > 0"
+            :can-add-to-queue="headerTracks.length > 0"
+            :can-preview="visibleTableEntries.length > 0"
             :preview-blocked-reason="previewBlockedReason"
             :can-add-to-playlist="playlistTracks.length > 0"
             :add-to-playlist-items="addToPlaylistItems"

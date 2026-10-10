@@ -112,7 +112,7 @@ describe('rounded artwork composite clip', () => {
 
   it('gives hairline frames a border-coloured ground and radius-less thumbs', () => {
     const preview = read('../playlists/TrackPreviewOverlay.vue');
-    const dossier = read('../playlists/LibraryEntityDossier.vue');
+    const dossier = read('../layout/AppFolderDossier.vue');
     expect(
       rule(preview, '.track-preview__artwork,\n.track-preview__peek'),
     ).toContain('background: var(--ui-color-border);');
@@ -126,7 +126,7 @@ describe('rounded artwork composite clip', () => {
     expect(preview).toMatch(
       /<UiTrackThumb\s+:key="track\.id"[\s\S]*?radius="0"/u,
     );
-    expect(rule(dossier, '.library-entity-dossier__artwork')).toContain(
+    expect(rule(dossier, '.app-folder-dossier__artwork')).toContain(
       'background: var(--ui-color-border);',
     );
   });

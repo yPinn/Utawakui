@@ -3,3 +3,4 @@
 export const ICON_SIZE = 16;
 export const PLAYLIST_ROW_THUMB_SIZE = 40;
 export const PLAYER_BAR_ARTWORK_SIZE = 48;
+export const FOLDER_DOSSIER_ARTWORK_SIZE = 136;
