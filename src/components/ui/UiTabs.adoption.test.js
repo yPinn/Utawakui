@@ -38,7 +38,6 @@ describe('UiTabs adoption contract', () => {
   it('uses UiTabs for true tabpanels and segmented controls for choices', () => {
     for (const path of [
       'components/output/ObsOutputWorkspace.vue',
-      'components/output/ObsTemplateGallery.vue',
       'components/playback/PlayerToolsPanel.vue',
       'components/queue/QueuePanel.vue',
       'views/VisualSystemView.vue',
@@ -47,7 +46,6 @@ describe('UiTabs adoption contract', () => {
     }
 
     for (const path of [
-      'components/output/ObsSlotWorkbench.vue',
       'components/internal-tools/InternalToolsNavigation.vue',
       'components/lyrics-provider/LyricsProviderReviewStrata.vue',
     ]) {

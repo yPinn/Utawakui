@@ -1,8 +1,15 @@
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import { captureSizeById } from '../constants/outputCaptureSizes.js';
 
 const OUTPUT_PATH_BY_KIND = Object.freeze(
   Object.fromEntries(
     OUTPUT_TEMPLATE_VALUES.slots.map((slot) => [slot.id, slot.path]),
+  ),
+);
+
+const OUTPUT_LABEL_BY_KIND = Object.freeze(
+  Object.fromEntries(
+    OUTPUT_TEMPLATE_VALUES.slots.map((slot) => [slot.id, slot.label]),
   ),
 );
 
@@ -35,4 +42,18 @@ export function buildAllOutputSlotUrls(status) {
       buildOutputSlotUrls(status, slot.id),
     ]),
   );
+}
+
+// OBS reads layer-* params on URL drop and strips them before saving the source.
+export function buildOutputDropUrl(obsUrl, kind, captureSizeId) {
+  const label = OUTPUT_LABEL_BY_KIND[kind];
+  const size = captureSizeById(kind, captureSizeId);
+  if (!obsUrl || !label || !size) return null;
+  const url = new URL(obsUrl);
+  url.searchParams.set('layer-name', `Utawakui ${label}`);
+  url.searchParams.set('layer-width', String(size.width));
+  url.searchParams.set('layer-height', String(size.height));
+  // Qt's QUrlQuery does not decode '+' as a space.
+  url.search = url.search.replaceAll('+', '%20');
+  return url.toString();
 }

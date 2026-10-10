@@ -1,14 +1,17 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
+import { useAppView } from '../../composables/useAppView.js';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
 import { useOutputAppearanceAutosave } from '../../composables/output/useOutputAppearanceAutosave.js';
-import { useSpoutOutput } from '../../composables/output/useSpoutOutput.js';
+import { Settings } from '../../icons/index.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
-import ObsOutputSettings from './ObsOutputSettings.vue';
+import ObsOutputRuntimeStatus from './ObsOutputRuntimeStatus.vue';
 import ObsTemplateGallery from './ObsTemplateGallery.vue';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTabs from '../ui/UiTabs.vue';
 
 const props = defineProps({
@@ -19,12 +22,6 @@ const props = defineProps({
   slotDefaults: { type: Object, default: () => ({}) },
 });
 
-const pages = [
-  { id: 'workbench', label: '工作台' },
-  { id: 'gallery', label: '模板庫' },
-  { id: 'settings', label: '輸出設定' },
-];
-
 function orderPresets(presets) {
   return [...presets].sort((a, b) => {
     const orderDelta = (a.order ?? 100) - (b.order ?? 100);
@@ -33,6 +30,16 @@ function orderPresets(presets) {
 }
 
 const orderedPresets = computed(() => orderPresets(props.presets));
+const modeItems = [
+  { id: 'workbench', label: '編輯' },
+  { id: 'gallery', label: '模板' },
+];
+const kindTabs = computed(() =>
+  props.slotDefinitions.map((definition) => ({
+    id: definition.id,
+    label: definition.label,
+  })),
+);
 const availableKindIds = computed(() =>
   props.slotDefinitions.map((definition) => definition.id),
 );
@@ -67,20 +74,13 @@ const {
   saveSlotSettings,
   saveTemplateSelection,
   toggleSavedColor,
-  updateSettings,
 } = useOutputRuntimeContext();
 const appearanceAutosave = useOutputAppearanceAutosave({
   save: ({ kind, settings }) =>
     saveSlotSettings(kind, settings, props.slotDefaults[kind]),
 });
 const appearanceSaveStatus = appearanceAutosave.status;
-const {
-  state: spoutState,
-  refresh: refreshSpoutStatus,
-  setFrameRateProfile: setSpoutFrameRateProfile,
-  start: startSpoutOutput,
-  stop: stopSpoutOutput,
-} = useSpoutOutput();
+const { openSettings } = useAppView();
 
 const browsedPreset = computed(
   () =>
@@ -183,14 +183,9 @@ function queueAppearanceSave(change) {
   );
 }
 
-async function saveRuntimeSettings(settings) {
-  await updateSettings(settings);
-}
-
 onMounted(async () => {
   await initializeOutput();
   await refreshOutputStatus();
-  await refreshSpoutStatus();
   await loadSlots(props.slotDefaults);
   await refreshProjection();
 });
@@ -203,24 +198,49 @@ onBeforeUnmount(() => {
 <template>
   <AppFolderPage mode="workspace" body-label="輸出工作區">
     <template #header>
-      <UiTabs
-        :items="pages"
-        :active-id="activePage"
-        aria-label="輸出頁面"
-        tab-id-prefix="obs-output"
-        panel-id-prefix="obs-output"
-        variant="panel"
-        @update:active-id="selectPage"
-      />
+      <div class="obs-output-workspace__header">
+        <UiTabs
+          class="obs-output-workspace__kinds"
+          :items="kindTabs"
+          :active-id="activeKind"
+          aria-label="輸出畫面"
+          tab-id-prefix="output-kind"
+          panel-id-prefix="output-kind"
+          variant="bar"
+          @update:active-id="selectKind"
+        />
+        <div class="obs-output-workspace__header-end">
+          <UiSegmentedControl
+            :items="modeItems"
+            :model-value="activePage"
+            aria-label="編輯或挑選模板"
+            @update:model-value="selectPage"
+          />
+          <ObsOutputRuntimeStatus
+            :output-status="outputState.status"
+            :busy="runtimeBusy"
+            @start="startOutput"
+            @stop="stopOutput"
+          />
+          <UiIconButton
+            :icon="Settings"
+            label="輸出設定"
+            @click="openSettings('output')"
+          />
+        </div>
+      </div>
     </template>
 
-    <div class="obs-output-workspace">
+    <div
+      :id="`output-kind-${activeKind}-panel`"
+      class="obs-output-workspace"
+      role="tabpanel"
+      :aria-labelledby="`output-kind-${activeKind}-tab`"
+    >
       <section
         v-show="activePage === 'gallery'"
         id="obs-output-gallery-panel"
         class="obs-output-workspace__panel"
-        role="tabpanel"
-        aria-labelledby="obs-output-gallery-tab"
       >
         <ObsTemplateGallery
           :presets="orderedPresets"
@@ -230,10 +250,8 @@ onBeforeUnmount(() => {
           :selected-preset-id="browsedPreset?.id ?? null"
           :applied-preset-ids="appliedPresetIds"
           :is-applying="outputState.isSavingSlot"
-          @update:active-kind="selectKind"
           @update:selected-preset-id="selectPreset"
           @apply-preset="applyPreset"
-          @open-workbench="selectPage('workbench')"
         />
       </section>
 
@@ -241,15 +259,11 @@ onBeforeUnmount(() => {
         v-if="activePage === 'workbench'"
         id="obs-output-workbench-panel"
         class="obs-output-workspace__panel"
-        role="tabpanel"
-        aria-labelledby="obs-output-workbench-tab"
       >
         <ObsSlotWorkbench
           :preset="appliedPreset"
           :output-slot="activeSlot"
           :active-kind="activeKind"
-          :slot-definitions="slotDefinitions"
-          :output-status="outputState.status"
           :preview-url="workbenchUrls.previewUrl"
           :obs-url="workbenchUrls.obsUrl"
           :preview-backdrop="previewBackdrop"
@@ -258,44 +272,13 @@ onBeforeUnmount(() => {
           :recent-colors="outputState.preferences.recentColors"
           :saved-colors="outputState.preferences.savedColors"
           :save-status="appearanceSaveStatus"
-          @update:active-kind="selectKind"
           @update:preview-backdrop="selectPreviewBackdrop"
           @update:show-lyrics-guide="setLyricsGuideVisible"
           @change-settings="queueAppearanceSave"
           @commit-color="saveRecentColor"
           @toggle-saved-color="toggleSavedColor"
           @retry-save="appearanceAutosave.retry"
-          @open-gallery="selectPage('gallery')"
           @refresh-projection="refreshProjection"
-        />
-      </section>
-
-      <section
-        v-show="activePage === 'settings'"
-        id="obs-output-settings-panel"
-        class="obs-output-workspace__panel"
-        role="tabpanel"
-        aria-labelledby="obs-output-settings-tab"
-      >
-        <ObsOutputSettings
-          :status="outputState.status"
-          :settings="outputState.settings"
-          :suggested-ports="outputState.suggestedPorts"
-          :busy="runtimeBusy"
-          :error="outputState.error"
-          :spout-status="spoutState.status"
-          :spout-busy="
-            spoutState.isConfiguring ||
-            spoutState.isStarting ||
-            spoutState.isStopping
-          "
-          :spout-error="spoutState.error"
-          @save="saveRuntimeSettings"
-          @start="startOutput"
-          @stop="stopOutput"
-          @spout-start="startSpoutOutput"
-          @spout-stop="stopSpoutOutput"
-          @spout-set-frame-rate-profile="setSpoutFrameRateProfile"
         />
       </section>
     </div>
@@ -308,6 +291,27 @@ onBeforeUnmount(() => {
   min-height: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
+}
+
+.obs-output-workspace__header {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3) var(--ui-space-4);
+}
+
+.obs-output-workspace__header-end {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-4);
+  margin-inline-start: auto;
+}
+
+.obs-output-workspace__kinds.ui-tabs--bar {
+  width: auto;
 }
 
 .obs-output-workspace__panel {

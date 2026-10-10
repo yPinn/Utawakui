@@ -22,7 +22,7 @@ export function describeSpoutOutputStatus(status = {}) {
       state: 'stopping',
       label: '停止中',
       tone: 'warning',
-      detail: '正在關閉 Spout2 sender。',
+      detail: '正在停止輸出。',
     };
   }
   if (lifecycle === 'sending') {
@@ -38,7 +38,7 @@ export function describeSpoutOutputStatus(status = {}) {
       state: 'error',
       label: '錯誤',
       tone: 'danger',
-      detail: status.error?.message ?? 'Spout2 sender 未啟動。',
+      detail: status.error?.message ?? 'Spout2 輸出未啟動。',
     };
   }
   return {

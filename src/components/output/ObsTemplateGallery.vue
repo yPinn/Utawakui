@@ -7,7 +7,6 @@ import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
@@ -20,12 +19,7 @@ const props = defineProps({
   isApplying: { type: Boolean, default: false },
 });
 
-const emit = defineEmits([
-  'update:activeKind',
-  'update:selectedPresetId',
-  'applyPreset',
-  'openWorkbench',
-]);
+const emit = defineEmits(['update:selectedPresetId', 'applyPreset']);
 
 const selectedPreset = computed(
   () =>
@@ -34,11 +28,6 @@ const selectedPreset = computed(
     null,
 );
 const hasSelectedPreset = computed(() => Boolean(selectedPreset.value));
-const selectedIndex = computed(() =>
-  activeGroup.value?.templates.findIndex(
-    (preset) => preset.id === selectedPreset.value?.id,
-  ),
-);
 const isApplied = computed(
   () =>
     selectedPreset.value?.id ===
@@ -60,13 +49,6 @@ const selectedAvailabilitySummary = computed(() => {
 const visibleGroups = computed(() =>
   props.templateGroups.filter((group) => group.templates.length),
 );
-const categoryTabs = computed(() =>
-  visibleGroups.value.map((group) => ({
-    id: group.kind,
-    label: group.label,
-    count: group.templates.length,
-  })),
-);
 const activeGroup = computed(
   () =>
     visibleGroups.value.find((group) => group.kind === props.activeKind) ??
@@ -74,20 +56,13 @@ const activeGroup = computed(
     null,
 );
 
-function selectPreset(id) {
-  emit('update:selectedPresetId', id);
+// Plain availability is the default; only surface exceptions such as 建議 or 尚未提供.
+function showsAvailability(preset) {
+  return Boolean(preset.availability) && preset.availability.label !== '可用';
 }
 
-function selectKind(kind) {
-  emit('update:activeKind', kind);
-  const group = visibleGroups.value.find(
-    (candidate) => candidate.kind === kind,
-  );
-  if (
-    !group?.templates.some((preset) => preset.id === props.selectedPresetId)
-  ) {
-    emit('update:selectedPresetId', group?.templates[0]?.id ?? null);
-  }
+function selectPreset(id) {
+  emit('update:selectedPresetId', id);
 }
 
 function applyPreset(preset) {
@@ -114,30 +89,13 @@ function applyPreset(preset) {
     >
       <template #main>
         <div class="obs-template-gallery__catalog" aria-label="模板縮圖">
-          <UiTabs
-            :items="categoryTabs"
-            :active-id="activeGroup?.kind ?? null"
-            aria-label="Overlay 類型"
-            tab-id-prefix="output-kind"
-            panel-id-prefix="output-kind"
-            variant="panel"
-            @update:active-id="selectKind"
-          >
-            <template #after="{ item }">
-              <UiChip tone="muted">{{ item.count }}</UiChip>
-            </template>
-          </UiTabs>
-
           <UiScrollRegion
             v-if="activeGroup"
-            :id="`output-kind-${activeGroup.kind}-panel`"
             :key="activeGroup.kind"
             class="obs-template-gallery__group"
             axis="both"
             viewport-tag="section"
             viewport-class="obs-template-gallery__group-viewport"
-            role="tabpanel"
-            :aria-labelledby="`output-kind-${activeGroup.kind}-tab`"
           >
             <div class="obs-template-gallery__grid">
               <UiTooltip
@@ -167,7 +125,7 @@ function applyPreset(preset) {
                         {{ preset.name }}
                       </span>
                       <UiChip
-                        v-if="preset.availability"
+                        v-if="showsAvailability(preset)"
                         :tone="preset.availability.tone ?? 'muted'"
                       >
                         {{ preset.availability.label }}
@@ -198,14 +156,10 @@ function applyPreset(preset) {
         />
 
         <div class="obs-template-gallery__detail-header">
-          <span class="obs-template-gallery__detail-index">
-            {{ selectedIndex + 1 }} / {{ activeGroup?.templates.length ?? 0 }}
-          </span>
           <div class="obs-template-gallery__heading">
             <h2 class="obs-template-gallery__detail-title">
               {{ selectedPreset.name }}
             </h2>
-            <UiChip v-if="isApplied" tone="accent">使用中</UiChip>
           </div>
         </div>
       </template>
@@ -231,7 +185,6 @@ function applyPreset(preset) {
 
       <template #side-footer>
         <div class="obs-template-gallery__actions">
-          <UiButton @click="emit('openWorkbench')">前往工作台</UiButton>
           <UiButton
             variant="accent"
             :disabled="isApplying || isApplied || !isSelectedPresetAvailable"
@@ -263,9 +216,7 @@ function applyPreset(preset) {
   min-height: 0;
   min-width: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  align-content: start;
-  gap: var(--ui-space-3);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .obs-template-gallery__group {
@@ -367,7 +318,7 @@ function applyPreset(preset) {
 
 .obs-template-gallery__detail-header {
   gap: var(--ui-space-3);
-  padding-block-end: var(--ui-space-3);
+  padding-block: var(--ui-space-3);
 }
 
 .obs-template-gallery__actions {
@@ -387,7 +338,6 @@ function applyPreset(preset) {
   line-height: var(--ui-line-height-title);
 }
 
-.obs-template-gallery__detail-index,
 .obs-template-gallery__detail-summary,
 .obs-template-gallery__availability {
   max-inline-size: 56ch;

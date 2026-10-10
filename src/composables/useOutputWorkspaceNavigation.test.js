@@ -42,7 +42,7 @@ describe('useOutputWorkspaceNavigation', () => {
   it('keeps the remembered state when a consumer requests unavailable navigation', async () => {
     const { useOutputWorkspaceNavigation } = await loadNavigation();
     const navigation = useOutputWorkspaceNavigation();
-    navigation.selectPage('settings');
+    navigation.selectPage('gallery');
     navigation.selectKind('setlist', ['now-playing', 'setlist']);
 
     expect(navigation.selectPage('unknown')).toBe(false);
@@ -50,7 +50,7 @@ describe('useOutputWorkspaceNavigation', () => {
       false,
     );
     expect(navigation.selectPreviewBackdrop('transparent')).toBe(false);
-    expect(navigation.activePage.value).toBe('settings');
+    expect(navigation.activePage.value).toBe('gallery');
     expect(navigation.activeKind.value).toBe('setlist');
     expect(navigation.previewBackdrop.value).toBe('checker');
   });

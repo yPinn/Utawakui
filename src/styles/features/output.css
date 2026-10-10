@@ -17,8 +17,6 @@
     21rem
   ); /* stable information rail */
   --ui-output-workbench-stage-max-width: 64rem; /* large 16:9 preview without indefinite upscaling */
-  --ui-output-port-input-width: 4.75rem; /* five port digits plus compact padding */
-  --ui-output-settings-column-min-width: 22rem; /* two-column settings floor before stacking */
   --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* thumbnail-only label */

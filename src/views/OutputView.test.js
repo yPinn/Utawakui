@@ -17,19 +17,15 @@ function renderOutputView() {
 describe('OutputView', () => {
   it('opens the workbench first and keeps the gallery second', async () => {
     const html = await renderOutputView();
-    const workbenchTab = html.indexOf('id="obs-output-workbench-tab"');
-    const galleryTab = html.indexOf('id="obs-output-gallery-tab"');
-    const settingsTab = html.indexOf('id="obs-output-settings-tab"');
+    const editMode = html.indexOf('<!--[-->編輯<!--]-->');
+    const galleryMode = html.indexOf('<!--[-->模板<!--]-->');
 
-    expect(workbenchTab).toBeGreaterThan(-1);
-    expect(workbenchTab).toBeLessThan(galleryTab);
-    expect(galleryTab).toBeLessThan(settingsTab);
-    expect(html).toMatch(
-      /id="obs-output-workbench-tab"[^>]*aria-selected="true"/,
-    );
-    expect(html).toMatch(
-      /id="obs-output-gallery-tab"[^>]*aria-selected="false"/,
-    );
+    expect(editMode).toBeGreaterThan(-1);
+    expect(editMode).toBeLessThan(galleryMode);
+    expect(html).toContain('aria-checked="true" tabindex="0"');
+    expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->編輯/);
+    expect(html).toContain('aria-label="輸出設定"');
+    expect(html).not.toContain('id="obs-output-settings-tab"');
   });
 
   it('renders three output categories while keeping one template grid active', async () => {
@@ -46,13 +42,13 @@ describe('OutputView', () => {
     expect(html).toContain('播放中');
     expect(html).toContain('歌單');
     expect(html).toContain('歌詞');
-    expect(html).toContain('aria-label="目前編輯的 Overlay 類型"');
+    expect(html).toContain('aria-label="輸出畫面"');
     expect(setlistOption).toBeGreaterThan(-1);
     expect(setlistOption).toBeLessThan(lyricsOption);
     expect(lyricsOption).toBeLessThan(nowPlayingOption);
     expect(html).not.toContain('>封面</button>');
     expect(html).toMatch(
-      /<button[^>]*role="radio"[^>]*aria-checked="true"[^>]*>[\s\S]{0,80}歌單/,
+      /id="output-kind-setlist-tab"[^>]*aria-selected="true"/,
     );
     expect(html).toContain('黑幕歌單');
     expect(html).not.toContain('聚焦歌詞');
@@ -66,9 +62,7 @@ describe('OutputView', () => {
     try {
       const html = await renderOutputView();
 
-      expect(html).toMatch(
-        /id="obs-output-gallery-tab"[^>]*aria-selected="true"/,
-      );
+      expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->模板/);
       expect(html).toMatch(
         /id="output-kind-lyrics-tab"[^>]*aria-selected="true"/,
       );

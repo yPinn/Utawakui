@@ -1,134 +1,90 @@
 <script setup>
 import { computed } from 'vue';
-import {
-  describeOutputClientStatus,
-  describeOutputSourceStatus,
-} from '../../utils/outputRuntimeStatus.js';
-import UiNotice from '../ui/UiNotice.vue';
+import { Play, Power } from '../../icons/index.js';
+import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
+import UiButton from '../ui/UiButton.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 
 const props = defineProps({
   outputStatus: { type: Object, default: () => ({ running: false }) },
-  error: { type: String, default: '' },
+  busy: { type: Boolean, default: false },
 });
 
-const sourceStatus = computed(() =>
-  describeOutputSourceStatus(props.outputStatus),
-);
-const clientStatus = computed(() =>
-  describeOutputClientStatus(props.outputStatus),
+const emit = defineEmits(['start', 'stop']);
+
+const runtimeStatus = computed(() =>
+  describeOutputRuntimeStatus(props.outputStatus),
 );
 </script>
 
 <template>
   <section class="obs-output-runtime-status" aria-label="輸出狀態">
-    <dl class="obs-output-runtime-status__signals">
-      <UiTooltip :text="sourceStatus.detail" placement="bottom">
-        <template #trigger="{ triggerProps }">
-          <div
-            v-bind="triggerProps"
-            class="obs-output-runtime-status__signal"
-            tabindex="0"
-            :aria-label="`資料：${sourceStatus.label}。${sourceStatus.detail}`"
-          >
-            <dt>
-              <span
-                class="obs-output-runtime-status__dot"
-                :data-tone="sourceStatus.tone"
-                aria-hidden="true"
-              />
-              資料
-            </dt>
-            <dd>{{ sourceStatus.label }}</dd>
-          </div>
-        </template>
-      </UiTooltip>
+    <UiTooltip
+      :text="`${runtimeStatus.label}：${runtimeStatus.detail}`"
+      placement="bottom"
+    >
+      <template #trigger="{ triggerProps }">
+        <span
+          v-bind="triggerProps"
+          class="obs-output-runtime-status__dot"
+          :data-tone="runtimeStatus.tone"
+          role="img"
+          tabindex="0"
+          :aria-label="`${runtimeStatus.label}。${runtimeStatus.detail}`"
+        />
+      </template>
+    </UiTooltip>
 
-      <UiTooltip :text="clientStatus.detail" placement="bottom">
-        <template #trigger="{ triggerProps }">
-          <div
-            v-bind="triggerProps"
-            class="obs-output-runtime-status__signal"
-            tabindex="0"
-            :aria-label="`Browser Source：${clientStatus.label}。${clientStatus.detail}`"
-          >
-            <dt>
-              <span
-                class="obs-output-runtime-status__dot"
-                :data-tone="clientStatus.tone"
-                aria-hidden="true"
-              />
-              來源
-            </dt>
-            <dd>{{ clientStatus.label }}</dd>
-          </div>
-        </template>
-      </UiTooltip>
-    </dl>
-
-    <UiNotice
-      v-if="error"
-      tone="danger"
-      title="輸出未更新"
-      :message="error"
-      compact
-    />
+    <UiButton
+      v-if="!outputStatus.running"
+      class="obs-output-runtime-status__command"
+      :icon="Play"
+      variant="accent"
+      :disabled="busy"
+      @click="emit('start')"
+    >
+      啟動
+    </UiButton>
+    <UiButton
+      v-else
+      class="obs-output-runtime-status__command"
+      :icon="Power"
+      :disabled="busy"
+      @click="emit('stop')"
+    >
+      停止
+    </UiButton>
   </section>
 </template>
 
 <style scoped>
 .obs-output-runtime-status {
   min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-  padding-block: 0 var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.obs-output-runtime-status__signals {
-  min-width: 0;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2) var(--ui-space-4);
-  margin: 0;
+  gap: var(--ui-space-2);
 }
 
-.obs-output-runtime-status__signal,
-.obs-output-runtime-status__signal dt {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-1);
+.obs-output-runtime-status__dot:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
-.obs-output-runtime-status__signal {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
-}
-
-.obs-output-runtime-status__signal dt,
-.obs-output-runtime-status__signal dd {
-  margin: 0;
-}
-
-.obs-output-runtime-status__signal dd {
-  color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-semibold);
-  white-space: nowrap;
+.obs-output-runtime-status__command {
+  min-width: var(--ui-output-settings-command-button-width);
+  justify-content: center;
 }
 
 .obs-output-runtime-status__dot {
-  inline-size: var(--ui-space-2);
-  block-size: var(--ui-space-2);
+  inline-size: var(--ui-space-3);
+  block-size: var(--ui-space-3);
   flex: 0 0 auto;
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-text-muted);
 }
 
-.obs-output-runtime-status__dot[data-tone='info'] {
-  background: var(--ui-color-info);
+.obs-output-runtime-status__dot[data-tone='accent'] {
+  background: var(--ui-color-accent);
 }
 
 .obs-output-runtime-status__dot[data-tone='success'] {

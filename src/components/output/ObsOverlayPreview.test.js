@@ -72,10 +72,23 @@ describe('ObsOverlayPreview', () => {
     });
 
     expect(html).toContain('class="ui-icon-btn');
-    expect(html).toContain('>複製 Browser Source URL</span>');
+    expect(html).toContain('>複製網址</span>');
     expect(html).not.toContain(
       'aria-label="複製目前類型的 Browser Source URL"',
     );
+  });
+
+  it('lets the copy button be dragged into streaming software with layer params', async () => {
+    const html = await renderPreview({
+      obsUrl: 'http://127.0.0.1:8700/overlay/lyrics',
+    });
+
+    expect(html).toContain('draggable="true"');
+    expect(componentSource).toContain('複製網址，或直接拖進直播軟體');
+    expect(componentSource).toContain(
+      "setData('text/uri-list', dropUrl.value)",
+    );
+    expect(componentSource).toContain("effectAllowed = 'copy'");
   });
 
   it('omits opt-in lyrics diagnostics from the inspection URL in production', async () => {

@@ -61,7 +61,9 @@ const outputColorFieldSource = readFileSync(
   'utf8',
 );
 const settingsSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputSettings.vue', import.meta.url)),
+  fileURLToPath(
+    new URL('../settings/OutputRuntimeSettingsBlock.vue', import.meta.url),
+  ),
   'utf8',
 );
 const settingsViewSource = readFileSync(
@@ -104,9 +106,7 @@ describe('OBS output workspace layout contract', () => {
     expect(workspaceSource).toMatch(
       /<section\s+v-show="activePage === 'gallery'"\s+id="obs-output-gallery-panel"/u,
     );
-    expect(workspaceSource).toMatch(
-      /<section\s+v-show="activePage === 'settings'"\s+id="obs-output-settings-panel"/u,
-    );
+    expect(workspaceSource).not.toContain('obs-output-settings-panel');
   });
 
   it('keeps gallery sizing token-driven and responsive to its own column width', () => {
@@ -187,9 +187,9 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).toContain('ObsTemplatePreviewStage');
     expect(componentSource).not.toContain('ObsOverlayPreview');
     expect(componentSource).not.toContain('previewUrl');
-    expect(componentSource).toContain('<UiTabs');
+    expect(componentSource).not.toContain('<UiTabs');
     expect(componentSource).not.toContain('ObsOutputTabs');
-    expect(workbenchSource).toContain('<UiSegmentedControl');
+    expect(workbenchSource).not.toContain('<UiSegmentedControl');
     expect(componentSource).toContain('activeGroup.templates');
     expect(componentSource).not.toContain('v-for="preset in group.templates"');
     expect(compactSplitLayoutSource).toMatch(
@@ -434,9 +434,8 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain(
       '{{ PREVIEW_CANVAS_WIDTH }} × {{ PREVIEW_CANVAS_HEIGHT }}',
     );
-    expect(settingsSource).toContain('type="text"');
+    expect(settingsSource).toContain('<UiTextField');
     expect(settingsSource).toContain('inputmode="numeric"');
-    expect(settingsSource).toContain('text-align: right');
     expect(settingsSource).toContain('@change="commitSettings()"');
     expect(settingsSource).toContain(
       '@keydown.enter.prevent="commitSettings()"',
@@ -444,62 +443,51 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain('type="number"');
     expect(settingsSource).not.toContain('step="1"');
     expect(settingsSource).not.toContain(':icon="Check"');
-    expect(settingsSource).toContain('type="checkbox"');
+    expect(settingsSource).toContain('<UiCheckbox');
     expect(settingsSource).toContain('describeOutputRuntimeStatus');
     expect(previewSource).not.toContain('describeOutputRuntimeStatus');
-    expect(settingsSource).toContain('runtimeStatus.value.detail');
+    expect(settingsSource).toContain('serviceStatus.detail');
     expect(previewSource).not.toContain('sourceDiagnostic');
     expect(previewSource).not.toContain('UiChip');
     expect(previewSource).not.toContain('UiNotice');
-    expect(workbenchSource).toContain('ObsOutputRuntimeStatus');
-    expect(workbenchSource).toContain(':output-status="outputStatus"');
-    expect(workbenchSource).toContain(':error="outputError"');
+    expect(workbenchSource).not.toContain('ObsOutputRuntimeStatus');
+    expect(workbenchSource).toContain(':message="outputError"');
+    expect(workbenchSource).toContain('title="輸出未更新"');
     expect(workbenchSource).not.toContain('preset.detail');
     expect(workbenchSource).not.toContain('preset.tags');
     expect(runtimeStatusSource).not.toContain('preset?.summary');
-    expect(runtimeStatusSource).toContain('describeOutputSourceStatus');
-    expect(runtimeStatusSource).toContain('describeOutputClientStatus');
+    expect(runtimeStatusSource).toContain('describeOutputRuntimeStatus');
     expect(runtimeStatusSource).toContain('aria-label="輸出狀態"');
-    expect(runtimeStatusSource).toContain('v-if="error"');
-    expect(runtimeStatusSource).toContain('title="輸出未更新"');
     expect(workspaceSource).toContain('await initializeOutput()');
     expect(workspaceSource).toContain('await refreshOutputStatus()');
     expect(settingsSource).not.toContain('OBS 已連線');
     expect(settingsSource).not.toContain('等待 OBS Browser Source 連線');
-    expect(settingsSource).toContain('Port 被占用');
-    expect(settingsSource).toContain('SettingsBlock');
+    expect(settingsSource).toContain('連接埠被占用');
     expect(settingsSource).toContain('SettingsActionRow');
+    expect(settingsSource).toContain('variant="subtle"');
     expect(settingsSource).toContain('UiNotice');
-    expect(settingsSource).not.toContain('obs-output-settings__row');
-    expect(settingsSource).toContain(
-      'var(--ui-output-settings-column-min-width)',
-    );
+    expect(settingsViewSource).toContain('<OutputRuntimeSettingsBlock');
     expect(settingsViewSource).not.toContain(
       '--settings-view-column-min-width',
     );
     expect(settingsViewSource).toContain('class="settings-view__panel"');
-    expect(settingsSource).toContain('var(--ui-checkbox-size)');
     expect(tokenSource).not.toContain('--ui-settings-column-min-width:');
     expect(tokenSource).not.toContain('--ui-settings-checkbox-size:');
-    expect(settingsSource).toContain('可用 Port');
-    expect(previewTokenSource).toContain(
-      '--ui-output-settings-column-min-width: 22rem',
-    );
-    expect(previewTokenSource).toContain(
-      '--ui-output-port-input-width: 4.75rem',
-    );
+    expect(settingsSource).toContain('可用連接埠');
+    expect(previewTokenSource).not.toContain('--ui-output-port-input-width');
     expect(previewTokenSource).toContain(
       '--ui-output-settings-command-button-width:',
     );
-    expect(settingsSource).toContain('obs-output-settings__command');
+    expect(runtimeStatusSource).toContain('obs-output-runtime-status__command');
+    expect(settingsSource).toContain('output.start()');
     expect(settingsSource).not.toContain('v-model="copyKind"');
     expect(settingsSource).not.toContain('title="OBS URL"');
     expect(settingsSource).not.toContain('copyObsUrl');
     expect(settingsSource).not.toContain('目前模板 URL');
-    expect(settingsSource).not.toContain('檢查 Port');
+    expect(settingsSource).not.toContain('檢查連接埠');
     expect(settingsSource).not.toContain("emit('suggestPorts')");
     expect(previewSource).toContain('Browser Source 即時預覽');
-    expect(previewSource).toContain('Browser Source URL');
+    expect(previewSource).toContain('label="複製網址"');
     expect(previewSource).toContain(
       'window.Utawakui.copyOutputUrl(props.activeKind)',
     );

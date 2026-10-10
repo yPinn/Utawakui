@@ -1,6 +1,6 @@
 import { readonly, shallowRef } from 'vue';
 
-const OUTPUT_PAGE_IDS = Object.freeze(['workbench', 'gallery', 'settings']);
+const OUTPUT_PAGE_IDS = Object.freeze(['workbench', 'gallery']);
 const OUTPUT_PREVIEW_BACKDROP_IDS = Object.freeze(['checker', 'dark', 'light']);
 
 const activePage = shallowRef('workbench');

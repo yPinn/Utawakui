@@ -106,3 +106,8 @@ export function captureSizeForKind(kind, value, templateId = null) {
     OUTPUT_WIDGET_CAPTURE_SIZES[0]
   );
 }
+
+export function captureSizeById(kind, id) {
+  if (kind === 'lyrics') return OUTPUT_LYRICS_CAPTURE_SIZE;
+  return WIDGET_SIZE_BY_ID.get(id) ?? null;
+}

@@ -18,7 +18,9 @@ const runtimeStatusSource = readSource(
   '../components/output/ObsOutputRuntimeStatus.vue',
 );
 const gallerySource = readSource('../components/output/ObsTemplateGallery.vue');
-const settingsSource = readSource('../components/output/ObsOutputSettings.vue');
+const settingsSource = readSource(
+  '../components/settings/OutputRuntimeSettingsBlock.vue',
+);
 const tokenSource = readSource('./tokens.css');
 const outputFeaturePath = new URL('./features/output.css', import.meta.url);
 const legacyFeaturePath = new URL(
@@ -34,7 +36,7 @@ const publicOverlayTokens = readSource('../../overlay/shared/tokens.css');
 const outputConsumerPaths = [
   '../components/output/ObsAppearanceControlRow.vue',
   '../components/output/ObsOutputRuntimeStatus.vue',
-  '../components/output/ObsOutputSettings.vue',
+  '../components/settings/OutputRuntimeSettingsBlock.vue',
   '../components/output/ObsOutputSplitLayout.vue',
   '../components/output/ObsOverlayPreview.vue',
   '../components/output/ObsSlotWorkbench.vue',
@@ -97,7 +99,6 @@ const outputOwnedTokens = [
   '--ui-output-gallery-tile-min-width',
   '--ui-output-workbench-inspector-width',
   '--ui-output-workbench-stage-max-width',
-  '--ui-output-port-input-width',
   '--ui-output-settings-command-button-width',
   '--ui-output-template-thumb-min-height',
   '--ui-output-template-thumb-title-font-size',
@@ -124,7 +125,6 @@ describe('Output Token v2 surface cutover', () => {
     expect(splitLayoutSource).toContain('<UiScrollRegion');
     expect(workbenchSource).toContain('<UiScrollRegion');
     expect(gallerySource).toContain('<UiScrollRegion');
-    expect(settingsSource).toContain('<UiScrollRegion');
   });
 
   it('moves Output-owned geometry out of the T1 core and into one feature stylesheet', () => {
@@ -148,10 +148,9 @@ describe('Output Token v2 surface cutover', () => {
       }
     }
 
-    expect(outputFeatureSource).toContain(
+    expect(outputFeatureSource).not.toContain(
       '--ui-output-settings-column-min-width:',
     );
-    expect(settingsSource).toContain('var(--ui-checkbox-size)');
     expect(workbenchSource).toContain('var(--ui-font-weight-semibold)');
   });
 
@@ -180,17 +179,17 @@ describe('Output Token v2 surface cutover', () => {
 
   it('preserves the workbench, gallery, settings, preview, and template anatomy', () => {
     expect(workspaceSource).toContain('<UiTabs');
-    expect(gallerySource).toContain('<UiTabs');
-    expect(workbenchSource).toContain('<UiSegmentedControl');
+    expect(gallerySource).not.toContain('<UiTabs');
+    expect(workbenchSource).not.toContain('<UiSegmentedControl');
     expect(workspaceSource).toContain('<ObsTemplateGallery');
     expect(workspaceSource).toContain('<ObsSlotWorkbench');
-    expect(workspaceSource).toContain('<ObsOutputSettings');
+    expect(workspaceSource).not.toContain('<ObsOutputSettings');
     expect(workbenchSource).toContain('<ObsOverlayPreview');
-    expect(workbenchSource).toContain('<ObsOutputRuntimeStatus');
+    expect(workspaceSource).toContain('<ObsOutputRuntimeStatus');
     expect(runtimeStatusSource).toContain('aria-label="輸出狀態"');
     expect(gallerySource).toContain('<ObsTemplateThumbnail');
     expect(gallerySource).toContain('<ObsTemplatePreviewStage');
-    expect(settingsSource).toContain('<ObsSpoutOutputSettings');
+    expect(settingsSource).toContain('Spout2 輸出');
   });
 
   it('keeps public Overlay tokens and runtime outside the control-panel feature layer', () => {

@@ -99,7 +99,7 @@ describe('useSpoutOutput', () => {
 
     await expect(spout.start()).resolves.toBe(false);
 
-    expect(spout.state.error).toBe('Spout2 sender 未啟動，請再試一次。');
+    expect(spout.state.error).toBe('Spout2 輸出未啟動，請再試一次。');
     expect(spout.state.error).not.toContain('private');
     expect(bridge.recordDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({

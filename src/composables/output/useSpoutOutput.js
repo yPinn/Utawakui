@@ -62,7 +62,7 @@ export function useSpoutOutput() {
         error,
         'refresh',
         'SPOUT_OUTPUT_STATUS_FAILED',
-        '無法讀取 Spout2 sender 狀態。',
+        '無法讀取 Spout2 輸出狀態。',
       );
       return false;
     } finally {
@@ -84,7 +84,7 @@ export function useSpoutOutput() {
         error,
         'start',
         'SPOUT_OUTPUT_START_FAILED',
-        'Spout2 sender 未啟動，請再試一次。',
+        'Spout2 輸出未啟動，請再試一次。',
       );
       return false;
     } finally {
@@ -106,7 +106,7 @@ export function useSpoutOutput() {
         error,
         'stop',
         'SPOUT_OUTPUT_STOP_FAILED',
-        'Spout2 sender 未停止，請再試一次。',
+        'Spout2 輸出未停止，請再試一次。',
       );
       return false;
     } finally {

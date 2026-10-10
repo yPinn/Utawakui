@@ -28,7 +28,7 @@ describe('Output page composition contract', () => {
       '<AppFolderPage mode="workspace" body-label="輸出工作區">',
     );
     expect(workspaceSource).toMatch(
-      /<template\s+#header>[\s\S]*?<UiTabs[\s\S]*?@update:active-id="selectPage"/u,
+      /<template\s+#header>[\s\S]*?<UiSegmentedControl[\s\S]*?@update:model-value="selectPage"/u,
     );
     expect(workspaceSource).toContain('await appearanceAutosave.flush()');
     expect(workspaceSource).toContain(':preview-backdrop="previewBackdrop"');

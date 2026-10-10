@@ -26,8 +26,8 @@ describe('platform terminology', () => {
   });
 
   it('keeps Browser Source and virtual audio copy destination-neutral', () => {
-    expect(outputWorkspace).toContain('aria-label="輸出頁面"');
-    expect(outputWorkspace).not.toContain('aria-label="OBS 輸出頁面"');
+    expect(outputWorkspace).toContain('aria-label="輸出畫面"');
+    expect(outputWorkspace).not.toContain('aria-label="OBS');
     expect(outputRuntime).toContain('再啟動 Browser Source 輸出');
     expect(outputRuntime).not.toContain('建立 OBS Browser Source');
     expect(captureDeviceModal).toContain(

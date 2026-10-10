@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, shallowRef, watch } from 'vue';
-import { Palette } from '../../icons/index.js';
+import { Check, CircleAlert, Loader2 } from '../../icons/index.js';
 import {
   isOutputLocalFont,
   sanitizeOutputAppearanceSetting,
@@ -12,18 +12,16 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
-import ObsOutputRuntimeStatus from './ObsOutputRuntimeStatus.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
   outputSlot: { type: Object, default: null },
   activeKind: { type: String, default: null },
-  slotDefinitions: { type: Array, default: () => [] },
-  outputStatus: { type: Object, default: () => ({ running: false }) },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
   previewBackdrop: { type: String, default: 'checker' },
@@ -40,14 +38,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  'update:activeKind',
   'update:previewBackdrop',
   'update:showLyricsGuide',
   'changeSettings',
   'commitColor',
   'toggleSavedColor',
   'retrySave',
-  'openGallery',
   'refreshProjection',
 ]);
 
@@ -91,12 +87,6 @@ const configurationFieldGroups = computed(() => {
   }
   return [...groups.values()];
 });
-const kindOptions = computed(() =>
-  props.slotDefinitions.map((definition) => ({
-    id: definition.id,
-    label: definition.label,
-  })),
-);
 const templateId = computed(
   () => props.preset?.id ?? props.outputSlot?.templateId ?? null,
 );
@@ -109,6 +99,16 @@ const saveStatusLabel = computed(() => {
     return '儲存中…';
   }
   return '已儲存';
+});
+const saveStatusIcon = computed(() => {
+  if (props.saveStatus === 'error') return CircleAlert;
+  if (props.saveStatus === 'saved') return Check;
+  return Loader2;
+});
+const saveStatusTone = computed(() => {
+  if (props.saveStatus === 'error') return 'danger';
+  if (props.saveStatus === 'saved') return 'success';
+  return 'accent';
 });
 const showSaveStatus = shallowRef(props.saveStatus !== 'saved');
 let saveStatusTimer = null;
@@ -236,18 +236,6 @@ function resetAppearance() {
   >
     <template #main>
       <main class="obs-slot-workbench__canvas">
-        <header class="obs-slot-workbench__canvas-header">
-          <UiSegmentedControl
-            :items="kindOptions"
-            :model-value="activeKind"
-            aria-label="目前編輯的 Overlay 類型"
-            @update:model-value="emit('update:activeKind', $event)"
-          />
-          <UiButton :icon="Palette" @click="emit('openGallery')">
-            更換模板
-          </UiButton>
-        </header>
-
         <UiScrollRegion
           class="obs-slot-workbench__stage"
           axis="both"
@@ -282,7 +270,12 @@ function resetAppearance() {
           :data-state="saveStatus"
         >
           <span role="status" aria-live="polite" aria-atomic="true">
-            {{ saveStatusLabel }}
+            <UiStatusIcon
+              :icon="saveStatusIcon"
+              :tone="saveStatusTone"
+              :spinning="saveStatusIcon === Loader2"
+              :label="saveStatusLabel"
+            />
           </span>
           <UiButton v-if="saveStatus === 'error'" @click="emit('retrySave')">
             重試
@@ -292,9 +285,13 @@ function resetAppearance() {
     </template>
 
     <template #side>
-      <ObsOutputRuntimeStatus
-        :output-status="outputStatus"
-        :error="outputError"
+      <UiNotice
+        v-if="outputError"
+        class="obs-slot-workbench__notice"
+        tone="danger"
+        title="輸出未更新"
+        :message="outputError"
+        compact
       />
 
       <section
@@ -339,17 +336,19 @@ function resetAppearance() {
   min-height: 0;
   min-width: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--ui-space-3);
+  grid-template-rows: minmax(0, 1fr);
 }
 
-.obs-slot-workbench__canvas-header,
 .obs-slot-workbench__inspector-header {
   min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-2);
+}
+
+.obs-slot-workbench__notice {
+  margin-block: var(--ui-space-3);
 }
 
 .obs-slot-workbench__stage {
@@ -389,15 +388,6 @@ function resetAppearance() {
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-label);
   white-space: nowrap;
-}
-
-.obs-slot-workbench__save-state[data-state='pending'],
-.obs-slot-workbench__save-state[data-state='saving'] {
-  color: var(--ui-color-accent);
-}
-
-.obs-slot-workbench__save-state[data-state='error'] {
-  color: var(--ui-color-danger);
 }
 
 .obs-slot-workbench__section {

@@ -71,10 +71,6 @@ const batchThreeConsumers = [
     source: readSource('../lyrics-provider/LyricsProviderReviewForm.vue'),
   },
   {
-    name: 'output settings',
-    source: readSource('../output/ObsOutputSettings.vue'),
-  },
-  {
     name: 'output template gallery',
     source: readSource('../output/ObsTemplateGallery.vue'),
   },
@@ -231,8 +227,8 @@ describe('UiScrollRegion production migration', () => {
     const referenceSource = batchThreeConsumers[1].source;
     const benchmarkSource = batchThreeConsumers[2].source;
     const providerFormSource = batchThreeConsumers[5].source;
-    const splitLayoutSource = batchThreeConsumers[9].source;
-    const demoSource = batchThreeConsumers[10].source;
+    const splitLayoutSource = batchThreeConsumers[8].source;
+    const demoSource = batchThreeConsumers[9].source;
 
     expect(
       referenceSource.indexOf('class="reference-annotation__case-header"'),

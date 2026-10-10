@@ -64,7 +64,7 @@ describe('UiButton destructive consumers', () => {
 
   it('does not relabel reversible clearing or transport stop as destructive', () => {
     expect(source('../queue/QueuePanel.vue')).not.toContain('intent="danger"');
-    expect(source('../output/ObsOutputSettings.vue')).not.toContain(
+    expect(source('../settings/OutputRuntimeSettingsBlock.vue')).not.toContain(
       'intent="danger"',
     );
   });

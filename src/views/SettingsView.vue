@@ -1,5 +1,12 @@
 <script setup>
-import { computed, onMounted, onUnmounted, shallowRef, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  shallowRef,
+  watch,
+} from 'vue';
 import {
   Ellipsis,
   ExternalLink,
@@ -19,6 +26,7 @@ import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSe
 import LibraryStorageSettingsRow from '../components/settings/LibraryStorageSettingsRow.vue';
 import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
 import ObsIntegrationSettingsBlock from '../components/settings/ObsIntegrationSettingsBlock.vue';
+import OutputRuntimeSettingsBlock from '../components/settings/OutputRuntimeSettingsBlock.vue';
 import ObsSessionExportModal from '../components/settings/ObsSessionExportModal.vue';
 import PlaybackHistorySettingsRow from '../components/settings/PlaybackHistorySettingsRow.vue';
 import SeparationGpuSettingsRow from '../components/settings/SeparationGpuSettingsRow.vue';
@@ -38,6 +46,7 @@ import {
   isKnownFeatureDependency,
 } from '../constants/featureDependencies.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
+import { useAppView } from '../composables/useAppView.js';
 import { useFeatureDependencies } from '../composables/useFeatureDependencies.js';
 import { useFeatureGateAccess } from '../composables/useFeatureGateAccess.js';
 import { useFeatureGatePresentation } from '../composables/useFeatureGatePresentation.js';
@@ -245,6 +254,22 @@ const optionalFeatureGroups = computed(() => {
 function selectSettingsTab(tabId) {
   activeSettingsTab.value = tabId;
 }
+
+const { settingsSection, clearSettingsSection } = useAppView();
+
+watch(
+  settingsSection,
+  async (section) => {
+    if (!section) return;
+    clearSettingsSection();
+    activeSettingsTab.value = 'optional';
+    await nextTick();
+    document
+      .getElementById(`settings-group-${section}`)
+      ?.scrollIntoView({ block: 'start' });
+  },
+  { immediate: true },
+);
 
 watch(
   () => featureGateAccessState.request?.featureId,
@@ -700,6 +725,7 @@ onUnmounted(() => {
 
         <SettingsBlock
           v-for="group in optionalFeatureGroups"
+          :id="`settings-group-${group.id}`"
           :key="group.id"
           :title="group.title"
         >
@@ -744,6 +770,11 @@ onUnmounted(() => {
                 :preference-busy="separationSettings.preferenceBusy.value"
                 :preference-error="separationSettings.preferenceError.value"
                 @set-gpu-acceleration="separationSettings.setGpuAcceleration"
+              />
+              <OutputRuntimeSettingsBlock
+                v-if="
+                  gate.id === FEATURE_IDS.PUBLIC_OUTPUT_FLOW && gate.enabled
+                "
               />
               <ObsIntegrationSettingsBlock
                 v-if="

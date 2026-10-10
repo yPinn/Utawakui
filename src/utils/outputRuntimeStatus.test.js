@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  describeOutputClientStatus,
-  describeOutputRuntimeStatus,
-  describeOutputSourceStatus,
-} from './outputRuntimeStatus.js';
+import { describeOutputRuntimeStatus } from './outputRuntimeStatus.js';
 
 describe('describeOutputRuntimeStatus', () => {
   it('reports a stopped service before considering source or clients', () => {
@@ -17,7 +13,7 @@ describe('describeOutputRuntimeStatus', () => {
       state: 'stopped',
       label: '服務已停止',
       tone: 'muted',
-      detail: '本機服務未啟動。',
+      detail: '按「啟動」開始輸出。',
     });
   });
 
@@ -33,9 +29,9 @@ describe('describeOutputRuntimeStatus', () => {
       }),
     ).toEqual({
       state: 'source-unavailable',
-      label: '資料來源未連線',
+      label: '無法取得播放內容',
       tone: 'danger',
-      detail: '本機服務已啟動，但尚未收到播放器資料。',
+      detail: '已啟動，正在等待播放內容。',
     });
   });
 
@@ -48,9 +44,9 @@ describe('describeOutputRuntimeStatus', () => {
       }),
     ).toEqual({
       state: 'source-syncing',
-      label: '正在同步資料',
+      label: '同步中',
       tone: 'warning',
-      detail: '正在接收播放器、佇列與歌詞狀態。',
+      detail: '正在讀取播放內容。',
     });
   });
 
@@ -63,9 +59,9 @@ describe('describeOutputRuntimeStatus', () => {
       }),
     ).toEqual({
       state: 'source-ready',
-      label: '資料已同步',
+      label: '等待連線',
       tone: 'accent',
-      detail: '播放資料已就緒，等待 Browser Source 連線。',
+      detail: '到「工作台」複製網址，或直接拖進直播軟體。',
     });
 
     expect(
@@ -78,23 +74,23 @@ describe('describeOutputRuntimeStatus', () => {
       state: 'client-connected',
       label: 'Browser Source 已連線',
       tone: 'success',
-      detail: '2 個 Browser Source 連線，播放資料已同步。',
+      detail: '2 個 Browser Source 已連線。',
     });
   });
 
   it('keeps a safe legacy fallback when source diagnostics are absent', () => {
     expect(describeOutputRuntimeStatus({ running: true, clients: 0 })).toEqual({
       state: 'service-running',
-      label: '服務可用',
+      label: '已啟動',
       tone: 'accent',
       detail: '等待 Browser Source 連線。',
     });
   });
 
   it.each([
-    ['renderer_loading', '控制面板正在重新載入，等待目前播放資料。'],
-    ['renderer_crashed', '播放器資料來源已中斷，請重新啟動應用程式。'],
-    ['renderer_destroyed', '播放器資料來源已中斷，請重新啟動應用程式。'],
+    ['renderer_loading', '應用程式重新載入中，請稍候。'],
+    ['renderer_crashed', '無法取得播放內容，請重新啟動應用程式。'],
+    ['renderer_destroyed', '無法取得播放內容，請重新啟動應用程式。'],
   ])('explains the %s unavailable reason', (reason, detail) => {
     expect(
       describeOutputRuntimeStatus({
@@ -105,92 +101,5 @@ describe('describeOutputRuntimeStatus', () => {
         },
       }).detail,
     ).toBe(detail);
-  });
-});
-
-describe('compact output status descriptions', () => {
-  it.each([
-    [
-      { running: false },
-      {
-        state: 'stopped',
-        label: '服務停止',
-        tone: 'muted',
-        detail: '本機輸出服務未啟動。',
-      },
-    ],
-    [
-      {
-        running: true,
-        observed: { sourceSynchronization: 'syncing' },
-      },
-      {
-        state: 'syncing',
-        label: '同步中',
-        tone: 'warning',
-        detail: '正在接收播放器、佇列與歌詞狀態。',
-      },
-    ],
-    [
-      {
-        running: true,
-        observed: {
-          sourceSynchronization: 'unavailable',
-          unavailableReason: 'renderer_crashed',
-        },
-      },
-      {
-        state: 'unavailable',
-        label: '來源中斷',
-        tone: 'danger',
-        detail: '播放器資料來源已中斷，請重新啟動應用程式。',
-      },
-    ],
-    [
-      {
-        running: true,
-        observed: { sourceSynchronization: 'ready' },
-      },
-      {
-        state: 'ready',
-        label: '已同步',
-        tone: 'success',
-        detail: '播放資料已就緒。',
-      },
-    ],
-  ])('describes source state independently', (status, expected) => {
-    expect(describeOutputSourceStatus(status)).toEqual(expected);
-  });
-
-  it.each([
-    [
-      { running: false, clients: 3 },
-      {
-        state: 'stopped',
-        label: '未連線',
-        tone: 'muted',
-        detail: '輸出服務停止時不接受 Browser Source 連線。',
-      },
-    ],
-    [
-      { running: true, clients: 0 },
-      {
-        state: 'disconnected',
-        label: '未連線',
-        tone: 'muted',
-        detail: '尚無 Browser Source 連線。',
-      },
-    ],
-    [
-      { running: true, clients: 2 },
-      {
-        state: 'connected',
-        label: '2 個來源',
-        tone: 'success',
-        detail: '2 個 Browser Source 已連線。',
-      },
-    ],
-  ])('describes Browser Source clients independently', (status, expected) => {
-    expect(describeOutputClientStatus(status)).toEqual(expected);
   });
 });

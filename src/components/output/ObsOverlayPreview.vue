@@ -21,6 +21,7 @@ import {
   calculateCapturePreviewScale,
   OUTPUT_LYRICS_CAPTURE_SIZE,
 } from '../../constants/outputCaptureSizes.js';
+import { buildOutputDropUrl } from '../../utils/outputRoutes.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
@@ -65,6 +66,9 @@ const isLyrics = computed(() => props.activeKind === 'lyrics');
 const selectedCaptureSize = computed(
   () => props.captureSize ?? props.supportedCaptureSizes[0] ?? 'small',
 );
+const dropUrl = computed(() =>
+  buildOutputDropUrl(props.obsUrl, props.activeKind, selectedCaptureSize.value),
+);
 const hasRuntimeTemplate = computed(() => Boolean(props.previewUrl));
 const inspectionUrl = computed(() => {
   if (!props.previewUrl) return null;
@@ -107,6 +111,13 @@ function measurePreview() {
 
 function handlePreviewLoad() {
   emit('refreshProjection');
+}
+
+function startUrlDrag(event) {
+  if (!dropUrl.value || !event.dataTransfer) return;
+  event.dataTransfer.effectAllowed = 'copy';
+  event.dataTransfer.setData('text/uri-list', dropUrl.value);
+  event.dataTransfer.setData('text/plain', dropUrl.value);
 }
 
 async function copyObsUrl() {
@@ -206,10 +217,8 @@ onBeforeUnmount(() => {
           :role="copyState === 'error' ? 'alert' : 'status'"
           aria-live="polite"
         >
-          <template v-if="copyState === 'copied'">
-            已複製 Browser Source URL
-          </template>
-          <template v-else-if="copyState === 'error'">無法複製 URL</template>
+          <template v-if="copyState === 'copied'"> 已複製 </template>
+          <template v-else-if="copyState === 'error'">複製失敗</template>
         </p>
       </div>
       <div class="obs-overlay-preview__actions">
@@ -239,8 +248,11 @@ onBeforeUnmount(() => {
         <UiIconButton
           v-if="obsUrl"
           :icon="Copy"
-          label="複製 Browser Source URL"
+          label="複製網址"
+          title="複製網址，或直接拖進直播軟體"
+          :draggable="dropUrl ? 'true' : undefined"
           @click="copyObsUrl"
+          @dragstart="startUrlDrag"
         />
       </div>
     </div>
