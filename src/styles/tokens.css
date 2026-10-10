@@ -295,7 +295,10 @@
   --ui-folder-heading-gap: var(--ui-space-1);
   /* Mirrors FOLDER_DOSSIER_ARTWORK_SIZE (136px) in src/constants/ui.js. */
   --ui-folder-dossier-artwork-size: 8.5rem;
-  --ui-folder-compact-bar-block-size: 3rem;
+  /* Live Play button plus one block inset on each side. */
+  --ui-folder-compact-bar-block-size: calc(
+    var(--ui-icon-button-size-lg) + 2 * var(--ui-space-2)
+  );
   --ui-folder-artifact-canvas-min-height: 24rem;
   --ui-folder-artifact-folder-min-height: calc(
     var(--ui-folder-artifact-canvas-min-height) +

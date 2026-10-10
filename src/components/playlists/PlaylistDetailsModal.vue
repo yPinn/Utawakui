@@ -147,13 +147,14 @@ function cancel() {
         >
           {{ description }}
         </p>
-        <UiHint v-if="!isAlbum">
-          封面變更會立即套用；取消只會放棄尚未儲存的名稱與說明。
-        </UiHint>
       </div>
     </div>
 
     <template #footer>
+      <!-- Footnote sits on the action row so the fields keep the cover's height. -->
+      <UiHint v-if="!isAlbum" class="playlist-details__footnote">
+        封面立即套用；名稱與說明需按儲存。
+      </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
         取消
       </UiButton>
@@ -226,6 +227,12 @@ function cancel() {
   grid-template-rows: auto minmax(calc(var(--ui-field-height) * 2), 1fr);
   align-content: start;
   gap: var(--ui-modal-section-gap);
+}
+
+/* Start of the footer row, pushing the actions to the end. */
+.playlist-details__footnote {
+  min-inline-size: 0;
+  margin-inline-end: auto;
 }
 
 /* Title tier — DESIGN.md names active item titles explicitly. */

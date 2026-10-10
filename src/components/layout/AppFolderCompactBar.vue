@@ -41,6 +41,8 @@ defineProps({
   display: flex;
   align-items: center;
   gap: var(--ui-space-3);
+  /* Block inset only; Play stays on the rail Play's inline edge. */
+  padding-block: var(--ui-space-2);
   border-bottom: var(--ui-border-width) solid
     var(--ui-folder-ledger-rule-strong, var(--ui-color-border));
   background: var(--ui-folder-page-background);

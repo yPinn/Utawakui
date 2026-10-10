@@ -24,7 +24,8 @@ describe('Folder content edge', () => {
       read('./AppFolderCompactBar.vue'),
       '.app-folder-compact-bar__surface',
     );
-    expect(surface).not.toMatch(/padding/u);
+    expect(surface).toContain('padding-block: var(--ui-space-2);');
+    expect(surface).not.toMatch(/padding(-inline)?:/u);
     expect(surface).toContain('inset-inline: 0;');
   });
 

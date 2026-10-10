@@ -75,7 +75,8 @@ describe('PlaylistDetailsModal component contract', () => {
   it('offers an explicit cancel before save and shares it with X and Escape', () => {
     const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
     const cancelIndex = footer.indexOf('取消');
-    const saveIndex = footer.indexOf('儲存');
+    // The footnote also mentions 儲存; the Save button follows Cancel.
+    const saveIndex = footer.indexOf('儲存', cancelIndex);
 
     expect(cancelIndex).toBeGreaterThan(-1);
     expect(saveIndex).toBeGreaterThan(cancelIndex);
@@ -88,9 +89,17 @@ describe('PlaylistDetailsModal component contract', () => {
   });
 
   it('states the immediate cover boundary and keeps one saving owner around playlist writes', () => {
-    expect(modalSource).toContain(
-      '封面變更會立即套用；取消只會放棄尚未儲存的名稱與說明。',
+    const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
+    expect(footer).toMatch(
+      /<UiHint[^>]*class="playlist-details__footnote"[^>]*>\s*封面立即套用；名稱與說明需按儲存。/u,
     );
+    // The fields column holds only name and description, so the textarea's
+    // 1fr track reaches the cover's bottom edge.
+    const fields = modalSource.slice(
+      modalSource.indexOf('class="playlist-details__fields"'),
+      modalSource.indexOf('<template #footer>'),
+    );
+    expect(fields).not.toContain('<UiHint');
     expect(actionSource).toContain('editDetailsIsSaving');
     expect(actionSource).toContain('if (editDetailsIsSaving.value) return;');
     expect(sidebarSource).toContain(':saving="editDetailsIsSaving"');
