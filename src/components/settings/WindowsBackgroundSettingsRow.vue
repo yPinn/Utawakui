@@ -19,7 +19,7 @@ const emit = defineEmits(['setBehavior']);
 const closeBehaviorItems = Object.freeze([
   { value: 'ask', label: '每次詢問' },
   { value: 'tray', label: '在系統匣背景執行' },
-  { value: 'quit', label: '完全結束' },
+  { value: 'quit', label: '結束' },
 ]);
 </script>
 

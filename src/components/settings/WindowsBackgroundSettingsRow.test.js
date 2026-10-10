@@ -18,7 +18,7 @@ describe('WindowsBackgroundSettingsRow', () => {
     expect(html).toContain('關閉主視窗時');
     expect(html).toContain('每次詢問');
     expect(html).toContain('在系統匣背景執行');
-    expect(html).toContain('完全結束');
+    expect(html).toContain('結束');
     expect(html).toContain('背景執行時，播放、OBS 連線與輸出會繼續。');
     expect(html).toContain('class="ui-select" value="ask"');
   });

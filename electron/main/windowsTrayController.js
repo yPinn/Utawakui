@@ -187,18 +187,16 @@ function createWindowsTrayController({
       const result = await dialog.showMessageBox(sourceWindow, {
         type: 'question',
         title: appName,
-        message: hasActiveSeparation
-          ? '伴奏處理中'
-          : `要讓 ${appName} 在背景繼續執行嗎？`,
+        message: hasActiveSeparation ? '伴奏處理中' : '要在背景繼續執行嗎？',
         detail: hasActiveSeparation
-          ? '停止並結束會取消目前歌曲，未處理的順序不會保留。'
-          : '背景執行會保留播放、OBS 連線與輸出；你可以從系統匣再次開啟或完整結束。',
+          ? '停止會取消目前歌曲，其餘排程不保留。'
+          : '播放、OBS 連線與輸出會保留，可從系統匣開啟或結束。',
         buttons: hasActiveSeparation
           ? ['在背景繼續', '停止並結束', '取消']
-          : ['在背景執行', '完全結束', '取消'],
+          : ['背景執行', '結束', '取消'],
         defaultId: CLOSE_RESPONSE.TRAY,
         cancelId: CLOSE_RESPONSE.CANCEL,
-        checkboxLabel: hasActiveSeparation ? undefined : '記住我的選擇',
+        checkboxLabel: hasActiveSeparation ? undefined : '記住選擇',
         checkboxChecked: false,
         noLink: true,
       });

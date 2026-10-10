@@ -95,9 +95,9 @@ describe('windowsTrayController', () => {
     expect(dialog.showMessageBox).toHaveBeenCalledWith(
       win,
       expect.objectContaining({
-        buttons: ['在背景執行', '完全結束', '取消'],
+        buttons: ['背景執行', '結束', '取消'],
         cancelId: 2,
-        checkboxLabel: '記住我的選擇',
+        checkboxLabel: '記住選擇',
       }),
     );
     expect(Tray).not.toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('windowsTrayController', () => {
     expect(dialog.showMessageBox).toHaveBeenCalledWith(
       win,
       expect.objectContaining({
-        buttons: ['在背景執行', '完全結束', '取消'],
+        buttons: ['背景執行', '結束', '取消'],
       }),
     );
     expect(recordDiagnostic).toHaveBeenCalledWith(

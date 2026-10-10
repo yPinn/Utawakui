@@ -48,15 +48,15 @@ const modalTitle = computed(() =>
         <p class="window-close-decision__question">
           {{
             hasActiveSeparation
-              ? '要讓處理在背景繼續嗎？'
-              : '要讓 Utawakui 在背景繼續執行嗎？'
+              ? '要在背景繼續處理嗎？'
+              : '要在背景繼續執行嗎？'
           }}
         </p>
         <p class="window-close-decision__detail">
           {{
             hasActiveSeparation
-              ? '停止並結束會取消目前歌曲，未處理的順序不會保留。'
-              : '背景執行會保留播放、OBS 連線與輸出；你可以從系統匣再次開啟或完整結束。'
+              ? '停止會取消目前歌曲，其餘排程不保留。'
+              : '播放、OBS 連線與輸出會保留，可從系統匣開啟或結束。'
           }}
         </p>
       </div>
@@ -65,7 +65,7 @@ const modalTitle = computed(() =>
         v-if="!isErrorPresentation && !hasActiveSeparation"
         id="window-close-remember"
         :model-value="remember"
-        label="記住我的選擇"
+        label="記住選擇"
         :disabled="isResponding"
         @update:model-value="emit('update:remember', $event)"
       />
@@ -101,7 +101,7 @@ const modalTitle = computed(() =>
           loading-label="結束中"
           @click="emit('decision', 'quit')"
         >
-          {{ hasActiveSeparation ? '停止並結束' : '完全結束' }}
+          {{ hasActiveSeparation ? '停止並結束' : '結束' }}
         </UiButton>
         <UiButton
           v-if="!isErrorPresentation"
@@ -111,7 +111,7 @@ const modalTitle = computed(() =>
           loading-label="處理中"
           @click="emit('decision', 'tray')"
         >
-          {{ hasActiveSeparation ? '在背景繼續' : '在背景執行' }}
+          {{ hasActiveSeparation ? '在背景繼續' : '背景執行' }}
         </UiButton>
       </div>
     </div>

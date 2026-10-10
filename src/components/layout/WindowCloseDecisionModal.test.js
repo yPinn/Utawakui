@@ -25,10 +25,10 @@ describe('WindowCloseDecisionModal', () => {
 
     expect(html).toContain('ui-modal--notice');
     expect(html).toContain('關閉 Utawakui');
-    expect(html).toContain('在背景執行');
-    expect(html).toContain('完全結束');
+    expect(html).toContain('背景執行');
+    expect(html).toContain('結束');
     expect(html).toContain('取消');
-    expect(html).toContain('記住我的選擇');
+    expect(html).toContain('記住選擇');
     expect(html).toContain('type="checkbox"');
   });
 
@@ -54,8 +54,8 @@ describe('WindowCloseDecisionModal', () => {
     expect(html).toContain('無法在背景執行');
     expect(html).toContain('系統匣目前無法建立，視窗會保持開啟。');
     expect(html).toContain('知道了');
-    expect(html).not.toContain('完全結束');
-    expect(html).not.toContain('記住我的選擇');
+    expect(html).not.toContain('結束');
+    expect(html).not.toContain('記住選擇');
   });
 
   it('makes stopping active accompaniment work explicit and one-shot', async () => {
@@ -69,6 +69,6 @@ describe('WindowCloseDecisionModal', () => {
     expect(html).toContain('停止並結束');
     expect(html).toContain('在背景繼續');
     expect(html).toContain('ui-btn--intent-danger');
-    expect(html).not.toContain('記住我的選擇');
+    expect(html).not.toContain('記住選擇');
   });
 });
