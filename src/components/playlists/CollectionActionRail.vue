@@ -10,6 +10,7 @@ import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 
 const props = defineProps({
   entityLabel: { type: String, required: true },
@@ -24,7 +25,14 @@ const props = defineProps({
   entityAction: { type: Object, default: null },
   moreItems: { type: Array, default: () => [] },
   searchQuery: { type: String, default: '' },
+  // Track list density; empty hides the view switch.
+  viewMode: { type: String, default: '' },
 });
+
+const VIEW_MODE_ITEMS = Object.freeze([
+  Object.freeze({ id: 'list', label: '清單' }),
+  Object.freeze({ id: 'compact', label: '精簡' }),
+]);
 
 const emit = defineEmits([
   'togglePlayback',
@@ -34,6 +42,7 @@ const emit = defineEmits([
   'entityAction',
   'menuAction',
   'update:searchQuery',
+  'update:viewMode',
 ]);
 
 const activeMenu = shallowRef(null);
@@ -125,6 +134,13 @@ function selectMenuAction(value) {
     </div>
 
     <div class="collection-action-rail__tools">
+      <UiSegmentedControl
+        v-if="viewMode"
+        :items="VIEW_MODE_ITEMS"
+        :model-value="viewMode"
+        aria-label="曲目檢視"
+        @update:model-value="emit('update:viewMode', $event)"
+      />
       <UiSearchBox
         :model-value="searchQuery"
         @update:model-value="emit('update:searchQuery', $event)"

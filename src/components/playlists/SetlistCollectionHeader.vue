@@ -42,6 +42,7 @@ const props = defineProps({
   addToPlaylistItems: { type: Array, default: () => [] },
   moreItems: { type: Array, default: () => [] },
   searchQuery: { type: String, default: '' },
+  viewMode: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -54,6 +55,7 @@ const emit = defineEmits([
   'selectArtist',
   'choosePhoto',
   'update:searchQuery',
+  'update:viewMode',
 ]);
 
 // Matches UiCollageThumb's empty glyph at 136px (size / 2.5).
@@ -194,6 +196,7 @@ function handleMenuAction(value) {
       :entity-action="entityAction"
       :more-items="moreItems"
       :search-query="searchQuery"
+      :view-mode="viewMode"
       @toggle-playback="emit('togglePlayback')"
       @toggle-shuffle="emit('toggleShuffle')"
       @add-to-queue="emit('addToQueue')"
@@ -201,6 +204,7 @@ function handleMenuAction(value) {
       @entity-action="activateEntityAction"
       @menu-action="handleMenuAction"
       @update:search-query="emit('update:searchQuery', $event)"
+      @update:view-mode="emit('update:viewMode', $event)"
     />
   </section>
 </template>

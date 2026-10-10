@@ -165,7 +165,9 @@ watch(
   inline-size: 100%;
   max-inline-size: var(--ui-folder-sheet-max-inline-size);
   min-block-size: max(100%, var(--ui-folder-sheet-min-block-size));
-  overflow: hidden;
+  /* clip, not hidden: hidden would make the sheet a scroll container and
+     detach sticky page chrome from the Folder scroll viewport. */
+  overflow: clip;
   border-radius: var(--ui-radius-xs);
   background: var(--ui-folder-page-background);
   color: var(--ui-color-text);

@@ -305,3 +305,42 @@ describe('LibraryTrackTable shared row behavior', () => {
     app.unmount();
   });
 });
+
+describe('LibraryTrackTable density and sticky header', () => {
+  it('drops artwork and joins title and artist on one line in compact density', () => {
+    const { app, root } = mountTable({
+      variant: 'library',
+      density: 'compact',
+    });
+    const table = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table'),
+    )[0];
+
+    expect(classIncludes(table, 'library-track-table--compact')).toBe(true);
+    expect(
+      findAll(root, (node) => classIncludes(node, 'library-track-row__thumb')),
+    ).toHaveLength(0);
+    expect(source).toMatch(
+      /\.library-track-table--compact \.library-track-row \{\s*min-height: var\(--ui-track-row-compact-min-height\);/u,
+    );
+    expect(source).toMatch(
+      /\.library-track-table--compact \.library-track-row__copy \{\s*flex-direction: row;/u,
+    );
+    app.unmount();
+  });
+
+  it('keeps artwork in the default list density', () => {
+    const { app, root } = mountTable({ variant: 'library' });
+    expect(
+      findAll(root, (node) => classIncludes(node, 'library-track-row__thumb'))
+        .length,
+    ).toBeGreaterThan(0);
+    app.unmount();
+  });
+
+  it('sticks the opaque header below the page compact bar', () => {
+    expect(source).toMatch(
+      /\.library-track-table__header \{[^}]*position: sticky;[^}]*top: var\(--ui-folder-sticky-offset, 0\);[^}]*z-index: var\(--ui-layer-overlay\);[^}]*background: var\(--ui-folder-page-background/su,
+    );
+  });
+});

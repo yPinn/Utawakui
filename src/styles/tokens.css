@@ -138,6 +138,7 @@
   --ui-control-height-emergency: 3rem;
   --ui-control-track-size-md: 0.375rem;
   --ui-track-row-min-height: 3.25rem;
+  --ui-track-row-compact-min-height: 2.25rem;
   --ui-sidebar-row-min-height: 3.25rem;
   --ui-track-artwork-size-dense: 2.25rem;
   --ui-track-artwork-size-standard: 2.5rem;
@@ -294,6 +295,7 @@
   --ui-folder-heading-gap: var(--ui-space-1);
   /* Mirrors FOLDER_DOSSIER_ARTWORK_SIZE (136px) in src/constants/ui.js. */
   --ui-folder-dossier-artwork-size: 8.5rem;
+  --ui-folder-compact-bar-block-size: 3rem;
   --ui-folder-artifact-canvas-min-height: 24rem;
   --ui-folder-artifact-folder-min-height: calc(
     var(--ui-folder-artifact-canvas-min-height) +

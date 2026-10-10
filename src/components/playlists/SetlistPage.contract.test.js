@@ -209,4 +209,17 @@ describe('Setlist page composition', () => {
       /selectedPlaylist\.value\?\.id \?\?\s*playlistState\.selectedArtistId \?\?\s*`library:/u,
     );
   });
+
+  it('reveals a compact bar and sticky table header once the dossier scrolls away', () => {
+    expect(viewSource).toContain(
+      'const compactBarVisible = useScrolledPast(collectionHeader);',
+    );
+    expect(viewSource).toMatch(
+      /<AppFolderCompactBar[\s\S]*?:visible="compactBarVisible"[\s\S]*?<PlaybackPrimaryButton/u,
+    );
+    expect(viewSource).toContain('ref="collectionHeader"');
+    expect(viewSource).toContain(':style="stickyOffsetStyle"');
+    expect(viewSource).toContain('v-model:view-mode="trackListDensity"');
+    expect(viewSource).toContain(':density="trackListDensity"');
+  });
 });

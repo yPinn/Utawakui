@@ -16,6 +16,8 @@ import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useSetlistAlbumContext } from '../composables/useSetlistAlbumContext.js';
+import { useScrolledPast } from '../composables/useScrolledPast.js';
+import { useTrackListDensity } from '../composables/useTrackListDensity.js';
 import { useTrackPreview } from '../composables/useTrackPreview.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import ArtistPhotoCandidateModal from '../components/artists/ArtistPhotoCandidateModal.vue';
@@ -26,15 +28,18 @@ import {
   addToPlaylistMenuItem,
   collectionManageMenuItems,
 } from '../utils/collectionMenuItems.js';
+import AppFolderCompactBar from '../components/layout/AppFolderCompactBar.vue';
 import AppFolderContentField from '../components/layout/AppFolderContentField.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue';
 import SetlistCollectionHeader from '../components/playlists/SetlistCollectionHeader.vue';
 import TrackPreviewOverlay from '../components/playlists/TrackPreviewOverlay.vue';
 import PerformanceSessionWorkspace from '../components/performance-session/PerformanceSessionWorkspace.vue';
+import PlaybackPrimaryButton from '../components/playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from '../components/track/TrackActionMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
+import { contentLangAttribute } from '../utils/contentLanguage.js';
 import { formatLongDuration } from '../utils/format.js';
 import {
   TRACK_MENU_ACTIONS,
@@ -127,6 +132,17 @@ const isLocalLibraryView = computed(
 const isAlbumSelected = computed(() => mode.value === 'album');
 // Artist pages are derived read-only references (ADR 0022).
 const isArtistSelected = computed(() => mode.value === 'artist');
+
+const trackListDensity = useTrackListDensity();
+const collectionHeader = shallowRef(null);
+// Spotify-style: once the dossier scrolls away, a compact bar keeps the
+// title and Play reachable and the table header sticks below it.
+const compactBarVisible = useScrolledPast(collectionHeader);
+const stickyOffsetStyle = computed(() => ({
+  '--ui-folder-sticky-offset': compactBarVisible.value
+    ? 'var(--ui-folder-compact-bar-block-size)'
+    : '0px',
+}));
 
 const { albumEntries, albumSupportingContent } = useSetlistAlbumContext();
 const artistPage = computed(() =>
@@ -804,7 +820,7 @@ onMounted(async () => {
       @menu-select="handlePreviewMenuSelect"
     />
 
-    <div class="setlist-view__main">
+    <div class="setlist-view__main" :style="stickyOffsetStyle">
       <AppSurfaceBoundary
         v-if="performanceSessionWorkspace.isOpen.value"
         surface-id="performance-session-workspace"
@@ -819,9 +835,28 @@ onMounted(async () => {
       </AppSurfaceBoundary>
 
       <template v-else>
-        <div class="setlist-view__collection-header">
+        <AppFolderCompactBar
+          :title="pageTitle"
+          :title-lang="
+            mode === 'all' ? undefined : contentLangAttribute(pageTitle)
+          "
+          :visible="compactBarVisible"
+        >
+          <template #action>
+            <PlaybackPrimaryButton
+              :playing="selectedCollectionIsPlaying"
+              :disabled="headerTracks.length === 0"
+              :play-label="`播放${pageTitle}`"
+              :pause-label="`暫停${pageTitle}`"
+              @click="toggleSelectedCollectionPlayback"
+            />
+          </template>
+        </AppFolderCompactBar>
+
+        <div ref="collectionHeader" class="setlist-view__collection-header">
           <SetlistCollectionHeader
             v-model:search-query="searchQuery"
+            v-model:view-mode="trackListDensity"
             :entity-kind="mode === 'all' ? 'library' : mode"
             :library-view="playlistState.libraryView"
             :title="pageTitle"
@@ -899,6 +934,7 @@ onMounted(async () => {
               :drop-target-track-id="dropTargetTrackId"
               :drop-position="dropPosition"
               :jumpable-track-ids="jumpableTrackIds"
+              :density="trackListDensity"
               @toggle-sort="togglePlaylistSort"
               @select-track="selectTrack"
               @activate-track="activateTrack"

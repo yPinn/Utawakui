@@ -48,6 +48,12 @@ const props = defineProps({
   dropTargetTrackId: { type: String, default: null },
   dropPosition: { type: String, default: null },
   jumpableTrackIds: { type: Set, default: () => new Set() },
+  // compact: one-line rows without artwork, for scanning long lists.
+  density: {
+    type: String,
+    default: 'list',
+    validator: (value) => ['list', 'compact'].includes(value),
+  },
 });
 
 const emit = defineEmits([
@@ -65,7 +71,9 @@ const emit = defineEmits([
 ]);
 
 const hasReorderColumn = computed(() => props.variant === 'playlist');
-const showsArtwork = computed(() => props.variant !== 'album');
+const showsArtwork = computed(
+  () => props.variant !== 'album' && props.density !== 'compact',
+);
 const showsArtist = computed(() => props.variant !== 'artist');
 
 const columnRoles = computed(() => [
@@ -112,7 +120,11 @@ function sortLabel(key, label) {
 </script>
 
 <template>
-  <div class="library-track-table" :data-track-table-variant="variant">
+  <div
+    class="library-track-table"
+    :class="{ 'library-track-table--compact': density === 'compact' }"
+    :data-track-table-variant="variant"
+  >
     <div class="library-track-table__header" :style="gridStyle">
       <span
         v-if="hasReorderColumn"
@@ -351,7 +363,12 @@ function sortLabel(key, label) {
 }
 
 .library-track-table__header {
+  /* Sticks below the page's compact bar once the dossier scrolls away. */
+  position: sticky;
+  top: var(--ui-folder-sticky-offset, 0);
+  z-index: var(--ui-layer-overlay);
   min-height: var(--ui-list-header-height);
+  background: var(--ui-folder-page-background, var(--ui-color-surface));
   padding-inline: var(--ui-track-row-padding-inline);
   color: var(--ui-color-text-muted);
   border-bottom: var(--ui-border-width) solid
@@ -516,6 +533,24 @@ function sortLabel(key, label) {
 .library-track-row__title {
   min-width: 0;
   font-weight: var(--ui-font-weight-semibold);
+}
+
+.library-track-table--compact .library-track-row {
+  min-height: var(--ui-track-row-compact-min-height);
+}
+
+.library-track-table--compact .library-track-row__copy {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--ui-space-2);
+}
+
+.library-track-table--compact .library-track-row__title {
+  flex: 0 1 auto;
+}
+
+.library-track-table--compact .library-track-row__subtitle {
+  flex: 1 1 0;
 }
 
 .library-track-row__title--destination,

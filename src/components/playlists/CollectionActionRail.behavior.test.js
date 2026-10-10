@@ -56,4 +56,12 @@ describe('CollectionActionRail', () => {
   it('keeps Folder asset tools out of the stable collection command and search rail', () => {
     expect(source).not.toContain('page-tools');
   });
+
+  it('offers the list／compact view switch only when the caller owns a density', () => {
+    expect(source).toMatch(
+      /<UiSegmentedControl\s+v-if="viewMode"[\s\S]*?aria-label="曲目檢視"[\s\S]*?@update:model-value="emit\('update:viewMode', \$event\)"/u,
+    );
+    expect(source).toContain("Object.freeze({ id: 'list', label: '清單' })");
+    expect(source).toContain("Object.freeze({ id: 'compact', label: '精簡' })");
+  });
 });
