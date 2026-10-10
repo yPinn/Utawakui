@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 
-// Session-wide track list density ('list' | 'compact'); persisting it waits
-// for the user-preference pass.
+// Session-wide track list density ('list' | 'compact'). No UI switches it
+// yet; collection pages stay in list view.
 const density = ref('list');
 
 export function useTrackListDensity() {

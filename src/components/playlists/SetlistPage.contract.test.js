@@ -219,7 +219,7 @@ describe('Setlist page composition', () => {
     );
     expect(viewSource).toContain('ref="collectionHeader"');
     expect(viewSource).toContain(':style="stickyOffsetStyle"');
-    expect(viewSource).toContain('v-model:view-mode="trackListDensity"');
+    expect(viewSource).not.toContain('v-model:view-mode');
     expect(viewSource).toContain(':density="trackListDensity"');
   });
 });

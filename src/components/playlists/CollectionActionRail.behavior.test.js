@@ -57,11 +57,9 @@ describe('CollectionActionRail', () => {
     expect(source).not.toContain('page-tools');
   });
 
-  it('offers the list／compact view switch only when the caller owns a density', () => {
-    expect(source).toMatch(
-      /<UiSegmentedControl\s+v-if="viewMode"[\s\S]*?aria-label="曲目檢視"[\s\S]*?@update:model-value="emit\('update:viewMode', \$event\)"/u,
-    );
-    expect(source).toContain("Object.freeze({ id: 'list', label: '清單' })");
-    expect(source).toContain("Object.freeze({ id: 'compact', label: '精簡' })");
+  // The track list stays in list view; there is no density switch in the rail.
+  it('keeps the track density switch out of the collection rail', () => {
+    expect(source).not.toContain('UiSegmentedControl');
+    expect(source).not.toContain('viewMode');
   });
 });

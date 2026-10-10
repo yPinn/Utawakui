@@ -856,7 +856,6 @@ onMounted(async () => {
         <div ref="collectionHeader" class="setlist-view__collection-header">
           <SetlistCollectionHeader
             v-model:search-query="searchQuery"
-            v-model:view-mode="trackListDensity"
             :entity-kind="mode === 'all' ? 'library' : mode"
             :library-view="playlistState.libraryView"
             :title="pageTitle"
