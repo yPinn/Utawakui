@@ -44,5 +44,8 @@ describe('AppFolderCompactBar', () => {
       /\.app-folder-compact-bar__surface \{[^}]*position: absolute;[^}]*block-size: var\(--ui-folder-compact-bar-block-size\);/su,
     );
     expect(source).toContain('font-family: var(--ui-font-family-display);');
+    expect(source).toContain(
+      'transform: translateY(var(--ui-folder-compact-bar-title-optical-offset));',
+    );
   });
 });

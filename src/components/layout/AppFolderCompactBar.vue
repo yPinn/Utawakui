@@ -67,5 +67,7 @@ defineProps({
   line-height: var(--ui-line-height-title);
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Centres the visible ink on the Play button, not the line box. */
+  transform: translateY(var(--ui-folder-compact-bar-title-optical-offset));
 }
 </style>

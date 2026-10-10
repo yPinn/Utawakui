@@ -296,6 +296,9 @@
   /* Mirrors FOLDER_DOSSIER_ARTWORK_SIZE (136px) in src/constants/ui.js. */
   --ui-folder-dossier-artwork-size: 8.5rem;
   /* Live Play button plus one block inset on each side. */
+  /* Windows UI faces draw single-line ink about 0.15em above the line-box
+     centre (measured across Latin, CJK and kana titles). */
+  --ui-folder-compact-bar-title-optical-offset: 0.15em;
   --ui-folder-compact-bar-block-size: calc(
     var(--ui-icon-button-size-lg) + 2 * var(--ui-space-2)
   );
