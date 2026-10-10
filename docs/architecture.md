@@ -129,10 +129,10 @@ Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live�
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
 layout family 是 registered v2 surface。`SetlistPage.vue`、`OutputPage.vue` 與 `ImportPage.vue` 是 route-level page composition owners。
-`SetlistPage.vue` 以完整 Setlist v2 boundary 包住 `AppFolderPage`，把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同藝人專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`ImportPage.vue` 同樣以完整 Import v2 boundary 包住 page composition，將「匯入」identity 放在 fixed header，
+`SetlistPage.vue` 以完整 Setlist v2 boundary 包住 `AppFolderPage`，把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同藝人專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`AppFolderPage`把`folder-tools`與Folder extension放在同一個第2列；extension直接顯露`AppFolderLayout`的單一Folder material，不建立滿版pseudo child surface、top seam、獨立工具列row或無效高度。`folder-tools`是row 2 upper-end的Folder背景控制，不繪製dock surface且位於floating plane下方；外層Scrollbar仍為最高paint owner。`SetlistPage`只透過共用方形Command `UiIconButton`＋`UiContextMenu`提供新增照片／便條intent、loading與focus return，並以`useAppConfirmation`確認物件刪除；便條編輯狀態由`SetlistPage`持有、經`SetlistFolderArtifactLayer`的`editingKey`傳到`UiFolderArtifact`，由共用`UiTextarea`的`bare` variant承接輸入；便條紙材是main在建立時隨機寫入payload的`paper`，renderer只依token與`src/assets/folder-paper/`的顆粒素材繪製，canvas在可編輯欄位上讓出拖曳與鍵盤移動。collection command rail不再轉送page-owned control；`useSetlistFolderObjects.js`是頁面物件的state／intent owner，以key為單位合併最新版面並以單一批次寫入。`SetlistFolderArtifactLayer.vue` 以type registry把 durable objects 與 page-scoped derived artist note 投影到同一個 Folder-wide canvas，避免座標與 stacking authority 分裂，並把main projection的rotation交給既有rotation-aware canvas；未登記的type不渲染。照片 activation 使用 renderer-root `UiModal`的shell-free media presentation；thumbnail與Preview都組合shared `UiPhotoFrame` material與filter，thumbnail使用4:3 cover，Preview使用intrinsic contain。Media grid在content的inline-end保留top-aligned vertical action rail；close先於caller action出現在DOM與Tab順序，remove使用shared `UiIconButton danger` intent、close維持neutral，content bounds會扣除rail與gap；frame material不是Modal shell。`UiModal`的backdrop預設保持inert，只有media caller opt in self-click dismissal；同一owner管理成對enter／leave transition、Escape、focus與finite open-order stack，`SetlistPage`保留asset snapshot到leave完成後才釋放。所有物件只有一種paper／side／bottom region-local placement，Pin只鎖使用者移動；shared geometry按placement投影，side reserve不足時暫時fallback到底部且resize不寫回canonical pose。`ImportPage.vue` 同樣以完整 Import v2 boundary 包住 page composition，將「匯入」identity 放在 fixed header，
 將本機匯入、provider 搜尋、候選、進度與錯誤狀態留在唯一 document scroll body；provider preview 只有 track list 使用 bounded internal scroll。
 `OutputPage.vue` 擁有 Output／local overlay host 的完整 v2 boundary；`ObsOutputWorkspace`
-把工作台／模板庫／輸出設定放在 `AppFolderPage` fixed header，不再增加重複的可見頁名。
+在 `AppFolderPage` fixed header 放置唯一的畫面分頁（歌單／歌詞／播放中）、編輯／模板模式切換、runtime 燈號與啟動／停止，以及跳到 Settings「公開輸出與 OBS」的輸出設定入口（`openSettings('output')`），不再增加重複的可見頁名。連接埠、自動啟動、畫面延遲與 Spout2 由 `OutputRuntimeSettingsBlock` 在對外輸出 gate 啟用後呈現。
 Lyrics 與 local overlay host 同樣使用完整 v2 boundary。
 Setlist 開啟場次準備時，`SetlistPage` 將 `AppFolderPage` 由 document mode 切為 workspace mode，再進入
 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
@@ -140,9 +140,9 @@ Setlist 開啟場次準備時，`SetlistPage` 將 `AppFolderPage` 由 document m
 `PerformanceSessionPanel` 維持 Right Dock 的 v2 projection recipe，不嵌入 workspace editor 或形成
 重複 feature boundary。Lyrics 固定使用 workspace mode，Folder page 不建立 document scroll；
 `LyricsDocumentPanel`、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。Output
-同樣使用 workspace mode；Workbench stage／inspector、Gallery grid／detail 與 runtime Settings
+同樣使用 workspace mode；Workbench stage／inspector 與 Gallery grid／detail
 各自擁有 bounded scroll。Workbench 的 Widget 尺寸由 preview option caption 單一表達，Lyrics
-固定尺寸留在 preview footer；inspector 只保留模板 identity、短暫 save feedback、runtime status、
+固定尺寸留在 preview footer；inspector 只保留模板 identity、短暫 save feedback、
 error 與實際設定，模板描述留在 Gallery。Lyrics preview 以可用寬、高較小者縮放完整 16:9 畫布；
 inspection composition 依 runtime 狀態維持單一 owner：服務未啟動時由控制台 frame 繪製，live
 cross-origin iframe 存在時由 iframe 內的 bounded Workbench query 繪製人物參考與
@@ -371,6 +371,7 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                                                                                          |
 | Derived artist index                  | Main artist index cache           | 唯讀投影；Renderer 只取 opaque artist id、顯示名稱與 track ids                                                                         |
 | Artist photos                         | Main artist photo services        | `artists/<artistId>/` sidecar；Renderer 只送 artist id／candidate id 與選圖／移除／候選 intent                                         |
+| Folder page objects                   | Main folder object store          | Library root manifest＋opaque asset dirs；Renderer 只送 bounded page／object key／region placement／Pin／order batch intent            |
 
 Artist organization（[ADR 0022](adr/0022-artist-identity-and-organization.md)）的第一階段由
 `electron/lib/artists/artistIndex.js` 擁有：依 `ytdlpInfo.extractPerformerCredits()` 的有序演出者
@@ -391,6 +392,8 @@ Sidebar 參照區以 `orderReferenceItems()` 依藝人名稱混排專輯與藝�
 標記，自動查詢不再寫回。Renderer 只透過 `utawakui-media://artist-photo/<artistId>/<filename>` 讀取，
 該路由由 `artistPhotos.resolveArtistPhotoPath()` 比對 provenance 記錄的唯一檔名。沒有照片時顯示人像圖示，
 不借用專輯封面。
+
+Folder 頁面物件由 `electron/lib/library/folderPageObjects.js` 擁有。`folder-page-assets.json` v4 以單一 `objects[]` 保存 key、type、source、page identity、paper／side／bottom placement、Pin、bounded rotation、同頁共用的有限 order、依 type registry 驗證的 payload 與時間；`user` key 為 `<type>:<uuid>`，`derived` key 為 `derived:<slug>`，只有 user 物件可刪除並計入每頁 12 個上限。Main 的原生 picker 每次只選一個本機 JPEG／PNG／WebP，先以 byte、magic 與 dimension bounds 驗證，再複製到 `folder-page-assets/<assetId>/image.<ext>`；新物件由 main 放在 bottom region 的 4×3 格點並以可測試的 random source 加入每軸最多 0.04 normalized jitter 與四個 ±3.25° 以內的非零角度，randomness 不進 render path。版面以 `saveFolderPageLayout` 批次寫入：整批先驗證再一次寫入，user 物件只更新 placement／Pin／order，derived 物件於第一次版面變更時建立紀錄，寫入後同頁 order 重新壓成 1..n。v3 的 `assets[]`／`layouts[]` 在讀取時遷移：未 Pin 的舊 anchor 視為 paper placement，同序時衍生物件排前。`electron/main/folderPageObjectHandlers.js` 重新驗證目前 entity 存在，preload 只暴露 list／choose-photo／save-layout／remove 四個固定 intent，renderer 不提交 path、URL、filename 或任意 IPC channel。圖片只經 exact `utawakui-media://folder-asset/<assetId>/<filename>` 路由讀取；resolver 以 manifest 比對唯一檔名。缺檔在讀取時 reconciliation，移除物件與刪除 collection 都先更新 manifest，再清理精確 asset directory。
 
 缺圖 artist 頁的明確「搜尋線上藝人照片」動作由
 `electron/lib/artists/artistPhotoCandidateService.js` 擁有。Main 從 artist index 推導名稱與最多三筆

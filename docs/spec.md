@@ -90,7 +90,11 @@ adapters 評估，目前不做 OBS native plugin。
 <library>/
   library.json
   playlists.json
+  folder-page-assets.json
   performance-session-plan.json
+  folder-page-assets/
+    <assetId>/
+      image.<ext>
   tracks/
     <trackId>/
       audio.<ext>
@@ -104,9 +108,11 @@ adapters 評估，目前不做 OBS native plugin。
 
 - `library.json` 不保存 absolute media paths，也不是未來持續擴張的完整資料庫。
 - `playlists.json` 保存使用者有順序的 collections 與 track ids。
+- `folder-page-assets.json`（v4）以單一 `objects[]` 保存 playlist／album／artist Folder 頁面的懸浮物件：object key、`type`（目前 `photo`／`note`）、`source`（`user` 可刪除／`derived` 只存位置）、bounded page identity、paper／side／bottom placement 與 region-local anchor、Pin、rotation、同頁共用的有限 layer order、依類型驗證的 payload 與時間；圖片本體位於 `folder-page-assets/<assetId>/`，不保存原始路徑或遠端 URL。每頁最多 12 個使用者物件（衍生物件不計），照片須為經 main 驗證的 JPEG／PNG／WebP；刪除 collection 時一併清理物件與照片。`pdf`／`embed` 類型保留給後續階段，目前會被拒絕。
 - `performance-session-plan.json` 保存一份 bounded current draft，只含 source identity、item ids、track ids、session-local labels、verification、cursor、revision 與 timestamp；不保存 media path／URL。
 - 封面 provenance、歌詞、分析與分離結果是 main-owned sidecars；renderer 只傳 track id 與產品 intent。`artwork.json` 不保存遠端圖片 URL 或完整 provider response。
 - 所有 renderer media URL 經 `utawakui-media:` 的 track-id allowlist resolver。
+- Collection entity 頁以紙張正下方Folder底材右上角的方形`Plus` Command icon control作為單一新增入口，展開共用選單選擇照片或便條；新便條直接在紙上進入編輯，Escape／失焦即儲存，空白便條丟棄，點擊或Enter可再次編輯。物件右鍵（或鍵盤選單鍵）提供依類型的操作：照片展開／固定／移除、便條編輯／固定／刪除、衍生摘要只能固定；刪除一律經共用確認視窗。控制直接屬於Folder背景，不繪製dock surface，與既有extension共用第2列，也不新增top seam、額外底部row或無效高度。Floating artifacts畫在它上方，因此可自然覆蓋該背景入口；外層Scrollbar仍為最高paint owner。Collection action rail維持播放／試聽／佇列／entity／更多與search，不承接頁面資產。縮圖與衍生藝人摘要共用一個 Folder-wide drag／Pin／stacking owner，短按或 Enter／Space 以共用 Modal mechanics 的 image-only media presentation 展開，drag 不會誤觸展開。所有物件不論是否Pin都保存paper／side／bottom region-local placement，放開或鍵盤移動後立即貼齊該placement；Pin只鎖定移動。Side reserve不足以容納rotation-aware物件集合時只在render階段投影到底部，變寬即回到原side placement；resize不保存、不自動捲動，fallback時Pin或取消Pin以可見位置保存。物件版面變更以單一批次寫入，重排一次送出完整順序。照片與衍生摘要都按頁面保存，A→B→A與app重啟各自還原。新使用者物件由main放在紙張下方bottom region的4×3格點，加上±0.04 normalized jitter與四個受限非零角度之一；重開與render不重新隨機。衍生摘要尚未保存時以固定的bottom預設位置排在最底層。本次新增的物件由canvas從bottom region最上層物件往右下以共用最小可抓取尺寸階梯錯開並保存，讓先前物件保留可抓取邊緣。便條是薄紙：一律使用半透明材質（重疊時可隱約看到下層），並依key的穩定hash取四種顆粒偏移之一，重繪與重開不變；便條不繪製摺痕線。使用者便條建立時由main隨機選一種紙材並保存（藍紫／粉紅／鵝黃／牛皮紙／橫線紙，皆帶顆粒），目前不開放使用者選擇；缺少或未知紙材的舊便條依key取得固定紙材並寫回，衍生摘要固定為Folder色薄棉紙。縮圖與Preview共用`UiPhotoFrame`的mat padding、strong semantic border、paper surface、artifact shadow與vintage filter；縮圖使用4:3 cover crop，Preview保留intrinsic ratio並以contain完整顯示。展開層不繪製raised dialog shell、canvas stage或內容scrollport；圖片在共享`72dvw × 70dvh`與viewport inset範圍內完整縮小，小圖不強制放大，任何橫／直／方形比例都不得裁切。關閉與移除重用影像frame外、inline-end且上緣對齊的垂直方形Overlay `UiIconButton` rail；DOM、Tab與視覺順序都是close→remove，移除使用shared `danger` intent，關閉維持neutral，media bounds會預留rail與gap。Media以既有motion tokens成對展開／收合，reduced motion直接呈現最終狀態。只有media backdrop的self-click可收合，圖片與controls不會誤觸，一般dialog backdrop仍保持inert。從Preview開啟的移除確認沿用shared Modal的有限open-order stack，視覺與鍵盤頂層一致。全部曲目／本機曲目與 workspace mode 不提供 durable page asset。
 - Settings 的曲庫空間摘要依實際檔案大小分類；無法辨識的資料只列為「其他」，不進自動清理候選。
 - 去人聲自動管理預設關閉，預設上限為 25 GiB。啟用後只在去人聲超過上限或磁碟低於安全空間時清理到 85%，先移除非目前選用的結果，再依 qualified playback 的最久未播放順序移除目前結果。歌曲本體、歌詞、封面、分析與未知檔案不會被自動刪除。
 - 播放中、待播與正在處理的曲目不進清理候選。完整行為見 [曲庫空間管理契約](contracts/library-storage-management.md)。
