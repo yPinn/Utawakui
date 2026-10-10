@@ -83,6 +83,13 @@
   --ui-font-family-base:
     'Segoe UI Variable Text', 'Segoe UI', 'Microsoft JhengHei UI',
     'Microsoft JhengHei', system-ui, sans-serif;
+  /* Role stacks swap only the Latin face; CJK falls back to the base family. */
+  --ui-font-family-display:
+    Bahnschrift, 'Segoe UI Variable Display', 'Segoe UI',
+    'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, sans-serif;
+  --ui-font-family-utility:
+    'Cascadia Mono', Consolas, 'Microsoft JhengHei UI', 'Microsoft JhengHei',
+    ui-monospace, monospace;
 
   --ui-font-size-sm: 0.875rem;
   --ui-font-size-md: 1rem;
@@ -698,18 +705,47 @@
   }
 }
 
-/* Language-aware Windows fallbacks keep one semantic UI-family token. */
+/* Language-aware Windows fallbacks. var() resolves where declared, so each
+   language redeclares every role stack instead of one shared CJK token. */
+[data-ui-system='v2']:lang(zh-Hans),
+[data-ui-system='v2'] :lang(zh-Hans) {
+  --ui-font-family-base:
+    'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI',
+    'Microsoft YaHei', system-ui, sans-serif;
+  --ui-font-family-display:
+    Bahnschrift, 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI',
+    'Microsoft YaHei', system-ui, sans-serif;
+  --ui-font-family-utility:
+    'Cascadia Mono', Consolas, 'Microsoft YaHei UI', 'Microsoft YaHei',
+    ui-monospace, monospace;
+}
+
 [data-ui-system='v2']:lang(ja),
 [data-ui-system='v2'] :lang(ja) {
   --ui-font-family-base:
     'Yu Gothic UI', 'Meiryo UI', 'Segoe UI Variable Text', 'Segoe UI',
     system-ui, sans-serif;
+  --ui-font-family-display:
+    Bahnschrift, 'Yu Gothic UI', 'Meiryo UI', 'Segoe UI', system-ui, sans-serif;
+  --ui-font-family-utility:
+    'Cascadia Mono', Consolas, 'Yu Gothic UI', 'Meiryo UI', ui-monospace,
+    monospace;
 }
 
 [data-ui-system='v2']:lang(ko),
 [data-ui-system='v2'] :lang(ko) {
   --ui-font-family-base:
     'Malgun Gothic', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --ui-font-family-display:
+    Bahnschrift, 'Malgun Gothic', 'Segoe UI', system-ui, sans-serif;
+  --ui-font-family-utility:
+    'Cascadia Mono', Consolas, 'Malgun Gothic', ui-monospace, monospace;
+}
+
+/* Inherited font-family is already resolved, so a lang-tagged element
+   re-resolves the base stack; any component font rule still wins. */
+:where([data-ui-system='v2'] [lang]) {
+  font-family: var(--ui-font-family-base);
 }
 
 /* Light is a semantic remap of the same primitives, not a color inversion. */

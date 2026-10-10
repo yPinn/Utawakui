@@ -6,6 +6,7 @@
 import { computed } from 'vue';
 import { Pause, Play, UserRound } from '../../icons/index.js';
 import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -168,7 +169,10 @@ function toggleFromArtwork(event) {
       </template>
     </UiCollageThumb>
     <span class="playlist-sidebar-row__info">
-      <span class="playlist-sidebar-row__name">
+      <span
+        class="playlist-sidebar-row__name"
+        :lang="contentLangAttribute(playlist.name, playlist.artist)"
+      >
         {{ playlist.name || '(未命名歌單)' }}
       </span>
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>

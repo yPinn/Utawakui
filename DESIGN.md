@@ -724,9 +724,9 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 - **Overlay Kinetic Pop Display Fonts:** `Utawakui M PLUS Rounded 1c` for the flat／split-depth materials; `Utawakui Keifont` for the enlarged gradient material.
 - **Overlay Ornate Vertical Display Font:** `Utawakui Hina Mincho` for Japanese-first grouped-kanji vertical lyrics.
 - **Overlay Utility Font:** system sans.
-- **Label/Mono Font:** pending; only introduce mono if timestamps, technical metadata, or counters clearly benefit.
+- **Control Panel Font Roles:** `--ui-font-family-base` for UI and body text, `--ui-font-family-display` (Bahnschrift Latin) for Folder titles, `--ui-font-family-utility` (Cascadia Mono／Consolas Latin) for labels, counters and field values. Each role swaps only the Latin face; CJK always falls back to the language's Windows UI face.
 
-**Character:** Product typography should be functional, internationalized, and calm. It must handle Japanese, Korean, Traditional Chinese, English, long song titles, artist metadata, and dense table labels without feeling cramped.
+**Character:** Product typography should be functional, internationalized, and calm. It must handle Traditional Chinese, Simplified Chinese, English, Japanese, Korean, long song titles, artist metadata, and dense table labels without feeling cramped.
 
 ### Surface Strategy
 
@@ -741,8 +741,8 @@ The control-panel default is:
 
 ```css
 --ui-font-family-base:
-  'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-  -apple-system, sans-serif;
+  'Segoe UI Variable Text', 'Segoe UI', 'Microsoft JhengHei UI',
+  'Microsoft JhengHei', system-ui, sans-serif;
 ```
 
 This matches the current `src/styles/tokens.css` direction. Keep this stack compatible and local-first; do not bundle brand fonts into the Electron control panel.
@@ -1056,6 +1056,8 @@ Naming here is this project's own semantic roles, not a literal port of any plat
 **The Fixed Scale Rule.** Product UI uses fixed rem scale, not viewport-fluid type. Responsive behavior comes from layout, not shrinking text.
 
 **The Multilingual Fit Rule.** Long metadata must truncate, marquee, wrap, or resize by component rule; it must not overflow its container.
+
+**The Content Language Rule.** The document language is `zh-TW`; user content (track title／artist／album, collection names, notes) carries its own `lang` from `contentLangAttribute`／`trackContentLang` in `src/utils/contentLanguage.js`. It judges related fields together: kana or Hangul first, then Japanese-only shinjitai, then simplified versus traditional characters derived from OpenCC's raw tables (shinjitai shared with simplified forms is not Chinese evidence); anything undecided keeps the document default. Each `:lang()` token block restates every font role, and a lang-tagged element re-resolves the base stack at zero specificity, so put `lang` on the element that owns the text's font role. Pure-kanji Japanese with no kana or shinjitai in any related field stays in the default face until a user-chosen language exists.
 
 ## Elevation
 

@@ -6,6 +6,7 @@ import {
   GripVertical,
   ICON_SIZE,
 } from '../../icons/index.js';
+import { trackContentLang } from '../../utils/contentLanguage.js';
 import { formatAddedDate, formatDuration } from '../../utils/format.js';
 import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
@@ -280,7 +281,7 @@ function sortLabel(key, label) {
             :track="track"
             size="var(--ui-track-row-thumb-size)"
           />
-          <span class="library-track-row__copy">
+          <span class="library-track-row__copy" :lang="trackContentLang(track)">
             <UiTextButton
               v-if="jumpableTrackIds.has(track.id)"
               class="library-track-row__title library-track-row__title--destination"

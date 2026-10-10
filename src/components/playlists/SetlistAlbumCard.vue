@@ -1,4 +1,5 @@
 <script setup>
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -46,7 +47,9 @@ function playAlbum(event) {
       />
     </UiArtworkReveal>
     <span class="setlist-album-card__copy">
-      <strong>{{ album.name }}</strong>
+      <strong :lang="contentLangAttribute(album.name, album.artist)">{{
+        album.name
+      }}</strong>
       <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
     </span>
   </div>
