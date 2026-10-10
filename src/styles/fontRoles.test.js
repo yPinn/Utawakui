@@ -18,7 +18,7 @@ describe('font role tokens', () => {
   });
 
   // var() resolves where it is declared, so a language must restate each role.
-  it.each(['zh-Hans', 'ja', 'ko'])('restates every role for %s', (language) => {
+  it.each(['ja', 'ko'])('restates every role for %s', (language) => {
     const block = languageBlock(language);
     for (const role of ROLES) {
       expect(block).toContain(`--ui-font-family-${role}:`);
@@ -34,7 +34,6 @@ describe('font role tokens', () => {
   });
 
   it.each([
-    ['zh-Hans', 'Microsoft YaHei UI'],
     ['ja', 'Yu Gothic UI'],
     ['ko', 'Malgun Gothic'],
   ])('keeps the %s CJK face in every role', (language, face) => {
@@ -42,5 +41,12 @@ describe('font role tokens', () => {
     const stacks = block.split(/--ui-font-family-/u).slice(1);
     expect(stacks).toHaveLength(ROLES.length);
     for (const stack of stacks) expect(stack).toContain(face);
+  });
+
+  // YaHei draws about one weight step heavier than JhengHei, which made
+  // simplified titles look bolder than their neighbours in the same list.
+  it('keeps simplified Chinese on the shared JhengHei stacks', () => {
+    expect(languageBlock('zh-Hans')).toBe('');
+    expect(tokens).not.toMatch(/--ui-font-family-[a-z]+:[^;]*YaHei/u);
   });
 });

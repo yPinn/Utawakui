@@ -760,20 +760,9 @@
 }
 
 /* Language-aware Windows fallbacks. var() resolves where declared, so each
-   language redeclares every role stack instead of one shared CJK token. */
-[data-ui-system='v2']:lang(zh-Hans),
-[data-ui-system='v2'] :lang(zh-Hans) {
-  --ui-font-family-base:
-    'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI',
-    'Microsoft YaHei', system-ui, sans-serif;
-  --ui-font-family-display:
-    Bahnschrift, 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI',
-    'Microsoft YaHei', system-ui, sans-serif;
-  --ui-font-family-utility:
-    'Cascadia Mono', Consolas, 'Microsoft YaHei UI', 'Microsoft YaHei',
-    ui-monospace, monospace;
-}
-
+   language redeclares every role stack instead of one shared CJK token.
+   Simplified Chinese keeps JhengHei: it covers the characters, and YaHei
+   draws about one weight step heavier, so mixed lists looked uneven. */
 [data-ui-system='v2']:lang(ja),
 [data-ui-system='v2'] :lang(ja) {
   --ui-font-family-base:
