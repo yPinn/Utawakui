@@ -22,7 +22,11 @@ vi.mock('signalsmith-stretch', () => {
     disconnect() {}
   }
 
-  const SignalsmithStretch = vi.fn(async (context) => {
+  const SignalsmithStretch = vi.fn(async (context, options) => {
+    // Chromium's AudioWorkletNode rejects a non-sequence outputChannelCount.
+    if (options && !Array.isArray(options.outputChannelCount)) {
+      throw new TypeError('outputChannelCount must be a sequence');
+    }
     if (!registrationByContext.has(context)) {
       registrationByContext.set(
         context,

@@ -1,4 +1,8 @@
 import SignalsmithStretch from 'signalsmith-stretch';
+import signalsmithStretchModuleUrl from 'signalsmith-stretch?url';
+
+// CSP `script-src 'self'` blocks the package's default blob: worklet URL.
+SignalsmithStretch.moduleUrl = signalsmithStretchModuleUrl;
 
 const GAIN_RAMP_SECONDS = 0.03;
 
@@ -321,7 +325,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     if (!pitchNodeReady) {
       pitchNodeReady = (async () => {
         const node = await SignalsmithStretch(audioCtx, {
-          outputChannelCount: 2,
+          outputChannelCount: [2],
         });
         masterGain.connect(node);
         node.connect(wetGain);
@@ -341,7 +345,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     if (!graph.pitchNodeReady) {
       graph.pitchNodeReady = (async () => {
         const node = await SignalsmithStretch(graph.context, {
-          outputChannelCount: 2,
+          outputChannelCount: [2],
         });
         if (!isCaptureGraphReady(graph)) return null;
         graph.mix.connect(node);
