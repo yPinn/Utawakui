@@ -17,13 +17,30 @@ const ARTIST_SUMMARY_ROTATION = -1.5;
 const NOTE_MATERIAL = 'translucent';
 const NOTE_TEXTURE_COUNT = 4;
 
-// Stable per-key grain so a note keeps its texture across renders and restarts.
-function noteTexture(key) {
+function keyHash(key) {
   let hash = 0;
   for (const character of key) {
     hash = (hash * 31 + character.codePointAt(0)) >>> 0;
   }
-  return hash % NOTE_TEXTURE_COUNT;
+  return hash;
+}
+
+// Stable per-key grain so a note keeps its texture across renders and restarts.
+function noteTexture(key) {
+  return keyHash(key) % NOTE_TEXTURE_COUNT;
+}
+
+// About one in three user objects carries stationery: tape on photos, a
+// torn edge on notes. The data card is an index card, so it is always clipped.
+const STATIONERY_SHARE = 3;
+function stationeryFor(item) {
+  if (item.source === 'derived') return { stationery: 'clip' };
+  const hash = keyHash(item.key);
+  if (hash % STATIONERY_SHARE !== 0) return { stationery: 'none' };
+  return {
+    stationery: item.type === 'photo' ? 'tape' : 'torn',
+    stationeryVariant: Math.floor(hash / STATIONERY_SHARE) % 2,
+  };
 }
 
 // Rendering per object type; unknown types (e.g. pdf, embed) stay hidden.
@@ -139,16 +156,20 @@ const items = computed(() => {
 });
 
 const artifacts = computed(() =>
-  items.value.map((item, index) => ({
-    id: item.key,
-    ...OBJECT_RENDERERS[item.type](item),
-    initialPlacement: item.placement,
-    initialPinned: item.pinned === true,
-    initialZ: index + 1,
-    rotation: item.rotation ?? 0,
-    editing: item.key === editingKey.value,
-    autoPlace: props.freshKeys.includes(item.key),
-  })),
+  items.value.map((item, index) => {
+    const rendered = OBJECT_RENDERERS[item.type](item);
+    return {
+      id: item.key,
+      ...rendered,
+      props: { ...rendered.props, ...stationeryFor(item) },
+      initialPlacement: item.placement,
+      initialPinned: item.pinned === true,
+      initialZ: index + 1,
+      rotation: item.rotation ?? 0,
+      editing: item.key === editingKey.value,
+      autoPlace: props.freshKeys.includes(item.key),
+    };
+  }),
 );
 
 function findItem(key) {

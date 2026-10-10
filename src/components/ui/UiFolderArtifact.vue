@@ -54,6 +54,13 @@ const props = defineProps({
     validator: (value) => ['print', 'archival'].includes(value),
   },
   titleLang: { type: String, default: undefined },
+  // Decoration chosen by the caller from the object's key, never at random.
+  stationery: {
+    type: String,
+    default: 'none',
+    validator: (value) => ['none', 'clip', 'tape', 'torn'].includes(value),
+  },
+  stationeryVariant: { type: Number, default: 0 },
   // Data-card rows: [{ label, value, lang? }].
   fields: { type: Array, default: () => [] },
   editing: { type: Boolean, default: false },
@@ -153,7 +160,17 @@ function handleStackLayerKeydown(layer, event) {
     :data-paper-texture="kind === 'note' ? texture : undefined"
     :data-paper="kind === 'note' ? paper : undefined"
     :data-photo-frame="kind === 'photo' ? frame : undefined"
+    :data-stationery="stationery === 'none' ? undefined : stationery"
+    :data-stationery-variant="
+      stationery === 'torn' ? stationeryVariant % 2 : undefined
+    "
   >
+    <span
+      v-if="stationery === 'clip' || stationery === 'tape'"
+      class="ui-folder-artifact__stationery"
+      :class="`ui-folder-artifact__stationery--${stationery}`"
+      aria-hidden="true"
+    ></span>
     <template v-if="kind === 'photo'">
       <UiPhotoFrame v-if="src" :src="src" :alt="alt" fit="cover" filtered />
       <slot v-else></slot>
@@ -230,6 +247,7 @@ function handleStackLayerKeydown(layer, event) {
 
 <style scoped>
 .ui-folder-artifact {
+  position: relative;
   box-sizing: border-box;
   margin: 0;
   color: var(--ui-color-text);
@@ -249,6 +267,43 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact--photo {
   width: var(--ui-folder-artifact-photo-width);
+}
+
+/* Stationery rides on the artifact, stays inert and avoids the pin corner. */
+.ui-folder-artifact__stationery {
+  position: absolute;
+  z-index: var(--ui-layer-overlay);
+  pointer-events: none;
+}
+
+.ui-folder-artifact__stationery--clip {
+  inline-size: var(--ui-space-4);
+  block-size: var(--ui-space-7);
+  /* Rises above the card so its overlap stays inside the note padding. */
+  inset-block-start: calc(-1 * var(--ui-space-6));
+  inset-inline-start: var(--ui-space-5);
+  background: var(--ui-folder-stationery-clip-color);
+  mask: url('../../assets/folder-stationery/paperclip.svg?no-inline') center /
+    contain no-repeat;
+}
+
+.ui-folder-artifact__stationery--tape {
+  inline-size: var(--ui-space-8);
+  block-size: var(--ui-space-5);
+  inset-block-start: calc(-1 * var(--ui-space-3));
+  inset-inline-start: 50%;
+  background: var(--ui-folder-stationery-tape-bg);
+  box-shadow: var(--ui-folder-stationery-tape-shadow);
+  transform: translateX(-50%) rotate(-4deg);
+}
+
+.ui-folder-artifact--note[data-stationery='torn'] {
+  padding-block-end: calc(var(--ui-space-5) + var(--ui-space-3));
+  clip-path: var(--ui-folder-stationery-edge-torn-a);
+}
+
+.ui-folder-artifact--note[data-stationery='torn'][data-stationery-variant='1'] {
+  clip-path: var(--ui-folder-stationery-edge-torn-b);
 }
 
 /* A dark archival print: same frame mechanics, restated tokens only. */

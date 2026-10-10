@@ -76,6 +76,31 @@ describe('SetlistFolderArtifactLayer', () => {
     expect(html).not.toContain('ui-folder-artifact--compact');
   });
 
+  it('clips the data card and gives about one in three user objects stable stationery', async () => {
+    const card = await render({
+      summary: { artist: '王以太', trackCount: 14, albumCount: 1 },
+      objects: [],
+    });
+    const clip = card.match(
+      /<span[^>]*ui-folder-artifact__stationery--clip[^>]*>/u,
+    )?.[0];
+    expect(clip).toContain('aria-hidden="true"');
+
+    const photos = Array.from({ length: 30 }, (_, index) =>
+      photo({
+        key: `photo:00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      }),
+    );
+    const first = await render({ objects: photos });
+    const second = await render({ objects: photos });
+    const taped = first.match(/ui-folder-artifact__stationery--tape/gu) ?? [];
+
+    expect(second).toBe(first);
+    expect(taped.length).toBeGreaterThan(4);
+    expect(taped.length).toBeLessThan(18);
+    expect(first).not.toContain('data-stationery="torn"');
+  });
+
   it('places an unsaved derived summary behind saved objects with its default pose', async () => {
     const html = await render({
       summary: { artist: 'Aimer', text: 'Artist summary' },
@@ -173,7 +198,7 @@ describe('SetlistFolderArtifactLayer', () => {
     expect(html).toContain('data-paper-texture="1"');
     expect(html).toContain('data-paper-texture="2"');
     expect(source).toMatch(
-      /function noteTexture\(key\)[\s\S]*?hash % NOTE_TEXTURE_COUNT/u,
+      /function noteTexture\(key\)[\s\S]*?keyHash\(key\) % NOTE_TEXTURE_COUNT/u,
     );
   });
 

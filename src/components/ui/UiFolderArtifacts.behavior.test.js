@@ -469,8 +469,16 @@ describe('UiFolderArtifact', () => {
     expect(photoFrameRule).not.toContain('background-image');
     expect(stackFrameRule).not.toContain('background-image');
     expect(artifactSource).not.toContain('backdrop-filter');
-    expect(artifactSource).not.toContain('clip-path');
-    expect(artifactSource).not.toContain('mask');
+    // Stationery is the only place a clip-path or mask may appear.
+    const styles = artifactSource.slice(artifactSource.indexOf('<style'));
+    for (const match of styles.matchAll(/([^{}]+)\{[^}]*(clip-path|mask):/gu)) {
+      const selector = match[1].trim();
+      if (match[2] === 'mask') {
+        expect(selector).toBe('.ui-folder-artifact__stationery--clip');
+      } else {
+        expect(selector).toContain("[data-stationery='torn']");
+      }
+    }
     expect(artifactSource).not.toContain('feTurbulence');
     expect(artifactSource).toMatch(
       /@media \(forced-colors: active\)[\s\S]*background-image:\s*none;[\s\S]*filter:\s*none;/u,

@@ -368,6 +368,53 @@
   --ui-folder-artifact-drag-shadow: 0 0.75rem 1rem rgb(0 0 0 / 28%);
   --ui-folder-artifact-drag-scale: 1.0125;
 
+  /* Stationery: decoration drawn inside an artifact, never a hit target. */
+  --ui-folder-stationery-clip-color: var(--ui-color-border-strong);
+  --ui-folder-stationery-tape-bg: color-mix(
+    in srgb,
+    var(--ui-color-paper) 58%,
+    transparent
+  );
+  --ui-folder-stationery-tape-shadow: 0 0.0625rem 0.125rem rgb(0 0 0 / 18%);
+  --ui-folder-stationery-edge-torn-a: polygon(
+    0 0,
+    100% 0,
+    100% 91%,
+    94% 94%,
+    88% 90%,
+    81% 95%,
+    73% 91%,
+    66% 96%,
+    58% 91%,
+    50% 95%,
+    42% 90%,
+    35% 95%,
+    27% 91%,
+    19% 96%,
+    11% 91%,
+    5% 95%,
+    0 92%
+  );
+  --ui-folder-stationery-edge-torn-b: polygon(
+    0 0,
+    100% 0,
+    100% 93%,
+    95% 90%,
+    89% 95%,
+    82% 91%,
+    74% 96%,
+    67% 92%,
+    59% 95%,
+    51% 90%,
+    43% 95%,
+    36% 91%,
+    28% 96%,
+    20% 92%,
+    12% 95%,
+    6% 91%,
+    0 94%
+  );
+
   /* Flat archival elevation: shadows indicate real overlap only. */
   --ui-shadow-contact: none;
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 32%);
