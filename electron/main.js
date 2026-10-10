@@ -122,6 +122,9 @@ const { createLibraryStorageService } = require('./lib/library/storage');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
 const {
+  registerFolderPageObjectHandlers,
+} = require('./main/folderPageObjectHandlers');
+const {
   registerPerformanceSessionPlanHandlers,
 } = require('./main/performanceSessionPlanHandlers');
 const {
@@ -869,6 +872,15 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      recordDiagnostic,
+    });
+
+    registerFolderPageObjectHandlers({
+      ipcMain,
+      dialog,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
       recordDiagnostic,
     });
 

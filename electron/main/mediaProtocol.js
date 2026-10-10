@@ -8,6 +8,9 @@ const {
   resolveTrackPath,
 } = require('../lib/library');
 const { resolveArtistPhotoPath } = require('../lib/artists/artistPhotos');
+const {
+  resolveFolderPageAssetPath,
+} = require('../lib/library/folderPageObjects');
 const { MEDIA_SCHEME } = require('./mediaScheme');
 
 // Serves local audio files to the sandboxed renderer (nodeIntegration:
@@ -17,9 +20,10 @@ const { MEDIA_SCHEME } = require('./mediaScheme');
 // separation-result request (`<trackId>/separations/<presetId>.wav`,
 // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
 // cover image (resolvePlaylistCoverPath); 'artist-photo' resolves the one
-// recorded artist photo (resolveArtistPhotoPath); 'local' resolves legacy
-// pre-migration audio through resolveTrackPath. Every hostname and segment
-// count is allowlisted before a filesystem resolver sees it.
+// recorded artist photo (resolveArtistPhotoPath); 'folder-asset' resolves one
+// manifest-owned page image; 'local' resolves legacy pre-migration audio
+// through resolveTrackPath. Every hostname and segment count is allowlisted
+// before a filesystem resolver sees it.
 function notFoundResponse() {
   return new Response('Not found', { status: 404 });
 }
@@ -43,6 +47,8 @@ function registerMediaProtocol({
     resolveSeparationPath = resolveSeparationResultPath,
   resolveTrackPath: resolveLegacyTrackPath = resolveTrackPath,
   resolveArtistPhotoPath: resolvePhotoPath = resolveArtistPhotoPath,
+  resolveFolderPageAssetPath:
+    resolveFolderAssetPath = resolveFolderPageAssetPath,
 }) {
   protocol.handle(MEDIA_SCHEME, (request) => {
     const url = new URL(request.url);
@@ -76,6 +82,10 @@ function registerMediaProtocol({
       if (segments.length !== 2) return notFoundResponse();
       const [artistId, photoFilename] = segments;
       filePath = resolvePhotoPath(dir, artistId, photoFilename);
+    } else if (url.hostname === 'folder-asset') {
+      if (segments.length !== 2) return notFoundResponse();
+      const [assetId, assetFilename] = segments;
+      filePath = resolveFolderAssetPath(dir, assetId, assetFilename);
     } else if (url.hostname === 'local') {
       if (segments.length !== 1) return notFoundResponse();
       filePath = resolveLegacyTrackPath(dir, segments[0]);

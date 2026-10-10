@@ -5,6 +5,7 @@ const {
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
 } = require('../lib/library');
+const { deleteFolderPageObjects } = require('../lib/library/folderPageObjects');
 const {
   buildPlaylistCoverUrl,
   createPlaylist,
@@ -63,6 +64,7 @@ function registerPlaylistsHandlers({
   setPlaylistKindValue = setPlaylistKind,
   setPlaylistDescriptionText = setPlaylistDescription,
   writePlaylistCoverFromFile = writePlaylistCoverFile,
+  deleteFolderPageObjectsForPage = deleteFolderPageObjects,
 }) {
   // Shared shape for every playlists:* diagnostic wrap below — keeps the
   // 11 handlers from repeating the same recordDiagnostic/publicError
@@ -129,8 +131,18 @@ function registerPlaylistsHandlers({
       '這個歌單無法刪除，請再試一次。',
       () => {
         const dir = resolveDownloadDir(getConfig());
+        const target = loadPlaylistsList(dir).find(
+          (playlist) => playlist.id === id,
+        );
         deletePlaylistCoverDirectory(dir, id);
-        return withCoverUrls(deletePlaylistRecord(dir, id));
+        const playlists = deletePlaylistRecord(dir, id);
+        if (target && ['playlist', 'album'].includes(target.kind)) {
+          deleteFolderPageObjectsForPage(dir, {
+            kind: target.kind,
+            id: target.id,
+          });
+        }
+        return withCoverUrls(playlists);
       },
     ),
   );

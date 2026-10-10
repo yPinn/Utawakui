@@ -228,6 +228,12 @@ export const UI_DEMO_GROUPS = Object.freeze([
         components: ['UiCollageThumb'],
       },
       {
+        key: 'photo-frame',
+        title: '照片外框',
+        components: ['UiPhotoFrame'],
+        adopted: true,
+      },
+      {
         key: 'track-rows',
         title: '曲目資料列',
         components: ['UiTrackRow'],

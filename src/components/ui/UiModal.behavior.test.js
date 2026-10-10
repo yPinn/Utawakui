@@ -213,6 +213,70 @@ describe('UiModal behavior', () => {
     app.unmount();
   });
 
+  it('lets only an opted-in media backdrop self-click request close', async () => {
+    const close = vi.fn();
+    const Root = {
+      setup: () => () =>
+        h(UiModal, {
+          open: true,
+          title: '頁面照片',
+          presentation: 'media',
+          dismissOnBackdrop: true,
+          onClose: close,
+        }),
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(root);
+    await nextTick();
+
+    const backdrop = findAll(body, (node) =>
+      String(node.props?.class || '').includes('ui-modal-backdrop'),
+    )[0];
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+
+    backdrop.props.onClick({ target: dialog, currentTarget: backdrop });
+    expect(close).not.toHaveBeenCalled();
+
+    backdrop.props.onClick({ target: backdrop, currentTarget: backdrop });
+    expect(close).toHaveBeenCalledOnce();
+
+    app.unmount();
+  });
+
+  it('keeps media close above remove in both DOM and keyboard order', async () => {
+    const Root = {
+      setup: () => () =>
+        h(
+          UiModal,
+          {
+            open: true,
+            title: '頁面照片',
+            presentation: 'media',
+          },
+          {
+            'header-actions': () => h('button', null, '刪除照片'),
+            default: () => h('img', { alt: '頁面照片' }),
+          },
+        ),
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(root);
+    await nextTick();
+
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+    const actionLabels = findAll(dialog, (node) => node.type === 'button').map(
+      textContent,
+    );
+    app.unmount();
+    expect(actionLabels.slice(0, 2)).toEqual(['關閉', '刪除照片']);
+  });
+
   it('disables every close path while a caller-owned commit is in progress', async () => {
     const close = vi.fn();
     const Root = {
@@ -220,6 +284,8 @@ describe('UiModal behavior', () => {
         h(UiModal, {
           open: true,
           title: '儲存中',
+          presentation: 'media',
+          dismissOnBackdrop: true,
           closeDisabled: true,
           onClose: close,
         }),
@@ -237,6 +303,10 @@ describe('UiModal behavior', () => {
     )[0];
     expect(closeButton.props.disabled).toBe(true);
     closeButton.props.onClick();
+    const backdrop = findAll(body, (node) =>
+      String(node.props?.class || '').includes('ui-modal-backdrop'),
+    )[0];
+    backdrop.props.onClick({ target: backdrop, currentTarget: backdrop });
     listeners.get('keydown')[0]({ key: 'Escape' });
 
     expect(close).not.toHaveBeenCalled();
@@ -273,6 +343,71 @@ describe('UiModal behavior', () => {
 
     expect(closeFirst).not.toHaveBeenCalled();
     expect(closeSecond).toHaveBeenCalledOnce();
+    app.unmount();
+  });
+
+  it('paints the last-opened modal above later-mounted teleport anchors', async () => {
+    const confirmationOpen = ref(false);
+    const previewOpen = ref(true);
+    const closeConfirmation = vi.fn(() => {
+      confirmationOpen.value = false;
+    });
+    const closePreview = vi.fn(() => {
+      previewOpen.value = false;
+    });
+    const Root = {
+      setup: () => () => [
+        h(UiModal, {
+          open: confirmationOpen.value,
+          title: '移除照片？',
+          onClose: closeConfirmation,
+        }),
+        h(UiModal, {
+          open: previewOpen.value,
+          title: '頁面照片',
+          onClose: closePreview,
+        }),
+      ],
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(root);
+    await nextTick();
+
+    confirmationOpen.value = true;
+    await nextTick();
+
+    const dialogs = findAll(body, (node) => node.props?.role === 'dialog');
+    const confirmation = dialogs.find(
+      (dialog) => dialog.props['aria-label'] === '移除照片？',
+    );
+    const preview = dialogs.find(
+      (dialog) => dialog.props['aria-label'] === '頁面照片',
+    );
+
+    expect(
+      String(confirmation.parent.props.style['--ui-modal-stack-index']),
+    ).toBe('1');
+    expect(String(preview.parent.props.style['--ui-modal-stack-index'])).toBe(
+      '0',
+    );
+
+    for (const listener of listeners.get('keydown')) {
+      listener({ key: 'Escape' });
+    }
+    await nextTick();
+
+    expect(closeConfirmation).toHaveBeenCalledOnce();
+    expect(closePreview).not.toHaveBeenCalled();
+    const remainingBackdrop = findAll(body, (node) =>
+      String(node.props?.class || '').includes('ui-modal-backdrop'),
+    )[0];
+    expect(
+      String(remainingBackdrop.props.style['--ui-modal-stack-index']),
+    ).toBe('0');
+
     app.unmount();
   });
 

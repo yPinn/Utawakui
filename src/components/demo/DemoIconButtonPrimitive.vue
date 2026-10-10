@@ -6,6 +6,7 @@ import {
   Play,
   Repeat,
   Settings,
+  Trash2,
 } from '../../icons/index.js';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
@@ -311,6 +312,18 @@ function stateProps(state, variant) {
           </tbody>
         </table>
       </UiScrollRegion>
+      <article class="demo-icon-button-danger" data-icon-button-intent="danger">
+        <span>Destructive Overlay</span>
+        <span class="demo-icon-button-state__overlay">
+          <component
+            :is="layer.component"
+            :icon="Trash2"
+            label="刪除頁面照片"
+            variant="overlay"
+            intent="danger"
+          />
+        </span>
+      </article>
     </section>
 
     <section class="demo-icon-button-subsection">
@@ -360,8 +373,9 @@ function stateProps(state, variant) {
         <div>
           <dt>Appearance</dt>
           <dd>
-            variant · ghost／accent／command／overlay<br />size ·
-            md／lg；density owns routine md<br />shape · square／circle／inherit
+            variant · ghost／accent／command／overlay<br />intent ·
+            neutral／danger<br />size · md／lg；density owns routine md<br />shape
+            · square／circle／inherit
           </dd>
         </div>
         <div>
@@ -465,11 +479,22 @@ function stateProps(state, variant) {
 
 .demo-icon-button-size > span,
 .demo-icon-button-content-grid article > span,
-.demo-icon-button-state > span {
+.demo-icon-button-state > span,
+.demo-icon-button-danger > span {
   color: var(--ui-color-text-subtle);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
+}
+
+.demo-icon-button-danger {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-3);
+  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
 }
 
 .demo-icon-button-size--standard {

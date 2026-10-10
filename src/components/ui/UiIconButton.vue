@@ -22,6 +22,11 @@ const props = defineProps({
     validator: (value) =>
       ['ghost', 'accent', 'command', 'overlay'].includes(value),
   },
+  intent: {
+    type: String,
+    default: 'neutral',
+    validator: (value) => ['neutral', 'danger'].includes(value),
+  },
   size: {
     type: String,
     default: 'md',
@@ -65,6 +70,7 @@ function buttonAttrs(triggerProps) {
     class="ui-icon-btn"
     :class="[
       `ui-icon-btn--${variant}`,
+      `ui-icon-btn--intent-${intent}`,
       `ui-icon-btn--${size}`,
       `ui-icon-btn--${shape}`,
       {
@@ -224,6 +230,53 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-overlay-contrast);
 }
 
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost {
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):hover {
+  background: var(--ui-button-danger-surface-hover);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):active {
+  background: var(--ui-button-danger-surface-active);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--command {
+  border-color: var(--ui-button-danger-border);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):hover {
+  border-color: var(--ui-button-danger-border);
+  background: var(--ui-button-danger-surface-hover);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):active {
+  border-color: var(--ui-button-danger-border);
+  background: var(--ui-button-danger-surface-active);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--accent,
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay {
+  background: var(--ui-button-danger-fill);
+  color: var(--ui-button-danger-contrast);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):hover,
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):hover {
+  background: var(--ui-button-danger-fill-hover);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):active,
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):active {
+  background: var(--ui-button-danger-fill-active);
+}
+
 .ui-icon-btn:disabled,
 .ui-icon-btn[aria-disabled='true'] {
   opacity: var(--ui-opacity-disabled);
@@ -246,6 +299,20 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-accent-contrast-muted);
 }
 
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost:disabled,
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost[aria-disabled='true'],
+.ui-icon-btn--intent-danger.ui-icon-btn--command:disabled,
+.ui-icon-btn--intent-danger.ui-icon-btn--command[aria-disabled='true'] {
+  color: var(--ui-button-danger-text);
+}
+
+.ui-icon-btn--intent-danger.ui-icon-btn--accent:disabled,
+.ui-icon-btn--intent-danger.ui-icon-btn--accent[aria-disabled='true'],
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay:disabled,
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay[aria-disabled='true'] {
+  color: var(--ui-button-danger-contrast-muted);
+}
+
 .ui-icon-btn:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
@@ -256,6 +323,10 @@ function buttonAttrs(triggerProps) {
 }
 
 @media (forced-colors: active) {
+  .ui-icon-btn--intent-danger {
+    border: var(--ui-border-width) solid ButtonText;
+  }
+
   .ui-icon-btn--active {
     outline: var(--ui-border-width) solid Highlight;
     outline-offset: var(--ui-focus-offset-inset);

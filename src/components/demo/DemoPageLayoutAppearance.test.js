@@ -150,7 +150,9 @@ describe('DemoPageLayoutAppearance', () => {
     expect(folderPageSource).toMatch(
       /\.app-folder-page__scroll\s*\{[^}]*min-height:\s*0;[^}]*height:\s*100%;/su,
     );
-    expect(folderPageSource).toContain('<div class="app-folder-page__sheet">');
+    expect(folderPageSource).toContain(
+      'class="app-folder-page__sheet" data-folder-artifact-region="paper"',
+    );
     expect(folderPageSource).toContain('<AppLooseLeafEdge />');
     expect(folderLayoutSource).toContain('container-type: inline-size');
     expect(folderLayoutSource).toContain('container-name: app-folder-layout');

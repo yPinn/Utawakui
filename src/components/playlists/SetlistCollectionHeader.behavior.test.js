@@ -185,4 +185,9 @@ describe('SetlistCollectionHeader', () => {
     expect(source).not.toContain('usePlaybackQueue');
     expect(source).not.toContain('usePlaylists');
   });
+
+  it('does not own or forward Folder page asset controls', () => {
+    expect(source).not.toContain('page-tools');
+    expect(source).not.toContain('useSetlistFolderAssets');
+  });
 });

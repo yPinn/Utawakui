@@ -202,6 +202,36 @@ describe('shared UI interaction contracts', () => {
     app.unmount();
   });
 
+  it('keeps a disabled overlay icon action compact and announced', () => {
+    const { app, root } = mount(UiIconButton, {
+      icon: Volume2,
+      label: '新增頁面照片',
+      variant: 'overlay',
+      disabled: true,
+    });
+    const button = findAll(root, (node) => node.type === 'button')[0];
+
+    expect(button.props.disabled).toBe(true);
+    expect(textContent(button)).toContain('新增頁面照片');
+    expect(String(button.props.class)).toContain('ui-icon-btn--overlay');
+    app.unmount();
+  });
+
+  it('projects destructive meaning through the shared icon-button intent', () => {
+    const { app, root } = mount(UiIconButton, {
+      icon: Volume2,
+      label: '刪除頁面照片',
+      variant: 'overlay',
+      intent: 'danger',
+    });
+    const button = findAll(root, (node) => node.type === 'button')[0];
+
+    expect(String(button.props.class)).toContain('ui-icon-btn--overlay');
+    expect(String(button.props.class)).toContain('ui-icon-btn--intent-danger');
+    expect(textContent(button)).toContain('刪除頁面照片');
+    app.unmount();
+  });
+
   it('distinguishes standalone status meaning from a decorative duplicate', () => {
     const standalone = mount(UiStatusIcon, {
       icon: Volume2,

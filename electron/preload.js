@@ -116,6 +116,55 @@ function libraryStoragePolicyIntent(value) {
   };
 }
 
+function folderPageIdentityIntent(value) {
+  return {
+    kind: value?.kind,
+    id: value?.id,
+  };
+}
+
+function folderPageLayoutEntryIntent(value) {
+  const entry = {
+    key: value?.key,
+    placement: {
+      region: value?.placement?.region,
+      anchor: {
+        x: value?.placement?.anchor?.x,
+        y: value?.placement?.anchor?.y,
+      },
+    },
+    pinned: value?.pinned,
+    order: value?.order,
+  };
+  if (Object.hasOwn(value ?? {}, 'type')) entry.type = value.type;
+  if (Object.hasOwn(value ?? {}, 'rotation')) entry.rotation = value.rotation;
+  return entry;
+}
+
+function folderPageLayoutIntent(value) {
+  return {
+    page: folderPageIdentityIntent(value?.page),
+    entries: Array.isArray(value?.entries)
+      ? value.entries.slice(0, 64).map(folderPageLayoutEntryIntent)
+      : [],
+  };
+}
+
+function folderPageNoteIntent(value) {
+  return {
+    page: folderPageIdentityIntent(value?.page),
+    key: value?.key,
+    text: typeof value?.text === 'string' ? value.text.slice(0, 2000) : '',
+  };
+}
+
+function folderPageObjectTargetIntent(value) {
+  return {
+    page: folderPageIdentityIntent(value?.page),
+    key: value?.key,
+  };
+}
+
 function performanceSessionPlanReplaceIntent(value) {
   return {
     sourceId: value?.sourceId,
@@ -435,6 +484,36 @@ contextBridge.exposeInMainWorld('Utawakui', {
       libraryStoragePolicyIntent(policy),
     ),
   cleanupLibraryStorage: () => ipcRenderer.invoke('library-storage:cleanup'),
+  listFolderPageObjects: (page) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:list',
+      folderPageIdentityIntent(page),
+    ),
+  chooseFolderPagePhoto: (page) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:choose-photo',
+      folderPageIdentityIntent(page),
+    ),
+  createFolderPageNote: (page) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:create-note',
+      folderPageIdentityIntent(page),
+    ),
+  updateFolderPageNote: (intent) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:update-note',
+      folderPageNoteIntent(intent),
+    ),
+  saveFolderPageLayout: (intent) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:save-layout',
+      folderPageLayoutIntent(intent),
+    ),
+  removeFolderPageObject: (intent) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:remove',
+      folderPageObjectTargetIntent(intent),
+    ),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
   getTrackLyrics: (trackId, filename) =>

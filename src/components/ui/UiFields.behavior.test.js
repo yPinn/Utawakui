@@ -123,7 +123,21 @@ describe('shared field accessibility and data flow', () => {
     trigger(textarea, 'onInput', { target: { value: '新的備註' } });
     expect(textarea.props).toMatchObject({ rows: 4, maxlength: 500 });
     expect(textareaUpdate).toHaveBeenCalledWith('新的備註');
+    expect(String(textarea.props.class)).not.toContain('ui-textarea--bare');
     textareaMount.app.unmount();
+
+    const bareMount = mount(UiTextarea, {
+      id: 'paper-note',
+      label: '便條內容',
+      labelHidden: true,
+      variant: 'bare',
+    });
+    const bareTextarea = findAll(
+      bareMount.root,
+      (node) => node.type === 'textarea',
+    )[0];
+    expect(String(bareTextarea.props.class)).toContain('ui-textarea--bare');
+    bareMount.app.unmount();
 
     const selectUpdate = vi.fn();
     const selectMount = mount(UiSelect, {

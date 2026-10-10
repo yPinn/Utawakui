@@ -20,6 +20,12 @@ defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  // 'bare' drops the field surface so the text sits on its host material.
+  variant: {
+    type: String,
+    default: 'field',
+    validator: (value) => ['field', 'bare'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -52,6 +58,7 @@ defineExpose({ focus });
         :id="id"
         ref="textarea"
         class="ui-textarea"
+        :class="{ 'ui-textarea--bare': variant === 'bare' }"
         :value="modelValue"
         :placeholder="placeholder"
         :rows="rows"
@@ -108,6 +115,17 @@ defineExpose({ focus });
 
 .ui-textarea[aria-invalid='true'] {
   border-color: var(--ui-field-border-invalid);
+}
+
+.ui-textarea--bare,
+.ui-textarea--bare:hover:not(:disabled) {
+  min-height: 0;
+  padding: 0;
+  resize: none;
+  border-color: transparent;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
 }
 
 .ui-textarea:disabled {

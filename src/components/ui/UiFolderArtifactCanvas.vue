@@ -11,9 +11,10 @@ import {
 } from 'vue';
 import {
   clampFolderArtifactPosition,
-  getFolderArtifactAnchor,
+  folderArtifactFitsSideRegion,
+  getFolderArtifactPlacement,
   moveFolderArtifactFromKeyboard,
-  projectFolderArtifactPosition,
+  projectFolderArtifactPlacement,
 } from '../../utils/folderArtifactGeometry.js';
 import { Pin } from '../../icons/index.js';
 import UiIconButton from './UiIconButton.vue';
@@ -29,11 +30,19 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['layoutChange', 'pinChange', 'activate']);
+const emit = defineEmits([
+  'layoutChange',
+  'pinChange',
+  'stackChange',
+  'activate',
+  'contextmenu',
+]);
 
 const clampBounds = shallowRef(null);
+const pinInsetMeasure = shallowRef(null);
 const itemElements = new Map();
-const anchors = new Map();
+const placements = new Map();
+const pendingAutoPlacements = new Set();
 const positions = reactive({});
 const pinnedArtifactIds = reactive(new Set());
 const activeArtifactId = shallowRef(null);
@@ -44,18 +53,39 @@ let resizeObserver = null;
 let reclampFrame = null;
 const DRAG_ACTIVATION_THRESHOLD = 5;
 
+function copyPlacement(placement) {
+  return {
+    region: placement?.region ?? 'paper',
+    anchor: { x: placement?.anchor?.x ?? 0, y: placement?.anchor?.y ?? 0 },
+  };
+}
+
+function declaredPlacement(artifact) {
+  return copyPlacement(artifact.initialPlacement);
+}
+
 function ensurePositions() {
   const activeIds = new Set(props.artifacts.map((artifact) => artifact.id));
   for (const id of Object.keys(positions)) {
     if (!activeIds.has(id)) {
       delete positions[id];
-      anchors.delete(id);
+      placements.delete(id);
+      pendingAutoPlacements.delete(id);
       pinnedArtifactIds.delete(id);
     }
   }
   props.artifacts.forEach((artifact, index) => {
     if (positions[artifact.id]) return;
-    positions[artifact.id] = { x: 0, y: 0, z: index + 1 };
+    positions[artifact.id] = {
+      x: 0,
+      y: 0,
+      z: artifact.initialZ ?? index + 1,
+    };
+    placements.set(artifact.id, declaredPlacement(artifact));
+    if (artifact.autoPlace === true) pendingAutoPlacements.add(artifact.id);
+    if (artifact.initialPinned === true) {
+      pinnedArtifactIds.add(artifact.id);
+    }
   });
 }
 
@@ -86,6 +116,55 @@ function canvasSize() {
   return elementSize(clampBounds.value);
 }
 
+function relativeRegion(element, canvasRect) {
+  const rect = element?.getBoundingClientRect?.();
+  if (!rect || !canvasRect) return null;
+  return {
+    x: rect.left - canvasRect.left,
+    y: rect.top - canvasRect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
+function getFolderArtifactRegions() {
+  const size = canvasSize();
+  const fallback = {
+    paper: { x: 0, y: 0, width: size.width, height: size.height },
+    side: { x: size.width, y: 0, width: 0, height: size.height },
+    bottom: { x: 0, y: size.height, width: size.width, height: 0 },
+  };
+  if (props.material !== 'folder' || !clampBounds.value) return fallback;
+  const canvasRect = clampBounds.value.getBoundingClientRect?.();
+  const canvasRoot = clampBounds.value.closest?.(
+    '[data-folder-artifact-canvas]',
+  );
+  const workspace = canvasRoot?.parentElement?.parentElement;
+  const paper = relativeRegion(
+    workspace?.querySelector?.('[data-folder-artifact-region="paper"]'),
+    canvasRect,
+  );
+  const bottom = relativeRegion(
+    workspace?.querySelector?.('[data-folder-artifact-region="bottom"]'),
+    canvasRect,
+  );
+  if (!paper || !bottom) return fallback;
+  return {
+    paper,
+    side: {
+      x: paper.x + paper.width,
+      y: paper.y,
+      width: Math.max(0, size.width - paper.x - paper.width),
+      height: paper.height,
+    },
+    bottom,
+  };
+}
+
+function placementRegionInset() {
+  return elementSize(pinInsetMeasure.value).width;
+}
+
 function artifactRotation(id) {
   return props.artifacts.find((artifact) => artifact.id === id)?.rotation ?? 0;
 }
@@ -96,7 +175,41 @@ function artifactGeometry(id) {
     canvasSize: canvasSize(),
     minimumVisibleSize: props.minimumVisibleSize,
     rotation: artifactRotation(id),
+    regions: getFolderArtifactRegions(),
+    regionInset: placementRegionInset(),
   };
+}
+
+// Side objects fall back to the bottom together when any of them cannot fit.
+function sideProjectionContext(id) {
+  const sideIds = Object.keys(positions)
+    .filter((candidateId) => placements.get(candidateId)?.region === 'side')
+    .sort((left, right) => positions[left].z - positions[right].z);
+  const sideAvailable = sideIds.every((candidateId) =>
+    folderArtifactFitsSideRegion(artifactGeometry(candidateId)),
+  );
+  return {
+    sideAvailable,
+    fallbackIndex: Math.max(0, sideIds.indexOf(id)),
+    fallbackCount: Math.max(1, sideIds.length),
+  };
+}
+
+function projectPlacedPosition(id) {
+  return projectFolderArtifactPlacement(placements.get(id), {
+    ...artifactGeometry(id),
+    ...sideProjectionContext(id),
+  }).position;
+}
+
+function reprojectArtifacts({ except = null } = {}) {
+  props.artifacts.forEach((artifact) => {
+    if (artifact.id === except || !positions[artifact.id]) return;
+    applyPosition(artifact.id, projectPlacedPosition(artifact.id), {
+      notify: false,
+      updatePlacement: false,
+    });
+  });
 }
 
 function clampPosition(id, position) {
@@ -112,43 +225,84 @@ function clampPosition(id, position) {
 function applyPosition(
   id,
   nextPosition,
-  { notify = true, updateAnchor = true } = {},
+  { notify = true, updatePlacement = true } = {},
 ) {
   const current = positions[id];
   if (!current) return;
   const bounded = clampPosition(id, nextPosition);
   current.x = bounded.x;
   current.y = bounded.y;
-  if (updateAnchor) {
-    anchors.set(id, getFolderArtifactAnchor(bounded, artifactGeometry(id)));
+  if (updatePlacement) {
+    placements.set(
+      id,
+      getFolderArtifactPlacement(bounded, artifactGeometry(id)),
+    );
   }
   if (notify) {
     emit('layoutChange', {
       id,
+      placement: copyPlacement(placements.get(id)),
+      order: current.z,
       position: { x: bounded.x, y: bounded.y, z: current.z },
     });
   }
 }
 
+// Snap to the stored placement so a later resize never moves the object.
+function settleArtifact(id) {
+  applyPosition(id, projectPlacedPosition(id), {
+    notify: false,
+    updatePlacement: false,
+  });
+  reprojectArtifacts({ except: id });
+}
+
 function resetArtifact(id) {
   const artifact = props.artifacts.find((candidate) => candidate.id === id);
+  if (!artifact || !positions[id]) return;
+  placements.set(id, declaredPlacement(artifact));
+  applyPosition(id, projectPlacedPosition(id), {
+    notify: false,
+    updatePlacement: false,
+  });
+}
+
+// Steps a newly added object down-right from the topmost bottom-region object
+// by the minimum grab size, so every earlier object keeps a grabbable edge.
+function placeCascade(id) {
   const current = positions[id];
-  if (!artifact || !current) return;
-  const geometry = artifactGeometry(id);
-  const initialPosition = projectFolderArtifactPosition(
-    { x: artifact.initialX ?? 0, y: artifact.initialY ?? 0 },
-    geometry,
-  );
-  anchors.set(id, getFolderArtifactAnchor(initialPosition, geometry));
-  applyPosition(id, initialPosition, { updateAnchor: false });
+  if (!current) return;
+  const regions = getFolderArtifactRegions();
+  const ground = regions.bottom.height > 0 ? regions.bottom : regions.paper;
+  const inset = placementRegionInset();
+  const step = props.minimumVisibleSize;
+  const size = elementSize(itemElements.get(id));
+  const previousId = Object.keys(positions)
+    .filter((candidateId) => candidateId !== id)
+    .filter((candidateId) => placements.get(candidateId)?.region === 'bottom')
+    .sort((left, right) => positions[right].z - positions[left].z)[0];
+  let x = ground.x + inset;
+  let y = ground.y + inset;
+  if (previousId) {
+    x = positions[previousId].x + step;
+    y = positions[previousId].y + step;
+  }
+  if (y + size.height > ground.y + ground.height - inset) y = ground.y + inset;
+  if (x + size.width > ground.x + ground.width - inset) x = ground.x + inset;
+  applyPosition(id, { x, y });
+  settleArtifact(id);
 }
 
 function reset() {
   ensurePositions();
   props.artifacts.forEach((artifact, index) => {
-    if (positions[artifact.id]) positions[artifact.id].z = index + 1;
-    resetArtifact(artifact.id);
+    if (positions[artifact.id]) {
+      positions[artifact.id].z = artifact.initialZ ?? index + 1;
+    }
   });
+  props.artifacts.forEach((artifact) => resetArtifact(artifact.id));
+  for (const id of pendingAutoPlacements) placeCascade(id);
+  pendingAutoPlacements.clear();
   isReady.value = true;
 }
 
@@ -161,11 +315,16 @@ function normalizeArtifactStack(frontId) {
   orderedIds.forEach((id, index) => {
     positions[id].z = index + 1;
   });
+  return orderedIds;
 }
 
 function bringToFront(id) {
   if (!positions[id]) return;
-  normalizeArtifactStack(id);
+  const previousOrder = positions[id].z;
+  const orderedIds = normalizeArtifactStack(id);
+  if (positions[id].z !== previousOrder) {
+    emit('stackChange', { ids: orderedIds });
+  }
 }
 
 function isArtifactPinned(id) {
@@ -178,21 +337,38 @@ function focusArtifact(id) {
 
 function togglePin(artifact) {
   const pinned = !isArtifactPinned(artifact.id);
+  const current = positions[artifact.id];
   if (pinned) pinnedArtifactIds.add(artifact.id);
   else pinnedArtifactIds.delete(artifact.id);
-
-  const current = positions[artifact.id];
+  if (current) {
+    // The visible pose wins, including a side object shown in its fallback.
+    placements.set(
+      artifact.id,
+      getFolderArtifactPlacement(current, artifactGeometry(artifact.id)),
+    );
+    settleArtifact(artifact.id);
+  }
   emit('pinChange', {
     id: artifact.id,
     pinned,
+    placement: copyPlacement(placements.get(artifact.id)),
+    order: current?.z,
     position: current
       ? { x: current.x, y: current.y, z: current.z }
       : undefined,
   });
 }
 
+// Text fields inside an artifact keep native selection, caret and keys.
+function isEditableTarget(target) {
+  return Boolean(
+    target?.closest?.('textarea, input, select, [contenteditable="true"]'),
+  );
+}
+
 function beginDrag(artifact, event) {
   if (event.button !== undefined && event.button !== 0) return;
+  if (artifact.editing || isEditableTarget(event.target)) return;
   const draggable = !isArtifactPinned(artifact.id);
   const activatable = artifact.activatable === true;
   const activationTarget = event.target?.closest?.('[data-artifact-activate]');
@@ -243,6 +419,9 @@ function finishDrag(event, shouldActivate) {
   if (shouldActivate && !dragSession.moved && dragSession.activatable) {
     emit('activate', dragSession.id, dragSession.activationIntent);
   }
+  if (dragSession.moved && dragSession.draggable) {
+    settleArtifact(dragSession.id);
+  }
   event.currentTarget?.releasePointerCapture?.(event.pointerId);
   dragSession = null;
   activeArtifactId.value = null;
@@ -257,6 +436,7 @@ function cancelDrag(event) {
 }
 
 function handleKeydown(artifact, event) {
+  if (artifact.editing || isEditableTarget(event.target)) return;
   if (artifact.activatable && ['Enter', ' '].includes(event.key)) {
     event.preventDefault();
     emit('activate', artifact.id);
@@ -287,27 +467,32 @@ function handleKeydown(artifact, event) {
   event.preventDefault();
   bringToFront(artifact.id);
   applyPosition(artifact.id, nextPosition);
+  settleArtifact(artifact.id);
+}
+
+function togglePinById(id) {
+  const artifact = props.artifacts.find((candidate) => candidate.id === id);
+  if (artifact) togglePin(artifact);
+}
+
+// Keyboard-invoked menus carry no pointer position, so anchor to the item.
+function openContextMenu(artifact, event) {
+  if (artifact.editing || isEditableTarget(event.target)) return;
+  event.preventDefault();
+  const fromKeyboard = event.clientX === 0 && event.clientY === 0;
+  emit('contextmenu', {
+    id: artifact.id,
+    x: event.clientX,
+    y: event.clientY,
+    anchorEl: fromKeyboard ? event.currentTarget : null,
+  });
 }
 
 function scheduleReclamp() {
   if (reclampFrame !== null) return;
   const run = () => {
     reclampFrame = null;
-    props.artifacts.forEach((artifact) => {
-      const current = positions[artifact.id];
-      if (!current) return;
-      const anchor =
-        anchors.get(artifact.id) ??
-        getFolderArtifactAnchor(current, artifactGeometry(artifact.id));
-      const projected = projectFolderArtifactPosition(
-        anchor,
-        artifactGeometry(artifact.id),
-      );
-      applyPosition(artifact.id, projected, {
-        notify: false,
-        updateAnchor: false,
-      });
-    });
+    reprojectArtifacts({ except: dragSession?.id ?? null });
   };
   if (typeof requestAnimationFrame === 'function') {
     reclampFrame = requestAnimationFrame(run);
@@ -332,6 +517,13 @@ onMounted(async () => {
   if (typeof ResizeObserver === 'function') {
     resizeObserver = new ResizeObserver(scheduleReclamp);
     if (clampBounds.value) resizeObserver.observe(clampBounds.value);
+    const canvasRoot = clampBounds.value?.closest?.(
+      '[data-folder-artifact-canvas]',
+    );
+    const workspace = canvasRoot?.parentElement?.parentElement;
+    workspace
+      ?.querySelectorAll?.('[data-folder-artifact-region]')
+      .forEach((region) => resizeObserver.observe(region));
   }
 });
 
@@ -342,11 +534,12 @@ onBeforeUnmount(() => {
   }
 });
 
-defineExpose({ reset });
+defineExpose({ reset, togglePinById });
 </script>
 
 <template>
   <div
+    data-folder-artifact-canvas
     class="ui-folder-artifact-canvas"
     :class="{
       'ui-folder-artifact-canvas--ready': isReady,
@@ -355,6 +548,11 @@ defineExpose({ reset });
     role="region"
     :aria-label="label"
   >
+    <span
+      ref="pinInsetMeasure"
+      class="ui-folder-artifact-canvas__pin-inset-measure"
+      aria-hidden="true"
+    ></span>
     <div class="ui-folder-artifact-canvas__sheet" aria-hidden="true"></div>
     <p :id="instructionId" class="ui-visually-hidden">
       未固定時可用方向鍵移動，Shift 加速，Home 回到預設位置
@@ -390,6 +588,7 @@ defineExpose({ reset });
         @pointermove="moveDrag"
         @pointerup="endDrag"
         @pointercancel="cancelDrag"
+        @contextmenu="openContextMenu(artifact, $event)"
       >
         <slot :artifact="artifact"></slot>
         <UiIconButton
@@ -433,6 +632,14 @@ defineExpose({ reset });
     var(--ui-folder-artifact-sheet-inset-inline);
   border: var(--ui-border-width) solid var(--ui-color-border);
   background: var(--ui-folder-artifact-sheet-bg);
+}
+
+.ui-folder-artifact-canvas__pin-inset-measure {
+  position: absolute;
+  inline-size: var(--ui-folder-artifact-pinned-region-inset);
+  block-size: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .ui-folder-artifact-canvas--folder {

@@ -52,4 +52,8 @@ describe('CollectionActionRail', () => {
     );
     expect(source).toContain('（${previewBlockedReason}）');
   });
+
+  it('keeps Folder asset tools out of the stable collection command and search rail', () => {
+    expect(source).not.toContain('page-tools');
+  });
 });

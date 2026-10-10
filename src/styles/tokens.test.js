@@ -300,10 +300,11 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(446);
+    expect(uniqueNames.size).toBe(459);
     expect(uniqueNames).toContain('--ui-folder-content-background');
     expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
     expect(uniqueNames).toContain('--ui-folder-artifact-folder-min-height');
+    expect(uniqueNames).toContain('--ui-folder-artifact-pinned-region-inset');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-background');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-padding');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-radius');
@@ -356,7 +357,20 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(tokens).toMatch(
       /--ui-folder-artifact-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\+\s*var\(--ui-border-width\)\s*\);/u,
     );
-    expect(uniqueNames).toContain('--ui-folder-artifact-note-bg-translucent');
+    expect(uniqueNames).toContain('--ui-folder-artifact-note-opacity');
+    expect(uniqueNames).not.toContain(
+      '--ui-folder-artifact-note-bg-translucent',
+    );
+    for (const paper of [
+      'periwinkle',
+      'rose',
+      'canary',
+      'kraft',
+      'ruled',
+      'rule',
+    ]) {
+      expect(uniqueNames).toContain(`--ui-folder-artifact-paper-${paper}`);
+    }
     expect(tokens).toMatch(
       /--ui-folder-artifact-stack-block-size:\s*calc\(\s*var\(--ui-folder-artifact-stack-width\)\s*\/\s*4\s*\*\s*3\s*\+\s*var\(--ui-space-5\)\s*\);/u,
     );
@@ -416,6 +430,20 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-modal-content-inset');
     expect(uniqueNames).toContain('--ui-modal-section-gap');
     expect(uniqueNames).toContain('--ui-modal-footer-inset-block');
+    expect(uniqueNames).toContain('--ui-modal-media-max-inline-size');
+    expect(uniqueNames).toContain('--ui-modal-media-max-block-size');
+    expect(tokens).toContain(
+      '--ui-media-max-inline-size: var(--ui-modal-media-max-inline-size);',
+    );
+    expect(tokens).toContain(
+      '--ui-media-max-block-size: var(--ui-modal-media-max-block-size);',
+    );
+    expect(uniqueNames).not.toContain('--ui-photo-frame-max-inline-size');
+    expect(tokens).not.toContain('--ui-folder-artifact-photo-frame:');
+    expect(tokens).toContain('--ui-photo-frame-padding: var(--ui-space-2);');
+    expect(tokens).toContain(
+      '--ui-photo-frame-shadow: var(--ui-folder-artifact-shadow);',
+    );
     expect(uniqueNames).not.toContain('--ui-modal-width-default');
     expect(uniqueNames).not.toContain('--ui-modal-width-notice');
     expect(uniqueNames).not.toContain('--ui-modal-width-wide');

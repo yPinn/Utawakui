@@ -104,6 +104,8 @@ describe('AppFolderLayout', () => {
     }
 
     expect(source).not.toContain('--ui-folder-interior-background');
+    expect(source).not.toContain('--ui-folder-pocket-surface');
+    expect(source).not.toContain('--ui-folder-pocket-edge');
     expect(source).not.toContain('--ui-color-canvas:');
     expect(source).not.toContain('--ui-color-accent:');
   });

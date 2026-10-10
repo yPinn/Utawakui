@@ -21,6 +21,11 @@ const SECTIONS = [
     title: '拼貼縮圖',
     components: ['UiCollageThumb'],
   },
+  {
+    key: 'photo-frame',
+    title: '照片外框',
+    components: ['UiPhotoFrame'],
+  },
   { key: 'track-rows', title: '曲目資料列', components: ['UiTrackRow'] },
 ];
 
@@ -42,8 +47,11 @@ describe('DemoContent staged review boundary', () => {
     expect(contentSource).toContain(
       "import DemoTrackRowAppearance from './DemoTrackRowAppearance.vue';",
     );
+    expect(contentSource).toContain(
+      "import DemoPhotoFramePrimitive from './DemoPhotoFramePrimitive.vue';",
+    );
     expect(contentSource).toMatch(
-      /const COMPARISON_SECTION_KEYS = new Set\(\[\s*'marquee-text',\s*'track-thumb',\s*'collage-thumb',\s*'track-rows',?\s*\]\);/u,
+      /const COMPARISON_SECTION_KEYS = new Set\(\[\s*'marquee-text',\s*'track-thumb',\s*'collage-thumb',\s*'photo-frame',\s*'track-rows',?\s*\]\);/u,
     );
     expect(contentSource).toMatch(
       /<DemoMarqueeTextAppearance\s+v-if="section\.key === 'marquee-text'"\s*\/>/u,
@@ -55,15 +63,20 @@ describe('DemoContent staged review boundary', () => {
       /<DemoCollageThumbAppearance\s+v-else-if="section\.key === 'collage-thumb'"\s*\/>/u,
     );
     expect(contentSource).toMatch(
+      /<DemoPhotoFramePrimitive\s+v-else-if="section\.key === 'photo-frame'"\s*\/>/u,
+    );
+    expect(contentSource).toMatch(
       /<DemoTrackRowAppearance\s+v-else-if="section\.key === 'track-rows'"\s*\/>/u,
     );
-    expect(html.match(/data-review-section="reviewed"/gu)).toHaveLength(4);
+    expect(html.match(/data-review-section="reviewed"/gu)).toHaveLength(5);
     expect(html).toContain('data-marquee-source="candidate"');
     expect(html).toContain('data-marquee-source="current"');
     expect(html).toContain('data-track-thumb-source="candidate"');
     expect(html).toContain('data-track-thumb-source="current"');
     expect(html).toContain('data-collage-thumb-source="candidate"');
     expect(html).toContain('data-collage-thumb-source="current"');
+    expect(html).toContain('data-photo-frame-mode="thumbnail"');
+    expect(html).toContain('data-photo-frame-mode="preview"');
     expect(html).toContain('data-track-row-source="candidate"');
     expect(html).toContain('data-track-row-source="current"');
   });

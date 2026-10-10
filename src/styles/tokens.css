@@ -294,6 +294,7 @@
   --ui-folder-artifact-safe-inset: calc(
     var(--ui-focus-width) + var(--ui-focus-offset) + var(--ui-border-width)
   );
+  --ui-folder-artifact-pinned-region-inset: var(--ui-space-4);
   --ui-folder-artifact-canvas-bg: var(--ui-color-surface);
   --ui-folder-artifact-sheet-bg: var(--ui-color-canvas);
   --ui-folder-artifact-sheet-inset-inline: var(--ui-space-7);
@@ -305,11 +306,16 @@
   );
   --ui-folder-artifact-note-width: 18rem;
   --ui-folder-artifact-note-min-height: 11rem;
-  --ui-folder-artifact-photo-frame: var(--ui-space-2);
-  --ui-folder-artifact-photo-bg: var(--ui-color-surface-raised);
+  --ui-photo-frame-padding: var(--ui-space-2);
+  --ui-photo-frame-bg: var(--ui-color-surface-raised);
+  --ui-photo-frame-shadow: var(--ui-folder-artifact-shadow);
+  --ui-photo-frame-filter: saturate(0.78) sepia(0.16) contrast(0.96)
+    brightness(0.96);
+  --ui-media-max-inline-size: var(--ui-modal-media-max-inline-size);
+  --ui-media-max-block-size: var(--ui-modal-media-max-block-size);
   --ui-folder-artifact-photo-bg-back: color-mix(
     in srgb,
-    var(--ui-folder-artifact-photo-bg) 90%,
+    var(--ui-photo-frame-bg) 90%,
     var(--ui-color-canvas)
   );
   --ui-folder-artifact-note-bg: color-mix(
@@ -317,9 +323,31 @@
     var(--ui-folder-layout-background) 32%,
     var(--ui-color-surface-raised)
   );
-  --ui-folder-artifact-note-bg-translucent: color-mix(
+  --ui-folder-artifact-note-opacity: 84%;
+  --ui-folder-artifact-paper-periwinkle: color-mix(
     in srgb,
-    var(--ui-folder-artifact-note-bg) 84%,
+    var(--ui-palette-indigo-800) 75%,
+    var(--ui-palette-plum-800)
+  );
+  --ui-folder-artifact-paper-rose: color-mix(
+    in srgb,
+    var(--ui-palette-red-700) 45%,
+    var(--ui-palette-plum-900)
+  );
+  --ui-folder-artifact-paper-canary: color-mix(
+    in srgb,
+    var(--ui-palette-amber-800) 55%,
+    var(--ui-palette-warm-neutral-900)
+  );
+  --ui-folder-artifact-paper-kraft: color-mix(
+    in srgb,
+    var(--ui-palette-olive-800) 70%,
+    var(--ui-palette-warm-neutral-900)
+  );
+  --ui-folder-artifact-paper-ruled: var(--ui-palette-warm-neutral-900);
+  --ui-folder-artifact-paper-rule: color-mix(
+    in srgb,
+    var(--ui-color-text) 12%,
     transparent
   );
   --ui-folder-artifact-shadow: 0 0.75rem 1.5rem -0.75rem rgb(0 0 0 / 38%);
@@ -602,6 +630,8 @@
   --ui-modal-content-inset: var(--ui-space-5);
   --ui-modal-section-gap: var(--ui-space-4);
   --ui-modal-footer-inset-block: var(--ui-space-3);
+  --ui-modal-media-max-inline-size: 72dvw;
+  --ui-modal-media-max-block-size: 70dvh;
   --ui-track-row-thumb-size: var(--ui-track-artwork-size);
   --ui-track-row-gap: var(--ui-space-2);
   --ui-track-row-padding-block: var(--ui-space-1);
@@ -764,6 +794,23 @@
   --ui-color-paper-text: var(--ui-palette-neutral-900);
 
   --ui-folder-sheet-background: var(--ui-color-paper);
+  --ui-folder-artifact-paper-periwinkle: color-mix(
+    in srgb,
+    var(--ui-palette-indigo-300) 70%,
+    var(--ui-palette-plum-200)
+  );
+  --ui-folder-artifact-paper-rose: color-mix(
+    in srgb,
+    var(--ui-palette-red-300) 75%,
+    var(--ui-palette-plum-200)
+  );
+  --ui-folder-artifact-paper-canary: var(--ui-palette-amber-300);
+  --ui-folder-artifact-paper-kraft: color-mix(
+    in srgb,
+    var(--ui-palette-olive-400) 55%,
+    var(--ui-palette-warm-neutral-300)
+  );
+  --ui-folder-artifact-paper-ruled: var(--ui-palette-warm-neutral-50);
 }
 
 /* Persistent shell chrome is a local dark instrument in both themes. The

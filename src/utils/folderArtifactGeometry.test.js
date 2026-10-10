@@ -3,9 +3,11 @@ import {
   clampFolderArtifactPosition,
   getFolderArtifactAnchor,
   getFolderArtifactPositionBounds,
+  getFolderArtifactPlacement,
   getFolderArtifactVisualBounds,
   moveFolderArtifactFromKeyboard,
   projectFolderArtifactPosition,
+  projectFolderArtifactPlacement,
 } from './folderArtifactGeometry.js';
 
 describe('folder artifact geometry', () => {
@@ -146,6 +148,90 @@ describe('folder artifact geometry', () => {
       x: 660,
       y: 110,
     });
+  });
+
+  it('stores placements relative to the physical paper, side, or bottom region', () => {
+    const geometry = {
+      itemSize: { width: 272, height: 210 },
+      canvasSize: { width: 1520, height: 1348 },
+      minimumVisibleSize: 48,
+      rotation: 3.25,
+      regions: {
+        paper: { x: 0, y: 0, width: 1152, height: 900 },
+        side: { x: 1152, y: 0, width: 368, height: 900 },
+        bottom: { x: 0, y: 900, width: 1520, height: 448 },
+      },
+    };
+    const sidePosition = { x: 1200, y: 126 };
+    const placement = getFolderArtifactPlacement(sidePosition, geometry);
+
+    expect(placement.region).toBe('side');
+    const projection = projectFolderArtifactPlacement(placement, geometry);
+    expect(projection.region).toBe('side');
+    expect(projection.position.x).toBeCloseTo(sidePosition.x);
+    expect(projection.position.y).toBeCloseTo(sidePosition.y);
+  });
+
+  it('falls a side placement back to the bottom without changing it', () => {
+    const placement = { region: 'side', anchor: { x: 0.5, y: 0.25 } };
+    const item = {
+      itemSize: { width: 272, height: 210 },
+      minimumVisibleSize: 48,
+      rotation: -3.25,
+    };
+    const narrow = projectFolderArtifactPlacement(placement, {
+      ...item,
+      canvasSize: { width: 1304, height: 1348 },
+      regions: {
+        paper: { x: 0, y: 0, width: 1152, height: 900 },
+        side: { x: 1152, y: 0, width: 152, height: 900 },
+        bottom: { x: 0, y: 900, width: 1304, height: 448 },
+      },
+    });
+    const wide = projectFolderArtifactPlacement(placement, {
+      ...item,
+      canvasSize: { width: 1520, height: 1348 },
+      regions: {
+        paper: { x: 0, y: 0, width: 1152, height: 900 },
+        side: { x: 1152, y: 0, width: 368, height: 900 },
+        bottom: { x: 0, y: 900, width: 1520, height: 448 },
+      },
+    });
+
+    expect(narrow.region).toBe('bottom');
+    expect(narrow.position.y).toBeGreaterThanOrEqual(900);
+    expect(wide.region).toBe('side');
+    expect(wide.position.x).toBeGreaterThanOrEqual(1152);
+    expect(placement).toEqual({
+      region: 'side',
+      anchor: { x: 0.5, y: 0.25 },
+    });
+  });
+
+  it('uses finite side order to keep bottom fallbacks from sharing one position', () => {
+    const options = {
+      itemSize: { width: 272, height: 210 },
+      canvasSize: { width: 1304, height: 1348 },
+      regions: {
+        paper: { x: 0, y: 0, width: 1152, height: 900 },
+        side: { x: 1152, y: 0, width: 152, height: 900 },
+        bottom: { x: 0, y: 900, width: 1304, height: 448 },
+      },
+      fallbackCount: 2,
+    };
+    const placement = { region: 'side', anchor: { x: 0.5, y: 0.5 } };
+    const first = projectFolderArtifactPlacement(placement, {
+      ...options,
+      fallbackIndex: 0,
+    });
+    const second = projectFolderArtifactPlacement(placement, {
+      ...options,
+      fallbackIndex: 1,
+    });
+
+    expect(first.region).toBe('bottom');
+    expect(second.region).toBe('bottom');
+    expect(first.position.x).toBeLessThan(second.position.x);
   });
 
   it('normalizes anchors across an oversized artifact range', () => {

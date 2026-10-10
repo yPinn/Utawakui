@@ -9,6 +9,13 @@ const pageSource = readSource('./SetlistPage.vue');
 const viewSource = readSource('../../views/SetlistView.vue');
 
 describe('Setlist page composition', () => {
+  it('remounts the object layer per Folder page and persists one layout batch', () => {
+    expect(pageSource).toContain(':key="folderPageKey"');
+    expect(pageSource).toContain('@layout-change="handleArtifactLayout"');
+    expect(pageSource).toContain('folderObjects.saveLayout(entries, options)');
+    expect(pageSource).not.toContain('artistSummaryLayout');
+  });
+
   it('owns one AppFolderPage with a fixed library header and feature body', () => {
     expect(pageSource).toContain(
       "import AppFolderPage from '../layout/AppFolderPage.vue'",
@@ -20,7 +27,7 @@ describe('Setlist page composition', () => {
       /<template\s+v-if="showLibraryHeader"\s+#header>[\s\S]*?<UiPageHeader[\s\S]*?<UiSearchBox/u,
     );
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist">[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>\s*<\/AppSurfaceBoundary>/u,
+      /<AppSurfaceBoundary\s+surface-id="setlist">[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
     );
     expect(pageSource).not.toMatch(
       /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist">/u,
@@ -58,23 +65,92 @@ describe('Setlist page composition', () => {
     expect(viewSource).toContain('@select-album="selectPlaylistAction"');
   });
 
-  it('projects the selected album summary on the Folder-wide floating plane', () => {
+  it('projects summary and user photos through one Folder-wide artifact layer', () => {
     expect(pageSource).toContain(
       "import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js'",
     );
     expect(pageSource).toContain(
-      "import SetlistArtistSummaryArtifact from './SetlistArtistSummaryArtifact.vue'",
+      "import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue'",
     );
+    expect(pageSource).toContain(
+      "import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue'",
+    );
+    expect(pageSource).toContain('useSetlistFolderObjects');
     expect(pageSource).toContain(
       'const { albumSupportingContent } = useSetlistAlbumContext()',
     );
     expect(pageSource).toMatch(
-      /<template\s+v-if="albumSupportingContent"\s+#floating>[\s\S]*?<SetlistArtistSummaryArtifact\s+:artist="albumSupportingContent\.artist"\s+:summary="albumSupportingContent\.summary"/u,
+      /<template\s+v-if="showFolderArtifacts"\s+#floating>[\s\S]*?<SetlistFolderArtifactLayer[\s\S]*?:objects="folderObjects\.objects\.value"/u,
     );
     expect(pageSource.indexOf('#floating')).toBeGreaterThan(
       pageSource.indexOf('<SetlistView'),
     );
     expect(pageSource).not.toContain('#extension');
+    expect(pageSource.match(/<SetlistFolderArtifactLayer/gu)).toHaveLength(1);
+    expect(pageSource).toContain('<FolderAssetPreviewModal');
+  });
+
+  it('places one add-object menu on Folder ground only for bounded collection entities', () => {
+    expect(pageSource).toContain('const folderPageIdentity = computed(');
+    expect(pageSource).toContain('#folder-tools');
+    expect(pageSource).toContain('新增頁面物件');
+    expect(pageSource.indexOf('#folder-tools')).toBeGreaterThan(
+      pageSource.indexOf('#floating'),
+    );
+    expect(pageSource).not.toContain('#page-tools');
+    expect(pageSource).toContain(
+      "import UiIconButton from '../ui/UiIconButton.vue'",
+    );
+    expect(pageSource).not.toContain(
+      "import UiButton from '../ui/UiButton.vue'",
+    );
+    expect(pageSource).toMatch(
+      /#folder-tools>[\s\S]*?<UiIconButton[\s\S]*?:icon="Plus"[\s\S]*?:label="addObjectLabel"[\s\S]*?variant="command"[\s\S]*?aria-haspopup="menu"/u,
+    );
+    expect(pageSource).toMatch(
+      /#folder-tools>[\s\S]*?<UiContextMenu[\s\S]*?:anchor-el="addObjectButton\?\.\$el \?\? null"[\s\S]*?:items="ADD_MENU_ITEMS"/u,
+    );
+    expect(pageSource).toMatch(
+      /key: 'photo',\s*label: '照片',\s*value: 'photo'[\s\S]*?key: 'note',\s*label: '便條',\s*value: 'note'/u,
+    );
+    expect(pageSource).not.toMatch(
+      /#folder-tools>[\s\S]*?<UiIconButton[\s\S]*?shape="circle"/u,
+    );
+    expect(pageSource).not.toMatch(/#folder-tools[^>]*>[\s\S]*?<UiButton/u);
+    expect(pageSource).not.toContain('新增照片\n');
+    expect(viewSource).not.toContain('<template #page-tools>');
+    expect(viewSource).not.toContain('<slot name="page-tools"></slot>');
+  });
+
+  it('opens new notes for editing, discards empty ones, and confirms removal', () => {
+    expect(pageSource).toMatch(
+      /function selectAddAction[\s\S]*?folderObjects\.addNote\(\)[\s\S]*?editingNoteKey\.value = key/u,
+    );
+    expect(pageSource).toMatch(
+      /function commitNote[\s\S]*?text\.trim\(\) === ''[\s\S]*?folderObjects\.remove\(key\)[\s\S]*?folderObjects\.updateNoteText\(key, text\.trimEnd\(\)\)/u,
+    );
+    expect(pageSource).toMatch(
+      /async function confirmRemoveObject[\s\S]*?confirmation\.confirm\([\s\S]*?intent: 'danger'[\s\S]*?folderObjects\.remove\(key\)/u,
+    );
+    expect(pageSource).toMatch(
+      /function toggleAddMenu\(event\) \{\s*event\.stopPropagation\(\);/u,
+    );
+    expect(pageSource).toContain('@click="toggleAddMenu"');
+    expect(pageSource).toContain('v-model:editing-key="editingNoteKey"');
+    expect(pageSource).toContain(':fresh-keys="folderObjects.freshKeys.value"');
+    expect(pageSource).toContain('@remove="confirmRemoveObject"');
+  });
+
+  it('retains the preview asset through its leave transition before releasing it', () => {
+    expect(pageSource).toContain('const selectedAsset = shallowRef(null)');
+    expect(pageSource).toContain('const previewOpen = shallowRef(false)');
+    expect(pageSource).toContain('previewOpen.value = false');
+    expect(pageSource).toMatch(
+      /function finishAssetPreviewClose\(\)[\s\S]*?selectedAsset\.value = null/u,
+    );
+    expect(pageSource).toMatch(
+      /<FolderAssetPreviewModal[\s\S]*?:open="previewOpen"[\s\S]*?:asset="selectedAsset"[\s\S]*?@close="closeAssetPreview"[\s\S]*?@after-leave="finishAssetPreviewClose"/u,
+    );
   });
 
   it('shares one album context projection while keeping related albums on paper', () => {

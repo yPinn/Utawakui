@@ -11,7 +11,7 @@ const source = readFileSync(
 
 async function renderPage(
   mode,
-  { withExtension = false, withFloating = false } = {},
+  { withExtension = false, withFloating = false, withFolderTools = false } = {},
 ) {
   return renderToString(
     createSSRApp({
@@ -25,6 +25,9 @@ async function renderPage(
         }
         if (withFloating) {
           slots.floating = () => h('aside', 'Floating artifact');
+        }
+        if (withFolderTools) {
+          slots['folder-tools'] = () => h('button', 'Add Folder asset');
         }
         return h(
           AppFolderPage,
@@ -96,7 +99,9 @@ describe('AppFolderPage', () => {
     expect(withoutExtension).not.toContain('app-folder-page__extension');
     expect(extensionPosition).toBeGreaterThan(sheetPosition);
     expect(withExtension).toContain('Folder extension');
-    expect(source).toContain('v-if="$slots.extension || $slots.floating"');
+    expect(source).toContain(
+      'v-if="$slots.extension || $slots.floating || $slots[\'folder-tools\']"',
+    );
     expect(source).toMatch(
       /\.app-folder-page__extension\s*\{[^}]*position:\s*relative;[^}]*grid-row:\s*2;[^}]*z-index:\s*0;/su,
     );
@@ -133,14 +138,55 @@ describe('AppFolderPage', () => {
     );
   });
 
+  it('keeps Folder tools on the extension material below floating artifacts', async () => {
+    const html = await renderPage('document', {
+      withFloating: true,
+      withFolderTools: true,
+    });
+    const sheetPosition = html.indexOf('app-folder-page__sheet');
+    const extensionPosition = html.indexOf('app-folder-page__extension');
+    const floatingPosition = html.indexOf('app-folder-page__floating');
+    const toolsPosition = html.indexOf('app-folder-page__tools');
+
+    expect(extensionPosition).toBeGreaterThan(sheetPosition);
+    expect(floatingPosition).toBeGreaterThan(extensionPosition);
+    expect(toolsPosition).toBeGreaterThan(extensionPosition);
+    expect(toolsPosition).toBeLessThan(floatingPosition);
+    expect(html).toContain('Add Folder asset');
+    expect(source).toContain(
+      "$slots.extension || $slots.floating || $slots['folder-tools']",
+    );
+    expect(source).toContain('<slot name="folder-tools" />');
+    expect(source).not.toContain('app-folder-page__extension--pocket');
+    expect(source).toMatch(
+      /:deep\(\.app-folder-page__document\)\s*\{[^}]*grid-template-rows:\s*max-content max-content;/su,
+    );
+    expect(source).toMatch(
+      /\.app-folder-page__tools\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*0;[^}]*justify-content:\s*flex-end;[^}]*margin-block-start:\s*var\(--ui-space-2\);[^}]*padding-inline-end:\s*var\(--ui-folder-document-inset\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-folder-page__floating\s*\{[^}]*z-index:\s*1;/su,
+    );
+    const toolsRule =
+      source.match(/\.app-folder-page__tools\s*\{[^}]*\}/su)?.[0] ?? '';
+    expect(toolsRule).not.toContain('background:');
+    expect(toolsRule).not.toMatch(/padding:(?!-)/u);
+    expect(toolsRule).not.toContain('border-radius:');
+    expect(source).not.toMatch(/grid-row:\s*3/u);
+    expect(source).not.toContain('--ui-folder-pocket-surface');
+    expect(source).not.toContain('--ui-folder-pocket-edge');
+  });
+
   it('uses a bounded non-scrolling body for workspace mode', async () => {
-    const html = await renderPage('workspace');
+    const html = await renderPage('workspace', { withFolderTools: true });
 
     expect(html).toContain('data-page-mode="workspace"');
     expect(html).toContain('app-folder-page__body--workspace');
     expect(html).not.toContain('app-folder-page__scroll');
     expect(html).not.toContain('app-folder-page__sheet');
     expect(html).not.toContain('app-folder-page__extension');
+    expect(html).not.toContain('app-folder-page__tools');
+    expect(html).not.toContain('Add Folder asset');
     expect(html).not.toContain('app-loose-leaf-edge');
     expect(html).not.toContain('role="region"');
     expect(html).not.toContain('aria-label="workspace body"');

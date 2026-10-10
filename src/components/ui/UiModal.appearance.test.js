@@ -10,11 +10,15 @@ describe('UiModal appearance contract', () => {
   it('offers an optional header tool area split from close by one separator', () => {
     // Without tools the header is unchanged: title and close only.
     expect(modalSource).toMatch(
-      /<template v-if="\$slots\['header-actions'\]">\s*<div class="ui-modal__header-actions">\s*<slot name="header-actions" \/>\s*<\/div>\s*<UiSeparator\s+orientation="vertical"/u,
+      /<template v-if="\$slots\['header-actions'\]">\s*<div class="ui-modal__header-actions">\s*<slot name="header-actions" \/>\s*<\/div>\s*<UiSeparator\s+v-if="presentation !== 'media'"\s+orientation="vertical"/u,
     );
-    // Close stays last, after the tools and their separator.
+    // Dialog close stays last, after the tools and their separator.
     expect(modalSource).toMatch(
-      /<\/template>\s*<UiIconButton\s+:icon="X"\s+label="關閉"\s+:disabled="closeDisabled"\s+@click="close"\s*\/>/u,
+      /<\/template>\s*<UiIconButton\s+v-if="presentation !== 'media'"\s+:icon="X"\s+label="關閉"\s+variant="ghost"\s+tooltip-placement="top"[\s\S]*?:disabled="closeDisabled"\s+@click="close"\s*\/>/u,
+    );
+    // Media close comes before caller actions so visual and Tab order agree.
+    expect(modalSource).toMatch(
+      /<UiIconButton\s+v-if="presentation === 'media'"\s+:icon="X"\s+label="關閉"\s+variant="overlay"\s+tooltip-placement="start"[\s\S]*?\/>\s*<template v-if="\$slots\['header-actions'\]">/u,
     );
   });
 
@@ -84,6 +88,72 @@ describe('UiModal appearance contract', () => {
     expect(modalSource).toContain("'ui-modal--select-none': !selectable");
     expect(modalSource).toMatch(
       /\.ui-modal--select-none\s*\{[\s\S]*?-webkit-user-select:\s*none;[\s\S]*?user-select:\s*none;/u,
+    );
+  });
+
+  it('offers an image-led media presentation without the raised dialog shell', () => {
+    expect(modalSource).toContain(
+      "presentation: {\n    type: String,\n    default: 'dialog',",
+    );
+    expect(modalSource).toContain("['dialog', 'media'].includes(value)");
+    expect(modalSource).toContain('`ui-modal--${presentation}`');
+    expect(modalSource).toContain(
+      "'ui-visually-hidden': presentation === 'media'",
+    );
+    expect(modalSource).toContain('v-if="presentation !== \'media\'"');
+    expect(modalSource).toContain('class="ui-modal__media-body"');
+    expect(modalSource).toContain('variant="overlay"');
+    expect(modalSource).toContain('variant="ghost"');
+    expect(modalSource).not.toContain(
+      ":shape=\"presentation === 'media' ? 'circle' : 'square'\"",
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal--media\s*\{[^}]*inline-size:\s*fit-content;[^}]*container-type:\s*normal;[^}]*overflow:\s*visible;[^}]*border:\s*none;[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/su,
+    );
+    expect(modalSource).toContain('--ui-modal-media-content-max-inline-size:');
+    expect(modalSource).toContain('--ui-modal-media-content-max-block-size:');
+    expect(modalSource).toMatch(
+      /--ui-modal-media-content-max-inline-size:\s*min\(\s*var\(--ui-modal-media-max-inline-size\),\s*calc\([\s\S]*?100dvw[\s\S]*?var\(--ui-modal-media-action-rail-inline-size\)[\s\S]*?var\(--ui-modal-media-action-gap\)[\s\S]*?\)\s*\);/u,
+    );
+    expect(modalSource).toMatch(
+      /--ui-modal-media-content-max-block-size:\s*min\(\s*var\(--ui-modal-media-max-block-size\),\s*calc\(100dvh - \(var\(--ui-modal-viewport-inset\) \* 2\)\)\s*\);/u,
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal--media \.ui-modal__header\s*\{[^}]*position:\s*static;[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;[^}]*align-self:\s*start;/su,
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal--media \.ui-modal__header-end\s*\{[^}]*flex-direction:\s*column;[^}]*gap:\s*var\(--ui-space-1\);/su,
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal__media-body\s*\{[^}]*--ui-media-max-inline-size:\s*var\(--ui-modal-media-content-max-inline-size\);[^}]*--ui-media-max-block-size:\s*var\(--ui-modal-media-content-max-block-size\);/su,
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal__media-body\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*1;/su,
+    );
+    expect(modalSource).toContain('tooltip-placement="start"');
+    expect(modalSource).toContain('tooltip-placement="top"');
+  });
+
+  it('uses a media-only enter and leave transition without animating layout', () => {
+    expect(modalSource).toContain('<Transition');
+    expect(modalSource).toContain(
+      ":name=\"presentation === 'media' ? 'ui-modal-media' : undefined\"",
+    );
+    expect(modalSource).toContain('@after-leave="handleAfterLeave"');
+    expect(modalSource).toMatch(
+      /\.ui-modal-media-enter-active[\s\S]*?background-color var\(--ui-motion-duration-standard\)[\s\S]*?\.ui-modal-media-leave-active[\s\S]*?background-color var\(--ui-motion-duration-fast\)/u,
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal-media-enter-active \.ui-modal--media[\s\S]*?transform var\(--ui-motion-duration-standard\)[\s\S]*?clip-path var\(--ui-motion-duration-standard\)/u,
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal-media-enter-from \.ui-modal--media,[\s\S]*?\.ui-modal-media-leave-to \.ui-modal--media[\s\S]*?transform:\s*scale\(0\.94\);[\s\S]*?clip-path:\s*inset\(4%\);/u,
+    );
+    expect(modalSource).not.toMatch(
+      /ui-modal-media-(?:enter|leave)-active[\s\S]*?transition:[^;]*(?:width|height|top|left)/u,
+    );
+    expect(modalSource).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?ui-modal-media-enter-active[\s\S]*?transition:\s*none;/u,
     );
   });
 

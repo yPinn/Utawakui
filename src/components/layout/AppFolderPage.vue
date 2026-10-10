@@ -46,7 +46,7 @@ watch(
       :aria-label="props.bodyLabel"
       tabindex="0"
     >
-      <div class="app-folder-page__sheet">
+      <div class="app-folder-page__sheet" data-folder-artifact-region="paper">
         <AppLooseLeafEdge />
 
         <header v-if="$slots.header" class="app-folder-page__header">
@@ -59,13 +59,15 @@ watch(
       </div>
 
       <div
-        v-if="$slots.extension || $slots.floating"
+        v-if="$slots.extension || $slots.floating || $slots['folder-tools']"
         class="app-folder-page__extension"
-        :class="{
-          'app-folder-page__extension--floating': $slots.floating,
-        }"
+        :class="{ 'app-folder-page__extension--floating': $slots.floating }"
+        data-folder-artifact-region="bottom"
       >
         <slot name="extension" />
+        <div v-if="$slots['folder-tools']" class="app-folder-page__tools">
+          <slot name="folder-tools" />
+        </div>
       </div>
 
       <div v-if="$slots.floating" class="app-folder-page__floating">
@@ -189,6 +191,19 @@ watch(
   min-height: 0;
   overflow: visible;
   pointer-events: none;
+}
+
+.app-folder-page__tools {
+  position: relative;
+  z-index: 0;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-block-start: var(--ui-space-2);
+  padding-inline-end: var(--ui-folder-document-inset);
+  pointer-events: auto;
 }
 
 .app-folder-page__body {

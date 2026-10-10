@@ -13,6 +13,10 @@ const artifactSource = readFileSync(
   new URL('./UiFolderArtifact.vue', import.meta.url),
   'utf8',
 );
+const photoFrameSource = readFileSync(
+  new URL('./UiPhotoFrame.vue', import.meta.url),
+  'utf8',
+);
 const activeTokensSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
@@ -27,16 +31,14 @@ const artifacts = [
     id: 'photo',
     kind: 'photo',
     label: '錄音現場照片',
-    initialX: 0.08,
-    initialY: 0.08,
+    initialPlacement: { region: 'paper', anchor: { x: 0.08, y: 0.08 } },
     rotation: -2,
   },
   {
     id: 'note',
     kind: 'note',
     label: '錄製備忘',
-    initialX: 0.52,
-    initialY: 0.38,
+    initialPlacement: { region: 'paper', anchor: { x: 0.52, y: 0.38 } },
     rotation: 1,
   },
   {
@@ -45,8 +47,7 @@ const artifacts = [
     label: '重疊照片',
     activatable: true,
     activationLabel: '切換照片',
-    initialX: 0.3,
-    initialY: 0.1,
+    initialPlacement: { region: 'paper', anchor: { x: 0.3, y: 0.1 } },
     rotation: 2,
   },
 ];
@@ -134,6 +135,61 @@ describe('UiFolderArtifactCanvas', () => {
     expect(canvasSource).not.toContain('position: fixed');
   });
 
+  it('hydrates one region placement, pin state, and finite layer order without saving mount or resize work', () => {
+    expect(canvasSource).toContain('artifact.initialPinned === true');
+    expect(canvasSource).toContain('artifact.initialZ ?? index + 1');
+    expect(canvasSource).toContain('copyPlacement(artifact.initialPlacement)');
+    expect(canvasSource).toContain('const placements = new Map()');
+    expect(canvasSource).not.toContain('const anchors = new Map()');
+    expect(canvasSource).not.toContain('pinPlacements');
+    expect(canvasSource).toMatch(
+      /function resetArtifact\(id\)[\s\S]*?applyPosition\(id, projectPlacedPosition\(id\), \{[\s\S]*?notify: false,[\s\S]*?updatePlacement: false,[\s\S]*?\}\);/u,
+    );
+    expect(canvasSource).toMatch(
+      /function scheduleReclamp\(\)[\s\S]*?reprojectArtifacts\(\{ except: dragSession\?\.id \?\? null \}\)/u,
+    );
+    expect(canvasSource).toContain('projectFolderArtifactPlacement');
+    expect(canvasSource).toContain('getFolderArtifactRegions');
+    expect(canvasSource).not.toMatch(
+      /function scheduleReclamp\(\)[\s\S]*?emit\('(?:layoutChange|pinChange)'/u,
+    );
+  });
+
+  it('stores the visible pose as the placement when pinning or unpinning', () => {
+    expect(canvasSource).toMatch(
+      /function togglePin\(artifact\)[\s\S]*?getFolderArtifactPlacement\(current, artifactGeometry\(artifact\.id\)\)[\s\S]*?settleArtifact\(artifact\.id\)/u,
+    );
+    expect(canvasSource).toMatch(/emit\('pinChange',[\s\S]*?placement:/u);
+  });
+
+  it('snaps a released or keyboard-moved object to its placement and reprojects the rest', () => {
+    expect(canvasSource).toMatch(
+      /function settleArtifact\(id\)[\s\S]*?projectPlacedPosition\(id\)[\s\S]*?reprojectArtifacts\(\{ except: id \}\)/u,
+    );
+    expect(canvasSource).toMatch(
+      /function finishDrag[\s\S]*?dragSession\.moved && dragSession\.draggable[\s\S]*?settleArtifact\(dragSession\.id\)/u,
+    );
+    expect(canvasSource).toMatch(
+      /function handleKeydown[\s\S]*?applyPosition\(artifact\.id, nextPosition\);\s*settleArtifact\(artifact\.id\);/u,
+    );
+    expect(canvasSource).toMatch(
+      /function sideProjectionContext\(id\)[\s\S]*?placements\.get\(candidateId\)\?\.region === 'side'/u,
+    );
+  });
+
+  it('emits region placements and bounded stack order instead of persistence-hostile pixels', () => {
+    expect(canvasSource).toContain("'stackChange'");
+    expect(canvasSource).toMatch(
+      /emit\('layoutChange',[\s\S]*?placement: copyPlacement\(placements\.get\(id\)\),[\s\S]*?order: current\.z/u,
+    );
+    expect(canvasSource).toMatch(
+      /emit\('pinChange',[\s\S]*?placement:[\s\S]*?order: current\?\.z/u,
+    );
+    expect(canvasSource).toMatch(
+      /function bringToFront\(id\)[\s\S]*?emit\('stackChange', \{ ids: orderedIds \}\)/u,
+    );
+  });
+
   it('separates click-like activation from drag and keeps photo switching available while pinned', () => {
     expect(canvasSource).toContain("'activate'");
     expect(canvasSource).toContain('DRAG_ACTIVATION_THRESHOLD');
@@ -211,12 +267,7 @@ describe('UiFolderArtifactCanvas', () => {
     );
     expect(canvasSource).toContain('elementSize(clampBounds.value)');
     expect(canvasSource).toContain('resizeObserver.observe(clampBounds.value)');
-    expect(canvasSource).toContain('getFolderArtifactAnchor');
-    expect(canvasSource).toContain('projectFolderArtifactPosition');
-    expect(canvasSource).toContain('const anchors = new Map()');
-    expect(canvasSource).toMatch(
-      /function scheduleReclamp\(\)[\s\S]*?projectFolderArtifactPosition\([\s\S]*?anchor,[\s\S]*?artifactGeometry\(artifact\.id\),[\s\S]*?\)/u,
-    );
+    expect(canvasSource).toContain('getFolderArtifactPlacement');
     expect(canvasSource).toMatch(
       /clampFolderArtifactPosition\([\s\S]*?props\.minimumVisibleSize,[\s\S]*?artifactRotation\(id\),[\s\S]*?\)/u,
     );
@@ -279,6 +330,51 @@ describe('UiFolderArtifactCanvas', () => {
 });
 
 describe('UiFolderArtifact', () => {
+  it('cascades newly added objects from the topmost bottom object by the grab size', () => {
+    expect(canvasSource).toContain(
+      'if (artifact.autoPlace === true) pendingAutoPlacements.add(artifact.id);',
+    );
+    expect(canvasSource).toMatch(
+      /function placeCascade\(id\)[\s\S]*?const step = props\.minimumVisibleSize;[\s\S]*?region === 'bottom'[\s\S]*?positions\[right\]\.z - positions\[left\]\.z[\s\S]*?x = positions\[previousId\]\.x \+ step;[\s\S]*?y = positions\[previousId\]\.y \+ step;[\s\S]*?applyPosition\(id, \{ x, y \}\);[\s\S]*?settleArtifact\(id\);/u,
+    );
+    expect(canvasSource).toMatch(
+      /function reset\(\)[\s\S]*?for \(const id of pendingAutoPlacements\) placeCascade\(id\);[\s\S]*?pendingAutoPlacements\.clear\(\);/u,
+    );
+  });
+
+  it('varies only the grain offset per note and paints no fold or crease lines', () => {
+    expect(artifactSource).toContain(
+      `:data-paper-texture="kind === 'note' ? texture : undefined"`,
+    );
+    const offsets = [1, 2, 3].map((index) => {
+      const match = artifactSource.match(
+        new RegExp(
+          `\\[data-paper-texture='${index}'\\]\\s*\\{\\s*--ui-folder-artifact-note-grain-offset:\\s*([^;]+);\\s*\\}`,
+          'u',
+        ),
+      );
+      expect(match).not.toBeNull();
+      return match[1];
+    });
+    expect(new Set(offsets).size).toBe(3);
+    expect(artifactSource).not.toMatch(
+      /fold-angle|crease-angle|linear-gradient\(\s*var/u,
+    );
+    expect(artifactSource).toMatch(
+      /background-position:\s*0 0,\s*var\(--ui-folder-artifact-note-grain-offset, 0 0\);/u,
+    );
+  });
+
+  it('edits notes through the shared UiTextarea field instead of a local control', () => {
+    expect(artifactSource).toContain(
+      "import UiTextarea from './UiTextarea.vue'",
+    );
+    expect(artifactSource).not.toContain('<textarea');
+    expect(artifactSource).toMatch(
+      /<UiTextarea[\s\S]*?v-if="editing"[\s\S]*?:label="editLabel"[\s\S]*?label-hidden[\s\S]*?variant="bare"[\s\S]*?@keydown="handleEditorKeydown"[\s\S]*?@blur="commitDraft"/u,
+    );
+  });
+
   it('supports opaque photos, controlled note materials, and stacked images', () => {
     expect(artifactSource).toContain("['photo', 'note', 'stack']");
     expect(artifactSource).toContain("['solid', 'translucent']");
@@ -293,8 +389,36 @@ describe('UiFolderArtifact', () => {
     expect(activeTokensSource).toMatch(
       /--ui-folder-artifact-note-bg:\s*color-mix\([\s\S]*?var\(--ui-color-accent-soft\)/u,
     );
-    expect(activeTokensSource).toMatch(
-      /--ui-folder-artifact-note-bg-translucent:\s*color-mix\([\s\S]*?var\(--ui-folder-artifact-note-bg\) 84%[\s\S]*?transparent/u,
+    expect(activeTokensSource).toContain(
+      '--ui-folder-artifact-note-opacity: 84%;',
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact--note\.ui-folder-artifact--translucent\s*\{[^}]*color-mix\([\s\S]*?var\(--ui-folder-artifact-note-paper, var\(--ui-folder-artifact-note-bg\)\)[\s\S]*?var\(--ui-folder-artifact-note-opacity\)/u,
+    );
+  });
+
+  it('prints notes on bounded paper stocks with project-owned grain assets', () => {
+    expect(artifactSource).toContain(
+      `:data-paper="kind === 'note' ? paper : undefined"`,
+    );
+    for (const paper of ['periwinkle', 'rose', 'canary', 'kraft', 'ruled']) {
+      expect(artifactSource).toMatch(
+        new RegExp(
+          `\\[data-paper='${paper}'\\]\\s*\\{[^}]*--ui-folder-artifact-note-paper:\\s*var\\(--ui-folder-artifact-paper-${paper}\\)`,
+          'u',
+        ),
+      );
+    }
+    expect(artifactSource).not.toMatch(/\[data-paper='tissue'\]/u);
+    expect(artifactSource).toContain(
+      "url('../../assets/folder-paper/grain-fine.svg?no-inline')",
+    );
+    expect(artifactSource).toContain(
+      "url('../../assets/folder-paper/grain-coarse.svg?no-inline')",
+    );
+    expect(artifactSource).not.toContain('data:image');
+    expect(artifactSource).toContain(
+      'background-blend-mode: normal, soft-light;',
     );
   });
 
@@ -321,17 +445,23 @@ describe('UiFolderArtifact', () => {
 
     expect(noteHtml).toContain('ui-folder-artifact--note');
     expect(photoHtml).toContain('ui-folder-artifact--photo');
-    expect(artifactSource).not.toContain('appearance');
-    expect(artifactSource).toMatch(
-      /\.ui-folder-artifact--photo img,[\s\S]*filter:\s*saturate\(/u,
+    expect(photoHtml).toContain('ui-photo-frame');
+    expect(artifactSource).toContain(
+      "import UiPhotoFrame from './UiPhotoFrame.vue'",
     );
     expect(artifactSource).toMatch(
-      /\.ui-folder-artifact--note\s*\{[\s\S]*background-image:\s*linear-gradient\(/u,
+      /<UiPhotoFrame[\s\S]*?:src="src"[\s\S]*?:alt="alt"[\s\S]*?fit="cover"[\s\S]*?filtered/u,
+    );
+    expect(artifactSource).not.toContain('appearance');
+    expect(photoFrameSource).toMatch(
+      /\.ui-photo-frame--filtered \.ui-photo-frame__image\s*\{[^}]*filter:\s*var\(--ui-photo-frame-filter\)/u,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact--note\s*\{[^}]*background-image:\s*var\(--ui-folder-artifact-note-print, none\),\s*var\(--ui-folder-artifact-note-grain, none\);/u,
     );
     expect(artifactSource).not.toContain('radial-gradient(');
     const photoFrameRule =
-      artifactSource.match(/\.ui-folder-artifact--photo\s*\{[^}]*\}/su)?.[0] ??
-      '';
+      photoFrameSource.match(/\.ui-photo-frame\s*\{[^}]*\}/su)?.[0] ?? '';
     const stackFrameRule =
       artifactSource.match(
         /\.ui-folder-artifact__stack-layer\s*\{[^}]*\}/su,
@@ -382,7 +512,9 @@ describe('UiFolderArtifact', () => {
     expect(html).toContain('ui-folder-artifact__stack-status');
     expect(artifactSource).toContain('getFolderArtifactStackLayers');
     expect(artifactSource).toContain('getFolderArtifactStackLayoutVariant');
-    expect(artifactSource).toContain("defineEmits(['previous', 'next'])");
+    expect(artifactSource).toContain(
+      "defineEmits(['previous', 'next', 'commit'])",
+    );
     expect(artifactSource).toContain("emit('previous')");
     expect(artifactSource).toContain("emit('next')");
     expect(artifactSource).toContain('handleStackLayerKeydown');
@@ -412,11 +544,15 @@ describe('UiFolderArtifact', () => {
     );
     for (const tokensSource of [activeTokensSource, v2TokensSource]) {
       expect(tokensSource).toMatch(
-        /--ui-folder-artifact-photo-bg-back:\s*color-mix\(\s*in srgb,\s*var\(--ui-folder-artifact-photo-bg\) 90%,\s*var\(--ui-color-canvas\)\s*\);/u,
+        /--ui-folder-artifact-photo-bg-back:\s*color-mix\(\s*in srgb,\s*var\(--ui-photo-frame-bg\) 90%,\s*var\(--ui-color-canvas\)\s*\);/u,
       );
     }
     expect(artifactSource).toMatch(
       /\.ui-folder-artifact__stack-layer--back\s*\{[^}]*background-color:\s*var\(--ui-folder-artifact-photo-bg-back\);/su,
+    );
+    // Rotated front layer must stay inside the measured artifact box.
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layer\s*\{[^}]*box-sizing:\s*border-box;[^}]*width:\s*78%;/su,
     );
     expect(artifactSource).toMatch(
       /\.ui-folder-artifact__stack-layer--back\s*\{[^}]*translate3d\(\s*var\(--ui-folder-artifact-stack-back-x\),\s*var\(--ui-folder-artifact-stack-back-y\),\s*0\s*\)[^}]*rotate\(var\(--ui-folder-artifact-stack-back-rotation\)\)/su,

@@ -1,6 +1,12 @@
 <script>
 // Shared by every UiModal instance in this renderer.
 const openModalStack = [];
+
+function rebaseOpenModalStack() {
+  openModalStack.forEach((entry, index) => {
+    entry.stackIndex.value = index;
+  });
+}
 </script>
 
 <script setup>
@@ -9,9 +15,9 @@ const openModalStack = [];
 // field at a time). Scrollable content lives in the default slot, while an
 // optional footer slot keeps primary actions outside that scrollport. This
 // component otherwise owns only the overlay mechanics (teleport, locked
-// backdrop, Escape, focus). The backdrop is deliberately inert because modal
-// content can contain drafts; only explicit close controls may discard them.
-import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
+// backdrop, Escape, focus). The backdrop stays inert by default because modal
+// content can contain drafts; disposable media can opt into outside dismissal.
+import { onMounted, onUnmounted, shallowRef, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
 import {
   provideUiOverlayHost,
@@ -45,40 +51,82 @@ const props = defineProps({
     default: 'default',
     validator: (value) => ['default', 'notice', 'wide'].includes(value),
   },
+  presentation: {
+    type: String,
+    default: 'dialog',
+    validator: (value) => ['dialog', 'media'].includes(value),
+  },
   fixedHeight: { type: Boolean, default: false },
   closeDisabled: { type: Boolean, default: false },
+  dismissOnBackdrop: { type: Boolean, default: false },
   selectable: { type: Boolean, default: true },
   // Optional content colour (e.g. a cover's) washed in from the end edge.
   // Material colour only: it never recolours text, controls or accent.
   tint: { type: String, default: null },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'afterLeave']);
 const modalIdentity = Symbol('ui-modal');
+const modalStackIndex = shallowRef(0);
+const modalStackEntry = {
+  identity: modalIdentity,
+  stackIndex: modalStackIndex,
+};
 
 // Teleport moves the element elsewhere in the DOM, not out of this
 // component's own template-ref tracking, so this still resolves correctly.
 const dialogRef = useTemplateRef('dialog');
 let previouslyFocused = null;
+let pendingFocusRestore = null;
 
 function registerOpenModal() {
-  const existingIndex = openModalStack.indexOf(modalIdentity);
+  const existingIndex = openModalStack.findIndex(
+    (entry) => entry.identity === modalIdentity,
+  );
   if (existingIndex >= 0) openModalStack.splice(existingIndex, 1);
-  openModalStack.push(modalIdentity);
+  openModalStack.push(modalStackEntry);
+  rebaseOpenModalStack();
 }
 
 function unregisterOpenModal() {
-  const index = openModalStack.indexOf(modalIdentity);
-  if (index >= 0) openModalStack.splice(index, 1);
+  const index = openModalStack.findIndex(
+    (entry) => entry.identity === modalIdentity,
+  );
+  if (index < 0) return;
+  openModalStack.splice(index, 1);
+  rebaseOpenModalStack();
 }
 
 function isTopModal() {
-  return openModalStack.at(-1) === modalIdentity;
+  return openModalStack.at(-1)?.identity === modalIdentity;
 }
 
 function close() {
   if (props.closeDisabled) return;
   emit('close');
+}
+
+function handleBackdropClick(event) {
+  if (
+    !props.dismissOnBackdrop ||
+    !props.open ||
+    !isTopModal() ||
+    event.target !== event.currentTarget
+  ) {
+    return;
+  }
+  close();
+}
+
+function restorePendingFocus() {
+  const focusTarget = pendingFocusRestore;
+  pendingFocusRestore = null;
+  if (focusTarget?.isConnected) focusTarget.focus();
+}
+
+function handleAfterLeave() {
+  restorePendingFocus();
+  emit('afterLeave');
 }
 
 function getFocusableElements() {
@@ -130,6 +178,7 @@ watch(
     if (typeof window === 'undefined') return;
     if (isOpen) {
       registerOpenModal();
+      pendingFocusRestore = null;
       previouslyFocused = document.activeElement;
       window.requestAnimationFrame(() => {
         const dialog = dialogRef.value;
@@ -139,11 +188,8 @@ watch(
       return;
     }
     unregisterOpenModal();
-    const focusTarget = previouslyFocused;
+    pendingFocusRestore = previouslyFocused;
     previouslyFocused = null;
-    nextTick(() => {
-      if (focusTarget?.isConnected) focusTarget.focus();
-    });
   },
 );
 
@@ -157,6 +203,7 @@ onUnmounted(() => {
   if (typeof window === 'undefined') return;
   unregisterOpenModal();
   window.removeEventListener('keydown', onWindowKeydown);
+  restorePendingFocus();
 });
 </script>
 
@@ -164,59 +211,97 @@ onUnmounted(() => {
   <!-- Deferred: a modal can mount in the same pass as the host it targets,
        before that host is in the document. -->
   <Teleport defer :to="overlayHost || undefined" :disabled="!overlayHost">
-    <div v-if="open" class="ui-modal-backdrop">
+    <Transition
+      :name="presentation === 'media' ? 'ui-modal-media' : undefined"
+      :css="presentation === 'media'"
+      @after-leave="handleAfterLeave"
+    >
       <div
-        ref="dialog"
-        class="ui-modal"
-        :class="[
-          `ui-modal--${size}`,
-          {
-            'ui-modal--fixed-height': fixedHeight,
-            'ui-modal--with-footer': Boolean($slots.footer),
-            'ui-modal--tinted': Boolean(tint),
-            'ui-modal--select-none': !selectable,
-          },
-        ]"
-        :style="tint ? { '--ui-modal-tint': tint } : undefined"
-        role="dialog"
-        tabindex="-1"
-        aria-modal="true"
-        :aria-label="title"
+        v-if="open"
+        class="ui-modal-backdrop"
+        :style="{ '--ui-modal-stack-index': modalStackIndex }"
+        :onClick="dismissOnBackdrop ? handleBackdropClick : undefined"
       >
-        <div class="ui-modal__header">
-          <h2 class="ui-modal__title">{{ title }}</h2>
-          <!-- Optional caller tools stay ahead of the default close, split by
-               one separator so closing never reads as one of them. -->
-          <div class="ui-modal__header-end">
-            <template v-if="$slots['header-actions']">
-              <div class="ui-modal__header-actions">
-                <slot name="header-actions" />
-              </div>
-              <UiSeparator
-                orientation="vertical"
-                class="ui-modal__header-separator"
+        <div
+          ref="dialog"
+          class="ui-modal"
+          :class="[
+            `ui-modal--${size}`,
+            `ui-modal--${presentation}`,
+            {
+              'ui-modal--fixed-height': fixedHeight,
+              'ui-modal--with-footer':
+                presentation !== 'media' && Boolean($slots.footer),
+              'ui-modal--tinted': Boolean(tint),
+              'ui-modal--select-none': !selectable,
+            },
+          ]"
+          :style="tint ? { '--ui-modal-tint': tint } : undefined"
+          role="dialog"
+          tabindex="-1"
+          aria-modal="true"
+          :aria-label="title"
+        >
+          <div class="ui-modal__header">
+            <h2
+              class="ui-modal__title"
+              :class="{ 'ui-visually-hidden': presentation === 'media' }"
+            >
+              {{ title }}
+            </h2>
+            <!-- Optional caller tools stay ahead of the default close, split by
+                 one separator so closing never reads as one of them. -->
+            <div class="ui-modal__header-end">
+              <UiIconButton
+                v-if="presentation === 'media'"
+                :icon="X"
+                label="關閉"
+                variant="overlay"
+                tooltip-placement="start"
+                :disabled="closeDisabled"
+                @click="close"
               />
-            </template>
-            <UiIconButton
-              :icon="X"
-              label="關閉"
-              :disabled="closeDisabled"
-              @click="close"
-            />
+              <template v-if="$slots['header-actions']">
+                <div class="ui-modal__header-actions">
+                  <slot name="header-actions" />
+                </div>
+                <UiSeparator
+                  v-if="presentation !== 'media'"
+                  orientation="vertical"
+                  class="ui-modal__header-separator"
+                />
+              </template>
+              <UiIconButton
+                v-if="presentation !== 'media'"
+                :icon="X"
+                label="關閉"
+                variant="ghost"
+                tooltip-placement="top"
+                :disabled="closeDisabled"
+                @click="close"
+              />
+            </div>
+          </div>
+          <UiScrollRegion
+            v-if="presentation !== 'media'"
+            class="ui-modal__body"
+            axis="vertical"
+            viewport-class="ui-modal__body-viewport"
+          >
+            <slot />
+          </UiScrollRegion>
+          <div v-else class="ui-modal__media-body">
+            <slot />
+          </div>
+          <div
+            v-if="presentation !== 'media' && $slots.footer"
+            class="ui-modal__footer"
+          >
+            <slot name="footer" />
           </div>
         </div>
-        <UiScrollRegion
-          class="ui-modal__body"
-          axis="vertical"
-          viewport-class="ui-modal__body-viewport"
-        >
-          <slot />
-        </UiScrollRegion>
-        <div v-if="$slots.footer" class="ui-modal__footer">
-          <slot name="footer" />
-        </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -224,7 +309,7 @@ onUnmounted(() => {
 .ui-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: var(--ui-z-dialog);
+  z-index: calc(var(--ui-z-dialog) + var(--ui-modal-stack-index, 0));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -377,6 +462,123 @@ onUnmounted(() => {
   font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-heading);
   overflow-wrap: anywhere;
+}
+
+.ui-modal--media {
+  --ui-modal-media-action-rail-inline-size: var(--ui-icon-button-size-md);
+  --ui-modal-media-action-gap: var(--ui-space-2);
+  --ui-modal-media-content-max-inline-size: min(
+    var(--ui-modal-media-max-inline-size),
+    calc(
+      100dvw - (var(--ui-modal-viewport-inset) * 2) -
+        var(--ui-modal-media-action-rail-inline-size) -
+        var(--ui-modal-media-action-gap)
+    )
+  );
+  --ui-modal-media-content-max-block-size: min(
+    var(--ui-modal-media-max-block-size),
+    calc(100dvh - (var(--ui-modal-viewport-inset) * 2))
+  );
+
+  position: relative;
+  inline-size: fit-content;
+  max-inline-size: calc(
+    var(--ui-modal-media-content-max-inline-size) +
+      var(--ui-modal-media-action-rail-inline-size) +
+      var(--ui-modal-media-action-gap)
+  );
+  max-block-size: var(--ui-modal-media-content-max-block-size);
+  container-type: normal;
+  grid-template-columns: minmax(0, max-content) var(
+      --ui-modal-media-action-rail-inline-size
+    );
+  grid-template-rows: minmax(0, max-content);
+  gap: var(--ui-modal-media-action-gap);
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-modal--media .ui-modal__header {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  z-index: 1;
+  align-self: start;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+.ui-modal--media .ui-modal__header-end {
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.ui-modal--media .ui-modal__header-actions {
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.ui-modal__media-body {
+  grid-column: 1;
+  grid-row: 1;
+  min-inline-size: 0;
+  min-block-size: 0;
+  --ui-media-max-inline-size: var(--ui-modal-media-content-max-inline-size);
+  --ui-media-max-block-size: var(--ui-modal-media-content-max-block-size);
+
+  max-inline-size: var(--ui-modal-media-content-max-inline-size);
+  max-block-size: var(--ui-modal-media-content-max-block-size);
+  display: grid;
+  place-items: center;
+}
+
+.ui-modal-media-enter-active {
+  transition: background-color var(--ui-motion-duration-standard)
+    var(--ui-motion-easing-enter);
+}
+
+.ui-modal-media-leave-active {
+  transition: background-color var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-exit);
+}
+
+.ui-modal-media-enter-active .ui-modal--media {
+  transition:
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    transform var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    clip-path var(--ui-motion-duration-standard) var(--ui-motion-easing-enter);
+}
+
+.ui-modal-media-leave-active .ui-modal--media {
+  transition:
+    opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    transform var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    clip-path var(--ui-motion-duration-fast) var(--ui-motion-easing-exit);
+}
+
+.ui-modal-media-enter-from,
+.ui-modal-media-leave-to {
+  background-color: transparent;
+}
+
+.ui-modal-media-enter-from .ui-modal--media,
+.ui-modal-media-leave-to .ui-modal--media {
+  opacity: 0;
+  transform: scale(0.94);
+  clip-path: inset(4%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-modal-media-enter-active,
+  .ui-modal-media-leave-active,
+  .ui-modal-media-enter-active .ui-modal--media,
+  .ui-modal-media-leave-active .ui-modal--media {
+    transition: none;
+  }
 }
 
 @container (max-width: 22.5rem) {

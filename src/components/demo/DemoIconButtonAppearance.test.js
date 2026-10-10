@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
-import { Play, Repeat } from '../../icons/index.js';
+import { Play, Repeat, Trash2 } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { attachClientRender, findAll, mount } from '../ui/uiTestHost.js';
@@ -226,6 +226,32 @@ describe('DemoIconButtonAppearance', () => {
     );
   });
 
+  it('keeps destructive intent orthogonal to icon-button appearance', async () => {
+    const html = await renderToString(createSSRApp(DemoIconButtonAppearance));
+
+    expect(html.match(/data-icon-button-intent="danger"/gu)).toHaveLength(2);
+    expect(html.match(/ui-icon-btn--intent-danger/gu)).toHaveLength(2);
+    expect(html).toContain('Destructive Overlay');
+    expect(candidateSource).toContain(
+      "validator: (value) => ['neutral', 'danger'].includes(value)",
+    );
+    expect(candidateSource).toContain('`ui-icon-btn--intent-${intent}`');
+    expect(candidateSource).toMatch(
+      /\.ui-icon-btn--intent-danger\.ui-icon-btn--overlay\s*\{[^}]*background:\s*var\(--ui-button-danger-fill\);[^}]*color:\s*var\(--ui-button-danger-contrast\);/su,
+    );
+
+    const danger = mount(UiIconButton, {
+      icon: Trash2,
+      label: '刪除頁面照片',
+      variant: 'overlay',
+      intent: 'danger',
+    });
+    const button = findAll(danger.root, (node) => node.type === 'button')[0];
+    expect(String(button.props.class)).toContain('ui-icon-btn--overlay');
+    expect(String(button.props.class)).toContain('ui-icon-btn--intent-danger');
+    danger.app.unmount();
+  });
+
   it('lists bounded recipes separately and keeps their sizing parent-owned', async () => {
     const html = await renderToString(createSSRApp(DemoIconButtonAppearance));
 
@@ -313,6 +339,7 @@ describe('DemoIconButtonAppearance', () => {
     expect(html).toContain('label · required accessible name');
     expect(html).toContain('title · optional；defaults to label');
     expect(html).toContain('variant · ghost／accent／command／overlay');
+    expect(html).toContain('intent · neutral／danger');
     expect(html).toContain('size · md／lg；density owns routine md');
     expect(html).toContain('shape · square／circle／inherit');
     expect(html).toContain(

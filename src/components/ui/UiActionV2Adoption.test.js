@@ -47,6 +47,7 @@ describe('Token v2 shared primitive adoption', () => {
       'text-button',
       'segmented-control',
       'skeleton',
+      'photo-frame',
       'tooltip',
       'popover',
     ]);

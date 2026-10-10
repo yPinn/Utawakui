@@ -61,6 +61,12 @@ const MAIN_INVOKE_CHANNELS = [
   'feedback:build-preview',
   'feedback:export-fallback',
   'feedback:submit',
+  'folder-page-objects:choose-photo',
+  'folder-page-objects:create-note',
+  'folder-page-objects:list',
+  'folder-page-objects:remove',
+  'folder-page-objects:save-layout',
+  'folder-page-objects:update-note',
   'import:resolve-source',
   'library:apply-artist-photo-candidate',
   'library:cancel-artist-photo-candidates',
@@ -473,6 +479,102 @@ describe('main preload bridge', () => {
       'separation:move-queue-item',
       'item-1',
       -1,
+    );
+
+    const page = { kind: 'playlist', id: 'playlist-1' };
+    bridge.listFolderPageObjects({ ...page, sourcePath: 'C:\\private' });
+    bridge.chooseFolderPagePhoto({
+      ...page,
+      url: 'https://untrusted.example/photo.png',
+    });
+    bridge.saveFolderPageLayout({
+      page,
+      entries: [
+        {
+          key: 'photo:asset-1',
+          placement: {
+            region: 'side',
+            anchor: { x: 0.5, y: 0.25, private: true },
+            sourcePath: 'C:\\private',
+          },
+          pinned: true,
+          order: 3,
+          imageUrl: 'https://untrusted.example/photo.png',
+        },
+        {
+          key: 'derived:artist-summary',
+          type: 'note',
+          placement: { region: 'bottom', anchor: { x: 0.1, y: 0.15 } },
+          pinned: false,
+          rotation: -1.5,
+          order: 1,
+        },
+      ],
+      executable: 'private.exe',
+    });
+    bridge.saveFolderPageLayout();
+    bridge.createFolderPageNote({ ...page, text: 'private' });
+    bridge.updateFolderPageNote({
+      page,
+      key: 'note:note-1',
+      text: 'x'.repeat(2100),
+      executable: 'private.exe',
+    });
+    bridge.updateFolderPageNote({ page, key: 'note:note-1', text: 42 });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:create-note',
+      page,
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:update-note',
+      { page, key: 'note:note-1', text: 'x'.repeat(2000) },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:update-note',
+      { page, key: 'note:note-1', text: '' },
+    );
+    bridge.removeFolderPageObject({
+      page,
+      key: 'photo:asset-1',
+      executable: 'private.exe',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:list',
+      page,
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:choose-photo',
+      page,
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:save-layout',
+      {
+        page,
+        entries: [
+          {
+            key: 'photo:asset-1',
+            placement: { region: 'side', anchor: { x: 0.5, y: 0.25 } },
+            pinned: true,
+            order: 3,
+          },
+          {
+            key: 'derived:artist-summary',
+            type: 'note',
+            placement: { region: 'bottom', anchor: { x: 0.1, y: 0.15 } },
+            pinned: false,
+            rotation: -1.5,
+            order: 1,
+          },
+        ],
+      },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:save-layout',
+      { page: { kind: undefined, id: undefined }, entries: [] },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:remove',
+      { page, key: 'photo:asset-1' },
     );
 
     bridge.openMusicAnalysisReferenceAnnotation('E:\\untrusted\\run.json');
@@ -962,6 +1064,13 @@ describe('performer preload bridge', () => {
       ['--ui-theme=light'],
     );
     expect(bridge.initialUiTheme).toBe('light');
+
+    const darkThemeBridge = await loadBridge(
+      './performerPreload.js',
+      'UtawakuiPerformer',
+      ['--ui-theme=dark'],
+    );
+    expect(darkThemeBridge.initialUiTheme).toBe('dark');
 
     const cleanups = [];
     for (const [name, method] of Object.entries(bridge)) {

@@ -225,8 +225,7 @@ const demoFolderArtifacts = [
     id: 'artist-summary',
     kind: 'note',
     label: '藝人曲庫摘要',
-    initialX: 0.12,
-    initialY: 0.78,
+    initialPlacement: { region: 'bottom', anchor: { x: 0.9, y: 0.85 } },
     rotation: -1.5,
   },
 ];

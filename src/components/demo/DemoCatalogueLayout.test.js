@@ -58,7 +58,7 @@ describe('F8 reviewed catalogue layout', () => {
     expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(2);
     expect(html.match(/data-review-status="partial"/g)).toHaveLength(5);
     expect(html.match(/data-review-status="pending"/g) ?? []).toHaveLength(0);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(37);
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(38);
     expect(html).toContain('Foundation → UiModal＋UiScrollRegion');
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
@@ -188,7 +188,7 @@ describe('F8 reviewed catalogue layout', () => {
     expect(header).toContain('F8 保留研究標本與正式元件回歸');
     expect(header).toContain('Candidate 不進入 production');
     expect(header).toContain('Foundation → UiModal＋UiScrollRegion');
-    expect(header).toContain('14 個 section');
+    expect(header).toContain('15 個 section');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(2);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,

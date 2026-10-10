@@ -7,6 +7,7 @@ const library = vi.hoisted(() => ({
   resolveTrackAssetPath: vi.fn(),
   resolveTrackPath: vi.fn(),
   resolveArtistPhotoPath: vi.fn(),
+  resolveFolderPageAssetPath: vi.fn(),
 }));
 
 vi.mock('../lib/library', () => library);
@@ -34,6 +35,7 @@ function setup() {
     resolveTrackAssetPath: library.resolveTrackAssetPath,
     resolveTrackPath: library.resolveTrackPath,
     resolveArtistPhotoPath: library.resolveArtistPhotoPath,
+    resolveFolderPageAssetPath: library.resolveFolderPageAssetPath,
   });
   return { getConfig, handler, protocol, resolveDownloadDir };
 }
@@ -57,6 +59,9 @@ beforeEach(() => {
   library.resolvePlaylistCoverPath.mockReturnValue('E:\\Library\\cover.webp');
   library.resolveTrackPath.mockReturnValue('E:\\Library\\legacy.mp3');
   library.resolveArtistPhotoPath.mockReturnValue('E:\\Library\\photo.jpg');
+  library.resolveFolderPageAssetPath.mockReturnValue(
+    'E:\\Library\\folder-page-assets\\asset-1\\image.png',
+  );
 });
 
 describe('registerMediaProtocol', () => {
@@ -119,6 +124,13 @@ describe('registerMediaProtocol', () => {
       'photo.jpg',
     );
 
+    handler(request('utawakui-media://folder-asset/asset%201/image.png?v=1'));
+    expect(library.resolveFolderPageAssetPath).toHaveBeenCalledWith(
+      'E:\\Library',
+      'asset 1',
+      'image.png',
+    );
+
     handler(request('utawakui-media://local/legacy%20song.mp3'));
     expect(library.resolveTrackPath).toHaveBeenCalledWith(
       'E:\\Library',
@@ -133,6 +145,8 @@ describe('registerMediaProtocol', () => {
     'utawakui-media://playlist-cover/id/cover.webp/ignored',
     'utawakui-media://artist-photo/artist-0123456789abcdef',
     'utawakui-media://artist-photo/id/photo.jpg/ignored',
+    'utawakui-media://folder-asset/asset-1',
+    'utawakui-media://folder-asset/asset-1/image.png/ignored',
     'utawakui-media://local/file.mp3/ignored',
     'utawakui-media://track/%E0%A4%A/audio.wav',
   ])('fails closed for a non-allowlisted route: %s', (url) => {
@@ -146,6 +160,7 @@ describe('registerMediaProtocol', () => {
     expect(library.resolvePlaylistCoverPath).not.toHaveBeenCalled();
     expect(library.resolveTrackPath).not.toHaveBeenCalled();
     expect(library.resolveArtistPhotoPath).not.toHaveBeenCalled();
+    expect(library.resolveFolderPageAssetPath).not.toHaveBeenCalled();
     expect(library.buildRangeResponse).not.toHaveBeenCalled();
   });
 

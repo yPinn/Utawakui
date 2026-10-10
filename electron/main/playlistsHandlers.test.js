@@ -45,6 +45,7 @@ function register(overrides = {}) {
     setPlaylistKindValue: vi.fn(() => [playlist()]),
     setPlaylistDescriptionText: vi.fn(() => [playlist()]),
     writePlaylistCoverFromFile: vi.fn(() => 'cover.jpg'),
+    deleteFolderPageObjectsForPage: vi.fn(),
     ...overrides,
   });
   return ipcMain.handlers;
@@ -75,6 +76,23 @@ describe('registerPlaylistsHandlers', () => {
     await expect(handlers.get('playlists:list')()).resolves.toEqual([
       expect.objectContaining({ coverUrl: expect.any(String) }),
     ]);
+  });
+
+  it('cascades page photos only after deleting the matching collection', async () => {
+    const deleteFolderPageObjectsForPage = vi.fn();
+    const handlers = register({
+      loadPlaylistsList: vi.fn(() => [
+        playlist({ kind: 'album', id: 'album-1' }),
+      ]),
+      deleteFolderPageObjectsForPage,
+    });
+
+    await handlers.get('playlists:delete')(null, 'album-1');
+
+    expect(deleteFolderPageObjectsForPage).toHaveBeenCalledWith('library-dir', {
+      kind: 'album',
+      id: 'album-1',
+    });
   });
 
   it.each([

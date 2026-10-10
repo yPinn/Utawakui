@@ -1,12 +1,14 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
 import {
   getFolderArtifactStackLayoutVariant,
   getFolderArtifactStackLayers,
   normalizeFolderArtifactStackIndex,
 } from '../../utils/folderArtifactStack.js';
+import UiPhotoFrame from './UiPhotoFrame.vue';
+import UiTextarea from './UiTextarea.vue';
 
-const emit = defineEmits(['previous', 'next']);
+const emit = defineEmits(['previous', 'next', 'commit']);
 
 const props = defineProps({
   kind: {
@@ -27,7 +29,56 @@ const props = defineProps({
   alt: { type: String, default: '' },
   images: { type: Array, default: () => [] },
   activeIndex: { type: Number, default: 0 },
+  // Paper stock of a note; tissue keeps the Folder-tinted default sheet.
+  paper: {
+    type: String,
+    default: 'tissue',
+    validator: (value) =>
+      ['tissue', 'periwinkle', 'rose', 'canary', 'kraft', 'ruled'].includes(
+        value,
+      ),
+  },
+  // Grain offset variant (0–3) so overlapping notes never share one texture.
+  texture: {
+    type: Number,
+    default: 0,
+    validator: (value) => Number.isInteger(value) && value >= 0 && value < 4,
+  },
+  editing: { type: Boolean, default: false },
+  editLabel: { type: String, default: '便條內容' },
+  maxLength: { type: Number, default: 2000 },
 });
+
+const editor = useTemplateRef('editor');
+const editorId = `folder-artifact-editor-${useId()}`;
+const draft = ref('');
+let committed = false;
+
+watch(
+  () => props.editing,
+  async (editing) => {
+    if (!editing) return;
+    draft.value = props.body;
+    committed = false;
+    await nextTick();
+    editor.value?.focus();
+  },
+  { immediate: true },
+);
+
+// Escape and blur both end editing; only the first one commits.
+function commitDraft() {
+  if (committed || !props.editing) return;
+  committed = true;
+  emit('commit', draft.value);
+}
+
+function handleEditorKeydown(event) {
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  event.stopPropagation();
+  commitDraft();
+}
 
 const normalizedStackIndex = computed(() =>
   normalizeFolderArtifactStackIndex(props.activeIndex, props.images.length),
@@ -75,9 +126,11 @@ function handleStackLayerKeydown(layer, event) {
       `ui-folder-artifact--${props.kind}`,
       `ui-folder-artifact--${props.material}`,
     ]"
+    :data-paper-texture="kind === 'note' ? texture : undefined"
+    :data-paper="kind === 'note' ? paper : undefined"
   >
     <template v-if="kind === 'photo'">
-      <img v-if="src" :src="src" :alt="alt" draggable="false" />
+      <UiPhotoFrame v-if="src" :src="src" :alt="alt" fit="cover" filtered />
       <slot v-else></slot>
       <p v-if="caption">{{ caption }}</p>
     </template>
@@ -125,7 +178,20 @@ function handleStackLayerKeydown(layer, event) {
         {{ eyebrow }}
       </p>
       <h4 v-if="title">{{ title }}</h4>
-      <p v-if="body" class="ui-folder-artifact__body">{{ body }}</p>
+      <UiTextarea
+        v-if="editing"
+        :id="editorId"
+        ref="editor"
+        v-model="draft"
+        :label="editLabel"
+        label-hidden
+        variant="bare"
+        :maxlength="maxLength"
+        :rows="4"
+        @keydown="handleEditorKeydown"
+        @blur="commitDraft"
+      />
+      <p v-else-if="body" class="ui-folder-artifact__body">{{ body }}</p>
       <slot></slot>
     </template>
   </article>
@@ -140,30 +206,18 @@ function handleStackLayerKeydown(layer, event) {
   -webkit-user-drag: none;
 }
 
-.ui-folder-artifact img {
+.ui-folder-artifact--stack img {
   display: block;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
+  filter: var(--ui-photo-frame-filter);
   pointer-events: none;
   -webkit-user-drag: none;
 }
 
 .ui-folder-artifact--photo {
   width: var(--ui-folder-artifact-photo-width);
-  padding: var(--ui-folder-artifact-photo-frame);
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  background-color: var(--ui-folder-artifact-photo-bg);
-  box-shadow: var(--ui-folder-artifact-shadow);
-}
-
-.ui-folder-artifact--photo img {
-  aspect-ratio: 4 / 3;
-}
-
-.ui-folder-artifact--photo img,
-.ui-folder-artifact--stack img {
-  filter: saturate(0.78) sepia(0.16) contrast(0.96) brightness(0.96);
 }
 
 .ui-folder-artifact--photo > p {
@@ -182,25 +236,70 @@ function handleStackLayerKeydown(layer, event) {
   padding: var(--ui-space-5);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-xs);
-  background-color: var(--ui-folder-artifact-note-bg);
+  background-color: var(
+    --ui-folder-artifact-note-paper,
+    var(--ui-folder-artifact-note-bg)
+  );
   background-image:
-    linear-gradient(
-      102deg,
-      transparent 0 46%,
-      color-mix(in srgb, var(--ui-color-text) 3%, transparent) 49%,
-      transparent 52% 100%
-    ),
-    linear-gradient(
-      8deg,
-      transparent 0 64%,
-      color-mix(in srgb, var(--ui-color-surface-raised) 18%, transparent) 68%,
-      transparent 72% 100%
-    );
+    var(--ui-folder-artifact-note-print, none),
+    var(--ui-folder-artifact-note-grain, none);
+  background-position:
+    0 0,
+    var(--ui-folder-artifact-note-grain-offset, 0 0);
+  background-blend-mode: normal, soft-light;
   box-shadow: var(--ui-folder-artifact-shadow);
 }
 
+.ui-folder-artifact[data-paper='periwinkle'] {
+  --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-periwinkle);
+  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+}
+
+.ui-folder-artifact[data-paper='rose'] {
+  --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-rose);
+  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+}
+
+.ui-folder-artifact[data-paper='canary'] {
+  --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-canary);
+  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+}
+
+.ui-folder-artifact[data-paper='kraft'] {
+  --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-kraft);
+  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-coarse.svg?no-inline');
+}
+
+.ui-folder-artifact[data-paper='ruled'] {
+  --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-ruled);
+  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+  --ui-folder-artifact-note-print: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--ui-space-5) - var(--ui-border-width)),
+    var(--ui-folder-artifact-paper-rule)
+      calc(var(--ui-space-5) - var(--ui-border-width)) var(--ui-space-5)
+  );
+}
+
+.ui-folder-artifact[data-paper-texture='1'] {
+  --ui-folder-artifact-note-grain-offset: 2.3rem 3.8rem;
+}
+
+.ui-folder-artifact[data-paper-texture='2'] {
+  --ui-folder-artifact-note-grain-offset: 5.2rem 1.2rem;
+}
+
+.ui-folder-artifact[data-paper-texture='3'] {
+  --ui-folder-artifact-note-grain-offset: 7.6rem 6rem;
+}
+
 .ui-folder-artifact--note.ui-folder-artifact--translucent {
-  background-color: var(--ui-folder-artifact-note-bg-translucent);
+  background-color: color-mix(
+    in srgb,
+    var(--ui-folder-artifact-note-paper, var(--ui-folder-artifact-note-bg))
+      var(--ui-folder-artifact-note-opacity),
+    transparent
+  );
 }
 
 .ui-folder-artifact__eyebrow,
@@ -226,6 +325,8 @@ function handleStackLayerKeydown(layer, event) {
   max-width: 34ch;
   font-size: var(--ui-font-size-md);
   line-height: var(--ui-line-height-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   text-wrap: pretty;
 }
 
@@ -269,7 +370,7 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact__stack-layers[data-stack-layout='3'] {
   --ui-folder-artifact-stack-back-x: 1%;
-  --ui-folder-artifact-stack-back-y: -1%;
+  --ui-folder-artifact-stack-back-y: 0.5%;
   --ui-folder-artifact-stack-back-rotation: 5deg;
   --ui-folder-artifact-stack-front-x: 25%;
   --ui-folder-artifact-stack-front-y: 28%;
@@ -280,16 +381,17 @@ function handleStackLayerKeydown(layer, event) {
   position: absolute;
   z-index: 1;
   inset: 0 auto auto 0;
-  width: 82%;
+  box-sizing: border-box;
+  width: 78%;
   margin: 0;
-  padding: var(--ui-folder-artifact-photo-frame);
+  padding: var(--ui-photo-frame-padding);
   border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  background-color: var(--ui-folder-artifact-photo-bg);
+  background-color: var(--ui-photo-frame-bg);
   color: inherit;
   font: inherit;
   text-align: inherit;
   cursor: pointer;
-  box-shadow: var(--ui-folder-artifact-shadow);
+  box-shadow: var(--ui-photo-frame-shadow);
   transform-origin: center;
   transition:
     transform var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
@@ -314,10 +416,6 @@ function handleStackLayerKeydown(layer, event) {
       0
     )
     rotate(var(--ui-folder-artifact-stack-front-rotation));
-}
-
-.ui-folder-artifact--stack img {
-  aspect-ratio: 4 / 3;
 }
 
 .ui-folder-artifact__stack-position {
@@ -375,7 +473,6 @@ function handleStackLayerKeydown(layer, event) {
 }
 
 @media (forced-colors: active) {
-  .ui-folder-artifact--photo,
   .ui-folder-artifact--note,
   .ui-folder-artifact__stack-layer {
     border: var(--ui-border-width) solid CanvasText;
@@ -384,7 +481,6 @@ function handleStackLayerKeydown(layer, event) {
     color: CanvasText;
   }
 
-  .ui-folder-artifact--photo img,
   .ui-folder-artifact--stack img {
     filter: none;
   }
