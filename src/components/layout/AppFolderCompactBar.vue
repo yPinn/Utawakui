@@ -41,7 +41,6 @@ defineProps({
   display: flex;
   align-items: center;
   gap: var(--ui-space-3);
-  padding-inline: var(--ui-track-row-padding-inline);
   border-bottom: var(--ui-border-width) solid
     var(--ui-folder-ledger-rule-strong, var(--ui-color-border));
   background: var(--ui-folder-page-background);

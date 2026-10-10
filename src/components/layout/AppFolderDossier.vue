@@ -71,7 +71,9 @@ defineProps({
   grid-template-columns: max-content minmax(0, 1fr);
   gap: var(--ui-space-5);
   align-items: end;
-  padding: var(--ui-space-5);
+  /* Block space only: the artwork shares the paper content edge with the
+     action rail and track table. */
+  padding-block: var(--ui-space-5);
   background: var(--ui-folder-dossier-background, transparent);
 }
 

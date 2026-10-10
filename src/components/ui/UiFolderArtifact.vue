@@ -325,7 +325,8 @@ function handleStackLayerKeydown(layer, event) {
   width: var(--ui-folder-artifact-note-width);
   min-height: var(--ui-folder-artifact-note-min-height);
   display: grid;
-  align-content: center;
+  /* Notes read from the top; only the compact stock centres its line. */
+  align-content: start;
   gap: var(--ui-space-3);
   padding: var(--ui-space-5);
   border: var(--ui-border-width) solid var(--ui-color-border);
@@ -440,6 +441,7 @@ function handleStackLayerKeydown(layer, event) {
 }
 
 .ui-folder-artifact--note.ui-folder-artifact--compact {
+  align-content: center;
   width: var(--ui-folder-artifact-note-width-compact);
   min-height: var(--ui-folder-artifact-note-min-height-compact);
   padding: var(--ui-space-4);
