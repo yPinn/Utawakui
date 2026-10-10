@@ -577,4 +577,55 @@ describe('UiFolderArtifact', () => {
       /\.ui-folder-artifact__stack-layer:focus-visible\s*\{[^}]*outline:\s*var\(--ui-focus-width\) solid var\(--ui-color-focus\);/su,
     );
   });
+
+  it('shrinks a short single-line note to the compact stock, never while editing', async () => {
+    const render = (props) =>
+      renderToString(
+        createSSRApp({
+          render: () => h(UiFolderArtifact, { kind: 'note', ...props }),
+        }),
+      );
+    expect(await render({ body: 'BPM 92' })).toContain(
+      'ui-folder-artifact--compact',
+    );
+    expect(await render({ body: 'BPM 92', editing: true })).not.toContain(
+      'ui-folder-artifact--compact',
+    );
+    expect(await render({ body: '第一行\n第二行' })).not.toContain(
+      'ui-folder-artifact--compact',
+    );
+    expect(
+      await render({
+        body: '副歌第二段降半音，最後一句拉長，結尾再慢一點收尾，換氣在第三拍',
+      }),
+    ).not.toContain('ui-folder-artifact--compact');
+    expect(await render({ title: '直播備註', body: '短' })).not.toContain(
+      'ui-folder-artifact--compact',
+    );
+  });
+
+  it('prints archival photos by restating the shared photo-frame tokens', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(UiFolderArtifact, {
+            kind: 'photo',
+            src: '/photo.jpg',
+            frame: 'archival',
+          }),
+      }),
+    );
+    expect(html).toContain('data-photo-frame="archival"');
+    const rule = artifactSource.slice(
+      artifactSource.indexOf(
+        ".ui-folder-artifact--photo[data-photo-frame='archival'] {",
+      ),
+    );
+    expect(rule).toMatch(
+      /^[^}]*--ui-photo-frame-bg: var\(--ui-palette-neutral-950\);/u,
+    );
+    expect(rule).toMatch(
+      /^[^}]*--ui-photo-frame-border-color: var\(--ui-palette-neutral-950\);/u,
+    );
+  });
 });

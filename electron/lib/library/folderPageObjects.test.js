@@ -9,6 +9,7 @@ const {
   FOLDER_PAGE_USER_OBJECT_LIMIT,
   MAX_NOTE_TEXT_LENGTH,
   NOTE_PAPERS,
+  PHOTO_FRAMES,
   addFolderPageNote,
   addFolderPagePhoto,
   buildFolderPageAssetUrl,
@@ -110,7 +111,7 @@ describe('folder page objects', () => {
   });
 
   it('copies a photo under an opaque id and persists no source path or URL', () => {
-    const randomValues = [0, 1, 0];
+    const randomValues = [0, 1, 0, 0.9];
     const photo = addFolderPagePhoto(directory, page, sourcePath, {
       id: PHOTO_ID,
       now: new Date('2026-10-10T01:00:00.000Z'),
@@ -128,6 +129,7 @@ describe('folder page objects', () => {
       order: 1,
       createdAt: '2026-10-10T01:00:00.000Z',
       imageUrl: `utawakui-media://folder-asset/${PHOTO_ID}/image.png`,
+      frame: 'archival',
     });
     expect(listFolderPageObjects(directory, page)).toEqual([photo]);
 
@@ -586,6 +588,34 @@ describe('folder page objects', () => {
     ).toEqual(derived);
     expect(
       listFolderPageObjects(directory, page).map((object) => object.paper),
+    ).toEqual(derived);
+  });
+
+  it('picks a print stock per photo once and derives a stable frame for legacy photos', () => {
+    expect(PHOTO_FRAMES).toEqual(['print', 'archival']);
+    const first = addFolderPagePhoto(directory, page, sourcePath, {
+      id: PHOTO_ID,
+      random: () => 0,
+    });
+    const last = addFolderPagePhoto(directory, page, sourcePath, {
+      id: SECOND_PHOTO_ID,
+      random: () => 0.999,
+    });
+    expect([first.frame, last.frame]).toEqual(['print', 'archival']);
+
+    const manifest = readManifest(directory);
+    delete manifest.objects[0].payload.frame;
+    manifest.objects[1].payload.frame = 'polaroid';
+    fs.writeFileSync(
+      path.join(directory, FOLDER_PAGE_OBJECTS_FILENAME),
+      JSON.stringify(manifest),
+    );
+    const derived = listFolderPageObjects(directory, page).map(
+      (object) => object.frame,
+    );
+    derived.forEach((frame) => expect(PHOTO_FRAMES).toContain(frame));
+    expect(
+      readManifest(directory).objects.map((object) => object.payload.frame),
     ).toEqual(derived);
   });
 

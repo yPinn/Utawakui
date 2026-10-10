@@ -1,6 +1,7 @@
 <script setup>
 import { computed, shallowRef, useTemplateRef } from 'vue';
 import { Maximize2, Pencil, Pin, PinOff, Trash2 } from '../../icons/index.js';
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
@@ -32,13 +33,19 @@ const OBJECT_RENDERERS = Object.freeze({
     label: '頁面照片',
     activatable: true,
     activationLabel: '展開照片',
-    props: { src: item.imageUrl, alt: '頁面照片縮圖' },
+    props: {
+      src: item.imageUrl,
+      alt: '頁面照片縮圖',
+      frame: item.frame ?? 'print',
+    },
   }),
   note: (item) =>
     item.content
       ? {
           kind: 'note',
-          label: item.content.title,
+          label: [item.content.eyebrow, item.content.title]
+            .filter(Boolean)
+            .join('：'),
           props: {
             ...item.content,
             material: NOTE_MATERIAL,
@@ -72,19 +79,24 @@ const emit = defineEmits(['layoutChange', 'activate', 'noteCommit', 'remove']);
 const canvas = useTemplateRef('canvas');
 const menu = shallowRef(null);
 
-const summaryBody = computed(() => {
-  if (!props.summary) return '';
-  if (typeof props.summary.text === 'string') return props.summary.text;
+// The artist summary is a data card: label／value rows instead of prose.
+const summaryFields = computed(() => {
+  if (!props.summary || typeof props.summary.text === 'string') return [];
   const { trackCount = 0, albumCount = 0, yearStart, yearEnd } = props.summary;
-  const facts = [`${trackCount} 首曲目`, `${albumCount} 張專輯`];
+  const fields = [
+    { label: '曲目', value: `${trackCount} 首` },
+    { label: '專輯', value: `${albumCount} 張` },
+  ];
   if (yearStart) {
-    facts.push(
-      yearEnd && yearEnd !== yearStart
-        ? `${yearStart}–${yearEnd}`
-        : String(yearStart),
-    );
+    fields.push({
+      label: '年份',
+      value:
+        yearEnd && yearEnd !== yearStart
+          ? `${yearStart}–${yearEnd}`
+          : String(yearStart),
+    });
   }
-  return facts.join(' · ');
+  return fields;
 });
 
 const derivedItems = computed(() =>
@@ -99,9 +111,12 @@ const derivedItems = computed(() =>
           rotation: ARTIST_SUMMARY_ROTATION,
           order: 0,
           content: {
-            eyebrow: props.summary.artist,
-            title: '藝人曲庫摘要',
-            body: summaryBody.value,
+            eyebrow: '藝人資料',
+            title: props.summary.artist,
+            titleLang: contentLangAttribute(props.summary.artist),
+            body:
+              typeof props.summary.text === 'string' ? props.summary.text : '',
+            fields: summaryFields.value,
           },
         },
       ]

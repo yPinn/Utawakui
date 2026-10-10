@@ -40,7 +40,7 @@ defineProps({
   display: grid;
   margin: 0;
   padding: var(--ui-photo-frame-padding);
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border: var(--ui-border-width) solid var(--ui-photo-frame-border-color);
   background-color: var(--ui-photo-frame-bg);
   box-shadow: var(--ui-photo-frame-shadow);
 }

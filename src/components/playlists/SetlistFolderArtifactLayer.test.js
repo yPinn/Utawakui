@@ -51,10 +51,29 @@ describe('SetlistFolderArtifactLayer', () => {
     expect(html).toContain('Artist summary');
     expect(html).toContain('utawakui-media://folder-asset/asset-1/image.png');
     expect(html).toContain('--ui-folder-artifact-rotation:-2.5deg');
-    expect(html).toContain('藝人曲庫摘要，已固定');
+    expect(html).toContain('藝人資料：Aimer，已固定');
     expect(html).toContain('頁面照片，已固定，按 Enter 或空白鍵展開照片');
     expect(html.match(/--ui-folder-artifact-z:1/gu)).toHaveLength(1);
     expect(html.match(/--ui-folder-artifact-z:2/gu)).toHaveLength(1);
+  });
+
+  it('renders the derived artist summary as a label／value data card', async () => {
+    const html = await render({
+      summary: {
+        artist: '王以太',
+        trackCount: 14,
+        albumCount: 1,
+        yearStart: 2019,
+      },
+      objects: [],
+    });
+
+    expect(html).toContain('ui-folder-artifact__fields');
+    expect(html).toMatch(/<dt[^>]*>曲目<\/dt><dd[^>]*>14 首<\/dd>/u);
+    expect(html).toMatch(/<dt[^>]*>專輯<\/dt><dd[^>]*>1 張<\/dd>/u);
+    expect(html).toMatch(/<dt[^>]*>年份<\/dt><dd[^>]*>2019<\/dd>/u);
+    expect(html).toContain('藝人資料');
+    expect(html).not.toContain('ui-folder-artifact--compact');
   });
 
   it('places an unsaved derived summary behind saved objects with its default pose', async () => {

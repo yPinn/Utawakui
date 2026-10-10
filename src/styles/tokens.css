@@ -317,7 +317,10 @@
   );
   --ui-folder-artifact-note-width: 18rem;
   --ui-folder-artifact-note-min-height: 11rem;
+  --ui-folder-artifact-note-width-compact: 12rem;
+  --ui-folder-artifact-note-min-height-compact: 7rem;
   --ui-photo-frame-padding: var(--ui-space-2);
+  --ui-photo-frame-border-color: var(--ui-color-border-strong);
   --ui-photo-frame-bg: var(--ui-color-surface-raised);
   --ui-photo-frame-shadow: var(--ui-folder-artifact-shadow);
   --ui-photo-frame-filter: saturate(0.78) sepia(0.16) contrast(0.96)

@@ -32,13 +32,30 @@ const NOTE_PAPERS = Object.freeze([
   'ruled',
 ]);
 
-// Notes saved before paper stocks existed get a stable stock from their key.
-function paperForKey(key) {
+// Photo print stocks, picked once at creation like note papers.
+const PHOTO_FRAMES = Object.freeze(['print', 'archival']);
+
+function keyHash(key) {
   let hash = 0;
   for (const character of String(key)) {
     hash = (hash * 31 + character.codePointAt(0)) >>> 0;
   }
-  return NOTE_PAPERS[hash % NOTE_PAPERS.length];
+  return hash;
+}
+
+// Objects saved before a stock existed get a stable one from their key.
+function paperForKey(key) {
+  return NOTE_PAPERS[keyHash(key) % NOTE_PAPERS.length];
+}
+
+function frameForKey(key) {
+  return PHOTO_FRAMES[keyHash(key) % PHOTO_FRAMES.length];
+}
+
+function pickStock(stocks, random) {
+  return stocks[
+    Math.min(stocks.length - 1, Math.floor(randomUnit(random) * stocks.length))
+  ];
 }
 const INITIAL_ANCHOR_JITTER = 0.04;
 const INITIAL_ROTATIONS = Object.freeze([-3.25, -1.75, 1.75, 3.25]);
@@ -58,10 +75,13 @@ const IMAGE_FILENAME_PATTERN = /^image\.(?:jpg|png|webp)$/u;
 const OBJECT_TYPES = Object.freeze({
   photo: Object.freeze({
     sources: new Set(['user']),
-    sanitizePayload: (payload) =>
-      isImageFilename(payload?.imageFilename)
-        ? { imageFilename: payload.imageFilename }
-        : null,
+    sanitizePayload: (payload, source, key) => {
+      if (!isImageFilename(payload?.imageFilename)) return null;
+      const frame = PHOTO_FRAMES.includes(payload.frame)
+        ? payload.frame
+        : frameForKey(key);
+      return { imageFilename: payload.imageFilename, frame };
+    },
   }),
   note: Object.freeze({
     sources: new Set(['user', 'derived']),
@@ -344,10 +364,13 @@ function readManifest(directory) {
       changed = true;
       continue;
     }
+    // Persist stocks derived for objects saved before they existed.
     if (
-      object.type === 'note' &&
-      object.source === 'user' &&
-      rawObject.payload?.paper !== object.payload.paper
+      (object.type === 'note' &&
+        object.source === 'user' &&
+        rawObject.payload?.paper !== object.payload.paper) ||
+      (object.type === 'photo' &&
+        rawObject.payload?.frame !== object.payload.frame)
     ) {
       changed = true;
     }
@@ -400,6 +423,7 @@ function projectObject(object) {
       photoAssetId(object),
       object.payload.imageFilename,
     );
+    projection.frame = object.payload.frame;
   } else if (object.type === 'note' && object.source === 'user') {
     projection.text = object.payload.text;
     projection.paper = object.payload.paper;
@@ -520,13 +544,17 @@ function addFolderPagePhoto(directory, pageValue, sourcePath, options = {}) {
   const image = readPhotoSource(sourcePath);
   const objects = loadObjects(directory);
   const imageFilename = `image${image.extension}`;
+  const random =
+    typeof options.random === 'function' ? options.random : Math.random;
   const { id, object: photo } = createUserObject(
     objects,
     page,
     'photo',
     { imageFilename },
-    options,
+    { ...options, random },
   );
+  // Drawn after the pose so existing placement sequences stay stable.
+  photo.payload.frame = pickStock(PHOTO_FRAMES, random);
   const targetDirectory = assetDirectory(directory, id);
 
   fs.mkdirSync(targetDirectory, { recursive: true });
@@ -545,15 +573,11 @@ function addFolderPageNote(directory, pageValue, options = {}) {
   const objects = loadObjects(directory);
   const random =
     typeof options.random === 'function' ? options.random : Math.random;
-  const paperIndex = Math.min(
-    NOTE_PAPERS.length - 1,
-    Math.floor(randomUnit(random) * NOTE_PAPERS.length),
-  );
   const { object: note } = createUserObject(
     objects,
     page,
     'note',
-    { text: '', paper: NOTE_PAPERS[paperIndex] },
+    { text: '', paper: pickStock(NOTE_PAPERS, random) },
     { ...options, random },
   );
   writeManifest(directory, [...objects, note]);
@@ -703,6 +727,7 @@ module.exports = {
   FOLDER_PAGE_USER_OBJECT_LIMIT,
   MAX_NOTE_TEXT_LENGTH,
   NOTE_PAPERS,
+  PHOTO_FRAMES,
   addFolderPageNote,
   addFolderPagePhoto,
   buildFolderPageAssetUrl,

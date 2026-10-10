@@ -10,6 +10,9 @@ import UiTextarea from './UiTextarea.vue';
 
 const emit = defineEmits(['previous', 'next', 'commit']);
 
+// A short single-line note shrinks to the compact stock; content decides.
+const COMPACT_NOTE_MAX_LENGTH = 24;
+
 const props = defineProps({
   kind: {
     type: String,
@@ -44,9 +47,29 @@ const props = defineProps({
     default: 0,
     validator: (value) => Number.isInteger(value) && value >= 0 && value < 4,
   },
+  // Photo print stock; archival restates the shared photo-frame tokens.
+  frame: {
+    type: String,
+    default: 'print',
+    validator: (value) => ['print', 'archival'].includes(value),
+  },
+  titleLang: { type: String, default: undefined },
+  // Data-card rows: [{ label, value, lang? }].
+  fields: { type: Array, default: () => [] },
   editing: { type: Boolean, default: false },
   editLabel: { type: String, default: '便條內容' },
   maxLength: { type: Number, default: 2000 },
+});
+
+const compact = computed(() => {
+  if (props.kind !== 'note' || props.editing) return false;
+  if (props.title || props.eyebrow || props.fields.length) return false;
+  const body = props.body.trim();
+  return (
+    body.length > 0 &&
+    body.length <= COMPACT_NOTE_MAX_LENGTH &&
+    !/[\r\n]/u.test(body)
+  );
 });
 
 const editor = useTemplateRef('editor');
@@ -125,9 +148,11 @@ function handleStackLayerKeydown(layer, event) {
     :class="[
       `ui-folder-artifact--${props.kind}`,
       `ui-folder-artifact--${props.material}`,
+      { 'ui-folder-artifact--compact': compact },
     ]"
     :data-paper-texture="kind === 'note' ? texture : undefined"
     :data-paper="kind === 'note' ? paper : undefined"
+    :data-photo-frame="kind === 'photo' ? frame : undefined"
   >
     <template v-if="kind === 'photo'">
       <UiPhotoFrame v-if="src" :src="src" :alt="alt" fit="cover" filtered />
@@ -177,7 +202,7 @@ function handleStackLayerKeydown(layer, event) {
       <p v-if="eyebrow" class="ui-folder-artifact__eyebrow">
         {{ eyebrow }}
       </p>
-      <h4 v-if="title">{{ title }}</h4>
+      <h4 v-if="title" :lang="titleLang">{{ title }}</h4>
       <UiTextarea
         v-if="editing"
         :id="editorId"
@@ -192,6 +217,12 @@ function handleStackLayerKeydown(layer, event) {
         @blur="commitDraft"
       />
       <p v-else-if="body" class="ui-folder-artifact__body">{{ body }}</p>
+      <dl v-if="fields.length" class="ui-folder-artifact__fields">
+        <template v-for="field in fields" :key="field.label">
+          <dt>{{ field.label }}</dt>
+          <dd :lang="field.lang">{{ field.value }}</dd>
+        </template>
+      </dl>
       <slot></slot>
     </template>
   </article>
@@ -218,6 +249,14 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact--photo {
   width: var(--ui-folder-artifact-photo-width);
+}
+
+/* A dark archival print: same frame mechanics, restated tokens only. */
+.ui-folder-artifact--photo[data-photo-frame='archival'] {
+  --ui-photo-frame-padding: var(--ui-space-1);
+  --ui-photo-frame-bg: var(--ui-palette-neutral-950);
+  --ui-photo-frame-border-color: var(--ui-palette-neutral-950);
+  --ui-photo-frame-filter: grayscale(0.85) contrast(1.05);
 }
 
 .ui-folder-artifact--photo > p {
@@ -310,15 +349,50 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact__eyebrow {
   color: var(--ui-color-text-muted);
+  font-family: var(--ui-font-family-utility);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-caption);
 }
 
 .ui-folder-artifact--note h4 {
+  font-family: var(--ui-font-family-display);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
+  font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-title);
+}
+
+/* Data card: label／value rows in the utility face. */
+.ui-folder-artifact__fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--ui-space-1) var(--ui-space-3);
+  margin: 0;
+  font-family: var(--ui-font-family-utility);
+  font-size: var(--ui-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--ui-line-height-caption);
+}
+
+.ui-folder-artifact__fields dt {
+  color: var(--ui-color-text-muted);
+}
+
+.ui-folder-artifact__fields dd {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--ui-font-family-utility);
+  overflow-wrap: anywhere;
+}
+
+.ui-folder-artifact--note.ui-folder-artifact--compact {
+  width: var(--ui-folder-artifact-note-width-compact);
+  min-height: var(--ui-folder-artifact-note-min-height-compact);
+  padding: var(--ui-space-4);
+}
+
+.ui-folder-artifact--compact .ui-folder-artifact__body {
+  font-family: var(--ui-font-family-utility);
+  font-size: var(--ui-font-size-sm);
 }
 
 .ui-folder-artifact__body {
