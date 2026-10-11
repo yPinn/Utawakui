@@ -14,8 +14,10 @@ function zipEntrySegments(entryName) {
 function validateZipEntryName(entryName, destinationDir, dependency) {
   const normalizedName = String(entryName || '');
   const label = dependencyDownloadLabel(dependency);
+  // Drive-relative names such as C:tool.exe are not absolute, even on Windows.
   if (
     normalizedName.length === 0 ||
+    /^[A-Za-z]:/u.test(normalizedName) ||
     path.isAbsolute(normalizedName) ||
     path.win32.isAbsolute(normalizedName) ||
     zipEntrySegments(normalizedName).includes('..')

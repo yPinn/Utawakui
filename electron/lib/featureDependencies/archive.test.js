@@ -72,16 +72,20 @@ afterEach(() => {
 });
 
 describe('validateZipArchiveBuffer', () => {
-  it('accepts bounded nested entries', () => {
-    const archive = createStoredZip([
-      { name: 'package/bin/tool.exe', data: 'exe' },
-      { name: 'package/licenses/', data: '' },
-    ]);
+  it.each(['C:\\managed\\tool', 'D:\\managed\\tool', '/managed/tool'])(
+    'accepts bounded nested entries in %j',
+    (destinationDir) => {
+      const archive = createStoredZip([
+        { name: 'package/bin/tool.exe', data: 'exe' },
+        { name: 'package\\bin\\helper.exe', data: 'exe' },
+        { name: 'package/licenses/', data: '' },
+      ]);
 
-    expect(() =>
-      validateZipArchiveBuffer(archive, 'C:\\managed\\tool', dependency()),
-    ).not.toThrow();
-  });
+      expect(() =>
+        validateZipArchiveBuffer(archive, destinationDir, dependency()),
+      ).not.toThrow();
+    },
+  );
 
   it.each([
     '',
@@ -97,6 +101,27 @@ describe('validateZipArchiveBuffer', () => {
     expect(() =>
       validateZipArchiveBuffer(archive, 'C:\\managed\\tool', dependency()),
     ).toThrow(/outside the destination/);
+  });
+
+  it.each([
+    'C:drive-relative.txt',
+    'c:drive-relative.txt',
+    'D:',
+    'd:.',
+    'D:package/bin/tool.exe',
+    'd:package\\bin\\tool.exe',
+  ])('rejects drive-relative entry %j regardless of destination', (name) => {
+    const archive = createStoredZip([{ name, data: 'unsafe' }]);
+
+    for (const destinationDir of [
+      'C:\\managed\\tool',
+      'D:\\managed\\tool',
+      '/managed/tool',
+    ]) {
+      expect(() =>
+        validateZipArchiveBuffer(archive, destinationDir, dependency()),
+      ).toThrow(/outside the destination/);
+    }
   });
 
   it('rejects archives without a valid end-of-central-directory record', () => {
