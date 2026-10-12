@@ -5,6 +5,13 @@ const viewSource = readFileSync(
   new URL('./SetlistView.vue', import.meta.url),
   'utf8',
 );
+const performanceSource = readFileSync(
+  new URL(
+    '../components/performance/PerformanceWorkspace.vue',
+    import.meta.url,
+  ),
+  'utf8',
+);
 const headerSource = readFileSync(
   new URL(
     '../components/playlists/SetlistCollectionHeader.vue',
@@ -14,10 +21,13 @@ const headerSource = readFileSync(
 );
 
 describe('Setlist performance-session entry', () => {
-  it('uses the shared workspace coordinator instead of local navigation state', () => {
-    expect(viewSource).toContain('usePerformanceSessionWorkspace');
-    expect(viewSource).toContain('performanceSessionWorkspace.isOpen.value');
-    expect(viewSource).toContain('@close="performanceSessionWorkspace.close"');
+  it('moves the shared workspace coordinator to Performance composition', () => {
+    expect(viewSource).not.toContain('usePerformanceSessionWorkspace');
+    expect(viewSource).not.toContain(
+      'performanceSessionWorkspace.isOpen.value',
+    );
+    expect(performanceSource).toContain('usePerformanceSessionWorkspace');
+    expect(performanceSource).toContain('@close="sessionWorkspace.close"');
     expect(viewSource).not.toContain('const isPreparingSession');
   });
 

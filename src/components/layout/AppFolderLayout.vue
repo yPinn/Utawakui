@@ -123,16 +123,12 @@ function navigate(destinationId, event) {
   user-select: none;
 }
 
-.app-folder-layout[data-active-destination='lyrics'] {
+.app-folder-layout[data-active-destination='performance'] {
   --ui-folder-layout-background: var(--ui-color-folder-secondary);
 }
 
-.app-folder-layout[data-active-destination='output'] {
+.app-folder-layout[data-active-destination='display'] {
   --ui-folder-layout-background: var(--ui-color-folder-tertiary);
-}
-
-.app-folder-layout[data-active-destination='import'] {
-  --ui-folder-layout-background: var(--ui-color-folder-neutral);
 }
 
 .app-folder-layout__shape-definition {
@@ -172,24 +168,19 @@ function navigate(destinationId, event) {
   scroll-padding-inline: var(--ui-folder-perimeter);
 }
 
-.app-folder-layout__destination[data-folder-destination='setlist'] {
+.app-folder-layout__destination[data-folder-destination='library'] {
   --ui-folder-tab-material: var(--ui-color-folder-primary);
   --ui-folder-tab-foreground: var(--ui-color-folder-primary-foreground);
 }
 
-.app-folder-layout__destination[data-folder-destination='lyrics'] {
+.app-folder-layout__destination[data-folder-destination='performance'] {
   --ui-folder-tab-material: var(--ui-color-folder-secondary);
   --ui-folder-tab-foreground: var(--ui-color-folder-secondary-foreground);
 }
 
-.app-folder-layout__destination[data-folder-destination='output'] {
+.app-folder-layout__destination[data-folder-destination='display'] {
   --ui-folder-tab-material: var(--ui-color-folder-tertiary);
   --ui-folder-tab-foreground: var(--ui-color-folder-tertiary-foreground);
-}
-
-.app-folder-layout__destination[data-folder-destination='import'] {
-  --ui-folder-tab-material: var(--ui-color-folder-neutral);
-  --ui-folder-tab-foreground: var(--ui-color-folder-neutral-foreground);
 }
 
 .app-folder-layout__destination {

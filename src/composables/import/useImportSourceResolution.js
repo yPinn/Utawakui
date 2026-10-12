@@ -10,8 +10,8 @@ function createPreviewTrack(entry) {
   return {
     ...entry,
     selected: true,
-    status: 'pending',
-    errorCode: null,
+    status: entry.status || 'pending',
+    errorCode: entry.errorCode || null,
   };
 }
 

@@ -21,9 +21,9 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import UiSurface from '../ui/UiSurface.vue';
 
 const props = defineProps({
-  expanded: { type: Boolean, default: false },
+  open: { type: Boolean, default: false },
 });
-const emit = defineEmits(['requestExpand', 'requestClose']);
+const emit = defineEmits(['requestClose']);
 
 const {
   state: sessionState,
@@ -47,6 +47,7 @@ const { state: planState, setTrack } = useBgmStandbyPlan();
 const { state: libraryState } = useLibrary();
 const searchQuery = shallowRef('');
 const pinned = shallowRef(false);
+const pickerExpanded = shallowRef(false);
 const player = useTemplateRef('player');
 const BGM_PICKER_ID = 'bgm-track-picker';
 const moveInstructionId = `bgm-player-move-${useId()}`;
@@ -63,16 +64,6 @@ const {
 
 const sessionActive = computed(() =>
   ['live', 'record', 'reconnecting'].includes(handoffState.sessionMode),
-);
-const bgmOperationActive = computed(
-  () =>
-    handoffState.bgmRequested ||
-    handoffState.restorePending ||
-    handoffState.audibleLane === 'bgm' ||
-    ['stopping-bgm', 'error'].includes(handoffState.phase),
-);
-const visible = computed(
-  () => props.expanded || sessionActive.value || bgmOperationActive.value,
 );
 const SESSION_LABELS = Object.freeze({
   live: 'LIVE',
@@ -114,29 +105,31 @@ const libraryError = computed(
 
 onMounted(initializeSession);
 
-watch(visible, (isVisible, wasVisible) => {
-  if (isVisible || !wasVisible) return;
-  const playerElement = player.value?.$el ?? player.value;
-  const focusedInside = playerElement?.contains?.(document.activeElement);
-  if (!focusedInside) return;
-  nextTick(() => document.querySelector('[data-app-bgm-trigger]')?.focus?.());
-});
-
 watch(
-  () => props.expanded,
-  async () => {
+  () => props.open,
+  async (isOpen, wasOpen) => {
+    const playerElement = player.value?.$el ?? player.value;
+    const focusedInside = playerElement?.contains?.(document.activeElement);
+    if (!isOpen) pickerExpanded.value = false;
     await nextTick();
-    reclamp();
+    if (isOpen) reclamp();
+    if (!isOpen && wasOpen && focusedInside) {
+      document.querySelector('[data-app-bgm-trigger]')?.focus?.();
+    }
   },
 );
+
+watch(pickerExpanded, async () => {
+  await nextTick();
+  reclamp();
+});
 
 async function changeBgmTrack(trackId) {
   if (await setTrack(trackId)) searchQuery.value = '';
 }
 
-function toggleExpanded() {
-  if (props.expanded) emit('requestClose');
-  else emit('requestExpand');
+function togglePicker() {
+  pickerExpanded.value = !pickerExpanded.value;
 }
 
 function togglePinned() {
@@ -144,15 +137,19 @@ function togglePinned() {
 }
 
 function handleEscape(event) {
-  if (!props.expanded) return;
+  if (!props.open) return;
   event.preventDefault();
+  if (pickerExpanded.value) {
+    pickerExpanded.value = false;
+    return;
+  }
   emit('requestClose');
 }
 </script>
 
 <template>
   <UiSurface
-    v-if="visible"
+    v-if="open"
     ref="player"
     tag="aside"
     tone="raised"
@@ -160,12 +157,12 @@ function handleEscape(event) {
     stroke="inset"
     class="bgm-player"
     :class="{
-      'bgm-player--expanded': expanded,
+      'bgm-player--expanded': pickerExpanded,
       'bgm-player--pinned': pinned,
       'bgm-player--dragging': isDragging,
     }"
     :style="surfaceStyle"
-    :data-expanded="expanded ? 'true' : 'false'"
+    :data-expanded="pickerExpanded ? 'true' : 'false'"
     aria-label="BGM 播放器"
     @keydown.esc.stop="handleEscape"
   >
@@ -186,10 +183,10 @@ function handleEscape(event) {
     >
       <h2 class="ui-visually-hidden">BGM 播放器</h2>
       <div class="bgm-player__identity">
-        <UiChip class="bgm-player__feature-status" tone="accent">
+        <div class="bgm-player__feature-identity">
           <Music2 aria-hidden="true" />
           <span>BGM</span>
-        </UiChip>
+        </div>
         <UiChip class="bgm-player__session-status" :tone="sessionTone">
           {{ sessionLabel }}
         </UiChip>
@@ -206,13 +203,13 @@ function handleEscape(event) {
           @click="togglePinned"
         />
         <UiIconButton
-          :icon="expanded ? ChevronUp : ChevronDown"
-          :label="expanded ? '收合更換歌曲' : '展開更換歌曲'"
-          :active="expanded"
-          :aria-expanded="expanded"
+          :icon="pickerExpanded ? ChevronUp : ChevronDown"
+          :label="pickerExpanded ? '收合更換歌曲' : '展開更換歌曲'"
+          :active="pickerExpanded"
+          :aria-expanded="pickerExpanded"
           :aria-controls="BGM_PICKER_ID"
           @pointerdown.stop
-          @click="toggleExpanded"
+          @click="togglePicker"
         />
       </div>
     </header>
@@ -241,9 +238,9 @@ function handleEscape(event) {
       @commit-position="commitBgmPosition"
     />
 
-    <UiSeparator v-if="expanded" class="bgm-player__separator" />
+    <UiSeparator v-if="pickerExpanded" class="bgm-player__separator" />
     <BgmTrackPicker
-      v-if="expanded"
+      v-if="pickerExpanded"
       :id="BGM_PICKER_ID"
       class="bgm-player__picker"
       :search-results="searchResults"
@@ -331,9 +328,20 @@ function handleEscape(event) {
   gap: var(--ui-space-1);
 }
 
-.bgm-player__feature-status :deep(svg) {
+.bgm-player__feature-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.bgm-player__feature-identity :deep(svg) {
   width: var(--ui-space-4);
   height: var(--ui-space-4);
+  color: var(--ui-color-accent);
 }
 
 .bgm-player__session-status {

@@ -41,6 +41,10 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
+const props = defineProps({
+  reviewOnly: { type: Boolean, default: false },
+});
+
 const IDENTITY_STATUS_ICONS = {
   identified: BadgeCheck,
   review: CircleAlert,
@@ -187,74 +191,77 @@ function trackStatusIconLabel(track) {
 <template>
   <section
     class="provider-import-panel"
-    aria-labelledby="provider-import-title"
+    :aria-labelledby="props.reviewOnly ? undefined : 'provider-import-title'"
+    :aria-label="props.reviewOnly ? '匯入來源檢視' : undefined"
   >
-    <div class="section-heading">
-      <h2 id="provider-import-title" class="section-heading__title">
-        外部來源
-      </h2>
-      <p class="section-heading__meta">YT Music / YouTube</p>
-    </div>
-
-    <div class="source-row">
-      <div class="source-row__input-wrap">
-        <input
-          :value="state.input"
-          class="source-row__input"
-          aria-label="歌曲名稱或外部來源連結"
-          placeholder="搜尋歌名、歌手，或貼上 YouTube / YouTube Music 連結"
-          :disabled="
-            state.isResolving || state.isOpeningDiscovery || state.isImporting
-          "
-          @input="setInput($event.target.value)"
-          @keydown.enter="resolveSource"
-        />
-        <UiButton
-          v-if="state.input"
-          :icon="X"
-          class="source-row__clear"
-          aria-label="清除輸入內容"
-          title="清除輸入內容"
-          :disabled="
-            state.isResolving || state.isOpeningDiscovery || state.isImporting
-          "
-          @click="setInput('')"
-        />
+    <template v-if="!props.reviewOnly">
+      <div class="section-heading">
+        <h2 id="provider-import-title" class="section-heading__title">
+          外部來源
+        </h2>
+        <p class="section-heading__meta">YT Music / YouTube</p>
       </div>
-      <UiButton
-        :icon="Search"
-        class="source-row__action"
-        variant="accent"
-        :disabled="
-          !state.input.trim() ||
-          state.isResolving ||
-          state.isOpeningDiscovery ||
-          state.isImporting
-        "
-        @click="resolveSource"
-      >
-        {{ state.isResolving ? '搜尋中' : '搜尋音源' }}
-      </UiButton>
-    </div>
 
-    <div class="discovery-row">
-      <UiHint class="discovery-row__hint" tone="muted">
-        <span>優先搜尋 YT Music 歌曲；YouTube 補足其他版本。</span>
-        <span>在瀏覽器複製歌曲、專輯或播放清單連結，再貼回上方欄位。</span>
-      </UiHint>
-      <UiButton
-        :icon="ExternalLink"
-        :disabled="
-          !state.input.trim() ||
-          state.isResolving ||
-          state.isOpeningDiscovery ||
-          state.isImporting
-        "
-        @click="openYoutubeMusicSearch"
-      >
-        {{ state.isOpeningDiscovery ? '開啟中' : '到 YT Music 尋找更多結果' }}
-      </UiButton>
-    </div>
+      <div class="source-row">
+        <div class="source-row__input-wrap">
+          <input
+            :value="state.input"
+            class="source-row__input"
+            aria-label="歌曲名稱或外部來源連結"
+            placeholder="搜尋歌名、歌手，或貼上 YouTube / YouTube Music 連結"
+            :disabled="
+              state.isResolving || state.isOpeningDiscovery || state.isImporting
+            "
+            @input="setInput($event.target.value)"
+            @keydown.enter="resolveSource"
+          />
+          <UiButton
+            v-if="state.input"
+            :icon="X"
+            class="source-row__clear"
+            aria-label="清除輸入內容"
+            title="清除輸入內容"
+            :disabled="
+              state.isResolving || state.isOpeningDiscovery || state.isImporting
+            "
+            @click="setInput('')"
+          />
+        </div>
+        <UiButton
+          :icon="Search"
+          class="source-row__action"
+          variant="accent"
+          :disabled="
+            !state.input.trim() ||
+            state.isResolving ||
+            state.isOpeningDiscovery ||
+            state.isImporting
+          "
+          @click="resolveSource"
+        >
+          {{ state.isResolving ? '搜尋中' : '搜尋音源' }}
+        </UiButton>
+      </div>
+
+      <div class="discovery-row">
+        <UiHint class="discovery-row__hint" tone="muted">
+          <span>優先搜尋 YT Music 歌曲；YouTube 補足其他版本。</span>
+          <span>在瀏覽器複製歌曲、專輯或播放清單連結，再貼回上方欄位。</span>
+        </UiHint>
+        <UiButton
+          :icon="ExternalLink"
+          :disabled="
+            !state.input.trim() ||
+            state.isResolving ||
+            state.isOpeningDiscovery ||
+            state.isImporting
+          "
+          @click="openYoutubeMusicSearch"
+        >
+          {{ state.isOpeningDiscovery ? '開啟中' : '到 YT Music 尋找更多結果' }}
+        </UiButton>
+      </div>
+    </template>
 
     <UiNotice
       v-if="state.status && state.statusType === 'error'"

@@ -51,6 +51,11 @@ const props = defineProps({
     default: 'default',
     validator: (value) => ['default', 'notice', 'wide'].includes(value),
   },
+  maxBlockSize: {
+    type: String,
+    default: '',
+    validator: (value) => ['', 'small', 'medium', 'large'].includes(value),
+  },
   presentation: {
     type: String,
     default: 'dialog',
@@ -228,6 +233,7 @@ onUnmounted(() => {
           :class="[
             `ui-modal--${size}`,
             `ui-modal--${presentation}`,
+            maxBlockSize ? `ui-modal--max-block-${maxBlockSize}` : null,
             {
               'ui-modal--fixed-height': fixedHeight,
               'ui-modal--with-footer':
@@ -418,6 +424,18 @@ onUnmounted(() => {
 
 .ui-modal--wide {
   --ui-modal-inline-size: var(--ui-modal-inline-size-large);
+  --ui-modal-max-block-size: var(--ui-modal-max-block-size-large);
+}
+
+.ui-modal--max-block-small {
+  --ui-modal-max-block-size: var(--ui-modal-max-block-size-small);
+}
+
+.ui-modal--max-block-medium {
+  --ui-modal-max-block-size: var(--ui-modal-max-block-size-medium);
+}
+
+.ui-modal--max-block-large {
   --ui-modal-max-block-size: var(--ui-modal-max-block-size-large);
 }
 

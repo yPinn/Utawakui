@@ -5,22 +5,24 @@ import { APP_DESTINATIONS } from '../utils/appDestinationRegistry.js';
 const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
-describe('contextual capability boundaries during Phase 2', () => {
+describe('contextual capability boundaries after the destination cutover', () => {
   const appSource = readSource('../App.vue');
   const internalViewsBranch = appSource.match(
     /const\s+internalViews\s*=\s*internalWorkbenchesEnabled\s*\?\s*\{([\s\S]*?)\n\s*\}\s*:\s*\{\};/u,
   )?.[1];
 
-  it('keeps the verified legacy entries until the three-destination cutover', () => {
+  it('keeps capability workspaces out of the three public destinations', () => {
     expect(APP_DESTINATIONS.map(({ id }) => id)).toEqual([
-      'setlist',
-      'lyrics',
-      'output',
-      'import',
+      'library',
+      'performance',
+      'display',
     ]);
 
-    expect(appSource).toContain('lyrics: LyricsView');
-    expect(appSource).toContain('import: ImportPage');
+    expect(appSource).not.toContain('lyrics: LyricsView');
+    expect(appSource).not.toContain('import: ImportPage');
+    expect(appSource).toContain('library: LibraryPage');
+    expect(appSource).toContain('performance: PerformancePage');
+    expect(appSource).toContain('display: DisplayPage');
   });
 
   it('keeps Separation attached to track and Lyrics contexts instead of a Page', () => {
@@ -39,13 +41,16 @@ describe('contextual capability boundaries during Phase 2', () => {
     ).toBe(false);
   });
 
-  it('keeps Provider acquisition inside Import and provider review dev-only', () => {
-    const importWorkspaceSource = readSource(
-      '../components/import/ImportWorkspace.vue',
+  it('keeps Provider acquisition inside the Import Dock and provider review dev-only', () => {
+    const importDockSource = readSource(
+      '../components/import/ImportDockContent.vue',
     );
-    const importViewSource = readSource('../views/ImportView.vue');
-    expect(importWorkspaceSource).toContain('<ImportView />');
-    expect(importViewSource).toContain('<ProviderImportPanel />');
+    const importReviewSource = readSource(
+      '../components/import/ImportReviewModal.vue',
+    );
+    expect(importDockSource).toContain('<ImportReviewModal');
+    expect(importReviewSource).toContain('<ImportCollectionReview />');
+    expect(importReviewSource).not.toContain('ProviderImportPanel');
     expect(internalViewsBranch).toContain(
       "'lyrics-provider-review': defineAsyncComponent",
     );

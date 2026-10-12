@@ -5,6 +5,7 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
+const libraryPageSource = readSource('../pages/LibraryPage.vue');
 const viewSource = readSource('../views/LyricsView.vue');
 const workspaceSource = readSource('../components/lyrics/LyricsWorkspace.vue');
 const authoringSource = readSource(
@@ -48,8 +49,12 @@ const legacyTokens = [
 
 describe('Lyrics Token v2 surface cutover', () => {
   it('keeps Lyrics in Folder workspace mode with feature-owned scroll regions', () => {
-    expect(appSource).toContain('<AppFolderPage v-else mode="workspace">');
-    expect(appSource).toContain("lyrics: 'lyrics'");
+    expect(appSource).not.toContain('lyrics: LyricsView');
+    expect(libraryPageSource).toContain("surfaceId: 'lyrics'");
+    expect(libraryPageSource).toContain("pageMode: 'workspace'");
+    expect(libraryPageSource).toContain(
+      "import('../components/lyrics/LyricsAuthoringWorkspace.vue')",
+    );
     expect(viewSource).toContain('<LyricsWorkspace />');
     expect(authoringSource).toMatch(
       /\.lyrics-workspace\s*\{(?=[^}]*display:\s*flex)(?=[^}]*flex:\s*1)(?=[^}]*min-height:\s*0)[^}]*\}/su,

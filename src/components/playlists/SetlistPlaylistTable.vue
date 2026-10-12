@@ -1,9 +1,9 @@
 <script setup>
 import { computed } from 'vue';
-import LibraryTrackTable from '../library/LibraryTrackTable.vue';
+import TrackTable from '../track/TrackTable.vue';
 
 // Compatibility adapter for visual demos and older callers. Production
-// Setlist pages use LibraryTrackTable directly so every entity variant shares
+// Setlist pages use TrackTable directly so every entity variant shares
 // one column, alignment, state, and keyboard-interaction contract.
 const props = defineProps({
   entries: { type: Array, default: () => [] },
@@ -41,7 +41,7 @@ const variant = computed(() =>
 </script>
 
 <template>
-  <LibraryTrackTable
+  <TrackTable
     :entries="entries"
     :variant="variant"
     :label="label"

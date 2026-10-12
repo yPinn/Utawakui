@@ -1,13 +1,12 @@
 <script setup>
 import { computed, onMounted } from 'vue';
-import SeparationToolbarPopover from '../separation/SeparationToolbarPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import {
   Cpu,
   ICON_SIZE,
-  ListOrdered,
+  ListChecks,
   MemoryStick,
   Music2,
   Moon,
@@ -17,25 +16,31 @@ import {
 } from '../../icons/index.js';
 import { useObsIntegration } from '../../composables/useObsIntegration.js';
 import { useElapsedClock } from '../../composables/useElapsedClock.js';
-import { usePerformerSelfView } from '../../composables/usePerformerSelfView.js';
 import { useAppUsage } from '../../composables/useAppUsage.js';
 import { useTheme } from '../../composables/useTheme.js';
 import { formatElapsedClock } from '../../utils/format.js';
 
 const props = defineProps({
-  sessionActive: { type: Boolean, default: false },
-  sessionControls: { type: String, default: '' },
+  preparationActive: { type: Boolean, default: false },
+  preparationControls: { type: String, default: '' },
+  preparationStatus: { type: String, default: 'idle' },
+  preparationStatusLabel: { type: String, default: '' },
   bgmActive: { type: Boolean, default: false },
   bgmControls: { type: String, default: '' },
+  performerActive: { type: Boolean, default: false },
+  performerBusy: { type: Boolean, default: false },
   settingsActive: { type: Boolean, default: false },
   updateAvailable: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['toggleSession', 'toggleBgm', 'openSettings']);
+const emit = defineEmits([
+  'togglePreparation',
+  'toggleBgm',
+  'togglePerformer',
+  'toggleSettings',
+]);
 
 const { theme, toggleTheme } = useTheme();
-const { state: performerState, open: openPerformerView } =
-  usePerformerSelfView();
 const { state: appUsageState, refreshAppUsage } = useAppUsage();
 const { state: obsState, refreshObsStatus } = useObsIntegration();
 onMounted(refreshAppUsage);
@@ -79,10 +84,15 @@ const label = computed(() =>
   isLight.value ? '切換為深色主題' : '切換為淺色主題',
 );
 const performerLabel = computed(() =>
-  performerState.open ? '切換到提詞器' : '開啟提詞器',
+  props.performerActive ? '關閉提詞器' : '開啟提詞器',
 );
 const settingsLabel = computed(() =>
   props.updateAvailable ? '設定（有可用更新）' : '設定',
+);
+const preparationLabel = computed(() =>
+  props.preparationStatus === 'idle' || !props.preparationStatusLabel
+    ? '曲目準備'
+    : `曲目準備；${props.preparationStatusLabel}`,
 );
 
 function formatResourcePercent(value) {
@@ -218,14 +228,17 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
 
       <div class="app-title-bar__controls">
         <UiIconButton
-          :icon="ListOrdered"
-          label="場次"
+          data-app-preparation-trigger
+          class="app-title-bar__preparation"
+          :class="`app-title-bar__preparation--${preparationStatus}`"
+          :icon="ListChecks"
+          :label="preparationLabel"
           variant="ghost"
           size="md"
-          :active="sessionActive"
-          :aria-expanded="sessionActive"
-          :aria-controls="sessionControls || undefined"
-          @click="emit('toggleSession')"
+          :active="preparationActive"
+          :aria-expanded="preparationActive"
+          :aria-controls="preparationControls || undefined"
+          @click="emit('togglePreparation')"
         />
         <UiIconButton
           data-app-bgm-trigger
@@ -243,11 +256,11 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           :label="performerLabel"
           variant="ghost"
           size="md"
-          :active="performerState.open"
-          :disabled="performerState.isOpening"
-          @click="openPerformerView"
+          :active="performerActive"
+          :aria-pressed="performerActive"
+          :disabled="performerBusy"
+          @click="emit('togglePerformer')"
         />
-        <SeparationToolbarPopover />
         <UiIconButton
           :icon="isLight ? Moon : Sun"
           :label="label"
@@ -265,7 +278,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
             size="md"
             :active="settingsActive"
             :aria-current="settingsActive ? 'page' : undefined"
-            @click="emit('openSettings')"
+            @click="emit('toggleSettings')"
           />
           <span
             v-if="updateAvailable"
@@ -440,6 +453,18 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.app-title-bar__preparation--running {
+  color: var(--ui-color-accent);
+}
+
+.app-title-bar__preparation--paused {
+  color: var(--ui-color-warning);
+}
+
+.app-title-bar__preparation--attention {
+  color: var(--ui-color-danger);
 }
 
 .app-title-bar__settings {

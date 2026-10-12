@@ -28,6 +28,11 @@ describe('AppPlaylistSidebar shell', () => {
     );
   });
 
+  it('does not own or forward the shell Import action', () => {
+    expect(source).not.toContain("defineEmits(['openImport'])");
+    expect(source).not.toContain('@import-tracks');
+  });
+
   it('derives the collection interaction mode from the shell-owned sidebar width', () => {
     expect(source).toContain('SIDEBAR_COMPACT_THRESHOLD');
     expect(source).toContain('const sidebarCompact = computed(');

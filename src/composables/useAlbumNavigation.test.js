@@ -18,13 +18,13 @@ async function load() {
 describe('useAlbumNavigation', () => {
   it('routes a derived artist source to the artist page', async () => {
     const { navigation, playlists, appView } = await load();
-    appView.setActiveView('output');
+    appView.setActiveView('display');
 
     navigation.jumpToPlaylist('artist-0123456789abcdef');
 
     expect(playlists.state.selectedArtistId).toBe('artist-0123456789abcdef');
     expect(playlists.state.selectedId).toBe(null);
-    expect(appView.activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('library');
   });
 
   it('keeps routing playlist and album sources to the collection page', async () => {

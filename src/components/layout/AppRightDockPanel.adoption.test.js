@@ -8,19 +8,15 @@ function readSource(path) {
 const queueSource = readSource('../queue/QueuePanel.vue');
 const contextSource = readSource('../playlists/TrackContextPanel.vue');
 const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
-const sessionSource = readSource(
-  '../performance-session/PerformanceSessionPanel.vue',
-);
-const separationQueueSource = readSource(
-  '../separation/SeparationQueuePanel.vue',
-);
+const preparationSource = readSource('../preparation/PreparationDockPanel.vue');
+const importSource = readSource('../import/ImportDockContent.vue');
+const separationSource = readSource('../separation/SeparationDockContent.vue');
 
 describe('AppRightDockPanel production adoption', () => {
   it.each([
     ['QueuePanel', queueSource],
     ['TrackContextPanel', contextSource],
-    ['PerformanceSessionPanel', sessionSource],
-    ['SeparationQueuePanel', separationQueueSource],
+    ['PreparationDockPanel', preparationSource],
   ])(
     '%s delegates shared Dock geometry and scrolling to the compound',
     (_, source) => {
@@ -40,8 +36,7 @@ describe('AppRightDockPanel production adoption', () => {
   it.each([
     ['QueuePanel', queueSource, '摺疊播放佇列'],
     ['TrackContextPanel', contextSource, '摺疊播放資訊'],
-    ['PerformanceSessionPanel', sessionSource, '摺疊場次'],
-    ['SeparationQueuePanel', separationQueueSource, '摺疊伴奏處理'],
+    ['PreparationDockPanel', preparationSource, '摺疊曲目準備'],
   ])('%s forwards the shared Dock collapse contract', (_, source, label) => {
     expect(source).toContain(`collapse-label="${label}"`);
     expect(source).toContain('@collapse="emit(\'collapse\')"');
@@ -69,17 +64,22 @@ describe('AppRightDockPanel production adoption', () => {
     expect(contextSource).not.toMatch(/:tracks="\[currentTrack\]"/u);
   });
 
-  it('uses shared sections for the session groups without a local separator recipe', () => {
-    expect(sessionSource).toContain(
+  it('uses shared sections for the import groups without a local separator recipe', () => {
+    expect(importSource).toContain(
       "import AppRightDockSection from '../layout/AppRightDockSection.vue';",
     );
-    expect(sessionSource.match(/<AppRightDockSection/gu)).toHaveLength(2);
-    expect(sessionSource).toContain('heading="待唱安排"');
-    expect(sessionSource).toContain(
-      ':heading="`目前選取的${selectedCollectionKindLabel}`"',
-    );
-    expect(sessionSource).toContain('divided');
-    expect(sessionSource).not.toContain('UiSeparator');
-    expect(sessionSource).not.toContain('<section');
+    expect(importSource.match(/<AppRightDockSection/gu)).toHaveLength(2);
+    expect(importSource).toContain('heading="本機音訊"');
+    expect(importSource).toContain('heading="外部來源"');
+    expect(importSource).toContain('divided');
+    expect(importSource).not.toContain('UiSeparator');
+  });
+
+  it('keeps Import and Separation content free of nested Dock shells', () => {
+    for (const source of [importSource, separationSource]) {
+      expect(source).not.toContain('AppRightDockPanel');
+      expect(source).not.toContain('AppRightDockHeader');
+      expect(source).not.toContain('UiScrollRegion');
+    }
   });
 });

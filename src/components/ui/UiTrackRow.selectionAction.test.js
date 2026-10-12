@@ -1,9 +1,26 @@
+import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import UiTrackRow from './UiTrackRow.vue';
 
+const source = readFileSync(
+  new URL('./UiTrackRow.vue', import.meta.url),
+  'utf8',
+);
+
 describe('UiTrackRow selection action semantics', () => {
+  it('owns single-line overflow for title and artist content rendered by child components', () => {
+    expect(source).toContain(':deep(.ui-track__title)');
+    expect(source).toContain(':deep(.ui-track__title-text)');
+    expect(source).toMatch(
+      /:deep\(\.ui-track__title-text\)[\s\S]*?overflow: hidden;[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/u,
+    );
+    expect(source).toMatch(
+      /\.ui-track__artist[\s\S]*?overflow: hidden;[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/u,
+    );
+  });
+
   it('only exposes pressed state and instructions when a caller opts in', async () => {
     const selected = await renderToString(
       createSSRApp({

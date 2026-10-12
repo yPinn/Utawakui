@@ -37,7 +37,7 @@ describe('BgmPlayer', () => {
     expect(source).toContain("inactive: 'OBS 未確認'");
     expect(source).not.toContain('可試播本機監聽；OBS 收音仍需短錄影確認。');
     expect(source).not.toContain("inactive: '試播模式'");
-    expect(source).toContain('v-if="expanded"');
+    expect(source).toContain('v-if="pickerExpanded"');
     expect(source).not.toContain('<UiScrollLayout');
     expect(source).toContain('setTrack');
     expect(source).not.toContain('addTrack');
@@ -56,16 +56,17 @@ describe('BgmPlayer', () => {
     );
   });
 
-  it('keeps active sessions and audible offline audition visible', () => {
-    expect(source).toContain(
-      'props.expanded || sessionActive.value || bgmOperationActive.value',
-    );
-    expect(source).toContain("'stopping-bgm'");
-    expect(source).toContain('handoffState.restorePending');
-    expect(source).toContain(':restore-pending="handoffState.restorePending"');
-    expect(source).toContain('v-if="visible"');
-    expect(source).toContain("emit('requestExpand')");
+  it('lets explicit shell disclosure hide the surface without changing audio state', () => {
+    expect(source).toContain('open: { type: Boolean, default: false }');
+    expect(source).toContain('v-if="open"');
+    expect(source).not.toContain('const visible = computed');
+    expect(source).not.toContain('bgmOperationActive');
+    expect(source).not.toContain('props.open || sessionActive.value');
+    expect(source).toContain('const pickerExpanded = shallowRef(false)');
+    expect(source).toContain('pickerExpanded.value = !pickerExpanded.value');
+    expect(source).not.toContain("emit('requestExpand')");
     expect(source).toContain("emit('requestClose')");
+    expect(source).toContain(':restore-pending="handoffState.restorePending"');
     expect(source).not.toContain(':bgm-requested=');
   });
 
@@ -96,10 +97,11 @@ describe('BgmPlayer', () => {
     expect(source).not.toMatch(/\b(?:27|38|7)rem\b/u);
   });
 
-  it('uses compact feature and session badges instead of a tall title block', () => {
-    expect(source).toContain('<UiChip class="bgm-player__feature-status"');
+  it('uses a plain feature identity and reserves the badge for session state', () => {
+    expect(source).toContain('class="bgm-player__feature-identity"');
     expect(source).toContain('<Music2 aria-hidden="true" />');
     expect(source).toContain('<span>BGM</span>');
+    expect(source).not.toContain('<UiChip class="bgm-player__feature-status"');
     expect(source).toContain('class="bgm-player__session-status"');
     expect(source).not.toContain('class="bgm-player__mark"');
     expect(source).not.toContain('class="bgm-player__title"');

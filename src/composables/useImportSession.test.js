@@ -37,7 +37,7 @@ let mockPlaylist;
 
 const confirmedProviderFlow = {
   featureId: 'provider-flow',
-  noticeVersion: 'feature-notice-v3',
+  noticeVersion: 'provider-flow-notice-v4',
   confirmedAt: '2026-08-13T00:00:00.000Z',
   enabled: true,
 };
@@ -144,6 +144,7 @@ describe('useImportSession', () => {
       '已在系統瀏覽器開啟 YT Music，找到來源後請複製連結貼回此處。',
     );
     expect(session.state.statusType).toBe('success');
+    expect(session.state.statusScope).toBe('surface');
     expect(session.state.isOpeningDiscovery).toBe(false);
   });
 
@@ -350,7 +351,68 @@ describe('useImportSession', () => {
 
     expect(downloadAudioMock).toHaveBeenCalledWith('aud12345678');
     expect(session.state.status).toBe('已下載：Single Song');
-    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.statusScope).toBe('object');
+    expect(session.state.sourceKind).toBe('single');
+    expect(session.state.singleTrack.status).toBe('done');
+    expect(session.canConfirmImport.value).toBe(false);
+  });
+
+  it('keeps the selected single source object visible while its download is running', async () => {
+    const pendingDownload = deferred();
+    resolveImportSourceMock.mockResolvedValueOnce({
+      input: 'abc12345678',
+      sourceVideoId: 'abc12345678',
+      source: { playbackVideoId: 'abc12345678', title: 'Song' },
+      recommendedCandidate: {
+        playbackVideoId: 'abc12345678',
+        title: 'Song',
+      },
+      candidates: [{ playbackVideoId: 'abc12345678', title: 'Song' }],
+    });
+    downloadAudioMock.mockReturnValueOnce(pendingDownload.promise);
+    const session = await loadImportSession();
+
+    session.setInput('abc12345678');
+    await session.resolveSource();
+    const importPromise = session.confirmImport();
+    await flushPromises();
+
+    expect(session.state.sourceKind).toBe('single');
+    expect(session.state.singleTrack.status).toBe('downloading');
+    expect(session.state.isImporting).toBe(true);
+
+    pendingDownload.resolve({ title: 'Song' });
+    await importPromise;
+    expect(session.state.singleTrack.status).toBe('done');
+  });
+
+  it('preserves a completed candidate object when another source version is selected', async () => {
+    resolveImportSourceMock.mockResolvedValueOnce({
+      input: 'Song',
+      sourceVideoId: 'source00001',
+      source: { playbackVideoId: 'source00001', title: 'Song' },
+      recommendedCandidate: {
+        playbackVideoId: 'audio000001',
+        title: 'Song · Audio',
+      },
+      candidates: [
+        { playbackVideoId: 'audio000001', title: 'Song · Audio' },
+        { playbackVideoId: 'live0000001', title: 'Song · Live' },
+      ],
+    });
+    downloadAudioMock.mockResolvedValueOnce({ title: 'Song · Audio' });
+    const session = await loadImportSession();
+
+    session.setInput('Song');
+    await session.resolveSource();
+    await session.confirmImport();
+    session.selectImportCandidate('live0000001');
+
+    expect(session.state.singleResolution.candidates[0].status).toBe('done');
+    expect(session.state.singleTrack).toMatchObject({
+      id: 'live0000001',
+      status: 'pending',
+    });
   });
 
   it('resolves a free-text query through the generic import bridge', async () => {
@@ -1163,6 +1225,47 @@ describe('useImportSession', () => {
 
     expect(session.state.status).toBe('下載失敗：儲存空間不足');
     expect(session.state.statusType).toBe('error');
+    expect(session.state.sourceKind).toBe('single');
+    expect(session.state.singleTrack.status).toBe('error');
+    expect(session.state.singleTrack.errorCode).toBe('disk-full');
+    expect(session.state.isImporting).toBe(false);
+  });
+
+  it('returns a single track to pending when download discovers missing provider tools', async () => {
+    resolveImportSourceMock.mockResolvedValueOnce({
+      input: 'abc12345678',
+      sourceVideoId: 'abc12345678',
+      source: { playbackVideoId: 'abc12345678', title: 'Song' },
+      recommendedCandidate: { playbackVideoId: 'abc12345678', title: 'Song' },
+      candidates: [{ playbackVideoId: 'abc12345678', title: 'Song' }],
+    });
+    downloadAudioMock.mockRejectedValueOnce(
+      new Error(
+        `${APP_ERROR_PREFIX}${JSON.stringify({
+          code: 'FEATURE_DEPENDENCY_MISSING',
+          severity: 'warning',
+          title: '需要先準備外部來源工具',
+          message: '請先到設定頁準備「線上來源下載工具」，再使用外部來源。',
+          actionLabel: '前往設定',
+          context: {
+            featureId: 'provider-flow',
+            dependencyId: 'yt-dlp-provider-tool',
+          },
+        })}`,
+      ),
+    );
+    const session = await loadImportSession();
+    const { useAppView } = await import('./useAppView.js');
+
+    session.setInput('abc12345678');
+    await session.resolveSource();
+    await session.confirmImport();
+
+    expect(useAppView().activeView.value).toBe('settings');
+    expect(session.state.status).toBe('請到設定完成外部來源準備。');
+    expect(session.state.statusType).toBe('pending');
+    expect(session.state.singleTrack.status).toBe('pending');
+    expect(session.state.singleTrack.errorCode).toBe(null);
     expect(session.state.isImporting).toBe(false);
   });
 

@@ -12,7 +12,7 @@ describe('SetlistView track interaction owner', () => {
     expect(source).toContain('function selectTrack(track)');
     expect(source).toContain(':selected-track-id="selectedTrackId"');
     expect(source).toContain(
-      "import LibraryTrackTable from '../components/library/LibraryTrackTable.vue'",
+      "import TrackTable from '../components/track/TrackTable.vue'",
     );
     expect(source).not.toContain('UiTrackRow');
   });
@@ -40,7 +40,7 @@ describe('SetlistView track interaction owner', () => {
   });
 
   it('uses one canonical table and disables custom reorder while filtering', () => {
-    expect(source).toContain('<LibraryTrackTable');
+    expect(source).toContain('<TrackTable');
     expect(source).toContain(':entries="visibleTableEntries"');
     expect(source).toContain("mode.value === 'all' ? 'library' : mode.value");
     expect(source).toContain(':variant="tableVariant"');

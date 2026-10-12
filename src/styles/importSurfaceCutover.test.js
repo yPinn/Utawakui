@@ -5,109 +5,78 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
-const folderPageSource = readSource('../components/layout/AppFolderPage.vue');
-const importPageSource = readSource('../components/import/ImportPage.vue');
-const importWorkspaceSource = readSource(
-  '../components/import/ImportWorkspace.vue',
+const libraryPageSource = readSource('../pages/LibraryPage.vue');
+const dockSource = readSource('../components/import/ImportDockContent.vue');
+const preparationSource = readSource(
+  '../components/preparation/PreparationDockPanel.vue',
 );
-const importSource = readSource('../views/ImportView.vue');
+const rowSource = readSource('../components/import/ImportSourceRow.vue');
+const reviewSource = readSource('../components/import/ImportReviewModal.vue');
+const collectionReviewSource = readSource(
+  '../components/import/ImportCollectionReview.vue',
+);
+const collectionStatusSource = readSource(
+  '../components/import/ImportCollectionTrackStatus.vue',
+);
+const trackTableSource = readSource('../components/track/TrackTable.vue');
 const providerSource = readSource(
   '../components/import/ProviderImportPanel.vue',
 );
-const candidateSource = readSource(
-  '../components/import/ImportCandidateOption.vue',
-);
 
 describe('Import Token v2 surface cutover', () => {
-  it('keeps the long Import flow in Folder document mode with one page scroll owner', () => {
-    expect(importPageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="import">\s*<AppFolderPage\s+mode="document"\s+body-label="匯入內容">/u,
-    );
-    expect(importPageSource).toContain('<template #header>');
-    expect(importPageSource).toContain('<UiPageHeader title="匯入" />');
-    expect(importPageSource).not.toMatch(
-      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="import">/u,
-    );
-    expect(appSource).not.toContain('documentFolderViews');
-    expect(appSource).not.toContain('folderPageMode');
-    expect(importSource).not.toMatch(/\.import-view\s*\{[^}]*overflow-y\s*:/su);
-    expect(providerSource).toContain('<UiScrollRegion');
-    expect(providerSource).toContain('class="preview-tracks"');
-    expect(providerSource).toContain(
-      'viewport-class="preview-tracks__viewport"',
-    );
+  it('keeps quick import in the retained Right Dock instead of a Folder page', () => {
+    expect(appSource).toContain('<PreparationDockPanel');
+    expect(appSource).toContain('RIGHT_DOCK_SURFACE_PREPARATION');
+    expect(libraryPageSource).not.toContain('ImportWorkspace');
+    expect(libraryPageSource).not.toContain("surfaceId: 'import'");
+    expect(preparationSource).toContain('<AppRightDockPanel');
+    expect(preparationSource).toContain('collapse-label="摺疊曲目準備"');
+    expect(dockSource).not.toContain('AppRightDockPanel');
   });
 
-  it('uses the Folder paper inset and flat top-level source sections', () => {
-    expect(folderPageSource).toMatch(
-      /\.app-folder-page__body--document\s*\{[^}]*padding-block-start:\s*var\(--ui-folder-document-inset\);/su,
-    );
-    expect(importSource).toMatch(
-      /\.import-view\s*\{[^}]*gap:\s*var\(--ui-folder-section-gap\);/su,
-    );
-    for (const [componentSource, selector] of [
-      [importSource, 'local-import-panel'],
-      [providerSource, 'provider-import-panel'],
-    ]) {
-      expect(componentSource).not.toMatch(
-        new RegExp(
-          `\\.${selector}\\s*\\{[^}]*(?:padding|background|border|border-radius):`,
-          'su',
-        ),
-      );
-    }
+  it('uses the shared track row and Dock section density for result objects', () => {
+    expect(dockSource).toContain('<AppRightDockSection heading="本機音訊"');
+    expect(dockSource).toContain('<AppRightDockSection heading="外部來源"');
+    expect(dockSource).toContain('<ImportSourceRow');
+    expect(rowSource).toContain('<UiTrackRow');
+    expect(rowSource).toContain('state-surface');
+    expect(rowSource).not.toContain('QueueTrackButton');
+    expect(rowSource).not.toContain('UiTrackThumb');
   });
 
-  it('keeps the local import action legible at the compact breakpoint', () => {
-    expect(importSource).toContain('class="local-import-action__button"');
-    expect(importSource).toMatch(
-      /@media \(max-width:\s*680px\)[\s\S]*?\.local-import-action\s*\{[^}]*align-items:\s*center;[^}]*flex-wrap:\s*wrap;/u,
-    );
-    expect(importSource).toMatch(
-      /@media \(max-width:\s*680px\)[\s\S]*?\.local-import-action__button\s*\{[^}]*flex:\s*1 0 100%;/u,
-    );
+  it('uses shared icon actions and avoids a bespoke full-width Dock button', () => {
+    expect(dockSource).toContain('<UiIconButton');
+    expect(dockSource).not.toContain('<UiButton');
+    expect(dockSource).not.toContain('import-dock-panel__full-action');
+  });
+
+  it('keeps dense collection review in the wide modal', () => {
+    expect(dockSource).toContain('<ImportReviewModal');
+    expect(reviewSource).toContain('size="wide"');
+    expect(reviewSource).not.toContain('fixed-height');
+    expect(reviewSource).toContain('<ImportCollectionReview />');
+    expect(reviewSource).toContain('<template #footer>');
+    expect(reviewSource).not.toContain('ProviderImportPanel');
+    expect(collectionReviewSource).toContain('<UiSegmentedControl');
+    expect(collectionReviewSource).not.toContain('UiScroll');
+    expect(collectionReviewSource).toContain('@click="retryFailedTracks"');
+    expect(collectionReviewSource).toContain('<TrackTable');
+    expect(collectionReviewSource).toContain('<UiCheckbox');
+    expect(collectionStatusSource).toContain('<UiStatusIcon');
+    expect(trackTableSource).toContain("props.variant === 'review'");
   });
 
   it('uses only formal v2 token names throughout the Import surface', () => {
-    for (const source of [importSource, providerSource, candidateSource]) {
+    for (const source of [
+      dockSource,
+      rowSource,
+      collectionReviewSource,
+      collectionStatusSource,
+      trackTableSource,
+      providerSource,
+    ]) {
       expect(source).not.toContain('var(--ui-radius)');
       expect(source).not.toContain('var(--ui-font-weight-strong)');
     }
-    expect(importSource).toContain('var(--ui-radius-sm)');
-    expect(importSource).toContain('var(--ui-font-weight-semibold)');
-    expect(providerSource).toContain('var(--ui-radius-md)');
-    expect(providerSource).toContain('var(--ui-font-weight-semibold)');
-    expect(candidateSource).toContain('var(--ui-radius-md)');
-    expect(candidateSource).toContain('var(--ui-font-weight-semibold)');
-  });
-
-  it('preserves the local, provider, candidate, progress, and retry anatomy', () => {
-    expect(importPageSource).toContain('<UiPageHeader title="匯入" />');
-    expect(importSource).not.toContain('UiPageHeader');
-    expect(importSource).toContain('class="local-import-panel"');
-    expect(importSource).toContain('<ProviderImportPanel />');
-    expect(providerSource).toContain('<ImportCandidateOption');
-    expect(providerSource).toContain('@click="resolveSource"');
-    expect(providerSource).toContain('@click="confirmImport"');
-    expect(providerSource).toContain('@click="retryFailedTracks"');
-    expect(providerSource).toContain("state.statusType === 'error'");
-  });
-
-  it('keeps the existing import owner behind the embeddable workspace seam', () => {
-    expect(importPageSource).toContain(
-      "import ImportWorkspace from './ImportWorkspace.vue'",
-    );
-    expect(importWorkspaceSource).toContain(
-      "import ImportView from '../../views/ImportView.vue'",
-    );
-    expect(importSource).toContain(
-      "import ProviderImportPanel from '../components/import/ProviderImportPanel.vue'",
-    );
-    expect(providerSource).toContain(
-      "import ImportCandidateOption from './ImportCandidateOption.vue'",
-    );
-    expect(importSource).not.toContain('LegacyImport');
-    expect(providerSource).not.toContain('LegacyImport');
-    expect(candidateSource).not.toContain('LegacyImport');
   });
 });

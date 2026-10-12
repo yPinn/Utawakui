@@ -6,14 +6,19 @@ const appSource = readFileSync(
   'utf8',
 );
 
-describe('App accompaniment toolbar composition', () => {
-  it('keeps the titlebar popover as the single accompaniment surface', () => {
+describe('App accompaniment preparation composition', () => {
+  it('keeps accompaniment inside the shared preparation Dock instead of a titlebar popover', () => {
     expect(appSource).toContain('<AppTitleBar');
-    expect(appSource).not.toContain('SeparationQueuePanel');
+    expect(appSource).toContain('<PreparationDockPanel');
+    expect(appSource).toContain('useSeparationQueue()');
+    expect(appSource).toContain('separationQueueIndicator(');
+    expect(appSource).toContain(
+      ':preparation-status="separationIndicator.state"',
+    );
+    expect(appSource).toContain(':separation-controller="separationQueue"');
+    expect(appSource).not.toContain('SeparationToolbarPopover');
     expect(appSource).not.toContain('RIGHT_DOCK_SURFACE_SEPARATION');
-    expect(appSource).not.toContain('separationExpanded');
-    expect(appSource).not.toContain('openSeparationSurface');
-    expect(appSource).not.toContain('@open-separation');
+    expect(appSource).toContain('RIGHT_DOCK_SURFACE_PREPARATION');
 
     const playerStart = appSource.indexOf('<PlayerBar');
     const playerEnd = appSource.indexOf('/>', playerStart);

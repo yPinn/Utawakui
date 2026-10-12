@@ -441,6 +441,41 @@ describe('UiModal behavior', () => {
     app.unmount();
   });
 
+  it('lets a caller cap block size independently from inline size', async () => {
+    const Root = {
+      setup: () => () => [
+        h(UiModal, {
+          open: true,
+          title: '預設寬視窗',
+          size: 'wide',
+        }),
+        h(UiModal, {
+          open: true,
+          title: '較短寬視窗',
+          size: 'wide',
+          maxBlockSize: 'medium',
+        }),
+      ],
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(root);
+    await nextTick();
+
+    const dialogs = findAll(body, (node) => node.props?.role === 'dialog');
+    expect(String(dialogs[0].props.class)).not.toContain(
+      'ui-modal--max-block-medium',
+    );
+    expect(String(dialogs[1].props.class)).toContain(
+      'ui-modal--max-block-medium',
+    );
+    expect(String(dialogs[1].props.class)).toContain('ui-modal--wide');
+
+    app.unmount();
+  });
+
   it('disables text selection only when the caller opts into a decision surface', async () => {
     const Root = {
       setup: () => () => [
@@ -508,9 +543,9 @@ describe('UiModal behavior', () => {
 
   it('mounts on the renderer root host and hands it to its content', async () => {
     const shellHost = hostNode('div');
-    const setlistHost = hostNode('div');
+    const libraryHost = hostNode('div');
     namedHosts.set('#app-shell-overlay', shellHost);
-    namedHosts.set('#setlist-overlay', setlistHost);
+    namedHosts.set('#library-overlay', libraryHost);
     let contentHost = null;
     const Content = {
       setup() {
@@ -525,7 +560,7 @@ describe('UiModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
-    app.provide(UI_OVERLAY_HOST_KEY, '#setlist-overlay');
+    app.provide(UI_OVERLAY_HOST_KEY, '#library-overlay');
     app.mount(root);
     await nextTick();
 
@@ -533,7 +568,7 @@ describe('UiModal behavior', () => {
       findAll(shellHost, (node) => node.props?.role === 'dialog'),
     ).toHaveLength(1);
     expect(
-      findAll(setlistHost, (node) => node.props?.role === 'dialog'),
+      findAll(libraryHost, (node) => node.props?.role === 'dialog'),
     ).toHaveLength(0);
     expect(contentHost).toBe('#app-shell-overlay');
 

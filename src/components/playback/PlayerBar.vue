@@ -87,7 +87,7 @@ const { state: metronomeState } = useMetronome();
 // PlayerBar is mounted exactly once for the app's lifetime, making this the
 // natural single place to wire the metronome to whatever track is loaded.
 useMetronomeTrackTempo();
-const { activeView, openLiveLyrics } = useAppView();
+const { activeView, performanceTool, openLiveLyrics } = useAppView();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
 const {
@@ -663,8 +663,14 @@ onUnmounted(() => {
           :disabled="!state.track"
           label="查看目前歌曲歌詞"
           title="歌詞"
-          :active="activeView === 'lyrics'"
-          :aria-current="activeView === 'lyrics' ? 'page' : undefined"
+          :active="
+            activeView === 'performance' && performanceTool === 'live-lyrics'
+          "
+          :aria-current="
+            activeView === 'performance' && performanceTool === 'live-lyrics'
+              ? 'page'
+              : undefined
+          "
           @click="showCurrentTrackLyrics"
         />
 

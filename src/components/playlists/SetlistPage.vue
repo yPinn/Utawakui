@@ -10,13 +10,11 @@ import {
 } from 'vue';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useSetlistFolderObjects } from '../../composables/useSetlistFolderObjects.js';
-import { usePerformanceSessionWorkspace } from '../../composables/usePerformanceSessionWorkspace.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
 import SetlistView from '../../views/SetlistView.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
-import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -26,7 +24,6 @@ import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue';
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();
 const { albumSupportingContent } = useSetlistAlbumContext();
-const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 const folderObjects = useSetlistFolderObjects();
 const confirmation = useAppConfirmation();
 // null when closed; { key } edits an existing note, { key: null } creates.
@@ -53,9 +50,6 @@ const previewOpen = shallowRef(false);
 const addObjectButton = useTemplateRef('addObjectButton');
 let focusAddButtonAfterPreviewClose = false;
 
-const pageMode = computed(() =>
-  performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document',
-);
 const documentKey = computed(
   () =>
     selectedPlaylist.value?.id ??
@@ -63,7 +57,6 @@ const documentKey = computed(
     `library:${playlistState.libraryView}`,
 );
 const folderPageIdentity = computed(() => {
-  if (performanceSessionWorkspace.isOpen.value) return null;
   if (selectedPlaylist.value) {
     return {
       kind: selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist',
@@ -232,85 +225,80 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppSurfaceBoundary
-    surface-id="setlist"
-    :child-hosts="['performance-session-workspace']"
+  <AppFolderPage
+    mode="document"
+    :document-key="documentKey"
+    body-label="曲目內容"
   >
-    <AppFolderPage
-      :mode="pageMode"
-      :document-key="documentKey"
-      body-label="曲目內容"
-    >
-      <UiNotice
-        v-if="folderPageIdentity && folderObjects.error.value"
-        tone="danger"
-        title="頁面物件操作未完成"
-        :message="folderObjects.error.value"
-        action-label="重試讀取"
-        compact
-        @action="retryFolderAssets"
+    <UiNotice
+      v-if="folderPageIdentity && folderObjects.error.value"
+      tone="danger"
+      title="頁面物件操作未完成"
+      :message="folderObjects.error.value"
+      action-label="重試讀取"
+      compact
+      @action="retryFolderAssets"
+    />
+
+    <SetlistView v-model:search-query="searchQuery" />
+
+    <template v-if="showFolderArtifacts" #floating>
+      <SetlistFolderArtifactLayer
+        :key="folderPageKey"
+        :objects="folderObjects.objects.value"
+        :summary="artistSummary"
+        :fresh-keys="folderObjects.freshKeys.value"
+        @layout-change="handleArtifactLayout"
+        @activate="openAsset"
+        @edit-note="openNoteEditor"
+        @remove="confirmRemoveObject"
       />
+    </template>
 
-      <SetlistView v-model:search-query="searchQuery" />
+    <template v-if="folderPageIdentity" #folder-tools>
+      <UiIconButton
+        ref="addObjectButton"
+        :icon="Plus"
+        :label="addObjectLabel"
+        variant="command"
+        aria-haspopup="menu"
+        :aria-expanded="addMenuOpen"
+        :disabled="
+          folderObjects.loading.value ||
+          folderObjects.adding.value ||
+          folderObjects.limitReached.value
+        "
+        @click="toggleAddMenu"
+      />
+      <UiContextMenu
+        :open="addMenuOpen"
+        :anchor-el="addObjectButton?.$el ?? null"
+        :width="160"
+        aria-label="新增頁面物件"
+        :items="ADD_MENU_ITEMS"
+        @select="selectAddAction"
+        @close="addMenuOpen = false"
+      />
+    </template>
+  </AppFolderPage>
 
-      <template v-if="showFolderArtifacts" #floating>
-        <SetlistFolderArtifactLayer
-          :key="folderPageKey"
-          :objects="folderObjects.objects.value"
-          :summary="artistSummary"
-          :fresh-keys="folderObjects.freshKeys.value"
-          @layout-change="handleArtifactLayout"
-          @activate="openAsset"
-          @edit-note="openNoteEditor"
-          @remove="confirmRemoveObject"
-        />
-      </template>
+  <AppFolderNoteEditorModal
+    :open="Boolean(noteEditor)"
+    :mode="noteEditor?.key ? 'edit' : 'create'"
+    :title="editedNote?.title ?? ''"
+    :text="editedNote?.text ?? ''"
+    :paper="editedNote?.paper ?? 'tissue'"
+    :saving="noteEditorSaving"
+    @close="closeNoteEditor"
+    @save="saveNote"
+  />
 
-      <template v-if="folderPageIdentity" #folder-tools>
-        <UiIconButton
-          ref="addObjectButton"
-          :icon="Plus"
-          :label="addObjectLabel"
-          variant="command"
-          aria-haspopup="menu"
-          :aria-expanded="addMenuOpen"
-          :disabled="
-            folderObjects.loading.value ||
-            folderObjects.adding.value ||
-            folderObjects.limitReached.value
-          "
-          @click="toggleAddMenu"
-        />
-        <UiContextMenu
-          :open="addMenuOpen"
-          :anchor-el="addObjectButton?.$el ?? null"
-          :width="160"
-          aria-label="新增頁面物件"
-          :items="ADD_MENU_ITEMS"
-          @select="selectAddAction"
-          @close="addMenuOpen = false"
-        />
-      </template>
-    </AppFolderPage>
-
-    <AppFolderNoteEditorModal
-      :open="Boolean(noteEditor)"
-      :mode="noteEditor?.key ? 'edit' : 'create'"
-      :title="editedNote?.title ?? ''"
-      :text="editedNote?.text ?? ''"
-      :paper="editedNote?.paper ?? 'tissue'"
-      :saving="noteEditorSaving"
-      @close="closeNoteEditor"
-      @save="saveNote"
-    />
-
-    <FolderAssetPreviewModal
-      :open="previewOpen"
-      :asset="selectedAsset"
-      :removing="folderObjects.removing.value"
-      @close="closeAssetPreview"
-      @after-leave="finishAssetPreviewClose"
-      @remove="removeAsset"
-    />
-  </AppSurfaceBoundary>
+  <FolderAssetPreviewModal
+    :open="previewOpen"
+    :asset="selectedAsset"
+    :removing="folderObjects.removing.value"
+    @close="closeAssetPreview"
+    @after-leave="finishAssetPreviewClose"
+    @remove="removeAsset"
+  />
 </template>

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import LibraryTrackTable from './LibraryTrackTable.vue';
+import TrackTable from './TrackTable.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -16,7 +16,7 @@ import {
 } from '../ui/uiTestHost.js';
 
 for (const [component, filename] of [
-  [LibraryTrackTable, './LibraryTrackTable.vue'],
+  [TrackTable, './TrackTable.vue'],
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiMarqueeText, '../ui/UiMarqueeText.vue'],
@@ -56,7 +56,7 @@ const entries = tracks.map((track, visibleIndex) => ({
 }));
 
 const source = readFileSync(
-  new URL('./LibraryTrackTable.vue', import.meta.url),
+  new URL('./TrackTable.vue', import.meta.url),
   'utf8',
 );
 
@@ -67,7 +67,7 @@ function classIncludes(node, className) {
 }
 
 function mountTable(overrides = {}) {
-  return mount(LibraryTrackTable, {
+  return mount(TrackTable, {
     entries,
     variant: 'playlist',
     sort: { key: null, direction: 'asc' },
@@ -85,7 +85,7 @@ function rowRoles(row) {
   );
 }
 
-describe('LibraryTrackTable canonical grid', () => {
+describe('TrackTable canonical grid', () => {
   it('forms one continuous ledger sheet with functional row rules', () => {
     const headerRule = source.match(
       /\.library-track-table__header\s*\{(?<body>[\s\S]*?)\n\}/u,
@@ -183,9 +183,67 @@ describe('LibraryTrackTable canonical grid', () => {
     expect(source).toContain('data-column-priority="secondary"');
     expect(source).toContain('@container library-track-table');
   });
+
+  it('adapts batch review to the same identity and duration grid without browse actions', () => {
+    const reviewEntries = entries.map((entry) => ({
+      ...entry,
+      source: { ...entry.track, selected: true, status: 'pending' },
+    }));
+    const { app, root } = mountTable({
+      entries: reviewEntries,
+      variant: 'review',
+      sortable: false,
+    });
+    const header = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__header'),
+    )[0];
+    const row = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+
+    expect(rowRoles(header)).toEqual([
+      'selection',
+      'identity',
+      'duration',
+      'status',
+    ]);
+    expect(rowRoles(row)).toEqual(rowRoles(header));
+    expect(classIncludes(row, 'library-track-row--review')).toBe(true);
+    expect(
+      findAll(row, (node) =>
+        String(node.props?.['aria-label'] ?? '').startsWith('選取：'),
+      ),
+    ).toHaveLength(0);
+    expect(source).toContain('<slot name="row-leading"');
+    expect(source).toContain('<slot name="row-trailing"');
+    app.unmount();
+  });
+
+  it('keeps long review identity text on one line inside the shared grid', () => {
+    const copyRule = source.match(
+      /\.library-track-row--review \.library-track-row__copy\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+    const reviewTextRule = source.match(
+      /\.library-track-row--review\s+:deep\(\.library-track-row__review-text\)\s*\{(?<body>[\s\S]*?)\n\}/u,
+    )?.groups?.body;
+
+    expect(source).toContain(
+      'class="library-track-row__title library-track-row__review-text"',
+    );
+    expect(source).toContain(
+      'class="library-track-row__subtitle library-track-row__review-text"',
+    );
+    expect(copyRule).toContain('flex: 1 1 0;');
+    expect(copyRule).toContain('max-width: 100%;');
+    expect(copyRule).toContain('overflow: hidden;');
+    expect(reviewTextRule).toContain('display: block;');
+    expect(reviewTextRule).toContain('overflow: hidden;');
+    expect(reviewTextRule).toContain('text-overflow: ellipsis;');
+    expect(reviewTextRule).toContain('white-space: nowrap;');
+  });
 });
 
-describe('LibraryTrackTable shared row behavior', () => {
+describe('TrackTable shared row behavior', () => {
   it('uses the shared quiet selection surface and reserves the outline for keyboard focus', () => {
     const selectedRule = source.match(
       /\.library-track-row--selected\s*\{(?<body>[\s\S]*?)\n\}/u,
@@ -306,7 +364,7 @@ describe('LibraryTrackTable shared row behavior', () => {
   });
 });
 
-describe('LibraryTrackTable density and sticky header', () => {
+describe('TrackTable density and sticky header', () => {
   it('drops artwork and joins title and artist on one line in compact density', () => {
     const { app, root } = mountTable({
       variant: 'library',

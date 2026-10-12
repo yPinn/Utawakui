@@ -131,16 +131,18 @@ describe('PlayerBar responsive metadata layout', () => {
     }
   });
 
-  it('keeps Lyrics as a Spotify-style playback destination with current-page state', () => {
+  it('opens Live Lyrics as a Performance tool with current-page state', () => {
     expect(componentSource).toContain(
-      'const { activeView, openLiveLyrics } = useAppView();',
+      'const { activeView, performanceTool, openLiveLyrics } = useAppView();',
     );
     expect(componentSource).toContain('openLiveLyrics();');
     expect(componentSource).toContain(':icon="MicVocal"');
     expect(componentSource).not.toContain(':icon="Captions"');
-    expect(componentSource).toContain(':active="activeView === \'lyrics\'"');
-    expect(componentSource).toContain(
-      ":aria-current=\"activeView === 'lyrics' ? 'page' : undefined\"",
+    expect(componentSource).toMatch(
+      /:active="\s*activeView === 'performance' && performanceTool === 'live-lyrics'\s*"/u,
+    );
+    expect(componentSource).toMatch(
+      /:aria-current="\s*activeView === 'performance' && performanceTool === 'live-lyrics'\s*\? 'page'\s*: undefined\s*"/u,
     );
     expect(componentSource).toContain('label="查看目前歌曲歌詞"');
   });

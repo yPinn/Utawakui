@@ -2,22 +2,22 @@ import { computed, reactive, readonly, shallowRef } from 'vue';
 
 export const RIGHT_DOCK_SURFACE_METADATA = 'metadata';
 export const RIGHT_DOCK_SURFACE_QUEUE = 'queue';
-export const RIGHT_DOCK_SURFACE_SESSION = 'session';
+export const RIGHT_DOCK_SURFACE_PREPARATION = 'preparation';
 
 const SURFACE_PRIORITY = [
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
-  RIGHT_DOCK_SURFACE_SESSION,
+  RIGHT_DOCK_SURFACE_PREPARATION,
 ];
 const surfaces = reactive({
   [RIGHT_DOCK_SURFACE_METADATA]: false,
   [RIGHT_DOCK_SURFACE_QUEUE]: false,
-  [RIGHT_DOCK_SURFACE_SESSION]: false,
+  [RIGHT_DOCK_SURFACE_PREPARATION]: false,
 });
 const mountedSurfaces = reactive({
   [RIGHT_DOCK_SURFACE_METADATA]: false,
   [RIGHT_DOCK_SURFACE_QUEUE]: false,
-  [RIGHT_DOCK_SURFACE_SESSION]: false,
+  [RIGHT_DOCK_SURFACE_PREPARATION]: false,
 });
 const isExpanded = shallowRef(false);
 const lastSurface = shallowRef(null);

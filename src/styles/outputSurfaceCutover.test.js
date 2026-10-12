@@ -114,9 +114,12 @@ const outputOwnedTokens = [
 
 describe('Output Token v2 surface cutover', () => {
   it('keeps Output in Folder workspace mode with bounded feature scroll owners', () => {
-    expect(appSource).toContain('output: DisplayPage');
+    expect(appSource).toContain('display: DisplayPage');
+    expect(displayPageSource).toContain(
+      '<AppSurfaceBoundary surface-id="display">',
+    );
     expect(displayPageSource).toContain('<OutputPage />');
-    expect(pageSource).toContain('<AppSurfaceBoundary surface-id="output">');
+    expect(pageSource).not.toContain('AppSurfaceBoundary');
     expect(viewSource).toContain('<ObsOutputWorkspace');
     expect(workspaceSource).toContain(
       '<AppFolderPage mode="workspace" body-label="輸出工作區">',

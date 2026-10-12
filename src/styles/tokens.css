@@ -152,6 +152,7 @@
   --ui-window-titlebar-block-size: 2.5rem;
   --ui-shell-content-inset-block: var(--ui-shell-edge-inset-inline);
   --ui-shell-edge-inset-inline: var(--ui-space-2);
+  --ui-shell-workspace-inline-start: var(--ui-space-3);
   --ui-shell-leading-artwork-centerline: calc(
     var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
   );

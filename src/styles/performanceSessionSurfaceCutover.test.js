@@ -5,8 +5,10 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
-const pageSource = readSource('../components/playlists/SetlistPage.vue');
-const setlistSource = readSource('../views/SetlistView.vue');
+const pageSource = readSource('../pages/PerformancePage.vue');
+const performanceSource = readSource(
+  '../components/performance/PerformanceWorkspace.vue',
+);
 const workspaceSource = readSource(
   '../components/performance-session/PerformanceSessionWorkspace.vue',
 );
@@ -40,10 +42,10 @@ describe('Performance Session Token v2 surface cutover', () => {
   });
 
   it('uses complete PerformanceSession names in the production composition', () => {
-    expect(setlistSource).toContain(
-      "import PerformanceSessionWorkspace from '../components/performance-session/PerformanceSessionWorkspace.vue'",
+    expect(performanceSource).toContain(
+      "import PerformanceSessionWorkspace from '../performance-session/PerformanceSessionWorkspace.vue'",
     );
-    expect(setlistSource).toContain('<PerformanceSessionWorkspace');
+    expect(performanceSource).toContain('<PerformanceSessionWorkspace');
     expect(workspaceSource).toContain(
       "import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue'",
     );
@@ -55,29 +57,30 @@ describe('Performance Session Token v2 surface cutover', () => {
     );
     for (const [legacyName] of renamedComponents) {
       const legacyIdentifier = new RegExp(`\\b${legacyName}\\b`, 'u');
-      expect(setlistSource).not.toMatch(legacyIdentifier);
+      expect(performanceSource).not.toMatch(legacyIdentifier);
       expect(workspaceSource).not.toMatch(legacyIdentifier);
     }
   });
 
-  it('switches only an open Setlist preparation surface to Folder workspace mode', () => {
-    expect(pageSource).toContain(
-      "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
+  it('composes Session preparation inside the Performance workspace', () => {
+    expect(pageSource).toContain('surface-id="performance"');
+    expect(pageSource).toContain('<AppFolderPage mode="workspace"');
+    expect(performanceSource).toContain(
+      'surface-id="performance-session-workspace"',
     );
-    expect(appSource).toContain(
-      "const pageComposedFolderViews = new Set(['setlist', 'output', 'import'])",
+    expect(performanceSource).toContain('detached-host');
+    expect(appSource).toMatch(
+      /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
     );
     expect(appSource).toContain('v-if="activeViewOwnsFolderPage"');
   });
 
-  it('keeps the Right Dock projection in its existing shell-owned component', () => {
-    expect(appSource).toContain(
-      "import PerformanceSessionPanel from './components/performance-session/PerformanceSessionPanel.vue'",
-    );
-    expect(appSource).toContain('<PerformanceSessionPanel');
-    expect(appSource).not.toMatch(
-      /<AppSurfaceBoundary[^>]+performance-session[^>]*>[\s\S]*?<PerformanceSessionPanel/u,
-    );
+  it('moves collection-source setup into the Performance workspace and removes the parallel Dock', () => {
+    expect(workspaceSource).toContain('replaceFromCollection');
+    expect(workspaceSource).toContain('prepareSelectedCollection');
+    expect(workspaceSource).toContain('從清單建立');
+    expect(appSource).not.toContain('PerformanceSessionPanel');
+    expect(appSource).not.toContain('RIGHT_DOCK_SURFACE_SESSION');
   });
 
   it('removes legacy Session component selectors from the renamed workspace family', () => {

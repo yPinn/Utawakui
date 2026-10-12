@@ -10,15 +10,15 @@ const appSource = readSource('../../App.vue');
 const displayPageSource = readSource('../../pages/DisplayPage.vue');
 
 describe('Output page composition contract', () => {
-  it('owns the complete Output surface around the existing feature view', () => {
+  it('leaves destination surface ownership with DisplayPage', () => {
     expect(pageSource).toContain(
       "import OutputView from '../../views/OutputView.vue';",
     );
-    expect(pageSource).toContain(
-      "import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';",
-    );
-    expect(pageSource).toContain('<AppSurfaceBoundary surface-id="output">');
+    expect(pageSource).not.toContain('AppSurfaceBoundary');
     expect(pageSource).toContain('<OutputView />');
+    expect(displayPageSource).toContain(
+      '<AppSurfaceBoundary surface-id="display">',
+    );
   });
 
   it('places the guarded Output mode tabs in a fixed workspace header', () => {
@@ -43,17 +43,17 @@ describe('Output page composition contract', () => {
     expect(workspaceSource).not.toContain('obs-output-workspace__modebar');
   });
 
-  it('stays lazy while App routes Output through its page owner', () => {
+  it('stays lazy while App routes Display through its page owner', () => {
     expect(appSource).toMatch(
       /const\s+DisplayPage\s*=\s*defineAsyncComponent\(\s*\(\)\s*=>\s*import\('\.\/pages\/DisplayPage\.vue'\),?\s*\);/u,
     );
-    expect(appSource).toContain('output: DisplayPage');
+    expect(appSource).toContain('display: DisplayPage');
     expect(displayPageSource).toContain(
       "import OutputPage from '../components/output/OutputPage.vue';",
     );
     expect(displayPageSource).toContain('<OutputPage />');
-    expect(appSource).toContain(
-      "const pageComposedFolderViews = new Set(['setlist', 'output', 'import']);",
+    expect(appSource).toMatch(
+      /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
     );
     expect(appSource).not.toContain("output: 'output'");
   });

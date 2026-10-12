@@ -20,18 +20,15 @@ describe('Setlist page composition', () => {
     expect(pageSource).toContain(
       "import AppFolderPage from '../layout/AppFolderPage.vue'",
     );
-    expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>\s*<AppFolderPage\s+:mode="pageMode"/u,
-    );
+    expect(pageSource).toContain('<AppFolderPage');
+    expect(pageSource).toContain('mode="document"');
     expect(pageSource).not.toContain('#header');
     expect(pageSource).not.toContain('UiPageHeader');
     expect(pageSource).not.toContain('UiSearchBox');
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
+      /<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
     );
-    expect(pageSource).not.toMatch(
-      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>/u,
-    );
+    expect(pageSource).not.toContain('AppSurfaceBoundary');
   });
 
   it('keeps the rich playlist header in content and removes the library header duplicate', () => {
@@ -186,17 +183,15 @@ describe('Setlist page composition', () => {
     expect(appSource).toContain(
       "import LibraryPage from './pages/LibraryPage.vue'",
     );
-    expect(appSource).toContain('setlist: LibraryPage');
-    expect(appSource).toContain(
-      "const pageComposedFolderViews = new Set(['setlist', 'output', 'import'])",
+    expect(appSource).toContain('library: LibraryPage');
+    expect(appSource).toMatch(
+      /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
     );
     expect(appSource).toContain('v-if="activeViewOwnsFolderPage"');
   });
 
-  it('uses document mode for the library and workspace mode only for preparation', () => {
-    expect(pageSource).toContain(
-      "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
-    );
+  it('uses document mode for the Library browse workspace', () => {
+    expect(pageSource).toContain('mode="document"');
     expect(pageSource).toContain('const documentKey = computed(');
     expect(pageSource).toContain(':document-key="documentKey"');
   });

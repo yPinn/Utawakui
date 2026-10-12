@@ -1,6 +1,7 @@
 <script setup>
 import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
 import LyricsLiveControls from './LyricsLiveControls.vue';
+import '../../styles/features/lyrics.css';
 
 defineProps({
   documentId: { type: String, default: '' },

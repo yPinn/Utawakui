@@ -10,7 +10,6 @@ const GLOBAL_CONFIRMATION_OWNERS = [
   '../../views/SetlistView.vue',
   '../../composables/usePlaylistActions.js',
   '../performance-session/PerformanceSessionWorkspace.vue',
-  '../performance-session/PerformanceSessionPanel.vue',
   '../analysis/MusicAnalysisReferenceAnnotation.vue',
 ];
 

@@ -130,7 +130,7 @@ describe('QueuePanel shared Dock content', () => {
     );
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
     expect(trackRowSource).toMatch(
-      /\.ui-track__title\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+      /:deep\(\.ui-track__title\)\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
     );
     expect(trackRowSource).toMatch(
       /\.ui-track__artist\s*\{[^}]*color:\s*var\(--ui-color-text-muted\);[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*line-height:\s*var\(--ui-line-height-caption\);/su,

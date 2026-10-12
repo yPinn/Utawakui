@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 let importLocalAudioFilesMock;
 let listTracksMock;
 let listPlaylistsMock;
-let refreshLibraryMetadataMock;
 
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -17,13 +16,11 @@ beforeEach(() => {
   });
   listTracksMock = vi.fn().mockResolvedValue([]);
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
-  refreshLibraryMetadataMock = vi.fn().mockResolvedValue({ updated: 0 });
   vi.stubGlobal('window', {
     Utawakui: {
       importLocalAudioFiles: importLocalAudioFilesMock,
       listTracks: listTracksMock,
       listPlaylists: listPlaylistsMock,
-      refreshLibraryMetadata: refreshLibraryMetadataMock,
       onLibraryUpdated: () => () => {},
     },
   });

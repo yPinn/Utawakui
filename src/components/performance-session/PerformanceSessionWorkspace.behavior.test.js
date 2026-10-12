@@ -17,8 +17,8 @@ const planListSource = readFileSync(
   new URL('./PerformanceSessionPlanList.vue', import.meta.url),
   'utf8',
 );
-const setlistSource = readFileSync(
-  new URL('../../views/SetlistView.vue', import.meta.url),
+const performanceSource = readFileSync(
+  new URL('../performance/PerformanceWorkspace.vue', import.meta.url),
   'utf8',
 );
 
@@ -33,9 +33,18 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).not.toContain('appendPlaceholders');
   });
 
+  it('owns the selected playlist or album source action after the global session Dock is removed', () => {
+    expect(workspaceSource).toContain('usePlaylists');
+    expect(workspaceSource).toContain('selectedPlaylist');
+    expect(workspaceSource).toContain('replaceFromCollection');
+    expect(workspaceSource).toContain('從清單建立');
+    expect(workspaceSource).toContain('prepareSelectedCollection');
+  });
+
   it('uses a fixed workspace shell with one scrolling body per pane', () => {
-    expect(setlistSource).toContain(
-      "'setlist-view--session': performanceSessionWorkspace.isOpen.value",
+    expect(performanceSource).toContain('<PerformanceSessionWorkspace');
+    expect(performanceSource).toContain(
+      'surface-id="performance-session-workspace"',
     );
     expect(workspaceSource).toMatch(
       /\.performance-session-workspace\s*\{[^}]*flex:\s*1[^}]*overflow:\s*hidden/su,
@@ -45,6 +54,16 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     );
     expect(workspaceSource).not.toContain('min-height: 560px');
     expect(workspaceSource).not.toContain('calc(100vh - 230px)');
+  });
+
+  it('shows the return action only for a contextual entry', () => {
+    expect(workspaceSource).toContain(
+      'showReturn: { type: Boolean, default: false }',
+    );
+    expect(workspaceSource).toContain('v-if="showReturn"');
+    expect(performanceSource).toContain(
+      ':show-return="sessionWorkspace.isOpen.value"',
+    );
   });
 
   it('keeps review actions outside the scrolling details body and removes mandatory verification copy', () => {
@@ -71,8 +90,8 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(reviewSource).not.toContain('editLibraryMetadata');
     expect(workspaceSource).not.toContain('editLibraryMetadata');
     expect(workspaceSource).not.toContain('edit-library-metadata');
-    expect(setlistSource).not.toContain('editSessionLinkedTrack');
-    expect(setlistSource).not.toContain('@edit-library-metadata');
+    expect(performanceSource).not.toContain('editSessionLinkedTrack');
+    expect(performanceSource).not.toContain('@edit-library-metadata');
   });
 
   it('describes manual display fields by their output role instead of artist metadata', () => {

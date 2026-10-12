@@ -20,23 +20,23 @@ describe('AppSurfaceBoundary', () => {
     };
     const { app, root } = mount(
       AppSurfaceBoundary,
-      { surfaceId: 'setlist' },
+      { surfaceId: 'library' },
       { default: () => h(OverlayProbe) },
     );
     const boundary = findAll(
       root,
-      (node) => node.props?.['data-ui-surface'] === 'setlist',
+      (node) => node.props?.['data-ui-surface'] === 'library',
     )[0];
     const host = findAll(
       root,
-      (node) => node.props?.id === 'setlist-overlay',
+      (node) => node.props?.id === 'library-overlay',
     )[0];
     const probe = findAll(root, (node) => node.props?.['data-overlay-host'])[0];
 
     expect(boundary.props['data-ui-system']).toBe('v2');
-    expect(host.props['data-ui-surface']).toBe('setlist-overlay');
+    expect(host.props['data-ui-surface']).toBe('library-overlay');
     expect(host.props['data-ui-system']).toBe('v2');
-    expect(probe.props['data-overlay-host']).toBe('#setlist-overlay');
+    expect(probe.props['data-overlay-host']).toBe('#library-overlay');
     app.unmount();
   });
 
@@ -62,7 +62,10 @@ describe('AppSurfaceBoundary', () => {
   it('mounts a detached child host beside its parent host', () => {
     const { app, root } = mount(
       AppSurfaceBoundary,
-      { surfaceId: 'setlist', childHosts: ['performance-session-workspace'] },
+      {
+        surfaceId: 'performance',
+        childHosts: ['performance-session-workspace'],
+      },
       {
         default: () =>
           h(AppSurfaceBoundary, {
@@ -76,7 +79,7 @@ describe('AppSurfaceBoundary', () => {
     ).map((node) => node.props.id);
 
     expect(hostIds).toEqual([
-      'setlist-overlay',
+      'performance-overlay',
       'performance-session-workspace-overlay',
     ]);
     app.unmount();

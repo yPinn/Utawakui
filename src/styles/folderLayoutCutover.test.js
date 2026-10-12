@@ -92,19 +92,32 @@ describe('Folder layout family cutover', () => {
   it('keeps every feature behind a registered surface and overlay host', () => {
     const registry = readSource('../utils/rendererSurfaceRegistry.js');
     const app = readSource('../App.vue');
-    const importPage = readSource('../components/import/ImportPage.vue');
-    const outputPage = readSource('../components/output/OutputPage.vue');
+    const libraryPage = readSource('../pages/LibraryPage.vue');
+    const performancePage = readSource('../pages/PerformancePage.vue');
+    const displayPage = readSource('../pages/DisplayPage.vue');
 
-    for (const surfaceId of ['lyrics', 'output', 'import']) {
+    for (const surfaceId of [
+      'library',
+      'performance',
+      'display',
+      'lyrics',
+      'import',
+    ]) {
       expect(registry).toContain(`surfaceId: '${surfaceId}'`);
       expect(registry).toContain(`overlayHostId: '${surfaceId}-overlay'`);
     }
-    expect(app).toContain("lyrics: 'lyrics'");
+    expect(app).toContain('library: LibraryPage');
+    expect(app).toContain('performance: PerformancePage');
+    expect(app).toContain('display: DisplayPage');
     expect(app).not.toContain("output: 'output'");
-    expect(importPage).toContain('<AppSurfaceBoundary surface-id="import">');
-    expect(outputPage).toContain('<AppSurfaceBoundary surface-id="output">');
-    expect(registry).toContain("surfaceId: 'setlist'");
-    expect(registry).toContain("surfaceId: 'setlist-overlay'");
+    expect(libraryPage).toContain('surface-id="library"');
+    expect(libraryPage).toContain(
+      ':surface-id="workspaceDefinition.surfaceId"',
+    );
+    expect(performancePage).toContain('surface-id="performance"');
+    expect(displayPage).toContain('surface-id="display"');
+    expect(registry).toContain("surfaceId: 'library'");
+    expect(registry).toContain("surfaceId: 'library-overlay'");
     expect(registry).toContain("surfaceId: 'performance-session-workspace'");
     expect(registry).toContain("parentSurfaceId: 'app-folder'");
   });

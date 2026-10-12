@@ -9,7 +9,7 @@ const source = readFileSync(
   'utf8',
 );
 
-async function renderLayout(activeDestination = 'setlist') {
+async function renderLayout(activeDestination = 'library') {
   return renderToString(
     createSSRApp({
       render: () =>
@@ -30,11 +30,10 @@ describe('AppFolderLayout', () => {
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain('role="tablist"');
     expect(html).not.toContain('role="tab"');
-    expect(html.indexOf('Setlist')).toBeLessThan(html.indexOf('Lyrics'));
-    expect(html.indexOf('Lyrics')).toBeLessThan(html.indexOf('Output'));
-    expect(html.indexOf('Output')).toBeLessThan(html.indexOf('Import'));
+    expect(html.indexOf('曲庫')).toBeLessThan(html.indexOf('演唱'));
+    expect(html.indexOf('演唱')).toBeLessThan(html.indexOf('顯示'));
     expect(html).toContain('Feature body');
-    for (const destination of ['setlist', 'lyrics', 'output', 'import']) {
+    for (const destination of ['library', 'performance', 'display']) {
       expect(html).toContain(`data-folder-destination="${destination}"`);
     }
   });
@@ -49,10 +48,9 @@ describe('AppFolderLayout', () => {
 
   it('gives every Folder tab its destination material and contrast foreground', () => {
     for (const [destination, material] of [
-      ['setlist', 'primary'],
-      ['lyrics', 'secondary'],
-      ['output', 'tertiary'],
-      ['import', 'neutral'],
+      ['library', 'primary'],
+      ['performance', 'secondary'],
+      ['display', 'tertiary'],
     ]) {
       expect(source).toMatch(
         new RegExp(
@@ -99,9 +97,8 @@ describe('AppFolderLayout', () => {
     );
 
     for (const [destination, material] of [
-      ['lyrics', 'secondary'],
-      ['output', 'tertiary'],
-      ['import', 'neutral'],
+      ['performance', 'secondary'],
+      ['display', 'tertiary'],
     ]) {
       expect(source).toMatch(
         new RegExp(

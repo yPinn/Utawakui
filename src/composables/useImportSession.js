@@ -18,6 +18,7 @@ const state = reactive({
   input: '',
   status: '',
   statusType: 'idle', // 'idle' | 'empty' | 'pending' | 'success' | 'error'
+  statusScope: 'surface', // 'surface' | 'object'
   failureHint: '',
   downloadDir: '',
   isDefaultDir: true,
@@ -128,9 +129,10 @@ const canUseConfirmButton = computed(() =>
   state.isImporting ? state.sourceKind === 'playlist' : canConfirmImport.value,
 );
 
-function setStatus(message = '', type = 'idle') {
+function setStatus(message = '', type = 'idle', scope = 'surface') {
   state.status = message;
   state.statusType = type;
+  state.statusScope = scope;
   // Failure sites set this back right after calling setStatus — resetting
   // it here keeps a stale hint from a previous error surviving a new status.
   state.failureHint = '';
@@ -186,9 +188,9 @@ async function ensureProviderFlow({
   return enabled;
 }
 
-// state is exposed readonly() — these three are the only fields ImportView
-// binds two-way (input/activeFilter directly, individual track.selected
-// checkboxes), so they're the only fields needing a setter.
+// State is exposed readonly(). The Dock and review modal use these bounded
+// setters for input, filters and per-track selection instead of mutating the
+// shared session through their presentation surfaces.
 function setInput(value) {
   if (value === state.input) return;
   state.input = value;

@@ -7,45 +7,40 @@ import {
 } from './appDestinationRegistry.js';
 
 describe('app destination registry', () => {
-  it('keeps the current four-destination order and labels during Phase 1', () => {
+  it('publishes the three user-language destinations in workflow order', () => {
     expect(APP_DESTINATIONS).toEqual([
       {
-        id: 'setlist',
-        label: 'Setlist',
-        settingsReturnLabel: '歌單',
+        id: 'library',
+        label: '曲庫',
+        settingsReturnLabel: '曲庫',
         shortcut: 'f1',
       },
       {
-        id: 'lyrics',
-        label: 'Lyrics',
-        settingsReturnLabel: '歌詞',
+        id: 'performance',
+        label: '演唱',
+        settingsReturnLabel: '演唱',
         shortcut: 'f2',
       },
       {
-        id: 'output',
-        label: 'Output',
-        settingsReturnLabel: '輸出',
+        id: 'display',
+        label: '顯示',
+        settingsReturnLabel: '顯示',
         shortcut: 'f3',
-      },
-      {
-        id: 'import',
-        label: 'Import',
-        settingsReturnLabel: '匯入',
-        shortcut: 'f4',
       },
     ]);
   });
 
-  it('derives shortcuts and membership without registering Settings as a Folder destination', () => {
+  it('leaves F4 unassigned and keeps Settings outside Folder destinations', () => {
     expect(APP_DESTINATION_SHORTCUTS).toEqual({
-      f1: 'setlist',
-      f2: 'lyrics',
-      f3: 'output',
-      f4: 'import',
+      f1: 'library',
+      f2: 'performance',
+      f3: 'display',
     });
-    expect(isAppDestination('lyrics')).toBe(true);
+    expect(isAppDestination('performance')).toBe(true);
+    expect(isAppDestination('lyrics')).toBe(false);
+    expect(isAppDestination('import')).toBe(false);
     expect(isAppDestination('settings')).toBe(false);
-    expect(appDestinationSettingsLabel('output')).toBe('輸出');
+    expect(appDestinationSettingsLabel('display')).toBe('顯示');
     expect(appDestinationSettingsLabel('settings')).toBeUndefined();
   });
 

@@ -186,7 +186,7 @@ watch(
       />
       <UiHint v-else-if="isLoading" padded>載入中</UiHint>
       <UiHint v-else-if="trackCount === 0" padded>
-        曲庫還沒有任何曲目。請先到 Import 匯入本機音訊。
+        曲庫還沒有任何曲目。請從曲庫的「匯入曲目」加入本機音訊。
       </UiHint>
       <UiHint v-else-if="!hasSelectedTrack" padded>請選擇歌詞曲目。</UiHint>
       <UiHint v-else-if="isLoadingLyrics" padded>載入歌詞中</UiHint>

@@ -12,53 +12,37 @@ const headerSource = readSource(
   '../components/playlists/SetlistCollectionHeader.vue',
 );
 const dossierSource = readSource('../components/layout/AppFolderDossier.vue');
-const tableSource = readSource('../components/library/LibraryTrackTable.vue');
+const tableSource = readSource('../components/track/TrackTable.vue');
 const studioTableSource = readSource(
   '../components/playlists/StudioLibraryTrackTable.vue',
 );
 
 describe('Setlist Token v2 surface cutover', () => {
-  it('keeps Setlist in the Folder document mode and leaves page scrolling with AppFolderPage', () => {
-    expect(appSource).toContain('setlist: LibraryPage');
-    expect(libraryPageSource).toContain('<SetlistPage />');
-    expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>\s*<AppFolderPage\s+:mode="pageMode"/u,
+  it('keeps Library browse in Folder document mode with one page scroll owner', () => {
+    expect(appSource).toContain('library: LibraryPage');
+    expect(libraryPageSource).toContain(
+      '<SetlistPage v-if="libraryWorkspace === \'browse\'"',
     );
-    expect(pageSource).toContain(
-      "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
-    );
+    expect(libraryPageSource).toContain('surface-id="library"');
+    expect(pageSource).toContain('<AppFolderPage');
+    expect(pageSource).toContain('mode="document"');
     expect(setlistSource).not.toMatch(
       /\.setlist-view(?!--session)[^{]*\{[^}]*overflow-y\s*:/su,
     );
   });
 
-  it('hands the migrated Performance Session workspace to one v2 child boundary', () => {
-    expect(setlistSource).toContain(
-      "import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue'",
-    );
-    expect(setlistSource).toMatch(
-      /<AppSurfaceBoundary\s+v-if="performanceSessionWorkspace\.isOpen\.value"\s+surface-id="performance-session-workspace"/u,
-    );
-    // Its host mounts beside the Setlist host, outside the scroll document's
-    // stacking context.
-    expect(setlistSource).toMatch(
-      /surface-id="performance-session-workspace"[^>]*detached-host/u,
-    );
-    expect(setlistSource).toMatch(
-      /<AppSurfaceBoundary[\s\S]*?<PerformanceSessionWorkspace[\s\S]*?<\/AppSurfaceBoundary>/u,
-    );
-    expect(setlistSource).toMatch(
-      /\.setlist-view__session-boundary\s*\{[^}]*display:\s*flex;[^}]*min-height:\s*0;[^}]*flex:\s*1;[^}]*flex-direction:\s*column;/su,
-    );
+  it('keeps Performance Session out of the Library browse slice', () => {
+    expect(pageSource).not.toContain('performance-session-workspace');
+    expect(pageSource).not.toContain('usePerformanceSessionWorkspace');
+    expect(setlistSource).not.toContain('PerformanceSessionWorkspace');
+    expect(setlistSource).not.toContain('usePerformanceSessionWorkspace');
   });
 
-  it('keeps Setlist-owned modal and action menu inside the Setlist feature owner', () => {
-    expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView[\s\S]*?<\/AppFolderPage>[\s\S]*?<\/AppSurfaceBoundary>/u,
+  it('keeps Library-owned modal and action menu under the Library surface owner', () => {
+    expect(libraryPageSource).toMatch(
+      /<AppSurfaceBoundary[\s\S]*?surface-id="library"[\s\S]*?<SetlistPage/u,
     );
-    expect(pageSource).not.toMatch(
-      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>/u,
-    );
+    expect(pageSource).not.toContain('AppSurfaceBoundary');
     expect(setlistSource).toContain('<TrackMetadataModal');
     expect(setlistSource).toContain('<TrackActionMenu');
     expect(setlistSource).not.toContain('provideUiOverlayHost');

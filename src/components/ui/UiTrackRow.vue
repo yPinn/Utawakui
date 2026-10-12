@@ -319,13 +319,13 @@ function handleActionKeydown(event) {
   flex-direction: column;
 }
 
-.ui-track__title {
+:deep(.ui-track__title) {
   color: inherit;
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
-.ui-track__title-text {
+:deep(.ui-track__title-text) {
   display: block;
   max-width: 100%;
   min-width: 0;
@@ -334,11 +334,17 @@ function handleActionKeydown(event) {
   white-space: nowrap;
 }
 
-.ui-track--current .ui-track__title {
+.ui-track--current :deep(.ui-track__title) {
   color: var(--ui-color-current);
 }
 
 .ui-track__artist {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--ui-color-text-muted);
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-caption);

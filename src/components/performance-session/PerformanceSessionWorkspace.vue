@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onMounted, shallowRef } from 'vue';
-import { ArrowLeft, Plus, Trash2 } from '../../icons/index.js';
+import { ArrowLeft, ListPlus, Plus, Trash2 } from '../../icons/index.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
+import { usePlaylists } from '../../composables/usePlaylists.js';
+import { playlistDisplayName } from '../../utils/playlistMenu.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -17,6 +19,7 @@ import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
+  showReturn: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close']);
@@ -34,7 +37,9 @@ const {
   removeItem,
   selectItem,
   clear,
+  replaceFromCollection,
 } = usePerformanceSessionPlan();
+const { selectedPlaylist } = usePlaylists();
 
 const librarySearchQuery = shallowRef('');
 const mobilePane = shallowRef('list');
@@ -75,6 +80,15 @@ const workspaceValidationError = computed(() =>
     : state.validationError,
 );
 const sourceLabel = computed(() => state.plan.source?.name ?? '臨時場次');
+const selectedCollectionLabel = computed(() =>
+  playlistDisplayName(selectedPlaylist.value),
+);
+const selectedCollectionKindLabel = computed(() =>
+  selectedPlaylist.value?.kind === 'album' ? '專輯' : '清單',
+);
+const collectionActionLabel = computed(() =>
+  selectedPlaylist.value?.kind === 'album' ? '從專輯建立' : '從清單建立',
+);
 
 onMounted(initialize);
 
@@ -144,6 +158,46 @@ async function clearDraft() {
   });
   if (confirmed) clear();
 }
+
+async function prepareSelectedCollection() {
+  const collection = selectedPlaylist.value;
+  if (!collection) return;
+
+  await initialize();
+  let replaceCurrent = hasItems.value;
+  if (replaceCurrent) {
+    replaceCurrent = await confirmAction({
+      title: '取代待唱安排？',
+      message: `「${selectedCollectionLabel.value}」會取代「${sourceLabel.value}」。`,
+      detail: '目前待唱安排的手動調整會遺失。',
+      confirmLabel: '取代安排',
+      intent: 'danger',
+    });
+    if (!replaceCurrent) return;
+  }
+
+  let prepared = await replaceFromCollection(collection.id, replaceCurrent);
+  if (
+    !prepared &&
+    !replaceCurrent &&
+    state.validationError?.code === 'SESSION_PLAN_REPLACE_REQUIRED'
+  ) {
+    const confirmed = await confirmAction({
+      title: '取代另一份待唱安排？',
+      message: '目前已有另一份待唱安排。',
+      detail: '取代後，原安排的手動調整會遺失。',
+      confirmLabel: '取代安排',
+      intent: 'danger',
+    });
+    if (confirmed) prepared = await replaceFromCollection(collection.id, true);
+  }
+
+  if (prepared) {
+    librarySearchQuery.value = '';
+    creatingManualItem.value = false;
+    mobilePane.value = 'list';
+  }
+}
 </script>
 
 <template>
@@ -163,6 +217,16 @@ async function clearDraft() {
       </template>
       <template #actions>
         <UiButton
+          v-if="selectedPlaylist"
+          :icon="ListPlus"
+          :loading="state.isSaving"
+          loading-label="建立中"
+          :title="`以目前${selectedCollectionKindLabel}「${selectedCollectionLabel}」建立待唱安排`"
+          @click="prepareSelectedCollection"
+        >
+          {{ collectionActionLabel }}
+        </UiButton>
+        <UiButton
           :icon="Trash2"
           intent="danger"
           :disabled="!hasItems || state.isSaving"
@@ -170,7 +234,9 @@ async function clearDraft() {
         >
           清除
         </UiButton>
-        <UiButton :icon="ArrowLeft" @click="emit('close')"> 返回 </UiButton>
+        <UiButton v-if="showReturn" :icon="ArrowLeft" @click="emit('close')">
+          返回
+        </UiButton>
       </template>
     </UiPageHeader>
 

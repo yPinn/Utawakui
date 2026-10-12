@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const confirmedProviderFlow = {
   featureId: 'provider-flow',
-  noticeVersion: 'feature-notice-v3',
+  noticeVersion: 'provider-flow-notice-v4',
   confirmedAt: '2026-08-20T00:00:00.000Z',
   enabled: true,
 };
@@ -40,7 +40,7 @@ describe('useFeatureGateAccess', () => {
 
     expect(allowed).toBe(true);
     expect(access.state.request).toBe(null);
-    expect(appView.activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('library');
   });
 
   it('routes disabled feature requests to Settings with a user-facing notice', async () => {
@@ -51,7 +51,7 @@ describe('useFeatureGateAccess', () => {
       },
     });
     const { access, appView } = await loadAccess();
-    appView.setActiveView('import');
+    appView.setActiveView('display');
 
     const allowed = await access.requireFeatureGate('provider-flow', {
       source: 'import',
@@ -61,12 +61,13 @@ describe('useFeatureGateAccess', () => {
 
     expect(allowed).toBe(false);
     expect(appView.activeView.value).toBe('settings');
-    expect(appView.returnView.value).toBe('import');
+    expect(appView.returnView.value).toBe('display');
+    expect(appView.libraryWorkspace.value).toBe('browse');
     expect(access.state.request).toMatchObject({
       featureId: 'provider-flow',
-      title: '需要啟用外部來源匯入',
+      title: '需要啟用外部來源',
       message: '請先到設定啟用外部來源。',
-      actionLabel: '啟用外部來源匯入',
+      actionLabel: '啟用外部來源',
       source: 'import',
       operation: 'resolve-source',
     });
@@ -82,7 +83,7 @@ describe('useFeatureGateAccess', () => {
       },
     });
     const { access, appView } = await loadAccess();
-    appView.setActiveView('lyrics');
+    appView.openLyricsAuthoring();
 
     access.requestFeatureSetup('provider-flow', {
       title: '需要準備外部來源工具',
@@ -93,7 +94,8 @@ describe('useFeatureGateAccess', () => {
     });
 
     expect(appView.activeView.value).toBe('settings');
-    expect(appView.returnView.value).toBe('lyrics');
+    expect(appView.returnView.value).toBe('library');
+    expect(appView.libraryWorkspace.value).toBe('lyrics-authoring');
     expect(access.state.request).toMatchObject({
       featureId: 'provider-flow',
       kind: 'setup',

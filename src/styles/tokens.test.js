@@ -300,7 +300,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(482);
+    expect(uniqueNames.size).toBe(483);
     expect(uniqueNames).toContain('--ui-folder-content-background');
     expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
     expect(uniqueNames).toContain('--ui-folder-artifact-folder-min-height');
@@ -404,6 +404,7 @@ describe('Studio Library workspace prototype isolation', () => {
     );
     expect(uniqueNames).toContain('--ui-track-row-state-surface-outset-inline');
     expect(uniqueNames).toContain('--ui-shell-edge-inset-inline');
+    expect(uniqueNames).toContain('--ui-shell-workspace-inline-start');
     expect(uniqueNames).toContain('--ui-shell-leading-artwork-centerline');
     expect(uniqueNames).toContain('--ui-sidebar-artwork-size');
     expect(uniqueNames).toContain(
@@ -566,6 +567,9 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(tokens).toContain(
       '--ui-shell-edge-inset-inline: var(--ui-space-2);',
     );
+    expect(tokens).toContain(
+      '--ui-shell-workspace-inline-start: var(--ui-space-3);',
+    );
     expect(tokens).toContain('--ui-panel-inset: 1rem;');
     expect(tokens).toContain('--ui-panel-inset: 0.75rem;');
     expect(app).toMatch(
@@ -575,7 +579,10 @@ describe('Studio Library workspace prototype isolation', () => {
       /\.shell__workspace\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(app).toMatch(
-      /\.shell__main\s*\{[^}]*padding-left:\s*var\(--ui-space-3\);[^}]*padding-right:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/su,
+      /\.shell__main\s*\{[^}]*padding-left:\s*var\(--ui-shell-workspace-inline-start\);[^}]*padding-right:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/su,
+    );
+    expect(app).toMatch(
+      /\.shell__bgm-boundary\s*\{[^}]*inset-inline-start:\s*var\(--ui-shell-workspace-inline-start\);[^}]*\}/su,
     );
     expect(app).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,

@@ -60,6 +60,18 @@ describe('UiModal appearance contract', () => {
     );
   });
 
+  it('supports a semantic max block-size override without changing inline size', () => {
+    expect(modalSource).toContain(
+      "validator: (value) => ['', 'small', 'medium', 'large'].includes(value)",
+    );
+    expect(modalSource).toContain(
+      'maxBlockSize ? `ui-modal--max-block-${maxBlockSize}` : null',
+    );
+    expect(modalSource).toMatch(
+      /\.ui-modal--max-block-medium\s*\{\s*--ui-modal-max-block-size:\s*var\(--ui-modal-max-block-size-medium\);/u,
+    );
+  });
+
   it('uses the reviewed raised shell, nested field aliases, and semantic zone spacing', () => {
     expect(modalSource).toContain(
       '--ui-field-bg: var(--ui-field-bg-on-raised);',

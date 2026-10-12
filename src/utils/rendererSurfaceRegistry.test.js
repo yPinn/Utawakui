@@ -62,9 +62,10 @@ describe('renderer surface registry', () => {
 
     for (const surfaceId of [
       'app-folder',
-      'setlist',
+      'library',
+      'performance',
+      'display',
       'lyrics',
-      'output',
       'import',
       'app-utility',
       'app-shell-overlay',
@@ -103,48 +104,65 @@ describe('renderer surface registry', () => {
     });
   });
 
-  it('registers Setlist and its overlay as one complete v2 surface', () => {
-    expect(UI_SURFACE_REGISTRY.setlist).toMatchObject({
-      entryOwner: 'src/components/playlists/SetlistPage.vue',
-      overlayHostId: 'setlist-overlay',
+  it('registers Library and its overlay as one complete v2 surface', () => {
+    expect(UI_SURFACE_REGISTRY.library).toMatchObject({
+      entryOwner: 'src/pages/LibraryPage.vue',
+      overlayHostId: 'library-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
-      surfaceId: 'setlist',
+      surfaceId: 'library',
       system: 'v2',
     });
-    expect(registeredOverlayHostAttributes('setlist')).toMatchObject({
-      id: 'setlist-overlay',
+    expect(registeredOverlayHostAttributes('library')).toMatchObject({
+      id: 'library-overlay',
       'data-ui-renderer': 'main',
-      'data-ui-surface': 'setlist-overlay',
+      'data-ui-surface': 'library-overlay',
       'data-ui-system': 'v2',
     });
-    expect(UI_SURFACE_REGISTRY['setlist-overlay'].entryOwner).toBe(
-      'src/components/playlists/SetlistPage.vue',
+    expect(UI_SURFACE_REGISTRY['library-overlay'].entryOwner).toBe(
+      'src/pages/LibraryPage.vue',
     );
   });
 
-  it('registers Output and its overlay as one complete v2 surface', () => {
-    expect(UI_SURFACE_REGISTRY.output).toMatchObject({
-      entryOwner: 'src/App.vue',
-      overlayHostId: 'output-overlay',
+  it('registers Performance and its overlay as one complete v2 surface', () => {
+    expect(UI_SURFACE_REGISTRY.performance).toMatchObject({
+      entryOwner: 'src/pages/PerformancePage.vue',
+      overlayHostId: 'performance-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
-      surfaceId: 'output',
+      surfaceId: 'performance',
       system: 'v2',
     });
-    expect(registeredOverlayHostAttributes('output')).toMatchObject({
-      id: 'output-overlay',
+    expect(registeredOverlayHostAttributes('performance')).toMatchObject({
+      id: 'performance-overlay',
       'data-ui-renderer': 'main',
-      'data-ui-surface': 'output-overlay',
+      'data-ui-surface': 'performance-overlay',
+      'data-ui-system': 'v2',
+    });
+  });
+
+  it('registers Display and its overlay as one complete v2 surface', () => {
+    expect(UI_SURFACE_REGISTRY.display).toMatchObject({
+      entryOwner: 'src/pages/DisplayPage.vue',
+      overlayHostId: 'display-overlay',
+      parentSurfaceId: 'app-folder',
+      renderer: 'main',
+      surfaceId: 'display',
+      system: 'v2',
+    });
+    expect(registeredOverlayHostAttributes('display')).toMatchObject({
+      id: 'display-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'display-overlay',
       'data-ui-system': 'v2',
     });
   });
 
   it('registers Lyrics and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.lyrics).toMatchObject({
-      entryOwner: 'src/App.vue',
+      entryOwner: 'src/pages/LibraryPage.vue',
       overlayHostId: 'lyrics-overlay',
-      parentSurfaceId: 'app-folder',
+      parentSurfaceId: 'library',
       renderer: 'main',
       surfaceId: 'lyrics',
       system: 'v2',
@@ -159,9 +177,9 @@ describe('renderer surface registry', () => {
 
   it('registers Import and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.import).toMatchObject({
-      entryOwner: 'src/components/import/ImportPage.vue',
+      entryOwner: 'src/pages/LibraryPage.vue',
       overlayHostId: 'import-overlay',
-      parentSurfaceId: 'app-folder',
+      parentSurfaceId: 'library',
       renderer: 'main',
       surfaceId: 'import',
       system: 'v2',
@@ -173,15 +191,15 @@ describe('renderer surface registry', () => {
       'data-ui-system': 'v2',
     });
     expect(UI_SURFACE_REGISTRY['import-overlay'].entryOwner).toBe(
-      'src/components/import/ImportPage.vue',
+      'src/pages/LibraryPage.vue',
     );
   });
 
   it('registers the Performance Session workspace and overlay as v2', () => {
     expect(UI_SURFACE_REGISTRY['performance-session-workspace']).toMatchObject({
-      entryOwner: 'src/views/SetlistView.vue',
+      entryOwner: 'src/components/performance/PerformanceWorkspace.vue',
       overlayHostId: 'performance-session-workspace-overlay',
-      parentSurfaceId: 'setlist',
+      parentSurfaceId: 'performance',
       renderer: 'main',
       surfaceId: 'performance-session-workspace',
       system: 'v2',
@@ -197,7 +215,9 @@ describe('renderer surface registry', () => {
   });
 
   it('resolves any registered overlay host to its renderer root', () => {
-    expect(rendererRootSurfaceId('#setlist-overlay')).toBe('app-shell');
+    expect(rendererRootSurfaceId('#library-overlay')).toBe('app-shell');
+    expect(rendererRootSurfaceId('#performance-overlay')).toBe('app-shell');
+    expect(rendererRootSurfaceId('#display-overlay')).toBe('app-shell');
     expect(rendererRootSurfaceId('#lyrics-overlay')).toBe('app-shell');
     expect(
       rendererRootSurfaceId('#performance-session-workspace-overlay'),

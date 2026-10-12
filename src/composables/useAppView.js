@@ -2,8 +2,11 @@ import { computed, readonly, shallowRef } from 'vue';
 
 // Module-scope singleton (like usePlayer.js/usePlaylists.js) so components
 // below App.vue can switch tabs too, not just App.vue and the sidebar.
-const activeView = shallowRef('setlist');
-const returnView = shallowRef('setlist');
+const activeView = shallowRef('library');
+const returnView = shallowRef('library');
+const libraryWorkspace = shallowRef('browse');
+const performanceTool = shallowRef('session');
+const rootEntryRevision = shallowRef(0);
 const isSettingsView = computed(() => activeView.value === 'settings');
 // One-shot section request so other views can open Settings at a block.
 const settingsSection = shallowRef(null);
@@ -16,34 +19,48 @@ function openSettings(section = null) {
   }
 }
 
+function commitActiveView(view) {
+  activeView.value = view;
+  returnView.value = view;
+}
+
 function setActiveView(view) {
   if (view === 'settings') {
     openSettings();
     return;
   }
 
-  activeView.value = view;
-  returnView.value = view;
+  if (view === 'library') libraryWorkspace.value = 'browse';
+  if (view === 'performance') performanceTool.value = 'session';
+  rootEntryRevision.value += 1;
+  commitActiveView(view);
 }
 
-// Contextual entry points deliberately hide the transitional destination ids
-// from feature callers. Phase 3 can redirect these intents to the new Page
-// compositions without adding a second navigation state or revisiting every
-// domain component.
 function openLibraryContent() {
-  setActiveView('setlist');
+  libraryWorkspace.value = 'browse';
+  commitActiveView('library');
 }
 
 function openLyricsAuthoring() {
-  setActiveView('lyrics');
+  libraryWorkspace.value = 'lyrics-authoring';
+  commitActiveView('library');
 }
 
 function openLiveLyrics() {
-  setActiveView('lyrics');
+  performanceTool.value = 'live-lyrics';
+  commitActiveView('performance');
 }
 
 function openPerformancePreparation() {
-  setActiveView('setlist');
+  performanceTool.value = 'session';
+  commitActiveView('performance');
+}
+
+function selectPerformanceTool(tool) {
+  if (!['session', 'live-lyrics'].includes(tool)) return false;
+  performanceTool.value = tool;
+  if (activeView.value !== 'performance') commitActiveView('performance');
+  return true;
 }
 
 function clearSettingsSection() {
@@ -52,13 +69,16 @@ function clearSettingsSection() {
 
 function returnFromSettings() {
   if (activeView.value !== 'settings') return;
-  setActiveView(returnView.value || 'setlist');
+  commitActiveView(returnView.value || 'library');
 }
 
 export function useAppView() {
   return {
     activeView: readonly(activeView),
     returnView: readonly(returnView),
+    libraryWorkspace: readonly(libraryWorkspace),
+    performanceTool: readonly(performanceTool),
+    rootEntryRevision: readonly(rootEntryRevision),
     isSettingsView,
     settingsSection: readonly(settingsSection),
     clearSettingsSection,
@@ -67,6 +87,7 @@ export function useAppView() {
     openLyricsAuthoring,
     openLiveLyrics,
     openPerformancePreparation,
+    selectPerformanceTool,
     openSettings,
     returnFromSettings,
   };

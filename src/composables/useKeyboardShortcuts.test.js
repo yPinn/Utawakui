@@ -38,12 +38,12 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  useAppView().setActiveView('setlist');
+  useAppView().openLibraryContent();
 });
 
 async function setupShortcuts(options) {
   const appView = useAppView();
-  appView.setActiveView('setlist');
+  appView.openLibraryContent();
   const { useKeyboardShortcuts } = await import('./useKeyboardShortcuts.js');
 
   await renderToString(
@@ -72,25 +72,28 @@ function dispatchKey(key) {
 }
 
 describe('useKeyboardShortcuts', () => {
-  it('maps F3/F4 to the visible Output/Import tab order', async () => {
+  it('maps F1-F3 to Library, Performance, and Display while leaving F4 unused', async () => {
     const appView = await setupShortcuts();
 
+    dispatchKey('F2');
+    expect(appView.activeView.value).toBe('performance');
+
     const f3PreventDefault = dispatchKey('F3');
-    expect(appView.activeView.value).toBe('output');
+    expect(appView.activeView.value).toBe('display');
     expect(f3PreventDefault).toHaveBeenCalled();
 
     const f4PreventDefault = dispatchKey('F4');
-    expect(appView.activeView.value).toBe('import');
-    expect(f4PreventDefault).toHaveBeenCalled();
+    expect(appView.activeView.value).toBe('display');
+    expect(f4PreventDefault).not.toHaveBeenCalled();
   });
 
   it('maps F9 to Settings and preserves the workflow return context', async () => {
     const appView = await setupShortcuts();
-    appView.setActiveView('output');
+    appView.setActiveView('display');
 
     const f9PreventDefault = dispatchKey('F9');
     expect(appView.activeView.value).toBe('settings');
-    expect(appView.returnView.value).toBe('output');
+    expect(appView.returnView.value).toBe('display');
     expect(f9PreventDefault).toHaveBeenCalled();
   });
 
@@ -103,7 +106,7 @@ describe('useKeyboardShortcuts', () => {
     vi.stubGlobal('document', {
       activeElement: null,
       querySelector: vi.fn((selector) =>
-        selector === '[data-app-workflow-trigger="lyrics"]'
+        selector === '[data-app-workflow-trigger="performance"]'
           ? workflowTrigger
           : null,
       ),
@@ -114,7 +117,7 @@ describe('useKeyboardShortcuts', () => {
     dispatchKey('F2');
     await nextTick();
 
-    expect(appView.activeView.value).toBe('lyrics');
+    expect(appView.activeView.value).toBe('performance');
     expect(workflowTrigger.focus).toHaveBeenCalledOnce();
     expect(document.activeElement).toBe(workflowTrigger);
   });
@@ -152,19 +155,19 @@ describe('useKeyboardShortcuts', () => {
     });
 
     const f5PreventDefault = dispatchKey('F5');
-    expect(appView.activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('library');
     expect(f5PreventDefault).not.toHaveBeenCalled();
 
     const f6PreventDefault = dispatchKey('F6');
-    expect(appView.activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('library');
     expect(f6PreventDefault).not.toHaveBeenCalled();
 
     const f7PreventDefault = dispatchKey('F7');
-    expect(appView.activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('library');
     expect(f7PreventDefault).not.toHaveBeenCalled();
 
     const f8PreventDefault = dispatchKey('F8');
-    expect(appView.activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('library');
     expect(f8PreventDefault).not.toHaveBeenCalled();
   });
 

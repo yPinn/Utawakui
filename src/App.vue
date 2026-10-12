@@ -24,7 +24,6 @@ import BgmPlayer from './components/bgm/BgmPlayer.vue';
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
-import PerformanceSessionPanel from './components/performance-session/PerformanceSessionPanel.vue';
 import LibraryPage from './pages/LibraryPage.vue';
 import { useAppView } from './composables/useAppView.js';
 import { usePlaybackQueue } from './composables/usePlaybackQueue.js';
@@ -49,14 +48,14 @@ import { useWindowCloseDecision } from './composables/useWindowCloseDecision.js'
 import { useTrayNavigation } from './composables/useTrayNavigation.js';
 import { usePlaybackHistory } from './composables/usePlaybackHistory.js';
 import { usePlaybackResume } from './composables/usePlaybackResume.js';
+import { useSeparationQueue } from './composables/useSeparationQueue.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
-  RIGHT_DOCK_SURFACE_SESSION,
+  RIGHT_DOCK_SURFACE_PREPARATION,
   useAppRightDock,
 } from './composables/useAppRightDock.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
-import { usePerformanceSessionWorkspace } from './composables/usePerformanceSessionWorkspace.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 import { measureInteractionToNextPaint } from './utils/interactionPerformance.js';
@@ -64,6 +63,7 @@ import { hasOpenTransientOverlay } from './utils/transientOverlay.js';
 import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
 import { appDestinationSettingsLabel } from './utils/appDestinationRegistry.js';
+import { separationQueueIndicator } from './components/separation/separationQueuePresentation.js';
 
 provideUiOverlayHost('app-shell');
 const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
@@ -73,15 +73,17 @@ const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
 const DisplayPage = defineAsyncComponent(
   () => import('./pages/DisplayPage.vue'),
 );
-const LyricsView = defineAsyncComponent(() => import('./views/LyricsView.vue'));
-const ImportPage = defineAsyncComponent(
-  () => import('./components/import/ImportPage.vue'),
+const PerformancePage = defineAsyncComponent(
+  () => import('./pages/PerformancePage.vue'),
 );
 const SettingsPage = defineAsyncComponent(
   () => import('./pages/SettingsPage.vue'),
 );
 const PlaybackInfoContextView = defineAsyncComponent(
   () => import('./views/StudioLibraryContextView.vue'),
+);
+const PreparationDockPanel = defineAsyncComponent(
+  () => import('./components/preparation/PreparationDockPanel.vue'),
 );
 
 // These workbenches are development aids, not user-facing product pages.
@@ -173,19 +175,20 @@ onMounted(announcement.initialize);
 const { width: sidebarWidth } = useSidebarWidth();
 const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
-const performanceSessionWorkspace = usePerformanceSessionWorkspace();
+const separationQueue = useSeparationQueue();
+onMounted(separationQueue.initialize);
+onUnmounted(separationQueue.dispose);
 const { state: playerState } = usePlayer();
 const { currentTrack: queueCurrentTrack } = usePlaybackQueue();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
 const BGM_PLAYER_ID = 'app-bgm-player';
-const bgmPlayerExpanded = ref(false);
+const bgmPlayerOpen = ref(false);
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
-  setlist: LibraryPage,
-  output: DisplayPage,
-  lyrics: LyricsView,
-  import: ImportPage,
+  library: LibraryPage,
+  performance: PerformancePage,
+  display: DisplayPage,
   ...internalViews,
 };
 
@@ -209,6 +212,11 @@ function leaveSettings() {
     document.querySelector('[data-app-settings-trigger]')?.focus?.();
   });
 }
+
+function toggleSettings() {
+  if (isSettingsView.value) leaveSettings();
+  else openSettings();
+}
 const { mode: visualReviewMode } = useVisualReviewMode();
 // Playback Info belongs to the persistent player/queue context, not the
 // current workspace page. The audio-backed player remains authoritative once
@@ -222,8 +230,8 @@ const metadataSurfaceActive = computed(
 const queueSurfaceActive = computed(
   () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_QUEUE,
 );
-const sessionSurfaceActive = computed(
-  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_SESSION,
+const preparationSurfaceActive = computed(
+  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_PREPARATION,
 );
 const metadataExpanded = computed(
   () => rightDock.isExpanded.value && metadataSurfaceActive.value,
@@ -231,8 +239,11 @@ const metadataExpanded = computed(
 const queueExpanded = computed(
   () => rightDock.isExpanded.value && queueSurfaceActive.value,
 );
-const sessionExpanded = computed(
-  () => rightDock.isExpanded.value && sessionSurfaceActive.value,
+const preparationExpanded = computed(
+  () => rightDock.isExpanded.value && preparationSurfaceActive.value,
+);
+const separationIndicator = computed(() =>
+  separationQueueIndicator(separationQueue.queue.value),
 );
 const rightDockExpanded = computed(
   () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
@@ -246,7 +257,8 @@ const restorableDockSurface = computed(
       : RIGHT_DOCK_SURFACE_QUEUE),
 );
 const rightDockLabel = computed(() => {
-  if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_SESSION) return '場次';
+  if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_PREPARATION)
+    return '曲目準備';
   if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE)
     return '播放佇列';
   return '播放資訊';
@@ -290,28 +302,23 @@ function toggleQueueSurface() {
   );
 }
 
-function toggleSessionSurface() {
+function togglePreparationSurface() {
   rememberRightDockTrigger();
-  rightDock.toggleSurface(RIGHT_DOCK_SURFACE_SESSION);
+  rightDock.toggleSurface(RIGHT_DOCK_SURFACE_PREPARATION);
 }
 
 function openBgmPlayer() {
-  bgmPlayerExpanded.value = true;
+  bgmPlayerOpen.value = true;
 }
 
 function closeBgmPlayer() {
-  if (!bgmPlayerExpanded.value) return;
-  bgmPlayerExpanded.value = false;
+  if (!bgmPlayerOpen.value) return;
+  bgmPlayerOpen.value = false;
 }
 
 function toggleBgmPlayer() {
-  if (bgmPlayerExpanded.value) closeBgmPlayer();
+  if (bgmPlayerOpen.value) closeBgmPlayer();
   else openBgmPlayer();
-}
-
-function openSessionPreparation() {
-  performanceSessionWorkspace.open();
-  rightDock.setExpanded(false);
 }
 
 function closeDockSurface(surface) {
@@ -372,24 +379,18 @@ onUnmounted(() =>
   document.removeEventListener('keydown', handleRightDockKeydown),
 );
 
-const folderFeatureSurfaces = Object.freeze({
-  lyrics: 'lyrics',
-});
-const pageComposedFolderViews = new Set(['setlist', 'output', 'import']);
-const activeFolderFeatureSurface = computed(
-  () => folderFeatureSurfaces[activeView.value] ?? '',
-);
+const pageComposedFolderViews = new Set(['library', 'performance', 'display']);
 const activeViewOwnsFolderPage = computed(() =>
   pageComposedFolderViews.has(activeView.value),
 );
 
-// Studio Library reviews the Setlist interior. Keep the production Setlist
+// Studio Library reviews the Library interior. Keep the production Library
 // destination selected while the development-only review surface is active.
 const folderActiveDestination = internalWorkbenchesEnabled
   ? computed(() =>
       activeView.value === 'visual-system' &&
       isStudioLibraryMode(visualReviewMode.value)
-        ? 'setlist'
+        ? 'library'
         : activeView.value,
     )
   : activeView;
@@ -407,20 +408,30 @@ useKeyboardShortcuts({ internalViewShortcuts });
     <div v-bind="appOverlayHostAttributes" class="ui-overlay-host" />
     <AppTitleBar
       class="shell__titlebar"
-      :session-active="sessionExpanded"
-      :session-controls="RIGHT_DOCK_CONTENT_ID"
-      :bgm-active="bgmPlayerExpanded"
+      :preparation-active="preparationExpanded"
+      :preparation-controls="RIGHT_DOCK_CONTENT_ID"
+      :preparation-status="separationIndicator.state"
+      :preparation-status-label="separationIndicator.label"
+      :bgm-active="bgmPlayerOpen"
       :bgm-controls="BGM_PLAYER_ID"
+      :performer-active="performerView.state.open"
+      :performer-busy="performerView.state.isOpening"
       :settings-active="isSettingsView"
       :update-available="appUpdateReady"
-      @toggle-session="toggleSessionSurface"
+      @toggle-preparation="togglePreparationSurface"
       @toggle-bgm="toggleBgmPlayer"
-      @open-settings="openSettings"
+      @toggle-performer="performerView.toggle"
+      @toggle-settings="toggleSettings"
     />
     <div class="shell__sidebar">
       <AppPlaylistSidebar />
     </div>
-    <main class="shell__main shell__main--with-dock">
+    <main
+      class="shell__main shell__main--with-dock"
+      :class="{
+        'shell__main--dock-expanded': rightDockExpanded,
+      }"
+    >
       <div class="shell__workspace">
         <AppUtilityPage
           v-if="isSettingsView"
@@ -440,32 +451,17 @@ useKeyboardShortcuts({ internalViewShortcuts });
               :is="views[activeView]"
               v-if="activeViewOwnsFolderPage"
             />
-            <AppSurfaceBoundary
-              v-else-if="activeFolderFeatureSurface"
-              :key="activeFolderFeatureSurface"
-              :surface-id="activeFolderFeatureSurface"
-            >
-              <AppFolderPage mode="workspace">
-                <component :is="views[activeView]" />
-              </AppFolderPage>
-            </AppSurfaceBoundary>
             <AppFolderPage v-else mode="workspace">
               <component :is="views[activeView]" />
             </AppFolderPage>
           </AppFolderLayout>
         </AppSurfaceBoundary>
       </div>
-      <div
-        class="shell__bgm-boundary"
-        :class="{
-          'shell__bgm-boundary--beside-dock': rightDockExpanded,
-        }"
-      >
+      <div class="shell__bgm-boundary">
         <BgmPlayer
           :id="BGM_PLAYER_ID"
           class="shell__bgm-player"
-          :expanded="bgmPlayerExpanded"
-          @request-expand="openBgmPlayer"
+          :open="bgmPlayerOpen"
           @request-close="closeBgmPlayer"
         />
       </div>
@@ -510,16 +506,17 @@ useKeyboardShortcuts({ internalViewShortcuts });
             @collapse="collapseRightDock"
             @close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"
           />
-          <PerformanceSessionPanel
-            v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_SESSION]"
+          <PreparationDockPanel
+            v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_PREPARATION]"
             class="shell__dock-surface"
             :class="{
-              'shell__dock-surface--active': sessionSurfaceActive,
+              'shell__dock-surface--active': preparationSurfaceActive,
             }"
-            :aria-hidden="!sessionExpanded"
-            :inert="!sessionExpanded"
+            :active="preparationExpanded"
+            :separation-controller="separationQueue"
+            :aria-hidden="!preparationExpanded"
+            :inert="!preparationExpanded"
             @collapse="collapseRightDock"
-            @open-preparation="openSessionPreparation"
           />
         </AppRightDock>
       </div>
@@ -542,7 +539,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
       :message="performerView.state.error"
       action-label="重試"
       compact
-      @action="performerView.open"
+      @action="performerView.toggle"
     />
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
@@ -649,13 +646,13 @@ useKeyboardShortcuts({ internalViewShortcuts });
      different distances on purpose, not a shorthand that happens to cover
      both. */
   padding-bottom: var(--ui-shell-content-inset-block);
-  padding-left: var(--ui-space-3);
+  padding-left: var(--ui-shell-workspace-inline-start);
   padding-right: var(--ui-shell-edge-inset-inline);
 }
 
 .shell__main--with-dock {
-  /* Keep the Dock bay structural in both states so folding does not reflow the
-     active workspace. The collapsed component itself remains button-sized. */
+  /* Keep the desktop workspace width stable across Dock disclosure. The
+     collapsed surface is transparent, but its structural bay remains. */
   grid-template-columns: minmax(0, 1fr) var(--ui-right-dock-width);
   gap: var(--ui-space-3);
 }
@@ -671,21 +668,14 @@ useKeyboardShortcuts({ internalViewShortcuts });
   z-index: var(--ui-z-floating);
   inset-block-start: var(--ui-shell-content-inset-block);
   inset-block-end: var(--ui-shell-content-inset-block);
-  inset-inline-start: var(--ui-shell-edge-inset-inline);
-  inset-inline-end: calc(
-    var(--ui-shell-edge-inset-inline) + var(--ui-right-dock-rail-width) +
-      var(--ui-space-2)
-  );
+  inset-inline-start: var(--ui-shell-workspace-inline-start);
+  /* The Dock bay stabilizes the in-flow workspace, but it is not a clipping
+     boundary for shell-owned floating surfaces. Keep one invariant movement
+     plane across both Dock states and paint the player above the Dock. */
+  inset-inline-end: var(--ui-shell-edge-inset-inline);
   min-inline-size: 0;
   min-block-size: 0;
   pointer-events: none;
-}
-
-.shell__bgm-boundary--beside-dock {
-  inset-inline-end: calc(
-    var(--ui-right-dock-width) + var(--ui-space-3) +
-      var(--ui-shell-edge-inset-inline)
-  );
 }
 
 .shell__bgm-player {
@@ -711,6 +701,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
 }
 
 .shell__dock--collapsed {
+  /* The column remains reserved, but only the local restore action paints. */
   align-items: flex-end;
 }
 
@@ -756,7 +747,15 @@ useKeyboardShortcuts({ internalViewShortcuts });
     gap: 0;
   }
 
-  .shell__dock {
+  .shell__dock--collapsed {
+    position: absolute;
+    z-index: var(--ui-z-sticky);
+    inset-inline-end: var(--ui-shell-edge-inset-inline);
+    inset-block-end: var(--ui-shell-content-inset-block);
+    padding-top: 0;
+  }
+
+  .shell__main--dock-expanded .shell__dock {
     position: absolute;
     z-index: var(--ui-z-sticky);
     inset-block: 0 var(--ui-shell-content-inset-block);

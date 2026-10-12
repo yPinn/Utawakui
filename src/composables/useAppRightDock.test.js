@@ -5,21 +5,22 @@ describe('useAppRightDock', () => {
     vi.resetModules();
   });
 
-  it('registers one session surface beside playback and metadata', async () => {
+  it('registers one preparation surface beside playback and metadata', async () => {
     const module = await import('./useAppRightDock.js');
     const dock = module.useAppRightDock();
 
     expect(module).not.toHaveProperty('RIGHT_DOCK_SURFACE_SEPARATION');
-    expect(module.RIGHT_DOCK_SURFACE_SESSION).toBe('session');
+    expect(module.RIGHT_DOCK_SURFACE_PREPARATION).toBe('preparation');
+    expect(module).not.toHaveProperty('RIGHT_DOCK_SURFACE_IMPORT');
     expect(Object.keys(dock.surfaces)).toEqual([
       'metadata',
       'queue',
-      'session',
+      'preparation',
     ]);
     expect(Object.keys(dock.mountedSurfaces)).toEqual([
       'metadata',
       'queue',
-      'session',
+      'preparation',
     ]);
   });
 
@@ -27,27 +28,27 @@ describe('useAppRightDock', () => {
     const {
       RIGHT_DOCK_SURFACE_METADATA,
       RIGHT_DOCK_SURFACE_QUEUE,
-      RIGHT_DOCK_SURFACE_SESSION,
+      RIGHT_DOCK_SURFACE_PREPARATION,
       useAppRightDock,
     } = await import('./useAppRightDock.js');
     const dock = useAppRightDock();
 
     dock.showSurface(RIGHT_DOCK_SURFACE_METADATA);
     dock.showSurface(RIGHT_DOCK_SURFACE_QUEUE);
-    dock.showSurface(RIGHT_DOCK_SURFACE_SESSION);
+    dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
 
     dock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE);
 
     expect(dock.surfaces.metadata).toBe(true);
     expect(dock.surfaces.queue).toBe(true);
-    expect(dock.surfaces.session).toBe(false);
+    expect(dock.surfaces.preparation).toBe(false);
     expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_QUEUE);
 
     dock.toggleSurface(RIGHT_DOCK_SURFACE_METADATA);
 
     expect(dock.surfaces.metadata).toBe(true);
     expect(dock.surfaces.queue).toBe(false);
-    expect(dock.surfaces.session).toBe(false);
+    expect(dock.surfaces.preparation).toBe(false);
     expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_METADATA);
   });
 

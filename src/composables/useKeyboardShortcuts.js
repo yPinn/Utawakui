@@ -19,7 +19,7 @@ const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.
 const TEMPO_STEP = 0.05;
 
-// F1-F4 match AppFolderLayout.vue's left-to-right workflow order — F-key
+// F1-F3 match AppFolderLayout.vue's left-to-right workflow order — F-key
 // position mirrors tab position so the mapping stays obvious without a
 // legend. Settings sits in the Titlebar's utility controls, so its shortcut
 // isn't part of that contiguous run either — F5-F8 are reserved for internal

@@ -26,6 +26,22 @@ export function useImportExecution({
   } = usePlaylists();
   let cancelRequested = false;
 
+  function setSingleStatus(status, errorCode = null) {
+    if (state.singleTrack) {
+      state.singleTrack.status = status;
+      state.singleTrack.errorCode = errorCode;
+    }
+    const selectedCandidate = state.singleResolution?.candidates?.find(
+      (candidate) =>
+        (candidate.playbackVideoId || candidate.id) ===
+        state.selectedCandidateId,
+    );
+    if (selectedCandidate) {
+      selectedCandidate.status = status;
+      selectedCandidate.errorCode = errorCode;
+    }
+  }
+
   async function importSingle() {
     const input = state.input.trim();
     const downloadInput =
@@ -33,19 +49,24 @@ export function useImportExecution({
       state.singleTrack?.playbackVideoId ||
       input;
     setStatus('下載中...', 'pending');
+    setSingleStatus('downloading');
     state.isImporting = true;
 
     try {
       const result = await window.Utawakui.downloadAudio(downloadInput);
-      if (state.singleTrack) state.singleTrack.status = 'done';
+      setSingleStatus('done');
       setStatus(
         result.title ? `已下載：${result.title}` : '歌曲已下載',
         'success',
+        'object',
       );
-      state.sourceKind = 'idle';
     } catch (error) {
-      if (handleProviderSetupError(error)) return;
+      if (handleProviderSetupError(error)) {
+        setSingleStatus('pending');
+        return;
+      }
       const failure = describeDownloadFailure(error);
+      setSingleStatus('error', failure.code);
       reportImportError(error, 'download-track', '下載未完成，請再試一次。');
       setStatus(`下載失敗：${failure.label}`, 'error');
       state.failureHint = failure.hint;

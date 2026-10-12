@@ -7,9 +7,9 @@ const source = readFileSync(
 describe('SetlistPlaylistTable compatibility adapter', () => {
   it('delegates every row and grid behavior to the canonical library table', () => {
     expect(source).toContain(
-      "import LibraryTrackTable from '../library/LibraryTrackTable.vue'",
+      "import TrackTable from '../track/TrackTable.vue'",
     );
-    expect(source).toContain('<LibraryTrackTable');
+    expect(source).toContain('<TrackTable');
     expect(source).toContain(':variant="variant"');
     expect(source).not.toContain('grid-template-columns');
     expect(source).not.toContain('playlist-track__action');
