@@ -5,6 +5,10 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 const pageUrl = new URL('./ImportPage.vue', import.meta.url);
 const pageSource = existsSync(pageUrl) ? readFileSync(pageUrl, 'utf8') : '';
+const workspaceUrl = new URL('./ImportWorkspace.vue', import.meta.url);
+const workspaceSource = existsSync(workspaceUrl)
+  ? readFileSync(workspaceUrl, 'utf8')
+  : '';
 const importSource = readSource('../../views/ImportView.vue');
 const appSource = readSource('../../App.vue');
 
@@ -24,16 +28,25 @@ describe('Import page composition contract', () => {
     expect(importSource).not.toContain('UiPageHeader');
   });
 
-  it('owns the complete Import surface around the existing feature view', () => {
+  it('owns the complete Import surface around an embeddable workspace', () => {
     expect(pageSource).toContain(
-      "import ImportView from '../../views/ImportView.vue';",
+      "import ImportWorkspace from './ImportWorkspace.vue';",
     );
     expect(pageSource).toMatch(
-      /<AppSurfaceBoundary\s+surface-id="import">[\s\S]*?<AppFolderPage[\s\S]*?<ImportView\s*\/>[\s\S]*?<\/AppFolderPage>\s*<\/AppSurfaceBoundary>/u,
+      /<AppSurfaceBoundary\s+surface-id="import">[\s\S]*?<AppFolderPage[\s\S]*?<ImportWorkspace\s*\/>[\s\S]*?<\/AppFolderPage>\s*<\/AppSurfaceBoundary>/u,
     );
     expect(pageSource).not.toMatch(
       /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="import">/u,
     );
+    expect(workspaceSource).toContain(
+      "import ImportView from '../../views/ImportView.vue';",
+    );
+    expect(workspaceSource).toMatch(
+      /<template>\s*<ImportView\s*\/>\s*<\/template>/u,
+    );
+    expect(workspaceSource).not.toContain('AppFolderPage');
+    expect(workspaceSource).not.toContain('AppSurfaceBoundary');
+    expect(workspaceSource).not.toContain('UiPageHeader');
   });
 
   it('stays lazy while App routes page compositions without a document-mode special case', () => {

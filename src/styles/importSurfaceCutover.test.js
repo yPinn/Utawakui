@@ -7,6 +7,9 @@ const readSource = (path) =>
 const appSource = readSource('../App.vue');
 const folderPageSource = readSource('../components/layout/AppFolderPage.vue');
 const importPageSource = readSource('../components/import/ImportPage.vue');
+const importWorkspaceSource = readSource(
+  '../components/import/ImportWorkspace.vue',
+);
 const importSource = readSource('../views/ImportView.vue');
 const providerSource = readSource(
   '../components/import/ProviderImportPanel.vue',
@@ -90,8 +93,11 @@ describe('Import Token v2 surface cutover', () => {
     expect(providerSource).toContain("state.statusType === 'error'");
   });
 
-  it('retains the existing domain component names without compatibility wrappers', () => {
+  it('keeps the existing import owner behind the embeddable workspace seam', () => {
     expect(importPageSource).toContain(
+      "import ImportWorkspace from './ImportWorkspace.vue'",
+    );
+    expect(importWorkspaceSource).toContain(
       "import ImportView from '../../views/ImportView.vue'",
     );
     expect(importSource).toContain(

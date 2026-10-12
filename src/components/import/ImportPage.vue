@@ -1,8 +1,8 @@
 <script setup>
-import ImportView from '../../views/ImportView.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import ImportWorkspace from './ImportWorkspace.vue';
 </script>
 
 <template>
@@ -12,7 +12,7 @@ import UiPageHeader from '../ui/UiPageHeader.vue';
         <UiPageHeader title="匯入" />
       </template>
 
-      <ImportView />
+      <ImportWorkspace />
     </AppFolderPage>
   </AppSurfaceBoundary>
 </template>
