@@ -4,6 +4,7 @@ import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import LyricsLiveControls from './LyricsLiveControls.vue';
+import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
 import LyricsPreparationBar from './LyricsPreparationBar.vue';
 import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
@@ -34,6 +35,7 @@ function attachClientRender(component, filename) {
 }
 
 attachClientRender(LyricsLiveControls, './LyricsLiveControls.vue');
+attachClientRender(LyricsLiveTool, './LyricsLiveTool.vue');
 attachClientRender(LyricsDocumentPanel, './LyricsDocumentPanel.vue');
 attachClientRender(LyricsPreparationBar, './LyricsPreparationBar.vue');
 attachClientRender(LyricsSegmentEditor, './LyricsSegmentEditor.vue');
@@ -715,9 +717,13 @@ describe('LyricsWorkspace event wiring', () => {
     LyricsSourceManagerModal.setup = (props) => () =>
       Vue.h('source-manager-probe', { 'data-open': props.open });
 
-    const { default: LyricsWorkspace } = await import('./LyricsWorkspace.vue');
-    attachClientRender(LyricsWorkspace, './LyricsWorkspace.vue');
-    const { root } = mount(LyricsWorkspace);
+    const { default: LyricsAuthoringWorkspace } =
+      await import('./LyricsAuthoringWorkspace.vue');
+    attachClientRender(
+      LyricsAuthoringWorkspace,
+      './LyricsAuthoringWorkspace.vue',
+    );
+    const { root } = mount(LyricsAuthoringWorkspace);
     await Promise.resolve();
     expect(loadReading).toHaveBeenCalledWith(
       track.id,

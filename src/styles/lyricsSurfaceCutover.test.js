@@ -7,13 +7,19 @@ const readSource = (path) =>
 const appSource = readSource('../App.vue');
 const viewSource = readSource('../views/LyricsView.vue');
 const workspaceSource = readSource('../components/lyrics/LyricsWorkspace.vue');
+const authoringSource = readSource(
+  '../components/lyrics/LyricsAuthoringWorkspace.vue',
+);
+const liveToolSource = readSource('../components/lyrics/LyricsLiveTool.vue');
 const documentSource = readSource(
   '../components/lyrics/LyricsDocumentPanel.vue',
 );
 
 const productionLyricsSources = [
   'LyricsDocumentPanel.vue',
+  'LyricsAuthoringWorkspace.vue',
   'LyricsLiveControls.vue',
+  'LyricsLiveTool.vue',
   'LyricsLrclibCandidateRow.vue',
   'LyricsLrclibSearchPanel.vue',
   'LyricsLrclibSearchWorkspace.vue',
@@ -45,10 +51,10 @@ describe('Lyrics Token v2 surface cutover', () => {
     expect(appSource).toContain('<AppFolderPage v-else mode="workspace">');
     expect(appSource).toContain("lyrics: 'lyrics'");
     expect(viewSource).toContain('<LyricsWorkspace />');
-    expect(workspaceSource).toMatch(
+    expect(authoringSource).toMatch(
       /\.lyrics-workspace\s*\{(?=[^}]*display:\s*flex)(?=[^}]*flex:\s*1)(?=[^}]*min-height:\s*0)[^}]*\}/su,
     );
-    expect(workspaceSource).toContain('class="lyrics-stage"');
+    expect(authoringSource).toContain('class="lyrics-stage"');
     expect(documentSource).toContain('<UiScrollRegion');
     expect(documentSource).toContain('id="lyrics-document-reader"');
   });
@@ -60,7 +66,7 @@ describe('Lyrics Token v2 surface cutover', () => {
       }
     }
 
-    expect(workspaceSource).toContain('var(--ui-radius-md)');
+    expect(authoringSource).toContain('var(--ui-radius-md)');
     expect(documentSource).toContain('var(--ui-layer-overlay)');
     expect(documentSource).toContain('var(--ui-radius-md)');
     expect(
@@ -81,12 +87,13 @@ describe('Lyrics Token v2 surface cutover', () => {
       'LyricsPreparationBar',
       'LyricsTimingToolbar',
       'LyricsSegmentEditor',
-      'LyricsDocumentPanel',
-      'LyricsLiveControls',
       'LyricsTrackPickerModal',
       'LyricsSourceManagerModal',
     ]) {
-      expect(workspaceSource).toContain(`<${component}`);
+      expect(authoringSource).toContain(`<${component}`);
+    }
+    for (const component of ['LyricsDocumentPanel', 'LyricsLiveControls']) {
+      expect(liveToolSource).toContain(`<${component}`);
     }
 
     const sourceManager = productionLyricsSources.find(

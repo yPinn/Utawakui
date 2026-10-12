@@ -2,7 +2,11 @@ import fs from 'fs';
 import { describe, expect, it } from 'vitest';
 
 const workspaceSource = fs.readFileSync(
-  new URL('./LyricsWorkspace.vue', import.meta.url),
+  new URL('./LyricsAuthoringWorkspace.vue', import.meta.url),
+  'utf8',
+);
+const liveToolSource = fs.readFileSync(
+  new URL('./LyricsLiveTool.vue', import.meta.url),
   'utf8',
 );
 const documentPanelSource = fs.readFileSync(
@@ -27,12 +31,14 @@ describe('LyricsWorkspace information hierarchy', () => {
   it('orders preparation above the reader and overlays compact live controls after it', () => {
     const headerIndex = workspaceSource.indexOf('<LyricsWorkspaceHeader');
     const preparationIndex = workspaceSource.indexOf('<LyricsPreparationBar');
-    const readerIndex = workspaceSource.indexOf('<LyricsDocumentPanel');
-    const liveControlsIndex = workspaceSource.indexOf('<LyricsLiveControls');
+    const liveToolIndex = workspaceSource.indexOf('<LyricsLiveTool');
+    const readerIndex = liveToolSource.indexOf('<LyricsDocumentPanel');
+    const liveControlsIndex = liveToolSource.indexOf('<LyricsLiveControls');
 
     expect(headerIndex).toBeGreaterThan(-1);
     expect(preparationIndex).toBeGreaterThan(headerIndex);
-    expect(readerIndex).toBeGreaterThan(preparationIndex);
+    expect(liveToolIndex).toBeGreaterThan(preparationIndex);
+    expect(readerIndex).toBeGreaterThan(-1);
     expect(liveControlsIndex).toBeGreaterThan(readerIndex);
     expect(workspaceSource).toContain(
       'grid-template-rows: auto auto auto minmax(0, 1fr)',
@@ -158,6 +164,19 @@ describe('LyricsWorkspace information hierarchy', () => {
     expect(segmentEditorSource).toContain('lyrics-segment-editor__adjustment');
     expect(segmentEditorSource).toContain(
       'lyrics-segment-editor__word--current',
+    );
+  });
+
+  it('keeps the live tool in the bounded reader row with or without timing tools', () => {
+    expect(workspaceSource).toContain(
+      '<div v-if="timingDraft" class="lyrics-timing-stack">',
+    );
+    expect(workspaceSource).toContain('class="lyrics-stage__live-tool"');
+    expect(workspaceSource).toMatch(
+      /\.lyrics-timing-stack\s*\{(?=[^}]*grid-row:\s*3)[^}]*\}/su,
+    );
+    expect(workspaceSource).toMatch(
+      /\.lyrics-stage__live-tool\s*\{(?=[^}]*grid-row:\s*4)[^}]*\}/su,
     );
   });
 });
