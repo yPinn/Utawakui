@@ -112,6 +112,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                                  |
 | [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                               |
 | [0022](adr/0022-artist-identity-and-organization.md)                   | 主路徑已實作                     | Artist／album 唯讀參照、衍生 artist 頁、官方頻道頭像與缺圖 YT Music 人工候選已建立；MusicBrainz 名稱與合併等後續。                                |
+| [0023](adr/0023-renderer-destination-and-workspace-model.md)           | 已接受／待實作                   | Renderer 將由功能分頁收斂為曲庫／演唱／顯示三個目的地；先建立 Page／contextual capability 邊界，再原子切換導航與清理舊名稱。                      |
 
 ## 常用文件
 
