@@ -461,7 +461,7 @@ function languageMatchesPreference(source, preference) {
   );
 }
 
-// Whether the reading-aid toolbar (LyricsWorkspace.vue) should offer
+// Whether the reading-aid toolbar (LyricsAuthoringWorkspace.vue) should offer
 // itself at all. 'ja'/'ko' both trigger a reading-aid variant as of Stage
 // 5c; other values are returned so callers/tests can be explicit about "no
 // reading aid for this script" vs. "not checked yet". Requires actual
@@ -564,7 +564,7 @@ const LYRICS_SOURCE_KIND_LABELS = {
   manual: '手動匯入',
 };
 
-// Shared by LyricsWorkspace.vue's source <select> and
+// Shared by LyricsAuthoringWorkspace.vue's source <select> and
 // LyricsSourceManagerModal.vue's current-sources list — same display
 // string in both places. Kind leads (always meaningful); language only
 // follows when it's a real value — lrclib's API has no language field at

@@ -83,7 +83,7 @@ const rootProps = computed(() => ({
   height: var(--ui-space-5);
   border-radius: var(--ui-radius-pill);
   /* Not a tokens.css token — a per-context override a parent can set (see
-     LyricsWorkspace.vue's .lyrics-row-status) when its own background
+     LyricsAuthoringWorkspace.vue's .lyrics-row-status) when its own background
      differs from the default contrast target below. Custom properties
      inherit through the DOM, so the scoped-style boundary doesn't block it. */
   background: var(--ui-status-icon-bg, var(--ui-color-surface-hover));

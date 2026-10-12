@@ -586,7 +586,7 @@ describe('Lyrics workspace control contracts', () => {
   });
 });
 
-describe('LyricsWorkspace event wiring', () => {
+describe('LyricsAuthoringWorkspace event wiring', () => {
   it('routes child selection and live commands to the existing composables', async () => {
     const track = {
       id: 'track-1',

@@ -3,7 +3,7 @@ import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 
 // Module-scope singleton — LibraryBrowseContent.vue and useLyrics.js (for
-// LyricsWorkspace.vue) both need the raw track pool with metadata
+// LyricsAuthoringWorkspace.vue) both need the raw track pool with metadata
 // enrichment. Each previously owned its own listTracks() fetch and
 // onLibraryUpdated subscription; those were duplicated for no independent
 // reason (unlike usePlayer.js's self-healing resubscribe or

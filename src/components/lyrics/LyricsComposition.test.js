@@ -7,16 +7,12 @@ function readComponent(filename) {
 }
 
 describe('lyrics contextual compositions', () => {
-  it('keeps the legacy Lyrics destination as a thin authoring adapter', () => {
-    const source = readComponent('./LyricsWorkspace.vue');
+  it('removes the legacy destination adapters after contextual cutover', () => {
+    const workspaceUrl = new URL('./LyricsWorkspace.vue', import.meta.url);
+    const viewUrl = new URL('../../views/LyricsView.vue', import.meta.url);
 
-    expect(source).toContain(
-      "import LyricsAuthoringWorkspace from './LyricsAuthoringWorkspace.vue';",
-    );
-    expect(source).toMatch(
-      /<template>\s*<LyricsAuthoringWorkspace\s*\/>\s*<\/template>/u,
-    );
-    expect(source).not.toContain('useLyrics(');
+    expect(existsSync(workspaceUrl)).toBe(false);
+    expect(existsSync(viewUrl)).toBe(false);
   });
 
   it('keeps acquisition and correction controls in the Library authoring composition', () => {

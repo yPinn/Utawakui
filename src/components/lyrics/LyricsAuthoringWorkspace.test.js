@@ -27,7 +27,7 @@ function readComponent(filename) {
   return fs.existsSync(url) ? fs.readFileSync(url, 'utf8') : '';
 }
 
-describe('LyricsWorkspace information hierarchy', () => {
+describe('LyricsAuthoringWorkspace information hierarchy', () => {
   it('orders preparation above the reader and overlays compact live controls after it', () => {
     const headerIndex = workspaceSource.indexOf('<LyricsWorkspaceHeader');
     const preparationIndex = workspaceSource.indexOf('<LyricsPreparationBar');

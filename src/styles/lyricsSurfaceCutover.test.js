@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const readSource = (path) =>
@@ -6,8 +6,6 @@ const readSource = (path) =>
 
 const appSource = readSource('../App.vue');
 const libraryPageSource = readSource('../pages/LibraryPage.vue');
-const viewSource = readSource('../views/LyricsView.vue');
-const workspaceSource = readSource('../components/lyrics/LyricsWorkspace.vue');
 const authoringSource = readSource(
   '../components/lyrics/LyricsAuthoringWorkspace.vue',
 );
@@ -30,7 +28,6 @@ const productionLyricsSources = [
   'LyricsSegmentEditor.vue',
   'LyricsSourceManagerModal.vue',
   'LyricsTrackPickerModal.vue',
-  'LyricsWorkspace.vue',
   'LyricsWorkspaceHeader.vue',
 ].map((filename) => ({
   filename,
@@ -50,12 +47,20 @@ const legacyTokens = [
 describe('Lyrics Token v2 surface cutover', () => {
   it('keeps Lyrics in Folder workspace mode with feature-owned scroll regions', () => {
     expect(appSource).not.toContain('lyrics: LyricsView');
+    expect(
+      existsSync(new URL('../views/LyricsView.vue', import.meta.url)),
+    ).toBe(false);
+    expect(
+      existsSync(
+        new URL('../components/lyrics/LyricsWorkspace.vue', import.meta.url),
+      ),
+    ).toBe(false);
     expect(libraryPageSource).toContain("surfaceId: 'lyrics'");
     expect(libraryPageSource).toContain("pageMode: 'workspace'");
     expect(libraryPageSource).toContain(
       "import('../components/lyrics/LyricsAuthoringWorkspace.vue')",
     );
-    expect(viewSource).toContain('<LyricsWorkspace />');
+    expect(authoringSource).toContain('<LyricsWorkspaceHeader');
     expect(authoringSource).toMatch(
       /\.lyrics-workspace\s*\{(?=[^}]*display:\s*flex)(?=[^}]*flex:\s*1)(?=[^}]*min-height:\s*0)[^}]*\}/su,
     );
@@ -110,8 +115,8 @@ describe('Lyrics Token v2 surface cutover', () => {
   });
 
   it('keeps the Internal Tools provider review outside the production Lyrics slice', () => {
-    expect(viewSource).not.toContain('components/lyrics-provider');
-    expect(workspaceSource).not.toContain('components/lyrics-provider');
+    expect(authoringSource).not.toContain('components/lyrics-provider');
+    expect(liveToolSource).not.toContain('components/lyrics-provider');
     expect(
       productionLyricsSources.some(({ filename }) =>
         filename.includes('ProviderReview'),

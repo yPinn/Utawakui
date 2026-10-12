@@ -118,7 +118,7 @@ function togglePlayback(playlist, event) {
 }
 
 // Playlists keep manual order; albums are sorted and not draggable.
-// Shared with LyricsWorkspace.vue through playlistOrdering.js.
+// Shared with LyricsAuthoringWorkspace.vue through playlistOrdering.js.
 const orderedPlaylists = computed(() =>
   orderPlaylistsForDisplay(state.playlists, props.tracksById),
 );

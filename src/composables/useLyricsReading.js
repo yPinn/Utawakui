@@ -2,7 +2,7 @@ import { reactive, readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 // Single shared instance (module scope, not per-component), same as
-// useSeparation.js/usePlayer.js: LyricsWorkspace unmounts on every tab
+// useSeparation.js/usePlayer.js: LyricsAuthoringWorkspace unmounts on every tab
 // switch, so state kept in component refs would appear to vanish mid-run
 // even though a generation worker keeps going on the main process.
 const { recordError } = useAppDiagnostics();
@@ -27,7 +27,7 @@ const loadRevisions = new Map();
 const loadsInFlight = new Map();
 
 // Which display variant is selected — lives here rather than in
-// LyricsWorkspace's own refs so switching tabs and back doesn't reset it.
+// LyricsAuthoringWorkspace's own refs so switching tabs and back doesn't reset it.
 const variant = shallowRef('off'); // 'off' | 'furigana' | 'romaji'
 
 let unsubscribeProgress = null;

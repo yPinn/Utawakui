@@ -1,6 +1,6 @@
 import { deriveAlbumSummary } from './albumSummary.js';
 
-// Shared by PlaylistSidebar.vue (nav rows) and LyricsWorkspace.vue (the playlist
+// Shared by PlaylistSidebar.vue (nav rows) and LyricsAuthoringWorkspace.vue (the playlist
 // <select>) so both present playlists in the same order; the sidebar defines it:
 // playlists first (manual drag order, see reorderPlaylist in usePlaylists.js),
 // then albums by derived artist ascending, newest release first within an
