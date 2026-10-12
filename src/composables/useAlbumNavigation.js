@@ -8,7 +8,7 @@ import { isArtistSourceId } from '../utils/artistPage.js';
 // switching) so callers get one jumpToAlbum() instead of wiring both.
 export function useAlbumNavigation() {
   const { state, select, selectArtist } = usePlaylists();
-  const { setActiveView } = useAppView();
+  const { openLibraryContent } = useAppView();
 
   const albumByTrackId = computed(() =>
     albumPlaylistByTrackId(state.playlists),
@@ -24,7 +24,7 @@ export function useAlbumNavigation() {
     const album = albumForTrack(track);
     if (!album) return;
     select(album.id);
-    setActiveView('setlist');
+    openLibraryContent();
   }
 
   // For a caller that already has the target playlist/album id directly
@@ -35,13 +35,13 @@ export function useAlbumNavigation() {
     if (!id) return;
     if (isArtistSourceId(id)) selectArtist(id);
     else select(id);
-    setActiveView('setlist');
+    openLibraryContent();
   }
 
   function jumpToArtist(id) {
     if (!isArtistSourceId(id)) return;
     selectArtist(id);
-    setActiveView('setlist');
+    openLibraryContent();
   }
 
   return { albumForTrack, jumpToAlbum, jumpToArtist, jumpToPlaylist };

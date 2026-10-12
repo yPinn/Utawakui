@@ -87,7 +87,7 @@ const { state: metronomeState } = useMetronome();
 // PlayerBar is mounted exactly once for the app's lifetime, making this the
 // natural single place to wire the metronome to whatever track is loaded.
 useMetronomeTrackTempo();
-const { activeView, setActiveView } = useAppView();
+const { activeView, openLiveLyrics } = useAppView();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
 const {
@@ -474,7 +474,7 @@ function playNext() {
 // useLyrics.js already syncs to whatever's playing, so switching tabs is
 // enough — no track needs to be passed through.
 function showCurrentTrackLyrics() {
-  setActiveView('lyrics');
+  openLiveLyrics();
 }
 
 function playNextAfterEnded() {

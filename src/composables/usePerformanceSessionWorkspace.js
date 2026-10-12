@@ -11,7 +11,7 @@ function open() {
   const appView = useAppView();
   if (!isOpen.value) returnView.value = appView.activeView.value;
   isOpen.value = true;
-  appView.setActiveView('setlist');
+  appView.openPerformancePreparation();
 }
 
 function close() {

@@ -35,7 +35,7 @@ const {
 const { state: libraryState } = useLibrary();
 const { state: playlistsState } = usePlaylists();
 const { jumpToArtist, jumpToPlaylist } = useAlbumNavigation();
-const { setActiveView } = useAppView();
+const { openLyricsAuthoring } = useAppView();
 const { state: artistIndexState, ensureLoaded: ensureArtistIndex } =
   useArtistIndex();
 ensureArtistIndex();
@@ -106,7 +106,7 @@ function navigateToQueueSource() {
 }
 
 function openLyrics() {
-  setActiveView('lyrics');
+  openLyricsAuthoring();
 }
 
 function openArtist() {

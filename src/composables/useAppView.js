@@ -26,6 +26,26 @@ function setActiveView(view) {
   returnView.value = view;
 }
 
+// Contextual entry points deliberately hide the transitional destination ids
+// from feature callers. Phase 3 can redirect these intents to the new Page
+// compositions without adding a second navigation state or revisiting every
+// domain component.
+function openLibraryContent() {
+  setActiveView('setlist');
+}
+
+function openLyricsAuthoring() {
+  setActiveView('lyrics');
+}
+
+function openLiveLyrics() {
+  setActiveView('lyrics');
+}
+
+function openPerformancePreparation() {
+  setActiveView('setlist');
+}
+
 function clearSettingsSection() {
   settingsSection.value = null;
 }
@@ -43,6 +63,10 @@ export function useAppView() {
     settingsSection: readonly(settingsSection),
     clearSettingsSection,
     setActiveView,
+    openLibraryContent,
+    openLyricsAuthoring,
+    openLiveLyrics,
+    openPerformancePreparation,
     openSettings,
     returnFromSettings,
   };

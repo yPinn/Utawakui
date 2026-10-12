@@ -128,7 +128,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
   it('keeps real Sidebar collection changes inside the Visual System comparison view', () => {
     expect(sidebarSource).toContain("activeView.value === 'visual-system'");
     expect(sidebarSource).toContain('isStudioLibraryMode');
-    expect(sidebarSource).toContain("setActiveView('setlist')");
+    expect(sidebarSource).toContain('openLibraryContent()');
   });
 
   it('keeps the primary page playlist-owned and projects playback context as a shell-main sibling', () => {
@@ -158,7 +158,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(contextSource).toContain(
       "import { useAppView } from '../composables/useAppView.js';",
     );
-    expect(contextSource).toContain("setActiveView('lyrics')");
+    expect(contextSource).toContain('openLyricsAuthoring()');
     expect(contextSource).toContain('@open-lyrics="openLyrics"');
     expect(contextSource).toContain(
       "import { useCurrentTrackLyricsPreview } from '../composables/useCurrentTrackLyricsPreview.js';",

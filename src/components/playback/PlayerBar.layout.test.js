@@ -133,8 +133,9 @@ describe('PlayerBar responsive metadata layout', () => {
 
   it('keeps Lyrics as a Spotify-style playback destination with current-page state', () => {
     expect(componentSource).toContain(
-      'const { activeView, setActiveView } = useAppView();',
+      'const { activeView, openLiveLyrics } = useAppView();',
     );
+    expect(componentSource).toContain('openLiveLyrics();');
     expect(componentSource).toContain(':icon="MicVocal"');
     expect(componentSource).not.toContain(':icon="Captions"');
     expect(componentSource).toContain(':active="activeView === \'lyrics\'"');

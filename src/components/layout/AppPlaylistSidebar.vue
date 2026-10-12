@@ -21,7 +21,7 @@ import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
-const { activeView, setActiveView } = useAppView();
+const { activeView, openLibraryContent } = useAppView();
 const { mode: visualReviewMode } = useVisualReviewMode();
 const {
   editDetailsPlaylist,
@@ -47,7 +47,7 @@ function activateSetlistView() {
   const isViewingStudioLibrary =
     activeView.value === 'visual-system' &&
     isStudioLibraryMode(visualReviewMode.value);
-  if (!isViewingStudioLibrary) setActiveView('setlist');
+  if (!isViewingStudioLibrary) openLibraryContent();
 }
 
 async function handleResizeKeydown(event) {

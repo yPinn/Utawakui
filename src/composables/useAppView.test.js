@@ -50,4 +50,20 @@ describe('useAppView', () => {
     expect(appView.activeView.value).toBe('output');
     expect(appView.returnView.value).toBe('output');
   });
+
+  it('maps contextual navigation intents through the current legacy destinations', () => {
+    const appView = useAppView();
+
+    appView.openLyricsAuthoring();
+    expect(appView.activeView.value).toBe('lyrics');
+
+    appView.openLibraryContent();
+    expect(appView.activeView.value).toBe('setlist');
+
+    appView.openLiveLyrics();
+    expect(appView.activeView.value).toBe('lyrics');
+
+    appView.openPerformancePreparation();
+    expect(appView.activeView.value).toBe('setlist');
+  });
 });
