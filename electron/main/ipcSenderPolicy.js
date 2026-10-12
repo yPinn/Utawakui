@@ -13,7 +13,7 @@ const IPC_CHANNEL_CAPABILITIES = Object.freeze({
   'performer-view:adjust-lyrics-offset': IPC_CAPABILITIES.PERFORMER,
   'performer-view:get-reading-scale': IPC_CAPABILITIES.PERFORMER,
   'performer-view:set-reading-scale': IPC_CAPABILITIES.PERFORMER,
-  'performer-view:close': IPC_CAPABILITIES.PERFORMER,
+  'performer-view:close': IPC_CAPABILITIES.MAIN_OR_PERFORMER,
   'performer-view:minimize': IPC_CAPABILITIES.PERFORMER,
   'performer-view:toggle-full-screen': IPC_CAPABILITIES.PERFORMER,
   'performer-view:toggle-always-on-top': IPC_CAPABILITIES.PERFORMER,

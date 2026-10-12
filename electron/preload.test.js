@@ -145,6 +145,7 @@ const MAIN_INVOKE_CHANNELS = [
   'output:stop',
   'output:suggest-ports',
   'output:update-settings',
+  'performer-view:close',
   'performer-view:get-status',
   'performer-view:open',
   'performer-view:publish',
@@ -259,6 +260,16 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('exposes a fixed no-payload Performer close intent', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    await bridge.closePerformerView({ privateWindowId: 42 });
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'performer-view:close',
+    );
+  });
+
   it('parses only bounded initial renderer arguments', async () => {
     const defaults = await loadBridge('./preload.js', 'Utawakui', [
       '--ui-theme=unknown',

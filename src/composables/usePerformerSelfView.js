@@ -188,6 +188,28 @@ async function open() {
   }
 }
 
+async function close() {
+  state.isOpening = true;
+  try {
+    applyStatus(await bridgeMethod('closePerformerView')());
+    state.error = '';
+    return true;
+  } catch (error) {
+    state.error = reportPerformerError(
+      error,
+      'close',
+      '目前無法關閉表演者畫面，請再試一次。',
+    );
+    return false;
+  } finally {
+    state.isOpening = false;
+  }
+}
+
+async function toggle() {
+  return state.open ? close() : open();
+}
+
 async function initialize() {
   if (initialized) return;
   initialized = true;
@@ -226,6 +248,8 @@ export function usePerformerSelfView() {
     state: readonly(state),
     initialize,
     open,
+    close,
+    toggle,
     refreshStatus,
   };
 }

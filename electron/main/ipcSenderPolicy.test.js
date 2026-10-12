@@ -83,7 +83,7 @@ describe('trusted IPC main boundary', () => {
     ).resolves.toBe('closed');
     await expect(
       rawIpcMain.handles.get('performer-view:close')(createEvent(main)),
-    ).rejects.toMatchObject({ code: 'IPC_SENDER_UNTRUSTED' });
+    ).resolves.toBe('closed');
     await expect(
       rawIpcMain.handles.get('performer-view:adjust-lyrics-offset')(
         createEvent(performer),
@@ -114,7 +114,7 @@ describe('trusted IPC main boundary', () => {
       'performer-view:adjust-lyrics-offset': 'performer',
       'performer-view:get-reading-scale': 'performer',
       'performer-view:set-reading-scale': 'performer',
-      'performer-view:close': 'performer',
+      'performer-view:close': 'main-or-performer',
       'performer-view:minimize': 'performer',
       'performer-view:toggle-full-screen': 'performer',
       'performer-view:toggle-always-on-top': 'performer',
