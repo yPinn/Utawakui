@@ -184,9 +184,9 @@ describe('Setlist page composition', () => {
 
   it('routes Setlist through its page owner instead of the generic page wrapper', () => {
     expect(appSource).toContain(
-      "import SetlistPage from './components/playlists/SetlistPage.vue'",
+      "import LibraryPage from './pages/LibraryPage.vue'",
     );
-    expect(appSource).toContain('setlist: SetlistPage');
+    expect(appSource).toContain('setlist: LibraryPage');
     expect(appSource).toContain(
       "const pageComposedFolderViews = new Set(['setlist', 'output', 'import'])",
     );

@@ -39,6 +39,14 @@ describe('AppFolderLayout', () => {
     }
   });
 
+  it('renders navigation from the shared destination registry', () => {
+    expect(source).toContain(
+      "import { APP_DESTINATIONS } from '../../utils/appDestinationRegistry.js';",
+    );
+    expect(source).not.toContain('const destinations = Object.freeze([');
+    expect(source).toContain('v-for="destination in APP_DESTINATIONS"');
+  });
+
   it('gives every Folder tab its destination material and contrast foreground', () => {
     for (const [destination, material] of [
       ['setlist', 'primary'],

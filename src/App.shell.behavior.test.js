@@ -43,7 +43,8 @@ describe('App shell right Dock', () => {
     expect(source).toMatch(/<AppUtilityPage\s+v-if="isSettingsView"/u);
     expect(source).not.toContain('AppUtilityFrame');
     expect(source).toContain('@back="leaveSettings"');
-    expect(source).toContain('<SettingsView />');
+    expect(source).toContain('<SettingsPage />');
+    expect(source).toContain("() => import('./pages/SettingsPage.vue')");
     expect(source).toMatch(
       /<AppSurfaceBoundary v-else surface-id="app-folder">/u,
     );
@@ -51,6 +52,21 @@ describe('App shell right Dock', () => {
     expect(source).toContain('v-if="activeViewOwnsFolderPage"');
     expect(source).toContain('<AppFolderPage v-else mode="workspace">');
     expect(source).not.toContain('settings: SettingsView');
+  });
+
+  it('routes product destinations through Page composition owners', () => {
+    expect(source).toContain(
+      "import LibraryPage from './pages/LibraryPage.vue';",
+    );
+    expect(source).toContain("() => import('./pages/DisplayPage.vue')");
+    expect(source).toContain('setlist: LibraryPage');
+    expect(source).toContain('output: DisplayPage');
+    expect(source).not.toContain(
+      "import SetlistPage from './components/playlists/SetlistPage.vue';",
+    );
+    expect(source).not.toContain(
+      "() => import('./components/output/OutputPage.vue')",
+    );
   });
 
   it('owns session, playback, and metadata surfaces beside the primary archive workspace', () => {

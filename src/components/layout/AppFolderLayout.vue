@@ -1,5 +1,6 @@
 <script setup>
 import { useId } from 'vue';
+import { APP_DESTINATIONS } from '../../utils/appDestinationRegistry.js';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineProps({
@@ -11,13 +12,6 @@ const tabShapeId = `app-folder-tab-shape-${useId()}`;
 const tabShapeStyle = {
   '--ui-folder-tab-shape': `url("#${tabShapeId}")`,
 };
-const destinations = Object.freeze([
-  Object.freeze({ id: 'setlist', label: 'Setlist' }),
-  Object.freeze({ id: 'lyrics', label: 'Lyrics' }),
-  Object.freeze({ id: 'output', label: 'Output' }),
-  Object.freeze({ id: 'import', label: 'Import' }),
-]);
-
 function revealDestination(event) {
   event.currentTarget?.scrollIntoView({
     block: 'nearest',
@@ -62,7 +56,7 @@ function navigate(destinationId, event) {
       aria-label="Folder 頁面"
     >
       <button
-        v-for="destination in destinations"
+        v-for="destination in APP_DESTINATIONS"
         :key="destination.id"
         type="button"
         class="app-folder-layout__destination"

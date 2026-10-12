@@ -3,6 +3,10 @@ import { useObsIntegration } from './useObsIntegration.js';
 import { useAppView } from './useAppView.js';
 import { usePlayer } from './usePlayer.js';
 import { isEditableTarget } from '../utils/dom.js';
+import {
+  APP_DESTINATION_SHORTCUTS,
+  isAppDestination,
+} from '../utils/appDestinationRegistry.js';
 
 // Global keyboard shortcuts, instantiated once in App.vue. The listener is still
 // removed on unmount: a no-op in prod, but Vite HMR re-runs setup on every edit
@@ -21,17 +25,10 @@ const TEMPO_STEP = 0.05;
 // isn't part of that contiguous run either — F5-F8 are reserved for internal
 // dev-only workbenches (see App.vue's internalViewShortcuts), so Settings uses
 // F9.
-const WORKFLOW_VIEW_SHORTCUTS = {
-  f1: 'setlist',
-  f2: 'lyrics',
-  f3: 'output',
-  f4: 'import',
-};
 const VIEW_SHORTCUTS = {
-  ...WORKFLOW_VIEW_SHORTCUTS,
+  ...APP_DESTINATION_SHORTCUTS,
   f9: 'settings',
 };
-const WORKFLOW_VIEWS = new Set(Object.values(WORKFLOW_VIEW_SHORTCUTS));
 
 export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
   const { isSettingsView, openSettings, setActiveView } = useAppView();
@@ -94,7 +91,7 @@ export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
       if (shortcutView === 'settings') openSettings();
       else {
         const leavingSettingsForWorkflow =
-          isSettingsView.value && WORKFLOW_VIEWS.has(shortcutView);
+          isSettingsView.value && isAppDestination(shortcutView);
         setActiveView(shortcutView);
         if (leavingSettingsForWorkflow && typeof document !== 'undefined') {
           nextTick(() => {

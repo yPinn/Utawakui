@@ -25,7 +25,7 @@ import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import PerformanceSessionPanel from './components/performance-session/PerformanceSessionPanel.vue';
-import SetlistPage from './components/playlists/SetlistPage.vue';
+import LibraryPage from './pages/LibraryPage.vue';
 import { useAppView } from './composables/useAppView.js';
 import { usePlaybackQueue } from './composables/usePlaybackQueue.js';
 import { usePlayer } from './composables/usePlayer.js';
@@ -63,21 +63,22 @@ import { measureInteractionToNextPaint } from './utils/interactionPerformance.js
 import { hasOpenTransientOverlay } from './utils/transientOverlay.js';
 import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
+import { appDestinationSettingsLabel } from './utils/appDestinationRegistry.js';
 
 provideUiOverlayHost('app-shell');
 const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
 
-// Setlist is the only initial view. Keep inactive workflows out of Vite's first
+// Library is the only initial view. Keep inactive workflows out of Vite's first
 // renderer graph so a new dev server can show the working shell immediately.
-const OutputPage = defineAsyncComponent(
-  () => import('./components/output/OutputPage.vue'),
+const DisplayPage = defineAsyncComponent(
+  () => import('./pages/DisplayPage.vue'),
 );
 const LyricsView = defineAsyncComponent(() => import('./views/LyricsView.vue'));
 const ImportPage = defineAsyncComponent(
   () => import('./components/import/ImportPage.vue'),
 );
-const SettingsView = defineAsyncComponent(
-  () => import('./views/SettingsView.vue'),
+const SettingsPage = defineAsyncComponent(
+  () => import('./pages/SettingsPage.vue'),
 );
 const PlaybackInfoContextView = defineAsyncComponent(
   () => import('./views/StudioLibraryContextView.vue'),
@@ -181,8 +182,8 @@ const bgmPlayerExpanded = ref(false);
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
-  setlist: SetlistPage,
-  output: OutputPage,
+  setlist: LibraryPage,
+  output: DisplayPage,
   lyrics: LyricsView,
   import: ImportPage,
   ...internalViews,
@@ -197,14 +198,8 @@ const {
   openSettings,
   returnFromSettings,
 } = useAppView();
-const workflowViewLabels = {
-  setlist: '歌單',
-  lyrics: '歌詞',
-  output: '輸出',
-  import: '匯入',
-};
 const settingsBackLabel = computed(() => {
-  const label = workflowViewLabels[returnView.value];
+  const label = appDestinationSettingsLabel(returnView.value);
   return label ? `返回${label}` : '返回先前頁面';
 });
 
@@ -434,7 +429,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
           :back-label="settingsBackLabel"
           @back="leaveSettings"
         >
-          <SettingsView />
+          <SettingsPage />
         </AppUtilityPage>
         <AppSurfaceBoundary v-else surface-id="app-folder">
           <AppFolderLayout

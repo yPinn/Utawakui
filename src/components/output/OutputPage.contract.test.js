@@ -7,6 +7,7 @@ const pageUrl = new URL('./OutputPage.vue', import.meta.url);
 const pageSource = existsSync(pageUrl) ? readFileSync(pageUrl, 'utf8') : '';
 const workspaceSource = readSource('./ObsOutputWorkspace.vue');
 const appSource = readSource('../../App.vue');
+const displayPageSource = readSource('../../pages/DisplayPage.vue');
 
 describe('Output page composition contract', () => {
   it('owns the complete Output surface around the existing feature view', () => {
@@ -44,9 +45,13 @@ describe('Output page composition contract', () => {
 
   it('stays lazy while App routes Output through its page owner', () => {
     expect(appSource).toMatch(
-      /const\s+OutputPage\s*=\s*defineAsyncComponent\(\s*\(\)\s*=>\s*import\('\.\/components\/output\/OutputPage\.vue'\),?\s*\);/u,
+      /const\s+DisplayPage\s*=\s*defineAsyncComponent\(\s*\(\)\s*=>\s*import\('\.\/pages\/DisplayPage\.vue'\),?\s*\);/u,
     );
-    expect(appSource).toContain('output: OutputPage');
+    expect(appSource).toContain('output: DisplayPage');
+    expect(displayPageSource).toContain(
+      "import OutputPage from '../components/output/OutputPage.vue';",
+    );
+    expect(displayPageSource).toContain('<OutputPage />');
     expect(appSource).toContain(
       "const pageComposedFolderViews = new Set(['setlist', 'output', 'import']);",
     );
