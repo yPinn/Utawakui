@@ -326,7 +326,11 @@ function toggleCandidate(candidate) {
     </form>
 
     <div class="lyrics-lrclib-search__result-meta">
-      <p v-if="resultAnnouncement" class="visually-hidden" aria-live="polite">
+      <p
+        v-if="resultAnnouncement"
+        class="ui-visually-hidden"
+        aria-live="polite"
+      >
         {{ resultAnnouncement }}
       </p>
       <UiButton
@@ -506,18 +510,6 @@ function toggleCandidate(candidate) {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .lyrics-lrclib-search__form {

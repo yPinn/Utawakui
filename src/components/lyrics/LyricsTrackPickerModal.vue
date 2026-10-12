@@ -1,14 +1,12 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, shallowRef } from 'vue';
 import {
   Captions,
   Check,
-  ICON_SIZE,
   Library,
   ListMusic,
   Music,
   Music2,
-  Search,
 } from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useLyrics } from '../../composables/useLyrics.js';
@@ -17,6 +15,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
@@ -29,7 +28,7 @@ const { state, currentTrackId, selectTrack, setTrackScope } = useLyrics();
 const { selectedPlaylist } = usePlaylists();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 
-const query = ref('');
+const query = shallowRef('');
 
 const scopeOptions = computed(() => [
   {
@@ -136,11 +135,11 @@ function handleTrackSelect(track) {
         </UiButton>
       </div>
 
-      <label class="lyrics-track-picker__search">
-        <Search :size="ICON_SIZE" aria-hidden="true" />
-        <span class="visually-hidden">搜尋曲目</span>
-        <input v-model="query" placeholder="搜尋曲名、歌手或 ID" />
-      </label>
+      <UiSearchBox
+        v-model="query"
+        label="搜尋曲目"
+        placeholder="搜尋曲名、歌手或 ID"
+      />
 
       <div class="lyrics-track-picker__summary">
         <span>{{ selectedScopeLabel }}</span>
@@ -200,18 +199,6 @@ function handleTrackSelect(track) {
 </template>
 
 <style scoped>
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .lyrics-track-picker {
   display: grid;
   gap: var(--ui-space-3);
@@ -221,38 +208,6 @@ function handleTrackSelect(track) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ui-space-2);
-}
-
-.lyrics-track-picker__search {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text-muted);
-}
-
-.lyrics-track-picker__search input {
-  min-width: 0;
-  flex: 1;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-track-picker__search input::placeholder {
-  color: var(--ui-color-text-muted);
-}
-
-.lyrics-track-picker__search:focus-within {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-track-picker__summary {
