@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import OutputView from './OutputView.vue';
+import DisplayPage from './DisplayPage.vue';
 import { useOutputWorkspaceNavigation } from '../composables/useOutputWorkspaceNavigation.js';
 
 const outputKindIds = ['setlist', 'lyrics', 'now-playing'];
 
-function renderOutputView() {
+function renderDisplayPage() {
   return renderToString(
     createSSRApp({
-      render: () => h(OutputView),
+      render: () => h(DisplayPage),
     }),
   );
 }
 
-describe('OutputView', () => {
+describe('DisplayPage', () => {
   it('opens the workbench first and keeps the gallery second', async () => {
-    const html = await renderOutputView();
+    const html = await renderDisplayPage();
     const editMode = html.indexOf('<!--[-->編輯<!--]-->');
     const galleryMode = html.indexOf('<!--[-->模板<!--]-->');
 
@@ -29,7 +29,7 @@ describe('OutputView', () => {
   });
 
   it('renders three output categories while keeping one template grid active', async () => {
-    const html = await renderOutputView();
+    const html = await renderDisplayPage();
     const setlistOption = html.indexOf('歌單');
     const lyricsOption = html.indexOf('歌詞');
     const nowPlayingOption = html.indexOf('播放中');
@@ -60,7 +60,7 @@ describe('OutputView', () => {
     navigation.selectKind('lyrics', outputKindIds);
 
     try {
-      const html = await renderOutputView();
+      const html = await renderDisplayPage();
 
       expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->模板/);
       expect(html).toMatch(

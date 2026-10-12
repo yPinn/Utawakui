@@ -1,24 +1,25 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
-const pageUrl = new URL('./OutputPage.vue', import.meta.url);
-const pageSource = existsSync(pageUrl) ? readFileSync(pageUrl, 'utf8') : '';
-const workspaceSource = readSource('./ObsOutputWorkspace.vue');
-const appSource = readSource('../../App.vue');
-const displayPageSource = readSource('../../pages/DisplayPage.vue');
+const workspaceSource = readSource(
+  '../components/output/ObsOutputWorkspace.vue',
+);
+const appSource = readSource('../App.vue');
+const displayPageSource = readSource('./DisplayPage.vue');
 
-describe('Output page composition contract', () => {
-  it('leaves destination surface ownership with DisplayPage', () => {
-    expect(pageSource).toContain(
-      "import OutputView from '../../views/OutputView.vue';",
-    );
-    expect(pageSource).not.toContain('AppSurfaceBoundary');
-    expect(pageSource).toContain('<OutputView />');
+describe('Display page composition contract', () => {
+  it('owns the destination surface and composes the Output workspace directly', () => {
     expect(displayPageSource).toContain(
       '<AppSurfaceBoundary surface-id="display">',
     );
+    expect(displayPageSource).toContain(
+      "import ObsOutputWorkspace from '../components/output/ObsOutputWorkspace.vue';",
+    );
+    expect(displayPageSource).toContain('<ObsOutputWorkspace');
+    expect(displayPageSource).not.toContain('OutputPage');
+    expect(displayPageSource).not.toContain('OutputView');
   });
 
   it('places the guarded Output mode tabs in a fixed workspace header', () => {
@@ -48,10 +49,7 @@ describe('Output page composition contract', () => {
       /const\s+DisplayPage\s*=\s*defineAsyncComponent\(\s*\(\)\s*=>\s*import\('\.\/pages\/DisplayPage\.vue'\),?\s*\);/u,
     );
     expect(appSource).toContain('display: DisplayPage');
-    expect(displayPageSource).toContain(
-      "import OutputPage from '../components/output/OutputPage.vue';",
-    );
-    expect(displayPageSource).toContain('<OutputPage />');
+    expect(displayPageSource).toContain('getOutputWorkbenchData');
     expect(appSource).toMatch(
       /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
     );

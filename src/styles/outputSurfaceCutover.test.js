@@ -6,8 +6,6 @@ const readSource = (path) =>
 
 const appSource = readSource('../App.vue');
 const displayPageSource = readSource('../pages/DisplayPage.vue');
-const pageSource = readSource('../components/output/OutputPage.vue');
-const viewSource = readSource('../views/OutputView.vue');
 const workspaceSource = readSource(
   '../components/output/ObsOutputWorkspace.vue',
 );
@@ -118,9 +116,9 @@ describe('Output Token v2 surface cutover', () => {
     expect(displayPageSource).toContain(
       '<AppSurfaceBoundary surface-id="display">',
     );
-    expect(displayPageSource).toContain('<OutputPage />');
-    expect(pageSource).not.toContain('AppSurfaceBoundary');
-    expect(viewSource).toContain('<ObsOutputWorkspace');
+    expect(displayPageSource).toContain('<ObsOutputWorkspace');
+    expect(displayPageSource).not.toContain('OutputPage');
+    expect(displayPageSource).not.toContain('OutputView');
     expect(workspaceSource).toContain(
       '<AppFolderPage mode="workspace" body-label="輸出工作區">',
     );
@@ -135,7 +133,7 @@ describe('Output Token v2 surface cutover', () => {
   it('moves Output-owned geometry out of the T1 core and into one feature stylesheet', () => {
     expect(existsSync(outputFeaturePath)).toBe(true);
     expect(existsSync(legacyFeaturePath)).toBe(false);
-    expect(viewSource).toContain('../styles/features/output.css');
+    expect(displayPageSource).toContain('../styles/features/output.css');
 
     for (const token of outputOwnedTokens) {
       expect(outputFeatureSource, token).toMatch(
@@ -201,6 +199,6 @@ describe('Output Token v2 surface cutover', () => {
     expect(publicOverlayTokens).toContain('--ovl-');
     expect(publicOverlayTokens).not.toContain('--ui-');
     expect(outputFeatureSource).not.toContain('--ovl-');
-    expect(viewSource).not.toContain('overlay/shared');
+    expect(displayPageSource).not.toContain('overlay/shared');
   });
 });

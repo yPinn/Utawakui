@@ -48,14 +48,18 @@ describe('destination Page composition', () => {
     expect(workspace).not.toContain('已唱紀錄');
   });
 
-  it('gives Display a thin Page owner around the existing Output composition', () => {
+  it('lets Display directly own the existing Output workspace composition', () => {
     const source = readPage('./DisplayPage.vue');
 
     expect(source).toContain(
-      "import OutputPage from '../components/output/OutputPage.vue';",
+      "import ObsOutputWorkspace from '../components/output/ObsOutputWorkspace.vue';",
     );
+    expect(source).toContain('getOutputWorkbenchData');
+    expect(source).toContain("import '../styles/features/output.css';");
     expect(source).toContain('surface-id="display"');
-    expect(source).toContain('<OutputPage />');
+    expect(source).toContain('<ObsOutputWorkspace');
+    expect(source).not.toContain('OutputPage');
+    expect(source).not.toContain('OutputView');
   });
 
   it('gives Settings a Page owner inside the existing utility layout shell', () => {
