@@ -26,13 +26,20 @@ describe('three-destination cutover contract', () => {
   });
 
   it('removes Performance Session composition from the Library browse owner', () => {
-    const page = readSource('../components/playlists/SetlistPage.vue');
-    const view = readSource('../views/SetlistView.vue');
+    const page = readSource('../components/library/LibraryBrowseWorkspace.vue');
+    const view = readSource('../components/library/LibraryBrowseContent.vue');
 
     expect(page).not.toContain('usePerformanceSessionWorkspace');
     expect(page).not.toContain('performance-session-workspace');
     expect(view).not.toContain('usePerformanceSessionWorkspace');
     expect(view).not.toContain('<PerformanceSessionWorkspace');
+  });
+
+  it('removes legacy Setlist composition identities from production', () => {
+    const libraryPage = readSource('./LibraryPage.vue');
+
+    expect(libraryPage).not.toContain('SetlistPage');
+    expect(libraryPage).not.toContain('SetlistView');
   });
 
   it('routes the Titlebar preparation command to the shell-owned Preparation Dock', () => {

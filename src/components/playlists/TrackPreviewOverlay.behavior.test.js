@@ -24,7 +24,7 @@ const modalSource = readFileSync(
   'utf8',
 );
 const setlistSource = readFileSync(
-  new URL('../../views/SetlistView.vue', import.meta.url),
+  new URL('../library/LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
 
@@ -160,7 +160,7 @@ describe('TrackPreviewOverlay', () => {
     expect(source).toContain('surface-id="track-preview"');
     // Its Teleport target only exists once the dialog is in the document.
     expect(source).toMatch(/<TrackActionMenu\s+v-if="menu"/u);
-    // A modal in SetlistView mounts before the setlist host is attached.
+    // A modal in LibraryBrowseContent mounts before the host is attached.
     expect(modalSource).toContain('<Teleport defer');
   });
 

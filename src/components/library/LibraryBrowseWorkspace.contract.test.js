@@ -5,10 +5,10 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../../App.vue');
-const pageSource = readSource('./SetlistPage.vue');
-const viewSource = readSource('../../views/SetlistView.vue');
+const pageSource = readSource('./LibraryBrowseWorkspace.vue');
+const viewSource = readSource('./LibraryBrowseContent.vue');
 
-describe('Setlist page composition', () => {
+describe('Library browse workspace composition', () => {
   it('remounts the object layer per Folder page and persists one layout batch', () => {
     expect(pageSource).toContain(':key="folderPageKey"');
     expect(pageSource).toContain('@layout-change="handleArtifactLayout"');
@@ -26,31 +26,33 @@ describe('Setlist page composition', () => {
     expect(pageSource).not.toContain('UiPageHeader');
     expect(pageSource).not.toContain('UiSearchBox');
     expect(pageSource).toMatch(
-      /<AppFolderPage[\s\S]*?<SetlistView\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
+      /<AppFolderPage[\s\S]*?<LibraryBrowseContent\s+v-model:search-query="searchQuery"[\s\S]*?<\/AppFolderPage>/u,
     );
     expect(pageSource).not.toContain('AppSurfaceBoundary');
   });
 
   it('keeps the rich playlist header in content and removes the library header duplicate', () => {
     expect(viewSource).toContain(
-      "import AppFolderContentField from '../components/layout/AppFolderContentField.vue'",
+      "import AppFolderContentField from '../layout/AppFolderContentField.vue'",
     );
     expect(viewSource).toContain('<SetlistCollectionHeader');
     expect(viewSource).toMatch(
       /<AppFolderContentField\s+:variant="contentFieldVariant"\s+aria-label="曲目清單與狀態"\s*>/u,
     );
-    expect(viewSource).toContain('class="setlist-view__collection-header"');
+    expect(viewSource).toContain(
+      'class="library-browse-content__collection-header"',
+    );
     expect(viewSource).toContain(
       "const searchQuery = defineModel('searchQuery'",
     );
     expect(viewSource).not.toContain('UiPageHeader');
     expect(viewSource).not.toContain('UiSearchBox');
-    expect(viewSource).not.toContain('setlist-view__page-header');
+    expect(viewSource).not.toContain('library-browse-content__page-header');
   });
 
   it('ends the primary track field before local album supporting content', () => {
     expect(viewSource).toContain(
-      "import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue'",
+      "import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue'",
     );
     expect(viewSource).toContain(
       'const { albumEntries, albumSupportingContent } = useSetlistAlbumContext()',
@@ -67,10 +69,10 @@ describe('Setlist page composition', () => {
       "import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js'",
     );
     expect(pageSource).toContain(
-      "import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue'",
+      "import SetlistFolderArtifactLayer from '../playlists/SetlistFolderArtifactLayer.vue'",
     );
     expect(pageSource).toContain(
-      "import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue'",
+      "import FolderAssetPreviewModal from '../playlists/FolderAssetPreviewModal.vue'",
     );
     expect(pageSource).toContain('useSetlistFolderObjects');
     expect(pageSource).toContain(
@@ -80,7 +82,7 @@ describe('Setlist page composition', () => {
       /<template\s+v-if="showFolderArtifacts"\s+#floating>[\s\S]*?<SetlistFolderArtifactLayer[\s\S]*?:objects="folderObjects\.objects\.value"/u,
     );
     expect(pageSource.indexOf('#floating')).toBeGreaterThan(
-      pageSource.indexOf('<SetlistView'),
+      pageSource.indexOf('<LibraryBrowseContent'),
     );
     expect(pageSource).not.toContain('#extension');
     expect(pageSource.match(/<SetlistFolderArtifactLayer/gu)).toHaveLength(1);
@@ -157,7 +159,7 @@ describe('Setlist page composition', () => {
 
   it('shares one album context projection while keeping related albums on paper', () => {
     expect(viewSource).toContain(
-      "import { useSetlistAlbumContext } from '../composables/useSetlistAlbumContext.js'",
+      "import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js'",
     );
     expect(viewSource).toContain(
       'const { albumEntries, albumSupportingContent } = useSetlistAlbumContext()',

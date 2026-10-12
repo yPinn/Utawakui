@@ -43,7 +43,7 @@ const sidebarCompact = computed(
   () => sidebarWidth.value < SIDEBAR_COMPACT_THRESHOLD,
 );
 
-function activateSetlistView() {
+function activateLibraryBrowse() {
   const isViewingStudioLibrary =
     activeView.value === 'visual-system' &&
     isStudioLibraryMode(visualReviewMode.value);
@@ -84,7 +84,7 @@ async function handleResizeKeydown(event) {
       :library-view="playlistState.libraryView"
       :compact="sidebarCompact"
       @library-view-select="setLibraryView"
-      @activate-setlist="activateSetlistView"
+      @activate-library="activateLibraryBrowse"
       @playlist-action="handlePlaylistMenuAction"
     />
 

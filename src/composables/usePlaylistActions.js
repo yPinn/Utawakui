@@ -10,7 +10,7 @@ import {
 
 // Module-scope singleton, same pattern as usePlaylists.js — the edit-details
 // modal and its target must be shared state, not per-caller, since both the
-// persistent AppPlaylistSidebar and SetlistView's own hero can trigger it,
+// persistent AppPlaylistSidebar and LibraryBrowseContent's hero can trigger it,
 // and only one <PlaylistDetailsModal> should ever be mounted.
 const {
   state: playlistState,
@@ -37,7 +37,7 @@ const editDetailsIsSaving = ref(false);
 
 // The join itself is the "ghost trackId" filter — a track deleted outside
 // the app just silently drops out, per tracks.js's orphan doctrine. Shared
-// by SetlistView's own playlistTracks and editDetailsCoverTracks below
+// by LibraryBrowseContent's own playlistTracks and editDetailsCoverTracks below
 // (whichever playlist the modal targets, which may not be the selected
 // one) so both stay in sync with one join.
 function resolvePlaylistTracks(playlist) {

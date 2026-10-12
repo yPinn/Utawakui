@@ -2,17 +2,17 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync(
-  new URL('./SetlistView.vue', import.meta.url),
+  new URL('./LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
 
-describe('SetlistView track interaction owner', () => {
+describe('LibraryBrowseContent track interaction owner', () => {
   it('owns transient selection separately from current playback', () => {
     expect(source).toContain('const selectedTrackId = shallowRef(null);');
     expect(source).toContain('function selectTrack(track)');
     expect(source).toContain(':selected-track-id="selectedTrackId"');
     expect(source).toContain(
-      "import TrackTable from '../components/track/TrackTable.vue'",
+      "import TrackTable from '../track/TrackTable.vue'",
     );
     expect(source).not.toContain('UiTrackRow');
   });
@@ -64,7 +64,7 @@ describe('SetlistView track interaction owner', () => {
 
   it('projects shared collection playback state and explicit action ownership into the header', () => {
     expect(source).toContain(
-      "import { useCollectionPlayback } from '../composables/useCollectionPlayback.js'",
+      "import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js'",
     );
     expect(source).toContain('<SetlistCollectionHeader');
     expect(source).toContain(':playing="selectedCollectionIsPlaying"');
@@ -96,10 +96,10 @@ describe('SetlistView track interaction owner', () => {
 
   it('offers explicit YT Music photo candidates only for an artist without a photo', () => {
     expect(source).toContain(
-      "import ArtistPhotoCandidateModal from '../components/artists/ArtistPhotoCandidateModal.vue'",
+      "import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue'",
     );
     expect(source).toContain(
-      "import { useArtistPhotoCandidates } from '../composables/useArtistPhotoCandidates.js'",
+      "import { useArtistPhotoCandidates } from '../../composables/useArtistPhotoCandidates.js'",
     );
     expect(source).toMatch(
       /!artistPage\.value\.photoUrl[\s\S]*?ARTIST_PHOTO_ACTIONS\.searchOnline/u,

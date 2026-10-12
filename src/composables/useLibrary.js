@@ -2,7 +2,7 @@ import { computed, reactive, readonly, ref } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 
-// Module-scope singleton — SetlistView.vue and useLyrics.js (for
+// Module-scope singleton — LibraryBrowseContent.vue and useLyrics.js (for
 // LyricsWorkspace.vue) both need the raw track pool with metadata
 // enrichment. Each previously owned its own listTracks() fetch and
 // onLibraryUpdated subscription; those were duplicated for no independent
@@ -46,7 +46,7 @@ const enrichedTracks = computed(() =>
 
 // `tracks` is a computed ref assigned as a property of this reactive object
 // — Vue auto-unwraps refs/computeds read through a reactive proxy, so every
-// existing reader of `useLibrary().state.tracks` (SetlistView.vue,
+// existing reader of `useLibrary().state.tracks` (LibraryBrowseContent.vue,
 // useLyrics.js, and everything derived from `tracksById` below: UiTrackRow,
 // UiTrackThumb, SetlistPlaylistTable, PlayerBar, usePlaybackQueue.js, ...)
 // transparently receives album-cover-enriched tracks with no changes needed

@@ -28,7 +28,7 @@ const queuePanelSource = readFileSync(
   'utf8',
 );
 const setlistSource = readFileSync(
-  new URL('../../views/SetlistView.vue', import.meta.url),
+  new URL('../library/LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
 const trackActionMenuSource = readFileSync(

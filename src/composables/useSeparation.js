@@ -9,7 +9,7 @@ import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 
 // Single shared instance (module scope, not per-component), same as
-// usePlayer.js: SetlistView unmounts on every tab switch, so state that
+// usePlayer.js: LibraryBrowseContent unmounts on every destination switch, so state that
 // lived in its own refs used to vanish from the UI mid-run even though the
 // worker kept going. Owning the in-flight promise and progress map here
 // fixes that.

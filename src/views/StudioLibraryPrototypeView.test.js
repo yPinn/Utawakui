@@ -18,7 +18,7 @@ const visualSystemSource = readFileSync(
   'utf8',
 );
 const setlistSource = readFileSync(
-  new URL('./SetlistView.vue', import.meta.url),
+  new URL('../components/library/LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
 const appSource = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');

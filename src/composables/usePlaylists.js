@@ -8,7 +8,7 @@ const state = reactive({
   playlists: [],
   // null means "全部曲目" (no playlist selected, show the full library).
   selectedId: null,
-  // Which pseudo-view SetlistView shows when nothing is selected —
+  // Which Library browse mode is shown when nothing is selected —
   // 'all' | 'local'. Shared (not view-local) so the persistent
   // AppPlaylistSidebar can drive it from any tab.
   libraryView: 'all',

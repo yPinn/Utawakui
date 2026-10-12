@@ -2,21 +2,15 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const viewSource = readFileSync(
-  new URL('./SetlistView.vue', import.meta.url),
+  new URL('./LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
 const performanceSource = readFileSync(
-  new URL(
-    '../components/performance/PerformanceWorkspace.vue',
-    import.meta.url,
-  ),
+  new URL('../performance/PerformanceWorkspace.vue', import.meta.url),
   'utf8',
 );
 const headerSource = readFileSync(
-  new URL(
-    '../components/playlists/SetlistCollectionHeader.vue',
-    import.meta.url,
-  ),
+  new URL('../playlists/SetlistCollectionHeader.vue', import.meta.url),
   'utf8',
 );
 

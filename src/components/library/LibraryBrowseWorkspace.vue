@@ -13,14 +13,14 @@ import { useSetlistFolderObjects } from '../../composables/useSetlistFolderObjec
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
-import SetlistView from '../../views/SetlistView.vue';
+import LibraryBrowseContent from './LibraryBrowseContent.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
-import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
-import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue';
+import FolderAssetPreviewModal from '../playlists/FolderAssetPreviewModal.vue';
+import SetlistFolderArtifactLayer from '../playlists/SetlistFolderArtifactLayer.vue';
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();
 const { albumSupportingContent } = useSetlistAlbumContext();
@@ -240,7 +240,7 @@ onBeforeUnmount(() => {
       @action="retryFolderAssets"
     />
 
-    <SetlistView v-model:search-query="searchQuery" />
+    <LibraryBrowseContent v-model:search-query="searchQuery" />
 
     <template v-if="showFolderArtifacts" #floating>
       <SetlistFolderArtifactLayer

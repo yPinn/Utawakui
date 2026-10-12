@@ -7,7 +7,7 @@ function source(relativePath) {
 
 const GLOBAL_CONFIRMATION_OWNERS = [
   '../../views/SettingsView.vue',
-  '../../views/SetlistView.vue',
+  '../library/LibraryBrowseContent.vue',
   '../../composables/usePlaylistActions.js',
   '../performance-session/PerformanceSessionWorkspace.vue',
   '../analysis/MusicAnalysisReferenceAnnotation.vue',

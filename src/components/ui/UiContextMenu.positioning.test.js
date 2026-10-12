@@ -382,7 +382,7 @@ describe('UiContextMenu production caller contract', () => {
 
     for (const path of [
       '../playlists/PlaylistSidebar.vue',
-      '../../views/SetlistView.vue',
+      '../library/LibraryBrowseContent.vue',
     ]) {
       const source = sourceFor(path);
       expect(source, path).toMatch(/clientX/u);

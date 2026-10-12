@@ -1,5 +1,5 @@
 <script setup>
-// Track-search input — was duplicated once per SetlistView layout branch
+// Track-search input — was duplicated once per Library browse layout branch
 // (playlist toolbar vs. all-tracks page header). v-model owns clearing too,
 // so callers don't need a separate clear handler.
 import { computed, useAttrs, useId } from 'vue';

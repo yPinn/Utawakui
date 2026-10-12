@@ -3,7 +3,7 @@ import { computed, defineAsyncComponent, nextTick } from 'vue';
 import { ArrowLeft } from '../icons/index.js';
 import { useAppView } from '../composables/useAppView.js';
 import { focusAppDestinationTrigger } from '../utils/appDestinationFocus.js';
-import SetlistPage from '../components/playlists/SetlistPage.vue';
+import LibraryBrowseWorkspace from '../components/library/LibraryBrowseWorkspace.vue';
 import AppFolderPage from '../components/layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import UiButton from '../components/ui/UiButton.vue';
@@ -33,7 +33,7 @@ async function returnToLibrary() {
 
 <template>
   <AppSurfaceBoundary surface-id="library" :child-hosts="['lyrics']">
-    <SetlistPage v-if="libraryWorkspace === 'browse'" />
+    <LibraryBrowseWorkspace v-if="libraryWorkspace === 'browse'" />
     <AppSurfaceBoundary
       v-else
       :surface-id="workspaceDefinition.surfaceId"

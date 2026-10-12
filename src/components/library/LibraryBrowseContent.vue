@@ -1,61 +1,61 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { ImagePlus, Search, Trash2, UserRound } from '../icons/index.js';
-import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
-import { useAppConfirmation } from '../composables/useAppConfirmation.js';
-import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
-import { useArtistIndex } from '../composables/useArtistIndex.js';
-import { useArtistPhotoCandidates } from '../composables/useArtistPhotoCandidates.js';
-import { useBgmSession } from '../composables/useBgmSession.js';
-import { useCollectionPlayback } from '../composables/useCollectionPlayback.js';
-import { useDragReorder } from '../composables/useDragReorder.js';
-import { useLibrary } from '../composables/useLibrary.js';
-import { usePlayer } from '../composables/usePlayer.js';
-import { usePlaylistActions } from '../composables/usePlaylistActions.js';
-import { usePlaylists } from '../composables/usePlaylists.js';
-import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import { useSetlistAlbumContext } from '../composables/useSetlistAlbumContext.js';
-import { useScrolledPast } from '../composables/useScrolledPast.js';
-import { useTrackListDensity } from '../composables/useTrackListDensity.js';
-import { useTrackPreview } from '../composables/useTrackPreview.js';
-import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
-import ArtistIdentityModal from '../components/artists/ArtistIdentityModal.vue';
-import ArtistPhotoCandidateModal from '../components/artists/ArtistPhotoCandidateModal.vue';
-import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
-import TrackTable from '../components/track/TrackTable.vue';
+import { ImagePlus, Search, Trash2, UserRound } from '../../icons/index.js';
+import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
+import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { useArtistPhotoCandidates } from '../../composables/useArtistPhotoCandidates.js';
+import { useBgmSession } from '../../composables/useBgmSession.js';
+import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
+import { useDragReorder } from '../../composables/useDragReorder.js';
+import { useLibrary } from '../../composables/useLibrary.js';
+import { usePlayer } from '../../composables/usePlayer.js';
+import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
+import { usePlaylists } from '../../composables/usePlaylists.js';
+import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
+import { useScrolledPast } from '../../composables/useScrolledPast.js';
+import { useTrackListDensity } from '../../composables/useTrackListDensity.js';
+import { useTrackPreview } from '../../composables/useTrackPreview.js';
+import { useTrackMetadataEditor } from '../../composables/useTrackMetadataEditor.js';
+import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue';
+import LibraryArtistIdentityController from './LibraryArtistIdentityController.vue';
+import TrackMetadataModal from './TrackMetadataModal.vue';
+import TrackTable from '../track/TrackTable.vue';
 import {
   addToPlaylistChildren,
   addToPlaylistMenuItem,
   collectionManageMenuItems,
-} from '../utils/collectionMenuItems.js';
-import AppFolderCompactBar from '../components/layout/AppFolderCompactBar.vue';
-import AppFolderContentField from '../components/layout/AppFolderContentField.vue';
-import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue';
-import SetlistCollectionHeader from '../components/playlists/SetlistCollectionHeader.vue';
-import TrackPreviewOverlay from '../components/playlists/TrackPreviewOverlay.vue';
-import PlaybackPrimaryButton from '../components/playback/PlaybackPrimaryButton.vue';
-import TrackActionMenu from '../components/track/TrackActionMenu.vue';
-import UiHint from '../components/ui/UiHint.vue';
-import UiNotice from '../components/ui/UiNotice.vue';
-import { contentLangAttribute } from '../utils/contentLanguage.js';
-import { formatLongDuration } from '../utils/format.js';
+} from '../../utils/collectionMenuItems.js';
+import AppFolderCompactBar from '../layout/AppFolderCompactBar.vue';
+import AppFolderContentField from '../layout/AppFolderContentField.vue';
+import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue';
+import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue';
+import TrackPreviewOverlay from '../playlists/TrackPreviewOverlay.vue';
+import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
+import TrackActionMenu from '../track/TrackActionMenu.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
+import { formatLongDuration } from '../../utils/format.js';
 import {
   TRACK_MENU_ACTIONS,
   libraryViewTitle,
   playlistDisplayName,
-} from '../utils/playlistMenu.js';
+} from '../../utils/playlistMenu.js';
 import {
   sortPlaylistEntries,
   nextPlaylistSort,
-} from '../utils/playlistSort.js';
-import { toPlayableTrack } from '../utils/playableTrack.js';
-import { deriveAlbumSummary } from '../utils/albumSummary.js';
-import { artistSearchTexts, deriveArtistPage } from '../utils/artistPage.js';
-import { shufflePreviewTracks } from '../utils/trackPreviewOrder.js';
+} from '../../utils/playlistSort.js';
+import { toPlayableTrack } from '../../utils/playableTrack.js';
+import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import { artistSearchTexts, deriveArtistPage } from '../../utils/artistPage.js';
+import { shufflePreviewTracks } from '../../utils/trackPreviewOrder.js';
 import {
   sortSetlistLibraryTracks,
   sortSetlistLocalTracks,
-} from '../utils/trackSourceDisplay.js';
+} from '../../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
 const { confirm: confirmAction } = useAppConfirmation();
@@ -95,13 +95,6 @@ const {
   resolvePhotos: resolveArtistPhotos,
   choosePhoto: chooseArtistPhoto,
   clearPhoto: clearArtistPhoto,
-  mergeArtists,
-  splitArtistCredit,
-  setDisplayName: setArtistDisplayName,
-  undoOrganization: undoArtistOrganization,
-  searchCatalog,
-  applyCatalogCandidate,
-  cancelCatalogSearch,
 } = useArtistIndex();
 const artistPhotoCandidates = useArtistPhotoCandidates({
   refreshArtistIndex,
@@ -159,11 +152,6 @@ const artistPage = computed(() =>
         tracksById: libraryTracksById.value,
       })
     : null,
-);
-const selectedArtistIdentity = computed(() =>
-  artistIndexState.index?.artists?.find(
-    (artist) => artist.id === artistPage.value?.id,
-  ),
 );
 // Queue/history source of the open collection: playlist, album or artist.
 // Library views are collections too; the prefix never collides with
@@ -379,84 +367,7 @@ function chooseSelectedArtistPhoto() {
 }
 
 function openArtistIdentity() {
-  if (selectedArtistIdentity.value) artistIdentityOpen.value = true;
-}
-
-function closeArtistIdentity() {
-  if (artistIndexState.isMutating) return;
-  const lookupArtistId = artistIndexState.identityLookup.artistId;
-  if (lookupArtistId) void cancelCatalogSearch(lookupArtistId);
-  artistIdentityOpen.value = false;
-}
-
-function handleArtistCatalogSearch() {
-  const current = selectedArtistIdentity.value;
-  if (current) void searchCatalog(current.id);
-}
-
-async function handleArtistCatalogApply(candidateId) {
-  const current = selectedArtistIdentity.value;
-  if (!current) return;
-  const result = await applyCatalogCandidate(current.id, candidateId);
-  if (result?.status === 'ok' && result.artistId) {
-    selectArtist(result.artistId);
-  }
-}
-
-async function handleArtistMerge(targetArtistId) {
-  const current = selectedArtistIdentity.value;
-  const target = artistIndexState.index?.artists?.find(
-    (artist) => artist.id === targetArtistId,
-  );
-  if (!current || !target) return;
-  const confirmed = await confirmAction({
-    title: '合併藝人？',
-    subject: `${current.name} ＋ ${target.name}`,
-    message: '兩邊的曲目會整理到同一個藝人頁，原始曲目標示不會改寫。',
-    detail: '若判斷有誤，可以用「復原上一次整理」或再拆分標示。',
-    confirmLabel: '合併藝人',
-  });
-  if (!confirmed) return;
-  const result = await mergeArtists([current.id, target.id]);
-  if (result?.status === 'ok' && result.artistId) {
-    selectArtist(result.artistId);
-  }
-}
-
-async function handleArtistDisplayName(displayName) {
-  const current = selectedArtistIdentity.value;
-  if (!current) return;
-  const result = await setArtistDisplayName(current.id, displayName);
-  if (result?.status === 'ok' && result.artistId) {
-    selectArtist(result.artistId);
-  }
-}
-
-async function handleArtistSplit(creditId) {
-  const current = selectedArtistIdentity.value;
-  const credit = current?.credits?.find((entry) => entry.id === creditId);
-  if (!current || !credit) return;
-  const confirmed = await confirmAction({
-    title: '拆分藝人標示？',
-    subject: credit.name,
-    message: '這個標示及其曲目會回到獨立的藝人頁。',
-    detail: '其他已連結的藝人標示不受影響，且可復原上一次整理。',
-    confirmLabel: '拆分標示',
-  });
-  if (!confirmed) return;
-  const result = await splitArtistCredit(current.id, credit.id);
-  if (result?.status === 'ok' && result.artistId) {
-    selectArtist(result.artistId);
-  }
-}
-
-async function handleArtistUndo() {
-  const firstTrackId = selectedArtistIdentity.value?.trackIds?.[0];
-  const result = await undoArtistOrganization();
-  if (result?.status !== 'ok' || !firstTrackId) return;
-  const fallbackArtistId =
-    artistIndexState.index?.trackArtistIds?.[firstTrackId]?.[0];
-  if (fallbackArtistId) selectArtist(fallbackArtistId);
+  if (artistPage.value?.id) artistIdentityOpen.value = true;
 }
 
 function handleCollectionMenuAction(value) {
@@ -601,8 +512,6 @@ watch(
   ],
   () => {
     selectedTrackId.value = null;
-    const lookupArtistId = artistIndexState.identityLookup.artistId;
-    if (lookupArtistId) void cancelCatalogSearch(lookupArtistId);
     artistIdentityOpen.value = false;
     artistPhotoCandidates.close();
     closeAddMenu();
@@ -856,7 +765,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="setlist-view">
+  <div class="library-browse-content">
     <TrackMetadataModal
       :open="trackMetadataEditor.isOpen.value"
       :title="trackMetadataEditor.state.titleDraft"
@@ -889,23 +798,10 @@ onMounted(async () => {
       @update-artist="trackMetadataEditor.setArtistDraft"
     />
 
-    <ArtistIdentityModal
+    <LibraryArtistIdentityController
       :open="artistIdentityOpen"
-      :artist="selectedArtistIdentity"
-      :artists="artistIndexState.index?.artists ?? []"
-      :can-undo="artistIndexState.index?.canUndoOrganization ?? false"
-      :busy="artistIndexState.isMutating"
-      :error="artistIndexState.error?.message ?? ''"
-      :lookup-status="artistIndexState.identityLookup.status"
-      :catalog-candidates="artistIndexState.identityLookup.candidates"
-      :lookup-error="artistIndexState.identityLookup.error"
-      @close="closeArtistIdentity"
-      @merge="handleArtistMerge"
-      @set-display-name="handleArtistDisplayName"
-      @split="handleArtistSplit"
-      @undo="handleArtistUndo"
-      @search-catalog="handleArtistCatalogSearch"
-      @apply-catalog="handleArtistCatalogApply"
+      :artist-id="artistPage?.id ?? ''"
+      @close="artistIdentityOpen = false"
     />
 
     <ArtistPhotoCandidateModal
@@ -944,7 +840,7 @@ onMounted(async () => {
       @menu-select="handlePreviewMenuSelect"
     />
 
-    <div class="setlist-view__main" :style="stickyOffsetStyle">
+    <div class="library-browse-content__main" :style="stickyOffsetStyle">
       <AppFolderCompactBar
         :title="pageTitle"
         :title-lang="
@@ -963,7 +859,10 @@ onMounted(async () => {
         </template>
       </AppFolderCompactBar>
 
-      <div ref="collectionHeader" class="setlist-view__collection-header">
+      <div
+        ref="collectionHeader"
+        class="library-browse-content__collection-header"
+      >
         <SetlistCollectionHeader
           v-model:search-query="searchQuery"
           :entity-kind="mode === 'all' ? 'library' : mode"
@@ -1098,24 +997,24 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.setlist-view {
+.library-browse-content {
   display: grid;
   min-block-size: 100%;
 }
 
-.setlist-view__main {
+.library-browse-content__main {
   min-width: 0;
   min-block-size: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.setlist-view__collection-header {
+.library-browse-content__collection-header {
   min-width: 0;
   flex: 0 0 auto;
 }
 
-.setlist-view__session-boundary {
+.library-browse-content__session-boundary {
   display: flex;
   min-width: 0;
   min-height: 0;

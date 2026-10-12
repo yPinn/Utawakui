@@ -35,7 +35,7 @@ import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 
 const props = defineProps({
-  // Passed from SetlistView to avoid a duplicate library subscription.
+  // Passed from the Library shell to avoid a duplicate library subscription.
   tracksById: { type: Map, default: () => new Map() },
   libraryView: { type: String, default: 'all' },
   compact: { type: Boolean, default: false },
@@ -50,7 +50,7 @@ const {
 } = useArtistIndex();
 
 const emit = defineEmits([
-  'activateSetlist',
+  'activateLibrary',
   'libraryViewSelect',
   'playlistAction',
 ]);
@@ -250,7 +250,7 @@ function toggleArtistPlayback(artist, event) {
 function selectArtistRow(id) {
   closePlaylistMenu();
   selectArtist(id);
-  emit('activateSetlist');
+  emit('activateLibrary');
 }
 
 // Artist rows are read-only references with no collection menu.
@@ -370,19 +370,19 @@ function closePlaylistMenu() {
 function selectPlaylist(id) {
   closePlaylistMenu();
   select(id);
-  emit('activateSetlist');
+  emit('activateLibrary');
 }
 
 function selectLibraryView(view) {
   closePlaylistMenu();
   select(null);
   emit('libraryViewSelect', view);
-  emit('activateSetlist');
+  emit('activateLibrary');
 }
 
 function createPlaylist() {
   closePlaylistMenu();
-  emit('activateSetlist');
+  emit('activateLibrary');
   create();
 }
 
@@ -393,7 +393,7 @@ function handleMenuSelect(value) {
     contextKind === 'global' &&
     value.action === PLAYLIST_MENU_ACTIONS.createPlaylist
   ) {
-    emit('activateSetlist');
+    emit('activateLibrary');
     create();
     return;
   }

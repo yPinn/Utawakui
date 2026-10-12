@@ -6,8 +6,12 @@ const readSource = (path) =>
 
 const appSource = readSource('../App.vue');
 const libraryPageSource = readSource('../pages/LibraryPage.vue');
-const pageSource = readSource('../components/playlists/SetlistPage.vue');
-const setlistSource = readSource('../views/SetlistView.vue');
+const pageSource = readSource(
+  '../components/library/LibraryBrowseWorkspace.vue',
+);
+const setlistSource = readSource(
+  '../components/library/LibraryBrowseContent.vue',
+);
 const headerSource = readSource(
   '../components/playlists/SetlistCollectionHeader.vue',
 );
@@ -21,13 +25,13 @@ describe('Setlist Token v2 surface cutover', () => {
   it('keeps Library browse in Folder document mode with one page scroll owner', () => {
     expect(appSource).toContain('library: LibraryPage');
     expect(libraryPageSource).toContain(
-      '<SetlistPage v-if="libraryWorkspace === \'browse\'"',
+      '<LibraryBrowseWorkspace v-if="libraryWorkspace === \'browse\'"',
     );
     expect(libraryPageSource).toContain('surface-id="library"');
     expect(pageSource).toContain('<AppFolderPage');
     expect(pageSource).toContain('mode="document"');
     expect(setlistSource).not.toMatch(
-      /\.setlist-view(?!--session)[^{]*\{[^}]*overflow-y\s*:/su,
+      /\.library-browse-content[^{]*\{[^}]*overflow-y\s*:/su,
     );
   });
 
@@ -40,7 +44,7 @@ describe('Setlist Token v2 surface cutover', () => {
 
   it('keeps Library-owned modal and action menu under the Library surface owner', () => {
     expect(libraryPageSource).toMatch(
-      /<AppSurfaceBoundary[\s\S]*?surface-id="library"[\s\S]*?<SetlistPage/u,
+      /<AppSurfaceBoundary[\s\S]*?surface-id="library"[\s\S]*?<LibraryBrowseWorkspace/u,
     );
     expect(pageSource).not.toContain('AppSurfaceBoundary');
     expect(setlistSource).toContain('<TrackMetadataModal');

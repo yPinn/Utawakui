@@ -1,4 +1,4 @@
-// Shared between SetlistView.vue (dispatches these actions from its own
+// Shared between LibraryBrowseContent.vue (dispatches these actions from its own
 // track/playlist context menus) and PlaylistSidebar.vue (emits them from its
 // row context menu) — a single source keeps the action-string vocabulary
 // from drifting between the emitter and the handler.
@@ -13,7 +13,7 @@ export const PLAYLIST_MENU_ACTIONS = {
   download: 'download',
 };
 
-// Track action vocabulary is shared by SetlistView and caller-owned track
+// Track action vocabulary is shared by LibraryBrowseContent and caller-owned track
 // menus such as QueuePanel. The menu surface stays trigger-neutral; callers
 // still decide which actions are available in their own product context.
 export const TRACK_MENU_ACTIONS = {
@@ -39,7 +39,7 @@ export function libraryViewTitle(libraryView) {
 // Playlists selectable as an "add to X" target: albums are always excluded
 // (their membership is read-only). excludeId drops the playlist itself
 // (PlaylistSidebar's "merge into another playlist" menu); excludeTrackId
-// drops playlists that already contain the track (SetlistView's per-track
+// drops playlists that already contain the track (LibraryBrowseContent's per-track
 // "add to playlist" menu). Neither exclusion applies unless passed.
 export function addToPlaylistTargets(
   playlists,

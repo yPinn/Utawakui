@@ -32,8 +32,8 @@ const albumSupportingContent = computed(() => {
 });
 
 // One module-scope read-only projection feeds both halves of the album page:
-// related albums stay on the paper in SetlistView, while the artist summary
-// sits after that paper in SetlistPage's Folder extension.
+// related albums stay on the paper in LibraryBrowseContent, while the artist
+// summary sits after that paper in LibraryBrowseWorkspace's Folder extension.
 export function useSetlistAlbumContext() {
   return { albumEntries, albumSupportingContent };
 }

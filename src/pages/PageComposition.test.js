@@ -11,7 +11,7 @@ describe('destination Page composition', () => {
     const source = readPage('./LibraryPage.vue');
 
     expect(source).toContain(
-      "import SetlistPage from '../components/playlists/SetlistPage.vue';",
+      "import LibraryBrowseWorkspace from '../components/library/LibraryBrowseWorkspace.vue';",
     );
     expect(source).toContain('libraryWorkspace');
     expect(source).toContain('openLibraryContent');
@@ -22,7 +22,7 @@ describe('destination Page composition', () => {
     expect(source).toContain('<AppSurfaceBoundary');
     expect(source).toContain('surface-id="library"');
     expect(source).toContain(
-      '<SetlistPage v-if="libraryWorkspace === \'browse\'"',
+      '<LibraryBrowseWorkspace v-if="libraryWorkspace === \'browse\'"',
     );
     expect(source).toContain('returnToLibrary');
     expect(source).toContain("focusAppDestinationTrigger('library')");

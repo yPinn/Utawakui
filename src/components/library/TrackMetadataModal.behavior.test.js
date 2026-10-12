@@ -7,7 +7,7 @@ const modalSource = readFileSync(
   'utf8',
 );
 const setlistSource = readFileSync(
-  new URL('../../views/SetlistView.vue', import.meta.url),
+  new URL('./LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
 const queueSource = readFileSync(

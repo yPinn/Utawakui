@@ -46,7 +46,7 @@ describe('UiButton destructive consumers', () => {
     expect(trackMenu).toMatch(
       /key: 'delete-track',[\s\S]*?danger: true,[\s\S]*?action: TRACK_MENU_ACTIONS\.deleteTrack/u,
     );
-    const setlist = source('../../views/SetlistView.vue');
+    const setlist = source('../library/LibraryBrowseContent.vue');
     expect(setlist).toContain('TRACK_MENU_ACTIONS.deleteTrack');
     expect(setlist).toContain('useAppConfirmation');
     expect(setlist).not.toContain('window.confirm');
