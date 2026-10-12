@@ -20,7 +20,7 @@ const consumerSources = [
   '../playlists/StudioLibraryTrackTable.vue',
   '../playback/PlayerBar.vue',
   '../playlists/StudioLibraryDossier.vue',
-  '../playlists/TrackContextPanel.vue',
+  '../playback/context/TrackContextPanel.vue',
   '../layout/AppRightDock.vue',
   '../layout/AppRightDockHeader.vue',
   '../layout/AppRightDockPanel.vue',
@@ -389,7 +389,7 @@ describe('DemoDensity', () => {
       '--ui-right-dock-',
     );
     expect(
-      sourceByName.get('../playlists/TrackContextPanel.vue'),
+      sourceByName.get('../playback/context/TrackContextPanel.vue'),
     ).not.toContain('--ui-right-dock-');
     // Production Folder layout no longer references this
     // Candidate-only token (see its own comment) — DemoView.vue is the

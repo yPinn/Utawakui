@@ -16,7 +16,7 @@ import {
   createLocalArtistSummary,
   createTrackReadiness,
 } from '../utils/trackContextPresentation.js';
-import TrackContextPanel from '../components/playlists/TrackContextPanel.vue';
+import TrackContextPanel from '../components/playback/context/TrackContextPanel.vue';
 
 const emit = defineEmits(['collapse', 'openQueue']);
 

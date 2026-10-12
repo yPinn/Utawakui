@@ -5,7 +5,7 @@ const artworkTone = vi.hoisted(() => ({
   load: vi.fn(async () => null),
 }));
 
-vi.mock('../../utils/artworkTone.js', () => ({
+vi.mock('../../../utils/artworkTone.js', () => ({
   loadArtworkTone: artworkTone.load,
 }));
 
@@ -17,35 +17,35 @@ import TrackLyricsPreview from './TrackLyricsPreview.vue';
 import TrackQueuePreview from './TrackQueuePreview.vue';
 import TrackCapabilityItem from './TrackCapabilityItem.vue';
 import TrackCapabilityMatrix from './TrackCapabilityMatrix.vue';
-import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
-import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
-import AppRightDockSection from '../layout/AppRightDockSection.vue';
-import UiButton from '../ui/UiButton.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
-import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
-import UiHint from '../ui/UiHint.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
-import UiScrollLayout from '../ui/UiScrollLayout.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiSeparator from '../ui/UiSeparator.vue';
-import UiStatusIcon from '../ui/UiStatusIcon.vue';
-import UiTextButton from '../ui/UiTextButton.vue';
-import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
-import UiTrackRow from '../ui/UiTrackRow.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
-import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
-import TrackArtistCredits from '../track/TrackArtistCredits.vue';
-import QueueTrackButton from '../queue/QueueTrackButton.vue';
-import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
-import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';
+import AppRightDockHeader from '../../layout/AppRightDockHeader.vue';
+import AppRightDockPanel from '../../layout/AppRightDockPanel.vue';
+import AppRightDockSection from '../../layout/AppRightDockSection.vue';
+import UiButton from '../../ui/UiButton.vue';
+import UiCollageThumb from '../../ui/UiCollageThumb.vue';
+import UiArtworkOverlay from '../../ui/UiArtworkOverlay.vue';
+import UiHint from '../../ui/UiHint.vue';
+import UiIconButton from '../../ui/UiIconButton.vue';
+import UiMarqueeText from '../../ui/UiMarqueeText.vue';
+import UiScrollLayout from '../../ui/UiScrollLayout.vue';
+import UiScrollRegion from '../../ui/UiScrollRegion.vue';
+import UiSeparator from '../../ui/UiSeparator.vue';
+import UiStatusIcon from '../../ui/UiStatusIcon.vue';
+import UiTextButton from '../../ui/UiTextButton.vue';
+import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
+import UiTrackRow from '../../ui/UiTrackRow.vue';
+import UiTrackThumb from '../../ui/UiTrackThumb.vue';
+import UiTooltipSurface from '../../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
+import QueueTrackButton from '../../queue/QueueTrackButton.vue';
+import RightDockTrackArtworkCue from '../../queue/RightDockTrackArtworkCue.vue';
+import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';
 import {
   attachClientRender,
   findAll,
   mount,
   textContent,
   trigger,
-} from '../ui/uiTestHost.js';
+} from '../../ui/uiTestHost.js';
 
 for (const [component, filename] of [
   [TrackContextPanel, './TrackContextPanel.vue'],
@@ -56,28 +56,28 @@ for (const [component, filename] of [
   [TrackQueuePreview, './TrackQueuePreview.vue'],
   [TrackCapabilityItem, './TrackCapabilityItem.vue'],
   [TrackCapabilityMatrix, './TrackCapabilityMatrix.vue'],
-  [AppRightDockHeader, '../layout/AppRightDockHeader.vue'],
-  [AppRightDockPanel, '../layout/AppRightDockPanel.vue'],
-  [AppRightDockSection, '../layout/AppRightDockSection.vue'],
-  [UiButton, '../ui/UiButton.vue'],
-  [UiCollageThumb, '../ui/UiCollageThumb.vue'],
-  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
-  [UiHint, '../ui/UiHint.vue'],
-  [UiIconButton, '../ui/UiIconButton.vue'],
-  [UiMarqueeText, '../ui/UiMarqueeText.vue'],
-  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
-  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
-  [UiSeparator, '../ui/UiSeparator.vue'],
-  [UiStatusIcon, '../ui/UiStatusIcon.vue'],
-  [UiTextButton, '../ui/UiTextButton.vue'],
-  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
-  [UiTrackRow, '../ui/UiTrackRow.vue'],
-  [UiTrackThumb, '../ui/UiTrackThumb.vue'],
-  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
-  [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
-  [QueueTrackButton, '../queue/QueueTrackButton.vue'],
-  [RightDockTrackArtworkCue, '../queue/RightDockTrackArtworkCue.vue'],
-  [RightDockTrackMenuButton, '../queue/RightDockTrackMenuButton.vue'],
+  [AppRightDockHeader, '../../layout/AppRightDockHeader.vue'],
+  [AppRightDockPanel, '../../layout/AppRightDockPanel.vue'],
+  [AppRightDockSection, '../../layout/AppRightDockSection.vue'],
+  [UiButton, '../../ui/UiButton.vue'],
+  [UiCollageThumb, '../../ui/UiCollageThumb.vue'],
+  [UiArtworkOverlay, '../../ui/UiArtworkOverlay.vue'],
+  [UiHint, '../../ui/UiHint.vue'],
+  [UiIconButton, '../../ui/UiIconButton.vue'],
+  [UiMarqueeText, '../../ui/UiMarqueeText.vue'],
+  [UiScrollLayout, '../../ui/UiScrollLayout.vue'],
+  [UiScrollRegion, '../../ui/UiScrollRegion.vue'],
+  [UiSeparator, '../../ui/UiSeparator.vue'],
+  [UiStatusIcon, '../../ui/UiStatusIcon.vue'],
+  [UiTextButton, '../../ui/UiTextButton.vue'],
+  [UiOverflowTooltip, '../../ui/UiOverflowTooltip.vue'],
+  [UiTrackRow, '../../ui/UiTrackRow.vue'],
+  [UiTrackThumb, '../../ui/UiTrackThumb.vue'],
+  [UiTooltipSurface, '../../ui/tooltip/UiTooltipSurface.vue'],
+  [TrackArtistCredits, '../../track/TrackArtistCredits.vue'],
+  [QueueTrackButton, '../../queue/QueueTrackButton.vue'],
+  [RightDockTrackArtworkCue, '../../queue/RightDockTrackArtworkCue.vue'],
+  [RightDockTrackMenuButton, '../../queue/RightDockTrackMenuButton.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -245,10 +245,10 @@ describe('TrackContextPanel', () => {
     );
 
     expect(source).toContain(
-      "import AppRightDockPanel from '../layout/AppRightDockPanel.vue';",
+      "import AppRightDockPanel from '../../layout/AppRightDockPanel.vue';",
     );
     expect(source).toContain(
-      "import AppRightDockSection from '../layout/AppRightDockSection.vue';",
+      "import AppRightDockSection from '../../layout/AppRightDockSection.vue';",
     );
     expect(source).not.toContain('AppRightDockHeader');
     expect(source).not.toContain('UiScrollRegion');
@@ -464,7 +464,7 @@ describe('TrackContextPanel', () => {
     );
     expect(source).toContain(':loading="lyricsLoading"');
     const viewSource = readFileSync(
-      new URL('../../views/StudioLibraryContextView.vue', import.meta.url),
+      new URL('../../../views/StudioLibraryContextView.vue', import.meta.url),
       'utf8',
     );
     expect(viewSource).toContain(':lyrics-loading="lyricsLoading"');

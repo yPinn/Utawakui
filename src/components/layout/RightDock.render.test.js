@@ -3,7 +3,7 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import AppRightDock from './AppRightDock.vue';
 import AppRightDockHeader from './AppRightDockHeader.vue';
-import TrackContextPanel from '../playlists/TrackContextPanel.vue';
+import TrackContextPanel from '../playback/context/TrackContextPanel.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 
 function render(component, props = {}, slots = {}) {

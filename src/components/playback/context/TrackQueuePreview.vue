@@ -1,8 +1,8 @@
 <script setup>
 import { computed, shallowRef, useTemplateRef } from 'vue';
-import AppRightDockSection from '../layout/AppRightDockSection.vue';
-import QueueTrackButton from '../queue/QueueTrackButton.vue';
-import UiButton from '../ui/UiButton.vue';
+import AppRightDockSection from '../../layout/AppRightDockSection.vue';
+import QueueTrackButton from '../../queue/QueueTrackButton.vue';
+import UiButton from '../../ui/UiButton.vue';
 import TrackContextActions from './TrackContextActions.vue';
 
 const props = defineProps({

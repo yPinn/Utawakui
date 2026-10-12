@@ -229,7 +229,10 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(folderLayoutSource).not.toContain('@media (max-width: 70rem)');
     expect(contextSource).toContain('TrackContextPanel');
     const inspectorSource = readFileSync(
-      new URL('../components/playlists/TrackContextPanel.vue', import.meta.url),
+      new URL(
+        '../components/playback/context/TrackContextPanel.vue',
+        import.meta.url,
+      ),
       'utf8',
     );
     expect(rightDockSource).toContain('.app-right-dock--collapsed');

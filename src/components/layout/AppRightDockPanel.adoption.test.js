@@ -6,22 +6,28 @@ function readSource(path) {
 }
 
 const queueSource = readSource('../queue/QueuePanel.vue');
-const contextSource = readSource('../playlists/TrackContextPanel.vue');
-const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
+const contextSource = readSource('../playback/context/TrackContextPanel.vue');
+const queuePreviewSource = readSource(
+  '../playback/context/TrackQueuePreview.vue',
+);
 const preparationSource = readSource('../preparation/PreparationDockPanel.vue');
 const importSource = readSource('../import/ImportDockContent.vue');
 const separationSource = readSource('../separation/SeparationDockContent.vue');
 
 describe('AppRightDockPanel production adoption', () => {
   it.each([
-    ['QueuePanel', queueSource],
-    ['TrackContextPanel', contextSource],
-    ['PreparationDockPanel', preparationSource],
+    ['QueuePanel', queueSource, '../layout/AppRightDockPanel.vue'],
+    ['TrackContextPanel', contextSource, '../../layout/AppRightDockPanel.vue'],
+    [
+      'PreparationDockPanel',
+      preparationSource,
+      '../layout/AppRightDockPanel.vue',
+    ],
   ])(
     '%s delegates shared Dock geometry and scrolling to the compound',
-    (_, source) => {
+    (_, source, importPath) => {
       expect(source).toContain(
-        "import AppRightDockPanel from '../layout/AppRightDockPanel.vue';",
+        `import AppRightDockPanel from '${importPath}';`,
       );
       expect(source).toContain('<AppRightDockPanel');
       expect(source).not.toContain('AppRightDockHeader');
@@ -45,7 +51,7 @@ describe('AppRightDockPanel production adoption', () => {
 
   it('uses feature-owned playback sections below the media Hero', () => {
     expect(contextSource).toContain(
-      "import AppRightDockSection from '../layout/AppRightDockSection.vue';",
+      "import AppRightDockSection from '../../layout/AppRightDockSection.vue';",
     );
     expect(contextSource).not.toContain('TrackContextBlock');
     expect(contextSource).not.toContain('useStudioLibraryInspectorWidth');

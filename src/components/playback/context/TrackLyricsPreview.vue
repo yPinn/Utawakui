@@ -1,8 +1,8 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import { loadArtworkTone } from '../../utils/artworkTone.js';
-import AppRightDockSection from '../layout/AppRightDockSection.vue';
-import UiButton from '../ui/UiButton.vue';
+import { loadArtworkTone } from '../../../utils/artworkTone.js';
+import AppRightDockSection from '../../layout/AppRightDockSection.vue';
+import UiButton from '../../ui/UiButton.vue';
 
 const props = defineProps({
   preview: { type: Object, default: null },

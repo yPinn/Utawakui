@@ -2,30 +2,30 @@ import { nextTick, reactive } from 'vue';
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TrackLyricsPreview from './TrackLyricsPreview.vue';
-import AppRightDockSection from '../layout/AppRightDockSection.vue';
-import UiButton from '../ui/UiButton.vue';
-import UiSeparator from '../ui/UiSeparator.vue';
+import AppRightDockSection from '../../layout/AppRightDockSection.vue';
+import UiButton from '../../ui/UiButton.vue';
+import UiSeparator from '../../ui/UiSeparator.vue';
 import {
   attachClientRender,
   findAll,
   mount,
   textContent,
   trigger,
-} from '../ui/uiTestHost.js';
+} from '../../ui/uiTestHost.js';
 
 const artworkTone = vi.hoisted(() => ({
   load: vi.fn(),
 }));
 
-vi.mock('../../utils/artworkTone.js', () => ({
+vi.mock('../../../utils/artworkTone.js', () => ({
   loadArtworkTone: artworkTone.load,
 }));
 
 for (const [component, filename] of [
   [TrackLyricsPreview, './TrackLyricsPreview.vue'],
-  [AppRightDockSection, '../layout/AppRightDockSection.vue'],
-  [UiButton, '../ui/UiButton.vue'],
-  [UiSeparator, '../ui/UiSeparator.vue'],
+  [AppRightDockSection, '../../layout/AppRightDockSection.vue'],
+  [UiButton, '../../ui/UiButton.vue'],
+  [UiSeparator, '../../ui/UiSeparator.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

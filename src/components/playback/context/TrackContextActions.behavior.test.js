@@ -11,13 +11,13 @@ describe('TrackContextActions', () => {
     );
 
     expect(source).toContain(
-      "import { Ellipsis } from '../../icons/index.js';",
+      "import { Ellipsis } from '../../../icons/index.js';",
     );
     expect(source).toContain(
-      "import TrackActionMenu from '../track/TrackActionMenu.vue';",
+      "import TrackActionMenu from '../../track/TrackActionMenu.vue';",
     );
     expect(source).toContain(
-      "import TrackMetadataModal from '../library/TrackMetadataModal.vue';",
+      "import TrackMetadataModal from '../../library/TrackMetadataModal.vue';",
     );
     expect(source).toContain('variant="overlay"');
     expect(source).toContain('label="歌曲選項"');
@@ -39,7 +39,7 @@ describe('TrackContextActions', () => {
       "validator: (value) => ['overlay', 'row'].includes(value)",
     );
     expect(source).toContain(
-      "import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';",
+      "import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';",
     );
     expect(source).toContain('v-if="trigger === \'overlay\'"');
     expect(source).toContain(':menu-open="Boolean(trackMenu)"');

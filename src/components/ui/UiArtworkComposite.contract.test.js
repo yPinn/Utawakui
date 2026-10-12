@@ -72,7 +72,7 @@ describe('rounded artwork composite clip', () => {
 
   it('routes every overlay host through a composite layer', () => {
     const hosts = {
-      '../playlists/TrackContextHero.vue':
+      '../playback/context/TrackContextHero.vue':
         /<UiTrackThumb[\s\S]*?<template #overlay>/u,
       './UiTrackRow.vue':
         /<UiTrackThumb[\s\S]*?<template v-if="\$slots\.artworkOverlay" #overlay>/u,
@@ -100,7 +100,10 @@ describe('rounded artwork composite clip', () => {
       rule(read('./UiTrackRow.vue'), '.ui-track__artwork-action'),
     ).not.toMatch(/overflow:/u);
     expect(
-      rule(read('../playlists/TrackContextHero.vue'), '.track-context-hero'),
+      rule(
+        read('../playback/context/TrackContextHero.vue'),
+        '.track-context-hero',
+      ),
     ).not.toMatch(/overflow:/u);
     expect(
       rule(

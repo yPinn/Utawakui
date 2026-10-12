@@ -1,12 +1,12 @@
 <script setup>
 import { computed } from 'vue';
-import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
-import { useArtistIndex } from '../../composables/useArtistIndex.js';
-import { artistCreditLinks } from '../../utils/artistPage.js';
-import TrackArtistCredits from '../track/TrackArtistCredits.vue';
-import UiTextButton from '../ui/UiTextButton.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
-import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import { useAlbumNavigation } from '../../../composables/useAlbumNavigation.js';
+import { useArtistIndex } from '../../../composables/useArtistIndex.js';
+import { artistCreditLinks } from '../../../utils/artistPage.js';
+import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
+import UiTextButton from '../../ui/UiTextButton.vue';
+import UiTrackThumb from '../../ui/UiTrackThumb.vue';
+import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
 
 const props = defineProps({
   track: { type: Object, required: true },

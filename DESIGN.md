@@ -1090,9 +1090,9 @@ Components should use a single product vocabulary across library, import, lyrics
 Component folders are grouped by product role, not by current visual style. Existing UI may be temporary, but new or rebuilt components should land in the category that describes their responsibility.
 
 - `src/components/layout/`: app shell, global navigation, and long-lived frame components.
-- `src/components/playback/`: persistent playback controls, transport, pitch/tempo, and now-playing surfaces.
+- `src/components/playback/`: persistent playback controls, transport, pitch/tempo, now-playing surfaces, and shell playback context under `context/`.
 - `src/components/library/`: Library destination browsing, collection presentation, album grouping, Folder artifacts, metadata, and artist-identity surfaces.
-- `src/components/playlists/`: playlist membership and navigation, playback context, and Studio Library review components.
+- `src/components/playlists/`: playlist membership and navigation plus Studio Library review components.
 - `src/components/track/`: track identity, actions, shared tables, and the independent track-preview surface.
 - `src/components/queue/`: active queue, upcoming tracks, reorderable queue sections.
 - `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.

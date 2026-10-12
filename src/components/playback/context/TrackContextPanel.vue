@@ -1,17 +1,17 @@
 <script setup>
 import { computed } from 'vue';
-import { formatDuration } from '../../utils/format.js';
-import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
-import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import { formatDuration } from '../../../utils/format.js';
+import AppRightDockPanel from '../../layout/AppRightDockPanel.vue';
+import AppRightDockSection from '../../layout/AppRightDockSection.vue';
 import TrackArtistPreview from './TrackArtistPreview.vue';
 import TrackCapabilityMatrix from './TrackCapabilityMatrix.vue';
 import TrackContextActions from './TrackContextActions.vue';
 import TrackContextHero from './TrackContextHero.vue';
 import TrackLyricsPreview from './TrackLyricsPreview.vue';
 import TrackQueuePreview from './TrackQueuePreview.vue';
-import UiHint from '../ui/UiHint.vue';
-import UiSeparator from '../ui/UiSeparator.vue';
-import UiTextButton from '../ui/UiTextButton.vue';
+import UiHint from '../../ui/UiHint.vue';
+import UiSeparator from '../../ui/UiSeparator.vue';
+import UiTextButton from '../../ui/UiTextButton.vue';
 
 const props = defineProps({
   currentTrack: { type: Object, default: null },

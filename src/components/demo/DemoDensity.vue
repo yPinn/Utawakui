@@ -303,7 +303,7 @@ const CURRENT_MAPPINGS = [
       'src/components/layout/AppRightDockHeader.vue',
       'src/components/layout/AppRightDockPanel.vue',
       'src/components/queue/QueuePanel.vue',
-      'src/components/playlists/TrackContextPanel.vue',
+      'src/components/playback/context/TrackContextPanel.vue',
     ],
     value: 'Side panel 基準邊距固定 0.5rem／8 CSS px',
     status:

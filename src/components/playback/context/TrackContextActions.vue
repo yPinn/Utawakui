@@ -1,16 +1,16 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
-import { useLibrary } from '../../composables/useLibrary.js';
-import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
-import { usePlaylists } from '../../composables/usePlaylists.js';
-import { useTrackMetadataEditor } from '../../composables/useTrackMetadataEditor.js';
-import { Ellipsis } from '../../icons/index.js';
-import { TRACK_MENU_ACTIONS } from '../../utils/playlistMenu.js';
-import TrackMetadataModal from '../library/TrackMetadataModal.vue';
-import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';
-import TrackActionMenu from '../track/TrackActionMenu.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
+import { useAlbumNavigation } from '../../../composables/useAlbumNavigation.js';
+import { useLibrary } from '../../../composables/useLibrary.js';
+import { usePlaybackQueue } from '../../../composables/usePlaybackQueue.js';
+import { usePlaylists } from '../../../composables/usePlaylists.js';
+import { useTrackMetadataEditor } from '../../../composables/useTrackMetadataEditor.js';
+import { Ellipsis } from '../../../icons/index.js';
+import { TRACK_MENU_ACTIONS } from '../../../utils/playlistMenu.js';
+import TrackMetadataModal from '../../library/TrackMetadataModal.vue';
+import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';
+import TrackActionMenu from '../../track/TrackActionMenu.vue';
+import UiIconButton from '../../ui/UiIconButton.vue';
 
 const props = defineProps({
   track: { type: Object, required: true },

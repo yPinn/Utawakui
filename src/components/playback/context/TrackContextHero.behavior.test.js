@@ -1,21 +1,21 @@
 import { readFileSync } from 'node:fs';
 import { h } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
-import UiTextButton from '../ui/UiTextButton.vue';
-import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
-import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
-import TrackArtistCredits from '../track/TrackArtistCredits.vue';
+import UiArtworkOverlay from '../../ui/UiArtworkOverlay.vue';
+import UiIconButton from '../../ui/UiIconButton.vue';
+import UiMarqueeText from '../../ui/UiMarqueeText.vue';
+import UiTextButton from '../../ui/UiTextButton.vue';
+import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
+import UiTrackThumb from '../../ui/UiTrackThumb.vue';
+import UiTooltipSurface from '../../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
 import {
   attachClientRender,
   findAll,
   mount,
   textContent,
   trigger,
-} from '../ui/uiTestHost.js';
+} from '../../ui/uiTestHost.js';
 
 const navigation = vi.hoisted(() => ({
   albums: new Map(),
@@ -24,14 +24,14 @@ const navigation = vi.hoisted(() => ({
 }));
 const artistIndexState = vi.hoisted(() => ({ index: null }));
 
-vi.mock('../../composables/useAlbumNavigation.js', () => ({
+vi.mock('../../../composables/useAlbumNavigation.js', () => ({
   useAlbumNavigation: () => ({
     albumForTrack: (candidate) => navigation.albums.get(candidate?.id) ?? null,
     jumpToAlbum: navigation.jumpToAlbum,
     jumpToArtist: navigation.jumpToArtist,
   }),
 }));
-vi.mock('../../composables/useArtistIndex.js', () => ({
+vi.mock('../../../composables/useArtistIndex.js', () => ({
   useArtistIndex: () => ({ state: artistIndexState }),
 }));
 
@@ -39,14 +39,14 @@ const { default: TrackContextHero } = await import('./TrackContextHero.vue');
 
 for (const [component, filename] of [
   [TrackContextHero, './TrackContextHero.vue'],
-  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
-  [UiIconButton, '../ui/UiIconButton.vue'],
-  [UiMarqueeText, '../ui/UiMarqueeText.vue'],
-  [UiTextButton, '../ui/UiTextButton.vue'],
-  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
-  [UiTrackThumb, '../ui/UiTrackThumb.vue'],
-  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
-  [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
+  [UiArtworkOverlay, '../../ui/UiArtworkOverlay.vue'],
+  [UiIconButton, '../../ui/UiIconButton.vue'],
+  [UiMarqueeText, '../../ui/UiMarqueeText.vue'],
+  [UiTextButton, '../../ui/UiTextButton.vue'],
+  [UiOverflowTooltip, '../../ui/UiOverflowTooltip.vue'],
+  [UiTrackThumb, '../../ui/UiTrackThumb.vue'],
+  [UiTooltipSurface, '../../ui/tooltip/UiTooltipSurface.vue'],
+  [TrackArtistCredits, '../../track/TrackArtistCredits.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

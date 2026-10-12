@@ -85,7 +85,7 @@ graph 不改變產品 feature gate、IPC trust boundary 或正式 workflow owner
 surface stack 與 foreground navigation，不接管播放或處理資料。Token v2 Studio
 Library metadata 可作為 retained fallback，production Queue 可顯示在前景；PlayerBar 縮圖是
 direct metadata intent，會先取消其他前景 surface 再顯示 metadata。`QueuePanel.vue` 與
-`TrackContextPanel.vue` 各自只呈現 feature content，並透過 `AppRightDockPanel.vue` 共用
+`src/components/playback/context/TrackContextPanel.vue` 各自只呈現 feature content，並透過 `AppRightDockPanel.vue` 共用
 header、單一 scroll owner 與 content inset；播放 queue authority 仍由
 `usePlaybackQueue.js` 持有。匯入與伴奏處理共用 shell-owned `PreparationDockPanel.vue`；Titlebar
 只保留一個固定 `ListChecks`「曲目準備」controlled disclosure，Dock 內以

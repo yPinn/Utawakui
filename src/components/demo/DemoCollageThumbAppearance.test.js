@@ -51,9 +51,13 @@ const trackCandidateSource = readSource('./DemoCandidateTrackThumb.vue');
 const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
 const dossierSource = readSource('../playlists/StudioLibraryDossierHeader.vue');
-const inspectorSource = readSource('../playlists/TrackContextPanel.vue');
-const artistPreviewSource = readSource('../playlists/TrackArtistPreview.vue');
-const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
+const inspectorSource = readSource('../playback/context/TrackContextPanel.vue');
+const artistPreviewSource = readSource(
+  '../playback/context/TrackArtistPreview.vue',
+);
+const queuePreviewSource = readSource(
+  '../playback/context/TrackQueuePreview.vue',
+);
 const queueTrackButtonSource = readSource('../queue/QueueTrackButton.vue');
 const libraryDossierSource = readSource('../library/LibraryEntityDossier.vue');
 const sidebarRowSource = readSource('../playlists/PlaylistSidebarRow.vue');

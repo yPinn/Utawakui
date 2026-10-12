@@ -177,7 +177,7 @@ describe('UiScrollRegion production migration', () => {
     const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
     const featureSources = [
       readSource('../queue/QueuePanel.vue'),
-      readSource('../playlists/TrackContextPanel.vue'),
+      readSource('../playback/context/TrackContextPanel.vue'),
     ];
 
     const scrollLayoutSource = readSource('./UiScrollLayout.vue');

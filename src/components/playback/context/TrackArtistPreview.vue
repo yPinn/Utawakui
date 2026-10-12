@@ -1,10 +1,10 @@
 <script setup>
 import { computed } from 'vue';
-import { UserRound } from '../../icons/index.js';
-import AppRightDockSection from '../layout/AppRightDockSection.vue';
-import UiButton from '../ui/UiButton.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
-import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import { UserRound } from '../../../icons/index.js';
+import AppRightDockSection from '../../layout/AppRightDockSection.vue';
+import UiButton from '../../ui/UiButton.vue';
+import UiCollageThumb from '../../ui/UiCollageThumb.vue';
+import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
 
 const props = defineProps({
   summary: { type: Object, required: true },
