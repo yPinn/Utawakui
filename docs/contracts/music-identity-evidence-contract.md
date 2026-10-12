@@ -212,17 +212,33 @@ title／artist／album。
 [ADR 0022](../adr/0022-artist-identity-and-organization.md) 是 artist organization 的決策來源。第一階段的
 `electron/lib/artists/artistIndex.js` 只消費 `normalizeForCompare()` 作 Tier A 分組鍵，以及
 `ytdlpInfo.extractPerformerCredits()` 的有序演出者 parts；它不使用 `splitArtistNames()`，不重新拆分扁平
-artist 字串，也不持久化任何 identity。分組鍵與 artist id 都是可重新計算的 in-memory 值。
+artist 字串。未經整理的 credit 仍使用可重新計算的衍生 id；`artistOrganization.js` 再把確認過的
+credit keys 投影到 `artists.json` 的 stable entity。Track scalar 與 credited form 不被改寫。
+Artist-aware track presentation 以 `trackArtistIds` 投影 entity canonical display name；index 尚未載入才回退
+raw credit。搜尋同時比對 canonical name 與 entity 中所有 credited forms，因此任一別名都會找到完整 entity
+曲目集合，split 後則依新 projection 自然分離。
+
+`artistIdentityService.js` 擁有 MusicBrainz artist query、候選排序、錄音佐證、短期 opaque session
+與 apply policy。Artist-aware projection 首次載入與 track 變更只送出無參數 start intent；Main 重新檢查
+`provider-flow`、自行取得曲庫並以 single-flight bounded queue 解析。只有唯一 name／alias exact match 且
+至少一首本機 recording 由 title＋duration 佐證時才自動 apply；歧義與弱證據只保留人工重新查詢 fallback。
+若 provider gate 在同一 session 由關閉轉為啟用，已載入的 projection 會對相同曲庫重送一次 start intent；
+沒有第二個自動整理開關，Main 仍在每次操作重新檢查 gate。
+Renderer 不傳 query、MBID、URL 或 raw response。確認後只保存 bounded catalog facts；相同已確認 MBID
+是唯一可自動合併 stable entities 的 external key。共享 `musicIdentity/` domain 仍不建立 entity 或決定合併。
 
 ## Persistence boundary
 
 目前 filesystem 仍是 track existence authority，`library.json` 只保存既有 scalar metadata。
-本契約不建立 `identity.json`、alias graph、artist entity 或 database table；ADR 0022 後續階段的
-`artists.json` 由該 ADR 定義。
+本契約不建立 `identity.json`、通用 alias graph 或 database table。Artist organization 依 ADR 0022
+使用 library-root `artists.json`：version、revision、stable UUID entity、bounded credits／catalog facts、
+old-stable redirects、typed dismissed negative evidence 與 bounded undo snapshots。Split 會保存 credit-pair 及
+適用時的 credit-to-MBID 排除，避免自動 resolver 重新合併；只有明確 manual merge／catalog apply 會清除，
+undo 連同排除一起還原。Main 以 corruption backup 與 atomic write 擁有它；Renderer 只接收投影，
+並提交 artist／credit／candidate opaque ids、bounded display-name intent 與 expected revision。
 
-若未來要持久化 identity，必須先以 ADR 決定 versioned sidecar 或 SQLite migration boundary、
-stable IDs、provenance、user-confirmed merge／split、undo 與 locale display policy。未完成該決策前，
-共享層輸出都是可重新計算的 observations 與 evidence。
+這個持久化邊界只屬於 artist consumer。共享層輸出仍是可重新計算的 observations 與 evidence；
+未來其他 consumer 若要持久化 identity，仍須另行決定 migration、provenance 與 undo policy。
 
 ## Security and boundedness
 

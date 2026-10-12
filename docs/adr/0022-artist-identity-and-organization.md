@@ -2,21 +2,20 @@
 
 ## Status
 
-Accepted (2026-10-05). Implemented on 2026-10-05: the derived index, the sidebar
-artists section and the artist page. The official-channel artist photo path and
-the explicit YT Music candidate fallback were implemented by 2026-10-08;
-visible Electron acceptance and the YT Music drift gate are pending.
-MusicBrainz display-name resolution is not implemented yet. The owner selected MusicBrainz as the
-external artist identity authority; the remaining sections define the local
-model that consumes it.
+Accepted (2026-10-05). The derived index, sidebar artists section, artist page,
+official-channel photo path and explicit YT Music photo fallback were implemented
+by 2026-10-08. On 2026-10-12 the local organization slice added stable entities
+in `artists.json`, manual merge／split／display-name override／undo, legacy photo
+and Folder-object compatibility, and provider-gated MusicBrainz identity
+resolution. Unique exact name／alias matches corroborated by a library recording
+are applied automatically; manual lookup remains the fallback. Applying an
+identity persists bounded catalog facts, and credits that resolve to the same
+MBID merge without rewriting track metadata.
 
-Delivery is phased. The first slice is the derived, non-persistent artist model,
-the library navigation and the artist page, plus MusicBrainz resolution used only
-for the display name. `artists.json` with merge／split／undo, merge suggestions
-and MBID-based automatic merging are deferred until the library shows real
-cross-language duplication or a shift toward single-track imports; on 2026-10-05
-the owner's library had one such duplicate. Local audio tags and cover／upload
-performer attribution follow after the first slice.
+Delivery remains phased. Visible Electron acceptance and the YT Music drift gate
+are pending. Proactive Traditional／Simplified or weak MusicBrainz-alias
+suggestions, local audio tags and cover／upload performer attribution remain
+deferred.
 
 ## Context
 
@@ -219,13 +218,22 @@ automatically.
 
 Lookups reuse the existing `electron/lib/musicbrainz/` adapter, the app-wide
 1.1-second request scheduler, response bounds and User-Agent. They require the
-`provider-flow` gate, the same gate artwork search already uses. Resolution is
-on demand only: opening an artist page resolves that artist, and an explicit
-「全部查詢」 action enqueues the rest. The app never scans the library in the
-background at startup, so artist names leave the machine only after a user
-action. The queue is bounded and cancellable and never blocks import, playback or
-the artist page. With the gate off or the provider unavailable, the page still
-works entirely from local derivation.
+`provider-flow` gate, the same gate artwork search already uses. The first
+artist-aware library projection and later track changes send a no-argument start
+intent. Main rechecks the gate, derives the directory, tracks and queries, then
+runs a single-flight queue of at most 64 attempts per activation. It rebuilds the
+artist projection after each accepted mutation and only applies the strict
+corroborated tier above. Ambiguous or weaker results remain available through
+the modal's explicit re-query fallback.
+
+There is no startup scan before an artist-aware surface is opened. Once the
+updated provider notice is accepted, opening that surface may send local artist
+names to MusicBrainz automatically. The queue is bounded, resumable and never
+blocks import, playback or the artist page. With the gate off or the provider
+unavailable, the page still works entirely from local derivation.
+Enabling the updated provider notice while an artist-aware surface is already
+open retries the unchanged library once in the same session. There is no second
+automatic-organization preference: the provider gate is the consent boundary.
 
 From each resolved artist, main keeps only bounded scalar facts: MBID, name, sort
 name, type, disambiguation, and up to 32 aliases with their locale, primary flag
@@ -255,21 +263,32 @@ user decisions and bounded catalog facts, never track metadata:
   an optional MBID with its cached catalog facts, and the credit keys linked to
   the entity. Each credit key keeps the raw credited form it came from, the
   normalizer version, and its link source (`auto`, `musicbrainz`, `user`).
+- `redirects`: bounded old-stable-id to current-stable-id links retained across
+  later merges, so queue／history／Folder references survive another merge and
+  undo restores the previous redirect set with the entities.
 - `trackLinks`: a bounded exception list that pins one track's credited part to a
   specific entity, used only to separate homonyms.
-- `dismissed`: suggestion pairs the user rejected.
+- `dismissed`: bounded typed credit-pair and credit-to-MBID negative evidence.
+  Splitting a mistaken grouping records these exclusions so a later automatic
+  pass cannot recreate it. Explicit manual merge／catalog apply clears the
+  matching exclusion; undo restores it with the rest of the snapshot.
 - `revision` plus a bounded undo history of merge, split and override operations.
 
 Track metadata is never rewritten. `library.json` keeps its scalar `artist`, and
-the raw credited form stays the display and evidence source. If the comparison
-normalizer changes, main re-keys stored credit keys from their raw forms under the
-new normalizer version instead of trusting stale keys.
+the raw credited form stays an evidence and search source. Once the artist index
+is available, artist-aware track rows project the entity display name for every
+linked credit; before the index loads they fall back to the raw form. Search
+matches the entity display name and every grouped credited form, so either name
+returns the complete entity track set. If the comparison normalizer changes,
+main re-keys stored credit keys from their raw forms under the new normalizer
+version instead of trusting stale keys.
 
 Display name precedence is: user override, then the resolved MusicBrainz artist
 name (usually the original script, e.g. 米津玄師 rather than the YT Music
 `Kenshi Yonezu`), then the most frequent credited form in the library. Other
 MusicBrainz locale aliases are offered as options and are never applied
-silently. Track rows keep showing their own credited form.
+silently. A split immediately restores separate entity projections without
+discarding either track's original credit.
 
 ### Local audio tags
 
@@ -285,12 +304,13 @@ inventory and packaging tests.
 
 ### Process boundary
 
-The renderer sends bounded intents only: open an artist by local id, merge entity
-ids, split a credit key, confirm or dismiss a suggestion, set or clear a display
-override, choose an MBID candidate by opaque candidate id, and undo. It never sends
-MBIDs, MusicBrainz URLs, raw provider data or file paths. Main derives artist pages
-from the library, playlists and `artists.json`, and projects only display data and
-opaque ids.
+The renderer sends bounded intents only: open an artist by local id, start
+automatic resolution without arguments, merge entity ids, split a credit key,
+set or clear a display override, choose a manual candidate by opaque candidate
+id, and undo. It never sends names, queries, MBIDs, MusicBrainz URLs, raw provider
+data or file paths for automatic resolution. Main derives artist pages from the
+library, playlists and `artists.json`, and projects only display data, resolved
+state and opaque ids.
 
 ## Rejected for this decision
 
@@ -312,9 +332,9 @@ opaque ids.
 Artist pages work offline from local data, and MusicBrainz improves them
 incrementally when `provider-flow` is enabled. Coverage of VTuber and doujin
 artists in MusicBrainz is unmeasured; for uncatalogued artists the experience is
-tier A plus manual merge. The 1 req/s fair-use limit makes a full 「全部查詢」 of a
-large library slow by design, which is why resolution is on demand, bounded and
-resumable. Hosted MusicBrainz terms favor non-commercial use; commercial
+tier A plus manual merge. The 1 req/s fair-use limit makes convergence of a large
+library slow by design, so the artist-aware background queue is single-flight,
+bounded and resumable. Hosted MusicBrainz terms favor non-commercial use; commercial
 distribution would require confirming MetaBrainz service terms, as already noted
 for artwork.
 
