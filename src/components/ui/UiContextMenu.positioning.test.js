@@ -365,7 +365,7 @@ describe('UiContextMenu production caller contract', () => {
   it('uses anchor elements for every button opener and leaves pointer callers coordinate-based', () => {
     const buttonCallers = [
       '../performance-session/PerformanceSessionPlanList.vue',
-      '../playlists/CollectionActionRail.vue',
+      '../library/CollectionActionRail.vue',
       '../queue/QueuePanel.vue',
       '../separation/SeparationToolbarList.vue',
       '../settings/DiagnosticsSettingsRow.vue',

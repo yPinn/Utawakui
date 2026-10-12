@@ -55,7 +55,7 @@ const inspectorSource = readSource('../playlists/TrackContextPanel.vue');
 const artistPreviewSource = readSource('../playlists/TrackArtistPreview.vue');
 const queuePreviewSource = readSource('../playlists/TrackQueuePreview.vue');
 const queueTrackButtonSource = readSource('../queue/QueueTrackButton.vue');
-const setlistHeaderSource = readSource('../playlists/LibraryEntityDossier.vue');
+const libraryDossierSource = readSource('../library/LibraryEntityDossier.vue');
 const sidebarRowSource = readSource('../playlists/PlaylistSidebarRow.vue');
 const detailsModalSource = readSource('../playlists/PlaylistDetailsModal.vue');
 const uiConstantsSource = readSource('../../constants/ui.js');
@@ -394,7 +394,7 @@ describe('DemoCollageThumbAppearance', () => {
     expect(sidebarRowSource).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
     expect(dossierSource).toContain(':size="88"');
     expect(detailsModalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
-    expect(setlistHeaderSource).toContain(
+    expect(libraryDossierSource).toContain(
       ':size="FOLDER_DOSSIER_ARTWORK_SIZE"',
     );
     expect(uiConstantsSource).toContain(

@@ -11,8 +11,8 @@ import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 import UiIconButton from '../ui/UiIconButton.vue';
-import CollectionActionRail from '../playlists/CollectionActionRail.vue';
-import LibraryEntityDossier from '../playlists/LibraryEntityDossier.vue';
+import CollectionActionRail from './CollectionActionRail.vue';
+import LibraryEntityDossier from './LibraryEntityDossier.vue';
 
 const props = defineProps({
   entityKind: {

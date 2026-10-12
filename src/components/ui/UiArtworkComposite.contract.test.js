@@ -78,7 +78,7 @@ describe('rounded artwork composite clip', () => {
         /<UiTrackThumb[\s\S]*?<template v-if="\$slots\.artworkOverlay" #overlay>/u,
       '../playlists/PlaylistDetailsModal.vue':
         /<UiCollageThumb[\s\S]*?:decorative="isAlbum"[\s\S]*?<template v-if="!isAlbum" #overlay>/u,
-      '../playlists/LibraryEntityDossier.vue':
+      '../library/LibraryEntityDossier.vue':
         /<UiCollageThumb[\s\S]*?radius="0"[\s\S]*?<template v-if="\$slots\['artwork-overlay'\]" #overlay>/u,
       '../playlists/TrackPreviewOverlay.vue':
         /class="track-preview__artwork-layers ui-artwork-composite"[\s\S]*?<Transition[\s\S]*?<UiArtworkOverlay>/u,
@@ -90,7 +90,7 @@ describe('rounded artwork composite clip', () => {
     expect(read('../playlists/PlaylistDetailsModal.vue')).not.toContain(
       '<UiArtworkOverlay',
     );
-    expect(read('../playlists/LibraryEntityDossier.vue')).not.toContain(
+    expect(read('../library/LibraryEntityDossier.vue')).not.toContain(
       '<UiArtworkOverlay',
     );
   });

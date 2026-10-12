@@ -15,6 +15,9 @@ describe('Library browse workspace composition', () => {
       '../playlists/SetlistAlbumSupportingContent.vue',
       '../playlists/SetlistCollectionHeader.vue',
       '../playlists/SetlistFolderArtifactLayer.vue',
+      '../playlists/CollectionActionRail.vue',
+      '../playlists/LibraryEntityDossier.vue',
+      '../playlists/FolderAssetPreviewModal.vue',
       '../../composables/useSetlistAlbumContext.js',
       '../../composables/useSetlistFolderObjects.js',
     ];
@@ -23,6 +26,9 @@ describe('Library browse workspace composition', () => {
       './LibraryAlbumSupportingContent.vue',
       './LibraryCollectionHeader.vue',
       './LibraryFolderArtifactLayer.vue',
+      './CollectionActionRail.vue',
+      './LibraryEntityDossier.vue',
+      './FolderAssetPreviewModal.vue',
       '../../composables/useLibraryAlbumContext.js',
       '../../composables/useLibraryFolderObjects.js',
     ];
@@ -98,7 +104,7 @@ describe('Library browse workspace composition', () => {
       "import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue'",
     );
     expect(pageSource).toContain(
-      "import FolderAssetPreviewModal from '../playlists/FolderAssetPreviewModal.vue'",
+      "import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue'",
     );
     expect(pageSource).toContain('useLibraryFolderObjects');
     expect(pageSource).toContain(

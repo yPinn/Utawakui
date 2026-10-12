@@ -19,7 +19,7 @@ import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
-import FolderAssetPreviewModal from '../playlists/FolderAssetPreviewModal.vue';
+import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();

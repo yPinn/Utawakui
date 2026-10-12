@@ -34,10 +34,10 @@ describe('LibraryCollectionHeader', () => {
     const html = await renderHeader();
 
     expect(source).toContain(
-      "import LibraryEntityDossier from '../playlists/LibraryEntityDossier.vue'",
+      "import LibraryEntityDossier from './LibraryEntityDossier.vue'",
     );
     expect(source).toContain(
-      "import CollectionActionRail from '../playlists/CollectionActionRail.vue'",
+      "import CollectionActionRail from './CollectionActionRail.vue'",
     );
     expect(html).toContain('id="album-title-test"');
     expect(html).toContain('aria-labelledby="album-title-test"');
