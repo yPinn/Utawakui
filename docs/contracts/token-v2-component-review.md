@@ -148,7 +148,7 @@ material 或 responsive perimeter，因此不是兩套 visual layout。
 
 Registered feature boundary必須包住完整page composition，提供token scope與local overlay host；它不是document body內的視覺內容層。只有真正擁有整個bounded workspace paint的child surface（例如Performance Session workspace）可放在workspace body內。
 
-1. Folder choices 只包含 Setlist／Lyrics／Output／Import application destinations；使用 `nav`＋native button＋`aria-current="page"`，不宣告 `tablist`／`tab`／`tabpanel`。Settings 已上抽為 Titlebar direct utility destination，不參與 Folder geometry／scroll／current state。
+1. Folder choices 只包含 Library／Performance／Display application destinations；使用 `nav`＋native button＋`aria-current="page"`，不宣告 `tablist`／`tab`／`tabpanel`。Import 是 Sidebar 開啟的 shell Right Dock task，不是 Folder；Settings 已上抽為 Titlebar direct utility destination，不參與 Folder geometry／scroll／current state。
 2. Tab button 維持固定 active-height hit envelope。`::before` 只畫並位移 clipped surface；獨立 content wrapper 同步位移，不 transition button height，因此切換不會推動下方 document。
 3. Folder label 先以未被 cover rail 遮住的 material 計算重心，再以共用 optical token 下移 1 CSS px，抵銷 Folder 底色條造成的下緣視覺重量。Active center 是 `(active height - cover size) / 2`；resting center 再加 `rest offset / 2`。正式 44／40／8px envelope 的數學中心為 18／20px、實際內容中心為 19／21px；label block／half-offset／optical-offset tokens 同時服務 production 與 F8。
 4. Inactive surface 在 cover rail 後、current destination 在前、focus 最前；cover rail 同時遮住未選 tab 下緣並連接 Folder perimeter。所有 SVG clip-path ids 都是 instance-safe，避免同頁重複標本或未來 reusable shell 互相引用。

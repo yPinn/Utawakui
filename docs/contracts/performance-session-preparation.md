@@ -99,7 +99,7 @@ Setlista 的 Reserve List、Now Singing 與 Set List 在 Utawakui 中對應三�
 | Now Playing | 演唱中             | confirmed-start 後的單筆 committed snapshot | transport 狀態、結束／停止；不由 draft editor 改寫 |
 | History     | 已唱紀錄           | committed session history                   | 查閱時間與結果；一般 preparation 不可改寫          |
 
-目前已實作的 preparation workspace 與 Right Dock summary 只呈現「待唱」。active-session control 落地後，
+目前已實作的 preparation workspace 只呈現「待唱」。active-session control 落地後，
 「演唱中」是 active session 的固定主要區塊，「待唱」是主要可操作清單，「已唱紀錄」是次要查閱面；
 三者不得和一般 playback Queue／Recently Played 混用。非 live／record 狀態不顯示假的演唱中或空 history，
 也不以 `NP`、`Reserve`、`History` 縮寫要求 operator 推測狀態。
@@ -108,9 +108,9 @@ Setlista 的 Reserve List、Now Singing 與 Set List 在 Utawakui 中對應三�
 
 ### 從 playlist／album 建立
 
-Titlebar 的「場次」是唯一固定入口。開啟入口只顯示 Right Dock preparation summary，不建立、
-取代或修改 draft。Setlist 中選定 collection 後，summary 會將該 playlist／album 顯示為目前來源
-候選；使用者必須執行明確的「用此清單／專輯建立場次」才建立 draft：
+Performance 的「待唱安排」是 preparation 的單一入口。Library 中選定 playlist／album 後，
+workspace header 會將它顯示為可用來源；使用者必須執行明確的「從清單建立」／「從專輯建立」
+才建立 draft：
 
 1. 依 collection 的 canonical member order 建立 items；畫面搜尋、暫時排序與可見篩選不得改變
    匯入順序。
@@ -118,7 +118,7 @@ Titlebar 的「場次」是唯一固定入口。開啟入口只顯示 Right Dock
    ready；缺少的 source id 則投影為 blocked。
 3. Album membership 雖是 read-only，也可作為 draft source；後續 plan reorder／remove 不改寫
    album。
-4. 若已有 current draft，summary 先顯示既有來源、總數與需處理數量；只有使用者執行
+4. 若已有 current draft，workspace 先顯示既有來源、總數與需處理數量；只有使用者執行
    「以此清單／專輯取代目前草稿」並確認後才可取代，不做隱式 merge。
 
 建立後 playlist 與 draft 分離。來源 collection 新增、刪除或重新排序時只顯示「來源已有變更」；
@@ -146,9 +146,9 @@ Live／record session 作用中時仍可開啟 preparation 搜尋曲庫、加入
 
 ## 逐曲 review workflow
 
-Right Dock 只負責單一入口的 preparation summary 與來源 intent，不嵌入完整 editor。Preparation
-仍是 Setlist folder 內的完整 workspace，不是 modal、BGM player 或 active-session control expansion；可從任何主要
-頁面開啟，完成後返回原本頁面。Desktop 使用 plan list＋focused review editor；窄視窗改為可返回
+Preparation 是 Performance 目的地內的完整 workspace，不是 Right Dock、modal、BGM player 或
+active-session control expansion。Titlebar 與 Right Dock 不另設重複入口或 summary。Desktop 使用
+plan list＋focused review editor；窄視窗改為可返回
 清單的單欄 drill-in，不把兩欄壓到不可讀。
 
 Workspace 填滿 `AppFolderPage` workspace body 的可用高度；header 與 aggregate state 固定，中間 grid 使用剩餘高度。

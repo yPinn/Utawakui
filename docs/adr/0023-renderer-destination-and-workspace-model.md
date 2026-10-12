@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted (2026-10-12). Implementation is planned in phased commits. Until the
-navigation cutover is verified, the current `setlist`／`lyrics`／`output`／`import`
-destinations remain runtime truth. This ADR defines the target information
-architecture and migration constraints; it does not claim that the target is
-already implemented.
+Accepted (2026-10-12). Phases 0–3 are implemented: public navigation now uses
+`library`／`performance`／`display`, contextual Lyrics compositions are split, and
+Import is a shell-owned Right Dock task with a modal review expansion. The cutover
+still awaits owner-visible acceptance before its staged commit; Phase 4 naming
+cleanup remains pending where explicitly listed below.
 
 ## Context
 
@@ -63,7 +63,7 @@ Renderer composition uses five levels:
 | Level              | Meaning                                                     | Examples                                              |
 | ------------------ | ----------------------------------------------------------- | ----------------------------------------------------- |
 | Destination Page   | A stable user destination and top-level composition owner.  | `LibraryPage`, `PerformancePage`, `DisplayPage`       |
-| Workspace          | A main-area task that may temporarily occupy a destination. | import, lyrics authoring, session preparation         |
+| Workspace          | A main-area task that may temporarily occupy a destination. | lyrics authoring, session preparation                 |
 | Panel／Tool        | A switchable or persistent instrument inside a context.     | live lyrics, Queue, player tools, Right Dock surfaces |
 | Section／Object UI | A domain object or meaningful subsection of a task.         | track row, session item, output slot                  |
 | `Ui*` primitive    | Domain-neutral behavior and visual anatomy.                 | button, search box, modal, tabs                       |
@@ -82,13 +82,13 @@ real ownership conflict demonstrates that another level is needed.
 Import, Lyrics, Analysis, Separation and Provider are capabilities opened from
 the object or task that gives them meaning:
 
-| Capability | Library context                                                 | Performance context                               | Display context                       |
-| ---------- | --------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------- |
-| Import     | Full workspace opened from Library.                             | Not exposed.                                      | Not exposed.                          |
-| Lyrics     | Search, source management, text, timing and reading authoring.  | Read, synchronize and apply bounded live offsets. | Configure public lyrics presentation. |
-| Analysis   | Track-scoped action and background job.                         | Consume verified results only.                    | Not exposed directly.                 |
-| Separation | Track-scoped processing action and reusable result.             | Select or adjust an available result when needed. | Not exposed directly.                 |
-| Provider   | Gated assistance inside import or track-scoped authoring flows. | Not a standalone live destination.                | Not exposed directly.                 |
+| Capability | Library context                                                 | Performance context                                | Display context                                    |
+| ---------- | --------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| Import     | Titlebar intent opens the shell Right Dock without navigation.  | Same shell task; current destination is preserved. | Same shell task; current destination is preserved. |
+| Lyrics     | Search, source management, text, timing and reading authoring.  | Read, synchronize and apply bounded live offsets.  | Configure public lyrics presentation.              |
+| Analysis   | Track-scoped action and background job.                         | Consume verified results only.                     | Not exposed directly.                              |
+| Separation | Track-scoped processing action and reusable result.             | Select or adjust an available result when needed.  | Not exposed directly.                              |
+| Provider   | Gated assistance inside import or track-scoped authoring flows. | Not a standalone live destination.                 | Not exposed directly.                              |
 
 The same canonical Lyrics, player, library and job owners continue to provide
 state. Splitting authoring and live presentation means composing narrower
@@ -122,8 +122,10 @@ The IA migration does not move long-lived state into pages:
 - Queue remains its own renderer owner;
 - Lyrics retains one canonical renderer owner;
 - PlayerBar, BGM, Right Dock and Titlebar remain shell-owned siblings;
-- Right Dock session content remains a projection and entry point, while the full
-  preparation workspace belongs to Performance;
+- Import is a Titlebar-triggered lazy Right Dock task; playlist／album review may expand to a wide
+  modal while retaining the same `useImportSession` authority;
+- session preparation belongs to Performance and no longer has a duplicate
+  Titlebar／Right Dock entry;
 - `overlay/` remains an independent Browser Source delivery path with its own
   tokens and route adapters.
 
@@ -133,19 +135,19 @@ Pages emit or consume bounded intent. They do not become new state stores.
 
 The migration uses the following target mapping:
 
-| Current navigation／owner                       | Target                                            | Migration rule                                                                                                  |
-| ----------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `setlist` destination                           | `library`                                         | Cut over only after Library contextual workspaces are reachable.                                                |
-| `SetlistPage.vue`                               | Library-owned Workspace                           | Split first and name the extracted responsibility; use `LibraryBrowseWorkspace` only if it owns browsing alone. |
-| `lyrics` destination／`LyricsView.vue`          | No destination                                    | Split into Library authoring and Performance live-tool compositions.                                            |
-| `import` destination／`ImportPage.vue`          | Library `ImportWorkspace.vue`                     | Keep the old entry until the Library journey is verified.                                                       |
-| `output` destination／`OutputPage.vue`          | `display`／`DisplayPage.vue`                      | Display composes the existing `ObsOutputWorkspace`; Output stays domain prose.                                  |
-| `SettingsView.vue`                              | body adapter under `SettingsPage.vue`             | `SettingsPage` owns composition; `AppUtilityPage` remains the layout shell.                                     |
-| `PerformanceSessionWorkspace.vue` under Setlist | Same workspace under Performance                  | Remove the coordinator's forced `setlist` navigation during the cutover.                                        |
-| `setlist` surface                               | `library` surface                                 | Rename surface and overlay host in the same atomic navigation change.                                           |
-| `lyrics` destination surface                    | contextual composition under Library／Performance | Add a registered child surface only when token, overlay-host or focus ownership requires one.                   |
-| `output` surface                                | `display` surface                                 | Do not rename Output protocol, Overlay routes or `--ovl-*` tokens.                                              |
-| `import` surface                                | child of `library`                                | Preserve gate, progress, error and cancellation owners.                                                         |
+| Current navigation／owner                       | Target                                                                       | Migration rule                                                                                                              |
+| ----------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `setlist` destination                           | `library`                                                                    | Cut over only after Library contextual workspaces are reachable.                                                            |
+| `SetlistPage.vue`                               | Library-owned Workspace                                                      | Split first and name the extracted responsibility; use `LibraryBrowseWorkspace` only if it owns browsing alone.             |
+| `lyrics` destination／`LyricsView.vue`          | No destination                                                               | Split into Library authoring and Performance live-tool compositions.                                                        |
+| `import` destination／`ImportPage.vue`          | `PreparationDockPanel.vue`／`ImportDockContent.vue`＋`ImportReviewModal.vue` | Old destination／page／view adapters are removed; the shared preparation Dock keeps the current destination visible.        |
+| `output` destination／`OutputPage.vue`          | `display`／`DisplayPage.vue`                                                 | Display composes the existing `ObsOutputWorkspace`; Output stays domain prose.                                              |
+| `SettingsView.vue`                              | body adapter under `SettingsPage.vue`                                        | `SettingsPage` owns composition; `AppUtilityPage` remains the layout shell.                                                 |
+| `PerformanceSessionWorkspace.vue` under Setlist | Same workspace under Performance                                             | Remove the coordinator's forced `setlist` navigation during the cutover.                                                    |
+| `setlist` surface                               | `library` surface                                                            | Rename surface and overlay host in the same atomic navigation change.                                                       |
+| `lyrics` destination surface                    | contextual composition under Library／Performance                            | Add a registered child surface only when token, overlay-host or focus ownership requires one.                               |
+| `output` surface                                | `display` surface                                                            | Do not rename Output protocol, Overlay routes or `--ovl-*` tokens.                                                          |
+| `import` surface                                | `preparation` shell Right Dock surface                                       | Reuse the canonical import session and Local Library; share only Dock chrome with Separation, never their data authorities. |
 
 Navigation callers must express semantic intent before the cutover. Examples are
 open Library content, open track lyrics authoring, open Performance live lyrics
@@ -156,11 +158,12 @@ active-destination state.
 ### Migration sequence
 
 1. Add the `src/pages/` composition seam while preserving the current four
-   visible destinations.
-2. Split Lyrics authoring from live controls, make Import embeddable in Library,
-   and replace direct old-id callers with semantic intents.
+   visible destinations. **Implemented.**
+2. Split Lyrics authoring from live controls, move Import into the shell Right
+   Dock, and replace direct old-id callers with semantic intents. **Implemented.**
 3. Atomically add Performance and switch navigation, shortcuts, surfaces, focus
    restoration and settings return behavior to `library`／`performance`／`display`.
+   **Implemented; awaiting owner-visible acceptance.**
 4. After visible acceptance, rename workspace files and remove legacy adapters.
 5. Update current-state architecture, design and product-status documents only
    after the implementation is verified.

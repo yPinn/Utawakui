@@ -87,9 +87,12 @@ Library metadata 可作為 retained fallback，production Queue 可顯示在前�
 direct metadata intent，會先取消其他前景 surface 再顯示 metadata。`QueuePanel.vue` 與
 `TrackContextPanel.vue` 各自只呈現 feature content，並透過 `AppRightDockPanel.vue` 共用
 header、單一 scroll owner 與 content inset；播放 queue authority 仍由
-`usePlaybackQueue.js` 持有。伴奏處理改由 Titlebar 的 `SeparationToolbarPopover.vue` 作為
-唯一 surface；它消費 `useUiDensity.js` 的 native compact／standard 投影、維持 viewport
-有界尺寸與清單內單一 scroll owner，並將排序、移除、重試與清除紀錄收在同一清單。Pending
+`usePlaybackQueue.js` 持有。匯入與伴奏處理共用 shell-owned `PreparationDockPanel.vue`；Titlebar
+只保留一個固定 `ListChecks`「曲目準備」controlled disclosure，Dock 內以
+`UiSegmentedControl` 切換 `ImportDockContent.vue` 與 `SeparationDockContent.vue`，兩個 feature
+content 不再各自建立 Dock header 或 scroll shell。App shell 是 `useSeparationQueue.js` 的唯一
+renderer owner，Titlebar status 與伴奏內容只消費同一 projection。伴奏清單將排序、移除、重試
+與清除紀錄收在共用 `SeparationToolbarList.vue`。Pending
 列重用 `useDragReorder.js` 的整列拖曳與 `UiSeparator` drop feedback；ellipsis 與右鍵開啟同一
 `UiContextMenu`，但不繼承播放 Queue 的選取、播放或 artwork action。一次 drop 只送出 bounded
 整數 offset，main-owned queue 在單次更新內依相鄰 Pending 項目完成移動。伴奏處理狀態仍由
@@ -100,6 +103,8 @@ Dock 的 expanded resize width、persistent desktop reserved bay、compact overl
 屬於 shell，不得回流到 PlayerBar 或 playlist component。Pointer／keyboard resize separator 只在
 expanded state 掛載；collapsed restore control 只保留按鈕局部邊界，不保留全高 rail、resize hit target
 或 value semantics。Shell-owned bay仍維持workspace幾何，但其空白wrapper不承接pointer hit testing。
+Shell 以 `--ui-shell-workspace-inline-start` 同時定義 Folder 主內容起線與 BGM movable boundary
+左界；BGM 仍可覆蓋 Right Dock，right／bottom bounds 不依 Dock 展開狀態改寫。
 Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
 tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
 只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow
@@ -115,30 +120,32 @@ shared `UiTrackRow` 不持有排序 semantics。最近播放由 feature adapter 
 組合 `UiTrackRow`，保留 52／40px recipe，但不繼承 Queue selection、reorder、drop target
 或整列 activation。
 
-shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titlebar disclosure 開啟，
+shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titlebar disclosure 開啟／關閉，
 在 bounded body 內組合 `BgmTrackPicker.vue` 的本機曲庫搜尋／單曲取代，並以
-`BgmPlayerTransport.vue` 呈現目前 BGM、進度與安全控制。它預設位於 PlayerBar 上方並避開目前 Dock
-footprint，但不是場次面板或 Right Dock surface；Dock footprint 只決定 home anchor／safe edge，
+`BgmPlayerTransport.vue` 呈現目前 BGM、進度與安全控制。它預設位於 PlayerBar 上方並避開 desktop
+persistent Dock bay；compact viewport只在Dock overlay展開時避開其footprint。它不是場次面板或 Right Dock surface；Dock footprint 只決定 home anchor／safe edge，
 不得覆寫 player-owned inline-size。使用者可在 shell 安全範圍移動並 Pin 位置。
 Transport 將曲名限制為單行，並固定 session／phase／deferred restore／time／primary-action 槽位；
 Play／Pause 共用同一節點，error 只替換 phase 投影，不插入會推動版面的臨時內容。
 Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live／record（同時作用時
-`live > record`）則自動保留 compact transport。元件只消費
+`live > record`）只更新狀態投影，不覆寫使用者明確關閉。Titlebar presentation與source picker是正交狀態；
+關閉完整player不停止deck或取消handoff，重新開啟時投影目前狀態。元件只消費
 `useBgmSession.js` 的 readonly 投影與 actions，不成為 PlayerBar 模式或 Folder artifact。
 
-Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
-Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
-layout family 是 registered v2 surface。`SetlistPage.vue`、`OutputPage.vue` 與 `ImportPage.vue` 是 route-level page composition owners。
-`SetlistPage.vue` 以完整 Setlist v2 boundary 包住 `AppFolderPage`，把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同藝人專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`AppFolderPage`把`folder-tools`與Folder extension放在同一個第2列；extension直接顯露`AppFolderLayout`的單一Folder material，不建立滿版pseudo child surface、top seam、獨立工具列row或無效高度。`folder-tools`是row 2 upper-end的Folder背景控制，不繪製dock surface且位於floating plane下方；外層Scrollbar仍為最高paint owner。`SetlistPage`只透過共用方形Command `UiIconButton`＋`UiContextMenu`提供新增照片／便條intent、loading與focus return，並以`useAppConfirmation`確認物件刪除；便條編輯狀態由`SetlistPage`持有、經`SetlistFolderArtifactLayer`的`editingKey`傳到`UiFolderArtifact`，由共用`UiTextarea`的`bare` variant承接輸入；便條紙材是main在建立時隨機寫入payload的`paper`，renderer只依token與`src/assets/folder-paper/`的顆粒素材繪製，canvas在可編輯欄位上讓出拖曳與鍵盤移動。collection command rail不再轉送page-owned control；`useSetlistFolderObjects.js`是頁面物件的state／intent owner，以key為單位合併最新版面並以單一批次寫入。`SetlistFolderArtifactLayer.vue` 以type registry把 durable objects 與 page-scoped derived artist note 投影到同一個 Folder-wide canvas，避免座標與 stacking authority 分裂，並把main projection的rotation交給既有rotation-aware canvas；未登記的type不渲染。照片 activation 使用 renderer-root `UiModal`的shell-free media presentation；thumbnail與Preview都組合shared `UiPhotoFrame` material與filter，thumbnail使用4:3 cover，Preview使用intrinsic contain。Media grid在content的inline-end保留top-aligned vertical action rail；close先於caller action出現在DOM與Tab順序，remove使用shared `UiIconButton danger` intent、close維持neutral，content bounds會扣除rail與gap；frame material不是Modal shell。`UiModal`的backdrop預設保持inert，只有media caller opt in self-click dismissal；同一owner管理成對enter／leave transition、Escape、focus與finite open-order stack，`SetlistPage`保留asset snapshot到leave完成後才釋放。所有物件只有一種paper／side／bottom region-local placement，Pin只鎖使用者移動；shared geometry按placement投影，side reserve不足時暫時fallback到底部且resize不寫回canonical pose。`ImportPage.vue` 同樣以完整 Import v2 boundary 包住 page composition，將「匯入」identity 放在 fixed header，
-將本機匯入、provider 搜尋、候選、進度與錯誤狀態留在唯一 document scroll body；provider preview 只有 track list 使用 bounded internal scroll。
+Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Library／
+Performance／Display 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
+layout family 是 registered v2 surface。`LibraryPage.vue`、`PerformancePage.vue` 與
+`DisplayPage.vue` 是 destination-level composition owners。
+`SetlistPage.vue` 以完整 Setlist v2 boundary 包住 `AppFolderPage`，把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同藝人專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`AppFolderPage`把`folder-tools`與Folder extension放在同一個第2列；extension直接顯露`AppFolderLayout`的單一Folder material，不建立滿版pseudo child surface、top seam、獨立工具列row或無效高度。`folder-tools`是row 2 upper-end的Folder背景控制，不繪製dock surface且位於floating plane下方；外層Scrollbar仍為最高paint owner。`SetlistPage`只透過共用方形Command `UiIconButton`＋`UiContextMenu`提供新增照片／便條intent、loading與focus return，並以`useAppConfirmation`確認物件刪除；便條編輯狀態由`SetlistPage`持有、經`SetlistFolderArtifactLayer`的`editingKey`傳到`UiFolderArtifact`，由共用`UiTextarea`的`bare` variant承接輸入；便條紙材是main在建立時隨機寫入payload的`paper`，renderer只依token與`src/assets/folder-paper/`的顆粒素材繪製，canvas在可編輯欄位上讓出拖曳與鍵盤移動。collection command rail不再轉送page-owned control；`useSetlistFolderObjects.js`是頁面物件的state／intent owner，以key為單位合併最新版面並以單一批次寫入。`SetlistFolderArtifactLayer.vue` 以type registry把 durable objects 與 page-scoped derived artist note 投影到同一個 Folder-wide canvas，避免座標與 stacking authority 分裂，並把main projection的rotation交給既有rotation-aware canvas；未登記的type不渲染。照片 activation 使用 renderer-root `UiModal`的shell-free media presentation；thumbnail與Preview都組合shared `UiPhotoFrame` material與filter，thumbnail使用4:3 cover，Preview使用intrinsic contain。Media grid在content的inline-end保留top-aligned vertical action rail；close先於caller action出現在DOM與Tab順序，remove使用shared `UiIconButton danger` intent、close維持neutral，content bounds會扣除rail與gap；frame material不是Modal shell。`UiModal`的backdrop預設保持inert，只有media caller opt in self-click dismissal；同一owner管理成對enter／leave transition、Escape、focus與finite open-order stack，`SetlistPage`保留asset snapshot到leave完成後才釋放。所有物件只有一種paper／side／bottom region-local placement，Pin只鎖使用者移動；shared geometry按placement投影，side reserve不足時暫時fallback到底部且resize不寫回canonical pose。Import 不再擁有 destination 或 main-area page。Window Titlebar 的「曲目準備」controlled disclosure 由 shell 切換 retained `PreparationDockPanel.vue`，並保留目前 Library／Performance／Display 目的地；再次點擊只關閉這個前景 surface。短任務與單曲候選由 `ImportDockContent.vue` 在 Right Dock 內完成；playlist／album 的多選、filter、retry 交由寬版 `ImportReviewModal.vue`。Dock content 與 review modal 共用 module-scope `useImportSession`，不建立第二份 job queue 或下載歷史；完成項目的持久 truth 仍是 Local Library。匯入物件列直接組合 `UiTrackRow` 的 Dock density／state surface，但 action、下載狀態與錯誤恢復由 Import owner 持有，不帶入 `QueueTrackButton` 的播放、選取、拖曳或排序行為。
 `OutputPage.vue` 擁有 Output／local overlay host 的完整 v2 boundary；`ObsOutputWorkspace`
 在 `AppFolderPage` fixed header 放置唯一的畫面分頁（歌單／歌詞／播放中）、編輯／模板模式切換、runtime 燈號與啟動／停止，以及跳到 Settings「公開輸出與 OBS」的輸出設定入口（`openSettings('output')`），不再增加重複的可見頁名。連接埠、自動啟動、畫面延遲與 Spout2 由 `OutputRuntimeSettingsBlock` 在對外輸出 gate 啟用後呈現。
 Lyrics 與 local overlay host 同樣使用完整 v2 boundary。
-Setlist 開啟場次準備時，`SetlistPage` 將 `AppFolderPage` 由 document mode 切為 workspace mode，再進入
-`performance-session-workspace` boundary；`PerformanceSessionWorkspace`
+Performance 的「待唱安排」開啟場次準備時，`PerformancePage` 將 `AppFolderPage` 由 document mode
+切為 workspace mode，再進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
 與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
-`PerformanceSessionPanel` 維持 Right Dock 的 v2 projection recipe，不嵌入 workspace editor 或形成
-重複 feature boundary。Lyrics 固定使用 workspace mode，Folder page 不建立 document scroll；
+Titlebar 與 Right Dock 不再提供重複的場次入口；selected playlist／album 的「從清單建立」／
+「從專輯建立」動作由 workspace header 持有，既有 draft 的取代仍先確認。Lyrics 固定使用
+workspace mode，Folder page 不建立 document scroll；
 `LyricsDocumentPanel`、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。Output
 同樣使用 workspace mode；Workbench stage／inspector 與 Gallery grid／detail
 各自擁有 bounded scroll。Workbench 的 Widget 尺寸由 preview option caption 單一表達，Lyrics
@@ -478,11 +485,11 @@ duplicate、reorder 與 remove，不借用 playback Queue。曲庫刪除只解�
 track link，保留 authored label 供 operator 修復。Session details 將 canonical title／artist 視為唯讀
 projection，不提供或轉送 global metadata editor intent；display save 只送 session-local labels，relink
 才可另送既有 track id，兩者都不呼叫 library metadata write handler。
-`AppTitleBar.vue` 的場次 disclosure 是唯一固定入口，`PerformanceSessionPanel.vue` 在 shell Right
-Dock 投影 current draft summary 與目前 selected collection 的明確建立／取代 intent；入口 mount 只
-初始化讀取，不改寫 draft。`usePerformanceSessionWorkspace.js` 只協調完整 Setlist workspace 的
-open／return view，不擁有任何 session data。此 owner 目前交付 inactive preparation，並在同一
-Right Dock summary 不再組合 BGM source picker 或 transport；BGM／演唱 transport handoff 已接線，但 active item
+`PerformanceSessionWorkspace.vue` 是 inactive preparation 的單一可見 owner；selected
+playlist／album 的明確建立／取代 intent 與完整 list＋review editor 都留在「待唱安排」。
+`usePerformanceSessionWorkspace.js` 只協調 Performance 內的 workspace open／return state，不擁有
+任何 session data。Titlebar 與 Right Dock 不投影第二份 preparation summary。BGM／演唱 transport
+handoff 已接線，但 active item
 progress、confirmed-playing session projection 與 OBS history commit 仍未接線。完整邊界見
 [演出場次準備契約](contracts/performance-session-preparation.md)。
 

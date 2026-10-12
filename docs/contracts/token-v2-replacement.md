@@ -227,21 +227,21 @@ Public Output 繼續只使用 `--ovl-*`。控制台 Output preview 可以保留�
 
 ### Rename matrix
 
-| Current                       | Target／結論                                                                 | Action boundary                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `AppArchiveFrame`             | `AppFolderLayout`                                                            | Folder family cutover 時 rename，刪除舊 component 與 aliases           |
-| `AppTopTabs`                  | Delete；只有 navigation 真有獨立 owner 時建立 internal `AppFolderNavigation` | Folder family cutover                                                  |
-| `AppInnerPage`                | `AppFolderPage`                                                              | Folder family cutover 時 rename，禁止 compatibility wrapper            |
-| `UiPageHeader`                | Retain                                                                       | 作為內容 primitive，由 `AppFolderPage` 擁有 placement                  |
-| `AppUtilityFrame`             | `AppUtilityPage`                                                             | 已隨 Settings Utility cutover 完成，舊檔與 selector 已刪除             |
-| `SessionPreparationWorkspace` | `PerformanceSessionWorkspace`                                                | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
-| `SessionPlanList`             | `PerformanceSessionPlanList`                                                 | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
-| `SessionPlanReviewEditor`     | `PerformanceSessionPlanEditor`                                               | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
-| `SessionManualItemForm`       | `PerformanceSessionManualItemForm`                                           | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
-| `PerformanceSessionPanel`     | Retain                                                                       | 名稱與 domain owner 已一致                                             |
-| `useVisualSystemMode`         | `useVisualReviewMode`                                                        | F8 review infrastructure slice；不得成為 production runtime API        |
-| `StudioLibraryDossier*`       | Development-only retain until candidate disposition                          | 不得直接 promotion 到 production；adoption 時改用正式 owner 名稱或刪除 |
-| `DemoCandidate*`              | Delete after formal adoption                                                 | 每個 component adoption slice 同步移除                                 |
+| Current                       | Target／結論                                                                 | Action boundary                                                                |
+| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `AppArchiveFrame`             | `AppFolderLayout`                                                            | Folder family cutover 時 rename，刪除舊 component 與 aliases                   |
+| `AppTopTabs`                  | Delete；只有 navigation 真有獨立 owner 時建立 internal `AppFolderNavigation` | Folder family cutover                                                          |
+| `AppInnerPage`                | `AppFolderPage`                                                              | Folder family cutover 時 rename，禁止 compatibility wrapper                    |
+| `UiPageHeader`                | Retain                                                                       | 作為內容 primitive，由 `AppFolderPage` 擁有 placement                          |
+| `AppUtilityFrame`             | `AppUtilityPage`                                                             | 已隨 Settings Utility cutover 完成，舊檔與 selector 已刪除                     |
+| `SessionPreparationWorkspace` | `PerformanceSessionWorkspace`                                                | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
+| `SessionPlanList`             | `PerformanceSessionPlanList`                                                 | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
+| `SessionPlanReviewEditor`     | `PerformanceSessionPlanEditor`                                               | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
+| `SessionManualItemForm`       | `PerformanceSessionManualItemForm`                                           | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
+| `PerformanceSessionPanel`     | Delete                                                                       | 待唱安排已由 Performance workspace 單獨擁有；Titlebar／Right Dock 不再重複投影 |
+| `useVisualSystemMode`         | `useVisualReviewMode`                                                        | F8 review infrastructure slice；不得成為 production runtime API                |
+| `StudioLibraryDossier*`       | Development-only retain until candidate disposition                          | 不得直接 promotion 到 production；adoption 時改用正式 owner 名稱或刪除         |
+| `DemoCandidate*`              | Delete after formal adoption                                                 | 每個 component adoption slice 同步移除                                         |
 
 未列入矩陣的 stable component 不因字面整齊而改名。若 owner 尚未確認，先完成 responsibility split，再決定 rename／move；不得以 barrel 或 wrapper 永久保留雙名稱。
 
@@ -495,9 +495,9 @@ Phase 2 已以 `AppFolderLayout`／`AppFolderPage` 完整接手 Folder navigatio
 
 Phase 3.1 已將 Setlist 與 `setlist-overlay` 原子切為 v2，保留一般瀏覽時 `AppFolderPage` 的 `document` mode 與 page-level scroll owner；registered Setlist boundary包住完整page composition，不進入document flow覆蓋neutral page paint。Header／Table 改用既有正式v2 weight／radius／motion names，F8 Studio Library selected row回到已核准的中性文字色8% surface recipe，沒有compatibility alias或feature anatomy變更。
 
-Phase 3.2 已將 `performance-session-workspace` 與 local overlay host 原子切為 v2；場次開啟時 Folder page 動態切為 `workspace` mode，由 workspace 內兩個具名 pane 擁有 scroll。四個舊 `Session*` components／tests 已移入 `components/performance-session/` 並改為完整 `PerformanceSession*` domain names，舊檔、舊 CSS selector、compatibility wrapper 與雙 import 路徑皆移除。Shell 內的 `PerformanceSessionPanel` 維持既有 v2 Right Dock projection，不嵌入 workspace editor，也不新增 feature boundary。Feature anatomy、互動與資料 authority 均未變更。
+Phase 3.2 已將 `performance-session-workspace` 與 local overlay host 原子切為 v2；場次開啟時 Folder page 動態切為 `workspace` mode，由 workspace 內兩個具名 pane 擁有 scroll。四個舊 `Session*` components／tests 已移入 `components/performance-session/` 並改為完整 `PerformanceSession*` domain names，舊檔、舊 CSS selector、compatibility wrapper 與雙 import 路徑皆移除。後續 IA cutover 又移除 shell 的 `PerformanceSessionPanel` 與 Titlebar 場次入口，來源 collection 的建立／取代 intent 改由 Performance workspace header 單獨持有；session data authority 不變。
 
-Phase 3.3 已將 Import 與 `import-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `document` mode 與 page-level scroll owner；registered Import boundary包住完整page composition，只有playlist preview的track list保留bounded internal scroll。`ImportView`、`ProviderImportPanel`、`ImportCandidateOption`名稱已符合page／domain panel／option結構，因此沒有cosmetic rename；本機匯入、provider resolution、single／playlist preview、progress、error、retry、completion anatomy與資料authority均未變更。
+Phase 3.3 最初將 Import page 與 `import-overlay` 原子切為 v2；後續 IA cutover 已刪除 `ImportPage`／`ImportWorkspace`／`ImportView`，目前由 shell-owned `PreparationDockPanel` 提供唯一 Right Dock chrome，`ImportDockContent` 承接本機選檔、provider 搜尋、單曲候選、進度與錯誤，並與 `SeparationDockContent` 透過共用 `UiSegmentedControl` 切換。playlist／album 的密集 review 仍在寬版 `ImportReviewModal`；Import Dock content 與 Modal 共用原本 `useImportSession`，不建立平行 queue／history。匯入物件列直接組合 `UiTrackRow` 的 Dock recipe，但不重用 `QueueTrackButton` 的播放與排序行為。
 
 Phase 3.4 已將 Lyrics 與 `lyrics-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `workspace` mode；Folder page 不建立 document scroll，reader、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。13 個 production Lyrics consumers 的 20 個 legacy file-token pairs 已改為正式 radius、typography、motion 與 popover layer names；選歌、來源管理、LRCLIB 搜尋、手動匯入、逐行閱讀／編輯、timing 與 live offset anatomy／authority 均未變更。既有 component names 已清楚表達 domain 與角色，因此沒有 cosmetic rename；`components/lyrics-provider/` 的 Internal Tools review surface 明確留在 Phase 4。
 
