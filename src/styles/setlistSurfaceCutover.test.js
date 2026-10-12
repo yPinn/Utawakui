@@ -5,6 +5,7 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
+const libraryPageSource = readSource('../pages/LibraryPage.vue');
 const pageSource = readSource('../components/playlists/SetlistPage.vue');
 const setlistSource = readSource('../views/SetlistView.vue');
 const headerSource = readSource(
@@ -18,7 +19,8 @@ const studioTableSource = readSource(
 
 describe('Setlist Token v2 surface cutover', () => {
   it('keeps Setlist in the Folder document mode and leaves page scrolling with AppFolderPage', () => {
-    expect(appSource).toContain('setlist: SetlistPage');
+    expect(appSource).toContain('setlist: LibraryPage');
+    expect(libraryPageSource).toContain('<SetlistPage />');
     expect(pageSource).toMatch(
       /<AppSurfaceBoundary\s+surface-id="setlist"\s+:child-hosts="\['performance-session-workspace'\]"\s*>\s*<AppFolderPage\s+:mode="pageMode"/u,
     );

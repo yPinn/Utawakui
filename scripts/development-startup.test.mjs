@@ -19,10 +19,10 @@ const packageJson = JSON.parse(
 );
 
 const PUBLIC_INACTIVE_VIEWS = [
-  ['OutputPage', './components/output/OutputPage.vue'],
+  ['DisplayPage', './pages/DisplayPage.vue'],
   ['LyricsView', './views/LyricsView.vue'],
   ['ImportPage', './components/import/ImportPage.vue'],
-  ['SettingsView', './views/SettingsView.vue'],
+  ['SettingsPage', './pages/SettingsPage.vue'],
 ];
 const INTERNAL_VIEWS = [
   ['music-analysis', 'MusicAnalysisView'],
@@ -32,9 +32,9 @@ const INTERNAL_VIEWS = [
 ];
 
 describe('development startup contract', () => {
-  it('keeps the initial Setlist view eager and lazy-loads every inactive view', () => {
+  it('keeps the initial Library page eager and lazy-loads every inactive view', () => {
     expect(appSource).toContain(
-      "import SetlistPage from './components/playlists/SetlistPage.vue';",
+      "import LibraryPage from './pages/LibraryPage.vue';",
     );
 
     for (const [viewName, importPath] of PUBLIC_INACTIVE_VIEWS) {

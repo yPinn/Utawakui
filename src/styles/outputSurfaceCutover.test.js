@@ -5,6 +5,7 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
+const displayPageSource = readSource('../pages/DisplayPage.vue');
 const pageSource = readSource('../components/output/OutputPage.vue');
 const viewSource = readSource('../views/OutputView.vue');
 const workspaceSource = readSource(
@@ -113,7 +114,8 @@ const outputOwnedTokens = [
 
 describe('Output Token v2 surface cutover', () => {
   it('keeps Output in Folder workspace mode with bounded feature scroll owners', () => {
-    expect(appSource).toContain('output: OutputPage');
+    expect(appSource).toContain('output: DisplayPage');
+    expect(displayPageSource).toContain('<OutputPage />');
     expect(pageSource).toContain('<AppSurfaceBoundary surface-id="output">');
     expect(viewSource).toContain('<ObsOutputWorkspace');
     expect(workspaceSource).toContain(
