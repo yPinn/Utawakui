@@ -266,7 +266,7 @@ const CURRENT_MAPPINGS = [
     label: '列表標頭',
     sources: [
       'src/styles/tokens.css',
-      'src/components/playlists/StudioLibraryTrackTable.vue',
+      'src/components/demo/studio-library/StudioLibraryTrackTable.vue',
     ],
     value: '列表標頭尚無 active token',
     status: 'consumer 已引用候選 token，目前只在 F8 生效',
@@ -287,7 +287,7 @@ const CURRENT_MAPPINGS = [
     label: 'Panel inset',
     sources: [
       'src/styles/tokens.css',
-      'src/components/playlists/StudioLibraryDossier.vue',
+      'src/components/demo/studio-library/StudioLibraryDossier.vue',
     ],
     value: 'Panel inset 1rem／16 CSS px',
     status:

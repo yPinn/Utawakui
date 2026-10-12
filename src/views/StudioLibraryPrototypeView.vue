@@ -4,7 +4,7 @@ import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import StudioLibraryDossier from '../components/playlists/StudioLibraryDossier.vue';
+import StudioLibraryDossier from '../components/demo/studio-library/StudioLibraryDossier.vue';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { createStudioLibraryPresentation } from '../utils/studioLibraryPresentation.js';
 

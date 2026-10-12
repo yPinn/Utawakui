@@ -1,6 +1,6 @@
 <script setup>
-import UiChip from '../ui/UiChip.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiChip from '../../ui/UiChip.vue';
+import UiCollageThumb from '../../ui/UiCollageThumb.vue';
 
 defineProps({
   kindLabel: { type: String, required: true },

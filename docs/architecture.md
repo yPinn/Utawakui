@@ -57,7 +57,8 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 更新；`src/composables/useUiDensity.js` 驗證後寫入 document root。Renderer 不取得
 `BrowserWindow`、不依 viewport 猜測狀態。唯一 production token entry 只對明列的
 geometry roles 套用 compact remap；內容 reflow 仍由各 layout owner 決定。Dev-only 型錄
-視圖（`DemoView.vue`／`VisualSystemView.vue`／`StudioLibraryPrototypeView.vue`）保留歷史
+視圖（`DemoView.vue`／`VisualSystemView.vue`／`StudioLibraryPrototypeView.vue`）與
+`src/components/demo/studio-library/`保留歷史
 比較標本與 View candidate；owner 檢查順序與現況見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
 已完成的 production replacement boundary 見

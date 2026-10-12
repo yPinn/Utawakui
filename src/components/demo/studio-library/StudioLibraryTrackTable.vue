@@ -4,13 +4,13 @@ import {
   GripVertical,
   ICON_SIZE,
   Volume2,
-} from '../../icons/index.js';
-import { formatDuration } from '../../utils/format.js';
-import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
-import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
-import UiIconButton from '../ui/UiIconButton.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
+} from '../../../icons/index.js';
+import { formatDuration } from '../../../utils/format.js';
+import { PLAYLIST_SORT_KEYS } from '../../../utils/playlistSort.js';
+import { formatStudioTrackSource } from '../../../utils/studioLibraryPresentation.js';
+import UiIconButton from '../../ui/UiIconButton.vue';
+import UiScrollRegion from '../../ui/UiScrollRegion.vue';
+import UiTrackThumb from '../../ui/UiTrackThumb.vue';
 
 const SORT_COLUMNS = {
   title: { key: PLAYLIST_SORT_KEYS.title, label: '曲目' },

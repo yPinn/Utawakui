@@ -4,36 +4,36 @@ import { describe, expect, it, vi } from 'vitest';
 import StudioLibraryDossier from './StudioLibraryDossier.vue';
 import StudioLibraryDossierHeader from './StudioLibraryDossierHeader.vue';
 import StudioLibraryTrackTable from './StudioLibraryTrackTable.vue';
-import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
-import UiHint from '../ui/UiHint.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
-import UiSearchBox from '../ui/UiSearchBox.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
-import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import UiButton from '../../ui/UiButton.vue';
+import UiChip from '../../ui/UiChip.vue';
+import UiCollageThumb from '../../ui/UiCollageThumb.vue';
+import UiHint from '../../ui/UiHint.vue';
+import UiIconButton from '../../ui/UiIconButton.vue';
+import UiSearchBox from '../../ui/UiSearchBox.vue';
+import UiScrollRegion from '../../ui/UiScrollRegion.vue';
+import UiTrackThumb from '../../ui/UiTrackThumb.vue';
+import UiTooltipSurface from '../../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
   mount,
   textContent,
   trigger,
-} from '../ui/uiTestHost.js';
+} from '../../ui/uiTestHost.js';
 
 for (const [component, filename] of [
   [StudioLibraryDossier, './StudioLibraryDossier.vue'],
   [StudioLibraryDossierHeader, './StudioLibraryDossierHeader.vue'],
   [StudioLibraryTrackTable, './StudioLibraryTrackTable.vue'],
-  [UiButton, '../ui/UiButton.vue'],
-  [UiChip, '../ui/UiChip.vue'],
-  [UiCollageThumb, '../ui/UiCollageThumb.vue'],
-  [UiHint, '../ui/UiHint.vue'],
-  [UiIconButton, '../ui/UiIconButton.vue'],
-  [UiSearchBox, '../ui/UiSearchBox.vue'],
-  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
-  [UiTrackThumb, '../ui/UiTrackThumb.vue'],
-  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+  [UiButton, '../../ui/UiButton.vue'],
+  [UiChip, '../../ui/UiChip.vue'],
+  [UiCollageThumb, '../../ui/UiCollageThumb.vue'],
+  [UiHint, '../../ui/UiHint.vue'],
+  [UiIconButton, '../../ui/UiIconButton.vue'],
+  [UiSearchBox, '../../ui/UiSearchBox.vue'],
+  [UiScrollRegion, '../../ui/UiScrollRegion.vue'],
+  [UiTrackThumb, '../../ui/UiTrackThumb.vue'],
+  [UiTooltipSurface, '../../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

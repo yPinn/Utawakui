@@ -1,13 +1,13 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import { RotateCcw } from '../../icons/index.js';
-import { useDragReorder } from '../../composables/useDragReorder.js';
+import { RotateCcw } from '../../../icons/index.js';
+import { useDragReorder } from '../../../composables/useDragReorder.js';
 import {
   nextPlaylistSort,
   sortPlaylistEntries,
-} from '../../utils/playlistSort.js';
-import UiButton from '../ui/UiButton.vue';
-import UiSearchBox from '../ui/UiSearchBox.vue';
+} from '../../../utils/playlistSort.js';
+import UiButton from '../../ui/UiButton.vue';
+import UiSearchBox from '../../ui/UiSearchBox.vue';
 import StudioLibraryDossierHeader from './StudioLibraryDossierHeader.vue';
 import StudioLibraryTrackTable from './StudioLibraryTrackTable.vue';
 

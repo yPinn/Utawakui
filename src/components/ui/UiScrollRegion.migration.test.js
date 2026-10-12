@@ -20,7 +20,7 @@ const batchOneConsumers = [
   },
   {
     name: 'studio track table',
-    source: readSource('../playlists/StudioLibraryTrackTable.vue'),
+    source: readSource('../demo/studio-library/StudioLibraryTrackTable.vue'),
     marker: 'class="studio-track-table"',
     component: 'UiScrollRegion',
   },

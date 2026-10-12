@@ -18,7 +18,7 @@ const headerSource = readSource(
 const dossierSource = readSource('../components/layout/AppFolderDossier.vue');
 const tableSource = readSource('../components/track/TrackTable.vue');
 const studioTableSource = readSource(
-  '../components/playlists/StudioLibraryTrackTable.vue',
+  '../components/demo/studio-library/StudioLibraryTrackTable.vue',
 );
 
 describe('Library Token v2 surface cutover', () => {

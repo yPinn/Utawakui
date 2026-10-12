@@ -50,7 +50,9 @@ const currentSource = readSource('../ui/UiCollageThumb.vue');
 const trackCandidateSource = readSource('./DemoCandidateTrackThumb.vue');
 const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
-const dossierSource = readSource('../playlists/StudioLibraryDossierHeader.vue');
+const dossierSource = readSource(
+  './studio-library/StudioLibraryDossierHeader.vue',
+);
 const inspectorSource = readSource('../playback/context/TrackContextPanel.vue');
 const artistPreviewSource = readSource(
   '../playback/context/TrackArtistPreview.vue',

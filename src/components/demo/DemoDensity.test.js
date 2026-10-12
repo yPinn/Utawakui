@@ -17,9 +17,9 @@ const consumerSources = [
   '../ui/UiIconButton.vue',
   '../ui/UiTrackRow.vue',
   '../playlists/PlaylistSidebarRow.vue',
-  '../playlists/StudioLibraryTrackTable.vue',
+  './studio-library/StudioLibraryTrackTable.vue',
   '../playback/PlayerBar.vue',
-  '../playlists/StudioLibraryDossier.vue',
+  './studio-library/StudioLibraryDossier.vue',
   '../playback/context/TrackContextPanel.vue',
   '../layout/AppRightDock.vue',
   '../layout/AppRightDockHeader.vue',
@@ -359,14 +359,14 @@ describe('DemoDensity', () => {
       'min-height: var(--ui-sidebar-row-min-height)',
     );
     expect(
-      sourceByName.get('../playlists/StudioLibraryTrackTable.vue'),
+      sourceByName.get('./studio-library/StudioLibraryTrackTable.vue'),
     ).toContain('min-height: var(--ui-list-header-height)');
     expect(sourceByName.get('../playback/PlayerBar.vue')).toContain(
       'height: var(--ui-player-bar-height)',
     );
-    expect(sourceByName.get('../playlists/StudioLibraryDossier.vue')).toContain(
-      'padding: var(--ui-panel-inset)',
-    );
+    expect(
+      sourceByName.get('./studio-library/StudioLibraryDossier.vue'),
+    ).toContain('padding: var(--ui-panel-inset)');
     expect(sourceByName.get('../layout/AppRightDock.vue')).toContain(
       '--ui-track-row-min-height: var(--ui-right-dock-track-row-min-height)',
     );

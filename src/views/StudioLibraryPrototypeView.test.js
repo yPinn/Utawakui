@@ -31,7 +31,10 @@ const sidebarSource = readFileSync(
   'utf8',
 );
 const dossierSource = readFileSync(
-  new URL('../components/playlists/StudioLibraryDossier.vue', import.meta.url),
+  new URL(
+    '../components/demo/studio-library/StudioLibraryDossier.vue',
+    import.meta.url,
+  ),
   'utf8',
 );
 const playerBarSource = readFileSync(
@@ -43,6 +46,32 @@ const rightDockSource = readFileSync(
   'utf8',
 );
 describe('StudioLibraryPrototypeView development integration', () => {
+  it('keeps Studio Library specimens under the development-only demo owner', () => {
+    for (const filename of [
+      'StudioLibraryDossier.vue',
+      'StudioLibraryDossierHeader.vue',
+      'StudioLibraryTrackTable.vue',
+    ]) {
+      expect(
+        existsSync(
+          fileURLToPath(
+            new URL(
+              `../components/demo/studio-library/${filename}`,
+              import.meta.url,
+            ),
+          ),
+        ),
+      ).toBe(true);
+      expect(
+        existsSync(
+          fileURLToPath(
+            new URL(`../components/playlists/${filename}`, import.meta.url),
+          ),
+        ),
+      ).toBe(false);
+    }
+  });
+
   it('projects the real library into a native dossier without an iframe', () => {
     expect(source).toContain('import { useLibrary }');
     expect(source).toContain('import { usePlaylists }');

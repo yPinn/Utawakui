@@ -1092,7 +1092,8 @@ Component folders are grouped by product role, not by current visual style. Exis
 - `src/components/layout/`: app shell, global navigation, and long-lived frame components.
 - `src/components/playback/`: persistent playback controls, transport, pitch/tempo, now-playing surfaces, and shell playback context under `context/`.
 - `src/components/library/`: Library destination browsing, collection presentation, album grouping, Folder artifacts, metadata, and artist-identity surfaces.
-- `src/components/playlists/`: playlist membership and navigation plus Studio Library review components.
+- `src/components/playlists/`: playlist membership and navigation only.
+- `src/components/demo/`: development-only component specimens and review compositions; Studio Library candidates stay under `demo/studio-library/` until adopted or removed.
 - `src/components/track/`: track identity, actions, shared tables, and the independent track-preview surface.
 - `src/components/queue/`: active queue, upcoming tracks, reorderable queue sections.
 - `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.
