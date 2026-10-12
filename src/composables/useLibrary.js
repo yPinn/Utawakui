@@ -48,7 +48,7 @@ const enrichedTracks = computed(() =>
 // — Vue auto-unwraps refs/computeds read through a reactive proxy, so every
 // existing reader of `useLibrary().state.tracks` (LibraryBrowseContent.vue,
 // useLyrics.js, and everything derived from `tracksById` below: UiTrackRow,
-// UiTrackThumb, SetlistPlaylistTable, PlayerBar, usePlaybackQueue.js, ...)
+// UiTrackThumb, TrackTable, PlayerBar, usePlaybackQueue.js, ...)
 // transparently receives album-cover-enriched tracks with no changes needed
 // on their end.
 const state = reactive({

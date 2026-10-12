@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
@@ -164,7 +164,7 @@ describe('DemoPageLayoutAppearance', () => {
     );
     expect(source).toContain('<AppFolderContentField');
     expect(source).toContain('<SetlistCollectionHeader');
-    expect(source).toContain('<SetlistPlaylistTable');
+    expect(source).toContain('<TrackTable');
     expect(source).toContain('<SetlistAlbumSupportingContent');
     expect(source).toContain('@select-album="selectDemoAlbum"');
     expect(source).toContain('const demoSelectedAlbumId = shallowRef(');
@@ -191,17 +191,22 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).toContain('@play-album="toggleDemoSupportingAlbumPlayback"');
   });
 
-  it('reuses the production collection header and track table for the Setlist specimen', () => {
+  it('reuses the production collection header and canonical track table for the Library specimen', () => {
     expect(source).toContain(
       "import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue'",
     );
     expect(source).toContain(
-      "import SetlistPlaylistTable from '../playlists/SetlistPlaylistTable.vue'",
+      "import TrackTable from '../track/TrackTable.vue'",
     );
+    expect(
+      existsSync(
+        new URL('../playlists/SetlistPlaylistTable.vue', import.meta.url),
+      ),
+    ).toBe(false);
     expect(source).toContain('v-if="activeFolder.id === \'library\'"');
     expect(source).toContain(':title-id="specimenTitleId"');
     expect(source).toContain(':entries="visibleDemoAlbumEntries"');
-    expect(source).toContain(':is-album="true"');
+    expect(source).toContain('variant="album"');
     expect(source).toContain(':playing="demoCollectionPlaying"');
     expect(source).toContain(':shuffle-active="demoCollectionShuffle"');
     expect(source).toContain('@toggle-playback="toggleDemoCollectionPlayback"');

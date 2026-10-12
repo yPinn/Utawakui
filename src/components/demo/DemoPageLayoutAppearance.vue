@@ -5,7 +5,7 @@ import AppFolderLayout from '../layout/AppFolderLayout.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue';
 import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue';
-import SetlistPlaylistTable from '../playlists/SetlistPlaylistTable.vue';
+import TrackTable from '../track/TrackTable.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
@@ -369,10 +369,11 @@ function toggleDemoCollectionShuffle() {
               />
 
               <AppFolderContentField aria-label="專輯曲目">
-                <SetlistPlaylistTable
+                <TrackTable
                   :entries="visibleDemoAlbumEntries"
+                  variant="album"
                   :sort="demoSort"
-                  :is-album="true"
+                  sortable
                   :can-drag="false"
                   :jumpable-track-ids="emptyTrackIds"
                   @toggle-sort="toggleDemoSort"
