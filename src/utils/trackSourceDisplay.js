@@ -31,7 +31,7 @@ function compareImportedAtNewest(a, b) {
   return bTimestamp - aTimestamp;
 }
 
-export function compareSetlistLocalTrackOrder(a, b) {
+export function compareLocalLibraryTrackOrder(a, b) {
   const importedAtDelta = compareImportedAtNewest(a, b);
   if (importedAtDelta !== 0) return importedAtDelta;
   const titleDelta = compareText(titleKey(a), titleKey(b));
@@ -40,7 +40,7 @@ export function compareSetlistLocalTrackOrder(a, b) {
   return compareText(a?.id, b?.id);
 }
 
-export function compareSetlistLibraryTrackOrder(a, b) {
+export function compareLibraryTrackOrder(a, b) {
   const importedAtDelta = compareImportedAtNewest(a, b);
   if (importedAtDelta !== 0) return importedAtDelta;
   const artistDelta = compareText(a?.artist, b?.artist);
@@ -51,12 +51,12 @@ export function compareSetlistLibraryTrackOrder(a, b) {
   return compareText(a?.id, b?.id);
 }
 
-export function sortSetlistLocalTracks(tracks) {
-  return tracks.filter(isLocalTrack).sort(compareSetlistLocalTrackOrder);
+export function sortLocalLibraryTracks(tracks) {
+  return tracks.filter(isLocalTrack).sort(compareLocalLibraryTrackOrder);
 }
 
-export function sortSetlistLibraryTracks(tracks) {
+export function sortLibraryTracks(tracks) {
   return tracks
     .filter((track) => !isLocalTrack(track))
-    .sort(compareSetlistLibraryTrackOrder);
+    .sort(compareLibraryTrackOrder);
 }

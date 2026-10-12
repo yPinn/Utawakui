@@ -1,6 +1,6 @@
 <script setup>
 // Muted/full-strength/danger status text — loading, empty, and error states
-// across Setlist/Import/Lyrics/Queue all rendered the same handful of
+// across Library/Import/Lyrics/Queue all rendered the same handful of
 // declarations independently. `role`/`aria-*` fall through to the root <p>
 // automatically (single-root component), so callers still pass
 // role="status"/"alert" directly.

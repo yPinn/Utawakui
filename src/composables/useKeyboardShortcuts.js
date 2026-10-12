@@ -81,7 +81,7 @@ export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
 
     if (event.altKey || event.metaKey) return;
 
-    // App destination switching fires even while typing (e.g. the Setlist search
+    // App destination switching fires even while typing (e.g. the Library search
     // box) — F-keys don't insert characters, and this is a global app-level
     // shortcut a performer needs mid-stream regardless of focus. Every
     // other shortcut below stays gated behind isEditableTarget.

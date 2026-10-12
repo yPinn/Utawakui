@@ -197,7 +197,7 @@ const {
           role="status"
         >
           <strong>這個{{ emptyCollectionName }}還沒有曲目</strong>
-          <span>可先從 Import 匯入，或在既有 Setlist 中加入曲目。</span>
+          <span>可先從 Import 匯入，或在既有播放清單中加入曲目。</span>
         </div>
         <div
           v-else-if="visibleTracks.length === 0"

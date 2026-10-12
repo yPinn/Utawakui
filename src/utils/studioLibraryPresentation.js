@@ -2,8 +2,8 @@ import { deriveAlbumSummary } from './albumSummary.js';
 import { formatLongDuration } from './format.js';
 import { libraryViewTitle, playlistDisplayName } from './playlistMenu.js';
 import {
-  sortSetlistLibraryTracks,
-  sortSetlistLocalTracks,
+  sortLibraryTracks,
+  sortLocalLibraryTracks,
 } from './trackSourceDisplay.js';
 
 function resolveCollectionTracks(selectedPlaylist, libraryView, tracks) {
@@ -15,8 +15,8 @@ function resolveCollectionTracks(selectedPlaylist, libraryView, tracks) {
   }
 
   return libraryView === 'local'
-    ? sortSetlistLocalTracks(tracks)
-    : sortSetlistLibraryTracks(tracks);
+    ? sortLocalLibraryTracks(tracks)
+    : sortLibraryTracks(tracks);
 }
 
 function filenameExtension(filename) {

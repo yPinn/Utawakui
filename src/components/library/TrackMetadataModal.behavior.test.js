@@ -6,7 +6,7 @@ const modalSource = readFileSync(
   new URL('./TrackMetadataModal.vue', import.meta.url),
   'utf8',
 );
-const setlistSource = readFileSync(
+const libraryBrowseSource = readFileSync(
   new URL('./LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
@@ -80,7 +80,7 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).not.toMatch(/>\s*搜尋封面\s*</u);
     expect(modalSource).not.toContain('openArtworkSource');
     expect(modalSource).not.toContain('@open-source');
-    expect(setlistSource).not.toContain('@open-artwork-source');
+    expect(libraryBrowseSource).not.toContain('@open-artwork-source');
     expect(queueSource).not.toContain('@open-artwork-source');
   });
 
@@ -138,7 +138,7 @@ describe('TrackMetadataModal artwork discovery contract', () => {
       '@search-artwork="trackMetadataEditor.searchArtwork"',
       '@apply-artwork="trackMetadataEditor.applySelectedArtwork"',
     ]) {
-      expect(setlistSource).toContain(binding);
+      expect(libraryBrowseSource).toContain(binding);
     }
   });
 });

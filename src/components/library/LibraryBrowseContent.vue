@@ -14,7 +14,7 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
-import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
+import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { useScrolledPast } from '../../composables/useScrolledPast.js';
 import { useTrackListDensity } from '../../composables/useTrackListDensity.js';
 import { useTrackPreview } from '../../composables/useTrackPreview.js';
@@ -30,8 +30,8 @@ import {
 } from '../../utils/collectionMenuItems.js';
 import AppFolderCompactBar from '../layout/AppFolderCompactBar.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
-import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue';
-import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue';
+import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue';
+import LibraryCollectionHeader from './LibraryCollectionHeader.vue';
 import TrackPreviewOverlay from '../playlists/TrackPreviewOverlay.vue';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
@@ -53,8 +53,8 @@ import { deriveAlbumSummary } from '../../utils/albumSummary.js';
 import { artistSearchTexts, deriveArtistPage } from '../../utils/artistPage.js';
 import { shufflePreviewTracks } from '../../utils/trackPreviewOrder.js';
 import {
-  sortSetlistLibraryTracks,
-  sortSetlistLocalTracks,
+  sortLibraryTracks,
+  sortLocalLibraryTracks,
 } from '../../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
@@ -142,7 +142,7 @@ const stickyOffsetStyle = computed(() => ({
     : '0px',
 }));
 
-const { albumEntries, albumSupportingContent } = useSetlistAlbumContext();
+const { albumEntries, albumSupportingContent } = useLibraryAlbumContext();
 const artistPage = computed(() =>
   isArtistSelected.value
     ? deriveArtistPage({
@@ -200,8 +200,8 @@ function matchesSearch(track) {
 
 const libraryViewTracks = computed(() =>
   isLocalLibraryView.value
-    ? sortSetlistLocalTracks(libraryState.tracks)
-    : sortSetlistLibraryTracks(libraryState.tracks),
+    ? sortLocalLibraryTracks(libraryState.tracks)
+    : sortLibraryTracks(libraryState.tracks),
 );
 const visibleTracks = computed(() =>
   libraryViewTracks.value.filter(matchesSearch),
@@ -863,7 +863,7 @@ onMounted(async () => {
         ref="collectionHeader"
         class="library-browse-content__collection-header"
       >
-        <SetlistCollectionHeader
+        <LibraryCollectionHeader
           v-model:search-query="searchQuery"
           :entity-kind="mode === 'all' ? 'library' : mode"
           :library-view="playlistState.libraryView"
@@ -958,7 +958,7 @@ onMounted(async () => {
         </template>
       </AppFolderContentField>
 
-      <SetlistAlbumSupportingContent
+      <LibraryAlbumSupportingContent
         v-if="albumSupportingContent?.relatedAlbums.length > 0"
         :artist="albumSupportingContent.artist"
         :related-albums="albumSupportingContent.relatedAlbums"
@@ -967,7 +967,7 @@ onMounted(async () => {
         @play-album="toggleSupportingAlbumPlayback"
       />
 
-      <SetlistAlbumSupportingContent
+      <LibraryAlbumSupportingContent
         v-else-if="artistPage && artistPage.albums.length > 0"
         :artist="artistPage.name"
         :related-albums="artistPage.albums"

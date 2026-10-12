@@ -17,7 +17,7 @@ const visualSystemSource = readFileSync(
   new URL('./VisualSystemView.vue', import.meta.url),
   'utf8',
 );
-const setlistSource = readFileSync(
+const libraryBrowseSource = readFileSync(
   new URL('../components/library/LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
@@ -79,7 +79,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
     );
     expect(appSource).toContain('<AppFolderLayout');
     expect(appSource).not.toContain('visualReviewCandidateView');
-    expect(setlistSource).not.toContain('tokens-v2.css');
+    expect(libraryBrowseSource).not.toContain('tokens-v2.css');
   });
 
   it('separates the final board, live Candidate, and regression catalogue', () => {

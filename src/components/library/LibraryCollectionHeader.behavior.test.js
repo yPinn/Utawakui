@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
-import SetlistCollectionHeader from './SetlistCollectionHeader.vue';
+import LibraryCollectionHeader from './LibraryCollectionHeader.vue';
 
 const source = readFileSync(
-  new URL('./SetlistCollectionHeader.vue', import.meta.url),
+  new URL('./LibraryCollectionHeader.vue', import.meta.url),
   'utf8',
 );
 
@@ -13,7 +13,7 @@ async function renderHeader(overrides = {}) {
   return renderToString(
     createSSRApp({
       render: () =>
-        h(SetlistCollectionHeader, {
+        h(LibraryCollectionHeader, {
           entityKind: 'album',
           title: 'AIR·艾熱',
           titleId: 'album-title-test',
@@ -29,15 +29,15 @@ async function renderHeader(overrides = {}) {
   );
 }
 
-describe('SetlistCollectionHeader', () => {
+describe('LibraryCollectionHeader', () => {
   it('composes one shared entity dossier with one collection action rail', async () => {
     const html = await renderHeader();
 
     expect(source).toContain(
-      "import LibraryEntityDossier from './LibraryEntityDossier.vue'",
+      "import LibraryEntityDossier from '../playlists/LibraryEntityDossier.vue'",
     );
     expect(source).toContain(
-      "import CollectionActionRail from './CollectionActionRail.vue'",
+      "import CollectionActionRail from '../playlists/CollectionActionRail.vue'",
     );
     expect(html).toContain('id="album-title-test"');
     expect(html).toContain('aria-labelledby="album-title-test"');
@@ -91,10 +91,10 @@ describe('SetlistCollectionHeader', () => {
         'utawakui-media://artist-photo/artist-0123456789abcdef/photo.jpg',
     });
 
-    expect(empty).toContain('setlist-collection-header__photo-action--empty');
+    expect(empty).toContain('library-collection-header__photo-action--empty');
     expect(empty).not.toContain('新增照片');
     expect(withPhoto).not.toContain(
-      'setlist-collection-header__photo-action--empty',
+      'library-collection-header__photo-action--empty',
     );
     expect(withPhoto).toContain('更換照片');
     expect(withPhoto).toContain('aria-label="選擇藝人照片"');
@@ -103,7 +103,7 @@ describe('SetlistCollectionHeader', () => {
       'v-else-if="entityKind === \'artist\'" #artwork-overlay',
     );
     expect(source).not.toMatch(
-      /\.setlist-collection-header__photo-action\s*\{[^}]*(?:position:|inset:|border-radius:)/su,
+      /\.library-collection-header__photo-action\s*\{[^}]*(?:position:|inset:|border-radius:)/su,
     );
     // With a photo the action reveals through UiArtworkReveal; the empty
     // avatar keeps its add glyph visible in a plain wrapper.
@@ -111,7 +111,7 @@ describe('SetlistCollectionHeader', () => {
     expect(empty).not.toContain('ui-artwork-reveal');
     expect(withPhoto).toContain('ui-artwork-reveal');
     expect(source).not.toMatch(
-      /\.setlist-collection-header__photo-action\s*\{[^}]*opacity:/su,
+      /\.library-collection-header__photo-action\s*\{[^}]*opacity:/su,
     );
   });
 
@@ -123,25 +123,25 @@ describe('SetlistCollectionHeader', () => {
       description: '',
     });
     const button = html.slice(
-      html.indexOf('setlist-collection-header__photo-action'),
+      html.indexOf('library-collection-header__photo-action'),
       html.indexOf(
         '</button>',
-        html.indexOf('setlist-collection-header__photo-action'),
+        html.indexOf('library-collection-header__photo-action'),
       ),
     );
 
     expect(button).toContain('lucide-user-round-plus');
-    expect(button).not.toContain('setlist-collection-header__photo-label');
+    expect(button).not.toContain('library-collection-header__photo-label');
     expect(source).toContain('v-bind="photoTooltipTriggerProps"');
     expect(source).toMatch(
       /useTooltip\(\{[\s\S]*?text: '選擇藝人照片',[\s\S]*?disabled: computed\(\(\) => Boolean\(props\.coverUrl\)\),/u,
     );
     expect(source).not.toContain("from '../ui/UiTooltip.vue'");
     expect(source).not.toMatch(
-      /\.setlist-collection-header__photo-action--empty\s*\{[^}]*justify-content:\s*flex-end/su,
+      /\.library-collection-header__photo-action--empty\s*\{[^}]*justify-content:\s*flex-end/su,
     );
     expect(source).toMatch(
-      /\.app-folder-dossier__artwork:has\(\s*\.setlist-collection-header__photo-action--empty\s*\)\s*\.ui-collage-thumb__single-empty\s*\)\s*\{\s*visibility:\s*hidden;/su,
+      /\.app-folder-dossier__artwork:has\(\s*\.library-collection-header__photo-action--empty\s*\)\s*\.ui-collage-thumb__single-empty\s*\)\s*\{\s*visibility:\s*hidden;/su,
     );
   });
 
@@ -188,6 +188,6 @@ describe('SetlistCollectionHeader', () => {
 
   it('does not own or forward Folder page asset controls', () => {
     expect(source).not.toContain('page-tools');
-    expect(source).not.toContain('useSetlistFolderAssets');
+    expect(source).not.toContain('useLibraryFolderAssets');
   });
 });

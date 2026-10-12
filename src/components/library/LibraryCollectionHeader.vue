@@ -11,8 +11,8 @@ import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 import UiIconButton from '../ui/UiIconButton.vue';
-import CollectionActionRail from './CollectionActionRail.vue';
-import LibraryEntityDossier from './LibraryEntityDossier.vue';
+import CollectionActionRail from '../playlists/CollectionActionRail.vue';
+import LibraryEntityDossier from '../playlists/LibraryEntityDossier.vue';
 
 const props = defineProps({
   entityKind: {
@@ -111,7 +111,7 @@ function handleMenuAction(value) {
 </script>
 
 <template>
-  <section class="setlist-collection-header">
+  <section class="library-collection-header">
     <LibraryEntityDossier
       :entity-kind="entityKind"
       :library-view="libraryView"
@@ -126,7 +126,7 @@ function handleMenuAction(value) {
       @select-artist="emit('selectArtist')"
     >
       <template v-if="entityKind === 'playlist'" #artwork-action>
-        <UiArtworkReveal class="setlist-collection-header__cover-edit">
+        <UiArtworkReveal class="library-collection-header__cover-edit">
           <UiIconButton
             :icon="Pencil"
             label="編輯播放清單詳細資料"
@@ -141,14 +141,14 @@ function handleMenuAction(value) {
       <template v-else-if="entityKind === 'artist'" #artwork-overlay>
         <component
           :is="coverUrl ? UiArtworkReveal : 'span'"
-          :class="{ 'setlist-collection-header__photo-static': !coverUrl }"
+          :class="{ 'library-collection-header__photo-static': !coverUrl }"
         >
           <button
             v-bind="photoTooltipTriggerProps"
             type="button"
-            class="setlist-collection-header__photo-action"
+            class="library-collection-header__photo-action"
             :class="{
-              'setlist-collection-header__photo-action--empty': !coverUrl,
+              'library-collection-header__photo-action--empty': !coverUrl,
             }"
             aria-label="選擇藝人照片"
             @click="emit('choosePhoto')"
@@ -156,17 +156,17 @@ function handleMenuAction(value) {
             <template v-if="coverUrl">
               <ImagePlus
                 :size="ICON_SIZE"
-                class="setlist-collection-header__photo-icon"
+                class="library-collection-header__photo-icon"
                 aria-hidden="true"
               />
-              <span class="setlist-collection-header__photo-label">
+              <span class="library-collection-header__photo-label">
                 更換照片
               </span>
             </template>
             <UserRoundPlus
               v-else
               :size="EMPTY_PHOTO_GLYPH_SIZE"
-              class="setlist-collection-header__photo-icon"
+              class="library-collection-header__photo-icon"
               aria-hidden="true"
             />
           </button>
@@ -206,7 +206,7 @@ function handleMenuAction(value) {
 </template>
 
 <style scoped>
-.setlist-collection-header {
+.library-collection-header {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-4);
@@ -214,20 +214,20 @@ function handleMenuAction(value) {
 
 /* Corner control: positioned here, revealed by UiArtworkReveal with the
    dossier artwork as its focus-within scope. */
-.setlist-collection-header__cover-edit {
+.library-collection-header__cover-edit {
   position: absolute;
   right: var(--ui-space-2);
   bottom: var(--ui-space-2);
 }
 
 /* The empty avatar's always-visible wrapper stretches like UiArtworkReveal. */
-.setlist-collection-header__photo-static {
+.library-collection-header__photo-static {
   display: grid;
 }
 
 /* Sized and clipped by the dossier's UiArtworkOverlay plane; revealed by
    UiArtworkReveal when a photo exists. */
-.setlist-collection-header__photo-action {
+.library-collection-header__photo-action {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -243,16 +243,16 @@ function handleMenuAction(value) {
     var(--ui-motion-easing-standard);
 }
 
-.setlist-collection-header__photo-action:active {
+.library-collection-header__photo-action:active {
   background: var(--ui-color-overlay-scrim-active);
 }
 
-.setlist-collection-header__photo-action:focus-visible {
+.library-collection-header__photo-action:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
-.setlist-collection-header__photo-label {
+.library-collection-header__photo-label {
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
@@ -260,26 +260,26 @@ function handleMenuAction(value) {
 
 /* An empty avatar keeps the invitation visible as one centered add glyph, so
    the thumbnail's own placeholder glyph is hidden beneath it. */
-.setlist-collection-header__photo-action--empty {
+.library-collection-header__photo-action--empty {
   background: transparent;
   color: var(--ui-color-text-muted);
 }
 
 :deep(
   .app-folder-dossier__artwork:has(
-      .setlist-collection-header__photo-action--empty
+      .library-collection-header__photo-action--empty
     )
     .ui-collage-thumb__single-empty
 ) {
   visibility: hidden;
 }
 
-.setlist-collection-header__photo-action--empty:hover {
+.library-collection-header__photo-action--empty:hover {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
 
-.setlist-collection-header__photo-action--empty:active {
+.library-collection-header__photo-action--empty:active {
   background: var(--ui-color-surface-active);
 }
 </style>

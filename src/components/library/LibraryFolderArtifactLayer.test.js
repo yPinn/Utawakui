@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
-import SetlistFolderArtifactLayer from './SetlistFolderArtifactLayer.vue';
+import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 
 const source = readFileSync(
-  new URL('./SetlistFolderArtifactLayer.vue', import.meta.url),
+  new URL('./LibraryFolderArtifactLayer.vue', import.meta.url),
   'utf8',
 );
 
@@ -25,11 +25,11 @@ function photo(overrides = {}) {
 
 function render(props) {
   return renderToString(
-    createSSRApp({ render: () => h(SetlistFolderArtifactLayer, props) }),
+    createSSRApp({ render: () => h(LibraryFolderArtifactLayer, props) }),
   );
 }
 
-describe('SetlistFolderArtifactLayer', () => {
+describe('LibraryFolderArtifactLayer', () => {
   it('combines the derived artist note and user photos in one folder canvas', async () => {
     const html = await render({
       summary: { artist: 'Aimer', text: 'Artist summary' },

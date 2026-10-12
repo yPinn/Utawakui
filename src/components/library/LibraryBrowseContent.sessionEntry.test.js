@@ -10,7 +10,7 @@ const performanceSource = readFileSync(
   'utf8',
 );
 const headerSource = readFileSync(
-  new URL('../playlists/SetlistCollectionHeader.vue', import.meta.url),
+  new URL('./LibraryCollectionHeader.vue', import.meta.url),
   'utf8',
 );
 

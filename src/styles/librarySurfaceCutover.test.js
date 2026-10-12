@@ -9,11 +9,11 @@ const libraryPageSource = readSource('../pages/LibraryPage.vue');
 const pageSource = readSource(
   '../components/library/LibraryBrowseWorkspace.vue',
 );
-const setlistSource = readSource(
+const browseContentSource = readSource(
   '../components/library/LibraryBrowseContent.vue',
 );
 const headerSource = readSource(
-  '../components/playlists/SetlistCollectionHeader.vue',
+  '../components/library/LibraryCollectionHeader.vue',
 );
 const dossierSource = readSource('../components/layout/AppFolderDossier.vue');
 const tableSource = readSource('../components/track/TrackTable.vue');
@@ -21,7 +21,7 @@ const studioTableSource = readSource(
   '../components/playlists/StudioLibraryTrackTable.vue',
 );
 
-describe('Setlist Token v2 surface cutover', () => {
+describe('Library Token v2 surface cutover', () => {
   it('keeps Library browse in Folder document mode with one page scroll owner', () => {
     expect(appSource).toContain('library: LibraryPage');
     expect(libraryPageSource).toContain(
@@ -30,7 +30,7 @@ describe('Setlist Token v2 surface cutover', () => {
     expect(libraryPageSource).toContain('surface-id="library"');
     expect(pageSource).toContain('<AppFolderPage');
     expect(pageSource).toContain('mode="document"');
-    expect(setlistSource).not.toMatch(
+    expect(browseContentSource).not.toMatch(
       /\.library-browse-content[^{]*\{[^}]*overflow-y\s*:/su,
     );
   });
@@ -38,8 +38,8 @@ describe('Setlist Token v2 surface cutover', () => {
   it('keeps Performance Session out of the Library browse slice', () => {
     expect(pageSource).not.toContain('performance-session-workspace');
     expect(pageSource).not.toContain('usePerformanceSessionWorkspace');
-    expect(setlistSource).not.toContain('PerformanceSessionWorkspace');
-    expect(setlistSource).not.toContain('usePerformanceSessionWorkspace');
+    expect(browseContentSource).not.toContain('PerformanceSessionWorkspace');
+    expect(browseContentSource).not.toContain('usePerformanceSessionWorkspace');
   });
 
   it('keeps Library-owned modal and action menu under the Library surface owner', () => {
@@ -47,13 +47,13 @@ describe('Setlist Token v2 surface cutover', () => {
       /<AppSurfaceBoundary[\s\S]*?surface-id="library"[\s\S]*?<LibraryBrowseWorkspace/u,
     );
     expect(pageSource).not.toContain('AppSurfaceBoundary');
-    expect(setlistSource).toContain('<TrackMetadataModal');
-    expect(setlistSource).toContain('<TrackActionMenu');
-    expect(setlistSource).not.toContain('provideUiOverlayHost');
-    expect(setlistSource).not.toContain('document.body');
+    expect(browseContentSource).toContain('<TrackMetadataModal');
+    expect(browseContentSource).toContain('<TrackActionMenu');
+    expect(browseContentSource).not.toContain('provideUiOverlayHost');
+    expect(browseContentSource).not.toContain('document.body');
   });
 
-  it('uses only formal v2 names in the Setlist and Studio Library row slice', () => {
+  it('uses only formal v2 names in the Library and Studio Library row slice', () => {
     const sources = [
       headerSource,
       dossierSource,

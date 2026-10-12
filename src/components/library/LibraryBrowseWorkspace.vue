@@ -9,9 +9,9 @@ import {
   watch,
 } from 'vue';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
-import { useSetlistFolderObjects } from '../../composables/useSetlistFolderObjects.js';
+import { useLibraryFolderObjects } from '../../composables/useLibraryFolderObjects.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
-import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js';
+import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
 import LibraryBrowseContent from './LibraryBrowseContent.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
@@ -20,11 +20,11 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
 import FolderAssetPreviewModal from '../playlists/FolderAssetPreviewModal.vue';
-import SetlistFolderArtifactLayer from '../playlists/SetlistFolderArtifactLayer.vue';
+import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();
-const { albumSupportingContent } = useSetlistAlbumContext();
-const folderObjects = useSetlistFolderObjects();
+const { albumSupportingContent } = useLibraryAlbumContext();
+const folderObjects = useLibraryFolderObjects();
 const confirmation = useAppConfirmation();
 // null when closed; { key } edits an existing note, { key: null } creates.
 const noteEditor = shallowRef(null);
@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
     <LibraryBrowseContent v-model:search-query="searchQuery" />
 
     <template v-if="showFolderArtifacts" #floating>
-      <SetlistFolderArtifactLayer
+      <LibraryFolderArtifactLayer
         :key="folderPageKey"
         :objects="folderObjects.objects.value"
         :summary="artistSummary"

@@ -23,7 +23,7 @@ const modalSource = readFileSync(
   new URL('../ui/UiModal.vue', import.meta.url),
   'utf8',
 );
-const setlistSource = readFileSync(
+const libraryBrowseSource = readFileSync(
   new URL('../library/LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
@@ -92,7 +92,7 @@ describe('TrackPreviewOverlay', () => {
     expect(source).toMatch(
       /<TrackArtistCredits\s+:track="track"\s+@navigate="emit\('navigate'\)"/u,
     );
-    expect(setlistSource).toContain('@navigate="trackPreview.close"');
+    expect(libraryBrowseSource).toContain('@navigate="trackPreview.close"');
   });
 
   it('keeps how the window was chosen and its times off screen', async () => {
@@ -143,10 +143,10 @@ describe('TrackPreviewOverlay', () => {
       ':remove-from-playlist-id="menuOptions.removeFromPlaylistId"',
     );
     expect(source).toContain(':can-go-to-album="menuOptions.canGoToAlbum"');
-    expect(setlistSource).toContain(
+    expect(libraryBrowseSource).toContain(
       'const addMenuOptions = computed(() => trackMenuOptions(addMenu.value?.track));',
     );
-    expect(setlistSource).toMatch(
+    expect(libraryBrowseSource).toMatch(
       /trackMenuOptions\(trackPreview\.state\.tracks\[trackPreview\.state\.index\]\)/u,
     );
   });
@@ -407,16 +407,16 @@ describe('TrackPreviewOverlay', () => {
   });
 
   it('is wired from the collection header without touching the performance player', () => {
-    expect(setlistSource).toContain('@preview="openTrackPreview"');
-    expect(setlistSource).toContain('<TrackPreviewOverlay');
-    expect(setlistSource).toContain(
+    expect(libraryBrowseSource).toContain('@preview="openTrackPreview"');
+    expect(libraryBrowseSource).toContain('<TrackPreviewOverlay');
+    expect(libraryBrowseSource).toContain(
       'trackPreview.close();\n  activateTrack(track);',
     );
     expect(source).not.toContain('usePlayer');
   });
 
   it('shuffles only artist previews, keeping the selection first', () => {
-    expect(setlistSource).toMatch(
+    expect(libraryBrowseSource).toMatch(
       /isArtistSelected\.value\s*\?\s*shufflePreviewTracks\(visibleTracks, \{ pinnedId: selectedTrackId\.value \}\)\s*:\s*visibleTracks/u,
     );
   });

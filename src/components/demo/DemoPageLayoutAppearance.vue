@@ -3,8 +3,8 @@ import { computed, shallowRef, useId } from 'vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import AppFolderLayout from '../layout/AppFolderLayout.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
-import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue';
-import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue';
+import LibraryAlbumSupportingContent from '../library/LibraryAlbumSupportingContent.vue';
+import LibraryCollectionHeader from '../library/LibraryCollectionHeader.vue';
 import TrackTable from '../track/TrackTable.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
@@ -346,7 +346,7 @@ function toggleDemoCollectionShuffle() {
             </template>
 
             <template v-if="activeFolder.id === 'library'">
-              <SetlistCollectionHeader
+              <LibraryCollectionHeader
                 v-model:search-query="demoSearchQuery"
                 entity-kind="album"
                 :title="selectedDemoAlbum.name"
@@ -380,7 +380,7 @@ function toggleDemoCollectionShuffle() {
                 />
               </AppFolderContentField>
 
-              <SetlistAlbumSupportingContent
+              <LibraryAlbumSupportingContent
                 artist="王以太"
                 :related-albums="demoRelatedAlbums"
                 :playing-album-id="demoSupportingAlbumPlayingId"

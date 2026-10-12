@@ -90,7 +90,7 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).toContain('material="folder"');
     expect(source).toContain('<UiFolderArtifact');
     expect(source.indexOf('#floating')).toBeGreaterThan(
-      source.indexOf('<SetlistAlbumSupportingContent'),
+      source.indexOf('<LibraryAlbumSupportingContent'),
     );
     expect(source).not.toContain('#extension');
   });
@@ -163,14 +163,14 @@ describe('DemoPageLayoutAppearance', () => {
       "import AppFolderContentField from '../layout/AppFolderContentField.vue'",
     );
     expect(source).toContain('<AppFolderContentField');
-    expect(source).toContain('<SetlistCollectionHeader');
+    expect(source).toContain('<LibraryCollectionHeader');
     expect(source).toContain('<TrackTable');
-    expect(source).toContain('<SetlistAlbumSupportingContent');
+    expect(source).toContain('<LibraryAlbumSupportingContent');
     expect(source).toContain('@select-album="selectDemoAlbum"');
     expect(source).toContain('const demoSelectedAlbumId = shallowRef(');
     expect(source).toContain('const demoRelatedAlbums = computed(');
     expect(source.indexOf('</AppFolderContentField>')).toBeLessThan(
-      source.indexOf('<SetlistAlbumSupportingContent'),
+      source.indexOf('<LibraryAlbumSupportingContent'),
     );
     expect(contentFieldSource).toContain(
       'background: var(--ui-folder-content-background)',
@@ -193,7 +193,7 @@ describe('DemoPageLayoutAppearance', () => {
 
   it('reuses the production collection header and canonical track table for the Library specimen', () => {
     expect(source).toContain(
-      "import SetlistCollectionHeader from '../playlists/SetlistCollectionHeader.vue'",
+      "import LibraryCollectionHeader from '../library/LibraryCollectionHeader.vue'",
     );
     expect(source).toContain(
       "import TrackTable from '../track/TrackTable.vue'",

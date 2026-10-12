@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import AppFolderSection from '../layout/AppFolderSection.vue';
-import SetlistAlbumCard from './SetlistAlbumCard.vue';
+import LibraryAlbumCard from './LibraryAlbumCard.vue';
 
 const props = defineProps({
   artist: { type: String, required: true },
@@ -23,20 +23,20 @@ const albumCountLabel = computed(() => `${props.relatedAlbums.length} 張`);
 </script>
 
 <template>
-  <div class="setlist-album-supporting" aria-label="專輯延伸內容">
+  <div class="library-album-supporting" aria-label="專輯延伸內容">
     <AppFolderSection
       v-if="relatedAlbums.length > 0"
       :title="sectionTitle"
       :title-lang="sectionTitleLang"
       :meta="albumCountLabel"
     >
-      <ul class="setlist-album-supporting__albums">
+      <ul class="library-album-supporting__albums">
         <li
           v-for="album in relatedAlbums"
           :key="album.id"
-          class="setlist-album-supporting__album-item"
+          class="library-album-supporting__album-item"
         >
-          <SetlistAlbumCard
+          <LibraryAlbumCard
             :album="album"
             :playing="album.id === playingAlbumId"
             @select="emit('selectAlbum', $event)"
@@ -49,14 +49,14 @@ const albumCountLabel = computed(() => `${props.relatedAlbums.length} 張`);
 </template>
 
 <style scoped>
-.setlist-album-supporting {
+.library-album-supporting {
   min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-6);
   padding-block-start: var(--ui-space-6);
 }
 
-.setlist-album-supporting__albums {
+.library-album-supporting__albums {
   min-inline-size: 0;
   margin: 0;
   padding: 0;
@@ -66,7 +66,7 @@ const albumCountLabel = computed(() => `${props.relatedAlbums.length} 張`);
   list-style: none;
 }
 
-.setlist-album-supporting__album-item {
+.library-album-supporting__album-item {
   min-inline-size: 0;
 }
 </style>

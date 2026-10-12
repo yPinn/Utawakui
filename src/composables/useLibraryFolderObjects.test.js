@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSetlistFolderObjects } from './useSetlistFolderObjects.js';
+import { createLibraryFolderObjects } from './useLibraryFolderObjects.js';
 
 function deferred() {
   let resolve;
@@ -60,7 +60,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('createSetlistFolderObjects', () => {
+describe('createLibraryFolderObjects', () => {
   it('ignores a stale page response after the document changes', async () => {
     const first = deferred();
     const second = deferred();
@@ -70,7 +70,7 @@ describe('createSetlistFolderObjects', () => {
         .mockReturnValueOnce(first.promise)
         .mockReturnValueOnce(second.promise),
     });
-    const owner = createSetlistFolderObjects({ bridge: api });
+    const owner = createLibraryFolderObjects({ bridge: api });
     const artistPage = { kind: 'artist', id: 'artist-0123456789abcdef' };
 
     const firstLoad = owner.load(playlistPage);
@@ -89,7 +89,7 @@ describe('createSetlistFolderObjects', () => {
 
   it('adds a photo, reports cancellation, and caps user objects only', async () => {
     const api = bridge();
-    const owner = createSetlistFolderObjects({ bridge: api });
+    const owner = createLibraryFolderObjects({ bridge: api });
     await owner.load(playlistPage);
 
     await expect(owner.addPhoto()).resolves.toBe('photo:asset-1');
@@ -120,7 +120,7 @@ describe('createSetlistFolderObjects', () => {
         .fn()
         .mockResolvedValue([photo('asset-1'), photo('asset-2')]),
     });
-    const owner = createSetlistFolderObjects({ bridge: api, delayMs: 100 });
+    const owner = createLibraryFolderObjects({ bridge: api, delayMs: 100 });
     await owner.load(playlistPage);
 
     owner.saveLayout([entry('photo:asset-1', { order: 1 })]);
@@ -161,7 +161,7 @@ describe('createSetlistFolderObjects', () => {
         .mockReturnValueOnce(firstSave.promise)
         .mockResolvedValue([]),
     });
-    const owner = createSetlistFolderObjects({ bridge: api, delayMs: 20 });
+    const owner = createLibraryFolderObjects({ bridge: api, delayMs: 20 });
     await owner.load(playlistPage);
 
     owner.saveLayout([entry('photo:asset-1', { order: 1 })]);
@@ -184,7 +184,7 @@ describe('createSetlistFolderObjects', () => {
   it('creates a local derived record on its first layout and sends its type and rotation', async () => {
     const page = { kind: 'album', id: 'album-1' };
     const api = bridge();
-    const owner = createSetlistFolderObjects({ bridge: api });
+    const owner = createLibraryFolderObjects({ bridge: api });
     await owner.load(page);
 
     const summary = entry('derived:artist-summary', {
@@ -219,7 +219,7 @@ describe('createSetlistFolderObjects', () => {
     const api = bridge({
       listFolderPageObjects: vi.fn(async (page) => [photo(page.id, { page })]),
     });
-    const owner = createSetlistFolderObjects({ bridge: api });
+    const owner = createLibraryFolderObjects({ bridge: api });
 
     await owner.load(albumA);
     await owner.load(albumB);
@@ -234,7 +234,7 @@ describe('createSetlistFolderObjects', () => {
 
   it('creates a note from saved content and updates title and text together', async () => {
     const api = bridge();
-    const owner = createSetlistFolderObjects({ bridge: api });
+    const owner = createLibraryFolderObjects({ bridge: api });
     await owner.load(playlistPage);
 
     await expect(
@@ -266,7 +266,7 @@ describe('createSetlistFolderObjects', () => {
     const api = bridge({
       listFolderPageObjects: vi.fn().mockResolvedValue([photo()]),
     });
-    const owner = createSetlistFolderObjects({ bridge: api, delayMs: 1_000 });
+    const owner = createLibraryFolderObjects({ bridge: api, delayMs: 1_000 });
     await owner.load(playlistPage);
 
     owner.saveLayout([entry('photo:asset-1')]);

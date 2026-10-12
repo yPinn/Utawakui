@@ -2,19 +2,19 @@ import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
-import SetlistAlbumSupportingContent from './SetlistAlbumSupportingContent.vue';
+import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue';
 
 const source = readFileSync(
-  new URL('./SetlistAlbumSupportingContent.vue', import.meta.url),
+  new URL('./LibraryAlbumSupportingContent.vue', import.meta.url),
   'utf8',
 );
 
-describe('SetlistAlbumSupportingContent', () => {
+describe('LibraryAlbumSupportingContent', () => {
   it('renders local related albums as paper supporting content', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
-          h(SetlistAlbumSupportingContent, {
+          h(LibraryAlbumSupportingContent, {
             artist: '王以太',
             relatedAlbums: [
               {
@@ -38,7 +38,7 @@ describe('SetlistAlbumSupportingContent', () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
-          h(SetlistAlbumSupportingContent, {
+          h(LibraryAlbumSupportingContent, {
             artist: '王以太',
             relatedAlbums: [],
           }),
@@ -53,7 +53,7 @@ describe('SetlistAlbumSupportingContent', () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
-          h(SetlistAlbumSupportingContent, {
+          h(LibraryAlbumSupportingContent, {
             artist: 'YOASOBI',
             albumsTitle: '專輯',
             relatedAlbums: [
@@ -80,7 +80,7 @@ describe('SetlistAlbumSupportingContent', () => {
       renderToString(
         createSSRApp({
           render: () =>
-            h(SetlistAlbumSupportingContent, {
+            h(LibraryAlbumSupportingContent, {
               artist: 'YOASOBI',
               relatedAlbums: [
                 {
@@ -102,9 +102,9 @@ describe('SetlistAlbumSupportingContent', () => {
 
   it('delegates each repeated item to the shared supporting-content card', () => {
     expect(source).toContain(
-      "import SetlistAlbumCard from './SetlistAlbumCard.vue'",
+      "import LibraryAlbumCard from './LibraryAlbumCard.vue'",
     );
-    expect(source).toContain('<SetlistAlbumCard');
+    expect(source).toContain('<LibraryAlbumCard');
     expect(source).toContain('@select="emit(\'selectAlbum\', $event)"');
     expect(source).toContain(':playing="album.id === playingAlbumId"');
     expect(source).toContain('@play="emit(\'playAlbum\', $event)"');

@@ -12,10 +12,10 @@ import {
   textContent,
   trigger,
 } from '../ui/uiTestHost.js';
-import SetlistAlbumCard from './SetlistAlbumCard.vue';
+import LibraryAlbumCard from './LibraryAlbumCard.vue';
 
 for (const [component, filename] of [
-  [SetlistAlbumCard, './SetlistAlbumCard.vue'],
+  [LibraryAlbumCard, './LibraryAlbumCard.vue'],
   [PlaybackPrimaryButton, '../playback/PlaybackPrimaryButton.vue'],
   [UiArtworkReveal, '../ui/UiArtworkReveal.vue'],
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
@@ -34,13 +34,13 @@ const album = {
 };
 
 const source = readFileSync(
-  new URL('./SetlistAlbumCard.vue', import.meta.url),
+  new URL('./LibraryAlbumCard.vue', import.meta.url),
   'utf8',
 );
 
-describe('SetlistAlbumCard', () => {
+describe('LibraryAlbumCard', () => {
   it('presents one full-card navigation action and one artwork playback action', () => {
-    const mounted = mount(SetlistAlbumCard, { album });
+    const mounted = mount(LibraryAlbumCard, { album });
     const buttons = findAll(mounted.root, (node) => node.type === 'button');
     const openButton = buttons.find(
       (button) => button.props['aria-label'] === '開啟專輯：chasing ghosts',
@@ -67,7 +67,7 @@ describe('SetlistAlbumCard', () => {
   it('keeps playback independent from full-card navigation', () => {
     const onSelect = vi.fn();
     const onPlay = vi.fn();
-    const mounted = mount(SetlistAlbumCard, { album, onSelect, onPlay });
+    const mounted = mount(LibraryAlbumCard, { album, onSelect, onPlay });
     const buttons = findAll(mounted.root, (node) => node.type === 'button');
     const openButton = buttons.find(
       (button) => button.props['aria-label'] === '開啟專輯：chasing ghosts',
@@ -92,7 +92,7 @@ describe('SetlistAlbumCard', () => {
   });
 
   it('projects the current album as a pause action', () => {
-    const mounted = mount(SetlistAlbumCard, { album, playing: true });
+    const mounted = mount(LibraryAlbumCard, { album, playing: true });
     const pauseButton = findAll(
       mounted.root,
       (node) =>
@@ -106,11 +106,11 @@ describe('SetlistAlbumCard', () => {
   });
 
   it('omits missing metadata without inventing a placeholder', () => {
-    const mounted = mount(SetlistAlbumCard, {
+    const mounted = mount(LibraryAlbumCard, {
       album: { ...album, releaseYear: null },
     });
     const copy = findAll(mounted.root, (node) =>
-      String(node.props?.class ?? '').includes('setlist-album-card__copy'),
+      String(node.props?.class ?? '').includes('library-album-card__copy'),
     )[0];
 
     expect(textContent(copy)).toBe('chasing ghosts');
@@ -126,7 +126,7 @@ describe('SetlistAlbumCard', () => {
     );
     expect(source).toContain('data-artwork-reveal-scope="focus-within"');
     expect(source).toMatch(
-      /\.setlist-album-card\s*\{[^}]*background:\s*transparent;/su,
+      /\.library-album-card\s*\{[^}]*background:\s*transparent;/su,
     );
     expect(source).not.toContain('background: var(--ui-color-surface-raised)');
     expect(source).toContain('background: var(--ui-color-surface-hover)');
@@ -134,10 +134,10 @@ describe('SetlistAlbumCard', () => {
     expect(source).toContain('border-radius: var(--ui-radius-md)');
     expect(source).toContain('outline: var(--ui-focus-width) solid');
     expect(source).toMatch(
-      /\.setlist-album-card__play\s*\{[^}]*grid-area:\s*1\s*\/\s*1;[^}]*align-self:\s*end;[^}]*justify-self:\s*end;[^}]*margin:\s*var\(--ui-space-2\);/su,
+      /\.library-album-card__play\s*\{[^}]*grid-area:\s*1\s*\/\s*1;[^}]*align-self:\s*end;[^}]*justify-self:\s*end;[^}]*margin:\s*var\(--ui-space-2\);/su,
     );
     expect(source).toMatch(
-      /\.setlist-album-card__play\s+:deep\(\.ui-icon-btn\)\s*\{[^}]*box-shadow:\s*var\(--ui-shadow-overlay\);/su,
+      /\.library-album-card__play\s+:deep\(\.ui-icon-btn\)\s*\{[^}]*box-shadow:\s*var\(--ui-shadow-overlay\);/su,
     );
   });
 });

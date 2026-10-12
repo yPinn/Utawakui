@@ -1,7 +1,7 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
 
-export const SETLIST_FOLDER_USER_OBJECT_LIMIT = 12;
-export const SETLIST_FOLDER_LAYOUT_SAVE_DELAY_MS = 300;
+export const LIBRARY_FOLDER_USER_OBJECT_LIMIT = 12;
+export const LIBRARY_FOLDER_LAYOUT_SAVE_DELAY_MS = 300;
 
 function resolveBridge(bridge) {
   if (bridge) return bridge;
@@ -37,12 +37,12 @@ function layoutEntry(value) {
   return entry;
 }
 
-export function createSetlistFolderObjects(options = {}) {
+export function createLibraryFolderObjects(options = {}) {
   const bridge = resolveBridge(options.bridge);
   const delayMs =
     Number.isFinite(options.delayMs) && options.delayMs >= 0
       ? options.delayMs
-      : SETLIST_FOLDER_LAYOUT_SAVE_DELAY_MS;
+      : LIBRARY_FOLDER_LAYOUT_SAVE_DELAY_MS;
   const page = shallowRef(null);
   const objects = shallowRef([]);
   // Keys added this session, set in the same tick as the object so the
@@ -192,7 +192,7 @@ export function createSetlistFolderObjects(options = {}) {
     if (
       !page.value ||
       state.adding ||
-      userObjectCount.value >= SETLIST_FOLDER_USER_OBJECT_LIMIT ||
+      userObjectCount.value >= LIBRARY_FOLDER_USER_OBJECT_LIMIT ||
       typeof bridge?.chooseFolderPagePhoto !== 'function'
     ) {
       return null;
@@ -220,7 +220,7 @@ export function createSetlistFolderObjects(options = {}) {
     if (
       !page.value ||
       state.adding ||
-      userObjectCount.value >= SETLIST_FOLDER_USER_OBJECT_LIMIT ||
+      userObjectCount.value >= LIBRARY_FOLDER_USER_OBJECT_LIMIT ||
       typeof bridge?.createFolderPageNote !== 'function'
     ) {
       return null;
@@ -318,7 +318,7 @@ export function createSetlistFolderObjects(options = {}) {
     saving: computed(() => state.saving),
     error: computed(() => state.error),
     limitReached: computed(
-      () => userObjectCount.value >= SETLIST_FOLDER_USER_OBJECT_LIMIT,
+      () => userObjectCount.value >= LIBRARY_FOLDER_USER_OBJECT_LIMIT,
     ),
     load,
     addPhoto,
@@ -334,7 +334,7 @@ export function createSetlistFolderObjects(options = {}) {
 
 let singleton;
 
-export function useSetlistFolderObjects() {
-  singleton ??= createSetlistFolderObjects();
+export function useLibraryFolderObjects() {
+  singleton ??= createLibraryFolderObjects();
   return singleton;
 }

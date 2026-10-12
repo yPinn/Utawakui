@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  compareSetlistLibraryTrackOrder,
-  sortSetlistLibraryTracks,
-  sortSetlistLocalTracks,
+  compareLibraryTrackOrder,
+  sortLibraryTracks,
+  sortLocalLibraryTracks,
 } from './trackSourceDisplay.js';
 
-describe('sortSetlistLocalTracks', () => {
+describe('sortLocalLibraryTracks', () => {
   it('returns only local-file tracks sorted by importedAt newest first', () => {
     const tracks = [
       {
@@ -36,7 +36,7 @@ describe('sortSetlistLocalTracks', () => {
       },
     ];
 
-    expect(sortSetlistLocalTracks(tracks).map((track) => track.id)).toEqual([
+    expect(sortLocalLibraryTracks(tracks).map((track) => track.id)).toEqual([
       'local-z',
       'local-a',
     ]);
@@ -54,14 +54,14 @@ describe('sortSetlistLocalTracks', () => {
       { id: 'alpha', sourceType: 'local-file' },
     ];
 
-    expect(sortSetlistLocalTracks(tracks).map((track) => track.id)).toEqual([
+    expect(sortLocalLibraryTracks(tracks).map((track) => track.id)).toEqual([
       'alpha',
       'zeta',
     ]);
   });
 });
 
-describe('sortSetlistLibraryTracks', () => {
+describe('sortLibraryTracks', () => {
   it('returns only non-local tracks sorted by importedAt newest first', () => {
     const tracks = [
       {
@@ -96,7 +96,7 @@ describe('sortSetlistLibraryTracks', () => {
       },
     ];
 
-    expect(sortSetlistLibraryTracks(tracks).map((track) => track.id)).toEqual([
+    expect(sortLibraryTracks(tracks).map((track) => track.id)).toEqual([
       'song-a2',
       'song-b',
       'song-a1',
@@ -132,7 +132,7 @@ describe('sortSetlistLibraryTracks', () => {
       },
     ];
 
-    expect(sortSetlistLibraryTracks(tracks).map((track) => track.id)).toEqual([
+    expect(sortLibraryTracks(tracks).map((track) => track.id)).toEqual([
       'song-a1',
       'song-a2',
       'song-b',
@@ -146,7 +146,7 @@ describe('sortSetlistLibraryTracks', () => {
         { id: 'missing' },
         { id: 'new', importedAt: '2026-10-04T10:00:00.000Z' },
         { id: 'invalid', importedAt: 'not-a-date' },
-      ].sort(compareSetlistLibraryTrackOrder),
+      ].sort(compareLibraryTrackOrder),
     ).toEqual([
       { id: 'new', importedAt: '2026-10-04T10:00:00.000Z' },
       { id: 'invalid', importedAt: 'not-a-date' },

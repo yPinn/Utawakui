@@ -150,7 +150,7 @@ function handleTrackSelect(track) {
         v-if="state.trackScope === 'current-playlist' && !selectedPlaylist"
         padded
       >
-        目前沒有選取 Setlist 歌單。
+        目前沒有選取播放清單。
       </UiHint>
       <UiHint v-else-if="visibleTracks.length === 0" padded>
         找不到符合的曲目。

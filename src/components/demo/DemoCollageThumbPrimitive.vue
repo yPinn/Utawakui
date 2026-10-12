@@ -105,7 +105,7 @@ const CONSUMER_SIZES = [
   { size: 40, label: 'Sidebar · 40px' },
   { size: 88, label: 'Dossier · 88px' },
   { size: 120, label: 'Context panel · 120px' },
-  { size: 136, label: 'Setlist header · 136px' },
+  { size: 136, label: 'Library collection header · 136px' },
   { size: 160, label: 'Details modal · 160px' },
   { size: 280, label: 'Context inspector · 280px' },
 ];

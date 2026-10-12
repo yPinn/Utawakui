@@ -27,7 +27,7 @@ const queuePanelSource = readFileSync(
   new URL('../queue/QueuePanel.vue', import.meta.url),
   'utf8',
 );
-const setlistSource = readFileSync(
+const libraryBrowseSource = readFileSync(
   new URL('../library/LibraryBrowseContent.vue', import.meta.url),
   'utf8',
 );
@@ -364,8 +364,8 @@ describe('TrackActionMenu behavior model', () => {
 });
 
 describe('TrackActionMenu ownership', () => {
-  it('is shared by Setlist and Right Dock without duplicating destination assembly', () => {
-    for (const ownerSource of [setlistSource, queuePanelSource]) {
+  it('is shared by Library and Right Dock without duplicating destination assembly', () => {
+    for (const ownerSource of [libraryBrowseSource, queuePanelSource]) {
       expect(ownerSource).toContain('TrackActionMenu');
       expect(ownerSource).not.toContain('addToPlaylistTargets');
       expect(ownerSource).not.toContain("label: '新增至播放清單'");

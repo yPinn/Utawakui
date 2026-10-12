@@ -24,21 +24,21 @@ function playAlbum(event) {
 </script>
 
 <template>
-  <div class="setlist-album-card" data-artwork-reveal-scope="focus-within">
+  <div class="library-album-card" data-artwork-reveal-scope="focus-within">
     <button
       type="button"
-      class="setlist-album-card__open"
+      class="library-album-card__open"
       :aria-label="`開啟專輯：${album.name}`"
       @click="selectAlbum"
     />
     <UiCollageThumb
-      class="setlist-album-card__artwork"
+      class="library-album-card__artwork"
       :cover-url="album.coverUrl"
       :tracks="album.tracks"
       :can-collage="false"
       :size="ALBUM_ARTWORK_SIZE"
     />
-    <UiArtworkReveal class="setlist-album-card__play">
+    <UiArtworkReveal class="library-album-card__play">
       <PlaybackPrimaryButton
         :playing="playing"
         :play-label="`播放專輯：${album.name}`"
@@ -46,7 +46,7 @@ function playAlbum(event) {
         @click="playAlbum"
       />
     </UiArtworkReveal>
-    <span class="setlist-album-card__copy">
+    <span class="library-album-card__copy">
       <strong :lang="contentLangAttribute(album.name, album.artist)">{{
         album.name
       }}</strong>
@@ -56,7 +56,7 @@ function playAlbum(event) {
 </template>
 
 <style scoped>
-.setlist-album-card {
+.library-album-card {
   position: relative;
   isolation: isolate;
   min-inline-size: 0;
@@ -75,26 +75,26 @@ function playAlbum(event) {
     var(--ui-motion-easing-standard);
 }
 
-.setlist-album-card:hover,
-.setlist-album-card:focus-within {
+.library-album-card:hover,
+.library-album-card:focus-within {
   background: var(--ui-color-surface-hover);
 }
 
-.setlist-album-card:has(.setlist-album-card__open:active) {
+.library-album-card:has(.library-album-card__open:active) {
   background: var(--ui-color-surface-active);
 }
 
-.setlist-album-card:has(.setlist-album-card__open:focus-visible) {
+.library-album-card:has(.library-album-card__open:focus-visible) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
-.setlist-album-card__artwork,
-.setlist-album-card__open {
+.library-album-card__artwork,
+.library-album-card__open {
   grid-area: 1 / 1;
 }
 
-.setlist-album-card__open {
+.library-album-card__open {
   z-index: var(--ui-layer-raised);
   grid-area: 1 / 1 / 3 / 2;
   align-self: stretch;
@@ -107,7 +107,7 @@ function playAlbum(event) {
   cursor: pointer;
 }
 
-.setlist-album-card__play {
+.library-album-card__play {
   z-index: var(--ui-layer-overlay);
   grid-area: 1 / 1;
   align-self: end;
@@ -115,31 +115,31 @@ function playAlbum(event) {
   margin: var(--ui-space-2);
 }
 
-.setlist-album-card__play :deep(.ui-icon-btn) {
+.library-album-card__play :deep(.ui-icon-btn) {
   box-shadow: var(--ui-shadow-overlay);
 }
 
-.setlist-album-card__copy {
+.library-album-card__copy {
   grid-area: 2 / 1;
   min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-1);
 }
 
-.setlist-album-card__copy strong,
-.setlist-album-card__copy span {
+.library-album-card__copy strong,
+.library-album-card__copy span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.setlist-album-card__copy strong {
+.library-album-card__copy strong {
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
-.setlist-album-card__copy span {
+.library-album-card__copy span {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);

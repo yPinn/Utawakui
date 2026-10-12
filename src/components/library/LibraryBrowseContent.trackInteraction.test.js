@@ -66,7 +66,7 @@ describe('LibraryBrowseContent track interaction owner', () => {
     expect(source).toContain(
       "import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js'",
     );
-    expect(source).toContain('<SetlistCollectionHeader');
+    expect(source).toContain('<LibraryCollectionHeader');
     expect(source).toContain(':playing="selectedCollectionIsPlaying"');
     expect(source).toContain(
       '@toggle-playback="toggleSelectedCollectionPlayback"',

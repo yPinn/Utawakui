@@ -11,7 +11,7 @@ import {
   collectionAddToPlaylistItems,
 } from './playlistMenu.js';
 
-// Presentational menu items shared by the Setlist collection header and the
+// Presentational menu items shared by the Library collection header and the
 // Sidebar row menu, so labels, icons and action payloads cannot drift.
 
 export function addToPlaylistChildren(playlists, sourcePlaylistId) {

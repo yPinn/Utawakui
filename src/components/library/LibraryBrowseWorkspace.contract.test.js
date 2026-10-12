@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const readSource = (path) =>
@@ -9,6 +9,32 @@ const pageSource = readSource('./LibraryBrowseWorkspace.vue');
 const viewSource = readSource('./LibraryBrowseContent.vue');
 
 describe('Library browse workspace composition', () => {
+  it('uses Library-owned component and composable identities', () => {
+    const legacyPaths = [
+      '../playlists/SetlistAlbumCard.vue',
+      '../playlists/SetlistAlbumSupportingContent.vue',
+      '../playlists/SetlistCollectionHeader.vue',
+      '../playlists/SetlistFolderArtifactLayer.vue',
+      '../../composables/useSetlistAlbumContext.js',
+      '../../composables/useSetlistFolderObjects.js',
+    ];
+    const libraryPaths = [
+      './LibraryAlbumCard.vue',
+      './LibraryAlbumSupportingContent.vue',
+      './LibraryCollectionHeader.vue',
+      './LibraryFolderArtifactLayer.vue',
+      '../../composables/useLibraryAlbumContext.js',
+      '../../composables/useLibraryFolderObjects.js',
+    ];
+
+    for (const path of legacyPaths) {
+      expect(existsSync(new URL(path, import.meta.url))).toBe(false);
+    }
+    for (const path of libraryPaths) {
+      expect(existsSync(new URL(path, import.meta.url))).toBe(true);
+    }
+  });
+
   it('remounts the object layer per Folder page and persists one layout batch', () => {
     expect(pageSource).toContain(':key="folderPageKey"');
     expect(pageSource).toContain('@layout-change="handleArtifactLayout"');
@@ -35,7 +61,7 @@ describe('Library browse workspace composition', () => {
     expect(viewSource).toContain(
       "import AppFolderContentField from '../layout/AppFolderContentField.vue'",
     );
-    expect(viewSource).toContain('<SetlistCollectionHeader');
+    expect(viewSource).toContain('<LibraryCollectionHeader');
     expect(viewSource).toMatch(
       /<AppFolderContentField\s+:variant="contentFieldVariant"\s+aria-label="曲目清單與狀態"\s*>/u,
     );
@@ -52,40 +78,40 @@ describe('Library browse workspace composition', () => {
 
   it('ends the primary track field before local album supporting content', () => {
     expect(viewSource).toContain(
-      "import SetlistAlbumSupportingContent from '../playlists/SetlistAlbumSupportingContent.vue'",
+      "import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue'",
     );
     expect(viewSource).toContain(
-      'const { albumEntries, albumSupportingContent } = useSetlistAlbumContext()',
+      'const { albumEntries, albumSupportingContent } = useLibraryAlbumContext()',
     );
-    expect(viewSource).toContain('<SetlistAlbumSupportingContent');
+    expect(viewSource).toContain('<LibraryAlbumSupportingContent');
     expect(viewSource.indexOf('</AppFolderContentField>')).toBeLessThan(
-      viewSource.indexOf('<SetlistAlbumSupportingContent'),
+      viewSource.indexOf('<LibraryAlbumSupportingContent'),
     );
     expect(viewSource).toContain('@select-album="selectPlaylistAction"');
   });
 
   it('projects summary and user photos through one Folder-wide artifact layer', () => {
     expect(pageSource).toContain(
-      "import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js'",
+      "import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js'",
     );
     expect(pageSource).toContain(
-      "import SetlistFolderArtifactLayer from '../playlists/SetlistFolderArtifactLayer.vue'",
+      "import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue'",
     );
     expect(pageSource).toContain(
       "import FolderAssetPreviewModal from '../playlists/FolderAssetPreviewModal.vue'",
     );
-    expect(pageSource).toContain('useSetlistFolderObjects');
+    expect(pageSource).toContain('useLibraryFolderObjects');
     expect(pageSource).toContain(
-      'const { albumSupportingContent } = useSetlistAlbumContext()',
+      'const { albumSupportingContent } = useLibraryAlbumContext()',
     );
     expect(pageSource).toMatch(
-      /<template\s+v-if="showFolderArtifacts"\s+#floating>[\s\S]*?<SetlistFolderArtifactLayer[\s\S]*?:objects="folderObjects\.objects\.value"/u,
+      /<template\s+v-if="showFolderArtifacts"\s+#floating>[\s\S]*?<LibraryFolderArtifactLayer[\s\S]*?:objects="folderObjects\.objects\.value"/u,
     );
     expect(pageSource.indexOf('#floating')).toBeGreaterThan(
       pageSource.indexOf('<LibraryBrowseContent'),
     );
     expect(pageSource).not.toContain('#extension');
-    expect(pageSource.match(/<SetlistFolderArtifactLayer/gu)).toHaveLength(1);
+    expect(pageSource.match(/<LibraryFolderArtifactLayer/gu)).toHaveLength(1);
     expect(pageSource).toContain('<FolderAssetPreviewModal');
   });
 
@@ -159,10 +185,10 @@ describe('Library browse workspace composition', () => {
 
   it('shares one album context projection while keeping related albums on paper', () => {
     expect(viewSource).toContain(
-      "import { useSetlistAlbumContext } from '../../composables/useSetlistAlbumContext.js'",
+      "import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js'",
     );
     expect(viewSource).toContain(
-      'const { albumEntries, albumSupportingContent } = useSetlistAlbumContext()',
+      'const { albumEntries, albumSupportingContent } = useLibraryAlbumContext()',
     );
     expect(viewSource).toContain(
       'v-if="albumSupportingContent?.relatedAlbums.length > 0"',
@@ -181,7 +207,7 @@ describe('Library browse workspace composition', () => {
     expect(viewSource).toContain("'content'");
   });
 
-  it('routes Setlist through its page owner instead of the generic page wrapper', () => {
+  it('routes Library through its page owner instead of the generic page wrapper', () => {
     expect(appSource).toContain(
       "import LibraryPage from './pages/LibraryPage.vue'",
     );
