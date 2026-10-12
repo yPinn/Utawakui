@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { artistCreditLinks } from '../../utils/artistPage.js';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
@@ -10,7 +12,15 @@ const props = defineProps({
   track: { type: Object, required: true },
 });
 
-const artistName = computed(() => props.track?.artist || '未知演唱者');
+const { state: artistIndexState } = useArtistIndex();
+const artistName = computed(() => {
+  const links = artistCreditLinks(props.track, artistIndexState.index);
+  return (
+    links?.map((link) => link.text).join(', ') ||
+    props.track?.artist ||
+    '未知演唱者'
+  );
+});
 const accessibleLabel = computed(
   () => `目前歌曲：${props.track?.title || '未命名曲目'}，${artistName.value}`,
 );

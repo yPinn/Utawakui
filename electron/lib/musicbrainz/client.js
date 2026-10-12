@@ -43,6 +43,11 @@ function escapeLucene(value) {
 }
 
 function buildMusicBrainzQuery(entityType, query = {}) {
+  if (entityType === 'artist') {
+    return validText(query.artist, true)
+      ? `artist:"${escapeLucene(query.artist)}"`
+      : null;
+  }
   const field =
     entityType === 'release-group'
       ? 'releasegroup'
@@ -112,6 +117,64 @@ function artistCreditText(value) {
   return normalizeText(text, 500);
 }
 
+function normalizeArtistCredits(value) {
+  if (!Array.isArray(value) || value.length > 32) return [];
+  return value
+    .slice(0, 16)
+    .map((credit) => {
+      const artist = credit?.artist;
+      const name = normalizeText(credit?.name ?? artist?.name, 200);
+      if (!name || !MBID_RE.test(artist?.id ?? '')) return null;
+      const joinPhrase = normalizeText(credit?.joinphrase, 30) ?? '';
+      return {
+        id: artist.id.toLowerCase(),
+        name,
+        joinPhrase,
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeArtistAlias(value) {
+  if (!value || typeof value !== 'object') return null;
+  const name = normalizeText(value.name, 200);
+  if (!name) return null;
+  return {
+    name,
+    ...(normalizeText(value['sort-name'], 200)
+      ? { sortName: normalizeText(value['sort-name'], 200) }
+      : {}),
+    ...(normalizeText(value.locale, 20)
+      ? { locale: normalizeText(value.locale, 20) }
+      : {}),
+    primary: value.primary === true,
+    ...(normalizeText(value.type, 100)
+      ? { type: normalizeText(value.type, 100) }
+      : {}),
+  };
+}
+
+function normalizeArtist(value) {
+  if (!value || typeof value !== 'object' || !MBID_RE.test(value.id)) {
+    return null;
+  }
+  const name = normalizeText(value.name, 200);
+  if (!name) return null;
+  const aliases = Array.isArray(value.aliases)
+    ? value.aliases.slice(0, 32).map(normalizeArtistAlias).filter(Boolean)
+    : [];
+  return {
+    entityType: 'artist',
+    id: value.id.toLowerCase(),
+    name,
+    sortName: normalizeText(value['sort-name'], 200),
+    type: normalizeText(value.type, 100),
+    disambiguation: normalizeText(value.disambiguation, 200),
+    aliases,
+    score: normalizeScore(value.score),
+  };
+}
+
 function normalizeReleaseGroup(value) {
   if (!value || typeof value !== 'object' || !MBID_RE.test(value.id)) {
     return null;
@@ -174,6 +237,7 @@ function normalizeRecording(value) {
     id: value.id.toLowerCase(),
     title,
     artistCredit: artistCreditText(value['artist-credit']),
+    artistCredits: normalizeArtistCredits(value['artist-credit']),
     duration:
       Number.isFinite(duration) && duration >= 0
         ? Math.round(duration / 1000)
@@ -296,7 +360,11 @@ function createMusicBrainzClient(options = {}) {
       const parsed = parseJson(bounded.text);
       if (parsed.status === 'error') return parsed;
       const listKey =
-        entityType === 'release-group' ? 'release-groups' : 'recordings';
+        entityType === 'release-group'
+          ? 'release-groups'
+          : entityType === 'artist'
+            ? 'artists'
+            : 'recordings';
       const values = parsed.value?.[listKey];
       if (!Array.isArray(values)) {
         return { status: 'error', reason: 'invalid-json' };
@@ -307,7 +375,9 @@ function createMusicBrainzClient(options = {}) {
       const normalize =
         entityType === 'release-group'
           ? normalizeReleaseGroup
-          : normalizeRecording;
+          : entityType === 'artist'
+            ? normalizeArtist
+            : normalizeRecording;
       const records = values
         .slice(0, DEFAULT_SEARCH_LIMIT)
         .map(normalize)
@@ -324,6 +394,8 @@ function createMusicBrainzClient(options = {}) {
   }
 
   return {
+    searchArtists: (query, requestOptions) =>
+      request('artist', query, requestOptions),
     searchRecordings: (query, requestOptions) =>
       request('recording', query, requestOptions),
     searchReleaseGroups: (query, requestOptions) =>
@@ -340,6 +412,7 @@ module.exports = {
   buildMusicBrainzQuery,
   buildMusicBrainzUserAgent,
   createMusicBrainzClient,
+  normalizeArtist,
   normalizeRecording,
   normalizeReleaseGroup,
 };

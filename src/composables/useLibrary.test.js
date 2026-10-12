@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 let libraryUpdatedCallback;
 let listTracksMock;
 let listPlaylistsMock;
-let refreshLibraryMetadataMock;
 
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -21,12 +20,10 @@ beforeEach(() => {
   // enrichment below), which independently fetches on module load — stub it
   // too so that fetch resolves instead of throwing on a missing mock.
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
-  refreshLibraryMetadataMock = vi.fn().mockResolvedValue({ updated: 0 });
   vi.stubGlobal('window', {
     Utawakui: {
       listTracks: listTracksMock,
       listPlaylists: listPlaylistsMock,
-      refreshLibraryMetadata: refreshLibraryMetadataMock,
       onLibraryUpdated: (callback) => {
         libraryUpdatedCallback = callback;
         return vi.fn();
@@ -177,24 +174,6 @@ describe('album cover override', () => {
     expect(tracksById.value.get('t1').thumbnailUrl).toBe(
       'utawakui-media://playlist-cover/album-1/cover.jpg',
     );
-  });
-});
-
-describe('refreshMetadata', () => {
-  it('calls the refreshLibraryMetadata bridge and returns the maintenance summary', async () => {
-    const summary = {
-      updated: 95,
-      normalized: 12,
-      enriched: 90,
-      skipped: 3,
-    };
-    refreshLibraryMetadataMock.mockResolvedValue(summary);
-    const { refreshMetadata } = await loadLibrary();
-
-    const result = await refreshMetadata();
-
-    expect(refreshLibraryMetadataMock).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(summary);
   });
 });
 

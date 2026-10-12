@@ -7,12 +7,14 @@ import {
   isArtistId,
   isArtistPhotoRemoved,
   listArtistPhotoUrls,
+  promoteArtistPhotoState,
   readArtistPhoto,
   resolveArtistPhotoPath,
   writeArtistPhoto,
 } from './artistPhotos.js';
 
 const ARTIST_ID = 'artist-0123456789abcdef';
+const STABLE_ARTIST_ID = 'artist-123e4567-e89b-42d3-a456-426614174000';
 const CHANNEL_ID = 'UC5DHwv9N4OQ9AWtKr8YSefw';
 const NOW = new Date('2026-10-05T12:00:00.000Z');
 
@@ -27,10 +29,89 @@ afterEach(() => {
 });
 
 describe('artist photo storage', () => {
-  it('accepts only derived artist ids', () => {
+  it('accepts derived and stable artist ids only', () => {
     expect(isArtistId(ARTIST_ID)).toBe(true);
+    expect(isArtistId(STABLE_ARTIST_ID)).toBe(true);
     expect(isArtistId('artist-../../x')).toBe(false);
     expect(isArtistId('3f2c9e0a-uuid')).toBe(false);
+  });
+
+  it('promotes the strongest legacy photo without deleting either source', () => {
+    const automaticId = 'artist-1111111111111111';
+    const localId = 'artist-2222222222222222';
+    writeArtistPhoto(dir, automaticId, {
+      buffer: Buffer.from('automatic'),
+      extension: '.jpg',
+      source: 'youtube-channel',
+      channelId: CHANNEL_ID,
+      now: new Date('2026-10-12T01:00:00.000Z'),
+    });
+    writeArtistPhoto(dir, localId, {
+      buffer: Buffer.from('local'),
+      extension: '.png',
+      source: 'local-file',
+      now: new Date('2026-10-11T01:00:00.000Z'),
+    });
+
+    expect(
+      promoteArtistPhotoState(dir, [automaticId, localId], STABLE_ARTIST_ID),
+    ).toEqual({
+      changed: true,
+      sourceArtistId: localId,
+      state: 'photo',
+    });
+    expect(readArtistPhoto(dir, STABLE_ARTIST_ID)).toMatchObject({
+      filename: 'photo.png',
+      source: 'local-file',
+    });
+    expect(
+      fs.readFileSync(
+        path.join(dir, 'artists', STABLE_ARTIST_ID, 'photo.png'),
+        'utf8',
+      ),
+    ).toBe('local');
+    expect(readArtistPhoto(dir, automaticId)).not.toBeNull();
+    expect(readArtistPhoto(dir, localId)).not.toBeNull();
+  });
+
+  it('promotes a removal marker only when no source has a photo', () => {
+    const removedId = 'artist-3333333333333333';
+    clearArtistPhoto(dir, removedId, {
+      now: new Date('2026-10-12T02:00:00.000Z'),
+    });
+
+    expect(
+      promoteArtistPhotoState(dir, [removedId], STABLE_ARTIST_ID),
+    ).toMatchObject({ changed: true, state: 'removed' });
+    expect(isArtistPhotoRemoved(dir, STABLE_ARTIST_ID)).toBe(true);
+    expect(isArtistPhotoRemoved(dir, removedId)).toBe(true);
+  });
+
+  it('never overwrites an existing stable photo during promotion', () => {
+    const sourceId = 'artist-4444444444444444';
+    writeArtistPhoto(dir, sourceId, {
+      buffer: Buffer.from('source'),
+      extension: '.jpg',
+      source: 'local-file',
+      now: NOW,
+    });
+    writeArtistPhoto(dir, STABLE_ARTIST_ID, {
+      buffer: Buffer.from('stable'),
+      extension: '.webp',
+      source: 'local-file',
+      now: NOW,
+    });
+
+    expect(promoteArtistPhotoState(dir, [sourceId], STABLE_ARTIST_ID)).toEqual({
+      changed: false,
+      state: 'existing',
+    });
+    expect(
+      fs.readFileSync(
+        path.join(dir, 'artists', STABLE_ARTIST_ID, 'photo.webp'),
+        'utf8',
+      ),
+    ).toBe('stable');
   });
 
   it('writes a YouTube photo with provenance and serves only that file', () => {

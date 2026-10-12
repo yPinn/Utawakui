@@ -137,6 +137,12 @@ describe('SettingsView version and maintenance sections', () => {
     expect(source).toContain('原始歌曲會保留，之後可以重新產生。');
   });
 
+  it('presents metadata organization as automatic instead of owning a manual maintenance action', () => {
+    expect(librarySource).toContain('<LibraryMetadataSettingsRow />');
+    expect(source).not.toContain('useLibraryMetadataMaintenance');
+    expect(source).not.toContain('@run="runLibraryMetadataMaintenance"');
+  });
+
   it('nests BPM controls inside the audio-processing feature row', () => {
     const gateRowStart = source.indexOf('<SettingsFeatureGateRow');
     const bpmRow = source.indexOf('<MusicAnalysisSettingsRow', gateRowStart);

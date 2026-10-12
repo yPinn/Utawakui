@@ -12,7 +12,8 @@ const ARTISTS_DIRNAME = 'artists';
 const PROVENANCE_FILENAME = 'photo.json';
 const LEGACY_PROVENANCE_SCHEMA_VERSION = 1;
 const PROVENANCE_SCHEMA_VERSION = 2;
-const ARTIST_ID_RE = /^artist-[0-9a-f]{16}$/u;
+const ARTIST_ID_RE =
+  /^artist-(?:[0-9a-f]{16}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/iu;
 const PHOTO_FILENAME_RE = /^photo\.(?:jpg|png|webp)$/u;
 const PHOTO_EXTENSIONS = new Set(['.jpg', '.png', '.webp']);
 const LEGACY_PHOTO_SOURCES = new Set(['youtube-channel', 'local-file']);
@@ -171,6 +172,112 @@ function isArtistPhotoRemoved(dir, artistId) {
   }
 }
 
+function photoPromotionRank(provenance) {
+  if (provenance.source === 'local-file') return 30;
+  if (
+    provenance.source === 'youtube-music' &&
+    provenance.selection === 'user-confirmed'
+  ) {
+    return 20;
+  }
+  return 10;
+}
+
+// A stable artist entity may absorb several previously derived ids. Promote
+// one bounded sidecar into the stable directory, but keep every source
+// directory intact so split／undo remains lossless. Existing stable state is
+// always authoritative and is never overwritten by this migration helper.
+function promoteArtistPhotoState(dir, sourceArtistIds, targetArtistId) {
+  if (!isArtistId(targetArtistId)) {
+    return { changed: false, state: 'invalid' };
+  }
+  if (
+    readArtistPhoto(dir, targetArtistId) ||
+    isArtistPhotoRemoved(dir, targetArtistId)
+  ) {
+    return { changed: false, state: 'existing' };
+  }
+
+  const candidates = [];
+  const removals = [];
+  for (const sourceArtistId of [
+    ...new Set(Array.isArray(sourceArtistIds) ? sourceArtistIds : []),
+  ]) {
+    if (!isArtistId(sourceArtistId) || sourceArtistId === targetArtistId)
+      continue;
+    const artistDir = resolveArtistDir(dir, sourceArtistId);
+    const provenance = artistDir ? readProvenance(artistDir) : null;
+    if (provenance) {
+      const filePath = path.join(artistDir, provenance.filename);
+      if (fs.existsSync(filePath)) {
+        candidates.push({
+          sourceArtistId,
+          filePath,
+          provenance,
+          rank: photoPromotionRank(provenance),
+          acceptedAt: Date.parse(provenance.acceptedAt),
+        });
+      }
+      continue;
+    }
+    if (!artistDir || !isArtistPhotoRemoved(dir, sourceArtistId)) continue;
+    try {
+      const marker = JSON.parse(
+        fs.readFileSync(path.join(artistDir, PROVENANCE_FILENAME), 'utf8'),
+      );
+      removals.push({
+        sourceArtistId,
+        removedAt:
+          typeof marker.removedAt === 'string' &&
+          !Number.isNaN(Date.parse(marker.removedAt))
+            ? marker.removedAt
+            : new Date(0).toISOString(),
+      });
+    } catch {
+      // isArtistPhotoRemoved already validated the marker; a concurrent
+      // deletion simply leaves this source unavailable for promotion.
+    }
+  }
+
+  candidates.sort(
+    (left, right) =>
+      right.rank - left.rank || right.acceptedAt - left.acceptedAt,
+  );
+  const selected = candidates[0];
+  if (selected) {
+    const extension = path.extname(selected.provenance.filename).toLowerCase();
+    writeArtistPhoto(dir, targetArtistId, {
+      buffer: fs.readFileSync(selected.filePath),
+      extension,
+      source: selected.provenance.source,
+      channelId: selected.provenance.channelId,
+      selection: selected.provenance.selection,
+      now: new Date(selected.provenance.acceptedAt),
+    });
+    return {
+      changed: true,
+      sourceArtistId: selected.sourceArtistId,
+      state: 'photo',
+    };
+  }
+
+  removals.sort(
+    (left, right) => Date.parse(right.removedAt) - Date.parse(left.removedAt),
+  );
+  const removal = removals[0];
+  if (removal) {
+    clearArtistPhoto(dir, targetArtistId, {
+      now: new Date(removal.removedAt),
+    });
+    return {
+      changed: true,
+      sourceArtistId: removal.sourceArtistId,
+      state: 'removed',
+    };
+  }
+  return { changed: false, state: 'missing' };
+}
+
 module.exports = {
   ARTISTS_DIRNAME,
   buildArtistPhotoUrl,
@@ -178,6 +285,7 @@ module.exports = {
   isArtistId,
   isArtistPhotoRemoved,
   listArtistPhotoUrls,
+  promoteArtistPhotoState,
   readArtistPhoto,
   resolveArtistPhotoPath,
   writeArtistPhoto,

@@ -3,6 +3,7 @@
 const { createAppError } = require('../lib/appError');
 const { createArtistIndexCache } = require('../lib/artists/artistIndex');
 const {
+  FOLDER_PAGE_USER_OBJECT_LIMIT,
   addFolderPageNote,
   addFolderPagePhoto,
   listFolderPageObjects,
@@ -62,6 +63,35 @@ async function pageExistsInLibrary(
   );
 }
 
+function artistFolderPageContext(page, index) {
+  const canonicalId = index.artistRedirects?.[page.id] ?? page.id;
+  if (!index.artists.some((artist) => artist.id === canonicalId)) return null;
+  const sourceIds = Object.entries(index.artistRedirects ?? {})
+    .filter(([, targetId]) => targetId === canonicalId)
+    .map(([sourceId]) => sourceId);
+  const canonicalPage = { kind: 'artist', id: canonicalId };
+  const sourcePages = sourceIds.map((id) => ({ kind: 'artist', id }));
+  return {
+    canonicalPage,
+    storagePages: [canonicalPage, ...sourcePages],
+    // New objects stay with a real source credit whenever possible. A later
+    // split/undo can then reveal them without copying or deleting assets.
+    writePage: sourcePages[0] ?? canonicalPage,
+  };
+}
+
+async function resolveArtistFolderPages(
+  directory,
+  page,
+  artistIndexCache = createArtistIndexCache(),
+) {
+  const index = await artistIndexCache.getIndex(
+    directory,
+    listTracks(directory),
+  );
+  return artistFolderPageContext(page, index);
+}
+
 function pageInvalidError() {
   return createAppError({
     code: 'FOLDER_PAGE_OBJECT_PAGE_INVALID',
@@ -97,6 +127,7 @@ function registerFolderPageObjectHandlers({
   getMainWindow,
   recordDiagnostic,
   artistIndexCache = createArtistIndexCache(),
+  resolveArtistPages,
   validatePageExists = (directory, page) =>
     pageExistsInLibrary(directory, page, artistIndexCache),
   listObjects = listFolderPageObjects,
@@ -106,6 +137,11 @@ function registerFolderPageObjectHandlers({
   saveLayout = saveFolderPageLayout,
   removeObject = removeFolderPageObject,
 }) {
+  const deriveArtistPages =
+    resolveArtistPages ??
+    ((directory, page) =>
+      resolveArtistFolderPages(directory, page, artistIndexCache));
+
   function withBoundary(operation, work) {
     const presentation = OPERATION_ERRORS[operation];
     return runDiagnosticIpcOperation(
@@ -130,24 +166,71 @@ function registerFolderPageObjectHandlers({
     if (!page) throw pageInvalidError();
     const resolved = await withBoundary(operation, async () => {
       const directory = resolveDownloadDir(getConfig());
+      if (page.kind === 'artist') {
+        const context = await deriveArtistPages(directory, page);
+        return context
+          ? { directory, page: context.canonicalPage, context }
+          : null;
+      }
       return (await validatePageExists(directory, page))
-        ? { directory, page }
+        ? {
+            directory,
+            page,
+            context: {
+              canonicalPage: page,
+              storagePages: [page],
+              writePage: page,
+            },
+          }
         : null;
     });
     if (!resolved) throw pageInvalidError();
     return resolved;
   }
 
+  function listContextObjects(directory, context) {
+    const seen = new Set();
+    const objects = [];
+    for (const storagePage of context.storagePages) {
+      for (const object of listObjects(directory, storagePage)) {
+        if (!object?.key || seen.has(object.key)) continue;
+        seen.add(object.key);
+        objects.push(object);
+      }
+    }
+    return objects;
+  }
+
+  function objectStoragePage(directory, context, key) {
+    return (
+      listContextObjects(directory, context).find(
+        (object) => object.key === key,
+      )?.page ?? context.writePage
+    );
+  }
+
+  function assertContextObjectCapacity(directory, context) {
+    const userCount = listContextObjects(directory, context).filter(
+      (object) => object.source === 'user',
+    ).length;
+    if (userCount >= FOLDER_PAGE_USER_OBJECT_LIMIT) {
+      const error = new Error('Folder page object limit reached.');
+      error.code = 'FOLDER_PAGE_OBJECT_LIMIT_REACHED';
+      throw error;
+    }
+  }
+
   ipcMain.handle('folder-page-objects:list', async (event, pageValue) => {
-    const { directory, page } = await resolvePage(pageValue, 'list');
-    return withBoundary('list', () => listObjects(directory, page));
+    const { directory, context } = await resolvePage(pageValue, 'list');
+    return withBoundary('list', () => listContextObjects(directory, context));
   });
 
   ipcMain.handle(
     'folder-page-objects:choose-photo',
     async (event, pageValue) => {
-      const { directory, page } = await resolvePage(pageValue, 'add');
+      const { directory, context } = await resolvePage(pageValue, 'add');
       return withBoundary('add', async () => {
+        assertContextObjectCapacity(directory, context);
         const result = await dialog.showOpenDialog(getMainWindow(), {
           properties: ['openFile'],
           filters: [
@@ -159,7 +242,7 @@ function registerFolderPageObjectHandlers({
         }
         return {
           status: 'added',
-          object: addPhoto(directory, page, result.filePaths[0]),
+          object: addPhoto(directory, context.writePage, result.filePaths[0]),
         };
       });
     },
@@ -168,22 +251,31 @@ function registerFolderPageObjectHandlers({
   ipcMain.handle(
     'folder-page-objects:create-note',
     async (event, intent = {}) => {
-      const { directory, page } = await resolvePage(intent.page, 'note');
-      return withBoundary('note', () =>
-        addNote(directory, page, { title: intent.title, text: intent.text }),
-      );
+      const { directory, context } = await resolvePage(intent.page, 'note');
+      return withBoundary('note', () => {
+        assertContextObjectCapacity(directory, context);
+        return addNote(directory, context.writePage, {
+          title: intent.title,
+          text: intent.text,
+        });
+      });
     },
   );
 
   ipcMain.handle(
     'folder-page-objects:update-note',
     async (event, intent = {}) => {
-      const { directory, page } = await resolvePage(intent.page, 'note');
+      const { directory, context } = await resolvePage(intent.page, 'note');
       return withBoundary('note', () =>
-        updateNote(directory, page, intent.key, {
-          title: intent.title,
-          text: intent.text,
-        }),
+        updateNote(
+          directory,
+          objectStoragePage(directory, context, intent.key),
+          intent.key,
+          {
+            title: intent.title,
+            text: intent.text,
+          },
+        ),
       );
     },
   );
@@ -191,24 +283,55 @@ function registerFolderPageObjectHandlers({
   ipcMain.handle(
     'folder-page-objects:save-layout',
     async (event, intent = {}) => {
-      const { directory, page } = await resolvePage(intent.page, 'layout');
+      const { directory, context } = await resolvePage(intent.page, 'layout');
       const entries = Array.isArray(intent.entries)
         ? intent.entries.map(layoutEntry)
         : [];
-      return withBoundary('layout', () => saveLayout(directory, page, entries));
+      return withBoundary('layout', () => {
+        if (entries.length === 0) {
+          return saveLayout(directory, context.writePage, entries);
+        }
+        const pageByKey = new Map(
+          listContextObjects(directory, context).map((object) => [
+            object.key,
+            object.page,
+          ]),
+        );
+        const entriesByPage = new Map();
+        for (const entry of entries) {
+          const storagePage = pageByKey.get(entry.key) ?? context.writePage;
+          const pageKey = `${storagePage.kind}\0${storagePage.id}`;
+          const group = entriesByPage.get(pageKey) ?? {
+            page: storagePage,
+            entries: [],
+          };
+          group.entries.push(entry);
+          entriesByPage.set(pageKey, group);
+        }
+        for (const group of entriesByPage.values()) {
+          saveLayout(directory, group.page, group.entries);
+        }
+        return listContextObjects(directory, context);
+      });
     },
   );
 
   ipcMain.handle('folder-page-objects:remove', async (event, intent = {}) => {
-    const { directory, page } = await resolvePage(intent.page, 'remove');
+    const { directory, context } = await resolvePage(intent.page, 'remove');
     return withBoundary('remove', () => {
-      removeObject(directory, page, intent.key);
-      return listObjects(directory, page);
+      removeObject(
+        directory,
+        objectStoragePage(directory, context, intent.key),
+        intent.key,
+      );
+      return listContextObjects(directory, context);
     });
   });
 }
 
 module.exports = {
+  artistFolderPageContext,
   pageExistsInLibrary,
+  resolveArtistFolderPages,
   registerFolderPageObjectHandlers,
 };

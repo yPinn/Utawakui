@@ -14,7 +14,7 @@ export const FEATURE_GATES = Object.freeze(
       feature.id,
       Object.freeze({
         ...feature,
-        noticeVersion: registry.noticeVersion,
+        noticeVersion: feature.noticeVersion || registry.noticeVersion,
       }),
     ]),
   ),

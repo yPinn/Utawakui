@@ -16,6 +16,7 @@ import { useCollectionPlayback } from '../../composables/useCollectionPlayback.j
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import {
+  artistSearchTexts,
   deriveArtistPage,
   listSidebarArtists,
   orderReferenceItems,
@@ -150,9 +151,13 @@ function playlistMatchesSearch(playlist) {
     return true;
   }
   return memberTracksFor(playlist).some((track) =>
-    [track.title, track.artist, track.album, track.filename, track.id].some(
-      (field) => searchableText(field).includes(query),
-    ),
+    [
+      track.title,
+      ...artistSearchTexts(track, artistIndexState.index),
+      track.album,
+      track.filename,
+      track.id,
+    ].some((field) => searchableText(field).includes(query)),
   );
 }
 
@@ -871,10 +876,6 @@ function startDrag(playlist, event) {
       ) /
       2
   );
-  /* In expanded geometry the toolbar begins 2px farther right than the
-     compact 52px lane. Offset against the row's border-aware inset here,
-     then override below inside the compact query, so this fading control
-     keeps the artwork centerline instead of jumping by those 2px. */
   inset-inline-start: calc(
     var(--ui-sidebar-row-padding-inline) + var(--ui-border-width)
   );

@@ -59,7 +59,6 @@ import { useAppInfo } from '../composables/useAppInfo.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
-import { useLibraryMetadataMaintenance } from '../composables/useLibraryMetadataMaintenance.js';
 import { useLibraryStorage } from '../composables/useLibraryStorage.js';
 import { useMusicAnalysisSettings } from '../composables/useMusicAnalysisSettings.js';
 import { useObsIntegrationSettings } from '../composables/useObsIntegrationSettings.js';
@@ -123,11 +122,6 @@ const {
   refreshAppUpdateAutoCheck,
   setAppUpdateAutoCheck,
 } = useAppUpdate();
-const {
-  state: libraryMetadataMaintenanceState,
-  message: libraryMetadataMaintenanceMessage,
-  run: runLibraryMetadataMaintenance,
-} = useLibraryMetadataMaintenance();
 const {
   state: featureGateState,
   isFeatureEnabled,
@@ -626,12 +620,7 @@ onUnmounted(() => {
             @cleanup="handleCleanupLibraryStorage"
           />
 
-          <LibraryMetadataSettingsRow
-            :is-running="libraryMetadataMaintenanceState.isRunning"
-            :message="libraryMetadataMaintenanceMessage"
-            :error="libraryMetadataMaintenanceState.error"
-            @run="runLibraryMetadataMaintenance"
-          />
+          <LibraryMetadataSettingsRow />
 
           <PlaybackHistorySettingsRow
             :record-count="recentItems.length"

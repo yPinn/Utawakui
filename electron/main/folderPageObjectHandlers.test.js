@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../lib/appError.js';
-import { registerFolderPageObjectHandlers } from './folderPageObjectHandlers.js';
+import {
+  artistFolderPageContext,
+  registerFolderPageObjectHandlers,
+} from './folderPageObjectHandlers.js';
 
 function createIpcMain() {
   const handlers = new Map();
@@ -48,7 +51,12 @@ function register(overrides = {}) {
     getMainWindow: () => null,
     recordDiagnostic: vi.fn().mockReturnValue({ ok: true }),
     validatePageExists: vi.fn(() => true),
-    listObjects: vi.fn(() => [photo()]),
+    resolveArtistPages: vi.fn(async (_directory, page) => ({
+      canonicalPage: page,
+      storagePages: [page],
+      writePage: page,
+    })),
+    listObjects: vi.fn((_directory, page) => [photo({ page })]),
     addPhoto: vi.fn(() => photo()),
     addNote: vi.fn(() => ({ key: 'note:note-1', type: 'note', text: '' })),
     updateNote: vi.fn(() => ({ key: 'note:note-1', text: '備忘' })),
@@ -85,6 +93,68 @@ describe('registerFolderPageObjectHandlers', () => {
       page,
     );
     expect(dependencies.listObjects).toHaveBeenCalledWith('library-dir', page);
+  });
+
+  it('projects merged artist page objects from every source credit page', async () => {
+    const stable = {
+      kind: 'artist',
+      id: 'artist-11111111-1111-4111-8111-111111111111',
+    };
+    const english = { kind: 'artist', id: 'artist-68d52f69a4a24a1a' };
+    const chinese = { kind: 'artist', id: 'artist-882cd3bcbb49699f' };
+    const englishPhoto = photo({ key: 'photo:english', page: english });
+    const chineseNote = {
+      key: 'note:chinese',
+      type: 'note',
+      source: 'user',
+      page: chinese,
+    };
+    const listObjects = vi.fn((_directory, page) => {
+      if (page.id === english.id) return [englishPhoto];
+      if (page.id === chinese.id) return [chineseNote];
+      return [];
+    });
+    const { dependencies, handlers } = register({
+      resolveArtistPages: vi.fn(async () => ({
+        canonicalPage: stable,
+        storagePages: [stable, english, chinese],
+        writePage: english,
+      })),
+      listObjects,
+    });
+
+    await expect(
+      handlers.get('folder-page-objects:list')(null, stable),
+    ).resolves.toEqual([englishPhoto, chineseNote]);
+    expect(listObjects.mock.calls.map((call) => call[1])).toEqual([
+      stable,
+      english,
+      chinese,
+    ]);
+
+    await handlers.get('folder-page-objects:create-note')(null, {
+      page: stable,
+      title: '合併後新增',
+      text: '保存在主要來源頁，undo 後仍可讀取。',
+    });
+    expect(dependencies.addNote).toHaveBeenCalledWith(
+      'library-dir',
+      english,
+      expect.objectContaining({ title: '合併後新增' }),
+    );
+
+    await handlers.get('folder-page-objects:update-note')(null, {
+      page: stable,
+      key: chineseNote.key,
+      title: '',
+      text: '更新',
+    });
+    expect(dependencies.updateNote).toHaveBeenCalledWith(
+      'library-dir',
+      chinese,
+      chineseNote.key,
+      { title: '', text: '更新' },
+    );
   });
 
   it('opens a single local image picker and keeps its path main-owned', async () => {
@@ -310,5 +380,35 @@ describe('registerFolderPageObjectHandlers', () => {
     expect(payload.code).toBe(code);
     expect(JSON.stringify(payload)).not.toContain('Someone');
     expect(recordDiagnostic).toHaveBeenCalled();
+  });
+});
+
+describe('artistFolderPageContext', () => {
+  it('resolves legacy ids and keeps merged source pages available for split and undo', () => {
+    const stableId = 'artist-11111111-1111-4111-8111-111111111111';
+    const englishId = 'artist-68d52f69a4a24a1a';
+    const chineseId = 'artist-882cd3bcbb49699f';
+    const index = {
+      artists: [{ id: stableId }],
+      artistRedirects: {
+        [englishId]: stableId,
+        [chineseId]: stableId,
+      },
+    };
+
+    expect(
+      artistFolderPageContext({ kind: 'artist', id: englishId }, index),
+    ).toEqual({
+      canonicalPage: { kind: 'artist', id: stableId },
+      storagePages: [
+        { kind: 'artist', id: stableId },
+        { kind: 'artist', id: englishId },
+        { kind: 'artist', id: chineseId },
+      ],
+      writePage: { kind: 'artist', id: englishId },
+    });
+    expect(
+      artistFolderPageContext({ kind: 'artist', id: 'artist-missing' }, index),
+    ).toBeNull();
   });
 });

@@ -65,7 +65,7 @@ beforeEach(() => {
   navigation.jumpToAlbum.mockReset();
   navigation.jumpToArtist.mockReset();
   artistIndexState.index = {
-    artists: [],
+    artists: [{ id: 'artist-1', name: track.artist, credits: [] }],
     trackArtistIds: { [track.id]: ['artist-1'] },
   };
 });
@@ -121,6 +121,22 @@ describe('TrackContextHero', () => {
     trigger(albumCta, 'onClick', { stopPropagation: vi.fn() });
     trigger(artistCta, 'onClick', { stopPropagation: vi.fn() });
     expect(calls).toEqual(['album', 'artist']);
+    app.unmount();
+  });
+
+  it('uses the canonical artist name for visible and accessible identity', () => {
+    artistIndexState.index = {
+      artists: [{ id: 'artist-lin', name: '林俊傑', credits: [] }],
+      trackArtistIds: { english: ['artist-lin'] },
+    };
+    const { app, root } = mount(TrackContextHero, {
+      track: { id: 'english', title: '53 Dawns', artist: 'JJ Lin' },
+    });
+    const hero = findAll(root, (node) => node.type === 'article')[0];
+
+    expect(textContent(root)).toContain('林俊傑');
+    expect(textContent(root)).not.toContain('JJ Lin');
+    expect(hero.props['aria-label']).toBe('目前歌曲：53 Dawns，林俊傑');
     app.unmount();
   });
 

@@ -68,7 +68,10 @@ const MAIN_INVOKE_CHANNELS = [
   'folder-page-objects:save-layout',
   'folder-page-objects:update-note',
   'import:resolve-source',
+  'library:apply-artist-identity-candidate',
   'library:apply-artist-photo-candidate',
+  'library:auto-resolve-artist-identities',
+  'library:cancel-artist-identity-candidates',
   'library:cancel-artist-photo-candidates',
   'library:choose-track-artwork',
   'library:clear-track-artwork',
@@ -82,11 +85,15 @@ const MAIN_INVOKE_CHANNELS = [
   'library:list',
   'library:load-artist-photo-candidate-preview',
   'library:load-track-artwork-preview',
+  'library:merge-artists',
   'library:open-track-artwork-source',
-  'library:refresh-metadata',
   'library:resolve-artist-photo',
+  'library:search-artist-identity-candidates',
   'library:search-artist-photo-candidates',
   'library:search-track-artwork',
+  'library:set-artist-display-name',
+  'library:split-artist-credit',
+  'library:undo-artist-organization',
   'library:update-track-metadata',
   'library-storage:cleanup',
   'library-storage:get',
@@ -755,6 +762,80 @@ describe('main preload bridge', () => {
       ['feature-dependencies:repair', 'ffmpeg-gyan-essentials'],
       ['feature-dependencies:detect-system-ffmpeg'],
       ['feature-dependencies:set-ffmpeg-source', true],
+    ]);
+  });
+
+  it('shapes artist organization intents without provider ids or paths', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const stableId = 'artist-123e4567-e89b-42d3-a456-426614174000';
+
+    bridge.mergeArtists(
+      ['artist-68d52f69a4a24a1a', 'artist-882cd3bcbb49699f'],
+      4,
+      'E:\\private',
+    );
+    bridge.splitArtistCredit(
+      stableId,
+      'credit-68d52f69a4a24a1a',
+      5,
+      'raw ignored',
+    );
+    bridge.setArtistDisplayName(stableId, '林俊傑', 6, {
+      mbid: 'ignored',
+    });
+    bridge.undoArtistOrganization(7, { privateState: true });
+    bridge.autoResolveArtistIdentities({
+      directory: 'E:\\private',
+      artistIds: ['ignored'],
+    });
+    bridge.searchArtistIdentityCandidates(stableId, {
+      query: 'ignored',
+      mbid: 'ignored',
+    });
+    bridge.cancelArtistIdentityCandidates(stableId, 'ignored');
+    bridge.applyArtistIdentityCandidate(
+      stableId,
+      'candidate_0123456789abcdef012345',
+      8,
+      { mbid: 'ignored', sourceUrl: 'ignored' },
+    );
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      [
+        'library:merge-artists',
+        {
+          artistIds: ['artist-68d52f69a4a24a1a', 'artist-882cd3bcbb49699f'],
+          expectedRevision: 4,
+        },
+      ],
+      [
+        'library:split-artist-credit',
+        {
+          artistId: stableId,
+          creditId: 'credit-68d52f69a4a24a1a',
+          expectedRevision: 5,
+        },
+      ],
+      [
+        'library:set-artist-display-name',
+        {
+          artistId: stableId,
+          displayName: '林俊傑',
+          expectedRevision: 6,
+        },
+      ],
+      ['library:undo-artist-organization', { expectedRevision: 7 }],
+      ['library:auto-resolve-artist-identities'],
+      ['library:search-artist-identity-candidates', stableId],
+      ['library:cancel-artist-identity-candidates', stableId],
+      [
+        'library:apply-artist-identity-candidate',
+        {
+          artistId: stableId,
+          candidateId: 'candidate_0123456789abcdef012345',
+          expectedRevision: 8,
+        },
+      ],
     ]);
   });
 

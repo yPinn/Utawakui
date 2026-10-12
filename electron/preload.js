@@ -470,6 +470,39 @@ contextBridge.exposeInMainWorld('Utawakui', {
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: (options) => ipcRenderer.invoke('library:list', options),
   getArtistIndex: () => ipcRenderer.invoke('library:get-artist-index'),
+  autoResolveArtistIdentities: () =>
+    ipcRenderer.invoke('library:auto-resolve-artist-identities'),
+  mergeArtists: (artistIds, expectedRevision) =>
+    ipcRenderer.invoke('library:merge-artists', {
+      artistIds: Array.isArray(artistIds) ? artistIds.slice(0, 2) : [],
+      expectedRevision,
+    }),
+  splitArtistCredit: (artistId, creditId, expectedRevision) =>
+    ipcRenderer.invoke('library:split-artist-credit', {
+      artistId,
+      creditId,
+      expectedRevision,
+    }),
+  setArtistDisplayName: (artistId, displayName, expectedRevision) =>
+    ipcRenderer.invoke('library:set-artist-display-name', {
+      artistId,
+      displayName,
+      expectedRevision,
+    }),
+  undoArtistOrganization: (expectedRevision) =>
+    ipcRenderer.invoke('library:undo-artist-organization', {
+      expectedRevision,
+    }),
+  searchArtistIdentityCandidates: (artistId) =>
+    ipcRenderer.invoke('library:search-artist-identity-candidates', artistId),
+  cancelArtistIdentityCandidates: (artistId) =>
+    ipcRenderer.invoke('library:cancel-artist-identity-candidates', artistId),
+  applyArtistIdentityCandidate: (artistId, candidateId, expectedRevision) =>
+    ipcRenderer.invoke('library:apply-artist-identity-candidate', {
+      artistId,
+      candidateId,
+      expectedRevision,
+    }),
   resolveArtistPhoto: (artistId) =>
     ipcRenderer.invoke('library:resolve-artist-photo', artistId),
   searchArtistPhotoCandidates: (artistId) =>
@@ -530,7 +563,6 @@ contextBridge.exposeInMainWorld('Utawakui', {
       folderPageObjectTargetIntent(intent),
     ),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
-  refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   getTrackMusicStructure: (trackId) =>

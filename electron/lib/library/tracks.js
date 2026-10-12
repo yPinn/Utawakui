@@ -81,7 +81,7 @@ function isValidDuration(value) {
   return Number.isFinite(value) && value > 0;
 }
 
-// Settings' repeatable, offline maintenance pass. Title/artist are rewritten
+// Automatic, repeatable offline maintenance pass. Title/artist are rewritten
 // only when missing or when the current scalar still equals the provider's
 // previous projection; this lets newer normalization repair old imports without
 // trampling manual edits. Duration is fill-only, while album/year keep the

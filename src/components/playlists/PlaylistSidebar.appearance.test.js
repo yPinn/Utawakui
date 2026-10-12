@@ -11,6 +11,15 @@ const rowSource = readFileSync(
 );
 
 describe('PlaylistSidebar compact-to-expanded stability', () => {
+  it('searches collection members by every integrated artist form', () => {
+    expect(source).toMatch(
+      /import\s*\{[\s\S]*?artistSearchTexts[\s\S]*?\}\s*from '\.\.\/\.\.\/utils\/artistPage\.js'/u,
+    );
+    expect(source).toMatch(
+      /function playlistMatchesSearch\(playlist\)[\s\S]*?artistSearchTexts\(track, artistIndexState\.index\)/u,
+    );
+  });
+
   it('delegates collection playback state and transitions to the shared controller', () => {
     expect(source).toContain(
       "import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js'",
@@ -68,6 +77,8 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(fixedNavigationAt).toBeLessThan(allTracksAt);
     expect(allTracksAt).toBeLessThan(localTracksAt);
     expect(localTracksAt).toBeLessThan(scrollAt);
+    expect(source).not.toContain('匯入曲目');
+    expect(source).not.toContain('ArrowDownToLine');
     expect(scrollAt).toBeLessThan(collectionsAt);
     for (const [layoutRole, featureRole] of [
       ['block-start', 'list-gap'],

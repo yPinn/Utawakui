@@ -72,14 +72,131 @@ describe('buildArtistIndex', () => {
 
   it('skips tracks without artist', () => {
     const index = buildArtistIndex([{ id: 'a' }, { id: 'b', artist: '  ' }]);
-    expect(index).toEqual({ artists: [], trackArtistIds: {} });
+    expect(index).toEqual({
+      artists: [],
+      trackArtistIds: {},
+      artistRedirects: {},
+      organizationRevision: 0,
+      canUndoOrganization: false,
+    });
+  });
+
+  it('projects cross-script credits through one persisted artist entity', () => {
+    const stableId = 'artist-123e4567-e89b-42d3-a456-426614174000';
+    const index = buildArtistIndex(
+      [
+        { id: 'english', artist: 'JJ Lin' },
+        { id: 'chinese', artist: '林俊傑' },
+      ],
+      new Map(),
+      {
+        version: 1,
+        revision: 4,
+        artists: [
+          {
+            id: stableId,
+            displayNameOverride: '林俊傑',
+            credits: [
+              {
+                id: 'credit-jj',
+                key: 'jj lin',
+                raw: 'JJ Lin',
+                normalizerVersion: 1,
+                source: 'user',
+              },
+              {
+                id: 'credit-lin',
+                key: '林俊傑',
+                raw: '林俊傑',
+                normalizerVersion: 1,
+                source: 'user',
+              },
+            ],
+          },
+        ],
+        redirects: [
+          {
+            from: 'artist-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            to: stableId,
+          },
+        ],
+        trackLinks: [],
+        dismissed: [],
+        history: [],
+      },
+    );
+
+    expect(index.artists).toEqual([
+      expect.objectContaining({
+        id: stableId,
+        name: '林俊傑',
+        trackIds: ['english', 'chinese'],
+        credits: [
+          { id: 'credit-jj', name: 'JJ Lin', trackCount: 1 },
+          { id: 'credit-lin', name: '林俊傑', trackCount: 1 },
+        ],
+      }),
+    ]);
+    expect(index.trackArtistIds).toEqual({
+      english: [stableId],
+      chinese: [stableId],
+    });
+    expect(index.artistRedirects).toEqual({
+      'artist-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa': stableId,
+      'artist-68d52f69a4a24a1a': stableId,
+      'artist-882cd3bcbb49699f': stableId,
+    });
+    expect(index.organizationRevision).toBe(4);
+  });
+
+  it('projects only a bounded identity-resolved flag from stored catalog facts', () => {
+    const stableId = 'artist-123e4567-e89b-42d3-a456-426614174000';
+    const index = buildArtistIndex(
+      [{ id: 'english', artist: 'JJ Lin' }],
+      new Map(),
+      {
+        version: 1,
+        revision: 1,
+        artists: [
+          {
+            id: stableId,
+            catalog: {
+              mbid: '11111111-1111-4111-8111-111111111111',
+              name: '林俊傑',
+              aliases: [],
+              fetchedAt: '2026-10-12T03:00:00.000Z',
+            },
+            credits: [
+              {
+                id: 'credit-jj',
+                key: 'jj lin',
+                raw: 'JJ Lin',
+                normalizerVersion: 1,
+                source: 'musicbrainz',
+              },
+            ],
+          },
+        ],
+        redirects: [],
+        trackLinks: [],
+        dismissed: [],
+        history: [],
+      },
+    );
+
+    expect(index.artists[0]).toMatchObject({
+      id: stableId,
+      name: '林俊傑',
+      identityResolved: true,
+    });
+    expect(index.artists[0]).not.toHaveProperty('catalog');
   });
 });
 
 const ADO_CHANNEL = 'UC5DHwv9N4OQ9AWtKr8YSefw';
 const TOPIC_CHANNEL = 'UCmfq2-6nkZFvS5LYtshQmEw';
 
-function cacheWith(factsByTrackId, photoUrls = new Map()) {
+function cacheWith(factsByTrackId, photoUrls = new Map(), options = {}) {
   const readFacts = vi.fn(
     async (_dir, trackId) => factsByTrackId[trackId] ?? null,
   );
@@ -87,7 +204,7 @@ function cacheWith(factsByTrackId, photoUrls = new Map()) {
   return {
     readFacts,
     listPhotoUrls,
-    cache: createArtistIndexCache({ readFacts, listPhotoUrls }),
+    cache: createArtistIndexCache({ readFacts, listPhotoUrls, ...options }),
   };
 }
 
@@ -144,6 +261,144 @@ describe('createArtistIndexCache', () => {
       'utawakui-media://artist-photo/x/photo.jpg?v=1',
       '',
     ]);
+  });
+
+  it('uses a source-credit photo for a stable artist unless removal was explicit', async () => {
+    const stableId = 'artist-11111111-1111-4111-8111-111111111111';
+    const sourceId = 'artist-68d52f69a4a24a1a';
+    const organization = {
+      schemaVersion: 1,
+      normalizerVersion: 1,
+      revision: 1,
+      artists: [
+        {
+          id: stableId,
+          credits: [
+            {
+              id: 'credit-68d52f69a4a24a1a',
+              key: 'jj lin',
+              raw: 'JJ Lin',
+              normalizerVersion: 1,
+              source: 'manual',
+            },
+          ],
+        },
+      ],
+      history: [],
+    };
+    const photoUrls = new Map([
+      [sourceId, 'utawakui-media://legacy/photo.jpg'],
+    ]);
+    const common = {
+      loadOrganization: () => organization,
+    };
+    const tracks = [{ id: 'english', artist: 'JJ Lin' }];
+    const { cache: withFallback } = cacheWith({}, photoUrls, {
+      ...common,
+      isPhotoRemoved: () => false,
+    });
+    const { cache: afterRemoval } = cacheWith({}, photoUrls, {
+      ...common,
+      isPhotoRemoved: () => true,
+    });
+
+    await expect(withFallback.getIndex('/lib', tracks)).resolves.toMatchObject({
+      artists: [
+        { id: stableId, photoUrl: 'utawakui-media://legacy/photo.jpg' },
+      ],
+    });
+    await expect(afterRemoval.getIndex('/lib', tracks)).resolves.toMatchObject({
+      artists: [{ id: stableId, photoUrl: '' }],
+    });
+  });
+
+  it('promotes source photo state after creating a merged stable artist', async () => {
+    const dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-artist-merge-'),
+    );
+    const promotePhotoState = vi.fn(() => ({ changed: true, state: 'photo' }));
+    try {
+      const tracks = [
+        { id: 'english', artist: 'JJ Lin' },
+        { id: 'chinese', artist: '林俊傑' },
+      ];
+      const { cache } = cacheWith({}, new Map(), { promotePhotoState });
+      const before = await cache.getIndex(dir, tracks);
+      const selectedIds = before.artists.map((artist) => artist.id);
+      const uuid = '11111111-1111-4111-8111-111111111111';
+
+      const result = await cache.mergeArtists(dir, tracks, selectedIds, {
+        expectedRevision: 0,
+        randomUUID: () => uuid,
+      });
+
+      expect(result).toMatchObject({
+        status: 'ok',
+        artistId: `artist-${uuid}`,
+        revision: 1,
+      });
+      expect(promotePhotoState).toHaveBeenCalledWith(
+        dir,
+        selectedIds,
+        `artist-${uuid}`,
+      );
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('includes existing stable ids when promoting photos across a later merge', async () => {
+    const dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-artist-remerge-'),
+    );
+    const promotePhotoState = vi.fn(() => ({ changed: true, state: 'photo' }));
+    try {
+      const tracks = [
+        { id: 'english', artist: 'JJ Lin' },
+        { id: 'chinese', artist: '林俊傑' },
+      ];
+      const { cache } = cacheWith({}, new Map(), { promotePhotoState });
+      const initial = await cache.getIndex(dir, tracks);
+      const english = initial.artists.find(
+        (artist) => artist.name === 'JJ Lin',
+      );
+      const chinese = initial.artists.find(
+        (artist) => artist.name === '林俊傑',
+      );
+      const firstStableId = 'artist-11111111-1111-4111-8111-111111111111';
+      const secondStableId = 'artist-22222222-2222-4222-8222-222222222222';
+
+      await cache.setDisplayName(dir, tracks, english.id, 'JJ Lin', {
+        expectedRevision: 0,
+        randomUUID: () => firstStableId.slice('artist-'.length),
+      });
+      await cache.setDisplayName(dir, tracks, chinese.id, '林俊傑', {
+        expectedRevision: 1,
+        randomUUID: () => secondStableId.slice('artist-'.length),
+      });
+      promotePhotoState.mockClear();
+
+      const result = await cache.mergeArtists(
+        dir,
+        tracks,
+        [firstStableId, secondStableId],
+        { expectedRevision: 2 },
+      );
+
+      expect(result).toMatchObject({ status: 'ok', artistId: firstStableId });
+      expect(promotePhotoState).toHaveBeenCalledWith(
+        dir,
+        expect.arrayContaining([
+          english.id,
+          chinese.id,
+          firstStableId,
+          secondStableId,
+        ]),
+        firstStableId,
+      );
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

@@ -13,6 +13,23 @@ export function isArtistSourceId(id) {
   return typeof id === 'string' && id.startsWith(ARTIST_ID_PREFIX);
 }
 
+export function resolveArtistId(artistId, artistIndex) {
+  if (!isArtistSourceId(artistId)) return artistId;
+  const redirects = artistIndex?.artistRedirects;
+  if (!redirects || typeof redirects !== 'object') return artistId;
+  const seen = new Set();
+  let current = artistId;
+  while (
+    isArtistSourceId(redirects[current]) &&
+    !seen.has(current) &&
+    seen.size < 8
+  ) {
+    seen.add(current);
+    current = redirects[current];
+  }
+  return current;
+}
+
 function validReleaseYear(value) {
   return Number.isInteger(value) && value > 0 ? value : undefined;
 }
@@ -67,7 +84,11 @@ export function listSidebarArtists({
           return owned.length > 0 || artist.trackIds.length >= 2;
         }
         return (
-          artist.name.toLocaleLowerCase().includes(normalizedQuery) ||
+          [artist.name, ...(artist.credits ?? []).map((credit) => credit.name)]
+            .filter(Boolean)
+            .some((name) =>
+              name.toLocaleLowerCase().includes(normalizedQuery),
+            ) ||
           artist.trackIds.some((id) =>
             String(map.get(id)?.title ?? '')
               .toLocaleLowerCase()
@@ -87,17 +108,56 @@ export function listSidebarArtists({
   );
 }
 
-// A track's own credited forms paired with artist ids for navigation. Multi-part
-// credits link only when their ", " parts line up one-to-one with the index;
-// otherwise the caller keeps plain text instead of guessing.
+function artistMap(artistIndex) {
+  return new Map(
+    (artistIndex?.artists ?? [])
+      .filter((artist) => artist?.id && artist?.name)
+      .map((artist) => [artist.id, artist]),
+  );
+}
+
+function appendUniqueText(values, seen, value) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) return;
+  const key = text.normalize('NFKC').toLocaleLowerCase();
+  if (seen.has(key)) return;
+  seen.add(key);
+  values.push(text);
+}
+
+// Artist-aware surfaces show the entity's canonical names. Source credits stay
+// untouched in library.json and remain available through artistSearchTexts.
 export function artistCreditLinks(track, artistIndex) {
   const credit = typeof track?.artist === 'string' ? track.artist.trim() : '';
   const ids = artistIndex?.trackArtistIds?.[track?.id];
   if (!credit || !Array.isArray(ids) || ids.length === 0) return null;
-  if (ids.length === 1) return [{ text: credit, artistId: ids[0] }];
-  const parts = credit.split(', ');
-  if (parts.length !== ids.length) return null;
-  return parts.map((text, index) => ({ text, artistId: ids[index] }));
+  const artists = artistMap(artistIndex);
+  const links = ids.map((artistId) => {
+    const artist = artists.get(artistId);
+    return artist ? { text: artist.name, artistId } : null;
+  });
+  return links.every(Boolean) ? links : null;
+}
+
+// Search preserves every source credit while also reaching canonical names and
+// the other credit forms grouped into the same artist entity.
+export function artistSearchTexts(track, artistIndex) {
+  const values = [];
+  const seen = new Set();
+  appendUniqueText(values, seen, track?.artist);
+
+  const ids = artistIndex?.trackArtistIds?.[track?.id];
+  if (!Array.isArray(ids)) return values;
+  const artists = artistMap(artistIndex);
+  for (const artistId of ids) {
+    const artist = artists.get(artistId);
+    if (!artist) continue;
+    appendUniqueText(values, seen, artist.name);
+    for (const credit of artist.credits ?? []) {
+      appendUniqueText(values, seen, credit?.name);
+    }
+  }
+  return values;
 }
 
 // Sidebar reference tier (ADR 0022): albums and artists share one list keyed by
@@ -154,7 +214,10 @@ export function deriveArtistPage({
   albumEntries,
   tracksById,
 }) {
-  const artist = artistIndex?.artists?.find((entry) => entry.id === artistId);
+  const resolvedArtistId = resolveArtistId(artistId, artistIndex);
+  const artist = artistIndex?.artists?.find(
+    (entry) => entry.id === resolvedArtistId,
+  );
   if (!artist) return null;
   const map = tracksById instanceof Map ? tracksById : new Map();
   const albums =

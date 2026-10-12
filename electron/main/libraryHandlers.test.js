@@ -84,33 +84,75 @@ describe('library metadata maintenance handlers', () => {
       lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
       listLibraryTracks: vi.fn().mockReturnValue([]),
       runLibraryBackfill: vi.fn().mockResolvedValue(0),
+      organizeLibraryMetadata: vi.fn().mockReturnValue({
+        updated: 0,
+        normalized: 0,
+        enriched: 0,
+        skipped: 0,
+      }),
       ...overrides,
     });
 
     return handlers;
   }
 
-  it('refreshes renderers without allowing the follow-up list to start provider backfill', async () => {
-    const listLibraryTracks = vi.fn().mockReturnValue([]);
-    const runLibraryBackfill = vi.fn().mockResolvedValue(0);
-    const organizeLibraryMetadata = vi.fn().mockReturnValue({
-      updated: 1,
-      normalized: 1,
-      enriched: 0,
-      skipped: 0,
+  it('automatically organizes saved metadata once before exposing a library directory', async () => {
+    let tracks = [{ id: 'track-1', artist: 'Old Artist' }];
+    const listLibraryTracks = vi.fn(() => tracks);
+    const organizeLibraryMetadata = vi.fn(() => {
+      tracks = [{ id: 'track-1', artist: 'Canonical Artist' }];
+      return { updated: 1, normalized: 1, enriched: 0, skipped: 0 };
     });
-    const notifyLibraryUpdated = vi.fn();
-
     const handlers = registerHandlers({
-      notifyLibraryUpdated,
       listLibraryTracks,
-      runLibraryBackfill,
       organizeLibraryMetadata,
     });
 
-    await handlers.get('library:refresh-metadata')();
-    expect(notifyLibraryUpdated).toHaveBeenCalledWith({
-      allowProviderBackfill: false,
+    await expect(handlers.get('library:list')()).resolves.toEqual(tracks);
+    await expect(handlers.get('library:list')()).resolves.toEqual(tracks);
+
+    expect(organizeLibraryMetadata).toHaveBeenCalledOnce();
+    expect(organizeLibraryMetadata).toHaveBeenCalledWith(
+      'library-dir',
+      expect.any(Function),
+    );
+    expect(listLibraryTracks).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the library readable when automatic metadata organization fails', async () => {
+    const recordDiagnostic = vi.fn();
+    const tracks = [{ id: 'track-1', title: 'Playable track' }];
+    const organizeLibraryMetadata = vi.fn(() => {
+      throw new Error('index write failed: C:\\Private\\library.json');
+    });
+    const handlers = registerHandlers({
+      listLibraryTracks: vi.fn().mockReturnValue(tracks),
+      organizeLibraryMetadata,
+      recordDiagnostic,
+    });
+
+    await expect(handlers.get('library:list')()).resolves.toEqual(tracks);
+    await expect(handlers.get('library:list')()).resolves.toEqual(tracks);
+    expect(organizeLibraryMetadata).toHaveBeenCalledOnce();
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        process: 'main',
+        level: 'error',
+        source: 'library',
+        operation: 'automatic-metadata-organization',
+        code: 'LIBRARY_METADATA_AUTO_ORGANIZATION_FAILED',
+      }),
+    );
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+  });
+
+  it('honors a library refresh that explicitly disables provider backfill', async () => {
+    const listLibraryTracks = vi.fn().mockReturnValue([]);
+    const runLibraryBackfill = vi.fn().mockResolvedValue(0);
+
+    const handlers = registerHandlers({
+      listLibraryTracks,
+      runLibraryBackfill,
     });
 
     await handlers.get('library:list')(null, {
@@ -140,6 +182,261 @@ describe('library metadata maintenance handlers', () => {
       tracks,
     );
     expect(runLibraryBackfill).not.toHaveBeenCalled();
+  });
+
+  it('keeps artist organization mutations id-only, revisioned, and main-derived', async () => {
+    const tracks = [
+      { id: 'a', artist: 'JJ Lin' },
+      { id: 'b', artist: '林俊傑' },
+    ];
+    const stableId = 'artist-123e4567-e89b-42d3-a456-426614174000';
+    const artistIndexCache = {
+      getIndex: vi.fn(),
+      mergeArtists: vi.fn().mockResolvedValue({
+        status: 'ok',
+        changed: true,
+        artistId: stableId,
+        revision: 1,
+      }),
+      splitArtistCredit: vi.fn().mockResolvedValue({
+        status: 'ok',
+        changed: true,
+        artistId: stableId,
+        revision: 2,
+      }),
+      setDisplayName: vi.fn().mockResolvedValue({
+        status: 'ok',
+        changed: true,
+        artistId: stableId,
+        revision: 3,
+      }),
+      undoOrganization: vi.fn().mockResolvedValue({
+        status: 'ok',
+        changed: true,
+        revision: 4,
+      }),
+    };
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      artistIndexCache,
+      notifyLibraryUpdated,
+      listLibraryTracks: vi.fn().mockReturnValue(tracks),
+    });
+
+    await expect(
+      handlers.get('library:merge-artists')(null, {
+        artistIds: ['artist-68d52f69a4a24a1a', 'artist-882cd3bcbb49699f'],
+        expectedRevision: 0,
+        privatePath: 'E:\\private',
+      }),
+    ).resolves.toMatchObject({ status: 'ok', artistId: stableId });
+    expect(artistIndexCache.mergeArtists).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+      ['artist-68d52f69a4a24a1a', 'artist-882cd3bcbb49699f'],
+      { expectedRevision: 0 },
+    );
+
+    await handlers.get('library:split-artist-credit')(null, {
+      artistId: stableId,
+      creditId: 'credit-68d52f69a4a24a1a',
+      expectedRevision: 1,
+      rawCredit: 'ignored',
+    });
+    expect(artistIndexCache.splitArtistCredit).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+      stableId,
+      'credit-68d52f69a4a24a1a',
+      { expectedRevision: 1 },
+    );
+
+    await handlers.get('library:set-artist-display-name')(null, {
+      artistId: stableId,
+      displayName: '林俊傑',
+      expectedRevision: 2,
+      mbid: 'ignored',
+    });
+    expect(artistIndexCache.setDisplayName).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+      stableId,
+      '林俊傑',
+      { expectedRevision: 2 },
+    );
+
+    await handlers.get('library:undo-artist-organization')(null, {
+      expectedRevision: 3,
+      privateState: {},
+    });
+    expect(artistIndexCache.undoOrganization).toHaveBeenCalledWith(
+      'library-dir',
+      { expectedRevision: 3 },
+    );
+    expect(notifyLibraryUpdated).toHaveBeenCalledTimes(4);
+    expect(notifyLibraryUpdated).toHaveBeenLastCalledWith({
+      allowProviderBackfill: false,
+    });
+  });
+
+  it('rejects malformed artist organization intents before the store boundary', async () => {
+    const artistIndexCache = {
+      mergeArtists: vi.fn(),
+      splitArtistCredit: vi.fn(),
+      setDisplayName: vi.fn(),
+      undoOrganization: vi.fn(),
+    };
+    const handlers = registerHandlers({ artistIndexCache });
+
+    await expect(
+      handlers.get('library:merge-artists')(null, {
+        artistIds: ['../escape', 'artist-0123456789abcdef'],
+        expectedRevision: 0,
+      }),
+    ).resolves.toEqual({ status: 'error', reason: 'invalid-intent' });
+    await expect(
+      handlers.get('library:set-artist-display-name')(null, {
+        artistId: 'artist-0123456789abcdef',
+        displayName: 'x'.repeat(201),
+        expectedRevision: 0,
+      }),
+    ).resolves.toEqual({ status: 'error', reason: 'invalid-intent' });
+    expect(artistIndexCache.mergeArtists).not.toHaveBeenCalled();
+    expect(artistIndexCache.setDisplayName).not.toHaveBeenCalled();
+  });
+
+  it('keeps MusicBrainz artist lookup explicit, gated, and opaque across IPC', async () => {
+    const tracks = [{ id: 'a', title: 'Always Online', artist: 'JJ Lin' }];
+    const candidateId = 'candidate_0123456789abcdef012345';
+    const artistIdentityService = {
+      search: vi.fn().mockResolvedValue({
+        status: 'ok',
+        artistId: 'artist-68d52f69a4a24a1a',
+        candidates: [{ candidateId, name: '林俊傑', aliases: ['JJ Lin'] }],
+      }),
+      apply: vi.fn().mockResolvedValue({
+        status: 'ok',
+        changed: true,
+        artistId: 'artist-123e4567-e89b-42d3-a456-426614174000',
+        revision: 1,
+      }),
+      cancel: vi.fn(),
+    };
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      artistIdentityService,
+      listLibraryTracks: vi.fn().mockReturnValue(tracks),
+      notifyLibraryUpdated,
+    });
+
+    await expect(
+      handlers.get('library:search-artist-identity-candidates')(
+        null,
+        'artist-68d52f69a4a24a1a',
+      ),
+    ).resolves.toMatchObject({
+      status: 'ok',
+      candidates: [{ candidateId, name: '林俊傑' }],
+    });
+    expect(artistIdentityService.search).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+      'artist-68d52f69a4a24a1a',
+    );
+
+    await handlers.get('library:apply-artist-identity-candidate')(null, {
+      artistId: 'artist-68d52f69a4a24a1a',
+      candidateId,
+      expectedRevision: 0,
+      mbid: 'must-not-cross-ipc',
+      sourceUrl: 'https://musicbrainz.org/artist/private',
+    });
+    expect(artistIdentityService.apply).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+      'artist-68d52f69a4a24a1a',
+      candidateId,
+      0,
+    );
+    expect(notifyLibraryUpdated).toHaveBeenCalledWith({
+      allowProviderBackfill: false,
+    });
+  });
+
+  it('does not call MusicBrainz artist lookup while provider-flow is closed', async () => {
+    const artistIdentityService = {
+      search: vi.fn(),
+      apply: vi.fn(),
+      cancel: vi.fn(),
+    };
+    const handlers = registerHandlers({
+      artistIdentityService,
+      getConfig: () => ({}),
+    });
+
+    await expect(
+      handlers.get('library:search-artist-identity-candidates')(
+        null,
+        'artist-68d52f69a4a24a1a',
+      ),
+    ).resolves.toEqual({ status: 'disabled' });
+    expect(artistIdentityService.search).not.toHaveBeenCalled();
+  });
+
+  it('starts automatic artist identity reconciliation without renderer-derived inputs', async () => {
+    const tracks = [{ id: 'a', title: 'Always Online', artist: 'JJ Lin' }];
+    const notifyLibraryUpdated = vi.fn();
+    const artistIdentityService = {
+      reconcile: vi.fn(async (directory, currentTracks, options) => {
+        await options.onApplied({ status: 'ok', changed: true });
+        return { status: 'ok', attempted: 1, changed: 1 };
+      }),
+      search: vi.fn(),
+      apply: vi.fn(),
+      cancel: vi.fn(),
+    };
+    const handlers = registerHandlers({
+      artistIdentityService,
+      listLibraryTracks: vi.fn().mockReturnValue(tracks),
+      notifyLibraryUpdated,
+    });
+
+    await expect(
+      handlers.get('library:auto-resolve-artist-identities')(null, {
+        directory: 'E:\\private',
+        artistIds: ['ignored'],
+      }),
+    ).resolves.toEqual({ status: 'started' });
+    await vi.waitFor(() =>
+      expect(artistIdentityService.reconcile).toHaveBeenCalledWith(
+        'library-dir',
+        tracks,
+        expect.objectContaining({ onApplied: expect.any(Function) }),
+      ),
+    );
+    await vi.waitFor(() =>
+      expect(notifyLibraryUpdated).toHaveBeenCalledWith({
+        allowProviderBackfill: false,
+      }),
+    );
+  });
+
+  it('does not start automatic artist identity reconciliation while provider-flow is closed', async () => {
+    const artistIdentityService = {
+      reconcile: vi.fn(),
+      search: vi.fn(),
+      apply: vi.fn(),
+      cancel: vi.fn(),
+    };
+    const handlers = registerHandlers({
+      artistIdentityService,
+      getConfig: () => ({}),
+    });
+
+    await expect(
+      handlers.get('library:auto-resolve-artist-identities')(),
+    ).resolves.toEqual({ status: 'disabled' });
+    expect(artistIdentityService.reconcile).not.toHaveBeenCalled();
   });
 
   it('resolves artist photos only for valid ids behind the provider gate', async () => {
@@ -570,30 +867,6 @@ describe('library metadata maintenance handlers', () => {
     expect(calls).toEqual(['invalidate', 'delete']);
     expect(recordDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({ source: 'library', operation: 'delete-track' }),
-    );
-  });
-
-  it('records a metadata refresh failure and rethrows a safe AppError', async () => {
-    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
-    const handlers = registerHandlers({
-      recordDiagnostic,
-      organizeLibraryMetadata: vi.fn(() => {
-        throw new Error('corrupt sidecar');
-      }),
-    });
-
-    const error = await handlers
-      .get('library:refresh-metadata')()
-      .catch((err) => err);
-
-    const payload = parseAppError(error);
-    expect(payload.code).toBe('LIBRARY_REFRESH_METADATA_FAILED');
-    expect(payload.context.diagnosticRecorded).toBe(true);
-    expect(recordDiagnostic).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: 'library',
-        operation: 'refresh-metadata',
-      }),
     );
   });
 

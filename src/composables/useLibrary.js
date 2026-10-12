@@ -103,19 +103,6 @@ function initialize() {
   return initializationPromise;
 }
 
-// Manual metadata maintenance from already-downloaded info.json sidecars —
-// see libraryHandlers.js's library:refresh-metadata handler. Returns a bounded
-// summary so the caller can distinguish normalization, enrichment, and skipped
-// manual edits; no need to also
-// call refresh() here, main pushes library:updated on any real change and
-// the subscription below already re-fetches on that.
-async function refreshMetadata() {
-  if (typeof window === 'undefined' || !window.Utawakui) {
-    return { updated: 0, normalized: 0, enriched: 0, skipped: 0 };
-  }
-  return window.Utawakui.refreshLibraryMetadata();
-}
-
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unsubscribeLibraryUpdated?.();
@@ -128,6 +115,5 @@ export function useLibrary() {
     tracksById,
     initialize,
     refresh,
-    refreshMetadata,
   };
 }

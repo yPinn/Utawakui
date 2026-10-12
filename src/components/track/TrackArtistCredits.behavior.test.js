@@ -26,7 +26,10 @@ function render(props) {
 
 beforeEach(() => {
   artistIndexState.index = {
-    artists: [],
+    artists: [
+      { id: 'artist-yoasobi', name: 'YOASOBI', credits: [] },
+      { id: 'artist-midories', name: 'ミドリーズ', credits: [] },
+    ],
     trackArtistIds: {
       solo: ['artist-yoasobi'],
       duet: ['artist-yoasobi', 'artist-midories'],
@@ -66,6 +69,33 @@ describe('TrackArtistCredits', () => {
 
     expect(calls).toEqual(['navigate:artist-yoasobi', 'jump:artist-yoasobi']);
     app.unmount();
+  });
+
+  it('shows the same canonical name for every integrated credit', async () => {
+    artistIndexState.index = {
+      artists: [
+        {
+          id: 'artist-lin',
+          name: '林俊傑',
+          credits: [{ name: 'JJ Lin' }, { name: '林俊傑' }],
+        },
+      ],
+      trackArtistIds: {
+        english: ['artist-lin'],
+        chinese: ['artist-lin'],
+      },
+    };
+
+    const english = await render({
+      track: { id: 'english', artist: 'JJ Lin' },
+    });
+    const chinese = await render({
+      track: { id: 'chinese', artist: '林俊傑' },
+    });
+
+    expect(english).toContain('前往藝人：林俊傑');
+    expect(english).not.toContain('>JJ Lin<');
+    expect(chinese).toContain('前往藝人：林俊傑');
   });
 
   it('renders nothing for a track without artist text', async () => {

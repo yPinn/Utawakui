@@ -3,14 +3,16 @@
   "features": [
     {
       "id": "provider-flow",
-      "title": "啟用外部來源匯入",
+      "noticeVersion": "provider-flow-notice-v4",
+      "title": "啟用外部來源",
       "category": "provider",
-      "confirmLabel": "啟用匯入",
+      "confirmLabel": "啟用外部來源",
       "cancelLabel": "取消",
-      "summary": "搜尋外部來源並匯入本機曲庫。",
+      "summary": "搜尋／匯入外部來源，並自動整理藝人標示。",
       "body": [
         "使用外部來源前，請確認來源平台允許下載、快取或保存。",
         "匯入的音訊、封面及相關資料，仍須依素材授權範圍使用。",
+        "啟用後，首次載入藝人資料或曲庫變更時，系統會將本機藝人名稱送往 MusicBrainz，以高可信證據自動整理同一藝人的不同標示。",
         "Utawakui 不會驗證素材授權；啟用紀錄僅保存在本機。"
       ]
     },

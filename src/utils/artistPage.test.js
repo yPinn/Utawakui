@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   artistCreditLinks,
+  artistSearchTexts,
   deriveArtistPage,
   isArtistSourceId,
   listSidebarArtists,
@@ -69,7 +70,7 @@ const albumEntries = [
 ];
 
 describe('artistCreditLinks', () => {
-  it('links a single credit as written on the track', () => {
+  it('links a single credit with the canonical artist name', () => {
     expect(
       artistCreditLinks({ id: 'y1', artist: 'YOASOBI' }, artistIndex),
     ).toEqual([{ text: 'YOASOBI', artistId: 'artist-yoasobi' }]);
@@ -87,18 +88,83 @@ describe('artistCreditLinks', () => {
     ]);
   });
 
-  it('keeps plain text when parts and ids cannot be paired', () => {
+  it('uses one canonical name after cross-script credits are integrated', () => {
+    const integrated = {
+      artists: [
+        {
+          id: 'artist-lin',
+          name: '林俊傑',
+          credits: [
+            { id: 'credit-jj', name: 'JJ Lin' },
+            { id: 'credit-lin', name: '林俊傑' },
+          ],
+          trackIds: ['english', 'chinese'],
+        },
+      ],
+      trackArtistIds: {
+        english: ['artist-lin'],
+        chinese: ['artist-lin'],
+      },
+    };
+
+    expect(
+      artistCreditLinks({ id: 'english', artist: 'JJ Lin' }, integrated),
+    ).toEqual([{ text: '林俊傑', artistId: 'artist-lin' }]);
+    expect(
+      artistCreditLinks({ id: 'chinese', artist: '林俊傑' }, integrated),
+    ).toEqual([{ text: '林俊傑', artistId: 'artist-lin' }]);
+  });
+
+  it('uses indexed entities without depending on source-credit punctuation', () => {
     expect(
       artistCreditLinks(
         { id: 'm1', artist: 'YOASOBI & ミドリーズ' },
         artistIndex,
       ),
-    ).toBe(null);
+    ).toEqual([
+      { text: 'YOASOBI', artistId: 'artist-yoasobi' },
+      { text: 'ミドリーズ', artistId: 'artist-midories' },
+    ]);
+  });
+
+  it('keeps plain text when the artist index cannot resolve every entity', () => {
     expect(
       artistCreditLinks({ id: 'unknown', artist: 'Eve' }, artistIndex),
     ).toBe(null);
     expect(artistCreditLinks({ id: 'y1', artist: '' }, artistIndex)).toBe(null);
     expect(artistCreditLinks({ id: 'y1', artist: 'YOASOBI' }, null)).toBe(null);
+  });
+});
+
+describe('artistSearchTexts', () => {
+  it('lets every integrated credit find the complete canonical artist', () => {
+    const integrated = {
+      artists: [
+        {
+          id: 'artist-lin',
+          name: '林俊傑',
+          credits: [{ name: 'JJ Lin' }, { name: '林俊傑' }],
+        },
+      ],
+      trackArtistIds: {
+        english: ['artist-lin'],
+        chinese: ['artist-lin'],
+      },
+    };
+
+    expect(
+      artistSearchTexts({ id: 'english', artist: 'JJ Lin' }, integrated),
+    ).toEqual(['JJ Lin', '林俊傑']);
+    expect(
+      artistSearchTexts({ id: 'chinese', artist: '林俊傑' }, integrated),
+    ).toEqual(['林俊傑', 'JJ Lin']);
+  });
+
+  it('falls back to the source credit before the artist index loads', () => {
+    expect(artistSearchTexts({ id: 'raw', artist: 'JJ Lin' }, null)).toEqual([
+      'JJ Lin',
+    ]);
+    expect(artistSearchTexts({ id: 'empty', artist: '' }, null)).toEqual([]);
   });
 });
 
@@ -161,6 +227,38 @@ describe('listSidebarArtists', () => {
     ).toEqual(['YOASOBI', 'ミドリーズ']);
   });
 
+  it('lets every integrated credit find the canonical artist row', () => {
+    const integrated = {
+      artists: [
+        {
+          id: 'artist-lin',
+          name: '林俊傑',
+          credits: [{ name: 'JJ Lin' }, { name: '林俊傑' }],
+          trackIds: ['english', 'chinese'],
+        },
+      ],
+      trackArtistIds: {
+        english: ['artist-lin'],
+        chinese: ['artist-lin'],
+      },
+    };
+    const integratedTracks = new Map([
+      ['english', { id: 'english', title: '53 Dawns', artist: 'JJ Lin' }],
+      ['chinese', { id: 'chinese', title: 'Always Online', artist: '林俊傑' }],
+    ]);
+
+    for (const query of ['jj lin', '林俊傑']) {
+      expect(
+        listSidebarArtists({
+          artistIndex: integrated,
+          albumEntries: [],
+          tracksById: integratedTracks,
+          query,
+        }).map((artist) => artist.name),
+      ).toEqual(['林俊傑']);
+    }
+  });
+
   it('returns nothing before the index loads', () => {
     expect(listSidebarArtists({ artistIndex: null })).toEqual([]);
   });
@@ -209,6 +307,22 @@ describe('orderReferenceItems', () => {
 });
 
 describe('deriveArtistPage', () => {
+  it('redirects a legacy credit artist id to its stable entity', () => {
+    const redirectedIndex = {
+      ...artistIndex,
+      artistRedirects: { 'artist-legacy': 'artist-yoasobi' },
+    };
+
+    const page = deriveArtistPage({
+      artistId: 'artist-legacy',
+      artistIndex: redirectedIndex,
+      albumEntries,
+      tracksById,
+    });
+
+    expect(page).toMatchObject({ id: 'artist-yoasobi', name: 'YOASOBI' });
+  });
+
   it('orders albums newest first and tracks by album, then loose tracks', () => {
     const page = deriveArtistPage({
       artistId: 'artist-yoasobi',

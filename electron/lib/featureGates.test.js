@@ -16,7 +16,7 @@ describe('featureGates', () => {
       }),
     ).toEqual({
       featureId: 'provider-flow',
-      noticeVersion: 'feature-notice-v3',
+      noticeVersion: 'provider-flow-notice-v4',
       confirmedAt: '2026-08-13T00:00:00.000Z',
       enabled: true,
     });
@@ -37,7 +37,7 @@ describe('featureGates', () => {
     expect(
       normalizeFeatureConfirmations({
         'provider-flow': {
-          noticeVersion: 'feature-notice-v3',
+          noticeVersion: 'provider-flow-notice-v4',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
@@ -60,7 +60,7 @@ describe('featureGates', () => {
     ).toEqual({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'feature-notice-v3',
+        noticeVersion: 'provider-flow-notice-v4',
         confirmedAt: '2026-08-13T00:00:00.000Z',
         enabled: true,
       },
@@ -72,7 +72,7 @@ describe('featureGates', () => {
       featureConfirmations: {
         'provider-flow': {
           featureId: 'provider-flow',
-          noticeVersion: 'feature-notice-v3',
+          noticeVersion: 'provider-flow-notice-v4',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
@@ -88,7 +88,6 @@ describe('featureGates', () => {
 
     expect(gates).toHaveLength(5);
     for (const gate of gates) {
-      expect(gate.noticeVersion).toBe('feature-notice-v3');
       expect(gate.cancelLabel).toBe('取消');
       expect(gate.summary.length).toBeLessThanOrEqual(28);
       expect(gate.summary.endsWith('。')).toBe(true);
@@ -100,8 +99,15 @@ describe('featureGates', () => {
       );
     }
 
+    expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).noticeVersion).toBe(
+      'provider-flow-notice-v4',
+    );
+    expect(getFeatureGate(FEATURE_IDS.LYRICS_FLOW).noticeVersion).toBe(
+      'feature-notice-v3',
+    );
+
     expect(gates.map((gate) => gate.summary)).toEqual([
-      '搜尋外部來源並匯入本機曲庫。',
+      '搜尋／匯入外部來源，並自動整理藝人標示。',
       '搜尋並保存外部歌詞或字幕。',
       '在本機進行 BPM 分析、人聲分離與音高／速度調整。',
       '以 Browser Source 顯示曲目、佇列與歌詞。',
@@ -110,6 +116,12 @@ describe('featureGates', () => {
 
     expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
       '來源平台',
+    );
+    expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
+      '藝人名稱送往 MusicBrainz',
+    );
+    expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
+      '曲庫變更時',
     );
     expect(getFeatureGate(FEATURE_IDS.LYRICS_FLOW).body.join('')).toContain(
       '公開顯示',
