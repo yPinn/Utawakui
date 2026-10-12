@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   UI_DEMO_EXCLUDED_COMPONENTS,
-  UI_DEMO_GROUP_REVIEW_STATUS,
   UI_DEMO_GROUPS,
 } from './uiDemoSections.js';
 
@@ -32,7 +31,6 @@ describe('UI demo component order', () => {
       'density',
       'scrollbar',
       'page-header',
-      'page-layout',
       'separator',
       'stack',
       'surface',
@@ -95,69 +93,28 @@ describe('UI demo component order', () => {
     expect(registeredSharedComponents).toEqual(sharedComponents);
     expect(registeredComponents).toContain('UiActionMenu Candidate');
     expect(registeredComponents).toContain('UiContextMenu Current');
-    expect(registeredComponents).toContain('AppFolderLayout target');
     expect(new Set(registeredComponents).size).toBe(
       registeredComponents.length,
     );
-
-    for (const key of [
-      'kbd',
-      'color-field',
-      'disclosure',
-      'notification-host',
-      'tooltip',
-      'switch',
-      'breadcrumb',
-    ]) {
-      expect(
-        UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
-          (section) => section.key === key,
-        )?.reviewed,
-        key,
-      ).toBe(false);
-    }
-
-    for (const key of [
-      'separator',
-      'stack',
-      'surface',
-      'segmented-control',
-      'radio-group',
-      'skeleton',
-      'popover',
-      'combobox',
-    ]) {
-      expect(
-        UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
-          (section) => section.key === key,
-        )?.reviewed,
-        key,
-      ).not.toBe(false);
-    }
   });
 
-  it('keeps rejected decorative artifacts out of the final page-layout review', () => {
-    const pageLayout = UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
-      (section) => section.key === 'page-layout',
-    );
-
-    expect(pageLayout?.components).toEqual(['AppFolderLayout target']);
+  it('keeps page-only artifacts out of the component catalogue', () => {
+    expect(
+      UI_DEMO_GROUPS.flatMap((group) => group.sections).some(
+        (section) => section.key === 'page-layout',
+      ),
+    ).toBe(false);
     expect(UI_DEMO_EXCLUDED_COMPONENTS).toEqual([
       'UiFolderArtifact',
       'UiFolderArtifactCanvas',
     ]);
   });
 
-  it('derives group review status from section truth', () => {
-    expect(UI_DEMO_GROUP_REVIEW_STATUS).toEqual({
-      foundations: 'partial',
-      inputs: 'partial',
-      actions: 'reviewed',
-      navigation: 'partial',
-      feedback: 'partial',
-      content: 'reviewed',
-      overlays: 'partial',
-    });
+  it('keeps migration lifecycle state out of the catalogue IA', () => {
+    for (const section of UI_DEMO_GROUPS.flatMap((group) => group.sections)) {
+      expect(section).not.toHaveProperty('reviewed');
+      expect(section).not.toHaveProperty('adopted');
+    }
   });
 
   it('uses Traditional Chinese display labels while preserving stable keys', () => {
@@ -184,7 +141,6 @@ describe('UI demo component order', () => {
       '密度與尺寸',
       '捲動條外觀',
       '頁面標題列',
-      '頁面版型',
       '分隔線',
       '版面容器',
       '面板外觀',

@@ -224,7 +224,7 @@ describe('Library browse workspace composition', () => {
     );
     expect(appSource).toContain('library: LibraryPage');
     expect(appSource).toMatch(
-      /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
+      /const pageComposedFolderViews = new Set\(\[[\s\S]*?'library'[\s\S]*?\]\);/u,
     );
     expect(appSource).toContain('v-if="activeViewOwnsFolderPage"');
   });

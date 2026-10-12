@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { UI_DEMO_ADOPTED_SECTION_KEYS } from '../../constants/uiDemoSections.js';
 
 function readSource(file) {
   return readFileSync(new URL(file, import.meta.url), 'utf8');
@@ -110,8 +109,12 @@ describe('new shared infra catalogue registration', () => {
     ['skeleton', 'UiSkeleton'],
     ['combobox', 'UiCombobox'],
     ['tooltip', 'UiTooltip'],
-  ])('records %s as adopted production infrastructure', (key) => {
-    expect(UI_DEMO_ADOPTED_SECTION_KEYS).toContain(key);
+  ])('finds %s in the production component graph', (_key, component) => {
+    const consumers = productionSources(
+      new URL('../../', import.meta.url),
+    ).filter(([, source]) => source.includes(`/ui/${component}.vue`));
+
+    expect(consumers.length).toBeGreaterThan(0);
   });
 
   it('uses the popover interactive-panel anatomy in its catalogue sample', () => {
@@ -122,11 +125,11 @@ describe('new shared infra catalogue registration', () => {
     expect(source).toContain('class="demo-popover-content"');
   });
 
-  it('records UiPopover as reviewed production infrastructure', () => {
+  it('registers UiPopover in the catalogue IA', () => {
     const source = readSource('../../constants/uiDemoSections.js');
 
     expect(source).toMatch(
-      /key: 'popover',[\s\S]*?components: \['UiPopover'\],[\s\S]*?adopted: true,/u,
+      /key: 'popover',[\s\S]*?components: \['UiPopover'\],/u,
     );
   });
 });

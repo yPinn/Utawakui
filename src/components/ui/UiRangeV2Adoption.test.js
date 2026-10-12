@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { UI_DEMO_ADOPTED_SECTION_KEYS } from '../../constants/uiDemoSections.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -23,7 +22,6 @@ describe('Token v2 Range formal adoption', () => {
       "import UiRangeControl from './range/UiRangeControl.vue';",
     );
     expect(demoSource).not.toContain('DemoCandidateRange');
-    expect(UI_DEMO_ADOPTED_SECTION_KEYS).toContain('range');
   });
 
   it('keeps the adopted authored appearance aliases in the production graph', () => {

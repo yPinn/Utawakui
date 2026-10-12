@@ -100,9 +100,8 @@ const internalViews = internalWorkbenchesEnabled
       'music-analysis-evaluation': defineAsyncComponent(
         () => import('./views/MusicAnalysisEvaluationView.vue'),
       ),
-      // Demo and Studio Library are both facets of the same not-yet-adopted
-      // visual-refresh exploration — see VisualSystemView.vue's internal
-      // mode toggle instead of two separate global shortcuts.
+      // The Visual System is a development-only component catalogue. Adopted
+      // product pages are not retained here as alternate implementations.
       'visual-system': defineAsyncComponent(
         () => import('./views/VisualSystemView.vue'),
       ),
@@ -110,8 +109,7 @@ const internalViews = internalWorkbenchesEnabled
   : {};
 // Ordered by current workflow/usage priority: Music Analysis is the most
 // active dev-tool area right now, Diagnostics/Lyrics Provider Review are
-// established support workflows, and the merged Visual System exploration
-// (not yet adopted, see DESIGN.md) sits last.
+// established support workflows, and the Visual System catalogue sits last.
 const internalViewShortcuts = internalWorkbenchesEnabled
   ? {
       f5: 'music-analysis',
@@ -374,7 +372,12 @@ onUnmounted(() =>
   document.removeEventListener('keydown', handleRightDockKeydown),
 );
 
-const pageComposedFolderViews = new Set(['library', 'performance', 'display']);
+const pageComposedFolderViews = new Set([
+  'library',
+  'performance',
+  'display',
+  'visual-system',
+]);
 const activeViewOwnsFolderPage = computed(() =>
   pageComposedFolderViews.has(activeView.value),
 );

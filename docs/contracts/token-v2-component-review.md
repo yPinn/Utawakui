@@ -10,6 +10,10 @@ implementations.
 owner decisions。F8 現在只保留元件回歸目錄；已採用的 page／layout 決策板、
 Studio Library live Candidate 與 Setlist Current 比較頁均已移除。完整 catalogue
 只負責元件回歸證據，不得取代 View-level owner decision。
+目前 catalogue 重用正式 `AppFolderPage` workspace composition，以固定 `UiTabs`
+切換分類，並由單一 `UiScrollLayout` 擁有 active group 的垂直捲動；分類切換會回到
+內容起點。型錄只掛載目前分類，不同時渲染全部群組，也不顯示 adoption 數量、
+review badge 或 migration status。
 Production surface 替換、fail-closed scope、legacy ratchet 與 final deletion 的完成紀錄
 由 [Token v2 完整替換契約](token-v2-replacement.md) 管理；本文件不再作 migration
 status source，也不建立 compatibility fallback。
@@ -107,7 +111,7 @@ section 的完成狀態與數量不因此重寫，其餘 Token v2 候選也不�
 5. Track transparent；rail absolutely overlay 在 scrollport 內，不參與內容寬高計算。該軸沒有 overflow 時 rail／thumb 不顯示；純 `UiScrollRegion` 不猜內容 gutter，`UiScrollLayout` 則可持續保留宣告軸的 lane，避免 overflow 進出時內容位移。`scrollbar-gutter: stable` 只可能是另類 native consumer 的明確例外，不屬於 overlay default。
 6. Header、Tabs、Toolbar、table heading 留在 Scroll Region 外；只有實際移動的 body／list 擁有 rail。Playlist Sidebar 的搜尋／新增 Toolbar 與 Right Dock 的 header／tabs 都固定在 rail range 外；Modal、Popover、Queue、PlayerBar Panel、Settings、資料表、Analysis、Lyrics、Provider、Output 與 F8 catalogue 亦依此拆分，避免 rail 從固定 chrome 旁穿過。
 7. Playlist Sidebar 的完整展開集合清單在 overflow 時自動顯示 chrome；折疊精簡清單以 `scrollbarVisibility="hidden"` 只隱藏 rail／thumb，仍保留 wheel／keyboard 的 native scroll authority。這是 feature-owned interaction shape，不由寬度或 geometry 猜測。
-8. 標本同時呈現 vertical、horizontal 與 both-axis，實際 native viewports 可取得 keyboard focus；另以「未溢位／已溢位」並列證明相同內容寬度，再以靜態 anatomy 並列 Default／Hover／Active。Current 與 Token v2 現在共用正式 behavior，由各自 semantic tokens 決定 paint。
+8. 型錄以正式 `UiScrollLayout` 同時呈現 vertical、horizontal 與 both-axis，實際 native viewports 可取得 keyboard focus；另以「未溢位／已溢位」並列證明 layout reserve 不因 rail 出現而改變內容座標。型錄不另畫第二套 scrollbar skin 或靜態狀態模型。
 9. forced-colors 使用系統 `Canvas`／`CanvasText`，overlay rail 對 accessibility tree 隱藏，但 focusable native viewport 與可見 thumb 保留 overflow affordance。`base.css` 的全域 hidden scrollbar 規則已移除；native chrome suppression 只存在於 `UiScrollRegion` viewport。
 10. `109ichiki.com` 的 custom fixed／absolute scrollbar 只作「overlay 可避免 layout occupation」的實作證據，不是唯一視覺答案。Utawakui 沒有照搬其 20px lane、8px outlined thumb、全頁 fixed placement 或品牌語彙，而是沿用本產品 geometry、neutral states、local region 與 forced-colors contract。
 11. Sidebar 與 Right Dock 只共用 side-panel 內容角色：8px perimeter、16px section stack、8px section content、4px row list、4px state-surface outset 與 4px radius。`UiScrollLayout` 依 `12px lane - 3px thumb inset` 加入宣告軸的 9px visual safe reserve；feature 不再保存 scrollbar 與 outset 的總距離 token。row box 因而在 inline-end 得到 13px，state surface 向外消化 4px 後正好在距面板 edge 9px 處切齊 visible thumb 內側邊界；12px rail 仍維持完整 pointer hit lane，row 內部 padding 也繼續將文字與 action 留在更安全的位置。`UiScrollRegion` viewport 建立低於 rail 的 stacking context，consumer 不能以正 z-index 穿越 rail。兩個 panel frame 都以不消耗 content box 的 1px inset stroke 對齊；Right Dock 透過 `UiSurface` 的 inset-stroke mode 使用獨立 overlay，保留 narrow-window elevation `box-shadow` 通道。展開時的兩個 resize axis 共用 12px hit target／2px indicator 與 separator keyboard contract；Sidebar 只將 3px 放進 panel、其餘 9px 放入 shell 的 12px inter-panel gap，以免覆蓋 scrollbar thumb，Right Dock 則在無 scrollbar 的 start edge 置中。Right Dock 摺疊後不掛載 separator 或 resize hit target，只保留右下 restore action。Toolbar／header 是固定 chrome，直接 section 由 panel parent 的 16px `gap` 排列，section header／body 與 feature subgroup 由 8px `gap` 排列，row list 由 4px `gap` 排列；divider 與 child 不再疊加 sibling margin。Playlist／Album 與 Queue／History 的選取、播放、membership、reorder 權限仍由各 feature owner 分開。

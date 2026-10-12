@@ -24,6 +24,12 @@ const batchOneConsumers = [
     marker: 'class="settings-view"',
     component: 'UiScrollRegion',
   },
+  {
+    name: 'demo catalogue workspace',
+    source: readSource('../demo/DemoCatalogueWorkspace.vue'),
+    marker: 'class="demo-catalogue-workspace__scroll"',
+    component: 'UiScrollLayout',
+  },
 ];
 
 const batchTwoConsumers = [
@@ -76,7 +82,6 @@ const batchThreeConsumers = [
     name: 'output split layout',
     source: readSource('../output/ObsOutputSplitLayout.vue'),
   },
-  { name: 'demo catalogue', source: readSource('../../views/DemoView.vue') },
 ];
 
 describe('UiScrollRegion production migration', () => {
@@ -222,7 +227,7 @@ describe('UiScrollRegion production migration', () => {
     const benchmarkSource = batchThreeConsumers[2].source;
     const providerFormSource = batchThreeConsumers[5].source;
     const splitLayoutSource = batchThreeConsumers[8].source;
-    const demoSource = batchThreeConsumers[9].source;
+    const demoSource = batchOneConsumers[3].source;
 
     expect(
       referenceSource.indexOf('class="reference-annotation__case-header"'),
@@ -242,8 +247,10 @@ describe('UiScrollRegion production migration', () => {
     expect(splitLayoutSource.indexOf('<slot name="side-header"')).toBeLessThan(
       splitLayoutSource.indexOf('class="obs-output-split-layout__side-scroll"'),
     );
-    expect(demoSource.indexOf('class="demo-view__index"')).toBeLessThan(
-      demoSource.indexOf('class="demo-view__scroll"'),
+    expect(
+      demoSource.indexOf('class="demo-catalogue-workspace__tabs"'),
+    ).toBeLessThan(
+      demoSource.indexOf('class="demo-catalogue-workspace__scroll"'),
     );
   });
 

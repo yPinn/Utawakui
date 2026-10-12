@@ -3,8 +3,7 @@ defineProps({
   id: { type: String, required: true },
   title: { type: String, required: true },
   componentLabel: { type: String, default: '' },
-  reviewed: { type: Boolean, default: false },
-  fullWidth: { type: Boolean, default: false },
+  comparison: { type: Boolean, default: false },
 });
 </script>
 
@@ -12,10 +11,9 @@ defineProps({
   <section
     class="demo-catalogue-section"
     :class="{
-      'demo-catalogue-section--reviewed': reviewed,
-      'demo-catalogue-section--full-width': fullWidth,
+      'demo-catalogue-section--comparison': comparison,
     }"
-    :data-review-section="reviewed ? 'reviewed' : undefined"
+    :data-demo-comparison="comparison || undefined"
     :aria-labelledby="`${id}-title`"
   >
     <header class="demo-catalogue-section__header">
@@ -41,19 +39,9 @@ defineProps({
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.demo-catalogue-section--reviewed {
+.demo-catalogue-section--comparison {
   padding: var(--ui-space-6) 0;
   background: transparent;
-}
-
-.demo-catalogue-section--full-width {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.demo-catalogue-section--full-width .demo-catalogue-section__header {
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--ui-space-3);
 }
 
 .demo-catalogue-section__header {
@@ -85,7 +73,7 @@ defineProps({
   min-width: 0;
 }
 
-.demo-catalogue-section--reviewed
+.demo-catalogue-section--comparison
   .demo-catalogue-section__body
   :deep([data-demo-review-layer]) {
   --demo-review-layer-background: var(--ui-color-surface-raised);
@@ -100,31 +88,7 @@ defineProps({
   container-type: inline-size;
 }
 
-.demo-catalogue-section--reviewed
-  .demo-catalogue-section__body
-  :deep([data-demo-review-layer='candidate']) {
-  --demo-review-layer-background: var(--ui-color-surface-raised);
-  --demo-review-layer-border: var(--ui-color-border);
-}
-
-.demo-catalogue-section--reviewed
-  .demo-catalogue-section__body
-  :deep([data-demo-review-layer='current']) {
-  --demo-review-layer-background: #30383e;
-  --demo-review-layer-border: #3c4749;
-}
-
-:global(
-  :root[data-ui-theme='light']
-    .demo-catalogue-section--reviewed
-    .demo-catalogue-section__body
-    [data-demo-review-layer='current']
-) {
-  --demo-review-layer-background: #fff;
-  --demo-review-layer-border: #d8ded9;
-}
-
-.demo-catalogue-section--reviewed
+.demo-catalogue-section--comparison
   .demo-catalogue-section__body
   :deep([data-demo-review-layer] > header:first-child) {
   min-width: 0;
@@ -187,19 +151,19 @@ defineProps({
   );
 }
 
-@media (max-width: 58rem) {
+@container app-folder-layout (max-width: 58rem) {
   .demo-catalogue-section {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-space-3);
   }
 
-  .demo-catalogue-section--reviewed
+  .demo-catalogue-section--comparison
     .demo-catalogue-section__body
     :deep([data-demo-review-layer]) {
     padding: var(--ui-space-4);
   }
 
-  .demo-catalogue-section--reviewed
+  .demo-catalogue-section--comparison
     .demo-catalogue-section__body
     :deep([data-demo-review-layer] > header:first-child) {
     grid-template-columns: minmax(0, 1fr);

@@ -70,7 +70,7 @@ describe('Performance Session Token v2 surface cutover', () => {
     );
     expect(performanceSource).toContain('detached-host');
     expect(appSource).toMatch(
-      /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
+      /const pageComposedFolderViews = new Set\(\[[\s\S]*?'performance'[\s\S]*?\]\);/u,
     );
     expect(appSource).toContain('v-if="activeViewOwnsFolderPage"');
   });

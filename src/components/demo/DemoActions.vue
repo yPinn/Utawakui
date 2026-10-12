@@ -17,7 +17,7 @@ defineProps({
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="true"
+      :comparison="true"
     >
       <DemoButtonAppearance v-if="section.key === 'buttons'" />
 

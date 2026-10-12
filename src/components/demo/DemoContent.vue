@@ -27,7 +27,7 @@ const COMPARISON_SECTION_KEYS = new Set([
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="COMPARISON_SECTION_KEYS.has(section.key)"
+      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoMarqueeTextAppearance v-if="section.key === 'marquee-text'" />
       <DemoTrackThumbAppearance v-else-if="section.key === 'track-thumb'" />

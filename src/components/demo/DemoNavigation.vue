@@ -10,6 +10,8 @@ defineProps({
   sections: { type: Array, default: () => [] },
 });
 
+const COMPARISON_SECTION_KEYS = new Set(['tabs', 'segmented-control']);
+
 const sampleMode = ref('quick');
 const disclosureOpen = ref(false);
 const sampleModes = [
@@ -32,7 +34,7 @@ const sampleTrail = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="section.reviewed !== false"
+      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoTabsAppearance v-if="section.key === 'tabs'" />
 

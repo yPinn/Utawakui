@@ -57,8 +57,11 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 更新；`src/composables/useUiDensity.js` 驗證後寫入 document root。Renderer 不取得
 `BrowserWindow`、不依 viewport 猜測狀態。唯一 production token entry 只對明列的
 geometry roles 套用 compact remap；內容 reflow 仍由各 layout owner 決定。Dev-only
-`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；已被 production 採用的整頁 candidate
-與其專用狀態不得留在型錄形成第二份產品頁。owner 檢查順序與歷史見
+`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`DemoView.vue` 重用正式
+`AppFolderPage` workspace composition，型錄內由 `UiTabs` 固定分類、單一
+`UiScrollLayout` 擁有內容捲動。已被 production 採用的整頁 candidate 與其專用狀態不得
+留在型錄形成第二份產品頁，migration／adoption status 也不進入 runtime catalogue。owner
+檢查順序與歷史見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
 已完成的 production replacement boundary 見
 [Token v2 完整替換契約](contracts/token-v2-replacement.md)。Main 與 Performer 的 `#app`

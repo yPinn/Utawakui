@@ -29,7 +29,7 @@ describe('F8 action-menu comparison', () => {
     expect(overlaysSource).toContain("new Set(['context-menu', 'modal'])");
     expect(overlaysSource).toContain('<DemoActionMenuAppearance');
     expect(html.match(/data-demo-review-layer=/g)).toHaveLength(4);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(2);
+    expect(html.match(/data-demo-comparison="true"/g)).toHaveLength(2);
     expect(html).toContain('Token v2 候選 UiActionMenu');
     expect(html).toContain('現行 UiContextMenu');
   });

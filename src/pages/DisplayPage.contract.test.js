@@ -51,7 +51,7 @@ describe('Display page composition contract', () => {
     expect(appSource).toContain('display: DisplayPage');
     expect(displayPageSource).toContain('getOutputWorkbenchData');
     expect(appSource).toMatch(
-      /const pageComposedFolderViews = new Set\(\[\s*'library',\s*'performance',\s*'display',?\s*\]\);/u,
+      /const pageComposedFolderViews = new Set\(\[[\s\S]*?'display'[\s\S]*?\]\);/u,
     );
     expect(appSource).not.toContain("output: 'output'");
   });

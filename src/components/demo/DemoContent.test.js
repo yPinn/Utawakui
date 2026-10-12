@@ -68,7 +68,7 @@ describe('DemoContent staged review boundary', () => {
     expect(contentSource).toMatch(
       /<DemoTrackRowAppearance\s+v-else-if="section\.key === 'track-rows'"\s*\/>/u,
     );
-    expect(html.match(/data-review-section="reviewed"/gu)).toHaveLength(5);
+    expect(html.match(/data-demo-comparison="true"/gu)).toHaveLength(5);
     expect(html).toContain('data-marquee-source="candidate"');
     expect(html).toContain('data-marquee-source="current"');
     expect(html).toContain('data-track-thumb-source="candidate"');

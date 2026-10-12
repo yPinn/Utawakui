@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { compileStyle, parse } from '@vue/compiler-sfc';
 import { describe, expect, it } from 'vitest';
-import { UI_DEMO_ADOPTED_SECTION_KEYS } from '../../constants/uiDemoSections.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -33,26 +32,6 @@ function vueSources(directoryUrl) {
 }
 
 describe('Token v2 shared primitive adoption', () => {
-  it('records review and production adoption as separate truths', () => {
-    expect(UI_DEMO_ADOPTED_SECTION_KEYS).toEqual([
-      'scrollbar',
-      'separator',
-      'stack',
-      'surface',
-      'combobox',
-      'range',
-      'radio-group',
-      'buttons',
-      'icon-buttons',
-      'text-button',
-      'segmented-control',
-      'skeleton',
-      'photo-frame',
-      'tooltip',
-      'popover',
-    ]);
-  });
-
   it('adopts the reviewed Button hierarchy and complete state contract', () => {
     expect(buttonSource).toContain(
       "['ghost', 'secondary', 'accent'].includes(value)",

@@ -29,7 +29,7 @@ describe('DemoOverlays overlay checkpoints', () => {
     );
 
     expect(source).toContain("new Set(['context-menu', 'modal'])");
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(2);
+    expect(html.match(/data-demo-comparison="true"/g)).toHaveLength(2);
     expect(html).toContain('UiActionMenu Candidate · UiContextMenu Current');
     expect(html).toContain('兩種 caller trigger');
     expect(html).toContain('Token v2 候選 UiModal');

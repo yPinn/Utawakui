@@ -67,10 +67,10 @@ describe('development startup contract', () => {
     expect(appSource).toContain("f6: 'diagnostics-workbench'");
     expect(appSource).toContain("f7: 'lyrics-provider-review'");
     expect(appSource).toContain("f8: 'visual-system'");
-    expect(appSource).toContain('isStudioLibraryMode');
     expect(appSource).toMatch(
-      /const folderActiveDestination = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?isStudioLibraryMode\(visualReviewMode\.value\)[\s\S]*?\? 'library'\s*:\s*activeView\.value/u,
+      /const pageComposedFolderViews = new Set\(\[[\s\S]*?'visual-system'[\s\S]*?\]\);/u,
     );
+    expect(appSource).not.toContain('isStudioLibraryMode');
   });
 
   it('does not watch generated artifacts during development', () => {

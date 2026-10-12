@@ -55,7 +55,7 @@ function dismissNotification({ id }) {
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="COMPARISON_SECTION_KEYS.has(section.key)"
+      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoChipAppearance v-if="section.key === 'chips'" />
 

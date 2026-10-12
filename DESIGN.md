@@ -93,12 +93,14 @@ components:
 > imports have been removed. The completed replacement record lives in
 > [Token v2 Replacement](docs/contracts/token-v2-replacement.md).
 
-F8 remains a development-only component catalogue and regression surface. The
-adopted Studio Library page candidate and final decision board have been retired;
-historical Candidate／Current component specimens remain only where an unresolved
-component contract still needs comparison. New production work must use the formal
-`Ui*` components and the stable token entry. The component review history and
-unresolved product-level choices remain in
+F8 remains a development-only component catalogue and regression surface. It uses
+the production `AppFolderPage` workspace composition, `UiTabs` category navigation
+and one `UiScrollLayout` content owner; it does not keep a parallel page shell or
+show migration status. The adopted Studio Library page candidate and final decision
+board have been retired; historical Candidate／Current component specimens remain
+only where an unresolved component contract still needs comparison. New production
+work must use the formal `Ui*` components and the stable token entry. The component
+review history and unresolved product-level choices remain in
 [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
 
 The adopted visual direction comes from

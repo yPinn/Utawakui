@@ -9,7 +9,6 @@ import UiSurface from '../ui/UiSurface.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 import DemoCoreMinimums from './DemoCoreMinimums.vue';
 import DemoDensity from './DemoDensity.vue';
-import DemoPageLayoutAppearance from './DemoPageLayoutAppearance.vue';
 import DemoScrollbarAppearance from './DemoScrollbarAppearance.vue';
 import DemoSpacingShape from './DemoSpacingShape.vue';
 import DemoStatusPalette from './DemoStatusPalette.vue';
@@ -24,6 +23,20 @@ const SURFACE_SAMPLES = [
   { label: 'surface-md', tone: 'surface', radius: 'md' },
   { label: 'raised-lg', tone: 'raised', radius: 'lg' },
 ];
+const COMPARISON_SECTION_KEYS = new Set([
+  'system-palette',
+  'folder-palette',
+  'status-palette',
+  'typography',
+  'spacing-shape',
+  'core-minimums',
+  'density',
+  'scrollbar',
+  'page-header',
+  'separator',
+  'stack',
+  'surface',
+]);
 
 const SYSTEM_COLOR_SWATCHES = [
   {
@@ -109,8 +122,7 @@ const SYSTEM_COLOR_SWATCHES = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="section.reviewed !== false"
-      :full-width="section.key === 'page-layout'"
+      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <div v-if="section.key === 'system-palette'" class="demo-review-block">
         <p class="demo-review-note">
@@ -179,8 +191,6 @@ const SYSTEM_COLOR_SWATCHES = [
       <DemoDensity v-else-if="section.key === 'density'" />
 
       <DemoScrollbarAppearance v-else-if="section.key === 'scrollbar'" />
-
-      <DemoPageLayoutAppearance v-else-if="section.key === 'page-layout'" />
 
       <div
         v-else-if="section.key === 'page-header'"

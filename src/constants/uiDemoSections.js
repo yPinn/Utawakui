@@ -20,7 +20,6 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'scrollbar',
         title: '捲動條外觀',
         components: ['UiScrollLayout', 'UiScrollRegion'],
-        adopted: true,
       },
       {
         key: 'page-header',
@@ -28,34 +27,24 @@ export const UI_DEMO_GROUPS = Object.freeze([
         components: ['UiPageHeader'],
       },
       {
-        key: 'page-layout',
-        title: '頁面版型',
-        components: ['AppFolderLayout target'],
-        reviewed: false,
-      },
-      {
         key: 'separator',
         title: '分隔線',
         components: ['UiSeparator'],
-        adopted: true,
       },
       {
         key: 'stack',
         title: '版面容器',
         components: ['UiStack'],
-        adopted: true,
       },
       {
         key: 'surface',
         title: '面板外觀',
         components: ['UiSurface'],
-        adopted: true,
       },
       {
         key: 'kbd',
         title: '快捷鍵提示',
         components: ['UiKbd'],
-        reviewed: false,
       },
     ],
   },
@@ -85,7 +74,6 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'combobox',
         title: '可搜尋選單',
         components: ['UiCombobox'],
-        adopted: true,
       },
       {
         key: 'checkbox',
@@ -96,26 +84,21 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'switch',
         title: '切換開關',
         components: ['UiSwitch'],
-        reviewed: false,
       },
       {
         key: 'range',
         title: '範圍控制',
         components: ['UiRange'],
-        adopted: true,
       },
       {
         key: 'color-field',
         title: '色彩欄位',
         components: ['UiColorField'],
-        reviewed: false,
       },
       {
         key: 'radio-group',
         title: '單選群組',
         components: ['UiRadioGroup'],
-        reviewed: true,
-        adopted: true,
       },
     ],
   },
@@ -128,19 +111,16 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'buttons',
         title: '按鈕',
         components: ['UiButton'],
-        adopted: true,
       },
       {
         key: 'icon-buttons',
         title: '圖示按鈕',
         components: ['UiIconButton'],
-        adopted: true,
       },
       {
         key: 'text-button',
         title: '文字操作',
         components: ['UiTextButton'],
-        adopted: true,
       },
     ],
   },
@@ -154,19 +134,16 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'breadcrumb',
         title: '路徑導覽',
         components: ['UiBreadcrumb'],
-        reviewed: false,
       },
       {
         key: 'segmented-control',
         title: '分段單選',
         components: ['UiSegmentedControl'],
-        adopted: true,
       },
       {
         key: 'disclosure',
         title: '展開區塊',
         components: ['UiDisclosure'],
-        reviewed: false,
       },
     ],
   },
@@ -188,14 +165,11 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'skeleton',
         title: '載入骨架',
         components: ['UiSkeleton'],
-        reviewed: true,
-        adopted: true,
       },
       {
         key: 'notification-host',
         title: '固定通知 Host',
         components: ['UiNotificationHost'],
-        reviewed: false,
       },
     ],
   },
@@ -231,7 +205,6 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'photo-frame',
         title: '照片外框',
         components: ['UiPhotoFrame'],
-        adopted: true,
       },
       {
         key: 'track-rows',
@@ -255,39 +228,12 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'tooltip',
         title: '工具提示',
         components: ['UiTooltip', 'UiOverflowTooltip'],
-        reviewed: false,
-        adopted: true,
       },
       {
         key: 'popover',
         title: '錨定浮層',
         components: ['UiPopover'],
-        adopted: true,
       },
     ],
   },
 ]);
-
-export const UI_DEMO_GROUP_REVIEW_STATUS = Object.freeze(
-  Object.fromEntries(
-    UI_DEMO_GROUPS.map((group) => {
-      const reviewedCount = group.sections.filter(
-        (section) => section.reviewed !== false,
-      ).length;
-      const status =
-        reviewedCount === group.sections.length
-          ? 'reviewed'
-          : reviewedCount === 0
-            ? 'pending'
-            : 'partial';
-
-      return [group.key, status];
-    }),
-  ),
-);
-
-export const UI_DEMO_ADOPTED_SECTION_KEYS = Object.freeze(
-  UI_DEMO_GROUPS.flatMap((group) => group.sections)
-    .filter((section) => section.adopted === true)
-    .map((section) => section.key),
-);

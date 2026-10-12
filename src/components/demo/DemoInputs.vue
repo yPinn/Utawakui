@@ -18,6 +18,18 @@ defineProps({
   sections: { type: Array, default: () => [] },
 });
 
+const COMPARISON_SECTION_KEYS = new Set([
+  'field',
+  'search-box',
+  'text-field',
+  'textarea',
+  'select',
+  'combobox',
+  'checkbox',
+  'range',
+  'radio-group',
+]);
+
 const sampleColor = ref('#8296d0');
 const sampleAutoUpdate = ref(true);
 const sampleLyricsSource = ref('netease');
@@ -43,7 +55,7 @@ const sampleThemes = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="section.reviewed !== false"
+      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoSearchBoxAppearance v-if="section.key === 'search-box'" />
 

@@ -38,19 +38,17 @@ describe('Folder layout family cutover', () => {
   });
 
   it('makes F8 reuse the formal Folder implementation', () => {
-    const demo = readSource('../components/demo/DemoPageLayoutAppearance.vue');
+    const app = readSource('../App.vue');
+    const demo = readSource('../views/DemoView.vue');
 
     expect(demo).toContain(
-      "import AppFolderLayout from '../layout/AppFolderLayout.vue'",
+      "import AppFolderPage from '../components/layout/AppFolderPage.vue'",
     );
-    expect(demo).toContain(
-      "import AppFolderPage from '../layout/AppFolderPage.vue'",
-    );
-    expect(demo).toContain('<AppFolderLayout');
     expect(demo).toContain('<AppFolderPage');
-    expect(demo).not.toContain('demo-page-layout__folder-tab');
-    expect(demo).not.toContain('demo-page-layout__folder-shell');
-    expect(demo).not.toContain('--demo-folder-color');
+    expect(demo).not.toContain('AppFolderLayout');
+    expect(app).toMatch(
+      /pageComposedFolderViews\s*=\s*new Set\(\[[\s\S]*?'visual-system'[\s\S]*?\]\)/u,
+    );
   });
 
   it('uses the formal Folder aliases and removes candidate aliases', () => {

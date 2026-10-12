@@ -1,13 +1,12 @@
-import fs from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { compileStyle, parse } from '@vue/compiler-sfc';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
-import DemoView from '../../views/DemoView.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 
 const readSource = (relativePath) =>
-  fs.readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+  readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 
 const catalogueSource = readSource('./DemoCatalogueSection.vue');
 const catalogueDescriptor = parse(catalogueSource).descriptor;
@@ -17,15 +16,15 @@ const catalogueCompiledCss = compileStyle({
   source: catalogueDescriptor.styles[0].content,
   scoped: true,
 }).code;
-const viewSource = readSource('../../views/DemoView.vue');
 const foundationsSource = readSource('./DemoFoundations.vue');
 const inputsSource = readSource('./DemoInputs.vue');
 const actionsSource = readSource('./DemoActions.vue');
 const navigationSource = readSource('./DemoNavigation.vue');
 const feedbackSource = readSource('./DemoFeedback.vue');
 const contentSource = readSource('./DemoContent.vue');
+const overlaysSource = readSource('./DemoOverlays.vue');
 
-const REVIEWED_APPEARANCE_SOURCES = [
+const COMPARISON_APPEARANCE_SOURCES = [
   './DemoFieldAppearance.vue',
   './DemoFieldReadonlyAppearance.vue',
   './DemoSearchBoxAppearance.vue',
@@ -51,99 +50,35 @@ const REVIEWED_APPEARANCE_SOURCES = [
   './DemoModalAppearance.vue',
 ].map(readSource);
 
-describe('F8 reviewed catalogue layout', () => {
-  it('reports the completed core groups and remaining overlay boundary', async () => {
-    const html = await renderToString(createSSRApp(DemoView));
-
-    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(2);
-    expect(html.match(/data-review-status="partial"/g)).toHaveLength(5);
-    expect(html.match(/data-review-status="pending"/g) ?? []).toHaveLength(0);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(38);
-    expect(html).toContain('Foundation → UiModal＋UiScrollRegion');
-    expect(
-      html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
-    ).toHaveLength(2);
-    expect(
-      html.match(/class="demo-group__status"[^>]*>\s*部分完成/g),
-    ).toHaveLength(5);
-    expect(
-      html.match(/class="demo-group__status"[^>]*>\s*待審查/g) ?? [],
-    ).toHaveLength(0);
-  });
-
-  it('keeps reviewed sections flat and uses the comparison layers as surfaces', async () => {
+describe('F8 component catalogue layout', () => {
+  it('keeps component sections flat and comparison surfaces local', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
           h(
             DemoCatalogueSection,
             {
-              id: 'reviewed-fixture',
-              title: 'Reviewed fixture',
-              reviewed: true,
+              id: 'comparison-fixture',
+              title: 'Comparison fixture',
+              comparison: true,
             },
             () => 'Evidence',
           ),
       }),
     );
-    const reviewedRule =
+    const comparisonRule =
       catalogueSource.match(
-        /\.demo-catalogue-section--reviewed\s*\{[^}]*\}/s,
+        /\.demo-catalogue-section--comparison\s*\{[^}]*\}/s,
       )?.[0] ?? '';
 
-    expect(html).toContain('demo-catalogue-section--reviewed');
-    expect(html).toContain('data-review-section="reviewed"');
-    expect(reviewedRule).toContain('background: transparent');
-    expect(reviewedRule).not.toContain('border-radius');
-    expect(reviewedRule).not.toMatch(/selected|accent|folder/);
+    expect(html).toContain('demo-catalogue-section--comparison');
+    expect(html).toContain('data-demo-comparison="true"');
+    expect(comparisonRule).toContain('background: transparent');
+    expect(comparisonRule).not.toContain('border-radius');
+    expect(comparisonRule).not.toMatch(/selected|accent|folder/);
   });
 
-  it('lets page-level specimens use the full catalogue width', async () => {
-    const html = await renderToString(
-      createSSRApp({
-        render: () =>
-          h(
-            DemoCatalogueSection,
-            {
-              id: 'page-fixture',
-              title: 'Page fixture',
-              fullWidth: true,
-            },
-            () => 'Page evidence',
-          ),
-      }),
-    );
-
-    expect(html).toContain('demo-catalogue-section--full-width');
-    expect(catalogueSource).toMatch(
-      /\.demo-catalogue-section--full-width\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s,
-    );
-    expect(catalogueSource).toMatch(
-      /\.demo-catalogue-section--full-width\s+\.demo-catalogue-section__header\s*\{[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\);/s,
-    );
-    expect(foundationsSource).toContain(
-      ':full-width="section.key === \'page-layout\'"',
-    );
-  });
-
-  it('gives completed and pending section lists a consistent block rhythm', () => {
-    expect(foundationsSource).toContain(
-      ':reviewed="section.reviewed !== false"',
-    );
-    expect(inputsSource).toContain(':reviewed="section.reviewed !== false"');
-    expect(actionsSource).toContain(':reviewed="true"');
-    expect(navigationSource).toContain(
-      ':reviewed="section.reviewed !== false"',
-    );
-    expect(feedbackSource).toContain(
-      'COMPARISON_SECTION_KEYS.has(section.key)',
-    );
-    expect(contentSource).toContain('COMPARISON_SECTION_KEYS.has(section.key)');
-    const overlaysSource = readSource('./DemoOverlays.vue');
-    expect(overlaysSource).toContain(
-      'COMPARISON_SECTION_KEYS.has(section.key)',
-    );
-
+  it('gives every group a consistent section rhythm', () => {
     for (const source of [
       foundationsSource,
       inputsSource,
@@ -157,44 +92,21 @@ describe('F8 reviewed catalogue layout', () => {
     }
   });
 
-  it('uses one isolated Candidate and Current surface contract across reviewed components', () => {
-    for (const source of REVIEWED_APPEARANCE_SOURCES) {
+  it('uses one isolated Candidate and Current comparison contract', () => {
+    for (const source of COMPARISON_APPEARANCE_SOURCES) {
       expect(source).toContain(':data-demo-review-layer="layer.key"');
     }
 
     expect(catalogueSource).toMatch(
       /:deep\(\[data-demo-review-layer\]\)\s*\{[^}]*background:\s*var\(--demo-review-layer-background\)/s,
     );
-    expect(catalogueSource).toMatch(
-      /data-demo-review-layer=['"]candidate['"][^}]*--demo-review-layer-background:\s*var\(--ui-color-surface-raised\)/s,
-    );
-    expect(catalogueSource).toMatch(
-      /data-demo-review-layer=['"]current['"][^}]*--demo-review-layer-background:\s*#30383e/s,
-    );
-    expect(catalogueSource).toMatch(
-      /data-ui-theme=['"]light['"][^}]*data-demo-review-layer=['"]current['"][^}]*--demo-review-layer-background:\s*#fff(?:fff)?/s,
-    );
-    expect(catalogueCompiledCss).toMatch(
-      /:root\[data-ui-theme=['"]light['"]\][^{]*\.demo-catalogue-section--reviewed[^{]*\[data-demo-review-layer=['"]current['"]\]\s*\{/s,
-    );
+    expect(catalogueSource).not.toMatch(/#[0-9a-f]{3,8}/iu);
+    expect(catalogueCompiledCss).not.toContain(':root[data-ui-theme=');
   });
 
-  it('keeps the F8 boundary in one concise summary and preserves responsive reading order', async () => {
-    const html = await renderToString(createSSRApp(DemoView));
-    const header = html.match(
-      /<header class="demo-view__header"[\s\S]*?<\/header>/u,
-    )?.[0];
-
-    expect(header).toContain('F8 保留研究標本與正式元件回歸');
-    expect(header).toContain('Candidate 不進入 production');
-    expect(header).toContain('Foundation → UiModal＋UiScrollRegion');
-    expect(header).toContain('15 個 section');
-    expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(2);
-    expect(viewSource).toMatch(
-      /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,
-    );
+  it('preserves responsive section reading order', () => {
     expect(catalogueSource).toMatch(
-      /@media \(max-width: 58rem\)[\s\S]*\.demo-catalogue-section\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@container app-folder-layout \(max-width: 58rem\)[\s\S]*\.demo-catalogue-section\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
   });
 });
