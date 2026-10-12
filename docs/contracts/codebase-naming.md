@@ -44,12 +44,12 @@ A contextual module such as `service.js`, `state.mjs`, or `http.js` is valid onl
 inside a directory that makes its full responsibility direct when read as a path.
 Broad-root modules must carry the domain in their filename.
 
-During the ADR 0023 migration, remaining product files such as `SetlistPage.vue`,
-`OutputPage.vue` and `SettingsView.vue` are bounded legacy adapters until their
-callers move in Phase 4. The former `ImportPage.vue`／`ImportView.vue` adapters are
-already removed because Import now owns a Dock panel plus modal review rather than
-a destination Page. No new product destination or caller may adopt the remaining
-legacy names. `AppFolderPage` and `AppUtilityPage` are
+ADR 0023 destination composition cleanup is complete. Library browsing now uses
+`LibraryBrowseWorkspace.vue`／`LibraryBrowseContent.vue`, Display directly composes
+`ObsOutputWorkspace.vue`, and the former Import and Lyrics destination adapters are
+removed. `SettingsView.vue` remains an intentional body adapter under
+`SettingsPage.vue`, not a pending destination migration. No new product destination
+or caller may adopt the removed legacy names. `AppFolderPage` and `AppUtilityPage` are
 established layout-shell components named for the page frame they render; they
 are not destination compositions and do not justify new feature-local `*Page`
 names.

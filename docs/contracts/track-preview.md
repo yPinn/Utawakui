@@ -137,7 +137,7 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
 - 滾輪在卡片區每 450ms 最多換一張。
 - 視窗失焦（切到其他視窗）或隱藏（縮到 tray 或最小化）時暫停但保留 lane；焦點回來時只自動續播
   這種失焦造成的暫停，使用者暫停、被搶占或換卡後的暫停不會自動續播；關閉 overlay、換 collection 或
-  SetlistView unmount 時 release。
+  LibraryBrowseContent unmount 時 release。
 - 卡片動作依工作區分組，不使用 modal footer：封面旁直排的曲目操作就是曲目列右鍵選單本身
   （更多＝`TrackActionMenu`，與該列右鍵傳入同一份 per-track 選項：從播放清單移除、前往專輯），
   加上取自該選單的「加入佇列」捷徑；不提供右鍵選單沒有的試聽專屬動作。編輯資訊與前往專輯會先
@@ -147,7 +147,7 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
 - 外框使用共用 `UiModal`（`wide`）；`UiModal` 一律掛到所屬 renderer root 的 overlay host，遮罩因此蓋過 Folder 分頁與 Right Dock（見 Token v2 完整替換契約）。UiContextMenu 的 z-index 低於 dialog，teleport 到 surface host
   會被蓋住，因此 modal 內容以 `track-preview` surface 提供自己的 overlay host，選單只在開啟時
   mount（host 此時才在 document 內），畫在 dialog 的 stacking context 內。
-- `UiModal` 的 Teleport 使用 `defer`：SetlistView 與 setlist host 在同一輪 mount，host 尚未插入
+- `UiModal` 的 Teleport 使用 `defer`：LibraryBrowseContent 與 library host 在同一輪 mount，host 尚未插入
   document，未 defer 時目標為 null，第一次開啟就會讓 Vue patch 崩潰並凍結頁面。
 - 播放錯誤以 `TRACK_PREVIEW_PLAYBACK_FAILED` 記錄並跳到下一首；整份清單都失敗時停在錯誤狀態。
 

@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted (2026-10-12). Phases 0–3 are implemented: public navigation now uses
-`library`／`performance`／`display`, contextual Lyrics compositions are split, and
-Import is a shell-owned Right Dock task with a modal review expansion. The cutover
-still awaits owner-visible acceptance before its staged commit; Phase 4 naming
-cleanup remains pending where explicitly listed below.
+Accepted (2026-10-12). Phases 0–4 are implemented: public navigation uses
+`library`／`performance`／`display`, contextual Lyrics compositions are split,
+Import is a shell-owned Right Dock task with a modal review expansion, and the
+legacy destination adapters have been removed. The retained floating BGM owner and
+its drag boundary have received owner-visible acceptance.
 
 ## Context
 
@@ -135,19 +135,19 @@ Pages emit or consume bounded intent. They do not become new state stores.
 
 The migration uses the following target mapping:
 
-| Current navigation／owner                       | Target                                                                       | Migration rule                                                                                                              |
-| ----------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `setlist` destination                           | `library`                                                                    | Cut over only after Library contextual workspaces are reachable.                                                            |
-| `SetlistPage.vue`                               | Library-owned Workspace                                                      | Split first and name the extracted responsibility; use `LibraryBrowseWorkspace` only if it owns browsing alone.             |
-| `lyrics` destination／`LyricsView.vue`          | No destination                                                               | Split into Library authoring and Performance live-tool compositions.                                                        |
-| `import` destination／`ImportPage.vue`          | `PreparationDockPanel.vue`／`ImportDockContent.vue`＋`ImportReviewModal.vue` | Old destination／page／view adapters are removed; the shared preparation Dock keeps the current destination visible.        |
-| `output` destination／`OutputPage.vue`          | `display`／`DisplayPage.vue`                                                 | Display composes the existing `ObsOutputWorkspace`; Output stays domain prose.                                              |
-| `SettingsView.vue`                              | body adapter under `SettingsPage.vue`                                        | `SettingsPage` owns composition; `AppUtilityPage` remains the layout shell.                                                 |
-| `PerformanceSessionWorkspace.vue` under Setlist | Same workspace under Performance                                             | Remove the coordinator's forced `setlist` navigation during the cutover.                                                    |
-| `setlist` surface                               | `library` surface                                                            | Rename surface and overlay host in the same atomic navigation change.                                                       |
-| `lyrics` destination surface                    | contextual composition under Library／Performance                            | Add a registered child surface only when token, overlay-host or focus ownership requires one.                               |
-| `output` surface                                | `display` surface                                                            | Do not rename Output protocol, Overlay routes or `--ovl-*` tokens.                                                          |
-| `import` surface                                | `preparation` shell Right Dock surface                                       | Reuse the canonical import session and Local Library; share only Dock chrome with Separation, never their data authorities. |
+| Former navigation／owner                        | Implemented target                                                           | Result                                                                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `setlist` destination                           | `library`                                                                    | Navigation, surface and overlay-host identities are cut over atomically.                                                  |
+| `SetlistPage.vue`                               | `LibraryBrowseWorkspace.vue`＋`LibraryBrowseContent.vue`                     | Folder artifacts and browsing have named owners; artist identity mutations live in `LibraryArtistIdentityController.vue`. |
+| `lyrics` destination／`LyricsView.vue`          | No destination                                                               | `LyricsAuthoringWorkspace.vue` and `PerformanceLyricsWorkspace.vue` are contextual owners; legacy adapters are removed.   |
+| `import` destination／`ImportPage.vue`          | `PreparationDockPanel.vue`／`ImportDockContent.vue`＋`ImportReviewModal.vue` | Old destination／page／view adapters are removed; the shared preparation Dock keeps the current destination visible.      |
+| `output` destination／`OutputPage.vue`          | `display`／`DisplayPage.vue`                                                 | `DisplayPage.vue` directly composes `ObsOutputWorkspace.vue`; Output remains domain prose.                                |
+| `SettingsView.vue`                              | body adapter under `SettingsPage.vue`                                        | `SettingsPage.vue` owns composition; `AppUtilityPage.vue` remains the layout shell.                                       |
+| `PerformanceSessionWorkspace.vue` under Setlist | Same workspace under Performance                                             | The coordinator no longer forces Library navigation.                                                                      |
+| `setlist` surface                               | `library` surface                                                            | Renderer surface and host names match the destination.                                                                    |
+| `lyrics` destination surface                    | contextual composition under Library／Performance                            | A registered child surface is present only where token, overlay-host or focus ownership requires one.                     |
+| `output` surface                                | `display` surface                                                            | Output protocol, Overlay routes and `--ovl-*` tokens retain domain terminology.                                           |
+| `import` surface                                | `preparation` shell Right Dock surface                                       | Import and Separation share Dock chrome while retaining separate data authorities.                                        |
 
 Navigation callers must express semantic intent before the cutover. Examples are
 open Library content, open track lyrics authoring, open Performance live lyrics
@@ -163,10 +163,12 @@ active-destination state.
    Dock, and replace direct old-id callers with semantic intents. **Implemented.**
 3. Atomically add Performance and switch navigation, shortcuts, surfaces, focus
    restoration and settings return behavior to `library`／`performance`／`display`.
-   **Implemented; awaiting owner-visible acceptance.**
+   **Implemented and owner-accepted.**
 4. After visible acceptance, rename workspace files and remove legacy adapters.
+   **Implemented.**
 5. Update current-state architecture, design and product-status documents only
    after the implementation is verified.
+   **Implemented.**
 
 The migration never hides an old formal entry before its replacement journey has
 tests and an accessible return path.
