@@ -19,12 +19,6 @@ const batchOneConsumers = [
     component: 'UiScrollLayout',
   },
   {
-    name: 'studio track table',
-    source: readSource('../demo/studio-library/StudioLibraryTrackTable.vue'),
-    marker: 'class="studio-track-table"',
-    component: 'UiScrollRegion',
-  },
-  {
     name: 'settings',
     source: readSource('../../views/SettingsView.vue'),
     marker: 'class="settings-view"',
@@ -100,7 +94,7 @@ describe('UiScrollRegion production migration', () => {
   it('preserves padding and layout at the composition layer or explicit viewport', () => {
     const folderPageSource = batchOneConsumers[0].source;
     const sidebarSource = batchOneConsumers[1].source;
-    const settingsSource = batchOneConsumers[3].source;
+    const settingsSource = batchOneConsumers[2].source;
     const utilitySource = readSource('../layout/AppUtilityPage.vue');
 
     expect(folderPageSource).toMatch(
@@ -147,9 +141,9 @@ describe('UiScrollRegion production migration', () => {
     const modalSource = batchTwoConsumers[0].source;
     const popoverSource = batchTwoConsumers[3].source;
     const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
-    const settingsSource = batchOneConsumers[3].source;
+    const settingsSource = batchOneConsumers[2].source;
     const utilitySource = readSource('../layout/AppUtilityPage.vue');
-    const trackTableSource = batchOneConsumers[2].source;
+    const trackTableSource = readSource('../track/TrackTable.vue');
 
     expect(modalSource.indexOf('class="ui-modal__header"')).toBeLessThan(
       modalSource.indexOf('class="ui-modal__body"'),
@@ -167,9 +161,9 @@ describe('UiScrollRegion production migration', () => {
       utilitySource.indexOf('class="app-utility-page__header"'),
     ).toBeLessThan(utilitySource.indexOf('class="app-utility-page__body"'));
     expect(
-      trackTableSource.indexOf('class="studio-track-table__header"'),
+      trackTableSource.indexOf('class="library-track-table__header"'),
     ).toBeLessThan(
-      trackTableSource.indexOf('class="studio-track-table__body-scroll"'),
+      trackTableSource.indexOf('class="library-track-table__body"'),
     );
   });
 

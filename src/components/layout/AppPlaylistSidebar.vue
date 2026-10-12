@@ -12,17 +12,12 @@ import {
   SIDEBAR_WIDTH_MIN,
   useSidebarWidth,
 } from '../../composables/useSidebarWidth.js';
-import {
-  isStudioLibraryMode,
-  useVisualReviewMode,
-} from '../../composables/useVisualReviewMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
-const { activeView, openLibraryContent } = useAppView();
-const { mode: visualReviewMode } = useVisualReviewMode();
+const { openLibraryContent } = useAppView();
 const {
   editDetailsPlaylist,
   editDetailsIsAlbum,
@@ -42,13 +37,6 @@ const { width: sidebarWidth } = useSidebarWidth();
 const sidebarCompact = computed(
   () => sidebarWidth.value < SIDEBAR_COMPACT_THRESHOLD,
 );
-
-function activateLibraryBrowse() {
-  const isViewingStudioLibrary =
-    activeView.value === 'visual-system' &&
-    isStudioLibraryMode(visualReviewMode.value);
-  if (!isViewingStudioLibrary) openLibraryContent();
-}
 
 async function handleResizeKeydown(event) {
   if (event.key === 'Enter' || event.key === ' ') {
@@ -84,7 +72,7 @@ async function handleResizeKeydown(event) {
       :library-view="playlistState.libraryView"
       :compact="sidebarCompact"
       @library-view-select="setLibraryView"
-      @activate-library="activateLibraryBrowse"
+      @activate-library="openLibraryContent"
       @playlist-action="handlePlaylistMenuAction"
     />
 

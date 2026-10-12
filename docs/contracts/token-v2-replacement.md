@@ -257,13 +257,9 @@ Rename 必須與對應 atomic surface cutover 同一 slice 完成：
 
 ## F8 與 Candidate 邊界
 
-F8 保留三個用途：
-
-1. 最終決策板：只顯示精簡設計方向、保留／收斂／排除與完整 layout specimen。
-2. Studio Library Candidate：用真實資料檢查 feature density、Folder material 與 document plane。
-3. 完整元件回歸目錄：檢查 theme、density、state、responsive 與 accessibility。
-
-F8 已移除 `Setlist Current` 比較頁；這不代表刪除 production Setlist。最終決策板不得再加入 migration、token、registry、production status 等工程文案。
+F8 現在只保留元件回歸目錄，用來檢查 theme、density、state、responsive 與
+accessibility。已採用的 final board、Studio Library Candidate 與 `Setlist Current`
+比較頁均已移除，避免型錄形成第二份產品頁或平行資料流。
 
 Candidate recipe 只有在真實 production consumer 需要時才能進入正式 API。通過後將 recipe 合併到正式 `Ui*`，讓 F8 與 production 使用同一 implementation，並刪除對應 `DemoCandidate*`。完整 catalogue 是 regression evidence，不是 owner approval surface。
 
@@ -509,4 +505,4 @@ Phase 4.2 已清理 `internal-tools` 內 Music Analysis 與 Lyrics Provider Revi
 
 Phase 5 已將 `performer`、`performer-overlay`、window toolbar、stage、lyric cue 與 Electron native substrate 原子切為 v2。最後 3 個 production-consumed legacy names／4 files／5 pairs 已清除；40px toolbar 改用正式 `--ui-window-titlebar-block-size`，字重改用 `semibold`／`bold`，native dark／light background同步為 `#191a1e`／`#e8e4dd`。Self-View snapshot authority、window controls、track／lyrics／reading／next-track anatomy與三個 Performer feature geometry names均未變更，既有 component names 已符合 renderer／role 結構，因此沒有 cosmetic rename。
 
-Phase 6 已將 v2 graph 原子移入 `src/styles/tokens.css`，刪除 T1 stylesheet、`tokens-v2.css`、legacy manifest／invalidation、generator／readiness scripts、npm commands與 registry migration status。三個 `UiModal` migration aliases同批改為正式 `inline-size` names後移除，當時 stable graph為404個 unique names；2026-10-05 為正式 `AppFolderContentField` 新增 `--ui-folder-content-background` 與 `--ui-folder-content-state-min-block-size`，2026-10-08 為PlayerBar新增 `--ui-player-extras-inline-size` 與 `--ui-player-side-reserve-inline-size`、為Right Dock新增三個 `--ui-right-dock-section-surface-*`，並以 `--ui-track-row-selected-surface` 取代 `--ui-row-active-shadow`，現行 graph 為411個。永久 gate另修正6個既有未宣告 production references：BGM icon尺寸改用spacing foundation、Settings／Lyrics typography與muted color改用正式 semantics、Output mockup移除無owner尺寸上限。F8 final board、17個`DemoCandidate*.vue`、Studio Library Candidate、Folder component-owned exterior color與所有 feature artwork均保留；Candidate import boundary明確禁止進入production graph。下一步不再有Token migration phase，後續只依真實consumer另案審查component／View產品決策。
+Phase 6 已將 v2 graph 原子移入 `src/styles/tokens.css`，刪除 T1 stylesheet、`tokens-v2.css`、legacy manifest／invalidation、generator／readiness scripts、npm commands與 registry migration status。三個 `UiModal` migration aliases同批改為正式 `inline-size` names後移除，當時 stable graph為404個 unique names；2026-10-05 為正式 `AppFolderContentField` 新增 `--ui-folder-content-background` 與 `--ui-folder-content-state-min-block-size`，2026-10-08 為PlayerBar新增 `--ui-player-extras-inline-size` 與 `--ui-player-side-reserve-inline-size`、為Right Dock新增三個 `--ui-right-dock-section-surface-*`，並以 `--ui-track-row-selected-surface` 取代 `--ui-row-active-shadow`，現行 graph 為411個。永久 gate另修正6個既有未宣告 production references：BGM icon尺寸改用spacing foundation、Settings／Lyrics typography與muted color改用正式 semantics、Output mockup移除無owner尺寸上限。2026-10-13 cleanup 又移除已採用的 F8 final board、Studio Library Candidate 與專用 state adapters；17個`DemoCandidate*.vue`只保留尚未收斂的 component-level evidence。Candidate import boundary仍明確禁止進入production graph。下一步不再有Token migration phase，後續只依真實consumer另案審查component產品決策。

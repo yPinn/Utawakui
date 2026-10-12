@@ -25,7 +25,8 @@ describe('App shell right Dock', () => {
     expect(source).toMatch(
       /const\s*\{[\s\S]*?activeView,[\s\S]*?setActiveView,[\s\S]*?\}\s*=\s*useAppView\(\);/u,
     );
-    expect(source).toContain(':active-destination="folderActiveDestination"');
+    expect(source).toContain(':active-destination="activeView"');
+    expect(source).not.toContain('folderActiveDestination');
     expect(source).toContain('@navigate="setActiveView"');
     expect(source).toContain(
       'useKeyboardShortcuts({ internalViewShortcuts });',

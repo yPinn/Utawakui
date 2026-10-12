@@ -50,9 +50,6 @@ const currentSource = readSource('../ui/UiCollageThumb.vue');
 const trackCandidateSource = readSource('./DemoCandidateTrackThumb.vue');
 const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
-const dossierSource = readSource(
-  './studio-library/StudioLibraryDossierHeader.vue',
-);
 const inspectorSource = readSource('../playback/context/TrackContextPanel.vue');
 const artistPreviewSource = readSource(
   '../playback/context/TrackArtistPreview.vue',
@@ -398,7 +395,6 @@ describe('DemoCollageThumbAppearance', () => {
       'export const PLAYLIST_ROW_THUMB_SIZE = 40;',
     );
     expect(sidebarRowSource).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
-    expect(dossierSource).toContain(':size="88"');
     expect(detailsModalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
     expect(libraryDossierSource).toContain(
       ':size="FOLDER_DOSSIER_ARTWORK_SIZE"',

@@ -33,10 +33,6 @@ import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
-import {
-  isStudioLibraryMode,
-  useVisualReviewMode,
-} from './composables/useVisualReviewMode.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
@@ -217,7 +213,6 @@ function toggleSettings() {
   if (isSettingsView.value) leaveSettings();
   else openSettings();
 }
-const { mode: visualReviewMode } = useVisualReviewMode();
 // Playback Info belongs to the persistent player/queue context, not the
 // current workspace page. The audio-backed player remains authoritative once
 // playback begins; Queue supplies the prepared track before that handoff.
@@ -384,16 +379,6 @@ const activeViewOwnsFolderPage = computed(() =>
   pageComposedFolderViews.has(activeView.value),
 );
 
-// Studio Library reviews the Library interior. Keep the production Library
-// destination selected while the development-only review surface is active.
-const folderActiveDestination = internalWorkbenchesEnabled
-  ? computed(() =>
-      activeView.value === 'visual-system' &&
-      isStudioLibraryMode(visualReviewMode.value)
-        ? 'library'
-        : activeView.value,
-    )
-  : activeView;
 useKeyboardShortcuts({ internalViewShortcuts });
 </script>
 
@@ -444,7 +429,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
         </AppUtilityPage>
         <AppSurfaceBoundary v-else surface-id="app-folder">
           <AppFolderLayout
-            :active-destination="folderActiveDestination"
+            :active-destination="activeView"
             @navigate="setActiveView"
           >
             <component

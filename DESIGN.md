@@ -93,12 +93,12 @@ components:
 > imports have been removed. The completed replacement record lives in
 > [Token v2 Replacement](docs/contracts/token-v2-replacement.md).
 
-F8 remains a development-only decision and regression surface. Its historical
-Candidate／Current specimens, Studio Library Candidate, final decision board and
-feature artwork are retained as review evidence, but they are not production
-implementation truth or an extra destination. New production work must use the
-formal `Ui*` components and the stable token entry. The component review history
-and unresolved product-level choices remain in
+F8 remains a development-only component catalogue and regression surface. The
+adopted Studio Library page candidate and final decision board have been retired;
+historical Candidate／Current component specimens remain only where an unresolved
+component contract still needs comparison. New production work must use the formal
+`Ui*` components and the stable token entry. The component review history and
+unresolved product-level choices remain in
 [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
 
 The adopted visual direction comes from
@@ -1093,7 +1093,7 @@ Component folders are grouped by product role, not by current visual style. Exis
 - `src/components/playback/`: persistent playback controls, transport, pitch/tempo, now-playing surfaces, and shell playback context under `context/`.
 - `src/components/library/`: Library destination browsing, collection presentation, album grouping, Folder artifacts, metadata, and artist-identity surfaces.
 - `src/components/playlists/`: playlist membership and navigation only.
-- `src/components/demo/`: development-only component specimens and review compositions; Studio Library candidates stay under `demo/studio-library/` until adopted or removed.
+- `src/components/demo/`: development-only component specimens and catalogue compositions; adopted page candidates must be removed instead of retained as parallel product pages.
 - `src/components/track/`: track identity, actions, shared tables, and the independent track-preview surface.
 - `src/components/queue/`: active queue, upcoming tracks, reorderable queue sections.
 - `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.

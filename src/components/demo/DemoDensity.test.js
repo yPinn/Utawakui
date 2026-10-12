@@ -17,9 +17,8 @@ const consumerSources = [
   '../ui/UiIconButton.vue',
   '../ui/UiTrackRow.vue',
   '../playlists/PlaylistSidebarRow.vue',
-  './studio-library/StudioLibraryTrackTable.vue',
+  '../track/TrackTable.vue',
   '../playback/PlayerBar.vue',
-  './studio-library/StudioLibraryDossier.vue',
   '../playback/context/TrackContextPanel.vue',
   '../layout/AppRightDock.vue',
   '../layout/AppRightDockHeader.vue',
@@ -218,10 +217,10 @@ describe('DemoDensity', () => {
     ];
 
     expect(stages).toHaveLength(28);
-    expect(html.match(/data-density-specimen=/gu)).toHaveLength(40);
+    expect(html.match(/data-density-specimen=/gu)).toHaveLength(42);
     expect(html.match(/data-density-specimen="standard"/gu)).toHaveLength(14);
     expect(html.match(/data-density-specimen="compact"/gu)).toHaveLength(14);
-    expect(html.match(/data-density-specimen="current"/gu)).toHaveLength(12);
+    expect(html.match(/data-density-specimen="current"/gu)).toHaveLength(14);
     expect(componentSource).toContain("'--demo-density-size': sample.size");
     expect(componentSource).toContain('height: var(--demo-density-size)');
     expect(componentSource).toContain('inline-size: var(--demo-density-size)');
@@ -250,7 +249,7 @@ describe('DemoDensity', () => {
     for (const shape of ['square', 'height', 'space']) {
       expect(html).toContain(`data-density-shape="${shape}"`);
     }
-    expect(html.match(/data-density-unmapped="true"/gu)).toHaveLength(3);
+    expect(html.match(/data-density-unmapped="true"/gu)).toHaveLength(2);
   });
 
   it('reflows from its own available width without undefined typography tokens', () => {
@@ -303,7 +302,7 @@ describe('DemoDensity', () => {
     expect(html).toContain('一般控制 1.875rem／30 CSS px');
     expect(html).toContain('Icon Button 另有 2rem／32 CSS px 下限');
     expect(html).toContain('Sidebar 列 52 CSS px');
-    expect(html).toContain('列表標頭尚無 active token');
+    expect(html).toContain('列表標頭 2.25rem／36 CSS px');
     expect(html).toContain('Panel inset 1rem／16 CSS px');
     expect(html).toContain(
       'Standard 已映射；Compact 由 Token v2 density scope 覆寫為 0.75rem／12 CSS px',
@@ -358,15 +357,15 @@ describe('DemoDensity', () => {
     expect(sourceByName.get('../playlists/PlaylistSidebarRow.vue')).toContain(
       'min-height: var(--ui-sidebar-row-min-height)',
     );
-    expect(
-      sourceByName.get('./studio-library/StudioLibraryTrackTable.vue'),
-    ).toContain('min-height: var(--ui-list-header-height)');
+    expect(sourceByName.get('../track/TrackTable.vue')).toContain(
+      'min-height: var(--ui-list-header-height)',
+    );
     expect(sourceByName.get('../playback/PlayerBar.vue')).toContain(
       'height: var(--ui-player-bar-height)',
     );
-    expect(
-      sourceByName.get('./studio-library/StudioLibraryDossier.vue'),
-    ).toContain('padding: var(--ui-panel-inset)');
+    expect(sourceByName.get('../../views/DemoView.vue')).toContain(
+      'var(--ui-panel-inset)',
+    );
     expect(sourceByName.get('../layout/AppRightDock.vue')).toContain(
       '--ui-track-row-min-height: var(--ui-right-dock-track-row-min-height)',
     );

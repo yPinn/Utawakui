@@ -190,7 +190,10 @@ const CURRENT_MAPPINGS = [
     value: '尚未映射',
     status: 'active token 與元件 variant 均不存在',
     shape: 'square',
-    samples: [],
+    samples: [
+      { label: 'Standard', size: '2.25rem', px: 36 },
+      { label: 'Compact', size: '2rem', px: 32 },
+    ],
   },
   {
     key: 'track-row',
@@ -264,12 +267,9 @@ const CURRENT_MAPPINGS = [
   {
     key: 'list-header',
     label: '列表標頭',
-    sources: [
-      'src/styles/tokens.css',
-      'src/components/demo/studio-library/StudioLibraryTrackTable.vue',
-    ],
-    value: '列表標頭尚無 active token',
-    status: 'consumer 已引用候選 token，目前只在 F8 生效',
+    sources: ['src/styles/tokens.css', 'src/components/track/TrackTable.vue'],
+    value: '列表標頭 2.25rem／36 CSS px',
+    status: 'Production TrackTable 使用 active token',
     shape: 'height',
     samples: [],
   },
@@ -285,10 +285,7 @@ const CURRENT_MAPPINGS = [
   {
     key: 'panel-inset',
     label: 'Panel inset',
-    sources: [
-      'src/styles/tokens.css',
-      'src/components/demo/studio-library/StudioLibraryDossier.vue',
-    ],
+    sources: ['src/styles/tokens.css', 'src/views/DemoView.vue'],
     value: 'Panel inset 1rem／16 CSS px',
     status:
       'Standard 已映射；Compact 由 Token v2 density scope 覆寫為 0.75rem／12 CSS px',

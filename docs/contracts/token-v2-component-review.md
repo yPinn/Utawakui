@@ -1,14 +1,15 @@
 # Token v2 元件檢查契約
 
 Status: historical F8 component review complete; Token v2 replacement is now
-production-wide and uses the sole stable `src/styles/tokens.css` entry. F8 and
-Studio Library Candidate remain development-only visual evidence and do not
-authorize a new View or alternate component implementation.
+production-wide and uses the sole stable `src/styles/tokens.css` entry. F8 is a
+development-only component catalogue. The adopted Studio Library page candidate
+and final decision board have been removed so they cannot become alternate View
+implementations.
 
 本文件保存 Token v2 視覺重新設計的檢查順序、當時已確認範圍與後續
-owner decisions。F8 預設開啟精簡的 page／layout 最終決策板，另保留
-Studio Library live Candidate 與完整元件回歸目錄；已移除 Setlist Current
-比較頁。完整 catalogue 仍負責元件回歸證據，不得取代 View-level owner decision。
+owner decisions。F8 現在只保留元件回歸目錄；已採用的 page／layout 決策板、
+Studio Library live Candidate 與 Setlist Current 比較頁均已移除。完整 catalogue
+只負責元件回歸證據，不得取代 View-level owner decision。
 Production surface 替換、fail-closed scope、legacy ratchet 與 final deletion 的完成紀錄
 由 [Token v2 完整替換契約](token-v2-replacement.md) 管理；本文件不再作 migration
 status source，也不建立 compatibility fallback。
@@ -158,11 +159,11 @@ Registered feature boundary必須包住完整page composition，提供token scop
 8. Forced-colors 使用系統 Highlight／HighlightText 保留 current destination；reduced motion 取消 surface／content transform transition。Shape、material 與 motion都不是唯一狀態線索。
 9. 第一版明確不支援 closeable、reorderable、user-created、vertical folders、per-tab semantic colors 或動態 route metadata。若實際頁面需求證明其中一項必要，另開 contract gate，不擴張基礎 layout API。
 10. Production replacement 已以完整 layout family 為單位完成：`AppFolderLayout`／`AppFolderPage` 接手的同一 slice 已移除 `--ui-archive-*`、Studio Library candidate-root color override與舊三件組 ownership，沒有 compatibility wrapper 或雙向 alias。
-11. `StudioLibraryDossier` 只供應 header／toolbar／body content，不擁有 Folder perimeter。F8 page specimen 直接組合同一套正式 layout family，不再複製 tabs、rail、shape、material 或 document CSS。
-12. 最終決策板只保留精簡取捨與正常 flow 的狀態、列表及 scroll 證據。Photo／stack／note 等 feature 視覺與其 primitive 仍保留在各自探索／回歸範圍；退出 page-layout approval surface 不代表刪除、棄用或授權改寫。
-13. Migration／production／ownership 進度只記在本文件與 task review，不回填成最終決策板的可見訊息。
+11. F8 catalogue 直接重用正式 layout family，不複製 tabs、rail、shape、material 或 document CSS。
+12. 已採用的 View candidate 與 final board 必須退場；Photo／stack／note 等仍待判定的 component primitive 可留在各自回歸範圍。
+13. Migration／production／ownership 進度只記在本文件與 task review，不回填成型錄的可見產品訊息。
 
-## F7 View checkpoint
+## Historical F7 View checkpoint
 
 Studio Library／Controlled Dossier 保持 View-level Candidate，不是第二套元件庫，
 也不是正式 Setlist migration。F7 驗證資訊架構、layout、density、folder material、

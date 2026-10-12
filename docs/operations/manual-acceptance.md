@@ -7,8 +7,8 @@ not by adding completed history here.
 
 ## Control Panel And Workbenches
 
-- [ ] At normal and minimum window sizes, verify the Visual System workbench's
-      (F8, Demo sub-mode) component states and F5 single／batch Music Analysis
+- [ ] At normal and minimum window sizes, verify the F8 Visual System component
+      catalogue states and F5 single／batch Music Analysis
       modes, independent pane scrolling, dependency preparation, progress,
       cancellation, recovery, and reconnect behavior.
 - [ ] With a trusted M2 fixture, verify section order, localized roles, time ranges,

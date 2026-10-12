@@ -128,9 +128,9 @@ describe('finalized control-panel token system', () => {
 
     expect(candidateFiles).toHaveLength(17);
     expect(productionCandidateReferences).toEqual([]);
-    expect(
-      readSource('src/components/demo/DemoFinalDecisionBoard.vue'),
-    ).toContain('Folder 外觀色屬於元件');
+    expect(readSource('src/views/VisualSystemView.vue')).toContain(
+      '<DemoView />',
+    );
   });
 
   it('removes migration-only package commands', () => {

@@ -139,11 +139,10 @@ describe('Studio Library workspace prototype isolation', () => {
     );
     expect(app).toContain("import('./views/VisualSystemView.vue')");
     expect(visualSystemView).toContain(
-      "import StudioLibraryPrototypeView from './StudioLibraryPrototypeView.vue';",
-    );
-    expect(visualSystemView).toContain(
       "import DemoView from './DemoView.vue';",
     );
+    expect(visualSystemView).not.toContain('StudioLibraryPrototypeView');
+    expect(visualSystemView).not.toContain('UiTabs');
     expect(visualSystemView).toContain(
       "registeredSurfaceAttributes('visual-review')",
     );
