@@ -84,7 +84,7 @@ describe('DemoPageLayoutAppearance', () => {
   it('moves the artist summary onto the Folder-wide floating plane without duplicating it', () => {
     expect(source).not.toContain(':summary="demoArtistSummary"');
     expect(source).toContain(
-      '<template v-if="activeFolder.id === \'setlist\'" #floating>',
+      '<template v-if="activeFolder.id === \'library\'" #floating>',
     );
     expect(source).toContain('<UiFolderArtifactCanvas');
     expect(source).toContain('material="folder"');
@@ -198,7 +198,7 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).toContain(
       "import SetlistPlaylistTable from '../playlists/SetlistPlaylistTable.vue'",
     );
-    expect(source).toContain('v-if="activeFolder.id === \'setlist\'"');
+    expect(source).toContain('v-if="activeFolder.id === \'library\'"');
     expect(source).toContain(':title-id="specimenTitleId"');
     expect(source).toContain(':entries="visibleDemoAlbumEntries"');
     expect(source).toContain(':is-album="true"');
@@ -208,12 +208,11 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).toContain('@toggle-shuffle="toggleDemoCollectionShuffle"');
     expect(source).not.toContain('useCollectionPlayback');
     expect(source).toContain(
-      '<template v-if="activeFolder.id !== \'setlist\'" #header>',
+      '<template v-if="activeFolder.id !== \'library\'" #header>',
     );
     expect(source).toContain('工作集摘要');
-    expect(source).toContain('同步歌詞工作區');
+    expect(source).toContain('演唱工作區');
     expect(source).toContain('直播輸出工作區');
-    expect(source).toContain('素材匯入工作區');
   });
 
   it('keeps primary specimen sections at the page heading level', () => {

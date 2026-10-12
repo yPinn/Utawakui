@@ -14,7 +14,7 @@ import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 
 const previewMode = shallowRef('wide');
 const contentMode = shallowRef('overflow');
-const activeFolderId = shallowRef('setlist');
+const activeFolderId = shallowRef('library');
 const demoSearchQuery = shallowRef('');
 const demoSort = shallowRef({ key: null, direction: 'asc' });
 const demoCollectionPlaying = shallowRef(false);
@@ -37,32 +37,25 @@ const contentModes = [
 ];
 const folderDefinitions = [
   {
-    id: 'setlist',
-    label: 'Setlist',
+    id: 'library',
+    label: '曲庫',
     title: '夏季 Cover 工作集',
     description: '整理曲目、素材與輸出狀態。',
     action: '新增素材',
   },
   {
-    id: 'lyrics',
-    label: 'Lyrics',
-    title: '同步歌詞工作區',
-    description: '確認歌詞、時間軸與演出提示。',
-    action: '匯入歌詞',
+    id: 'performance',
+    label: '演唱',
+    title: '演唱工作區',
+    description: '安排待唱內容並切換現場工具。',
+    action: '安排待唱',
   },
   {
-    id: 'output',
-    label: 'Output',
+    id: 'display',
+    label: '顯示',
     title: '直播輸出工作區',
     description: '檢查版型與公開輸出狀態。',
     action: '新增版型',
-  },
-  {
-    id: 'import',
-    label: 'Import',
-    title: '素材匯入工作區',
-    description: '加入本機素材並確認必要資訊。',
-    action: '選擇檔案',
   },
 ];
 const materialRows = [
@@ -247,7 +240,7 @@ const activeFolder = computed(() => {
   const definition =
     folderDefinitions.find((page) => page.id === activeFolderId.value) ??
     folderDefinitions[0];
-  if (definition.id !== 'setlist') return definition;
+  if (definition.id !== 'library') return definition;
   return {
     ...definition,
     title: selectedDemoAlbum.value.name,
@@ -336,7 +329,7 @@ function toggleDemoCollectionShuffle() {
             :body-label="activeFolder.title + '內容'"
             :aria-labelledby="specimenTitleId"
           >
-            <template v-if="activeFolder.id !== 'setlist'" #header>
+            <template v-if="activeFolder.id !== 'library'" #header>
               <UiPageHeader
                 :title="activeFolder.title"
                 :title-id="specimenTitleId"
@@ -352,7 +345,7 @@ function toggleDemoCollectionShuffle() {
               </UiPageHeader>
             </template>
 
-            <template v-if="activeFolder.id === 'setlist'">
+            <template v-if="activeFolder.id === 'library'">
               <SetlistCollectionHeader
                 v-model:search-query="demoSearchQuery"
                 entity-kind="album"
@@ -473,7 +466,7 @@ function toggleDemoCollectionShuffle() {
               </div>
             </AppFolderContentField>
 
-            <template v-if="activeFolder.id === 'setlist'" #floating>
+            <template v-if="activeFolder.id === 'library'" #floating>
               <UiFolderArtifactCanvas
                 :artifacts="demoFolderArtifacts"
                 material="folder"

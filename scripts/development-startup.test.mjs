@@ -20,8 +20,7 @@ const packageJson = JSON.parse(
 
 const PUBLIC_INACTIVE_VIEWS = [
   ['DisplayPage', './pages/DisplayPage.vue'],
-  ['LyricsView', './views/LyricsView.vue'],
-  ['ImportPage', './components/import/ImportPage.vue'],
+  ['PerformancePage', './pages/PerformancePage.vue'],
   ['SettingsPage', './pages/SettingsPage.vue'],
 ];
 const INTERNAL_VIEWS = [
@@ -70,7 +69,7 @@ describe('development startup contract', () => {
     expect(appSource).toContain("f8: 'visual-system'");
     expect(appSource).toContain('isStudioLibraryMode');
     expect(appSource).toMatch(
-      /const folderActiveDestination = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?isStudioLibraryMode\(visualReviewMode\.value\)[\s\S]*?\? 'setlist'\s*:\s*activeView\.value/u,
+      /const folderActiveDestination = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?isStudioLibraryMode\(visualReviewMode\.value\)[\s\S]*?\? 'library'\s*:\s*activeView\.value/u,
     );
   });
 
