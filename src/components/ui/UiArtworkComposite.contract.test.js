@@ -80,7 +80,7 @@ describe('rounded artwork composite clip', () => {
         /<UiCollageThumb[\s\S]*?:decorative="isAlbum"[\s\S]*?<template v-if="!isAlbum" #overlay>/u,
       '../library/LibraryEntityDossier.vue':
         /<UiCollageThumb[\s\S]*?radius="0"[\s\S]*?<template v-if="\$slots\['artwork-overlay'\]" #overlay>/u,
-      '../playlists/TrackPreviewOverlay.vue':
+      '../track/TrackPreviewOverlay.vue':
         /class="track-preview__artwork-layers ui-artwork-composite"[\s\S]*?<Transition[\s\S]*?<UiArtworkOverlay>/u,
     };
     for (const [path, pattern] of Object.entries(hosts)) {
@@ -111,7 +111,7 @@ describe('rounded artwork composite clip', () => {
   });
 
   it('gives hairline frames a border-coloured ground and radius-less thumbs', () => {
-    const preview = read('../playlists/TrackPreviewOverlay.vue');
+    const preview = read('../track/TrackPreviewOverlay.vue');
     const dossier = read('../layout/AppFolderDossier.vue');
     expect(
       rule(preview, '.track-preview__artwork,\n.track-preview__peek'),

@@ -122,7 +122,7 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
 ## 試聽 owner 與 overlay
 
 - Owner 是 `src/composables/useTrackPreview.js`（module-scope 單例，自有 audio element）；
-  `TrackPreviewOverlay.vue` 只投影狀態並送出意圖，不 import 演唱播放器。
+  `src/components/track/TrackPreviewOverlay.vue` 只投影狀態並送出意圖，不 import 演唱播放器。
 - 入口：album／artist／playlist 頁 CollectionActionRail 的「試聽」按鈕，位於隨機播放之後。
   曲目清單是目前可見（套用搜尋後）的順序，從選取中的曲目開始，否則從第一首。
   Artist 頁與 album 頁區隔：可見曲目每次開啟時隨機排序，選取中的曲目固定為第一首，

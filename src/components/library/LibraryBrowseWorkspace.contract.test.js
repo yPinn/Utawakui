@@ -9,7 +9,7 @@ const pageSource = readSource('./LibraryBrowseWorkspace.vue');
 const viewSource = readSource('./LibraryBrowseContent.vue');
 
 describe('Library browse workspace composition', () => {
-  it('uses Library-owned component and composable identities', () => {
+  it('uses ownership-aligned component and composable identities', () => {
     const legacyPaths = [
       '../playlists/SetlistAlbumCard.vue',
       '../playlists/SetlistAlbumSupportingContent.vue',
@@ -18,6 +18,7 @@ describe('Library browse workspace composition', () => {
       '../playlists/CollectionActionRail.vue',
       '../playlists/LibraryEntityDossier.vue',
       '../playlists/FolderAssetPreviewModal.vue',
+      '../playlists/TrackPreviewOverlay.vue',
       '../../composables/useSetlistAlbumContext.js',
       '../../composables/useSetlistFolderObjects.js',
     ];
@@ -29,6 +30,7 @@ describe('Library browse workspace composition', () => {
       './CollectionActionRail.vue',
       './LibraryEntityDossier.vue',
       './FolderAssetPreviewModal.vue',
+      '../track/TrackPreviewOverlay.vue',
       '../../composables/useLibraryAlbumContext.js',
       '../../composables/useLibraryFolderObjects.js',
     ];
@@ -64,6 +66,9 @@ describe('Library browse workspace composition', () => {
   });
 
   it('keeps the rich playlist header in content and removes the library header duplicate', () => {
+    expect(viewSource).toContain(
+      "import TrackPreviewOverlay from '../track/TrackPreviewOverlay.vue'",
+    );
     expect(viewSource).toContain(
       "import AppFolderContentField from '../layout/AppFolderContentField.vue'",
     );

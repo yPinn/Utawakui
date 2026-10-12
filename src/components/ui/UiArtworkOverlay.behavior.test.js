@@ -42,7 +42,7 @@ describe('UiArtworkOverlay', () => {
     for (const host of [
       '../ui/UiCollageThumb.vue',
       '../ui/UiTrackThumb.vue',
-      '../playlists/TrackPreviewOverlay.vue',
+      '../track/TrackPreviewOverlay.vue',
     ]) {
       const hostSource = readFileSync(new URL(host, import.meta.url), 'utf8');
       expect(hostSource, host).toMatch(

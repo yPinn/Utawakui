@@ -32,7 +32,7 @@ import AppFolderCompactBar from '../layout/AppFolderCompactBar.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue';
 import LibraryCollectionHeader from './LibraryCollectionHeader.vue';
-import TrackPreviewOverlay from '../playlists/TrackPreviewOverlay.vue';
+import TrackPreviewOverlay from '../track/TrackPreviewOverlay.vue';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
 import UiHint from '../ui/UiHint.vue';

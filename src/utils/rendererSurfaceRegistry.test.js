@@ -230,7 +230,7 @@ describe('renderer surface registry', () => {
 
   it('gives the track preview dialog its own overlay host for nested menus', () => {
     expect(UI_SURFACE_REGISTRY['track-preview']).toMatchObject({
-      entryOwner: 'src/components/playlists/TrackPreviewOverlay.vue',
+      entryOwner: 'src/components/track/TrackPreviewOverlay.vue',
       overlayHostId: 'track-preview-overlay',
       parentSurfaceId: 'app-shell',
       surfaceId: 'track-preview',
