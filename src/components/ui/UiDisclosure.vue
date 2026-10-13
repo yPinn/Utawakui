@@ -47,9 +47,9 @@ function handleToggle(event) {
   padding: var(--ui-space-2) var(--ui-space-3);
   border-radius: var(--ui-radius-md);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   cursor: pointer;
   list-style: none;
   -webkit-user-select: none;
@@ -88,8 +88,9 @@ function handleToggle(event) {
   min-width: 0;
   padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-3);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   overflow-wrap: anywhere;
   -webkit-user-select: text;
   user-select: text;

@@ -118,9 +118,9 @@ function clear() {
   background: transparent;
   color: var(--ui-field-fg);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-field-font-size);
+  font-weight: var(--ui-field-font-weight);
+  line-height: var(--ui-field-line-height);
 }
 
 .ui-search-box__input::placeholder {

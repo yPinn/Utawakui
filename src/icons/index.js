@@ -40,6 +40,7 @@ export {
   ListMusic,
   ListOrdered,
   ListPlus,
+  ListX,
   Loader2,
   LocateFixed,
   Maximize2,

@@ -21,6 +21,7 @@ const props = defineProps({
   title: { type: String, default: '' },
   message: { type: String, default: '' },
   actionLabel: { type: String, default: '' },
+  actionDisabled: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
 });
 
@@ -75,6 +76,7 @@ const role = computed(() =>
     <UiButton
       v-if="resolvedActionLabel"
       class="ui-notice__action"
+      :disabled="actionDisabled"
       @click="emit('action')"
     >
       {{ resolvedActionLabel }}
@@ -153,16 +155,16 @@ const role = computed(() =>
 }
 
 .ui-notice__title {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .ui-notice__message {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-notice__action {

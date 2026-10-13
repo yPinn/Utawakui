@@ -639,10 +639,10 @@ describe('UiFolderArtifact', () => {
       ),
     );
     expect(rule).toMatch(
-      /^[^}]*--ui-photo-frame-bg: var\(--ui-palette-neutral-950\);/u,
+      /^[^}]*--ui-photo-frame-bg: var\(--ui-photo-frame-archival-bg\);/u,
     );
     expect(rule).toMatch(
-      /^[^}]*--ui-photo-frame-border-color: var\(--ui-palette-neutral-950\);/u,
+      /^[^}]*--ui-photo-frame-border-color: var\(--ui-photo-frame-archival-border-color\);/u,
     );
   });
 });

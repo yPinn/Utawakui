@@ -38,9 +38,9 @@ defineProps({
 /* Headline tier — DESIGN.md names major view titles explicitly. */
 .ui-page-header__title {
   margin: 0;
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
   color: var(--ui-color-text);
 }
 
@@ -54,7 +54,8 @@ defineProps({
   margin: 0;
   max-width: 70ch;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 </style>

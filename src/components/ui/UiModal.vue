@@ -476,9 +476,9 @@ onUnmounted(() => {
   min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
   overflow-wrap: anywhere;
 }
 

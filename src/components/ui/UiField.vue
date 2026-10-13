@@ -103,14 +103,14 @@ const fieldDescribedBy = computed(() =>
 
 .ui-field__label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .ui-field__label--inline {
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-regular);
+  font-weight: var(--ui-type-body-compact-weight);
 }
 
 .ui-field__label--hidden {
@@ -136,8 +136,8 @@ const fieldDescribedBy = computed(() =>
 
 .ui-field__message {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 </style>

@@ -44,9 +44,11 @@ const slots = useSlots();
 const { claim, release } = useContextMenuGate();
 
 const MAX_MENU_HEIGHT_REM = 20;
-const MENU_PADDING_BLOCK_REM = 0.5;
+const MENU_PADDING_BLOCK_REM = 1;
+const MENU_INSET_REM = 0.5;
+const SEPARATOR_INSET_REM = 0.25;
 const VIEWPORT_MARGIN_REM = 0.5;
-const SUBMENU_GAP_REM = 0.25;
+const SUBMENU_GAP_REM = 0.5;
 
 const menuRef = useTemplateRef('menu');
 const submenuRef = useTemplateRef('submenu');
@@ -74,7 +76,7 @@ const rootPlacement = computed(() =>
 );
 
 function menuRowHeightPixels() {
-  return customLengthPixels('--ui-menu-item-height', 2);
+  return customLengthPixels('--ui-floating-row-min-height', 2);
 }
 
 const activeSubmenuItem = computed(
@@ -95,9 +97,13 @@ function measuredRect(element) {
 }
 
 function submenuFallbackTop(scrollTop) {
-  const menuInset = customLengthPixels('--ui-space-1', 0.25);
+  const menuInset = customLengthPixels('--ui-space-2', MENU_INSET_REM);
+  const separatorInset = customLengthPixels(
+    '--ui-space-1',
+    SEPARATOR_INSET_REM,
+  );
   const separatorHeight =
-    customLengthPixels('--ui-border-width', 0.0625) + menuInset * 2;
+    customLengthPixels('--ui-border-width', 0.0625) + separatorInset * 2;
   let offset = menuInset;
 
   for (const item of props.items) {
@@ -133,7 +139,7 @@ const submenuPlacement = computed(() => {
     '--ui-floating-viewport-inset',
     VIEWPORT_MARGIN_REM,
   );
-  const gap = customLengthPixels('--ui-space-1', SUBMENU_GAP_REM);
+  const gap = customLengthPixels('--ui-space-2', SUBMENU_GAP_REM);
   const scrollTop = menuScrollTop.value;
   const rootRect = measuredRect(menuRoot());
   const parentRect = measuredRect(
@@ -239,7 +245,7 @@ function clampPosition() {
       viewport,
       placement: 'bottom-start',
       direction: resolvedDirection(),
-      gap: customLengthPixels('--ui-space-1', SUBMENU_GAP_REM),
+      gap: customLengthPixels('--ui-space-2', SUBMENU_GAP_REM),
       inset: margin,
       flipAlignment: true,
     });
@@ -555,16 +561,16 @@ onUnmounted(() => {
     20rem,
     calc(100vh - (2 * var(--ui-floating-viewport-inset)))
   );
-  background: var(--ui-color-surface);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  box-shadow: var(--ui-shadow-overlay);
+  background: var(--ui-floating-list-bg);
+  border: var(--ui-border-width) solid var(--ui-floating-list-border);
+  border-radius: var(--ui-floating-list-radius);
+  box-shadow: var(--ui-floating-list-shadow);
 }
 
 .ui-context-menu :deep(.ui-context-menu__viewport) {
   block-size: auto;
   max-block-size: inherit;
-  padding: var(--ui-space-1);
+  padding: var(--ui-floating-list-padding);
 }
 
 .ui-context-menu--submenu {
@@ -573,44 +579,51 @@ onUnmounted(() => {
 
 .ui-context-menu__empty {
   margin: 0;
-  padding: var(--ui-space-1) var(--ui-space-2);
+  padding: var(--ui-floating-row-padding-block)
+    var(--ui-floating-row-padding-inline);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-context-menu__item {
   display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr) max-content 1rem;
+  grid-template-columns: var(--ui-space-4) minmax(0, 1fr) max-content var(
+      --ui-space-4
+    );
   align-items: center;
   column-gap: var(--ui-space-2);
   width: 100%;
-  min-height: var(--ui-menu-item-height);
-  padding: var(--ui-space-1) var(--ui-space-2);
+  min-height: var(--ui-floating-row-min-height);
+  padding: var(--ui-floating-row-padding-block)
+    var(--ui-floating-row-padding-inline);
   border: 0;
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-floating-row-radius);
   background: transparent;
   color: var(--ui-color-text);
   font: inherit;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-floating-row-font-size);
   /* Regular, not Label's usual strong — matches macOS context-menu
      convention (native menu items aren't bold), a deliberate deviation
      from the Label tier's default weight. */
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  font-weight: var(--ui-floating-row-font-weight);
+  line-height: var(--ui-floating-row-line-height);
   text-align: left;
   cursor: pointer;
 }
 
 .ui-context-menu__item--active:not(:disabled),
-.ui-context-menu__item:hover:not(:disabled),
-.ui-context-menu__item:focus-visible {
+.ui-context-menu__item:hover:not(:disabled) {
   background: var(--ui-color-surface-hover);
-  outline: none;
+}
+
+.ui-context-menu__item:active:not(:disabled) {
+  background: var(--ui-color-surface-active);
 }
 
 .ui-context-menu__item:focus-visible {
+  background: var(--ui-color-surface-active);
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
@@ -625,6 +638,12 @@ onUnmounted(() => {
   color: var(--ui-color-danger);
 }
 
+.ui-context-menu__item--danger:hover:not(:disabled),
+.ui-context-menu__item--danger:active:not(:disabled),
+.ui-context-menu__item--danger:focus-visible {
+  background: var(--ui-color-danger-soft);
+}
+
 .ui-context-menu__separator {
   height: var(--ui-border-width);
   margin: var(--ui-space-1) var(--ui-space-2);
@@ -636,8 +655,8 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1rem;
-  height: 1rem;
+  width: var(--ui-space-4);
+  height: var(--ui-space-4);
   color: currentColor;
 }
 
@@ -666,9 +685,9 @@ onUnmounted(() => {
 .ui-context-menu__status {
   justify-self: end;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   white-space: nowrap;
 }
 </style>

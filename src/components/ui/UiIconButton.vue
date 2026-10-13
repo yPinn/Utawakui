@@ -1,6 +1,6 @@
 <script setup>
 import { computed, mergeProps, useAttrs } from 'vue';
-import { ICON_SIZE } from '../../icons/index.js';
+import { ICON_SIZE, Loader2 } from '../../icons/index.js';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { isTooltipPlacement, useTooltip } from './useTooltip.js';
 
@@ -38,12 +38,20 @@ const props = defineProps({
     validator: (value) => ['square', 'circle', 'inherit'].includes(value),
   },
   active: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+  loadingLabel: { type: String, default: '處理中' },
   stretch: { type: Boolean, default: false },
   fill: { type: Boolean, default: false },
 });
 
 const attrs = useAttrs();
-const titleText = computed(() => props.title ?? props.label);
+const accessibleLabel = computed(() =>
+  props.loading ? props.loadingLabel : props.label,
+);
+const titleText = computed(() =>
+  props.loading ? props.loadingLabel : (props.title ?? props.label),
+);
 const {
   open: tooltipOpen,
   position: tooltipPosition,
@@ -68,6 +76,8 @@ function buttonAttrs(triggerProps) {
     v-bind="buttonAttrs(triggerProps)"
     type="button"
     class="ui-icon-btn"
+    :disabled="disabled || loading"
+    :aria-busy="loading || undefined"
     :class="[
       `ui-icon-btn--${variant}`,
       `ui-icon-btn--intent-${intent}`,
@@ -76,16 +86,25 @@ function buttonAttrs(triggerProps) {
       {
         'ui-icon-btn--active': active,
         'ui-icon-btn--stretch': stretch,
+        'is-loading': loading,
       },
     ]"
   >
+    <Loader2
+      v-if="loading"
+      class="ui-icon-btn__spinner"
+      :size="ICON_SIZE"
+      aria-hidden="true"
+    />
     <component
       :is="icon"
+      v-else
+      class="ui-icon-btn__icon"
       :size="ICON_SIZE"
       :fill="fill ? 'currentColor' : 'none'"
       aria-hidden="true"
     />
-    <span class="ui-visually-hidden">{{ label }}</span>
+    <span class="ui-visually-hidden">{{ accessibleLabel }}</span>
     <UiTooltipSurface
       :open="tooltipOpen"
       :text="titleText"
@@ -116,6 +135,11 @@ function buttonAttrs(triggerProps) {
       var(--ui-motion-easing-standard),
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard),
     opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
+}
+
+.ui-icon-btn__icon,
+.ui-icon-btn__spinner {
+  flex: 0 0 auto;
 }
 
 @scope ([data-ui-system='v2']) to ([data-ui-system]) {
@@ -316,6 +340,27 @@ function buttonAttrs(triggerProps) {
 .ui-icon-btn:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-icon-btn__spinner {
+  animation: ui-icon-btn-spin calc(var(--ui-motion-duration-slow) * 4) linear
+    infinite;
+}
+
+@keyframes ui-icon-btn-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+:global(:root[data-ui-motion='reduced'] .ui-icon-btn__spinner) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-icon-btn__spinner {
+    animation: none;
+  }
 }
 
 .ui-icon-btn--stretch:focus-visible {

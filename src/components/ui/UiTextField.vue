@@ -20,6 +20,11 @@ defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  textRole: {
+    type: String,
+    default: 'input',
+    validator: (value) => ['input', 'title'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -52,6 +57,7 @@ defineExpose({ focus });
         :id="id"
         ref="input"
         class="ui-text-field"
+        :class="`ui-text-field--${textRole}`"
         :type="type"
         :value="modelValue"
         :placeholder="placeholder"
@@ -79,9 +85,9 @@ defineExpose({ focus });
   background: var(--ui-field-bg);
   color: var(--ui-field-fg);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-field-font-size);
+  font-weight: var(--ui-field-font-weight);
+  line-height: var(--ui-field-line-height);
   -webkit-user-select: text;
   user-select: text;
   transition:
@@ -89,6 +95,12 @@ defineExpose({ focus });
       var(--ui-motion-easing-standard),
     border-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard);
+}
+
+.ui-text-field--title {
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .ui-text-field:hover:not(:disabled) {

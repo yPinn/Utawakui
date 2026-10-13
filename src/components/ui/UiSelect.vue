@@ -23,8 +23,18 @@ const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
 const selectRef = useTemplateRef('select');
 
+function isOptionGroup(option) {
+  return Array.isArray(option?.options);
+}
+
+function selectableOptions() {
+  return props.options.flatMap((option) =>
+    isOptionGroup(option) ? option.options : [option],
+  );
+}
+
 function updateValue(event) {
-  const selected = props.options.find(
+  const selected = selectableOptions().find(
     (option) => String(option.value) === event.target.value,
   );
   emit('update:modelValue', selected ? selected.value : event.target.value);
@@ -64,14 +74,32 @@ defineExpose({ focus });
         @change="updateValue"
       >
         <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
-        <option
-          v-for="option in options"
-          :key="String(option.value)"
-          :value="option.value"
-          :disabled="option.disabled"
+        <template
+          v-for="entry in options"
+          :key="
+            isOptionGroup(entry)
+              ? `group:${entry.label}`
+              : `option:${entry.value}`
+          "
         >
-          {{ option.label }}
-        </option>
+          <optgroup
+            v-if="isOptionGroup(entry)"
+            :label="entry.label"
+            :disabled="entry.disabled"
+          >
+            <option
+              v-for="option in entry.options"
+              :key="String(option.value)"
+              :value="option.value"
+              :disabled="entry.disabled || option.disabled"
+            >
+              {{ option.label }}
+            </option>
+          </optgroup>
+          <option v-else :value="entry.value" :disabled="entry.disabled">
+            {{ entry.label }}
+          </option>
+        </template>
       </select>
     </template>
   </UiField>
@@ -88,9 +116,9 @@ defineExpose({ focus });
   background: var(--ui-field-bg);
   color: var(--ui-field-fg);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-field-font-size);
+  font-weight: var(--ui-field-font-weight);
+  line-height: var(--ui-field-line-height);
   transition:
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),

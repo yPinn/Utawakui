@@ -106,6 +106,20 @@ describe('shared UI interaction contracts', () => {
     app.unmount();
   });
 
+  it('can disable an in-progress notice action', () => {
+    const { app, root } = mount(UiNotice, {
+      tone: 'warning',
+      title: '需要相容轉檔',
+      message: '正在建立 FLAC 副本。',
+      actionLabel: '轉檔中…',
+      actionDisabled: true,
+    });
+    const action = findAll(root, (node) => node.type === 'button')[0];
+
+    expect(action.props.disabled).toBe(true);
+    app.unmount();
+  });
+
   it('keeps notice title spacing on the shared spacing scale', () => {
     const source = readFileSync(
       new URL('./UiNotice.vue', import.meta.url),
@@ -199,6 +213,23 @@ describe('shared UI interaction contracts', () => {
     expect(button.props['aria-busy']).toBe(true);
     expect(textContent(button)).toContain('正在儲存');
     expect(textContent(button)).not.toContain('儲存儲存');
+    app.unmount();
+  });
+
+  it('keeps a loading icon action compact while announcing its progress', () => {
+    const { app, root } = mount(UiIconButton, {
+      icon: Volume2,
+      label: '更換圖片',
+      loading: true,
+      loadingLabel: '準備預覽中',
+    });
+    const button = findAll(root, (node) => node.type === 'button')[0];
+
+    expect(button.props.disabled).toBe(true);
+    expect(button.props['aria-busy']).toBe(true);
+    expect(String(button.props.class)).toContain('is-loading');
+    expect(textContent(button)).toContain('準備預覽中');
+    expect(textContent(button)).not.toContain('更換圖片');
     app.unmount();
   });
 

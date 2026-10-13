@@ -5,6 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const tokens = fs.readFileSync(path.join(dirname, 'tokens.css'), 'utf8');
+const designGuide = fs.readFileSync(
+  path.join(dirname, '..', '..', 'DESIGN.md'),
+  'utf8',
+);
 
 const fieldTokens = [
   '--ui-field-height',
@@ -18,11 +22,52 @@ const fieldTokens = [
   '--ui-field-border',
   '--ui-field-border-hover',
   '--ui-field-border-invalid',
+  '--ui-field-font-size',
+  '--ui-field-font-weight',
+  '--ui-field-line-height',
   '--ui-checkbox-size',
   '--ui-range-track-size',
   '--ui-range-thumb-size',
   '--ui-progress-track-size',
 ];
+
+const typeRoles = {
+  display: {
+    size: '--ui-font-size-2xl',
+    weight: '--ui-font-weight-bold',
+    lineHeight: '--ui-line-height-display',
+  },
+  heading: {
+    size: '--ui-font-size-xl',
+    weight: '--ui-font-weight-bold',
+    lineHeight: '--ui-line-height-heading',
+  },
+  title: {
+    size: '--ui-font-size-lg',
+    weight: '--ui-font-weight-semibold',
+    lineHeight: '--ui-line-height-title',
+  },
+  body: {
+    size: '--ui-font-size-md',
+    weight: '--ui-font-weight-regular',
+    lineHeight: '--ui-line-height-body',
+  },
+  'body-compact': {
+    size: '--ui-font-size-sm',
+    weight: '--ui-font-weight-regular',
+    lineHeight: '--ui-line-height-label',
+  },
+  label: {
+    size: '--ui-font-size-sm',
+    weight: '--ui-font-weight-semibold',
+    lineHeight: '--ui-line-height-label',
+  },
+  caption: {
+    size: '--ui-font-size-sm',
+    weight: '--ui-font-weight-regular',
+    lineHeight: '--ui-line-height-caption',
+  },
+};
 
 function declarations(css) {
   return new Map(
@@ -58,7 +103,69 @@ const componentFiles = filesUnder(uiDirectory)
     source: fs.readFileSync(file, 'utf8'),
   }));
 
+function componentSource(filename) {
+  return componentFiles.find((file) => file.name.endsWith(`/${filename}`))
+    ?.source;
+}
+
 describe('shared UI component token contract', () => {
+  it('defines readable semantic type roles without coupling them to color', () => {
+    const values = declarations(tokens);
+
+    for (const [role, recipe] of Object.entries(typeRoles)) {
+      expect(values.get(`--ui-type-${role}-size`), `${role} size`).toBe(
+        `var(${recipe.size})`,
+      );
+      expect(values.get(`--ui-type-${role}-weight`), `${role} weight`).toBe(
+        `var(${recipe.weight})`,
+      );
+      expect(
+        values.get(`--ui-type-${role}-line-height`),
+        `${role} line height`,
+      ).toBe(`var(${recipe.lineHeight})`);
+      expect(values.has(`--ui-type-${role}-color`), `${role} color`).toBe(
+        false,
+      );
+    }
+
+    for (const retiredRole of [
+      'headline',
+      'content',
+      'control',
+      'command',
+      'input',
+      'support',
+    ]) {
+      expect(
+        [...values.keys()].some((name) =>
+          name.startsWith(`--ui-type-${retiredRole}-`),
+        ),
+        retiredRole,
+      ).toBe(false);
+    }
+  });
+
+  it('uses semantic type roles at the shared primitive boundary', () => {
+    expect(componentSource('UiPageHeader.vue')).toContain(
+      'var(--ui-type-heading-size)',
+    );
+    expect(componentSource('UiModal.vue')).toContain(
+      'var(--ui-type-heading-size)',
+    );
+    expect(componentSource('UiButton.vue')).toContain(
+      'var(--ui-type-label-size)',
+    );
+    expect(componentSource('UiField.vue')).toContain(
+      'var(--ui-type-caption-line-height)',
+    );
+    expect(componentSource('UiTextField.vue')).toContain(
+      'var(--ui-field-font-size)',
+    );
+    expect(componentSource('UiSearchBox.vue')).toContain(
+      'var(--ui-field-font-size)',
+    );
+  });
+
   it('derives both side panels from one shared content rhythm', () => {
     const values = declarations(tokens);
 
@@ -117,6 +224,27 @@ describe('shared UI component token contract', () => {
       expect(values.has(reference), `${name} -> ${reference}`).toBe(true);
     }
     expect(values.get('--ui-field-hex-value-inline-size')).toContain('7ch');
+    expect(values.get('--ui-field-font-size')).toBe(
+      'var(--ui-type-body-compact-size)',
+    );
+    expect(values.get('--ui-field-font-weight')).toBe(
+      'var(--ui-type-body-compact-weight)',
+    );
+    expect(values.get('--ui-field-line-height')).toBe(
+      'var(--ui-type-body-compact-line-height)',
+    );
+    expect(values.get('--ui-textarea-font-size')).toBe(
+      'var(--ui-type-body-compact-size)',
+    );
+    expect(values.get('--ui-textarea-font-weight')).toBe(
+      'var(--ui-type-body-compact-weight)',
+    );
+    expect(values.get('--ui-textarea-line-height')).toBe(
+      'var(--ui-type-body-line-height)',
+    );
+    expect(componentSource('UiTextarea.vue')).toContain(
+      'var(--ui-textarea-font-size)',
+    );
   });
 
   it('keeps icon-button and Tooltip contracts on shared semantic roles', () => {
@@ -137,6 +265,68 @@ describe('shared UI component token contract', () => {
       'var(--ui-line-height-caption)',
     );
     expect(values.get('--ui-tooltip-shadow')).toBe('var(--ui-shadow-overlay)');
+  });
+
+  it('defines one floating-list and row recipe for menus and listboxes', () => {
+    const values = declarations(tokens);
+
+    expect(values.get('--ui-floating-list-bg')).toBe(
+      'var(--ui-color-surface-raised)',
+    );
+    expect(values.get('--ui-floating-list-border')).toBe(
+      'var(--ui-color-border)',
+    );
+    expect(values.get('--ui-floating-list-radius')).toBe('var(--ui-radius-lg)');
+    expect(values.get('--ui-floating-list-shadow')).toBe(
+      'var(--ui-shadow-overlay)',
+    );
+    expect(values.get('--ui-floating-list-padding')).toBe('var(--ui-space-2)');
+    expect(values.get('--ui-floating-row-min-height')).toBe('2rem');
+    expect(values.get('--ui-floating-row-padding-block')).toBe(
+      'var(--ui-space-1)',
+    );
+    expect(values.get('--ui-floating-row-padding-inline')).toBe(
+      'var(--ui-space-2)',
+    );
+    expect(values.get('--ui-floating-row-radius')).toBe('var(--ui-radius-sm)');
+    expect(values.get('--ui-floating-row-font-size')).toBe(
+      'var(--ui-type-body-compact-size)',
+    );
+    expect(values.get('--ui-floating-row-font-weight')).toBe(
+      'var(--ui-type-body-compact-weight)',
+    );
+    expect(values.get('--ui-floating-row-line-height')).toBe(
+      'var(--ui-type-body-compact-line-height)',
+    );
+    expect(values.get('--ui-menu-item-height')).toBe(
+      'var(--ui-floating-row-min-height)',
+    );
+  });
+
+  it('keeps fixed archival material colors behind component aliases', () => {
+    const values = declarations(tokens);
+    const folderArtifact = componentSource('UiFolderArtifact.vue');
+
+    expect(values.get('--ui-photo-frame-archival-bg')).toBe(
+      'var(--ui-palette-neutral-950)',
+    );
+    expect(values.get('--ui-photo-frame-archival-border-color')).toBe(
+      'var(--ui-photo-frame-archival-bg)',
+    );
+    expect(folderArtifact).not.toContain('--ui-palette-');
+  });
+
+  it('documents semantic type and recipe promotion boundaries', () => {
+    expect(designGuide).toContain('### Semantic Type Recipes');
+    for (const role of Object.keys(typeRoles)) {
+      expect(designGuide, role).toContain(`--ui-type-${role}-*`);
+    }
+    expect(designGuide).toContain('Type recipes never own text color');
+    expect(designGuide).toContain('### Text Intent Mapping');
+    expect(designGuide).toContain('Description');
+    expect(designGuide).toContain('Field value');
+    expect(designGuide).toContain('Menu item');
+    expect(designGuide).toContain('two production consumers');
   });
 
   it('satisfies every shared-component reference from the adopted token graph', () => {
@@ -171,9 +361,32 @@ describe('shared UI component token contract', () => {
     expect(violations).toEqual([]);
   });
 
+  it('keeps primitive spacing and radius declarations on the shared token scale', () => {
+    const violations = componentFiles.flatMap(({ name, source }) =>
+      [...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gu)].flatMap(
+        ([, styles]) =>
+          [
+            ...styles.matchAll(
+              /(?:^|\n)\s*((?:padding|margin|gap|border-radius)(?:-[a-z-]+)?):\s*([^;]+);/gu,
+            ),
+          ].flatMap((match) =>
+            [...match[2].matchAll(/-?\d+(?:\.\d+)?(?:px|rem|em)\b/gu)]
+              .map(([value]) => value)
+              .filter(
+                (value) => Number.parseFloat(value) !== 0 && value !== '-1px',
+              )
+              .map((value) => `${name}: ${match[1]}: ${value}`),
+          ),
+      ),
+    );
+
+    expect(violations).toEqual([]);
+  });
+
   it('gives every continuously animated component OS and manual reduced-motion paths', () => {
     for (const name of [
       'UiButton.vue',
+      'UiIconButton.vue',
       'UiDisclosure.vue',
       'UiMarqueeText.vue',
       'UiNotificationHost.vue',
@@ -190,12 +403,14 @@ describe('shared UI component token contract', () => {
     }
   });
 
-  it('derives context-menu geometry from the shared row-height token', () => {
+  it('derives context-menu geometry from the shared floating-row token', () => {
     const source = componentFiles.find((file) =>
       file.name.endsWith('/UiContextMenu.vue'),
     )?.source;
 
-    expect(source).toContain("customLengthPixels('--ui-menu-item-height', 2)");
+    expect(source).toContain(
+      "customLengthPixels('--ui-floating-row-min-height', 2)",
+    );
     expect(source).not.toContain('ROW_HEIGHT_REM');
   });
 });

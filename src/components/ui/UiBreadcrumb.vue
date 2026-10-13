@@ -103,15 +103,16 @@ function isCurrent(index) {
   max-width: var(--ui-breadcrumb-segment-max-inline-size);
   overflow: hidden;
   font: inherit;
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-compact-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ui-breadcrumb__current {
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-semibold);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .ui-breadcrumb__link {

@@ -214,7 +214,7 @@ function handleActionKeydown(event) {
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   border-radius: var(--ui-track-row-radius, var(--ui-radius-md));
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
 }
 
 .ui-track::before {
@@ -321,8 +321,8 @@ function handleActionKeydown(event) {
 
 :deep(.ui-track__title) {
   color: inherit;
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 :deep(.ui-track__title-text) {
@@ -346,8 +346,8 @@ function handleActionKeydown(event) {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text-muted);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-track__duration {

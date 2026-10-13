@@ -72,8 +72,9 @@ watch(ratio, (next, previous) => {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   gap: var(--ui-space-2);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   -webkit-user-select: none;
   user-select: none;
 }

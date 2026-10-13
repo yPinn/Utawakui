@@ -20,6 +20,12 @@ defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  fill: { type: Boolean, default: false },
+  resize: {
+    type: String,
+    default: 'vertical',
+    validator: (value) => ['vertical', 'none'].includes(value),
+  },
   // 'bare' drops the field surface so the text sits on its host material.
   variant: {
     type: String,
@@ -42,7 +48,7 @@ defineExpose({ focus });
 <template>
   <UiField
     :id="id"
-    :class="attrs.class"
+    :class="[attrs.class, { 'ui-textarea-field--fill': fill }]"
     :style="attrs.style"
     :label="label"
     :hint="hint"
@@ -58,7 +64,11 @@ defineExpose({ focus });
         :id="id"
         ref="textarea"
         class="ui-textarea"
-        :class="{ 'ui-textarea--bare': variant === 'bare' }"
+        :class="{
+          'ui-textarea--bare': variant === 'bare',
+          'ui-textarea--fill': fill,
+          'ui-textarea--resize-none': resize === 'none',
+        }"
         :value="modelValue"
         :placeholder="placeholder"
         :rows="rows"
@@ -87,9 +97,9 @@ defineExpose({ focus });
   background: var(--ui-field-bg);
   color: var(--ui-field-fg);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-textarea-font-size);
+  font-weight: var(--ui-textarea-font-weight);
+  line-height: var(--ui-textarea-line-height);
   -webkit-user-select: text;
   user-select: text;
   transition:
@@ -111,6 +121,18 @@ defineExpose({ focus });
 .ui-textarea:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-textarea-field--fill,
+.ui-textarea-field--fill :deep(.ui-field__main),
+.ui-textarea-field--fill :deep(.ui-field__control),
+.ui-textarea--fill {
+  min-block-size: 0;
+  block-size: var(--ui-textarea-fill-block-size, 100%);
+}
+
+.ui-textarea--resize-none {
+  resize: none;
 }
 
 .ui-textarea[aria-invalid='true'] {

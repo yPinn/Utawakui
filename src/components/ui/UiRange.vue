@@ -103,8 +103,10 @@ defineExpose({ focus });
 .ui-range__value {
   min-width: 3ch;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
   font-variant-numeric: tabular-nums;
+  line-height: var(--ui-type-caption-line-height);
   text-align: end;
 }
 
@@ -119,7 +121,6 @@ defineExpose({ focus });
   .ui-range__value {
     min-inline-size: 2.5rem;
     color: var(--ui-color-text-muted);
-    line-height: var(--ui-line-height-caption);
     overflow-wrap: anywhere;
     -webkit-user-select: none;
     user-select: none;

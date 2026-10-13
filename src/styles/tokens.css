@@ -108,6 +108,31 @@
   --ui-line-height-label: 1.25;
   --ui-line-height-caption: 1.4;
 
+  /* Semantic type recipes: conventional reading hierarchy and compact roles.
+     Color stays independent so the same role can sit on neutral, muted, or
+     status surfaces without smuggling a foreground decision into typography. */
+  --ui-type-display-size: var(--ui-font-size-2xl);
+  --ui-type-display-weight: var(--ui-font-weight-bold);
+  --ui-type-display-line-height: var(--ui-line-height-display);
+  --ui-type-heading-size: var(--ui-font-size-xl);
+  --ui-type-heading-weight: var(--ui-font-weight-bold);
+  --ui-type-heading-line-height: var(--ui-line-height-heading);
+  --ui-type-title-size: var(--ui-font-size-lg);
+  --ui-type-title-weight: var(--ui-font-weight-semibold);
+  --ui-type-title-line-height: var(--ui-line-height-title);
+  --ui-type-body-size: var(--ui-font-size-md);
+  --ui-type-body-weight: var(--ui-font-weight-regular);
+  --ui-type-body-line-height: var(--ui-line-height-body);
+  --ui-type-body-compact-size: var(--ui-font-size-sm);
+  --ui-type-body-compact-weight: var(--ui-font-weight-regular);
+  --ui-type-body-compact-line-height: var(--ui-line-height-label);
+  --ui-type-label-size: var(--ui-font-size-sm);
+  --ui-type-label-weight: var(--ui-font-weight-semibold);
+  --ui-type-label-line-height: var(--ui-line-height-label);
+  --ui-type-caption-size: var(--ui-font-size-sm);
+  --ui-type-caption-weight: var(--ui-font-weight-regular);
+  --ui-type-caption-line-height: var(--ui-line-height-caption);
+
   /* Spacing foundation: 4px-equivalent rhythm at the default rem basis. */
   --ui-space-0: 0;
   --ui-space-1: 0.25rem;
@@ -329,6 +354,8 @@
   --ui-photo-frame-padding: var(--ui-space-2);
   --ui-photo-frame-border-color: var(--ui-color-border-strong);
   --ui-photo-frame-bg: var(--ui-color-surface-raised);
+  --ui-photo-frame-archival-bg: var(--ui-palette-neutral-950);
+  --ui-photo-frame-archival-border-color: var(--ui-photo-frame-archival-bg);
   --ui-photo-frame-shadow: var(--ui-folder-artifact-shadow);
   --ui-photo-frame-filter: saturate(0.78) sepia(0.16) contrast(0.96)
     brightness(0.96);
@@ -558,6 +585,12 @@
   --ui-field-height: var(--ui-control-height);
   --ui-field-padding-block: var(--ui-space-1);
   --ui-field-padding-inline: var(--ui-space-2);
+  --ui-field-font-size: var(--ui-type-body-compact-size);
+  --ui-field-font-weight: var(--ui-type-body-compact-weight);
+  --ui-field-line-height: var(--ui-type-body-compact-line-height);
+  --ui-textarea-font-size: var(--ui-type-body-compact-size);
+  --ui-textarea-font-weight: var(--ui-type-body-compact-weight);
+  --ui-textarea-line-height: var(--ui-type-body-line-height);
   --ui-field-hex-value-inline-size: calc(
     7ch + var(--ui-field-padding-inline) + var(--ui-field-padding-inline) +
       var(--ui-border-width) + var(--ui-border-width)
@@ -599,6 +632,9 @@
     var(--ui-color-danger-contrast) 75%,
     var(--ui-color-danger)
   );
+  --ui-button-group-border: var(--ui-color-border);
+  --ui-button-group-bg-raised: var(--ui-color-surface-raised);
+  --ui-button-group-shadow-raised: var(--ui-shadow-overlay);
   --ui-checkbox-size: var(--ui-space-4);
   --ui-switch-track-width: var(--ui-space-6);
   --ui-switch-track-height: var(--ui-space-4);
@@ -638,6 +674,18 @@
   --ui-scrollbar-radius: var(--ui-radius-pill);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
+  --ui-floating-list-bg: var(--ui-color-surface-raised);
+  --ui-floating-list-border: var(--ui-color-border);
+  --ui-floating-list-radius: var(--ui-radius-lg);
+  --ui-floating-list-shadow: var(--ui-shadow-overlay);
+  --ui-floating-list-padding: var(--ui-space-2);
+  --ui-floating-row-min-height: 2rem;
+  --ui-floating-row-padding-block: var(--ui-space-1);
+  --ui-floating-row-padding-inline: var(--ui-space-2);
+  --ui-floating-row-radius: var(--ui-radius-sm);
+  --ui-floating-row-font-size: var(--ui-type-body-compact-size);
+  --ui-floating-row-font-weight: var(--ui-type-body-compact-weight);
+  --ui-floating-row-line-height: var(--ui-type-body-compact-line-height);
   --ui-tooltip-font-size: var(--ui-font-size-sm);
   --ui-tooltip-font-weight: var(--ui-font-weight-regular);
   --ui-tooltip-line-height: var(--ui-line-height-caption);
@@ -679,7 +727,8 @@
   --ui-bgm-player-restore-status-inline-size: 4rem;
   --ui-bgm-player-time-inline-size: 4.5rem;
   --ui-search-clear-hit-size: var(--ui-field-height);
-  --ui-menu-item-height: 2rem;
+  /* Compatibility alias for feature menus pending bounded migration. */
+  --ui-menu-item-height: var(--ui-floating-row-min-height);
   --ui-modal-inline-size-small: 24rem;
   --ui-modal-inline-size-medium: 32rem;
   --ui-modal-inline-size-large: 48rem;

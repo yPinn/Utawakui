@@ -76,8 +76,8 @@ function toCssLength(value) {
   display: inline-flex;
   border-radius: var(--ui-track-thumb-radius, var(--ui-radius-sm));
   color: var(--ui-track-thumb-color, var(--ui-color-text));
-  font-size: var(--ui-track-thumb-font-size, var(--ui-font-size-sm));
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-track-thumb-font-size, var(--ui-type-label-size));
+  font-weight: var(--ui-type-label-weight);
   text-transform: var(--ui-track-thumb-transform, uppercase);
   overflow: hidden;
   user-select: none;

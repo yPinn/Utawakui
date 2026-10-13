@@ -2,9 +2,10 @@
 // This project's first aria-activedescendant / role="listbox" pattern — focus
 // stays on the input the entire time; the listbox is display-only and never
 // receives real DOM focus. Scope is intentionally narrow: pick one value from
-// a caller-provided list by typing to filter. No free-text (creatable) value
-// and no async/server-side filtering — both are left for a real consumer to
-// ask for.
+// caller-provided flat items or semantic groups. Editable consumers can type
+// to filter; select-only consumers use a real button trigger. No free-text
+// (creatable) value and no async/server-side filtering — both are left for a
+// real consumer to ask for.
 import {
   computed,
   nextTick,
@@ -15,7 +16,7 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
-import { ChevronDown, ICON_SIZE } from '../../icons/index.js';
+import { Check, ChevronDown, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
 import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import {
@@ -42,6 +43,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  editable: { type: Boolean, default: true },
   noResultsText: { type: String, default: '沒有符合的結果' },
 });
 
@@ -49,7 +51,7 @@ const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
 const { claim, release } = useContextMenuGate();
 
-const inputRef = useTemplateRef('input');
+const controlRef = useTemplateRef('control');
 const listboxRef = useTemplateRef('listbox');
 const query = shallowRef('');
 const isFiltering = shallowRef(false);
@@ -62,20 +64,76 @@ const listboxViewport = () => listboxRef.value?.viewport;
 let frameId = 0;
 
 const listboxId = `${props.id}-listbox`;
-const selectedItem = computed(() =>
-  props.items.find((item) => String(item.value) === String(props.modelValue)),
+
+function isItemGroup(entry) {
+  return Array.isArray(entry?.options);
+}
+
+const itemGroups = computed(() =>
+  props.items.map((entry, index) => {
+    if (!isItemGroup(entry)) {
+      return {
+        key: `option:${String(entry.value)}:${index}`,
+        label: '',
+        items: [entry],
+      };
+    }
+
+    return {
+      key: `group:${entry.label}:${index}`,
+      label: String(entry.label ?? ''),
+      items: entry.options.map((item) => ({
+        ...item,
+        disabled: Boolean(entry.disabled || item.disabled),
+      })),
+    };
+  }),
 );
-const filteredItems = computed(() => {
-  const needle = isFiltering.value ? query.value.trim().toLowerCase() : '';
-  if (!needle) return props.items;
-  return props.items.filter((item) =>
-    String(item.searchText ?? item.label)
-      .toLowerCase()
-      .includes(needle),
+const flatItems = computed(() =>
+  itemGroups.value.flatMap(({ items }) => items),
+);
+const selectedItem = computed(() =>
+  flatItems.value.find(
+    (item) => String(item.value) === String(props.modelValue),
+  ),
+);
+
+function isSelected(item) {
+  return (
+    Boolean(selectedItem.value) &&
+    String(item.value) === String(selectedItem.value.value)
   );
+}
+const filteredGroups = computed(() => {
+  const needle = isFiltering.value ? query.value.trim().toLowerCase() : '';
+  if (!needle) return itemGroups.value;
+  return itemGroups.value
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        String(item.searchText ?? item.label)
+          .toLowerCase()
+          .includes(needle),
+      ),
+    }))
+    .filter(({ items }) => items.length > 0);
 });
+const filteredItems = computed(() =>
+  filteredGroups.value.flatMap(({ items }) => items),
+);
+const filteredItemIndexByValue = computed(
+  () =>
+    new Map(
+      filteredItems.value.map((item, index) => [String(item.value), index]),
+    ),
+);
+
 function optionId(item) {
   return `${props.id}-option-${String(item.value)}`;
+}
+
+function optionIndex(item) {
+  return filteredItemIndexByValue.value.get(String(item.value)) ?? -1;
 }
 
 const activeOptionId = computed(() => {
@@ -134,7 +192,7 @@ function scheduleFrame(callback) {
 
 function updatePosition() {
   if (!isOpen.value || typeof window === 'undefined') return;
-  const anchor = inputRef.value?.getBoundingClientRect();
+  const anchor = controlRef.value?.getBoundingClientRect();
   const surface = listboxRoot()?.getBoundingClientRect();
   if (!anchor || !surface) return;
 
@@ -143,7 +201,7 @@ function updatePosition() {
     surface,
     viewport: { width: window.innerWidth, height: window.innerHeight },
     placement: 'bottom-start',
-    direction: window.getComputedStyle(inputRef.value).direction,
+    direction: window.getComputedStyle(controlRef.value).direction,
     gap: customLengthPixels('--ui-floating-gap', 0.5),
     inset: customLengthPixels('--ui-floating-viewport-inset', 0.5),
   });
@@ -190,7 +248,7 @@ function selectItem(item) {
   isFiltering.value = false;
   query.value = String(item.label);
   closeList();
-  inputRef.value?.focus();
+  controlRef.value?.focus();
 }
 
 function moveHighlight(delta) {
@@ -225,6 +283,16 @@ function onClick() {
   if (!isOpen.value) openWithSelection();
 }
 
+function onSelectOnlyClick() {
+  if (isOpen.value) closeList({ revertQuery: true });
+  else openWithSelection();
+}
+
+function highlightItem(item) {
+  if (item.disabled) return;
+  highlightedIndex.value = optionIndex(item);
+}
+
 function onKeydown(event) {
   if (event.key === 'ArrowDown') {
     event.preventDefault();
@@ -248,6 +316,12 @@ function onKeydown(event) {
     highlightedIndex.value = lastEnabledIndex();
     return;
   }
+  if (!props.editable && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    if (isOpen.value && highlightedIndex.value >= 0) commitHighlighted();
+    else openWithSelection();
+    return;
+  }
   if (event.key === 'Enter' && isOpen.value && highlightedIndex.value >= 0) {
     event.preventDefault();
     commitHighlighted();
@@ -267,7 +341,7 @@ function onBlur() {
 function onOutsidePointer(event) {
   if (!isOpen.value) return;
   if (
-    inputRef.value?.contains(event.target) ||
+    controlRef.value?.contains(event.target) ||
     listboxRoot()?.contains(event.target)
   ) {
     return;
@@ -291,7 +365,7 @@ function onResize() {
 }
 
 function focus() {
-  inputRef.value?.focus();
+  controlRef.value?.focus();
 }
 
 defineExpose({ focus });
@@ -328,14 +402,43 @@ onBeforeUnmount(() => {
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
       <span class="ui-combobox__control">
-        <input
+        <button
+          v-if="!editable"
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
-          ref="input"
+          ref="control"
+          class="ui-combobox__native ui-combobox__select-trigger"
+          type="button"
+          role="combobox"
+          aria-haspopup="listbox"
+          :disabled="disabled"
+          :aria-required="required || undefined"
+          :aria-expanded="isOpen"
+          :aria-controls="listboxId"
+          :aria-activedescendant="activeOptionId"
+          :aria-describedby="describedBy"
+          :aria-invalid="fieldInvalid || undefined"
+          @click="onSelectOnlyClick"
+          @keydown="onKeydown"
+          @blur="onBlur"
+        >
+          <span
+            class="ui-combobox__value"
+            :class="{ 'ui-combobox__value--placeholder': !selectedItem }"
+          >
+            {{ query || placeholder }}
+          </span>
+        </button>
+        <input
+          v-else
+          v-bind="nativeControlAttrs(attrs)"
+          :id="id"
+          ref="control"
           class="ui-combobox__native"
           type="text"
           role="combobox"
           autocomplete="off"
+          aria-haspopup="listbox"
           :value="query"
           :placeholder="placeholder"
           :required="required"
@@ -382,34 +485,55 @@ onBeforeUnmount(() => {
       >
         {{ noResultsText }}
       </li>
-      <li
-        v-for="(item, index) in filteredItems"
-        :id="optionId(item)"
-        :key="String(item.value)"
-        class="ui-combobox__option"
-        :class="{
-          'ui-combobox__option--active': index === highlightedIndex,
-        }"
-        role="option"
-        :aria-selected="
-          Boolean(selectedItem) &&
-          String(item.value) === String(selectedItem.value)
-        "
-        :aria-disabled="item.disabled || undefined"
-        @mousedown.prevent
-        @click="selectItem(item)"
-      >
-        <slot
-          name="option"
-          :item="item"
-          :selected="
-            Boolean(selectedItem) &&
-            String(item.value) === String(selectedItem.value)
-          "
-        >
-          {{ item.label }}
-        </slot>
-      </li>
+      <template v-for="group in filteredGroups" :key="group.key">
+        <li class="ui-combobox__group-shell" role="presentation">
+          <span
+            v-if="group.label"
+            class="ui-combobox__group-label"
+            aria-hidden="true"
+          >
+            {{ group.label }}
+          </span>
+          <ul
+            class="ui-combobox__group-options"
+            :role="group.label ? 'group' : 'presentation'"
+            :aria-label="group.label || undefined"
+          >
+            <li
+              v-for="item in group.items"
+              :id="optionId(item)"
+              :key="String(item.value)"
+              class="ui-combobox__option"
+              :class="{
+                'ui-combobox__option--grouped': group.label,
+                'ui-combobox__option--active':
+                  optionIndex(item) === highlightedIndex,
+              }"
+              role="option"
+              :aria-selected="isSelected(item)"
+              :aria-disabled="item.disabled || undefined"
+              @pointerenter="highlightItem(item)"
+              @mousedown.prevent
+              @click="selectItem(item)"
+            >
+              <span class="ui-combobox__option-content">
+                <slot name="option" :item="item" :selected="isSelected(item)">
+                  {{ item.label }}
+                </slot>
+              </span>
+              <span
+                class="ui-combobox__option-indicator"
+                :class="{
+                  'ui-combobox__option-indicator--selected': isSelected(item),
+                }"
+                aria-hidden="true"
+              >
+                <Check v-if="isSelected(item)" :size="ICON_SIZE" />
+              </span>
+            </li>
+          </ul>
+        </li>
+      </template>
     </UiScrollRegion>
   </Teleport>
 </template>
@@ -432,14 +556,34 @@ onBeforeUnmount(() => {
   background: var(--ui-field-bg);
   color: var(--ui-field-fg);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-field-font-size);
+  font-weight: var(--ui-field-font-weight);
+  line-height: var(--ui-field-line-height);
   transition:
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),
     border-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard);
+}
+
+.ui-combobox__select-trigger {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  text-align: start;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-combobox__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-combobox__value--placeholder {
+  color: var(--ui-field-placeholder);
 }
 
 .ui-combobox__native::placeholder {
@@ -482,43 +626,83 @@ onBeforeUnmount(() => {
     16rem,
     calc(100vh - (2 * var(--ui-floating-viewport-inset)))
   );
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-color-surface-raised);
-  box-shadow: var(--ui-shadow-overlay);
+  border: var(--ui-border-width) solid var(--ui-floating-list-border);
+  border-radius: var(--ui-floating-list-radius);
+  background: var(--ui-floating-list-bg);
+  box-shadow: var(--ui-floating-list-shadow);
 }
 
 .ui-combobox__listbox :deep(.ui-combobox__listbox-viewport) {
   block-size: auto;
   max-block-size: inherit;
   margin: 0;
-  padding: var(--ui-space-1);
+  padding: var(--ui-floating-list-padding);
   overscroll-behavior: contain;
   list-style: none;
 }
 
 .ui-combobox__option {
-  min-block-size: var(--ui-menu-item-height);
+  min-block-size: var(--ui-floating-row-min-height);
   display: flex;
   align-items: center;
-  padding: var(--ui-space-1) var(--ui-space-2);
+  padding: var(--ui-floating-row-padding-block)
+    var(--ui-floating-row-padding-inline);
   overflow: hidden;
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-floating-row-radius);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-floating-row-font-size);
+  font-weight: var(--ui-floating-row-font-weight);
+  line-height: var(--ui-floating-row-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+  user-select: none;
 }
 
-.ui-combobox__option--active {
-  background: var(--ui-color-surface-hover);
+.ui-combobox__option-content {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.ui-combobox__option-indicator {
+  inline-size: var(--ui-space-4);
+  flex: 0 0 var(--ui-space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: var(--ui-space-2);
+  color: var(--ui-color-accent);
+}
+
+.ui-combobox__group-shell,
+.ui-combobox__group-options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-combobox__group-label {
+  display: block;
+  padding: var(--ui-space-2) var(--ui-space-2) var(--ui-space-1);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-caption-line-height);
+}
+
+.ui-combobox__option--grouped .ui-combobox__option-content {
+  margin-inline-start: var(--ui-space-2);
 }
 
 .ui-combobox__option[aria-selected='true'] {
-  color: var(--ui-color-accent);
-  font-weight: var(--ui-font-weight-semibold);
+  background: var(--ui-color-surface-selected);
+  color: var(--ui-color-text);
+}
+
+.ui-combobox__option--active,
+.ui-combobox__option:hover:not([aria-disabled='true']) {
+  background: var(--ui-color-surface-hover);
 }
 
 .ui-combobox__option[aria-disabled='true'] {
@@ -528,12 +712,14 @@ onBeforeUnmount(() => {
 }
 
 .ui-combobox__empty {
-  min-block-size: var(--ui-menu-item-height);
+  min-block-size: var(--ui-floating-row-min-height);
   display: flex;
   align-items: center;
-  padding: var(--ui-space-1) var(--ui-space-2);
+  padding: var(--ui-floating-row-padding-block)
+    var(--ui-floating-row-padding-inline);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 </style>

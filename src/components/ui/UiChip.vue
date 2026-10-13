@@ -51,9 +51,9 @@ defineProps({
     --ui-chip-color,
     var(--ui-chip-tone-color, var(--ui-color-text-muted))
   );
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   white-space: nowrap;
 }
 

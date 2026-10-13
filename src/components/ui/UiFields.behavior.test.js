@@ -32,6 +32,35 @@ for (const [component, filename] of [
 }
 
 describe('shared field accessibility and data flow', () => {
+  it('projects an explicit title text role without changing the field contract', () => {
+    const titleField = mount(UiTextField, {
+      id: 'collection-title',
+      label: '名稱',
+      labelHidden: true,
+      textRole: 'title',
+    });
+    const titleInput = findAll(
+      titleField.root,
+      (node) => node.type === 'input',
+    )[0];
+
+    expect(String(titleInput.props.class)).toContain('ui-text-field--title');
+    titleField.app.unmount();
+
+    const defaultField = mount(UiTextField, {
+      id: 'collection-description',
+      label: '描述',
+    });
+    const defaultInput = findAll(
+      defaultField.root,
+      (node) => node.type === 'input',
+    )[0];
+    expect(String(defaultInput.props.class)).not.toContain(
+      'ui-text-field--title',
+    );
+    defaultField.app.unmount();
+  });
+
   it('connects label, external description, hint, native attributes, and updates', async () => {
     const update = vi.fn();
     const blur = vi.fn();
@@ -139,6 +168,28 @@ describe('shared field accessibility and data flow', () => {
     expect(String(bareTextarea.props.class)).toContain('ui-textarea--bare');
     bareMount.app.unmount();
 
+    const fillMount = mount(UiTextarea, {
+      id: 'full-height-note',
+      label: '完整備註',
+      class: 'review-note',
+      fill: true,
+      resize: 'none',
+    });
+    const fillField = findAll(fillMount.root, (node) =>
+      String(node.props.class || '').includes('ui-field'),
+    )[0];
+    const fillTextarea = findAll(
+      fillMount.root,
+      (node) => node.type === 'textarea',
+    )[0];
+    expect(String(fillField.props.class)).toContain('review-note');
+    expect(String(fillField.props.class)).toContain('ui-textarea-field--fill');
+    expect(String(fillTextarea.props.class)).toContain('ui-textarea--fill');
+    expect(String(fillTextarea.props.class)).toContain(
+      'ui-textarea--resize-none',
+    );
+    fillMount.app.unmount();
+
     const selectUpdate = vi.fn();
     const selectMount = mount(UiSelect, {
       id: 'mode',
@@ -205,6 +256,51 @@ describe('shared field accessibility and data flow', () => {
     });
     expect(rangeUpdate).toHaveBeenCalledWith(0.7);
     rangeMount.app.unmount();
+  });
+
+  it('groups native select options without changing the selected value contract', () => {
+    const update = vi.fn();
+    const selectMount = mount(UiSelect, {
+      id: 'source',
+      label: '來源',
+      modelValue: 'playlist-1',
+      options: [
+        { value: 'playback-order', label: '目前播放順序' },
+        {
+          label: '播放清單',
+          options: [{ value: 'playlist-1', label: '演出歌單' }],
+        },
+        {
+          label: '專輯',
+          options: [{ value: 'album-1', label: '花皮', disabled: true }],
+        },
+      ],
+      'onUpdate:modelValue': update,
+    });
+    const select = findAll(
+      selectMount.root,
+      (node) => node.type === 'select',
+    )[0];
+    const groups = findAll(
+      selectMount.root,
+      (node) => node.type === 'optgroup',
+    );
+    const options = findAll(selectMount.root, (node) => node.type === 'option');
+
+    expect(groups.map(({ props }) => props.label)).toEqual([
+      '播放清單',
+      '專輯',
+    ]);
+    expect(options.map((option) => textContent(option))).toEqual([
+      '目前播放順序',
+      '演出歌單',
+      '花皮',
+    ]);
+    expect(options[2].props.disabled).toBe(true);
+
+    trigger(select, 'onChange', { target: { value: 'album-1' } });
+    expect(update).toHaveBeenCalledWith('album-1');
+    selectMount.app.unmount();
   });
 
   it('projects the optional range default and reset intent through the field compound', () => {

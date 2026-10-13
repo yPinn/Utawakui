@@ -183,7 +183,9 @@ describe('UiColorField', () => {
       '--ui-field-fg',
       '--ui-field-radius',
       '--ui-field-hex-value-inline-size',
-      '--ui-font-size-sm',
+      '--ui-field-font-size',
+      '--ui-field-font-weight',
+      '--ui-field-line-height',
       '--ui-color-focus',
     ]) {
       expect(styles).toContain(`var(${token})`);

@@ -114,7 +114,10 @@ describe('UiBreadcrumb', () => {
       '--ui-focus-width',
       '--ui-opacity-disabled',
       '--ui-breadcrumb-segment-max-inline-size',
-      '--ui-font-size-sm',
+      '--ui-type-body-compact-size',
+      '--ui-type-body-compact-weight',
+      '--ui-type-body-compact-line-height',
+      '--ui-type-label-weight',
     ]) {
       expect(source).toContain(`var(${token})`);
     }

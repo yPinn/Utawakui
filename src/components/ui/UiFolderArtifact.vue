@@ -361,16 +361,17 @@ function handleStackLayerKeydown(layer, event) {
 /* A dark archival print: same frame mechanics, restated tokens only. */
 .ui-folder-artifact--photo[data-photo-frame='archival'] {
   --ui-photo-frame-padding: var(--ui-space-1);
-  --ui-photo-frame-bg: var(--ui-palette-neutral-950);
-  --ui-photo-frame-border-color: var(--ui-palette-neutral-950);
+  --ui-photo-frame-bg: var(--ui-photo-frame-archival-bg);
+  --ui-photo-frame-border-color: var(--ui-photo-frame-archival-border-color);
   --ui-photo-frame-filter: grayscale(0.85) contrast(1.05);
 }
 
 .ui-folder-artifact--photo > p {
   margin: var(--ui-space-2) 0 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-folder-artifact--note {
@@ -458,15 +459,16 @@ function handleStackLayerKeydown(layer, event) {
 .ui-folder-artifact__eyebrow {
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-utility);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-folder-artifact--note h4 {
   font-family: var(--ui-font-family-display);
-  font-size: var(--ui-font-size-lg);
+  font-size: var(--ui-type-title-size);
   font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-title);
+  line-height: var(--ui-type-title-line-height);
 }
 
 /* Data card: label／value rows in the utility face. */
@@ -476,9 +478,10 @@ function handleStackLayerKeydown(layer, event) {
   gap: var(--ui-space-1) var(--ui-space-3);
   margin: 0;
   font-family: var(--ui-font-family-utility);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
   font-variant-numeric: tabular-nums;
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-folder-artifact__fields dt {
@@ -501,13 +504,14 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact--compact .ui-folder-artifact__body {
   font-family: var(--ui-font-family-utility);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
 }
 
 .ui-folder-artifact__body {
   max-width: 34ch;
-  font-size: var(--ui-font-size-md);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   text-wrap: pretty;
@@ -609,10 +613,10 @@ function handleStackLayerKeydown(layer, event) {
   border-radius: var(--ui-radius-xs);
   background-color: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-caption-line-height);
   opacity: 0;
   transition: opacity var(--ui-motion-duration-feedback)
     var(--ui-motion-easing-standard);

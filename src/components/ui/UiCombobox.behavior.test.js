@@ -27,6 +27,29 @@ const ITEMS = [
   { value: 'better-lyrics', label: 'Better Lyrics' },
 ];
 
+const GROUPED_ITEMS = [
+  { value: 'playback-order', label: '目前播放順序' },
+  {
+    label: '播放清單',
+    options: [{ value: 'playlist-1', label: '演出歌單' }],
+  },
+  {
+    label: '專輯',
+    options: [
+      {
+        value: 'album-1',
+        label: '花皮 · Sabrina 胡恂舞',
+        searchText: '花皮 Sabrina 胡恂舞',
+      },
+      {
+        value: 'album-2',
+        label: 'After Dark · Aimer',
+        searchText: 'After Dark Aimer',
+      },
+    ],
+  },
+];
+
 let body;
 
 beforeEach(() => {
@@ -68,6 +91,10 @@ function options() {
 
 function emptyMessage() {
   return findAll(body, (node) => node.props?.role === 'presentation')[0];
+}
+
+function groups() {
+  return findAll(body, (node) => node.props?.role === 'group');
 }
 
 describe('UiCombobox', () => {
@@ -155,6 +182,119 @@ describe('UiCombobox', () => {
     const filtered = options();
     expect(filtered).toHaveLength(1);
     expect(filtered[0].props.id).toBe('lyrics-source-option-better-lyrics');
+    app.unmount();
+  });
+
+  it('renders grouped items with one selected-value and keyboard contract', async () => {
+    const { app, root } = mount(UiCombobox, {
+      id: 'separation-source',
+      label: '來源',
+      modelValue: 'album-2',
+      items: GROUPED_ITEMS,
+    });
+    const control = input(root);
+
+    expect(control.props.value).toBe('After Dark · Aimer');
+    trigger(control, 'onClick');
+    await nextTick();
+
+    expect(groups().map(({ props }) => props['aria-label'])).toEqual([
+      '播放清單',
+      '專輯',
+    ]);
+    expect(options().map(({ props }) => props.id)).toEqual([
+      'separation-source-option-playback-order',
+      'separation-source-option-playlist-1',
+      'separation-source-option-album-1',
+      'separation-source-option-album-2',
+    ]);
+    expect(control.props['aria-activedescendant']).toBe(
+      'separation-source-option-album-2',
+    );
+    expect(options()[3].props['aria-selected']).toBe(true);
+    app.unmount();
+  });
+
+  it('renders a select-only trigger without editable input behavior', async () => {
+    const { app, root } = mount(UiCombobox, {
+      id: 'separation-source',
+      label: '來源',
+      modelValue: 'album-2',
+      items: GROUPED_ITEMS,
+      editable: false,
+    });
+    const control = input(root);
+
+    expect(control.type).toBe('button');
+    expect(control.props).toMatchObject({
+      type: 'button',
+      role: 'combobox',
+      'aria-haspopup': 'listbox',
+      'aria-expanded': false,
+    });
+    expect(control.props.onInput).toBeUndefined();
+    expect(control.props['aria-autocomplete']).toBeUndefined();
+
+    trigger(control, 'onClick');
+    await nextTick();
+
+    const albumOption = options()[2];
+    trigger(albumOption, 'onPointerenter');
+    await nextTick();
+
+    expect(control.props['aria-activedescendant']).toBe(
+      'separation-source-option-album-1',
+    );
+    expect(
+      findAll(body, (node) =>
+        String(node.props?.class ?? '').includes(
+          'ui-combobox__option-indicator--selected',
+        ),
+      ),
+    ).toHaveLength(1);
+    app.unmount();
+  });
+
+  it('filters grouped children by searchText and removes empty groups', async () => {
+    const { app, root } = mount(UiCombobox, {
+      id: 'separation-source',
+      label: '來源',
+      modelValue: '',
+      items: GROUPED_ITEMS,
+    });
+    const control = input(root);
+
+    trigger(control, 'onInput', { target: { value: 'aimer' } });
+    await nextTick();
+
+    expect(groups().map(({ props }) => props['aria-label'])).toEqual(['專輯']);
+    expect(options()).toHaveLength(1);
+    expect(options()[0].props.id).toBe('separation-source-option-album-2');
+    app.unmount();
+  });
+
+  it('moves through grouped options as one keyboard sequence', async () => {
+    const { app, root } = mount(UiCombobox, {
+      id: 'separation-source',
+      label: '來源',
+      modelValue: '',
+      items: GROUPED_ITEMS,
+    });
+    const control = input(root);
+
+    for (const expectedId of [
+      'separation-source-option-playback-order',
+      'separation-source-option-playlist-1',
+      'separation-source-option-album-1',
+    ]) {
+      trigger(control, 'onKeydown', {
+        key: 'ArrowDown',
+        preventDefault: vi.fn(),
+      });
+      await nextTick();
+      expect(control.props['aria-activedescendant']).toBe(expectedId);
+    }
+
     app.unmount();
   });
 
@@ -382,9 +522,9 @@ describe('UiCombobox', () => {
       '--ui-focus-width',
       '--ui-z-popover',
       '--ui-floating-viewport-inset',
-      '--ui-menu-item-height',
-      '--ui-color-surface-raised',
-      '--ui-shadow-overlay',
+      '--ui-floating-row-min-height',
+      '--ui-floating-list-bg',
+      '--ui-floating-list-shadow',
       '--ui-opacity-disabled',
     ]) {
       expect(source).toContain(`var(${token})`);

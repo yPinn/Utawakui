@@ -152,7 +152,8 @@ describe('UiContextMenu positioning', () => {
           ({
             '--ui-floating-viewport-inset': '8px',
             '--ui-space-1': '4px',
-            '--ui-menu-item-height': '32px',
+            '--ui-space-2': '8px',
+            '--ui-floating-row-min-height': '32px',
             '--ui-border-width': '1px',
           })[name] ?? '',
       })),
@@ -232,7 +233,7 @@ describe('UiContextMenu positioning', () => {
     const menu = menuRoots()[0];
 
     expect(menu.props.style.left).toBe('300px');
-    expect(menu.props.style.top).toBe('266px');
+    expect(menu.props.style.top).toBe('262px');
     expect(menu.props['data-placement']).toBe('top-start');
     app.unmount();
   });
@@ -262,7 +263,7 @@ describe('UiContextMenu positioning', () => {
     const menu = menuRoots()[0];
 
     expect(menu.props.style.left).toBe('360px');
-    expect(menu.props.style.top).toBe('136px');
+    expect(menu.props.style.top).toBe('140px');
     expect(menu.props['data-placement']).toBe('bottom-end');
     app.unmount();
   });
@@ -288,7 +289,7 @@ describe('UiContextMenu positioning', () => {
         width: 210,
         height: 32,
       },
-      expectedLeft: '136px',
+      expectedLeft: '132px',
     },
     {
       label: 'RTL logical end',
@@ -310,7 +311,7 @@ describe('UiContextMenu positioning', () => {
         width: 210,
         height: 32,
       },
-      expectedLeft: '176px',
+      expectedLeft: '172px',
     },
   ])(
     'opens the submenu on physical left for $label and mirrors the chevron',

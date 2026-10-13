@@ -12,8 +12,10 @@ Studio Library live Candidate 與 Setlist Current 比較頁均已移除。完整
 只負責元件回歸證據，不得取代 View-level owner decision。
 目前 catalogue 重用正式 `AppFolderPage` workspace composition，以固定 `UiTabs`
 切換分類，並由單一 `UiScrollLayout` 擁有 active group 的垂直捲動；分類切換會回到
-內容起點。型錄只掛載目前分類，不同時渲染全部群組，也不顯示 adoption 數量、
-review badge 或 migration status。
+內容起點，頁面軌道不隨標本內容寬度縮放。型錄只掛載目前分類，不同時渲染全部
+群組，也不顯示 adoption 數量、review badge、migration status 或凍結的 v1
+Current 對照層。已採用元件只呈現正式實作；未解決差距最多保留一個明確標示為
+尚未採用的提案標本。
 Production surface 替換、fail-closed scope、legacy ratchet 與 final deletion 的完成紀錄
 由 [Token v2 完整替換契約](token-v2-replacement.md) 管理；本文件不再作 migration
 status source，也不建立 compatibility fallback。
@@ -34,13 +36,13 @@ F8 的展示順序遵守這個 gate。標本看起來完整不等於 production 
 
 使用者可見文案的透明採必要揭露，不等於展示背景實作。產品標本與輔助技術宣告只說明狀態、影響與可採取行動；`runtime`、`sidecar`、`adapter`、`host`、`parent`、`token` 等實作名詞只可留在明確的開發審查註記、診斷或文件。來源、網路、儲存位置與處理方式只有在會影響使用者選擇、隱私期待或復原方式時才揭露。
 
-F8 的 Candidate／Current、ARIA、尺寸與元件責任屬 owner 檢查所需資訊，必須與產品訊息分層呈現；型錄不能讓工程註記看起來像正式產品文案。產品訊息與 live-region 內容使用同一套使用者語言，並維持可獨立翻譯的完整句子。
+F8 的 ARIA、尺寸與元件責任屬 owner 檢查所需資訊，必須與產品訊息分層呈現；型錄不能讓工程註記或未採用提案看起來像正式產品文案。產品訊息與 live-region 內容使用同一套使用者語言，並維持可獨立翻譯的完整句子。
 
 ## 2026-10-05 production adoption 補記
 
 - 正式 `UiProgress` 已採用核准 Candidate contract：8px track、`--ui-radius-xs`、Info activity role、自然換行 copy，以及 reduced-motion-safe indeterminate segment。Native progress 保留 name／value；region busy 與 milestone announcement 仍由流程 owner 負責。Determinate fill 由 `aria-hidden` 圖層繪製，數值增加時以 `--ui-motion-duration-slow` 平移、減少時直接跳回，reduced motion 不補間；更新間隔小於 200ms 視為連續串流（例如播放位置），由元件自行改為直接跟隨，不提供 caller 端覆寫。可見數值與 native value 一律即時呈現真實值。`labelHidden` 沿用 Field／Checkbox 慣例，只移除可見 copy lane，native progress 仍以 `label` 作 accessible name。
 - 正式 `UiCheckbox` 已採用核准 Candidate contract：Standard／Compact 36／32px full-row target、16px project-owned Check／Minus、`--ui-radius-sm` indicator、多行首行對齊與整列 disabled。單一 native input 繼續擁有互動、focus、required、disabled、Boolean／mixed 與 ARIA 語意；consumer public props／events 未變。
-- F8 的 Candidate 標本繼續作歷史回歸證據；Current layer 已改為投影上述正式 adoption，不再描述 pill progress 或 Windows native checkbox 舊外觀。
+- 歷史 Candidate／Current 判斷只保存在本文件的日期快照；F8 runtime 不再投影凍結的 Current layer。正式 adoption 由實際 `Ui*` 標本驗證，未採用差距另以單一提案標本呈現。
 - Control-panel 與 public Overlay 仍維持不同 token namespace。Live Stage artwork card 的既有 raw radius 已映射至 `--ovl-primitive-radius-md`，沒有引入 `--ui-*` 依賴。
 - Playlist／Album 詳細資料以 Medium modal 承載 120px artwork 與雙欄編輯 anatomy；Small 保留給短訊息／確認，不因單一 feature 放大其全域 contract。窄 viewport 由 modal cap 與 details container query 降為單欄。
 
@@ -87,20 +89,15 @@ production-wide replacement。仍有效的是元件 anatomy、variant、accessib
 | F7 View               | Studio Library／Controlled Dossier 已接入真實 Library／Playlist／Player／Queue 投影；Candidate 為唯一 View-level live panel，playlist workspace 與 queue metadata 分責、local search／sort／reorder、單擊選取與雙擊播放已建立                                                               | 仍待完整 owner visible acceptance；local order 不持久化，不代表正式 Setlist 或任何 Candidate component adoption                                   |
 
 這個 checkpoint 當時只有 Icon Button hard-floor 修正屬於正式 active 變更。
-Phase 6 後 Candidate 標本仍完整保留在 development-only F8，但使用同一 stable
-token entry；source-boundary gate禁止 `DemoCandidate*` 進入production graph，
-因此標本不是替代實作，也不形成第二份 token payload。
+日期快照保留當時的 Candidate／Current 判斷；runtime F8 已移除凍結的 v1
+Current 標本與比較 surface。尚未採用的 `DemoCandidate*` 仍受
+source-boundary gate 限制，不得進入 production graph，也不形成第二份 token
+payload。
 
-F8 已將 Foundation 至 UiModal 的 30 個 comparison section 統一為
-Candidate／Current 對照；所有 component group 都已完成 owner checkpoint。
-這只收束 development component review。F7 已由 owner 另行啟動為
-development-only View checkpoint，但仍不啟動 production adoption。共用比較層
-標示 Candidate與凍結的pre-adoption Current快照，窄內容使用container reflow；
-快照只屬於specimen，不再作production token truth。
-
-Scrollbar 是 30-section checkpoint 完成後由 owner 另行要求加入的瀏覽器外觀
-契約。追加標本已完成可視核准並提升為正式 primitive；原 30 個 comparison
-section 的完成狀態與數量不因此重寫，其餘 Token v2 候選也不因此取得採用授權。
+Foundation 至 UiModal 的歷史 comparison checkpoint 已完成；細節留在本文件供
+追溯，不再要求 F8 同時渲染兩個版本。正式元件由 production `Ui*` 標本回歸，
+未採用差距最多保留單一提案。Scrollbar 是該 checkpoint 後另行核准並提升的正式
+primitive；這不會自動核准其餘提案。
 
 ## 已採用階段：Scrollbar appearance 與 Scroll Region
 
@@ -612,6 +609,7 @@ Owner 在 UiProgress 階段回查已審查元件的文字選取行為；selectio
 12. Queue 已採用正式 `UiTrackRow` 的 Standard 52／40px recipe，並沿用同一 anatomy、keyboard focus 與 selected／current 分責。Queue 與 Recently Played 的 caller-owned row recipe 都是單擊選取、雙擊播放、縮圖切換播放／暫停、Enter 播放／Space 選取、隱藏 duration、曲名純文字；artist lane 組合正式 `TrackArtistCredits`，只有 artist index 能一一配對的 credit 才是 sibling CTA，無法配對時維持純文字。Queue section 的已知來源名稱同樣使用正式 `UiTextButton`，default 無底線，hover／focus-visible 才顯示底線；靜態「下一首來自：」不屬於 CTA。Shared Track Row token 將 selected 統一為文字色 8% 的中性 surface 並取消 accent edge，不使用未核准的品牌藍填色；Right Dock 不再重複 override。兩者共用 Right Dock row hover、artwork cue 與 overflow action recipe：neutral row hover／focus 顯示由 HTML audio authority 投影的 Play cue，同一首歌曲實際播放時顯示 Pause；`…` 保留固定 trail lane 以避免 layout shift，預設隱藏，僅在 row hover、selected、focus-within 或 menu open 時顯示。Tooltip 先以內容寬度排版，再以 max-inline-size／viewport 作上限，並將「的更多選項」保留為不可拆 suffix。只有可排序 Queue row 整列帶 native draggable，不顯示獨立 drag icon；artwork、artist CTA 與 `…` action 排除 drag start。Recently Played 明確傳入 `draggable=false`，不接 drag／drop events，也不提供 drop indicator。Before／after indicator 在相鄰 row gap 內組合實際 `UiSeparator`，primitive 保留共用 thickness，Queue caller 使用 accent tone 作明確 drop feedback；不畫 row boundary。row inline size 受 Right Dock 約束。Queue 與 Recently Played 的 row root 都不套用 `content-visibility: auto` 或其他 paint containment；shared state surface 以 negative inline inset 延伸到 row box 外，必須在 Current、non-draggable、draggable 與 history 路徑保持相同可見邊界。排序 intent、drop target 與 drag lifecycle 留在 Queue feature owner，shared Row 不擁有排序。正式元件提供 bounded `overflow`、`thumbLoading`、`thumbDecoding`、artwork action 與 Enter activation 邊界；既有 consumer 的 marquee、eager loading、auto decoding 與互動預設不變，Right Dock adapter 才明確使用 ellipsis、lazy loading 與 async decoding。Queue 與 Recently Played 的 scroll boundary 都對 tabs、heading、empty cue、row 空白、metadata 與 actions 套用 `select-none`，避免拖曳或 disclosure 操作時產生原生文字 selection 藍底。artist 導覽先同步通知 QueuePanel 關閉 Dock，再由 `TrackArtistCredits` 的既有 navigation owner 切到 Artist 頁；不觸發 row selection、playback 或 reorder。這個 production adoption 保持在 feature owner，不改寫 `UiTabs`、`UiHint` 或 `UiTrackRow` 的通用 selection policy。這是已由真實 Right Dock consumer 證明的最小 production adoption，不把 selection、playback、reorder 或來源導覽責任上提到 shared row。
 13. Right Dock 由 `AppRightDock` boundary 將內部 `UiTrackRow` 映射到固定 52／40px；inline 邊界使用 8px panel perimeter、4px row content inset 與 4px state-surface outset，因此 state paint／section content／artwork 分別位於 Dock edge 的 4／8／12px。這是 shell surface 密度契約，不改寫 generic Compact Row，也不依賴 Sidebar feature token。正式Row把整列`interactive`與compound `stateSurface`分開：前者才建立stretched row button、cursor與selection／activate intent；後者只在nested actions hover、focus-within、pressed或menu open時畫同一neutral surface，不建立selected語意。Playback Info 的下一首preview因此以passive `QueueTrackButton`重用artwork播放、artist destination與menu，仍不取得整列選取、拖曳或reorder。Dock header已擁有播放來源identity，不再渲染重複的collection cover／名稱／description block。
 14. 2026-10-06 owner 決定（承接第 9 點）：Setlist 頁面的曲目列藝人文字成為 sibling CTA。正式 `UiTrackRow` 只新增通用的 `artist` slot，替換 artist lane 的內容，lane、typography、ellipsis 與 row semantics 不變，也沒有新增 artist-specific prop。連結由 feature-owned `TrackArtistCredits` 以正式 `UiTextButton`（`overflow="ellipsis"`）逐一呈現：多位藝人只在 credit 與 artist index 能一一對應時分別可點，否則維持純文字。Artist 頁的每一列都是同一位藝人，因此一律不顯示 artist lane，合作曲也不例外；合作者改由各曲目的專輯查找。採用範圍是 Setlist 全部曲目（`UiTrackRow`）、`SetlistPlaylistTable`、PlayerBar 的 now-playing artist line，以及 2026-10-08 owner 明確加入的 Queue／Recently Played row；Right Dock 只在 adapter 的既有 `artist` slot 組合相同元件，不新增 artist-specific shared row prop。
+15. 2026-10-13 owner 決定：重複的「曲名前往專輯／藝人credit前往藝人頁」組合收斂為 track-level `TrackIdentityRow`，不把playlist、artist index或view state注入`UiTrackRow`。`navigation="none | album | artist | identity"`是 opt-in identity destination recipe，不是視覺variant；預設`none`不建立CTA。Album mode只有在`albumForTrack`解析成功時把曲名交給正式Text Action；Artist mode沿用`TrackArtistCredits`的canonical配對與plain-text fallback；Identity同時啟用兩者。封面仍由caller決定播放／預覽等行為。adapter保留`UiTrackRow` props、row events與slots，並在既有Library transition前同步發出帶`kind／id`的`navigate`，讓Modal或Dock先關閉。首個production adopter是`LyricsTrackPickerModal`：保留整列曲目選取與歌詞status，只移除重複album lookup／title click wiring；Queue／Recently Played本輪維持既有成熟adapter，零修改。
 
 ## 2026-10-06 owner 決定：UiArtworkOverlay 共用覆蓋層
 
@@ -768,13 +766,14 @@ token-compatible primitives。
 
 ## 驗證與提交邊界
 
-每個 phase 必須包含實際元件標本、Candidate／Current 真值、深色／淺色、
-窄容器、keyboard focus、語意／ARIA、focused tests、完整 tests、lint、
-format、build、candidate isolation 與 production bundle isolation。
+每個新 phase 必須包含實際正式元件或單一提案標本、深色／淺色、窄容器、
+keyboard focus、語意／ARIA、focused tests、完整 tests、lint、format、build、
+proposal isolation 與 production bundle isolation；不得為回歸方便重新建立 v1
+Current snapshot。
 
 提交分成兩類：
 
 - active component fix：正式 token／元件／consumer 及其測試；
-- development review checkpoint：F8 標本、Candidate mapping、檢查測試與文件。
+- development review checkpoint：F8 正式／提案標本、檢查測試與文件。
 
-不要把尚未 owner 核准的 Candidate 值混入 active component fix。
+不要把尚未 owner 核准的提案值混入 active component fix。
