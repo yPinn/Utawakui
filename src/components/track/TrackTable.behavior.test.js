@@ -184,62 +184,13 @@ describe('TrackTable canonical grid', () => {
     expect(source).toContain('@container library-track-table');
   });
 
-  it('adapts batch review to the same identity and duration grid without browse actions', () => {
-    const reviewEntries = entries.map((entry) => ({
-      ...entry,
-      source: { ...entry.track, selected: true, status: 'pending' },
-    }));
-    const { app, root } = mountTable({
-      entries: reviewEntries,
-      variant: 'review',
-      sortable: false,
-    });
-    const header = findAll(root, (node) =>
-      classIncludes(node, 'library-track-table__header'),
-    )[0];
-    const row = findAll(root, (node) =>
-      classIncludes(node, 'library-track-row'),
-    )[0];
-
-    expect(rowRoles(header)).toEqual([
-      'selection',
-      'identity',
-      'duration',
-      'status',
-    ]);
-    expect(rowRoles(row)).toEqual(rowRoles(header));
-    expect(classIncludes(row, 'library-track-row--review')).toBe(true);
-    expect(
-      findAll(row, (node) =>
-        String(node.props?.['aria-label'] ?? '').startsWith('選取：'),
-      ),
-    ).toHaveLength(0);
-    expect(source).toContain('<slot name="row-leading"');
-    expect(source).toContain('<slot name="row-trailing"');
-    app.unmount();
-  });
-
-  it('keeps long review identity text on one line inside the shared grid', () => {
-    const copyRule = source.match(
-      /\.library-track-row--review \.library-track-row__copy\s*\{(?<body>[\s\S]*?)\n\}/u,
-    )?.groups?.body;
-    const reviewTextRule = source.match(
-      /\.library-track-row--review\s+:deep\(\.library-track-row__review-text\)\s*\{(?<body>[\s\S]*?)\n\}/u,
-    )?.groups?.body;
-
-    expect(source).toContain(
-      'class="library-track-row__title library-track-row__review-text"',
-    );
-    expect(source).toContain(
-      'class="library-track-row__subtitle library-track-row__review-text"',
-    );
-    expect(copyRule).toContain('flex: 1 1 0;');
-    expect(copyRule).toContain('max-width: 100%;');
-    expect(copyRule).toContain('overflow: hidden;');
-    expect(reviewTextRule).toContain('display: block;');
-    expect(reviewTextRule).toContain('overflow: hidden;');
-    expect(reviewTextRule).toContain('text-overflow: ellipsis;');
-    expect(reviewTextRule).toContain('white-space: nowrap;');
+  it('stays scoped to browse tables rather than import review rows', () => {
+    expect(source).toContain("['library', 'playlist', 'album', 'artist']");
+    expect(source).not.toContain("props.variant === 'review'");
+    expect(source).not.toContain('isReviewVariant');
+    expect(source).not.toContain('<slot name="row-leading"');
+    expect(source).not.toContain('<slot name="row-trailing"');
+    expect(source).not.toContain('library-track-row--review');
   });
 });
 

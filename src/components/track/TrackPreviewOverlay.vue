@@ -668,8 +668,8 @@ onUnmounted(() => setKeyboardListener(false));
   margin: 0;
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -682,11 +682,11 @@ onUnmounted(() => setKeyboardListener(false));
   min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-2xl);
-  font-weight: var(--ui-font-weight-bold);
+  font-size: var(--ui-type-display-size);
+  font-weight: var(--ui-type-display-weight);
   /* Display leading is too tight: the clamp would clip the last line's
      hover underline. */
-  line-height: var(--ui-line-height-title);
+  line-height: var(--ui-type-title-line-height);
 }
 
 /* Plain titles clamp like UiTextButton's clamp overflow. */

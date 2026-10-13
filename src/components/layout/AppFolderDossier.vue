@@ -106,8 +106,8 @@ defineProps({
 .app-folder-dossier__marker {
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-utility);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .app-folder-dossier__title {
@@ -115,9 +115,9 @@ defineProps({
   margin: 0;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-display);
-  font-size: var(--ui-font-size-2xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-display);
+  font-size: var(--ui-type-display-size);
+  font-weight: var(--ui-type-display-weight);
+  line-height: var(--ui-type-display-line-height);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -131,9 +131,9 @@ defineProps({
   margin: 0;
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-utility);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 /* Separators are presentation only; assistive tech reads plain values. */
@@ -158,8 +158,8 @@ defineProps({
   max-width: 72ch;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

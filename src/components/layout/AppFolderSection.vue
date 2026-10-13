@@ -58,18 +58,18 @@ const titleId = `app-folder-section-${useId()}`;
   margin: 0;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-display);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
   overflow-wrap: anywhere;
 }
 
 .app-folder-section__meta {
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-utility);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
   font-variant-numeric: tabular-nums;
-  line-height: var(--ui-line-height-label);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .app-folder-section__actions {

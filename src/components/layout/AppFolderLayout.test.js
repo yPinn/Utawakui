@@ -30,8 +30,8 @@ describe('AppFolderLayout', () => {
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain('role="tablist"');
     expect(html).not.toContain('role="tab"');
-    expect(html.indexOf('曲庫')).toBeLessThan(html.indexOf('演唱'));
-    expect(html.indexOf('演唱')).toBeLessThan(html.indexOf('顯示'));
+    expect(html.indexOf('曲庫')).toBeLessThan(html.indexOf('演唱工具'));
+    expect(html.indexOf('演唱工具')).toBeLessThan(html.indexOf('畫面輸出'));
     expect(html).toContain('Feature body');
     for (const destination of ['library', 'performance', 'display']) {
       expect(html).toContain(`data-folder-destination="${destination}"`);

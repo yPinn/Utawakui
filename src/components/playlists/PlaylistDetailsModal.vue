@@ -124,6 +124,7 @@ function cancel() {
           class="playlist-details__name-field"
           label="名稱"
           label-hidden
+          text-role="title"
           :maxlength="200"
           :disabled="saving"
           @keydown.enter="save"
@@ -136,6 +137,8 @@ function cancel() {
           class="playlist-details__description-field"
           label="說明"
           label-hidden
+          fill
+          resize="none"
           :rows="3"
           :maxlength="500"
           :disabled="saving"
@@ -235,39 +238,19 @@ function cancel() {
   margin-inline-end: auto;
 }
 
-/* Title tier — DESIGN.md names active item titles explicitly. */
-.playlist-details__name-field :deep(.ui-text-field) {
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
-}
-
-/* The right-hand lane shares the artwork's 160px visual baseline. The grid
-   track already owns the remaining height; carry it through UiField's wrappers
-   so the visible textarea — not just its parent row — reaches that baseline. */
+/* The right-hand lane shares the artwork's 160px visual baseline. */
 .playlist-details__description-field {
   min-block-size: 0;
   block-size: 100%;
-}
-
-.playlist-details__description-field :deep(.ui-field__main),
-.playlist-details__description-field :deep(.ui-field__control),
-.playlist-details__description-field :deep(.ui-textarea) {
-  min-block-size: 0;
-  block-size: 100%;
-}
-
-.playlist-details__description-field :deep(.ui-textarea) {
-  resize: none;
 }
 
 .playlist-details__readonly-description {
   margin: 0;
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-line-height);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -284,10 +267,9 @@ function cancel() {
     grid-template-rows: auto auto;
   }
 
-  .playlist-details__description-field,
-  .playlist-details__description-field :deep(.ui-field__main),
-  .playlist-details__description-field :deep(.ui-field__control),
-  .playlist-details__description-field :deep(.ui-textarea) {
+  .playlist-details__description-field {
+    --ui-textarea-fill-block-size: auto;
+
     block-size: auto;
   }
 }

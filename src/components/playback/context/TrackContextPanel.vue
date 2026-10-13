@@ -104,7 +104,9 @@ const currentTrackFacts = computed(() => {
       heading="目前歌曲"
       appearance="contained"
     >
-      <UiHint>目前沒有播放中的歌曲</UiHint>
+      <UiHint class="studio-context-inspector__hint">
+        目前沒有播放中的歌曲
+      </UiHint>
     </AppRightDockSection>
 
     <TrackLyricsPreview
@@ -167,9 +169,9 @@ const currentTrackFacts = computed(() => {
   align-items: center;
   padding-inline-start: var(--ui-space-2);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   -webkit-user-select: none;
   user-select: none;
 }
@@ -206,8 +208,8 @@ const currentTrackFacts = computed(() => {
 
 .studio-context-inspector__details dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   -webkit-user-select: none;
   user-select: none;
 }
@@ -215,14 +217,14 @@ const currentTrackFacts = computed(() => {
 .studio-context-inspector__details dd {
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   text-align: end;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.studio-context-inspector__section :deep(.ui-hint),
+.studio-context-inspector__hint,
 .studio-context-inspector__details dd {
   -webkit-user-select: none;
   user-select: none;

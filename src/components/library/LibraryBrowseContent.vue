@@ -280,14 +280,10 @@ const albumSummary = computed(() =>
     ? deriveAlbumSummary(playlistTracks.value)
     : { artist: undefined, releaseYear: undefined },
 );
-// Album and artist pages are artist-aware surfaces, so they request the index.
-watch(
-  mode,
-  (current) => {
-    if (current === 'album' || current === 'artist') ensureArtistIndex();
-  },
-  { immediate: true },
-);
+// Every Library track list renders artist credits. Load the canonical index for
+// all modes so those credits do not silently degrade to plain text outside an
+// album or artist page.
+ensureArtistIndex();
 const headerFields = computed(() => {
   const count = headerTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);

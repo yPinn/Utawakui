@@ -304,9 +304,9 @@ watch(titleError, (error) => {
 .track-metadata__section-title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .track-metadata__fields {

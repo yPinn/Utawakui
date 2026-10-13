@@ -352,6 +352,7 @@ function handleSeparationPresetChange(presetId) {
             <UiButton
               v-for="stop in row.stops"
               :key="stop.value"
+              class="player-tools__stop-button"
               :active="stop.active"
               :disabled="stop.disabled"
               @click="stop.onSelect"
@@ -456,9 +457,9 @@ function handleSeparationPresetChange(presetId) {
   align-items: center;
   gap: var(--ui-space-1);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .player-tools__metro-toggle {
@@ -474,9 +475,9 @@ function handleSeparationPresetChange(presetId) {
   background: var(--ui-color-surface);
   color: var(--ui-color-text);
   font: inherit;
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   animation: player-tools-pulse var(--ui-motion-duration-fast)
@@ -496,9 +497,9 @@ function handleSeparationPresetChange(presetId) {
 
 .player-tools__metro-toggle small {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .player-tools__beat-row {
@@ -537,8 +538,8 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__description {
   display: block;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .player-tools__stepper-controls {
@@ -567,7 +568,7 @@ function handleSeparationPresetChange(presetId) {
   width: 100%;
   justify-content: center;
   min-height: var(--ui-player-tools-meter-control-block-size);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-type-body-size);
   transition: transform var(--ui-motion-duration-fast)
     var(--ui-motion-easing-standard);
 }
@@ -587,7 +588,7 @@ function handleSeparationPresetChange(presetId) {
 
 .player-tools__value {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-type-body-size);
   font-weight: var(--ui-font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
@@ -625,7 +626,7 @@ function handleSeparationPresetChange(presetId) {
   margin-bottom: var(--ui-space-2);
 }
 
-.player-tools__stop-row :deep(.ui-btn) {
+.player-tools__stop-button {
   justify-content: center;
 }
 

@@ -75,7 +75,7 @@ const {
   tooltipId: localTracksTooltipId,
   triggerProps: localTracksTooltipTriggerProps,
 } = useTooltip({
-  text: '本機曲目',
+  text: '本機檔案',
   placement: 'end',
   disabled: computed(() => !props.compact),
   describedBy: false,
@@ -507,7 +507,7 @@ function startDrag(playlist, event) {
         v-bind="localTracksTooltipTriggerProps"
         type="button"
         class="playlist-sidebar__item"
-        aria-label="本機曲目"
+        aria-label="本機檔案"
         :class="{
           'playlist-sidebar__item--active': isLibraryViewActive('local'),
         }"
@@ -526,11 +526,11 @@ function startDrag(playlist, event) {
           <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
         </span>
         <span class="playlist-sidebar__info">
-          <span class="playlist-sidebar__label">本機曲目</span>
+          <span class="playlist-sidebar__label">本機檔案</span>
         </span>
         <UiTooltipSurface
           :open="localTracksTooltipOpen"
-          text="本機曲目"
+          text="本機檔案"
           :tooltip-id="localTracksTooltipId"
           :position="localTracksTooltipPosition"
           placement="end"
@@ -800,8 +800,8 @@ function startDrag(playlist, event) {
   background: var(--ui-color-surface);
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .playlist-sidebar__search:focus-within {
@@ -900,8 +900,8 @@ function startDrag(playlist, event) {
     var(--ui-color-text)
   );
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
   overflow: hidden;
 }
 
@@ -946,8 +946,8 @@ function startDrag(playlist, event) {
   margin: 0;
   padding: var(--ui-space-1) var(--ui-sidebar-row-padding-inline);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 /* Same compact-sidebar collapse as PlaylistSidebarRow.vue's own

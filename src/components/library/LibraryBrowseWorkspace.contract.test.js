@@ -211,6 +211,13 @@ describe('Library browse workspace composition', () => {
     expect(viewSource).toContain('@play-album="toggleSupportingAlbumPlayback"');
   });
 
+  it('loads artist destinations for every Library table mode, not only artist pages', () => {
+    expect(viewSource).toContain('ensureArtistIndex();');
+    expect(viewSource).not.toMatch(
+      /if \(current === 'album' \|\| current === 'artist'\) ensureArtistIndex\(\)/u,
+    );
+  });
+
   it('uses the bounded field variant only for loading, error, and empty states', () => {
     expect(viewSource).toContain('const contentFieldVariant = computed(');
     expect(viewSource).toContain(':variant="contentFieldVariant"');

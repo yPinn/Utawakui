@@ -253,9 +253,9 @@ function handleMenuAction(value) {
 }
 
 .library-collection-header__photo-label {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 /* An empty avatar keeps the invitation visible as one centered add glyph, so

@@ -103,9 +103,9 @@ onMounted(() => titleElement.value?.focus());
 
 .app-utility-page__title {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
   text-wrap: balance;
 }
 
@@ -116,8 +116,8 @@ onMounted(() => titleElement.value?.focus());
 .app-utility-page__description {
   max-width: 70ch;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .app-utility-page__body {

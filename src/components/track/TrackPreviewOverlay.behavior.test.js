@@ -365,16 +365,16 @@ describe('TrackPreviewOverlay', () => {
   it('tiers cover, display title and a small artist line', () => {
     const styles = source.slice(source.indexOf('<style scoped>'));
     expect(styles).toMatch(
-      /\.track-preview__title\s*\{[^}]*font-size:\s*var\(--ui-font-size-2xl\);/u,
+      /\.track-preview__title\s*\{[^}]*font-size:\s*var\(--ui-type-display-size\);/u,
     );
     expect(styles).toMatch(
-      /\.track-preview__meta\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);/u,
+      /\.track-preview__meta\s*\{[^}]*font-size:\s*var\(--ui-type-caption-size\);/u,
     );
     // Display leading clips the clamped title's last-line hover underline.
     expect(styles).toMatch(
-      /\.track-preview__title\s*\{[^}]*line-height:\s*var\(--ui-line-height-title\);/u,
+      /\.track-preview__title\s*\{[^}]*line-height:\s*var\(--ui-type-title-line-height\);/u,
     );
-    expect(styles).not.toContain('--ui-line-height-display');
+    expect(styles).not.toContain('--ui-type-display-line-height');
     // Neighbours sit one named tier below the current cover.
     expect(styles).toContain('--track-preview-peek-scale: 0.7;');
     expect(styles).toMatch(

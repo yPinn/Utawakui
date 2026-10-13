@@ -60,9 +60,9 @@ function collapseDock() {
 .app-right-dock-header h2 {
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
   -webkit-user-select: none;
@@ -72,9 +72,9 @@ function collapseDock() {
 .app-right-dock-header p {
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
   -webkit-user-select: text;

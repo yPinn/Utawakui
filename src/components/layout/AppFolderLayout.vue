@@ -200,9 +200,9 @@ function navigate(destinationId, event) {
   background: transparent;
   color: var(--ui-folder-tab-foreground);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   cursor: pointer;
   transition: color var(--ui-motion-duration-feedback)
     var(--ui-motion-easing-standard);

@@ -66,9 +66,9 @@ const body = computed(() => pendingFeature.value?.body || []);
 .feature-notice__summary {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .feature-notice__list {
@@ -77,9 +77,9 @@ const body = computed(() => pendingFeature.value?.body || []);
   margin: 0;
   padding-left: var(--ui-space-4);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .feature-notice__item {

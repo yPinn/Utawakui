@@ -206,17 +206,17 @@ function handleRadioKeydown(event, index) {
 .artwork-results__title {
   flex: 1 1 auto;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .artwork-results__artist,
 .artwork-results__meta,
 .artwork-results__reason {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .artwork-results__reason {

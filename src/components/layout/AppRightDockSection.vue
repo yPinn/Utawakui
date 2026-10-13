@@ -63,9 +63,9 @@ const headingId = `app-right-dock-section-heading-${useId()}`;
   min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   -webkit-user-select: none;
   user-select: none;
 }

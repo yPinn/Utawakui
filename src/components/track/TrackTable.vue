@@ -12,7 +12,6 @@ import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
 import TrackArtistCredits from './TrackArtistCredits.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
-import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
@@ -23,8 +22,6 @@ const COLUMN_TRACKS = Object.freeze({
   'context-primary': 'minmax(7.5rem, 1fr)',
   duration: '4.5rem',
   actions: 'var(--ui-icon-button-size-md)',
-  selection: 'var(--ui-control-height)',
-  status: '5rem',
 });
 
 const props = defineProps({
@@ -33,13 +30,12 @@ const props = defineProps({
     type: String,
     default: 'library',
     validator: (value) =>
-      ['library', 'playlist', 'album', 'artist', 'review'].includes(value),
+      ['library', 'playlist', 'album', 'artist'].includes(value),
   },
   label: { type: String, default: '' },
   identityLabel: { type: String, default: '曲目' },
   contextLabel: { type: String, default: '新增日期' },
   durationLabel: { type: String, default: '時長' },
-  statusLabel: { type: String, default: '狀態' },
   sort: {
     type: Object,
     default: () => ({ key: null, direction: 'asc' }),
@@ -74,25 +70,20 @@ const emit = defineEmits([
   'trackDragEnd',
 ]);
 
-const isReviewVariant = computed(() => props.variant === 'review');
 const hasReorderColumn = computed(() => props.variant === 'playlist');
 const showsArtwork = computed(
   () => props.variant !== 'album' && props.density !== 'compact',
 );
 const showsArtist = computed(() => props.variant !== 'artist');
 
-const columnRoles = computed(() =>
-  isReviewVariant.value
-    ? ['selection', 'identity', 'duration', 'status']
-    : [
-        ...(hasReorderColumn.value ? ['reorder'] : []),
-        'index',
-        'identity',
-        'context-primary',
-        'duration',
-        'actions',
-      ],
-);
+const columnRoles = computed(() => [
+  ...(hasReorderColumn.value ? ['reorder'] : []),
+  'index',
+  'identity',
+  'context-primary',
+  'duration',
+  'actions',
+]);
 
 function templateFor(roles) {
   return roles.map((role) => COLUMN_TRACKS[role]).join(' ');
@@ -115,7 +106,6 @@ const resolvedLabel = computed(() => {
   if (props.variant === 'album') return '專輯曲目';
   if (props.variant === 'artist') return '藝人曲目';
   if (props.variant === 'playlist') return '播放清單曲目';
-  if (props.variant === 'review') return '匯入曲目確認';
   return '曲庫曲目';
 });
 
@@ -137,16 +127,11 @@ function sortLabel(key, label) {
   >
     <div class="library-track-table__header" :style="gridStyle">
       <span
-        v-if="isReviewVariant"
-        data-track-column="selection"
-        aria-label="選取"
-      ></span>
-      <span
         v-if="hasReorderColumn"
         data-track-column="reorder"
         aria-label="排序"
       ></span>
-      <span v-if="!isReviewVariant" data-track-column="index">#</span>
+      <span data-track-column="index">#</span>
       <span data-track-column="identity">
         <button
           v-if="sortable"
@@ -175,7 +160,6 @@ function sortLabel(key, label) {
         <span v-else>{{ identityLabel }}</span>
       </span>
       <span
-        v-if="!isReviewVariant"
         data-track-column="context-primary"
         data-column-priority="secondary"
       >
@@ -232,10 +216,7 @@ function sortLabel(key, label) {
         </button>
         <span v-else>{{ durationLabel }}</span>
       </span>
-      <span v-if="isReviewVariant" data-track-column="status">
-        {{ statusLabel }}
-      </span>
-      <span v-else data-track-column="actions" aria-label="操作"></span>
+      <span data-track-column="actions" aria-label="操作"></span>
     </div>
 
     <ul
@@ -244,13 +225,12 @@ function sortLabel(key, label) {
       :aria-label="resolvedLabel"
     >
       <li
-        v-for="{ track, visibleIndex, addedAt, source } in entries"
+        v-for="{ track, visibleIndex, addedAt } in entries"
         :key="track.id"
         class="library-track-row"
         :class="{
           'library-track-row--selected': selectedTrackId === track.id,
           'library-track-row--current': currentTrackId === track.id,
-          'library-track-row--review': isReviewVariant,
           'library-track-row--dragging': draggingTrackId === track.id,
           'library-track-row--drop-before':
             dropTargetTrackId === track.id && dropPosition === 'before',
@@ -260,13 +240,12 @@ function sortLabel(key, label) {
         :style="gridStyle"
         role="listitem"
         :aria-current="currentTrackId === track.id ? 'true' : undefined"
-        @contextmenu="!isReviewVariant && emit('openMenu', track, $event)"
+        @contextmenu="emit('openMenu', track, $event)"
         @dragover="canDrag && emit('trackDragOver', track, $event)"
         @dragleave="canDrag && emit('trackDragLeave', track, $event)"
         @drop="canDrag && emit('trackDrop', track, $event)"
       >
         <button
-          v-if="!isReviewVariant"
           type="button"
           class="library-track-row__action"
           :aria-label="`選取：${track.title}`"
@@ -303,15 +282,7 @@ function sortLabel(key, label) {
           />
         </span>
 
-        <span
-          v-if="isReviewVariant"
-          class="library-track-row__selection"
-          data-track-column="selection"
-        >
-          <slot name="row-leading" :track="track" :source="source || track" />
-        </span>
-
-        <span v-else class="library-track-row__index" data-track-column="index">
+        <span class="library-track-row__index" data-track-column="index">
           {{ visibleIndex + 1 }}
         </span>
 
@@ -324,34 +295,20 @@ function sortLabel(key, label) {
           />
           <span class="library-track-row__copy" :lang="trackContentLang(track)">
             <UiTextButton
-              v-if="!isReviewVariant && jumpableTrackIds.has(track.id)"
+              v-if="jumpableTrackIds.has(track.id)"
               class="library-track-row__title library-track-row__title--destination"
               :text="track.title"
               :aria-label="`前往專輯：${track.title}`"
               @click="emit('titleClick', track)"
               @dblclick.stop
             />
-            <UiOverflowTooltip
-              v-else-if="isReviewVariant"
-              class="library-track-row__title library-track-row__review-text"
-              :text="track.title"
-            >
-              {{ track.title }}
-            </UiOverflowTooltip>
             <UiMarqueeText
               v-else
               class="library-track-row__title"
               :text="track.title"
             />
-            <UiOverflowTooltip
-              v-if="track.artist && isReviewVariant"
-              class="library-track-row__subtitle library-track-row__review-text"
-              :text="track.artist"
-            >
-              {{ track.artist }}
-            </UiOverflowTooltip>
             <TrackArtistCredits
-              v-else-if="track.artist && showsArtist"
+              v-if="track.artist && showsArtist"
               class="library-track-row__subtitle"
               :track="track"
             />
@@ -359,7 +316,6 @@ function sortLabel(key, label) {
         </span>
 
         <span
-          v-if="!isReviewVariant"
           class="library-track-row__context"
           data-track-column="context-primary"
           data-column-priority="secondary"
@@ -373,18 +329,7 @@ function sortLabel(key, label) {
         >
           {{ formatDuration(track.duration) }}
         </span>
-        <span
-          v-if="isReviewVariant"
-          class="library-track-row__status"
-          data-track-column="status"
-        >
-          <slot name="row-trailing" :track="track" :source="source || track" />
-        </span>
-        <span
-          v-else
-          class="library-track-row__actions"
-          data-track-column="actions"
-        >
+        <span class="library-track-row__actions" data-track-column="actions">
           <UiIconButton
             class="library-track-row__more"
             :icon="Ellipsis"
@@ -408,10 +353,6 @@ function sortLabel(key, label) {
   -webkit-user-select: none;
 }
 
-.library-track-table[data-track-table-variant='review'] {
-  margin-block-start: 0;
-}
-
 .library-track-table__header,
 .library-track-row {
   display: grid;
@@ -432,14 +373,9 @@ function sortLabel(key, label) {
   color: var(--ui-color-text-muted);
   border-bottom: var(--ui-border-width) solid
     var(--ui-folder-ledger-rule-strong, var(--ui-color-border));
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-}
-
-.library-track-table[data-track-table-variant='review']
-  .library-track-table__header {
-  background: var(--ui-color-surface-raised);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .library-track-table__sort {
@@ -497,8 +433,8 @@ function sortLabel(key, label) {
   border-bottom: var(--ui-border-width) solid
     var(--ui-folder-ledger-rule, var(--ui-color-border));
   border-radius: 0;
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .library-track-row__action {
@@ -558,21 +494,17 @@ function sortLabel(key, label) {
 }
 
 .library-track-row__reorder-cell,
-.library-track-row__selection,
 .library-track-row__index,
 .library-track-row__identity,
 .library-track-row__context,
 .library-track-row__duration,
-.library-track-row__actions,
-.library-track-row__status {
+.library-track-row__actions {
   position: relative;
   z-index: var(--ui-layer-raised);
 }
 
 .library-track-row__reorder-cell,
-.library-track-row__selection,
-.library-track-row__actions,
-.library-track-row__status {
+.library-track-row__actions {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -596,20 +528,6 @@ function sortLabel(key, label) {
   min-width: 0;
   display: flex;
   flex-direction: column;
-}
-
-.library-track-row--review .library-track-row__copy {
-  flex: 1 1 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.library-track-row--review :deep(.library-track-row__review-text) {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .library-track-row__title {
@@ -647,17 +565,15 @@ function sortLabel(key, label) {
 .library-track-row__duration {
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 [data-track-column='reorder'],
-[data-track-column='selection'],
 [data-track-column='index'],
-[data-track-column='actions'],
-[data-track-column='status'] {
+[data-track-column='actions'] {
   justify-self: center;
   text-align: center;
 }

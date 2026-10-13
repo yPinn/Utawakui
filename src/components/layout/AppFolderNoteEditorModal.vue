@@ -96,6 +96,7 @@ function cancel() {
           class="app-folder-note-editor__title-field"
           label="標題"
           label-hidden
+          text-role="title"
           placeholder="標題（選填）"
           :maxlength="NOTE_TITLE_MAX_LENGTH"
           :disabled="saving"
@@ -107,6 +108,8 @@ function cancel() {
           class="app-folder-note-editor__text-field"
           label="內文"
           label-hidden
+          fill
+          resize="none"
           placeholder="內文"
           :rows="3"
           :maxlength="NOTE_TEXT_MAX_LENGTH"
@@ -175,24 +178,10 @@ function cancel() {
   gap: var(--ui-modal-section-gap);
 }
 
-.app-folder-note-editor__title-field :deep(.ui-text-field) {
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
-}
-
-/* Carry the remaining track height through UiField's wrappers so the visible
-   textarea reaches the preview's bottom edge. */
-.app-folder-note-editor__text-field,
-.app-folder-note-editor__text-field :deep(.ui-field__main),
-.app-folder-note-editor__text-field :deep(.ui-field__control),
-.app-folder-note-editor__text-field :deep(.ui-textarea) {
+/* Fill the remaining track so the text aligns with the preview's bottom edge. */
+.app-folder-note-editor__text-field {
   min-block-size: 0;
   block-size: 100%;
-}
-
-.app-folder-note-editor__text-field :deep(.ui-textarea) {
-  resize: none;
 }
 
 /* Start of the footer row, pushing the actions to the end. */
@@ -211,10 +200,9 @@ function cancel() {
     grid-template-rows: auto auto;
   }
 
-  .app-folder-note-editor__text-field,
-  .app-folder-note-editor__text-field :deep(.ui-field__main),
-  .app-folder-note-editor__text-field :deep(.ui-field__control),
-  .app-folder-note-editor__text-field :deep(.ui-textarea) {
+  .app-folder-note-editor__text-field {
+    --ui-textarea-fill-block-size: auto;
+
     block-size: auto;
   }
 }

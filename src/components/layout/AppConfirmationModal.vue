@@ -65,16 +65,16 @@ const title = computed(() => request.value?.title || '確認操作');
 .app-confirmation__subject {
   min-inline-size: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
   overflow-wrap: anywhere;
 }
 
 .app-confirmation__meta {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
 }
 
@@ -86,8 +86,8 @@ const title = computed(() => request.value?.title || '確認操作');
 .app-confirmation__message,
 .app-confirmation__detail {
   margin: 0;
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .app-confirmation__message {

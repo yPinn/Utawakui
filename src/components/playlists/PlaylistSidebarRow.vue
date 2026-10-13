@@ -332,8 +332,8 @@ function toggleFromArtwork(event) {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 /* Same title-only coral cue as UiTrackRow/QueueTrackButton's --current —
@@ -348,9 +348,9 @@ function toggleFromArtwork(event) {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 /* Compact sidebar (see AppPlaylistSidebar.vue's container-type: inline-size

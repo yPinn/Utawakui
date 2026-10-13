@@ -210,7 +210,7 @@ describe('TrackContextPanel', () => {
     expect(source).toContain('<template #identity>');
     expect(source).toContain('overflow="ellipsis"');
     expect(source).toMatch(
-      /\.studio-context-inspector__source-identity\s*\{[^}]*min-block-size:\s*var\(--ui-control-height\);[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*color:\s*var\(--ui-color-text\);[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+      /\.studio-context-inspector__source-identity\s*\{[^}]*min-block-size:\s*var\(--ui-control-height\);[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*color:\s*var\(--ui-color-text\);[^}]*font-size:\s*var\(--ui-type-label-size\);[^}]*font-weight:\s*var\(--ui-type-label-weight\);[^}]*line-height:\s*var\(--ui-type-label-line-height\);/su,
     );
     expect(source).toMatch(
       /\.studio-context-inspector__source-identity\s*\{[^}]*padding-inline-start:\s*var\(--ui-space-2\);/su,

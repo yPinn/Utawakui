@@ -65,7 +65,7 @@ describe('Library Token v2 surface cutover', () => {
       for (const token of forbidden) expect(source).not.toContain(token);
     }
 
-    expect(dossierSource).toContain('var(--ui-font-weight-bold)');
+    expect(dossierSource).toContain('var(--ui-type-display-weight)');
     expect(dossierSource).toContain('var(--ui-font-weight-semibold)');
     expect(headerSource).toContain('var(--ui-motion-duration-fast)');
     expect(headerSource).toContain('var(--ui-motion-easing-standard)');

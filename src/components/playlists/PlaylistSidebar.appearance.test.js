@@ -67,7 +67,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
       'class="playlist-sidebar__fixed-navigation"',
     );
     const allTracksAt = source.indexOf('aria-label="全部曲目"');
-    const localTracksAt = source.indexOf('aria-label="本機曲目"');
+    const localTracksAt = source.indexOf('aria-label="本機檔案"');
     const scrollAt = source.indexOf('<UiScrollLayout');
     const collectionsAt = source.indexOf(
       'v-for="playlist in visiblePlaylistItems"',
@@ -78,6 +78,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(allTracksAt).toBeLessThan(localTracksAt);
     expect(localTracksAt).toBeLessThan(scrollAt);
     expect(source).not.toContain('匯入曲目');
+    expect(source).not.toContain('本機曲目');
     expect(source).not.toContain('ArrowDownToLine');
     expect(scrollAt).toBeLessThan(collectionsAt);
     for (const [layoutRole, featureRole] of [

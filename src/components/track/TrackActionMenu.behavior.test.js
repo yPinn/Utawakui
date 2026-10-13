@@ -180,7 +180,7 @@ describe('TrackActionMenu behavior model', () => {
     await nextTick();
     const submenu = menuSurfaces()[1];
 
-    expect(submenu.props.style.left).toBe('36px');
+    expect(submenu.props.style.left).toBe('32px');
     expect(submenu.props.style.top).toBe('78px');
 
     const rootMenuViewport = findAll(
@@ -236,7 +236,7 @@ describe('TrackActionMenu behavior model', () => {
     const submenu = menuSurfaces()[1];
 
     expect(submenu.props.style.left).toBe('8px');
-    expect(submenu.props.style.width).toBe('184px');
+    expect(submenu.props.style.width).toBe('180px');
     expect(submenu.props.style.top).toBe('78px');
     mounted.app.unmount();
   });
@@ -355,7 +355,7 @@ describe('TrackActionMenu behavior model', () => {
 
   it('uses the shared spacing token between search and menu action groups', () => {
     expect(trackActionMenuSource).toMatch(
-      /\.track-action-menu__search\s*\{[^}]*margin-block-end:\s*var\(--ui-space-1\)/s,
+      /\.track-action-menu__search\s*\{[^}]*margin-block-end:\s*var\(--ui-space-2\)/s,
     );
     expect(trackActionMenuSource).not.toMatch(
       /\.track-action-menu__(?:search|empty)\s*\{[^}]*(?:margin|gap|padding)[^}]*\b\d+px\b/s,

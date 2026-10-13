@@ -132,18 +132,18 @@ const modalTitle = computed(() =>
 .window-close-decision__question,
 .window-close-decision__detail {
   margin: 0;
-  line-height: var(--ui-line-height-body);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .window-close-decision__question {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-type-body-size);
   font-weight: var(--ui-font-weight-semibold);
 }
 
 .window-close-decision__detail {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
 }
 
 .window-close-decision__actions {

@@ -101,10 +101,10 @@ describe('AppRightDockHeader', () => {
       /\.app-right-dock-header__identity\s*\{[^}]*flex:\s*1 1 auto;[^}]*min-width:\s*0;[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-side-panel-list-gap\);/su,
     );
     expect(source).toMatch(
-      /\.app-right-dock-header h2\s*\{[^}]*font-size:\s*var\(--ui-font-size-lg\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,
+      /\.app-right-dock-header h2\s*\{[^}]*font-size:\s*var\(--ui-type-title-size\);[^}]*font-weight:\s*var\(--ui-type-title-weight\);[^}]*line-height:\s*var\(--ui-type-title-line-height\);/su,
     );
     expect(source).toMatch(
-      /\.app-right-dock-header p\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*line-height:\s*var\(--ui-line-height-caption\);/su,
+      /\.app-right-dock-header p\s*\{[^}]*font-size:\s*var\(--ui-type-caption-size\);[^}]*font-weight:\s*var\(--ui-type-caption-weight\);[^}]*line-height:\s*var\(--ui-type-caption-line-height\);/su,
     );
     expect(source).not.toMatch(/font-size:\s*(?:\d|\.)+(?:px|rem)/u);
     expect(source).not.toMatch(

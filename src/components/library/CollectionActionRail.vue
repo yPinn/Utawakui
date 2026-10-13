@@ -127,6 +127,7 @@ function selectMenuAction(value) {
     <div class="collection-action-rail__tools">
       <UiSearchBox
         :model-value="searchQuery"
+        class="collection-action-rail__search"
         @update:model-value="emit('update:searchQuery', $event)"
       />
     </div>
@@ -174,7 +175,7 @@ function selectMenuAction(value) {
   }
 
   .collection-action-rail__tools,
-  .collection-action-rail__tools :deep(.ui-search-box) {
+  .collection-action-rail__search {
     width: 100%;
   }
 }

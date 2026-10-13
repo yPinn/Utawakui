@@ -47,20 +47,22 @@ describe('PlaylistDetailsModal component contract', () => {
 
   it('keeps a clear modal title, editable name and description hierarchy', () => {
     expect(modalSource).toMatch(
-      /\.playlist-details__name-field :deep\(\.ui-text-field\)\s*\{[\s\S]*?font-size:\s*var\(--ui-font-size-lg\);[\s\S]*?font-weight:\s*var\(--ui-font-weight-semibold\);[\s\S]*?line-height:\s*var\(--ui-line-height-title\);/u,
+      /<UiTextField[\s\S]*?text-role="title"[\s\S]*?\/>/u,
     );
+    expect(modalSource).not.toContain(':deep(.ui-text-field)');
     expect(modalSource).toMatch(
-      /\.playlist-details__readonly-description\s*\{[\s\S]*?font-size:\s*var\(--ui-font-size-sm\);[\s\S]*?font-weight:\s*var\(--ui-font-weight-regular\);[\s\S]*?line-height:\s*var\(--ui-line-height-body\);/u,
+      /\.playlist-details__readonly-description\s*\{[\s\S]*?font-size:\s*var\(--ui-type-body-compact-size\);[\s\S]*?font-weight:\s*var\(--ui-type-body-compact-weight\);[\s\S]*?line-height:\s*var\(--ui-type-body-line-height\);/u,
     );
     expect(modalSource).toMatch(
       /\.playlist-details__description-field\s*\{[\s\S]*?block-size:\s*100%;/u,
     );
     expect(modalSource).toMatch(
-      /\.playlist-details__description-field :deep\(\.ui-field__main\),[\s\S]*?\.playlist-details__description-field :deep\(\.ui-field__control\),[\s\S]*?\.playlist-details__description-field :deep\(\.ui-textarea\)\s*\{[\s\S]*?block-size:\s*100%;/u,
+      /<UiTextarea[\s\S]*?\sfill[\s\S]*?resize="none"/u,
     );
-    expect(modalSource).toMatch(
-      /\.playlist-details__description-field :deep\(\.ui-textarea\)\s*\{[\s\S]*?resize:\s*none;/u,
-    );
+    expect(modalSource).not.toContain(':deep(.ui-field__main)');
+    expect(modalSource).not.toContain(':deep(.ui-field__control)');
+    expect(modalSource).not.toContain(':deep(.ui-textarea)');
+    expect(modalSource).toContain('--ui-textarea-fill-block-size: auto');
   });
 
   it('preserves draft save semantics and album-specific description behavior', () => {

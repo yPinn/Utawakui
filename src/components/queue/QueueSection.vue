@@ -121,6 +121,8 @@ function openTrackMenu(track, payload) {
 
 <style scoped>
 .queue-section {
+  --queue-source-link-optical-offset: 0.18em;
+
   display: grid;
   gap: var(--ui-side-panel-content-gap);
   min-width: 0;
@@ -140,9 +142,9 @@ function openTrackMenu(track, payload) {
   margin: 0;
   min-width: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 /* Static label, not part of the CTA — must not shrink/truncate before the
@@ -165,8 +167,8 @@ function openTrackMenu(track, payload) {
 }
 
 .queue-section__source-link :deep(.ui-text-btn__text) {
-  padding-block-end: 0.18em;
-  margin-block-end: -0.18em;
+  padding-block-end: var(--queue-source-link-optical-offset);
+  margin-block-end: calc(-1 * var(--queue-source-link-optical-offset));
 }
 
 .queue-section__list {

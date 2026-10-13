@@ -62,9 +62,9 @@ defineProps({
   overflow: hidden;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-display);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-title-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
   /* Centres the visible ink on the Play button, not the line box. */

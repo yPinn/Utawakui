@@ -120,20 +120,20 @@ describe('QueuePanel shared Dock content', () => {
       expect(queueSource).not.toContain('var(--ui-radius)');
     }
     expect(sectionSource).toMatch(
-      /\.queue-section__title\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+      /\.queue-section__title\s*\{[^}]*font-size:\s*var\(--ui-type-label-size\);[^}]*font-weight:\s*var\(--ui-type-label-weight\);[^}]*line-height:\s*var\(--ui-type-label-line-height\);/su,
     );
     expect(trackRowSource).toMatch(
-      /\.ui-track\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);/su,
+      /\.ui-track\s*\{[^}]*font-size:\s*var\(--ui-type-body-compact-size\);/su,
     );
     expect(trackRowSource).toContain(
       'min-height: var(--ui-track-row-min-height)',
     );
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
     expect(trackRowSource).toMatch(
-      /:deep\(\.ui-track__title\)\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+      /:deep\(\.ui-track__title\)\s*\{[^}]*font-weight:\s*var\(--ui-type-label-weight\);[^}]*line-height:\s*var\(--ui-type-label-line-height\);/su,
     );
     expect(trackRowSource).toMatch(
-      /\.ui-track__artist\s*\{[^}]*color:\s*var\(--ui-color-text-muted\);[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*line-height:\s*var\(--ui-line-height-caption\);/su,
+      /\.ui-track__artist\s*\{[^}]*color:\s*var\(--ui-color-text-muted\);[^}]*font-weight:\s*var\(--ui-type-caption-weight\);[^}]*line-height:\s*var\(--ui-type-caption-line-height\);/su,
     );
     expect(trackRowSource).toContain('ui-track--interactive');
     expect(trackRowSource).toContain('ui-track--current');
@@ -204,14 +204,17 @@ describe('QueuePanel shared Dock content', () => {
     expect(sectionSource).toMatch(
       /\.queue-section__title-text--destination\s*\{[^}]*overflow:\s*visible;/su,
     );
+    expect(sectionSource).toContain(
+      '--queue-source-link-optical-offset: 0.18em',
+    );
     expect(sectionSource).toMatch(
-      /\.queue-section__source-link :deep\(\.ui-text-btn__text\)\s*\{[^}]*padding-block-end:\s*0\.18em;[^}]*margin-block-end:\s*-0\.18em;/su,
+      /\.queue-section__source-link :deep\(\.ui-text-btn__text\)\s*\{[^}]*padding-block-end:\s*var\(--queue-source-link-optical-offset\);[^}]*margin-block-end:\s*calc\(-1 \* var\(--queue-source-link-optical-offset\)\);/su,
     );
     expect(sectionSource).not.toMatch(
       /\.queue-section__source-link :deep\(\.ui-text-btn__text\)\s*\{[^}]*text-decoration:/su,
     );
     expect(sectionCss).toMatch(
-      /\.queue-section__source-link\[data-v-right-dock-test-0\]\s+\.ui-text-btn__text\s*\{[^}]*padding-block-end:\s*0\.18em;[^}]*margin-block-end:\s*-0\.18em;/su,
+      /\.queue-section__source-link\[data-v-right-dock-test-0\]\s+\.ui-text-btn__text\s*\{[^}]*padding-block-end:\s*var\(--queue-source-link-optical-offset\);[^}]*margin-block-end:\s*calc\(-1 \* var\(--queue-source-link-optical-offset\)\);/su,
     );
     expect(sectionCss).not.toMatch(
       /\.queue-section__source-link\[data-v-right-dock-test-0\]\s+\.ui-text-btn__text\s*\{[^}]*text-decoration:/su,

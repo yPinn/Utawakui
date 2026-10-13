@@ -170,8 +170,12 @@ describe('TrackContextHero', () => {
     expect(source).toContain('var(--ui-color-overlay-scrim)');
     expect(source).toContain('var(--ui-color-overlay-scrim-active)');
     expect(source).toContain('var(--ui-color-overlay-contrast)');
-    expect(source).toContain('var(--ui-font-size-lg)');
-    expect(source).toContain('var(--ui-font-size-sm)');
+    expect(source).toContain('var(--ui-type-title-size)');
+    expect(source).toContain('var(--ui-type-title-weight)');
+    expect(source).toContain('var(--ui-type-title-line-height)');
+    expect(source).toContain('var(--ui-type-caption-size)');
+    expect(source).toContain('var(--ui-type-caption-weight)');
+    expect(source).toContain('var(--ui-type-caption-line-height)');
     expect(source).toContain('var(--ui-space-4)');
     expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/iu);
     expect(source).not.toMatch(/margin-(?:top|bottom):/u);

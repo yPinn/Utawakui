@@ -137,9 +137,9 @@ watch(
   min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
   overflow-wrap: anywhere;
   white-space: normal;
 }

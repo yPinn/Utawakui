@@ -208,7 +208,7 @@ function forwardSelect(value, item) {
 <style scoped>
 .track-action-menu__search {
   min-width: 0;
-  margin-block-end: var(--ui-space-1);
+  margin-block-end: var(--ui-space-2);
 }
 
 .track-action-menu__empty {
@@ -218,8 +218,8 @@ function forwardSelect(value, item) {
   margin: 0;
   padding: var(--ui-space-1) var(--ui-space-2);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 </style>
