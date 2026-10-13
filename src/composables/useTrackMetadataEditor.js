@@ -2,11 +2,13 @@ import { computed, reactive, readonly } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { useFeatureGates } from './useFeatureGates.js';
 
 const REQUIRED_TITLE_MESSAGE = '歌名必填';
 const RESTART_REQUIRED_MESSAGE = '需要重新啟動應用程式';
 const { recordError } = useAppDiagnostics();
 const { requireFeatureGate } = useFeatureGateAccess();
+const { isFeatureEnabled, refreshConfirmations } = useFeatureGates();
 
 const ARTWORK_FAILURE_MESSAGES = Object.freeze({
   'invalid-query': '請輸入 200 字以內的歌曲名稱、演唱者或專輯。',
@@ -33,6 +35,7 @@ function reportMetadataError(error, operation, message) {
 
 export function useTrackMetadataEditor({ refresh = null } = {}) {
   let artworkPreviewGeneration = 0;
+  let artworkSearchPromise = null;
   const state = reactive({
     track: null,
     titleDraft: '',
@@ -120,6 +123,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     const trackId = state.track?.id;
     invalidateArtworkResults({ cancelRemote: false });
     state.isArtworkSearching = false;
+    artworkSearchPromise = null;
     if (trackId) {
       Promise.resolve(
         window.Utawakui?.cancelTrackArtworkSearch?.(trackId),
@@ -129,6 +133,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
 
   function reset() {
     const previewUrl = state.artworkPreviewUrl;
+    cancelArtworkSearch();
     resetArtworkSearch({ preserveDraft: false });
     revokeObjectUrl(previewUrl);
     state.track = null;
@@ -153,7 +158,9 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.artistDraft = track?.artist ?? '';
     state.artworkPreviewUrl = track?.thumbnailUrl ?? '';
     state.error = null;
-    if (track && !track.thumbnailUrl) openArtworkSearch();
+    if (track && !track.thumbnailUrl) {
+      openArtworkSearch({ promptForGate: false });
+    }
   }
 
   function close() {
@@ -175,24 +182,39 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     if (state.error === REQUIRED_TITLE_MESSAGE && nextValue.trim()) {
       state.error = null;
     }
-    if (state.artworkSearchOpen) invalidateArtworkResults();
+    if (state.artworkSearchOpen) {
+      if (state.isArtworkSearching) cancelArtworkSearch();
+      else invalidateArtworkResults();
+    }
   }
 
   function setArtistDraft(value) {
     const nextValue = String(value ?? '');
     if (state.artistDraft === nextValue) return;
     state.artistDraft = nextValue;
-    if (state.artworkSearchOpen) invalidateArtworkResults();
+    if (state.artworkSearchOpen) {
+      if (state.isArtworkSearching) cancelArtworkSearch();
+      else invalidateArtworkResults();
+    }
   }
 
-  function openArtworkSearch() {
+  function openArtworkSearch({ promptForGate = true } = {}) {
     if (!state.track) return;
-    invalidateArtworkResults();
-    state.artworkSearchOpen = true;
-    state.artworkQuery = {
-      album: state.track.album ?? '',
-    };
+    if (!state.artworkSearchOpen) {
+      invalidateArtworkResults();
+      state.artworkSearchOpen = true;
+      state.artworkQuery = {
+        album: state.track.album ?? '',
+      };
+    }
     state.error = null;
+    if (
+      !state.isArtworkSearching &&
+      !state.artworkSearchCompleted &&
+      state.titleDraft.trim()
+    ) {
+      void searchArtwork({ promptForGate });
+    }
   }
 
   function closeArtworkSearch() {
@@ -355,7 +377,20 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     );
   }
 
-  async function searchArtwork() {
+  async function canSearchArtwork({ promptForGate }) {
+    if (promptForGate) {
+      return requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
+        source: 'artwork',
+        operation: 'search',
+        message: '請先到設定啟用外部來源，才能線上搜尋封面。',
+      });
+    }
+    if (isFeatureEnabled(FEATURE_IDS.PROVIDER_FLOW)) return true;
+    await refreshConfirmations();
+    return isFeatureEnabled(FEATURE_IDS.PROVIDER_FLOW);
+  }
+
+  async function performArtworkSearch({ promptForGate }) {
     if (!state.track) return null;
     if (
       typeof window === 'undefined' ||
@@ -364,31 +399,34 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       state.error = RESTART_REQUIRED_MESSAGE;
       return null;
     }
-    const enabled = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
-      source: 'artwork',
-      operation: 'search',
-      message: '請先到設定啟用外部來源，才能線上搜尋封面。',
-    });
-    if (!enabled) return null;
-
     state.isArtworkSearching = true;
     state.error = null;
-    if (state.artworkDraft.action === 'candidate') {
-      state.artworkDraft = { action: 'keep' };
-      state.artworkPreviewUrl = state.track.thumbnailUrl ?? '';
-    }
     artworkPreviewGeneration += 1;
     const generation = artworkPreviewGeneration;
+    const trackId = state.track.id;
+    const query = {
+      title: state.titleDraft,
+      artist: state.artistDraft,
+      album: state.artworkQuery.album,
+    };
     state.artworkCandidates = state.artworkCandidates.map((candidate) => ({
       ...candidate,
       previewLoading: false,
     }));
     try {
-      const result = await window.Utawakui.searchTrackArtwork(state.track.id, {
-        title: state.titleDraft,
-        artist: state.artistDraft,
-        album: state.artworkQuery.album,
-      });
+      const enabled = await canSearchArtwork({ promptForGate });
+      if (
+        !enabled ||
+        generation !== artworkPreviewGeneration ||
+        state.track?.id !== trackId
+      ) {
+        return null;
+      }
+      if (state.artworkDraft.action === 'candidate') {
+        state.artworkDraft = { action: 'keep' };
+        state.artworkPreviewUrl = state.track.thumbnailUrl ?? '';
+      }
+      const result = await window.Utawakui.searchTrackArtwork(trackId, query);
       if (generation !== artworkPreviewGeneration) return null;
       if (result?.status !== 'ok') {
         state.error = artworkFailure(
@@ -409,11 +447,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       }));
       state.selectedArtworkCandidateId = null;
       state.artworkSearchCompleted = true;
-      void loadArtworkPreviews(
-        state.track.id,
-        state.artworkCandidates,
-        generation,
-      );
+      void loadArtworkPreviews(trackId, state.artworkCandidates, generation);
       return state.artworkCandidates;
     } catch (err) {
       if (generation !== artworkPreviewGeneration) return null;
@@ -428,6 +462,22 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
         state.isArtworkSearching = false;
       }
     }
+  }
+
+  function searchArtwork({ promptForGate = true } = {}) {
+    if (!state.track) return Promise.resolve(null);
+    if (artworkSearchPromise) return artworkSearchPromise;
+    const request = performArtworkSearch({ promptForGate });
+    artworkSearchPromise = request;
+    request.then(
+      () => {
+        if (artworkSearchPromise === request) artworkSearchPromise = null;
+      },
+      () => {
+        if (artworkSearchPromise === request) artworkSearchPromise = null;
+      },
+    );
+    return request;
   }
 
   function selectArtworkCandidate(candidateId) {
@@ -449,7 +499,8 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
 
   async function save() {
     if (!state.track) return null;
-    if (state.isArtworkSearching || state.isArtworkPreparing) return null;
+    if (state.isArtworkPreparing) return null;
+    if (state.isArtworkSearching) cancelArtworkSearch();
 
     const title = state.titleDraft.trim();
     const artist = state.artistDraft.trim();

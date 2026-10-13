@@ -63,7 +63,11 @@ describe('useTrackMetadataEditor', () => {
     await expect(editor.chooseThumbnail()).resolves.toBe(null);
   });
 
-  it('opens the online artwork workspace for a track without artwork without starting a request', async () => {
+  it('opens and preloads the online artwork workspace for a track without artwork', async () => {
+    searchTrackArtworkMock.mockResolvedValue({
+      status: 'ok',
+      candidates: [],
+    });
     const { useTrackMetadataEditor } =
       await import('./useTrackMetadataEditor.js');
     const editor = useTrackMetadataEditor();
@@ -78,7 +82,64 @@ describe('useTrackMetadataEditor', () => {
 
     expect(editor.state.artworkSearchOpen).toBe(true);
     expect(editor.state.artworkQuery.album).toBe('Album');
+    await vi.waitFor(() => {
+      expect(searchTrackArtworkMock).toHaveBeenCalledWith('local-1', {
+        title: 'Title',
+        artist: 'Artist',
+        album: 'Album',
+      });
+    });
+    expect(searchTrackArtworkMock).toHaveBeenCalledTimes(1);
+    expect(editor.state.artworkSearchCompleted).toBe(true);
+  });
+
+  it('coalesces repeated open and search intents with the preload request', async () => {
+    const pending = deferred();
+    searchTrackArtworkMock.mockReturnValue(pending.promise);
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+
+    editor.open({
+      id: 'local-1',
+      title: 'Title',
+      artist: 'Artist',
+      thumbnailUrl: '',
+    });
+    editor.openArtworkSearch();
+    const repeatedSearch = editor.searchArtwork();
+
+    await vi.waitFor(() =>
+      expect(searchTrackArtworkMock).toHaveBeenCalledOnce(),
+    );
+    pending.resolve({ status: 'ok', candidates: [] });
+    await repeatedSearch;
+
+    expect(searchTrackArtworkMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not open provider setup when an automatic preload finds the gate disabled', async () => {
+    vi.resetModules();
+    window.Utawakui.getFeatureConfirmations.mockResolvedValue({});
+    const { useAppView } = await import('./useAppView.js');
+    useAppView().setActiveView('library');
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+
+    editor.open({
+      id: 'local-1',
+      title: 'Title',
+      artist: 'Artist',
+      thumbnailUrl: '',
+    });
+
+    await vi.waitFor(() => {
+      expect(window.Utawakui.getFeatureConfirmations).toHaveBeenCalled();
+      expect(editor.state.isArtworkSearching).toBe(false);
+    });
     expect(searchTrackArtworkMock).not.toHaveBeenCalled();
+    expect(useAppView().activeView.value).toBe('library');
   });
 
   it('keeps online artwork search collapsed when the track already has artwork', async () => {
@@ -252,8 +313,8 @@ describe('useTrackMetadataEditor', () => {
 
     editor.setTitleDraft('Search and Save Title');
     editor.setArtistDraft('Search and Save Artist');
-    editor.openArtworkSearch();
     editor.setArtworkQueryField('album', 'Search Album');
+    editor.openArtworkSearch();
     await editor.searchArtwork();
 
     expect(searchTrackArtworkMock).toHaveBeenCalledWith('track-1', {

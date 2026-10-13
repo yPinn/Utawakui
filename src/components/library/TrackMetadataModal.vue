@@ -65,7 +65,8 @@ const selectedArtworkCandidate = computed(
     ) || null,
 );
 
-const fieldsDisabled = computed(
+const fieldsDisabled = computed(() => props.saving || props.artworkPreparing);
+const searchControlsDisabled = computed(
   () => props.saving || props.artworkPreparing || props.artworkSearching,
 );
 const closeDisabled = computed(() => props.saving || props.artworkPreparing);
@@ -203,9 +204,8 @@ watch(searchOptionsOpen, (open) => {
                   :active="searchOptionsOpen"
                   :aria-pressed="searchOptionsOpen"
                   :aria-expanded="searchOptionsOpen"
-                  aria-haspopup="dialog"
                   aria-controls="track-artwork-search-options"
-                  :disabled="fieldsDisabled"
+                  :disabled="searchControlsDisabled"
                   @click="searchOptionsOpen = !searchOptionsOpen"
                 />
                 <UiIconButton
@@ -229,12 +229,13 @@ watch(searchOptionsOpen, (open) => {
               </div>
             </div>
 
-            <div
+            <form
               v-if="searchOptionsOpen"
               id="track-artwork-search-options"
               class="track-metadata__search-options"
-              role="dialog"
+              role="search"
               aria-label="專輯篩選"
+              @submit.prevent="emit('searchArtwork')"
               @keydown.escape.stop.prevent="
                 closeAlbumFilter({ restoreFocus: true })
               "
@@ -247,11 +248,10 @@ watch(searchOptionsOpen, (open) => {
                 placeholder="專輯（選填）"
                 label-hidden
                 maxlength="200"
-                :disabled="fieldsDisabled"
+                :disabled="searchControlsDisabled"
                 @update:model-value="
                   emit('updateArtworkQuery', 'album', $event)
                 "
-                @keydown.enter.prevent="emit('searchArtwork')"
               />
               <UiIconButton
                 :icon="Search"
@@ -269,7 +269,7 @@ watch(searchOptionsOpen, (open) => {
                 :disabled="saving || artworkPreparing"
                 @click="closeAlbumFilter({ restoreFocus: true })"
               />
-            </div>
+            </form>
 
             <UiHint v-if="artworkSearching" role="status">
               正在尋找最相符的封面…
@@ -359,9 +359,6 @@ watch(searchOptionsOpen, (open) => {
 }
 
 .track-metadata__search {
-  --track-metadata-search-options-inline-size: 20rem;
-
-  position: relative;
   padding-top: var(--ui-space-4);
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
@@ -389,21 +386,13 @@ watch(searchOptionsOpen, (open) => {
 }
 
 .track-metadata__search-options {
-  position: absolute;
-  inset-block-start: var(--ui-space-2);
-  inset-inline-end: 0;
-  z-index: var(--ui-layer-raised);
-  inline-size: min(var(--track-metadata-search-options-inline-size), 100%);
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: start;
   gap: var(--ui-space-1);
-  padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-  box-shadow: var(--ui-shadow-overlay);
+  padding-block: var(--ui-space-2);
+  border-block: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .track-metadata__empty {

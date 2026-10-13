@@ -77,20 +77,26 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).not.toContain('UiDisclosure');
   });
 
-  it('keeps the optional album field in a contained find-bar overlay', () => {
-    expect(modalSource).toContain('role="dialog"');
+  it('keeps the optional album field in an in-flow search row below the toolbar', () => {
+    const actionsIndex = modalSource.indexOf(
+      'class="track-metadata__search-actions"',
+    );
+    const queryIndex = modalSource.indexOf('id="track-artwork-search-options"');
+    const resultsIndex = modalSource.indexOf('<ArtworkSearchResults');
+
+    expect(modalSource).toContain('role="search"');
     expect(modalSource).toContain('aria-label="專輯篩選"');
     expect(modalSource).toContain(':aria-expanded="searchOptionsOpen"');
-    expect(modalSource).toContain('aria-haspopup="dialog"');
+    expect(modalSource).not.toContain('aria-haspopup="dialog"');
     expect(modalSource).toContain('label-hidden');
     expect(modalSource).toContain('label="以專輯條件搜尋"');
     expect(modalSource).toContain('label="關閉專輯篩選"');
-    expect(modalSource).toMatch(
-      /\.track-metadata__search\s*\{[^}]*position:\s*relative/msu,
-    );
-    expect(modalSource).toMatch(
+    expect(queryIndex).toBeGreaterThan(actionsIndex);
+    expect(resultsIndex).toBeGreaterThan(queryIndex);
+    expect(modalSource).not.toMatch(
       /\.track-metadata__search-options\s*\{[^}]*position:\s*absolute/msu,
     );
+    expect(modalSource).not.toContain('var(--ui-shadow-overlay)');
   });
 
   it('keeps search actions concise and does not navigate away from the modal', () => {
@@ -103,6 +109,16 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).not.toContain('@open-source');
     expect(libraryBrowseSource).not.toContain('@open-artwork-source');
     expect(queueSource).not.toContain('@open-artwork-source');
+  });
+
+  it('keeps background preload from locking the metadata fields', () => {
+    expect(modalSource).toContain(
+      'const fieldsDisabled = computed(() => props.saving || props.artworkPreparing);',
+    );
+    expect(modalSource).toContain(
+      'props.saving || props.artworkPreparing || props.artworkSearching',
+    );
+    expect(modalSource).toContain(':disabled="searchControlsDisabled"');
   });
 
   it('uses candidate selection as a staged cover choice without an immediate apply action', () => {
