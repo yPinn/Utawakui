@@ -7,6 +7,7 @@ const {
 const {
   deleteTrack,
   deleteTrackArtworkFile,
+  convertLocalAudioFiles,
   findTrackRecord,
   importLocalAudioFiles,
   listTracks,
@@ -15,6 +16,7 @@ const {
   updateTrackMetadata,
   writeTrackArtworkFile,
 } = require('../lib/library');
+const { getPreparedFfmpegPath } = require('../lib/featureDependencies');
 const {
   enforceLibraryStoragePolicySafely,
 } = require('./libraryStorageHandlers');
@@ -27,6 +29,10 @@ const { isFeatureGateEnabled } = require('../lib/featureGates');
 const {
   createArtworkDiscoveryService,
 } = require('../lib/artwork/discoveryService');
+const { AUDIO_PICKER_EXTENSIONS } = require('../lib/library/constants');
+const {
+  createLocalImportReviewSessionStore,
+} = require('../lib/library/localImportReviewSessions');
 const { createArtistIndexCache } = require('../lib/artists/artistIndex');
 const {
   createArtistPhotoService,
@@ -40,6 +46,7 @@ const {
 const { isArtistId } = require('../lib/artists/artistPhotos');
 const { isCreditId } = require('../lib/artists/artistOrganization');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const { createAppError } = require('../lib/appError');
 const { isMusicBrainzSourcePage } = require('../lib/musicbrainz/identifiers');
 const { hasControlCharacters } = require('../lib/textGuards');
 
@@ -99,6 +106,13 @@ function registerLibraryHandlers({
   runLibraryBackfill = runBackfillPass,
   organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
   importAudioFiles = importLocalAudioFiles,
+  convertAudioFiles = convertLocalAudioFiles,
+  getPreparedLocalConversionFfmpegPath = getPreparedFfmpegPath,
+  resolveUserDataDir = () => {
+    throw new Error('local conversion user data resolver is not configured');
+  },
+  updateConfig = () => undefined,
+  localImportReviewSessions = createLocalImportReviewSessionStore(),
   findLibraryTrackRecord = findTrackRecord,
   deleteLibraryTrack = deleteTrack,
   removeTrackFromPlaylists = removeTrackFromAllPlaylists,
@@ -124,6 +138,44 @@ function registerLibraryHandlers({
   artistIdentityService = createArtistIdentityService({ artistIndexCache }),
   recordDiagnostic,
 }) {
+  function recordLocalImportFailure(failure, operation) {
+    try {
+      recordDiagnostic?.({
+        process: 'main',
+        level: 'warning',
+        source: 'library',
+        operation,
+        code: 'LIBRARY_IMPORT_AUDIO_FILE_SKIPPED',
+        message: 'Local audio import skipped a file',
+        error: failure.error,
+        context: { reason: failure.reason },
+      });
+    } catch {
+      // Per-file diagnostics are fail-open; the bounded result still tells
+      // the renderer how the batch completed.
+    }
+  }
+
+  async function finalizeLocalImport(importResult) {
+    if (importResult.imported.length === 0) return;
+    notifyLibraryUpdated();
+    await enforceLibraryStoragePolicySafely({
+      enforceLibraryStoragePolicy,
+      options: {
+        protectedTrackIds: importResult.imported.map((track) => track.id),
+      },
+      recordDiagnostic,
+    });
+    for (const track of importResult.imported) {
+      try {
+        enqueueMusicAnalysis(track.id);
+      } catch {
+        // Analysis is optional background work. Imported audio remains
+        // available even if queue admission fails unexpectedly.
+      }
+    }
+  }
+
   const resolvedArtworkDiscoveryService =
     artworkDiscoveryService ??
     createArtworkService({
@@ -621,7 +673,7 @@ function registerLibraryHandlers({
       filters: [
         {
           name: '音訊檔',
-          extensions: ['webm', 'm4a', 'opus', 'mp3', 'wav', 'flac'],
+          extensions: AUDIO_PICKER_EXTENSIONS,
         },
       ],
     });
@@ -629,6 +681,7 @@ function registerLibraryHandlers({
       return { imported: [], skipped: [] };
     }
 
+    const conversionCandidates = [];
     const imported = await runDiagnosticIpcOperation(
       {
         recordDiagnostic,
@@ -644,28 +697,92 @@ function registerLibraryHandlers({
           context: { retryable: true },
         },
       },
-      () => importAudioFiles(resolveDownloadDir(getConfig()), result.filePaths),
+      () =>
+        importAudioFiles(resolveDownloadDir(getConfig()), result.filePaths, {
+          onFailure: (failure) =>
+            recordLocalImportFailure(failure, 'import-audio-file'),
+          onConversionCandidate: (candidate) =>
+            conversionCandidates.push(candidate),
+        }),
     );
-    if (imported.imported.length > 0) {
-      notifyLibraryUpdated();
-      await enforceLibraryStoragePolicySafely({
-        enforceLibraryStoragePolicy,
-        options: {
-          protectedTrackIds: imported.imported.map((track) => track.id),
-        },
-        recordDiagnostic,
-      });
-      for (const track of imported.imported) {
-        try {
-          enqueueMusicAnalysis(track.id);
-        } catch {
-          // Analysis is optional background work. Imported audio remains
-          // available even if queue admission fails unexpectedly.
-        }
+    await finalizeLocalImport(imported);
+
+    const { conversionRequired, ...publicResult } = imported;
+    if (
+      conversionCandidates.length > 0 &&
+      Array.isArray(conversionRequired) &&
+      conversionRequired.length === conversionCandidates.length
+    ) {
+      const sessionId = localImportReviewSessions.create(conversionCandidates);
+      if (sessionId) {
+        publicResult.conversionReview = {
+          sessionId,
+          files: conversionRequired,
+        };
       }
     }
-    return imported;
+    return publicResult;
   });
+
+  ipcMain.handle(
+    'library:convert-local-audio-files',
+    async (event, sessionId) => {
+      requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+      if (!localImportReviewSessions.has(sessionId)) {
+        throw createAppError({
+          code: 'LOCAL_IMPORT_REVIEW_EXPIRED',
+          severity: 'warning',
+          title: '需要重新選擇檔案',
+          message: '這次轉檔確認已失效，請重新選擇檔案。',
+          context: { retryable: true },
+        });
+      }
+
+      const config = getConfig();
+      const ffmpegPath = getPreparedLocalConversionFfmpegPath(
+        resolveUserDataDir(),
+        config.systemFfmpegPath,
+        {
+          onStaleSystemPath: () => updateConfig({ systemFfmpegPath: null }),
+        },
+      );
+      const candidates = localImportReviewSessions.consume(sessionId);
+      if (!candidates) {
+        throw createAppError({
+          code: 'LOCAL_IMPORT_REVIEW_EXPIRED',
+          severity: 'warning',
+          title: '需要重新選擇檔案',
+          message: '這次轉檔確認已失效，請重新選擇檔案。',
+          context: { retryable: true },
+        });
+      }
+
+      const converted = await runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'library',
+            operation: 'convert-local-audio-files',
+            code: 'LIBRARY_CONVERT_AUDIO_FAILED',
+          },
+          publicError: {
+            code: 'LIBRARY_CONVERT_AUDIO_FAILED',
+            title: '相容轉檔未完成',
+            message: '音訊轉檔未完成，請重新選擇檔案後再試一次。',
+            context: { retryable: true },
+          },
+        },
+        () =>
+          convertAudioFiles(resolveDownloadDir(config), candidates, {
+            ffmpegPath,
+            onFailure: (failure) =>
+              recordLocalImportFailure(failure, 'convert-local-audio-file'),
+          }),
+      );
+      await finalizeLocalImport(converted);
+      return converted;
+    },
+  );
 
   ipcMain.handle('library:delete-track', async (event, trackId) => {
     const dir = resolveDownloadDir(getConfig());

@@ -563,6 +563,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
       folderPageObjectTargetIntent(intent),
     ),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
+  convertLocalAudioFiles: (sessionId) =>
+    ipcRenderer.invoke(
+      'library:convert-local-audio-files',
+      typeof sessionId === 'string' ? sessionId : '',
+    ),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   getTrackMusicStructure: (trackId) =>

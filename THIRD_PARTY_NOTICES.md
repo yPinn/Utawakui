@@ -21,13 +21,13 @@ Summary from `node scripts/license-inventory.mjs`:
 
 | License                      | Count |
 | ---------------------------- | ----: |
-| MIT                          |    54 |
+| MIT                          |    64 |
 | MIT AND Apache-2.0           |     1 |
 | ISC                          |     4 |
 | Apache-2.0                   |     2 |
 | BlueOak-1.0.0                |     1 |
 | BSD-2-Clause                 |     1 |
-| BSD-3-Clause                 |     1 |
+| BSD-3-Clause                 |     2 |
 | MIT OR CC0-1.0               |     2 |
 | Python-2.0                   |     1 |
 | Standard 'no charge' license |     1 |
@@ -43,6 +43,7 @@ Direct runtime dependencies:
 | `kissfft-js`                   | 0.1.8   | MIT                                                                | Packaged runtime dependency for DSP/audio analysis paths.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `koroman`                      | 1.0.16  | MIT                                                                | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `kuromoji`                     | 0.1.2   | Apache-2.0                                                         | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `music-metadata`               | 12.2.0  | MIT                                                                | Main-process parser for validating user-selected local audio and deriving duration, bounded common tags, and embedded artwork. Its pure-JavaScript parser closure is packaged in `app.asar`.                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `onnxruntime-node`             | 1.30.0  | MIT (core); see note                                               | Native ONNX Runtime binding. The win32/x64 binary tarball also bundles Microsoft's `DirectML.dll`, which ships under the separate "Microsoft Software License Terms — Microsoft DirectX Machine Learning (DirectML)" (a Microsoft redistributable EULA, not MIT) rather than the MIT license that covers the ONNX Runtime core and JS binding. npm package has license metadata but no bundled license file for either component. Keep both the upstream ONNX Runtime source/license link and the DirectML redistributable license link in release notices; full DirectML EULA text has not been reviewed clause-by-clause. |
 | `obs-websocket-js`             | 5.0.8   | MIT                                                                | Lazy-loaded main-process client for the optional read-only OBS status／timestamp integration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `opencc-js`                    | 1.4.2   | MIT AND Apache-2.0                                                 | Pure-JavaScript OpenCC renderer bundle with generated `opencc-data` dictionaries; retain its MIT license and Apache-2.0 third-party notices.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -53,14 +54,16 @@ Direct runtime dependencies:
 
 Notable transitive runtime dependencies:
 
-| Package                                  | Version         | License        | Reason to track                                                                 |
-| ---------------------------------------- | --------------- | -------------- | ------------------------------------------------------------------------------- |
-| `adm-zip`                                | 0.6.1           | MIT            | Direct release tooling dependency and transitive ONNX Runtime archive helper.   |
-| `argparse`                               | 2.0.1           | Python-2.0     | Transitive parser dependency used by the update runtime closure.                |
-| `global-agent`                           | 4.1.3           | BSD-3-Clause   | Transitive dependency in the production closure.                                |
-| `web-worker`                             | 1.5.0           | Apache-2.0     | Transitive dependency in the production closure.                                |
-| `type-fest`                              | 0.20.2 / 3.13.1 | MIT OR CC0-1.0 | Dual-licensed transitive dependency, including the OBS client branch.           |
-| `@napolab/texture-bridge` / `neverthrow` | 0.15.0 / 8.2.0  | MIT            | Native Spout binding and bounded result helper used by the experimental sender. |
+| Package                                  | Version               | License        | Reason to track                                                                    |
+| ---------------------------------------- | --------------------- | -------------- | ---------------------------------------------------------------------------------- |
+| `adm-zip`                                | 0.6.1                 | MIT            | Direct release tooling dependency and transitive ONNX Runtime archive helper.      |
+| `argparse`                               | 2.0.1                 | Python-2.0     | Transitive parser dependency used by the update runtime closure.                   |
+| `global-agent`                           | 4.1.3                 | BSD-3-Clause   | Transitive dependency in the production closure.                                   |
+| `file-type`／`strtok3`／`token-types`    | 22.1.1／10.4.1／6.1.2 | MIT            | Pure-JavaScript format sniffing and bounded tokenization used by `music-metadata`. |
+| `ieee754`                                | 1.2.1                 | BSD-3-Clause   | Numeric decoding helper in the local-audio metadata parser closure.                |
+| `web-worker`                             | 1.5.0                 | Apache-2.0     | Transitive dependency in the production closure.                                   |
+| `type-fest`                              | 0.20.2 / 3.13.1       | MIT OR CC0-1.0 | Dual-licensed transitive dependency, including the OBS client branch.              |
+| `@napolab/texture-bridge` / `neverthrow` | 0.15.0 / 8.2.0        | MIT            | Native Spout binding and bounded result helper used by the experimental sender.    |
 
 The Windows texture-bridge binding incorporates Spout2／SpoutDX under the
 BSD-2-Clause license and ships its full `THIRD-PARTY-NOTICES` beside the native

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../lib/appError.js';
 import { buildFeatureConfirmation, FEATURE_IDS } from '../lib/featureGates.js';
+import { AUDIO_PICKER_EXTENSIONS } from '../lib/library/constants.js';
 import libraryHandlersModule from './libraryHandlers.js';
 
 function parseAppError(error) {
@@ -1187,6 +1188,30 @@ describe('local import automatic music analysis', () => {
     };
     const enqueueMusicAnalysis = vi.fn(() => true);
     const enforceLibraryStoragePolicy = vi.fn().mockResolvedValue(undefined);
+    const requireFeatureGate = vi.fn();
+    const getPreparedLocalConversionFfmpegPath = vi.fn(
+      () => 'C:\\ffmpeg\\bin\\ffmpeg.exe',
+    );
+    const convertAudioFiles = vi.fn().mockResolvedValue({
+      imported: [],
+      skipped: [],
+    });
+    const localImportReviewSessions = {
+      create: vi.fn(() => '11111111-1111-4111-8111-111111111111'),
+      has: vi.fn(() => true),
+      consume: vi.fn(() => [
+        {
+          sourcePath: 'C:\\Users\\Singer\\Private\\Legacy.wma',
+          sourceFormat: 'wma',
+        },
+      ]),
+    };
+    const dialog = {
+      showOpenDialog: vi.fn().mockResolvedValue({
+        canceled: false,
+        filePaths: ['one.mp3', 'two.mp3'],
+      }),
+    };
     const importAudioFiles = vi.fn().mockReturnValue({
       imported: [
         { id: 'local-1', title: 'One' },
@@ -1196,23 +1221,23 @@ describe('local import automatic music analysis', () => {
     });
     registerLibraryHandlers({
       ipcMain,
-      dialog: {
-        showOpenDialog: vi.fn().mockResolvedValue({
-          canceled: false,
-          filePaths: ['one.mp3', 'two.mp3'],
-        }),
-      },
+      dialog,
       getConfig: () => ({}),
       resolveDownloadDir: () => 'library-dir',
       getMainWindow: vi.fn(),
       notifyLibraryUpdated: vi.fn(),
       sendBackfillStatus: vi.fn(),
       featureIds: FEATURE_IDS,
+      requireFeatureGate,
       getProviderRunner: vi.fn(),
       lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
       enqueueMusicAnalysis,
       enforceLibraryStoragePolicy,
       importAudioFiles,
+      convertAudioFiles,
+      getPreparedLocalConversionFfmpegPath,
+      resolveUserDataDir: () => 'user-data-dir',
+      localImportReviewSessions,
       ...overrides,
     });
     return {
@@ -1220,8 +1245,179 @@ describe('local import automatic music analysis', () => {
       enqueueMusicAnalysis,
       enforceLibraryStoragePolicy,
       importAudioFiles,
+      convertAudioFiles,
+      getPreparedLocalConversionFfmpegPath,
+      localImportReviewSessions,
+      requireFeatureGate,
+      dialog,
     };
   }
+
+  it('uses the shared audio allowlist and records per-file failures without returning private paths', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const importAudioFiles = vi.fn(async (directory, filePaths, options) => {
+      options.onFailure({
+        sourcePath: 'C:\\Users\\Singer\\Private\\broken.mp3',
+        reason: 'invalid-audio',
+        error: new Error('parser failed at C:\\Users\\Singer\\Private'),
+      });
+      return {
+        imported: [],
+        skipped: [{ filename: 'broken.mp3', reason: 'invalid-audio' }],
+      };
+    });
+    const harness = registerLocalImport({ recordDiagnostic, importAudioFiles });
+
+    const result = await harness.handlers.get('library:import-audio-files')();
+
+    expect(harness.dialog.showOpenDialog).toHaveBeenCalledWith(undefined, {
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        {
+          name: '音訊檔',
+          extensions: AUDIO_PICKER_EXTENSIONS,
+        },
+      ],
+    });
+    expect(importAudioFiles).toHaveBeenCalledWith(
+      'library-dir',
+      ['one.mp3', 'two.mp3'],
+      {
+        onFailure: expect.any(Function),
+        onConversionCandidate: expect.any(Function),
+      },
+    );
+    expect(result).toEqual({
+      imported: [],
+      skipped: [{ filename: 'broken.mp3', reason: 'invalid-audio' }],
+    });
+    expect(JSON.stringify(result)).not.toMatch(/Singer|Private/u);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'library',
+        operation: 'import-audio-file',
+        code: 'LIBRARY_IMPORT_AUDIO_FILE_SKIPPED',
+        error: expect.any(Error),
+        context: { reason: 'invalid-audio' },
+      }),
+    );
+  });
+
+  it('returns an opaque review session without exposing conversion source paths', async () => {
+    const importAudioFiles = vi.fn(async (directory, filePaths, options) => {
+      options.onConversionCandidate({
+        sourcePath: 'C:\\Users\\Singer\\Private\\Legacy.wma',
+        sourceFormat: 'wma',
+      });
+      return {
+        imported: [{ id: 'direct-1', title: 'Direct' }],
+        skipped: [],
+        conversionRequired: [{ filename: 'Legacy.wma', sourceFormat: 'wma' }],
+      };
+    });
+    const harness = registerLocalImport({ importAudioFiles });
+
+    const result = await harness.handlers.get('library:import-audio-files')();
+
+    expect(harness.localImportReviewSessions.create).toHaveBeenCalledWith([
+      {
+        sourcePath: 'C:\\Users\\Singer\\Private\\Legacy.wma',
+        sourceFormat: 'wma',
+      },
+    ]);
+    expect(result).toEqual({
+      imported: [{ id: 'direct-1', title: 'Direct' }],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'Legacy.wma', sourceFormat: 'wma' }],
+      },
+    });
+    expect(JSON.stringify(result)).not.toMatch(/Singer|Private/u);
+  });
+
+  it('rechecks the audio gate and prepared FFmpeg before consuming a review session', async () => {
+    const convertAudioFiles = vi.fn().mockResolvedValue({
+      imported: [{ id: 'converted-1', title: 'Converted' }],
+      skipped: [],
+    });
+    const harness = registerLocalImport({
+      convertAudioFiles,
+      getConfig: () => ({ systemFfmpegPath: 'C:\\trusted\\ffmpeg.exe' }),
+    });
+
+    const result = await harness.handlers.get(
+      'library:convert-local-audio-files',
+    )(null, '11111111-1111-4111-8111-111111111111');
+
+    expect(harness.requireFeatureGate).toHaveBeenCalledWith(
+      FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+    );
+    expect(harness.getPreparedLocalConversionFfmpegPath).toHaveBeenCalledWith(
+      'user-data-dir',
+      'C:\\trusted\\ffmpeg.exe',
+      expect.objectContaining({ onStaleSystemPath: expect.any(Function) }),
+    );
+    expect(harness.localImportReviewSessions.consume).toHaveBeenCalledWith(
+      '11111111-1111-4111-8111-111111111111',
+    );
+    expect(convertAudioFiles).toHaveBeenCalledWith(
+      'library-dir',
+      [
+        {
+          sourcePath: 'C:\\Users\\Singer\\Private\\Legacy.wma',
+          sourceFormat: 'wma',
+        },
+      ],
+      {
+        ffmpegPath: 'C:\\ffmpeg\\bin\\ffmpeg.exe',
+        onFailure: expect.any(Function),
+      },
+    );
+    expect(result).toEqual({
+      imported: [{ id: 'converted-1', title: 'Converted' }],
+      skipped: [],
+    });
+    expect(harness.enqueueMusicAnalysis).toHaveBeenCalledWith('converted-1');
+  });
+
+  it('keeps a review session available when FFmpeg is not prepared', async () => {
+    const missing = new Error('bounded missing dependency');
+    const harness = registerLocalImport({
+      getPreparedLocalConversionFfmpegPath: vi.fn(() => {
+        throw missing;
+      }),
+    });
+
+    await expect(
+      harness.handlers.get('library:convert-local-audio-files')(
+        null,
+        '11111111-1111-4111-8111-111111111111',
+      ),
+    ).rejects.toBe(missing);
+    expect(harness.localImportReviewSessions.consume).not.toHaveBeenCalled();
+    expect(harness.convertAudioFiles).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid or expired review id with a bounded AppError', async () => {
+    const harness = registerLocalImport({
+      localImportReviewSessions: {
+        create: vi.fn(),
+        has: vi.fn(() => false),
+        consume: vi.fn(),
+      },
+    });
+
+    const error = await harness.handlers
+      .get('library:convert-local-audio-files')(null, '..\\private')
+      .catch((caught) => caught);
+
+    expect(parseAppError(error)).toMatchObject({
+      code: 'LOCAL_IMPORT_REVIEW_EXPIRED',
+      message: '這次轉檔確認已失效，請重新選擇檔案。',
+    });
+    expect(harness.convertAudioFiles).not.toHaveBeenCalled();
+  });
 
   it('enqueues every successfully imported local track', async () => {
     const harness = registerLocalImport();

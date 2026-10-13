@@ -96,7 +96,10 @@ const {
   writeTrackArtworkBuffer,
   deleteTrackArtworkFile,
 } = require('./library/trackArtwork');
-const { importLocalAudioFiles } = require('./library/importLocal');
+const {
+  convertLocalAudioFiles,
+  importLocalAudioFiles,
+} = require('./library/importLocal');
 const { runBackfillPass } = require('./library/backfill');
 const {
   inspectTrackMusicStructure,
@@ -183,6 +186,7 @@ module.exports = {
   setReadingLine,
   updateTrackMetadata,
   computeLyricsSourceFingerprint,
+  convertLocalAudioFiles,
   timingSidecarPath,
   validateLyricsTimingDocument,
 };

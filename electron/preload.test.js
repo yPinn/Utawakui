@@ -82,6 +82,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:delete-track',
   'library:get-artist-index',
   'library:import-audio-files',
+  'library:convert-local-audio-files',
   'library:list',
   'library:load-artist-photo-candidate-preview',
   'library:load-track-artwork-preview',
@@ -763,6 +764,21 @@ describe('main preload bridge', () => {
       ['feature-dependencies:detect-system-ffmpeg'],
       ['feature-dependencies:set-ffmpeg-source', true],
     ]);
+  });
+
+  it('forwards only an opaque local conversion review id', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.convertLocalAudioFiles(
+      '11111111-1111-4111-8111-111111111111',
+      ['C:\\Users\\Singer\\Private\\song.wma'],
+      { codec: 'arbitrary' },
+    );
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:convert-local-audio-files',
+      '11111111-1111-4111-8111-111111111111',
+    );
   });
 
   it('shapes artist organization intents without provider ids or paths', async () => {

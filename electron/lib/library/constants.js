@@ -1,14 +1,58 @@
 'use strict';
 
-// MIME maps are the allowlist for servable media extensions.
-const AUDIO_MIME_TYPES = {
-  '.webm': 'audio/webm',
-  '.m4a': 'audio/mp4',
-  '.opus': 'audio/ogg',
-  '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
-  '.flac': 'audio/flac',
-};
+// One direct-play registry drives file selection, import validation, and media
+// serving. A listed extension is not sufficient on its own: import also checks
+// the detected container and codec for this family before persisting the file.
+const AUDIO_FORMATS = Object.freeze(
+  Object.fromEntries(
+    Object.entries({
+      '.aac': { family: 'adts-aac', mimeType: 'audio/aac' },
+      '.adts': { family: 'adts-aac', mimeType: 'audio/aac' },
+      '.bwf': { family: 'wave', mimeType: 'audio/wav' },
+      '.flac': { family: 'flac', mimeType: 'audio/flac' },
+      '.m4a': { family: 'mp4-aac', mimeType: 'audio/mp4' },
+      '.mp3': { family: 'mp3', mimeType: 'audio/mpeg' },
+      '.oga': { family: 'ogg-audio', mimeType: 'audio/ogg' },
+      '.ogg': { family: 'ogg-audio', mimeType: 'audio/ogg' },
+      '.opus': { family: 'ogg-opus', mimeType: 'audio/ogg' },
+      '.wav': { family: 'wave', mimeType: 'audio/wav' },
+      '.wave': { family: 'wave', mimeType: 'audio/wav' },
+      '.webm': { family: 'webm-audio', mimeType: 'audio/webm' },
+    }).map(([extension, format]) => [extension, Object.freeze(format)]),
+  ),
+);
+// Recognized source formats that require an explicit, Main-owned compatibility
+// conversion before they can enter the playable library. These extensions are
+// picker-only: they are never added to AUDIO_MIME_TYPES or media serving.
+const AUDIO_CONVERSION_FORMATS = Object.freeze(
+  Object.fromEntries(
+    Object.entries({
+      '.aif': { family: 'aiff', sourceFormat: 'aiff', label: 'AIFF' },
+      '.aifc': { family: 'aiff', sourceFormat: 'aiff', label: 'AIFF-C' },
+      '.aiff': { family: 'aiff', sourceFormat: 'aiff', label: 'AIFF' },
+      '.ape': {
+        family: 'monkeys-audio',
+        sourceFormat: 'ape',
+        label: "Monkey's Audio",
+      },
+      '.caf': { family: 'caf', sourceFormat: 'caf', label: 'CAF' },
+      '.wma': { family: 'asf-wma', sourceFormat: 'wma', label: 'WMA' },
+      '.wv': {
+        family: 'wavpack',
+        sourceFormat: 'wavpack',
+        label: 'WavPack',
+      },
+    }).map(([extension, format]) => [extension, Object.freeze(format)]),
+  ),
+);
+const AUDIO_MIME_TYPES = Object.freeze(
+  Object.fromEntries(
+    Object.entries(AUDIO_FORMATS).map(([extension, format]) => [
+      extension,
+      format.mimeType,
+    ]),
+  ),
+);
 const IMAGE_MIME_TYPES = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -17,6 +61,14 @@ const IMAGE_MIME_TYPES = {
 };
 const MIME_TYPES = { ...AUDIO_MIME_TYPES, ...IMAGE_MIME_TYPES };
 const AUDIO_EXTENSIONS = new Set(Object.keys(AUDIO_MIME_TYPES));
+const AUDIO_CONVERSION_EXTENSIONS = new Set(
+  Object.keys(AUDIO_CONVERSION_FORMATS),
+);
+const AUDIO_PICKER_EXTENSIONS = Object.freeze(
+  [...Object.keys(AUDIO_MIME_TYPES), ...AUDIO_CONVERSION_EXTENSIONS].map(
+    (extension) => extension.slice(1),
+  ),
+);
 const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
 const EXTENSION_BY_IMAGE_MIME_TYPE = Object.fromEntries(
   Object.entries(IMAGE_MIME_TYPES).map(([ext, mimeType]) => [mimeType, ext]),
@@ -57,10 +109,14 @@ const INDEX_FILENAME = 'library.json';
 const INDEX_VERSION = 2;
 
 module.exports = {
+  AUDIO_FORMATS,
+  AUDIO_CONVERSION_FORMATS,
   AUDIO_MIME_TYPES,
   IMAGE_MIME_TYPES,
   MIME_TYPES,
   AUDIO_EXTENSIONS,
+  AUDIO_CONVERSION_EXTENSIONS,
+  AUDIO_PICKER_EXTENSIONS,
   IMAGE_EXTENSIONS,
   EXTENSION_BY_IMAGE_MIME_TYPE,
   TRACKS_DIRNAME,

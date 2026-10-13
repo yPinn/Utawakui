@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FEATURE_GATES } from '../constants/featureGates.js';
 
 let importLocalAudioFilesMock;
 let listTracksMock;
 let listPlaylistsMock;
+let convertLocalAudioFilesMock;
 
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -16,11 +18,25 @@ beforeEach(() => {
   });
   listTracksMock = vi.fn().mockResolvedValue([]);
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
+  convertLocalAudioFilesMock = vi.fn().mockResolvedValue({
+    imported: [],
+    skipped: [],
+  });
   vi.stubGlobal('window', {
     Utawakui: {
       importLocalAudioFiles: importLocalAudioFilesMock,
+      convertLocalAudioFiles: convertLocalAudioFilesMock,
       listTracks: listTracksMock,
       listPlaylists: listPlaylistsMock,
+      getFeatureConfirmations: vi.fn().mockResolvedValue({
+        'audio-processing-flow': {
+          featureId: 'audio-processing-flow',
+          noticeVersion: FEATURE_GATES['audio-processing-flow'].noticeVersion,
+          confirmedAt: '2026-10-13T00:00:00.000Z',
+          enabled: true,
+        },
+      }),
+      confirmFeatureGate: vi.fn(),
       onLibraryUpdated: () => () => {},
     },
   });
@@ -43,7 +59,7 @@ describe('useLocalImport', () => {
         { id: 'song-a', title: 'Song A' },
         { id: 'song-b', title: 'Song B' },
       ],
-      skipped: [{ path: 'notes.txt', reason: 'unsupported-extension' }],
+      skipped: [{ filename: 'notes.txt', reason: 'unsupported-extension' }],
     });
     const localImport = await loadLocalImport();
 
@@ -57,7 +73,7 @@ describe('useLocalImport', () => {
       { id: 'song-b', title: 'Song B' },
     ]);
     expect(localImport.state.skipped).toEqual([
-      { path: 'notes.txt', reason: 'unsupported-extension' },
+      { filename: 'notes.txt', reason: 'unsupported-extension' },
     ]);
     expect(localImport.state.message).toBe('已複製 2 首，略過 1 個檔案');
   });
@@ -67,7 +83,7 @@ describe('useLocalImport', () => {
       imported: [{ id: 'song-a', title: 'Song A' }],
       skipped: [
         {
-          path: 'Song A Copy.mp3',
+          filename: 'Song A Copy.mp3',
           reason: 'duplicate-content',
           existingTrackId: 'song-a',
         },
@@ -81,12 +97,101 @@ describe('useLocalImport', () => {
     expect(localImport.state.message).toBe('已複製 1 首，略過 1 個重複檔案');
   });
 
+  it('keeps a bounded conversion review separate from successful direct imports', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'direct', title: 'Direct song' }],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [
+          { filename: 'Legacy.wma', sourceFormat: 'wma' },
+          { filename: 'Lossless.m4a', sourceFormat: 'alac' },
+        ],
+      },
+    });
+    const localImport = await loadLocalImport();
+
+    await localImport.importFiles();
+
+    expect(localImport.state.conversionReview).toEqual({
+      sessionId: '11111111-1111-4111-8111-111111111111',
+      files: [
+        { filename: 'Legacy.wma', sourceFormat: 'wma' },
+        { filename: 'Lossless.m4a', sourceFormat: 'alac' },
+      ],
+    });
+    expect(localImport.conversionReviewMessage.value).toBe(
+      '2 個 WMA、ALAC 檔案需要轉成 FLAC；原檔不會修改，轉換副本可能使用較多空間。',
+    );
+    expect(localImport.state.message).toBe(
+      '已複製 1 首；另有 2 個檔案需要相容轉檔',
+    );
+  });
+
+  it('converts only the opaque pending review and appends imported rows', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'direct', title: 'Direct song' }],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'Legacy.wma', sourceFormat: 'wma' }],
+      },
+    });
+    convertLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'converted', title: 'Converted song' }],
+      skipped: [],
+    });
+    const localImport = await loadLocalImport();
+    await localImport.importFiles();
+    listTracksMock.mockClear();
+
+    await localImport.convertPendingFiles();
+
+    expect(convertLocalAudioFilesMock).toHaveBeenCalledWith(
+      '11111111-1111-4111-8111-111111111111',
+    );
+    expect(localImport.state.imported).toEqual([
+      { id: 'direct', title: 'Direct song' },
+      { id: 'converted', title: 'Converted song' },
+    ]);
+    expect(localImport.state.conversionReview).toBeNull();
+    expect(localImport.state.isConverting).toBe(false);
+    expect(localImport.state.message).toBe('已轉換並匯入 1 首');
+    expect(listTracksMock).toHaveBeenCalledOnce();
+  });
+
+  it('routes a missing FFmpeg dependency to setup without losing the review', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'Legacy.wma', sourceFormat: 'wma' }],
+      },
+    });
+    convertLocalAudioFilesMock.mockRejectedValueOnce(
+      new Error(
+        'UTAWAKUI_APP_ERROR:{"code":"FEATURE_DEPENDENCY_MISSING","severity":"warning","title":"尚未準備音訊處理項目","message":"請到設定準備 FFmpeg。","context":{"featureId":"audio-processing-flow","dependencyId":"ffmpeg-gyan-essentials"}}',
+      ),
+    );
+    const localImport = await loadLocalImport();
+    await localImport.importFiles();
+
+    await localImport.convertPendingFiles();
+
+    expect(localImport.state.conversionReview).not.toBeNull();
+    expect(localImport.state.statusType).toBe('pending');
+    expect(localImport.state.message).toBe(
+      '請先在設定準備 FFmpeg，再回來執行相容轉檔。',
+    );
+  });
+
   it('reports duplicate-only imports without treating them as hard failures', async () => {
     importLocalAudioFilesMock.mockResolvedValueOnce({
       imported: [],
       skipped: [
         {
-          path: 'Song A Copy.mp3',
+          filename: 'Song A Copy.mp3',
           reason: 'duplicate-content',
           existingTrackId: 'song-a',
         },
@@ -99,6 +204,32 @@ describe('useLocalImport', () => {
     expect(localImport.state.statusType).toBe('idle');
     expect(localImport.state.message).toBe('沒有新增曲目，略過 1 個重複檔案');
   });
+
+  it.each([
+    [
+      'unsupported-codec',
+      '沒有可匯入的音訊檔；1 個檔案使用目前無法直接播放的編碼。',
+    ],
+    [
+      'unsupported-media',
+      '沒有可匯入的音訊檔；1 個檔案包含影片或其他不支援的媒體串流。',
+    ],
+  ])(
+    'explains the bounded %s compatibility failure',
+    async (reason, message) => {
+      importLocalAudioFilesMock.mockResolvedValueOnce({
+        imported: [],
+        skipped: [{ filename: 'Unsupported.m4a', reason }],
+      });
+      const localImport = await loadLocalImport();
+
+      await localImport.importFiles();
+
+      expect(localImport.state.statusType).toBe('error');
+      expect(localImport.state.message).toBe(message);
+      expect(localImport.state.message).not.toContain('Unsupported.m4a');
+    },
+  );
 
   it('reports cancel/empty selection as a neutral status', async () => {
     importLocalAudioFilesMock.mockResolvedValueOnce({
@@ -138,5 +269,26 @@ describe('useLocalImport', () => {
       '需要重新啟動應用程式才能使用本機音訊匯入。',
     );
     expect(importLocalAudioFilesMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a restart hint when the conversion bridge is stale', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'Legacy.wma', sourceFormat: 'wma' }],
+      },
+    });
+    delete window.Utawakui.convertLocalAudioFiles;
+    const localImport = await loadLocalImport();
+    await localImport.importFiles();
+
+    await localImport.convertPendingFiles();
+
+    expect(localImport.state.statusType).toBe('error');
+    expect(localImport.state.message).toBe(
+      '需要重新啟動應用程式才能使用相容轉檔。',
+    );
   });
 });

@@ -25,7 +25,12 @@ import ImportSourceRow from './ImportSourceRow.vue';
 const props = defineProps({
   active: { type: Boolean, default: false },
 });
-const { state: localImportState, importFiles } = useLocalImport();
+const {
+  state: localImportState,
+  conversionReviewMessage,
+  convertPendingFiles,
+  importFiles,
+} = useLocalImport();
 const {
   state,
   playlistStats,
@@ -44,6 +49,7 @@ const sourceBusy = computed(
 const showLocalStatus = computed(
   () =>
     Boolean(localImportState.message) &&
+    !localImportState.conversionReview &&
     (localImportState.statusType !== 'success' ||
       localImportState.imported.length === 0 ||
       localImportState.skipped.length > 0),
@@ -170,11 +176,26 @@ watch(
         <UiIconButton
           :icon="FolderPlus"
           label="選擇音訊檔"
-          :disabled="localImportState.isImporting"
-          :aria-busy="localImportState.isImporting"
+          :disabled="
+            localImportState.isImporting || localImportState.isConverting
+          "
+          :aria-busy="
+            localImportState.isImporting || localImportState.isConverting
+          "
           @click="importFiles"
         />
       </template>
+
+      <UiNotice
+        v-if="localImportState.conversionReview"
+        tone="warning"
+        title="需要相容轉檔"
+        :message="conversionReviewMessage"
+        action-label="轉成 FLAC 並匯入"
+        :action-disabled="localImportState.isConverting"
+        compact
+        @action="convertPendingFiles"
+      />
 
       <UiNotice
         v-if="showLocalStatus && localImportState.statusType === 'error'"
