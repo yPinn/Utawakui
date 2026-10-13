@@ -95,8 +95,10 @@ function handleRadioKeydown(event, index) {
           class="artwork-results__thumb"
           :class="{ 'is-loading': candidate.previewLoading }"
           :track="track"
-          size="3.5rem"
+          size="var(--artwork-result-thumb-size)"
           :decorative="false"
+          loading="lazy"
+          decoding="async"
           :aria-label="`${display.title}封面`"
         >
           <template v-if="candidate.previewLoading" #overlay>
@@ -134,6 +136,8 @@ function handleRadioKeydown(event, index) {
 
 <style scoped>
 .artwork-results {
+  --artwork-result-thumb-size: 3rem;
+
   min-width: 0;
   border-block: var(--ui-border-width) solid var(--ui-color-border);
 }
@@ -155,7 +159,7 @@ function handleRadioKeydown(event, index) {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr);
+  grid-template-columns: var(--artwork-result-thumb-size) minmax(0, 1fr);
   align-items: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-2);

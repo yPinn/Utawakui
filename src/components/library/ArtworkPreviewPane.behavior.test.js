@@ -37,6 +37,9 @@ describe('ArtworkPreviewPane behavior contract', () => {
     expect(source).toContain(':loading="artworkPreparing"');
     expect(source).toContain('loading-label="準備預覽中"');
     expect(source).toContain('intent="danger"');
+    expect(source).toMatch(
+      /\.artwork-preview__actions\s*\{[^}]*inline-size:\s*var\(--track-metadata-preview-size\)[^}]*justify-content:\s*flex-end/msu,
+    );
     expect(source).toContain('v-if="!searchOpen"');
     expect(source).not.toContain('收合搜尋');
     expect(source).toContain("emit('choose')");

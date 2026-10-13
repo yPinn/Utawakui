@@ -122,9 +122,11 @@ const previewTrack = computed(() =>
 }
 
 .artwork-preview__actions {
+  inline-size: var(--track-metadata-preview-size);
+  align-self: center;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-end;
   gap: var(--ui-space-1);
 }
 
@@ -140,6 +142,11 @@ const previewTrack = computed(() =>
   .artwork-preview__heading,
   .artwork-preview__actions {
     grid-column: 2;
+  }
+
+  .artwork-preview__actions {
+    inline-size: auto;
+    align-self: stretch;
   }
 
   .artwork-preview__thumb {

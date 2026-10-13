@@ -49,6 +49,20 @@ afterEach(() => {
 });
 
 describe('useTrackMetadataEditor', () => {
+  it('exposes truthful idle state and ignores intents without a target track', async () => {
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+
+    expect(editor.isOpen.value).toBe(false);
+    expect(editor.isArtworkDirty.value).toBe(false);
+    expect(editor.isDirty.value).toBe(false);
+    expect(editor.openArtworkSearch()).toBeUndefined();
+    expect(editor.clearThumbnail()).toBeUndefined();
+    await expect(editor.searchArtwork()).resolves.toBe(null);
+    await expect(editor.chooseThumbnail()).resolves.toBe(null);
+  });
+
   it('opens the online artwork workspace for a track without artwork without starting a request', async () => {
     const { useTrackMetadataEditor } =
       await import('./useTrackMetadataEditor.js');
@@ -188,6 +202,24 @@ describe('useTrackMetadataEditor', () => {
     expect(editor.state.error).toBe('需要重新啟動應用程式');
   });
 
+  it('reports missing artwork-search bridge support without clearing the draft', async () => {
+    vi.stubGlobal('window', { Utawakui: {} });
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({
+      id: 'track-1',
+      title: 'Library Title',
+      thumbnailUrl: 'x://cover',
+    });
+    editor.openArtworkSearch();
+
+    await expect(editor.searchArtwork()).resolves.toBe(null);
+
+    expect(editor.state.track?.id).toBe('track-1');
+    expect(editor.state.error).toBe('需要重新啟動應用程式');
+  });
+
   it('uses the current metadata drafts as the artwork query and never auto-applies a result', async () => {
     searchTrackArtworkMock.mockResolvedValue({
       status: 'ok',
@@ -296,6 +328,61 @@ describe('useTrackMetadataEditor', () => {
     );
   });
 
+  it('keeps existing candidates visible while a refined search is pending or fails', async () => {
+    const refinedSearch = deferred();
+    searchTrackArtworkMock
+      .mockResolvedValueOnce({
+        status: 'ok',
+        candidates: [{ id: 'candidate-1', releaseTitle: 'Existing' }],
+      })
+      .mockReturnValueOnce(refinedSearch.promise);
+    loadTrackArtworkPreviewMock.mockResolvedValue({
+      status: 'error',
+      reason: 'not-found',
+    });
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Library Title' });
+    editor.openArtworkSearch();
+    await editor.searchArtwork();
+    editor.setArtworkQueryField('album', 'Refined album');
+
+    const pendingSearch = editor.searchArtwork();
+    await vi.waitFor(() => expect(editor.state.isArtworkSearching).toBe(true));
+    expect(
+      editor.state.artworkCandidates.map((candidate) => candidate.id),
+    ).toEqual(['candidate-1']);
+
+    refinedSearch.resolve({ status: 'error', reason: 'provider-unavailable' });
+    await pendingSearch;
+
+    expect(
+      editor.state.artworkCandidates.map((candidate) => candidate.id),
+    ).toEqual(['candidate-1']);
+    expect(editor.state.error).toBe('目前無法搜尋封面，請稍後再試。');
+  });
+
+  it('keeps candidates usable when an individual preview request rejects', async () => {
+    searchTrackArtworkMock.mockResolvedValue({
+      status: 'ok',
+      candidates: [{ id: 'candidate-1', releaseTitle: 'One' }],
+    });
+    loadTrackArtworkPreviewMock.mockRejectedValue(new Error('preview failed'));
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Library Title' });
+    editor.openArtworkSearch();
+
+    await editor.searchArtwork();
+    await vi.waitFor(() => {
+      expect(editor.state.artworkCandidates[0]?.previewLoading).toBe(false);
+    });
+
+    expect(editor.state.artworkCandidates[0]?.previewUrl).toBe('');
+  });
+
   it('shows candidate data before previews finish and loads the recommended preview first', async () => {
     const recommendedPreview = deferred();
     searchTrackArtworkMock.mockResolvedValue({
@@ -350,6 +437,123 @@ describe('useTrackMetadataEditor', () => {
       expect(editor.state.artworkCandidates[1].previewLoading).toBe(false);
       expect(editor.state.artworkCandidates[1].previewUrl).toMatch(/^blob:/u);
     });
+  });
+
+  it('deduplicates byte-identical previews while preserving distinct artwork', async () => {
+    searchTrackArtworkMock.mockResolvedValue({
+      status: 'ok',
+      candidates: [
+        { id: 'candidate-1', releaseTitle: 'One', recommended: true },
+        { id: 'candidate-2', releaseTitle: 'One duplicate' },
+        { id: 'candidate-3', releaseTitle: 'Different' },
+      ],
+    });
+    loadTrackArtworkPreviewMock.mockImplementation((_trackId, candidateId) =>
+      Promise.resolve({
+        status: 'ok',
+        mimeType: 'image/png',
+        bytes:
+          candidateId === 'candidate-3'
+            ? [137, 80, 78, 71, 3, 3]
+            : Uint8Array.from([137, 80, 78, 71, 1]),
+      }),
+    );
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Library Title' });
+    editor.openArtworkSearch();
+
+    await editor.searchArtwork();
+    await vi.waitFor(() => {
+      expect(
+        editor.state.artworkCandidates.every(
+          (candidate) => !candidate.previewLoading,
+        ),
+      ).toBe(true);
+    });
+
+    expect(
+      editor.state.artworkCandidates.map((candidate) => candidate.id),
+    ).toEqual(['candidate-1', 'candidate-3']);
+  });
+
+  it('transfers a selected duplicate to the higher-ranked canonical artwork', async () => {
+    const canonicalPreview = deferred();
+    const duplicatePreview = deferred();
+    searchTrackArtworkMock.mockResolvedValue({
+      status: 'ok',
+      candidates: [
+        { id: 'candidate-1', releaseTitle: 'Canonical', recommended: true },
+        { id: 'candidate-2', releaseTitle: 'Duplicate' },
+      ],
+    });
+    loadTrackArtworkPreviewMock.mockImplementation((_trackId, candidateId) =>
+      candidateId === 'candidate-1'
+        ? canonicalPreview.promise
+        : duplicatePreview.promise,
+    );
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Library Title' });
+    editor.openArtworkSearch();
+    await editor.searchArtwork();
+    editor.selectArtworkCandidate('candidate-2');
+
+    duplicatePreview.resolve({
+      status: 'ok',
+      mimeType: 'image/png',
+      bytes: Uint8Array.from([137, 80, 78, 71, 1]),
+    });
+    await vi.waitFor(() => {
+      expect(
+        editor.state.artworkCandidates.find(
+          (candidate) => candidate.id === 'candidate-2',
+        )?.previewLoading,
+      ).toBe(false);
+    });
+    canonicalPreview.resolve({
+      status: 'ok',
+      mimeType: 'image/png',
+      bytes: { data: [137, 80, 78, 71, 1] },
+    });
+
+    await vi.waitFor(() => {
+      expect(
+        editor.state.artworkCandidates.map((candidate) => candidate.id),
+      ).toEqual(['candidate-1']);
+    });
+    expect(editor.state.selectedArtworkCandidateId).toBe('candidate-1');
+    expect(editor.state.artworkDraft).toEqual({
+      action: 'candidate',
+      candidateId: 'candidate-1',
+    });
+    expect(editor.state.artworkPreviewUrl).toMatch(/^blob:/u);
+  });
+
+  it('keeps current candidates visible while editing optional album context', async () => {
+    searchTrackArtworkMock.mockResolvedValue({
+      status: 'ok',
+      candidates: [{ id: 'candidate-1', releaseTitle: 'One' }],
+    });
+    loadTrackArtworkPreviewMock.mockResolvedValue({
+      status: 'error',
+      reason: 'not-found',
+    });
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Library Title' });
+    editor.openArtworkSearch();
+    await editor.searchArtwork();
+
+    editor.setArtworkQueryField('album', 'Album detail');
+    editor.setArtworkQueryField('album', 'Album detail');
+    editor.setArtworkQueryField('artist', 'Ignored');
+
+    expect(editor.state.artworkCandidates).toHaveLength(1);
+    expect(editor.state.artworkSearchCompleted).toBe(true);
   });
 
   it('promotes a newly selected pending preview ahead of the remaining queue', async () => {

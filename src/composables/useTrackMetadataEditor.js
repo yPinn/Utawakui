@@ -191,27 +191,34 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     const nextValue = String(value ?? '');
     if (state.artworkQuery.album === nextValue) return;
     state.artworkQuery.album = nextValue;
-    invalidateArtworkResults();
   }
 
   function artworkFailure(result, fallback) {
     return ARTWORK_FAILURE_MESSAGES[result?.reason] || fallback;
   }
 
-  function previewObjectUrl(result) {
+  function previewBytes(result) {
+    if (result?.status !== 'ok' || !result.bytes) {
+      return new Uint8Array();
+    }
+    if (result.bytes instanceof Uint8Array) return result.bytes;
+    if (Array.isArray(result.bytes)) return Uint8Array.from(result.bytes);
+    return Uint8Array.from(result.bytes?.data || []);
+  }
+
+  function samePreviewBytes(first, second) {
+    if (first.byteLength !== second.byteLength) return false;
+    return first.every((value, index) => value === second[index]);
+  }
+
+  function previewObjectUrl(result, bytes = previewBytes(result)) {
     if (
-      result?.status !== 'ok' ||
-      !result.bytes ||
+      bytes.byteLength === 0 ||
       typeof Blob !== 'function' ||
       typeof URL?.createObjectURL !== 'function'
     ) {
       return '';
     }
-    const bytes =
-      result.bytes instanceof Uint8Array
-        ? result.bytes
-        : Uint8Array.from(result.bytes?.data || []);
-    if (bytes.byteLength === 0) return '';
     return URL.createObjectURL(
       new Blob([bytes], {
         type: result.mimeType || 'application/octet-stream',
@@ -222,9 +229,54 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   async function loadArtworkPreviews(trackId, candidates, generation) {
     const loadPreview = window.Utawakui?.loadTrackArtworkPreview;
     if (typeof loadPreview !== 'function') return;
+    const candidateOrder = new Map(
+      candidates.map((candidate, index) => [candidate.id, index]),
+    );
+    const loadedPreviewBytes = new Map();
     const pending = new Map(
       candidates.map((candidate) => [candidate.id, candidate]),
     );
+
+    function transferSelection(duplicateId, canonicalId) {
+      if (state.selectedArtworkCandidateId !== duplicateId) return;
+      state.selectedArtworkCandidateId = canonicalId;
+      state.artworkDraft = { action: 'candidate', candidateId: canonicalId };
+      state.artworkPreviewUrl =
+        state.artworkCandidates.find(
+          (candidate) => candidate.id === canonicalId,
+        )?.previewUrl || '';
+    }
+
+    function removeDuplicateCandidate(duplicateId, canonicalId) {
+      const duplicateIndex = state.artworkCandidates.findIndex(
+        (candidate) => candidate.id === duplicateId,
+      );
+      if (duplicateIndex < 0) return;
+      const [duplicate] = state.artworkCandidates.splice(duplicateIndex, 1);
+      loadedPreviewBytes.delete(duplicateId);
+      transferSelection(duplicateId, canonicalId);
+      if (
+        duplicate.previewUrl?.startsWith('blob:') &&
+        duplicate.previewUrl !== state.artworkPreviewUrl
+      ) {
+        revokeObjectUrl(duplicate.previewUrl);
+      }
+    }
+
+    function keepUniquePreview(candidateId, bytes) {
+      for (const [existingId, existingBytes] of loadedPreviewBytes) {
+        if (!samePreviewBytes(bytes, existingBytes)) continue;
+        const currentFirst =
+          candidateOrder.get(candidateId) < candidateOrder.get(existingId);
+        const canonicalId = currentFirst ? candidateId : existingId;
+        const duplicateId = currentFirst ? existingId : candidateId;
+        removeDuplicateCandidate(duplicateId, canonicalId);
+        if (!currentFirst) return false;
+        break;
+      }
+      loadedPreviewBytes.set(candidateId, bytes);
+      return true;
+    }
 
     function takeNextCandidate() {
       const priorityIds = [
@@ -251,7 +303,11 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
         let previewUrl = '';
         try {
           const result = await loadPreview(trackId, candidate.id);
-          previewUrl = previewObjectUrl(result);
+          const bytes = previewBytes(result);
+          if (bytes.byteLength > 0) {
+            if (!keepUniquePreview(candidate.id, bytes)) continue;
+            previewUrl = previewObjectUrl(result, bytes);
+          }
         } catch {
           // Keep the text candidate available when its preview cannot load.
         }
@@ -306,8 +362,12 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       state.artworkDraft = { action: 'keep' };
       state.artworkPreviewUrl = state.track.thumbnailUrl ?? '';
     }
-    invalidateArtworkResults();
+    artworkPreviewGeneration += 1;
     const generation = artworkPreviewGeneration;
+    state.artworkCandidates = state.artworkCandidates.map((candidate) => ({
+      ...candidate,
+      previewLoading: false,
+    }));
     try {
       const result = await window.Utawakui.searchTrackArtwork(state.track.id, {
         title: state.titleDraft,
@@ -324,6 +384,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       }
       const canLoadPreviews =
         typeof window.Utawakui?.loadTrackArtworkPreview === 'function';
+      revokeArtworkPreviews();
       state.artworkCandidates = (
         Array.isArray(result.candidates) ? result.candidates : []
       ).map((candidate) => ({

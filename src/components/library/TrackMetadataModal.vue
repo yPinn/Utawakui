@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue';
-import { ChevronUp, Search, SlidersHorizontal } from '../../icons/index.js';
+import { ChevronUp, Search, SlidersHorizontal, X } from '../../icons/index.js';
 import ArtworkPreviewPane from './ArtworkPreviewPane.vue';
 import ArtworkSearchResults from './ArtworkSearchResults.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -49,6 +49,8 @@ const searchOptionsOpen = shallowRef(false);
 const titleField = useTemplateRef('titleField');
 const artworkSearchHeading = useTemplateRef('artworkSearchHeading');
 const artworkSearchTrigger = useTemplateRef('artworkSearchTrigger');
+const albumFilterField = useTemplateRef('albumFilterField');
+const albumFilterTrigger = useTemplateRef('albumFilterTrigger');
 
 const currentTrack = computed(() => ({
   title: props.title,
@@ -89,6 +91,18 @@ async function restoreArtworkSearchTrigger() {
     ?.focus();
 }
 
+async function focusAlbumFilter() {
+  await nextTick();
+  albumFilterField.value?.focus();
+}
+
+async function closeAlbumFilter({ restoreFocus = false } = {}) {
+  searchOptionsOpen.value = false;
+  if (!restoreFocus) return;
+  await nextTick();
+  albumFilterTrigger.value?.$el?.focus?.();
+}
+
 watch(
   () => props.artworkSearchOpen,
   (open, wasOpen) => {
@@ -104,6 +118,10 @@ watch(
 watch(titleError, (error) => {
   if (error) void nextTick(() => titleField.value?.focus());
 });
+
+watch(searchOptionsOpen, (open) => {
+  if (open) void focusAlbumFilter();
+});
 </script>
 
 <template>
@@ -111,7 +129,8 @@ watch(titleError, (error) => {
     :open="open"
     title="編輯歌曲"
     size="wide"
-    :fixed-height="artworkSearchOpen"
+    max-block-size="medium"
+    fixed-height
     :close-disabled="closeDisabled"
     @close="cancel"
   >
@@ -172,18 +191,19 @@ watch(titleError, (error) => {
                   class="track-metadata__section-title"
                   tabindex="-1"
                 >
-                  線上搜尋封面
+                  搜尋封面
                 </h3>
-                <UiHint>
-                  使用外部來源搜尋；選取後先預覽，按「儲存」才會更換封面。
-                </UiHint>
+                <UiHint>選取後先預覽，儲存時套用。</UiHint>
               </div>
               <div class="track-metadata__search-actions">
                 <UiIconButton
+                  ref="albumFilterTrigger"
                   :icon="SlidersHorizontal"
                   label="設定專輯篩選"
                   :active="searchOptionsOpen"
                   :aria-pressed="searchOptionsOpen"
+                  :aria-expanded="searchOptionsOpen"
+                  aria-haspopup="dialog"
                   aria-controls="track-artwork-search-options"
                   :disabled="fieldsDisabled"
                   @click="searchOptionsOpen = !searchOptionsOpen"
@@ -213,18 +233,41 @@ watch(titleError, (error) => {
               v-if="searchOptionsOpen"
               id="track-artwork-search-options"
               class="track-metadata__search-options"
+              role="dialog"
+              aria-label="專輯篩選"
+              @keydown.escape.stop.prevent="
+                closeAlbumFilter({ restoreFocus: true })
+              "
             >
               <UiTextField
                 id="track-artwork-album-filter"
+                ref="albumFilterField"
                 :model-value="artworkQuery.album"
                 label="專輯（選填）"
-                hint="結果太多或版本相近時再填。"
+                placeholder="專輯（選填）"
+                label-hidden
                 maxlength="200"
                 :disabled="fieldsDisabled"
                 @update:model-value="
                   emit('updateArtworkQuery', 'album', $event)
                 "
                 @keydown.enter.prevent="emit('searchArtwork')"
+              />
+              <UiIconButton
+                :icon="Search"
+                label="以專輯條件搜尋"
+                :loading="artworkSearching"
+                loading-label="搜尋中"
+                :disabled="
+                  saving || artworkPreparing || !String(title || '').trim()
+                "
+                @click="emit('searchArtwork')"
+              />
+              <UiIconButton
+                :icon="X"
+                label="關閉專輯篩選"
+                :disabled="saving || artworkPreparing"
+                @click="closeAlbumFilter({ restoreFocus: true })"
               />
             </div>
 
@@ -316,6 +359,9 @@ watch(titleError, (error) => {
 }
 
 .track-metadata__search {
+  --track-metadata-search-options-inline-size: 20rem;
+
+  position: relative;
   padding-top: var(--ui-space-4);
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
@@ -343,10 +389,21 @@ watch(titleError, (error) => {
 }
 
 .track-metadata__search-options {
+  position: absolute;
+  inset-block-start: var(--ui-space-2);
+  inset-inline-end: 0;
+  z-index: var(--ui-layer-raised);
+  inline-size: min(var(--track-metadata-search-options-inline-size), 100%);
   min-width: 0;
-  padding: var(--ui-space-3);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-2);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface-raised);
+  box-shadow: var(--ui-shadow-overlay);
 }
 
 .track-metadata__empty {

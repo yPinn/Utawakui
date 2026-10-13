@@ -22,6 +22,11 @@ describe('ArtworkSearchResults behavior contract', () => {
     expect(source).not.toMatch(/@keyframes|artwork-results__loading/u);
     expect(source).not.toContain('UiSkeleton');
     expect(source).toContain("emit('select', candidate.id)");
+    expect(source).toContain('--artwork-result-thumb-size: 3rem');
+    expect(source).toContain('size="var(--artwork-result-thumb-size)"');
+    expect(source).toContain(
+      'grid-template-columns: var(--artwork-result-thumb-size) minmax(0, 1fr)',
+    );
   });
 
   it('projects only decision-useful copy without leaving the modal', () => {

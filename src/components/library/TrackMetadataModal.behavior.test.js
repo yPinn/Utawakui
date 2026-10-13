@@ -42,12 +42,13 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(compiled.errors).toEqual([]);
   });
 
-  it('uses an image-first split workspace that expands only for artwork search', () => {
+  it('uses an image-first split workspace with stable bounded geometry', () => {
     expect(modalSource).toContain('ArtworkPreviewPane');
     expect(modalSource).toContain('ArtworkSearchResults');
     expect(modalSource).toContain('size="wide"');
-    expect(modalSource).toContain(':fixed-height="artworkSearchOpen"');
-    expect(modalSource).not.toMatch(/\sfixed-height(?:\s|>)/u);
+    expect(modalSource).toContain('max-block-size="medium"');
+    expect(modalSource).toMatch(/\sfixed-height(?:\s|>)/u);
+    expect(modalSource).not.toContain(':fixed-height="artworkSearchOpen"');
     expect(modalSource).toMatch(
       /grid-template-columns:\s*minmax\([^;]+\)\s+minmax\(0,\s*1fr\)/u,
     );
@@ -70,18 +71,34 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).toContain('SlidersHorizontal');
     expect(modalSource).toContain('ChevronUp');
     expect(modalSource).toContain('設定專輯篩選');
-    expect(modalSource).toContain(
-      '使用外部來源搜尋；選取後先預覽，按「儲存」才會更換封面。',
-    );
+    expect(modalSource).toContain('選取後先預覽，儲存時套用。');
     expect(modalSource).not.toContain('套用前');
     expect(modalSource).not.toContain('<details');
     expect(modalSource).not.toContain('UiDisclosure');
   });
 
+  it('keeps the optional album field in a contained find-bar overlay', () => {
+    expect(modalSource).toContain('role="dialog"');
+    expect(modalSource).toContain('aria-label="專輯篩選"');
+    expect(modalSource).toContain(':aria-expanded="searchOptionsOpen"');
+    expect(modalSource).toContain('aria-haspopup="dialog"');
+    expect(modalSource).toContain('label-hidden');
+    expect(modalSource).toContain('label="以專輯條件搜尋"');
+    expect(modalSource).toContain('label="關閉專輯篩選"');
+    expect(modalSource).toMatch(
+      /\.track-metadata__search\s*\{[^}]*position:\s*relative/msu,
+    );
+    expect(modalSource).toMatch(
+      /\.track-metadata__search-options\s*\{[^}]*position:\s*absolute/msu,
+    );
+  });
+
   it('keeps search actions concise and does not navigate away from the modal', () => {
     expect(modalSource).toContain('UiIconButton');
     expect(modalSource).toMatch(/>\s*搜尋\s*</u);
-    expect(modalSource).not.toMatch(/>\s*搜尋封面\s*</u);
+    expect(modalSource).not.toMatch(
+      /<UiButton[\s\S]*?>\s*搜尋封面\s*<\/UiButton>/u,
+    );
     expect(modalSource).not.toContain('openArtworkSource');
     expect(modalSource).not.toContain('@open-source');
     expect(libraryBrowseSource).not.toContain('@open-artwork-source');
