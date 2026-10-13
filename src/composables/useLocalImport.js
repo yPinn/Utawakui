@@ -4,6 +4,7 @@ import { normalizeAppError } from '../utils/appErrors.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useLibrary } from './useLibrary.js';
+import { registerLocalImportActivity } from './usePreparationActivity.js';
 
 const CONVERSION_FORMAT_LABELS = Object.freeze({
   aiff: 'AIFF',
@@ -25,6 +26,8 @@ const state = reactive({
   skipped: [],
   conversionReview: null,
 });
+const readonlyState = readonly(state);
+registerLocalImportActivity(readonlyState);
 
 const { refresh: refreshLibrary } = useLibrary();
 const { recordError } = useAppDiagnostics();
@@ -264,7 +267,7 @@ async function convertPendingFiles() {
 
 export function useLocalImport() {
   return {
-    state: readonly(state),
+    state: readonlyState,
     conversionReviewMessage,
     convertPendingFiles,
     importFiles,

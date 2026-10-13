@@ -79,6 +79,7 @@ function createQueueHarness() {
     move: vi.fn(() => true),
     remove: vi.fn(() => true),
     retry: vi.fn(() => true),
+    clearPending: vi.fn(() => 3),
     clearCompleted: vi.fn(() => 2),
     cancelActive: vi.fn(() => Promise.resolve(true)),
   };
@@ -101,6 +102,7 @@ describe('registerSeparationHandlers', () => {
       'separation:move-queue-item',
       'separation:remove-queue-item',
       'separation:retry-queue-item',
+      'separation:clear-pending',
       'separation:clear-completed',
       'separation:select',
     ]);
@@ -162,6 +164,9 @@ describe('registerSeparationHandlers', () => {
     await expect(
       handlers.get('separation:retry-queue-item')(null, 'item-1'),
     ).resolves.toEqual({ retried: true });
+    await expect(handlers.get('separation:clear-pending')()).resolves.toEqual({
+      removed: 3,
+    });
     await expect(handlers.get('separation:clear-completed')()).resolves.toEqual(
       { removed: 2 },
     );
@@ -172,6 +177,7 @@ describe('registerSeparationHandlers', () => {
     expect(queue.move).toHaveBeenCalledWith('item-1', -1);
     expect(queue.remove).toHaveBeenCalledWith('item-1');
     expect(queue.retry).toHaveBeenCalledWith('item-1');
+    expect(queue.clearPending).toHaveBeenCalledOnce();
     expect(requireFeatureGate).toHaveBeenCalledTimes(2);
   });
 

@@ -119,7 +119,7 @@ describe('separation queue presentation', () => {
   it('projects a compact status for the persistent accompaniment entry point', () => {
     expect(separationQueueIndicator(null)).toEqual({
       state: 'idle',
-      label: '伴奏處理',
+      label: '',
     });
     expect(
       separationQueueIndicator({
@@ -130,7 +130,17 @@ describe('separation queue presentation', () => {
         failed: 0,
         cancelled: 0,
       }),
-    ).toEqual({ state: 'running', label: '已處理 1 / 3 首' });
+    ).toEqual({ state: 'running', label: '處理中 1/3' });
+    expect(
+      separationQueueIndicator({
+        status: 'pausing',
+        done: 1,
+        total: 3,
+        pending: 1,
+        failed: 0,
+        cancelled: 0,
+      }),
+    ).toEqual({ state: 'pausing', label: '即將暫停' });
     expect(
       separationQueueIndicator({
         status: 'paused',
@@ -140,7 +150,17 @@ describe('separation queue presentation', () => {
         failed: 0,
         cancelled: 0,
       }),
-    ).toEqual({ state: 'paused', label: '已暫停 · 2 首待處理' });
+    ).toEqual({ state: 'paused', label: '已暫停' });
+    expect(
+      separationQueueIndicator({
+        status: 'paused',
+        done: 3,
+        total: 3,
+        pending: 0,
+        failed: 0,
+        cancelled: 0,
+      }),
+    ).toEqual({ state: 'paused', label: '已暫停' });
     expect(
       separationQueueIndicator({
         status: 'idle',
@@ -160,6 +180,6 @@ describe('separation queue presentation', () => {
         failed: 0,
         cancelled: 0,
       }),
-    ).toEqual({ state: 'idle', label: '3 首完成' });
+    ).toEqual({ state: 'idle', label: '' });
   });
 });

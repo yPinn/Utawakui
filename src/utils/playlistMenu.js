@@ -33,7 +33,7 @@ export function playlistDisplayName(playlist) {
 
 // Title of the library destination shown when no collection is selected.
 export function libraryViewTitle(libraryView) {
-  return libraryView === 'local' ? '本機曲目' : '全部曲目';
+  return libraryView === 'local' ? '本機檔案' : '全部曲目';
 }
 
 // Playlists selectable as an "add to X" target: albums are always excluded

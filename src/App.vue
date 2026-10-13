@@ -44,6 +44,7 @@ import { useWindowCloseDecision } from './composables/useWindowCloseDecision.js'
 import { useTrayNavigation } from './composables/useTrayNavigation.js';
 import { usePlaybackHistory } from './composables/usePlaybackHistory.js';
 import { usePlaybackResume } from './composables/usePlaybackResume.js';
+import { usePreparationActivity } from './composables/usePreparationActivity.js';
 import { useSeparationQueue } from './composables/useSeparationQueue.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
@@ -59,7 +60,7 @@ import { hasOpenTransientOverlay } from './utils/transientOverlay.js';
 import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
 import { appDestinationSettingsLabel } from './utils/appDestinationRegistry.js';
-import { separationQueueIndicator } from './components/separation/separationQueuePresentation.js';
+import { preparationActivityIndicator } from './components/preparation/preparationActivityPresentation.js';
 
 provideUiOverlayHost('app-shell');
 const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
@@ -169,6 +170,7 @@ onMounted(announcement.initialize);
 const { width: sidebarWidth } = useSidebarWidth();
 const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
+const preparationActivity = usePreparationActivity();
 const separationQueue = useSeparationQueue();
 onMounted(separationQueue.initialize);
 onUnmounted(separationQueue.dispose);
@@ -235,8 +237,12 @@ const queueExpanded = computed(
 const preparationExpanded = computed(
   () => rightDock.isExpanded.value && preparationSurfaceActive.value,
 );
-const separationIndicator = computed(() =>
-  separationQueueIndicator(separationQueue.queue.value),
+const preparationIndicator = computed(() =>
+  preparationActivityIndicator({
+    separationQueue: separationQueue.queue.value,
+    providerImport: preparationActivity.providerImport.value,
+    localImport: preparationActivity.localImport.value,
+  }),
 );
 const rightDockExpanded = computed(
   () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
@@ -398,8 +404,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
       class="shell__titlebar"
       :preparation-active="preparationExpanded"
       :preparation-controls="RIGHT_DOCK_CONTENT_ID"
-      :preparation-status="separationIndicator.state"
-      :preparation-status-label="separationIndicator.label"
+      :preparation-status="preparationIndicator.state"
+      :preparation-status-label="preparationIndicator.label"
       :bgm-active="bgmPlayerOpen"
       :bgm-controls="BGM_PLAYER_ID"
       :performer-active="performerView.state.open"

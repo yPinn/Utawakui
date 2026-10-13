@@ -305,6 +305,30 @@ describe('separation queue service', () => {
     ).toEqual(['track-1', 'track-4', 'track-3']);
   });
 
+  it('clears pending work atomically without cancelling the active item', async () => {
+    const harness = createHarness();
+    const queued = harness.service.enqueue({
+      trackIds: ['track-1', 'track-2', 'track-3'],
+      recipeId: 'general',
+    });
+    await flush();
+    const pendingWaiter = harness.service.waitForItem(queued.itemIds[1]);
+    const updatesBeforeClear = harness.updates.length;
+
+    expect(harness.service.clearPending()).toBe(2);
+    await expect(pendingWaiter).rejects.toThrow(
+      'audio-processing job cancelled',
+    );
+
+    const remainingItems = harness.service.getStatus().queue.items;
+    expect(remainingItems).toHaveLength(1);
+    expect(remainingItems[0].trackId).toBe('track-1');
+    expect(['checking', 'running']).toContain(remainingItems[0].status);
+    expect(harness.runs).toHaveLength(1);
+    expect(harness.cancelActiveTrack).not.toHaveBeenCalled();
+    expect(harness.updates).toHaveLength(updatesBeforeClear + 1);
+  });
+
   it('retries failed work and clears only successful terminal items', async () => {
     const runTrack = vi
       .fn()

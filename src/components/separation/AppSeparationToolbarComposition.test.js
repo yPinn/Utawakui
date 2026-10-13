@@ -11,9 +11,12 @@ describe('App accompaniment preparation composition', () => {
     expect(appSource).toContain('<AppTitleBar');
     expect(appSource).toContain('<PreparationDockPanel');
     expect(appSource).toContain('useSeparationQueue()');
-    expect(appSource).toContain('separationQueueIndicator(');
+    expect(appSource).toContain('usePreparationActivity()');
+    expect(appSource).not.toContain('useImportSession()');
+    expect(appSource).not.toContain('useLocalImport()');
+    expect(appSource).toContain('preparationActivityIndicator({');
     expect(appSource).toContain(
-      ':preparation-status="separationIndicator.state"',
+      ':preparation-status="preparationIndicator.state"',
     );
     expect(appSource).toContain(':separation-controller="separationQueue"');
     expect(appSource).not.toContain('SeparationToolbarPopover');

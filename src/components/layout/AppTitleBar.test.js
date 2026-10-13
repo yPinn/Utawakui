@@ -84,10 +84,16 @@ describe('AppTitleBar', () => {
     expect(source).toContain(
       "preparationStatusLabel: { type: String, default: '' }",
     );
-    expect(source).toContain('const preparationLabel = computed(');
-    expect(source).toContain(':label="preparationLabel"');
+    expect(source).toContain('const preparationActionLabel = computed(');
+    expect(source).toContain("? '收合曲目準備'");
+    expect(source).toContain(": '展開曲目準備'");
+    expect(source).toContain('const preparationTooltipSuffix = computed(');
+    expect(source).toContain(':label="preparationActionLabel"');
+    expect(source).toContain('title="曲目準備"');
+    expect(source).toContain(':tooltip-suffix="preparationTooltipSuffix"');
+    expect(source).not.toContain('`曲目準備；${props.preparationStatusLabel}`');
     expect(source).toContain(
-      '`app-title-bar__preparation--${preparationStatus}`',
+      '`app-title-bar__preparation--${preparationTone}`',
     );
     expect(source).toContain(':active="preparationActive"');
     expect(source).toContain(':aria-expanded="preparationActive"');
@@ -95,6 +101,18 @@ describe('AppTitleBar', () => {
       ':aria-controls="preparationControls || undefined"',
     );
     expect(source).toContain('@click="emit(\'togglePreparation\')"');
+  });
+
+  it('keeps preparation status tone visible while the Dock toggle is selected', () => {
+    expect(source).toContain("'pausing', 'paused'");
+    expect(source).toMatch(
+      /\.app-title-bar__controls\s+\.app-title-bar__preparation\.app-title-bar__preparation--paused/u,
+    );
+    expect(source).toMatch(
+      /\.app-title-bar__controls\s+\.app-title-bar__preparation\.app-title-bar__preparation--attention/u,
+    );
+    expect(source).toContain('color: var(--ui-color-warning);');
+    expect(source).toContain('color: var(--ui-color-danger);');
   });
 
   it('does not retain the superseded session disclosure', () => {

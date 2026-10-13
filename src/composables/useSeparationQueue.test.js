@@ -55,6 +55,7 @@ function createHarness() {
     moveSeparationQueueItem: vi.fn().mockResolvedValue({ moved: true }),
     removeSeparationQueueItem: vi.fn().mockResolvedValue({ removed: true }),
     retrySeparationQueueItem: vi.fn().mockResolvedValue({ retried: true }),
+    clearPendingSeparations: vi.fn().mockResolvedValue({ removed: 1 }),
     clearCompletedSeparations: vi.fn().mockResolvedValue({ removed: 1 }),
     cancelSeparation: vi.fn().mockResolvedValue({ cancelled: true }),
     onSeparationQueueProgress: vi.fn((callback) => {
@@ -173,6 +174,7 @@ describe('useSeparationQueue', () => {
     await harness.separationQueue.move('item-3', -2);
     await harness.separationQueue.remove('item-3');
     await harness.separationQueue.retry('item-2');
+    await harness.separationQueue.clearPending();
     await harness.separationQueue.clearCompleted();
     await harness.separationQueue.cancelActive();
 
@@ -188,9 +190,10 @@ describe('useSeparationQueue', () => {
     expect(harness.bridge.retrySeparationQueueItem).toHaveBeenCalledWith(
       'item-2',
     );
+    expect(harness.bridge.clearPendingSeparations).toHaveBeenCalledOnce();
     expect(harness.bridge.clearCompletedSeparations).toHaveBeenCalledOnce();
     expect(harness.bridge.cancelSeparation).toHaveBeenCalledOnce();
-    expect(harness.bridge.getSeparationQueueStatus).toHaveBeenCalledTimes(5);
+    expect(harness.bridge.getSeparationQueueStatus).toHaveBeenCalledTimes(6);
   });
 
   it('rejects zero, fractional, and out-of-range reorder offsets', () => {

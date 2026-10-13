@@ -1,12 +1,25 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { useDragReorder } from '../../composables/useDragReorder.js';
-import { Ellipsis, RotateCcw, Square, Trash2 } from '../../icons/index.js';
+import {
+  BadgeCheck,
+  Check,
+  CircleDashed,
+  CircleX,
+  ListMinus,
+  Pause,
+  Play,
+  RotateCcw,
+  Square,
+} from '../../icons/index.js';
+import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiProgress from '../ui/UiProgress.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
-import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import { separationItemLabel } from './separationQueuePresentation.js';
 import { pendingReorderOffset } from './separationToolbarQueue.js';
 
@@ -16,35 +29,51 @@ const props = defineProps({
   attentionItems: { type: Array, default: () => [] },
   completedItems: { type: Array, default: () => [] },
   trackFor: { type: Function, required: true },
+  paused: { type: Boolean, default: false },
+  pausing: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
   'move',
   'remove',
   'retry',
+  'pause',
+  'resume',
   'cancelActive',
+  'clearPending',
   'clearCompleted',
+  'navigate',
 ]);
 const itemMenu = shallowRef(null);
 const completedItemsNewestFirst = computed(() =>
   [...props.completedItems].reverse(),
 );
+const ITEM_STATUS_PRESENTATION = Object.freeze({
+  failed: Object.freeze({ icon: CircleX, tone: 'danger' }),
+  cancelled: Object.freeze({ icon: Square, tone: 'muted' }),
+  completed: Object.freeze({ icon: Check, tone: 'success' }),
+  skipped: Object.freeze({ icon: BadgeCheck, tone: 'muted' }),
+});
+const UNKNOWN_STATUS_PRESENTATION = Object.freeze({
+  icon: CircleDashed,
+  tone: 'muted',
+});
 const menuItems = computed(() => {
   const item = itemMenu.value?.item;
   if (!item) return [];
 
   if (['checking', 'running'].includes(item.status)) {
-    return [{ value: 'cancel', label: '停止這首', icon: Square, danger: true }];
+    return [{ value: 'cancel', label: '停止這首', icon: Square }];
   }
 
   if (item.status === 'pending') {
-    return [{ value: 'remove', label: '移除', icon: Trash2, danger: true }];
+    return [{ value: 'remove', label: '移除', icon: ListMinus }];
   }
 
   return [
     { value: 'retry', label: '重試', icon: RotateCcw },
     { separator: true },
-    { value: 'remove', label: '移除', icon: Trash2, danger: true },
+    { value: 'remove', label: '移除', icon: ListMinus },
   ];
 });
 
@@ -52,15 +81,33 @@ function itemMenuOpen(item) {
   return itemMenu.value?.item?.itemId === item.itemId;
 }
 
+function statusPresentationFor(item) {
+  return ITEM_STATUS_PRESENTATION[item.status] ?? UNKNOWN_STATUS_PRESENTATION;
+}
+
 function openItemMenu(item, event) {
   event.preventDefault?.();
   event.stopPropagation?.();
-  const fromButton = event.type === 'click';
   itemMenu.value = {
     item,
-    anchorEl: fromButton ? event.currentTarget : null,
-    x: fromButton ? 0 : (event.clientX ?? 0),
-    y: fromButton ? 0 : (event.clientY ?? 0),
+    anchorEl: null,
+    x: event.clientX ?? 0,
+    y: event.clientY ?? 0,
+  };
+}
+
+function openItemMenuFromKeyboard(item, event) {
+  const isContextMenuKey = event.key === 'ContextMenu';
+  const isShiftF10 = event.shiftKey && event.key === 'F10';
+  if (!isContextMenuKey && !isShiftF10) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  itemMenu.value = {
+    item,
+    anchorEl: event.currentTarget,
+    x: 0,
+    y: 0,
   };
 }
 
@@ -102,7 +149,7 @@ const {
   canDrag: () => props.pendingItems.length >= 2,
 });
 
-const DRAG_EXCLUDED_ACTIONS = '.ui-icon-btn';
+const DRAG_EXCLUDED_ACTIONS = '.ui-icon-btn, .ui-text-btn';
 let dragStartedFromAction = false;
 
 function isExcludedDragTarget(target) {
@@ -139,65 +186,88 @@ function dragItem(item) {
 
 <template>
   <div class="separation-toolbar-list">
-    <section v-if="activeItems.length > 0" aria-labelledby="quick-active">
-      <h3 id="quick-active" class="separation-toolbar-list__heading">處理中</h3>
+    <AppRightDockSection v-if="activeItems.length > 0" heading="處理中">
+      <template #trailing>
+        <UiIconButton
+          v-if="pendingItems.length > 0"
+          :icon="Pause"
+          :label="pausing ? '等待暫停' : '完成這首後暫停'"
+          :disabled="pausing"
+          @click="emit('pause')"
+        />
+      </template>
+      <div class="separation-toolbar-list__active-status">
+        <UiProgress
+          v-for="item in activeItems"
+          :key="`${item.itemId}-progress`"
+          class="separation-toolbar-list__progress"
+          label="進度"
+          :value="item.percent ?? 0"
+          :value-text="separationItemLabel(item)"
+          :indeterminate="!Number.isFinite(item.percent)"
+        />
+      </div>
       <ul class="separation-toolbar-list__items">
-        <UiTrackRow
+        <TrackIdentityRow
           v-for="item in activeItems"
           :key="item.itemId"
-          class="separation-toolbar-list__item"
+          class="separation-toolbar-list__item right-dock-track"
           :track="trackFor(item)"
+          navigation="artist"
+          state-surface
+          :state-surface-active="itemMenuOpen(item)"
           hide-duration
           overflow="ellipsis"
+          tabindex="0"
+          aria-haspopup="menu"
+          :aria-expanded="itemMenuOpen(item) ? 'true' : 'false'"
           @contextmenu.prevent.stop="openItemMenu(item, $event)"
-        >
-          <template #trail>
-            <span class="separation-toolbar-list__trail">
-              <UiIconButton
-                class="separation-toolbar-list__menu"
-                :icon="Ellipsis"
-                :label="`${trackFor(item).title}的更多選項`"
-                :title="trackFor(item).title"
-                tooltip-suffix="的更多選項"
-                aria-haspopup="menu"
-                :aria-expanded="itemMenuOpen(item) ? 'true' : 'false'"
-                @click.stop="openItemMenu(item, $event)"
-              />
-            </span>
-          </template>
-        </UiTrackRow>
+          @keydown="openItemMenuFromKeyboard(item, $event)"
+          @navigate="emit('navigate', $event)"
+        />
       </ul>
-      <UiProgress
-        v-for="item in activeItems"
-        :key="`${item.itemId}-progress`"
-        class="separation-toolbar-list__progress"
-        label="進度"
-        :value="item.percent ?? 0"
-        :value-text="separationItemLabel(item)"
-        :indeterminate="!Number.isFinite(item.percent)"
-      />
-    </section>
+    </AppRightDockSection>
 
-    <section v-if="pendingItems.length > 0" aria-labelledby="quick-pending">
-      <h3 id="quick-pending" class="separation-toolbar-list__heading">
-        接下來
-      </h3>
+    <AppRightDockSection v-if="pendingItems.length > 0" heading="接下來">
+      <template #trailing>
+        <div class="separation-toolbar-list__section-actions">
+          <UiIconButton
+            v-if="paused"
+            :icon="Play"
+            label="繼續處理"
+            variant="accent"
+            @click="emit('resume')"
+          />
+          <UiIconButton
+            :icon="ListMinus"
+            label="清除待處理"
+            @click="emit('clearPending')"
+          />
+        </div>
+      </template>
       <ul class="separation-toolbar-list__items">
-        <UiTrackRow
-          v-for="(item, index) in pendingItems"
+        <TrackIdentityRow
+          v-for="item in pendingItems"
           :key="item.itemId"
-          class="separation-toolbar-list__item"
+          class="separation-toolbar-list__item right-dock-track"
           :class="{
             'separation-toolbar-list__item--draggable': pendingItems.length > 1,
             'separation-toolbar-list__item--dragging':
               draggingPendingId === item.itemId,
           }"
           :track="trackFor(item)"
+          navigation="artist"
+          state-surface
+          :state-surface-active="itemMenuOpen(item)"
           hide-duration
           overflow="ellipsis"
           thumb-loading="lazy"
           :draggable="pendingItems.length > 1"
+          tabindex="0"
+          aria-haspopup="menu"
+          :aria-expanded="itemMenuOpen(item) ? 'true' : 'false'"
           @contextmenu.prevent.stop="openItemMenu(item, $event)"
+          @keydown="openItemMenuFromKeyboard(item, $event)"
           @pointerdown="handlePendingPointerDown"
           @pointerup="resetPendingDragOrigin"
           @pointercancel="resetPendingDragOrigin"
@@ -206,30 +276,8 @@ function dragItem(item) {
           @dragleave="leavePendingDropTarget(dragItem(item), $event)"
           @drop="dropPendingItem(dragItem(item), $event)"
           @dragend="handlePendingDragEnd"
+          @navigate="emit('navigate', $event)"
         >
-          <template #lead>
-            <span class="separation-toolbar-list__order" aria-hidden="true">
-              {{ index + 1 }}
-            </span>
-          </template>
-          <template #trail>
-            <span class="separation-toolbar-list__trail">
-              <span class="separation-toolbar-list__state">
-                {{ separationItemLabel(item) }}
-              </span>
-              <UiIconButton
-                class="separation-toolbar-list__menu"
-                :icon="Ellipsis"
-                :label="`${trackFor(item).title}的更多選項`"
-                :title="trackFor(item).title"
-                tooltip-suffix="的更多選項"
-                aria-haspopup="menu"
-                :aria-expanded="itemMenuOpen(item) ? 'true' : 'false'"
-                @click.stop="openItemMenu(item, $event)"
-                @dblclick.stop
-              />
-            </span>
-          </template>
           <template #overlay>
             <UiSeparator
               v-if="pendingDropTargetId === item.itemId"
@@ -238,77 +286,70 @@ function dragItem(item) {
               :class="`separation-toolbar-list__drop-indicator--${pendingDropPosition}`"
             />
           </template>
-        </UiTrackRow>
+        </TrackIdentityRow>
       </ul>
-    </section>
+    </AppRightDockSection>
 
-    <section v-if="attentionItems.length > 0" aria-labelledby="quick-attention">
-      <h3 id="quick-attention" class="separation-toolbar-list__heading">
-        未完成
-      </h3>
+    <AppRightDockSection v-if="attentionItems.length > 0" heading="未完成">
       <ul class="separation-toolbar-list__items">
-        <UiTrackRow
+        <TrackIdentityRow
           v-for="item in attentionItems"
           :key="item.itemId"
-          class="separation-toolbar-list__item"
+          class="separation-toolbar-list__item right-dock-track"
           :track="trackFor(item)"
+          navigation="artist"
+          state-surface
+          :state-surface-active="itemMenuOpen(item)"
           hide-duration
           overflow="ellipsis"
           thumb-loading="lazy"
+          tabindex="0"
+          aria-haspopup="menu"
+          :aria-expanded="itemMenuOpen(item) ? 'true' : 'false'"
           @contextmenu.prevent.stop="openItemMenu(item, $event)"
+          @keydown="openItemMenuFromKeyboard(item, $event)"
+          @navigate="emit('navigate', $event)"
         >
           <template #trail>
-            <span class="separation-toolbar-list__trail">
-              <span class="separation-toolbar-list__state">
-                {{ separationItemLabel(item) }}
-              </span>
-              <UiIconButton
-                class="separation-toolbar-list__menu"
-                :icon="Ellipsis"
-                :label="`${trackFor(item).title}的更多選項`"
-                :title="trackFor(item).title"
-                tooltip-suffix="的更多選項"
-                aria-haspopup="menu"
-                :aria-expanded="itemMenuOpen(item) ? 'true' : 'false'"
-                @click.stop="openItemMenu(item, $event)"
-              />
-            </span>
+            <UiStatusIcon
+              :icon="statusPresentationFor(item).icon"
+              :tone="statusPresentationFor(item).tone"
+              :label="separationItemLabel(item)"
+            />
           </template>
-        </UiTrackRow>
+        </TrackIdentityRow>
       </ul>
-    </section>
+    </AppRightDockSection>
 
-    <section
+    <AppRightDockSection
       v-if="completedItemsNewestFirst.length > 0"
-      aria-labelledby="quick-completed"
+      heading="已完成"
     >
-      <div class="separation-toolbar-list__section-heading">
-        <h3 id="quick-completed" class="separation-toolbar-list__heading">
-          已完成
-        </h3>
-        <UiIconButton
-          :icon="Trash2"
-          label="清除完成紀錄"
-          @click="emit('clearCompleted')"
-        />
-      </div>
+      <template #trailing>
+        <UiButton @click="emit('clearCompleted')">清除紀錄</UiButton>
+      </template>
       <ul class="separation-toolbar-list__items">
-        <UiTrackRow
+        <TrackIdentityRow
           v-for="item in completedItemsNewestFirst"
           :key="item.itemId"
+          class="right-dock-track"
           :track="trackFor(item)"
+          navigation="artist"
           hide-duration
           overflow="ellipsis"
           thumb-loading="lazy"
+          @navigate="emit('navigate', $event)"
         >
           <template #trail>
-            <span class="separation-toolbar-list__state">
-              {{ separationItemLabel(item) }}
-            </span>
+            <UiStatusIcon
+              :icon="statusPresentationFor(item).icon"
+              :tone="statusPresentationFor(item).tone"
+              :label="separationItemLabel(item)"
+            />
           </template>
-        </UiTrackRow>
+        </TrackIdentityRow>
       </ul>
-    </section>
+    </AppRightDockSection>
 
     <UiContextMenu
       :open="Boolean(itemMenu)"
@@ -326,33 +367,8 @@ function dragItem(item) {
 
 <style scoped>
 .separation-toolbar-list {
-  --ui-track-row-min-height: 2.5rem;
-  --ui-track-row-thumb-size: 2rem;
-  --ui-track-row-padding-inline: var(--ui-space-1);
-
   display: grid;
-  gap: var(--ui-space-3);
-}
-
-.separation-toolbar-list__heading {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-}
-
-.separation-toolbar-list__section-heading {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
-  margin-bottom: var(--ui-space-2);
-}
-
-.separation-toolbar-list > section > .separation-toolbar-list__heading {
-  margin-bottom: var(--ui-space-2);
+  gap: var(--ui-right-dock-section-gap);
 }
 
 .separation-toolbar-list__items {
@@ -361,6 +377,12 @@ function dragItem(item) {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.separation-toolbar-list__section-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-1);
 }
 
 .separation-toolbar-list__item {
@@ -382,32 +404,10 @@ function dragItem(item) {
   opacity: var(--ui-opacity-dragging);
 }
 
-.separation-toolbar-list__progress {
-  margin: var(--ui-space-1) var(--ui-space-2) 0;
-}
-
-.separation-toolbar-list__order {
-  min-width: var(--ui-space-5);
-  color: var(--ui-color-text-muted);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-.separation-toolbar-list__state {
-  flex: 0 0 auto;
-  color: var(--ui-color-text-muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.separation-toolbar-list__trail {
-  display: inline-flex;
-  align-items: center;
+.separation-toolbar-list__active-status {
+  display: grid;
   gap: var(--ui-space-1);
-}
-
-.separation-toolbar-list__menu {
-  flex: 0 0 auto;
+  margin: 0 var(--ui-space-2) var(--ui-space-2);
 }
 
 .separation-toolbar-list__drop-indicator {

@@ -401,6 +401,21 @@ function createSeparationQueueService({
     return true;
   }
 
+  function clearPending() {
+    const pendingEntries = items.filter(({ status }) => status === 'pending');
+    if (pendingEntries.length === 0) return 0;
+
+    for (const entry of pendingEntries) {
+      entry.status = 'cancelled';
+      entry.error = new Error(CANCELLED_MESSAGE);
+      settleWaiters(entry);
+    }
+    const pendingSet = new Set(pendingEntries);
+    items = items.filter((entry) => !pendingSet.has(entry));
+    emitUpdate();
+    return pendingEntries.length;
+  }
+
   function clearCompleted() {
     const before = items.length;
     items = items.filter(({ status }) => !CLEARABLE_ITEM_STATUSES.has(status));
@@ -429,6 +444,7 @@ function createSeparationQueueService({
     move,
     remove,
     retry,
+    clearPending,
     clearCompleted,
     cancelActive,
   };

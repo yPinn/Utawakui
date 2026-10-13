@@ -286,6 +286,10 @@ function registerSeparationHandlers({
     return { retried: queueService.retry(itemId) };
   });
 
+  ipcMain.handle('separation:clear-pending', async () => ({
+    removed: queueService.clearPending(),
+  }));
+
   ipcMain.handle('separation:clear-completed', async () => ({
     removed: queueService.clearCompleted(),
   }));

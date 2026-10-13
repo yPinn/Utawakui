@@ -1,12 +1,11 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
-import { separationQueueSummary } from '../separation/separationQueuePresentation.js';
+import { nextTick, shallowRef, useTemplateRef } from 'vue';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
-import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import UiTabs from '../ui/UiTabs.vue';
 import ImportDockContent from '../import/ImportDockContent.vue';
 import SeparationDockContent from '../separation/SeparationDockContent.vue';
 
-const props = defineProps({
+defineProps({
   active: { type: Boolean, default: false },
   separationController: { type: Object, required: true },
 });
@@ -21,45 +20,71 @@ const preparationTabs = [
 // retained after its first shell mount, so local state still remembers the
 // selected tab for the lifetime of the app session.
 const activePreparationTab = shallowRef('import');
-const subtitle = computed(() =>
-  activePreparationTab.value === 'separation'
-    ? separationQueueSummary(props.separationController.queue.value)
-    : '本機與外部來源',
-);
+const dockPanel = useTemplateRef('dockPanel');
+
+function selectTab(tabId) {
+  activePreparationTab.value = tabId;
+  nextTick(() => {
+    dockPanel.value?.scrollTo({ top: 0 });
+  });
+}
 </script>
 
 <template>
   <AppRightDockPanel
+    ref="dockPanel"
     title="曲目準備"
-    :subtitle="subtitle"
     collapse-label="摺疊曲目準備"
     aria-label="曲目準備"
     @collapse="emit('collapse')"
   >
-    <UiSegmentedControl
-      v-model="activePreparationTab"
-      class="preparation-dock-panel__tabs"
-      :items="preparationTabs"
-      aria-label="選擇曲目準備工具"
-    />
+    <template #identity>
+      <UiTabs
+        :items="preparationTabs"
+        :active-id="activePreparationTab"
+        aria-label="曲目準備工具"
+        tab-id-prefix="preparation-dock"
+        panel-id-prefix="preparation-dock"
+        variant="bar"
+        @update:active-id="selectTab"
+      />
+    </template>
 
-    <ImportDockContent
+    <div
       v-show="activePreparationTab === 'import'"
-      :active="active && activePreparationTab === 'import'"
-    />
-    <SeparationDockContent
+      id="preparation-dock-import-panel"
+      class="preparation-dock-panel__content"
+      role="tabpanel"
+      aria-labelledby="preparation-dock-import-tab"
+      tabindex="0"
+    >
+      <ImportDockContent
+        :active="active && activePreparationTab === 'import'"
+      />
+    </div>
+    <div
       v-show="activePreparationTab === 'separation'"
-      :separation-controller="separationController"
-    />
+      id="preparation-dock-separation-panel"
+      class="preparation-dock-panel__content"
+      role="tabpanel"
+      aria-labelledby="preparation-dock-separation-tab"
+      tabindex="0"
+    >
+      <SeparationDockContent
+        :separation-controller="separationController"
+        @navigate="emit('collapse')"
+      />
+    </div>
   </AppRightDockPanel>
 </template>
 
 <style scoped>
-.preparation-dock-panel__tabs {
-  inline-size: 100%;
+.preparation-dock-panel__content {
+  min-inline-size: 0;
 }
 
-.preparation-dock-panel__tabs :deep(.ui-segmented-control__option) {
-  flex: 1;
+.preparation-dock-panel__content:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: calc(-1 * var(--ui-focus-width));
 }
 </style>

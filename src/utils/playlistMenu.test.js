@@ -5,8 +5,16 @@ import {
   addToPlaylistTargets,
   collectionAddToPlaylistItems,
   filterPlaylistTargets,
+  libraryViewTitle,
   playlistDisplayName,
 } from './playlistMenu.js';
+
+describe('libraryViewTitle', () => {
+  it('names the full union and the local-file subset', () => {
+    expect(libraryViewTitle('all')).toBe('全部曲目');
+    expect(libraryViewTitle('local')).toBe('本機檔案');
+  });
+});
 
 describe('playlistDisplayName', () => {
   it('returns the playlist name when present', () => {

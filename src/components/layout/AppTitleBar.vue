@@ -89,10 +89,16 @@ const performerLabel = computed(() =>
 const settingsLabel = computed(() =>
   props.updateAvailable ? '設定（有可用更新）' : '設定',
 );
-const preparationLabel = computed(() =>
-  props.preparationStatus === 'idle' || !props.preparationStatusLabel
-    ? '曲目準備'
-    : `曲目準備；${props.preparationStatusLabel}`,
+const preparationActionLabel = computed(() =>
+  props.preparationActive ? '收合曲目準備' : '展開曲目準備',
+);
+const preparationTooltipSuffix = computed(() =>
+  props.preparationStatusLabel ? ` · ${props.preparationStatusLabel}` : '',
+);
+const preparationTone = computed(() =>
+  ['pausing', 'paused'].includes(props.preparationStatus)
+    ? 'paused'
+    : props.preparationStatus,
 );
 
 function formatResourcePercent(value) {
@@ -230,9 +236,11 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
         <UiIconButton
           data-app-preparation-trigger
           class="app-title-bar__preparation"
-          :class="`app-title-bar__preparation--${preparationStatus}`"
+          :class="`app-title-bar__preparation--${preparationTone}`"
           :icon="ListChecks"
-          :label="preparationLabel"
+          :label="preparationActionLabel"
+          title="曲目準備"
+          :tooltip-suffix="preparationTooltipSuffix"
           variant="ghost"
           size="md"
           :active="preparationActive"
@@ -323,8 +331,8 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   align-items: center;
   gap: var(--ui-space-3);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
 }
 
@@ -386,8 +394,8 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   display: flex;
   align-items: center;
   gap: var(--ui-space-3);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
 }
 
@@ -455,15 +463,30 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   gap: var(--ui-space-2);
 }
 
-.app-title-bar__preparation--running {
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--running,
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--running:hover,
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--running:active {
   color: var(--ui-color-accent);
 }
 
-.app-title-bar__preparation--paused {
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--paused,
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--paused:hover,
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--paused:active {
   color: var(--ui-color-warning);
 }
 
-.app-title-bar__preparation--attention {
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--attention,
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--attention:hover,
+.app-title-bar__controls
+  .app-title-bar__preparation.app-title-bar__preparation--attention:active {
   color: var(--ui-color-danger);
 }
 

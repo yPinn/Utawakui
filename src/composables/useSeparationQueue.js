@@ -243,6 +243,7 @@ export function useSeparationQueue({ bridge = window.Utawakui } = {}) {
     safeId(itemId, 128)
       ? applyRefreshAction('retrySeparationQueueItem', itemId)
       : false;
+  const clearPending = () => applyRefreshAction('clearPendingSeparations');
   const clearCompleted = () => applyRefreshAction('clearCompletedSeparations');
   const cancelActive = () => applyRefreshAction('cancelSeparation');
 
@@ -264,6 +265,7 @@ export function useSeparationQueue({ bridge = window.Utawakui } = {}) {
     move,
     remove,
     retry,
+    clearPending,
     clearCompleted,
     cancelActive,
     dispose,

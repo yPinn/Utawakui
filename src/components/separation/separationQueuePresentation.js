@@ -87,16 +87,22 @@ export function separationQueueSummary(queue) {
 }
 
 export function separationQueueIndicator(queue) {
-  if (!queue) return { state: 'idle', label: '伴奏處理' };
-  if (['running', 'pausing'].includes(queue.status)) {
-    return { state: 'running', label: separationQueueSummary(queue) };
+  if (!queue) return { state: 'idle', label: '' };
+  if (queue.status === 'running') {
+    return {
+      state: 'running',
+      label: `處理中 ${queue.done ?? 0}/${queue.total ?? 0}`,
+    };
+  }
+  if (queue.status === 'pausing') {
+    return { state: 'pausing', label: '即將暫停' };
   }
   if (queue.status === 'paused') {
-    return { state: 'paused', label: separationQueueSummary(queue) };
+    return { state: 'paused', label: '已暫停' };
   }
   const unfinished = (queue.failed ?? 0) + (queue.cancelled ?? 0);
   if (unfinished > 0) {
     return { state: 'attention', label: `${unfinished} 首未完成` };
   }
-  return { state: 'idle', label: separationQueueSummary(queue) };
+  return { state: 'idle', label: '' };
 }
