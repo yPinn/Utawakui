@@ -351,9 +351,12 @@ function buildAudioDownloadAttempts(baseOptions, info = null) {
 
 async function fetchVideoInfo(
   videoId,
-  { runner, phases = ANONYMOUS_YOUTUBE_PHASES } = {},
+  { runner, phases = ANONYMOUS_YOUTUBE_PHASES, signal } = {},
 ) {
   const run = requireYoutubeRunner(runner);
+  const execute = signal
+    ? (url, options) => run(url, options, { signal })
+    : run;
   try {
     const info = await runPhasedYoutubeAttempts(
       watchUrl(videoId),
@@ -368,7 +371,7 @@ async function fetchVideoInfo(
         },
         isRetryableMetadataError,
       ),
-      run,
+      execute,
     );
     return typeof info === 'object' && info !== null ? info : null;
   } catch {
@@ -425,6 +428,10 @@ async function inferAlbumTitleFromFirstEntry(entries, { runner } = {}) {
 
 async function downloadAudio(videoId, destDir, options = {}) {
   const runner = requireYoutubeRunner(options.runner);
+  const execute = options.signal
+    ? (url, ytdlpOptions) =>
+        runner(url, ytdlpOptions, { signal: options.signal })
+    : runner;
   fs.mkdirSync(destDir, { recursive: true });
 
   const trackDir = resolveTrackDir(destDir, videoId);
@@ -437,13 +444,14 @@ async function downloadAudio(videoId, destDir, options = {}) {
   const info = await fetchVideoInfo(videoId, {
     phases: getAuthenticatedYoutubePhases(),
     runner,
+    signal: options.signal,
   });
   const resetLyrics = lyricsManifestNeedsRescan(trackDir);
 
   // Verified per attempt, not once after the whole ladder — some clients let
   // yt-dlp exit 0 without writing a usable file, which must not stop retries.
   async function runAndVerifyAudioOutput(url, options) {
-    const result = await runner(url, options);
+    const result = await execute(url, options);
     if (!hasStructuredAudioFile(trackDir)) {
       throw new Error(MISSING_AUDIO_OUTPUT_MESSAGE);
     }

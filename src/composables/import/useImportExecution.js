@@ -3,11 +3,14 @@ import {
   downloadFailureHint,
   downloadFailureLabel,
 } from '../../utils/downloadFailureDisplay.js';
+import { normalizeAppError } from '../../utils/appErrors.js';
 import {
   getPlaylistImportStats,
   hasImportableSelection,
 } from '../../utils/importPlaylist.js';
 import { usePlaylists } from '../usePlaylists.js';
+
+const PROVIDER_DOWNLOAD_CONCURRENCY = 2;
 
 export function useImportExecution({
   state,
@@ -25,6 +28,7 @@ export function useImportExecution({
     upsertAlbum,
   } = usePlaylists();
   let cancelRequested = false;
+  const activeDownloadIds = new Set();
 
   function setSingleStatus(status, errorCode = null) {
     if (state.singleTrack) {
@@ -51,6 +55,7 @@ export function useImportExecution({
     setStatus('下載中...', 'pending');
     setSingleStatus('downloading');
     state.isImporting = true;
+    activeDownloadIds.add(downloadInput);
 
     try {
       const result = await window.Utawakui.downloadAudio(downloadInput);
@@ -61,6 +66,15 @@ export function useImportExecution({
         'object',
       );
     } catch (error) {
+      const appError = normalizeAppError(error, {
+        source: 'import',
+        operation: 'download-track',
+      });
+      if (appError.code === 'IMPORT_DOWNLOAD_CANCELLED') {
+        setSingleStatus('pending');
+        setStatus('已停止下載', 'pending');
+        return;
+      }
       if (handleProviderSetupError(error)) {
         setSingleStatus('pending');
         return;
@@ -71,6 +85,7 @@ export function useImportExecution({
       setStatus(`下載失敗：${failure.label}`, 'error');
       state.failureHint = failure.hint;
     } finally {
+      activeDownloadIds.delete(downloadInput);
       state.isImporting = false;
     }
   }
@@ -88,15 +103,42 @@ export function useImportExecution({
 
     track.status = 'downloading';
     track.errorCode = null;
+    activeDownloadIds.add(track.id);
 
     try {
       await window.Utawakui.downloadAudio(track.id);
       track.status = 'done';
     } catch (error) {
+      const appError = normalizeAppError(error, {
+        source: 'import',
+        operation: 'download-track',
+      });
+      if (appError.code === 'IMPORT_DOWNLOAD_CANCELLED') {
+        track.status = 'pending';
+        track.errorCode = null;
+        return;
+      }
       track.status = 'error';
       track.errorCode = describeDownloadFailure(error).code;
       reportImportError(error, 'download-track', '部分曲目未下載。');
+    } finally {
+      activeDownloadIds.delete(track.id);
     }
+  }
+
+  async function downloadPlaylistTracks(tracks) {
+    let nextIndex = 0;
+    async function runWorker() {
+      while (!cancelRequested) {
+        const track = tracks[nextIndex];
+        nextIndex += 1;
+        if (!track) return;
+        await downloadPlaylistTrack(track);
+      }
+    }
+
+    const workerCount = Math.min(PROVIDER_DOWNLOAD_CONCURRENCY, tracks.length);
+    await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
   }
 
   async function syncImportedPlaylist() {
@@ -140,17 +182,11 @@ export function useImportExecution({
     setStatus('下載選取曲目中...', 'pending');
 
     try {
-      for (const track of state.playlistTracks) {
-        if (cancelRequested) break;
-        if (
-          !track.selected ||
-          track.alreadyDownloaded ||
-          track.status === 'done'
-        ) {
-          continue;
-        }
-        await downloadPlaylistTrack(track);
-      }
+      const tracks = state.playlistTracks.filter(
+        (track) =>
+          track.selected && !track.alreadyDownloaded && track.status !== 'done',
+      );
+      await downloadPlaylistTracks(tracks);
 
       const playlistSynced = await syncImportedPlaylist();
       const stats = getPlaylistImportStats(state.playlistTracks);
@@ -182,13 +218,25 @@ export function useImportExecution({
     }
   }
 
-  function cancelImport() {
+  async function cancelTrackDownload(trackId) {
+    if (!activeDownloadIds.has(trackId)) return false;
+    if (typeof window.Utawakui.cancelAudioDownload !== 'function') return false;
+    return window.Utawakui.cancelAudioDownload(trackId);
+  }
+
+  async function cancelImport() {
     cancelRequested = true;
+    if (typeof window.Utawakui.cancelAudioDownload !== 'function') return;
+    await Promise.allSettled(
+      [...activeDownloadIds].map((trackId) =>
+        window.Utawakui.cancelAudioDownload(trackId),
+      ),
+    );
   }
 
   async function confirmImport() {
     if (state.isImporting) {
-      cancelImport();
+      await cancelImport();
       return;
     }
     if (!canConfirmImport.value) return;
@@ -212,6 +260,7 @@ export function useImportExecution({
   }
 
   return {
+    cancelTrackDownload,
     confirmImport,
     resetCancellation,
     retryFailedTracks,

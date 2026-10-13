@@ -130,6 +130,30 @@ describe('buildPythonYtdlpArgs', () => {
 });
 
 describe('createPythonYtdlpRunner', () => {
+  it('kills the active provider process when its caller aborts', async () => {
+    const proc = new EventEmitter();
+    proc.stdout = new EventEmitter();
+    proc.stderr = new EventEmitter();
+    proc.kill = vi.fn();
+    const runner = createPythonYtdlpRunner({
+      pythonPath: 'python.exe',
+      spawnImpl: vi.fn(() => proc),
+    });
+    const controller = new AbortController();
+
+    const pending = runner(
+      'https://example.test/video',
+      { skipDownload: true },
+      { signal: controller.signal },
+    );
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({
+      code: 'IMPORT_DOWNLOAD_CANCELLED',
+    });
+    expect(proc.kill).toHaveBeenCalledOnce();
+  });
+
   it('kills and rejects a provider process that stays idle', async () => {
     vi.useFakeTimers();
     try {

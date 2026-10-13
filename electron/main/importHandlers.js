@@ -14,6 +14,9 @@ const {
 } = require('../lib/downloadFailure');
 const { APP_ERROR_PREFIX, createAppError } = require('../lib/appError');
 const {
+  createProviderDownloadScheduler,
+} = require('../lib/providerDownloadScheduler');
+const {
   extractVideoId,
   extractPlaylistId,
   classifyPlaylistKind,
@@ -47,7 +50,6 @@ async function classifyingFailures(run, { recordDiagnostic } = {}) {
     return await run();
   } catch (err) {
     if (
-      err?.code === 'PROVIDER_SEARCH_FAILED' &&
       typeof err?.publicMessage === 'string' &&
       String(err?.message || '').startsWith(APP_ERROR_PREFIX)
     ) {
@@ -173,6 +175,15 @@ function buildProviderIndexEntry(
   };
 }
 
+function createSerialTaskLane() {
+  let tail = Promise.resolve();
+  return function runSerialTask(task) {
+    const result = tail.then(task, task);
+    tail = result.catch(() => undefined);
+    return result;
+  };
+}
+
 function registerImportHandlers({
   ipcMain,
   getConfig,
@@ -189,8 +200,13 @@ function registerImportHandlers({
   fetchYoutubeMetadata = fetchMetadata,
   searchYoutubeCandidates = searchPlaybackCandidates,
   listLibraryTracks = listTracks,
+  providerDownloadScheduler = createProviderDownloadScheduler(),
+  saveProviderIndexEntry = saveIndexEntry,
   recordDiagnostic,
 }) {
+  const providerDownloadTasks = new Map();
+  const runLibraryFinalize = createSerialTaskLane();
+
   function onSearchDiagnostics(summary) {
     const context = boundedSearchDiagnostics(summary);
     if (context.status === 'failed') return;
@@ -228,6 +244,64 @@ function registerImportHandlers({
         }),
       existingIds,
     });
+  }
+
+  function runProviderDownload(videoId) {
+    const existing = providerDownloadTasks.get(videoId);
+    if (existing) return existing;
+
+    const task = (async () => {
+      const destDir = resolveDownloadDir(getConfig());
+      const result = await providerDownloadScheduler.schedule(
+        videoId,
+        async ({ signal }) => {
+          const runner = await getProviderRunner();
+          return downloadTrackAudio(videoId, destDir, { runner, signal });
+        },
+      );
+
+      await runLibraryFinalize(async () => {
+        const trackDir = resolveTrackDir(destDir, videoId);
+        if (result.title) {
+          try {
+            saveProviderIndexEntry(
+              destDir,
+              videoId,
+              buildProviderIndexEntry(result),
+            );
+          } catch {
+            // The download itself succeeded and the file is playable — a
+            // failed index write will be repaired by the next backfill pass.
+          }
+        }
+        if (trackDir) {
+          scheduleOptionalLyricsAfterImport(
+            { ...result, id: videoId },
+            trackDir,
+            lyricsAcquisitionService,
+            () => notifyLibraryUpdated({ allowProviderBackfill: false }),
+          );
+        }
+        try {
+          enqueueMusicAnalysis(videoId);
+        } catch {
+          // Analysis is optional background work. A playable download remains
+          // successful even if queue admission fails unexpectedly.
+        }
+        await enforceLibraryStoragePolicySafely({
+          enforceLibraryStoragePolicy,
+          options: { protectedTrackIds: [videoId] },
+          recordDiagnostic,
+        });
+      });
+
+      return result;
+    })().finally(() => {
+      providerDownloadTasks.delete(videoId);
+    });
+
+    providerDownloadTasks.set(videoId, task);
+    return task;
   }
 
   ipcMain.handle('import:resolve-source', async (event, input) => {
@@ -379,45 +453,29 @@ function registerImportHandlers({
     requireFeatureGate(featureIds.PROVIDER_FLOW);
     return classifyingFailures(
       async () => {
-        const runner = await getProviderRunner();
         const videoId = extractVideoId(input);
         if (!videoId) throw new Error('invalid video id or YouTube URL');
-        const destDir = resolveDownloadDir(getConfig());
-        const result = await downloadTrackAudio(videoId, destDir, { runner });
-        const trackDir = resolveTrackDir(destDir, videoId);
-        if (result.title) {
-          try {
-            saveIndexEntry(destDir, videoId, buildProviderIndexEntry(result));
-          } catch {
-            // The download itself succeeded and the file is playable — a
-            // failed index write (e.g. disk full) shouldn't be reported to
-            // the renderer as a failed download. The next background
-            // backfill pass will retry writing the title.
-          }
-        }
-        if (trackDir) {
-          scheduleOptionalLyricsAfterImport(
-            { ...result, id: videoId },
-            trackDir,
-            lyricsAcquisitionService,
-            () => notifyLibraryUpdated({ allowProviderBackfill: false }),
-          );
-        }
         try {
-          enqueueMusicAnalysis(videoId);
-        } catch {
-          // Analysis is optional background work. A playable download remains
-          // successful even if queue admission fails unexpectedly.
+          return await runProviderDownload(videoId);
+        } catch (error) {
+          if (error?.code !== 'IMPORT_DOWNLOAD_CANCELLED') throw error;
+          throw createAppError({
+            code: 'IMPORT_DOWNLOAD_CANCELLED',
+            severity: 'info',
+            title: '匯入已停止',
+            message: '這首曲目已停止下載。',
+          });
         }
-        await enforceLibraryStoragePolicySafely({
-          enforceLibraryStoragePolicy,
-          options: { protectedTrackIds: [videoId] },
-          recordDiagnostic,
-        });
-        return result;
       },
       { recordDiagnostic },
     );
+  });
+
+  ipcMain.handle('yt:cancel-download', async (event, input) => {
+    requireFeatureGate(featureIds.PROVIDER_FLOW);
+    const videoId = extractVideoId(input);
+    if (!videoId) return false;
+    return providerDownloadScheduler.cancel(videoId);
   });
 }
 

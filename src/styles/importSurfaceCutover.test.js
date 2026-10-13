@@ -60,10 +60,12 @@ describe('Import Token v2 surface cutover', () => {
     expect(collectionReviewSource).toContain('<UiSegmentedControl');
     expect(collectionReviewSource).not.toContain('UiScroll');
     expect(collectionReviewSource).toContain('@click="retryFailedTracks"');
-    expect(collectionReviewSource).toContain('<TrackTable');
+    expect(collectionReviewSource).toContain('<UiTrackRow');
+    expect(collectionReviewSource).toContain('state-surface');
     expect(collectionReviewSource).toContain('<UiCheckbox');
     expect(collectionStatusSource).toContain('<UiStatusIcon');
-    expect(trackTableSource).toContain("props.variant === 'review'");
+    expect(collectionReviewSource).not.toContain('<TrackTable');
+    expect(trackTableSource).not.toContain("props.variant === 'review'");
   });
 
   it('uses only formal v2 token names throughout the Import surface', () => {

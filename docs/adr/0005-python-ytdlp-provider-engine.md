@@ -76,6 +76,31 @@ bounded fallback phases." Cookies stay as a later fallback, not the primary
 reliability story, because browser cookie extraction is brittle on current
 Windows browser encryption.
 
+### Provider work admission
+
+Provider acquisition uses bounded work lanes rather than a user-configurable
+thread count:
+
+- Renderer collection import projects at most two active track downloads so
+  pending rows remain visibly pending until work really starts.
+- Main owns the authoritative provider scheduler, also capped at two active
+  track ids across every renderer request. Requests for the same track id share
+  one promise instead of spawning another yt-dlp process.
+- Queued and active work can be cancelled only by a bounded track-id intent.
+  Main derives the provider target and passes an `AbortSignal` through the
+  downloader into the Python runner; renderer never receives a process id,
+  path, provider URL, runner option, or scheduler setting.
+- Download admission ends before library finalization. Index persistence,
+  optional sidecar/analysis scheduling, and storage-policy enforcement use one
+  serial finalization lane so parallel network work cannot create competing
+  library commits.
+
+The product UI describes queue state and outcomes, not workers or threads. The
+fixed limit is an implementation safety boundary; changing it requires measured
+network, disk, provider, and cancellation evidence rather than an exposed
+preference. Audio processing remains a separate runtime family and retains its
+concurrency-one heavy scheduler from ADR 0009.
+
 ## Validation
 
 The selected path was validated against the same previously PO-token-blocked

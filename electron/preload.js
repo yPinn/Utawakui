@@ -395,6 +395,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   openYoutubeMusicSearch: (query) =>
     ipcRenderer.invoke('provider-discovery:open-youtube-music-search', query),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
+  cancelAudioDownload: (videoId) =>
+    ipcRenderer.invoke('yt:cancel-download', videoId),
   // YouTube playlist URL/ID resolution — distinct from the user-named
   // playlists API below (listPlaylists/createPlaylist/etc.).
   fetchYoutubePlaylist: (input) =>
@@ -840,6 +842,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('separation:remove-queue-item', itemId),
   retrySeparationQueueItem: (itemId) =>
     ipcRenderer.invoke('separation:retry-queue-item', itemId),
+  clearPendingSeparations: () => ipcRenderer.invoke('separation:clear-pending'),
   clearCompletedSeparations: () =>
     ipcRenderer.invoke('separation:clear-completed'),
   selectSeparationResult: (trackId, recipeId) =>

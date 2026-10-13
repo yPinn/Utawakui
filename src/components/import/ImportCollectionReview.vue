@@ -10,12 +10,13 @@ import {
   identityArtistLabel,
   identityTitle,
 } from '../../utils/importCandidateDisplay.js';
+import ImportCollectionExecutionList from './ImportCollectionExecutionList.vue';
 import ImportCollectionTrackStatus from './ImportCollectionTrackStatus.vue';
-import TrackTable from '../track/TrackTable.vue';
-import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 
 const {
   state,
@@ -28,6 +29,7 @@ const {
   filterOptions,
   setActiveFilter,
   setTrackSelected,
+  cancelTrackDownload,
   toggleSelectAll,
   selectMissingTracks,
   retryFailedTracks,
@@ -35,6 +37,13 @@ const {
 
 const collectionLabel = computed(() =>
   state.collectionKind === 'album' ? '專輯' : '播放清單',
+);
+const executionMode = computed(
+  () =>
+    state.isImporting ||
+    (state.playlistTracks ?? []).some((track) =>
+      ['downloading', 'done', 'error'].includes(track.status),
+    ),
 );
 const filterItems = computed(() =>
   filterOptions.value.map((filter) => ({
@@ -44,14 +53,13 @@ const filterItems = computed(() =>
   })),
 );
 const reviewEntries = computed(() =>
-  visiblePlaylistTracks.value.map((source, visibleIndex) => ({
+  visiblePlaylistTracks.value.map((source) => ({
     track: {
       ...source,
       title: identityTitle(source.trackIdentity, source.title),
       artist: identityArtistLabel(source.trackIdentity, source.artist),
     },
     source,
-    visibleIndex,
   })),
 );
 
@@ -71,75 +79,92 @@ function checkboxId(trackId) {
       </p>
     </header>
 
-    <div class="import-collection-review__toolbar">
-      <UiSegmentedControl
-        :items="filterItems"
-        :model-value="state.activeFilter"
-        aria-label="匯入曲目篩選"
-        :disabled="state.isImporting"
-        @update:model-value="setActiveFilter"
-      >
-        <template #after="{ item }">
-          <span class="import-collection-review__filter-count">
-            {{ item.count }}
-          </span>
-        </template>
-      </UiSegmentedControl>
+    <ImportCollectionExecutionList
+      v-if="executionMode"
+      :tracks="state.playlistTracks"
+      :retry-disabled="!canRetryFailed"
+      @cancel="cancelTrackDownload"
+      @retry-failed="retryFailedTracks"
+    />
 
-      <div class="import-collection-review__actions">
-        <UiButton
-          :icon="ListChecks"
+    <template v-else>
+      <div class="import-collection-review__toolbar">
+        <UiSegmentedControl
+          :items="filterItems"
+          :model-value="state.activeFilter"
+          aria-label="匯入曲目篩選"
           :disabled="state.isImporting"
-          @click="selectMissingTracks"
+          @update:model-value="setActiveFilter"
         >
-          選取未下載
-        </UiButton>
-        <UiButton
-          :icon="SquareCheckBig"
-          :active="allSelected"
-          :disabled="state.isImporting || selectablePlaylistTracks.length === 0"
-          :aria-pressed="allSelected"
-          @click="toggleSelectAll"
-        >
-          {{ allSelected ? '取消全選' : '全選' }}
-        </UiButton>
-        <UiButton
-          v-if="playlistStats.error > 0"
-          :icon="RefreshCw"
-          :disabled="!canRetryFailed"
-          @click="retryFailedTracks"
-        >
-          重試失敗
-        </UiButton>
-      </div>
-    </div>
+          <template #after="{ item }">
+            <span class="import-collection-review__filter-count">
+              {{ item.count }}
+            </span>
+          </template>
+        </UiSegmentedControl>
 
-    <TrackTable
-      v-if="reviewEntries.length > 0"
-      class="import-collection-review__table"
-      :entries="reviewEntries"
-      variant="review"
-      label="匯入曲目確認"
-      duration-label="時長"
-      status-label="狀態"
-    >
-      <template #row-leading="{ track, source }">
-        <UiCheckbox
-          :id="checkboxId(source.id)"
-          :model-value="source.selected"
-          :label="`選取 ${track.title}`"
-          label-hidden
-          :disabled="state.isImporting || source.status === 'done'"
-          @update:model-value="setTrackSelected(source.id, $event)"
-        />
-      </template>
-      <template #row-trailing="{ source }">
-        <ImportCollectionTrackStatus :track="source" />
-      </template>
-    </TrackTable>
-    <UiHint v-else class="import-collection-review__empty" padded center>
-      沒有符合目前篩選的曲目
-    </UiHint>
+        <div class="import-collection-review__actions">
+          <UiIconButton
+            :icon="ListChecks"
+            label="選取未下載"
+            :disabled="state.isImporting"
+            @click="selectMissingTracks"
+          />
+          <UiIconButton
+            :icon="SquareCheckBig"
+            :label="allSelected ? '取消全選' : '全選'"
+            :active="allSelected"
+            :disabled="
+              state.isImporting || selectablePlaylistTracks.length === 0
+            "
+            :aria-pressed="allSelected"
+            @click="toggleSelectAll"
+          />
+          <UiIconButton
+            v-if="playlistStats.error > 0"
+            :icon="RefreshCw"
+            label="重試失敗"
+            :disabled="!canRetryFailed"
+            @click="retryFailedTracks"
+          />
+        </div>
+      </div>
+
+      <ul
+        v-if="reviewEntries.length > 0"
+        class="import-collection-review__rows"
+        aria-label="匯入曲目確認"
+      >
+        <UiTrackRow
+          v-for="entry in reviewEntries"
+          :key="entry.source.id"
+          class="import-collection-review__row"
+          :track="entry.track"
+          :active="entry.source.selected"
+          state-surface
+          overflow="ellipsis"
+          thumb-loading="lazy"
+          thumb-decoding="async"
+        >
+          <template #lead>
+            <UiCheckbox
+              :id="checkboxId(entry.source.id)"
+              :model-value="entry.source.selected"
+              :label="`選取 ${entry.track.title}`"
+              label-hidden
+              :disabled="entry.source.status === 'done'"
+              @update:model-value="setTrackSelected(entry.source.id, $event)"
+            />
+          </template>
+          <template #trail>
+            <ImportCollectionTrackStatus :track="entry.source" />
+          </template>
+        </UiTrackRow>
+      </ul>
+      <UiHint v-else class="import-collection-review__empty" padded center>
+        沒有符合目前篩選的曲目
+      </UiHint>
+    </template>
 
     <UiHint
       v-if="dominantFailureCode"
@@ -168,9 +193,9 @@ function checkboxId(trackId) {
   margin: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -178,8 +203,8 @@ function checkboxId(trackId) {
 .import-collection-review__meta {
   margin: var(--ui-space-1) 0 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
 }
 
@@ -204,10 +229,25 @@ function checkboxId(trackId) {
   font-variant-numeric: tabular-nums;
 }
 
-.import-collection-review__table,
+.import-collection-review__rows,
 .import-collection-review__empty {
   min-inline-size: 0;
   min-block-size: 0;
+}
+
+.import-collection-review__rows {
+  display: grid;
+  gap: var(--ui-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import-collection-review__row {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  box-sizing: border-box;
 }
 
 .import-collection-review__failure {

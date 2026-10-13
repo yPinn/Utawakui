@@ -101,6 +101,44 @@ describe('ImportSourceRow shared object adapter', () => {
     mounted.app.unmount();
   });
 
+  it('uses the whole row for collection review while preserving the trailing status', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ImportSourceRow, {
+            track,
+            status: 'done',
+            rowAction: true,
+            actionLabel: '檢視 Sample Song',
+          }),
+      }),
+    );
+
+    expect(html).toContain('ui-track--interactive');
+    expect(html).toContain('ui-track__action');
+    expect(html).toContain('檢視 Sample Song');
+    expect(html).toContain('完成');
+    expect(html).not.toContain('ui-icon-btn');
+
+    const action = vi.fn();
+    const mounted = mount(ImportSourceRow, {
+      track,
+      status: 'done',
+      rowAction: true,
+      actionLabel: '檢視 Sample Song',
+      onAction: action,
+    });
+    const rowAction = findAll(
+      mounted.root,
+      (node) => node.type === 'button',
+    ).find((button) => button.props?.['aria-label'] === '檢視 Sample Song');
+
+    expect(rowAction).toBeTruthy();
+    trigger(rowAction, 'onClick');
+    expect(action).toHaveBeenCalledOnce();
+    mounted.app.unmount();
+  });
+
   it('projects running and terminal states through shared status icons', async () => {
     const running = await renderToString(
       createSSRApp({

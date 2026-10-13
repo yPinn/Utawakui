@@ -7,6 +7,10 @@ const {
   scheduleOptionalLyricsAfterImport,
 } = importHandlersModule;
 
+function flushAsync() {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
 function registerDownload(overrides = {}) {
   const handlers = new Map();
   const ipcMain = {
@@ -296,7 +300,141 @@ describe('scheduleOptionalLyricsAfterImport', () => {
   });
 });
 
-describe('provider download automatic music analysis', () => {
+describe('provider download scheduling and automatic music analysis', () => {
+  it('admits at most two provider downloads at once', async () => {
+    const gates = new Map();
+    const downloadTrackAudio = vi.fn((videoId) => {
+      let resolve;
+      const promise = new Promise((resolvePromise) => {
+        resolve = resolvePromise;
+      });
+      gates.set(videoId, { promise, resolve });
+      return promise;
+    });
+    const harness = registerDownload({ downloadTrackAudio });
+
+    const jobs = [
+      harness.handlers.get('yt:download-audio')(null, 'aaaaaaaaaaa'),
+      harness.handlers.get('yt:download-audio')(null, 'bbbbbbbbbbb'),
+      harness.handlers.get('yt:download-audio')(null, 'ccccccccccc'),
+    ];
+    await flushAsync();
+
+    expect(downloadTrackAudio.mock.calls.map(([id]) => id)).toEqual([
+      'aaaaaaaaaaa',
+      'bbbbbbbbbbb',
+    ]);
+
+    gates.get('aaaaaaaaaaa').resolve({ title: 'A', duration: 180 });
+    await flushAsync();
+    expect(downloadTrackAudio).toHaveBeenCalledTimes(3);
+
+    gates.get('bbbbbbbbbbb').resolve({ title: 'B', duration: 180 });
+    gates.get('ccccccccccc').resolve({ title: 'C', duration: 180 });
+    await Promise.all(jobs);
+  });
+
+  it('serializes library finalization after concurrent downloads finish', async () => {
+    let releaseFirstFinalize;
+    const enforceLibraryStoragePolicy = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseFirstFinalize = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(undefined);
+    const harness = registerDownload({ enforceLibraryStoragePolicy });
+
+    const first = harness.handlers.get('yt:download-audio')(
+      null,
+      'aaaaaaaaaaa',
+    );
+    const second = harness.handlers.get('yt:download-audio')(
+      null,
+      'bbbbbbbbbbb',
+    );
+    await flushAsync();
+
+    expect(harness.downloadTrackAudio).toHaveBeenCalledTimes(2);
+    expect(enforceLibraryStoragePolicy).toHaveBeenCalledTimes(1);
+
+    releaseFirstFinalize();
+    await flushAsync();
+    expect(enforceLibraryStoragePolicy).toHaveBeenCalledTimes(2);
+
+    await Promise.all([first, second]);
+  });
+
+  it('shares one download and finalization task for duplicate track requests', async () => {
+    let releaseDownload;
+    const downloadTrackAudio = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          releaseDownload = () =>
+            resolve({ title: 'Same Song', duration: 180 });
+        }),
+    );
+    const saveProviderIndexEntry = vi.fn();
+    const harness = registerDownload({
+      downloadTrackAudio,
+      saveProviderIndexEntry,
+    });
+
+    const first = harness.handlers.get('yt:download-audio')(
+      null,
+      'dQw4w9WgXcQ',
+    );
+    const duplicate = harness.handlers.get('yt:download-audio')(
+      null,
+      'dQw4w9WgXcQ',
+    );
+    await flushAsync();
+
+    expect(downloadTrackAudio).toHaveBeenCalledOnce();
+    releaseDownload();
+    await expect(Promise.all([first, duplicate])).resolves.toHaveLength(2);
+    expect(saveProviderIndexEntry).toHaveBeenCalledOnce();
+    expect(harness.enforceLibraryStoragePolicy).toHaveBeenCalledOnce();
+  });
+
+  it('cancels an active provider download without recording it as a failure', async () => {
+    const downloadTrackAudio = vi.fn(
+      (videoId, destDir, { signal }) =>
+        new Promise((resolve, reject) => {
+          signal.addEventListener(
+            'abort',
+            () =>
+              reject(
+                Object.assign(new Error('provider download cancelled'), {
+                  code: 'IMPORT_DOWNLOAD_CANCELLED',
+                }),
+              ),
+            { once: true },
+          );
+        }),
+    );
+    const harness = registerDownload({ downloadTrackAudio });
+
+    const download = harness.handlers.get('yt:download-audio')(
+      null,
+      'dQw4w9WgXcQ',
+    );
+    await flushAsync();
+    await expect(
+      harness.handlers.get('yt:cancel-download')(null, 'dQw4w9WgXcQ'),
+    ).resolves.toBe(true);
+
+    await expect(download).rejects.toMatchObject({
+      code: 'IMPORT_DOWNLOAD_CANCELLED',
+      publicMessage: '這首曲目已停止下載。',
+    });
+    expect(harness.recordDiagnostic).not.toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'DOWNLOAD_FAILED' }),
+    );
+  });
+
   it('uses the downloaded file duration for lyrics acquisition', async () => {
     const lyricsAcquisitionService = {
       scheduleAutomaticAcquisition: vi.fn(),

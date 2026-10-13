@@ -4,9 +4,9 @@ import {
   Download,
   ExternalLink,
   FolderPlus,
-  ListChecks,
   RefreshCw,
   Search,
+  Square,
 } from '../../icons/index.js';
 import { useImportSession } from '../../composables/useImportSession.js';
 import { useLocalImport } from '../../composables/useLocalImport.js';
@@ -90,17 +90,16 @@ const collectionStatus = computed(() => {
   }
   return 'pending';
 });
-const externalObjectOwnsSuccess = computed(
-  () => state.sourceKind === 'single' && state.singleTrack?.status === 'done',
-);
+const externalObjectOwnsSuccess = computed(() => {
+  if (state.sourceKind === 'single')
+    return state.singleTrack?.status === 'done';
+  if (state.sourceKind === 'playlist') return collectionStatus.value === 'done';
+  return false;
+});
 const showExternalStatus = computed(
   () =>
     Boolean(state.status) &&
-    !(
-      state.statusType === 'success' &&
-      state.statusScope === 'object' &&
-      externalObjectOwnsSuccess.value
-    ),
+    !(state.statusType === 'success' && externalObjectOwnsSuccess.value),
 );
 
 function statusForCandidate(candidate) {
@@ -115,6 +114,12 @@ function statusForCandidate(candidate) {
 
 function actionForCandidate(candidate) {
   const status = statusForCandidate(candidate);
+  if (status === 'downloading') {
+    return {
+      icon: Square,
+      label: `停止下載 ${candidate.title || '這首歌曲'}`,
+    };
+  }
   if (status === 'pending') {
     return {
       icon: Download,
@@ -130,10 +135,18 @@ function actionForCandidate(candidate) {
   return { icon: null, label: '' };
 }
 
+function candidateActionDisabled(candidate) {
+  if (statusForCandidate(candidate) === 'downloading') return false;
+  return sourceBusy.value;
+}
+
 async function downloadCandidate(candidate) {
-  if (sourceBusy.value) return;
+  const status = statusForCandidate(candidate);
+  if (sourceBusy.value && status !== 'downloading') return;
   const id = candidateId(candidate);
-  if (id && state.singleResolution) selectImportCandidate(id);
+  if (status !== 'downloading' && id && state.singleResolution) {
+    selectImportCandidate(id);
+  }
   await confirmImport();
 }
 
@@ -288,7 +301,7 @@ watch(
           :status="statusForCandidate(entry.source)"
           :action-icon="actionForCandidate(entry.source).icon"
           :action-label="actionForCandidate(entry.source).label"
-          :action-disabled="sourceBusy"
+          :action-disabled="candidateActionDisabled(entry.source)"
           @action="downloadCandidate(entry.source)"
         />
       </ul>
@@ -301,7 +314,7 @@ watch(
         <ImportSourceRow
           :track="collectionSummary"
           :status="collectionStatus"
-          :action-icon="ListChecks"
+          row-action
           :action-label="`檢視 ${collectionSummary.title}`"
           :action-disabled="state.isImporting"
           @action="openCollectionReview"

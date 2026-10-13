@@ -11,6 +11,7 @@ import { useImportExecution } from './import/useImportExecution.js';
 import { useImportSourceResolution } from './import/useImportSourceResolution.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { registerProviderImportActivity } from './usePreparationActivity.js';
 const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
 
@@ -42,6 +43,8 @@ const state = reactive({
   isOpeningDiscovery: false,
   isImporting: false,
 });
+const readonlyState = readonly(state);
+registerProviderImportActivity(readonlyState);
 
 const playlistStats = computed(() =>
   getPlaylistImportStats(state.playlistTracks),
@@ -248,7 +251,8 @@ const sourceResolution = useImportSourceResolution({
   setStatus,
 });
 
-const { confirmImport, retryFailedTracks } = importExecution;
+const { cancelTrackDownload, confirmImport, retryFailedTracks } =
+  importExecution;
 const { openYoutubeMusicSearch, resolveSource, selectImportCandidate } =
   sourceResolution;
 
@@ -337,7 +341,7 @@ async function openDownloadDir() {
 
 export function useImportSession() {
   return {
-    state: readonly(state),
+    state: readonlyState,
     playlistStats,
     dominantFailureCode,
     visiblePlaylistTracks,
@@ -353,6 +357,7 @@ export function useImportSession() {
     setTrackSelected,
     openYoutubeMusicSearch,
     resolveSource,
+    cancelTrackDownload,
     confirmImport,
     clearPreview,
     selectImportCandidate,

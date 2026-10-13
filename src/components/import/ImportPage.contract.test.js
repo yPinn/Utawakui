@@ -36,6 +36,9 @@ describe('Import preparation composition contract', () => {
     expect(dock).toContain('label="選擇音訊檔"');
     expect(dock).toContain('label="搜尋外部來源"');
     expect(dock).toContain('label="到 YT Music 尋找更多結果"');
+    expect(dock).toContain('row-action');
+    expect(dock).not.toContain(':action-icon="ListChecks"');
+    expect(dock).not.toContain('ListChecks,');
     expect(dock).not.toContain('subtitle="本機與外部來源"');
     expect(dock).toContain('const showLocalStatus = computed(');
     expect(dock).toContain('localImportState.conversionReview');
@@ -44,9 +47,15 @@ describe('Import preparation composition contract', () => {
     expect(dock).toContain('@action="convertPendingFiles"');
     expect(dock).toContain(':action-disabled="localImportState.isConverting"');
     expect(dock).toContain('const showExternalStatus = computed(');
+    expect(dock).not.toContain("state.statusScope === 'object'");
     expect(dock).toContain('() => props.active');
     expect(dock).toContain('reviewOpen.value = false');
     expect(dock).toContain("candidate.status || 'pending'");
+    expect(dock).toContain("status === 'downloading'");
+    expect(dock).toContain('label: `停止下載');
+    expect(dock).toContain(
+      ':action-disabled="candidateActionDisabled(entry.source)"',
+    );
     expect(modal).toContain('<UiModal');
     expect(modal).toContain('size="wide"');
     expect(modal).toContain('max-block-size="medium"');
@@ -54,6 +63,8 @@ describe('Import preparation composition contract', () => {
     expect(modal).toContain('<ImportCollectionReview />');
     expect(modal).toContain('<template #footer>');
     expect(modal).not.toContain('ProviderImportPanel');
+    expect(modal).not.toContain('selectionSummary');
+    expect(modal).not.toContain('<UiHint');
   });
 
   it('keeps collection confirmation in shared controls inside the modal-owned body', () => {
@@ -61,9 +72,11 @@ describe('Import preparation composition contract', () => {
     const status = readSource('./ImportCollectionTrackStatus.vue');
 
     expect(review).toContain('<UiSegmentedControl');
-    expect(review).toContain('<TrackTable');
-    expect(review).toContain('variant="review"');
-    expect(review).toContain('<UiButton');
+    expect(review).toContain('<UiTrackRow');
+    expect(review).toContain('state-surface');
+    expect(review).toContain('overflow="ellipsis"');
+    expect(review).toContain('<UiIconButton');
+    expect(review).not.toContain("import UiButton from '../ui/UiButton.vue';");
     expect(review).not.toContain('filter-tab');
     expect(review).not.toContain('preview-panel');
     expect(review).not.toContain('<input');
@@ -72,7 +85,8 @@ describe('Import preparation composition contract', () => {
 
     expect(review).toContain('<UiCheckbox');
     expect(review).toContain('<ImportCollectionTrackStatus');
-    expect(review).not.toContain('<UiTrackRow');
+    expect(review).not.toContain('<TrackTable');
+    expect(review).not.toContain('variant="review"');
     expect(status).toContain('<UiStatusIcon');
     expect(status).not.toContain('QueueTrackButton');
   });

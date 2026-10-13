@@ -6,6 +6,7 @@ import {
   applySubtitleOptions,
   buildAudioDownloadOptionAttempts,
   buildSubtitleOptions,
+  downloadAudio,
   fetchPlaylist,
   finalizeDownloadedTrackFiles,
   hasStructuredAudioFile,
@@ -14,6 +15,39 @@ import {
   readTrackInfoMetadata,
   readTrackSidecarState,
 } from './downloader.js';
+
+describe('downloadAudio cancellation', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-download-abort-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('passes the caller AbortSignal to metadata and audio attempts', async () => {
+    const controller = new AbortController();
+    const runner = vi.fn(async (url, options, execution) => {
+      expect(url).toContain('abc12345678');
+      expect(options).toBeTypeOf('object');
+      expect(execution.signal).toBe(controller.signal);
+      throw Object.assign(new Error('provider operation cancelled'), {
+        code: 'IMPORT_DOWNLOAD_CANCELLED',
+      });
+    });
+
+    await expect(
+      downloadAudio('abc12345678', dir, {
+        runner,
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ code: 'IMPORT_DOWNLOAD_CANCELLED' });
+
+    expect(runner).toHaveBeenCalledTimes(2);
+  });
+});
 
 describe('applySubtitleOptions', () => {
   it('does not fall back to automatic captions', () => {

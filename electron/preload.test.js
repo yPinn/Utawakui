@@ -185,6 +185,7 @@ const MAIN_INVOKE_CHANNELS = [
   'playlists:upsert-album',
   'provider-discovery:open-youtube-music-search',
   'separation:cancel',
+  'separation:clear-pending',
   'separation:clear-completed',
   'separation:enqueue',
   'separation:get-queue-status',
@@ -203,6 +204,7 @@ const MAIN_INVOKE_CHANNELS = [
   'window-close:present',
   'window-close:respond',
   'yt:download-audio',
+  'yt:cancel-download',
   'yt:fetch-metadata',
   'yt:fetch-playlist',
   'yt:resolve-import-source',
@@ -1188,6 +1190,20 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'provider-discovery:open-youtube-music-search',
       '宇多田ヒカル First Love',
+    );
+  });
+
+  it('forwards only the provider track id when stopping a download', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.cancelAudioDownload('track-1', {
+      path: 'C:\\private',
+      processId: 42,
+    });
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'yt:cancel-download',
+      'track-1',
     );
   });
 

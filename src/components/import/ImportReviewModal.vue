@@ -4,7 +4,6 @@ import { Download, Square } from '../../icons/index.js';
 import { useImportSession } from '../../composables/useImportSession.js';
 import ImportCollectionReview from './ImportCollectionReview.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 
 defineProps({
@@ -13,20 +12,11 @@ defineProps({
 });
 
 const emit = defineEmits(['close']);
-const {
-  state,
-  playlistStats,
-  canUseConfirmButton,
-  confirmImportLabel,
-  confirmImport,
-} = useImportSession();
+const { state, canUseConfirmButton, confirmImportLabel, confirmImport } =
+  useImportSession();
 
 const modalTitle = computed(() =>
   state.collectionKind === 'album' ? '確認匯入專輯' : '確認匯入播放清單',
-);
-const selectionSummary = computed(
-  () =>
-    `已選 ${playlistStats.value.selected} / ${playlistStats.value.total} 首`,
 );
 const confirmIcon = computed(() => (state.isImporting ? Square : Download));
 </script>
@@ -42,9 +32,6 @@ const confirmIcon = computed(() => (state.isImporting ? Square : Download));
   >
     <ImportCollectionReview />
     <template #footer>
-      <UiHint class="import-review-modal__selection" tone="muted">
-        {{ selectionSummary }}
-      </UiHint>
       <UiButton
         :icon="confirmIcon"
         variant="accent"
@@ -56,10 +43,3 @@ const confirmIcon = computed(() => (state.isImporting ? Square : Download));
     </template>
   </UiModal>
 </template>
-
-<style scoped>
-.import-review-modal__selection {
-  margin-inline-end: auto;
-  font-variant-numeric: tabular-nums;
-}
-</style>

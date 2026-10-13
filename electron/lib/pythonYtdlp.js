@@ -123,6 +123,13 @@ function createYtdlpError(code, stdout, stderr) {
   return error;
 }
 
+function providerCancellationError() {
+  return Object.assign(new Error('provider operation cancelled'), {
+    code: 'IMPORT_DOWNLOAD_CANCELLED',
+    name: 'AbortError',
+  });
+}
+
 function createPythonYtdlpRunner(runtime) {
   const spawnImpl = runtime.spawnImpl || spawn;
   const pythonPath = runtime.pythonPath || 'python';
@@ -132,8 +139,13 @@ function createPythonYtdlpRunner(runtime) {
       ? runtime.idleTimeoutMs
       : DEFAULT_YTDLP_IDLE_TIMEOUT_MS;
 
-  return function runPythonYtdlp(url, options = {}) {
+  return function runPythonYtdlp(url, options = {}, execution = {}) {
     return new Promise((resolve, reject) => {
+      const signal = execution?.signal;
+      if (signal?.aborted) {
+        reject(providerCancellationError());
+        return;
+      }
       const mergedOptions = buildRuntimeOptions(options, {
         ...runtime,
         remoteComponents,
@@ -153,6 +165,7 @@ function createPythonYtdlpRunner(runtime) {
       let stderr = '';
       let settled = false;
       let idleTimer = null;
+      let abortListener = null;
 
       function clearIdleTimer() {
         clearTimeout(idleTimer);
@@ -182,9 +195,22 @@ function createPythonYtdlpRunner(runtime) {
         if (settled) return false;
         settled = true;
         clearIdleTimer();
+        if (signal && abortListener) {
+          signal.removeEventListener('abort', abortListener);
+          abortListener = null;
+        }
         callback();
         return true;
       }
+
+      abortListener = () => {
+        if (!finish(() => reject(providerCancellationError()))) return;
+        try {
+          child.kill();
+        } catch {
+          // Cancellation remains authoritative even if the process exited.
+        }
+      };
 
       child.stdout?.on('data', (chunk) => {
         stdout += chunk;
@@ -210,6 +236,7 @@ function createPythonYtdlpRunner(runtime) {
           }
         });
       });
+      signal?.addEventListener('abort', abortListener, { once: true });
       armIdleTimer();
     });
   };

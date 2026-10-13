@@ -6,6 +6,7 @@ let resolveImportInputMock;
 let resolveImportSourceMock;
 let fetchVideoMetadataMock;
 let downloadAudioMock;
+let cancelAudioDownloadMock;
 let getConfigMock;
 let getFeatureConfirmationsMock;
 let confirmFeatureGateMock;
@@ -50,6 +51,7 @@ beforeEach(() => {
   resolveImportSourceMock = vi.fn();
   fetchVideoMetadataMock = vi.fn();
   downloadAudioMock = vi.fn();
+  cancelAudioDownloadMock = vi.fn().mockResolvedValue(true);
   getConfigMock = vi.fn().mockResolvedValue({
     downloadDir: 'C:\\Music\\Utawakui',
     isDefault: true,
@@ -92,6 +94,7 @@ beforeEach(() => {
       resolveImportSource: resolveImportSourceMock,
       fetchVideoMetadata: fetchVideoMetadataMock,
       downloadAudio: downloadAudioMock,
+      cancelAudioDownload: cancelAudioDownloadMock,
       getConfig: getConfigMock,
       getFeatureConfirmations: getFeatureConfirmationsMock,
       confirmFeatureGate: confirmFeatureGateMock,
@@ -124,10 +127,12 @@ async function flushPromises() {
 
 function deferred() {
   let resolve;
-  const promise = new Promise((resolvePromise) => {
+  let reject;
+  const promise = new Promise((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
+    reject = rejectPromise;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 describe('useImportSession', () => {
@@ -199,6 +204,7 @@ describe('useImportSession', () => {
       'canConfirmImport',
       'canRetryFailed',
       'canUseConfirmButton',
+      'cancelTrackDownload',
       'chooseDownloadDir',
       'clearPreview',
       'confirmImport',
@@ -224,6 +230,15 @@ describe('useImportSession', () => {
       'toggleSelectAll',
       'visiblePlaylistTracks',
     ]);
+  });
+
+  it('does not send a cancel intent for a track that is not active', async () => {
+    const session = await loadImportSession();
+
+    await expect(session.cancelTrackDownload('not-active')).resolves.toBe(
+      false,
+    );
+    expect(cancelAudioDownloadMock).not.toHaveBeenCalled();
   });
 
   it('keeps a resolved playlist preview in the shared session without downloading', async () => {
@@ -987,6 +1002,102 @@ describe('useImportSession', () => {
     );
   });
 
+  it('downloads at most two playlist tracks concurrently and leaves later tracks pending', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [1, 2, 3].map((number) => ({
+        id: `song-${number}`,
+        title: `Song ${number}`,
+        alreadyDownloaded: false,
+      })),
+    });
+    const gates = new Map(
+      [1, 2, 3].map((number) => [`song-${number}`, deferred()]),
+    );
+    downloadAudioMock.mockImplementation((id) => gates.get(id).promise);
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    const importPromise = session.confirmImport();
+    await flushPromises();
+
+    expect(downloadAudioMock.mock.calls.map(([id]) => id)).toEqual([
+      'song-1',
+      'song-2',
+    ]);
+    expect(
+      session.state.playlistTracks.map(({ id, status }) => ({ id, status })),
+    ).toEqual([
+      { id: 'song-1', status: 'downloading' },
+      { id: 'song-2', status: 'downloading' },
+      { id: 'song-3', status: 'pending' },
+    ]);
+
+    gates.get('song-1').resolve({ title: 'Song 1' });
+    await flushPromises();
+    expect(downloadAudioMock).toHaveBeenCalledWith('song-3');
+
+    gates.get('song-2').resolve({ title: 'Song 2' });
+    gates.get('song-3').resolve({ title: 'Song 3' });
+    await importPromise;
+  });
+
+  it('cancels one active playlist track and admits the next pending track', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [1, 2, 3].map((number) => ({
+        id: `song-${number}`,
+        title: `Song ${number}`,
+        alreadyDownloaded: false,
+      })),
+    });
+    const gates = new Map(
+      [1, 2, 3].map((number) => [`song-${number}`, deferred()]),
+    );
+    downloadAudioMock.mockImplementation((id) => gates.get(id).promise);
+    cancelAudioDownloadMock.mockImplementationOnce(async (id) => {
+      gates.get(id).reject(
+        new Error(
+          `${APP_ERROR_PREFIX}${JSON.stringify({
+            code: 'IMPORT_DOWNLOAD_CANCELLED',
+            severity: 'info',
+            title: '匯入已停止',
+            message: '這首曲目已停止下載。',
+          })}`,
+        ),
+      );
+      return true;
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    const importPromise = session.confirmImport();
+    await flushPromises();
+
+    await expect(session.cancelTrackDownload('song-1')).resolves.toBe(true);
+    await flushPromises();
+
+    expect(cancelAudioDownloadMock).toHaveBeenCalledWith('song-1');
+    expect(downloadAudioMock.mock.calls.map(([id]) => id)).toEqual([
+      'song-1',
+      'song-2',
+      'song-3',
+    ]);
+    expect(
+      session.state.playlistTracks.map(({ id, status }) => ({ id, status })),
+    ).toEqual([
+      { id: 'song-1', status: 'pending' },
+      { id: 'song-2', status: 'downloading' },
+      { id: 'song-3', status: 'downloading' },
+    ]);
+
+    gates.get('song-2').resolve({ title: 'Song 2' });
+    gates.get('song-3').resolve({ title: 'Song 3' });
+    await importPromise;
+  });
+
   it('creates no playlist when nothing ends up selected and downloaded', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
@@ -1231,6 +1342,46 @@ describe('useImportSession', () => {
     expect(session.state.isImporting).toBe(false);
   });
 
+  it('cancels the active single-track download and returns it to pending', async () => {
+    resolveImportSourceMock.mockResolvedValueOnce({
+      input: 'abc12345678',
+      sourceVideoId: 'abc12345678',
+      source: { playbackVideoId: 'abc12345678', title: 'Song' },
+      recommendedCandidate: { playbackVideoId: 'abc12345678', title: 'Song' },
+      candidates: [{ playbackVideoId: 'abc12345678', title: 'Song' }],
+    });
+    const gate = deferred();
+    downloadAudioMock.mockReturnValueOnce(gate.promise);
+    cancelAudioDownloadMock.mockImplementationOnce(async () => {
+      gate.reject(
+        new Error(
+          `${APP_ERROR_PREFIX}${JSON.stringify({
+            code: 'IMPORT_DOWNLOAD_CANCELLED',
+            severity: 'info',
+            title: '匯入已停止',
+            message: '這首曲目已停止下載。',
+          })}`,
+        ),
+      );
+      return true;
+    });
+    const session = await loadImportSession();
+
+    session.setInput('abc12345678');
+    await session.resolveSource();
+    const download = session.confirmImport();
+    await flushPromises();
+    expect(session.state.singleTrack.status).toBe('downloading');
+
+    await session.confirmImport();
+    await download;
+
+    expect(cancelAudioDownloadMock).toHaveBeenCalledWith('abc12345678');
+    expect(session.state.singleTrack.status).toBe('pending');
+    expect(session.state.status).toBe('已停止下載');
+    expect(session.state.statusType).toBe('pending');
+  });
+
   it('returns a single track to pending when download discovers missing provider tools', async () => {
     resolveImportSourceMock.mockResolvedValueOnce({
       input: 'abc12345678',
@@ -1395,28 +1546,46 @@ describe('useImportSession', () => {
         { id: 'song-2', title: 'Song 2', alreadyDownloaded: false },
       ],
     });
-    let releaseFirstDownload;
-    downloadAudioMock.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          releaseFirstDownload = () => resolve({ title: 'ok' });
-        }),
-    );
+    const activeDownloads = new Map();
+    downloadAudioMock.mockImplementation((id) => {
+      const gate = deferred();
+      activeDownloads.set(id, gate);
+      return gate.promise;
+    });
+    cancelAudioDownloadMock.mockImplementation(async (id) => {
+      activeDownloads.get(id)?.reject(
+        new Error(
+          `${APP_ERROR_PREFIX}${JSON.stringify({
+            code: 'IMPORT_DOWNLOAD_CANCELLED',
+            severity: 'info',
+            title: '匯入已停止',
+            message: '這首曲目已停止下載。',
+          })}`,
+        ),
+      );
+      return true;
+    });
     const session = await loadImportSession();
 
     session.setInput('playlist-id');
     await session.resolveSource();
-    const importPromise = session.confirmImport(); // starts importing song-1
+    const importPromise = session.confirmImport();
     await flushPromises();
 
     expect(session.state.isImporting).toBe(true);
+    expect(downloadAudioMock).toHaveBeenCalledTimes(2);
     // A second confirmImport() call while importing is the UI's "stop"
     // button — it cancels rather than starting a second import.
     await session.confirmImport();
-
-    releaseFirstDownload();
     await importPromise;
 
+    expect(cancelAudioDownloadMock.mock.calls.map(([id]) => id).sort()).toEqual(
+      ['song-1', 'song-2'],
+    );
+    expect(session.state.playlistTracks.map((track) => track.status)).toEqual([
+      'pending',
+      'pending',
+    ]);
     expect(session.state.status).toBe('已停止，未完成的曲目仍留在預覽中');
     expect(session.state.statusType).toBe('pending');
   });

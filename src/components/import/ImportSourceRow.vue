@@ -22,6 +22,7 @@ const props = defineProps({
   actionIcon: { type: [Object, Function], default: null },
   actionLabel: { type: String, default: '' },
   actionDisabled: { type: Boolean, default: false },
+  rowAction: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['action']);
@@ -59,11 +60,14 @@ const hasAction = computed(() =>
   <UiTrackRow
     class="import-source-row right-dock-track"
     :track="track"
+    :interactive="rowAction && !actionDisabled"
+    :action-label="rowAction ? actionLabel : undefined"
     state-surface
     hide-duration
     overflow="ellipsis"
     thumb-loading="lazy"
     thumb-decoding="async"
+    @row-click="!actionDisabled && emit('action')"
   >
     <template #trail>
       <UiIconButton
