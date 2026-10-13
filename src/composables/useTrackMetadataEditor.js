@@ -12,6 +12,11 @@ const ARTWORK_FAILURE_MESSAGES = Object.freeze({
   'invalid-query': '請輸入 200 字以內的歌曲名稱、演唱者或專輯。',
   'provider-unavailable': '目前無法搜尋封面，請稍後再試。',
   'candidate-expired': '這批封面候選已過期，請重新搜尋。',
+  'draft-unavailable': '封面草稿已失效，請重新選擇圖片。',
+  'unsupported-file': '無法使用這張圖片，請選擇 JPG、PNG 或 WebP。',
+  'artwork-unavailable': '目前無法讀取封面，請重新選擇圖片。',
+  'invalid-artwork-intent': '封面變更無效，請重新操作。',
+  'invalid-metadata': '歌名或演唱者格式無效，請確認內容長度。',
   'track-unavailable': '找不到這首歌曲。',
 });
 
@@ -33,8 +38,10 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     titleDraft: '',
     artistDraft: '',
     isSaving: false,
-    isArtworkSaving: false,
+    isArtworkPreparing: false,
     isArtworkSearching: false,
+    artworkDraft: { action: 'keep' },
+    artworkPreviewUrl: '',
     artworkSearchOpen: false,
     artworkSearchCompleted: false,
     artworkQuery: { album: '' },
@@ -44,26 +51,48 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   });
 
   const isOpen = computed(() => Boolean(state.track));
+  const isArtworkDirty = computed(() => state.artworkDraft.action !== 'keep');
+  const isDirty = computed(() => {
+    if (!state.track) return false;
+    return (
+      state.titleDraft.trim() !== String(state.track.title ?? '').trim() ||
+      state.artistDraft.trim() !== String(state.track.artist ?? '').trim() ||
+      state.artworkDraft.action !== 'keep'
+    );
+  });
 
-  function revokeArtworkPreviews() {
+  function revokeObjectUrl(url) {
+    if (
+      url?.startsWith('blob:') &&
+      typeof URL?.revokeObjectURL === 'function'
+    ) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function revokeArtworkPreviews(preserveUrl = '') {
     if (typeof URL?.revokeObjectURL !== 'function') return;
     for (const candidate of state.artworkCandidates) {
-      if (candidate.previewUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(candidate.previewUrl);
+      if (
+        candidate.previewUrl?.startsWith('blob:') &&
+        candidate.previewUrl !== preserveUrl
+      ) {
+        revokeObjectUrl(candidate.previewUrl);
       }
     }
   }
 
-  function invalidateArtworkResults() {
+  function invalidateArtworkResults({ preserveDraft = true } = {}) {
     artworkPreviewGeneration += 1;
-    revokeArtworkPreviews();
+    const preserveUrl = preserveDraft ? state.artworkPreviewUrl : '';
+    revokeArtworkPreviews(preserveUrl);
     state.artworkSearchCompleted = false;
     state.artworkCandidates = [];
     state.selectedArtworkCandidateId = null;
   }
 
-  function resetArtworkSearch() {
-    invalidateArtworkResults();
+  function resetArtworkSearch(options) {
+    invalidateArtworkResults(options);
     state.artworkSearchOpen = false;
     state.artworkQuery = { album: '' };
     state.isArtworkSearching = false;
@@ -84,33 +113,53 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function reset() {
-    resetArtworkSearch();
+    const previewUrl = state.artworkPreviewUrl;
+    resetArtworkSearch({ preserveDraft: false });
+    revokeObjectUrl(previewUrl);
     state.track = null;
     state.titleDraft = '';
     state.artistDraft = '';
-    state.isArtworkSaving = false;
+    state.isArtworkPreparing = false;
+    state.artworkDraft = { action: 'keep' };
+    state.artworkPreviewUrl = '';
     state.error = null;
   }
 
   function open(track) {
-    resetArtworkSearch();
+    const previousTrackId = state.track?.id;
+    if (previousTrackId) {
+      Promise.resolve(
+        window.Utawakui?.discardTrackArtworkDraft?.(previousTrackId),
+      ).catch(() => {});
+    }
+    reset();
     state.track = track;
     state.titleDraft = track?.title ?? '';
     state.artistDraft = track?.artist ?? '';
+    state.artworkPreviewUrl = track?.thumbnailUrl ?? '';
     state.error = null;
     if (track && !track.thumbnailUrl) openArtworkSearch();
   }
 
   function close() {
-    if (state.isSaving || state.isArtworkSaving) return;
+    if (state.isSaving || state.isArtworkPreparing) return;
+    const trackId = state.track?.id;
     cancelArtworkSearch();
     reset();
+    if (trackId) {
+      Promise.resolve(
+        window.Utawakui?.discardTrackArtworkDraft?.(trackId),
+      ).catch(() => {});
+    }
   }
 
   function setTitleDraft(value) {
     const nextValue = String(value ?? '');
     if (state.titleDraft === nextValue) return;
     state.titleDraft = nextValue;
+    if (state.error === REQUIRED_TITLE_MESSAGE && nextValue.trim()) {
+      state.error = null;
+    }
     if (state.artworkSearchOpen) invalidateArtworkResults();
   }
 
@@ -132,7 +181,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function closeArtworkSearch() {
-    if (state.isArtworkSaving) return;
+    if (state.isArtworkPreparing) return;
     cancelArtworkSearch();
     resetArtworkSearch();
   }
@@ -222,6 +271,12 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
           previewUrl,
           previewLoading: false,
         };
+        if (
+          state.artworkDraft.action === 'candidate' &&
+          state.artworkDraft.candidateId === candidate.id
+        ) {
+          state.artworkPreviewUrl = previewUrl;
+        }
       }
     }
     await Promise.all(
@@ -247,6 +302,10 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
 
     state.isArtworkSearching = true;
     state.error = null;
+    if (state.artworkDraft.action === 'candidate') {
+      state.artworkDraft = { action: 'keep' };
+      state.artworkPreviewUrl = state.track.thumbnailUrl ?? '';
+    }
     invalidateArtworkResults();
     const generation = artworkPreviewGeneration;
     try {
@@ -272,9 +331,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
         previewUrl: '',
         previewLoading: canLoadPreviews,
       }));
-      state.selectedArtworkCandidateId =
-        state.artworkCandidates.find((candidate) => candidate.recommended)
-          ?.id || null;
+      state.selectedArtworkCandidateId = null;
       state.artworkSearchCompleted = true;
       void loadArtworkPreviews(
         state.track.id,
@@ -298,52 +355,25 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function selectArtworkCandidate(candidateId) {
+    const candidate = state.artworkCandidates.find(
+      (current) => current.id === candidateId,
+    );
+    if (!candidate) return;
     if (
-      state.artworkCandidates.some((candidate) => candidate.id === candidateId)
+      state.artworkDraft.action === 'local-draft' &&
+      state.artworkPreviewUrl !== candidate.previewUrl
     ) {
-      state.selectedArtworkCandidateId = candidateId;
+      revokeObjectUrl(state.artworkPreviewUrl);
     }
-  }
-
-  async function applySelectedArtwork() {
-    if (!state.track || !state.selectedArtworkCandidateId) return null;
-    if (
-      typeof window === 'undefined' ||
-      typeof window.Utawakui?.applyTrackArtwork !== 'function'
-    ) {
-      state.error = RESTART_REQUIRED_MESSAGE;
-      return null;
-    }
-    state.isArtworkSaving = true;
+    state.selectedArtworkCandidateId = candidateId;
+    state.artworkDraft = { action: 'candidate', candidateId };
+    state.artworkPreviewUrl = candidate.previewUrl || '';
     state.error = null;
-    try {
-      const result = await window.Utawakui.applyTrackArtwork(
-        state.track.id,
-        state.selectedArtworkCandidateId,
-      );
-      if (result?.status !== 'ok' || !result.track) {
-        state.error = artworkFailure(result, '線上封面未套用，請再試一次。');
-        return null;
-      }
-      updateOpenTrackArtwork(result.track);
-      await refresh?.();
-      resetArtworkSearch();
-      return result.track;
-    } catch (err) {
-      state.error = reportMetadataError(
-        err,
-        'apply-artwork',
-        '線上封面未套用，請再試一次。',
-      );
-      return null;
-    } finally {
-      state.isArtworkSaving = false;
-    }
   }
 
   async function save() {
     if (!state.track) return null;
-    if (state.isArtworkSearching || state.isArtworkSaving) return null;
+    if (state.isArtworkSearching || state.isArtworkPreparing) return null;
 
     const title = state.titleDraft.trim();
     const artist = state.artistDraft.trim();
@@ -351,10 +381,11 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       state.error = REQUIRED_TITLE_MESSAGE;
       return null;
     }
+    if (!isDirty.value) return null;
 
     if (
       typeof window === 'undefined' ||
-      typeof window.Utawakui?.updateTrackMetadata !== 'function'
+      typeof window.Utawakui?.saveTrackEdits !== 'function'
     ) {
       state.error = RESTART_REQUIRED_MESSAGE;
       return null;
@@ -363,20 +394,18 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.isSaving = true;
     state.error = null;
     try {
-      const updated = await window.Utawakui.updateTrackMetadata(
-        state.track.id,
-        {
-          title,
-          artist,
-        },
-      );
-      if (!updated) {
-        state.error = '找不到曲目';
+      const result = await window.Utawakui.saveTrackEdits(state.track.id, {
+        title,
+        artist,
+        artwork: state.artworkDraft,
+      });
+      if (result?.status !== 'ok' || !result.track) {
+        state.error = artworkFailure(result, '歌曲變更未儲存，請再試一次。');
         return null;
       }
       await refresh?.();
       reset();
-      return updated;
+      return result.track;
     } catch (err) {
       state.error = reportMetadataError(
         err,
@@ -389,77 +418,69 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     }
   }
 
-  function updateOpenTrackArtwork(updated) {
-    if (!state.track || !updated || updated.id !== state.track.id) return;
-    state.track = {
-      ...state.track,
-      thumbnailUrl: updated.thumbnailUrl,
-    };
-  }
-
   async function chooseThumbnail() {
     if (!state.track) return null;
     if (
       typeof window === 'undefined' ||
-      typeof window.Utawakui?.chooseTrackArtwork !== 'function'
+      typeof window.Utawakui?.chooseTrackArtworkDraft !== 'function'
     ) {
       state.error = RESTART_REQUIRED_MESSAGE;
       return null;
     }
 
-    state.isArtworkSaving = true;
+    state.isArtworkPreparing = true;
     state.error = null;
     try {
-      const updated = await window.Utawakui.chooseTrackArtwork(state.track.id);
-      updateOpenTrackArtwork(updated);
-      resetArtworkSearch();
-      await refresh?.();
-      return updated;
+      const result = await window.Utawakui.chooseTrackArtworkDraft(
+        state.track.id,
+      );
+      if (result?.status === 'cancelled') return null;
+      if (result?.status !== 'ok') {
+        state.error = artworkFailure(result, '封面無法預覽，請選擇其他圖片。');
+        return null;
+      }
+      const previewUrl = previewObjectUrl(result);
+      if (!previewUrl) {
+        state.error = '封面無法預覽，請選擇其他圖片。';
+        return null;
+      }
+      if (state.artworkDraft.action === 'local-draft') {
+        revokeObjectUrl(state.artworkPreviewUrl);
+      }
+      state.artworkDraft = { action: 'local-draft' };
+      state.artworkPreviewUrl = previewUrl;
+      state.selectedArtworkCandidateId = null;
+      return previewUrl;
     } catch (err) {
       state.error = reportMetadataError(
         err,
         'set-artwork',
-        '封面未更新，請再試一次。',
+        '封面無法預覽，請再試一次。',
       );
       return null;
     } finally {
-      state.isArtworkSaving = false;
+      state.isArtworkPreparing = false;
     }
   }
 
-  async function clearThumbnail() {
-    if (!state.track) return null;
-    if (
-      typeof window === 'undefined' ||
-      typeof window.Utawakui?.clearTrackArtwork !== 'function'
-    ) {
-      state.error = RESTART_REQUIRED_MESSAGE;
-      return null;
+  function clearThumbnail() {
+    if (!state.track) return;
+    if (state.artworkDraft.action === 'local-draft') {
+      revokeObjectUrl(state.artworkPreviewUrl);
     }
-
-    state.isArtworkSaving = true;
     state.error = null;
-    try {
-      const updated = await window.Utawakui.clearTrackArtwork(state.track.id);
-      updateOpenTrackArtwork(updated);
-      resetArtworkSearch();
-      await refresh?.();
-      return updated;
-    } catch (err) {
-      state.error = reportMetadataError(
-        err,
-        'clear-artwork',
-        '封面未更新，請再試一次。',
-      );
-      return null;
-    } finally {
-      state.isArtworkSaving = false;
-    }
+    state.selectedArtworkCandidateId = null;
+    state.artworkDraft = state.track.thumbnailUrl
+      ? { action: 'clear' }
+      : { action: 'keep' };
+    state.artworkPreviewUrl = '';
   }
 
   return {
     state: readonly(state),
     isOpen,
+    isArtworkDirty,
+    isDirty,
     open,
     close,
     save,
@@ -470,7 +491,6 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     setArtworkQueryField,
     searchArtwork,
     selectArtworkCandidate,
-    applySelectedArtwork,
     setTitleDraft,
     setArtistDraft,
   };

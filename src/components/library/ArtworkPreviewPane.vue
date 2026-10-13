@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue';
 import { ImagePlus, Search, Trash2 } from '../../icons/index.js';
-import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
@@ -10,13 +9,14 @@ import UiTrackThumb from '../ui/UiTrackThumb.vue';
 const props = defineProps({
   currentTrack: { type: Object, required: true },
   candidate: { type: Object, default: null },
+  staged: { type: Boolean, default: false },
   searchOpen: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
-  artworkSaving: { type: Boolean, default: false },
+  artworkPreparing: { type: Boolean, default: false },
   artworkSearching: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['choose', 'clear', 'openSearch', 'apply']);
+const emit = defineEmits(['choose', 'clear', 'openSearch']);
 
 const previewTrack = computed(() =>
   props.candidate
@@ -34,14 +34,10 @@ const previewTrack = computed(() =>
     <div class="artwork-preview__heading">
       <h3 id="artwork-preview-title">
         {{
-          candidate
-            ? '候選預覽'
-            : currentTrack.thumbnailUrl
-              ? '目前封面'
-              : '封面'
+          staged ? '封面預覽' : currentTrack.thumbnailUrl ? '目前封面' : '封面'
         }}
       </h3>
-      <UiChip v-if="candidate" tone="warning">尚未套用</UiChip>
+      <UiChip v-if="staged" tone="warning">待儲存</UiChip>
     </div>
 
     <UiTrackThumb
@@ -63,42 +59,32 @@ const previewTrack = computed(() =>
       </template>
     </UiTrackThumb>
 
-    <UiButton
-      v-if="candidate"
-      variant="accent"
-      :loading="artworkSaving"
-      loading-label="套用中"
-      :disabled="disabled || artworkSearching"
-      @click="emit('apply')"
-    >
-      套用這張封面
-    </UiButton>
-
-    <div class="artwork-preview__actions">
-      <UiButton
+    <div class="artwork-preview__actions" role="group" aria-label="封面操作">
+      <UiIconButton
+        :icon="ImagePlus"
+        :label="currentTrack.thumbnailUrl ? '更換圖片' : '選擇圖片'"
+        variant="command"
+        :loading="artworkPreparing"
+        loading-label="準備預覽中"
+        :disabled="disabled || artworkSearching"
+        @click="emit('choose')"
+      />
+      <UiIconButton
         v-if="!searchOpen"
-        variant="accent"
+        data-artwork-search-trigger
         :icon="Search"
+        label="線上搜尋"
         :disabled="disabled || artworkSearching"
         @click="emit('openSearch')"
-      >
-        搜尋線上封面
-      </UiButton>
-      <div class="artwork-preview__utility-actions">
-        <UiIconButton
-          :icon="ImagePlus"
-          label="從電腦選擇圖片"
-          :disabled="disabled"
-          @click="emit('choose')"
-        />
-        <UiIconButton
-          v-if="currentTrack.thumbnailUrl"
-          :icon="Trash2"
-          label="移除封面"
-          :disabled="disabled"
-          @click="emit('clear')"
-        />
-      </div>
+      />
+      <UiIconButton
+        v-if="currentTrack.thumbnailUrl"
+        :icon="Trash2"
+        label="移除封面"
+        intent="danger"
+        :disabled="disabled"
+        @click="emit('clear')"
+      />
     </div>
   </section>
 </template>
@@ -136,13 +122,9 @@ const previewTrack = computed(() =>
 }
 
 .artwork-preview__actions {
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.artwork-preview__utility-actions {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--ui-space-1);
 }
 
@@ -156,8 +138,7 @@ const previewTrack = computed(() =>
   }
 
   .artwork-preview__heading,
-  .artwork-preview__actions,
-  .artwork-preview > :deep(.ui-btn) {
+  .artwork-preview__actions {
     grid-column: 2;
   }
 

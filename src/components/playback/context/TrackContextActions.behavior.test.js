@@ -73,4 +73,21 @@ describe('TrackContextActions', () => {
     );
     expect(source).not.toMatch(/\b(?:playTrack|togglePlayerPlayback|seek)\b/u);
   });
+
+  it('binds the metadata modal to the public editor refs and readonly state contract', () => {
+    const source = readFileSync(
+      new URL('./TrackContextActions.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain('v-if="trackMetadataEditor.isOpen.value"');
+    expect(source).toContain(':title="trackMetadataEditor.state.titleDraft"');
+    expect(source).toContain(':artist="trackMetadataEditor.state.artistDraft"');
+    expect(source).toContain(
+      ':thumbnail-url="trackMetadataEditor.state.artworkPreviewUrl"',
+    );
+    expect(source).toContain(':saving="trackMetadataEditor.state.isSaving"');
+    expect(source).toContain(':dirty="trackMetadataEditor.isDirty.value"');
+    expect(source).not.toContain('trackMetadataEditor.state.open');
+  });
 });

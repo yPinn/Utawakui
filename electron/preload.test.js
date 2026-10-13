@@ -73,9 +73,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:auto-resolve-artist-identities',
   'library:cancel-artist-identity-candidates',
   'library:cancel-artist-photo-candidates',
-  'library:choose-track-artwork',
-  'library:clear-track-artwork',
-  'library:apply-track-artwork',
+  'library:choose-track-artwork-draft',
   'library:cancel-track-artwork-search',
   'library:choose-artist-photo',
   'library:clear-artist-photo',
@@ -86,16 +84,17 @@ const MAIN_INVOKE_CHANNELS = [
   'library:list',
   'library:load-artist-photo-candidate-preview',
   'library:load-track-artwork-preview',
+  'library:discard-track-artwork-draft',
   'library:merge-artists',
   'library:open-track-artwork-source',
   'library:resolve-artist-photo',
   'library:search-artist-identity-candidates',
   'library:search-artist-photo-candidates',
   'library:search-track-artwork',
+  'library:save-track-edits',
   'library:set-artist-display-name',
   'library:split-artist-credit',
   'library:undo-artist-organization',
-  'library:update-track-metadata',
   'library-storage:cleanup',
   'library-storage:get',
   'library-storage:set-policy',
@@ -948,6 +947,38 @@ describe('main preload bridge', () => {
         },
       ],
       ['library-storage:cleanup'],
+    ]);
+  });
+
+  it('exposes only bounded track-edit intents and never forwards artwork paths', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.chooseTrackArtworkDraft('track-1', 'C:\\private\\cover.png');
+    bridge.discardTrackArtworkDraft('track-1', 'C:\\private\\cover.png');
+    bridge.saveTrackEdits('track-1', {
+      title: '歌曲',
+      artist: '演唱者',
+      artwork: {
+        action: 'candidate',
+        candidateId: 'candidate-1',
+        path: 'C:\\private\\cover.png',
+        url: 'file:///private/cover.png',
+      },
+      privatePath: 'C:\\private',
+    });
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['library:choose-track-artwork-draft', 'track-1'],
+      ['library:discard-track-artwork-draft', 'track-1'],
+      [
+        'library:save-track-edits',
+        'track-1',
+        {
+          title: '歌曲',
+          artist: '演唱者',
+          artwork: { action: 'candidate', candidateId: 'candidate-1' },
+        },
+      ],
     ]);
   });
 

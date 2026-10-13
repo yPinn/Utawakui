@@ -5,6 +5,7 @@ const {
   readTrackInfoMaintenanceFields,
 } = require('../lib/downloader');
 const {
+  captureTrackArtworkSnapshot,
   deleteTrack,
   deleteTrackArtworkFile,
   convertLocalAudioFiles,
@@ -12,6 +13,8 @@ const {
   importLocalAudioFiles,
   listTracks,
   organizeTrackMetadataFromSidecars,
+  readLocalArtworkDraft: readLocalArtworkDraftFile,
+  restoreTrackArtworkSnapshot,
   runBackfillPass,
   updateTrackMetadata,
   writeTrackArtworkFile,
@@ -121,6 +124,9 @@ function registerLibraryHandlers({
   removeTrackFromBgmStandbyPlan = (directory, trackId) =>
     createBgmStandbyPlanStore({ directory }).removeTrackReference(trackId),
   updateLibraryTrackMetadata = updateTrackMetadata,
+  captureLibraryTrackArtworkSnapshot = captureTrackArtworkSnapshot,
+  restoreLibraryTrackArtworkSnapshot = restoreTrackArtworkSnapshot,
+  readLocalArtworkDraft = readLocalArtworkDraftFile,
   writeLibraryTrackArtworkFile = writeTrackArtworkFile,
   deleteLibraryTrackArtworkFile = deleteTrackArtworkFile,
   artworkDiscoveryService,
@@ -203,6 +209,41 @@ function registerLibraryHandlers({
         }
       },
     });
+
+  const localArtworkDrafts = new Map();
+
+  function localArtworkDraftKey(event, trackId) {
+    const senderId = Number.isInteger(event?.sender?.id)
+      ? event.sender.id
+      : 'renderer';
+    return `${senderId}:${trackId}`;
+  }
+
+  function normalizeArtworkEditIntent(value) {
+    const action = value?.action;
+    if (!['keep', 'local-draft', 'candidate', 'clear'].includes(action)) {
+      return null;
+    }
+    if (action !== 'candidate') return { action };
+    if (
+      typeof value.candidateId !== 'string' ||
+      value.candidateId.length === 0 ||
+      value.candidateId.length > 200
+    ) {
+      return null;
+    }
+    return { action, candidateId: value.candidateId };
+  }
+
+  function normalizeTrackMetadataEdits(value) {
+    if (typeof value?.title !== 'string' || typeof value?.artist !== 'string') {
+      return null;
+    }
+    const title = value.title.trim();
+    const artist = value.artist.trim();
+    if (!title || title.length > 200 || artist.length > 200) return null;
+    return { title, artist };
+  }
   const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
     getProviderRunner,
     lyricsAcquisitionService,
@@ -828,104 +869,150 @@ function registerLibraryHandlers({
   });
 
   ipcMain.handle(
-    'library:update-track-metadata',
-    async (event, trackId, fields) => {
+    'library:choose-track-artwork-draft',
+    async (event, trackId) => {
       const dir = resolveDownloadDir(getConfig());
-      const updated = await runDiagnosticIpcOperation(
+      const track = listLibraryTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      if (!track) return { status: 'error', reason: 'track-unavailable' };
+
+      const result = await dialog.showOpenDialog(getMainWindow(), {
+        properties: ['openFile'],
+        filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+      });
+      if (result.canceled || !result.filePaths[0]) {
+        return { status: 'cancelled' };
+      }
+
+      const preview = await runDiagnosticIpcOperation(
         {
           recordDiagnostic,
           diagnostic: {
             source: 'library',
-            operation: 'update-track-metadata',
-            code: 'LIBRARY_UPDATE_METADATA_FAILED',
+            operation: 'choose-track-artwork-draft',
+            code: 'LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED',
           },
           publicError: {
-            code: 'LIBRARY_UPDATE_METADATA_FAILED',
-            title: '歌曲資訊無法更新',
-            message: '歌曲資訊無法更新，請再試一次。',
+            code: 'LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED',
+            title: '封面無法預覽',
+            message: '這張圖片無法預覽，請選擇其他圖片。',
             context: { retryable: true },
           },
         },
-        () => updateLibraryTrackMetadata(dir, trackId, fields),
+        () => readLocalArtworkDraft(result.filePaths[0]),
       );
-      if (updated) notifyLibraryUpdated();
-      return updated;
+      if (!preview) return { status: 'error', reason: 'unsupported-file' };
+
+      localArtworkDrafts.set(localArtworkDraftKey(event, trackId), {
+        sourcePath: result.filePaths[0],
+      });
+      return { status: 'ok', ...preview };
     },
   );
 
-  ipcMain.handle('library:choose-track-artwork', async (event, trackId) => {
+  ipcMain.handle('library:discard-track-artwork-draft', (event, trackId) =>
+    localArtworkDrafts.delete(localArtworkDraftKey(event, trackId)),
+  );
+
+  ipcMain.handle('library:save-track-edits', async (event, trackId, edits) => {
     const dir = resolveDownloadDir(getConfig());
     const track = listLibraryTracks(dir).find(
       (candidate) => candidate.id === trackId,
     );
-    if (!track) return null;
+    if (!track) return { status: 'error', reason: 'track-unavailable' };
 
-    const result = await dialog.showOpenDialog(getMainWindow(), {
-      properties: ['openFile'],
-      filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
-    });
-    if (result.canceled || !result.filePaths[0]) return track;
+    const metadata = normalizeTrackMetadataEdits(edits);
+    if (!metadata) return { status: 'error', reason: 'invalid-metadata' };
 
-    const updated = await runDiagnosticIpcOperation(
+    const artwork = normalizeArtworkEditIntent(edits?.artwork);
+    if (!artwork) return { status: 'error', reason: 'invalid-artwork-intent' };
+    if (artwork.action === 'candidate') {
+      requireFeatureGate(featureIds.PROVIDER_FLOW);
+    }
+
+    const draftKey = localArtworkDraftKey(event, trackId);
+    const localDraft = localArtworkDrafts.get(draftKey);
+    if (artwork.action === 'local-draft' && !localDraft) {
+      return { status: 'error', reason: 'draft-unavailable' };
+    }
+    const artworkSnapshot =
+      artwork.action === 'keep'
+        ? null
+        : captureLibraryTrackArtworkSnapshot(dir, trackId);
+    if (artwork.action !== 'keep' && !Array.isArray(artworkSnapshot)) {
+      return { status: 'error', reason: 'artwork-unavailable' };
+    }
+
+    const saved = await runDiagnosticIpcOperation(
       {
         recordDiagnostic,
         diagnostic: {
           source: 'library',
-          operation: 'choose-track-artwork',
-          code: 'LIBRARY_CHOOSE_ARTWORK_FAILED',
+          operation: 'save-track-edits',
+          code: 'LIBRARY_SAVE_TRACK_EDITS_FAILED',
         },
         publicError: {
-          code: 'LIBRARY_CHOOSE_ARTWORK_FAILED',
-          title: '封面無法更新',
-          message: '這首歌曲的封面無法更新，請再試一次。',
+          code: 'LIBRARY_SAVE_TRACK_EDITS_FAILED',
+          title: '歌曲變更無法儲存',
+          message: '歌曲變更無法儲存，請再試一次。',
           context: { retryable: true },
         },
       },
-      () => {
-        const filename = writeLibraryTrackArtworkFile(
-          dir,
-          trackId,
-          result.filePaths[0],
-        );
-        return (
-          filename &&
-          listLibraryTracks(dir).find((candidate) => candidate.id === trackId)
-        );
+      async () => {
+        const rollbackArtwork = () => {
+          if (artworkSnapshot) {
+            restoreLibraryTrackArtworkSnapshot(dir, trackId, artworkSnapshot);
+          }
+        };
+        try {
+          if (artwork.action === 'local-draft') {
+            const filename = writeLibraryTrackArtworkFile(
+              dir,
+              trackId,
+              localDraft.sourcePath,
+            );
+            if (!filename) {
+              rollbackArtwork();
+              return { status: 'error', reason: 'draft-unavailable' };
+            }
+          } else if (artwork.action === 'candidate') {
+            const result = await resolvedArtworkDiscoveryService.apply(
+              dir,
+              trackId,
+              artwork.candidateId,
+            );
+            if (result?.status !== 'ok') {
+              rollbackArtwork();
+              return result;
+            }
+          } else if (artwork.action === 'clear') {
+            deleteLibraryTrackArtworkFile(dir, trackId);
+          }
+
+          const updated = updateLibraryTrackMetadata(dir, trackId, {
+            title: metadata.title,
+            artist: metadata.artist,
+          });
+          if (!updated) {
+            rollbackArtwork();
+            return { status: 'error', reason: 'track-unavailable' };
+          }
+          return {
+            status: 'ok',
+            track: updated,
+          };
+        } catch (error) {
+          rollbackArtwork();
+          throw error;
+        }
       },
     );
-    if (updated) notifyLibraryUpdated();
-    return updated || track;
-  });
-
-  ipcMain.handle('library:clear-track-artwork', async (event, trackId) => {
-    const dir = resolveDownloadDir(getConfig());
-    const track = listLibraryTracks(dir).find(
-      (candidate) => candidate.id === trackId,
-    );
-    if (!track) return null;
-
-    const deleted = await runDiagnosticIpcOperation(
-      {
-        recordDiagnostic,
-        diagnostic: {
-          source: 'library',
-          operation: 'clear-track-artwork',
-          code: 'LIBRARY_CLEAR_ARTWORK_FAILED',
-        },
-        publicError: {
-          code: 'LIBRARY_CLEAR_ARTWORK_FAILED',
-          title: '封面無法移除',
-          message: '這首歌曲的封面無法移除，請再試一次。',
-          context: { retryable: true },
-        },
-      },
-      () => deleteLibraryTrackArtworkFile(dir, trackId),
-    );
-    const updated = listLibraryTracks(dir).find(
-      (candidate) => candidate.id === trackId,
-    );
-    if (deleted) notifyLibraryUpdated();
-    return updated || track;
+    if (saved?.status === 'ok') {
+      localArtworkDrafts.delete(draftKey);
+      notifyLibraryUpdated();
+    }
+    return saved;
   });
 
   // One in-flight search per track; the renderer can abort it so a slow
@@ -1006,41 +1093,6 @@ function registerLibraryHandlers({
         },
         () => resolvedArtworkDiscoveryService.loadPreview(trackId, candidateId),
       );
-    },
-  );
-
-  ipcMain.handle(
-    'library:apply-track-artwork',
-    async (event, trackId, candidateId) => {
-      requireFeatureGate(featureIds.PROVIDER_FLOW);
-      const dir = resolveDownloadDir(getConfig());
-      const track = listLibraryTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      if (!track) return { status: 'error', reason: 'track-unavailable' };
-      const result = await runDiagnosticIpcOperation(
-        {
-          recordDiagnostic,
-          diagnostic: {
-            source: 'artwork',
-            operation: 'apply',
-            code: 'ARTWORK_APPLY_FAILED',
-          },
-          publicError: {
-            code: 'ARTWORK_APPLY_FAILED',
-            title: '封面無法更新',
-            message: '線上封面未套用，請再試一次。',
-            context: { retryable: true },
-          },
-        },
-        () => resolvedArtworkDiscoveryService.apply(dir, trackId, candidateId),
-      );
-      if (result.status !== 'ok') return result;
-      const updated = listLibraryTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      notifyLibraryUpdated();
-      return { status: 'ok', track: updated || track };
     },
   );
 

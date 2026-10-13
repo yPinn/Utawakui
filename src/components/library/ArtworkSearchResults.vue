@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, useTemplateRef } from 'vue';
 import { projectArtworkCandidate } from '../../utils/artworkCandidateDisplay.js';
 import UiChip from '../ui/UiChip.vue';
 import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
@@ -13,6 +13,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['select']);
+const groupRef = useTemplateRef('group');
 
 const displayCandidates = computed(() =>
   props.candidates.map((candidate) => ({
@@ -25,12 +26,55 @@ const displayCandidates = computed(() =>
     },
   })),
 );
+
+function radioTabIndex(candidateId, index) {
+  if (props.selectedId) return props.selectedId === candidateId ? 0 : -1;
+  return index === 0 ? 0 : -1;
+}
+
+async function focusCandidate(index) {
+  await nextTick();
+  groupRef.value?.querySelectorAll('[role="radio"]').item(index)?.focus();
+}
+
+function handleRadioKeydown(event, index) {
+  const lastIndex = displayCandidates.value.length - 1;
+  let nextIndex;
+  switch (event.key) {
+    case 'ArrowDown':
+    case 'ArrowRight':
+      nextIndex = index >= lastIndex ? 0 : index + 1;
+      break;
+    case 'ArrowUp':
+    case 'ArrowLeft':
+      nextIndex = index <= 0 ? lastIndex : index - 1;
+      break;
+    case 'Home':
+      nextIndex = 0;
+      break;
+    case 'End':
+      nextIndex = lastIndex;
+      break;
+    default:
+      return;
+  }
+  event.preventDefault();
+  const candidate = displayCandidates.value[nextIndex]?.candidate;
+  if (!candidate) return;
+  emit('select', candidate.id);
+  void focusCandidate(nextIndex);
+}
 </script>
 
 <template>
-  <div class="artwork-results" role="radiogroup" aria-label="線上封面候選">
+  <div
+    ref="group"
+    class="artwork-results"
+    role="radiogroup"
+    aria-label="線上封面候選"
+  >
     <article
-      v-for="{ candidate, display, track } in displayCandidates"
+      v-for="({ candidate, display, track }, index) in displayCandidates"
       :key="candidate.id"
       class="artwork-results__row"
       :class="{
@@ -42,8 +86,10 @@ const displayCandidates = computed(() =>
         class="artwork-results__select"
         role="radio"
         :aria-checked="selectedId === candidate.id"
+        :tabindex="radioTabIndex(candidate.id, index)"
         :disabled="disabled"
         @click="emit('select', candidate.id)"
+        @keydown="handleRadioKeydown($event, index)"
       >
         <UiTrackThumb
           class="artwork-results__thumb"

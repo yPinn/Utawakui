@@ -91,6 +91,8 @@ describe('library metadata maintenance handlers', () => {
         enriched: 0,
         skipped: 0,
       }),
+      captureLibraryTrackArtworkSnapshot: vi.fn().mockReturnValue([]),
+      restoreLibraryTrackArtworkSnapshot: vi.fn().mockReturnValue(true),
       ...overrides,
     });
 
@@ -901,107 +903,250 @@ describe('library metadata maintenance handlers', () => {
     );
   });
 
-  it('records an update-track-metadata failure and rethrows a safe AppError', async () => {
+  it('records a combined track-edit failure and rethrows a safe AppError', async () => {
     const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
     const handlers = registerHandlers({
       recordDiagnostic,
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', title: 'Original' }]),
       updateLibraryTrackMetadata: vi.fn(() => {
         throw new Error('index write failed');
       }),
     });
 
     const error = await handlers
-      .get('library:update-track-metadata')(null, 'track-1', { title: 'x' })
+      .get('library:save-track-edits')({ sender: { id: 7 } }, 'track-1', {
+        title: 'x',
+        artist: '',
+        artwork: { action: 'keep' },
+      })
       .catch((err) => err);
 
     const payload = parseAppError(error);
-    expect(payload.code).toBe('LIBRARY_UPDATE_METADATA_FAILED');
+    expect(payload.code).toBe('LIBRARY_SAVE_TRACK_EDITS_FAILED');
     expect(payload.context.diagnosticRecorded).toBe(true);
   });
 
-  it('records a choose-track-artwork write failure and rethrows a safe AppError', async () => {
-    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+  it('rejects unbounded metadata before mutating artwork or the library index', async () => {
+    const deleteLibraryTrackArtworkFile = vi.fn();
+    const updateLibraryTrackMetadata = vi.fn();
     const handlers = registerHandlers({
-      recordDiagnostic,
       listLibraryTracks: vi
         .fn()
-        .mockReturnValue([{ id: 'track-1', sourceType: 'local-file' }]),
+        .mockReturnValue([{ id: 'track-1', title: 'Original' }]),
+      deleteLibraryTrackArtworkFile,
+      updateLibraryTrackMetadata,
+    });
+
+    await expect(
+      handlers.get('library:save-track-edits')(
+        { sender: { id: 7 } },
+        'track-1',
+        {
+          title: 'x'.repeat(201),
+          artist: '',
+          artwork: { action: 'clear' },
+        },
+      ),
+    ).resolves.toEqual({ status: 'error', reason: 'invalid-metadata' });
+    expect(deleteLibraryTrackArtworkFile).not.toHaveBeenCalled();
+    expect(updateLibraryTrackMetadata).not.toHaveBeenCalled();
+  });
+
+  it('keeps a chosen local artwork path in main and returns only bounded preview bytes', async () => {
+    const readLocalArtworkDraft = vi.fn().mockReturnValue({
+      mimeType: 'image/jpeg',
+      bytes: Buffer.from([0xff, 0xd8, 0xff]),
+    });
+    const writeLibraryTrackArtworkFile = vi.fn();
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', sourceType: 'provider' }]),
       dialog: {
-        showOpenDialog: vi
-          .fn()
-          .mockResolvedValue({ canceled: false, filePaths: ['cover.jpg'] }),
+        showOpenDialog: vi.fn().mockResolvedValue({
+          canceled: false,
+          filePaths: ['C:\\private\\cover.jpg'],
+        }),
       },
-      writeLibraryTrackArtworkFile: vi.fn(() => {
-        throw new Error('disk full');
-      }),
+      readLocalArtworkDraft,
+      writeLibraryTrackArtworkFile,
+      notifyLibraryUpdated,
     });
 
-    const error = await handlers
-      .get('library:choose-track-artwork')(null, 'track-1')
-      .catch((err) => err);
-
-    const payload = parseAppError(error);
-    expect(payload.code).toBe('LIBRARY_CHOOSE_ARTWORK_FAILED');
-    expect(payload.context.diagnosticRecorded).toBe(true);
-  });
-
-  it('records a clear-track-artwork failure and rethrows a safe AppError', async () => {
-    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
-    const handlers = registerHandlers({
-      recordDiagnostic,
-      listLibraryTracks: vi
-        .fn()
-        .mockReturnValue([{ id: 'track-1', sourceType: 'local-file' }]),
-      deleteLibraryTrackArtworkFile: vi.fn(() => {
-        throw new Error('permission denied');
-      }),
+    await expect(
+      handlers.get('library:choose-track-artwork-draft')(
+        { sender: { id: 7 } },
+        'track-1',
+      ),
+    ).resolves.toEqual({
+      status: 'ok',
+      mimeType: 'image/jpeg',
+      bytes: Buffer.from([0xff, 0xd8, 0xff]),
     });
-
-    const error = await handlers
-      .get('library:clear-track-artwork')(null, 'track-1')
-      .catch((err) => err);
-
-    const payload = parseAppError(error);
-    expect(payload.code).toBe('LIBRARY_CLEAR_ARTWORK_FAILED');
-    expect(payload.context.diagnosticRecorded).toBe(true);
+    expect(readLocalArtworkDraft).toHaveBeenCalledWith(
+      'C:\\private\\cover.jpg',
+    );
+    expect(writeLibraryTrackArtworkFile).not.toHaveBeenCalled();
+    expect(notifyLibraryUpdated).not.toHaveBeenCalled();
   });
 
-  it('allows a provider-backed managed track to use the local artwork picker', async () => {
+  it('commits a main-owned local artwork draft together with metadata', async () => {
+    const notifyLibraryUpdated = vi.fn();
     const writeLibraryTrackArtworkFile = vi
       .fn()
       .mockReturnValue('thumbnail.jpg');
+    const updateLibraryTrackMetadata = vi.fn().mockReturnValue({
+      id: 'track-1',
+      title: 'Edited',
+      artist: 'Artist',
+      thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
+    });
     const listLibraryTracks = vi
       .fn()
-      .mockReturnValueOnce([{ id: 'track-1', sourceType: 'provider' }])
+      .mockReturnValueOnce([{ id: 'track-1', title: 'Original' }])
+      .mockReturnValueOnce([{ id: 'track-1', title: 'Original' }])
       .mockReturnValueOnce([
         {
           id: 'track-1',
-          sourceType: 'provider',
+          title: 'Edited',
+          artist: 'Artist',
           thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
         },
       ]);
     const handlers = registerHandlers({
       listLibraryTracks,
+      notifyLibraryUpdated,
       writeLibraryTrackArtworkFile,
+      updateLibraryTrackMetadata,
+      readLocalArtworkDraft: vi.fn().mockReturnValue({
+        mimeType: 'image/png',
+        bytes: Buffer.from([1, 2, 3]),
+      }),
       dialog: {
         showOpenDialog: vi.fn().mockResolvedValue({
           canceled: false,
-          filePaths: ['cover.jpg'],
+          filePaths: ['C:\\private\\cover.png'],
         }),
       },
     });
+    const event = { sender: { id: 7 } };
+    await handlers.get('library:choose-track-artwork-draft')(event, 'track-1');
 
     await expect(
-      handlers.get('library:choose-track-artwork')(null, 'track-1'),
-    ).resolves.toMatchObject({
-      id: 'track-1',
-      thumbnailUrl: expect.any(String),
+      handlers.get('library:save-track-edits')(event, 'track-1', {
+        title: 'Edited',
+        artist: 'Artist',
+        artwork: { action: 'local-draft' },
+      }),
+    ).resolves.toEqual({
+      status: 'ok',
+      track: expect.objectContaining({
+        id: 'track-1',
+        title: 'Edited',
+        thumbnailUrl: expect.any(String),
+      }),
     });
     expect(writeLibraryTrackArtworkFile).toHaveBeenCalledWith(
       'library-dir',
       'track-1',
-      'cover.jpg',
+      'C:\\private\\cover.png',
     );
+    expect(updateLibraryTrackMetadata).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+      { title: 'Edited', artist: 'Artist' },
+    );
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+    expect(
+      handlers.get('library:discard-track-artwork-draft')(event, 'track-1'),
+    ).toBe(false);
+  });
+
+  it('restores artwork when metadata persistence fails after an artwork mutation', async () => {
+    const artworkSnapshot = [{ filename: 'thumbnail.jpg', bytes: 'old' }];
+    const captureLibraryTrackArtworkSnapshot = vi
+      .fn()
+      .mockReturnValue(artworkSnapshot);
+    const restoreLibraryTrackArtworkSnapshot = vi.fn().mockReturnValue(true);
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', title: 'Original' }]),
+      captureLibraryTrackArtworkSnapshot,
+      restoreLibraryTrackArtworkSnapshot,
+      readLocalArtworkDraft: vi.fn().mockReturnValue({
+        mimeType: 'image/png',
+        bytes: Buffer.from([1, 2, 3]),
+      }),
+      writeLibraryTrackArtworkFile: vi.fn().mockReturnValue('thumbnail.png'),
+      updateLibraryTrackMetadata: vi.fn(() => {
+        throw new Error('index write failed');
+      }),
+      notifyLibraryUpdated,
+      dialog: {
+        showOpenDialog: vi.fn().mockResolvedValue({
+          canceled: false,
+          filePaths: ['C:\\private\\cover.png'],
+        }),
+      },
+      recordDiagnostic: vi.fn().mockReturnValue({ ok: true }),
+    });
+    const event = { sender: { id: 7 } };
+    await handlers.get('library:choose-track-artwork-draft')(event, 'track-1');
+
+    await expect(
+      handlers.get('library:save-track-edits')(event, 'track-1', {
+        title: 'Edited',
+        artist: '',
+        artwork: { action: 'local-draft' },
+      }),
+    ).rejects.toBeTruthy();
+    expect(captureLibraryTrackArtworkSnapshot).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+    );
+    expect(restoreLibraryTrackArtworkSnapshot).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+      artworkSnapshot,
+    );
+    expect(notifyLibraryUpdated).not.toHaveBeenCalled();
+  });
+
+  it('stages artwork removal without touching the library until Save', async () => {
+    const deleteLibraryTrackArtworkFile = vi.fn().mockReturnValue(true);
+    const updateLibraryTrackMetadata = vi
+      .fn()
+      .mockReturnValue({ id: 'track-1', title: 'Song', artist: '' });
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', title: 'Song' }]),
+      deleteLibraryTrackArtworkFile,
+      updateLibraryTrackMetadata,
+      notifyLibraryUpdated,
+    });
+
+    expect(deleteLibraryTrackArtworkFile).not.toHaveBeenCalled();
+    await handlers.get('library:save-track-edits')(
+      { sender: { id: 7 } },
+      'track-1',
+      {
+        title: 'Song',
+        artist: '',
+        artwork: { action: 'clear' },
+      },
+    );
+    expect(deleteLibraryTrackArtworkFile).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+    );
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 
   it('rechecks the provider gate and delegates bounded artwork search to the main-owned service', async () => {
@@ -1120,7 +1265,7 @@ describe('library metadata maintenance handlers', () => {
     });
   });
 
-  it('applies only an opaque candidate id, refreshes the library, and opens only the resolved MusicBrainz page', async () => {
+  it('commits only an opaque candidate id with metadata and opens only the resolved MusicBrainz page', async () => {
     const requireFeatureGate = vi.fn();
     const notifyLibraryUpdated = vi.fn();
     const openExternal = vi.fn().mockResolvedValue(undefined);
@@ -1150,13 +1295,18 @@ describe('library metadata maintenance handlers', () => {
       openExternal,
       artworkDiscoveryService,
       listLibraryTracks,
+      updateLibraryTrackMetadata: vi.fn().mockReturnValue(updated),
     });
 
     await expect(
-      handlers.get('library:apply-track-artwork')(
-        null,
+      handlers.get('library:save-track-edits')(
+        { sender: { id: 7 } },
         'track-1',
-        'candidate-1',
+        {
+          title: 'Song',
+          artist: '',
+          artwork: { action: 'candidate', candidateId: 'candidate-1' },
+        },
       ),
     ).resolves.toEqual({ status: 'ok', track: updated });
     expect(artworkDiscoveryService.apply).toHaveBeenCalledWith(

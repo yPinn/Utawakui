@@ -115,7 +115,7 @@ const items = computed(() => {
   if (track.sourceType === 'local-file') {
     metadataItems.push({
       key: 'edit-metadata',
-      label: '編輯資訊',
+      label: '編輯歌曲',
       icon: Pencil,
       value: { action: TRACK_MENU_ACTIONS.editMetadata },
     });

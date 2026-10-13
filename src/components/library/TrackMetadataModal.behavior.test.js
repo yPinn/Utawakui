@@ -42,11 +42,12 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(compiled.errors).toEqual([]);
   });
 
-  it('uses an image-first split workspace with a fixed-height body and separate footer', () => {
+  it('uses an image-first split workspace that expands only for artwork search', () => {
     expect(modalSource).toContain('ArtworkPreviewPane');
     expect(modalSource).toContain('ArtworkSearchResults');
     expect(modalSource).toContain('size="wide"');
-    expect(modalSource).toContain('fixed-height');
+    expect(modalSource).toContain(':fixed-height="artworkSearchOpen"');
+    expect(modalSource).not.toMatch(/\sfixed-height(?:\s|>)/u);
     expect(modalSource).toMatch(
       /grid-template-columns:\s*minmax\([^;]+\)\s+minmax\(0,\s*1fr\)/u,
     );
@@ -69,7 +70,10 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).toContain('SlidersHorizontal');
     expect(modalSource).toContain('ChevronUp');
     expect(modalSource).toContain('設定專輯篩選');
-    expect(modalSource).toContain('使用外部來源搜尋；套用前不會更換封面。');
+    expect(modalSource).toContain(
+      '使用外部來源搜尋；選取後先預覽，按「儲存」才會更換封面。',
+    );
+    expect(modalSource).not.toContain('套用前');
     expect(modalSource).not.toContain('<details');
     expect(modalSource).not.toContain('UiDisclosure');
   });
@@ -84,26 +88,26 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(queueSource).not.toContain('@open-artwork-source');
   });
 
-  it('requires an explicit selection and apply action without automatic writes', () => {
+  it('uses candidate selection as a staged cover choice without an immediate apply action', () => {
     expect(modalSource).toContain(':selected-id="selectedArtworkCandidateId"');
     expect(modalSource).toContain(
       '@select="emit(\'selectArtworkCandidate\', $event)"',
     );
     expect(modalSource).toContain(':candidate="selectedArtworkCandidate"');
-    expect(modalSource).toContain('@apply="emit(\'applyArtwork\')"');
-    expect(modalSource).toContain("emit('applyArtwork')");
-    expect(modalSource).not.toMatch(/watch\([^)]*candidate[^)]*apply/iu);
+    expect(modalSource).not.toContain('applyArtwork');
+    expect(modalSource).not.toContain('套用這張封面');
   });
 
-  it('names the footer action for metadata instead of implying a staged artwork transaction', () => {
-    expect(modalSource).toContain('儲存歌曲資料');
-    expect(modalSource).not.toContain('儲存變更');
+  it('uses one Save action for metadata and artwork drafts', () => {
+    expect(modalSource).toMatch(/>\s*儲存\s*</u);
+    expect(modalSource).not.toContain('儲存歌曲資料');
+    expect(modalSource).toContain(':disabled="fieldsDisabled || !dirty"');
   });
 
   it('offers an explicit cancel before save and locks close paths only during writes', () => {
     const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
     const cancelIndex = footer.indexOf('取消');
-    const saveIndex = footer.indexOf('儲存歌曲資料');
+    const saveIndex = footer.indexOf('儲存');
 
     expect(cancelIndex).toBeGreaterThan(-1);
     expect(saveIndex).toBeGreaterThan(cancelIndex);
@@ -113,14 +117,26 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).toContain('@close="cancel"');
     expect(modalSource).toContain(':close-disabled="closeDisabled"');
     expect(modalSource).toContain(
-      'const closeDisabled = computed(() => props.saving || props.artworkSaving);',
+      'const closeDisabled = computed(() => props.saving || props.artworkPreparing);',
     );
   });
 
-  it('makes the independent artwork commit boundary explicit', () => {
-    expect(modalSource).toContain(
-      '從電腦選擇、移除或套用候選封面會立即生效；取消只放棄尚未儲存的歌名與演唱者。',
-    );
+  it('keeps Cancel truthful by removing the immediate artwork write disclaimer', () => {
+    expect(modalSource).not.toContain('立即生效');
+    expect(modalSource).not.toContain('只放棄尚未儲存');
+  });
+
+  it('associates the required-title failure with the title field', () => {
+    expect(modalSource).toContain(':error="titleError"');
+    expect(modalSource).toContain('ref="titleField"');
+  });
+
+  it('hands focus into and back out of progressive artwork search', () => {
+    expect(modalSource).toContain('useTemplateRef');
+    expect(modalSource).toContain('ref="artworkSearchHeading"');
+    expect(modalSource).toContain('ref="artworkSearchTrigger"');
+    expect(modalSource).toContain('focusArtworkSearch');
+    expect(modalSource).toContain('restoreArtworkSearchTrigger');
   });
 
   it('allows locally-created blob URLs without permitting remote artwork hotlinks', () => {
@@ -136,9 +152,9 @@ describe('TrackMetadataModal artwork discovery contract', () => {
       ':artwork-candidates="trackMetadataEditor.state.artworkCandidates"',
       '@open-artwork-search="trackMetadataEditor.openArtworkSearch"',
       '@search-artwork="trackMetadataEditor.searchArtwork"',
-      '@apply-artwork="trackMetadataEditor.applySelectedArtwork"',
     ]) {
       expect(libraryBrowseSource).toContain(binding);
     }
+    expect(libraryBrowseSource).not.toContain('@apply-artwork');
   });
 });

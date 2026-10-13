@@ -92,6 +92,9 @@ const {
   deleteTrack,
 } = require('./library/tracks');
 const {
+  captureTrackArtworkSnapshot,
+  restoreTrackArtworkSnapshot,
+  readLocalArtworkDraft,
   writeTrackArtworkFile,
   writeTrackArtworkBuffer,
   deleteTrackArtworkFile,
@@ -117,6 +120,7 @@ module.exports = {
   allocateLyricsFilename,
   backfillLyricsSourceLabels,
   buildRangeResponse,
+  captureTrackArtworkSnapshot,
   deleteLyricsSource,
   deleteTrack,
   deleteTrackArtworkFile,
@@ -155,6 +159,7 @@ module.exports = {
   normalizeTrackLyricsSidecars,
   organizeTrackMetadataFromSidecars,
   readTrackLyrics,
+  readLocalArtworkDraft,
   recordSeparationResult,
   deletePlaylistCoverDir,
   refreshTrackMetadataFromSidecars,
@@ -172,6 +177,7 @@ module.exports = {
   resolveTrackArtworkPath,
   resolveTrackDir,
   resolveTrackPath,
+  restoreTrackArtworkSnapshot,
   runBackfillPass,
   saveIndexEntry,
   saveTrackLyricsManifest,

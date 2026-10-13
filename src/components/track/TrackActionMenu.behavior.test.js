@@ -253,7 +253,7 @@ describe('TrackActionMenu behavior model', () => {
       expect.arrayContaining([
         '加入佇列',
         '加入播放清單',
-        '編輯資訊',
+        '編輯歌曲',
         '前往專輯',
       ]),
     );

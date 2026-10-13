@@ -34,4 +34,14 @@ describe('ArtworkSearchResults behavior contract', () => {
     expect(source).not.toContain('reasonLabel');
     expect(source).not.toContain('MusicBrainz');
   });
+
+  it('implements the complete radio keyboard model with one tab stop', () => {
+    expect(source).toContain(':tabindex="radioTabIndex(candidate.id, index)"');
+    expect(source).toContain('@keydown="handleRadioKeydown($event, index)"');
+    expect(source).toContain("case 'ArrowDown':");
+    expect(source).toContain("case 'ArrowUp':");
+    expect(source).toContain("case 'Home':");
+    expect(source).toContain("case 'End':");
+    expect(source).toContain('focusCandidate(nextIndex)');
+  });
 });

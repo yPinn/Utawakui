@@ -1,5 +1,5 @@
 <script setup>
-import { computed, shallowRef, watch } from 'vue';
+import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue';
 import { ChevronUp, Search, SlidersHorizontal } from '../../icons/index.js';
 import ArtworkPreviewPane from './ArtworkPreviewPane.vue';
 import ArtworkSearchResults from './ArtworkSearchResults.vue';
@@ -15,8 +15,10 @@ const props = defineProps({
   title: { type: String, default: '' },
   artist: { type: String, default: '' },
   thumbnailUrl: { type: String, default: '' },
+  dirty: { type: Boolean, default: false },
+  artworkChanged: { type: Boolean, default: false },
   saving: { type: Boolean, default: false },
-  artworkSaving: { type: Boolean, default: false },
+  artworkPreparing: { type: Boolean, default: false },
   artworkSearching: { type: Boolean, default: false },
   artworkSearchOpen: { type: Boolean, default: false },
   artworkSearchCompleted: { type: Boolean, default: false },
@@ -39,12 +41,14 @@ const emit = defineEmits([
   'updateArtworkQuery',
   'searchArtwork',
   'selectArtworkCandidate',
-  'applyArtwork',
   'updateTitle',
   'updateArtist',
 ]);
 
 const searchOptionsOpen = shallowRef(false);
+const titleField = useTemplateRef('titleField');
+const artworkSearchHeading = useTemplateRef('artworkSearchHeading');
+const artworkSearchTrigger = useTemplateRef('artworkSearchTrigger');
 
 const currentTrack = computed(() => ({
   title: props.title,
@@ -60,68 +64,83 @@ const selectedArtworkCandidate = computed(
 );
 
 const fieldsDisabled = computed(
-  () => props.saving || props.artworkSaving || props.artworkSearching,
+  () => props.saving || props.artworkPreparing || props.artworkSearching,
 );
-const closeDisabled = computed(() => props.saving || props.artworkSaving);
+const closeDisabled = computed(() => props.saving || props.artworkPreparing);
+const titleError = computed(() =>
+  props.error === '歌名必填' ? props.error : '',
+);
+const generalError = computed(() => (titleError.value ? '' : props.error));
 
 function cancel() {
   if (closeDisabled.value) return;
   emit('close');
 }
 
+async function focusArtworkSearch() {
+  await nextTick();
+  artworkSearchHeading.value?.focus();
+}
+
+async function restoreArtworkSearchTrigger() {
+  await nextTick();
+  artworkSearchTrigger.value
+    ?.querySelector('[data-artwork-search-trigger]')
+    ?.focus();
+}
+
 watch(
   () => props.artworkSearchOpen,
-  (open) => {
-    if (!open) searchOptionsOpen.value = false;
+  (open, wasOpen) => {
+    if (open) {
+      void focusArtworkSearch();
+      return;
+    }
+    searchOptionsOpen.value = false;
+    if (wasOpen && props.open) void restoreArtworkSearchTrigger();
   },
 );
+
+watch(titleError, (error) => {
+  if (error) void nextTick(() => titleField.value?.focus());
+});
 </script>
 
 <template>
   <UiModal
     :open="open"
-    title="編輯資訊"
+    title="編輯歌曲"
     size="wide"
-    fixed-height
+    :fixed-height="artworkSearchOpen"
     :close-disabled="closeDisabled"
     @close="cancel"
   >
     <template #default>
       <div class="track-metadata">
-        <div class="track-metadata__preview">
+        <div ref="artworkSearchTrigger" class="track-metadata__preview">
           <ArtworkPreviewPane
             :current-track="currentTrack"
             :candidate="selectedArtworkCandidate"
+            :staged="artworkChanged"
             :search-open="artworkSearchOpen"
-            :disabled="saving || artworkSaving"
-            :artwork-saving="artworkSaving"
+            :disabled="saving"
+            :artwork-preparing="artworkPreparing"
             :artwork-searching="artworkSearching"
             @choose="emit('chooseThumbnail')"
             @clear="emit('clearThumbnail')"
             @open-search="emit('openArtworkSearch')"
-            @apply="emit('applyArtwork')"
           />
-          <UiHint>
-            從電腦選擇、移除或套用候選封面會立即生效；取消只放棄尚未儲存的歌名與演唱者。
-          </UiHint>
         </div>
 
         <div class="track-metadata__workspace">
-          <section
-            class="track-metadata__section"
-            aria-labelledby="track-metadata-fields-heading"
-          >
-            <h3
-              id="track-metadata-fields-heading"
-              class="track-metadata__section-title"
-            >
-              歌曲資料
-            </h3>
+          <section class="track-metadata__section" aria-label="基本資料">
             <div class="track-metadata__fields">
               <UiTextField
                 id="track-metadata-title"
+                ref="titleField"
                 :model-value="title"
                 label="歌名"
+                :error="titleError"
                 maxlength="200"
                 required
                 :disabled="fieldsDisabled"
@@ -149,11 +168,15 @@ watch(
               <div class="track-metadata__search-copy">
                 <h3
                   id="track-artwork-search-heading"
+                  ref="artworkSearchHeading"
                   class="track-metadata__section-title"
+                  tabindex="-1"
                 >
                   線上搜尋封面
                 </h3>
-                <UiHint>使用外部來源搜尋；套用前不會更換封面。</UiHint>
+                <UiHint>
+                  使用外部來源搜尋；選取後先預覽，按「儲存」才會更換封面。
+                </UiHint>
               </div>
               <div class="track-metadata__search-actions">
                 <UiIconButton
@@ -168,16 +191,16 @@ watch(
                 <UiIconButton
                   :icon="ChevronUp"
                   label="收合線上搜尋"
-                  :disabled="artworkSearching || artworkSaving"
+                  :disabled="artworkSearching || artworkPreparing"
                   @click="emit('closeArtworkSearch')"
                 />
                 <UiButton
-                  variant="accent"
+                  variant="secondary"
                   :icon="Search"
                   :loading="artworkSearching"
                   loading-label="搜尋中"
                   :disabled="
-                    saving || artworkSaving || !String(title || '').trim()
+                    saving || artworkPreparing || !String(title || '').trim()
                   "
                   @click="emit('searchArtwork')"
                 >
@@ -213,7 +236,7 @@ watch(
               v-if="artworkCandidates.length > 0"
               :candidates="artworkCandidates"
               :selected-id="selectedArtworkCandidateId"
-              :disabled="artworkSearching || artworkSaving"
+              :disabled="artworkSearching || artworkPreparing"
               @select="emit('selectArtworkCandidate', $event)"
             />
 
@@ -227,10 +250,10 @@ watch(
           </section>
 
           <UiNotice
-            v-if="error"
+            v-if="generalError"
             tone="danger"
             title="操作未完成"
-            :message="error"
+            :message="generalError"
             compact
           />
         </div>
@@ -245,10 +268,10 @@ watch(
         variant="accent"
         :loading="saving"
         loading-label="儲存中"
-        :disabled="fieldsDisabled"
+        :disabled="fieldsDisabled || !dirty"
         @click="emit('save')"
       >
-        儲存歌曲資料
+        儲存
       </UiButton>
     </template>
   </UiModal>

@@ -137,14 +137,16 @@ async function handleTrackMenuSelect(value) {
     />
 
     <TrackMetadataModal
-      v-if="trackMetadataEditor.state.open"
-      :open="trackMetadataEditor.state.open"
-      :title="trackMetadataEditor.state.title"
-      :artist="trackMetadataEditor.state.artist"
-      :thumbnail-url="trackMetadataEditor.state.thumbnailUrl"
-      :saving="trackMetadataEditor.state.saving"
-      :artwork-saving="trackMetadataEditor.state.artworkSaving"
-      :artwork-searching="trackMetadataEditor.state.artworkSearching"
+      v-if="trackMetadataEditor.isOpen.value"
+      :open="trackMetadataEditor.isOpen.value"
+      :title="trackMetadataEditor.state.titleDraft"
+      :artist="trackMetadataEditor.state.artistDraft"
+      :thumbnail-url="trackMetadataEditor.state.artworkPreviewUrl"
+      :dirty="trackMetadataEditor.isDirty.value"
+      :artwork-changed="trackMetadataEditor.isArtworkDirty.value"
+      :saving="trackMetadataEditor.state.isSaving"
+      :artwork-preparing="trackMetadataEditor.state.isArtworkPreparing"
+      :artwork-searching="trackMetadataEditor.state.isArtworkSearching"
       :artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"
       :artwork-search-completed="
         trackMetadataEditor.state.artworkSearchCompleted
@@ -164,7 +166,6 @@ async function handleTrackMenuSelect(value) {
       @update-artwork-query="trackMetadataEditor.setArtworkQueryField"
       @search-artwork="trackMetadataEditor.searchArtwork"
       @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
-      @apply-artwork="trackMetadataEditor.applySelectedArtwork"
       @update-title="trackMetadataEditor.setTitleDraft"
       @update-artist="trackMetadataEditor.setArtistDraft"
     />

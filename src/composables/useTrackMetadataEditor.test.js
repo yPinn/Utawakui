@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FEATURE_GATES, FEATURE_IDS } from '../constants/featureGates.js';
 
-let updateTrackMetadataMock;
+let saveTrackEditsMock;
+let chooseTrackArtworkDraftMock;
+let discardTrackArtworkDraftMock;
 let searchTrackArtworkMock;
 let loadTrackArtworkPreviewMock;
-let applyTrackArtworkMock;
 let cancelTrackArtworkSearchMock;
 
 function deferred() {
@@ -16,17 +17,19 @@ function deferred() {
 }
 
 beforeEach(() => {
-  updateTrackMetadataMock = vi.fn();
+  saveTrackEditsMock = vi.fn();
+  chooseTrackArtworkDraftMock = vi.fn();
+  discardTrackArtworkDraftMock = vi.fn().mockResolvedValue(true);
   searchTrackArtworkMock = vi.fn();
   loadTrackArtworkPreviewMock = vi.fn();
-  applyTrackArtworkMock = vi.fn();
   cancelTrackArtworkSearchMock = vi.fn().mockResolvedValue(true);
   vi.stubGlobal('window', {
     Utawakui: {
-      updateTrackMetadata: updateTrackMetadataMock,
+      saveTrackEdits: saveTrackEditsMock,
+      chooseTrackArtworkDraft: chooseTrackArtworkDraftMock,
+      discardTrackArtworkDraft: discardTrackArtworkDraftMock,
       searchTrackArtwork: searchTrackArtworkMock,
       loadTrackArtworkPreview: loadTrackArtworkPreviewMock,
-      applyTrackArtwork: applyTrackArtworkMock,
       cancelTrackArtworkSearch: cancelTrackArtworkSearchMock,
       getFeatureConfirmations: vi.fn().mockResolvedValue({
         [FEATURE_IDS.PROVIDER_FLOW]: {
@@ -81,10 +84,13 @@ describe('useTrackMetadataEditor', () => {
 
   it('seeds drafts from the target track and saves trimmed title and artist', async () => {
     const refresh = vi.fn();
-    updateTrackMetadataMock.mockResolvedValue({
-      id: 'local-1',
-      title: 'Edited Title',
-      artist: 'Edited Artist',
+    saveTrackEditsMock.mockResolvedValue({
+      status: 'ok',
+      track: {
+        id: 'local-1',
+        title: 'Edited Title',
+        artist: 'Edited Artist',
+      },
     });
     const { useTrackMetadataEditor } =
       await import('./useTrackMetadataEditor.js');
@@ -105,9 +111,10 @@ describe('useTrackMetadataEditor', () => {
       title: 'Edited Title',
       artist: 'Edited Artist',
     });
-    expect(updateTrackMetadataMock).toHaveBeenCalledWith('local-1', {
+    expect(saveTrackEditsMock).toHaveBeenCalledWith('local-1', {
       title: 'Edited Title',
       artist: 'Edited Artist',
+      artwork: { action: 'keep' },
     });
     expect(refresh).toHaveBeenCalledTimes(1);
     expect(editor.state.track).toBe(null);
@@ -115,9 +122,12 @@ describe('useTrackMetadataEditor', () => {
   });
 
   it('allows clearing artist while keeping title required', async () => {
-    updateTrackMetadataMock.mockResolvedValue({
-      id: 'local-1',
-      title: 'Title',
+    saveTrackEditsMock.mockResolvedValue({
+      status: 'ok',
+      track: {
+        id: 'local-1',
+        title: 'Title',
+      },
     });
     const { useTrackMetadataEditor } =
       await import('./useTrackMetadataEditor.js');
@@ -128,9 +138,10 @@ describe('useTrackMetadataEditor', () => {
 
     await editor.save();
 
-    expect(updateTrackMetadataMock).toHaveBeenCalledWith('local-1', {
+    expect(saveTrackEditsMock).toHaveBeenCalledWith('local-1', {
       title: 'Title',
       artist: '',
+      artwork: { action: 'keep' },
     });
   });
 
@@ -144,9 +155,23 @@ describe('useTrackMetadataEditor', () => {
 
     await expect(editor.save()).resolves.toBe(null);
 
-    expect(updateTrackMetadataMock).not.toHaveBeenCalled();
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
     expect(editor.state.track.id).toBe('local-1');
     expect(editor.state.error).toBe('歌名必填');
+  });
+
+  it('does not call the bridge when Save is requested without any changes', async () => {
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+
+    editor.open({ id: 'local-1', title: 'Title', artist: 'Artist' });
+
+    await expect(editor.save()).resolves.toBe(null);
+
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
+    expect(editor.state.track?.id).toBe('local-1');
+    expect(editor.state.error).toBe(null);
   });
 
   it('reports missing bridge support without closing the modal', async () => {
@@ -156,6 +181,7 @@ describe('useTrackMetadataEditor', () => {
     const editor = useTrackMetadataEditor();
 
     editor.open({ id: 'local-1', title: 'Title' });
+    editor.setTitleDraft('Edited Title');
     await expect(editor.save()).resolves.toBe(null);
 
     expect(editor.state.track.id).toBe('local-1');
@@ -204,9 +230,8 @@ describe('useTrackMetadataEditor', () => {
       album: 'Search Album',
     });
     expect(editor.state.titleDraft).toBe('Search and Save Title');
-    expect(editor.state.selectedArtworkCandidateId).toBe('candidate-1');
-    expect(updateTrackMetadataMock).not.toHaveBeenCalled();
-    expect(applyTrackArtworkMock).not.toHaveBeenCalled();
+    expect(editor.state.selectedArtworkCandidateId).toBe(null);
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
   });
 
   it('lets the editor close while a search is running and ignores its late result', async () => {
@@ -397,7 +422,7 @@ describe('useTrackMetadataEditor', () => {
     expect(editor.state.artworkSearchCompleted).toBe(false);
   });
 
-  it('applies artwork only after explicit candidate selection', async () => {
+  it('stages a selected online candidate and commits it only with the form', async () => {
     const refresh = vi.fn();
     searchTrackArtworkMock.mockResolvedValue({
       status: 'ok',
@@ -416,7 +441,7 @@ describe('useTrackMetadataEditor', () => {
       status: 'error',
       reason: 'not-found',
     });
-    applyTrackArtworkMock.mockResolvedValue({
+    saveTrackEditsMock.mockResolvedValue({
       status: 'ok',
       track: {
         id: 'track-1',
@@ -433,14 +458,104 @@ describe('useTrackMetadataEditor', () => {
     expect(editor.state.selectedArtworkCandidateId).toBe(null);
 
     editor.selectArtworkCandidate('candidate-1');
-    await expect(editor.applySelectedArtwork()).resolves.toMatchObject({
+    expect(editor.state.artworkDraft).toEqual({
+      action: 'candidate',
+      candidateId: 'candidate-1',
+    });
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
+
+    await expect(editor.save()).resolves.toMatchObject({
       id: 'track-1',
       thumbnailUrl: expect.any(String),
     });
-    expect(applyTrackArtworkMock).toHaveBeenCalledWith(
-      'track-1',
-      'candidate-1',
-    );
+    expect(saveTrackEditsMock).toHaveBeenCalledWith('track-1', {
+      title: 'Library Title',
+      artist: '',
+      artwork: { action: 'candidate', candidateId: 'candidate-1' },
+    });
     expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('previews a main-owned local artwork draft without refreshing the library', async () => {
+    const refresh = vi.fn();
+    chooseTrackArtworkDraftMock.mockResolvedValue({
+      status: 'ok',
+      mimeType: 'image/png',
+      bytes: Uint8Array.from([137, 80, 78, 71]),
+    });
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor({ refresh });
+    editor.open({
+      id: 'track-1',
+      title: 'Title',
+      thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
+    });
+
+    await editor.chooseThumbnail();
+
+    expect(chooseTrackArtworkDraftMock).toHaveBeenCalledWith('track-1');
+    expect(editor.state.artworkDraft).toEqual({ action: 'local-draft' });
+    expect(editor.state.artworkPreviewUrl).toMatch(/^blob:/u);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
+  });
+
+  it('previews artwork removal and persists it only when Save is pressed', async () => {
+    saveTrackEditsMock.mockResolvedValue({
+      status: 'ok',
+      track: { id: 'track-1', title: 'Title', thumbnailUrl: '' },
+    });
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({
+      id: 'track-1',
+      title: 'Title',
+      thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
+    });
+
+    editor.clearThumbnail();
+
+    expect(editor.state.artworkPreviewUrl).toBe('');
+    expect(editor.state.artworkDraft).toEqual({ action: 'clear' });
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
+
+    await editor.save();
+    expect(saveTrackEditsMock).toHaveBeenCalledWith('track-1', {
+      title: 'Title',
+      artist: '',
+      artwork: { action: 'clear' },
+    });
+  });
+
+  it('discards the main-owned local draft and performs no write on Cancel', async () => {
+    chooseTrackArtworkDraftMock.mockResolvedValue({
+      status: 'ok',
+      mimeType: 'image/webp',
+      bytes: Uint8Array.from([82, 73, 70, 70]),
+    });
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Title' });
+    await editor.chooseThumbnail();
+
+    editor.close();
+
+    expect(discardTrackArtworkDraftMock).toHaveBeenCalledWith('track-1');
+    expect(saveTrackEditsMock).not.toHaveBeenCalled();
+    expect(editor.state.track).toBe(null);
+  });
+
+  it('discards a previous main-owned draft before reopening the same track', async () => {
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+
+    editor.open({ id: 'track-1', title: 'Title' });
+    editor.open({ id: 'track-1', title: 'Title' });
+
+    expect(discardTrackArtworkDraftMock).toHaveBeenCalledWith('track-1');
   });
 });

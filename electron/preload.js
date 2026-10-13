@@ -116,6 +116,24 @@ function libraryStoragePolicyIntent(value) {
   };
 }
 
+function trackEditIntent(value) {
+  const requestedAction = value?.artwork?.action;
+  const action = ['keep', 'local-draft', 'candidate', 'clear'].includes(
+    requestedAction,
+  )
+    ? requestedAction
+    : 'keep';
+  const artwork = { action };
+  if (action === 'candidate') {
+    artwork.candidateId = value?.artwork?.candidateId;
+  }
+  return {
+    title: value?.title,
+    artist: value?.artist,
+    artwork,
+  };
+}
+
 function folderPageIdentityIntent(value) {
   return {
     kind: value?.kind,
@@ -707,12 +725,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
       ipcRenderer.removeListener('lyrics:reading-progress', listener);
   },
   deleteTrack: (trackId) => ipcRenderer.invoke('library:delete-track', trackId),
-  updateTrackMetadata: (trackId, fields) =>
-    ipcRenderer.invoke('library:update-track-metadata', trackId, fields),
-  chooseTrackArtwork: (trackId) =>
-    ipcRenderer.invoke('library:choose-track-artwork', trackId),
-  clearTrackArtwork: (trackId) =>
-    ipcRenderer.invoke('library:clear-track-artwork', trackId),
+  saveTrackEdits: (trackId, fields) =>
+    ipcRenderer.invoke(
+      'library:save-track-edits',
+      trackId,
+      trackEditIntent(fields),
+    ),
+  chooseTrackArtworkDraft: (trackId) =>
+    ipcRenderer.invoke('library:choose-track-artwork-draft', trackId),
+  discardTrackArtworkDraft: (trackId) =>
+    ipcRenderer.invoke('library:discard-track-artwork-draft', trackId),
   searchTrackArtwork: (trackId, edits) =>
     ipcRenderer.invoke('library:search-track-artwork', trackId, edits),
   cancelTrackArtworkSearch: (trackId) =>
@@ -723,8 +745,6 @@ contextBridge.exposeInMainWorld('Utawakui', {
       trackId,
       candidateId,
     ),
-  applyTrackArtwork: (trackId, candidateId) =>
-    ipcRenderer.invoke('library:apply-track-artwork', trackId, candidateId),
   openTrackArtworkSource: (trackId, candidateId) =>
     ipcRenderer.invoke(
       'library:open-track-artwork-source',

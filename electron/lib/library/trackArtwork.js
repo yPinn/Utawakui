@@ -6,15 +6,12 @@ const {
 } = require('../musicbrainz/identifiers');
 const fs = require('fs');
 const path = require('path');
-const {
-  atomicCopyFileSync,
-  atomicWriteBuffer,
-  atomicWriteJson,
-} = require('../atomicWrite');
+const { atomicWriteBuffer, atomicWriteJson } = require('../atomicWrite');
 const {
   ARTWORK_BASENAME,
   ARTWORK_PROVENANCE_FILENAME,
   IMAGE_EXTENSIONS,
+  IMAGE_MIME_TYPES,
 } = require('./constants');
 const {
   resolveTrackDir,
@@ -24,6 +21,63 @@ const {
 const { findTrackRecord } = require('./tracks');
 
 const MAX_ARTWORK_BYTES = 10 * 1024 * 1024;
+
+function hasSupportedImageSignature(bytes, extension) {
+  if (!Buffer.isBuffer(bytes)) return false;
+  if (extension === '.jpg' || extension === '.jpeg') {
+    return (
+      bytes.length >= 3 &&
+      bytes[0] === 0xff &&
+      bytes[1] === 0xd8 &&
+      bytes[2] === 0xff
+    );
+  }
+  if (extension === '.png') {
+    return (
+      bytes.length >= 8 &&
+      bytes
+        .subarray(0, 8)
+        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    );
+  }
+  if (extension === '.webp') {
+    return (
+      bytes.length >= 12 &&
+      bytes.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      bytes.subarray(8, 12).toString('ascii') === 'WEBP'
+    );
+  }
+  return false;
+}
+
+function readLocalArtworkDraft(sourcePath) {
+  if (typeof sourcePath !== 'string' || sourcePath.length === 0) return null;
+  const extension = path.extname(sourcePath).toLowerCase();
+  if (!IMAGE_EXTENSIONS.has(extension)) return null;
+
+  let stat;
+  try {
+    stat = fs.statSync(sourcePath);
+  } catch {
+    return null;
+  }
+  if (!stat.isFile() || stat.size <= 0 || stat.size > MAX_ARTWORK_BYTES) {
+    return null;
+  }
+
+  const bytes = fs.readFileSync(sourcePath);
+  if (
+    bytes.length === 0 ||
+    bytes.length > MAX_ARTWORK_BYTES ||
+    !hasSupportedImageSignature(bytes, extension)
+  ) {
+    return null;
+  }
+  return {
+    mimeType: IMAGE_MIME_TYPES[extension],
+    bytes,
+  };
+}
 
 function deleteArtworkProvenance(trackDir) {
   const provenancePath = path.join(trackDir, ARTWORK_PROVENANCE_FILENAME);
@@ -96,6 +150,55 @@ function deleteTrackArtworkFiles(trackDir) {
   return deleted;
 }
 
+function captureTrackArtworkSnapshot(dir, trackId) {
+  if (!findTrackRecord(dir, trackId)) return null;
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir || !resolveTrackAudioPath(dir, trackId)) return null;
+
+  let entries;
+  try {
+    entries = fs.readdirSync(trackDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  return entries
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        (isArtworkFilename(entry.name) ||
+          entry.name === ARTWORK_PROVENANCE_FILENAME),
+    )
+    .map((entry) => ({
+      filename: entry.name,
+      bytes: fs.readFileSync(path.join(trackDir, entry.name)),
+    }));
+}
+
+function restoreTrackArtworkSnapshot(dir, trackId, snapshot) {
+  if (!findTrackRecord(dir, trackId) || !Array.isArray(snapshot)) return false;
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir || !resolveTrackAudioPath(dir, trackId)) return false;
+  if (
+    snapshot.some(
+      (entry) =>
+        !entry ||
+        (!isArtworkFilename(entry.filename) &&
+          entry.filename !== ARTWORK_PROVENANCE_FILENAME) ||
+        !Buffer.isBuffer(entry.bytes),
+    )
+  ) {
+    return false;
+  }
+
+  fs.mkdirSync(trackDir, { recursive: true });
+  deleteTrackArtworkFiles(trackDir);
+  deleteArtworkProvenance(trackDir);
+  for (const entry of snapshot) {
+    atomicWriteBuffer(path.join(trackDir, entry.filename), entry.bytes);
+  }
+  return true;
+}
+
 function writeTrackArtworkFile(dir, trackId, sourcePath) {
   if (!findTrackRecord(dir, trackId)) return null;
   const trackDir = resolveTrackDir(dir, trackId);
@@ -104,11 +207,13 @@ function writeTrackArtworkFile(dir, trackId, sourcePath) {
   if (typeof sourcePath !== 'string' || sourcePath.length === 0) return null;
   const ext = path.extname(sourcePath).toLowerCase();
   if (!IMAGE_EXTENSIONS.has(ext)) return null;
+  const draft = readLocalArtworkDraft(sourcePath);
+  if (!draft) return null;
 
   fs.mkdirSync(trackDir, { recursive: true });
   const filename = `${ARTWORK_BASENAME}${ext}`;
   deleteArtworkProvenance(trackDir);
-  atomicCopyFileSync(sourcePath, path.join(trackDir, filename));
+  atomicWriteBuffer(path.join(trackDir, filename), draft.bytes);
   removeOtherArtworkFiles(trackDir, filename);
   return filename;
 }
@@ -151,6 +256,9 @@ function deleteTrackArtworkFile(dir, trackId) {
 }
 
 module.exports = {
+  captureTrackArtworkSnapshot,
+  restoreTrackArtworkSnapshot,
+  readLocalArtworkDraft,
   writeTrackArtworkFile,
   writeTrackArtworkBuffer,
   deleteTrackArtworkFile,
