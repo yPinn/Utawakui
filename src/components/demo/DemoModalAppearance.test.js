@@ -1,95 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-
-const appearanceSource = readFileSync(
-  new URL('./DemoModalAppearance.vue', import.meta.url),
-  'utf8',
-);
 const layerSource = readFileSync(
   new URL('./DemoModalLayer.vue', import.meta.url),
-  'utf8',
-);
-const overlaysSource = readFileSync(
-  new URL('./DemoOverlays.vue', import.meta.url),
   'utf8',
 );
 const tokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
-
 describe('DemoModalAppearance Candidate and Current checkpoint', () => {
-  it('shows the greenfield shell geometry before mapping production content', () => {
-    expect(appearanceSource).toContain(
-      'Greenfield raised shell＋on-raised 欄位層級',
-    );
-    expect(layerSource).toContain("key: 'small'");
-    expect(layerSource).toContain("key: 'medium'");
-    expect(layerSource).toContain("key: 'large'");
-    expect(layerSource).toContain('Small · 384px／max 560px');
-    expect(layerSource).toContain('Medium · 512px／max 720px');
-    expect(layerSource).toMatch(/Large ·\s+768px／max 800px/);
-    expect(layerSource).toContain('Standard 24px／Compact 16px');
-    expect(layerSource).toContain('Header／Body／Footer');
-    expect(layerSource).toContain('Body-only scroll');
-    expect(layerSource).toContain(
-      'Medium scroll baseline · 45rem／720px ceiling',
-    );
-    expect(layerSource).toMatch(/不綁定 production\s+情境/);
-    expect(layerSource).toContain('default／notice／wide 保留相容命名');
-    expect(layerSource).toContain('Standard 24px／Compact 16px');
-    expect(layerSource).toContain('Header／Body／Footer · Body-only scroll');
-    expect(layerSource).toContain('背景頁尚未 inert');
-    expect(layerSource).toContain('繁體中文、日本語、한국어 and English');
-    expect(layerSource).toContain("title: '確認內容'");
-    expect(layerSource).toContain("title: '提供補充內容'");
-    expect(layerSource).not.toContain('Desired inline');
-    expect(layerSource).not.toContain('Block ceiling');
-    expect(layerSource).not.toContain('Body behavior');
-    expect(layerSource).not.toContain('demo-modal-sample__measurements');
-    expect(layerSource).not.toContain("purpose: 'transactional'");
-    expect(layerSource).not.toContain("purpose: 'informational'");
-    expect(layerSource).not.toContain("purpose: 'workspace'");
-  });
-
-  it('reuses reviewed components in Candidate and production truth in Current', () => {
-    expect(layerSource).not.toContain('DemoCandidateButton');
-    expect(layerSource).toContain(
-      "import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue'",
-    );
-    expect(layerSource).toContain(
-      "import DemoCandidateHint from './DemoCandidateHint.vue'",
-    );
-    expect(layerSource).toContain(
-      "import DemoCandidateSelect from './DemoCandidateSelect.vue'",
-    );
-    expect(layerSource).toContain("import UiButton from '../ui/UiButton.vue'");
-    expect(layerSource).toContain(
-      ":variant=\"isCandidate ? 'secondary' : 'ghost'\"",
-    );
-    expect(layerSource).toContain(
-      "import UiCheckbox from '../ui/UiCheckbox.vue'",
-    );
-    expect(layerSource).toContain("import UiHint from '../ui/UiHint.vue'");
-    expect(layerSource).toContain("import UiModal from '../ui/UiModal.vue'");
-    expect(layerSource).toContain("import UiSelect from '../ui/UiSelect.vue'");
-    expect(layerSource).toContain(
-      "import UiTextField from '../ui/UiTextField.vue'",
-    );
-    expect(layerSource).toContain(
-      "import UiTextarea from '../ui/UiTextarea.vue'",
-    );
-    expect(layerSource).toContain('const checkboxComponent = computed');
-    expect(layerSource).toContain('const hintComponent = computed');
-    expect(layerSource).toContain('const selectComponent = computed');
-    expect(layerSource).toContain('v-model="showFooter"');
-    expect(layerSource).toContain('v-model="fieldSummary"');
-    expect(layerSource).toContain('v-model="fieldDetails"');
-    expect(layerSource).toContain('v-model="fieldCategory"');
-    expect(layerSource).not.toContain('DemoCandidateNotice');
-    expect(layerSource).not.toContain('UiNotice');
-  });
-
   it('keeps sample content orthogonal to modal size and public behavior', () => {
     expect(layerSource).toContain('const CONTENT_CASES = Object.freeze');
     expect(layerSource).toContain("key: 'short'");
@@ -105,7 +24,6 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
     expect(layerSource).not.toContain('content-case=');
     expect(layerSource).not.toContain('v-model="stressBody"');
   });
-
   it('provides long structured selectable content with a caller-owned initial focus target', () => {
     expect(layerSource).toContain('const READING_SECTIONS = Object.freeze');
     expect(layerSource).toContain('class="demo-modal-case-reading"');
@@ -116,7 +34,6 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
       /\.demo-modal-case-reading\s*\{[^}]*user-select:\s*text;/s,
     );
   });
-
   it('uses the Large body width without turning readable prose into a shell rule', () => {
     expect(layerSource).toMatch(
       /\.demo-modal-sample__lead\s*\{[^}]*max-inline-size:\s*68ch;/s,
@@ -127,33 +44,6 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
     );
     expect(layerSource).not.toContain('--ui-modal-prose');
   });
-
-  it('keeps Current on an explicit active-token snapshot', () => {
-    expect(appearanceSource).toContain("[data-demo-modal-source='current']");
-    expect(appearanceSource).toContain('--ui-color-surface: #292f35');
-    expect(appearanceSource).toContain('--ui-color-surface-raised: #30383e');
-    expect(appearanceSource).toContain('--ui-field-bg: #344046');
-    expect(appearanceSource).toContain('--ui-shadow-dialog: 0 1rem 2.5rem');
-    expect(appearanceSource).toContain('--ui-modal-inline-size-small: 24rem');
-    expect(appearanceSource).toContain('--ui-modal-inline-size-medium: 32rem');
-    expect(appearanceSource).toContain('--ui-modal-inline-size-large: 48rem');
-    expect(appearanceSource).toContain(
-      '--ui-modal-max-block-size-small: 35rem',
-    );
-    expect(appearanceSource).toContain('--ui-modal-content-inset: 1.5rem');
-    expect(appearanceSource).toContain("[data-ui-theme='light']");
-    expect(appearanceSource).toContain('--ui-color-surface: #fffdfa');
-    expect(appearanceSource).toContain('--ui-color-surface-raised: #fff');
-    expect(appearanceSource).toContain('--ui-field-bg: #edf2ef');
-    expect(appearanceSource).toContain('--ui-color-surface-selected: #dceee9');
-    expect(appearanceSource).toContain('--ui-color-accent: #327a7f');
-    expect(appearanceSource).toContain('--ui-color-info: #4d8793');
-    expect(appearanceSource).toContain('--ui-color-warning: #b78336');
-    expect(appearanceSource).toContain(
-      '--ui-field-bg-on-raised: var(--ui-color-surface)',
-    );
-  });
-
   it('defines semantic field surfaces for controls nested on a raised Candidate shell', () => {
     expect(tokenSource).toContain(
       '--ui-field-bg-on-raised: var(--ui-color-surface)',
@@ -163,22 +53,6 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
     );
     expect(tokenSource).toContain(
       '--ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised)',
-    );
-  });
-
-  it('wires the completed Candidate and Current comparison into the shared catalogue section', () => {
-    expect(overlaysSource).toContain(
-      "import DemoModalAppearance from './DemoModalAppearance.vue'",
-    );
-    expect(overlaysSource).toContain("new Set(['context-menu', 'modal'])");
-    expect(overlaysSource).toContain(
-      '<DemoModalAppearance v-else-if="section.key === \'modal\'" />',
-    );
-    expect(appearanceSource).toMatch(
-      /\.demo-modal-layer\s*\{[^}]*padding-block-start:\s*var\(--ui-space-4\);[^}]*border-block-start:/s,
-    );
-    expect(appearanceSource).toMatch(
-      /\.demo-modal-layer__header\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(12rem,\s*0\.42fr\)\s+minmax\(0,\s*1fr\);/s,
     );
   });
 });

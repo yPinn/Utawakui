@@ -1,6 +1,5 @@
 <script setup>
 import { reactive } from 'vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
 
@@ -207,8 +206,8 @@ const LAYERS = [
   {
     key: 'candidate',
     className: 'demo-checkbox-layer--candidate',
-    title: '核准 Candidate Checkbox',
-    note: '保留核准標本，供正式元件回歸比對。',
+    title: '已核准 Checkbox 規格',
+    note: '保留單一標本，供正式元件回歸檢查。',
     geometryNote: 'Visual indicator 固定 16px；target 隨離散 density 映射。',
     contracts: [
       'Visual indicator · 16 CSS px',
@@ -216,24 +215,6 @@ const LAYERS = [
       'Width · content／parent-owned',
     ],
     component: DemoCandidateCheckbox,
-    sizes: [
-      ['standard', 'Standard target · 36 CSS px'],
-      ['compact', 'Compact target · 32 CSS px'],
-    ],
-  },
-  {
-    key: 'current',
-    className: 'demo-checkbox-layer--current',
-    title: '正式 UiCheckbox · 已採用',
-    note: 'Native input 保留語意；正式 indicator、full-row target與狀態外觀已統一。',
-    geometryNote:
-      'Visual indicator 固定 16px；Standard／Compact target由正式 density控制。',
-    contracts: [
-      'Visual indicator · 16 CSS px',
-      'Target · full label row',
-      'Width · content／parent-owned',
-    ],
-    component: UiCheckbox,
     sizes: [
       ['standard', 'Standard target · 36 CSS px'],
       ['compact', 'Compact target · 32 CSS px'],
@@ -280,7 +261,6 @@ function coverageFor(layer, state) {
       class="demo-checkbox-layer"
       :class="layer.className"
       :data-checkbox-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-checkbox-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -696,10 +676,7 @@ function coverageFor(layer, state) {
 }
 
 .demo-checkbox-state[data-checkbox-state='focus']
-  :deep(.demo-candidate-checkbox__indicator),
-.demo-checkbox-layer--current
-  .demo-checkbox-state[data-checkbox-state='focus']
-  :deep(.ui-checkbox__indicator) {
+  :deep(.demo-candidate-checkbox__indicator) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
@@ -776,42 +753,6 @@ function coverageFor(layer, state) {
 .demo-checkbox-api dd {
   margin: var(--ui-space-1) 0 0;
   color: var(--ui-color-text);
-}
-
-.demo-checkbox-layer--current {
-  color-scheme: dark;
-  --ui-font-family-base:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
-  --ui-checkbox-size: 1rem;
-  --ui-control-height: 2.25rem;
-  --ui-border-width: 1px;
-  --ui-radius-sm: 0.25rem;
-  --ui-motion-duration-feedback: 100ms;
-  --ui-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ui-color-surface-raised: #30383e;
-  --ui-color-surface-hover: #344046;
-  --ui-color-border-strong: #586568;
-  --ui-color-accent: #55a2a7;
-  --ui-color-accent-contrast: #102326;
-  --ui-color-focus: #dd7a64;
-  --ui-color-danger: #dd7078;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-opacity-disabled: 0.5;
-}
-
-:global(:root[data-ui-theme='light'] .demo-checkbox-layer--current) {
-  color-scheme: light;
-  --ui-color-surface-raised: #fff;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-border-strong: #b9c4c0;
-  --ui-color-accent: #2f777c;
-  --ui-color-accent-contrast: #fffdfa;
-  --ui-color-focus: #d26a45;
-  --ui-color-danger: #bd5961;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
 }
 
 @container (max-width: 48rem) {

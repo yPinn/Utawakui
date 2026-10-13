@@ -346,9 +346,9 @@ const LONG_TITLE =
 .demo-type-check__languages {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 @media (max-width: 72rem) {

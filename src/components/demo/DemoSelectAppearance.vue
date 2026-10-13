@@ -1,7 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiSelect from '../ui/UiSelect.vue';
 import DemoCandidateSelect from './DemoCandidateSelect.vue';
 
 const WIDTH_CASES = [
@@ -242,25 +241,12 @@ const STATES = [
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Select',
+    title: '未採用提案 Select',
     note: '自有 closed indicator、ellipsis 與 overflow tooltip；popup 寬度仍由 Chromium／Windows 決定。',
     component: DemoCandidateSelect,
     sizes: [
       ['standard', 'Standard · 36 CSS px', 'Windows Chromium rendered · 36'],
       ['compact', 'Compact · 32 CSS px', 'Windows Chromium rendered · 32'],
-    ],
-  },
-  {
-    key: 'current',
-    title: '現行 UiSelect',
-    note: '以 active token 與 native color-scheme 快照呈現，避免被 F8 候選值污染。',
-    component: UiSelect,
-    sizes: [
-      [
-        'active',
-        'Active token floor · 30 CSS px',
-        'Windows Chromium rendered · 31（native intrinsic floor）',
-      ],
     ],
   },
 ];
@@ -308,7 +294,6 @@ function coverageFor(layer, state) {
       class="demo-select-layer"
       :class="`demo-select-layer--${layer.key}`"
       :data-select-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-select-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -380,8 +365,8 @@ function coverageFor(layer, state) {
         <header class="demo-select-subsection__header">
           <h5>Owned anatomy</h5>
           <p>
-            Field 擁有 label／support；Select 擁有 closed control。Candidate
-            接管 indicator，popup 與語意仍維持 native。
+            Field 擁有 label／support；Select 擁有 closed control。提案 接管
+            indicator，popup 與語意仍維持 native。
           </p>
         </header>
 
@@ -422,7 +407,7 @@ function coverageFor(layer, state) {
               <b>3</b
               ><span>{{
                 layer.key === 'candidate'
-                  ? 'Candidate closed indicator · project-owned'
+                  ? '提案 closed indicator · project-owned'
                   : 'Current Chromium／Windows native indicator'
               }}</span>
             </li>
@@ -460,7 +445,7 @@ function coverageFor(layer, state) {
               {{
                 layer.key === 'candidate'
                   ? 'Closed truncate／tooltip 可控；popup／semantics 維持 native'
-                  : 'Current 快照不套用 Candidate indicator／option 樣式'
+                  : '舊快照不套用提案 indicator／option 樣式'
               }}
             </dd>
           </div>
@@ -737,9 +722,9 @@ function coverageFor(layer, state) {
 .demo-select-content h6,
 .demo-select-state h6,
 .demo-select-api h5 {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-select-contracts {
@@ -890,9 +875,9 @@ function coverageFor(layer, state) {
 .demo-select-reference dt,
 .demo-select-api dt {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-select-reference dd,
@@ -989,69 +974,22 @@ function coverageFor(layer, state) {
 
 .demo-select-layer--candidate
   .demo-select-state[data-select-state='hover']
-  :deep(.demo-candidate-select__native),
-.demo-select-layer--current
-  .demo-select-state[data-select-state='hover']
-  :deep(.ui-select) {
+  :deep(.demo-candidate-select__native) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }
 
 .demo-select-layer--candidate
   .demo-select-state[data-select-state='focus']
-  :deep(.demo-candidate-select__native),
-.demo-select-layer--current
-  .demo-select-state[data-select-state='focus']
-  :deep(.ui-select) {
+  :deep(.demo-candidate-select__native) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
 .demo-select-layer--candidate
   .demo-select-state[data-select-state='invalid']
-  :deep(.demo-candidate-select__native),
-.demo-select-layer--current
-  .demo-select-state[data-select-state='invalid']
-  :deep(.ui-select) {
+  :deep(.demo-candidate-select__native) {
   border-color: var(--ui-field-border-invalid);
-}
-
-.demo-select-layer--current {
-  color-scheme: dark;
-  --ui-font-family-base:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #586568;
-  --ui-field-border-invalid: #dd7078;
-  --ui-color-focus: #dd7a64;
-  --ui-color-danger: #dd7078;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-motion-easing-standard: ease-out;
-}
-
-:global(:root[data-ui-theme='light'] .demo-select-layer--current) {
-  color-scheme: light;
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-field-border-invalid: #bd5961;
-  --ui-color-focus: #d26a45;
-  --ui-color-danger: #bd5961;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
 }
 
 @container (max-width: 48rem) {

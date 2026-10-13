@@ -270,7 +270,7 @@ function toneLabel(item) {
 
         <article class="demo-chip-recipe" data-chip-recipe="count">
           <div class="demo-chip-recipe__line">
-            <span>候選版本</span>
+            <span>提案版本</span>
             <component :is="layer.component" tone="muted">24</component>
           </div>
           <span>Count meaning stays in adjacent copy</span>
@@ -312,7 +312,7 @@ function toneLabel(item) {
         <span>tone · 8 semantic labels</span>
         <span>default slot · concise visible label</span>
         <span>attrs · native span fallthrough</span>
-        <span>background／color · Current compatibility escape hatch</span>
+        <span>background／color · deprecated compatibility escape hatch</span>
         <span>No action／filter／dismiss／navigation behavior</span>
         <span
           >No hover／pressed／focus／selected／remove／disabled contract</span

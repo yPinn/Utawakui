@@ -110,7 +110,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'buttons',
         title: '按鈕',
-        components: ['UiButton'],
+        components: ['UiButton', 'UiButtonGroup'],
       },
       {
         key: 'icon-buttons',
@@ -221,7 +221,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'context-menu',
         title: '動作選單',
-        components: ['UiActionMenu Candidate', 'UiContextMenu Current'],
+        components: ['UiActionMenu 提案'],
       },
       { key: 'modal', title: '對話框', components: ['UiModal'] },
       {

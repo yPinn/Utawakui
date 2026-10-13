@@ -56,20 +56,6 @@ describe('DemoFieldValidationFeedback', () => {
     expect(html).not.toContain('Zod');
   });
 
-  it('separates the candidate contract from current behavior', async () => {
-    const html = await renderToString(
-      createSSRApp(DemoFieldValidationFeedback),
-    );
-    const candidateIndex = html.indexOf('data-validation-source="candidate"');
-    const currentIndex = html.indexOf('data-validation-source="current"');
-
-    expect(candidateIndex).toBeGreaterThanOrEqual(0);
-    expect(currentIndex).toBeGreaterThan(candidateIndex);
-    expect(html).toContain('Auto 為預設');
-    expect(html).toContain('Reserved 是父層候選策略');
-    expect(html).toContain('現行僅有 Auto');
-  });
-
   it('shows pristine, invalid, and corrected required-field timing', async () => {
     const html = await renderToString(
       createSSRApp(DemoFieldValidationFeedback),

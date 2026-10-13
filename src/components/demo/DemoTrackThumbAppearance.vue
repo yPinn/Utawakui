@@ -1,12 +1,11 @@
 <script setup>
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import DemoCandidateTrackThumb from './DemoCandidateTrackThumb.vue';
 import DemoTrackThumbPrimitive from './DemoTrackThumbPrimitive.vue';
 
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 UiTrackThumb · 單曲封面',
+    title: '未採用提案 UiTrackThumb · 單曲封面',
     note: '有效封面優先；沒有可用封面時顯示穩定的預設圖片，並保留獨立封面的名稱關係。',
     component: DemoCandidateTrackThumb,
     densities: [
@@ -50,41 +49,6 @@ const LAYERS = [
       },
     ],
   },
-  {
-    key: 'current',
-    title: '現行 UiTrackThumb',
-    note: '保留現行封面、首字、空內容與圖片失敗行為，不套用候選版修正。',
-    component: UiTrackThumb,
-    densities: [{ id: 'active', label: 'Current · 40 CSS px', size: 40 }],
-    recipeSummary:
-      '目前收斂為四個尺寸；Queue 已併入 40px 標準曲目列，48px 只留給 PlayerBar。',
-    recipes: [
-      {
-        id: 'import-current-32',
-        label: '匯入候選 · 32px',
-        size: 32,
-        note: '位於 56px 最小高度的選擇列。',
-      },
-      {
-        id: 'track-row-current-40',
-        label: '曲目列／佇列 · 40px',
-        size: 40,
-        note: 'UiTrackRow 的 52px 最小列高，Queue 也直接沿用。',
-      },
-      {
-        id: 'player-current-48',
-        label: '播放器 · 48px',
-        size: 48,
-        note: '左下 PlayerBar 專用，加上上下各 16px 間距後為 80px 高。',
-      },
-      {
-        id: 'metadata-current-64',
-        label: '封面編輯 · 64px',
-        size: 64,
-        note: '與 64px 預覽欄對齊。',
-      },
-    ],
-  },
 ];
 </script>
 
@@ -101,7 +65,6 @@ const LAYERS = [
       class="demo-track-thumb-layer"
       :class="`demo-track-thumb-layer--${layer.key}`"
       :data-track-thumb-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-track-thumb-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -157,9 +120,9 @@ const LAYERS = [
 
 .demo-track-thumb-layer__header h4 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .demo-track-thumb-layer__header p {
@@ -167,44 +130,6 @@ const LAYERS = [
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
   overflow-wrap: anywhere;
-}
-
-.demo-track-thumb-layer--current {
-  color-scheme: dark;
-  --ui-space-1: 0.25rem;
-  --ui-space-2: 0.5rem;
-  --ui-space-3: 0.75rem;
-  --ui-space-4: 1rem;
-  --ui-space-5: 1.5rem;
-  --ui-space-6: 2rem;
-  --ui-border-width: 1px;
-  --ui-radius-sm: 0.25rem;
-  --ui-radius-md: 0.375rem;
-  --ui-font-family-base:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
-  --ui-font-size-sm: 0.875rem;
-  --ui-font-size-md: 1rem;
-  --ui-font-weight-regular: 400;
-  --ui-font-weight-semibold: 600;
-  --ui-line-height-label: 1.25;
-  --ui-line-height-caption: 1.4;
-  --ui-color-surface: #292f35;
-  --ui-color-surface-raised: #30383e;
-  --ui-color-surface-hover: #344046;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-color-border: #3c4749;
-}
-
-:global(:root[data-ui-theme='light'] .demo-track-thumb-layer--current) {
-  color-scheme: light;
-  --ui-color-surface: #fffdfa;
-  --ui-color-surface-raised: #fff;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
-  --ui-color-border: #d8ded9;
 }
 
 @container (max-width: 48rem) {

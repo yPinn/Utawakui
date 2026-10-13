@@ -14,14 +14,6 @@ defineProps({
   sections: { type: Array, default: () => [] },
 });
 
-const COMPARISON_SECTION_KEYS = new Set([
-  'chips',
-  'status-icons',
-  'hints',
-  'notices',
-  'progress',
-]);
-
 const notificationItems = shallowRef([]);
 let notificationSequence = 0;
 
@@ -55,7 +47,6 @@ function dismissNotification({ id }) {
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoChipAppearance v-if="section.key === 'chips'" />
 

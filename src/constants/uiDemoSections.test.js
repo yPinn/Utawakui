@@ -80,8 +80,7 @@ describe('UI demo component order', () => {
       group.sections.flatMap((section) => section.components ?? []),
     ).sort();
     const registeredSharedComponents = registeredComponents
-      .map((name) => name.replace(/ (Candidate|Current)$/u, ''))
-      .filter((name) => name !== 'UiActionMenu' && name.startsWith('Ui'))
+      .map((name) => (name === 'UiActionMenu 提案' ? 'UiContextMenu' : name))
       .sort();
     const sharedComponents = fs
       .readdirSync(new URL('../components/ui/', import.meta.url))
@@ -91,8 +90,8 @@ describe('UI demo component order', () => {
       .sort();
 
     expect(registeredSharedComponents).toEqual(sharedComponents);
-    expect(registeredComponents).toContain('UiActionMenu Candidate');
-    expect(registeredComponents).toContain('UiContextMenu Current');
+    expect(registeredComponents).toContain('UiActionMenu 提案');
+    expect(registeredComponents).not.toContain('UiContextMenu Current');
     expect(new Set(registeredComponents).size).toBe(
       registeredComponents.length,
     );

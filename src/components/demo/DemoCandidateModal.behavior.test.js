@@ -287,6 +287,10 @@ describe('DemoCandidateModal behavior', () => {
     const controls = dialog.querySelectorAll();
     const first = controls[0];
     const last = controls.at(-1);
+    // Opening deliberately focuses the autofocus field. Reset that evidence so
+    // this assertion measures only the boundary-cycle interaction below.
+    first.focus.mockClear();
+    last.focus.mockClear();
     const forwardEvent = {
       key: 'Tab',
       shiftKey: false,

@@ -21,10 +21,11 @@ const visualReviewOverlayHostAttributes =
 
 <style scoped>
 .visual-system-view {
-  width: 100%;
-  min-height: 0;
+  inline-size: 100%;
+  block-size: 100%;
   min-width: 0;
-  height: 100%;
-  display: flex;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
 }
 </style>

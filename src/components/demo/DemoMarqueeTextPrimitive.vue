@@ -130,11 +130,11 @@ const CONTENT_ITEMS = [
       <header class="demo-marquee-subsection__header">
         <h5>閱讀與操作</h5>
         <p v-if="layer.key === 'candidate'">
-          Candidate
+          提案
           只在指向或聚焦所在操作時移動一次；到達末端後停留，離開後回到開頭，再次進入會重新播放。按住文字時暫停，方便選取。
         </p>
         <p v-else>
-          Current
+          舊實作
           會持續往返；指向文字或聚焦所在操作不會暫停，減少動態時回到靜態省略。
         </p>
       </header>

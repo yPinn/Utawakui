@@ -227,9 +227,9 @@ defineProps({
 .demo-icon-button-context-grid article > header > span {
   min-width: 0;
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-icon-button-context-grid article > header > code {

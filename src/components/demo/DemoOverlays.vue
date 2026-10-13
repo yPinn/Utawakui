@@ -12,7 +12,6 @@ defineProps({
   sections: { type: Array, default: () => [] },
 });
 
-const COMPARISON_SECTION_KEYS = new Set(['context-menu', 'modal']);
 const popoverOpen = ref(false);
 </script>
 
@@ -24,7 +23,6 @@ const popoverOpen = ref(false);
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoActionMenuAppearance v-if="section.key === 'context-menu'" />
       <DemoModalAppearance v-else-if="section.key === 'modal'" />

@@ -58,7 +58,7 @@ const SELECT_OPTIONS = [
       <header class="demo-validation-layer__header">
         <div>
           <span>Token v2 candidate</span>
-          <h5 id="demo-validation-candidate-title">候選驗證契約</h5>
+          <h5 id="demo-validation-candidate-title">提案驗證契約</h5>
         </div>
         <p>
           Auto 為預設；Reserved 是父層候選策略。兩者只改版面節奏，不改驗證語意。
@@ -272,46 +272,6 @@ const SELECT_OPTIONS = [
         </div>
       </section>
     </section>
-
-    <section
-      class="demo-validation-layer demo-validation-layer--current"
-      data-validation-source="current"
-      aria-labelledby="demo-validation-current-title"
-    >
-      <header class="demo-validation-layer__header">
-        <div>
-          <span>Current implementation</span>
-          <h5 id="demo-validation-current-title">現行行為邊界</h5>
-        </div>
-        <p>
-          現行僅有 Auto；元件已處理 Error 優先、Danger
-          邊界與描述關聯，但不擁有驗證時機或訊息轉譯。
-        </p>
-      </header>
-      <div class="demo-validation-current-flow" aria-label="現行欄位回饋行為">
-        <div>
-          <span>Caller props</span>
-          <strong>hint／error／invalid</strong>
-          <small>任何字串會原樣進入元件</small>
-        </div>
-        <b aria-hidden="true">→</b>
-        <div>
-          <span>UiField rule</span>
-          <strong>Error wins</strong>
-          <small>有 error 就不渲染 hint</small>
-        </div>
-        <b aria-hidden="true">→</b>
-        <div>
-          <span>DOM result</span>
-          <strong>0 or 1 support row</strong>
-          <small>訊息出現才參與版面流</small>
-        </div>
-      </div>
-      <p class="demo-validation-current__boundary">
-        尚未制定：blur／submit 觸發策略、issue 對本地化文案的 mapping，以及父層
-        Reserved helper。
-      </p>
-    </section>
   </article>
 </template>
 
@@ -344,8 +304,7 @@ const SELECT_OPTIONS = [
 .demo-validation-layer__header p,
 .demo-validation-block__header h6,
 .demo-validation-block__header p,
-.demo-validation-space > p,
-.demo-validation-current__boundary {
+.demo-validation-space > p {
   margin: 0;
 }
 
@@ -353,8 +312,7 @@ const SELECT_OPTIONS = [
 .demo-validation-layer__header span,
 .demo-validation-flow__step > span,
 .demo-validation-space > header span,
-.demo-validation-long-message > span,
-.demo-validation-current-flow span {
+.demo-validation-long-message > span {
   color: var(--ui-color-text-subtle);
   font-size: var(--ui-font-size-xs);
   font-weight: var(--ui-font-weight-semibold);
@@ -373,8 +331,7 @@ const SELECT_OPTIONS = [
 .demo-field-validation__header > p,
 .demo-validation-layer__header p,
 .demo-validation-block__header p,
-.demo-validation-space > p,
-.demo-validation-current__boundary {
+.demo-validation-space > p {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
@@ -389,14 +346,6 @@ const SELECT_OPTIONS = [
 
 .demo-validation-layer--candidate {
   border-top: 2px solid var(--ui-color-accent);
-}
-
-.demo-validation-layer--current {
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface) 76%,
-    var(--ui-color-surface-raised)
-  );
 }
 
 .demo-validation-layer__header {

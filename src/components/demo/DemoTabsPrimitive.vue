@@ -151,7 +151,7 @@ function variantNote(variant) {
         <p>
           {{
             layerText(
-              'Control height 來自 Candidate density scope；group 寬度由 parent layout 擁有。',
+              'Control height 來自提案 density scope；group 寬度由 parent layout 擁有。',
               'Control height 來自 active token；group 寬度維持現行實作。',
             )
           }}
@@ -444,7 +444,7 @@ function variantNote(variant) {
       <p class="demo-tabs-state-note">
         {{
           layer.key === 'candidate'
-            ? 'Candidate：Pressed 使用 active surface；Focus 使用 2px inset ring。'
+            ? '提案：Pressed 使用 active surface；Focus 使用 2px inset ring。'
             : 'Current：無 authored pressed；Focus 保留外擴 ring，窄幅需實查裁切。'
         }}
       </p>

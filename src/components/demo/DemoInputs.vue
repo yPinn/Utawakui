@@ -18,26 +18,33 @@ defineProps({
   sections: { type: Array, default: () => [] },
 });
 
-const COMPARISON_SECTION_KEYS = new Set([
-  'field',
-  'search-box',
-  'text-field',
-  'textarea',
-  'select',
-  'combobox',
-  'checkbox',
-  'range',
-  'radio-group',
-]);
-
 const sampleColor = ref('#8296d0');
 const sampleAutoUpdate = ref(true);
-const sampleLyricsSource = ref('netease');
-const sampleLyricsSources = [
-  { value: 'lrclib', label: 'LRCLIB' },
-  { value: 'netease', label: 'NetEase' },
-  { value: 'musixmatch', label: 'Musixmatch（reserve）', disabled: true },
-  { value: 'better-lyrics', label: 'Better Lyrics' },
+const sampleTrackSource = ref('album-after-dark');
+const sampleTrackSources = [
+  { value: 'playback-order', label: '目前播放順序' },
+  {
+    label: '播放清單',
+    options: [
+      { value: 'playlist-show', label: '演出歌單' },
+      { value: 'playlist-warmup', label: '暖場歌單' },
+    ],
+  },
+  {
+    label: '專輯',
+    options: [
+      {
+        value: 'album-after-dark',
+        label: 'After Dark · Aimer',
+        searchText: 'After Dark Aimer',
+      },
+      {
+        value: 'album-flower-skin',
+        label: '花皮 · Sabrina 胡恂舞',
+        searchText: '花皮 Sabrina 胡恂舞',
+      },
+    ],
+  },
 ];
 const sampleTheme = ref('system');
 const sampleThemes = [
@@ -55,7 +62,6 @@ const sampleThemes = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoSearchBoxAppearance v-if="section.key === 'search-box'" />
 
@@ -72,14 +78,15 @@ const sampleThemes = [
 
       <div v-else-if="section.key === 'combobox'" class="demo-combobox-sample">
         <UiCombobox
-          id="demo-combobox-lyrics-source"
-          v-model="sampleLyricsSource"
-          label="歌詞來源"
-          placeholder="輸入以過濾來源"
-          :items="sampleLyricsSources"
+          id="demo-combobox-track-source"
+          v-model="sampleTrackSource"
+          label="曲目來源"
+          placeholder="輸入專輯或藝人"
+          :items="sampleTrackSources"
         />
         <p class="demo-sample-caption">
-          從既有清單打字過濾並選一個值；不支援自由輸入新值，也不做非同步搜尋。
+          Flat與grouped
+          items共用同一個鍵盤與搜尋順序；不支援自由輸入新值，也不做非同步搜尋。
         </p>
       </div>
 

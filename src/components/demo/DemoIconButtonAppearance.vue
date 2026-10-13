@@ -12,7 +12,7 @@ const LAYERS = [
     component: UiIconButton,
     actionComponent: UiButton,
     actionVariant: 'secondary',
-    fieldNote: 'Candidate 同列 control boxes · 36／32px',
+    fieldNote: '提案同列 control boxes · 36／32px',
     stateNote:
       'Ghost／Accent／Command／Overlay 皆有 authored hover 與 pressed。',
     sizes: [
@@ -26,21 +26,6 @@ const LAYERS = [
       ],
     ],
   },
-  {
-    key: 'current',
-    title: 'Active token compatibility',
-    note: '同一正式元件在 active token 快照維持 md 32px／lg 44px；既有頁面不會被強制切換 Token v2 尺寸與色彩。',
-    component: UiIconButton,
-    actionComponent: UiButton,
-    actionVariant: 'ghost',
-    fieldNote: 'Current icon 32px／Field＋Button 30px',
-    stateNote:
-      'Ghost／Accent／Command／Overlay 保持完整 hover 與 pressed contract。',
-    sizes: [
-      ['current-md', 'current-md', 'md', 'Current md · 32 CSS px'],
-      ['current-lg', 'current-lg', 'lg', 'Current lg · 44 CSS px'],
-    ],
-  },
 ];
 </script>
 
@@ -52,7 +37,6 @@ const LAYERS = [
       class="demo-icon-button-layer"
       :class="`demo-icon-button-layer--${layer.key}`"
       :data-icon-button-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-icon-button-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -100,69 +84,15 @@ const LAYERS = [
 
 .demo-icon-button-layer__header h4 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .demo-icon-button-layer__header p {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
-}
-
-.demo-icon-button-layer--current {
-  --ui-control-height: 1.875rem;
-  --ui-icon-button-size-md: 2rem;
-  --ui-icon-button-size-lg: 2.75rem;
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #536165;
-  --ui-color-canvas: #1f2328;
-  --ui-color-surface: #292f35;
-  --ui-color-surface-hover: #344046;
-  --ui-color-surface-active: #3a464c;
-  --ui-color-surface-selected: #25474a;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-color-accent: #55a2a7;
-  --ui-color-accent-hover: #6ab4b8;
-  --ui-color-accent-contrast: #102326;
-  --ui-color-accent-contrast-muted: color-mix(
-    in srgb,
-    var(--ui-color-accent-contrast) 75%,
-    var(--ui-color-accent)
-  );
-  --ui-color-overlay-contrast: #fff;
-  --ui-color-focus: #dd7a64;
-  --ui-motion-easing-standard: ease-out;
-}
-
-:global(:root[data-ui-theme='light'] .demo-icon-button-layer--current) {
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-color-canvas: #f4f0e8;
-  --ui-color-surface: #f7f4ed;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-surface-active: #e4ece8;
-  --ui-color-surface-selected: #dceee9;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
-  --ui-color-accent: #327a7f;
-  --ui-color-accent-hover: #286a6e;
-  --ui-color-accent-contrast: #fffdfa;
-  --ui-color-focus: #d26a45;
 }
 
 @container (max-width: 48rem) {

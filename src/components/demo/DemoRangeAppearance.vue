@@ -83,7 +83,7 @@ const CONTENT_CASES = [
     step: 0.1,
     formatValue: (value) =>
       `${value === 100 ? '標準速度' : '速度'}／${Number(value).toFixed(1)} percent`,
-    note: 'Narrow Candidate stacks output below the track',
+    note: 'Narrow proposal stacks output below the track',
   },
   {
     key: 'native-value',
@@ -276,21 +276,6 @@ const LAYERS = [
       ['compact', 'Compact target · 32 CSS px'],
     ],
   },
-  {
-    key: 'current',
-    className: 'demo-range-layer--current',
-    title: '現行 UiRange',
-    note: 'Windows Chromium native track／thumb；input box 只有 track 高度，Field row 仍保留現行 30px。',
-    geometryNote:
-      'Current 保留 4px input box、16px native thumb 與 30px Field row，不套用 Candidate target。',
-    contracts: [
-      'Track／input box · 4 CSS px',
-      'Native thumb · 16 CSS px',
-      'Width · 100% parent／min 0／max none',
-    ],
-    component: UiRange,
-    sizes: [['active', 'Current field row · 30 CSS px']],
-  },
 ];
 
 const values = reactive(
@@ -347,7 +332,6 @@ function candidatePreviewProps(layer, formatValue) {
       class="demo-range-layer"
       :class="layer.className"
       :data-range-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-range-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -902,13 +886,6 @@ function candidatePreviewProps(layer, formatValue) {
       var(--ui-range-focus);
 }
 
-.demo-range-layer--current
-  .demo-range-state[data-range-state='focus']
-  :deep(.ui-range-control__native) {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
 .demo-range-coverage {
   min-width: 0;
   border: var(--ui-border-width) solid var(--ui-color-border);
@@ -981,57 +958,6 @@ function candidatePreviewProps(layer, formatValue) {
 .demo-range-api dd {
   margin: var(--ui-space-1) 0 0;
   color: var(--ui-color-text);
-}
-
-.demo-range-layer--current {
-  color-scheme: dark;
-  --ui-font-family-base:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
-  --ui-field-height: 1.875rem;
-  --ui-range-track-size: 0.25rem;
-  --ui-range-thumb-size: 1rem;
-  --ui-color-accent: #55a2a7;
-  --ui-color-focus: #dd7a64;
-  --ui-color-danger: #dd7078;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-opacity-disabled: 0.5;
-}
-
-.demo-range-layer--current :deep(.ui-range-control) {
-  height: auto;
-}
-
-.demo-range-layer--current :deep(.ui-range-control__native) {
-  position: static;
-  height: var(--ui-range-track-size);
-  appearance: auto;
-  background: initial;
-}
-
-.demo-range-layer--current
-  :deep(.ui-range-control__native::-webkit-slider-thumb) {
-  margin-block-start: 0;
-  appearance: auto;
-  border: initial;
-  background: initial;
-  box-shadow: none;
-  opacity: 1;
-  transition: none;
-}
-
-.demo-range-layer--current :deep(.ui-range-control__track) {
-  display: none;
-}
-
-:global(:root[data-ui-theme='light'] .demo-range-layer--current) {
-  color-scheme: light;
-  --ui-color-accent: #2f777c;
-  --ui-color-focus: #d26a45;
-  --ui-color-danger: #bd5961;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
 }
 
 @container (max-width: 48rem) {

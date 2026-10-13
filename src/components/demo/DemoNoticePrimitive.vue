@@ -172,7 +172,7 @@ function recordAction(label) {
         <h5>尺寸與內容結構</h5>
         <p>
           內容包含裝飾性狀態圖示，標題或說明至少顯示一項，也可加入選用的情境操作；密度只改內距與操作高度下限，不縮小
-          14px 文字。Candidate 重用已審查的 Status Icon：20px 狀態圖示與 14px
+          14px 文字。提案重用已審查的 Status Icon：20px 狀態圖示與 14px
           首行置中對齊，圖示與文字間距固定為 8px。
         </p>
       </header>
@@ -334,8 +334,7 @@ function recordAction(label) {
       <header class="demo-notice-subsection__header">
         <h5>輔助技術與公開介面</h5>
         <p>
-          候選版的訊息類型不決定宣告急迫性；現行版會自動將一般訊息設為
-          status、失敗設為 alert，此處保留作比較。
+          訊息類型不決定宣告急迫性；announcement role 由擁有更新時機的流程決定。
         </p>
       </header>
 
@@ -463,9 +462,9 @@ function recordAction(label) {
 .demo-notice-aria-list strong,
 .demo-notice-contract-list dt {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-notice-subsection__header p,
@@ -510,9 +509,9 @@ function recordAction(label) {
 
 .demo-notice-item__label {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-notice-frame {

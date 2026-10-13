@@ -97,7 +97,7 @@ describe('DemoCandidateModal appearance contract', () => {
 
   it('uses the design-system modal headline instead of a section-title treatment', () => {
     expect(source).toMatch(
-      /\.demo-candidate-modal__title\s*\{[^}]*font-size:\s*var\(--ui-font-size-xl\);[^}]*font-weight:\s*var\(--ui-font-weight-bold\);[^}]*line-height:\s*var\(--ui-line-height-heading\);/s,
+      /\.demo-candidate-modal__title\s*\{[^}]*font-size:\s*var\(--ui-type-heading-size\);[^}]*font-weight:\s*var\(--ui-type-heading-weight\);[^}]*line-height:\s*var\(--ui-type-heading-line-height\);/s,
     );
   });
 

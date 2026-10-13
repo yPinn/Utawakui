@@ -51,6 +51,7 @@ const STATES = [
   ['pressed', 'Pressed'],
   ['focus', 'Focus-visible'],
   ['active', 'Active toggle'],
+  ['loading', 'Loading'],
   ['disabled', 'Disabled'],
 ];
 
@@ -84,6 +85,13 @@ const COVERAGE = {
       'Accent fill',
       'Caller-defined',
       'Caller-defined',
+    ],
+    [
+      'loading',
+      'Spinner＋disabled',
+      'Spinner＋disabled',
+      'Spinner＋disabled',
+      'Spinner＋disabled',
     ],
     [
       'disabled',
@@ -124,6 +132,13 @@ const COVERAGE = {
       'Caller-defined',
     ],
     [
+      'loading',
+      'Spinner＋disabled',
+      'Spinner＋disabled',
+      'Spinner＋disabled',
+      'Spinner＋disabled',
+    ],
+    [
       'disabled',
       'Native disabled＋50%',
       'Native disabled＋50%',
@@ -147,6 +162,8 @@ function stateProps(state, variant) {
     variant,
     active: state === 'active',
     disabled: state === 'disabled',
+    loading: state === 'loading',
+    loadingLabel: `${variant} 處理中`,
     'aria-pressed': state === 'active' ? true : undefined,
   };
 }
@@ -382,14 +399,15 @@ function stateProps(state, variant) {
           <dt>State</dt>
           <dd>
             active · visual only；caller supplies aria-pressed<br />stretch ·
-            parent-owned hit area；fill · glyph only
+            parent-owned hit area；fill · glyph only<br />loading · shared async
+            progress；loadingLabel · announced status
           </dd>
         </div>
         <div>
           <dt>Native boundary</dt>
           <dd>
             native disabled · attrs／events fallthrough<br />No readonly · No
-            loading · No permission · No emergency prop
+            permission · No emergency prop
           </dd>
         </div>
       </dl>
@@ -450,9 +468,9 @@ function stateProps(state, variant) {
 
 .demo-icon-button-subsection__header h6 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-icon-button-size-grid,
@@ -482,9 +500,9 @@ function stateProps(state, variant) {
 .demo-icon-button-state > span,
 .demo-icon-button-danger > span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-icon-button-danger {

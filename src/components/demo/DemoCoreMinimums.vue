@@ -70,11 +70,12 @@ const CURRENT_GROUPS = [
     sources: [
       'src/styles/tokens.css',
       'src/components/ui/UiTrackRow.vue',
+      'src/components/track/TrackIdentityRow.vue',
       'src/components/playlists/PlaylistSidebarRow.vue',
       'src/components/playback/PlayerBar.vue',
     ],
     contract:
-      '曲目列／Sidebar 列 3.25rem（52px）· 封面 2.5rem · Player 5rem；列表標頭無現行共用 token',
+      '曲目列／Sidebar 列 3.25rem（52px）· 封面 2.5rem · Player 5rem；身分導覽由 TrackIdentityRow opt-in；列表標頭無現行共用 token',
     status: '部分落地，逐項審查中',
   },
   {
@@ -105,7 +106,7 @@ const CURRENT_GROUPS = [
     >
       <header class="demo-core-minimums__layer-header">
         <div>
-          <p class="demo-core-minimums__eyebrow">候選規格</p>
+          <p class="demo-core-minimums__eyebrow">提案規格</p>
           <h3 id="demo-core-candidate-title">Token v2 新制定</h3>
         </div>
         <p>
@@ -335,9 +336,9 @@ const CURRENT_GROUPS = [
 .demo-core-minimums__group dt {
   margin-bottom: var(--ui-space-1);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-core-minimums__group dd,
@@ -397,9 +398,9 @@ const CURRENT_GROUPS = [
 .demo-core-minimums__sources > span,
 .demo-core-minimums__contract > span {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-core-minimums__sources code,

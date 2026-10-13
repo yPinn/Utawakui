@@ -23,21 +23,6 @@ const SURFACE_SAMPLES = [
   { label: 'surface-md', tone: 'surface', radius: 'md' },
   { label: 'raised-lg', tone: 'raised', radius: 'lg' },
 ];
-const COMPARISON_SECTION_KEYS = new Set([
-  'system-palette',
-  'folder-palette',
-  'status-palette',
-  'typography',
-  'spacing-shape',
-  'core-minimums',
-  'density',
-  'scrollbar',
-  'page-header',
-  'separator',
-  'stack',
-  'surface',
-]);
-
 const SYSTEM_COLOR_SWATCHES = [
   {
     label: '畫布',
@@ -122,7 +107,6 @@ const SYSTEM_COLOR_SWATCHES = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <div v-if="section.key === 'system-palette'" class="demo-review-block">
         <p class="demo-review-note">

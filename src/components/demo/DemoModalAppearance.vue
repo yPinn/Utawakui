@@ -4,13 +4,8 @@ import DemoModalLayer from './DemoModalLayer.vue';
 const LAYERS = Object.freeze([
   {
     key: 'candidate',
-    title: 'Token v2 候選 UiModal',
+    title: '未採用提案 UiModal',
     note: 'Greenfield raised shell＋on-raised 欄位層級；384／512／768px、固定 header／footer 與 body-only scroll。',
-  },
-  {
-    key: 'current',
-    title: '現行 UiModal',
-    note: '正式元件已採 raised shell＋on-raised 欄位層級；保留 default／notice／wide 相容命名與既有焦點行為。',
   },
 ]);
 </script>
@@ -23,7 +18,6 @@ const LAYERS = Object.freeze([
       class="demo-modal-layer"
       :class="`demo-modal-layer--${layer.key}`"
       :data-modal-source="layer.key"
-      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-modal-${layer.key}-title`"
     >
       <header class="demo-modal-layer__header">
@@ -67,9 +61,9 @@ const LAYERS = Object.freeze([
 
 .demo-modal-layer__header h4 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .demo-modal-layer__header p {
@@ -77,119 +71,6 @@ const LAYERS = Object.freeze([
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
   overflow-wrap: anywhere;
-}
-
-.demo-modal-layer--current,
-:global([data-demo-modal-source='current']) {
-  color-scheme: dark;
-  --ui-color-canvas: #1f2328;
-  --ui-color-surface: #292f35;
-  --ui-color-surface-raised: #30383e;
-  --ui-color-surface-hover: #344046;
-  --ui-color-surface-active: #3a464c;
-  --ui-color-surface-selected: #25474a;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-color-border: #3c4749;
-  --ui-color-border-strong: #586568;
-  --ui-color-accent: #55a2a7;
-  --ui-color-accent-hover: #6ab4b8;
-  --ui-color-accent-contrast: #102326;
-  --ui-color-focus: #dd7a64;
-  --ui-color-info: #7fb8bd;
-  --ui-color-info-soft: color-mix(in srgb, #7fb8bd 18%, transparent);
-  --ui-color-warning: #d6a84f;
-  --ui-color-warning-soft: color-mix(in srgb, #d6a84f 18%, transparent);
-  --ui-space-1: 0.25rem;
-  --ui-space-2: 0.5rem;
-  --ui-space-3: 0.75rem;
-  --ui-space-4: 1rem;
-  --ui-space-5: 1.5rem;
-  --ui-space-6: 2rem;
-  --ui-space-8: 4rem;
-  --ui-border-width: 1px;
-  --ui-radius-md: 0.375rem;
-  --ui-radius-lg: 0.5rem;
-  --ui-font-family-base:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
-  --ui-font-size-sm: 0.875rem;
-  --ui-font-size-md: 1rem;
-  --ui-font-size-lg: 1.125rem;
-  --ui-font-size-xl: 1.5rem;
-  --ui-font-weight-regular: 400;
-  --ui-font-weight-semibold: 600;
-  --ui-font-weight-bold: 650;
-  --ui-line-height-heading: 1.2;
-  --ui-line-height-title: 1.3;
-  --ui-line-height-body: 1.5;
-  --ui-line-height-label: 1.25;
-  --ui-line-height-caption: 1.4;
-  --ui-control-height: 1.875rem;
-  --ui-icon-button-size-md: 2rem;
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-bg-readonly: #30383e;
-  --ui-field-bg-on-raised: var(--ui-color-surface);
-  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
-  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #586568;
-  --ui-field-border-invalid: #dd7078;
-  --ui-focus-width: 2px;
-  --ui-focus-offset: 2px;
-  --ui-opacity-disabled: 0.5;
-  --ui-modal-inline-size-small: 24rem;
-  --ui-modal-inline-size-medium: 32rem;
-  --ui-modal-inline-size-large: 48rem;
-  --ui-modal-max-block-size-small: 35rem;
-  --ui-modal-max-block-size-medium: 45rem;
-  --ui-modal-max-block-size-large: 50rem;
-  --ui-modal-viewport-inset: 1.5rem;
-  --ui-modal-content-inset: 1.5rem;
-  --ui-modal-section-gap: 1rem;
-  --ui-modal-footer-inset-block: 0.75rem;
-  --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
-  --ui-shadow-dialog: 0 1rem 2.5rem rgb(0 0 0 / 42%);
-  --ui-z-dialog: 200;
-}
-
-:global(:root[data-ui-theme='light'] .demo-modal-layer--current),
-:global(:root[data-ui-theme='light'] [data-demo-modal-source='current']) {
-  color-scheme: light;
-  --ui-color-canvas: #f7f1e7;
-  --ui-color-surface: #fffdfa;
-  --ui-color-surface-raised: #fff;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-surface-active: #e4ece8;
-  --ui-color-surface-selected: #dceee9;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
-  --ui-color-border: #d8ded9;
-  --ui-color-border-strong: #b9c4c0;
-  --ui-color-accent: #327a7f;
-  --ui-color-accent-hover: #286a6e;
-  --ui-color-accent-contrast: #fffdfa;
-  --ui-color-focus: #d26a45;
-  --ui-color-info: #4d8793;
-  --ui-color-info-soft: color-mix(in srgb, #4d8793 18%, transparent);
-  --ui-color-warning: #b78336;
-  --ui-color-warning-soft: color-mix(in srgb, #b78336 18%, transparent);
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-bg-readonly: #fff;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-field-border-invalid: #bd5961;
-  --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
 }
 
 @media (max-width: 48rem) {

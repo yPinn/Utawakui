@@ -16,20 +16,6 @@ const LAYERS = [
     stateNote:
       'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',
   },
-  {
-    key: 'current',
-    title: 'Active token compatibility',
-    note: '同一正式元件維持 Default 無底線，hover／focus-visible 顯示底線。',
-    component: UiTextButton,
-    appearanceContract: '僅 hover／focus-visible 顯示底線',
-    overflowNote:
-      '預設沿用 UiMarqueeText；高列數 caller 可明確選用 static ellipsis。',
-    overflowContract:
-      'UiMarqueeText is default；overflow="ellipsis" skips observer／motion work',
-    recipeProps: {},
-    stateNote:
-      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；Token v2 disabled 50%。',
-  },
 ];
 </script>
 
@@ -41,7 +27,6 @@ const LAYERS = [
       class="demo-text-button-layer"
       :class="`demo-text-button-layer--${layer.key}`"
       :data-text-button-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-text-button-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -89,43 +74,15 @@ const LAYERS = [
 
 .demo-text-button-layer__header h4 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .demo-text-button-layer__header p {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
-}
-
-.demo-text-button-layer--current {
-  --ui-color-canvas: #1f2328;
-  --ui-color-surface: #292f35;
-  --ui-color-surface-raised: #30383e;
-  --ui-color-surface-hover: #344046;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-color-text-subtle: #aeb8b6;
-  --ui-color-border: #3c4749;
-  --ui-color-border-strong: #586568;
-  --ui-color-accent: #55a2a7;
-  --ui-color-focus: #dd7a64;
-}
-
-:global(:root[data-ui-theme='light'] .demo-text-button-layer--current) {
-  --ui-color-canvas: #f7f1e7;
-  --ui-color-surface: #fffdfa;
-  --ui-color-surface-raised: #ffffff;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
-  --ui-color-text-subtle: #69747a;
-  --ui-color-border: #d8ded9;
-  --ui-color-border-strong: #b9c4c0;
-  --ui-color-accent: #327a7f;
-  --ui-color-focus: #d26a45;
 }
 
 @container (max-width: 48rem) {

@@ -196,23 +196,12 @@ const STATES = [
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Textarea',
+    title: '未採用提案 Textarea',
     note: '沿用候選 Field 外框；多行本體只定義 rows、換行、溢位與 resize。',
     floor: 'Standard 72／Compact 64 CSS px',
     heightCases: [
       ['standard-floor', 2, 'Standard hard floor', '2 rows · 72 CSS px'],
       ['compact-floor', 2, 'Compact hard floor', '2 rows · 64 CSS px'],
-      ['default', 3, 'Default rows · 3', 'native content · 73 CSS px'],
-      ['rows-5', 5, 'Rows 5', 'content capacity · 115 CSS px'],
-    ],
-  },
-  {
-    key: 'current',
-    title: '現行 UiTextarea',
-    note: '以 active token 快照呈現；現行 hard floor 為 60 CSS px。',
-    floor: 'Active 60 CSS px',
-    heightCases: [
-      ['active-floor', 2, 'Active hard floor', '2 rows · 60 CSS px'],
       ['default', 3, 'Default rows · 3', 'native content · 73 CSS px'],
       ['rows-5', 5, 'Rows 5', 'content capacity · 115 CSS px'],
     ],
@@ -264,7 +253,6 @@ function coverageFor(layer, state) {
       class="demo-textarea-layer"
       :class="`demo-textarea-layer--${layer.key}`"
       :data-textarea-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-textarea-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -586,9 +574,9 @@ function coverageFor(layer, state) {
 .demo-textarea-content h6,
 .demo-textarea-state h6,
 .demo-textarea-api h5 {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-textarea-contracts {
@@ -737,9 +725,9 @@ function coverageFor(layer, state) {
 .demo-textarea-reference dt,
 .demo-textarea-api dt {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-textarea-reference dd,
@@ -817,18 +805,12 @@ function coverageFor(layer, state) {
 
 .demo-textarea-layer--candidate
   .demo-textarea-state[data-textarea-state='focus']
-  :deep(.ui-textarea),
-.demo-textarea-layer--current
-  .demo-textarea-state[data-textarea-state='focus']
   :deep(.ui-textarea) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
 .demo-textarea-layer--candidate
-  .demo-textarea-state[data-textarea-state='invalid']
-  :deep(.ui-textarea),
-.demo-textarea-layer--current
   .demo-textarea-state[data-textarea-state='invalid']
   :deep(.ui-textarea) {
   border-color: var(--ui-field-border-invalid);
@@ -846,39 +828,6 @@ function coverageFor(layer, state) {
   :deep(.ui-textarea) {
   background: var(--ui-field-bg-readonly);
   border-color: var(--ui-field-border);
-}
-
-.demo-textarea-layer--current {
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #536165;
-  --ui-field-border-invalid: #dd7078;
-  --ui-color-focus: #dd8267;
-}
-
-:global(:root[data-ui-theme='light'] .demo-textarea-layer--current) {
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-field-border-invalid: #bd5961;
-  --ui-color-focus: #d26a45;
-}
-
-.demo-textarea-layer--current
-  .demo-textarea-state[data-textarea-state='hover']
-  :deep(.ui-textarea) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
 }
 
 @container (max-width: 48rem) {

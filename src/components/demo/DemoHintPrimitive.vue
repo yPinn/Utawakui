@@ -171,7 +171,7 @@ const TONE_ITEMS = [
         <h5>訊息類型</h5>
         <p>
           UiHint 不加入固定的「類型：」前綴。內容類型、格式與來源說明預設使用
-          Neutral；若 Current
+          Neutral；若 legacy
           相容色仍被使用，句子本身說明狀態，顏色只輔助掃描。需要標題、圖示或操作時使用
           UiNotice。
         </p>
@@ -303,7 +303,7 @@ const TONE_ITEMS = [
         <span>tone · 7 個相容值</span>
         <span>預設插槽 · 可見的輔助文字</span>
         <span>原生屬性會套用到段落</span>
-        <span>padded／center · 僅保留現行版面相容性</span>
+        <span>padded／center · 僅保留 legacy 版面相容性</span>
         <span>不包含圖示、操作、欄位關聯或即時宣告</span>
       </div>
     </section>

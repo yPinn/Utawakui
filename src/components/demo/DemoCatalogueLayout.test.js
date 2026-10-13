@@ -3,7 +3,15 @@ import { createSSRApp, h } from 'vue';
 import { compileStyle, parse } from '@vue/compiler-sfc';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
+import { UI_DEMO_GROUPS } from '../../constants/uiDemoSections.js';
+import DemoActions from './DemoActions.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoContent from './DemoContent.vue';
+import DemoFeedback from './DemoFeedback.vue';
+import DemoFoundations from './DemoFoundations.vue';
+import DemoInputs from './DemoInputs.vue';
+import DemoNavigation from './DemoNavigation.vue';
+import DemoOverlays from './DemoOverlays.vue';
 
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
@@ -24,7 +32,17 @@ const feedbackSource = readSource('./DemoFeedback.vue');
 const contentSource = readSource('./DemoContent.vue');
 const overlaysSource = readSource('./DemoOverlays.vue');
 
-const COMPARISON_APPEARANCE_SOURCES = [
+const GROUP_COMPONENTS = {
+  foundations: DemoFoundations,
+  inputs: DemoInputs,
+  actions: DemoActions,
+  navigation: DemoNavigation,
+  feedback: DemoFeedback,
+  content: DemoContent,
+  overlays: DemoOverlays,
+};
+
+const SPECIMEN_APPEARANCE_SOURCES = [
   './DemoFieldAppearance.vue',
   './DemoFieldReadonlyAppearance.vue',
   './DemoSearchBoxAppearance.vue',
@@ -50,8 +68,13 @@ const COMPARISON_APPEARANCE_SOURCES = [
   './DemoModalAppearance.vue',
 ].map(readSource);
 
+const INTERACTIVE_PROPOSAL_SOURCES = [
+  './DemoActionMenuLayer.vue',
+  './DemoModalLayer.vue',
+].map(readSource);
+
 describe('F8 component catalogue layout', () => {
-  it('keeps component sections flat and comparison surfaces local', async () => {
+  it('keeps component sections flat without a second review surface', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
@@ -59,23 +82,16 @@ describe('F8 component catalogue layout', () => {
             DemoCatalogueSection,
             {
               id: 'comparison-fixture',
-              title: 'Comparison fixture',
-              comparison: true,
+              title: 'Specimen fixture',
             },
             () => 'Evidence',
           ),
       }),
     );
-    const comparisonRule =
-      catalogueSource.match(
-        /\.demo-catalogue-section--comparison\s*\{[^}]*\}/s,
-      )?.[0] ?? '';
-
-    expect(html).toContain('demo-catalogue-section--comparison');
-    expect(html).toContain('data-demo-comparison="true"');
-    expect(comparisonRule).toContain('background: transparent');
-    expect(comparisonRule).not.toContain('border-radius');
-    expect(comparisonRule).not.toMatch(/selected|accent|folder/);
+    expect(html).toContain('demo-catalogue-section');
+    expect(html).not.toContain('demo-catalogue-section--comparison');
+    expect(html).not.toContain('data-demo-comparison');
+    expect(catalogueSource).not.toContain('comparison:');
   });
 
   it('gives every group a consistent section rhythm', () => {
@@ -92,16 +108,45 @@ describe('F8 component catalogue layout', () => {
     }
   });
 
-  it('uses one isolated Candidate and Current comparison contract', () => {
-    for (const source of COMPARISON_APPEARANCE_SOURCES) {
-      expect(source).toContain(':data-demo-review-layer="layer.key"');
+  it('keeps legacy Current snapshots out of the runtime catalogue', () => {
+    for (const source of SPECIMEN_APPEARANCE_SOURCES) {
+      expect(source).not.toMatch(/key:\s*['"]current['"]/u);
+      expect(source).not.toContain('data-demo-review-layer');
+      expect(source).not.toMatch(/-layer--current|--demo-current/u);
+      expect(source).not.toContain(":root[data-ui-theme='light']");
     }
 
-    expect(catalogueSource).toMatch(
-      /:deep\(\[data-demo-review-layer\]\)\s*\{[^}]*background:\s*var\(--demo-review-layer-background\)/s,
-    );
+    expect(catalogueSource).not.toContain('data-demo-review-layer');
+    expect(catalogueSource).not.toContain('data-demo-comparison');
+    expect(catalogueSource).not.toContain('demo-catalogue-section--comparison');
     expect(catalogueSource).not.toMatch(/#[0-9a-f]{3,8}/iu);
     expect(catalogueCompiledCss).not.toContain(':root[data-ui-theme=');
+  });
+
+  it('renders active truth and proposals without Candidate／Current comparison copy', async () => {
+    for (const group of UI_DEMO_GROUPS) {
+      const html = await renderToString(
+        createSSRApp(GROUP_COMPONENTS[group.key], {
+          sections: group.sections,
+        }),
+      );
+      const visibleText = html.replace(/<[^>]+>/gu, ' ');
+
+      expect(html).not.toMatch(/data-[\w-]+-source="current"/u);
+      expect(html).not.toContain('Current ·');
+      expect(html).not.toContain('Token v2 候選');
+      expect(html).not.toContain('Token v2 Candidate');
+      expect(visibleText).not.toMatch(/\bCandidate\b|(?:候選|現行)版/u);
+    }
+  });
+
+  it('does not retain unreachable Current implementations in interactive proposals', () => {
+    for (const source of INTERACTIVE_PROPOSAL_SOURCES) {
+      expect(source).not.toMatch(/layer\.key\s*[!=]==?\s*['"]current['"]/u);
+      expect(source).not.toContain('isCandidate');
+      expect(source).not.toContain('setCurrentMarker');
+      expect(source).not.toContain('useUiOverlayHost');
+    }
   });
 
   it('preserves responsive section reading order', () => {

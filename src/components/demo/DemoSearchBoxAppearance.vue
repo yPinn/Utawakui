@@ -205,7 +205,7 @@ const SEARCH_STATES = [
 const SEARCH_LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選基礎',
+    title: '未採用提案基礎',
     note: '使用 Field 外框與 Search anatomy；比較狀態外觀與覆蓋責任。',
     sizes: [
       ['standard', 'Standard', 'Standard 36 CSS px'],
@@ -243,36 +243,6 @@ const SEARCH_LAYERS = [
         'update:modelValue',
       ],
       ['Structure', 'Fixed anatomy · no slots', 'Label 保持點擊聚焦'],
-    ],
-  },
-  {
-    key: 'current',
-    title: '現行 Search Box 基礎',
-    note: '以 active token 與現有 UiSearchBox 結構如實呈現。',
-    sizes: [['active', 'Active', 'Active 30 CSS px']],
-    leadingLabel: '現行只有 16-unit glyph，未擁有固定 slot',
-    clearLabel: '現行只有 16-unit glyph，未擁有命中區 token',
-    labelSelection: '可選取（待補）／仍可點擊聚焦',
-    nativeCancel: ['unowned', '原生 × 與自訂 Clear 可能同時出現'],
-    decision: 'Active 30 CSS px 只容納 16-unit glyph，命中區尚未制定',
-    gapItems: [
-      'Hover surface 尚未制定',
-      'Disabled 整體外觀尚未制定',
-      '原生 search cancel ownership 未落地',
-    ],
-    values: [
-      ['Outer shell', 'Active 30 CSS px', 'Field active token'],
-      ['Leading glyph', '16 unit', 'Decorative／aria-hidden'],
-      ['Input', 'Fluid · min 0', 'type=search／native attrs → input'],
-      ['Clear action', '16-unit glyph only', '無獨立尺寸／命中區 token'],
-      ['Inline rhythm', '8 + 16 + 4', '4 + 16 + 8'],
-      ['Native cancel', 'Browser default', '與 custom Clear 可能重複'],
-      [
-        'Public API',
-        'id／label／modelValue／placeholder／disabled',
-        'update:modelValue',
-      ],
-      ['Structure', 'Fixed anatomy · no slots', 'Clear 僅在有值時出現'],
     ],
   },
 ];
@@ -316,7 +286,6 @@ function coverageFor(layer, state, index) {
       class="demo-search-layer"
       :class="`demo-search-layer--${layer.key}`"
       :data-search-source="layer.key"
-      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-search-${layer.key}-title`"
     >
       <header class="demo-search-layer__header">
@@ -628,9 +597,9 @@ function coverageFor(layer, state, index) {
 .demo-search-state-review__header h5,
 .demo-search-state h6 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-search-size-list,
@@ -764,16 +733,6 @@ function coverageFor(layer, state, index) {
 .demo-search-layer--candidate .demo-search-anatomy-visual__clear {
   width: 2rem;
   align-self: stretch;
-}
-
-.demo-search-layer--current .demo-search-anatomy-visual__control {
-  height: 1.875rem;
-}
-
-.demo-search-layer--current .demo-search-anatomy-visual__clear {
-  width: 1rem;
-  height: 1rem;
-  border: 0;
 }
 
 .demo-search-alignment-readout {
@@ -929,13 +888,6 @@ function coverageFor(layer, state, index) {
   outline-offset: var(--ui-focus-offset);
 }
 
-.demo-search-layer--current
-  .demo-search-state[data-search-state='input-focus']
-  :deep(.ui-search-box__control) {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
 .demo-search-layer--candidate
   .demo-search-state[data-search-state='clear-hover']
   :deep(.ui-search-box__clear) {
@@ -946,12 +898,6 @@ function coverageFor(layer, state, index) {
   .demo-search-state[data-search-state='clear-hover']
   :deep(.ui-search-box__clear)::before {
   background: var(--ui-color-surface-hover);
-}
-
-.demo-search-layer--current
-  .demo-search-state[data-search-state='clear-hover']
-  :deep(.ui-search-box__clear) {
-  color: var(--ui-color-text);
 }
 
 .demo-search-layer--candidate
@@ -978,13 +924,6 @@ function coverageFor(layer, state, index) {
   .demo-search-state[data-search-state='clear-focus']
   :deep(.ui-search-box__clear)::before {
   background: var(--ui-color-surface-hover);
-}
-
-.demo-search-layer--current
-  .demo-search-state[data-search-state='clear-focus']
-  :deep(.ui-search-box__control) {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .demo-search-layer--candidate
@@ -1133,38 +1072,6 @@ function coverageFor(layer, state, index) {
   :deep(.ui-search-box__input::-webkit-search-cancel-button) {
   -webkit-appearance: none;
   appearance: none;
-}
-
-.demo-search-layer--current {
-  --demo-current-field-height: 1.875rem;
-  --demo-current-field-bg: #344046;
-  --demo-current-field-bg-hover: #3a464c;
-  --demo-current-field-fg: #f7f1e7;
-  --demo-current-field-placeholder: #aeb8b6;
-  --demo-current-field-border: #3c4749;
-  --demo-current-field-border-hover: #586568;
-  --demo-current-focus: #dd7a64;
-
-  --ui-field-height: var(--demo-current-field-height);
-  --ui-field-bg: var(--demo-current-field-bg);
-  --ui-field-bg-hover: var(--demo-current-field-bg-hover);
-  --ui-field-fg: var(--demo-current-field-fg);
-  --ui-field-placeholder: var(--demo-current-field-placeholder);
-  --ui-field-border: var(--demo-current-field-border);
-  --ui-field-border-hover: var(--demo-current-field-border-hover);
-  --ui-color-focus: var(--demo-current-focus);
-  --ui-color-text: var(--demo-current-field-fg);
-  --ui-color-text-muted: var(--demo-current-field-placeholder);
-}
-
-:global(:root[data-ui-theme='light'] .demo-search-layer--current) {
-  --demo-current-field-bg: #edf2ef;
-  --demo-current-field-bg-hover: #e4ece8;
-  --demo-current-field-fg: #1f2328;
-  --demo-current-field-placeholder: #69747a;
-  --demo-current-field-border: #d8ded9;
-  --demo-current-field-border-hover: #b9c4c0;
-  --demo-current-focus: #d26a45;
 }
 
 @container (max-width: 48rem) {

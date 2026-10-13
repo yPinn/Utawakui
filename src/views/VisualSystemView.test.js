@@ -60,4 +60,13 @@ describe('VisualSystemView component catalogue boundary', () => {
       expect(demoSource).not.toContain(owner);
     }
   });
+
+  it('gives the single catalogue page one stable full-width workspace track', () => {
+    expect(source).toMatch(
+      /\.visual-system-view\s*\{[^}]*inline-size:\s*100%;[^}]*block-size:\s*100%;[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/su,
+    );
+    expect(source).not.toMatch(
+      /\.visual-system-view\s*\{[^}]*display:\s*flex;/su,
+    );
+  });
 });

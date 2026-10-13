@@ -195,29 +195,12 @@ const STATES = [
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Text Field',
+    title: '未採用提案 Text Field',
     note: '沿用已核定 Field 外殼；此區只新增單行輸入本體的候選規格。',
     sizes: [
       ['standard', 'Standard', '36 CSS px'],
       ['compact', 'Compact', '32 CSS px'],
     ],
-    anatomy: [
-      ['Start inset', '0.5rem／8 CSS px'],
-      ['Text lane', '單行、min-width 0、native inline scroll'],
-      ['End inset', '0.5rem／8 CSS px'],
-    ],
-    api: [
-      ['Value', 'modelValue → update:modelValue'],
-      ['Text', 'placeholder · maxlength · dir'],
-      ['Browser', 'autocomplete · native attrs'],
-      ['Field', 'label · hint · error · invalid'],
-    ],
-  },
-  {
-    key: 'current',
-    title: '現行 UiTextField',
-    note: '以 active token 快照呈現；正式元件目前沒有 size prop 或 accessory slot。',
-    sizes: [['active', 'Active default', '30 CSS px']],
     anatomy: [
       ['Start inset', '0.5rem／8 CSS px'],
       ['Text lane', '單行、min-width 0、native inline scroll'],
@@ -273,7 +256,6 @@ function coverageFor(layer, state) {
       class="demo-text-field-layer"
       :class="`demo-text-field-layer--${layer.key}`"
       :data-text-field-source="layer.key"
-      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-text-field-${layer.key}-title`"
     >
       <header class="demo-text-field-layer__header">
@@ -564,9 +546,9 @@ function coverageFor(layer, state) {
 .demo-text-field-content h6,
 .demo-text-field-state h6,
 .demo-text-field-api h5 {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-text-field-foundation__grid {
@@ -710,9 +692,9 @@ function coverageFor(layer, state) {
 .demo-text-field-anatomy__reference dt,
 .demo-text-field-api dt {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-text-field-anatomy__reference dd,
@@ -811,18 +793,12 @@ function coverageFor(layer, state) {
 
 .demo-text-field-layer--candidate
   .demo-text-field-state[data-text-field-state='focus']
-  :deep(.ui-text-field),
-.demo-text-field-layer--current
-  .demo-text-field-state[data-text-field-state='focus']
   :deep(.ui-text-field) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
 .demo-text-field-layer--candidate
-  .demo-text-field-state[data-text-field-state='invalid']
-  :deep(.ui-text-field),
-.demo-text-field-layer--current
   .demo-text-field-state[data-text-field-state='invalid']
   :deep(.ui-text-field) {
   border-color: var(--ui-field-border-invalid);
@@ -840,39 +816,6 @@ function coverageFor(layer, state) {
   :deep(.ui-text-field) {
   background: var(--ui-field-bg-readonly);
   border-color: var(--ui-field-border);
-}
-
-.demo-text-field-layer--current {
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #536165;
-  --ui-field-border-invalid: #dd7078;
-  --ui-color-focus: #dd8267;
-}
-
-:global(:root[data-ui-theme='light'] .demo-text-field-layer--current) {
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-field-border-invalid: #bd5961;
-  --ui-color-focus: #d26a45;
-}
-
-.demo-text-field-layer--current
-  .demo-text-field-state[data-text-field-state='hover']
-  :deep(.ui-text-field) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
 }
 
 @container (max-width: 48rem) {

@@ -1,40 +1,21 @@
 <script setup>
-import { computed, onUnmounted, shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import UiButton from '../ui/UiButton.vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
-import UiHint from '../ui/UiHint.vue';
-import UiModal from '../ui/UiModal.vue';
-import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
-import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
 import DemoCandidateHint from './DemoCandidateHint.vue';
 import DemoCandidateModal from './DemoCandidateModal.vue';
 import DemoCandidateSelect from './DemoCandidateSelect.vue';
 
-const overlayHost = useUiOverlayHost();
-
-const props = defineProps({
+defineProps({
   layer: { type: Object, required: true },
 });
 
 const SHELL_SIZES = Object.freeze([
-  {
-    key: 'small',
-    label: 'Small',
-    currentSize: 'default',
-  },
-  {
-    key: 'medium',
-    label: 'Medium',
-    currentSize: 'notice',
-  },
-  {
-    key: 'large',
-    label: 'Large',
-    currentSize: 'wide',
-  },
+  { key: 'small', label: 'Small' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'large', label: 'Large' },
 ]);
 
 const CONTENT_CASES = Object.freeze([
@@ -116,20 +97,6 @@ const READING_SECTIONS = Object.freeze([
   },
 ]);
 
-const isCandidate = computed(() => props.layer.key === 'candidate');
-const modalComponent = computed(() =>
-  isCandidate.value ? DemoCandidateModal : UiModal,
-);
-const buttonComponent = computed(() => UiButton);
-const checkboxComponent = computed(() =>
-  isCandidate.value ? DemoCandidateCheckbox : UiCheckbox,
-);
-const hintComponent = computed(() =>
-  isCandidate.value ? DemoCandidateHint : UiHint,
-);
-const selectComponent = computed(() =>
-  isCandidate.value ? DemoCandidateSelect : UiSelect,
-);
 const activeSize = shallowRef('');
 const showFooter = shallowRef(true);
 const contentCase = shallowRef('short');
@@ -151,50 +118,33 @@ const activeContentCase = computed(
 const hasFooter = computed(
   () => Boolean(activeShell.value) && showFooter.value,
 );
-const modalProps = computed(() =>
-  isCandidate.value
-    ? { size: activeShell.value?.key ?? 'medium' }
-    : { size: activeShell.value?.currentSize ?? 'default' },
-);
-
-function setCurrentMarker(open) {
-  if (typeof document === 'undefined' || isCandidate.value || !overlayHost) {
-    return;
-  }
-  const host = document.querySelector(overlayHost);
-  if (!host?.dataset) return;
-  if (open) host.dataset.demoModalSource = 'current';
-  else delete host.dataset.demoModalSource;
-}
+const modalProps = computed(() => ({
+  size: activeShell.value?.key ?? 'medium',
+}));
 
 function openSize(size) {
   activeSize.value = size;
-  setCurrentMarker(true);
 }
 
 function closeModal() {
   activeSize.value = '';
-  setCurrentMarker(false);
 }
 
 function finishAction() {
   result.value = `已完成 ${activeShell.value?.label ?? 'Modal'}／${activeContentCase.value.label} 標本操作`;
   closeModal();
 }
-
-onUnmounted(() => setCurrentMarker(false));
 </script>
 
 <template>
   <div class="demo-modal-specimen">
     <dl class="demo-modal-specimen__summary" aria-label="Modal shell 規格">
       <div>
-        <dt>{{ isCandidate ? '尺寸' : '相容命名' }}</dt>
+        <dt>尺寸</dt>
         <dd>
           Small · 384px／max 560px · Medium · 512px／max 720px · Large ·
           768px／max 800px
         </dd>
-        <dd v-if="!isCandidate">default／notice／wide 保留相容命名</dd>
       </div>
       <div>
         <dt>安全邊界</dt>
@@ -213,13 +163,9 @@ onUnmounted(() => setCurrentMarker(false));
     <section class="demo-modal-specimen__preview">
       <header class="demo-modal-specimen__intro">
         <h5>開啟尺寸標本</h5>
-        <p v-if="isCandidate">
+        <p>
           Neutral shell 只定義尺寸、間距與 overflow，不綁定 production
           情境；實際內容仍由 caller 組成。
-        </p>
-        <p v-else>
-          正式 UiModal 已採用相同 shell 幾何；保留 public size 名稱與既有
-          focus／dismissal 行為。
         </p>
       </header>
 
@@ -227,43 +173,40 @@ onUnmounted(() => setCurrentMarker(false));
         <div class="demo-modal-specimen__axis">
           <span class="demo-modal-specimen__axis-label">尺寸</span>
           <div class="demo-modal-specimen__sizes" aria-label="開啟 Modal 尺寸">
-            <component
-              :is="buttonComponent"
+            <UiButton
               v-for="size in SHELL_SIZES"
               :key="size.key"
-              :variant="isCandidate ? 'secondary' : 'ghost'"
+              variant="secondary"
               :active="activeSize === size.key"
               aria-haspopup="dialog"
               :aria-expanded="activeSize === size.key"
               @click="openSize(size.key)"
             >
               {{ size.label }}
-            </component>
+            </UiButton>
           </div>
         </div>
 
         <div class="demo-modal-specimen__axis">
           <span class="demo-modal-specimen__axis-label">內容</span>
           <div class="demo-modal-specimen__cases" aria-label="選擇內容案例">
-            <component
-              :is="buttonComponent"
+            <UiButton
               v-for="sample in CONTENT_CASES"
               :key="sample.key"
-              :variant="isCandidate ? 'secondary' : 'ghost'"
+              variant="secondary"
               :active="contentCase === sample.key"
               :aria-pressed="contentCase === sample.key"
               @click="contentCase = sample.key"
             >
               {{ sample.label }}
-            </component>
+            </UiButton>
           </div>
         </div>
 
         <div class="demo-modal-specimen__axis">
           <span class="demo-modal-specimen__axis-label">結構</span>
           <div class="demo-modal-specimen__options" aria-label="Modal 標本選項">
-            <component
-              :is="checkboxComponent"
+            <DemoCandidateCheckbox
               :id="`demo-modal-${layer.key}-footer`"
               v-model="showFooter"
               label="顯示 Footer"
@@ -272,24 +215,17 @@ onUnmounted(() => setCurrentMarker(false));
         </div>
       </div>
 
-      <component :is="hintComponent" class="demo-modal-specimen__caption">
-        <template v-if="isCandidate">
-          案例只改變 caller content，不會指定 Modal size；可檢查 body-only
-          scroll、重新開啟回頂、文字選取與固定 header／footer。
-        </template>
-        <template v-else>
-          Current 已固定 header／footer 並只捲動 body；因尚未切換 native dialog
-          top layer，背景頁尚未 inert。
-        </template>
-      </component>
+      <DemoCandidateHint class="demo-modal-specimen__caption">
+        案例只改變 caller content，不會指定 Modal size；可檢查 body-only
+        scroll、重新開啟回頂、文字選取與固定 header／footer。
+      </DemoCandidateHint>
     </section>
 
     <p class="demo-modal-specimen__result" aria-live="polite">
       {{ result }}
     </p>
 
-    <component
-      :is="modalComponent"
+    <DemoCandidateModal
       :open="Boolean(activeShell)"
       :title="activeContentCase.title"
       v-bind="modalProps"
@@ -305,9 +241,9 @@ onUnmounted(() => setCurrentMarker(false));
             選擇會套用到目前的本機顯示設定。請確認內容後再完成操作。
           </p>
 
-          <component :is="hintComponent" class="demo-modal-sample__hint">
+          <DemoCandidateHint class="demo-modal-sample__hint">
             短內容不應為了對齊最大高度而留下固定空間。
-          </component>
+          </DemoCandidateHint>
         </template>
 
         <div
@@ -325,8 +261,7 @@ onUnmounted(() => setCurrentMarker(false));
               autocomplete="off"
               autofocus
             />
-            <component
-              :is="selectComponent"
+            <DemoCandidateSelect
               :id="`demo-modal-${layer.key}-category`"
               v-model="fieldCategory"
               label="內容分類"
@@ -340,9 +275,9 @@ onUnmounted(() => setCurrentMarker(false));
               :rows="6"
             />
           </div>
-          <component :is="hintComponent">
+          <DemoCandidateHint>
             這些控制項不會送出資料；操作結果只留在元件型錄。
-          </component>
+          </DemoCandidateHint>
         </div>
 
         <article v-else class="demo-modal-case-reading">
@@ -369,15 +304,10 @@ onUnmounted(() => setCurrentMarker(false));
       </div>
 
       <template v-if="hasFooter" #footer>
-        <UiButton
-          :variant="isCandidate ? 'secondary' : 'ghost'"
-          @click="closeModal"
-        >
-          取消
-        </UiButton>
+        <UiButton variant="secondary" @click="closeModal"> 取消 </UiButton>
         <UiButton variant="accent" @click="finishAction">完成</UiButton>
       </template>
-    </component>
+    </DemoCandidateModal>
   </div>
 </template>
 
@@ -431,9 +361,9 @@ onUnmounted(() => setCurrentMarker(false));
 .demo-modal-specimen__intro h5 {
   flex: 0 0 auto;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-modal-specimen__summary dd,
@@ -479,9 +409,9 @@ onUnmounted(() => setCurrentMarker(false));
 
 .demo-modal-specimen__axis-label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   -webkit-user-select: none;
   user-select: none;
 }
@@ -560,9 +490,9 @@ onUnmounted(() => setCurrentMarker(false));
 
 .demo-modal-case-reading__section h3 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-modal-case-reading__section h3:focus-visible {

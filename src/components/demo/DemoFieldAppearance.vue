@@ -124,7 +124,7 @@ const FIELD_STATES = [
 const FIELD_LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選外觀',
+    title: '未採用提案外觀',
     note: '尚未套用正式元件；本區由 F8 的 Token v2 scope 驅動。',
     labelSelection: ['complete', 'Select none'],
     disabledFeedback: ['complete', 'Not-allowed · Select none'],
@@ -142,26 +142,6 @@ const FIELD_LAYERS = [
       ['Focus', '2 CSS px＋2 CSS px offset', 'Indigo 外框'],
       ['Disabled', '50%', '原生 disabled · Select none'],
       ['Placeholder', 'Dark 5.69:1', 'Light 7.37:1 · AA'],
-    ],
-  },
-  {
-    key: 'current',
-    title: '現行 Field 外觀',
-    note: '以 active token 快照呈現，避免繼承 F8 候選配色。',
-    labelSelection: ['pending', '可選取（待補）'],
-    disabledFeedback: ['pending', 'Not-allowed · 可選取（待補）'],
-    readonlySurface: ['base', 'Same as editable'],
-    pendingNote:
-      'Readonly 與 Editable 同表面 · Label／Disabled Select none 尚未套用',
-    sizes: [['active', 'Active default', '30 CSS px']],
-    values: [
-      ['高度', '1.875rem／30 CSS px', '無 Compact 映射'],
-      ['內距', 'Block 0.25rem／4 CSS px', 'Inline 0.5rem／8 CSS px'],
-      ['圓角', '0.375rem／6 CSS px', '與候選相同'],
-      ['表面', 'Hover surface 作預設', 'Active surface 作 Hover'],
-      ['Focus', '2 CSS px＋2 CSS px offset', 'Coral 外框'],
-      ['Disabled', '50%', '仍可選取 · Select none 待補'],
-      ['Placeholder', 'Dark 5.25:1', 'Light 4.23:1 · 未達 4.5:1'],
     ],
   },
 ];
@@ -194,7 +174,6 @@ function coverageFor(layer, state, index) {
       class="demo-field-layer"
       :class="`demo-field-layer--${layer.key}`"
       :data-field-source="layer.key"
-      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-field-${layer.key}-title`"
     >
       <header class="demo-field-layer__header">
@@ -459,9 +438,9 @@ function coverageFor(layer, state, index) {
 .demo-field-foundation__block h6,
 .demo-field-state h6 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-field-subsection__header p,
@@ -717,42 +696,6 @@ function coverageFor(layer, state, index) {
   :deep(.ui-text-field:read-only) {
   background: var(--ui-field-bg-readonly);
   border-color: var(--ui-field-border);
-}
-
-.demo-field-layer--current {
-  --demo-current-field-height: 1.875rem;
-  --demo-current-field-bg: #344046;
-  --demo-current-field-bg-hover: #3a464c;
-  --demo-current-field-fg: #f7f1e7;
-  --demo-current-field-placeholder: #aeb8b6;
-  --demo-current-field-border: #3c4749;
-  --demo-current-field-border-hover: #586568;
-  --demo-current-field-invalid: #dd7078;
-  --demo-current-focus: #dd7a64;
-
-  --ui-field-height: var(--demo-current-field-height);
-  --ui-field-bg: var(--demo-current-field-bg);
-  --ui-field-bg-hover: var(--demo-current-field-bg-hover);
-  --ui-field-fg: var(--demo-current-field-fg);
-  --ui-field-placeholder: var(--demo-current-field-placeholder);
-  --ui-field-border: var(--demo-current-field-border);
-  --ui-field-border-hover: var(--demo-current-field-border-hover);
-  --ui-field-border-invalid: var(--demo-current-field-invalid);
-  --ui-color-focus: var(--demo-current-focus);
-  --ui-color-danger: var(--demo-current-field-invalid);
-  --ui-color-text: var(--demo-current-field-fg);
-  --ui-color-text-muted: var(--demo-current-field-placeholder);
-}
-
-:global(:root[data-ui-theme='light'] .demo-field-layer--current) {
-  --demo-current-field-bg: #edf2ef;
-  --demo-current-field-bg-hover: #e4ece8;
-  --demo-current-field-fg: #1f2328;
-  --demo-current-field-placeholder: #69747a;
-  --demo-current-field-border: #d8ded9;
-  --demo-current-field-border-hover: #b9c4c0;
-  --demo-current-field-invalid: #bd5961;
-  --demo-current-focus: #d26a45;
 }
 
 @container (max-width: 48rem) {

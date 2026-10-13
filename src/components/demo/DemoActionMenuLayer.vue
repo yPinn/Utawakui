@@ -1,22 +1,17 @@
 <script setup>
-import { computed, onUnmounted, shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import {
   Check,
   Copy,
   Ellipsis,
   FolderOpen,
-  ListEnd,
   ListPlus,
   Pencil,
   Trash2,
 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import DemoCandidateActionMenu from './DemoCandidateActionMenu.vue';
-
-const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
   layer: { type: Object, required: true },
@@ -143,9 +138,6 @@ const MENU_SETS = Object.freeze({
   },
 });
 
-const menuComponent = computed(() =>
-  props.layer.key === 'candidate' ? DemoCandidateActionMenu : UiContextMenu,
-);
 const menu = shallowRef({
   open: false,
   anchorEl: null,
@@ -165,74 +157,25 @@ const triggerHeadingId = computed(
 const coverageHeadingId = computed(
   () => `action-menu-${props.layer.key}-coverage`,
 );
-const boundaryNote = computed(() =>
-  props.layer.key === 'candidate'
-    ? '內部捲動保持展開；外部捲動關閉。子選單與父項目對齊，依文字方向選側並在 viewport 邊界翻面。'
-    : 'Current 使用正式元件真值：按鈕上下翻向，右鍵限制在安全邊界，子選單依文字方向換側。',
-);
-const anatomyLines = computed(() =>
-  props.layer.key === 'candidate'
-    ? [
-        'Item anatomy：optional 16px leading icon · concise action label · optional 16px submenu chevron',
-        'Surface gap 4px · Menu inset 4px · Item inset 4px／8px · 只在實際存在的欄位之間 保留 8px · separator 4px／8px',
-        '固定動作在支援寬度內完整顯示；使用者命名的目的地只在硬限制下防禦性截斷。',
-        'Icon 只輔助可見動作文案；只有 opener 與 submenu chevron 可獨立使用。',
-      ]
-    : [
-        'Current 保留固定 icon／label／status／submenu lanes 與現行截斷，只供 migration audit。',
-        'Current 使用正式 UiContextMenu 與 active-token 快照，不套用 Candidate anatomy。',
-      ],
-);
+const boundaryNote =
+  '內部捲動保持展開；外部捲動關閉。子選單與父項目對齊，依文字方向選側並在 viewport 邊界翻面。';
+const anatomyLines = Object.freeze([
+  'Item anatomy：optional 16px leading icon · concise action label · optional 16px submenu chevron',
+  'Surface gap 4px · Menu inset 4px · Item inset 4px／8px · 只在實際存在的欄位之間 保留 8px · separator 4px／8px',
+  '固定動作在支援寬度內完整顯示；使用者命名的目的地只在硬限制下防禦性截斷。',
+  'Icon 只輔助可見動作文案；只有 opener 與 submenu chevron 可獨立使用。',
+]);
 const menuId = computed(() => `action-menu-${props.layer.key}-popup`);
-const controlledMenuId = computed(() =>
-  props.layer.key === 'candidate' ? menuId.value : undefined,
-);
 const menuRootAttributes = computed(() => ({
-  ...(props.layer.key === 'candidate' ? { id: menuId.value } : {}),
+  id: menuId.value,
   dir: menu.value.dir,
   'aria-label': menu.value.label,
 }));
-const menuPositionProps = computed(() =>
-  props.layer.key === 'current'
-    ? {
-        anchorEl: menu.value.anchorEl,
-        x: menu.value.x,
-        y: menu.value.y,
-      }
-    : { x: menu.value.x, y: menu.value.y },
-);
 const menuComponentAttributes = computed(() => ({
   ...menuRootAttributes.value,
-  ...menuPositionProps.value,
+  x: menu.value.x,
+  y: menu.value.y,
 }));
-
-function setCurrentMarker(isOpen) {
-  if (
-    typeof document === 'undefined' ||
-    props.layer.key !== 'current' ||
-    !overlayHost
-  ) {
-    return;
-  }
-  const host = document.querySelector(overlayHost);
-  if (!host?.dataset) return;
-  if (isOpen) host.dataset.demoActionMenuSource = 'current';
-  else delete host.dataset.demoActionMenuSource;
-}
-
-function itemsForLayer(specimen, items) {
-  if (props.layer.key !== 'current' || specimen !== 'general') return items;
-  return items.map((item) =>
-    item.key === 'queue'
-      ? {
-          ...item,
-          label: '新增至佇列',
-          icon: ListEnd,
-          status: '已在佇列',
-        }
-      : item,
-  );
-}
 
 function openMenuAt(
   specimen,
@@ -241,14 +184,13 @@ function openMenuAt(
   { anchorEl = null, dir, trigger = specimen } = {},
 ) {
   const definition = MENU_SETS[specimen];
-  setCurrentMarker(true);
   menu.value = {
     open: true,
     anchorEl,
     x: Math.round(x),
     y: Math.round(y),
     width: definition.width,
-    items: itemsForLayer(specimen, definition.items),
+    items: definition.items,
     emptyText: definition.emptyText,
     label: definition.label,
     dir: dir ?? definition.dir,
@@ -297,7 +239,6 @@ function openAtViewportEdge(event) {
 }
 
 function closeMenu() {
-  setCurrentMarker(false);
   menu.value = { ...menu.value, open: false, anchorEl: null };
 }
 
@@ -305,8 +246,6 @@ function handleSelect(value, item) {
   lastAction.value = `已執行：${item?.label ?? value}`;
   closeMenu();
 }
-
-onUnmounted(() => setCurrentMarker(false));
 </script>
 
 <template>
@@ -347,7 +286,7 @@ onUnmounted(() => setCurrentMarker(false));
             :icon="Ellipsis"
             label="更多操作"
             aria-haspopup="menu"
-            :aria-controls="controlledMenuId"
+            :aria-controls="menuId"
             :aria-expanded="menu.open && menu.trigger === 'more'"
             @click="openFromControl($event, 'settings')"
           />
@@ -356,7 +295,7 @@ onUnmounted(() => setCurrentMarker(false));
           type="button"
           class="demo-action-menu-specimen__row"
           aria-haspopup="menu"
-          :aria-controls="controlledMenuId"
+          :aria-controls="menuId"
           :aria-expanded="menu.open && menu.trigger === 'row'"
           @contextmenu.prevent="openRowMenu"
           @keydown="onRowKeydown"
@@ -382,7 +321,7 @@ onUnmounted(() => setCurrentMarker(false));
         <UiButton
           variant="ghost"
           aria-haspopup="menu"
-          :aria-controls="controlledMenuId"
+          :aria-controls="menuId"
           :aria-expanded="menu.open && menu.trigger === 'general'"
           @click="openFromControl($event, 'general')"
         >
@@ -391,7 +330,7 @@ onUnmounted(() => setCurrentMarker(false));
         <UiButton
           variant="ghost"
           aria-haspopup="menu"
-          :aria-controls="controlledMenuId"
+          :aria-controls="menuId"
           :aria-expanded="menu.open && menu.trigger === 'long'"
           @click="openFromControl($event, 'long')"
         >
@@ -400,7 +339,7 @@ onUnmounted(() => setCurrentMarker(false));
         <UiButton
           variant="ghost"
           aria-haspopup="menu"
-          :aria-controls="controlledMenuId"
+          :aria-controls="menuId"
           :aria-expanded="menu.open && menu.trigger === 'rtl'"
           @click="openFromControl($event, 'rtl')"
         >
@@ -409,7 +348,7 @@ onUnmounted(() => setCurrentMarker(false));
         <UiButton
           variant="ghost"
           aria-haspopup="menu"
-          :aria-controls="controlledMenuId"
+          :aria-controls="menuId"
           :aria-expanded="menu.open && menu.trigger === 'empty'"
           @click="openFromControl($event, 'empty')"
         >
@@ -418,7 +357,7 @@ onUnmounted(() => setCurrentMarker(false));
         <UiButton
           variant="ghost"
           aria-haspopup="menu"
-          :aria-controls="controlledMenuId"
+          :aria-controls="menuId"
           :aria-expanded="menu.open && menu.trigger === 'edge'"
           @click="openAtViewportEdge"
         >
@@ -435,7 +374,7 @@ onUnmounted(() => setCurrentMarker(false));
     </p>
 
     <component
-      :is="menuComponent"
+      :is="DemoCandidateActionMenu"
       v-bind="menuComponentAttributes"
       :open="menu.open"
       :width="menu.width"
@@ -482,9 +421,9 @@ onUnmounted(() => setCurrentMarker(false));
 
 .demo-action-menu-specimen__metrics dt {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-action-menu-specimen__metrics dd {
@@ -512,9 +451,9 @@ onUnmounted(() => setCurrentMarker(false));
 
 .demo-action-menu-specimen__group h5 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-action-menu-specimen__group p,

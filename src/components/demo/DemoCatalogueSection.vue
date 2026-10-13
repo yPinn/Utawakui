@@ -3,19 +3,11 @@ defineProps({
   id: { type: String, required: true },
   title: { type: String, required: true },
   componentLabel: { type: String, default: '' },
-  comparison: { type: Boolean, default: false },
 });
 </script>
 
 <template>
-  <section
-    class="demo-catalogue-section"
-    :class="{
-      'demo-catalogue-section--comparison': comparison,
-    }"
-    :data-demo-comparison="comparison || undefined"
-    :aria-labelledby="`${id}-title`"
-  >
+  <section class="demo-catalogue-section" :aria-labelledby="`${id}-title`">
     <header class="demo-catalogue-section__header">
       <h3 :id="`${id}-title`" class="demo-catalogue-section__title">
         {{ title }}
@@ -39,11 +31,6 @@ defineProps({
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.demo-catalogue-section--comparison {
-  padding: var(--ui-space-6) 0;
-  background: transparent;
-}
-
 .demo-catalogue-section__header {
   min-width: 0;
   align-self: start;
@@ -54,9 +41,9 @@ defineProps({
 .demo-catalogue-section__title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .demo-catalogue-section__component {
@@ -71,34 +58,6 @@ defineProps({
 
 .demo-catalogue-section__body {
   min-width: 0;
-}
-
-.demo-catalogue-section--comparison
-  .demo-catalogue-section__body
-  :deep([data-demo-review-layer]) {
-  --demo-review-layer-background: var(--ui-color-surface-raised);
-  --demo-review-layer-border: var(--ui-color-border);
-
-  min-width: 0;
-  margin: 0;
-  padding: var(--ui-space-5);
-  border: var(--ui-border-width) solid var(--demo-review-layer-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--demo-review-layer-background);
-  container-type: inline-size;
-}
-
-.demo-catalogue-section--comparison
-  .demo-catalogue-section__body
-  :deep([data-demo-review-layer] > header:first-child) {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--ui-space-4);
-  padding: 0 0 var(--ui-space-3);
-  border-top: 0;
-  border-bottom: var(--ui-border-width) solid var(--demo-review-layer-border);
 }
 
 .demo-catalogue-section__body :deep(.demo-sample-row) {
@@ -155,19 +114,6 @@ defineProps({
   .demo-catalogue-section {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-space-3);
-  }
-
-  .demo-catalogue-section--comparison
-    .demo-catalogue-section__body
-    :deep([data-demo-review-layer]) {
-    padding: var(--ui-space-4);
-  }
-
-  .demo-catalogue-section--comparison
-    .demo-catalogue-section__body
-    :deep([data-demo-review-layer] > header:first-child) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--ui-space-1);
   }
 }
 </style>

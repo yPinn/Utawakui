@@ -9,14 +9,6 @@ import DemoTrackThumbAppearance from './DemoTrackThumbAppearance.vue';
 defineProps({
   sections: { type: Array, default: () => [] },
 });
-
-const COMPARISON_SECTION_KEYS = new Set([
-  'marquee-text',
-  'track-thumb',
-  'collage-thumb',
-  'photo-frame',
-  'track-rows',
-]);
 </script>
 
 <template>
@@ -27,7 +19,6 @@ const COMPARISON_SECTION_KEYS = new Set([
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :comparison="COMPARISON_SECTION_KEYS.has(section.key)"
     >
       <DemoMarqueeTextAppearance v-if="section.key === 'marquee-text'" />
       <DemoTrackThumbAppearance v-else-if="section.key === 'track-thumb'" />

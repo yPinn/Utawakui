@@ -1,6 +1,7 @@
 <script setup>
 import { Download, Repeat } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -24,24 +25,6 @@ const LAYERS = [
       ['standard', 'Standard · 36 CSS px'],
       ['compact', 'Compact · 32 CSS px'],
     ],
-  },
-  {
-    key: 'current',
-    title: 'Active token compatibility',
-    note: '同一正式元件以 active token 快照顯示 30px control，確認既有頁面不會被強制切換 Token v2 尺寸與色彩。',
-    overflowNote:
-      '同一單行 ellipsis contract；幾何仍由 active token scope 決定。',
-    secondaryVariant: 'secondary',
-    secondaryLabel: 'Secondary',
-    statePair: 'Secondary／Accent',
-    appearanceContract: 'variant · secondary／ghost／accent',
-    intentContract: 'intent · neutral／danger',
-    publicNote: '同一 bounded API 在 active token scope 下維持可用。',
-    iconBoundary:
-      '現行仍含 icon-only compatibility branch；新用法 → UiIconButton',
-    contractBoundary: 'No size prop · Legacy icon-only branch · No readonly',
-    component: UiButton,
-    sizes: [['active', 'Current · 30 CSS px']],
   },
 ];
 
@@ -138,7 +121,6 @@ function stateProps(state, variant) {
       class="demo-button-layer"
       :class="`demo-button-layer--${layer.key}`"
       :data-button-source="layer.key"
-      :data-demo-review-layer="layer.key"
     >
       <header class="demo-button-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -149,8 +131,7 @@ function stateProps(state, variant) {
         <header class="demo-button-subsection__header">
           <h5>尺寸與寬度</h5>
           <p>
-            Standard／Compact 是離散 Candidate；按鈕預設維持 intrinsic inline
-            size。
+            Standard／Compact 是離散尺寸；按鈕預設維持 intrinsic inline size。
           </p>
         </header>
         <div class="demo-button-size-grid">
@@ -213,6 +194,16 @@ function stateProps(state, variant) {
               確認刪除
             </component>
           </div>
+        </article>
+        <article class="demo-button-group" data-button-group>
+          <span>Grouped anatomy · shared outer boundary</span>
+          <UiButtonGroup label="Button group anatomy">
+            <UiButton aria-label="前一項">前一項</UiButton>
+            <UiButton aria-label="下一項">下一項</UiButton>
+          </UiButtonGroup>
+          <small
+            >Group owns outer border、radius and internal separators.</small
+          >
         </article>
       </section>
 
@@ -502,6 +493,28 @@ function stateProps(state, variant) {
   line-height: var(--ui-line-height-caption);
 }
 
+.demo-button-group {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-2);
+  padding-block-start: var(--ui-space-1);
+}
+
+.demo-button-group > span {
+  color: var(--ui-color-text-subtle);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
+}
+
+.demo-button-group > small {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
+}
+
 .demo-button-subsection {
   min-width: 0;
   display: grid;
@@ -544,9 +557,9 @@ function stateProps(state, variant) {
 .demo-button-state > span,
 .demo-button-async-grid article > span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-button-hierarchy {
@@ -563,9 +576,9 @@ function stateProps(state, variant) {
 
 .demo-button-hierarchy span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-button-intent {
@@ -577,9 +590,9 @@ function stateProps(state, variant) {
 
 .demo-button-intent > span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-button-intent > div {
@@ -770,57 +783,6 @@ function stateProps(state, variant) {
 
 .demo-button-layer--candidate {
   --demo-button-height: var(--ui-control-height);
-}
-
-.demo-button-layer--current {
-  --ui-control-height: 1.875rem;
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #536165;
-  --ui-field-border-invalid: #dd7078;
-  --ui-color-surface-hover: #344046;
-  --ui-color-surface-active: #3a464c;
-  --ui-color-surface-selected: #25474a;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-  --ui-color-accent: #55a2a7;
-  --ui-color-accent-hover: #6ab4b8;
-  --ui-color-accent-contrast: #102326;
-  --ui-color-accent-contrast-muted: color-mix(
-    in srgb,
-    var(--ui-color-accent-contrast) 75%,
-    var(--ui-color-accent)
-  );
-  --ui-color-focus: #dd7a64;
-  --ui-motion-duration-feedback: 100ms;
-  --ui-motion-duration-slow: 280ms;
-  --ui-motion-easing-standard: ease-out;
-}
-
-:global(:root[data-ui-theme='light'] .demo-button-layer--current) {
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-field-border-invalid: #bd5961;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-surface-active: #e4ece8;
-  --ui-color-surface-selected: #dceee9;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
-  --ui-color-accent: #327a7f;
-  --ui-color-accent-hover: #286a6e;
-  --ui-color-accent-contrast: #fffdfa;
-  --ui-color-focus: #d26a45;
 }
 
 @container (max-width: 48rem) {

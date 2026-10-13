@@ -21,7 +21,8 @@ describe('DemoView Folder page boundary', () => {
     expect(source).toContain('mode="workspace"');
     expect(source).toContain('<UiPageHeader');
     expect(html).toContain('UI 元件型錄');
-    expect(html).toContain('正式元件與必要差異的回歸檢查');
+    expect(html).toContain('正式元件與少量未採用提案的回歸檢查');
+    expect(source).toMatch(/\.demo-view\s*\{[^}]*inline-size:\s*100%;/su);
   });
 
   it('does not redraw Folder or scrollbar ownership in the view', () => {

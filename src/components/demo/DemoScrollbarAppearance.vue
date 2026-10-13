@@ -259,9 +259,9 @@ const HORIZONTAL_ITEMS = Object.freeze([
 
 .demo-scrollbar-layout-proof__header h4 {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-scrollbar-layout-proof__grid {

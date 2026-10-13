@@ -151,16 +151,16 @@ const iconTone = computed(() =>
   min-block-size: var(--demo-notice-status-icon-size);
   display: grid;
   align-items: center;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-candidate-notice__message {
   color: color-mix(in srgb, var(--ui-color-text) 82%, var(--demo-notice-tone));
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .demo-candidate-notice__message:only-child {

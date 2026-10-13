@@ -138,6 +138,7 @@ describe('DemoCoreMinimums', () => {
     expect(html).toContain('src/components/ui/UiRange.vue');
     expect(html).toContain('src/components/ui/UiIconButton.vue');
     expect(html).toContain('src/components/ui/UiTrackRow.vue');
+    expect(html).toContain('src/components/track/TrackIdentityRow.vue');
     expect(html).toContain('src/components/playlists/PlaylistSidebarRow.vue');
     expect(html).toContain('src/components/playback/PlayerBar.vue');
     expect(html).toContain('src/components/layout/AppRightDock.vue');

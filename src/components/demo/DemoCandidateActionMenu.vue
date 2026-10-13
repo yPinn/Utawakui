@@ -676,9 +676,9 @@ onUnmounted(() => {
   background: transparent;
   color: var(--ui-color-text);
   font: inherit;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-compact-line-height);
   text-align: start;
   cursor: pointer;
 }

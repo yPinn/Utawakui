@@ -5,13 +5,8 @@ import UiTextarea from '../ui/UiTextarea.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 Candidate',
+    title: '未採用提案',
     note: 'Readonly 使用 quiet surface；文字、選取與 keyboard focus 保持完整。',
-  },
-  {
-    key: 'current',
-    title: 'Current',
-    note: 'Readonly 與 Editable 同表面且仍有 Hover，保留現行真值供比較。',
   },
 ];
 
@@ -81,7 +76,6 @@ function stateNote(layer, state) {
         class="demo-field-readonly-layer"
         :class="`demo-field-readonly-layer--${layer.key}`"
         :data-field-readonly-layer="layer.key"
-        :data-demo-review-layer="layer.key"
       >
         <header class="demo-field-readonly-layer__header">
           <h6>{{ layer.title }}</h6>
@@ -203,9 +197,9 @@ function stateNote(layer, state) {
 
 .demo-field-readonly__rules dt,
 .demo-field-readonly-state__heading strong {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .demo-field-readonly__rules dd {
@@ -277,38 +271,6 @@ function stateNote(layer, state) {
 .demo-field-readonly-layer--candidate :deep(.ui-field__label) {
   -webkit-user-select: none;
   user-select: none;
-}
-
-.demo-field-readonly-layer--current {
-  --ui-field-height: 1.875rem;
-  --ui-field-padding-block: 0.25rem;
-  --ui-field-padding-inline: 0.5rem;
-  --ui-field-radius: 0.375rem;
-  --ui-field-bg: #344046;
-  --ui-field-bg-hover: #3a464c;
-  --ui-field-fg: #f7f1e7;
-  --ui-field-placeholder: #aeb8b6;
-  --ui-field-border: #3c4749;
-  --ui-field-border-hover: #536165;
-  --ui-field-border-invalid: #dd7078;
-  --ui-color-focus: #dd8267;
-  --ui-color-danger: #dd7078;
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
-}
-
-:global(:root[data-ui-theme='light'] .demo-field-readonly-layer--current) {
-  --ui-field-bg: #edf2ef;
-  --ui-field-bg-hover: #e4ece8;
-  --ui-field-fg: #1f2328;
-  --ui-field-placeholder: #69747a;
-  --ui-field-border: #d8ded9;
-  --ui-field-border-hover: #b9c4c0;
-  --ui-field-border-invalid: #bd5961;
-  --ui-color-focus: #d26a45;
-  --ui-color-danger: #bd5961;
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
 }
 
 @container (max-width: 42rem) {

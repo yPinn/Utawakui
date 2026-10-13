@@ -170,7 +170,7 @@ function toneLabel(item) {
           <span class="demo-status-icon-tone__label">{{
             toneLabel(item)
           }}</span>
-          <small v-if="item.compatibility">Current compatibility only</small>
+          <small v-if="item.compatibility">Legacy compatibility only</small>
         </article>
       </div>
     </section>
@@ -328,7 +328,9 @@ function toneLabel(item) {
         <span>label · required concise status name</span>
         <span>decorative · hides duplicated meaning</span>
         <span>spinning · glyph only／reduced-motion safe</span>
-        <span>tone · Current 10／Candidate 8 semantic names</span>
+        <span
+          >tone · 8 semantic names；legacy aliases are compatibility-only</span
+        >
         <span>attrs · native span fallthrough</span>
         <span>No action／focus／disabled／separate tooltip prop</span>
       </div>
