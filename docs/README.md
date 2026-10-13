@@ -113,6 +113,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                                  |
 | [0022](adr/0022-artist-identity-and-organization.md)                   | 主路徑已實作                     | Stable artist entity、merge／split／display override／undo、顯式 MusicBrainz identity lookup 與照片相容遷移已建立；主動 alias 建議與本機 tags 後續。 |
 | [0023](adr/0023-renderer-destination-and-workspace-model.md)           | 已接受／Phase 0–3 已實作         | Renderer 已收斂為曲庫／演唱／顯示三個目的地；Import 改為 Right Dock 任務，待 owner 視覺驗收後再進 Phase 4 名稱清理。                                 |
+| [0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)     | 已接受／已實作                   | WMA、AIFF、ALAC、APE、WavPack 與 CAF 採 Main-owned 明示 FLAC 相容轉檔；直接匯入不依賴 FFmpeg。                                                       |
 
 ## 常用文件
 
@@ -140,7 +141,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [演出場次準備契約](contracts/performance-session-preparation.md)、
   [BGM 待機播放契約](contracts/bgm-standby-lane.md)、
   [曲目試聽契約](contracts/track-preview.md)。
-- Library：[曲庫空間管理契約](contracts/library-storage-management.md)。
+- Library：[曲庫空間管理契約](contracts/library-storage-management.md)、
+  [曲目編輯契約](contracts/track-editing.md)。
 - Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)、
   [artist photo provider contract](contracts/artist-photo-provider.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。
