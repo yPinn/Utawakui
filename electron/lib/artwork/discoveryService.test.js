@@ -21,50 +21,101 @@ const releaseGroup = {
   score: 100,
 };
 
-describe('artwork discovery service', () => {
-  it('stops after the original recording search yields four unique covers', async () => {
-    const releases = Array.from({ length: 6 }, (_, index) => ({
-      id: `40000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
-      title: `我等你 ${index + 1}`,
-      artistCredit: '劉若英',
-      status: 'Official',
-      date: '1999-11-01',
-      releaseGroup: {
-        id: `50000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
-        firstReleaseDate: '1999-11-01',
-        primaryType: 'Album',
-        secondaryTypes: [],
+function deferred() {
+  let resolve;
+  const promise = new Promise((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+function recordingReleases(count = 6) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `40000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    title: `我等你 ${index + 1}`,
+    artistCredit: '劉若英',
+    status: 'Official',
+    date: '1999-11-01',
+    releaseGroup: {
+      id: `50000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      firstReleaseDate: '1999-11-01',
+      primaryType: 'Album',
+      secondaryTypes: [],
+    },
+  }));
+}
+
+function frontFor(entityId) {
+  return {
+    status: 'ok',
+    front: {
+      imageUrl: `https://coverartarchive.org/release/${entityId}/front.jpg`,
+      previewUrl: `https://coverartarchive.org/release/${entityId}/front-250.jpg`,
+      applyUrl: `https://coverartarchive.org/release/${entityId}/front-1200.jpg`,
+    },
+  };
+}
+
+function trackedDeferredCoverLookups() {
+  const pending = [];
+  let active = 0;
+  let maxActive = 0;
+  return {
+    pending,
+    lookupFront: vi.fn((_entityType, entityId) => {
+      const lookup = deferred();
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      pending.push({ entityId, lookup });
+      return lookup.promise.finally(() => {
+        active -= 1;
+      });
+    }),
+    active: () => active,
+    maxActive: () => maxActive,
+  };
+}
+
+function recordingSearchService({
+  lookupFront,
+  onProviderFailure,
+  releaseCount = 6,
+} = {}) {
+  const searchRecordings = vi.fn().mockResolvedValue({
+    status: 'ok',
+    records: [
+      {
+        entityType: 'recording',
+        id: '33333333-3333-4333-8333-333333333333',
+        title: '後來',
+        artistCredit: '劉若英',
+        duration: 341,
+        releases: recordingReleases(releaseCount),
+        score: 100,
       },
-    }));
-    const searchRecordings = vi.fn().mockResolvedValue({
-      status: 'ok',
-      records: [
-        {
-          entityType: 'recording',
-          id: '33333333-3333-4333-8333-333333333333',
-          title: '後來',
-          artistCredit: '劉若英',
-          duration: 341,
-          releases,
-          score: 100,
-        },
-      ],
-    });
-    const searchReleaseGroups = vi
-      .fn()
-      .mockResolvedValue({ status: 'ok', records: [] });
-    const lookupFront = vi.fn(async (_entityType, entityId) => ({
-      status: 'ok',
-      front: {
-        imageUrl: `https://coverartarchive.org/release/${entityId}/front.jpg`,
-        previewUrl: `https://coverartarchive.org/release/${entityId}/front-250.jpg`,
-        applyUrl: `https://coverartarchive.org/release/${entityId}/front-1200.jpg`,
-      },
-    }));
-    const service = createArtworkDiscoveryService({
+    ],
+  });
+  const searchReleaseGroups = vi
+    .fn()
+    .mockResolvedValue({ status: 'ok', records: [] });
+  return {
+    searchRecordings,
+    searchReleaseGroups,
+    service: createArtworkDiscoveryService({
       musicBrainzClient: { searchRecordings, searchReleaseGroups },
       coverArtClient: { lookupFront },
-    });
+      onProviderFailure,
+    }),
+  };
+}
+
+describe('artwork discovery service', () => {
+  it('stops after the original recording search yields four unique covers', async () => {
+    const lookupFront = vi.fn(async (_entityType, entityId) =>
+      frontFor(entityId),
+    );
+    const { searchRecordings, searchReleaseGroups, service } =
+      recordingSearchService({ lookupFront });
 
     const result = await service.search(track);
 
@@ -72,7 +123,98 @@ describe('artwork discovery service', () => {
     expect(result.candidates).toHaveLength(4);
     expect(searchRecordings).toHaveBeenCalledOnce();
     expect(searchReleaseGroups).not.toHaveBeenCalled();
-    expect(lookupFront.mock.calls.length).toBeLessThanOrEqual(5);
+    expect(lookupFront).toHaveBeenCalledTimes(4);
+  });
+
+  it('starts all four required cover lookups before the first one settles', async () => {
+    const lookups = trackedDeferredCoverLookups();
+    const { service } = recordingSearchService({
+      lookupFront: lookups.lookupFront,
+    });
+
+    const resultPromise = service.search(track);
+
+    await vi.waitFor(() =>
+      expect(lookups.lookupFront).toHaveBeenCalledTimes(4),
+    );
+    expect(lookups.active()).toBe(4);
+    for (const { entityId, lookup } of lookups.pending) {
+      lookup.resolve(frontFor(entityId));
+    }
+
+    const result = await resultPromise;
+    expect(result.status).toBe('ok');
+    expect(result.candidates).toHaveLength(4);
+    expect(lookups.lookupFront).toHaveBeenCalledTimes(4);
+    expect(lookups.maxActive()).toBe(4);
+  });
+
+  it('fills only a missing cover slot without scanning the rest of the stage', async () => {
+    const lookups = trackedDeferredCoverLookups();
+    const { service } = recordingSearchService({
+      lookupFront: lookups.lookupFront,
+      releaseCount: 8,
+    });
+
+    const resultPromise = service.search(track);
+    await vi.waitFor(() =>
+      expect(lookups.lookupFront).toHaveBeenCalledTimes(4),
+    );
+
+    lookups.pending[0].lookup.resolve({
+      status: 'unavailable',
+      reason: 'no-front',
+    });
+    await vi.waitFor(() =>
+      expect(lookups.lookupFront).toHaveBeenCalledTimes(5),
+    );
+    expect(lookups.active()).toBe(4);
+
+    for (const { entityId, lookup } of lookups.pending.slice(1, 5)) {
+      lookup.resolve(frontFor(entityId));
+    }
+
+    const result = await resultPromise;
+    expect(result.status).toBe('ok');
+    expect(result.candidates).toHaveLength(4);
+    expect(lookups.lookupFront).toHaveBeenCalledTimes(5);
+    expect(lookups.maxActive()).toBe(4);
+  });
+
+  it('does not refill the cover pool after cancellation', async () => {
+    const controller = new AbortController();
+    const lookupFront = vi.fn(
+      (_entityType, _entityId, { signal }) =>
+        new Promise((resolve) => {
+          signal.addEventListener(
+            'abort',
+            () => resolve({ status: 'error', reason: 'timeout' }),
+            { once: true },
+          );
+        }),
+    );
+    const onProviderFailure = vi.fn();
+    const { service } = recordingSearchService({
+      lookupFront,
+      onProviderFailure,
+      releaseCount: 8,
+    });
+
+    const resultPromise = service.search(
+      track,
+      {},
+      { signal: controller.signal },
+    );
+    await vi.waitFor(() => expect(lookupFront).toHaveBeenCalledTimes(4));
+
+    controller.abort();
+
+    await expect(resultPromise).resolves.toEqual({
+      status: 'error',
+      reason: 'cancelled',
+    });
+    expect(lookupFront).toHaveBeenCalledTimes(4);
+    expect(onProviderFailure).not.toHaveBeenCalled();
   });
 
   it('falls back to release-group search only when recording candidates are insufficient', async () => {

@@ -24,7 +24,7 @@ const MAX_QUERY_VARIANTS = 3;
 const TARGET_CANDIDATE_COUNT = 4;
 const MAX_RAW_PROPOSALS = 24;
 const MAX_PROPOSALS_PER_STAGE = 8;
-const COVER_LOOKUP_CONCURRENCY = 2;
+const COVER_LOOKUP_CONCURRENCY = 4;
 const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
 const MAX_PREVIEW_PIXELS = 4 * 1024 * 1024;
 const PROVIDER_FAILURE_REASONS = new Set([
@@ -300,39 +300,59 @@ function createArtworkDiscoveryService(options = {}) {
         if (queue.length >= MAX_PROPOSALS_PER_STAGE) break;
       }
       let nextIndex = 0;
-      async function worker() {
-        while (
-          nextIndex < queue.length &&
-          coverLookupCount < MAX_RAW_PROPOSALS &&
-          !targetReached()
-        ) {
+      const inFlight = new Set();
+
+      async function hydrateProposal(proposal) {
+        try {
+          const front = await coverArtClient.lookupFront(
+            proposal.entityType,
+            proposal.entityId,
+            { signal: requestOptions.signal },
+          );
+          if (front.status === 'ok') {
+            proposals.push({ ...proposal, front: front.front });
+          } else if (front.status === 'error') {
+            noteProviderFailure('cover-art-lookup', front);
+          }
+        } catch {
+          noteProviderFailure('cover-art-lookup', {
+            reason: 'unexpected-error',
+          });
+        }
+      }
+
+      while (
+        nextIndex < queue.length &&
+        coverLookupCount < MAX_RAW_PROPOSALS &&
+        !isCancelled() &&
+        !targetReached()
+      ) {
+        // Reserve every in-flight lookup as one potential candidate. This
+        // fills the fast path in one bounded wave without over-fetching when
+        // all lookups succeed; failed or duplicate fronts release one slot.
+        const openCandidateSlots = Math.max(
+          0,
+          TARGET_CANDIDATE_COUNT - rankedCandidates().length - inFlight.size,
+        );
+        const lookupSlots = Math.min(
+          COVER_LOOKUP_CONCURRENCY - inFlight.size,
+          openCandidateSlots,
+          queue.length - nextIndex,
+          MAX_RAW_PROPOSALS - coverLookupCount,
+        );
+        for (let index = 0; index < lookupSlots; index += 1) {
           const proposal = queue[nextIndex];
           nextIndex += 1;
           coverLookupCount += 1;
-          try {
-            const front = await coverArtClient.lookupFront(
-              proposal.entityType,
-              proposal.entityId,
-              { signal: requestOptions.signal },
-            );
-            if (front.status === 'ok') {
-              proposals.push({ ...proposal, front: front.front });
-            } else if (front.status === 'error') {
-              noteProviderFailure('cover-art-lookup', front);
-            }
-          } catch {
-            noteProviderFailure('cover-art-lookup', {
-              reason: 'unexpected-error',
-            });
-          }
+          const lookup = hydrateProposal(proposal).finally(() => {
+            inFlight.delete(lookup);
+          });
+          inFlight.add(lookup);
         }
+        if (inFlight.size === 0) break;
+        await Promise.race(inFlight);
       }
-      await Promise.all(
-        Array.from(
-          { length: Math.min(COVER_LOOKUP_CONCURRENCY, queue.length) },
-          () => worker(),
-        ),
-      );
+      await Promise.all(inFlight);
     }
 
     const isCancelled = () => requestOptions.signal?.aborted === true;
