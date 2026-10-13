@@ -133,7 +133,11 @@ function batchStatus(trackId) {
       />
     </div>
 
-    <UiSearchBox v-model="query" placeholder="搜尋可分析曲目" />
+    <UiSearchBox
+      v-model="query"
+      class="analysis-picker__search"
+      placeholder="搜尋可分析曲目"
+    />
 
     <UiHint v-if="!batchAvailable && !batchMode" tone="warning">
       請先到設定準備 BPM 分析，才能使用批次重跑。
@@ -232,18 +236,18 @@ function batchStatus(trackId) {
 
 .analysis-picker__heading {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .analysis-picker__count {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
-.analysis-picker :deep(.ui-search-box) {
+.analysis-picker__search {
   width: 100%;
 }
 
@@ -255,11 +259,6 @@ function batchStatus(trackId) {
   width: var(--ui-control-height);
   height: var(--ui-control-height);
   flex: 0 0 var(--ui-control-height);
-  display: inline-grid;
-  place-items: center;
-}
-
-.analysis-picker__checkbox :deep(.ui-field__control) {
   display: inline-grid;
   place-items: center;
 }

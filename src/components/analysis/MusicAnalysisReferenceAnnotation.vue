@@ -375,8 +375,8 @@ onUnmounted(structureSignals.clear);
 }
 
 .reference-annotation__toolbar h2 {
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .reference-annotation__dirty {
@@ -445,8 +445,8 @@ onUnmounted(structureSignals.clear);
 .reference-annotation__summary span,
 .reference-annotation__case-header > div > span {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .reference-annotation__summary strong {
@@ -501,8 +501,8 @@ onUnmounted(structureSignals.clear);
 
 .reference-annotation__case-header h3 {
   overflow-wrap: anywhere;
-  font-size: var(--ui-font-size-xl);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-heading-size);
+  line-height: var(--ui-type-title-line-height);
 }
 
 @media (max-width: 840px) {

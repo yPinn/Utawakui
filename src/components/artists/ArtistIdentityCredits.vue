@@ -70,14 +70,14 @@ const emit = defineEmits(['split']);
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .artist-identity-credits__count {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-type-caption-line-height);
 }
 </style>

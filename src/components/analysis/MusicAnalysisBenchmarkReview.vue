@@ -286,8 +286,8 @@ onMounted(library.initialize);
 }
 
 .benchmark-review__title {
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .benchmark-review__empty {
@@ -354,9 +354,9 @@ onMounted(library.initialize);
 
 .benchmark-review__eyebrow {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .benchmark-review__case-list {
@@ -405,8 +405,8 @@ onMounted(library.initialize);
 
 .benchmark-review__case-header h3 {
   overflow-wrap: anywhere;
-  font-size: var(--ui-font-size-xl);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-heading-size);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .benchmark-review__metrics {
@@ -433,8 +433,8 @@ onMounted(library.initialize);
 .benchmark-review__metrics dd {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
   font-variant-numeric: tabular-nums;
 }
 

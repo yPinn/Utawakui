@@ -508,8 +508,8 @@ function toggleCandidate(candidate) {
 .lyrics-lrclib-search__result-meta p {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-lrclib-search__form {
@@ -527,8 +527,8 @@ function toggleCandidate(candidate) {
   grid-column: 1 / -1;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-lrclib-search__results {
@@ -554,15 +554,15 @@ function toggleCandidate(candidate) {
   gap: var(--ui-space-2);
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .lyrics-lrclib-search__group h3 span {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
 }
 
 .lyrics-lrclib-search__list {

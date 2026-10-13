@@ -84,7 +84,7 @@ const items = computed(() =>
 .obs-segmented-appearance-choice__alignment {
   inline-size: 1rem;
   display: grid;
-  gap: 0.125rem;
+  gap: calc(var(--ui-space-1) / 2);
 }
 
 .obs-segmented-appearance-choice__alignment > span {

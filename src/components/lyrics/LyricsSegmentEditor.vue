@@ -144,6 +144,7 @@ function nudgeSelected(deltaMs) {
         <strong>「{{ nextSegmentLabel }}」</strong>
       </div>
       <UiButton
+        class="lyrics-segment-editor__record-button"
         :icon="Clock"
         variant="accent"
         :disabled="!canTap || isSaving"
@@ -264,16 +265,16 @@ function nudgeSelected(deltaMs) {
 }
 
 .lyrics-segment-editor__word-text {
-  font-size: var(--ui-font-size-md);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .lyrics-segment-editor__word-time,
 .lyrics-segment-editor__eyebrow,
 .lyrics-segment-editor__complete {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-segment-editor__word-time {
@@ -313,7 +314,7 @@ function nudgeSelected(deltaMs) {
     flex-direction: column;
   }
 
-  .lyrics-segment-editor__workflow :deep(.ui-btn),
+  .lyrics-segment-editor__record-button,
   .lyrics-segment-editor__adjustment-actions {
     align-self: flex-start;
   }

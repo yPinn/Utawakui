@@ -301,9 +301,9 @@ function applyPreset(preset) {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -333,9 +333,9 @@ function applyPreset(preset) {
 .obs-template-gallery__detail-title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .obs-template-gallery__detail-summary,
@@ -343,8 +343,8 @@ function applyPreset(preset) {
   max-inline-size: 56ch;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .obs-template-gallery__availability {

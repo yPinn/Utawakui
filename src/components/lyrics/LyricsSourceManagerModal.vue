@@ -370,9 +370,9 @@ function sourceTierLabel(source) {
 .lyrics-source-manager__section-title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .lyrics-source-manager__list {
@@ -460,8 +460,8 @@ function sourceTierLabel(source) {
   gap: var(--ui-space-1);
   min-width: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .lyrics-source-manager__delete-copy span {

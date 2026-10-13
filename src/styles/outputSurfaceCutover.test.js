@@ -154,7 +154,7 @@ describe('Output Token v2 surface cutover', () => {
     expect(outputFeatureSource).not.toContain(
       '--ui-output-settings-column-min-width:',
     );
-    expect(workbenchSource).toContain('var(--ui-font-weight-semibold)');
+    expect(workbenchSource).toContain('var(--ui-type-title-weight)');
   });
 
   it('includes transitive shared compounds in the no-T1 contract', () => {
@@ -170,13 +170,13 @@ describe('Output Token v2 surface cutover', () => {
     }
 
     expect(readSource(outputSharedComponentPaths[0])).toContain(
-      'var(--ui-font-weight-semibold)',
+      'var(--ui-type-label-weight)',
     );
     expect(readSource(outputSharedComponentPaths[0])).toContain(
       'var(--ui-radius-md)',
     );
     expect(readSource(outputSharedComponentPaths[1])).toContain(
-      'var(--ui-font-weight-semibold)',
+      'var(--ui-type-title-weight)',
     );
   });
 

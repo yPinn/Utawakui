@@ -330,15 +330,15 @@ function applyCatalog() {
 .artist-identity-modal__section-title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .artist-identity-modal__status {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .artist-identity-modal__section--catalog {

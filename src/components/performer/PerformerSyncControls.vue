@@ -43,6 +43,7 @@ const offsetLabel = computed(() => {
     </div>
     <div class="performer-sync-controls__actions">
       <UiButton
+        class="performer-sync-controls__button"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'delay')"
@@ -50,6 +51,7 @@ const offsetLabel = computed(() => {
         延後 0.1 秒
       </UiButton>
       <UiButton
+        class="performer-sync-controls__button"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'reset')"
@@ -57,6 +59,7 @@ const offsetLabel = computed(() => {
         歸零
       </UiButton>
       <UiButton
+        class="performer-sync-controls__button"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'advance')"
@@ -70,7 +73,11 @@ const offsetLabel = computed(() => {
       role="alert"
     >
       <span>{{ offset.error }}</span>
-      <UiButton variant="ghost" @click="$emit('action', 'retry')">
+      <UiButton
+        class="performer-sync-controls__button"
+        variant="ghost"
+        @click="$emit('action', 'retry')"
+      >
         重試
       </UiButton>
     </div>
@@ -96,8 +103,8 @@ const offsetLabel = computed(() => {
 
 .performer-sync-controls__status {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .performer-sync-controls__status output {
@@ -110,16 +117,15 @@ const offsetLabel = computed(() => {
   flex-wrap: nowrap;
 }
 
-.performer-sync-controls__actions :deep(.ui-btn),
-.performer-sync-controls__error :deep(.ui-btn) {
+.performer-sync-controls__button {
   min-block-size: var(--ui-performer-action-min-block-size);
 }
 
 .performer-sync-controls__error {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .performer-sync-controls__error {

@@ -88,7 +88,7 @@ describe('Lyrics Token v2 surface cutover', () => {
       productionLyricsSources.find(
         ({ filename }) => filename === 'LyricsWorkspaceHeader.vue',
       ).source,
-    ).toContain('var(--ui-line-height-heading)');
+    ).toContain('var(--ui-type-heading-line-height)');
   });
 
   it('preserves the authoring, acquisition, reader, timing, and live-control anatomy', () => {

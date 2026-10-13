@@ -1,6 +1,7 @@
 <script setup>
 import { Minus, Plus } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 defineProps({
@@ -35,7 +36,12 @@ function resetLyricsOffset() {
       compact
       @action="emit('retryOffset')"
     />
-    <div class="lyrics-live-controls__panel">
+    <UiButtonGroup
+      class="lyrics-live-controls__panel"
+      label="歌詞時間偏移"
+      radius="lg"
+      raised
+    >
       <UiButton
         class="lyrics-live-controls__adjust"
         :icon="Minus"
@@ -63,7 +69,7 @@ function resetLyricsOffset() {
       >
         提前
       </UiButton>
-    </div>
+    </UiButtonGroup>
   </aside>
 </template>
 
@@ -82,24 +88,9 @@ function resetLyricsOffset() {
   max-width: 24rem;
 }
 
-.lyrics-live-controls__panel {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface-raised);
-  box-shadow: var(--ui-shadow-overlay);
-}
-
-.lyrics-live-controls__panel :deep(.ui-btn) {
+.lyrics-live-controls__adjust,
+.lyrics-live-controls__value {
   min-height: var(--ui-lyrics-live-control-height);
-  border-radius: 0;
-}
-
-.lyrics-live-controls__panel :deep(.ui-btn + .ui-btn) {
-  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .lyrics-live-controls__adjust {

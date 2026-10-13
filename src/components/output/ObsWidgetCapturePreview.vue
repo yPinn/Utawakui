@@ -254,8 +254,8 @@ onBeforeUnmount(() => {
   place-items: center;
   padding: var(--ui-space-2);
   color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
   text-align: center;
 }
 
@@ -265,8 +265,8 @@ onBeforeUnmount(() => {
   justify-items: center;
   gap: var(--ui-space-1);
   color: inherit;
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
   font-variant-numeric: tabular-nums;
 }
 

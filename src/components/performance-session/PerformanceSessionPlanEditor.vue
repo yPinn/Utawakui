@@ -293,15 +293,15 @@ function cancelEditing() {
 
 .performance-session-editor__eyebrow {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .performance-session-editor__title {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-heading-line-height);
   overflow-wrap: anywhere;
 }
 
@@ -322,8 +322,8 @@ function cancelEditing() {
 
 .performance-session-editor__source-label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .performance-session-editor__source-details {

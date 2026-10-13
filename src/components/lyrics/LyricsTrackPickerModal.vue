@@ -8,16 +8,15 @@ import {
   Music,
   Music2,
 } from '../../icons/index.js';
-import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
-import UiTrackRow from '../ui/UiTrackRow.vue';
 
 defineProps({
   open: { type: Boolean, default: false },
@@ -26,7 +25,6 @@ const emit = defineEmits(['close']);
 
 const { state, currentTrackId, selectTrack, setTrackScope } = useLyrics();
 const { selectedPlaylist } = usePlaylists();
-const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 
 const query = shallowRef('');
 
@@ -46,7 +44,7 @@ const scopeOptions = computed(() => [
   },
   {
     value: 'local',
-    label: '本機曲目',
+    label: '本機檔案',
     icon: Music,
   },
   {
@@ -80,14 +78,6 @@ const selectedScopeLabel = computed(
     scopeOptions.value.find((option) => option.value === state.trackScope)
       ?.label ?? '全部曲目',
 );
-
-const jumpableTrackIds = computed(() => {
-  const ids = new Set();
-  for (const track of visibleTracks.value) {
-    if (albumForTrack(track)) ids.add(track.id);
-  }
-  return ids;
-});
 
 function lyricsStatusLabel(track) {
   const status = track.lyrics?.status;
@@ -163,7 +153,7 @@ function handleTrackSelect(track) {
         viewport-tag="ul"
         viewport-class="lyrics-track-picker__list-viewport"
       >
-        <UiTrackRow
+        <TrackIdentityRow
           v-for="track in visibleTracks"
           :key="track.id"
           :track="track"
@@ -172,10 +162,9 @@ function handleTrackSelect(track) {
           interactive
           :action-label="`選取：${track.title}`"
           hide-duration
-          :title-clickable="jumpableTrackIds.has(track.id)"
-          :title-aria-label="`前往專輯：${track.title}`"
+          navigation="album"
           @row-click="handleTrackSelect(track)"
-          @title-click="jumpToAlbum(track)"
+          @navigate="emit('close')"
         >
           <template #trail>
             <div class="lyrics-track-picker__row-status">
@@ -192,7 +181,7 @@ function handleTrackSelect(track) {
               />
             </div>
           </template>
-        </UiTrackRow>
+        </TrackIdentityRow>
       </UiScrollRegion>
     </div>
   </UiModal>
@@ -216,8 +205,8 @@ function handleTrackSelect(track) {
   justify-content: space-between;
   gap: var(--ui-space-3);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-track-picker__list {

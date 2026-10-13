@@ -507,16 +507,16 @@ function submitApproval() {
 
 .review-form__eyebrow {
   color: var(--ui-color-current);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .review-form__header h2 {
   margin: var(--ui-space-1) 0 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-title-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -569,8 +569,8 @@ function submitApproval() {
 
 .review-form__lookup-identity > span {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .review-form__lookup-value {
@@ -585,8 +585,8 @@ function submitApproval() {
 .review-form__lookup-row > p {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .review-form__lookup-actions {
@@ -597,8 +597,8 @@ function submitApproval() {
   min-height: var(--ui-space-4);
   margin: 0;
   color: var(--ui-color-success);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
   text-align: end;
 }
 
@@ -728,8 +728,8 @@ function submitApproval() {
   grid-column: 1 / -1;
   margin: 0;
   color: var(--ui-color-warning);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .review-form__reject.ui-btn {
@@ -740,8 +740,8 @@ function submitApproval() {
 .review-form__key,
 .review-form__save-note {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
 }
 
 .review-form__save-note {

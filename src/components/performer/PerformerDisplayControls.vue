@@ -40,8 +40,8 @@ const readingScaleItems = [
 
 .performer-display-controls__label {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .performer-display-controls :deep(.ui-segmented-control__option) {

@@ -82,8 +82,8 @@ function toggleMotion() {
 .obs-template-preview-stage__motion {
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -319,9 +319,9 @@ function updatePosition(value) {
   grid-template-columns: var(--ui-bgm-player-time-inline-size) minmax(0, 1fr);
   gap: var(--ui-space-2);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .bgm-transport__time {

@@ -52,8 +52,8 @@ const hasRuby = computed(() =>
 
 .performer-lyric-cue__text {
   font-size: var(--ui-performer-cue-next-font-size);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .performer-lyric-cue--current {
@@ -63,14 +63,14 @@ const hasRuby = computed(() =>
 .performer-lyric-cue--current .performer-lyric-cue__text {
   font-size: var(--ui-performer-cue-current-font-size);
   font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-body);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .performer-lyric-cue__reading {
   margin-top: var(--ui-space-2);
   color: var(--ui-color-text-subtle);
   font-size: var(--ui-performer-reading-font-size);
-  line-height: var(--ui-line-height-body);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .performer-lyric-cue--current .performer-lyric-cue__reading {
@@ -81,7 +81,7 @@ const hasRuby = computed(() =>
 .performer-lyric-cue rt {
   color: var(--ui-color-text-subtle);
   font-size: var(--ui-performer-ruby-font-size);
-  font-weight: var(--ui-font-weight-regular);
+  font-weight: var(--ui-type-body-weight);
 }
 
 .performer-lyric-cue--current rt {

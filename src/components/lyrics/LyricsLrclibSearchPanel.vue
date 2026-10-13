@@ -100,9 +100,9 @@ defineExpose({ focusSearchTrigger });
   align-items: center;
   gap: var(--ui-space-2);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .lyrics-lrclib-search-panel__actions {

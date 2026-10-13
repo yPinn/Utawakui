@@ -1,6 +1,7 @@
 <script setup>
 import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
+import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 defineProps({
@@ -102,12 +103,9 @@ function handleLyricsTextVariantChange(event) {
 
       <div class="lyrics-preparation__group">
         <span class="lyrics-preparation__label">字級</span>
-        <div
-          class="lyrics-preparation__stepper"
-          role="group"
-          aria-label="歌詞字級"
-        >
+        <UiButtonGroup class="lyrics-preparation__stepper" label="歌詞字級">
           <UiButton
+            class="lyrics-preparation__stepper-button"
             title="縮小歌詞"
             aria-label="縮小歌詞"
             :disabled="!canDecreaseFontSize"
@@ -116,6 +114,7 @@ function handleLyricsTextVariantChange(event) {
             A−
           </UiButton>
           <UiButton
+            class="lyrics-preparation__stepper-button"
             title="放大歌詞"
             aria-label="放大歌詞"
             :disabled="!canIncreaseFontSize"
@@ -123,7 +122,7 @@ function handleLyricsTextVariantChange(event) {
           >
             A+
           </UiButton>
-        </div>
+        </UiButtonGroup>
       </div>
     </div>
     <UiNotice
@@ -172,9 +171,9 @@ function handleLyricsTextVariantChange(event) {
 .lyrics-preparation__label {
   flex: 0 0 auto;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .lyrics-preparation__select {
@@ -214,20 +213,8 @@ function handleLyricsTextVariantChange(event) {
   color: var(--ui-color-text);
 }
 
-.lyrics-preparation__stepper {
-  display: inline-flex;
-  overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-}
-
-.lyrics-preparation__stepper :deep(.ui-btn) {
+.lyrics-preparation__stepper-button {
   min-width: var(--ui-icon-button-size-lg);
-  border-radius: 0;
-}
-
-.lyrics-preparation__stepper :deep(.ui-btn + .ui-btn) {
-  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 @container (max-width: 46rem) {

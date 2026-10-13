@@ -198,8 +198,8 @@ function moveFocus(choice, event) {
   min-width: 0;
   inline-size: 100%;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
   text-align: center;
 }
 </style>

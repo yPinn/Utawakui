@@ -385,8 +385,8 @@ onUnmounted(() => {
 
 .reference-editor__quick-roles > span {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
 }
 
 .reference-editor__timeline {
@@ -423,8 +423,8 @@ onUnmounted(() => {
   background: var(--ui-color-accent-soft);
   color: var(--ui-color-accent);
   font: inherit;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
   white-space: nowrap;
   cursor: pointer;
 }

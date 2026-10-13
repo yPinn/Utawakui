@@ -228,8 +228,8 @@ function updateValue(value) {
   border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  line-height: var(--ui-type-body-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -246,8 +246,8 @@ function updateValue(value) {
 .obs-font-family-select__warning {
   margin: 0;
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .obs-font-family-select__status,
@@ -285,17 +285,17 @@ function updateValue(value) {
 .obs-font-family-select__badge {
   flex: none;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
 }
 
 .obs-font-family-select__option-sample {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

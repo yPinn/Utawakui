@@ -133,16 +133,16 @@ async function handleFileImport() {
 .lyrics-manual-import-panel__header h4 {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .lyrics-manual-import-panel__header p {
   margin: var(--ui-space-1) 0 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-manual-import-panel__field {
@@ -152,9 +152,9 @@ async function handleFileImport() {
 
 .lyrics-manual-import-panel__label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .lyrics-manual-import-panel__input,
@@ -166,8 +166,8 @@ async function handleFileImport() {
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .lyrics-manual-import-panel__input {

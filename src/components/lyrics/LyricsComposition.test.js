@@ -45,4 +45,25 @@ describe('lyrics contextual compositions', () => {
     expect(source).not.toContain('LyricsSourceManagerModal');
     expect(source).not.toContain('LyricsTimingToolbar');
   });
+
+  it('uses the shared library scope vocabulary in the track picker', () => {
+    const source = readComponent('./LyricsTrackPickerModal.vue');
+
+    expect(source).toContain("label: '全部曲目'");
+    expect(source).toContain("label: '本機檔案'");
+    expect(source).not.toContain("label: '本機曲目'");
+  });
+
+  it('uses the shared identity-navigation row recipe in the track picker', () => {
+    const source = readComponent('./LyricsTrackPickerModal.vue');
+
+    expect(source).toContain(
+      "import TrackIdentityRow from '../track/TrackIdentityRow.vue';",
+    );
+    expect(source).toContain('<TrackIdentityRow');
+    expect(source).toContain('navigation="album"');
+    expect(source).toContain('@navigate="emit(\'close\')"');
+    expect(source).not.toContain('useAlbumNavigation');
+    expect(source).not.toContain('jumpableTrackIds');
+  });
 });

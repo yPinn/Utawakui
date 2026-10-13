@@ -230,16 +230,16 @@ onMounted(initialize);
 
 .performance-lyrics-workspace__title {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
 }
 
 .performance-lyrics-workspace__track,
 .performance-lyrics-workspace__control-label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .performance-lyrics-workspace__track {

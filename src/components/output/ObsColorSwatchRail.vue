@@ -87,8 +87,8 @@ const visibleColors = computed(() =>
   display: flex;
   align-items: center;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .obs-color-swatch-rail__empty {

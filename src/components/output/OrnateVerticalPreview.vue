@@ -100,6 +100,8 @@ const previewLines = computed(() => {
 }
 
 .ornate-preview__line {
+  --ornate-preview-segment-gap: 0.62em;
+
   position: relative;
   grid-area: 1 / 1;
   align-self: center;
@@ -108,7 +110,7 @@ const previewLines = computed(() => {
   display: flex;
   flex-direction: row-reverse;
   align-items: center;
-  gap: 0.62em;
+  gap: var(--ornate-preview-segment-gap);
   font-size: var(--ui-output-preview-ornate-font-size);
   opacity: 0;
 }

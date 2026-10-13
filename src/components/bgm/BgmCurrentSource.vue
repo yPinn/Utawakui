@@ -44,9 +44,9 @@ defineProps({
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .bgm-current-source__artwork :deep(svg) {

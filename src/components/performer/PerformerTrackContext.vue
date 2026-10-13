@@ -60,15 +60,15 @@ const statusLabels = {
 
 .performer-track-context__copy strong {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .performer-track-context__copy span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .performer-track-context__status {
@@ -78,8 +78,8 @@ const statusLabels = {
   justify-content: flex-start;
   gap: var(--ui-space-3);
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
 }
 

@@ -12,6 +12,7 @@ import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -46,6 +47,7 @@ attachClientRender(
   '../separation/SeparationPresetControl.vue',
 );
 attachClientRender(UiButton, '../ui/UiButton.vue');
+attachClientRender(UiButtonGroup, '../ui/UiButtonGroup.vue');
 attachClientRender(UiChip, '../ui/UiChip.vue');
 attachClientRender(UiHint, '../ui/UiHint.vue');
 attachClientRender(UiIconButton, '../ui/UiIconButton.vue');

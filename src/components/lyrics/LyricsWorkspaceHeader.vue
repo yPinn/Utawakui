@@ -143,17 +143,17 @@ function lyricsStatusOverrides() {
 .lyrics-workspace-header__title {
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-bold);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .lyrics-workspace-header__meta,
 .lyrics-workspace-header__reload-status {
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-workspace-header__meta {

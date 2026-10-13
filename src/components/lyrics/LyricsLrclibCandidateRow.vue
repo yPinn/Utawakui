@@ -293,9 +293,9 @@ function previewLineHasTiming(line) {
   flex: 0 1 auto;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-body-line-height);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -312,9 +312,9 @@ function previewLineHasTiming(line) {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   overflow-wrap: anywhere;
 }
 
@@ -479,8 +479,8 @@ function previewLineHasTiming(line) {
   margin: 0;
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -498,15 +498,15 @@ function previewLineHasTiming(line) {
   margin: 0;
   padding-left: var(--ui-space-5);
   color: var(--ui-color-warning);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-lrclib-candidate-row__availability {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-lrclib-candidate-preview__lines {

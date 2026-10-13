@@ -125,8 +125,8 @@ function create() {
 
 .performance-session-manual__title {
   margin-top: var(--ui-space-1);
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-heading);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-heading-line-height);
 }
 
 .performance-session-manual__description {

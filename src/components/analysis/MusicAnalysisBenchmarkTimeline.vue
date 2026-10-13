@@ -147,16 +147,16 @@ function seekTo(section) {
 
 .benchmark-timeline__title {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .benchmark-timeline__status-copy,
 .benchmark-timeline__empty,
 .benchmark-timeline__ruler {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .benchmark-timeline__track {
@@ -180,8 +180,8 @@ function seekTo(section) {
   background: var(--benchmark-role-color, var(--ui-color-accent));
   color: var(--ui-color-accent-contrast);
   font: inherit;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;

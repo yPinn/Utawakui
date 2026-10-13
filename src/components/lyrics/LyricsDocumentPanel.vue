@@ -387,8 +387,8 @@ watch(
   background: transparent;
   color: inherit;
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-title-size);
+  line-height: var(--ui-type-body-line-height);
   text-align: left;
   cursor: pointer;
 }

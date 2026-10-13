@@ -335,8 +335,8 @@ onBeforeUnmount(() => {
   background: var(--ui-field-bg);
   color: var(--ui-field-fg);
   font: inherit;
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
   text-align: start;
   cursor: pointer;
   transition:
@@ -405,8 +405,8 @@ onBeforeUnmount(() => {
   padding: var(--ui-space-1) var(--ui-space-2);
   border-radius: var(--ui-radius-sm);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
   cursor: pointer;
 }
 

@@ -19,8 +19,8 @@ defineProps({
   align-items: center;
   gap: var(--ui-space-2);
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .performer-next-track > span {
