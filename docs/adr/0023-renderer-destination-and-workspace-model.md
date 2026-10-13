@@ -3,7 +3,7 @@
 ## Status
 
 Accepted (2026-10-12). Phases 0–4 are implemented: public navigation uses
-`library`／`performance`／`display`, contextual Lyrics compositions are split,
+「曲庫」／「演唱工具」／「畫面輸出」for `library`／`performance`／`display`, contextual Lyrics compositions are split,
 Import is a shell-owned Right Dock task with a modal review expansion, and the
 legacy destination adapters have been removed. The retained floating BGM owner and
 its drag boundary have received owner-visible acceptance.
@@ -39,11 +39,11 @@ the product's durable content root rather than a setup detail.
 
 The public control-panel navigation has three destinations:
 
-| Visible label | Destination id | Composition owner               | Responsibility                                                                 |
-| ------------- | -------------- | ------------------------------- | ------------------------------------------------------------------------------ |
-| 曲庫          | `library`      | `src/pages/LibraryPage.vue`     | Browse and organize local tracks, collections and track-scoped authoring work. |
-| 演唱          | `performance`  | `src/pages/PerformancePage.vue` | Prepare a session and operate the bounded tools needed while singing.          |
-| 顯示          | `display`      | `src/pages/DisplayPage.vue`     | Configure and inspect OBS／Browser Source public presentation.                 |
+| Visible label | Destination id | Composition owner               | Responsibility                                                           |
+| ------------- | -------------- | ------------------------------- | ------------------------------------------------------------------------ |
+| 曲庫          | `library`      | `src/pages/LibraryPage.vue`     | Browse and organize tracks, collections and track-scoped authoring work. |
+| 演唱工具      | `performance`  | `src/pages/PerformancePage.vue` | Prepare a session and operate the bounded tools needed while singing.    |
+| 畫面輸出      | `display`      | `src/pages/DisplayPage.vue`     | Configure and inspect OBS／Browser Source public presentation.           |
 
 Settings remains a Titlebar utility; it is not a fourth Folder destination. The
 target `SettingsPage` owns utility composition inside the existing
@@ -202,11 +202,10 @@ callers and the renderer surface registry. The destination cutover is therefore
 one atomic, fully tested phase rather than a sequence of partially visible tab
 changes.
 
-Display becomes the user-facing destination name, but Output remains the correct
-technical term for projection runtime, Browser Source routes and public data
-contracts. Likewise, Performance does not rename Session, Queue or playback
+「畫面輸出」becomes the user-facing destination name, but Output remains the
+correct technical term for projection runtime, Browser Source routes and public
+data contracts. Likewise,「演唱工具」does not rename Session, Queue or playback
 history; it composes them without erasing their distinct authorities.
 
-Current-state documents such as `docs/architecture.md` continue describing the
-four-destination implementation until the cutover lands. The ADR and naming
-contract are the intended-behavior sources during migration.
+Current-state documents use the accepted three-destination names. Destination ids
+and technical Output／Performance terminology remain stable internal contracts.

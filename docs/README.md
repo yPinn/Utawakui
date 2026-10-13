@@ -112,7 +112,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                                     |
 | [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                                  |
 | [0022](adr/0022-artist-identity-and-organization.md)                   | 主路徑已實作                     | Stable artist entity、merge／split／display override／undo、顯式 MusicBrainz identity lookup 與照片相容遷移已建立；主動 alias 建議與本機 tags 後續。 |
-| [0023](adr/0023-renderer-destination-and-workspace-model.md)           | 已接受／Phase 0–3 已實作         | Renderer 已收斂為曲庫／演唱／顯示三個目的地；Import 改為 Right Dock 任務，待 owner 視覺驗收後再進 Phase 4 名稱清理。                                 |
+| [0023](adr/0023-renderer-destination-and-workspace-model.md)           | 已接受／Phase 0–4 已實作         | Renderer 已收斂為曲庫／演唱工具／畫面輸出三個目的地；Import 是共用曲目準備 Right Dock 任務，舊destination adapter與名稱清理已完成。                  |
 | [0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)     | 已接受／已實作                   | WMA、AIFF、ALAC、APE、WavPack 與 CAF 採 Main-owned 明示 FLAC 相容轉檔；直接匯入不依賴 FFmpeg。                                                       |
 
 ## 常用文件

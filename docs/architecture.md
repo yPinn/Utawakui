@@ -91,17 +91,33 @@ direct metadata intent，會先取消其他前景 surface 再顯示 metadata。`
 `src/components/playback/context/TrackContextPanel.vue` 各自只呈現 feature content，並透過 `AppRightDockPanel.vue` 共用
 header、單一 scroll owner 與 content inset；播放 queue authority 仍由
 `usePlaybackQueue.js` 持有。匯入與伴奏處理共用 shell-owned `PreparationDockPanel.vue`；Titlebar
-只保留一個固定 `ListChecks`「曲目準備」controlled disclosure，Dock 內以
-`UiSegmentedControl` 切換 `ImportDockContent.vue` 與 `SeparationDockContent.vue`，兩個 feature
-content 不再各自建立 Dock header 或 scroll shell。App shell 是 `useSeparationQueue.js` 的唯一
+只保留一個固定 `ListChecks`「曲目準備」controlled disclosure。Dock 與 Queue／Recently Played
+沿用相同的固定 `UiTabs` bar header 與 linked tabpanels，在 `ImportDockContent.vue` 與
+`SeparationDockContent.vue` 間切換；兩個 feature content 不再各自建立 Dock header、導覽 chrome
+或 scroll shell。外部來源清單由 Renderer 以固定兩個 worker 投影工作，但 Main 的
+`providerDownloadScheduler` 才是全域 admission owner：最多同時執行兩個不同 track id，重複 id
+共用同一個工作，queued／active 都可由 bounded track-id intent 取消。每首下載完成後才進入固定
+concurrency-one 的 library finalize lane，依序寫入索引、安排 optional sidecars／分析並套用 storage
+policy；下載槽不等待這些 finalize 工作，因此網路取得與曲庫提交不會共用同一個資源鎖。Renderer
+不提交 URL、path、process id、runner option 或 concurrency，也不提供 thread slider。Import 執行態
+只投影「處理中／接下來／未完成／已完成」及必要的逐首停止／批次重試；選取 filter 與 checkbox
+只存在於確認態。App shell 是 `useSeparationQueue.js` 的唯一
 renderer owner，Titlebar status 與伴奏內容只消費同一 projection。伴奏清單將排序、移除、重試
-與清除紀錄收在共用 `SeparationToolbarList.vue`。Pending
-列重用 `useDragReorder.js` 的整列拖曳與 `UiSeparator` drop feedback；ellipsis 與右鍵開啟同一
-`UiContextMenu`，但不繼承播放 Queue 的選取、播放或 artwork action。一次 drop 只送出 bounded
+與清除紀錄收在共用 `SeparationToolbarList.vue`；暫停與繼續依附對應 queue section header，preview 的
+「開始準備」enqueue 後由 Main 自動執行，不另設第二列 transport control。Pending
+列重用 `useDragReorder.js` 的整列拖曳與 `UiSeparator` drop feedback；低頻操作由右鍵或鍵盤開啟
+同一 `UiContextMenu`，不以可見 ellipsis 壓縮曲目資訊，也不繼承播放 Queue 的選取、播放或 artwork action。四種狀態列以
+`TrackIdentityRow navigation="artist"` 組合 canonical artist destination；Preparation Dock 先同步
+collapse，再由既有 Library owner 完成 destination transition。一次 drop 只送出 bounded
 整數 offset，main-owned queue 在單次更新內依相鄰 Pending 項目完成移動。伴奏處理狀態仍由
 main-owned separation queue 持有，實際進度與錯誤權威不移入 Renderer。工具列模式的名稱、順序
 與預設值由 Lyrics 同用的 `separationPresets.js` recipe catalog 投影；批次完成數屬於 header 摘要，
-目前歌曲百分比只由鄰接的單曲 progress 顯示一次。Right
+目前歌曲百分比只由 active row 上方的固定 status lane 顯示一次。`useSeparationPreparation.js`
+明示持有 source selection：預設「目前播放順序」，另投影既有 playlist／album；來源或 recipe
+改變時立即依 canonical source order 投影「尚未準備／已有伴奏」，並排除同 recipe 已由 Queue
+代表的 track。Primary intent 只快照尚未準備的 track ids；既有 current result 只能由「已有伴奏」
+section 的明確 regenerate intent 重做。集合失效時回退到播放順序。這個 selector 不提供單曲 picker，
+也不改動 Playback Queue／Recently Played authority。Right
 Dock 的 expanded resize width、persistent desktop reserved bay、compact overlay、Escape 與 focus restoration
 屬於 shell，不得回流到 PlayerBar 或 playlist component。Pointer／keyboard resize separator 只在
 expanded state 掛載；collapsed restore control 只保留按鈕局部邊界，不保留全高 rail、resize hit target
@@ -122,6 +138,7 @@ paint containment，非拖曳 row 才可保留 `content-visibility` optimization
 shared `UiTrackRow` 不持有排序 semantics。最近播放由 feature adapter 直接
 組合 `UiTrackRow`，保留 52／40px recipe，但不繼承 Queue selection、reorder、drop target
 或整列 activation。
+可重用的曲目身分導覽位於 `src/components/track/TrackIdentityRow.vue`，而非 `ui/` primitive：它以 opt-in `none／album／artist／identity` recipe 組合 `UiTrackRow`、`TrackArtistCredits` 與既有 `useAlbumNavigation`。只有能解析到本機專輯或 canonical artist 的文字才成為 CTA；目的地不存在時保持純文字。adapter 在切換 Library destination 前同步發出 `navigate`，讓 Modal／Dock caller先收合；封面動作、整列選取、播放、排序、trail狀態仍由各feature owner持有。
 
 shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titlebar disclosure 開啟／關閉，
 在 bounded body 內組合 `BgmTrackPicker.vue` 的本機曲庫搜尋／單曲取代，並以
@@ -139,7 +156,7 @@ Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有
 Performance／Display 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
 layout family 是 registered v2 surface。`LibraryPage.vue`、`PerformancePage.vue` 與
 `DisplayPage.vue` 是 destination-level composition owners。
-`LibraryBrowseWorkspace.vue` 以完整 Library v2 boundary 包住 `AppFolderPage`，並持有 Folder artifacts；`LibraryBrowseContent.vue` 把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。`LibraryArtistIdentityController.vue` 單獨持有 artist identity modal 與 mutation orchestration。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同藝人專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`AppFolderPage`把`folder-tools`與Folder extension放在同一個第2列；extension直接顯露`AppFolderLayout`的單一Folder material，不建立滿版pseudo child surface、top seam、獨立工具列row或無效高度。`folder-tools`是row 2 upper-end的Folder背景控制，不繪製dock surface且位於floating plane下方；外層Scrollbar仍為最高paint owner。`LibraryBrowseWorkspace`只透過共用方形Command `UiIconButton`＋`UiContextMenu`提供新增照片／便條intent、loading與focus return，並以`useAppConfirmation`確認物件刪除；便條編輯狀態由`LibraryBrowseWorkspace`持有、經`LibraryFolderArtifactLayer`的`editingKey`傳到`UiFolderArtifact`，由共用`UiTextarea`的`bare` variant承接輸入；便條紙材是main在建立時隨機寫入payload的`paper`，renderer只依token與`src/assets/folder-paper/`的顆粒素材繪製，canvas在可編輯欄位上讓出拖曳與鍵盤移動。collection command rail不再轉送page-owned control；`useLibraryFolderObjects.js`是頁面物件的state／intent owner，以key為單位合併最新版面並以單一批次寫入。`LibraryFolderArtifactLayer.vue` 以type registry把 durable objects 與 page-scoped derived artist note 投影到同一個 Folder-wide canvas，避免座標與 stacking authority 分裂，並把main projection的rotation交給既有rotation-aware canvas；未登記的type不渲染。照片 activation 使用 renderer-root `UiModal`的shell-free media presentation；thumbnail與Preview都組合shared `UiPhotoFrame` material與filter，thumbnail使用4:3 cover，Preview使用intrinsic contain。Media grid在content的inline-end保留top-aligned vertical action rail；close先於caller action出現在DOM與Tab順序，remove使用shared `UiIconButton danger` intent、close維持neutral，content bounds會扣除rail與gap；frame material不是Modal shell。`UiModal`的backdrop預設保持inert，只有media caller opt in self-click dismissal；同一owner管理成對enter／leave transition、Escape、focus與finite open-order stack，`LibraryBrowseWorkspace`保留asset snapshot到leave完成後才釋放。所有物件只有一種paper／side／bottom region-local placement，Pin只鎖使用者移動；shared geometry按placement投影，side reserve不足時暫時fallback到底部且resize不寫回canonical pose。Import 不再擁有 destination 或 main-area page。Window Titlebar 的「曲目準備」controlled disclosure 由 shell 切換 retained `PreparationDockPanel.vue`，並保留目前 Library／Performance／Display 目的地；再次點擊只關閉這個前景 surface。短任務與單曲候選由 `ImportDockContent.vue` 在 Right Dock 內完成；playlist／album 的多選、filter、retry 交由寬版 `ImportReviewModal.vue`。Dock content 與 review modal 共用 module-scope `useImportSession`，不建立第二份 job queue 或下載歷史；完成項目的持久 truth 仍是 Local Library。匯入物件列直接組合 `UiTrackRow` 的 Dock density／state surface，但 action、下載狀態與錯誤恢復由 Import owner 持有，不帶入 `QueueTrackButton` 的播放、選取、拖曳或排序行為。
+`LibraryBrowseWorkspace.vue` 以完整 Library v2 boundary 包住 `AppFolderPage`，並持有 Folder artifacts；`LibraryBrowseContent.vue` 把 library identity／search 放在 fixed header，將 loading／error／empty／track list 留在唯一 document scroll body。`LibraryArtistIdentityController.vue` 單獨持有 artist identity modal 與 mutation orchestration。Registered boundary 只提供 token scope 與 local overlay host，不進入 document flow 覆蓋 neutral page paint。`AppFolderContentField.vue` 擁有 tracks／states 的 recessed neutral background，並隨 primary content 結束；loading／error／empty 使用有限高度的 `state` variant，正常列表維持 intrinsic terminus。Playlist／album dossier 與 toolbar 留在 field 上方，album 的本機同藝人專輯與曲庫摘要留在 field 下方的 document surface，且不新增第二個 scroll owner。`AppFolderPage`把`folder-tools`與Folder extension放在同一個第2列；extension直接顯露`AppFolderLayout`的單一Folder material，不建立滿版pseudo child surface、top seam、獨立工具列row或無效高度。`folder-tools`是row 2 upper-end的Folder背景控制，不繪製dock surface且位於floating plane下方；外層Scrollbar仍為最高paint owner。`LibraryBrowseWorkspace`只透過共用方形Command `UiIconButton`＋`UiContextMenu`提供新增照片／便條intent、loading與focus return，並以`useAppConfirmation`確認物件刪除；便條編輯狀態由`LibraryBrowseWorkspace`持有、經`LibraryFolderArtifactLayer`的`editingKey`傳到`UiFolderArtifact`，由共用`UiTextarea`的`bare` variant承接輸入；便條紙材是main在建立時隨機寫入payload的`paper`，renderer只依token與`src/assets/folder-paper/`的顆粒素材繪製，canvas在可編輯欄位上讓出拖曳與鍵盤移動。collection command rail不再轉送page-owned control；`useLibraryFolderObjects.js`是頁面物件的state／intent owner，以key為單位合併最新版面並以單一批次寫入。`LibraryFolderArtifactLayer.vue` 以type registry把 durable objects 與 page-scoped derived artist note 投影到同一個 Folder-wide canvas，避免座標與 stacking authority 分裂，並把main projection的rotation交給既有rotation-aware canvas；未登記的type不渲染。照片 activation 使用 renderer-root `UiModal`的shell-free media presentation；thumbnail與Preview都組合shared `UiPhotoFrame` material與filter，thumbnail使用4:3 cover，Preview使用intrinsic contain。Media grid在content的inline-end保留top-aligned vertical action rail；close先於caller action出現在DOM與Tab順序，remove使用shared `UiIconButton danger` intent、close維持neutral，content bounds會扣除rail與gap；frame material不是Modal shell。`UiModal`的backdrop預設保持inert，只有media caller opt in self-click dismissal；同一owner管理成對enter／leave transition、Escape、focus與finite open-order stack，`LibraryBrowseWorkspace`保留asset snapshot到leave完成後才釋放。所有物件只有一種paper／side／bottom region-local placement，Pin只鎖使用者移動；shared geometry按placement投影，side reserve不足時暫時fallback到底部且resize不寫回canonical pose。Import 不再擁有 destination 或 main-area page。Window Titlebar 的「曲目準備」controlled disclosure 由 shell 切換 retained `PreparationDockPanel.vue`，並保留目前 Library／Performance／Display 目的地；再次點擊只關閉這個前景 surface。短任務與單曲候選由 `ImportDockContent.vue` 在 Right Dock 內完成；playlist／album 的多選、filter、retry 交由寬版 `ImportReviewModal.vue`。Dock content 與 review modal 共用 module-scope `useImportSession`，不建立第二份 job queue 或下載歷史；完成項目的持久 truth 仍是 Local Library。Dock快速結果與Modal批次確認都直接組合 `UiTrackRow`：Import只在lead／trail加入選取、action、下載狀態與錯誤恢復，不帶入`TrackTable`的collection browse grid，也不帶入`QueueTrackButton`的播放、拖曳或排序行為。Collection摘要以整列action開啟review，trail維持object status；Modal次要批次操作使用既有`UiIconButton`與accessible label，footer只保留帶數量的主要動作。當row已表達成功時，Dock不重複surface success copy，錯誤與recovery仍保留。Separation queue以`AppRightDockSection`、`TrackIdentityRow`與既有Right Dock section／content gap token沿用相同heading tone、row密度與state surface；progress、reorder、retry與cancel仍由Separation owner持有。Pending順序由list位置與drag feedback表達，不再顯示ordinal／waiting copy；低頻row action只由pointer context menu或Context Menu鍵／Shift+F10開啟，不保留會壓縮artist文字的visible ellipsis。Terminal item以`UiStatusIcon`＋Tooltip／ARIA呈現狀態。
 `DisplayPage.vue` 擁有 Display／local overlay host 的完整 v2 boundary，並直接組合 `ObsOutputWorkspace.vue`。
 `ObsOutputWorkspace.vue` 在 `AppFolderPage` fixed header 放置唯一的畫面分頁（歌單／歌詞／播放中）、編輯／模板模式切換、runtime 燈號與啟動／停止，以及跳到 Settings「公開輸出與 OBS」的輸出設定入口（`openSettings('output')`），不再增加重複的可見頁名。連接埠、自動啟動、畫面延遲與 Spout2 由 `OutputRuntimeSettingsBlock` 在對外輸出 gate 啟用後呈現。
 Lyrics 與 local overlay host 同樣使用完整 v2 boundary。
@@ -360,28 +377,29 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 
 ## 權威狀態與資料
 
-| 資料                                  | 權威 owner                        | 投影／持久化                                                                                                                                                   |
-| ------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                                                                                                            |
-| Track added time                      | Main library/import boundary      | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影                                                                                            |
-| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                                                                                                                   |
-| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費；Self-View 同步微調經 revision／track／source stale guard 回到既有 `useLyrics` owner                         |
-| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                                                                                                           |
-| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用                                                                                                             |
-| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate                                                                                                                   |
-| Performance session current draft     | Main session plan store           | Library root bounded JSON；Renderer 提交 ids／labels／intent                                                                                                   |
-| BGM standby preparation               | Main BGM plan store               | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent                                                                                            |
-| BGM transport／handoff                | Renderer BGM deck／coordinator    | HTML audio events、logical gain bus 與 readonly UI projection                                                                                                  |
-| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent                                                                                                                       |
-| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent                                                                                                                         |
-| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy                                                                                                               |
-| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments                                                                                                                  |
-| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent                                                                                                                        |
-| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記                                                                                                                     |
-| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                                                                                                                  |
-| Artist index／organization            | Main artist index／organization   | `artists.json` stable entity＋negative evidence＋唯讀投影；Renderer auto-resolve 只送無參數 intent，其他 mutation 只送 opaque ids、bounded 顯示名稱與 revision |
-| Artist photos                         | Main artist photo services        | `artists/<artistId>/` sidecar；Renderer 只送 artist id／candidate id 與選圖／移除／候選 intent                                                                 |
-| Folder page objects                   | Main folder object store          | Library root manifest＋opaque asset dirs；Renderer 只送 bounded page／object key／region placement／Pin／order batch intent                                    |
+| 資料                                  | 權威 owner                         | 投影／持久化                                                                                                                                                   |
+| ------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Track existence                       | Library filesystem                 | `library.json` 只補 scalar metadata                                                                                                                            |
+| Track added time                      | Main library/import boundary       | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影                                                                                            |
+| Playback timing/state                 | Renderer HTML audio element        | Main、taskbar、SMTC 與 Output 只接收狀態投影                                                                                                                   |
+| Queue／playing track／lyrics state    | Renderer composables               | Projection Hub 驗證後供 Self-View 與 Overlay 消費；Self-View 同步微調經 revision／track／source stale guard 回到既有 `useLyrics` owner                         |
+| Recent playback events                | Main playback persistence service  | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                                                                                                           |
+| Complete last-played index            | Main playback persistence service  | Main-private 本機 JSON；只供去人聲 LRU policy 使用                                                                                                             |
+| Playback resume snapshot              | Renderer player／queue projection  | Main 驗證並原子保存；啟動只 paused rehydrate                                                                                                                   |
+| Performance session current draft     | Main session plan store            | Library root bounded JSON；Renderer 提交 ids／labels／intent                                                                                                   |
+| BGM standby preparation               | Main BGM plan store                | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent                                                                                            |
+| BGM transport／handoff                | Renderer BGM deck／coordinator     | HTML audio events、logical gain bus 與 readonly UI projection                                                                                                  |
+| Feature confirmation                  | Main config state                  | Renderer 只顯示與提交 allowlisted intent                                                                                                                       |
+| Lyrics／analysis／separation sidecars | Main library services              | Renderer 只提供 track id 與產品 intent                                                                                                                         |
+| Library storage policy／snapshot      | Main config／library service       | Renderer 只接收分類容量並提交 allowlisted policy                                                                                                               |
+| Dependency registry                   | `shared/featureDependencies.json`  | Main 解析 URL、hash、path、model 與 arguments                                                                                                                  |
+| OBS endpoint／credential              | Main config／encrypted file        | Renderer 只提交 bounded settings intent                                                                                                                        |
+| OBS session history                   | Main session history service       | 本機 JSON；Renderer 只讀並輸出場次時間標記                                                                                                                     |
+| App CPU／RAM observation              | Main usage service                 | Titlebar 只接收 bounded percentage projection                                                                                                                  |
+| Artist index／organization            | Main artist index／organization    | `artists.json` stable entity＋negative evidence＋唯讀投影；Renderer auto-resolve 只送無參數 intent，其他 mutation 只送 opaque ids、bounded 顯示名稱與 revision |
+| Artist photos                         | Main artist photo services         | `artists/<artistId>/` sidecar；Renderer 只送 artist id／candidate id 與選圖／移除／候選 intent                                                                 |
+| Track editing draft                   | Renderer editor＋Main path session | Renderer 持有文字／預覽草稿；Main 持有本機 path，單次 Save 才更新 metadata／artwork，失敗回滾封面                                                              |
+| Folder page objects                   | Main folder object store           | Library root manifest＋opaque asset dirs；Renderer 只送 bounded page／object key／region placement／Pin／order batch intent                                    |
 
 `library:list` 是本機曲庫投影的共同入口。Main 對每個 resolved library directory 在單次 App session
 首次讀取前執行一次 `organizeTrackMetadataFromSidecars()`，從已保存的 `info.json` 套用目前的 bounded
@@ -401,7 +419,8 @@ form 都不改寫。Library-root `artists.json` 保存 version／revision、boun
 id；投影提供 bounded legacy／old-stable redirect，讓既有 selection、queue／history source 與頁面 navigation
 導向目前 stable id，且 redirect 隨 undo snapshot 一起復原。
 Main 在 `library:get-artist-index` 首次被呼叫時才非同步讀取 sidecar，並以（track id、artist scalar）快取；
-Renderer 的 `useArtistIndex.js` 在第一個 artist surface 開啟時才請求，曲庫變動後重抓，專輯歸屬由
+Renderer 的 `useArtistIndex.js` 在第一個顯示可導向 artist credit 的 surface 開啟時才請求，曲庫變動後重抓；
+Library 所有 track-list mode 與 Preparation separation list 都屬於這類 surface。專輯歸屬由
 `src/utils/artistCollections.js` 以成員曲目最多的 artist 決定。
 Sidebar 參照區以 `orderReferenceItems()` 依藝人名稱混排專輯與藝人，並在曲庫清單載入後以 idle task 請求 index；artist 選取由 `usePlaylists.js` 的
 `selectedArtistId` 擁有並與 collection 選取互斥，`src/utils/artistPage.js` 推導 sidebar 清單與 artist 頁，
@@ -706,10 +725,11 @@ sidecar currentness，並在手動 analysis／batch 結束後再執行。排入�
 播放清單批次加入都經過同一 owner，依序執行並以 open `(trackId, recipeId)` 去重；每首開始前
 重新檢查 gate、依賴、來源與目前 profile 結果，預設略過已存在的 current result，只有明確
 重新準備 intent 才覆寫。Main 提供 bounded status query／progress event、pause-after-current、
-active cancel、pending move／remove、failed retry／dismiss 與 successful-history clear；Renderer 只提交
+active cancel、pending move／remove／atomic clear、failed retry／dismiss 與 successful-history clear；Renderer 只提交
 track ids、allowlisted product intent 與 boolean override。Queue status 只代表本次 App session
 的操作進度，manifest 仍是結果存在與可播放的權威；重啟持久化、平行處理、ETA、完成通知與
-worker／model reuse 不屬於第一階段。`separationHandlers.js` 將同一 bounded status 送往
+worker／model reuse 不屬於第一階段。Renderer 的 clear-completed 只是移除 session history，
+不得使用 durable delete 語意或刪除 manifest result。`separationHandlers.js` 將同一 bounded status 送往
 `windowState.js`；Windows taskbar 以已完成首數加目前單曲百分比投影 aggregate progress，百分比
 未知時使用 indeterminate、暫停時使用 paused、仍有失敗或取消項目時使用 error，idle／完成後清除。
 伴奏工作清單的容量提示只在所有計畫歌曲都有可靠時長時顯示「最多新增」上限，不能冒充曲庫總占用；
