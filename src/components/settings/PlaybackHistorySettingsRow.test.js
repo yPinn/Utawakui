@@ -36,10 +36,11 @@ describe('PlaybackHistorySettingsRow', () => {
     expect(html).not.toContain('清除播放紀錄');
   });
 
-  it('keeps clear as a danger overflow action disabled while empty or busy', () => {
+  it('keeps clear as a neutral list action disabled while empty or busy', () => {
     expect(source).toContain("label: '清除播放紀錄'");
-    expect(source).toContain('icon: Trash2');
-    expect(source).toContain('danger: true');
+    expect(source).toContain('icon: ListX');
+    expect(source).not.toContain('Trash2');
+    expect(source).not.toContain('danger: true');
     expect(source).toMatch(
       /disabled:\s*props\.isLoading\s*\|\|\s*props\.isClearing\s*\|\|\s*props\.recordCount === 0/u,
     );

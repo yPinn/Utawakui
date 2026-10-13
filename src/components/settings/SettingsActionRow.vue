@@ -165,16 +165,16 @@ const resolvedTitleTag = computed(
 .settings-action-row__title {
   color: var(--ui-color-text);
   font-size: var(--settings-action-row-title-size);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .settings-action-row__description,
 .settings-action-row__value {
   color: var(--ui-color-text-muted);
   font-size: var(--settings-action-row-value-size);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .settings-action-row__value {

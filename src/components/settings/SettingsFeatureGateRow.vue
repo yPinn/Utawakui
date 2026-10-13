@@ -141,9 +141,9 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
 .settings-feature-gate-row__notice-summary {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .settings-feature-gate-row__notice-list {
@@ -152,9 +152,9 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
   margin: 0;
   padding-left: var(--ui-space-4);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .settings-feature-gate-row__notice-list li {

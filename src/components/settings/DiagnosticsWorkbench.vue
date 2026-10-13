@@ -107,6 +107,7 @@ onMounted(workbench.refresh);
       >
         <UiSearchBox
           v-model="query"
+          class="diagnostics-workbench__search"
           label="搜尋診斷事件"
           placeholder="搜尋來源、操作、代碼或訊息"
         />
@@ -185,7 +186,7 @@ onMounted(workbench.refresh);
   min-height: 0;
 }
 
-.diagnostics-workbench__filters :deep(.ui-search-box) {
+.diagnostics-workbench__search {
   flex: 1 1 16rem;
 }
 
@@ -229,8 +230,8 @@ onMounted(workbench.refresh);
   grid-template-columns: max-content max-content max-content max-content 1fr;
   align-items: center;
   gap: var(--ui-space-3);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .diagnostics-workbench__timestamp,

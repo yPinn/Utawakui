@@ -285,8 +285,8 @@ async function chooseManaged() {
   max-width: 65ch;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .ffmpeg-source-modal__list {
@@ -340,9 +340,9 @@ async function chooseManaged() {
 }
 
 .ffmpeg-source-modal__label {
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .ffmpeg-source-modal__caption {

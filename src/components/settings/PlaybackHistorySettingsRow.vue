@@ -1,6 +1,6 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
-import { Clock, Ellipsis, Trash2 } from '../../icons/index.js';
+import { Clock, Ellipsis, ListX } from '../../icons/index.js';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -34,8 +34,7 @@ const menuItems = computed(() => [
   {
     value: 'clear',
     label: '清除播放紀錄',
-    icon: Trash2,
-    danger: true,
+    icon: ListX,
     disabled: props.isLoading || props.isClearing || props.recordCount === 0,
   },
 ]);

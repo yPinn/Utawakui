@@ -33,7 +33,10 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(483);
+    expect(names.size).toBe(527);
+    expect(names).toContain('--ui-textarea-font-size');
+    expect(names).toContain('--ui-textarea-font-weight');
+    expect(names).toContain('--ui-textarea-line-height');
     expect(names).toContain('--ui-folder-content-background');
     expect(names).toContain('--ui-folder-content-state-min-block-size');
     expect(names).toContain('--ui-folder-sheet-background');

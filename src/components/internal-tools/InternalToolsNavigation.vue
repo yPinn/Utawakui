@@ -119,8 +119,8 @@ function selectTool(route) {
   max-width: 58ch;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .internal-tools-nav :deep(.ui-segmented-control__option) {

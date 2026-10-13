@@ -228,8 +228,8 @@ function choose(deviceId) {
   min-width: 0;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .capture-device-modal__guide-btn {
@@ -287,9 +287,9 @@ function choose(deviceId) {
 .capture-device-modal__group-heading {
   padding: var(--ui-space-2) var(--ui-space-1) 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .capture-device-modal__label {

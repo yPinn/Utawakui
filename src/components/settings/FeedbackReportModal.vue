@@ -252,8 +252,8 @@ function handleNoticeAction(operation) {
 .feedback-report__intro {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .feedback-report__summary {
@@ -275,8 +275,8 @@ function handleNoticeAction(operation) {
 .feedback-report__row dd {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
   overflow-wrap: anywhere;
 }
 

@@ -118,8 +118,8 @@ const hasSession = computed(
 .obs-session-export-modal__status {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .obs-session-export-modal__controls {

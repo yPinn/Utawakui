@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
@@ -67,6 +68,17 @@ describe('DiagnosticsSettingsRow', () => {
   it('keeps the overflow trigger enabled even while loading or empty', async () => {
     const loadingHtml = await renderRow({ recordCount: 0, isLoading: true });
     expect(buttonTag(loadingHtml, '錯誤紀錄選項')).not.toContain('disabled');
+  });
+
+  it('treats clearing projected records as a neutral list action', () => {
+    const source = readFileSync(
+      new URL('./DiagnosticsSettingsRow.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain('icon: ListX');
+    expect(source).not.toContain('Trash2');
+    expect(source).not.toContain('danger: true');
   });
 
   it('renders safe notices without exposing diagnostic event details', async () => {
