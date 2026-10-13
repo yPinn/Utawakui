@@ -108,4 +108,28 @@ describe('preparation activity presentation', () => {
       }),
     ).toEqual({ state: 'attention', label: '有未完成項目' });
   });
+
+  it('projects provider failures and concurrent preparation work explicitly', () => {
+    expect(
+      preparationActivityIndicator({
+        providerImport: {
+          playlistTracks: [{ status: 'done' }, { status: 'error' }],
+        },
+      }),
+    ).toEqual({ state: 'attention', label: '匯入未完成' });
+
+    expect(
+      preparationActivityIndicator({
+        separationQueue: {
+          status: 'running',
+          done: 0,
+          total: 2,
+          pending: 1,
+          failed: 0,
+          cancelled: 0,
+        },
+        localImport: { isImporting: true },
+      }),
+    ).toEqual({ state: 'running', label: '多項處理中' });
+  });
 });
