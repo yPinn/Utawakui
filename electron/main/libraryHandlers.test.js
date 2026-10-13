@@ -1213,6 +1213,52 @@ describe('library metadata maintenance handlers', () => {
     ).toBe(false);
   });
 
+  it('aborts all in-flight artwork previews through the existing cancel intent', async () => {
+    const capturedSignals = [];
+    const artworkDiscoveryService = {
+      loadPreview: vi.fn(
+        (_trackId, _candidateId, { signal }) =>
+          new Promise((resolve) => {
+            capturedSignals.push(signal);
+            signal.addEventListener(
+              'abort',
+              () => resolve({ status: 'error', reason: 'timeout' }),
+              { once: true },
+            );
+          }),
+      ),
+    };
+    const handlers = registerHandlers({
+      artworkDiscoveryService,
+      listLibraryTracks: vi.fn().mockReturnValue([{ id: 'track-1' }]),
+    });
+
+    const first = handlers.get('library:load-track-artwork-preview')(
+      null,
+      'track-1',
+      'candidate-1',
+    );
+    const second = handlers.get('library:load-track-artwork-preview')(
+      null,
+      'track-1',
+      'candidate-2',
+    );
+    await vi.waitFor(() => expect(capturedSignals).toHaveLength(2));
+
+    expect(
+      handlers.get('library:cancel-track-artwork-search')(null, 'track-1'),
+    ).toBe(true);
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { status: 'error', reason: 'timeout' },
+      { status: 'error', reason: 'timeout' },
+    ]);
+    expect(capturedSignals[0]).toBe(capturedSignals[1]);
+    expect(capturedSignals[0].aborted).toBe(true);
+    expect(
+      handlers.get('library:cancel-track-artwork-search')(null, 'track-1'),
+    ).toBe(false);
+  });
+
   it('records private provider context while returning only the coarse public reason', async () => {
     const recordDiagnostic = vi.fn(() => ({ ok: true }));
     const createArtworkService = vi.fn(({ onProviderFailure }) => ({

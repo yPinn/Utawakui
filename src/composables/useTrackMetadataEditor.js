@@ -82,7 +82,19 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     }
   }
 
-  function invalidateArtworkResults({ preserveDraft = true } = {}) {
+  function invalidateArtworkResults({
+    preserveDraft = true,
+    cancelRemote = true,
+  } = {}) {
+    const trackId = state.track?.id;
+    const hasPendingPreview = state.artworkCandidates.some(
+      (candidate) => candidate.previewLoading,
+    );
+    if (cancelRemote && trackId && hasPendingPreview) {
+      Promise.resolve(
+        window.Utawakui?.cancelTrackArtworkSearch?.(trackId),
+      ).catch(() => {});
+    }
     artworkPreviewGeneration += 1;
     const preserveUrl = preserveDraft ? state.artworkPreviewUrl : '';
     revokeArtworkPreviews(preserveUrl);
@@ -98,12 +110,15 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.isArtworkSearching = false;
   }
 
-  // Aborts the main-side lookup and orphans its late result: the generation
-  // bump makes searchArtwork() discard whatever it resolves with.
+  // Aborts main-side lookup/preview work and orphans late results: the
+  // generation bump makes searchArtwork() discard whatever it resolves with.
   function cancelArtworkSearch() {
-    if (!state.isArtworkSearching) return;
+    const hasPendingPreview = state.artworkCandidates.some(
+      (candidate) => candidate.previewLoading,
+    );
+    if (!state.isArtworkSearching && !hasPendingPreview) return;
     const trackId = state.track?.id;
-    invalidateArtworkResults();
+    invalidateArtworkResults({ cancelRemote: false });
     state.isArtworkSearching = false;
     if (trackId) {
       Promise.resolve(
@@ -336,7 +351,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       }
     }
     await Promise.all(
-      Array.from({ length: Math.min(2, pending.size) }, () => worker()),
+      Array.from({ length: Math.min(4, pending.size) }, () => worker()),
     );
   }
 

@@ -126,6 +126,13 @@ describe('MusicBrainz client', () => {
             status: 'Official',
             date: '2024-01-02',
             country: 'TW',
+            'cover-art-archive': {
+              artwork: true,
+              front: true,
+              back: false,
+              count: 1,
+              darkened: false,
+            },
             'release-group': {
               id: '44444444-4444-4444-8444-444444444444',
               title: '專輯',
@@ -153,6 +160,13 @@ describe('MusicBrainz client', () => {
           title: '專輯',
           status: 'Official',
           country: 'TW',
+          coverArtArchive: {
+            artwork: true,
+            front: true,
+            back: false,
+            count: 1,
+            darkened: false,
+          },
           releaseGroup: { primaryType: 'Album' },
         },
       ],

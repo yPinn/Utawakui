@@ -126,6 +126,106 @@ describe('artwork discovery service', () => {
     expect(lookupFront).toHaveBeenCalledTimes(4);
   });
 
+  it('uses MusicBrainz front-artwork evidence without a CAA metadata preflight', async () => {
+    const lookupFront = vi.fn();
+    const downloadArtwork = vi.fn().mockResolvedValue({
+      status: 'ok',
+      image: {
+        mimeType: 'image/jpeg',
+        extension: '.jpg',
+        width: 250,
+        height: 250,
+        buffer: Buffer.from('preview'),
+      },
+    });
+    const releases = recordingReleases(4).map((release) => ({
+      ...release,
+      coverArtArchive: {
+        artwork: true,
+        front: true,
+        back: false,
+        count: 1,
+        darkened: false,
+      },
+    }));
+    const searchRecordings = vi.fn().mockResolvedValue({
+      status: 'ok',
+      records: [
+        {
+          entityType: 'recording',
+          id: '33333333-3333-4333-8333-333333333333',
+          title: '後來',
+          artistCredit: '劉若英',
+          duration: 341,
+          releases,
+          score: 100,
+        },
+      ],
+    });
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: {
+        searchRecordings,
+        searchReleaseGroups: vi.fn(),
+      },
+      coverArtClient: { lookupFront },
+      downloadArtwork,
+    });
+
+    const result = await service.search(track);
+
+    expect(result).toMatchObject({ status: 'ok' });
+    expect(result.candidates).toHaveLength(4);
+    expect(lookupFront).not.toHaveBeenCalled();
+    await expect(
+      service.loadPreview(track.id, result.candidates[0].id),
+    ).resolves.toMatchObject({ status: 'ok', mimeType: 'image/jpeg' });
+    expect(downloadArtwork).toHaveBeenCalledWith(
+      `https://coverartarchive.org/release/${releases[0].id}/front-250`,
+      expect.objectContaining({
+        maxBytes: 1024 * 1024,
+        maxPixels: 512 * 512,
+        allowedMimeTypes: ['image/jpeg'],
+      }),
+    );
+  });
+
+  it('returns only the highest-ranked candidate from the same release group', async () => {
+    const sharedGroupId = '50000000-0000-4000-8000-000000000000';
+    const releases = recordingReleases(4).map((release) => ({
+      ...release,
+      releaseGroup: { ...release.releaseGroup, id: sharedGroupId },
+      coverArtArchive: { front: true },
+    }));
+    const searchReleaseGroups = vi
+      .fn()
+      .mockResolvedValue({ status: 'ok', records: [] });
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: {
+        searchRecordings: vi.fn().mockResolvedValue({
+          status: 'ok',
+          records: [
+            {
+              entityType: 'recording',
+              id: '33333333-3333-4333-8333-333333333333',
+              title: '後來',
+              artistCredit: '劉若英',
+              duration: 341,
+              releases,
+              score: 100,
+            },
+          ],
+        }),
+        searchReleaseGroups,
+      },
+      coverArtClient: { lookupFront: vi.fn() },
+    });
+
+    const result = await service.search(track);
+
+    expect(result.candidates).toHaveLength(1);
+    expect(searchReleaseGroups).toHaveBeenCalledOnce();
+  });
+
   it('starts all four required cover lookups before the first one settles', async () => {
     const lookups = trackedDeferredCoverLookups();
     const { service } = recordingSearchService({
@@ -572,8 +672,8 @@ describe('artwork discovery service', () => {
       front.applyUrl,
     ]);
     expect(downloadArtwork.mock.calls[0][1]).toMatchObject({
-      maxBytes: 2 * 1024 * 1024,
-      maxPixels: 4 * 1024 * 1024,
+      maxBytes: 1024 * 1024,
+      maxPixels: 512 * 512,
     });
     expect(writeArtwork).toHaveBeenCalledWith(
       'library-dir',
@@ -591,6 +691,115 @@ describe('artwork discovery service', () => {
       `https://musicbrainz.org/release-group/${releaseGroup.id}`,
     );
     expect(service.sourcePage('other-track', 'candidate-1')).toBe(null);
+  });
+
+  it('coalesces concurrent preview loads for the same opaque candidate', async () => {
+    const preview = deferred();
+    const downloadArtwork = vi.fn(() => preview.promise);
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: {
+        searchRecordings: vi
+          .fn()
+          .mockResolvedValue({ status: 'ok', records: [] }),
+        searchReleaseGroups: vi.fn().mockResolvedValue({
+          status: 'ok',
+          records: [releaseGroup],
+        }),
+      },
+      coverArtClient: {
+        lookupFront: vi.fn().mockResolvedValue({
+          status: 'ok',
+          front: {
+            imageUrl: 'https://coverartarchive.org/release-group/x/front',
+            previewUrl: 'https://coverartarchive.org/release-group/x/front-250',
+            applyUrl: 'https://coverartarchive.org/release-group/x/front-500',
+            thumbnailMimeTypes: ['image/jpeg'],
+          },
+        }),
+      },
+      downloadArtwork,
+      randomId: () => 'candidate-1',
+    });
+    await service.search(track);
+
+    const first = service.loadPreview(track.id, 'candidate-1');
+    const second = service.loadPreview(track.id, 'candidate-1');
+    expect(downloadArtwork).toHaveBeenCalledOnce();
+    preview.resolve({
+      status: 'ok',
+      image: {
+        mimeType: 'image/jpeg',
+        extension: '.jpg',
+        width: 250,
+        height: 250,
+        buffer: Buffer.from('preview'),
+      },
+    });
+
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
+    expect(downloadArtwork).toHaveBeenCalledOnce();
+  });
+
+  it('falls back from the bounded 1200 thumbnail to 500 when applying artwork', async () => {
+    const downloadArtwork = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 'error',
+        reason: 'not-found',
+        httpStatus: 404,
+      })
+      .mockResolvedValueOnce({
+        status: 'ok',
+        image: {
+          mimeType: 'image/jpeg',
+          extension: '.jpg',
+          width: 500,
+          height: 500,
+          buffer: Buffer.from('image'),
+        },
+      });
+    const writeArtwork = vi.fn().mockReturnValue('thumbnail.jpg');
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: {
+        searchRecordings: vi
+          .fn()
+          .mockResolvedValue({ status: 'ok', records: [] }),
+        searchReleaseGroups: vi.fn().mockResolvedValue({
+          status: 'ok',
+          records: [releaseGroup],
+        }),
+      },
+      coverArtClient: {
+        lookupFront: vi.fn().mockResolvedValue({
+          status: 'ok',
+          front: {
+            imageUrl: 'https://coverartarchive.org/release-group/x/front',
+            previewUrl: 'https://coverartarchive.org/release-group/x/front-250',
+            applyUrl: 'https://coverartarchive.org/release-group/x/front-1200',
+            applyUrls: [
+              'https://coverartarchive.org/release-group/x/front-1200',
+              'https://coverartarchive.org/release-group/x/front-500',
+            ],
+            thumbnailMimeTypes: ['image/jpeg'],
+          },
+        }),
+      },
+      downloadArtwork,
+      writeArtwork,
+      randomId: () => 'candidate-1',
+    });
+    await service.search(track);
+
+    await expect(
+      service.apply('library-dir', track.id, 'candidate-1'),
+    ).resolves.toEqual({ status: 'ok', filename: 'thumbnail.jpg' });
+    expect(downloadArtwork.mock.calls.map(([url]) => url)).toEqual([
+      'https://coverartarchive.org/release-group/x/front-1200',
+      'https://coverartarchive.org/release-group/x/front-500',
+    ]);
+    expect(downloadArtwork.mock.calls[0][1]).toMatchObject({
+      allowedMimeTypes: ['image/jpeg'],
+    });
   });
 
   it('rejects invalid edits and expires candidate capabilities', async () => {

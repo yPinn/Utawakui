@@ -148,4 +148,35 @@ describe('artwork image validation', () => {
     ).resolves.toEqual({ status: 'error', reason: 'response-too-large' });
     expect(cancel).toHaveBeenCalledOnce();
   });
+
+  it('classifies provider pressure and enforces a consumer image-type allowlist', async () => {
+    await expect(
+      downloadValidatedArtwork('https://coverartarchive.org/release/x/front', {
+        fetch: vi
+          .fn()
+          .mockResolvedValue(response(Buffer.alloc(0), { status: 429 })),
+      }),
+    ).resolves.toEqual({
+      status: 'error',
+      reason: 'rate-limited',
+      httpStatus: 429,
+    });
+    await expect(
+      downloadValidatedArtwork('https://coverartarchive.org/release/x/front', {
+        fetch: vi
+          .fn()
+          .mockResolvedValue(response(Buffer.alloc(0), { status: 503 })),
+      }),
+    ).resolves.toEqual({
+      status: 'error',
+      reason: 'service-unavailable',
+      httpStatus: 503,
+    });
+    await expect(
+      downloadValidatedArtwork('https://archive.org/download/x/front.png', {
+        fetch: vi.fn().mockResolvedValue(response(pngBuffer(250, 250))),
+        allowedMimeTypes: ['image/jpeg'],
+      }),
+    ).resolves.toEqual({ status: 'error', reason: 'unsupported-image-type' });
+  });
 });

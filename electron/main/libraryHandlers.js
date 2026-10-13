@@ -1018,6 +1018,22 @@ function registerLibraryHandlers({
   // One in-flight search per track; the renderer can abort it so a slow
   // provider never traps the editor.
   const artworkSearches = new Map();
+  const artworkPreviews = new Map();
+
+  function abortArtworkOperations(trackId) {
+    let aborted = false;
+    const searchController = artworkSearches.get(trackId);
+    if (searchController) {
+      searchController.abort();
+      aborted = true;
+    }
+    const previewGroup = artworkPreviews.get(trackId);
+    if (previewGroup) {
+      previewGroup.controller.abort();
+      aborted = true;
+    }
+    return aborted;
+  }
 
   ipcMain.handle(
     'library:search-track-artwork',
@@ -1028,7 +1044,7 @@ function registerLibraryHandlers({
         (candidate) => candidate.id === trackId,
       );
       if (!track) return { status: 'error', reason: 'track-unavailable' };
-      artworkSearches.get(trackId)?.abort();
+      abortArtworkOperations(trackId);
       const controller = new AbortController();
       artworkSearches.set(trackId, controller);
       const result = await runDiagnosticIpcOperation(
@@ -1062,9 +1078,7 @@ function registerLibraryHandlers({
   );
 
   ipcMain.handle('library:cancel-track-artwork-search', (event, trackId) => {
-    const controller = artworkSearches.get(trackId);
-    controller?.abort();
-    return Boolean(controller);
+    return abortArtworkOperations(trackId);
   });
 
   ipcMain.handle(
@@ -1076,6 +1090,12 @@ function registerLibraryHandlers({
         (candidate) => candidate.id === trackId,
       );
       if (!track) return { status: 'error', reason: 'track-unavailable' };
+      let previewGroup = artworkPreviews.get(trackId);
+      if (!previewGroup || previewGroup.controller.signal.aborted) {
+        previewGroup = { active: 0, controller: new AbortController() };
+        artworkPreviews.set(trackId, previewGroup);
+      }
+      previewGroup.active += 1;
       return runDiagnosticIpcOperation(
         {
           recordDiagnostic,
@@ -1091,8 +1111,19 @@ function registerLibraryHandlers({
             context: { retryable: true },
           },
         },
-        () => resolvedArtworkDiscoveryService.loadPreview(trackId, candidateId),
-      );
+        () =>
+          resolvedArtworkDiscoveryService.loadPreview(trackId, candidateId, {
+            signal: previewGroup.controller.signal,
+          }),
+      ).finally(() => {
+        previewGroup.active -= 1;
+        if (
+          previewGroup.active === 0 &&
+          artworkPreviews.get(trackId) === previewGroup
+        ) {
+          artworkPreviews.delete(trackId);
+        }
+      });
     },
   );
 

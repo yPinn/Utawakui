@@ -2,7 +2,10 @@
 
 const { hasControlCharacters } = require('../textGuards');
 const { randomUUID } = require('crypto');
-const { createCoverArtArchiveClient } = require('../coverArtArchive/client.js');
+const {
+  buildCoverArtFront,
+  createCoverArtArchiveClient,
+} = require('../coverArtArchive/client.js');
 const { writeTrackArtworkBuffer } = require('../library/trackArtwork.js');
 const { createMusicBrainzClient } = require('../musicbrainz/client.js');
 const { musicBrainzEntityUrl } = require('../musicbrainz/identifiers.js');
@@ -24,9 +27,9 @@ const MAX_QUERY_VARIANTS = 3;
 const TARGET_CANDIDATE_COUNT = 4;
 const MAX_RAW_PROPOSALS = 24;
 const MAX_PROPOSALS_PER_STAGE = 8;
-const COVER_LOOKUP_CONCURRENCY = 4;
-const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
-const MAX_PREVIEW_PIXELS = 4 * 1024 * 1024;
+const COVER_HYDRATION_CONCURRENCY = 4;
+const MAX_PREVIEW_BYTES = 1024 * 1024;
+const MAX_PREVIEW_PIXELS = 512 * 512;
 const PROVIDER_FAILURE_REASONS = new Set([
   'fetch-unavailable',
   'http-error',
@@ -116,6 +119,7 @@ function releaseGroupProposal(record, variant) {
     date: record.firstReleaseDate,
     primaryType: record.primaryType,
     secondaryTypes: record.secondaryTypes,
+    coverArtArchive: record.coverArtArchive,
     searchScore: record.score,
     queryVariant: variantProjection(variant),
   };
@@ -141,6 +145,7 @@ function recordingProposals(record, variant) {
       country: release.country,
       primaryType: release.releaseGroup?.primaryType,
       secondaryTypes: release.releaseGroup?.secondaryTypes || [],
+      coverArtArchive: release.coverArtArchive,
       searchScore: record.score,
       queryVariant: variantProjection(variant),
     });
@@ -241,7 +246,7 @@ function createArtworkDiscoveryService(options = {}) {
     const variants = queryPlan(expected);
     const proposalKeys = new Set();
     const proposals = [];
-    let coverLookupCount = 0;
+    let coverHydrationCount = 0;
     let sawProviderError = false;
     let firstProviderFailure = null;
     let providerFailureCount = 0;
@@ -281,9 +286,18 @@ function createArtworkDiscoveryService(options = {}) {
     }
 
     function rankedCandidates() {
-      return rankArtworkCandidates(expected, proposals, {
-        limit: TARGET_CANDIDATE_COUNT,
+      const ranked = rankArtworkCandidates(expected, proposals, {
+        limit: MAX_RAW_PROPOSALS,
       });
+      const releaseGroups = new Set();
+      return ranked
+        .filter((candidate) => {
+          const key = releaseGroupIdentity(candidate);
+          if (releaseGroups.has(key)) return false;
+          releaseGroups.add(key);
+          return true;
+        })
+        .slice(0, TARGET_CANDIDATE_COUNT);
     }
 
     function targetReached() {
@@ -303,6 +317,15 @@ function createArtworkDiscoveryService(options = {}) {
       const inFlight = new Set();
 
       async function hydrateProposal(proposal) {
+        if (proposal.coverArtArchive?.front === false) return;
+        if (proposal.coverArtArchive?.front === true) {
+          const front = buildCoverArtFront(
+            proposal.entityType,
+            proposal.entityId,
+          );
+          if (front) proposals.push({ ...proposal, front });
+          return;
+        }
         try {
           const front = await coverArtClient.lookupFront(
             proposal.entityType,
@@ -323,31 +346,31 @@ function createArtworkDiscoveryService(options = {}) {
 
       while (
         nextIndex < queue.length &&
-        coverLookupCount < MAX_RAW_PROPOSALS &&
+        coverHydrationCount < MAX_RAW_PROPOSALS &&
         !isCancelled() &&
         !targetReached()
       ) {
-        // Reserve every in-flight lookup as one potential candidate. This
+        // Reserve every in-flight hydration as one potential candidate. This
         // fills the fast path in one bounded wave without over-fetching when
-        // all lookups succeed; failed or duplicate fronts release one slot.
+        // all proposals succeed; failed or duplicate fronts release one slot.
         const openCandidateSlots = Math.max(
           0,
           TARGET_CANDIDATE_COUNT - rankedCandidates().length - inFlight.size,
         );
-        const lookupSlots = Math.min(
-          COVER_LOOKUP_CONCURRENCY - inFlight.size,
+        const hydrationSlots = Math.min(
+          COVER_HYDRATION_CONCURRENCY - inFlight.size,
           openCandidateSlots,
           queue.length - nextIndex,
-          MAX_RAW_PROPOSALS - coverLookupCount,
+          MAX_RAW_PROPOSALS - coverHydrationCount,
         );
-        for (let index = 0; index < lookupSlots; index += 1) {
+        for (let index = 0; index < hydrationSlots; index += 1) {
           const proposal = queue[nextIndex];
           nextIndex += 1;
-          coverLookupCount += 1;
-          const lookup = hydrateProposal(proposal).finally(() => {
-            inFlight.delete(lookup);
+          coverHydrationCount += 1;
+          const hydration = hydrateProposal(proposal).finally(() => {
+            inFlight.delete(hydration);
           });
-          inFlight.add(lookup);
+          inFlight.add(hydration);
         }
         if (inFlight.size === 0) break;
         await Promise.race(inFlight);
@@ -385,7 +408,7 @@ function createArtworkDiscoveryService(options = {}) {
         if (
           isCancelled() ||
           targetReached() ||
-          coverLookupCount >= MAX_RAW_PROPOSALS
+          coverHydrationCount >= MAX_RAW_PROPOSALS
         ) {
           break variantLoop;
         }
@@ -440,11 +463,17 @@ function createArtworkDiscoveryService(options = {}) {
       return { status: 'error', reason: 'candidate-expired' };
     }
     if (!candidate.previewImage) {
-      const result = await downloadArtwork(candidate.front.previewUrl, {
-        signal: requestOptions.signal,
-        maxBytes: MAX_PREVIEW_BYTES,
-        maxPixels: MAX_PREVIEW_PIXELS,
-      });
+      if (!candidate.previewPromise) {
+        candidate.previewPromise = downloadArtwork(candidate.front.previewUrl, {
+          signal: requestOptions.signal,
+          maxBytes: MAX_PREVIEW_BYTES,
+          maxPixels: MAX_PREVIEW_PIXELS,
+          allowedMimeTypes: candidate.front.thumbnailMimeTypes,
+        }).finally(() => {
+          delete candidate.previewPromise;
+        });
+      }
+      const result = await candidate.previewPromise;
       if (result.status === 'error') return result;
       candidate.previewImage = result.image;
     }
@@ -460,9 +489,18 @@ function createArtworkDiscoveryService(options = {}) {
     if (!candidate) {
       return { status: 'error', reason: 'candidate-expired' };
     }
-    const result = await downloadArtwork(candidate.front.applyUrl, {
-      signal: requestOptions.signal,
-    });
+    const applyUrls = Array.isArray(candidate.front.applyUrls)
+      ? candidate.front.applyUrls
+      : [candidate.front.applyUrl];
+    let result = { status: 'error', reason: 'not-found' };
+    for (const applyUrl of applyUrls) {
+      result = await downloadArtwork(applyUrl, {
+        signal: requestOptions.signal,
+        allowedMimeTypes: candidate.front.thumbnailMimeTypes,
+      });
+      if (result.status === 'ok') break;
+      if (result.reason !== 'not-found') return result;
+    }
     if (result.status === 'error') return result;
     const sourcePage = musicBrainzEntityUrl(
       candidate.entityType,

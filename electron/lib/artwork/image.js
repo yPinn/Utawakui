@@ -184,6 +184,13 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
     Number.isSafeInteger(options.maxPixels) && options.maxPixels > 0
       ? Math.min(options.maxPixels, MAX_ARTWORK_PIXELS)
       : MAX_ARTWORK_PIXELS;
+  const allowedMimeTypes = Array.isArray(options.allowedMimeTypes)
+    ? new Set(
+        options.allowedMimeTypes.filter(
+          (value) => typeof value === 'string' && value.startsWith('image/'),
+        ),
+      )
+    : null;
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const signal = options.signal
     ? AbortSignal.any([options.signal, timeoutSignal])
@@ -197,7 +204,10 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
         method: 'GET',
         redirect: 'manual',
         headers: {
-          Accept: 'image/jpeg, image/png, image/webp',
+          Accept:
+            allowedMimeTypes?.size > 0
+              ? [...allowedMimeTypes].join(', ')
+              : 'image/jpeg, image/png, image/webp',
           'User-Agent': `Utawakui/${packageMetadata.version}`,
         },
         signal,
@@ -233,7 +243,14 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
       await response.body?.cancel().catch(() => undefined);
       return {
         status: 'error',
-        reason: response.status === 404 ? 'not-found' : 'http-error',
+        reason:
+          response.status === 404
+            ? 'not-found'
+            : response.status === 429
+              ? 'rate-limited'
+              : response.status === 503
+                ? 'service-unavailable'
+                : 'http-error',
         httpStatus: response.status,
       };
     }
@@ -241,6 +258,9 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
     if (bounded.status === 'error') return bounded;
     const image = inspectArtworkImage(bounded.buffer);
     if (!image) return { status: 'error', reason: 'invalid-image' };
+    if (allowedMimeTypes?.size > 0 && !allowedMimeTypes.has(image.mimeType)) {
+      return { status: 'error', reason: 'unsupported-image-type' };
+    }
     const mimeType = declaredMimeType(response);
     if (mimeType && mimeType !== image.mimeType) {
       return { status: 'error', reason: 'mime-mismatch' };

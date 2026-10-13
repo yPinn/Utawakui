@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  buildCoverArtFront,
   createCoverArtArchiveClient,
   isAllowedCoverArtUrl,
   normalizeCoverArtResponse,
@@ -10,6 +11,23 @@ function jsonResponse(value, status = 200) {
 }
 
 describe('Cover Art Archive client', () => {
+  it('builds only bounded generated-thumbnail routes for a valid entity', () => {
+    const mbid = '11111111-1111-4111-8111-111111111111';
+
+    expect(buildCoverArtFront('release', mbid)).toEqual({
+      imageUrl: `https://coverartarchive.org/release/${mbid}/front`,
+      previewUrl: `https://coverartarchive.org/release/${mbid}/front-250`,
+      applyUrl: `https://coverartarchive.org/release/${mbid}/front-1200`,
+      applyUrls: [
+        `https://coverartarchive.org/release/${mbid}/front-1200`,
+        `https://coverartarchive.org/release/${mbid}/front-500`,
+      ],
+      thumbnailMimeTypes: ['image/jpeg'],
+    });
+    expect(buildCoverArtFront('recording', mbid)).toBe(null);
+    expect(buildCoverArtFront('release', 'not-an-mbid')).toBe(null);
+  });
+
   it('keeps one front image and only allowlisted HTTPS assets', () => {
     expect(
       normalizeCoverArtResponse({
@@ -34,7 +52,9 @@ describe('Cover Art Archive client', () => {
       front: {
         imageUrl: 'https://archive.org/download/x/front.jpg',
         previewUrl: 'https://coverartarchive.org/release/x/front-250',
-        applyUrl: 'https://archive.org/download/x/front.jpg',
+        applyUrl: 'https://coverartarchive.org/release/x/front-500',
+        applyUrls: ['https://coverartarchive.org/release/x/front-500'],
+        thumbnailMimeTypes: ['image/jpeg'],
       },
     });
     expect(isAllowedCoverArtUrl('https://ia801.test.archive.org/a.jpg')).toBe(
@@ -65,8 +85,24 @@ describe('Cover Art Archive client', () => {
         imageUrl: 'https://archive.org/download/x/front.jpg',
         previewUrl: 'https://coverartarchive.org/release/x/front-250',
         applyUrl: 'https://ia801.test.archive.org/x/front-1200.jpg',
+        applyUrls: ['https://ia801.test.archive.org/x/front-1200.jpg'],
+        thumbnailMimeTypes: ['image/jpeg'],
       },
     });
+  });
+
+  it('does not fall back to an unbounded original when generated thumbnails are absent', () => {
+    expect(
+      normalizeCoverArtResponse({
+        images: [
+          {
+            front: true,
+            image: 'https://archive.org/download/x/front.pdf',
+            thumbnails: {},
+          },
+        ],
+      }),
+    ).toEqual({ status: 'unavailable', reason: 'no-front' });
   });
 
   it('uses fixed entity routes, caches successful lookups, and treats 404 as unavailable', async () => {
@@ -78,6 +114,10 @@ describe('Cover Art Archive client', () => {
             {
               front: true,
               image: 'https://archive.org/download/x/front.jpg',
+              thumbnails: {
+                250: 'https://coverartarchive.org/release-group/x/front-250',
+                500: 'https://coverartarchive.org/release-group/x/front-500',
+              },
             },
           ],
         }),
@@ -121,6 +161,10 @@ describe('Cover Art Archive client', () => {
             {
               front: true,
               image: 'https://archive.org/download/x/front.jpg',
+              thumbnails: {
+                250: 'https://coverartarchive.org/release/x/front-250',
+                500: 'https://coverartarchive.org/release/x/front-500',
+              },
             },
           ],
         }),

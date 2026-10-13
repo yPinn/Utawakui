@@ -98,6 +98,22 @@ function normalizeStringList(value, limit = 12) {
   return values;
 }
 
+function normalizeCoverArtArchive(value) {
+  if (!value || typeof value !== 'object') return undefined;
+  const normalized = {};
+  for (const key of ['artwork', 'front', 'back', 'darkened']) {
+    if (typeof value[key] === 'boolean') normalized[key] = value[key];
+  }
+  if (
+    Number.isSafeInteger(value.count) &&
+    value.count >= 0 &&
+    value.count <= 10_000
+  ) {
+    normalized.count = value.count;
+  }
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
 function artistCreditText(value) {
   if (!Array.isArray(value) || value.length > 32) return undefined;
   let text = '';
@@ -189,6 +205,7 @@ function normalizeReleaseGroup(value) {
     firstReleaseDate: normalizeDate(value['first-release-date']),
     primaryType: normalizeText(value['primary-type'], 100),
     secondaryTypes: normalizeStringList(value['secondary-types']),
+    coverArtArchive: normalizeCoverArtArchive(value['cover-art-archive']),
     score: normalizeScore(value.score),
   };
 }
@@ -207,6 +224,7 @@ function normalizeRelease(value) {
     status: normalizeText(value.status, 100),
     date: normalizeDate(value.date),
     country: normalizeText(value.country, 10),
+    coverArtArchive: normalizeCoverArtArchive(value['cover-art-archive']),
     releaseGroup:
       releaseGroup && MBID_RE.test(releaseGroup.id)
         ? {

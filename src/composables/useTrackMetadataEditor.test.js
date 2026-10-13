@@ -556,9 +556,11 @@ describe('useTrackMetadataEditor', () => {
     expect(editor.state.artworkSearchCompleted).toBe(true);
   });
 
-  it('promotes a newly selected pending preview ahead of the remaining queue', async () => {
+  it('starts all four bounded preview requests before the first one settles', async () => {
     const recommendedPreview = deferred();
     const secondPreview = deferred();
+    const thirdPreview = deferred();
+    const fourthPreview = deferred();
     searchTrackArtworkMock.mockResolvedValue({
       status: 'ok',
       candidates: [
@@ -571,7 +573,8 @@ describe('useTrackMetadataEditor', () => {
     loadTrackArtworkPreviewMock.mockImplementation((_trackId, candidateId) => {
       if (candidateId === 'candidate-1') return recommendedPreview.promise;
       if (candidateId === 'candidate-2') return secondPreview.promise;
-      return Promise.resolve({ status: 'error', reason: 'not-found' });
+      if (candidateId === 'candidate-3') return thirdPreview.promise;
+      return fourthPreview.promise;
     });
     const { useTrackMetadataEditor } =
       await import('./useTrackMetadataEditor.js');
@@ -582,15 +585,34 @@ describe('useTrackMetadataEditor', () => {
 
     expect(
       loadTrackArtworkPreviewMock.mock.calls.map((call) => call[1]),
-    ).toEqual(['candidate-1', 'candidate-2']);
+    ).toEqual(['candidate-1', 'candidate-2', 'candidate-3', 'candidate-4']);
 
-    editor.selectArtworkCandidate('candidate-4');
-    secondPreview.resolve({ status: 'error', reason: 'not-found' });
-
-    await vi.waitFor(() => {
-      expect(loadTrackArtworkPreviewMock.mock.calls[2][1]).toBe('candidate-4');
-    });
     recommendedPreview.resolve({ status: 'error', reason: 'not-found' });
+    secondPreview.resolve({ status: 'error', reason: 'not-found' });
+    thirdPreview.resolve({ status: 'error', reason: 'not-found' });
+    fourthPreview.resolve({ status: 'error', reason: 'not-found' });
+  });
+
+  it('cancels pending preview downloads when the artwork search surface closes', async () => {
+    searchTrackArtworkMock.mockResolvedValue({
+      status: 'ok',
+      candidates: [
+        { id: 'candidate-1', recommended: true, reasons: [] },
+        { id: 'candidate-2', recommended: false, reasons: [] },
+      ],
+    });
+    loadTrackArtworkPreviewMock.mockReturnValue(new Promise(() => {}));
+    const { useTrackMetadataEditor } =
+      await import('./useTrackMetadataEditor.js');
+    const editor = useTrackMetadataEditor();
+    editor.open({ id: 'track-1', title: 'Library Title' });
+    editor.openArtworkSearch();
+    await editor.searchArtwork();
+
+    editor.closeArtworkSearch();
+
+    expect(cancelTrackArtworkSearchMock).toHaveBeenCalledWith('track-1');
+    expect(editor.state.artworkCandidates).toEqual([]);
   });
 
   it('invalidates stale artwork results when a shared title or artist draft changes', async () => {

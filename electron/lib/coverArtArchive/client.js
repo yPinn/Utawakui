@@ -63,6 +63,24 @@ function allowedUrl(value) {
   }
 }
 
+function buildCoverArtFront(entityType, mbid) {
+  if (
+    !['release', 'release-group'].includes(entityType) ||
+    typeof mbid !== 'string' ||
+    !MBID_RE.test(mbid)
+  ) {
+    return null;
+  }
+  const baseUrl = `${COVER_ART_ARCHIVE_BASE_URL}/${entityType}/${mbid.toLowerCase()}/front`;
+  return {
+    imageUrl: baseUrl,
+    previewUrl: `${baseUrl}-250`,
+    applyUrl: `${baseUrl}-1200`,
+    applyUrls: [`${baseUrl}-1200`, `${baseUrl}-500`],
+    thumbnailMimeTypes: ['image/jpeg'],
+  };
+}
+
 function normalizeCoverArtResponse(value) {
   if (!value || typeof value !== 'object' || !Array.isArray(value.images)) {
     return { status: 'error', reason: 'invalid-json' };
@@ -75,17 +93,22 @@ function normalizeCoverArtResponse(value) {
     const imageUrl = allowedUrl(image.image);
     const previewUrl =
       allowedUrl(image.thumbnails?.['250']) ||
-      allowedUrl(image.thumbnails?.small) ||
+      allowedUrl(image.thumbnails?.small);
+    const applyUrls = [
+      allowedUrl(image.thumbnails?.['1200']),
       allowedUrl(image.thumbnails?.['500']) ||
-      imageUrl;
-    const applyUrl =
-      allowedUrl(image.thumbnails?.['1200']) ||
-      allowedUrl(image.thumbnails?.large) ||
-      imageUrl;
-    if (!imageUrl || !previewUrl || !applyUrl) continue;
+        allowedUrl(image.thumbnails?.large),
+    ].filter((url, index, urls) => url && urls.indexOf(url) === index);
+    if (!imageUrl || !previewUrl || applyUrls.length === 0) continue;
     return {
       status: 'ok',
-      front: { imageUrl, previewUrl, applyUrl },
+      front: {
+        imageUrl,
+        previewUrl,
+        applyUrl: applyUrls[0],
+        applyUrls,
+        thumbnailMimeTypes: ['image/jpeg'],
+      },
     };
   }
   return { status: 'unavailable', reason: 'no-front' };
@@ -229,6 +252,7 @@ module.exports = {
   DEFAULT_CACHE_TTL_MS,
   DEFAULT_MAX_RESPONSE_BYTES,
   DEFAULT_REQUEST_TIMEOUT_MS,
+  buildCoverArtFront,
   createCoverArtArchiveClient,
   isAllowedCoverArtUrl,
   normalizeCoverArtResponse,
