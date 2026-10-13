@@ -353,6 +353,11 @@ After changing gates or dependencies:
   Removing a dependency must clear its app-owned family root, including stale
   versions/caches and the verified legacy model location, without touching
   tracks or generated separation results.
+- In the packaged app, select one direct-play file together with WMA, AIFF,
+  ALAC, APE, WavPack and CAF fixtures. Confirm the direct file imports before
+  dependency preparation, conversion starts only after explicit confirmation,
+  every supported fixture becomes a validated FLAC managed copy, the originals
+  remain unchanged, and DRM／video-bearing or mismatched files stay rejected.
 - In the packaged app, run `quick` and `general` separation with GPU acceleration
   enabled and disabled against the same input. Confirm completion, equivalent
   output shape, no GPU-process crash or service restart loop, automatic CPU

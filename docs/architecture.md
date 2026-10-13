@@ -473,15 +473,42 @@ Artwork discovery 由 `musicbrainz/`／`coverArtArchive/` provider adapters、
 與 early stop，排序後再以 canonical image identity 去重。Main 擁有節流、快取、timeout、redirect
 allowlist、圖片 bytes／MIME／magic／尺寸／總像素驗證與 apply；Renderer 只提交目前 metadata draft、
 選填 album filter、track id 與 candidate id，收到文字候選後即呈現，再以有界併發漸進載入經驗證
-bytes 的 `blob:` 預覽，不直接 hotlink。使用者確認後，
-library owner 才 atomic 取代 `thumbnail.<ext>` 並寫入最小 `artwork.json` provenance；自動 backfill
-不得覆寫既有封面。第一版沒有自動套用或 metadata side effect。
-完整邊界見 [Music Identity／Evidence 契約](contracts/music-identity-evidence-contract.md)。
+bytes 的 `blob:` 預覽，不直接 hotlink。候選 selection、本機 picker 與移除只更新 Renderer 預覽；本機
+path 只存在 Main 的 sender／track scoped process-memory session。單一 Save 才由 library owner套用
+bounded `keep／local-draft／candidate／clear` intent 與 title／artist；artwork mutation 前保存
+`thumbnail.<ext>`／`artwork.json` snapshot，後續 metadata 或 candidate 失敗即還原，成功只發出一次
+library update。自動 backfill 不得覆寫既有封面，也沒有自動套用或 metadata side effect。完整邊界見
+[Music Identity／Evidence 契約](contracts/music-identity-evidence-contract.md)與
+[曲目編輯契約](contracts/track-editing.md)。
 
 本機媒體經 `utawakui-media:` protocol 交付 renderer。Scheme 與 handler 註冊在
 `electron/main/mediaScheme.js`／`mediaProtocol.js`；`electron/lib/` 只提供其呼叫的
 path／range 工具函式。Resolver 只接受 track id 與 allowlisted asset names，並由 main
 建立正確的 HTTP range response；renderer 不接觸 absolute path。
+
+本機音訊匯入由 `electron/lib/library/importLocal.js` 在 library root 的隱藏 staging
+目錄執行非同步 copy 與 SHA-256，並以 `music-metadata` 解析實際容器、codec、時長及
+有界的 title／artist／album／year／embedded artwork。檔案必須通過副檔名 allowlist、
+可解析性、正時長及容器／codec 相容檢查後，才原子移入 `tracks/<trackId>/` 並寫入
+`library.json`；索引寫入失敗會回滾新 track directory。Main diagnostics 保留原始錯誤，
+renderer 只收到 basename、固定 reason code 與必要的 existing track id。
+`electron/lib/library/constants.js` 的 direct-play registry 是 picker、filesystem allowlist、
+media MIME 與 validation family 的單一來源。目前直接支援 MP3、FLAC、WAV family 的
+PCM／IEEE float／μ-law、MP4 family 的 AAC、ADTS AAC，以及 Ogg／WebM family 的
+Opus／Vorbis。Picker 另接受經實際 container／codec 驗證的 WMA、AIFF／AIFF-C、M4A／ALAC、
+Monkey's Audio、WavPack 與 CAF，但這些格式不會加入 direct-play MIME allowlist。Ogg／Speex、
+壓縮 WAV、其他 WebM codec、DRM、MIDI、CDA、播放清單與 video-bearing media 會以 bounded
+`unsupported-codec`／`unsupported-media`／`format-mismatch` 拒絕。
+
+相容轉檔依 [ADR 0024](adr/0024-explicit-local-audio-compatibility-transcoding.md) 實作為
+main-owned、使用者明示的第二階段。初次選檔只把來源 path 與 allowlisted format code 放入
+15 分鐘、process-memory、one-shot review session；renderer 只取得 opaque UUID、basename 與
+格式代碼。使用者選擇「轉成 FLAC 並匯入」後，Main 重新檢查 `audio-processing-flow`、解析既有
+verified FFmpeg runtime 並重驗來源，再以固定參數輸出到 library-root staging。輸出會重新通過
+direct FLAC validation、hash、duplicate、metadata、artwork、atomic move 與 rollback 契約；原檔
+不修改。`library.json` 只保存原始 basename、allowlisted `sourceFormat` 與 `conversionFormat: flac`，
+不保存來源 path、raw codec、executable 或 command line。缺少 FFmpeg 只導向既有 Settings 準備
+流程，不靜默下載，也不回滾同批已完成的直接匯入。
 
 曲庫位置由 `electron/main/configState.js` 的 guarded resolver 統一驗證。預設 Music
 位置可由 main 建立；使用者選擇的自訂位置若消失、不是目錄或無法讀寫，設定仍保留且不
@@ -693,6 +720,7 @@ worker／model reuse 不屬於第一階段。`separationHandlers.js` 將同一 b
 | 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                                            |
 | -------------------------------------- | ----------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
 | Local import、library、playback        | 無                      | 無                             | 永遠可用，不等待 optional service                                                             |
+| Local compatibility conversion         | `audio-processing-flow` | FFmpeg                         | 使用者明示後才執行；缺依賴不影響同批直接匯入                                                  |
 | Provider acquisition／search／backfill | `provider-flow`         | `yt-dlp-provider-tool` runtime | Embedded Python、yt-dlp wheel、provider 與 plugin 原子驗證／啟用                              |
 | External lyrics lookup                 | `lyrics-flow`           | 無 installed binary            | 每次 external request 檢查；provider failure 不回滾已成功的本機工作                           |
 | Quick／general separation              | `audio-processing-flow` | FFmpeg + selected model        | FFmpeg 與每個 model 可獨立 install／repair／remove                                            |
