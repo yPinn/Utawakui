@@ -8,14 +8,14 @@ export const APP_DESTINATIONS = Object.freeze(
     },
     {
       id: 'performance',
-      label: '演唱',
-      settingsReturnLabel: '演唱',
+      label: '演唱工具',
+      settingsReturnLabel: '演唱工具',
       shortcut: 'f2',
     },
     {
       id: 'display',
-      label: '顯示',
-      settingsReturnLabel: '顯示',
+      label: '畫面輸出',
+      settingsReturnLabel: '畫面輸出',
       shortcut: 'f3',
     },
   ].map(Object.freeze),

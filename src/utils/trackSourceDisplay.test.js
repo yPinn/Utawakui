@@ -62,7 +62,7 @@ describe('sortLocalLibraryTracks', () => {
 });
 
 describe('sortLibraryTracks', () => {
-  it('returns only non-local tracks sorted by importedAt newest first', () => {
+  it('returns every track sorted by importedAt newest first', () => {
     const tracks = [
       {
         id: 'local-a',
@@ -97,10 +97,18 @@ describe('sortLibraryTracks', () => {
     ];
 
     expect(sortLibraryTracks(tracks).map((track) => track.id)).toEqual([
+      'local-a',
       'song-a2',
       'song-b',
       'song-a1',
       'song-z',
+    ]);
+    expect(tracks.map((track) => track.id)).toEqual([
+      'local-a',
+      'song-z',
+      'song-a2',
+      'song-b',
+      'song-a1',
     ]);
   });
 

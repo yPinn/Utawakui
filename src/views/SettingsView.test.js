@@ -99,6 +99,7 @@ describe('SettingsView version and maintenance sections', () => {
     expect(source).toContain('無法建立預設資料夾。請選擇其他位置。');
     expect(source).toContain('設定已保留。請重新連接磁碟，或選擇其他位置。');
     expect(source).toContain('下載與匯入的曲目會存放在這裡。');
+    expect(source).toContain('切換位置不會搬移既有曲目。');
   });
 
   it('owns playback-history clearing under library and storage settings', () => {

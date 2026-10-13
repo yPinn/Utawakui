@@ -17,14 +17,14 @@ describe('app destination registry', () => {
       },
       {
         id: 'performance',
-        label: '演唱',
-        settingsReturnLabel: '演唱',
+        label: '演唱工具',
+        settingsReturnLabel: '演唱工具',
         shortcut: 'f2',
       },
       {
         id: 'display',
-        label: '顯示',
-        settingsReturnLabel: '顯示',
+        label: '畫面輸出',
+        settingsReturnLabel: '畫面輸出',
         shortcut: 'f3',
       },
     ]);
@@ -40,7 +40,7 @@ describe('app destination registry', () => {
     expect(isAppDestination('lyrics')).toBe(false);
     expect(isAppDestination('import')).toBe(false);
     expect(isAppDestination('settings')).toBe(false);
-    expect(appDestinationSettingsLabel('display')).toBe('顯示');
+    expect(appDestinationSettingsLabel('display')).toBe('畫面輸出');
     expect(appDestinationSettingsLabel('settings')).toBeUndefined();
   });
 

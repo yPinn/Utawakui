@@ -56,7 +56,5 @@ export function sortLocalLibraryTracks(tracks) {
 }
 
 export function sortLibraryTracks(tracks) {
-  return tracks
-    .filter((track) => !isLocalTrack(track))
-    .sort(compareLibraryTrackOrder);
+  return [...tracks].sort(compareLibraryTrackOrder);
 }

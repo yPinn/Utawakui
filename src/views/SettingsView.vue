@@ -570,7 +570,7 @@ onUnmounted(() => {
                   ? 'muted'
                   : 'accent'
             "
-            tooltip="下載與匯入的曲目會存放在這裡。"
+            tooltip="下載與匯入的曲目會存放在這裡。切換位置不會搬移既有曲目。"
           >
             <template #actions>
               <UiIconButton
@@ -919,8 +919,8 @@ onUnmounted(() => {
   max-width: 66ch;
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 @media (max-width: 42rem) {
