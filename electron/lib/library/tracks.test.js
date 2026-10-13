@@ -947,13 +947,15 @@ describe('updateTrackMetadata', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('updates title and artist while preserving managed import metadata', () => {
+  it('updates title and artist while preserving managed import metadata', async () => {
     const sourceDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'utawakui-edit-source-test-'),
     );
     const sourcePath = path.join(sourceDir, 'Original.mp3');
     fs.writeFileSync(sourcePath, 'audio');
-    const { imported } = importLocalAudioFiles(dir, [sourcePath]);
+    const { imported } = await importLocalAudioFiles(dir, [sourcePath], {
+      readAudioMetadata: async () => ({ duration: 1 }),
+    });
 
     const updated = updateTrackMetadata(dir, imported[0].id, {
       title: 'Edited Title',
