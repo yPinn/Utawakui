@@ -6,7 +6,7 @@ import {
 } from './uiDemoSections.js';
 
 describe('UI demo component order', () => {
-  it('uses the conventional foundations-to-overlays order', () => {
+  it('keeps the conventional component groups before the dedicated track collection proposal', () => {
     expect(UI_DEMO_GROUPS.map((group) => group.key)).toEqual([
       'foundations',
       'inputs',
@@ -15,7 +15,18 @@ describe('UI demo component order', () => {
       'feedback',
       'content',
       'overlays',
+      'track-collections',
     ]);
+  });
+
+  it('names the track collection review in concise user-facing language', () => {
+    expect(
+      UI_DEMO_GROUPS.find((group) => group.key === 'track-collections'),
+    ).toMatchObject({
+      title: '集合曲目表',
+      description: '比較不同集合的欄位、狀態與窄版呈現。',
+      sections: [{ title: '檢視與互動' }],
+    });
   });
 
   it('covers every shared UI primitive exactly once', () => {
@@ -69,6 +80,7 @@ describe('UI demo component order', () => {
       'modal',
       'tooltip',
       'popover',
+      'track-collection-grid',
     ]);
     expect(new Set(sections.map((section) => section.key)).size).toBe(
       sections.length,
@@ -125,6 +137,7 @@ describe('UI demo component order', () => {
       '狀態與回饋',
       '內容與媒體',
       '浮層元件',
+      '集合曲目表',
     ]);
     expect(
       UI_DEMO_GROUPS.flatMap((group) =>
@@ -178,6 +191,7 @@ describe('UI demo component order', () => {
       '對話框',
       '工具提示',
       '錨定浮層',
+      '檢視與互動',
     ]);
   });
 });

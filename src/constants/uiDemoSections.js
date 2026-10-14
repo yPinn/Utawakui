@@ -236,4 +236,15 @@ export const UI_DEMO_GROUPS = Object.freeze([
       },
     ],
   },
+  {
+    key: 'track-collections',
+    title: '集合曲目表',
+    description: '比較不同集合的欄位、狀態與窄版呈現。',
+    sections: [
+      {
+        key: 'track-collection-grid',
+        title: '檢視與互動',
+      },
+    ],
+  },
 ]);

@@ -12,6 +12,7 @@ import DemoFoundations from './DemoFoundations.vue';
 import DemoInputs from './DemoInputs.vue';
 import DemoNavigation from './DemoNavigation.vue';
 import DemoOverlays from './DemoOverlays.vue';
+import DemoTrackCollectionProposal from './DemoTrackCollectionProposal.vue';
 
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
@@ -31,6 +32,7 @@ const navigationSource = readSource('./DemoNavigation.vue');
 const feedbackSource = readSource('./DemoFeedback.vue');
 const contentSource = readSource('./DemoContent.vue');
 const overlaysSource = readSource('./DemoOverlays.vue');
+const trackCollectionSource = readSource('./DemoTrackCollectionProposal.vue');
 
 const GROUP_COMPONENTS = {
   foundations: DemoFoundations,
@@ -40,6 +42,7 @@ const GROUP_COMPONENTS = {
   feedback: DemoFeedback,
   content: DemoContent,
   overlays: DemoOverlays,
+  'track-collections': DemoTrackCollectionProposal,
 };
 
 const SPECIMEN_APPEARANCE_SOURCES = [
@@ -103,6 +106,7 @@ describe('F8 component catalogue layout', () => {
       feedbackSource,
       contentSource,
       overlaysSource,
+      trackCollectionSource,
     ]) {
       expect(source).toMatch(/display:\s*grid;[^}]*gap:/s);
     }

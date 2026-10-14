@@ -10,6 +10,7 @@ import DemoFoundations from './DemoFoundations.vue';
 import DemoInputs from './DemoInputs.vue';
 import DemoNavigation from './DemoNavigation.vue';
 import DemoOverlays from './DemoOverlays.vue';
+import DemoTrackCollectionProposal from './DemoTrackCollectionProposal.vue';
 
 const GROUP_COMPONENTS = Object.freeze({
   foundations: DemoFoundations,
@@ -19,6 +20,7 @@ const GROUP_COMPONENTS = Object.freeze({
   feedback: DemoFeedback,
   content: DemoContent,
   overlays: DemoOverlays,
+  'track-collections': DemoTrackCollectionProposal,
 });
 
 const groupTabs = UI_DEMO_GROUPS.map(({ key, title }) => ({
