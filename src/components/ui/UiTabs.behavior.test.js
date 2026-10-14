@@ -22,6 +22,15 @@ const items = [
 ];
 
 describe('UiTabs', () => {
+  it('keeps content-sized tabs from shrinking into overlapping labels when the rail overflows', () => {
+    expect(source).toMatch(
+      /\.ui-tabs__tab\s*\{[^}]*flex:\s*0 0 auto;[^}]*white-space:\s*nowrap;/su,
+    );
+    expect(source).toMatch(
+      /\.ui-tabs--equal \.ui-tabs__tab\s*\{[^}]*flex:\s*1 1 0;/su,
+    );
+  });
+
   it('fills the available Bar rail without adding inter-tab gap or a shared divider', () => {
     expect(source).toMatch(
       /\.ui-tabs--bar\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;/su,

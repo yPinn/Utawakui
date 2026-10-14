@@ -168,6 +168,7 @@ function moveFocus(item, event) {
 }
 
 .ui-tabs__tab {
+  flex: 0 0 auto;
   min-height: var(--ui-control-height);
   display: inline-flex;
   align-items: center;
