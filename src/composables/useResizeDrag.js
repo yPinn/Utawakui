@@ -15,7 +15,7 @@ const RESIZE_DRAG_ACTIVATION_DISTANCE = 4;
 //
 // Listeners attach to event.currentTarget (the handle, via setPointerCapture)
 // rather than window/document, as the original sidebar-only code did.
-export function useResizeDrag({ onMove, onCommit, invert = false }) {
+export function useResizeDrag({ onMove, onCommit, onCancel, invert = false }) {
   const isResizing = shallowRef(false);
 
   function startResize(event) {
@@ -47,6 +47,7 @@ export function useResizeDrag({ onMove, onCommit, invert = false }) {
       target.removeEventListener('pointercancel', onPointerCancel);
       isResizing.value = false;
       if (activated && commit) onCommit?.();
+      if (activated && !commit) onCancel?.();
     }
 
     function onPointerUp() {

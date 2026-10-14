@@ -126,9 +126,11 @@ describe('useResizeDrag', () => {
 
   it('cleans up a cancelled drag without committing', () => {
     const onCommit = vi.fn();
+    const onCancel = vi.fn();
     const { isResizing, startResize } = useResizeDrag({
       onMove: vi.fn(),
       onCommit,
+      onCancel,
     });
     const event = makeEvent();
 
@@ -140,6 +142,7 @@ describe('useResizeDrag', () => {
     expect(target.releasePointerCapture).toHaveBeenCalledWith(1);
     expect(isResizing.value).toBe(false);
     expect(onCommit).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   it('does not require onCommit', () => {
