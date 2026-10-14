@@ -41,7 +41,13 @@ const props = defineProps({
   canAddToPlaylist: { type: Boolean, default: false },
   addToPlaylistItems: { type: Array, default: () => [] },
   moreItems: { type: Array, default: () => [] },
+  showSearch: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
+  density: {
+    type: String,
+    default: 'list',
+    validator: (value) => ['list', 'compact'].includes(value),
+  },
 });
 
 const emit = defineEmits([
@@ -54,6 +60,7 @@ const emit = defineEmits([
   'selectArtist',
   'choosePhoto',
   'update:searchQuery',
+  'updateDensity',
 ]);
 
 // Matches UiCollageThumb's empty glyph at 136px (size / 2.5).
@@ -193,7 +200,9 @@ function handleMenuAction(value) {
       :preview-blocked-reason="previewBlockedReason"
       :entity-action="entityAction"
       :more-items="moreItems"
+      :show-search="showSearch"
       :search-query="searchQuery"
+      :density="density"
       @toggle-playback="emit('togglePlayback')"
       @toggle-shuffle="emit('toggleShuffle')"
       @add-to-queue="emit('addToQueue')"
@@ -201,6 +210,7 @@ function handleMenuAction(value) {
       @entity-action="activateEntityAction"
       @menu-action="handleMenuAction"
       @update:search-query="emit('update:searchQuery', $event)"
+      @update-density="emit('updateDensity', $event)"
     />
   </section>
 </template>

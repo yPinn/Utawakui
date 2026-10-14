@@ -1,31 +1,32 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef, toRef, watch } from 'vue';
+import { ChevronDown, ICON_SIZE } from '../../icons/index.js';
+import { useTrackCollectionColumns } from '../../composables/useTrackCollectionColumns.js';
+import TrackCollectionRow from './TrackCollectionRow.vue';
+import TrackTableColumnChooser from './TrackTableColumnChooser.vue';
 import {
-  ChevronDown,
-  Ellipsis,
-  GripVertical,
-  ICON_SIZE,
-} from '../../icons/index.js';
-import { trackContentLang } from '../../utils/contentLanguage.js';
-import { formatAddedDate, formatDuration } from '../../utils/format.js';
-import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
-import TrackArtistCredits from './TrackArtistCredits.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
-import UiTextButton from '../ui/UiTextButton.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
+  TRACK_COLLECTION_KINDS,
+  projectTrackCollectionEntries,
+  reorderTrackCollectionColumn,
+  trackCollectionColumnChoices,
+  trackCollectionProfile,
+} from './trackCollectionProfiles.js';
 
-const COLUMN_TRACKS = Object.freeze({
-  reorder: 'var(--ui-icon-button-size-md)',
-  index: '3ch',
-  identity: 'minmax(0, 2fr)',
-  'context-primary': 'minmax(7.5rem, 1fr)',
-  duration: '4.5rem',
-  actions: 'var(--ui-icon-button-size-md)',
+const VARIANT_KIND = Object.freeze({
+  library: 'library-all',
+  playlist: 'playlist',
+  album: 'album',
+  artist: 'artist',
 });
 
 const props = defineProps({
   entries: { type: Array, default: () => [] },
+  collectionKind: {
+    type: String,
+    default: '',
+    validator: (value) => !value || TRACK_COLLECTION_KINDS.includes(value),
+  },
+  // Compatibility input while callers migrate to collectionKind.
   variant: {
     type: String,
     default: 'library',
@@ -33,22 +34,22 @@ const props = defineProps({
       ['library', 'playlist', 'album', 'artist'].includes(value),
   },
   label: { type: String, default: '' },
-  identityLabel: { type: String, default: '曲目' },
-  contextLabel: { type: String, default: '新增日期' },
-  durationLabel: { type: String, default: '時長' },
+  columnPreferences: { type: Object, default: () => ({}) },
   sort: {
     type: Object,
     default: () => ({ key: null, direction: 'asc' }),
   },
   sortable: { type: Boolean, default: false },
   canDrag: { type: Boolean, default: false },
-  selectedTrackId: { type: String, default: null },
-  currentTrackId: { type: String, default: null },
-  draggingTrackId: { type: String, default: null },
-  dropTargetTrackId: { type: String, default: null },
-  dropPosition: { type: String, default: null },
-  jumpableTrackIds: { type: Set, default: () => new Set() },
-  // compact: one-line rows without artwork, for scanning long lists.
+  selectedTrackId: { type: String, default: '' },
+  currentTrackId: { type: String, default: '' },
+  playingTrackId: { type: String, default: '' },
+  draggingTrackId: { type: String, default: '' },
+  dropTargetTrackId: { type: String, default: '' },
+  dropPosition: { type: String, default: '' },
+  albumJumpableTrackIds: { type: Set, default: () => new Set() },
+  vsQueuedTrackIds: { type: Set, default: () => new Set() },
+  vsEnqueuePendingTrackId: { type: String, default: '' },
   density: {
     type: String,
     default: 'list',
@@ -57,10 +58,14 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  'updateColumnPreferences',
+  'layoutChange',
   'toggleSort',
   'selectTrack',
   'activateTrack',
-  'titleClick',
+  'togglePlayback',
+  'navigateAlbum',
+  'queueSeparation',
   'openMenu',
   'moveTrack',
   'trackDragStart',
@@ -70,44 +75,49 @@ const emit = defineEmits([
   'trackDragEnd',
 ]);
 
-const hasReorderColumn = computed(() => props.variant === 'playlist');
-const showsArtwork = computed(
-  () => props.variant !== 'album' && props.density !== 'compact',
+const resolvedCollectionKind = computed(
+  () => props.collectionKind || VARIANT_KIND[props.variant],
 );
-const showsArtist = computed(() => props.variant !== 'artist');
+const profile = computed(() =>
+  trackCollectionProfile(resolvedCollectionKind.value),
+);
+const projectedEntries = computed(() =>
+  projectTrackCollectionEntries(props.entries, resolvedCollectionKind.value),
+);
+const dragEnabled = computed(
+  () => profile.value.dragBehavior === 'reorder' && props.canDrag,
+);
+const hasColumnChoices = computed(
+  () => trackCollectionColumnChoices(resolvedCollectionKind.value).length > 0,
+);
 
-const columnRoles = computed(() => [
-  ...(hasReorderColumn.value ? ['reorder'] : []),
-  'index',
-  'identity',
-  'context-primary',
-  'duration',
-  'actions',
-]);
-
-function templateFor(roles) {
-  return roles.map((role) => COLUMN_TRACKS[role]).join(' ');
-}
-
-const gridStyle = computed(() => ({
-  '--library-track-table-grid': templateFor(columnRoles.value),
-  '--library-track-table-grid-medium': templateFor(
-    columnRoles.value.filter((role) => role !== 'context-primary'),
-  ),
-  '--library-track-table-grid-narrow': templateFor(
-    columnRoles.value.filter(
-      (role) => role !== 'context-primary' && role !== 'duration',
-    ),
-  ),
-}));
-
-const resolvedLabel = computed(() => {
-  if (props.label) return props.label;
-  if (props.variant === 'album') return '專輯曲目';
-  if (props.variant === 'artist') return '藝人曲目';
-  if (props.variant === 'playlist') return '播放清單曲目';
-  return '曲庫曲目';
+const {
+  columnResizeBounds,
+  columnWidth,
+  columnWidthContract,
+  gridStyle,
+  guideStyle,
+  isResizing,
+  layout,
+  resetColumnWidth,
+  resizeColumnFromKeyboard,
+  startColumnResize,
+} = useTrackCollectionColumns({
+  collectionKind: resolvedCollectionKind,
+  preferences: toRef(props, 'columnPreferences'),
+  onUpdatePreferences: (preferences) =>
+    emit('updateColumnPreferences', preferences),
 });
+
+const draggedHeaderRole = shallowRef('');
+const headerDropTargetRole = shallowRef('');
+const headerDropPosition = shallowRef('');
+
+watch(
+  () => layout.value.hiddenForWidth.join('|'),
+  () => emit('layoutChange', [...layout.value.hiddenForWidth]),
+  { immediate: true },
+);
 
 function isSortActive(key) {
   return props.sort.key === key;
@@ -117,277 +127,429 @@ function sortLabel(key, label) {
   if (!isSortActive(key)) return `${label}排序`;
   return `${label}${props.sort.direction === 'asc' ? '升冪' : '降冪'}排序`;
 }
+
+function isColumnSortable(column) {
+  if (!props.sortable || !column.sortKey) return false;
+  if (column.sortKey !== 'playCount') return true;
+  return projectedEntries.value.some((entry) => entry.playCount !== null);
+}
+
+function forwardOpenMenu(...args) {
+  emit('openMenu', ...args);
+}
+
+function forwardMoveTrack(...args) {
+  emit('moveTrack', ...args);
+}
+
+function forwardTrackDragStart(...args) {
+  emit('trackDragStart', ...args);
+}
+
+function forwardTrackDragOver(...args) {
+  emit('trackDragOver', ...args);
+}
+
+function forwardTrackDragLeave(...args) {
+  emit('trackDragLeave', ...args);
+}
+
+function forwardTrackDrop(...args) {
+  emit('trackDrop', ...args);
+}
+
+function isHeaderColumnReorderable(column) {
+  return profile.value.headerReorder && Boolean(column.textField);
+}
+
+function headerColumnLabel(column) {
+  return isHeaderColumnReorderable(column)
+    ? `${column.label}欄；拖曳，或按 Alt 加左右方向鍵調整順序`
+    : ['separation', 'actions'].includes(column.role)
+      ? column.label
+      : undefined;
+}
+
+function plainPreferences(preferences) {
+  return {
+    visibleAdvanced: [...preferences.visibleAdvanced],
+    hiddenDefaultColumns: [...preferences.hiddenDefaultColumns],
+    widths: { ...preferences.widths },
+    ...(preferences.columnOrder
+      ? { columnOrder: [...preferences.columnOrder] }
+      : {}),
+  };
+}
+
+function emitHeaderReorder(movedRole, targetRole, position) {
+  const reordered = reorderTrackCollectionColumn(
+    resolvedCollectionKind.value,
+    props.columnPreferences,
+    movedRole,
+    targetRole,
+    position,
+  );
+  emit('updateColumnPreferences', plainPreferences(reordered));
+}
+
+function clearHeaderDrag() {
+  draggedHeaderRole.value = '';
+  headerDropTargetRole.value = '';
+  headerDropPosition.value = '';
+}
+
+function startHeaderDrag(column, event) {
+  if (!isHeaderColumnReorderable(column)) return;
+  draggedHeaderRole.value = column.role;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', column.role);
+  }
+}
+
+function updateHeaderDrop(column, event) {
+  if (
+    !draggedHeaderRole.value ||
+    !isHeaderColumnReorderable(column) ||
+    draggedHeaderRole.value === column.role
+  ) {
+    return;
+  }
+  event.preventDefault();
+  const bounds = event.currentTarget?.getBoundingClientRect?.();
+  const midpoint = bounds ? bounds.left + bounds.width / 2 : null;
+  headerDropTargetRole.value = column.role;
+  headerDropPosition.value =
+    midpoint != null && Number.isFinite(event.clientX)
+      ? event.clientX < midpoint
+        ? 'before'
+        : 'after'
+      : 'before';
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+}
+
+function leaveHeaderDrop(column, event) {
+  if (event.currentTarget?.contains?.(event.relatedTarget)) return;
+  if (headerDropTargetRole.value !== column.role) return;
+  headerDropTargetRole.value = '';
+  headerDropPosition.value = '';
+}
+
+function dropHeaderColumn(column, event) {
+  if (
+    !draggedHeaderRole.value ||
+    !isHeaderColumnReorderable(column) ||
+    draggedHeaderRole.value === column.role
+  ) {
+    clearHeaderDrag();
+    return;
+  }
+  event.preventDefault();
+  emitHeaderReorder(
+    draggedHeaderRole.value,
+    column.role,
+    headerDropPosition.value || 'before',
+  );
+  clearHeaderDrag();
+}
+
+function reorderHeaderFromKeyboard(column, event) {
+  if (event.currentTarget !== event.target) return;
+  if (
+    !event.altKey ||
+    !isHeaderColumnReorderable(column) ||
+    !['ArrowLeft', 'ArrowRight'].includes(event.key)
+  ) {
+    return;
+  }
+  const visible = layout.value.columns.filter(isHeaderColumnReorderable);
+  const currentIndex = visible.findIndex(
+    (candidate) => candidate.role === column.role,
+  );
+  const delta = event.key === 'ArrowLeft' ? -1 : 1;
+  const target = visible[currentIndex + delta];
+  if (!target) return;
+  event.preventDefault();
+  event.stopPropagation?.();
+  emitHeaderReorder(column.role, target.role, delta < 0 ? 'before' : 'after');
+}
 </script>
 
 <template>
   <div
+    ref="table"
     class="library-track-table"
-    :class="{ 'library-track-table--compact': density === 'compact' }"
+    :class="{
+      'library-track-table--compact': density === 'compact',
+      'library-track-table--resizing': isResizing,
+    }"
     :data-track-table-variant="variant"
+    :data-collection-kind="resolvedCollectionKind"
   >
-    <div class="library-track-table__header" :style="gridStyle">
+    <div ref="header" class="library-track-table__header" :style="gridStyle">
       <span
-        v-if="hasReorderColumn"
-        data-track-column="reorder"
-        aria-label="排序"
-      ></span>
-      <span data-track-column="index">#</span>
-      <span data-track-column="identity">
-        <button
-          v-if="sortable"
-          type="button"
-          class="library-track-table__sort"
-          :class="{
-            'library-track-table__sort--active': isSortActive(
-              PLAYLIST_SORT_KEYS.title,
-            ),
-          }"
-          :aria-label="sortLabel(PLAYLIST_SORT_KEYS.title, identityLabel)"
-          @click="emit('toggleSort', PLAYLIST_SORT_KEYS.title)"
-        >
-          <span>{{ identityLabel }}</span>
-          <ChevronDown
-            v-if="isSortActive(PLAYLIST_SORT_KEYS.title)"
-            class="library-track-table__sort-indicator"
-            :class="{
-              'library-track-table__sort-indicator--desc':
-                sort.direction === 'desc',
-            }"
-            :size="ICON_SIZE"
-            aria-hidden="true"
-          />
-        </button>
-        <span v-else>{{ identityLabel }}</span>
-      </span>
-      <span
-        data-track-column="context-primary"
-        data-column-priority="secondary"
+        v-for="column in layout.columns"
+        :key="column.role"
+        :class="{
+          'library-track-table__header-column--reorderable':
+            isHeaderColumnReorderable(column),
+          'library-track-table__header-column--dragging':
+            draggedHeaderRole === column.role,
+          'library-track-table__header-column--drop-before':
+            headerDropTargetRole === column.role &&
+            headerDropPosition === 'before',
+          'library-track-table__header-column--drop-after':
+            headerDropTargetRole === column.role &&
+            headerDropPosition === 'after',
+        }"
+        :data-track-column="column.role"
+        :data-column-align="column.align"
+        :data-column-reorderable="
+          isHeaderColumnReorderable(column) ? 'true' : undefined
+        "
+        :data-column-priority="
+          column.priority === 'essential' ? undefined : column.priority
+        "
+        :aria-hidden="column.role === 'spacer' ? 'true' : undefined"
+        :aria-label="headerColumnLabel(column)"
+        :draggable="isHeaderColumnReorderable(column) ? true : undefined"
+        :tabindex="isHeaderColumnReorderable(column) ? 0 : undefined"
+        @keydown="reorderHeaderFromKeyboard(column, $event)"
+        @dragstart="startHeaderDrag(column, $event)"
+        @dragover="updateHeaderDrop(column, $event)"
+        @dragleave="leaveHeaderDrop(column, $event)"
+        @drop="dropHeaderColumn(column, $event)"
+        @dragend="clearHeaderDrag"
       >
-        <button
-          v-if="sortable"
-          type="button"
-          class="library-track-table__sort"
-          :class="{
-            'library-track-table__sort--active': isSortActive(
-              PLAYLIST_SORT_KEYS.addedAt,
-            ),
-          }"
-          :aria-label="sortLabel(PLAYLIST_SORT_KEYS.addedAt, contextLabel)"
-          @click="emit('toggleSort', PLAYLIST_SORT_KEYS.addedAt)"
-        >
-          <span>{{ contextLabel }}</span>
-          <ChevronDown
-            v-if="isSortActive(PLAYLIST_SORT_KEYS.addedAt)"
-            class="library-track-table__sort-indicator"
+        <template v-if="column.role !== 'spacer'">
+          <button
+            v-if="isColumnSortable(column)"
+            type="button"
+            class="library-track-table__sort"
             :class="{
-              'library-track-table__sort-indicator--desc':
-                sort.direction === 'desc',
+              'library-track-table__sort--active': isSortActive(column.sortKey),
             }"
-            :size="ICON_SIZE"
-            aria-hidden="true"
+            :aria-label="sortLabel(column.sortKey, column.label)"
+            draggable="false"
+            @click="emit('toggleSort', column.sortKey)"
+            @dragstart.stop.prevent
+          >
+            <ChevronDown
+              v-if="
+                isSortActive(column.sortKey) &&
+                column.sortIndicatorPlacement === 'before'
+              "
+              class="library-track-table__sort-indicator"
+              :class="{
+                'library-track-table__sort-indicator--desc':
+                  sort.direction === 'desc',
+              }"
+              :size="ICON_SIZE"
+              aria-hidden="true"
+            />
+            <span>{{ column.label }}</span>
+            <ChevronDown
+              v-if="
+                isSortActive(column.sortKey) &&
+                column.sortIndicatorPlacement !== 'before'
+              "
+              class="library-track-table__sort-indicator"
+              :class="{
+                'library-track-table__sort-indicator--desc':
+                  sort.direction === 'desc',
+              }"
+              :size="ICON_SIZE"
+              aria-hidden="true"
+            />
+          </button>
+          <span
+            v-else-if="column.role === 'separation'"
+            class="ui-visually-hidden"
+          >
+            {{ column.label }}
+          </span>
+          <span v-else-if="column.role !== 'actions'">
+            {{ column.label }}
+          </span>
+          <TrackTableColumnChooser
+            v-else-if="hasColumnChoices"
+            :collection-kind="resolvedCollectionKind"
+            :preferences="columnPreferences"
+            :hidden-for-width="layout.hiddenForWidth"
+            @update-column-preferences="emit('updateColumnPreferences', $event)"
           />
-        </button>
-        <span v-else>{{ contextLabel }}</span>
+
+          <button
+            v-if="column.resizable"
+            type="button"
+            class="library-track-table__resize-handle"
+            role="separator"
+            aria-orientation="vertical"
+            :aria-label="`調整${column.label}欄寬`"
+            :aria-valuemin="columnWidthContract(column.role).minWidth"
+            :aria-valuenow="columnWidth(column.role)"
+            :aria-valuemax="columnResizeBounds(column.role).maxWidth"
+            :aria-valuetext="`${columnWidth(column.role)} 像素`"
+            :data-resize-column="column.role"
+            draggable="false"
+            @pointerdown="startColumnResize(column, $event)"
+            @keydown="resizeColumnFromKeyboard(column, $event)"
+            @dblclick="resetColumnWidth(column, $event)"
+            @dragstart.stop.prevent
+          ></button>
+        </template>
       </span>
-      <span data-track-column="duration" data-column-priority="tertiary">
-        <button
-          v-if="sortable"
-          type="button"
-          class="library-track-table__sort"
-          :class="{
-            'library-track-table__sort--active': isSortActive(
-              PLAYLIST_SORT_KEYS.duration,
-            ),
-          }"
-          :aria-label="sortLabel(PLAYLIST_SORT_KEYS.duration, durationLabel)"
-          @click="emit('toggleSort', PLAYLIST_SORT_KEYS.duration)"
-        >
-          <span>{{ durationLabel }}</span>
-          <ChevronDown
-            v-if="isSortActive(PLAYLIST_SORT_KEYS.duration)"
-            class="library-track-table__sort-indicator"
-            :class="{
-              'library-track-table__sort-indicator--desc':
-                sort.direction === 'desc',
-            }"
-            :size="ICON_SIZE"
-            aria-hidden="true"
-          />
-        </button>
-        <span v-else>{{ durationLabel }}</span>
-      </span>
-      <span data-track-column="actions" aria-label="操作"></span>
     </div>
 
     <ul
       class="library-track-table__body"
       role="list"
-      :aria-label="resolvedLabel"
+      :aria-label="label || profile.accessibleLabel"
     >
-      <li
-        v-for="{ track, visibleIndex, addedAt } in entries"
-        :key="track.id"
-        class="library-track-row"
-        :class="{
-          'library-track-row--selected': selectedTrackId === track.id,
-          'library-track-row--current': currentTrackId === track.id,
-          'library-track-row--dragging': draggingTrackId === track.id,
-          'library-track-row--drop-before':
-            dropTargetTrackId === track.id && dropPosition === 'before',
-          'library-track-row--drop-after':
-            dropTargetTrackId === track.id && dropPosition === 'after',
-        }"
-        :style="gridStyle"
-        role="listitem"
-        :aria-current="currentTrackId === track.id ? 'true' : undefined"
-        @contextmenu="emit('openMenu', track, $event)"
-        @dragover="canDrag && emit('trackDragOver', track, $event)"
-        @dragleave="canDrag && emit('trackDragLeave', track, $event)"
-        @drop="canDrag && emit('trackDrop', track, $event)"
-      >
-        <button
-          type="button"
-          class="library-track-row__action"
-          :aria-label="`選取：${track.title}`"
-          aria-description="單擊或空白鍵選取；雙擊或 Enter 播放"
-          :aria-pressed="selectedTrackId === track.id"
-          @click.stop="emit('selectTrack', track)"
-          @dblclick.stop="emit('activateTrack', track)"
-          @keydown.enter.prevent.stop="emit('activateTrack', track)"
-          @keydown.space.prevent.stop="emit('selectTrack', track)"
-        ></button>
-
-        <span
-          v-if="hasReorderColumn"
-          class="library-track-row__reorder-cell"
-          data-track-column="reorder"
-        >
-          <UiIconButton
-            class="library-track-row__reorder"
-            :icon="GripVertical"
-            :label="`調整順序：${track.title}`"
-            :title="
-              canDrag
-                ? '拖曳，或使用方向鍵調整順序'
-                : '清除搜尋並回到自訂順序後可調整'
-            "
-            :disabled="!canDrag"
-            :draggable="canDrag"
-            @click.stop
-            @dblclick.stop
-            @keydown.up.prevent.stop="emit('moveTrack', track.id, -1)"
-            @keydown.down.prevent.stop="emit('moveTrack', track.id, 1)"
-            @dragstart="canDrag && emit('trackDragStart', track, $event)"
-            @dragend="canDrag && emit('trackDragEnd')"
-          />
-        </span>
-
-        <span class="library-track-row__index" data-track-column="index">
-          {{ visibleIndex + 1 }}
-        </span>
-
-        <span class="library-track-row__identity" data-track-column="identity">
-          <UiTrackThumb
-            v-if="showsArtwork"
-            class="library-track-row__thumb"
-            :track="track"
-            size="var(--ui-track-row-thumb-size)"
-          />
-          <span class="library-track-row__copy" :lang="trackContentLang(track)">
-            <UiTextButton
-              v-if="jumpableTrackIds.has(track.id)"
-              class="library-track-row__title library-track-row__title--destination"
-              :text="track.title"
-              :aria-label="`前往專輯：${track.title}`"
-              @click="emit('titleClick', track)"
-              @dblclick.stop
-            />
-            <UiMarqueeText
-              v-else
-              class="library-track-row__title"
-              :text="track.title"
-            />
-            <TrackArtistCredits
-              v-if="track.artist && showsArtist"
-              class="library-track-row__subtitle"
-              :track="track"
-            />
-          </span>
-        </span>
-
-        <span
-          class="library-track-row__context"
-          data-track-column="context-primary"
-          data-column-priority="secondary"
-        >
-          {{ formatAddedDate(addedAt) }}
-        </span>
-        <span
-          class="library-track-row__duration"
-          data-track-column="duration"
-          data-column-priority="tertiary"
-        >
-          {{ formatDuration(track.duration) }}
-        </span>
-        <span class="library-track-row__actions" data-track-column="actions">
-          <UiIconButton
-            class="library-track-row__more"
-            :icon="Ellipsis"
-            :label="`更多：${track.title}`"
-            @click.stop="emit('openMenu', track, $event)"
-            @dblclick.stop
-          />
-        </span>
-      </li>
+      <TrackCollectionRow
+        v-for="entry in projectedEntries"
+        :key="entry.track.id"
+        :entry="entry"
+        :profile="profile"
+        :columns="layout.columns"
+        :grid-style="gridStyle"
+        :density="density"
+        :album-jumpable="albumJumpableTrackIds.has(entry.track.id)"
+        :vs-queued="vsQueuedTrackIds.has(entry.track.id)"
+        :vs-enqueue-pending="vsEnqueuePendingTrackId === entry.track.id"
+        :selected="selectedTrackId === entry.track.id"
+        :current="currentTrackId === entry.track.id"
+        :playing="playingTrackId === entry.track.id"
+        :drag-enabled="dragEnabled"
+        :dragging="dragEnabled && draggingTrackId === entry.track.id"
+        :drop-position="
+          dropTargetTrackId === entry.track.id ? dropPosition : ''
+        "
+        @select-track="emit('selectTrack', $event)"
+        @activate-track="emit('activateTrack', $event)"
+        @toggle-playback="emit('togglePlayback', $event)"
+        @navigate-album="emit('navigateAlbum', $event)"
+        @queue-separation="emit('queueSeparation', $event)"
+        @open-menu="forwardOpenMenu"
+        @move-track="forwardMoveTrack"
+        @drag-start="forwardTrackDragStart"
+        @drag-over="forwardTrackDragOver"
+        @drag-leave="forwardTrackDragLeave"
+        @drop="forwardTrackDrop"
+        @drag-end="emit('trackDragEnd')"
+      />
     </ul>
+
+    <span
+      v-if="isResizing"
+      class="library-track-table__resize-guide"
+      :style="guideStyle"
+      aria-hidden="true"
+    ></span>
   </div>
 </template>
 
 <style scoped>
 .library-track-table {
+  position: relative;
   min-width: 0;
+  max-width: 100%;
   margin-block-start: var(--ui-space-2);
   container-name: library-track-table;
   container-type: inline-size;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.library-track-table__header,
-.library-track-row {
-  display: grid;
-  grid-template-columns: var(--library-track-table-grid);
-  min-width: 0;
-  align-items: center;
-  gap: var(--ui-track-row-gap);
 }
 
 .library-track-table__header {
-  /* Sticks below the page's compact bar once the dossier scrolls away. */
   position: sticky;
   top: var(--ui-folder-sticky-offset, 0);
   z-index: var(--ui-layer-overlay);
+  min-width: 0;
   min-height: var(--ui-list-header-height);
-  background: var(--ui-folder-page-background, var(--ui-color-surface));
+  display: grid;
+  grid-template-columns: var(--library-track-table-grid);
+  align-items: center;
+  gap: var(--ui-track-row-gap);
   padding-inline: var(--ui-track-row-padding-inline);
-  color: var(--ui-color-text-muted);
   border-bottom: var(--ui-border-width) solid
     var(--ui-folder-ledger-rule-strong, var(--ui-color-border));
+  background: var(--ui-folder-page-background, var(--ui-color-surface));
+  color: var(--ui-color-text-muted);
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
   line-height: var(--ui-type-label-line-height);
 }
 
-.library-track-table__sort {
-  display: inline-flex;
+.library-track-table__header > [data-track-column] {
+  position: relative;
   min-width: 0;
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-self: stretch;
+}
+
+.library-track-table__header > [data-column-align='center'] {
+  justify-content: center;
+}
+
+.library-track-table__header > [data-column-align='end'] {
+  justify-content: flex-end;
+}
+
+.library-track-table__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  background: var(--ui-color-surface);
+  list-style: none;
+}
+
+.library-track-table__header-column--reorderable {
+  cursor: grab;
+}
+
+.library-track-table__header-column--reorderable:focus-visible {
+  border-radius: var(--ui-radius-sm);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+}
+
+.library-track-table__header-column--dragging {
+  opacity: var(--ui-opacity-dragging);
+}
+
+.library-track-table__header-column--drop-before::after,
+.library-track-table__header-column--drop-after::after {
+  position: absolute;
+  z-index: var(--ui-layer-indicator);
+  inset-block: var(--ui-space-2);
+  inline-size: var(--ui-focus-width);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-accent);
+  content: '';
+  pointer-events: none;
+}
+
+.library-track-table__header-column--drop-before::after {
+  inset-inline-start: calc(var(--ui-track-row-gap) / -2);
+}
+
+.library-track-table__header-column--drop-after::after {
+  inset-inline-end: calc(var(--ui-track-row-gap) / -2);
+}
+
+.library-track-table__sort {
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
   justify-self: start;
   gap: var(--ui-space-1);
   padding: 0;
-  color: inherit;
-  background: transparent;
   border: 0;
+  background: transparent;
+  color: inherit;
   font: inherit;
   text-align: start;
   cursor: pointer;
@@ -415,182 +577,81 @@ function sortLabel(key, label) {
   transform: rotate(180deg);
 }
 
-.library-track-table__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.library-track-row {
-  position: relative;
-  isolation: isolate;
-  min-height: var(--ui-track-row-min-height);
-  padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
-  color: var(--ui-color-text);
-  border-bottom: var(--ui-border-width) solid
-    var(--ui-folder-ledger-rule, var(--ui-color-border));
-  border-radius: 0;
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
-}
-
-.library-track-row__action {
+.library-track-table__resize-handle {
   position: absolute;
-  z-index: var(--ui-layer-base);
-  inset: 0;
+  z-index: var(--ui-layer-raised);
+  inset-block: 0;
+  inset-inline-end: calc(
+    (var(--ui-resize-handle-hit-size) + var(--ui-track-row-gap)) / -2
+  );
+  inline-size: var(--ui-resize-handle-hit-size);
+  min-inline-size: var(--ui-resize-handle-hit-size);
   padding: 0;
-  background: transparent;
   border: 0;
-  border-radius: inherit;
-  cursor: pointer;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
 }
 
-.library-track-row:has(.library-track-row__action:focus-visible) {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
-.library-track-row__action:focus-visible {
+.library-track-table__resize-handle:focus-visible {
   outline: none;
 }
 
-.library-track-row:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.library-track-row--selected {
-  background: var(--ui-track-row-selected-surface);
-}
-
-.library-track-row--current .library-track-row__title {
-  color: var(--ui-color-current);
-}
-
-.library-track-row--dragging {
-  opacity: var(--ui-opacity-dragging);
-}
-
-.library-track-row--drop-before::before,
-.library-track-row--drop-after::after {
+.library-track-table__resize-handle::before {
   position: absolute;
-  right: var(--ui-track-row-padding-inline);
-  left: var(--ui-track-row-padding-inline);
-  height: var(--ui-drag-indicator-width);
-  background: var(--ui-color-accent);
-  border-radius: var(--ui-radius-pill);
+  inset-block: var(--ui-space-2);
+  inset-inline-start: 50%;
+  inline-size: var(--ui-border-width);
+  background: var(--ui-color-border-strong);
   content: '';
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.library-track-table:not(.library-track-table--resizing)
+  .library-track-table__header:hover
+  .library-track-table__resize-handle::before,
+.library-track-table:not(.library-track-table--resizing)
+  .library-track-table__header:focus-within
+  .library-track-table__resize-handle::before {
+  opacity: 1;
+}
+
+.library-track-table:not(.library-track-table--resizing)
+  .library-track-table__resize-handle:focus-visible::before {
+  inline-size: var(--ui-focus-width);
+  background: var(--ui-color-focus);
+}
+
+.library-track-table__resize-guide {
+  position: absolute;
+  z-index: var(--ui-layer-indicator);
+  inset-block: 0;
+  left: 0;
+  inline-size: var(--ui-focus-width);
+  background: var(--ui-color-accent);
   pointer-events: none;
 }
 
-.library-track-row--drop-before::before {
-  top: calc(var(--ui-space-1) * -1);
-}
-
-.library-track-row--drop-after::after {
-  bottom: calc(var(--ui-space-1) * -1);
-}
-
-.library-track-row__reorder-cell,
-.library-track-row__index,
-.library-track-row__identity,
-.library-track-row__context,
-.library-track-row__duration,
-.library-track-row__actions {
-  position: relative;
-  z-index: var(--ui-layer-raised);
-}
-
-.library-track-row__reorder-cell,
-.library-track-row__actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.library-track-row__index,
-.library-track-row__identity,
-.library-track-row__context,
-.library-track-row__duration {
-  pointer-events: none;
-}
-
-.library-track-row__identity {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-track-row-gap);
-}
-
-.library-track-row__copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.library-track-row__title {
-  min-width: 0;
-  font-weight: var(--ui-font-weight-semibold);
-}
-
-.library-track-table--compact .library-track-row {
-  min-height: var(--ui-track-row-compact-min-height);
-}
-
-.library-track-table--compact .library-track-row__copy {
-  flex-direction: row;
-  align-items: baseline;
-  gap: var(--ui-space-2);
-}
-
-.library-track-table--compact .library-track-row__title {
-  flex: 0 1 auto;
-}
-
-.library-track-table--compact .library-track-row__subtitle {
-  flex: 1 1 0;
-}
-
-.library-track-row__title--destination,
-.library-track-row__subtitle :deep(.track-artist-credits__link) {
-  position: relative;
-  z-index: var(--ui-layer-raised);
-  pointer-events: auto;
-}
-
-.library-track-row__subtitle,
-.library-track-row__context,
-.library-track-row__duration {
-  overflow: hidden;
-  color: var(--ui-color-text-muted);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-[data-track-column='reorder'],
-[data-track-column='index'],
-[data-track-column='actions'] {
+[data-column-align='center'] {
   justify-self: center;
   text-align: center;
 }
 
-[data-track-column='identity'],
-[data-track-column='context-primary'] {
+[data-column-align='start'] {
   justify-self: stretch;
   text-align: start;
 }
 
-[data-track-column='duration'] {
+[data-column-align='end'] {
   justify-self: end;
   text-align: end;
 }
 
-[data-track-column='index'],
-[data-track-column='context-primary'],
+[data-track-column='ordinal'],
+[data-track-column='usage'],
+[data-track-column='releaseYear'],
 [data-track-column='duration'] {
   font-variant-numeric: tabular-nums;
 }
@@ -600,27 +661,5 @@ function sortLabel(key, label) {
   .library-track-table__sort {
   width: 100%;
   justify-content: flex-end;
-}
-
-@container library-track-table (max-width: 44rem) {
-  .library-track-table__header,
-  .library-track-row {
-    grid-template-columns: var(--library-track-table-grid-medium);
-  }
-
-  [data-column-priority='secondary'] {
-    display: none;
-  }
-}
-
-@container library-track-table (max-width: 30rem) {
-  .library-track-table__header,
-  .library-track-row {
-    grid-template-columns: var(--library-track-table-grid-narrow);
-  }
-
-  [data-column-priority='tertiary'] {
-    display: none;
-  }
 }
 </style>

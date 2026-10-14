@@ -57,9 +57,14 @@ describe('CollectionActionRail', () => {
     expect(source).not.toContain('page-tools');
   });
 
-  // The track list stays in list view; there is no density switch in the rail.
-  it('keeps the track density switch out of the collection rail', () => {
-    expect(source).not.toContain('UiSegmentedControl');
-    expect(source).not.toContain('viewMode');
+  it('keeps density independent from optional search and places it on the right', () => {
+    const searchIndex = source.indexOf('<UiSearchBox');
+    const densityIndex = source.indexOf('<TrackListDensityMenu');
+
+    expect(source).toContain('showSearch');
+    expect(source).toContain('v-if="showSearch"');
+    expect(densityIndex).toBeGreaterThan(searchIndex);
+    expect(source).toContain(':density="density"');
+    expect(source).toContain("emit('updateDensity', $event)");
   });
 });

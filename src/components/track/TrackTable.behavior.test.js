@@ -1,10 +1,17 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import TrackTable from './TrackTable.vue';
+import TrackCollectionRow from './TrackCollectionRow.vue';
+import TrackTableColumnChooser from './TrackTableColumnChooser.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiPopover from '../ui/UiPopover.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
@@ -17,10 +24,17 @@ import {
 
 for (const [component, filename] of [
   [TrackTable, './TrackTable.vue'],
+  [TrackCollectionRow, './TrackCollectionRow.vue'],
+  [TrackTableColumnChooser, './TrackTableColumnChooser.vue'],
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
+  [UiCheckbox, '../ui/UiCheckbox.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiMarqueeText, '../ui/UiMarqueeText.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
+  [UiPopover, '../ui/UiPopover.vue'],
+  [UiStatusIcon, '../ui/UiStatusIcon.vue'],
   [UiTextButton, '../ui/UiTextButton.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
@@ -39,12 +53,14 @@ const tracks = [
     id: 'track-a',
     title: '第一首歌',
     artist: '演出者 A',
+    album: '專輯 A',
     duration: 181,
   },
   {
     id: 'track-b',
     title: '第二首歌',
     artist: '演出者 B',
+    album: '專輯 B',
     duration: 239,
   },
 ];
@@ -57,6 +73,10 @@ const entries = tracks.map((track, visibleIndex) => ({
 
 const source = readFileSync(
   new URL('./TrackTable.vue', import.meta.url),
+  'utf8',
+);
+const rowSource = readFileSync(
+  new URL('./TrackCollectionRow.vue', import.meta.url),
   'utf8',
 );
 
@@ -74,7 +94,7 @@ function mountTable(overrides = {}) {
     sortable: true,
     selectedTrackId: 'track-a',
     currentTrackId: 'track-b',
-    jumpableTrackIds: new Set(['track-a']),
+    albumJumpableTrackIds: new Set(['track-a']),
     ...overrides,
   });
 }
@@ -94,7 +114,9 @@ describe('TrackTable canonical grid', () => {
       /\.library-track-table__body\s*\{(?<body>[\s\S]*?)\n\}/u,
     )?.groups?.body;
     const rowRule = [
-      ...source.matchAll(/^\.library-track-row\s*\{(?<body>[\s\S]*?)\n\}/gmu),
+      ...rowSource.matchAll(
+        /^\.library-track-row\s*\{(?<body>[\s\S]*?)\n\}/gmu,
+      ),
     ]
       .map((match) => match.groups?.body ?? '')
       .find((body) => body.includes('min-height:'));
@@ -121,10 +143,10 @@ describe('TrackTable canonical grid', () => {
     )[0];
 
     expect(rowRoles(header)).toEqual([
-      'reorder',
-      'index',
+      'ordinal',
       'identity',
-      'context-primary',
+      'spacer',
+      'separation',
       'duration',
       'actions',
     ]);
@@ -140,13 +162,13 @@ describe('TrackTable canonical grid', () => {
   });
 
   it.each([
-    ['library', false, true, true],
-    ['playlist', true, true, true],
-    ['album', false, false, true],
-    ['artist', false, true, false],
+    ['library', true, true],
+    ['playlist', true, true],
+    ['album', false, true],
+    ['artist', true, false],
   ])(
     'adapts the %s identity without changing outer column alignment',
-    (variant, hasReorder, hasArtwork, hasArtist) => {
+    (variant, hasArtwork, hasArtist) => {
       const { app, root } = mountTable({ variant });
       const roles = rowRoles(
         findAll(root, (node) => classIncludes(node, 'library-track-row'))[0],
@@ -158,11 +180,13 @@ describe('TrackTable canonical grid', () => {
         classIncludes(node, 'library-track-row__subtitle'),
       );
 
-      expect(roles.includes('reorder')).toBe(hasReorder);
+      expect(roles).not.toContain('reorder');
+      expect(roles[0]).toBe('ordinal');
       expect(thumbs.length > 0).toBe(hasArtwork);
       expect(artists.length > 0).toBe(hasArtist);
-      expect(roles.slice(-3)).toEqual([
-        'context-primary',
+      expect(roles.slice(-4)).toEqual([
+        'spacer',
+        'separation',
         'duration',
         'actions',
       ]);
@@ -171,17 +195,18 @@ describe('TrackTable canonical grid', () => {
   );
 
   it('centralizes role alignment, numeric treatment, and responsive priority', () => {
-    expect(source).toMatch(
-      /\[data-track-column='(?:reorder|index|actions)'\][\s\S]*?justify-self:\s*center;/u,
+    const productionSource = `${source}\n${rowSource}`;
+    expect(productionSource).toMatch(
+      /\[data-column-align='center'\][\s\S]*?justify-self:\s*center;/u,
     );
-    expect(source).toMatch(
-      /\[data-track-column='duration'\][\s\S]*?justify-self:\s*end;/u,
+    expect(productionSource).toMatch(
+      /\[data-column-align='end'\][\s\S]*?justify-self:\s*end;/u,
     );
-    expect(source).toMatch(
-      /\[data-track-column='(?:index|context-primary|duration)'\][\s\S]*?font-variant-numeric:\s*tabular-nums;/u,
+    expect(productionSource).toMatch(
+      /\[data-track-column='ordinal'\],[\s\S]*?font-variant-numeric:\s*tabular-nums;/u,
     );
-    expect(source).toContain('data-column-priority="secondary"');
-    expect(source).toContain('@container library-track-table');
+    expect(source).toContain(':data-column-priority=');
+    expect(source).toContain('useTrackCollectionColumns');
   });
 
   it('stays scoped to browse tables rather than import review rows', () => {
@@ -196,7 +221,7 @@ describe('TrackTable canonical grid', () => {
 
 describe('TrackTable shared row behavior', () => {
   it('uses the shared quiet selection surface and reserves the outline for keyboard focus', () => {
-    const selectedRule = source.match(
+    const selectedRule = rowSource.match(
       /\.library-track-row--selected\s*\{(?<body>[\s\S]*?)\n\}/u,
     )?.groups?.body;
 
@@ -204,9 +229,9 @@ describe('TrackTable shared row behavior', () => {
       'background: var(--ui-track-row-selected-surface);',
     );
     expect(selectedRule).not.toContain('box-shadow');
-    expect(source).not.toContain('--ui-color-surface-selected');
-    expect(source).not.toContain('--ui-row-active-shadow');
-    expect(source).toMatch(
+    expect(rowSource).not.toContain('--ui-color-surface-selected');
+    expect(rowSource).not.toContain('--ui-row-active-shadow');
+    expect(rowSource).toMatch(
       /\.library-track-row:has\(\.library-track-row__action:focus-visible\)\s*\{[^}]*outline:\s*var\(--ui-focus-width\) solid var\(--ui-color-focus\);/su,
     );
   });
@@ -287,24 +312,133 @@ describe('TrackTable shared row behavior', () => {
     app.unmount();
   });
 
-  it('exposes reorder only for playlist custom order and supports arrows', () => {
+  it('keeps title static and attaches album navigation only to the release cell', () => {
+    const onNavigateAlbum = vi.fn();
+    const { app, root } = mountTable({
+      onNavigateAlbum,
+      columnPreferences: { visibleAdvanced: ['release'] },
+    });
+    const firstRow = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+    const titleDestination = findAll(
+      firstRow,
+      (node) => node.props?.['aria-label'] === '前往專輯：第一首歌',
+    );
+    const albumDestination = findAll(
+      firstRow,
+      (node) => node.props?.['aria-label'] === '前往專輯：專輯 A',
+    )[0];
+
+    expect(titleDestination).toHaveLength(0);
+    expect(albumDestination.type).toBe('button');
+    trigger(albumDestination, 'onClick', { stopPropagation: vi.fn() });
+    expect(onNavigateAlbum).toHaveBeenCalledWith(tracks[0]);
+    app.unmount();
+
+    const album = mountTable({
+      collectionKind: 'album',
+      albumJumpableTrackIds: new Set(['track-a']),
+      onNavigateAlbum,
+    });
+    expect(
+      findAll(
+        album.root,
+        (node) => node.props?.['aria-label'] === '前往專輯：專輯 A',
+      ),
+    ).toHaveLength(0);
+    album.app.unmount();
+  });
+
+  it('keeps the accompaniment command before duration and overflow after it', () => {
+    const onQueueSeparation = vi.fn();
+    const { app, root } = mountTable({
+      columnPreferences: {
+        hiddenDefaultColumns: ['release', 'membership'],
+      },
+      onQueueSeparation,
+    });
+    const firstRow = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+    const roles = rowRoles(firstRow);
+    const vsButton = findAll(
+      firstRow,
+      (node) =>
+        node.type === 'button' &&
+        textContent(node).includes('加入伴奏處理佇列：第一首歌'),
+    )[0];
+    const moreButton = findAll(
+      firstRow,
+      (node) =>
+        node.type === 'button' && textContent(node).includes('更多：第一首歌'),
+    )[0];
+
+    expect(roles).not.toContain('release');
+    expect(roles).not.toContain('membership');
+    expect(roles.indexOf('separation')).toBeLessThan(roles.indexOf('duration'));
+    expect(roles.indexOf('actions')).toBeGreaterThan(roles.indexOf('duration'));
+    expect(roles).toContain('separation');
+    expect(roles).toContain('actions');
+    expect(vsButton).toBeTruthy();
+    expect(moreButton).toBeTruthy();
+    trigger(vsButton, 'onClick', { stopPropagation: vi.fn() });
+    expect(onQueueSeparation).toHaveBeenCalledWith(tracks[0]);
+    app.unmount();
+  });
+
+  it('projects existing and queued accompaniment truth as non-command row states', () => {
+    const ready = mountTable({
+      entries: [
+        { ...entries[0], track: { ...tracks[0], hasSeparation: true } },
+      ],
+    });
+    expect(
+      findAll(
+        ready.root,
+        (node) => node.props?.['aria-label'] === '已有伴奏：第一首歌',
+      ),
+    ).toHaveLength(1);
+    expect(
+      findAll(ready.root, (node) =>
+        textContent(node).includes('加入伴奏處理佇列：第一首歌'),
+      ),
+    ).toHaveLength(0);
+    ready.app.unmount();
+
+    const queued = mountTable({ vsQueuedTrackIds: new Set(['track-a']) });
+    expect(
+      findAll(
+        queued.root,
+        (node) => node.props?.['aria-label'] === '伴奏處理中：第一首歌',
+      ),
+    ).toHaveLength(1);
+    expect(rowSource).not.toMatch(/已有 VS|VS 處理|加入 VS/u);
+    queued.app.unmount();
+  });
+
+  it('exposes whole-row reorder only for playlist custom order and supports arrows', () => {
     const onMoveTrack = vi.fn();
     const { app, root } = mountTable({ canDrag: true, onMoveTrack });
-    const handle = findAll(
+    const row = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+    const action = findAll(
       root,
       (node) =>
         node.type === 'button' &&
-        textContent(node).includes('調整順序：第一首歌'),
+        node.props?.['aria-label'] === '選取：第一首歌',
     )[0];
 
-    expect(handle.props.draggable).toBe(true);
-    expect(handle.props.role).toBeUndefined();
-    trigger(handle, 'onKeydown', {
+    expect(row.props.draggable).toBe(true);
+    expect(rowRoles(row)).not.toContain('reorder');
+    expect(action.props['aria-description']).toContain('方向鍵調整順序');
+    trigger(action, 'onKeydown', {
       key: 'ArrowUp',
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
     });
-    trigger(handle, 'onKeydown', {
+    trigger(action, 'onKeydown', {
       key: 'ArrowDown',
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
@@ -329,11 +463,11 @@ describe('TrackTable density and sticky header', () => {
     expect(
       findAll(root, (node) => classIncludes(node, 'library-track-row__thumb')),
     ).toHaveLength(0);
-    expect(source).toMatch(
-      /\.library-track-table--compact \.library-track-row \{\s*min-height: var\(--ui-track-row-compact-min-height\);/u,
+    expect(rowSource).toMatch(
+      /\.library-track-row--compact \{\s*min-height: var\(--ui-track-row-compact-min-height\);/u,
     );
-    expect(source).toMatch(
-      /\.library-track-table--compact \.library-track-row__copy \{\s*flex-direction: row;/u,
+    expect(rowSource).toMatch(
+      /\.library-track-row--compact \.library-track-row__copy \{\s*flex-direction: row;/u,
     );
     app.unmount();
   });
@@ -351,5 +485,164 @@ describe('TrackTable density and sticky header', () => {
     expect(source).toMatch(
       /\.library-track-table__header \{[^}]*position: sticky;[^}]*top: var\(--ui-folder-sticky-offset, 0\);[^}]*z-index: var\(--ui-layer-overlay\);[^}]*background: var\(--ui-folder-page-background/su,
     );
+  });
+});
+
+describe('TrackTable production collection contract', () => {
+  it.each([
+    [
+      'library-all',
+      [
+        'ordinal',
+        'identity',
+        'release',
+        'spacer',
+        'separation',
+        'duration',
+        'actions',
+      ],
+    ],
+    [
+      'library-local',
+      [
+        'ordinal',
+        'identity',
+        'release',
+        'spacer',
+        'separation',
+        'duration',
+        'actions',
+      ],
+    ],
+    [
+      'playlist',
+      ['ordinal', 'identity', 'spacer', 'separation', 'duration', 'actions'],
+    ],
+    [
+      'album',
+      [
+        'ordinal',
+        'identity',
+        'usage',
+        'spacer',
+        'separation',
+        'duration',
+        'actions',
+      ],
+    ],
+    [
+      'artist',
+      [
+        'ordinal',
+        'identity',
+        'usage',
+        'spacer',
+        'separation',
+        'duration',
+        'actions',
+      ],
+    ],
+  ])(
+    'uses one descriptor sequence for %s header and rows',
+    (collectionKind, roles) => {
+      const { app, root } = mountTable({ collectionKind });
+      const header = findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__header'),
+      )[0];
+      const row = findAll(root, (node) =>
+        classIncludes(node, 'library-track-row'),
+      )[0];
+
+      expect(rowRoles(header)).toEqual(roles);
+      expect(rowRoles(row)).toEqual(roles);
+      app.unmount();
+    },
+  );
+
+  it('uses the playlist row as the drag source without a reorder column', () => {
+    const onMoveTrack = vi.fn();
+    const onTrackDragStart = vi.fn();
+    const { app, root } = mountTable({
+      collectionKind: 'playlist',
+      canDrag: true,
+      onMoveTrack,
+      onTrackDragStart,
+    });
+    const row = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+    const action = findAll(
+      row,
+      (node) => node.props?.['aria-label'] === '選取：第一首歌',
+    )[0];
+    const dragEvent = { dataTransfer: {} };
+
+    expect(row.props.draggable).toBe(true);
+    expect(rowRoles(row)).not.toContain('reorder');
+    trigger(row, 'onDragstart', dragEvent);
+    trigger(action, 'onKeydown', {
+      key: 'ArrowDown',
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    });
+    expect(onTrackDragStart).toHaveBeenCalledWith(tracks[0], dragEvent);
+    expect(onMoveTrack).toHaveBeenCalledWith('track-a', 1);
+    app.unmount();
+  });
+
+  it('shares the centered ordinal slot between number and playback control', () => {
+    const onTogglePlayback = vi.fn();
+    const { app, root } = mountTable({
+      collectionKind: 'playlist',
+      playingTrackId: 'track-a',
+      onTogglePlayback,
+    });
+    const firstRow = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+    const ordinal = findAll(
+      firstRow,
+      (node) => node.props?.['data-track-column'] === 'ordinal',
+    )[0];
+    const playback = findAll(
+      ordinal,
+      (node) =>
+        node.type === 'button' && textContent(node).includes('暫停：第一首歌'),
+    )[0];
+
+    expect(ordinal.props['data-column-align']).toBe('center');
+    trigger(playback, 'onClick', { stopPropagation: vi.fn() });
+    expect(onTogglePlayback).toHaveBeenCalledWith(tracks[0]);
+    app.unmount();
+  });
+
+  it('does not advertise local-usage sorting until truthful values exist', () => {
+    const unavailable = mountTable({ collectionKind: 'album' });
+    expect(
+      findAll(
+        unavailable.root,
+        (node) => node.props?.['aria-label'] === '播放次數排序',
+      ),
+    ).toHaveLength(0);
+    unavailable.app.unmount();
+
+    const available = mountTable({
+      collectionKind: 'album',
+      entries: [{ ...entries[0], playCount: 0 }],
+    });
+    expect(
+      findAll(
+        available.root,
+        (node) => node.props?.['aria-label'] === '播放次數排序',
+      ),
+    ).toHaveLength(1);
+    available.app.unmount();
+  });
+
+  it('keeps album-cell navigation and canonical artist credits without deep overrides', () => {
+    expect(rowSource).toContain('<TrackArtistCredits');
+    expect(rowSource).toContain("emit('navigateAlbum', entry.track)");
+    expect(rowSource).not.toContain("emit('titleClick', entry.track)");
+    expect(`${source}\n${rowSource}`).not.toContain(':deep(');
   });
 });

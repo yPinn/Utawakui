@@ -42,12 +42,54 @@ describe('LibraryBrowseContent track interaction owner', () => {
   it('uses one canonical table and disables custom reorder while filtering', () => {
     expect(source).toContain('<TrackTable');
     expect(source).toContain(':entries="visibleTableEntries"');
-    expect(source).toContain("mode.value === 'all' ? 'library' : mode.value");
-    expect(source).toContain(':variant="tableVariant"');
+    expect(source).toContain('? `library-${playlistState.libraryView}`');
+    expect(source).toContain(':collection-kind="tableCollectionKind"');
+    expect(source).toContain(
+      ':column-preferences="currentTableColumnPreferences"',
+    );
+    expect(source).toContain(
+      '@update-column-preferences="updateTableColumnPreferences"',
+    );
+    expect(source).not.toContain(':variant="tableVariant"');
     expect(source).toContain('@move-track="movePlaylistTrack"');
     expect(source).toMatch(
       /const canDragPlaylistRows = computed\([\s\S]*?mode\.value === 'playlist'[\s\S]*?!normalizedSearchQuery\.value[\s\S]*?playlistSort\.value\.key === null/u,
     );
+  });
+
+  it('routes the ordinal playback control through the audio authority', () => {
+    expect(source).toContain('const { state, playTrack, clearTrack, toggle }');
+    expect(source).toContain(
+      ':playing-track-id="state.isPlaying ? state.track?.id : \'\'"',
+    );
+    expect(source).toContain('@toggle-playback="toggleTrackPlayback"');
+    expect(source).toMatch(
+      /function toggleTrackPlayback\(track\)[\s\S]*?state\.track\?\.id === track\?\.id[\s\S]*?toggle\(\)[\s\S]*?activateTrack\(track\)/u,
+    );
+  });
+
+  it('keeps track titles static and navigates from the album cell only', () => {
+    expect(source).toContain(
+      ':album-jumpable-track-ids="albumJumpableTrackIds"',
+    );
+    expect(source).toContain('@navigate-album="jumpToAlbum"');
+    expect(source).not.toContain('@title-click="jumpToAlbum"');
+  });
+
+  it('offers search only for library and playlist while keeping density available', () => {
+    expect(source).toMatch(
+      /const showTrackSearch = computed\([\s\S]*?mode\.value === 'all'[\s\S]*?mode\.value === 'playlist'/u,
+    );
+    expect(source).toContain(':show-search="showTrackSearch"');
+    expect(source).toContain(':density="trackListDensity"');
+    expect(source).toContain('@update-density="setTrackListDensity"');
+  });
+
+  it('routes one track through the shared gated Separation Queue owner', () => {
+    expect(source).toContain('useSeparationQueueContext');
+    expect(source).toContain('useTrackSeparationAction');
+    expect(source).toContain(':vs-queued-track-ids="vsQueuedTrackIds"');
+    expect(source).toContain('@queue-separation="queueTrackForSeparation"');
   });
 
   it('keeps header playback on the full sorted collection instead of the search result', () => {

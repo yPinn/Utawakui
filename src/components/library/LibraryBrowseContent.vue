@@ -16,7 +16,9 @@ import { usePlaylists } from '../../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { useScrolledPast } from '../../composables/useScrolledPast.js';
+import { useSeparationQueueContext } from '../../composables/useSeparationQueueContext.js';
 import { useTrackListDensity } from '../../composables/useTrackListDensity.js';
+import { useTrackSeparationAction } from '../../composables/useTrackSeparationAction.js';
 import { useTrackPreview } from '../../composables/useTrackPreview.js';
 import { useTrackMetadataEditor } from '../../composables/useTrackMetadataEditor.js';
 import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue';
@@ -57,7 +59,7 @@ import {
   sortLocalLibraryTracks,
 } from '../../utils/trackSourceDisplay.js';
 
-const { state, playTrack, clearTrack } = usePlayer();
+const { state, playTrack, clearTrack, toggle } = usePlayer();
 const { confirm: confirmAction } = useAppConfirmation();
 const { recordError } = useAppDiagnostics();
 const {
@@ -112,6 +114,7 @@ const searchQuery = defineModel('searchQuery', {
 });
 const addMenu = ref(null);
 const playlistSort = ref({ key: null, direction: 'asc' });
+const tableColumnPreferencesByKind = shallowRef({});
 
 const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
 
@@ -131,7 +134,19 @@ const isAlbumSelected = computed(() => mode.value === 'album');
 // Artist pages are derived read-only references (ADR 0022).
 const isArtistSelected = computed(() => mode.value === 'artist');
 
-const trackListDensity = useTrackListDensity();
+const { density: trackListDensity, setDensity: setTrackListDensity } =
+  useTrackListDensity();
+const separationController = useSeparationQueueContext();
+const {
+  enqueueingTrackId: vsEnqueuePendingTrackId,
+  error: separationActionError,
+  vsQueuedTrackIds,
+  queueTrackForSeparation,
+  clearError: clearSeparationActionError,
+} = useTrackSeparationAction({
+  separationController,
+  tracksById: libraryTracksById,
+});
 const collectionHeader = shallowRef(null);
 // Spotify-style: once the dossier scrolls away, a compact bar keeps the
 // title and Play reachable and the table header sticks below it.
@@ -168,7 +183,7 @@ const playlistTracks = computed(() =>
 );
 
 // Empty inside an album's own page — jumping to itself would be a no-op.
-const jumpableTrackIds = computed(() => {
+const albumJumpableTrackIds = computed(() => {
   if (isAlbumSelected.value) return new Set();
   const ids = new Set();
   const tracks =
@@ -179,8 +194,11 @@ const jumpableTrackIds = computed(() => {
   return ids;
 });
 
+const showTrackSearch = computed(
+  () => mode.value === 'all' || mode.value === 'playlist',
+);
 const normalizedSearchQuery = computed(() =>
-  searchQuery.value.trim().toLocaleLowerCase(),
+  showTrackSearch.value ? searchQuery.value.trim().toLocaleLowerCase() : '',
 );
 
 function matchesSearch(track) {
@@ -236,12 +254,19 @@ const visibleTableEntries = computed(() =>
     ? visibleLibraryEntries.value
     : visiblePlaylistEntries.value,
 );
-const tableContextLabel = computed(() =>
-  mode.value === 'all' || mode.value === 'artist' ? '匯入日期' : '新增日期',
+const tableCollectionKind = computed(() =>
+  mode.value === 'all' ? `library-${playlistState.libraryView}` : mode.value,
 );
-const tableVariant = computed(() =>
-  mode.value === 'all' ? 'library' : mode.value,
+const currentTableColumnPreferences = computed(
+  () => tableColumnPreferencesByKind.value[tableCollectionKind.value] ?? {},
 );
+
+function updateTableColumnPreferences(preferences) {
+  tableColumnPreferencesByKind.value = {
+    ...tableColumnPreferencesByKind.value,
+    [tableCollectionKind.value]: preferences,
+  };
+}
 // Header actions act on the whole page, independent of the search filter.
 const headerTracks = computed(() =>
   mode.value === 'all' ? libraryViewTracks.value : playlistTracks.value,
@@ -474,7 +499,9 @@ function trackMenuOptions(track) {
 }
 const addMenuOptions = computed(() => trackMenuOptions(addMenu.value?.track));
 
-const pageError = computed(() => playlistState.error || deleteError.value);
+const pageError = computed(
+  () => playlistState.error || deleteError.value || separationActionError.value,
+);
 const visibleTracksEmptyText = computed(() =>
   normalizedSearchQuery.value ? '找不到符合搜尋的曲目。' : '沒有曲目。',
 );
@@ -507,12 +534,14 @@ watch(
     () => playlistState.libraryView,
   ],
   () => {
+    if (!showTrackSearch.value) searchQuery.value = '';
     selectedTrackId.value = null;
     artistIdentityOpen.value = false;
     artistPhotoCandidates.close();
     closeAddMenu();
     clearDragState();
     trackPreview.close();
+    clearSeparationActionError();
   },
 );
 
@@ -533,6 +562,14 @@ function activateTrack(track) {
     sourceId: collectionSourceId.value,
   });
   playTrack(toPlayableTrack(track));
+}
+
+function toggleTrackPlayback(track) {
+  if (state.track?.id === track?.id) {
+    toggle();
+    return;
+  }
+  activateTrack(track);
 }
 
 function toggleSelectedCollectionPlayback() {
@@ -881,6 +918,8 @@ onMounted(async () => {
           :can-add-to-playlist="playlistTracks.length > 0"
           :add-to-playlist-items="addToPlaylistItems"
           :more-items="collectionMoreItems"
+          :show-search="showTrackSearch"
+          :density="trackListDensity"
           @toggle-playback="toggleSelectedCollectionPlayback"
           @toggle-shuffle="toggleShuffle"
           @add-to-queue="enqueueSelectedCollection"
@@ -889,6 +928,7 @@ onMounted(async () => {
           @menu-action="handleCollectionMenuAction"
           @select-artist="openAlbumArtist"
           @choose-photo="chooseSelectedArtistPhoto"
+          @update-density="setTrackListDensity"
         />
       </div>
 
@@ -913,7 +953,7 @@ onMounted(async () => {
           <UiNotice
             v-if="pageError"
             tone="danger"
-            title="播放清單操作未完成"
+            title="曲目操作未完成"
             :message="pageError"
             compact
           />
@@ -927,23 +967,29 @@ onMounted(async () => {
           <TrackTable
             v-else
             :entries="visibleTableEntries"
-            :variant="tableVariant"
+            :collection-kind="tableCollectionKind"
+            :column-preferences="currentTableColumnPreferences"
             :label="`${pageTitle}曲目`"
-            :context-label="tableContextLabel"
             :sort="playlistSort"
             :sortable="mode !== 'all'"
             :can-drag="canDragPlaylistRows"
             :selected-track-id="selectedTrackId"
             :current-track-id="state.track?.id"
+            :playing-track-id="state.isPlaying ? state.track?.id : ''"
             :dragging-track-id="draggingTrackId"
             :drop-target-track-id="dropTargetTrackId"
             :drop-position="dropPosition"
-            :jumpable-track-ids="jumpableTrackIds"
+            :album-jumpable-track-ids="albumJumpableTrackIds"
+            :vs-queued-track-ids="vsQueuedTrackIds"
+            :vs-enqueue-pending-track-id="vsEnqueuePendingTrackId"
             :density="trackListDensity"
             @toggle-sort="togglePlaylistSort"
+            @update-column-preferences="updateTableColumnPreferences"
             @select-track="selectTrack"
             @activate-track="activateTrack"
-            @title-click="jumpToAlbum"
+            @toggle-playback="toggleTrackPlayback"
+            @navigate-album="jumpToAlbum"
+            @queue-separation="queueTrackForSeparation"
             @open-menu="openAddMenu"
             @move-track="movePlaylistTrack"
             @track-drag-start="startDrag"

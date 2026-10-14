@@ -10,6 +10,7 @@ import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import TrackListDensityMenu from '../track/TrackListDensityMenu.vue';
 
 const props = defineProps({
   entityLabel: { type: String, required: true },
@@ -23,7 +24,13 @@ const props = defineProps({
   previewBlockedReason: { type: String, default: '' },
   entityAction: { type: Object, default: null },
   moreItems: { type: Array, default: () => [] },
+  showSearch: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
+  density: {
+    type: String,
+    default: 'list',
+    validator: (value) => ['list', 'compact'].includes(value),
+  },
 });
 
 const emit = defineEmits([
@@ -34,6 +41,7 @@ const emit = defineEmits([
   'entityAction',
   'menuAction',
   'update:searchQuery',
+  'updateDensity',
 ]);
 
 const activeMenu = shallowRef(null);
@@ -126,9 +134,15 @@ function selectMenuAction(value) {
 
     <div class="collection-action-rail__tools">
       <UiSearchBox
+        v-if="showSearch"
         :model-value="searchQuery"
         class="collection-action-rail__search"
         @update:model-value="emit('update:searchQuery', $event)"
+      />
+      <TrackListDensityMenu
+        class="collection-action-rail__density"
+        :density="density"
+        @update-density="emit('updateDensity', $event)"
       />
     </div>
 
@@ -162,6 +176,10 @@ function selectMenuAction(value) {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.collection-action-rail__density {
+  margin-inline-start: auto;
 }
 
 @container app-folder-layout (max-width: 36rem) {

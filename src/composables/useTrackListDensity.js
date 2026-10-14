@@ -1,9 +1,18 @@
-import { ref } from 'vue';
+import { readonly, shallowRef } from 'vue';
 
-// Session-wide track list density ('list' | 'compact'). No UI switches it
-// yet; collection pages stay in list view.
-const density = ref('list');
+export const TRACK_LIST_DENSITIES = Object.freeze(['list', 'compact']);
+
+// Session-wide display preference. It intentionally resets to the spacious
+// list recipe after an app restart instead of becoming persisted settings.
+const density = shallowRef('list');
+
+function setDensity(value) {
+  if (TRACK_LIST_DENSITIES.includes(value)) density.value = value;
+}
 
 export function useTrackListDensity() {
-  return density;
+  return {
+    density: readonly(density),
+    setDensity,
+  };
 }

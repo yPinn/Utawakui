@@ -17,6 +17,7 @@ const headerSource = readSource(
 );
 const dossierSource = readSource('../components/layout/AppFolderDossier.vue');
 const tableSource = readSource('../components/track/TrackTable.vue');
+const trackRowSource = readSource('../components/track/TrackCollectionRow.vue');
 
 describe('Library Token v2 surface cutover', () => {
   it('keeps Library browse in Folder document mode with one page scroll owner', () => {
@@ -51,7 +52,7 @@ describe('Library Token v2 surface cutover', () => {
   });
 
   it('uses only formal v2 names in the production Library row slice', () => {
-    const sources = [headerSource, dossierSource, tableSource];
+    const sources = [headerSource, dossierSource, tableSource, trackRowSource];
     const forbidden = [
       '--ui-font-weight-heavy',
       '--ui-font-weight-strong',
@@ -69,12 +70,12 @@ describe('Library Token v2 surface cutover', () => {
     expect(dossierSource).toContain('var(--ui-font-weight-semibold)');
     expect(headerSource).toContain('var(--ui-motion-duration-fast)');
     expect(headerSource).toContain('var(--ui-motion-easing-standard)');
-    expect(tableSource).toContain('border-radius: 0;');
-    expect(tableSource).toContain('var(--ui-folder-ledger-rule');
-    expect(tableSource).toContain(
+    expect(trackRowSource).toContain('border-radius: 0;');
+    expect(trackRowSource).toContain('var(--ui-folder-ledger-rule');
+    expect(trackRowSource).toContain(
       'background: var(--ui-track-row-selected-surface);',
     );
-    expect(tableSource).not.toContain('--ui-row-active-shadow');
-    expect(tableSource).not.toContain('--ui-track-row-active-shadow');
+    expect(trackRowSource).not.toContain('--ui-row-active-shadow');
+    expect(trackRowSource).not.toContain('--ui-track-row-active-shadow');
   });
 });
