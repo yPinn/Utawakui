@@ -46,6 +46,7 @@ import { usePlaybackHistory } from './composables/usePlaybackHistory.js';
 import { usePlaybackResume } from './composables/usePlaybackResume.js';
 import { usePreparationActivity } from './composables/usePreparationActivity.js';
 import { useSeparationQueue } from './composables/useSeparationQueue.js';
+import { SEPARATION_QUEUE_KEY } from './composables/useSeparationQueueContext.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
@@ -172,6 +173,7 @@ const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
 const preparationActivity = usePreparationActivity();
 const separationQueue = useSeparationQueue();
+provide(SEPARATION_QUEUE_KEY, separationQueue);
 onMounted(separationQueue.initialize);
 onUnmounted(separationQueue.dispose);
 const { state: playerState } = usePlayer();
