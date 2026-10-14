@@ -7,9 +7,21 @@ import {
   nextPlaylistSort,
 } from './playlistSort.js';
 
-function entry({ id, title, artist, addedAt, duration, playlistIndex }) {
+function entry({
+  id,
+  title,
+  artist,
+  album,
+  releaseYear,
+  importedAt,
+  playCount,
+  addedAt,
+  duration,
+  playlistIndex,
+}) {
   return {
-    track: { id, title, artist, duration },
+    track: { id, title, artist, album, releaseYear, importedAt, duration },
+    playCount,
     addedAt,
     playlistIndex,
   };
@@ -182,6 +194,34 @@ describe('comparePlaylistEntries — tie-break on identical sort key', () => {
         direction: 'asc',
       }),
     ).toBeGreaterThan(0);
+  });
+});
+
+describe('comparePlaylistEntries — collection metadata', () => {
+  it.each([
+    [PLAYLIST_SORT_KEYS.album, { album: 'Beta' }, { album: 'Alpha' }],
+    [
+      PLAYLIST_SORT_KEYS.releaseYear,
+      { releaseYear: 2024 },
+      { releaseYear: 2020 },
+    ],
+    [
+      PLAYLIST_SORT_KEYS.importedAt,
+      { importedAt: '2026-10-12' },
+      { importedAt: '2026-10-01' },
+    ],
+    [PLAYLIST_SORT_KEYS.playCount, { playCount: 20 }, { playCount: 3 }],
+  ])('sorts %s and keeps missing values at the end', (key, later, earlier) => {
+    const a = entry({ id: 'a', playlistIndex: 0, ...later });
+    const b = entry({ id: 'b', playlistIndex: 1, ...earlier });
+    const missing = entry({ id: 'missing', playlistIndex: 2 });
+
+    expect(
+      comparePlaylistEntries(a, b, { key, direction: 'asc' }),
+    ).toBeGreaterThan(0);
+    expect(
+      comparePlaylistEntries(a, missing, { key, direction: 'desc' }),
+    ).toBeLessThan(0);
   });
 });
 

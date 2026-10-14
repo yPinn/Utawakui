@@ -1,8 +1,21 @@
 export const PLAYLIST_SORT_KEYS = {
   title: 'title',
+  album: 'album',
+  releaseYear: 'releaseYear',
   addedAt: 'addedAt',
+  importedAt: 'importedAt',
+  playCount: 'playCount',
   duration: 'duration',
 };
+
+const OPTIONAL_VALUE_SORT_KEYS = new Set([
+  PLAYLIST_SORT_KEYS.album,
+  PLAYLIST_SORT_KEYS.releaseYear,
+  PLAYLIST_SORT_KEYS.addedAt,
+  PLAYLIST_SORT_KEYS.importedAt,
+  PLAYLIST_SORT_KEYS.playCount,
+  PLAYLIST_SORT_KEYS.duration,
+]);
 
 export function compareText(a, b) {
   return String(a ?? '').localeCompare(String(b ?? ''), undefined, {
@@ -40,6 +53,34 @@ export function comparePlaylistEntries(a, b, sort) {
       (dateA, dateB) => new Date(dateA).getTime() - new Date(dateB).getTime(),
       direction,
     );
+  } else if (key === PLAYLIST_SORT_KEYS.album) {
+    result = compareOptionalValues(
+      a.track.album,
+      b.track.album,
+      compareText,
+      direction,
+    );
+  } else if (key === PLAYLIST_SORT_KEYS.releaseYear) {
+    result = compareOptionalValues(
+      Number.isFinite(a.track.releaseYear) ? a.track.releaseYear : null,
+      Number.isFinite(b.track.releaseYear) ? b.track.releaseYear : null,
+      (yearA, yearB) => yearA - yearB,
+      direction,
+    );
+  } else if (key === PLAYLIST_SORT_KEYS.importedAt) {
+    result = compareOptionalValues(
+      a.track.importedAt,
+      b.track.importedAt,
+      (dateA, dateB) => new Date(dateA).getTime() - new Date(dateB).getTime(),
+      direction,
+    );
+  } else if (key === PLAYLIST_SORT_KEYS.playCount) {
+    result = compareOptionalValues(
+      Number.isFinite(a.playCount) ? a.playCount : null,
+      Number.isFinite(b.playCount) ? b.playCount : null,
+      (countA, countB) => countA - countB,
+      direction,
+    );
   } else if (key === PLAYLIST_SORT_KEYS.duration) {
     result = compareOptionalValues(
       Number.isFinite(a.track.duration) ? a.track.duration : null,
@@ -49,11 +90,7 @@ export function comparePlaylistEntries(a, b, sort) {
     );
   }
 
-  if (
-    result !== 0 &&
-    key !== PLAYLIST_SORT_KEYS.addedAt &&
-    key !== PLAYLIST_SORT_KEYS.duration
-  ) {
+  if (result !== 0 && !OPTIONAL_VALUE_SORT_KEYS.has(key)) {
     return direction === 'desc' ? -result : result;
   }
   if (result !== 0) return result;
