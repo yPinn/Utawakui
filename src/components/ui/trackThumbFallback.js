@@ -1,7 +1,7 @@
-import trackThumbFallbackBlue from '../../assets/demo/track-thumb/track-thumb-fallback-blue.png';
-import trackThumbFallbackPink from '../../assets/demo/track-thumb/track-thumb-fallback-pink.png';
-import trackThumbFallbackRed from '../../assets/demo/track-thumb/track-thumb-fallback-red.png';
-import trackThumbFallbackYellow from '../../assets/demo/track-thumb/track-thumb-fallback-yellow.png';
+import trackThumbFallbackBlue from '../../assets/track-artwork/track-thumb-fallback-blue.png';
+import trackThumbFallbackPink from '../../assets/track-artwork/track-thumb-fallback-pink.png';
+import trackThumbFallbackRed from '../../assets/track-artwork/track-thumb-fallback-red.png';
+import trackThumbFallbackYellow from '../../assets/track-artwork/track-thumb-fallback-yellow.png';
 
 export const TRACK_THUMB_FALLBACK_ARTWORK = Object.freeze([
   { id: 'blue', url: trackThumbFallbackBlue },

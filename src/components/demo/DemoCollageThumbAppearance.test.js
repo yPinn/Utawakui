@@ -7,7 +7,7 @@ import DemoCandidateCollageThumb from './DemoCandidateCollageThumb.vue';
 import DemoCandidateTrackArtwork from './DemoCandidateTrackArtwork.vue';
 import DemoCandidateTrackThumb from './DemoCandidateTrackThumb.vue';
 import DemoCollageThumbAppearance from './DemoCollageThumbAppearance.vue';
-import { getTrackThumbFallbackArtwork } from './trackThumbFallback.js';
+import { getTrackThumbFallbackArtwork } from '../ui/trackThumbFallback.js';
 import {
   attachClientRender,
   findAll,
@@ -43,7 +43,7 @@ const trackArtworkSource = readSource('./DemoCandidateTrackArtwork.vue');
 const artworkEmptySource = readSource('./DemoCandidateArtworkEmpty.vue');
 const currentSource = readSource('../ui/UiCollageThumb.vue');
 const trackCandidateSource = readSource('./DemoCandidateTrackThumb.vue');
-const trackFallbackSource = readSource('./trackThumbFallback.js');
+const productionTrackFallbackSource = readSource('../ui/trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
 const inspectorSource = readSource('../playback/context/TrackContextPanel.vue');
 const artistPreviewSource = readSource(
@@ -448,10 +448,10 @@ describe('DemoCollageThumbAppearance', () => {
     expect(candidateSource).toContain('DemoCandidateTrackArtwork');
     expect(trackCandidateSource).toContain('DemoCandidateTrackArtwork');
     expect(trackArtworkSource).toContain('getTrackThumbFallbackArtwork');
-    expect(trackArtworkSource).toContain("from './trackThumbFallback.js'");
+    expect(trackArtworkSource).toContain("from '../ui/trackThumbFallback.js'");
     expect(candidateSource).not.toContain('DemoCandidateTrackThumb');
     expect(trackCandidateSource).not.toContain('DemoCandidateCollageThumb');
-    expect(trackFallbackSource).toContain(
+    expect(productionTrackFallbackSource).toContain(
       'export function getTrackThumbFallbackArtwork(track)',
     );
     expect(currentSource).not.toContain('demo-candidate-collage-thumb');

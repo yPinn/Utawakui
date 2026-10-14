@@ -65,7 +65,7 @@ describe('rounded artwork composite clip', () => {
     });
     for (const html of [trackHtml, collageHtml]) {
       expect(html).toMatch(
-        /__layers ui-artwork-composite"[^>]*><img[^>]*>.*ui-artwork-overlay.*cue/su,
+        /__layers ui-artwork-composite"[^>]*>.*?<img[^>]*>.*ui-artwork-overlay.*cue/su,
       );
     }
   });

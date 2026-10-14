@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -21,6 +22,7 @@ import QueueTrackButton from './QueueTrackButton.vue';
 
 for (const [component, filename] of [
   [QueueTrackButton, './QueueTrackButton.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],

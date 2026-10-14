@@ -5,7 +5,7 @@ import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';
 import {
   getTrackThumbFallbackArtwork,
   TRACK_THUMB_FALLBACK_ARTWORK,
-} from './trackThumbFallback.js';
+} from '../ui/trackThumbFallback.js';
 
 defineProps({
   layer: { type: Object, required: true },

@@ -4,6 +4,7 @@ import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
@@ -20,6 +21,7 @@ for (const [component, filename] of [
   [UiArtworkReveal, '../ui/UiArtworkReveal.vue'],
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);

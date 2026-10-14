@@ -1,8 +1,8 @@
 <script setup>
-// Track thumbnail square: image, or initial-letter fallback, or a custom
-// fallback via the default slot when there's no track at all.
-import { getTrackInitial } from '../../utils/trackDisplay.js';
+// Track thumbnail square: custom artwork, stable default artwork, or a custom
+// empty-state slot when there is no track identity at all.
 import UiArtworkOverlay from './UiArtworkOverlay.vue';
+import TrackArtworkContent from './TrackArtworkContent.vue';
 
 defineProps({
   track: { type: Object, default: undefined },
@@ -47,16 +47,12 @@ function toCssLength(value) {
     }"
   >
     <span class="ui-track-thumb__layers ui-artwork-composite">
-      <img
-        v-if="track?.thumbnailUrl"
-        class="ui-track-thumb__image"
-        :src="track.thumbnailUrl"
-        alt=""
+      <TrackArtworkContent
+        v-if="track"
+        :track="track"
         :loading="loading"
         :decoding="decoding"
-        draggable="false"
       />
-      <span v-else-if="track">{{ getTrackInitial(track) }}</span>
       <slot v-else />
       <UiArtworkOverlay v-if="$slots.overlay">
         <slot name="overlay" />
@@ -95,13 +91,5 @@ function toCssLength(value) {
   align-items: center;
   justify-content: center;
   background: var(--ui-track-thumb-bg, var(--ui-color-surface-hover));
-}
-
-.ui-track-thumb__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
 }
 </style>

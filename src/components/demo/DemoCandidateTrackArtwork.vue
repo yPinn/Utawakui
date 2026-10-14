@@ -1,7 +1,7 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { getTrackInitial } from '../../utils/trackDisplay.js';
-import { getTrackThumbFallbackArtwork } from './trackThumbFallback.js';
+import { getTrackThumbFallbackArtwork } from '../ui/trackThumbFallback.js';
 
 const props = defineProps({
   track: { type: Object, required: true },

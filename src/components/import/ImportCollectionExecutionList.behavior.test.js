@@ -14,6 +14,7 @@ import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import ImportCollectionExecutionList from './ImportCollectionExecutionList.vue';
@@ -21,6 +22,7 @@ import ImportCollectionExecutionList from './ImportCollectionExecutionList.vue';
 for (const [component, filename] of [
   [ImportCollectionExecutionList, './ImportCollectionExecutionList.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiMarqueeText, '../ui/UiMarqueeText.vue'],
   [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],

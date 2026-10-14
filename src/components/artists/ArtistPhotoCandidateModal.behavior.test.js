@@ -12,6 +12,7 @@ import UiRadioGroup from '../ui/UiRadioGroup.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import {
   attachClientRender,
   findAll,
@@ -43,6 +44,7 @@ for (const [component, filename] of [
   [UiRadioGroup, '../ui/UiRadioGroup.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiSkeleton, '../ui/UiSkeleton.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);

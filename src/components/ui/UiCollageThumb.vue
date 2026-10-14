@@ -7,8 +7,8 @@
 // implementations had drifted apart.
 import { computed } from 'vue';
 import { Music2 } from '../../icons/index.js';
-import { getTrackInitial } from '../../utils/trackDisplay.js';
 import UiArtworkOverlay from './UiArtworkOverlay.vue';
+import TrackArtworkContent from './TrackArtworkContent.vue';
 
 const props = defineProps({
   coverUrl: { type: String, default: '' },
@@ -39,8 +39,8 @@ const singleTrack = computed(() => (props.canCollage ? null : props.tracks[0]));
 const hasArtwork = computed(
   () =>
     Boolean(props.coverUrl) ||
-    Boolean(singleTrack.value?.thumbnailUrl) ||
-    displayTracks.value.some((track) => track.thumbnailUrl),
+    Boolean(singleTrack.value) ||
+    displayTracks.value.length > 0,
 );
 // Scales with `size` so the same markup reads correctly at both the 136px
 // dossier and the 40px sidebar row — a fixed pixel value only ever looked
@@ -75,16 +75,11 @@ const singleIconSize = computed(() =>
         draggable="false"
       />
       <template v-else-if="!canCollage">
-        <img
-          v-if="singleTrack?.thumbnailUrl"
-          class="ui-collage-thumb__custom-image"
-          :src="singleTrack.thumbnailUrl"
-          alt=""
-          draggable="false"
+        <TrackArtworkContent
+          v-if="singleTrack"
+          class="ui-collage-thumb__single-artwork"
+          :track="singleTrack"
         />
-        <span v-else-if="singleTrack" class="ui-collage-thumb__single-initial">
-          {{ getTrackInitial(singleTrack) }}
-        </span>
         <span v-else class="ui-collage-thumb__single-empty">
           <component
             :is="emptyIcon || Music2"
@@ -99,14 +94,7 @@ const singleIconSize = computed(() =>
           :key="track.id"
           class="ui-collage-thumb__cell"
         >
-          <img
-            v-if="track.thumbnailUrl"
-            class="ui-collage-thumb__image"
-            :src="track.thumbnailUrl"
-            alt=""
-            draggable="false"
-          />
-          <span v-else>{{ getTrackInitial(track) }}</span>
+          <TrackArtworkContent :track="track" />
         </span>
         <span
           v-for="index in emptySlotCount"
@@ -178,7 +166,7 @@ const singleIconSize = computed(() =>
   object-fit: cover;
 }
 
-.ui-collage-thumb__single-initial,
+.ui-collage-thumb__single-artwork,
 .ui-collage-thumb__single-empty {
   grid-column: 1 / -1;
   grid-row: 1 / -1;
@@ -191,7 +179,13 @@ const singleIconSize = computed(() =>
   opacity: var(--ui-opacity-muted);
 }
 
-.ui-collage-thumb__single-initial {
+.ui-collage-thumb__single-artwork {
+  width: 100%;
+  height: 100%;
+}
+
+.ui-collage-thumb__single-artwork,
+.ui-collage-thumb__cell {
   font-size: var(--ui-collage-thumb-font-size);
   font-weight: var(--ui-type-label-weight);
   text-transform: var(--ui-collage-thumb-transform, uppercase);
@@ -222,11 +216,5 @@ const singleIconSize = computed(() =>
 
 .ui-collage-thumb__cell--empty {
   opacity: var(--ui-opacity-muted);
-}
-
-.ui-collage-thumb__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 </style>
