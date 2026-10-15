@@ -183,11 +183,9 @@ describe('AppFolderPage', () => {
     expect(html).toContain('data-page-mode="workspace"');
     expect(html).toContain('app-folder-page__body--workspace');
     expect(html).not.toContain('app-folder-page__scroll');
-    expect(html).not.toContain('app-folder-page__sheet');
     expect(html).not.toContain('app-folder-page__extension');
     expect(html).not.toContain('app-folder-page__tools');
     expect(html).not.toContain('Add Folder asset');
-    expect(html).not.toContain('app-loose-leaf-edge');
     expect(html).not.toContain('role="region"');
     expect(html).not.toContain('aria-label="workspace body"');
     expect(source).toMatch(
@@ -195,6 +193,21 @@ describe('AppFolderPage', () => {
     );
     expect(source).toMatch(
       /\.app-folder-page\[data-page-mode='workspace'\]\s*\{[^}]*background:\s*var\(--ui-folder-page-background\);/su,
+    );
+  });
+
+  it('puts workspaces on the same loose-leaf sheet, filling the Folder', async () => {
+    const html = await renderPage('workspace');
+
+    expect(html).toContain('app-folder-page__sheet--workspace');
+    expect(html.indexOf('app-loose-leaf-edge')).toBeGreaterThan(
+      html.indexOf('app-folder-page__sheet--workspace'),
+    );
+    expect(source).toMatch(
+      /\.app-folder-page__sheet--workspace\s*\{[^}]*max-inline-size:\s*none;[^}]*block-size:\s*100%;/su,
+    );
+    expect(source).toMatch(
+      /\.app-folder-page__body--workspace\s*\{[^}]*padding-inline-start:\s*calc\(\s*var\(--ui-folder-document-inset\) \+ var\(--ui-folder-sheet-binding-gutter\)\s*\);/su,
     );
   });
 

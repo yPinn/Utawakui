@@ -4,12 +4,13 @@ import { ArrowLeft, ListPlus, Plus, Trash2 } from '../../icons/index.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import { playlistDisplayName } from '../../utils/playlistMenu.js';
+import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
@@ -80,6 +81,9 @@ const workspaceValidationError = computed(() =>
     : state.validationError,
 );
 const sourceLabel = computed(() => state.plan.source?.name ?? '臨時場次');
+const sourceLang = computed(() =>
+  contentLangAttribute(state.plan.source?.name),
+);
 const selectedCollectionLabel = computed(() =>
   playlistDisplayName(selectedPlaylist.value),
 );
@@ -208,12 +212,30 @@ async function prepareSelectedCollection() {
     }"
     aria-label="待唱安排"
   >
-    <UiPageHeader
-      class="performance-session-workspace__page-header"
-      title="待唱安排"
+    <AppFolderWorkspaceToolbar
+      class="performance-session-workspace__toolbar"
+      :context="sourceLabel"
+      :context-lang="sourceLang"
+      meta="只安排尚未開始的曲目"
     >
-      <template #description>
-        {{ sourceLabel }} · 只安排尚未開始的曲目。
+      <template #status>
+        <UiChip tone="accent">{{ state.plan.summary.total }} 首</UiChip>
+        <UiChip
+          v-if="hasItems && state.plan.summary.needsAttention === 0"
+          tone="success"
+        >
+          全部可演出
+        </UiChip>
+        <UiChip v-else-if="state.plan.summary.needsAttention" tone="warning">
+          {{ state.plan.summary.needsAttention }} 首需處理
+        </UiChip>
+        <span
+          v-if="state.isSaving"
+          class="performance-session-workspace__saving"
+          role="status"
+        >
+          儲存中…
+        </span>
       </template>
       <template #actions>
         <UiButton
@@ -238,27 +260,7 @@ async function prepareSelectedCollection() {
           返回
         </UiButton>
       </template>
-    </UiPageHeader>
-
-    <div class="performance-session-workspace__summary" aria-label="待唱狀態">
-      <UiChip tone="accent">{{ state.plan.summary.total }} 首</UiChip>
-      <UiChip
-        v-if="hasItems && state.plan.summary.needsAttention === 0"
-        tone="success"
-      >
-        全部可演出
-      </UiChip>
-      <UiChip v-else-if="state.plan.summary.needsAttention" tone="warning">
-        {{ state.plan.summary.needsAttention }} 首需處理
-      </UiChip>
-      <span
-        v-if="state.isSaving"
-        class="performance-session-workspace__saving"
-        role="status"
-      >
-        儲存中…
-      </span>
-    </div>
+    </AppFolderWorkspaceToolbar>
 
     <UiNotice
       v-if="state.error"
@@ -389,33 +391,23 @@ async function prepareSelectedCollection() {
   overflow: hidden;
 }
 
-.performance-session-workspace__page-header {
-  margin-block-end: var(--ui-folder-section-gap);
-}
-
-.performance-session-workspace__summary {
-  display: flex;
+.performance-session-workspace__toolbar {
   flex: 0 0 auto;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ui-space-2);
-  margin-bottom: var(--ui-space-3);
 }
 
 .performance-session-workspace__saving {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
+/* Panes sit on the Folder paper, divided by ledger rules instead of a card. */
 .performance-session-workspace__grid {
   display: grid;
   flex: 1;
   grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 0.8fr);
   min-height: 0;
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
 }
 
 .performance-session-workspace__list-pane,
@@ -429,8 +421,11 @@ async function prepareSelectedCollection() {
 
 .performance-session-workspace__list-pane {
   gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
-  border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
+  /* Inline start stays on the paper content edge shared with the toolbar. */
+  padding-block: var(--ui-space-3);
+  padding-inline-end: var(--ui-space-3);
+  border-inline-end: var(--ui-border-width) solid
+    var(--ui-folder-ledger-rule, var(--ui-color-border));
 }
 
 .performance-session-workspace__composer {
@@ -440,7 +435,8 @@ async function prepareSelectedCollection() {
   gap: var(--ui-space-2);
   align-items: center;
   padding-bottom: var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+  border-bottom: var(--ui-border-width) solid
+    var(--ui-folder-ledger-rule, var(--ui-color-border));
 }
 
 .performance-session-workspace__list-scroll {

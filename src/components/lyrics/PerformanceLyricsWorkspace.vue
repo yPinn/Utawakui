@@ -1,12 +1,22 @@
 <script setup>
 import { computed, onMounted, shallowRef, watch } from 'vue';
-import { Minus, Plus } from '../../icons/index.js';
+import { Minus, Pencil, Plus } from '../../icons/index.js';
+import { useAppView } from '../../composables/useAppView.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
-import { alignReadings, detectLyricsScript } from '../../utils/lyrics.js';
+import { trackContentLang } from '../../utils/contentLanguage.js';
+import {
+  alignReadings,
+  detectLyricsScript,
+  formatLyricsSourceLabel,
+} from '../../utils/lyrics.js';
+import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import UiSelect from '../ui/UiSelect.vue';
 
 const SUPPORTED_READING_SCRIPTS = new Set(['ja', 'ko']);
 const LYRICS_FONT_SIZE_CLASSES = [
@@ -28,13 +38,22 @@ const {
   resetOffset,
   retryOffsetSave,
   playFromLine,
+  selectSource,
 } = useLyrics();
 const {
   variant: readingVariant,
   getDoc: getReadingDoc,
+  isGenerating: isGeneratingReadingFor,
+  errorFor: readingErrorFor,
   loadReading,
+  generateReading,
   setVariant: setReadingVariant,
 } = useLyricsReading();
+const { openLyricsAuthoring } = useAppView();
+
+// Key of the source whose stored reading has been looked up, so a pending
+// lookup is never mistaken for a missing reading.
+const checkedReadingKey = shallowRef('');
 
 const lyricsFontSizeIndex = shallowRef(1);
 const lyricsScript = computed(() =>
@@ -78,18 +97,59 @@ const offsetLabel = computed(() => {
   if (state.offsetSeconds === 0) return '0.0s';
   return `${state.offsetSeconds > 0 ? '+' : ''}${state.offsetSeconds.toFixed(1)}s`;
 });
-const liveContextLabel = computed(() => {
-  if (!selectedTrack.value) return '尚未選擇曲目';
-  return [selectedTrack.value.title, selectedTrack.value.artist]
-    .filter(Boolean)
-    .join(' · ');
+const trackLang = computed(() => trackContentLang(selectedTrack.value));
+const sourceOptions = computed(() =>
+  selectedLyrics.value.sources.map((source) => ({
+    value: source.filename,
+    label: formatLyricsSourceLabel(source),
+  })),
+);
+const readingKey = computed(() => {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  return track && source ? `${track.id}::${source.filename}` : '';
 });
+const isGeneratingReading = computed(() => {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  return Boolean(
+    track && source && isGeneratingReadingFor(track.id, source.filename),
+  );
+});
+const readingError = computed(() => {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  return track && source ? readingErrorFor(track.id, source.filename) : null;
+});
+// A stale reading aligns to no line, so it counts as missing too.
+const showsMissingReading = computed(
+  () =>
+    showsReadingAid.value &&
+    readingVariant.value !== 'off' &&
+    readingKey.value !== '' &&
+    checkedReadingKey.value === readingKey.value &&
+    !readingLines.value.some(Boolean),
+);
 
 async function loadSelectedReading() {
   const track = selectedTrack.value;
   const source = selectedSource.value;
   if (!track || !source) return;
+  const key = readingKey.value;
   await loadReading(track.id, source.filename, lyricsDocument.value);
+  if (readingKey.value === key) checkedReadingKey.value = key;
+}
+
+function generateSelectedReading() {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  if (!track || !source || isGeneratingReading.value) return;
+  generateReading(
+    track.id,
+    source.filename,
+    lyricsDocument.value,
+    lyricsScript.value,
+  );
 }
 
 function selectReadingVariant(variant) {
@@ -132,14 +192,24 @@ onMounted(initialize);
 
 <template>
   <section class="performance-lyrics-workspace" aria-label="現場歌詞">
-    <header class="performance-lyrics-workspace__toolbar">
-      <div class="performance-lyrics-workspace__identity">
-        <h1 class="performance-lyrics-workspace__title">現場歌詞</h1>
-        <p class="performance-lyrics-workspace__track">
-          {{ liveContextLabel }}
-        </p>
-      </div>
-      <div class="performance-lyrics-workspace__display-controls">
+    <AppFolderWorkspaceToolbar
+      :context="selectedTrack?.title || '尚未選擇曲目'"
+      :context-lang="trackLang"
+      :meta="selectedTrack?.artist ?? ''"
+      :meta-lang="trackLang"
+    >
+      <template #actions>
+        <UiSelect
+          v-if="sourceOptions.length > 0"
+          id="performance-lyrics-source"
+          class="performance-lyrics-workspace__source"
+          label="歌詞來源"
+          label-hidden
+          :model-value="selectedSource?.filename ?? ''"
+          :options="sourceOptions"
+          :disabled="sourceOptions.length < 2"
+          @update:model-value="selectSource"
+        />
         <div
           v-if="readingOptions.length > 0"
           class="performance-lyrics-workspace__control-group"
@@ -167,8 +237,36 @@ onMounted(initialize);
             @click="increaseLyricsFontSize"
           />
         </div>
-      </div>
-    </header>
+        <UiButton
+          v-if="selectedTrack"
+          :icon="Pencil"
+          title="在曲庫編輯這首歌的歌詞、來源與讀音"
+          @click="openLyricsAuthoring"
+        >
+          編輯歌詞
+        </UiButton>
+      </template>
+    </AppFolderWorkspaceToolbar>
+
+    <UiNotice
+      v-if="readingError"
+      tone="danger"
+      :message="readingError"
+      action-label="重試"
+      :action-disabled="isGeneratingReading"
+      compact
+      @action="generateSelectedReading"
+    />
+    <UiNotice
+      v-else-if="showsMissingReading"
+      tone="info"
+      :message="
+        isGeneratingReading ? '正在產生讀音…' : '這首歌還沒有讀音資料。'
+      "
+      :action-label="isGeneratingReading ? '' : '產生讀音'"
+      compact
+      @action="generateSelectedReading"
+    />
 
     <LyricsLiveTool
       :document-id="lyricsDocument.documentId"
@@ -199,76 +297,33 @@ onMounted(initialize);
 
 <style scoped>
 .performance-lyrics-workspace {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
   min-width: 0;
   min-height: 0;
   height: 100%;
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
 }
 
-.performance-lyrics-workspace__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+.performance-lyrics-workspace > :last-child {
+  flex: 1 1 auto;
 }
 
-.performance-lyrics-workspace__identity {
-  min-width: 0;
+.performance-lyrics-workspace__source {
+  inline-size: 12rem;
+  max-inline-size: 100%;
 }
 
-.performance-lyrics-workspace__title,
-.performance-lyrics-workspace__track {
-  margin: 0;
-}
-
-.performance-lyrics-workspace__title {
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-heading-size);
-  font-weight: var(--ui-type-heading-weight);
-  line-height: var(--ui-type-heading-line-height);
-}
-
-.performance-lyrics-workspace__track,
 .performance-lyrics-workspace__control-label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-body-compact-size);
   line-height: var(--ui-type-body-compact-line-height);
 }
 
-.performance-lyrics-workspace__track {
-  overflow: hidden;
-  margin-top: var(--ui-space-1);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.performance-lyrics-workspace__display-controls,
 .performance-lyrics-workspace__control-group {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-}
-
-.performance-lyrics-workspace__display-controls {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-@media (max-width: 52rem) {
-  .performance-lyrics-workspace__toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .performance-lyrics-workspace__display-controls {
-    justify-content: flex-start;
-  }
 }
 </style>

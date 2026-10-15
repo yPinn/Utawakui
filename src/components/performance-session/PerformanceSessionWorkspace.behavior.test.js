@@ -104,7 +104,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   });
 
   it('names the implemented preparation surface as the editable upcoming plan', () => {
-    expect(workspaceSource).toContain('title="待唱安排"');
+    expect(workspaceSource).toContain('aria-label="待唱安排"');
     expect(workspaceSource).toContain('只安排尚未開始的曲目');
     expect(workspaceSource).toContain('aria-label="待唱清單"');
     expect(workspaceSource).toContain('搜尋曲庫並加入待唱');

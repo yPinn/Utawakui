@@ -74,7 +74,13 @@ watch(
         <slot name="floating" />
       </div>
     </UiScrollLayout>
-    <template v-else>
+    <!-- Same loose-leaf paper as documents, but bounded: tools scroll inside. -->
+    <div
+      v-else
+      class="app-folder-page__sheet app-folder-page__sheet--workspace"
+    >
+      <AppLooseLeafEdge />
+
       <header v-if="$slots.header" class="app-folder-page__header">
         <slot name="header" />
       </header>
@@ -82,7 +88,7 @@ watch(
       <div class="app-folder-page__body app-folder-page__body--workspace">
         <slot />
       </div>
-    </template>
+    </div>
   </section>
 </template>
 
@@ -104,10 +110,6 @@ watch(
 
 .app-folder-page[data-page-mode='workspace'] {
   background: var(--ui-folder-page-background);
-}
-
-.app-folder-page--with-header[data-page-mode='workspace'] {
-  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .app-folder-page:focus-visible {
@@ -173,6 +175,19 @@ watch(
   color: var(--ui-color-text);
 }
 
+/* Must follow the sheet rule: workspaces fill the Folder at a fixed height. */
+.app-folder-page__sheet--workspace {
+  max-inline-size: none;
+  min-block-size: 0;
+  block-size: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.app-folder-page--with-header .app-folder-page__sheet--workspace {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .app-folder-page__extension {
   position: relative;
   grid-column: 1;
@@ -228,6 +243,9 @@ watch(
   min-height: 0;
   height: 100%;
   padding: var(--ui-folder-document-inset);
+  padding-inline-start: calc(
+    var(--ui-folder-document-inset) + var(--ui-folder-sheet-binding-gutter)
+  );
   overflow: hidden;
 }
 
