@@ -17,6 +17,8 @@ const COVERAGE_NEUTRAL_SOURCES = new Map([
   ['overlay/shared/mangaFrameContract.mjs', 're-export-only'],
   ['overlay/shared/state.mjs', 're-export-only'],
   ['src/components/demo/demoImageFixtures.js', 'static-fixture'],
+  ['src/components/demo/demoTrackCollectionLayout.js', 're-export-only'],
+  ['src/components/demo/demoTrackCollectionProfiles.js', 're-export-only'],
   ['src/composables/useStudioLibraryInspectorWidth.js', 're-export-only'],
   ['src/icons/index.js', 're-export-only'],
   ['src/utils/performerView.js', 're-export-only'],
@@ -67,6 +69,7 @@ const coveragePolicy = Object.freeze({
     'src/composables/**/*.js',
     'src/components/preparation/*.js',
     'src/components/separation/*.js',
+    'src/components/track/*.js',
     'src/components/demo/trackThumbFallback.js',
     'src/components/ui/*.js',
     'src/constants/*.js',
@@ -560,6 +563,7 @@ function classifyAppSource(filePath) {
       /^shared\/.+\.(?:js|mjs)$/.test(normalized) ||
       /^src\/components\/preparation\/.+\.js$/.test(normalized) ||
       /^src\/components\/separation\/.+\.js$/.test(normalized) ||
+      /^src\/components\/track\/.+\.js$/.test(normalized) ||
       normalized === 'src/components/demo/trackThumbFallback.js' ||
       /^src\/components\/ui\/.+\.js$/.test(normalized) ||
       /^src\/(?:bgm|composables|constants|icons|utils)\/.+\.js$/.test(

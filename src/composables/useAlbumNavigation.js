@@ -2,12 +2,13 @@ import { computed } from 'vue';
 import { usePlaylists } from './usePlaylists.js';
 import { useAppView } from './useAppView.js';
 import { albumPlaylistByTrackId } from '../utils/albumMembership.js';
+import { albumReferenceTitleForTrack } from '../utils/albumReference.js';
 import { isArtistSourceId } from '../utils/artistPage.js';
 
 // Combines usePlaylists.js (membership + selection) and useAppView.js (tab
 // switching) so callers get one jumpToAlbum() instead of wiring both.
 export function useAlbumNavigation() {
-  const { state, select, selectArtist } = usePlaylists();
+  const { state, select, selectAlbumReference, selectArtist } = usePlaylists();
   const { openLibraryContent } = useAppView();
 
   const albumByTrackId = computed(() =>
@@ -19,11 +20,19 @@ export function useAlbumNavigation() {
     return albumByTrackId.value.get(track.id) ?? null;
   }
 
+  function canJumpToAlbum(track) {
+    return Boolean(albumForTrack(track) || albumReferenceTitleForTrack(track));
+  }
+
   // Doesn't touch playback — the queue was already snapshotted at setQueue().
   function jumpToAlbum(track) {
     const album = albumForTrack(track);
-    if (!album) return;
-    select(album.id);
+    if (album) select(album.id);
+    else {
+      const title = albumReferenceTitleForTrack(track);
+      if (!title) return;
+      selectAlbumReference(title);
+    }
     openLibraryContent();
   }
 
@@ -44,5 +53,11 @@ export function useAlbumNavigation() {
     openLibraryContent();
   }
 
-  return { albumForTrack, jumpToAlbum, jumpToArtist, jumpToPlaylist };
+  return {
+    albumForTrack,
+    canJumpToAlbum,
+    jumpToAlbum,
+    jumpToArtist,
+    jumpToPlaylist,
+  };
 }

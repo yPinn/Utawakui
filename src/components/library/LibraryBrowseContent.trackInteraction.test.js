@@ -53,8 +53,37 @@ describe('LibraryBrowseContent track interaction owner', () => {
     expect(source).not.toContain(':variant="tableVariant"');
     expect(source).toContain('@move-track="movePlaylistTrack"');
     expect(source).toMatch(
-      /const canDragPlaylistRows = computed\([\s\S]*?mode\.value === 'playlist'[\s\S]*?!normalizedSearchQuery\.value[\s\S]*?playlistSort\.value\.key === null/u,
+      /const canReorderPlaylistTracks = computed\([\s\S]*?mode\.value === 'playlist'[\s\S]*?!normalizedSearchQuery\.value[\s\S]*?effectiveTrackRowSort\.value\.key === null/u,
     );
+    expect(source).toContain(
+      ':can-reorder-playlist-tracks="canReorderPlaylistTracks"',
+    );
+    expect(source).not.toContain(':can-drag="canDragPlaylistRows"');
+  });
+
+  it('applies row sorting only to Library and Playlist projections', () => {
+    expect(source).toContain('const trackRowSort = ref(');
+    expect(source).toContain('const effectiveTrackRowSort = computed(');
+    expect(source).toMatch(
+      /normalizeTrackCollectionSort\(\s*tableCollectionKind\.value,\s*trackRowSort\.value,?\s*\)/u,
+    );
+    expect(source).toContain('const orderedLibraryEntries = computed(');
+    expect(source).toContain(
+      'sortTrackRowEntries(entries, effectiveTrackRowSort.value)',
+    );
+    expect(source).toContain(':sort="effectiveTrackRowSort"');
+    expect(source).not.toContain(':sortable="mode !== \'all\'"');
+  });
+
+  it('projects main-owned play counts into every collection entry', () => {
+    expect(source).toContain('const { playCountOf } = usePlaybackHistory();');
+    expect(source).toMatch(
+      /const orderedLibraryEntries = computed\([\s\S]*?playCount: playCountOf\(track\.id\)/u,
+    );
+    expect(source).toMatch(
+      /const orderedPlaylistEntries = computed\([\s\S]*?playCount: playCountOf\(track\.id\)/u,
+    );
+    expect(source).not.toContain('track.playCount');
   });
 
   it('routes the ordinal playback control through the audio authority', () => {
@@ -74,6 +103,15 @@ describe('LibraryBrowseContent track interaction owner', () => {
     );
     expect(source).toContain('@navigate-album="jumpToAlbum"');
     expect(source).not.toContain('@title-click="jumpToAlbum"');
+  });
+
+  it('routes metadata-only album cells to a transient read-only album reference', () => {
+    expect(source).toContain('deriveAlbumReference');
+    expect(source).toContain('selectedAlbumReference');
+    expect(source).toContain('canJumpToAlbum(track)');
+    expect(source).toContain(
+      ':entity-action-visible="!isAlbumReferenceSelected"',
+    );
   });
 
   it('offers search only for library and playlist while keeping density available', () => {

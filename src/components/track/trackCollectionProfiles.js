@@ -1,3 +1,5 @@
+import { formatGroupedInteger } from '../../utils/format.js';
+
 export const TRACK_COLLECTION_KINDS = Object.freeze([
   'library-all',
   'library-local',
@@ -13,7 +15,8 @@ const CANONICAL_SEMANTIC_ROLES = Object.freeze([
   'imported',
   'usage',
 ]);
-const TRACK_ROW_CONTROL_WIDTH = 20;
+// Matches --ui-space-5: exactly one dense chooser／overflow control track.
+const TRACK_ROW_UTILITY_LANE_WIDTH = 24;
 
 const COLUMN_DEFINITIONS = Object.freeze({
   ordinal: Object.freeze({
@@ -22,6 +25,8 @@ const COLUMN_DEFINITIONS = Object.freeze({
     sortKey: null,
     priority: 'essential',
     align: 'center',
+    headerAlign: 'center',
+    numeric: true,
     defaultWidth: 40,
     minWidth: 32,
     maxWidth: 40,
@@ -33,10 +38,11 @@ const COLUMN_DEFINITIONS = Object.freeze({
     sortKey: 'title',
     priority: 'essential',
     align: 'start',
+    headerAlign: 'start',
     distributionWeight: 2,
     sortIndicatorPlacement: 'after',
     defaultWidth: 320,
-    minWidth: 200,
+    minWidth: 128,
     maxWidth: 720,
     resizable: true,
   }),
@@ -47,6 +53,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
     priority: 'release',
     textField: 'releaseText',
     align: 'start',
+    headerAlign: 'start',
     distributionWeight: 1,
     sortIndicatorPlacement: 'after',
     defaultWidth: 208,
@@ -61,6 +68,8 @@ const COLUMN_DEFINITIONS = Object.freeze({
     priority: 'supplemental',
     textField: 'releaseYearText',
     align: 'start',
+    headerAlign: 'start',
+    numeric: true,
     distributionWeight: 1,
     sortIndicatorPlacement: 'after',
     defaultWidth: 96,
@@ -75,6 +84,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
     priority: 'supplemental',
     textField: 'membershipText',
     align: 'start',
+    headerAlign: 'start',
     distributionWeight: 1,
     sortIndicatorPlacement: 'after',
     defaultWidth: 128,
@@ -89,6 +99,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
     priority: 'advanced',
     textField: 'importedText',
     align: 'start',
+    headerAlign: 'start',
     distributionWeight: 1,
     sortIndicatorPlacement: 'after',
     defaultWidth: 128,
@@ -102,9 +113,11 @@ const COLUMN_DEFINITIONS = Object.freeze({
     sortKey: 'playCount',
     priority: 'supplemental',
     textField: 'usageText',
-    align: 'start',
+    align: 'end',
+    headerAlign: 'end',
+    numeric: true,
     distributionWeight: 1,
-    sortIndicatorPlacement: 'after',
+    sortIndicatorPlacement: 'before',
     defaultWidth: 104,
     minWidth: 88,
     maxWidth: 192,
@@ -116,22 +129,12 @@ const COLUMN_DEFINITIONS = Object.freeze({
     sortKey: 'duration',
     priority: 'duration',
     align: 'end',
+    headerAlign: 'end',
+    numeric: true,
     sortIndicatorPlacement: 'before',
     defaultWidth: 104,
     minWidth: 96,
     maxWidth: 104,
-    resizable: false,
-  }),
-  separation: Object.freeze({
-    role: 'separation',
-    label: '伴奏處理',
-    sortKey: null,
-    priority: 'essential',
-    align: 'end',
-    // Maps to --ui-space-5, the dense icon-control size used by the row.
-    defaultWidth: TRACK_ROW_CONTROL_WIDTH,
-    minWidth: TRACK_ROW_CONTROL_WIDTH,
-    maxWidth: TRACK_ROW_CONTROL_WIDTH,
     resizable: false,
   }),
   actions: Object.freeze({
@@ -140,10 +143,10 @@ const COLUMN_DEFINITIONS = Object.freeze({
     sortKey: null,
     priority: 'essential',
     align: 'end',
-    // Maps to --ui-space-5, the dense icon-control size used by the row.
-    defaultWidth: TRACK_ROW_CONTROL_WIDTH,
-    minWidth: TRACK_ROW_CONTROL_WIDTH,
-    maxWidth: TRACK_ROW_CONTROL_WIDTH,
+    headerAlign: 'end',
+    defaultWidth: TRACK_ROW_UTILITY_LANE_WIDTH,
+    minWidth: TRACK_ROW_UTILITY_LANE_WIDTH,
+    maxWidth: TRACK_ROW_UTILITY_LANE_WIDTH,
     resizable: false,
   }),
 });
@@ -156,40 +159,40 @@ const PROFILES = Object.freeze({
   'library-all': Object.freeze({
     kind: 'library-all',
     label: '全部曲目',
-    description: '所有曲目，預設顯示來源專輯。',
+    description: '所有曲目，預設顯示專輯與播放次數。',
     accessibleLabel: '全部曲目',
     showArtwork: true,
     showArtist: true,
-    semanticColumns: semanticColumns('release'),
-    advancedColumns: semanticColumns('releaseYear', 'imported', 'usage'),
+    semanticColumns: semanticColumns('release', 'usage'),
+    advancedColumns: semanticColumns('releaseYear', 'imported'),
     lockedDefaultColumns: Object.freeze([]),
     toggleableDefaultColumns: Object.freeze([]),
-    columnWidths: Object.freeze({ identity: 320 }),
+    columnWidths: Object.freeze({ identity: 304, release: 224 }),
     ordinalMode: 'collection',
     albumNavigation: true,
     artistNavigation: true,
-    sortable: false,
-    headerReorder: true,
-    dragBehavior: 'none',
+    canSortTrackRows: true,
+    canReorderColumns: true,
+    canReorderPlaylistTracks: false,
   }),
   'library-local': Object.freeze({
     kind: 'library-local',
     label: '本機檔案',
-    description: '本機曲目，預設顯示來源專輯。',
+    description: '本機曲目，預設顯示專輯與播放次數。',
     accessibleLabel: '本機檔案曲目',
     showArtwork: true,
     showArtist: true,
-    semanticColumns: semanticColumns('release'),
-    advancedColumns: semanticColumns('releaseYear', 'imported', 'usage'),
+    semanticColumns: semanticColumns('release', 'usage'),
+    advancedColumns: semanticColumns('releaseYear', 'imported'),
     lockedDefaultColumns: Object.freeze([]),
     toggleableDefaultColumns: Object.freeze([]),
-    columnWidths: Object.freeze({ identity: 320 }),
+    columnWidths: Object.freeze({ identity: 304, release: 224 }),
     ordinalMode: 'collection',
     albumNavigation: true,
     artistNavigation: true,
-    sortable: false,
-    headerReorder: true,
-    dragBehavior: 'none',
+    canSortTrackRows: true,
+    canReorderColumns: true,
+    canReorderPlaylistTracks: false,
   }),
   playlist: Object.freeze({
     kind: 'playlist',
@@ -211,9 +214,9 @@ const PROFILES = Object.freeze({
     ordinalMode: 'collection',
     albumNavigation: true,
     artistNavigation: true,
-    sortable: true,
-    headerReorder: true,
-    dragBehavior: 'reorder',
+    canSortTrackRows: true,
+    canReorderColumns: true,
+    canReorderPlaylistTracks: true,
   }),
   album: Object.freeze({
     kind: 'album',
@@ -226,13 +229,13 @@ const PROFILES = Object.freeze({
     advancedColumns: semanticColumns('imported'),
     lockedDefaultColumns: Object.freeze(['usage']),
     toggleableDefaultColumns: Object.freeze([]),
-    columnWidths: Object.freeze({ identity: 360, minIdentityWidth: 208 }),
+    columnWidths: Object.freeze({ identity: 360 }),
     ordinalMode: 'source',
     albumNavigation: false,
     artistNavigation: true,
-    sortable: true,
-    headerReorder: false,
-    dragBehavior: 'none',
+    canSortTrackRows: false,
+    canReorderColumns: true,
+    canReorderPlaylistTracks: false,
   }),
   artist: Object.freeze({
     kind: 'artist',
@@ -249,15 +252,21 @@ const PROFILES = Object.freeze({
     ordinalMode: 'collection',
     albumNavigation: true,
     artistNavigation: false,
-    sortable: true,
-    headerReorder: false,
-    dragBehavior: 'none',
+    canSortTrackRows: false,
+    canReorderColumns: true,
+    canReorderPlaylistTracks: false,
   }),
 });
 
-const PLAY_COUNT_FORMATTER = new Intl.NumberFormat('zh-TW', {
-  maximumFractionDigits: 0,
+const DEFAULT_TRACK_COLLECTION_SORT = Object.freeze({
+  key: null,
+  direction: 'asc',
 });
+const TRACK_COLLECTION_SORT_KEYS = new Set(
+  Object.values(COLUMN_DEFINITIONS)
+    .map((column) => column.sortKey)
+    .filter(Boolean),
+);
 
 function boundedPositiveInteger(value) {
   const numeric = Number(value);
@@ -423,12 +432,28 @@ export function normalizeTrackCollectionPreferences(kind, value = {}) {
     });
     widths[role] = width.width;
   }
-  const columnOrder = normalizedSemanticOrder(profile, value?.columnOrder);
+  const columnOrder = profile.canReorderColumns
+    ? normalizedSemanticOrder(profile, value?.columnOrder)
+    : null;
   return Object.freeze({
     visibleAdvanced: Object.freeze(visibleAdvanced),
     hiddenDefaultColumns: Object.freeze(hiddenDefaultColumns),
     widths: Object.freeze(widths),
     ...(columnOrder ? { columnOrder: Object.freeze(columnOrder) } : {}),
+  });
+}
+
+export function normalizeTrackCollectionSort(kind, value = {}) {
+  const profile = trackCollectionProfile(kind);
+  if (
+    !profile.canSortTrackRows ||
+    !TRACK_COLLECTION_SORT_KEYS.has(value?.key)
+  ) {
+    return DEFAULT_TRACK_COLLECTION_SORT;
+  }
+  return Object.freeze({
+    key: value.key,
+    direction: value.direction === 'desc' ? 'desc' : 'asc',
   });
 }
 
@@ -453,7 +478,6 @@ export function trackCollectionColumns(kind, preferences = {}) {
     COLUMN_DEFINITIONS.ordinal,
     COLUMN_DEFINITIONS.identity,
     ...visibleSemanticColumns,
-    COLUMN_DEFINITIONS.separation,
     COLUMN_DEFINITIONS.duration,
     COLUMN_DEFINITIONS.actions,
   ]);
@@ -468,7 +492,7 @@ export function reorderTrackCollectionColumn(
 ) {
   const profile = trackCollectionProfile(kind);
   const normalized = normalizeTrackCollectionPreferences(kind, preferences);
-  if (!profile.headerReorder || movedRole === targetRole) return normalized;
+  if (!profile.canReorderColumns || movedRole === targetRole) return normalized;
 
   const order = [...(normalized.columnOrder ?? defaultSemanticOrder(profile))];
   if (!order.includes(movedRole) || !order.includes(targetRole)) {
@@ -513,8 +537,7 @@ export function projectTrackCollectionEntries(entries, kind) {
       ),
       membershipText: String(entry.addedAtLabel ?? compactDate(entry.addedAt)),
       importedText: compactDate(entry.importedAt ?? entry.track?.importedAt),
-      usageText:
-        playCount === null ? '—' : PLAY_COUNT_FORMATTER.format(playCount),
+      usageText: playCount === null ? '—' : formatGroupedInteger(playCount),
       playCount,
     };
   });

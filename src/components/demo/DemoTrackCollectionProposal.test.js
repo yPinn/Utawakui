@@ -157,8 +157,7 @@ function mountTable(overrides = {}) {
     entries,
     collectionKind: 'playlist',
     sort: { key: null, direction: 'asc' },
-    sortable: true,
-    reorderEnabled: true,
+    canReorderPlaylistTracks: true,
     selectedTrackId: 'track-a',
     currentTrackId: 'track-b',
     ...overrides,
@@ -193,8 +192,10 @@ describe('F8 Track Collection proposal', () => {
     expect(text).toContain('Minimum');
     expect(text).toContain('125% 字級壓力');
     expect(text).toContain('最近操作');
+    expect(proposalSource).toContain('label="播放清單曲目順序可調整"');
+    expect(proposalSource).not.toContain('label="自訂順序可調整"');
     expect(text).toContain('比較各檢視的欄位、排序與曲目狀態。');
-    expect(text).toContain('所有曲目，預設顯示來源專輯。');
+    expect(text).toContain('所有曲目，預設顯示專輯與播放次數。');
     expect(text).toContain('點選播放中曲目，查看選取與播放狀態。');
     expect(text).not.toContain('row intent');
     expect(text).not.toContain('Selected＋Current共存');
@@ -245,8 +246,8 @@ describe('F8 Track Collection proposal', () => {
   });
 
   it.each([
-    ['library-all', true, true, ['release']],
-    ['library-local', true, true, ['release']],
+    ['library-all', true, true, ['release', 'usage']],
+    ['library-local', true, true, ['release', 'usage']],
     ['playlist', true, true, []],
     ['album', false, true, ['usage']],
     ['artist', true, false, ['usage']],
@@ -284,7 +285,7 @@ describe('F8 Track Collection proposal', () => {
     },
   );
 
-  it('emits the field-specific sort key for release, membership and usage columns', () => {
+  it('emits field-specific sort keys only for row-sort-enabled profiles', () => {
     const onToggleSort = vi.fn();
     const playlist = mountTable({
       onToggleSort,
@@ -303,29 +304,28 @@ describe('F8 Track Collection proposal', () => {
     }
     playlist.app.unmount();
 
-    const album = mountTable({ collectionKind: 'album', onToggleSort });
+    const library = mountTable({
+      collectionKind: 'library-all',
+      onToggleSort,
+    });
     const usage = findAll(
-      album.root,
+      library.root,
       (node) =>
         node.type === 'button' && node.props['aria-label'] === '播放次數排序',
     )[0];
     trigger(usage, 'onClick');
     expect(onToggleSort).toHaveBeenLastCalledWith('playCount');
-    album.app.unmount();
+    library.app.unmount();
 
-    const artist = mountTable({
-      collectionKind: 'artist',
-      onToggleSort,
-      columnPreferences: { visibleAdvanced: ['releaseYear'] },
-    });
-    const releaseYear = findAll(
-      artist.root,
-      (node) =>
-        node.type === 'button' && node.props['aria-label'] === '發行年份排序',
-    )[0];
-    trigger(releaseYear, 'onClick');
-    expect(onToggleSort).toHaveBeenLastCalledWith('releaseYear');
-    artist.app.unmount();
+    for (const collectionKind of ['album', 'artist']) {
+      const fixed = mountTable({ collectionKind, onToggleSort });
+      expect(
+        findAll(fixed.root, (node) =>
+          String(node.props?.['aria-label'] ?? '').endsWith('排序'),
+        ),
+      ).toHaveLength(0);
+      fixed.app.unmount();
+    }
   });
 
   it('keeps title plain while artist and album own their matching destinations', () => {
@@ -405,29 +405,25 @@ describe('F8 Track Collection proposal', () => {
     const statusCell = findAll(durationCell, (node) =>
       classIncludes(node, 'demo-track-collection-row__status'),
     )[0];
-    const favoriteStatuses = findAll(
+    const statuses = findAll(
       statusCell,
       (node) => node.props?.role === 'img' && node.props?.['aria-label'],
     );
-    const separationCell = findAll(
-      firstRow,
-      (node) => node.props?.['data-track-column'] === 'separation',
-    )[0];
-    const separationStatuses = findAll(
-      separationCell,
-      (node) => node.props?.role === 'img' && node.props?.['aria-label'],
+    const favoriteStatus = statuses.find(
+      (node) => node.props['aria-label'] === '已加入最愛',
+    );
+    const separationStatus = statuses.find(
+      (node) => node.props['aria-label'] === '已有伴奏',
     );
 
-    expect(favoriteStatuses.map((node) => node.props['aria-label'])).toEqual([
+    expect(statuses.map((node) => node.props['aria-label'])).toEqual([
       '已加入最愛',
-    ]);
-    expect(separationStatuses.map((node) => node.props['aria-label'])).toEqual([
       '已有伴奏',
     ]);
-    expect(String(favoriteStatuses[0].props.class)).toContain(
+    expect(String(favoriteStatus.props.class)).toContain(
       'ui-status-icon--current',
     );
-    expect(String(separationStatuses[0].props.class)).toContain(
+    expect(String(separationStatus.props.class)).toContain(
       'ui-status-icon--success',
     );
     expect(
@@ -435,9 +431,7 @@ describe('F8 Track Collection proposal', () => {
         classIncludes(node, 'demo-track-collection-row__status-icon--favorite'),
       ),
     ).toHaveLength(1);
-    expect(rowRoles(firstRow).indexOf('separation')).toBeLessThan(
-      rowRoles(firstRow).indexOf('duration'),
-    );
+    expect(rowRoles(firstRow)).not.toContain('separation');
     expect(rowRoles(firstRow)).not.toContain('status');
     expect(rowSource).toMatch(
       /\.demo-track-collection-row__status\s*\{[^}]*inline-size:\s*var\(--demo-track-collection-status-slot\);/su,
@@ -510,7 +504,7 @@ describe('F8 Track Collection proposal', () => {
 
     const disabledMove = vi.fn();
     const disabled = mountTable({
-      reorderEnabled: false,
+      canReorderPlaylistTracks: false,
       onMoveTrack: disabledMove,
     });
     const disabledRow = findAll(disabled.root, (node) =>
@@ -543,7 +537,7 @@ describe('F8 Track Collection proposal', () => {
       const onDrop = vi.fn();
       const { app, root } = mountTable({
         collectionKind,
-        reorderEnabled: true,
+        canReorderPlaylistTracks: true,
         onDragStart,
         onDragOver,
         onDrop,
@@ -640,7 +634,9 @@ describe('F8 Track Collection proposal', () => {
 
     expect(ordinalHeader.props['data-column-align']).toBe('center');
     expect(ordinalRow.props['data-column-align']).toBe('center');
-    expect(tableSource).toContain(':data-column-align="column.align"');
+    expect(tableSource).toContain(
+      ':data-column-align="column.headerAlign ?? column.align"',
+    );
     expect(rowSource).toContain(
       `:data-column-align="columnAlignment('ordinal')"`,
     );
@@ -659,7 +655,7 @@ describe('F8 Track Collection proposal', () => {
     app.unmount();
   });
 
-  it('reorders semantic headers by pointer or keyboard outside locked Artist and Album profiles', () => {
+  it('reorders semantic headers by pointer or keyboard for every profile', () => {
     const onUpdateColumnPreferences = vi.fn();
     const mounted = mountTable({
       onUpdateColumnPreferences,
@@ -717,23 +713,54 @@ describe('F8 Track Collection proposal', () => {
     mounted.app.unmount();
 
     for (const collectionKind of ['artist', 'album']) {
-      const locked = mountTable({ collectionKind });
-      const semanticHeaders = findAll(
-        locked.root,
-        (node) =>
-          ['release', 'releaseYear', 'usage'].includes(
-            node.props?.['data-track-column'],
-          ) && !classIncludes(node, 'demo-track-collection-row__semantic'),
+      const editable = mountTable({
+        collectionKind,
+        columnPreferences: { visibleAdvanced: ['imported'] },
+      });
+      const header = findAll(editable.root, (node) =>
+        classIncludes(node, 'demo-track-collection-table__header'),
+      )[0];
+      const semanticHeaders = findAll(header, (node) =>
+        ['usage', 'imported'].includes(node.props?.['data-track-column']),
       );
+
+      expect(semanticHeaders).toHaveLength(2);
       expect(
-        semanticHeaders.every((node) => node.props.draggable !== true),
+        semanticHeaders.every((node) => node.props.draggable === true),
       ).toBe(true);
-      expect(semanticHeaders.every((node) => node.props.tabindex == null)).toBe(
+      expect(semanticHeaders.every((node) => node.props.tabindex === 0)).toBe(
         true,
       );
-      locked.app.unmount();
+      editable.app.unmount();
     }
   });
+
+  it.each([
+    ['library-all', true],
+    ['library-local', true],
+    ['playlist', true],
+    ['album', false],
+    ['artist', false],
+  ])(
+    'sets track-row sort controls for %s to %s',
+    (collectionKind, canSortTrackRows) => {
+      const { app, root } = mountTable({ collectionKind });
+      const header = findAll(root, (node) =>
+        classIncludes(node, 'demo-track-collection-table__header'),
+      )[0];
+      const rowSortButtons = findAll(
+        header,
+        (node) =>
+          node.type === 'button' &&
+          ['曲目排序', '時長排序'].includes(node.props?.['aria-label']),
+      );
+
+      expect(rowSortButtons.map((node) => node.props['aria-label'])).toEqual(
+        canSortTrackRows ? ['曲目排序', '時長排序'] : [],
+      );
+      app.unmount();
+    },
+  );
 
   it('exposes bounded column separators and supports keyboard resizing', async () => {
     const onUpdateColumnPreferences = vi.fn();
@@ -750,9 +777,9 @@ describe('F8 Track Collection proposal', () => {
     )[0];
 
     expect(separator.props['aria-orientation']).toBe('vertical');
-    expect(separator.props['aria-valuemin']).toBe(200);
-    expect(separator.props['aria-valuenow']).toBe(412);
-    expect(separator.props['aria-valuemax']).toBe(476);
+    expect(separator.props['aria-valuemin']).toBe(128);
+    expect(separator.props['aria-valuenow']).toBe(422);
+    expect(separator.props['aria-valuemax']).toBe(490);
 
     trigger(separator, 'onKeydown', {
       key: 'ArrowRight',
@@ -762,7 +789,7 @@ describe('F8 Track Collection proposal', () => {
     expect(onUpdateColumnPreferences).toHaveBeenLastCalledWith({
       visibleAdvanced: ['release', 'membership'],
       hiddenDefaultColumns: [],
-      widths: { identity: 420, release: 270, membership: 190 },
+      widths: { identity: 430, release: 275, membership: 195 },
     });
 
     trigger(separator, 'onKeydown', {
@@ -773,7 +800,7 @@ describe('F8 Track Collection proposal', () => {
     expect(onUpdateColumnPreferences).toHaveBeenLastCalledWith({
       visibleAdvanced: ['release', 'membership'],
       hiddenDefaultColumns: [],
-      widths: { identity: 388, release: 270, membership: 190 },
+      widths: { identity: 398, release: 275, membership: 195 },
     });
 
     trigger(separator, 'onKeydown', {
@@ -784,7 +811,7 @@ describe('F8 Track Collection proposal', () => {
     expect(onUpdateColumnPreferences).toHaveBeenLastCalledWith({
       visibleAdvanced: ['release', 'membership'],
       hiddenDefaultColumns: [],
-      widths: { identity: 200, release: 270, membership: 190 },
+      widths: { identity: 128, release: 275, membership: 195 },
     });
 
     trigger(separator, 'onKeydown', {
@@ -795,7 +822,7 @@ describe('F8 Track Collection proposal', () => {
     expect(onUpdateColumnPreferences).toHaveBeenLastCalledWith({
       visibleAdvanced: ['release', 'membership'],
       hiddenDefaultColumns: [],
-      widths: { identity: 476, release: 270, membership: 190 },
+      widths: { identity: 490, release: 275, membership: 195 },
     });
     app.unmount();
   });
@@ -890,6 +917,79 @@ describe('F8 Track Collection proposal', () => {
       visibleAdvanced: ['release', 'membership', 'releaseYear'],
       hiddenDefaultColumns: [],
       widths: {},
+    });
+    mounted.app.unmount();
+  });
+
+  it('keeps resize topology and committed geometry stable until controlled preferences return', async () => {
+    const onUpdateColumnPreferences = vi.fn();
+    const mounted = mountTable({
+      columnPreferences: {
+        visibleAdvanced: ['release', 'membership', 'releaseYear'],
+        widths: { identity: 400 },
+      },
+      onUpdateColumnPreferences,
+    });
+    const header = findAll(mounted.root, (node) =>
+      classIncludes(node, 'demo-track-collection-table__header'),
+    )[0];
+    const row = findAll(mounted.root, (node) =>
+      classIncludes(node, 'demo-track-collection-row'),
+    )[0];
+    const separator = findAll(
+      mounted.root,
+      (node) => node.props?.['data-resize-column'] === 'identity',
+    )[0];
+    const listeners = new Map();
+    const target = {
+      setPointerCapture: vi.fn(),
+      hasPointerCapture: () => true,
+      releasePointerCapture: vi.fn(),
+      addEventListener: (name, handler) => listeners.set(name, handler),
+      removeEventListener: (name) => listeners.delete(name),
+      getBoundingClientRect: () => ({ left: 394, right: 406, width: 12 }),
+    };
+    const gridVariable = '--demo-track-collection-grid';
+    const initialRoles = rowRoles(row);
+    const initialTracks = header.props.style[gridVariable].match(
+      /(?:minmax\(0, 1fr\)|\d+px)/gu,
+    );
+
+    trigger(separator, 'onPointerdown', {
+      preventDefault: vi.fn(),
+      currentTarget: target,
+      clientX: 400,
+      pointerId: 5,
+    });
+    listeners.get('pointermove')({ clientX: 432 });
+    await nextTick();
+    listeners.get('pointermove')({ clientX: 440 });
+    await nextTick();
+
+    const activeGrid = header.props.style[gridVariable];
+    const activeTracks = activeGrid.match(/(?:minmax\(0, 1fr\)|\d+px)/gu);
+    expect(rowRoles(row)).toEqual(initialRoles);
+    expect(activeTracks[1]).toBe('440px');
+    expect(activeTracks.filter((_, index) => index !== 1)).toEqual(
+      initialTracks.filter((_, index) => index !== 1),
+    );
+    expect(onUpdateColumnPreferences).not.toHaveBeenCalled();
+
+    listeners.get('pointerup')({});
+    await nextTick();
+
+    expect(header.props.style[gridVariable]).toBe(activeGrid);
+    expect(rowRoles(row)).toEqual(initialRoles);
+    expect(onUpdateColumnPreferences).toHaveBeenCalledOnce();
+    expect(onUpdateColumnPreferences).toHaveBeenLastCalledWith({
+      visibleAdvanced: ['release', 'membership', 'releaseYear'],
+      hiddenDefaultColumns: [],
+      widths: {
+        identity: 440,
+        release: 208,
+        membership: 128,
+        releaseYear: 96,
+      },
     });
     mounted.app.unmount();
   });
@@ -1005,7 +1105,7 @@ describe('F8 Track Collection proposal', () => {
       visibleAdvanced: ['release', 'membership', 'releaseYear'],
       hiddenDefaultColumns: [],
       widths: {
-        identity: 484,
+        identity: 508,
         release: 220,
         membership: 128,
         releaseYear: 96,
@@ -1030,7 +1130,7 @@ describe('F8 Track Collection proposal', () => {
       (node) => node.props?.['data-resize-column'] === 'identity',
     )[0];
 
-    expect(separator.props['aria-valuemax']).toBe(450);
+    expect(separator.props['aria-valuemax']).toBe(466);
     mounted.app.unmount();
   });
 
@@ -1065,6 +1165,15 @@ describe('F8 Track Collection proposal', () => {
       /\.demo-track-collection-row\s*\{[^}]*min-height:\s*var\(--ui-track-row-min-height\);/su,
     );
     expect(rowSource).not.toContain('height: auto');
+  });
+
+  it('keeps the specimen status and time as one right-aligned trailing group', () => {
+    expect(rowSource).toMatch(
+      /\.demo-track-collection-row__duration\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(--demo-track-collection-status-slot\)\s+auto;[^}]*gap:\s*var\(--ui-space-4\);[^}]*justify-content:\s*end;/su,
+    );
+    expect(rowSource).not.toMatch(
+      /\.demo-track-collection-row__duration\s*\{[^}]*grid-template-columns:[^}]*minmax\(0,\s*1fr\)/su,
+    );
   });
 
   it('keeps the row hit area active behind content while nested destinations stay independent', () => {

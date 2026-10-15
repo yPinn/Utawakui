@@ -1,3 +1,13 @@
+const GROUPED_INTEGER_FORMATTER = new Intl.NumberFormat('zh-TW', {
+  useGrouping: true,
+  maximumFractionDigits: 0,
+});
+
+export function formatGroupedInteger(value, fallback = '—') {
+  if (!Number.isFinite(value)) return fallback;
+  return GROUPED_INTEGER_FORMATTER.format(Math.trunc(value));
+}
+
 export function formatDuration(seconds, fallback = '--:--') {
   if (!Number.isFinite(seconds)) return fallback;
   const total = Math.floor(seconds);

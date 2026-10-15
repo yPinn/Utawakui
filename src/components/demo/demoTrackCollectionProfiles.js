@@ -1,5 +1,6 @@
 export {
   TRACK_COLLECTION_KINDS as DEMO_TRACK_COLLECTION_KINDS,
+  normalizeTrackCollectionSort as normalizeDemoTrackCollectionSort,
   normalizeTrackCollectionPreferences as normalizeDemoTrackCollectionPreferences,
   projectTrackCollectionEntries as projectDemoTrackCollectionEntries,
   reorderTrackCollectionColumn as reorderDemoTrackCollectionColumn,

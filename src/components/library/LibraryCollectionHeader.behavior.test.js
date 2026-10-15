@@ -59,6 +59,16 @@ describe('LibraryCollectionHeader', () => {
     expect(source).toContain("emit('menuAction', value)");
   });
 
+  it('hides source-owned album mutations on a metadata-derived reference', async () => {
+    const html = await renderHeader({
+      entityKind: 'album',
+      entityActionVisible: false,
+      addToPlaylistItems: [{ label: '工作歌單', value: 'playlist-1' }],
+    });
+
+    expect(html).not.toContain('將專輯新增至播放清單');
+  });
+
   it('renders artist pages as a round, read-only reference without an extension action', async () => {
     const html = await renderHeader({
       entityKind: 'artist',

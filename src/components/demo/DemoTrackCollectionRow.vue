@@ -61,6 +61,10 @@ function columnAlignment(role) {
   return props.columns.find((column) => column.role === role)?.align ?? 'start';
 }
 
+function columnIsNumeric(role) {
+  return Boolean(props.columns.find((column) => column.role === role)?.numeric);
+}
+
 function handleActionKeydown(event) {
   if (
     props.dragEnabled &&
@@ -141,6 +145,7 @@ function handleDrop(event) {
       class="demo-track-collection-row__ordinal"
       data-track-column="ordinal"
       :data-column-align="columnAlignment('ordinal')"
+      :data-column-numeric="columnIsNumeric('ordinal') ? 'true' : undefined"
     >
       <span class="demo-track-collection-row__ordinal-text">
         {{ entry.ordinalText }}
@@ -191,6 +196,7 @@ function handleDrop(event) {
         :data-track-column="column.role"
         :data-column-priority="column.priority"
         :data-column-align="column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
         :title="`${entry.usageText} 次應用內有效播放`"
       >
         {{ entry.usageText }}
@@ -205,6 +211,7 @@ function handleDrop(event) {
         :data-track-column="column.role"
         :data-column-priority="column.priority"
         :data-column-align="column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
         :text="entry.releaseText"
         :aria-label="`前往專輯：${entry.releaseText}`"
         overflow="ellipsis"
@@ -217,6 +224,7 @@ function handleDrop(event) {
         :data-track-column="column.role"
         :data-column-priority="column.priority"
         :data-column-align="column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
         :text="entry[column.textField]"
         @click.stop="emit('selectTrack', entry.track)"
         @dblclick.stop="emit('activateTrack', entry.track)"
@@ -233,25 +241,12 @@ function handleDrop(event) {
     ></span>
 
     <span
-      v-if="hasColumn('separation')"
-      class="demo-track-collection-row__separation"
-      data-track-column="separation"
-      data-column-align="end"
-    >
-      <UiStatusIcon
-        v-if="entry.separationReady"
-        :icon="BadgeCheck"
-        tone="success"
-        label="已有伴奏"
-      />
-    </span>
-
-    <span
       v-if="hasColumn('duration')"
       class="demo-track-collection-row__duration"
       data-track-column="duration"
       data-column-priority="duration"
       data-column-align="end"
+      data-column-numeric="true"
     >
       <span class="demo-track-collection-row__status">
         <span
@@ -260,6 +255,12 @@ function handleDrop(event) {
         >
           <UiStatusIcon :icon="Heart" tone="current" label="已加入最愛" />
         </span>
+        <UiStatusIcon
+          v-if="entry.separationReady"
+          :icon="BadgeCheck"
+          tone="success"
+          label="已有伴奏"
+        />
       </span>
       <span class="demo-track-collection-row__duration-text">
         {{ formatDuration(entry.track.duration) }}
@@ -370,13 +371,11 @@ function handleDrop(event) {
 .demo-track-collection-row__semantic,
 .demo-track-collection-row__usage,
 .demo-track-collection-row__duration,
-.demo-track-collection-row__separation,
 .demo-track-collection-row__actions {
   position: relative;
   z-index: var(--ui-layer-raised);
 }
 
-.demo-track-collection-row__separation,
 .demo-track-collection-row__actions {
   display: inline-flex;
   align-items: center;
@@ -480,14 +479,15 @@ function handleDrop(event) {
 }
 
 .demo-track-collection-row__duration {
+  inline-size: 100%;
   min-width: 0;
   display: grid;
   grid-template-columns:
     var(--demo-track-collection-status-slot)
-    minmax(0, 1fr);
+    auto;
   align-items: center;
-  gap: var(--ui-space-2);
-  justify-self: stretch;
+  gap: var(--ui-space-4);
+  justify-content: end;
 }
 
 .demo-track-collection-row__duration-text {
@@ -535,10 +535,7 @@ function handleDrop(event) {
   text-align: end;
 }
 
-[data-track-column='ordinal'],
-[data-track-column='usage'],
-[data-track-column='releaseYear'],
-[data-track-column='duration'] {
+[data-column-numeric='true'] {
   font-variant-numeric: tabular-nums;
 }
 </style>

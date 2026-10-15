@@ -1,5 +1,6 @@
 import { computed, reactive, readonly } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
 
 // Module-scope singleton preserves selection across tab unmounts.
 // Keep playback out so this stays testable under plain Node.
@@ -14,6 +15,8 @@ const state = reactive({
   libraryView: 'all',
   // Derived artist reference page (ADR 0022); exclusive with selectedId.
   selectedArtistId: null,
+  // Metadata-derived album reference; never persisted as playlist membership.
+  selectedAlbumReference: null,
   error: null,
 });
 const { recordError } = useAppDiagnostics();
@@ -115,11 +118,20 @@ if (import.meta.hot) {
 function select(id) {
   state.selectedId = id;
   state.selectedArtistId = null;
+  state.selectedAlbumReference = null;
 }
 
 function selectArtist(id) {
   state.selectedId = null;
   state.selectedArtistId = id || null;
+  state.selectedAlbumReference = null;
+}
+
+function selectAlbumReference(albumTitle) {
+  const title = normalizeAlbumReferenceTitle(albumTitle);
+  state.selectedId = null;
+  state.selectedArtistId = null;
+  state.selectedAlbumReference = title || null;
 }
 
 function setLibraryView(view) {
@@ -340,6 +352,7 @@ export function usePlaylists() {
     selectedPlaylist,
     select,
     selectArtist,
+    selectAlbumReference,
     setLibraryView,
     create,
     rename,

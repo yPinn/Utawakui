@@ -21,9 +21,27 @@ const SPACER_COLUMN = Object.freeze({
   resizable: false,
 });
 
+const SHRINK_PRIORITY = Object.freeze({
+  advanced: 0,
+  supplemental: 1,
+  release: 2,
+  identity: 3,
+  ordinal: 4,
+  duration: 5,
+  essential: 6,
+});
+
+function columnShrinkPriority(column) {
+  return (
+    SHRINK_PRIORITY[column.role] ??
+    SHRINK_PRIORITY[column.priority] ??
+    SHRINK_PRIORITY.essential
+  );
+}
+
 function insertSpacer(columns) {
   const trailingIndex = columns.findIndex((column) =>
-    ['separation', 'duration', 'actions'].includes(column.role),
+    ['duration', 'actions'].includes(column.role),
   );
   const index = trailingIndex >= 0 ? trailingIndex : columns.length;
   return Object.freeze([
@@ -101,13 +119,6 @@ function shrinkToFit({
     availableWidth;
   if (!(overflow > 0)) return nextWidths;
 
-  const priority = Object.freeze({
-    advanced: 0,
-    supplemental: 1,
-    release: 2,
-    duration: 3,
-    essential: 4,
-  });
   const shrinkable = columns
     .filter((column) => {
       const contract = trackCollectionColumnWidth(kind, column.role);
@@ -119,10 +130,7 @@ function shrinkToFit({
       if (leftOverridden !== rightOverridden) {
         return leftOverridden - rightOverridden;
       }
-      return (
-        (priority[left.priority] ?? priority.essential) -
-        (priority[right.priority] ?? priority.essential)
-      );
+      return columnShrinkPriority(left) - columnShrinkPriority(right);
     })
     .map((column) => column.role);
 

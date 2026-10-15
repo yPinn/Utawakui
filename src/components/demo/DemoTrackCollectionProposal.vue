@@ -9,6 +9,7 @@ import {
   demoTrackCollectionColumns,
   demoTrackCollectionProfile,
   normalizeDemoTrackCollectionPreferences,
+  normalizeDemoTrackCollectionSort,
   projectDemoTrackCollectionEntries,
 } from './demoTrackCollectionProfiles.js';
 
@@ -109,7 +110,7 @@ const activeKind = shallowRef('library-all');
 const viewport = shallowRef('wide');
 const typeScale = shallowRef(false);
 const statePreset = shallowRef('selected-current');
-const reorderPreference = shallowRef(true);
+const playlistTrackReorderPreference = shallowRef(true);
 const orderedEntries = shallowRef([...BASE_ENTRIES]);
 const selectedTrackId = shallowRef('demo-track-1');
 const currentTrackId = shallowRef('demo-track-1');
@@ -131,9 +132,11 @@ const columnPreferencesByKind = shallowRef(
 const activeProfile = computed(() =>
   demoTrackCollectionProfile(activeKind.value),
 );
-const sortable = computed(() => activeProfile.value.sortable);
 const activeColumnPreferences = computed(
   () => columnPreferencesByKind.value[activeKind.value],
+);
+const effectiveTrackRowSort = computed(() =>
+  normalizeDemoTrackCollectionSort(activeKind.value, sort.value),
 );
 const stateOptions = computed(() =>
   STATE_OPTIONS.map((option) => ({
@@ -141,21 +144,21 @@ const stateOptions = computed(() =>
     disabled:
       option.disabled ||
       (['dragging', 'drop-before', 'drop-after'].includes(option.value) &&
-        activeProfile.value.dragBehavior !== 'reorder'),
+        !activeProfile.value.canReorderPlaylistTracks),
   })),
 );
-const reorderEnabled = computed(
+const canReorderPlaylistTracks = computed(
   () =>
-    activeKind.value === 'playlist' &&
-    reorderPreference.value &&
-    sort.value.key === null,
+    activeProfile.value.canReorderPlaylistTracks &&
+    playlistTrackReorderPreference.value &&
+    effectiveTrackRowSort.value.key === null,
 );
 const visibleEntries = computed(() => {
   const projected = projectDemoTrackCollectionEntries(
     orderedEntries.value,
     activeKind.value,
   );
-  const { key, direction } = sort.value;
+  const { key, direction } = effectiveTrackRowSort.value;
   const sorted = key
     ? [...projected].sort((left, right) => {
         let leftValue;
@@ -228,7 +231,7 @@ function updateColumnPreferences(preferences) {
 }
 
 function toggleSort(key) {
-  if (!sortable.value) return;
+  if (!activeProfile.value.canSortTrackRows) return;
   const current = sort.value;
   if (current.key !== key) {
     sort.value = { key, direction: 'asc' };
@@ -287,10 +290,10 @@ function applyStatePreset(preset, announce = true) {
     currentTrackId.value = 'demo-track-1';
     playingTrackId.value = 'demo-track-1';
   } else if (preset === 'dragging') {
-    if (activeProfile.value.dragBehavior !== 'reorder') return;
+    if (!activeProfile.value.canReorderPlaylistTracks) return;
     draggingTrackId.value = 'demo-track-1';
   } else if (preset === 'drop-before' || preset === 'drop-after') {
-    if (activeProfile.value.dragBehavior !== 'reorder') return;
+    if (!activeProfile.value.canReorderPlaylistTracks) return;
     draggingTrackId.value = 'demo-track-1';
     dropTargetTrackId.value = 'demo-track-2';
     dropPosition.value = preset === 'drop-before' ? 'before' : 'after';
@@ -312,7 +315,7 @@ function openMenu(track) {
 }
 
 function moveTrack(trackId, offset) {
-  if (!reorderEnabled.value) return;
+  if (!canReorderPlaylistTracks.value) return;
   const currentIndex = orderedEntries.value.findIndex(
     (entry) => entry.track.id === trackId,
   );
@@ -332,7 +335,7 @@ function moveTrack(trackId, offset) {
 }
 
 function startDrag(track, event) {
-  if (!reorderEnabled.value) {
+  if (!canReorderPlaylistTracks.value) {
     event.preventDefault();
     return;
   }
@@ -343,7 +346,7 @@ function startDrag(track, event) {
 }
 
 function updateDropTarget(track, event) {
-  if (!reorderEnabled.value || !draggingTrackId.value) return;
+  if (!canReorderPlaylistTracks.value || !draggingTrackId.value) return;
   event.preventDefault();
   const bounds = event.currentTarget?.getBoundingClientRect?.();
   const position =
@@ -361,7 +364,7 @@ function leaveDropTarget(track) {
 }
 
 function dropTrack(track, event) {
-  if (!reorderEnabled.value || !draggingTrackId.value) return;
+  if (!canReorderPlaylistTracks.value || !draggingTrackId.value) return;
   event.preventDefault();
   const draggedId = draggingTrackId.value;
   const sourceIndex = orderedEntries.value.findIndex(
@@ -451,17 +454,17 @@ function clearDragState() {
           <UiCheckbox
             v-if="activeKind === 'playlist'"
             id="demo-track-collection-reorder"
-            label="自訂順序可調整"
-            :model-value="reorderPreference"
-            @update:model-value="reorderPreference = $event"
+            label="播放清單曲目順序可調整"
+            :model-value="playlistTrackReorderPreference"
+            @update:model-value="playlistTrackReorderPreference = $event"
           />
         </div>
       </header>
 
       <div class="demo-track-collection-proposal__profile-note">
         <span>{{ activeProfile.description }}</span>
-        <span v-if="activeKind === 'playlist' && !reorderEnabled">
-          排序或關閉自訂順序時，整列拖曳暫停。
+        <span v-if="activeKind === 'playlist' && !canReorderPlaylistTracks">
+          排序或關閉播放清單曲目順序調整時，整列拖曳暫停。
         </span>
         <span
           v-if="
@@ -487,9 +490,8 @@ function clearDragState() {
           :entries="visibleEntries"
           :collection-kind="activeKind"
           :column-preferences="activeColumnPreferences"
-          :sort="sort"
-          :sortable="sortable"
-          :reorder-enabled="reorderEnabled"
+          :sort="effectiveTrackRowSort"
+          :can-reorder-playlist-tracks="canReorderPlaylistTracks"
           :selected-track-id="selectedTrackId"
           :current-track-id="currentTrackId"
           :playing-track-id="playingTrackId"

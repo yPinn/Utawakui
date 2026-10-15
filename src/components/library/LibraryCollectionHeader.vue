@@ -40,6 +40,7 @@ const props = defineProps({
   previewBlockedReason: { type: String, default: '' },
   canAddToPlaylist: { type: Boolean, default: false },
   addToPlaylistItems: { type: Array, default: () => [] },
+  entityActionVisible: { type: Boolean, default: true },
   moreItems: { type: Array, default: () => [] },
   showSearch: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
@@ -89,6 +90,7 @@ const ENTITY_LABEL_BY_KIND = Object.freeze({
 const entityLabel = computed(() => ENTITY_LABEL_BY_KIND[props.entityKind]);
 // Artist pages are read-only references with no entity-specific action.
 const entityAction = computed(() => {
+  if (!props.entityActionVisible) return null;
   if (props.entityKind === 'artist' || props.entityKind === 'library') {
     return null;
   }

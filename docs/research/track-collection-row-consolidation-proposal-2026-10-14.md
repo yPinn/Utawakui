@@ -76,13 +76,13 @@ Selected 只表示目前操作對象；Current 只表示 HTML audio authority �
 
 下表是提案的完整 profile，而不是任意 boolean 組合。`Library all` 與 `Library local` 即使初版視覺相同，也保留不同 kind，避免未來再以隱含 caller 條件區分。
 
-| Collection kind | Artwork | Artist line | Ordinal            | Semantic columns         | Title destination | Reorder behavior                       | Membership action               |
-| --------------- | ------- | ----------- | ------------------ | ------------------------ | ----------------- | -------------------------------------- | ------------------------------- |
-| Library all     | 顯示    | 顯示        | Collection         | Release／Album           | Album（可解析時） | 無                                     | Delete local track              |
-| Library local   | 顯示    | 顯示        | Collection         | Release／Album           | Album（可解析時） | 無                                     | Delete local track              |
-| Playlist        | 顯示    | 顯示        | Collection         | Release＋Membership date | Album（可解析時） | 整列；僅custom order時可拖曳／鍵盤移動 | Remove from playlist            |
-| Album           | 隱藏    | 顯示        | Source disc／track | Local usage              | 無                | 無                                     | 無membership destructive action |
-| Artist          | 顯示    | 隱藏        | Collection         | Release＋Release year    | Album（可解析時） | 無                                     | 無membership destructive action |
+| Collection kind | Artwork | Artist line | Ordinal            | Semantic columns         | Title destination | Track-row sort | Manual row reorder                     | Membership action               |
+| --------------- | ------- | ----------- | ------------------ | ------------------------ | ----------------- | -------------- | -------------------------------------- | ------------------------------- |
+| Library all     | 顯示    | 顯示        | Collection         | Release／Album           | Album（可解析時） | 可             | 無                                     | Delete local track              |
+| Library local   | 顯示    | 顯示        | Collection         | Release／Album           | Album（可解析時） | 可             | 無                                     | Delete local track              |
+| Playlist        | 顯示    | 顯示        | Collection         | Release＋Membership date | Album（可解析時） | 可             | 整列；僅custom order時可拖曳／鍵盤移動 | Remove from playlist            |
+| Album           | 隱藏    | 顯示        | Source disc／track | Local usage              | 無                | 固定來源順序   | 無                                     | 無membership destructive action |
+| Artist          | 顯示    | 隱藏        | Collection         | Release＋Release year    | Album（可解析時） | 固定衍生順序   | 無                                     | 無membership destructive action |
 
 Album 與 Artist 的semantic columns是本提案刻意提出的nature adjustment：
 
@@ -97,6 +97,7 @@ Album 與 Artist 的semantic columns是本提案刻意提出的nature adjustment
 | -------------------------------- | ------------------------------ | ----------------------------------------------- |
 | Pointer click／Space             | Select row                     | 所有collection kinds                            |
 | Pointer double click／Enter      | Activate／play track           | 所有collection kinds                            |
+| Sortable column header           | Reorder projected track rows   | Library all／local／Playlist                    |
 | Title action                     | Navigate to source Album       | Destination可解析，且目前不是該Album            |
 | Artist credit action             | Navigate to Artist             | Canonical credit可一一配對，且Artist line有顯示 |
 | Trailing menu／context menu key  | Open the same row actions      | 所有collection kinds                            |
@@ -105,7 +106,9 @@ Album 與 Artist 的semantic columns是本提案刻意提出的nature adjustment
 
 Right click、可見 menu trigger、Context Menu key／Shift+F10 必須收斂到同一個 action owner。滑鼠右鍵不得成為唯一入口。
 
-Artist與Album是資訊型衍生集合，永遠不是drag source或drop target。Profile必須顯式宣告`dragBehavior: none`並阻斷drag／drop intent emission；Playlist則由整列作為唯一drag source，不建立專用handle或額外grid lane。
+Artist與Album是資訊型衍生集合，永遠不是drag source或drop target。Profile必須以`canReorderPlaylistTracks: false`阻斷drag／drop intent emission；Playlist則由整列作為唯一drag source，不建立專用handle或額外grid lane。
+
+欄位位置、依header排序track rows與手動拖列是三個獨立能力。`canSortTrackRows`只在Library all／local／Playlist開啟；Album／Artist即使收到其他頁留下的sort state，也必須投影回canonical order。Column drag由`canReorderColumns`另外管理，不以row-sort限制推導。
 
 ### 4.5 State contract
 
@@ -165,9 +168,9 @@ F8候選以34rem／28rem／23rem作比較基線，並提供Wide／Medium／Narro
 - `album`
 - `artist`
 
-Runtime capability 與profile分離：`collectionKind="playlist"`宣告row具備reorder capability，`reorderEnabled`只決定整列目前是否可拖曳及接受方向鍵調整。Reorder不建立column，因此搜尋或排序不會改變column structure。
+Runtime capability 與profile分離：profile的`canReorderPlaylistTracks`宣告row是否具備reorder capability，component同名prop只決定整列目前是否可拖曳及接受方向鍵調整。Reorder不建立column，因此搜尋或排序不會改變column structure。
 
-Entry projection把`releaseText`、`releaseYearText`、`membershipText`與`usageText`分開；table只接收已界定的presentation values，不猜`addedAt`是import date、membership date或album。`releaseYearText`只接受canonical歌曲發行年份，缺漏保持空值。Usage value由app-owned qualified playback提供，provider `view_count`不進此projection。
+Entry projection把`releaseText`、`releaseYearText`、`membershipText`與`usageText`分開；table只接收已界定的presentation values，不猜`addedAt`是import date、membership date或album。`releaseYearText`只接受canonical歌曲發行年份，缺漏保持空值。Usage value由app-owned qualified playback提供，provider `view_count`不進此projection；header與value都靠inline end，並由shared grouped-integer formatter依目前`zh-TW`locale輸出三位逗號分組。
 
 ## 6. 不採用的替代方案
 

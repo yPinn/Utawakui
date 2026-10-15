@@ -2,9 +2,25 @@ import { describe, it, expect } from 'vitest';
 import {
   formatDuration,
   formatElapsedClock,
+  formatGroupedInteger,
   formatLongDuration,
   formatAddedDate,
 } from './format.js';
+
+describe('formatGroupedInteger', () => {
+  it('groups integer values every three digits with the product locale', () => {
+    expect(formatGroupedInteger(0)).toBe('0');
+    expect(formatGroupedInteger(1_234)).toBe('1,234');
+    expect(formatGroupedInteger(1_234_567)).toBe('1,234,567');
+    expect(formatGroupedInteger(-1_234)).toBe('-1,234');
+  });
+
+  it('truncates fractional counts and supports a caller fallback', () => {
+    expect(formatGroupedInteger(1_234.9)).toBe('1,234');
+    expect(formatGroupedInteger(undefined)).toBe('—');
+    expect(formatGroupedInteger(Number.POSITIVE_INFINITY, '')).toBe('');
+  });
+});
 
 describe('formatDuration', () => {
   it('formats a normal duration', () => {

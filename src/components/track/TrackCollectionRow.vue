@@ -69,6 +69,7 @@ const rowActionDescription = computed(() =>
     ? '單擊或空白鍵選取；雙擊或 Enter 播放；方向鍵調整順序'
     : '單擊或空白鍵選取；雙擊或 Enter 播放',
 );
+const contentLang = computed(() => trackContentLang(props.entry.track));
 const showArtwork = computed(
   () => props.profile.showArtwork && props.density !== 'compact',
 );
@@ -84,6 +85,10 @@ function hasColumn(role) {
 
 function columnAlignment(role) {
   return props.columns.find((column) => column.role === role)?.align ?? 'start';
+}
+
+function columnIsNumeric(role) {
+  return Boolean(props.columns.find((column) => column.role === role)?.numeric);
 }
 
 function handleActionKeydown(event) {
@@ -152,6 +157,7 @@ function handleActionKeydown(event) {
       class="library-track-row__ordinal"
       data-track-column="ordinal"
       :data-column-align="columnAlignment('ordinal')"
+      :data-column-numeric="columnIsNumeric('ordinal') ? 'true' : undefined"
     >
       <span class="library-track-row__ordinal-text">
         {{ entry.ordinalText }}
@@ -178,10 +184,7 @@ function handleActionKeydown(event) {
         :track="entry.track"
         size="var(--ui-track-row-thumb-size)"
       />
-      <span
-        class="library-track-row__copy"
-        :lang="trackContentLang(entry.track)"
-      >
+      <span class="library-track-row__copy" :lang="contentLang">
         <UiMarqueeText
           class="library-track-row__title"
           :text="entry.track.title"
@@ -201,6 +204,7 @@ function handleActionKeydown(event) {
         :data-track-column="column.role"
         :data-column-priority="column.priority"
         :data-column-align="column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
         :aria-label="
           entry.playCount === null
             ? '尚未提供應用內有效播放次數'
@@ -220,6 +224,8 @@ function handleActionKeydown(event) {
         :data-track-column="column.role"
         :data-column-priority="column.priority"
         :data-column-align="column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
+        :lang="contentLang"
         :text="entry.releaseText"
         :aria-label="`前往專輯：${entry.releaseText}`"
         overflow="ellipsis"
@@ -232,6 +238,8 @@ function handleActionKeydown(event) {
         :data-track-column="column.role"
         :data-column-priority="column.priority"
         :data-column-align="column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
+        :lang="column.role === 'release' ? contentLang : undefined"
         :text="entry[column.textField]"
         @click.stop="emit('selectTrack', entry.track)"
         @dblclick.stop="emit('activateTrack', entry.track)"
@@ -248,44 +256,41 @@ function handleActionKeydown(event) {
     ></span>
 
     <span
-      v-if="hasColumn('separation')"
-      class="library-track-row__separation"
-      data-track-column="separation"
-      data-column-align="end"
-    >
-      <UiStatusIcon
-        v-if="separationReady"
-        :icon="BadgeCheck"
-        tone="success"
-        :label="`已有伴奏：${entry.track.title}`"
-      />
-      <UiStatusIcon
-        v-else-if="vsQueued"
-        :icon="CircleDashed"
-        tone="info"
-        spinning
-        :label="`伴奏處理中：${entry.track.title}`"
-      />
-      <UiIconButton
-        v-else
-        class="library-track-row__separation-action"
-        :icon="AudioWaveform"
-        :label="`加入伴奏處理佇列：${entry.track.title}`"
-        :loading="vsEnqueuePending"
-        :loading-label="`正在加入伴奏處理佇列：${entry.track.title}`"
-        @click.stop="emit('queueSeparation', entry.track)"
-        @dblclick.stop
-      />
-    </span>
-
-    <span
       v-if="hasColumn('duration')"
       class="library-track-row__duration"
       data-track-column="duration"
       data-column-priority="duration"
       data-column-align="end"
+      data-column-numeric="true"
     >
-      {{ formatDuration(entry.track.duration) }}
+      <span class="library-track-row__status">
+        <UiStatusIcon
+          v-if="separationReady"
+          :icon="BadgeCheck"
+          tone="success"
+          :label="`已有伴奏：${entry.track.title}`"
+        />
+        <UiStatusIcon
+          v-else-if="vsQueued"
+          :icon="CircleDashed"
+          tone="info"
+          spinning
+          :label="`伴奏處理中：${entry.track.title}`"
+        />
+        <UiIconButton
+          v-else
+          class="library-track-row__separation-action"
+          :icon="AudioWaveform"
+          :label="`加入伴奏處理佇列：${entry.track.title}`"
+          :loading="vsEnqueuePending"
+          :loading-label="`正在加入伴奏處理佇列：${entry.track.title}`"
+          @click.stop="emit('queueSeparation', entry.track)"
+          @dblclick.stop
+        />
+      </span>
+      <span class="library-track-row__duration-text">
+        {{ formatDuration(entry.track.duration) }}
+      </span>
     </span>
 
     <span
@@ -388,7 +393,6 @@ function handleActionKeydown(event) {
 .library-track-row__identity,
 .library-track-row__semantic,
 .library-track-row__duration,
-.library-track-row__separation,
 .library-track-row__actions {
   position: relative;
   z-index: var(--ui-layer-raised);
@@ -466,15 +470,34 @@ function handleActionKeydown(event) {
 }
 
 .library-track-row__semantic--destination,
-.library-track-row__subtitle {
+.library-track-row__subtitle,
+.library-track-row__separation-action {
   pointer-events: auto;
 }
 
-.library-track-row__separation,
 .library-track-row__actions {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+.library-track-row__duration {
+  inline-size: 100%;
+  display: grid;
+  grid-template-columns: var(--ui-space-5) auto;
+  align-items: center;
+  gap: var(--ui-space-4);
+  justify-content: end;
+}
+
+.library-track-row__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.library-track-row__duration-text {
+  justify-self: end;
 }
 
 .library-track-row__subtitle,
@@ -521,10 +544,7 @@ function handleActionKeydown(event) {
   text-align: end;
 }
 
-[data-track-column='ordinal'],
-[data-track-column='usage'],
-[data-track-column='releaseYear'],
-[data-track-column='duration'] {
+[data-column-numeric='true'] {
   font-variant-numeric: tabular-nums;
 }
 </style>

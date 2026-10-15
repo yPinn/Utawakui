@@ -91,7 +91,6 @@ function mountTable(overrides = {}) {
     entries,
     variant: 'playlist',
     sort: { key: null, direction: 'asc' },
-    sortable: true,
     selectedTrackId: 'track-a',
     currentTrackId: 'track-b',
     albumJumpableTrackIds: new Set(['track-a']),
@@ -146,7 +145,6 @@ describe('TrackTable canonical grid', () => {
       'ordinal',
       'identity',
       'spacer',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -184,12 +182,7 @@ describe('TrackTable canonical grid', () => {
       expect(roles[0]).toBe('ordinal');
       expect(thumbs.length > 0).toBe(hasArtwork);
       expect(artists.length > 0).toBe(hasArtist);
-      expect(roles.slice(-4)).toEqual([
-        'spacer',
-        'separation',
-        'duration',
-        'actions',
-      ]);
+      expect(roles.slice(-3)).toEqual(['spacer', 'duration', 'actions']);
       app.unmount();
     },
   );
@@ -203,10 +196,25 @@ describe('TrackTable canonical grid', () => {
       /\[data-column-align='end'\][\s\S]*?justify-self:\s*end;/u,
     );
     expect(productionSource).toMatch(
-      /\[data-track-column='ordinal'\],[\s\S]*?font-variant-numeric:\s*tabular-nums;/u,
+      /\[data-column-numeric='true'\][\s\S]*?font-variant-numeric:\s*tabular-nums;/u,
+    );
+    expect(source).toContain(
+      ':data-column-align="column.headerAlign ?? column.align"',
     );
     expect(source).toContain(':data-column-priority=');
     expect(source).toContain('useTrackCollectionColumns');
+  });
+
+  it('keeps accompaniment status immediately before time in one right-aligned trailing group', () => {
+    expect(rowSource).toMatch(
+      /\.library-track-row__duration\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(--ui-space-5\) auto;[^}]*gap:\s*var\(--ui-space-4\);[^}]*justify-content:\s*end;/su,
+    );
+    expect(rowSource).not.toMatch(
+      /\.library-track-row__duration\s*\{[^}]*grid-template-columns:[^}]*minmax\(0,\s*1fr\)/su,
+    );
+    expect(rowSource.indexOf('library-track-row__status')).toBeLessThan(
+      rowSource.indexOf('library-track-row__duration-text'),
+    );
   });
 
   it('stays scoped to browse tables rather than import review rows', () => {
@@ -350,7 +358,44 @@ describe('TrackTable shared row behavior', () => {
     album.app.unmount();
   });
 
-  it('keeps the accompaniment command before duration and overflow after it', () => {
+  it('tags the identity copy and release cell with the track content language', () => {
+    const japanese = [
+      {
+        id: 'ja-link',
+        title: 'アイドル',
+        artist: 'YOASOBI',
+        album: 'THE BOOK 3',
+      },
+      { id: 'ja-text', title: '勇者', artist: 'YOASOBI', album: 'ハルカ' },
+    ];
+    const { app, root } = mountTable({
+      entries: [...japanese, ...tracks].map((track, visibleIndex) => ({
+        track,
+        visibleIndex,
+      })),
+      albumJumpableTrackIds: new Set(['ja-link']),
+      columnPreferences: { visibleAdvanced: ['release'] },
+    });
+    const rows = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    );
+    const langOf = (row, predicate) => findAll(row, predicate)[0]?.props?.lang;
+    const copyLang = (row) =>
+      langOf(row, (node) => classIncludes(node, 'library-track-row__copy'));
+    const releaseLang = (row) =>
+      langOf(row, (node) => node.props?.['data-track-column'] === 'release');
+
+    // Jumpable album renders a button, the rest an overflow cell.
+    for (const row of rows.slice(0, 2)) {
+      expect(copyLang(row)).toBe('ja');
+      expect(releaseLang(row)).toBe('ja');
+    }
+    expect(copyLang(rows[2])).toBeUndefined();
+    expect(releaseLang(rows[2])).toBeUndefined();
+    app.unmount();
+  });
+
+  it('keeps the accompaniment command inside the duration cell and overflow after it', () => {
     const onQueueSeparation = vi.fn();
     const { app, root } = mountTable({
       columnPreferences: {
@@ -376,11 +421,21 @@ describe('TrackTable shared row behavior', () => {
 
     expect(roles).not.toContain('release');
     expect(roles).not.toContain('membership');
-    expect(roles.indexOf('separation')).toBeLessThan(roles.indexOf('duration'));
     expect(roles.indexOf('actions')).toBeGreaterThan(roles.indexOf('duration'));
-    expect(roles).toContain('separation');
+    expect(roles).not.toContain('separation');
     expect(roles).toContain('actions');
     expect(vsButton).toBeTruthy();
+    const durationCell = findAll(firstRow, (node) =>
+      classIncludes(node, 'library-track-row__duration'),
+    )[0];
+    expect(
+      findAll(
+        durationCell,
+        (node) =>
+          node.type === 'button' &&
+          textContent(node).includes('加入伴奏處理佇列：第一首歌'),
+      ),
+    ).toHaveLength(1);
     expect(moreButton).toBeTruthy();
     trigger(vsButton, 'onClick', { stopPropagation: vi.fn() });
     expect(onQueueSeparation).toHaveBeenCalledWith(tracks[0]);
@@ -419,7 +474,10 @@ describe('TrackTable shared row behavior', () => {
 
   it('exposes whole-row reorder only for playlist custom order and supports arrows', () => {
     const onMoveTrack = vi.fn();
-    const { app, root } = mountTable({ canDrag: true, onMoveTrack });
+    const { app, root } = mountTable({
+      canReorderPlaylistTracks: true,
+      onMoveTrack,
+    });
     const row = findAll(root, (node) =>
       classIncludes(node, 'library-track-row'),
     )[0];
@@ -496,8 +554,8 @@ describe('TrackTable production collection contract', () => {
         'ordinal',
         'identity',
         'release',
+        'usage',
         'spacer',
-        'separation',
         'duration',
         'actions',
       ],
@@ -508,39 +566,20 @@ describe('TrackTable production collection contract', () => {
         'ordinal',
         'identity',
         'release',
-        'spacer',
-        'separation',
-        'duration',
-        'actions',
-      ],
-    ],
-    [
-      'playlist',
-      ['ordinal', 'identity', 'spacer', 'separation', 'duration', 'actions'],
-    ],
-    [
-      'album',
-      [
-        'ordinal',
-        'identity',
         'usage',
         'spacer',
-        'separation',
         'duration',
         'actions',
       ],
+    ],
+    ['playlist', ['ordinal', 'identity', 'spacer', 'duration', 'actions']],
+    [
+      'album',
+      ['ordinal', 'identity', 'usage', 'spacer', 'duration', 'actions'],
     ],
     [
       'artist',
-      [
-        'ordinal',
-        'identity',
-        'usage',
-        'spacer',
-        'separation',
-        'duration',
-        'actions',
-      ],
+      ['ordinal', 'identity', 'usage', 'spacer', 'duration', 'actions'],
     ],
   ])(
     'uses one descriptor sequence for %s header and rows',
@@ -559,12 +598,81 @@ describe('TrackTable production collection contract', () => {
     },
   );
 
+  it.each([
+    ['library-all', true],
+    ['library-local', true],
+    ['playlist', true],
+    ['album', true],
+    ['artist', true],
+  ])(
+    'sets semantic column reorder affordances for %s to %s',
+    (collectionKind, canReorderColumns) => {
+      const { app, root } = mountTable({
+        collectionKind,
+        columnPreferences:
+          collectionKind === 'playlist'
+            ? { visibleAdvanced: ['release', 'membership'] }
+            : undefined,
+      });
+      const header = findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__header'),
+      )[0];
+      const semanticHeaders = findAll(
+        header,
+        (node) =>
+          ['release', 'membership', 'usage'].includes(
+            node.props?.['data-track-column'],
+          ) && node.type !== 'button',
+      );
+
+      expect(semanticHeaders.length).toBeGreaterThan(0);
+      expect(
+        semanticHeaders.every(
+          (node) => (node.props.draggable === true) === canReorderColumns,
+        ),
+      ).toBe(true);
+      expect(
+        semanticHeaders.every(
+          (node) => (node.props.tabindex === 0) === canReorderColumns,
+        ),
+      ).toBe(true);
+      app.unmount();
+    },
+  );
+
+  it.each([
+    ['library-all', true],
+    ['library-local', true],
+    ['playlist', true],
+    ['album', false],
+    ['artist', false],
+  ])(
+    'sets track-row sort controls for %s to %s',
+    (collectionKind, canSortTrackRows) => {
+      const { app, root } = mountTable({ collectionKind });
+      const header = findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__header'),
+      )[0];
+      const rowSortButtons = findAll(
+        header,
+        (node) =>
+          node.type === 'button' &&
+          ['曲目排序', '時長排序'].includes(node.props?.['aria-label']),
+      );
+
+      expect(rowSortButtons.map((node) => node.props['aria-label'])).toEqual(
+        canSortTrackRows ? ['曲目排序', '時長排序'] : [],
+      );
+      app.unmount();
+    },
+  );
+
   it('uses the playlist row as the drag source without a reorder column', () => {
     const onMoveTrack = vi.fn();
     const onTrackDragStart = vi.fn();
     const { app, root } = mountTable({
       collectionKind: 'playlist',
-      canDrag: true,
+      canReorderPlaylistTracks: true,
       onMoveTrack,
       onTrackDragStart,
     });
@@ -617,7 +725,7 @@ describe('TrackTable production collection contract', () => {
   });
 
   it('does not advertise local-usage sorting until truthful values exist', () => {
-    const unavailable = mountTable({ collectionKind: 'album' });
+    const unavailable = mountTable({ collectionKind: 'library-all' });
     expect(
       findAll(
         unavailable.root,
@@ -627,7 +735,7 @@ describe('TrackTable production collection contract', () => {
     unavailable.app.unmount();
 
     const available = mountTable({
-      collectionKind: 'album',
+      collectionKind: 'library-all',
       entries: [{ ...entries[0], playCount: 0 }],
     });
     expect(
@@ -637,6 +745,34 @@ describe('TrackTable production collection contract', () => {
       ),
     ).toHaveLength(1);
     available.app.unmount();
+  });
+
+  it('right-aligns grouped local-usage values and their header', () => {
+    const { app, root } = mountTable({
+      collectionKind: 'library-all',
+      entries: [{ ...entries[0], playCount: 1_234 }],
+    });
+    const header = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__header'),
+    )[0];
+    const row = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    )[0];
+    const usageHeader = findAll(
+      header,
+      (node) => node.props?.['data-track-column'] === 'usage',
+    )[0];
+    const usageCell = findAll(
+      row,
+      (node) => node.props?.['data-track-column'] === 'usage',
+    )[0];
+
+    expect(usageHeader.props['data-column-align']).toBe('end');
+    expect(usageHeader.props['data-column-numeric']).toBe('true');
+    expect(usageCell.props['data-column-align']).toBe('end');
+    expect(usageCell.props['data-column-numeric']).toBe('true');
+    expect(textContent(usageCell)).toContain('1,234');
+    app.unmount();
   });
 
   it('keeps album-cell navigation and canonical artist credits without deep overrides', () => {

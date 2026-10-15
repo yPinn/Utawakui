@@ -29,6 +29,47 @@ describe('demo track collection layout', () => {
     expect(measured).toEqual(firstFrame);
   });
 
+  it('balances title, album, and the trailing group in the default-window content box', () => {
+    const layout = resolveDemoTrackCollectionLayout({
+      kind: 'library-all',
+      availableWidth: 768,
+    });
+
+    expect(roles(layout)).toEqual([
+      'ordinal',
+      'identity',
+      'release',
+      'usage',
+      'spacer',
+      'duration',
+      'actions',
+    ]);
+    expect(layout.widths).toMatchObject({
+      ordinal: 40,
+      identity: 296,
+      release: 144,
+      usage: 88,
+      duration: 104,
+      actions: 24,
+    });
+    expect(layout.requiredWidth).toBe(768);
+    expect(768 - layout.requiredWidth).toBe(0);
+    expect(layout.hiddenForWidth).toEqual([]);
+  });
+
+  it.each(['library-all', 'library-local', 'playlist', 'album', 'artist'])(
+    'keeps every default %s field visible in the 768px default-window content box',
+    (kind) => {
+      const layout = resolveDemoTrackCollectionLayout({
+        kind,
+        availableWidth: 768,
+      });
+
+      expect(layout.hiddenForWidth).toEqual([]);
+      expect(layout.requiredWidth).toBeLessThanOrEqual(768);
+    },
+  );
+
   it('distributes wide default layouts by role while retaining a structural flexible gap', () => {
     const layout = resolveDemoTrackCollectionLayout({
       kind: 'playlist',
@@ -39,19 +80,17 @@ describe('demo track collection layout', () => {
       'ordinal',
       'identity',
       'spacer',
-      'separation',
       'duration',
       'actions',
     ]);
     expect(layout.widths).toMatchObject({
       ordinal: 40,
       identity: 720,
-      separation: 20,
       duration: 104,
-      actions: 20,
+      actions: 24,
     });
     expect(layout.gridTemplate).toContain('minmax(0, 1fr)');
-    expect(layout.requiredWidth).toBe(968);
+    expect(layout.requiredWidth).toBe(944);
     expect(1200 - layout.requiredWidth).toBeGreaterThan(0);
     expect(layout.hiddenForWidth).toEqual([]);
   });
@@ -73,8 +112,8 @@ describe('demo track collection layout', () => {
     expect(expanded.widths.identity).toBeGreaterThan(288);
     expect(expanded.widths.identity).toBeLessThan(defaults.widths.identity);
     expect(expanded.widths).toMatchObject({
-      usage: 129,
-      releaseYear: 121,
+      usage: 132,
+      releaseYear: 124,
     });
     expect(expanded.requiredWidth).toBeLessThan(1280);
   });
@@ -94,7 +133,7 @@ describe('demo track collection layout', () => {
       release: 260,
       membership: 180,
     });
-    expect(layout.requiredWidth).toBe(1124);
+    expect(layout.requiredWidth).toBe(1100);
   });
 
   it('projects enabled advanced columns in profile order without mutating preferences', () => {
@@ -116,7 +155,6 @@ describe('demo track collection layout', () => {
       'usage',
       'releaseYear',
       'spacer',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -131,7 +169,7 @@ describe('demo track collection layout', () => {
     const layout = resolveDemoTrackCollectionLayout({
       kind: 'library-all',
       preferences: {
-        visibleAdvanced: ['releaseYear', 'imported', 'usage'],
+        visibleAdvanced: ['releaseYear', 'imported'],
         widths: {},
       },
       availableWidth: 760,
@@ -141,16 +179,16 @@ describe('demo track collection layout', () => {
       'ordinal',
       'identity',
       'release',
+      'usage',
       'releaseYear',
       'spacer',
-      'separation',
       'duration',
       'actions',
     ]);
-    expect(layout.hiddenForWidth).toEqual(['usage', 'imported']);
+    expect(layout.hiddenForWidth).toEqual(['imported']);
   });
 
-  it('uses utility lane minimums during type or container pressure without making them user-resizable', () => {
+  it('preserves structural lanes while data columns absorb default-window pressure', () => {
     const layout = resolveDemoTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: ['release', 'membership'] },
@@ -158,10 +196,13 @@ describe('demo track collection layout', () => {
     });
 
     expect(layout.hiddenForWidth).toEqual([]);
-    expect(layout.widths.ordinal).toBeGreaterThanOrEqual(32);
-    expect(layout.widths.ordinal).toBeLessThan(40);
-    expect(layout.widths.duration).toBeGreaterThanOrEqual(96);
-    expect(layout.widths.duration).toBeLessThanOrEqual(104);
+    expect(layout.widths.ordinal).toBe(40);
+    expect(layout.widths.duration).toBe(104);
+    expect(layout.widths).toMatchObject({
+      identity: 208,
+      release: 144,
+      membership: 112,
+    });
   });
 
   it('preserves the minimum identity lane and removes low-priority utility lanes at minimum width', () => {
@@ -175,16 +216,12 @@ describe('demo track collection layout', () => {
       'ordinal',
       'identity',
       'spacer',
-      'separation',
+      'duration',
       'actions',
     ]);
-    expect(layout.widths.identity).toBeGreaterThanOrEqual(200);
+    expect(layout.widths.identity).toBeGreaterThanOrEqual(128);
     expect(layout.requiredWidth).toBeLessThanOrEqual(336);
-    expect(layout.hiddenForWidth).toEqual([
-      'membership',
-      'release',
-      'duration',
-    ]);
+    expect(layout.hiddenForWidth).toEqual(['membership', 'release']);
   });
 
   it.each(['library-all', 'library-local', 'playlist', 'album', 'artist'])(
@@ -199,7 +236,7 @@ describe('demo track collection layout', () => {
     },
   );
 
-  it('shrinks default donors deterministically before a saved width override', () => {
+  it('shrinks a saved width only after the remaining donor lanes reach their bounds', () => {
     const layout = resolveDemoTrackCollectionLayout({
       kind: 'playlist',
       preferences: {
@@ -209,10 +246,10 @@ describe('demo track collection layout', () => {
       availableWidth: 840,
     });
 
-    expect(layout.widths.identity).toBe(336);
+    expect(layout.widths.identity).toBe(340);
     expect(layout.widths.membership).toBe(112);
-    expect(layout.widths.release).toBe(144);
-    expect(layout.widths.duration).toBe(96);
+    expect(layout.widths.release).toBe(148);
+    expect(layout.widths.duration).toBe(104);
   });
 
   it('locks the visible role topology while a pointer resize is active', () => {
@@ -244,7 +281,7 @@ describe('demo track collection layout', () => {
     });
 
     expect(layout.widths).toMatchObject({
-      identity: 200,
+      identity: 128,
       release: 480,
       releaseYear: 90,
     });
@@ -278,13 +315,13 @@ describe('demo track collection layout', () => {
     });
     const bounds = resolveDemoTrackCollectionResizeBounds({
       startWidth: layout.widths.identity,
-      minWidth: 200,
+      minWidth: 128,
       maxWidth: 720,
       availableWidth: 1200,
       requiredWidth: layout.requiredWidth,
     });
 
-    expect(bounds).toEqual({ minWidth: 200, maxWidth: 476 });
+    expect(bounds).toEqual({ minWidth: 128, maxWidth: 490 });
     expect(
       resolveDemoTrackCollectionResizeWidth({
         ...bounds,
@@ -292,7 +329,7 @@ describe('demo track collection layout', () => {
         delta: 48,
         direction: 'ltr',
       }),
-    ).toBe(460);
+    ).toBe(470);
     expect(
       resolveDemoTrackCollectionResizeWidth({
         ...bounds,
@@ -300,7 +337,7 @@ describe('demo track collection layout', () => {
         delta: -48,
         direction: 'ltr',
       }),
-    ).toBe(364);
+    ).toBe(374);
     expect(
       resolveDemoTrackCollectionResizeWidth({
         ...bounds,
@@ -308,8 +345,8 @@ describe('demo track collection layout', () => {
         delta: 1000,
         direction: 'ltr',
       }),
-    ).toBe(476);
-    expect(layout.widths).toMatchObject({ release: 270, membership: 190 });
+    ).toBe(490);
+    expect(layout.widths).toMatchObject({ release: 275, membership: 195 });
   });
 
   it('reverses physical pointer deltas for a logical RTL column edge', () => {

@@ -45,6 +45,7 @@ export function useTrackCollectionColumns({
     direction: 'ltr',
   });
   const draftPreferences = shallowRef(null);
+  const committedPreferences = shallowRef(null);
   const resizeRole = shallowRef('');
   const resizeStartWidth = shallowRef(0);
   const resizeBounds = shallowRef(null);
@@ -60,7 +61,10 @@ export function useTrackCollectionColumns({
     ),
   );
   const effectivePreferences = computed(
-    () => draftPreferences.value ?? normalizedPreferences.value,
+    () =>
+      draftPreferences.value ??
+      committedPreferences.value ??
+      normalizedPreferences.value,
   );
   const layout = computed(() =>
     resolveTrackCollectionLayout({
@@ -76,11 +80,12 @@ export function useTrackCollectionColumns({
     [gridVariable]: layout.value.gridTemplate,
   }));
 
-  function emitPreferences(next) {
+  function emitPreferences(next, { retainUntilControlledUpdate = false } = {}) {
     const normalized = normalizeTrackCollectionPreferences(
       toValue(collectionKind),
       next,
     );
+    if (retainUntilControlledUpdate) committedPreferences.value = normalized;
     onUpdatePreferences?.(plainPreferences(normalized));
   }
 
@@ -188,7 +193,9 @@ export function useTrackCollectionColumns({
 
   function finishResize(commit) {
     if (commit && draftPreferences.value) {
-      emitPreferences(draftPreferences.value);
+      emitPreferences(draftPreferences.value, {
+        retainUntilControlledUpdate: true,
+      });
     }
     draftPreferences.value = null;
     resizeRole.value = '';
@@ -280,7 +287,17 @@ export function useTrackCollectionColumns({
     });
   }
 
-  watch(collectionKind, () => finishResize(false));
+  watch(
+    () => toValue(preferences),
+    () => {
+      committedPreferences.value = null;
+    },
+    { deep: true },
+  );
+  watch(collectionKind, () => {
+    committedPreferences.value = null;
+    finishResize(false);
+  });
 
   onMounted(() => {
     const element = tableRef.value;

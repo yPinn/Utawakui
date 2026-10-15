@@ -13,6 +13,7 @@ import { useLibrary } from '../../composables/useLibrary.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { useScrolledPast } from '../../composables/useScrolledPast.js';
@@ -25,6 +26,7 @@ import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue'
 import LibraryArtistIdentityController from './LibraryArtistIdentityController.vue';
 import TrackMetadataModal from './TrackMetadataModal.vue';
 import TrackTable from '../track/TrackTable.vue';
+import { normalizeTrackCollectionSort } from '../track/trackCollectionProfiles.js';
 import {
   addToPlaylistChildren,
   addToPlaylistMenuItem,
@@ -47,11 +49,12 @@ import {
   playlistDisplayName,
 } from '../../utils/playlistMenu.js';
 import {
-  sortPlaylistEntries,
-  nextPlaylistSort,
+  sortPlaylistEntries as sortTrackRowEntries,
+  nextPlaylistSort as nextTrackRowSort,
 } from '../../utils/playlistSort.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import { deriveAlbumReference } from '../../utils/albumReference.js';
 import { artistSearchTexts, deriveArtistPage } from '../../utils/artistPage.js';
 import { shufflePreviewTracks } from '../../utils/trackPreviewOrder.js';
 import {
@@ -88,8 +91,9 @@ const {
 } = usePlaylists();
 const { resolvePlaylistTracks, openEditDetails, handlePlaylistMenuAction } =
   usePlaylistActions();
+const { playCountOf } = usePlaybackHistory();
 const collectionPlayback = useCollectionPlayback();
-const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const { canJumpToAlbum, jumpToAlbum } = useAlbumNavigation();
 const {
   state: artistIndexState,
   ensureLoaded: ensureArtistIndex,
@@ -113,24 +117,42 @@ const searchQuery = defineModel('searchQuery', {
   default: '',
 });
 const addMenu = ref(null);
-const playlistSort = ref({ key: null, direction: 'asc' });
+const trackRowSort = ref({ key: null, direction: 'asc' });
 const tableColumnPreferencesByKind = shallowRef({});
 
 const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
+
+const albumReference = computed(() =>
+  deriveAlbumReference(
+    playlistState.selectedAlbumReference,
+    libraryState.tracks,
+  ),
+);
 
 const mode = computed(() => {
   if (selectedPlaylist.value) {
     return selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist';
   }
+  if (playlistState.selectedAlbumReference) return 'album';
   return playlistState.selectedArtistId ? 'artist' : 'all';
 });
 const isLocalLibraryView = computed(
   () => mode.value === 'all' && playlistState.libraryView === 'local',
 );
+const tableCollectionKind = computed(() =>
+  mode.value === 'all' ? `library-${playlistState.libraryView}` : mode.value,
+);
+const effectiveTrackRowSort = computed(() =>
+  normalizeTrackCollectionSort(tableCollectionKind.value, trackRowSort.value),
+);
 
 // Album track membership/order is read-only — see playlists.js's
-// PLAYLIST_KINDS comment. Rename/delete/play/sort still apply to both.
+// PLAYLIST_KINDS comment. Rename/delete/play remain available, while the
+// source-owned row order stays fixed.
 const isAlbumSelected = computed(() => mode.value === 'album');
+const isAlbumReferenceSelected = computed(() =>
+  Boolean(playlistState.selectedAlbumReference),
+);
 // Artist pages are derived read-only references (ADR 0022).
 const isArtistSelected = computed(() => mode.value === 'artist');
 
@@ -173,13 +195,20 @@ const artistPage = computed(() =>
 // playlist UUIDs or artist ids in the shared queue/history namespace.
 const collectionSourceId = computed(() => {
   if (mode.value === 'all') return `library:${playlistState.libraryView}`;
-  return selectedPlaylist.value?.id ?? artistPage.value?.id ?? null;
+  return (
+    selectedPlaylist.value?.id ??
+    albumReference.value?.id ??
+    artistPage.value?.id ??
+    null
+  );
 });
 
 const playlistTracks = computed(() =>
   isArtistSelected.value
     ? (artistPage.value?.tracks ?? [])
-    : resolvePlaylistTracks(selectedPlaylist.value),
+    : isAlbumReferenceSelected.value
+      ? (albumReference.value?.tracks ?? [])
+      : resolvePlaylistTracks(selectedPlaylist.value),
 );
 
 // Empty inside an album's own page — jumping to itself would be a no-op.
@@ -189,7 +218,7 @@ const albumJumpableTrackIds = computed(() => {
   const tracks =
     mode.value === 'all' ? libraryState.tracks : playlistTracks.value;
   for (const track of tracks) {
-    if (albumForTrack(track)) ids.add(track.id);
+    if (canJumpToAlbum(track)) ids.add(track.id);
   }
   return ids;
 });
@@ -221,20 +250,28 @@ const libraryViewTracks = computed(() =>
     ? sortLocalLibraryTracks(libraryState.tracks)
     : sortLibraryTracks(libraryState.tracks),
 );
-const visibleTracks = computed(() =>
-  libraryViewTracks.value.filter(matchesSearch),
-);
+const orderedLibraryEntries = computed(() => {
+  const entries = libraryViewTracks.value.map((track, playlistIndex) => ({
+    track,
+    playlistIndex,
+    addedAt: track.importedAt,
+    playCount: playCountOf(track.id),
+  }));
+  return sortTrackRowEntries(entries, effectiveTrackRowSort.value);
+});
 const orderedPlaylistEntries = computed(() => {
   // Artist pages have no membership date; show when the track entered the library.
   const entries = playlistTracks.value.map((track, playlistIndex) => ({
     track,
     playlistIndex,
-    addedAt: isArtistSelected.value
-      ? track.importedAt
-      : selectedPlaylist.value?.addedAt?.[track.id],
+    addedAt:
+      isArtistSelected.value || isAlbumReferenceSelected.value
+        ? track.importedAt
+        : selectedPlaylist.value?.addedAt?.[track.id],
+    playCount: playCountOf(track.id),
   }));
 
-  return sortPlaylistEntries(entries, playlistSort.value);
+  return sortTrackRowEntries(entries, effectiveTrackRowSort.value);
 });
 
 const visiblePlaylistEntries = computed(() =>
@@ -243,19 +280,14 @@ const visiblePlaylistEntries = computed(() =>
     .map((entry, visibleIndex) => ({ ...entry, visibleIndex })),
 );
 const visibleLibraryEntries = computed(() =>
-  visibleTracks.value.map((track, visibleIndex) => ({
-    track,
-    visibleIndex,
-    addedAt: track.importedAt,
-  })),
+  orderedLibraryEntries.value
+    .filter(({ track }) => matchesSearch(track))
+    .map((entry, visibleIndex) => ({ ...entry, visibleIndex })),
 );
 const visibleTableEntries = computed(() =>
   mode.value === 'all'
     ? visibleLibraryEntries.value
     : visiblePlaylistEntries.value,
-);
-const tableCollectionKind = computed(() =>
-  mode.value === 'all' ? `library-${playlistState.libraryView}` : mode.value,
 );
 const currentTableColumnPreferences = computed(
   () => tableColumnPreferencesByKind.value[tableCollectionKind.value] ?? {},
@@ -273,7 +305,7 @@ const headerTracks = computed(() =>
 );
 const collectionPlaybackTracks = computed(() =>
   mode.value === 'all'
-    ? libraryViewTracks.value
+    ? orderedLibraryEntries.value.map(({ track }) => track)
     : orderedPlaylistEntries.value.map(({ track }) => track),
 );
 
@@ -346,6 +378,9 @@ const playlistArtistLinkLabel = computed(() =>
 const pageTitle = computed(() => {
   if (selectedPlaylist.value)
     return playlistDisplayName(selectedPlaylist.value);
+  if (isAlbumReferenceSelected.value) {
+    return albumReference.value?.name ?? playlistState.selectedAlbumReference;
+  }
   if (isArtistSelected.value) return artistPage.value?.name ?? '藝人';
   return libraryViewTitle(playlistState.libraryView);
 });
@@ -473,11 +508,11 @@ const collectionMoreItems = computed(() => {
   ];
 });
 
-const canDragPlaylistRows = computed(
+const canReorderPlaylistTracks = computed(
   () =>
     mode.value === 'playlist' &&
     !normalizedSearchQuery.value &&
-    playlistSort.value.key === null &&
+    effectiveTrackRowSort.value.key === null &&
     Boolean(selectedPlaylist.value),
 );
 const queuedTrackIds = computed(() =>
@@ -492,7 +527,7 @@ function trackMenuOptions(track) {
   return {
     removeFromPlaylistId: inEditablePlaylist ? selectedPlaylist.value.id : '',
     canGoToAlbum: Boolean(
-      track && !isAlbumSelected.value && albumForTrack(track),
+      track && !isAlbumSelected.value && canJumpToAlbum(track),
     ),
     canDelete: Boolean(track) && mode.value === 'all',
   };
@@ -509,6 +544,7 @@ const tableEmptyText = computed(() => {
   if (mode.value === 'all') return visibleTracksEmptyText.value;
   if (playlistTracks.value.length > 0) return '找不到符合搜尋的曲目。';
   if (isArtistSelected.value) return '沒有曲目。';
+  if (isAlbumSelected.value) return '這個專輯參照目前沒有曲目。';
   return '這個歌單還沒有曲目。從任一曲目列的操作選單加入。';
 });
 const contentFieldVariant = computed(() => {
@@ -530,6 +566,7 @@ const contentFieldVariant = computed(() => {
 watch(
   [
     () => selectedPlaylist.value?.id,
+    () => playlistState.selectedAlbumReference,
     () => playlistState.selectedArtistId,
     () => playlistState.libraryView,
   ],
@@ -592,8 +629,11 @@ function enqueueSelectedCollection() {
   collectionPlayback.enqueueCollection(selectedCollectionPlaybackContext.value);
 }
 
-function togglePlaylistSort(key) {
-  playlistSort.value = nextPlaylistSort(playlistSort.value, key);
+function toggleTrackRowSort(key) {
+  if (!normalizeTrackCollectionSort(tableCollectionKind.value, { key }).key) {
+    return;
+  }
+  trackRowSort.value = nextTrackRowSort(effectiveTrackRowSort.value, key);
   clearDragState();
 }
 
@@ -737,7 +777,7 @@ function reorderTrack(draggedId, targetId, position) {
 
 function movePlaylistTrack(trackId, offset) {
   const playlist = selectedPlaylist.value;
-  if (!playlist || !canDragPlaylistRows.value) return;
+  if (!playlist || !canReorderPlaylistTracks.value) return;
   const currentIndex = playlist.trackIds.indexOf(trackId);
   const targetIndex = currentIndex + offset;
   if (
@@ -767,7 +807,7 @@ const {
   clearDragState,
 } = useDragReorder({
   onReorder: reorderTrack,
-  canDrag: () => canDragPlaylistRows.value,
+  canDrag: () => canReorderPlaylistTracks.value,
 });
 
 // closeAddMenu() is a caller-side side effect (dismiss any open context
@@ -777,7 +817,7 @@ const {
 // order (closing the menu on a rejected drag start would be an observable
 // behavior change, not a pure refactor).
 function startDrag(track, event) {
-  if (!canDragPlaylistRows.value) {
+  if (!canReorderPlaylistTracks.value) {
     event.preventDefault();
     return;
   }
@@ -917,6 +957,7 @@ onMounted(async () => {
           :preview-blocked-reason="previewBlockedReason"
           :can-add-to-playlist="playlistTracks.length > 0"
           :add-to-playlist-items="addToPlaylistItems"
+          :entity-action-visible="!isAlbumReferenceSelected"
           :more-items="collectionMoreItems"
           :show-search="showTrackSearch"
           :density="trackListDensity"
@@ -970,9 +1011,8 @@ onMounted(async () => {
             :collection-kind="tableCollectionKind"
             :column-preferences="currentTableColumnPreferences"
             :label="`${pageTitle}曲目`"
-            :sort="playlistSort"
-            :sortable="mode !== 'all'"
-            :can-drag="canDragPlaylistRows"
+            :sort="effectiveTrackRowSort"
+            :can-reorder-playlist-tracks="canReorderPlaylistTracks"
             :selected-track-id="selectedTrackId"
             :current-track-id="state.track?.id"
             :playing-track-id="state.isPlaying ? state.track?.id : ''"
@@ -983,7 +1023,7 @@ onMounted(async () => {
             :vs-queued-track-ids="vsQueuedTrackIds"
             :vs-enqueue-pending-track-id="vsEnqueuePendingTrackId"
             :density="trackListDensity"
-            @toggle-sort="togglePlaylistSort"
+            @toggle-sort="toggleTrackRowSort"
             @update-column-preferences="updateTableColumnPreferences"
             @select-track="selectTrack"
             @activate-track="activateTrack"

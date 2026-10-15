@@ -1,3 +1,5 @@
+import { formatGroupedInteger } from './format.js';
+
 export function candidateId(candidate) {
   return candidate?.playbackVideoId || candidate?.id || '';
 }
@@ -17,9 +19,6 @@ export function playbackKindLabel(kind) {
   return labels[kind] || '來源';
 }
 
-const INTEGER_FORMATTER = new Intl.NumberFormat('zh-TW', {
-  maximumFractionDigits: 0,
-});
 const COMPACT_FORMATTER = new Intl.NumberFormat('zh-TW', {
   maximumFractionDigits: 1,
 });
@@ -33,7 +32,7 @@ export function formatViewCount(value) {
   if (count >= 10_000) {
     return `${COMPACT_FORMATTER.format(count / 10_000)} 萬次觀看`;
   }
-  return `${INTEGER_FORMATTER.format(count)} 次觀看`;
+  return `${formatGroupedInteger(count, '')} 次觀看`;
 }
 
 export function identityTitle(identity, fallback = '') {

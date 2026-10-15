@@ -22,8 +22,7 @@ const props = defineProps({
     type: Object,
     default: () => ({ key: null, direction: 'asc' }),
   },
-  sortable: { type: Boolean, default: false },
-  reorderEnabled: { type: Boolean, default: false },
+  canReorderPlaylistTracks: { type: Boolean, default: false },
   selectedTrackId: { type: String, default: '' },
   currentTrackId: { type: String, default: '' },
   playingTrackId: { type: String, default: '' },
@@ -73,7 +72,8 @@ const profile = computed(() =>
 );
 const dragEnabled = computed(
   () =>
-    profile.value.dragBehavior === 'reorder' && Boolean(props.reorderEnabled),
+    profile.value.canReorderPlaylistTracks &&
+    Boolean(props.canReorderPlaylistTracks),
 );
 const draggedHeaderRole = shallowRef('');
 const headerDropTargetRole = shallowRef('');
@@ -123,13 +123,13 @@ function sortLabel(key, label) {
 }
 
 function isHeaderColumnReorderable(column) {
-  return profile.value.headerReorder && Boolean(column.textField);
+  return profile.value.canReorderColumns && Boolean(column.textField);
 }
 
 function headerColumnLabel(column) {
   return isHeaderColumnReorderable(column)
     ? `${column.label}欄；拖曳，或按 Alt 加左右方向鍵調整順序`
-    : ['separation', 'actions'].includes(column.role)
+    : column.role === 'actions'
       ? column.label
       : undefined;
 }
@@ -269,7 +269,8 @@ function reorderHeaderFromKeyboard(column, event) {
             headerDropPosition === 'after',
         }"
         :data-track-column="column.role"
-        :data-column-align="column.align"
+        :data-column-align="column.headerAlign ?? column.align"
+        :data-column-numeric="column.numeric ? 'true' : undefined"
         :data-column-reorderable="
           isHeaderColumnReorderable(column) ? 'true' : undefined
         "
@@ -289,7 +290,7 @@ function reorderHeaderFromKeyboard(column, event) {
       >
         <template v-if="column.role !== 'spacer'">
           <button
-            v-if="sortable && column.sortKey"
+            v-if="profile.canSortTrackRows && column.sortKey"
             type="button"
             class="demo-track-collection-table__sort"
             :class="{
@@ -330,12 +331,6 @@ function reorderHeaderFromKeyboard(column, event) {
               aria-hidden="true"
             />
           </button>
-          <span
-            v-else-if="column.role === 'separation'"
-            class="ui-visually-hidden"
-          >
-            {{ column.label }}
-          </span>
           <span v-else-if="column.role !== 'actions'">
             {{ column.label }}
           </span>
@@ -610,10 +605,7 @@ function reorderHeaderFromKeyboard(column, event) {
   text-align: end;
 }
 
-[data-track-column='ordinal'],
-[data-track-column='usage'],
-[data-track-column='releaseYear'],
-[data-track-column='duration'] {
+[data-column-numeric='true'] {
   font-variant-numeric: tabular-nums;
 }
 

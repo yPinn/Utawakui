@@ -45,18 +45,24 @@ describe('demo track collection profiles', () => {
       showArtwork: true,
       showArtist: true,
       ordinalMode: 'collection',
-      semanticColumns: [{ role: 'release', label: '專輯' }],
+      semanticColumns: [
+        { role: 'release', label: '專輯' },
+        { role: 'usage', label: '播放次數' },
+      ],
     });
     expect(demoTrackCollectionProfile('library-local')).toMatchObject({
       label: '本機檔案',
       showArtwork: true,
       showArtist: true,
       ordinalMode: 'collection',
-      semanticColumns: [{ role: 'release', label: '專輯' }],
+      semanticColumns: [
+        { role: 'release', label: '專輯' },
+        { role: 'usage', label: '播放次數' },
+      ],
     });
     expect(demoTrackCollectionProfile('playlist')).toMatchObject({
       label: '播放清單',
-      dragBehavior: 'reorder',
+      canReorderPlaylistTracks: true,
       semanticColumns: [],
     });
     expect(demoTrackCollectionProfile('album')).toMatchObject({
@@ -67,7 +73,7 @@ describe('demo track collection profiles', () => {
       semanticColumns: [
         { role: 'usage', label: '播放次數', sortKey: 'playCount' },
       ],
-      dragBehavior: 'none',
+      canReorderPlaylistTracks: false,
     });
     expect(demoTrackCollectionProfile('artist')).toMatchObject({
       label: '藝人',
@@ -76,7 +82,7 @@ describe('demo track collection profiles', () => {
       semanticColumns: [
         { role: 'usage', label: '播放次數', sortKey: 'playCount' },
       ],
-      dragBehavior: 'none',
+      canReorderPlaylistTracks: false,
     });
   });
 
@@ -89,8 +95,8 @@ describe('demo track collection profiles', () => {
         ]),
       ),
     ).toEqual({
-      'library-all': '所有曲目，預設顯示來源專輯。',
-      'library-local': '本機曲目，預設顯示來源專輯。',
+      'library-all': '所有曲目，預設顯示專輯與播放次數。',
+      'library-local': '本機曲目，預設顯示專輯與播放次數。',
       playlist: '播放清單曲目，預設只顯示必要欄位。',
       album: '專輯曲目，預設顯示播放次數與時長。',
       artist: '藝人曲目，預設顯示播放次數與時長。',
@@ -124,13 +130,6 @@ describe('demo track collection profiles', () => {
         align: 'start',
       },
       {
-        role: 'separation',
-        label: '伴奏處理',
-        sortKey: null,
-        priority: 'essential',
-        align: 'end',
-      },
-      {
         role: 'duration',
         label: '時長',
         sortKey: 'duration',
@@ -149,7 +148,6 @@ describe('demo track collection profiles', () => {
     expect(demoTrackCollectionColumnRoles('playlist')).toEqual([
       'ordinal',
       'identity',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -157,7 +155,6 @@ describe('demo track collection profiles', () => {
       'ordinal',
       'identity',
       'usage',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -165,7 +162,6 @@ describe('demo track collection profiles', () => {
       'ordinal',
       'identity',
       'usage',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -185,23 +181,32 @@ describe('demo track collection profiles', () => {
 
     expect(columns.ordinal).toMatchObject({
       align: 'center',
+      headerAlign: 'center',
+      numeric: true,
     });
-    expect(columns.ordinal).not.toHaveProperty('headerAlign');
-    for (const role of [
-      'identity',
-      'release',
-      'releaseYear',
-      'membership',
-      'imported',
-      'usage',
-    ]) {
+    for (const role of ['identity', 'release', 'membership', 'imported']) {
       expect(columns[role]).toMatchObject({
         align: 'start',
+        headerAlign: 'start',
         sortIndicatorPlacement: 'after',
       });
     }
+    expect(columns.releaseYear).toMatchObject({
+      align: 'start',
+      headerAlign: 'start',
+      numeric: true,
+      sortIndicatorPlacement: 'after',
+    });
+    expect(columns.usage).toMatchObject({
+      align: 'end',
+      headerAlign: 'end',
+      numeric: true,
+      sortIndicatorPlacement: 'before',
+    });
     expect(columns.duration).toMatchObject({
       align: 'end',
+      headerAlign: 'end',
+      numeric: true,
       sortIndicatorPlacement: 'before',
     });
     expect(columns.duration).toMatchObject({
@@ -212,12 +217,26 @@ describe('demo track collection profiles', () => {
     expect(columns.actions).toMatchObject({ align: 'end' });
   });
 
-  it('allows semantic header reordering outside the locked Artist and Album profiles', () => {
+  it('keeps column, track-row sort, and manual playlist reorder capabilities independent', () => {
     expect(
       Object.fromEntries(
         DEMO_TRACK_COLLECTION_KINDS.map((kind) => [
           kind,
-          demoTrackCollectionProfile(kind).headerReorder,
+          demoTrackCollectionProfile(kind).canReorderColumns,
+        ]),
+      ),
+    ).toEqual({
+      'library-all': true,
+      'library-local': true,
+      playlist: true,
+      album: true,
+      artist: true,
+    });
+    expect(
+      Object.fromEntries(
+        DEMO_TRACK_COLLECTION_KINDS.map((kind) => [
+          kind,
+          demoTrackCollectionProfile(kind).canSortTrackRows,
         ]),
       ),
     ).toEqual({
@@ -227,6 +246,29 @@ describe('demo track collection profiles', () => {
       album: false,
       artist: false,
     });
+    expect(
+      Object.fromEntries(
+        DEMO_TRACK_COLLECTION_KINDS.map((kind) => [
+          kind,
+          demoTrackCollectionProfile(kind).canReorderPlaylistTracks,
+        ]),
+      ),
+    ).toEqual({
+      'library-all': false,
+      'library-local': false,
+      playlist: true,
+      album: false,
+      artist: false,
+    });
+    for (const kind of DEMO_TRACK_COLLECTION_KINDS) {
+      expect(demoTrackCollectionProfile(kind)).not.toHaveProperty(
+        'headerReorder',
+      );
+      expect(demoTrackCollectionProfile(kind)).not.toHaveProperty(
+        'dragBehavior',
+      );
+      expect(demoTrackCollectionProfile(kind)).not.toHaveProperty('sortable');
+    }
 
     const reordered = reorderDemoTrackCollectionColumn(
       'playlist',
@@ -246,7 +288,6 @@ describe('demo track collection profiles', () => {
       'identity',
       'membership',
       'release',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -263,6 +304,7 @@ describe('demo track collection profiles', () => {
       visibleAdvanced: [],
       hiddenDefaultColumns: [],
       widths: {},
+      columnOrder: ['usage', 'releaseYear', 'release', 'imported'],
     });
   });
 
@@ -302,33 +344,33 @@ describe('demo track collection profiles', () => {
   it.each([
     [
       'library-all',
-      ['release'],
-      ['releaseYear', 'imported', 'usage'],
-      { identity: [320, 200], release: [208, 144] },
+      ['release', 'usage'],
+      ['releaseYear', 'imported'],
+      { identity: [304, 128], release: [224, 144] },
     ],
     [
       'library-local',
-      ['release'],
-      ['releaseYear', 'imported', 'usage'],
-      { identity: [320, 200], release: [208, 144] },
+      ['release', 'usage'],
+      ['releaseYear', 'imported'],
+      { identity: [304, 128], release: [224, 144] },
     ],
     [
       'playlist',
       [],
       ['release', 'membership', 'usage', 'releaseYear'],
-      { identity: [288, 200], membership: [128, 112] },
+      { identity: [288, 128], membership: [128, 112] },
     ],
     [
       'album',
       ['usage'],
       ['imported'],
-      { identity: [360, 208], usage: [104, 88] },
+      { identity: [360, 128], usage: [104, 88] },
     ],
     [
       'artist',
       ['usage'],
       ['release', 'releaseYear', 'imported'],
-      { identity: [288, 200], releaseYear: [96, 88] },
+      { identity: [288, 128], releaseYear: [96, 88] },
     ],
   ])(
     'defines default, advanced and width contracts for %s',
@@ -396,7 +438,6 @@ describe('demo track collection profiles', () => {
       'identity',
       'usage',
       'releaseYear',
-      'separation',
       'duration',
       'actions',
     ]);
@@ -480,7 +521,7 @@ describe('demo track collection profiles', () => {
       demoTrackCollectionColumnRoles('playlist', {
         hiddenDefaultColumns: ['release'],
       }),
-    ).toEqual(['ordinal', 'identity', 'separation', 'duration', 'actions']);
+    ).toEqual(['ordinal', 'identity', 'duration', 'actions']);
     expect(
       normalizeDemoTrackCollectionPreferences('artist', {
         hiddenDefaultColumns: ['release', 'releaseYear'],
@@ -491,7 +532,9 @@ describe('demo track collection profiles', () => {
         hiddenDefaultColumns: ['usage'],
       }).hiddenDefaultColumns,
     ).toEqual([]);
-    expect(demoTrackCollectionProfile('playlist').dragBehavior).toBe('reorder');
+    expect(
+      demoTrackCollectionProfile('playlist').canReorderPlaylistTracks,
+    ).toBe(true);
   });
 
   it('inserts enabled advanced columns in profile order without changing the profile defaults', () => {
@@ -505,7 +548,6 @@ describe('demo track collection profiles', () => {
       'identity',
       'usage',
       'releaseYear',
-      'separation',
       'duration',
       'actions',
     ]);

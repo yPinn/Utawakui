@@ -169,6 +169,35 @@ describe('selectArtist', () => {
   });
 });
 
+describe('selectAlbumReference', () => {
+  it('keeps metadata album, artist and collection selections mutually exclusive', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    const {
+      state,
+      select,
+      selectAlbumReference,
+      selectArtist,
+      selectedPlaylist,
+    } = await loadPlaylists();
+
+    select('p1');
+    selectAlbumReference(' Message In A Bottle ');
+    expect(state.selectedId).toBe(null);
+    expect(state.selectedArtistId).toBe(null);
+    expect(state.selectedAlbumReference).toBe('Message In A Bottle');
+    expect(selectedPlaylist.value).toBe(null);
+
+    selectArtist('artist-0123456789abcdef');
+    expect(state.selectedAlbumReference).toBe(null);
+
+    selectAlbumReference('Message In A Bottle');
+    select('p1');
+    expect(state.selectedAlbumReference).toBe(null);
+  });
+});
+
 describe('addTrack', () => {
   it('is a no-op (no IPC call) when the track is already a member', async () => {
     listPlaylistsMock.mockResolvedValue([
