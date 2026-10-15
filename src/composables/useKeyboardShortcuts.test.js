@@ -3,20 +3,18 @@ import { createSSRApp, h, nextTick } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { useAppView } from './useAppView.js';
 
-vi.mock('./usePlayer.js', () => ({
-  usePlayer: () => ({
-    state: {
-      volume: 0.5,
-      transposeSemitones: 0,
-      tempoRate: 1,
-    },
-    setVolume: vi.fn(),
-    toggleMute: vi.fn(),
-    toggleCaptureGuideVocal: vi.fn(),
-    setTransposeSemitones: vi.fn(),
-    setTempoRate: vi.fn(),
-  }),
+const player = vi.hoisted(() => ({
+  state: { volume: 0.5, transposeSemitones: 0, tempoRate: 1 },
+  setVolume: vi.fn(),
+  toggleMute: vi.fn(),
+  toggleCaptureGuideVocal: vi.fn(),
+  setTransposeSemitones: vi.fn(),
+  setTempoRate: vi.fn(),
 }));
+vi.mock('./usePlayer.js', () => ({ usePlayer: () => player }));
+
+const requestHistoryTraversal = vi.hoisted(() => vi.fn());
+vi.mock('./useNavigationInput.js', () => ({ requestHistoryTraversal }));
 
 const addMarkerMock = vi.hoisted(() => vi.fn());
 vi.mock('./useObsIntegration.js', () => ({
@@ -28,6 +26,21 @@ let keydownListener;
 beforeEach(() => {
   keydownListener = null;
   addMarkerMock.mockClear();
+  requestHistoryTraversal.mockClear();
+  Object.assign(player.state, {
+    volume: 0.5,
+    transposeSemitones: 0,
+    tempoRate: 1,
+  });
+  for (const key of [
+    'setVolume',
+    'toggleMute',
+    'toggleCaptureGuideVocal',
+    'setTransposeSemitones',
+    'setTempoRate',
+  ]) {
+    player[key].mockClear();
+  }
   vi.stubGlobal('window', {
     addEventListener: vi.fn((type, listener) => {
       if (type === 'keydown') keydownListener = listener;
@@ -58,18 +71,22 @@ async function setupShortcuts(options) {
   return appView;
 }
 
-function dispatchKey(key) {
+function dispatchKey(key, modifiers = {}) {
   const preventDefault = vi.fn();
   keydownListener({
     key,
     preventDefault,
     ctrlKey: false,
+    shiftKey: false,
     altKey: false,
     metaKey: false,
     target: null,
+    ...modifiers,
   });
   return preventDefault;
 }
+
+const EDITABLE_TARGET = { tagName: 'INPUT' };
 
 describe('useKeyboardShortcuts', () => {
   it('maps F1-F3 to Library, Performance, and Display while leaving F4 unused', async () => {
@@ -177,5 +194,169 @@ describe('useKeyboardShortcuts', () => {
     dispatchKey('k');
 
     expect(addMarkerMock).toHaveBeenCalledOnce();
+  });
+
+  it('maps M and G to mute and capture guide vocal without preventing default', async () => {
+    await setupShortcuts();
+
+    expect(dispatchKey('m')).not.toHaveBeenCalled();
+    expect(dispatchKey('G')).not.toHaveBeenCalled();
+
+    expect(player.toggleMute).toHaveBeenCalledOnce();
+    expect(player.toggleCaptureGuideVocal).toHaveBeenCalledOnce();
+  });
+
+  it('adjusts volume by 10% with ArrowUp/ArrowDown and clamps to 0..1', async () => {
+    await setupShortcuts();
+
+    expect(dispatchKey('ArrowUp')).toHaveBeenCalled();
+    expect(player.setVolume).toHaveBeenLastCalledWith(0.6);
+
+    player.state.volume = 0.95;
+    dispatchKey('ArrowUp');
+    expect(player.setVolume).toHaveBeenLastCalledWith(1);
+
+    player.state.volume = 0.05;
+    expect(dispatchKey('ArrowDown')).toHaveBeenCalled();
+    expect(player.setVolume).toHaveBeenLastCalledWith(0);
+  });
+
+  it('maps Ctrl+ArrowUp/Down to transpose and Ctrl+Shift+ArrowUp/Down to tempo', async () => {
+    await setupShortcuts();
+
+    expect(dispatchKey('ArrowUp', { ctrlKey: true })).toHaveBeenCalled();
+    expect(player.setTransposeSemitones).toHaveBeenLastCalledWith(1);
+    dispatchKey('ArrowDown', { ctrlKey: true });
+    expect(player.setTransposeSemitones).toHaveBeenLastCalledWith(-1);
+
+    dispatchKey('ArrowUp', { ctrlKey: true, shiftKey: true });
+    expect(player.setTempoRate).toHaveBeenLastCalledWith(1.05);
+    dispatchKey('ArrowDown', { ctrlKey: true, shiftKey: true });
+    expect(player.setTempoRate).toHaveBeenLastCalledWith(0.95);
+    expect(player.setVolume).not.toHaveBeenCalled();
+  });
+
+  it('ignores every non-F-key shortcut while typing in an editable field', async () => {
+    await setupShortcuts();
+
+    for (const modifiers of [
+      { key: 'm' },
+      { key: 'g' },
+      { key: 'k' },
+      { key: 'ArrowUp' },
+      { key: 'ArrowUp', ctrlKey: true },
+      { key: 'ArrowUp', ctrlKey: true, shiftKey: true },
+    ]) {
+      const { key, ...rest } = modifiers;
+      expect(
+        dispatchKey(key, { ...rest, target: EDITABLE_TARGET }),
+      ).not.toHaveBeenCalled();
+    }
+
+    expect(player.toggleMute).not.toHaveBeenCalled();
+    expect(player.toggleCaptureGuideVocal).not.toHaveBeenCalled();
+    expect(addMarkerMock).not.toHaveBeenCalled();
+    expect(player.setVolume).not.toHaveBeenCalled();
+    expect(player.setTransposeSemitones).not.toHaveBeenCalled();
+    expect(player.setTempoRate).not.toHaveBeenCalled();
+  });
+
+  it('still switches destinations from an editable field', async () => {
+    const appView = await setupShortcuts();
+
+    dispatchKey('F2', { target: EDITABLE_TARGET });
+
+    expect(appView.activeView.value).toBe('performance');
+  });
+
+  it('reserves Alt and Meta combinations, including F-keys', async () => {
+    const appView = await setupShortcuts();
+
+    for (const modifiers of [{ altKey: true }, { metaKey: true }]) {
+      dispatchKey('F2', modifiers);
+      dispatchKey('m', modifiers);
+      dispatchKey('ArrowUp', modifiers);
+      dispatchKey('ArrowUp', { ...modifiers, ctrlKey: true });
+    }
+
+    expect(appView.activeView.value).toBe('library');
+    expect(player.toggleMute).not.toHaveBeenCalled();
+    expect(player.setVolume).not.toHaveBeenCalled();
+    expect(player.setTransposeSemitones).not.toHaveBeenCalled();
+  });
+
+  it('does not treat other Ctrl combinations as plain shortcuts', async () => {
+    const appView = await setupShortcuts();
+
+    dispatchKey('m', { ctrlKey: true });
+    dispatchKey('k', { ctrlKey: true });
+    dispatchKey('F2', { ctrlKey: true });
+
+    expect(player.toggleMute).not.toHaveBeenCalled();
+    expect(addMarkerMock).not.toHaveBeenCalled();
+    expect(appView.activeView.value).toBe('library');
+  });
+
+  it('ignores unbound keys', async () => {
+    await setupShortcuts();
+
+    expect(dispatchKey('x')).not.toHaveBeenCalled();
+    expect(dispatchKey(' ')).not.toHaveBeenCalled();
+  });
+
+  describe('history traversal', () => {
+    it('maps Alt+ArrowLeft/Right to back and forward, even while typing', async () => {
+      await setupShortcuts();
+
+      expect(
+        dispatchKey('ArrowLeft', { altKey: true, target: EDITABLE_TARGET }),
+      ).toHaveBeenCalled();
+      expect(requestHistoryTraversal).toHaveBeenLastCalledWith('back');
+
+      expect(
+        dispatchKey('ArrowRight', { altKey: true, shiftKey: true }),
+      ).toHaveBeenCalled();
+      expect(requestHistoryTraversal).toHaveBeenLastCalledWith('forward');
+    });
+
+    it('maps the browser navigation keys to back and forward', async () => {
+      await setupShortcuts();
+
+      expect(dispatchKey('BrowserBack')).toHaveBeenCalled();
+      expect(requestHistoryTraversal).toHaveBeenLastCalledWith('back');
+      expect(dispatchKey('BrowserForward')).toHaveBeenCalled();
+      expect(requestHistoryTraversal).toHaveBeenLastCalledWith('forward');
+    });
+
+    it('does not traverse on key auto-repeat but still blocks the default', async () => {
+      await setupShortcuts();
+
+      expect(
+        dispatchKey('ArrowLeft', { altKey: true, repeat: true }),
+      ).toHaveBeenCalled();
+      dispatchKey('BrowserBack', { repeat: true });
+
+      expect(requestHistoryTraversal).not.toHaveBeenCalled();
+    });
+
+    it('yields Alt+Arrow to a component that already handled the event', async () => {
+      await setupShortcuts();
+
+      expect(
+        dispatchKey('ArrowLeft', { altKey: true, defaultPrevented: true }),
+      ).not.toHaveBeenCalled();
+      expect(requestHistoryTraversal).not.toHaveBeenCalled();
+    });
+
+    it('ignores unrelated Alt and Arrow combinations', async () => {
+      await setupShortcuts();
+
+      dispatchKey('ArrowLeft');
+      dispatchKey('ArrowUp', { altKey: true });
+      dispatchKey('ArrowLeft', { altKey: true, ctrlKey: true });
+      dispatchKey('ArrowLeft', { metaKey: true });
+
+      expect(requestHistoryTraversal).not.toHaveBeenCalled();
+    });
   });
 });

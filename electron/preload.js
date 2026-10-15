@@ -386,6 +386,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('app:navigate', listener);
     return () => ipcRenderer.removeListener('app:navigate', listener);
   },
+  onHistoryCommand: (callback) => {
+    const listener = (event, direction) => {
+      if (direction === 'back' || direction === 'forward') callback(direction);
+    };
+    ipcRenderer.on('app:history-command', listener);
+    return () => ipcRenderer.removeListener('app:history-command', listener);
+  },
   getAnnouncementSeenVersion: () =>
     ipcRenderer.invoke('config:get-announcement-seen-version'),
   setAnnouncementSeenVersion: (version) =>

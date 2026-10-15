@@ -142,6 +142,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [演出場次準備契約](contracts/performance-session-preparation.md)、
   [BGM 待機播放契約](contracts/bgm-standby-lane.md)、
   [曲目試聽契約](contracts/track-preview.md)。
+- Input：[輸入綁定契約](contracts/input-bindings.md)。
 - Library：[曲庫空間管理契約](contracts/library-storage-management.md)、
   [曲目編輯契約](contracts/track-editing.md)。
 - Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)、

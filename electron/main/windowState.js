@@ -16,6 +16,7 @@ const {
 } = require('./separationTaskbarProgress');
 const { readDeveloperOptions } = require('./runtimeEnvironment');
 const { hardenWebContentsNavigation } = require('./webContentsSecurity');
+const { forwardHistoryAppCommands } = require('./appCommands');
 
 // Must equal APP_NAME in electron/main.js (that copy feeds app.setName(),
 // which has to run before any lib require reads app.getPath('userData') —
@@ -278,6 +279,8 @@ function createMainWindow(
     isFullScreen = false;
     publishUiDensity();
   });
+
+  forwardHistoryAppCommands(mainWindow);
 
   if (process.platform === 'win32') {
     mainWindow.setAppDetails({

@@ -211,6 +211,7 @@ const MAIN_INVOKE_CHANNELS = [
 ].sort();
 
 const MAIN_EVENT_CHANNELS = [
+  'app:history-command',
   'app:navigate',
   'app-update:status',
   'app-usage:status',
@@ -657,6 +658,27 @@ describe('main preload bridge', () => {
     cleanupQueue();
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'separation:progress',
+      listener,
+    );
+  });
+
+  it('forwards only the fixed history traversal intents', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const callback = vi.fn();
+    const unsubscribe = bridge.onHistoryCommand(callback);
+    const listener = electron.ipcRenderer.on.mock.calls.findLast(
+      ([channel]) => channel === 'app:history-command',
+    )[1];
+
+    listener({ sender: 'private' }, 'back');
+    listener({ sender: 'private' }, 'forward');
+    listener({ sender: 'private' }, 'reload');
+    listener({ sender: 'private' }, { direction: 'back' });
+
+    expect(callback.mock.calls).toEqual([['back'], ['forward']]);
+    unsubscribe();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
+      'app:history-command',
       listener,
     );
   });

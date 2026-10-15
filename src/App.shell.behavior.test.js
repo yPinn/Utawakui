@@ -41,6 +41,7 @@ describe('App shell right Dock', () => {
     expect(source).toContain(
       'const navigationHistory = useNavigationHistory();',
     );
+    expect(source).toContain('useNavigationInput();');
     expect(source).toMatch(
       /function leaveSettings\(\)\s*\{\s*if \(!navigationHistory\.leaveSettings\(\)\) returnFromSettings\(\);/u,
     );

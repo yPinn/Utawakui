@@ -54,7 +54,8 @@ of the product navigation.
 The global keyboard order follows the visible order: F1 opens Library, F2 opens
 Performance and F3 opens Display. F4 becomes unassigned rather than being reused
 without a separate product decision. F5–F8 remain development-only workbenches,
-and F9 remains Settings.
+and F9 remains Settings. The full binding inventory lives in the
+[input bindings contract](../contracts/input-bindings.md).
 
 ### Granularity contract
 
