@@ -12,6 +12,7 @@ function createHarness() {
     clearRecentHistory: vi.fn(() => []),
     getResumeSnapshot: vi.fn(() => null),
     saveResumeSnapshot: vi.fn((snapshot) => snapshot),
+    getPlayCountByTrackId: vi.fn(() => ({ 'track-a': 2 })),
   };
   registerPlaybackPersistenceHandlers({ ipcMain, service });
   return { handlers, service };
@@ -27,7 +28,20 @@ describe('playbackPersistenceHandlers', () => {
       'playback-history:record',
       'playback-resume:get',
       'playback-resume:save',
+      'playback-usage:get-play-counts',
     ]);
+  });
+
+  it('exposes play counts without accepting renderer arguments', async () => {
+    const { handlers, service } = createHarness();
+
+    await expect(
+      handlers.get('playback-usage:get-play-counts')(
+        { sender: 'private' },
+        'ignored',
+      ),
+    ).resolves.toEqual({ 'track-a': 2 });
+    expect(service.getPlayCountByTrackId).toHaveBeenCalledWith();
   });
 
   it('passes only bounded scalar playback intents to the service', async () => {

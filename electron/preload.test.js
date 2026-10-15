@@ -172,6 +172,7 @@ const MAIN_INVOKE_CHANNELS = [
   'playback-history:record',
   'playback-resume:get',
   'playback-resume:save',
+  'playback-usage:get-play-counts',
   'playlists:choose-cover',
   'playlists:clear-cover',
   'playlists:create',
@@ -896,6 +897,7 @@ describe('main preload bridge', () => {
       },
       'ignored',
     );
+    bridge.getPlaybackPlayCounts('ignored');
     bridge.savePlaybackResumeSnapshot({
       currentTrackId: 'track-a',
       positionSeconds: 12,
@@ -921,6 +923,9 @@ describe('main preload bridge', () => {
       'playback-history:record',
       'track-a',
       { sourceId: 'playlist-1', sourceName: '深夜練唱' },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'playback-usage:get-play-counts',
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'playback-resume:save',

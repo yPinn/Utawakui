@@ -297,6 +297,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   clearRecentPlaybackHistory: () =>
     ipcRenderer.invoke('playback-history:clear'),
+  getPlaybackPlayCounts: () =>
+    ipcRenderer.invoke('playback-usage:get-play-counts'),
   getPlaybackResumeSnapshot: () => ipcRenderer.invoke('playback-resume:get'),
   savePlaybackResumeSnapshot: (snapshot) =>
     ipcRenderer.invoke('playback-resume:save', playbackResumeIntent(snapshot)),

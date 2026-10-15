@@ -12,9 +12,16 @@ session history 或 Queue 的 previous stack 合併。
   跳躍、只載入、播放失敗或快速誤點不計入。
 - Renderer 只提交 `trackId` 與 bounded `sourceId`／`sourceName`。Main 產生
   `playedAt`，以原子寫入保存到 user data 的 `playback-history.json`。
-- 同一 qualified event 另以原子寫入更新 main-private `playback-usage.json`，保存完整曲庫的
-  `trackId → lastPlayedAt` 索引。它只供去人聲容量管理的 LRU policy 使用，不跨 IPC，也不受
-  最近 50 首顯示上限或「清除最近播放」影響。
+- 同一 qualified event 另以原子寫入更新 main-owned `playback-usage.json`，保存完整曲庫的
+  `trackId → lastPlayedAt` 與 `trackId → playCount`。兩者都不受最近 50 首顯示上限或
+  「清除最近播放」影響；最近播放清單出現的曲目必定至少計一次。
+  - `lastPlayedAt` 只供去人聲容量管理的 LRU policy 使用，不跨 IPC。
+  - `playCount` 是曲目列「播放次數」的唯一來源，只經固定 channel
+    `playback-usage:get-play-counts` 以整份 map 讀出；renderer 不能寫入或重設。
+    `usePlaybackHistory` 在 record 成功後於本地同步 +1，失敗則不變；讀取失敗時次數
+    視為未知，欄位隱藏而非顯示 0。
+  - 早於次數欄位的舊檔，有 `lastPlayedAt` 但無次數的曲目讀取時補為 1。
+  - 播放次數只存在本機 user data，不做任何雲端統計或上傳。
 - 介面不承諾固定顯示數量；main 目前保留最近 50 首 unique tracks 作為儲存防線。顯示時以
   `trackId` 向目前曲庫解析 metadata，已刪除曲目不顯示。
 - 使用者可在 Settings「曲庫與儲存」明確清除最近播放；操作位於 danger overflow
@@ -51,8 +58,8 @@ session history 或 Queue 的 previous stack 合併。
 
 ## 驗證界線
 
-- Main tests 覆蓋 schema、上限、同曲 upsert、舊檔去重、corrupt recovery、atomic persistence 與 IPC
-  registration。
+- Main tests 覆蓋 schema、上限、同曲 upsert、舊檔去重、corrupt recovery、atomic persistence、
+  播放次數累加／舊檔補 1／非法次數過濾與 IPC registration。
 - Renderer tests 覆蓋 10 秒 qualification、seek exclusion、normal ended、source context、
   direct replay preserves Queue、missing-track filtering、paused restore、tabs／ARIA、
   read-only Recent row、Settings clear confirmation 與 sticky scroll state。另以真實 player

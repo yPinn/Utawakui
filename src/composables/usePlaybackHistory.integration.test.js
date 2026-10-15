@@ -120,4 +120,48 @@ describe('usePlaybackHistory integration', () => {
     await history.clear();
     expect(history.recentItems.value).toEqual([]);
   });
+
+  it('projects main-owned play counts and advances them on the same qualified event', async () => {
+    window.Utawakui.getPlaybackPlayCounts = vi.fn(async () => ({
+      'track-a': 2,
+    }));
+    harness.recordRecentPlayback.mockResolvedValue([]);
+    harness.clearRecentPlaybackHistory.mockResolvedValue([]);
+    const { usePlaybackHistory } = await import('./usePlaybackHistory.js');
+    const history = usePlaybackHistory();
+    await history.initialize();
+
+    expect(history.playCountOf('track-a')).toBe(2);
+    expect(history.playCountOf('track-unplayed')).toBe(0);
+
+    harness.onEnded({ trackId: 'track-a', playbackRevision: 1 });
+    await vi.waitFor(() => expect(history.playCountOf('track-a')).toBe(3));
+
+    await history.clear();
+    expect(history.playCountOf('track-a')).toBe(3);
+  });
+
+  it('keeps play counts unknown when they cannot be loaded or recorded', async () => {
+    window.Utawakui.getPlaybackPlayCounts = vi.fn(async () => {
+      throw new Error('unavailable');
+    });
+    const { usePlaybackHistory } = await import('./usePlaybackHistory.js');
+    const history = usePlaybackHistory();
+    await history.initialize();
+
+    expect(history.playCountOf('track-a')).toBe(null);
+    expect(history.state.error).toBe(null);
+  });
+
+  it('does not advance the count when recording fails', async () => {
+    window.Utawakui.getPlaybackPlayCounts = vi.fn(async () => ({}));
+    harness.recordRecentPlayback.mockRejectedValue(new Error('disk full'));
+    const { usePlaybackHistory } = await import('./usePlaybackHistory.js');
+    const history = usePlaybackHistory();
+    await history.initialize();
+
+    harness.onEnded({ trackId: 'track-a', playbackRevision: 1 });
+    await vi.waitFor(() => expect(history.state.error).not.toBe(null));
+    expect(history.playCountOf('track-a')).toBe(0);
+  });
 });

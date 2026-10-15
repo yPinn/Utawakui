@@ -135,6 +135,9 @@ describe('playback history runtime chain', () => {
         clearRecentPlaybackHistory: vi.fn(async () =>
           service.clearRecentHistory(),
         ),
+        getPlaybackPlayCounts: vi.fn(async () =>
+          service.getPlayCountByTrackId(),
+        ),
       },
     });
     const { usePlayer } = await import('./usePlayer.js');
@@ -168,6 +171,8 @@ describe('playback history runtime chain', () => {
         track: harness.tracksById.get('track-a'),
       }),
     ]);
+    expect(history.playCountOf('track-a')).toBe(1);
+    expect(service.getPlayCountByTrackId()).toEqual({ 'track-a': 1 });
 
     history.dispose();
   });

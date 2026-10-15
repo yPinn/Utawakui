@@ -18,6 +18,9 @@ function registerPlaybackPersistenceHandlers({ ipcMain, service }) {
   ipcMain.handle('playback-resume:save', async (_event, snapshot) =>
     service.saveResumeSnapshot(snapshot),
   );
+  ipcMain.handle('playback-usage:get-play-counts', async () =>
+    service.getPlayCountByTrackId(),
+  );
 }
 
 module.exports = { registerPlaybackPersistenceHandlers };

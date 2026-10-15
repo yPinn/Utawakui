@@ -81,6 +81,10 @@ function normalizeHistoryEntries(value) {
   return entries;
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
 function normalizeSourceContext(value) {
   if (value === null || value === undefined) {
     return { sourceId: null, sourceName: null };
@@ -216,20 +220,21 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     });
   }
 
-  function getLastPlayedAtByTrackId() {
-    return loadDocument(usagePath, {}, (document) => {
+  function getUsage() {
+    const empty = { lastPlayedAtByTrackId: {}, playCountByTrackId: {} };
+    return loadDocument(usagePath, empty, (document) => {
       if (
         !document ||
         typeof document !== 'object' ||
         Array.isArray(document) ||
         document.version !== PLAYBACK_PERSISTENCE_VERSION ||
-        !document.lastPlayedAtByTrackId ||
-        typeof document.lastPlayedAtByTrackId !== 'object' ||
-        Array.isArray(document.lastPlayedAtByTrackId)
+        !isPlainObject(document.lastPlayedAtByTrackId) ||
+        (document.playCountByTrackId !== undefined &&
+          !isPlainObject(document.playCountByTrackId))
       ) {
         throw new Error('invalid playback usage document');
       }
-      const result = {};
+      const lastPlayedAtByTrackId = {};
       for (const [trackId, playedAt] of Object.entries(
         document.lastPlayedAtByTrackId,
       )) {
@@ -238,18 +243,42 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
           typeof playedAt === 'string' &&
           !Number.isNaN(Date.parse(playedAt))
         ) {
-          result[trackId] = new Date(playedAt).toISOString();
+          lastPlayedAtByTrackId[trackId] = new Date(playedAt).toISOString();
         }
       }
-      return result;
+      // Usage files written before play counts existed still prove one play.
+      const playCountByTrackId = Object.fromEntries(
+        Object.keys(lastPlayedAtByTrackId).map((trackId) => [trackId, 1]),
+      );
+      for (const [trackId, count] of Object.entries(
+        document.playCountByTrackId ?? {},
+      )) {
+        if (
+          isBoundedTrackId(trackId) &&
+          Number.isSafeInteger(count) &&
+          count > 0
+        ) {
+          playCountByTrackId[trackId] = count;
+        }
+      }
+      return { lastPlayedAtByTrackId, playCountByTrackId };
     });
   }
 
-  function writeUsage(lastPlayedAtByTrackId) {
+  function getLastPlayedAtByTrackId() {
+    return getUsage().lastPlayedAtByTrackId;
+  }
+
+  function getPlayCountByTrackId() {
+    return getUsage().playCountByTrackId;
+  }
+
+  function writeUsage(usage) {
     ensureDirectory();
     atomicWriteJson(usagePath, {
       version: PLAYBACK_PERSISTENCE_VERSION,
-      lastPlayedAtByTrackId,
+      lastPlayedAtByTrackId: usage.lastPlayedAtByTrackId,
+      playCountByTrackId: usage.playCountByTrackId,
     });
   }
 
@@ -266,9 +295,16 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
       ),
     ].slice(0, PLAYBACK_HISTORY_LIMIT);
     writeHistory(entries);
+    const usage = getUsage();
     writeUsage({
-      ...getLastPlayedAtByTrackId(),
-      [entry.trackId]: entry.playedAt,
+      lastPlayedAtByTrackId: {
+        ...usage.lastPlayedAtByTrackId,
+        [entry.trackId]: entry.playedAt,
+      },
+      playCountByTrackId: {
+        ...usage.playCountByTrackId,
+        [entry.trackId]: (usage.playCountByTrackId[entry.trackId] ?? 0) + 1,
+      },
     });
     return entries;
   }
@@ -308,6 +344,7 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     recordRecentPlayback,
     clearRecentHistory,
     getLastPlayedAtByTrackId,
+    getPlayCountByTrackId,
     getResumeSnapshot,
     saveResumeSnapshot,
   };

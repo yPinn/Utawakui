@@ -149,6 +149,61 @@ describe('playbackPersistence', () => {
     );
   });
 
+  it('counts every qualified playback independently of the recent limit and clear', () => {
+    service.recordRecentPlayback('track-a');
+    service.recordRecentPlayback('track-b');
+    service.recordRecentPlayback('track-a');
+    service.clearRecentHistory();
+    service.recordRecentPlayback('track-a');
+
+    expect(service.getPlayCountByTrackId()).toEqual({
+      'track-a': 3,
+      'track-b': 1,
+    });
+  });
+
+  it('treats a legacy last-played entry without a count as one play', () => {
+    fs.writeFileSync(
+      path.join(userDataDir, 'playback-usage.json'),
+      JSON.stringify({
+        version: 1,
+        lastPlayedAtByTrackId: {
+          'track-a': '2026-09-01T00:00:00.000Z',
+          'track-b': '2026-09-02T00:00:00.000Z',
+        },
+      }),
+    );
+
+    expect(service.getPlayCountByTrackId()).toEqual({
+      'track-a': 1,
+      'track-b': 1,
+    });
+    service.recordRecentPlayback('track-a');
+    expect(service.getPlayCountByTrackId()).toEqual({
+      'track-a': 2,
+      'track-b': 1,
+    });
+  });
+
+  it('drops invalid stored play counts without hiding valid ones', () => {
+    fs.writeFileSync(
+      path.join(userDataDir, 'playback-usage.json'),
+      JSON.stringify({
+        version: 1,
+        lastPlayedAtByTrackId: {},
+        playCountByTrackId: {
+          'track-a': 4,
+          'track-b': -1,
+          'track-c': 1.5,
+          'track-d': '7',
+          '../escape': 2,
+        },
+      }),
+    );
+
+    expect(service.getPlayCountByTrackId()).toEqual({ 'track-a': 4 });
+  });
+
   it('rejects unsafe renderer history payloads before writing', () => {
     expect(() => service.recordRecentPlayback('../escape')).toThrow(
       /track id/i,
