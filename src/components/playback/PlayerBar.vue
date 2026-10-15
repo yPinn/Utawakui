@@ -16,6 +16,7 @@ import {
 } from '../../icons/index.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { usePlaybackTransport } from '../../composables/usePlaybackTransport.js';
 import { useMetronome } from '../../composables/useMetronome.js';
 import { useMetronomeTrackTempo } from '../../composables/useMetronomeTrackTempo.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
@@ -35,7 +36,6 @@ import {
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
 import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
-import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
 import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
@@ -59,10 +59,8 @@ const emit = defineEmits(['artworkActivate', 'queueActivate']);
 
 const {
   state,
-  playTrack,
   toggle,
   seek,
-  restartTrack,
   setVolume,
   toggleMute,
   cyclePlaybackMode,
@@ -78,11 +76,11 @@ const {
 const {
   state: queueState,
   canGoNext,
-  previousTrack,
   nextTrack,
   restartSourceQueue,
   toggleShuffle,
 } = usePlaybackQueue();
+const { playQueuedTrack, playPrevious, playNext } = usePlaybackTransport();
 const { state: metronomeState } = useMetronome();
 // PlayerBar is mounted exactly once for the app's lifetime, making this the
 // natural single place to wire the metronome to whatever track is loaded.
@@ -447,28 +445,9 @@ const pitchTempoRows = computed(() => [
   },
 ]);
 
-function playQueuedTrack(track) {
-  if (!track) return;
-  playTrack(toPlayableTrack(track));
-}
-
 function jumpToCurrentTrackAlbum() {
   if (!currentTrackAlbum.value) return;
   jumpToAlbum(state.track);
-}
-
-function playPrevious() {
-  const previous = previousTrack();
-  if (previous) {
-    playQueuedTrack(previous);
-    return;
-  }
-
-  restartTrack();
-}
-
-function playNext() {
-  playQueuedTrack(nextTrack());
 }
 
 // useLyrics.js already syncs to whatever's playing, so switching tabs is

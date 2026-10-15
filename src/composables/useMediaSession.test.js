@@ -21,6 +21,14 @@ vi.mock('./usePlayer.js', () => ({
   },
 }));
 
+const transport = vi.hoisted(() => ({
+  playPrevious: vi.fn(),
+  playNext: vi.fn(),
+}));
+vi.mock('./usePlaybackTransport.js', () => ({
+  usePlaybackTransport: () => transport,
+}));
+
 import { useMediaSession } from './useMediaSession.js';
 
 class FakeMediaMetadata {
@@ -105,17 +113,29 @@ describe('useMediaSession', () => {
     expect(mediaSession.playbackState).toBe('none');
   });
 
-  it('routes only play and pause actions and releases them on unmount', () => {
+  it('routes play, pause and track skipping and releases them on unmount', () => {
+    transport.playPrevious.mockClear();
+    transport.playNext.mockClear();
     scope.run(() => useMediaSession());
 
-    expect([...actionHandlers.keys()]).toEqual(['play', 'pause']);
+    expect([...actionHandlers.keys()]).toEqual([
+      'play',
+      'pause',
+      'previoustrack',
+      'nexttrack',
+    ]);
     actionHandlers.get('play')();
     actionHandlers.get('pause')();
+    actionHandlers.get('previoustrack')();
+    actionHandlers.get('nexttrack')();
     expect(playerHarness.current.play).toHaveBeenCalledOnce();
     expect(playerHarness.current.pause).toHaveBeenCalledOnce();
+    expect(transport.playPrevious).toHaveBeenCalledOnce();
+    expect(transport.playNext).toHaveBeenCalledOnce();
 
     lifecycle.unmounted.forEach((callback) => callback());
-    expect(actionHandlers.get('play')).toBeNull();
-    expect(actionHandlers.get('pause')).toBeNull();
+    for (const action of ['play', 'pause', 'previoustrack', 'nexttrack']) {
+      expect(actionHandlers.get(action)).toBeNull();
+    }
   });
 });

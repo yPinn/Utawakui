@@ -1,11 +1,14 @@
 import { onUnmounted, watchEffect } from 'vue';
 import { usePlayer } from './usePlayer.js';
+import { usePlaybackTransport } from './usePlaybackTransport.js';
 
-// Mirrors playback to Windows SMTC. Hardware media keys stay unclaimed.
+// Mirrors playback to Windows SMTC and claims the hardware media keys, so play,
+// pause and track skipping follow the same actions as the on-screen controls.
 export function useMediaSession() {
   if (typeof navigator === 'undefined' || !navigator.mediaSession) return;
 
   const { state, play, pause } = usePlayer();
+  const { playPrevious, playNext } = usePlaybackTransport();
 
   watchEffect(() => {
     const track = state.track;
@@ -33,15 +36,23 @@ export function useMediaSession() {
         : 'paused';
   });
 
-  // Screen-drawn buttons on the SMTC card, not hardware keys — these route
-  // through the same play()/pause() as every other caller, never touching
-  // state.isPlaying directly (see usePlayer.js).
-  navigator.mediaSession.setActionHandler('play', () => play());
-  navigator.mediaSession.setActionHandler('pause', () => pause());
+  // SMTC card buttons and hardware media keys alike route through the same
+  // play()/pause() as every other caller, never touching state.isPlaying directly
+  // (see usePlayer.js).
+  const actionHandlers = {
+    play: () => play(),
+    pause: () => pause(),
+    previoustrack: () => playPrevious(),
+    nexttrack: () => playNext(),
+  };
+  for (const [action, handler] of Object.entries(actionHandlers)) {
+    navigator.mediaSession.setActionHandler(action, handler);
+  }
 
   const clearActionHandlers = () => {
-    navigator.mediaSession.setActionHandler('play', null);
-    navigator.mediaSession.setActionHandler('pause', null);
+    for (const action of Object.keys(actionHandlers)) {
+      navigator.mediaSession.setActionHandler(action, null);
+    }
   };
 
   onUnmounted(clearActionHandlers);
