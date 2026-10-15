@@ -49,6 +49,13 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(albumActionSource).toContain(':text="state.track.title"');
   });
 
+  // The title button inherits font-family, so lang belongs on the wrapper.
+  it('tags the title and artist wrapper with the track content language', () => {
+    expect(componentSource).toMatch(
+      /class="player-bar__track-copy"\s*:lang="trackContentLang\(state\.track\)"/u,
+    );
+  });
+
   it('shares the Shell substrate without a divider while the floating panel keeps its surface', () => {
     const playerBarRule = cssRule(componentSource, '.player-bar');
     const toolsMarkerRule = cssRule(

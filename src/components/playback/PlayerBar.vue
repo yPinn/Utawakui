@@ -36,6 +36,7 @@ import {
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
 import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
+import { trackContentLang } from '../../utils/contentLanguage.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
 import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
@@ -524,7 +525,7 @@ onUnmounted(() => {
         :controls="artworkControls"
         @activate="emit('artworkActivate')"
       />
-      <div class="player-bar__track-copy">
+      <div class="player-bar__track-copy" :lang="trackContentLang(state.track)">
         <template v-if="state.track">
           <UiTooltip v-if="currentTrackAlbum" :text="currentTrackAlbumCtaLabel">
             <template #trigger="{ triggerProps }">

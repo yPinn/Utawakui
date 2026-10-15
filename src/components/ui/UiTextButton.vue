@@ -67,6 +67,11 @@ const displayText = computed(() => String(props.text ?? ''));
   cursor: pointer;
 }
 
+/* inherit would keep the parent's resolved face; a lang tag re-resolves it. */
+.ui-text-btn[lang] {
+  font-family: var(--ui-font-family-base);
+}
+
 @scope ([data-ui-system='v2']) to ([data-ui-system]) {
   .ui-text-btn {
     -webkit-user-select: none;

@@ -34,13 +34,42 @@ describe('font role tokens', () => {
   });
 
   it.each([
-    ['ja', 'Yu Gothic UI'],
+    ['ja', 'Utawakui Gothic JA'],
     ['ko', 'Malgun Gothic'],
   ])('keeps the %s CJK face in every role', (language, face) => {
     const block = languageBlock(language);
     const stacks = block.split(/--ui-font-family-/u).slice(1);
     expect(stacks).toHaveLength(ROLES.length);
     for (const stack of stacks) expect(stack).toContain(face);
+  });
+
+  // Yu Gothic UI narrows kana; plain Yu Gothic at 400 resolves to Light.
+  it('maps Japanese regular text to Yu Gothic Medium, not the UI cut', () => {
+    expect(tokens).toMatch(
+      /font-family: 'Utawakui Gothic JA';\s*src: local\('Yu Gothic Medium'\)[^;]*;\s*font-weight: 100 500;/u,
+    );
+    expect(tokens).toMatch(
+      /font-family: 'Utawakui Gothic JA';\s*src: local\('Yu Gothic Bold'\)[^;]*;\s*font-weight: 600 900;/u,
+    );
+    const stacks = languageBlock('ja')
+      .split(/--ui-font-family-/u)
+      .slice(1);
+    for (const stack of stacks) {
+      expect(stack.indexOf('Utawakui Gothic JA')).toBeLessThan(
+        stack.indexOf('Yu Gothic UI'),
+      );
+    }
+  });
+
+  // Its font-family: inherit outranks the zero-specificity [lang] rule.
+  it('lets a lang-tagged text button re-resolve the base stack', () => {
+    const button = readFileSync(
+      new URL('../components/ui/UiTextButton.vue', import.meta.url),
+      'utf8',
+    );
+    expect(button).toMatch(
+      /\.ui-text-btn\[lang\] \{\s*font-family: var\(--ui-font-family-base\);/u,
+    );
   });
 
   // YaHei draws about one weight step heavier than JhengHei, which made

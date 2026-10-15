@@ -803,16 +803,31 @@
    language redeclares every role stack instead of one shared CJK token.
    Simplified Chinese keeps JhengHei: it covers the characters, and YaHei
    draws about one weight step heavier, so mixed lists looked uneven. */
+/* Yu Gothic UI narrows kana and Yu Gothic Regular renders Light in Chromium,
+   so regular text maps to Medium and heavier text to Bold. */
+@font-face {
+  font-family: 'Utawakui Gothic JA';
+  src: local('Yu Gothic Medium'), local('YuGothic-Medium');
+  font-weight: 100 500;
+}
+
+@font-face {
+  font-family: 'Utawakui Gothic JA';
+  src: local('Yu Gothic Bold'), local('YuGothic-Bold');
+  font-weight: 600 900;
+}
+
 [data-ui-system='v2']:lang(ja),
 [data-ui-system='v2'] :lang(ja) {
   --ui-font-family-base:
-    'Yu Gothic UI', 'Meiryo UI', 'Segoe UI Variable Text', 'Segoe UI',
+    'Segoe UI Variable Text', 'Segoe UI', 'Utawakui Gothic JA', 'Yu Gothic UI',
     system-ui, sans-serif;
   --ui-font-family-display:
-    Bahnschrift, 'Yu Gothic UI', 'Meiryo UI', 'Segoe UI', system-ui, sans-serif;
+    Bahnschrift, 'Segoe UI', 'Utawakui Gothic JA', 'Yu Gothic UI', system-ui,
+    sans-serif;
   --ui-font-family-utility:
-    'Cascadia Mono', Consolas, 'Yu Gothic UI', 'Meiryo UI', ui-monospace,
-    monospace;
+    'Cascadia Mono', Consolas, 'Utawakui Gothic JA', 'Yu Gothic UI',
+    ui-monospace, monospace;
 }
 
 [data-ui-system='v2']:lang(ko),
