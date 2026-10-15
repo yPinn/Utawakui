@@ -72,6 +72,15 @@ function returnFromSettings() {
   commitActiveView(returnView.value || 'library');
 }
 
+// History restore (ADR 0025): puts back a recorded location without the side
+// effects of a fresh entry — no root-entry bump, Performance tool untouched.
+function restoreLocation({ view, workspace, returnView: settingsReturnView }) {
+  if (view === 'library') libraryWorkspace.value = workspace ?? 'browse';
+  activeView.value = view;
+  returnView.value =
+    view === 'settings' ? settingsReturnView || 'library' : view;
+}
+
 export function useAppView() {
   return {
     activeView: readonly(activeView),
@@ -90,5 +99,6 @@ export function useAppView() {
     selectPerformanceTool,
     openSettings,
     returnFromSettings,
+    restoreLocation,
   };
 }

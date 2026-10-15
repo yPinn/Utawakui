@@ -114,6 +114,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0022](adr/0022-artist-identity-and-organization.md)                   | 主路徑已實作                     | Stable artist entity、merge／split／display override／undo、顯式 MusicBrainz identity lookup 與照片相容遷移已建立；主動 alias 建議與本機 tags 後續。 |
 | [0023](adr/0023-renderer-destination-and-workspace-model.md)           | 已接受／Phase 0–4 已實作         | Renderer 已收斂為曲庫／演唱工具／畫面輸出三個目的地；Import 是共用曲目準備 Right Dock 任務，舊destination adapter與名稱清理已完成。                  |
 | [0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)     | 已接受／已實作                   | WMA、AIFF、ALAC、APE、WavPack 與 CAF 採 Main-owned 明示 FLAC 相容轉檔；直接匯入不依賴 FFmpeg。                                                       |
+| [0025](adr/0025-renderer-navigation-history.md)                        | 已接受／歷史模型已實作           | Renderer 自管導覽歷史堆疊，只記錄目的地與曲庫位置；Settings 返回沿歷史回退；滑鼠側鍵、Alt+←／→、瀏覽器鍵與 Windows app-command 已接。                |
 
 ## 常用文件
 

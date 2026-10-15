@@ -180,6 +180,7 @@ checker／dark／light；copied route 不帶這些參數；
 Titlebar direct action 進入 shell-level `AppUtilityPage`，不屬於 Folder destination。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
+Navigation history 由 module-scope `useNavigationHistory.js` 單獨擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：它觀察 `useAppView` 與 `usePlaylists` 的位置狀態，只記錄目的地、Library workspace／選取目標與 Settings 返回來源，不記錄播放、佇列、搜尋、排序或 Performance tool。堆疊與位置模型是純邏輯（`navigationHistoryStack.js`、`navigationLocation.js`）；還原走 `useAppView.restoreLocation()`，不增加 root-entry revision。Settings 的返回優先沿歷史回到前一筆，無法對應時退回 `returnFromSettings()`。
 Utility page 是 registered v2 surface，只擁有返回、頁名、焦點與 local overlay host；
 `SettingsView` 繼續擁有內容 lifecycle 與唯一的 body Scroll Region。雙欄與 Separation select 的
 特殊 geometry由各自 component-local custom property 擁有，不回填 core token graph。

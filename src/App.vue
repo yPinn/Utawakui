@@ -32,6 +32,7 @@ import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
+import { useNavigationHistory } from './composables/useNavigationHistory.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
@@ -199,13 +200,15 @@ const {
   openSettings,
   returnFromSettings,
 } = useAppView();
+// Starts recording navigation before any destination change (ADR 0025).
+const navigationHistory = useNavigationHistory();
 const settingsBackLabel = computed(() => {
   const label = appDestinationSettingsLabel(returnView.value);
   return label ? `返回${label}` : '返回先前頁面';
 });
 
 function leaveSettings() {
-  returnFromSettings();
+  if (!navigationHistory.leaveSettings()) returnFromSettings();
   nextTick(() => {
     document.querySelector('[data-app-settings-trigger]')?.focus?.();
   });

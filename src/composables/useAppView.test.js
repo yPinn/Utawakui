@@ -90,4 +90,55 @@ describe('useAppView', () => {
     expect(appView.performanceTool.value).toBe('session');
     expect(appView.rootEntryRevision.value).toBe(initialRootEntryRevision + 2);
   });
+
+  describe('restoreLocation', () => {
+    it('restores the destination and Library workspace without resetting the root', () => {
+      const appView = useAppView();
+      appView.setActiveView('display');
+      const revision = appView.rootEntryRevision.value;
+
+      appView.restoreLocation({
+        view: 'library',
+        workspace: 'lyrics-authoring',
+        returnView: null,
+      });
+
+      expect(appView.activeView.value).toBe('library');
+      expect(appView.libraryWorkspace.value).toBe('lyrics-authoring');
+      expect(appView.returnView.value).toBe('library');
+      expect(appView.rootEntryRevision.value).toBe(revision);
+    });
+
+    it('keeps the Performance tool when restoring Performance', () => {
+      const appView = useAppView();
+      appView.openLiveLyrics();
+      appView.setActiveView('display');
+
+      appView.restoreLocation({
+        view: 'performance',
+        workspace: null,
+        returnView: null,
+      });
+
+      expect(appView.activeView.value).toBe('performance');
+      expect(appView.performanceTool.value).toBe('live-lyrics');
+      expect(appView.returnView.value).toBe('performance');
+    });
+
+    it('restores Settings together with the view it returns to', () => {
+      const appView = useAppView();
+
+      appView.restoreLocation({
+        view: 'settings',
+        workspace: null,
+        returnView: 'display',
+      });
+
+      expect(appView.isSettingsView.value).toBe(true);
+      expect(appView.returnView.value).toBe('display');
+
+      appView.returnFromSettings();
+      expect(appView.activeView.value).toBe('display');
+    });
+  });
 });

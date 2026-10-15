@@ -34,6 +34,18 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('v-model:active-view="activeView"');
   });
 
+  it('starts navigation history and leaves Settings through it', () => {
+    expect(source).toContain(
+      "import { useNavigationHistory } from './composables/useNavigationHistory.js';",
+    );
+    expect(source).toContain(
+      'const navigationHistory = useNavigationHistory();',
+    );
+    expect(source).toMatch(
+      /function leaveSettings\(\)\s*\{\s*if \(!navigationHistory\.leaveSettings\(\)\) returnFromSettings\(\);/u,
+    );
+  });
+
   it('renders Settings in a mutually exclusive shell utility page', () => {
     expect(source).toContain(
       "import AppUtilityPage from './components/layout/AppUtilityPage.vue';",
