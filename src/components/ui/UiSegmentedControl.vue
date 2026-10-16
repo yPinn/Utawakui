@@ -19,7 +19,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'reselect']);
 const groupRef = useTemplateRef('group');
 const optionRefs = useTemplateRef('options');
 
@@ -36,10 +36,10 @@ const focusId = computed(() =>
     : enabledItems.value[0]?.id,
 );
 
-function select(item) {
-  if (!itemDisabled(item) && !Object.is(item.id, props.modelValue)) {
-    emit('update:modelValue', item.id);
-  }
+function select(item, allowReselect = false) {
+  if (itemDisabled(item)) return;
+  if (!Object.is(item.id, props.modelValue)) emit('update:modelValue', item.id);
+  else if (allowReselect) emit('reselect', item.id);
 }
 
 function resolvedDirection() {
@@ -133,7 +133,7 @@ function moveFocus(item, event) {
         :aria-disabled="itemDisabled(item) || undefined"
         :disabled="itemDisabled(item)"
         :tabindex="Object.is(item.id, focusId) ? 0 : -1"
-        @click="select(item)"
+        @click="select(item, true)"
         @keydown="moveFocus(item, $event)"
       >
         <slot name="label" :item="item">{{ item.label }}</slot>

@@ -429,6 +429,35 @@ describe('UiIconButton tooltip composition', () => {
 });
 
 describe('UiPopover', () => {
+  it.each([true, false])(
+    'focuses the first control only when focusOnOpen is %s',
+    async (focusOnOpen) => {
+      const first = hostNode('button');
+      mount(
+        UiPopover,
+        { open: true, ariaLabel: '歌詞顯示設定', focusOnOpen },
+        {
+          trigger: ({ triggerProps }) => h('button', triggerProps, '顯示'),
+          default: () =>
+            h(
+              'button',
+              {
+                onVnodeMounted: ({ el }) => {
+                  let panel = el.parent;
+                  while (panel && panel.props.role !== 'dialog')
+                    panel = panel.parent;
+                  panel.querySelector = vi.fn(() => first);
+                },
+              },
+              '第一個設定',
+            ),
+        },
+      );
+      await nextTick();
+      await nextTick();
+      expect(first.focus).toHaveBeenCalledTimes(focusOnOpen ? 1 : 0);
+    },
+  );
   it('accepts bounded panel geometry and exposes one labelled vertical scroll body', async () => {
     const panelStyle = {
       minInlineSize: '20rem',

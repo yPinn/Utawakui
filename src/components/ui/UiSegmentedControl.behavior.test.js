@@ -194,6 +194,30 @@ describe('UiSegmentedControl', () => {
     endMount.app.unmount();
   });
 
+  it('allows explicit reactivation without making focus navigation retry work', async () => {
+    const reselect = vi.fn();
+    const update = vi.fn();
+    const mounted = mount(UiSegmentedControl, {
+      items: ITEMS,
+      modelValue: 'library',
+      ariaLabel: '工作區模式',
+      onReselect: reselect,
+      'onUpdate:modelValue': update,
+    });
+    const options = radios(mounted.root);
+    trigger(options[0], 'onClick');
+    expect(reselect).toHaveBeenCalledExactlyOnceWith('library');
+    expect(update).not.toHaveBeenCalled();
+    trigger(options[0], 'onKeydown', {
+      key: 'Home',
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    });
+    await nextTick();
+    expect(reselect).toHaveBeenCalledTimes(1);
+    mounted.app.unmount();
+  });
+
   it('uses shared control, state, focus, motion, and selection tokens', () => {
     const source = readFileSync(
       new URL('./UiSegmentedControl.vue', import.meta.url),

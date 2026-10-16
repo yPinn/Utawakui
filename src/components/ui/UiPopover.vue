@@ -20,6 +20,7 @@ const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  focusOnOpen: { type: Boolean, default: false },
   ariaLabel: { type: String, required: true },
   placement: {
     type: String,
@@ -126,15 +127,26 @@ function handleScroll(event) {
   requestClose('external-scroll');
 }
 
+function openPanel() {
+  if (!props.open) return;
+  updatePosition();
+  if (!props.focusOnOpen) return;
+  const first = panelRef.value?.querySelector?.(
+    'button:not([disabled]), select:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+  );
+  (first ?? panelRef.value)?.focus?.({ preventScroll: true });
+}
+
 watch(
   () => props.open,
   (open) => {
-    if (open) nextTick(updatePosition);
+    if (open) nextTick(openPanel);
   },
-  { immediate: true },
+  { flush: 'post' },
 );
 
 onMounted(() => {
+  if (props.open) nextTick(openPanel);
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   document.addEventListener('pointerdown', handleOutsidePointer, true);
   window.addEventListener('keydown', handleKeydown, true);
@@ -166,6 +178,7 @@ onBeforeUnmount(() => {
       :role="props.role"
       :aria-label="props.ariaLabel"
       :aria-modal="props.role === 'dialog' ? 'false' : undefined"
+      :tabindex="focusOnOpen ? -1 : undefined"
       :style="[props.panelStyle, position]"
     >
       <header v-if="$slots.header" class="ui-popover__header">

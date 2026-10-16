@@ -31,6 +31,7 @@ const props = defineProps({
   // items, so pressed semantics must never be inferred from `active` alone.
   selectionAction: { type: Boolean, default: false },
   actionDescription: { type: String, default: undefined },
+  actionKeyboardShortcuts: { type: String, default: undefined },
   // Lets a caller show its own duration inside #trail (e.g. after other
   // trailing badges) instead of the default duration-then-trail order.
   hideDuration: { type: Boolean, default: false },
@@ -68,6 +69,7 @@ const emit = defineEmits([
   'rowClick',
   'rowDblclick',
   'activate',
+  'actionKeydown',
 ]);
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
@@ -92,6 +94,7 @@ function activateFromRowContent(event) {
 }
 
 function handleActionKeydown(event) {
+  emit('actionKeydown', event);
   if (event.key !== 'Enter' || !props.activateOnEnter) return;
   event.preventDefault();
   emit('activate', event);
@@ -117,6 +120,7 @@ function handleActionKeydown(event) {
       :aria-label="resolvedActionLabel"
       :aria-description="selectionAction ? actionDescription : undefined"
       :aria-pressed="selectionAction ? active : undefined"
+      :aria-keyshortcuts="actionKeyboardShortcuts"
       @click="emit('rowClick', $event)"
       @dblclick="emit('rowDblclick', $event)"
       @keydown="handleActionKeydown"

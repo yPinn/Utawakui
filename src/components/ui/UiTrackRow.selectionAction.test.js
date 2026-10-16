@@ -31,6 +31,7 @@ describe('UiTrackRow selection action semantics', () => {
             interactive: true,
             selectionAction: true,
             actionDescription: '單擊選取；雙擊播放',
+            actionKeyboardShortcuts: 'Alt+ArrowUp Alt+ArrowDown',
           }),
       }),
     );
@@ -47,6 +48,7 @@ describe('UiTrackRow selection action semantics', () => {
 
     expect(selected).toContain('aria-pressed="true"');
     expect(selected).toContain('aria-description="單擊選取；雙擊播放"');
+    expect(selected).toContain('aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"');
     expect(command).not.toContain('aria-pressed');
     expect(command).not.toContain('aria-description');
   });
