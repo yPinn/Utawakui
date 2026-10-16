@@ -26,7 +26,12 @@ function trackedAppSources() {
 
 describe('coverage policy', () => {
   it('classifies every tracked application source as measured or deferred', () => {
-    const unclassified = trackedAppSources().filter(
+    const tracked = trackedAppSources();
+    expect(
+      tracked.length,
+      'coverage inventory must not be empty',
+    ).toBeGreaterThan(0);
+    const unclassified = tracked.filter(
       (file) => classifyAppSource(file).status === 'unclassified',
     );
 
@@ -42,6 +47,7 @@ describe('coverage policy', () => {
       'electron/performerPreload.js',
       'overlay/now-playing/now-playing.mjs',
       'shared/outputContract.js',
+      'src/components/bgm/bgmPresentation.js',
       'src/components/demo/trackThumbFallback.js',
       'src/components/separation/separationQueuePresentation.js',
       'src/components/track/trackCollectionLayout.js',
