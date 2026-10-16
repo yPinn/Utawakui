@@ -76,6 +76,7 @@ const modalStackIndex = shallowRef(0);
 const modalStackEntry = {
   identity: modalIdentity,
   stackIndex: modalStackIndex,
+  contains: (element) => dialogRef.value?.contains(element),
 };
 
 // Teleport moves the element elsewhere in the DOM, not out of this
@@ -83,6 +84,7 @@ const modalStackEntry = {
 const dialogRef = useTemplateRef('dialog');
 let previouslyFocused = null;
 let pendingFocusRestore = null;
+let focusRevision = 0;
 
 function registerOpenModal() {
   const existingIndex = openModalStack.findIndex(
@@ -126,12 +128,26 @@ function handleBackdropClick(event) {
 function restorePendingFocus() {
   const focusTarget = pendingFocusRestore;
   pendingFocusRestore = null;
+  const topModal = openModalStack.at(-1);
+  if (topModal && !topModal.contains(focusTarget)) return;
   if (focusTarget?.isConnected) focusTarget.focus();
 }
 
 function handleAfterLeave() {
   restorePendingFocus();
   emit('afterLeave');
+}
+
+function isAvailableFocusTarget(element) {
+  return (
+    !element.disabled &&
+    !element.hidden &&
+    element.type !== 'hidden' &&
+    (element.tabIndex ?? 0) >= 0 &&
+    !element.matches?.(':disabled') &&
+    !element.closest?.('[inert], [aria-hidden="true"]') &&
+    (!element.getClientRects || element.getClientRects().length > 0)
+  );
 }
 
 function getFocusableElements() {
@@ -141,23 +157,28 @@ function getFocusableElements() {
     dialog.querySelectorAll(
       'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
-  );
+  ).filter(isAvailableFocusTarget);
 }
 
 function trapTabFocus(event) {
   const focusable = getFocusableElements();
-  if (focusable.length === 0) return;
+  if (focusable.length === 0) {
+    event.preventDefault();
+    dialogRef.value?.focus();
+    return;
+  }
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
   const active = document.activeElement;
   const isInsideDialog = dialogRef.value?.contains(active);
+  const isTabStop = focusable.includes(active);
 
   if (event.shiftKey) {
-    if (!isInsideDialog || active === first) {
+    if (!isInsideDialog || !isTabStop || active === first) {
       event.preventDefault();
       last.focus();
     }
-  } else if (!isInsideDialog || active === last) {
+  } else if (!isInsideDialog || !isTabStop || active === last) {
     event.preventDefault();
     first.focus();
   }
@@ -177,21 +198,30 @@ function onWindowKeydown(event) {
 // deliberately excluded: a fallback selector would match the header's close
 // button (first in DOM order), and an Enter right after opening would close the
 // modal and discard the draft, the Enter-driven fragility this modal replaces.
+function openModal() {
+  registerOpenModal();
+  pendingFocusRestore = null;
+  previouslyFocused = document.activeElement;
+  const revision = ++focusRevision;
+  window.requestAnimationFrame(() => {
+    if (!props.open || !isTopModal() || revision !== focusRevision) return;
+    const dialog = dialogRef.value;
+    const field = Array.from(
+      dialog?.querySelectorAll('input, textarea, select') ?? [],
+    ).find(isAvailableFocusTarget);
+    (field || dialog)?.focus();
+  });
+}
+
 watch(
   () => props.open,
   (isOpen) => {
     if (typeof window === 'undefined') return;
     if (isOpen) {
-      registerOpenModal();
-      pendingFocusRestore = null;
-      previouslyFocused = document.activeElement;
-      window.requestAnimationFrame(() => {
-        const dialog = dialogRef.value;
-        const field = dialog?.querySelector('input, textarea, select');
-        (field || dialog)?.focus();
-      });
+      openModal();
       return;
     }
+    focusRevision++;
     unregisterOpenModal();
     pendingFocusRestore = previouslyFocused;
     previouslyFocused = null;
@@ -200,14 +230,16 @@ watch(
 
 onMounted(() => {
   if (typeof window === 'undefined') return;
-  if (props.open) registerOpenModal();
+  if (props.open) openModal();
   window.addEventListener('keydown', onWindowKeydown);
 });
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
+  focusRevision++;
   unregisterOpenModal();
   window.removeEventListener('keydown', onWindowKeydown);
+  pendingFocusRestore ??= previouslyFocused;
   restorePendingFocus();
 });
 </script>

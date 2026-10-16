@@ -144,6 +144,138 @@ describe('UiModal behavior', () => {
     vi.restoreAllMocks();
   });
 
+  it('captures focus when mounted open and restores it on unmount', async () => {
+    const app = renderer.createApp({
+      setup: () => () => h(UiModal, { open: true, title: '已開啟的確認' }),
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(hostNode('root'));
+    await nextTick();
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+    animationFrames.splice(0).forEach((callback) => callback());
+    app.unmount();
+    expect(dialog.focus).toHaveBeenCalledOnce();
+    expect(focusOrigin.focus).toHaveBeenCalledOnce();
+  });
+
+  it('ignores an earlier open cycle when the modal reopens before its focus frame', async () => {
+    const open = ref(false);
+    const app = renderer.createApp({
+      setup: () => () => h(UiModal, { open: open.value, title: '確認操作' }),
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(hostNode('root'));
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    open.value = false;
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+    animationFrames.splice(0).forEach((callback) => callback());
+    app.unmount();
+    expect(dialog.focus).toHaveBeenCalledOnce();
+  });
+
+  it('skips hidden and disabled fields when choosing initial focus', async () => {
+    const open = ref(false);
+    const app = renderer.createApp({
+      setup: () => () => h(UiModal, { open: open.value, title: '編輯內容' }),
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(hostNode('root'));
+    open.value = true;
+    await nextTick();
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+    const disabled = { disabled: true, focus: vi.fn() };
+    const hidden = { getClientRects: () => [], focus: vi.fn() };
+    const field = { focus: vi.fn() };
+    dialog.querySelector.mockReturnValue(disabled);
+    dialog.querySelectorAll.mockReturnValue([disabled, hidden, field]);
+    animationFrames.splice(0).forEach((callback) => callback());
+    app.unmount();
+    expect(disabled.focus).not.toHaveBeenCalled();
+    expect(hidden.focus).not.toHaveBeenCalled();
+    expect(field.focus).toHaveBeenCalledOnce();
+  });
+
+  it('does not restore page focus when a lower modal unmounts beneath a dialog', async () => {
+    const lowerMounted = ref(true);
+    const app = renderer.createApp({
+      setup: () => () => [
+        lowerMounted.value ? h(UiModal, { open: true, title: '底層' }) : null,
+        h(UiModal, { open: true, title: '頂層' }),
+      ],
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(hostNode('root'));
+    await nextTick();
+    animationFrames.splice(0).forEach((callback) => callback());
+    lowerMounted.value = false;
+    await nextTick();
+    const callsWhileTopIsOpen = focusOrigin.focus.mock.calls.length;
+    app.unmount();
+    expect(callsWhileTopIsOpen).toBe(0);
+  });
+
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])(
+    'wraps Tab (shift=%s, dialog focused=%s) past unavailable controls',
+    async (shiftKey, dialogFocused) => {
+      const app = renderer.createApp({
+        setup: () => () => h(UiModal, { open: true, title: '確認操作' }),
+      });
+      app.provide(ssrContextKey, { modules: new Set() });
+      app.provide(UI_OVERLAY_HOST_KEY, body);
+      app.mount(hostNode('root'));
+      await nextTick();
+      const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+      const disabled = { disabled: true, focus: vi.fn() };
+      const hidden = { getClientRects: () => [], focus: vi.fn() };
+      const first = { focus: vi.fn() };
+      const last = { focus: vi.fn() };
+      dialog.querySelectorAll.mockReturnValue([disabled, first, last, hidden]);
+      if (dialogFocused) document.activeElement = dialog;
+      dialog.contains = vi.fn(() => dialogFocused);
+      const event = { key: 'Tab', shiftKey, preventDefault: vi.fn() };
+      listeners.get('keydown')[0](event);
+      app.unmount();
+      expect((shiftKey ? last : first).focus).toHaveBeenCalledOnce();
+      expect(disabled.focus).not.toHaveBeenCalled();
+      expect(hidden.focus).not.toHaveBeenCalled();
+      expect(event.preventDefault).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each([false, true])(
+    'contains Tab while every control is busy (shift=%s)',
+    async (shiftKey) => {
+      const app = renderer.createApp({
+        setup: () => () =>
+          h(UiModal, { open: true, title: '儲存中', closeDisabled: true }),
+      });
+      app.provide(ssrContextKey, { modules: new Set() });
+      app.provide(UI_OVERLAY_HOST_KEY, body);
+      app.mount(hostNode('root'));
+      await nextTick();
+      const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+      const event = { key: 'Tab', shiftKey, preventDefault: vi.fn() };
+      listeners.get('keydown')[0](event);
+      app.unmount();
+      expect(event.preventDefault).toHaveBeenCalledOnce();
+      expect(dialog.focus).toHaveBeenCalledOnce();
+    },
+  );
+
   it('closes on Escape and restores focus to the opening control', async () => {
     const open = ref(false);
     const close = vi.fn(() => {
