@@ -209,6 +209,27 @@ describe('outputRuntime controller', () => {
     }
   });
 
+  it('forwards only the explicit dev frame origin to the server', async () => {
+    for (const devFrameOrigin of [undefined, 'http://localhost:5173']) {
+      const { factory } = createServerFactory();
+      const runtime = createOutputRuntime({
+        serverFactory: factory,
+        getConfig: () => ({
+          outputRuntime: { autoStart: true, port: 8700 },
+        }),
+        requireFeatureGate: vi.fn(),
+        devFrameOrigin,
+      });
+
+      await runtime.startConfigured();
+
+      expect(factory).toHaveBeenCalledWith(
+        expect.objectContaining({ devFrameOrigin: devFrameOrigin ?? null }),
+      );
+      await runtime.stop();
+    }
+  });
+
   it('reports Output-listening and source-synchronized milestones without payload data', async () => {
     const { factory } = createServerFactory();
     const onMilestone = vi.fn();

@@ -6,6 +6,7 @@ const vue = require('@vitejs/plugin-vue');
 const path = require('node:path');
 const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
 const { coveragePolicy } = require('./scripts/coveragePolicy.js');
+const devServerValues = require('./shared/devServerValues.json');
 
 module.exports = defineConfig({
   plugins: [vue(), createOverlayReloadPlugin(__dirname)],
@@ -15,7 +16,7 @@ module.exports = defineConfig({
   // Required for Electron loadFile(); file:// cannot resolve root paths.
   base: './',
   server: {
-    port: 5173,
+    port: devServerValues.port,
     strictPort: true,
     watch: {
       ignored: [

@@ -1,17 +1,16 @@
 'use strict';
 
-const packageMetadata = require('../../../package.json');
+const { PROJECT_URL, appUserAgent } = require('../userAgent.js');
 const { normalizeLrclibRecord } = require('./record.js');
 const { sharedLrclibRequestScheduler } = require('./scheduler.js');
 
 const LRCLIB_API_BASE_URL = 'https://lrclib.net';
-const LRCLIB_PROJECT_URL = 'https://github.com/yPinn/Utawakui';
 const DEFAULT_REQUEST_TIMEOUT_MS = 8000;
 const DEFAULT_MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 const DEFAULT_MAX_RETRY_AFTER_MS = 60_000;
 
 function buildLrclibUserAgent() {
-  return `Utawakui/${packageMetadata.version} (${LRCLIB_PROJECT_URL})`;
+  return appUserAgent(PROJECT_URL);
 }
 
 function buildUrl(endpoint, params, baseUrl) {

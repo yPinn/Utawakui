@@ -2,14 +2,13 @@
 
 const { MBID_RE } = require('./identifiers');
 const { hasControlCharacters } = require('../textGuards');
-const packageMetadata = require('../../../package.json');
+const { PROJECT_URL, appUserAgent } = require('../userAgent.js');
 const { readBoundedText } = require('../lrclib/client.js');
 const {
   createProviderRequestScheduler,
 } = require('../providerRequestScheduler.js');
 
 const MUSICBRAINZ_API_BASE_URL = 'https://musicbrainz.org';
-const MUSICBRAINZ_PROJECT_URL = 'https://github.com/yPinn/Utawakui';
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_CACHE_TTL_MS = 15 * 60 * 1000;
@@ -25,7 +24,7 @@ const sharedMusicBrainzScheduler = createProviderRequestScheduler({
 });
 
 function buildMusicBrainzUserAgent() {
-  return `Utawakui/${packageMetadata.version} (${MUSICBRAINZ_PROJECT_URL})`;
+  return appUserAgent(PROJECT_URL);
 }
 
 function validText(value, required = false) {

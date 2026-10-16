@@ -1,4 +1,5 @@
 {
+  "releaseRepository": "yPinn/Utawakui-Releases",
   "runtimeEnabled": true,
   "signedManifestEnabled": false,
   "startupCheckDelayMs": 15000,

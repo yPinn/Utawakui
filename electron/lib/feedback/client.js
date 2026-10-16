@@ -1,6 +1,6 @@
 'use strict';
 
-const packageMetadata = require('../../../package.json');
+const { appUserAgent } = require('../userAgent.js');
 const {
   FEEDBACK_CLIENT_MARKER,
   FEEDBACK_CLIENT_MARKER_HEADER,
@@ -14,7 +14,7 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 64 * 1024;
 
 function buildFeedbackUserAgent() {
-  return `Utawakui/${packageMetadata.version} (feedback)`;
+  return appUserAgent('feedback');
 }
 
 function classifyTransportFailure(error) {

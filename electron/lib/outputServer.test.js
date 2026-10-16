@@ -374,6 +374,9 @@ describe('outputServer', () => {
     expect(workbench.headers.get('content-security-policy')).toContain(
       "frame-src 'self'",
     );
+    expect(workbench.headers.get('content-security-policy')).not.toContain(
+      'localhost',
+    );
     const workbenchDocument = await workbench.text();
     expect(workbenchDocument).toContain('href="/overlay/shared/fallback.css"');
     expect(workbenchDocument).toContain('src="/overlay/lyrics"');

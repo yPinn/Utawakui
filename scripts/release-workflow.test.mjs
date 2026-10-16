@@ -89,6 +89,9 @@ describe('release workflow', () => {
       repo: 'Utawakui-Releases',
       releaseType: 'release',
     });
+    expect(updateValues.releaseRepository).toBe(
+      `${builder.publish.owner}/${builder.publish.repo}`,
+    );
     expect(builder.win.signExecutable).toBe(false);
     expect(builder.win.verifyUpdateCodeSignature).toBe(false);
   });

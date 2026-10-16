@@ -20,18 +20,21 @@ const ARTWORK_CACHE_LIMIT = 128;
 const DEFAULT_OVERLAY_ROOT = path.resolve(__dirname, '../../../overlay');
 const DEFAULT_SHARED_ROOT = path.resolve(__dirname, '../../../shared');
 const GSAP_BROWSER_ASSET = require.resolve('gsap/dist/gsap.min.js');
-const OVERLAY_CONTENT_SECURITY_POLICY = [
-  "default-src 'none'",
-  "style-src 'self'",
-  "script-src 'self'",
-  "connect-src 'self' ws://127.0.0.1:*",
-  "img-src 'self' data:",
-  "font-src 'self' data:",
-  "frame-src 'self'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "frame-ancestors 'self' file: http://localhost:5173",
-].join('; ');
+// The dev renderer origin may frame previews only when main runs with --dev.
+function overlayContentSecurityPolicy(devFrameOrigin = null) {
+  return [
+    "default-src 'none'",
+    "style-src 'self'",
+    "script-src 'self'",
+    "connect-src 'self' ws://127.0.0.1:*",
+    "img-src 'self' data:",
+    "font-src 'self' data:",
+    "frame-src 'self'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    ["frame-ancestors 'self' file:", devFrameOrigin].filter(Boolean).join(' '),
+  ].join('; ');
+}
 const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics': ['lyrics', 'index.html'],
   '/overlay/lyrics/': ['lyrics', 'index.html'],
@@ -221,20 +224,26 @@ function parseOverlayTraceMilestone(value) {
   return { name: value.name, atUnixMs: value.atUnixMs };
 }
 
-function cacheHeaders(contentType, etag) {
+function cacheHeaders(contentType, etag, contentSecurityPolicy) {
   return {
     'Content-Type': contentType,
     'Cache-Control': 'no-cache',
     ETag: etag,
-    'Content-Security-Policy': OVERLAY_CONTENT_SECURITY_POLICY,
+    'Content-Security-Policy': contentSecurityPolicy,
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
     'Cross-Origin-Resource-Policy': 'same-origin',
   };
 }
 
-function writeStatic(request, response, asset, contentType) {
-  const headers = cacheHeaders(contentType, asset.etag);
+function writeStatic(
+  request,
+  response,
+  asset,
+  contentType,
+  contentSecurityPolicy,
+) {
+  const headers = cacheHeaders(contentType, asset.etag, contentSecurityPolicy);
   if (request.headers['if-none-match'] === asset.etag) {
     response.writeHead(304, headers);
     response.end();
@@ -297,6 +306,9 @@ function createOutputHttpHandler(options = {}) {
   const sharedRoot = options.sharedRoot ?? DEFAULT_SHARED_ROOT;
   const resolveArtworkAsset = options.resolveArtworkAsset ?? (() => null);
   const logger = options.logger ?? console;
+  const contentSecurityPolicy = overlayContentSecurityPolicy(
+    options.devFrameOrigin ?? null,
+  );
   const staticAssetCache = new Map();
   const artworkAssetCache = new Map();
 
@@ -474,7 +486,13 @@ function createOutputHttpHandler(options = {}) {
         const contentType =
           OVERLAY_MIME_TYPES[path.extname(filePath)] ??
           'application/octet-stream';
-        writeStatic(request, response, asset, contentType);
+        writeStatic(
+          request,
+          response,
+          asset,
+          contentType,
+          contentSecurityPolicy,
+        );
       } catch (error) {
         if (error.code !== 'ENOENT') {
           logger.error?.('[output] Failed to read overlay asset', error);
@@ -490,5 +508,6 @@ function createOutputHttpHandler(options = {}) {
 
 module.exports = {
   createOutputHttpHandler,
+  overlayContentSecurityPolicy,
   writeJson,
 };

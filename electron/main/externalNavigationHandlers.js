@@ -2,6 +2,7 @@
 
 const { createAppError } = require('../lib/appError');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const { releaseRepository } = require('../../shared/appUpdateValues.json');
 
 const EXTERNAL_TARGETS = Object.freeze({
   'vb-cable': 'https://vb-audio.com/Cable/',
@@ -9,7 +10,7 @@ const EXTERNAL_TARGETS = Object.freeze({
   // The public update feed identity (see electron-builder.yml's
   // provider/owner/repo and ADR 0007) — the release list page, not a
   // deep link to one version, so no version-string validation is needed.
-  'release-notes': 'https://github.com/yPinn/Utawakui-Releases/releases',
+  'release-notes': `https://github.com/${releaseRepository}/releases`,
   // Author-run Discord server for announcements and user feedback
   // discussion — a fixed vendor invite link, not a per-user or expiring one.
   'community-discord': 'https://discord.gg/yJKddEtpNt',

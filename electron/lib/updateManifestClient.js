@@ -6,14 +6,16 @@
 // classified error reasons, redirect: 'error') for the same reason: a
 // main-process network call to a fixed, non-renderer-suppliable URL.
 
-const packageMetadata = require('../../package.json');
+const { appUserAgent } = require('./userAgent.js');
 // Generic streamed-response reader with no lrclib-specific behavior — see
 // feedback/client.js's identical reuse of this helper.
 const { readBoundedText } = require('./lrclib/client.js');
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 16 * 1024;
-const RELEASE_REPOSITORY = 'yPinn/Utawakui-Releases';
+const {
+  releaseRepository: RELEASE_REPOSITORY,
+} = require('../../shared/appUpdateValues.json');
 
 // version comes only from electron-updater's own reported info.version — see
 // appUpdateService.js. Never accept a renderer- or caller-suppliable URL, per
@@ -23,7 +25,7 @@ function manifestUrlForVersion(version) {
 }
 
 function buildUserAgent() {
-  return `Utawakui/${packageMetadata.version} (update-manifest)`;
+  return appUserAgent('update-manifest');
 }
 
 function classifyTransportFailure(error) {

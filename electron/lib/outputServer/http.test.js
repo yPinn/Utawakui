@@ -6,7 +6,20 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import outputHttpModule from './http.js';
 
-const { createOutputHttpHandler } = outputHttpModule;
+const { createOutputHttpHandler, overlayContentSecurityPolicy } =
+  outputHttpModule;
+
+describe('overlayContentSecurityPolicy', () => {
+  it('limits framing to the app shell unless a dev origin is supplied', () => {
+    expect(overlayContentSecurityPolicy()).toMatch(
+      /frame-ancestors 'self' file:$/u,
+    );
+    expect(overlayContentSecurityPolicy()).not.toContain('localhost');
+    expect(overlayContentSecurityPolicy('http://localhost:5173')).toMatch(
+      /frame-ancestors 'self' file: http:\/\/localhost:5173$/u,
+    );
+  });
+});
 const servers = new Set();
 const temporaryRoots = new Set();
 

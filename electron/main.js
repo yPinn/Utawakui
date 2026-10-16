@@ -81,6 +81,7 @@ const {
   registerHeavyJobSchedulerLifecycle,
 } = require('./main/heavyJobSchedulerLifecycle');
 const { createDiagnosticsService } = require('./lib/diagnostics');
+const { DEV_SERVER_ORIGIN, devServerUrl } = require('./lib/devServer');
 const {
   createStartupBaselineMetadata,
   createStartupTrace,
@@ -579,6 +580,7 @@ if (!gotSingleInstanceLock) {
           trackId,
         ),
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+      devFrameOrigin: windowState.isDev ? DEV_SERVER_ORIGIN : null,
       onMilestone: recordMainMilestone,
       onProjectionChange: sessionHistoryService.handleProjectionChange,
       recordOverlayMilestone: startupTrace.enabled
@@ -777,7 +779,7 @@ if (!gotSingleInstanceLock) {
     performerWindowManager = createPerformerWindowManager({
       BrowserWindow,
       isDev: windowState.isDev,
-      devUrl: 'http://localhost:5173/performer-view.html',
+      devUrl: devServerUrl('performer-view.html'),
       pagePath: path.join(__dirname, '..', 'dist', 'performer-view.html'),
       preloadPath: path.join(__dirname, 'performerPreload.js'),
       getPersistedBounds: () => configState.getConfig().performerWindowBounds,

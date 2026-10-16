@@ -40,6 +40,7 @@ function createOutputRuntime({
   requireFeatureGate = () => undefined,
   resolveArtworkAsset = () => null,
   featureId = 'public-output-flow',
+  devFrameOrigin = null,
   onMilestone = () => undefined,
   // Fires on every projection update, not just track changes — see
   // sessionHistoryService.js, the only current consumer, for how it derives
@@ -121,6 +122,7 @@ function createOutputRuntime({
       port,
       overlaySlots,
       resolveArtworkAsset,
+      devFrameOrigin,
       initialProjection: projectionHub.getProjection(),
       recordStartupMilestone: recordOverlayMilestone,
       logger,

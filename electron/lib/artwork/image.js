@@ -1,6 +1,6 @@
 'use strict';
 
-const packageMetadata = require('../../../package.json');
+const { appUserAgent } = require('../userAgent.js');
 const { isAllowedCoverArtUrl } = require('../coverArtArchive/client.js');
 
 const DEFAULT_IMAGE_TIMEOUT_MS = 15_000;
@@ -208,7 +208,7 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
             allowedMimeTypes?.size > 0
               ? [...allowedMimeTypes].join(', ')
               : 'image/jpeg, image/png, image/webp',
-          'User-Agent': `Utawakui/${packageMetadata.version}`,
+          'User-Agent': appUserAgent(),
         },
         signal,
       });

@@ -16,6 +16,7 @@ const {
   projectSeparationTaskbarProgress,
 } = require('./separationTaskbarProgress');
 const { readDeveloperOptions } = require('./runtimeEnvironment');
+const { DEV_SERVER_ORIGIN } = require('../lib/devServer');
 const { hardenWebContentsNavigation } = require('./webContentsSecurity');
 const { forwardHistoryAppCommands } = require('./appCommands');
 
@@ -299,7 +300,7 @@ function createMainWindow(
   }
 
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL(DEV_SERVER_ORIGIN);
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', '..', 'dist', 'index.html'));
   }

@@ -126,6 +126,7 @@ function createOutputServer(options = {}) {
   const handleRequest = createOutputHttpHandler({
     getSnapshot,
     getClientCount: () => webSocketServer?.clients.size ?? 0,
+    devFrameOrigin: options.devFrameOrigin,
     logger,
     overlayRoot: options.overlayRoot,
     recordStartupMilestone: options.recordStartupMilestone,

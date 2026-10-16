@@ -1,7 +1,7 @@
 'use strict';
 
 const { MBID_RE } = require('../musicbrainz/identifiers');
-const packageMetadata = require('../../../package.json');
+const { appUserAgent } = require('../userAgent.js');
 const { readBoundedText } = require('../lrclib/client.js');
 
 const COVER_ART_ARCHIVE_BASE_URL = 'https://coverartarchive.org';
@@ -186,7 +186,7 @@ function createCoverArtArchiveClient(options = {}) {
               redirect: 'manual',
               headers: {
                 Accept: 'application/json',
-                'User-Agent': `Utawakui/${packageMetadata.version}`,
+                'User-Agent': appUserAgent(),
               },
               signal,
             }),

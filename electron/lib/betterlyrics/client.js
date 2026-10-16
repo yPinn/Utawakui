@@ -2,13 +2,13 @@
 
 const crypto = require('crypto');
 const { setTimeout: sleepFor } = require('node:timers/promises');
-const packageMetadata = require('../../../package.json');
+const { appUserAgent } = require('../userAgent.js');
 const { DEFAULT_AMLL_TTML_RESPONSE_BYTES } = require('../amll/ttml.js');
 
 const BETTER_LYRICS_API_BASE_URL = 'https://lyrics-api.boidu.dev';
 const MAX_QUERY_CHARS = 256;
 const MAX_DURATION_SECONDS = 24 * 60 * 60;
-const USER_AGENT = `Utawakui/${packageMetadata.version} (lyrics-provider)`;
+const USER_AGENT = appUserAgent('lyrics-provider');
 const CACHE_STATUSES = new Set(['HIT', 'MISS', 'NEGATIVE_HIT', 'STALE']);
 
 function containsControlCharacter(value) {

@@ -1,6 +1,6 @@
 'use strict';
 
-const packageMetadata = require('../../../package.json');
+const { appUserAgent } = require('../userAgent.js');
 const { readBoundedText } = require('../lrclib/client.js');
 const { createLrclibRequestScheduler } = require('../lrclib/scheduler.js');
 
@@ -164,7 +164,7 @@ function createNeteaseClient(options = {}) {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
               Referer: 'https://music.163.com/',
-              'User-Agent': `Utawakui/${packageMetadata.version}`,
+              'User-Agent': appUserAgent(),
             },
             body: new URLSearchParams(fields),
             signal,
