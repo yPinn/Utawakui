@@ -265,6 +265,16 @@ describe('TrackTable shared row behavior', () => {
     app.unmount();
   });
 
+  it('projects the current title cue through the marquee component boundary', () => {
+    expect(rowSource).toMatch(
+      /<span class="library-track-row__title">\s*<UiMarqueeText\s+:text="entry\.track\.title"\s*\/>\s*<\/span>/u,
+    );
+    expect(rowSource).toMatch(
+      /\.library-track-row--current\s+\.library-track-row__title\s*\{[^}]*color:\s*var\(--ui-color-current\);/su,
+    );
+    expect(rowSource).not.toContain(':deep(');
+  });
+
   it('selects on click or Space and activates on double click or Enter', () => {
     const onSelectTrack = vi.fn();
     const onActivateTrack = vi.fn();

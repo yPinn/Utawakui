@@ -185,10 +185,9 @@ function handleActionKeydown(event) {
         size="var(--ui-track-row-thumb-size)"
       />
       <span class="library-track-row__copy" :lang="contentLang">
-        <UiMarqueeText
-          class="library-track-row__title"
-          :text="entry.track.title"
-        />
+        <span class="library-track-row__title">
+          <UiMarqueeText :text="entry.track.title" />
+        </span>
         <TrackArtistCredits
           v-if="entry.track.artist && profile.showArtist"
           class="library-track-row__subtitle"
