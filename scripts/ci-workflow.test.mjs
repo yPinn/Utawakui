@@ -118,6 +118,28 @@ describe('ordinary CI workflow', () => {
     expect(uploadStep?.with?.['retention-days']).toBe(7);
   });
 
+  it('restores the pinned Vitest module cache after npm ci and before tests', () => {
+    const steps = readWorkflow().jobs.build.steps;
+    const indexOf = (predicate) => steps.findIndex(predicate);
+    const cacheIndex = indexOf((step) =>
+      step.uses?.startsWith('actions/cache@'),
+    );
+    const cacheStep = steps[cacheIndex];
+
+    expect(cacheStep?.uses).toMatch(/^actions\/cache@[a-f0-9]{40}$/u);
+    expect(cacheStep?.with?.path).toBe(
+      'node_modules/.experimental-vitest-cache',
+    );
+    expect(cacheStep?.with?.key).toContain("hashFiles('package-lock.json')");
+    expect(cacheIndex).toBeGreaterThan(
+      indexOf((step) => step.run === 'npm ci'),
+    );
+    expect(cacheIndex).toBeLessThan(indexOf((step) => step.run === 'npm test'));
+    expect(cacheIndex).toBeLessThan(
+      indexOf((step) => step.run === 'npm run test:coverage'),
+    );
+  });
+
   it('lints the correct commit range for pushes and pull requests', () => {
     const qualityJob = readWorkflow().jobs.build;
     const serializedSteps = JSON.stringify(qualityJob.steps);

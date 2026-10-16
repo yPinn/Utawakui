@@ -58,6 +58,16 @@ jobs:
         if: steps.scope.outputs.quality == 'true'
         run: npm ci
 
+      # After npm ci, which clears node_modules; entries are content-keyed.
+      - name: Restore Vitest module cache
+        if: steps.scope.outputs.quality == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: node_modules/.experimental-vitest-cache
+          key: vitest-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            vitest-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
       - name: Commitlint push
         if: steps.scope.outputs.quality == 'true' && github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         run: npx --no -- commitlint --from "${{ github.event.before }}" --to "${{ github.sha }}" --verbose
