@@ -264,6 +264,7 @@ function registerFolderPageObjectHandlers({
         return addNote(directory, context.writePage, {
           title: intent.title,
           text: intent.text,
+          paper: intent.paper,
         });
       });
     },
@@ -281,6 +282,7 @@ function registerFolderPageObjectHandlers({
           {
             title: intent.title,
             text: intent.text,
+            paper: intent.paper,
           },
         ),
       );
@@ -298,7 +300,9 @@ function registerFolderPageObjectHandlers({
           intent.key,
           {
             label: intent.label,
+            captionTitle: intent.captionTitle,
             caption: intent.caption,
+            captionPaper: intent.captionPaper,
           },
         ),
       );

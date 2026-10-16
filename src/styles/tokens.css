@@ -343,17 +343,17 @@
   --ui-folder-artifact-sheet-inset-inline: var(--ui-space-7);
   --ui-folder-artifact-sheet-inset-block: var(--ui-space-5);
   --ui-folder-artifact-photo-width: 17rem;
-  /* Other print shapes keep about the same image area as the 4:3 width. */
-  --ui-folder-artifact-photo-width-portrait: 12.75rem;
-  --ui-folder-artifact-photo-width-square: 14.75rem;
-  --ui-folder-artifact-photo-width-wide: 19.5rem;
-  --ui-folder-artifact-photo-width-tall: 11rem;
   --ui-folder-artifact-stack-width: 20rem;
   --ui-folder-artifact-stack-block-size: calc(
     var(--ui-folder-artifact-stack-width) / 4 * 3 + var(--ui-space-5)
   );
   --ui-folder-artifact-note-width: 18rem;
   --ui-folder-artifact-note-min-height: 11rem;
+  /* Longer notes stop at a square and open into the reading sheet. */
+  --ui-folder-artifact-note-max-height: var(--ui-folder-artifact-note-width);
+  /* A long note opens on a letter-proportioned sheet of its own paper. */
+  --ui-folder-note-reader-width: 34rem;
+  --ui-folder-note-reader-aspect: 1.3;
   --ui-folder-artifact-note-width-compact: 12rem;
   --ui-folder-artifact-note-min-height-compact: 7rem;
   --ui-photo-frame-padding: var(--ui-space-2);
@@ -361,15 +361,27 @@
   --ui-photo-frame-bg: var(--ui-color-surface-raised);
   --ui-photo-frame-archival-bg: var(--ui-palette-neutral-950);
   --ui-photo-frame-archival-border-color: var(--ui-photo-frame-archival-bg);
-  /* Instant film keeps a wider lower margin for a short handwritten line. */
-  --ui-photo-frame-instant-padding-block-end: var(--ui-space-7);
-  /* Expanded prints keep their real-world size relation: a 4×6 print may
-     use the full media bounds and an older small print a little less, while
-     instant film is a small object enlarged at most 1.75× its page size. */
-  --ui-photo-frame-archival-expanded-scale: 0.85;
-  --ui-photo-frame-instant-expanded-max-size: calc(
-    var(--ui-folder-artifact-photo-width) * 1.75
-  );
+  /* Photos are sized from their real stock: one millimetre at 96 dpi, shrunk
+     on the page and enlarged when expanded, so their size relation matches
+     the objects on a desk. Stock sizes are unitless millimetres. */
+  --ui-photo-mm: 0.2362rem;
+  --ui-photo-page-scale: 0.5;
+  --ui-photo-expanded-scale: 1.25;
+  /* Print is a 4×6 in sheet; archival an older, smaller 3R sheet. */
+  --ui-photo-print-long-mm: 152;
+  --ui-photo-print-short-mm: 102;
+  --ui-photo-archival-long-mm: 127;
+  --ui-photo-archival-short-mm: 89;
+  /* instax film: every sheet is 86 mm tall with a 62 mm tall image. */
+  --ui-photo-instant-film-block-mm: 86;
+  --ui-photo-instant-image-block-mm: 62;
+  --ui-photo-instant-top-mm: 6.5;
+  --ui-photo-instant-mini-film-mm: 54;
+  --ui-photo-instant-mini-image-mm: 46;
+  --ui-photo-instant-square-film-mm: 72;
+  --ui-photo-instant-square-image-mm: 62;
+  --ui-photo-instant-wide-film-mm: 108;
+  --ui-photo-instant-wide-image-mm: 99;
   /* Marker text tops out relative to the print width (cqi of its line). */
   --ui-photo-frame-label-max-size: 9cqi;
   --ui-photo-frame-shadow: var(--ui-folder-artifact-shadow);

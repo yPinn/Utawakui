@@ -16,6 +16,9 @@ const props = defineProps({
   },
   filtered: { type: Boolean, default: false },
   intrinsic: { type: Boolean, default: false },
+  // Sizes the print from its real stock in millimetres: the page scale for a
+  // thumbnail, the expanded scale for an intrinsic preview.
+  scaled: { type: Boolean, default: false },
   // Print stock, shared by the thumbnail and the expanded presentation.
   frame: {
     type: String,
@@ -55,6 +58,7 @@ const labelStyle = computed(() => {
       {
         'ui-photo-frame--filtered': filtered,
         'ui-photo-frame--intrinsic': intrinsic,
+        'ui-photo-frame--scaled': scaled,
       },
     ]"
     :data-photo-frame="frame"
@@ -78,11 +82,13 @@ const labelStyle = computed(() => {
 </template>
 
 <style scoped>
+/* Real stocks in millimetres. A print's long edge is its paper's long edge;
+   portrait and tall shapes narrow it, and a square uses the short edge. */
 .ui-photo-frame {
-  --ui-photo-frame-padding-block-end: var(--ui-photo-frame-padding);
-  /* A plain print may fill the media bounds; other stocks scale them down
-     or cap the enlargement of a small object. */
-  --ui-photo-frame-expanded-scale: 1;
+  --ui-photo-frame-long-mm: var(--ui-photo-print-long-mm);
+  --ui-photo-frame-short-mm: var(--ui-photo-print-short-mm);
+  --ui-photo-frame-width-mm: var(--ui-photo-frame-long-mm);
+  --ui-photo-frame-scale: var(--ui-photo-page-scale);
   --ui-photo-frame-expanded-max-size: 100vmax;
 
   position: relative;
@@ -92,10 +98,28 @@ const labelStyle = computed(() => {
   display: grid;
   margin: 0;
   padding: var(--ui-photo-frame-padding);
-  padding-block-end: var(--ui-photo-frame-padding-block-end);
   border: var(--ui-border-width) solid var(--ui-photo-frame-border-color);
   background-color: var(--ui-photo-frame-bg);
   box-shadow: var(--ui-photo-frame-shadow);
+}
+
+.ui-photo-frame[data-photo-ratio='portrait'] {
+  --ui-photo-frame-width-mm: calc(var(--ui-photo-frame-long-mm) * 0.75);
+}
+
+.ui-photo-frame[data-photo-ratio='tall'] {
+  --ui-photo-frame-width-mm: calc(var(--ui-photo-frame-long-mm) * 0.5625);
+}
+
+.ui-photo-frame[data-photo-ratio='square'] {
+  --ui-photo-frame-width-mm: var(--ui-photo-frame-short-mm);
+}
+
+.ui-photo-frame--scaled {
+  inline-size: calc(
+    var(--ui-photo-frame-width-mm) * var(--ui-photo-mm) *
+      var(--ui-photo-frame-scale)
+  );
 }
 
 .ui-photo-frame__image {
@@ -131,34 +155,80 @@ const labelStyle = computed(() => {
   aspect-ratio: 9 / 16;
 }
 
-/* A dark archival print: same frame mechanics, restated tokens only. */
+/* A dark archival print: a smaller 3R stock, restated tokens only. */
 .ui-photo-frame[data-photo-frame='archival'] {
   --ui-photo-frame-padding: var(--ui-space-1);
   --ui-photo-frame-bg: var(--ui-photo-frame-archival-bg);
   --ui-photo-frame-border-color: var(--ui-photo-frame-archival-border-color);
   --ui-photo-frame-filter: grayscale(0.85) contrast(1.05);
-  --ui-photo-frame-expanded-scale: var(
-    --ui-photo-frame-archival-expanded-scale
-  );
+  --ui-photo-frame-long-mm: var(--ui-photo-archival-long-mm);
+  --ui-photo-frame-short-mm: var(--ui-photo-archival-short-mm);
 }
 
+/* Instant film is laid out from its own sheet: the margins and image area
+   are fractions of the film, so it scales as one object at every size.
+   mini carries portrait, SQUARE square and WIDE landscape photos. */
 .ui-photo-frame[data-photo-frame='instant'] {
-  --ui-photo-frame-padding-block-end: var(
-    --ui-photo-frame-instant-padding-block-end
-  );
-  --ui-photo-frame-expanded-max-size: var(
-    --ui-photo-frame-instant-expanded-max-size
-  );
+  --ui-photo-frame-film-mm: var(--ui-photo-instant-wide-film-mm);
+  --ui-photo-frame-film-image-mm: var(--ui-photo-instant-wide-image-mm);
+  --ui-photo-frame-width-mm: var(--ui-photo-frame-film-mm);
+
+  grid-template-columns:
+    calc(
+      (var(--ui-photo-frame-film-mm) - var(--ui-photo-frame-film-image-mm)) /
+        2 / var(--ui-photo-frame-film-mm) * 100%
+    )
+    minmax(0, 1fr)
+    calc(
+      (var(--ui-photo-frame-film-mm) - var(--ui-photo-frame-film-image-mm)) /
+        2 / var(--ui-photo-frame-film-mm) * 100%
+    );
+  grid-template-rows:
+    calc(
+      var(--ui-photo-instant-top-mm) / var(--ui-photo-instant-film-block-mm) *
+        100%
+    )
+    minmax(0, 1fr)
+    calc(
+      (
+          var(--ui-photo-instant-film-block-mm) -
+            var(--ui-photo-instant-image-block-mm) -
+            var(--ui-photo-instant-top-mm)
+        ) /
+        var(--ui-photo-instant-film-block-mm) * 100%
+    );
+  padding: 0;
+  aspect-ratio: var(--ui-photo-frame-film-mm) /
+    var(--ui-photo-instant-film-block-mm);
 }
 
-/* A bold marker line in the lower margin. Its width is fixed by the insets,
-   so it can be the size container: the text scales with the print and
-   shrinks as the line grows longer. */
+.ui-photo-frame[data-photo-frame='instant'][data-photo-ratio='portrait'] {
+  --ui-photo-frame-film-mm: var(--ui-photo-instant-mini-film-mm);
+  --ui-photo-frame-film-image-mm: var(--ui-photo-instant-mini-image-mm);
+}
+
+.ui-photo-frame[data-photo-frame='instant'][data-photo-ratio='square'] {
+  --ui-photo-frame-film-mm: var(--ui-photo-instant-square-film-mm);
+  --ui-photo-frame-film-image-mm: var(--ui-photo-instant-square-image-mm);
+}
+
+/* The film's image area is the crop, in the page and in the preview. */
+.ui-photo-frame[data-photo-frame='instant'] .ui-photo-frame__image {
+  grid-area: 2 / 2;
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  max-block-size: none;
+  aspect-ratio: auto;
+  object-fit: cover;
+}
+
+/* A bold marker line in the lower margin. The cell fixes its width, so it
+   can be the size container: the text scales with the film and shrinks as
+   the line grows longer. */
 .ui-photo-frame__label {
-  position: absolute;
-  inset-inline: var(--ui-photo-frame-padding);
-  inset-block-end: 0;
-  block-size: var(--ui-photo-frame-padding-block-end);
+  grid-area: 3 / 2;
+  min-inline-size: 0;
   margin: 0;
   align-content: center;
   overflow: hidden;
@@ -189,27 +259,48 @@ const labelStyle = computed(() => {
 }
 
 .ui-photo-frame--intrinsic {
+  --ui-photo-frame-scale: var(--ui-photo-expanded-scale);
+
   inline-size: fit-content;
+}
+
+/* An expanded print's long edge stops at its real size × the expanded
+   scale, within the media bounds; auto sizing never upscales the image. */
+.ui-photo-frame--intrinsic.ui-photo-frame--scaled {
+  --ui-photo-frame-expanded-max-size: calc(
+    var(--ui-photo-frame-long-mm) * var(--ui-photo-mm) *
+      var(--ui-photo-frame-scale)
+  );
 }
 
 .ui-photo-frame--intrinsic .ui-photo-frame__image {
   inline-size: auto;
   block-size: auto;
-  /* auto sizing already stops at the image's own pixels; never upscale. */
   max-inline-size: calc(
     min(
-        var(--ui-media-max-inline-size) * var(--ui-photo-frame-expanded-scale),
+        var(--ui-media-max-inline-size),
         var(--ui-photo-frame-expanded-max-size)
       ) -
       (var(--ui-photo-frame-padding) * 2) - (var(--ui-border-width) * 2)
   );
   max-block-size: calc(
     min(
-        var(--ui-media-max-block-size) * var(--ui-photo-frame-expanded-scale),
+        var(--ui-media-max-block-size),
         var(--ui-photo-frame-expanded-max-size)
       ) -
-      var(--ui-photo-frame-padding) - var(--ui-photo-frame-padding-block-end) -
-      (var(--ui-border-width) * 2)
+      (var(--ui-photo-frame-padding) * 2) - (var(--ui-border-width) * 2)
+  );
+}
+
+/* Expanded film keeps its sheet: real width × the expanded scale, held
+   inside the media bounds on both axes. */
+.ui-photo-frame--intrinsic[data-photo-frame='instant'] {
+  inline-size: min(
+    var(--ui-photo-frame-film-mm) * var(--ui-photo-mm) *
+      var(--ui-photo-frame-scale),
+    var(--ui-media-max-inline-size),
+    var(--ui-media-max-block-size) * var(--ui-photo-frame-film-mm) /
+      var(--ui-photo-instant-film-block-mm)
   );
 }
 

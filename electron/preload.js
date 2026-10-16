@@ -172,6 +172,7 @@ function folderPageNoteContent(value) {
   return {
     title: typeof value?.title === 'string' ? value.title.slice(0, 80) : '',
     text: typeof value?.text === 'string' ? value.text.slice(0, 2000) : '',
+    paper: typeof value?.paper === 'string' ? value.paper.slice(0, 16) : '',
   };
 }
 
@@ -195,8 +196,16 @@ function folderPagePhotoTextIntent(value) {
     page: folderPageIdentityIntent(value?.page),
     key: value?.key,
     label: typeof value?.label === 'string' ? value.label.slice(0, 16) : '',
+    captionTitle:
+      typeof value?.captionTitle === 'string'
+        ? value.captionTitle.slice(0, 80)
+        : '',
     caption:
-      typeof value?.caption === 'string' ? value.caption.slice(0, 80) : '',
+      typeof value?.caption === 'string' ? value.caption.slice(0, 2000) : '',
+    captionPaper:
+      typeof value?.captionPaper === 'string'
+        ? value.captionPaper.slice(0, 16)
+        : '',
   };
 }
 

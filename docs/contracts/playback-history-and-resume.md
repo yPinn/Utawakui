@@ -27,11 +27,29 @@ session history 或 Queue 的 previous stack 合併。
 - 使用者可在 Settings「曲庫與儲存」明確清除最近播放；操作位於 danger overflow
   action 並要求確認。這不清空 Queue、歌單、OBS session history 或診斷紀錄。
 
+## 音量偏好
+
+- `shared/audioControlValues.json` 是演唱 master volume、導唱監聽／擷取 level、BGM base
+  volume 與 Talk attenuation 的 canonical default／range／step authority。Main、preload、
+  Renderer state、BGM plan 與 audio deck 不得另寫一份現行數值。
+- 演唱 master volume／mute 與兩個導唱 level 是 machine-local durable preferences，由 Main
+  `config.json.audioPreferences` 保存。啟動解析順序固定為 canonical defaults、通過逐欄正規化的
+  config preferences、Renderer／Web Audio runtime projection；合法保存值不得被新版 default
+  覆寫，單一欄位損壞也不得清掉其他合法欄位。
+- Main 在建立主 BrowserWindow 前完成正規化，並以 bounded `additionalArguments` 交給 preload；
+  `usePlayer` 第一個 reactive state 已是 resolved preferences，不得先繪製 defaults 再非同步跳值，
+  也不得為了 hydration 建立 `AudioContext`。
+- 舊版 `playback-resume.json` version 1 的 volume／mute 只在 config 尚無
+  `audioPreferences` 時遷移一次。任何已存在的 audio preferences，即使需要逐欄 fallback，也
+  優先於 stale resume snapshot。
+- BGM volume／mute／dim／fade／silence settings 仍由完整的 `bgm-standby.json` versioned plan
+  持有；它只與演唱設定共用 scalar contract，不拆成第二個 config persistence owner。
+
 ## 啟動恢復
 
-- `playback-resume.json` 只保存 current track id、position、volume、mute、playback
-  mode，以及以 track ids 表示的 source queue、manual queue、previous entries、shuffle
-  order 與 bounded source context。
+- `playback-resume.json` version 2 只保存 current track id、position、playback mode，以及以
+  track ids 表示的 source queue、manual queue、previous entries、shuffle order 與 bounded
+  source context；volume／mute 不再屬於播放恢復。
 - Snapshot 由 renderer owner 投影；preload 與 main 再做 allowlist／bounds 驗證。
   Renderer 不提交 path、media URL、任意 IPC channel 或 library metadata。
 - 完整重啟後先向目前曲庫解析所有 ids，過濾缺檔曲目，再恢復 Queue 與 Player。
@@ -43,6 +61,10 @@ session history 或 Queue 的 previous stack 合併。
 
 ## UI 與元件邊界
 
+- `UiRangeControl` 只有收到 finite `defaultValue` 才提供 context-menu reset。導唱校準、變調、
+  音高、速度與 Output appearance 是可回復設定，可以傳入 canonical default；播放進度、演唱
+  master volume 與 BGM volume 是演出中的即時 transport controls，不提供右鍵重設，避免無提示的
+  突發 seek 或 gain 跳變。
 - Right Dock Queue surface 內使用「佇列／最近播放」兩個真實 tabpanels。`UiTabs`
   只擁有 tab semantics／keyboard；`QueuePanel` 擁有 panel ids、顯示狀態與 scroll。
 - Sticky header 的背景、blur 與 shadow 使用共用 Right Dock semantic tokens；只有內容

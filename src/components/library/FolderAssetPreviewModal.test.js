@@ -45,9 +45,13 @@ describe('FolderAssetPreviewModal', () => {
   });
 
   it('inherits media bounds from the shared modal instead of local overrides', () => {
-    // Local style only places the caption note; it never resizes the media.
+    // The caption column only takes its width out of the print's bounds;
+    // nothing widens the shared media bounds.
     expect(source).not.toContain('--ui-modal-media-content-max');
-    expect(source).not.toMatch(/max-(?:inline|block)-size|--ui-media-max/u);
+    expect(source).toMatch(
+      /\.folder-asset-preview--captioned \{\s*--ui-media-max-inline-size: calc\(\s*var\(--ui-modal-media-max-inline-size\) -\s*var\(--ui-folder-artifact-note-width\) - var\(--ui-space-4\)\s*\);/u,
+    );
+    expect(source).not.toMatch(/--ui-media-max-block-size:/u);
   });
 
   it('opens photo text editing from the rail and shows the caption as a note', async () => {
@@ -61,6 +65,7 @@ describe('FolderAssetPreviewModal', () => {
               imageUrl: 'utawakui-media://folder-asset/asset-1/image.png',
               frame: 'instant',
               label: '2024 夏',
+              captionTitle: '那一晚',
               caption: '第一次在 Live House 唱這首。',
               captionPaper: 'rose',
             },
@@ -74,6 +79,8 @@ describe('FolderAssetPreviewModal', () => {
     );
     expect(html).toContain('2024 夏');
     expect(html).toContain('第一次在 Live House 唱這首。');
+    expect(html).toMatch(/<h4[^>]*>那一晚<\/h4>/u);
+    expect(html).toContain('folder-asset-preview--captioned');
     expect(html).toContain('data-paper="rose"');
   });
 

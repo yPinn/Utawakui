@@ -33,11 +33,16 @@ describe('AppFolderNoteEditorModal', () => {
     });
 
     expect(created).toContain('新增便條');
-    expect(created).toContain('紙色於建立時決定；標題可留空。');
+    expect(created).toContain('右下角可切換紙色；標題可留空。');
+    // A new note starts on one of the user stocks, never the derived tissue.
+    expect(created).toMatch(
+      /data-paper="(periwinkle|rose|canary|kraft|ruled)"/u,
+    );
     expect(edited).toContain('編輯便條');
     expect(edited).toContain('value="安可"');
     expect(edited).toContain('最後一首');
     expect(edited).toContain('data-paper="rose"');
+    expect(edited).toContain('切換紙色（目前：粉紅）');
   });
 
   it('cannot save an empty note', async () => {
@@ -68,9 +73,24 @@ describe('AppFolderNoteEditorModal', () => {
 
   it('commits trimmed content only on Save', () => {
     expect(source).toMatch(
-      /emit\('save', \{\s*title: titleDraft\.value\.trim\(\),\s*text: textDraft\.value\.trimEnd\(\),\s*\}\)/u,
+      /emit\('save', \{\s*title: titleDraft\.value\.trim\(\),\s*text: textDraft\.value\.trimEnd\(\),\s*paper: paperDraft\.value\.id,\s*\}\)/u,
     );
     expect(source).toContain('@keydown.enter="save"');
     expect(source).toContain(':maxlength="NOTE_TITLE_MAX_LENGTH"');
+  });
+
+  it('picks the paper with the shared overlay icon button, cycling stocks', () => {
+    expect(source).toContain(
+      "import UiIconButton from '../ui/UiIconButton.vue'",
+    );
+    expect(source).toContain(':icon="Palette"');
+    expect(source).toContain('variant="overlay"');
+    expect(source).toContain('@click="cyclePaper"');
+    expect(source).not.toMatch(/<button\b/u);
+    // The stock list and its cycle are shared with the photo caption editor.
+    expect(source).toContain(
+      'paperIndex.value = nextNotePaperIndex(paperIndex.value);',
+    );
+    expect(source).toContain("from '../../utils/notePapers.js'");
   });
 });

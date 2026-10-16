@@ -161,8 +161,20 @@ describe('LibraryFolderArtifactLayer', () => {
     expect(html).not.toContain('按 Enter 或空白鍵編輯便條');
     expect(html).toMatch(/<h4[^>]*>安可<\/h4>/u);
     expect(html).toContain('頁面便條：安可');
+    // A click opens a photo, or the reading sheet of a note the cap cut off;
+    // it never starts an edit.
     expect(source).toMatch(
-      /function handleActivate\(id\) \{\s*if \(findItem\(id\)\?\.type === 'photo'\) emit\('activate', id\);\s*\}/u,
+      /function handleActivate\(id\) \{\s*const item = findItem\(id\);\s*if \(item\?\.type === 'photo'\) emit\('activate', id\);\s*else if \(isReadableNote\(item\)\) emit\('readNote', id\);\s*\}/u,
+    );
+    expect(source).toContain('capped: true,');
+    expect(source).toContain(
+      "...(readable ? { activatable: true, activationLabel: '閱讀便條' } : {}),",
+    );
+    expect(source).toContain(
+      '@overflow-change="setNoteOverflow(artifact.id, $event)"',
+    );
+    expect(source).toContain(
+      "else if (action === 'read') emit('readNote', id);",
     );
     expect(source).toContain(
       "else if (action === 'edit') emit('editNote', id);",
@@ -204,7 +216,7 @@ describe('LibraryFolderArtifactLayer', () => {
 
   it('routes every layout, pin, and stack change as one entry batch keyed by object', () => {
     expect(source).toMatch(
-      /defineEmits\(\[\s*'layoutChange',\s*'activate',\s*'editNote',\s*'editPhotoText',\s*'remove',?\s*\]\)/u,
+      /defineEmits\(\[\s*'layoutChange',\s*'activate',\s*'editNote',\s*'editPhotoText',\s*'readNote',\s*'remove',?\s*\]\)/u,
     );
     expect(source).toMatch(
       /function handleLayoutChange[\s\S]*?\{\s*immediate: false,\s*\}/u,

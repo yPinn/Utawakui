@@ -42,7 +42,8 @@ describe('AppFolderPhotoTextEditorModal', () => {
     expect(print).not.toContain('拍立得文字');
     expect(print).toContain('說明');
     expect(source).toContain('const PHOTO_LABEL_MAX_LENGTH = 16;');
-    expect(source).toContain('const PHOTO_CAPTION_MAX_LENGTH = 80;');
+    expect(source).toContain('const PHOTO_CAPTION_TITLE_MAX_LENGTH = 80;');
+    expect(source).toContain('const PHOTO_CAPTION_MAX_LENGTH = 2000;');
   });
 
   it('saves trimmed text only when something changed', async () => {
@@ -52,8 +53,24 @@ describe('AppFolderPhotoTextEditorModal', () => {
     );
     expect(saveButton?.[0]).toContain('disabled');
     expect(source).toMatch(
-      /emit\('save', \{\s*label: isInstant\.value \? labelDraft\.value\.trim\(\) : '',\s*caption: captionDraft\.value\.trim\(\),\s*\}\)/u,
+      /emit\('save', \{\s*label: isInstant\.value \? labelDraft\.value\.trim\(\) : '',\s*captionTitle: captionTitleDraft\.value\.trim\(\),\s*caption: captionDraft\.value\.trimEnd\(\),\s*captionPaper: captionPaper\.value\.id,\s*\}\)/u,
     );
+  });
+
+  it('tucks a caption paper swatch at the print corner with the shared switch', async () => {
+    const html = await render({
+      frame: 'print',
+      caption: '說明',
+      captionPaper: 'kraft',
+    });
+    expect(html).toContain('data-paper="kraft"');
+    expect(html).toContain('切換說明便條紙色（目前：牛皮紙）');
+    expect(html).not.toContain('app-folder-photo-text__caption-paper--empty');
+    const empty = await render({ frame: 'print' });
+    expect(empty).toContain('app-folder-photo-text__caption-paper--empty');
+    expect(source).toContain('@click="cycleCaptionPaper"');
+    expect(source).toContain('captionPaper: captionPaper.value.id,');
+    expect(source).not.toMatch(/<button\b/u);
   });
 
   it('shares the note editor anatomy with the footnote on the action row', () => {

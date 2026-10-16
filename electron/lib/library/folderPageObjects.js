@@ -24,9 +24,11 @@ const MAX_LAYOUT_BATCH_SIZE = 64;
 const MAX_OBJECT_ROTATION = 5;
 const MAX_NOTE_TEXT_LENGTH = 2_000;
 const MAX_NOTE_TITLE_LENGTH = 80;
-// Instant film carries one short line; the caption note holds the rest.
+// Instant film carries one short line; the caption note holds the rest and
+// takes a note's title and body.
 const MAX_PHOTO_LABEL_LENGTH = 16;
-const MAX_PHOTO_CAPTION_LENGTH = 80;
+const MAX_PHOTO_CAPTION_TITLE_LENGTH = MAX_NOTE_TITLE_LENGTH;
+const MAX_PHOTO_CAPTION_LENGTH = MAX_NOTE_TEXT_LENGTH;
 // Paper stocks a new user note may be printed on; picked once at creation.
 const NOTE_PAPERS = Object.freeze([
   'periwinkle',
@@ -190,11 +192,18 @@ const OBJECT_TYPES = Object.freeze({
       ) {
         sanitized.label = payload.label;
       }
-      if (
-        isBoundedText(payload.caption, MAX_PHOTO_CAPTION_LENGTH) &&
-        payload.caption !== ''
-      ) {
-        sanitized.caption = payload.caption;
+      const captionTitle = isBoundedText(
+        payload.captionTitle,
+        MAX_PHOTO_CAPTION_TITLE_LENGTH,
+      )
+        ? payload.captionTitle
+        : '';
+      const caption = isBoundedText(payload.caption, MAX_PHOTO_CAPTION_LENGTH)
+        ? payload.caption
+        : '';
+      if (captionTitle !== '' || caption !== '') {
+        if (captionTitle !== '') sanitized.captionTitle = captionTitle;
+        if (caption !== '') sanitized.caption = caption;
         sanitized.captionPaper = NOTE_PAPERS.includes(payload.captionPaper)
           ? payload.captionPaper
           : paperForKey(key);
@@ -567,6 +576,7 @@ function projectObject(object) {
     projection.frame = object.payload.frame;
     projection.ratio = object.payload.ratio;
     projection.label = object.payload.label ?? '';
+    projection.captionTitle = object.payload.captionTitle ?? '';
     projection.caption = object.payload.caption ?? '';
     if (object.payload.captionPaper) {
       projection.captionPaper = object.payload.captionPaper;
@@ -740,9 +750,11 @@ function updateFolderPagePhotoText(
     throw validationError('Invalid page photo.');
   }
   const label = content?.label ?? '';
+  const captionTitle = content?.captionTitle ?? '';
   const caption = content?.caption ?? '';
   if (
     !isBoundedText(label, MAX_PHOTO_LABEL_LENGTH) ||
+    !isBoundedText(captionTitle, MAX_PHOTO_CAPTION_TITLE_LENGTH) ||
     !isBoundedText(caption, MAX_PHOTO_CAPTION_LENGTH)
   ) {
     throw validationError('Invalid page photo text.');
@@ -757,14 +769,18 @@ function updateFolderPagePhotoText(
   const previous = objects[index].payload;
   const payload = { ...previous };
   delete payload.label;
+  delete payload.captionTitle;
   delete payload.caption;
   delete payload.captionPaper;
   if (payload.frame === 'instant' && label.trim() !== '') payload.label = label;
-  if (caption.trim() !== '') {
-    payload.caption = caption;
-    // Drawn on the first caption and kept while the caption is edited.
-    payload.captionPaper =
-      previous.captionPaper ?? pickStock(NOTE_PAPERS, random);
+  if (captionTitle.trim() !== '' || caption.trim() !== '') {
+    if (captionTitle.trim() !== '') payload.captionTitle = captionTitle;
+    if (caption.trim() !== '') payload.caption = caption;
+    // The editor may choose it; otherwise the saved one stays, and a first
+    // caption draws one.
+    payload.captionPaper = NOTE_PAPERS.includes(content?.captionPaper)
+      ? content.captionPaper
+      : (previous.captionPaper ?? pickStock(NOTE_PAPERS, random));
   }
   objects[index] = { ...objects[index], payload };
   writeManifest(directory, objects);
@@ -796,7 +812,14 @@ function addFolderPageNote(directory, pageValue, content, options = {}) {
     objects,
     page,
     'note',
-    { title, text, paper: pickStock(NOTE_PAPERS, random) },
+    // The editor may choose the stock; otherwise one is drawn once here.
+    {
+      title,
+      text,
+      paper: NOTE_PAPERS.includes(content?.paper)
+        ? content.paper
+        : pickStock(NOTE_PAPERS, random),
+    },
     { ...options, random },
   );
   writeManifest(directory, [...objects, note]);
@@ -814,9 +837,17 @@ function updateFolderPageNote(directory, pageValue, key, content) {
     (object) => object.key === key && samePage(object.page, page),
   );
   if (index < 0) throw validationError('Page note not found.');
+  const previous = objects[index].payload;
   objects[index] = {
     ...objects[index],
-    payload: { ...objects[index].payload, title, text },
+    payload: {
+      ...previous,
+      title,
+      text,
+      paper: NOTE_PAPERS.includes(content?.paper)
+        ? content.paper
+        : previous.paper,
+    },
   };
   writeManifest(directory, objects);
   return projectObject(objects[index]);
@@ -944,6 +975,7 @@ module.exports = {
   MAX_NOTE_TEXT_LENGTH,
   MAX_NOTE_TITLE_LENGTH,
   MAX_PHOTO_CAPTION_LENGTH,
+  MAX_PHOTO_CAPTION_TITLE_LENGTH,
   MAX_PHOTO_LABEL_LENGTH,
   NOTE_PAPERS,
   PHOTO_FRAMES,

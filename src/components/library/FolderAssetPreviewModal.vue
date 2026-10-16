@@ -17,7 +17,9 @@ const props = defineProps({
 const emit = defineEmits(['close', 'afterLeave', 'remove', 'editText']);
 const confirmation = useAppConfirmation();
 
+const captionTitle = computed(() => props.asset?.captionTitle ?? '');
 const caption = computed(() => props.asset?.caption ?? '');
+const hasCaption = computed(() => Boolean(captionTitle.value || caption.value));
 
 async function requestRemoval() {
   if (!props.asset || props.removing) return;
@@ -62,24 +64,32 @@ async function requestRemoval() {
       />
     </template>
 
-    <div v-if="asset" class="folder-asset-preview">
+    <div
+      v-if="asset"
+      class="folder-asset-preview"
+      :class="{ 'folder-asset-preview--captioned': hasCaption }"
+    >
       <UiPhotoFrame
         :src="asset.imageUrl"
         alt="展開的頁面照片"
         fit="contain"
         filtered
         intrinsic
+        scaled
         :frame="asset.frame ?? 'print'"
+        :ratio="asset.ratio ?? 'landscape'"
         :label="asset.label ?? ''"
         :label-lang="contentLangAttribute(asset.label ?? '')"
       />
-      <!-- The caption is a small note tucked over the print's lower corner. -->
+      <!-- The caption note sits beside the print, like the action rail. -->
       <UiFolderArtifact
-        v-if="caption"
+        v-if="hasCaption"
         class="folder-asset-preview__caption"
         kind="note"
         material="translucent"
         :paper="asset.captionPaper ?? 'canary'"
+        :title="captionTitle"
+        :title-lang="contentLangAttribute(captionTitle)"
         :body="caption"
         :lang="contentLangAttribute(caption)"
       />
@@ -89,20 +99,26 @@ async function requestRemoval() {
 
 <style scoped>
 .folder-asset-preview {
-  position: relative;
   display: grid;
-  justify-items: center;
+  grid-auto-flow: column;
+  align-items: start;
+  justify-content: center;
+  gap: var(--ui-space-4);
 }
 
-/* Only about a quarter of the note rests on the print's corner. */
+/* The note column comes out of the print's bounds, so the two never overlap. */
+.folder-asset-preview--captioned {
+  --ui-media-max-inline-size: calc(
+    var(--ui-modal-media-max-inline-size) -
+      var(--ui-folder-artifact-note-width) - var(--ui-space-4)
+  );
+}
+
+/* A full note: title and body, scrolling inside when the body runs long. */
 .folder-asset-preview__caption {
-  --ui-folder-artifact-note-width: var(--ui-folder-artifact-note-width-compact);
   --ui-folder-artifact-note-min-height: auto;
 
-  position: absolute;
-  inset-inline-end: calc(var(--ui-folder-artifact-note-width-compact) * -0.75);
-  inset-block-end: calc(var(--ui-space-6) * -1);
-  transform: rotate(3deg);
-  pointer-events: none;
+  max-block-size: var(--ui-media-max-block-size);
+  overflow-y: auto;
 }
 </style>

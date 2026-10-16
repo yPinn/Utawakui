@@ -19,6 +19,7 @@ import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
+import AppFolderNoteReaderModal from '../layout/AppFolderNoteReaderModal.vue';
 import AppFolderPhotoTextEditorModal from '../layout/AppFolderPhotoTextEditorModal.vue';
 import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
@@ -32,6 +33,8 @@ const noteEditor = shallowRef(null);
 const noteEditorSaving = ref(false);
 // Key of the photo whose instant line and caption are being edited.
 const photoTextKey = shallowRef(null);
+// Key of the long note open on the reading sheet.
+const readerKey = shallowRef(null);
 const photoTextSaving = ref(false);
 const addMenuOpen = ref(false);
 const ADD_MENU_CONTENT = Object.freeze({
@@ -127,6 +130,7 @@ watch(
     selectedAsset.value = null;
     noteEditor.value = null;
     photoTextKey.value = null;
+    readerKey.value = null;
     addMenuOpen.value = false;
     focusAddButtonAfterPreviewClose = false;
     await folderObjects.load(page);
@@ -220,6 +224,31 @@ async function savePhotoText(content) {
   }
 }
 
+const readNote = computed(() =>
+  readerKey.value
+    ? (folderObjects.objects.value.find(
+        (object) => object.key === readerKey.value,
+      ) ?? null)
+    : null,
+);
+
+function openNoteReader(key) {
+  readerKey.value = key;
+}
+
+function closeNoteReader() {
+  if (folderObjects.removing.value) return;
+  readerKey.value = null;
+}
+
+// The reading sheet closes once its note is gone.
+async function removeReadNote(key) {
+  await confirmRemoveObject(key);
+  if (!folderObjects.objects.value.some((object) => object.key === key)) {
+    readerKey.value = null;
+  }
+}
+
 async function confirmRemoveObject(key) {
   const object = folderObjects.objects.value.find((entry) => entry.key === key);
   if (!object) return;
@@ -306,6 +335,7 @@ onBeforeUnmount(() => {
         @activate="openAsset"
         @edit-note="openNoteEditor"
         @edit-photo-text="openPhotoTextEditor"
+        @read-note="openNoteReader"
         @remove="confirmRemoveObject"
       />
     </template>
@@ -337,12 +367,21 @@ onBeforeUnmount(() => {
     </template>
   </AppFolderPage>
 
+  <AppFolderNoteReaderModal
+    :open="Boolean(readNote)"
+    :note="readNote"
+    :removing="folderObjects.removing.value"
+    @close="closeNoteReader"
+    @edit="openNoteEditor"
+    @remove="removeReadNote"
+  />
+
   <AppFolderNoteEditorModal
     :open="Boolean(noteEditor)"
     :mode="noteEditor?.key ? 'edit' : 'create'"
     :title="editedNote?.title ?? ''"
     :text="editedNote?.text ?? ''"
-    :paper="editedNote?.paper ?? 'tissue'"
+    :paper="editedNote?.paper ?? ''"
     :saving="noteEditorSaving"
     @close="closeNoteEditor"
     @save="saveNote"

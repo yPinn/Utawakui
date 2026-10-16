@@ -299,7 +299,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(536);
+    expect(uniqueNames.size).toBe(548);
     expect(uniqueNames).toContain('--ui-action-menu-max-block-size');
     expect(uniqueNames).toContain('--ui-textarea-font-size');
     expect(uniqueNames).toContain('--ui-textarea-font-weight');

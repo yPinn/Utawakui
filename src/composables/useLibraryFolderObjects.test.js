@@ -238,23 +238,33 @@ describe('createLibraryFolderObjects', () => {
     await owner.load(playlistPage);
 
     await expect(
-      owner.addNote({ title: '安可', text: '最後一首' }),
+      owner.addNote({ title: '安可', text: '最後一首', paper: 'rose' }),
     ).resolves.toBe('note:note-1');
     expect(owner.freshKeys.value).toEqual(['note:note-1']);
     expect(api.createFolderPageNote).toHaveBeenCalledWith({
       page: playlistPage,
       title: '安可',
       text: '最後一首',
+      paper: 'rose',
     });
     await expect(
-      owner.updateNote('note:note-1', { title: '', text: '安可曲' }),
+      owner.updateNote('note:note-1', {
+        title: '',
+        text: '安可曲',
+        paper: 'kraft',
+      }),
     ).resolves.toBe(true);
-    expect(owner.objects.value[0]).toMatchObject({ title: '', text: '安可曲' });
+    expect(owner.objects.value[0]).toMatchObject({
+      title: '',
+      text: '安可曲',
+      paper: 'kraft',
+    });
     expect(api.updateFolderPageNote).toHaveBeenCalledWith({
       page: playlistPage,
       key: 'note:note-1',
       title: '',
       text: '安可曲',
+      paper: 'kraft',
     });
 
     api.createFolderPageNote.mockRejectedValueOnce(new Error('disk'));

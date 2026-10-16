@@ -10,6 +10,7 @@ const {
   MAX_NOTE_TEXT_LENGTH,
   MAX_NOTE_TITLE_LENGTH,
   MAX_PHOTO_CAPTION_LENGTH,
+  MAX_PHOTO_CAPTION_TITLE_LENGTH,
   MAX_PHOTO_LABEL_LENGTH,
   NOTE_PAPERS,
   PHOTO_FRAMES,
@@ -137,6 +138,7 @@ describe('folder page objects', () => {
       frame: 'instant',
       ratio: 'landscape',
       label: '',
+      captionTitle: '',
       caption: '',
     });
     expect(listFolderPageObjects(directory, page)).toEqual([photo]);
@@ -862,6 +864,69 @@ describe('folder page objects', () => {
     expect(() =>
       updateFolderPagePhotoText(directory, page, 'note:x', { caption: 'a' }),
     ).toThrow('Invalid page photo.');
+
+    // A caption is a full note: a title alone is enough to keep it.
+    const titled = updateFolderPagePhotoText(directory, page, print.key, {
+      captionTitle: '那一晚',
+      caption: '',
+    });
+    expect(titled).toMatchObject({ captionTitle: '那一晚', caption: '' });
+    expect(titled.captionPaper).toEqual(expect.any(String));
+    expect(MAX_PHOTO_CAPTION_TITLE_LENGTH).toBe(MAX_NOTE_TITLE_LENGTH);
+    expect(MAX_PHOTO_CAPTION_LENGTH).toBe(MAX_NOTE_TEXT_LENGTH);
+    expect(() =>
+      updateFolderPagePhotoText(directory, page, print.key, {
+        captionTitle: 'x'.repeat(MAX_PHOTO_CAPTION_TITLE_LENGTH + 1),
+      }),
+    ).toThrow('Invalid page photo text.');
+  });
+
+  it('keeps a caption paper the editor picks', () => {
+    const photo = addFolderPagePhoto(directory, page, sourcePath, {
+      id: PHOTO_ID,
+    });
+    const picked = updateFolderPagePhotoText(directory, page, photo.key, {
+      caption: '說明',
+      captionPaper: 'ruled',
+    });
+    expect(picked.captionPaper).toBe('ruled');
+    expect(
+      updateFolderPagePhotoText(directory, page, photo.key, {
+        caption: '改寫',
+        captionPaper: 'neon',
+      }).captionPaper,
+    ).toBe('ruled');
+  });
+
+  it('keeps the paper a user picks and ignores unknown stocks', () => {
+    const picked = addFolderPageNote(
+      directory,
+      page,
+      { text: '便條', paper: 'kraft' },
+      { random: () => 0 },
+    );
+    expect(picked.paper).toBe('kraft');
+    expect(
+      updateFolderPageNote(directory, page, picked.key, {
+        text: '便條',
+        paper: 'ruled',
+      }).paper,
+    ).toBe('ruled');
+    // An unknown stock keeps the saved one, and a new note draws its own.
+    expect(
+      updateFolderPageNote(directory, page, picked.key, {
+        text: '便條',
+        paper: 'tissue',
+      }).paper,
+    ).toBe('ruled');
+    expect(
+      addFolderPageNote(
+        directory,
+        page,
+        { text: '便條', paper: 'neon' },
+        { random: () => 0 },
+      ).paper,
+    ).toBe(NOTE_PAPERS[0]);
   });
 
   it('counts notes toward the shared user object limit', () => {

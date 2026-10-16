@@ -361,7 +361,7 @@ describe('UiFolderArtifact', () => {
       /fold-angle|crease-angle|linear-gradient\(\s*var/u,
     );
     expect(artifactSource).toMatch(
-      /background-position:\s*0 0,\s*var\(--ui-folder-artifact-note-grain-offset, 0 0\);/u,
+      /background-position:\s*var\(--ui-folder-artifact-note-grain-offset, 0 0\);/u,
     );
   });
 
@@ -417,9 +417,7 @@ describe('UiFolderArtifact', () => {
       "url('../../assets/folder-paper/grain-coarse.svg?no-inline')",
     );
     expect(artifactSource).not.toContain('data:image');
-    expect(artifactSource).toContain(
-      'background-blend-mode: normal, soft-light;',
-    );
+    expect(artifactSource).toContain('background-blend-mode: soft-light;');
   });
 
   it('assigns vintage photo and paper-note materials from kind without appearance state', async () => {
@@ -457,7 +455,7 @@ describe('UiFolderArtifact', () => {
       /\.ui-photo-frame--filtered \.ui-photo-frame__image\s*\{[^}]*filter:\s*var\(--ui-photo-frame-filter\)/u,
     );
     expect(artifactSource).toMatch(
-      /\.ui-folder-artifact--note\s*\{[^}]*background-image:\s*var\(--ui-folder-artifact-note-print, none\),\s*var\(--ui-folder-artifact-note-grain, none\);/u,
+      /\.ui-folder-artifact--note\s*\{[^}]*background-image:\s*var\(--ui-folder-artifact-note-grain, none\);/u,
     );
     expect(artifactSource).not.toContain('radial-gradient(');
     const photoFrameRule =
@@ -530,7 +528,7 @@ describe('UiFolderArtifact', () => {
     expect(artifactSource).toContain('getFolderArtifactStackLayers');
     expect(artifactSource).toContain('getFolderArtifactStackLayoutVariant');
     expect(artifactSource).toContain(
-      "defineEmits(['previous', 'next', 'commit'])",
+      "defineEmits(['previous', 'next', 'commit', 'overflowChange'])",
     );
     expect(artifactSource).toContain("emit('previous')");
     expect(artifactSource).toContain("emit('next')");
@@ -685,13 +683,59 @@ describe('UiFolderArtifact', () => {
     );
   });
 
-  it('expands each stock at its real-world size relation, never past the image', () => {
-    expect(photoFrameSource).toMatch(
-      /\.ui-photo-frame \{[^}]*--ui-photo-frame-expanded-scale: 1;/su,
+  it('prints ruled lines under the text at the text line height', () => {
+    const ruled = artifactSource.slice(
+      artifactSource.indexOf(".ui-folder-artifact[data-paper='ruled'] {"),
     );
-    // Instant film is a small object: enlarged, but only so far.
+    expect(ruled).toMatch(
+      /^[^}]*--ui-folder-artifact-note-line-height: var\(--ui-space-5\);/su,
+    );
+    // The sheet carries only grain; the rules start at the body's first line.
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact--note \{[^}]*background-image: var\(--ui-folder-artifact-note-grain, none\);/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__body \{[^}]*background-image: var\(--ui-folder-artifact-note-print, none\);[^}]*line-height: var\(\s*--ui-folder-artifact-note-line-height,\s*var\(--ui-type-body-line-height\)\s*\);/su,
+    );
+  });
+
+  it('caps a long note on the page and fades its body out at the cap', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(UiFolderArtifact, {
+            kind: 'note',
+            title: '演出前提醒',
+            body: '第二段副歌前換氣。',
+            capped: true,
+          }),
+      }),
+    );
+    expect(html).toContain('ui-folder-artifact--capped');
+    // Overflow is measured after layout, so nothing fades before then.
+    expect(html).not.toContain('data-overflowing');
+    expect(html).not.toContain('ui-folder-artifact__more');
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact--note\.ui-folder-artifact--capped \{\s*max-block-size: var\(--ui-folder-artifact-note-max-height\);\s*display: flex;\s*flex-direction: column;/u,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact--capped \.ui-folder-artifact__body \{\s*flex: 0 1 auto;\s*min-block-size: 0;\s*overflow: hidden;/u,
+    );
+    expect(artifactSource).toMatch(
+      /\[data-overflowing='true'\] \.ui-folder-artifact__body \{\s*mask-image: linear-gradient\(/u,
+    );
+    expect(artifactSource).toMatch(
+      /body\.scrollHeight > body\.clientHeight \+ 1/u,
+    );
+  });
+
+  it('expands each stock from its real size, never past the image', () => {
+    // Page and expanded sizes share one real-millimetre basis.
     expect(photoFrameSource).toMatch(
-      /\[data-photo-frame='instant'\] \{[^}]*--ui-photo-frame-expanded-max-size: var\(\s*--ui-photo-frame-instant-expanded-max-size\s*\);/su,
+      /\.ui-photo-frame--scaled \{\s*inline-size: calc\(\s*var\(--ui-photo-frame-width-mm\) \* var\(--ui-photo-mm\) \*\s*var\(--ui-photo-frame-scale\)\s*\);/u,
+    );
+    expect(photoFrameSource).toMatch(
+      /\.ui-photo-frame--intrinsic \{\s*--ui-photo-frame-scale: var\(--ui-photo-expanded-scale\);/u,
     );
     const intrinsic = photoFrameSource.slice(
       photoFrameSource.indexOf(
@@ -699,11 +743,15 @@ describe('UiFolderArtifact', () => {
       ),
     );
     expect(intrinsic).toMatch(
-      /^[^}]*inline-size: auto;[^}]*min\(\s*var\(--ui-media-max-inline-size\) \* var\(--ui-photo-frame-expanded-scale\),\s*var\(--ui-photo-frame-expanded-max-size\)\s*\)[^}]*min\(\s*var\(--ui-media-max-block-size\) \* var\(--ui-photo-frame-expanded-scale\),\s*var\(--ui-photo-frame-expanded-max-size\)\s*\)/su,
+      /^[^}]*inline-size: auto;[^}]*min\(\s*var\(--ui-media-max-inline-size\),\s*var\(--ui-photo-frame-expanded-max-size\)\s*\)[^}]*min\(\s*var\(--ui-media-max-block-size\),\s*var\(--ui-photo-frame-expanded-max-size\)\s*\)/su,
+    );
+    // Instant film keeps its sheet, held inside the media bounds.
+    expect(photoFrameSource).toMatch(
+      /\.ui-photo-frame--intrinsic\[data-photo-frame='instant'\] \{\s*inline-size: min\(\s*var\(--ui-photo-frame-film-mm\) \* var\(--ui-photo-mm\) \*\s*var\(--ui-photo-frame-scale\),\s*var\(--ui-media-max-inline-size\),/u,
     );
   });
 
-  it('sizes each print shape to a shared image area and crops to it', async () => {
+  it('lays instant film out from its real sheet and files each shape', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
@@ -717,16 +765,22 @@ describe('UiFolderArtifact', () => {
     );
     expect(html.match(/data-photo-ratio="portrait"/gu)).toHaveLength(2);
     expect(html.match(/data-photo-frame="instant"/gu)).toHaveLength(2);
-    for (const ratio of ['portrait', 'square', 'wide', 'tall']) {
-      expect(artifactSource).toContain(
-        `width: var(--ui-folder-artifact-photo-width-${ratio});`,
-      );
-    }
+    expect(html).toContain('ui-photo-frame--scaled');
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact--photo \{\s*width: fit-content;/u,
+    );
     expect(photoFrameSource).toMatch(
       /\[data-photo-ratio='tall'\] \.ui-photo-frame__image \{\s*aspect-ratio: 9 \/ 16;/u,
     );
+    // mini carries portrait, SQUARE square and WIDE landscape photos.
     expect(photoFrameSource).toMatch(
-      /\[data-photo-frame='instant'\] \{\s*--ui-photo-frame-padding-block-end: var\(\s*--ui-photo-frame-instant-padding-block-end\s*\);/u,
+      /\[data-photo-frame='instant'\]\[data-photo-ratio='portrait'\] \{\s*--ui-photo-frame-film-mm: var\(--ui-photo-instant-mini-film-mm\);/u,
+    );
+    expect(photoFrameSource).toMatch(
+      /\[data-photo-frame='instant'\]\[data-photo-ratio='square'\] \{\s*--ui-photo-frame-film-mm: var\(--ui-photo-instant-square-film-mm\);/u,
+    );
+    expect(photoFrameSource).toContain(
+      'aspect-ratio: var(--ui-photo-frame-film-mm) /',
     );
   });
 });

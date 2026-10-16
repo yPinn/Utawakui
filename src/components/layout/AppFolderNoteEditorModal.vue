@@ -2,9 +2,16 @@
 // Creates or edits one Folder note. Content is drafted locally and committed
 // only on Save, so an overlapping note can never be edited by a stray click.
 import { computed, shallowRef, watch } from 'vue';
+import { Palette } from '../../icons/index.js';
+import {
+  NOTE_PAPERS,
+  nextNotePaperIndex,
+  notePaperIndex,
+} from '../../utils/notePapers.js';
 import UiButton from '../ui/UiButton.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
@@ -23,9 +30,8 @@ const props = defineProps({
   },
   title: { type: String, default: '' },
   text: { type: String, default: '' },
-  // Edit mode previews the note's own stock; a new note's stock is picked on
-  // creation, so its preview stays on the neutral tissue sheet.
-  paper: { type: String, default: 'tissue' },
+  // The note's own stock in edit mode; a new note starts on a random one.
+  paper: { type: String, default: '' },
   saving: { type: Boolean, default: false },
 });
 
@@ -33,6 +39,8 @@ const emit = defineEmits(['close', 'save']);
 
 const titleDraft = shallowRef('');
 const textDraft = shallowRef('');
+const paperIndex = shallowRef(0);
+const paperDraft = computed(() => NOTE_PAPERS[paperIndex.value]);
 const previewStyle = Object.freeze({
   '--app-folder-note-editor-preview-size': `${NOTE_PREVIEW_SIZE}px`,
 });
@@ -52,6 +60,7 @@ watch(
     if (!isOpen) return;
     titleDraft.value = props.title;
     textDraft.value = props.text;
+    paperIndex.value = notePaperIndex(props.paper);
   },
   { immediate: true },
 );
@@ -61,7 +70,13 @@ function save() {
   emit('save', {
     title: titleDraft.value.trim(),
     text: textDraft.value.trimEnd(),
+    paper: paperDraft.value.id,
   });
+}
+
+function cyclePaper() {
+  if (props.saving) return;
+  paperIndex.value = nextNotePaperIndex(paperIndex.value);
 }
 
 function cancel() {
@@ -79,13 +94,27 @@ function cancel() {
     @close="cancel"
   >
     <div class="app-folder-note-editor" :style="previewStyle">
-      <div class="app-folder-note-editor__preview" aria-hidden="true">
+      <!-- A swatch of the paper itself; the shared overlay control moves to
+           the next stock. -->
+      <div class="app-folder-note-editor__paper">
         <UiFolderArtifact
           kind="note"
           material="translucent"
-          :paper="mode === 'edit' ? paper : 'tissue'"
-          :title="titleDraft"
-          :body="textDraft"
+          :paper="paperDraft.id"
+          aria-hidden="true"
+        >
+          <span class="app-folder-note-editor__paper-name">
+            {{ paperDraft.label }}
+          </span>
+        </UiFolderArtifact>
+        <UiIconButton
+          class="app-folder-note-editor__paper-switch"
+          :icon="Palette"
+          :label="`切換紙色（目前：${paperDraft.label}）`"
+          variant="overlay"
+          tooltip-placement="bottom"
+          :disabled="saving"
+          @click="cyclePaper"
         />
       </div>
 
@@ -120,9 +149,7 @@ function cancel() {
 
     <template #footer>
       <UiHint class="app-folder-note-editor__footnote">
-        {{
-          mode === 'create' ? '紙色於建立時決定；標題可留空。' : '標題可留空。'
-        }}
+        右下角可切換紙色；標題可留空。
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
         取消
@@ -153,20 +180,35 @@ function cancel() {
   gap: var(--ui-modal-section-gap);
 }
 
-.app-folder-note-editor__preview {
+.app-folder-note-editor__paper {
+  position: relative;
   inline-size: var(--app-folder-note-editor-preview-size);
   block-size: var(--app-folder-note-editor-preview-size);
-  overflow: hidden;
-  pointer-events: none;
 }
 
-/* The live preview fills the square instead of the canvas note stock. */
-.app-folder-note-editor__preview :deep(.ui-folder-artifact) {
+/* Corner control: positioned by the swatch, like the cover's clear button. */
+.app-folder-note-editor__paper-switch {
+  position: absolute;
+  z-index: var(--ui-layer-indicator);
+  inset-inline-end: var(--ui-space-2);
+  inset-block-end: var(--ui-space-2);
+}
+
+/* The swatch fills the square instead of the canvas note stock. */
+.app-folder-note-editor__paper :deep(.ui-folder-artifact) {
   inline-size: 100%;
   block-size: 100%;
   min-block-size: 0;
-  overflow: hidden;
+  align-content: end;
   padding: var(--ui-space-4);
+}
+
+.app-folder-note-editor__paper-name {
+  color: var(--ui-color-text-muted);
+  font-family: var(--ui-font-family-utility);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+  text-align: start;
 }
 
 .app-folder-note-editor__fields {

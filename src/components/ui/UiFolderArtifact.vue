@@ -1,5 +1,15 @@
 <script setup>
-import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  useId,
+  useTemplateRef,
+  watch,
+} from 'vue';
 import {
   getFolderArtifactStackLayoutVariant,
   getFolderArtifactStackLayers,
@@ -8,7 +18,7 @@ import {
 import UiPhotoFrame from './UiPhotoFrame.vue';
 import UiTextarea from './UiTextarea.vue';
 
-const emit = defineEmits(['previous', 'next', 'commit']);
+const emit = defineEmits(['previous', 'next', 'commit', 'overflowChange']);
 
 // A short single-line note shrinks to the compact stock; content decides.
 const COMPACT_NOTE_MAX_LENGTH = 24;
@@ -87,6 +97,8 @@ const props = defineProps({
   // Data-card rows: [{ label, value, lang? }].
   fields: { type: Array, default: () => [] },
   editing: { type: Boolean, default: false },
+  // Caps a note on the page; a longer body fades out and reports overflow.
+  capped: { type: Boolean, default: false },
   editLabel: { type: String, default: '便條內容' },
   maxLength: { type: Number, default: 2000 },
 });
@@ -101,6 +113,44 @@ const compact = computed(() => {
     !/[\r\n]/u.test(body)
   );
 });
+
+const bodyElement = useTemplateRef('bodyElement');
+const overflowing = shallowRef(false);
+let bodyObserver = null;
+
+function measureOverflow() {
+  const body = bodyElement.value;
+  const next = Boolean(
+    props.capped && body && body.scrollHeight > body.clientHeight + 1,
+  );
+  if (next === overflowing.value) return;
+  overflowing.value = next;
+  emit('overflowChange', next);
+}
+
+onMounted(() => {
+  if (typeof ResizeObserver !== 'function') return;
+  bodyObserver = new ResizeObserver(measureOverflow);
+  watch(
+    bodyElement,
+    (body, previous) => {
+      if (previous) bodyObserver.unobserve(previous);
+      if (body) bodyObserver.observe(body);
+      measureOverflow();
+    },
+    { immediate: true },
+  );
+});
+
+onBeforeUnmount(() => bodyObserver?.disconnect());
+
+watch(
+  () => [props.body, props.title, props.capped],
+  async () => {
+    await nextTick();
+    measureOverflow();
+  },
+);
 
 const editor = useTemplateRef('editor');
 const editorId = `folder-artifact-editor-${useId()}`;
@@ -178,9 +228,13 @@ function handleStackLayerKeydown(layer, event) {
     :class="[
       `ui-folder-artifact--${props.kind}`,
       `ui-folder-artifact--${props.material}`,
-      { 'ui-folder-artifact--compact': compact },
+      {
+        'ui-folder-artifact--compact': compact,
+        'ui-folder-artifact--capped': capped && kind === 'note',
+      },
     ]"
     :data-paper-texture="kind === 'note' ? texture : undefined"
+    :data-overflowing="overflowing ? 'true' : undefined"
     :data-paper="kind === 'note' ? paper : undefined"
     :data-photo-frame="kind === 'photo' ? frame : undefined"
     :data-photo-ratio="kind === 'photo' ? ratio : undefined"
@@ -229,6 +283,7 @@ function handleStackLayerKeydown(layer, event) {
         :alt="alt"
         fit="cover"
         filtered
+        scaled
         :frame="frame"
         :ratio="ratio"
         :label="label"
@@ -294,7 +349,19 @@ function handleStackLayerKeydown(layer, event) {
         @keydown="handleEditorKeydown"
         @blur="commitDraft"
       />
-      <p v-else-if="body" class="ui-folder-artifact__body">{{ body }}</p>
+      <p
+        v-else-if="body"
+        ref="bodyElement"
+        class="ui-folder-artifact__body"
+        v-text="body"
+      ></p>
+      <span
+        v-if="overflowing"
+        class="ui-folder-artifact__more"
+        aria-hidden="true"
+      >
+        …
+      </span>
       <dl v-if="fields.length" class="ui-folder-artifact__fields">
         <template v-for="field in fields" :key="field.label">
           <dt>{{ field.label }}</dt>
@@ -326,24 +393,14 @@ function handleStackLayerKeydown(layer, event) {
   -webkit-user-drag: none;
 }
 
+/* The print sizes itself from its real stock; a slotted placeholder keeps
+   the default width. */
 .ui-folder-artifact--photo {
+  width: fit-content;
+}
+
+.ui-folder-artifact--photo:not(:has(.ui-photo-frame)) {
   width: var(--ui-folder-artifact-photo-width);
-}
-
-.ui-folder-artifact--photo[data-photo-ratio='portrait'] {
-  width: var(--ui-folder-artifact-photo-width-portrait);
-}
-
-.ui-folder-artifact--photo[data-photo-ratio='square'] {
-  width: var(--ui-folder-artifact-photo-width-square);
-}
-
-.ui-folder-artifact--photo[data-photo-ratio='wide'] {
-  width: var(--ui-folder-artifact-photo-width-wide);
-}
-
-.ui-folder-artifact--photo[data-photo-ratio='tall'] {
-  width: var(--ui-folder-artifact-photo-width-tall);
 }
 
 /* Only a paper corner peeks out from behind the print's lower end corner. */
@@ -466,13 +523,9 @@ function handleStackLayerKeydown(layer, event) {
     --ui-folder-artifact-note-paper,
     var(--ui-folder-artifact-note-bg)
   );
-  background-image:
-    var(--ui-folder-artifact-note-print, none),
-    var(--ui-folder-artifact-note-grain, none);
-  background-position:
-    0 0,
-    var(--ui-folder-artifact-note-grain-offset, 0 0);
-  background-blend-mode: normal, soft-light;
+  background-image: var(--ui-folder-artifact-note-grain, none);
+  background-position: var(--ui-folder-artifact-note-grain-offset, 0 0);
+  background-blend-mode: soft-light;
   box-shadow: var(--ui-folder-artifact-shadow);
 }
 
@@ -505,6 +558,8 @@ function handleStackLayerKeydown(layer, event) {
     var(--ui-folder-artifact-paper-rule)
       calc(var(--ui-space-5) - var(--ui-border-width)) var(--ui-space-5)
   );
+  /* Text keeps the rule pitch so every line sits on a printed rule. */
+  --ui-folder-artifact-note-line-height: var(--ui-space-5);
 }
 
 .ui-folder-artifact[data-paper-texture='1'] {
@@ -585,11 +640,53 @@ function handleStackLayerKeydown(layer, event) {
   font-size: var(--ui-type-body-compact-size);
 }
 
+/* A capped note keeps its title and fades its body out at the cap. */
+.ui-folder-artifact--note.ui-folder-artifact--capped {
+  max-block-size: var(--ui-folder-artifact-note-max-height);
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-folder-artifact--capped > * {
+  flex: none;
+}
+
+.ui-folder-artifact--capped .ui-folder-artifact__body {
+  flex: 0 1 auto;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.ui-folder-artifact[data-overflowing='true'] .ui-folder-artifact__body {
+  mask-image: linear-gradient(
+    to bottom,
+    var(--ui-color-text) calc(100% - var(--ui-space-6)),
+    transparent
+  );
+}
+
+.ui-folder-artifact__more {
+  position: absolute;
+  inset-inline-end: var(--ui-space-4);
+  inset-block-end: var(--ui-space-2);
+  color: var(--ui-color-text-muted);
+  font-family: var(--ui-font-family-utility);
+  font-size: var(--ui-type-body-size);
+  line-height: var(--ui-type-body-line-height);
+  pointer-events: none;
+}
+
+/* Ruled paper prints its rules under the text itself, starting at the
+   text's first line, so they never drift from the lines above them. */
 .ui-folder-artifact__body {
   max-width: 34ch;
+  background-image: var(--ui-folder-artifact-note-print, none);
   font-size: var(--ui-type-body-size);
   font-weight: var(--ui-type-body-weight);
-  line-height: var(--ui-type-body-line-height);
+  line-height: var(
+    --ui-folder-artifact-note-line-height,
+    var(--ui-type-body-line-height)
+  );
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   text-wrap: pretty;

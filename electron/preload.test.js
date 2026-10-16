@@ -551,15 +551,21 @@ describe('main preload bridge', () => {
     bridge.updateFolderPageNote({ page, key: 'note:note-1', text: 42 });
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:create-note',
-      { page, title: 't'.repeat(80), text: 'private' },
+      { page, title: 't'.repeat(80), text: 'private', paper: '' },
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:update-note',
-      { page, key: 'note:note-1', title: '', text: 'x'.repeat(2000) },
+      {
+        page,
+        key: 'note:note-1',
+        title: '',
+        text: 'x'.repeat(2000),
+        paper: '',
+      },
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:update-note',
-      { page, key: 'note:note-1', title: '', text: '' },
+      { page, key: 'note:note-1', title: '', text: '', paper: '' },
     );
     bridge.updateFolderPagePhotoText({
       page,
@@ -574,7 +580,9 @@ describe('main preload bridge', () => {
         page,
         key: 'photo:asset-1',
         label: 'l'.repeat(16),
-        caption: 'c'.repeat(80),
+        captionTitle: '',
+        caption: 'c'.repeat(120),
+        captionPaper: '',
       },
     );
     bridge.removeFolderPageObject({

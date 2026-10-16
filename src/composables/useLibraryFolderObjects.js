@@ -233,6 +233,7 @@ export function createLibraryFolderObjects(options = {}) {
         page: activePage,
         title: content?.title ?? '',
         text: content?.text ?? '',
+        paper: content?.paper ?? '',
       });
       if (!isActivePage(activePage) || !note?.key) return null;
       freshKeys.value = [...freshKeys.value, note.key];
@@ -249,6 +250,7 @@ export function createLibraryFolderObjects(options = {}) {
   async function updateNote(key, content) {
     const title = content?.title ?? '';
     const text = content?.text ?? '';
+    const paper = content?.paper ?? '';
     if (
       !page.value ||
       typeof title !== 'string' ||
@@ -259,10 +261,18 @@ export function createLibraryFolderObjects(options = {}) {
     }
     const activePage = { ...page.value };
     objects.value = objects.value.map((object) =>
-      object.key === key ? { ...object, title, text } : object,
+      object.key === key
+        ? { ...object, title, text, ...(paper ? { paper } : {}) }
+        : object,
     );
     try {
-      await bridge.updateFolderPageNote({ page: activePage, key, title, text });
+      await bridge.updateFolderPageNote({
+        page: activePage,
+        key,
+        title,
+        text,
+        paper,
+      });
       return true;
     } catch {
       state.error = '目前無法儲存頁面便條。';
@@ -273,10 +283,13 @@ export function createLibraryFolderObjects(options = {}) {
   // Main picks the caption paper, so the saved projection replaces the photo.
   async function updatePhotoText(key, content) {
     const label = content?.label ?? '';
+    const captionTitle = content?.captionTitle ?? '';
     const caption = content?.caption ?? '';
+    const captionPaper = content?.captionPaper ?? '';
     if (
       !page.value ||
       typeof label !== 'string' ||
+      typeof captionTitle !== 'string' ||
       typeof caption !== 'string' ||
       typeof bridge?.updateFolderPagePhotoText !== 'function'
     ) {
@@ -288,7 +301,9 @@ export function createLibraryFolderObjects(options = {}) {
         page: activePage,
         key,
         label,
+        captionTitle,
         caption,
+        captionPaper,
       });
       if (!isActivePage(activePage) || photo?.key !== key) return false;
       objects.value = objects.value.map((object) =>

@@ -1,6 +1,13 @@
 <script setup>
 import { computed, shallowRef, useTemplateRef } from 'vue';
-import { Maximize2, Pencil, Pin, PinOff, Trash2 } from '../../icons/index.js';
+import {
+  BookOpen,
+  Maximize2,
+  Pencil,
+  Pin,
+  PinOff,
+  Trash2,
+} from '../../icons/index.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import { folderStationeryFor } from '../../utils/folderStationery.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
@@ -46,7 +53,10 @@ const OBJECT_RENDERERS = Object.freeze({
       label: item.label ?? '',
       labelLang: contentLangAttribute(item.label ?? ''),
       // The caption itself shows on expand; the page only shows its corner.
-      captionPaper: item.caption ? (item.captionPaper ?? 'canary') : '',
+      captionPaper:
+        item.captionTitle || item.caption
+          ? (item.captionPaper ?? 'canary')
+          : '',
     },
   }),
   note: (item) =>
@@ -74,6 +84,8 @@ const OBJECT_RENDERERS = Object.freeze({
             paper: item.paper ?? 'tissue',
             material: NOTE_MATERIAL,
             texture: noteTexture(item.key),
+            // Long notes stop at the cap; only those open the reading sheet.
+            capped: true,
           },
         },
 });
@@ -90,6 +102,7 @@ const emit = defineEmits([
   'activate',
   'editNote',
   'editPhotoText',
+  'readNote',
   'remove',
 ]);
 const canvas = useTemplateRef('canvas');
@@ -154,12 +167,29 @@ const items = computed(() => {
   return [...derived, ...user].sort((left, right) => left.order - right.order);
 });
 
+// Keys of user notes whose body the cap cuts off, as measured on the page.
+const overflowingNotes = shallowRef(new Set());
+
+function setNoteOverflow(key, overflowing) {
+  if (overflowingNotes.value.has(key) === overflowing) return;
+  const next = new Set(overflowingNotes.value);
+  if (overflowing) next.add(key);
+  else next.delete(key);
+  overflowingNotes.value = next;
+}
+
+function isReadableNote(item) {
+  return isUserNote(item) && overflowingNotes.value.has(item.key);
+}
+
 const artifacts = computed(() =>
   items.value.map((item, index) => {
     const rendered = OBJECT_RENDERERS[item.type](item);
+    const readable = isReadableNote(item);
     return {
       id: item.key,
       ...rendered,
+      ...(readable ? { activatable: true, activationLabel: '閱讀便條' } : {}),
       props: { ...rendered.props, ...folderStationeryFor(item) },
       initialPlacement: item.placement,
       initialPinned: item.pinned === true,
@@ -217,7 +247,9 @@ function isUserNote(item) {
 }
 
 function handleActivate(id) {
-  if (findItem(id)?.type === 'photo') emit('activate', id);
+  const item = findItem(id);
+  if (item?.type === 'photo') emit('activate', id);
+  else if (isReadableNote(item)) emit('readNote', id);
 }
 
 const menuContent = computed(() => {
@@ -264,6 +296,17 @@ const menuContent = computed(() => {
     groups.push({
       id: 'object',
       items: [
+        ...(isReadableNote(item)
+          ? [
+              {
+                id: 'read',
+                kind: 'action',
+                label: '閱讀便條',
+                value: 'read',
+                icon: BookOpen,
+              },
+            ]
+          : []),
         {
           id: 'edit',
           kind: 'action',
@@ -308,6 +351,7 @@ function selectMenuAction(action) {
   closeMenu();
   if (!id) return;
   if (action === 'open') emit('activate', id);
+  else if (action === 'read') emit('readNote', id);
   else if (action === 'edit') emit('editNote', id);
   else if (action === 'text') emit('editPhotoText', id);
   else if (action === 'pin') canvas.value?.togglePinById(id);
@@ -328,7 +372,11 @@ function selectMenuAction(action) {
     @contextmenu="openMenu"
   >
     <template #default="{ artifact }">
-      <UiFolderArtifact :kind="artifact.kind" v-bind="artifact.props" />
+      <UiFolderArtifact
+        :kind="artifact.kind"
+        v-bind="artifact.props"
+        @overflow-change="setNoteOverflow(artifact.id, $event)"
+      />
     </template>
   </UiFolderArtifactCanvas>
   <UiActionMenu
