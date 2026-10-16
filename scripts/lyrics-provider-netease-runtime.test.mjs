@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { satisfies } from 'semver';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FIXED_LYRICS_PROVIDER_DESCRIPTORS } from './lyrics-provider-probe-registry.mjs';
 import {
@@ -131,6 +132,23 @@ describe('NetEase evaluation runtime contract', () => {
     );
     expect(summary.lockedPackageCount).toBeGreaterThan(100);
     expect(summary.missingIntegrityCount).toBe(0);
+  });
+
+  it('locks every proxy-addr instance above the trust-subnet spoofing floor', () => {
+    const lock = JSON.parse(
+      fs.readFileSync(
+        'scripts/lyrics-provider-netease-runtime/package-lock.json',
+        'utf8',
+      ),
+    );
+    const entries = Object.entries(lock.packages).filter(([packagePath]) =>
+      packagePath.endsWith('node_modules/proxy-addr'),
+    );
+
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [packagePath, metadata] of entries) {
+      expect(satisfies(metadata.version, '>=2.0.8 <3'), packagePath).toBe(true);
+    }
   });
 
   it('derives one ignored runtime root separate from node_modules and application data', () => {
