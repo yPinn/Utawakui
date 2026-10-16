@@ -162,8 +162,9 @@ layout family 是 registered v2 surface。`LibraryPage.vue`、`PerformancePage.v
 `DisplayPage.vue` 擁有 Display／local overlay host 的完整 v2 boundary，並直接組合 `ObsOutputWorkspace.vue`。
 `ObsOutputWorkspace.vue` 在 `AppFolderPage` fixed header 放置唯一的畫面分頁（歌單／歌詞／播放中）、編輯／模板模式切換、runtime 燈號與啟動／停止，以及跳到 Settings「公開輸出與 OBS」的輸出設定入口（`openSettings('output')`），不再增加重複的可見頁名。連接埠、自動啟動、畫面延遲與 Spout2 由 `OutputRuntimeSettingsBlock` 在對外輸出 gate 啟用後呈現。
 Lyrics 與 local overlay host 同樣使用完整 v2 boundary。
-`PerformancePage` 固定以 workspace mode 組合 `PerformanceWorkspace`，以 `UiTabs` 切換「待唱安排」與
-「現場歌詞」；兩個工具都以 `AppFolderWorkspaceToolbar` 呈現情境與動作，pane 直接放在紙面、以 ledger
+`PerformancePage` 固定以 workspace mode 組合 `PerformanceWorkspace`，以 `UiTabs` 依序切換「歌詞」與
+「待唱安排」；直接進入演唱工具預設開啟歌詞，明確的待唱準備 intent 仍開啟待唱安排。
+兩個工具都以 `AppFolderWorkspaceToolbar` 呈現情境與動作，pane 直接放在紙面、以 ledger
 rule 分隔。「待唱安排」進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
 與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
 Titlebar 與 Right Dock 不再提供重複的場次入口；selected playlist／album 的「從清單建立」／

@@ -117,6 +117,12 @@ Performance therefore composes the session state that currently exists and a
 separate Live Tool Switcher. A tool switch changes the operator instrument; it
 does not change the temporal phase.
 
+The visible tool order is「歌詞」then「待唱安排」. Lyrics is available for practice,
+reading and singing without requiring an active session, so its label has no live
+qualifier. Direct Performance navigation opens Lyrics; explicit preparation
+intents still open the upcoming plan. The internal `live-lyrics` tool id remains
+stable, and history restore preserves the current tool.
+
 ### Persistent shell ownership
 
 The IA migration does not move long-lived state into pages:

@@ -5,7 +5,7 @@ import { computed, readonly, shallowRef } from 'vue';
 const activeView = shallowRef('library');
 const returnView = shallowRef('library');
 const libraryWorkspace = shallowRef('browse');
-const performanceTool = shallowRef('session');
+const performanceTool = shallowRef('live-lyrics');
 const rootEntryRevision = shallowRef(0);
 const isSettingsView = computed(() => activeView.value === 'settings');
 // One-shot section request so other views can open Settings at a block.
@@ -31,7 +31,7 @@ function setActiveView(view) {
   }
 
   if (view === 'library') libraryWorkspace.value = 'browse';
-  if (view === 'performance') performanceTool.value = 'session';
+  if (view === 'performance') performanceTool.value = 'live-lyrics';
   rootEntryRevision.value += 1;
   commitActiveView(view);
 }

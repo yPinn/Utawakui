@@ -84,10 +84,11 @@ describe('useAppView', () => {
     expect(appView.libraryWorkspace.value).toBe('browse');
     expect(appView.rootEntryRevision.value).toBe(initialRootEntryRevision + 1);
 
-    appView.openLiveLyrics();
+    appView.openPerformancePreparation();
+    expect(appView.performanceTool.value).toBe('session');
     expect(appView.rootEntryRevision.value).toBe(initialRootEntryRevision + 1);
     appView.setActiveView('performance');
-    expect(appView.performanceTool.value).toBe('session');
+    expect(appView.performanceTool.value).toBe('live-lyrics');
     expect(appView.rootEntryRevision.value).toBe(initialRootEntryRevision + 2);
   });
 

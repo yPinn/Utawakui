@@ -54,6 +54,51 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     );
     expect(workspaceSource).not.toContain('min-height: 560px');
     expect(workspaceSource).not.toContain('calc(100vh - 230px)');
+    expect(workspaceSource).not.toMatch(
+      /<UiScrollRegion\s+v-else-if="hasItems"/u,
+    );
+    expect(planListSource).toContain(
+      "import UiScrollLayout from '../ui/UiScrollLayout.vue';",
+    );
+    expect(planListSource).toContain('content-tag="ol"');
+    expect(workspaceSource).toContain('content-tag="ul"');
+    expect(workspaceSource).not.toContain(
+      "import UiScrollRegion from '../ui/UiScrollRegion.vue';",
+    );
+  });
+
+  it('reflows from its actual workspace container without fixed pane pixels or viewport media', () => {
+    expect(workspaceSource).toContain(
+      'container-name: performance-session-workspace;',
+    );
+    expect(workspaceSource).toContain(
+      '@container performance-session-workspace (max-width: 48.75rem)',
+    );
+    expect(workspaceSource).toContain(
+      'grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);',
+    );
+    expect(workspaceSource).not.toContain('minmax(360px');
+    expect(workspaceSource).not.toContain('minmax(320px');
+    expect(workspaceSource).not.toContain('@media (max-width: 780px)');
+  });
+
+  it('adapts session occurrences through the shared track-row primitive instead of TrackTable semantics', () => {
+    expect(planListSource).toContain(
+      "import UiTrackRow from '../ui/UiTrackRow.vue';",
+    );
+    expect(planListSource).toContain('<UiTrackRow');
+    expect(planListSource).toContain('<template #lead>');
+    expect(planListSource).toContain('<template #trail>');
+    expect(planListSource).not.toContain('PerformanceSessionPlanRow');
+    expect(planListSource).not.toContain('TrackTable');
+  });
+
+  it('reuses track-row list spacing without a second grid or row-state recipe', () => {
+    expect(planListSource).toContain('var(--ui-track-list-gap)');
+    expect(planListSource).not.toContain('grid-template-columns');
+    expect(planListSource).not.toContain('--performance-session-plan-grid');
+    expect(planListSource).not.toContain('--ui-track-row-selected-surface');
+    expect(planListSource).not.toContain('draggable');
   });
 
   it('shows the return action only for a contextual entry', () => {

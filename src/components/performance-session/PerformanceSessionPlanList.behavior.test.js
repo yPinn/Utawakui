@@ -1,5 +1,6 @@
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import {
   attachClientRender,
   findAll,
@@ -11,18 +12,31 @@ import {
 import UiChip from '../ui/UiChip.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiMarqueeText from '../ui/UiMarqueeText.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTextButton from '../ui/UiTextButton.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 
 for (const [component, filename] of [
   [PerformanceSessionPlanList, './PerformanceSessionPlanList.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiActionMenu, '../ui/UiActionMenu.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiMarqueeText, '../ui/UiMarqueeText.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiTextButton, '../ui/UiTextButton.vue'],
   [UiTooltip, '../ui/UiTooltip.vue'],
+  [UiTrackRow, '../ui/UiTrackRow.vue'],
+  [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -60,6 +74,7 @@ afterEach(() => {
 const items = [
   {
     itemId: 'item-1',
+    trackId: 'track-1',
     mode: 'library-track',
     displayTitle: 'First song',
     displayArtist: 'Singer A',
@@ -81,6 +96,17 @@ const items = [
     displayArtist: 'Singer C',
     status: 'unavailable',
     verification: 'unreviewed',
+  },
+];
+
+const tracks = [
+  {
+    id: 'track-1',
+    title: 'Canonical library title',
+    artist: 'Canonical artist',
+    album: 'Canonical album',
+    duration: 245,
+    thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
   },
 ];
 
@@ -108,15 +134,67 @@ async function openItemMenu(root, label) {
 }
 
 describe('PerformanceSessionPlanList', () => {
+  it('uses one semantic scrolling ordered list without a duplicated table header', () => {
+    const mounted = mount(PerformanceSessionPlanList, {
+      items,
+      tracks,
+      selectedItemId: 'item-2',
+    });
+    const scroll = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes(
+        'performance-session-plan-list__body-scroll',
+      ),
+    )[0];
+    const orderedLists = findAll(mounted.root, (node) => node.type === 'ol');
+
+    expect(scroll).toBeDefined();
+    expect(orderedLists).toHaveLength(1);
+    expect(textContent(mounted.root)).not.toContain('順序曲目狀態操作');
+    mounted.app.unmount();
+  });
+
+  it('adapts canonical track information into UiTrackRow while preserving session copy', () => {
+    const mounted = mount(PerformanceSessionPlanList, {
+      items: [items[0]],
+      tracks,
+      selectedItemId: 'item-1',
+    });
+    const row = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '')
+        .split(/\s+/u)
+        .includes('ui-track'),
+    )[0];
+    const artwork = findAll(
+      row,
+      (node) =>
+        node.type === 'img' &&
+        node.props?.['data-track-artwork-kind'] === 'custom',
+    )[0];
+
+    expect(row).toBeDefined();
+    expect(String(row.props.class)).toContain('performance-session-plan-entry');
+    expect(String(row.props.class)).toContain('ui-track--active');
+    expect(textContent(row)).toContain('First song');
+    expect(textContent(row)).toContain('Singer A');
+    expect(textContent(row)).not.toContain('Canonical library title');
+    expect(textContent(row)).not.toContain('Canonical artist');
+    expect(artwork.props.src).toBe(
+      'utawakui-media://track/track-1/thumbnail.jpg',
+    );
+    expect(textContent(row)).toContain('4:05');
+    mounted.app.unmount();
+  });
+
   it('renders occurrence order and truthful preparation states', () => {
     const mounted = mount(PerformanceSessionPlanList, {
       items,
+      tracks,
       selectedItemId: 'item-2',
     });
     const rows = findAll(mounted.root, (node) =>
       String(node.props?.class ?? '')
         .split(/\s+/u)
-        .includes('performance-session-plan-row'),
+        .includes('performance-session-plan-entry'),
     );
 
     expect(rows).toHaveLength(3);
@@ -125,11 +203,7 @@ describe('PerformanceSessionPlanList', () => {
     expect(textContent(mounted.root)).not.toContain('待確認');
     expect(textContent(mounted.root)).toContain('手動');
     expect(textContent(mounted.root)).toContain('音檔缺少');
-    expect(
-      String(rows[1].props.class).includes(
-        'performance-session-plan-row--selected',
-      ),
-    ).toBe(true);
+    expect(String(rows[1].props.class).includes('ui-track--active')).toBe(true);
     mounted.app.unmount();
   });
 

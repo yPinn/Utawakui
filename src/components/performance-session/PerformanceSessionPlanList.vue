@@ -7,12 +7,15 @@ import {
   Ellipsis,
   Trash2,
 } from '../../icons/index.js';
-import UiChip from '../ui/UiChip.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
+  tracks: { type: Array, default: () => [] },
   selectedItemId: { type: String, default: null },
   saving: { type: Boolean, default: false },
 });
@@ -22,6 +25,44 @@ const emit = defineEmits(['select', 'move', 'duplicate', 'remove']);
 const menuOpen = shallowRef(false);
 const menuAnchorEl = shallowRef(null);
 const menuItemId = shallowRef(null);
+
+const STATUS_PRESENTATION = Object.freeze({
+  ready: null,
+  manual: { label: '手動', tone: 'muted' },
+  'needs-link': { label: '需處理', tone: 'warning' },
+  unavailable: { label: '音檔缺少', tone: 'danger' },
+  'source-changed': { label: '資料已變更', tone: 'warning' },
+  'needs-attention': { label: '需處理', tone: 'warning' },
+});
+
+const tracksById = computed(
+  () => new Map(props.tracks.map((track) => [track.id, track])),
+);
+const presentationRows = computed(() =>
+  props.items.map((item, index) => {
+    const canonicalTrack = item.trackId
+      ? tracksById.value.get(item.trackId)
+      : null;
+    const fallbackId = item.trackId ?? item.linkedTrack?.id ?? item.itemId;
+    return {
+      item,
+      index,
+      position: index + 1,
+      status:
+        STATUS_PRESENTATION[item.status] ??
+        STATUS_PRESENTATION['needs-attention'],
+      track:
+        canonicalTrack ??
+        (item.linkedTrack
+          ? { ...item.linkedTrack, id: item.linkedTrack.id ?? fallbackId }
+          : {
+              id: fallbackId,
+              title: item.displayTitle,
+              artist: item.displayArtist,
+            }),
+    };
+  }),
+);
 
 const activeMenuItem = computed(() =>
   props.items.find((item) => item.itemId === menuItemId.value),
@@ -87,21 +128,6 @@ const menuContent = computed(() => ({
   ],
 }));
 
-const STATUS_PRESENTATION = Object.freeze({
-  ready: null,
-  manual: { label: '手動', tone: 'muted' },
-  'needs-link': { label: '需處理', tone: 'warning' },
-  unavailable: { label: '音檔缺少', tone: 'danger' },
-  'source-changed': { label: '資料已變更', tone: 'warning' },
-  'needs-attention': { label: '需處理', tone: 'warning' },
-});
-
-function statusPresentation(item) {
-  return (
-    STATUS_PRESENTATION[item.status] ?? STATUS_PRESENTATION['needs-attention']
-  );
-}
-
 function closeMenu() {
   menuOpen.value = false;
   menuAnchorEl.value = null;
@@ -109,7 +135,7 @@ function closeMenu() {
 
 function openMenu(event, itemId) {
   if (props.saving) return;
-  event.stopPropagation();
+  event.stopPropagation?.();
   menuAnchorEl.value = event.currentTarget;
   menuItemId.value = itemId;
   menuOpen.value = true;
@@ -155,156 +181,103 @@ watch(
 </script>
 
 <template>
-  <ol class="performance-session-plan-list" aria-label="待唱順序">
-    <li
-      v-for="(item, index) in props.items"
-      :key="item.itemId"
-      class="performance-session-plan-row"
-      :class="{
-        'performance-session-plan-row--selected':
-          item.itemId === selectedItemId,
-      }"
+  <section class="performance-session-plan-list-surface">
+    <UiScrollLayout
+      class="performance-session-plan-list__body-scroll"
+      axis="vertical"
+      content-tag="ol"
+      content-class="performance-session-plan-list"
+      aria-label="待唱順序"
     >
-      <button
-        type="button"
-        class="performance-session-plan-row__select"
-        :aria-label="`檢查第 ${index + 1} 首：${item.displayTitle}`"
-        :aria-current="item.itemId === selectedItemId ? 'true' : undefined"
-        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
-        @click="emit('select', item.itemId)"
-        @keydown="handleRowKeydown($event, item, index)"
+      <UiTrackRow
+        v-for="row in presentationRows"
+        :key="row.item.itemId"
+        class="performance-session-plan-entry"
+        :track="row.track"
+        :title="row.item.displayTitle"
+        :artist="row.item.displayArtist"
+        :active="row.item.itemId === selectedItemId"
+        interactive
+        state-surface
+        :state-surface-active="menuOpen && menuItemId === row.item.itemId"
+        selection-action
+        action-description="單擊選取；Alt 加上下方向鍵調整順序；選單可複製或移除"
+        action-keyboard-shortcuts="Alt+ArrowUp Alt+ArrowDown"
+        :action-label="`檢查第 ${row.position} 首：${row.item.displayTitle}`"
+        overflow="ellipsis"
+        thumb-loading="lazy"
+        thumb-decoding="async"
+        @row-click="emit('select', row.item.itemId)"
+        @action-keydown="handleRowKeydown($event, row.item, row.index)"
+        @contextmenu.prevent.stop="openMenu($event, row.item.itemId)"
       >
-        <span class="performance-session-plan-row__index">{{ index + 1 }}</span>
-        <span class="performance-session-plan-row__copy">
-          <span class="performance-session-plan-row__title" dir="auto">
-            {{ item.displayTitle }}
+        <template #lead>
+          <span class="performance-session-plan-entry__ordinal">
+            {{ row.position }}
           </span>
-          <span
-            v-if="item.displayArtist"
-            class="performance-session-plan-row__artist"
-            dir="auto"
-          >
-            {{ item.displayArtist }}
-          </span>
-        </span>
-        <UiChip
-          v-if="statusPresentation(item)"
-          :tone="statusPresentation(item).tone"
-        >
-          {{ statusPresentation(item).label }}
-        </UiChip>
-      </button>
+        </template>
+        <template #trail>
+          <UiChip v-if="row.status" :tone="row.status.tone">
+            {{ row.status.label }}
+          </UiChip>
+          <UiIconButton
+            :icon="Ellipsis"
+            :label="`第 ${row.position} 首「${row.item.displayTitle}」的更多操作`"
+            :disabled="saving"
+            aria-haspopup="menu"
+            :aria-expanded="
+              menuOpen && menuItemId === row.item.itemId ? 'true' : 'false'
+            "
+            @click="openMenu($event, row.item.itemId)"
+          />
+        </template>
+      </UiTrackRow>
+    </UiScrollLayout>
 
-      <div class="performance-session-plan-row__actions">
-        <UiIconButton
-          :icon="Ellipsis"
-          :label="`第 ${index + 1} 首「${item.displayTitle}」的更多操作`"
-          :disabled="saving"
-          aria-haspopup="menu"
-          :aria-expanded="
-            menuOpen && menuItemId === item.itemId ? 'true' : 'false'
-          "
-          @click="openMenu($event, item.itemId)"
-        />
-      </div>
-    </li>
-  </ol>
-
-  <UiActionMenu
-    :open="menuOpen"
-    :anchor="menuAnchor"
-    size="md"
-    :aria-label="
-      activeMenuIndex >= 0 ? `第 ${activeMenuIndex + 1} 首操作` : '待唱操作'
-    "
-    :content="menuContent"
-    @select="handleMenuSelect"
-    @close="closeMenu"
-  />
+    <UiActionMenu
+      :open="menuOpen"
+      :anchor="menuAnchor"
+      size="md"
+      :aria-label="
+        activeMenuIndex >= 0 ? `第 ${activeMenuIndex + 1} 首操作` : '待唱操作'
+      "
+      :content="menuContent"
+      @select="handleMenuSelect"
+      @close="closeMenu"
+    />
+  </section>
 </template>
 
 <style scoped>
-.performance-session-plan-list {
+.performance-session-plan-list-surface {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.performance-session-plan-list__body-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.performance-session-plan-list__body-scroll
+  :deep(.performance-session-plan-list) {
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-2);
+  gap: var(--ui-track-list-gap);
   min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.performance-session-plan-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--ui-space-2);
-  align-items: center;
-  padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
-}
-
-.performance-session-plan-row--selected {
-  border-color: var(--ui-color-accent);
-  background: var(--ui-color-surface-selected);
-}
-
-.performance-session-plan-row__select {
-  display: grid;
-  grid-template-columns: 3ch minmax(0, 1fr) auto;
-  gap: var(--ui-space-2);
-  align-items: center;
-  min-width: 0;
-  padding: var(--ui-space-1);
-  border: 0;
-  border-radius: var(--ui-radius-md);
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.performance-session-plan-row__select:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.performance-session-plan-row__select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.performance-session-plan-row__index {
+.performance-session-plan-entry__ordinal {
+  min-inline-size: var(--ui-space-5);
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
-}
-
-.performance-session-plan-row__copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.performance-session-plan-row__title,
-.performance-session-plan-row__artist {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.performance-session-plan-row__title {
-  font-weight: var(--ui-font-weight-semibold);
-}
-
-.performance-session-plan-row__artist {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
-.performance-session-plan-row__actions {
-  display: flex;
-  align-items: center;
 }
 </style>

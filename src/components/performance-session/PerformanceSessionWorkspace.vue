@@ -11,7 +11,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import PerformanceSessionManualItemForm from './PerformanceSessionManualItemForm.vue';
@@ -307,42 +307,39 @@ async function prepareSelectedCollection() {
           compact
         />
 
-        <UiScrollRegion
-          v-if="isSearching"
+        <UiScrollLayout
+          v-if="isSearching && filteredTracks.length"
           class="performance-session-workspace__list-scroll"
+          content-tag="ul"
+          content-class="performance-session-workspace__search-results"
           aria-label="曲庫搜尋結果"
         >
-          <ul
-            v-if="filteredTracks.length"
-            class="performance-session-workspace__search-results"
-          >
-            <UiTrackRow
-              v-for="track in filteredTracks"
-              :key="track.id"
-              :track="track"
-              interactive
-              :action-label="`加入待唱：${track.title ?? track.id}`"
-              @row-click="addLibraryTrack(track.id)"
-            />
-          </ul>
-          <UiHint v-else padded center> 曲庫中沒有符合的歌曲。 </UiHint>
-        </UiScrollRegion>
-
-        <UiScrollRegion
-          v-else-if="hasItems"
-          class="performance-session-workspace__list-scroll"
-          aria-label="待唱清單"
-        >
-          <PerformanceSessionPlanList
-            :items="state.plan.items"
-            :selected-item-id="state.plan.reviewCursorItemId"
-            :saving="state.isSaving"
-            @select="selectForReview"
-            @move="moveItem"
-            @duplicate="duplicateItem"
-            @remove="confirmRemoveItem"
+          <UiTrackRow
+            v-for="track in filteredTracks"
+            :key="track.id"
+            :track="track"
+            interactive
+            :action-label="`加入待唱：${track.title ?? track.id}`"
+            @row-click="addLibraryTrack(track.id)"
           />
-        </UiScrollRegion>
+        </UiScrollLayout>
+
+        <UiHint v-else-if="isSearching" padded center>
+          曲庫中沒有符合的歌曲。
+        </UiHint>
+
+        <PerformanceSessionPlanList
+          v-else-if="hasItems"
+          class="performance-session-workspace__plan-list"
+          :items="state.plan.items"
+          :tracks="tracks"
+          :selected-item-id="state.plan.reviewCursorItemId"
+          :saving="state.isSaving"
+          @select="selectForReview"
+          @move="moveItem"
+          @duplicate="duplicateItem"
+          @remove="confirmRemoveItem"
+        />
 
         <UiHint v-else padded center>
           搜尋曲庫加入第一首待唱曲目；其他來源可用「新增手動項目」。
@@ -383,6 +380,8 @@ async function prepareSelectedCollection() {
 
 <style scoped>
 .performance-session-workspace {
+  container-name: performance-session-workspace;
+  container-type: inline-size;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -405,7 +404,7 @@ async function prepareSelectedCollection() {
 .performance-session-workspace__grid {
   display: grid;
   flex: 1;
-  grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 0.8fr);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   min-height: 0;
   overflow: hidden;
 }
@@ -444,12 +443,18 @@ async function prepareSelectedCollection() {
   min-height: 0;
 }
 
-.performance-session-workspace__search-results {
+.performance-session-workspace__plan-list {
+  flex: 1;
+  min-height: 0;
+}
+
+.performance-session-workspace__list-scroll
+  :deep(.performance-session-workspace__search-results) {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-1);
+  gap: var(--ui-track-list-gap);
   margin: 0;
-  padding: 0 var(--ui-scrollbar-lane-size) 0 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -459,7 +464,7 @@ async function prepareSelectedCollection() {
   margin: var(--ui-space-3) var(--ui-space-3) 0;
 }
 
-@media (max-width: 780px) {
+@container performance-session-workspace (max-width: 48.75rem) {
   .performance-session-workspace__grid {
     display: block;
   }

@@ -152,11 +152,18 @@ plan list＋focused review editor；窄視窗改為可返回
 清單的單欄 drill-in，不把兩欄壓到不可讀。
 
 Workspace 填滿 `AppFolderPage` workspace body 的可用高度；header 與 aggregate state 固定，中間 grid 使用剩餘高度。
-左 pane 的 library／manual composer 固定在上方，只有搜尋結果或 plan list 捲動；右 pane 只有 details
-body 捲動，必要 action footer 固定。窄視窗一次只顯示 list 或 details，返回動作不隨內容捲走。
+左 pane 的 library／manual composer 固定在上方，搜尋結果與 plan list 都以 `UiScrollLayout` 包住既有
+`UiTrackRow`，只有各自的內容捲動；右 pane 只有 details body 捲動，必要 action footer固定。Workspace
+以自己的 named inline-size container 決定雙 pane 或 list／details drill-in，不使用 viewport media query；
+窄 container 一次只顯示 list 或 details，返回動作不隨內容捲走。
 
-Plan list 顯示順序、session label 與只有在需要決策時才出現的 manual／warning state。每列以單一
-`…` 入口收納上移、下移、duplicate 與 remove，避免窄欄位被四顆等權重圖示撐成第二列；
+Plan list 以語意 `ol`／`li` 保存 occurrence 順序，並重用 `UiTrackRow` 的 artwork、identity、duration、
+selection surface、focus 與 overflow anatomy。List 以 `trackId` 從 workspace 已持有的 enriched canonical
+tracks 取得 thumbnail 與 duration，再以 session `displayTitle`／`displayArtist` 覆寫本場輸出文字；
+manual／unavailable item 使用穩定 fallback identity。Lead slot 顯示 occurrence 順序，trail slot只放需要
+決策時才出現的狀態與單一 `…` 入口。Render／edit key 必須保持 `itemId`，因為同一 track 可在場次中
+重複；不得直接套用以 canonical track id、sort、playback 與 column preferences 為契約的 Library
+`TrackTable`。選單收納上移、下移、duplicate 與 remove，避免窄欄位被四顆等權重圖示撐成第二列；
 `Alt + ArrowUp／ArrowDown` 保留不開選單的鍵盤排序。移除只刪除這個 occurrence，必須先明示不會
 刪除曲庫歌曲。Focused details 顯示：
 
