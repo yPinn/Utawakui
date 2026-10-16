@@ -1,0 +1,141 @@
+'use strict';
+
+// Opt-in integration suite for the independent evaluation dependency tree.
+// First npm ci --ignore-scripts --prefix scripts/lyrics-provider-netease-runtime,
+// then node --test scripts/lyrics-provider-netease-runtime/dependency-security.test.cjs.
+// Never imports the provider entry point or contacts a real provider.
+const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
+const { once } = require('node:events');
+const { createRequire } = require('node:module');
+const net = require('node:net');
+const { test } = require('node:test');
+const { getUri } = require('get-uri');
+const proxyaddr = require('proxy-addr');
+
+test('proxy trust rejects the malformed mapped subnet without breaking IPv4', () => {
+  assert.equal(proxyaddr.compile('::ffff:10.0.0.0/8')('203.0.113.10'), false);
+  assert.equal(proxyaddr.compile('10.0.0.0/8')('10.1.2.3'), true);
+});
+
+test('FTP parser rejects the long malformed line within a process deadline', () => {
+  // Resolve the actual client used by get-uri, even if npm nests it in future.
+  const getUriRequire = createRequire(require.resolve('get-uri'));
+  const parserPath = getUriRequire.resolve('basic-ftp/dist/parseList');
+  const result = spawnSync(
+    process.execPath,
+    [
+      '-e',
+      `
+        const assert = require('node:assert/strict');
+        const { parseList } = require(${JSON.stringify(parserPath)});
+        const bad = '-rw-r--r-- 1 ' + 'a '.repeat(65536) + '!';
+        const valid = '-rw-r--r-- 1 owner group 42 Jan 1 2026 file.txt';
+        const files = parseList(bad + '\\r\\n' + valid + '\\r\\n');
+        assert.deepEqual(files.map(file => [file.name, file.size]), [['file.txt', 42]]);
+      `,
+    ],
+    { timeout: 3000, encoding: 'utf8', windowsHide: true },
+  );
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+async function checkTransfer(fallback) {
+  const content = 'function FindProxyForURL() { return "DIRECT"; }';
+  const commands = [];
+  const servers = new Set();
+  const sockets = new Set();
+  const server = net.createServer((socket) => {
+    sockets.add(socket);
+    socket.on('error', () => {});
+    let buffer = '';
+    let dataSocket;
+    let transferContent;
+    const transfer = () => {
+      if (!dataSocket || transferContent === undefined) return;
+      dataSocket.end(transferContent, () =>
+        socket.write('226 Transfer complete\r\n'),
+      );
+      transferContent = undefined;
+    };
+    socket.write('220 Test FTP ready\r\n');
+    socket.on('data', (data) => {
+      buffer += data.toString();
+      let index;
+      while ((index = buffer.indexOf('\r\n')) >= 0) {
+        const line = buffer.slice(0, index);
+        buffer = buffer.slice(index + 2);
+        const command = line.split(' ')[0];
+        commands.push(command);
+        if (command === 'USER') socket.write('331 Password required\r\n');
+        else if (command === 'PASS') socket.write('230 Logged in\r\n');
+        else if (command === 'FEAT') socket.write('211 No features\r\n');
+        else if (command === 'MDTM') {
+          socket.write(fallback ? '500 No MDTM\r\n' : '213 20260101000000\r\n');
+        } else if (command === 'EPSV') {
+          dataSocket = undefined;
+          const dataServer = net.createServer((connection) => {
+            dataSocket = connection;
+            sockets.add(connection);
+            connection.on('error', () => {});
+            transfer();
+          });
+          servers.add(dataServer);
+          dataServer.listen(0, '127.0.0.1', () => {
+            socket.write(
+              `229 Entering Extended Passive Mode (|||${dataServer.address().port}|)\r\n`,
+            );
+          });
+        } else if (command === 'LIST' || command === 'MLSD') {
+          socket.write('150 Listing\r\n');
+          transferContent = `type=file;size=${content.length};modify=20260101000000; file.pac\r\n`;
+          transfer();
+        } else if (command === 'RETR') {
+          socket.write('150 Download\r\n');
+          transferContent = content;
+          transfer();
+        } else if (command === 'QUIT') socket.end('221 Goodbye\r\n');
+        else socket.write('200 OK\r\n');
+      }
+    });
+  });
+  servers.add(server);
+  try {
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const stream = await getUri(
+      `ftp://127.0.0.1:${server.address().port}/file.pac`,
+      { timeout: 2000 },
+    );
+    let result = '';
+    for await (const chunk of stream) result += chunk.toString();
+    assert.equal(result, content);
+    assert.equal(stream.lastModified.toISOString(), '2026-01-01T00:00:00.000Z');
+    assert.ok(commands.includes('RETR'));
+    if (fallback) {
+      assert.ok(commands.includes('LIST') || commands.includes('MLSD'));
+    }
+  } finally {
+    for (const socket of sockets) socket.destroy();
+    for (const item of servers) {
+      await new Promise((resolve) => item.close(resolve));
+    }
+  }
+}
+
+test(
+  'get-uri transfers bytes and MDTM using the patched FTP client',
+  { timeout: 10000 },
+  async () => {
+    await checkTransfer(false);
+  },
+);
+
+test(
+  'get-uri preserves its listing fallback with the patched FTP client',
+  { timeout: 10000 },
+  async () => {
+    await checkTransfer(true);
+  },
+);

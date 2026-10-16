@@ -151,6 +151,33 @@ describe('NetEase evaluation runtime contract', () => {
     }
   });
 
+  it('locks the get-uri FTP client to the patched parser without changing the provider profile', () => {
+    const template = JSON.parse(
+      fs.readFileSync(
+        'scripts/lyrics-provider-netease-runtime/package.json',
+        'utf8',
+      ),
+    );
+    const lock = JSON.parse(
+      fs.readFileSync(
+        'scripts/lyrics-provider-netease-runtime/package-lock.json',
+        'utf8',
+      ),
+    );
+    expect(template.overrides?.['get-uri']?.['basic-ftp']).toBe('6.2.3');
+    const entries = Object.entries(lock.packages).filter(([packagePath]) =>
+      packagePath.endsWith('node_modules/basic-ftp'),
+    );
+
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [packagePath, metadata] of entries) {
+      expect(satisfies(metadata.version, '>=6.2.1 <7'), packagePath).toBe(true);
+    }
+    expect(validateNeteaseRuntimeLock(lock).packageVersion).toBe(
+      NETEASE_RUNTIME_PROFILE.packageVersion,
+    );
+  });
+
   it('derives one ignored runtime root separate from node_modules and application data', () => {
     const projectRoot = makeTemporaryRoot();
     const paths = createNeteaseRuntimePaths(projectRoot);

@@ -4,5 +4,10 @@
   "private": true,
   "dependencies": {
     "@neteasecloudmusicapienhanced/api": "4.40.1"
+  },
+  "overrides": {
+    "get-uri": {
+      "basic-ftp": "6.2.3"
+    }
   }
 }
