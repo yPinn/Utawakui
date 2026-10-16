@@ -575,7 +575,7 @@ function stateProps(state, variant) {
   overflow: hidden;
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-type-caption-size);
   line-height: var(--ui-line-height-caption);
   text-overflow: ellipsis;
   white-space: nowrap;

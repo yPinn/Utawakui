@@ -314,7 +314,7 @@ const SELECT_OPTIONS = [
 .demo-validation-space > header span,
 .demo-validation-long-message > span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-type-caption-size);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-caption);
   letter-spacing: 0.04em;
@@ -494,7 +494,7 @@ const SELECT_OPTIONS = [
 
 .demo-validation-replacement__arrow span {
   color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-type-caption-size);
   line-height: var(--ui-line-height-caption);
 }
 

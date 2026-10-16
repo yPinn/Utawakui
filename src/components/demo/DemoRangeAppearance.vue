@@ -783,7 +783,7 @@ function candidatePreviewProps(layer, formatValue) {
 .demo-range-stops__specimen > p {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-type-caption-size);
   line-height: var(--ui-line-height-caption);
   overflow-wrap: anywhere;
 }

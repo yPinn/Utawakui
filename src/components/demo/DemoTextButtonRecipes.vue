@@ -150,7 +150,7 @@ defineProps({
 .demo-text-button-recipe-list article > header > code {
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-type-caption-size);
   line-height: var(--ui-line-height-caption);
   text-align: end;
 }

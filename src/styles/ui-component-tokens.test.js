@@ -207,12 +207,8 @@ describe('shared UI component token contract', () => {
     expect(values.get('--ui-player-leading-padding-inline')).toContain(
       'var(--ui-shell-leading-artwork-centerline) - 1.5rem',
     );
-    expect(values.get('--ui-inspector-width')).toBe(
-      'var(--ui-right-dock-width)',
-    );
-    expect(values.get('--ui-inspector-rail-width')).toBe(
-      'var(--ui-right-dock-rail-width)',
-    );
+    expect(values.has('--ui-inspector-width')).toBe(false);
+    expect(values.has('--ui-inspector-rail-width')).toBe(false);
   });
 
   it('defines a complete field component layer with valid aliases', () => {

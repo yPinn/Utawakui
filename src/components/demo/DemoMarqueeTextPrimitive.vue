@@ -343,7 +343,7 @@ const CONTENT_ITEMS = [
 }
 
 [data-marquee-focus-owner] {
-  min-height: var(--ui-control-height-compact, 2rem);
+  min-height: var(--ui-control-height);
   display: block;
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);

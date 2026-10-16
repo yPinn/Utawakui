@@ -78,11 +78,9 @@ describe('z-index layer contract', () => {
       'sticky',
       'floating',
       'popover',
-      'backdrop',
       'dialog',
       'toast',
       'tooltip',
-      'drag',
     ].map((name) => value(`--ui-z-${name}`));
 
     expect(local).toEqual([...local].sort((a, b) => a - b));

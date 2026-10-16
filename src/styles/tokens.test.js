@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(551);
+    expect(uniqueNames.size).toBe(547);
     expect(uniqueNames).toContain('--ui-action-menu-max-block-size');
     expect(uniqueNames).toContain('--ui-textarea-font-size');
     expect(uniqueNames).toContain('--ui-textarea-font-weight');
@@ -397,7 +397,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-field-bg-hover-on-raised');
     expect(uniqueNames).toContain('--ui-field-bg-readonly-on-raised');
     expect(uniqueNames).toContain('--ui-field-hex-value-inline-size');
-    expect(uniqueNames).toContain('--ui-inspector-width');
+    expect(uniqueNames).not.toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-right-dock-width');
     expect(uniqueNames).toContain('--ui-right-dock-rail-width');
     expect(uniqueNames).toContain('--ui-right-dock-content-inset');
@@ -415,7 +415,7 @@ describe('Studio Library workspace prototype isolation', () => {
     );
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
-    expect(uniqueNames).toContain('--ui-inspector-rail-width');
+    expect(uniqueNames).not.toContain('--ui-inspector-rail-width');
     expect(uniqueNames).toContain('--ui-opacity-dragging');
     expect(uniqueNames).toContain('--ui-scrollbar-lane-size');
     expect(uniqueNames).toContain('--ui-scrollbar-thumb-inset');
@@ -554,13 +554,11 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(tokens).toContain('--ui-folder-tab-cover-size: var(--ui-space-2);');
   });
 
-  it('keeps the desktop Inspector bay aligned with the current draggable maximum', () => {
+  it('keeps the desktop Right Dock bay at the current draggable maximum', () => {
     const candidate = tokenBlock(rootTokenSelector);
 
     expect(candidate['--ui-right-dock-width']).toBe('17.5rem');
-    expect(candidate['--ui-inspector-width']).toBe(
-      'var(--ui-right-dock-width)',
-    );
+    expect(candidate['--ui-inspector-width']).toBeUndefined();
   });
 
   it('keeps one 8px perimeter around every shell surface', () => {

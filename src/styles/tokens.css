@@ -246,8 +246,6 @@
   );
   --ui-right-dock-sticky-blur: 0.75rem;
   --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
-  --ui-inspector-width: var(--ui-right-dock-width);
-  --ui-inspector-rail-width: var(--ui-right-dock-rail-width);
   --ui-shell-gutter: 0.75rem;
   --ui-player-padding-block-end: var(--ui-shell-content-inset-block);
   --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
@@ -474,11 +472,9 @@
   --ui-z-sticky: 10;
   --ui-z-floating: 15;
   --ui-z-popover: 20;
-  --ui-z-backdrop: 30;
   --ui-z-dialog: 40;
   --ui-z-toast: 50;
   --ui-z-tooltip: 60;
-  --ui-z-drag: 70;
 
   /* Local layers: valid only inside an owner that isolates its stacking context. */
   --ui-layer-behind: -1;
