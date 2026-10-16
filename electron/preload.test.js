@@ -349,6 +349,16 @@ describe('main preload bridge', () => {
     });
   });
 
+  it('relays dark theme and explicitly unmuted audio at startup', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui', [
+      '--ui-theme=dark',
+      '--performance-muted=0',
+    ]);
+
+    expect(bridge.initialUiTheme).toBe('dark');
+    expect(bridge.initialAudioPreferences.performanceMuted).toBe(false);
+  });
+
   it('forwards only the bounded density payload from the fixed event channel', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     const callback = vi.fn();
@@ -745,6 +755,71 @@ describe('main preload bridge', () => {
     );
   });
 
+  it('bounds folder note and photo text without forwarding private fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const page = { kind: 'playlist', id: 'playlist-1' };
+
+    await bridge.createFolderPageNote({
+      page,
+      title: 'Note',
+      text: 'Text',
+      paper: 'p'.repeat(17),
+      privatePath: 'private',
+    });
+    await bridge.updateFolderPagePhotoText({
+      page,
+      key: 'photo:asset-1',
+      label: 'Photo',
+      captionTitle: 't'.repeat(81),
+      caption: 'c'.repeat(2001),
+      captionPaper: 'p'.repeat(17),
+      privatePath: 'private',
+    });
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      [
+        'folder-page-objects:create-note',
+        { page, title: 'Note', text: 'Text', paper: 'p'.repeat(16) },
+      ],
+      [
+        'folder-page-objects:update-photo-text',
+        {
+          page,
+          key: 'photo:asset-1',
+          label: 'Photo',
+          captionTitle: 't'.repeat(80),
+          caption: 'c'.repeat(2000),
+          captionPaper: 'p'.repeat(16),
+        },
+      ],
+    ]);
+  });
+
+  it('shapes an absent folder layout entry without inventing optional fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const page = { kind: 'playlist', id: 'playlist-1' };
+
+    await bridge.saveFolderPageLayout({ page, entries: [null] });
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledExactlyOnceWith(
+      'folder-page-objects:save-layout',
+      {
+        page,
+        entries: [
+          {
+            key: undefined,
+            placement: {
+              region: undefined,
+              anchor: { x: undefined, y: undefined },
+            },
+            pinned: undefined,
+            order: undefined,
+          },
+        ],
+      },
+    );
+  });
+
   it('shapes close decisions and forwards only fixed shell navigation events', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     const requestCallback = vi.fn();
@@ -831,6 +906,100 @@ describe('main preload bridge', () => {
     );
   });
 
+  it.each([
+    ['onWindowCloseRequest', 'window-close:request'],
+    ['onWindowCloseDismiss', 'window-close:dismiss'],
+  ])(
+    'filters malformed close events and cleans up %s',
+    async (method, channel) => {
+      const bridge = await loadBridge('./preload.js', 'Utawakui');
+      const callback = vi.fn();
+      const unsubscribe = bridge[method](callback);
+      const listener = electron.ipcRenderer.on.mock.calls.find(
+        ([name]) => name === channel,
+      )[1];
+      const requestId = '11111111-1111-4111-8111-111111111111';
+
+      for (const payload of [
+        undefined,
+        null,
+        'request',
+        [],
+        {},
+        { requestId: 42 },
+        { requestId: 'invalid' },
+        { requestId, activeWork: 'unknown' },
+        { requestId, privatePath: 'private' },
+        { requestId, activeWork: 'separation', privatePath: 'private' },
+      ]) {
+        listener({ sender: 'private' }, payload);
+      }
+      expect(callback).not.toHaveBeenCalled();
+
+      const payload = { requestId, activeWork: 'separation' };
+      listener({ sender: 'private' }, payload);
+      expect(callback.mock.calls).toEqual([[payload]]);
+
+      unsubscribe();
+      expect(
+        electron.ipcRenderer.removeListener,
+      ).toHaveBeenCalledExactlyOnceWith(channel, listener);
+    },
+  );
+
+  it('rejects malformed close errors but accepts the exact public text limits', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const callback = vi.fn();
+    const unsubscribe = bridge.onWindowCloseError(callback);
+    const listener = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'window-close:error',
+    )[1];
+
+    for (const payload of [
+      undefined,
+      null,
+      'error',
+      [],
+      {},
+      { title: 'Error' },
+      { title: 'Error', message: 'Message', privatePath: 'private' },
+      { title: 42, message: 'Message' },
+      { title: '', message: 'Message' },
+      { title: 't'.repeat(121), message: 'Message' },
+      { title: 'Error', message: 42 },
+      { title: 'Error', message: '' },
+      { title: 'Error', message: 'm'.repeat(501) },
+    ]) {
+      listener({ sender: 'private' }, payload);
+    }
+    expect(callback).not.toHaveBeenCalled();
+
+    const payload = { title: 't'.repeat(120), message: 'm'.repeat(500) };
+    listener({ sender: 'private' }, payload);
+    expect(callback.mock.calls).toEqual([[payload]]);
+
+    unsubscribe();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledExactlyOnceWith(
+      'window-close:error',
+      listener,
+    );
+  });
+
+  it.each([undefined, null])(
+    'does not invent a missing close decision (%s)',
+    async (decision) => {
+      const bridge = await loadBridge('./preload.js', 'Utawakui');
+      const requestId = '11111111-1111-4111-8111-111111111111';
+
+      await bridge.respondWindowCloseRequest(requestId, decision);
+
+      expect(electron.ipcRenderer.invoke).toHaveBeenCalledExactlyOnceWith(
+        'window-close:respond',
+        { requestId, action: undefined, remember: undefined },
+      );
+    },
+  );
+
   it('forwards only dependency ids and the FFmpeg source intent', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 
@@ -864,6 +1033,33 @@ describe('main preload bridge', () => {
       'library:convert-local-audio-files',
       '11111111-1111-4111-8111-111111111111',
     );
+  });
+
+  it.each([undefined, null, 42, { sessionId: 'untrusted', path: 'private' }])(
+    'never forwards a non-string conversion session id (%s)',
+    async (sessionId) => {
+      const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+      await bridge.convertLocalAudioFiles(sessionId);
+
+      expect(electron.ipcRenderer.invoke).toHaveBeenCalledExactlyOnceWith(
+        'library:convert-local-audio-files',
+        '',
+      );
+    },
+  );
+
+  it('defaults music analysis batches to non-forced while preserving an explicit force intent', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const trackIds = ['track-1'];
+
+    await bridge.startMusicStructureBatch(trackIds);
+    await bridge.startMusicStructureBatch(trackIds, true);
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['music-structure:start-batch', { trackIds, force: false }],
+      ['music-structure:start-batch', { trackIds, force: true }],
+    ]);
   });
 
   it('shapes artist organization intents without provider ids or paths', async () => {
@@ -1012,6 +1208,17 @@ describe('main preload bridge', () => {
       hasTrack: true,
       trackId: 'track-a',
     });
+  });
+
+  it('preserves null as the explicit playback resume reset intent', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    await bridge.savePlaybackResumeSnapshot(null);
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledExactlyOnceWith(
+      'playback-resume:save',
+      null,
+    );
   });
 
   it('shapes audio preferences without forwarding arbitrary config fields', async () => {
