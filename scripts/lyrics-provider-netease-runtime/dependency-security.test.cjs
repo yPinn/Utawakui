@@ -12,6 +12,52 @@ const net = require('node:net');
 const { test } = require('node:test');
 const { getUri } = require('get-uri');
 const proxyaddr = require('proxy-addr');
+const qs = require('qs');
+const { Address4, Address6 } = require('ip-address');
+
+test('query parsing and serialization preserve bounded nested form values', () => {
+  const value = { names: ['one', 'two'], filter: { enabled: 'yes' } };
+  assert.deepEqual(qs.parse(qs.stringify(value)), value);
+  assert.deepEqual(qs.parse('__proto__[polluted]=yes'), {});
+  assert.equal(Object.hasOwn(Object.prototype, 'polluted'), false);
+});
+
+test('IP subnet comparisons reject mixed families and recognize link-local IPv6', () => {
+  assert.equal(
+    new Address6('a00::1').isInSubnet(new Address4('10.0.0.0/8')),
+    false,
+  );
+  assert.equal(
+    new Address4('32.0.0.1').isInSubnet(new Address6('2000::/3')),
+    false,
+  );
+  assert.equal(
+    new Address4('10.1.2.3').isInSubnet(new Address4('10.0.0.0/8')),
+    true,
+  );
+  assert.equal(new Address6('febf::1').isLinkLocal(), true);
+});
+
+test('the pinned metadata 11 client still parses local PCM audio without network', async () => {
+  const { parseBuffer } = await import('music-metadata');
+  const audio = Buffer.alloc(60);
+  audio.write('RIFF', 0);
+  audio.writeUInt32LE(52, 4);
+  audio.write('WAVEfmt ', 8);
+  audio.writeUInt32LE(16, 16);
+  audio.writeUInt16LE(1, 20);
+  audio.writeUInt16LE(1, 22);
+  audio.writeUInt32LE(8000, 24);
+  audio.writeUInt32LE(16000, 28);
+  audio.writeUInt16LE(2, 32);
+  audio.writeUInt16LE(16, 34);
+  audio.write('data', 36);
+  audio.writeUInt32LE(16, 40);
+  const result = await parseBuffer(audio, { mimeType: 'audio/wav' });
+  assert.equal(result.format.sampleRate, 8000);
+  assert.equal(result.format.numberOfChannels, 1);
+  assert.equal(result.format.bitsPerSample, 16);
+});
 
 test('proxy trust rejects the malformed mapped subnet without breaking IPv4', () => {
   assert.equal(proxyaddr.compile('::ffff:10.0.0.0/8')('203.0.113.10'), false);
