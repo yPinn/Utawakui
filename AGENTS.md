@@ -54,7 +54,10 @@ npm run license:inventory
 npm run clean
 ```
 
-Tests are Vitest and stay next to the production file they cover. Use the recursive
+Tests are Vitest and stay next to the production file they cover. `vite.config.js`
+runs them as two projects: `unit`, then `runtime` (child-process CLIs, kuromoji and
+model runtimes, matched by `RUNTIME_TEST_PATTERNS`) with a longer timeout; add new
+process- or dictionary-bound tests to that list instead of raising the unit timeout. Use the recursive
 `electron/lib/**/*.js` coverage shape: `electron/lib/library.js` and
 `electron/lib/featureDependencies.js` are re-export barrels, while their logic lives
 in subdirectories. Browser-bound player composables need DOM and Web Audio mocks;

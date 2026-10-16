@@ -8,6 +8,18 @@ const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
 const { coveragePolicy } = require('./scripts/coveragePolicy.js');
 const devServerValues = require('./shared/devServerValues.json');
 
+// Child-process CLIs and dictionary/model runtimes run after the unit group so
+// their CPU load cannot push ordinary tests past the default timeout.
+const RUNTIME_TEST_PATTERNS = [
+  'scripts/**/*.test.mjs',
+  'electron/lib/kuromoji*.test.js',
+  'electron/lib/japaneseReading/**/*.test.js',
+  'electron/lib/vocalSeparation.test.js',
+];
+const TEST_EXCLUDE = ['coverage/**', 'dist/**', '**/node_modules/**'];
+// Istanbul instrumentation slows every test 2-3x; scale budgets, not hang checks.
+const TIMEOUT_SCALE = process.argv.includes('--coverage') ? 3 : 1;
+
 module.exports = defineConfig({
   plugins: [vue(), createOverlayReloadPlugin(__dirname)],
   // Vite clears interactive terminals when it restarts or re-optimizes. Keep the
@@ -45,17 +57,42 @@ module.exports = defineConfig({
     // job (npm ci, lint, format, build, everything) just to shake off one
     // transient test.
     retry: process.env.CI ? 1 : 0,
-    include: [
-      'electron/*.test.js',
-      'electron/lib/**/*.test.js',
-      'electron/main/**/*.test.js',
-      'overlay/**/*.test.js',
-      'scripts/**/*.test.mjs',
-      'services/**/*.test.js',
-      'shared/**/*.test.js',
-      'src/**/*.test.js',
+    // Threads start faster than forks here; the full suite has no
+    // process.chdir or native-addon test that needs a separate process.
+    pool: 'threads',
+    // Reuses transformed modules across runs; content-keyed, so edits invalidate.
+    experimental: { fsModuleCache: true },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          testTimeout: 5_000 * TIMEOUT_SCALE,
+          include: [
+            'electron/*.test.js',
+            'electron/lib/**/*.test.js',
+            'electron/main/**/*.test.js',
+            'overlay/**/*.test.js',
+            'services/**/*.test.js',
+            'shared/**/*.test.js',
+            'src/**/*.test.js',
+          ],
+          exclude: [...TEST_EXCLUDE, ...RUNTIME_TEST_PATTERNS],
+          sequence: { groupOrder: 0 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'runtime',
+          include: RUNTIME_TEST_PATTERNS,
+          exclude: TEST_EXCLUDE,
+          // Real child processes and dictionary loads; not a hang budget.
+          testTimeout: 20_000 * TIMEOUT_SCALE,
+          sequence: { groupOrder: 1 },
+        },
+      },
     ],
-    exclude: ['coverage/**', 'dist/**', '**/node_modules/**'],
     coverage: {
       // v8 (the default) double-counts electron/lib CJS files that are both
       // `import`-ed by their own test file and `require()`-d by another
