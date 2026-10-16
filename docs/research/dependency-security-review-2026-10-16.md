@@ -80,7 +80,7 @@ resuming evaluation, and provision from the reviewed template. The provisioner
 includes the lock SHA-256 in the generation identity, so a changed lock creates a
 different generation. No existing runtime generation or user data was deleted.
 
-## Remaining audit results
+## Audit results after the critical/high pass
 
 The root `npm audit --omit=dev --json` reports zero vulnerabilities in the desktop
 production dependency closure at this review time. This is an npm advisory
@@ -104,3 +104,56 @@ Moderate sprintf-js and low KaTeX findings are separate follow-up work. npm's
 propagated package totals must not be compared directly with GitHub's count of
 individual advisories. Since these changes are not pushed, GitHub alert state
 has not been updated by this review.
+
+## Moderate/low follow-up — 2026-10-16
+
+Owner subsequently authorized fixing remaining advisories with an available
+upstream patch, while retaining the unresolved node-forge and braces records and
+not performing online evaluation or pushing commits. The audit counts above are
+the earlier critical/high checkpoint; the results below supersede them.
+
+| Package        | Previous | Reviewed version | Resolution                                                                                                                                                                                                                   |
+| -------------- | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| qs             | 6.15.3   | 6.16.1           | Independent evaluation override within major 6, necessary because its Express 4 and body-parser parents request `~6.15.1`. All locked instances are checked against `>=6.16.0 <7`.                                           |
+| ip-address     | 10.5.0   | 10.7.4           | Updated within the existing socks dependency range. All instances are checked against `>=10.7.1 <11`, covering the subnet, link-local/NAT64, and oversized-diagnostic advisories.                                            |
+| music-metadata | 11.15.0  | 11.16.1          | Updated within the evaluation client's existing `^11.14.0` range; checked against `>=11.16.0 <12`. The desktop application's independent 12.2.0 pin was not changed.                                                         |
+| KaTeX          | 0.16.47  | 0.18.2           | Scoped override under micromark-extension-math in the development toolchain. The patched floor comes from [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7). No desktop runtime dependency was added. |
+
+No upstream fix is currently published for the separate moderate
+[sprintf-js advisory](https://github.com/advisories/GHSA-hp3w-g68c-fv3c): npm latest
+is still 1.1.3, and the advisory lists all versions through 1.1.3 as affected.
+Its development-only chain is electron-builder → app-builder-lib → @electron/get
+→ global-agent → roarr → sprintf-js. No attempt was made to hide the finding,
+replace the logger, or downgrade the packaging toolchain. This is a third
+unresolved advisory alongside node-forge and braces, not a patched issue.
+
+Verification adds three evaluation version-floor tests that failed against the
+old lock, then passed after the three targeted updates. The opt-in suite now has
+seven passing tests, including normal nested query roundtrips, prototype-key
+rejection, mixed-family subnet rejection with valid same-family controls,
+link-local IPv6 recognition, and in-memory PCM metadata parsing. No real song
+or provider request was used. Existing proxy and FTP regressions remain covered.
+
+KaTeX was verified with both a failing version-floor test and a failing inherited
+trust behavior test before updating. After updating, the same behavior test
+rejects inherited trust while preserving an explicit own trust option; inline
+and display Markdown math also render normally. The test uses an options
+prototype, never mutates Object.prototype, and does not insert generated HTML
+into a browser.
+
+Post-update audit: the independent evaluation tree has 0 critical, 2 high package
+nodes from the single node-forge advisory, and no moderate or low findings. The
+root tree has 5 high and 8 moderate package nodes from the unpatched braces and
+sprintf-js advisories, and no low findings. Desktop production audit remains
+zero. Package-node counts include propagated parent findings; these are not
+counts of independent advisories. GitHub alerts remain unchanged until a later
+authorized push and rescan.
+
+Final follow-up verification: 779 Vitest files passed, 7,673 tests passed and 1
+existing test remained skipped; the seven opt-in integration tests also passed.
+Coverage is unchanged at 88.99% statements, 81.31% branches, 92.04% functions,
+and 91.41% lines. All original coverage ratchets passed without policy changes.
+ESLint, Markdownlint (116 files), Prettier, production build, packaging contracts,
+and diff whitespace checks passed. The build retains its existing large-chunk
+warning. No installer build or live Electron acceptance run was claimed for
+these evaluation/development-only dependency updates.
