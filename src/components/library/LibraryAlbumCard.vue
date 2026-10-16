@@ -1,10 +1,11 @@
 <script setup>
+import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 
-const ALBUM_ARTWORK_SIZE = 136;
+const ALBUM_ARTWORK_SIZE = ARTWORK_SIZE.xl;
 
 const props = defineProps({
   album: { type: Object, required: true },

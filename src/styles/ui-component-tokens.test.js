@@ -197,7 +197,9 @@ describe('shared UI component token contract', () => {
     expect(values.get('--ui-right-dock-width')).toBe('17.5rem');
     expect(values.get('--ui-right-dock-rail-width')).toBe('2.5rem');
     expect(values.get('--ui-right-dock-track-row-min-height')).toBe('3.25rem');
-    expect(values.get('--ui-right-dock-track-artwork-size')).toBe('2.5rem');
+    expect(values.get('--ui-right-dock-track-artwork-size')).toBe(
+      'var(--ui-track-artwork-size-standard)',
+    );
     expect(values.get('--ui-sidebar-row-min-height')).toBe('3.25rem');
     expect(values.get('--ui-sidebar-artwork-size')).toBe(
       'var(--ui-track-artwork-size-standard)',

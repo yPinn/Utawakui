@@ -558,6 +558,24 @@ Primary control heights:
 | Track row                  | `3.25rem` (52 CSS px)           | Enough for title + artist and compact artwork.             |
 | Player bar                 | `4.75rem` (76 CSS px)           | Preserves persistent transport and artwork.                |
 
+Artwork edge ramp (`--ui-artwork-size-*`, mirrored in pixels by `ARTWORK_SIZE`
+in `src/constants/ui.js` for component `size` props). Role tokens such as
+`--ui-track-artwork-size-*`, `--ui-bgm-player-artwork-size` and
+`--ui-folder-dossier-artwork-size` alias a step; new artwork surfaces pick a
+step instead of a raw length.
+
+| Step   | Size                  | Current roles                                     |
+| ------ | --------------------- | ------------------------------------------------- |
+| `2xs`  | `2.25rem` (36 CSS px) | Compact-density track rows.                       |
+| `xs`   | `2.5rem` (40 CSS px)  | Standard rows, Right Dock, sidebar, preview peek. |
+| `sm`   | `3rem` (48 CSS px)    | Prominent rows, player bar, artwork search.       |
+| `md`   | `4rem` (64 CSS px)    | Track preview thumbnails.                         |
+| `lg`   | `5rem` (80 CSS px)    | BGM player, narrow track editor artwork.          |
+| `xl`   | `8.5rem` (136 px)     | Album cards and Folder dossier.                   |
+| `2xl`  | `10rem` (160 CSS px)  | Playlist details and Folder editor previews.      |
+| `3xl`  | `14rem` (224 CSS px)  | Track editor artwork column minimum.              |
+| `hero` | `20rem` (320 CSS px)  | Track preview overlay.                            |
+
 These CSS-pixel equivalents assume a `16px` root and 100% Chromium zoom. Treat the rem values as implementation targets when refreshing tokens and components. A future touch-first surface can introduce touch-specific component tokens without shrinking the desktop hard floors.
 
 ### Unit Rules

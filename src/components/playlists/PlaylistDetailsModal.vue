@@ -5,6 +5,7 @@
 // round-trip. Album descriptions stay read-only here (source-normalized
 // metadata, not user-authored; see LibraryEntityDossier.vue).
 import { computed, shallowRef, watch } from 'vue';
+import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -16,7 +17,7 @@ import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 
-const PLAYLIST_DETAILS_COVER_SIZE = 160;
+const PLAYLIST_DETAILS_COVER_SIZE = ARTWORK_SIZE['2xl'];
 const playlistDetailsStyle = Object.freeze({
   '--playlist-details-cover-size': `${PLAYLIST_DETAILS_COVER_SIZE}px`,
 });

@@ -324,7 +324,10 @@ watch(searchOptionsOpen, (open) => {
 .track-metadata {
   min-height: 100%;
   display: grid;
-  grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);
+  grid-template-columns: minmax(var(--ui-artwork-size-3xl), 15rem) minmax(
+      0,
+      1fr
+    );
   align-items: start;
   gap: var(--ui-space-4);
 }

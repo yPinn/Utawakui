@@ -2,6 +2,7 @@
 // Creates or edits one Folder note. Content is drafted locally and committed
 // only on Save, so an overlapping note can never be edited by a stray click.
 import { computed, shallowRef, watch } from 'vue';
+import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { Palette } from '../../icons/index.js';
 import {
   NOTE_PAPERS,
@@ -19,7 +20,7 @@ import UiTextField from '../ui/UiTextField.vue';
 const NOTE_TITLE_MAX_LENGTH = 80;
 const NOTE_TEXT_MAX_LENGTH = 2000;
 // Matches the playlist details cover so both editors share one anatomy.
-const NOTE_PREVIEW_SIZE = 160;
+const NOTE_PREVIEW_SIZE = ARTWORK_SIZE['2xl'];
 
 const props = defineProps({
   open: { type: Boolean, default: false },

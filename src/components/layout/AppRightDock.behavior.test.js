@@ -282,7 +282,7 @@ describe('AppRightDock', () => {
         '--ui-right-dock-track-row-min-height: 3.25rem;',
       );
       expect(tokenSource).toContain(
-        '--ui-right-dock-track-artwork-size: 2.5rem;',
+        '--ui-right-dock-track-artwork-size: var(--ui-track-artwork-size-standard);',
       );
       expect(tokenSource).toContain(
         '--ui-right-dock-track-row-padding-inline: var(--ui-space-1);',

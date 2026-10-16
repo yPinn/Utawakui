@@ -22,7 +22,9 @@
   --ui-output-template-thumb-title-font-size: 0.75rem; /* thumbnail-only label */
   --ui-output-template-thumb-caption-font-size: 0.625rem; /* secondary compact preview cue */
   --ui-output-template-thumb-content-width: 86%; /* optically centered comparison composition */
-  --ui-output-template-thumb-artwork-size: 2.5rem; /* balances artwork at the tile minimum */
+  --ui-output-template-thumb-artwork-size: var(
+    --ui-artwork-size-xs
+  ); /* balances artwork at the tile minimum */
   --ui-output-template-thumb-content-padding: var(--ui-space-2);
   --ui-output-template-thumb-tight-gap: var(--ui-space-1);
   --ui-output-template-thumb-group-gap: var(--ui-space-2);

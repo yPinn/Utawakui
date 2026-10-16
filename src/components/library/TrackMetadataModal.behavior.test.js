@@ -50,7 +50,7 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).toMatch(/\sfixed-height(?:\s|>)/u);
     expect(modalSource).not.toContain(':fixed-height="artworkSearchOpen"');
     expect(modalSource).toMatch(
-      /grid-template-columns:\s*minmax\([^;]+\)\s+minmax\(0,\s*1fr\)/u,
+      /grid-template-columns:\s*minmax\(var\(--ui-artwork-size-3xl\),\s*15rem\)\s+minmax\(\s*0,\s*1fr\s*\)/u,
     );
     expect(modalSource).toMatch(
       /\.track-metadata__preview\s*\{[^}]*position:\s*sticky/msu,

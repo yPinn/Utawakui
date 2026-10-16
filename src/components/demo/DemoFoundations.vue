@@ -7,6 +7,7 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoArtworkRamp from './DemoArtworkRamp.vue';
 import DemoCoreMinimums from './DemoCoreMinimums.vue';
 import DemoDensity from './DemoDensity.vue';
 import DemoScrollbarAppearance from './DemoScrollbarAppearance.vue';
@@ -173,6 +174,8 @@ const SYSTEM_COLOR_SWATCHES = [
       <DemoCoreMinimums v-else-if="section.key === 'core-minimums'" />
 
       <DemoDensity v-else-if="section.key === 'density'" />
+
+      <DemoArtworkRamp v-else-if="section.key === 'artwork-ramp'" />
 
       <DemoScrollbarAppearance v-else-if="section.key === 'scrollbar'" />
 

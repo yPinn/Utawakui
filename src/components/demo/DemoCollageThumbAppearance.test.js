@@ -360,7 +360,7 @@ describe('DemoCollageThumbAppearance', () => {
     }
     expect(candidateSource).not.toMatch(/minWidth|maxWidth|density/u);
     expect(uiConstantsSource).toContain(
-      'export const PLAYLIST_ROW_THUMB_SIZE = 40;',
+      'export const PLAYLIST_ROW_THUMB_SIZE = ARTWORK_SIZE.xs;',
     );
     expect(sidebarRowSource).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
     expect(detailsModalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
@@ -368,7 +368,7 @@ describe('DemoCollageThumbAppearance', () => {
       ':size="FOLDER_DOSSIER_ARTWORK_SIZE"',
     );
     expect(uiConstantsSource).toContain(
-      'export const FOLDER_DOSSIER_ARTWORK_SIZE = 136;',
+      'export const FOLDER_DOSSIER_ARTWORK_SIZE = ARTWORK_SIZE.xl;',
     );
     // F8 retains the reviewed 280px comparison specimen. Playback Info no
     // longer repeats a source cover block; the Artist preview keeps its

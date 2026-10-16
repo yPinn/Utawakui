@@ -195,19 +195,21 @@ describe('DemoTrackThumbAppearance', () => {
     expect(tokenSource).not.toContain('--ui-queue-track-thumb-size');
     expect(playerArtworkSource).toContain(':size="PLAYER_BAR_ARTWORK_SIZE"');
     expect(uiConstantsSource).toContain(
-      'export const PLAYER_BAR_ARTWORK_SIZE = 48;',
+      'export const PLAYER_BAR_ARTWORK_SIZE = ARTWORK_SIZE.sm;',
     );
-    expect(tokenSource).toContain('--ui-track-artwork-size-prominent: 3rem;');
+    expect(tokenSource).toContain(
+      '--ui-track-artwork-size-prominent: var(--ui-artwork-size-sm);',
+    );
     expect(playerBarSource).toContain('height: var(--ui-player-bar-height);');
     expect(tokenSource).toContain('--ui-player-bar-height: 4.75rem;');
     expect(metadataPreviewSource).toContain(
       'size="var(--track-metadata-preview-size)"',
     );
     expect(metadataPreviewSource).toContain(
-      '--track-metadata-preview-size: 13rem;',
+      '--track-metadata-preview-size: var(--ui-artwork-size-3xl);',
     );
     expect(metadataSource).toContain(
-      'grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);',
+      'minmax(var(--ui-artwork-size-3xl), 15rem)',
     );
   });
   it('keeps visible specimen copy concise and free of background implementation terms', async () => {

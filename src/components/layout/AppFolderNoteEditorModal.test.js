@@ -68,7 +68,7 @@ describe('AppFolderNoteEditorModal', () => {
     expect(rule('.app-folder-note-editor__fields')).toContain(
       'min-block-size: var(--app-folder-note-editor-preview-size);',
     );
-    expect(source).toContain('const NOTE_PREVIEW_SIZE = 160;');
+    expect(source).toContain("const NOTE_PREVIEW_SIZE = ARTWORK_SIZE['2xl'];");
   });
 
   it('commits trimmed content only on Save', () => {

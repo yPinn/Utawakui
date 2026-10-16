@@ -136,7 +136,7 @@ function handleRadioKeydown(event, index) {
 
 <style scoped>
 .artwork-results {
-  --artwork-result-thumb-size: 3rem;
+  --artwork-result-thumb-size: var(--ui-artwork-size-sm);
 
   min-width: 0;
   border-block: var(--ui-border-width) solid var(--ui-color-border);

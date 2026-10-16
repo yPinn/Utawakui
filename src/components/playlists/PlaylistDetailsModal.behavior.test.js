@@ -32,10 +32,12 @@ describe('PlaylistDetailsModal component contract', () => {
   });
 
   it('keeps one feature-owned cover size source and semantic content spacing', () => {
-    expect(modalSource).toContain('const PLAYLIST_DETAILS_COVER_SIZE = 160;');
+    expect(modalSource).toContain(
+      "const PLAYLIST_DETAILS_COVER_SIZE = ARTWORK_SIZE['2xl'];",
+    );
     expect(modalSource).toContain(':size="PLAYLIST_DETAILS_COVER_SIZE"');
     expect(modalSource).toContain('--playlist-details-cover-size');
-    expect(modalSource.match(/\b160\b/gu)).toHaveLength(1);
+    expect(modalSource).not.toMatch(/\b160\b/u);
     expect(modalSource).toMatch(
       /\.playlist-details\s*\{[\s\S]*?gap:\s*var\(--ui-modal-section-gap\);/u,
     );

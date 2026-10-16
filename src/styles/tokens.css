@@ -165,10 +165,20 @@
   --ui-track-row-min-height: 3.25rem;
   --ui-track-row-compact-min-height: 2.25rem;
   --ui-sidebar-row-min-height: 3.25rem;
-  --ui-track-artwork-size-dense: 2.25rem;
-  --ui-track-artwork-size-standard: 2.5rem;
-  --ui-track-artwork-size-prominent: 3rem;
-  --ui-track-artwork-size-preview: 4rem;
+  /* Artwork edge ramp; ARTWORK_SIZE in src/constants/ui.js mirrors it in px. */
+  --ui-artwork-size-2xs: 2.25rem;
+  --ui-artwork-size-xs: 2.5rem;
+  --ui-artwork-size-sm: 3rem;
+  --ui-artwork-size-md: 4rem;
+  --ui-artwork-size-lg: 5rem;
+  --ui-artwork-size-xl: 8.5rem;
+  --ui-artwork-size-2xl: 10rem;
+  --ui-artwork-size-3xl: 14rem;
+  --ui-artwork-size-hero: 20rem;
+  --ui-track-artwork-size-dense: var(--ui-artwork-size-2xs);
+  --ui-track-artwork-size-standard: var(--ui-artwork-size-xs);
+  --ui-track-artwork-size-prominent: var(--ui-artwork-size-sm);
+  --ui-track-artwork-size-preview: var(--ui-artwork-size-md);
   --ui-track-artwork-size: var(--ui-track-artwork-size-standard);
   --ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);
   --ui-list-header-height: 2.25rem;
@@ -223,7 +233,7 @@
   --ui-right-dock-section-surface-padding: var(--ui-space-3);
   --ui-right-dock-section-surface-radius: var(--ui-radius-lg);
   --ui-right-dock-track-row-min-height: 3.25rem;
-  --ui-right-dock-track-artwork-size: 2.5rem;
+  --ui-right-dock-track-artwork-size: var(--ui-track-artwork-size-standard);
   --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
   --ui-right-dock-track-row-state-surface-outset-inline: var(
     --ui-side-panel-row-state-surface-outset-inline
@@ -314,8 +324,7 @@
   --ui-folder-document-block-end-inset: var(--ui-space-6);
   --ui-folder-section-gap: var(--ui-space-4);
   --ui-folder-heading-gap: var(--ui-space-1);
-  /* Mirrors FOLDER_DOSSIER_ARTWORK_SIZE (136px) in src/constants/ui.js. */
-  --ui-folder-dossier-artwork-size: 8.5rem;
+  --ui-folder-dossier-artwork-size: var(--ui-artwork-size-xl);
   /* Live Play button plus one block inset on each side. */
   /* Windows UI faces draw single-line ink about 0.15em above the line-box
      centre (measured across Latin, CJK and kana titles). */
@@ -751,7 +760,7 @@
   --ui-bgm-player-inline-size: 20rem;
   --ui-bgm-player-max-inline-size: 22rem;
   --ui-bgm-player-max-block-size: 28rem;
-  --ui-bgm-player-artwork-size: 5rem;
+  --ui-bgm-player-artwork-size: var(--ui-artwork-size-lg);
   --ui-bgm-player-volume-inline-size: 5rem;
   --ui-bgm-player-time-inline-size: 4.5rem;
   --ui-search-clear-hit-size: var(--ui-field-height);

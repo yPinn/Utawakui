@@ -42,6 +42,28 @@ describe('ArtworkPreviewPane behavior contract', () => {
     );
     expect(source).toContain('v-if="!searchOpen"');
     expect(source).not.toContain('收合搜尋');
+  });
+
+  it('sizes the artwork from ramp steps and edge-aligns the narrow layout', () => {
+    expect(source).toContain(
+      '--track-metadata-preview-size: var(--ui-artwork-size-3xl);',
+    );
+    expect(source).toContain(
+      '--track-metadata-preview-size: var(--ui-artwork-size-lg);',
+    );
+    expect(source).not.toMatch(/\b(7|13)rem\b/u);
+    expect(source).toMatch(
+      /grid-template-columns:\s*var\(--track-metadata-preview-size\)\s+minmax\(0, 1fr\)/u,
+    );
+    expect(source).toMatch(
+      /\.artwork-preview__thumb\s*\{[^}]*grid-row:\s*1 \/ span 2;/u,
+    );
+    expect(source).toMatch(
+      /\.artwork-preview__actions\s*\{[^}]*inline-size:\s*auto;[^}]*align-self:\s*end;/u,
+    );
+  });
+
+  it('keeps the remaining artwork actions wired', () => {
     expect(source).toContain("emit('choose')");
     expect(source).toContain("emit('openSearch')");
     expect(source).toContain("emit('clear')");

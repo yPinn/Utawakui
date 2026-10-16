@@ -91,7 +91,7 @@ const previewTrack = computed(() =>
 
 <style scoped>
 .artwork-preview {
-  --track-metadata-preview-size: 13rem;
+  --track-metadata-preview-size: var(--ui-artwork-size-3xl);
 
   min-width: 0;
   display: flex;
@@ -132,10 +132,11 @@ const previewTrack = computed(() =>
 
 @media (max-width: 760px) {
   .artwork-preview {
-    --track-metadata-preview-size: 7rem;
+    /* Heading top to actions bottom spans one lg artwork edge. */
+    --track-metadata-preview-size: var(--ui-artwork-size-lg);
 
     display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
+    grid-template-columns: var(--track-metadata-preview-size) minmax(0, 1fr);
     align-items: start;
   }
 
@@ -146,11 +147,11 @@ const previewTrack = computed(() =>
 
   .artwork-preview__actions {
     inline-size: auto;
-    align-self: stretch;
+    align-self: end;
   }
 
   .artwork-preview__thumb {
-    grid-row: 1 / span 3;
+    grid-row: 1 / span 2;
     grid-column: 1;
   }
 }

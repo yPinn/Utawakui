@@ -452,8 +452,8 @@ onUnmounted(() => setKeyboardListener(false));
 /* Conventional feed order: now-playing, the media, then one edge column for
    track actions and feed stepping. */
 .track-preview {
-  --track-preview-artwork-size: 20rem;
-  --track-preview-peek-size: 2.5rem;
+  --track-preview-artwork-size: var(--ui-artwork-size-hero);
+  --track-preview-peek-size: var(--ui-artwork-size-xs);
   --track-preview-peek-scale: 0.7;
   --track-preview-info-size: 15rem;
 

@@ -2,6 +2,7 @@
 // Edits a photo's instant-film line and its caption note, which takes a
 // note's title and body. Drafts commit only on Save; clearing removes text.
 import { computed, shallowRef, watch } from 'vue';
+import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { Palette } from '../../icons/index.js';
 import {
   NOTE_PAPERS,
@@ -20,7 +21,7 @@ const PHOTO_LABEL_MAX_LENGTH = 16;
 const PHOTO_CAPTION_TITLE_MAX_LENGTH = 80;
 const PHOTO_CAPTION_MAX_LENGTH = 2000;
 // Matches the note editor and playlist details so all three share one anatomy.
-const PREVIEW_SIZE = 160;
+const PREVIEW_SIZE = ARTWORK_SIZE['2xl'];
 
 const props = defineProps({
   open: { type: Boolean, default: false },

@@ -78,6 +78,6 @@ describe('AppFolderPhotoTextEditorModal', () => {
     expect(footer).toMatch(
       /<UiHint class="app-folder-photo-text__footnote">[\s\S]*?<UiButton[^>]*variant="secondary"[\s\S]*?<UiButton[^>]*variant="accent"/u,
     );
-    expect(source).toContain('const PREVIEW_SIZE = 160;');
+    expect(source).toContain("const PREVIEW_SIZE = ARTWORK_SIZE['2xl'];");
   });
 });
