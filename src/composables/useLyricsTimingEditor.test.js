@@ -26,6 +26,38 @@ beforeEach(() => {
 });
 
 describe('useLyricsTimingEditor', () => {
+  it('rejects a single-segment line instead of offering a 0/0 save', async () => {
+    const editor = await loadEditor();
+    expect(
+      editor.beginLine(
+        { ...document, lines: [{ ...document.lines[0], text: '歌う声' }] },
+        'line_01',
+      ),
+    ).toBe(false);
+    expect(editor.draft.value).toBe(null);
+    expect(editor.canCommit.value).toBe(false);
+  });
+  it('reuses exact reading segments as suggestions, without inventing timestamps', async () => {
+    const editor = await loadEditor();
+    const japanese = {
+      ...document,
+      lines: [{ ...document.lines[0], text: '歌う声' }],
+    };
+    const reading = {
+      lineId: 'line_01',
+      text: '歌う声',
+      segments: [{ t: '歌', r: 'うた' }, { t: 'う' }, { t: '声', r: 'こえ' }],
+    };
+    expect(editor.beginLine(japanese, 'line_01', reading)).toBe(true);
+    expect(editor.draft.value.segments.map((x) => x.text).join('')).toBe(
+      '歌う声',
+    );
+    expect(editor.draft.value.segments[1].startMs).toBe(null);
+    expect(editor.canCommit.value).toBe(false);
+    expect(
+      editor.beginLine(japanese, 'line_01', { ...reading, text: 'stale' }),
+    ).toBe(false);
+  });
   it('suggests exact whitespace-preserving slices and never owns playback', async () => {
     const editor = await loadEditor();
 
@@ -43,6 +75,7 @@ describe('useLyricsTimingEditor', () => {
   it('records tap boundaries, nudges them, and builds a new immutable document', async () => {
     const editor = await loadEditor();
     editor.beginLine(document, 'line_01');
+    expect(editor.canUndo.value).toBe(false);
 
     expect(editor.tapBoundary(1600)).toBe(true);
     expect(editor.canUndo.value).toBe(true);
@@ -108,11 +141,15 @@ describe('useLyricsTimingEditor', () => {
     };
 
     editor.beginLine(segmented, 'line_01');
+    expect(editor.canCommit.value).toBe(false);
+    expect(editor.nudgeBoundary(1, 0)).toBe(false);
     expect(editor.nudgeBoundary(1, 100)).toBe(true);
     expect(editor.buildDocument().lines[0].segments[1]).toMatchObject({
       segmentId: 'saved_2',
       startMs: 1600,
     });
+    editor.undo();
+    expect(editor.canCommit.value).toBe(false);
     editor.cancel();
     expect(editor.draft.value).toBe(null);
   });

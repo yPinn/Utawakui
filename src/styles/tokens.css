@@ -542,6 +542,13 @@
   --ui-color-focus: var(--ui-palette-indigo-300);
   --ui-color-current: var(--ui-palette-indigo-300);
   --ui-color-current-soft: var(--ui-color-accent-soft);
+  /* Highlighter on the live lyrics sheet, pre-mixed with the paper so the
+     stroke's overlapping layers stay one even tone. */
+  --ui-lyrics-highlight: color-mix(
+    in srgb,
+    var(--ui-palette-amber-400) 40%,
+    var(--ui-folder-sheet-background)
+  );
 
   --ui-color-neutral: var(--ui-palette-cool-gray-300);
   --ui-color-info: var(--ui-palette-sky-400);
@@ -965,6 +972,11 @@
   --ui-color-paper-text: var(--ui-palette-neutral-900);
 
   --ui-folder-sheet-background: var(--ui-color-paper);
+  --ui-lyrics-highlight: color-mix(
+    in srgb,
+    var(--ui-palette-amber-300) 80%,
+    var(--ui-folder-sheet-background)
+  );
   --ui-folder-artifact-paper-periwinkle: color-mix(
     in srgb,
     var(--ui-palette-indigo-300) 70%,

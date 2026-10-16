@@ -5,8 +5,8 @@ const groupSource = fs.readFileSync(
   new URL('./UiButtonGroup.vue', import.meta.url),
   'utf8',
 );
-const preparationSource = fs.readFileSync(
-  new URL('../lyrics/LyricsPreparationBar.vue', import.meta.url),
+const displaySource = fs.readFileSync(
+  new URL('../lyrics/LyricsDisplayControls.vue', import.meta.url),
   'utf8',
 );
 const liveSource = fs.readFileSync(
@@ -28,11 +28,11 @@ describe('UiButtonGroup appearance ownership', () => {
   });
 
   it('keeps feature consumers on the public group contract', () => {
-    for (const source of [preparationSource, liveSource]) {
-      expect(source).toContain('<UiButtonGroup');
-      expect(source).not.toContain(':deep(.ui-btn)');
-    }
+    expect(liveSource).toContain('<UiButtonGroup');
+    expect(liveSource).not.toContain(':deep(.ui-btn)');
     expect(liveSource).toContain('radius="lg"');
     expect(liveSource).toContain('raised');
+    expect(displaySource).toContain('<UiIconButton');
+    expect(displaySource).not.toContain(':deep(.ui-btn)');
   });
 });

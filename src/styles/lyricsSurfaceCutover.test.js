@@ -15,6 +15,9 @@ const documentSource = readSource(
 );
 
 const productionLyricsSources = [
+  'LyricsDisplayControls.vue',
+  'LyricsSourceControl.vue',
+  'PerformanceLyricsWorkspace.vue',
   'LyricsDocumentPanel.vue',
   'LyricsAuthoringWorkspace.vue',
   'LyricsLiveControls.vue',
@@ -88,7 +91,7 @@ describe('Lyrics Token v2 surface cutover', () => {
       productionLyricsSources.find(
         ({ filename }) => filename === 'LyricsWorkspaceHeader.vue',
       ).source,
-    ).toContain('var(--ui-type-heading-line-height)');
+    ).toContain('<AppFolderWorkspaceToolbar');
   });
 
   it('preserves the authoring, acquisition, reader, timing, and live-control anatomy', () => {

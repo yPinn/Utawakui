@@ -3,7 +3,41 @@
   --ui-lyrics-live-action-width: 4.5rem;
   --ui-lyrics-live-display-width: 4.75rem;
   --ui-lyrics-live-safe-area: 4.75rem;
-  --ui-lyrics-font-size-compact: 1.125rem;
-  --ui-lyrics-font-size-default: 1.375rem;
-  --ui-lyrics-font-size-large: 1.75rem;
+  --ui-lyrics-font-size-compact: var(--ui-font-size-lg);
+  --ui-lyrics-font-size-default: var(--ui-font-size-xl);
+  --ui-lyrics-font-size-large: var(--ui-font-size-2xl);
+  --ui-lyrics-font-weight: var(--ui-font-weight-regular);
+  --ui-lyrics-line-height: var(--ui-line-height-body);
+  --ui-lyrics-romaji-font-size-compact: var(--ui-font-size-md);
+  --ui-lyrics-romaji-font-size-default: var(--ui-font-size-lg);
+  --ui-lyrics-romaji-font-size-large: var(--ui-font-size-xl);
+  --ui-lyrics-romaji-font-weight: var(--ui-font-weight-regular);
+  --ui-lyrics-romaji-line-height: var(--ui-line-height-body);
+  --ui-lyrics-ruby-font-weight: var(--ui-font-weight-semibold);
+  --ui-lyrics-ruby-line-height: var(--ui-line-height-title);
+  --ui-lyrics-ruby-font-size-compact: var(--ui-font-size-sm);
+  --ui-lyrics-ruby-font-size-default: var(--ui-font-size-sm);
+  --ui-lyrics-ruby-font-size-large: var(--ui-font-size-md);
+  --ui-lyrics-marker-height-compact: var(--ui-space-3);
+  --ui-lyrics-marker-height-default: var(--ui-space-4);
+  --ui-lyrics-marker-height-large: var(--ui-space-4);
+  --ui-lyrics-marker-bottom: var(--ui-space-1);
+  --ui-lyrics-marker-cut: var(--ui-space-1);
+}
+
+/* Each reader size is an explicit combination of existing foundation tiers. */
+.lyrics-preview {
+  --ui-lyrics-romaji-font-size: var(--ui-lyrics-romaji-font-size-default);
+  --ui-lyrics-ruby-font-size: var(--ui-lyrics-ruby-font-size-default);
+  --ui-lyrics-marker-height: var(--ui-lyrics-marker-height-default);
+}
+.lyrics-preview--font-compact {
+  --ui-lyrics-romaji-font-size: var(--ui-lyrics-romaji-font-size-compact);
+  --ui-lyrics-ruby-font-size: var(--ui-lyrics-ruby-font-size-compact);
+  --ui-lyrics-marker-height: var(--ui-lyrics-marker-height-compact);
+}
+.lyrics-preview--font-large {
+  --ui-lyrics-romaji-font-size: var(--ui-lyrics-romaji-font-size-large);
+  --ui-lyrics-ruby-font-size: var(--ui-lyrics-ruby-font-size-large);
+  --ui-lyrics-marker-height: var(--ui-lyrics-marker-height-large);
 }

@@ -53,35 +53,19 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
     expect(workspaceSource).not.toContain('TRACK_SCOPE_LABELS');
   });
 
-  it('keeps preparation controls compact while preserving accessible names', () => {
+  it('uses the shared controls inside the bounded preparation bar', () => {
     const preparationSource = readComponent('./LyricsPreparationBar.vue');
-
+    const controls = readComponent('./LyricsDisplayControls.vue');
     expect(preparationSource).toContain('閱讀與預先設定');
-    expect(preparationSource).toContain('>來源<');
-    expect(preparationSource).toMatch(/>\s*管理\s*</);
-    expect(preparationSource).toContain('>讀音<');
-    expect(preparationSource).toContain('>字級<');
-    expect(preparationSource).not.toContain('伴奏準備');
-    expect(preparationSource).toContain('lyrics-preparation__label');
-    expect(preparationSource).toContain('border-inline-start');
-    expect(preparationSource).not.toContain('歌詞時間偏移');
-    expect(preparationSource).not.toContain('已自動套用');
-    expect(preparationSource).not.toContain('重新建立讀音資料');
-    expect(preparationSource).not.toContain('重試建立讀音資料');
-    expect(preparationSource).not.toContain('isGeneratingReading');
-    expect(preparationSource).not.toContain('hasReadingDocument');
-    expect(preparationSource).not.toContain("emit('generateReading')");
-    expect(preparationSource).not.toMatch(/>\s*產生\s*</);
-    expect(preparationSource).toContain('@container (max-width: 46rem)');
-    expect(preparationSource).toContain('flex-wrap: wrap');
-    expect(preparationSource).toContain('.lyrics-preparation__group--source {');
-    expect(preparationSource).toContain('min-width: 0');
-    expect(preparationSource).toContain('<UiNotice');
-    expect(preparationSource).toContain(':message="readingError"');
-    expect(preparationSource).toContain('tone="danger"');
-    expect(preparationSource).not.toContain('data-message');
-    expect(workspaceSource).not.toContain(':is-generating-reading=');
-    expect(workspaceSource).not.toContain('@generate-reading=');
+    expect(preparationSource).toContain('<LyricsDisplayControls');
+    expect(preparationSource).not.toContain('layout="inline"');
+    expect(preparationSource).not.toContain('<select');
+    expect(controls).toContain('<LyricsSourceControl');
+    expect(controls).toContain('<UiSegmentedControl');
+    expect(controls).toContain('<UiIconButton');
+    expect(controls).toContain('<UiNotice');
+    expect(controls).toContain('flex-wrap: wrap');
+    expect(workspaceSource).toContain('useLyricsDisplay');
   });
 
   it('keeps playback-time adjustment as the original compact floating cluster', () => {
@@ -102,17 +86,13 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
     expect(documentPanelSource).toContain('--ui-lyrics-live-safe-area');
   });
 
-  it('keeps a visible track picker and moves the shared model control into the header', () => {
+  it('puts track actions in the shared edit menu and removes duplicate separation controls', () => {
     const headerSource = readComponent('./LyricsWorkspaceHeader.vue');
-
-    expect(headerSource).toContain('title="選擇歌詞曲目"');
-    expect(headerSource).toContain('aria-label="選擇歌詞曲目"');
-    expect(headerSource).toMatch(/>\s*選曲\s*</);
-    expect(headerSource).toContain('<SeparationPresetControl');
-    expect(headerSource).toContain('lyrics-workspace-header__divider');
-    expect(workspaceSource).toContain('container-type: inline-size');
-    expect(headerSource).toContain('@container (max-width: 48rem)');
-    expect(headerSource).not.toContain('@media (max-width: 900px)');
+    expect(headerSource).toContain('<UiActionMenu');
+    expect(headerSource).toContain("label: '選擇曲目'");
+    expect(headerSource).toContain("label: '重新掃描歌詞'");
+    expect(headerSource).not.toContain('SeparationPresetControl');
+    expect(headerSource).toContain('<AppFolderWorkspaceToolbar');
   });
 
   it('exposes the scrolling lyrics reader as a keyboard-focusable region', () => {

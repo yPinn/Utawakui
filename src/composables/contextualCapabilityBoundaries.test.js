@@ -27,16 +27,20 @@ describe('contextual capability boundaries after the destination cutover', () =>
     expect(appSource).toContain('settings: SettingsPage');
   });
 
-  it('keeps Separation attached to track and Lyrics contexts instead of a Page', () => {
+  it('keeps Separation contextual without duplicating it in lyrics authoring', () => {
     const lyricsHeaderSource = readSource(
       '../components/lyrics/LyricsWorkspaceHeader.vue',
     );
     const playerToolsSource = readSource(
       '../components/playback/PlayerToolsPanel.vue',
     );
+    const preparationSource = readSource(
+      '../components/preparation/PreparationDockPanel.vue',
+    );
 
-    expect(lyricsHeaderSource).toContain('<SeparationPresetControl');
+    expect(lyricsHeaderSource).not.toContain('SeparationPresetControl');
     expect(playerToolsSource).toContain('<SeparationPresetControl');
+    expect(preparationSource).toContain('<SeparationDockContent');
     expect(APP_DESTINATIONS.some(({ id }) => id === 'separation')).toBe(false);
     expect(
       existsSync(new URL('../pages/SeparationPage.vue', import.meta.url)),

@@ -170,7 +170,36 @@ rule 分隔。「待唱安排」進入 `performance-session-workspace` boundary�
 Titlebar 與 Right Dock 不再提供重複的場次入口；selected playlist／album 的「從清單建立」／
 「從專輯建立」動作由 workspace toolbar 持有，既有 draft 的取代仍先確認。`PerformanceLyricsWorkspace`
 與曲庫的 `LyricsAuthoringWorkspace` 共用 `useLyrics`／`useLyricsReading` module-scope owner：現場可在既有來源間
-`selectSource`、缺讀音時呼叫 `generateReading`，並以 `openLyricsAuthoring` 前往曲庫歌詞編輯。Library 內的
+`selectSource`、缺讀音時呼叫 `generateReading`，並以 `openLyricsAuthoring` 前往曲庫歌詞編輯。
+「顯示」內的來源選單列出已保存來源，不以只有一份來源為由禁用，僅在歌詞讀取中暫停互動。
+兩個工作區的來源控制共用 `LyricsSourceControl`，以 `UiSelect`／`UiButton` 組合，
+並使用同一個 `LyricsSourceManagerModal` 管理、搜尋及匯入來源；沒有來源時仍可開啟管理。
+閱讀頁從「顯示 → 管理來源」直接開啟既有 modal，不先導航至曲庫；先關閉 popover，
+再以常駐「顯示」按鈕作 modal 的焦點返回目標。來源異動仍由 canonical `useLyrics` 處理，
+文字、讀音修正與時間軸編輯保留在曲庫 authoring 工作區。
+讀音選項直接完成load／missing才generate，重選相同選項可重試；讀取失敗不視為missing，
+pending request依track／source／document identity合併，切換內容或卸載後不為舊內容啟動generate。
+兩頁的顯示選項與讀音準備由 `useLyricsDisplay` 協調，依賴既有 lyrics／reading owner，
+不持有第二份讀音文件或 generation state；`useLyricsReading` 仍驗證 canonical identity、
+合併底層 load 並持有 generation 鎖。字級使用共用 session-only「小／標準／大」偏好，
+對應既有明確 typography tiers，不使用比例縮放，也不新增 persistence。
+`LyricsDisplayControls` 共用來源、文字、讀音、字級與 busy／error UI；閱讀頁採 stacked，
+編輯頁的 `LyricsPreparationBar` 同樣收進「顯示」popover，不再常駐整排設定。兩者都使用 `UiSelect`、
+`UiSegmentedControl`、`UiIconButton`、`UiHint`／`UiNotice`，重選讀音即可重試。
+暫時清空或載入歌詞不清除讀音偏好；韓文完成載入後把假名偏好轉成羅馬字。
+編輯頁保留逐行讀音修正、時間軸與同曲重播刷新，讀取失敗不視為缺檔。
+歌詞編輯的 `LyricsWorkspaceHeader` 使用 `AppFolderWorkspaceToolbar`，常駐只保留「顯示」與「編輯」。
+編輯 `UiActionMenu` 收納修正讀音、逐字校時、選擇曲目與重新掃描；不新增模式 tabs。
+預覽時不顯示逐行編輯動作，進入任務後只顯示該任務的 pencil 或 clock，以及情境提示與結束入口。
+有逐行草稿時鎖定任務、來源與曲目切換，必須先儲存或取消，不新增確認 modal。
+讀音輸入沿用 `UiTextField`，儲存中防連點，失敗保留草稿；逐字校時沿用原 toolbar／segment editor。
+兩頁的顯示浮層採用 `UiPopover` opt-in initial focus，展開即聚焦第一個可用控制，
+Escape 返回 trigger，非 modal Tab 仍可離開。逐字校時入口與草稿共用 `lyricsTiming.js`
+能力判斷：需有效行起訖與至少兩段；優先保留來源分段，其次採同 lineId／原文且完整還原文字的
+既有讀音 annotation spans，最後才使用保留空白的分段。讀音片段只是建議，不等於精準詞界，
+不新增 tokenizer、不猜測內部時間；所有邊界有效且相對初始草稿有時間變更才開放儲存，復原回原值則停用。
+伴奏處理不再重複放在歌詞工具列，沿用 shell「曲目準備」的 separation 工作流。
+來源、讀音與字級收在工具列的「顯示」`UiPopover`，歌詞以 `LyricsDocumentPanel` 的 `presentation="sheet"` 印在紙面（目前行螢光筆、讀音印在上方）。Library 內的
 歌詞編輯同樣使用 workspace mode，Folder page 不建立 document scroll；
 `LyricsDocumentPanel`、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。Output
 同樣使用 workspace mode；Workbench stage／inspector 與 Gallery grid／detail

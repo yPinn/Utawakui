@@ -21,12 +21,15 @@ defineProps({
   hasReadingDocument: { type: Boolean, default: false },
   editingReadingLineIndex: { type: Number, default: null },
   readingLineDraft: { type: String, default: '' },
+  isSavingReading: { type: Boolean, default: false },
   lyricsScript: { type: String, default: 'unknown' },
   canEditTiming: { type: Boolean, default: false },
+  editableTimingLineIds: { type: Array, default: null },
   offsetLabel: { type: String, required: true },
   canResetOffset: { type: Boolean, default: false },
   offsetError: { type: String, default: '' },
   allowAuthoringActions: { type: Boolean, default: false },
+  presentation: { type: String, default: 'list' },
 });
 
 const emit = defineEmits([
@@ -64,8 +67,11 @@ const emit = defineEmits([
         allowAuthoringActions ? editingReadingLineIndex : null
       "
       :reading-line-draft="readingLineDraft"
+      :is-saving-reading="isSavingReading"
       :lyrics-script="lyricsScript"
       :can-edit-timing="allowAuthoringActions && canEditTiming"
+      :editable-timing-line-ids="editableTimingLineIds"
+      :presentation="presentation"
       @seek-line="emit('seekLine', $event)"
       @edit-timing="emit('editTiming', $event)"
       @start-reading-edit="emit('startReadingEdit', $event)"

@@ -7,6 +7,14 @@ import LyricsLiveControls from './LyricsLiveControls.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
 import LyricsPreparationBar from './LyricsPreparationBar.vue';
+import LyricsSourceControl from './LyricsSourceControl.vue';
+import LyricsDisplayControls from './LyricsDisplayControls.vue';
+import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiField from '../ui/UiField.vue';
+import UiTextField from '../ui/UiTextField.vue';
+import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
 import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
@@ -39,6 +47,17 @@ attachClientRender(LyricsLiveControls, './LyricsLiveControls.vue');
 attachClientRender(LyricsLiveTool, './LyricsLiveTool.vue');
 attachClientRender(LyricsDocumentPanel, './LyricsDocumentPanel.vue');
 attachClientRender(LyricsPreparationBar, './LyricsPreparationBar.vue');
+attachClientRender(LyricsSourceControl, './LyricsSourceControl.vue');
+attachClientRender(LyricsDisplayControls, './LyricsDisplayControls.vue');
+attachClientRender(UiSegmentedControl, '../ui/UiSegmentedControl.vue');
+attachClientRender(UiSelect, '../ui/UiSelect.vue');
+attachClientRender(UiField, '../ui/UiField.vue');
+attachClientRender(UiTextField, '../ui/UiTextField.vue');
+attachClientRender(
+  AppFolderWorkspaceToolbar,
+  '../layout/AppFolderWorkspaceToolbar.vue',
+);
+UiActionMenu.render = () => null;
 attachClientRender(LyricsSegmentEditor, './LyricsSegmentEditor.vue');
 attachClientRender(LyricsTimingToolbar, './LyricsTimingToolbar.vue');
 attachClientRender(LyricsWorkspaceHeader, './LyricsWorkspaceHeader.vue');
@@ -55,6 +74,14 @@ attachClientRender(UiNotice, '../ui/UiNotice.vue');
 attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue');
 attachClientRender(UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue');
 attachClientRender(UiTooltip, '../ui/UiTooltip.vue');
+
+function selectReading(root, label) {
+  const button = findAll(
+    root,
+    (node) => node.type === 'button' && nodeText(node).trim() === label,
+  )[0];
+  button.props.onClick();
+}
 
 function hostNode(type, text = '') {
   return { type, text, props: {}, children: [], parent: null };
@@ -201,6 +228,9 @@ describe('Lyrics workspace control contracts', () => {
     const reader = findByProp(panel.root, 'aria-label', '歌詞內容');
     const activeRow = {
       getBoundingClientRect: () => ({ top: 620, height: 48 }),
+      querySelector: vi.fn(() => ({
+        getBoundingClientRect: () => ({ top: 650, height: 120 }),
+      })),
     };
     const scrollTo = vi.fn();
     reader.scrollTop = 160;
@@ -224,9 +254,10 @@ describe('Lyrics workspace control contracts', () => {
 
     await returnButton.props.onClick();
     expect(scrollTo).toHaveBeenCalledWith({
-      top: 536,
+      top: 160 + 650 - 100 - 400 / 3,
       behavior: 'smooth',
     });
+    expect(activeRow.querySelector).toHaveBeenCalledWith('.lyrics-line__text');
     await nextTick();
     expect(
       findByProp(panel.root, 'aria-label', '回到目前歌詞'),
@@ -237,6 +268,34 @@ describe('Lyrics workspace control contracts', () => {
     await nextTick();
     await nextTick();
     expect(scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the first lyric at the natural top when it has not reached the follow anchor', async () => {
+    const panel = mount(LyricsDocumentPanel, {
+      documentId: 'lyrics-start',
+      lines: [{ lineId: 'first', start: 1, text: 'First line' }],
+      trackCount: 1,
+      hasSelectedTrack: true,
+      lyricsStatus: 'available',
+      hasSelectedSource: true,
+      activeLineIndex: 0,
+    });
+    await nextTick();
+    const reader = findByProp(panel.root, 'aria-label', '歌詞內容');
+    reader.scrollTop = 0;
+    reader.clientHeight = 400;
+    reader.getBoundingClientRect = () => ({ top: 0 });
+    reader.querySelector = () => ({
+      getBoundingClientRect: () => ({ top: 24, height: 36 }),
+    });
+    reader.scrollTo = vi.fn();
+    reader.props.onWheelPassive();
+    await nextTick();
+    await findByProp(panel.root, 'aria-label', '回到目前歌詞').props.onClick();
+    expect(reader.scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'smooth',
+    });
   });
 
   it('recognizes touch, keyboard, and scrollbar browsing and resets follow mode for a new document', async () => {
@@ -318,7 +377,7 @@ describe('Lyrics workspace control contracts', () => {
       ).props.onClick();
 
       expect(scrollTo).toHaveBeenCalledWith({
-        top: 236,
+        top: 300 - 200 / 3,
         behavior: 'auto',
       });
     } finally {
@@ -436,12 +495,22 @@ describe('Lyrics workspace control contracts', () => {
 
   it('shows reading failures through the shared notice component', () => {
     const empty = mount(LyricsPreparationBar, {
-      showsReadingAid: true,
-      lyricsScript: 'ja',
+      readingOptions: [
+        { id: 'off', label: '關閉' },
+        { id: 'furigana', label: '假名' },
+        { id: 'romaji', label: '羅馬字' },
+      ],
+      hasSelectedTrack: true,
+      readingVariant: 'furigana',
     });
     const failed = mount(LyricsPreparationBar, {
-      showsReadingAid: true,
-      lyricsScript: 'ja',
+      readingOptions: [
+        { id: 'off', label: '關閉' },
+        { id: 'furigana', label: '假名' },
+        { id: 'romaji', label: '羅馬字' },
+      ],
+      hasSelectedTrack: true,
+      readingVariant: 'furigana',
       readingError: '讀音產生失敗',
     });
 
@@ -464,8 +533,11 @@ describe('Lyrics workspace control contracts', () => {
       sources: [{ filename: 'main.lrc', kind: 'manual' }],
       selectedSourceFilename: 'main.lrc',
       hasSelectedTrack: true,
-      showsReadingAid: true,
-      lyricsScript: 'ja',
+      readingOptions: [
+        { id: 'off', label: '關閉' },
+        { id: 'furigana', label: '假名' },
+        { id: 'romaji', label: '羅馬字' },
+      ],
       readingVariant: 'furigana',
       canDecreaseFontSize: true,
       canIncreaseFontSize: true,
@@ -480,9 +552,7 @@ describe('Lyrics workspace control contracts', () => {
       target: { value: 'main.lrc' },
     });
     findByProp(root, 'aria-label', '管理歌詞來源').props.onClick();
-    findByProp(root, 'aria-label', '讀音顯示').props.onChange({
-      target: { value: 'furigana' },
-    });
+    selectReading(root, '假名');
     expect(nodeText(root)).not.toContain('已自動套用');
     expect(findByProp(root, 'aria-label', '重新建立讀音資料')).toBeUndefined();
     expect(findByProp(root, 'aria-label', '重試建立讀音資料')).toBeUndefined();
@@ -534,16 +604,19 @@ describe('Lyrics workspace control contracts', () => {
     const generateSeparation = vi.fn();
     const adjustOffset = vi.fn();
     const resetOffset = vi.fn();
-    const header = mount(LyricsWorkspaceHeader, {
-      track: { title: 'Euphoria', lyrics: { status: 'available' } },
-      trackMeta: 'BTS / 3:49',
-      separationPresetOptions: [{ id: 'quick', label: '速度優先' }],
-      selectedSeparationPresetId: 'quick',
-      onSeparationPresetChange: preset,
-      onGenerateSeparation: generateSeparation,
-      onSelectTrack: selectTrack,
-      onRefresh: refresh,
-    });
+    const header = mount(
+      { ...LyricsWorkspaceHeader, render: () => null },
+      {
+        track: { title: 'Euphoria', lyrics: { status: 'available' } },
+        trackMeta: 'BTS / 3:49',
+        separationPresetOptions: [{ id: 'quick', label: '速度優先' }],
+        selectedSeparationPresetId: 'quick',
+        onSeparationPresetChange: preset,
+        onGenerateSeparation: generateSeparation,
+        onSelectTrack: selectTrack,
+        onRefresh: refresh,
+      },
+    );
     const live = mount(LyricsLiveControls, {
       offsetLabel: '+0.2s',
       canReset: true,
@@ -551,20 +624,16 @@ describe('Lyrics workspace control contracts', () => {
       onResetOffset: resetOffset,
     });
 
-    findByProp(header.root, 'aria-label', '選擇歌詞曲目').props.onClick();
-    findByProp(header.root, 'aria-label', '重新掃描歌詞').props.onClick();
-    findByProp(header.root, 'aria-label', '伴奏處理模式').props.onChange({
-      target: { value: 'quick' },
-    });
-    findByProp(header.root, 'aria-label', '產生伴奏').props.onClick();
+    header.app._instance.setupState.selectAction({ id: 'selectTrack' });
+    header.app._instance.setupState.selectAction({ id: 'refresh' });
     findByProp(live.root, 'aria-label', '延後 0.1 秒').props.onClick();
     findByProp(live.root, 'aria-label', '重設歌詞時間偏移').props.onClick();
     findByProp(live.root, 'aria-label', '提前 0.1 秒').props.onClick();
 
     expect(selectTrack).toHaveBeenCalledOnce();
     expect(refresh).toHaveBeenCalledOnce();
-    expect(preset).toHaveBeenCalledWith('quick');
-    expect(generateSeparation).toHaveBeenCalledOnce();
+    expect(preset).not.toHaveBeenCalled();
+    expect(generateSeparation).not.toHaveBeenCalled();
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
   });
@@ -682,6 +751,9 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
     vi.doMock('../../composables/useLyricsReading.js', () => ({
       useLyricsReading: () => ({
         variant: readingVariant,
+        setVariant: (value) => {
+          readingVariant.value = value;
+        },
         getDoc: () => readingDoc.value,
         isGenerating: () => false,
         errorFor: () => null,
@@ -725,7 +797,8 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
       LyricsAuthoringWorkspace,
       './LyricsAuthoringWorkspace.vue',
     );
-    const { root } = mount(LyricsAuthoringWorkspace);
+    const { root, app } = mount(LyricsAuthoringWorkspace);
+    const vm = app._instance.setupState;
     await Promise.resolve();
     expect(loadReading).toHaveBeenCalledWith(
       track.id,
@@ -734,50 +807,29 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
     );
     expect(generateReading).not.toHaveBeenCalled();
 
-    findByProp(root, 'aria-label', '選擇歌詞曲目').props.onClick();
-    findByProp(root, 'aria-label', '重新掃描歌詞').props.onClick();
-    findByProp(root, 'aria-label', '管理歌詞來源').props.onClick();
-    findByProp(root, 'aria-label', '歌詞來源').props.onChange({
-      target: { value: 'main.lrc' },
-    });
-    findByProp(root, 'aria-label', '讀音顯示').props.onChange({
-      target: { value: 'romaji' },
-    });
-    await Promise.resolve();
-    await nextTick();
+    vm.isTrackPickerOpen = true;
+    vm.refresh();
+    await vm.openSourceManager(async () => {});
+    vm.selectSource('main.lrc');
+    await vm.setReadingVariant('romaji');
     expect(generateReading).toHaveBeenCalledOnce();
-    readingDoc.value = { lines: [] };
+    readingDoc.value = {
+      lines: [
+        {
+          lineId: 'line_1',
+          text: '너는 내 삶에 다시 뜬 햇빛',
+          romaji: 'neoneun',
+        },
+      ],
+    };
     loadReading.mockResolvedValue(readingDoc.value);
-    findByProp(root, 'aria-label', '讀音顯示').props.onChange({
-      target: { value: 'off' },
-    });
-    findByProp(root, 'aria-label', '讀音顯示').props.onChange({
-      target: { value: 'furigana' },
-    });
-    findByProp(root, 'aria-label', '縮小歌詞').props.onClick();
-    await nextTick();
-    expect(findByProp(root, 'aria-label', '縮小歌詞').props.disabled).toBe(
-      true,
-    );
-    findByProp(root, 'aria-label', '放大歌詞').props.onClick();
-    findByProp(root, 'aria-label', '放大歌詞').props.onClick();
-    await nextTick();
-    expect(findByProp(root, 'aria-label', '放大歌詞').props.disabled).toBe(
-      true,
-    );
-    findByProp(root, 'aria-label', '伴奏處理模式').props.onChange({
-      target: { value: 'high-quality' },
-    });
-    await nextTick();
-    expect(separate).not.toHaveBeenCalled();
-    expect(
-      findByProp(root, 'aria-label', '此模式已產生；切換模式可查看其他結果'),
-    ).toBeTruthy();
-    findByProp(root, 'aria-label', '伴奏處理模式').props.onChange({
-      target: { value: 'quick' },
-    });
-    await nextTick();
-    findByProp(root, 'aria-label', '產生伴奏').props.onClick();
+    vm.setReadingVariant('off');
+    await vm.setReadingVariant('romaji');
+    vm.decreaseLyricsFontSize();
+    expect(vm.canDecreaseLyricsFontSize).toBe(false);
+    vm.increaseLyricsFontSize();
+    vm.increaseLyricsFontSize();
+    expect(vm.canIncreaseLyricsFontSize).toBe(false);
     findByProp(root, 'aria-label', '延後 0.1 秒').props.onClick();
     findByProp(root, 'aria-label', '重設歌詞時間偏移').props.onClick();
     findByProp(root, 'aria-label', '提前 0.1 秒').props.onClick();
@@ -790,13 +842,10 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
     );
     expect(refresh).toHaveBeenCalledOnce();
     expect(selectSource).toHaveBeenCalledWith('main.lrc');
-    expect(readingVariant.value).toBe('furigana');
+    expect(readingVariant.value).toBe('romaji');
     expect(generateReading).toHaveBeenCalledOnce();
-    expect(selectPreset.mock.calls).toEqual([
-      [track, 'high-quality'],
-      [track, 'quick'],
-    ]);
-    expect(separate).toHaveBeenCalledWith(track, 'quick');
+    expect(selectPreset).not.toHaveBeenCalled();
+    expect(separate).not.toHaveBeenCalled();
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
 

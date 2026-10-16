@@ -1,12 +1,22 @@
 <script setup>
-import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  shallowRef,
+  useTemplateRef,
+  watch,
+} from 'vue';
 import { Check, Clock, LocateFixed, Pencil, X } from '../../icons/index.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
+import { rubySegmentGaps } from '../../utils/rubyLayout.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTextField from '../ui/UiTextField.vue';
 
 const props = defineProps({
   documentId: { type: String, default: '' },
@@ -26,8 +36,16 @@ const props = defineProps({
   hasReadingDocument: { type: Boolean, default: false },
   editingReadingLineIndex: { type: Number, default: null },
   readingLineDraft: { type: String, default: '' },
+  isSavingReading: { type: Boolean, default: false },
   lyricsScript: { type: String, default: 'unknown' },
   canEditTiming: { type: Boolean, default: false },
+  editableTimingLineIds: { type: Array, default: null },
+  // 'sheet' prints the live lyrics on paper with a highlighter on the sung line.
+  presentation: {
+    type: String,
+    default: 'list',
+    validator: (value) => ['list', 'sheet'].includes(value),
+  },
 });
 
 const emit = defineEmits([
@@ -52,11 +70,42 @@ const LYRICS_SCROLL_KEYS = new Set([
 const panel = useTemplateRef('panel');
 const isFollowingActiveLine = shallowRef(true);
 let pointerScrollStart = null;
+const measuredRubyScale = shallowRef(1);
+const readerHeight = shallowRef('0px');
+let readerObserver;
 
 const activeLineId = computed(() => {
   if (props.activeLineIndex < 0) return null;
   return props.lines[props.activeLineIndex]?.lineId ?? null;
 });
+const showsFurigana = computed(
+  () => props.showsReadingAid && props.readingVariant === 'furigana',
+);
+const editableTimingIds = computed(() =>
+  props.editableTimingLineIds === null
+    ? null
+    : new Set(props.editableTimingLineIds),
+);
+const lyricsLang = computed(() =>
+  ['ja', 'ko'].includes(props.lyricsScript) ? props.lyricsScript : undefined,
+);
+const romanizationLang = computed(() =>
+  lyricsLang.value ? `${lyricsLang.value}-Latn` : undefined,
+);
+// Sheet readings float over their word, so neighbours get explicit room.
+const rubyGaps = computed(() =>
+  props.presentation === 'sheet' && showsFurigana.value
+    ? props.readingLines.map((line) =>
+        rubySegmentGaps(line?.segments, measuredRubyScale.value),
+      )
+    : [],
+);
+
+function rubyGapStyle(lineIndex, segmentIndex) {
+  const gap = rubyGaps.value[lineIndex]?.[segmentIndex] ?? 0;
+  return gap > 0 ? { '--lyrics-ruby-gap': `${gap}em` } : undefined;
+}
+
 const showsReturnToActiveLine = computed(
   () => Boolean(activeLineId.value) && !isFollowingActiveLine.value,
 );
@@ -64,6 +113,33 @@ const showsReturnToActiveLine = computed(
 function panelViewport() {
   return panel.value?.viewport ?? panel.value;
 }
+
+function measureReader() {
+  const viewport = panelViewport();
+  if (!viewport) return;
+  readerHeight.value = `${Math.max(0, viewport.clientHeight || 0)}px`;
+  if (typeof globalThis.getComputedStyle !== 'function') return;
+  const annotation = viewport.querySelector?.('rt');
+  const lyric = annotation?.closest('.lyrics-line__text');
+  if (!annotation || !lyric) return;
+  const mainSize = Number.parseFloat(getComputedStyle(lyric).fontSize);
+  const rubySize = Number.parseFloat(getComputedStyle(annotation).fontSize);
+  if (mainSize > 0 && rubySize > 0)
+    measuredRubyScale.value = rubySize / mainSize;
+}
+
+onMounted(() => {
+  measureReader();
+  const viewport = panelViewport();
+  if (viewport && typeof ResizeObserver === 'function') {
+    readerObserver = new ResizeObserver(() => {
+      measureReader();
+      if (isFollowingActiveLine.value) void scrollActiveLineIntoView();
+    });
+    readerObserver.observe(viewport);
+  }
+});
+onUnmounted(() => readerObserver?.disconnect());
 
 function canSeekLine(line) {
   return Number.isFinite(line?.start);
@@ -89,15 +165,21 @@ async function scrollActiveLineIntoView() {
     return;
   }
   const containerRect = scrollPanel.getBoundingClientRect();
-  const activeRect = activeLine.getBoundingClientRect();
+  const primary =
+    activeLine.querySelector?.('.lyrics-line__text') ?? activeLine;
+  const activeRect = primary.getBoundingClientRect();
+  const rubyReserve =
+    typeof globalThis.getComputedStyle === 'function'
+      ? Number.parseFloat(getComputedStyle(primary).paddingBlockStart) || 0
+      : 0;
   scrollPanel.scrollTo({
     top: Math.max(
       0,
       scrollPanel.scrollTop +
         activeRect.top -
         containerRect.top -
-        scrollPanel.clientHeight * 0.42 +
-        activeRect.height / 2,
+        scrollPanel.clientHeight / 3 +
+        rubyReserve,
     ),
     behavior: shouldReduceMotion() ? 'auto' : 'smooth',
   });
@@ -155,15 +237,36 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  [
+    () => props.fontSizeClass,
+    () => props.readingVariant,
+    () => props.readingLines,
+    () => props.presentation,
+    () => props.lines,
+  ],
+  async () => {
+    await nextTick();
+    measureReader();
+    if (isFollowingActiveLine.value) void scrollActiveLineIntoView();
+  },
+);
 </script>
 
 <template>
-  <div class="lyrics-document">
+  <div
+    class="lyrics-document"
+    :style="{ '--lyrics-reader-height': readerHeight }"
+  >
     <UiScrollRegion
       id="lyrics-document-reader"
       ref="panel"
       class="lyrics-preview"
-      :class="fontSizeClass"
+      :class="[
+        fontSizeClass,
+        { 'lyrics-preview--sheet': presentation === 'sheet' },
+      ]"
       axis="both"
       viewport-class="lyrics-preview__viewport"
       role="region"
@@ -207,6 +310,7 @@ watch(
           :class="{
             'lyrics-line--active': index === activeLineIndex,
             'lyrics-line--past': index < activeLineIndex,
+            'lyrics-line--ruby': showsFurigana,
           }"
         >
           <div
@@ -215,16 +319,19 @@ watch(
           >
             <span class="lyrics-line__edit-field">
               <span aria-hidden="true" />
-              <input
-                :value="readingLineDraft"
-                type="text"
-                class="lyrics-line__edit-input"
+              <UiTextField
+                :id="`lyrics-reading-line-${index}`"
+                :model-value="readingLineDraft"
+                label="這行的讀音"
+                label-hidden
+                autofocus
+                :disabled="isSavingReading"
                 :placeholder="
                   lyricsScript === 'ko'
                     ? '輸入這行的羅馬拼音'
                     : '輸入這行的假名讀音'
                 "
-                @input="emit('update-reading-draft', $event.target.value)"
+                @update:model-value="emit('update-reading-draft', $event)"
                 @keydown.enter="emit('commit-reading-edit', index)"
                 @keydown.esc="emit('cancel-reading-edit')"
               />
@@ -233,12 +340,14 @@ watch(
               :icon="Check"
               title="儲存"
               aria-label="儲存"
+              :loading="isSavingReading"
               @click="emit('commit-reading-edit', index)"
             />
             <UiButton
               :icon="X"
               title="取消"
               aria-label="取消"
+              :disabled="isSavingReading"
               @click="emit('cancel-reading-edit')"
             />
           </div>
@@ -257,38 +366,51 @@ watch(
               <span class="lyrics-line__time">{{
                 formatLyricTime(line.start)
               }}</span>
-              <span class="lyrics-line__text-group">
-                <span class="lyrics-line__text">
-                  <template
-                    v-if="
-                      showsReadingAid &&
-                      readingVariant === 'furigana' &&
-                      readingLines[index]?.segments?.length
-                    "
-                  >
+              <span class="lyrics-line__text-group" :lang="lyricsLang">
+                <span class="lyrics-line__text"
+                  ><span class="lyrics-line__ink">
                     <template
-                      v-for="(segment, segmentIndex) in readingLines[index]
-                        .segments"
-                      :key="segmentIndex"
+                      v-if="
+                        showsFurigana && readingLines[index]?.segments?.length
+                      "
                     >
-                      <ruby v-if="segment.r"
-                        >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
+                      <template
+                        v-for="(segment, segmentIndex) in readingLines[index]
+                          .segments"
+                        :key="segmentIndex"
                       >
-                      <template v-else>{{ segment.t }}</template>
+                        <ruby
+                          v-if="segment.r"
+                          :style="rubyGapStyle(index, segmentIndex)"
+                          >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
+                        >
+                        <span
+                          v-else-if="rubyGapStyle(index, segmentIndex)"
+                          class="lyrics-line__ruby-gap"
+                          :style="rubyGapStyle(index, segmentIndex)"
+                          >{{ segment.t }}</span
+                        >
+                        <template v-else>{{ segment.t }}</template>
+                      </template>
                     </template>
-                  </template>
-                  <template v-else>{{ line.text }}</template>
-                </span>
+                    <template v-else>{{ line.text }}</template>
+                  </span></span
+                >
                 <span
                   v-if="showsReadingAid && readingVariant === 'romaji'"
                   class="lyrics-line__romaji"
+                  :lang="romanizationLang"
                 >
                   {{ readingLines[index]?.romaji || '\u00A0' }}
                 </span>
               </span>
             </button>
             <UiButton
-              v-if="canEditTiming && canSeekLine(line)"
+              v-if="
+                canEditTiming &&
+                canSeekLine(line) &&
+                (!editableTimingIds || editableTimingIds.has(line.lineId))
+              "
               class="lyrics-line__edit"
               :icon="Clock"
               :title="`編輯逐字時間：${line.text}`"
@@ -333,7 +455,10 @@ watch(
   min-height: 0;
 }
 .lyrics-preview :deep(.lyrics-preview__viewport) {
-  padding-bottom: var(--ui-lyrics-live-safe-area);
+  padding-bottom: max(
+    var(--ui-lyrics-live-safe-area),
+    calc(var(--lyrics-reader-height) * 2 / 3)
+  );
 }
 .lyrics-preview__return {
   position: absolute;
@@ -387,8 +512,9 @@ watch(
   background: transparent;
   color: inherit;
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-type-title-size);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-lyrics-font-size-default);
+  font-weight: var(--ui-lyrics-font-weight);
+  line-height: var(--ui-lyrics-line-height);
   text-align: left;
   cursor: pointer;
 }
@@ -409,18 +535,6 @@ watch(
   align-items: center;
   padding: var(--ui-space-2) var(--ui-space-3);
 }
-.lyrics-line__edit-input {
-  min-width: 0;
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-.lyrics-line__edit-input:focus-visible,
 .lyrics-line__button:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
@@ -452,6 +566,7 @@ watch(
   display: grid;
   gap: var(--ui-space-1);
   min-width: 0;
+  font-family: var(--ui-font-family-base);
 }
 .lyrics-line__text {
   min-width: 0;
@@ -460,7 +575,9 @@ watch(
   word-break: normal;
 }
 .lyrics-line__text rt {
-  font-size: 0.5em;
+  font-size: var(--ui-lyrics-ruby-font-size);
+  font-weight: var(--ui-lyrics-ruby-font-weight);
+  line-height: var(--ui-lyrics-ruby-line-height);
   color: var(--ui-color-text-muted);
   user-select: none;
 }
@@ -471,7 +588,80 @@ watch(
 }
 .lyrics-line__romaji {
   color: var(--ui-color-text-muted);
-  font-size: 0.7em;
-  line-height: var(--ui-line-height-caption);
+  font-size: var(--ui-lyrics-romaji-font-size);
+  font-weight: var(--ui-lyrics-romaji-font-weight);
+  line-height: var(--ui-lyrics-romaji-line-height);
+  overflow-wrap: anywhere;
+}
+/* Sheet: ink on paper, readings printed above, highlighter on the sung line. */
+.lyrics-preview--sheet .lyrics-line {
+  color: var(--ui-color-text);
+}
+.lyrics-preview--sheet .lyrics-line__button {
+  align-items: last baseline;
+}
+.lyrics-preview--sheet .lyrics-line__time {
+  color: var(--ui-color-text-muted);
+}
+.lyrics-preview--sheet .lyrics-line--active .lyrics-line__row {
+  background: transparent;
+}
+/* Reserve the same fragment geometry before and during the current line.
+   Only paint changes, so marker activation cannot change wrapping. */
+.lyrics-preview--sheet .lyrics-line__ink {
+  padding-inline: var(--ui-space-3);
+  margin-inline: calc(-1 * var(--ui-space-3));
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.lyrics-preview--sheet .lyrics-line--active .lyrics-line__ink {
+  background-image: linear-gradient(
+    104deg,
+    transparent var(--ui-lyrics-marker-cut),
+    var(--ui-lyrics-highlight)
+      calc(var(--ui-lyrics-marker-cut) + var(--ui-border-width)),
+    var(--ui-lyrics-highlight)
+      calc(100% - var(--ui-lyrics-marker-cut) - var(--ui-border-width)),
+    transparent calc(100% - var(--ui-lyrics-marker-cut))
+  );
+  background-position: 0 calc(100% - var(--ui-lyrics-marker-bottom));
+  background-size: 100% var(--ui-lyrics-marker-height);
+  background-repeat: no-repeat;
+}
+.lyrics-preview--sheet .lyrics-line__text rt,
+.lyrics-preview--sheet .lyrics-line__romaji,
+.lyrics-preview--sheet .lyrics-line--active .lyrics-line__text rt,
+.lyrics-preview--sheet .lyrics-line--active .lyrics-line__romaji {
+  color: inherit;
+  opacity: 1;
+}
+/* Readings float centred over their word instead of spreading it;
+   rubySegmentGaps() reads the actual tier sizes to keep neighbours clear. */
+.lyrics-preview--sheet {
+  --lyrics-ruby-block-size: calc(
+    var(--ui-lyrics-ruby-font-size) * var(--ui-lyrics-ruby-line-height)
+  );
+}
+.lyrics-preview--sheet .lyrics-line--ruby .lyrics-line__text {
+  padding-block-start: var(--lyrics-ruby-block-size);
+}
+.lyrics-preview--sheet .lyrics-line__text ruby {
+  position: relative;
+  display: inline-block;
+  margin-inline-start: var(--lyrics-ruby-gap, 0);
+}
+.lyrics-preview--sheet .lyrics-line__ruby-gap {
+  margin-inline-start: var(--lyrics-ruby-gap, 0);
+}
+.lyrics-preview--sheet .lyrics-line__text rt {
+  position: absolute;
+  inset-block-end: 88%;
+  inset-inline-start: 50%;
+  display: block;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.lyrics-preview--sheet .lyrics-line__romaji {
+  order: -1;
 }
 </style>

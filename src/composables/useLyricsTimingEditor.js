@@ -1,27 +1,18 @@
 import { computed, readonly, shallowRef } from 'vue';
+import {
+  canEditTimingLine,
+  suggestSplitOffsets,
+  timingSegmentsFor,
+} from '../utils/lyricsTiming.js';
+export { suggestSplitOffsets } from '../utils/lyricsTiming.js';
 
 const draft = shallowRef(null);
 const baseDocument = shallowRef(null);
 const history = [];
+const initialSegments = shallowRef([]);
 
 function cloneSegments(segments) {
   return segments.map((segment) => ({ ...segment }));
-}
-
-export function suggestSplitOffsets(text) {
-  return [...String(text).matchAll(/\s+/gu)].map(
-    (match) => match.index + match[0].length,
-  );
-}
-
-function splitText(text) {
-  const offsets = suggestSplitOffsets(text);
-  if (offsets.length === 0) return [text];
-  const boundaries = [0, ...offsets, text.length];
-  return boundaries
-    .slice(0, -1)
-    .map((start, index) => text.slice(start, boundaries[index + 1]))
-    .filter(Boolean);
 }
 
 function isValidDraft(value) {
@@ -42,25 +33,28 @@ function isValidDraft(value) {
   });
 }
 
-const canCommit = computed(() => isValidDraft(draft.value));
-const canUndo = computed(() => history.length > 0 && draft.value !== null);
+const hasChanges = computed(() =>
+  Boolean(
+    draft.value?.segments.some(
+      (segment, index) =>
+        segment.startMs !== initialSegments.value[index]?.startMs ||
+        segment.endMs !== initialSegments.value[index]?.endMs,
+    ),
+  ),
+);
+const canCommit = computed(() => hasChanges.value && isValidDraft(draft.value));
+const canUndo = computed(() => draft.value !== null && history.length > 0);
 
-function beginLine(document, lineId) {
+function beginLine(document, lineId, readingLine = null) {
   const line = document?.lines?.find(
     (candidate) => candidate.lineId === lineId,
   );
-  if (!line) return false;
+  if (!canEditTimingLine(line, readingLine)) return false;
 
   baseDocument.value = document;
   history.length = 0;
-  const segments = line.segments
-    ? cloneSegments(line.segments)
-    : splitText(line.text).map((text, index, parts) => ({
-        segmentId: `${line.lineId}_s_${index}`,
-        text,
-        startMs: index === 0 ? line.startMs : null,
-        endMs: index === parts.length - 1 ? line.endMs : null,
-      }));
+  const segments = timingSegmentsFor(line, readingLine);
+  initialSegments.value = cloneSegments(segments);
   draft.value = {
     lineId: line.lineId,
     text: line.text,
@@ -80,6 +74,7 @@ function setBoundary(index, positionMs) {
   if (!value || index <= 0 || index >= value.segments.length) return false;
   const previous = value.segments[index - 1];
   const current = value.segments[index];
+  if (current.startMs === positionMs) return false;
   const upperBound = current.endMs ?? value.endMs;
   if (
     !Number.isFinite(positionMs) ||
@@ -137,6 +132,7 @@ function buildDocument() {
 function cancel() {
   draft.value = null;
   baseDocument.value = null;
+  initialSegments.value = [];
   history.length = 0;
 }
 

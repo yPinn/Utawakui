@@ -1,30 +1,20 @@
 <script setup>
-import { computed, onMounted, shallowRef, watch } from 'vue';
-import { Minus, Pencil, Plus } from '../../icons/index.js';
+import { computed, nextTick, onMounted, onUnmounted, shallowRef } from 'vue';
+import { Pencil, SlidersHorizontal } from '../../icons/index.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import { trackContentLang } from '../../utils/contentLanguage.js';
-import {
-  alignReadings,
-  detectLyricsScript,
-  formatLyricsSourceLabel,
-} from '../../utils/lyrics.js';
+import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
 import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
+import LyricsDisplayControls from './LyricsDisplayControls.vue';
+import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
-import UiNotice from '../ui/UiNotice.vue';
-import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
-import UiSelect from '../ui/UiSelect.vue';
+import UiPopover from '../ui/UiPopover.vue';
 
-const SUPPORTED_READING_SCRIPTS = new Set(['ja', 'ko']);
-const LYRICS_FONT_SIZE_CLASSES = [
-  'lyrics-preview--font-compact',
-  'lyrics-preview--font-default',
-  'lyrics-preview--font-large',
-];
-
+const lyrics = useLyrics();
+const reading = useLyricsReading();
 const {
   state,
   selectedTrack,
@@ -39,159 +29,63 @@ const {
   retryOffsetSave,
   playFromLine,
   selectSource,
-} = useLyrics();
-const {
-  variant: readingVariant,
-  getDoc: getReadingDoc,
-  isGenerating: isGeneratingReadingFor,
-  errorFor: readingErrorFor,
-  loadReading,
-  generateReading,
-  setVariant: setReadingVariant,
-} = useLyricsReading();
+  lyricsTextVariant,
+  setLyricsTextVariant,
+} = lyrics;
 const { openLyricsAuthoring } = useAppView();
 
-// Key of the source whose stored reading has been looked up, so a pending
-// lookup is never mistaken for a missing reading.
-const checkedReadingKey = shallowRef('');
+let disposed = false;
+onUnmounted(() => {
+  disposed = true;
+});
 
-const lyricsFontSizeIndex = shallowRef(1);
-const lyricsScript = computed(() =>
-  detectLyricsScript(lyricLines.value.map((line) => line.text).join('')),
+const displayMenuOpen = shallowRef(false);
+const isSourceManagerOpen = shallowRef(false);
+let displayTriggerElement = null;
+
+function toggleDisplayMenu(event) {
+  displayTriggerElement = event.currentTarget;
+  displayMenuOpen.value = !displayMenuOpen.value;
+}
+
+async function openSourceManager() {
+  displayMenuOpen.value = false;
+  await nextTick();
+  if (disposed || !selectedTrack.value) return;
+  // The management button was inside the now-unmounted popover. Give UiModal
+  // a persistent return-focus target before it captures document.activeElement.
+  displayTriggerElement?.focus();
+  isSourceManagerOpen.value = true;
+}
+const {
+  lyricsScript,
+  showsReadingAid,
+  readingOptions,
+  readingLines,
+  lyricsFontSizeClass,
+  lyricsFontSizeLabel,
+  canDecreaseLyricsFontSize,
+  canIncreaseLyricsFontSize,
+  readingVariant,
+  readingError,
+  isPreparingReading,
+  isGeneratingReading,
+  selectReadingVariant,
+  decreaseLyricsFontSize,
+  increaseLyricsFontSize,
+} = useLyricsDisplay({ lyrics, reading });
+const offsetLabel = computed(() =>
+  state.offsetSeconds === 0
+    ? '0.0s'
+    : `${state.offsetSeconds > 0 ? '+' : ''}${state.offsetSeconds.toFixed(1)}s`,
 );
-const showsReadingAid = computed(() =>
-  SUPPORTED_READING_SCRIPTS.has(lyricsScript.value),
-);
-const readingOptions = computed(() => {
-  if (lyricsScript.value === 'ja') {
-    return [
-      { id: 'off', label: '關閉' },
-      { id: 'furigana', label: '假名' },
-      { id: 'romaji', label: '羅馬字' },
-    ];
-  }
-  if (lyricsScript.value === 'ko') {
-    return [
-      { id: 'off', label: '關閉' },
-      { id: 'romaji', label: '羅馬字' },
-    ];
-  }
-  return [];
-});
-const selectedReadingDoc = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return track && source ? getReadingDoc(track.id, source.filename) : null;
-});
-const readingLines = computed(() =>
-  alignReadings(lyricLines.value, selectedReadingDoc.value),
-);
-const lyricsFontSizeClass = computed(
-  () => LYRICS_FONT_SIZE_CLASSES[lyricsFontSizeIndex.value],
-);
-const canDecreaseLyricsFontSize = computed(() => lyricsFontSizeIndex.value > 0);
-const canIncreaseLyricsFontSize = computed(
-  () => lyricsFontSizeIndex.value < LYRICS_FONT_SIZE_CLASSES.length - 1,
-);
-const offsetLabel = computed(() => {
-  if (state.offsetSeconds === 0) return '0.0s';
-  return `${state.offsetSeconds > 0 ? '+' : ''}${state.offsetSeconds.toFixed(1)}s`;
-});
 const trackLang = computed(() => trackContentLang(selectedTrack.value));
-const sourceOptions = computed(() =>
-  selectedLyrics.value.sources.map((source) => ({
-    value: source.filename,
-    label: formatLyricsSourceLabel(source),
-  })),
-);
-const readingKey = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return track && source ? `${track.id}::${source.filename}` : '';
-});
-const isGeneratingReading = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return Boolean(
-    track && source && isGeneratingReadingFor(track.id, source.filename),
-  );
-});
-const readingError = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return track && source ? readingErrorFor(track.id, source.filename) : null;
-});
-// A stale reading aligns to no line, so it counts as missing too.
-const showsMissingReading = computed(
-  () =>
-    showsReadingAid.value &&
-    readingVariant.value !== 'off' &&
-    readingKey.value !== '' &&
-    checkedReadingKey.value === readingKey.value &&
-    !readingLines.value.some(Boolean),
-);
-
-async function loadSelectedReading() {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  if (!track || !source) return;
-  const key = readingKey.value;
-  await loadReading(track.id, source.filename, lyricsDocument.value);
-  if (readingKey.value === key) checkedReadingKey.value = key;
-}
-
-function generateSelectedReading() {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  if (!track || !source || isGeneratingReading.value) return;
-  generateReading(
-    track.id,
-    source.filename,
-    lyricsDocument.value,
-    lyricsScript.value,
-  );
-}
-
-function selectReadingVariant(variant) {
-  setReadingVariant(variant);
-  if (variant !== 'off') void loadSelectedReading();
-}
-
-function decreaseLyricsFontSize() {
-  lyricsFontSizeIndex.value = Math.max(0, lyricsFontSizeIndex.value - 1);
-}
-
-function increaseLyricsFontSize() {
-  lyricsFontSizeIndex.value = Math.min(
-    LYRICS_FONT_SIZE_CLASSES.length - 1,
-    lyricsFontSizeIndex.value + 1,
-  );
-}
-
-watch(
-  () => [
-    selectedTrack.value?.id,
-    selectedSource.value?.filename,
-    lyricsDocument.value?.documentId,
-    lyricsDocument.value?.normalizerProfileId,
-    lyricsDocument.value?.source?.sha256,
-  ],
-  loadSelectedReading,
-  { immediate: true },
-);
-
-watch(lyricsScript, (script) => {
-  if (!SUPPORTED_READING_SCRIPTS.has(script)) setReadingVariant('off');
-  else if (script === 'ko' && readingVariant.value === 'furigana') {
-    setReadingVariant('romaji');
-  }
-});
 
 onMounted(initialize);
 </script>
 
 <template>
-  <section class="performance-lyrics-workspace" aria-label="現場歌詞">
+  <section class="performance-lyrics-workspace" aria-label="歌詞">
     <AppFolderWorkspaceToolbar
       :context="selectedTrack?.title || '尚未選擇曲目'"
       :context-lang="trackLang"
@@ -199,44 +93,46 @@ onMounted(initialize);
       :meta-lang="trackLang"
     >
       <template #actions>
-        <UiSelect
-          v-if="sourceOptions.length > 0"
-          id="performance-lyrics-source"
-          class="performance-lyrics-workspace__source"
-          label="歌詞來源"
-          label-hidden
-          :model-value="selectedSource?.filename ?? ''"
-          :options="sourceOptions"
-          :disabled="sourceOptions.length < 2"
-          @update:model-value="selectSource"
-        />
-        <div
-          v-if="readingOptions.length > 0"
-          class="performance-lyrics-workspace__control-group"
+        <UiPopover
+          v-model:open="displayMenuOpen"
+          aria-label="歌詞顯示設定"
+          placement="bottom-end"
+          focus-on-open
         >
-          <span class="performance-lyrics-workspace__control-label">讀音</span>
-          <UiSegmentedControl
-            :model-value="readingVariant"
-            :items="readingOptions"
-            aria-label="現場歌詞讀音顯示"
-            @update:model-value="selectReadingVariant"
+          <template #trigger="{ triggerProps }">
+            <UiButton
+              v-bind="triggerProps"
+              :icon="SlidersHorizontal"
+              :active="displayMenuOpen"
+              @click="toggleDisplayMenu"
+            >
+              顯示
+            </UiButton>
+          </template>
+          <LyricsDisplayControls
+            class="performance-lyrics-workspace__display"
+            :sources="selectedLyrics.sources"
+            :selected-source-filename="selectedSource?.filename ?? ''"
+            :has-selected-track="Boolean(selectedTrack)"
+            :is-loading-sources="state.isLoadingLyrics"
+            :reading-options="readingOptions"
+            :reading-variant="readingVariant"
+            :reading-error="readingError || ''"
+            :is-preparing-reading="isPreparingReading"
+            :is-generating-reading="isGeneratingReading"
+            :shows-lyrics-text-variant="lyricsScript === 'zh'"
+            :lyrics-text-variant="lyricsTextVariant"
+            :font-size-label="lyricsFontSizeLabel"
+            :can-decrease-font-size="canDecreaseLyricsFontSize"
+            :can-increase-font-size="canIncreaseLyricsFontSize"
+            @source-change="selectSource"
+            @manage-sources="openSourceManager"
+            @reading-variant-change="selectReadingVariant"
+            @lyrics-text-variant-change="setLyricsTextVariant"
+            @decrease-font-size="decreaseLyricsFontSize"
+            @increase-font-size="increaseLyricsFontSize"
           />
-        </div>
-        <div class="performance-lyrics-workspace__control-group">
-          <span class="performance-lyrics-workspace__control-label">字級</span>
-          <UiIconButton
-            :icon="Minus"
-            label="縮小現場歌詞"
-            :disabled="!canDecreaseLyricsFontSize"
-            @click="decreaseLyricsFontSize"
-          />
-          <UiIconButton
-            :icon="Plus"
-            label="放大現場歌詞"
-            :disabled="!canIncreaseLyricsFontSize"
-            @click="increaseLyricsFontSize"
-          />
-        </div>
+        </UiPopover>
         <UiButton
           v-if="selectedTrack"
           :icon="Pencil"
@@ -248,27 +144,8 @@ onMounted(initialize);
       </template>
     </AppFolderWorkspaceToolbar>
 
-    <UiNotice
-      v-if="readingError"
-      tone="danger"
-      :message="readingError"
-      action-label="重試"
-      :action-disabled="isGeneratingReading"
-      compact
-      @action="generateSelectedReading"
-    />
-    <UiNotice
-      v-else-if="showsMissingReading"
-      tone="info"
-      :message="
-        isGeneratingReading ? '正在產生讀音…' : '這首歌還沒有讀音資料。'
-      "
-      :action-label="isGeneratingReading ? '' : '產生讀音'"
-      compact
-      @action="generateSelectedReading"
-    />
-
     <LyricsLiveTool
+      class="performance-lyrics-workspace__reader"
       :document-id="lyricsDocument.documentId"
       :error="state.error || ''"
       :is-loading="state.isLoading"
@@ -287,10 +164,15 @@ onMounted(initialize);
       :offset-label="offsetLabel"
       :can-reset-offset="state.offsetSeconds !== 0"
       :offset-error="state.offsetSave.error || ''"
+      presentation="sheet"
       @seek-line="playFromLine"
       @adjust-offset="adjustOffset"
       @reset-offset="resetOffset"
       @retry-offset="retryOffsetSave"
+    />
+    <LyricsSourceManagerModal
+      :open="isSourceManagerOpen"
+      @close="isSourceManagerOpen = false"
     />
   </section>
 </template>
@@ -306,24 +188,12 @@ onMounted(initialize);
   overflow: hidden;
 }
 
-.performance-lyrics-workspace > :last-child {
+.performance-lyrics-workspace__reader {
   flex: 1 1 auto;
 }
 
-.performance-lyrics-workspace__source {
-  inline-size: 12rem;
+.performance-lyrics-workspace__display {
+  inline-size: 18rem;
   max-inline-size: 100%;
-}
-
-.performance-lyrics-workspace__control-label {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
-}
-
-.performance-lyrics-workspace__control-group {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
 }
 </style>

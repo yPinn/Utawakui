@@ -6,6 +6,13 @@ function source(filename) {
 }
 
 describe('online lyrics search modal contract', () => {
+  it('reuses the shared text field for source labels instead of styling a native input', () => {
+    const manager = source('./LyricsSourceManagerModal.vue');
+    expect(manager).toContain('<UiTextField');
+    expect(manager).toContain('label="歌詞來源標籤"');
+    expect(manager).not.toContain('<input');
+    expect(manager).not.toContain('lyrics-source-manager__input');
+  });
   it('uses one modal shell and switches to a provider-scoped search workspace', () => {
     const manager = source('./LyricsSourceManagerModal.vue');
     const panel = source('./LyricsLrclibSearchPanel.vue');

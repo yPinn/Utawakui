@@ -98,6 +98,13 @@ state. Splitting authoring and live presentation means composing narrower
 surfaces, not creating a second lyrics store or a mode-heavy duplicate
 workspace.
 
+The 2026-10-16 source-entry consolidation permits the Performance reader to open
+the existing source-management modal directly, without navigating to Library.
+Both contexts reuse the same source control, modal and canonical Lyrics owner;
+search and import retain their existing gates. This is a contextual shortcut,
+not a second authoring workspace. Text, reading correction and timing authoring
+remain in Library.
+
 ### Performance time and tool dimensions
 
 Reserve／待唱, confirmed Now Playing／演唱中 and History／已唱 are temporal

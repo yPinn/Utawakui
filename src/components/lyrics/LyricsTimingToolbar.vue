@@ -37,6 +37,8 @@ defineEmits(['undo', 'save', 'cancel']);
         :icon="Check"
         variant="accent"
         :disabled="!canSave || isSaving"
+        :loading="isSaving"
+        loading-label="儲存中"
         aria-label="儲存逐字時間"
         title="儲存逐字時間"
         @click="$emit('save')"

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
 import { Pencil, Plus, Trash2 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import {
@@ -14,6 +14,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiTextField from '../ui/UiTextField.vue';
 import LyricsLrclibSearchPanel from './LyricsLrclibSearchPanel.vue';
 import LyricsLrclibSearchWorkspace from './LyricsLrclibSearchWorkspace.vue';
 import LyricsManualImportPanel from './LyricsManualImportPanel.vue';
@@ -34,6 +35,7 @@ const betterLyricsPanelRef = useTemplateRef('betterLyricsPanelRef');
 const isManualImportOpen = ref(false);
 const editingFilename = ref(null);
 const labelDraft = ref('');
+const sourceLabelId = `lyrics-source-label-${useId()}`;
 const pendingDeleteSource = ref(null);
 const isDeletingSource = ref(false);
 const sourceTiers = ref(new Map());
@@ -246,11 +248,13 @@ function sourceTierLabel(source) {
               </UiButton>
             </template>
             <template v-else-if="editingFilename === source.filename">
-              <input
+              <UiTextField
+                :id="sourceLabelId"
                 v-model="labelDraft"
-                class="lyrics-source-manager__input"
-                maxlength="32"
-                aria-label="歌詞來源標籤"
+                class="lyrics-source-manager__label-field"
+                :maxlength="32"
+                label="歌詞來源標籤"
+                label-hidden
                 placeholder="標籤（留空清除）"
                 @keydown.enter="commitEdit(source.filename)"
                 @keydown.esc="cancelEdit"
@@ -468,22 +472,9 @@ function sourceTierLabel(source) {
   color: var(--ui-color-text-muted);
 }
 
-.lyrics-source-manager__input {
+.lyrics-source-manager__label-field {
   min-width: 0;
   flex: 1;
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-source-manager__input:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-source-manager__manual-import {

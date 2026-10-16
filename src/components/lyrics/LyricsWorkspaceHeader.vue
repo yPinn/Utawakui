@@ -1,199 +1,149 @@
 <script setup>
-import { ListMusic, RefreshCw } from '../../icons/index.js';
-import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
+import { computed, nextTick, shallowRef } from 'vue';
+import { Pencil, SlidersHorizontal } from '../../icons/index.js';
+import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
-
+import UiPopover from '../ui/UiPopover.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
+import UiHint from '../ui/UiHint.vue';
 const props = defineProps({
   track: { type: Object, default: null },
   trackMeta: { type: String, default: '' },
   reloadStatus: { type: String, default: '' },
   isReloading: { type: Boolean, default: false },
-  separationPresetOptions: { type: Array, default: () => [] },
-  selectedSeparationPresetId: { type: String, required: true },
-  separationPresetTitle: { type: String, default: '' },
-  separationInFlight: { type: Boolean, default: false },
-  separationProgressPercent: { type: Number, default: 0 },
-  separationHasResult: { type: Boolean, default: false },
-  separationError: { type: String, default: '' },
+  canEditReadings: { type: Boolean, default: false },
+  canEditTiming: { type: Boolean, default: false },
+  isLocked: { type: Boolean, default: false },
+  editMode: { type: String, default: 'preview' },
 });
-
-const emit = defineEmits([
-  'selectTrack',
-  'refresh',
-  'separationPresetChange',
-  'generateSeparation',
-]);
-
-function lyricsStatusLabel() {
-  const status = props.track?.lyrics?.status;
-  if (status === 'available') return '有歌詞';
-  if (status === 'missing') return '無歌詞';
-  return '未掃描歌詞';
+const emit = defineEmits(['selectTrack', 'refresh', 'editModeChange']);
+const displayOpen = shallowRef(false);
+const menuOpen = shallowRef(false);
+const menuElement = shallowRef(null);
+let displayTrigger = null;
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuElement.value,
+}));
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'edit',
+      items: [
+        {
+          id: 'reading',
+          kind: 'action',
+          label: '修正讀音',
+          disabled: !props.canEditReadings || props.isLocked,
+        },
+        {
+          id: 'timing',
+          kind: 'action',
+          label: '逐字校時',
+          disabled: !props.canEditTiming || props.isLocked,
+          disabledReason: !props.canEditTiming
+            ? '需要可用的字詞分段與起訖時間'
+            : '',
+        },
+      ],
+    },
+    {
+      id: 'track',
+      items: [
+        {
+          id: 'selectTrack',
+          kind: 'action',
+          label: '選擇曲目',
+          disabled: props.isLocked,
+        },
+        {
+          id: 'refresh',
+          kind: 'action',
+          label: '重新掃描歌詞',
+          disabled: props.isLocked || props.isReloading || !props.track,
+        },
+      ],
+    },
+  ],
+}));
+function toggleDisplay(event) {
+  displayTrigger = event.currentTarget;
+  menuOpen.value = false;
+  displayOpen.value = !displayOpen.value;
 }
-
-function lyricsStatusTone() {
-  return props.track?.lyrics?.status === 'available' ? 'accent' : 'muted';
+async function closeDisplay() {
+  displayOpen.value = false;
+  await nextTick();
+  displayTrigger?.focus();
 }
-
-function lyricsStatusOverrides() {
-  if (props.track?.lyrics?.status) return {};
-  return {
-    background: 'var(--ui-color-surface-hover)',
-    color: 'var(--ui-color-text)',
-  };
+function openMenu(event) {
+  displayOpen.value = false;
+  menuElement.value = event.currentTarget;
+  menuOpen.value = !menuOpen.value;
+}
+function selectAction(item) {
+  const action = menuContent.value.groups
+    .flatMap((group) => group.items)
+    .find((entry) => entry.id === item.id);
+  if (!action || action.disabled) return;
+  menuOpen.value = false;
+  if (item.id === 'reading' || item.id === 'timing')
+    emit('editModeChange', item.id);
+  else emit(item.id);
 }
 </script>
-
 <template>
-  <header class="lyrics-workspace-header">
-    <div class="lyrics-workspace-header__text">
-      <div class="lyrics-workspace-header__title-row">
-        <h2 class="lyrics-workspace-header__title">
-          {{ track?.title || '未選取歌曲' }}
-        </h2>
-        <UiChip
-          v-if="track"
-          class="lyrics-workspace-header__status-badge"
-          :tone="lyricsStatusTone()"
-          v-bind="lyricsStatusOverrides()"
+  <div class="lyrics-workspace-header">
+    <AppFolderWorkspaceToolbar
+      :context="track?.title || '尚未選擇曲目'"
+      :meta="trackMeta"
+    >
+      <template #actions>
+        <UiPopover
+          v-model:open="displayOpen"
+          aria-label="歌詞顯示設定"
+          placement="bottom-end"
+          focus-on-open
         >
-          {{ lyricsStatusLabel() }}
-        </UiChip>
-      </div>
-      <p v-if="trackMeta" class="lyrics-workspace-header__meta">
-        {{ trackMeta }}
-      </p>
-      <p
-        v-if="reloadStatus"
-        class="lyrics-workspace-header__reload-status"
-        role="status"
-      >
-        {{ reloadStatus }}
-      </p>
-    </div>
-
-    <div class="lyrics-workspace-header__controls">
-      <SeparationPresetControl
-        :has-track="Boolean(track)"
-        :preset-options="separationPresetOptions"
-        :selected-preset-id="selectedSeparationPresetId"
-        :preset-title="separationPresetTitle"
-        :in-flight="separationInFlight"
-        :progress-percent="separationProgressPercent"
-        :has-result="separationHasResult"
-        :error="separationError"
-        @preset-change="emit('separationPresetChange', $event)"
-        @generate="emit('generateSeparation')"
-      />
-
-      <span class="lyrics-workspace-header__divider" aria-hidden="true"></span>
-
-      <div class="lyrics-workspace-header__actions">
+          <template #trigger="{ triggerProps }">
+            <UiButton
+              v-bind="triggerProps"
+              :icon="SlidersHorizontal"
+              :active="displayOpen"
+              :disabled="isLocked"
+              @click="toggleDisplay"
+              >顯示</UiButton
+            >
+          </template>
+          <slot name="display" :close-display="closeDisplay" />
+        </UiPopover>
         <UiButton
-          :icon="ListMusic"
-          title="選擇歌詞曲目"
-          aria-label="選擇歌詞曲目"
-          @click="emit('selectTrack')"
+          :icon="Pencil"
+          :active="editMode !== 'preview'"
+          :disabled="isLocked"
+          aria-haspopup="menu"
+          :aria-expanded="menuOpen"
+          @click="openMenu"
+          >編輯</UiButton
         >
-          選曲
-        </UiButton>
-        <UiButton
-          :icon="RefreshCw"
-          :active="isReloading"
-          title="重新掃描歌詞"
-          aria-label="重新掃描歌詞"
-          @click="emit('refresh')"
-        />
-      </div>
-    </div>
-  </header>
+      </template>
+    </AppFolderWorkspaceToolbar>
+    <UiHint v-if="reloadStatus" role="status">{{ reloadStatus }}</UiHint>
+    <UiActionMenu
+      :open="menuOpen"
+      :anchor="menuAnchor"
+      aria-label="歌詞編輯操作"
+      :content="menuContent"
+      @select="selectAction"
+      @close="menuOpen = false"
+    />
+  </div>
 </template>
-
 <style scoped>
 .lyrics-workspace-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-4);
+  min-width: 0;
   padding: var(--ui-space-3) var(--ui-space-4);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.lyrics-workspace-header__text {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.lyrics-workspace-header__title-row {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-}
-
-.lyrics-workspace-header__title,
-.lyrics-workspace-header__meta,
-.lyrics-workspace-header__reload-status {
-  margin: 0;
-}
-
-.lyrics-workspace-header__title {
-  overflow: hidden;
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-heading-size);
-  font-weight: var(--ui-type-heading-weight);
-  line-height: var(--ui-type-heading-line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lyrics-workspace-header__meta,
-.lyrics-workspace-header__reload-status {
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-}
-
-.lyrics-workspace-header__meta {
-  color: var(--ui-color-text-muted);
-}
-
-.lyrics-workspace-header__reload-status {
-  color: var(--ui-color-accent);
-}
-
-.lyrics-workspace-header__status-badge {
-  flex: 0 0 auto;
-  padding: var(--ui-space-1) var(--ui-space-2);
-}
-
-.lyrics-workspace-header__controls,
-.lyrics-workspace-header__actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
-}
-
-.lyrics-workspace-header__divider {
-  width: var(--ui-border-width);
-  height: var(--ui-control-height);
-  flex: 0 0 var(--ui-border-width);
-  background: var(--ui-color-border);
-}
-
-@container (max-width: 48rem) {
-  .lyrics-workspace-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .lyrics-workspace-header__controls {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
 }
 </style>

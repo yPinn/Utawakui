@@ -3,14 +3,13 @@ import { computed, ref, watch } from 'vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
-import { useSeparation } from '../../composables/useSeparation.js';
+import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import { useLyricsTimingEditor } from '../../composables/useLyricsTimingEditor.js';
-import {
-  SEPARATION_PRESET_SELECT_TITLE,
-  separationPresetOptionsFor,
-} from '../../constants/separationPresets.js';
 import { formatDuration } from '../../utils/format.js';
-import { alignReadings, detectLyricsScript } from '../../utils/lyrics.js';
+import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
+import { canEditTimingLine } from '../../utils/lyricsTiming.js';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsPreparationBar from './LyricsPreparationBar.vue';
 import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
@@ -19,7 +18,8 @@ import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 
-const SUPPORTED_READING_SCRIPTS = new Set(['ja', 'ko']);
+const lyrics = useLyrics();
+const reading = useLyricsReading();
 
 const {
   state,
@@ -40,7 +40,7 @@ const {
   retryOffsetSave,
   playFromLine,
   saveTimingDocument,
-} = useLyrics();
+} = lyrics;
 const { state: playerState } = usePlayer();
 
 const {
@@ -55,36 +55,66 @@ const {
   cancel: cancelTiming,
 } = useLyricsTimingEditor();
 
+const { setReadingLine } = reading;
 const {
-  state: separationState,
-  isSeparating,
-  presetIdFor,
-  progressPercent,
-  separate,
-  selectPreset,
-} = useSeparation();
+  lyricsScript,
+  showsReadingAid,
+  readingOptions,
+  selectedReadingDoc,
+  readingLines,
+  lyricsFontSizeClass,
+  lyricsFontSizeLabel,
+  canDecreaseLyricsFontSize,
+  canIncreaseLyricsFontSize,
+  readingVariant,
+  readingError,
+  isPreparingReading,
+  isGeneratingReading,
+  selectReadingVariant: setReadingVariant,
+  decreaseLyricsFontSize,
+  increaseLyricsFontSize,
+  refreshSelectedReading,
+} = useLyricsDisplay({ lyrics, reading });
 
-const {
-  variant: readingVariant,
-  getDoc: getReadingDoc,
-  isGenerating: isGeneratingReadingFor,
-  errorFor: readingErrorFor,
-  loadReading,
-  generateReading,
-  setReadingLine,
-} = useLyricsReading();
-
-const lyricsFontSizeIndex = ref(1);
 const isSourceManagerOpen = ref(false);
 const isTrackPickerOpen = ref(false);
 const editingReadingLineIndex = ref(null);
 const readingLineDraft = ref('');
-
-const LYRICS_FONT_SIZE_CLASSES = [
-  'lyrics-preview--font-compact',
-  'lyrics-preview--font-default',
-  'lyrics-preview--font-large',
-];
+const editMode = ref('preview');
+const isSavingReading = ref(false);
+const hasEditingDraft = computed(
+  () => Boolean(timingDraft.value) || editingReadingLineIndex.value !== null,
+);
+const isEditingLocked = computed(
+  () =>
+    hasEditingDraft.value || isSavingReading.value || state.timingSave.isSaving,
+);
+const editingHelp = computed(() => {
+  if (hasEditingDraft.value)
+    return '儲存或取消這行編輯後，可繼續選擇其他歌詞。';
+  if (editMode.value === 'timing') return '選擇歌詞行的時鐘開始逐字校時。';
+  return isGeneratingReading.value || isPreparingReading.value
+    ? '正在準備讀音…'
+    : '選擇歌詞行的鉛筆修正讀音。';
+});
+function setEditMode(mode) {
+  if (isEditingLocked.value || !['preview', 'reading', 'timing'].includes(mode))
+    return;
+  if (mode !== 'preview' && (!selectedSource.value || state.isLoadingLyrics))
+    return;
+  if (mode === 'reading' && !showsReadingAid.value) return;
+  if (mode === 'timing' && !canEditTiming.value) return;
+  editMode.value = mode;
+  if (mode === 'reading' && readingVariant.value === 'off') {
+    void setReadingVariant(lyricsScript.value === 'ja' ? 'furigana' : 'romaji');
+  }
+}
+async function openSourceManager(closeDisplay) {
+  if (isEditingLocked.value) return;
+  await closeDisplay();
+  if (isEditingLocked.value || !selectedTrack.value) return;
+  isSourceManagerOpen.value = true;
+}
 
 const offsetLabel = computed(() => {
   if (state.offsetSeconds === 0) return '0.0s';
@@ -102,14 +132,6 @@ const selectedMeta = computed(() => {
   return parts.join(' / ');
 });
 
-const lyricsFontSizeClass = computed(
-  () => LYRICS_FONT_SIZE_CLASSES[lyricsFontSizeIndex.value],
-);
-const canDecreaseLyricsFontSize = computed(() => lyricsFontSizeIndex.value > 0);
-const canIncreaseLyricsFontSize = computed(
-  () => lyricsFontSizeIndex.value < LYRICS_FONT_SIZE_CLASSES.length - 1,
-);
-
 const reloadStatusLabel = computed(() => {
   if (state.backfillStatus.error) return state.backfillStatus.error;
   if (state.backfillStatus.isRunning) {
@@ -123,67 +145,6 @@ const reloadStatusLabel = computed(() => {
   return '';
 });
 
-const selectedSeparationError = computed(() => {
-  const track = selectedTrack.value;
-  return track ? (separationState.errors.get(track.id) ?? null) : null;
-});
-
-const selectedPresetId = computed(() => presetIdFor(selectedTrack.value));
-const separationPresetOptions = computed(() =>
-  separationPresetOptionsFor(selectedTrack.value),
-);
-const selectedSeparationInFlight = computed(() => {
-  const track = selectedTrack.value;
-  return track ? isSeparating(track.id) : false;
-});
-const selectedSeparationProgressPercent = computed(() => {
-  const track = selectedTrack.value;
-  return track ? progressPercent(track.id) : 0;
-});
-const selectedSeparationHasResult = computed(() =>
-  Boolean(selectedTrack.value?.separation?.results?.[selectedPresetId.value]),
-);
-
-// Only Japanese/Korean lyrics get a reading-aid toolbar at all — showing a
-// permanently-disabled control for every other language is pure noise
-// (matches the plan's "not disabled — hidden" call).
-const lyricsScript = computed(() =>
-  detectLyricsScript(lyricLines.value.map((line) => line.text).join('')),
-);
-const showsReadingAid = computed(() =>
-  SUPPORTED_READING_SCRIPTS.has(lyricsScript.value),
-);
-
-// Korean lyrics never produce furigana (see lyricsReading.js's
-// buildRomanizationDoc — Korean has no ruby step at all), so the variant
-// select hides that option for them. `readingVariant` lives in
-// useLyricsReading.js's module scope and survives switching tracks, so
-// without this a furigana selection made on a Japanese track would leave
-// a Korean track's select showing a value with no matching <option>.
-watch(lyricsScript, (script) => {
-  if (script === 'ko' && readingVariant.value === 'furigana') {
-    readingVariant.value = 'romaji';
-  }
-});
-
-const selectedReadingDoc = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return track && source ? getReadingDoc(track.id, source.filename) : null;
-});
-
-// Aligned 1:1 with lyricLines — entry is the matching reading line or null
-// when there's no doc yet, or the doc is stale against the current text.
-const readingLines = computed(() =>
-  alignReadings(lyricLines.value, selectedReadingDoc.value),
-);
-
-const readingError = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return track && source ? readingErrorFor(track.id, source.filename) : null;
-});
-
 const isSelectedPlaybackAtStart = computed(() => {
   const trackId = selectedTrack.value?.id;
   return Boolean(
@@ -194,49 +155,17 @@ const isSelectedPlaybackAtStart = computed(() => {
   );
 });
 
-let readingIntentRevision = 0;
-
-async function applySelectedReadingIntent() {
-  readingIntentRevision += 1;
-  const revision = readingIntentRevision;
-  editingReadingLineIndex.value = null;
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  if (!track || !source) return;
-
-  const document = lyricsDocument.value;
-  const script = lyricsScript.value;
-  const loaded = await loadReading(track.id, source.filename, document);
-  if (
-    revision !== readingIntentRevision ||
-    selectedTrack.value?.id !== track.id ||
-    selectedSource.value?.filename !== source.filename
-  ) {
-    return;
-  }
-  if (
-    readingVariant.value === 'off' ||
-    loaded !== null ||
-    !SUPPORTED_READING_SCRIPTS.has(script) ||
-    isGeneratingReadingFor(track.id, source.filename)
-  ) {
-    return;
-  }
-
-  await generateReading(track.id, source.filename, document, script);
-}
-
 watch(
-  () => [
-    selectedTrack.value?.id,
-    selectedSource.value?.filename,
-    lyricsScript.value,
-    lyricsDocument.value?.documentId,
-    lyricsDocument.value?.normalizerProfileId,
-    lyricsDocument.value?.source?.sha256,
+  [
+    () => selectedTrack.value?.id,
+    () => selectedSource.value?.filename,
+    () => lyricsDocument.value?.documentId,
   ],
-  applySelectedReadingIntent,
-  { immediate: true },
+  () => {
+    cancelReadingLineEdit();
+    cancelTiming();
+    editMode.value = 'preview';
+  },
 );
 
 watch(
@@ -257,30 +186,10 @@ watch(
       continuityRevision !== previousContinuityRevision;
     const wrappedToBeginning = wasAtStart === false;
     if (reloadedSameTrack || restartedAtBeginning || wrappedToBeginning) {
-      applySelectedReadingIntent();
+      refreshSelectedReading();
     }
   },
 );
-
-function handlePresetChange(presetId) {
-  const track = selectedTrack.value;
-  if (track) selectPreset(track, presetId);
-}
-
-function generateSeparation() {
-  const track = selectedTrack.value;
-  if (!track || selectedSeparationHasResult.value) return;
-  separate(track, selectedPresetId.value);
-}
-
-function setReadingVariant(variant) {
-  readingVariant.value = variant;
-  if (variant === 'off') {
-    readingIntentRevision += 1;
-    return;
-  }
-  applySelectedReadingIntent();
-}
 
 // Seeds the draft from whatever reading already exists for this line.
 // Japanese: segment reading where present, the segment's own text
@@ -290,6 +199,7 @@ function setReadingVariant(variant) {
 // produces a `segment.r`) — the thing being edited IS the line's romaji
 // string, so seed from that directly.
 function startEditReadingLine(index) {
+  if (editMode.value !== 'reading' || isEditingLocked.value) return;
   const current = readingLines.value[index];
   if (lyricsScript.value === 'ko') {
     readingLineDraft.value = current?.romaji ?? '';
@@ -309,33 +219,57 @@ function cancelReadingLineEdit() {
 async function commitReadingLineEdit(index) {
   const track = selectedTrack.value;
   const source = selectedSource.value;
-  if (!track || !source) return;
-  await setReadingLine(
-    track.id,
-    source.filename,
-    lyricsDocument.value,
-    lyricsDocument.value.lines[index].lineId,
-    readingLineDraft.value,
-  );
-  cancelReadingLineEdit();
+  if (
+    !track ||
+    !source ||
+    isSavingReading.value ||
+    editingReadingLineIndex.value !== index
+  )
+    return;
+  const documentId = lyricsDocument.value.documentId;
+  const lineId = lyricsDocument.value.lines[index]?.lineId;
+  if (!lineId) return;
+  isSavingReading.value = true;
+  try {
+    await setReadingLine(
+      track.id,
+      source.filename,
+      lyricsDocument.value,
+      lineId,
+      readingLineDraft.value,
+    );
+    if (
+      selectedTrack.value?.id === track.id &&
+      selectedSource.value?.filename === source.filename &&
+      lyricsDocument.value.documentId === documentId &&
+      !reading.errorFor(track.id, source.filename)
+    )
+      cancelReadingLineEdit();
+  } finally {
+    isSavingReading.value = false;
+  }
 }
 
-function decreaseLyricsFontSize() {
-  lyricsFontSizeIndex.value = Math.max(0, lyricsFontSizeIndex.value - 1);
-}
-
-function increaseLyricsFontSize() {
-  lyricsFontSizeIndex.value = Math.min(
-    LYRICS_FONT_SIZE_CLASSES.length - 1,
-    lyricsFontSizeIndex.value + 1,
-  );
-}
-
-const canEditTiming = computed(() =>
-  lyricsDocument.value.lines.some((line) => Number.isFinite(line.startMs)),
+const timingReadings = computed(
+  () =>
+    new Map(
+      readingLines.value.filter(Boolean).map((line) => [line.lineId, line]),
+    ),
 );
-const canTapTiming = computed(
-  () => timingDraft.value !== null && !canCommitTiming.value,
+const editableTimingLineIds = computed(() =>
+  lyricsDocument.value.lines
+    .filter((line) =>
+      canEditTimingLine(line, timingReadings.value.get(line.lineId)),
+    )
+    .map((line) => line.lineId),
+);
+const canEditTiming = computed(() => editableTimingLineIds.value.length > 0);
+const canTapTiming = computed(() =>
+  Boolean(
+    timingDraft.value?.segments.some(
+      (segment, index) => index > 0 && !Number.isFinite(segment.startMs),
+    ),
+  ),
 );
 const totalTimingBoundaries = computed(() =>
   Math.max(0, (timingDraft.value?.segments.length ?? 1) - 1),
@@ -347,15 +281,14 @@ const completedTimingBoundaries = computed(
     ).length ?? 0,
 );
 
-watch(
-  () => lyricsDocument.value.documentId,
-  (documentId, previousDocumentId) => {
-    if (previousDocumentId && documentId !== previousDocumentId) cancelTiming();
-  },
-);
-
 function startTimingEdit(lineId) {
-  beginTimingLine(lyricsDocument.value, lineId);
+  if (editMode.value !== 'timing' || isEditingLocked.value) return;
+  if (!editableTimingLineIds.value.includes(lineId)) return;
+  beginTimingLine(
+    lyricsDocument.value,
+    lineId,
+    timingReadings.value.get(lineId),
+  );
 }
 
 function recordTimingBoundary() {
@@ -365,9 +298,13 @@ function recordTimingBoundary() {
 }
 
 async function commitTimingDocument() {
+  if (state.timingSave.isSaving || !timingDraft.value || !canCommitTiming.value)
+    return;
+  const draft = timingDraft.value;
   const document = buildTimingDocument();
   if (!document) return;
-  if (await saveTimingDocument(document)) cancelTiming();
+  if ((await saveTimingDocument(document)) && timingDraft.value === draft)
+    cancelTiming();
 }
 </script>
 
@@ -379,39 +316,51 @@ async function commitTimingDocument() {
         :track-meta="selectedMeta"
         :reload-status="reloadStatusLabel"
         :is-reloading="isReloading"
-        :separation-preset-options="separationPresetOptions"
-        :selected-separation-preset-id="selectedPresetId"
-        :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
-        :separation-in-flight="selectedSeparationInFlight"
-        :separation-progress-percent="selectedSeparationProgressPercent"
-        :separation-has-result="selectedSeparationHasResult"
-        :separation-error="selectedSeparationError || ''"
+        :can-edit-readings="showsReadingAid && !state.isLoadingLyrics"
+        :can-edit-timing="canEditTiming && !state.isLoadingLyrics"
+        :is-locked="isEditingLocked"
+        :edit-mode="editMode"
         @select-track="isTrackPickerOpen = true"
         @refresh="refresh"
-        @separation-preset-change="handlePresetChange"
-        @generate-separation="generateSeparation"
-      />
-
-      <LyricsPreparationBar
-        :sources="selectedLyrics.sources"
-        :selected-source-filename="state.selectedSourceFilename || ''"
-        :has-selected-track="Boolean(selectedTrack)"
-        :shows-reading-aid="showsReadingAid"
-        :shows-lyrics-text-variant="lyricsScript === 'zh'"
-        :lyrics-script="lyricsScript"
-        :lyrics-text-variant="lyricsTextVariant"
-        :reading-variant="readingVariant"
-        :reading-error="readingError || ''"
-        :can-decrease-font-size="canDecreaseLyricsFontSize"
-        :can-increase-font-size="canIncreaseLyricsFontSize"
-        @source-change="selectSource"
-        @manage-sources="isSourceManagerOpen = true"
-        @reading-variant-change="setReadingVariant"
-        @lyrics-text-variant-change="setLyricsTextVariant"
-        @decrease-font-size="decreaseLyricsFontSize"
-        @increase-font-size="increaseLyricsFontSize"
-      />
-
+        @edit-mode-change="setEditMode"
+      >
+        <template #display="{ closeDisplay }">
+          <LyricsPreparationBar
+            :sources="selectedLyrics.sources"
+            :selected-source-filename="state.selectedSourceFilename || ''"
+            :has-selected-track="Boolean(selectedTrack)"
+            :is-loading-sources="state.isLoadingLyrics"
+            :reading-options="readingOptions"
+            :is-preparing-reading="isPreparingReading"
+            :is-generating-reading="isGeneratingReading"
+            :font-size-label="lyricsFontSizeLabel"
+            :shows-lyrics-text-variant="lyricsScript === 'zh'"
+            :lyrics-text-variant="lyricsTextVariant"
+            :reading-variant="readingVariant"
+            :reading-error="readingError || ''"
+            :can-decrease-font-size="canDecreaseLyricsFontSize"
+            :can-increase-font-size="canIncreaseLyricsFontSize"
+            @source-change="selectSource"
+            @manage-sources="openSourceManager(closeDisplay)"
+            @reading-variant-change="setReadingVariant"
+            @lyrics-text-variant-change="setLyricsTextVariant"
+            @decrease-font-size="decreaseLyricsFontSize"
+            @increase-font-size="increaseLyricsFontSize"
+          />
+        </template>
+      </LyricsWorkspaceHeader>
+      <div v-if="editMode !== 'preview'" class="lyrics-edit-context">
+        <UiHint role="status">{{ editingHelp }}</UiHint>
+        <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')"
+          >結束編輯</UiButton
+        >
+        <UiNotice
+          v-if="editMode === 'reading' && readingError"
+          tone="danger"
+          :message="readingError"
+          compact
+        />
+      </div>
       <div v-if="timingDraft" class="lyrics-timing-stack">
         <LyricsTimingToolbar
           :can-undo="canUndoTiming"
@@ -448,11 +397,19 @@ async function commitTimingDocument() {
         :shows-reading-aid="showsReadingAid"
         :reading-variant="readingVariant"
         :reading-lines="readingLines"
-        :has-reading-document="Boolean(selectedReadingDoc)"
+        :has-reading-document="
+          editMode === 'reading' &&
+          Boolean(selectedReadingDoc) &&
+          !hasEditingDraft
+        "
         :editing-reading-line-index="editingReadingLineIndex"
         :reading-line-draft="readingLineDraft"
+        :is-saving-reading="isSavingReading"
+        :editable-timing-line-ids="editableTimingLineIds"
         :lyrics-script="lyricsScript"
-        :can-edit-timing="canEditTiming"
+        :can-edit-timing="
+          editMode === 'timing' && canEditTiming && !hasEditingDraft
+        "
         :offset-label="offsetLabel"
         :can-reset-offset="state.offsetSeconds !== 0"
         :offset-error="state.offsetSave.error || ''"
@@ -500,6 +457,15 @@ async function commitTimingDocument() {
   background: var(--ui-color-surface);
 }
 
+.lyrics-edit-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+}
 .lyrics-timing-stack {
   grid-row: 3;
   min-width: 0;
