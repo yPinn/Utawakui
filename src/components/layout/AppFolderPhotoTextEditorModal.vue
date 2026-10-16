@@ -92,7 +92,7 @@ function cancel() {
 <template>
   <UiModal
     :open="open"
-    title="編輯照片文字"
+    title="編輯照片說明"
     size="notice"
     :close-disabled="saving"
     @close="cancel"
@@ -146,8 +146,8 @@ function cancel() {
           v-if="isInstant"
           id="app-folder-photo-text-label"
           v-model="labelDraft"
-          label="拍立得文字"
-          :hint="`寫在相框下緣，最多 ${PHOTO_LABEL_MAX_LENGTH} 字。`"
+          label="相框文字"
+          :hint="`顯示在相框下緣，最多 ${PHOTO_LABEL_MAX_LENGTH} 字。`"
           placeholder="例如：2024 夏・台北"
           :maxlength="PHOTO_LABEL_MAX_LENGTH"
           :disabled="saving"
@@ -156,7 +156,7 @@ function cancel() {
         <UiTextField
           id="app-folder-photo-text-caption-title"
           v-model="captionTitleDraft"
-          label="說明便條"
+          label="便條標題"
           text-role="title"
           placeholder="標題（選填）"
           :maxlength="PHOTO_CAPTION_TITLE_MAX_LENGTH"
@@ -167,11 +167,11 @@ function cancel() {
           id="app-folder-photo-text-caption"
           v-model="captionDraft"
           class="app-folder-photo-text__caption"
-          label="說明便條內文"
+          label="便條內容"
           label-hidden
           fill
           resize="none"
-          placeholder="內文，展開照片時貼在照片右側。"
+          placeholder="展開照片時顯示在右側。"
           :rows="3"
           :maxlength="PHOTO_CAPTION_MAX_LENGTH"
           :disabled="saving"
@@ -181,7 +181,7 @@ function cancel() {
 
     <template #footer>
       <UiHint class="app-folder-photo-text__footnote">
-        清空欄位即移除該段文字。
+        清空欄位即可移除文字。
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
         取消

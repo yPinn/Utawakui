@@ -17,16 +17,16 @@ const TOOLS = [
   {
     id: 'vb-cable',
     name: 'VB-CABLE',
-    tag: '推薦：最簡單',
+    tag: '適合單一音源',
     tagTone: 'success',
-    description: '一對一音訊路由，安裝最快、設定最少。免費。',
+    description: '安裝與設定較簡單。免費。',
   },
   {
     id: 'voicemeeter',
     name: 'VoiceMeeter',
-    tag: '需混合多個音源',
+    tag: '混合多個音源',
     tagTone: 'info',
-    description: '完整虛擬混音台，可同時混合多個聲音來源。免費。',
+    description: '可同時混合多個聲音來源。免費。',
   },
 ];
 
@@ -38,14 +38,13 @@ function openDownload(targetId) {
 <template>
   <UiModal
     :open="open"
-    title="虛擬音效裝置怎麼選"
+    title="選擇虛擬音效裝置"
     size="wide"
     @close="emit('close')"
   >
     <div class="virtual-cable-guide">
       <p class="virtual-cable-guide__intro">
-        虛擬音效裝置讓 Utawakui
-        把伴奏直接送給直播或錄影軟體擷取，不需要實體接線。
+        讓 Utawakui 將伴奏直接送到直播或錄影軟體，不需實體接線。
       </p>
 
       <ul class="virtual-cable-guide__list">
@@ -64,7 +63,7 @@ function openDownload(targetId) {
             </p>
           </div>
           <UiButton :icon="ExternalLink" @click="openDownload(tool.id)">
-            前往官網下載
+            前往下載
           </UiButton>
         </li>
       </ul>

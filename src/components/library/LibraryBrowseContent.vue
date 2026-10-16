@@ -665,8 +665,9 @@ function toggleTrackRowSort(key) {
 async function removeTrack(track) {
   const confirmed = await confirmAction({
     title: '刪除曲目？',
-    message: `「${track.title}」會從曲庫及所有播放清單移除。`,
-    detail: '原始檔案與去人聲版本也會刪除，此動作無法復原。',
+    subject: track.title,
+    message: '會從曲庫與所有播放清單移除。',
+    detail: '原始音檔與去人聲版本也會刪除，且無法復原。',
     confirmLabel: '刪除曲目',
     intent: 'danger',
   });

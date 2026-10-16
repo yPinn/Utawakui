@@ -72,7 +72,7 @@ describe('FolderAssetPreviewModal', () => {
           }),
       }),
     );
-    expect(source).toContain('label="編輯照片文字"');
+    expect(source).toContain('label="編輯照片說明"');
     expect(source).toContain("emit('editText', asset.key)");
     expect(source.indexOf(':icon="Pencil"')).toBeLessThan(
       source.indexOf(':icon="Trash2"'),
@@ -106,11 +106,9 @@ describe('FolderAssetPreviewModal', () => {
   });
 
   it('states the removal consequence once with concise actions', () => {
-    expect(source).toContain("title: '移除這張照片？'");
-    expect(source).toContain(
-      "message: '照片會從此頁面移除，原始檔案仍會保留。'",
-    );
-    expect(source).toContain("confirmLabel: '移除'");
+    expect(source).toContain("title: '從頁面移除照片？'");
+    expect(source).toContain("message: '原始檔案會保留。'");
+    expect(source).toContain("confirmLabel: '移除照片'");
     expect(source).not.toContain('subject:');
     expect(source).not.toContain('detail:');
     expect(source).not.toContain('cancelLabel:');

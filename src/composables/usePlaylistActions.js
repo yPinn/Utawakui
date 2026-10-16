@@ -151,8 +151,8 @@ async function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
     title: `${action}？`,
     subject: name,
     meta: `${playlist.trackIds.length} 首曲目`,
-    message: `只會移除${collectionType}，不會刪除音檔。`,
-    detail: '刪除後無法復原。',
+    message: `只會移除${collectionType}，音檔會保留。`,
+    detail: '此動作無法復原。',
     confirmLabel: action,
     intent: 'danger',
   });

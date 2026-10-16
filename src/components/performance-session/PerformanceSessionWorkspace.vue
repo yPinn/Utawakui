@@ -142,10 +142,10 @@ async function confirmRemoveItem(itemId) {
   );
   if (!item) return;
   const confirmed = await confirmAction({
-    title: '從待唱移除這首歌？',
-    message: `「${item.displayTitle}」會從這份場次安排移除。`,
-    detail: '這不會刪除曲庫中的歌曲。',
-    confirmLabel: '從待唱移除',
+    title: '從待唱移除歌曲？',
+    subject: item.displayTitle,
+    message: '只會移出這份安排，曲庫歌曲會保留。',
+    confirmLabel: '移除歌曲',
     intent: 'danger',
   });
   if (confirmed) removeItem(itemId);
@@ -154,10 +154,10 @@ async function confirmRemoveItem(itemId) {
 async function clearDraft() {
   if (!hasItems.value) return;
   const confirmed = await confirmAction({
-    title: '清除場次草稿？',
-    message: '目前待唱安排中的所有項目會被清除。',
-    detail: '這不會刪除曲庫歌曲或播放清單。',
-    confirmLabel: '清除草稿',
+    title: '清除待唱安排？',
+    message: '所有待唱項目與手動調整都會清除。',
+    detail: '曲庫歌曲與播放清單會保留。',
+    confirmLabel: '清除安排',
     intent: 'danger',
   });
   if (confirmed) clear();
@@ -172,8 +172,9 @@ async function prepareSelectedCollection() {
   if (replaceCurrent) {
     replaceCurrent = await confirmAction({
       title: '取代待唱安排？',
-      message: `「${selectedCollectionLabel.value}」會取代「${sourceLabel.value}」。`,
-      detail: '目前待唱安排的手動調整會遺失。',
+      subject: selectedCollectionLabel.value,
+      meta: `目前：${sourceLabel.value}`,
+      message: '現有安排與手動調整會被取代。',
       confirmLabel: '取代安排',
       intent: 'danger',
     });
@@ -187,9 +188,8 @@ async function prepareSelectedCollection() {
     state.validationError?.code === 'SESSION_PLAN_REPLACE_REQUIRED'
   ) {
     const confirmed = await confirmAction({
-      title: '取代另一份待唱安排？',
-      message: '目前已有另一份待唱安排。',
-      detail: '取代後，原安排的手動調整會遺失。',
+      title: '取代待唱安排？',
+      message: '目前已有其他安排，取代後手動調整會遺失。',
       confirmLabel: '取代安排',
       intent: 'danger',
     });

@@ -50,7 +50,7 @@ describe('production UI primitive adoption', () => {
     expect(source).toContain("import UiSearchBox from '../ui/UiSearchBox.vue'");
     expect(source).not.toMatch(/<input\b/gu);
     expect(source).toMatch(
-      /<UiSearchBox\s+v-model="query"\s+label="搜尋曲目"\s+placeholder="搜尋曲名、歌手或 ID"\s*\/>/u,
+      /<UiSearchBox\s+v-model="query"\s+label="搜尋曲目"\s+placeholder="搜尋歌名或歌手"\s*\/>/u,
     );
   });
 });

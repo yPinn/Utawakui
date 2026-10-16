@@ -32,7 +32,7 @@ function openCommunityDiscord() {
 async function handleClearDiagnostics() {
   const confirmed = await confirmAction({
     title: '清除錯誤紀錄？',
-    message: '這台電腦上已儲存的錯誤紀錄會被清除。',
+    message: '已儲存的錯誤紀錄會被清除。',
     detail: '此動作無法復原。',
     confirmLabel: '清除紀錄',
     intent: 'danger',

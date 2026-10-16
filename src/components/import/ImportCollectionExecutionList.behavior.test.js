@@ -97,7 +97,8 @@ describe('Import collection execution list', () => {
     });
     const retryButtons = findAll(
       mounted.root,
-      (node) => node.type === 'button' && textContent(node) === '重試失敗',
+      (node) =>
+        node.type === 'button' && textContent(node) === '重試未完成曲目',
     );
 
     expect(retryButtons).toHaveLength(1);

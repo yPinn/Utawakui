@@ -52,7 +52,7 @@ const modalTitle = computed(() =>
     ? activeProvider.value.id === 'all'
       ? '搜尋歌詞'
       : `搜尋 ${activeProvider.value.label}`
-    : '管理歌詞來源',
+    : '歌詞來源',
 );
 
 watch(
@@ -201,7 +201,7 @@ function sourceTierLabel(source) {
             id="lyrics-source-manager-current-title"
             class="lyrics-source-manager__section-title"
           >
-            目前的來源
+            已儲存來源
           </h3>
           <UiButton
             v-if="!isManualImportOpen"
@@ -224,10 +224,10 @@ function sourceTierLabel(source) {
           >
             <template v-if="pendingDeleteSource?.filename === source.filename">
               <div class="lyrics-source-manager__delete-copy">
-                <strong>刪除這個歌詞來源？</strong>
+                <strong>刪除歌詞來源？</strong>
                 <span>
                   {{ formatLyricsSourceLabel(source) }}
-                  會被刪除，此動作無法復原。
+                  會被刪除，且無法復原。
                 </span>
               </div>
               <UiButton
@@ -235,7 +235,7 @@ function sourceTierLabel(source) {
                 :disabled="isDeletingSource"
                 @click="cancelDelete"
               >
-                取消刪除
+                取消
               </UiButton>
               <UiButton
                 variant="accent"
@@ -244,7 +244,7 @@ function sourceTierLabel(source) {
                 loading-label="刪除中"
                 @click="confirmDelete"
               >
-                確認刪除歌詞來源
+                刪除來源
               </UiButton>
             </template>
             <template v-else-if="editingFilename === source.filename">

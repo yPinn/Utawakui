@@ -128,7 +128,7 @@ function handleTrackSelect(track) {
       <UiSearchBox
         v-model="query"
         label="搜尋曲目"
-        placeholder="搜尋曲名、歌手或 ID"
+        placeholder="搜尋歌名或歌手"
       />
 
       <div class="lyrics-track-picker__summary">
@@ -140,10 +140,10 @@ function handleTrackSelect(track) {
         v-if="state.trackScope === 'current-playlist' && !selectedPlaylist"
         padded
       >
-        目前沒有選取播放清單。
+        尚未選擇播放清單。
       </UiHint>
       <UiHint v-else-if="visibleTracks.length === 0" padded>
-        找不到符合的曲目。
+        找不到符合條件的曲目。
       </UiHint>
 
       <UiScrollRegion
@@ -160,7 +160,7 @@ function handleTrackSelect(track) {
           :active="track.id === state.selectedTrackId"
           :current="track.id === currentTrackId"
           interactive
-          :action-label="`選取：${track.title}`"
+          :action-label="`選取 ${track.title}`"
           hide-duration
           navigation="album"
           @row-click="handleTrackSelect(track)"

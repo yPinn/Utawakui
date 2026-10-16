@@ -91,8 +91,8 @@ const managedProgressLabel = computed(() => {
   return '準備中…';
 });
 const systemSourceCaption = computed(() => {
-  if (isDetecting.value) return '正在檢查本機可用版本';
-  if (detection.value?.ok) return '已找到可用版本';
+  if (isDetecting.value) return '檢查中';
+  if (detection.value?.ok) return '可使用';
   if (detection.value) return '未找到可用版本';
   return '尚未檢查';
 });
@@ -133,7 +133,7 @@ async function chooseSystem() {
   } catch (err) {
     switchError.value = recordError(err, {
       code: 'FFMPEG_SOURCE_SWITCH_FAILED',
-      title: 'FFmpeg 來源未切換',
+      title: '無法切換 FFmpeg 來源',
       message: '請再試一次。',
       source: 'settings',
       operation: 'set-ffmpeg-source',
@@ -157,7 +157,7 @@ async function chooseManaged() {
   } catch (err) {
     switchError.value = recordError(err, {
       code: 'FFMPEG_SOURCE_SWITCH_FAILED',
-      title: 'FFmpeg 來源未切換',
+      title: '無法切換 FFmpeg 來源',
       message: '請再試一次。',
       source: 'settings',
       operation: 'set-ffmpeg-source',
@@ -170,10 +170,15 @@ async function chooseManaged() {
 </script>
 
 <template>
-  <UiModal :open="open" title="FFmpeg 來源" size="wide" @close="emit('close')">
+  <UiModal
+    :open="open"
+    title="選擇 FFmpeg 來源"
+    size="wide"
+    @close="emit('close')"
+  >
     <div class="ffmpeg-source-modal">
       <p class="ffmpeg-source-modal__description">
-        選擇系統 FFmpeg，或由 Utawakui 下載管理。
+        使用電腦上的 FFmpeg，或由 Utawakui 下載並管理。
       </p>
 
       <ul class="ffmpeg-source-modal__list">
@@ -193,9 +198,7 @@ async function chooseManaged() {
               >
                 <Settings :size="ICON_SIZE" aria-hidden="true" />
                 <span class="ffmpeg-source-modal__label-group">
-                  <span class="ffmpeg-source-modal__label"
-                    >使用系統 FFmpeg</span
-                  >
+                  <span class="ffmpeg-source-modal__label">系統 FFmpeg</span>
                   <span class="ffmpeg-source-modal__caption">
                     {{ systemSourceCaption }}
                   </span>
@@ -240,7 +243,7 @@ async function chooseManaged() {
                 <Download :size="ICON_SIZE" aria-hidden="true" />
                 <span class="ffmpeg-source-modal__label-group">
                   <span class="ffmpeg-source-modal__label"
-                    >使用 Utawakui 管理的版本</span
+                    >Utawakui 管理版本</span
                   >
                   <span class="ffmpeg-source-modal__caption">
                     {{ managedSourceCaption }}
@@ -267,7 +270,7 @@ async function chooseManaged() {
       <UiNotice
         v-if="switchError"
         tone="danger"
-        title="FFmpeg 來源未切換"
+        title="無法切換 FFmpeg 來源"
         :message="switchError"
         compact
       />

@@ -313,7 +313,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).not.toContain('網易雲音樂沒有找到');
     expect(nodeText(root)).not.toContain('Better Lyrics 公開快取');
     expect(nodeText(root)).not.toContain('部分來源未完成');
-    expect(nodeText(root)).not.toContain('找到 0 個錄音版本');
+    expect(nodeText(root)).not.toContain('找到 0 個版本');
     expect(nodeText(root).match(/沒有找到候選歌詞/g)).toHaveLength(1);
 
     app.unmount();
@@ -495,9 +495,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     expect(nodeText(root)).toContain('LRCLIB 無法連線');
     expect(nodeText(root)).toContain('另有 1 筆結果缺少必要資料');
-    expect(nodeText(root)).toContain(
-      '以下已載入結果仍可檢視；可用來源仍可儲存',
-    );
+    expect(nodeText(root)).toContain('已載入的結果仍可檢視與儲存');
     expect(findByProp(root, 'aria-label', '儲存 Song，Artist')).toBeUndefined();
     expect(nodeText(root).match(/部分線上結果未載入/g)).toHaveLength(1);
     expect(nodeText(root)).not.toContain('部分候選未顯示');
@@ -867,10 +865,10 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const Workspace = await loadWorkspaceComponent();
     const { app, root } = mount(Workspace);
     await vi.waitFor(() =>
-      expect(nodeText(root)).toContain('沒有可安全顯示的候選'),
+      expect(nodeText(root)).toContain('沒有可用的歌詞結果'),
     );
 
-    expect(nodeText(root)).toContain('沒有可安全顯示的候選');
+    expect(nodeText(root)).toContain('沒有可用的歌詞結果');
     expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
     app.unmount();
   });

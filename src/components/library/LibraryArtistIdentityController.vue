@@ -74,7 +74,7 @@ async function handleArtistMerge(targetArtistId) {
     title: '合併藝人？',
     subject: `${current.name} ＋ ${target.name}`,
     message: '兩邊的曲目會整理到同一個藝人頁，原始曲目標示不會改寫。',
-    detail: '若判斷有誤，可以用「復原上一次整理」或再拆分標示。',
+    detail: '需要時可復原上一次整理，或再拆分標示。',
     confirmLabel: '合併藝人',
   });
   if (!confirmed) return;
@@ -101,7 +101,7 @@ async function handleArtistSplit(creditId) {
     title: '拆分藝人標示？',
     subject: credit.name,
     message: '這個標示及其曲目會回到獨立的藝人頁。',
-    detail: '其他已連結的藝人標示不受影響，且可復原上一次整理。',
+    detail: '其他標示不受影響，需要時可復原上一次整理。',
     confirmLabel: '拆分標示',
   });
   if (!confirmed) return;

@@ -38,7 +38,7 @@ const emit = defineEmits(['search', 'update:selectedId', 'apply']);
       compact
     />
     <UiHint v-else-if="status === 'empty'" padded center role="status">
-      MusicBrainz 找不到可確認的藝人資料。
+      MusicBrainz 找不到相符的藝人資料。
     </UiHint>
     <UiRadioGroup
       v-if="items.length"
@@ -57,7 +57,7 @@ const emit = defineEmits(['search', 'update:selectedId', 'apply']);
         :loading="busy"
         @click="emit('apply')"
       >
-        套用
+        套用資料
       </UiButton>
     </div>
   </div>

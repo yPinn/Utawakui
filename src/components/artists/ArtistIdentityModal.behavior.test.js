@@ -111,8 +111,8 @@ describe('ArtistIdentityModal', () => {
     expect(html).toContain('JJ Lin');
     expect(html).toContain('林俊傑');
     expect(html).toContain('已自動整理');
-    expect(html).toContain('組合有誤時，拆分標示即可');
-    expect(html).toContain('進階修正');
+    expect(html).toContain('若組合有誤，可拆分標示');
+    expect(html).toContain('手動修正');
     expect(html).toContain('復原');
     expect(html).not.toContain('顯示名稱');
     expect(html).not.toContain('合併藝人');
@@ -163,7 +163,7 @@ describe('ArtistIdentityModal', () => {
         (node) => node.type === 'button' && textContent(node).trim() === label,
       )[0];
 
-    trigger(button('進階修正'), 'onClick');
+    trigger(button('手動修正'), 'onClick');
     await nextTick();
     trigger(button('重新辨識'), 'onClick');
     const radio = findAll(
@@ -174,7 +174,7 @@ describe('ArtistIdentityModal', () => {
     )[0];
     trigger(radio, 'onChange');
     await nextTick();
-    trigger(button('套用'), 'onClick');
+    trigger(button('套用資料'), 'onClick');
 
     expect(onSearchCatalog).toHaveBeenCalledOnce();
     expect(onApplyCatalog).toHaveBeenCalledWith(
@@ -202,7 +202,7 @@ describe('ArtistIdentityModal', () => {
         mounted.overlayHost,
         (node) => node.type === 'button' && textContent(node).trim() === label,
       )[0];
-    trigger(button('進階修正'), 'onClick');
+    trigger(button('手動修正'), 'onClick');
     await nextTick();
 
     const search = findAll(
@@ -218,7 +218,7 @@ describe('ArtistIdentityModal', () => {
     )[0];
     trigger(radio, 'onChange');
     await nextTick();
-    trigger(button('合併'), 'onClick');
+    trigger(button('合併藝人'), 'onClick');
     trigger(button('儲存'), 'onClick');
     trigger(button('拆分 JJ Lin'), 'onClick');
     trigger(button('復原'), 'onClick');

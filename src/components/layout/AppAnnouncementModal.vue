@@ -11,21 +11,16 @@ function openReleaseNotes() {
 </script>
 
 <template>
-  <UiModal
-    :open="state.open"
-    title="有什麼新變化"
-    size="notice"
-    @close="dismiss"
-  >
+  <UiModal :open="state.open" title="本次更新" size="notice" @close="dismiss">
     <div class="announcement-notice">
       <p class="announcement-notice__version">v{{ version }}</p>
       <p class="announcement-notice__summary">{{ summary }}</p>
 
       <div class="announcement-notice__actions">
         <UiButton variant="ghost" @click="openReleaseNotes">
-          查看完整發行說明
+          查看發行說明
         </UiButton>
-        <UiButton variant="accent" @click="dismiss">知道了</UiButton>
+        <UiButton variant="accent" @click="dismiss">關閉</UiButton>
       </div>
     </div>
   </UiModal>

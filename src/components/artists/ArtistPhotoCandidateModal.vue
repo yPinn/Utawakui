@@ -31,7 +31,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'retry', 'selectCandidate', 'confirm']);
 
 const title = computed(() =>
-  props.artistName ? `選擇${props.artistName}的線上照片` : '選擇線上藝人照片',
+  props.artistName ? `選擇 ${props.artistName} 的照片` : '選擇藝人照片',
 );
 const showsCandidates = computed(() =>
   ['ready', 'applying'].includes(props.status),
@@ -65,8 +65,8 @@ function selectCandidate(candidateId) {
   <UiModal :open="open" :title="title" size="wide" @close="emit('close')">
     <div class="artist-photo-candidate-modal">
       <UiHint tone="text">
-        Utawakui 不會登入帳號，只會向 YouTube Music
-        搜尋並顯示已下載、驗證的圖片；確認後儲存到本機。
+        從 YouTube Music 搜尋藝人圖片，套用後儲存到本機；Utawakui
+        不會登入你的帳號。
       </UiHint>
 
       <div
@@ -84,7 +84,7 @@ function selectCandidate(candidateId) {
       </div>
 
       <UiHint v-else-if="status === 'empty'" padded center role="status">
-        找不到可確認的藝人照片。
+        找不到合適的藝人照片。
       </UiHint>
 
       <UiNotice
@@ -152,7 +152,7 @@ function selectCandidate(candidateId) {
         loading-label="套用中"
         @click="confirm"
       >
-        使用這張照片
+        套用照片
       </UiButton>
     </template>
   </UiModal>

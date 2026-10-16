@@ -44,9 +44,9 @@ function kindLabel(kind) {
 }
 
 const DESCRIPTION_PLACEHOLDER_BY_KIND = {
-  [FEEDBACK_KINDS.BUG]: '發生了什麼事？你原本想做什麼、實際上看到什麼？',
-  [FEEDBACK_KINDS.FEATURE]: '你想要什麼樣的功能？它能解決什麼問題？',
-  [FEEDBACK_KINDS.EXPERIENCE]: '哪個部分讓你用起來不順手，或有什麼想法？',
+  [FEEDBACK_KINDS.BUG]: '描述你原本想做什麼，以及實際發生的情況。',
+  [FEEDBACK_KINDS.FEATURE]: '描述想要的功能，以及它能解決的問題。',
+  [FEEDBACK_KINDS.EXPERIENCE]: '哪個部分不順手？也歡迎分享其他想法。',
   [FEEDBACK_KINDS.CONTENT]: '這首歌或這個歌詞來源有什麼問題？',
 };
 
@@ -77,7 +77,7 @@ function handleNoticeAction(operation) {
     <div class="feedback-report">
       <template v-if="state.step === 'compose'">
         <p class="feedback-report__intro">
-          告訴我們錯誤、想要的功能，或任何使用上的想法。送出前你會先看到完整內容再確認。
+          回報錯誤、建議功能或分享使用感受。送出前可先預覽。
         </p>
 
         <UiSelect
@@ -112,7 +112,7 @@ function handleNoticeAction(operation) {
         <UiCheckbox
           v-if="DIAGNOSTICS_ALLOWED_KINDS.has(state.kind)"
           id="feedback-include-diagnostics"
-          label="附上最近的錯誤紀錄，幫助我們排查"
+          label="附上最近的錯誤紀錄"
           :model-value="state.includeDiagnostics"
           @update:model-value="
             (value) => updateDraft({ includeDiagnostics: value })
@@ -124,8 +124,8 @@ function handleNoticeAction(operation) {
           label="聯絡方式（選填）"
           :model-value="state.contact"
           :maxlength="MAX_CONTACT_LENGTH"
-          hint="方便我們在需要時回覆你，例如 Discord 帳號或 email。"
-          placeholder="不留也沒關係"
+          hint="需要回覆時使用，例如 Discord 帳號或 Email。"
+          placeholder="可留空"
           @update:model-value="(value) => updateDraft({ contact: value })"
         />
 
@@ -155,9 +155,7 @@ function handleNoticeAction(operation) {
       </template>
 
       <template v-else-if="state.step === 'preview'">
-        <p class="feedback-report__intro">
-          這是即將送出的內容，確認沒問題再送出。
-        </p>
+        <p class="feedback-report__intro">確認以下內容後送出。</p>
 
         <dl class="feedback-report__summary">
           <div class="feedback-report__row">
@@ -224,19 +222,19 @@ function handleNoticeAction(operation) {
             :loading="state.isLoading"
             @click="submitReport"
           >
-            確認送出
+            送出回饋
           </UiButton>
         </div>
       </template>
 
       <template v-else-if="state.step === 'result'">
-        <p class="feedback-report__intro">已收到你的回饋，謝謝！</p>
+        <p class="feedback-report__intro">回饋已送出，謝謝！</p>
         <p v-if="reportReference" class="feedback-report__report-id">
           回報碼：{{ reportReference }}
         </p>
 
         <div class="feedback-report__actions">
-          <UiButton variant="accent" @click="closeReport">完成</UiButton>
+          <UiButton variant="accent" @click="closeReport">關閉</UiButton>
         </div>
       </template>
     </div>

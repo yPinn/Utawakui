@@ -482,7 +482,7 @@ function trackStatusIconLabel(track) {
             :disabled="!canRetryFailed"
             @click="retryFailedTracks"
           >
-            重試失敗
+            重試未完成曲目
           </UiButton>
         </div>
       </div>

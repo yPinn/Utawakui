@@ -45,7 +45,7 @@ const { devices, monitorDeviceLabel, captureErrorNotice, selectDevice } =
 // selection here. Naming it explicitly (not a hardcoded "耳機" guess, which
 // isn't always true) tells the user what they'll actually hear through.
 const offOptionLabel = computed(
-  () => `關閉（只透過 ${monitorDeviceLabel.value} 播放）`,
+  () => `關閉擷取（仍從 ${monitorDeviceLabel.value} 播放）`,
 );
 
 const isGuideOpen = shallowRef(false);
@@ -105,18 +105,23 @@ function choose(deviceId) {
 </script>
 
 <template>
-  <UiModal :open="open" title="擷取輸出裝置" size="wide" @close="emit('close')">
+  <UiModal
+    :open="open"
+    title="選擇擷取輸出裝置"
+    size="wide"
+    @close="emit('close')"
+  >
     <div class="capture-device-modal">
       <div class="capture-device-modal__intro">
         <p class="capture-device-modal__description">
-          選擇要送到直播或錄影軟體的虛擬音效裝置。
+          選擇直播或錄影軟體要擷取的輸出裝置。
         </p>
         <UiButton
           class="capture-device-modal__guide-btn"
           :icon="Info"
           @click="isGuideOpen = true"
         >
-          如何選擇虛擬音效裝置？
+          如何選擇？
         </UiButton>
       </div>
 
@@ -190,7 +195,7 @@ function choose(deviceId) {
       </UiScrollRegion>
 
       <UiHint v-if="devices.length === 0" padded>
-        找不到輸出裝置。請先安裝虛擬音效裝置。
+        找不到可用裝置。請先安裝虛擬音效裝置。
       </UiHint>
 
       <UiNotice

@@ -17,14 +17,14 @@ afterEach(() => {
 describe('AppAnnouncementModal', () => {
   it('renders nothing when the announcement has not been opened', async () => {
     const html = await renderModal();
-    expect(html).not.toContain('有什麼新變化');
+    expect(html).not.toContain('本次更新');
   });
 
   it('shows the bundled version and summary once opened', async () => {
     useAppAnnouncement().reopen();
     const html = await renderModal();
 
-    expect(html).toContain('有什麼新變化');
+    expect(html).toContain('本次更新');
     expect(html).toContain(announcement.version);
     expect(html).toContain(announcement.summary);
     expect(html).toContain('ui-modal--notice');

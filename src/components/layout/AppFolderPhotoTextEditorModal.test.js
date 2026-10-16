@@ -35,11 +35,11 @@ describe('AppFolderPhotoTextEditorModal', () => {
     });
     const print = await render({ frame: 'print', caption: '說明' });
 
-    expect(instant).toContain('拍立得文字');
+    expect(instant).toContain('相框文字');
     expect(instant).toContain('value="2024 夏"');
     expect(instant).toContain('第一次唱這首。');
     expect(instant).toContain('data-photo-frame="instant"');
-    expect(print).not.toContain('拍立得文字');
+    expect(print).not.toContain('相框文字');
     expect(print).toContain('說明');
     expect(source).toContain('const PHOTO_LABEL_MAX_LENGTH = 16;');
     expect(source).toContain('const PHOTO_CAPTION_TITLE_MAX_LENGTH = 80;');

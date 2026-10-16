@@ -71,17 +71,17 @@ describe('ArtistPhotoCandidateModal', () => {
   it('explains the anonymous YT Music lookup and local confirmation boundary', async () => {
     const html = await render({ candidates: CANDIDATES });
 
-    expect(html).toContain('選擇艾熱AIR的線上照片');
+    expect(html).toContain('選擇 艾熱AIR 的照片');
     expect(html).toContain('YouTube Music');
-    expect(html).toContain('不會登入帳號');
-    expect(html).toContain('確認後儲存到本機');
+    expect(html).toContain('不會登入你的帳號');
+    expect(html).toContain('套用後儲存到本機');
     expect(html).toContain('src="blob:artist-preview"');
     expect(html).not.toMatch(/<img[^>]+src="https?:\/\//u);
   });
 
   it.each([
     ['searching', '正在搜尋藝人照片…'],
-    ['empty', '找不到可確認的藝人照片。'],
+    ['empty', '找不到合適的藝人照片。'],
   ])('renders the %s state without a candidate radio', async (status, copy) => {
     const html = await render({ status });
 
@@ -141,7 +141,7 @@ describe('ArtistPhotoCandidateModal', () => {
     const confirmButton = findAll(
       overlayHost,
       (node) =>
-        node.type === 'button' && textContent(node).trim() === '使用這張照片',
+        node.type === 'button' && textContent(node).trim() === '套用照片',
     )[0];
 
     expect(radio.props).toMatchObject({
@@ -169,7 +169,7 @@ describe('ArtistPhotoCandidateModal', () => {
     const selectedConfirm = findAll(
       selected.overlayHost,
       (node) =>
-        node.type === 'button' && textContent(node).trim() === '使用這張照片',
+        node.type === 'button' && textContent(node).trim() === '套用照片',
     )[0];
     expect(selectedConfirm.props.disabled).toBe(false);
     trigger(selectedConfirm, 'onClick');

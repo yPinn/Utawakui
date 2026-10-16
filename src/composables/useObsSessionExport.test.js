@@ -160,7 +160,7 @@ describe('useObsSessionExport', () => {
 
     expect(copyObsText).toHaveBeenCalledWith('0:00 Song A\n0:30 Song B');
     expect(exportState.copyState.value.tone).toBe('success');
-    expect(exportState.copyState.value.message).toBe('已複製章節文字');
+    expect(exportState.copyState.value.message).toBe('章節已複製');
   });
 
   it('names the chapter-text recovery when clipboard copying fails', async () => {
@@ -182,7 +182,7 @@ describe('useObsSessionExport', () => {
 
     expect(exportState.copyState.value.tone).toBe('error');
     expect(exportState.copyState.value.message).toBe(
-      '無法複製章節文字，請手動選取文字',
+      '無法複製章節，請手動選取內容',
     );
   });
 

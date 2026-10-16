@@ -119,9 +119,7 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain('@clear="handleClearPlaybackHistory"');
     expect(source).toContain('initializePlaybackHistory();');
     expect(source).toContain("title: '清除最近播放紀錄？'");
-    expect(source).toContain(
-      '這不會影響播放佇列、播放清單、OBS 場次紀錄或錯誤紀錄。',
-    );
+    expect(source).toContain('播放佇列、播放清單、OBS 場次與錯誤紀錄會保留。');
   });
 
   it('keeps storage and automatic metadata organization in the library section', () => {
@@ -133,7 +131,7 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain('<LibraryMetadataSettingsRow />');
     expect(source).toContain('libraryStorage.initialize();');
     expect(source).toContain('libraryStorage.dispose');
-    expect(source).toContain("title: '清理去人聲版本？'");
+    expect(source).toContain("title: '清除去人聲版本？'");
     expect(source).not.toContain('useLibraryMetadataMaintenance');
   });
 

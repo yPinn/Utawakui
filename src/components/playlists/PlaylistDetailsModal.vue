@@ -1,10 +1,10 @@
 <script setup>
-// The single "編輯詳細資料" entry point. Name and description are drafted locally
+// The single collection-details editor. Name and description are drafted locally
 // and committed only on Save, instead of relying on Enter/blur. A cover change
 // (choose/clear) still commits immediately, since it is an independent async IPC
 // round-trip. Album descriptions stay read-only here (source-normalized
 // metadata, not user-authored; see LibraryEntityDossier.vue).
-import { shallowRef, watch } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -32,6 +32,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'save', 'chooseCover', 'clearCover']);
+
+const modalTitle = computed(() =>
+  props.isAlbum ? '編輯專輯' : '編輯播放清單',
+);
 
 const nameDraft = shallowRef('');
 const descriptionDraft = shallowRef('');
@@ -67,7 +71,7 @@ function cancel() {
 <template>
   <UiModal
     :open="open"
-    title="編輯詳細資料"
+    :title="modalTitle"
     size="notice"
     :close-disabled="saving"
     @close="cancel"
@@ -83,18 +87,18 @@ function cancel() {
         >
           <template v-if="!isAlbum" #overlay>
             <UiArtworkReveal>
-              <UiTooltip text="選擇相片">
+              <UiTooltip text="選擇封面">
                 <template #trigger="{ triggerProps }">
                   <button
                     v-bind="triggerProps"
                     type="button"
                     class="playlist-details__cover-edit"
-                    aria-label="選擇相片"
+                    aria-label="選擇封面"
                     :disabled="saving"
                     @click="emit('chooseCover')"
                   >
                     <Pencil :size="ICON_SIZE" aria-hidden="true" />
-                    <span>選擇相片</span>
+                    <span>選擇封面</span>
                   </button>
                 </template>
               </UiTooltip>
@@ -108,7 +112,7 @@ function cancel() {
           >
             <UiIconButton
               :icon="X"
-              label="移除自訂封面"
+              label="移除封面"
               variant="overlay"
               :disabled="saving"
               @click="emit('clearCover')"
@@ -156,7 +160,7 @@ function cancel() {
     <template #footer>
       <!-- Footnote sits on the action row so the fields keep the cover's height. -->
       <UiHint v-if="!isAlbum" class="playlist-details__footnote">
-        封面立即套用；名稱與說明需按儲存。
+        封面會立即套用；其他變更需儲存。
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
         取消

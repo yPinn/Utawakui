@@ -1,5 +1,5 @@
 // 'selected' isn't a filter tab — checkbox state is already visible per-row
-// in the list, and the toolbar's 選取未下載/全選/重試失敗 actions already
+// in the list, and the toolbar's 選取未下載/全選/重試未完成曲目 actions already
 // manipulate + auto-switch to the relevant status filter (see
 // useImportSession.js's selectMissingTracks/selectFailedTracks). A separate
 // tab for it would just duplicate what's below.

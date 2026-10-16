@@ -44,7 +44,7 @@ const emit = defineEmits(['update:query', 'update:selectedId', 'merge']);
         :loading="busy"
         @click="emit('merge')"
       >
-        合併
+        合併藝人
       </UiButton>
     </div>
   </div>

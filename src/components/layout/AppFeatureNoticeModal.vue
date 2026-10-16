@@ -50,7 +50,7 @@ const body = computed(() => pendingFeature.value?.body || []);
           :disabled="state.isSaving"
           @click="confirmPendingFeature"
         >
-          {{ state.isSaving ? '啟用中...' : pendingFeature.confirmLabel }}
+          {{ state.isSaving ? '啟用中…' : pendingFeature.confirmLabel }}
         </UiButton>
       </div>
     </div>

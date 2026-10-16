@@ -16,7 +16,7 @@ const { state, canUseConfirmButton, confirmImportLabel, confirmImport } =
   useImportSession();
 
 const modalTitle = computed(() =>
-  state.collectionKind === 'album' ? '確認匯入專輯' : '確認匯入播放清單',
+  state.collectionKind === 'album' ? '匯入專輯' : '匯入播放清單',
 );
 const confirmIcon = computed(() => (state.isImporting ? Square : Download));
 </script>

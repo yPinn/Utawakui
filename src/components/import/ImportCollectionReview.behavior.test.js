@@ -40,7 +40,7 @@ describe('Import collection review composition', () => {
     expect(source.match(/<UiIconButton\b/gu)).toHaveLength(3);
     expect(source).toContain('label="選取未下載"');
     expect(source).toContain(`:label="allSelected ? '取消全選' : '全選'"`);
-    expect(source).toContain('label="重試失敗"');
+    expect(source).toContain('label="重試未完成曲目"');
   });
 
   it('keeps normal identity success quiet while preserving actionable row states', () => {

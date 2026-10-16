@@ -165,8 +165,7 @@ async function openWorklist() {
   if (annotation.dirty.value) {
     const confirmed = await confirmAction({
       title: '捨棄未儲存的標註？',
-      message: '目前工作集有尚未儲存的人工標註。',
-      detail: '更換工作集後，這些變更會遺失。',
+      message: '更換工作集後，未儲存的標註會遺失。',
       confirmLabel: '捨棄並更換',
       intent: 'danger',
     });

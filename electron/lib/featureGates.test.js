@@ -95,7 +95,7 @@ describe('featureGates', () => {
       expect(gate.body.length).toBeLessThanOrEqual(4);
       expect(gate.body.every((line) => line.endsWith('。'))).toBe(true);
       expect(gate.body.at(-1)).toBe(
-        'Utawakui 不會驗證素材授權；啟用紀錄僅保存在本機。',
+        'Utawakui 不會驗證素材授權；啟用設定只保存在本機。',
       );
     }
 
@@ -107,7 +107,7 @@ describe('featureGates', () => {
     );
 
     expect(gates.map((gate) => gate.summary)).toEqual([
-      '搜尋／匯入外部來源，並自動整理藝人標示。',
+      '搜尋與匯入外部來源，並整理藝人名稱。',
       '搜尋並保存外部歌詞或字幕。',
       '在本機進行 BPM 分析、人聲分離與音高／速度調整。',
       '以 Browser Source 顯示曲目、佇列與歌詞。',
@@ -118,10 +118,10 @@ describe('featureGates', () => {
       '來源平台',
     );
     expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
-      '藝人名稱送往 MusicBrainz',
+      '藝人名稱傳送至 MusicBrainz',
     );
     expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
-      '曲庫變更時',
+      '載入或更新曲庫時',
     );
     expect(getFeatureGate(FEATURE_IDS.LYRICS_FLOW).body.join('')).toContain(
       '公開顯示',
@@ -134,7 +134,7 @@ describe('featureGates', () => {
     );
     expect(
       getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
-    ).toContain('額外下載');
+    ).toContain('需要下載');
     expect(
       getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
     ).toContain('歌曲不會上傳');

@@ -19,9 +19,9 @@ function feature(id) {
 describe('platform terminology', () => {
   it('treats YouTube chapters as one format of the generic session timeline', () => {
     expect(sessionExportModal).toContain('title="匯出場次時間軸"');
-    expect(sessionExportModal).toContain('label="YouTube 章節文字"');
-    expect(sessionExportModal).toContain('複製章節文字');
-    expect(sessionExportModal).toContain('曲目切換與手動標記才會記錄時間戳');
+    expect(sessionExportModal).toContain('label="YouTube 章節"');
+    expect(sessionExportModal).toContain('複製章節');
+    expect(sessionExportModal).toContain('曲目切換與標記會自動記錄');
     expect(sessionExportModal).not.toContain('title="匯出 YouTube 章節"');
   });
 
@@ -30,16 +30,14 @@ describe('platform terminology', () => {
     expect(outputWorkspace).not.toContain('aria-label="OBS');
     expect(outputRuntime).toContain('再啟動 Browser Source 輸出');
     expect(outputRuntime).not.toContain('建立 OBS Browser Source');
+    expect(captureDeviceModal).toContain('選擇直播或錄影軟體要擷取的輸出裝置');
+    expect(captureDeviceModal).toContain('如何選擇？');
     expect(captureDeviceModal).toContain(
-      '選擇要送到直播或錄影軟體的虛擬音效裝置',
-    );
-    expect(captureDeviceModal).toContain('如何選擇虛擬音效裝置？');
-    expect(captureDeviceModal).toContain(
-      '找不到輸出裝置。請先安裝虛擬音效裝置。',
+      '找不到可用裝置。請先安裝虛擬音效裝置。',
     );
     expect(captureDeviceModal).not.toContain('不知道要裝哪套');
     expect(captureDeviceModal).not.toContain('讓 OBS 擷取');
-    expect(virtualCableGuide).toContain('直播或錄影軟體擷取');
+    expect(virtualCableGuide).toContain('直播或錄影軟體');
     expect(virtualCableGuide).not.toContain('送給 OBS 擷取');
   });
 

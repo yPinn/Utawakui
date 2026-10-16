@@ -47,16 +47,14 @@ const modalTitle = computed(() =>
       <div v-else class="window-close-decision__copy">
         <p class="window-close-decision__question">
           {{
-            hasActiveSeparation
-              ? '要在背景繼續處理嗎？'
-              : '要在背景繼續執行嗎？'
+            hasActiveSeparation ? '要繼續在背景處理嗎？' : '要改為背景執行嗎？'
           }}
         </p>
         <p class="window-close-decision__detail">
           {{
             hasActiveSeparation
-              ? '停止會取消目前歌曲，其餘排程不保留。'
-              : '播放、OBS 連線與輸出會保留，可從系統匣開啟或結束。'
+              ? '結束會取消目前歌曲，其他排程也不會保留。'
+              : '播放、OBS 連線與輸出會繼續，可從系統匣重新開啟或結束。'
           }}
         </p>
       </div>
@@ -84,7 +82,7 @@ const modalTitle = computed(() =>
           variant="accent"
           @click="emit('close')"
         >
-          知道了
+          關閉
         </UiButton>
         <UiButton
           v-if="!isErrorPresentation"
@@ -111,7 +109,7 @@ const modalTitle = computed(() =>
           loading-label="處理中"
           @click="emit('decision', 'tray')"
         >
-          {{ hasActiveSeparation ? '在背景繼續' : '背景執行' }}
+          {{ hasActiveSeparation ? '繼續處理' : '背景執行' }}
         </UiButton>
       </div>
     </div>

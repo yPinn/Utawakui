@@ -71,10 +71,10 @@ const catalogCandidateItems = computed(() =>
   props.catalogCandidates.map((candidate) => {
     const evidence =
       candidate.evidence === 'exact-recording'
-        ? '名稱與曲目證據相符'
+        ? '名稱與曲目相符'
         : candidate.evidence === 'exact'
-          ? '名稱相符，需人工確認'
-          : '弱候選，請仔細確認';
+          ? '名稱相符，請確認'
+          : '可能相符，請確認';
     const aliases = Array.isArray(candidate.aliases)
       ? candidate.aliases.slice(0, 3).join('、')
       : '';
@@ -143,9 +143,7 @@ function applyCatalog() {
     @close="close"
   >
     <div class="artist-identity-modal">
-      <UiHint tone="text">
-        曲目會統一顯示此藝人名稱；原始標示仍保留，並可用於搜尋。
-      </UiHint>
+      <UiHint tone="text"> 曲目會統一顯示此名稱；原始標示仍可搜尋。 </UiHint>
 
       <UiNotice
         v-if="error"
@@ -159,7 +157,7 @@ function applyCatalog() {
         <section class="artist-identity-modal__section">
           <div class="artist-identity-modal__section-heading">
             <h3 class="artist-identity-modal__section-title">目前組合</h3>
-            <UiHint>有誤時可將標示拆回獨立藝人。</UiHint>
+            <UiHint>若組合有誤，可拆回個別藝人。</UiHint>
           </div>
           <ArtistIdentityCredits
             :credits="credits"
@@ -175,7 +173,7 @@ function applyCatalog() {
               <strong class="artist-identity-modal__status">
                 已自動整理
               </strong>
-              <UiHint>組合有誤時，拆分標示即可。</UiHint>
+              <UiHint>若組合有誤，可拆分標示。</UiHint>
             </template>
             <template v-else>
               <strong class="artist-identity-modal__status">
@@ -196,7 +194,7 @@ function applyCatalog() {
           aria-controls="artist-identity-advanced"
           @click="advancedOpen = !advancedOpen"
         >
-          {{ advancedOpen ? '收起進階' : '進階修正' }}
+          {{ advancedOpen ? '收起修正' : '手動修正' }}
         </UiButton>
       </div>
 
@@ -208,7 +206,7 @@ function applyCatalog() {
         <section class="artist-identity-modal__section">
           <div class="artist-identity-modal__section-heading">
             <h3 class="artist-identity-modal__section-title">顯示名稱</h3>
-            <UiHint>統一套用於藝人頁與曲目顯示。</UiHint>
+            <UiHint>套用於藝人頁與曲目。</UiHint>
           </div>
           <div class="artist-identity-modal__inline-action">
             <UiTextField
@@ -254,7 +252,7 @@ function applyCatalog() {
         >
           <div class="artist-identity-modal__section-heading">
             <h3 class="artist-identity-modal__section-title">重新辨識</h3>
-            <UiHint>自動結果不足時，再手動選擇 MusicBrainz 資料。</UiHint>
+            <UiHint>需要其他結果時，可選擇 MusicBrainz 資料。</UiHint>
           </div>
           <ArtistIdentityCatalog
             :status="lookupStatus"

@@ -149,7 +149,7 @@ function cancel() {
 
     <template #footer>
       <UiHint class="app-folder-note-editor__footnote">
-        右下角可切換紙色；標題可留空。
+        標題可留空，右下角可換紙色。
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
         取消

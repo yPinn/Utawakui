@@ -95,8 +95,8 @@ function handleDownloadDirMenuSelect(actionId) {
 async function handleClearPlaybackHistory() {
   const confirmed = await confirmAction({
     title: '清除最近播放紀錄？',
-    message: '這台電腦上的最近播放紀錄會被清除。',
-    detail: '這不會影響播放佇列、播放清單、OBS 場次紀錄或錯誤紀錄。',
+    message: '最近播放紀錄會被清除。',
+    detail: '播放佇列、播放清單、OBS 場次與錯誤紀錄會保留。',
     confirmLabel: '清除播放紀錄',
     intent: 'danger',
   });
@@ -112,10 +112,10 @@ async function handleClearPlaybackHistory() {
 
 async function handleCleanupLibraryStorage() {
   const confirmed = await confirmAction({
-    title: '清理去人聲版本？',
-    message: '已產生的去人聲音訊會被清除。',
+    title: '清除去人聲版本？',
+    message: '所有去人聲版本都會被清除。',
     detail: '原始歌曲會保留，之後可以重新產生。',
-    confirmLabel: '清理版本',
+    confirmLabel: '清除版本',
     intent: 'danger',
   });
   if (confirmed) await libraryStorage.cleanup();

@@ -39,7 +39,7 @@ const hasSession = computed(
         v-if="exportState.isLoading.value"
         class="obs-session-export-modal__status"
       >
-        讀取場次紀錄中…
+        正在讀取場次紀錄…
       </p>
 
       <UiNotice
@@ -50,8 +50,8 @@ const hasSession = computed(
       />
 
       <p v-else-if="!hasSession" class="obs-session-export-modal__status">
-        尚無可匯出的場次紀錄。連上 OBS
-        並開始直播／錄影後，曲目切換與手動標記才會記錄時間戳。
+        沒有可匯出的紀錄。連線 OBS
+        並開始直播或錄影後，曲目切換與標記會自動記錄。
       </p>
 
       <template v-else>
@@ -67,12 +67,12 @@ const hasSession = computed(
             label="偏移量（秒）"
             :model-value="exportState.offsetSeconds.value"
             placeholder="0"
-            hint="校正 VOD 實際開頭與 OBS 時間軸的差距，從每個時間戳扣除。"
+            hint="用於校正 VOD 開頭，會從所有時間戳扣除。"
             @update:model-value="exportState.offsetSeconds.value = $event"
           />
           <UiIconButton
             :icon="RefreshCw"
-            label="重新讀取場次紀錄"
+            label="重新讀取"
             @click="exportState.open()"
           />
         </div>
@@ -87,7 +87,7 @@ const hasSession = computed(
 
         <UiTextarea
           id="obs-session-export-text"
-          label="YouTube 章節文字"
+          label="YouTube 章節"
           :model-value="exportState.result.value.text"
           :rows="10"
           disabled
@@ -95,7 +95,7 @@ const hasSession = computed(
 
         <div class="obs-session-export-modal__actions">
           <UiButton variant="accent" @click="exportState.copyChapters()">
-            複製章節文字
+            複製章節
           </UiButton>
           <span
             v-if="exportState.copyState.value.message"

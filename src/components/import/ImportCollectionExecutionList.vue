@@ -86,7 +86,7 @@ function failureLabel(track) {
         <UiIconButton
           v-if="section.id === 'failed'"
           :icon="RefreshCw"
-          label="重試失敗"
+          label="重試未完成曲目"
           :disabled="retryDisabled"
           @click="emit('retryFailed')"
         />

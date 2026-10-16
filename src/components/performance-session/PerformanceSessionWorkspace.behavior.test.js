@@ -169,8 +169,9 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('confirms occurrence removal without offering a library deletion path', () => {
     expect(workspaceSource).toContain('@remove="confirmRemoveItem"');
     expect(workspaceSource).toContain('function confirmRemoveItem(itemId)');
-    expect(workspaceSource).toContain('從待唱移除');
-    expect(workspaceSource).toContain('不會刪除曲庫歌曲');
+    expect(workspaceSource).toContain("title: '從待唱移除歌曲？'");
+    expect(workspaceSource).toContain("confirmLabel: '移除歌曲'");
+    expect(workspaceSource).toContain('曲庫歌曲會保留');
     expect(workspaceSource).toContain('removeItem(itemId)');
     expect(workspaceSource).not.toContain('deleteTrack');
   });

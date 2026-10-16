@@ -71,7 +71,7 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).toContain('SlidersHorizontal');
     expect(modalSource).toContain('ChevronUp');
     expect(modalSource).toContain('設定專輯篩選');
-    expect(modalSource).toContain('選取後先預覽，儲存時套用。');
+    expect(modalSource).toContain('選取後預覽，儲存後套用。');
     expect(modalSource).not.toContain('套用前');
     expect(modalSource).not.toContain('<details');
     expect(modalSource).not.toContain('UiDisclosure');

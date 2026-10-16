@@ -194,7 +194,7 @@ watch(searchOptionsOpen, (open) => {
                 >
                   搜尋封面
                 </h3>
-                <UiHint>選取後先預覽，儲存時套用。</UiHint>
+                <UiHint>選取後預覽，儲存後套用。</UiHint>
               </div>
               <div class="track-metadata__search-actions">
                 <UiIconButton
@@ -272,7 +272,7 @@ watch(searchOptionsOpen, (open) => {
             </form>
 
             <UiHint v-if="artworkSearching" role="status">
-              正在尋找最相符的封面…
+              正在尋找封面…
             </UiHint>
 
             <ArtworkSearchResults
@@ -288,7 +288,7 @@ watch(searchOptionsOpen, (open) => {
               class="track-metadata__empty"
               role="status"
             >
-              找不到可用封面。請確認歌名與演唱者，必要時再填入專輯縮小範圍。
+              找不到封面。請確認歌名與演唱者，或加入專輯名稱後再搜尋。
             </UiHint>
           </section>
 

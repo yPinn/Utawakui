@@ -255,15 +255,15 @@ async function confirmRemoveObject(key) {
   const confirmed = await confirmation.confirm(
     object.type === 'photo'
       ? {
-          title: '移除這張照片？',
-          message: '照片會從此頁面移除，原始檔案仍會保留。',
-          confirmLabel: '移除',
+          title: '從頁面移除照片？',
+          message: '原始檔案會保留。',
+          confirmLabel: '移除照片',
           intent: 'danger',
         }
       : {
-          title: '刪除這張便條？',
-          message: '便條內容會從此頁面刪除，無法復原。',
-          confirmLabel: '刪除',
+          title: '刪除便條？',
+          message: '便條內容會被刪除，且無法復原。',
+          confirmLabel: '刪除便條',
           intent: 'danger',
         },
   );

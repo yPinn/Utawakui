@@ -96,7 +96,7 @@ describe('FeedbackReportModal', () => {
     await feedback.submitReport();
     const html = await renderModal();
 
-    expect(html).toContain('已收到你的回饋');
+    expect(html).toContain('回饋已送出');
     expect(html).toContain('回報碼：AEB6-AB26-F40B');
     expect(html).not.toContain(reportId);
     expect(feedback.state.reportId).toBe(reportId);

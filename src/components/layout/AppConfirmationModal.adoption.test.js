@@ -41,8 +41,9 @@ describe('App confirmation adoption', () => {
     expect(manager).not.toContain('window.confirm');
     expect(manager).not.toContain('useAppConfirmation');
     expect(manager).toContain('pendingDeleteSource');
-    expect(manager).toContain('取消刪除');
-    expect(manager).toContain('確認刪除歌詞來源');
+    expect(manager).toContain('取消');
+    expect(manager).toContain('刪除來源');
+    expect(manager).not.toContain('確認刪除歌詞來源');
   });
 
   it('gives collection deletion one compact value pair instead of embedding values in prose', () => {
@@ -51,8 +52,19 @@ describe('App confirmation adoption', () => {
     expect(actions).toContain('subject: name');
     expect(actions).toContain('meta: `${playlist.trackIds.length} 首曲目`');
     expect(actions).toContain(
-      'message: `只會移除${collectionType}，不會刪除音檔。`',
+      'message: `只會移除${collectionType}，音檔會保留。`',
     );
     expect(actions).not.toContain('「${name}」包含');
+  });
+
+  it('uses the same photo-removal decision at both page entry points', () => {
+    const preview = source('../library/FolderAssetPreviewModal.vue');
+    const workspace = source('../library/LibraryBrowseWorkspace.vue');
+
+    for (const owner of [preview, workspace]) {
+      expect(owner).toContain("title: '從頁面移除照片？'");
+      expect(owner).toContain("message: '原始檔案會保留。'");
+      expect(owner).toContain("confirmLabel: '移除照片'");
+    }
   });
 });

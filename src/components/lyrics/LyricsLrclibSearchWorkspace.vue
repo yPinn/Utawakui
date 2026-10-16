@@ -143,7 +143,7 @@ const partialResultsMessage = computed(() => {
     );
   }
   return details.length
-    ? `${details.join('；')}。以下已載入結果仍可檢視；可用來源仍可儲存。`
+    ? `${details.join('；')}。已載入的結果仍可檢視與儲存。`
     : '';
 });
 const showPartialResultsWarning = computed(
@@ -169,7 +169,7 @@ const resultAnnouncement = computed(() => {
     return '';
   }
   return props.providerId === 'all'
-    ? `找到 ${resultCount.value} 個錄音版本、${sourceResultCount.value} 個歌詞來源`
+    ? `找到 ${resultCount.value} 個版本、${sourceResultCount.value} 個歌詞來源`
     : `找到 ${sourceResultCount.value} 筆候選歌詞`;
 });
 
@@ -289,7 +289,7 @@ function toggleCandidate(candidate) {
 <template>
   <div class="lyrics-lrclib-search">
     <div class="lyrics-lrclib-search__toolbar">
-      <UiButton @click="emit('back')">返回來源管理</UiButton>
+      <UiButton @click="emit('back')">返回歌詞來源</UiButton>
     </div>
 
     <form class="lyrics-lrclib-search__form" @submit.prevent="handleSearch()">
@@ -321,7 +321,7 @@ function toggleCandidate(candidate) {
         :id="`${providerId}-query-help`"
         class="lyrics-lrclib-search__query-help"
       >
-        可輸入原文、羅馬字或常用譯名；只會影響本次搜尋，不修改曲目資料。
+        可輸入原文、羅馬字或常用譯名，只用於本次搜尋。
       </p>
     </form>
 
@@ -350,8 +350,8 @@ function toggleCandidate(candidate) {
       <UiNotice
         v-if="draftDiffersFromResults"
         tone="info"
-        title="目前顯示上次查詢結果"
-        message="再次按下搜尋，才會使用剛修改的歌曲名稱與演唱者。"
+        title="搜尋條件已變更"
+        message="再次搜尋即可使用新的歌曲名稱與演唱者。"
         compact
       />
       <UiNotice
@@ -388,9 +388,7 @@ function toggleCandidate(candidate) {
         </div>
       </div>
 
-      <UiHint v-else-if="!hasSearched" padded>
-        請輸入歌曲名稱後搜尋。輸入期間不會自動送出。
-      </UiHint>
+      <UiHint v-else-if="!hasSearched" padded> 請輸入歌曲名稱後搜尋。 </UiHint>
       <template v-else-if="silentProviderMiss">
         <!-- A normal Better Lyrics miss is intentionally silent. -->
       </template>
@@ -406,8 +404,8 @@ function toggleCandidate(candidate) {
       <UiNotice
         v-else-if="state.candidateSearch.invalidRecordCount > 0 && !hasResults"
         tone="warning"
-        title="沒有可安全顯示的候選"
-        :message="`${state.candidateSearch.invalidRecordCount} 筆來源資料不完整，已安全略過。請調整查詢後再試。`"
+        title="沒有可用的歌詞結果"
+        :message="`${state.candidateSearch.invalidRecordCount} 筆結果資料不完整，請調整搜尋條件後再試。`"
         compact
       />
       <UiHint v-else-if="!hasResults" role="status" padded>

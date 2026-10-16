@@ -41,7 +41,7 @@ describe('Settings document section ownership', () => {
     expect(librarySource).toContain('usePlaybackHistory');
     expect(librarySource).toContain('<LibraryStorageSettingsRow');
     expect(librarySource).toContain('<PlaybackHistorySettingsRow');
-    expect(librarySource).toContain("title: '清理去人聲版本？'");
+    expect(librarySource).toContain("title: '清除去人聲版本？'");
     expect(librarySource).toContain("title: '清除最近播放紀錄？'");
   });
 

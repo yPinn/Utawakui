@@ -62,7 +62,7 @@ const previewTrack = computed(() =>
     <div class="artwork-preview__actions" role="group" aria-label="封面操作">
       <UiIconButton
         :icon="ImagePlus"
-        :label="currentTrack.thumbnailUrl ? '更換圖片' : '選擇圖片'"
+        :label="currentTrack.thumbnailUrl ? '更換封面' : '選擇封面'"
         variant="command"
         :loading="artworkPreparing"
         loading-label="準備預覽中"

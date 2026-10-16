@@ -24,9 +24,9 @@ const hasCaption = computed(() => Boolean(captionTitle.value || caption.value));
 async function requestRemoval() {
   if (!props.asset || props.removing) return;
   const confirmed = await confirmation.confirm({
-    title: '移除這張照片？',
-    message: '照片會從此頁面移除，原始檔案仍會保留。',
-    confirmLabel: '移除',
+    title: '從頁面移除照片？',
+    message: '原始檔案會保留。',
+    confirmLabel: '移除照片',
     intent: 'danger',
   });
   if (confirmed) emit('remove', props.asset.key);
@@ -47,7 +47,7 @@ async function requestRemoval() {
     <template v-if="asset" #header-actions>
       <UiIconButton
         :icon="Pencil"
-        label="編輯照片文字"
+        label="編輯照片說明"
         variant="overlay"
         tooltip-placement="start"
         :disabled="removing"

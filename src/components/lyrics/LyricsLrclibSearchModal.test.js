@@ -119,7 +119,7 @@ describe('online lyrics search modal contract', () => {
     expect(workspace).toContain('saveLyricsProviderCandidate');
     expect(workspace).toContain('props.providerId');
     expect(workspace).toContain(
-      '可輸入原文、羅馬字或常用譯名；只會影響本次搜尋，不修改曲目資料。',
+      '可輸入原文、羅馬字或常用譯名，只用於本次搜尋。',
     );
     expect(workspace).toContain('歌曲名稱');
     expect(workspace).toContain('演唱者（選填）');

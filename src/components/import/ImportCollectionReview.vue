@@ -123,7 +123,7 @@ function checkboxId(trackId) {
           <UiIconButton
             v-if="playlistStats.error > 0"
             :icon="RefreshCw"
-            label="重試失敗"
+            label="重試未完成曲目"
             :disabled="!canRetryFailed"
             @click="retryFailedTracks"
           />
@@ -162,7 +162,7 @@ function checkboxId(trackId) {
         </UiTrackRow>
       </ul>
       <UiHint v-else class="import-collection-review__empty" padded center>
-        沒有符合目前篩選的曲目
+        沒有符合目前篩選的曲目。
       </UiHint>
     </template>
 

@@ -23,12 +23,12 @@ describe('ArtworkPreviewPane behavior contract', () => {
   });
 
   it('keeps artwork actions compact, named and grouped without hiding the save action', () => {
-    expect(source).toContain('更換圖片');
-    expect(source).toContain('選擇圖片');
+    expect(source).toContain('更換封面');
+    expect(source).toContain('選擇封面');
     expect(source).toContain('label="線上搜尋"');
     expect(source).toContain('label="移除封面"');
     expect(source).toMatch(
-      /<UiIconButton[\s\S]*?:label="[\s\S]*?更換圖片[\s\S]*?選擇圖片[\s\S]*?"[\s\S]*?variant="command"/u,
+      /<UiIconButton[\s\S]*?:label="[\s\S]*?更換封面[\s\S]*?選擇封面[\s\S]*?"[\s\S]*?variant="command"/u,
     );
     expect([...source.matchAll(/<UiButton/gu)]).toHaveLength(0);
     expect([...source.matchAll(/<UiIconButton/gu)]).toHaveLength(3);

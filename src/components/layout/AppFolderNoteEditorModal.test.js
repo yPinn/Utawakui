@@ -33,7 +33,7 @@ describe('AppFolderNoteEditorModal', () => {
     });
 
     expect(created).toContain('新增便條');
-    expect(created).toContain('右下角可切換紙色；標題可留空。');
+    expect(created).toContain('標題可留空，右下角可換紙色。');
     // A new note starts on one of the user stocks, never the derived tissue.
     expect(created).toMatch(
       /data-paper="(periwinkle|rose|canary|kraft|ruled)"/u,

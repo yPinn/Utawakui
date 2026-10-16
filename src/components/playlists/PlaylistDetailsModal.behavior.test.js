@@ -93,7 +93,7 @@ describe('PlaylistDetailsModal component contract', () => {
   it('states the immediate cover boundary and keeps one saving owner around playlist writes', () => {
     const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
     expect(footer).toMatch(
-      /<UiHint[^>]*class="playlist-details__footnote"[^>]*>\s*封面立即套用；名稱與說明需按儲存。/u,
+      /<UiHint[^>]*class="playlist-details__footnote"[^>]*>\s*封面會立即套用；其他變更需儲存。/u,
     );
     // The fields column holds only name and description, so the textarea's
     // 1fr track reaches the cover's bottom edge.

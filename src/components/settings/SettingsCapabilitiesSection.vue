@@ -181,7 +181,7 @@ async function detectSystemFfmpeg() {
 async function handleRemoveMusicAnalysis() {
   const confirmed = await confirmAction({
     title: '移除 BPM 分析元件？',
-    message: '這台電腦上的 BPM 分析元件會被移除。',
+    message: 'BPM 分析元件會被移除。',
     detail: '歌曲與既有分析資料都會保留，之後可以重新準備。',
     confirmLabel: '移除元件',
     intent: 'danger',
@@ -194,7 +194,7 @@ async function handleRemoveMusicAnalysis() {
 async function handleClearObsPassword() {
   const confirmed = await confirmAction({
     title: '移除 OBS 密碼？',
-    message: '這台電腦上已儲存的 OBS WebSocket 密碼會被移除。',
+    message: '已儲存的 OBS 密碼會被移除。',
     detail: '下次連線時需要重新輸入密碼。',
     confirmLabel: '移除密碼',
     intent: 'danger',
@@ -245,7 +245,7 @@ async function handleWorkflowItemAdvancedAction({ item, action }) {
     const itemTitle = item.title || item.name;
     const confirmed = await confirmAction({
       title: `移除「${itemTitle}」？`,
-      message: '這台電腦上的功能元件會被移除。',
+      message: '移除後，此功能會暫時無法使用。',
       detail: '需要時可以重新準備。',
       confirmLabel: '移除元件',
       intent: 'danger',

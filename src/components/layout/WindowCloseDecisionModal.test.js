@@ -53,7 +53,7 @@ describe('WindowCloseDecisionModal', () => {
 
     expect(html).toContain('無法在背景執行');
     expect(html).toContain('系統匣目前無法建立，視窗會保持開啟。');
-    expect(html).toContain('知道了');
+    expect(html).toContain('關閉');
     expect(html).not.toContain('結束');
     expect(html).not.toContain('記住選擇');
   });
@@ -67,7 +67,7 @@ describe('WindowCloseDecisionModal', () => {
 
     expect(html).toContain('伴奏處理中');
     expect(html).toContain('停止並結束');
-    expect(html).toContain('在背景繼續');
+    expect(html).toContain('繼續處理');
     expect(html).toContain('ui-btn--intent-danger');
     expect(html).not.toContain('記住選擇');
   });

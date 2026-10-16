@@ -58,7 +58,7 @@ async function handleFileImport() {
     <div class="lyrics-manual-import-panel__header">
       <div>
         <h4 id="lyrics-manual-import-title">手動匯入</h4>
-        <p>貼上 LRC / 純文字，或選擇本機歌詞檔。</p>
+        <p>貼上 LRC 或純文字，或選擇本機歌詞檔。</p>
       </div>
       <UiButton title="收合手動匯入" @click="emit('cancel')">收合</UiButton>
     </div>
@@ -107,7 +107,7 @@ async function handleFileImport() {
         title="儲存貼上的歌詞"
         @click="handleTextSubmit"
       >
-        {{ state.manualSave.isSaving ? '儲存中...' : '儲存' }}
+        {{ state.manualSave.isSaving ? '儲存中…' : '儲存' }}
       </UiButton>
     </div>
   </form>

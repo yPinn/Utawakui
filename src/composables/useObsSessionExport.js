@@ -69,8 +69,8 @@ const result = computed(() =>
 
 async function copyChapters() {
   return clipboard.copy(result.value.text, 'YouTube 章節文字', {
-    successMessage: '已複製章節文字',
-    errorMessage: '無法複製章節文字，請手動選取文字',
+    successMessage: '章節已複製',
+    errorMessage: '無法複製章節，請手動選取內容',
   });
 }
 
