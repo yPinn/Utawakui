@@ -4,21 +4,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const { isSafeTrackId } = require('./library/paths');
+const audioControlValues = require('../../shared/audioControlValues.json');
 
 const BGM_STANDBY_PLAN_FILENAME = 'bgm-standby.json';
 const BGM_STANDBY_PLAN_VERSION = 3;
 const BGM_STANDBY_LEGACY_VERSIONS = Object.freeze([1, 2]);
 const BGM_STANDBY_LEGACY_TRACK_LIMIT = 100;
 const BGM_STANDBY_POSITION_MAX_SECONDS = 24 * 60 * 60;
-const BGM_STANDBY_DEFAULT_DIM_DB = -12;
-
 const BGM_STANDBY_DEFAULT_SETTINGS = Object.freeze({
-  volume: 0.25,
-  isMuted: false,
+  volume: audioControlValues.bgmVolume.defaultValue,
+  isMuted: audioControlValues.bgmMutedDefault,
   loop: true,
   fadeInSeconds: 1,
   fadeOutSeconds: 0.6,
-  dimDb: BGM_STANDBY_DEFAULT_DIM_DB,
+  dimDb: audioControlValues.bgmDimDb.defaultValue,
   dimAttackMs: 100,
   dimReleaseMs: 600,
   preRollSeconds: 0.75,
@@ -60,11 +59,19 @@ const BGM_STANDBY_LEGACY_DEFAULT_SETTINGS = Object.freeze({
 });
 
 const SETTING_RULES = Object.freeze({
-  volume: { type: 'number', min: 0, max: 1 },
+  volume: {
+    type: 'number',
+    min: audioControlValues.bgmVolume.min,
+    max: audioControlValues.bgmVolume.max,
+  },
   isMuted: { type: 'boolean' },
   fadeInSeconds: { type: 'number', min: 0.1, max: 5 },
   fadeOutSeconds: { type: 'number', min: 0.1, max: 5 },
-  dimDb: { type: 'number', min: -30, max: -6 },
+  dimDb: {
+    type: 'number',
+    min: audioControlValues.bgmDimDb.min,
+    max: audioControlValues.bgmDimDb.max,
+  },
   dimAttackMs: { type: 'number', min: 20, max: 500 },
   dimReleaseMs: { type: 'number', min: 100, max: 2000 },
   preRollSeconds: { type: 'number', min: 0.5, max: 10 },

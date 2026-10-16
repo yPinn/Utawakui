@@ -942,7 +942,7 @@ onUnmounted(() => {
   line-height: var(--ui-type-caption-line-height);
 }
 
-@media (max-width: 42rem) {
+@container app-folder-layout (max-width: 42rem) {
   .settings-view__optional-intro {
     grid-template-columns: minmax(0, 1fr);
   }

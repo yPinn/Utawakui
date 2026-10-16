@@ -100,8 +100,6 @@ describe('usePlaybackResume integration', () => {
     expect(harness.restorePlaybackState).toHaveBeenCalledWith({
       track: expect.objectContaining({ id: 'track-a' }),
       positionSeconds: 22.5,
-      volume: 0.7,
-      isMuted: true,
       playbackMode: 'repeat-list',
     });
     expect(resume.state.isInitialized).toBe(true);

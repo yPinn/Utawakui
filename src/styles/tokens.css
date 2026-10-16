@@ -594,7 +594,7 @@
   --ui-color-folder-primary: var(--ui-palette-indigo-700);
   --ui-color-folder-secondary: var(--ui-palette-plum-700);
   --ui-color-folder-tertiary: var(--ui-palette-olive-700);
-  --ui-color-folder-neutral: var(--ui-palette-warm-neutral-700);
+  --ui-color-folder-neutral: var(--ui-palette-neutral-800);
   --ui-color-folder-primary-foreground: var(--ui-palette-warm-neutral-100);
   --ui-color-folder-secondary-foreground: var(--ui-palette-warm-neutral-100);
   --ui-color-folder-tertiary-foreground: var(--ui-palette-warm-neutral-100);
@@ -956,7 +956,7 @@
   --ui-color-folder-primary: var(--ui-palette-indigo-600);
   --ui-color-folder-secondary: var(--ui-palette-plum-300);
   --ui-color-folder-tertiary: var(--ui-palette-olive-300);
-  --ui-color-folder-neutral: var(--ui-palette-warm-neutral-400);
+  --ui-color-folder-neutral: var(--ui-palette-neutral-300);
   --ui-color-folder-primary-foreground: var(--ui-palette-warm-neutral-100);
   --ui-color-folder-secondary-foreground: var(--ui-palette-neutral-900);
   --ui-color-folder-tertiary-foreground: var(--ui-palette-neutral-900);

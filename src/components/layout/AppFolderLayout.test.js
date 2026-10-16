@@ -23,7 +23,7 @@ async function renderLayout(activeDestination = 'library') {
 }
 
 describe('AppFolderLayout', () => {
-  it('owns the four workflow destinations and global navigation semantics', async () => {
+  it('owns the four product destinations and global navigation semantics', async () => {
     const html = await renderLayout();
 
     expect(html).toContain('aria-label="Folder 頁面"');
@@ -32,8 +32,14 @@ describe('AppFolderLayout', () => {
     expect(html).not.toContain('role="tab"');
     expect(html.indexOf('曲庫')).toBeLessThan(html.indexOf('演唱工具'));
     expect(html.indexOf('演唱工具')).toBeLessThan(html.indexOf('畫面輸出'));
+    expect(html.indexOf('畫面輸出')).toBeLessThan(html.indexOf('設定'));
     expect(html).toContain('Feature body');
-    for (const destination of ['library', 'performance', 'display']) {
+    for (const destination of [
+      'library',
+      'performance',
+      'display',
+      'settings',
+    ]) {
       expect(html).toContain(`data-folder-destination="${destination}"`);
     }
   });
@@ -47,14 +53,10 @@ describe('AppFolderLayout', () => {
   });
 
   it('gives every Folder tab its destination material and contrast foreground', () => {
-    for (const [destination, material] of [
-      ['library', 'primary'],
-      ['performance', 'secondary'],
-      ['display', 'tertiary'],
-    ]) {
+    for (const material of ['primary', 'secondary', 'tertiary', 'neutral']) {
       expect(source).toMatch(
         new RegExp(
-          `\\.app-folder-layout__destination\\[data-folder-destination='${destination}'\\]\\s*\\{[^}]*--ui-folder-tab-material:\\s*var\\(--ui-color-folder-${material}\\);[^}]*--ui-folder-tab-foreground:\\s*var\\(--ui-color-folder-${material}-foreground\\);`,
+          `\\.app-folder-layout__destination\\[data-folder-material='${material}'\\]\\s*\\{[^}]*--ui-folder-tab-material:\\s*var\\(--ui-color-folder-${material}\\);[^}]*--ui-folder-tab-foreground:\\s*var\\(--ui-color-folder-${material}-foreground\\);`,
           'su',
         ),
       );
@@ -91,18 +93,18 @@ describe('AppFolderLayout', () => {
     expect(source).not.toContain('Archive');
   });
 
-  it('maps destination color only to the Folder exterior', () => {
+  it('maps data-driven destination material only to the Folder exterior', async () => {
+    const settingsHtml = await renderLayout('settings');
+
+    expect(settingsHtml).toContain('data-active-material="neutral"');
     expect(source).toMatch(
       /\.app-folder-layout\s*\{[^}]*--ui-folder-layout-background:\s*var\(--ui-color-folder-primary\);[^}]*--ui-folder-page-background:\s*var\(\s*--ui-folder-sheet-background\s*\);[^}]*--ui-folder-content-background:\s*transparent;/su,
     );
 
-    for (const [destination, material] of [
-      ['performance', 'secondary'],
-      ['display', 'tertiary'],
-    ]) {
+    for (const material of ['secondary', 'tertiary', 'neutral']) {
       expect(source).toMatch(
         new RegExp(
-          `\\.app-folder-layout\\[data-active-destination='${destination}'\\]\\s*\\{[^}]*--ui-folder-layout-background:\\s*var\\(--ui-color-folder-${material}\\);[^}]*\\}`,
+          `\\.app-folder-layout\\[data-active-material='${material}'\\]\\s*\\{[^}]*--ui-folder-layout-background:\\s*var\\(--ui-color-folder-${material}\\);[^}]*\\}`,
           'su',
         ),
       );

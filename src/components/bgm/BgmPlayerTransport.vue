@@ -14,6 +14,7 @@ import {
   VolumeX,
 } from '../../icons/index.js';
 import { formatDuration } from '../../utils/format.js';
+import audioControlValues from '../../../shared/audioControlValues.json';
 import BgmCurrentSource from './BgmCurrentSource.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -26,8 +27,8 @@ const props = defineProps({
   currentTrack: { type: Object, default: null },
   isDimmed: { type: Boolean, default: false },
   isMuted: { type: Boolean, default: false },
-  dimDb: { type: Number, default: -12 },
-  volume: { type: Number, default: 0.25 },
+  dimDb: { type: Number, default: audioControlValues.bgmDimDb.defaultValue },
+  volume: { type: Number, default: audioControlValues.bgmVolume.defaultValue },
   currentTime: { type: Number, default: 0 },
   duration: { type: Number, default: 0 },
   error: { type: String, default: '' },
@@ -243,9 +244,9 @@ function updatePosition(value) {
       <UiRangeControl
         class="bgm-transport__volume"
         :model-value="volumeDraft"
-        :min="0"
-        :max="1"
-        :step="0.01"
+        :min="audioControlValues.bgmVolume.min"
+        :max="audioControlValues.bgmVolume.max"
+        :step="audioControlValues.bgmVolume.step"
         :value-text="`${Math.round(volumeDraft * 100)}%`"
         :format-value="(value) => `${Math.round(value * 100)}%`"
         aria-label="BGM 音量"

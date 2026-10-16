@@ -7,7 +7,12 @@
 
 const path = require('path');
 const { app } = require('electron');
-const { loadConfig, saveConfig } = require('../lib/config');
+const {
+  hasStoredAudioPreferences,
+  loadConfig,
+  normalizeAudioPreferences,
+  saveConfig,
+} = require('../lib/config');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
 const {
   ensureLibraryDirectory,
@@ -20,6 +25,7 @@ const {
 let configPath = null;
 let cachedConfig = null;
 let lastWrittenLibraryPath = null;
+let audioPreferencesStored = false;
 
 // Sidecar for the NSIS uninstaller (build/installer.nsh), which can't parse
 // JSON — UTF-16LE with no BOM/trailing newline is what NSIS's
@@ -39,6 +45,7 @@ function writeLibraryPathSidecar(config) {
 function loadInitialConfig() {
   // Machine-local settings only, never exported or shared.
   configPath = path.join(app.getPath('userData'), 'config.json');
+  audioPreferencesStored = hasStoredAudioPreferences(configPath);
   cachedConfig = loadConfig(configPath);
   writeLibraryPathSidecar(cachedConfig);
   return cachedConfig;
@@ -54,8 +61,21 @@ function getConfig() {
 
 function updateConfig(patch) {
   cachedConfig = saveConfig(configPath, patch);
+  if (Object.hasOwn(patch, 'audioPreferences')) {
+    audioPreferencesStored = true;
+  }
   writeLibraryPathSidecar(cachedConfig);
   return cachedConfig;
+}
+
+function initializeAudioPreferences(legacyAudioPreferences = null) {
+  if (audioPreferencesStored) return cachedConfig.audioPreferences;
+  const audioPreferences = normalizeAudioPreferences({
+    ...cachedConfig.audioPreferences,
+    ...(legacyAudioPreferences ?? {}),
+  });
+  updateConfig({ audioPreferences });
+  return audioPreferences;
 }
 
 function requireFeatureGate(featureId) {
@@ -103,6 +123,7 @@ module.exports = {
   loadInitialConfig,
   getConfig,
   updateConfig,
+  initializeAudioPreferences,
   requireFeatureGate,
   getDownloadDirStatus,
   resolveConfiguredDownloadDir,

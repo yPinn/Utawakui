@@ -23,6 +23,12 @@ function register(overrides = {}) {
     uiTheme: 'dark',
     sidebarWidth: 256,
     captureDeviceId: null,
+    audioPreferences: {
+      performanceVolume: 0.5,
+      performanceMuted: false,
+      monitorGuideVocalLevel: 0.5,
+      captureGuideVocalLevel: 0,
+    },
     autoAnalyzeMusicStructure: true,
     separationGpuAcceleration: true,
     autoCheckAppUpdates: true,
@@ -110,6 +116,8 @@ describe('registerConfigHandlers', () => {
       'config:set-sidebar-width',
       'config:get-capture-device',
       'config:set-capture-device',
+      'config:get-audio-preferences',
+      'config:set-audio-preferences',
       'config:get-auto-music-analysis',
       'config:set-auto-music-analysis',
       'config:get-separation-gpu-acceleration',
@@ -121,6 +129,38 @@ describe('registerConfigHandlers', () => {
       'config:get-announcement-seen-version',
       'config:set-announcement-seen-version',
     ]);
+  });
+
+  it('reads and writes only a complete bounded audio-preference object', async () => {
+    const { ipcMain, updateConfig } = register();
+    const preferences = {
+      performanceVolume: 0.72,
+      performanceMuted: true,
+      monitorGuideVocalLevel: 0.35,
+      captureGuideVocalLevel: 0.15,
+    };
+
+    await expect(
+      ipcMain.handlers.get('config:get-audio-preferences')(),
+    ).resolves.toEqual({
+      performanceVolume: 0.5,
+      performanceMuted: false,
+      monitorGuideVocalLevel: 0.5,
+      captureGuideVocalLevel: 0,
+    });
+    await expect(
+      ipcMain.handlers.get('config:set-audio-preferences')(null, preferences),
+    ).resolves.toEqual(preferences);
+    expect(updateConfig).toHaveBeenCalledWith({
+      audioPreferences: preferences,
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:set-audio-preferences')(null, {
+        ...preferences,
+        performanceVolume: 2,
+      }),
+    ).rejects.toThrow(/AUDIO_PREFERENCES_INVALID/u);
   });
 
   it('projects the resolved default and custom download directories', async () => {

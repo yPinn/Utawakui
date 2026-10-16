@@ -89,7 +89,7 @@ const headingId = computed(
   gap: var(--ui-space-2);
 }
 
-@media (max-width: 680px) {
+@container app-folder-layout (max-width: 42.5rem) {
   .settings-block__header {
     align-items: stretch;
     flex-direction: column;

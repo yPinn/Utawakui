@@ -10,6 +10,8 @@ const limits = require('../../shared/playbackPersistenceValues.json');
 const PLAYBACK_HISTORY_LIMIT = 50;
 const PLAYBACK_QUEUE_LIMIT = limits.queueLimit;
 const PLAYBACK_PERSISTENCE_VERSION = 1;
+const PLAYBACK_RESUME_VERSION = 2;
+const LEGACY_PLAYBACK_RESUME_VERSION = 1;
 const MAX_SOURCE_TEXT_LENGTH = 255;
 const MAX_RESUME_POSITION_SECONDS = 7 * 24 * 60 * 60;
 const PLAYBACK_MODES = new Set(['sequence', 'repeat-list', 'repeat-one']);
@@ -151,24 +153,58 @@ function normalizeResumeSnapshot(value, now) {
     !Number.isFinite(value.positionSeconds) ||
     value.positionSeconds < 0 ||
     value.positionSeconds > MAX_RESUME_POSITION_SECONDS ||
-    !Number.isFinite(value.volume) ||
-    value.volume < 0 ||
-    value.volume > 1 ||
-    typeof value.isMuted !== 'boolean' ||
     !PLAYBACK_MODES.has(value.playbackMode)
   ) {
     throw new Error('invalid playback resume snapshot');
   }
 
   return {
-    version: PLAYBACK_PERSISTENCE_VERSION,
+    version: PLAYBACK_RESUME_VERSION,
     updatedAt: now().toISOString(),
     currentTrackId: validateTrackId(value.currentTrackId),
     positionSeconds: value.positionSeconds,
-    volume: value.volume,
-    isMuted: value.isMuted,
     playbackMode: value.playbackMode,
     queue: normalizeQueueSnapshot(value.queue),
+  };
+}
+
+function normalizeStoredResumeDocument(document) {
+  if (document === null) {
+    return { snapshot: null, legacyAudioPreferences: null };
+  }
+  if (
+    !document ||
+    typeof document !== 'object' ||
+    Array.isArray(document) ||
+    ![LEGACY_PLAYBACK_RESUME_VERSION, PLAYBACK_RESUME_VERSION].includes(
+      document.version,
+    ) ||
+    typeof document.updatedAt !== 'string' ||
+    Number.isNaN(Date.parse(document.updatedAt))
+  ) {
+    throw new Error('invalid playback resume document');
+  }
+  if (
+    document.version === LEGACY_PLAYBACK_RESUME_VERSION &&
+    (!Number.isFinite(document.volume) ||
+      document.volume < 0 ||
+      document.volume > 1 ||
+      typeof document.isMuted !== 'boolean')
+  ) {
+    throw new Error('invalid playback resume document');
+  }
+  return {
+    snapshot: normalizeResumeSnapshot(
+      document,
+      () => new Date(document.updatedAt),
+    ),
+    legacyAudioPreferences:
+      document.version === LEGACY_PLAYBACK_RESUME_VERSION
+        ? {
+            performanceVolume: document.volume,
+            performanceMuted: document.isMuted,
+          }
+        : null,
   };
 }
 
@@ -315,21 +351,20 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
   }
 
   function getResumeSnapshot() {
-    return loadDocument(resumePath, null, (document) => {
-      if (document === null) return null;
-      const normalized = normalizeResumeSnapshot(
-        document,
-        () => new Date(document.updatedAt),
-      );
-      if (
-        document.version !== PLAYBACK_PERSISTENCE_VERSION ||
-        typeof document.updatedAt !== 'string' ||
-        Number.isNaN(Date.parse(document.updatedAt))
-      ) {
-        throw new Error('invalid playback resume document');
-      }
-      return normalized;
-    });
+    return loadDocument(
+      resumePath,
+      null,
+      (document) => normalizeStoredResumeDocument(document).snapshot,
+    );
+  }
+
+  function getLegacyAudioPreferences() {
+    return loadDocument(
+      resumePath,
+      null,
+      (document) =>
+        normalizeStoredResumeDocument(document).legacyAudioPreferences,
+    );
   }
 
   function saveResumeSnapshot(value) {
@@ -346,6 +381,7 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     getLastPlayedAtByTrackId,
     getPlayCountByTrackId,
     getResumeSnapshot,
+    getLegacyAudioPreferences,
     saveResumeSnapshot,
   };
 }
@@ -353,5 +389,6 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
 module.exports = {
   PLAYBACK_HISTORY_LIMIT,
   PLAYBACK_PERSISTENCE_VERSION,
+  PLAYBACK_RESUME_VERSION,
   createPlaybackPersistence,
 };

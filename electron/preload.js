@@ -35,6 +35,28 @@ function readInitialCaptureDeviceId() {
   return value.length > 0 ? value : null;
 }
 
+function readNumberArgument(name) {
+  const prefix = `--${name}=`;
+  const arg = process.argv.find((value) => value.startsWith(prefix));
+  const number = arg ? Number(arg.slice(prefix.length)) : Number.NaN;
+  return Number.isFinite(number) ? number : undefined;
+}
+
+// Sandboxed preload can require only Electron, so it relays Main's values and
+// the renderer's normalizeAudioPreferences() applies bounds and defaults.
+function readInitialAudioPreferences() {
+  const mutedArgument = process.argv.find((value) =>
+    value.startsWith('--performance-muted='),
+  );
+  const muted = mutedArgument?.slice('--performance-muted='.length);
+  return {
+    performanceVolume: readNumberArgument('performance-volume'),
+    performanceMuted: muted === '1' ? true : muted === '0' ? false : undefined,
+    monitorGuideVocalLevel: readNumberArgument('monitor-guide-vocal-level'),
+    captureGuideVocalLevel: readNumberArgument('capture-guide-vocal-level'),
+  };
+}
+
 const startupTraceEnabled = process.argv.includes('--startup-trace-enabled=1');
 const internalWorkbenchesEnabled = process.argv.includes(
   '--internal-workbenches-enabled=1',
@@ -84,8 +106,6 @@ function playbackResumeIntent(value) {
   return {
     currentTrackId: value?.currentTrackId,
     positionSeconds: value?.positionSeconds,
-    volume: value?.volume,
-    isMuted: value?.isMuted,
     playbackMode: value?.playbackMode,
     queue: {
       sourceTrackIds: value?.queue?.sourceTrackIds,
@@ -98,6 +118,15 @@ function playbackResumeIntent(value) {
       isShuffle: value?.queue?.isShuffle,
       orderIds: value?.queue?.orderIds,
     },
+  };
+}
+
+function audioPreferencesIntent(value) {
+  return {
+    performanceVolume: value?.performanceVolume,
+    performanceMuted: value?.performanceMuted,
+    monitorGuideVocalLevel: value?.monitorGuideVocalLevel,
+    captureGuideVocalLevel: value?.captureGuideVocalLevel,
   };
 }
 
@@ -355,6 +384,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getCaptureDevice: () => ipcRenderer.invoke('config:get-capture-device'),
   setCaptureDevice: (deviceId) =>
     ipcRenderer.invoke('config:set-capture-device', deviceId),
+  initialAudioPreferences: readInitialAudioPreferences(),
+  getAudioPreferences: () => ipcRenderer.invoke('config:get-audio-preferences'),
+  setAudioPreferences: (audioPreferences) =>
+    ipcRenderer.invoke(
+      'config:set-audio-preferences',
+      audioPreferencesIntent(audioPreferences),
+    ),
   getAutoMusicAnalysis: () =>
     ipcRenderer.invoke('config:get-auto-music-analysis'),
   setAutoMusicAnalysis: (enabled) =>

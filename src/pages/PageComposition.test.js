@@ -62,13 +62,26 @@ describe('destination Page composition', () => {
     expect(source).not.toContain('OutputView');
   });
 
-  it('gives Settings a Page owner inside the existing utility layout shell', () => {
+  it('gives Settings a neutral Folder Page and registered surface owner', () => {
     const source = readPage('./SettingsPage.vue');
 
     expect(source).toContain(
       "import SettingsView from '../views/SettingsView.vue';",
     );
-    expect(source).toMatch(/<template>\s*<SettingsView\s*\/>\s*<\/template>/u);
+    expect(source).toContain(
+      "import AppFolderPage from '../components/layout/AppFolderPage.vue';",
+    );
+    expect(source).toContain(
+      "import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';",
+    );
+    expect(source).toContain(
+      "import UiPageHeader from '../components/ui/UiPageHeader.vue';",
+    );
+    expect(source).toContain('surface-id="settings"');
+    expect(source).toContain('<AppFolderPage mode="workspace"');
+    expect(source).toContain('<UiPageHeader title="設定"');
+    expect(source).toContain('管理曲庫、音訊、進階功能與應用程式行為。');
+    expect(source).toContain('<SettingsView />');
     expect(source).not.toContain('AppUtilityPage');
   });
 });

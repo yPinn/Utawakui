@@ -367,6 +367,10 @@ capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
   item gain trim 與 pre-roll／post-roll 設定；repeat 固定為 loop，不是 renderer 可寫設定。Prepared performance
   item／label／revision 由 session preparation owner 保存與解析；BGM 不複製其資料。不得保存
   absolute path、media URL、library metadata 副本或可在重啟後自動開始的 armed transport state。
+- BGM base volume 與 Talk attenuation 的 default／range／step 消費
+  `shared/audioControlValues.json`；Main plan、Renderer fallback、audio deck 與 transport 不得各自
+  定義現行值。BGM plan 仍是這整組設定唯一的 durable owner，不因共用 scalar contract 而改存
+  `config.json.audioPreferences`。
 - 完整 App 重啟後先以目前曲庫解析 ids、過濾缺檔，再恢復為 paused／`manual-hold`；不得在
   啟動、更新或還原視窗時自動發聲。隱藏既有主視窗到系統匣不屬於重啟，記憶體中的 BGM
   可繼續播放。

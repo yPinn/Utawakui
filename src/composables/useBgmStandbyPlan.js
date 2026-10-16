@@ -1,16 +1,15 @@
 import { computed, readonly } from 'vue';
 import { useSerializedPlanStore } from './useSerializedPlanStore.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
-
-const DEFAULT_DIM_DB = -12;
+import audioControlValues from '../../shared/audioControlValues.json';
 
 export const BGM_STANDBY_DEFAULT_SETTINGS = Object.freeze({
-  volume: 0.25,
-  isMuted: false,
+  volume: audioControlValues.bgmVolume.defaultValue,
+  isMuted: audioControlValues.bgmMutedDefault,
   loop: true,
   fadeInSeconds: 1,
   fadeOutSeconds: 0.6,
-  dimDb: DEFAULT_DIM_DB,
+  dimDb: audioControlValues.bgmDimDb.defaultValue,
   dimAttackMs: 100,
   dimReleaseMs: 600,
   preRollSeconds: 0.75,

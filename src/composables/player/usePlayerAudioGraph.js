@@ -1,5 +1,6 @@
 import SignalsmithStretch from 'signalsmith-stretch';
 import signalsmithStretchModuleUrl from 'signalsmith-stretch?url';
+import { AUDIO_CONTROL_VALUES } from '../../utils/audioPreferences.js';
 
 // CSP `script-src 'self'` blocks the package's default blob: worklet URL.
 SignalsmithStretch.moduleUrl = signalsmithStretchModuleUrl;
@@ -9,19 +10,32 @@ const GAIN_RAMP_SECONDS = 0.03;
 export const TRANSPOSE_SEMITONES_RANGE = Object.freeze({ min: -12, max: 12 });
 export const PITCH_CENTS_RANGE = Object.freeze({ min: -50, max: 50 });
 export const TEMPO_RATE_RANGE = Object.freeze({ min: 0.5, max: 1.5 });
-export const GUIDE_VOCAL_LEVEL_RANGE = Object.freeze({ min: 0, max: 1 });
+export const PLAYER_VOLUME_RANGE = Object.freeze({
+  ...AUDIO_CONTROL_VALUES.performanceVolume,
+});
+export const GUIDE_VOCAL_LEVEL_RANGE = Object.freeze({
+  min: AUDIO_CONTROL_VALUES.monitorGuideVocalLevel.min,
+  max: AUDIO_CONTROL_VALUES.monitorGuideVocalLevel.max,
+  step: AUDIO_CONTROL_VALUES.monitorGuideVocalLevel.step,
+});
 
 export const PLAYER_AUDIO_DEFAULTS = Object.freeze({
-  volume: 0.5,
+  volume: AUDIO_CONTROL_VALUES.performanceVolume.defaultValue,
   transposeSemitones: 0,
   pitchCents: 0,
   tempoRate: 1,
-  monitorGuideVocalLevel: 0.5,
-  captureGuideVocalLevel: 0,
+  monitorGuideVocalLevel:
+    AUDIO_CONTROL_VALUES.monitorGuideVocalLevel.defaultValue,
+  captureGuideVocalLevel:
+    AUDIO_CONTROL_VALUES.captureGuideVocalLevel.defaultValue,
 });
 
 function clamp(value, range) {
   return Math.min(range.max, Math.max(range.min, value));
+}
+
+function boundedOrCurrent(value, range, currentValue) {
+  return Number.isFinite(value) ? clamp(value, range) : currentValue;
 }
 
 // SoundTouchNode exposed two independent AudioParams (pitchSemitones,
@@ -246,12 +260,20 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   }
 
   function setGuideVocalValue(value) {
-    state.guideVocalValue = clamp(value, GUIDE_VOCAL_LEVEL_RANGE);
+    state.guideVocalValue = boundedOrCurrent(
+      value,
+      GUIDE_VOCAL_LEVEL_RANGE,
+      state.guideVocalValue,
+    );
     applyMonitorGuideVocalGain();
   }
 
   function setCaptureGuideVocalValue(value) {
-    state.captureGuideVocalValue = clamp(value, GUIDE_VOCAL_LEVEL_RANGE);
+    state.captureGuideVocalValue = boundedOrCurrent(
+      value,
+      GUIDE_VOCAL_LEVEL_RANGE,
+      state.captureGuideVocalValue,
+    );
     applyCaptureGuideVocalGain();
   }
 
@@ -491,9 +513,14 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   }
 
   function setVolume(volume) {
-    state.volume = volume;
+    const nextVolume = boundedOrCurrent(
+      volume,
+      PLAYER_VOLUME_RANGE,
+      state.volume,
+    );
+    state.volume = nextVolume;
     if (!audioCtx) return;
-    rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : volume);
+    rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : nextVolume);
   }
 
   function setMuted(muted) {

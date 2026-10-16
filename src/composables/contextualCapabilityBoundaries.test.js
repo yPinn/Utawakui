@@ -11,11 +11,12 @@ describe('contextual capability boundaries after the destination cutover', () =>
     /const\s+internalViews\s*=\s*internalWorkbenchesEnabled\s*\?\s*\{([\s\S]*?)\n\s*\}\s*:\s*\{\};/u,
   )?.[1];
 
-  it('keeps capability workspaces out of the three public destinations', () => {
+  it('keeps capability workspaces out of the four public destinations', () => {
     expect(APP_DESTINATIONS.map(({ id }) => id)).toEqual([
       'library',
       'performance',
       'display',
+      'settings',
     ]);
 
     expect(appSource).not.toContain('lyrics: LyricsView');
@@ -23,6 +24,7 @@ describe('contextual capability boundaries after the destination cutover', () =>
     expect(appSource).toContain('library: LibraryPage');
     expect(appSource).toContain('performance: PerformancePage');
     expect(appSource).toContain('display: DisplayPage');
+    expect(appSource).toContain('settings: SettingsPage');
   });
 
   it('keeps Separation attached to track and Lyrics contexts instead of a Page', () => {

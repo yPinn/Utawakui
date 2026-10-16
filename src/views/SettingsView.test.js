@@ -37,7 +37,7 @@ const supportSource = source.slice(
 );
 
 describe('SettingsView version and maintenance sections', () => {
-  it('delegates the page heading to the utility frame and exposes three top-level tabs', () => {
+  it('delegates the page heading to SettingsPage and exposes three content tabs', () => {
     expect(source).not.toContain('<h1 class="settings-view__title">設定</h1>');
     expect(source).not.toContain('settings-view__header');
     expect(source).not.toContain('settings-view__column-header');

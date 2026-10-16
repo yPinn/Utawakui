@@ -227,21 +227,21 @@ Public Output 繼續只使用 `--ovl-*`。控制台 Output preview 可以保留�
 
 ### Rename matrix
 
-| Current                       | Target／結論                                                                 | Action boundary                                                                |
-| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `AppArchiveFrame`             | `AppFolderLayout`                                                            | Folder family cutover 時 rename，刪除舊 component 與 aliases                   |
-| `AppTopTabs`                  | Delete；只有 navigation 真有獨立 owner 時建立 internal `AppFolderNavigation` | Folder family cutover                                                          |
-| `AppInnerPage`                | `AppFolderPage`                                                              | Folder family cutover 時 rename，禁止 compatibility wrapper                    |
-| `UiPageHeader`                | Retain                                                                       | 作為內容 primitive，由 `AppFolderPage` 擁有 placement                          |
-| `AppUtilityFrame`             | `AppUtilityPage`                                                             | 已隨 Settings Utility cutover 完成，舊檔與 selector 已刪除                     |
-| `SessionPreparationWorkspace` | `PerformanceSessionWorkspace`                                                | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
-| `SessionPlanList`             | `PerformanceSessionPlanList`                                                 | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
-| `SessionPlanReviewEditor`     | `PerformanceSessionPlanEditor`                                               | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
-| `SessionManualItemForm`       | `PerformanceSessionManualItemForm`                                           | 已隨 Performance Session cutover 完成，舊檔已刪除                              |
-| `PerformanceSessionPanel`     | Delete                                                                       | 待唱安排已由 Performance workspace 單獨擁有；Titlebar／Right Dock 不再重複投影 |
-| `useVisualSystemMode`         | `useVisualReviewMode`                                                        | F8 review infrastructure slice；不得成為 production runtime API                |
-| `StudioLibraryDossier*`       | Development-only retain until candidate disposition                          | 不得直接 promotion 到 production；adoption 時改用正式 owner 名稱或刪除         |
-| `DemoCandidate*`              | Delete after formal adoption                                                 | 每個 component adoption slice 同步移除                                         |
+| Current                             | Target／結論                                                                 | Action boundary                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `AppArchiveFrame`                   | `AppFolderLayout`                                                            | Folder family cutover 時 rename，刪除舊 component 與 aliases                        |
+| `AppTopTabs`                        | Delete；只有 navigation 真有獨立 owner 時建立 internal `AppFolderNavigation` | Folder family cutover                                                               |
+| `AppInnerPage`                      | `AppFolderPage`                                                              | Folder family cutover 時 rename，禁止 compatibility wrapper                         |
+| `UiPageHeader`                      | Retain                                                                       | 作為內容 primitive，由 `AppFolderPage` 擁有 placement                               |
+| `AppUtilityFrame`／`AppUtilityPage` | Delete                                                                       | Settings 已改由正式 `AppFolderLayout`＋`AppFolderPage` 組合，Utility surface 已移除 |
+| `SessionPreparationWorkspace`       | `PerformanceSessionWorkspace`                                                | 已隨 Performance Session cutover 完成，舊檔已刪除                                   |
+| `SessionPlanList`                   | `PerformanceSessionPlanList`                                                 | 已隨 Performance Session cutover 完成，舊檔已刪除                                   |
+| `SessionPlanReviewEditor`           | `PerformanceSessionPlanEditor`                                               | 已隨 Performance Session cutover 完成，舊檔已刪除                                   |
+| `SessionManualItemForm`             | `PerformanceSessionManualItemForm`                                           | 已隨 Performance Session cutover 完成，舊檔已刪除                                   |
+| `PerformanceSessionPanel`           | Delete                                                                       | 待唱安排已由 Performance workspace 單獨擁有；Titlebar／Right Dock 不再重複投影      |
+| `useVisualSystemMode`               | `useVisualReviewMode`                                                        | F8 review infrastructure slice；不得成為 production runtime API                     |
+| `StudioLibraryDossier*`             | Development-only retain until candidate disposition                          | 不得直接 promotion 到 production；adoption 時改用正式 owner 名稱或刪除              |
+| `DemoCandidate*`                    | Delete after formal adoption                                                 | 每個 component adoption slice 同步移除                                              |
 
 未列入矩陣的 stable component 不因字面整齊而改名。若 owner 尚未確認，先完成 responsibility split，再決定 rename／move；不得以 barrel 或 wrapper 永久保留雙名稱。
 
@@ -498,7 +498,7 @@ Phase 3.4 已將 Lyrics 與 `lyrics-overlay` 原子切為 v2，維持 `AppFolder
 
 Phase 3.5 已將 Output control panel 與 `output-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `workspace` mode 與 Workbench stage／inspector、Gallery grid／detail、runtime Settings 的 bounded scroll owners。19 個 Output 專屬 geometry declarations 已從 T1 core 移入改名後的 `styles/features/output.css`，generic consumers 改用正式 v2 radius／weight／motion／checkbox semantics。Output render graph 共用的 `SettingsBlock`／`SettingsActionRow` 亦納入 no-T1 gate，7 個只服務這兩個 compound 的 global declarations 已原值收斂成 foundation／component-local recipe。Lyrics inspection composition 依 runtime 狀態維持單一 owner：unavailable fallback 由 control-panel frame 繪製，live cross-origin iframe 由 bounded Workbench query 繪製；copied route 不帶 inspection 參數，public `overlay/` 仍只使用獨立 `--ovl-*`。
 
-Phase 4.1 已將 `app-utility`、local overlay host 與 Settings page 原子切為 v2；`AppUtilityFrame` 同批收斂為 `AppUtilityPage`，舊檔、舊 selector 與雙 import path均已移除。Utility page 保留 fixed header／focus owner，`SettingsView` 保留唯一 body Scroll Region 與雙欄／窄版 stacking。8 個 production files 的 16 個 legacy pairs 已映射至正式 radius／typography／motion semantics或 component-local geometry，6 個 Settings／Separation declarations 已退出 T1 core。Settings blocks、feature gates、audio／OBS integration、modal flows 與資料 authority均未變更；其餘 component names 已符合 compound／domain control 角色。
+Phase 4.1 最初將 `app-utility`、local overlay host 與 Settings page 原子切為 v2，並把 `AppUtilityFrame` 收斂為 `AppUtilityPage`；後續 Settings Folder cutover 已將該臨時 Utility shell／surface 完整移除，改由 registered `settings` boundary、`AppFolderLayout` 與 workspace-mode `AppFolderPage` 承接 fixed header、neutral Folder material 和 local overlay host。`SettingsView` 持續保留唯一 body Scroll Region 與雙欄／窄版 stacking。原階段 8 個 production files 的 16 個 legacy pairs 已映射至正式 radius／typography／motion semantics或 component-local geometry，6 個 Settings／Separation declarations 已退出 T1 core；Settings blocks、feature gates、audio／OBS integration、modal flows 與資料 authority均未變更。
 
 Phase 4.2 已清理 `internal-tools` 內 Music Analysis 與 Lyrics Provider Review 的完整 consumer graph；8 個 production files 的 12 個 legacy pairs 已映射至正式 typography／radius／motion semantics，4 個無 production consumer 的 generic aliases 同批退出 T1 core。既有 `MusicAnalysis*` 與 `LyricsProviderReviewForm` 名稱已符合 domain／role 結構，因此不做 cosmetic rename；分析資料、benchmark、annotation、provider review、分類導覽與工具 navigation 均未變更。
 

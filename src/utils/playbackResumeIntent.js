@@ -26,8 +26,6 @@ export function buildPlaybackResumeIntent({ playerState, queueState }) {
   return {
     currentTrackId,
     positionSeconds: Math.max(0, Number(playerState.currentTime) || 0),
-    volume: Number(playerState.volume),
-    isMuted: Boolean(playerState.isMuted),
     playbackMode: playerState.playbackMode,
     queue: {
       sourceTrackIds: source.map((track) => track.id),
@@ -57,8 +55,6 @@ export function resumeWatchSources({ playerState, queueState }) {
   return [
     playerState.track?.id,
     playerState.currentTime,
-    playerState.volume,
-    playerState.isMuted,
     playerState.playbackMode,
     queueState.tracks,
     queueState.queuedTracks,

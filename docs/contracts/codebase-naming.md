@@ -48,11 +48,12 @@ ADR 0023 destination composition cleanup is complete. Library browsing now uses
 `LibraryBrowseWorkspace.vue`／`LibraryBrowseContent.vue`, Display directly composes
 `ObsOutputWorkspace.vue`, and the former Import and Lyrics destination adapters are
 removed. `SettingsView.vue` remains an intentional body adapter under
-`SettingsPage.vue`, not a pending destination migration. No new product destination
-or caller may adopt the removed legacy names. `AppFolderPage` and `AppUtilityPage` are
-established layout-shell components named for the page frame they render; they
-are not destination compositions and do not justify new feature-local `*Page`
-names.
+`SettingsPage.vue`, which now owns the registered Settings Folder composition.
+No new product destination or caller may adopt the removed legacy names.
+`AppFolderPage` is the established page-frame component; the retired
+`AppUtilityPage` name and surface must not be restored as a parallel shell. Layout
+components are not destination compositions and do not justify new feature-local
+`*Page` names.
 
 ## Renderer composition scale
 
@@ -60,7 +61,7 @@ The filename must state the component's composition scale:
 
 | Suffix／prefix          | Responsibility                                                             |
 | ----------------------- | -------------------------------------------------------------------------- |
-| `*Page.vue`             | A stable public destination or shell utility composition.                  |
+| `*Page.vue`             | A stable public destination composition.                                   |
 | `*Workspace.vue`        | A main-area task that may temporarily occupy one destination.              |
 | `*Panel.vue`            | A bounded region that can coexist with its surrounding task.               |
 | `*Tool.vue`             | A switchable operator instrument; it does not own destination navigation.  |

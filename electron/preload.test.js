@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import Module from 'node:module';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -28,6 +29,7 @@ const MAIN_INVOKE_CHANNELS = [
   'config:choose-download-dir',
   'config:get',
   'config:get-capture-device',
+  'config:get-audio-preferences',
   'config:get-sidebar-width',
   'config:get-ui-theme',
   'config:get-auto-music-analysis',
@@ -38,6 +40,7 @@ const MAIN_INVOKE_CHANNELS = [
   'config:open-download-dir',
   'config:reset-download-dir',
   'config:set-capture-device',
+  'config:set-audio-preferences',
   'config:set-sidebar-width',
   'config:set-ui-theme',
   'config:set-auto-music-analysis',
@@ -272,6 +275,18 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('requires only Electron, as a sandboxed preload must', () => {
+    // Any other require fails at load and leaves the window without a bridge.
+    const source = readFileSync(
+      new URL('./preload.js', import.meta.url),
+      'utf8',
+    );
+    const requires = [
+      ...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/gu),
+    ].map((match) => match[1]);
+    expect(requires).toEqual(['electron']);
+  });
+
   it('exposes a fixed no-payload Performer close intent', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 
@@ -288,12 +303,23 @@ describe('main preload bridge', () => {
       '--ui-density=dense',
       '--sidebar-width=Infinity',
       '--capture-device-id=',
+      '--performance-volume=Infinity',
+      '--performance-muted=invalid',
+      '--monitor-guide-vocal-level=-1',
+      '--capture-guide-vocal-level=2',
     ]);
     expect(defaults).toMatchObject({
       initialUiTheme: 'light',
       initialUiDensity: 'compact',
       initialSidebarWidth: 256,
       initialCaptureDeviceId: null,
+      // Preload relays raw values; the renderer bounds them and fills defaults.
+      initialAudioPreferences: {
+        performanceVolume: undefined,
+        performanceMuted: undefined,
+        monitorGuideVocalLevel: -1,
+        captureGuideVocalLevel: 2,
+      },
       startupTraceEnabled: false,
     });
 
@@ -302,6 +328,10 @@ describe('main preload bridge', () => {
       '--ui-density=standard',
       '--sidebar-width=320',
       '--capture-device-id=device-1',
+      '--performance-volume=0.72',
+      '--performance-muted=1',
+      '--monitor-guide-vocal-level=0.35',
+      '--capture-guide-vocal-level=0.15',
       '--startup-trace-enabled=1',
     ]);
     expect(configured).toMatchObject({
@@ -309,6 +339,12 @@ describe('main preload bridge', () => {
       initialUiDensity: 'standard',
       initialSidebarWidth: 320,
       initialCaptureDeviceId: 'device-1',
+      initialAudioPreferences: {
+        performanceVolume: 0.72,
+        performanceMuted: true,
+        monitorGuideVocalLevel: 0.35,
+        captureGuideVocalLevel: 0.15,
+      },
       startupTraceEnabled: true,
     });
   });
@@ -957,8 +993,6 @@ describe('main preload bridge', () => {
       {
         currentTrackId: 'track-a',
         positionSeconds: 12,
-        volume: 0.5,
-        isMuted: false,
         playbackMode: 'sequence',
         queue: {
           sourceTrackIds: ['track-a'],
@@ -978,6 +1012,28 @@ describe('main preload bridge', () => {
       hasTrack: true,
       trackId: 'track-a',
     });
+  });
+
+  it('shapes audio preferences without forwarding arbitrary config fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.setAudioPreferences({
+      performanceVolume: 0.72,
+      performanceMuted: true,
+      monitorGuideVocalLevel: 0.35,
+      captureGuideVocalLevel: 0.15,
+      privatePath: 'E:\\private.wav',
+    });
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'config:set-audio-preferences',
+      {
+        performanceVolume: 0.72,
+        performanceMuted: true,
+        monitorGuideVocalLevel: 0.35,
+        captureGuideVocalLevel: 0.15,
+      },
+    );
   });
 
   it('shapes library storage policy without accepting paths or arbitrary limits', async () => {

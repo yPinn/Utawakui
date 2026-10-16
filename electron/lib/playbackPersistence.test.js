@@ -259,12 +259,10 @@ describe('playbackPersistence', () => {
     });
 
     expect(saved).toEqual({
-      version: 1,
+      version: 2,
       updatedAt: '2026-09-27T12:00:00.000Z',
       currentTrackId: 'track-b',
       positionSeconds: 37.25,
-      volume: 0.72,
-      isMuted: true,
       playbackMode: 'repeat-list',
       queue: {
         sourceTrackIds: ['track-a', 'track-b', 'missing-duplicate'],
@@ -318,6 +316,11 @@ describe('playbackPersistence', () => {
 
     expect(service.saveResumeSnapshot(null)).toBe(null);
     expect(service.getResumeSnapshot()).toBe(null);
+    expect(
+      fs
+        .readdirSync(userDataDir)
+        .filter((name) => name.includes('playback-resume.json.corrupted-')),
+    ).toHaveLength(0);
   });
 
   it('clears recent history without affecting the resume snapshot', () => {

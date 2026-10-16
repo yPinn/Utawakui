@@ -136,7 +136,7 @@ export function createKeyboardBindings({ internalViewShortcuts = {} } = {}) {
     ),
   );
   // F4 stays unassigned (ADR 0023); F5-F8 are dev-only workbenches.
-  const settings = viewBinding('view.settings', '開啟設定', 'f9', 'settings');
+  // F9 belongs to the Settings record in APP_DESTINATIONS.
   const internal = Object.entries(internalViewShortcuts).map(([key, view]) =>
     viewBinding(
       `view.internal.${view}`,
@@ -148,13 +148,9 @@ export function createKeyboardBindings({ internalViewShortcuts = {} } = {}) {
   );
 
   return Object.freeze(
-    [
-      ...destinations,
-      settings,
-      ...internal,
-      ...PLAYER_BINDINGS,
-      ...HISTORY_BINDINGS,
-    ].map(define),
+    [...destinations, ...internal, ...PLAYER_BINDINGS, ...HISTORY_BINDINGS].map(
+      define,
+    ),
   );
 }
 

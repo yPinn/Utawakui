@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   ANNOUNCEMENT_VERSION_MAX_LENGTH,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
+  DEFAULT_AUDIO_PREFERENCES,
   SIDEBAR_WIDTH_MIN,
   isValidObsHost,
   loadConfig,
@@ -28,7 +29,7 @@ describe('config', () => {
   it('missing file falls back to defaults', () => {
     const config = loadConfig(configPath);
     expect(config).toEqual({
-      version: 3,
+      version: 4,
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'light',
@@ -36,6 +37,7 @@ describe('config', () => {
       performerWindowBounds: null,
       sidebarWidth: 256,
       captureDeviceId: null,
+      audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
       separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
@@ -112,7 +114,7 @@ describe('config', () => {
     fs.writeFileSync(configPath, JSON.stringify(null));
     const config = loadConfig(configPath);
     expect(config).toEqual({
-      version: 3,
+      version: 4,
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'light',
@@ -120,6 +122,7 @@ describe('config', () => {
       performerWindowBounds: null,
       sidebarWidth: 256,
       captureDeviceId: null,
+      audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
       separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
@@ -425,7 +428,7 @@ describe('config', () => {
     );
 
     expect(loadConfig(configPath)).toMatchObject({
-      version: 3,
+      version: 4,
       downloadDir: '/existing-library',
       outputRuntime: {
         autoStart: true,

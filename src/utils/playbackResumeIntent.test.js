@@ -146,6 +146,11 @@ describe('resumeWatchSources', () => {
     const onChange = vi.fn();
     watch(() => resumeWatchSources({ playerState, queueState }), onChange);
 
+    playerState.volume = 0.8;
+    playerState.isMuted = true;
+    await nextTick();
+    expect(onChange).not.toHaveBeenCalled();
+
     playerState.currentTime = 1;
     await nextTick();
     queueState.queuedTracks = [{ id: 'q1' }];

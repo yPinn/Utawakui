@@ -15,7 +15,6 @@ import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppRightDock from './components/layout/AppRightDock.vue';
 import AppSurfaceBoundary from './components/layout/AppSurfaceBoundary.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
-import AppUtilityPage from './components/layout/AppUtilityPage.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
@@ -38,6 +37,7 @@ import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
+import { useAudioPreferences } from './composables/useAudioPreferences.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
 import { useAppUpdate } from './composables/useAppUpdate.js';
@@ -62,7 +62,7 @@ import { measureInteractionToNextPaint } from './utils/interactionPerformance.js
 import { hasOpenTransientOverlay } from './utils/transientOverlay.js';
 import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
-import { appDestinationSettingsLabel } from './utils/appDestinationRegistry.js';
+import { focusAppDestinationTrigger } from './utils/appDestinationFocus.js';
 import { preparationActivityIndicator } from './components/preparation/preparationActivityPresentation.js';
 
 provideUiOverlayHost('app-shell');
@@ -133,6 +133,8 @@ const closeDecision = useWindowCloseDecision();
 const trayNavigation = useTrayNavigation();
 const playbackHistory = usePlaybackHistory();
 const playbackResume = usePlaybackResume();
+const audioPreferences = useAudioPreferences();
+audioPreferences.initialize();
 void Promise.allSettled([
   playbackResume.initialize(),
   playbackHistory.initialize(),
@@ -142,6 +144,7 @@ onUnmounted(() => {
   trayNavigation.dispose();
   playbackResume.dispose();
   playbackHistory.dispose();
+  void audioPreferences.dispose();
 });
 // Validate and stage the persisted capture device before playback. The capture
 // AudioContext itself stays closed until the first explicit play action.
@@ -189,13 +192,13 @@ const views = {
   library: LibraryPage,
   performance: PerformancePage,
   display: DisplayPage,
+  settings: SettingsPage,
   ...internalViews,
 };
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const {
   activeView,
-  returnView,
   isSettingsView,
   setActiveView,
   openSettings,
@@ -204,10 +207,6 @@ const {
 // Starts recording navigation before any destination change (ADR 0025).
 const navigationHistory = useNavigationHistory();
 useNavigationInput();
-const settingsBackLabel = computed(() => {
-  const label = appDestinationSettingsLabel(returnView.value);
-  return label ? `返回${label}` : '返回先前頁面';
-});
 
 function leaveSettings() {
   if (!navigationHistory.leaveSettings()) returnFromSettings();
@@ -217,8 +216,12 @@ function leaveSettings() {
 }
 
 function toggleSettings() {
-  if (isSettingsView.value) leaveSettings();
-  else openSettings();
+  if (isSettingsView.value) {
+    leaveSettings();
+    return;
+  }
+  openSettings();
+  nextTick(() => focusAppDestinationTrigger('settings'));
 }
 // Playback Info belongs to the persistent player/queue context, not the
 // current workspace page. The audio-backed player remains authoritative once
@@ -389,6 +392,7 @@ const pageComposedFolderViews = new Set([
   'library',
   'performance',
   'display',
+  'settings',
   'visual-system',
 ]);
 const activeViewOwnsFolderPage = computed(() =>
@@ -434,16 +438,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
       }"
     >
       <div class="shell__workspace">
-        <AppUtilityPage
-          v-if="isSettingsView"
-          title="設定"
-          description="管理曲庫、音訊、進階功能與應用程式行為。"
-          :back-label="settingsBackLabel"
-          @back="leaveSettings"
-        >
-          <SettingsPage />
-        </AppUtilityPage>
-        <AppSurfaceBoundary v-else surface-id="app-folder">
+        <AppSurfaceBoundary surface-id="app-folder">
           <AppFolderLayout
             :active-destination="activeView"
             @navigate="setActiveView"

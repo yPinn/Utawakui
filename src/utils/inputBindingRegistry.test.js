@@ -79,9 +79,16 @@ describe('keyboard binding registry', () => {
   });
 
   it('keeps Settings on F9 and marks internal workbenches as dev-only', () => {
-    expect(
-      bindings.find((binding) => binding.view === 'settings'),
-    ).toMatchObject({ key: 'f9', editable: 'allow', devOnly: false });
+    const settingsBindings = bindings.filter(
+      (binding) => binding.view === 'settings',
+    );
+    expect(settingsBindings).toHaveLength(1);
+    expect(settingsBindings[0]).toMatchObject({
+      id: 'view.settings',
+      key: 'f9',
+      editable: 'allow',
+      devOnly: false,
+    });
 
     const internal = bindings.filter((binding) => binding.devOnly);
     expect(internal.map((binding) => [binding.key, binding.view])).toEqual([

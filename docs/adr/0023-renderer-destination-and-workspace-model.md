@@ -2,8 +2,8 @@
 
 ## Status
 
-Accepted (2026-10-12). Phases 0–4 are implemented: public navigation uses
-「曲庫」／「演唱工具」／「畫面輸出」for `library`／`performance`／`display`, contextual Lyrics compositions are split,
+Accepted (2026-10-12), amended (2026-10-16). Phases 0–5 are implemented: public navigation uses
+「曲庫」／「演唱工具」／「畫面輸出」／「設定」for `library`／`performance`／`display`／`settings`, contextual Lyrics compositions are split,
 Import is a shell-owned Right Dock task with a modal review expansion, and the
 legacy destination adapters have been removed. The retained floating BGM owner and
 its drag boundary have received owner-visible acceptance.
@@ -37,19 +37,21 @@ the product's durable content root rather than a setup detail.
 
 ### Product destinations
 
-The public control-panel navigation has three destinations:
+The public control-panel navigation has four destinations:
 
 | Visible label | Destination id | Composition owner               | Responsibility                                                           |
 | ------------- | -------------- | ------------------------------- | ------------------------------------------------------------------------ |
 | 曲庫          | `library`      | `src/pages/LibraryPage.vue`     | Browse and organize tracks, collections and track-scoped authoring work. |
 | 演唱工具      | `performance`  | `src/pages/PerformancePage.vue` | Prepare a session and operate the bounded tools needed while singing.    |
 | 畫面輸出      | `display`      | `src/pages/DisplayPage.vue`     | Configure and inspect OBS／Browser Source public presentation.           |
+| 設定          | `settings`     | `src/pages/SettingsPage.vue`    | Configure local storage, devices, optional capabilities and maintenance. |
 
-Settings remains a Titlebar utility; it is not a fourth Folder destination. The
-target `SettingsPage` owns utility composition inside the existing
-`AppUtilityPage` layout shell and initially wraps the current `SettingsView` body
-as a migration adapter. Internal Tools remain development-only and are not part
-of the product navigation.
+Settings is the fourth Folder destination and also keeps the direct Titlebar gear.
+`SettingsPage` owns one registered `settings` boundary and composes the existing
+`SettingsView` inside workspace-mode `AppFolderPage`; it does not nest a second
+Folder layout. The destination uses the semantic neutral Folder material, mapped
+to charcoal／near-black in dark mode and cool gray in light mode. Internal Tools
+remain development-only and are not part of the product navigation.
 
 The global keyboard order follows the visible order: F1 opens Library, F2 opens
 Performance and F3 opens Display. F4 becomes unassigned rather than being reused
@@ -61,13 +63,13 @@ and F9 remains Settings. The full binding inventory lives in the
 
 Renderer composition uses five levels:
 
-| Level              | Meaning                                                     | Examples                                              |
-| ------------------ | ----------------------------------------------------------- | ----------------------------------------------------- |
-| Destination Page   | A stable user destination and top-level composition owner.  | `LibraryPage`, `PerformancePage`, `DisplayPage`       |
-| Workspace          | A main-area task that may temporarily occupy a destination. | lyrics authoring, session preparation                 |
-| Panel／Tool        | A switchable or persistent instrument inside a context.     | live lyrics, Queue, player tools, Right Dock surfaces |
-| Section／Object UI | A domain object or meaningful subsection of a task.         | track row, session item, output slot                  |
-| `Ui*` primitive    | Domain-neutral behavior and visual anatomy.                 | button, search box, modal, tabs                       |
+| Level              | Meaning                                                     | Examples                                                        |
+| ------------------ | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| Destination Page   | A stable user destination and top-level composition owner.  | `LibraryPage`, `PerformancePage`, `DisplayPage`, `SettingsPage` |
+| Workspace          | A main-area task that may temporarily occupy a destination. | lyrics authoring, session preparation                           |
+| Panel／Tool        | A switchable or persistent instrument inside a context.     | live lyrics, Queue, player tools, Right Dock surfaces           |
+| Section／Object UI | A domain object or meaningful subsection of a task.         | track row, session item, output slot                            |
+| `Ui*` primitive    | Domain-neutral behavior and visual anatomy.                 | button, search box, modal, tabs                                 |
 
 A component folder describes domain responsibility, not navigation. A workspace
 may compose components from several domain folders, and a capability folder does
@@ -143,7 +145,7 @@ The migration uses the following target mapping:
 | `lyrics` destination／`LyricsView.vue`          | No destination                                                               | `LyricsAuthoringWorkspace.vue` and `PerformanceLyricsWorkspace.vue` are contextual owners; legacy adapters are removed.   |
 | `import` destination／`ImportPage.vue`          | `PreparationDockPanel.vue`／`ImportDockContent.vue`＋`ImportReviewModal.vue` | Old destination／page／view adapters are removed; the shared preparation Dock keeps the current destination visible.      |
 | `output` destination／`OutputPage.vue`          | `display`／`DisplayPage.vue`                                                 | `DisplayPage.vue` directly composes `ObsOutputWorkspace.vue`; Output remains domain prose.                                |
-| `SettingsView.vue`                              | body adapter under `SettingsPage.vue`                                        | `SettingsPage.vue` owns composition; `AppUtilityPage.vue` remains the layout shell.                                       |
+| `SettingsView.vue`                              | body adapter under `SettingsPage.vue`                                        | `SettingsPage.vue` owns the registered Folder page composition; the former Utility shell is removed.                      |
 | `PerformanceSessionWorkspace.vue` under Setlist | Same workspace under Performance                                             | The coordinator no longer forces Library navigation.                                                                      |
 | `setlist` surface                               | `library` surface                                                            | Renderer surface and host names match the destination.                                                                    |
 | `lyrics` destination surface                    | contextual composition under Library／Performance                            | A registered child surface is present only where token, overlay-host or focus ownership requires one.                     |
@@ -170,6 +172,9 @@ active-destination state.
 5. Update current-state architecture, design and product-status documents only
    after the implementation is verified.
    **Implemented.**
+6. Move Settings from the standalone Utility shell into the shared Folder destination
+   registry, preserve Titlebar／F9 direct entry and return behavior, and remove the
+   retired Utility surface. **Implemented and owner-approved.**
 
 The migration never hides an old formal entry before its replacement journey has
 tests and an accessible return path.
@@ -193,7 +198,7 @@ tests and an accessible return path.
 
 ## Consequences
 
-The public navigation becomes smaller and easier to explain, while capabilities
+The public navigation exposes four stable product destinations while capabilities
 remain available at the point where the user needs them. Page names describe
 destinations; domain folders continue to describe reusable ownership.
 
@@ -208,5 +213,5 @@ correct technical term for projection runtime, Browser Source routes and public
 data contracts. Likewise,「演唱工具」does not rename Session, Queue or playback
 history; it composes them without erasing their distinct authorities.
 
-Current-state documents use the accepted three-destination names. Destination ids
+Current-state documents use the accepted four-destination names. Destination ids
 and technical Output／Performance terminology remain stable internal contracts.

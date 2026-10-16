@@ -170,7 +170,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
   border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-@media (max-width: 680px) {
+@container app-folder-layout (max-width: 42.5rem) {
   .settings-feature-gate-row__items {
     padding-block: 0;
     padding-inline-start: 0;

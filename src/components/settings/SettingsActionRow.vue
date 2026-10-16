@@ -191,7 +191,7 @@ const resolvedTitleTag = computed(
   flex-wrap: wrap;
 }
 
-@media (max-width: 900px) {
+@container app-folder-layout (max-width: 56.25rem) {
   .settings-action-row {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -202,7 +202,7 @@ const resolvedTitleTag = computed(
   }
 }
 
-@media (max-width: 680px) {
+@container app-folder-layout (max-width: 42.5rem) {
   .settings-action-row {
     grid-template-columns: 1fr;
   }

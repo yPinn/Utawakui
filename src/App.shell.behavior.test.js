@@ -47,28 +47,28 @@ describe('App shell right Dock', () => {
     );
   });
 
-  it('renders Settings in a mutually exclusive shell utility page', () => {
-    expect(source).toContain(
-      "import AppUtilityPage from './components/layout/AppUtilityPage.vue';",
-    );
+  it('renders Settings as the neutral fourth Folder destination', () => {
+    expect(source).not.toContain('AppUtilityPage');
     expect(source).toContain(':settings-active="isSettingsView"');
     expect(source).toContain(':update-available="appUpdateReady"');
     expect(source).toContain('@toggle-settings="toggleSettings"');
     expect(source).toMatch(
-      /function toggleSettings\(\)\s*\{[\s\S]*?if \(isSettingsView\.value\) leaveSettings\(\);[\s\S]*?else openSettings\(\);/u,
+      /function toggleSettings\(\)\s*\{[\s\S]*?if \(isSettingsView\.value\)\s*\{[\s\S]*?leaveSettings\(\);[\s\S]*?return;[\s\S]*?\}[\s\S]*?openSettings\(\);[\s\S]*?focusAppDestinationTrigger\('settings'\)/u,
     );
-    expect(source).toMatch(/<AppUtilityPage\s+v-if="isSettingsView"/u);
     expect(source).not.toContain('AppUtilityFrame');
-    expect(source).toContain('@back="leaveSettings"');
-    expect(source).toContain('<SettingsPage />');
     expect(source).toContain("() => import('./pages/SettingsPage.vue')");
-    expect(source).toMatch(
-      /<AppSurfaceBoundary v-else surface-id="app-folder">/u,
-    );
+    expect(source).toContain('settings: SettingsPage');
+    expect(source).toContain('<AppSurfaceBoundary surface-id="app-folder">');
     expect(source).toContain('<AppFolderLayout');
     expect(source).toContain('v-if="activeViewOwnsFolderPage"');
     expect(source).toContain('<AppFolderPage v-else mode="workspace">');
-    expect(source).not.toContain('settings: SettingsView');
+    expect(source).toMatch(
+      /const pageComposedFolderViews = new Set\(\[[\s\S]*?'settings'/u,
+    );
+    expect(source).toContain("focusAppDestinationTrigger('settings')");
+    expect(source).toContain(
+      "document.querySelector('[data-app-settings-trigger]')?.focus?.()",
+    );
   });
 
   it('routes the controlled Performer toggle through the shell owner', () => {

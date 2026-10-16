@@ -4,13 +4,14 @@ import { describe, expect, it } from 'vitest';
 const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
-describe('three-destination cutover contract', () => {
-  it('mounts only Library, Performance, and Display as public app destinations', () => {
+describe('four-destination cutover contract', () => {
+  it('mounts Library, Performance, Display, and Settings as public app destinations', () => {
     const app = readSource('../App.vue');
 
     expect(app).toContain('library: LibraryPage');
     expect(app).toContain('performance: PerformancePage');
     expect(app).toContain('display: DisplayPage');
+    expect(app).toContain('settings: SettingsPage');
     expect(app).not.toContain('setlist: LibraryPage');
     expect(app).not.toContain('lyrics: LyricsView');
     expect(app).not.toContain('import: ImportPage');

@@ -6,6 +6,7 @@ const {
   CAPTURE_DEVICE_ID_MAX_LENGTH,
   SIDEBAR_WIDTH_MAX,
   SIDEBAR_WIDTH_MIN,
+  isValidAudioPreferences,
 } = require('../lib/config');
 const {
   isWindowCloseBehavior,
@@ -252,6 +253,45 @@ function registerConfigHandlers({
       },
     );
   });
+
+  ipcMain.handle('config:get-audio-preferences', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-audio-preferences',
+        code: 'AUDIO_PREFERENCES_READ_FAILED',
+        title: '無法讀取音量設定',
+        message: '目前無法讀取音量設定。',
+      },
+      () => ({ ...getConfig().audioPreferences }),
+    ),
+  );
+
+  ipcMain.handle(
+    'config:set-audio-preferences',
+    async (event, audioPreferences) => {
+      if (!isValidAudioPreferences(audioPreferences)) {
+        throw createValidationError(
+          'AUDIO_PREFERENCES_INVALID',
+          '無法保存音量設定',
+          '指定的音量設定超出支援範圍。',
+        );
+      }
+      return runConfigOperation(
+        {
+          recordDiagnostic,
+          operation: 'set-audio-preferences',
+          code: 'AUDIO_PREFERENCES_UPDATE_FAILED',
+          title: '無法保存音量設定',
+          message: '目前無法保存音量設定，請稍後再試。',
+        },
+        () => {
+          updateConfig({ audioPreferences });
+          return { ...getConfig().audioPreferences };
+        },
+      );
+    },
+  );
 
   ipcMain.handle('config:get-auto-music-analysis', async () =>
     runConfigOperation(

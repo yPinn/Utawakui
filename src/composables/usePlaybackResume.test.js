@@ -43,8 +43,6 @@ describe('buildPlaybackResumeIntent', () => {
     expect(intent).toEqual({
       currentTrackId: 'track-a',
       positionSeconds: 12.5,
-      volume: 0.65,
-      isMuted: true,
       playbackMode: 'repeat-one',
       queue: {
         sourceTrackIds: ['track-a', 'track-b'],

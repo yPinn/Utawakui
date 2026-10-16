@@ -3,20 +3,26 @@ export const APP_DESTINATIONS = Object.freeze(
     {
       id: 'library',
       label: '曲庫',
-      settingsReturnLabel: '曲庫',
+      material: 'primary',
       shortcut: 'f1',
     },
     {
       id: 'performance',
       label: '演唱工具',
-      settingsReturnLabel: '演唱工具',
+      material: 'secondary',
       shortcut: 'f2',
     },
     {
       id: 'display',
       label: '畫面輸出',
-      settingsReturnLabel: '畫面輸出',
+      material: 'tertiary',
       shortcut: 'f3',
+    },
+    {
+      id: 'settings',
+      label: '設定',
+      material: 'neutral',
+      shortcut: 'f9',
     },
   ].map(Object.freeze),
 );
@@ -36,8 +42,4 @@ export const APP_DESTINATION_SHORTCUTS = Object.freeze(
 
 export function isAppDestination(destinationId) {
   return destinationById.has(destinationId);
-}
-
-export function appDestinationSettingsLabel(destinationId) {
-  return destinationById.get(destinationId)?.settingsReturnLabel;
 }

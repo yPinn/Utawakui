@@ -67,7 +67,7 @@ describe('renderer surface registry', () => {
       'display',
       'lyrics',
       'import',
-      'app-utility',
+      'settings',
       'app-shell-overlay',
     ]) {
       expect(registeredSurfaceAttributes(surfaceId)).not.toHaveProperty(
@@ -76,7 +76,7 @@ describe('renderer surface registry', () => {
     }
   });
 
-  it('registers the Folder layout and Utility as sibling v2 surfaces', () => {
+  it('registers Settings as a Folder child with its own overlay host', () => {
     expect(UI_SURFACE_REGISTRY['app-folder']).toMatchObject({
       entryOwner: 'src/App.vue',
       parentSurfaceId: 'app-shell',
@@ -90,18 +90,21 @@ describe('renderer surface registry', () => {
       'data-ui-surface': 'app-folder-overlay',
       'data-ui-system': 'v2',
     });
-    expect(UI_SURFACE_REGISTRY['app-utility']).toMatchObject({
-      parentSurfaceId: 'app-shell',
+    expect(UI_SURFACE_REGISTRY.settings).toMatchObject({
+      entryOwner: 'src/pages/SettingsPage.vue',
+      overlayHostId: 'settings-overlay',
+      parentSurfaceId: 'app-folder',
       renderer: 'main',
-      surfaceId: 'app-utility',
+      surfaceId: 'settings',
       system: 'v2',
     });
-    expect(registeredOverlayHostAttributes('app-utility')).toMatchObject({
-      id: 'app-utility-overlay',
+    expect(registeredOverlayHostAttributes('settings')).toMatchObject({
+      id: 'settings-overlay',
       'data-ui-renderer': 'main',
-      'data-ui-surface': 'app-utility-overlay',
+      'data-ui-surface': 'settings-overlay',
       'data-ui-system': 'v2',
     });
+    expect(UI_SURFACE_REGISTRY['app-utility']).toBeUndefined();
   });
 
   it('registers Library and its overlay as one complete v2 surface', () => {
@@ -218,6 +221,7 @@ describe('renderer surface registry', () => {
     expect(rendererRootSurfaceId('#library-overlay')).toBe('app-shell');
     expect(rendererRootSurfaceId('#performance-overlay')).toBe('app-shell');
     expect(rendererRootSurfaceId('#display-overlay')).toBe('app-shell');
+    expect(rendererRootSurfaceId('#settings-overlay')).toBe('app-shell');
     expect(rendererRootSurfaceId('#lyrics-overlay')).toBe('app-shell');
     expect(
       rendererRootSurfaceId('#performance-session-workspace-overlay'),

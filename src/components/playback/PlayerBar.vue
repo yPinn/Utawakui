@@ -27,8 +27,10 @@ import {
   separationPresetOptionsFor,
 } from '../../constants/separationPresets.js';
 import {
+  GUIDE_VOCAL_LEVEL_RANGE,
   PITCH_CENTS_RANGE,
   PLAYER_AUDIO_DEFAULTS,
+  PLAYER_VOLUME_RANGE,
   PLAYBACK_MODES,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
@@ -253,7 +255,7 @@ const GUIDE_VOCAL_STOPS = [
   { value: 0.75, label: '75%' },
   { value: 1, label: '100%' },
 ];
-const GUIDE_VOCAL_STEP = 0.05;
+const GUIDE_VOCAL_STEP = GUIDE_VOCAL_LEVEL_RANGE.step;
 
 // All five stops (0% included) are plain value picks — on/off is its own
 // dedicated control (the row's speaker icon, see guideVocalRows below),
@@ -694,9 +696,9 @@ onUnmounted(() => {
         <UiRangeControl
           v-model="volume"
           class="player-bar__volume-range"
-          :min="0"
-          :max="1"
-          :step="0.01"
+          :min="PLAYER_VOLUME_RANGE.min"
+          :max="PLAYER_VOLUME_RANGE.max"
+          :step="PLAYER_VOLUME_RANGE.step"
           :format-value="formatVolumePercent"
           :value-text="`${volumePercent}%`"
           aria-label="音量"

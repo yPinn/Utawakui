@@ -11,6 +11,7 @@ const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../lib/thumbarIcons');
 const { isBoundedTrackId } = require('../lib/library/paths');
+const { normalizeAudioPreferences } = require('../lib/config');
 const {
   projectSeparationTaskbarProgress,
 } = require('./separationTaskbarProgress');
@@ -209,6 +210,9 @@ function createMainWindow(
   initialCaptureDeviceId = null,
   options = {},
 ) {
+  const initialAudioPreferences = normalizeAudioPreferences(
+    options.audioPreferences,
+  );
   const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.light;
   const { backgroundColor, ...titleBarOverlay } = titlebarColors;
   mainWindow = new BrowserWindow({
@@ -237,16 +241,18 @@ function createMainWindow(
       allowRunningInsecureContent: false,
       webviewTag: false,
       devTools: isDev,
-      // Lets preload's initialUiTheme/initialSidebarWidth/
-      // initialCaptureDeviceId/initialUiDensity read these synchronously, so
-      // the first frame paints the right palette, dimensions and sidebar
-      // width and useAudioOutput.js can apply the persisted capture device
-      // without an async round trip. New windows always begin restored.
+      // Lets preload read first-frame UI and audio preferences synchronously,
+      // so controls never paint defaults and then jump after an IPC round
+      // trip. New windows always begin restored.
       additionalArguments: [
         `--ui-theme=${initialTheme}`,
         `--ui-density=${UI_DENSITY_COMPACT}`,
         `--sidebar-width=${initialSidebarWidth}`,
         `--capture-device-id=${initialCaptureDeviceId ?? ''}`,
+        `--performance-volume=${initialAudioPreferences.performanceVolume}`,
+        `--performance-muted=${initialAudioPreferences.performanceMuted ? '1' : '0'}`,
+        `--monitor-guide-vocal-level=${initialAudioPreferences.monitorGuideVocalLevel}`,
+        `--capture-guide-vocal-level=${initialAudioPreferences.captureGuideVocalLevel}`,
         ...(options.startupTraceEnabled ? ['--startup-trace-enabled=1'] : []),
         ...(isDev ? ['--internal-workbenches-enabled=1'] : []),
       ],

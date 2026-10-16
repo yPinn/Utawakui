@@ -6,14 +6,17 @@ import {
   GUIDE_VOCAL_LEVEL_RANGE,
   PITCH_CENTS_RANGE,
   PLAYER_AUDIO_DEFAULTS,
+  PLAYER_VOLUME_RANGE,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
 } from './player/usePlayerAudioGraph.js';
+import { normalizeAudioPreferences } from '../utils/audioPreferences.js';
 
 export {
   GUIDE_VOCAL_LEVEL_RANGE,
   PITCH_CENTS_RANGE,
   PLAYER_AUDIO_DEFAULTS,
+  PLAYER_VOLUME_RANGE,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
 };
@@ -32,6 +35,11 @@ const PLAYBACK_MODE_ORDER = Object.freeze([
 ]);
 const LOOP_WRAP_EDGE_SECONDS = 1;
 const { recordError } = useAppDiagnostics();
+const initialAudioPreferences = normalizeAudioPreferences(
+  typeof window !== 'undefined'
+    ? window.Utawakui?.initialAudioPreferences
+    : null,
+);
 
 function reportPlayerError(error, operation, message) {
   return recordError(error, {
@@ -54,15 +62,15 @@ const state = reactive({
   continuityRevision: 0,
   currentTime: 0,
   duration: 0,
-  volume: PLAYER_AUDIO_DEFAULTS.volume,
-  isMuted: false,
+  volume: initialAudioPreferences.performanceVolume,
+  isMuted: initialAudioPreferences.performanceMuted,
   playbackMode: PLAYBACK_MODES.sequence,
   isLooping: false,
   error: null,
   guideVocalOn: true,
-  guideVocalValue: PLAYER_AUDIO_DEFAULTS.monitorGuideVocalLevel,
+  guideVocalValue: initialAudioPreferences.monitorGuideVocalLevel,
   captureGuideVocalOn: false,
-  captureGuideVocalValue: PLAYER_AUDIO_DEFAULTS.captureGuideVocalLevel,
+  captureGuideVocalValue: initialAudioPreferences.captureGuideVocalLevel,
   transposeSemitones: PLAYER_AUDIO_DEFAULTS.transposeSemitones,
   pitchCents: PLAYER_AUDIO_DEFAULTS.pitchCents,
   tempoRate: PLAYER_AUDIO_DEFAULTS.tempoRate,
@@ -97,7 +105,6 @@ const {
   setTempoRate,
   setTransposeSemitones,
   setVolume,
-  setMuted,
   toggleCaptureGuideVocal,
   toggleMute,
 } = audioGraph;
@@ -328,8 +335,6 @@ async function playTrack(track) {
 function restorePlaybackState({
   track,
   positionSeconds = 0,
-  volume = PLAYER_AUDIO_DEFAULTS.volume,
-  isMuted = false,
   playbackMode = PLAYBACK_MODES.sequence,
 } = {}) {
   if (!track) return false;
@@ -346,8 +351,6 @@ function restorePlaybackState({
   pendingRestorePosition = Math.max(0, Number(positionSeconds) || 0);
   resetTrackAudioControls();
   routeAudioGraph(Boolean(track.usesSeparatedAudio));
-  setVolume(Number(volume));
-  setMuted(Boolean(isMuted));
   setPlaybackMode(playbackMode);
   audio.src = track.url;
   return true;

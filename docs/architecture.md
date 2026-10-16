@@ -181,14 +181,16 @@ cross-origin iframe 存在時由 iframe 內的 bounded Workbench query 繪製人
 checker／dark／light；copied route 不帶這些參數；
 `app-folder-layout` 小於 40rem 時，Workbench 以 2:1、Gallery 以 1:1 切成上下兩個 bounded pane，
 不新增 page-level scroll。控制台 feature stylesheet 與 public `overlay/` 的
-`--ovl-*` runtime 互不匯入。Settings 由
-Titlebar direct action 進入 shell-level `AppUtilityPage`，不屬於 Folder destination。
+`--ovl-*` runtime 互不匯入。Settings 是 `AppFolderLayout` 的第四個正式 destination，
+由 `SettingsPage` 在 registered `settings` boundary 中組合 workspace-mode `AppFolderPage`；
+Folder exterior 使用 dark 炭灰／近黑、light 冷灰的 semantic neutral material，紙面仍沿用共用 neutral sheet。
+Titlebar direct action 與 F9 都進入同一個 Settings destination，不建立 utility shell 或第二層 Folder。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
 Navigation history 由 module-scope `useNavigationHistory.js` 單獨擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：它觀察 `useAppView` 與 `usePlaylists` 的位置狀態，只記錄目的地、Library workspace／選取目標與 Settings 返回來源，不記錄播放、佇列、搜尋、排序或 Performance tool。堆疊與位置模型是純邏輯（`navigationHistoryStack.js`、`navigationLocation.js`）；還原走 `useAppView.restoreLocation()`，不增加 root-entry revision。Settings 的返回優先沿歷史回到前一筆，無法對應時退回 `returnFromSettings()`。
 歷史走訪的輸入由 `inputBindingRegistry.js` 宣告、`useNavigationInput.js` 收斂：滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command`（`electron/main/appCommands.js`）共用同一個走訪出口，內含浮層守衛與短時間去重。
-Utility page 是 registered v2 surface，只擁有返回、頁名、焦點與 local overlay host；
-`SettingsView` 繼續擁有內容 lifecycle 與唯一的 body Scroll Region。雙欄與 Separation select 的
+`SettingsPage` 擁有 fixed Folder header 與 registered local overlay host；
+`SettingsView` 繼續擁有內容 lifecycle、基本／選用／支援分類與唯一的 body Scroll Region。雙欄與 Separation select 的
 特殊 geometry由各自 component-local custom property 擁有，不回填 core token graph。
 
 Windows notification-area lifecycle 由 main-owned
@@ -389,6 +391,7 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | Track existence                       | Library filesystem                 | `library.json` 只補 scalar metadata                                                                                                                            |
 | Track added time                      | Main library/import boundary       | 新匯入寫入 `library.json.importedAt`；舊資料由音訊檔 mtime 相容投影                                                                                            |
 | Playback timing/state                 | Renderer HTML audio element        | Main、taskbar、SMTC 與 Output 只接收狀態投影                                                                                                                   |
+| Performance audio preferences         | Main config state                  | `config.json.audioPreferences`；shared scalar contract，preload 同步 seed 第一幀，Renderer debounce/coalesce 寫回                                              |
 | Queue／playing track／lyrics state    | Renderer composables               | Projection Hub 驗證後供 Self-View 與 Overlay 消費；Self-View 同步微調經 revision／track／source stale guard 回到既有 `useLyrics` owner                         |
 | Recent playback events                | Main playback persistence service  | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                                                                                                           |
 | Complete last-played index            | Main playback persistence service  | Main-private 本機 JSON；只供去人聲 LRU policy 使用                                                                                                             |
@@ -554,8 +557,14 @@ track ids 由 main 組合成保護集合。歌曲本體、其他 sidecar 與未�
 
 最近播放與啟動恢復由 `electron/lib/playbackPersistence.js` 保存到 app user data，並由
 `playbackPersistenceHandlers.js`／preload 的固定 channels 暴露 bounded intent。History 只接受
-track id 與 source context，時間由 main 產生；resume 只接受 ids、position、volume、mute、
-playback mode 與 Queue scalar state。Renderer 的 `usePlaybackHistory.js` 依 HTML audio progress／
+track id 與 source context，時間由 main 產生；resume version 2 只接受 ids、position、playback mode
+與 Queue scalar state。演唱 master volume／mute 與導唱監聽／擷取 level 由
+`shared/audioControlValues.json` 定義 canonical scalar contract，Main
+`config.json.audioPreferences` 逐欄正規化並在建立 BrowserWindow 前透過 preload 同步 seed
+Renderer 第一幀；舊 resume version 1 的 volume／mute 只在 config 尚無新偏好時遷移一次。
+Renderer 的 `useAudioPreferences.js` 以 coalesced write 保存變更，不依賴 current track；BGM
+volume／mute／dim／fade 則維持由完整 `bgm-standby.json` plan 持有，不拆入 machine config。
+Renderer 的 `usePlaybackHistory.js` 依 HTML audio progress／
 ended 判定 qualified event；`useRecentPlaybackActivation.js` 只協調 Queue／Player owners，
 將明確選取的歷史曲目作為單曲 interrupt 播放，不重建來源 Queue；
 `usePlaybackResume.js` 只投影／rehydrate owner state。啟動先以目前 library 過濾缺檔，再恢復為

@@ -34,8 +34,9 @@ const {
 } = require('../../shared/performerViewContract.mjs');
 const { normalizePerformerWindowBounds } = require('./performerWindowBounds');
 const storageValues = require('../../shared/libraryStorageValues.json');
+const audioControlValues = require('../../shared/audioControlValues.json');
 
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 const UI_THEMES = ['light', 'dark'];
 // Keep in sync with --ui-playlist-sidebar-width-min/-max in
 // src/styles/tokens.css — main process can't read CSS.
@@ -44,6 +45,14 @@ const LEGACY_SIDEBAR_WIDTH_MINS = new Set([68, 72]);
 const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
+const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
+  performanceVolume: audioControlValues.performanceVolume.defaultValue,
+  performanceMuted: audioControlValues.performanceMutedDefault,
+  monitorGuideVocalLevel:
+    audioControlValues.monitorGuideVocalLevel.defaultValue,
+  captureGuideVocalLevel:
+    audioControlValues.captureGuideVocalLevel.defaultValue,
+});
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
@@ -58,6 +67,7 @@ const DEFAULTS = {
   // for a device that's since been unplugged just fails to apply (see
   // useAudioOutput.js), not a validation concern here.
   captureDeviceId: null,
+  audioPreferences: DEFAULT_AUDIO_PREFERENCES,
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
@@ -111,6 +121,72 @@ const DEFAULTS = {
     skipThresholdMs: DEFAULT_OBS_SKIP_THRESHOLD_MS,
   }),
 };
+
+function isBoundedAudioValue(value, rule) {
+  return Number.isFinite(value) && value >= rule.min && value <= rule.max;
+}
+
+function normalizeAudioPreferences(value) {
+  const source =
+    value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return {
+    performanceVolume: isBoundedAudioValue(
+      source.performanceVolume,
+      audioControlValues.performanceVolume,
+    )
+      ? source.performanceVolume
+      : DEFAULT_AUDIO_PREFERENCES.performanceVolume,
+    performanceMuted:
+      typeof source.performanceMuted === 'boolean'
+        ? source.performanceMuted
+        : DEFAULT_AUDIO_PREFERENCES.performanceMuted,
+    monitorGuideVocalLevel: isBoundedAudioValue(
+      source.monitorGuideVocalLevel,
+      audioControlValues.monitorGuideVocalLevel,
+    )
+      ? source.monitorGuideVocalLevel
+      : DEFAULT_AUDIO_PREFERENCES.monitorGuideVocalLevel,
+    captureGuideVocalLevel: isBoundedAudioValue(
+      source.captureGuideVocalLevel,
+      audioControlValues.captureGuideVocalLevel,
+    )
+      ? source.captureGuideVocalLevel
+      : DEFAULT_AUDIO_PREFERENCES.captureGuideVocalLevel,
+  };
+}
+
+function isValidAudioPreferences(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  return Boolean(
+    isBoundedAudioValue(
+      value.performanceVolume,
+      audioControlValues.performanceVolume,
+    ) &&
+    typeof value.performanceMuted === 'boolean' &&
+    isBoundedAudioValue(
+      value.monitorGuideVocalLevel,
+      audioControlValues.monitorGuideVocalLevel,
+    ) &&
+    isBoundedAudioValue(
+      value.captureGuideVocalLevel,
+      audioControlValues.captureGuideVocalLevel,
+    ),
+  );
+}
+
+function hasStoredAudioPreferences(configPath) {
+  try {
+    const value = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    return Boolean(
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.hasOwn(value, 'audioPreferences'),
+    );
+  } catch {
+    return false;
+  }
+}
 
 function normalizeSidebarWidth(value) {
   if (LEGACY_SIDEBAR_WIDTH_MINS.has(value)) return SIDEBAR_WIDTH_MIN;
@@ -273,6 +349,7 @@ function loadConfig(configPath) {
       data.captureDeviceId.length <= CAPTURE_DEVICE_ID_MAX_LENGTH
         ? data.captureDeviceId
         : DEFAULTS.captureDeviceId,
+    audioPreferences: normalizeAudioPreferences(data.audioPreferences),
     autoAnalyzeMusicStructure:
       typeof data.autoAnalyzeMusicStructure === 'boolean'
         ? data.autoAnalyzeMusicStructure
@@ -316,6 +393,7 @@ module.exports = {
   loadConfig,
   saveConfig,
   DEFAULTS,
+  DEFAULT_AUDIO_PREFERENCES,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
   ANNOUNCEMENT_VERSION_MAX_LENGTH,
   SIDEBAR_WIDTH_MIN,
@@ -334,4 +412,7 @@ module.exports = {
   normalizeObsIntegration,
   isValidLibraryStoragePolicy,
   normalizeLibraryStoragePolicy,
+  hasStoredAudioPreferences,
+  isValidAudioPreferences,
+  normalizeAudioPreferences,
 };

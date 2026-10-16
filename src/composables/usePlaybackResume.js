@@ -82,8 +82,6 @@ function initialize() {
             restorePlaybackState({
               track: toPlayableTrack(restoredTrack),
               positionSeconds: snapshot.positionSeconds,
-              volume: snapshot.volume,
-              isMuted: snapshot.isMuted,
               playbackMode: snapshot.playbackMode,
             });
           } else {

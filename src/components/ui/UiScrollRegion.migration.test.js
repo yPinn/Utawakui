@@ -100,7 +100,6 @@ describe('UiScrollRegion production migration', () => {
     const folderPageSource = batchOneConsumers[0].source;
     const sidebarSource = batchOneConsumers[1].source;
     const settingsSource = batchOneConsumers[2].source;
-    const utilitySource = readSource('../layout/AppUtilityPage.vue');
 
     expect(folderPageSource).toMatch(
       /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-end:/su,
@@ -120,9 +119,6 @@ describe('UiScrollRegion production migration', () => {
     );
     expect(settingsSource).toMatch(
       /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
-    );
-    expect(utilitySource).toMatch(
-      /\.app-utility-page\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
     );
   });
 
@@ -147,7 +143,7 @@ describe('UiScrollRegion production migration', () => {
     const popoverSource = batchTwoConsumers[3].source;
     const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
     const settingsSource = batchOneConsumers[2].source;
-    const utilitySource = readSource('../layout/AppUtilityPage.vue');
+    const settingsPageSource = readSource('../../pages/SettingsPage.vue');
     const trackTableSource = readSource('../track/TrackTable.vue');
 
     expect(modalSource.indexOf('class="ui-modal__header"')).toBeLessThan(
@@ -162,9 +158,9 @@ describe('UiScrollRegion production migration', () => {
       dockPanelSource.indexOf('class="app-right-dock-panel__scroll"'),
     );
     expect(settingsSource).not.toContain('class="settings-view__header"');
-    expect(
-      utilitySource.indexOf('class="app-utility-page__header"'),
-    ).toBeLessThan(utilitySource.indexOf('class="app-utility-page__body"'));
+    expect(settingsPageSource.indexOf('<template #header>')).toBeLessThan(
+      settingsPageSource.indexOf('<SettingsView />'),
+    );
     expect(
       trackTableSource.indexOf('class="library-track-table__header"'),
     ).toBeLessThan(

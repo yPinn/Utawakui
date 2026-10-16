@@ -60,9 +60,10 @@ misplaced side-button press must not move the operator away from it.
 
 `back()` and `forward()` skip entries whose playlist was deleted and report whether
 a move happened. Artist and album-reference entries are not validated: a vanished
-target renders the page's empty state. Settings' 「返回」 control traverses back
-when the previous entry is not Settings, and otherwise falls back to
-`returnFromSettings()`, so its public contract is unchanged.
+target renders the page's empty state. Activating the current Settings Titlebar
+gear traverses back when the previous entry is not Settings, and otherwise falls
+back to `returnFromSettings()`; direct Folder destination choices remain ordinary
+navigation intents.
 
 ### Inputs
 

@@ -150,19 +150,19 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     surfaceId: 'import-overlay',
     system: 'v2',
   }),
-  'app-utility': createSurfaceDefinition({
-    entryOwner: 'src/components/layout/AppUtilityPage.vue',
-    overlayHostId: 'app-utility-overlay',
-    parentSurfaceId: 'app-shell',
+  settings: createSurfaceDefinition({
+    entryOwner: 'src/pages/SettingsPage.vue',
+    overlayHostId: 'settings-overlay',
+    parentSurfaceId: 'app-folder',
     renderer: 'main',
-    surfaceId: 'app-utility',
+    surfaceId: 'settings',
     system: 'v2',
   }),
-  'app-utility-overlay': createSurfaceDefinition({
-    entryOwner: 'src/components/layout/AppUtilityPage.vue',
-    parentSurfaceId: 'app-utility',
+  'settings-overlay': createSurfaceDefinition({
+    entryOwner: 'src/pages/SettingsPage.vue',
+    parentSurfaceId: 'settings',
     renderer: 'main',
-    surfaceId: 'app-utility-overlay',
+    surfaceId: 'settings-overlay',
     system: 'v2',
   }),
   performer: createSurfaceDefinition({

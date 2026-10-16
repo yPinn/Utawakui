@@ -4,6 +4,7 @@ import { useAppView } from './useAppView.js';
 import { usePlayer } from './usePlayer.js';
 import { isEditableTarget } from '../utils/dom.js';
 import { isAppDestination } from '../utils/appDestinationRegistry.js';
+import { focusAppDestinationTrigger } from '../utils/appDestinationFocus.js';
 import { requestHistoryTraversal } from './useNavigationInput.js';
 import {
   createKeyboardBindings,
@@ -56,6 +57,9 @@ export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
   function openView(view) {
     if (view === 'settings') {
       openSettings();
+      if (typeof document !== 'undefined') {
+        nextTick(() => focusAppDestinationTrigger('settings'));
+      }
       return;
     }
     const leavingSettingsForWorkflow =

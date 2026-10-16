@@ -1,9 +1,9 @@
 <script setup>
-import { useId } from 'vue';
+import { computed, useId } from 'vue';
 import { APP_DESTINATIONS } from '../../utils/appDestinationRegistry.js';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
-defineProps({
+const props = defineProps({
   activeDestination: { type: String, required: true },
 });
 
@@ -12,6 +12,12 @@ const tabShapeId = `app-folder-tab-shape-${useId()}`;
 const tabShapeStyle = {
   '--ui-folder-tab-shape': `url("#${tabShapeId}")`,
 };
+const activeMaterial = computed(
+  () =>
+    APP_DESTINATIONS.find(
+      (destination) => destination.id === props.activeDestination,
+    )?.material ?? 'primary',
+);
 function revealDestination(event) {
   event.currentTarget?.scrollIntoView({
     block: 'nearest',
@@ -28,7 +34,8 @@ function navigate(destinationId, event) {
 <template>
   <div
     class="app-folder-layout"
-    :data-active-destination="activeDestination"
+    :data-active-destination="props.activeDestination"
+    :data-active-material="activeMaterial"
     :style="tabShapeStyle"
   >
     <svg
@@ -62,12 +69,13 @@ function navigate(destinationId, event) {
         class="app-folder-layout__destination"
         :class="{
           'app-folder-layout__destination--active':
-            destination.id === activeDestination,
+            destination.id === props.activeDestination,
         }"
         :data-folder-destination="destination.id"
+        :data-folder-material="destination.material"
         :data-app-workflow-trigger="destination.id"
         :aria-current="
-          destination.id === activeDestination ? 'page' : undefined
+          destination.id === props.activeDestination ? 'page' : undefined
         "
         @focus="revealDestination"
         @click="navigate(destination.id, $event)"
@@ -123,12 +131,16 @@ function navigate(destinationId, event) {
   user-select: none;
 }
 
-.app-folder-layout[data-active-destination='performance'] {
+.app-folder-layout[data-active-material='secondary'] {
   --ui-folder-layout-background: var(--ui-color-folder-secondary);
 }
 
-.app-folder-layout[data-active-destination='display'] {
+.app-folder-layout[data-active-material='tertiary'] {
   --ui-folder-layout-background: var(--ui-color-folder-tertiary);
+}
+
+.app-folder-layout[data-active-material='neutral'] {
+  --ui-folder-layout-background: var(--ui-color-folder-neutral);
 }
 
 .app-folder-layout__shape-definition {
@@ -168,19 +180,24 @@ function navigate(destinationId, event) {
   scroll-padding-inline: var(--ui-folder-perimeter);
 }
 
-.app-folder-layout__destination[data-folder-destination='library'] {
+.app-folder-layout__destination[data-folder-material='primary'] {
   --ui-folder-tab-material: var(--ui-color-folder-primary);
   --ui-folder-tab-foreground: var(--ui-color-folder-primary-foreground);
 }
 
-.app-folder-layout__destination[data-folder-destination='performance'] {
+.app-folder-layout__destination[data-folder-material='secondary'] {
   --ui-folder-tab-material: var(--ui-color-folder-secondary);
   --ui-folder-tab-foreground: var(--ui-color-folder-secondary-foreground);
 }
 
-.app-folder-layout__destination[data-folder-destination='display'] {
+.app-folder-layout__destination[data-folder-material='tertiary'] {
   --ui-folder-tab-material: var(--ui-color-folder-tertiary);
   --ui-folder-tab-foreground: var(--ui-color-folder-tertiary-foreground);
+}
+
+.app-folder-layout__destination[data-folder-material='neutral'] {
+  --ui-folder-tab-material: var(--ui-color-folder-neutral);
+  --ui-folder-tab-foreground: var(--ui-color-folder-neutral-foreground);
 }
 
 .app-folder-layout__destination {

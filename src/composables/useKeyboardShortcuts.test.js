@@ -104,14 +104,31 @@ describe('useKeyboardShortcuts', () => {
     expect(f4PreventDefault).not.toHaveBeenCalled();
   });
 
-  it('maps F9 to Settings and preserves the workflow return context', async () => {
+  it('maps F9 to Settings, preserves return context, and focuses its Folder trigger', async () => {
+    const settingsTrigger = {
+      focus: vi.fn(() => {
+        document.activeElement = settingsTrigger;
+      }),
+    };
+    vi.stubGlobal('document', {
+      activeElement: null,
+      querySelector: vi.fn((selector) =>
+        selector === '[data-app-workflow-trigger="settings"]'
+          ? settingsTrigger
+          : null,
+      ),
+    });
     const appView = await setupShortcuts();
     appView.setActiveView('display');
 
     const f9PreventDefault = dispatchKey('F9');
+    await nextTick();
+
     expect(appView.activeView.value).toBe('settings');
     expect(appView.returnView.value).toBe('display');
     expect(f9PreventDefault).toHaveBeenCalled();
+    expect(settingsTrigger.focus).toHaveBeenCalledOnce();
+    expect(document.activeElement).toBe(settingsTrigger);
   });
 
   it('moves focus to the selected workflow destination when an F-key leaves Settings', async () => {

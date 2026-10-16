@@ -277,6 +277,9 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(light['--ui-color-folder-tertiary']).toBe(
       'var(--ui-palette-olive-300)',
     );
+    expect(light['--ui-color-folder-neutral']).toBe(
+      'var(--ui-palette-neutral-300)',
+    );
     expect(light['--ui-color-folder-primary-foreground']).toBe(
       'var(--ui-palette-warm-neutral-100)',
     );

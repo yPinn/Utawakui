@@ -337,7 +337,10 @@ function createConfiguredMainWindow() {
     config.uiTheme,
     config.sidebarWidth,
     config.captureDeviceId,
-    { startupTraceEnabled: startupTrace.enabled },
+    {
+      startupTraceEnabled: startupTrace.enabled,
+      audioPreferences: config.audioPreferences,
+    },
   );
   windowsTrayController?.attachWindow(mainWindow);
   performerWindowManager?.attachMainWindow(mainWindow);
@@ -544,6 +547,9 @@ if (!gotSingleInstanceLock) {
     const playbackPersistence = createPlaybackPersistence({
       userDataDir: app.getPath('userData'),
     });
+    configState.initializeAudioPreferences(
+      playbackPersistence.getLegacyAudioPreferences(),
+    );
     const libraryStorageService = createLibraryStorageService({
       resolveLibraryDir: () =>
         configState.resolveDownloadDir(configState.getConfig()),

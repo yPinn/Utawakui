@@ -13,6 +13,19 @@ describe('focusAppDestinationTrigger', () => {
     expect(focus).toHaveBeenCalledOnce();
   });
 
+  it('treats Settings as a registered Folder destination', () => {
+    const focus = vi.fn();
+    const querySelector = vi.fn(() => ({ focus }));
+
+    expect(focusAppDestinationTrigger('settings', { querySelector })).toBe(
+      true,
+    );
+    expect(querySelector).toHaveBeenCalledWith(
+      '[data-app-workflow-trigger="settings"]',
+    );
+    expect(focus).toHaveBeenCalledOnce();
+  });
+
   it('rejects unknown destinations and missing triggers', () => {
     const querySelector = vi.fn(() => null);
 

@@ -254,7 +254,7 @@ function updatePolicy(fields) {
   gap: var(--ui-space-2);
 }
 
-@media (max-width: 35rem) {
+@container app-folder-layout (max-width: 35rem) {
   .library-storage__categories {
     grid-template-columns: 1fr;
   }

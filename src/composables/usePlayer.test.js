@@ -244,6 +244,30 @@ function createDeferred() {
 }
 
 describe('guide vocal defaults', () => {
+  it('hydrates persisted audio preferences before exposing the first state', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        initialAudioPreferences: {
+          performanceVolume: 0.72,
+          performanceMuted: true,
+          monitorGuideVocalLevel: 0.35,
+          captureGuideVocalLevel: 0.15,
+        },
+        onLibraryUpdated: vi.fn(() => vi.fn()),
+      },
+    });
+
+    const player = await loadPlayer();
+
+    expect(player.state).toMatchObject({
+      volume: 0.72,
+      isMuted: true,
+      guideVocalValue: 0.35,
+      captureGuideVocalValue: 0.15,
+    });
+    expect(MockAudioContext.instances).toHaveLength(0);
+  });
+
   it('preserves the stable public player contract', async () => {
     const player = await loadPlayer();
 
@@ -360,6 +384,18 @@ describe('guide vocal defaults', () => {
 });
 
 describe('mix and transport controls', () => {
+  it('clamps public master-volume intents and ignores non-finite values', async () => {
+    const player = await loadPlayer();
+
+    player.setVolume(2);
+    expect(player.state.volume).toBe(1);
+    player.setVolume(-1);
+    expect(player.state.volume).toBe(0);
+    player.setVolume(0.63);
+    player.setVolume(Number.NaN);
+    expect(player.state.volume).toBe(0.63);
+  });
+
   it('drives master gain through volume and mute actions', async () => {
     const player = await loadPlayer();
     await player.playTrack({
@@ -1028,9 +1064,11 @@ describe('playback persistence events', () => {
     unsubscribe();
   });
 
-  it('restores a track and transport settings paused without autoplay', async () => {
+  it('restores transport paused without overriding durable audio preferences', async () => {
     const player = await loadPlayer();
     MockAudio.latest.play.mockClear();
+    player.setVolume(0.63);
+    player.toggleMute();
 
     player.restorePlaybackState({
       track: {
@@ -1039,15 +1077,15 @@ describe('playback persistence events', () => {
         url: 'utawakui-media://track/track-restored/audio.wav',
       },
       positionSeconds: 37.25,
-      volume: 0.72,
-      isMuted: true,
+      volume: 0.12,
+      isMuted: false,
       playbackMode: 'repeat-list',
     });
 
     expect(player.state.track?.id).toBe('track-restored');
     expect(player.state.isPlaying).toBe(false);
     expect(player.state.playbackPhase).toBe('paused');
-    expect(player.state.volume).toBe(0.72);
+    expect(player.state.volume).toBe(0.63);
     expect(player.state.isMuted).toBe(true);
     expect(player.state.playbackMode).toBe('repeat-list');
     expect(MockAudio.latest.play).not.toHaveBeenCalled();

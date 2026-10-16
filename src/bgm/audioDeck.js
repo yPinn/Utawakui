@@ -1,10 +1,10 @@
-const DEFAULT_DIM_DB = -12;
+import audioControlValues from '../../shared/audioControlValues.json';
 
 const DEFAULT_SETTINGS = Object.freeze({
-  volume: 0.25,
-  isMuted: false,
+  volume: audioControlValues.bgmVolume.defaultValue,
+  isMuted: audioControlValues.bgmMutedDefault,
   loop: true,
-  dimDb: DEFAULT_DIM_DB,
+  dimDb: audioControlValues.bgmDimDb.defaultValue,
   dimAttackMs: 100,
   dimReleaseMs: 600,
 });
@@ -149,13 +149,23 @@ export function createBgmAudioDeck({
   function configure(nextSettings = {}) {
     settings = {
       ...settings,
-      volume: clamp(nextSettings.volume, 0, 1, settings.volume),
+      volume: clamp(
+        nextSettings.volume,
+        audioControlValues.bgmVolume.min,
+        audioControlValues.bgmVolume.max,
+        settings.volume,
+      ),
       isMuted:
         typeof nextSettings.isMuted === 'boolean'
           ? nextSettings.isMuted
           : settings.isMuted,
       loop: true,
-      dimDb: clamp(nextSettings.dimDb, -30, -6, settings.dimDb),
+      dimDb: clamp(
+        nextSettings.dimDb,
+        audioControlValues.bgmDimDb.min,
+        audioControlValues.bgmDimDb.max,
+        settings.dimDb,
+      ),
       dimAttackMs: clamp(
         nextSettings.dimAttackMs,
         20,
@@ -294,7 +304,12 @@ export function createBgmAudioDeck({
   }
 
   function setVolume(volume) {
-    settings.volume = clamp(volume, 0, 1, settings.volume);
+    settings.volume = clamp(
+      volume,
+      audioControlValues.bgmVolume.min,
+      audioControlValues.bgmVolume.max,
+      settings.volume,
+    );
     applyLiveGain(state.isDimmed ? settings.dimAttackMs : 0);
   }
 
