@@ -1,10 +1,12 @@
 <script setup>
+import { computed, useId } from 'vue';
 import { BadgeCheck, ICON_SIZE } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 
-defineProps({
+const props = defineProps({
   hasTrack: { type: Boolean, default: false },
   presetOptions: { type: Array, default: () => [] },
   selectedPresetId: { type: String, required: true },
@@ -17,10 +19,13 @@ defineProps({
 });
 
 const emit = defineEmits(['presetChange', 'generate']);
-
-function handlePresetChange(event) {
-  emit('presetChange', event.target.value);
-}
+const selectId = `separation-preset-${useId()}`;
+const selectOptions = computed(() =>
+  props.presetOptions.map((preset) => ({
+    value: preset.id,
+    label: preset.label,
+  })),
+);
 </script>
 
 <template>
@@ -29,22 +34,17 @@ function handlePresetChange(event) {
       <span class="separation-preset-control__label">{{ label }}</span>
       <UiTooltip :text="presetTitle" :disabled="!presetTitle">
         <template #trigger="{ triggerProps }">
-          <select
+          <UiSelect
             v-bind="triggerProps"
+            :id="selectId"
             class="separation-preset-control__select"
-            :value="selectedPresetId"
+            label="伴奏處理模式"
+            label-hidden
+            :model-value="selectedPresetId"
+            :options="selectOptions"
             :disabled="!hasTrack || inFlight"
-            aria-label="伴奏處理模式"
-            @change="handlePresetChange"
-          >
-            <option
-              v-for="preset in presetOptions"
-              :key="preset.id"
-              :value="preset.id"
-            >
-              {{ preset.label }}
-            </option>
-          </select>
+            @update:model-value="emit('presetChange', $event)"
+          />
         </template>
       </UiTooltip>
 
@@ -115,23 +115,7 @@ function handlePresetChange(event) {
 }
 
 .separation-preset-control__select {
-  box-sizing: border-box;
-  inline-size: 100%;
-  max-inline-size: 100%;
-  height: var(--ui-control-height);
   min-inline-size: 0;
-  padding-inline: var(--ui-space-2) var(--ui-space-5);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.separation-preset-control__select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .separation-preset-control__action {

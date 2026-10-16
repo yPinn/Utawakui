@@ -8,7 +8,6 @@ import {
   ListEnd,
   ListPlus,
   Plus,
-  Search,
 } from '../../icons/index.js';
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
@@ -31,6 +30,7 @@ import {
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 
@@ -438,18 +438,13 @@ function startDrag(playlist, event) {
   <nav class="playlist-sidebar" aria-label="播放清單篩選與集合">
     <div class="playlist-sidebar__toolbar">
       <div class="playlist-sidebar__toolbar-expanded">
-        <div class="playlist-sidebar__search">
-          <span class="playlist-sidebar__search-icon-slot" aria-hidden="true">
-            <Search class="playlist-sidebar__search-icon" :size="ICON_SIZE" />
-          </span>
-          <input
-            v-model="searchQuery"
-            class="playlist-sidebar__search-input"
-            type="search"
-            aria-label="搜尋歌單、專輯或曲目"
-            placeholder="搜尋"
-          />
-        </div>
+        <UiSearchBox
+          v-model="searchQuery"
+          class="playlist-sidebar__search"
+          label="搜尋歌單、專輯或曲目"
+          placeholder="搜尋"
+          icon-cell
+        />
         <UiIconButton
           class="playlist-sidebar__toolbar-action"
           :icon="Plus"
@@ -785,68 +780,10 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__search {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--ui-sidebar-toolbar-gap);
-  min-width: 0;
-  block-size: var(--ui-sidebar-toolbar-control-size);
-  min-height: var(--ui-sidebar-toolbar-control-size);
-  padding: var(--ui-sidebar-search-padding-block)
-    var(--ui-sidebar-search-padding-inline);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text-muted);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
-}
+  --ui-search-box-height-override: var(--ui-sidebar-toolbar-control-size);
 
-.playlist-sidebar__search:focus-within {
-  border-color: var(--ui-color-accent);
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
-.playlist-sidebar__search-icon {
-  flex-shrink: 0;
-}
-
-.playlist-sidebar__search-icon-slot {
-  position: relative;
-  display: flex;
-  flex: 0 0 var(--ui-sidebar-search-icon-inline-size);
-  align-items: center;
-  justify-content: center;
-  inline-size: var(--ui-sidebar-search-icon-inline-size);
-  block-size: 100%;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.playlist-sidebar__search-icon-slot::after {
-  content: '';
-  position: absolute;
-  inset-block: var(--ui-sidebar-search-separator-inset-block);
-  inset-inline-end: 0;
-  width: var(--ui-border-width);
-  background: var(--ui-color-border);
-}
-
-.playlist-sidebar__search-input {
   flex: 1;
   min-width: 0;
-  padding: 0 var(--ui-sidebar-search-input-padding-inline-end) 0 0;
-  border: none;
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  outline: none;
-}
-
-.playlist-sidebar__search-input::placeholder {
-  color: var(--ui-color-text-muted);
 }
 
 .playlist-sidebar__toolbar-action {

@@ -216,11 +216,6 @@
   --ui-sidebar-toolbar-padding-block: 0;
   --ui-sidebar-toolbar-padding-inline: var(--ui-sidebar-row-padding-inline);
   --ui-sidebar-toolbar-control-size: var(--ui-sidebar-artwork-size);
-  --ui-sidebar-search-padding-block: 0;
-  --ui-sidebar-search-padding-inline: 0;
-  --ui-sidebar-search-icon-inline-size: var(--ui-sidebar-toolbar-control-size);
-  --ui-sidebar-search-separator-inset-block: var(--ui-space-2);
-  --ui-sidebar-search-input-padding-inline-end: var(--ui-space-2);
   --ui-right-dock-content-inset: var(--ui-side-panel-content-inset);
   --ui-right-dock-section-gap: var(--ui-side-panel-section-gap);
   --ui-right-dock-content-gap: var(--ui-side-panel-content-gap);
@@ -760,6 +755,7 @@
   --ui-bgm-player-volume-inline-size: 5rem;
   --ui-bgm-player-time-inline-size: 4.5rem;
   --ui-search-clear-hit-size: var(--ui-field-height);
+  --ui-search-box-divider-inset-block: var(--ui-space-2);
   /* Compatibility alias for feature menus pending bounded migration. */
   --ui-menu-item-height: var(--ui-floating-row-min-height);
   --ui-modal-inline-size-small: 24rem;

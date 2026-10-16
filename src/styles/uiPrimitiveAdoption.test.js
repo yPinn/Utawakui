@@ -79,4 +79,15 @@ describe('shared primitive adoption', () => {
 
     expect(literalSpacing).toEqual([]);
   });
+
+  it('routes feature form controls through Ui* field primitives', () => {
+    const nativeControls = featureSources.flatMap(({ path, source }) => {
+      const template = source.match(/<template>([\s\S]*)<\/template>/u)?.[1];
+      return [...(template ?? '').matchAll(/<(input|select|textarea)\b/gu)].map(
+        ([, tag]) => `${relative(root, path).replaceAll('\\', '/')} -> ${tag}`,
+      );
+    });
+
+    expect(nativeControls).toEqual([]);
+  });
 });

@@ -169,6 +169,33 @@ describe('shared UI interaction contracts', () => {
     app.unmount();
   });
 
+  it('renders an opt-in divided icon cell sized by the search height override', () => {
+    const plain = mount(UiSearchBox, { modelValue: '' });
+    const divided = mount(UiSearchBox, { modelValue: '', iconCell: true });
+    const cells = (root) =>
+      findAll(root, (node) =>
+        String(node.props?.class || '').includes('ui-search-box__icon-cell'),
+      );
+    const source = readFileSync(
+      new URL('./UiSearchBox.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(cells(plain.root)).toHaveLength(0);
+    expect(cells(divided.root)).toHaveLength(1);
+    expect(source).toMatch(
+      /--ui-search-box-height:\s*var\(\s*--ui-search-box-height-override,\s*var\(--ui-field-height\)\s*\)/u,
+    );
+    expect(source).toMatch(
+      /\.ui-search-box__icon-cell\s*\{[^}]*flex:\s*0 0 var\(--ui-search-box-height\);/su,
+    );
+    expect(source).toMatch(
+      /\.ui-search-box__icon-cell::after\s*\{[^}]*inset-block:\s*var\(--ui-search-box-divider-inset-block\);/su,
+    );
+    plain.app.unmount();
+    divided.app.unmount();
+  });
+
   it('uses one custom search clear affordance and removes Chromium search chrome', () => {
     const update = vi.fn();
     const { app, root } = mount(UiSearchBox, {

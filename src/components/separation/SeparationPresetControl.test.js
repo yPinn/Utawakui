@@ -60,6 +60,8 @@ describe('SeparationPresetControl', () => {
     const html = await renderControl();
 
     expect(html).toContain('處理模式');
+    expect(html).toMatch(/<select[^>]*aria-describedby=/s);
+    expect(html).toMatch(/<label[^>]*>[\s\S]*伴奏處理模式/);
     expect(html).toContain('速度優先');
     expect(html).toContain('品質優先');
     expect(html).not.toContain('伴奏模型');
@@ -106,9 +108,8 @@ describe('SeparationPresetControl', () => {
     expect(componentSource).toMatch(
       /\.separation-preset-control__row\s*\{[^}]*grid-template-columns:[^;]*minmax\(\s*var\(--separation-preset-mode-min-width\),\s*1fr\s*\)/s,
     );
-    expect(componentSource).toMatch(
-      /\.separation-preset-control__select\s*\{[^}]*padding-inline:\s*var\(--ui-space-2\)\s+var\(--ui-space-5\)/s,
-    );
+    expect(componentSource).toContain('<UiSelect');
+    expect(componentSource).not.toMatch(/<select\b/);
     expect(componentSource).toMatch(
       /\.separation-preset-control__action\s*\{[^}]*width:\s*max-content/s,
     );

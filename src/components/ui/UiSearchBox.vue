@@ -15,6 +15,8 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: '搜尋曲目' },
   disabled: { type: Boolean, default: false },
+  // Square divided icon cell, so the glyph can share a caller's artwork column.
+  iconCell: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -39,9 +41,16 @@ defineExpose({ focus });
     <label class="ui-search-box__label" :for="controlId">{{ label }}</label>
     <div
       class="ui-search-box__control"
-      :class="{ 'ui-search-box__control--clearable': modelValue }"
+      :class="{
+        'ui-search-box__control--clearable': modelValue,
+        'ui-search-box__control--icon-cell': iconCell,
+      }"
     >
+      <span v-if="iconCell" class="ui-search-box__icon-cell" aria-hidden="true">
+        <Search class="ui-search-box__icon" :size="ICON_SIZE" />
+      </span>
       <Search
+        v-else
         class="ui-search-box__icon"
         :size="ICON_SIZE"
         aria-hidden="true"
@@ -93,13 +102,18 @@ defineExpose({ focus });
 }
 
 .ui-search-box__control {
+  --ui-search-box-height: var(
+    --ui-search-box-height-override,
+    var(--ui-field-height)
+  );
+
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-1);
   width: 100%;
   min-width: 0;
-  min-height: var(--ui-field-height);
+  min-height: var(--ui-search-box-height);
   padding-block: var(--ui-field-padding-block);
   padding-inline-start: var(--ui-field-padding-inline);
   padding-inline-end: var(--ui-field-padding-inline);
@@ -115,6 +129,31 @@ defineExpose({ focus });
 
 .ui-search-box__icon {
   flex: 0 0 auto;
+}
+
+.ui-search-box__control--icon-cell {
+  gap: var(--ui-field-padding-inline);
+  padding-block: 0;
+  padding-inline-start: 0;
+}
+
+.ui-search-box__icon-cell {
+  position: relative;
+  display: flex;
+  flex: 0 0 var(--ui-search-box-height);
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  user-select: none;
+}
+
+.ui-search-box__icon-cell::after {
+  content: '';
+  position: absolute;
+  inset-block: var(--ui-search-box-divider-inset-block);
+  inset-inline-end: 0;
+  width: var(--ui-border-width);
+  background: var(--ui-field-border);
 }
 
 .ui-search-box__input {

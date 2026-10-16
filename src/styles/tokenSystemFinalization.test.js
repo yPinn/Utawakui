@@ -33,7 +33,7 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(546);
+    expect(names.size).toBe(542);
     expect(names).toContain('--ui-action-menu-max-block-size');
     expect(names).toContain('--ui-textarea-font-size');
     expect(names).toContain('--ui-textarea-font-weight');

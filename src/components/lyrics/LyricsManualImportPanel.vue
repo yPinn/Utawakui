@@ -1,16 +1,19 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, useId } from 'vue';
 import { FolderOpen } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiTextarea from '../ui/UiTextarea.vue';
+import UiTextField from '../ui/UiTextField.vue';
 
 const emit = defineEmits(['cancel', 'saved']);
 
 const { state, selectedTrack, importManualLyricsText, importManualLyricsFile } =
   useLyrics();
 
+const fieldId = `lyrics-manual-import-${useId()}`;
 const labelDraft = ref('');
 const textDraft = ref('');
 const isImportingFile = ref(false);
@@ -72,25 +75,21 @@ async function handleFileImport() {
       compact
     />
 
-    <label class="lyrics-manual-import-panel__field">
-      <span class="lyrics-manual-import-panel__label">標籤</span>
-      <input
-        v-model="labelDraft"
-        class="lyrics-manual-import-panel__input"
-        maxlength="32"
-        placeholder="可留空"
-      />
-    </label>
+    <UiTextField
+      :id="`${fieldId}-label`"
+      v-model="labelDraft"
+      label="標籤"
+      :maxlength="32"
+      placeholder="可留空"
+    />
 
-    <label class="lyrics-manual-import-panel__field">
-      <span class="lyrics-manual-import-panel__label">歌詞內容</span>
-      <textarea
-        v-model="textDraft"
-        class="lyrics-manual-import-panel__textarea"
-        rows="8"
-        placeholder="貼上 LRC 或純文字歌詞"
-      />
-    </label>
+    <UiTextarea
+      :id="`${fieldId}-text`"
+      v-model="textDraft"
+      label="歌詞內容"
+      :rows="8"
+      placeholder="貼上 LRC 或純文字歌詞"
+    />
 
     <div class="lyrics-manual-import-panel__actions">
       <UiButton
@@ -143,47 +142,6 @@ async function handleFileImport() {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
-}
-
-.lyrics-manual-import-panel__field {
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.lyrics-manual-import-panel__label {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.lyrics-manual-import-panel__input,
-.lyrics-manual-import-panel__textarea {
-  width: 100%;
-  min-width: 0;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-line-height);
-}
-
-.lyrics-manual-import-panel__input {
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-}
-
-.lyrics-manual-import-panel__textarea {
-  resize: vertical;
-  padding: var(--ui-space-2);
-}
-
-.lyrics-manual-import-panel__input:focus-visible,
-.lyrics-manual-import-panel__textarea:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-manual-import-panel__actions {
