@@ -19,9 +19,6 @@ const collectionStatusSource = readSource(
   '../components/import/ImportCollectionTrackStatus.vue',
 );
 const trackTableSource = readSource('../components/track/TrackTable.vue');
-const providerSource = readSource(
-  '../components/import/ProviderImportPanel.vue',
-);
 
 describe('Import Token v2 surface cutover', () => {
   it('keeps quick import in the retained Right Dock instead of a Folder page', () => {
@@ -75,7 +72,6 @@ describe('Import Token v2 surface cutover', () => {
       collectionReviewSource,
       collectionStatusSource,
       trackTableSource,
-      providerSource,
     ]) {
       expect(source).not.toContain('var(--ui-radius)');
       expect(source).not.toContain('var(--ui-font-weight-strong)');

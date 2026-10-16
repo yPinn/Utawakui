@@ -206,13 +206,11 @@ describe('useImportSession', () => {
       'canUseConfirmButton',
       'cancelTrackDownload',
       'chooseDownloadDir',
-      'clearPreview',
       'confirmImport',
       'confirmImportLabel',
       'dominantFailureCode',
       'filterOptions',
       'getTrackStatusClass',
-      'getTrackStatusLabel',
       'openDownloadDir',
       'openYoutubeMusicSearch',
       'playlistStats',
@@ -1166,7 +1164,7 @@ describe('useImportSession', () => {
     );
   });
 
-  it('clears preview state without clearing the typed source', async () => {
+  it('clears the resolved preview when the typed source changes', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [{ id: 'video-1', title: 'Song 1', alreadyDownloaded: false }],
@@ -1175,9 +1173,10 @@ describe('useImportSession', () => {
 
     session.setInput('playlist-id');
     await session.resolveSource();
-    session.clearPreview();
+    expect(session.state.playlistTracks).not.toBe(null);
+    session.setInput('another-source');
 
-    expect(session.state.input).toBe('playlist-id');
+    expect(session.state.input).toBe('another-source');
     expect(session.state.sourceKind).toBe('idle');
     expect(session.state.singleTrack).toBe(null);
     expect(session.state.playlistTracks).toBe(null);
@@ -1688,21 +1687,8 @@ describe('useImportSession', () => {
     expect(session.confirmImportLabel.value).toBe('沒有選取的曲目');
   });
 
-  it('getTrackStatusLabel/Class reflect each track state', async () => {
+  it('getTrackStatusClass reflects each track state', async () => {
     const session = await loadImportSession();
-
-    expect(session.getTrackStatusLabel({ status: 'done' })).toBe('完成');
-    expect(
-      session.getTrackStatusLabel({
-        status: 'pending',
-        alreadyDownloaded: true,
-      }),
-    ).toBe('已存在');
-    expect(session.getTrackStatusLabel({ status: 'downloading' })).toBe(
-      '下載中',
-    );
-    expect(session.getTrackStatusLabel({ status: 'error' })).toBe('失敗');
-    expect(session.getTrackStatusLabel({ status: 'pending' })).toBe('待下載');
 
     expect(session.getTrackStatusClass({ status: 'done' })).toBe('done');
     expect(

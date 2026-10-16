@@ -43,7 +43,7 @@ Snapshot 的 `controls.lyricsOffset` 只投影 `available`、`saving` 與最長 
 | C    | Bounded intent interface；Electron IPC 與未來 mobile adapter 分別實作       | 任意 channel、任意 offset write         |
 | D    | Shell-local chrome：Electron titlebar、未來 mobile pairing／safe-area host  | OBS Overlay renderer 或 `--ovl-*` token |
 
-`PerformerStage` 只保留相容 wrapper；新 surface 應直接組合 `PerformerSurface`。Electron toolbar 永遠屬於 window shell，不進入共用 surface。
+所有 surface 直接組合 `PerformerSurface`；已無相容 wrapper。Electron toolbar 永遠屬於 window shell，不進入共用 surface。
 
 ## Token reuse 分級
 

@@ -277,14 +277,6 @@ function selectMissingTracks() {
   state.activeFilter = 'missing';
 }
 
-function getTrackStatusLabel(track) {
-  if (track.status === 'done') return '完成';
-  if (track.alreadyDownloaded) return '已存在';
-  if (track.status === 'downloading') return '下載中';
-  if (track.status === 'error') return '失敗';
-  return '待下載';
-}
-
 function getTrackStatusClass(track) {
   if (track.status === 'done') return 'done';
   if (track.alreadyDownloaded) return 'downloaded';
@@ -359,12 +351,10 @@ export function useImportSession() {
     resolveSource,
     cancelTrackDownload,
     confirmImport,
-    clearPreview,
     selectImportCandidate,
     toggleSelectAll,
     selectMissingTracks,
     retryFailedTracks,
-    getTrackStatusLabel,
     getTrackStatusClass,
     refreshConfig,
     chooseDownloadDir,
