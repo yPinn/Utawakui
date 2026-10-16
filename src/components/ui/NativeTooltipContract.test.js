@@ -3,6 +3,7 @@ import path from 'node:path';
 import { baseParse, ElementTypes, NodeTypes } from '@vue/compiler-dom';
 import { parse } from '@vue/compiler-sfc';
 import { describe, expect, it } from 'vitest';
+import { TOOLTIP_PLACEMENTS } from './useTooltip.js';
 
 const SOURCE_ROOTS = ['src/components', 'src/views'];
 const ALLOWED_NATIVE_TITLES = [
@@ -57,6 +58,35 @@ function nativeTitleAttributes(filename) {
   return titles;
 }
 
+function staticTooltipPlacements(filename) {
+  const source = readFileSync(filename, 'utf8');
+  const template = parse(source, { filename }).descriptor.template;
+  if (!template) return [];
+
+  const placements = [];
+  const visit = (node) => {
+    if (node.type === NodeTypes.ELEMENT) {
+      for (const prop of node.props) {
+        if (
+          prop.type !== NodeTypes.ATTRIBUTE ||
+          !['tooltip-placement', 'tooltipPlacement'].includes(prop.name)
+        ) {
+          continue;
+        }
+        placements.push({
+          file: filename.split(path.sep).join('/'),
+          line: template.loc.start.line + prop.loc.start.line - 1,
+          value: prop.value?.content ?? '',
+        });
+      }
+    }
+    for (const child of node.children ?? []) visit(child);
+  };
+
+  visit(baseParse(template.content));
+  return placements;
+}
+
 describe('native tooltip production boundary', () => {
   it('reserves native title for the explicit iframe accessible-name allowlist', () => {
     const titles = SOURCE_ROOTS.flatMap(productionVueFiles).flatMap(
@@ -73,5 +103,17 @@ describe('native tooltip production boundary', () => {
 
     expect(allowed).toEqual(ALLOWED_NATIVE_TITLES);
     expect(violations).toEqual([]);
+  });
+
+  it('uses only logical tooltip placements the shared positioner accepts', () => {
+    const placements = SOURCE_ROOTS.flatMap(productionVueFiles).flatMap(
+      staticTooltipPlacements,
+    );
+    const invalid = placements
+      .filter(({ value }) => !TOOLTIP_PLACEMENTS.includes(value))
+      .map(({ file, line, value }) => `${file}:${line} -> ${value}`);
+
+    expect(placements.length).toBeGreaterThan(0);
+    expect(invalid).toEqual([]);
   });
 });

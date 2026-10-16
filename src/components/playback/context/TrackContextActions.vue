@@ -112,7 +112,7 @@ async function handleTrackMenuSelect(value) {
       :icon="Ellipsis"
       label="歌曲選項"
       variant="overlay"
-      tooltip-placement="left"
+      tooltip-placement="start"
       aria-haspopup="menu"
       :aria-expanded="Boolean(trackMenu)"
       @click="openTrackMenu"
