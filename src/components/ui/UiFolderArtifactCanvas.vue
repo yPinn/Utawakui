@@ -491,9 +491,9 @@ function openContextMenu(artifact, event) {
   const fromKeyboard = event.clientX === 0 && event.clientY === 0;
   emit('contextmenu', {
     id: artifact.id,
-    x: event.clientX,
-    y: event.clientY,
-    anchorEl: fromKeyboard ? event.currentTarget : null,
+    anchor: fromKeyboard
+      ? { kind: 'element', element: event.currentTarget }
+      : { kind: 'point', x: event.clientX, y: event.clientY },
   });
 }
 

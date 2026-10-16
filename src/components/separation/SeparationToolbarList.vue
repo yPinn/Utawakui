@@ -14,7 +14,7 @@ import {
 } from '../../icons/index.js';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiProgress from '../ui/UiProgress.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
@@ -58,23 +58,79 @@ const UNKNOWN_STATUS_PRESENTATION = Object.freeze({
   icon: CircleDashed,
   tone: 'muted',
 });
-const menuItems = computed(() => {
+const menuContent = computed(() => {
   const item = itemMenu.value?.item;
-  if (!item) return [];
+  if (!item) return { kind: 'actions', groups: [] };
 
   if (['checking', 'running'].includes(item.status)) {
-    return [{ value: 'cancel', label: '停止這首', icon: Square }];
+    return {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'active',
+          items: [
+            {
+              id: 'cancel',
+              kind: 'action',
+              value: 'cancel',
+              label: '停止這首',
+              icon: Square,
+            },
+          ],
+        },
+      ],
+    };
   }
 
   if (item.status === 'pending') {
-    return [{ value: 'remove', label: '移除', icon: ListMinus }];
+    return {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'pending',
+          items: [
+            {
+              id: 'remove',
+              kind: 'action',
+              value: 'remove',
+              label: '移除',
+              icon: ListMinus,
+            },
+          ],
+        },
+      ],
+    };
   }
 
-  return [
-    { value: 'retry', label: '重試', icon: RotateCcw },
-    { separator: true },
-    { value: 'remove', label: '移除', icon: ListMinus },
-  ];
+  return {
+    kind: 'actions',
+    groups: [
+      {
+        id: 'retry',
+        items: [
+          {
+            id: 'retry',
+            kind: 'action',
+            value: 'retry',
+            label: '重試',
+            icon: RotateCcw,
+          },
+        ],
+      },
+      {
+        id: 'remove',
+        items: [
+          {
+            id: 'remove',
+            kind: 'action',
+            value: 'remove',
+            label: '移除',
+            icon: ListMinus,
+          },
+        ],
+      },
+    ],
+  };
 });
 
 function itemMenuOpen(item) {
@@ -90,9 +146,11 @@ function openItemMenu(item, event) {
   event.stopPropagation?.();
   itemMenu.value = {
     item,
-    anchorEl: null,
-    x: event.clientX ?? 0,
-    y: event.clientY ?? 0,
+    anchor: {
+      kind: 'point',
+      x: event.clientX ?? 0,
+      y: event.clientY ?? 0,
+    },
   };
 }
 
@@ -105,9 +163,7 @@ function openItemMenuFromKeyboard(item, event) {
   event.stopPropagation();
   itemMenu.value = {
     item,
-    anchorEl: event.currentTarget,
-    x: 0,
-    y: 0,
+    anchor: { kind: 'element', element: event.currentTarget },
   };
 }
 
@@ -351,14 +407,12 @@ function dragItem(item) {
       </ul>
     </AppRightDockSection>
 
-    <UiContextMenu
+    <UiActionMenu
       :open="Boolean(itemMenu)"
-      :anchor-el="itemMenu?.anchorEl ?? null"
-      :x="itemMenu?.x ?? 0"
-      :y="itemMenu?.y ?? 0"
-      :width="176"
+      :anchor="itemMenu?.anchor"
+      size="sm"
       aria-label="伴奏處理操作"
-      :items="menuItems"
+      :content="menuContent"
       @select="handleMenuSelect"
       @close="closeItemMenu"
     />

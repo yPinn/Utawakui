@@ -87,7 +87,7 @@ function requestClose(reason) {
 }
 
 function isRelatedFloatingSurface(target) {
-  return Boolean(target?.closest?.('.ui-context-menu'));
+  return Boolean(target?.closest?.('.ui-action-menu'));
 }
 
 function handleOutsidePointer(event) {

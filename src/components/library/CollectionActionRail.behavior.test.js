@@ -35,7 +35,7 @@ describe('CollectionActionRail', () => {
       'canAddToQueue',
       'canPreview',
       'entityAction',
-      'moreItems',
+      'moreContent',
     ]) {
       expect(source).toContain(capability);
     }

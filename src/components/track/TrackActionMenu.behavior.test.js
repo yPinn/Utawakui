@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import TrackActionMenu from './TrackActionMenu.vue';
 import {
   attachClientRender,
@@ -15,8 +17,10 @@ import {
 } from '../ui/uiTestHost.js';
 
 for (const [component, filename] of [
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+  [UiTooltip, '../ui/UiTooltip.vue'],
   [UiSearchBox, '../ui/UiSearchBox.vue'],
-  [UiContextMenu, '../ui/UiContextMenu.vue'],
+  [UiActionMenu, '../ui/UiActionMenu.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [TrackActionMenu, './TrackActionMenu.vue'],
 ]) {
@@ -54,10 +58,18 @@ beforeEach(() => {
   vi.stubGlobal('window', {
     innerWidth: 1280,
     innerHeight: 720,
-    addEventListener: (name, handler) => windowListeners.set(name, handler),
-    removeEventListener: (name) => windowListeners.delete(name),
+    addEventListener: (name, handler) => {
+      const listeners = windowListeners.get(name) ?? new Set();
+      listeners.add(handler);
+      windowListeners.set(name, listeners);
+    },
+    removeEventListener: (name, handler) => {
+      windowListeners.get(name)?.delete(handler);
+    },
     requestAnimationFrame: (callback) => callback(),
+    cancelAnimationFrame: vi.fn(),
     getComputedStyle: () => ({
+      direction: 'ltr',
       fontSize: '16px',
       getPropertyValue: () => '',
     }),
@@ -95,12 +107,26 @@ function menuSurfaces() {
   return findAll(body, (node) =>
     String(node.props?.class ?? '')
       .split(/\s+/u)
-      .includes('ui-context-menu'),
+      .includes('ui-action-menu'),
   );
 }
 
 function buttonByText(label) {
   return menuButtons().find((button) => textContent(button).includes(label));
+}
+
+function dispatchWindow(name, event) {
+  for (const listener of windowListeners.get(name) ?? []) listener(event);
+}
+
+function scrollEvent(target) {
+  const path = [];
+  let current = target;
+  while (current) {
+    path.push(current);
+    current = current.parent;
+  }
+  return { target, composedPath: () => path };
 }
 
 describe('TrackActionMenu behavior model', () => {
@@ -115,7 +141,7 @@ describe('TrackActionMenu behavior model', () => {
     const rootMenu = findAll(body, (node) => node.props.role === 'menu')[0];
 
     expect(rootMenu.props['aria-label']).toBe('曲目操作');
-    windowListeners.get('keydown')?.({
+    trigger(menuButtons()[0], 'onKeydown', {
       key: 'Escape',
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
@@ -140,10 +166,10 @@ describe('TrackActionMenu behavior model', () => {
     const menus = findAll(body, (node) => node.props.role === 'menu');
     expect(onClose).not.toHaveBeenCalled();
     expect(menus[0].contains(menus[1])).toBe(true);
-    windowListeners.get('scroll')?.({ target: menus[1] });
+    dispatchWindow('scroll', scrollEvent(menus[1]));
     expect(onClose).not.toHaveBeenCalled();
 
-    windowListeners.get('scroll')?.({ target: hostNode('main') });
+    dispatchWindow('scroll', scrollEvent(hostNode('main')));
     expect(onClose).toHaveBeenCalledOnce();
     mounted.app.unmount();
   });
@@ -152,8 +178,7 @@ describe('TrackActionMenu behavior model', () => {
     window.innerWidth = 500;
     const mounted = mount(TrackActionMenu, {
       open: true,
-      x: 260,
-      y: 32,
+      anchor: { kind: 'point', x: 260, y: 32 },
       track,
       playlists,
     });
@@ -180,12 +205,11 @@ describe('TrackActionMenu behavior model', () => {
     await nextTick();
     const submenu = menuSurfaces()[1];
 
-    expect(submenu.props.style.left).toBe('32px');
+    expect(submenu.props.style.left).toBe('12px');
     expect(submenu.props.style.top).toBe('78px');
 
-    const rootMenuViewport = findAll(
-      body,
-      (node) => node.props.role === 'menu',
+    const rootMenuViewport = findAll(body, (node) =>
+      String(node.props?.class ?? '').includes('ui-action-menu__viewport'),
     )[0];
     rootMenuViewport.scrollTop = 16;
     parentItem.getBoundingClientRect = () => ({
@@ -196,7 +220,7 @@ describe('TrackActionMenu behavior model', () => {
       width: 212,
       height: 32,
     });
-    windowListeners.get('scroll')?.({ target: rootMenuViewport });
+    dispatchWindow('scroll', scrollEvent(rootMenuViewport));
     await nextTick();
 
     expect(submenu.props.style.top).toBe('62px');
@@ -207,8 +231,7 @@ describe('TrackActionMenu behavior model', () => {
     window.innerWidth = 424;
     const mounted = mount(TrackActionMenu, {
       open: true,
-      x: 196,
-      y: 32,
+      anchor: { kind: 'point', x: 196, y: 32 },
       track,
       playlists,
     });
@@ -290,7 +313,7 @@ describe('TrackActionMenu behavior model', () => {
     });
     const deleteButton = buttonByText('刪除曲目');
     expect(deleteButton).toBeDefined();
-    expect(deleteButton.props.class).toContain('ui-context-menu__item--danger');
+    expect(deleteButton.props.class).toContain('ui-action-menu__item--danger');
     libraryMenu.app.unmount();
   });
 
@@ -311,7 +334,7 @@ describe('TrackActionMenu behavior model', () => {
       type: 'search',
       placeholder: '搜尋播放清單',
     });
-    expect(textContent(body)).toContain('新增歌單');
+    expect(textContent(body)).toContain('建立新播放清單');
     expect(textContent(body)).toContain('夜間歌單');
     expect(textContent(body)).toContain('工作用');
     expect(textContent(body)).not.toContain('已包含');
@@ -319,7 +342,7 @@ describe('TrackActionMenu behavior model', () => {
 
     trigger(input, 'onInput', { target: { value: ' 夜間 ' } });
     await nextTick();
-    expect(textContent(body)).toContain('新增歌單');
+    expect(textContent(body)).toContain('建立新播放清單');
     expect(textContent(body)).toContain('夜間歌單');
     expect(textContent(body)).not.toContain('工作用');
 
@@ -344,22 +367,22 @@ describe('TrackActionMenu behavior model', () => {
     trigger(input, 'onInput', { target: { value: '不存在' } });
     await nextTick();
 
-    expect(textContent(body)).toContain('新增歌單');
+    expect(textContent(body)).toContain('建立新播放清單');
     expect(textContent(body)).toContain('找不到播放清單');
     const submenu = findAll(body, (node) => node.props.role === 'menu')[1];
     expect(
       findAll(submenu, (node) => node.props.role === 'separator'),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
     mounted.app.unmount();
   });
 
-  it('uses the shared spacing token between search and menu action groups', () => {
-    expect(trackActionMenuSource).toMatch(
-      /\.track-action-menu__search\s*\{[^}]*margin-block-end:\s*var\(--ui-space-2\)/s,
-    );
-    expect(trackActionMenuSource).not.toMatch(
-      /\.track-action-menu__(?:search|empty)\s*\{[^}]*(?:margin|gap|padding)[^}]*\b\d+px\b/s,
-    );
+  it('delegates filtering, pinned actions, scrolling, and empty state to the shared recipe', () => {
+    expect(trackActionMenuSource).toContain("kind: 'filterable-actions'");
+    expect(trackActionMenuSource).not.toContain('UiSearchBox');
+    expect(trackActionMenuSource).not.toContain('playlistQuery');
+    expect(trackActionMenuSource).not.toContain('submenu-leading');
+    expect(trackActionMenuSource).not.toContain('submenu-trailing');
+    expect(trackActionMenuSource).not.toContain('<style');
   });
 });
 

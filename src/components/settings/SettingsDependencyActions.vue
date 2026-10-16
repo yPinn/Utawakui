@@ -1,7 +1,7 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { Download, Ellipsis } from '../../icons/index.js';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 
 const props = defineProps({
@@ -13,18 +13,28 @@ const emit = defineEmits(['primaryAction', 'advancedAction']);
 const isMenuOpen = shallowRef(false);
 const menuAnchorEl = shallowRef(null);
 
-const menuItems = computed(() =>
-  (props.item.advancedActions ?? []).map((action) =>
-    action.separator
-      ? action
-      : {
-          ...action,
-          value: action.id,
-        },
-  ),
-);
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuAnchorEl.value,
+}));
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'advanced',
+      items: (props.item.advancedActions ?? []).map((action) => ({
+        ...action,
+        kind: 'action',
+        value: action.id,
+      })),
+    },
+  ],
+  emptyText: '沒有可用的進階操作',
+}));
 
-const hasMenuItems = computed(() => menuItems.value.length > 0);
+const hasMenuItems = computed(
+  () => menuContent.value.groups[0].items.length > 0,
+);
 const primaryIcon = computed(() => props.item.actionIcon || Download);
 const menuLabel = computed(() => `${props.item.title || props.item.name}選項`);
 
@@ -68,12 +78,11 @@ function handleMenuSelect(actionId) {
       @click="openMenu"
     />
 
-    <UiContextMenu
+    <UiActionMenu
       :open="isMenuOpen"
-      :anchor-el="menuAnchorEl"
-      :width="184"
-      :items="menuItems"
-      empty-text="沒有可用的進階操作"
+      :anchor="menuAnchor"
+      size="sm"
+      :content="menuContent"
       @select="handleMenuSelect"
       @close="closeMenu"
     />

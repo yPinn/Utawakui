@@ -9,7 +9,7 @@ const source = readFileSync(
 describe('UiPopover related floating surfaces', () => {
   it('keeps a teleported context menu interactive without dismissing its parent popover', () => {
     expect(source).toContain('isRelatedFloatingSurface');
-    expect(source).toContain("target?.closest?.('.ui-context-menu')");
+    expect(source).toContain("target?.closest?.('.ui-action-menu')");
     expect(source).toContain('isRelatedFloatingSurface(event.target)');
     expect(source).toContain(
       "event.key !== 'Escape' ||\n    isRelatedFloatingSurface(event.target)",

@@ -144,10 +144,10 @@ describe('Library browse workspace composition', () => {
       /#folder-tools>[\s\S]*?<UiIconButton[\s\S]*?:icon="Plus"[\s\S]*?:label="addObjectLabel"[\s\S]*?variant="command"[\s\S]*?aria-haspopup="menu"/u,
     );
     expect(pageSource).toMatch(
-      /#folder-tools>[\s\S]*?<UiContextMenu[\s\S]*?:anchor-el="addObjectButton\?\.\$el \?\? null"[\s\S]*?:items="ADD_MENU_ITEMS"/u,
+      /#folder-tools>[\s\S]*?<UiActionMenu[\s\S]*?:anchor="addMenuAnchor"[\s\S]*?:content="ADD_MENU_CONTENT"/u,
     );
     expect(pageSource).toMatch(
-      /key: 'photo',\s*label: '照片',\s*value: 'photo'[\s\S]*?key: 'note',\s*label: '便條',\s*value: 'note'/u,
+      /id: 'photo',[\s\S]*?kind: 'action',[\s\S]*?label: '照片',[\s\S]*?value: 'photo'[\s\S]*?id: 'note',[\s\S]*?kind: 'action',[\s\S]*?label: '便條',[\s\S]*?value: 'note'/u,
     );
     expect(pageSource).not.toMatch(
       /#folder-tools>[\s\S]*?<UiIconButton[\s\S]*?shape="circle"/u,

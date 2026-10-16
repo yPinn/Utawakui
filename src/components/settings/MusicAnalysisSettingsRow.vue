@@ -49,7 +49,7 @@ const actionItem = computed(() => {
       ? [{ id: 'repair', icon: Wrench, label: '修復' }]
       : []),
     ...(installed.value && canRemove
-      ? [{ id: 'remove', icon: Trash2, label: '移除', danger: true }]
+      ? [{ id: 'remove', icon: Trash2, label: '移除', intent: 'danger' }]
       : []),
   ].map((action) => ({ ...action, disabled: props.capabilityBusy }));
 

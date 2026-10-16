@@ -1,7 +1,7 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { Clock, Ellipsis, ListX } from '../../icons/index.js';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import SettingsActionRow from './SettingsActionRow.vue';
@@ -30,14 +30,29 @@ const statusLabel = computed(() => {
   return props.recordCount > 0 ? '有紀錄' : '無紀錄';
 });
 
-const menuItems = computed(() => [
-  {
-    value: 'clear',
-    label: '清除播放紀錄',
-    icon: ListX,
-    disabled: props.isLoading || props.isClearing || props.recordCount === 0,
-  },
-]);
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuAnchorEl.value,
+}));
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'history',
+      items: [
+        {
+          id: 'clear',
+          kind: 'action',
+          value: 'clear',
+          label: '清除播放紀錄',
+          icon: ListX,
+          disabled:
+            props.isLoading || props.isClearing || props.recordCount === 0,
+        },
+      ],
+    },
+  ],
+}));
 
 function openMenu(event) {
   event.stopPropagation();
@@ -77,12 +92,12 @@ function handleMenuSelect(actionId) {
       </template>
     </SettingsActionRow>
 
-    <UiContextMenu
+    <UiActionMenu
       :open="isMenuOpen"
-      :anchor-el="menuAnchorEl"
-      :width="184"
+      :anchor="menuAnchor"
+      size="sm"
       aria-label="播放紀錄操作"
-      :items="menuItems"
+      :content="menuContent"
       @select="handleMenuSelect"
       @close="closeMenu"
     />

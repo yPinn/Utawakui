@@ -152,7 +152,7 @@ JSONL lines a second time in the export module itself.
 - `src/composables/usePersistentDiagnostics.js` — `exportBundle()`.
 - `src/components/settings/DiagnosticsSettingsBlock.vue` — export is the one
   primary visible action; refresh/open-folder/clear moved behind an
-  `Ellipsis` + `UiContextMenu` overflow menu (matching
+  `Ellipsis` + `UiActionMenu` overflow menu (matching
   `SettingsDependencyActions.vue`'s existing primary+menu convention — the
   four-icon-button layout this replaced was this file's only departure from
   that convention).

@@ -83,7 +83,7 @@ Main 端的 `app-command`（`browser-backward`、`browser-forward`）由
 | -------------------------------------- | ------------------------------------------- | ---------------------------------------------------------- |
 | `App.vue`                              | Esc                                         | 收合 Right Dock；有 transient overlay 或事件已被處理時不動 |
 | `UiModal`                              | Esc、Tab                                    | 僅最上層 modal 關閉；Tab 焦點陷阱                          |
-| `UiContextMenu`                        | Esc                                         | 關閉選單並停止傳遞                                         |
+| `UiActionMenu`                         | Esc                                         | 有搜尋字時先清除，否則關閉選單並停止傳遞                   |
 | `UiPopover`                            | Esc（capture）                              | 關閉浮層，排除相關浮層                                     |
 | `BgmPlayer`                            | Esc                                         | 先收合 picker，再要求關閉                                  |
 | `TrackPreviewOverlay`                  | ↑／↓、M（capture）                          | 上下首預覽、靜音；其餘按鍵隔離，F 鍵、Esc、Tab 放行        |

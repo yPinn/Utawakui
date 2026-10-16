@@ -17,7 +17,7 @@ import {
   watch,
 } from 'vue';
 import { Check, ChevronDown, ICON_SIZE } from '../../icons/index.js';
-import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
+import { useFloatingSurfaceGate } from '../../composables/useFloatingSurfaceGate.js';
 import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import {
   anchoredFloatingPosition,
@@ -49,7 +49,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
-const { claim, release } = useContextMenuGate();
+const { claim, release } = useFloatingSurfaceGate();
 
 const controlRef = useTemplateRef('control');
 const listboxRef = useTemplateRef('listbox');

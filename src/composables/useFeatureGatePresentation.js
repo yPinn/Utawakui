@@ -119,7 +119,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
               id: DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
               icon: Trash2,
               label: isRemoving ? '移除中' : '移除',
-              danger: true,
+              intent: 'danger',
               disabled: isBusy,
             },
           ]

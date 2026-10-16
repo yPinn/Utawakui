@@ -9,7 +9,7 @@ import {
   MessageSquare,
   RefreshCw,
 } from '../../icons/index.js';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import SettingsActionRow from './SettingsActionRow.vue';
@@ -35,24 +35,60 @@ const emit = defineEmits([
 const isMenuOpen = shallowRef(false);
 const menuAnchorEl = shallowRef(null);
 
-const menuItems = computed(() => [
-  {
-    value: 'refresh',
-    label: '重新讀取',
-    icon: RefreshCw,
-    disabled: props.isLoading,
-  },
-  { value: 'open-folder', label: '開啟資料夾', icon: FolderOpen },
-  { separator: true },
-  {
-    value: 'clear',
-    label: '清除紀錄',
-    icon: ListX,
-    disabled: props.isLoading || props.recordCount === 0,
-  },
-  { separator: true },
-  { value: 'report-issue', label: '回報問題', icon: MessageSquare },
-]);
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuAnchorEl.value,
+}));
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'records',
+      items: [
+        {
+          id: 'refresh',
+          kind: 'action',
+          value: 'refresh',
+          label: '重新讀取',
+          icon: RefreshCw,
+          disabled: props.isLoading,
+        },
+        {
+          id: 'open-folder',
+          kind: 'action',
+          value: 'open-folder',
+          label: '開啟資料夾',
+          icon: FolderOpen,
+        },
+      ],
+    },
+    {
+      id: 'destructive',
+      items: [
+        {
+          id: 'clear',
+          kind: 'action',
+          value: 'clear',
+          label: '清除紀錄',
+          icon: ListX,
+          disabled: props.isLoading || props.recordCount === 0,
+        },
+      ],
+    },
+    {
+      id: 'support',
+      items: [
+        {
+          id: 'report-issue',
+          kind: 'action',
+          value: 'report-issue',
+          label: '回報問題',
+          icon: MessageSquare,
+        },
+      ],
+    },
+  ],
+}));
 
 function openMenu(event) {
   event.stopPropagation();
@@ -107,11 +143,11 @@ function handleMenuSelect(actionId) {
       </template>
     </SettingsActionRow>
 
-    <UiContextMenu
+    <UiActionMenu
       :open="isMenuOpen"
-      :anchor-el="menuAnchorEl"
-      :width="184"
-      :items="menuItems"
+      :anchor="menuAnchor"
+      size="sm"
+      :content="menuContent"
       @select="handleMenuSelect"
       @close="closeMenu"
     />

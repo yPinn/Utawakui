@@ -3,7 +3,7 @@ import { computed, shallowRef, useTemplateRef } from 'vue';
 import { Maximize2, Pencil, Pin, PinOff, Trash2 } from '../../icons/index.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import { folderStationeryFor } from '../../utils/folderStationery.js';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
 
@@ -42,6 +42,11 @@ const OBJECT_RENDERERS = Object.freeze({
       src: item.imageUrl,
       alt: '頁面照片縮圖',
       frame: item.frame ?? 'print',
+      ratio: item.ratio ?? 'landscape',
+      label: item.label ?? '',
+      labelLang: contentLangAttribute(item.label ?? ''),
+      // The caption itself shows on expand; the page only shows its corner.
+      captionPaper: item.caption ? (item.captionPaper ?? 'canary') : '',
     },
   }),
   note: (item) =>
@@ -80,7 +85,13 @@ const props = defineProps({
   freshKeys: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['layoutChange', 'activate', 'editNote', 'remove']);
+const emit = defineEmits([
+  'layoutChange',
+  'activate',
+  'editNote',
+  'editPhotoText',
+  'remove',
+]);
 const canvas = useTemplateRef('canvas');
 const menu = shallowRef(null);
 
@@ -209,41 +220,79 @@ function handleActivate(id) {
   if (findItem(id)?.type === 'photo') emit('activate', id);
 }
 
-const menuItems = computed(() => {
+const menuContent = computed(() => {
   const item = menu.value ? findItem(menu.value.id) : null;
-  if (!item) return [];
+  if (!item) return { kind: 'actions', groups: [] };
   const pin = item.pinned
-    ? { key: 'pin', label: '取消固定', value: 'pin', icon: PinOff }
-    : { key: 'pin', label: '固定', value: 'pin', icon: Pin };
+    ? {
+        id: 'pin',
+        kind: 'action',
+        label: '取消固定',
+        value: 'pin',
+        icon: PinOff,
+      }
+    : {
+        id: 'pin',
+        kind: 'action',
+        label: '固定',
+        value: 'pin',
+        icon: Pin,
+      };
+  const groups = [];
   if (item.type === 'photo') {
-    return [
-      { key: 'open', label: '展開照片', value: 'open', icon: Maximize2 },
-      pin,
-      { separator: true },
-      {
-        key: 'remove',
-        label: '從頁面移除',
-        value: 'remove',
-        icon: Trash2,
-        danger: true,
-      },
-    ];
+    groups.push({
+      id: 'object',
+      items: [
+        {
+          id: 'open',
+          kind: 'action',
+          label: '展開照片',
+          value: 'open',
+          icon: Maximize2,
+        },
+        {
+          id: 'text',
+          kind: 'action',
+          label: '編輯照片文字',
+          value: 'text',
+          icon: Pencil,
+        },
+        pin,
+      ],
+    });
+  } else if (isUserNote(item)) {
+    groups.push({
+      id: 'object',
+      items: [
+        {
+          id: 'edit',
+          kind: 'action',
+          label: '編輯便條',
+          value: 'edit',
+          icon: Pencil,
+        },
+        pin,
+      ],
+    });
+  } else {
+    groups.push({ id: 'object', items: [pin] });
   }
-  if (isUserNote(item)) {
-    return [
-      { key: 'edit', label: '編輯便條', value: 'edit', icon: Pencil },
-      pin,
-      { separator: true },
-      {
-        key: 'remove',
-        label: '刪除便條',
-        value: 'remove',
-        icon: Trash2,
-        danger: true,
-      },
-    ];
+  if (item.type === 'photo' || isUserNote(item)) {
+    groups.push({
+      id: 'destructive',
+      items: [
+        {
+          id: 'remove',
+          kind: 'action',
+          label: item.type === 'photo' ? '從頁面移除' : '刪除便條',
+          value: 'remove',
+          icon: Trash2,
+          intent: 'danger',
+        },
+      ],
+    });
   }
-  return [pin];
+  return { kind: 'actions', groups };
 });
 
 function openMenu(payload) {
@@ -260,6 +309,7 @@ function selectMenuAction(action) {
   if (!id) return;
   if (action === 'open') emit('activate', id);
   else if (action === 'edit') emit('editNote', id);
+  else if (action === 'text') emit('editPhotoText', id);
   else if (action === 'pin') canvas.value?.togglePinById(id);
   else if (action === 'remove') emit('remove', id);
 }
@@ -281,14 +331,12 @@ function selectMenuAction(action) {
       <UiFolderArtifact :kind="artifact.kind" v-bind="artifact.props" />
     </template>
   </UiFolderArtifactCanvas>
-  <UiContextMenu
+  <UiActionMenu
     :open="Boolean(menu)"
-    :x="menu?.x ?? 0"
-    :y="menu?.y ?? 0"
-    :anchor-el="menu?.anchorEl ?? null"
-    :width="200"
+    :anchor="menu?.anchor"
+    size="md"
     aria-label="頁面物件操作"
-    :items="menuItems"
+    :content="menuContent"
     @select="selectMenuAction"
     @close="closeMenu"
   />

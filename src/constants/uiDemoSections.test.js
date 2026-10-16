@@ -91,9 +91,7 @@ describe('UI demo component order', () => {
     const registeredComponents = UI_DEMO_GROUPS.flatMap((group) =>
       group.sections.flatMap((section) => section.components ?? []),
     ).sort();
-    const registeredSharedComponents = registeredComponents
-      .map((name) => (name === 'UiActionMenu 提案' ? 'UiContextMenu' : name))
-      .sort();
+    const registeredSharedComponents = [...registeredComponents].sort();
     const sharedComponents = fs
       .readdirSync(new URL('../components/ui/', import.meta.url))
       .filter((filename) => /^Ui.+\.vue$/.test(filename))
@@ -102,8 +100,8 @@ describe('UI demo component order', () => {
       .sort();
 
     expect(registeredSharedComponents).toEqual(sharedComponents);
-    expect(registeredComponents).toContain('UiActionMenu 提案');
-    expect(registeredComponents).not.toContain('UiContextMenu Current');
+    expect(registeredComponents).toContain('UiActionMenu');
+    expect(registeredComponents).not.toContain('UiContextMenu');
     expect(new Set(registeredComponents).size).toBe(
       registeredComponents.length,
     );

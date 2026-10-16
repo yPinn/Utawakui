@@ -35,7 +35,7 @@ const batchOneConsumers = [
 const batchTwoConsumers = [
   { name: 'modal', source: readSource('./UiModal.vue') },
   { name: 'combobox', source: readSource('./UiCombobox.vue') },
-  { name: 'context menu', source: readSource('./UiContextMenu.vue') },
+  { name: 'action menu', source: readSource('./UiActionMenu.vue') },
   { name: 'popover', source: readSource('./UiPopover.vue') },
   { name: 'breadcrumb', source: readSource('./UiBreadcrumb.vue') },
   { name: 'tabs', source: readSource('./UiTabs.vue') },

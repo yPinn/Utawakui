@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addToPlaylistContent,
   addToPlaylistMenuItem,
   collectionManageMenuItems,
 } from './collectionMenuItems.js';
@@ -13,24 +14,44 @@ const playlists = [
 describe('collection menu items', () => {
   it('builds the add-to-playlist submenu with a create entry and targets', () => {
     const item = addToPlaylistMenuItem(playlists, playlists[0], '新增');
-    expect(item).toMatchObject({ key: 'add-to-playlist', label: '新增' });
-    expect(item.children.map((child) => child.key)).toEqual([
-      'create-playlist',
-      'targets-divider',
-      'target',
+    expect(item).toMatchObject({
+      id: 'add-to-playlist',
+      kind: 'submenu',
+      label: '新增',
+      size: 'lg',
+      content: { kind: 'filterable-actions' },
+    });
+    expect(item.content.pinnedItems[0]).toMatchObject({
+      id: 'create-playlist',
+      kind: 'action',
+    });
+    expect(item.content.groups[0].items.map(({ id }) => id)).toEqual([
+      'playlist:target',
     ]);
-    expect(item.children[0].icon).toBeDefined();
+    expect(item.content.pinnedItems[0].icon).toBeDefined();
+  });
+
+  it('builds the same filterable destination recipe for a direct opener', () => {
+    expect(addToPlaylistContent(playlists, 'source')).toMatchObject({
+      kind: 'filterable-actions',
+      search: { label: '搜尋播放清單' },
+      emptyText: '沒有可加入的播放清單',
+      noResultsText: '找不到播放清單',
+    });
   });
 
   it('labels album removal differently from playlist deletion', () => {
     const playlistItems = collectionManageMenuItems(playlists[0]);
     const albumItems = collectionManageMenuItems(playlists[2]);
-    expect(playlistItems.map((item) => item.key)).toEqual([
+    expect(playlistItems.map((item) => item.id)).toEqual([
       'edit-details',
       'convert-kind',
       'delete',
     ]);
-    expect(playlistItems.at(-1)).toMatchObject({ label: '刪除', danger: true });
+    expect(playlistItems.at(-1)).toMatchObject({
+      label: '刪除',
+      intent: 'danger',
+    });
     expect(albumItems.at(-1).label).toBe('移除');
     expect(albumItems[1].label).toBe('轉為播放清單');
     expect(albumItems[1].value).toEqual({

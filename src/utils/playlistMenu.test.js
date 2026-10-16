@@ -3,8 +3,6 @@ import {
   PLAYLIST_MENU_ACTIONS,
   TRACK_MENU_ACTIONS,
   addToPlaylistTargets,
-  collectionAddToPlaylistItems,
-  filterPlaylistTargets,
   libraryViewTitle,
   playlistDisplayName,
 } from './playlistMenu.js';
@@ -78,58 +76,6 @@ describe('addToPlaylistTargets', () => {
         excludeTrackId: 't1',
       }).map((p) => p.id),
     ).toEqual(['p2']);
-  });
-});
-
-describe('collectionAddToPlaylistItems', () => {
-  it('keeps create and eligible destination actions identical across collection menus', () => {
-    const playlists = [
-      { id: 'source', name: '來源', kind: 'playlist', trackIds: [] },
-      { id: 'target', name: '目標', kind: 'playlist', trackIds: [] },
-      { id: 'album', name: '專輯', kind: 'album', trackIds: [] },
-    ];
-
-    expect(collectionAddToPlaylistItems(playlists, 'source')).toEqual([
-      {
-        key: 'create-playlist',
-        label: '建立新播放清單',
-        value: {
-          action: PLAYLIST_MENU_ACTIONS.createPlaylist,
-          sourcePlaylistId: 'source',
-        },
-      },
-      { key: 'targets-divider', separator: true },
-      {
-        key: 'target',
-        label: '目標',
-        value: {
-          action: PLAYLIST_MENU_ACTIONS.addToPlaylist,
-          playlistId: 'source',
-          targetPlaylistId: 'target',
-        },
-      },
-    ]);
-  });
-});
-
-describe('filterPlaylistTargets', () => {
-  const playlists = [
-    { id: 'p1', name: 'Night Shift' },
-    { id: 'p2', name: '夜間歌單' },
-    { id: 'p3', name: 'Focus' },
-  ];
-
-  it('matches normalized playlist names without changing source order', () => {
-    expect(
-      filterPlaylistTargets(playlists, ' night ').map((item) => item.id),
-    ).toEqual(['p1']);
-    expect(
-      filterPlaylistTargets(playlists, ' 夜間 ').map((item) => item.id),
-    ).toEqual(['p2']);
-  });
-
-  it('returns all targets when the query is blank', () => {
-    expect(filterPlaylistTargets(playlists, '  ')).toEqual(playlists);
   });
 });
 

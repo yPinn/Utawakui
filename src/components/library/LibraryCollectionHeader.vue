@@ -39,9 +39,12 @@ const props = defineProps({
   canPreview: { type: Boolean, default: false },
   previewBlockedReason: { type: String, default: '' },
   canAddToPlaylist: { type: Boolean, default: false },
-  addToPlaylistItems: { type: Array, default: () => [] },
+  addToPlaylistContent: { type: Object, default: null },
   entityActionVisible: { type: Boolean, default: true },
-  moreItems: { type: Array, default: () => [] },
+  moreContent: {
+    type: Object,
+    default: () => ({ kind: 'actions', groups: [] }),
+  },
   showSearch: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
   density: {
@@ -98,9 +101,8 @@ const entityAction = computed(() => {
     return {
       icon: ListPlus,
       label: '將專輯新增至播放清單',
-      disabled:
-        !props.canAddToPlaylist || props.addToPlaylistItems.length === 0,
-      menuItems: props.addToPlaylistItems,
+      disabled: !props.canAddToPlaylist || !props.addToPlaylistContent,
+      menuContent: props.addToPlaylistContent,
     };
   }
   return {
@@ -201,7 +203,7 @@ function handleMenuAction(value) {
       :can-preview="canPreview"
       :preview-blocked-reason="previewBlockedReason"
       :entity-action="entityAction"
-      :more-items="moreItems"
+      :more-content="moreContent"
       :show-search="showSearch"
       :search-query="searchQuery"
       :density="density"

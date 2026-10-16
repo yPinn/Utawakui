@@ -24,7 +24,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import VirtualCableGuideModal from './VirtualCableGuideModal.vue';
 
-// A dedicated modal rather than a UiContextMenu row list — real Windows
+// A dedicated modal rather than a UiActionMenu row list — real Windows
 // audio device names run long ("喇叭 (Turtle Beach Stream Mic 2 Chat)"),
 // which a ~220px context menu has to ellipsis-truncate into
 // indistinguishable labels. Picking the wrong device here silently breaks

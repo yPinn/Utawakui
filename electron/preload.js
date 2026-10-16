@@ -190,6 +190,16 @@ function folderPageNoteIntent(value) {
   };
 }
 
+function folderPagePhotoTextIntent(value) {
+  return {
+    page: folderPageIdentityIntent(value?.page),
+    key: value?.key,
+    label: typeof value?.label === 'string' ? value.label.slice(0, 16) : '',
+    caption:
+      typeof value?.caption === 'string' ? value.caption.slice(0, 80) : '',
+  };
+}
+
 function folderPageObjectTargetIntent(value) {
   return {
     page: folderPageIdentityIntent(value?.page),
@@ -580,6 +590,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke(
       'folder-page-objects:update-note',
       folderPageNoteIntent(intent),
+    ),
+  updateFolderPagePhotoText: (intent) =>
+    ipcRenderer.invoke(
+      'folder-page-objects:update-photo-text',
+      folderPagePhotoTextIntent(intent),
     ),
   saveFolderPageLayout: (intent) =>
     ipcRenderer.invoke(

@@ -46,7 +46,12 @@ function buildCharSets() {
   };
 }
 
-function detect(text) {
+// The katakana middle dot also separates Chinese names and dates (2024 夏・台北),
+// so it is punctuation here, never evidence of Japanese.
+const NEUTRAL_KANA_BLOCK_MARKS = /・/gu;
+
+function detect(value) {
+  const text = value.replace(NEUTRAL_KANA_BLOCK_MARKS, ' ');
   const script = detectLyricsScript(text);
   if (script === 'ja' || script === 'ko') return script;
   if (script !== 'zh') return null;

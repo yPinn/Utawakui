@@ -4,7 +4,7 @@ import DemoActionMenuLayer from './DemoActionMenuLayer.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiActionMenu',
+    title: '正式元件 UiActionMenu',
     note: 'Trigger-neutral compound primitive；完整 menu keyboard、viewport collision 與精簡 icon／label／submenu lanes。',
   },
 ];

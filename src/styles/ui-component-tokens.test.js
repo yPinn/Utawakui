@@ -281,6 +281,7 @@ describe('shared UI component token contract', () => {
       'var(--ui-shadow-overlay)',
     );
     expect(values.get('--ui-floating-list-padding')).toBe('var(--ui-space-2)');
+    expect(values.get('--ui-action-menu-max-block-size')).toBe('20rem');
     expect(values.get('--ui-floating-row-min-height')).toBe('2rem');
     expect(values.get('--ui-floating-row-padding-block')).toBe(
       'var(--ui-space-1)',
@@ -337,7 +338,11 @@ describe('shared UI component token contract', () => {
           (match) => match[1],
         ),
       );
-      return [...source.matchAll(/var\((--ui-[\w-]+)\)/gu)]
+      const references = [
+        ...source.matchAll(/var\((--ui-[\w-]+)\)/gu),
+        ...source.matchAll(/customLengthPixels\(\s*['"](--ui-[\w-]+)['"]/gu),
+      ];
+      return references
         .map((match) => match[1])
         .filter((token) => !globalNames.has(token) && !localNames.has(token))
         .map((token) => `${name}: ${token}`);
@@ -403,9 +408,9 @@ describe('shared UI component token contract', () => {
     }
   });
 
-  it('derives context-menu geometry from the shared floating-row token', () => {
+  it('derives action-menu geometry from the shared floating-row token', () => {
     const source = componentFiles.find((file) =>
-      file.name.endsWith('/UiContextMenu.vue'),
+      file.name.endsWith('/UiActionMenu.vue'),
     )?.source;
 
     expect(source).toContain(

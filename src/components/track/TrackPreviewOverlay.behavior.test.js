@@ -208,9 +208,7 @@ describe('TrackPreviewOverlay', () => {
     expect(source).toMatch(
       /function openMenuAtPointer\(event\) \{\s*event\.preventDefault\(\);\s*event\.stopPropagation\(\);/u,
     );
-    expect(source).toMatch(
-      /:anchor-el="menu\.anchorEl"\s+:x="menu\.x"\s+:y="menu\.y"/u,
-    );
+    expect(source).toMatch(/:anchor="menu"/u);
   });
 
   it('groups controls by work zone instead of a modal footer', () => {

@@ -28,7 +28,7 @@ import TrackMetadataModal from './TrackMetadataModal.vue';
 import TrackTable from '../track/TrackTable.vue';
 import { normalizeTrackCollectionSort } from '../track/trackCollectionProfiles.js';
 import {
-  addToPlaylistChildren,
+  addToPlaylistContent,
   addToPlaylistMenuItem,
   collectionManageMenuItems,
 } from '../../utils/collectionMenuItems.js';
@@ -442,10 +442,10 @@ function handleCollectionMenuAction(value) {
   }
 }
 
-const addToPlaylistItems = computed(() =>
+const selectedPlaylistDestinationContent = computed(() =>
   selectedPlaylist.value
-    ? addToPlaylistChildren(playlistState.playlists, selectedPlaylist.value.id)
-    : [],
+    ? addToPlaylistContent(playlistState.playlists, selectedPlaylist.value.id)
+    : null,
 );
 
 const ARTIST_PHOTO_ACTIONS = Object.freeze({
@@ -457,55 +457,74 @@ const ARTIST_IDENTITY_ACTIONS = Object.freeze({
   manage: 'manage-artist-identity',
 });
 
-const collectionMoreItems = computed(() => {
+const collectionMoreContent = computed(() => {
   if (isArtistSelected.value) {
-    if (!artistPage.value) return [];
-    return [
-      {
-        key: ARTIST_IDENTITY_ACTIONS.manage,
-        label: '整理藝人',
-        icon: UserRound,
-        value: { action: ARTIST_IDENTITY_ACTIONS.manage },
-      },
-      {
-        key: ARTIST_PHOTO_ACTIONS.choose,
-        label: '選擇藝人照片',
-        icon: ImagePlus,
-        value: { action: ARTIST_PHOTO_ACTIONS.choose },
-      },
-      ...(!artistPage.value.photoUrl
-        ? [
+    if (!artistPage.value) return { kind: 'actions', groups: [] };
+    return {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'identity',
+          items: [
             {
-              key: ARTIST_PHOTO_ACTIONS.searchOnline,
-              label: '搜尋線上藝人照片',
-              icon: Search,
-              value: { action: ARTIST_PHOTO_ACTIONS.searchOnline },
+              id: ARTIST_IDENTITY_ACTIONS.manage,
+              kind: 'action',
+              label: '整理藝人',
+              icon: UserRound,
+              value: { action: ARTIST_IDENTITY_ACTIONS.manage },
             },
-          ]
-        : []),
-      ...(artistPage.value.photoUrl
-        ? [
+          ],
+        },
+        {
+          id: 'photo',
+          items: [
             {
-              key: ARTIST_PHOTO_ACTIONS.clear,
-              label: '移除藝人照片',
-              icon: Trash2,
-              value: { action: ARTIST_PHOTO_ACTIONS.clear },
+              id: ARTIST_PHOTO_ACTIONS.choose,
+              kind: 'action',
+              label: '選擇藝人照片',
+              icon: ImagePlus,
+              value: { action: ARTIST_PHOTO_ACTIONS.choose },
             },
-          ]
-        : []),
-    ];
+            ...(!artistPage.value.photoUrl
+              ? [
+                  {
+                    id: ARTIST_PHOTO_ACTIONS.searchOnline,
+                    kind: 'action',
+                    label: '搜尋線上藝人照片',
+                    icon: Search,
+                    value: { action: ARTIST_PHOTO_ACTIONS.searchOnline },
+                  },
+                ]
+              : [
+                  {
+                    id: ARTIST_PHOTO_ACTIONS.clear,
+                    kind: 'action',
+                    label: '移除藝人照片',
+                    icon: Trash2,
+                    value: { action: ARTIST_PHOTO_ACTIONS.clear },
+                  },
+                ]),
+          ],
+        },
+      ],
+    };
   }
   const playlist = selectedPlaylist.value;
-  if (!playlist) return [];
+  if (!playlist) return { kind: 'actions', groups: [] };
   const manageItems = collectionManageMenuItems(playlist);
-  if (playlistTracks.value.length === 0) return manageItems;
-  const addLabel =
-    playlist.kind === 'album' ? '新增專輯至播放清單' : '新增至別的播放清單';
-  return [
-    addToPlaylistMenuItem(playlistState.playlists, playlist, addLabel),
-    { key: 'manage-divider', separator: true },
-    ...manageItems,
-  ];
+  const groups = [];
+  if (playlistTracks.value.length > 0) {
+    const addLabel =
+      playlist.kind === 'album' ? '新增專輯至播放清單' : '新增至別的播放清單';
+    groups.push({
+      id: 'destinations',
+      items: [
+        addToPlaylistMenuItem(playlistState.playlists, playlist, addLabel),
+      ],
+    });
+  }
+  groups.push({ id: 'manage', items: manageItems });
+  return { kind: 'actions', groups };
 });
 
 const canReorderPlaylistTracks = computed(
@@ -680,9 +699,13 @@ function openAddMenu(track, event) {
   const fromButton = event.type !== 'contextmenu' && event.currentTarget;
   addMenu.value = {
     track,
-    anchorEl: fromButton || null,
-    x: fromButton ? 0 : (event.clientX ?? 0),
-    y: fromButton ? 0 : (event.clientY ?? 0),
+    anchor: fromButton
+      ? { kind: 'element', element: fromButton }
+      : {
+          kind: 'point',
+          x: event.clientX ?? 0,
+          y: event.clientY ?? 0,
+        },
   };
 }
 
@@ -956,9 +979,9 @@ onMounted(async () => {
           :can-preview="visibleTableEntries.length > 0"
           :preview-blocked-reason="previewBlockedReason"
           :can-add-to-playlist="playlistTracks.length > 0"
-          :add-to-playlist-items="addToPlaylistItems"
+          :add-to-playlist-content="selectedPlaylistDestinationContent"
           :entity-action-visible="!isAlbumReferenceSelected"
-          :more-items="collectionMoreItems"
+          :more-content="collectionMoreContent"
           :show-search="showTrackSearch"
           :density="trackListDensity"
           @toggle-playback="toggleSelectedCollectionPlayback"
@@ -1062,9 +1085,7 @@ onMounted(async () => {
 
       <TrackActionMenu
         :open="Boolean(addMenu)"
-        :anchor-el="addMenu?.anchorEl ?? null"
-        :x="addMenu?.x ?? 0"
-        :y="addMenu?.y ?? 0"
+        :anchor="addMenu?.anchor"
         :track="addMenu?.track ?? null"
         :playlists="playlistState.playlists"
         :current-track-id="state.track?.id ?? ''"

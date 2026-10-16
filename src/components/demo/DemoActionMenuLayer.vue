@@ -11,7 +11,7 @@ import {
 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import DemoCandidateActionMenu from './DemoCandidateActionMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 
 const props = defineProps({
   layer: { type: Object, required: true },
@@ -20,132 +20,231 @@ const props = defineProps({
 const MENU_SETS = Object.freeze({
   general: {
     label: '曲目操作',
-    width: 220,
-    emptyText: '',
-    items: [
-      { key: 'rename', label: '重新命名', icon: Pencil, value: '重新命名' },
-      {
-        key: 'queue',
-        label: '已在佇列',
-        icon: Check,
-        disabled: true,
-      },
-      {
-        key: 'playlist',
-        label: '新增至播放清單',
-        icon: ListPlus,
-        submenuWidth: 240,
-        children: [
-          { key: 'live', label: '歌回演出曲目', value: '加入歌回演出曲目' },
-          { key: 'practice', label: '日文咬字練習', value: '加入日文咬字練習' },
-          {
-            key: 'multilingual',
-            label: 'Midnight Session／深夜練唱清單',
-            value: '加入 Midnight Session',
-          },
-          ...Array.from({ length: 8 }, (_, index) => ({
-            key: `rehearsal-${index}`,
-            label: `排練清單 ${String(index + 1).padStart(2, '0')}`,
-            value: `加入排練清單 ${index + 1}`,
-          })),
-        ],
-      },
-      { key: 'manage-divider', separator: true },
-      {
-        key: 'duplicate',
-        label: '建立副本',
-        icon: Copy,
-        value: '建立副本',
-      },
-      {
-        key: 'remove',
-        label: '從清單移除',
-        icon: Trash2,
-        danger: true,
-        value: '從清單移除',
-      },
-    ],
+    size: 'md',
+    content: {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'primary',
+          items: [
+            {
+              id: 'rename',
+              kind: 'action',
+              label: '重新命名',
+              icon: Pencil,
+              value: '重新命名',
+            },
+            {
+              id: 'queue',
+              kind: 'action',
+              label: '加入佇列',
+              icon: Check,
+              disabled: true,
+              disabledReason: '已在佇列',
+            },
+            {
+              id: 'playlist',
+              kind: 'submenu',
+              label: '加入播放清單',
+              icon: ListPlus,
+              size: 'lg',
+              content: {
+                kind: 'filterable-actions',
+                search: {
+                  label: '搜尋播放清單',
+                  placeholder: '搜尋播放清單',
+                },
+                groups: [
+                  {
+                    id: 'destinations',
+                    items: [
+                      {
+                        id: 'live',
+                        kind: 'action',
+                        label: '歌回演出曲目',
+                        value: '加入歌回演出曲目',
+                      },
+                      {
+                        id: 'practice',
+                        kind: 'action',
+                        label: '日文咬字練習',
+                        value: '加入日文咬字練習',
+                      },
+                      ...Array.from({ length: 9 }, (_, index) => ({
+                        id: `rehearsal-${index}`,
+                        kind: 'action',
+                        label: `排練清單 ${String(index + 1).padStart(2, '0')}`,
+                        value: `加入排練清單 ${index + 1}`,
+                      })),
+                    ],
+                  },
+                ],
+                emptyText: '沒有播放清單',
+                noResultsText: '找不到播放清單',
+              },
+            },
+          ],
+        },
+        {
+          id: 'manage',
+          items: [
+            {
+              id: 'duplicate',
+              kind: 'action',
+              label: '建立副本',
+              icon: Copy,
+              value: '建立副本',
+            },
+            {
+              id: 'remove',
+              kind: 'action',
+              label: '從清單移除',
+              icon: Trash2,
+              intent: 'danger',
+              value: '從清單移除',
+            },
+          ],
+        },
+      ],
+    },
   },
   settings: {
     label: '曲庫位置操作',
-    width: 184,
-    emptyText: '',
-    items: [
-      {
-        key: 'open',
-        label: '開啟資料夾',
-        icon: FolderOpen,
-        value: '開啟資料夾',
-      },
-      { key: 'rename', label: '重新命名', icon: Pencil, value: '重新命名' },
-    ],
+    size: 'sm',
+    content: {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'directory',
+          items: [
+            {
+              id: 'open',
+              kind: 'action',
+              label: '開啟資料夾',
+              icon: FolderOpen,
+              value: '開啟資料夾',
+            },
+            {
+              id: 'rename',
+              kind: 'action',
+              label: '重新命名',
+              icon: Pencil,
+              value: '重新命名',
+            },
+          ],
+        },
+      ],
+    },
   },
   long: {
     label: '多語與捲動操作',
-    width: 220,
-    emptyText: '',
-    items: [
-      {
-        key: 'cjk',
-        label: '加入演出清單',
-        icon: ListPlus,
-        value: '加入演出清單',
-      },
-      {
-        key: 'latin',
-        label: 'Add to rehearsal list',
-        icon: ListPlus,
-        value: 'Add to rehearsal list',
-      },
-      {
-        key: 'arabic',
-        label: 'إضافة إلى قائمة',
-        icon: ListPlus,
-        value: 'إضافة إلى قائمة',
-      },
-      ...Array.from({ length: 9 }, (_, index) => ({
-        key: `archive-${index}`,
-        label: `封存版本 ${String(index + 1).padStart(2, '0')}`,
-        icon: Copy,
-        value: `封存版本 ${index + 1}`,
-      })),
-    ],
+    size: 'md',
+    content: {
+      kind: 'filterable-actions',
+      search: { label: '搜尋操作', placeholder: '搜尋操作' },
+      groups: [
+        {
+          id: 'versions',
+          items: [
+            {
+              id: 'cjk',
+              kind: 'action',
+              label: '加入演出清單',
+              icon: ListPlus,
+              value: '加入演出清單',
+            },
+            {
+              id: 'latin',
+              kind: 'action',
+              label: 'Add to rehearsal list',
+              icon: ListPlus,
+              value: 'Add to rehearsal list',
+            },
+            {
+              id: 'arabic',
+              kind: 'action',
+              label: 'إضافة إلى قائمة',
+              icon: ListPlus,
+              value: 'إضافة إلى قائمة',
+            },
+            ...Array.from({ length: 9 }, (_, index) => ({
+              id: `archive-${index}`,
+              kind: 'action',
+              label: `封存版本 ${String(index + 1).padStart(2, '0')}`,
+              icon: Copy,
+              value: `封存版本 ${index + 1}`,
+            })),
+          ],
+        },
+      ],
+      emptyText: '目前沒有可用操作',
+      noResultsText: '找不到操作',
+    },
   },
   rtl: {
     label: 'إجراءات قائمة التشغيل',
-    width: 220,
+    size: 'md',
     dir: 'rtl',
-    emptyText: '',
-    items: [
-      {
-        key: 'playlist',
-        label: 'إضافة إلى قائمة',
-        icon: ListPlus,
-        submenuWidth: 240,
-        children: [
-          { key: 'evening', label: 'قائمة التدريب المسائي' },
-          { key: 'live', label: 'قائمة العرض المباشر' },
-        ],
-      },
-      { key: 'copy', label: 'إنشاء نسخة', icon: Copy },
-    ],
+    content: {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'actions',
+          items: [
+            {
+              id: 'playlist',
+              kind: 'submenu',
+              label: 'إضافة إلى قائمة',
+              icon: ListPlus,
+              size: 'lg',
+              content: {
+                kind: 'actions',
+                groups: [
+                  {
+                    id: 'destinations',
+                    items: [
+                      {
+                        id: 'evening',
+                        kind: 'action',
+                        label: 'قائمة التدريب المسائي',
+                      },
+                      {
+                        id: 'live',
+                        kind: 'action',
+                        label: 'قائمة العرض المباشر',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              id: 'copy',
+              kind: 'action',
+              label: 'إنشاء نسخة',
+              icon: Copy,
+            },
+          ],
+        },
+      ],
+    },
   },
   empty: {
     label: '空選單',
-    width: 184,
-    emptyText: '目前沒有可用操作',
-    items: [],
+    size: 'sm',
+    content: {
+      kind: 'actions',
+      groups: [],
+      emptyText: '目前沒有可用操作',
+    },
   },
 });
 
 const menu = shallowRef({
   open: false,
-  anchorEl: null,
-  x: 0,
-  y: 0,
-  width: 220,
-  items: [],
-  emptyText: '',
+  anchor: { kind: 'point', x: 0, y: 0 },
+  size: 'md',
+  content: { kind: 'actions', groups: [] },
   label: '',
   dir: undefined,
   trigger: '',
@@ -166,32 +265,20 @@ const anatomyLines = Object.freeze([
   'Icon 只輔助可見動作文案；只有 opener 與 submenu chevron 可獨立使用。',
 ]);
 const menuId = computed(() => `action-menu-${props.layer.key}-popup`);
-const menuRootAttributes = computed(() => ({
-  id: menuId.value,
-  dir: menu.value.dir,
-  'aria-label': menu.value.label,
-}));
-const menuComponentAttributes = computed(() => ({
-  ...menuRootAttributes.value,
-  x: menu.value.x,
-  y: menu.value.y,
-}));
-
 function openMenuAt(
   specimen,
   x,
   y,
-  { anchorEl = null, dir, trigger = specimen } = {},
+  { anchorElement = null, dir, trigger = specimen } = {},
 ) {
   const definition = MENU_SETS[specimen];
   menu.value = {
     open: true,
-    anchorEl,
-    x: Math.round(x),
-    y: Math.round(y),
-    width: definition.width,
-    items: definition.items,
-    emptyText: definition.emptyText,
+    anchor: anchorElement
+      ? { kind: 'element', element: anchorElement }
+      : { kind: 'point', x: Math.round(x), y: Math.round(y) },
+    size: definition.size,
+    content: definition.content,
     label: definition.label,
     dir: dir ?? definition.dir,
     trigger,
@@ -201,7 +288,7 @@ function openMenuAt(
 function openFromControl(event, specimen = 'general') {
   event.stopPropagation();
   openMenuAt(specimen, 0, 0, {
-    anchorEl: event.currentTarget,
+    anchorElement: event.currentTarget,
     trigger: specimen === 'settings' ? 'more' : specimen,
   });
 }
@@ -239,7 +326,7 @@ function openAtViewportEdge(event) {
 }
 
 function closeMenu() {
-  menu.value = { ...menu.value, open: false, anchorEl: null };
+  menu.value = { ...menu.value, open: false };
 }
 
 function handleSelect(value, item) {
@@ -373,13 +460,14 @@ function handleSelect(value, item) {
       {{ lastAction }}
     </p>
 
-    <component
-      :is="DemoCandidateActionMenu"
-      v-bind="menuComponentAttributes"
+    <UiActionMenu
+      :id="menuId"
       :open="menu.open"
-      :width="menu.width"
-      :items="menu.items"
-      :empty-text="menu.emptyText"
+      :anchor="menu.anchor"
+      :size="menu.size"
+      :content="menu.content"
+      :dir="menu.dir"
+      :aria-label="menu.label"
       @select="handleSelect"
       @close="closeMenu"
     />

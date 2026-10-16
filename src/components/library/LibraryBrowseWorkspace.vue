@@ -15,10 +15,11 @@ import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
 import LibraryBrowseContent from './LibraryBrowseContent.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
+import AppFolderPhotoTextEditorModal from '../layout/AppFolderPhotoTextEditorModal.vue';
 import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 
@@ -29,25 +30,42 @@ const confirmation = useAppConfirmation();
 // null when closed; { key } edits an existing note, { key: null } creates.
 const noteEditor = shallowRef(null);
 const noteEditorSaving = ref(false);
+// Key of the photo whose instant line and caption are being edited.
+const photoTextKey = shallowRef(null);
+const photoTextSaving = ref(false);
 const addMenuOpen = ref(false);
-const ADD_MENU_ITEMS = Object.freeze([
-  Object.freeze({
-    key: 'photo',
-    label: '照片',
-    value: 'photo',
-    icon: ImagePlus,
-  }),
-  Object.freeze({
-    key: 'note',
-    label: '便條',
-    value: 'note',
-    icon: StickyNote,
-  }),
-]);
+const ADD_MENU_CONTENT = Object.freeze({
+  kind: 'actions',
+  groups: Object.freeze([
+    Object.freeze({
+      id: 'create',
+      items: Object.freeze([
+        Object.freeze({
+          id: 'photo',
+          kind: 'action',
+          label: '照片',
+          value: 'photo',
+          icon: ImagePlus,
+        }),
+        Object.freeze({
+          id: 'note',
+          kind: 'action',
+          label: '便條',
+          value: 'note',
+          icon: StickyNote,
+        }),
+      ]),
+    }),
+  ]),
+});
 const searchQuery = ref('');
 const selectedAsset = shallowRef(null);
 const previewOpen = shallowRef(false);
 const addObjectButton = useTemplateRef('addObjectButton');
+const addMenuAnchor = computed(() => ({
+  kind: 'element',
+  element: addObjectButton.value?.$el ?? null,
+}));
 let focusAddButtonAfterPreviewClose = false;
 
 const documentKey = computed(
@@ -108,6 +126,7 @@ watch(
     previewOpen.value = false;
     selectedAsset.value = null;
     noteEditor.value = null;
+    photoTextKey.value = null;
     addMenuOpen.value = false;
     focusAddButtonAfterPreviewClose = false;
     await folderObjects.load(page);
@@ -163,6 +182,41 @@ async function saveNote(content) {
     if (saved) noteEditor.value = null;
   } finally {
     noteEditorSaving.value = false;
+  }
+}
+
+const editedPhoto = computed(() =>
+  photoTextKey.value
+    ? (folderObjects.objects.value.find(
+        (object) => object.key === photoTextKey.value,
+      ) ?? null)
+    : null,
+);
+
+function openPhotoTextEditor(key) {
+  photoTextKey.value = key;
+}
+
+function closePhotoTextEditor() {
+  if (photoTextSaving.value) return;
+  photoTextKey.value = null;
+}
+
+async function savePhotoText(content) {
+  const key = photoTextKey.value;
+  if (!key || photoTextSaving.value) return;
+  photoTextSaving.value = true;
+  try {
+    if (!(await folderObjects.updatePhotoText(key, content))) return;
+    photoTextKey.value = null;
+    // An open preview shows the saved text without reopening.
+    if (selectedAsset.value?.key === key) {
+      selectedAsset.value =
+        folderObjects.objects.value.find((object) => object.key === key) ??
+        selectedAsset.value;
+    }
+  } finally {
+    photoTextSaving.value = false;
   }
 }
 
@@ -251,6 +305,7 @@ onBeforeUnmount(() => {
         @layout-change="handleArtifactLayout"
         @activate="openAsset"
         @edit-note="openNoteEditor"
+        @edit-photo-text="openPhotoTextEditor"
         @remove="confirmRemoveObject"
       />
     </template>
@@ -270,12 +325,12 @@ onBeforeUnmount(() => {
         "
         @click="toggleAddMenu"
       />
-      <UiContextMenu
+      <UiActionMenu
         :open="addMenuOpen"
-        :anchor-el="addObjectButton?.$el ?? null"
-        :width="160"
+        :anchor="addMenuAnchor"
+        size="sm"
         aria-label="新增頁面物件"
-        :items="ADD_MENU_ITEMS"
+        :content="ADD_MENU_CONTENT"
         @select="selectAddAction"
         @close="addMenuOpen = false"
       />
@@ -300,5 +355,14 @@ onBeforeUnmount(() => {
     @close="closeAssetPreview"
     @after-leave="finishAssetPreviewClose"
     @remove="removeAsset"
+    @edit-text="openPhotoTextEditor"
+  />
+
+  <AppFolderPhotoTextEditorModal
+    :open="Boolean(editedPhoto)"
+    :photo="editedPhoto"
+    :saving="photoTextSaving"
+    @close="closePhotoTextEditor"
+    @save="savePhotoText"
   />
 </template>

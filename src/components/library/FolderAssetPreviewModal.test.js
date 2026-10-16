@@ -45,8 +45,36 @@ describe('FolderAssetPreviewModal', () => {
   });
 
   it('inherits media bounds from the shared modal instead of local overrides', () => {
-    expect(source).not.toContain('<style');
+    // Local style only places the caption note; it never resizes the media.
     expect(source).not.toContain('--ui-modal-media-content-max');
+    expect(source).not.toMatch(/max-(?:inline|block)-size|--ui-media-max/u);
+  });
+
+  it('opens photo text editing from the rail and shows the caption as a note', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(FolderAssetPreviewModal, {
+            open: true,
+            asset: {
+              key: 'photo:asset-1',
+              imageUrl: 'utawakui-media://folder-asset/asset-1/image.png',
+              frame: 'instant',
+              label: '2024 夏',
+              caption: '第一次在 Live House 唱這首。',
+              captionPaper: 'rose',
+            },
+          }),
+      }),
+    );
+    expect(source).toContain('label="編輯照片文字"');
+    expect(source).toContain("emit('editText', asset.key)");
+    expect(source.indexOf(':icon="Pencil"')).toBeLessThan(
+      source.indexOf(':icon="Trash2"'),
+    );
+    expect(html).toContain('2024 夏');
+    expect(html).toContain('第一次在 Live House 唱這首。');
+    expect(html).toContain('data-paper="rose"');
   });
 
   it('keeps removal as a compact media control behind the shared confirmation owner', () => {

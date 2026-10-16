@@ -144,7 +144,7 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
   關閉試聽。版面依慣例為「目前播放資訊＋媒體（置中成一組）｜一條邊欄」：資訊欄固定 15rem（窄於封面，讓這組有餘寬置中、資訊內縮），含歌名、藝人與進度；正式播放鈕在封面右下角，只在 hover 或鍵盤焦點時出現（`UiArtworkReveal`，無障礙名稱「從這首開始播放」；先 release，再以可見清單建立 Queue 並正式播放）；邊欄內含兩個單位：對齊封面中央的曲目操作，以及在底部、live 尺寸的上一首／下一首；整個視窗表面以封面主色透過 `UiModal` 的 `tint` 淡入（只用於表面，不改變文字或控制項顏色）；封面 hover 時另有角落暗角襯托播放鈕；靜音放在 `UiModal` 標題列的工具區。換卡時只有歌名做方向滑動，藝人列直接更新。在目前封面按右鍵，會在指標位置開啟同一份右鍵選單；選單觸發點須停止開啟用的點擊冒泡，否則選單掛載時註冊的 window 點擊監聽會把它當成外部點擊而立即關閉。
 - 歌名與藝人沿用 PlayerBar 的 CTA：有所屬專輯時歌名前往專輯，可配對的藝人 credit 前往藝人頁
   （`TrackArtistCredits`）；無專輯或無法配對時維持純文字。兩者都先關閉試聽再切換頁面。
-- 外框使用共用 `UiModal`（`wide`）；`UiModal` 一律掛到所屬 renderer root 的 overlay host，遮罩因此蓋過 Folder 分頁與 Right Dock（見 Token v2 完整替換契約）。UiContextMenu 的 z-index 低於 dialog，teleport 到 surface host
+- 外框使用共用 `UiModal`（`wide`）；`UiModal` 一律掛到所屬 renderer root 的 overlay host，遮罩因此蓋過 Folder 分頁與 Right Dock（見 Token v2 完整替換契約）。`UiActionMenu` 的 z-index 低於 dialog，teleport 到 surface host
   會被蓋住，因此 modal 內容以 `track-preview` surface 提供自己的 overlay host，選單只在開啟時
   mount（host 此時才在 document 內），畫在 dialog 的 stacking context 內。
 - `UiModal` 的 Teleport 使用 `defer`：LibraryBrowseContent 與 library host 在同一輪 mount，host 尚未插入

@@ -111,9 +111,13 @@ function openTrackMenu(payload) {
   const fromButton = event.type === 'click';
   trackMenu.value = {
     ...payload,
-    anchorEl: fromButton ? event.currentTarget : null,
-    x: fromButton ? 0 : (event.clientX ?? 0),
-    y: fromButton ? 0 : (event.clientY ?? 0),
+    anchor: fromButton
+      ? { kind: 'element', element: event.currentTarget }
+      : {
+          kind: 'point',
+          x: event.clientX ?? 0,
+          y: event.clientY ?? 0,
+        },
   };
 }
 
@@ -275,9 +279,7 @@ const {
 
       <TrackActionMenu
         :open="Boolean(trackMenu)"
-        :anchor-el="trackMenu?.anchorEl ?? null"
-        :x="trackMenu?.x ?? 0"
-        :y="trackMenu?.y ?? 0"
+        :anchor="trackMenu?.anchor"
         :track="trackMenu?.track ?? null"
         :context="trackMenu?.context ?? 'default'"
         :playlists="playlistState.playlists"

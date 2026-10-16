@@ -24,6 +24,9 @@ const MAX_LAYOUT_BATCH_SIZE = 64;
 const MAX_OBJECT_ROTATION = 5;
 const MAX_NOTE_TEXT_LENGTH = 2_000;
 const MAX_NOTE_TITLE_LENGTH = 80;
+// Instant film carries one short line; the caption note holds the rest.
+const MAX_PHOTO_LABEL_LENGTH = 16;
+const MAX_PHOTO_CAPTION_LENGTH = 80;
 // Paper stocks a new user note may be printed on; picked once at creation.
 const NOTE_PAPERS = Object.freeze([
   'periwinkle',
@@ -34,7 +37,20 @@ const NOTE_PAPERS = Object.freeze([
 ]);
 
 // Photo print stocks, picked once at creation like note papers.
-const PHOTO_FRAMES = Object.freeze(['print', 'archival']);
+const PHOTO_FRAMES = Object.freeze(['print', 'archival', 'instant']);
+// Common print shapes; a photo is filed under the nearest one by aspect.
+const PHOTO_RATIOS = Object.freeze({
+  landscape: 4 / 3,
+  portrait: 3 / 4,
+  square: 1,
+  wide: 16 / 9,
+  tall: 9 / 16,
+});
+// Instant film comes in square, portrait and wide-landscape sheets only.
+const INSTANT_RATIOS = new Set(['square', 'portrait', 'landscape']);
+const DEFAULT_PHOTO_RATIO = 'landscape';
+// EXIF orientations 5–8 rotate the stored pixels by a quarter turn.
+const QUARTER_TURN_ORIENTATIONS = new Set([5, 6, 7, 8]);
 
 function keyHash(key) {
   let hash = 0;
@@ -49,8 +65,89 @@ function paperForKey(key) {
   return NOTE_PAPERS[keyHash(key) % NOTE_PAPERS.length];
 }
 
-function frameForKey(key) {
-  return PHOTO_FRAMES[keyHash(key) % PHOTO_FRAMES.length];
+function framesForRatio(ratio) {
+  return INSTANT_RATIOS.has(ratio)
+    ? PHOTO_FRAMES
+    : PHOTO_FRAMES.filter((frame) => frame !== 'instant');
+}
+
+function frameForKey(key, ratio) {
+  const frames = framesForRatio(ratio);
+  return frames[keyHash(key) % frames.length];
+}
+
+function isPhotoRatio(value) {
+  return typeof value === 'string' && Object.hasOwn(PHOTO_RATIOS, value);
+}
+
+// Nearest shape on a log scale, so 2:1 and 1:2 sit as far from square.
+function classifyPhotoRatio(width, height) {
+  if (!(width > 0) || !(height > 0)) return DEFAULT_PHOTO_RATIO;
+  const aspect = Math.log(width / height);
+  let nearest = DEFAULT_PHOTO_RATIO;
+  let nearestDistance = Infinity;
+  for (const [ratio, value] of Object.entries(PHOTO_RATIOS)) {
+    const distance = Math.abs(aspect - Math.log(value));
+    if (distance < nearestDistance) {
+      nearest = ratio;
+      nearestDistance = distance;
+    }
+  }
+  return nearest;
+}
+
+// Reads the EXIF orientation of a JPEG; 1 (upright) when absent or unreadable.
+function jpegOrientation(buffer) {
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return 1;
+  let offset = 2;
+  while (offset + 4 <= buffer.length && buffer[offset] === 0xff) {
+    const marker = buffer[offset + 1];
+    const length = buffer.readUInt16BE(offset + 2);
+    if (marker === 0xda || length < 2) return 1;
+    const start = offset + 4;
+    if (
+      marker === 0xe1 &&
+      start + 14 <= buffer.length &&
+      buffer.toString('ascii', start, start + 4) === 'Exif'
+    ) {
+      return exifOrientation(buffer, start + 6, offset + 2 + length);
+    }
+    offset += 2 + length;
+  }
+  return 1;
+}
+
+function exifOrientation(buffer, tiff, end) {
+  const order = buffer.toString('ascii', tiff, tiff + 2);
+  if (order !== 'II' && order !== 'MM') return 1;
+  const little = order === 'II';
+  const read16 = (at) =>
+    little ? buffer.readUInt16LE(at) : buffer.readUInt16BE(at);
+  const read32 = (at) =>
+    little ? buffer.readUInt32LE(at) : buffer.readUInt32BE(at);
+  const limit = Math.min(end, buffer.length);
+  const ifd = tiff + read32(tiff + 4);
+  if (ifd + 2 > limit) return 1;
+  const count = read16(ifd);
+  for (let index = 0; index < count; index += 1) {
+    const entry = ifd + 2 + index * 12;
+    if (entry + 12 > limit) return 1;
+    if (read16(entry) === 0x0112) {
+      const value = read16(entry + 8);
+      return value >= 1 && value <= 8 ? value : 1;
+    }
+  }
+  return 1;
+}
+
+// Classifies the photo as it is displayed, after any EXIF quarter turn.
+function photoRatioForImage(buffer, image) {
+  const turned =
+    image.extension === '.jpg' &&
+    QUARTER_TURN_ORIENTATIONS.has(jpegOrientation(buffer));
+  return turned
+    ? classifyPhotoRatio(image.height, image.width)
+    : classifyPhotoRatio(image.width, image.height);
 }
 
 function pickStock(stocks, random) {
@@ -79,10 +176,30 @@ const OBJECT_TYPES = Object.freeze({
     sources: new Set(['user']),
     sanitizePayload: (payload, source, key) => {
       if (!isImageFilename(payload?.imageFilename)) return null;
-      const frame = PHOTO_FRAMES.includes(payload.frame)
-        ? payload.frame
-        : frameForKey(key);
-      return { imageFilename: payload.imageFilename, frame };
+      // A missing ratio is measured from the stored image by readManifest.
+      const ratio = isPhotoRatio(payload.ratio) ? payload.ratio : null;
+      const frame =
+        PHOTO_FRAMES.includes(payload.frame) &&
+        (payload.frame !== 'instant' || !ratio || INSTANT_RATIOS.has(ratio))
+          ? payload.frame
+          : frameForKey(key, ratio);
+      const sanitized = { imageFilename: payload.imageFilename, frame, ratio };
+      if (
+        frame === 'instant' &&
+        isBoundedText(payload.label, MAX_PHOTO_LABEL_LENGTH)
+      ) {
+        sanitized.label = payload.label;
+      }
+      if (
+        isBoundedText(payload.caption, MAX_PHOTO_CAPTION_LENGTH) &&
+        payload.caption !== ''
+      ) {
+        sanitized.caption = payload.caption;
+        sanitized.captionPaper = NOTE_PAPERS.includes(payload.captionPaper)
+          ? payload.captionPaper
+          : paperForKey(key);
+      }
+      return sanitized;
     },
   }),
   note: Object.freeze({
@@ -245,6 +362,16 @@ function photoPath(directory, object) {
   );
 }
 
+function measureStoredPhotoRatio(directory, object) {
+  try {
+    const buffer = fs.readFileSync(photoPath(directory, object));
+    const image = inspectArtworkImage(buffer);
+    return image ? photoRatioForImage(buffer, image) : DEFAULT_PHOTO_RATIO;
+  } catch {
+    return DEFAULT_PHOTO_RATIO;
+  }
+}
+
 function samePage(left, right) {
   return left.kind === right.kind && left.id === right.id;
 }
@@ -368,6 +495,16 @@ function readManifest(directory) {
       changed = true;
       continue;
     }
+    // Photos saved before ratios existed are measured once and written back.
+    if (object.type === 'photo' && !object.payload.ratio) {
+      const ratio = measureStoredPhotoRatio(directory, object);
+      const frame =
+        object.payload.frame === 'instant' && !INSTANT_RATIOS.has(ratio)
+          ? frameForKey(object.key, ratio)
+          : object.payload.frame;
+      object.payload = { ...object.payload, ratio, frame };
+      changed = true;
+    }
     // Persist stocks derived for objects saved before they existed.
     if (
       (object.type === 'note' &&
@@ -428,6 +565,12 @@ function projectObject(object) {
       object.payload.imageFilename,
     );
     projection.frame = object.payload.frame;
+    projection.ratio = object.payload.ratio;
+    projection.label = object.payload.label ?? '';
+    projection.caption = object.payload.caption ?? '';
+    if (object.payload.captionPaper) {
+      projection.captionPaper = object.payload.captionPaper;
+    }
   } else if (object.type === 'note' && object.source === 'user') {
     projection.title = object.payload.title;
     projection.text = object.payload.text;
@@ -508,7 +651,7 @@ function readPhotoSource(sourcePath) {
   if (!hasValidArtworkDimensions(image)) {
     throw validationError('The image dimensions are outside supported bounds.');
   }
-  return image;
+  return { ...image, ratio: photoRatioForImage(buffer, image) };
 }
 
 // Builds a new user object on the next bottom-region slot of its page.
@@ -558,11 +701,11 @@ function addFolderPagePhoto(directory, pageValue, sourcePath, options = {}) {
     objects,
     page,
     'photo',
-    { imageFilename },
+    { imageFilename, ratio: image.ratio },
     { ...options, random },
   );
   // Drawn after the pose so existing placement sequences stay stable.
-  photo.payload.frame = pickStock(PHOTO_FRAMES, random);
+  photo.payload.frame = pickStock(framesForRatio(image.ratio), random);
   const targetDirectory = assetDirectory(directory, id);
 
   fs.mkdirSync(targetDirectory, { recursive: true });
@@ -578,6 +721,54 @@ function addFolderPagePhoto(directory, pageValue, sourcePath, options = {}) {
 
 function isNoteTitle(value) {
   return typeof value === 'string' && value.length <= MAX_NOTE_TITLE_LENGTH;
+}
+
+function isBoundedText(value, maxLength) {
+  return typeof value === 'string' && value.length <= maxLength;
+}
+
+// Saves a photo's instant label and caption; the caption paper is drawn once.
+function updateFolderPagePhotoText(
+  directory,
+  pageValue,
+  key,
+  content,
+  options = {},
+) {
+  const page = requirePage(pageValue);
+  if (parseObjectKey(key)?.type !== 'photo') {
+    throw validationError('Invalid page photo.');
+  }
+  const label = content?.label ?? '';
+  const caption = content?.caption ?? '';
+  if (
+    !isBoundedText(label, MAX_PHOTO_LABEL_LENGTH) ||
+    !isBoundedText(caption, MAX_PHOTO_CAPTION_LENGTH)
+  ) {
+    throw validationError('Invalid page photo text.');
+  }
+  const objects = loadObjects(directory);
+  const index = objects.findIndex(
+    (object) => object.key === key && samePage(object.page, page),
+  );
+  if (index < 0) throw validationError('Page photo not found.');
+  const random =
+    typeof options.random === 'function' ? options.random : Math.random;
+  const previous = objects[index].payload;
+  const payload = { ...previous };
+  delete payload.label;
+  delete payload.caption;
+  delete payload.captionPaper;
+  if (payload.frame === 'instant' && label.trim() !== '') payload.label = label;
+  if (caption.trim() !== '') {
+    payload.caption = caption;
+    // Drawn on the first caption and kept while the caption is edited.
+    payload.captionPaper =
+      previous.captionPaper ?? pickStock(NOTE_PAPERS, random);
+  }
+  objects[index] = { ...objects[index], payload };
+  writeManifest(directory, objects);
+  return projectObject(objects[index]);
 }
 
 // A note is created only from saved editor content; empty notes never exist.
@@ -752,8 +943,11 @@ module.exports = {
   FOLDER_PAGE_USER_OBJECT_LIMIT,
   MAX_NOTE_TEXT_LENGTH,
   MAX_NOTE_TITLE_LENGTH,
+  MAX_PHOTO_CAPTION_LENGTH,
+  MAX_PHOTO_LABEL_LENGTH,
   NOTE_PAPERS,
   PHOTO_FRAMES,
+  PHOTO_RATIOS,
   addFolderPageNote,
   addFolderPagePhoto,
   buildFolderPageAssetUrl,
@@ -763,5 +957,6 @@ module.exports = {
   resolveFolderPageAssetPath,
   saveFolderPageLayout,
   updateFolderPageNote,
+  updateFolderPagePhotoText,
   validateFolderPageIdentity,
 };

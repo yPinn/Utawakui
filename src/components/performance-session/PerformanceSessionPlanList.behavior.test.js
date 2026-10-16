@@ -9,17 +9,21 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 import UiChip from '../ui/UiChip.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 
 for (const [component, filename] of [
   [PerformanceSessionPlanList, './PerformanceSessionPlanList.vue'],
   [UiChip, '../ui/UiChip.vue'],
-  [UiContextMenu, '../ui/UiContextMenu.vue'],
+  [UiActionMenu, '../ui/UiActionMenu.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiTooltip, '../ui/UiTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -40,7 +44,9 @@ beforeEach(() => {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     requestAnimationFrame: (callback) => callback(),
+    cancelAnimationFrame: vi.fn(),
     getComputedStyle: () => ({
+      direction: 'ltr',
       fontSize: '16px',
       getPropertyValue: () => '',
     }),
@@ -170,11 +176,17 @@ describe('PerformanceSessionPlanList', () => {
     });
 
     await openItemMenu(mounted.root, '第 1 首「First song」的更多操作');
-    expect(buttonWithText(body, '上移一位').props.disabled).toBe(true);
-    expect(buttonWithText(body, '下移一位').props.disabled).toBe(false);
+    expect(buttonWithText(body, '上移一位').props['aria-disabled']).toBe(
+      'true',
+    );
+    expect(
+      buttonWithText(body, '下移一位').props['aria-disabled'],
+    ).toBeUndefined();
 
     await openItemMenu(mounted.root, '第 3 首「Missing audio」的更多操作');
-    expect(buttonWithText(body, '下移一位').props.disabled).toBe(true);
+    expect(buttonWithText(body, '下移一位').props['aria-disabled']).toBe(
+      'true',
+    );
     mounted.app.unmount();
   });
 

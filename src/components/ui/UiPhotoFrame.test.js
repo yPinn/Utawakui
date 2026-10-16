@@ -62,7 +62,7 @@ describe('UiPhotoFrame', () => {
       /\.ui-photo-frame--filtered \.ui-photo-frame__image\s*\{[^}]*filter:\s*var\(--ui-photo-frame-filter\)/su,
     );
     expect(source).toMatch(
-      /\.ui-photo-frame--intrinsic \.ui-photo-frame__image\s*\{[^}]*inline-size:\s*auto;[^}]*block-size:\s*auto;[^}]*max-inline-size:\s*calc\(\s*var\(--ui-media-max-inline-size\)[\s\S]*?var\(--ui-photo-frame-padding\)[\s\S]*?var\(--ui-border-width\)[\s\S]*?\);[^}]*max-block-size:\s*calc\(\s*var\(--ui-media-max-block-size\)/su,
+      /\.ui-photo-frame--intrinsic \.ui-photo-frame__image\s*\{[^}]*inline-size:\s*auto;[^}]*block-size:\s*auto;[^}]*max-inline-size:\s*calc\(\s*min\(\s*var\(--ui-media-max-inline-size\)[\s\S]*?var\(--ui-photo-frame-padding\)[\s\S]*?var\(--ui-border-width\)[\s\S]*?\);[^}]*max-block-size:\s*calc\(\s*min\(\s*var\(--ui-media-max-block-size\)/su,
     );
   });
 

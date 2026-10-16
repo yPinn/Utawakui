@@ -33,7 +33,8 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(527);
+    expect(names.size).toBe(536);
+    expect(names).toContain('--ui-action-menu-max-block-size');
     expect(names).toContain('--ui-textarea-font-size');
     expect(names).toContain('--ui-textarea-font-weight');
     expect(names).toContain('--ui-textarea-line-height');
@@ -129,7 +130,7 @@ describe('finalized control-panel token system', () => {
       .filter((path) => !path.includes(resolve(root, 'src/components/demo')))
       .filter((path) => readFileSync(path, 'utf8').includes('DemoCandidate'));
 
-    expect(candidateFiles).toHaveLength(17);
+    expect(candidateFiles).toHaveLength(16);
     expect(productionCandidateReferences).toEqual([]);
     expect(readSource('src/views/VisualSystemView.vue')).toContain(
       '<DemoView />',

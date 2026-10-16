@@ -8,12 +8,11 @@ const srcRoot = fileURLToPath(new URL('..', import.meta.url));
 // Shell chrome and teleported overlays are the only global layer owners.
 const GLOBAL_LAYER_OWNERS = new Set([
   'App.vue',
-  'components/demo/DemoCandidateActionMenu.vue',
   'components/output/ObsLookSelect.vue',
   'components/playback/PlayerBar.vue',
   'components/playback/PlayerBarPanel.vue',
   'components/ui/UiCombobox.vue',
-  'components/ui/UiContextMenu.vue',
+  'components/ui/UiActionMenu.vue',
   'components/ui/UiModal.vue',
   'components/ui/UiNotificationHost.vue',
   'components/ui/UiPopover.vue',

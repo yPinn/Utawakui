@@ -10,6 +10,7 @@ const {
   removeFolderPageObject,
   saveFolderPageLayout,
   updateFolderPageNote,
+  updateFolderPagePhotoText,
   validateFolderPageIdentity,
 } = require('../lib/library/folderPageObjects');
 const { listTracks } = require('../lib/library');
@@ -31,6 +32,11 @@ const OPERATION_ERRORS = Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_NOTE_FAILED',
     title: '無法儲存頁面便條',
     message: '這張便條目前無法新增或儲存，請再試一次。',
+  }),
+  photo: Object.freeze({
+    code: 'FOLDER_PAGE_OBJECT_PHOTO_TEXT_FAILED',
+    title: '無法儲存照片文字',
+    message: '這張照片的文字目前無法儲存，請再試一次。',
   }),
   layout: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_LAYOUT_FAILED',
@@ -134,6 +140,7 @@ function registerFolderPageObjectHandlers({
   addPhoto = addFolderPagePhoto,
   addNote = addFolderPageNote,
   updateNote = updateFolderPageNote,
+  updatePhotoText = updateFolderPagePhotoText,
   saveLayout = saveFolderPageLayout,
   removeObject = removeFolderPageObject,
 }) {
@@ -274,6 +281,24 @@ function registerFolderPageObjectHandlers({
           {
             title: intent.title,
             text: intent.text,
+          },
+        ),
+      );
+    },
+  );
+
+  ipcMain.handle(
+    'folder-page-objects:update-photo-text',
+    async (event, intent = {}) => {
+      const { directory, context } = await resolvePage(intent.page, 'photo');
+      return withBoundary('photo', () =>
+        updatePhotoText(
+          directory,
+          objectStoragePage(directory, context, intent.key),
+          intent.key,
+          {
+            label: intent.label,
+            caption: intent.caption,
           },
         ),
       );

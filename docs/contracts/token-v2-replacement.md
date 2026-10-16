@@ -317,16 +317,15 @@ Shared component contract 同時要求：
 
 Vue Teleport 保留 logical component tree，因此 surface provider 可以用 provide／inject 向 primitive 提供 target host；實際 DOM destination 仍必須是 registry 中與 trigger owner 關聯的 overlay surface。
 
-| Primitive／surface        | Pre-activation target | Registered target owner                                                     |
-| ------------------------- | --------------------- | --------------------------------------------------------------------------- |
-| `UiTooltipSurface`        | `body`                | Trigger 所屬 surface 的 overlay host                                        |
-| `UiCombobox`              | `body`                | Trigger 所屬 surface 的 overlay host                                        |
-| `UiContextMenu`           | `body`                | Trigger 所屬 surface 的 overlay host                                        |
-| `UiModal`                 | `body`                | 注入 host 所屬 renderer root 的 overlay host；同一 host 再提供給 modal 內容 |
-| `UiNotificationHost`      | `body`                | App Shell global overlay host                                               |
-| `UiPopover`               | `body`                | Trigger 所屬 surface 的 overlay host                                        |
-| `DemoCandidateActionMenu` | `body`                | F8 specimen surface host                                                    |
-| `DemoCandidateModal`      | `body`                | F8 specimen surface host                                                    |
+| Primitive／surface   | Pre-activation target | Registered target owner                                                     |
+| -------------------- | --------------------- | --------------------------------------------------------------------------- |
+| `UiTooltipSurface`   | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `UiCombobox`         | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `UiActionMenu`       | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `UiModal`            | `body`                | 注入 host 所屬 renderer root 的 overlay host；同一 host 再提供給 modal 內容 |
+| `UiNotificationHost` | `body`                | App Shell global overlay host                                               |
+| `UiPopover`          | `body`                | Trigger 所屬 surface 的 overlay host                                        |
+| `DemoCandidateModal` | `body`                | F8 specimen surface host                                                    |
 
 Host resolver 由 renderer／surface composition 提供，primitive 內部解析，不要求每個 caller 傳 DOM selector。常駐掛載的 overlay primitive 必須使用 `<Teleport defer>`（或只在開啟時掛載 Teleport）：feature 與其 surface host 常在同一輪 mount，host 尚未插入 document，未 defer 的 Teleport 會保留 null target，首次開啟即讓 Vue patch 崩潰；`overlayTeleportDefer.test.js` 守住此規則。Host 必須在 overlay 開啟前存在，帶有自己的 `data-ui-surface`／`data-ui-system` registry identity，並保留 viewport escape、focus trap／return、dismissal、stack order 與既有 module-level modal ordering。Production primitive 不得在 host 缺失時靜默回退 `body`；測試 harness 如需 fallback，必須顯式註冊。Global shell notification／menu 與 feature modal 可以使用不同 host，但同一 overlay stack 的 z-order 規則只有一份。
 

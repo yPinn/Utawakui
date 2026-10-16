@@ -33,7 +33,7 @@ import SeparationGpuSettingsRow from '../components/settings/SeparationGpuSettin
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
-import UiContextMenu from '../components/ui/UiContextMenu.vue';
+import UiActionMenu from '../components/ui/UiActionMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiIconButton from '../components/ui/UiIconButton.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
@@ -165,16 +165,36 @@ const downloadDirUnavailableMessage = computed(() =>
 // menu but isn't a dependency workflow item.
 const isDownloadDirMenuOpen = shallowRef(false);
 const downloadDirMenuAnchorEl = shallowRef(null);
-const downloadDirMenuItems = computed(() => [
-  { id: 'choose', icon: FolderOpen, label: '選擇其他資料夾', value: 'choose' },
-  {
-    id: 'reset',
-    icon: RotateCcw,
-    label: '還原預設資料夾',
-    value: 'reset',
-    disabled: importState.isDefaultDir,
-  },
-]);
+const downloadDirMenuAnchor = computed(() => ({
+  kind: 'element',
+  element: downloadDirMenuAnchorEl.value,
+}));
+const downloadDirMenuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'directory',
+      items: [
+        {
+          id: 'choose',
+          kind: 'action',
+          icon: FolderOpen,
+          label: '選擇其他資料夾',
+          value: 'choose',
+        },
+        {
+          id: 'reset',
+          kind: 'action',
+          icon: RotateCcw,
+          label: '還原預設資料夾',
+          value: 'reset',
+          disabled: importState.isDefaultDir,
+        },
+      ],
+    },
+  ],
+  emptyText: '沒有可用的操作',
+}));
 
 function openCommunityDiscord() {
   window.Utawakui?.openExternalTarget?.('community-discord');
@@ -586,12 +606,11 @@ onUnmounted(() => {
                 :aria-expanded="isDownloadDirMenuOpen ? 'true' : 'false'"
                 @click="openDownloadDirMenu"
               />
-              <UiContextMenu
+              <UiActionMenu
                 :open="isDownloadDirMenuOpen"
-                :anchor-el="downloadDirMenuAnchorEl"
-                :width="184"
-                :items="downloadDirMenuItems"
-                empty-text="沒有可用的操作"
+                :anchor="downloadDirMenuAnchor"
+                size="sm"
+                :content="downloadDirMenuContent"
                 @select="handleDownloadDirMenuSelect"
                 @close="closeDownloadDirMenu"
               />

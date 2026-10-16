@@ -47,11 +47,26 @@ const props = defineProps({
     default: 0,
     validator: (value) => Number.isInteger(value) && value >= 0 && value < 4,
   },
-  // Photo print stock; archival restates the shared photo-frame tokens.
+  // Photo print stock and shape; UiPhotoFrame owns their materials.
   frame: {
     type: String,
     default: 'print',
-    validator: (value) => ['print', 'archival'].includes(value),
+    validator: (value) => ['print', 'archival', 'instant'].includes(value),
+  },
+  ratio: {
+    type: String,
+    default: 'landscape',
+    validator: (value) =>
+      ['landscape', 'portrait', 'square', 'wide', 'tall'].includes(value),
+  },
+  // Instant film's short line, and the paper of a caption shown on expand.
+  label: { type: String, default: '' },
+  labelLang: { type: String, default: undefined },
+  captionPaper: {
+    type: String,
+    default: '',
+    validator: (value) =>
+      ['', 'periwinkle', 'rose', 'canary', 'kraft', 'ruled'].includes(value),
   },
   titleLang: { type: String, default: undefined },
   // Decoration chosen by the caller from the object's key, never at random.
@@ -168,6 +183,7 @@ function handleStackLayerKeydown(layer, event) {
     :data-paper-texture="kind === 'note' ? texture : undefined"
     :data-paper="kind === 'note' ? paper : undefined"
     :data-photo-frame="kind === 'photo' ? frame : undefined"
+    :data-photo-ratio="kind === 'photo' ? ratio : undefined"
     :data-stationery="stationery === 'none' ? undefined : stationery"
     :data-stationery-side="stationery === 'torn' ? stationerySide : undefined"
     :style="stationery === 'none' ? undefined : stationeryStyle"
@@ -200,7 +216,24 @@ function handleStackLayerKeydown(layer, event) {
       ></span>
     </template>
     <template v-if="kind === 'photo'">
-      <UiPhotoFrame v-if="src" :src="src" :alt="alt" fit="cover" filtered />
+      <!-- A caption note tucked behind the print; its text shows on expand. -->
+      <span
+        v-if="captionPaper"
+        class="ui-folder-artifact__caption-corner"
+        :data-caption-paper="captionPaper"
+        aria-hidden="true"
+      ></span>
+      <UiPhotoFrame
+        v-if="src"
+        :src="src"
+        :alt="alt"
+        fit="cover"
+        filtered
+        :frame="frame"
+        :ratio="ratio"
+        :label="label"
+        :label-lang="labelLang"
+      />
       <slot v-else></slot>
       <p v-if="caption">{{ caption }}</p>
     </template>
@@ -297,6 +330,59 @@ function handleStackLayerKeydown(layer, event) {
   width: var(--ui-folder-artifact-photo-width);
 }
 
+.ui-folder-artifact--photo[data-photo-ratio='portrait'] {
+  width: var(--ui-folder-artifact-photo-width-portrait);
+}
+
+.ui-folder-artifact--photo[data-photo-ratio='square'] {
+  width: var(--ui-folder-artifact-photo-width-square);
+}
+
+.ui-folder-artifact--photo[data-photo-ratio='wide'] {
+  width: var(--ui-folder-artifact-photo-width-wide);
+}
+
+.ui-folder-artifact--photo[data-photo-ratio='tall'] {
+  width: var(--ui-folder-artifact-photo-width-tall);
+}
+
+/* Only a paper corner peeks out from behind the print's lower end corner. */
+.ui-folder-artifact__caption-corner {
+  position: absolute;
+  z-index: var(--ui-layer-behind);
+  inset-inline-end: calc(var(--ui-space-3) * -1);
+  inset-block-end: calc(var(--ui-space-2) * -1);
+  inline-size: var(--ui-space-7);
+  block-size: var(--ui-space-6);
+  background: var(--ui-folder-artifact-caption-paper);
+  box-shadow: var(--ui-folder-artifact-shadow);
+  opacity: var(--ui-folder-artifact-note-opacity);
+  transform: rotate(6deg);
+  pointer-events: none;
+}
+
+[data-caption-paper='periwinkle'] {
+  --ui-folder-artifact-caption-paper: var(
+    --ui-folder-artifact-paper-periwinkle
+  );
+}
+
+[data-caption-paper='rose'] {
+  --ui-folder-artifact-caption-paper: var(--ui-folder-artifact-paper-rose);
+}
+
+[data-caption-paper='canary'] {
+  --ui-folder-artifact-caption-paper: var(--ui-folder-artifact-paper-canary);
+}
+
+[data-caption-paper='kraft'] {
+  --ui-folder-artifact-caption-paper: var(--ui-folder-artifact-paper-kraft);
+}
+
+[data-caption-paper='ruled'] {
+  --ui-folder-artifact-caption-paper: var(--ui-folder-artifact-paper-ruled);
+}
+
 /* Stationery rides on the artifact, stays inert and avoids the pin corner. */
 .ui-folder-artifact__stationery {
   position: absolute;
@@ -356,14 +442,6 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact--note[data-stationery-side='top'] {
   padding-block-start: calc(var(--ui-space-5) + var(--ui-space-3));
-}
-
-/* A dark archival print: same frame mechanics, restated tokens only. */
-.ui-folder-artifact--photo[data-photo-frame='archival'] {
-  --ui-photo-frame-padding: var(--ui-space-1);
-  --ui-photo-frame-bg: var(--ui-photo-frame-archival-bg);
-  --ui-photo-frame-border-color: var(--ui-photo-frame-archival-border-color);
-  --ui-photo-frame-filter: grayscale(0.85) contrast(1.05);
 }
 
 .ui-folder-artifact--photo > p {

@@ -1,5 +1,5 @@
 <script setup>
-import { shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import {
   Ellipsis,
   GalleryVerticalEnd,
@@ -7,7 +7,7 @@ import {
   Shuffle,
 } from '../../icons/index.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import TrackListDensityMenu from '../track/TrackListDensityMenu.vue';
@@ -23,7 +23,10 @@ const props = defineProps({
   // Set while recording／live: the preview would be silent, so it backs off.
   previewBlockedReason: { type: String, default: '' },
   entityAction: { type: Object, default: null },
-  moreItems: { type: Array, default: () => [] },
+  moreContent: {
+    type: Object,
+    default: () => ({ kind: 'actions', groups: [] }),
+  },
   showSearch: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
   density: {
@@ -46,6 +49,10 @@ const emit = defineEmits([
 
 const activeMenu = shallowRef(null);
 const menuAnchorEl = shallowRef(null);
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuAnchorEl.value,
+}));
 
 function openMenu(event, kind) {
   event.stopPropagation();
@@ -59,12 +66,22 @@ function closeMenu() {
 }
 
 function activateEntityAction(event) {
-  if (props.entityAction?.menuItems?.length) {
+  if (props.entityAction?.menuContent) {
     openMenu(event, 'entity');
     return;
   }
   emit('entityAction');
 }
+
+const activeContent = computed(() =>
+  activeMenu.value === 'entity'
+    ? (props.entityAction?.menuContent ?? { kind: 'actions', groups: [] })
+    : props.moreContent,
+);
+
+const hasMoreActions = computed(() =>
+  props.moreContent.groups?.some((group) => group.items?.length),
+);
 
 function selectMenuAction(value) {
   closeMenu();
@@ -112,9 +129,9 @@ function selectMenuAction(value) {
         :icon="entityAction.icon"
         :disabled="entityAction.disabled"
         :label="entityAction.label"
-        :aria-haspopup="entityAction.menuItems?.length ? 'menu' : undefined"
+        :aria-haspopup="entityAction.menuContent ? 'menu' : undefined"
         :aria-expanded="
-          entityAction.menuItems?.length
+          entityAction.menuContent
             ? activeMenu === 'entity'
               ? 'true'
               : 'false'
@@ -123,7 +140,7 @@ function selectMenuAction(value) {
         @click="activateEntityAction"
       />
       <UiIconButton
-        v-if="moreItems.length"
+        v-if="hasMoreActions"
         :icon="Ellipsis"
         :label="`${entityLabel}的更多操作`"
         aria-haspopup="menu"
@@ -146,14 +163,12 @@ function selectMenuAction(value) {
       />
     </div>
 
-    <UiContextMenu
+    <UiActionMenu
       :open="Boolean(activeMenu)"
-      :anchor-el="menuAnchorEl"
-      :width="224"
+      :anchor="menuAnchor"
+      size="md"
       :aria-label="`${entityLabel}操作`"
-      :items="
-        activeMenu === 'entity' ? (entityAction?.menuItems ?? []) : moreItems
-      "
+      :content="activeContent"
       @select="selectMenuAction"
       @close="closeMenu"
     />

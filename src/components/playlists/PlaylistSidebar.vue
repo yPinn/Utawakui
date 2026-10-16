@@ -28,7 +28,7 @@ import {
   addToPlaylistMenuItem,
   collectionManageMenuItems,
 } from '../../utils/collectionMenuItems.js';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
@@ -274,39 +274,45 @@ const hasVisibleCollectionItems = computed(
 const menuContext = ref(null);
 
 const isMenuOpen = computed(() => Boolean(menuContext.value));
-const menuX = computed(() => menuContext.value?.x ?? 0);
-const menuY = computed(() => menuContext.value?.y ?? 0);
 
 function createCollectionItems() {
   return [
     {
-      key: 'create-playlist',
+      id: 'create-playlist',
+      kind: 'action',
       label: '建立播放清單',
       icon: ListPlus,
       value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
     },
     {
-      key: 'create-folder',
+      id: 'create-folder',
+      kind: 'action',
       label: '建立資料夾',
       icon: FolderPlus,
-      status: '尚未支援',
+      disabledReason: '尚未支援',
       disabled: true,
       value: { action: PLAYLIST_MENU_ACTIONS.createFolder },
     },
   ];
 }
 
-const menuItems = computed(() => {
+const menuContent = computed(() => {
   const context = menuContext.value;
-  if (!context) return [];
-  if (context.kind === 'global') return createCollectionItems();
+  if (!context) return { kind: 'actions', groups: [] };
+  if (context.kind === 'global') {
+    return {
+      kind: 'actions',
+      groups: [{ id: 'create', items: createCollectionItems() }],
+    };
+  }
 
   const playlist = context.playlist;
   const isAlbum = playlist.kind === 'album';
 
-  const items = [
+  const primaryItems = [
     {
-      key: 'add-to-queue',
+      id: 'add-to-queue',
+      kind: 'action',
       label: '新增至佇列',
       icon: ListEnd,
       disabled: playlist.trackIds.length === 0,
@@ -317,32 +323,27 @@ const menuItems = computed(() => {
     },
   ];
 
-  // Only offered when there's something to add — UiContextMenu opens a
-  // submenu on hover regardless of `disabled`, so an empty collection omits
-  // `children` entirely rather than showing a disabled trigger that still
-  // pops an empty submenu.
+  // Empty collections omit the destination submenu because they contribute
+  // no tracks to another playlist.
   if (playlist.trackIds.length > 0) {
-    items.push(
+    primaryItems.push(
       addToPlaylistMenuItem(state.playlists, playlist, '新增至別的播放清單'),
     );
   }
 
-  items.push(
-    { key: 'manage-divider', separator: true },
-    ...collectionManageMenuItems(playlist),
-  );
+  const groups = [
+    { id: 'primary', items: primaryItems },
+    { id: 'manage', items: collectionManageMenuItems(playlist) },
+  ];
 
   // Global "create a new one" actions, unrelated to the specific row being
   // right-clicked — scoped to playlists only, matching the Spotify
   // reference (its album menu doesn't offer these either).
   if (!isAlbum) {
-    items.push(
-      { key: 'create-divider', separator: true },
-      ...createCollectionItems(),
-    );
+    groups.push({ id: 'create', items: createCollectionItems() });
   }
 
-  return items;
+  return { kind: 'actions', groups };
 });
 
 function openMenuAt(event, context) {
@@ -350,8 +351,7 @@ function openMenuAt(event, context) {
   event.stopPropagation();
   menuContext.value = {
     ...context,
-    x: event.clientX,
-    y: event.clientY,
+    anchor: { kind: 'point', x: event.clientX, y: event.clientY },
   };
 }
 
@@ -633,11 +633,10 @@ function startDrag(playlist, event) {
       </div>
     </UiScrollLayout>
 
-    <UiContextMenu
+    <UiActionMenu
       :open="isMenuOpen"
-      :x="menuX"
-      :y="menuY"
-      :items="menuItems"
+      :anchor="menuContext?.anchor"
+      :content="menuContent"
       @select="handleMenuSelect"
       @close="closePlaylistMenu"
     />

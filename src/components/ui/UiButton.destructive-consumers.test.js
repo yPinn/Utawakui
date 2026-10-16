@@ -44,7 +44,7 @@ describe('UiButton destructive consumers', () => {
   it('keeps library track deletion in the shared danger menu with confirmation in Setlist', () => {
     const trackMenu = source('../track/TrackActionMenu.vue');
     expect(trackMenu).toMatch(
-      /key: 'delete-track',[\s\S]*?danger: true,[\s\S]*?action: TRACK_MENU_ACTIONS\.deleteTrack/u,
+      /id: 'delete-track',[\s\S]*?intent: 'danger',[\s\S]*?action: TRACK_MENU_ACTIONS\.deleteTrack/u,
     );
     const setlist = source('../library/LibraryBrowseContent.vue');
     expect(setlist).toContain('TRACK_MENU_ACTIONS.deleteTrack');
@@ -55,7 +55,7 @@ describe('UiButton destructive consumers', () => {
   it('keeps collection deletion in a danger menu item with confirmation in its action owner', () => {
     const collectionMenu = source('../../utils/collectionMenuItems.js');
     expect(collectionMenu).toMatch(
-      /key: 'delete',[\s\S]*?danger: true,[\s\S]*?action: PLAYLIST_MENU_ACTIONS\.delete/u,
+      /id: 'delete',[\s\S]*?intent: 'danger',[\s\S]*?action: PLAYLIST_MENU_ACTIONS\.delete/u,
     );
     const playlistActions = source('../../composables/usePlaylistActions.js');
     expect(playlistActions).toContain('useAppConfirmation');

@@ -8,7 +8,7 @@ import {
   Trash2,
 } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 
 const props = defineProps({
@@ -29,39 +29,63 @@ const activeMenuItem = computed(() =>
 const activeMenuIndex = computed(() =>
   props.items.findIndex((item) => item.itemId === menuItemId.value),
 );
-const menuItems = computed(() => [
-  {
-    label: '上移一位',
-    value: 'move-up',
-    icon: ChevronUp,
-    status: 'Alt+↑',
-    disabled: props.saving || activeMenuIndex.value <= 0,
-  },
-  {
-    label: '下移一位',
-    value: 'move-down',
-    icon: ChevronDown,
-    status: 'Alt+↓',
-    disabled:
-      props.saving ||
-      activeMenuIndex.value < 0 ||
-      activeMenuIndex.value >= props.items.length - 1,
-  },
-  { separator: true },
-  {
-    label: '複製待唱項目',
-    value: 'duplicate',
-    icon: Copy,
-    disabled: props.saving || !activeMenuItem.value,
-  },
-  {
-    label: '從待唱移除',
-    value: 'remove',
-    icon: Trash2,
-    danger: true,
-    disabled: props.saving || !activeMenuItem.value,
-  },
-]);
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuAnchorEl.value,
+}));
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'reorder',
+      items: [
+        {
+          id: 'move-up',
+          kind: 'action',
+          label: '上移一位',
+          value: 'move-up',
+          icon: ChevronUp,
+          shortcut: 'Alt+↑',
+          disabled: props.saving || activeMenuIndex.value <= 0,
+        },
+        {
+          id: 'move-down',
+          kind: 'action',
+          label: '下移一位',
+          value: 'move-down',
+          icon: ChevronDown,
+          shortcut: 'Alt+↓',
+          disabled:
+            props.saving ||
+            activeMenuIndex.value < 0 ||
+            activeMenuIndex.value >= props.items.length - 1,
+        },
+      ],
+    },
+    {
+      id: 'manage',
+      items: [
+        {
+          id: 'duplicate',
+          kind: 'action',
+          label: '複製待唱項目',
+          value: 'duplicate',
+          icon: Copy,
+          disabled: props.saving || !activeMenuItem.value,
+        },
+        {
+          id: 'remove',
+          kind: 'action',
+          label: '從待唱移除',
+          value: 'remove',
+          icon: Trash2,
+          intent: 'danger',
+          disabled: props.saving || !activeMenuItem.value,
+        },
+      ],
+    },
+  ],
+}));
 
 const STATUS_PRESENTATION = Object.freeze({
   ready: null,
@@ -186,14 +210,14 @@ watch(
     </li>
   </ol>
 
-  <UiContextMenu
+  <UiActionMenu
     :open="menuOpen"
-    :anchor-el="menuAnchorEl"
-    :width="208"
+    :anchor="menuAnchor"
+    size="md"
     :aria-label="
       activeMenuIndex >= 0 ? `第 ${activeMenuIndex + 1} 首操作` : '待唱操作'
     "
-    :items="menuItems"
+    :content="menuContent"
     @select="handleMenuSelect"
     @close="closeMenu"
   />

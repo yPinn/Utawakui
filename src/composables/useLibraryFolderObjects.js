@@ -270,6 +270,37 @@ export function createLibraryFolderObjects(options = {}) {
     }
   }
 
+  // Main picks the caption paper, so the saved projection replaces the photo.
+  async function updatePhotoText(key, content) {
+    const label = content?.label ?? '';
+    const caption = content?.caption ?? '';
+    if (
+      !page.value ||
+      typeof label !== 'string' ||
+      typeof caption !== 'string' ||
+      typeof bridge?.updateFolderPagePhotoText !== 'function'
+    ) {
+      return false;
+    }
+    const activePage = { ...page.value };
+    try {
+      const photo = await bridge.updateFolderPagePhotoText({
+        page: activePage,
+        key,
+        label,
+        caption,
+      });
+      if (!isActivePage(activePage) || photo?.key !== key) return false;
+      objects.value = objects.value.map((object) =>
+        object.key === key ? { ...object, ...photo } : object,
+      );
+      return true;
+    } catch {
+      state.error = '目前無法儲存照片文字。';
+      return false;
+    }
+  }
+
   async function remove(key) {
     if (
       !page.value ||
@@ -324,6 +355,7 @@ export function createLibraryFolderObjects(options = {}) {
     addPhoto,
     addNote,
     updateNote,
+    updatePhotoText,
     saveLayout,
     remove,
     flush,

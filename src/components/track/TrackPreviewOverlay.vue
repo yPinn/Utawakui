@@ -145,13 +145,13 @@ function closeMenu() {
 // mounts mid-dispatch, does not read it as an outside click and close.
 function openMenu(event) {
   event.stopPropagation();
-  menu.value = { anchorEl: event.currentTarget, x: 0, y: 0 };
+  menu.value = { kind: 'element', element: event.currentTarget };
 }
 
 function openMenuAtPointer(event) {
   event.preventDefault();
   event.stopPropagation();
-  menu.value = { anchorEl: null, x: event.clientX, y: event.clientY };
+  menu.value = { kind: 'point', x: event.clientX, y: event.clientY };
 }
 
 function selectMenuAction(value) {
@@ -388,7 +388,7 @@ onUnmounted(() => setKeyboardListener(false));
               :icon="Ellipsis"
               label="更多操作"
               aria-haspopup="menu"
-              :aria-expanded="menu?.anchorEl ? 'true' : 'false'"
+              :aria-expanded="menu?.kind === 'element' ? 'true' : 'false'"
               @click="openMenu"
             />
             <UiIconButton
@@ -429,9 +429,7 @@ onUnmounted(() => setKeyboardListener(false));
       <TrackActionMenu
         v-if="menu"
         :open="Boolean(menu)"
-        :anchor-el="menu.anchorEl"
-        :x="menu.x"
-        :y="menu.y"
+        :anchor="menu"
         :track="track"
         :playlists="playlists"
         :current-track-id="currentTrackId"

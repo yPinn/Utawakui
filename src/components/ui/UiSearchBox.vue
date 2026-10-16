@@ -2,7 +2,7 @@
 // Track-search input — was duplicated once per Library browse layout branch
 // (playlist toolbar vs. all-tracks page header). v-model owns clearing too,
 // so callers don't need a separate clear handler.
-import { computed, useAttrs, useId } from 'vue';
+import { computed, useAttrs, useId, useTemplateRef } from 'vue';
 import { ICON_SIZE, Search, X } from '../../icons/index.js';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiTooltip from './UiTooltip.vue';
@@ -21,10 +21,17 @@ const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
 const generatedId = useId();
 const controlId = computed(() => props.id || `ui-search-${generatedId}`);
+const inputRef = useTemplateRef('input');
 
 function clear() {
   if (!props.disabled) emit('update:modelValue', '');
 }
+
+function focus() {
+  inputRef.value?.focus();
+}
+
+defineExpose({ focus });
 </script>
 
 <template>
@@ -40,8 +47,9 @@ function clear() {
         aria-hidden="true"
       />
       <input
-        v-bind="nativeControlAttrs(attrs)"
         :id="controlId"
+        ref="input"
+        v-bind="nativeControlAttrs(attrs)"
         :value="modelValue"
         class="ui-search-box__input"
         type="search"

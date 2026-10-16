@@ -633,9 +633,10 @@ describe('UiFolderArtifact', () => {
       }),
     );
     expect(html).toContain('data-photo-frame="archival"');
-    const rule = artifactSource.slice(
-      artifactSource.indexOf(
-        ".ui-folder-artifact--photo[data-photo-frame='archival'] {",
+    // The frame owns its stocks so the expanded preview prints the same.
+    const rule = photoFrameSource.slice(
+      photoFrameSource.indexOf(
+        ".ui-photo-frame[data-photo-frame='archival'] {",
       ),
     );
     expect(rule).toMatch(
@@ -643,6 +644,89 @@ describe('UiFolderArtifact', () => {
     );
     expect(rule).toMatch(
       /^[^}]*--ui-photo-frame-border-color: var\(--ui-photo-frame-archival-border-color\);/u,
+    );
+    expect(artifactSource).not.toContain("[data-photo-frame='archival']");
+  });
+
+  it('writes instant film text in the margin and tucks a caption corner behind', async () => {
+    const render = (props) =>
+      renderToString(
+        createSSRApp({
+          render: () =>
+            h(UiFolderArtifact, { kind: 'photo', src: '/photo.jpg', ...props }),
+        }),
+      );
+    const instant = await render({
+      frame: 'instant',
+      label: '2024 夏',
+      captionPaper: 'rose',
+    });
+    // "2024 " is five 0.6 units and 夏 one full unit.
+    expect(instant).toMatch(
+      /<figcaption class="ui-photo-frame__label" style="--ui-photo-frame-label-units:4\.00;"[^>]*><span class="ui-photo-frame__label-text"[^>]*>2024 夏/u,
+    );
+    const long = await render({
+      frame: 'instant',
+      label: '第一次在小酒館唱這首歌的夜晚好',
+    });
+    expect(long).toContain('--ui-photo-frame-label-units:15.00;');
+    expect(photoFrameSource).toMatch(
+      /\.ui-photo-frame__label-text \{[^}]*font-family: var\(--ui-font-family-display\);[^}]*calc\(96cqi \/ var\(--ui-photo-frame-label-units\)\)[^}]*font-weight: var\(--ui-type-display-weight\);/su,
+    );
+    expect(instant).toMatch(
+      /class="ui-folder-artifact__caption-corner" data-caption-paper="rose" aria-hidden="true"/u,
+    );
+    // Print stock has no margin to write on, and no caption means no corner.
+    const print = await render({ frame: 'print', label: '2024 夏' });
+    expect(print).not.toContain('ui-photo-frame__label');
+    expect(print).not.toContain('caption-corner');
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__caption-corner \{[^}]*z-index: var\(--ui-layer-behind\);[^}]*pointer-events: none;/su,
+    );
+  });
+
+  it('expands each stock at its real-world size relation, never past the image', () => {
+    expect(photoFrameSource).toMatch(
+      /\.ui-photo-frame \{[^}]*--ui-photo-frame-expanded-scale: 1;/su,
+    );
+    // Instant film is a small object: enlarged, but only so far.
+    expect(photoFrameSource).toMatch(
+      /\[data-photo-frame='instant'\] \{[^}]*--ui-photo-frame-expanded-max-size: var\(\s*--ui-photo-frame-instant-expanded-max-size\s*\);/su,
+    );
+    const intrinsic = photoFrameSource.slice(
+      photoFrameSource.indexOf(
+        '.ui-photo-frame--intrinsic .ui-photo-frame__image {',
+      ),
+    );
+    expect(intrinsic).toMatch(
+      /^[^}]*inline-size: auto;[^}]*min\(\s*var\(--ui-media-max-inline-size\) \* var\(--ui-photo-frame-expanded-scale\),\s*var\(--ui-photo-frame-expanded-max-size\)\s*\)[^}]*min\(\s*var\(--ui-media-max-block-size\) \* var\(--ui-photo-frame-expanded-scale\),\s*var\(--ui-photo-frame-expanded-max-size\)\s*\)/su,
+    );
+  });
+
+  it('sizes each print shape to a shared image area and crops to it', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(UiFolderArtifact, {
+            kind: 'photo',
+            src: '/photo.jpg',
+            frame: 'instant',
+            ratio: 'portrait',
+          }),
+      }),
+    );
+    expect(html.match(/data-photo-ratio="portrait"/gu)).toHaveLength(2);
+    expect(html.match(/data-photo-frame="instant"/gu)).toHaveLength(2);
+    for (const ratio of ['portrait', 'square', 'wide', 'tall']) {
+      expect(artifactSource).toContain(
+        `width: var(--ui-folder-artifact-photo-width-${ratio});`,
+      );
+    }
+    expect(photoFrameSource).toMatch(
+      /\[data-photo-ratio='tall'\] \.ui-photo-frame__image \{\s*aspect-ratio: 9 \/ 16;/u,
+    );
+    expect(photoFrameSource).toMatch(
+      /\[data-photo-frame='instant'\] \{\s*--ui-photo-frame-padding-block-end: var\(\s*--ui-photo-frame-instant-padding-block-end\s*\);/u,
     );
   });
 });

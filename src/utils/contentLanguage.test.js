@@ -36,6 +36,12 @@ describe('detectContentLanguage', () => {
     expect(detectContentLanguage('会社')).toBe('zh-Hant');
   });
 
+  it('treats the katakana middle dot as punctuation, not kana', () => {
+    expect(detectContentLanguage('2024 夏・台北')).toBe('zh-Hant');
+    expect(detectContentLanguage('周杰倫・五月天')).toBe('zh-Hant');
+    expect(detectContentLanguage('ヨルシカ・n-buna')).toBe('ja');
+  });
+
   it('judges related fields together', () => {
     expect(detectContentLanguage('紅蓮華')).toBe('zh-Hant');
     expect(detectContentLanguage('紅蓮華', 'LiSA', 'ストロングワールド')).toBe(

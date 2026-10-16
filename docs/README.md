@@ -59,7 +59,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Local library、playback、queue、playlists、可發聲節拍器、App CPU／RAM 顯示與
   Windows shell integration 已是預設核心；首次按 X 會詢問背景執行或退出，且可記住選擇，
   Settings 也能改回每次詢問。
-- Setlist 已有獨立的場次準備 workspace：可從 playlist／album 建立 current draft、逐曲連結與
+- 演唱工具「待唱安排」是場次準備 workspace：可從 playlist／album 建立 current draft、逐曲連結與
   驗證 session-local 名稱、貼上臨時曲目並在重啟後恢復。BGM monitor 基礎 slice 已加入本機
   曲庫清單、獨立右側 BGM player 與演唱播放器互斥交接；app-owned OBS capture、場次
   confirmed-playing snapshot／公開投影仍是下一階段。

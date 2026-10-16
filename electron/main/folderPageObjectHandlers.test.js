@@ -60,6 +60,7 @@ function register(overrides = {}) {
     addPhoto: vi.fn(() => photo()),
     addNote: vi.fn(() => ({ key: 'note:note-1', type: 'note', text: '' })),
     updateNote: vi.fn(() => ({ key: 'note:note-1', text: '備忘' })),
+    updatePhotoText: vi.fn(() => photo({ caption: '說明' })),
     saveLayout: vi.fn(() => [photo({ pinned: true })]),
     removeObject: vi.fn(() => true),
     ...overrides,
@@ -76,6 +77,7 @@ describe('registerFolderPageObjectHandlers', () => {
       'folder-page-objects:choose-photo',
       'folder-page-objects:create-note',
       'folder-page-objects:update-note',
+      'folder-page-objects:update-photo-text',
       'folder-page-objects:save-layout',
       'folder-page-objects:remove',
     ]);
@@ -154,6 +156,19 @@ describe('registerFolderPageObjectHandlers', () => {
       chinese,
       chineseNote.key,
       { title: '', text: '更新' },
+    );
+
+    await handlers.get('folder-page-objects:update-photo-text')(null, {
+      page: stable,
+      key: englishPhoto.key,
+      label: '夏',
+      caption: '說明',
+    });
+    expect(dependencies.updatePhotoText).toHaveBeenCalledWith(
+      'library-dir',
+      english,
+      englishPhoto.key,
+      { label: '夏', caption: '說明' },
     );
   });
 

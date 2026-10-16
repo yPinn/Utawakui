@@ -108,7 +108,7 @@ describe('SeparationToolbarList', () => {
       "import { useDragReorder } from '../../composables/useDragReorder.js'",
     );
     expect(source).toContain(
-      "import UiContextMenu from '../ui/UiContextMenu.vue'",
+      "import UiActionMenu from '../ui/UiActionMenu.vue'",
     );
     expect(source).toContain(
       "import AppRightDockSection from '../layout/AppRightDockSection.vue'",
@@ -125,7 +125,7 @@ describe('SeparationToolbarList', () => {
     );
     const completedSection = source.slice(
       source.indexOf('v-if="completedItemsNewestFirst.length > 0"'),
-      source.indexOf('<UiContextMenu'),
+      source.indexOf('<UiActionMenu'),
     );
     expect(pendingSection).toContain(':icon="ListMinus"');
     expect(pendingSection).toContain('label="清除待處理"');
@@ -145,7 +145,7 @@ describe('SeparationToolbarList', () => {
     expect(source).toContain('@dragover="updatePendingDropTarget');
     expect(source).toContain('@drop="dropPendingItem');
     expect(source).toContain('separation-toolbar-list__drop-indicator');
-    expect(source).toContain('<UiContextMenu');
+    expect(source).toContain('<UiActionMenu');
     expect(source).toContain("label: '移除',");
     expect(source).toContain("emit('move', itemId, offset)");
     expect(source).toContain("emit('remove', item.itemId)");

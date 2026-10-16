@@ -59,9 +59,13 @@ function openTrackMenu(event) {
   event?.stopPropagation?.();
   const fromButton = event?.type === 'click';
   trackMenu.value = {
-    anchorEl: fromButton ? (event.currentTarget ?? null) : null,
-    x: fromButton ? 0 : (event?.clientX ?? 0),
-    y: fromButton ? 0 : (event?.clientY ?? 0),
+    anchor: fromButton
+      ? { kind: 'element', element: event.currentTarget ?? null }
+      : {
+          kind: 'point',
+          x: event?.clientX ?? 0,
+          y: event?.clientY ?? 0,
+        },
   };
   emit('openChange', true);
 }
@@ -123,9 +127,7 @@ async function handleTrackMenuSelect(value) {
     <TrackActionMenu
       v-if="trackMenu"
       :open="Boolean(trackMenu)"
-      :anchor-el="trackMenu?.anchorEl ?? null"
-      :x="trackMenu?.x ?? 0"
-      :y="trackMenu?.y ?? 0"
+      :anchor="trackMenu.anchor"
       :track="track"
       :context="context"
       :playlists="playlistState.playlists"

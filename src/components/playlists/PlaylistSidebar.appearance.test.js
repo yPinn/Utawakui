@@ -49,7 +49,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).toContain("label: '建立播放清單'");
     expect(source).toContain("label: '建立資料夾'");
     expect(source).toMatch(
-      /label: '建立資料夾',[\s\S]*?status: '尚未支援',[\s\S]*?disabled: true,/u,
+      /label: '建立資料夾',[\s\S]*?disabledReason: '尚未支援',[\s\S]*?disabled: true,/u,
     );
   });
 

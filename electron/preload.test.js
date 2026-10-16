@@ -67,6 +67,7 @@ const MAIN_INVOKE_CHANNELS = [
   'folder-page-objects:remove',
   'folder-page-objects:save-layout',
   'folder-page-objects:update-note',
+  'folder-page-objects:update-photo-text',
   'import:resolve-source',
   'library:apply-artist-identity-candidate',
   'library:apply-artist-photo-candidate',
@@ -559,6 +560,22 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'folder-page-objects:update-note',
       { page, key: 'note:note-1', title: '', text: '' },
+    );
+    bridge.updateFolderPagePhotoText({
+      page,
+      key: 'photo:asset-1',
+      label: 'l'.repeat(30),
+      caption: 'c'.repeat(120),
+      sourcePath: 'private.png',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'folder-page-objects:update-photo-text',
+      {
+        page,
+        key: 'photo:asset-1',
+        label: 'l'.repeat(16),
+        caption: 'c'.repeat(80),
+      },
     );
     bridge.removeFolderPageObject({
       page,

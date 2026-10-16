@@ -9,8 +9,11 @@ const {
   FOLDER_PAGE_USER_OBJECT_LIMIT,
   MAX_NOTE_TEXT_LENGTH,
   MAX_NOTE_TITLE_LENGTH,
+  MAX_PHOTO_CAPTION_LENGTH,
+  MAX_PHOTO_LABEL_LENGTH,
   NOTE_PAPERS,
   PHOTO_FRAMES,
+  PHOTO_RATIOS,
   addFolderPageNote,
   addFolderPagePhoto,
   buildFolderPageAssetUrl,
@@ -20,6 +23,7 @@ const {
   resolveFolderPageAssetPath,
   saveFolderPageLayout,
   updateFolderPageNote,
+  updateFolderPagePhotoText,
   validateFolderPageIdentity,
 } = folderPageObjects;
 
@@ -130,7 +134,10 @@ describe('folder page objects', () => {
       order: 1,
       createdAt: '2026-10-10T01:00:00.000Z',
       imageUrl: `utawakui-media://folder-asset/${PHOTO_ID}/image.png`,
-      frame: 'archival',
+      frame: 'instant',
+      ratio: 'landscape',
+      label: '',
+      caption: '',
     });
     expect(listFolderPageObjects(directory, page)).toEqual([photo]);
 
@@ -658,7 +665,7 @@ describe('folder page objects', () => {
   });
 
   it('picks a print stock per photo once and derives a stable frame for legacy photos', () => {
-    expect(PHOTO_FRAMES).toEqual(['print', 'archival']);
+    expect(PHOTO_FRAMES).toEqual(['print', 'archival', 'instant']);
     const first = addFolderPagePhoto(directory, page, sourcePath, {
       id: PHOTO_ID,
       random: () => 0,
@@ -667,7 +674,7 @@ describe('folder page objects', () => {
       id: SECOND_PHOTO_ID,
       random: () => 0.999,
     });
-    expect([first.frame, last.frame]).toEqual(['print', 'archival']);
+    expect([first.frame, last.frame]).toEqual(['print', 'instant']);
 
     const manifest = readManifest(directory);
     delete manifest.objects[0].payload.frame;
@@ -683,6 +690,178 @@ describe('folder page objects', () => {
     expect(
       readManifest(directory).objects.map((object) => object.payload.frame),
     ).toEqual(derived);
+  });
+
+  it('files each photo under the nearest common print shape', () => {
+    const shapes = [
+      [pngHeader(640, 480), 'landscape'],
+      [pngHeader(480, 640), 'portrait'],
+      [pngHeader(500, 520), 'square'],
+      [pngHeader(1920, 1080), 'wide'],
+      [pngHeader(1080, 2400), 'tall'],
+      [pngHeader(3000, 1000), 'wide'],
+    ];
+    expect(Object.keys(PHOTO_RATIOS)).toEqual([
+      'landscape',
+      'portrait',
+      'square',
+      'wide',
+      'tall',
+    ]);
+    const ratios = shapes.map(([header], index) => {
+      fs.writeFileSync(sourcePath, header);
+      return addFolderPagePhoto(directory, page, sourcePath, {
+        id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      }).ratio;
+    });
+    expect(ratios).toEqual(shapes.map(([, ratio]) => ratio));
+  });
+
+  it('classifies a JPEG as displayed after its EXIF quarter turn', () => {
+    const jpegPath = path.join(directory, 'phone.jpg');
+    const exifJpeg = (orientation, littleEndian) => {
+      const tiff = Buffer.alloc(26);
+      tiff.write(littleEndian ? 'II' : 'MM', 0, 'ascii');
+      const write16 = (value, at) =>
+        littleEndian
+          ? tiff.writeUInt16LE(value, at)
+          : tiff.writeUInt16BE(value, at);
+      const write32 = (value, at) =>
+        littleEndian
+          ? tiff.writeUInt32LE(value, at)
+          : tiff.writeUInt32BE(value, at);
+      write16(42, 2);
+      write32(8, 4);
+      write16(1, 8);
+      write16(0x0112, 10);
+      write16(3, 12);
+      write32(1, 14);
+      write16(orientation, 18);
+      const exif = Buffer.concat([Buffer.from('Exif\0\0', 'binary'), tiff]);
+      const app1 = Buffer.alloc(4);
+      app1[0] = 0xff;
+      app1[1] = 0xe1;
+      app1.writeUInt16BE(exif.length + 2, 2);
+      const frame = jpegHeader(4032, 3024);
+      return Buffer.concat([
+        frame.subarray(0, 2),
+        app1,
+        exif,
+        frame.subarray(2),
+      ]);
+    };
+    const ratioFor = (buffer, id) => {
+      fs.writeFileSync(jpegPath, buffer);
+      return addFolderPagePhoto(directory, page, jpegPath, { id }).ratio;
+    };
+    expect(ratioFor(exifJpeg(6, false), PHOTO_ID)).toBe('portrait');
+    expect(ratioFor(exifJpeg(8, true), SECOND_PHOTO_ID)).toBe('portrait');
+    expect(
+      ratioFor(exifJpeg(1, true), '33333333-3333-4333-8333-333333333333'),
+    ).toBe('landscape');
+  });
+
+  it('never prints wide or tall shapes on instant film', () => {
+    fs.writeFileSync(sourcePath, pngHeader(1920, 1080));
+    const wide = addFolderPagePhoto(directory, page, sourcePath, {
+      id: PHOTO_ID,
+      random: () => 0.999,
+    });
+    fs.writeFileSync(sourcePath, pngHeader(480, 640));
+    const portrait = addFolderPagePhoto(directory, page, sourcePath, {
+      id: SECOND_PHOTO_ID,
+      random: () => 0.999,
+    });
+    expect([wide.frame, portrait.frame]).toEqual(['archival', 'instant']);
+  });
+
+  it('measures photos saved before ratios existed once and writes them back', () => {
+    fs.writeFileSync(sourcePath, pngHeader(480, 640));
+    addFolderPagePhoto(directory, page, sourcePath, { id: PHOTO_ID });
+    fs.writeFileSync(sourcePath, pngHeader(1920, 1080));
+    addFolderPagePhoto(directory, page, sourcePath, { id: SECOND_PHOTO_ID });
+    const manifest = readManifest(directory);
+    for (const object of manifest.objects) delete object.payload.ratio;
+    manifest.objects[1].payload.frame = 'instant';
+    fs.writeFileSync(
+      path.join(directory, FOLDER_PAGE_OBJECTS_FILENAME),
+      JSON.stringify(manifest),
+    );
+
+    const listed = listFolderPageObjects(directory, page);
+    expect(listed.map((object) => object.ratio)).toEqual(['portrait', 'wide']);
+    expect(listed[1].frame).not.toBe('instant');
+    expect(
+      readManifest(directory).objects.map((object) => object.payload.ratio),
+    ).toEqual(['portrait', 'wide']);
+  });
+
+  it('writes a short line on instant film and keeps one caption paper', () => {
+    const instant = addFolderPagePhoto(directory, page, sourcePath, {
+      id: PHOTO_ID,
+      random: () => 0.999,
+    });
+    const print = addFolderPagePhoto(directory, page, sourcePath, {
+      id: SECOND_PHOTO_ID,
+      random: () => 0,
+    });
+    expect([instant.frame, print.frame]).toEqual(['instant', 'print']);
+
+    const saved = updateFolderPagePhotoText(
+      directory,
+      page,
+      instant.key,
+      { label: '2024 夏', caption: '第一次唱這首。' },
+      { random: () => 0.5 },
+    );
+    expect(saved).toMatchObject({
+      label: '2024 夏',
+      caption: '第一次唱這首。',
+      captionPaper: NOTE_PAPERS[2],
+    });
+    // A later edit keeps the paper drawn for the first caption.
+    expect(
+      updateFolderPagePhotoText(
+        directory,
+        page,
+        instant.key,
+        { label: '2024 夏', caption: '改寫' },
+        { random: () => 0 },
+      ).captionPaper,
+    ).toBe(NOTE_PAPERS[2]);
+
+    // Only instant film has a lower margin to write on.
+    const printed = updateFolderPagePhotoText(directory, page, print.key, {
+      label: '不會保存',
+      caption: '',
+    });
+    expect(printed.label).toBe('');
+    expect(printed).not.toHaveProperty('captionPaper');
+
+    const cleared = updateFolderPagePhotoText(directory, page, instant.key, {
+      label: '',
+      caption: '',
+    });
+    expect(cleared).toMatchObject({ label: '', caption: '' });
+    expect(readManifest(directory).objects[0].payload).toEqual({
+      imageFilename: 'image.png',
+      frame: 'instant',
+      ratio: 'landscape',
+    });
+
+    expect(() =>
+      updateFolderPagePhotoText(directory, page, instant.key, {
+        label: 'x'.repeat(MAX_PHOTO_LABEL_LENGTH + 1),
+      }),
+    ).toThrow('Invalid page photo text.');
+    expect(() =>
+      updateFolderPagePhotoText(directory, page, instant.key, {
+        caption: 'x'.repeat(MAX_PHOTO_CAPTION_LENGTH + 1),
+      }),
+    ).toThrow('Invalid page photo text.');
+    expect(() =>
+      updateFolderPagePhotoText(directory, page, 'note:x', { caption: 'a' }),
+    ).toThrow('Invalid page photo.');
   });
 
   it('counts notes toward the shared user object limit', () => {

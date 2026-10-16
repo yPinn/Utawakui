@@ -343,6 +343,11 @@
   --ui-folder-artifact-sheet-inset-inline: var(--ui-space-7);
   --ui-folder-artifact-sheet-inset-block: var(--ui-space-5);
   --ui-folder-artifact-photo-width: 17rem;
+  /* Other print shapes keep about the same image area as the 4:3 width. */
+  --ui-folder-artifact-photo-width-portrait: 12.75rem;
+  --ui-folder-artifact-photo-width-square: 14.75rem;
+  --ui-folder-artifact-photo-width-wide: 19.5rem;
+  --ui-folder-artifact-photo-width-tall: 11rem;
   --ui-folder-artifact-stack-width: 20rem;
   --ui-folder-artifact-stack-block-size: calc(
     var(--ui-folder-artifact-stack-width) / 4 * 3 + var(--ui-space-5)
@@ -356,6 +361,17 @@
   --ui-photo-frame-bg: var(--ui-color-surface-raised);
   --ui-photo-frame-archival-bg: var(--ui-palette-neutral-950);
   --ui-photo-frame-archival-border-color: var(--ui-photo-frame-archival-bg);
+  /* Instant film keeps a wider lower margin for a short handwritten line. */
+  --ui-photo-frame-instant-padding-block-end: var(--ui-space-7);
+  /* Expanded prints keep their real-world size relation: a 4×6 print may
+     use the full media bounds and an older small print a little less, while
+     instant film is a small object enlarged at most 1.75× its page size. */
+  --ui-photo-frame-archival-expanded-scale: 0.85;
+  --ui-photo-frame-instant-expanded-max-size: calc(
+    var(--ui-folder-artifact-photo-width) * 1.75
+  );
+  /* Marker text tops out relative to the print width (cqi of its line). */
+  --ui-photo-frame-label-max-size: 9cqi;
   --ui-photo-frame-shadow: var(--ui-folder-artifact-shadow);
   --ui-photo-frame-filter: saturate(0.78) sepia(0.16) contrast(0.96)
     brightness(0.96);
@@ -679,6 +695,7 @@
   --ui-floating-list-radius: var(--ui-radius-lg);
   --ui-floating-list-shadow: var(--ui-shadow-overlay);
   --ui-floating-list-padding: var(--ui-space-2);
+  --ui-action-menu-max-block-size: 20rem;
   --ui-floating-row-min-height: 2rem;
   --ui-floating-row-padding-block: var(--ui-space-1);
   --ui-floating-row-padding-inline: var(--ui-space-2);

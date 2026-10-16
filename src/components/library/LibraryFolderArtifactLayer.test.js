@@ -168,12 +168,12 @@ describe('LibraryFolderArtifactLayer', () => {
       "else if (action === 'edit') emit('editNote', id);",
     );
     expect(source).toMatch(
-      /item\.type === 'photo'[\s\S]*?label: '展開照片'[\s\S]*?label: '從頁面移除'[\s\S]*?danger: true/u,
+      /item\.type === 'photo'[\s\S]*?label: '展開照片'[\s\S]*?label: item\.type === 'photo' \? '從頁面移除' : '刪除便條'[\s\S]*?intent: 'danger'/u,
     );
     expect(source).toMatch(
-      /isUserNote\(item\)[\s\S]*?label: '編輯便條'[\s\S]*?label: '刪除便條'[\s\S]*?danger: true/u,
+      /isUserNote\(item\)[\s\S]*?label: '編輯便條'[\s\S]*?label: item\.type === 'photo' \? '從頁面移除' : '刪除便條'[\s\S]*?intent: 'danger'/u,
     );
-    expect(source).toContain('return [pin];');
+    expect(source).toContain("groups.push({ id: 'object', items: [pin] });");
     expect(html).toContain('ui-folder-artifact--translucent');
     expect(source).toContain("const NOTE_MATERIAL = 'translucent';");
     expect(source).toContain('autoPlace: props.freshKeys.includes(item.key),');
@@ -203,8 +203,8 @@ describe('LibraryFolderArtifactLayer', () => {
   });
 
   it('routes every layout, pin, and stack change as one entry batch keyed by object', () => {
-    expect(source).toContain(
-      "defineEmits(['layoutChange', 'activate', 'editNote', 'remove'])",
+    expect(source).toMatch(
+      /defineEmits\(\[\s*'layoutChange',\s*'activate',\s*'editNote',\s*'editPhotoText',\s*'remove',?\s*\]\)/u,
     );
     expect(source).toMatch(
       /function handleLayoutChange[\s\S]*?\{\s*immediate: false,\s*\}/u,
