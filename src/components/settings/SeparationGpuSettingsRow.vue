@@ -2,7 +2,7 @@
 import { Cpu } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 defineProps({
   gpuAcceleration: { type: Boolean, default: true },
@@ -15,11 +15,11 @@ const emit = defineEmits(['setGpuAcceleration']);
 
 <template>
   <div class="separation-gpu-settings-row">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="Cpu"
       title="人聲分離"
-      tooltip="無法使用 GPU 時，會自動改用 CPU。"
-      variant="subtle"
+      guidance="無法使用 GPU 時，會自動改用 CPU。"
+      variant="nested"
     >
       <template #actions>
         <UiCheckbox
@@ -31,7 +31,7 @@ const emit = defineEmits(['setGpuAcceleration']);
           @update:model-value="emit('setGpuAcceleration', $event)"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiNotice
       v-if="preferenceError"

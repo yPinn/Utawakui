@@ -4,7 +4,7 @@ import { Clock, Ellipsis, ListX } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const props = defineProps({
   recordCount: { type: Number, default: 0 },
@@ -73,13 +73,13 @@ function handleMenuSelect(actionId) {
 
 <template>
   <div class="playback-history-settings-row">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="Clock"
       title="播放紀錄"
       :value="valueLabel"
       :status="statusLabel"
       status-tone="muted"
-      tooltip="最近播放依時間自動保存；清除不會影響播放佇列或歌單。"
+      guidance="自動保存最近播放；清除不影響佇列或歌單。"
     >
       <template #actions>
         <UiIconButton
@@ -90,7 +90,7 @@ function handleMenuSelect(actionId) {
           @click="openMenu"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiActionMenu
       :open="isMenuOpen"

@@ -212,16 +212,18 @@ checker／dark／light；copied route 不帶這些參數；
 `app-folder-layout` 小於 40rem 時，Workbench 以 2:1、Gallery 以 1:1 切成上下兩個 bounded pane，
 不新增 page-level scroll。控制台 feature stylesheet 與 public `overlay/` 的
 `--ovl-*` runtime 互不匯入。Settings 是 `AppFolderLayout` 的第四個正式 destination，
-由 `SettingsPage` 在 registered `settings` boundary 中組合 workspace-mode `AppFolderPage`；
+由 `SettingsPage` 在 registered `settings` boundary 中組合 document-mode `AppFolderPage`；
 Folder exterior 使用 dark 炭灰／近黑、light 冷灰的 semantic neutral material，紙面仍沿用共用 neutral sheet。
 Titlebar direct action 與 F9 都進入同一個 Settings destination，不建立 utility shell 或第二層 Folder。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
 Navigation history 由 module-scope `useNavigationHistory.js` 單獨擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：它觀察 `useAppView` 與 `usePlaylists` 的位置狀態，只記錄目的地、Library workspace／選取目標與 Settings 返回來源，不記錄播放、佇列、搜尋、排序或 Performance tool。堆疊與位置模型是純邏輯（`navigationHistoryStack.js`、`navigationLocation.js`）；還原走 `useAppView.restoreLocation()`，不增加 root-entry revision。Settings 的返回優先沿歷史回到前一筆，無法對應時退回 `returnFromSettings()`。
 歷史走訪的輸入由 `inputBindingRegistry.js` 宣告、`useNavigationInput.js` 收斂：滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command`（`electron/main/appCommands.js`）共用同一個走訪出口，內含浮層守衛與短時間去重。
-`SettingsPage` 擁有 fixed Folder header 與 registered local overlay host；
-`SettingsView` 繼續擁有內容 lifecycle、基本／選用／支援分類與唯一的 body Scroll Region。雙欄與 Separation select 的
-特殊 geometry由各自 component-local custom property 擁有，不回填 core token graph。
+`SettingsPage` 擁有隨活頁紙移動的 Folder header、唯一 page Scroll Region 與 registered local overlay host；
+`SettingsView` 只依序組合曲庫、音訊、應用程式、選用功能與支援五個連續章節。各 focused section component
+持有自己的 lifecycle、確認、deep-link 與 dialog 行為；頁內沒有第二層 tabs 或 Scroll Region。一般設定項目使用平面
+`SettingsDocumentItem`，只有巢狀 capability workflow 使用次層 surface。雙欄與 Separation select 的特殊 geometry
+由各自 component-local custom property 擁有，不回填 core token graph。
 
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主

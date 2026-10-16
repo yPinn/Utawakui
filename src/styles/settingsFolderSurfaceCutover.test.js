@@ -7,16 +7,35 @@ const readSource = (path) =>
 const appSource = readSource('../App.vue');
 const settingsPageSource = readSource('../pages/SettingsPage.vue');
 const settingsViewSource = readSource('../views/SettingsView.vue');
+const settingsLibrarySectionSource = readSource(
+  '../components/settings/SettingsLibrarySection.vue',
+);
+const settingsAudioSectionSource = readSource(
+  '../components/settings/SettingsAudioSection.vue',
+);
+const settingsApplicationSectionSource = readSource(
+  '../components/settings/SettingsApplicationSection.vue',
+);
+const settingsCapabilitiesSectionSource = readSource(
+  '../components/settings/SettingsCapabilitiesSection.vue',
+);
+const settingsSupportSectionSource = readSource(
+  '../components/settings/SettingsSupportSection.vue',
+);
+const settingsDocumentSource = [
+  settingsLibrarySectionSource,
+  settingsAudioSectionSource,
+  settingsApplicationSectionSource,
+  settingsCapabilitiesSectionSource,
+  settingsSupportSectionSource,
+].join('\n');
 const folderLayoutSource = readSource(
   '../components/layout/AppFolderLayout.vue',
 );
 const registrySource = readSource('../utils/rendererSurfaceRegistry.js');
 const tokenSource = readSource('./tokens.css');
-const settingsBlockSource = readSource(
-  '../components/settings/SettingsBlock.vue',
-);
-const settingsActionRowSource = readSource(
-  '../components/settings/SettingsActionRow.vue',
+const settingsDocumentItemSource = readSource(
+  '../components/settings/SettingsDocumentItem.vue',
 );
 const settingsFeatureGateRowSource = readSource(
   '../components/settings/SettingsFeatureGateRow.vue',
@@ -30,9 +49,13 @@ const settingsRenderGraphPaths = [
   '../components/settings/CaptureDeviceModal.vue',
   '../components/settings/FfmpegSourceModal.vue',
   '../components/settings/LibraryStorageSettingsRow.vue',
-  '../components/settings/SettingsActionRow.vue',
-  '../components/settings/SettingsBlock.vue',
+  '../components/settings/SettingsApplicationSection.vue',
+  '../components/settings/SettingsAudioSection.vue',
+  '../components/settings/SettingsCapabilitiesSection.vue',
+  '../components/settings/SettingsDocumentItem.vue',
   '../components/settings/SettingsFeatureGateRow.vue',
+  '../components/settings/SettingsLibrarySection.vue',
+  '../components/settings/SettingsSupportSection.vue',
   '../components/settings/VirtualCableGuideModal.vue',
   '../pages/SettingsPage.vue',
   '../views/SettingsView.vue',
@@ -73,7 +96,7 @@ describe('Settings Folder surface cutover', () => {
     expect(settingsPageSource).toContain(
       '<AppSurfaceBoundary surface-id="settings">',
     );
-    expect(settingsPageSource).toContain('<AppFolderPage mode="workspace"');
+    expect(settingsPageSource).toContain('<AppFolderPage mode="document"');
   });
 
   it('registers Settings and its local overlay host under app-folder', () => {
@@ -106,21 +129,21 @@ describe('Settings Folder surface cutover', () => {
     );
   });
 
-  it('keeps the Folder header fixed and Settings as the only body scroll owner', () => {
+  it('lets the Folder document own the heading, paper boundary, and only page scroll', () => {
     expect(settingsPageSource).toContain('<template #header>');
     expect(settingsPageSource).toContain('<UiPageHeader title="設定"');
-    expect(settingsViewSource.match(/<UiScrollRegion/gu)).toHaveLength(1);
-    expect(settingsViewSource).toContain('class="settings-view__scroll"');
-    expect(settingsViewSource).toContain(
-      'viewport-class="settings-view__viewport"',
-    );
+    expect(settingsViewSource).not.toContain('<UiScrollLayout');
+    expect(settingsViewSource).not.toContain('<UiScrollRegion');
+    expect(settingsViewSource).not.toContain('<UiTabs');
+    expect(settingsViewSource).not.toContain('role="tabpanel"');
+    expect(settingsViewSource).not.toContain('activeSettingsTab');
   });
 
   it('reflows Settings content from the Folder container instead of the viewport', () => {
     const responsiveSources = [
       settingsViewSource,
-      settingsBlockSource,
-      settingsActionRowSource,
+      settingsCapabilitiesSectionSource,
+      settingsDocumentItemSource,
       settingsFeatureGateRowSource,
       libraryStorageSettingsRowSource,
     ];
@@ -131,15 +154,15 @@ describe('Settings Folder surface cutover', () => {
     }
 
     expect(settingsViewSource).toContain(
-      '@container app-folder-layout (max-width: 42rem)',
-    );
-    expect(settingsBlockSource).toContain(
-      '@container app-folder-layout (max-width: 42.5rem)',
-    );
-    expect(settingsActionRowSource).toContain(
       '@container app-folder-layout (max-width: 56.25rem)',
     );
-    expect(settingsActionRowSource).toContain(
+    expect(settingsCapabilitiesSectionSource).toContain(
+      '@container app-folder-layout (max-width: 56.25rem)',
+    );
+    expect(settingsDocumentItemSource).toContain(
+      '@container app-folder-layout (max-width: 56.25rem)',
+    );
+    expect(settingsDocumentItemSource).toContain(
       '@container app-folder-layout (max-width: 42.5rem)',
     );
     expect(settingsFeatureGateRowSource).toContain(
@@ -147,6 +170,38 @@ describe('Settings Folder surface cutover', () => {
     );
     expect(libraryStorageSettingsRowSource).toContain(
       '@container app-folder-layout (max-width: 35rem)',
+    );
+  });
+
+  it('keeps default windowed rows compact and delays one-column stacking until the Folder is truly narrow', () => {
+    const windowedTier = settingsDocumentItemSource.slice(
+      settingsDocumentItemSource.indexOf(
+        '@container app-folder-layout (max-width: 56.25rem)',
+      ),
+      settingsDocumentItemSource.indexOf(
+        '@container app-folder-layout (max-width: 42.5rem)',
+      ),
+    );
+    const narrowTier = settingsDocumentItemSource.slice(
+      settingsDocumentItemSource.indexOf(
+        '@container app-folder-layout (max-width: 42.5rem)',
+      ),
+    );
+
+    expect(windowedTier).toMatch(
+      /\.settings-document-item\s*\{[^}]*gap:\s*var\(--ui-space-3\);[^}]*padding-block:\s*var\(--ui-space-3\);/su,
+    );
+    expect(windowedTier).not.toContain(
+      'grid-template-columns: minmax(0, 1fr);',
+    );
+    expect(windowedTier).toMatch(
+      /\.settings-document-item--nested\s*\{[^}]*padding-block:\s*var\(--ui-space-2\);/su,
+    );
+    expect(narrowTier).toMatch(
+      /\.settings-document-item\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/su,
+    );
+    expect(narrowTier).toMatch(
+      /\.settings-document-item__icon\s*\{[^}]*display:\s*none;/su,
     );
   });
 
@@ -163,15 +218,33 @@ describe('Settings Folder surface cutover', () => {
     }
   });
 
-  it('preserves Settings categories, feature blocks, actions, and modal flows', () => {
-    expect(settingsViewSource).toMatch(
-      /\.settings-view\s*\{(?=[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\))[^}]*\}/su,
-    );
+  it('rebuilds Settings as five ordered Folder sections while preserving its actions and modal flows', () => {
+    const sectionTitles = [
+      '曲庫與儲存',
+      '音訊輸出',
+      '應用程式',
+      '選用功能',
+      '支援與維護',
+    ];
+    let previousPosition = -1;
+    for (const title of sectionTitles) {
+      const position = settingsDocumentSource.indexOf(`title="${title}"`);
+      expect(position, title).toBeGreaterThan(previousPosition);
+      previousPosition = position;
+    }
     for (const component of [
-      'SettingsBlock',
-      'SettingsActionRow',
+      'SettingsLibrarySection',
+      'SettingsAudioSection',
+      'SettingsApplicationSection',
+      'SettingsCapabilitiesSection',
+      'SettingsSupportSection',
+    ]) {
+      expect(settingsViewSource, component).toContain(`<${component}`);
+    }
+    for (const component of [
+      'AppFolderSection',
+      'SettingsDocumentItem',
       'SettingsFeatureGateRow',
-      'UiTabs',
       'AudioOutputSettingsBlock',
       'ObsIntegrationSettingsBlock',
       'CaptureDeviceModal',
@@ -179,8 +252,10 @@ describe('Settings Folder surface cutover', () => {
       'FeedbackReportModal',
       'ObsSessionExportModal',
     ]) {
-      expect(settingsViewSource, component).toContain(`<${component}`);
+      expect(settingsDocumentSource, component).toContain(`<${component}`);
     }
-    expect(settingsViewSource).toContain('v-for="gate in group.gates"');
+    expect(settingsDocumentSource).not.toContain('<SettingsBlock');
+    expect(settingsDocumentSource).not.toContain('<SettingsActionRow');
+    expect(settingsDocumentSource).toContain('v-for="gate in group.gates"');
   });
 });

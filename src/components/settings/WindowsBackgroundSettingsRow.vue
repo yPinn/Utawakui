@@ -2,7 +2,7 @@
 import { Minimize2 } from '../../icons/index.js';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSelect from '../ui/UiSelect.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 defineProps({
   behavior: {
@@ -25,11 +25,10 @@ const closeBehaviorItems = Object.freeze([
 
 <template>
   <div class="windows-background-settings-row">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="Minimize2"
       title="關閉主視窗時"
-      description="背景執行時，播放、OBS 連線與輸出會繼續。"
-      tooltip="最小化按鈕仍會照常縮到 Windows 工作列。"
+      guidance="背景執行會保留播放、OBS 連線與輸出；最小化仍縮到 Windows 工作列。"
     >
       <template #actions>
         <UiSelect
@@ -43,7 +42,7 @@ const closeBehaviorItems = Object.freeze([
           @update:model-value="emit('setBehavior', $event)"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiNotice
       v-if="error"

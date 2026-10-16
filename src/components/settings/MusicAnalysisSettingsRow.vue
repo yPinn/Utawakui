@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { Cpu, Download, Trash2, Wrench } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 
 const props = defineProps({
@@ -79,13 +79,13 @@ function handleAdvancedAction({ action }) {
 
 <template>
   <div class="music-analysis-settings-row">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="Cpu"
       title="BPM 分析"
       :status="status"
       :status-tone="statusTone"
-      tooltip="在本機分析 BPM 與節拍，不會上傳歌曲。"
-      variant="subtle"
+      guidance="在本機分析 BPM 與節拍，不會上傳歌曲。"
+      variant="nested"
     >
       <template #actions>
         <UiCheckbox
@@ -103,7 +103,7 @@ function handleAdvancedAction({ action }) {
           @advanced-action="handleAdvancedAction"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiNotice
       v-if="capabilityError"

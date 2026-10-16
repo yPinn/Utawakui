@@ -81,11 +81,23 @@ describe('AppUpdateSettingsRow', () => {
     expect(off).toMatch(/id="app-update-auto-check"[^>]*disabled/);
   });
 
-  it('discloses the default background version check before the toggle', async () => {
+  it('keeps the version state and automatic-check control free of redundant guidance', async () => {
     const html = await renderRow({ phase: 'idle' });
 
-    expect(html).toContain('下載與安裝由你決定。');
+    expect(html).toContain('自動檢查');
+    expect(html).toContain('僅自動檢查；下載與安裝仍由你決定。');
+    expect(html).not.toContain('查看目前版本與更新狀態。');
     expect(html).not.toContain('啟動時只檢查；');
+  });
+
+  it('keeps the update consent boundary visible when version information fails', async () => {
+    const html = await renderRow({
+      currentVersion: '',
+      infoError: '版本資訊暫時無法取得。',
+    });
+
+    expect(html).toContain('僅自動檢查；下載與安裝仍由你決定。');
+    expect(html).toContain('版本資訊暫時無法取得。');
   });
 
   it('surfaces a preference-save failure without a second update action', async () => {

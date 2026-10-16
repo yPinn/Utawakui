@@ -18,12 +18,11 @@ import { useFeatureDependencies } from './useFeatureDependencies.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
 
-// Feature-gate/dependency row presentation for SettingsView.vue: pure
+// Feature-gate/dependency row presentation for SettingsCapabilitiesSection.vue: pure
 // data-shaping (labels, status/tone, workflow items) with no template ref or
-// lifecycle dependency, so the view stays interaction/template glue. A per-call
+// lifecycle dependency, so the section stays interaction/template glue. A per-call
 // factory, not a singleton like useFeatureDependencies.js: those own IPC
-// subscriptions that must outlive the view, while this is per-view state and
-// SettingsView unmounts on every tab switch.
+// subscriptions that must outlive the section, while this is per-section state.
 // systemFfmpegDetection is a caller-supplied ref with the last
 // window.Utawakui.detectSystemFfmpeg() result; it only feeds the compact row's
 // "可用系統版本" hint. Detection detail lives in FfmpegSourceModal.vue.
@@ -208,7 +207,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
                 : 'warning',
       icon: isFfmpeg ? Wrench : isModel ? Cpu : Download,
       // ffmpeg's primary action always opens FfmpegSourceModal.vue (see
-      // SettingsView.vue's handleWorkflowItemAction) rather than downloading
+      // SettingsCapabilitiesSection.vue's handleWorkflowItemAction) rather than downloading
       // directly — the modal is where the system-vs-managed choice happens.
       actionIcon: isFfmpeg
         ? Settings

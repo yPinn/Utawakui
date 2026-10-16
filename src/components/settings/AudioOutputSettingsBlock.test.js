@@ -18,12 +18,13 @@ async function renderBlock(props = {}) {
 }
 
 describe('AudioOutputSettingsBlock', () => {
-  it('keeps the inactive presentation concise and actionable', async () => {
+  it('keeps the section body concise and leaves its heading to the Folder section', async () => {
     const html = await renderBlock();
 
-    expect(html).toContain('音訊輸出');
-    expect(html).toContain('將伴奏送到直播或錄影軟體');
-    expect(html).toContain('直播或錄影軟體使用的虛擬音效裝置');
+    expect(html).not.toContain('>音訊輸出<');
+    expect(html).toContain('擷取輸出裝置');
+    expect(html).toContain('選擇直播或錄影軟體接收伴奏的虛擬裝置');
+    expect(html).not.toContain('將伴奏送到直播或錄影軟體');
     expect(html).not.toContain('OBS 擷取裝置');
     expect(html).not.toContain('OBS 用的虛擬音效裝置');
     expect(html).toContain('未啟用');

@@ -48,10 +48,13 @@ The public control-panel navigation has four destinations:
 
 Settings is the fourth Folder destination and also keeps the direct Titlebar gear.
 `SettingsPage` owns one registered `settings` boundary and composes the existing
-`SettingsView` inside workspace-mode `AppFolderPage`; it does not nest a second
-Folder layout. The destination uses the semantic neutral Folder material, mapped
-to charcoal／near-black in dark mode and cool gray in light mode. Internal Tools
-remain development-only and are not part of the product navigation.
+`SettingsView` inside document-mode `AppFolderPage`; it does not nest a second
+Folder layout. The complete loose-leaf sheet owns one page Scroll Region, with the
+header and five continuous settings sections moving together. `SettingsView` only
+orders those focused section owners; it does not add local tabs or an inner scroll.
+The destination uses the semantic neutral Folder material, mapped to
+charcoal／near-black in dark mode and cool gray in light mode. Internal Tools remain
+development-only and are not part of the product navigation.
 
 The global keyboard order follows the visible order: F1 opens Library, F2 opens
 Performance and F3 opens Display. F4 becomes unassigned rather than being reused

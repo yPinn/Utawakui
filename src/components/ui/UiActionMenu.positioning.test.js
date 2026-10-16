@@ -37,7 +37,7 @@ describe('UiActionMenu positioning contract', () => {
       '../settings/DiagnosticsSettingsRow.vue',
       '../settings/PlaybackHistorySettingsRow.vue',
       '../settings/SettingsDependencyActions.vue',
-      '../../views/SettingsView.vue',
+      '../settings/SettingsLibrarySection.vue',
     ];
     for (const path of buttonCallers) {
       const source = sourceFor(path);

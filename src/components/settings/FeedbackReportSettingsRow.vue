@@ -1,16 +1,16 @@
 <script setup>
 import { MessageSquare } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const emit = defineEmits(['open']);
 </script>
 
 <template>
-  <SettingsActionRow
+  <SettingsDocumentItem
     :icon="MessageSquare"
     title="回報問題"
-    tooltip="回報問題、提出功能請求、告訴我們使用上的想法，或反映內容／歌詞來源問題。"
+    guidance="回報問題、提出功能建議或反映內容來源。"
   >
     <template #actions>
       <UiIconButton
@@ -19,5 +19,5 @@ const emit = defineEmits(['open']);
         @click="emit('open')"
       />
     </template>
-  </SettingsActionRow>
+  </SettingsDocumentItem>
 </template>

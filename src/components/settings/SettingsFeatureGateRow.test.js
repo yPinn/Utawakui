@@ -40,7 +40,7 @@ describe('SettingsFeatureGateRow', () => {
     expect(html).not.toContain('BPM 分析');
   });
 
-  it('keeps dependency rows single-line and exposes detail as a tooltip', async () => {
+  it('keeps dependency guidance inline without repeating its hidden value', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>

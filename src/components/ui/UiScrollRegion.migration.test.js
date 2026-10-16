@@ -19,12 +19,6 @@ const batchOneConsumers = [
     component: 'UiScrollLayout',
   },
   {
-    name: 'settings',
-    source: readSource('../../views/SettingsView.vue'),
-    marker: 'class="settings-view"',
-    component: 'UiScrollRegion',
-  },
-  {
     name: 'demo catalogue workspace',
     source: readSource('../demo/DemoCatalogueWorkspace.vue'),
     marker: 'class="demo-catalogue-workspace__scroll"',
@@ -99,7 +93,8 @@ describe('UiScrollRegion production migration', () => {
   it('preserves padding and layout at the composition layer or explicit viewport', () => {
     const folderPageSource = batchOneConsumers[0].source;
     const sidebarSource = batchOneConsumers[1].source;
-    const settingsSource = batchOneConsumers[2].source;
+    const settingsSource = readSource('../../views/SettingsView.vue');
+    const settingsPageSource = readSource('../../pages/SettingsPage.vue');
 
     expect(folderPageSource).toMatch(
       /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-end:/su,
@@ -114,11 +109,11 @@ describe('UiScrollRegion production migration', () => {
       /\.playlist-sidebar__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
     );
     expect(sidebarSource).not.toContain('playlist-sidebar__scroll-viewport');
-    expect(settingsSource).toContain(
-      'viewport-class="settings-view__viewport"',
-    );
+    expect(settingsPageSource).toContain('<AppFolderPage mode="document"');
+    expect(settingsSource).not.toContain('<UiScrollLayout');
+    expect(settingsSource).not.toContain('<UiScrollRegion');
     expect(settingsSource).toMatch(
-      /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
+      /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*gap:/su,
     );
   });
 
@@ -142,7 +137,7 @@ describe('UiScrollRegion production migration', () => {
     const modalSource = batchTwoConsumers[0].source;
     const popoverSource = batchTwoConsumers[3].source;
     const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
-    const settingsSource = batchOneConsumers[2].source;
+    const settingsSource = readSource('../../views/SettingsView.vue');
     const settingsPageSource = readSource('../../pages/SettingsPage.vue');
     const trackTableSource = readSource('../track/TrackTable.vue');
 
@@ -223,7 +218,7 @@ describe('UiScrollRegion production migration', () => {
     const benchmarkSource = batchThreeConsumers[2].source;
     const providerFormSource = batchThreeConsumers[5].source;
     const splitLayoutSource = batchThreeConsumers[8].source;
-    const demoSource = batchOneConsumers[3].source;
+    const demoSource = batchOneConsumers[2].source;
 
     expect(
       referenceSource.indexOf('class="reference-annotation__case-header"'),

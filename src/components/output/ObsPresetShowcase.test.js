@@ -70,6 +70,12 @@ const settingsViewSource = readFileSync(
   fileURLToPath(new URL('../../views/SettingsView.vue', import.meta.url)),
   'utf8',
 );
+const settingsCapabilitiesSource = readFileSync(
+  fileURLToPath(
+    new URL('../settings/SettingsCapabilitiesSection.vue', import.meta.url),
+  ),
+  'utf8',
+);
 const workspaceSource = readFileSync(
   fileURLToPath(new URL('./ObsOutputWorkspace.vue', import.meta.url)),
   'utf8',
@@ -463,14 +469,17 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain('OBS 已連線');
     expect(settingsSource).not.toContain('等待 OBS Browser Source 連線');
     expect(settingsSource).toContain('連接埠被占用');
-    expect(settingsSource).toContain('SettingsActionRow');
-    expect(settingsSource).toContain('variant="subtle"');
+    expect(settingsSource).toContain('SettingsDocumentItem');
+    expect(settingsSource).toContain('variant="nested"');
     expect(settingsSource).toContain('UiNotice');
-    expect(settingsViewSource).toContain('<OutputRuntimeSettingsBlock');
+    expect(settingsViewSource).toContain('<SettingsCapabilitiesSection');
+    expect(settingsCapabilitiesSource).toContain('<OutputRuntimeSettingsBlock');
     expect(settingsViewSource).not.toContain(
       '--settings-view-column-min-width',
     );
-    expect(settingsViewSource).toContain('class="settings-view__panel"');
+    expect(settingsCapabilitiesSource).toContain(
+      'class="settings-capabilities-section"',
+    );
     expect(tokenSource).not.toContain('--ui-settings-column-min-width:');
     expect(tokenSource).not.toContain('--ui-settings-checkbox-size:');
     expect(settingsSource).toContain('可用連接埠');

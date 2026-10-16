@@ -6,7 +6,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const props = defineProps({
   currentVersion: { type: String, default: '' },
@@ -136,14 +136,14 @@ function handleAction() {
 
 <template>
   <div class="app-update-settings-row">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="RefreshCw"
       title="Utawakui 版本"
-      description="下載與安裝由你決定。"
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"
-      :tooltip="infoError || '查看目前版本與更新狀態。'"
+      description="僅自動檢查；下載與安裝仍由你決定。"
+      :guidance="infoError"
     >
       <template #actions>
         <UiCheckbox
@@ -175,7 +175,7 @@ function handleAction() {
           </UiButton>
         </template>
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiNotice
       v-if="autoCheckError"

@@ -5,7 +5,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import obsConnectionValues from '../../../shared/obsConnectionValues.json';
 
 const MAX_PASSWORD_LENGTH = obsConnectionValues.maxPasswordLength;
@@ -89,14 +89,14 @@ const outputSummary = computed(() => {
 
 <template>
   <div class="obs-integration-settings-block">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="Video"
       title="OBS 連線"
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
-      tooltip="只讀取直播、錄影狀態與時間戳，不會變更場景。"
-      variant="subtle"
+      guidance="只讀取直播、錄影與時間戳，不會變更場景。"
+      variant="nested"
     >
       <template #actions>
         <UiButton
@@ -117,7 +117,7 @@ const outputSummary = computed(() => {
           @update:model-value="emit('save', { enabled: $event })"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <div
       v-if="(!featureEnabled || !isEnabled) && hasStoredPassword"

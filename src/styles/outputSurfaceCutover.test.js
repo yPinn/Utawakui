@@ -51,8 +51,7 @@ const outputConsumerPaths = [
 ];
 
 const outputSharedComponentPaths = [
-  '../components/settings/SettingsActionRow.vue',
-  '../components/settings/SettingsBlock.vue',
+  '../components/settings/SettingsDocumentItem.vue',
 ];
 
 const legacyGenericTokens = [
@@ -174,9 +173,6 @@ describe('Output Token v2 surface cutover', () => {
     );
     expect(readSource(outputSharedComponentPaths[0])).toContain(
       'var(--ui-radius-md)',
-    );
-    expect(readSource(outputSharedComponentPaths[1])).toContain(
-      'var(--ui-type-title-weight)',
     );
   });
 

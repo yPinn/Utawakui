@@ -1,7 +1,7 @@
 <script setup>
 import { computed, shallowRef, useSlots } from 'vue';
 import { Info, Loader2, Plus } from '../../icons/index.js';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -38,13 +38,14 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
     class="settings-feature-gate-row"
     :class="{ 'settings-feature-gate-row--highlighted': highlighted }"
   >
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="gate.icon"
       :title="gate.title"
       :description="gate.description"
       :status="gate.status"
       :status-tone="gate.tone"
-      variant="feature"
+      variant="capability"
+      title-tag="h4"
     >
       <template #actions>
         <UiIconButton
@@ -68,7 +69,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
           {{ actionLabel }}
         </UiButton>
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiModal
       v-if="hasNotice"
@@ -91,15 +92,15 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
     </UiModal>
 
     <div v-if="shouldShowItems" class="settings-feature-gate-row__items">
-      <SettingsActionRow
+      <SettingsDocumentItem
         v-for="item in items"
         :key="item.id"
         :icon="item.icon"
         :title="item.title || item.name"
         :status="item.status"
         :status-tone="item.statusTone"
-        :tooltip="item.description"
-        variant="subtle"
+        :guidance="item.description"
+        variant="nested"
       >
         <template #actions>
           <SettingsDependencyActions
@@ -108,7 +109,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
             @advanced-action="emit('itemAdvancedAction', $event)"
           />
         </template>
-      </SettingsActionRow>
+      </SettingsDocumentItem>
       <slot name="items" />
     </div>
   </div>

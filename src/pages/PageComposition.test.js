@@ -62,7 +62,7 @@ describe('destination Page composition', () => {
     expect(source).not.toContain('OutputView');
   });
 
-  it('gives Settings a neutral Folder Page and registered surface owner', () => {
+  it('gives Settings one scrolling neutral Folder document and registered surface owner', () => {
     const source = readPage('./SettingsPage.vue');
 
     expect(source).toContain(
@@ -78,9 +78,10 @@ describe('destination Page composition', () => {
       "import UiPageHeader from '../components/ui/UiPageHeader.vue';",
     );
     expect(source).toContain('surface-id="settings"');
-    expect(source).toContain('<AppFolderPage mode="workspace"');
+    expect(source).toContain('<AppFolderPage mode="document"');
+    expect(source).toContain('body-label="設定文件"');
     expect(source).toContain('<UiPageHeader title="設定"');
-    expect(source).toContain('管理曲庫、音訊、進階功能與應用程式行為。');
+    expect(source).toContain('管理曲庫、音訊、應用程式與選用功能。');
     expect(source).toContain('<SettingsView />');
     expect(source).not.toContain('AppUtilityPage');
   });

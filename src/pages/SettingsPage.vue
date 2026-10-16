@@ -7,11 +7,11 @@ import SettingsView from '../views/SettingsView.vue';
 
 <template>
   <AppSurfaceBoundary surface-id="settings">
-    <AppFolderPage mode="workspace" body-label="設定內容">
+    <AppFolderPage mode="document" body-label="設定文件">
       <template #header>
         <UiPageHeader title="設定">
           <template #description>
-            管理曲庫、音訊、進階功能與應用程式行為。
+            管理曲庫、音訊、應用程式與選用功能。
           </template>
         </UiPageHeader>
       </template>

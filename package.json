@@ -22,6 +22,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:settings-layout": "npm run build && node scripts/settings-window-layout-probe.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage && node scripts/coverageRatchet.js",
     "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",

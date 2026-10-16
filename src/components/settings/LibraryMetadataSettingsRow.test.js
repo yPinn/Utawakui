@@ -16,8 +16,8 @@ describe('LibraryMetadataSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('曲目資訊自動整理');
-    expect(html).toContain('啟動曲庫時整理名稱、歌手、專輯與年份');
-    expect(html).toContain('從已保存的來源資訊');
+    expect(html).toContain('啟動時整理名稱、歌手、專輯與年份');
+    expect(html).toContain('只用已保存的來源資料');
     expect(html).toContain('自動');
     expect(html).not.toContain('已啟用');
     expect(html).not.toContain('ui-icon-button');

@@ -12,7 +12,7 @@ import {
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const props = defineProps({
   recordCount: { type: Number, default: 0 },
@@ -112,7 +112,7 @@ function handleMenuSelect(actionId) {
 
 <template>
   <div class="diagnostics-settings-row">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="ListChecks"
       title="錯誤紀錄"
       :value="
@@ -124,7 +124,7 @@ function handleMenuSelect(actionId) {
       "
       :status="recordCount > 0 ? '有紀錄' : '無紀錄'"
       :status-tone="recordCount > 0 ? 'warning' : 'muted'"
-      tooltip="協助排查播放、匯入或音訊處理問題。"
+      guidance="協助排查播放、匯入或音訊處理問題。"
     >
       <template #actions>
         <UiIconButton
@@ -141,7 +141,7 @@ function handleMenuSelect(actionId) {
           @click="openMenu"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiActionMenu
       :open="isMenuOpen"

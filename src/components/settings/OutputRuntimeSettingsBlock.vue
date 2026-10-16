@@ -11,7 +11,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTextField from '../ui/UiTextField.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const FRAME_RATE_ITEMS = Object.freeze([
   { id: 'reduced', label: '30 FPS' },
@@ -158,14 +158,14 @@ onMounted(() => {
 
 <template>
   <div class="output-runtime-settings-block">
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="Cable"
       title="本機輸出服務"
       :value="serviceStatus.detail"
       :status="serviceStatus.label"
       :status-tone="serviceStatus.tone"
-      tooltip="讓直播或錄影軟體以 Browser Source 顯示歌詞與曲目。"
-      variant="subtle"
+      guidance="供 Browser Source 顯示歌詞與曲目。"
+      variant="nested"
     >
       <template #actions>
         <UiCheckbox
@@ -189,7 +189,7 @@ onMounted(() => {
           停止
         </UiButton>
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <div class="output-runtime-settings-block__form">
       <div class="output-runtime-settings-block__fields">
@@ -245,14 +245,14 @@ onMounted(() => {
       compact
     />
 
-    <SettingsActionRow
+    <SettingsDocumentItem
       :icon="MonitorUp"
       title="Spout2 輸出"
       :value="spoutValue"
       :status="spoutPresentation.label"
       :status-tone="spoutPresentation.tone"
-      tooltip="實驗性功能：以透明背景將歌詞畫面傳給支援 Spout2 的軟體。"
-      variant="subtle"
+      guidance="實驗性：將透明歌詞畫面輸出至 Spout2 軟體。"
+      variant="nested"
     >
       <template #actions>
         <UiSegmentedControl
@@ -280,7 +280,7 @@ onMounted(() => {
           停止
         </UiButton>
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiNotice
       v-if="spoutNotice"

@@ -2,8 +2,7 @@
 import { Headphones } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import SettingsActionRow from './SettingsActionRow.vue';
-import SettingsBlock from './SettingsBlock.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 defineProps({
   enabled: { type: Boolean, default: false },
@@ -15,17 +14,14 @@ const emit = defineEmits(['selectDevice']);
 </script>
 
 <template>
-  <SettingsBlock
-    title="音訊輸出"
-    summary="將伴奏送到直播或錄影軟體"
-    :status="enabled ? '已啟用' : '未啟用'"
-    :status-tone="enabled ? 'success' : 'muted'"
-  >
-    <SettingsActionRow
+  <div class="audio-output-settings-block">
+    <SettingsDocumentItem
       :icon="Headphones"
       title="擷取輸出裝置"
       :value="deviceLabel"
-      tooltip="選擇直播或錄影軟體使用的虛擬音效裝置。"
+      :status="enabled ? '已啟用' : '未啟用'"
+      :status-tone="enabled ? 'success' : 'muted'"
+      guidance="選擇直播或錄影軟體接收伴奏的虛擬裝置。"
     >
       <template #actions>
         <UiIconButton
@@ -35,7 +31,7 @@ const emit = defineEmits(['selectDevice']);
           @click="emit('selectDevice')"
         />
       </template>
-    </SettingsActionRow>
+    </SettingsDocumentItem>
 
     <UiNotice
       v-if="errorNotice"
@@ -43,5 +39,13 @@ const emit = defineEmits(['selectDevice']);
       compact
       @action="emit('selectDevice')"
     />
-  </SettingsBlock>
+  </div>
 </template>
+
+<style scoped>
+.audio-output-settings-block {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-space-2);
+}
+</style>
