@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
+import obsConnectionValues from '../../../shared/obsConnectionValues.json';
+import obsSessionValues from '../../../shared/obsSessionValues.json';
 import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 
 async function renderBlock(props = {}) {
@@ -95,5 +98,24 @@ describe('ObsIntegrationSettingsBlock', () => {
 
     expect(html).toContain('OBS 設定發生問題');
     expect(html).toContain('無法移除密碼，請再試一次。');
+  });
+
+  it('derives connection defaults and placeholders from the shared OBS values', async () => {
+    const html = await renderBlock();
+    const { defaultHost, defaultPort } = obsConnectionValues;
+    const sources = [
+      './ObsIntegrationSettingsBlock.vue',
+      '../../composables/useObsIntegration.js',
+    ].map((path) => readFileSync(new URL(path, import.meta.url), 'utf8'));
+
+    expect(html).toContain(`placeholder="${defaultHost}"`);
+    expect(html).toContain(`placeholder="${defaultPort}"`);
+    expect(html).toContain(
+      `value="${obsSessionValues.defaultSkipThresholdMs / 1000}"`,
+    );
+    for (const source of sources) {
+      expect(source).not.toContain(String(defaultPort));
+      expect(source).not.toContain(`'${defaultHost}'`);
+    }
   });
 });

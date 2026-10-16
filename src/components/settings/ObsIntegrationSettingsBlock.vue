@@ -7,16 +7,26 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import obsConnectionValues from '../../../shared/obsConnectionValues.json';
+import obsSessionValues from '../../../shared/obsSessionValues.json';
 
 const MAX_PASSWORD_LENGTH = obsConnectionValues.maxPasswordLength;
+const DEFAULT_HOST = obsConnectionValues.defaultHost;
+const DEFAULT_PORT = String(obsConnectionValues.defaultPort);
 
 const props = defineProps({
   status: { type: Object, required: true },
   featureEnabled: { type: Boolean, default: true },
-  host: { type: String, default: '127.0.0.1' },
-  port: { type: String, default: '4455' },
+  host: { type: String, default: () => obsConnectionValues.defaultHost },
+  port: {
+    type: String,
+    default: () => String(obsConnectionValues.defaultPort),
+  },
   password: { type: String, default: '' },
-  skipThresholdSeconds: { type: String, default: '10' },
+  skipThresholdSeconds: {
+    type: String,
+    default: () =>
+      String(Math.round(obsSessionValues.defaultSkipThresholdMs / 1000)),
+  },
   hasStoredPassword: { type: Boolean, default: false },
   isSaving: { type: Boolean, default: false },
   error: { type: String, default: '' },
@@ -143,7 +153,7 @@ const outputSummary = computed(() => {
           class="obs-integration-settings-block__host"
           label="主機"
           :model-value="host"
-          placeholder="127.0.0.1"
+          :placeholder="DEFAULT_HOST"
           :disabled="isSaving"
           @update:model-value="emit('update:host', $event)"
         />
@@ -152,7 +162,7 @@ const outputSummary = computed(() => {
           class="obs-integration-settings-block__port"
           label="連接埠"
           :model-value="port"
-          placeholder="4455"
+          :placeholder="DEFAULT_PORT"
           :disabled="isSaving"
           @update:model-value="emit('update:port', $event)"
         />

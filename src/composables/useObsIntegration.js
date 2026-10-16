@@ -1,11 +1,16 @@
 import { reactive, readonly } from 'vue';
+import OBS_CONNECTION_VALUES from '../../shared/obsConnectionValues.json';
 
 // Module-scope singleton, same pattern as useSystemUsage.js — one OBS
 // connection applies to the whole app, not per-component. Mirrors
 // electron/main/obsAdapter.js's getStatus() shape exactly so this file stays
 // a thin projection, not a second source of truth.
 const state = reactive({
-  desired: { enabled: false, host: '127.0.0.1', port: 4455 },
+  desired: {
+    enabled: false,
+    host: OBS_CONNECTION_VALUES.defaultHost,
+    port: OBS_CONNECTION_VALUES.defaultPort,
+  },
   observed: {
     lifecycle: 'disabled',
     obsWebSocketVersion: null,
