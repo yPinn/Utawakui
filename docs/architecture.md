@@ -145,10 +145,13 @@ shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titl
 `BgmPlayerTransport.vue` 呈現目前 BGM、進度與安全控制。它預設位於 PlayerBar 上方並避開 desktop
 persistent Dock bay；compact viewport只在Dock overlay展開時避開其footprint。它不是場次面板或 Right Dock surface；Dock footprint 只決定 home anchor／safe edge，
 不得覆寫 player-owned inline-size。使用者可在 shell 安全範圍移動並 Pin 位置。
-Transport 將曲名限制為單行，並固定 session／phase／deferred restore／time／primary-action 槽位；
-Play／Pause 共用同一節點，error 只替換 phase 投影，不插入會推動版面的臨時內容。
-Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live／record（同時作用時
-`live > record`）只更新狀態投影，不覆寫使用者明確關閉。Titlebar presentation與source picker是正交狀態；
+`BgmCurrentSource.vue` 將曲名限制為單行，並整合單一 operational status 與 source-picker disclosure；
+phase／deferred restore／bounded public error 由 pure `bgmPresentation.js` 合成一句狀態，不保留獨立
+badge width slot。`BgmPlayerTransport.vue` 固定 progress 與 action slots；Play／Pause 共用同一節點，
+Talk 是可見文字 toggle，Mute＋Volume 是同一 audio group，Emergency Cut 使用 shared danger intent。
+Inactive 時可用同一 transport 明確試播本機 monitor，但不顯示 `OBS 未確認`；已確認 live／record（同時作用時
+`live > record`）與 reconnecting 只更新 quiet session context，不覆寫使用者明確關閉。BGM feature 另向
+App emit bounded Titlebar status projection，Shell 只中繼，不直接讀 audio controller。Titlebar presentation與source picker是正交狀態；
 關閉完整player不停止deck或取消handoff，重新開啟時投影目前狀態。元件只消費
 `useBgmSession.js` 的 readonly 投影與 actions，不成為 PlayerBar 模式或 Folder artifact。
 

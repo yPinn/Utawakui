@@ -20,24 +20,20 @@ describe('BgmPlayerTransport', () => {
         currentTime: 42,
         duration: 180,
         volume: 0.25,
-        error: 'BGM 音訊輸出暫時無法使用。',
       }),
     );
 
     expect(html).toContain('aria-label="BGM 播放控制"');
-    expect(html).toContain(
-      'aria-label="BGM 操作失敗：BGM 音訊輸出暫時無法使用。"',
-    );
-    expect(html).toContain('>失敗<');
+    expect(html).not.toContain('>失敗<');
     expect(html).not.toContain('目前可聽：BGM');
-    expect(html).toContain('Quiet Room');
     expect(html).toContain('暫停 BGM');
     expect(html).toContain('開啟 Talk（BGM 降低 12 dB）');
-    expect(html).toContain('緊急靜音 BGM');
+    expect(source).toMatch(/>\s*Talk\s*<\/UiButton>/u);
+    expect(html).toContain('立即停止 BGM（不淡出）');
     expect(html).toContain('aria-label="BGM 進度"');
     expect(html).toContain('0:42');
     expect(html).not.toContain('3:00');
-    expect(html).not.toContain('role="alert"');
+    expect(source).not.toContain('UiChip');
     expect(source).not.toContain('UiNotice');
     expect(source).not.toContain('場次');
   });
@@ -63,21 +59,15 @@ describe('BgmPlayerTransport', () => {
       createSSRApp(BgmPlayerTransport, {
         phase: 'track-active',
         audibleLane: 'performance',
-        restorePending: true,
         currentTrack: { title: 'Quiet Room', artist: 'Local Artist' },
       }),
     );
 
-    expect(html).toContain('aria-label="演唱曲目播放中"');
-    expect(html).toContain('>演唱<');
-    expect(html).not.toContain('>演唱曲目播放中<');
     expect(html).not.toContain('目前可聽：演唱曲目');
-    expect(html).toContain('aria-label="曲後恢復 BGM"');
-    expect(html).toContain('>回復<');
     expect(html).toContain('播放 BGM');
     expect(html).toContain('disabled');
     expect(html).not.toContain('暫停 BGM');
-    expect(html).toContain('緊急靜音 BGM');
+    expect(html).toContain('立即停止 BGM（不淡出）');
     expect(source).not.toContain('bgmRequested:');
   });
 
@@ -86,7 +76,6 @@ describe('BgmPlayerTransport', () => {
       createSSRApp(BgmPlayerTransport, {
         phase: 'track-paused',
         audibleLane: null,
-        restorePending: true,
         currentTrack: { title: 'Quiet Room', artist: 'Local Artist' },
       }),
     );
@@ -94,8 +83,6 @@ describe('BgmPlayerTransport', () => {
       /<button(?:(?!<\/button>)[\s\S])*播放 BGM(?:(?!<\/button>)[\s\S])*<\/button>/u,
     )?.[0];
 
-    expect(html).toContain('aria-label="演唱曲目已暫停"');
-    expect(html).toContain('>暫停<');
     expect(primaryButton).toBeDefined();
     expect(primaryButton).not.toContain('disabled');
   });
@@ -122,9 +109,9 @@ describe('BgmPlayerTransport', () => {
       /<button[^>]*bgm-transport__cut[^>]*>/u,
     )?.[0];
 
-    expect(idleHtml).toContain('緊急靜音 BGM');
+    expect(idleHtml).toContain('立即停止 BGM（不淡出）');
     expect(idleCut).toContain('disabled');
-    expect(playingHtml).toContain('緊急靜音 BGM');
+    expect(playingHtml).toContain('立即停止 BGM（不淡出）');
     expect(playingCut).not.toContain('disabled');
     expect(source).toContain(':disabled="!canCutBgm"');
     expect(source).not.toContain('v-if="canCutBgm"');
@@ -133,28 +120,16 @@ describe('BgmPlayerTransport', () => {
     expect(source).toContain('@click="activatePrimaryAction"');
   });
 
-  it('keeps status graphical and reserves optional status slots', async () => {
-    const idleHtml = await renderToString(
-      createSSRApp(BgmPlayerTransport, {
-        phase: 'idle',
-        restorePending: false,
-      }),
-    );
-    const restoreHtml = await renderToString(
-      createSSRApp(BgmPlayerTransport, {
-        phase: 'track-active',
-        restorePending: true,
-      }),
-    );
-
-    expect(source).toContain("import UiChip from '../ui/UiChip.vue'");
-    expect(source).toContain(':is="phaseStatus.icon"');
-    expect(source).toContain('class="bgm-transport__phase"');
-    expect(source).toContain('class="bgm-transport__restore"');
-    expect(source).not.toContain('v-if="restorePending"');
-    expect(idleHtml).toContain('aria-hidden="true"');
-    expect(idleHtml).toContain('>回復<');
-    expect(restoreHtml).toContain('aria-hidden="false"');
+  it('groups normal, audio, and emergency controls without status badges', () => {
+    expect(source).not.toContain('UiChip');
+    expect(source).not.toContain('bgm-transport__phase');
+    expect(source).not.toContain('bgm-transport__restore');
+    expect(source).toContain('class="bgm-transport__talk"');
+    expect(source).toContain('class="bgm-transport__audio"');
+    expect(source).toContain('class="bgm-transport__cut"');
+    expect(source).toContain(':aria-pressed="isDimmed"');
+    expect(source).toContain(':aria-pressed="isMuted"');
+    expect(source).toContain('intent="danger"');
   });
 
   it('keeps play unavailable until a BGM is selected', async () => {
@@ -164,7 +139,6 @@ describe('BgmPlayerTransport', () => {
       }),
     );
 
-    expect(html).toContain('尚未選擇 BGM');
     expect(html).toContain('disabled');
     expect(source).toContain(':disabled="primaryAction.disabled"');
     expect(source).not.toContain('sessionMode:');

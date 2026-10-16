@@ -61,8 +61,11 @@ describe('AppTitleBar', () => {
     expect(source).toContain('Music2,');
     expect(source).toContain('bgmActive: { type: Boolean, default: false }');
     expect(source).toContain("bgmControls: { type: String, default: '' }");
+    expect(source).toContain("bgmStatus: { type: String, default: 'idle' }");
+    expect(source).toContain("bgmStatusLabel: { type: String, default: '' }");
     expect(source).toContain("'toggleBgm'");
-    expect(source).toContain('label="BGM 播放器"');
+    expect(source).toContain(':label="bgmActionLabel"');
+    expect(source).toContain('`app-title-bar__bgm--${props.bgmStatus}`');
     expect(source).toContain(':active="bgmActive"');
     expect(source).toContain(':aria-expanded="bgmActive"');
     expect(source).toContain(':aria-controls="bgmControls || undefined"');

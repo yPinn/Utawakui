@@ -758,9 +758,6 @@
   --ui-bgm-player-max-block-size: 28rem;
   --ui-bgm-player-artwork-size: 5rem;
   --ui-bgm-player-volume-inline-size: 5rem;
-  --ui-bgm-player-session-status-inline-size: 5.5rem;
-  --ui-bgm-player-phase-status-inline-size: 4.25rem;
-  --ui-bgm-player-restore-status-inline-size: 4rem;
   --ui-bgm-player-time-inline-size: 4.5rem;
   --ui-search-clear-hit-size: var(--ui-field-height);
   /* Compatibility alias for feature menus pending bounded migration. */

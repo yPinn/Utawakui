@@ -91,15 +91,12 @@ describe('BGM player Token v2 layout contract', () => {
     expect(playerSource).toContain('container-type: inline-size;');
     expect(playerSource).toContain('container-name: bgm-player;');
     expect(transportSource).not.toContain('@media (max-width: 32rem)');
-    expect(transportSource).not.toMatch(
-      /\.bgm-transport__meter\s*\{[^}]*flex-direction:\s*column;/su,
-    );
     expect(transportSource).toContain(
       'min-inline-size: var(--ui-bgm-player-volume-inline-size);',
     );
     expect(transportSource).not.toContain('min-width: 5rem;');
     expect(transportSource).toMatch(
-      /\.bgm-transport__controls\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(4,\s*var\(--ui-icon-button-size-md\)\)\s+minmax\(\s*0,\s*1fr\s*\);/su,
+      /\.bgm-transport__controls\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(--ui-icon-button-size-md\)\s+auto\s+minmax\(\s*0,\s*1fr\s*\)\s+var\(\s*--ui-icon-button-size-md\s*\);/su,
     );
     expect(transportSource).toMatch(
       /\.bgm-transport__volume\s*\{[^}]*inline-size:\s*100%;/su,
@@ -107,24 +104,21 @@ describe('BGM player Token v2 layout contract', () => {
     expect(transportSource).not.toContain('flex: 1 0 100%;');
   });
 
-  it('reserves stable identity, status, restore, and time slots', () => {
-    expect(tokensSource).toContain(
+  it('keeps stable identity and time without obsolete badge width slots', () => {
+    expect(tokensSource).not.toContain(
       '--ui-bgm-player-session-status-inline-size:',
     );
-    expect(tokensSource).toContain('--ui-bgm-player-phase-status-inline-size:');
-    expect(tokensSource).toContain(
+    expect(tokensSource).not.toContain(
+      '--ui-bgm-player-phase-status-inline-size:',
+    );
+    expect(tokensSource).not.toContain(
       '--ui-bgm-player-restore-status-inline-size:',
     );
     expect(tokensSource).toContain('--ui-bgm-player-time-inline-size:');
-    expect(playerSource).toMatch(
-      /\.bgm-player__session-status\s*\{[^}]*inline-size:\s*var\(--ui-bgm-player-session-status-inline-size\);/su,
+    expect(playerSource).not.toContain(
+      'inline-size: var(--ui-bgm-player-session-status-inline-size)',
     );
-    expect(transportSource).toMatch(
-      /\.bgm-transport__readout\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto;/su,
-    );
-    expect(transportSource).toMatch(
-      /\.bgm-transport__meter\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(\s*--ui-bgm-player-phase-status-inline-size\s*\)\s+var\(\s*--ui-bgm-player-restore-status-inline-size\s*\);/su,
-    );
+    expect(currentSource).toContain('class="bgm-current-source__status"');
     expect(transportSource).toMatch(
       /\.bgm-transport__time\s*\{[^}]*inline-size:\s*var\(--ui-bgm-player-time-inline-size\);/su,
     );
@@ -160,7 +154,7 @@ describe('BGM player Token v2 layout contract', () => {
     expectNoneRule(playerSource, '\\.bgm-player__header');
     expectNoneRule(
       transportSource,
-      '\\.bgm-transport__meter,\\s*\\.bgm-transport__progress,\\s*\\.bgm-transport__controls',
+      '\\.bgm-transport__progress,\\s*\\.bgm-transport__controls',
     );
     expect(transportSource).not.toMatch(
       /\.bgm-transport__error\s*\{[^}]*user-select:\s*none;/su,

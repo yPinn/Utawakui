@@ -146,6 +146,7 @@ describe('App shell right Dock', () => {
     expect(source).toContain('class="shell__bgm-player"');
     expect(source).toContain(':open="bgmPlayerOpen"');
     expect(source).toContain('@request-close="closeBgmPlayer"');
+    expect(source).toContain('@status-change="bgmStatus = $event"');
     expect(source).not.toContain('useBgmSession');
     expect(source).not.toContain('LiveSessionCard');
 
@@ -258,6 +259,8 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('@toggle-session=');
     expect(source).toContain(':bgm-active="bgmPlayerOpen"');
     expect(source).toContain(':bgm-controls="BGM_PLAYER_ID"');
+    expect(source).toContain(':bgm-status="bgmStatus.state"');
+    expect(source).toContain(':bgm-status-label="bgmStatus.label"');
     expect(source).toContain('@toggle-bgm="toggleBgmPlayer"');
     expect(source).toContain(':artwork-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).toContain(':queue-controls="RIGHT_DOCK_CONTENT_ID"');

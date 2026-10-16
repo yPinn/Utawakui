@@ -1,10 +1,15 @@
 <script setup>
 import { Music2 } from '../../icons/index.js';
+import UiButton from '../ui/UiButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 defineProps({
   track: { type: Object, default: null },
+  status: { type: Object, default: null },
+  pickerExpanded: { type: Boolean, default: false },
+  pickerControls: { type: String, default: '' },
 });
+const emit = defineEmits(['togglePicker']);
 </script>
 
 <template>
@@ -18,7 +23,28 @@ defineProps({
       <Music2 aria-hidden="true" />
     </UiTrackThumb>
     <div class="bgm-current-source__copy">
-      <strong>{{ track?.title ?? '尚未選擇 BGM' }}</strong>
+      <div class="bgm-current-source__identity">
+        <strong>{{ track?.title ?? '尚未選擇 BGM' }}</strong>
+        <UiButton
+          class="bgm-current-source__change"
+          :active="pickerExpanded"
+          :aria-expanded="pickerExpanded"
+          :aria-controls="pickerControls || undefined"
+          @click="emit('togglePicker')"
+        >
+          {{ track ? '更換' : '選擇' }}
+        </UiButton>
+      </div>
+      <span
+        v-if="status"
+        class="bgm-current-source__status"
+        :class="`bgm-current-source__status--${status.tone}`"
+        :aria-label="status.accessibleLabel"
+        aria-live="polite"
+      >
+        <component :is="status.icon" v-if="status.icon" aria-hidden="true" />
+        <span>{{ status.label }}</span>
+      </span>
     </div>
   </div>
 </template>
@@ -37,9 +63,19 @@ defineProps({
   min-inline-size: 0;
   flex: 1;
   flex-direction: column;
+  justify-content: center;
+  gap: var(--ui-space-1);
 }
 
-.bgm-current-source__copy strong {
+.bgm-current-source__identity {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.bgm-current-source__identity strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -47,6 +83,47 @@ defineProps({
   font-size: var(--ui-type-title-size);
   font-weight: var(--ui-type-title-weight);
   line-height: var(--ui-type-label-line-height);
+}
+
+.bgm-current-source__change {
+  min-height: 0;
+  padding-block: var(--ui-space-1);
+}
+
+.bgm-current-source__status {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: var(--ui-space-1);
+  overflow: hidden;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+  white-space: nowrap;
+}
+
+.bgm-current-source__status > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bgm-current-source__status :deep(svg) {
+  width: var(--ui-space-4);
+  height: var(--ui-space-4);
+  flex: 0 0 auto;
+}
+
+.bgm-current-source__status--current,
+.bgm-current-source__status--accent {
+  color: var(--ui-color-accent);
+}
+
+.bgm-current-source__status--warning {
+  color: var(--ui-color-warning);
+}
+
+.bgm-current-source__status--danger {
+  color: var(--ui-color-danger);
 }
 
 .bgm-current-source__artwork :deep(svg) {

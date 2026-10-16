@@ -93,8 +93,8 @@ BGM 使用獨立控制面，不共用也不擴張底部 `PlayerBar`。`PlayerBar
 
 獨立 BGM 控制面採 shell-owned `BgmPlayer.vue`。它有自己的 Titlebar disclosure、播放器 identity、
 compact transport、進度／音量、曲庫搜尋與 error states，不嵌入 Performance「待唱安排」，
-也不沿用場次 workspace 的外觀。LIVE／REC 只提供狀態 badge、compact auto-visibility 與 confirmed-exit
-signal，不取得 BGM transport permission 或 presentation ownership。播放器採照片物件式的 bounded movement；Pin 只鎖定
+也不沿用場次 workspace 的外觀。LIVE／REC／reconnecting 只在真實存在時提供 quiet session context
+與 confirmed-exit signal，不取得 BGM transport permission 或 presentation ownership。播放器採照片物件式的 bounded movement；Pin 只鎖定
 目前位置，不改變 transport、展開或 session 狀態。
 
 此控制面採桌面 MiniPlayer 的工作模型：在主要工作流程旁維持 current-source identity、artwork、
@@ -115,25 +115,26 @@ progress、volume 與常駐 transport，移動或展開選曲都不改變播放 
   只由 Shell safe boundary 與 bounded movement 防止完全離開可用畫面；
 - player 的 inline end 以 Shell shared edge inset 為界；block end 與 Right Dock 內容同底，且始終
   位於 PlayerBar 上方。超過邊界時由共用 bounded movement clamp，不以 Dock footprint 額外縮排；
-- 窄視窗中 compact player 保留 session、可聽 lane、play／pause、進度、Talk／Dim 與 Emergency Cut；
+- 窄視窗中 compact player 保留目前來源、單一 operational status、play／pause、進度、Talk、Mute＋Volume 與 Emergency Cut；
   更換歌曲搜尋在同一 player 的 bounded scroll body 展開，不覆蓋 `PlayerBar`；
 - Right Dock rail／fold 外觀可以另行修改；BGM 只依 Shell 提供的 safe boundary 排版，不依賴
   現行 rail icon、固定像素 offset 或 Dock 內部 component anatomy。
 
 Compact BGM player 至少提供：
 
-- LIVE／REC 主次狀態與 OBS reconnecting 狀態；同時 live／record 時以 LIVE 為主要標籤，REC
-  不得把 compact header 撐成另一列；inactive 明確標成「OBS 未確認」，但不常駐完整說明句；
-- 以 icon 加短 label 的單一 phase badge 表達目前可聽 lane／handoff 狀態，並提供完整 accessible name／tooltip；
-  另顯示目前 BGM、音量與 unavailable 狀態，不得再用第二行「目前可聽」重複同一事實；
-- play／pause、Talk／Dim 與 Emergency Cut；
+- LIVE／REC 主狀態與 OBS reconnecting 狀態；同時 live／record 時以 LIVE 為主要標籤，且不得把
+  compact header 撐成另一列；inactive 不顯示 `OBS 未確認` 或 monitor-only badge；
+- 目前 BGM 區整合 icon、單一 operational status line 與「更換」入口；phase、deferred restore 與
+  bounded public error 合成一句可存取狀態，不另設 phase／restore badge，也不重複「目前可聽」；
+- play／pause、可見文字的 Talk toggle、同群組的 Mute＋Volume，以及 shared danger intent 的
+  「立即停止 BGM（不淡出）」；
 - fade、pre-roll、track active、post-roll、manual hold 與 error 的可見狀態；演唱曲目的名稱、開始
   intent 與場次 progress 由 performance-session feature 自己呈現，不併入 BGM player。
 
 主控制只表示 BGM 當下 transport，不得拿「曲後恢復」冒充正在播放。演唱播放器提出 start
 後，BGM 主控制立即由 Pause 重置為 disabled Play；`stopping-bgm` 期間仍可使用 Emergency Cut
-加速歸零，但不得取消後續 pre-roll。若這次交接原本由可聽 BGM 觸發，compact status 另顯示
-「曲後恢復 BGM」，直到 post-roll 完成或 restore intent 被明確清除。
+加速歸零，但不得取消後續 pre-roll。若這次交接原本由可聽 BGM 觸發，單一 operational status
+以「曲後回復」suffix 表示 deferred intent，直到 post-roll 完成或 restore intent 被明確清除。
 Transport 的固定 action 槽不因 phase mount／unmount；暫不可用時保留原位並 disabled，避免進度與
 音量控制位移。Titlebar BGM disclosure、source picker disclosure 與 Right Dock workspace disclosure
 各自保存 presentation state；任一方展開都不得自動關閉或收合另一方。明確關閉完整 BGM player
@@ -478,9 +479,10 @@ capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
 27. BGM player 可在 shell safe boundary 內以標題列 pointer drag 或方向鍵移動，Pin 只鎖定位置；
     不支援 rotation。鍵盤 focus 順序可預期，compact player 出現不搶 focus，退場時不把 focus
     留在已移除的節點。其內容不出現在 Browser Source 或 public Display。
-28. 曲名使用單行截斷；session、phase、deferred restore、時間與 transport action 使用固定槽位。
-    Play／Pause 共用同一 primary action 節點，錯誤投影到既有 phase badge 並以 tooltip／accessible
-    name 保留完整原因；idle、active、restore 與 error 切換不得改變 player 外框或推動相鄰控制。
+28. 曲名使用單行截斷；真實 session context、時間與 transport action 維持穩定位置。Play／Pause
+    共用同一 primary action 節點；phase、deferred restore 與 bounded public error 投影到目前來源下方的
+    單一 operational status line，並以 accessible name 保留完整語意；idle、active、restore 與 error
+    切換不得改變 player 外框或推動相鄰控制。
 29. Text placeholder、unreviewed、unlinked 或 source-unavailable item 不能進入 prepared handoff；
     其他 ready item 與 BGM 不受影響，operator 可回到 preparation 修正或 skip。
 30. Prepared item 在 fade-out／pre-roll 期間被改名、relink、remove、unverify 或失效時，舊 item

@@ -27,6 +27,8 @@ const props = defineProps({
   preparationStatusLabel: { type: String, default: '' },
   bgmActive: { type: Boolean, default: false },
   bgmControls: { type: String, default: '' },
+  bgmStatus: { type: String, default: 'idle' },
+  bgmStatusLabel: { type: String, default: '' },
   performerActive: { type: Boolean, default: false },
   performerBusy: { type: Boolean, default: false },
   settingsActive: { type: Boolean, default: false },
@@ -92,6 +94,10 @@ const settingsLabel = computed(() =>
 const preparationActionLabel = computed(() =>
   props.preparationActive ? '收合曲目準備' : '展開曲目準備',
 );
+const bgmActionLabel = computed(() => {
+  const action = props.bgmActive ? '收合 BGM 播放器' : '展開 BGM 播放器';
+  return props.bgmStatusLabel ? `${action} · ${props.bgmStatusLabel}` : action;
+});
 const preparationTooltipSuffix = computed(() =>
   props.preparationStatusLabel ? ` · ${props.preparationStatusLabel}` : '',
 );
@@ -250,8 +256,10 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
         />
         <UiIconButton
           data-app-bgm-trigger
+          class="app-title-bar__bgm"
+          :class="`app-title-bar__bgm--${props.bgmStatus}`"
           :icon="Music2"
-          label="BGM 播放器"
+          :label="bgmActionLabel"
           variant="ghost"
           size="md"
           :active="bgmActive"
@@ -487,6 +495,29 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   .app-title-bar__preparation.app-title-bar__preparation--attention:hover,
 .app-title-bar__controls
   .app-title-bar__preparation.app-title-bar__preparation--attention:active {
+  color: var(--ui-color-danger);
+}
+
+.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--playing,
+.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--playing:hover,
+.app-title-bar__controls
+  .app-title-bar__bgm.app-title-bar__bgm--playing:active {
+  color: var(--ui-color-accent);
+}
+
+.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--transition,
+.app-title-bar__controls
+  .app-title-bar__bgm.app-title-bar__bgm--transition:hover,
+.app-title-bar__controls
+  .app-title-bar__bgm.app-title-bar__bgm--transition:active {
+  color: var(--ui-color-warning);
+}
+
+.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--attention,
+.app-title-bar__controls
+  .app-title-bar__bgm.app-title-bar__bgm--attention:hover,
+.app-title-bar__controls
+  .app-title-bar__bgm.app-title-bar__bgm--attention:active {
   color: var(--ui-color-danger);
 }
 

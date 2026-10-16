@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(549);
+    expect(uniqueNames.size).toBe(546);
     expect(uniqueNames).toContain('--ui-action-menu-max-block-size');
     expect(uniqueNames).toContain('--ui-textarea-font-size');
     expect(uniqueNames).toContain('--ui-textarea-font-weight');
@@ -321,9 +321,6 @@ describe('Studio Library workspace prototype isolation', () => {
       '--ui-bgm-player-max-block-size',
       '--ui-bgm-player-artwork-size',
       '--ui-bgm-player-volume-inline-size',
-      '--ui-bgm-player-session-status-inline-size',
-      '--ui-bgm-player-phase-status-inline-size',
-      '--ui-bgm-player-restore-status-inline-size',
       '--ui-bgm-player-time-inline-size',
       '--ui-search-clear-hit-size',
     ]) {

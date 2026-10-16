@@ -7,6 +7,7 @@ import {
   onUnmounted,
   provide,
   ref,
+  shallowRef,
   watch,
 } from 'vue';
 import AppFolderLayout from './components/layout/AppFolderLayout.vue';
@@ -186,6 +187,7 @@ const { currentTrack: queueCurrentTrack } = usePlaybackQueue();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
 const BGM_PLAYER_ID = 'app-bgm-player';
 const bgmPlayerOpen = ref(false);
+const bgmStatus = shallowRef({ state: 'idle', label: '' });
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
@@ -419,6 +421,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
       :preparation-status-label="preparationIndicator.label"
       :bgm-active="bgmPlayerOpen"
       :bgm-controls="BGM_PLAYER_ID"
+      :bgm-status="bgmStatus.state"
+      :bgm-status-label="bgmStatus.label"
       :performer-active="performerView.state.open"
       :performer-busy="performerView.state.isOpening"
       :settings-active="isSettingsView"
@@ -459,6 +463,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
           class="shell__bgm-player"
           :open="bgmPlayerOpen"
           @request-close="closeBgmPlayer"
+          @status-change="bgmStatus = $event"
         />
       </div>
       <div

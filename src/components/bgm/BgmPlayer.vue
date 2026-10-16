@@ -8,14 +8,18 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
-import { ChevronDown, ChevronUp, Music2, Pin } from '../../icons/index.js';
+import { Music2, Pin } from '../../icons/index.js';
 import { useBoundedMovableSurface } from '../../composables/useBoundedMovableSurface.js';
 import { useBgmSession } from '../../composables/useBgmSession.js';
 import { useBgmStandbyPlan } from '../../composables/useBgmStandbyPlan.js';
 import { useLibrary } from '../../composables/useLibrary.js';
+import BgmCurrentSource from './BgmCurrentSource.vue';
 import BgmTrackPicker from './BgmTrackPicker.vue';
 import BgmPlayerTransport from './BgmPlayerTransport.vue';
-import UiChip from '../ui/UiChip.vue';
+import {
+  projectBgmOperationalStatus,
+  projectBgmShellStatus,
+} from './bgmPresentation.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiSurface from '../ui/UiSurface.vue';
@@ -23,7 +27,7 @@ import UiSurface from '../ui/UiSurface.vue';
 const props = defineProps({
   open: { type: Boolean, default: false },
 });
-const emit = defineEmits(['requestClose']);
+const emit = defineEmits(['requestClose', 'statusChange']);
 
 const {
   state: sessionState,
@@ -69,7 +73,6 @@ const SESSION_LABELS = Object.freeze({
   live: 'LIVE',
   record: 'REC',
   reconnecting: 'OBS 重連中',
-  inactive: 'OBS 未確認',
 });
 const sessionLabel = computed(() => {
   if (sessionIndicators.value.isReconnecting) {
@@ -77,7 +80,7 @@ const sessionLabel = computed(() => {
   }
   if (sessionIndicators.value.isLive) return SESSION_LABELS.live;
   if (sessionIndicators.value.isRecording) return SESSION_LABELS.record;
-  return SESSION_LABELS.inactive;
+  return '';
 });
 const sessionTone = computed(() => {
   if (handoffState.sessionMode === 'reconnecting') return 'warning';
@@ -98,6 +101,20 @@ const searchResults = computed(() => {
 });
 const transportError = computed(
   () => sessionState.error ?? handoffState.error ?? deckState.error ?? '',
+);
+const operationalStatus = computed(() =>
+  projectBgmOperationalStatus({
+    phase: handoffState.phase,
+    restorePending: handoffState.restorePending,
+    error: transportError.value,
+  }),
+);
+const shellStatus = computed(() =>
+  projectBgmShellStatus({
+    phase: handoffState.phase,
+    audibleLane: handoffState.audibleLane,
+    error: transportError.value,
+  }),
 );
 const libraryError = computed(
   () => planState.validationError?.message ?? planState.error ?? '',
@@ -122,6 +139,10 @@ watch(
 watch(pickerExpanded, async () => {
   await nextTick();
   reclamp();
+});
+
+watch(shellStatus, (status) => emit('statusChange', status), {
+  immediate: true,
 });
 
 async function changeBgmTrack(trackId) {
@@ -187,9 +208,14 @@ function handleEscape(event) {
           <Music2 aria-hidden="true" />
           <span>BGM</span>
         </div>
-        <UiChip class="bgm-player__session-status" :tone="sessionTone">
+        <span
+          v-if="sessionLabel"
+          class="bgm-player__session-status"
+          :class="`bgm-player__session-status--${sessionTone}`"
+          aria-live="polite"
+        >
           {{ sessionLabel }}
-        </UiChip>
+        </span>
       </div>
       <div class="bgm-player__header-actions">
         <UiIconButton
@@ -202,23 +228,22 @@ function handleEscape(event) {
           @pointerdown.stop
           @click="togglePinned"
         />
-        <UiIconButton
-          :icon="pickerExpanded ? ChevronUp : ChevronDown"
-          :label="pickerExpanded ? '收合更換歌曲' : '展開更換歌曲'"
-          :active="pickerExpanded"
-          :aria-expanded="pickerExpanded"
-          :aria-controls="BGM_PICKER_ID"
-          @pointerdown.stop
-          @click="togglePicker"
-        />
       </div>
     </header>
+
+    <BgmCurrentSource
+      class="bgm-player__source"
+      :track="currentTrack"
+      :status="operationalStatus"
+      :picker-expanded="pickerExpanded"
+      :picker-controls="BGM_PICKER_ID"
+      @toggle-picker="togglePicker"
+    />
 
     <BgmPlayerTransport
       class="bgm-player__transport"
       :phase="handoffState.phase"
       :audible-lane="handoffState.audibleLane"
-      :restore-pending="handoffState.restorePending"
       :current-track="currentTrack"
       :is-dimmed="deckState.isDimmed"
       :is-muted="settings.isMuted"
@@ -226,7 +251,6 @@ function handleEscape(event) {
       :volume="settings.volume"
       :current-time="deckState.currentTime"
       :duration="deckState.duration"
-      :error="transportError"
       @play="playBgm"
       @pause="pauseBgm"
       @cut="emergencyCut"
@@ -295,6 +319,7 @@ function handleEscape(event) {
 }
 
 .bgm-player__header,
+.bgm-player__source,
 .bgm-player__transport,
 .bgm-player__separator {
   flex: 0 0 auto;
@@ -345,10 +370,19 @@ function handleEscape(event) {
 }
 
 .bgm-player__session-status {
-  inline-size: var(--ui-bgm-player-session-status-inline-size);
-  justify-content: center;
-  overflow: hidden;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-type-caption-line-height);
   white-space: nowrap;
+}
+
+.bgm-player__session-status--current {
+  color: var(--ui-color-accent);
+}
+
+.bgm-player__session-status--warning {
+  color: var(--ui-color-warning);
 }
 
 .bgm-player__picker {

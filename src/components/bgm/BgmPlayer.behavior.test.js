@@ -34,7 +34,8 @@ describe('BgmPlayer', () => {
       '<BgmPlayerTransport\n      v-if="sessionActive"',
     );
     expect(source).not.toContain(':disabled="!sessionActive"');
-    expect(source).toContain("inactive: 'OBS 未確認'");
+    expect(source).not.toContain("inactive: 'OBS 未確認'");
+    expect(source).toContain('v-if="sessionLabel"');
     expect(source).not.toContain('可試播本機監聽；OBS 收音仍需短錄影確認。');
     expect(source).not.toContain("inactive: '試播模式'");
     expect(source).toContain('v-if="pickerExpanded"');
@@ -45,8 +46,10 @@ describe('BgmPlayer', () => {
     expect(source).not.toContain('selectTrack');
   });
 
-  it('keeps the current BGM visible through the shared transport', () => {
-    expect(source).not.toContain('<BgmCurrentSource');
+  it('keeps the current BGM and its single operational status visible', () => {
+    expect(source).toContain('<BgmCurrentSource');
+    expect(source).toContain(':status="operationalStatus"');
+    expect(source).toContain('@toggle-picker="togglePicker"');
     expect(source).toContain(':current-track="currentTrack"');
     expect(source).toContain('sessionIndicators.value.isRecording');
     expect(source).toContain("live: 'LIVE'");
@@ -66,7 +69,7 @@ describe('BgmPlayer', () => {
     expect(source).toContain('pickerExpanded.value = !pickerExpanded.value');
     expect(source).not.toContain("emit('requestExpand')");
     expect(source).toContain("emit('requestClose')");
-    expect(source).toContain(':restore-pending="handoffState.restorePending"');
+    expect(source).toContain('restorePending: handoffState.restorePending');
     expect(source).not.toContain(':bgm-requested=');
   });
 
@@ -97,12 +100,16 @@ describe('BgmPlayer', () => {
     expect(source).not.toMatch(/\b(?:27|38|7)rem\b/u);
   });
 
-  it('uses a plain feature identity and reserves the badge for session state', () => {
+  it('uses a plain feature identity and only shows real session activity', () => {
     expect(source).toContain('class="bgm-player__feature-identity"');
     expect(source).toContain('<Music2 aria-hidden="true" />');
     expect(source).toContain('<span>BGM</span>');
     expect(source).not.toContain('<UiChip class="bgm-player__feature-status"');
     expect(source).toContain('class="bgm-player__session-status"');
+    expect(source).not.toContain('<UiChip');
+    expect(source).not.toContain('ChevronDown');
+    expect(source).not.toContain('ChevronUp');
+    expect(source).not.toContain("'展開更換歌曲'");
     expect(source).not.toContain('class="bgm-player__mark"');
     expect(source).not.toContain('class="bgm-player__title"');
   });
