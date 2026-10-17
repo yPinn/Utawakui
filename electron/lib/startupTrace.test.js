@@ -10,6 +10,31 @@ const {
 } = startupTraceModule;
 
 describe('startup trace contract', () => {
+  it('bounds diagnostic session labels without allowing private metadata', () => {
+    const parse = (probeSession) =>
+      parseExternalStartupMilestone(
+        {
+          name: 'baseline-complete',
+          atUnixMs: 1100,
+          metadata: { probeSession },
+        },
+        { expectedProcess: 'main', timeOriginMs: 1000, nowMs: 1200 },
+      );
+    expect(parse('memory').metadata.probeSession).toBe('memory');
+    expect(parse('profile').metadata.probeSession).toBe('profile');
+    expect(() => parse('private-path')).toThrow(TypeError);
+  });
+  it('enables the memory probe only together with tracing', () => {
+    expect(
+      readStartupTraceOptions(['--startup-trace-memory-probe']).memoryProbe,
+    ).toBe(false);
+    expect(
+      readStartupTraceOptions([
+        '--startup-trace',
+        '--startup-trace-memory-probe',
+      ]).memoryProbe,
+    ).toBe(true);
+  });
   it('is inert by default and does not touch its writer', async () => {
     const writeLine = vi.fn();
     const trace = createStartupTrace({ writeLine });
@@ -199,6 +224,7 @@ describe('startup trace contract', () => {
     expect(readStartupTraceOptions(['app.exe'])).toEqual({
       enabled: false,
       exitOnComplete: false,
+      memoryProbe: false,
       filePath: null,
     });
     expect(
@@ -211,6 +237,7 @@ describe('startup trace contract', () => {
     ).toEqual({
       enabled: true,
       exitOnComplete: true,
+      memoryProbe: false,
       filePath: 'C:\\temp\\trace.jsonl',
     });
   });

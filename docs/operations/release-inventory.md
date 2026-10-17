@@ -27,6 +27,8 @@ Windows packaging is configured in `electron-builder.yml`.
   privileges remain enabled only while the main renderer loads from `file://`.
 - Renderer output: `dist/`, loaded by `electron/main/windowState.js`.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
+  The read-only default-session preparation helper `electron/main/previewSession.js`
+  uses the existing `electron/**/*` inclusion; its colocated tests remain excluded.
 - Cross-runtime JSON contracts and pure presentation projections: `shared/`,
   packaged into `app.asar`; Browser Source access is limited to exact loopback
   routes declared by `electron/lib/outputServer/http.js` and composed by

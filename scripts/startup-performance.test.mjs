@@ -4,6 +4,8 @@ import {
   parseStartupTrace,
   percentile,
   summarizeRuns,
+  buildStartupArguments,
+  parseArguments,
 } from './startup-performance.mjs';
 
 const completeTrace = (offset = 0) => [
@@ -77,6 +79,44 @@ const completeTrace = (offset = 0) => [
 ];
 
 describe('startup performance harness', () => {
+  it('rejects an older executable that ignores the requested memory-probe flag', () => {
+    const legacy = completeTrace();
+    expect(() =>
+      parseStartupTrace(legacy.map(JSON.stringify).join('\n'), {
+        expectedProbeSession: 'memory',
+      }),
+    ).toThrow('probe session');
+    const current = completeTrace();
+    current.at(-1).metadata.probeSession = 'memory';
+    expect(
+      parseStartupTrace(current.map(JSON.stringify).join('\n'), {
+        expectedProbeSession: 'memory',
+      }).baseline.probeSession,
+    ).toBe('memory');
+    expect(() =>
+      parseStartupTrace(current.map(JSON.stringify).join('\n'), {
+        expectedProbeSession: 'profile',
+      }),
+    ).toThrow('probe session');
+  });
+  it('retains profile tracing by default and labels the explicit memory control', () => {
+    expect(parseArguments([]).probeSession).toBe('profile');
+    const options = parseArguments(['--probe-session', 'memory']);
+    expect(options.probeSession).toBe('memory');
+    expect(
+      buildStartupArguments({
+        profilePath: 'profile',
+        tracePath: 'trace',
+        probeSession: options.probeSession,
+      }),
+    ).toContain('--startup-trace-memory-probe');
+    expect(
+      buildStartupArguments({ profilePath: 'profile', tracePath: 'trace' }),
+    ).not.toContain('--startup-trace-memory-probe');
+    expect(() => parseArguments(['--probe-session', 'other'])).toThrow(
+      'probe-session',
+    );
+  });
   it('builds isolated cold runs and a shared warm profile', () => {
     const plan = buildRunPlan({ coldRuns: 2, warmRuns: 3 });
 

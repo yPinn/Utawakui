@@ -138,6 +138,7 @@ const {
 } = require('./main/featureDependencyHandlers');
 const { runStartupMigrations } = require('./main/startupMigrations');
 const { startInteractiveRuntime } = require('./main/startupCoordinator');
+const { preparePreviewSession } = require('./main/previewSession');
 const { createStartupTraceProbe } = require('./main/startupTraceProbe');
 const { MEDIA_SCHEME } = require('./main/mediaScheme');
 const {
@@ -249,7 +250,10 @@ let appUsageService = null;
 let windowsTrayController = null;
 let windowCloseDecisionBridge = null;
 const startupTraceProbe = startupTrace.enabled
-  ? createStartupTraceProbe({ BrowserWindow })
+  ? createStartupTraceProbe({
+      BrowserWindow,
+      memorySession: startupTraceOptions.memoryProbe,
+    })
   : null;
 let startupTraceCompletion = null;
 
@@ -308,6 +312,9 @@ function completeStartupTrace() {
         gpuFeatureStatus: app.getGPUFeatureStatus(),
         outputStatus: outputRuntimeController?.getStatus(),
       });
+      metadata.probeSession = startupTraceOptions.memoryProbe
+        ? 'memory'
+        : 'profile';
       recordMainMilestone('baseline-complete', metadata);
       startupTraceProbe?.stop();
       return startupTrace.flush();
@@ -393,6 +400,7 @@ if (!gotSingleInstanceLock) {
 
   app.whenReady().then(() => {
     recordMainMilestone('electron-ready');
+    void preparePreviewSession(session.defaultSession);
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
     // Narrow exception for the main renderer's output picker and Web Audio

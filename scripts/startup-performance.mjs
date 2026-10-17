@@ -35,7 +35,7 @@ export function buildRunPlan({ coldRuns = 5, warmRuns = 5 } = {}) {
   ];
 }
 
-export function parseStartupTrace(input) {
+export function parseStartupTrace(input, { expectedProbeSession } = {}) {
   const lines = String(input)
     .split(/\r?\n/u)
     .map((line) => line.trim())
@@ -70,6 +70,16 @@ export function parseStartupTrace(input) {
   }
   for (const name of Object.keys(startupTraceValues.milestones)) {
     if (!byName.has(name)) throw new Error(`startup trace is missing ${name}`);
+  }
+  const probeSession =
+    byName.get('baseline-complete').metadata?.probeSession ?? 'profile';
+  if (
+    !['profile', 'memory'].includes(probeSession) ||
+    (expectedProbeSession && probeSession !== expectedProbeSession)
+  ) {
+    throw new Error(
+      'startup trace probe session does not match the requested mode; rebuild the executable',
+    );
   }
 
   return {
@@ -137,13 +147,14 @@ export function summarizeRuns(runs) {
   };
 }
 
-function parseArguments(argv) {
+export function parseArguments(argv) {
   const options = {
     exe: DEFAULT_EXE,
     output: DEFAULT_OUTPUT,
     coldRuns: 5,
     warmRuns: 5,
     timeoutMs: 60_000,
+    probeSession: 'profile',
   };
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index];
@@ -156,6 +167,11 @@ function parseArguments(argv) {
       options.warmRuns = requirePositiveInteger(value, 'warmRuns');
     } else if (flag === '--timeout-ms') {
       options.timeoutMs = requirePositiveInteger(value, 'timeoutMs');
+    } else if (flag === '--probe-session') {
+      if (!['profile', 'memory'].includes(value)) {
+        throw new TypeError('probe-session must be profile or memory');
+      }
+      options.probeSession = value;
     } else {
       throw new Error(`unknown startup performance argument: ${flag}`);
     }
@@ -199,16 +215,34 @@ async function seedProfile(profilePath) {
     });
 }
 
-function runPackagedApp({ exePath, profilePath, tracePath, timeoutMs }) {
+export function buildStartupArguments({
+  profilePath,
+  tracePath,
+  probeSession = 'profile',
+}) {
+  if (!['profile', 'memory'].includes(probeSession)) {
+    throw new TypeError('probe-session must be profile or memory');
+  }
+  return [
+    `--user-data-dir=${profilePath}`,
+    startupTraceValues.flag,
+    `${startupTraceValues.fileFlagPrefix}${tracePath}`,
+    startupTraceValues.exitFlag,
+    ...(probeSession === 'memory' ? [startupTraceValues.memoryProbeFlag] : []),
+  ];
+}
+
+function runPackagedApp({
+  exePath,
+  profilePath,
+  tracePath,
+  timeoutMs,
+  probeSession,
+}) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       exePath,
-      [
-        `--user-data-dir=${profilePath}`,
-        startupTraceValues.flag,
-        `${startupTraceValues.fileFlagPrefix}${tracePath}`,
-        startupTraceValues.exitFlag,
-      ],
+      buildStartupArguments({ profilePath, tracePath, probeSession }),
       { stdio: 'ignore', windowsHide: true },
     );
     let timedOut = false;
@@ -263,8 +297,11 @@ async function main() {
       profilePath,
       tracePath,
       timeoutMs: options.timeoutMs,
+      probeSession: options.probeSession,
     });
-    const parsed = parseStartupTrace(await fs.readFile(tracePath, 'utf8'));
+    const parsed = parseStartupTrace(await fs.readFile(tracePath, 'utf8'), {
+      expectedProbeSession: options.probeSession,
+    });
     if (run.scenario !== 'warm-prime') runs.push({ ...run, ...parsed });
   }
 
@@ -279,6 +316,7 @@ async function main() {
       totalMemoryMiB: Math.round(os.totalmem() / 1024 ** 2),
       storageClass: 'not-measured',
       libraryProfile: 'isolated-empty',
+      probeSession: options.probeSession,
     },
     runCounts: {
       cold: options.coldRuns,

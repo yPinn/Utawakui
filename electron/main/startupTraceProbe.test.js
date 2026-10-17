@@ -5,6 +5,34 @@ import startupTraceProbeModule from './startupTraceProbe.js';
 const { createStartupTraceProbe } = startupTraceProbeModule;
 
 describe('startup trace overlay probe', () => {
+  it.each([false, true])(
+    'keeps profile and memory probes explicit: memory=%s',
+    (memorySession) => {
+      let options;
+      class FakeBrowserWindow {
+        constructor(value) {
+          options = value;
+          this.webContents = new EventEmitter();
+          this.webContents.setWindowOpenHandler = vi.fn();
+          this.loadURL = vi.fn();
+        }
+      }
+      const probe = createStartupTraceProbe({
+        BrowserWindow: FakeBrowserWindow,
+        memorySession,
+      });
+      probe.start('http://127.0.0.1:8701');
+      expect(options.webPreferences.partition).toBe(
+        memorySession ? 'startup-trace-overlay' : undefined,
+      );
+      expect(options.webPreferences).toMatchObject({
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+      });
+    },
+  );
+
   it('loads one hidden loopback overlay and denies child windows', () => {
     const windows = [];
     class FakeBrowserWindow {

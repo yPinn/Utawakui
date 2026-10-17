@@ -3,6 +3,7 @@
   "flag": "--startup-trace",
   "fileFlagPrefix": "--startup-trace-file=",
   "exitFlag": "--startup-trace-exit",
+  "memoryProbeFlag": "--startup-trace-memory-probe",
   "overlayQuery": "startupTrace",
   "maxTelemetryBytes": 1024,
   "maxFutureSkewMs": 5000,
@@ -23,6 +24,7 @@
     "baseline-complete": "main"
   },
   "baselineMetadata": [
+    "probeSession",
     "cpuPercent",
     "workingSetKb",
     "peakWorkingSetKb",

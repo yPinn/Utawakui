@@ -56,6 +56,13 @@ function parseMetadata(name, value) {
   const result = {};
   for (const [key, rawValue] of entries) {
     if (!baselineMetadata.has(key)) invalid(`metadata.${key}`, 'unsupported');
+    if (key === 'probeSession') {
+      if (!['profile', 'memory'].includes(rawValue)) {
+        invalid('metadata.probeSession', 'expected profile or memory');
+      }
+      result[key] = rawValue;
+      continue;
+    }
     if (key === 'gpuAccelerationEnabled') {
       if (typeof rawValue !== 'boolean') {
         invalid(`metadata.${key}`, 'expected a boolean');
@@ -180,6 +187,7 @@ function readStartupTraceOptions(argv = []) {
   return {
     enabled,
     exitOnComplete: enabled && argv.includes(traceValues.exitFlag),
+    memoryProbe: enabled && argv.includes(traceValues.memoryProbeFlag),
     filePath: enabled ? filePath : null,
   };
 }

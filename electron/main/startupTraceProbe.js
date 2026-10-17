@@ -27,7 +27,7 @@ function parseLoopbackRuntimeUrl(value) {
   return parsed.origin;
 }
 
-function createStartupTraceProbe({ BrowserWindow }) {
+function createStartupTraceProbe({ BrowserWindow, memorySession = false }) {
   let probeWindow = null;
 
   function start(runtimeUrl) {
@@ -39,6 +39,9 @@ function createStartupTraceProbe({ BrowserWindow }) {
       width: 1280,
       height: 720,
       webPreferences: {
+        // Explicit diagnostic control matching Spout's in-memory session lifecycle.
+        // Default tracing retains the main profile's first-use and cache costs.
+        ...(memorySession ? { partition: 'startup-trace-overlay' } : {}),
         sandbox: true,
         contextIsolation: true,
         nodeIntegration: false,

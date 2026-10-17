@@ -41,6 +41,17 @@ navigation URL；main-frame navigation 與 redirect 都採相同 fail-closed pol
 拖曳不會被 Chromium 升級成頁面 navigation，HTTP loopback Overlay 也不取得 insecure
 content 例外；DevTools 只在 main／Performer 的明確 development launch 啟用，startup probe
 與 Spout helper 永遠關閉。這些同樣是 shell invariant，不建立一般使用者 toggle。
+Startup trace 預設 probe 仍使用 profile session，包含首次持久化 Cookie store 初始化成本；
+明確的 `--startup-trace-memory-probe` 僅在 trace 啟用時將診斷 probe 放入獨立 memory partition，
+用來對照既有 Spout helper 的非持久化 session lifecycle。正常啟動與產品視窗不受此 flag 影響。
+Trace 的 baseline metadata 記錄 allowlisted `probeSession`（`profile`／`memory`）；效能 harness
+驗證實際模式與請求一致，避免舊 executable 忽略 flag 卻產生誤標記的結果。
+正常 App 在 `app.whenReady()` 透過 `electron/main/previewSession.js` 並行準備原本的
+default session Cookie store：只查詢固定 loopback URL，丟棄 Cookie 值，不發出 HTTP
+請求、不寫 Cookie 或變更 session／proxy／cache 設定。主畫面、Output server 與設定載入
+不等待準備完成；同步或非同步失敗均回到既有導航的初始化／錯誤處理。這讓稍後進入工作臺的
+HTTP iframe 重用已初始化的 store；立即進入時仍可能有剩餘等待。模板庫 mockup 則由 renderer
+本地組合，沒有直接的 Cookie-store 等待。外部 OBS 與既有 Spout memory session 不由此 helper 管理。
 
 Raw Electron `ipcMain` 只在 composition root 交給
 `electron/main/ipcSenderPolicy.js`。所有未特別列出的 channel 預設只接受目前主視窗的

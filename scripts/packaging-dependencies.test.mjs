@@ -67,6 +67,21 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('packages the preview session initializer while excluding its tests', () => {
+    for (const [file, expected] of [
+      ['electron/main/previewSession.js', true],
+      ['electron/main/previewSession.test.js', false],
+    ]) {
+      const included = builder.files.some(
+        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+      );
+      const excluded = builder.files.some(
+        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+      );
+      expect(included && !excluded).toBe(expected);
+    }
+  });
+
   it('declares every package the packaged runtime loads as a dependency', () => {
     const undeclared = bareSpecifiers()
       .filter(({ name }) => !dependencies.has(name))

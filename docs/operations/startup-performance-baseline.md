@@ -56,3 +56,38 @@ npm run perf:startup -- --exe <packaged-exe> --output <new-output-directory>
 
 The output directory must be new because the harness uses exclusive trace/report
 creation and fails closed instead of overwriting evidence.
+
+## Profile initialization and memory-session control
+
+Default tracing continues to use the profile session. Fresh-profile Output timings
+therefore include Chromium persistent Cookie store initialization, not only the
+bundled Overlay and projection delivery. The historical table above remains a
+profile-session measurement and must not be compared directly with memory-session
+results as a product speedup.
+
+For an explicit control matching the non-persistent session lifecycle of the
+Spout helper, use a newly built executable and a separate output directory:
+
+```bash
+npm run perf:startup -- --exe <new-packaged-exe> --output <new-output-directory> --probe-session memory
+```
+
+`--probe-session profile` is the default. Memory mode passes the trace-only
+`--startup-trace-memory-probe` flag; normal launches create no diagnostic window
+and retain their existing sessions, proxy settings, caches and configuration.
+Each completed trace records `baseline-complete.metadata.probeSession`, and the
+report records `environment.probeSession`. The harness rejects a runtime mode
+mismatch, including an older executable that ignores the memory flag. Legacy
+traces without the field are treated as profile measurements.
+
+Current App startup also begins a read-only default Cookie-store preparation in
+parallel with shell initialization. A later preview can overlap that work with
+time spent in Library; an immediate preview can still wait for completion.
+Record whether that production preparation is present when comparing builds.
+The actual App path, interleaved control measurements and unchanged session /
+configuration boundaries are described in the investigation linked below.
+
+Compare matching session modes, library contents and executable builds. A fresh
+profile is not an OS-cold cache. The 2026-10-18 investigation, counterfactual
+controls and limitations are recorded in
+[Output first-frame profile investigation](../research/output-first-frame-profile-2026-10-18.md).
