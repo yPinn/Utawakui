@@ -233,6 +233,13 @@ or spawned binaries after the Vite build has already produced `dist/`.
 | Renderer build-time | `vue`, `@lucide/vue`, `signalsmith-stretch`, `opencc-js`                                                                                                                                                                           | Imported by renderer source and bundled into `dist/` by Vite; `opencc-js` is dual-use — see Packaged runtime above for its main-process path.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Tooling build-time  | Electron, electron-builder, Vite, Vitest, ESLint, Prettier, commitlint, markdownlint                                                                                                                                               | Needed to develop, test, build, and package; not app runtime dependencies.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
+`electron-builder.yml` trims packaged copies to what main actually loads: `gsap`
+keeps only `dist/gsap.min.js` for the Output HTTP plane, and `opencc-js` keeps
+only its UMD `cn2t`／`t2cn` converters plus license files. The renderer copy of
+`opencc-js` is bundled into `dist/` separately and is unaffected. Outside
+`dist/`, the package keeps only `public/assets/icons/app-icon.ico`; the
+renderer's PNG icons already arrive through Vite's `public/` copy.
+
 Notable transitive production dependencies can still appear in packaged
 `node_modules` when required by a packaged runtime dependency. `adm-zip@0.6.1`
 is both a release-tool dependency and part of `onnxruntime-node@1.30.0`'s

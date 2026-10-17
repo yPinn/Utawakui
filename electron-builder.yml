@@ -49,7 +49,8 @@ files:
   - dist/**/*
   - electron/**/*
   - '!electron/**/*.test.js'
-  - public/assets/icons/**/*
+  # Main only reads the shell icon; the renderer's PNG icons ship via dist/.
+  - public/assets/icons/app-icon.ico
   - overlay/**/*
   - '!overlay/**/*.test.js'
   - shared/**/*
@@ -70,6 +71,17 @@ files:
   - '!node_modules/kuromoji/demo/**/*'
   - '!node_modules/kuromoji/example/**/*'
   - '!node_modules/kuromoji/build/**/*'
+  # The output server serves only gsap.min.js to the Browser Source; the
+  # package's other builds, sources and plugins are never loaded.
+  - '!node_modules/gsap/**/*'
+  - node_modules/gsap/package.json
+  - node_modules/gsap/dist/gsap.min.js
+  # queryVariants.js requires only the UMD cn2t/t2cn converters; keep those
+  # and the license files, drop the ESM builds and the full bundle.
+  - '!node_modules/opencc-js/dist/esm/**/*'
+  - '!node_modules/opencc-js/dist/esm-lib/**/*'
+  - '!node_modules/opencc-js/dist/umd/full.js'
+  - '!node_modules/opencc-js/types/**/*'
 
 asarUnpack:
   # Native N-API module — onnxruntime.dll/DirectML.dll must land in the same
