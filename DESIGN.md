@@ -637,14 +637,15 @@ Inside a scoped block, write a selector that depends on root or ancestor state e
 
 The document root remains the authority for theme／density／motion／language metadata and literal platform `color-scheme`, but it is not a visual-system root. Main and Performer register their full-viewport `#app` surface before Vue mount; nested recipes resolve from the nearest registered v2 boundary and Teleport content resolves through that surface's overlay host. `UiModal` is the exception: as a window-level interruption it mounts on its renderer root host (App Shell or Performer) and hands that host to its content, because a feature surface host can sit inside the Folder page stacking context beneath the Folder tabs and Right Dock. The completed transition record and stable boundary contract live in [Token v2 完整替換契約](docs/contracts/token-v2-replacement.md).
 
-A component whose CSS outgrows its SFC may split it into sibling files imported with `<style scoped src="./Name.part.css">`, as `ObsTemplateMockup.vue` does. Keep the files beside the SFC (relative `url()` paths stay valid) and follow these rules:
+A component whose CSS outgrows its SFC may split it into sibling files imported with `<style scoped src="./Name.part.css">`. Keep the files beside the SFC so relative `url()` paths stay valid, and prove a CSS-only split by comparing compiled output before and after (normalize `data-v-*`). `@keyframes` split away from their scoped users go in an unscoped `<style src>` block with component-unique names: Vue only renames an `animation` reference when its keyframes sit in the same scoped block, so split scoped keyframes silently stop animating.
 
-- Each file owns one template's BEM prefix (`obs-template-mockup__<template>-*`), plus a `base` file for classes shared by every template.
-- A rule that targets another template's class uses `[data-template-id]` and lives in the file that owns the template being styled.
-- Order is the cascade: files import in the order of the original stylesheet. `thumbnail` (size variant), `keyframes` and `reduced-motion` come last, in that order.
-- `@keyframes` go in an unscoped `<style src>` block with component-unique names. Vue only renames an `animation` reference when its keyframes sit in the same scoped block, so split scoped keyframes silently stop animating.
-- Prove a CSS-only split by comparing compiled output before and after (normalize `data-v-*`). Source-contract tests read the combined text through `readObsTemplateMockupSource()`.
-- Do not add a shared mixin or utility layer for template CSS. Measured duplication is about 5% of rules (6 repeated blocks); prefer CSS custom properties if template size variants are ever consolidated.
+The Output template gallery is the one shell／preview composition. `ObsTemplateMockup.vue` owns only the shared 16:9 gallery box (backdrop, motion and template data attributes) and, inside it, a canvas at the template's capture size (1920×1080 for Lyrics, the 480-wide widget size otherwise) whose container query defines `--obs-canvas-rem`. Thumbnails letterbox that canvas in 16:9; the detail preview takes the capture's own shape, capped by `--ui-output-gallery-preview-max-height`. It renders the preview that `previews/outputTemplatePreviews.js` maps from the template id. Each `previews/<Template>Preview.vue` takes the same `{ scene, size, animated }` props and owns its markup, presentation logic and sibling `<Template>Preview.css`:
+
+- Template CSS is unscoped because previews render their own markup; every class stays inside the `obs-template-mockup__*` namespace, so a preview stylesheet only names its own template's classes or `[data-template-id]`.
+- Order is the cascade: the registry imports `ObsTemplateMockup.base.css` before any preview, then each preview's stylesheet loads, then the shell loads `motion` and `reduced-motion` last, in that order. Thumbnails scale the same canvas; do not add size-variant overrides.
+- Gallery sizes mirror the runtime Overlay as it renders at that capture size, including the Overlay `@media` rules that apply there: write runtime `rem` values as `calc(<n> * var(--obs-canvas-rem))` and keep a source-contract test that compares them with the Overlay stylesheet.
+- Source-contract tests read the combined text through `readObsTemplateMockupSource()` and one preview through `readObsTemplatePreviewSource('<Template>')`.
+- Do not add a shared mixin or utility layer for template CSS; prefer CSS custom properties if template size variants are consolidated.
 
 ### Token Namespace Contract
 

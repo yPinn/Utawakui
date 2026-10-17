@@ -187,6 +187,12 @@ adapters 評估，目前不做 OBS native plugin。
 - 現行三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；Now Playing 提供
   `now-next`（浮光光碟，預設）、`art-card`、`cover-player` 三個模板。Output
   Instance／Presentation Pack 是未來擴充方向，不應提前宣稱已完成。
+- Lyrics 提供 `focus-line`（聚焦歌詞，預設）、`karaoke-stack`、`live-stage`、
+  `kinetic-pop`、`ornate-vertical`、`manga-frame` 六個模板。各 slot 的預設模板在模板庫
+  標示「建議」，其餘標示「可用」。
+- 模板庫所有模板共用 `src/constants/outputPreviewSample.json` 的同一份示例曲目與歌詞，
+  只呈現動畫與樣式差異；預覽依模板的擷取尺寸（Lyrics 1920×1080、widget 480 寬）
+  等比縮放，縮圖與詳情使用同一比例，並可切換暗色、亮色與透明背景。
 - Setlist 的基礎公開契約只顯示目前演唱曲目與已唱紀錄，不投影待唱佇列，預設模板為
   `queue-board`（黑幕歌單）。480×810 是 large widget 的擷取尺寸，非模板本身的固定
   版面：模板以約兩成高度保留目前歌曲焦點區，已唱紀錄取得其餘可用高度；兩區只以
