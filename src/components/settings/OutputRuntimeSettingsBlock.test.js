@@ -83,6 +83,8 @@ describe('OutputRuntimeSettingsBlock', () => {
     expect(html).toContain('畫面延遲（毫秒）');
     expect(html).toContain('畫面比聲音快就調大，慢就調小。');
     expect(html).not.toContain('可用連接埠');
+    expect(html).toMatch(/<details\b(?![^>]*\bopen)[^>]*>/);
+    expect(html).toContain('連接埠與畫面同步設定');
   });
 
   it('offers available ports when the configured port is taken', async () => {
@@ -93,6 +95,7 @@ describe('OutputRuntimeSettingsBlock', () => {
     expect(html).toContain('請選擇下方可用的連接埠。');
     expect(html).toContain('aria-label="可用連接埠"');
     expect(html).toContain('8701');
+    expect(html).toMatch(/<details\b[^>]*\bopen/);
   });
 
   it('describes Spout2 as a transparent experimental sender', async () => {

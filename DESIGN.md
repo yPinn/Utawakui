@@ -1312,6 +1312,8 @@ Performer sync controls are intentionally narrow: delay 0.1 seconds, reset, adva
 
 ### Panels / Menus
 
+- **Progressive disclosure:** use `UiDisclosure` for collapsible settings groups. Its native `details` / `summary` owns disclosure interaction; slotted fields stay mounted while collapsed so drafts and lifecycle subscriptions survive. The feature owns error / setup-target expansion through `open` or `v-model:open`; recovery notices and actions that must remain available stay outside the collapsed body. `UiDisclosure` is an adopted production primitive, not a catalogue-only component.
+
 - **Panels:** use `surface` or `surface-raised`, with stable padding from the spacing scale.
 - **Menus:** render above layout stacking contexts and group actions by intent.
 - **Modals:** use only when interruption is necessary; prefer inline or progressive disclosure first.

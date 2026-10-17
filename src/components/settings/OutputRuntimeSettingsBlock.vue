@@ -8,6 +8,7 @@ import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js'
 import { describeSpoutOutputStatus } from '../../utils/spoutOutputStatus.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTextField from '../ui/UiTextField.vue';
@@ -74,6 +75,14 @@ const isDisplayDelayValid = computed(() =>
 );
 
 const hasPortConflict = computed(() => outputState.suggestedPorts.length > 0);
+const isSettingsOpen = shallowRef(false);
+watch(
+  () => hasPortConflict.value || Boolean(outputState.error),
+  (needsAttention) => {
+    if (needsAttention) isSettingsOpen.value = true;
+  },
+  { immediate: true },
+);
 const runtimeStatus = computed(() =>
   describeOutputRuntimeStatus(outputState.status),
 );
@@ -191,51 +200,53 @@ onMounted(() => {
       </template>
     </SettingsDocumentItem>
 
-    <div class="output-runtime-settings-block__form">
-      <div class="output-runtime-settings-block__fields">
-        <UiTextField
-          id="output-runtime-port"
-          v-model="draftPort"
-          class="output-runtime-settings-block__number"
-          label="連接埠"
-          inputmode="numeric"
-          :invalid="!isPortValid"
-          :disabled="busy"
-          @change="commitSettings()"
-          @keydown.enter.prevent="commitSettings()"
-        />
-        <UiTextField
-          id="output-display-delay"
-          v-model="draftDisplayDelayMs"
-          class="output-runtime-settings-block__delay"
-          label="畫面延遲（毫秒）"
-          hint="畫面比聲音快就調大，慢就調小。"
-          inputmode="numeric"
-          :invalid="!isDisplayDelayValid"
-          :disabled="busy"
-          @change="commitSettings()"
-          @keydown.enter.prevent="commitSettings()"
-        />
-      </div>
+    <UiDisclosure v-model:open="isSettingsOpen" label="連接埠與畫面同步設定">
+      <div class="output-runtime-settings-block__form">
+        <div class="output-runtime-settings-block__fields">
+          <UiTextField
+            id="output-runtime-port"
+            v-model="draftPort"
+            class="output-runtime-settings-block__number"
+            label="連接埠"
+            inputmode="numeric"
+            :invalid="!isPortValid"
+            :disabled="busy"
+            @change="commitSettings()"
+            @keydown.enter.prevent="commitSettings()"
+          />
+          <UiTextField
+            id="output-display-delay"
+            v-model="draftDisplayDelayMs"
+            class="output-runtime-settings-block__delay"
+            label="畫面延遲（毫秒）"
+            hint="畫面比聲音快就調大，慢就調小。"
+            inputmode="numeric"
+            :invalid="!isDisplayDelayValid"
+            :disabled="busy"
+            @change="commitSettings()"
+            @keydown.enter.prevent="commitSettings()"
+          />
+        </div>
 
-      <div
-        v-if="hasPortConflict"
-        class="output-runtime-settings-block__suggestions"
-        role="group"
-        aria-label="可用連接埠"
-      >
-        <span>可用連接埠</span>
-        <UiButton
-          v-for="port in outputState.suggestedPorts"
-          :key="port"
-          :active="Number(draftPort) === port"
-          :disabled="busy"
-          @click="chooseSuggestedPort(port)"
+        <div
+          v-if="hasPortConflict"
+          class="output-runtime-settings-block__suggestions"
+          role="group"
+          aria-label="可用連接埠"
         >
-          {{ port }}
-        </UiButton>
+          <span>可用連接埠</span>
+          <UiButton
+            v-for="port in outputState.suggestedPorts"
+            :key="port"
+            :active="Number(draftPort) === port"
+            :disabled="busy"
+            @click="chooseSuggestedPort(port)"
+          >
+            {{ port }}
+          </UiButton>
+        </div>
       </div>
-    </div>
+    </UiDisclosure>
 
     <UiNotice
       v-if="outputState.error"

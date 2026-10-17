@@ -8,6 +8,7 @@ import { useLibraryStorage } from '../../composables/useLibraryStorage.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import AppFolderSection from '../layout/AppFolderSection.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -217,14 +218,25 @@ onUnmounted(() => libraryStorage.dispose());
       @cleanup="handleCleanupLibraryStorage"
     />
 
-    <LibraryMetadataSettingsRow />
+    <UiDisclosure
+      label="曲目資訊與播放紀錄"
+      :open="Boolean(playbackHistoryState.error)"
+    >
+      <LibraryMetadataSettingsRow />
 
-    <PlaybackHistorySettingsRow
-      :record-count="recentItems.length"
-      :is-loading="!playbackHistoryState.isInitialized"
-      :is-clearing="isClearingPlaybackHistory"
-      :error="playbackHistoryState.error ?? ''"
-      @clear="handleClearPlaybackHistory"
+      <PlaybackHistorySettingsRow
+        :record-count="recentItems.length"
+        :is-loading="!playbackHistoryState.isInitialized"
+        :is-clearing="isClearingPlaybackHistory"
+        @clear="handleClearPlaybackHistory"
+      />
+    </UiDisclosure>
+    <UiNotice
+      v-if="playbackHistoryState.error"
+      tone="warning"
+      title="播放紀錄未更新"
+      :message="playbackHistoryState.error"
+      compact
     />
 
     <UiNotice

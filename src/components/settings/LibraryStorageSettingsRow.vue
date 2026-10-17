@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue';
 import storageValues from '../../../shared/libraryStorageValues.json';
-import { ChevronRight, ICON_SIZE, Trash2 } from '../../icons/index.js';
+import { Trash2 } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -57,129 +58,97 @@ function updatePolicy(fields) {
 </script>
 
 <template>
-  <details class="library-storage">
-    <summary class="library-storage__disclosure">
-      <ChevronRight
-        class="library-storage__indicator"
-        :size="ICON_SIZE"
-        aria-hidden="true"
-      />
-      <span class="library-storage__summary-copy">
-        <span class="library-storage__title">曲庫空間</span>
-        <span class="library-storage__status">{{ summary }}</span>
-        <span class="ui-visually-hidden">查看曲庫空間</span>
-      </span>
-    </summary>
-
-    <div class="library-storage__body">
-      <template v-if="storage">
-        <dl class="library-storage__categories" aria-label="曲庫空間分類">
-          <div class="library-storage__category">
-            <dt>歌曲</dt>
-            <dd>{{ formatBytes(storage.songBytes) }}</dd>
-          </div>
-          <div class="library-storage__category">
-            <dt>去人聲</dt>
-            <dd>{{ formatBytes(storage.separationBytes) }}</dd>
-          </div>
-          <div class="library-storage__category">
-            <dt>其他</dt>
-            <dd>{{ formatBytes(storage.otherBytes) }}</dd>
-          </div>
-        </dl>
-
-        <div class="library-storage__controls">
-          <UiCheckbox
-            id="auto-manage-separation-storage"
-            class="library-storage__auto-manage"
-            label="自動管理去人聲"
-            :model-value="policy.autoManageSeparation"
-            :disabled="saving || cleaning"
-            @update:model-value="updatePolicy({ autoManageSeparation: $event })"
-          />
-          <UiSelect
-            id="separation-storage-limit"
-            class="library-storage__limit"
-            label="上限"
-            :model-value="policy.separationLimitBytes"
-            :options="limitOptions"
-            :disabled="saving || cleaning"
-            @update:model-value="updatePolicy({ separationLimitBytes: $event })"
-          />
-          <UiIconButton
-            :icon="Trash2"
-            label="清理去人聲空間"
-            :disabled="saving || cleaning || storage.separationBytes === 0"
-            @click="emit('cleanup')"
-          />
-        </div>
-
-        <div class="library-storage__feedback">
-          <UiHint>只清去人聲，歌曲保留。</UiHint>
-          <UiHint
-            v-if="cleanupMessage"
-            :tone="cleaning ? 'muted' : 'success'"
-            role="status"
-          >
-            {{ cleanupMessage }}
-          </UiHint>
-        </div>
+  <div class="library-storage-settings-row">
+    <UiDisclosure
+      class="library-storage"
+      label="查看曲庫空間"
+      :open="Boolean(error)"
+    >
+      <template #summary>
+        <span class="library-storage__summary-copy">
+          <span class="library-storage__title">曲庫空間</span>
+          <span class="library-storage__status">{{ summary }}</span>
+          <span class="ui-visually-hidden">查看曲庫空間</span>
+        </span>
       </template>
 
-      <UiHint v-else-if="loading">計算中</UiHint>
+      <div class="library-storage__body">
+        <template v-if="storage">
+          <dl class="library-storage__categories" aria-label="曲庫空間分類">
+            <div class="library-storage__category">
+              <dt>歌曲</dt>
+              <dd>{{ formatBytes(storage.songBytes) }}</dd>
+            </div>
+            <div class="library-storage__category">
+              <dt>去人聲</dt>
+              <dd>{{ formatBytes(storage.separationBytes) }}</dd>
+            </div>
+            <div class="library-storage__category">
+              <dt>其他</dt>
+              <dd>{{ formatBytes(storage.otherBytes) }}</dd>
+            </div>
+          </dl>
 
-      <UiNotice
-        v-if="error"
-        tone="danger"
-        title="曲庫空間未更新"
-        :message="error"
-        compact
-      />
-    </div>
-  </details>
+          <div class="library-storage__controls">
+            <UiCheckbox
+              id="auto-manage-separation-storage"
+              class="library-storage__auto-manage"
+              label="自動管理去人聲"
+              :model-value="policy.autoManageSeparation"
+              :disabled="saving || cleaning"
+              @update:model-value="
+                updatePolicy({ autoManageSeparation: $event })
+              "
+            />
+            <UiSelect
+              id="separation-storage-limit"
+              class="library-storage__limit"
+              label="上限"
+              :model-value="policy.separationLimitBytes"
+              :options="limitOptions"
+              :disabled="saving || cleaning"
+              @update:model-value="
+                updatePolicy({ separationLimitBytes: $event })
+              "
+            />
+            <UiIconButton
+              :icon="Trash2"
+              label="清理去人聲空間"
+              :disabled="saving || cleaning || storage.separationBytes === 0"
+              @click="emit('cleanup')"
+            />
+          </div>
+
+          <div class="library-storage__feedback">
+            <UiHint>只清去人聲，歌曲保留。</UiHint>
+            <UiHint
+              v-if="cleanupMessage"
+              :tone="cleaning ? 'muted' : 'success'"
+              role="status"
+            >
+              {{ cleanupMessage }}
+            </UiHint>
+          </div>
+        </template>
+
+        <UiHint v-else-if="loading">計算中</UiHint>
+      </div>
+    </UiDisclosure>
+    <UiNotice
+      v-if="error"
+      tone="danger"
+      title="曲庫空間未更新"
+      :message="error"
+      compact
+    />
+  </div>
 </template>
 
 <style scoped>
-.library-storage {
+.library-storage-settings-row {
   min-width: 0;
-  border-block: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.library-storage__disclosure {
-  min-height: var(--ui-control-height);
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border-radius: var(--ui-radius-md);
-  cursor: pointer;
-  list-style: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.library-storage__disclosure::-webkit-details-marker {
-  display: none;
-}
-
-.library-storage__disclosure:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.library-storage__disclosure:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
-.library-storage__indicator {
-  flex: 0 0 auto;
-  color: var(--ui-color-text-muted);
-  transition: transform var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
-}
-
-.library-storage[open] .library-storage__indicator {
-  transform: rotate(90deg);
 }
 
 .library-storage__summary-copy {
@@ -207,7 +176,6 @@ function updatePolicy(fields) {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-3);
-  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-3);
 }
 
 .library-storage__categories {
@@ -265,16 +233,6 @@ function updatePolicy(fields) {
 
   .library-storage__auto-manage {
     grid-column: 1 / -1;
-  }
-}
-
-:global(:root[data-ui-motion='reduced'] .library-storage__indicator) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .library-storage__indicator {
-    transition: none;
   }
 }
 </style>

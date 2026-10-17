@@ -46,8 +46,9 @@ describe('LibraryStorageSettingsRow', () => {
     expect(html).toContain('曲庫空間');
     expect(html).toContain('18.6 GB 已使用 · 132 GB 可用');
     expect(html).toContain('查看曲庫空間');
-    expect(source).toContain('<details');
-    expect(source).toContain('ChevronRight');
+    expect(source).toContain('<UiDisclosure');
+    expect(html).toMatch(/<details\b[^>]*class="[^"]*ui-disclosure/);
+    expect(source).not.toContain('ChevronRight');
     expect(source).not.toContain('估算曲數');
     expect(source).not.toContain('重新掃描');
   });
@@ -81,5 +82,14 @@ describe('LibraryStorageSettingsRow', () => {
         },
       }),
     ).toContain('已釋放 8 GB');
+  });
+
+  it('keeps storage errors outside the disclosure even after manual collapse', async () => {
+    const html = await renderRow({ error: '目前無法讀取曲庫空間。' });
+
+    expect(html).toMatch(/<details\b[^>]*\bopen/);
+    expect(html.slice(html.indexOf('</details>'))).toContain(
+      '目前無法讀取曲庫空間。',
+    );
   });
 });

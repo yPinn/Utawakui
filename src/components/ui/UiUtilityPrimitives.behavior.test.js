@@ -1,5 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { createSSRApp, h, nextTick } from 'vue';
+import {
+  createSSRApp,
+  h,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  shallowRef,
+} from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
 import UiDisclosure from './UiDisclosure.vue';
@@ -102,6 +110,69 @@ describe('UiSkeleton', () => {
 });
 
 describe('UiDisclosure', () => {
+  it('keeps a draft mounted across caller expansion and native collapse/reopen', async () => {
+    const onMount = vi.fn();
+    const onUnmount = vi.fn();
+    const onToggle = vi.fn();
+    const DraftField = {
+      setup() {
+        const draft = shallowRef('原始設定');
+        onMounted(onMount);
+        onUnmounted(onUnmount);
+        return () =>
+          h('input', {
+            value: draft.value,
+            onInput: (event) => {
+              draft.value = event.target.value;
+            },
+          });
+      },
+    };
+    const props = reactive({
+      label: '進階設定',
+      open: false,
+      'onUpdate:open': (open) => {
+        props.open = open;
+      },
+      onToggle,
+    });
+    const mounted = mount(UiDisclosure, props, {
+      default: () => h(DraftField),
+    });
+    try {
+      const details = findAll(
+        mounted.root,
+        (node) => node.type === 'details',
+      )[0];
+      const input = findAll(mounted.root, (node) => node.type === 'input')[0];
+      expect(details.props.open).toBe(false);
+      expect(onMount).toHaveBeenCalledOnce();
+
+      // Error/deep-link policy can expand the same mounted form from its owner.
+      props.open = true;
+      await nextTick();
+      expect(details.props.open).toBe(true);
+      trigger(input, 'onInput', { target: { value: '尚未儲存的設定' } });
+      await nextTick();
+      for (const open of [false, true]) {
+        trigger(details, 'onToggle', { currentTarget: { open } });
+        await nextTick();
+        expect(props.open).toBe(open);
+        expect(details.props.open).toBe(open);
+        expect(findAll(mounted.root, (node) => node.type === 'input')[0]).toBe(
+          input,
+        );
+        expect(input.props.value).toBe('尚未儲存的設定');
+      }
+      expect(onToggle.mock.calls).toEqual([[false], [true]]);
+      expect(onMount).toHaveBeenCalledOnce();
+      expect(onUnmount).not.toHaveBeenCalled();
+    } finally {
+      mounted.app.unmount();
+    }
+    expect(onUnmount).toHaveBeenCalledOnce();
+  });
+
   it('uses the shared icon size instead of a component-local pixel literal', () => {
     const source = readFileSync(
       new URL('./UiDisclosure.vue', import.meta.url),

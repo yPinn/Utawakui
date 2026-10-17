@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { Video } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
@@ -95,13 +96,28 @@ const outputSummary = computed(() => {
   ];
   return parts.join('・');
 });
+
+const isConnectionSettingsOpen = shallowRef(false);
+watch(
+  () => [props.error, props.status?.error, isEnabled.value, lifecycle.value],
+  () => {
+    if (
+      props.error ||
+      props.status?.error ||
+      (isEnabled.value && lifecycle.value === 'disconnected')
+    ) {
+      isConnectionSettingsOpen.value = true;
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <div class="obs-integration-settings-block">
     <SettingsDocumentItem
       :icon="Video"
-      title="OBS 連線"
+      title="WebSocket 連線"
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
@@ -143,76 +159,82 @@ const outputSummary = computed(() => {
       </UiButton>
     </div>
 
-    <div
+    <UiDisclosure
       v-if="featureEnabled && isEnabled"
-      class="obs-integration-settings-block__form"
+      v-model:open="isConnectionSettingsOpen"
+      label="伺服器與場次設定"
     >
-      <div class="obs-integration-settings-block__connection">
-        <UiTextField
-          id="obs-integration-host"
-          class="obs-integration-settings-block__host"
-          label="主機"
-          :model-value="host"
-          :placeholder="DEFAULT_HOST"
-          :disabled="isSaving"
-          @update:model-value="emit('update:host', $event)"
-        />
-        <UiTextField
-          id="obs-integration-port"
-          class="obs-integration-settings-block__port"
-          label="連接埠"
-          :model-value="port"
-          :placeholder="DEFAULT_PORT"
-          :disabled="isSaving"
-          @update:model-value="emit('update:port', $event)"
-        />
-      </div>
+      <div class="obs-integration-settings-block__form">
+        <div class="obs-integration-settings-block__connection">
+          <UiTextField
+            id="obs-integration-host"
+            class="obs-integration-settings-block__host"
+            label="主機"
+            :model-value="host"
+            :placeholder="DEFAULT_HOST"
+            :disabled="isSaving"
+            @update:model-value="emit('update:host', $event)"
+          />
+          <UiTextField
+            id="obs-integration-port"
+            class="obs-integration-settings-block__port"
+            label="連接埠"
+            :model-value="port"
+            :placeholder="DEFAULT_PORT"
+            :disabled="isSaving"
+            @update:model-value="emit('update:port', $event)"
+          />
+        </div>
 
-      <div class="obs-integration-settings-block__credential">
+        <div class="obs-integration-settings-block__credential">
+          <UiTextField
+            id="obs-integration-password"
+            class="obs-integration-settings-block__password"
+            label="密碼"
+            type="password"
+            :model-value="password"
+            :placeholder="hasStoredPassword ? '已設定；留空不變更' : ''"
+            :maxlength="MAX_PASSWORD_LENGTH"
+            autocomplete="off"
+            :disabled="isSaving"
+            @update:model-value="emit('update:password', $event)"
+          />
+          <UiButton
+            v-if="hasStoredPassword"
+            variant="ghost"
+            :disabled="isSaving"
+            @click="emit('clearPassword')"
+          >
+            移除密碼
+          </UiButton>
+        </div>
+
         <UiTextField
-          id="obs-integration-password"
-          class="obs-integration-settings-block__password"
-          label="密碼"
-          type="password"
-          :model-value="password"
-          :placeholder="hasStoredPassword ? '已設定；留空不變更' : ''"
-          :maxlength="MAX_PASSWORD_LENGTH"
-          autocomplete="off"
+          id="obs-integration-skip-threshold"
+          label="略過門檻（秒）"
+          :model-value="skipThresholdSeconds"
+          placeholder="10"
+          hint="短於此秒數就換下一首，且不記錄；0 表示停用。"
           :disabled="isSaving"
-          @update:model-value="emit('update:password', $event)"
+          @update:model-value="emit('update:skipThresholdSeconds', $event)"
         />
-        <UiButton
-          v-if="hasStoredPassword"
-          variant="ghost"
-          :disabled="isSaving"
-          @click="emit('clearPassword')"
-        >
-          移除密碼
-        </UiButton>
-      </div>
 
-      <UiTextField
-        id="obs-integration-skip-threshold"
-        label="略過門檻（秒）"
-        :model-value="skipThresholdSeconds"
-        placeholder="10"
-        hint="短於此秒數就換下一首，且不記錄；0 表示停用。"
-        :disabled="isSaving"
-        @update:model-value="emit('update:skipThresholdSeconds', $event)"
-      />
-
-      <div class="obs-integration-settings-block__submit">
-        <UiButton variant="ghost" @click="emit('exportChapters')">
-          匯出時間標記
-        </UiButton>
-        <UiButton
-          variant="accent"
-          :loading="isSaving"
-          @click="emit('save', { enabled: true })"
-        >
-          儲存設定
-        </UiButton>
+        <div class="obs-integration-settings-block__submit">
+          <UiButton
+            variant="accent"
+            :loading="isSaving"
+            @click="emit('save', { enabled: true })"
+          >
+            儲存設定
+          </UiButton>
+        </div>
       </div>
+    </UiDisclosure>
+
+    <div v-if="featureEnabled" class="obs-integration-settings-block__export">
+      <UiButton variant="ghost" @click="emit('exportChapters')">
+        匯出時間標記
+      </UiButton>
     </div>
 
     <UiNotice
@@ -292,11 +314,8 @@ const outputSummary = computed(() => {
 }
 
 .obs-integration-settings-block__submit {
-  /* Secondary action (export) left, primary commit (save) right — same
-     footer convention as most dialogs, not two buttons stacked flush
-     together at one edge. */
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--ui-space-2);
 }
 </style>

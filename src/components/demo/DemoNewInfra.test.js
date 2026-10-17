@@ -86,9 +86,9 @@ describe('new shared infra catalogue registration', () => {
   });
 
   it('keeps the pending infra batch isolated from production consumers', () => {
+    // Settings has adopted UiDisclosure; its production usage is checked below.
     const pendingComponents = [
       'UiKbd',
-      'UiDisclosure',
       'UiNotificationHost',
       'UiSwitch',
       'UiBreadcrumb',
@@ -109,6 +109,7 @@ describe('new shared infra catalogue registration', () => {
     ['skeleton', 'UiSkeleton'],
     ['combobox', 'UiCombobox'],
     ['tooltip', 'UiTooltip'],
+    ['disclosure', 'UiDisclosure'],
   ])('finds %s in the production component graph', (_key, component) => {
     const consumers = productionSources(
       new URL('../../', import.meta.url),

@@ -285,6 +285,13 @@ gate 承接，不再以此阻止元件檔案存在。第二批七項同樣未修
 | `UiPopover`          | Controlled、non-modal anchored panel；擁有Teleport、logical placement、RTL／viewport clamp、outside pointer／Escape／external scroll dismissal、Escape focus return，以及optional header／body／footer的compact interactive-panel anatomy；footer actions靠inline-end。Caller仍擁有各區內容，不帶Notice status／tone、menu semantics、focus trap或background inert。                     |
 | `UiNotificationHost` | Caller控制items與identity；host擁有bottom-end bounded queue、避開persistent PlayerBar的block-end offset、bounded enter／leave／move motion、transient／progress／persistent lifecycle、hover／focus／document-hidden pause、manual close與touch／pen swipe，並組合`UiNotice`／`UiIconButton`；不從tone推導lifecycle或announcement。                                                      |
 
+2026-10-18 owner 核准 Settings 使用 `UiDisclosure` 試作漸進揭露：OBS 伺服器與場次設定、
+公開輸出連接埠與同步、工具與模型管理、曲庫空間及曲目維護直接組合正式 primitive。
+常用啟用／運作狀態、錯誤與復原入口留在外層；設定草稿與原有 domain lifecycle 不因收合而卸載。
+待準備／指定功能導向與表單錯誤由 caller 展開對應內容；primitive 不知道 feature gate、
+連線、IPC 或持久化。正式 consumer guard 因此允許 Disclosure；其他 pending infra 邊界維持原樣。
+此紀錄允許產品試作，不代替 owner 最終人工外觀驗收。
+
 2026-10-09 `UiRadioGroup` 與 `UiSkeleton` 由藝人照片候選 modal 完成第一個
 production adoption。候選選擇使用 `tiles` appearance 與 rich label slot，並以
 component-owned custom properties 對應三欄／窄版單欄；尚未完成預覽的候選維持
