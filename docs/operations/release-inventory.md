@@ -240,6 +240,10 @@ only its UMD `cn2t`／`t2cn` converters plus license files. The renderer copy of
 `dist/`, the package keeps only `public/assets/icons/app-icon.ico`; the
 renderer's PNG icons already arrive through Vite's `public/` copy.
 
+Renderer CSS that references `shared/assets/fonts/` is rewritten at build time
+(`scripts/viteSharedAssets.js`) to load the packaged `app.asar/shared/` copy, so
+the fonts ship once instead of also as hashed `dist/assets/` copies.
+
 Notable transitive production dependencies can still appear in packaged
 `node_modules` when required by a packaged runtime dependency. `adm-zip@0.6.1`
 is both a release-tool dependency and part of `onnxruntime-node@1.30.0`'s

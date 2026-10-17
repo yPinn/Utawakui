@@ -5,6 +5,7 @@ const { defineConfig } = require('vitest/config');
 const vue = require('@vitejs/plugin-vue');
 const path = require('node:path');
 const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
+const { createSharedAssetsPlugin } = require('./scripts/viteSharedAssets.js');
 const { coveragePolicy } = require('./scripts/coveragePolicy.js');
 const devServerValues = require('./shared/devServerValues.json');
 
@@ -21,7 +22,11 @@ const TEST_EXCLUDE = ['coverage/**', 'dist/**', '**/node_modules/**'];
 const TIMEOUT_SCALE = process.argv.includes('--coverage') ? 3 : 1;
 
 module.exports = defineConfig({
-  plugins: [vue(), createOverlayReloadPlugin(__dirname)],
+  plugins: [
+    vue(),
+    createOverlayReloadPlugin(__dirname),
+    createSharedAssetsPlugin(),
+  ],
   // Vite clears interactive terminals when it restarts or re-optimizes. Keep the
   // complete npm run dev scrollback available for startup diagnosis.
   clearScreen: false,
