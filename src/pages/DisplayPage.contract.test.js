@@ -46,8 +46,12 @@ describe('Display page composition contract', () => {
 
   it('stays lazy while App routes Display through its page owner', () => {
     expect(appSource).toMatch(
-      /const\s+DisplayPage\s*=\s*defineAsyncComponent\(\s*\(\)\s*=>\s*import\('\.\/pages\/DisplayPage\.vue'\),?\s*\);/u,
+      /const\s+loadDisplayPage\s*=\s*\(\)\s*=>\s*import\('\.\/pages\/DisplayPage\.vue'\);/u,
     );
+    expect(appSource).toMatch(
+      /const\s+DisplayPage\s*=\s*defineAsyncComponent\(loadDisplayPage\);/u,
+    );
+    expect(appSource).not.toMatch(/import\s+DisplayPage\s+from/u);
     expect(appSource).toContain('display: DisplayPage');
     expect(displayPageSource).toContain('getOutputWorkbenchData');
     expect(appSource).toMatch(

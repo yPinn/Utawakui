@@ -59,6 +59,7 @@ import {
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
+import { prefetchWhenIdle } from './utils/idlePrefetch.js';
 import { measureInteractionToNextPaint } from './utils/interactionPerformance.js';
 import { hasOpenTransientOverlay } from './utils/transientOverlay.js';
 import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
@@ -71,15 +72,12 @@ const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
 
 // Library is the only initial view. Keep inactive workflows out of Vite's first
 // renderer graph so a new dev server can show the working shell immediately.
-const DisplayPage = defineAsyncComponent(
-  () => import('./pages/DisplayPage.vue'),
-);
-const PerformancePage = defineAsyncComponent(
-  () => import('./pages/PerformancePage.vue'),
-);
-const SettingsPage = defineAsyncComponent(
-  () => import('./pages/SettingsPage.vue'),
-);
+const loadDisplayPage = () => import('./pages/DisplayPage.vue');
+const loadPerformancePage = () => import('./pages/PerformancePage.vue');
+const loadSettingsPage = () => import('./pages/SettingsPage.vue');
+const DisplayPage = defineAsyncComponent(loadDisplayPage);
+const PerformancePage = defineAsyncComponent(loadPerformancePage);
+const SettingsPage = defineAsyncComponent(loadSettingsPage);
 const PlaybackInfoContextView = defineAsyncComponent(
   () => import('./views/StudioLibraryContextView.vue'),
 );
@@ -155,6 +153,8 @@ provide(OUTPUT_RUNTIME_KEY, outputRuntime);
 onMounted(() => {
   recordRendererMilestone('interactive-shell');
   outputRuntime.initialize();
+  // After the shell settles, so the first visit to each page skips its parse.
+  prefetchWhenIdle([loadSettingsPage, loadDisplayPage, loadPerformancePage]);
 });
 const performerView = usePerformerSelfView();
 performerView.initialize();
