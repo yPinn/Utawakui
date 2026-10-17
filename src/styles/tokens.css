@@ -699,6 +699,10 @@
   --ui-radio-dot-size: var(--ui-space-2);
   --ui-scrollbar-lane-size: var(--ui-space-3);
   --ui-scrollbar-thumb-inset: calc(var(--ui-border-width) * 3);
+  /* Content and adjacent fixed chrome align to the visible thumb edge. */
+  --ui-scrollbar-visual-reserve: calc(
+    var(--ui-scrollbar-lane-size) - var(--ui-scrollbar-thumb-inset)
+  );
   --ui-scrollbar-thumb-min-length: var(--ui-space-6);
   --ui-scrollbar-thumb-max-length: 4.5rem;
   --ui-scrollbar-edge-inset: var(--ui-space-1);

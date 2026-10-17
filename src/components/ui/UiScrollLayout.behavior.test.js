@@ -44,13 +44,21 @@ describe('UiScrollLayout composition contract', () => {
   });
 
   it('owns axis-aware visual-thumb reserve without duplicating scroll behavior', () => {
+    const tokens = readFileSync(
+      new URL('../../styles/tokens.css', import.meta.url),
+      'utf8',
+    );
+    expect(tokens).toMatch(
+      /--ui-scrollbar-visual-reserve:\s*calc\(\s*var\(--ui-scrollbar-lane-size\)\s*-\s*var\(--ui-scrollbar-thumb-inset\)\s*\);/u,
+    );
+    expect(source).not.toContain('var(--ui-scrollbar-lane-size) -');
     expect(source).toContain(
       "import UiScrollRegion from './UiScrollRegion.vue';",
     );
     expect(source).toContain('ref="scrollRegion"');
     expect(source).toContain('defineExpose({ root, viewport, scrollTo })');
     expect(source).toMatch(
-      /\.ui-scroll-layout\s*\{[^}]*--ui-scroll-layout-scrollbar-visual-reserve:\s*calc\(\s*var\(--ui-scrollbar-lane-size\)\s*-\s*var\(--ui-scrollbar-thumb-inset\)\s*\);/su,
+      /\.ui-scroll-layout\s*\{[^}]*--ui-scroll-layout-scrollbar-visual-reserve:\s*var\(\s*--ui-scrollbar-visual-reserve\s*\);/su,
     );
     expect(source).toMatch(
       /\.ui-scroll-layout\[data-scroll-axis='vertical'\],[\s\S]*?\.ui-scroll-layout\[data-scroll-axis='both'\]\s*\{[^}]*--ui-scroll-layout-reserve-inline-end:\s*var\(\s*--ui-scroll-layout-scrollbar-visual-reserve\s*\);/u,

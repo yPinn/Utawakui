@@ -661,7 +661,11 @@ function startDrag(playlist, event) {
   gap: var(--ui-playlist-list-gap);
   margin-block-start: var(--ui-playlist-list-gap);
   margin-inline-start: var(--ui-playlist-sidebar-padding-inline);
-  margin-inline-end: var(--ui-playlist-row-state-surface-outset-inline);
+  /* Match the collection viewport's reserved visible scrollbar edge. */
+  margin-inline-end: calc(
+    var(--ui-playlist-row-state-surface-outset-inline) +
+      var(--ui-scrollbar-visual-reserve)
+  );
 }
 
 .playlist-sidebar__scroll {

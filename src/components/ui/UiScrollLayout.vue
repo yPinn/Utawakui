@@ -78,8 +78,8 @@ defineExpose({ root, viewport, scrollTo });
 .ui-scroll-layout {
   /* The rail is an overlay hit target. Content geometry only stops at the
      visible thumb's inner edge, not at the transparent start of the rail. */
-  --ui-scroll-layout-scrollbar-visual-reserve: calc(
-    var(--ui-scrollbar-lane-size) - var(--ui-scrollbar-thumb-inset)
+  --ui-scroll-layout-scrollbar-visual-reserve: var(
+    --ui-scrollbar-visual-reserve
   );
   --ui-scroll-layout-reserve-inline-end: 0rem;
   --ui-scroll-layout-reserve-block-end: 0rem;
