@@ -207,7 +207,7 @@ function registerPlayerStateHandler(ipcMain) {
 
 function createMainWindow(
   initialTheme = 'light',
-  initialSidebarWidth = 256,
+  initialSidebarWidth = 64,
   initialCaptureDeviceId = null,
   options = {},
 ) {

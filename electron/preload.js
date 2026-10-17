@@ -22,7 +22,7 @@ function readInitialUiDensity() {
 function readInitialSidebarWidth() {
   const arg = process.argv.find((a) => a.startsWith('--sidebar-width='));
   const value = arg ? Number(arg.slice('--sidebar-width='.length)) : NaN;
-  return Number.isFinite(value) ? value : 256;
+  return Number.isFinite(value) ? value : 64;
 }
 
 // Same synchronous-first-paint reasoning as readInitialUiTheme above — lets

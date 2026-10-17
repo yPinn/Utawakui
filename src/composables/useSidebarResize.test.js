@@ -39,6 +39,17 @@ describe('useSidebarResize', () => {
     expect(useSidebarWidth().width.value).toBe(256);
   });
 
+  it('starts collapsed without an initial preference and expands on demand', async () => {
+    delete window.Utawakui.initialSidebarWidth;
+    const { useSidebarWidth } = await import('./useSidebarWidth.js');
+    const { useSidebarResize } = await import('./useSidebarResize.js');
+
+    expect(useSidebarWidth().width.value).toBe(64);
+    await useSidebarResize().toggleSidebarCollapse();
+    expect(useSidebarWidth().width.value).toBe(256);
+    expect(window.Utawakui.setSidebarWidth).toHaveBeenLastCalledWith(256);
+  });
+
   it('supports bounded keyboard resizing without leaving an oversized compact rail', async () => {
     const { SIDEBAR_WIDTH_MAX, useSidebarWidth } =
       await import('./useSidebarWidth.js');

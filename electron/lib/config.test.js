@@ -35,7 +35,7 @@ describe('config', () => {
       uiTheme: 'light',
       performerReadingScale: 'desk',
       performerWindowBounds: null,
-      sidebarWidth: 256,
+      sidebarWidth: 64,
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
@@ -120,7 +120,7 @@ describe('config', () => {
       uiTheme: 'light',
       performerReadingScale: 'desk',
       performerWindowBounds: null,
-      sidebarWidth: 256,
+      sidebarWidth: 64,
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
@@ -242,7 +242,7 @@ describe('config', () => {
       configPath,
       JSON.stringify({ version: 1, sidebarWidth: 9999 }),
     );
-    expect(loadConfig(configPath).sidebarWidth).toBe(256);
+    expect(loadConfig(configPath).sidebarWidth).toBe(64);
   });
 
   it('non-numeric sidebarWidth falls back to the default', () => {
@@ -250,7 +250,7 @@ describe('config', () => {
       configPath,
       JSON.stringify({ version: 1, sidebarWidth: 'wide' }),
     );
-    expect(loadConfig(configPath).sidebarWidth).toBe(256);
+    expect(loadConfig(configPath).sidebarWidth).toBe(64);
   });
 
   it('round-trips captureDeviceId through save/load', () => {

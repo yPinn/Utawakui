@@ -60,7 +60,7 @@ const DEFAULTS = {
   uiTheme: 'light',
   performerReadingScale: 'desk',
   performerWindowBounds: null,
-  sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width
+  sidebarWidth: SIDEBAR_WIDTH_MIN, // Start collapsed unless a width is saved.
   // Audio output device id for the capture (OBS-facing) mix — see
   // usePlayer.js's capture chain. null means the feature is off; the
   // device is looked up by id at runtime via enumerateDevices(), so an id

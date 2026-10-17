@@ -106,6 +106,16 @@ afterEach(() => {
 });
 
 describe('windowState security boundary', () => {
+  it('seeds a collapsed sidebar when no startup width is supplied', async () => {
+    const { module, windowDouble } = await loadWindowState();
+
+    module.createMainWindow();
+
+    expect(windowDouble.options.webPreferences.additionalArguments).toContain(
+      '--sidebar-width=64',
+    );
+  });
+
   it('exposes the single packaged app icon path for native shell integrations', async () => {
     const { module } = await loadWindowState();
 

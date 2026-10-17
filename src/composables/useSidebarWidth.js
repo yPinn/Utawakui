@@ -13,7 +13,7 @@ export const SIDEBAR_WIDTH_KEYBOARD_STEP = 8; // 0.5rem at the app baseline
 // @container (width < 256px) rules in the Sidebar components.
 export const SIDEBAR_COMPACT_THRESHOLD = 256; // 16rem
 
-const width = ref(window.Utawakui?.initialSidebarWidth ?? 256);
+const width = ref(window.Utawakui?.initialSidebarWidth ?? SIDEBAR_WIDTH_MIN);
 
 function clamp(px) {
   return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, px));

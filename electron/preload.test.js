@@ -311,7 +311,7 @@ describe('main preload bridge', () => {
     expect(defaults).toMatchObject({
       initialUiTheme: 'light',
       initialUiDensity: 'compact',
-      initialSidebarWidth: 256,
+      initialSidebarWidth: 64,
       initialCaptureDeviceId: null,
       // Preload relays raw values; the renderer bounds them and fills defaults.
       initialAudioPreferences: {
