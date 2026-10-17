@@ -258,6 +258,18 @@ watch(
 }
 
 .performance-session-plan-list__body-scroll {
+  --ui-scroll-layout-padding-block-start: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-block-end: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-inline-start: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-inline-end: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
   flex: 1;
   min-height: 0;
 }
@@ -270,7 +282,6 @@ watch(
   gap: var(--ui-track-list-gap);
   min-width: 0;
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 

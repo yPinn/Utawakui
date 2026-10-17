@@ -190,7 +190,10 @@ Output 的 `AppFolderPage surface="canvas"` 填滿 Folder 內緣；`ObsOutputSpl
 「待唱安排」；直接進入演唱工具預設開啟歌詞，明確的待唱準備 intent 仍開啟待唱安排。
 兩個工具都以 `AppFolderWorkspaceToolbar` 呈現情境與動作，pane 直接放在紙面、以 ledger
 rule 分隔。「待唱安排」進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
-與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
+與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。
+Ordered plan／搜尋結果保留 `UiScrollLayout` 的內容安全預留；項目編輯與手動新增共用
+feature-local `PerformanceSessionReviewPane` 的 scroll／固定 footer 對齊，表單仍各自持有 draft、validation 與 intent。
+唯讀曲庫資料直接以平面 ledger 分組呈現，不增加另一張卡片。Shell 內的
 Titlebar 與 Right Dock 不再提供重複的場次入口；selected playlist／album 的「從清單建立」／
 「從專輯建立」動作由 workspace toolbar 持有，既有 draft 的取代仍先確認。`PerformanceLyricsWorkspace`
 與曲庫的 `LyricsAuthoringWorkspace` 共用 `useLyrics`／`useLyricsReading` module-scope owner：現場可在既有來源間

@@ -3,7 +3,7 @@ import { shallowRef } from 'vue';
 import { Plus } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import PerformanceSessionReviewPane from './PerformanceSessionReviewPane.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
 defineProps({
@@ -25,54 +25,52 @@ function create() {
 </script>
 
 <template>
-  <section
+  <PerformanceSessionReviewPane
     class="performance-session-manual"
     aria-labelledby="performance-session-manual-title"
+    body-label="新增手動項目內容"
   >
-    <UiScrollRegion class="performance-session-manual__body-scroll">
-      <div class="performance-session-manual__body">
-        <header class="performance-session-manual__header">
-          <p class="performance-session-manual__eyebrow">其他音訊來源</p>
-          <h2
-            id="performance-session-manual-title"
-            class="performance-session-manual__title"
-          >
-            新增手動項目
-          </h2>
-          <p class="performance-session-manual__description">
-            適用自行伴奏或外部播放；若由 Utawakui 播放，請先匯入曲庫。
-          </p>
-        </header>
+    <div class="performance-session-manual__body">
+      <header class="performance-session-manual__header">
+        <p class="performance-session-manual__eyebrow">其他音訊來源</p>
+        <h2
+          id="performance-session-manual-title"
+          class="performance-session-manual__title"
+        >
+          新增手動項目
+        </h2>
+        <p class="performance-session-manual__description">
+          適用自行伴奏或外部播放；若由 Utawakui 播放，請先匯入曲庫。
+        </p>
+      </header>
 
-        <UiNotice
-          v-if="validationError"
-          tone="warning"
-          title="尚未加入"
-          :message="validationError.message"
-          compact
+      <UiNotice
+        v-if="validationError"
+        tone="warning"
+        title="尚未加入"
+        :message="validationError.message"
+        compact
+      />
+
+      <form class="performance-session-manual__form" @submit.prevent="create">
+        <UiTextField
+          id="performance-session-manual-display-title"
+          v-model="displayTitle"
+          label="曲名／項目名稱"
+          hint="只用於本場顯示，不會建立曲庫歌曲。"
+          :maxlength="200"
+          required
         />
-
-        <form class="performance-session-manual__form" @submit.prevent="create">
-          <UiTextField
-            id="performance-session-manual-display-title"
-            v-model="displayTitle"
-            label="曲名／項目名稱"
-            hint="只用於本場顯示，不會建立曲庫歌曲。"
-            :maxlength="200"
-            required
-          />
-          <UiTextField
-            id="performance-session-manual-display-artist"
-            v-model="displayArtist"
-            label="第二行（選填）"
-            hint="可填原唱、演出者或版本資訊；留空則不顯示。"
-            :maxlength="200"
-          />
-        </form>
-      </div>
-    </UiScrollRegion>
-
-    <div class="performance-session-manual__actions">
+        <UiTextField
+          id="performance-session-manual-display-artist"
+          v-model="displayArtist"
+          label="第二行（選填）"
+          hint="可填原唱、演出者或版本資訊；留空則不顯示。"
+          :maxlength="200"
+        />
+      </form>
+    </div>
+    <template #actions>
       <UiButton :disabled="saving" @click="emit('cancel')">取消</UiButton>
       <UiButton
         :icon="Plus"
@@ -82,29 +80,15 @@ function create() {
       >
         加入場次
       </UiButton>
-    </div>
-  </section>
+    </template>
+  </PerformanceSessionReviewPane>
 </template>
 
 <style scoped>
-.performance-session-manual {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-.performance-session-manual__body-scroll {
-  flex: 1;
-  min-height: 0;
-}
-
 .performance-session-manual__body {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
-  padding: var(--ui-space-4);
 }
 
 .performance-session-manual__eyebrow,
@@ -116,37 +100,31 @@ function create() {
 .performance-session-manual__eyebrow,
 .performance-session-manual__description {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
 }
 
 .performance-session-manual__eyebrow {
-  font-weight: var(--ui-font-weight-semibold);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .performance-session-manual__title {
   margin-top: var(--ui-space-1);
   font-size: var(--ui-type-title-size);
-  line-height: var(--ui-type-heading-line-height);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
 }
 
 .performance-session-manual__description {
   margin-top: var(--ui-space-2);
-  line-height: var(--ui-line-height-body);
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
 }
 
 .performance-session-manual__form {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
-}
-
-.performance-session-manual__actions {
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-3) var(--ui-space-4);
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 </style>

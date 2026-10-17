@@ -3,7 +3,7 @@ import { computed, shallowRef, watch } from 'vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import PerformanceSessionReviewPane from './PerformanceSessionReviewPane.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -112,129 +112,127 @@ function cancelEditing() {
 </script>
 
 <template>
-  <section
+  <PerformanceSessionReviewPane
     class="performance-session-editor"
     aria-labelledby="performance-session-editor-title"
+    body-label="待唱項目設定內容"
   >
-    <UiScrollRegion class="performance-session-editor__body-scroll">
-      <div v-if="item" class="performance-session-editor__body">
-        <header class="performance-session-editor__header">
-          <p class="performance-session-editor__eyebrow">
-            {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
-          </p>
-          <h2
-            id="performance-session-editor-title"
-            class="performance-session-editor__title"
-            dir="auto"
-          >
-            {{ item.displayTitle }}
-          </h2>
-          <p
-            v-if="item.displayArtist"
-            class="performance-session-editor__artist"
-            dir="auto"
-          >
-            {{ item.displayArtist }}
-          </p>
-        </header>
-
-        <UiNotice
-          v-if="item.status === 'unavailable'"
-          tone="danger"
-          title="音檔已不存在"
-          message="請重新選擇一首曲庫歌曲。"
-          compact
-        />
-        <UiNotice
-          v-else-if="item.status === 'needs-link'"
-          tone="warning"
-          title="需要連結曲庫歌曲"
-          message="這是舊版文字項目；選擇音檔後即可演出。"
-          compact
-        />
-        <UiNotice
-          v-else-if="item.status === 'source-changed'"
-          tone="warning"
-          title="曲庫資料已變更"
-          message="場次顯示文字仍保留，可視需要調整。"
-          compact
-        />
-        <UiNotice
-          v-if="validationError"
-          tone="warning"
-          title="尚未儲存"
-          :message="validationError.message"
-          compact
-        />
-
-        <div
-          v-if="item.linkedTrack && !showForm"
-          class="performance-session-editor__source"
+    <div v-if="item" class="performance-session-editor__body">
+      <header class="performance-session-editor__header">
+        <p class="performance-session-editor__eyebrow">
+          {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
+        </p>
+        <h2
+          id="performance-session-editor-title"
+          class="performance-session-editor__title"
+          dir="auto"
         >
-          <span class="performance-session-editor__source-label"
-            >曲庫資料（唯讀）</span
-          >
-          <dl class="performance-session-editor__source-details">
-            <div class="performance-session-editor__source-row">
-              <dt>曲庫曲名</dt>
-              <dd dir="auto">{{ item.linkedTrack.title }}</dd>
-            </div>
-            <div
-              v-if="item.linkedTrack.artist"
-              class="performance-session-editor__source-row"
-            >
-              <dt>歌手／藝人</dt>
-              <dd dir="auto">{{ item.linkedTrack.artist }}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <form
-          v-if="showForm"
-          class="performance-session-editor__form"
-          @submit.prevent
+          {{ item.displayTitle }}
+        </h2>
+        <p
+          v-if="item.displayArtist"
+          class="performance-session-editor__artist"
+          dir="auto"
         >
-          <UiTextField
-            id="performance-session-display-title"
-            v-model="displayTitle"
-            label="顯示曲名"
-            hint="只用於本場輸出，不會修改曲庫曲名。"
-            :maxlength="200"
-            required
-          />
-          <UiTextField
-            id="performance-session-display-artist"
-            v-model="displayArtist"
-            label="第二行（選填）"
-            hint="可填原唱、演出者或版本資訊；留空則不顯示。"
-            :maxlength="200"
-          />
-          <template v-if="needsTrackRecovery">
-            <UiTextField
-              id="performance-session-track-filter"
-              v-model="trackFilter"
-              label="搜尋曲庫"
-              placeholder="曲名、演出者或 track id"
-            />
-            <UiSelect
-              id="performance-session-track-link"
-              v-model="trackId"
-              label="曲庫歌曲"
-              :options="trackOptions"
-            />
-            <UiHint v-if="trackOptions.length === 1 && trackFilter.trim()">
-              找不到符合的歌曲。
-            </UiHint>
-          </template>
-        </form>
+          {{ item.displayArtist }}
+        </p>
+      </header>
+
+      <UiNotice
+        v-if="item.status === 'unavailable'"
+        tone="danger"
+        title="音檔已不存在"
+        message="請重新選擇一首曲庫歌曲。"
+        compact
+      />
+      <UiNotice
+        v-else-if="item.status === 'needs-link'"
+        tone="warning"
+        title="需要連結曲庫歌曲"
+        message="這是舊版文字項目；選擇音檔後即可演出。"
+        compact
+      />
+      <UiNotice
+        v-else-if="item.status === 'source-changed'"
+        tone="warning"
+        title="曲庫資料已變更"
+        message="場次顯示文字仍保留，可視需要調整。"
+        compact
+      />
+      <UiNotice
+        v-if="validationError"
+        tone="warning"
+        title="尚未儲存"
+        :message="validationError.message"
+        compact
+      />
+
+      <div
+        v-if="item.linkedTrack && !showForm"
+        class="performance-session-editor__source"
+      >
+        <span class="performance-session-editor__source-label"
+          >曲庫資料（唯讀）</span
+        >
+        <dl class="performance-session-editor__source-details">
+          <div class="performance-session-editor__source-row">
+            <dt>曲庫曲名</dt>
+            <dd dir="auto">{{ item.linkedTrack.title }}</dd>
+          </div>
+          <div
+            v-if="item.linkedTrack.artist"
+            class="performance-session-editor__source-row"
+          >
+            <dt>歌手／藝人</dt>
+            <dd dir="auto">{{ item.linkedTrack.artist }}</dd>
+          </div>
+        </dl>
       </div>
 
-      <UiHint v-else id="performance-session-editor-title" padded center>
-        選擇一首曲目查看設定。
-      </UiHint>
-    </UiScrollRegion>
+      <form
+        v-if="showForm"
+        class="performance-session-editor__form"
+        @submit.prevent
+      >
+        <UiTextField
+          id="performance-session-display-title"
+          v-model="displayTitle"
+          label="顯示曲名"
+          hint="只用於本場輸出，不會修改曲庫曲名。"
+          :maxlength="200"
+          required
+        />
+        <UiTextField
+          id="performance-session-display-artist"
+          v-model="displayArtist"
+          label="第二行（選填）"
+          hint="可填原唱、演出者或版本資訊；留空則不顯示。"
+          :maxlength="200"
+        />
+        <template v-if="needsTrackRecovery">
+          <UiTextField
+            id="performance-session-track-filter"
+            v-model="trackFilter"
+            label="搜尋曲庫"
+            placeholder="曲名、演出者或 track id"
+          />
+          <UiSelect
+            id="performance-session-track-link"
+            v-model="trackId"
+            label="曲庫歌曲"
+            :options="trackOptions"
+          />
+          <UiHint v-if="trackOptions.length === 1 && trackFilter.trim()">
+            找不到符合的歌曲。
+          </UiHint>
+        </template>
+      </form>
+    </div>
 
-    <div v-if="item" class="performance-session-editor__actions">
+    <UiHint v-else id="performance-session-editor-title" padded center>
+      選擇一首曲目查看設定。
+    </UiHint>
+    <template v-if="item" #actions>
       <template v-if="showForm">
         <UiButton
           v-if="!needsTrackRecovery && item.mode !== 'manual'"
@@ -256,29 +254,15 @@ function cancelEditing() {
           調整本場顯示
         </UiButton>
       </template>
-    </div>
-  </section>
+    </template>
+  </PerformanceSessionReviewPane>
 </template>
 
 <style scoped>
-.performance-session-editor {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-.performance-session-editor__body-scroll {
-  flex: 1;
-  min-height: 0;
-}
-
 .performance-session-editor__body {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
-  padding: var(--ui-space-4);
 }
 
 .performance-session-editor__header {
@@ -295,35 +279,40 @@ function cancelEditing() {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .performance-session-editor__title {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text);
   font-size: var(--ui-type-title-size);
-  line-height: var(--ui-type-heading-line-height);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
   overflow-wrap: anywhere;
 }
 
 .performance-session-editor__artist {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   overflow-wrap: anywhere;
 }
 
 .performance-session-editor__source {
   display: grid;
   gap: var(--ui-space-1);
-  padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
+  padding-block-start: var(--ui-space-3);
+  border-block-start: var(--ui-border-width) solid
+    var(--ui-folder-ledger-rule, var(--ui-color-border));
 }
 
 .performance-session-editor__source-label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .performance-session-editor__source-details {
@@ -341,12 +330,17 @@ function cancelEditing() {
 
 .performance-session-editor__source-row dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .performance-session-editor__source-row dd {
   min-width: 0;
   margin: 0;
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-compact-line-height);
   overflow-wrap: anywhere;
 }
 
@@ -354,15 +348,5 @@ function cancelEditing() {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
-}
-
-.performance-session-editor__actions {
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-3) var(--ui-space-4);
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 </style>

@@ -396,8 +396,9 @@ async function prepareSelectedCollection() {
 
 .performance-session-workspace__saving {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 /* Panes sit on the Folder paper, divided by ledger rules instead of a card. */
@@ -439,6 +440,18 @@ async function prepareSelectedCollection() {
 }
 
 .performance-session-workspace__list-scroll {
+  --ui-scroll-layout-padding-block-start: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-block-end: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-inline-start: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-inline-end: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
   flex: 1;
   min-height: 0;
 }
@@ -454,7 +467,6 @@ async function prepareSelectedCollection() {
   flex-direction: column;
   gap: var(--ui-track-list-gap);
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 

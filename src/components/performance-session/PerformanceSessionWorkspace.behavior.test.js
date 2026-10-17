@@ -112,10 +112,17 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   });
 
   it('keeps review actions outside the scrolling details body and removes mandatory verification copy', () => {
-    expect(reviewSource).toContain('performance-session-editor__body-scroll');
+    const paneSource = readFileSync(
+      new URL('./PerformanceSessionReviewPane.vue', import.meta.url),
+      'utf8',
+    );
+    expect(reviewSource).toContain('PerformanceSessionReviewPane');
+    expect(reviewSource).toContain('#actions');
     expect(
-      reviewSource.indexOf('performance-session-editor__body-scroll'),
-    ).toBeLessThan(reviewSource.indexOf('performance-session-editor__actions'));
+      paneSource.indexOf('performance-session-review-pane__scroll'),
+    ).toBeLessThan(
+      paneSource.indexOf('performance-session-review-pane__actions'),
+    );
     expect(reviewSource).toContain('調整本場顯示');
     expect(reviewSource).not.toContain('確認本首');
     expect(reviewSource).not.toContain('確認並下一首');
