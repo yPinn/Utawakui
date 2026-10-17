@@ -183,6 +183,8 @@ function handleActionKeydown(event) {
         class="library-track-row__thumb"
         :track="entry.track"
         size="var(--ui-track-row-thumb-size)"
+        loading="lazy"
+        decoding="async"
       />
       <span class="library-track-row__copy" :lang="contentLang">
         <span class="library-track-row__title">
