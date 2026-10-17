@@ -6,6 +6,9 @@ const vue = require('@vitejs/plugin-vue');
 const path = require('node:path');
 const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
 const { createSharedAssetsPlugin } = require('./scripts/viteSharedAssets.js');
+const {
+  createSfcStyleCachePlugin,
+} = require('./scripts/vitestSfcStyleCache.js');
 const { coveragePolicy } = require('./scripts/coveragePolicy.js');
 const devServerValues = require('./shared/devServerValues.json');
 
@@ -26,6 +29,7 @@ module.exports = defineConfig({
     vue(),
     createOverlayReloadPlugin(__dirname),
     createSharedAssetsPlugin(),
+    createSfcStyleCachePlugin(),
   ],
   // Vite clears interactive terminals when it restarts or re-optimizes. Keep the
   // complete npm run dev scrollback available for startup diagnosis.
@@ -66,6 +70,7 @@ module.exports = defineConfig({
     // process.chdir or native-addon test that needs a separate process.
     pool: 'threads',
     // Reuses transformed modules across runs; content-keyed, so edits invalidate.
+    // SFCs with <style src> opt out through createSfcStyleCachePlugin.
     experimental: { fsModuleCache: true },
     projects: [
       {
