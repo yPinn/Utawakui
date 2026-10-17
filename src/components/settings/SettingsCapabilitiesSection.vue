@@ -24,6 +24,7 @@ import { useMusicAnalysisSettings } from '../../composables/useMusicAnalysisSett
 import { useObsIntegrationSettings } from '../../composables/useObsIntegrationSettings.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
+import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
 import AppFolderSection from '../layout/AppFolderSection.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -74,6 +75,8 @@ const obsSessionExport = useObsSessionExport();
 const { confirm: confirmAction } = useAppConfirmation();
 const systemFfmpegDetection = shallowRef(null);
 const isFfmpegSourceModalOpen = shallowRef(false);
+const optionalGroups = shallowRef(null);
+useOnFirstVisible(optionalGroups, detectSystemFfmpeg);
 
 const {
   featureGateRows,
@@ -277,7 +280,6 @@ function handleFeatureGateRequestAction() {
 }
 
 onMounted(() => {
-  detectSystemFfmpeg();
   refreshConfirmations();
   refreshDependencies();
   musicAnalysisSettings.initialize();
@@ -316,7 +318,7 @@ onUnmounted(() => {
       @action="handleFeatureGateRequestAction"
     />
 
-    <div class="settings-capabilities-section__groups">
+    <div ref="optionalGroups" class="settings-capabilities-section__groups">
       <AppFolderSection
         v-for="group in optionalFeatureGroups"
         :id="`settings-group-${group.id}`"

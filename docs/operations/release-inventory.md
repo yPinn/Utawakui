@@ -26,6 +26,8 @@ Windows packaging is configured in `electron-builder.yml`.
   enabled only for the ADR 0005 yt-dlp EJS runtime, and file-protocol extra
   privileges remain enabled only while the main renderer loads from `file://`.
 - Renderer output: `dist/`, loaded by `electron/main/windowState.js`.
+  Pure deferred-loader sources under `src/utils/` are bundled by Vite into this
+  existing renderer output, including their self-hosted runtime assets.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
   The read-only default-session preparation helper `electron/main/previewSession.js`
   uses the existing `electron/**/*` inclusion; its colocated tests remain excluded.

@@ -1,9 +1,5 @@
-import SignalsmithStretch from 'signalsmith-stretch';
-import signalsmithStretchModuleUrl from 'signalsmith-stretch?url';
+import { loadPitchProcessor } from '../../utils/pitchProcessorLoader.js';
 import { AUDIO_CONTROL_VALUES } from '../../utils/audioPreferences.js';
-
-// CSP `script-src 'self'` blocks the package's default blob: worklet URL.
-SignalsmithStretch.moduleUrl = signalsmithStretchModuleUrl;
 
 const GAIN_RAMP_SECONDS = 0.03;
 
@@ -346,6 +342,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     if (pitchNode) return pitchNode;
     if (!pitchNodeReady) {
       pitchNodeReady = (async () => {
+        const SignalsmithStretch = await loadPitchProcessor();
         const node = await SignalsmithStretch(audioCtx, {
           outputChannelCount: [2],
         });
@@ -366,6 +363,8 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     if (graph.pitchNode) return graph.pitchNode;
     if (!graph.pitchNodeReady) {
       graph.pitchNodeReady = (async () => {
+        const SignalsmithStretch = await loadPitchProcessor();
+        if (!isCaptureGraphReady(graph)) return null;
         const node = await SignalsmithStretch(graph.context, {
           outputChannelCount: [2],
         });

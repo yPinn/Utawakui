@@ -5,10 +5,8 @@ import {
   normalizeLyricsDocument,
   projectLegacyLyricLines,
 } from '../utils/lyricsDocument.js';
-import {
-  DEFAULT_LYRICS_TEXT_VARIANT,
-  projectLyricsTextVariant,
-} from '../utils/lyricsTextVariant.js';
+import { DEFAULT_LYRICS_TEXT_VARIANT } from '../utils/lyricsTextVariantValues.js';
+import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
 import { createTrackLyricsPreview } from '../utils/trackContextPresentation.js';
 
 function readTrackLyrics(trackId, filename) {
@@ -34,6 +32,7 @@ export function useCurrentTrackLyricsPreview({
   playerState,
   textVariant = DEFAULT_LYRICS_TEXT_VARIANT,
   loadLyrics = readTrackLyrics,
+  textVariantLoader = lyricsTextVariantLoader,
 }) {
   const loadedTrackId = shallowRef(null);
   const loadedSource = shallowRef(null);
@@ -72,15 +71,19 @@ export function useCurrentTrackLyricsPreview({
         if (cancelled || currentRequestId !== requestId) return;
         const resultSource = result?.source ?? source;
         const timing = result?.timing ?? null;
-        loadedTrackId.value = track.id;
-        loadedSource.value = resultSource;
-        lyricsDocument.value = normalizeLyricsDocument({
+        const document = normalizeLyricsDocument({
           text: result?.text ?? '',
           source: resultSource,
           sourceFingerprint: timing?.sourceFingerprint ?? null,
           normalizerProfileId: timing?.normalizerProfileId,
           timing,
         });
+        const preparation = textVariantLoader.prepare(document);
+        if (preparation) await preparation;
+        if (cancelled || currentRequestId !== requestId) return;
+        loadedTrackId.value = track.id;
+        loadedSource.value = resultSource;
+        lyricsDocument.value = document;
       } catch (reason) {
         if (cancelled || currentRequestId !== requestId) return;
         error.value = reason;
@@ -94,7 +97,7 @@ export function useCurrentTrackLyricsPreview({
   );
 
   const displayDocument = computed(() =>
-    projectLyricsTextVariant(lyricsDocument.value, {
+    textVariantLoader.project(lyricsDocument.value, {
       variant: unref(textVariant) ?? DEFAULT_LYRICS_TEXT_VARIANT,
     }),
   );

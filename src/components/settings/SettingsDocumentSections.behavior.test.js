@@ -571,7 +571,8 @@ describe('Settings document section behavior', () => {
     expect(mocks.initializeMusicAnalysis).toHaveBeenCalledOnce();
     expect(mocks.refreshSeparationPreference).toHaveBeenCalledOnce();
     expect(mocks.refreshObsSettings).toHaveBeenCalledOnce();
-    expect(mocks.detectSystemFfmpeg).toHaveBeenCalledOnce();
+    // Setup alone has no visible document target; the optional hint is deferred.
+    expect(mocks.detectSystemFfmpeg).not.toHaveBeenCalled();
     expect(getElementById).toHaveBeenCalledWith('settings-group-output');
     expect(getElementById).toHaveBeenCalledWith(
       `settings-feature-${FEATURE_IDS.PUBLIC_OUTPUT_FLOW}`,

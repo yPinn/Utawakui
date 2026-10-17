@@ -1,13 +1,14 @@
 import OpenCC from 'opencc-js/cn2t';
 import { detectLyricsScript } from './lyrics.js';
 
-export const LYRICS_TEXT_VARIANTS = Object.freeze({
-  ORIGINAL: 'original',
-  TAIWAN_TRADITIONAL: 'traditional-tw',
-});
-
-export const DEFAULT_LYRICS_TEXT_VARIANT =
-  LYRICS_TEXT_VARIANTS.TAIWAN_TRADITIONAL;
+import {
+  DEFAULT_LYRICS_TEXT_VARIANT,
+  LYRICS_TEXT_VARIANTS,
+} from './lyricsTextVariantValues.js';
+export {
+  DEFAULT_LYRICS_TEXT_VARIANT,
+  LYRICS_TEXT_VARIANTS,
+} from './lyricsTextVariantValues.js';
 
 const MAX_DOCUMENT_ID_LENGTH = 200;
 const TAIWAN_TRADITIONAL_DOCUMENT_SUFFIX = '~s2tw-v1';

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync(
-  new URL('./BgmPlayer.vue', import.meta.url),
+  new URL('./BgmPlayerPanel.vue', import.meta.url),
   'utf8',
 );
 

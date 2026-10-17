@@ -16,8 +16,8 @@ import {
 import {
   DEFAULT_LYRICS_TEXT_VARIANT,
   LYRICS_TEXT_VARIANTS,
-  projectLyricsTextVariant,
-} from '../utils/lyricsTextVariant.js';
+} from '../utils/lyricsTextVariantValues.js';
+import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
@@ -122,6 +122,16 @@ const sourceDocuments = useLyricsSourceDocuments({
   reportLyricsError,
   refreshLibrary,
   selectSource,
+  prepareLyrics: (result) =>
+    lyricsTextVariantLoader.prepare(
+      normalizeLyricsDocument({
+        text: result?.text ?? '',
+        source: result?.source ?? selectedSource.value,
+        sourceFingerprint: result?.timing?.sourceFingerprint ?? null,
+        normalizerProfileId: result?.timing?.normalizerProfileId,
+        timing: result?.timing,
+      }),
+    ),
 });
 const {
   lyricsTiming,
@@ -167,7 +177,7 @@ const lyricsDocument = computed(() =>
   }),
 );
 const displayLyricsDocument = computed(() =>
-  projectLyricsTextVariant(lyricsDocument.value, {
+  lyricsTextVariantLoader.project(lyricsDocument.value, {
     variant: lyricsTextVariant.value,
   }),
 );

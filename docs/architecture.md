@@ -152,6 +152,10 @@ shared `UiTrackRow` 不持有排序 semantics。最近播放由 feature adapter 
 可重用的曲目身分導覽位於 `src/components/track/TrackIdentityRow.vue`，而非 `ui/` primitive：它以 opt-in `none／album／artist／identity` recipe 組合 `UiTrackRow`、`TrackArtistCredits` 與既有 `useAlbumNavigation`。只有能解析到本機專輯或 canonical artist 的文字才成為 CTA；目的地不存在時保持純文字。adapter 在切換 Library destination 前同步發出 `navigate`，讓 Modal／Dock caller先收合；封面動作、整列選取、播放、排序、trail狀態仍由各feature owner持有。
 
 shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titlebar disclosure 開啟／關閉，
+啟動時常駐初始化 `useBgmSession` 並轉送即時 Titlebar status；完整視覺面板
+`BgmPlayerPanel.vue` 到首次開啟才非同步載入。首開後保留面板實例，關閉只移除其 surface，
+因此搜尋、Pin 與移動位置不重建；關閉期間仍保留 controller、還原、安全 gate 與狀態訂閱。
+視覺面板
 在 bounded body 內組合 `BgmTrackPicker.vue` 的本機曲庫搜尋／單曲取代，並以
 `BgmPlayerTransport.vue` 呈現目前 BGM、進度與安全控制。它預設位於 PlayerBar 上方並避開 desktop
 persistent Dock bay；compact viewport只在Dock overlay展開時避開其footprint。它不是場次面板或 Right Dock surface；Dock footprint 只決定 home anchor／safe edge，
@@ -238,6 +242,10 @@ Navigation history 由 module-scope `useNavigationHistory.js` 單獨擁有（[AD
 持有自己的 lifecycle、確認、deep-link 與 dialog 行為；頁內沒有第二層 tabs 或 Scroll Region。一般設定項目使用平面
 `SettingsDocumentItem`，只有巢狀 capability workflow 使用次層 surface。雙欄與 Separation select 的特殊 geometry
 由各自 component-local custom property 擁有，不回填 core token graph。
+設定章節的 markup 與 deep-link target 維持完整掛載；只有選用功能的系統 FFmpeg
+提示偵測經 `useOnFirstVisible` 延到該區段進入可視範圍，卸載時解除 observer。
+Modal 的手動重新偵測不受影響。設定草稿、區段訂閱與 module-scope 的更新／OBS／
+dependency 即時狀態仍各自維持原有 owner，不因延後提示偵測而中斷。
 
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主
@@ -429,6 +437,11 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 共用同一投影；原始 LRC／VTT／YRC、canonical document、timing sidecar、line／segment id
 與來源 provenance 均不改寫。T2 優先整行轉換後依等長字元邊界切回原 segment；若無法安全
 等長切分，才逐 segment 轉換並以其串接結果保持 line／segment 文字一致。
+`src/utils/lyricsTextVariantLoader.js` 共用延遲載入的 OpenCC projector。`useLyrics` 與
+`useCurrentTrackLyricsPreview` 在發佈中文文件前等待準備，等待後再檢查 request identity；
+載入失敗走既有歌詞錯誤與重試路徑，不先發佈原文。即使當時選擇原文仍先準備中文投影，
+確保後續原文／繁體切換保持同步。空文件及非中文不載入 converter；Library 使用的
+content-language 字元表仍是獨立的首屏依賴。
 
 ## 權威狀態與資料
 
@@ -668,6 +681,11 @@ Stretch pitch processing、capture sink 與 graph cleanup。Audio graph 不註�
 待啟用 intent，第一次播放才建立 capture context。裝置缺失、sink loss 或 native render error
 一律關閉 capture、清除 persisted device id 並保留 monitor playback；capture 不得 fallback 到
 系統預設喇叭。
+
+`src/utils/pitchProcessorLoader.js` 在第一次需要 pitch processing 時才載入 Signalsmith，
+monitor／capture 共用模組載入 promise，各自擁有 AudioWorkletNode；載入失敗可重試。
+Worklet 保持由 Vite 提供的 self-hosted URL，沒有放寬 CSP。Capture 在模組載入後再次
+確認 graph 仍有效，避免裝置切換期間建立過期節點。
 
 BGM transport 與演唱播放器分開：`src/bgm/audioDeck.js` 擁有第二個 HTML audio element、lazy
 AudioContext 與單一 logical gain bus；現行只連到系統預設 monitor destination。

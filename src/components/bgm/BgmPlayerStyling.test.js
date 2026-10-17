@@ -5,7 +5,7 @@ function read(relativePath) {
   return readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 }
 
-const playerSource = read('./BgmPlayer.vue');
+const playerSource = read('./BgmPlayerPanel.vue');
 const transportSource = read('./BgmPlayerTransport.vue');
 const currentSource = read('./BgmCurrentSource.vue');
 const pickerSource = read('./BgmTrackPicker.vue');

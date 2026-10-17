@@ -11,6 +11,7 @@ export function useLyricsSourceDocuments({
   reportLyricsError,
   refreshLibrary,
   selectSource,
+  prepareLyrics = () => null,
 }) {
   // Timing documents can contain thousands of immutable lines and segments.
   // Replacing a shallow ref avoids recursively proxying each snapshot.
@@ -42,6 +43,9 @@ export function useLyricsSourceDocuments({
     state.isLoadingLyrics = true;
     try {
       const result = await window.Utawakui.getTrackLyrics(track.id, filename);
+      if (requestId !== lyricsRequestId) return;
+      const preparation = prepareLyrics(result);
+      if (preparation) await preparation;
       if (requestId !== lyricsRequestId) return;
       state.lyricsText = result?.text ?? '';
       state.lyricSource = result?.source ?? null;

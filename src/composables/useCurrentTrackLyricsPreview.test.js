@@ -72,7 +72,11 @@ function deferred() {
   return { promise, resolve };
 }
 
-function createHarness({ selectedTrack = track('a'), loadLyrics } = {}) {
+function createHarness({
+  selectedTrack = track('a'),
+  loadLyrics,
+  textVariantLoader,
+} = {}) {
   const currentTrack = ref(selectedTrack);
   const playerState = reactive({
     track: selectedTrack,
@@ -86,12 +90,39 @@ function createHarness({ selectedTrack = track('a'), loadLyrics } = {}) {
       playerState,
       textVariant: ref('original'),
       loadLyrics,
+      textVariantLoader,
     }),
   );
   return { currentTrack, playerState, result, scope };
 }
 
 describe('current-track lyrics preview', () => {
+  it('keeps the preview empty during conversion preparation and discards cancelled loads', async () => {
+    const pending = deferred();
+    const prepare = vi
+      .fn()
+      .mockReturnValueOnce(pending.promise)
+      .mockReturnValue(null);
+    const textVariantLoader = { prepare, project: (document) => document };
+    const loadLyrics = vi.fn(async (id, filename) =>
+      lyricsResult(filename, `${id}中文`, '第二句'),
+    );
+    const { currentTrack, result, scope } = createHarness({
+      loadLyrics,
+      textVariantLoader,
+    });
+    await vi.waitFor(() => expect(prepare).toHaveBeenCalledOnce());
+    expect(result.document.value).toBeNull();
+    expect(result.preview.value).toBeNull();
+    expect(result.isLoading.value).toBe(true);
+    currentTrack.value = track('b');
+    await vi.waitFor(() => expect(result.loadedTrackId.value).toBe('b'));
+    pending.resolve();
+    await nextTick();
+    expect(result.document.value.lines[0].text).toBe('b中文');
+    scope.stop();
+  });
+
   it('loads the current track directly and follows its playback position', async () => {
     const loadLyrics = vi.fn(async () =>
       lyricsResult('a.vtt', 'First line', 'Second line', 1000),

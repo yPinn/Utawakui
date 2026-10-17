@@ -97,6 +97,11 @@ compact transport、進度／音量、曲庫搜尋與 error states，不嵌入 P
 與 confirmed-exit signal，不取得 BGM transport permission 或 presentation ownership。播放器採照片物件式的 bounded movement；Pin 只鎖定
 目前位置，不改變 transport、展開或 session 狀態。
 
+`BgmPlayer.vue` 的啟動還原與 Titlebar status projection 常駐；完整介面由
+`BgmPlayerPanel.vue` 首開才載入，不延後 `useBgmSession` 的初始化、安全 gate 或訂閱。
+首開後保留面板實例，關閉只隱藏 surface 並收起選曲，搜尋、Pin 與位置仍保留。
+載入途中關閉須遵從最新 disclosure 狀態，不得在載入完成後自行彈出，也不得再次初始化播放器。
+
 此控制面採桌面 MiniPlayer 的工作模型：在主要工作流程旁維持 current-source identity、artwork、
 progress、volume 與常駐 transport，移動或展開選曲都不改變播放 owner。Spotify／Apple Music／YouTube
 等產品的 resize、hide-artwork、queue 或 hover-only controls 只作模式參考；第一版 BGM 是單曲 loop，
