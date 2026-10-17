@@ -360,7 +360,6 @@ describe('output appearance schema', () => {
     'art-card',
     'cover-player',
     'queue-board',
-    'quiet-caption',
     'focus-line',
     'karaoke-stack',
     'kinetic-pop',

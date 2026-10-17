@@ -197,7 +197,7 @@ describe('overlay CSS tokens', () => {
       ":root[data-ovl-template='kinetic-pop']",
     );
     const kineticEnd = lyrics.indexOf(
-      ":root[data-ovl-template='quiet-caption']",
+      ":root[data-ovl-template='live-stage']",
       kineticStart,
     );
     const nonKineticLyrics =

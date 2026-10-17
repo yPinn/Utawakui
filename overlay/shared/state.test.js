@@ -207,7 +207,6 @@ describe('overlay state selectors', () => {
 
     for (const templateId of [
       'focus-line',
-      'quiet-caption',
       'karaoke-stack',
       'kinetic-pop',
       'ornate-vertical',
@@ -231,7 +230,6 @@ describe('overlay state selectors', () => {
 
     for (const templateId of [
       'focus-line',
-      'quiet-caption',
       'kinetic-pop',
       'ornate-vertical',
       'manga-frame',

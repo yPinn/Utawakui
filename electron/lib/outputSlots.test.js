@@ -258,7 +258,7 @@ describe('outputSlots', () => {
 
     expect(() =>
       upsertOutputSlot(dir, 'lyrics', {
-        templateId: 'quiet-caption',
+        templateId: 'focus-line',
         settings: {},
       }),
     ).not.toThrow();

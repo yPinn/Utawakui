@@ -572,8 +572,7 @@
 }
 
 .obs-template-mockup__eyebrow,
-.obs-template-mockup__secondary,
-.obs-template-mockup__reading {
+.obs-template-mockup__secondary {
   min-width: 0;
   overflow: hidden;
   color: var(--obs-preview-muted);
@@ -581,10 +580,6 @@
   line-height: var(--ui-line-height-label);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.obs-template-mockup__reading {
-  color: var(--obs-preview-accent);
 }
 
 .obs-template-mockup__title,

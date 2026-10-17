@@ -699,63 +699,6 @@
     will-change: clip-path, opacity;
   }
 
-  :root[data-ovl-template='quiet-caption'] .lyrics-overlay {
-    --ovl-template-lyrics-current-size: 2.75em;
-    --ovl-template-lyrics-next-size: 1.35em;
-    --ovl-template-lyrics-line-width: 32ch;
-    --ovl-template-lyrics-panel-width: 58rem;
-    --ovl-template-lyrics-bottom: 8%;
-
-    gap: var(--ovl-primitive-space-2);
-    padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
-  }
-
-  :root[data-ovl-template='quiet-caption'][data-ovl-content-width='narrow']
-    .lyrics-overlay {
-    --ovl-template-lyrics-line-width: 26ch;
-    --ovl-template-lyrics-panel-width: 50rem;
-  }
-
-  :root[data-ovl-template='quiet-caption'][data-ovl-content-width='wide']
-    .lyrics-overlay {
-    --ovl-template-lyrics-line-width: 40ch;
-    --ovl-template-lyrics-panel-width: 68rem;
-  }
-
-  :root[data-ovl-template='quiet-caption'][data-ovl-density='compact']
-    .lyrics-overlay {
-    gap: var(--ovl-primitive-space-1);
-    padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
-  }
-
-  :root[data-ovl-template='quiet-caption'][data-ovl-density='relaxed']
-    .lyrics-overlay {
-    gap: var(--ovl-primitive-space-3);
-    padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
-  }
-
-  :root[data-ovl-template='quiet-caption'] .lyrics-overlay__current,
-  :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
-    text-shadow: var(--ovl-user-text-shadow);
-    -webkit-text-stroke: 0;
-  }
-
-  :root[data-ovl-template='quiet-caption'][data-ovl-contrast='strong-outline']
-    .lyrics-overlay__current {
-    -webkit-text-stroke: var(--ovl-user-current-stroke-width)
-      var(--ovl-user-stroke-strong);
-  }
-
-  :root[data-ovl-template='quiet-caption'][data-ovl-contrast='strong-outline']
-    .lyrics-overlay__next {
-    -webkit-text-stroke: var(--ovl-user-next-stroke-width)
-      var(--ovl-user-stroke-soft);
-  }
-
-  :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
-    opacity: 0.72;
-  }
-
   :root[data-ovl-template='live-stage'],
   :root[data-ovl-template='live-stage'] body {
     background: transparent;

@@ -268,24 +268,14 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
       outputAppearanceFieldKeysForTemplate('live-stage'),
     ),
   }),
-  'reading-aid': Object.freeze({
-    id: 'reading-aid',
-    version: LYRICS_PRESENTATION_PROFILE_VERSION,
-    available: false,
-    editableAppearanceKeys: Object.freeze(
-      outputAppearanceFieldKeysForTemplate('reading-aid'),
-    ),
-  }),
 });
 const TEMPLATE_PROFILE_IDS = Object.freeze({
   'focus-line': 'generic-caption',
-  'quiet-caption': 'generic-caption',
   'karaoke-stack': 'classic-ktv',
   'kinetic-pop': 'kinetic-pop',
   'ornate-vertical': 'ornate-vertical',
   'manga-frame': 'manga-frame',
   'live-stage': 'live-stage',
-  'reading-aid': 'reading-aid',
 });
 
 function lexicalTokens(value) {
@@ -1791,7 +1781,6 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         'generic-caption',
         'kinetic-pop',
         'ornate-vertical',
-        'reading-aid',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
         ? analyzeLyricsSource(sourceText)

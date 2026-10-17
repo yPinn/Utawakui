@@ -6,7 +6,7 @@ IPC, or the Output server.
 
 Name each image after an existing output template id, for example:
 
-- `quiet-caption.webp`
+- `karaoke-stack.webp`
 - `live-stage.webp`
 - `manga-frame.webp`
 

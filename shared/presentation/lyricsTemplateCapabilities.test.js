@@ -14,15 +14,6 @@ const EXPECTED_LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
     scheduler: ['lyrics-segments'],
     presentationPolicyIds: [],
   },
-  'quiet-caption': {
-    minimumTimingTier: 'T1',
-    t1Progress: 'estimated-segments',
-    t2Progress: 'exact-segments',
-    usesSourceMappedTiming: false,
-    music: { cadence: true, beatPhase: false, sections: false },
-    scheduler: ['lyrics-segments'],
-    presentationPolicyIds: [],
-  },
   'karaoke-stack': {
     minimumTimingTier: 'T1',
     t1Progress: 'estimated-segments',
@@ -68,15 +59,6 @@ const EXPECTED_LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
     scheduler: ['lyrics-lines', 'live-stage-card', 'live-stage-captions'],
     presentationPolicyIds: ['broadcast-compact', 'balanced', 'literal'],
     defaultPresentationPolicyId: 'broadcast-compact',
-  },
-  'reading-aid': {
-    minimumTimingTier: 'T1',
-    t1Progress: 'line-entry',
-    t2Progress: 'exact-segments',
-    usesSourceMappedTiming: false,
-    music: { cadence: false, beatPhase: false, sections: false },
-    scheduler: ['lyrics-segments'],
-    presentationPolicyIds: [],
   },
 });
 

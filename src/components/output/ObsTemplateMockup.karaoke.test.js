@@ -6,10 +6,7 @@ const source = readObsTemplateMockupSource();
 describe('Classic KTV gallery mockup', () => {
   it('replaces the old panel and progress bar with two outlined lyric lanes', () => {
     const branchStart = source.indexOf("preset?.id === 'karaoke-stack'");
-    const branchEnd = source.indexOf(
-      "preset?.id === 'reading-aid'",
-      branchStart,
-    );
+    const branchEnd = source.indexOf('<template v-else>', branchStart);
     const branch = source.slice(branchStart, branchEnd);
 
     expect(branch).toContain('obs-template-mockup__ktv-lines');

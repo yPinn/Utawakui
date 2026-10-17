@@ -52,7 +52,6 @@
   --ui-output-preview-canvas: #14191d;
   --ui-output-preview-stage-canvas: #19252a;
   --ui-output-preview-lyrics-canvas: #162426;
-  --ui-output-preview-reading-canvas: #22201d;
   --ui-output-preview-surface: rgb(8 11 13 / 74%);
   --ui-output-preview-lyrics-surface: rgb(7 18 19 / 72%);
   --ui-output-preview-surface-muted: rgb(255 255 255 / 18%);
@@ -73,7 +72,6 @@
   --ui-output-preview-vinyl-artist-size: 0.75rem;
   --ui-output-preview-vinyl-artist-weight: 500;
   --ui-output-preview-stage-accent: #78c9cb;
-  --ui-output-preview-reading-accent: #f0b49d;
   --ui-output-preview-accent-contrast: #102326;
   --ui-output-preview-ktv-canvas: #11151d;
   --ui-output-preview-ktv-fill-unsung: #ffffff;

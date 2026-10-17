@@ -27,13 +27,11 @@
     "now-next": "now-playing",
     "queue-board": "setlist",
     "focus-line": "lyrics",
-    "quiet-caption": "lyrics",
     "karaoke-stack": "lyrics",
     "kinetic-pop": "lyrics",
     "ornate-vertical": "lyrics",
     "live-stage": "lyrics",
     "manga-frame": "lyrics",
-    "reading-aid": "lyrics",
     "art-card": "now-playing",
     "cover-player": "now-playing"
   },
@@ -41,13 +39,11 @@
     "now-next": { "default": "small", "supported": ["small"] },
     "queue-board": { "default": "large", "supported": ["large"] },
     "focus-line": { "default": "full", "supported": ["full"] },
-    "quiet-caption": { "default": "full", "supported": ["full"] },
     "karaoke-stack": { "default": "full", "supported": ["full"] },
     "kinetic-pop": { "default": "full", "supported": ["full"] },
     "ornate-vertical": { "default": "full", "supported": ["full"] },
     "live-stage": { "default": "full", "supported": ["full"] },
     "manga-frame": { "default": "full", "supported": ["full"] },
-    "reading-aid": { "default": "full", "supported": ["full"] },
     "art-card": { "default": "small", "supported": ["small"] },
     "cover-player": { "default": "medium", "supported": ["medium"] }
   }

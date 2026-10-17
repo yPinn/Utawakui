@@ -181,7 +181,6 @@ describe('lyrics overlay renderer', () => {
 
     for (const templateId of [
       'focus-line',
-      'quiet-caption',
       'karaoke-stack',
       'kinetic-pop',
       'ornate-vertical',
@@ -1474,7 +1473,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.ktvCountIn.dataset.ktvRole).toBe('female');
     expect(elements.ktvCountIn.dataset.ktvLane).toBe('a');
 
-    renderLyricsFrame(elements, frame, { templateId: 'quiet-caption' });
+    renderLyricsFrame(elements, frame, { templateId: 'focus-line' });
 
     expect(elements.root.hidden).toBe(true);
     expect(elements.ktvCountIn.hidden).toBe(true);
@@ -1759,7 +1758,7 @@ describe('lyrics overlay renderer', () => {
     };
 
     renderLyricsFrame(elements, frame, {
-      templateId: 'quiet-caption',
+      templateId: 'focus-line',
       reducedMotion: true,
     });
     const currentWrites = elements.current.textContentWriteCount;
@@ -1768,7 +1767,7 @@ describe('lyrics overlay renderer', () => {
     renderLyricsFrame(
       elements,
       { ...frame, revision: 2 },
-      { templateId: 'quiet-caption', reducedMotion: true },
+      { templateId: 'focus-line', reducedMotion: true },
     );
 
     expect(elements.current.textContentWriteCount).toBe(currentWrites);
@@ -2571,7 +2570,7 @@ describe('lyrics overlay renderer', () => {
         currentText: '其他模板仍可動態進場',
         lineIndex: 1,
       },
-      { templateId: 'quiet-caption' },
+      { templateId: 'focus-line' },
     );
 
     expect(elements.current.animate).toHaveBeenCalledWith(
@@ -2943,7 +2942,7 @@ describe('lyrics overlay renderer', () => {
         nextText: '一般下一句',
         lineIndex: 1,
       },
-      { templateId: 'quiet-caption', reducedMotion: true },
+      { templateId: 'focus-line', reducedMotion: true },
     );
 
     expect(cancelSchedule).toHaveBeenCalledWith(timer);
@@ -2968,7 +2967,7 @@ describe('lyrics overlay renderer', () => {
     };
 
     renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
-    renderLyricsFrame(elements, frame, { templateId: 'quiet-caption' });
+    renderLyricsFrame(elements, frame, { templateId: 'focus-line' });
 
     expect(elements.current.dataset).not.toHaveProperty('ktvLane');
     expect(elements.next.dataset).not.toHaveProperty('ktvLane');
@@ -3260,7 +3259,7 @@ describe('lyrics overlay renderer', () => {
         nextText: '',
         language: 'en',
       },
-      { templateId: 'quiet-caption', reducedMotion: true },
+      { templateId: 'focus-line', reducedMotion: true },
     );
 
     expect(elements.root.attributes['aria-label']).toBeUndefined();

@@ -131,30 +131,6 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ],
   },
   {
-    id: 'quiet-caption',
-    kind: 'lyrics',
-    order: 40,
-    name: '靜語雙行',
-    tone: 'minimal',
-    availability: {
-      label: '可用',
-      tone: 'muted',
-      summary: '只需要目前行與下一行文字。',
-    },
-    summary: '兩行低干擾字幕，保留畫面呼吸。',
-    detail: '目前行清楚、下一行輕淡，讓歌詞安靜融入演出畫面。',
-    preview: {
-      layoutLabel: '極簡雙行',
-      motionLabel: '柔和淡入',
-    },
-    tags: ['低干擾', '雙行歌詞', '透明背景'],
-    settings: [
-      { label: '顯示', value: '目前行、下一行' },
-      { label: '表面', value: '透明' },
-      { label: '資料', value: '不需逐字歌詞' },
-    ],
-  },
-  {
     id: 'focus-line',
     kind: 'lyrics',
     order: 50,
@@ -315,31 +291,6 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
       { label: '字卡', value: '右下精簡、播放後四至八秒' },
       { label: '成員', value: '解析但不顯示' },
       { label: '品牌', value: '上方低干擾舞台識別' },
-    ],
-  },
-  {
-    id: 'reading-aid',
-    kind: 'lyrics',
-    order: 80,
-    name: '讀音跟唱',
-    tone: 'minimal',
-    availability: {
-      available: false,
-      label: '尚未提供',
-      tone: 'warning',
-      summary: '目前輸出尚未提供讀音資料，暫時不能套用。',
-    },
-    summary: '在歌詞旁保留假名或羅馬字讀音。',
-    detail: '主歌詞與讀音並排呈現，協助日文、韓文與跨語言歌曲跟唱。',
-    preview: {
-      layoutLabel: '歌詞＋讀音',
-      motionLabel: '逐行切換',
-    },
-    tags: ['讀音輔助', '多語歌詞', '跟唱練習'],
-    settings: [
-      { label: '顯示', value: '歌詞、讀音' },
-      { label: '對齊', value: '置中／靠左' },
-      { label: '狀態', value: '無歌詞時顯示提示' },
     ],
   },
   {

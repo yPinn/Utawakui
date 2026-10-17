@@ -398,25 +398,6 @@ const mangaBubbles = computed(() => {
         </span>
       </template>
 
-      <template v-else-if="preset?.id === 'reading-aid'">
-        <span class="obs-template-mockup__reading">{{ lyrics.reading }}</span>
-        <strong
-          class="obs-template-mockup__title obs-template-mockup__animated-primary"
-        >
-          {{ lyrics.current }}
-        </strong>
-        <span class="obs-template-mockup__secondary">{{ lyrics.next }}</span>
-      </template>
-
-      <template v-else-if="preset?.id === 'quiet-caption'">
-        <strong
-          class="obs-template-mockup__title obs-template-mockup__title--quiet obs-template-mockup__animated-primary"
-        >
-          {{ lyrics.current }}
-        </strong>
-        <span class="obs-template-mockup__secondary">{{ lyrics.next }}</span>
-      </template>
-
       <template v-else>
         <span class="obs-template-mockup__eyebrow">
           {{ track.title }} · {{ track.artist }}

@@ -146,13 +146,11 @@ describe('lyrics presentation profiles', () => {
 
   it.each([
     ['focus-line', 'generic-caption', true],
-    ['quiet-caption', 'generic-caption', true],
     ['karaoke-stack', 'classic-ktv', true],
     ['kinetic-pop', 'kinetic-pop', true],
     ['ornate-vertical', 'ornate-vertical', true],
     ['manga-frame', 'manga-frame', true],
     ['live-stage', 'live-stage', true],
-    ['reading-aid', 'reading-aid', false],
   ])(
     'maps %s to its versioned presentation profile',
     (templateId, id, available) => {
@@ -415,7 +413,7 @@ describe('lyrics presentation profiles', () => {
     const first = cache.get(document, { templateId: 'focus-line' });
     const sameIdentity = cache.get(
       { ...document, lines: document.lines.map((line) => ({ ...line })) },
-      { templateId: 'quiet-caption' },
+      { templateId: 'focus-line' },
     );
     const ktv = cache.get(document, { templateId: 'karaoke-stack' });
     const revised = cache.get(

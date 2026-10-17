@@ -215,8 +215,7 @@
 }
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__secondary,
-.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__next,
-.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__reading {
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__next {
   font-size: var(--ui-output-template-thumb-caption-font-size);
 }
 

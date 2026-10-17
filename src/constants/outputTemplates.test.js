@@ -16,9 +16,7 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'kinetic-pop': '霓彩跳字',
   'ornate-vertical': '華綴直書',
   'manga-frame': '漫畫對白',
-  'quiet-caption': '靜語雙行',
   'focus-line': '聚焦歌詞',
-  'reading-aid': '讀音跟唱',
   'art-card': '星染黑膠',
   'now-next': '浮光光碟',
   'cover-player': '封面播放卡',
@@ -68,18 +66,6 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontWeight',
     'furigana',
   ],
-  'quiet-caption': [
-    'paletteId',
-    'lookAmount',
-    'fontFamily',
-    'fontScale',
-    'fontWeight',
-    'contrastStyle',
-    'surface',
-    'alignment',
-    'spacingDensity',
-    'contentWidth',
-  ],
   'focus-line': [
     'paletteId',
     'lookAmount',
@@ -92,7 +78,6 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'spacingDensity',
     'contentWidth',
   ],
-  'reading-aid': [],
   'art-card': [
     'paletteId',
     'lookAmount',
@@ -384,9 +369,7 @@ describe('output template registry', () => {
       'kinetic-pop',
       'ornate-vertical',
       'manga-frame',
-      'quiet-caption',
       'focus-line',
-      'reading-aid',
     ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
@@ -444,7 +427,6 @@ describe('output template registry', () => {
       ),
     ).toMatchObject({
       'focus-line': { id: 'generic-caption', version: 1, available: true },
-      'quiet-caption': { id: 'generic-caption', version: 1, available: true },
       'karaoke-stack': { id: 'classic-ktv', version: 1, available: true },
       'kinetic-pop': { id: 'kinetic-pop', version: 1, available: true },
       'ornate-vertical': {
@@ -454,19 +436,12 @@ describe('output template registry', () => {
       },
       'manga-frame': { id: 'manga-frame', version: 1, available: true },
       'live-stage': { id: 'live-stage', version: 1, available: true },
-      'reading-aid': { id: 'reading-aid', version: 1, available: false },
     });
     for (const template of lyricsGroup.templates) {
       expect(template.lyricsCapabilities).toEqual(
         lyricsTemplateCapabilities(template.id),
       );
     }
-    expect(
-      lyricsGroup.templates.find((template) => template.id === 'reading-aid'),
-    ).toMatchObject({
-      availability: { available: false, label: '尚未提供' },
-      editableAppearanceKeys: [],
-    });
     expect(
       lyricsGroup.templates.find((template) => template.id === 'kinetic-pop'),
     ).toMatchObject({

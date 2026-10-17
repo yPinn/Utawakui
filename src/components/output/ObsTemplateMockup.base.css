@@ -75,11 +75,6 @@
   --obs-preview-surface: var(--ui-output-preview-lyrics-surface);
 }
 
-.obs-template-mockup[data-template-id='reading-aid'] {
-  --obs-preview-bg: var(--ui-output-preview-reading-canvas);
-  --obs-preview-accent: var(--ui-output-preview-reading-accent);
-}
-
 .obs-template-mockup[data-tone='manga'] {
   --obs-preview-bg: var(--ui-output-preview-manga-canvas);
   --obs-preview-ink: var(--ui-output-preview-manga-ink);

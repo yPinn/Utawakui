@@ -7,14 +7,14 @@ import {
 describe('bundled output template thumbnails', () => {
   it('keys Vite asset URLs by the existing template id filename', () => {
     const registry = buildOutputTemplateThumbnailRegistry({
-      '../assets/output-template-thumbnails/quiet-caption.webp':
-        '/assets/quiet-caption.abc123.webp',
+      '../assets/output-template-thumbnails/focus-line.webp':
+        '/assets/focus-line.abc123.webp',
       '../assets/output-template-thumbnails/live-stage.png':
         '/assets/live-stage.def456.png',
     });
 
     expect(registry).toEqual({
-      'quiet-caption': '/assets/quiet-caption.abc123.webp',
+      'focus-line': '/assets/focus-line.abc123.webp',
       'live-stage': '/assets/live-stage.def456.png',
     });
     expect(Object.isFrozen(registry)).toBe(true);

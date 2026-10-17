@@ -27,14 +27,6 @@ export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
     music: { cadence: true, beatPhase: false, sections: false },
     scheduler: ['lyrics-segments'],
   }),
-  'quiet-caption': freezeCapabilities({
-    minimumTimingTier: 'T1',
-    t1Progress: 'estimated-segments',
-    t2Progress: 'exact-segments',
-    usesSourceMappedTiming: false,
-    music: { cadence: true, beatPhase: false, sections: false },
-    scheduler: ['lyrics-segments'],
-  }),
   'karaoke-stack': freezeCapabilities({
     minimumTimingTier: 'T1',
     t1Progress: 'estimated-segments',
@@ -76,14 +68,6 @@ export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
     scheduler: ['lyrics-lines', 'live-stage-card', 'live-stage-captions'],
     presentationPolicyIds: ['broadcast-compact', 'balanced', 'literal'],
     defaultPresentationPolicyId: 'broadcast-compact',
-  }),
-  'reading-aid': freezeCapabilities({
-    minimumTimingTier: 'T1',
-    t1Progress: 'line-entry',
-    t2Progress: 'exact-segments',
-    usesSourceMappedTiming: false,
-    music: { cadence: false, beatPhase: false, sections: false },
-    scheduler: ['lyrics-segments'],
   }),
 });
 

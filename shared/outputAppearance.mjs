@@ -327,10 +327,6 @@ const TEMPLATE_CONFIGS = Object.freeze({
     ],
     fields: SETLIST_FIELD_DEFAULTS,
   },
-  'quiet-caption': {
-    keys: BASIC_APPEARANCE_KEYS,
-    fields: LYRICS_FIELD_DEFAULTS,
-  },
   'focus-line': {
     keys: BASIC_APPEARANCE_KEYS,
     fields: LYRICS_FIELD_DEFAULTS,
@@ -399,9 +395,6 @@ const TEMPLATE_CONFIGS = Object.freeze({
       },
       fontScale: { defaultValue: 'medium' },
     },
-  },
-  'reading-aid': {
-    keys: [],
   },
 });
 

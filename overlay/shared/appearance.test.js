@@ -246,12 +246,8 @@ describe('overlay appearance', () => {
     );
     expect(lyricsCss).toContain('var(--ovl-user-panel-gap)');
     expect(lyricsCss).toContain('var(--ovl-user-current-stroke-width)');
-    expect(lyricsCss).toContain(
-      "[data-ovl-template='quiet-caption'][data-ovl-content-width='wide']",
-    );
-    expect(lyricsCss).toContain(
-      "[data-ovl-template='quiet-caption'][data-ovl-density='compact']",
-    );
+    expect(css).toContain(":root[data-ovl-content-width='wide']");
+    expect(css).toContain(":root[data-ovl-density='compact']");
   });
 
   it('keeps preset text roles readable against each palette ink role', () => {

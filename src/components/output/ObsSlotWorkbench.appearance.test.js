@@ -5,9 +5,12 @@ import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppeara
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 
-async function renderRegisteredTemplate(templateId) {
+async function renderRegisteredTemplate(templateId, presetOverrides = {}) {
   const data = getOutputWorkbenchData();
-  const preset = data.templates.find((template) => template.id === templateId);
+  const preset = {
+    ...data.templates.find((template) => template.id === templateId),
+    ...presetOverrides,
+  };
   const outputSlot = {
     ...data.slotDefaults[preset.kind],
     templateId,
@@ -93,7 +96,10 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
   );
 
   it('hides appearance reset when a template has no appearance controls', async () => {
-    const html = await renderRegisteredTemplate('reading-aid');
+    const html = await renderRegisteredTemplate('focus-line', {
+      appearanceFields: [],
+      presentationFields: [],
+    });
 
     expect(html).not.toContain('恢復模板預設');
   });

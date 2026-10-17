@@ -220,7 +220,7 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(mockupSource).toContain("animated ? 'playing' : 'paused'");
     expect(mockupSource).toContain("preset?.id ?? 'generic'");
-    expect(mockupSource).toContain("preset?.id === 'quiet-caption'");
+    expect(mockupSource).not.toContain("preset?.id === 'quiet-caption'");
     expect(mockupSource).toContain("preset?.id === 'manga-frame'");
     expect(mockupSource).toContain("preset?.id === 'cover-player'");
     expect(mockupSource).toContain('obs-template-mockup__cover-player');
