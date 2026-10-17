@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { normalizeOutputAppearance } from '../../../shared/outputAppearance.mjs';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 import { outputTemplatePreviewFor } from './previews/outputTemplatePreviews.js';
 
@@ -20,6 +21,10 @@ const props = defineProps({
 });
 
 const previewComponent = computed(() => outputTemplatePreviewFor(props.preset));
+// Previews show the template as applied: its own default font, weight, surface.
+const appearance = computed(() =>
+  normalizeOutputAppearance({}, { templateId: props.preset?.id }),
+);
 // Widgets preview at their own capture size; lyrics use the 1920×1080 canvas.
 const canvasStyle = computed(() => {
   const { width, height } = captureSizeForKind(
@@ -43,6 +48,9 @@ const canvasStyle = computed(() => {
     :data-template-id="preset?.id ?? 'generic'"
     :data-motion="animated ? 'playing' : 'paused'"
     :data-backdrop="backdrop"
+    :data-appearance-font="appearance.fontFamily"
+    :data-appearance-weight="appearance.fontWeight"
+    :data-appearance-surface="appearance.surface"
     :style="canvasStyle"
     aria-hidden="true"
   >

@@ -102,7 +102,9 @@
   overflow: hidden;
   place-self: center;
   color: var(--ui-output-preview-manga-ink);
+  font-family: var(--obs-user-font-family);
   font-size: 1em;
+  font-weight: var(--obs-user-font-weight);
   line-height: 1.16;
   line-break: strict;
   overflow-wrap: anywhere;
@@ -112,12 +114,6 @@
   white-space: pre-wrap;
   word-break: normal;
   writing-mode: vertical-rl;
-}
-
-.obs-template-mockup__manga-bubble[data-manga-language='ja']
-  .obs-template-mockup__manga-text {
-  font-family:
-    'Utawakui GenEi Antique', 'Noto Sans CJK JP', 'Yu Gothic UI', sans-serif;
 }
 
 .obs-template-mockup__manga-text ruby {

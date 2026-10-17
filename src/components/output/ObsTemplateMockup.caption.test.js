@@ -36,12 +36,16 @@ describe('Focus Line gallery mockup', () => {
     for (const [runtime, preview] of [
       ['--ovl-user-panel-width: 64rem;', 'calc(64 * var(--obs-canvas-rem))'],
       ['--ovl-user-line-width: 28ch;', 'max-inline-size: min(100%, 28ch);'],
-      ['--ovl-user-font-weight: 600;', 'font-weight: 600;'],
       ['--ovl-user-current-stroke-width: 0.035em;', '0.035em'],
     ]) {
       expect(appearanceCss).toContain(runtime);
       expect(source).toContain(preview);
     }
+    // Font, weight and surface come from the template's default appearance.
+    for (const role of ['font-family', 'font-weight']) {
+      expect(source).toContain(`${role}: var(--obs-user-${role})`);
+    }
+    expect(source).toContain('background: var(--obs-user-surface);');
     expect(source).toContain('line-height: 1.22;');
     expect(source).toContain('line-height: 1.3;');
   });

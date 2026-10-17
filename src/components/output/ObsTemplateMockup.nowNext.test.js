@@ -25,6 +25,29 @@ describe('Now Next gallery mockup', () => {
     expect(shell).toContain("'--obs-canvas-ratio': String(width / height)");
   });
 
+  it('applies each template default appearance like the runtime Overlay', () => {
+    const shell = readObsTemplateMockupSource();
+    const appearanceCss = readFileSync(
+      fileURLToPath(
+        new URL('../../../overlay/shared/appearance.css', import.meta.url),
+      ),
+      'utf8',
+    );
+
+    expect(shell).toContain('normalizeOutputAppearance({}, { templateId:');
+    for (const attribute of ['font', 'weight', 'surface']) {
+      expect(shell).toContain(`:data-appearance-${attribute}=`);
+    }
+    // Weights and the user surface roles mirror the Overlay appearance layer.
+    expect(appearanceCss).toContain('--ovl-user-font-weight: 700;');
+    expect(shell).toMatch(
+      /\[data-appearance-weight='bold'\]\s*\{\s*--obs-user-font-weight: 700;/u,
+    );
+    expect(shell).toMatch(
+      /\[data-appearance-surface='solid'\]\s*\{\s*--obs-user-surface: var\(--ui-output-preview-user-surface\);/u,
+    );
+  });
+
   it('gives detail previews the capture shape with a height cap', () => {
     const shell = readObsTemplateMockupSource().replace(/\s+/gu, ' ');
 

@@ -12,6 +12,7 @@
   grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 0;
   padding: 0;
+  background: var(--obs-user-surface);
   font-size: var(--obs-canvas-rem);
   text-align: start;
 }
@@ -50,7 +51,7 @@
 
 .obs-template-mockup__cover-player-title {
   font-size: 1em;
-  font-weight: 600;
+  font-weight: var(--obs-user-font-weight);
   line-height: 1.2;
 }
 

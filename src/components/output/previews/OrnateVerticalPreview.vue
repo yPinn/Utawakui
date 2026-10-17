@@ -100,7 +100,7 @@ const previewLines = computed(() => {
   /* Runtime inset is max(4rem, 4%) on both axes of a 1920×1080 canvas. */
   padding: calc(4 * var(--obs-canvas-rem)) 4%;
   color: var(--obs-preview-ink);
-  font-family: 'Utawakui Hina Mincho', 'Hina Mincho', 'Yu Mincho', serif;
+  font-family: var(--obs-user-font-family);
   line-height: 0.96;
   text-shadow: var(--ui-output-preview-ornate-shadow);
 }

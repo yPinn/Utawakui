@@ -39,6 +39,11 @@
   --obs-preview-ink: var(--ui-output-preview-text);
   --obs-preview-muted: var(--ui-output-preview-text-muted);
   --obs-preview-accent: var(--ui-output-preview-accent);
+  /* Mirrors overlay/shared/appearance.css user roles. */
+  --obs-user-font-family: var(--ui-output-preview-font-ui);
+  --obs-user-font-weight: 600;
+  --obs-user-surface: transparent;
+  --obs-user-outline: transparent;
 
   container-type: inline-size;
   width: 100%;
@@ -83,6 +88,40 @@
   max-inline-size: var(--ui-output-gallery-preview-max-width);
   aspect-ratio: var(--obs-canvas-aspect, var(--ui-output-preview-aspect-ratio));
   justify-self: center;
+}
+
+.obs-template-mockup[data-appearance-font='serif'] {
+  --obs-user-font-family: var(--ui-output-preview-font-display-cjk);
+}
+
+.obs-template-mockup[data-appearance-font='rounded'] {
+  --obs-user-font-family: var(--ui-output-preview-font-rounded);
+}
+
+.obs-template-mockup[data-appearance-font='ornate'] {
+  --obs-user-font-family: var(--ui-output-preview-font-ornate);
+}
+
+.obs-template-mockup[data-appearance-font='antique'] {
+  --obs-user-font-family: var(--ui-output-preview-font-antique);
+}
+
+.obs-template-mockup[data-appearance-weight='regular'] {
+  --obs-user-font-weight: 400;
+}
+
+.obs-template-mockup[data-appearance-weight='bold'] {
+  --obs-user-font-weight: 700;
+}
+
+.obs-template-mockup[data-appearance-surface='soft'] {
+  --obs-user-surface: var(--ui-output-preview-user-surface-soft);
+  --obs-user-outline: var(--ui-output-preview-user-outline);
+}
+
+.obs-template-mockup[data-appearance-surface='solid'] {
+  --obs-user-surface: var(--ui-output-preview-user-surface);
+  --obs-user-outline: var(--ui-output-preview-user-outline);
 }
 
 /* Outputs are transparent; the backdrop is a viewer choice, not template art. */

@@ -14,6 +14,10 @@
   transform: translateX(-50%);
   gap: calc(0.75 * var(--obs-canvas-rem));
   padding: calc(0.75 * var(--obs-canvas-rem)) calc(1 * var(--obs-canvas-rem));
+  border: 1px solid var(--obs-user-outline);
+  border-radius: calc(0.5 * var(--obs-canvas-rem));
+  background: var(--obs-user-surface);
+  font-family: var(--obs-user-font-family);
   font-size: var(--obs-canvas-rem);
   text-align: left;
   justify-items: start;
@@ -30,7 +34,7 @@
 .obs-template-mockup__caption-current {
   color: var(--obs-preview-ink);
   font-size: 3.5em;
-  font-weight: 600;
+  font-weight: var(--obs-user-font-weight);
   line-height: 1.22;
   -webkit-text-stroke: 0.035em var(--obs-preview-bg);
   paint-order: stroke fill;
@@ -39,6 +43,6 @@
 .obs-template-mockup__caption-next {
   color: var(--obs-preview-muted);
   font-size: 1.75em;
-  font-weight: 600;
+  font-weight: var(--obs-user-font-weight);
   line-height: 1.3;
 }

@@ -73,6 +73,7 @@
   display: grid;
   justify-items: start;
   gap: 0.08em;
+  font-family: var(--obs-user-font-family);
   font-size: var(--ui-live-stage-type-caption);
   font-weight: 700;
   line-height: 1.06;

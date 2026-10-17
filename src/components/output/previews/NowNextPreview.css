@@ -12,7 +12,10 @@
   align-items: center;
   gap: 0;
   padding: calc(1 * var(--obs-canvas-rem));
+  border: 1px solid var(--obs-user-outline);
   border-radius: calc(0.5 * var(--obs-canvas-rem));
+  background: var(--obs-user-surface);
+  font-family: var(--obs-user-font-family);
   font-size: var(--obs-canvas-rem);
   text-align: left;
 }
@@ -192,7 +195,7 @@
   display: -webkit-box;
   overflow: hidden;
   font-size: 1.85em;
-  font-weight: 600;
+  font-weight: var(--obs-user-font-weight);
   line-height: 1.15;
   overflow-wrap: anywhere;
   text-wrap: balance;

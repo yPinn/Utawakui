@@ -12,6 +12,7 @@
   align-content: center;
   gap: 0;
   padding: calc(0.5 * var(--obs-canvas-rem));
+  font-family: var(--obs-user-font-family);
   font-size: var(--obs-canvas-rem);
 }
 
@@ -504,7 +505,7 @@
   overflow: hidden;
   color: var(--ui-output-preview-vinyl-copy-ink);
   font-size: clamp(1.125em, calc(1em + 1cqi), 1.25em);
-  font-weight: 600;
+  font-weight: var(--obs-user-font-weight);
   line-height: 1.15;
   overflow-wrap: anywhere;
   text-wrap: balance;
