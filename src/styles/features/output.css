@@ -1,27 +1,27 @@
 [data-ui-system] {
   /* Output control-panel geometry belongs to this feature, not either core
      token system. Keep these values stable while v1 and v2 surfaces coexist. */
-  --ui-output-gallery-column-min: 22rem; /* room for multiple compact template tiles before stacking */
-  --ui-output-gallery-detail-width-min: 18rem; /* stable support column without competing with the gallery */
-  --ui-output-gallery-detail-width-max: 21rem; /* preview/support cap, independent of sidebar width */
-  --ui-output-gallery-detail-width: clamp(
-    var(--ui-output-gallery-detail-width-min),
-    22vw,
-    var(--ui-output-gallery-detail-width-max)
-  ); /* tracks window width, so sidebar drags do not resize the preview */
+  /* Measured with both modes: below 14rem segmented labels clip. The upper
+     bound is a workspace policy, additionally limited by the main minimum. */
+  --ui-output-side-width-min: 14rem;
+  --ui-output-side-width-default: 18rem;
+  --ui-output-side-width-max: 24rem;
+  --ui-output-main-width-min: 16rem;
+  --ui-output-preview-inset: max(
+    var(--ui-space-3),
+    calc(var(--ui-focus-width) + var(--ui-focus-offset))
+  );
+  --ui-output-split-gap: var(--ui-space-3);
+  --ui-output-toolbar-height: calc(
+    var(--ui-control-height) + var(--ui-space-5)
+  );
   --ui-output-gallery-preview-max-width: 19.5rem; /* medium template demo, not the editing canvas */
   --ui-output-gallery-preview-max-height: 20rem; /* tall widget demo stays above the description */
   --ui-output-gallery-tile-min-width: 10rem; /* dense media-browser tile with readable names */
-  --ui-output-workbench-inspector-width: clamp(
-    18rem,
-    22vw,
-    21rem
-  ); /* stable information rail */
   --ui-output-workbench-stage-max-width: 64rem; /* large 16:9 preview without indefinite upscaling */
   --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
   --ui-output-range-value-width: 3.5rem; /* stable numeric lane; slider consumes the remaining width */
-  --ui-output-template-thumb-title-font-size: 0.75rem; /* thumbnail-only label */
   --ui-output-setting-label-width-min: 4rem; /* compact setting label column */
 
   /* Representative full-strength Look swatches for the control-panel picker.

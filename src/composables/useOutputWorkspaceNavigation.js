@@ -7,6 +7,10 @@ const activePage = shallowRef('workbench');
 const activeKind = shallowRef(null);
 const previewBackdrop = shallowRef('checker');
 const showLyricsGuide = shallowRef(true);
+// A null preference lets the layout use its CSS default. Both modes share it.
+const sideWidth = shallowRef(null);
+const sideCollapsed = shallowRef(false);
+const compactSideOpen = shallowRef(false);
 const visibleActivePage = readonly(activePage);
 const visibleActiveKind = readonly(activeKind);
 const visiblePreviewBackdrop = readonly(previewBackdrop);
@@ -48,6 +52,25 @@ function setLyricsGuideVisible(visible) {
 
 export function useOutputWorkspaceNavigation() {
   return {
+    sideWidth: readonly(sideWidth),
+    sideCollapsed: readonly(sideCollapsed),
+    compactSideOpen: readonly(compactSideOpen),
+    setSideWidth(value) {
+      if (value !== null && (!Number.isFinite(value) || value <= 0))
+        return false;
+      sideWidth.value = value;
+      return true;
+    },
+    setSideCollapsed(value) {
+      if (typeof value !== 'boolean') return false;
+      sideCollapsed.value = value;
+      return true;
+    },
+    setCompactSideOpen(value) {
+      if (typeof value !== 'boolean') return false;
+      compactSideOpen.value = value;
+      return true;
+    },
     activePage: visibleActivePage,
     activeKind: visibleActiveKind,
     previewBackdrop: visiblePreviewBackdrop,

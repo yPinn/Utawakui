@@ -69,4 +69,24 @@ describe('useOutputWorkspaceNavigation', () => {
     );
     expect(navigation.activeKind.value).toBe('artwork');
   });
+
+  it('shares one pane preference across modes and consumers without storing effective clamps', async () => {
+    const { useOutputWorkspaceNavigation } = await loadNavigation();
+    const navigation = useOutputWorkspaceNavigation();
+    expect(navigation.sideWidth.value).toBeNull();
+    navigation.setSideWidth(336);
+    navigation.setSideCollapsed(true);
+    navigation.selectPage('gallery');
+    expect(navigation.sideWidth.value).toBe(336);
+    expect(navigation.sideCollapsed.value).toBe(true);
+    expect(navigation.setSideWidth(NaN)).toBe(false);
+    expect(navigation.setSideWidth(-1)).toBe(false);
+    expect(navigation.setSideWidth(Infinity)).toBe(false);
+    expect(navigation.setSideCollapsed('false')).toBe(false);
+    navigation.setCompactSideOpen(true);
+    const later = useOutputWorkspaceNavigation();
+    expect(later.sideWidth.value).toBe(336);
+    expect(later.sideCollapsed.value).toBe(true);
+    expect(later.compactSideOpen.value).toBe(true);
+  });
 });

@@ -88,17 +88,17 @@ const localizedSharedComponentTokens = [
 ];
 
 const outputOwnedTokens = [
-  '--ui-output-gallery-column-min',
-  '--ui-output-gallery-detail-width-min',
-  '--ui-output-gallery-detail-width-max',
-  '--ui-output-gallery-detail-width',
+  '--ui-output-side-width-min',
+  '--ui-output-side-width-max',
+  '--ui-output-side-width-default',
+  '--ui-output-main-width-min',
+  '--ui-output-split-gap',
+  '--ui-output-toolbar-height',
   '--ui-output-gallery-preview-max-width',
   '--ui-output-gallery-tile-min-width',
-  '--ui-output-workbench-inspector-width',
   '--ui-output-workbench-stage-max-width',
   '--ui-output-settings-command-button-width',
   '--ui-output-template-thumb-min-height',
-  '--ui-output-template-thumb-title-font-size',
   '--ui-output-setting-label-width-min',
 ];
 
@@ -112,14 +112,14 @@ describe('Output Token v2 surface cutover', () => {
     expect(displayPageSource).not.toContain('OutputPage');
     expect(displayPageSource).not.toContain('OutputView');
     expect(workspaceSource).toContain(
-      '<AppFolderPage mode="workspace" body-label="輸出工作區">',
+      '<AppFolderPage mode="workspace" surface="canvas" body-label="輸出工作區">',
     );
     expect(workspaceSource).toMatch(
       /\.obs-output-workspace\s*\{(?=[^}]*height:\s*100%)(?=[^}]*min-height:\s*0)(?=[^}]*grid-template-rows:\s*minmax\(0, 1fr\))[^}]*\}/su,
     );
-    expect(splitLayoutSource).toContain('<UiScrollRegion');
+    expect(splitLayoutSource).toContain('<UiScrollLayout');
     expect(workbenchSource).toContain('<UiScrollRegion');
-    expect(gallerySource).toContain('<UiScrollRegion');
+    expect(gallerySource).toContain('<UiScrollLayout');
   });
 
   it('moves Output-owned geometry out of the T1 core and into one feature stylesheet', () => {

@@ -1,15 +1,22 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Pause, Play } from '../../icons/index.js';
+import UiStack from '../ui/UiStack.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsTemplateMockup from './ObsTemplateMockup.vue';
+import ObsPreviewCaption from './ObsPreviewCaption.vue';
+import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
   scene: { type: Object, default: () => ({}) },
 });
+
+const captureSize = computed(() =>
+  captureSizeForKind(props.preset?.kind, null, props.preset?.id),
+);
 
 const isMotionPlaying = ref(true);
 const backdrop = ref('dark');
@@ -32,14 +39,20 @@ function toggleMotion() {
 
 <template>
   <section class="obs-template-preview-stage" aria-label="選中模板預覽">
-    <header class="obs-template-preview-stage__toolbar">
-      <div class="obs-template-preview-stage__labels">
-        <UiChip tone="muted">{{ scene.label ?? '固定示例' }}</UiChip>
-        <span class="obs-template-preview-stage__motion">
-          {{ preset?.preview?.motionLabel ?? '靜態' }}
-        </span>
-      </div>
-      <div class="obs-template-preview-stage__actions">
+    <header
+      class="obs-template-preview-stage__toolbar"
+      data-output-preview-info
+    >
+      <ObsPreviewCaption
+        :label="preset?.kind === 'lyrics' ? '固定' : captureSize.label"
+        :width="captureSize.width"
+        :height="captureSize.height"
+      />
+      <UiStack
+        class="obs-template-preview-stage__actions"
+        align="center"
+        :gap="2"
+      >
         <ObsPreviewBackdropToggle v-model="backdrop" />
         <UiIconButton
           :icon="motionIcon"
@@ -48,16 +61,28 @@ function toggleMotion() {
           :aria-pressed="isMotionPlaying"
           @click="toggleMotion"
         />
-      </div>
+      </UiStack>
+      <UiStack
+        class="obs-template-preview-stage__labels"
+        align="center"
+        :gap="2"
+      >
+        <UiChip tone="muted">{{ scene.label ?? '固定示例' }}</UiChip>
+        <span class="obs-template-preview-stage__motion">
+          {{ preset?.preview?.motionLabel ?? '靜態' }}
+        </span>
+      </UiStack>
     </header>
 
-    <ObsTemplateMockup
-      :preset="preset"
-      :scene="scene"
-      size="detail"
-      :animated="isMotionPlaying"
-      :backdrop="backdrop"
-    />
+    <div class="obs-template-preview-stage__canvas-group">
+      <ObsTemplateMockup
+        :preset="preset"
+        :scene="scene"
+        size="detail"
+        :animated="isMotionPlaying"
+        :backdrop="backdrop"
+      />
+    </div>
   </section>
 </template>
 
@@ -68,34 +93,43 @@ function toggleMotion() {
   gap: var(--ui-space-2);
 }
 
-.obs-template-preview-stage__toolbar,
+.obs-template-preview-stage__canvas-group {
+  box-sizing: border-box;
+  padding: var(--ui-output-preview-inset);
+  background: var(--ui-color-canvas);
+  min-inline-size: 0;
+  display: grid;
+  justify-items: center;
+  gap: var(--ui-space-2);
+}
+
 .obs-template-preview-stage__labels,
 .obs-template-preview-stage__actions {
   min-width: 0;
-  display: flex;
-  align-items: center;
 }
 
 .obs-template-preview-stage__toolbar {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: var(--ui-space-2);
 }
 
 .obs-template-preview-stage__labels {
-  gap: var(--ui-space-2);
+  grid-column: 1 / -1;
   overflow: hidden;
 }
 
 .obs-template-preview-stage__actions {
   flex: 0 0 auto;
-  gap: var(--ui-space-2);
 }
 
 .obs-template-preview-stage__motion {
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

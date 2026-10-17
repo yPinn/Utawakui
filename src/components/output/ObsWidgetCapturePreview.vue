@@ -1,4 +1,6 @@
 <script setup>
+import ObsPreviewCaption from './ObsPreviewCaption.vue';
+import UiButton from '../ui/UiButton.vue';
 import {
   computed,
   nextTick,
@@ -14,6 +16,7 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 
 const props = defineProps({
+  metadataTarget: { type: Object, default: null },
   inspectionUrl: { type: String, default: null },
   selectedSize: { type: String, required: true },
   supportedSizes: {
@@ -59,6 +62,10 @@ const previewGridStyle = computed(() => ({
   gridTemplateColumns: `repeat(${supportedCaptureSizes.value.length}, minmax(0, 1fr))`,
 }));
 
+const canvasAreaStyle = computed(() => ({
+  height: `${Math.max(...supportedCaptureSizes.value.map((size) => size.height)) * previewScale.value}px`,
+}));
+
 function measurePreview() {
   const availableWidth = previewGrid.value?.clientWidth ?? 0;
   const availableHeight = previewGrid.value?.clientHeight ?? 0;
@@ -78,11 +85,17 @@ function measurePreview() {
   const optionStyles = optionElements[0]
     ? getComputedStyle(optionElements[0])
     : null;
-  const rowGap = Number.parseFloat(optionStyles?.rowGap) || 0;
-  const captionHeight = Math.max(
-    0,
-    ...captionElements.map((caption) => caption.getBoundingClientRect().height),
-  );
+  const rowGap = props.metadataTarget
+    ? 0
+    : Number.parseFloat(optionStyles?.rowGap) || 0;
+  const captionHeight = props.metadataTarget
+    ? 0
+    : Math.max(
+        0,
+        ...captionElements.map(
+          (caption) => caption.getBoundingClientRect().height,
+        ),
+      );
   previewScale.value = calculateWidgetPreviewScale({
     availableWidth,
     availableHeight,
@@ -94,7 +107,7 @@ function measurePreview() {
 }
 
 watch(
-  () => props.supportedSizes,
+  () => [props.supportedSizes, props.metadataTarget],
   async () => {
     await nextTick();
     measurePreview();
@@ -119,6 +132,7 @@ onBeforeUnmount(() => {
   <div
     ref="previewGrid"
     class="obs-widget-capture-preview"
+    :class="{ 'obs-widget-capture-preview--external-info': metadataTarget }"
     :style="previewGridStyle"
     aria-label="Widget 擷取尺寸"
   >
@@ -136,31 +150,61 @@ onBeforeUnmount(() => {
       :aria-pressed="selectedSize === option.id"
       @click="emit('selectSize', option.id)"
     >
+      <Teleport :to="metadataTarget || 'body'" :disabled="!metadataTarget">
+        <component
+          :is="metadataTarget && captureOptions.length > 1 ? UiButton : 'span'"
+          ref="previewCaptions"
+          class="obs-widget-capture-preview__caption"
+          :active="
+            metadataTarget && captureOptions.length > 1
+              ? selectedSize === option.id
+              : undefined
+          "
+          :aria-pressed="
+            metadataTarget && captureOptions.length > 1
+              ? selectedSize === option.id
+              : undefined
+          "
+          @click="
+            metadataTarget &&
+            captureOptions.length > 1 &&
+            emit('selectSize', option.id)
+          "
+        >
+          <ObsPreviewCaption
+            :label="option.label"
+            :width="option.width"
+            :height="option.height"
+            :selected="selectedSize === option.id"
+          />
+        </component>
+      </Teleport>
       <span
-        class="obs-widget-capture-preview__frame"
-        :data-backdrop="backdrop"
-        :style="option.frameStyle"
+        class="obs-widget-capture-preview__canvas-area"
+        :style="canvasAreaStyle"
       >
-        <iframe
-          v-if="inspectionUrl"
-          class="obs-widget-capture-preview__iframe"
-          :src="inspectionUrl"
-          :style="option.canvasStyle"
-          :width="option.width"
-          :height="option.height"
-          :title="`${option.label}型 Browser Source 即時預覽`"
-          tabindex="-1"
-          aria-hidden="true"
-          sandbox="allow-scripts allow-same-origin"
-          referrerpolicy="no-referrer"
-        />
-        <span v-else class="obs-widget-capture-preview__fallback">
-          {{ preset?.preview?.title ?? 'Preview' }}
+        <span
+          class="obs-widget-capture-preview__frame"
+          :data-backdrop="backdrop"
+          :style="option.frameStyle"
+        >
+          <iframe
+            v-if="inspectionUrl"
+            class="obs-widget-capture-preview__iframe"
+            :src="inspectionUrl"
+            :style="option.canvasStyle"
+            :width="option.width"
+            :height="option.height"
+            :title="`${option.label}型 Browser Source 即時預覽`"
+            tabindex="-1"
+            aria-hidden="true"
+            sandbox="allow-scripts allow-same-origin"
+            referrerpolicy="no-referrer"
+          />
+          <span v-else class="obs-widget-capture-preview__fallback">
+            {{ preset?.preview?.title ?? 'Preview' }}
+          </span>
         </span>
-      </span>
-      <span ref="previewCaptions" class="obs-widget-capture-preview__caption">
-        <strong>{{ option.label }}</strong>
-        <span>{{ option.width }} × {{ option.height }}</span>
       </span>
     </button>
   </div>
@@ -173,16 +217,15 @@ onBeforeUnmount(() => {
   min-width: 0;
   min-height: 0;
   display: grid;
-  align-items: end;
+  align-items: stretch;
   gap: var(--ui-space-3);
 }
 
 .obs-widget-capture-preview__option {
   min-width: 0;
   min-height: 0;
-  height: 100%;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   align-items: end;
   justify-items: center;
   gap: var(--ui-space-2);
@@ -197,6 +240,11 @@ onBeforeUnmount(() => {
 .obs-widget-capture-preview__option:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.obs-widget-capture-preview--external-info .obs-widget-capture-preview__option {
+  grid-template-rows: minmax(0, 1fr);
+  row-gap: 0;
 }
 
 .obs-widget-capture-preview__frame {
@@ -261,26 +309,15 @@ onBeforeUnmount(() => {
 
 .obs-widget-capture-preview__caption {
   min-width: 0;
+  justify-self: stretch;
+}
+
+.obs-widget-capture-preview__canvas-area {
+  width: 100%;
+  min-width: 0;
   display: grid;
-  justify-items: center;
-  gap: var(--ui-space-1);
-  color: inherit;
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
-  font-variant-numeric: tabular-nums;
-}
-
-.obs-widget-capture-preview__caption strong {
-  color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-semibold);
-}
-
-.obs-widget-capture-preview__option--selected
-  .obs-widget-capture-preview__caption,
-.obs-widget-capture-preview__option--selected
-  .obs-widget-capture-preview__caption
-  strong {
-  color: var(--ui-color-accent);
+  place-items: end center;
+  align-self: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

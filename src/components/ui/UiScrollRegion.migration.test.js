@@ -67,6 +67,7 @@ const batchThreeConsumers = [
   {
     name: 'output template gallery',
     source: readSource('../output/ObsTemplateGallery.vue'),
+    component: 'UiScrollLayout',
   },
   {
     name: 'output slot workbench',
@@ -75,6 +76,7 @@ const batchThreeConsumers = [
   {
     name: 'output split layout',
     source: readSource('../output/ObsOutputSplitLayout.vue'),
+    component: 'UiScrollLayout',
   },
 ];
 
@@ -100,7 +102,7 @@ describe('UiScrollRegion production migration', () => {
       /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-end:/su,
     );
     expect(folderPageSource).not.toMatch(
-      /\.app-folder-page__body\s*\{[^}]*padding(?:-|:)/su,
+      /(?:^|\n)\.app-folder-page__body\s*\{[^}]*padding(?:-|:)/su,
     );
     expect(folderPageSource).toMatch(
       /\.app-folder-page__body--document\s*\{[^}]*padding-block-start:/su,
@@ -204,9 +206,9 @@ describe('UiScrollRegion production migration', () => {
 
   it.each(batchThreeConsumers)(
     'migrates the $name scroll owner without leaving native overflow paint',
-    ({ source }) => {
-      expect(source).toContain('UiScrollRegion');
-      expect(source).toContain('<UiScrollRegion');
+    ({ source, component = 'UiScrollRegion' }) => {
+      expect(source).toContain(component);
+      expect(source).toContain(`<${component}`);
       expect(source).not.toMatch(/overflow(?:-x|-y)?:\s*(?:auto|scroll);/u);
       expect(source).not.toContain('scrollbar-color:');
       expect(source).not.toContain('scrollbar-width:');

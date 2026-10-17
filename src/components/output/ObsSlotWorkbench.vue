@@ -1,5 +1,12 @@
 <script setup>
-import { computed, onBeforeUnmount, reactive, shallowRef, watch } from 'vue';
+import {
+  computed,
+  onBeforeUnmount,
+  reactive,
+  shallowRef,
+  useTemplateRef,
+  watch,
+} from 'vue';
 import { Check, CircleAlert, Loader2 } from '../../icons/index.js';
 import {
   isOutputLocalFont,
@@ -19,6 +26,9 @@ import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
+  sideWidth: { type: Number, default: null },
+  sideCollapsed: { type: Boolean, default: false },
+  compactSideOpen: { type: Boolean, default: false },
   preset: { type: Object, default: null },
   outputSlot: { type: Object, default: null },
   activeKind: { type: String, default: null },
@@ -38,6 +48,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  'update:sideWidth',
+  'update:sideCollapsed',
+  'update:compactSideOpen',
   'update:previewBackdrop',
   'update:showLyricsGuide',
   'changeSettings',
@@ -48,6 +61,7 @@ const emit = defineEmits([
 ]);
 
 const draft = reactive({ captureSize: 'small' });
+const tools = useTemplateRef('tools');
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
 const presentationFields = computed(
@@ -233,7 +247,16 @@ function resetAppearance() {
     aria-label="輸出工作台"
     side-label="輸出設定"
     side-variant="inspector"
+    :side-width="sideWidth"
+    :side-collapsed="sideCollapsed"
+    :compact-side-open="compactSideOpen"
+    @update:side-width="emit('update:sideWidth', $event)"
+    @update:side-collapsed="emit('update:sideCollapsed', $event)"
+    @update:compact-side-open="emit('update:compactSideOpen', $event)"
   >
+    <template #tools
+      ><div ref="tools" class="obs-slot-workbench__tools"
+    /></template>
     <template #main>
       <main class="obs-slot-workbench__canvas">
         <UiScrollRegion
@@ -242,6 +265,7 @@ function resetAppearance() {
           viewport-class="obs-slot-workbench__stage-viewport"
         >
           <ObsOverlayPreview
+            :tools-target="tools"
             :preset="preset"
             :active-kind="activeKind"
             :capture-size="draft.captureSize"
@@ -318,7 +342,9 @@ function resetAppearance() {
           />
         </div>
       </section>
+    </template>
 
+    <template #side-footer>
       <UiButton
         v-if="configurationFields.length > 0"
         class="obs-slot-workbench__reset"
@@ -337,6 +363,12 @@ function resetAppearance() {
   min-width: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
+  background: var(--ui-color-canvas);
+}
+
+.obs-slot-workbench__tools {
+  min-width: 0;
+  flex: 1;
 }
 
 .obs-slot-workbench__inspector-header {
@@ -375,7 +407,7 @@ function resetAppearance() {
 }
 
 .obs-slot-workbench__inspector-header {
-  padding-block-start: 0;
+  padding-block: var(--ui-space-1);
 }
 
 .obs-slot-workbench__save-state {
@@ -385,8 +417,9 @@ function resetAppearance() {
   justify-content: flex-end;
   gap: var(--ui-space-2);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   white-space: nowrap;
 }
 
@@ -405,12 +438,18 @@ function resetAppearance() {
 }
 
 .obs-slot-workbench__title {
-  font-size: var(--ui-font-size-lg);
+  font-size: var(--ui-type-title-size);
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .obs-slot-workbench__section-title {
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .obs-slot-workbench__fields {

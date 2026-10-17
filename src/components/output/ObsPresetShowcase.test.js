@@ -126,46 +126,39 @@ describe('OBS output workspace layout contract', () => {
     const compactComponentSource = compactWhitespace(componentSource);
     const compactSplitLayoutSource = compactWhitespace(splitLayoutSource);
 
-    expect(previewTokenSource).toContain(
-      '--ui-output-gallery-detail-width: clamp(',
-    );
-    expect(previewTokenSource).toContain(
-      '--ui-output-gallery-detail-width-max',
-    );
+    expect(previewTokenSource).toContain('--ui-output-side-width-default:');
+    expect(previewTokenSource).toContain('--ui-output-side-width-max');
     expect(previewTokenSource).toContain(
       '--ui-output-gallery-preview-max-width',
     );
-    expect(previewTokenSource).toContain(
-      '--ui-output-workbench-inspector-width',
-    );
+    expect(previewTokenSource).toContain('--ui-output-side-width-default');
     expect(previewTokenSource).toContain(
       '--ui-output-workbench-stage-max-width',
     );
     expect(previewTokenSource).toContain('--ui-output-gallery-tile-min-width');
-    expect(previewTokenSource).toContain(
-      '--ui-output-template-thumb-title-font-size',
-    );
-    for (const removed of ['caption-font-size', 'content-width']) {
+    for (const removed of [
+      'title-font-size',
+      'caption-font-size',
+      'content-width',
+    ]) {
       expect(previewTokenSource).not.toContain(
         `--ui-output-template-thumb-${removed}`,
       );
     }
-    expect(previewTokenSource).toContain('22vw');
+    expect(previewTokenSource).not.toContain('22vw');
     expect(previewTokenSource).not.toContain('34cqi');
     expect(previewTokenSource).toContain('--ui-output-setting-label-width-min');
     expect(componentSource).not.toContain('--ui-font-size-xs');
-    expect(componentSource).toContain('container-type: inline-size');
+    expect(workspaceSource).toContain('container-name: output-workspace');
     expect(compactComponentSource).toContain(
-      'repeat( auto-fill, minmax(var(--ui-output-gallery-tile-min-width), 1fr) )',
+      'repeat( auto-fill, minmax(min(100%, var(--ui-output-gallery-tile-min-width)), 1fr) )',
     );
-    expect(compactSplitLayoutSource).toMatch(
-      /minmax\(\s*var\(--ui-output-gallery-column-min\),\s*1fr\s*\)/,
-    );
+    expect(compactSplitLayoutSource).toMatch(/minmax\(0,\s*1fr\)/);
     expect(compactSplitLayoutSource).toContain(
-      'var(--ui-output-gallery-detail-width)',
+      'var(--ui-output-side-width, var(--ui-output-side-width-default))',
     );
     expect(compactSplitLayoutSource).not.toMatch(
-      /minmax\(\s*var\(--ui-output-gallery-detail-width-min\),\s*var\(--ui-output-gallery-detail-width-max\)\s*\)/,
+      /minmax\(\s*var\(--ui-output-gallery-detail-width-min\),\s*var\(--ui-output-side-width-max\)\s*\)/,
     );
     expect(mockupSource).toContain(
       'max-inline-size: var(--ui-output-gallery-preview-max-width)',
@@ -182,7 +175,10 @@ describe('OBS output workspace layout contract', () => {
       '--obs-canvas-rem: calc(100cqi * 16 / var(--obs-canvas-width, 1920));',
     );
     expect(mockupSource).not.toContain('calc(var(--ui-space-1) / 2)');
-    expect(componentSource).toContain('@container (width < 48rem)');
+    expect(componentSource).toContain('<UiScrollLayout');
+    expect(componentSource).toContain(
+      'content-class="obs-template-gallery__grid"',
+    );
     expect(componentSource).toContain("emit('applyPreset'");
     expect(componentSource).toContain('@dblclick="applyPreset(preset)"');
     expect(componentSource).toContain(
@@ -206,15 +202,12 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).not.toContain('<UiTabs');
     expect(componentSource).not.toContain('ObsOutputTabs');
     expect(workbenchSource).not.toContain('<UiSegmentedControl');
-    expect(componentSource).toContain('activeGroup.templates');
+    expect(componentSource).toContain('v-for="preset in filteredTemplates"');
     expect(componentSource).not.toContain('v-for="preset in group.templates"');
-    expect(compactSplitLayoutSource).toMatch(
-      /@container app-folder-layout \(width < 40rem\) \{ \.obs-output-split-layout \{ grid-template-columns: 1fr; grid-template-rows: minmax\(0, 2fr\) minmax\(0, 1fr\);/,
+    expect(compactSplitLayoutSource).toContain(
+      'obs-output-split-layout--compact',
     );
-    expect(compactSplitLayoutSource).toMatch(
-      /\.obs-output-split-layout--main-gallery \{ grid-template-rows: minmax\(0, 1fr\) minmax\(0, 1fr\);/,
-    );
-    expect(splitLayoutSource).not.toContain('container-type: inline-size');
+    expect(compactSplitLayoutSource).not.toContain('minmax(0, 2fr)');
   });
 
   it('keeps thumbnails static and animates only the selected detail preview', () => {
@@ -371,9 +364,7 @@ describe('OBS output workspace layout contract', () => {
     expect(widgetCapturePreviewSource).toContain(
       "emit('selectSize', option.id)",
     );
-    expect(previewTokenSource).toContain(
-      '--ui-output-gallery-detail-width: clamp(',
-    );
+    expect(previewTokenSource).toContain('--ui-output-side-width-default:');
   });
 
   it('keeps inspector fields inset and replaceable without owning their data', () => {
@@ -434,9 +425,7 @@ describe('OBS output workspace layout contract', () => {
 
   it('separates workbench preview and URL copy from runtime settings', () => {
     expect(workbenchSource).toContain('ObsOverlayPreview');
-    expect(splitLayoutSource).toContain(
-      'var(--ui-output-workbench-inspector-width)',
-    );
+    expect(splitLayoutSource).toContain('var(--ui-output-side-width-default)');
     expect(workbenchSource).not.toContain('<select');
     expect(workbenchSource).toContain('appearanceFields');
     expect(workbenchSource).toContain('presentationFields');
@@ -449,9 +438,8 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(previewSource).toContain('obs-overlay-preview__capture-meta');
     expect(previewSource).toContain('固定');
-    expect(previewSource).toContain(
-      '{{ PREVIEW_CANVAS_WIDTH }} × {{ PREVIEW_CANVAS_HEIGHT }}',
-    );
+    expect(previewSource).toContain(':width="PREVIEW_CANVAS_WIDTH"');
+    expect(previewSource).toContain(':height="PREVIEW_CANVAS_HEIGHT"');
     expect(settingsSource).toContain('<UiTextField');
     expect(settingsSource).toContain('inputmode="numeric"');
     expect(settingsSource).toContain('@change="commitSettings()"');

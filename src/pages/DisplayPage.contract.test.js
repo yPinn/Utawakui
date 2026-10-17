@@ -27,7 +27,7 @@ describe('Display page composition contract', () => {
       "import AppFolderPage from '../layout/AppFolderPage.vue';",
     );
     expect(workspaceSource).toContain(
-      '<AppFolderPage mode="workspace" body-label="輸出工作區">',
+      '<AppFolderPage mode="workspace" surface="canvas" body-label="輸出工作區">',
     );
     expect(workspaceSource).toMatch(
       /<template\s+#header>[\s\S]*?<UiSegmentedControl[\s\S]*?@update:model-value="selectPage"/u,

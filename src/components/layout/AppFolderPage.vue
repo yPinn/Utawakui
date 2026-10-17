@@ -6,6 +6,11 @@ import AppLooseLeafEdge from './AppLooseLeafEdge.vue';
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps({
+  surface: {
+    type: String,
+    default: 'paper',
+    validator: (value) => ['paper', 'canvas'].includes(value),
+  },
   mode: {
     type: String,
     default: 'document',
@@ -33,6 +38,9 @@ watch(
     class="app-folder-page"
     :class="{ 'app-folder-page--with-header': $slots.header }"
     :data-page-mode="props.mode"
+    :data-workspace-surface="
+      props.mode === 'workspace' ? props.surface : undefined
+    "
     tabindex="-1"
   >
     <UiScrollLayout
@@ -79,7 +87,7 @@ watch(
       v-else
       class="app-folder-page__sheet app-folder-page__sheet--workspace"
     >
-      <AppLooseLeafEdge />
+      <AppLooseLeafEdge v-if="props.surface !== 'canvas'" />
 
       <header v-if="$slots.header" class="app-folder-page__header">
         <slot name="header" />
@@ -265,5 +273,14 @@ watch(
     flex-wrap: wrap;
     gap: var(--ui-space-3);
   }
+}
+.app-folder-page[data-workspace-surface='canvas'] .app-folder-page__sheet {
+  max-inline-size: none;
+  background: var(--ui-color-surface);
+}
+
+.app-folder-page[data-workspace-surface='canvas'] .app-folder-page__header,
+.app-folder-page[data-workspace-surface='canvas'] .app-folder-page__body {
+  padding: var(--ui-space-4);
 }
 </style>

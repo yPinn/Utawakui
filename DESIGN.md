@@ -419,6 +419,38 @@ Limits:
 - **State ownership:** view selection is controlled by the application owner. The layout emits destination intent but does not own routing, unsaved-change guards, persistence, or post-navigation focus restoration. The fixed first version does not support closeable, reorderable, user-created, vertically oriented, or per-tab semantic-color variants.
 - **Accessibility:** forced-colors must preserve a system-highlight current destination and visible focus. Shape and color are supplemental; the current page remains exposed through `aria-current`.
 
+### Folder Composition Recipes And Acceptance
+
+Choose the recipe by the task's scrolling and visibility needs, not by destination color. The existing Folder Page Layout rules above own material and geometry; this section is the cross-page composition checklist.
+
+| Owner               | Shared responsibility                                                   | Feature responsibility                                                |
+| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| App Shell           | Sidebar, persistent PlayerBar and Right Dock bay                        | Consume player and task projections without duplicating their state   |
+| `AppFolderLayout`   | Destination navigation, semantic material and perimeter                 | Emit bounded navigation intent through the existing application owner |
+| `AppFolderPage`     | One loose-leaf sheet, binding gutter, body inset and explicit page mode | Choose document or workspace; supply content and optional header      |
+| Content composition | Shared headings, controls, row primitives and semantic tokens           | Domain identity, permissions, interaction capabilities and state      |
+
+| Recipe    | Current consumers                             | Header and scrolling contract                                                                                                                      |
+| --------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Document  | Library browsing; Settings                    | Heading and content move with the sheet. Page owns the vertical Scroll Region; ordinary rows extend the sheet.                                     |
+| Workspace | Library lyrics authoring; Performance; Output | Context and necessary tools stay outside bounded pane scrolls. Page owns no vertical Scroll Region; each pane names its own scroll responsibility. |
+
+- Keep object identity, task context, state and commands distinct. A collection dossier identifies a browsed object; `AppFolderWorkspaceToolbar` identifies the current working context. Local tabs identify related tools or output kinds. Do not repeat their labels as another large page heading. Settings retains its document heading.
+- Group commands by scope: local navigation first, editing or display mode next, runtime or primary task commands together. Preserve DOM and keyboard order when groups wrap. A state indicator describes its owning task; it is not another navigation entry. Keep low-frequency commands in the existing menu pattern where appropriate.
+- Sections, ledgers and controls share the paper content edge. Use `AppFolderSection` for document chapters and the existing workspace toolbar for context; do not add a common wrapper where a feature already has a justified composition. Reuse `UiScrollLayout` when scroll content needs a reserved thumb boundary; use bare `UiScrollRegion` only with an explicit full-bleed or caller-owned boundary recipe. Focus rings must remain inside the clipping boundary.
+- Reflow uses the container that actually constrains the content. Folder-wide insets can query `app-folder-layout`; a multi-pane workspace with its own padding must establish and query its own named content container. Column minima, gap and scroll/focus reserves must fit before choosing a side-by-side arrangement. Native Standard/Compact density does not choose pane topology.
+- Shared primitives do not imply shared capabilities. Track identity may reuse `UiTrackRow`, while Library sorting, Queue playback and session occurrence identity remain separate contracts. Reuse existing semantic typography and spacing tiers; a new custom property alone does not establish a new design-system tier.
+- Dossier artwork, `AppFolderCompactBar`, Folder extensions and movable photo/note artifacts are opt-in recipes for real content. They are not prerequisites for a destination to count as a Folder page. Output previews remain feature content; public `overlay/` keeps its independent tokens and delivery path.
+
+Accept each migrated page against this matrix:
+
+| Axis                       | Required evidence                                                                                                                                                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Window and available width | Actual Electron default 1280 × 850, minimum 960 × 650 and maximized window; Sidebar and Right Dock expanded/collapsed states. Record Folder and content widths separately, including widths immediately around a pane breakpoint.                             |
+| Theme and content          | Dark and light; long CJK/Latin text; realistic populated content plus loading, empty, disabled and recoverable-error states relevant to the page.                                                                                                             |
+| Geometry and interaction   | No accidental horizontal overflow, clipped commands or focus rings. Correct pane topology, accessible tab/panel relationships and keyboard order; one named owner per scrolling region.                                                                       |
+| Proof boundary             | Focused component/contract checks and build accompany actual Electron geometry checks. Captured frames support inspection; neither source assertions nor an isolated renderer probe replaces owner acceptance in the real app, or OBS for public composition. |
+
 ### Settings Destination
 
 - Settings is the fourth Folder destination and is also reached from a direct Titlebar gear. Its Folder tab uses `aria-current="page"` while active; the gear carries the passive update marker and, when activated while current, performs the bounded history return. It is not a popover or profile menu.
@@ -905,11 +937,11 @@ instead of permanent chrome. Leaving the Workbench, changing output kind, or
 applying a template first flushes the draft; template application and Output
 runtime settings remain deliberate actions.
 
-Output is a bounded workspace rather than a document page. Its Workbench／Gallery／
-Settings tabs stay in the fixed `AppFolderPage` header without an additional visible
+Output is a bounded workspace rather than a document page. Its output-kind tabs,
+Workbench/Gallery mode and runtime commands stay in the fixed `AppFolderPage` header without an additional visible
 `輸出` heading. Workbench treats the preview as primary and the inspector as supporting:
 Widget sizes are named once by their selectable preview caption, while the fixed Lyrics
-size appears as compact preview-footer metadata. Template descriptions remain in Gallery;
+size appears as compact metadata in the shared top tool area. Template descriptions remain in Gallery;
 the inspector keeps only the active template name, runtime state, error recovery, and
 effective controls. Inspector group headings use the 14px semibold Label role, field
 labels and status use the 14px regular Caption role, and group boundaries—not every
@@ -919,12 +951,55 @@ frame remains visible in a bounded stage. Its control-panel frame is the sole in
 composition owner while the runtime is unavailable; once the live cross-origin iframe is
 present, that inspection iframe owns checker／dark／light and the optional performer guide
 through bounded Workbench-only query state. The copied Browser Source URL contains neither.
-Below the 40rem Folder container threshold,
-Workbench stacks preview／inspector at 2:1 while Gallery uses 1:1 for catalog／detail;
-each pane retains its own Scroll Region and the page still has no vertical scroll owner.
-The inspector moves its visible inline inset into that Scroll Region's actual viewport:
-the inline end reserves both the overlay scrollbar lane and the shared outward focus-ring
-outset, so full-width fields never paint beneath the rail or lose keyboard focus edges.
+Output opts into the workspace-only `AppFolderPage surface="canvas"` recipe: it fills
+the Folder interior without the document paper-width cap or binding gutter. Both modes
+compose `ObsOutputSplitLayout` with the same bounded top tool area, side width,
+header/footer rows and scrollbar reserves. Workbench teleports its existing preview
+controls into that area; Gallery uses it for template search without applying a selection.
+The session-local navigation owner holds one requested side width and one collapsed state
+for both modes. CSS geometry defaults to 18rem, bounds the side to 14–24rem, and leaves
+at least 16rem for the main pane plus the shared spacing-token resize separator.
+The 14rem side minimum was checked against registered template controls; the upper
+limit is a layout policy rather than a ratio copied from another product.
+Pointer and keyboard resizing emit bounded preferences; shrinking the container clamps
+only effective width, and cancellation restores the original preference. Normal windowed
+and maximized layouts keep the same topology. Below the sum of the minima, an explicit
+shared compact-pane reveal preserves a reachable return action and moves focus out of
+any pane being hidden. Side subtrees stay mounted when collapsed. The external Dock
+reservation remains independent. Each pane retains its own Scroll Region and the page
+still has no vertical scroll owner.
+Gallery keeps the template name and apply command outside its detail scroll; preview and
+description scroll together so the preview cannot consume the entire detail pane height.
+The inspector maps its visible inline inset into `UiScrollLayout` content padding.
+The shared `--ui-scrollbar-visual-reserve` token defines the visible thumb boundary for
+both the scroll layout and aligned fixed header/footer; the scroll layout adds its
+axis-aware reserve once, while the caller retains the outward focus-ring outset.
+Full-width fields stay inside that boundary without changing shared focus presentation.
+
+Output inspector titles use the complete Title role; appearance group headings use
+Label, and field labels, passive save feedback and preview metadata use Caption.
+Empty states, disabled reasons and local-font status／warnings compose `UiHint`,
+preserving their existing live regions and control-description ids. These roles do
+not restyle template artwork or font samples. The range control's numeric lane uses
+the feature-owned `--ui-output-range-value-width`; its track can shrink to the shared
+control height so the numeric value remains inside the minimum-width inspector.
+
+Preview artboards keep their native capture aspect ratio and remain centered in
+available canvas space. Size metadata uses `ObsPreviewCaption` at the upper left
+of its preview workspace, while contextual tools occupy the upper right. Lyrics
+and Widgets use the same Workbench tools row outside the gray canvas stage.
+Widget options project their size information into that external row while retaining
+their capture-size owner; multiple sizes keep keyboard-operable selection buttons
+in the row as well as selectable artboards. Their shared-height canvas regions stay
+centered and preserve artboard bottom alignment. Gallery details use the same size component opposite preview
+tools, with sample／motion context on a separate row to fit a narrow inspector.
+Gallery retains its bounded, scrollable detail preview rather than adopting the
+Workbench's larger stage size. Preview scaling never changes output resolution. The canvas stage and Gallery
+canvas well reserve `--ui-output-preview-inset`, derived from shared spacing and
+focus-outset tokens, so the complete artboard border and selection ring remain
+visible. Lyrics fitting subtracts computed stage padding before calculating scale.
+Simple preview action／label rows compose `UiStack`; feature grids and the native
+external-info Teleport target retain their own layout responsibilities.
 
 Appearance controls are template-effective rather than slot-wide. Every available
 template exposes a bounded color-grading-style Look: Template Original, Warm Stage,

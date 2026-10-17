@@ -31,8 +31,8 @@ function orderPresets(presets) {
 
 const orderedPresets = computed(() => orderPresets(props.presets));
 const modeItems = [
-  { id: 'workbench', label: '編輯' },
-  { id: 'gallery', label: '模板' },
+  { id: 'workbench', label: '工作臺' },
+  { id: 'gallery', label: '模板庫' },
 ];
 const kindTabs = computed(() =>
   props.slotDefinitions.map((definition) => ({
@@ -45,6 +45,12 @@ const availableKindIds = computed(() =>
 );
 const {
   activePage,
+  sideWidth,
+  sideCollapsed,
+  compactSideOpen,
+  setSideWidth,
+  setSideCollapsed,
+  setCompactSideOpen,
   activeKind,
   previewBackdrop,
   showLyricsGuide,
@@ -196,9 +202,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppFolderPage mode="workspace" body-label="輸出工作區">
+  <AppFolderPage mode="workspace" surface="canvas" body-label="輸出工作區">
     <template #header>
       <div class="obs-output-workspace__header">
+        <UiSegmentedControl
+          :items="modeItems"
+          :model-value="activePage"
+          aria-label="工作臺或模板庫"
+          @update:model-value="selectPage"
+        />
         <UiTabs
           class="obs-output-workspace__kinds"
           :items="kindTabs"
@@ -210,23 +222,23 @@ onBeforeUnmount(() => {
           @update:active-id="selectKind"
         />
         <div class="obs-output-workspace__header-end">
-          <UiSegmentedControl
-            :items="modeItems"
-            :model-value="activePage"
-            aria-label="編輯或挑選模板"
-            @update:model-value="selectPage"
-          />
-          <ObsOutputRuntimeStatus
-            :output-status="outputState.status"
-            :busy="runtimeBusy"
-            @start="startOutput"
-            @stop="stopOutput"
-          />
-          <UiIconButton
-            :icon="Settings"
-            label="輸出設定"
-            @click="openSettings('output')"
-          />
+          <div
+            class="obs-output-workspace__commands"
+            role="group"
+            aria-label="輸出控制"
+          >
+            <ObsOutputRuntimeStatus
+              :output-status="outputState.status"
+              :busy="runtimeBusy"
+              @start="startOutput"
+              @stop="stopOutput"
+            />
+            <UiIconButton
+              :icon="Settings"
+              label="輸出設定"
+              @click="openSettings('output')"
+            />
+          </div>
         </div>
       </div>
     </template>
@@ -243,6 +255,9 @@ onBeforeUnmount(() => {
         class="obs-output-workspace__panel"
       >
         <ObsTemplateGallery
+          :side-width="sideWidth"
+          :side-collapsed="sideCollapsed"
+          :compact-side-open="compactSideOpen"
           :presets="orderedPresets"
           :template-groups="templateGroups"
           :preview-scene="previewScene"
@@ -250,6 +265,9 @@ onBeforeUnmount(() => {
           :selected-preset-id="browsedPreset?.id ?? null"
           :applied-preset-ids="appliedPresetIds"
           :is-applying="outputState.isSavingSlot"
+          @update:side-width="setSideWidth"
+          @update:side-collapsed="setSideCollapsed"
+          @update:compact-side-open="setCompactSideOpen"
           @update:selected-preset-id="selectPreset"
           @apply-preset="applyPreset"
         />
@@ -261,6 +279,9 @@ onBeforeUnmount(() => {
         class="obs-output-workspace__panel"
       >
         <ObsSlotWorkbench
+          :side-width="sideWidth"
+          :side-collapsed="sideCollapsed"
+          :compact-side-open="compactSideOpen"
           :preset="appliedPreset"
           :output-slot="activeSlot"
           :active-kind="activeKind"
@@ -272,6 +293,9 @@ onBeforeUnmount(() => {
           :recent-colors="outputState.preferences.recentColors"
           :saved-colors="outputState.preferences.savedColors"
           :save-status="appearanceSaveStatus"
+          @update:side-width="setSideWidth"
+          @update:side-collapsed="setSideCollapsed"
+          @update:compact-side-open="setCompactSideOpen"
           @update:preview-backdrop="selectPreviewBackdrop"
           @update:show-lyrics-guide="setLyricsGuideVisible"
           @change-settings="queueAppearanceSave"
@@ -289,8 +313,11 @@ onBeforeUnmount(() => {
 .obs-output-workspace {
   height: 100%;
   min-height: 0;
+  min-width: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
+  container-type: inline-size;
+  container-name: output-workspace;
 }
 
 .obs-output-workspace__header {
@@ -305,9 +332,16 @@ onBeforeUnmount(() => {
 .obs-output-workspace__header-end {
   min-width: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--ui-space-4);
+  gap: var(--ui-space-3);
   margin-inline-start: auto;
+}
+
+.obs-output-workspace__commands {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
 }
 
 .obs-output-workspace__kinds.ui-tabs--bar {

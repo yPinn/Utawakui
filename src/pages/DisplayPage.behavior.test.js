@@ -17,13 +17,13 @@ function renderDisplayPage() {
 describe('DisplayPage', () => {
   it('opens the workbench first and keeps the gallery second', async () => {
     const html = await renderDisplayPage();
-    const editMode = html.indexOf('<!--[-->編輯<!--]-->');
-    const galleryMode = html.indexOf('<!--[-->模板<!--]-->');
+    const editMode = html.indexOf('<!--[-->工作臺<!--]-->');
+    const galleryMode = html.indexOf('<!--[-->模板庫<!--]-->');
 
     expect(editMode).toBeGreaterThan(-1);
     expect(editMode).toBeLessThan(galleryMode);
     expect(html).toContain('aria-checked="true" tabindex="0"');
-    expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->編輯/);
+    expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->工作臺/);
     expect(html).toContain('aria-label="輸出設定"');
     expect(html).not.toContain('id="obs-output-settings-tab"');
   });
@@ -62,7 +62,7 @@ describe('DisplayPage', () => {
     try {
       const html = await renderDisplayPage();
 
-      expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->模板/);
+      expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->模板庫/);
       expect(html).toMatch(
         /id="output-kind-lyrics-tab"[^>]*aria-selected="true"/,
       );

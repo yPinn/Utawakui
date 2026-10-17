@@ -180,6 +180,12 @@ layout family 是 registered v2 surface。`LibraryPage.vue`、`PerformancePage.v
 `DisplayPage.vue` 擁有 Display／local overlay host 的完整 v2 boundary，並直接組合 `ObsOutputWorkspace.vue`。
 `ObsOutputWorkspace.vue` 在 `AppFolderPage` fixed header 放置唯一的畫面分頁（歌單／歌詞／播放中）、編輯／模板模式切換、runtime 燈號與啟動／停止，以及跳到 Settings「公開輸出與 OBS」的輸出設定入口（`openSettings('output')`），不再增加重複的可見頁名。連接埠、自動啟動、畫面延遲與 Spout2 由 `OutputRuntimeSettingsBlock` 在對外輸出 gate 啟用後呈現。
 Lyrics 與 local overlay host 同樣使用完整 v2 boundary。
+Output 的 `AppFolderPage surface="canvas"` 填滿 Folder 內緣；`ObsOutputSplitLayout`
+只擁有共用工具區、CSS token bounds、pointer／keyboard resize、收合與具名 pane scroll。
+`useOutputWorkspaceNavigation` 保存兩模式共用的 renderer-session requested width／collapsed
+及極窄 pane reveal；有效寬度由容器推導，不寫入 template appearance 或 main config。
+工作臺保留 preview 工具與外觀 draft authority，將原工具 Teleport 到共用工具 slot；
+模板庫搜尋只篩選陳列，不改 browse／applied 分工。外部 Dock reservation 不參與此分配。
 `PerformancePage` 固定以 workspace mode 組合 `PerformanceWorkspace`，以 `UiTabs` 依序切換「歌詞」與
 「待唱安排」；直接進入演唱工具預設開啟歌詞，明確的待唱準備 intent 仍開啟待唱安排。
 兩個工具都以 `AppFolderWorkspaceToolbar` 呈現情境與動作，pane 直接放在紙面、以 ledger
@@ -227,7 +233,7 @@ error 與實際設定，模板描述留在 Gallery。Lyrics preview 以可用寬
 inspection composition 依 runtime 狀態維持單一 owner：服務未啟動時由控制台 frame 繪製，live
 cross-origin iframe 存在時由 iframe 內的 bounded Workbench query 繪製人物參考與
 checker／dark／light；copied route 不帶這些參數；
-`app-folder-layout` 小於 40rem 時，Workbench 以 2:1、Gallery 以 1:1 切成上下兩個 bounded pane，
+Output 在紙面內的 `output-workspace` content container 小於 44rem 時，Workbench 以 2:1、Gallery 以 1:1 切成上下兩個 bounded pane，
 不新增 page-level scroll。控制台 feature stylesheet 與 public `overlay/` 的
 `--ovl-*` runtime 互不匯入。Settings 是 `AppFolderLayout` 的第四個正式 destination，
 由 `SettingsPage` 在 registered `settings` boundary 中組合 document-mode `AppFolderPage`；

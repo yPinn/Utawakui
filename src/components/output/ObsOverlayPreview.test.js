@@ -48,7 +48,11 @@ describe('ObsOverlayPreview', () => {
     expect(html).not.toContain('obs-streamer-preview');
     expect(html.match(/<iframe/g)).toHaveLength(1);
     expect(html).not.toContain('/workbench/lyrics');
-    expect(html).toContain('class="obs-overlay-preview__capture-meta"');
+    expect(html).toContain('obs-overlay-preview__capture-meta');
+    expect(html).toContain('obs-preview-caption__resolution');
+    expect(html.indexOf('obs-preview-caption')).toBeGreaterThan(
+      html.indexOf('obs-overlay-preview__toolbar'),
+    );
     expect(html).toContain('固定');
     expect(html).toContain('1920 × 1080');
   });

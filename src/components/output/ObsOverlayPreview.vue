@@ -23,11 +23,15 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import { buildOutputDropUrl } from '../../utils/outputRoutes.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiStack from '../ui/UiStack.vue';
+import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
 
 const props = defineProps({
+  toolsTarget: { type: Object, default: null },
   preset: { type: Object, default: null },
   activeKind: { type: String, default: null },
   captureSize: { type: String, default: null },
@@ -52,6 +56,7 @@ const emit = defineEmits([
 const previewReloadToken = claimPreviewReloadToken();
 const copyState = shallowRef('idle');
 const previewStage = useTemplateRef('previewStage');
+const previewInfo = useTemplateRef('previewInfo');
 const previewScale = shallowRef(1);
 const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width;
 const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height;
@@ -95,8 +100,21 @@ const previewFrameStyle = computed(() => ({
 }));
 
 function measurePreview() {
-  const availableWidth = previewStage.value?.clientWidth ?? 0;
-  const availableHeight = previewStage.value?.clientHeight ?? 0;
+  const stage = previewStage.value;
+  if (!stage) return;
+  const styles = getComputedStyle(stage);
+  const availableWidth = Math.max(
+    0,
+    stage.clientWidth -
+      parseFloat(styles.paddingLeft) -
+      parseFloat(styles.paddingRight),
+  );
+  const availableHeight = Math.max(
+    0,
+    stage.clientHeight -
+      parseFloat(styles.paddingTop) -
+      parseFloat(styles.paddingBottom),
+  );
   if (availableWidth <= 0 || availableHeight <= 0) return;
   previewScale.value = calculateCapturePreviewScale({
     availableWidth,
@@ -150,45 +168,46 @@ onBeforeUnmount(() => {
 <template>
   <section class="obs-overlay-preview" aria-label="Browser Source 預覽">
     <div ref="previewStage" class="obs-overlay-preview__stage">
-      <div
-        v-if="isLyrics"
-        class="obs-overlay-preview__frame"
-        :data-backdrop="previewBackdrop"
-        :style="previewFrameStyle"
-      >
-        <ObsStreamerPreview
-          v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"
-          :src="streamerPreviewImage"
-        />
-        <iframe
-          v-if="hasRuntimeTemplate"
-          :key="inspectionUrl"
-          class="obs-overlay-preview__iframe"
-          :src="inspectionUrl"
-          :style="previewCanvasStyle"
-          :width="PREVIEW_CANVAS_WIDTH"
-          :height="PREVIEW_CANVAS_HEIGHT"
-          title="Browser Source 即時預覽"
-          sandbox="allow-scripts allow-same-origin"
-          referrerpolicy="no-referrer"
-          @load="handlePreviewLoad"
-        />
-        <div v-else class="obs-overlay-preview__fallback">
-          <span class="obs-overlay-preview__fallback-title">
-            {{ preset?.preview?.title ?? 'Preview' }}
-          </span>
-          <span
-            v-for="line in preset?.preview?.lines ?? []"
-            :key="line"
-            class="obs-overlay-preview__fallback-line"
-          >
-            {{ line }}
-          </span>
+      <div v-if="isLyrics" class="obs-overlay-preview__canvas-group">
+        <div
+          class="obs-overlay-preview__frame"
+          :data-backdrop="previewBackdrop"
+          :style="previewFrameStyle"
+        >
+          <ObsStreamerPreview
+            v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"
+            :src="streamerPreviewImage"
+          />
+          <iframe
+            v-if="hasRuntimeTemplate"
+            :key="inspectionUrl"
+            class="obs-overlay-preview__iframe"
+            :src="inspectionUrl"
+            :style="previewCanvasStyle"
+            :width="PREVIEW_CANVAS_WIDTH"
+            :height="PREVIEW_CANVAS_HEIGHT"
+            title="Browser Source 即時預覽"
+            sandbox="allow-scripts allow-same-origin"
+            referrerpolicy="no-referrer"
+            @load="handlePreviewLoad"
+          />
+          <div v-else class="obs-overlay-preview__fallback">
+            <span class="obs-overlay-preview__fallback-title">
+              {{ preset?.preview?.title ?? 'Preview' }}
+            </span>
+            <span
+              v-for="line in preset?.preview?.lines ?? []"
+              :key="line"
+              class="obs-overlay-preview__fallback-line"
+            >
+              {{ line }}
+            </span>
+          </div>
         </div>
       </div>
-
       <ObsWidgetCapturePreview
         v-else
+        :metadata-target="previewInfo"
         :inspection-url="inspectionUrl"
         :selected-size="selectedCaptureSize"
         :supported-sizes="supportedCaptureSizes"
@@ -198,48 +217,61 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <div class="obs-overlay-preview__toolbar">
-      <div class="obs-overlay-preview__info">
-        <p v-if="isLyrics" class="obs-overlay-preview__capture-meta">
-          <span>固定</span>
-          <strong>
-            {{ PREVIEW_CANVAS_WIDTH }} × {{ PREVIEW_CANVAS_HEIGHT }}
-          </strong>
-        </p>
-        <p
-          v-if="copyState !== 'idle'"
-          class="obs-overlay-preview__feedback"
-          :role="copyState === 'error' ? 'alert' : 'status'"
-          aria-live="polite"
+    <Teleport :to="toolsTarget || 'body'" :disabled="!toolsTarget">
+      <UiStack
+        class="obs-overlay-preview__toolbar"
+        align="center"
+        justify="end"
+        :gap="2"
+      >
+        <div
+          ref="previewInfo"
+          class="obs-overlay-preview__info"
+          data-output-preview-info
         >
-          <template v-if="copyState === 'copied'"> 已複製 </template>
-          <template v-else-if="copyState === 'error'">複製失敗</template>
-        </p>
-      </div>
-      <div class="obs-overlay-preview__actions">
-        <UiIconButton
-          v-if="isLyrics"
-          :icon="UserRound"
-          :label="showLyricsGuide ? '隱藏人物參考' : '顯示人物參考'"
-          :active="showLyricsGuide"
-          :aria-pressed="showLyricsGuide"
-          @click="emit('update:showLyricsGuide', !showLyricsGuide)"
-        />
-        <ObsPreviewBackdropToggle
-          :model-value="previewBackdrop"
-          @update:model-value="emit('update:previewBackdrop', $event)"
-        />
-        <UiIconButton
-          v-if="obsUrl"
-          :icon="Copy"
-          label="複製網址"
-          title="複製網址，或直接拖進直播軟體"
-          :draggable="dropUrl ? 'true' : undefined"
-          @click="copyObsUrl"
-          @dragstart="startUrlDrag"
-        />
-      </div>
-    </div>
+          <ObsPreviewCaption
+            v-if="isLyrics"
+            class="obs-overlay-preview__capture-meta"
+            label="固定"
+            :width="PREVIEW_CANVAS_WIDTH"
+            :height="PREVIEW_CANVAS_HEIGHT"
+          />
+
+          <UiHint
+            v-if="copyState !== 'idle'"
+            class="obs-overlay-preview__feedback"
+            :role="copyState === 'error' ? 'alert' : 'status'"
+            aria-live="polite"
+          >
+            <template v-if="copyState === 'copied'"> 已複製 </template>
+            <template v-else-if="copyState === 'error'">複製失敗</template>
+          </UiHint>
+        </div>
+        <UiStack class="obs-overlay-preview__actions" align="center" :gap="3">
+          <UiIconButton
+            v-if="isLyrics"
+            :icon="UserRound"
+            :label="showLyricsGuide ? '隱藏人物參考' : '顯示人物參考'"
+            :active="showLyricsGuide"
+            :aria-pressed="showLyricsGuide"
+            @click="emit('update:showLyricsGuide', !showLyricsGuide)"
+          />
+          <ObsPreviewBackdropToggle
+            :model-value="previewBackdrop"
+            @update:model-value="emit('update:previewBackdrop', $event)"
+          />
+          <UiIconButton
+            v-if="obsUrl"
+            :icon="Copy"
+            label="複製網址"
+            title="複製網址，或直接拖進直播軟體"
+            :draggable="dropUrl ? 'true' : undefined"
+            @click="copyObsUrl"
+            @dragstart="startUrlDrag"
+          />
+        </UiStack>
+      </UiStack>
+    </Teleport>
   </section>
 </template>
 
@@ -253,6 +285,22 @@ onBeforeUnmount(() => {
   grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--ui-space-2);
   justify-self: center;
+}
+
+.obs-overlay-preview:has(.obs-overlay-preview__toolbar) {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.obs-overlay-preview:not(:has(.obs-overlay-preview__toolbar)) {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.obs-overlay-preview__canvas-group {
+  min-inline-size: 0;
+  min-block-size: 0;
+  display: grid;
+  justify-items: center;
+  gap: var(--ui-space-2);
 }
 
 .obs-overlay-preview__frame {
@@ -277,6 +325,8 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__stage {
+  box-sizing: border-box;
+  padding: var(--ui-output-preview-inset);
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -344,16 +394,10 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
   min-width: 0;
 }
 
-.obs-overlay-preview__actions,
-.obs-overlay-preview__info,
-.obs-overlay-preview__capture-meta {
+.obs-overlay-preview__info {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -365,29 +409,7 @@ onBeforeUnmount(() => {
   gap: var(--ui-space-2) var(--ui-space-3);
 }
 
-.obs-overlay-preview__capture-meta,
-.obs-overlay-preview__feedback {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
-}
-
-.obs-overlay-preview__capture-meta {
-  gap: var(--ui-space-2);
-}
-
-.obs-overlay-preview__capture-meta strong {
-  color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-
 .obs-overlay-preview__actions {
-  gap: var(--ui-space-3);
-}
-
-.obs-overlay-preview__feedback {
-  line-height: var(--ui-line-height-caption);
+  min-width: 0;
 }
 </style>

@@ -1,15 +1,20 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { Check, ICON_SIZE } from '../../icons/index.js';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiChip from '../ui/UiChip.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import UiSearchBox from '../ui/UiSearchBox.vue';
 
 const props = defineProps({
+  sideWidth: { type: Number, default: null },
+  sideCollapsed: { type: Boolean, default: false },
+  compactSideOpen: { type: Boolean, default: false },
   presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
   previewScene: { type: Object, default: () => ({}) },
@@ -19,7 +24,14 @@ const props = defineProps({
   isApplying: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:selectedPresetId', 'applyPreset']);
+const emit = defineEmits([
+  'update:selectedPresetId',
+  'applyPreset',
+  'update:sideWidth',
+  'update:sideCollapsed',
+  'update:compactSideOpen',
+]);
+const search = shallowRef('');
 
 const selectedPreset = computed(
   () =>
@@ -27,7 +39,6 @@ const selectedPreset = computed(
     props.presets[0] ??
     null,
 );
-const hasSelectedPreset = computed(() => Boolean(selectedPreset.value));
 const isApplied = computed(
   () =>
     selectedPreset.value?.id ===
@@ -55,6 +66,17 @@ const activeGroup = computed(
     visibleGroups.value[0] ??
     null,
 );
+const filteredTemplates = computed(() => {
+  const query = search.value.trim().toLocaleLowerCase();
+  return (activeGroup.value?.templates ?? []).filter(
+    (preset) =>
+      !query ||
+      [preset.name, preset.detail, ...(preset.tags ?? [])]
+        .join(' ')
+        .toLocaleLowerCase()
+        .includes(query),
+  );
+});
 
 // Plain availability is the default; only surface exceptions such as 建議 or 尚未提供.
 function showsAvailability(preset) {
@@ -85,87 +107,111 @@ function applyPreset(preset) {
       main-variant="gallery"
       side-label="模板展示預覽"
       side-variant="detail"
-      :side-visible="hasSelectedPreset"
+      :side-width="sideWidth"
+      :side-collapsed="sideCollapsed"
+      :compact-side-open="compactSideOpen"
+      @update:side-width="emit('update:sideWidth', $event)"
+      @update:side-collapsed="emit('update:sideCollapsed', $event)"
+      @update:compact-side-open="emit('update:compactSideOpen', $event)"
     >
+      <template #tools
+        ><UiSearchBox
+          v-model="search"
+          class="obs-template-gallery__search"
+          label="搜尋模板"
+          placeholder="搜尋模板"
+      /></template>
       <template #main>
         <div class="obs-template-gallery__catalog" aria-label="模板縮圖">
-          <UiScrollRegion
+          <UiScrollLayout
             v-if="activeGroup"
             :key="activeGroup.kind"
             class="obs-template-gallery__group"
-            axis="both"
+            axis="vertical"
             viewport-tag="section"
             viewport-class="obs-template-gallery__group-viewport"
+            content-class="obs-template-gallery__grid"
+            tabindex="0"
+            aria-label="模板縮圖"
           >
-            <div class="obs-template-gallery__grid">
-              <UiTooltip
-                v-for="preset in activeGroup.templates"
-                :key="preset.id"
-                text="查看模板預覽"
-              >
-                <template #trigger="{ triggerProps }">
-                  <button
-                    v-bind="triggerProps"
-                    type="button"
-                    class="obs-template-thumb"
-                    :class="{
-                      'obs-template-thumb--active':
-                        preset.id === selectedPreset?.id,
-                    }"
-                    :aria-pressed="preset.id === selectedPreset?.id"
-                    @click="selectPreset(preset.id)"
-                    @dblclick="applyPreset(preset)"
-                  >
-                    <ObsTemplateThumbnail
-                      :preset="preset"
-                      :scene="previewScene"
+            <UiTooltip
+              v-for="preset in filteredTemplates"
+              :key="preset.id"
+              text="查看模板預覽"
+            >
+              <template #trigger="{ triggerProps }">
+                <button
+                  v-bind="triggerProps"
+                  type="button"
+                  class="obs-template-thumb"
+                  :class="{
+                    'obs-template-thumb--active':
+                      preset.id === selectedPreset?.id,
+                  }"
+                  :aria-pressed="preset.id === selectedPreset?.id"
+                  @click="selectPreset(preset.id)"
+                  @dblclick="applyPreset(preset)"
+                >
+                  <ObsTemplateThumbnail
+                    :preset="preset"
+                    :scene="previewScene"
+                  />
+                  <div class="obs-template-thumb__body">
+                    <span class="obs-template-thumb__name">
+                      {{ preset.name }}
+                    </span>
+                    <UiChip
+                      v-if="showsAvailability(preset)"
+                      :tone="preset.availability.tone ?? 'muted'"
+                    >
+                      {{ preset.availability.label }}
+                    </UiChip>
+                    <Check
+                      v-if="preset.id === appliedPresetIds[preset.kind]"
+                      :size="ICON_SIZE"
+                      aria-label="已套用"
                     />
-                    <div class="obs-template-thumb__body">
-                      <span class="obs-template-thumb__name">
-                        {{ preset.name }}
-                      </span>
-                      <UiChip
-                        v-if="showsAvailability(preset)"
-                        :tone="preset.availability.tone ?? 'muted'"
-                      >
-                        {{ preset.availability.label }}
-                      </UiChip>
-                      <Check
-                        v-if="preset.id === appliedPresetIds[preset.kind]"
-                        :size="ICON_SIZE"
-                        aria-label="已套用"
-                      />
-                    </div>
-                    <div class="obs-template-thumb__meta">
-                      <span>{{ preset.preview.layoutLabel }}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{{ preset.preview.motionLabel }}</span>
-                    </div>
-                  </button>
-                </template>
-              </UiTooltip>
-            </div>
-          </UiScrollRegion>
+                  </div>
+                  <div class="obs-template-thumb__meta">
+                    <span>{{ preset.preview.layoutLabel }}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{{ preset.preview.motionLabel }}</span>
+                  </div>
+                </button>
+              </template>
+            </UiTooltip>
+            <UiHint
+              v-if="!filteredTemplates.length"
+              class="obs-template-gallery__empty"
+              role="status"
+            >
+              找不到符合的模板
+            </UiHint>
+          </UiScrollLayout>
+          <UiHint v-else class="obs-template-gallery__empty" role="status">
+            尚無可用模板
+          </UiHint>
         </div>
       </template>
 
       <template #side-header>
-        <ObsTemplatePreviewStage
-          :preset="selectedPreset"
-          :scene="previewScene"
-        />
-
-        <div class="obs-template-gallery__detail-header">
+        <div v-if="selectedPreset" class="obs-template-gallery__detail-header">
           <div class="obs-template-gallery__heading">
             <h2 class="obs-template-gallery__detail-title">
               {{ selectedPreset.name }}
             </h2>
           </div>
         </div>
+        <UiHint v-else class="obs-template-gallery__empty">尚未選擇模板</UiHint>
       </template>
 
       <template #side>
-        <div class="obs-template-gallery__detail-copy">
+        <ObsTemplatePreviewStage
+          v-if="selectedPreset"
+          :preset="selectedPreset"
+          :scene="previewScene"
+        />
+        <div v-if="selectedPreset" class="obs-template-gallery__detail-copy">
           <p class="obs-template-gallery__detail-summary">
             {{ selectedPreset.detail }}
           </p>
@@ -184,7 +230,7 @@ function applyPreset(preset) {
       </template>
 
       <template #side-footer>
-        <div class="obs-template-gallery__actions">
+        <div v-if="selectedPreset" class="obs-template-gallery__actions">
           <UiButton
             variant="accent"
             :disabled="isApplying || isApplied || !isSelectedPresetAvailable"
@@ -209,7 +255,11 @@ function applyPreset(preset) {
   height: 100%;
   min-height: 0;
   min-width: 0;
-  container-type: inline-size;
+}
+
+.obs-template-gallery__search {
+  min-width: 0;
+  flex: 1;
 }
 
 .obs-template-gallery__catalog {
@@ -220,15 +270,25 @@ function applyPreset(preset) {
 }
 
 .obs-template-gallery__group {
+  --ui-scroll-layout-padding-block-start: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-block-end: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-inline-start: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset)
+  );
+  --ui-scroll-layout-padding-inline-end: var(--ui-focus-width);
   min-height: 0;
   min-width: 0;
 }
 
-.obs-template-gallery__grid {
+.obs-template-gallery__group :deep(.obs-template-gallery__grid) {
   display: grid;
   grid-template-columns: repeat(
     auto-fill,
-    minmax(var(--ui-output-gallery-tile-min-width), 1fr)
+    minmax(min(100%, var(--ui-output-gallery-tile-min-width)), 1fr)
   );
   align-content: start;
   gap: var(--ui-space-2);
@@ -286,8 +346,9 @@ function applyPreset(preset) {
   gap: var(--ui-space-1);
   min-width: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-output-template-thumb-title-font-size);
-  line-height: var(--ui-line-height-label);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   white-space: nowrap;
 }
 
@@ -318,7 +379,7 @@ function applyPreset(preset) {
 
 .obs-template-gallery__detail-header {
   gap: var(--ui-space-3);
-  padding-block: var(--ui-space-3);
+  padding-block: var(--ui-space-1);
 }
 
 .obs-template-gallery__actions {
@@ -336,6 +397,10 @@ function applyPreset(preset) {
   font-size: var(--ui-type-title-size);
   font-weight: var(--ui-type-title-weight);
   line-height: var(--ui-type-title-line-height);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .obs-template-gallery__detail-summary,
@@ -344,6 +409,7 @@ function applyPreset(preset) {
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
   line-height: var(--ui-type-caption-line-height);
 }
 
@@ -361,11 +427,5 @@ function applyPreset(preset) {
 .obs-template-gallery__actions {
   justify-content: flex-end;
   gap: var(--ui-space-2);
-}
-
-@container (width < 48rem) {
-  .obs-template-gallery__catalog {
-    overflow: visible;
-  }
 }
 </style>
