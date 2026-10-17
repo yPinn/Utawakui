@@ -34,12 +34,13 @@
 }
 
 .obs-template-mockup {
-  --obs-preview-bg: var(--ui-output-preview-canvas);
+  --obs-preview-bg: var(--ui-output-preview-backdrop-dark);
   --obs-preview-surface: var(--ui-output-preview-surface);
   --obs-preview-ink: var(--ui-output-preview-text);
   --obs-preview-muted: var(--ui-output-preview-text-muted);
   --obs-preview-accent: var(--ui-output-preview-accent);
 
+  container-type: inline-size;
   width: 100%;
   aspect-ratio: var(--ui-output-preview-aspect-ratio);
   min-width: 0;
@@ -52,33 +53,51 @@
   contain: layout paint;
 }
 
+/* The template's own capture size, letterboxed inside the 16:9 gallery box. */
+.obs-template-mockup__canvas {
+  /* One runtime rem on this output; descendants resolve it against the canvas. */
+  --obs-canvas-rem: calc(100cqi * 16 / var(--obs-canvas-width, 1920));
+
+  position: relative;
+  container-type: inline-size;
+  block-size: 100%;
+  max-inline-size: 100%;
+  aspect-ratio: var(--obs-canvas-aspect, 16 / 9);
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  justify-self: center;
+  contain: layout paint;
+}
+
+/* Detail previews take the capture's own shape; tall widgets cap the height.
+  Thumbnails stay 16:9 so the gallery grid keeps one row rhythm. */
 .obs-template-mockup[data-size='detail'] {
+  inline-size: min(
+    100%,
+    calc(
+      var(--ui-output-gallery-preview-max-height) *
+        var(--obs-canvas-ratio, 1.7778)
+    )
+  );
   max-inline-size: var(--ui-output-gallery-preview-max-width);
+  aspect-ratio: var(--obs-canvas-aspect, var(--ui-output-preview-aspect-ratio));
   justify-self: center;
 }
 
-.obs-template-mockup[data-tone='stage'] {
-  --obs-preview-bg: var(--ui-output-preview-stage-canvas);
-  --obs-preview-accent: var(--ui-output-preview-stage-accent);
+/* Outputs are transparent; the backdrop is a viewer choice, not template art. */
+.obs-template-mockup[data-backdrop='light'] {
+  --obs-preview-bg: var(--ui-output-preview-backdrop-light);
 }
 
-.obs-template-mockup[data-template-id='karaoke-stack'] {
-  --obs-preview-bg: var(--ui-output-preview-ktv-canvas);
-}
-
-.obs-template-mockup[data-template-id='kinetic-pop'] {
-  --obs-preview-bg: var(--ui-output-preview-canvas);
-}
-
-.obs-template-mockup[data-tone='lyrics'] {
-  --obs-preview-bg: var(--ui-output-preview-lyrics-canvas);
-  --obs-preview-surface: var(--ui-output-preview-lyrics-surface);
-}
-
-.obs-template-mockup[data-tone='manga'] {
-  --obs-preview-bg: var(--ui-output-preview-manga-canvas);
-  --obs-preview-ink: var(--ui-output-preview-manga-ink);
-  --obs-preview-muted: var(--ui-output-preview-manga-ink);
+.obs-template-mockup[data-backdrop='checker'] {
+  background: conic-gradient(
+      var(--ui-output-preview-backdrop-checker-a) 25%,
+      var(--ui-output-preview-backdrop-checker-b) 0 50%,
+      var(--ui-output-preview-backdrop-checker-a) 0 75%,
+      var(--ui-output-preview-backdrop-checker-b) 0
+    )
+    0 0 / 4cqi 4cqi;
 }
 
 .obs-template-mockup__content {
@@ -89,8 +108,26 @@
   text-align: left;
 }
 
-.obs-template-mockup__content--now-playing {
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  align-items: center;
-  gap: 0;
+.obs-template-mockup__content--lyrics {
+  align-content: end;
+}
+
+@keyframes obs-preview-line-cycle {
+  0%,
+  12% {
+    opacity: 0.45;
+    transform: translateY(var(--ui-space-1));
+  }
+
+  24%,
+  76% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  90%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(calc(var(--ui-space-1) / -2));
+  }
 }

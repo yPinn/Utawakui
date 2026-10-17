@@ -8,6 +8,8 @@ import {
   groupOutputTemplatesByKind,
   orderOutputTemplates,
 } from './outputTemplates.js';
+import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import OUTPUT_PREVIEW_SAMPLE from './outputPreviewSample.json';
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'queue-board': '黑幕歌單',
@@ -375,7 +377,6 @@ describe('output template registry', () => {
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
     ).toMatchObject({
       kind: 'lyrics',
-      tone: 'stage',
       detail:
         '寬幅歌詞固定在左下；開場時於右下短暫亮出精簡曲目字卡，中央保留給表演者。',
       preview: {
@@ -392,7 +393,6 @@ describe('output template registry', () => {
       lyricsGroup.templates.find((template) => template.id === 'manga-frame'),
     ).toMatchObject({
       kind: 'lyrics',
-      tone: 'manga',
       preview: { layoutLabel: '直書對白', motionLabel: '整框淡入' },
     });
     expect(
@@ -532,38 +532,29 @@ describe('output template registry', () => {
     ).toBe(false);
   });
 
-  it('uses one fixed multilingual preview scene for every template comparison', () => {
+  it('builds one shared preview scene from the editable sample for every template', () => {
     const data = getOutputWorkbenchData();
 
-    expect(OUTPUT_PREVIEW_SCENE.track).toEqual({
-      title: '如果可以',
-      artist: '韋禮安',
-    });
+    expect(OUTPUT_PREVIEW_SCENE.track).toEqual(OUTPUT_PREVIEW_SAMPLE.track);
+    expect(OUTPUT_PREVIEW_SCENE.queue).toEqual(OUTPUT_PREVIEW_SAMPLE.queue);
     expect(OUTPUT_PREVIEW_SCENE.lyrics).toEqual({
-      current: '目前歌詞',
-      next: '下一句',
-      reading: '歌詞讀音',
-      kinetic: {
-        samples: ['選ばれる', 'すてっぷ', '美意識'],
-      },
-      ornate: {
-        current: '夜が明けるまで言葉を残していく',
-        next: '言葉だけが残る',
-      },
-      manga: {
-        current: '地下鉄に飲み込まれる',
-        language: 'ja',
-        reading: {
-          text: '地下鉄に飲み込まれる',
-          segments: [
-            { text: '地下鉄', reading: 'ちかてつ' },
-            { text: 'に' },
-            { text: '飲み込まれる', reading: 'のみこまれる' },
-          ],
-        },
+      language: OUTPUT_PREVIEW_SAMPLE.lyrics.language,
+      current: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
+      next: OUTPUT_PREVIEW_SAMPLE.lyrics.next,
+      reading: {
+        text: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
+        segments: OUTPUT_PREVIEW_SAMPLE.lyrics.reading,
       },
     });
-    expect(OUTPUT_PREVIEW_SCENE.label).toBe('固定示例 · 多語');
+    expect(
+      OUTPUT_PREVIEW_SAMPLE.lyrics.reading
+        .map((segment) => segment.text)
+        .join(''),
+    ).toBe(OUTPUT_PREVIEW_SAMPLE.lyrics.current);
+    expect(Object.isFrozen(OUTPUT_PREVIEW_SCENE.lyrics.reading.segments)).toBe(
+      true,
+    );
+    expect(OUTPUT_PREVIEW_SCENE.label).toBe(OUTPUT_PREVIEW_SAMPLE.label);
     expect(data.previewScene).toEqual(OUTPUT_PREVIEW_SCENE);
     expect(
       data.templates.every(
@@ -576,6 +567,28 @@ describe('output template registry', () => {
     ).toBe(true);
 
     data.previewScene.track.title = 'changed';
-    expect(OUTPUT_PREVIEW_SCENE.track.title).toBe('如果可以');
+    expect(OUTPUT_PREVIEW_SCENE.track.title).toBe(
+      OUTPUT_PREVIEW_SAMPLE.track.title,
+    );
+  });
+
+  it('labels each slot default as 建議 and every other template as 可用', () => {
+    const defaults = new Set(
+      OUTPUT_TEMPLATE_VALUES.slots.map((slot) => slot.defaultTemplateId),
+    );
+    const { templates } = getOutputWorkbenchData();
+
+    for (const template of templates) {
+      expect(template.availability, template.id).toMatchObject(
+        defaults.has(template.id)
+          ? { label: '建議', tone: 'accent', available: true }
+          : { label: '可用', tone: 'muted', available: true },
+      );
+      expect(template.availability.summary, template.id).toBeTruthy();
+      expect('tone' in template, template.id).toBe(false);
+    }
+    expect(
+      templates.filter((template) => template.availability.label === '建議'),
+    ).toHaveLength(OUTPUT_TEMPLATE_VALUES.slots.length);
   });
 });

@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import {
+  readObsTemplateMockupSource,
+  readObsTemplatePreviewSource,
+} from './obsTemplateMockupSource.mjs';
 
 const componentSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateGallery.vue', import.meta.url)),
@@ -30,6 +33,10 @@ const widgetCapturePreviewSource = readFileSync(
 const mockupSource = readObsTemplateMockupSource();
 const thumbnailSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateThumbnail.vue', import.meta.url)),
+  'utf8',
+);
+const backdropToggleSource = readFileSync(
+  fileURLToPath(new URL('./ObsPreviewBackdropToggle.vue', import.meta.url)),
   'utf8',
 );
 const previewStageSource = readFileSync(
@@ -138,6 +145,11 @@ describe('OBS output workspace layout contract', () => {
     expect(previewTokenSource).toContain(
       '--ui-output-template-thumb-title-font-size',
     );
+    for (const removed of ['caption-font-size', 'content-width']) {
+      expect(previewTokenSource).not.toContain(
+        `--ui-output-template-thumb-${removed}`,
+      );
+    }
     expect(previewTokenSource).toContain('22vw');
     expect(previewTokenSource).not.toContain('34cqi');
     expect(previewTokenSource).toContain('--ui-output-setting-label-width-min');
@@ -164,12 +176,10 @@ describe('OBS output workspace layout contract', () => {
     expect(mockupSource).toContain(
       'aspect-ratio: var(--ui-output-preview-aspect-ratio)',
     );
-    expect(mockupSource).toContain("[data-size='thumbnail']");
-    expect(mockupSource).toContain('place-content: center');
-    expect(mockupSource).toContain('justify-items: center');
-    expect(mockupSource).toContain('text-align: center');
+    // Thumbnails scale the same capture canvas instead of a separate layout.
+    expect(mockupSource).not.toContain("[data-size='thumbnail']");
     expect(mockupSource).toContain(
-      'width: var(--ui-output-template-thumb-content-width)',
+      '--obs-canvas-rem: calc(100cqi * 16 / var(--obs-canvas-width, 1920));',
     );
     expect(mockupSource).not.toContain('calc(var(--ui-space-1) / 2)');
     expect(componentSource).toContain('@container (width < 48rem)');
@@ -215,31 +225,42 @@ describe('OBS output workspace layout contract', () => {
     expect(previewStageSource).toContain('暫停動態預覽');
     expect(previewStageSource).toContain('播放動態預覽');
     expect(previewStageSource).toContain('固定示例');
+    expect(previewStageSource).toContain(
+      '<ObsPreviewBackdropToggle v-model="backdrop" />',
+    );
+    expect(previewStageSource).toContain(':backdrop="backdrop"');
+    expect(previewStageSource).toContain("const backdrop = ref('dark');");
+    // One cycling button; order is dark, light, then the transparency check.
+    expect(backdropToggleSource).toContain('<UiIconButton');
+    expect(backdropToggleSource).toContain(
+      '(currentIndex.value + 1) % PREVIEW_BACKDROPS.length',
+    );
+    const backdropOrder = ["id: 'dark'", "id: 'light'", "id: 'checker'"].map(
+      (id) => backdropToggleSource.indexOf(id),
+    );
+    expect(backdropOrder.every((index) => index > -1)).toBe(true);
+    expect([...backdropOrder].sort((a, b) => a - b)).toEqual(backdropOrder);
     expect(mockupSource).toContain(
       'animated: { type: Boolean, default: false }',
     );
     expect(mockupSource).toContain("animated ? 'playing' : 'paused'");
     expect(mockupSource).toContain("preset?.id ?? 'generic'");
-    expect(mockupSource).not.toContain("preset?.id === 'quiet-caption'");
-    expect(mockupSource).toContain("preset?.id === 'manga-frame'");
-    expect(mockupSource).toContain("preset?.id === 'cover-player'");
+    expect(mockupSource).toContain('<component');
+    expect(mockupSource).toContain(':is="previewComponent"');
+    expect(mockupSource).toContain('outputTemplatePreviewFor(props.preset)');
     expect(mockupSource).toContain('obs-template-mockup__cover-player');
     expect(mockupSource).toContain('obs-template-mockup__cover-player-copy');
-    expect(compactWhitespace(mockupSource)).toContain(
-      '.obs-template-mockup__cover-player .obs-template-mockup__artwork',
-    );
+    expect(mockupSource).toContain('obs-template-mockup__cover-player-art');
+    expect(mockupSource).not.toContain('obs-template-mockup__artwork');
     expect(mockupSource).toContain('obs-template-mockup__transport');
     expect(mockupSource).toContain('obs-template-mockup__timeline');
     expect(mockupSource).not.toContain('obs-template-mockup__volume');
     expect(mockupSource).toContain('obs-template-mockup__manga-bubble');
     expect(mockupSource).toContain(
-      "import MangaFrameSvg from './MangaFrameSvg.vue'",
+      "import MangaFrameSvg from '../MangaFrameSvg.vue'",
     );
     expect(mockupSource).toContain('writing-mode: vertical-rl');
-    const mangaBranch = mockupSource.slice(
-      mockupSource.indexOf("preset?.id === 'manga-frame'"),
-      mockupSource.indexOf("preset?.id === 'karaoke-stack'"),
-    );
+    const mangaBranch = readObsTemplatePreviewSource('MangaFrame');
     expect(mangaBranch).toContain('mangaBubbles');
     expect(mangaBranch).toContain('bubble.text');
     expect(mangaBranch).not.toContain('lyrics.next');
@@ -247,7 +268,7 @@ describe('OBS output workspace layout contract', () => {
       'obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble',
     );
     expect(mangaBranch).not.toContain(
-      'obs-template-mockup__title--manga obs-template-mockup__animated-primary',
+      'obs-template-mockup__manga-text obs-template-mockup__animated-primary',
     );
     expect(mockupSource).toContain('@media (prefers-reduced-motion: reduce)');
     expect(mockupSource).toContain('@keyframes obs-preview-line-cycle');
@@ -262,10 +283,12 @@ describe('OBS output workspace layout contract', () => {
     expect(previewTokenSource).toContain('--ui-output-preview-accent:');
     expect(previewTokenSource).toContain('--ui-output-preview-cycle-duration:');
     expect(previewTokenSource).toContain('--ui-output-preview-cycle-ease:');
-    expect(previewTokenSource).toContain(
-      '--ui-output-preview-player-track-size:',
-    );
-    expect(previewTokenSource).toContain('--ui-output-preview-ktv-canvas:');
+    for (const backdrop of ['dark', 'light', 'checker-a', 'checker-b']) {
+      expect(previewTokenSource).toContain(
+        `--ui-output-preview-backdrop-${backdrop}:`,
+      );
+    }
+    expect(previewTokenSource).not.toContain('--ui-output-preview-ktv-canvas:');
     expect(previewTokenSource).toContain(
       '--ui-output-preview-ktv-fill-unsung:',
     );
@@ -282,24 +305,16 @@ describe('OBS output workspace layout contract', () => {
       '--ui-output-preview-ktv-stroke-sung:',
     );
     expect(previewTokenSource).not.toContain('--ui-output-preview-ktv-shadow:');
-    expect(previewTokenSource).toContain(
-      '--ui-output-template-thumb-caption-font-size:',
-    );
-    expect(previewTokenSource).toContain(
-      '--ui-output-template-thumb-artwork-size:',
-    );
-    expect(previewTokenSource).toContain(
-      '--ui-output-template-thumb-content-width:',
-    );
     expect(mockupSource).toContain('var(--ui-output-preview-canvas)');
     expect(mockupSource).toContain('var(--ui-output-preview-cycle-duration)');
     expect(mockupSource).toContain('var(--ui-output-preview-cycle-ease)');
-    expect(mockupSource).toContain(
-      'var(--ui-output-template-thumb-caption-font-size)',
-    );
     expect(mockupSource).not.toMatch(/#[0-9a-f]{3,8}/i);
     expect(mockupSource).not.toContain('0.625rem');
-    expect(mockupSource).not.toContain('0.7em');
+    // 0.7em only appears in the artist clamp copied from the runtime Overlay.
+    expect(mockupSource.split('0.7em')).toHaveLength(2);
+    expect(mockupSource).toContain(
+      'clamp(0.75em, calc(0.7em + 0.5cqi), 0.875em)',
+    );
     expect(mockupSource).not.toContain('4.8s');
   });
 
@@ -330,11 +345,9 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain(':style="previewFrameStyle"');
     expect(previewSource).toContain('calculateCapturePreviewScale');
     expect(previewSource).toContain('transform-origin: left top');
-    expect(previewSource).toContain("id: 'checker'");
-    expect(previewSource).toContain("id: 'dark'");
-    expect(previewSource).toContain("id: 'light'");
+    expect(previewSource).toContain('<ObsPreviewBackdropToggle');
+    expect(previewSource).toContain(':model-value="previewBackdrop"');
     expect(previewSource).toContain(':data-backdrop="previewBackdrop"');
-    expect(previewSource).toContain('aria-label="預覽背景"');
     expect(previewSource).toContain('UiIconButton');
     expect(previewSource).not.toContain("emit('save");
     expect(previewSource).toContain("url.pathname = '/overlay/lyrics'");
@@ -342,7 +355,6 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain("url.searchParams.set('workbench', '1')");
     expect(previewSource).toContain("url.searchParams.set('backdrop'");
     expect(previewSource).not.toContain("searchParams.set('preview'");
-    expect(previewSource).toContain('gap: var(--ui-space-1)');
     expect(previewSource).toContain('var(--ui-color-surface)');
     expect(previewSource).toContain('var(--ui-color-canvas)');
     expect(previewSource).toContain('var(--ui-color-overlay-contrast)');

@@ -1,12 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import {
+  readObsTemplateMockupSource,
+  readObsTemplatePreviewSource,
+} from './obsTemplateMockupSource.mjs';
 
 describe('Kinetic Pop gallery mockup', () => {
   it('previews the default second material in one animated lyric stage', () => {
     const source = readObsTemplateMockupSource();
 
-    const kineticMarkup = source.match(
-      /<template v-else-if="preset\?\.id === 'kinetic-pop'">([\s\S]*?)<\/template>/,
+    const kineticMarkup = readObsTemplatePreviewSource('KineticPop').match(
+      /<template>([\s\S]*?)<\/template>/,
     )?.[1];
 
     expect(kineticMarkup).toBeDefined();
@@ -24,9 +29,9 @@ describe('Kinetic Pop gallery mockup', () => {
     expect(source).toContain("kineticMaterial: 'candy-rim'");
     expect(source).not.toContain("material: 'solid-outline', text:");
     expect(source).not.toContain("material: 'chromatic-depth', text:");
-    expect(source).toContain('adaptKineticPopLyricsPresentation,');
+    expect(source).toContain('adaptKineticPopLyricsPresentation');
     expect(source).toContain(
-      'const presentation = adaptKineticPopLyricsPresentation(text, {',
+      'const presentation = adaptKineticPopLyricsPresentation(lyrics.value.current, {',
     );
     expect(source).toContain('rows: presentation.rows.map');
     expect(source).toContain('units: row.units.map');
@@ -99,9 +104,62 @@ describe('Kinetic Pop gallery mockup', () => {
       /\.obs-template-mockup__kinetic-row\s*{([^}]*)}/,
     )?.[1];
 
-    expect(stageRule).toContain('inline-size: 100%;');
+    // Symmetric runtime safe area keeps the row centered on the full stage.
+    expect(stageRule).toContain(
+      'inset-inline: calc(4 * var(--obs-canvas-rem));',
+    );
     expect(lineRule).toContain('inline-size: 100%;');
     expect(rowRule).toContain('inline-size: 100%;');
     expect(rowRule).toContain('justify-content: center;');
+  });
+
+  it('sizes the preview from runtime rem on a 1920px canvas', () => {
+    const source = readObsTemplateMockupSource();
+    const runtimeCss = readFileSync(
+      fileURLToPath(
+        new URL('../../../overlay/lyrics/lyrics.css', import.meta.url),
+      ),
+      'utf8',
+    );
+    // Declarations of the first rule whose selector ends with `selector {`.
+    const block = (css, selector) => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    const runtimeCurrent = block(
+      runtimeCss,
+      ":root[data-ovl-template='kinetic-pop'] .lyrics-overlay__current",
+    );
+    const runtimeCandy = block(
+      runtimeCss,
+      ".lyrics-overlay__kinetic-line[data-kinetic-material='candy-rim']",
+    );
+    const stage = block(source, '.obs-template-mockup__kinetic-stage');
+    const candy = block(
+      source,
+      ".obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']",
+    );
+
+    expect(runtimeCurrent).toContain('font-size: 5em;');
+    expect(stage).toContain('font-size: calc(5 * var(--obs-canvas-rem));');
+    for (const declaration of ['line-height: 1.04;', 'font-weight: 800;']) {
+      expect(runtimeCurrent).toContain(declaration);
+      expect(stage).toContain(declaration);
+    }
+    for (const declaration of [
+      'font-size: 1.18em;',
+      'font-weight: 900;',
+      'line-height: 1.12;',
+    ]) {
+      expect(runtimeCandy).toContain(declaration);
+      expect(candy).toContain(declaration);
+    }
+    expect(stage).toContain(
+      'inset-block-end: calc(4 * var(--obs-canvas-rem));',
+    );
+    expect(source).not.toMatch(
+      /\[data-size='thumbnail'\]\s*\.obs-template-mockup__kinetic-stage/u,
+    );
   });
 });

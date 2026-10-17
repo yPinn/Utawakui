@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import {
+  readObsTemplateMockupSource,
+  readObsTemplatePreviewSource,
+} from './obsTemplateMockupSource.mjs';
 
 const mockupSource = readObsTemplateMockupSource();
 const templateRegistrySource = readFileSync(
@@ -66,7 +69,7 @@ describe('Now Playing template mockup', () => {
       /\.obs-template-mockup__vinyl-stage\s*{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s,
     );
     expect(mockupSource).toMatch(
-      /\.obs-template-mockup__vinyl-turntable\s*{[^}]*width:\s*100%;[^}]*aspect-ratio:\s*1;/s,
+      /\.obs-template-mockup__vinyl-turntable\s*{[^}]*width:\s*min\(100%, calc\(13\.25 \* var\(--obs-canvas-rem\)\)\);[^}]*aspect-ratio:\s*1;/s,
     );
     expect(mockupSource).toContain('viewBox="0 0 100 240"');
     expect(mockupSource).toContain('var(--ui-output-preview-vinyl-deck-metal)');
@@ -80,7 +83,7 @@ describe('Now Playing template mockup', () => {
       'var(--ui-output-preview-vinyl-neutral-accent)',
     );
     expect(mockupSource).toMatch(
-      /\.obs-template-mockup__vinyl-copy \.obs-template-mockup__title\s*{[^}]*color:\s*var\(--ui-output-preview-vinyl-copy-ink\);/s,
+      /\.obs-template-mockup__vinyl-title\s*{[^}]*color:\s*var\(--ui-output-preview-vinyl-copy-ink\);/s,
     );
     expect(mockupSource).toMatch(
       /\.obs-template-mockup__vinyl-label\s*{[^}]*background:\s*var\(--ui-output-preview-vinyl-sleeve-paper\);/s,
@@ -113,5 +116,36 @@ describe('Now Playing template mockup', () => {
     expect(mockupSource).toMatch(
       /\.obs-template-mockup\[data-motion='playing'\][^{]*\.obs-template-mockup__vinyl-record\s*{[^}]*animation-play-state:\s*running;/s,
     );
+  });
+
+  it('sizes the vinyl card from the 480×270 runtime rules', () => {
+    const runtimeCss = readFileSync(
+      fileURLToPath(
+        new URL('../../../overlay/now-playing/artwork.css', import.meta.url),
+      ),
+      'utf8',
+    );
+    const preview = readObsTemplatePreviewSource('ArtCard').replace(
+      /\s+/gu,
+      ' ',
+    );
+
+    for (const [runtime, mirrored] of [
+      [
+        'inline-size: min(100%, 28rem);',
+        'width: min(100%, calc(28 * var(--obs-canvas-rem)));',
+      ],
+      [
+        'inline-size: min(100%, 13.25rem);',
+        'width: min(100%, calc(13.25 * var(--obs-canvas-rem)));',
+      ],
+      ['calc(1em + 1cqi)', 'clamp(1.125em, calc(1em + 1cqi), 1.25em)'],
+      ['calc(0.7em + 0.5cqi)', 'clamp(0.75em, calc(0.7em + 0.5cqi), 0.875em)'],
+      ['font-size: 0.58em;', 'font-size: 0.58em;'],
+    ]) {
+      expect(runtimeCss).toContain(runtime);
+      expect(preview).toContain(mirrored);
+    }
+    expect(preview).not.toContain('obs-template-mockup__title');
   });
 });

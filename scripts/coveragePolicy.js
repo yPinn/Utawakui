@@ -72,6 +72,7 @@ const coveragePolicy = Object.freeze({
     'src/components/separation/*.js',
     'src/components/track/*.js',
     'src/components/demo/trackThumbFallback.js',
+    'src/components/output/previews/*.js',
     'src/components/ui/*.js',
     'src/constants/*.js',
     'src/icons/*.js',
@@ -567,6 +568,7 @@ function classifyAppSource(filePath) {
       /^src\/components\/separation\/.+\.js$/.test(normalized) ||
       /^src\/components\/track\/.+\.js$/.test(normalized) ||
       normalized === 'src/components/demo/trackThumbFallback.js' ||
+      /^src\/components\/output\/previews\/.+\.js$/.test(normalized) ||
       /^src\/components\/ui\/.+\.js$/.test(normalized) ||
       /^src\/(?:bgm|composables|constants|icons|utils)\/.+\.js$/.test(
         normalized,

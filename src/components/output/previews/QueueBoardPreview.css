@@ -1,13 +1,29 @@
+/* Mirrors overlay/setlist/setlist.css as it renders in the 480×810 capture:
+  1rem safe area, the max-width 42rem padding and every clamp() resolved at a
+  16px root; runtime rem -> canvas rem. */
 .obs-template-mockup__content--setlist {
-  --ui-setlist-preview-current-title-size: var(--ui-font-size-xl);
-  --ui-setlist-preview-history-title-size: var(--ui-font-size-md);
-  --ui-setlist-preview-current-artist-size: var(--ui-font-size-sm);
-  --ui-setlist-preview-history-artist-size: var(--ui-font-size-sm);
-  --ui-setlist-preview-label-size: var(--ui-font-size-sm);
-  --ui-setlist-preview-counter-size: var(--ui-font-size-sm);
+  --ui-setlist-preview-current-title-size: calc(1.85 * var(--obs-canvas-rem));
+  --ui-setlist-preview-history-title-size: calc(1.05 * var(--obs-canvas-rem));
+  --ui-setlist-preview-current-artist-size: calc(0.88 * var(--obs-canvas-rem));
+  --ui-setlist-preview-history-artist-size: calc(0.76 * var(--obs-canvas-rem));
+  --ui-setlist-preview-label-size: calc(0.75 * var(--obs-canvas-rem));
+  --ui-setlist-preview-counter-size: calc(0.7 * var(--obs-canvas-rem));
 
-  grid-template-rows: minmax(0, 2fr) minmax(0, 8fr);
-  gap: var(--ui-space-3);
+  position: absolute;
+  inset: calc(1 * var(--obs-canvas-rem));
+  box-sizing: border-box;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: minmax(calc(9 * var(--obs-canvas-rem)), auto) minmax(
+      0,
+      1fr
+    );
+  gap: 0;
+  row-gap: calc(1.5 * var(--obs-canvas-rem));
+  padding: calc(0.75 * var(--obs-canvas-rem));
+  border-radius: calc(0.5 * var(--obs-canvas-rem));
+  font-size: var(--obs-canvas-rem);
+  text-align: left;
 }
 
 .obs-template-mockup__setlist-history {
@@ -24,7 +40,7 @@
   overflow: hidden;
   display: flex;
   align-items: flex-start;
-  padding-block-start: var(--ui-space-3);
+  padding-block-start: calc(1 * var(--obs-canvas-rem));
 }
 
 .obs-template-mockup__setlist-history-list {
@@ -33,7 +49,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  row-gap: var(--ui-space-2);
+  row-gap: calc(0.5 * var(--obs-canvas-rem));
   margin: 0;
   padding: 0;
   list-style: none;
@@ -50,9 +66,9 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--ui-space-2);
-  padding-block-end: var(--ui-space-1);
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+  gap: calc(0.75 * var(--obs-canvas-rem));
+  padding-block-end: calc(0.5 * var(--obs-canvas-rem));
+  border-block-end: 1px solid var(--ui-color-border);
 }
 
 .obs-template-mockup__setlist-label,
@@ -61,8 +77,8 @@
   flex: 0 0 auto;
   color: var(--obs-preview-muted);
   font-size: var(--ui-setlist-preview-label-size);
-  font-weight: var(--ui-font-weight-semibold);
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   line-height: 1;
 }
 
@@ -70,7 +86,7 @@
 .obs-template-mockup__setlist-source {
   min-width: 0;
   overflow: hidden;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -78,15 +94,16 @@
 .obs-template-mockup__setlist-history-row {
   width: 100%;
   min-width: 0;
-  min-height: var(--ui-space-5);
+  min-height: calc(3 * var(--obs-canvas-rem));
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr);
+  grid-template-columns: calc(1.6 * var(--obs-canvas-rem)) minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: start;
-  column-gap: var(--ui-space-1);
-  padding-block: var(--ui-space-1);
-  padding-inline: var(--ui-space-2);
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+  column-gap: calc(0.5 * var(--obs-canvas-rem));
+  padding-block: calc(0.25 * var(--obs-canvas-rem));
+  padding-inline: calc(0.5 * var(--obs-canvas-rem));
+  border-block-end: 1px solid var(--ui-color-border);
   text-align: start;
 }
 
@@ -101,7 +118,10 @@
 .obs-template-mockup__content--setlist .obs-template-mockup__queue-title {
   grid-column: 2;
   grid-row: 1;
+  color: var(--obs-preview-ink);
   font-size: var(--ui-setlist-preview-history-title-size);
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .obs-template-mockup__setlist-artist {
@@ -111,8 +131,7 @@
   overflow: hidden;
   color: var(--obs-preview-muted);
   font-size: var(--ui-setlist-preview-history-artist-size);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .obs-template-mockup__setlist-current {
@@ -128,9 +147,9 @@
   align-self: start;
   justify-self: stretch;
   display: grid;
-  gap: var(--ui-space-1);
-  padding-block-start: var(--ui-space-3);
-  padding-inline: var(--ui-space-2);
+  gap: calc(0.25 * var(--obs-canvas-rem));
+  padding-block-start: calc(1 * var(--obs-canvas-rem));
+  padding-inline: calc(0.5 * var(--obs-canvas-rem));
   text-align: start;
 }
 
@@ -157,26 +176,31 @@
 }
 
 .obs-template-mockup__setlist-current-title {
+  color: var(--obs-preview-ink);
   font-size: var(--ui-setlist-preview-current-title-size);
+  font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: var(--ui-line-height-title);
+  line-height: 1.08;
 }
 
 .obs-template-mockup__setlist-current-artist {
+  color: var(--obs-preview-muted);
   font-size: var(--ui-setlist-preview-current-artist-size);
+  line-height: 1.2;
 }
 
-.obs-template-mockup__content--artwork {
-  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
-  align-content: end;
-  align-items: center;
-  gap: var(--ui-space-3);
+.obs-template-mockup__queue-number {
+  font-variant-numeric: tabular-nums;
 }
 
-.obs-template-mockup[data-template-id='art-card']
-  .obs-template-mockup__content--artwork {
-  grid-template-columns: minmax(0, 1fr);
-  place-items: center;
-  align-content: center;
-  padding-block: var(--ui-space-2);
+@keyframes obs-template-setlist-scroll {
+  0%,
+  10% {
+    transform: translateY(0);
+  }
+
+  90%,
+  100% {
+    transform: translateY(calc(-1 * var(--ui-setlist-scroll-distance, 0px)));
+  }
 }

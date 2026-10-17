@@ -1,0 +1,135 @@
+/* Mirrors overlay/now-playing/artwork.css cover-player as it renders in the
+  480×540 capture: 1rem safe area, the max-width 32rem player inset and the
+  max-height 42rem transport rule apply; runtime rem -> canvas rem. */
+.obs-template-mockup .obs-template-mockup__cover-player {
+  position: absolute;
+  inset: calc(1 * var(--obs-canvas-rem));
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 0;
+  padding: 0;
+  font-size: var(--obs-canvas-rem);
+  text-align: start;
+}
+
+.obs-template-mockup__cover-player-art {
+  min-width: 0;
+  min-height: 0;
+  max-inline-size: 100%;
+  block-size: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  background: var(--obs-preview-accent);
+  color: var(--ui-output-preview-accent-contrast);
+  font-size: 7em;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.obs-template-mockup__cover-player-copy {
+  min-width: 0;
+  display: grid;
+  gap: calc(0.125 * var(--obs-canvas-rem));
+  padding: calc(0.75 * var(--obs-canvas-rem)) calc(0.75 * var(--obs-canvas-rem))
+    calc(0.5 * var(--obs-canvas-rem));
+}
+
+.obs-template-mockup__cover-player-title,
+.obs-template-mockup__cover-player-artist {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__cover-player-title {
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.obs-template-mockup__cover-player-artist {
+  color: var(--obs-preview-muted);
+  font-size: 0.8125em;
+  line-height: 1.25;
+}
+
+.obs-template-mockup__cover-player-controls {
+  min-height: 0;
+  display: grid;
+  align-content: center;
+  gap: 0;
+  padding: 0 calc(0.75 * var(--obs-canvas-rem))
+    calc(0.75 * var(--obs-canvas-rem));
+}
+
+.obs-template-mockup__progress {
+  position: relative;
+  height: calc(0.1875 * var(--obs-canvas-rem));
+  display: block;
+  border-radius: calc(0.5 * var(--obs-canvas-rem));
+  background: var(--ui-output-preview-surface-muted);
+}
+
+.obs-template-mockup__progress-fill {
+  width: 62%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--obs-preview-ink);
+  transform-origin: left;
+}
+
+.obs-template-mockup__timeline {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: calc(0.25 * var(--obs-canvas-rem));
+  color: var(--obs-preview-muted);
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.obs-template-mockup__transport {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  justify-items: center;
+  margin-block-start: calc(0.75 * var(--obs-canvas-rem));
+  padding-block: 0;
+  color: var(--obs-preview-ink);
+  font-size: calc(1.125 * var(--obs-canvas-rem));
+  line-height: 1;
+}
+
+.obs-template-mockup__transport-play {
+  inline-size: calc(2.75 * var(--obs-canvas-rem));
+  block-size: calc(2.75 * var(--obs-canvas-rem));
+  display: grid;
+  place-items: center;
+  font-size: calc(2.5 * var(--obs-canvas-rem));
+}
+
+.obs-template-mockup[data-motion='playing']
+  .obs-template-mockup__progress-fill {
+  animation: obs-preview-progress-cycle var(--ui-output-preview-cycle-duration)
+    linear infinite;
+}
+
+@keyframes obs-preview-progress-cycle {
+  0%,
+  12% {
+    transform: scaleX(0.08);
+  }
+
+  76%,
+  100% {
+    transform: scaleX(1);
+  }
+}

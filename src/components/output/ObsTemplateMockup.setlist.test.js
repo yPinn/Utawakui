@@ -1,7 +1,20 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import { readObsTemplatePreviewSource } from './obsTemplateMockupSource.mjs';
 
-const source = readObsTemplateMockupSource();
+const source = readObsTemplatePreviewSource('QueueBoard');
+const normalized = source
+  .replace(/\s+/gu, ' ')
+  .replace(/\(\s+/gu, '(')
+  .replace(/\s+\)/gu, ')');
+const runtimeCss = readFileSync(
+  fileURLToPath(
+    new URL('../../../overlay/setlist/setlist.css', import.meta.url),
+  ),
+  'utf8',
+);
+const canvasRem = (value) => `calc(${value} * var(--obs-canvas-rem))`;
 
 describe('Setlist template mockup', () => {
   it('orders current song before completed history as distinct regions', () => {
@@ -19,67 +32,50 @@ describe('Setlist template mockup', () => {
     );
   });
 
-  it('mirrors the current 2／history 8 composition without a dead spacer row', () => {
-    expect(source).toMatch(
-      /\.obs-template-mockup__content--setlist\s*{[^}]*grid-template-rows:\s*minmax\(0, 2fr\) minmax\(0, 8fr\);[^}]*gap:\s*var\(--ui-space-3\);/s,
+  it('mirrors the runtime current／history rows inside the 480×810 capture', () => {
+    expect(runtimeCss).toContain(
+      'grid-template-rows: minmax(9rem, auto) minmax(0, 1fr);',
     );
-    expect(source).not.toContain(
-      'grid-template-rows: repeat(10, minmax(0, 1fr));',
+    expect(normalized).toContain(
+      `grid-template-rows: minmax(${canvasRem(9)}, auto) minmax(0, 1fr);`,
     );
+    // Panel gap doubles the default space-3; max-width 42rem pads with space-3.
+    expect(normalized).toContain(`row-gap: ${canvasRem(1.5)};`);
+    expect(normalized).toContain(`padding: ${canvasRem(0.75)};`);
+    expect(normalized).toContain(`inset: ${canvasRem(1)};`);
   });
 
-  it('uses explicit header／content rows with both contents aligned top-left', () => {
-    expect(source).toContain(
-      'class="obs-template-mockup__setlist-current-track"',
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-current-track\s*{[^}]*align-self:\s*start;[^}]*text-align:\s*start;/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history-viewport\s*{[^}]*align-items:\s*flex-start;[^}]*padding-block-start:/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history-row\s*{[^}]*text-align:\s*start;/s,
-    );
-  });
-
-  it('mirrors the readable role hierarchy while keeping thumbnail typography independent', () => {
-    const normalizedSource = source
-      .replace(/\s+/g, ' ')
-      .replace(/\(\s+/g, '(')
-      .replace(/\s+\)/g, ')');
-
-    for (const declaration of [
-      '--ui-setlist-preview-current-title-size: var(--ui-font-size-xl);',
-      '--ui-setlist-preview-history-title-size: var(--ui-font-size-md);',
-      '--ui-setlist-preview-current-artist-size: var(--ui-font-size-sm);',
-      '--ui-setlist-preview-history-artist-size: var(--ui-font-size-sm);',
-      '--ui-setlist-preview-label-size: var(--ui-font-size-sm);',
-      '--ui-setlist-preview-counter-size: var(--ui-font-size-sm);',
+  it('resolves every runtime type clamp at a 16px root', () => {
+    for (const [runtime, preview] of [
+      [
+        'clamp(1.75rem, 1.85em, 2.125rem)',
+        `--ui-setlist-preview-current-title-size: ${canvasRem(1.85)};`,
+      ],
+      [
+        'clamp(1rem, 1.05em, 1.125rem)',
+        `--ui-setlist-preview-history-title-size: ${canvasRem(1.05)};`,
+      ],
+      [
+        'clamp(0.8125rem, 0.88em, 1rem)',
+        `--ui-setlist-preview-current-artist-size: ${canvasRem(0.88)};`,
+      ],
+      [
+        'clamp(0.75rem, 0.72em, 0.8125rem)',
+        `--ui-setlist-preview-label-size: ${canvasRem(0.75)};`,
+      ],
+      [
+        'clamp(0.6875rem, 0.7em, 0.75rem)',
+        `--ui-setlist-preview-counter-size: ${canvasRem(0.7)};`,
+      ],
     ]) {
-      expect(normalizedSource).toContain(declaration);
+      expect(runtimeCss).toContain(runtime);
+      expect(normalized).toContain(preview);
     }
-
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-current-title\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-current-title-size\);/s,
+    expect(runtimeCss.replace(/\s+/gu, ' ')).toContain(
+      'clamp( 0.75rem, 0.76em, 0.875rem )',
     );
-    expect(source).toMatch(
-      /\.obs-template-mockup__content--setlist\s+\.obs-template-mockup__queue-title\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-history-title-size\);/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-current-artist\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-current-artist-size\);/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-artist\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-history-artist-size\);/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history-row\s+\.obs-template-mockup__queue-number\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-counter-size\);/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-label,\s*\.obs-template-mockup__setlist-caption,\s*\.obs-template-mockup__setlist-source\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-label-size\);/s,
-    );
-    expect(normalizedSource).toMatch(
-      /\.obs-template-mockup\[data-size='thumbnail'\]\s+\.obs-template-mockup__content--setlist\s*{[^}]*--ui-setlist-preview-current-title-size:\s*var\(--ui-output-template-thumb-title-font-size\);[^}]*--ui-setlist-preview-label-size:\s*var\(--ui-output-template-thumb-caption-font-size\);/s,
+    expect(normalized).toContain(
+      `--ui-setlist-preview-history-artist-size: ${canvasRem(0.76)};`,
     );
   });
 
@@ -87,11 +83,8 @@ describe('Setlist template mockup', () => {
     expect(source).toContain(
       'class="obs-template-mockup__setlist-history-list"',
     );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history-list\s*{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*align-content:\s*start;[^}]*row-gap:\s*var\(--ui-space-2\);/s,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history-row\s*{[^}]*grid-template-columns:\s*1rem minmax\(0, 1fr\);[^}]*grid-template-rows:\s*auto auto;[^}]*align-items:\s*start;/s,
+    expect(normalized).toContain(
+      `grid-template-columns: ${canvasRem(1.6)} minmax(0, 1fr);`,
     );
     expect(source).toMatch(
       /\.obs-template-mockup__setlist-history-row\s+\.obs-template-mockup__queue-number\s*{[^}]*grid-row:\s*1\s*\/\s*span 2;[^}]*align-self:\s*center;/s,
@@ -102,22 +95,10 @@ describe('Setlist template mockup', () => {
     expect(source).toMatch(
       /\.obs-template-mockup__setlist-artist\s*{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2;/s,
     );
-    expect(source).not.toContain(
-      'class="obs-template-mockup__setlist-history-marquee"',
-    );
-    expect(source).not.toContain(
-      'class="obs-template-mockup__setlist-history-sequence"',
-    );
-    expect(source).not.toContain('@keyframes obs-template-setlist-marquee');
-  });
-
-  it('mirrors two-line capture titles while keeping thumbnails single-line', () => {
     expect(source).toMatch(
-      /\.obs-template-mockup__setlist-current-title,\s*\.obs-template-mockup__content--setlist\s+\.obs-template-mockup__queue-title\s*{[^}]*display:\s*-webkit-box;[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;[^}]*-webkit-box-orient:\s*vertical;[^}]*-webkit-line-clamp:\s*2;/s,
+      /\.obs-template-mockup__setlist-current-title,\s*\.obs-template-mockup__content--setlist\s+\.obs-template-mockup__queue-title\s*{[^}]*display:\s*-webkit-box;[^}]*-webkit-line-clamp:\s*2;/s,
     );
-    expect(source).toMatch(
-      /\.obs-template-mockup\[data-size='thumbnail'\][\s\S]*\.obs-template-mockup__setlist-current-title,[\s\S]*\.obs-template-mockup__queue-title\s*{[^}]*display:\s*block;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/s,
-    );
+    expect(source).not.toContain("[data-size='thumbnail']");
   });
 
   it('measures Workbench overflow before enabling vertical history motion', () => {

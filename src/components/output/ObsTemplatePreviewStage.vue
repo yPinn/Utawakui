@@ -1,8 +1,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Pause, Play } from '../../icons/index.js';
-import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsTemplateMockup from './ObsTemplateMockup.vue';
 
 const props = defineProps({
@@ -11,6 +12,7 @@ const props = defineProps({
 });
 
 const isMotionPlaying = ref(true);
+const backdrop = ref('dark');
 const motionIcon = computed(() => (isMotionPlaying.value ? Pause : Play));
 const motionLabel = computed(() =>
   isMotionPlaying.value ? '暫停動態預覽' : '播放動態預覽',
@@ -37,13 +39,16 @@ function toggleMotion() {
           {{ preset?.preview?.motionLabel ?? '靜態' }}
         </span>
       </div>
-      <UiButton
-        :icon="motionIcon"
-        :active="isMotionPlaying"
-        :aria-label="motionLabel"
-        :title="motionLabel"
-        @click="toggleMotion"
-      />
+      <div class="obs-template-preview-stage__actions">
+        <ObsPreviewBackdropToggle v-model="backdrop" />
+        <UiIconButton
+          :icon="motionIcon"
+          :label="motionLabel"
+          :active="isMotionPlaying"
+          :aria-pressed="isMotionPlaying"
+          @click="toggleMotion"
+        />
+      </div>
     </header>
 
     <ObsTemplateMockup
@@ -51,6 +56,7 @@ function toggleMotion() {
       :scene="scene"
       size="detail"
       :animated="isMotionPlaying"
+      :backdrop="backdrop"
     />
   </section>
 </template>
@@ -63,7 +69,8 @@ function toggleMotion() {
 }
 
 .obs-template-preview-stage__toolbar,
-.obs-template-preview-stage__labels {
+.obs-template-preview-stage__labels,
+.obs-template-preview-stage__actions {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -77,6 +84,11 @@ function toggleMotion() {
 .obs-template-preview-stage__labels {
   gap: var(--ui-space-2);
   overflow: hidden;
+}
+
+.obs-template-preview-stage__actions {
+  flex: 0 0 auto;
+  gap: var(--ui-space-2);
 }
 
 .obs-template-preview-stage__motion {

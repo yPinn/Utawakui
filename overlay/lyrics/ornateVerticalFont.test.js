@@ -55,6 +55,7 @@ describe('Ornate Vertical bundled Japanese typeface contract', () => {
         'src',
         'components',
         'output',
+        'previews',
         'OrnateVerticalPreview.vue',
       ),
       'utf8',
@@ -72,7 +73,7 @@ describe('Ornate Vertical bundled Japanese typeface contract', () => {
       "url('/shared/assets/fonts/HinaMincho-Regular.ttf')",
     );
     expect(galleryPreview).toContain(
-      "url('../../../shared/assets/fonts/HinaMincho-Regular.ttf')",
+      "url('../../../../shared/assets/fonts/HinaMincho-Regular.ttf')",
     );
   });
 });

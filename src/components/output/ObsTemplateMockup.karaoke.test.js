@@ -1,13 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import {
+  readObsTemplateMockupSource,
+  readObsTemplatePreviewSource,
+} from './obsTemplateMockupSource.mjs';
 
 const source = readObsTemplateMockupSource();
 
 describe('Classic KTV gallery mockup', () => {
   it('replaces the old panel and progress bar with two outlined lyric lanes', () => {
-    const branchStart = source.indexOf("preset?.id === 'karaoke-stack'");
-    const branchEnd = source.indexOf('<template v-else>', branchStart);
-    const branch = source.slice(branchStart, branchEnd);
+    const branch = readObsTemplatePreviewSource('KaraokeStack');
 
     expect(branch).toContain('obs-template-mockup__ktv-lines');
     expect(branch).toContain('data-ktv-lane="a"');
@@ -19,7 +22,9 @@ describe('Classic KTV gallery mockup', () => {
     expect(branch).toContain('obs-template-mockup__ktv-line-fill');
     expect(branch).toContain('obs-template-mockup__ktv-count-in');
     expect(
-      branch.match(/obs-template-mockup__ktv-count-in-dot/gu),
+      branch
+        .match(/<template>([\s\S]*)<\/template>/u)?.[1]
+        .match(/obs-template-mockup__ktv-count-in-dot/gu),
     ).toHaveLength(4);
     expect(branch).not.toContain('obs-template-mockup__animated-primary');
     expect(branch).not.toContain('正在演唱');
@@ -47,9 +52,7 @@ describe('Classic KTV gallery mockup', () => {
     expect(source).toContain('inset: 0.11em 0.16em 0 0.11em;');
     expect(source).toContain('-webkit-text-stroke:');
     expect(source).toContain("font-family: 'Utawakui Open Huninn'");
-    expect(source).toContain('width: 94%;');
-    expect(source).toContain('max-width: 94%;');
-    expect(source).toContain('font-size: 2.6rem;');
+    expect(source).toContain('max-inline-size: 94%;');
     expect(source).toContain('padding: 0.11em 0.16em 0.18em 0.11em;');
     expect(source).toContain('margin: -0.11em -0.16em -0.18em -0.11em;');
     expect(ktvStyles).not.toContain('background-clip: text');
@@ -58,19 +61,76 @@ describe('Classic KTV gallery mockup', () => {
     expect(source).not.toContain('var(--ui-output-preview-ktv-shadow)');
   });
 
-  it('keeps the thumbnail lanes at the lower edge like the real Overlay', () => {
-    const genericThumbnailRule = source.indexOf(
-      ".obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__content {",
+  it('sizes the preview in runtime em on a 1920px canvas', () => {
+    const runtimeCss = readFileSync(
+      fileURLToPath(
+        new URL('../../../overlay/lyrics/lyrics.css', import.meta.url),
+      ),
+      'utf8',
     );
-    const ktvThumbnailRule = source.indexOf(
-      ".obs-template-mockup[data-size='thumbnail'][data-template-id='karaoke-stack']",
-      genericThumbnailRule,
-    );
-    const ruleEnd = source.indexOf('}', ktvThumbnailRule);
+    const cssBlock = (css, selector) => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    const runtime = (suffix) =>
+      cssBlock(
+        runtimeCss,
+        `:root[data-ovl-template='karaoke-stack'] ${suffix}`.trimEnd(),
+      );
 
-    expect(ktvThumbnailRule).toBeGreaterThan(genericThumbnailRule);
-    expect(source.slice(ktvThumbnailRule, ruleEnd)).toContain(
-      'align-content: end;',
+    expect(source).toContain(
+      '--obs-canvas-rem: calc(100cqi * 16 / var(--obs-canvas-width, 1920));',
+    );
+    expect(source).toContain('container-type: inline-size;');
+    expect(
+      cssBlock(
+        source,
+        ".obs-template-mockup[data-template-id='karaoke-stack']\n  .obs-template-mockup__content--lyrics",
+      ),
+    ).toContain('font-size: var(--obs-canvas-rem);');
+
+    const lines = cssBlock(source, '.obs-template-mockup__ktv-lines');
+    expect(runtime('.lyrics-overlay')).toContain(
+      '--ovl-ktv-lane-block-size: 5.832em;',
+    );
+    expect(lines).toContain('minmax(5.832em, auto)');
+    // Runtime safe area is max(4rem, 3%) inline and max(4rem, 5%) block.
+    expect(lines).toContain('inset-inline: 4em;');
+    expect(lines).toContain('inset-block-end: 4em;');
+
+    for (const declaration of [
+      'font-size: 5.4em;',
+      'letter-spacing: 0.015em;',
+      'line-height: 1.08;',
+    ]) {
+      expect(
+        runtime(
+          ".lyrics-overlay__current,\n  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next",
+        ),
+      ).toContain(declaration);
+      expect(cssBlock(source, '.obs-template-mockup__ktv-line')).toContain(
+        declaration,
+      );
+    }
+    for (const declaration of [
+      'inset-block-start: -2.55em;',
+      'inset-inline-start: 0.11em;',
+      'gap: 0.55em;',
+    ]) {
+      expect(runtime('.lyrics-overlay__ktv-count-in')).toContain(declaration);
+      expect(cssBlock(source, '.obs-template-mockup__ktv-count-in')).toContain(
+        declaration,
+      );
+    }
+    expect(runtime('.lyrics-overlay__ktv-count-in-dot')).toContain(
+      'inline-size: 2.1em;',
+    );
+    const dot = cssBlock(source, '.obs-template-mockup__ktv-count-in-dot');
+    expect(dot).toContain('width: 2.1em;');
+    expect(dot).toContain('border: 0.13em solid');
+    expect(source).not.toContain(
+      ".obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__ktv-line {",
     );
   });
 });

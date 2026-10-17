@@ -1,14 +1,25 @@
+/* Mirrors overlay/lyrics/lyrics.css kinetic-pop; runtime rem -> canvas rem. */
+.obs-template-mockup[data-template-id='kinetic-pop']
+  .obs-template-mockup__content--lyrics {
+  padding: 0;
+  font-size: var(--obs-canvas-rem);
+}
+
+/* Runtime safe area is max(4rem, 3%) inline and max(4rem, 4.5%) block. */
 .obs-template-mockup__kinetic-stage {
+  position: absolute;
+  inset-inline: calc(4 * var(--obs-canvas-rem));
+  inset-block-end: calc(4 * var(--obs-canvas-rem));
   display: grid;
   place-items: center;
-  inline-size: 100%;
   min-width: 0;
+  min-block-size: 1.3em;
   font-family:
     'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP',
     sans-serif;
-  font-size: 1.35rem;
+  font-size: calc(5 * var(--obs-canvas-rem));
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.04;
   text-align: center;
 }
 
@@ -136,4 +147,39 @@
   animation: obs-preview-kinetic-unit-cycle 3.2s cubic-bezier(0.16, 1, 0.3, 1)
     infinite both;
   animation-delay: var(--kinetic-unit-delay);
+}
+
+@keyframes obs-preview-kinetic-unit-cycle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(
+        var(--kinetic-preview-enter-x),
+        var(--kinetic-preview-enter-y)
+      )
+      scale(var(--kinetic-preview-enter-scale))
+      rotate(var(--kinetic-preview-enter-rotation));
+  }
+
+  2.6% {
+    opacity: 1;
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(1.07) rotate(var(--kinetic-rest-rotation));
+  }
+
+  4.2%,
+  78%,
+  90% {
+    opacity: 1;
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(var(--kinetic-rest-scale)) rotate(var(--kinetic-rest-rotation));
+  }
+
+  93%,
+  99% {
+    opacity: 0;
+    transform: translate(0, var(--kinetic-preview-exit-y))
+      scale(var(--kinetic-preview-exit-scale))
+      rotate(var(--kinetic-preview-exit-rotation));
+  }
 }

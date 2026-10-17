@@ -1,19 +1,20 @@
 <script setup>
 import { computed } from 'vue';
-import { ornateVerticalRevealDelaySeconds } from '../../../shared/presentation/ornateVerticalMotion.mjs';
+import { ornateVerticalRevealDelaySeconds } from '../../../../shared/presentation/ornateVerticalMotion.mjs';
 import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
-} from '../../../shared/presentation/ornateVerticalPresentation.mjs';
+} from '../../../../shared/presentation/ornateVerticalPresentation.mjs';
 
 const props = defineProps({
   scene: { type: Object, default: () => ({}) },
+  size: { type: String, default: 'detail' },
   animated: { type: Boolean, default: false },
 });
 
 const sourceTexts = computed(() => [
-  props.scene?.current ?? '夜が明けるまで言葉を残していく',
-  props.scene?.next ?? '言葉だけが残る',
+  props.scene?.lyrics?.current ?? '',
+  props.scene?.lyrics?.next ?? '',
 ]);
 
 const previewLines = computed(() => {
@@ -43,34 +44,38 @@ const previewLines = computed(() => {
 </script>
 
 <template>
-  <span class="ornate-preview" :data-animated="animated ? 'true' : 'false'">
-    <span
-      v-for="(line, lineIndex) in previewLines"
-      :key="`${lineIndex}-${line.text}`"
-      class="ornate-preview__line"
-      :data-placement="line.placement"
-      :data-segment-count="line.segments.length"
-      :style="{ '--ornate-line-offset': line.offset }"
-    >
+  <div
+    class="obs-template-mockup__content obs-template-mockup__content--lyrics"
+  >
+    <span class="ornate-preview" :data-animated="animated ? 'true' : 'false'">
       <span
-        v-for="segment in line.segments"
-        :key="`${lineIndex}-segment-${segment.index}-${segment.text}`"
-        class="ornate-preview__segment"
-        :data-segment-index="segment.index"
+        v-for="(line, lineIndex) in previewLines"
+        :key="`${lineIndex}-${line.text}`"
+        class="ornate-preview__line"
+        :data-placement="line.placement"
+        :data-segment-count="line.segments.length"
+        :style="{ '--ornate-line-offset': line.offset }"
       >
         <span
-          v-for="unit in segment.units"
-          :key="`${lineIndex}-${unit.index}-${unit.text}`"
-          class="ornate-preview__unit"
-          :data-emphasis="unit.emphasis"
-          :data-kind="unit.kind"
-          :data-text="unit.text"
-          :style="{ '--ornate-unit-delay': unit.delay }"
-          >{{ unit.text }}</span
+          v-for="segment in line.segments"
+          :key="`${lineIndex}-segment-${segment.index}-${segment.text}`"
+          class="ornate-preview__segment"
+          :data-segment-index="segment.index"
         >
+          <span
+            v-for="unit in segment.units"
+            :key="`${lineIndex}-${unit.index}-${unit.text}`"
+            class="ornate-preview__unit"
+            :data-emphasis="unit.emphasis"
+            :data-kind="unit.kind"
+            :data-text="unit.text"
+            :style="{ '--ornate-unit-delay': unit.delay }"
+            >{{ unit.text }}</span
+          >
+        </span>
       </span>
     </span>
-  </span>
+  </div>
 </template>
 
 <style scoped>
@@ -79,7 +84,7 @@ const previewLines = computed(() => {
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../../../shared/assets/fonts/HinaMincho-Regular.ttf')
+  src: url('../../../../shared/assets/fonts/HinaMincho-Regular.ttf')
     format('truetype');
 }
 
@@ -92,10 +97,11 @@ const previewLines = computed(() => {
   display: grid;
   box-sizing: border-box;
   overflow: hidden;
-  padding: 5% 6%;
+  /* Runtime inset is max(4rem, 4%) on both axes of a 1920×1080 canvas. */
+  padding: calc(4 * var(--obs-canvas-rem)) 4%;
   color: var(--obs-preview-ink);
   font-family: 'Utawakui Hina Mincho', 'Hina Mincho', 'Yu Mincho', serif;
-  line-height: 0.94;
+  line-height: 0.96;
   text-shadow: var(--ui-output-preview-ornate-shadow);
 }
 
@@ -214,3 +220,5 @@ const previewLines = computed(() => {
   }
 }
 </style>
+
+<style src="./OrnateVerticalPreview.css"></style>

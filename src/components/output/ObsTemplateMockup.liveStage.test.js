@@ -1,14 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import {
+  readObsTemplateMockupSource,
+  readObsTemplatePreviewSource,
+} from './obsTemplateMockupSource.mjs';
 
 describe('Live Stage gallery mockup', () => {
   it('mirrors the balanced runtime lanes and display-first broadcast hierarchy', () => {
     const source = readObsTemplateMockupSource();
 
-    const branch = source.slice(
-      source.indexOf("preset?.id === 'live-stage'"),
-      source.indexOf("preset?.id === 'manga-frame'"),
-    );
+    const branch = readObsTemplatePreviewSource('LiveStage');
 
     expect(branch).toContain('obs-template-mockup__live-stage-brand');
     expect(branch).toContain('obs-template-mockup__live-stage-brand-copy');
@@ -22,30 +24,42 @@ describe('Live Stage gallery mockup', () => {
     expect(source).toContain('inset-block-start: 5.556%');
     expect(source).toContain('inline-size: 34%');
     expect(source).toContain('inline-size: 32%');
-    expect(source).toContain('grid-template-columns: 20% minmax(0, 1fr)');
-    expect(source).toMatch(
-      /--ui-live-stage-type-label:\s*var\(\s*--ui-output-template-thumb-caption-font-size\s*\);/u,
+    // Runtime rem values reappear as canvas rem, so the preview keeps scale.
+    const runtimeCss = readFileSync(
+      fileURLToPath(
+        new URL('../../../overlay/lyrics/lyrics.css', import.meta.url),
+      ),
+      'utf8',
     );
-    expect(source).toMatch(
-      /--ui-live-stage-type-support:\s*var\(\s*--ui-output-template-thumb-title-font-size\s*\);/u,
+    for (const [runtimeVar, previewVar] of [
+      ['--ovl-live-stage-type-label', '--ui-live-stage-type-label'],
+      ['--ovl-live-stage-type-support', '--ui-live-stage-type-support'],
+      ['--ovl-live-stage-type-title', '--ui-live-stage-type-title'],
+      ['--ovl-live-stage-type-caption', '--ui-live-stage-type-caption'],
+    ]) {
+      const value = runtimeCss.match(
+        new RegExp(`${runtimeVar}: ([0-9.]+)r?em;`, 'u'),
+      )?.[1];
+      expect(value, runtimeVar).toBeDefined();
+      expect(source).toContain(
+        `${previewVar}: calc(${value} * var(--obs-canvas-rem));`,
+      );
+    }
+    expect(runtimeCss).toContain(
+      '--ovl-live-stage-card-mark-inline-size: 9rem;',
     );
     expect(source).toContain(
-      '--ui-live-stage-type-title: var(--ui-font-size-md)',
+      'grid-template-columns: calc(9 * var(--obs-canvas-rem)) minmax(0, 1fr);',
     );
-    expect(source).toContain(
-      '--ui-live-stage-type-caption: var(--ui-font-size-lg)',
-    );
+    expect(runtimeCss).toContain('--ovl-live-stage-brand-mark-size: 4.5rem;');
+    expect(source).toContain('width: calc(4.5 * var(--obs-canvas-rem));');
+    expect(runtimeCss).toContain('--ovl-live-stage-channel-size: 4rem;');
+    expect(source).toContain('font-size: calc(4 * var(--obs-canvas-rem));');
     expect(source).toMatch(
       /\.obs-template-mockup__live-stage-brand-copy\s*\{[\s\S]*?font-size:\s*var\(--ui-live-stage-type-label\);/u,
     );
     expect(source).toMatch(
       /\.obs-template-mockup__live-stage-brand-copy\s*> strong\s*\{[\s\S]*?font-size:\s*var\(--ui-live-stage-type-support\);/u,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__live-stage-brand > strong\s*\{[\s\S]*?width:\s*var\(--ui-space-5\);/u,
-    );
-    expect(source).toMatch(
-      /\.obs-template-mockup__live-stage-channel\s*\{[\s\S]*?font-size:\s*var\(--ui-font-size-lg\);/u,
     );
     expect(source).toMatch(
       /\.obs-template-mockup__live-stage-caption\s*\{[\s\S]*?font-size:\s*var\(--ui-live-stage-type-caption\);/u,

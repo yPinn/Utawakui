@@ -12,6 +12,7 @@ import {
 } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
+import OUTPUT_PREVIEW_SAMPLE from './outputPreviewSample.json';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
@@ -24,60 +25,26 @@ const OUTPUT_KIND_ORDER = new Map(
   OUTPUT_TEMPLATE_KINDS.map((kind, index) => [kind.id, index]),
 );
 
-export const OUTPUT_PREVIEW_SCENE = Object.freeze({
-  label: '固定示例 · 多語',
-  track: Object.freeze({
-    title: '如果可以',
-    artist: '韋禮安',
-  }),
-  nextTrack: Object.freeze({
-    title: '小幸運',
-    artist: '田馥甄',
-  }),
-  queue: Object.freeze([
-    Object.freeze({
-      number: '01',
-      title: '小幸運',
-      artist: '田馥甄',
-      state: 'played',
-    }),
-    Object.freeze({
-      number: '02',
-      title: '刻在我心底的名字',
-      artist: '盧廣仲',
-      state: 'played',
-    }),
-    Object.freeze({
-      number: '03',
-      title: '如果可以',
-      artist: '韋禮安',
-      state: 'current',
-    }),
-  ]),
-  lyrics: Object.freeze({
-    current: '目前歌詞',
-    next: '下一句',
-    reading: '歌詞讀音',
-    kinetic: Object.freeze({
-      samples: Object.freeze(['選ばれる', 'すてっぷ', '美意識']),
-    }),
-    ornate: Object.freeze({
-      current: '夜が明けるまで言葉を残していく',
-      next: '言葉だけが残る',
-    }),
-    manga: Object.freeze({
-      current: '地下鉄に飲み込まれる',
-      language: 'ja',
-      reading: Object.freeze({
-        text: '地下鉄に飲み込まれる',
-        segments: Object.freeze([
-          Object.freeze({ text: '地下鉄', reading: 'ちかてつ' }),
-          Object.freeze({ text: 'に' }),
-          Object.freeze({ text: '飲み込まれる', reading: 'のみこまれる' }),
-        ]),
-      }),
-    }),
-  }),
+function deepFreeze(value) {
+  if (value && typeof value === 'object') {
+    Object.values(value).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+// Every template previews the same editable sample (outputPreviewSample.json).
+export const OUTPUT_PREVIEW_SCENE = deepFreeze({
+  ...structuredClone(OUTPUT_PREVIEW_SAMPLE),
+  lyrics: {
+    language: OUTPUT_PREVIEW_SAMPLE.lyrics.language,
+    current: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
+    next: OUTPUT_PREVIEW_SAMPLE.lyrics.next,
+    reading: {
+      text: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
+      segments: structuredClone(OUTPUT_PREVIEW_SAMPLE.lyrics.reading),
+    },
+  },
 });
 
 const OUTPUT_TEMPLATE_DEFINITIONS = [
@@ -86,10 +53,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'now-playing',
     order: 20,
     name: '浮光光碟',
-    tone: 'stage',
     availability: {
-      label: '建議',
-      tone: 'accent',
       summary: '不需要封面，即可顯示目前曲目與下一首。',
     },
     summary: '光碟反光與歌曲資訊構成的橫向版面。',
@@ -110,10 +74,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'setlist',
     order: 20,
     name: '黑幕歌單',
-    tone: 'minimal',
     availability: {
-      label: '可用',
-      tone: 'muted',
       summary: '只需要目前曲目與已唱紀錄。',
     },
     summary: '黑底細線排列目前曲目與已唱紀錄。',
@@ -135,16 +96,13 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 50,
     name: '聚焦歌詞',
-    tone: 'lyrics',
     availability: {
-      label: '建議',
-      tone: 'accent',
       summary: '只需要目前行與下一行文字。',
     },
     summary: '強調目前行，弱化下一行提示。',
     detail: '目前行置中成為視覺焦點，下一行以低對比預告，適合多數演出。',
     preview: {
-      layoutLabel: '焦點單行',
+      layoutLabel: '目前＋下一行',
       motionLabel: '柔和淡入',
     },
     tags: ['當前行', '下一行', '高可讀'],
@@ -159,10 +117,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 10,
     name: '經典伴唱',
-    tone: 'stage',
     availability: {
-      label: '可用',
-      tone: 'muted',
       summary: '有逐字資料時精確掃色，否則依行長平順估算。',
     },
     summary: '雙行錯位字幕搭配倒數與逐字掃色。',
@@ -187,10 +142,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 30,
     name: '漫畫對白',
-    tone: 'manga',
     availability: {
-      label: '可用',
-      tone: 'muted',
       summary: '只需要目前行；有日文讀音時可顯示假名。',
     },
     summary: '歌詞化為左右交替的直書對話框。',
@@ -214,10 +166,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 25,
     name: '霓彩跳字',
-    tone: 'lyrics',
     availability: {
-      label: '可用',
-      tone: 'accent',
       summary: '逐行歌詞即可；每段歌詞自動交錯跳入。',
     },
     summary: '粗體漸層白框字，每段逐字交錯跳入。',
@@ -242,10 +191,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 28,
     name: '華綴直書',
-    tone: 'lyrics',
     availability: {
-      label: '可用',
-      tone: 'accent',
       summary: '只需要逐行歌詞；日文漢字會自動成組。',
     },
     summary: '明朝直書讓漢字成組、假名逐字綴現。',
@@ -271,10 +217,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 20,
     name: '舞台轉播',
-    tone: 'stage',
     availability: {
-      label: '可用',
-      tone: 'muted',
       summary: '需要逐行時間；曲目資訊用於開場字卡。',
     },
     summary: '舞台轉播風格的歌詞與開場字卡。',
@@ -298,10 +241,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'now-playing',
     order: 10,
     name: '星染黑膠',
-    tone: 'minimal',
     availability: {
-      label: '可用',
-      tone: 'muted',
       summary: '優先使用本機封面，缺圖時顯示曲名首字。',
     },
     summary: '封面與星染唱盤各半的黑膠播放場景。',
@@ -323,10 +263,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'now-playing',
     order: 30,
     name: '封面播放卡',
-    tone: 'minimal',
     availability: {
-      label: '可用',
-      tone: 'muted',
       summary: '使用本機封面與播放時間，缺少時改用替代顯示。',
     },
     summary: '大封面與播放進度構成的直式節目卡。',
@@ -335,7 +272,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
       layoutLabel: '直式封面卡',
       motionLabel: '進度同步',
     },
-    tags: ['大幅封面', '播放進度', '唯讀狀態'],
+    tags: ['大幅封面', '播放進度', '播放狀態'],
     settings: [
       { label: '顯示', value: '封面、歌名、歌手、進度' },
       { label: '控制列', value: '僅顯示播放狀態' },
@@ -368,6 +305,20 @@ function presentationFieldsForTemplate(templateId) {
   ]);
 }
 
+const DEFAULT_TEMPLATE_IDS = new Set(
+  OUTPUT_TEMPLATE_VALUES.slots.map((slot) => slot.defaultTemplateId),
+);
+
+// Labels follow state: each slot's default is 建議, the rest are 可用.
+function availabilityForTemplate(template, available = true) {
+  const status = !available
+    ? { label: '尚未提供', tone: 'warning' }
+    : DEFAULT_TEMPLATE_IDS.has(template.id)
+      ? { label: '建議', tone: 'accent' }
+      : { label: '可用', tone: 'muted' };
+  return Object.freeze({ ...template.availability, ...status, available });
+}
+
 export const OUTPUT_TEMPLATES = Object.freeze(
   OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
     const appearanceFields = outputAppearanceFieldsForTemplate(template.id);
@@ -375,6 +326,7 @@ export const OUTPUT_TEMPLATES = Object.freeze(
     if (template.kind !== 'lyrics') {
       return Object.freeze({
         ...template,
+        availability: availabilityForTemplate(template),
         appearanceFields,
         presentationFields,
       });
@@ -384,10 +336,10 @@ export const OUTPUT_TEMPLATES = Object.freeze(
     );
     return Object.freeze({
       ...template,
-      availability: Object.freeze({
-        ...template.availability,
-        available: presentationProfile.available,
-      }),
+      availability: availabilityForTemplate(
+        template,
+        presentationProfile.available,
+      ),
       editableAppearanceKeys: [...presentationProfile.editableAppearanceKeys],
       appearanceFields,
       presentationFields,

@@ -15,7 +15,7 @@ import {
   shallowRef,
   useTemplateRef,
 } from 'vue';
-import { Copy, Grid2X2, Moon, Sun, UserRound } from '../../icons/index.js';
+import { Copy, UserRound } from '../../icons/index.js';
 import streamerPreviewImage from '../../assets/workbench-streamer-guide.png';
 import {
   calculateCapturePreviewScale,
@@ -23,6 +23,7 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import { buildOutputDropUrl } from '../../utils/outputRoutes.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
 
@@ -54,11 +55,6 @@ const previewStage = useTemplateRef('previewStage');
 const previewScale = shallowRef(1);
 const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width;
 const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height;
-const PREVIEW_BACKDROPS = Object.freeze([
-  { id: 'checker', label: '透明背景', icon: Grid2X2 },
-  { id: 'dark', label: '暗色背景', icon: Moon },
-  { id: 'light', label: '亮色背景', icon: Sun },
-]);
 let copyResetTimer = null;
 let resizeObserver = null;
 
@@ -157,7 +153,6 @@ onBeforeUnmount(() => {
       <div
         v-if="isLyrics"
         class="obs-overlay-preview__frame"
-        :data-tone="preset?.tone"
         :data-backdrop="previewBackdrop"
         :style="previewFrameStyle"
       >
@@ -230,21 +225,10 @@ onBeforeUnmount(() => {
           :aria-pressed="showLyricsGuide"
           @click="emit('update:showLyricsGuide', !showLyricsGuide)"
         />
-        <div
-          class="obs-overlay-preview__backdrops"
-          role="group"
-          aria-label="預覽背景"
-        >
-          <UiIconButton
-            v-for="backdrop in PREVIEW_BACKDROPS"
-            :key="backdrop.id"
-            :icon="backdrop.icon"
-            :label="backdrop.label"
-            :active="previewBackdrop === backdrop.id"
-            :aria-pressed="previewBackdrop === backdrop.id"
-            @click="emit('update:previewBackdrop', backdrop.id)"
-          />
-        </div>
+        <ObsPreviewBackdropToggle
+          :model-value="previewBackdrop"
+          @update:model-value="emit('update:previewBackdrop', $event)"
+        />
         <UiIconButton
           v-if="obsUrl"
           :icon="Copy"
@@ -368,7 +352,6 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__actions,
-.obs-overlay-preview__backdrops,
 .obs-overlay-preview__info,
 .obs-overlay-preview__capture-meta {
   min-width: 0;
@@ -402,14 +385,6 @@ onBeforeUnmount(() => {
 
 .obs-overlay-preview__actions {
   gap: var(--ui-space-3);
-}
-
-.obs-overlay-preview__backdrops {
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
 }
 
 .obs-overlay-preview__feedback {

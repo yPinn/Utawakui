@@ -68,7 +68,7 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
       "url('../../../shared/assets/fonts/GenEiAntiqueNv6-M.ttf')",
     );
     expect(mockup).toMatch(
-      /data-manga-language='ja'[\s\S]*?\.obs-template-mockup__title--manga\s*{[\s\S]*?'Utawakui GenEi Antique'/,
+      /data-manga-language='ja'[\s\S]*?\.obs-template-mockup__manga-text\s*{[\s\S]*?'Utawakui GenEi Antique'/,
     );
     expect(notices).toContain('GenEi Antique');
     expect(design).toContain('Utawakui GenEi Antique');

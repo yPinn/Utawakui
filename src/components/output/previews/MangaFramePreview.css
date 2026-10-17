@@ -1,0 +1,146 @@
+/* Mirrors overlay/lyrics/lyrics.css manga-frame; runtime rem -> canvas rem.
+  At 1920×1080 every vh／rem min() in the runtime resolves to its rem side. */
+.obs-template-mockup[data-template-id='manga-frame']
+  .obs-template-mockup__content--lyrics {
+  padding: 0;
+  font-size: var(--obs-canvas-rem);
+}
+
+.obs-template-mockup__manga-bubbles {
+  --ui-manga-stage-edge: 66.667%;
+  --ui-manga-lane-inline-size: calc(34 * var(--obs-canvas-rem));
+
+  position: absolute;
+  inset-block: calc(4 * var(--obs-canvas-rem));
+  inset-inline: 0;
+  min-inline-size: 0;
+  display: block;
+}
+
+.obs-template-mockup__manga-bubble {
+  --ui-manga-bubble-base-block-size: calc(24 * var(--obs-canvas-rem));
+  --ui-manga-bubble-row-cap: calc(37.5 * var(--obs-canvas-rem));
+  --ui-manga-text-size-by-count: calc(2.9 * var(--obs-canvas-rem));
+
+  position: absolute;
+  inset-block-start: var(--ui-manga-anchor-y, 50%);
+  box-sizing: border-box;
+  block-size: min(
+    max(
+      var(--ui-manga-bubble-base-block-size),
+      var(--ui-manga-frame-required-block-size)
+    ),
+    var(--ui-manga-bubble-row-cap),
+    100%
+  );
+  max-inline-size: var(--ui-manga-lane-inline-size);
+  aspect-ratio: 2 / 3;
+  display: grid;
+  transform: translateY(-50%);
+  place-items: center;
+  color: var(--ui-output-preview-manga-ink);
+  font-size: var(--ui-manga-text-size-by-count);
+  --manga-frame-ink: var(--ui-output-preview-manga-ink);
+  --manga-frame-paper: var(--ui-output-preview-manga-paper);
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='2']
+  .obs-template-mockup__manga-bubble {
+  --ui-manga-bubble-row-cap: calc(37 * var(--obs-canvas-rem));
+  --ui-manga-text-size-by-count: calc(2.35 * var(--obs-canvas-rem));
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='3']
+  .obs-template-mockup__manga-bubble {
+  --ui-manga-bubble-row-cap: calc(20 * var(--obs-canvas-rem));
+  --ui-manga-text-size-by-count: calc(1.9 * var(--obs-canvas-rem));
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='3']
+  .obs-template-mockup__manga-bubble[data-manga-order='2'] {
+  --ui-manga-bubble-row-cap: calc(31 * var(--obs-canvas-rem));
+}
+
+.obs-template-mockup__manga-bubble[data-manga-side='left'] {
+  inset-inline-end: calc(
+    var(--ui-manga-stage-edge) + var(--ui-manga-inline-jitter, 0) *
+      var(--obs-canvas-rem)
+  );
+}
+
+.obs-template-mockup__manga-bubble[data-manga-side='right'] {
+  inset-inline-start: calc(
+    var(--ui-manga-stage-edge) + var(--ui-manga-inline-jitter, 0) *
+      var(--obs-canvas-rem)
+  );
+}
+
+.obs-template-mockup__manga-bubble[data-manga-side='right']
+  .obs-template-mockup__manga-frame {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
+.obs-template-mockup__manga-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.obs-template-mockup__manga-text {
+  position: relative;
+  z-index: var(--ui-layer-raised);
+  inline-size: max-content;
+  min-inline-size: 0;
+  max-inline-size: 72%;
+  block-size: fit-content;
+  min-block-size: 0;
+  max-block-size: 72%;
+  display: block;
+  overflow: hidden;
+  place-self: center;
+  color: var(--ui-output-preview-manga-ink);
+  font-size: 1em;
+  line-height: 1.16;
+  line-break: strict;
+  overflow-wrap: anywhere;
+  text-align: start;
+  text-orientation: mixed;
+  text-wrap: balance;
+  white-space: pre-wrap;
+  word-break: normal;
+  writing-mode: vertical-rl;
+}
+
+.obs-template-mockup__manga-bubble[data-manga-language='ja']
+  .obs-template-mockup__manga-text {
+  font-family:
+    'Utawakui GenEi Antique', 'Noto Sans CJK JP', 'Yu Gothic UI', sans-serif;
+}
+
+.obs-template-mockup__manga-text ruby {
+  ruby-align: center;
+  ruby-position: over;
+}
+
+.obs-template-mockup__manga-text rt {
+  font-family: inherit;
+  font-size: 0.4em;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+  text-orientation: upright;
+}
+
+.obs-template-mockup__manga-bubble[data-manga-script='latin']
+  .obs-template-mockup__manga-text {
+  font-size: 0.82em;
+}
+
+.obs-template-mockup__manga-bubble[data-lyric-kind='aside']
+  .obs-template-mockup__manga-text {
+  font-size: 0.78em;
+}

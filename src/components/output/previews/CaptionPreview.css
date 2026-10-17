@@ -1,0 +1,44 @@
+/* Mirrors the default .lyrics-overlay panel in overlay/lyrics/lyrics.css;
+  runtime rem -> canvas rem. */
+.obs-template-mockup .obs-template-mockup__caption {
+  position: absolute;
+  inset-inline-start: 50%;
+  /* max(4rem, 9%) of a 1080px canvas resolves to 9%. */
+  inset-block-end: 9%;
+  inline-size: min(
+    calc(100% - 8 * var(--obs-canvas-rem)),
+    calc(64 * var(--obs-canvas-rem))
+  );
+  box-sizing: border-box;
+  display: grid;
+  transform: translateX(-50%);
+  gap: calc(0.75 * var(--obs-canvas-rem));
+  padding: calc(0.75 * var(--obs-canvas-rem)) calc(1 * var(--obs-canvas-rem));
+  font-size: var(--obs-canvas-rem);
+  text-align: left;
+  justify-items: start;
+}
+
+.obs-template-mockup__caption-current,
+.obs-template-mockup__caption-next {
+  max-inline-size: min(100%, 28ch);
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.obs-template-mockup__caption-current {
+  color: var(--obs-preview-ink);
+  font-size: 3.5em;
+  font-weight: 600;
+  line-height: 1.22;
+  -webkit-text-stroke: 0.035em var(--obs-preview-bg);
+  paint-order: stroke fill;
+}
+
+.obs-template-mockup__caption-next {
+  color: var(--obs-preview-muted);
+  font-size: 1.75em;
+  font-weight: 600;
+  line-height: 1.3;
+}

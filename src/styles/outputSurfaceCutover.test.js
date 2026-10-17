@@ -41,12 +41,11 @@ const outputConsumerPaths = [
   '../components/output/ObsSlotWorkbench.vue',
   '../components/output/ObsTemplateGallery.vue',
   '../components/output/ObsTemplateMockup.base.css',
-  '../components/output/ObsTemplateMockup.cover-player.css',
-  '../components/output/ObsTemplateMockup.karaoke.css',
-  '../components/output/ObsTemplateMockup.live-stage.css',
-  '../components/output/ObsTemplateMockup.now-playing.css',
-  '../components/output/ObsTemplateMockup.setlist.css',
-  '../components/output/ObsTemplateMockup.thumbnail.css',
+  '../components/output/previews/CoverPlayerPreview.css',
+  '../components/output/previews/KaraokeStackPreview.css',
+  '../components/output/previews/LiveStagePreview.css',
+  '../components/output/previews/NowNextPreview.css',
+  '../components/output/previews/QueueBoardPreview.css',
   '../components/output/ObsWidgetCapturePreview.vue',
 ];
 
@@ -100,12 +99,6 @@ const outputOwnedTokens = [
   '--ui-output-settings-command-button-width',
   '--ui-output-template-thumb-min-height',
   '--ui-output-template-thumb-title-font-size',
-  '--ui-output-template-thumb-caption-font-size',
-  '--ui-output-template-thumb-content-width',
-  '--ui-output-template-thumb-artwork-size',
-  '--ui-output-template-thumb-content-padding',
-  '--ui-output-template-thumb-tight-gap',
-  '--ui-output-template-thumb-group-gap',
   '--ui-output-setting-label-width-min',
 ];
 

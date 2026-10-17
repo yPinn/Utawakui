@@ -10,6 +10,7 @@
     var(--ui-output-gallery-detail-width-max)
   ); /* tracks window width, so sidebar drags do not resize the preview */
   --ui-output-gallery-preview-max-width: 19.5rem; /* medium template demo, not the editing canvas */
+  --ui-output-gallery-preview-max-height: 20rem; /* tall widget demo stays above the description */
   --ui-output-gallery-tile-min-width: 10rem; /* dense media-browser tile with readable names */
   --ui-output-workbench-inspector-width: clamp(
     18rem,
@@ -20,14 +21,6 @@
   --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* thumbnail-only label */
-  --ui-output-template-thumb-caption-font-size: 0.625rem; /* secondary compact preview cue */
-  --ui-output-template-thumb-content-width: 86%; /* optically centered comparison composition */
-  --ui-output-template-thumb-artwork-size: var(
-    --ui-artwork-size-xs
-  ); /* balances artwork at the tile minimum */
-  --ui-output-template-thumb-content-padding: var(--ui-space-2);
-  --ui-output-template-thumb-tight-gap: var(--ui-space-1);
-  --ui-output-template-thumb-group-gap: var(--ui-space-2);
   --ui-output-setting-label-width-min: 4rem; /* compact setting label column */
 
   /* Representative full-strength Look swatches for the control-panel picker.
@@ -50,10 +43,11 @@
 
   /* Gallery mockups and iframe-failure states remain feature-owned artwork. */
   --ui-output-preview-canvas: #14191d;
-  --ui-output-preview-stage-canvas: #19252a;
-  --ui-output-preview-lyrics-canvas: #162426;
+  --ui-output-preview-backdrop-dark: #262626;
+  --ui-output-preview-backdrop-light: #f2f2f0;
+  --ui-output-preview-backdrop-checker-a: #d9d9d9;
+  --ui-output-preview-backdrop-checker-b: #f5f5f5;
   --ui-output-preview-surface: rgb(8 11 13 / 74%);
-  --ui-output-preview-lyrics-surface: rgb(7 18 19 / 72%);
   --ui-output-preview-surface-muted: rgb(255 255 255 / 18%);
   --ui-output-preview-text: #fffdfa;
   --ui-output-preview-text-muted: rgb(255 253 250 / 68%);
@@ -68,12 +62,8 @@
   --ui-output-preview-vinyl-sleeve-paper: #eee7dc;
   --ui-output-preview-vinyl-copy-ink: #161a1d;
   --ui-output-preview-vinyl-copy-muted: #54595d;
-  --ui-output-preview-vinyl-title-size: 1rem;
-  --ui-output-preview-vinyl-artist-size: 0.75rem;
-  --ui-output-preview-vinyl-artist-weight: 500;
   --ui-output-preview-stage-accent: #78c9cb;
   --ui-output-preview-accent-contrast: #102326;
-  --ui-output-preview-ktv-canvas: #11151d;
   --ui-output-preview-ktv-fill-unsung: #ffffff;
   --ui-output-preview-ktv-fill-solo: #2344b5;
   --ui-output-preview-ktv-fill-male: #2344b5;
@@ -94,11 +84,8 @@
   --ui-output-preview-ornate-echo: rgb(255 255 255 / 18%);
   --ui-output-preview-ornate-shadow:
     0 0.018em 0.012em rgb(0 0 0 / 76%), 0 0.055em 0.1em rgb(0 0 0 / 34%);
-  --ui-output-preview-ornate-detail-font-size: 0.9rem;
-  --ui-output-preview-ornate-thumbnail-font-size: 0.68rem;
   --ui-output-preview-kinetic-offset-start: -0.6em;
   --ui-output-preview-kinetic-offset-end: 0.7em;
-  --ui-output-preview-manga-canvas: #e8e8e5;
   --ui-output-preview-manga-paper: #ffffff;
   --ui-output-preview-manga-ink: #101010;
   --ui-output-preview-manga-halftone: rgb(16 16 16 / 20%);
@@ -106,7 +93,6 @@
   --ui-output-preview-manga-dot-size: 0.045rem;
   --ui-output-preview-manga-dot-gap: 0.055rem;
   --ui-output-preview-manga-pattern-size: 0.2rem;
-  --ui-output-preview-player-track-size: 0.125rem;
   --ui-output-preview-aspect-ratio: 16 / 9;
   --ui-output-preview-cycle-duration: 4.8s;
   --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);

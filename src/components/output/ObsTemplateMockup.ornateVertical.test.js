@@ -3,35 +3,39 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
-import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
+import {
+  readObsTemplateMockupSource,
+  readObsTemplatePreviewSource,
+} from './obsTemplateMockupSource.mjs';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Ornate Vertical gallery mockup', () => {
   it('keeps the parent mockup as a composition surface', () => {
-    const source = readObsTemplateMockupSource();
+    const source = `${readObsTemplateMockupSource()}
+${fs.readFileSync(
+  path.join(directory, 'previews', 'outputTemplatePreviews.js'),
+  'utf8',
+)}`;
 
     expect(source).toContain(
       "import OrnateVerticalPreview from './OrnateVerticalPreview.vue';",
     );
-    expect(source).toContain(
-      `<template v-else-if="preset?.id === 'ornate-vertical'">`,
-    );
-    expect(source).toContain('<OrnateVerticalPreview');
+    expect(source).toContain("'ornate-vertical': OrnateVerticalPreview,");
     expect(source).toContain(':animated="animated"');
-    expect(source).toContain(':scene="lyrics.ornate"');
+    expect(source).toContain(':scene="scene"');
   });
 
   it('uses shared presentation and motion rules for a two-line animated comparison', () => {
     const source = fs.readFileSync(
-      path.join(directory, 'OrnateVerticalPreview.vue'),
+      path.join(directory, 'previews', 'OrnateVerticalPreview.vue'),
       'utf8',
     );
 
     expect(source).toContain('adaptOrnateVerticalLyricsPresentation');
     expect(source).toContain('createOrnateVerticalDocumentContext');
     expect(source).toContain('ornateVerticalRevealDelaySeconds');
-    expect(source).toContain('夜が明けるまで言葉を残していく');
+    expect(source).toContain('props.scene?.lyrics?.current');
     expect(source).toContain('v-for="(line, lineIndex) in previewLines"');
     expect(source).toContain('v-for="segment in line.segments"');
     expect(source).toContain('v-for="unit in segment.units"');
@@ -76,11 +80,25 @@ describe('Ornate Vertical gallery mockup', () => {
     expect(source).toMatch(
       /data-template-id='ornate-vertical'[\s\S]*?\.obs-template-mockup__content--lyrics\s*\{[^}]*position:\s*relative;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/,
     );
-    expect(source).toContain(
-      '--ui-output-preview-ornate-font-size: var(\n    --ui-output-preview-ornate-detail-font-size\n  )',
+  });
+
+  it('sizes the preview from runtime units on a 1920×1080 canvas', () => {
+    const preview = readObsTemplatePreviewSource('OrnateVertical');
+    const runtimeCss = fs.readFileSync(
+      path.join(directory, '..', '..', '..', 'overlay', 'lyrics', 'lyrics.css'),
+      'utf8',
     );
-    expect(source).toContain(
-      '--ui-output-preview-ornate-font-size: var(\n    --ui-output-preview-ornate-thumbnail-font-size\n  )',
+
+    // Runtime 5.8vh, where one canvas vh is 0.675 canvas rem.
+    expect(runtimeCss).toContain('--ovl-ornate-font-size: 5.8vh;');
+    expect(preview).toMatch(
+      /--ui-output-preview-ornate-font-size: calc\(\s*5\.8 \* 0\.675 \* var\(--obs-canvas-rem\)\s*\);/u,
     );
+    expect(runtimeCss).toContain(
+      'inset: max(var(--ovl-safe-block), 4%) max(var(--ovl-safe-inline), 4%);',
+    );
+    expect(preview).toContain('padding: calc(4 * var(--obs-canvas-rem)) 4%;');
+    expect(preview).toContain('line-height: 0.96;');
+    expect(preview).not.toContain("[data-size='thumbnail']");
   });
 });
