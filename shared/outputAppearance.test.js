@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   OUTPUT_APPEARANCE_GROUPS,
+  OUTPUT_SLOT_APPEARANCE_DEFAULTS,
+  carryOutputAppearanceToTemplate,
   normalizeOutputAppearance,
   outputAppearanceFieldsForTemplate,
   sanitizeOutputAppearanceSetting,
@@ -383,5 +385,48 @@ describe('output appearance schema', () => {
         { id: 'high-contrast', label: '高對比' },
       ],
     });
+  });
+
+  it('carries only customized values when the template changes', () => {
+    const carried = carryOutputAppearanceToTemplate(
+      { fontFamily: 'serif', fontWeight: 'regular', captureSize: 'full' },
+      {
+        fromTemplateId: 'focus-line',
+        toTemplateId: 'manga-frame',
+        slotDefaults: OUTPUT_SLOT_APPEARANCE_DEFAULTS.lyrics,
+      },
+    );
+
+    expect(carried).toEqual({
+      fontFamily: 'antique',
+      fontWeight: 'regular',
+      captureSize: 'full',
+    });
+  });
+
+  it('keeps a customized local font and leaves same-template saves alone', () => {
+    const localFont = {
+      source: 'local',
+      family: 'Noto Sans CJK TC',
+      postscriptName: 'NotoSansCJKtc-Regular',
+      style: 'Regular',
+    };
+
+    expect(
+      carryOutputAppearanceToTemplate(
+        { fontFamily: { ...localFont } },
+        {
+          fromTemplateId: 'live-stage',
+          toTemplateId: 'focus-line',
+          slotDefaults: { fontFamily: localFont },
+        },
+      ).fontFamily,
+    ).toEqual({ ...localFont });
+    expect(
+      carryOutputAppearanceToTemplate(
+        { fontFamily: 'sans' },
+        { fromTemplateId: 'manga-frame', toTemplateId: 'manga-frame' },
+      ),
+    ).toEqual({ fontFamily: 'sans' });
   });
 });

@@ -1008,12 +1008,12 @@ for the performer. The Gallery mockup mirrors these roles and proportions, and t
 template defaults to the overlay sans stack without changing explicit saved font
 choices.
 
-The `manga-frame` template uses the bundled normal-width GenEi Antique 6.0a face
-under the local CSS family name `Utawakui GenEi Antique` when the projected line
-is Japanese. Ruby annotations inherit the same face so kanji and kana retain one
-comic-dialogue texture in vertical setting. Traditional Chinese and other content
-continue through the selected profile font stack; this exception does not alter
-the control panel or any other Output template.
+The `manga-frame` template defaults its font choice to the bundled normal-width
+GenEi Antique 6.0a face (`antique`, local CSS family `Utawakui GenEi Antique`), so
+kanji and kana keep one comic-dialogue texture in vertical setting. The choice also
+offers the overlay sans, serif and rounded stacks and applies to every language;
+ruby annotations inherit the bubble face. This default does not alter the control
+panel or any other Output template.
 
 The `ornate-vertical` template defaults to bundled Hina Mincho Regular under the
 local CSS family name `Utawakui Hina Mincho`; the user may select bundled GenEi

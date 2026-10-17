@@ -365,9 +365,9 @@ filler／連續重複與 CJK 顯示標點，平衡分行保留內容但重排 ro
 來源區間，再插值作者 segment 時間；映射失敗才使用 T1 視覺權重 page progress。
 
 Manga Frame 的共享 layout contract 以 document language、實際假名或既有 reading segment
-投影 `ja`／`other` 呈現提示。Browser Source 與 Renderer 預覽只在 `ja` bubble 套用封裝的
-GenEi Antique 6.0a 一般版；ruby `rt` 繼承相同字體，繁中與其他內容維持 profile font
-fallback。字型、固定來源 checksum 與 OFL 1.1 授權隨 `shared/assets/fonts/` 封裝，並只經
+投影 `ja`／`other` 呈現提示。字型由 Appearance 選擇，預設為封裝的 GenEi Antique 6.0a
+一般版（`antique`），也可改用 sans／serif／rounded，且不分語言一律套用；ruby `rt` 繼承
+對話框字體。字型、固定來源 checksum 與 OFL 1.1 授權隨 `shared/assets/fonts/` 封裝，並只經
 Output server exact allowlist 提供，不依賴遠端 webfont。
 
 Ornate Vertical profile 同樣留在 Lyrics Output route 內。共享 adapter 以 grapheme

@@ -785,7 +785,6 @@
     display: block;
     overflow: hidden;
     color: var(--ovl-color-text-secondary);
-    font-family: var(--ovl-font-ui);
     font-size: var(--ovl-template-artwork-artist-size);
     font-weight: 500;
     line-height: 1.25;

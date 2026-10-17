@@ -65,4 +65,38 @@ describe('buildOutputSlotPayload', () => {
     expect(payload.settings).toEqual({ fontFamily: localFont });
     expect(() => structuredClone(payload)).not.toThrow();
   });
+
+  it('moves untouched settings to the next template default', () => {
+    const fromFocusLine = buildOutputSlotPayload(
+      { templateId: 'focus-line', settings: { fontFamily: 'serif' } },
+      { templateId: 'manga-frame' },
+    );
+    // Karaoke has no font field, so the slot default stands for untouched.
+    const throughKaraoke = buildOutputSlotPayload(
+      { templateId: 'karaoke-stack', settings: { fontFamily: 'serif' } },
+      { templateId: 'manga-frame' },
+    );
+
+    expect(fromFocusLine.settings.fontFamily).toBe('antique');
+    expect(throughKaraoke.settings.fontFamily).toBe('antique');
+  });
+
+  it('keeps customized settings and explicit changes across templates', () => {
+    const customized = buildOutputSlotPayload(
+      { templateId: 'focus-line', settings: { fontFamily: 'rounded' } },
+      { templateId: 'manga-frame' },
+    );
+    const explicit = buildOutputSlotPayload(
+      { templateId: 'focus-line', settings: { fontFamily: 'serif' } },
+      { templateId: 'manga-frame', settings: { fontFamily: 'sans' } },
+    );
+    const sameTemplate = buildOutputSlotPayload(
+      { templateId: 'manga-frame', settings: { fontFamily: 'serif' } },
+      { settings: { fontScale: 'large' } },
+    );
+
+    expect(customized.settings.fontFamily).toBe('rounded');
+    expect(explicit.settings.fontFamily).toBe('sans');
+    expect(sameTemplate.settings.fontFamily).toBe('serif');
+  });
 });

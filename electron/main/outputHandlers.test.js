@@ -127,7 +127,7 @@ describe('output handlers', () => {
     });
 
     expect(await ipcMain.handlers.get('output-slots:list')()).toMatchObject({
-      version: 3,
+      version: 4,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': { templateId: 'now-next' },

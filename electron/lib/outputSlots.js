@@ -19,7 +19,7 @@ const {
 } = require('../../shared/presentation/lyricsPresentationPolicies.mjs');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
-const OUTPUT_SLOTS_VERSION = 3;
+const OUTPUT_SLOTS_VERSION = 4;
 const MAX_STYLE_SET_IDS = 32;
 const MAX_SETTINGS = 100;
 const MAX_ID_LENGTH = 100;
@@ -179,11 +179,25 @@ function migrateV1Document(value) {
     const normalized = sanitizeOutputSlot(kind, profile);
     if (normalized) slots[kind] = normalized;
   }
-  return normalizeDocument({ slots });
+  return migrateV3Document({ slots });
 }
 
 function migrateV2Document(value) {
-  return normalizeDocument(value);
+  return migrateV3Document(normalizeDocument(value));
+}
+
+// v3 stored Manga's former serif default, which Japanese bubbles never showed;
+// v4 makes GenEi Antique the default choice, so untouched slots keep that face.
+function migrateV3Document(value) {
+  const document = normalizeDocument(value);
+  const lyrics = document.slots.lyrics;
+  if (
+    lyrics?.templateId === 'manga-frame' &&
+    lyrics.settings.fontFamily === 'serif'
+  ) {
+    lyrics.settings.fontFamily = 'antique';
+  }
+  return document;
 }
 
 function writeOutputSlots(dir, document) {
@@ -231,6 +245,12 @@ function loadOutputSlots(dir) {
   if (data.version === 2 && data.slots) {
     const migrated = migrateV2Document(data);
     fs.copyFileSync(filePath, `${filePath}.v2-${Date.now()}.bak`);
+    writeOutputSlots(dir, migrated);
+    return migrated;
+  }
+  if (data.version === 3 && data.slots) {
+    const migrated = migrateV3Document(data);
+    fs.copyFileSync(filePath, `${filePath}.v3-${Date.now()}.bak`);
     writeOutputSlots(dir, migrated);
     return migrated;
   }

@@ -265,6 +265,7 @@ const BASIC_APPEARANCE_KEYS = Object.freeze([
 ]);
 const BASIC_FONT_IDS = Object.freeze(['sans', 'serif', 'rounded']);
 const ORNATE_FONT_IDS = Object.freeze(['ornate', 'antique']);
+const MANGA_FONT_IDS = Object.freeze(['antique', ...BASIC_FONT_IDS]);
 const ORNATE_POSITION_IDS = Object.freeze([
   'top-right',
   'center-right',
@@ -373,7 +374,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'furigana',
     ],
     fields: {
-      fontFamily: { defaultValue: 'serif' },
+      fontFamily: { defaultValue: 'antique', optionIds: MANGA_FONT_IDS },
       fontScale: { defaultValue: 'medium' },
       fontWeight: { defaultValue: 'bold' },
       furigana: { defaultValue: 'auto' },
@@ -574,6 +575,42 @@ export function outputAppearanceFieldsForTemplate(templateId) {
         : {};
     return cloneField(field, { ...fontOverride, ...templateOverride });
   });
+}
+
+function sameSettingValue(left, right) {
+  if (left === right) return true;
+  return (
+    typeof left === 'object' &&
+    left !== null &&
+    typeof right === 'object' &&
+    right !== null &&
+    JSON.stringify(left) === JSON.stringify(right)
+  );
+}
+
+// Switching templates keeps customized values. A value still equal to the
+// previous template's default (or the slot default when that template had no
+// such field) was never customized, so it follows the next template's default.
+export function carryOutputAppearanceToTemplate(settings, options = {}) {
+  const { fromTemplateId, toTemplateId, slotDefaults = {} } = options;
+  if (!settings || fromTemplateId === toTemplateId) return { ...settings };
+  const fromDefaults = new Map(
+    outputAppearanceFieldsForTemplate(fromTemplateId).map((field) => [
+      field.key,
+      field.defaultValue,
+    ]),
+  );
+  const next = { ...settings };
+  for (const field of outputAppearanceFieldsForTemplate(toTemplateId)) {
+    if (!(field.key in settings)) continue;
+    const reference = fromDefaults.has(field.key)
+      ? fromDefaults.get(field.key)
+      : slotDefaults[field.key];
+    if (sameSettingValue(settings[field.key], reference)) {
+      next[field.key] = field.defaultValue;
+    }
+  }
+  return next;
 }
 
 export function outputAppearanceFieldKeysForTemplate(templateId) {

@@ -12,9 +12,18 @@ const css = readFileSync(
   'utf8',
 );
 
+// Formatter-independent text: single spaces, no padding inside parentheses.
+const compactCss = css
+  .replace(/\s+/gu, ' ')
+  .replace(/\(\s+/gu, '(')
+  .replace(/\s+\)/gu, ')');
+
 function numericTypeStep(variableName) {
-  const match = css.match(
-    new RegExp(`--${variableName}:\\s*([0-9.]+)(?:rem|em);`, 'u'),
+  const match = compactCss.match(
+    new RegExp(
+      `--${variableName}:\\s*(?:calc\\()?([0-9.]+)(?:rem|em)(?: \\* var\\(--ovl-live-stage-scale\\)\\))?;`,
+      'u',
+    ),
   );
   return match ? Number(match[1]) : null;
 }
@@ -53,11 +62,23 @@ describe('Live Stage overlay layout contract', () => {
     expect(css).toContain(
       '--ovl-live-stage-caption-inline-size: min(34%, 42rem)',
     );
-    expect(css).toContain('--ovl-live-stage-card-inline-size: min(32%, 39rem)');
-    expect(css).toContain('--ovl-live-stage-brand-mark-size: 4.5rem');
-    expect(css).toContain('--ovl-live-stage-channel-size: 4rem');
-    expect(css).toContain('--ovl-live-stage-card-block-size: 7.5rem');
-    expect(css).toContain('--ovl-live-stage-card-mark-inline-size: 9rem');
+    // Brand, channel and card follow the Appearance font scale with the caption.
+    expect(css).toContain(
+      '--ovl-live-stage-scale: var(--ovl-user-font-scale-ratio, 1);',
+    );
+    expect(compactCss).toContain(
+      '--ovl-live-stage-card-inline-size: min(calc(32% * var(--ovl-live-stage-scale)), calc(39rem * var(--ovl-live-stage-scale)));',
+    );
+    for (const [variable, size] of [
+      ['brand-mark-size', '4.5rem'],
+      ['channel-size', '4rem'],
+      ['card-block-size', '7.5rem'],
+      ['card-mark-inline-size', '9rem'],
+    ]) {
+      expect(compactCss).toContain(
+        `--ovl-live-stage-${variable}: calc(${size} * var(--ovl-live-stage-scale));`,
+      );
+    }
     expect(css).toMatch(
       /:root\[data-ovl-template='live-stage'\] \.lyrics-overlay__current\s*\{[\s\S]*?inline-size:\s*var\(--ovl-live-stage-caption-inline-size\);/u,
     );

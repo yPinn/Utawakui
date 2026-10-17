@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import { outputAppearanceFieldsForTemplate } from '../../shared/outputAppearance.mjs';
 import { readObsTemplateMockupSource } from '../../src/components/output/obsTemplateMockupSource.mjs';
 
 const lyricsDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -58,8 +59,29 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
 
     expect(css).toContain("font-family: 'Utawakui GenEi Antique';");
     expect(css).toContain("url('/shared/assets/fonts/GenEiAntiqueNv6-M.ttf')");
+    // GenEi Antique is Manga's default font choice, not a forced Japanese rule.
+    const appearanceCss = fs.readFileSync(
+      path.join(rootDirectory, 'overlay', 'shared', 'appearance.css'),
+      'utf8',
+    );
+    const mangaFont = outputAppearanceFieldsForTemplate('manga-frame').find(
+      (field) => field.key === 'fontFamily',
+    );
+    expect(mangaFont.defaultValue).toBe('antique');
+    expect(mangaFont.options.map((option) => option.id)).toEqual([
+      'sans',
+      'serif',
+      'rounded',
+      'antique',
+    ]);
+    expect(appearanceCss).toMatch(
+      /\[data-ovl-font='antique'\]\s*{[^}]*'Utawakui GenEi Antique'/,
+    );
+    expect(css).not.toMatch(
+      /data-manga-language='ja'\]\s*\.lyrics-overlay__manga-text/,
+    );
     expect(css).toMatch(
-      /data-manga-language='ja'[\s\S]*?\.lyrics-overlay__manga-text\s*{[\s\S]*?'Utawakui GenEi Antique'/,
+      /\.lyrics-overlay__manga-text\s*{[^}]*font-family: var\(--ovl-user-font-family\);/,
     );
     expect(css).toMatch(
       /\.lyrics-overlay__manga-text rt\s*{[\s\S]*?font-family: inherit;/,

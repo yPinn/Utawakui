@@ -709,16 +709,27 @@
     --ovl-live-stage-inline-end: 5%;
     --ovl-live-stage-block-start: 5.556%;
     --ovl-live-stage-block-end: 8.333%;
+    /* Brand, channel and card are rem-sized; the caption scales through em. */
+    --ovl-live-stage-scale: var(--ovl-user-font-scale-ratio, 1);
     --ovl-live-stage-caption-inline-size: min(34%, 42rem);
-    --ovl-live-stage-card-inline-size: min(32%, 39rem);
-    --ovl-live-stage-type-label: 1.125rem;
-    --ovl-live-stage-type-support: 1.5rem;
-    --ovl-live-stage-type-title: 2.5rem;
+    --ovl-live-stage-card-inline-size: min(
+      calc(32% * var(--ovl-live-stage-scale)),
+      calc(39rem * var(--ovl-live-stage-scale))
+    );
+    --ovl-live-stage-type-label: calc(1.125rem * var(--ovl-live-stage-scale));
+    --ovl-live-stage-type-support: calc(1.5rem * var(--ovl-live-stage-scale));
+    --ovl-live-stage-type-title: calc(2.5rem * var(--ovl-live-stage-scale));
     --ovl-live-stage-type-caption: 3.5em;
-    --ovl-live-stage-brand-mark-size: 4.5rem;
-    --ovl-live-stage-channel-size: 4rem;
-    --ovl-live-stage-card-block-size: 7.5rem;
-    --ovl-live-stage-card-mark-inline-size: 9rem;
+    --ovl-live-stage-brand-mark-size: calc(
+      4.5rem * var(--ovl-live-stage-scale)
+    );
+    --ovl-live-stage-channel-size: calc(4rem * var(--ovl-live-stage-scale));
+    --ovl-live-stage-card-block-size: calc(
+      7.5rem * var(--ovl-live-stage-scale)
+    );
+    --ovl-live-stage-card-mark-inline-size: calc(
+      9rem * var(--ovl-live-stage-scale)
+    );
 
     isolation: isolate;
     inset: 0;
@@ -747,7 +758,7 @@
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: calc(0.75rem * var(--ovl-live-stage-scale));
     color: var(--ovl-color-text-primary);
     filter: var(--ovl-mark-shadow);
     font-family: var(--ovl-font-ui);
@@ -758,17 +769,18 @@
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    border: 0.22rem solid var(--ovl-color-text-primary);
+    border: calc(0.22rem * var(--ovl-live-stage-scale)) solid
+      var(--ovl-color-text-primary);
     background: var(--ovl-color-current);
     clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
     color: var(--ovl-color-ink);
-    font-size: 2.25rem;
+    font-size: calc(2.25rem * var(--ovl-live-stage-scale));
     line-height: 1;
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand-copy {
     display: grid;
-    gap: 0.08rem;
+    gap: calc(0.08rem * var(--ovl-live-stage-scale));
     font-size: var(--ovl-live-stage-type-label);
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -853,7 +865,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
+    gap: calc(0.6rem * var(--ovl-live-stage-scale));
     background: var(--ovl-color-current);
     color: var(--ovl-color-ink);
     font-size: var(--ovl-live-stage-type-label);
@@ -864,11 +876,11 @@
   :root[data-ovl-template='live-stage']
     .lyrics-overlay__live-stage-card-mark
     strong {
-    inline-size: 2.75rem;
+    inline-size: calc(2.75rem * var(--ovl-live-stage-scale));
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    border: 0.14rem solid currentColor;
+    border: calc(0.14rem * var(--ovl-live-stage-scale)) solid currentColor;
     clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
     font-size: var(--ovl-live-stage-type-support);
   }
@@ -877,8 +889,9 @@
     min-inline-size: 0;
     display: grid;
     align-content: center;
-    gap: 0.3rem;
-    padding: 1rem 1.5rem;
+    gap: calc(0.3rem * var(--ovl-live-stage-scale));
+    padding: calc(1rem * var(--ovl-live-stage-scale))
+      calc(1.5rem * var(--ovl-live-stage-scale));
     overflow: hidden;
     white-space: nowrap;
   }
@@ -1055,14 +1068,6 @@
     word-break: normal;
     writing-mode: vertical-rl;
     -webkit-text-stroke: 0;
-  }
-
-  :root[data-ovl-template='manga-frame']
-    .lyrics-overlay__manga-bubble[data-manga-language='ja']
-    .lyrics-overlay__manga-text {
-    font-family:
-      'Utawakui GenEi Antique', 'Noto Sans CJK JP', 'Yu Gothic UI',
-      var(--ovl-user-font-family);
   }
 
   :root[data-ovl-template='manga-frame'] .lyrics-overlay__manga-text ruby {

@@ -24,9 +24,9 @@ describe('outputSlots', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('returns an empty v3 document when overlays.json is missing', () => {
+  it('returns an empty v4 document when overlays.json is missing', () => {
     const document = loadOutputSlots(dir);
-    expect(document.version).toBe(3);
+    expect(document.version).toBe(4);
     expect(document.preferences).toEqual({
       recentColors: [],
       savedColors: [],
@@ -65,7 +65,7 @@ describe('outputSlots', () => {
     });
 
     expect(saved).toMatchObject({
-      version: 3,
+      version: 4,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
@@ -105,7 +105,7 @@ describe('outputSlots', () => {
     );
 
     expect(loadOutputSlots(dir)).toMatchObject({
-      version: 3,
+      version: 4,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
@@ -130,10 +130,10 @@ describe('outputSlots', () => {
         .readdirSync(dir)
         .some((name) => /^overlays\.json\.v1-.*\.bak$/.test(name)),
     ).toBe(true);
-    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).version).toBe(3);
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).version).toBe(4);
   });
 
-  it('migrates v2 slots to v3 preferences without losing slot settings', () => {
+  it('migrates v2 slots to v4 preferences without losing slot settings', () => {
     fs.writeFileSync(
       filePath,
       JSON.stringify({
@@ -148,7 +148,7 @@ describe('outputSlots', () => {
     );
 
     expect(loadOutputSlots(dir)).toMatchObject({
-      version: 3,
+      version: 4,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         lyrics: {
@@ -162,6 +162,54 @@ describe('outputSlots', () => {
         .readdirSync(dir)
         .some((name) => /^overlays\.json\.v2-.*\.bak$/.test(name)),
     ).toBe(true);
+  });
+
+  it('moves untouched v3 Manga fonts to the GenEi Antique default', () => {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 3,
+        slots: {
+          lyrics: {
+            templateId: 'manga-frame',
+            settings: { fontFamily: 'serif', captureSize: 'full' },
+          },
+          'now-playing': {
+            templateId: 'now-next',
+            settings: { fontFamily: 'serif', captureSize: 'small' },
+          },
+        },
+      }),
+    );
+
+    const document = loadOutputSlots(dir);
+    expect(document.version).toBe(4);
+    expect(document.slots.lyrics.settings.fontFamily).toBe('antique');
+    expect(document.slots['now-playing'].settings.fontFamily).toBe('serif');
+    expect(
+      fs
+        .readdirSync(dir)
+        .some((name) => /^overlays\.json\.v3-.*\.bak$/.test(name)),
+    ).toBe(true);
+  });
+
+  it('keeps v3 Manga fonts the user chose', () => {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 3,
+        slots: {
+          lyrics: {
+            templateId: 'manga-frame',
+            settings: { fontFamily: 'rounded', captureSize: 'full' },
+          },
+        },
+      }),
+    );
+
+    expect(loadOutputSlots(dir).slots.lyrics.settings.fontFamily).toBe(
+      'rounded',
+    );
   });
 
   it('upserts only the addressed kind and rejects cross-kind templates', () => {
@@ -435,7 +483,7 @@ describe('outputSlots', () => {
         .filter((name) => name.startsWith('overlays.json.corrupted-')),
     ).toHaveLength(1);
 
-    fs.writeFileSync(filePath, JSON.stringify({ version: 4, slots: {} }));
+    fs.writeFileSync(filePath, JSON.stringify({ version: 5, slots: {} }));
     expect(() => loadOutputSlots(dir)).toThrow(/newer overlays/i);
   });
 });

@@ -1,4 +1,9 @@
-import { sanitizeOutputLocalFont } from '../../shared/outputAppearance.mjs';
+import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import {
+  carryOutputAppearanceToTemplate,
+  OUTPUT_SLOT_APPEARANCE_DEFAULTS,
+  sanitizeOutputLocalFont,
+} from '../../shared/outputAppearance.mjs';
 
 function cloneScalarSettings(settings) {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
@@ -29,13 +34,19 @@ export function buildOutputSlotPayload(slot, changes = {}) {
   if (typeof templateId !== 'string') return null;
 
   const styleSetIds = changes.styleSetIds ?? slot?.styleSetIds;
+  const kind = OUTPUT_TEMPLATE_VALUES.templateKinds[templateId];
+  const carried = carryOutputAppearanceToTemplate(slot?.settings ?? {}, {
+    fromTemplateId: slot?.templateId,
+    toTemplateId: templateId,
+    slotDefaults: OUTPUT_SLOT_APPEARANCE_DEFAULTS[kind],
+  });
   return {
     templateId,
     styleSetIds: Array.isArray(styleSetIds)
       ? [...styleSetIds].filter((id) => typeof id === 'string')
       : [],
     settings: cloneScalarSettings({
-      ...(slot?.settings ?? {}),
+      ...carried,
       ...(changes.settings ?? {}),
     }),
   };

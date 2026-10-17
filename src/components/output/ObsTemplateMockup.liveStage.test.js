@@ -30,7 +30,10 @@ describe('Live Stage gallery mockup', () => {
         new URL('../../../overlay/lyrics/lyrics.css', import.meta.url),
       ),
       'utf8',
-    );
+    )
+      .replace(/\s+/gu, ' ')
+      .replace(/\(\s+/gu, '(')
+      .replace(/\s+\)/gu, ')');
     for (const [runtimeVar, previewVar] of [
       ['--ovl-live-stage-type-label', '--ui-live-stage-type-label'],
       ['--ovl-live-stage-type-support', '--ui-live-stage-type-support'],
@@ -38,7 +41,10 @@ describe('Live Stage gallery mockup', () => {
       ['--ovl-live-stage-type-caption', '--ui-live-stage-type-caption'],
     ]) {
       const value = runtimeCss.match(
-        new RegExp(`${runtimeVar}: ([0-9.]+)r?em;`, 'u'),
+        new RegExp(
+          `${runtimeVar}: (?:calc\\()?([0-9.]+)r?em(?: \\* var\\(--ovl-live-stage-scale\\)\\))?;`,
+          'u',
+        ),
       )?.[1];
       expect(value, runtimeVar).toBeDefined();
       expect(source).toContain(
@@ -46,14 +52,18 @@ describe('Live Stage gallery mockup', () => {
       );
     }
     expect(runtimeCss).toContain(
-      '--ovl-live-stage-card-mark-inline-size: 9rem;',
+      '--ovl-live-stage-card-mark-inline-size: calc(9rem * var(--ovl-live-stage-scale));',
     );
     expect(source).toContain(
       'grid-template-columns: calc(9 * var(--obs-canvas-rem)) minmax(0, 1fr);',
     );
-    expect(runtimeCss).toContain('--ovl-live-stage-brand-mark-size: 4.5rem;');
+    expect(runtimeCss).toContain(
+      '--ovl-live-stage-brand-mark-size: calc(4.5rem * var(--ovl-live-stage-scale));',
+    );
     expect(source).toContain('width: calc(4.5 * var(--obs-canvas-rem));');
-    expect(runtimeCss).toContain('--ovl-live-stage-channel-size: 4rem;');
+    expect(runtimeCss).toContain(
+      '--ovl-live-stage-channel-size: calc(4rem * var(--ovl-live-stage-scale));',
+    );
     expect(source).toContain('font-size: calc(4 * var(--obs-canvas-rem));');
     expect(source).toMatch(
       /\.obs-template-mockup__live-stage-brand-copy\s*\{[\s\S]*?font-size:\s*var\(--ui-live-stage-type-label\);/u,
