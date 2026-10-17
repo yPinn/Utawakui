@@ -294,6 +294,7 @@ function highlightItem(item) {
 }
 
 function onKeydown(event) {
+  if (props.disabled) return;
   if (event.key === 'ArrowDown') {
     event.preventDefault();
     if (!isOpen.value) openWithSelection();
@@ -331,7 +332,10 @@ function onKeydown(event) {
     event.preventDefault();
     event.stopPropagation();
     closeList({ revertQuery: true });
+    if (!props.editable) controlRef.value?.focus();
+    return;
   }
+  if (event.key === 'Tab' && isOpen.value) closeList({ revertQuery: true });
 }
 
 function onBlur() {
@@ -426,7 +430,9 @@ onBeforeUnmount(() => {
             class="ui-combobox__value"
             :class="{ 'ui-combobox__value--placeholder': !selectedItem }"
           >
-            {{ query || placeholder }}
+            <slot name="value" :item="selectedItem" :placeholder="placeholder">
+              {{ query || placeholder }}
+            </slot>
           </span>
         </button>
         <input

@@ -2,6 +2,7 @@ import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ObsFontFamilySelect from './ObsFontFamilySelect.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
@@ -16,6 +17,7 @@ import {
 
 for (const [component, filename] of [
   [UiButton, '../ui/UiButton.vue'],
+  [UiHint, '../ui/UiHint.vue'],
   [UiField, '../ui/UiField.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiCombobox, '../ui/UiCombobox.vue'],

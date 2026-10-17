@@ -44,9 +44,9 @@ defineProps({
 
 .obs-appearance-control-row__label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  font-weight: var(--ui-type-body-compact-weight);
-  line-height: var(--ui-type-body-compact-line-height);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .obs-appearance-control-row__control {

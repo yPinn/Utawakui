@@ -4,6 +4,7 @@ import { sanitizeOutputLocalFont } from '../../../shared/outputAppearance.mjs';
 import { useLocalFonts } from '../../composables/output/useLocalFonts.js';
 import { isOutputLocalFontAvailable } from '../../utils/outputLocalFonts.js';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 
 const props = defineProps({
@@ -195,21 +196,22 @@ function updateValue(value) {
       >
         {{ loadLabel }}
       </UiButton>
-      <span class="obs-font-family-select__status" aria-live="polite">
+      <UiHint class="obs-font-family-select__status" aria-live="polite">
         {{ catalogMessage }}
-      </span>
+      </UiHint>
     </div>
 
-    <p
+    <UiHint
       v-if="selectedLocalFontMissing"
+      tone="warning"
       class="obs-font-family-select__warning"
       role="status"
     >
       本機字體不可用，輸出會使用預設字體
-    </p>
-    <p v-if="savedLocalFont" class="obs-font-family-select__license">
+    </UiHint>
+    <UiHint v-if="savedLocalFont" class="obs-font-family-select__license">
       本機字體會用於公開輸出；請確認直播、錄影、VOD、剪輯及商用所需權利。
-    </p>
+    </UiHint>
   </div>
 </template>
 
@@ -239,24 +241,6 @@ function updateValue(value) {
   display: grid;
   gap: var(--ui-space-1);
   justify-items: start;
-}
-
-.obs-font-family-select__status,
-.obs-font-family-select__license,
-.obs-font-family-select__warning {
-  margin: 0;
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-}
-
-.obs-font-family-select__status,
-.obs-font-family-select__license {
-  color: var(--ui-color-text-muted);
-}
-
-.obs-font-family-select__warning {
-  color: var(--ui-color-warning);
 }
 
 .obs-font-family-select__option {

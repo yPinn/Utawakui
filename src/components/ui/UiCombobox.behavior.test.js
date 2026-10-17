@@ -508,6 +508,48 @@ describe('UiCombobox', () => {
     app.unmount();
   });
 
+  it('renders a rich selected value while navigation still commits only on confirmation', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(
+      UiCombobox,
+      {
+        id: 'rich-value',
+        label: '選項',
+        editable: false,
+        modelValue: 'netease',
+        items: ITEMS,
+        'onUpdate:modelValue': update,
+      },
+      {
+        value: ({ item }) =>
+          h('span', { 'data-selected-value': item.value }, item.label),
+      },
+    );
+    const control = findAll(root, (node) => node.props?.role === 'combobox')[0];
+    expect(
+      findAll(
+        control,
+        (node) => node.props?.['data-selected-value'] === 'netease',
+      ),
+    ).toHaveLength(1);
+    trigger(control, 'onClick');
+    trigger(control, 'onKeydown', {
+      key: 'ArrowDown',
+      preventDefault: vi.fn(),
+    });
+    await nextTick();
+    expect(update).not.toHaveBeenCalled();
+    expect(
+      findAll(
+        control,
+        (node) => node.props?.['data-selected-value'] === 'netease',
+      ),
+    ).toHaveLength(1);
+    trigger(control, 'onKeydown', { key: 'Enter', preventDefault: vi.fn() });
+    expect(update).toHaveBeenCalledExactlyOnceWith('better-lyrics');
+    app.unmount();
+  });
+
   it('uses shared field, floating, focus, and disabled tokens', () => {
     const source = readFileSync(
       new URL('./UiCombobox.vue', import.meta.url),

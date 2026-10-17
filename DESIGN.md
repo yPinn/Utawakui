@@ -935,6 +935,12 @@ selected name and three representative role Swatches visible, while the popup
 lists the same previews in the established option order. Arrow keys only browse;
 click／Enter commits and Escape preserves the previous Look, so exploring the
 list does not create autosave noise.
+`ObsLookSelect` composes select-only `UiCombobox`, using its `value` and `option`
+slots for representative Swatches. The shared primitive owns keyboard browsing,
+floating placement, focus and menu exclusivity; the feature owns Look ids, palette
+role previews and suppressing commits of the already-selected value. The `value`
+slot customizes selected content only and leaves editable combobox input behavior
+unchanged.
 Each non-original Look remaps the roles actually used by the template, including KTV
 role fills, Kinetic Pop materials, Manga ink／paper, and general text／surface colors;
 it is not a raw theme object or a LUT. `lookAmount` blends the complete semantic role

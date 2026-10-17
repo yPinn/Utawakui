@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import ObsLookSelect from './ObsLookSelect.vue';
+import UiCombobox from '../ui/UiCombobox.vue';
+import UiField from '../ui/UiField.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import {
   attachClientRender,
@@ -12,6 +14,8 @@ import {
 } from '../ui/uiTestHost.js';
 
 attachClientRender(ObsLookSelect, './ObsLookSelect.vue', import.meta.url);
+attachClientRender(UiCombobox, '../ui/UiCombobox.vue', import.meta.url);
+attachClientRender(UiField, '../ui/UiField.vue', import.meta.url);
 attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue', import.meta.url);
 
 const OPTIONS = [
@@ -177,6 +181,32 @@ describe('ObsLookSelect', () => {
     expect(update).toHaveBeenCalledWith('cool');
     expect(triggerNode.props['aria-expanded']).toBe(false);
     expect(triggerNode.focus).toHaveBeenCalledOnce();
+    app.unmount();
+  });
+
+  it('does not commit the selected Look again, and closes browsing on Tab', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(ObsLookSelect, {
+      id: 'dedup-look',
+      label: 'Look',
+      modelValue: 'warm',
+      options: OPTIONS,
+      'onUpdate:modelValue': update,
+    });
+    const control = combobox(root);
+    trigger(control, 'onClick');
+    trigger(control, 'onKeydown', { key: 'Enter', preventDefault: vi.fn() });
+    await nextTick();
+    expect(update).not.toHaveBeenCalled();
+    trigger(control, 'onClick');
+    trigger(control, 'onKeydown', {
+      key: 'ArrowDown',
+      preventDefault: vi.fn(),
+    });
+    trigger(control, 'onKeydown', { key: 'Tab' });
+    await nextTick();
+    expect(update).not.toHaveBeenCalled();
+    expect(control.props['aria-expanded']).toBe(false);
     app.unmount();
   });
 

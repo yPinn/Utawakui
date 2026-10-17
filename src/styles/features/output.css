@@ -20,6 +20,7 @@
   --ui-output-workbench-stage-max-width: 64rem; /* large 16:9 preview without indefinite upscaling */
   --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
+  --ui-output-range-value-width: 3.5rem; /* stable numeric lane; slider consumes the remaining width */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* thumbnail-only label */
   --ui-output-setting-label-width-min: 4rem; /* compact setting label column */
 

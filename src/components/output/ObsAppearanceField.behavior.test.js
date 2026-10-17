@@ -12,6 +12,7 @@ import UiColorField from '../ui/UiColorField.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -62,6 +63,7 @@ attachClientRender(
   import.meta.url,
 );
 attachClientRender(UiField, '../ui/UiField.vue', import.meta.url);
+attachClientRender(UiHint, '../ui/UiHint.vue', import.meta.url);
 attachClientRender(UiButton, '../ui/UiButton.vue', import.meta.url);
 attachClientRender(UiCombobox, '../ui/UiCombobox.vue', import.meta.url);
 attachClientRender(UiSelect, '../ui/UiSelect.vue', import.meta.url);
@@ -301,6 +303,12 @@ describe('ObsAppearanceField', () => {
       'output-appearance-lookAmount-hint',
     );
     expect(textContent(root)).toContain('選擇 Look 後可調整');
+    const hint = findAll(
+      root,
+      (node) => node.props?.id === 'output-appearance-lookAmount-hint',
+    )[0];
+    expect(hint.type).toBe('p');
+    expect(String(hint.props.class)).toContain('ui-hint');
     app.unmount();
   });
 });

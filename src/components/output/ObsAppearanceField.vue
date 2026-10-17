@@ -7,6 +7,7 @@ import ObsOutputColorField from './ObsOutputColorField.vue';
 import ObsPositionPicker from './ObsPositionPicker.vue';
 import ObsSegmentedAppearanceChoice from './ObsSegmentedAppearanceChoice.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
@@ -164,13 +165,13 @@ function commitColor(value) {
           {{ valueText }}
         </output>
       </div>
-      <p
+      <UiHint
         v-if="disabledHint"
         :id="controlHintId"
         class="obs-appearance-field__hint"
       >
         {{ disabledHint }}
-      </p>
+      </UiHint>
     </div>
   </ObsAppearanceControlRow>
 </template>
@@ -185,7 +186,9 @@ function commitColor(value) {
 }
 
 .obs-appearance-field__compound--range {
-  grid-template-columns: minmax(7rem, 1fr) 3.5rem;
+  grid-template-columns: minmax(var(--ui-control-height), 1fr) var(
+      --ui-output-range-value-width
+    );
 }
 
 .obs-appearance-field__range-stack {
@@ -204,12 +207,5 @@ function commitColor(value) {
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
-}
-
-.obs-appearance-field__hint {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
 }
 </style>
