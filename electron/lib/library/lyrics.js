@@ -153,7 +153,11 @@ function loadTrackLyricsManifest(trackDir) {
   }
 }
 
-function listTrackLyricsSources(trackDir) {
+// lyricsDirExists: false lets a caller that already listed the track folder
+// skip two reads that could only fail.
+function listTrackLyricsSources(trackDir, { lyricsDirExists = true } = {}) {
+  if (!lyricsDirExists)
+    return { checked: false, needsScan: false, sources: [] };
   const lyricsDir = getLyricsDirFromTrackDir(trackDir);
   let filenames;
   try {
@@ -217,9 +221,11 @@ function normalizeLyricsSourceLabel(label) {
   return `${trimmed.slice(0, MAX_LYRICS_SOURCE_LABEL_LENGTH - 1)}…`;
 }
 
-function getTrackLyricsState(trackDir) {
-  const { checked, needsScan, sources, preference } =
-    listTrackLyricsSources(trackDir);
+function getTrackLyricsState(trackDir, options) {
+  const { checked, needsScan, sources, preference } = listTrackLyricsSources(
+    trackDir,
+    options,
+  );
   return {
     status:
       sources.length > 0 ? 'available' : checked ? 'missing' : 'unchecked',

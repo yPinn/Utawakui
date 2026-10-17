@@ -6,6 +6,7 @@ import {
   migrateLegacyFlatSeparation,
   migrateLibrary,
   normalizeStructuredTrackSidecars,
+  trackFolderNeedsMigration,
 } from './migrations.js';
 
 describe('library migrations', () => {
@@ -255,5 +256,30 @@ describe('library migrations', () => {
   it('is safe for missing library roots and missing flat separations', () => {
     expect(() => migrateLibrary(path.join(dir, 'missing'))).not.toThrow();
     expect(() => migrateLegacyFlatSeparation(dir)).not.toThrow();
+  });
+});
+
+describe('trackFolderNeedsMigration', () => {
+  it('skips folders that are already normalized', () => {
+    expect(
+      trackFolderNeedsMigration([
+        'audio.m4a',
+        'audio.webm',
+        'info.json',
+        'thumbnail.jpg',
+      ]),
+    ).toBe(false);
+  });
+
+  it.each([
+    'audio.info.json',
+    'audio.ja.vtt',
+    'audio.en-orig.vtt',
+    'audio.webp',
+    'Audio.JPG',
+    'stems.wav',
+    'STEMS.WAV',
+  ])('flags %s for the migration path', (filename) => {
+    expect(trackFolderNeedsMigration(['audio.m4a', filename])).toBe(true);
   });
 });

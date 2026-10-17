@@ -324,6 +324,19 @@ describe('lyrics source preference', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
+  it('reports the same unchecked state when told the lyrics folder is absent', () => {
+    const emptyTrackDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-no-lyrics-'),
+    );
+    try {
+      expect(
+        getTrackLyricsState(emptyTrackDir, { lyricsDirExists: false }),
+      ).toEqual(getTrackLyricsState(emptyTrackDir));
+    } finally {
+      fs.rmSync(emptyTrackDir, { recursive: true, force: true });
+    }
+  });
+
   it('projects a persisted user-owned preference through the library state', () => {
     expect(
       setLyricsSourcePreference(trackDir, 'manual.lrc', 'user'),

@@ -23,6 +23,7 @@ const {
   isSafeTrackId,
   resolveTrackDir,
   findStructuredAudioFilename,
+  isStructuredAudioFilename,
 } = require('./paths');
 const { normalizeTrackLyricsSidecars } = require('./lyrics');
 const { loadSeparationManifest } = require('./separationManifest');
@@ -84,6 +85,20 @@ function normalizeStructuredTrackSidecars(trackDir) {
   } catch {
     // Same as above: leave it in place if locked.
   }
+}
+
+// Cheap pre-check over one folder listing: false means neither
+// normalizeStructuredTrackSidecars nor migrateLegacyFlatSeparation has work.
+// Deliberately broad; any audio.* sidecar or flat stems file takes the slow path.
+function trackFolderNeedsMigration(filenames) {
+  return filenames.some((filename) => {
+    const lower = filename.toLowerCase();
+    return (
+      lower === 'stems.wav' ||
+      (lower.startsWith(`${STRUCTURED_AUDIO_BASENAME}.`) &&
+        !isStructuredAudioFilename(filename))
+    );
+  });
 }
 
 // Migrates a track separated under the flat tracks/<id>/stems.wav +
@@ -268,6 +283,7 @@ function migrateLibrary(dir) {
 
 module.exports = {
   normalizeStructuredTrackSidecars,
+  trackFolderNeedsMigration,
   migrateLegacyFlatSeparation,
   migrateLibrary,
 };

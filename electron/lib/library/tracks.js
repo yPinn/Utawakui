@@ -4,12 +4,16 @@ const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson } = require('../atomicWrite');
 const { VIDEO_ID_RE } = require('../youtube');
-const { TRACKS_DIRNAME, INDEX_FILENAME } = require('./constants');
+const {
+  TRACKS_DIRNAME,
+  INDEX_FILENAME,
+  LYRICS_DIRNAME,
+  SEPARATIONS_DIRNAME,
+} = require('./constants');
 const {
   isSafeTrackId,
-  findStructuredAudioFilename,
-  findArtworkFilename,
-  hasTrackInfo,
+  isStructuredAudioFilename,
+  isArtworkFilename,
   isServableFilename,
   compareFilenames,
   trackIdFromFilename,
@@ -22,6 +26,7 @@ const {
   normalizeStructuredTrackSidecars,
   migrateLegacyFlatSeparation,
   migrateLibrary,
+  trackFolderNeedsMigration,
 } = require('./migrations');
 const { loadIndex, saveIndexEntry } = require('./metadataIndex');
 const {
@@ -225,21 +230,54 @@ function fileModifiedAt(filePath) {
   }
 }
 
+// Records built from a folder listing without a separations/ subfolder;
+// buildTrack skips the manifest read for them.
+const recordsWithoutSeparations = new WeakSet();
+
+function readTrackFolder(trackDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(trackDir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  return {
+    filenames: entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .sort(compareFilenames),
+    // Links may point at folders; keep them so the reads still follow them.
+    dirnames: new Set(
+      entries
+        .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
+        .map((entry) => entry.name),
+    ),
+  };
+}
+
+// One readdir per track; the migration path rereads only when it has work.
 function structuredTrackRecord(tracksRoot, id) {
   const trackDir = path.join(tracksRoot, id);
-  normalizeStructuredTrackSidecars(trackDir);
-  migrateLegacyFlatSeparation(trackDir);
-  const audioFilename = findStructuredAudioFilename(trackDir);
+  let folder = readTrackFolder(trackDir);
+  if (folder && trackFolderNeedsMigration(folder.filenames)) {
+    normalizeStructuredTrackSidecars(trackDir);
+    migrateLegacyFlatSeparation(trackDir);
+    folder = readTrackFolder(trackDir);
+  }
+  if (!folder) return null;
+  const audioFilename = folder.filenames.find(isStructuredAudioFilename);
   if (!audioFilename) return null;
-  const artworkFilename = findArtworkFilename(trackDir);
-  const lyrics = getTrackLyricsState(trackDir);
+  const artworkFilename = folder.filenames.find(isArtworkFilename);
+  const lyrics = getTrackLyricsState(trackDir, {
+    lyricsDirExists: folder.dirnames.has(LYRICS_DIRNAME),
+  });
   const ext = path.extname(audioFilename);
-  return {
+  const record = {
     id,
     filename: `${id}${ext}`,
     audioFilename,
     importedAt: fileModifiedAt(path.join(trackDir, audioFilename)),
-    hasInfo: hasTrackInfo(trackDir),
+    hasInfo: folder.filenames.includes('info.json'),
     hasArtwork: Boolean(artworkFilename),
     lyrics,
     url: `utawakui-media://track/${encodeURIComponent(id)}/${encodeURIComponent(audioFilename)}`,
@@ -247,6 +285,10 @@ function structuredTrackRecord(tracksRoot, id) {
       ? `utawakui-media://track/${encodeURIComponent(id)}/${encodeURIComponent(artworkFilename)}`
       : undefined,
   };
+  if (!folder.dirnames.has(SEPARATIONS_DIRNAME)) {
+    recordsWithoutSeparations.add(record);
+  }
+  return record;
 }
 
 function listStructuredTracks(dir) {
@@ -307,9 +349,10 @@ function buildTrack(dir, index, record) {
   const id = record.id;
   const indexed = index.tracks[id];
   const separationsDir = resolveSeparationsDir(dir, id);
-  const separationManifest = separationsDir
-    ? loadSeparationManifest(separationsDir)
-    : { selectedRecipeId: null, results: {} };
+  const separationManifest =
+    separationsDir && !recordsWithoutSeparations.has(record)
+      ? loadSeparationManifest(separationsDir)
+      : { selectedRecipeId: null, results: {} };
   const resultCount = Object.keys(separationManifest.results).length;
   const selectedResultExists = manifestHasSelectedResult(
     separationsDir,
