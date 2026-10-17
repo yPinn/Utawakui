@@ -88,4 +88,29 @@ describe('configState audio-preference initialization', () => {
       }),
     ).toEqual(explicitPreferences);
   });
+
+  it('reads initial settings and audio preference provenance from one snapshot', async () => {
+    const configPath = path.join(userDataDir, 'config.json');
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ uiTheme: 'dark', audioPreferences: null }),
+    );
+    const configState = await loadConfigState();
+    const read = vi.spyOn(fs, 'readFileSync');
+    try {
+      configState.loadInitialConfig();
+      expect(
+        read.mock.calls.filter(([file]) => String(file) === configPath),
+      ).toHaveLength(1);
+      expect(configState.getConfig().uiTheme).toBe('dark');
+      // Presence is a migration decision; an invalid stored value still must
+      // not let stale transport settings overwrite the normalized defaults.
+      expect(
+        configState.initializeAudioPreferences({ performanceVolume: 0.9 })
+          .performanceVolume,
+      ).toBe(0.5);
+    } finally {
+      read.mockRestore();
+    }
+  });
 });

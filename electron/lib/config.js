@@ -305,12 +305,12 @@ function normalizeLibraryStoragePolicy(value) {
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
 // degrade to defaults rather than throwing — this is machine-local settings
 // that can be hand-edited or clobbered by a sync tool, not exceptional input.
-function loadConfig(configPath) {
+function loadConfigSnapshot(configPath) {
   let raw;
   try {
     raw = fs.readFileSync(configPath, 'utf8');
   } catch {
-    return { ...DEFAULTS };
+    return { config: { ...DEFAULTS }, audioPreferencesStored: false };
   }
 
   let data;
@@ -318,65 +318,78 @@ function loadConfig(configPath) {
     data = JSON.parse(raw);
   } catch {
     backupCorrupted(configPath);
-    return { ...DEFAULTS };
+    return { config: { ...DEFAULTS }, audioPreferencesStored: false };
   }
 
   if (typeof data !== 'object' || data === null) {
     backupCorrupted(configPath);
-    return { ...DEFAULTS };
+    return { config: { ...DEFAULTS }, audioPreferencesStored: false };
   }
 
   return {
-    version: CURRENT_VERSION,
-    downloadDir:
-      typeof data.downloadDir === 'string'
-        ? data.downloadDir
-        : DEFAULTS.downloadDir,
-    featureConfirmations: normalizeFeatureConfirmations(
-      data.featureConfirmations,
-    ),
-    uiTheme: UI_THEMES.includes(data.uiTheme) ? data.uiTheme : DEFAULTS.uiTheme,
-    performerReadingScale: normalizePerformerReadingScale(
-      data.performerReadingScale,
-    ),
-    performerWindowBounds: normalizePerformerWindowBounds(
-      data.performerWindowBounds,
-    ),
-    sidebarWidth: normalizeSidebarWidth(data.sidebarWidth),
-    captureDeviceId:
-      typeof data.captureDeviceId === 'string' &&
-      data.captureDeviceId.length > 0 &&
-      data.captureDeviceId.length <= CAPTURE_DEVICE_ID_MAX_LENGTH
-        ? data.captureDeviceId
-        : DEFAULTS.captureDeviceId,
-    audioPreferences: normalizeAudioPreferences(data.audioPreferences),
-    autoAnalyzeMusicStructure:
-      typeof data.autoAnalyzeMusicStructure === 'boolean'
-        ? data.autoAnalyzeMusicStructure
-        : DEFAULTS.autoAnalyzeMusicStructure,
-    separationGpuAcceleration:
-      typeof data.separationGpuAcceleration === 'boolean'
-        ? data.separationGpuAcceleration
-        : DEFAULTS.separationGpuAcceleration,
-    autoCheckAppUpdates:
-      typeof data.autoCheckAppUpdates === 'boolean'
-        ? data.autoCheckAppUpdates
-        : DEFAULTS.autoCheckAppUpdates,
-    windowCloseBehavior: normalizeWindowCloseBehavior(data),
-    lastSeenAnnouncementVersion:
-      typeof data.lastSeenAnnouncementVersion === 'string' &&
-      data.lastSeenAnnouncementVersion.length > 0 &&
-      data.lastSeenAnnouncementVersion.length <= ANNOUNCEMENT_VERSION_MAX_LENGTH
-        ? data.lastSeenAnnouncementVersion
-        : DEFAULTS.lastSeenAnnouncementVersion,
-    systemFfmpegPath:
-      typeof data.systemFfmpegPath === 'string'
-        ? data.systemFfmpegPath
-        : DEFAULTS.systemFfmpegPath,
-    libraryStorage: normalizeLibraryStoragePolicy(data.libraryStorage),
-    outputRuntime: normalizeOutputRuntime(data.outputRuntime),
-    obsIntegration: normalizeObsIntegration(data.obsIntegration),
+    audioPreferencesStored:
+      !Array.isArray(data) && Object.hasOwn(data, 'audioPreferences'),
+    config: {
+      version: CURRENT_VERSION,
+      downloadDir:
+        typeof data.downloadDir === 'string'
+          ? data.downloadDir
+          : DEFAULTS.downloadDir,
+      featureConfirmations: normalizeFeatureConfirmations(
+        data.featureConfirmations,
+      ),
+      uiTheme: UI_THEMES.includes(data.uiTheme)
+        ? data.uiTheme
+        : DEFAULTS.uiTheme,
+      performerReadingScale: normalizePerformerReadingScale(
+        data.performerReadingScale,
+      ),
+      performerWindowBounds: normalizePerformerWindowBounds(
+        data.performerWindowBounds,
+      ),
+      sidebarWidth: normalizeSidebarWidth(data.sidebarWidth),
+      captureDeviceId:
+        typeof data.captureDeviceId === 'string' &&
+        data.captureDeviceId.length > 0 &&
+        data.captureDeviceId.length <= CAPTURE_DEVICE_ID_MAX_LENGTH
+          ? data.captureDeviceId
+          : DEFAULTS.captureDeviceId,
+      audioPreferences: normalizeAudioPreferences(data.audioPreferences),
+      autoAnalyzeMusicStructure:
+        typeof data.autoAnalyzeMusicStructure === 'boolean'
+          ? data.autoAnalyzeMusicStructure
+          : DEFAULTS.autoAnalyzeMusicStructure,
+      separationGpuAcceleration:
+        typeof data.separationGpuAcceleration === 'boolean'
+          ? data.separationGpuAcceleration
+          : DEFAULTS.separationGpuAcceleration,
+      autoCheckAppUpdates:
+        typeof data.autoCheckAppUpdates === 'boolean'
+          ? data.autoCheckAppUpdates
+          : DEFAULTS.autoCheckAppUpdates,
+      windowCloseBehavior: normalizeWindowCloseBehavior(data),
+      lastSeenAnnouncementVersion:
+        typeof data.lastSeenAnnouncementVersion === 'string' &&
+        data.lastSeenAnnouncementVersion.length > 0 &&
+        data.lastSeenAnnouncementVersion.length <=
+          ANNOUNCEMENT_VERSION_MAX_LENGTH
+          ? data.lastSeenAnnouncementVersion
+          : DEFAULTS.lastSeenAnnouncementVersion,
+      systemFfmpegPath:
+        typeof data.systemFfmpegPath === 'string'
+          ? data.systemFfmpegPath
+          : DEFAULTS.systemFfmpegPath,
+      libraryStorage: normalizeLibraryStoragePolicy(data.libraryStorage),
+      outputRuntime: normalizeOutputRuntime(data.outputRuntime),
+      obsIntegration: normalizeObsIntegration(data.obsIntegration),
+    },
   };
+}
+
+// Keep existing consumers on the settings-only contract; startup also needs
+// provenance so legacy audio migration can distinguish absence from defaults.
+function loadConfig(configPath) {
+  return loadConfigSnapshot(configPath).config;
 }
 
 function saveConfig(configPath, partial) {
@@ -391,6 +404,7 @@ function saveConfig(configPath, partial) {
 
 module.exports = {
   loadConfig,
+  loadConfigSnapshot,
   saveConfig,
   DEFAULTS,
   DEFAULT_AUDIO_PREFERENCES,

@@ -574,6 +574,11 @@ direct FLAC validation、hash、duplicate、metadata、artwork、atomic move 與
 不保存來源 path、raw codec、executable 或 command line。缺少 FFmpeg 只導向既有 Settings 準備
 流程，不靜默下載，也不回滾同批已完成的直接匯入。
 
+Main 啟動時，`electron/lib/config.js` 的 `loadConfigSnapshot()` 由同一次讀取／解析
+產生 normalized config 與 audio-preference presence metadata，交給 `configState` cache。
+Metadata 只供舊版播放設定遷移判斷，不進 persisted config 或 renderer projection；既有
+`loadConfig()` 仍只回傳設定。Config schema、單檔儲存與 atomic write 邊界保持不變。
+
 曲庫位置由 `electron/main/configState.js` 的 guarded resolver 統一驗證。預設 Music
 位置可由 main 建立；使用者選擇的自訂位置若消失、不是目錄或無法讀寫，設定仍保留且不
 改寫到 fallback，所有 library consumer 暫停讀寫並回傳 bounded unavailable error。

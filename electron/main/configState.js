@@ -8,8 +8,7 @@
 const path = require('path');
 const { app } = require('electron');
 const {
-  hasStoredAudioPreferences,
-  loadConfig,
+  loadConfigSnapshot,
   normalizeAudioPreferences,
   saveConfig,
 } = require('../lib/config');
@@ -45,8 +44,9 @@ function writeLibraryPathSidecar(config) {
 function loadInitialConfig() {
   // Machine-local settings only, never exported or shared.
   configPath = path.join(app.getPath('userData'), 'config.json');
-  audioPreferencesStored = hasStoredAudioPreferences(configPath);
-  cachedConfig = loadConfig(configPath);
+  const snapshot = loadConfigSnapshot(configPath);
+  audioPreferencesStored = snapshot.audioPreferencesStored;
+  cachedConfig = snapshot.config;
   writeLibraryPathSidecar(cachedConfig);
   return cachedConfig;
 }
