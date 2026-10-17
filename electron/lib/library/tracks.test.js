@@ -6,6 +6,7 @@ import {
   organizeTrackMetadataFromSidecars,
   refreshTrackMetadataFromSidecars,
   listTracks,
+  findTrack,
   updateTrackMetadata,
   deleteTrack,
 } from './tracks.js';
@@ -936,6 +937,57 @@ describe('organizeTrackMetadataFromSidecars', () => {
   });
 });
 
+describe('findTrack', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-find-track-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('builds the same track object listTracks returns', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'def.m4a'), 'y');
+    listTracks(dir);
+    saveIndexEntry(dir, 'abc', {
+      title: 'Song',
+      artist: 'Singer',
+      duration: 3,
+    });
+    fs.writeFileSync(path.join(dir, 'tracks', 'abc', 'thumbnail.jpg'), 'img');
+
+    const listed = listTracks(dir);
+    expect(findTrack(dir, 'abc')).toEqual(
+      listed.find((track) => track.id === 'abc'),
+    );
+    expect(findTrack(dir, 'def')).toEqual(
+      listed.find((track) => track.id === 'def'),
+    );
+  });
+
+  it('returns null for unknown, empty or unsafe ids', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+
+    expect(findTrack(dir, 'missing')).toBeNull();
+    expect(findTrack(dir, '')).toBeNull();
+    expect(findTrack(dir, '../abc')).toBeNull();
+  });
+
+  it('reads only the requested track folder', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'def.mp3'), 'y');
+    listTracks(dir);
+    const flatStems = path.join(dir, 'tracks', 'def', 'stems.wav');
+    fs.writeFileSync(flatStems, 'x');
+
+    expect(findTrack(dir, 'abc')?.id).toBe('abc');
+    expect(fs.existsSync(flatStems)).toBe(true);
+  });
+});
+
 describe('updateTrackMetadata', () => {
   let dir;
 
@@ -1102,6 +1154,8 @@ describe('deleteTrack', () => {
     fs.writeFileSync(path.join(sepDir, 'stems.wav'), 'x');
 
     deleteTrack(dir, 'abc');
+    // A single-track delete leaves def unmigrated; the next scan migrates it.
+    expect(listTracks(dir).map((track) => track.id)).toEqual(['def']);
     expect(fs.existsSync(path.join(dir, 'tracks', 'def', 'audio.mp3'))).toBe(
       true,
     );

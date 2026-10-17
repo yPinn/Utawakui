@@ -12,6 +12,7 @@ function registerLibraryArtistOrganizationHandlers({
   getConfig,
   resolveDownloadDir,
   listLibraryTracks,
+  listRecentLibraryTracks = listLibraryTracks,
   notifyLibraryUpdated,
   featureIds,
   artistIndexCache,
@@ -21,7 +22,7 @@ function registerLibraryArtistOrganizationHandlers({
   // Derived, read-only artist grouping (ADR 0022); never triggers backfill.
   ipcMain.handle('library:get-artist-index', async () => {
     const dir = resolveDownloadDir(getConfig());
-    return artistIndexCache.getIndex(dir, listLibraryTracks(dir));
+    return artistIndexCache.getIndex(dir, listRecentLibraryTracks(dir));
   });
 
   const validRevision = (value) => Number.isSafeInteger(value) && value >= 0;

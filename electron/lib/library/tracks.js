@@ -225,6 +225,30 @@ function fileModifiedAt(filePath) {
   }
 }
 
+function structuredTrackRecord(tracksRoot, id) {
+  const trackDir = path.join(tracksRoot, id);
+  normalizeStructuredTrackSidecars(trackDir);
+  migrateLegacyFlatSeparation(trackDir);
+  const audioFilename = findStructuredAudioFilename(trackDir);
+  if (!audioFilename) return null;
+  const artworkFilename = findArtworkFilename(trackDir);
+  const lyrics = getTrackLyricsState(trackDir);
+  const ext = path.extname(audioFilename);
+  return {
+    id,
+    filename: `${id}${ext}`,
+    audioFilename,
+    importedAt: fileModifiedAt(path.join(trackDir, audioFilename)),
+    hasInfo: hasTrackInfo(trackDir),
+    hasArtwork: Boolean(artworkFilename),
+    lyrics,
+    url: `utawakui-media://track/${encodeURIComponent(id)}/${encodeURIComponent(audioFilename)}`,
+    thumbnailUrl: artworkFilename
+      ? `utawakui-media://track/${encodeURIComponent(id)}/${encodeURIComponent(artworkFilename)}`
+      : undefined,
+  };
+}
+
 function listStructuredTracks(dir) {
   const tracksRoot = path.join(dir, TRACKS_DIRNAME);
   let entries;
@@ -236,29 +260,7 @@ function listStructuredTracks(dir) {
 
   return entries
     .filter((entry) => entry.isDirectory() && isSafeTrackId(entry.name))
-    .map((entry) => {
-      const trackDir = path.join(tracksRoot, entry.name);
-      normalizeStructuredTrackSidecars(trackDir);
-      migrateLegacyFlatSeparation(trackDir);
-      const audioFilename = findStructuredAudioFilename(trackDir);
-      if (!audioFilename) return null;
-      const artworkFilename = findArtworkFilename(trackDir);
-      const lyrics = getTrackLyricsState(trackDir);
-      const ext = path.extname(audioFilename);
-      return {
-        id: entry.name,
-        filename: `${entry.name}${ext}`,
-        audioFilename,
-        importedAt: fileModifiedAt(path.join(trackDir, audioFilename)),
-        hasInfo: hasTrackInfo(trackDir),
-        hasArtwork: Boolean(artworkFilename),
-        lyrics,
-        url: `utawakui-media://track/${encodeURIComponent(entry.name)}/${encodeURIComponent(audioFilename)}`,
-        thumbnailUrl: artworkFilename
-          ? `utawakui-media://track/${encodeURIComponent(entry.name)}/${encodeURIComponent(artworkFilename)}`
-          : undefined,
-      };
-    })
+    .map((entry) => structuredTrackRecord(tracksRoot, entry.name))
     .filter(Boolean);
 }
 
@@ -301,73 +303,98 @@ function listTrackRecords(dir) {
   return [...structured, ...listLegacyTracks(dir, structuredIds)];
 }
 
+function buildTrack(dir, index, record) {
+  const id = record.id;
+  const indexed = index.tracks[id];
+  const separationsDir = resolveSeparationsDir(dir, id);
+  const separationManifest = separationsDir
+    ? loadSeparationManifest(separationsDir)
+    : { selectedRecipeId: null, results: {} };
+  const resultCount = Object.keys(separationManifest.results).length;
+  const selectedResultExists = manifestHasSelectedResult(
+    separationsDir,
+    separationManifest,
+  );
+  const metadataNeedsBackfill =
+    !indexed?.title ||
+    (indexed?.artist === undefined && indexed?.artistOrigin === 'provider') ||
+    indexed?.duration === undefined;
+  const assetNeedsBackfill =
+    VIDEO_ID_RE.test(id) &&
+    (!record.hasInfo ||
+      !record.hasArtwork ||
+      record.lyrics.status === 'unchecked' ||
+      record.lyrics.needsScan);
+  return {
+    id,
+    filename: record.filename,
+    url: record.url,
+    title: indexed?.title || id,
+    artist: indexed?.artist,
+    duration: indexed?.duration,
+    // Album is optional; including it would create endless backfill loops.
+    album: indexed?.album,
+    releaseYear: indexed?.releaseYear,
+    sourceType: indexed?.sourceType,
+    storageType: indexed?.storageType,
+    originalFilename: indexed?.originalFilename,
+    importedAt: indexed?.importedAt || record.importedAt,
+    fileSize: indexed?.fileSize,
+    contentHash: indexed?.contentHash,
+    needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
+    hasSeparation: selectedResultExists,
+    stemsUrl: selectedResultExists
+      ? `utawakui-media://track/${encodeURIComponent(id)}/separations/${encodeURIComponent(
+          separationManifest.results[separationManifest.selectedRecipeId]
+            .artifactFilename,
+        )}`
+      : undefined,
+    separation:
+      resultCount > 0
+        ? {
+            selectedRecipeId: separationManifest.selectedRecipeId,
+            results: separationManifest.results,
+          }
+        : undefined,
+    thumbnailUrl: record.thumbnailUrl,
+    lyrics: record.lyrics,
+  };
+}
+
 function listTracks(dir) {
   const index = loadIndex(dir);
-
   return listTrackRecords(dir)
-    .map((record) => {
-      const id = record.id;
-      const indexed = index.tracks[id];
-      const separationsDir = resolveSeparationsDir(dir, id);
-      const separationManifest = separationsDir
-        ? loadSeparationManifest(separationsDir)
-        : { selectedRecipeId: null, results: {} };
-      const resultCount = Object.keys(separationManifest.results).length;
-      const selectedResultExists = manifestHasSelectedResult(
-        separationsDir,
-        separationManifest,
-      );
-      const metadataNeedsBackfill =
-        !indexed?.title ||
-        (indexed?.artist === undefined &&
-          indexed?.artistOrigin === 'provider') ||
-        indexed?.duration === undefined;
-      const assetNeedsBackfill =
-        VIDEO_ID_RE.test(id) &&
-        (!record.hasInfo ||
-          !record.hasArtwork ||
-          record.lyrics.status === 'unchecked' ||
-          record.lyrics.needsScan);
-      return {
-        id,
-        filename: record.filename,
-        url: record.url,
-        title: indexed?.title || id,
-        artist: indexed?.artist,
-        duration: indexed?.duration,
-        // Album is optional; including it would create endless backfill loops.
-        album: indexed?.album,
-        releaseYear: indexed?.releaseYear,
-        sourceType: indexed?.sourceType,
-        storageType: indexed?.storageType,
-        originalFilename: indexed?.originalFilename,
-        importedAt: indexed?.importedAt || record.importedAt,
-        fileSize: indexed?.fileSize,
-        contentHash: indexed?.contentHash,
-        needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
-        hasSeparation: selectedResultExists,
-        stemsUrl: selectedResultExists
-          ? `utawakui-media://track/${encodeURIComponent(id)}/separations/${encodeURIComponent(
-              separationManifest.results[separationManifest.selectedRecipeId]
-                .artifactFilename,
-            )}`
-          : undefined,
-        separation:
-          resultCount > 0
-            ? {
-                selectedRecipeId: separationManifest.selectedRecipeId,
-                results: separationManifest.results,
-              }
-            : undefined,
-        thumbnailUrl: record.thumbnailUrl,
-        lyrics: record.lyrics,
-      };
-    })
+    .map((record) => buildTrack(dir, index, record))
     .sort(compareTracks);
 }
 
+// Single-track counterpart to listTrackRecords: same migration and record
+// shape, but reads only this track's folder (or the legacy root files).
 function findTrackRecord(dir, trackId) {
-  return listTrackRecords(dir).find((track) => track.id === trackId) || null;
+  if (typeof trackId !== 'string' || !trackId) return null;
+  migrateLibrary(dir);
+  if (isSafeTrackId(trackId)) {
+    const tracksRoot = path.join(dir, TRACKS_DIRNAME);
+    let isDirectory = false;
+    try {
+      isDirectory = fs.statSync(path.join(tracksRoot, trackId)).isDirectory();
+    } catch {
+      // Missing folder: fall through to the legacy layout.
+    }
+    const record = isDirectory
+      ? structuredTrackRecord(tracksRoot, trackId)
+      : null;
+    if (record) return record;
+  }
+  return (
+    listLegacyTracks(dir, new Set()).find((track) => track.id === trackId) ||
+    null
+  );
+}
+
+function findTrack(dir, trackId) {
+  const record = findTrackRecord(dir, trackId);
+  return record ? buildTrack(dir, loadIndex(dir), record) : null;
 }
 
 function updateTrackMetadata(dir, trackId, fields = {}) {
@@ -384,7 +411,7 @@ function updateTrackMetadata(dir, trackId, fields = {}) {
     artistOrigin: 'manual',
   });
 
-  return listTracks(dir).find((track) => track.id === trackId) || null;
+  return findTrack(dir, trackId);
 }
 
 // Deletes the original audio file, its vocal-separation output (if any),
@@ -420,6 +447,7 @@ module.exports = {
   compareTracks,
   listTrackRecords,
   listTracks,
+  findTrack,
   findTrackRecord,
   updateTrackMetadata,
   deleteTrack,

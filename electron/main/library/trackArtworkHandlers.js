@@ -12,7 +12,7 @@ function registerLibraryTrackArtworkHandlers({
   getMainWindow,
   getConfig,
   resolveDownloadDir,
-  listLibraryTracks,
+  findLibraryTrack,
   notifyLibraryUpdated,
   featureIds,
   requireFeatureGate,
@@ -94,9 +94,7 @@ function registerLibraryTrackArtworkHandlers({
     'library:choose-track-artwork-draft',
     async (event, trackId) => {
       const dir = resolveDownloadDir(getConfig());
-      const track = listLibraryTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findLibraryTrack(dir, trackId);
       if (!track) return { status: 'error', reason: 'track-unavailable' };
 
       const result = await dialog.showOpenDialog(getMainWindow(), {
@@ -139,9 +137,7 @@ function registerLibraryTrackArtworkHandlers({
 
   ipcMain.handle('library:save-track-edits', async (event, trackId, edits) => {
     const dir = resolveDownloadDir(getConfig());
-    const track = listLibraryTracks(dir).find(
-      (candidate) => candidate.id === trackId,
-    );
+    const track = findLibraryTrack(dir, trackId);
     if (!track) return { status: 'error', reason: 'track-unavailable' };
 
     const metadata = normalizeTrackMetadataEdits(edits);
@@ -262,9 +258,7 @@ function registerLibraryTrackArtworkHandlers({
     async (event, trackId, edits = {}) => {
       requireFeatureGate(featureIds.PROVIDER_FLOW);
       const dir = resolveDownloadDir(getConfig());
-      const track = listLibraryTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findLibraryTrack(dir, trackId);
       if (!track) return { status: 'error', reason: 'track-unavailable' };
       abortArtworkOperations(trackId);
       const controller = new AbortController();
@@ -308,9 +302,7 @@ function registerLibraryTrackArtworkHandlers({
     async (event, trackId, candidateId) => {
       requireFeatureGate(featureIds.PROVIDER_FLOW);
       const dir = resolveDownloadDir(getConfig());
-      const track = listLibraryTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findLibraryTrack(dir, trackId);
       if (!track) return { status: 'error', reason: 'track-unavailable' };
       let previewGroup = artworkPreviews.get(trackId);
       if (!previewGroup || previewGroup.controller.signal.aborted) {
@@ -354,9 +346,7 @@ function registerLibraryTrackArtworkHandlers({
     async (event, trackId, candidateId) => {
       requireFeatureGate(featureIds.PROVIDER_FLOW);
       const dir = resolveDownloadDir(getConfig());
-      const track = listLibraryTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findLibraryTrack(dir, trackId);
       if (!track) return false;
       const sourcePage = resolvedArtworkDiscoveryService.sourcePage(
         trackId,

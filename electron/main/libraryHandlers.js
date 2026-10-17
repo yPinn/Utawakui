@@ -9,6 +9,7 @@ const {
   deleteTrack,
   deleteTrackArtworkFile,
   convertLocalAudioFiles,
+  findTrack,
   findTrackRecord,
   importLocalAudioFiles,
   listTracks,
@@ -47,6 +48,7 @@ const {
   createArtistIdentityService,
 } = require('../lib/artists/artistIdentityService');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const { createLibraryTrackSnapshot } = require('./libraryTrackSnapshot');
 const { createAppError } = require('../lib/appError');
 const { isMusicBrainzSourcePage } = require('../lib/musicbrainz/identifiers');
 const {
@@ -112,6 +114,7 @@ function registerLibraryHandlers({
   runArtistPhotoWorker,
   lyricsAcquisitionService,
   listLibraryTracks = listTracks,
+  trackSnapshot = createLibraryTrackSnapshot({ listLibraryTracks }),
   runLibraryBackfill = runBackfillPass,
   organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
   importAudioFiles = importLocalAudioFiles,
@@ -123,6 +126,7 @@ function registerLibraryHandlers({
   updateConfig = () => undefined,
   localImportReviewSessions = createLocalImportReviewSessionStore(),
   findLibraryTrackRecord = findTrackRecord,
+  findLibraryTrack = findTrack,
   deleteLibraryTrack = deleteTrack,
   removeTrackFromPlaylists = removeTrackFromAllPlaylists,
   unlinkTrackFromPerformanceSessionPlan = (directory, trackId) =>
@@ -224,7 +228,7 @@ function registerLibraryHandlers({
   ipcMain.handle('library:list', async (event, options = {}) => {
     const dir = resolveDownloadDir(getConfig());
     organizeLibraryMetadataAutomatically(dir);
-    const tracks = listLibraryTracks(dir);
+    const tracks = trackSnapshot.listFresh(dir);
     // Fire-and-forget — don't make the renderer wait on a network-bound
     // metadata pass just to see the tracks it already has.
     if (
@@ -433,6 +437,7 @@ function registerLibraryHandlers({
   };
   registerLibraryArtistOrganizationHandlers({
     ...libraryDependencies,
+    listRecentLibraryTracks: trackSnapshot.listRecent,
     artistIndexCache,
     artistIdentityService,
   });
@@ -446,6 +451,7 @@ function registerLibraryHandlers({
   });
   registerLibraryTrackArtworkHandlers({
     ...libraryDependencies,
+    findLibraryTrack,
     dialog,
     getMainWindow,
     requireFeatureGate,

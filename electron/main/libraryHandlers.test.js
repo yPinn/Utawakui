@@ -3,6 +3,7 @@ import { APP_ERROR_PREFIX } from '../lib/appError.js';
 import { buildFeatureConfirmation, FEATURE_IDS } from '../lib/featureGates.js';
 import { AUDIO_PICKER_EXTENSIONS } from '../lib/library/constants.js';
 import libraryHandlersModule from './libraryHandlers.js';
+import { createLibraryTrackSnapshot } from './libraryTrackSnapshot.js';
 
 function parseAppError(error) {
   const raw = String(error?.message || '');
@@ -93,6 +94,11 @@ describe('library metadata maintenance handlers', () => {
       }),
       captureLibraryTrackArtworkSnapshot: vi.fn().mockReturnValue([]),
       restoreLibraryTrackArtworkSnapshot: vi.fn().mockReturnValue(true),
+      // Single-track lookups follow each test's listLibraryTracks sequence.
+      findLibraryTrack: (dir, trackId) =>
+        (overrides.listLibraryTracks?.(dir) ?? []).find(
+          (track) => track.id === trackId,
+        ) ?? null,
       ...overrides,
     });
 
@@ -185,6 +191,30 @@ describe('library metadata maintenance handlers', () => {
       tracks,
     );
     expect(runLibraryBackfill).not.toHaveBeenCalled();
+  });
+
+  it('reuses the library:list scan for the artist index until the library changes', async () => {
+    const tracks = [{ id: 'a', artist: 'Aimer' }];
+    const listLibraryTracks = vi.fn().mockReturnValue(tracks);
+    const trackSnapshot = createLibraryTrackSnapshot({ listLibraryTracks });
+    const artistIndexCache = { getIndex: vi.fn().mockResolvedValue({}) };
+    const handlers = registerHandlers({
+      listLibraryTracks,
+      trackSnapshot,
+      artistIndexCache,
+    });
+
+    await handlers.get('library:list')(null, { allowProviderBackfill: false });
+    await handlers.get('library:get-artist-index')();
+    expect(listLibraryTracks).toHaveBeenCalledOnce();
+    expect(artistIndexCache.getIndex).toHaveBeenCalledWith(
+      'library-dir',
+      tracks,
+    );
+
+    trackSnapshot.invalidate();
+    await handlers.get('library:get-artist-index')();
+    expect(listLibraryTracks).toHaveBeenCalledTimes(2);
   });
 
   it('keeps artist organization mutations id-only, revisioned, and main-derived', async () => {

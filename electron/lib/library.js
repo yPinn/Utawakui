@@ -86,6 +86,7 @@ const {
 const {
   organizeTrackMetadataFromSidecars,
   refreshTrackMetadataFromSidecars,
+  findTrack,
   findTrackRecord,
   listTracks,
   updateTrackMetadata,
@@ -126,6 +127,7 @@ module.exports = {
   deleteTrackArtworkFile,
   deleteTrackReading,
   deleteTrackLyricsTiming,
+  findTrack,
   findTrackRecord,
   hasSeparation,
   hasSeparationResultFile,

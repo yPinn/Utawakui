@@ -89,6 +89,7 @@ const {
   registerStartupTraceHandler,
 } = require('./lib/startupTrace');
 const windowState = require('./main/windowState');
+const { createLibraryTrackSnapshot } = require('./main/libraryTrackSnapshot');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
@@ -436,6 +437,11 @@ if (!gotSingleInstanceLock) {
     app.once('will-quit', () => windowCloseDecisionBridge?.destroy());
     recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
+    const libraryTrackSnapshot = createLibraryTrackSnapshot();
+    const notifyLibraryUpdated = (options) => {
+      libraryTrackSnapshot.invalidate();
+      windowState.notifyLibraryUpdated(options);
+    };
     heavyJobScheduler = createHeavyJobScheduler();
     registerHeavyJobSchedulerLifecycle({
       app,
@@ -484,7 +490,7 @@ if (!gotSingleInstanceLock) {
         );
       },
       currentProfileIds: structureAnalysisProfileIds,
-      onTrackComplete: windowState.notifyLibraryUpdated,
+      onTrackComplete: notifyLibraryUpdated,
     });
     const structureAnalysisCapabilityService =
       createStructureAnalysisCapabilityService({
@@ -515,7 +521,7 @@ if (!gotSingleInstanceLock) {
         );
       },
       currentProfileIds: structureAnalysisProfileIds,
-      onTrackComplete: windowState.notifyLibraryUpdated,
+      onTrackComplete: notifyLibraryUpdated,
       logger: runtimeDiagnosticsLogger,
     });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
@@ -572,7 +578,7 @@ if (!gotSingleInstanceLock) {
           ...(snapshot?.queue?.queuedTrackIds || []),
         ].filter(Boolean);
       },
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
     });
     const enforceLibraryStoragePolicy = (options) => {
       const policy = configState.getConfig().libraryStorage;
@@ -842,7 +848,8 @@ if (!gotSingleInstanceLock) {
       resolveDownloadDir: configState.resolveDownloadDir,
       resolveUserDataDir: () => app.getPath('userData'),
       getMainWindow: windowState.getMainWindow,
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
+      trackSnapshot: libraryTrackSnapshot,
       sendBackfillStatus: windowState.sendBackfillStatus,
       featureIds: FEATURE_IDS,
       requireFeatureGate,
@@ -861,7 +868,7 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       getMainWindow: windowState.getMainWindow,
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       lyricsAcquisitionService,
@@ -874,7 +881,7 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       getMainWindow: windowState.getMainWindow,
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       analysisService: structureAnalysisService,
@@ -913,6 +920,7 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      listLibraryTracks: libraryTrackSnapshot.listRecent,
       recordDiagnostic,
     });
 
@@ -924,7 +932,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
       enforceLibraryStoragePolicy,
       recordDiagnostic,
@@ -936,7 +944,7 @@ if (!gotSingleInstanceLock) {
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       getMainWindow: windowState.getMainWindow,
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
@@ -965,7 +973,7 @@ if (!gotSingleInstanceLock) {
       getDownloadDirStatus: configState.getDownloadDirStatus,
       validateDownloadDir: configState.validateDownloadDir,
       getMainWindow: windowState.getMainWindow,
-      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      notifyLibraryUpdated,
       recordDiagnostic,
       titlebarColors: windowState.TITLEBAR_COLORS,
       applyPerformerUiTheme: (theme) =>

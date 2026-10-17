@@ -27,6 +27,7 @@ const FUNCTION_EXPORTS = [
   'deleteTrackArtworkFile',
   'deleteTrackReading',
   'deleteTrackLyricsTiming',
+  'findTrack',
   'findTrackRecord',
   'hasCurrentFullT2Lyrics',
   'hasSeparation',

@@ -3,8 +3,8 @@
 const {
   backfillLyricsSourceLabels,
   getTrackLyricsState,
+  findTrack,
   loadTrackLyricsManifest,
-  listTracks,
   resolveTrackDir,
   setLyricsSourcePreference,
 } = require('../../lib/library');
@@ -187,7 +187,7 @@ function registerLyricsAcquisitionHandlers({
     requireFeatureGate(featureIds.LYRICS_FLOW);
 
     const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((candidate) => candidate.id === trackId);
+    const track = findTrack(dir, trackId);
     if (!track) {
       return {
         provider: 'musixmatch',
@@ -202,9 +202,7 @@ function registerLyricsAcquisitionHandlers({
     'lyrics:search-candidates',
     async (event, trackId, options) => {
       const dir = resolveDownloadDir(getConfig());
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findTrack(dir, trackId);
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 
@@ -223,9 +221,7 @@ function registerLyricsAcquisitionHandlers({
         allowAll: true,
       });
       const dir = resolveDownloadDir(getConfig());
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findTrack(dir, trackId);
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
       const normalizedOptions = normalizeLrclibSearchOptions(options);
@@ -242,9 +238,7 @@ function registerLyricsAcquisitionHandlers({
     'lyrics:save-candidate',
     async (event, trackId, candidateId, expectedFingerprint, options) => {
       const dir = resolveDownloadDir(getConfig());
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findTrack(dir, trackId);
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
       const normalizedOptions = normalizeLrclibSearchOptions(options);
@@ -282,9 +276,7 @@ function registerLyricsAcquisitionHandlers({
     ) => {
       const providerId = normalizeLyricsProviderId(providerIdValue);
       const dir = resolveDownloadDir(getConfig());
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
+      const track = findTrack(dir, trackId);
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
       const normalizedOptions = normalizeLrclibSearchOptions(options);
