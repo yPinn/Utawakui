@@ -642,9 +642,6 @@ function startDrag(playlist, event) {
 .playlist-sidebar {
   --ui-playlist-navigation-plate-background: var(--ui-color-entry);
   --ui-playlist-navigation-plate-foreground: var(--ui-color-entry-foreground);
-  --ui-playlist-navigation-active-indicator: var(
-    --ui-color-entry-selected-indicator
-  );
 
   box-sizing: border-box;
   display: flex;
@@ -739,7 +736,7 @@ function startDrag(playlist, event) {
   pointer-events: none;
 }
 
-.playlist-sidebar__item:hover .playlist-sidebar__item-state-surface {
+.playlist-sidebar__item:where(:hover) .playlist-sidebar__item-state-surface {
   background: var(--ui-color-surface-hover);
 }
 
@@ -846,17 +843,30 @@ function startDrag(playlist, event) {
 }
 
 /* Fixed library functions use a stable filled entry plate. The row owns hover
-   and pressed paint; the plate only adds a selected-state indicator. */
+   and pressed paint; selection is expressed by the row surface. */
 .playlist-sidebar__thumb--accent {
-  border: var(--ui-border-width) solid transparent;
+  border: var(--ui-border-width) solid
+    color-mix(
+      in srgb,
+      var(--ui-playlist-navigation-plate-foreground) 30%,
+      var(--ui-playlist-navigation-plate-background)
+    );
   background: var(--ui-playlist-navigation-plate-background);
+  background-image: linear-gradient(
+    145deg,
+    color-mix(
+      in srgb,
+      var(--ui-playlist-navigation-plate-background) 90%,
+      var(--ui-playlist-navigation-plate-foreground)
+    ),
+    var(--ui-playlist-navigation-plate-background) 48%,
+    color-mix(
+      in srgb,
+      var(--ui-playlist-navigation-plate-background) 75%,
+      var(--ui-color-canvas)
+    )
+  );
   color: var(--ui-playlist-navigation-plate-foreground);
-}
-
-.playlist-sidebar__item--active
-  .playlist-sidebar__thumb.playlist-sidebar__thumb--accent {
-  box-shadow: 0 0 0 var(--ui-focus-width)
-    var(--ui-playlist-navigation-active-indicator);
 }
 
 .playlist-sidebar__info {
@@ -965,12 +975,6 @@ function startDrag(playlist, event) {
     transition:
       opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
       visibility 0s linear 0s;
-  }
-
-  .playlist-sidebar__item--active .playlist-sidebar__item-state-surface {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
   }
 }
 

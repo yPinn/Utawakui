@@ -220,7 +220,7 @@
       1.25rem
   );
   --ui-sidebar-row-compact-hit-size: var(--ui-sidebar-row-min-height);
-  --ui-sidebar-row-selected-bg: var(--ui-color-surface-selected);
+  --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);
   --ui-sidebar-toolbar-gap: var(--ui-space-2);
   --ui-sidebar-toolbar-block-size: var(--ui-sidebar-row-min-height);
   --ui-sidebar-toolbar-padding-block: 0;
@@ -1109,7 +1109,7 @@
     var(--ui-color-danger-contrast) 75%,
     var(--ui-color-danger)
   );
-  --ui-sidebar-row-selected-bg: var(--ui-color-surface-selected);
+  --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);
   --ui-track-row-selected-surface: color-mix(
     in srgb,
     var(--ui-color-text) 8%,

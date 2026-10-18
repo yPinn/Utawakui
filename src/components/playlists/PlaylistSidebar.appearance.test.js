@@ -183,16 +183,16 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
       );
     }
     expect(source).toMatch(
-      /\.playlist-sidebar__item:hover \.playlist-sidebar__item-state-surface\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
+      /\.playlist-sidebar__item:where\(:hover\) \.playlist-sidebar__item-state-surface\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
     );
     expect(rowSource).toMatch(
-      /\.playlist-sidebar-row:hover \.playlist-sidebar-row__state-surface\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
+      /\.playlist-sidebar-row:where\(:hover\) \.playlist-sidebar-row__state-surface\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
     );
     expect(source).not.toMatch(
-      /\.playlist-sidebar__item:hover \.playlist-sidebar__item-state-surface\s*\{[^}]*border-color:/su,
+      /\.playlist-sidebar__item:where\(:hover\) \.playlist-sidebar__item-state-surface\s*\{[^}]*border-color:/su,
     );
     expect(rowSource).not.toMatch(
-      /\.playlist-sidebar-row:hover \.playlist-sidebar-row__state-surface\s*\{[^}]*border-color:/su,
+      /\.playlist-sidebar-row:where\(:hover\) \.playlist-sidebar-row__state-surface\s*\{[^}]*border-color:/su,
     );
     expect(source).toMatch(
       /\.playlist-sidebar__item:active \.playlist-sidebar__item-state-surface\s*\{[^}]*background:\s*var\(--ui-color-surface-active\);/su,
@@ -204,13 +204,13 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
 
   it('keeps filled functional-entry plates distinct while the row owns interaction state', () => {
     expect(source).toMatch(
-      /\.playlist-sidebar\s*\{[^}]*--ui-playlist-navigation-plate-background:\s*var\(\s*--ui-color-entry\s*\);[^}]*--ui-playlist-navigation-plate-foreground:\s*var\(\s*--ui-color-entry-foreground\s*\);[^}]*--ui-playlist-navigation-active-indicator:\s*var\(\s*--ui-color-entry-selected-indicator\s*\);/su,
+      /\.playlist-sidebar\s*\{[^}]*--ui-playlist-navigation-plate-background:\s*var\(\s*--ui-color-entry\s*\);[^}]*--ui-playlist-navigation-plate-foreground:\s*var\(\s*--ui-color-entry-foreground\s*\);[^}]*\}/su,
     );
     expect(source).toMatch(
       /\.playlist-sidebar__thumb--accent\s*\{[^}]*background:\s*var\(--ui-playlist-navigation-plate-background\);[^}]*color:\s*var\(--ui-playlist-navigation-plate-foreground\);/su,
     );
     expect(source).not.toMatch(
-      /\.playlist-sidebar__item:hover\s+\.playlist-sidebar__thumb--accent/u,
+      /\.playlist-sidebar__item:where\(:hover\)\s+\.playlist-sidebar__thumb--accent/u,
     );
     expect(source).not.toMatch(
       /\.playlist-sidebar__item:active\s+\.playlist-sidebar__thumb--accent/u,
@@ -234,16 +234,38 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
   });
 
-  it('uses one accessible active plate indicator in expanded and compact geometry', () => {
-    expect(source).toMatch(
-      /\.playlist-sidebar__item--active\s+\.playlist-sidebar__thumb\.playlist-sidebar__thumb--accent\s*\{[^}]*box-shadow:\s*0 0 0 var\(--ui-focus-width\)\s+var\(--ui-playlist-navigation-active-indicator\);/su,
+  it('uses neutral row selection and preserves keyboard focus without a plate ring', () => {
+    const tokens = readFileSync(
+      new URL('../../styles/tokens.css', import.meta.url),
+      'utf8',
     );
     expect(
-      source.match(/--ui-playlist-navigation-active-indicator\)/gu),
-    ).toHaveLength(1);
-    expect(source).not.toMatch(
-      /@container \(width < 256px\)[\s\S]*?\.playlist-sidebar__item--active\s+\.playlist-sidebar__thumb\s*\{[^}]*box-shadow:/u,
+      tokens.match(
+        /--ui-sidebar-row-selected-bg: var\(--ui-color-surface-active\);/gu,
+      ),
+    ).toHaveLength(2);
+    expect(source).not.toContain('--ui-playlist-navigation-active-indicator');
+    expect(rowSource).not.toMatch(
+      /\.playlist-sidebar-row--active\s+\.playlist-sidebar-row__thumb[^}]*box-shadow:/su,
     );
+    for (const css of [source, rowSource]) {
+      expect(css).not.toMatch(
+        /--active\s+\.[\w-]+state-surface\s*\{[^}]*background:\s*transparent;/su,
+      );
+    }
+    expect(source).not.toMatch(
+      /\.playlist-sidebar__item--active\s+\.playlist-sidebar__thumb[^}]*box-shadow:/su,
+    );
+    for (const [css, control] of [
+      [source, 'playlist-sidebar__item'],
+      [rowSource, 'playlist-sidebar-row__select'],
+    ]) {
+      expect(css).toContain(`.${control}:focus-visible`);
+      expect(css).toContain(
+        'outline: var(--ui-focus-width) solid var(--ui-color-focus);',
+      );
+      expect(css).toContain('background: var(--ui-sidebar-row-selected-bg);');
+    }
   });
 
   it('uses app-owned end-side tooltips only while fixed navigation is compact', () => {

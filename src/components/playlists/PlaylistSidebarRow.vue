@@ -275,7 +275,7 @@ function toggleFromArtwork(event) {
   transform: translateY(50%);
 }
 
-.playlist-sidebar-row:hover .playlist-sidebar-row__state-surface {
+.playlist-sidebar-row:where(:hover) .playlist-sidebar-row__state-surface {
   background: var(--ui-color-surface-hover);
 }
 
@@ -296,10 +296,6 @@ function toggleFromArtwork(event) {
 .playlist-sidebar-row:has(.playlist-sidebar-row__select:active)
   .playlist-sidebar-row__state-surface {
   background: var(--ui-color-surface-active);
-}
-
-.playlist-sidebar-row--active .playlist-sidebar-row__thumb {
-  color: var(--ui-color-accent);
 }
 
 /* The play control is a pure hover affordance: UiArtworkOverlay owns its
@@ -391,18 +387,6 @@ function toggleFromArtwork(event) {
 
   .playlist-sidebar-row__play {
     display: none;
-  }
-
-  /* Compact rail selection sits on the artwork itself. A left-edge row
-     indicator has no useful text column to anchor to here. */
-  .playlist-sidebar-row--active .playlist-sidebar-row__state-surface {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
-    box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent);
   }
 
   /* Round artist covers do not carry the current-source dot. */
