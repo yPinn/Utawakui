@@ -1,11 +1,15 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   PLAYBACK_HISTORY_LIMIT,
   createPlaybackPersistence,
 } from './playbackPersistence.js';
+
+// Exercise real atomic renames on a writable filesystem, including Windows
+// sandboxes where the redirected system TEMP rejects rename with EPERM.
+const testTmpRoot = fileURLToPath(new URL('../../.tmp/', import.meta.url));
 
 describe('playbackPersistence', () => {
   let userDataDir;
@@ -13,8 +17,9 @@ describe('playbackPersistence', () => {
   let service;
 
   beforeEach(() => {
+    fs.mkdirSync(testTmpRoot, { recursive: true });
     userDataDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'utawakui-playback-persistence-'),
+      path.join(testTmpRoot, 'utawakui-playback-persistence-'),
     );
     clockMs = Date.parse('2026-09-27T12:00:00.000Z');
     service = createPlaybackPersistence({
@@ -24,6 +29,7 @@ describe('playbackPersistence', () => {
   });
 
   afterEach(() => {
+    expect(path.dirname(userDataDir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(userDataDir, { recursive: true, force: true });
   });
 

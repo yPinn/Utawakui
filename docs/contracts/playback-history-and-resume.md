@@ -87,3 +87,8 @@ session history 或 Queue 的 previous stack 合併。
   read-only Recent row、Settings clear confirmation 與 sticky scroll state。另以真實 player
   progress event 接到 main persistence service 的暫存目錄，驗證 qualified event 實際建立
   history JSON。
+- Main persistence 與 renderer runtime-chain fixtures 使用工作區忽略的 `.tmp` 下各自獨立目錄，
+  保留真實原子寫入並於測試後釋放訂閱、清理目錄。Windows AppContainer 的系統 TEMP 可能允許
+  建立檔案卻拒絕 rename，不能用這類目錄誤判產品寫入故障。Runtime-chain test 直接驗證
+  播放開始、紀錄 bridge 的呼叫與 promise 結果，再核對 history／次數，避免原始寫入錯誤
+  被「等不到檔案」的 timeout 掩蓋；另涵蓋門檻前、Seek、正常短曲結束、重複事件及播放失敗。

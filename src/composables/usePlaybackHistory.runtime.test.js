@@ -1,8 +1,12 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPlaybackPersistence } from '../../electron/lib/playbackPersistence.js';
+
+// Windows AppContainer temp directories can allow file creation but reject
+// rename. Keep real atomic writes inside the workspace's writable test area.
+const testTmpRoot = fileURLToPath(new URL('../../.tmp/', import.meta.url));
 
 const harness = vi.hoisted(() => ({
   queueState: {
@@ -105,22 +109,27 @@ class MockAudio {
 
 describe('playback history runtime chain', () => {
   let userDataDir;
+  let history;
 
   beforeEach(() => {
     vi.resetModules();
     MockAudio.latest = null;
     vi.stubGlobal('Audio', MockAudio);
+    fs.mkdirSync(testTmpRoot, { recursive: true });
     userDataDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'utawakui-playback-history-runtime-'),
+      path.join(testTmpRoot, 'utawakui-playback-history-runtime-'),
     );
   });
 
   afterEach(() => {
+    history?.dispose();
+    history = null;
     vi.unstubAllGlobals();
+    expect(path.dirname(userDataDir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(userDataDir, { recursive: true, force: true });
   });
 
-  it('writes playback-history.json after ten seconds of real player progress events', async () => {
+  async function createRuntime() {
     const service = createPlaybackPersistence({
       userDataDir,
       now: () => new Date('2026-09-27T12:00:00.000Z'),
@@ -143,17 +152,44 @@ describe('playback history runtime chain', () => {
     const { usePlayer } = await import('./usePlayer.js');
     const { usePlaybackHistory } = await import('./usePlaybackHistory.js');
     const player = usePlayer();
-    const history = usePlaybackHistory();
+    history = usePlaybackHistory();
     await history.initialize();
+    return {
+      player,
+      service,
+      audio: MockAudio.latest,
+      record: window.Utawakui.recordRecentPlayback,
+    };
+  }
 
-    await player.playTrack(harness.tracksById.get('track-a'));
-    MockAudio.latest.currentTime = 5;
-    MockAudio.latest.dispatch('timeupdate');
-    MockAudio.latest.currentTime = 10;
-    MockAudio.latest.dispatch('timeupdate');
+  function progress(audio, currentTime) {
+    audio.currentTime = currentTime;
+    audio.dispatch('timeupdate');
+  }
 
+  it('writes playback-history.json once after ten seconds of real player progress events', async () => {
+    const { player, service, audio, record } = await createRuntime();
+
+    expect(await player.playTrack(harness.tracksById.get('track-a'))).toBe(
+      true,
+    );
+    expect(player.state.error).toBeNull();
+    expect(player.state.isPlaying).toBe(true);
+    progress(audio, 5);
     const historyPath = path.join(userDataDir, 'playback-history.json');
-    await vi.waitFor(() => expect(fs.existsSync(historyPath)).toBe(true));
+    expect(record).not.toHaveBeenCalled();
+    expect(fs.existsSync(historyPath)).toBe(false);
+
+    progress(audio, 10);
+    expect(record).toHaveBeenCalledExactlyOnceWith('track-a', {
+      sourceId: 'playlist-1',
+      sourceName: '深夜練唱',
+    });
+    // Surface the original bridge/write rejection instead of timing out later
+    // with the uninformative observation that the file was never created.
+    await expect(record.mock.results[0].value).resolves.toHaveLength(1);
+
+    expect(fs.existsSync(historyPath)).toBe(true);
     expect(JSON.parse(fs.readFileSync(historyPath, 'utf8'))).toEqual({
       version: 1,
       entries: [
@@ -174,6 +210,59 @@ describe('playback history runtime chain', () => {
     expect(history.playCountOf('track-a')).toBe(1);
     expect(service.getPlayCountByTrackId()).toEqual({ 'track-a': 1 });
 
-    history.dispose();
+    progress(audio, 15);
+    audio.dispatch('ended');
+    expect(record).toHaveBeenCalledOnce();
+  });
+
+  it('excludes seek movement while retaining actual playback accumulated before it', async () => {
+    const { player, audio, record } = await createRuntime();
+    expect(await player.playTrack(harness.tracksById.get('track-a'))).toBe(
+      true,
+    );
+    progress(audio, 5);
+    audio.currentTime = 60;
+    audio.dispatch('seeking');
+    audio.dispatch('timeupdate');
+    audio.dispatch('seeked');
+    progress(audio, 64);
+    expect(record).not.toHaveBeenCalled();
+    expect(fs.existsSync(path.join(userDataDir, 'playback-history.json'))).toBe(
+      false,
+    );
+    progress(audio, 65);
+    expect(record).toHaveBeenCalledOnce();
+    await expect(record.mock.results[0].value).resolves.toHaveLength(1);
+    expect(history.playCountOf('track-a')).toBe(1);
+  });
+
+  it('persists a normally ended short song without waiting for ten seconds', async () => {
+    const { player, audio, record, service } = await createRuntime();
+    expect(await player.playTrack(harness.tracksById.get('track-a'))).toBe(
+      true,
+    );
+    progress(audio, 3);
+    expect(record).not.toHaveBeenCalled();
+    audio.dispatch('ended');
+    expect(record).toHaveBeenCalledOnce();
+    await expect(record.mock.results[0].value).resolves.toHaveLength(1);
+    expect(service.getRecentHistory()).toHaveLength(1);
+    expect(fs.existsSync(path.join(userDataDir, 'playback-history.json'))).toBe(
+      true,
+    );
+  });
+
+  it('does not persist a failed playback start', async () => {
+    const { player, audio, record } = await createRuntime();
+    audio.play.mockRejectedValueOnce(new Error('fixture playback failure'));
+    expect(await player.playTrack(harness.tracksById.get('track-a'))).toBe(
+      false,
+    );
+    progress(audio, 5);
+    progress(audio, 10);
+    expect(record).not.toHaveBeenCalled();
+    expect(fs.existsSync(path.join(userDataDir, 'playback-history.json'))).toBe(
+      false,
+    );
   });
 });
