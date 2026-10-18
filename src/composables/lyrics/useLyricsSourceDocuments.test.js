@@ -13,6 +13,7 @@ function setup(prepareLyrics) {
   const state = reactive({
     selectedSourceFilename: 'zh.vtt',
     offsetSave: {},
+    manualSave: {},
     lyricsText: '',
   });
   const selectedTrack = shallowRef({ id: 'a' });
@@ -27,6 +28,23 @@ function setup(prepareLyrics) {
 }
 
 describe('lyrics source preparation boundary', () => {
+  it('loads immediately when no custom preparation step is provided', async () => {
+    const { state, owner } = setup();
+    await owner.loadSelectedLyrics();
+    expect(state.lyricsText).toBe('a中文');
+    expect(state.isLoadingLyrics).toBe(false);
+    expect(state.error).toBeNull();
+  });
+
+  it('keeps the loaded source and explains recovery when the label bridge is unavailable', async () => {
+    const { state, owner } = setup();
+    await owner.loadSelectedLyrics();
+    expect(await owner.setSourceLabel('zh.vtt', '排練用')).toBeNull();
+    expect(state.manualSave.error).toBe('請重新啟動應用程式後再編輯標籤。');
+    expect(state.lyricsText).toBe('a中文');
+    expect(state.selectedSourceFilename).toBe('zh.vtt');
+    expect(state.manualSave.isSaving).not.toBe(true);
+  });
   it('does not publish Chinese text until preparation completes', async () => {
     let resolve;
     const pending = new Promise((done) => {
