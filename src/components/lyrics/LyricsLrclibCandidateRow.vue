@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue';
-import { ChevronRight } from '../../icons/index.js';
+import { computed, useId } from 'vue';
+import { ChevronDown, ChevronRight } from '../../icons/index.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 import {
@@ -11,6 +11,8 @@ import {
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiSurface from '../ui/UiSurface.vue';
+import UiStack from '../ui/UiStack.vue';
 
 const props = defineProps({
   candidate: { type: Object, required: true },
@@ -24,6 +26,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['toggle', 'save', 'confirmChanged', 'cancelChanged']);
+const previewId = `lyrics-candidate-preview-${useId()}`;
 
 const presentedCandidate = computed(
   () => props.changedCandidate || props.candidate,
@@ -72,25 +75,16 @@ function previewLineHasTiming(line) {
 </script>
 
 <template>
-  <li
-    class="lyrics-lrclib-candidate-row"
-    :class="{ 'lyrics-lrclib-candidate-row--expanded': expanded }"
-  >
+  <li class="lyrics-lrclib-candidate-row">
     <div class="lyrics-lrclib-candidate-row__header">
-      <button
-        type="button"
+      <UiButton
+        :icon="expanded ? ChevronDown : ChevronRight"
         class="lyrics-lrclib-candidate-row__toggle"
         :aria-expanded="expanded"
+        :aria-controls="previewId"
         :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，建議來源' : ''}`"
         @click="emit('toggle')"
       >
-        <ChevronRight
-          class="lyrics-lrclib-candidate-row__chevron"
-          :class="{
-            'lyrics-lrclib-candidate-row__chevron--expanded': expanded,
-          }"
-          aria-hidden="true"
-        />
         <span class="lyrics-lrclib-candidate-row__info">
           <span class="lyrics-lrclib-candidate-row__title-row">
             <span class="lyrics-lrclib-candidate-row__title" dir="auto">
@@ -112,7 +106,7 @@ function previewLineHasTiming(line) {
             >
           </span>
         </span>
-      </button>
+      </UiButton>
 
       <div class="lyrics-lrclib-candidate-row__summary">
         <span class="lyrics-lrclib-candidate-row__summary-details">
@@ -134,47 +128,36 @@ function previewLineHasTiming(line) {
             {{ durationLabel(presentedCandidate) }}
           </span>
         </span>
-      </div>
-    </div>
-
-    <div class="lyrics-lrclib-candidate-row__preview-row">
-      <p
-        v-if="!expanded && presentedCandidate.previewLines?.[0]"
-        class="lyrics-lrclib-candidate-row__preview-line"
-        dir="auto"
-      >
-        {{ presentedCandidate.previewLines[0].text }}
-      </p>
-
-      <div class="lyrics-lrclib-candidate-row__metadata">
-        <div
-          v-if="candidate.alreadySaved"
-          class="lyrics-lrclib-candidate-row__saved-status"
-        >
-          <UiChip tone="success">已儲存</UiChip>
+        <div class="lyrics-lrclib-candidate-row__metadata">
+          <div
+            v-if="candidate.alreadySaved"
+            class="lyrics-lrclib-candidate-row__saved-status"
+          >
+            <UiChip tone="success">已儲存</UiChip>
+          </div>
+          <UiChip
+            v-if="candidate.saveState === 'update-available'"
+            tone="warning"
+          >
+            有更新
+          </UiChip>
+          <UiChip :tone="capabilityTone">{{
+            capabilityLabel(presentedCandidate)
+          }}</UiChip>
         </div>
-        <UiChip
-          v-if="candidate.saveState === 'update-available'"
-          tone="warning"
-        >
-          有更新
-        </UiChip>
-        <UiChip :tone="capabilityTone">{{
-          capabilityLabel(presentedCandidate)
-        }}</UiChip>
       </div>
     </div>
 
-    <div v-if="expanded" class="lyrics-lrclib-candidate-row__expanded">
-      <ul
-        v-if="visibleWarnings.length"
-        class="lyrics-lrclib-candidate-row__warnings"
-      >
-        <li v-for="warning in visibleWarnings" :key="warning">{{ warning }}</li>
-      </ul>
-
-      <ol
+    <div
+      v-if="expanded"
+      :id="previewId"
+      class="lyrics-lrclib-candidate-row__expanded"
+    >
+      <UiSurface
         v-if="presentedCandidate.previewLines?.length"
+        tag="ol"
+        tone="canvas"
+        radius="sm"
         class="lyrics-lrclib-candidate-preview__lines"
         aria-label="歌詞預覽"
       >
@@ -196,7 +179,7 @@ function previewLineHasTiming(line) {
             line.text
           }}</span>
         </li>
-      </ol>
+      </UiSurface>
 
       <UiNotice
         v-if="changedCandidate"
@@ -206,40 +189,57 @@ function previewLineHasTiming(line) {
         compact
       />
 
+      <UiStack
+        class="lyrics-lrclib-candidate-row__support"
+        :gap="2"
+        align="center"
+        wrap
+      >
+        <div class="lyrics-lrclib-candidate-row__warning-slot">
+          <ul
+            v-if="visibleWarnings.length"
+            class="lyrics-lrclib-candidate-row__warnings"
+          >
+            <li v-for="warning in visibleWarnings" :key="warning">
+              {{ warning }}
+            </li>
+          </ul>
+        </div>
+
+        <div
+          v-if="!importMessage && (changedCandidate || !candidate.alreadySaved)"
+          class="lyrics-lrclib-candidate-row__footer"
+        >
+          <template v-if="changedCandidate">
+            <UiButton @click="emit('cancelChanged')">取消</UiButton>
+            <UiButton
+              variant="accent"
+              :disabled="saveDisabled"
+              @click="emit('confirmChanged')"
+            >
+              {{ saving ? '儲存中…' : '改用更新內容' }}
+            </UiButton>
+          </template>
+          <UiButton
+            v-else
+            variant="accent"
+            :disabled="saveDisabled"
+            :aria-label="`${candidate.saveState === 'update-available' ? '更新' : '儲存'} ${accessibleIdentity}`"
+            @click="emit('save')"
+          >
+            {{
+              saving
+                ? '儲存中…'
+                : candidate.saveState === 'update-available'
+                  ? '更新'
+                  : '儲存'
+            }}
+          </UiButton>
+        </div>
+      </UiStack>
       <p v-if="importMessage" class="lyrics-lrclib-candidate-row__availability">
         {{ importMessage }}
       </p>
-
-      <div
-        v-else-if="changedCandidate || !candidate.alreadySaved"
-        class="lyrics-lrclib-candidate-row__footer"
-      >
-        <template v-if="changedCandidate">
-          <UiButton @click="emit('cancelChanged')">取消</UiButton>
-          <UiButton
-            variant="accent"
-            :disabled="saveDisabled"
-            @click="emit('confirmChanged')"
-          >
-            {{ saving ? '儲存中…' : '改用更新內容' }}
-          </UiButton>
-        </template>
-        <UiButton
-          v-else
-          variant="accent"
-          :disabled="saveDisabled"
-          :aria-label="`${candidate.saveState === 'update-available' ? '更新' : '儲存'} ${accessibleIdentity}`"
-          @click="emit('save')"
-        >
-          {{
-            saving
-              ? '儲存中…'
-              : candidate.saveState === 'update-available'
-                ? '更新'
-                : '儲存'
-          }}
-        </UiButton>
-      </div>
     </div>
   </li>
 </template>
@@ -250,15 +250,6 @@ function previewLineHasTiming(line) {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--ui-space-3);
-}
-
-.lyrics-lrclib-candidate-row__preview-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-  margin-top: var(--ui-space-2);
-  padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
 }
 
 .lyrics-lrclib-candidate-row__metadata {
@@ -284,7 +275,7 @@ function previewLineHasTiming(line) {
 .lyrics-lrclib-candidate-row__title-row {
   min-width: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   gap: var(--ui-space-2);
 }
 
@@ -319,11 +310,15 @@ function previewLineHasTiming(line) {
 }
 
 .lyrics-lrclib-candidate-row__summary {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-rows:
+    calc(var(--ui-type-body-size) * var(--ui-type-body-line-height))
+    calc(var(--ui-type-caption-size) * var(--ui-type-caption-line-height));
+  justify-items: end;
+  align-content: start;
+  gap: var(--ui-space-1);
   flex-shrink: 0;
-  padding-top: var(--ui-space-1);
+  padding-top: calc(var(--ui-border-width) + var(--ui-space-1));
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
@@ -370,7 +365,8 @@ function previewLineHasTiming(line) {
   align-items: center;
   justify-content: flex-end;
   gap: var(--ui-space-3);
-  margin-top: var(--ui-space-2);
+  flex: 0 0 auto;
+  max-inline-size: 100%;
 }
 
 .lyrics-lrclib-candidate-preview__lines {
@@ -407,6 +403,10 @@ function previewLineHasTiming(line) {
 .lyrics-lrclib-candidate-row {
   --ui-lyrics-provider-slot-width: 5.5rem;
   --ui-lyrics-duration-slot-width: 7.5rem;
+  --ui-lyrics-candidate-content-inset: calc(
+    var(--ui-border-width) + var(--ui-space-3) + var(--ui-space-4) +
+      var(--ui-space-1)
+  );
 
   padding: var(--ui-space-2) var(--ui-space-3);
   border: 0;
@@ -419,41 +419,16 @@ function previewLineHasTiming(line) {
   border-bottom: 0;
 }
 
-.lyrics-lrclib-candidate-row--expanded {
-  background: var(--ui-color-canvas);
-}
-
-.lyrics-lrclib-candidate-row__toggle {
+.lyrics-lrclib-candidate-row__header > .lyrics-lrclib-candidate-row__toggle {
   min-width: 0;
-  display: flex;
   flex: 1;
   align-items: flex-start;
-  gap: var(--ui-space-2);
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+  justify-content: flex-start;
   text-align: start;
-  cursor: pointer;
 }
 
-.lyrics-lrclib-candidate-row__toggle:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.lyrics-lrclib-candidate-row__chevron {
-  width: var(--ui-space-4);
-  flex: 0 0 var(--ui-space-4);
-  margin-top: var(--ui-space-1);
-  color: var(--ui-color-text-muted);
-  transition: transform var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
-}
-
-.lyrics-lrclib-candidate-row__chevron--expanded {
-  transform: rotate(90deg);
+.lyrics-lrclib-candidate-row__toggle :deep(.ui-btn__icon) {
+  margin-block-start: var(--ui-space-1);
 }
 
 .lyrics-lrclib-candidate-row__title,
@@ -473,33 +448,34 @@ function previewLineHasTiming(line) {
   -webkit-line-clamp: 2;
 }
 
-.lyrics-lrclib-candidate-row__preview-line {
-  min-width: 0;
-  flex: 1 1 50%;
-  margin: 0;
-  overflow: hidden;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .lyrics-lrclib-candidate-row__expanded {
   display: grid;
   gap: var(--ui-space-2);
   margin-top: var(--ui-space-2);
-  padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
+  padding-inline-start: var(--ui-lyrics-candidate-content-inset);
 }
 
 .lyrics-lrclib-candidate-row__warnings {
   display: grid;
   gap: var(--ui-space-1);
   margin: 0;
-  padding-left: var(--ui-space-5);
+  padding: 0;
+  padding-inline-start: calc(var(--ui-border-width) + var(--ui-space-3));
+  list-style: none;
   color: var(--ui-color-warning);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
+}
+
+.lyrics-lrclib-candidate-row__warning-slot {
+  min-inline-size: 0;
+  flex: 1 1 0;
+  display: grid;
+  align-content: center;
+  min-block-size: calc(
+    var(--ui-type-caption-size) * var(--ui-type-caption-line-height) * 2 +
+      var(--ui-space-1)
+  );
 }
 
 .lyrics-lrclib-candidate-row__availability {
@@ -511,8 +487,6 @@ function previewLineHasTiming(line) {
 
 .lyrics-lrclib-candidate-preview__lines {
   padding: var(--ui-space-2) var(--ui-space-3);
-  border-left: var(--ui-border-width) solid var(--ui-color-border-strong);
-  background: var(--ui-color-surface);
 }
 
 @media (max-width: 680px) {
@@ -522,21 +496,11 @@ function previewLineHasTiming(line) {
 
   .lyrics-lrclib-candidate-row__summary {
     flex-wrap: wrap;
-    padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
-  }
-
-  .lyrics-lrclib-candidate-row__preview-row {
-    align-items: flex-start;
+    padding-inline-start: var(--ui-lyrics-candidate-content-inset);
   }
 
   .lyrics-lrclib-candidate-row__expanded {
-    padding-left: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lyrics-lrclib-candidate-row__chevron {
-    transition: none;
+    padding-inline-start: 0;
   }
 }
 </style>

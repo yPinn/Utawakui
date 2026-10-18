@@ -6,6 +6,17 @@ function source(filename) {
 }
 
 describe('online lyrics search modal contract', () => {
+  it('uses the formal button for candidate expansion without overriding interaction paint', () => {
+    const row = source('./LyricsLrclibCandidateRow.vue');
+    expect(row).not.toContain('<button');
+    expect(row).toContain(':icon="expanded ? ChevronDown : ChevronRight"');
+    expect(row).toContain(':aria-controls="previewId"');
+    expect(row).toContain(':id="previewId"');
+    expect(row).not.toContain('__toggle:focus-visible');
+    expect(row).not.toContain('__chevron');
+    expect(row).toContain('tag="ol"');
+    expect(row).toContain('tone="canvas"');
+  });
   it('reuses the shared text field for source labels instead of styling a native input', () => {
     const manager = source('./LyricsSourceManagerModal.vue');
     expect(manager).toContain('<UiTextField');
@@ -13,55 +24,42 @@ describe('online lyrics search modal contract', () => {
     expect(manager).not.toContain('<input');
     expect(manager).not.toContain('lyrics-source-manager__input');
   });
-  it('uses one modal shell and switches to a provider-scoped search workspace', () => {
+  it('uses the modal header for one combined search entry above the local collection', () => {
     const manager = source('./LyricsSourceManagerModal.vue');
-    const panel = source('./LyricsLrclibSearchPanel.vue');
-    const providerIcon = source('./LyricsProviderIcon.vue');
-
     expect(manager.match(/<UiModal/g)).toHaveLength(1);
-    expect(manager).toContain('<LyricsLrclibSearchWorkspace');
-    expect(manager).toContain('activeProviderId.value = providerId');
-    expect(manager).toContain("all: Object.freeze({ id: 'all'");
+    expect(manager).toContain('#header-actions');
+    expect(manager).toContain('可用歌詞');
+    expect(manager).toContain('aria-label="可使用的歌詞"');
+    expect(manager).toContain('ref="searchTrigger"');
+    expect(manager).toContain(
+      ":size=\"activeView === 'search' ? 'wide' : 'notice'\"",
+    );
+    expect(manager).toContain('max-block-size="small"');
+    expect(manager).toContain(
+      ":body-mode=\"activeView === 'search' ? 'workspace' : 'scroll'\"",
+    );
     expect(manager).toContain('provider-id="all"');
     expect(manager).toContain('provider-label="所有線上來源"');
-    expect(manager).toContain('provider-id="netease"');
-    expect(manager).toContain('provider-label="網易雲音樂"');
-    expect(manager).not.toContain('provider-id="amll"');
-    expect(manager).not.toContain('provider-label="AMLL TTML"');
-    expect(manager).toContain('provider-id="betterlyrics"');
-    expect(manager).toContain('provider-label="Better Lyrics"');
-    expect(manager.indexOf('ref="neteasePanelRef"')).toBeLessThan(
-      manager.indexOf('ref="lrclibPanelRef"'),
-    );
-    expect(manager.indexOf('ref="lrclibPanelRef"')).toBeLessThan(
-      manager.indexOf('ref="betterLyricsPanelRef"'),
-    );
-    expect(manager).toContain(':provider-id="activeProvider.id"');
     expect(manager).toContain('@back="returnToSources"');
-    expect(manager).toContain('lyrics-source-manager__online-list');
-    expect(manager).toContain('線上搜尋');
-    expect(manager).not.toContain('同時搜尋可用來源');
-    expect(manager).not.toContain('只有完整有效的逐字時間');
-    expect(manager).toMatch(
-      /function handleModalClose\(\) \{\s+activeView\.value = 'sources';\s+pendingDeleteSource\.value = null;\s+emit\('close'\);/u,
+    expect(manager).toContain('searchTriggerRef.value?.$el?.focus?.()');
+    expect(manager).not.toContain('activeProviderId');
+    expect(manager).not.toContain('LyricsLrclibSearchPanel');
+    expect(manager).not.toContain('lyrics-source-manager__online-list');
+    expect(manager).not.toContain('provider-id="netease"');
+    expect(manager).not.toContain('provider-id="lrclib"');
+    expect(manager).not.toContain('provider-id="betterlyrics"');
+    expect(manager.indexOf('label="手動匯入歌詞"')).toBeLessThan(
+      manager.indexOf('label="搜尋歌詞"'),
     );
-    expect(panel).toContain("emit('openSearch')");
-    expect(panel).not.toContain('description');
-    expect(panel).not.toContain('<UiChip');
-    expect(panel).not.toContain('searchLyricsCandidates');
-    expect(panel).toContain('<LyricsProviderIcon');
-    expect(panel).toContain(':provider-id="providerId"');
-    expect(providerIcon).toContain("providerId === 'lrclib'");
-    expect(providerIcon).toContain("providerId === 'netease'");
-    expect(providerIcon).not.toContain("providerId === 'amll'");
-    expect(providerIcon).toContain("providerId === 'betterlyrics'");
-    expect(providerIcon).toContain('<Disc3');
-    expect(providerIcon).toContain('<Captions');
-    expect(providerIcon).not.toContain('<Languages');
-    expect(providerIcon).toContain('<MicVocal');
-    expect(providerIcon).not.toContain('lyrics-provider-icon__monogram');
-    expect(providerIcon).not.toMatch(/>\s*(?:LRC|TTML|BL)\s*</);
-    expect(providerIcon).not.toMatch(/https?:\/\//);
+    expect(manager).toContain('<UiIconButton');
+    expect(manager).toContain(':aria-expanded="isManualImportOpen"');
+    expect(manager).toContain('hasUnlabeledLrclibSources');
+    expect(manager).toContain('await backfillSourceLabels()');
+    expect(manager).toContain('補齊標籤');
+    expect(manager).toContain('label="返回可用歌詞"');
+    expect(source('./LyricsLrclibSearchWorkspace.vue')).not.toContain(
+      '返回可用歌詞',
+    );
   });
 
   it('keeps source tier left and signed offset right in a compact divided slot', () => {
@@ -108,7 +106,7 @@ describe('online lyrics search modal contract', () => {
     const workspace = source('./LyricsLrclibSearchWorkspace.vue');
     const button = source('../ui/UiButton.vue');
 
-    expect(workspace).toContain('<form');
+    expect(workspace).toContain('tag="form"');
     expect(workspace).toContain('@submit.prevent="handleSearch()"');
     expect(workspace).toContain('v-model="titleDraft"');
     expect(workspace).toContain('v-model="artistDraft"');
@@ -173,6 +171,24 @@ describe('online lyrics search modal contract', () => {
     expect(row).toContain('showProvider');
   });
 
+  it('reuses surfaces, loading skeletons and scroll-safe layout across the modal views', () => {
+    const manager = source('./LyricsSourceManagerModal.vue');
+    const workspace = source('./LyricsLrclibSearchWorkspace.vue');
+    const manualImport = source('./LyricsManualImportPanel.vue');
+    for (const view of [manager, workspace, manualImport]) {
+      expect(view).toContain('<UiSurface');
+      expect(view).not.toContain('<input');
+      expect(view).not.toContain('<textarea');
+    }
+    expect(manager).toContain('tag="li"');
+    expect(manualImport).toContain('tag="form"');
+    expect(workspace).toContain('<UiSkeleton');
+    expect(workspace).toContain('<UiScrollLayout');
+    expect(workspace).not.toContain('<UiScrollRegion');
+    expect(workspace).not.toContain('padding-right: var(--ui-space-1)');
+    expect(workspace).not.toContain('skeleton span');
+  });
+
   it('keeps a compact provider-before-time summary in the upper-right', () => {
     const row = source('./LyricsLrclibCandidateRow.vue');
 
@@ -203,12 +219,6 @@ describe('online lyrics search modal contract', () => {
     const durationIndex = row.indexOf(
       'class="lyrics-lrclib-candidate-row__duration"',
     );
-    const previewRowIndex = row.indexOf(
-      'class="lyrics-lrclib-candidate-row__preview-row"',
-    );
-    const previewIndex = row.indexOf(
-      'class="lyrics-lrclib-candidate-row__preview-line"',
-    );
     const savedStatusIndex = row.indexOf(
       'class="lyrics-lrclib-candidate-row__saved-status"',
     );
@@ -223,14 +233,10 @@ describe('online lyrics search modal contract', () => {
     expect(providerSlotIndex).toBeGreaterThan(summaryDetailsIndex);
     expect(providerIndex).toBeGreaterThan(providerSlotIndex);
     expect(durationIndex).toBeGreaterThan(providerIndex);
-    expect(providerIndex).toBeLessThan(previewRowIndex);
-    expect(previewRowIndex).toBeGreaterThan(-1);
-    expect(previewIndex).toBeGreaterThan(previewRowIndex);
-    expect(savedStatusIndex).toBeGreaterThan(previewIndex);
+    expect(savedStatusIndex).toBeGreaterThan(durationIndex);
     expect(capabilityIndex).toBeGreaterThan(savedStatusIndex);
-    expect(row).toContain(
-      'v-if="!expanded && presentedCandidate.previewLines?.[0]"',
-    );
+    expect(row).not.toContain('lyrics-lrclib-candidate-row__preview-row');
+    expect(row).not.toContain('lyrics-lrclib-candidate-row__preview-line');
     expect(row).toContain('class="lyrics-lrclib-candidate-row__saved-status"');
     expect(row).toContain('<UiChip tone="success">已儲存</UiChip>');
     expect(row).toContain('class="lyrics-lrclib-candidate-row__metadata"');
@@ -239,7 +245,7 @@ describe('online lyrics search modal contract', () => {
     expect(row).not.toMatch(/>\s*推薦\s*</);
     expect(row).toContain('aria-hidden="true"');
     expect(row).toMatch(
-      /\.lyrics-lrclib-candidate-row__title-row\s*\{[^}]*min-width:\s*0;[^}]*display:\s*flex;[^}]*align-items:\s*flex-start;[^}]*gap:\s*var\(--ui-space-2\);/s,
+      /\.lyrics-lrclib-candidate-row__title-row\s*\{[^}]*min-width:\s*0;[^}]*display:\s*flex;[^}]*align-items:\s*baseline;[^}]*gap:\s*var\(--ui-space-2\);/s,
     );
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__title\s*\{[^}]*min-width:\s*0;[^}]*flex:\s*0 1 auto;/s,
@@ -247,8 +253,8 @@ describe('online lyrics search modal contract', () => {
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__recommendation\s*\{[^}]*flex:\s*0 0 auto;/s,
     );
-    expect(row).not.toMatch(
-      /\.lyrics-lrclib-candidate-row__summary\s*\{[^}]*gap:/s,
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-row__summary\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-space-1\);/s,
     );
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__summary-details\s*\{[^}]*display:\s*flex;[^}]*flex:\s*0 0 auto;[^}]*align-items:\s*center;/s,
@@ -264,12 +270,6 @@ describe('online lyrics search modal contract', () => {
     );
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row\s*\{[^}]*--ui-lyrics-provider-slot-width:\s*5\.5rem;[^}]*--ui-lyrics-duration-slot-width:\s*7\.5rem;/s,
-    );
-    expect(row).toMatch(
-      /\.lyrics-lrclib-candidate-row__preview-row\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--ui-space-2\);/s,
-    );
-    expect(row).toMatch(
-      /\.lyrics-lrclib-candidate-row__preview-line\s*\{[^}]*min-width:\s*0;[^}]*flex:\s*1 1 50%;[^}]*margin:\s*0;/s,
     );
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__metadata\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--ui-space-2\);[^}]*margin-inline-start:\s*auto;/s,
@@ -299,8 +299,36 @@ describe('online lyrics search modal contract', () => {
     expect(workspace).toMatch(
       /\.lyrics-lrclib-search\s*\{[^}]*overflow:\s*clip;[^}]*overflow-clip-margin:\s*var\(--lyrics-lrclib-search-focus-safe-inset\);/su,
     );
+    expect(workspace).not.toContain('lyrics-lrclib-search__toolbar');
+    expect(workspace).not.toContain('lyrics-lrclib-search__result-meta');
+    expect(workspace).toContain('<UiStack');
+    expect(workspace).toContain('aria-label="搜尋操作"');
     expect(workspace).toMatch(
-      /\.lyrics-lrclib-search__toolbar\s*\{[\s\S]*?display:\s*flex;/u,
+      /\.lyrics-lrclib-search__results\s*\{[^}]*min-height:\s*0;/u,
+    );
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search__results\s*\{[^}]*grid-template-rows:\s*minmax\(0, 1fr\);/u,
+    );
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search__results :deep\(\.lyrics-lrclib-search__results-viewport\)\s*\{\s*block-size:\s*auto;/u,
+    );
+  });
+
+  it('reserves supporting space after the preview and scroll-safe result padding', () => {
+    const row = source('./LyricsLrclibCandidateRow.vue');
+    const workspace = source('./LyricsLrclibSearchWorkspace.vue');
+
+    expect(row.indexOf('aria-label="歌詞預覽"')).toBeLessThan(
+      row.indexOf('class="lyrics-lrclib-candidate-row__warning-slot"'),
+    );
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-row__warning-slot\s*\{[^}]*min-block-size:\s*calc\(/u,
+    );
+    expect(workspace).toContain(
+      '--ui-scroll-layout-padding-inline-end: var(--ui-space-2)',
+    );
+    expect(workspace).toContain(
+      '--ui-scroll-layout-padding-block-end: var(--ui-space-2)',
     );
   });
 
@@ -326,7 +354,7 @@ describe('online lyrics search modal contract', () => {
 
     expect(workspace).toContain('@media (max-width: 680px)');
     expect(row).toContain('@media (max-width: 680px)');
-    expect(workspace).toContain('<UiScrollRegion');
+    expect(workspace).toContain('<UiScrollLayout');
     expect(workspace).toContain(
       'viewport-class="lyrics-lrclib-search__results-viewport"',
     );

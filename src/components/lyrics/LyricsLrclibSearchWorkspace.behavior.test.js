@@ -132,7 +132,13 @@ async function loadWorkspaceComponent() {
     { default: UiNotice },
     { default: UiField },
     { default: UiScrollRegion },
+    { default: UiScrollLayout },
+    { default: UiSkeleton },
+    { default: UiStack },
+    { default: UiSurface },
     { default: UiTextField },
+    { default: UiDisclosure },
+    { default: UiTooltipSurface },
   ] = await Promise.all([
     import('./LyricsLrclibSearchWorkspace.vue'),
     import('./LyricsProviderRecordingGroup.vue'),
@@ -143,7 +149,13 @@ async function loadWorkspaceComponent() {
     import('../ui/UiNotice.vue'),
     import('../ui/UiField.vue'),
     import('../ui/UiScrollRegion.vue'),
+    import('../ui/UiScrollLayout.vue'),
+    import('../ui/UiSkeleton.vue'),
+    import('../ui/UiStack.vue'),
+    import('../ui/UiSurface.vue'),
     import('../ui/UiTextField.vue'),
+    import('../ui/UiDisclosure.vue'),
+    import('../ui/tooltip/UiTooltipSurface.vue'),
   ]);
   attachClientRender(Workspace, './LyricsLrclibSearchWorkspace.vue');
   attachClientRender(RecordingGroup, './LyricsProviderRecordingGroup.vue');
@@ -154,7 +166,13 @@ async function loadWorkspaceComponent() {
   attachClientRender(UiNotice, '../ui/UiNotice.vue');
   attachClientRender(UiField, '../ui/UiField.vue');
   attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue');
+  attachClientRender(UiScrollLayout, '../ui/UiScrollLayout.vue');
+  attachClientRender(UiSkeleton, '../ui/UiSkeleton.vue');
+  attachClientRender(UiStack, '../ui/UiStack.vue');
+  attachClientRender(UiSurface, '../ui/UiSurface.vue');
   attachClientRender(UiTextField, '../ui/UiTextField.vue');
+  attachClientRender(UiDisclosure, '../ui/UiDisclosure.vue');
+  attachClientRender(UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue');
   return Workspace;
 }
 
@@ -165,6 +183,136 @@ afterEach(() => {
 });
 
 describe('LyricsLrclibSearchWorkspace behavior', () => {
+  it('shows three recording groups, discloses the remaining matches, and resets on search', async () => {
+    vi.stubGlobal('Document', class Document {});
+    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+    const candidates = Array.from({ length: 6 }, (_, index) => ({
+      id: index + 1,
+      candidateKey: `lrclib:${index + 1}`,
+      providerId: 'lrclib',
+      trackName: `Version ${index + 1}`,
+      artistName: 'Artist',
+      matchBand: index === 5 ? 'related' : 'strong',
+      capability: { level: 'T1', partial: false },
+      compatibility: { t0: true, t1: true },
+      previewLines: [{ start: 1, text: 'Line' }],
+      warnings: [],
+    }));
+    // The first recording owns two sources; the limit counts recordings, not sources.
+    const groups = candidates.slice(0, 5).map((c) => ({
+      recordingKey: `recording:${c.id}`,
+      recommendedCandidateKey: c.candidateKey,
+      candidates: [c],
+    }));
+    groups[0].candidates.push({
+      ...candidates[0],
+      id: 10,
+      candidateKey: 'lrclib:10',
+      artistName: 'First alternate',
+    });
+    groups[0].candidates.push({
+      ...candidates[0],
+      id: 2,
+      candidateKey: 'lrclib:2-alternate',
+      artistName: 'Last alternate',
+    });
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: 'ok',
+        candidates,
+        groups: { best: candidates.slice(0, 5), related: [candidates[5]] },
+        recordingGroups: {
+          best: groups,
+          related: [
+            {
+              recordingKey: 'related',
+              recommendedCandidateKey: candidates[5].candidateKey,
+              candidates: [candidates[5]],
+            },
+          ],
+        },
+      },
+      manualSave: { error: null },
+    });
+    const saveLyricsCandidate = vi.fn(async () => null);
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsCandidates: vi.fn(async () => ({
+          status: 'ok',
+          candidates,
+        })),
+        saveLyricsCandidate,
+      }),
+    }));
+    const Workspace = await loadWorkspaceComponent();
+    const { app, root } = mount(Workspace, { providerId: 'all' });
+    await vi.waitFor(() => expect(nodeText(root)).toContain('Version 3'));
+    expect(nodeText(root)).not.toContain('Version 4');
+    expect(nodeText(root)).toContain('Version 6');
+    expect(
+      findAll(
+        root,
+        (n) =>
+          n.type === 'button' &&
+          n.props['aria-expanded'] !== undefined &&
+          String(n.props['aria-label']).includes('Version 1'),
+      ),
+    ).toHaveLength(3);
+    const sourceOrder = findAll(
+      root,
+      (n) =>
+        n.type === 'button' &&
+        n.props['aria-expanded'] !== undefined &&
+        String(n.props['aria-label']).includes('Version 1'),
+    );
+    expect(sourceOrder.map((n) => n.props['aria-label'])).toEqual([
+      '收合 Version 1，Artist，建議來源',
+      '展開 Version 1，First alternate',
+      '展開 Version 1，Last alternate',
+    ]);
+    const disclosure = findAll(root, (n) => n.type === 'details')[0];
+    expect(nodeText(disclosure)).toContain('其餘符合版本（2）');
+    disclosure.props.onToggle({ currentTarget: { open: true } });
+    await nextTick();
+    expect(nodeText(root)).toContain('Version 4');
+    expect(nodeText(root)).toContain('Version 5');
+    findByProp(root, 'aria-label', '展開 Version 4，Artist').props.onClick();
+    await nextTick();
+    expect(
+      findByProp(root, 'aria-label', '儲存 Version 4，Artist'),
+    ).toBeDefined();
+    await findByProp(
+      root,
+      'aria-label',
+      '儲存 Version 4，Artist',
+    ).props.onClick();
+    expect(saveLyricsCandidate).toHaveBeenCalledWith(
+      expect.objectContaining({ candidateKey: 'lrclib:4' }),
+      'track-a',
+      { title: 'Song', artist: 'Artist' },
+    );
+    disclosure.props.onToggle({ currentTarget: { open: false } });
+    await nextTick();
+    expect(nodeText(root)).not.toContain('Version 4');
+    disclosure.props.onToggle({ currentTarget: { open: true } });
+    await nextTick();
+    findAll(root, (n) => n.type === 'form')[0].props.onSubmit({
+      preventDefault: vi.fn(),
+    });
+    await nextTick();
+    await vi.waitFor(() =>
+      expect(findAll(root, (n) => n.type === 'details')[0]?.props.open).toBe(
+        false,
+      ),
+    );
+    expect(nodeText(root)).not.toContain('Version 4');
+    app.unmount();
+  });
+
   it('shows every grouped source immediately with one recommended marker', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});
@@ -252,6 +400,36 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).toContain('已儲存');
     expect(findButtonByText(root, '已儲存')).toBeUndefined();
     expect(nodeText(root)).not.toContain('已保存');
+
+    const recommendedToggle = findByProp(
+      root,
+      'aria-label',
+      '收合 Song，Artist，建議來源',
+    );
+    expect(recommendedToggle.props.class).toContain('ui-btn');
+    const expandedToggle = findByProp(root, 'aria-expanded', true);
+    const previewId = expandedToggle.props['aria-controls'];
+    expect(previewId).toBeTruthy();
+    expect(findByProp(root, 'id', previewId)).toBeDefined();
+    expect(nodeText(root)).toContain('0:01');
+    recommendedToggle.props.onClick();
+    await nextTick();
+    expect(findByProp(root, 'aria-expanded', true)).toBeUndefined();
+    findByProp(
+      root,
+      'aria-label',
+      '展開 Song，Artist，建議來源',
+    ).props.onClick();
+    await nextTick();
+    findByProp(root, 'aria-label', '展開 Song，Artist').props.onClick();
+    await nextTick();
+    expect(
+      findByProp(root, 'aria-expanded', true).props['aria-controls'],
+    ).not.toBe(previewId);
+    expect(findByProp(root, 'id', previewId)).toBeUndefined();
+    findByProp(root, 'aria-label', '收合 Song，Artist').props.onClick();
+    await nextTick();
+    expect(findByProp(root, 'aria-expanded', true)).toBeUndefined();
 
     app.unmount();
   });
@@ -784,6 +962,15 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     );
 
     const broadenButton = findButtonByText(root, '擴大搜尋');
+    const submitButton = findAll(
+      root,
+      (n) => n.type === 'button' && n.props.type === 'submit',
+    )[0];
+    expect(broadenButton.parent).toBe(submitButton.parent);
+    expect(broadenButton.parent.props['aria-label']).toBe('搜尋操作');
+    expect(broadenButton.parent.children.indexOf(broadenButton)).toBeLessThan(
+      broadenButton.parent.children.indexOf(submitButton),
+    );
     await broadenButton.props.onClick();
     expect(searchLyricsCandidates).toHaveBeenLastCalledWith(
       {
@@ -792,6 +979,25 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       },
       'track-a',
     );
+
+    await nextTick();
+    const unavailableBroaden = findButtonByText(root, '擴大搜尋');
+    expect(unavailableBroaden).toBe(broadenButton);
+    expect(unavailableBroaden.props.disabled).toBe(true);
+    expect(unavailableBroaden.props['aria-hidden']).toBe(true);
+    expect(unavailableBroaden.props.class).toContain(
+      'lyrics-lrclib-search__broaden--hidden',
+    );
+
+    state.candidateSearch.isLoading = true;
+    await nextTick();
+    expect(nodeText(findByProp(root, 'type', 'submit'))).toContain('搜尋');
+    expect(nodeText(findByProp(root, 'type', 'submit'))).not.toContain(
+      '搜尋中',
+    );
+    expect(findByProp(root, 'type', 'submit').props.disabled).toBe(true);
+    state.candidateSearch.isLoading = false;
+    await nextTick();
 
     const saveButton = findByProp(
       root,

@@ -23,11 +23,9 @@ const productionLyricsSources = [
   'LyricsLiveControls.vue',
   'LyricsLiveTool.vue',
   'LyricsLrclibCandidateRow.vue',
-  'LyricsLrclibSearchPanel.vue',
   'LyricsLrclibSearchWorkspace.vue',
   'LyricsManualImportPanel.vue',
   'LyricsPreparationBar.vue',
-  'LyricsProviderIcon.vue',
   'LyricsSegmentEditor.vue',
   'LyricsSourceManagerModal.vue',
   'LyricsTrackPickerModal.vue',
@@ -86,7 +84,7 @@ describe('Lyrics Token v2 surface cutover', () => {
       productionLyricsSources.find(
         ({ filename }) => filename === 'LyricsLrclibCandidateRow.vue',
       ).source,
-    ).toContain('var(--ui-motion-duration-fast)');
+    ).toContain(':icon="expanded ? ChevronDown : ChevronRight"');
     expect(
       productionLyricsSources.find(
         ({ filename }) => filename === 'LyricsWorkspaceHeader.vue',
@@ -114,7 +112,9 @@ describe('Lyrics Token v2 surface cutover', () => {
     ).source;
     expect(sourceManager).toContain('<LyricsLrclibSearchWorkspace');
     expect(sourceManager).toContain('<LyricsManualImportPanel');
-    expect(sourceManager).toContain('<LyricsLrclibSearchPanel');
+    expect(sourceManager).toContain('#header-actions');
+    expect(sourceManager).toContain('provider-id="all"');
+    expect(sourceManager).not.toContain('<LyricsLrclibSearchPanel');
   });
 
   it('keeps the Internal Tools provider review outside the production Lyrics slice', () => {

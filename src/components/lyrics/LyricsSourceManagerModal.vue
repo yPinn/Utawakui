@@ -1,6 +1,13 @@
 <script setup>
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
-import { Pencil, Plus, Trash2 } from '../../icons/index.js';
+import {
+  ArrowLeft,
+  Pencil,
+  Plus,
+  Search,
+  Tag,
+  Trash2,
+} from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import {
   describeLyricsSourceTier,
@@ -12,10 +19,11 @@ import { normalizeLyricsDocument } from '../../utils/lyricsDocument.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import UiTextField from '../ui/UiTextField.vue';
-import LyricsLrclibSearchPanel from './LyricsLrclibSearchPanel.vue';
 import LyricsLrclibSearchWorkspace from './LyricsLrclibSearchWorkspace.vue';
 import LyricsManualImportPanel from './LyricsManualImportPanel.vue';
 
@@ -24,15 +32,23 @@ const props = defineProps({
 });
 const emit = defineEmits(['close']);
 
-const { state, selectedLyrics, setSourceLabel, deleteSource } = useLyrics();
+const {
+  state,
+  selectedLyrics,
+  setSourceLabel,
+  deleteSource,
+  backfillSourceLabels,
+} = useLyrics();
 
 const activeView = ref('sources');
-const activeProviderId = ref('all');
-const allProvidersPanelRef = useTemplateRef('allProvidersPanelRef');
-const neteasePanelRef = useTemplateRef('neteasePanelRef');
-const lrclibPanelRef = useTemplateRef('lrclibPanelRef');
-const betterLyricsPanelRef = useTemplateRef('betterLyricsPanelRef');
+const searchTriggerRef = useTemplateRef('searchTrigger');
 const isManualImportOpen = ref(false);
+const isBackfilling = ref(false);
+const hasUnlabeledLrclibSources = computed(() =>
+  selectedLyrics.value.sources.some(
+    (source) => source.kind === 'lrclib' && !source.label,
+  ),
+);
 const editingFilename = ref(null);
 const labelDraft = ref('');
 const sourceLabelId = `lyrics-source-label-${useId()}`;
@@ -40,19 +56,8 @@ const pendingDeleteSource = ref(null);
 const isDeletingSource = ref(false);
 const sourceTiers = ref(new Map());
 let sourceTierRequestId = 0;
-const PROVIDERS = Object.freeze({
-  all: Object.freeze({ id: 'all', label: '所有線上來源' }),
-  netease: Object.freeze({ id: 'netease', label: '網易雲音樂' }),
-  lrclib: Object.freeze({ id: 'lrclib', label: 'LRCLIB' }),
-  betterlyrics: Object.freeze({ id: 'betterlyrics', label: 'Better Lyrics' }),
-});
-const activeProvider = computed(() => PROVIDERS[activeProviderId.value]);
 const modalTitle = computed(() =>
-  activeView.value === 'search'
-    ? activeProvider.value.id === 'all'
-      ? '搜尋歌詞'
-      : `搜尋 ${activeProvider.value.label}`
-    : '歌詞來源',
+  activeView.value === 'search' ? '搜尋歌詞' : '可用歌詞',
 );
 
 watch(
@@ -79,21 +84,24 @@ watch(
   { immediate: true },
 );
 
-function openProviderSearch(providerId) {
-  activeProviderId.value = providerId;
+function openSearch() {
   activeView.value = 'search';
+}
+
+async function handleBackfill() {
+  if (isBackfilling.value) return;
+  isBackfilling.value = true;
+  try {
+    await backfillSourceLabels();
+  } finally {
+    isBackfilling.value = false;
+  }
 }
 
 async function returnToSources() {
   activeView.value = 'sources';
   await nextTick();
-  const panelRef = {
-    all: allProvidersPanelRef.value,
-    netease: neteasePanelRef.value,
-    lrclib: lrclibPanelRef.value,
-    betterlyrics: betterLyricsPanelRef.value,
-  }[activeProviderId.value];
-  panelRef?.focusSearchTrigger();
+  searchTriggerRef.value?.$el?.focus?.();
 }
 
 function handleModalClose() {
@@ -185,41 +193,59 @@ function sourceTierLabel(source) {
   <UiModal
     :open="open"
     :title="modalTitle"
-    size="wide"
+    :size="activeView === 'search' ? 'wide' : 'notice'"
+    max-block-size="small"
+    :body-mode="activeView === 'search' ? 'workspace' : 'scroll'"
     @close="handleModalClose"
   >
+    <template #header-actions>
+      <UiIconButton
+        v-if="activeView === 'search'"
+        :icon="ArrowLeft"
+        label="返回可用歌詞"
+        @click="returnToSources"
+      />
+      <template v-else>
+        <UiIconButton
+          v-if="hasUnlabeledLrclibSources"
+          :icon="Tag"
+          :disabled="isBackfilling"
+          :label="isBackfilling ? '補齊標籤中…' : '補齊標籤'"
+          @click="handleBackfill"
+        />
+        <UiIconButton
+          :icon="Plus"
+          :active="isManualImportOpen"
+          :aria-expanded="isManualImportOpen"
+          label="手動匯入歌詞"
+          @click="isManualImportOpen = !isManualImportOpen"
+        />
+        <UiIconButton
+          ref="searchTrigger"
+          :icon="Search"
+          variant="accent"
+          label="搜尋歌詞"
+          @click="openSearch"
+        />
+      </template>
+    </template>
     <LyricsLrclibSearchWorkspace
       v-if="activeView === 'search'"
-      :provider-id="activeProvider.id"
-      :provider-label="activeProvider.label"
+      provider-id="all"
+      provider-label="所有線上來源"
       @back="returnToSources"
     />
     <div v-else class="lyrics-source-manager">
-      <section aria-labelledby="lyrics-source-manager-current-title">
-        <div class="lyrics-source-manager__section-header">
-          <h3
-            id="lyrics-source-manager-current-title"
-            class="lyrics-source-manager__section-title"
-          >
-            已儲存來源
-          </h3>
-          <UiButton
-            v-if="!isManualImportOpen"
-            :icon="Plus"
-            title="手動匯入歌詞"
-            @click="isManualImportOpen = true"
-          >
-            手動匯入
-          </UiButton>
-        </div>
-
+      <section aria-label="可使用的歌詞">
         <UiHint v-if="selectedLyrics.sources.length === 0">
-          尚無歌詞來源。
+          尚無可用歌詞，可搜尋歌詞或手動匯入。
         </UiHint>
         <ul v-else class="lyrics-source-manager__list">
-          <li
+          <UiSurface
             v-for="source in selectedLyrics.sources"
             :key="source.filename"
+            tag="li"
+            tone="surface"
             class="lyrics-source-manager__row"
           >
             <template v-if="pendingDeleteSource?.filename === source.filename">
@@ -266,9 +292,13 @@ function sourceTierLabel(source) {
             </template>
             <template v-else>
               <span class="lyrics-source-manager__row-label">
-                {{ formatLyricsSourceLabel(source) }}
+                <UiOverflowTooltip
+                  class="lyrics-source-manager__row-name"
+                  :text="formatLyricsSourceLabel(source)"
+                />
                 <UiChip
                   v-if="state.selectedSourceFilename === source.filename"
+                  class="lyrics-source-manager__row-status"
                   tone="current"
                 >
                   使用中
@@ -291,22 +321,20 @@ function sourceTierLabel(source) {
                 </span>
               </span>
               <div class="lyrics-source-manager__row-actions">
-                <UiButton
+                <UiIconButton
                   :icon="Pencil"
-                  title="編輯標籤"
-                  aria-label="編輯標籤"
+                  label="編輯標籤"
                   @click="startEdit(source)"
                 />
-                <UiButton
+                <UiIconButton
                   :icon="Trash2"
                   intent="danger"
-                  title="刪除這個歌詞來源"
-                  aria-label="刪除這個歌詞來源"
+                  label="刪除這個歌詞來源"
                   @click="handleDelete(source)"
                 />
               </div>
             </template>
-          </li>
+          </UiSurface>
         </ul>
 
         <LyricsManualImportPanel
@@ -315,42 +343,6 @@ function sourceTierLabel(source) {
           @cancel="isManualImportOpen = false"
           @saved="isManualImportOpen = false"
         />
-      </section>
-
-      <section aria-labelledby="lyrics-source-manager-online-title">
-        <div class="lyrics-source-manager__section-header">
-          <h3
-            id="lyrics-source-manager-online-title"
-            class="lyrics-source-manager__section-title"
-          >
-            線上搜尋
-          </h3>
-        </div>
-        <div class="lyrics-source-manager__online-list">
-          <LyricsLrclibSearchPanel
-            ref="allProvidersPanelRef"
-            provider-id="all"
-            provider-label="所有線上來源"
-            primary
-            @open-search="openProviderSearch('all')"
-          />
-          <LyricsLrclibSearchPanel
-            ref="neteasePanelRef"
-            provider-id="netease"
-            provider-label="網易雲音樂"
-            @open-search="openProviderSearch('netease')"
-          />
-          <LyricsLrclibSearchPanel
-            ref="lrclibPanelRef"
-            @open-search="openProviderSearch('lrclib')"
-          />
-          <LyricsLrclibSearchPanel
-            ref="betterLyricsPanelRef"
-            provider-id="betterlyrics"
-            provider-label="Better Lyrics"
-            @open-search="openProviderSearch('betterlyrics')"
-          />
-        </div>
       </section>
     </div>
   </UiModal>
@@ -361,22 +353,6 @@ function sourceTierLabel(source) {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
-}
-
-.lyrics-source-manager__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-  margin-bottom: var(--ui-space-2);
-}
-
-.lyrics-source-manager__section-title {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-title-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
 }
 
 .lyrics-source-manager__list {
@@ -395,9 +371,6 @@ function sourceTierLabel(source) {
   align-items: center;
   gap: var(--ui-space-2);
   padding: var(--ui-space-2) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
 }
 
 .lyrics-source-manager__row-label {
@@ -409,8 +382,18 @@ function sourceTierLabel(source) {
   overflow: hidden;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
+  white-space: nowrap;
+}
+
+.lyrics-source-manager__row-label :deep(.lyrics-source-manager__row-name) {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lyrics-source-manager__row-status {
+  flex-shrink: 0;
 }
 
 .lyrics-source-manager__row-meta {
@@ -425,7 +408,7 @@ function sourceTierLabel(source) {
   white-space: nowrap;
 }
 
-.lyrics-source-manager__row-tier {
+.lyrics-source-manager__row-meta :deep(.lyrics-source-manager__row-tier) {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -479,12 +462,5 @@ function sourceTierLabel(source) {
 
 .lyrics-source-manager__manual-import {
   margin-top: var(--ui-space-3);
-}
-
-.lyrics-source-manager__online-list {
-  padding: 0 var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-canvas);
 }
 </style>

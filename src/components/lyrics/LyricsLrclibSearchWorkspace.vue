@@ -10,9 +10,13 @@ import {
 import { Search } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import UiButton from '../ui/UiButton.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiSkeleton from '../ui/UiSkeleton.vue';
+import UiStack from '../ui/UiStack.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import LyricsProviderRecordingGroup from './LyricsProviderRecordingGroup.vue';
 
@@ -40,6 +44,8 @@ const submittedQuery = shallowRef(null);
 const activeMode = shallowRef('structured');
 const hasSearched = shallowRef(false);
 const expandedKey = shallowRef(null);
+const remainingBestOpen = shallowRef(false);
+const INITIAL_BEST_RECORDING_COUNT = 3;
 const savingKey = shallowRef(null);
 const submissionPending = shallowRef(false);
 const changedCandidates = shallowRef(new Map());
@@ -93,6 +99,12 @@ const resultCount = computed(
   () =>
     resultRecordingGroups.value.best.length +
     resultRecordingGroups.value.related.length,
+);
+const initialBestGroups = computed(() =>
+  resultRecordingGroups.value.best.slice(0, INITIAL_BEST_RECORDING_COUNT),
+);
+const remainingBestGroups = computed(() =>
+  resultRecordingGroups.value.best.slice(INITIAL_BEST_RECORDING_COUNT),
 );
 const sourceResultCount = computed(
   () => state.candidateSearch.candidates.length,
@@ -222,6 +234,7 @@ async function handleSearch(mode = 'structured') {
   if (!query.title) return;
 
   submissionPending.value = true;
+  remainingBestOpen.value = false;
   clearCandidateSearch();
   try {
     activeMode.value = mode;
@@ -288,11 +301,13 @@ function toggleCandidate(candidate) {
 
 <template>
   <div class="lyrics-lrclib-search">
-    <div class="lyrics-lrclib-search__toolbar">
-      <UiButton @click="emit('back')">返回歌詞來源</UiButton>
-    </div>
-
-    <form class="lyrics-lrclib-search__form" @submit.prevent="handleSearch()">
+    <UiSurface
+      tag="form"
+      tone="surface"
+      radius="lg"
+      class="lyrics-lrclib-search__form"
+      @submit.prevent="handleSearch()"
+    >
       <UiTextField
         :id="`${providerId}-track-title`"
         ref="titleInput"
@@ -309,43 +324,51 @@ function toggleCandidate(candidate) {
         :aria-describedby="`${providerId}-query-help`"
         :maxlength="256"
       />
-      <UiButton
-        :icon="Search"
-        variant="accent"
-        type="submit"
-        :disabled="titleIsMissing || isSearchDisabled"
+      <UiStack
+        class="lyrics-lrclib-search__actions"
+        :gap="2"
+        align="center"
+        justify="end"
+        role="group"
+        aria-label="搜尋操作"
       >
-        {{ isSearchPending ? '搜尋中…' : '搜尋' }}
-      </UiButton>
+        <UiButton
+          class="lyrics-lrclib-search__broaden"
+          :class="{ 'lyrics-lrclib-search__broaden--hidden': !canBroaden }"
+          :disabled="!canBroaden || isSearchDisabled"
+          :aria-hidden="!canBroaden || undefined"
+          @click="handleSearch('broaden')"
+        >
+          擴大搜尋
+        </UiButton>
+        <UiButton
+          :icon="Search"
+          variant="accent"
+          type="submit"
+          :loading="isSearchPending"
+          loading-label="搜尋"
+          :disabled="titleIsMissing || isSearchDisabled"
+        >
+          搜尋
+        </UiButton>
+      </UiStack>
       <p
         :id="`${providerId}-query-help`"
         class="lyrics-lrclib-search__query-help"
       >
         可輸入原文、羅馬字或常用譯名，只用於本次搜尋。
       </p>
-    </form>
+    </UiSurface>
 
-    <div class="lyrics-lrclib-search__result-meta">
-      <p
-        v-if="resultAnnouncement"
-        class="ui-visually-hidden"
-        aria-live="polite"
-      >
-        {{ resultAnnouncement }}
-      </p>
-      <UiButton
-        v-if="canBroaden"
-        :disabled="isSearchDisabled"
-        @click="handleSearch('broaden')"
-      >
-        擴大搜尋
-      </UiButton>
-    </div>
+    <p v-if="resultAnnouncement" class="ui-visually-hidden" aria-live="polite">
+      {{ resultAnnouncement }}
+    </p>
 
-    <UiScrollRegion
+    <UiScrollLayout
       class="lyrics-lrclib-search__results"
       axis="vertical"
       viewport-class="lyrics-lrclib-search__results-viewport"
+      content-class="lyrics-lrclib-search__results-content"
     >
       <UiNotice
         v-if="draftDiffersFromResults"
@@ -377,16 +400,20 @@ function toggleCandidate(candidate) {
         compact
         @action="handleSearch(activeMode)"
       />
-      <div
+      <UiSurface
         v-else-if="isSearchPending"
+        radius="lg"
         class="lyrics-lrclib-search__skeleton"
         role="status"
         aria-label="正在載入候選歌詞"
       >
-        <div v-for="index in 3" :key="index" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
+        <UiSkeleton
+          v-for="index in 3"
+          :key="index"
+          :lines="3"
+          pattern="staggered"
+        />
+      </UiSurface>
 
       <UiHint v-else-if="!hasSearched" padded> 請輸入歌曲名稱後搜尋。 </UiHint>
       <template v-else-if="silentProviderMiss">
@@ -426,9 +453,9 @@ function toggleCandidate(candidate) {
             較符合的錄音版本
             <span>{{ resultRecordingGroups.best.length }}</span>
           </h3>
-          <ul class="lyrics-lrclib-search__list">
+          <UiSurface tag="ul" radius="lg" class="lyrics-lrclib-search__list">
             <LyricsProviderRecordingGroup
-              v-for="group in resultRecordingGroups.best"
+              v-for="group in initialBestGroups"
               :key="group.recordingKey"
               :group="group"
               :expanded-key="expandedKey"
@@ -441,7 +468,35 @@ function toggleCandidate(candidate) {
               @confirm-changed="handleSave"
               @cancel-changed="setChangedCandidate($event, null)"
             />
-          </ul>
+          </UiSurface>
+          <UiDisclosure
+            v-if="remainingBestGroups.length"
+            v-model:open="remainingBestOpen"
+            :label="`其餘符合版本（${remainingBestGroups.length}）`"
+            class="lyrics-lrclib-search__more"
+          >
+            <UiSurface
+              v-if="remainingBestOpen"
+              tag="ul"
+              radius="lg"
+              class="lyrics-lrclib-search__list"
+            >
+              <LyricsProviderRecordingGroup
+                v-for="group in remainingBestGroups"
+                :key="group.recordingKey"
+                :group="group"
+                :expanded-key="expandedKey"
+                :saving-key="savingKey"
+                :save-disabled="savingKey !== null"
+                :changed-candidates="changedCandidates"
+                :show-provider="providerId === 'all'"
+                @toggle="toggleCandidate"
+                @save="handleSave"
+                @confirm-changed="handleSave"
+                @cancel-changed="setChangedCandidate($event, null)"
+              />
+            </UiSurface>
+          </UiDisclosure>
         </section>
 
         <section
@@ -453,7 +508,7 @@ function toggleCandidate(candidate) {
             其他可能版本
             <span>{{ resultRecordingGroups.related.length }}</span>
           </h3>
-          <ul class="lyrics-lrclib-search__list">
+          <UiSurface tag="ul" radius="lg" class="lyrics-lrclib-search__list">
             <LyricsProviderRecordingGroup
               v-for="group in resultRecordingGroups.related"
               :key="group.recordingKey"
@@ -468,10 +523,10 @@ function toggleCandidate(candidate) {
               @confirm-changed="handleSave"
               @cancel-changed="setChangedCandidate($event, null)"
             />
-          </ul>
+          </UiSurface>
         </section>
       </template>
-    </UiScrollRegion>
+    </UiScrollLayout>
   </div>
 </template>
 
@@ -481,33 +536,14 @@ function toggleCandidate(candidate) {
     var(--ui-focus-width) + var(--ui-focus-offset)
   );
 
-  max-height: calc(100vh - var(--ui-space-8) - var(--ui-space-8));
-  display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  gap: var(--ui-space-3);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
   overflow: clip;
   overflow-clip-margin: var(--lyrics-lrclib-search-focus-safe-inset);
   -webkit-user-select: none;
   user-select: none;
-}
-
-.lyrics-lrclib-search__toolbar {
-  display: flex;
-  align-items: center;
-}
-
-.lyrics-lrclib-search__result-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-}
-
-.lyrics-lrclib-search__result-meta p {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
 }
 
 .lyrics-lrclib-search__form {
@@ -516,9 +552,7 @@ function toggleCandidate(candidate) {
   align-items: end;
   gap: var(--ui-space-2);
   padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-canvas);
+  flex: none;
 }
 
 .lyrics-lrclib-search__query-help {
@@ -529,16 +563,32 @@ function toggleCandidate(candidate) {
   line-height: var(--ui-type-caption-line-height);
 }
 
+.lyrics-lrclib-search__actions {
+  min-width: 0;
+}
+
+.lyrics-lrclib-search__broaden--hidden {
+  visibility: hidden;
+}
+
 .lyrics-lrclib-search__results {
-  min-height: calc(var(--ui-space-8) + var(--ui-space-8) + var(--ui-space-8));
+  --ui-scroll-layout-padding-inline-end: var(--ui-space-2);
+  --ui-scroll-layout-padding-block-end: var(--ui-space-2);
+
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .lyrics-lrclib-search__results :deep(.lyrics-lrclib-search__results-viewport) {
+  block-size: auto;
+  overscroll-behavior: contain;
+}
+
+.lyrics-lrclib-search__results :deep(.lyrics-lrclib-search__results-content) {
   display: grid;
   align-content: start;
   gap: var(--ui-space-3);
-  overscroll-behavior: contain;
-  padding-right: var(--ui-space-1);
 }
 
 .lyrics-lrclib-search__group {
@@ -567,52 +617,25 @@ function toggleCandidate(candidate) {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
   list-style: none;
 }
 
 .lyrics-lrclib-search__skeleton {
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
 }
 
-.lyrics-lrclib-search__skeleton > div {
-  display: grid;
-  gap: var(--ui-space-2);
+.lyrics-lrclib-search__skeleton :deep(.ui-skeleton) {
   padding: var(--ui-space-3) var(--ui-space-4);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.lyrics-lrclib-search__skeleton > div:last-child {
+.lyrics-lrclib-search__skeleton :deep(.ui-skeleton:last-child) {
   border-bottom: 0;
-}
-
-.lyrics-lrclib-search__skeleton span {
-  width: 70%;
-  height: var(--ui-space-3);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface-hover);
-}
-
-.lyrics-lrclib-search__skeleton span:nth-child(2) {
-  width: 45%;
-}
-
-.lyrics-lrclib-search__skeleton span:nth-child(3) {
-  width: 85%;
 }
 
 @media (max-width: 680px) {
   .lyrics-lrclib-search__form {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .lyrics-lrclib-search__result-meta {
-    align-items: stretch;
-    flex-direction: column;
   }
 }
 </style>

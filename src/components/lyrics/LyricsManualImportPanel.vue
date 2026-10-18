@@ -5,6 +5,7 @@ import { useLyrics } from '../../composables/useLyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -53,7 +54,8 @@ async function handleFileImport() {
 </script>
 
 <template>
-  <form
+  <UiSurface
+    tag="form"
     class="lyrics-manual-import-panel"
     aria-labelledby="lyrics-manual-import-title"
     @submit.prevent="handleTextSubmit"
@@ -109,7 +111,7 @@ async function handleFileImport() {
         {{ state.manualSave.isSaving ? '儲存中…' : '儲存' }}
       </UiButton>
     </div>
-  </form>
+  </UiSurface>
 </template>
 
 <style scoped>
@@ -117,9 +119,6 @@ async function handleFileImport() {
   display: grid;
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
 }
 
 .lyrics-manual-import-panel__header {

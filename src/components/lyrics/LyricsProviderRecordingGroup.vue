@@ -17,7 +17,7 @@ const orderedCandidates = computed(() => {
   return candidates.sort((first, second) => {
     if (first.candidateKey === props.group.recommendedCandidateKey) return -1;
     if (second.candidateKey === props.group.recommendedCandidateKey) return 1;
-    return first.candidateKey.localeCompare(second.candidateKey);
+    return 0;
   });
 });
 const hasAlternatives = computed(() => orderedCandidates.value.length > 1);
