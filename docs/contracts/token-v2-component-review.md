@@ -532,6 +532,12 @@ Owner 在 UiProgress 階段回查已審查元件的文字選取行為；selectio
 
 ## 已完成階段：UiProgress Candidate／Current 檢查
 
+2026-10-18 型錄同步：`DemoProgressAppearance`／`DemoProgressPrimitive` 已直接使用正式
+`UiProgress`，移除 `DemoCandidateProgress` 與舊 layer／density props；以下編號保留原階段
+checkpoint 記錄，不代表目前仍有 Candidate／Current 雙實作。現行 native semantics、Info
+fill、8px track、Caption copy、更新補間與 reduced motion 均以正式元件為準；全域
+Standard／Compact 皆沿用既有 tokens。型錄另覆蓋隱藏標籤、無 valueText 與 RTL。
+
 `UiNotice` 已完成 owner checkpoint；依 owner 指示只向下進入 Feedback 的
 `UiProgress`。F8 已建立標本並完成本階段 checkpoint：
 

@@ -66,24 +66,38 @@ describe('new shared infra catalogue registration', () => {
 
   it.each([
     ['./DemoFoundations.vue', 'UiKbd', 'kbd'],
-    ['./DemoInputs.vue', 'UiRadioGroup', 'radio-group'],
-    ['./DemoInputs.vue', 'UiSwitch', 'switch'],
-    ['./DemoInputs.vue', 'UiCombobox', 'combobox'],
+    [
+      './DemoInputs.vue',
+      'UiRadioGroup',
+      'radio-group',
+      'DemoRadioGroupAppearance',
+    ],
+    ['./DemoInputs.vue', 'UiSwitch', 'switch', 'DemoSwitchAppearance'],
+    ['./DemoInputs.vue', 'UiCombobox', 'combobox', 'DemoComboboxAppearance'],
     ['./DemoNavigation.vue', 'UiDisclosure', 'disclosure'],
     ['./DemoNavigation.vue', 'UiBreadcrumb', 'breadcrumb'],
     ['./DemoFeedback.vue', 'UiSkeleton', 'skeleton'],
     ['./DemoFeedback.vue', 'UiNotificationHost', 'notification-host'],
     ['./DemoOverlays.vue', 'UiTooltip', 'tooltip'],
     ['./DemoOverlays.vue', 'UiOverflowTooltip', 'tooltip'],
-  ])('renders %s in its catalogue section', (file, component, key) => {
-    const source = readSource(file);
-
-    expect(source).toContain(
-      `import ${component} from '../ui/${component}.vue';`,
-    );
-    expect(source).toContain(`section.key === '${key}'`);
-    expect(source).toContain(`<${component}`);
-  });
+  ])(
+    'renders %s in its catalogue section',
+    (file, component, key, composition) => {
+      const source = readSource(file);
+      const owner = composition ? readSource(`./${composition}.vue`) : source;
+      if (composition) {
+        expect(source).toContain(
+          `import ${composition} from './${composition}.vue';`,
+        );
+        expect(source).toContain(`<${composition}`);
+      }
+      expect(owner).toContain(
+        `import ${component} from '../ui/${component}.vue';`,
+      );
+      expect(source).toContain(`section.key === '${key}'`);
+      expect(owner).toContain(`<${component}`);
+    },
+  );
 
   it('keeps the pending infra batch isolated from production consumers', () => {
     // Settings adopted UiDisclosure and the shell adopted UiNotificationHost;

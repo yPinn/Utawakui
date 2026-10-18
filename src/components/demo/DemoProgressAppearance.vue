@@ -1,19 +1,5 @@
 <script setup>
-import DemoCandidateProgress from './DemoCandidateProgress.vue';
 import DemoProgressPrimitive from './DemoProgressPrimitive.vue';
-
-const LAYERS = [
-  {
-    key: 'candidate',
-    title: '已核准 UiProgress 規格',
-    note: '保留單一標本，供正式元件回歸檢查。',
-    component: DemoCandidateProgress,
-    densities: [
-      ['standard', 'Standard · 8 CSS px'],
-      ['compact', 'Compact · 8 CSS px'],
-    ],
-  },
-];
 </script>
 
 <template>
@@ -23,19 +9,13 @@ const LAYERS = [
       它只呈現工作進度；工作結果與後續操作由所在畫面顯示。
     </p>
 
-    <section
-      v-for="layer in LAYERS"
-      :key="layer.key"
-      class="demo-progress-layer"
-      :class="`demo-progress-layer--${layer.key}`"
-      :data-progress-source="layer.key"
-    >
+    <section class="demo-progress-layer" data-progress-source="production">
       <header class="demo-progress-layer__header">
-        <h4>{{ layer.title }}</h4>
-        <p>{{ layer.note }}</p>
+        <h4>正式 UiProgress</h4>
+        <p>確定進度與不定進度。</p>
       </header>
 
-      <DemoProgressPrimitive :layer="layer" />
+      <DemoProgressPrimitive />
     </section>
   </div>
 </template>

@@ -1,9 +1,11 @@
 <script setup>
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiProgress from '../ui/UiProgress.vue';
 
-defineProps({
-  layer: { type: Object, required: true },
-});
+const DENSITIES = [
+  ['standard', 'Standard · 8 CSS px'],
+  ['compact', 'Compact · 8 CSS px'],
+];
 
 const STATES = [
   {
@@ -39,9 +41,29 @@ const STATES = [
     label: '正在準備音訊',
     indeterminate: true,
   },
+  {
+    id: 'no-value-text',
+    label: '正在整理曲目',
+    value: 64,
+  },
+  {
+    id: 'label-hidden',
+    label: '背景整理進度',
+    labelHidden: true,
+    value: 64,
+    valueText: '64%',
+  },
 ];
 
 const CONTENT_ITEMS = [
+  {
+    id: 'rtl',
+    label: 'جارٍ تحضير الملفات المحلية',
+    value: 46,
+    valueText: '46%',
+    lang: 'ar',
+    dir: 'rtl',
+  },
   {
     id: 'long-cjk',
     label: '正在整理匯入的曲目與歌詞內容，完成後即可繼續編排播放順序。',
@@ -72,17 +94,10 @@ const CONTENT_ITEMS = [
     lang: 'en',
   },
 ];
-
-function densityProps(layer, density) {
-  return layer.key === 'candidate' ? { density } : {};
-}
 </script>
 
 <template>
-  <div
-    class="demo-progress-primitive"
-    :class="`demo-progress-primitive--${layer.key}`"
-  >
+  <div class="demo-progress-primitive">
     <section class="demo-progress-block demo-progress-role">
       <header class="demo-progress-subsection__header">
         <h5>使用時機</h5>
@@ -95,8 +110,7 @@ function densityProps(layer, density) {
       <div class="demo-progress-role__grid">
         <article data-progress-role="indicator">
           <strong>進度指示</strong>
-          <component
-            :is="layer.component"
+          <UiProgress
             label="正在整理曲目"
             :value="46"
             :max="100"
@@ -124,21 +138,19 @@ function densityProps(layer, density) {
         <h5>尺寸與內容結構</h5>
         <p>
           Standard／Compact 都使用 8px 進度軌與 2px
-          細圓角。標籤可換行，數值保持對齊。
+          細圓角。標籤可換行，數值保持對齊；密度跟隨整體設定。
         </p>
       </header>
 
       <div class="demo-progress-density-list">
         <article
-          v-for="density in layer.densities"
+          v-for="density in DENSITIES"
           :key="density[0]"
           class="demo-progress-density__item"
           :data-progress-density="density[0]"
         >
           <h6>{{ density[1] }}</h6>
-          <component
-            :is="layer.component"
-            v-bind="densityProps(layer, density[0])"
+          <UiProgress
             label="正在整理曲目"
             :value="46"
             :max="100"
@@ -171,10 +183,10 @@ function densityProps(layer, density) {
       <div class="demo-progress-state-list">
         <article v-for="state in STATES" :key="state.id">
           <span class="demo-progress-item__label">{{ state.id }}</span>
-          <component
-            :is="layer.component"
+          <UiProgress
             :data-progress-state="state.id"
             :label="state.label"
+            :label-hidden="state.labelHidden"
             :value="state.value"
             :max="state.max"
             :value-text="state.valueText"
@@ -200,8 +212,7 @@ function densityProps(layer, density) {
             class="demo-progress-content__frame"
             axis="horizontal"
           >
-            <component
-              :is="layer.component"
+            <UiProgress
               :data-progress-content="item.id"
               :label="item.label"
               :value="item.value"
@@ -225,12 +236,11 @@ function densityProps(layer, density) {
 
       <div class="demo-progress-recipe-list">
         <article data-progress-recipe="busy-region" aria-busy="true">
-          <component :is="layer.component" label="正在準備音訊" indeterminate />
+          <UiProgress label="正在準備音訊" indeterminate />
           <span>所在區域決定 aria-busy</span>
         </article>
         <article data-progress-recipe="milestone">
-          <component
-            :is="layer.component"
+          <UiProgress
             label="正在匯入曲目"
             :value="100"
             :max="100"
@@ -240,8 +250,7 @@ function densityProps(layer, density) {
           <span>只在重要階段更新狀態文字</span>
         </article>
         <article data-progress-recipe="result-message">
-          <component
-            :is="layer.component"
+          <UiProgress
             label="正在分析曲目"
             :value="5"
             :max="12"
@@ -251,8 +260,7 @@ function densityProps(layer, density) {
         </article>
         <article data-progress-recipe="parent-width">
           <div class="demo-progress-recipe__bounded">
-            <component
-              :is="layer.component"
+            <UiProgress
               label="正在整理曲目"
               :value="46"
               :max="100"
@@ -274,8 +282,7 @@ function densityProps(layer, density) {
 
       <div class="demo-progress-aria-list">
         <article data-progress-aria="determinate">
-          <component
-            :is="layer.component"
+          <UiProgress
             label="正在整理曲目"
             :value="46"
             :max="100"
@@ -284,12 +291,11 @@ function densityProps(layer, density) {
           <span>有數值進度 · 標籤與 46%</span>
         </article>
         <article data-progress-aria="indeterminate">
-          <component :is="layer.component" label="正在準備音訊" indeterminate />
+          <UiProgress label="正在準備音訊" indeterminate />
           <span>不確定進度 · 不帶假數值</span>
         </article>
         <article data-progress-aria="value-text">
-          <component
-            :is="layer.component"
+          <UiProgress
             label="正在分析曲目"
             :value="5"
             :max="12"
@@ -298,8 +304,7 @@ function densityProps(layer, density) {
           <span>可讀數值 · 5／12</span>
         </article>
         <article data-progress-aria="language">
-          <component
-            :is="layer.component"
+          <UiProgress
             label="音声を準備しています"
             :value="32"
             :max="100"

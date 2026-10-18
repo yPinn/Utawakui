@@ -14,7 +14,6 @@ const candidateChipSource = read('./DemoCandidateChip.vue');
 const candidateCheckboxSource = read('./DemoCandidateCheckbox.vue');
 const formalRangeSource = read('../ui/UiRange.vue');
 const formalRangeControlSource = read('../ui/range/UiRangeControl.vue');
-const candidateProgressSource = read('./DemoCandidateProgress.vue');
 const candidateMarqueeSource = read('./DemoCandidateMarqueeText.vue');
 const candidateHintSource = read('./DemoCandidateHint.vue');
 const candidateNoticeSource = read('./DemoCandidateNotice.vue');
@@ -72,7 +71,6 @@ describe('Token v2 Candidate text selection contract', () => {
     );
     expectV2NoneRule(formalRangeSource, '\\.ui-range__value');
     expectV2NoneRule(formalRangeControlSource, '\\.ui-range-control');
-    expectNoneRule(candidateProgressSource, '\\.demo-candidate-progress__copy');
     expectNoneRule(adoptedProgressSource, '\\.ui-progress__copy');
   });
 

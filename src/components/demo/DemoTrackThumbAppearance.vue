@@ -1,6 +1,7 @@
 <script setup>
 import DemoCandidateTrackThumb from './DemoCandidateTrackThumb.vue';
 import DemoTrackThumbPrimitive from './DemoTrackThumbPrimitive.vue';
+import DemoArtworkStates from './DemoArtworkStates.vue';
 
 const LAYERS = [
   {
@@ -59,6 +60,13 @@ const LAYERS = [
       它維持封面、替代內容與空內容的固定位置；集合封面和資料列有各自的責任。
     </p>
 
+    <section class="demo-track-thumb-layer" data-artwork-source="production">
+      <header class="demo-track-thumb-layer__header">
+        <h4>正式 UiArtworkLoading／UiArtworkReveal</h4>
+        <p>正式載入與 hover／focus 組合；下方單曲封面提案獨立保留。</p>
+      </header>
+      <DemoArtworkStates />
+    </section>
     <section
       v-for="layer in LAYERS"
       :key="layer.key"

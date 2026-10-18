@@ -1,0 +1,60 @@
+.demo-input-states,
+.demo-input-states__section,
+.demo-input-states__case {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.demo-input-states {
+  gap: var(--ui-space-6);
+}
+
+.demo-input-states__section + .demo-input-states__section {
+  padding-block-start: var(--ui-space-4);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.demo-input-states__grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  align-items: start;
+  gap: var(--ui-space-5);
+}
+
+.demo-input-states h4,
+.demo-input-states h5,
+.demo-input-states p {
+  margin: 0;
+}
+
+.demo-input-states h4 {
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
+}
+
+.demo-input-states h5 {
+  font-weight: var(--ui-type-label-weight);
+}
+
+.demo-input-states h5,
+.demo-input-states__copy,
+.demo-input-states output {
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+  overflow-wrap: anywhere;
+}
+
+.demo-input-states__copy,
+.demo-input-states output {
+  color: var(--ui-color-text-muted);
+}
+
+.demo-input-states__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-3);
+}

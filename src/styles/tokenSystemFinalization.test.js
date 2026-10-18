@@ -131,7 +131,10 @@ describe('finalized control-panel token system', () => {
       .filter((path) => !path.includes(resolve(root, 'src/components/demo')))
       .filter((path) => readFileSync(path, 'utf8').includes('DemoCandidate'));
 
-    expect(candidateFiles).toHaveLength(16);
+    expect(candidateFiles).toHaveLength(15);
+    expect(
+      candidateFiles.some((path) => path.endsWith('DemoCandidateProgress.vue')),
+    ).toBe(false);
     expect(productionCandidateReferences).toEqual([]);
     expect(readSource('src/views/VisualSystemView.vue')).toContain(
       '<DemoView />',

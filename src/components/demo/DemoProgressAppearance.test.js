@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
@@ -7,8 +7,8 @@ const primitiveSource = readFileSync(
   new URL('./DemoProgressPrimitive.vue', import.meta.url),
   'utf8',
 );
-const candidateSource = readFileSync(
-  new URL('./DemoCandidateProgress.vue', import.meta.url),
+const progressSource = readFileSync(
+  new URL('../ui/UiProgress.vue', import.meta.url),
   'utf8',
 );
 const reviewContract = readFileSync(
@@ -22,49 +22,93 @@ function visibleText(html) {
   return html.replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ');
 }
 describe('DemoProgressAppearance', () => {
+  it('renders the production primitive without a parallel Candidate or density API', async () => {
+    const html = await renderToString(createSSRApp(DemoProgressAppearance));
+    expect(html).toContain('data-progress-source="production"');
+    expect(html).toContain('class="ui-progress__fill');
+    expect(html).not.toContain('demo-candidate-progress');
+    expect(
+      existsSync(new URL('./DemoCandidateProgress.vue', import.meta.url)),
+    ).toBe(false);
+    expect(primitiveSource).toContain(
+      "import UiProgress from '../ui/UiProgress.vue';",
+    );
+    expect(primitiveSource).not.toMatch(
+      /layer\.component|densityProps|defineProps/u,
+    );
+    expect(html).not.toMatch(/\sdensity="/u);
+  });
+
+  it('shows determinate boundaries, custom totals, indeterminate and optional copy through UiProgress', async () => {
+    const html = await renderToString(createSSRApp(DemoProgressAppearance));
+    const specimen = (id) =>
+      html.match(
+        new RegExp(
+          `<div[^>]*data-progress-state="${id}"[^>]*>[\\s\\S]*?</progress>[\\s\\S]*?</div></div>`,
+          'u',
+        ),
+      )?.[0];
+    for (const [id, value, max, ratio] of [
+      ['zero', 0, 100, 0],
+      ['partial', 46, 100, 0.46],
+      ['complete', 100, 100, 1],
+      ['bounded-total', 5, 12, 5 / 12],
+    ]) {
+      const state = specimen(id);
+      expect(state, id).toBeDefined();
+      expect(state).toContain(`value="${value}"`);
+      expect(state).toContain(`max="${max}"`);
+      expect(state).toContain(`--ui-progress-ratio:${ratio}`);
+    }
+    expect(specimen('indeterminate')).not.toMatch(
+      /\svalue=|aria-valuetext=|ui-progress__fill/u,
+    );
+    expect(specimen('label-hidden')).toContain('aria-label="背景整理進度"');
+    expect(specimen('label-hidden')).not.toContain('ui-progress__copy');
+    expect(specimen('no-value-text')).not.toMatch(
+      /aria-valuetext=|ui-progress__value/u,
+    );
+    expect(html).toContain('data-progress-content="rtl"');
+    expect(html).toContain('dir="rtl"');
+  });
+
   it('keeps the primitive separate from task lifecycle and result messaging', async () => {
     const html = await renderToString(createSSRApp(DemoProgressAppearance));
     expect(html).toContain('UiProgress 是有標籤的進度指示器');
     expect(html).toContain('工作結果與後續操作由所在畫面顯示');
     expect(html).toContain('不負責取消、重試、關閉或通知佇列');
     expect(html).toContain('完成或失敗不靠進度條顏色單獨表達');
-    expect(candidateSource).not.toMatch(
-      /tone|success|warning|danger|action|dismiss|cancel|retry/iu,
+    expect(progressSource).not.toMatch(
+      /\b(?:tone|success|warning|danger|action|dismiss|cancel|retry)\s*:/iu,
     );
     expect(primitiveSource).not.toMatch(
       /import\s+UiNotice|import\s+UiHint|import\s+UiField/u,
     );
   });
   it('keeps indeterminate motion bounded and preserves a reduced-motion cue', () => {
-    expect(candidateSource).toContain('@keyframes demo-progress-indeterminate');
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-progress__track:indeterminate\s*\{[\s\S]*animation:/u,
+    expect(progressSource).toContain('@keyframes ui-progress-indeterminate');
+    expect(progressSource).toMatch(
+      /\.ui-progress__track:indeterminate\s*\{[\s\S]*animation:/u,
     );
     // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
-    expect(candidateSource).toMatch(
-      /:global\(\s*:root\[data-ui-motion='reduced'\]\s+\.demo-candidate-progress__track:indeterminate\s*\)/u,
+    expect(progressSource).toMatch(
+      /:global\(\s*:root\[data-ui-motion='reduced'\]\s+\.ui-progress__track:indeterminate\s*\)/u,
     );
-    expect(candidateSource).toContain(
-      '@media (prefers-reduced-motion: reduce)',
-    );
-    expect(candidateSource).toMatch(
+    expect(progressSource).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(progressSource).toMatch(
       /animation:\s*none;[\s\S]*background-position:\s*50% 0;/u,
     );
   });
   it('uses neutral activity color without treating completion as a tone', () => {
-    expect(candidateSource).toContain('var(--ui-color-info)');
-    expect(candidateSource).not.toMatch(
-      /::-webkit-progress-value,\s*\n\.demo-candidate-progress__track::-moz-progress-bar/u,
+    expect(progressSource).toMatch(
+      /\.ui-progress__fill\s*\{[^}]*background:\s*var\(--ui-color-info\);/u,
     );
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-progress__track::-webkit-progress-value\s*\{[\s\S]*?background:\s*var\(--ui-color-info\);/u,
-    );
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-progress__track::-moz-progress-bar\s*\{[\s\S]*?background:\s*var\(--ui-color-info\);/u,
-    );
-    expect(candidateSource).not.toContain('var(--ui-color-success)');
-    expect(candidateSource).not.toContain('var(--ui-color-danger)');
-    expect(candidateSource).not.toContain('accent-color:');
+    expect(progressSource).toContain('height: var(--ui-progress-track-size);');
+    expect(progressSource).toContain('border-radius: var(--ui-radius-xs);');
+    expect(progressSource).toContain('var(--ui-type-caption-size)');
+    expect(progressSource).not.toContain('var(--ui-color-success)');
+    expect(progressSource).not.toContain('var(--ui-color-danger)');
+    expect(progressSource).not.toContain('accent-color:');
   });
   it('keeps visible examples concise and free of background implementation terms', async () => {
     const text = visibleText(

@@ -1,5 +1,6 @@
 <script setup>
 import DemoModalLayer from './DemoModalLayer.vue';
+import DemoModalProduction from './DemoModalProduction.vue';
 
 const LAYERS = Object.freeze([
   {
@@ -12,6 +13,17 @@ const LAYERS = Object.freeze([
 
 <template>
   <div class="demo-modal-appearance">
+    <section
+      class="demo-modal-layer"
+      data-modal-source="production"
+      aria-labelledby="demo-modal-production-title"
+    >
+      <header class="demo-modal-layer__header">
+        <h4 id="demo-modal-production-title">正式 UiModal</h4>
+        <p>關閉限制與焦點恢復；下方另列未採用提案。</p>
+      </header>
+      <DemoModalProduction />
+    </section>
     <section
       v-for="layer in LAYERS"
       :key="layer.key"

@@ -72,7 +72,10 @@ describe('DemoTrackThumbAppearance', () => {
     expect(primitiveSource).not.toMatch(/import\s+UiCollageThumb/u);
     expect(primitiveSource).not.toMatch(/import\s+UiTrackRow/u);
     expect(candidateSource).not.toMatch(/playlist|queue|player|album/iu);
-    expect(html).not.toMatch(/UiThumbnail|UiArtwork|UiAvatar/u);
+    // Formal overlay primitives share this entry; the thumbnail itself keeps its name.
+    expect(html).not.toMatch(
+      /UiThumbnail|UiArtwork(?!Loading|Reveal)|UiAvatar/u,
+    );
   });
   it('uses a stable default image when a track has no custom cover', () => {
     const tracks = Array.from(

@@ -1,6 +1,7 @@
 <script setup>
 import DemoCandidateCollageThumb from './DemoCandidateCollageThumb.vue';
 import DemoCollageThumbPrimitive from './DemoCollageThumbPrimitive.vue';
+import DemoCollageThumbProduction from './DemoCollageThumbProduction.vue';
 
 const LAYERS = [
   {
@@ -21,6 +22,16 @@ const LAYERS = [
       public contract 或資料列操作。
     </p>
 
+    <section
+      class="demo-collage-thumb-layer"
+      data-collage-thumb-source="production"
+    >
+      <header class="demo-collage-thumb-layer__header">
+        <h4>正式 UiCollageThumb</h4>
+        <p>載入、缺圖與恢復行為；下方另列未採用提案。</p>
+      </header>
+      <DemoCollageThumbProduction />
+    </section>
     <section
       v-for="layer in LAYERS"
       :key="layer.key"
