@@ -77,8 +77,9 @@ const role = computed(() =>
     <UiButton
       v-if="resolvedActionLabel"
       class="ui-notice__action"
+      variant="secondary"
       :disabled="actionDisabled"
-      @click="emit('action')"
+      @click="!actionDisabled && emit('action')"
     >
       {{ resolvedActionLabel }}
     </UiButton>
@@ -89,7 +90,7 @@ const role = computed(() =>
 .ui-notice {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) fit-content(40%);
   align-items: start;
   gap: var(--ui-space-2);
   padding: var(--ui-space-3);
@@ -97,6 +98,7 @@ const role = computed(() =>
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface-raised);
   color: var(--ui-color-text);
+  overflow-wrap: anywhere;
 }
 
 .ui-notice--compact {
@@ -162,13 +164,15 @@ const role = computed(() =>
 }
 
 .ui-notice__message {
-  color: var(--ui-color-text-muted);
+  color: var(--ui-color-text);
   font-size: var(--ui-type-caption-size);
   font-weight: var(--ui-type-caption-weight);
   line-height: var(--ui-type-caption-line-height);
 }
 
 .ui-notice__action {
+  min-width: 0;
+  max-width: 100%;
   align-self: center;
 }
 

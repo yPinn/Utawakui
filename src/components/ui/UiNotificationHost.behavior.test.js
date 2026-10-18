@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { nextTick } from 'vue';
+import { nextTick, reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiButton from './UiButton.vue';
 import UiIconButton from './UiIconButton.vue';
@@ -92,6 +92,185 @@ function notifications() {
 }
 
 describe('UiNotificationHost', () => {
+  it('keeps the remaining deadline through same-id content/tone updates and filters empty entries', async () => {
+    const dismiss = vi.fn();
+    const props = reactive({
+      items: [
+        null,
+        { id: 'empty', message: '' },
+        {
+          id: 'content',
+          title: '完成',
+          lifecycle: 'transient',
+          durationMs: 1000,
+        },
+      ],
+      onDismiss: dismiss,
+    });
+    const { app } = mount(UiNotificationHost, props);
+    await nextTick();
+    expect(notifications()).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(600);
+    props.items[2].title = '更新後的長內容'.repeat(20);
+    props.items[2].tone = 'warning';
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(399);
+    expect(dismiss).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith({
+      id: 'content',
+      reason: 'timeout',
+    });
+    app.unmount();
+  });
+
+  it('keeps focus pause after cancelling a touch swipe', async () => {
+    const dismiss = vi.fn();
+    const { app } = mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'swipe',
+          title: '完成',
+          lifecycle: 'transient',
+          durationMs: 1000,
+          dismissible: true,
+        },
+      ],
+      onDismiss: dismiss,
+    });
+    await nextTick();
+    const article = notifications()[0];
+    trigger(article, 'onFocusin');
+    trigger(article, 'onPointerdown', {
+      pointerType: 'touch',
+      pointerId: 9,
+      clientX: 20,
+    });
+    trigger(article, 'onPointermove', { pointerId: 9, clientX: 40 });
+    trigger(article, 'onPointercancel', { pointerId: 9 });
+    await nextTick();
+    expect(article.props.style['--ui-notification-drag-x']).toBe('0px');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(dismiss).not.toHaveBeenCalled();
+    trigger(article, 'onFocusout', {
+      currentTarget: { contains: () => false },
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith({
+      id: 'swipe',
+      reason: 'timeout',
+    });
+    app.unmount();
+  });
+
+  it('preserves overlapping pointer/focus pauses when duration or lifecycle changes', async () => {
+    const dismiss = vi.fn();
+    const props = reactive({
+      items: [
+        {
+          id: 'update',
+          title: '處理中',
+          lifecycle: 'progress',
+          durationMs: 1000,
+        },
+      ],
+      onDismiss: dismiss,
+    });
+    const { app } = mount(UiNotificationHost, props);
+    await nextTick();
+    const article = notifications()[0];
+    trigger(article, 'onPointerenter');
+    trigger(article, 'onFocusin');
+    props.items[0].lifecycle = 'transient';
+    props.items[0].durationMs = 2000;
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(dismiss).not.toHaveBeenCalled();
+    trigger(article, 'onPointerleave');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(dismiss).not.toHaveBeenCalled();
+    trigger(article, 'onFocusout', {
+      currentTarget: { contains: () => false },
+    });
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(dismiss).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith({
+      id: 'update',
+      reason: 'timeout',
+    });
+    app.unmount();
+  });
+
+  it('does not rearm a dismissed timeout on pointer leave, and cleans up after removal/unmount', async () => {
+    const dismiss = vi.fn();
+    const props = reactive({
+      items: [
+        {
+          id: 'once',
+          title: '完成',
+          lifecycle: 'transient',
+          durationMs: 1000,
+          dismissible: true,
+        },
+      ],
+      onDismiss: dismiss,
+    });
+    const { app } = mount(UiNotificationHost, props);
+    await nextTick();
+    const article = notifications()[0];
+    trigger(article, 'onPointerenter');
+    trigger(findAll(article, (node) => node.type === 'button')[0], 'onClick');
+    trigger(article, 'onPointerleave');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(dismiss).toHaveBeenCalledOnce();
+    props.items = [];
+    await nextTick();
+    props.items = [
+      {
+        id: 'once',
+        title: '再次完成',
+        lifecycle: 'transient',
+        durationMs: 1000,
+      },
+    ];
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(dismiss).toHaveBeenCalledTimes(2);
+    app.unmount();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(dismiss).toHaveBeenCalledTimes(2);
+  });
+
+  it('forwards actionDisabled and recovers without consuming the notification', async () => {
+    const action = vi.fn();
+    const props = reactive({
+      items: [
+        {
+          id: 'retry',
+          title: '等待',
+          actionLabel: '重試',
+          actionDisabled: true,
+        },
+      ],
+      onAction: action,
+    });
+    const { app } = mount(UiNotificationHost, props);
+    await nextTick();
+    const button = findAll(
+      notifications()[0],
+      (node) => node.type === 'button',
+    )[0];
+    expect(button.props.disabled).toBe(true);
+    trigger(button, 'onClick');
+    expect(action).not.toHaveBeenCalled();
+    props.items[0].actionDisabled = false;
+    await nextTick();
+    trigger(button, 'onClick');
+    expect(action).toHaveBeenCalledExactlyOnceWith('retry');
+    expect(notifications()).toHaveLength(1);
+    app.unmount();
+  });
   it('resumes the remaining timeout after a modal interrupts a visible result', async () => {
     const { shallowRef, h } = await import('vue');
     const suspended = shallowRef(false);

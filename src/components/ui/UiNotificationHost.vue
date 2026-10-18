@@ -89,6 +89,7 @@ function clearTimer(state) {
 function dismiss(item, reason) {
   const state = timerState.get(item.id);
   clearTimer(state);
+  if (state) state.dismissed = true;
   const swipe = swipeState.get(item.id);
   if (swipe) {
     swipe.dragging = false;
@@ -100,7 +101,12 @@ function dismiss(item, reason) {
 
 function schedule(item, state) {
   clearTimer(state);
-  if (!mounted || lifecycleFor(item) !== 'transient' || state.paused.size > 0) {
+  if (
+    !mounted ||
+    state.dismissed ||
+    lifecycleFor(item) !== 'transient' ||
+    state.paused.size > 0
+  ) {
     return;
   }
   state.startedAt = Date.now();
@@ -123,7 +129,8 @@ function ensureTimer(item) {
     state = {
       durationMs,
       lifecycle,
-      paused: new Set(),
+      paused: new Set(state?.paused),
+      dismissed: false,
       remainingMs: durationMs,
       startedAt: 0,
       timer: undefined,
@@ -137,7 +144,9 @@ function ensureTimer(item) {
 
 function syncTimers() {
   const visibleIds = new Set(visibleItems.value.map((item) => item.id));
-  const itemsById = new Map(props.items.map((item) => [item.id, item]));
+  const itemsById = new Map(
+    props.items.filter(Boolean).map((item) => [item.id, item]),
+  );
   for (const [id, state] of timerState) {
     if (!itemsById.has(id)) {
       clearTimer(state);
@@ -345,6 +354,7 @@ onBeforeUnmount(() => {
           :title="item.title"
           :message="item.message"
           :action-label="item.actionLabel"
+          :action-disabled="Boolean(item.actionDisabled)"
           :compact="(item.density || props.density) === 'compact'"
           role="presentation"
           aria-live="off"

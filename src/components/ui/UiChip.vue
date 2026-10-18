@@ -33,12 +33,14 @@ defineProps({
       '--ui-chip-color': color,
     }"
   >
-    <slot />
+    <span class="ui-chip__label"><slot /></span>
   </span>
 </template>
 
 <style scoped>
 .ui-chip {
+  min-width: 0;
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -57,9 +59,16 @@ defineProps({
   white-space: nowrap;
 }
 
+.ui-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ui-chip--accent {
   --ui-chip-tone-bg: var(--ui-color-accent-soft);
-  --ui-chip-tone-color: var(--ui-color-accent);
+  --ui-chip-tone-color: var(--ui-color-text);
 }
 
 .ui-chip--current {
@@ -68,7 +77,7 @@ defineProps({
 }
 
 .ui-chip--info {
-  --ui-chip-tone-bg: var(--ui-color-accent-soft);
+  --ui-chip-tone-bg: var(--ui-color-info-soft);
   --ui-chip-tone-color: var(--ui-color-info);
 }
 

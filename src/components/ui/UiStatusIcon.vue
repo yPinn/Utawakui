@@ -1,6 +1,6 @@
 <script setup>
 // Small circular status badge for repeated row-trailing states.
-import { computed, useAttrs } from 'vue';
+import { computed, mergeProps, useAttrs } from 'vue';
 import { ICON_SIZE } from '../../icons/index.js';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { useTooltip } from './useTooltip.js';
@@ -40,15 +40,26 @@ const { open, position, setTooltip, tooltipId, triggerProps } = useTooltip({
   disabled: computed(() => props.decorative),
   describedBy: true,
 });
-const rootProps = computed(() => ({
-  ...attrs,
-  ...triggerProps.value,
-}));
+function rootProps() {
+  const bindings = mergeProps(attrs, triggerProps.value);
+  const describedBy = [
+    attrs['aria-describedby'],
+    triggerProps.value['aria-describedby'],
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .split(/\s+/u)
+    .filter(Boolean);
+  return {
+    ...bindings,
+    'aria-describedby': [...new Set(describedBy)].join(' ') || undefined,
+  };
+}
 </script>
 
 <template>
   <span
-    v-bind="rootProps"
+    v-bind="rootProps()"
     class="ui-status-icon"
     :class="`ui-status-icon--${tone}`"
     :role="decorative ? undefined : 'img'"

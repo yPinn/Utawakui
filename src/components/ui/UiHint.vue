@@ -38,6 +38,8 @@ defineProps({
 
 <style scoped>
 .ui-hint {
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
