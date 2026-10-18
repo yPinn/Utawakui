@@ -69,6 +69,52 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('DemoRangeAppearance', () => {
+  it('keeps invalid authoritative over interaction colors for the complete track', () => {
+    expect(candidateSource).toContain(
+      '.ui-range-control__native:where(:hover:not(:disabled))',
+    );
+    expect(candidateSource).toContain(
+      '.ui-range-control__native:where(:active:not(:disabled))',
+    );
+    expect(candidateSource).toMatch(
+      /\.ui-range-control__native\[aria-invalid='true'\]\s*\+ \.ui-range-control__track,/u,
+    );
+  });
+
+  it('clears both invalid specimens at 120 and restores their error at 121', async () => {
+    const { app, root } = mount(DemoRangeAppearance);
+    for (const id of [
+      'demo-range-candidate-state-invalid',
+      'demo-range-candidate-validation-error',
+    ]) {
+      const input = () =>
+        findAll(
+          root,
+          (node) => node.type === 'input' && node.props.id === id,
+        )[0];
+      expect(input().props['aria-invalid']).toBe(true);
+      trigger(input(), 'onInput', { target: { valueAsNumber: 120 } });
+      await nextTick();
+      expect(input().props['aria-invalid']).toBeUndefined();
+      expect(input().props['aria-valuetext']).toBe('120%');
+      expect(
+        findAll(root, (node) => node.props.id === `${id}-error`),
+      ).toHaveLength(0);
+      trigger(input(), 'onInput', { target: { valueAsNumber: 121 } });
+      await nextTick();
+      expect(input().props['aria-invalid']).toBe(true);
+      expect(input().props['aria-valuetext']).toBe('超過建議值：121%');
+      expect(
+        findAll(
+          root,
+          (node) =>
+            node.props.id === `${id}-error` && node.props.role === 'alert',
+        ),
+      ).toHaveLength(1);
+    }
+    app.unmount();
+  });
+
   it('mounts a dedicated Range phase after the accepted Checkbox phase', () => {
     expect(demoInputsSource).toContain(
       "import DemoCheckboxAppearance from './DemoCheckboxAppearance.vue';",

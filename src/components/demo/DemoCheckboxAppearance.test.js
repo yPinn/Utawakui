@@ -53,22 +53,20 @@ describe('DemoCheckboxAppearance', () => {
     expect(html).toContain('Target · full label row');
     expect(html).toContain('Width · content／parent-owned');
     expect(componentSource).toContain(
-      '.demo-checkbox-size--standard {\n  --demo-checkbox-target-size: 2.25rem;',
+      '.demo-checkbox-size--standard {\n  --ui-control-height: 2.25rem;',
     );
     expect(componentSource).toContain(
-      '.demo-checkbox-size--compact {\n  --demo-checkbox-target-size: 2rem;',
-    );
-    expect(candidateSource).toMatch(
-      /--demo-checkbox-resolved-target-size:\s*var\(\s*--demo-checkbox-target-size,\s*var\(--ui-control-height\)\s*\);/u,
-    );
-    expect(candidateSource).not.toContain(
-      '--demo-checkbox-target-size: var(--ui-control-height);',
+      '.demo-checkbox-size--compact {\n  --ui-control-height: 2rem;',
     );
     expect(candidateSource).toContain(
-      'min-height: var(--demo-checkbox-resolved-target-size);',
+      "import UiCheckbox from '../ui/UiCheckbox.vue';",
     );
-    expect(candidateSource).toContain('width: var(--ui-checkbox-size);');
-    expect(candidateSource).toContain('height: var(--ui-checkbox-size);');
+    expect(candidateSource).toContain('v-bind="$attrs"');
+    expect(candidateSource).not.toContain('type="checkbox"');
+    expect(candidateSource).not.toContain('<style');
+    expect(componentSource).toContain(
+      ":not(:checked):not([aria-checked='mixed'])",
+    );
   });
   it('keeps an accessible square target when a compound owner hides the visible label', async () => {
     const html = await renderToString(
@@ -83,9 +81,8 @@ describe('DemoCheckboxAppearance', () => {
     expect(html).toContain('ui-field__label--hidden');
     expect(html).toContain('for="track-row-selection"');
     expect(html).toContain('選取音樂分析候選');
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-checkbox\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--demo-checkbox-resolved-target-size\);/u,
-    );
+    expect(html).toContain('ui-checkbox__native');
+    expect(html).toContain('aria-label="選取音樂分析候選"');
   });
   it('demonstrates Hint replacement and merged ARIA descriptions', () => {
     const { app, root } = mount(DemoCheckboxAppearance);

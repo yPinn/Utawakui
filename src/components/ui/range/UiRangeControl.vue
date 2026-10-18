@@ -371,16 +371,16 @@ defineExpose({ focus });
     transform: translateX(-50%);
   }
 
-  .ui-range-control__native:hover:not(:disabled)
+  .ui-range-control__native:where(:hover:not(:disabled))
     + .ui-range-control__track
     .ui-range-control__fill,
-  .ui-range-control__native:focus-visible
+  .ui-range-control__native:where(:focus-visible)
     + .ui-range-control__track
     .ui-range-control__fill {
     background: var(--ui-range-fill-hover);
   }
 
-  .ui-range-control__native:active:not(:disabled)
+  .ui-range-control__native:where(:active:not(:disabled))
     + .ui-range-control__track
     .ui-range-control__fill {
     background: var(--ui-range-fill-active);
@@ -403,6 +403,7 @@ defineExpose({ focus });
         var(--ui-range-focus);
   }
 
+  .ui-range-control__native[aria-invalid='true'] + .ui-range-control__track,
   .ui-range-control__native[aria-invalid='true']
     + .ui-range-control__track
     .ui-range-control__fill,

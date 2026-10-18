@@ -146,7 +146,7 @@ defineExpose({ focus });
   width: var(--ui-checkbox-size);
   height: var(--ui-checkbox-size);
   place-items: center;
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border: var(--ui-border-width) solid var(--ui-color-control-boundary);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface-raised);
   color: var(--ui-color-accent-contrast);
@@ -158,7 +158,8 @@ defineExpose({ focus });
       var(--ui-motion-easing-standard);
 }
 
-.ui-checkbox__native:hover:not(:disabled) + .ui-checkbox__indicator {
+/* Hover must not override checked/mixed fill or the invalid border. */
+.ui-checkbox__native:where(:hover:not(:disabled)) + .ui-checkbox__indicator {
   border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-hover);
 }

@@ -216,7 +216,7 @@ describe('UiRadioGroup', () => {
     { id: 'locked', label: '尚未提供', disabled: true },
   ];
 
-  it('keeps both option insets equal to the indicator-to-copy gap', () => {
+  it('keeps option inline insets equal to the indicator-to-copy gap', () => {
     const source = readFileSync(
       new URL('./UiRadioGroup.vue', import.meta.url),
       'utf8',

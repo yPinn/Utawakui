@@ -272,6 +272,19 @@ function commitHighlighted() {
   if (item && !item.disabled) selectItem(item);
 }
 
+// Some IME keydown events omit isComposing; keep the input lifecycle as a fallback.
+let composing = false;
+
+function onCompositionStart() {
+  composing = true;
+}
+
+function onCompositionEnd() {
+  composing = false;
+}
+
+watch(() => [props.disabled, props.editable], onCompositionEnd);
+
 function onInput(event) {
   isFiltering.value = true;
   query.value = event.target.value;
@@ -294,7 +307,14 @@ function highlightItem(item) {
 }
 
 function onKeydown(event) {
-  if (props.disabled) return;
+  if (
+    props.disabled ||
+    composing ||
+    event.isComposing ||
+    event.keyCode === 229
+  ) {
+    return;
+  }
   if (event.key === 'ArrowDown') {
     event.preventDefault();
     if (!isOpen.value) openWithSelection();
@@ -339,6 +359,7 @@ function onKeydown(event) {
 }
 
 function onBlur() {
+  composing = false;
   closeList({ revertQuery: true });
 }
 
@@ -457,6 +478,8 @@ onBeforeUnmount(() => {
           :aria-invalid="fieldInvalid || undefined"
           @click="onClick"
           @input="onInput"
+          @compositionstart="onCompositionStart"
+          @compositionend="onCompositionEnd"
           @keydown="onKeydown"
           @blur="onBlur"
         />
@@ -596,7 +619,7 @@ onBeforeUnmount(() => {
   color: var(--ui-field-placeholder);
 }
 
-.ui-combobox__native:hover:not(:disabled) {
+.ui-combobox__native:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }

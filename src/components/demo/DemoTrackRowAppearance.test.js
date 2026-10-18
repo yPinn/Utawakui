@@ -31,6 +31,7 @@ const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 const primitiveSource = readSource('./DemoTrackRowPrimitive.vue');
 const candidateCheckboxSource = readSource('./DemoCandidateCheckbox.vue');
+const checkboxSource = readSource('../ui/UiCheckbox.vue');
 const candidateSource = readSource('./DemoCandidateTrackRow.vue');
 const candidateMarqueeSource = readSource('./DemoCandidateMarqueeText.vue');
 const reviewContract = readSource(
@@ -259,12 +260,13 @@ describe('DemoTrackRowAppearance', () => {
     );
     expect(candidateLayer).toContain('ui-field__label--hidden');
     expect(candidateLayer).toContain('選取音樂分析候選');
-    expect(candidateCheckboxSource).toContain(
+    expect(candidateCheckboxSource).toContain('v-bind="$attrs"');
+    expect(checkboxSource).toContain(
       'labelHidden: { type: Boolean, default: false }',
     );
-    expect(candidateCheckboxSource).toContain(':label-hidden="labelHidden"');
-    expect(candidateCheckboxSource).toMatch(
-      /\.demo-candidate-checkbox\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--demo-checkbox-resolved-target-size\);/u,
+    expect(checkboxSource).toContain(':label-hidden="labelHidden"');
+    expect(checkboxSource).toMatch(
+      /\.ui-checkbox-field\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--ui-checkbox-resolved-target-size\);/u,
     );
     expect(primitiveSource).toContain(
       "labelHidden: layer.key === 'candidate' || undefined",
@@ -287,11 +289,11 @@ describe('DemoTrackRowAppearance', () => {
     expect(primitiveSource).toMatch(
       /\.demo-track-row-selection-lane__control\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset-block-start:\s*50%;[\s\S]*?inset-inline-start:\s*50%;[\s\S]*?transform:\s*translate\(-50%, -50%\);/u,
     );
-    expect(candidateCheckboxSource).toMatch(
-      /\.demo-candidate-checkbox\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--demo-checkbox-resolved-target-size\);[\s\S]*?flex:\s*0 0 var\(--demo-checkbox-resolved-target-size\);/u,
+    expect(checkboxSource).toMatch(
+      /\.ui-checkbox-field\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--ui-checkbox-resolved-target-size\);[\s\S]*?flex:\s*0 0 var\(--ui-checkbox-resolved-target-size\);/u,
     );
-    expect(candidateCheckboxSource).toMatch(
-      /\.demo-candidate-checkbox\.has-hidden-label\s+:deep\(\.ui-field__control\)\s*\{[\s\S]*?width:\s*100%;/u,
+    expect(checkboxSource).toMatch(
+      /\.ui-checkbox-field\.has-hidden-label\s+:deep\(\.ui-field__control\)\s*\{[\s\S]*?width:\s*100%;/u,
     );
   });
   it('keeps selectable metadata above the row action and wires ordinary text clicks to visible feedback', () => {

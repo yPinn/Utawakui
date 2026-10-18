@@ -670,6 +670,35 @@ describe('Studio Library workspace prototype isolation', () => {
     }
   });
 
+  it.each([
+    ['dark', {}],
+    ['light', tokenBlock(lightTokenSelector)],
+    ['chrome', tokenBlock(chromeTokenSelector)],
+    [
+      'light chrome',
+      { ...tokenBlock(lightTokenSelector), ...tokenBlock(chromeTokenSelector) },
+    ],
+  ])(
+    'keeps %s choice boundaries visible on control and option surfaces',
+    (_, overrides) => {
+      const definitions = { ...tokenBlock(rootTokenSelector), ...overrides };
+      for (const background of [
+        '--ui-color-surface',
+        '--ui-color-surface-raised',
+        '--ui-color-surface-hover',
+        '--ui-color-surface-selected',
+      ]) {
+        expect(
+          contrastRatio(
+            resolveColor('--ui-color-control-boundary', definitions),
+            resolveColor(background, definitions),
+          ),
+          background,
+        ).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
+
   it('keeps Chrome navigation entries distinct from their container and glyph', () => {
     const definitions = {
       ...tokenBlock(rootTokenSelector),

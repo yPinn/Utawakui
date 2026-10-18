@@ -103,7 +103,7 @@ defineExpose({ focus });
   line-height: var(--ui-type-title-line-height);
 }
 
-.ui-text-field:hover:not(:disabled) {
+.ui-text-field:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }

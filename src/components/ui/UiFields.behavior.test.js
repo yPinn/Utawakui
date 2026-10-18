@@ -416,6 +416,53 @@ describe('shared field accessibility and data flow', () => {
     app.unmount();
   });
 
+  it('removes stale values across unknown progress and restores determinate copy', async () => {
+    const props = reactive({
+      label: '整理進度',
+      value: 5,
+      max: 12,
+      valueText: '5／12',
+      indeterminate: false,
+      labelHidden: false,
+    });
+    const { app, root } = mount(UiProgress, props);
+    const native = () => findAll(root, (node) => node.type === 'progress')[0];
+    const fills = () =>
+      findAll(root, (node) =>
+        String(node.props.class ?? '').includes('ui-progress__fill'),
+      );
+    props.indeterminate = true;
+    await nextTick();
+    expect(native().props.value).toBeUndefined();
+    expect(native().props['aria-valuetext']).toBeUndefined();
+    expect(textContent(root)).not.toContain('5／12');
+    expect(fills()).toHaveLength(0);
+    props.value = 12;
+    props.valueText = '全部完成';
+    props.indeterminate = false;
+    await nextTick();
+    expect(native().props).toMatchObject({
+      value: 12,
+      max: 12,
+      'aria-valuetext': '全部完成',
+    });
+    expect(fills()[0].props.style['--ui-progress-ratio']).toBe(1);
+    expect(textContent(root)).toContain('全部完成');
+    props.labelHidden = true;
+    await nextTick();
+    expect(textContent(root)).toBe('');
+    expect(native().props['aria-label']).toBe('整理進度');
+    expect(native().props['aria-valuetext']).toBe('全部完成');
+    props.labelHidden = false;
+    props.value = 0;
+    props.valueText = '';
+    await nextTick();
+    expect(fills()[0].props.style['--ui-progress-ratio']).toBe(0);
+    expect(native().props['aria-valuetext']).toBeUndefined();
+    expect(textContent(root)).toBe('整理進度');
+    app.unmount();
+  });
+
   it('paints a hidden fill that glides sparse steps and snaps back', async () => {
     let now = 0;
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);

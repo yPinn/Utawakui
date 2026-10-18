@@ -1,4 +1,6 @@
 <script setup>
+import { useId } from 'vue';
+
 const props = defineProps({
   name: { type: String, required: true },
   legend: { type: String, required: true },
@@ -19,9 +21,14 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+const instanceId = `ui-radio-${useId()}`;
 
 function optionId(item) {
-  return `${props.name}-${String(item.id).replace(/[^a-z0-9_-]+/giu, '-')}`;
+  // Keep Unicode and punctuation distinct, including numeric vs. string keys.
+  const key = Array.from(String(item.id), (character) =>
+    character.codePointAt(0).toString(16),
+  ).join('-');
+  return `${instanceId}-${typeof item.id}-${key}`;
 }
 
 function select(item) {
@@ -163,6 +170,18 @@ function select(item) {
   background: var(--ui-color-surface-raised);
 }
 
+.ui-radio-group--list .ui-radio-group__option {
+  align-content: start;
+  align-items: start;
+  padding-block: max(0rem, calc((var(--ui-control-height) - 1lh) / 2));
+  font-size: var(--ui-type-label-size);
+  line-height: var(--ui-type-label-line-height);
+}
+
+.ui-radio-group--list .ui-radio-group__indicator {
+  margin-block-start: max(0rem, calc((1lh - var(--ui-radio-size)) / 2));
+}
+
 .ui-radio-group__option:hover:not(.ui-radio-group__option--disabled):not(
     .ui-radio-group__option--checked
   ) {
@@ -193,6 +212,8 @@ function select(item) {
 .ui-radio-group__input {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
   opacity: 0;
   cursor: inherit;
@@ -220,7 +241,7 @@ function select(item) {
   block-size: var(--ui-radio-size);
   display: grid;
   place-items: center;
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border: var(--ui-border-width) solid var(--ui-color-control-boundary);
   border-radius: 50%;
   background: var(--ui-field-bg);
 }

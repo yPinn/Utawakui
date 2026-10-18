@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { h, nextTick } from 'vue';
+import { h, nextTick, reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiCombobox from './UiCombobox.vue';
 import UiField from './UiField.vue';
@@ -98,6 +98,148 @@ function groups() {
 }
 
 describe('UiCombobox', () => {
+  it('ignores the composition-ending Enter with keyCode 229, then accepts a new Enter', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(UiCombobox, {
+      id: 'ime-ending',
+      label: '來源',
+      items: ITEMS,
+      'onUpdate:modelValue': update,
+    });
+    const control = input(root);
+    trigger(control, 'onCompositionstart', {});
+    trigger(control, 'onInput', { target: { value: 'lyr' } });
+    await nextTick();
+    trigger(control, 'onCompositionend', {});
+    const preventDefault = vi.fn();
+    trigger(control, 'onKeydown', {
+      key: 'Enter',
+      keyCode: 229,
+      isComposing: false,
+      preventDefault,
+    });
+    expect(update).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+    trigger(control, 'onKeydown', {
+      key: 'Enter',
+      keyCode: 13,
+      preventDefault,
+    });
+    expect(update).toHaveBeenCalledExactlyOnceWith('better-lyrics');
+    app.unmount();
+  });
+
+  it.each(['disabled', 'editable'])(
+    'clears unfinished composition when %s changes',
+    async (prop) => {
+      const state = reactive({ disabled: false, editable: true });
+      const update = vi.fn();
+      const { app, root } = mount({
+        render: () =>
+          h(UiCombobox, {
+            ...state,
+            id: 'ime-transition',
+            label: '來源',
+            items: ITEMS,
+            'onUpdate:modelValue': update,
+          }),
+      });
+      let control = input(root);
+      trigger(control, 'onInput', { target: { value: 'lyr' } });
+      trigger(control, 'onCompositionstart', {});
+      await nextTick();
+      state[prop] = !state[prop];
+      await nextTick();
+      if (prop === 'disabled') {
+        state.disabled = false;
+        await nextTick();
+      }
+      control = input(root);
+      expect(control.type).toBe(prop === 'editable' ? 'button' : 'input');
+      expect(update).not.toHaveBeenCalled();
+      trigger(control, 'onKeydown', { key: 'Enter', preventDefault: vi.fn() });
+      expect(update).toHaveBeenCalledExactlyOnceWith('better-lyrics');
+      app.unmount();
+    },
+  );
+
+  it.each([
+    { label: 'native composing flag', event: { isComposing: true } },
+    { label: 'IME legacy key code', event: { keyCode: 229 } },
+    { label: 'composition lifecycle fallback', lifecycle: true, event: {} },
+  ])(
+    'does not navigate, dismiss, or commit during $label',
+    async ({ lifecycle, event }) => {
+      const update = vi.fn();
+      const { app, root } = mount(UiCombobox, {
+        id: 'ime-source',
+        label: '來源',
+        modelValue: 'netease',
+        items: ITEMS,
+        'onUpdate:modelValue': update,
+      });
+      const control = input(root);
+      trigger(control, 'onInput', { target: { value: 'lyr' } });
+      await nextTick();
+      if (lifecycle) trigger(control, 'onCompositionstart', {});
+      const highlighted = control.props['aria-activedescendant'];
+      for (const key of [
+        'Enter',
+        'ArrowDown',
+        'ArrowUp',
+        'Home',
+        'End',
+        'Escape',
+        'Tab',
+      ]) {
+        const preventDefault = vi.fn(),
+          stopPropagation = vi.fn();
+        trigger(control, 'onKeydown', {
+          key,
+          preventDefault,
+          stopPropagation,
+          ...event,
+        });
+        await nextTick();
+        expect(preventDefault).not.toHaveBeenCalled();
+        expect(stopPropagation).not.toHaveBeenCalled();
+        expect(control.props['aria-expanded']).toBe(true);
+        expect(control.props['aria-activedescendant']).toBe(highlighted);
+        expect(update).not.toHaveBeenCalled();
+      }
+      if (lifecycle) trigger(control, 'onCompositionend', {});
+      const preventDefault = vi.fn();
+      trigger(control, 'onKeydown', { key: 'Enter', preventDefault });
+      await nextTick();
+      expect(update).toHaveBeenCalledExactlyOnceWith('better-lyrics');
+      expect(preventDefault).toHaveBeenCalledOnce();
+      expect(control.props['aria-expanded']).toBe(false);
+      app.unmount();
+    },
+  );
+
+  it('clears an unfinished composition on blur so the next open can commit', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(UiCombobox, {
+      id: 'ime-blur',
+      label: '來源',
+      items: ITEMS,
+      modelValue: 'netease',
+      'onUpdate:modelValue': update,
+    });
+    const control = input(root);
+    trigger(control, 'onInput', { target: { value: 'lyr' } });
+    trigger(control, 'onCompositionstart', {});
+    trigger(control, 'onBlur');
+    await nextTick();
+    expect(control.props.value).toBe('NetEase');
+    trigger(control, 'onClick');
+    await nextTick();
+    trigger(control, 'onKeydown', { key: 'Enter', preventDefault: vi.fn() });
+    expect(update).toHaveBeenCalledExactlyOnceWith('netease');
+    app.unmount();
+  });
+
   it('renders a labeled, closed combobox with the selected label as its value', () => {
     const { app, root } = mount(UiCombobox, {
       id: 'lyrics-source',

@@ -509,7 +509,7 @@
 
   --ui-color-border: var(--ui-palette-neutral-700);
   --ui-color-border-strong: var(--ui-palette-neutral-500);
-  --ui-color-control-boundary: var(--ui-palette-neutral-500);
+  --ui-color-control-boundary: var(--ui-palette-neutral-300);
 
   /* Persistent operator chrome is a regional semantic, not the global theme. */
   --ui-color-chrome-surface: var(--ui-palette-neutral-900);
@@ -1015,7 +1015,7 @@
   --ui-color-text-subtle: var(--ui-palette-neutral-400);
   --ui-color-border: var(--ui-color-chrome-border);
   --ui-color-border-strong: var(--ui-palette-neutral-500);
-  --ui-color-control-boundary: var(--ui-palette-neutral-500);
+  --ui-color-control-boundary: var(--ui-palette-neutral-300);
 
   --ui-color-accent: var(--ui-palette-indigo-400);
   --ui-color-accent-hover: var(--ui-palette-indigo-300);

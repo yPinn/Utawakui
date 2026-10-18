@@ -7,6 +7,14 @@ function formatPercent(value) {
   return `${value}%`;
 }
 
+function speedInvalid(value) {
+  return value > 120;
+}
+
+function formatSpeed(value) {
+  return speedInvalid(value) ? `超過建議值：${value}%` : formatPercent(value);
+}
+
 function formatSignedDecibels(value) {
   const sign = value < 0 ? '−' : value > 0 ? '+' : '';
   return `${sign}${Math.abs(value)} dB`;
@@ -206,7 +214,7 @@ const STATES = [
     value: 140,
     min: 50,
     max: 150,
-    formatValue: (value) => `超過建議值：${value}%`,
+    formatValue: formatSpeed,
     error: '速度超過這個處理流程的建議值。',
     invalid: true,
     candidate: [
@@ -312,6 +320,12 @@ function contentValueText(layer, content) {
 
 function stateValueText(layer, state) {
   return state.formatValue(values[layer.key].states[state.key]);
+}
+
+function stateInvalid(layer, state) {
+  return state.key === 'invalid'
+    ? speedInvalid(values[layer.key].states[state.key])
+    : Boolean(state.invalid);
 }
 
 function candidatePreviewProps(layer, formatValue) {
@@ -535,8 +549,8 @@ function candidatePreviewProps(layer, formatValue) {
               :min="state.min ?? 0"
               :max="state.max ?? 100"
               :value-text="stateValueText(layer, state)"
-              :invalid="state.invalid"
-              :error="state.error"
+              :invalid="stateInvalid(layer, state)"
+              :error="stateInvalid(layer, state) ? state.error : ''"
               :disabled="state.disabled"
               v-bind="candidatePreviewProps(layer, state.formatValue)"
             />
@@ -614,13 +628,15 @@ function candidatePreviewProps(layer, formatValue) {
               label="處理速度"
               :min="50"
               :max="150"
-              :value-text="`超過建議值：${values[layer.key].validationError}%`"
+              :value-text="formatSpeed(values[layer.key].validationError)"
               hint="建議維持在 50% 至 120%。"
-              error="速度超過這個處理流程的建議值。"
-              aria-describedby="range-external-note"
-              v-bind="
-                candidatePreviewProps(layer, (value) => `超過建議值：${value}%`)
+              :error="
+                speedInvalid(values[layer.key].validationError)
+                  ? '速度超過這個處理流程的建議值。'
+                  : ''
               "
+              aria-describedby="range-external-note"
+              v-bind="candidatePreviewProps(layer, formatSpeed)"
             />
           </article>
         </div>

@@ -30,7 +30,7 @@ defineExpose({ focus });
 <template>
   <UiField
     :id="id"
-    :class="attrs.class"
+    :class="[attrs.class, { 'is-disabled': disabled }]"
     :style="attrs.style"
     :label="label"
     :hint="hint"
@@ -38,6 +38,7 @@ defineExpose({ focus });
     :described-by="attrs['aria-describedby']"
     :required="required"
     :invalid="invalid"
+    class="ui-switch-field"
     inline
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
@@ -65,12 +66,27 @@ defineExpose({ focus });
 </template>
 
 <style scoped>
-.ui-switch {
+.ui-switch-field :deep(.ui-field__main) {
   position: relative;
-  isolation: isolate;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
+  min-height: var(--ui-control-height);
+  align-items: start;
+}
+
+.ui-switch-field :deep(.ui-field__label--inline) {
+  padding-block: max(0rem, calc((var(--ui-control-height) - 1lh) / 2));
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ui-switch {
+  display: grid;
+  width: var(--ui-switch-track-width);
+  height: var(--ui-switch-track-height);
+  margin-block-start: calc(
+    (var(--ui-control-height) - var(--ui-switch-track-height)) / 2
+  );
 }
 
 .ui-switch__native {
@@ -89,7 +105,7 @@ defineExpose({ focus });
   width: var(--ui-switch-track-width);
   height: var(--ui-switch-track-height);
   display: block;
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border: var(--ui-border-width) solid var(--ui-color-control-boundary);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-surface-raised);
   pointer-events: none;
@@ -129,7 +145,7 @@ defineExpose({ focus });
   );
 }
 
-.ui-switch__native:hover:not(:disabled) + .ui-switch__track {
+.ui-switch__native:where(:hover:not(:disabled)) + .ui-switch__track {
   border-color: var(--ui-color-accent);
 }
 
@@ -138,11 +154,16 @@ defineExpose({ focus });
   outline-offset: var(--ui-focus-offset);
 }
 
+.ui-switch__native[aria-invalid='true'] + .ui-switch__track {
+  border-color: var(--ui-color-danger);
+}
+
 .ui-switch__native:disabled + .ui-switch__track {
   cursor: not-allowed;
   opacity: var(--ui-opacity-disabled);
 }
 
+.ui-switch-field.is-disabled :deep(.ui-field__label--inline),
 .ui-switch__native:disabled {
   cursor: not-allowed;
 }

@@ -126,9 +126,16 @@ defineExpose({ focus });
       var(--ui-motion-easing-standard);
 }
 
-.ui-select:hover:not(:disabled) {
+.ui-select:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
+}
+
+/* Native popups otherwise reuse the select's transient hover background.
+   Keep their resting surface stable; the platform owns option highlighting. */
+.ui-select option,
+.ui-select optgroup {
+  background-color: var(--ui-floating-list-bg);
 }
 
 .ui-select:focus-visible {

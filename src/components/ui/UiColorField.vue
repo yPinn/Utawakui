@@ -101,6 +101,7 @@ defineExpose({ focus });
           :disabled="disabled"
           :aria-label="pickerLabel"
           :aria-describedby="describedBy"
+          :aria-invalid="controlInvalid || undefined"
           @input="updatePicker"
           @change="commitPicker"
         />
@@ -188,8 +189,8 @@ defineExpose({ focus });
   user-select: text;
 }
 
-.ui-color-field__picker:hover:not(:disabled),
-.ui-color-field__input:hover:not(:disabled) {
+.ui-color-field__picker:where(:hover:not(:disabled)),
+.ui-color-field__input:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }
@@ -204,6 +205,7 @@ defineExpose({ focus });
   outline-offset: var(--ui-focus-offset);
 }
 
+.ui-color-field__picker[aria-invalid='true'],
 .ui-color-field__input[aria-invalid='true'] {
   border-color: var(--ui-field-border-invalid);
 }

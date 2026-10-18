@@ -89,6 +89,7 @@ describe('UiColorField', () => {
     input = hexInput(root);
     expect(input.props.value).toBe('#12');
     expect(input.props['aria-invalid']).toBe(true);
+    expect(colorPicker(root).props['aria-invalid']).toBe(true);
     expect(colorPicker(root).props.value).toBe('#FFFFFF');
     expect(update).not.toHaveBeenCalled();
     expect(
@@ -102,6 +103,7 @@ describe('UiColorField', () => {
     await nextTick();
     input = hexInput(root);
     expect(input.props['aria-invalid']).toBeUndefined();
+    expect(colorPicker(root).props['aria-invalid']).toBeUndefined();
     expect(update).toHaveBeenCalledOnce();
     expect(update).toHaveBeenCalledWith('#12Ab34');
 

@@ -625,12 +625,10 @@ function coverageFor(layer, state) {
 }
 
 .demo-checkbox-size--standard {
-  --demo-checkbox-target-size: 2.25rem;
   --ui-control-height: 2.25rem;
 }
 
 .demo-checkbox-size--compact {
-  --demo-checkbox-target-size: 2rem;
   --ui-control-height: 2rem;
 }
 
@@ -670,13 +668,16 @@ function coverageFor(layer, state) {
 }
 
 .demo-checkbox-state[data-checkbox-state='hover']
-  :deep(.demo-candidate-checkbox__indicator) {
+  :deep(
+    .ui-checkbox__native:where(:not(:checked):not([aria-checked='mixed']))
+      + .ui-checkbox__indicator
+  ) {
   border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-hover);
 }
 
 .demo-checkbox-state[data-checkbox-state='focus']
-  :deep(.demo-candidate-checkbox__indicator) {
+  :deep(.ui-checkbox__indicator) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }

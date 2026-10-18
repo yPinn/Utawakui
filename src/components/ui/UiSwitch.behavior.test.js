@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { h, nextTick, reactive } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiField from './UiField.vue';
 import UiSwitch from './UiSwitch.vue';
@@ -16,6 +17,61 @@ function nativeSwitch(root) {
 }
 
 describe('UiSwitch', () => {
+  it.each([false, true])(
+    'restores validation independently of checked=%s and disabled',
+    async (checked) => {
+      const state = reactive({
+        modelValue: checked,
+        invalid: false,
+        error: '',
+        disabled: false,
+      });
+      const update = vi.fn();
+      const { app, root } = mount({
+        render: () =>
+          h(UiSwitch, {
+            ...state,
+            id: 'recover',
+            label: '自動更新',
+            hint: '可隨時調整',
+            'onUpdate:modelValue': update,
+          }),
+      });
+      const assertState = (invalid, describedBy) => {
+        const control = nativeSwitch(root);
+        expect(control.props['aria-invalid']).toBe(invalid || undefined);
+        expect(control.props['aria-describedby']).toBe(describedBy);
+        expect(control.props.checked).toBe(state.modelValue);
+        expect(control.props.disabled).toBe(state.disabled);
+        expect(update).not.toHaveBeenCalled();
+      };
+      assertState(false, 'recover-hint');
+      state.error = '設定暫時不可用';
+      await nextTick();
+      assertState(true, 'recover-error');
+      state.disabled = true;
+      await nextTick();
+      assertState(true, 'recover-error');
+      state.error = '';
+      state.invalid = true;
+      await nextTick();
+      assertState(true, 'recover-hint');
+      state.modelValue = !checked;
+      await nextTick();
+      assertState(true, 'recover-hint');
+      state.invalid = false;
+      await nextTick();
+      assertState(false, 'recover-hint');
+      state.disabled = false;
+      await nextTick();
+      assertState(false, 'recover-hint');
+      state.error = '設定再次失效';
+      await nextTick();
+      assertState(true, 'recover-error');
+      app.unmount();
+    },
+  );
+
   it('renders a labeled native switch with field association', () => {
     const { app, root } = mount(UiSwitch, {
       id: 'auto-update',
@@ -102,7 +158,8 @@ describe('UiSwitch', () => {
       '--ui-radius-pill',
       '--ui-color-accent',
       '--ui-color-accent-contrast',
-      '--ui-color-border-strong',
+      '--ui-color-control-boundary',
+      '--ui-color-danger',
       '--ui-color-focus',
       '--ui-focus-width',
       '--ui-opacity-disabled',

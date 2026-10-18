@@ -60,9 +60,8 @@ describe('Token v2 Candidate text selection contract', () => {
       '\\.demo-candidate-tabs :deep\\(\\.ui-tabs__tab\\)',
     );
     expectNoneRule(candidateChipSource, '\\.demo-candidate-chip');
-    expectNoneRule(
-      candidateCheckboxSource,
-      '\\.demo-candidate-checkbox :deep\\(\\.ui-field__label--inline\\)',
+    expect(candidateCheckboxSource).toContain(
+      "import UiCheckbox from '../ui/UiCheckbox.vue';",
     );
     expectNoneRule(
       adoptedCheckboxSource,

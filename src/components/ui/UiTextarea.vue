@@ -109,7 +109,7 @@ defineExpose({ focus });
       var(--ui-motion-easing-standard);
 }
 
-.ui-textarea:hover:not(:disabled) {
+.ui-textarea:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }
@@ -140,7 +140,7 @@ defineExpose({ focus });
 }
 
 .ui-textarea--bare,
-.ui-textarea--bare:hover:not(:disabled) {
+.ui-textarea--bare:where(:hover:not(:disabled)) {
   min-height: 0;
   padding: 0;
   resize: none;
