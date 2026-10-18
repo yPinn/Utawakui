@@ -86,13 +86,9 @@ describe('new shared infra catalogue registration', () => {
   });
 
   it('keeps the pending infra batch isolated from production consumers', () => {
-    // Settings has adopted UiDisclosure; its production usage is checked below.
-    const pendingComponents = [
-      'UiKbd',
-      'UiNotificationHost',
-      'UiSwitch',
-      'UiBreadcrumb',
-    ];
+    // Settings adopted UiDisclosure and the shell adopted UiNotificationHost;
+    // their production usage is checked below.
+    const pendingComponents = ['UiKbd', 'UiSwitch', 'UiBreadcrumb'];
     const imports = productionSources(
       new URL('../../', import.meta.url),
     ).flatMap(([file, source]) =>
@@ -110,6 +106,7 @@ describe('new shared infra catalogue registration', () => {
     ['combobox', 'UiCombobox'],
     ['tooltip', 'UiTooltip'],
     ['disclosure', 'UiDisclosure'],
+    ['notification-host', 'UiNotificationHost'],
   ])('finds %s in the production component graph', (_key, component) => {
     const consumers = productionSources(
       new URL('../../', import.meta.url),

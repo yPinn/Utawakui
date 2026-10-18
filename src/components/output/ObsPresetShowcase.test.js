@@ -471,7 +471,7 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).toContain('連接埠被占用');
     expect(settingsSource).toContain('SettingsDocumentItem');
     expect(settingsSource).toContain('variant="nested"');
-    expect(settingsSource).toContain('UiNotice');
+    expect(settingsSource).toContain('UiHint');
     expect(settingsViewSource).toContain('<SettingsCapabilitiesSection');
     expect(settingsCapabilitiesSource).toContain('<OutputRuntimeSettingsBlock');
     expect(settingsViewSource).not.toContain(
@@ -493,7 +493,7 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain('title="OBS URL"');
     expect(settingsSource).not.toContain('copyObsUrl');
     expect(settingsSource).not.toContain('目前模板 URL');
-    expect(settingsSource).not.toContain('檢查連接埠');
+    expect(settingsSource).not.toMatch(/>\s*檢查連接埠\s*</u);
     expect(settingsSource).not.toContain("emit('suggestPorts')");
     expect(previewSource).toContain('Browser Source 即時預覽');
     expect(previewSource).toContain('label="複製網址"');

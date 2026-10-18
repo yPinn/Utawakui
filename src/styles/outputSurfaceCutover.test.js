@@ -164,7 +164,10 @@ describe('Output Token v2 surface cutover', () => {
     expect(readSource(outputSharedComponentPaths[0])).toContain(
       'var(--ui-type-label-weight)',
     );
-    expect(readSource(outputSharedComponentPaths[0])).toContain(
+    expect(readSource(outputSharedComponentPaths[0])).not.toContain(
+      'border-radius:',
+    );
+    expect(readSource('../components/settings/SettingsSection.vue')).toContain(
       'var(--ui-radius-md)',
     );
   });
