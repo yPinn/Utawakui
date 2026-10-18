@@ -1,0 +1,1433 @@
+{
+  "schemaVersion": 1,
+  "target": "win32-x64",
+  "packages": [
+    {
+      "path": "node_modules/@babel/helper-string-parser",
+      "name": "@babel/helper-string-parser",
+      "version": "7.29.7",
+      "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw==",
+      "files": [
+        {
+          "path": "node_modules/@babel/helper-string-parser/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "source": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@babel/helper-validator-identifier",
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.29.7",
+      "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==",
+      "files": [
+        {
+          "path": "node_modules/@babel/helper-validator-identifier/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "source": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@babel/parser",
+      "name": "@babel/parser",
+      "version": "7.29.9",
+      "integrity": "sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA==",
+      "files": [
+        {
+          "path": "node_modules/@babel/parser/LICENSE",
+          "sha256": "2e97627cb278aa7556fb9e8817368302301a595b6c7582512b8d74c57b773652",
+          "source": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.9.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@babel/types",
+      "name": "@babel/types",
+      "version": "7.29.8",
+      "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==",
+      "files": [
+        {
+          "path": "node_modules/@babel/types/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "source": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@borewit/text-codec",
+      "name": "@borewit/text-codec",
+      "version": "0.2.2",
+      "integrity": "sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ==",
+      "files": [
+        {
+          "path": "node_modules/@borewit/text-codec/LICENSE.txt",
+          "sha256": "5b3af80f317313a8b8c227b0c8bffae67728cfec1786137b0553e625f2affec9",
+          "source": "https://registry.npmjs.org/@borewit/text-codec/-/text-codec-0.2.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@jridgewell/sourcemap-codec",
+      "name": "@jridgewell/sourcemap-codec",
+      "version": "1.6.0",
+      "integrity": "sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==",
+      "files": [
+        {
+          "path": "node_modules/@jridgewell/sourcemap-codec/LICENSE",
+          "sha256": "769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c",
+          "source": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@lucide/vue",
+      "name": "@lucide/vue",
+      "version": "1.52.0",
+      "integrity": "sha512-Gwr6c14jhY6BscoFU+B9OKsr7lg8RTAKOLgW0e61kkFwkt9Q7CZmB9AyJcvhoqapEJgRg2bFoeAcO+cqpgKzEQ==",
+      "files": [
+        {
+          "path": "node_modules/@lucide/vue/LICENSE",
+          "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
+          "source": "https://registry.npmjs.org/@lucide/vue/-/vue-1.52.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@msgpack/msgpack",
+      "name": "@msgpack/msgpack",
+      "version": "2.8.0",
+      "integrity": "sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ==",
+      "files": [
+        {
+          "path": "node_modules/@msgpack/msgpack/LICENSE",
+          "sha256": "d95a411bcdadac85d678a99367ff51719e53539fa5ee9994943cd760c4ae64e4",
+          "source": "https://registry.npmjs.org/@msgpack/msgpack/-/msgpack-2.8.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@napolab/texture-bridge",
+      "name": "@napolab/texture-bridge",
+      "version": "0.15.0",
+      "integrity": "sha512-hAKPHfx9Y5VhMcxNqIeR7ib3kg59EmX/k4d+2q+kTraOUOZpa+sZEWXQgN6Wri7Kua3Vrc8MFpyTFnsQglKv7g==",
+      "files": [
+        {
+          "path": "node_modules/@napolab/texture-bridge/THIRD-PARTY-NOTICES",
+          "sha256": "691a25129a5bcd42d4911b89320fbac1243598c933ce7b726ae5346eb618ed0b",
+          "source": "https://registry.npmjs.org/@napolab/texture-bridge/-/texture-bridge-0.15.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@napolab/texture-bridge-core",
+      "name": "@napolab/texture-bridge-core",
+      "version": "0.15.0",
+      "integrity": "sha512-M6PZxfsl5LtrVSXBSzjPO9pqmntiDxIpaTgtDRdqhFVFXwx4ppqNOlb0MX54rzY8bpwWRUmcsAj8xj6eJZyKoA==",
+      "files": [
+        {
+          "path": "node_modules/@napolab/texture-bridge-core/LICENSE",
+          "sha256": "b944e306e242c5b3641b48a5877847ede2f3d945b8bb219703246827fada5968",
+          "source": "https://registry.npmjs.org/@napolab/texture-bridge-core/-/texture-bridge-core-0.15.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@napolab/texture-bridge-win32-x64-msvc",
+      "name": "@napolab/texture-bridge-win32-x64-msvc",
+      "version": "0.15.0",
+      "integrity": "sha512-KH+mLDqbX7ThR0Kq2QM4VyJjBH9gEEtC9uq/xT5dd4T1Ex2+cFnNUGfn8s6cg2B/KDsR/EexuZls9LcgohVlqQ==",
+      "files": [
+        {
+          "path": "node_modules/@napolab/texture-bridge-win32-x64-msvc/THIRD-PARTY-NOTICES",
+          "sha256": "691a25129a5bcd42d4911b89320fbac1243598c933ce7b726ae5346eb618ed0b",
+          "source": "https://registry.npmjs.org/@napolab/texture-bridge-win32-x64-msvc/-/texture-bridge-win32-x64-msvc-0.15.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@tokenizer/inflate",
+      "name": "@tokenizer/inflate",
+      "version": "0.4.1",
+      "integrity": "sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==",
+      "files": [
+        {
+          "path": "node_modules/@tokenizer/inflate/LICENSE",
+          "sha256": "5bb0e8b566dee0e946cafd9bbed359eb0494580df86457876b4f41bba5c77b25",
+          "source": "https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.4.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@tokenizer/token",
+      "name": "@tokenizer/token",
+      "version": "0.3.0",
+      "integrity": "sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==",
+      "files": [
+        {
+          "path": "node_modules/@tokenizer/token/README.md",
+          "sha256": "a88c936c259cc261d5b37a2433735e9819e01f824bdc26e644d46ccd3055c8d7",
+          "source": "https://registry.npmjs.org/@tokenizer/token/-/token-0.3.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-core",
+      "name": "@vue/compiler-core",
+      "version": "3.5.43",
+      "integrity": "sha512-zdiLhnbe1QQqgDT8xZMpNmyqZ3qlI+/Q/FHQco57Kwl/b05HhCzN6eVGN9QU9rbga4CrS0H5SYY8VGHZCt/1Hg==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-core/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-core/node_modules/entities",
+      "name": "entities",
+      "version": "7.0.1",
+      "integrity": "sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-core/node_modules/entities/LICENSE",
+          "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+          "source": "https://registry.npmjs.org/entities/-/entities-7.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-core/node_modules/estree-walker",
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "integrity": "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-core/node_modules/estree-walker/LICENSE",
+          "sha256": "8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e",
+          "source": "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-dom",
+      "name": "@vue/compiler-dom",
+      "version": "3.5.43",
+      "integrity": "sha512-PEZoAk3NQmsn/ejMzSOCyTYqwGqczrWm70PuhBKjjv1+TCoQAaO/zOqNwjV+honlNstT5ILxtc+8r8UUfj+iEQ==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-dom/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-sfc",
+      "name": "@vue/compiler-sfc",
+      "version": "3.5.43",
+      "integrity": "sha512-FCbrG3XNCRl+js3huuKx4IVHBLTvMkJhVepjbxSPu1gn4yWLaYtGNQdjJGZaMytXB6qb76qQDDmDSLy/vkmleQ==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-sfc/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-sfc/node_modules/estree-walker",
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "integrity": "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-sfc/node_modules/estree-walker/LICENSE",
+          "sha256": "8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e",
+          "source": "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/compiler-ssr",
+      "name": "@vue/compiler-ssr",
+      "version": "3.5.43",
+      "integrity": "sha512-GF62orf7KiJX9RqrHNGrYBudsQGD0OhJ5nDs90O8UiDuS40+YMYomiXu6w6EuvtXuRDc3MSNis3EaaSKAVSWpg==",
+      "files": [
+        {
+          "path": "node_modules/@vue/compiler-ssr/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/reactivity",
+      "name": "@vue/reactivity",
+      "version": "3.5.43",
+      "integrity": "sha512-G/c9GyOZNI2jVaaS6OX1EF1SSFSv7H0ERqNTl4+DTFMlZmB5eVAB53aLQNam/7NL2NPtaDD7RdVrzf8uJzMuOA==",
+      "files": [
+        {
+          "path": "node_modules/@vue/reactivity/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/runtime-core",
+      "name": "@vue/runtime-core",
+      "version": "3.5.43",
+      "integrity": "sha512-hU6U6VnVhBGQDpvlnnDlIB8ZGJBiOcgk2lh/0InltHiz3D8oSkluvuvY+do1G2H3+udeKFsmaBlgVYP7gXQzEw==",
+      "files": [
+        {
+          "path": "node_modules/@vue/runtime-core/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/runtime-dom",
+      "name": "@vue/runtime-dom",
+      "version": "3.5.43",
+      "integrity": "sha512-Bb2Jc0YjjJdMt1SJmb9b2L/IWd3I8lIT9x9eS/xvvP9CiVgna0ffua74xKRmt4/uSJ+0r4iN8ex1jrqkhQGWQw==",
+      "files": [
+        {
+          "path": "node_modules/@vue/runtime-dom/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/server-renderer",
+      "name": "@vue/server-renderer",
+      "version": "3.5.43",
+      "integrity": "sha512-l2Ygjv9NehV94PSBxNWsAHC0j/eIIKbn92mBuWXAPGLnn6HfJ6MH5ubsd+Nk0YoZ5FRuxWI1P2VSoh+dbPQhCQ==",
+      "files": [
+        {
+          "path": "node_modules/@vue/server-renderer/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/@vue/shared",
+      "name": "@vue/shared",
+      "version": "3.5.43",
+      "integrity": "sha512-uksS7YGMR5NZyr4JNq0Rp+QyLns0ueaz20KwzIPW9R0LH1Vnt4E+XUM29PNseEbf1www2gOuhuDi5AKOIXag9Q==",
+      "files": [
+        {
+          "path": "node_modules/@vue/shared/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/shared/-/shared-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/adm-zip",
+      "name": "adm-zip",
+      "version": "0.6.1",
+      "integrity": "sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ==",
+      "files": [
+        {
+          "path": "node_modules/adm-zip/LICENSE",
+          "sha256": "6bb5b2d4c07d793ca928daa63a8899c6914fafb5ac3aa04ec10cae07f3d57dca",
+          "source": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.6.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/argparse",
+      "name": "argparse",
+      "version": "2.0.1",
+      "integrity": "sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==",
+      "files": [
+        {
+          "path": "node_modules/argparse/LICENSE",
+          "sha256": "de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23",
+          "source": "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/builder-util-runtime",
+      "name": "builder-util-runtime",
+      "version": "9.7.0",
+      "integrity": "sha512-g/kR520giAFYkSXTzcmF3kqQq7wi8F6N6SzeDgZrqTBN+VHdmgWOyTdD1yD7AATDId/yXLvuP34CxW46/BwCdw==",
+      "files": [
+        {
+          "path": "node_modules/builder-util-runtime/LICENSE",
+          "sha256": "bed8d0ab3e6031817f775a641ff37313b0f5591bc8ba0ed79b978dafbd4231ce",
+          "source": "https://registry.npmjs.org/builder-util-runtime/-/builder-util-runtime-9.7.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/content-type",
+      "name": "content-type",
+      "version": "3.1.1",
+      "integrity": "sha512-GW4qUsfFo59d0HbUibDlWv5wPz+vAAcaTWbKIuKCf0JkC7wWkSyf8f13IpXn5JkeMlB2P8iTSSIjwXljorg2vA==",
+      "files": [
+        {
+          "path": "node_modules/content-type/LICENSE",
+          "sha256": "257aed98914108e91a337912727b6a802eef218248507f74b76faffaff517a38",
+          "source": "https://registry.npmjs.org/content-type/-/content-type-3.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/crypto-js",
+      "name": "crypto-js",
+      "version": "4.2.0",
+      "integrity": "sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==",
+      "files": [
+        {
+          "path": "node_modules/crypto-js/LICENSE",
+          "sha256": "f729d14b7e1bf8adca0dcc38b93b929d14d53fcd5db56c3d1c9b2daa7aa69396",
+          "source": "https://registry.npmjs.org/crypto-js/-/crypto-js-4.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/csstype",
+      "name": "csstype",
+      "version": "3.2.3",
+      "integrity": "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==",
+      "files": [
+        {
+          "path": "node_modules/csstype/LICENSE",
+          "sha256": "11d55bd4541c75ee7879547ac49089c489163dae49551389713c3d026cab383e",
+          "source": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/debug",
+      "name": "debug",
+      "version": "4.4.3",
+      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
+      "files": [
+        {
+          "path": "node_modules/debug/LICENSE",
+          "sha256": "3a61c6c96caf5c1d9b623fb9b04c822b783dfcb78aa7e49c76a3f643e6ed7f95",
+          "source": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/define-data-property",
+      "name": "define-data-property",
+      "version": "1.1.4",
+      "integrity": "sha512-rBMvIzlpA8v6E+SJZoo++HAYqsLrkg7MSfIinMPFhmkorw7X+dOXVJQs+QT69zGkzMyfDnIMN2Wid1+NbL3T+A==",
+      "files": [
+        {
+          "path": "node_modules/define-data-property/LICENSE",
+          "sha256": "b41d08bc3624d8c436fc80237d73ebb361985a67f4504bbcd703e5ca2b27254c",
+          "source": "https://registry.npmjs.org/define-data-property/-/define-data-property-1.1.4.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/define-properties",
+      "name": "define-properties",
+      "version": "1.2.1",
+      "integrity": "sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==",
+      "files": [
+        {
+          "path": "node_modules/define-properties/LICENSE",
+          "sha256": "00d402c2bbe7c67369bd01ce2c16b8ed46ccc949a1ee2d6bb8f9606afa8c7434",
+          "source": "https://registry.npmjs.org/define-properties/-/define-properties-1.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/doublearray",
+      "name": "doublearray",
+      "version": "0.0.2",
+      "integrity": "sha512-aw55FtZzT6AmiamEj2kvmR6BuFqvYgKZUkfQ7teqVRNqD5UE0rw8IeW/3gieHNKQ5sPuDKlljWEn4bzv5+1bHw==",
+      "files": [
+        {
+          "path": "node_modules/doublearray/LICENSE.txt",
+          "sha256": "3f16fbaaaf98d1ba9ad570a1b79799d4932198324b382aa4cad1270fd09f02e3",
+          "source": "https://registry.npmjs.org/doublearray/-/doublearray-0.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/electron-updater",
+      "name": "electron-updater",
+      "version": "6.8.9",
+      "integrity": "sha512-ZhVxM9iGONUpZGI1FxdMRgJjUFXi7AYGVa5PwKlO1tV1/4zDxQmfKpXOHVztKrd6L9rLcFjERvi1Mf2vxyTkig==",
+      "files": [
+        {
+          "path": "node_modules/electron-updater/LICENSE",
+          "sha256": "bed8d0ab3e6031817f775a641ff37313b0f5591bc8ba0ed79b978dafbd4231ce",
+          "source": "https://registry.npmjs.org/electron-updater/-/electron-updater-6.8.9.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/electron-updater/node_modules/js-yaml",
+      "name": "js-yaml",
+      "version": "4.3.2",
+      "integrity": "sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==",
+      "files": [
+        {
+          "path": "node_modules/electron-updater/node_modules/js-yaml/LICENSE",
+          "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+          "source": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.3.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/electron-updater/node_modules/semver",
+      "name": "semver",
+      "version": "7.7.4",
+      "integrity": "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==",
+      "files": [
+        {
+          "path": "node_modules/electron-updater/node_modules/semver/LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b",
+          "source": "https://registry.npmjs.org/semver/-/semver-7.7.4.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/es-define-property",
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "integrity": "sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==",
+      "files": [
+        {
+          "path": "node_modules/es-define-property/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292",
+          "source": "https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/es-errors",
+      "name": "es-errors",
+      "version": "1.3.0",
+      "integrity": "sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==",
+      "files": [
+        {
+          "path": "node_modules/es-errors/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292",
+          "source": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/escape-string-regexp",
+      "name": "escape-string-regexp",
+      "version": "4.0.0",
+      "integrity": "sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==",
+      "files": [
+        {
+          "path": "node_modules/escape-string-regexp/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/eventemitter3",
+      "name": "eventemitter3",
+      "version": "5.0.4",
+      "integrity": "sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==",
+      "files": [
+        {
+          "path": "node_modules/eventemitter3/LICENSE",
+          "sha256": "3aecc12b1cb28832b5f65ab64291de96568c3f236a74d646281b4491f7bcadbf",
+          "source": "https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.4.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/file-type",
+      "name": "file-type",
+      "version": "22.1.1",
+      "integrity": "sha512-sEB0oStmeLGtpmSAD88RDNuLsvhv4iC3u0lE25CUvfCULvj49xoQ3l3K525Vn+ZzsZ6DOLajQCV6RmhwwhqiJg==",
+      "files": [
+        {
+          "path": "node_modules/file-type/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/file-type/-/file-type-22.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/fs-extra",
+      "name": "fs-extra",
+      "version": "10.1.0",
+      "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+      "files": [
+        {
+          "path": "node_modules/fs-extra/LICENSE",
+          "sha256": "1e76029602ae9b21cc4e612db2496d92febed882ba13ba745f8b3309e85f9d39",
+          "source": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/global-agent",
+      "name": "global-agent",
+      "version": "4.1.3",
+      "integrity": "sha512-KUJEViiuFT3I97t+GYMikLPJS2Lfo/S2F+DQuBWzuzaMPnvt5yyZePzArx36fBzpGTxZjIpDbXLeySLgh+k76g==",
+      "files": [
+        {
+          "path": "node_modules/global-agent/LICENSE",
+          "sha256": "2aabdab5d0ce03a7314def8222988c2da4ba593ae82ae312439e5e306001dbae",
+          "source": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.3.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/globalthis",
+      "name": "globalthis",
+      "version": "1.0.4",
+      "integrity": "sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==",
+      "files": [
+        {
+          "path": "node_modules/globalthis/LICENSE",
+          "sha256": "acfaf437865d82f0fa9b9cdcae8b550bed8d011adaa5b42d973191caf99f62a8",
+          "source": "https://registry.npmjs.org/globalthis/-/globalthis-1.0.4.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/gopd",
+      "name": "gopd",
+      "version": "1.2.0",
+      "integrity": "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==",
+      "files": [
+        {
+          "path": "node_modules/gopd/LICENSE",
+          "sha256": "d90bf0a089da4cf43d644ed240a0b3825dcdb705e64e38371d56995a4cc9e4c5",
+          "source": "https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/graceful-fs",
+      "name": "graceful-fs",
+      "version": "4.2.11",
+      "integrity": "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==",
+      "files": [
+        {
+          "path": "node_modules/graceful-fs/LICENSE",
+          "sha256": "f65c5d9f22a317b2a10803bd1868461ce6499c2ed7217bc80c0cc772a748789c",
+          "source": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/gsap",
+      "name": "gsap",
+      "version": "3.15.0",
+      "integrity": "sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==",
+      "files": [
+        {
+          "path": "third-party/upstream/gsap-standard-license.txt",
+          "sha256": "9860b8b06d9ed430a80e114567bd3fdcf1d77cd56194c5cf295d6b3ea4cf6707",
+          "source": "https://gsap.com/community/standard-license/"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/has-property-descriptors",
+      "name": "has-property-descriptors",
+      "version": "1.0.2",
+      "integrity": "sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==",
+      "files": [
+        {
+          "path": "node_modules/has-property-descriptors/LICENSE",
+          "sha256": "0f0ca96f50793990031ebc488a38f7292ff70bce8ab6a8e5eeda674abc32ccdf",
+          "source": "https://registry.npmjs.org/has-property-descriptors/-/has-property-descriptors-1.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/ieee754",
+      "name": "ieee754",
+      "version": "1.2.1",
+      "integrity": "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==",
+      "files": [
+        {
+          "path": "node_modules/ieee754/LICENSE",
+          "sha256": "18d45466ba3253deae04667e267a91ea8de8548f18c1125264d1c9db28194cc1",
+          "source": "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/isomorphic-ws",
+      "name": "isomorphic-ws",
+      "version": "5.0.0",
+      "integrity": "sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==",
+      "files": [
+        {
+          "path": "node_modules/isomorphic-ws/LICENSE",
+          "sha256": "12a66fee27259312cf2101ac5a17f009da37dffdfcd051f821116a74ae9bf841",
+          "source": "https://registry.npmjs.org/isomorphic-ws/-/isomorphic-ws-5.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/js-yaml",
+      "name": "js-yaml",
+      "version": "5.4.3",
+      "integrity": "sha512-yzzNtgczwgoVHNigCyKTXcQJU4Y8t/ikU4UxXW0BvrLfHTGWZhsNcOT2s/a7vn81/4KqVnNmHjaUEPlvWnNwVw==",
+      "files": [
+        {
+          "path": "node_modules/js-yaml/LICENSE",
+          "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+          "source": "https://registry.npmjs.org/js-yaml/-/js-yaml-5.4.3.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/jsonfile",
+      "name": "jsonfile",
+      "version": "6.2.1",
+      "integrity": "sha512-zwOTdL3rFQ/lRdBnntKVOX6k5cKJwEc1HdilT71BWEu7J41gXIB2MRp+vxduPSwZJPWBxEzv4yH1wYLJGUHX4Q==",
+      "files": [
+        {
+          "path": "node_modules/jsonfile/LICENSE",
+          "sha256": "a9801fb52ba22ef808682a094da8a7a480584b7ed0dfd0d888ab543616335031",
+          "source": "https://registry.npmjs.org/jsonfile/-/jsonfile-6.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/kissfft-js",
+      "name": "kissfft-js",
+      "version": "0.1.8",
+      "integrity": "sha512-P3kZXvlFGYe+7N9RJvve5bpq9P0S1tZroSbqmiJZzYi6DlLJMrFpr/CFLpySIYJpZ4WJLYQE17Pj7QY3LNhfxA==",
+      "files": [
+        {
+          "path": "node_modules/kissfft-js/COPYING",
+          "sha256": "146ddc8ff7530a4a48b89050cfda5f6ef6c771a2f889d7472abe0f06e1f545c0",
+          "source": "https://registry.npmjs.org/kissfft-js/-/kissfft-js-0.1.8.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/koroman",
+      "name": "koroman",
+      "version": "1.0.16",
+      "integrity": "sha512-jW7SZ+BCOupGposHY1JXZ8bh6fFNkKYO/7w2aKx76Zav2jAopGtXQw99luIe94BvRViU9DxIPGY1Efwt0N0p8g==",
+      "files": [
+        {
+          "path": "third-party/upstream/koroman-license.txt",
+          "sha256": "8e140c804d0226d197db528f1653ede195ab254935b4fa18bc81f1ea455614ca",
+          "source": "https://raw.githubusercontent.com/gerosyab/koroman/e529729b923f8a9d9acc62b2c9c0887b00e9bd88/LICENSE"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/kuromoji",
+      "name": "kuromoji",
+      "version": "0.1.2",
+      "integrity": "sha512-V0dUf+C2LpcPEXhoHLMAop/bOht16Dyr+mDiIE39yX3vqau7p80De/koFqpiTcL1zzdZlc3xuHZ8u5gjYRfFaQ==",
+      "files": [
+        {
+          "path": "node_modules/kuromoji/LICENSE-2.0.txt",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "source": "https://registry.npmjs.org/kuromoji/-/kuromoji-0.1.2.tgz"
+        },
+        {
+          "path": "node_modules/kuromoji/NOTICE.md",
+          "sha256": "fab84e2471dada5afa7ea4226b629f3fda414f9b50b62b4f832f8b57fe9addd7",
+          "source": "https://registry.npmjs.org/kuromoji/-/kuromoji-0.1.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/kuromoji/node_modules/async",
+      "name": "async",
+      "version": "2.6.4",
+      "integrity": "sha512-mzo5dfJYwAn29PeiJ0zvwTo04zj8HDJj0Mn8TD7sno7q12prdbnasKJHhkm2c1LgrhlJ0teaea8860oxi51mGA==",
+      "files": [
+        {
+          "path": "node_modules/kuromoji/node_modules/async/LICENSE",
+          "sha256": "d9fed24f132985934fca621c4dc1dfb53e03377a24d0568d424383d7eaa9c0ac",
+          "source": "https://registry.npmjs.org/async/-/async-2.6.4.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/lazy-val",
+      "name": "lazy-val",
+      "version": "1.0.5",
+      "integrity": "sha512-0/BnGCCfyUMkBpeDgWihanIAF9JmZhHBgUhEqzvf+adhNGLoP6TaiI5oF8oyb3I45P+PcnrqihSf01M0l0G5+Q==",
+      "files": [
+        {
+          "path": "third-party/upstream/lazy-val-package.txt",
+          "sha256": "a5096f95098452cf6fe5c8ac9be8f13f59ab7c9f605ba5ef92c91b2c505744f0",
+          "source": "https://raw.githubusercontent.com/develar/lazy-val/b69ad4119f1b19bdab13c61ee2fcc88d46b89071/package.json"
+        },
+        {
+          "path": "third-party/upstream/lazy-val-mit.txt",
+          "sha256": "0f1ca09980799447d14722bb1c678b499bdc73e9a62c0c4ced5b61d3aa0b018c",
+          "source": "https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/MIT.txt"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/lodash",
+      "name": "lodash",
+      "version": "4.18.1",
+      "integrity": "sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==",
+      "files": [
+        {
+          "path": "node_modules/lodash/LICENSE",
+          "sha256": "f71e8ed126b46346494aad5486874cd8f0aafe95092ed67d2e3cb6110f939abc",
+          "source": "https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/lodash.escaperegexp",
+      "name": "lodash.escaperegexp",
+      "version": "4.1.2",
+      "integrity": "sha512-TM9YBvyC84ZxE3rgfefxUWiQKLilstD6k7PTGt6wfbtXF8ixIJLOL3VYyV/z+ZiPLsVxAsKAFVwWlWeb2Y8Yyw==",
+      "files": [
+        {
+          "path": "node_modules/lodash.escaperegexp/LICENSE",
+          "sha256": "ffd8b33b354585f4ce119f19c53728281e48a97b074491eb6bf6d5c5ff305272",
+          "source": "https://registry.npmjs.org/lodash.escaperegexp/-/lodash.escaperegexp-4.1.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/lodash.isequal",
+      "name": "lodash.isequal",
+      "version": "4.5.0",
+      "integrity": "sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==",
+      "files": [
+        {
+          "path": "node_modules/lodash.isequal/LICENSE",
+          "sha256": "e159c6d48c989185448658f276375bfb2300362ec6d4ae5525a2d49c4bcb947d",
+          "source": "https://registry.npmjs.org/lodash.isequal/-/lodash.isequal-4.5.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/magic-string",
+      "name": "magic-string",
+      "version": "0.30.21",
+      "integrity": "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==",
+      "files": [
+        {
+          "path": "node_modules/magic-string/LICENSE",
+          "sha256": "1cbe51b907662f6cb1492b16c359384a595180bf0e4d101603ed525e75c4e484",
+          "source": "https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/matcher",
+      "name": "matcher",
+      "version": "4.0.0",
+      "integrity": "sha512-S6x5wmcDmsDRRU/c2dkccDwQPXoFczc5+HpQ2lON8pnvHlnvHAHj5WlLVvw6n6vNyHuVugYrFohYxbS+pvFpKQ==",
+      "files": [
+        {
+          "path": "node_modules/matcher/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/matcher/-/matcher-4.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/media-typer",
+      "name": "media-typer",
+      "version": "2.0.0",
+      "integrity": "sha512-kOy3OxT2HH39N70UnKgu4NWDZjLOz8W/mfyvniHjRH/DrL3f2pOfvWQ4p60offbbtDAnXWp0v9LfMIqMec269Q==",
+      "files": [
+        {
+          "path": "node_modules/media-typer/LICENSE",
+          "sha256": "bd47ce7b88c7759630d1e2b9fcfa170a0f1fde522be09e13fb1581a79d090400",
+          "source": "https://registry.npmjs.org/media-typer/-/media-typer-2.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/ms",
+      "name": "ms",
+      "version": "2.1.3",
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+      "files": [
+        {
+          "path": "node_modules/ms/license.md",
+          "sha256": "1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801",
+          "source": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/music-metadata",
+      "name": "music-metadata",
+      "version": "12.2.0",
+      "integrity": "sha512-nyqJ4s0wVz91D24x/WdvzNRFJU3DryddKuBaBZXPakEUz3ZA90xB68XURfJYF8MMsfy50yG+PHTEt4r2+l8R3Q==",
+      "files": [
+        {
+          "path": "node_modules/music-metadata/LICENSE.txt",
+          "sha256": "ab27d7574bc6d292302b0b49c2e1ad6f0d88031822dce486257c085c7d83133c",
+          "source": "https://registry.npmjs.org/music-metadata/-/music-metadata-12.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/nanoid",
+      "name": "nanoid",
+      "version": "3.3.20",
+      "integrity": "sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==",
+      "files": [
+        {
+          "path": "node_modules/nanoid/LICENSE",
+          "sha256": "da4db1480d9beea3483a2eda5c53b22238d0827d57da162b48f122e04d2d9987",
+          "source": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.20.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/neverthrow",
+      "name": "neverthrow",
+      "version": "8.2.0",
+      "integrity": "sha512-kOCT/1MCPAxY5iUV3wytNFUMUolzuwd/VF/1KCx7kf6CutrOsTie+84zTGTpgQycjvfLdBBdvBvFLqFD2c0wkQ==",
+      "files": [
+        {
+          "path": "node_modules/neverthrow/LICENSE",
+          "sha256": "3f4f7f9d7c4a9965aeef4a9c95de38f73ecbab96bed68d320a224a74dfcaa973",
+          "source": "https://registry.npmjs.org/neverthrow/-/neverthrow-8.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/object-keys",
+      "name": "object-keys",
+      "version": "1.1.1",
+      "integrity": "sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==",
+      "files": [
+        {
+          "path": "node_modules/object-keys/LICENSE",
+          "sha256": "5640e5cbe2e9f57f6ccfdd8dbfbeadb875495bdbcb69d2666ce3177ccd0942e4",
+          "source": "https://registry.npmjs.org/object-keys/-/object-keys-1.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/obs-websocket-js",
+      "name": "obs-websocket-js",
+      "version": "5.0.8",
+      "integrity": "sha512-QDnQJMr5wuCoYugK02ggZ1/cvESs4KJDEK+UhGg0Ry35jnY8tK1Xr3KoPjKyoD6sd8G+WdtIdzuY+yUyPtogQQ==",
+      "files": [
+        {
+          "path": "node_modules/obs-websocket-js/LICENSE.md",
+          "sha256": "16133688d687deaf097d26c17da876b2c4e08cce798219c95e2908b1eba34f8e",
+          "source": "https://registry.npmjs.org/obs-websocket-js/-/obs-websocket-js-5.0.8.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/onnxruntime-common",
+      "name": "onnxruntime-common",
+      "version": "1.30.0",
+      "integrity": "sha512-7fdVWjAID1dVhH/G8qK3APARunV4VkBFoCQAP7qp4Wkab0mrorvmc+sqiT+mKXOzDqdjN5j+/Z9nb4gzNPWcyA==",
+      "files": [
+        {
+          "path": "third-party/upstream/onnx-license.txt",
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/onnxruntime-node",
+      "name": "onnxruntime-node",
+      "version": "1.30.0",
+      "integrity": "sha512-twhs1C2C/BFkz1yc5OY0KIU2GUq6DURO7hD4bx5Q2Qy3nAMJwRXW8xU3NVczE29VA9lolLOYepoD8fjTGOfIqw==",
+      "files": [
+        {
+          "path": "third-party/upstream/onnx-license.txt",
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+        },
+        {
+          "path": "third-party/upstream/onnx-notices.txt",
+          "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/opencc-js",
+      "name": "opencc-js",
+      "version": "1.4.2",
+      "integrity": "sha512-EdcspgdROiCCZDM+jZR6Pa670xW+EW2QhctPBQ8gRjg6lrx4IHEl+2s+kt5izk/TkxVRgdWuFgaGkaEdIUfdaw==",
+      "files": [
+        {
+          "path": "node_modules/opencc-js/LICENSE",
+          "sha256": "960f7fc16d8baa126802316a7df9078a383af4fb6bc60033adb28e85c08d5e5e",
+          "source": "https://registry.npmjs.org/opencc-js/-/opencc-js-1.4.2.tgz"
+        },
+        {
+          "path": "node_modules/opencc-js/THIRD_PARTY_LICENSES.md",
+          "sha256": "42c7dbe71c178fcca97ba945e9ac9ff360fb69bbfea4cb50556f6c65bfa59806",
+          "source": "https://registry.npmjs.org/opencc-js/-/opencc-js-1.4.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/picocolors",
+      "name": "picocolors",
+      "version": "1.1.1",
+      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
+      "files": [
+        {
+          "path": "node_modules/picocolors/LICENSE",
+          "sha256": "6582629e2979466878f6014313dcc2f3756c9616148682227ce3063dde310750",
+          "source": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/postcss",
+      "name": "postcss",
+      "version": "8.5.29",
+      "integrity": "sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==",
+      "files": [
+        {
+          "path": "node_modules/postcss/LICENSE",
+          "sha256": "5be1f3465bba68a626777f984878814aaf35e7ef8e9fd314d469bcf887050fb8",
+          "source": "https://registry.npmjs.org/postcss/-/postcss-8.5.29.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/sax",
+      "name": "sax",
+      "version": "1.6.1",
+      "integrity": "sha512-42tBVwLWnaQvW5zc4HbZrTuWccECCZfBi92FDuwtqxasH+JbPB3/FOKb1m222K42R4WxuxzzMsTswfzgtSu64Q==",
+      "files": [
+        {
+          "path": "node_modules/sax/LICENSE.md",
+          "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004",
+          "source": "https://registry.npmjs.org/sax/-/sax-1.6.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/semver",
+      "name": "semver",
+      "version": "7.8.5",
+      "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==",
+      "files": [
+        {
+          "path": "node_modules/semver/LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b",
+          "source": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/serialize-error",
+      "name": "serialize-error",
+      "version": "8.1.0",
+      "integrity": "sha512-3NnuWfM6vBYoy5gZFvHiYsVbafvI9vZv/+jlIigFn4oP4zjNPK3LhcY0xSCgeb1a5L8jO71Mit9LlNoi2UfDDQ==",
+      "files": [
+        {
+          "path": "node_modules/serialize-error/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/serialize-error/-/serialize-error-8.1.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/serialize-error/node_modules/type-fest",
+      "name": "type-fest",
+      "version": "0.20.2",
+      "integrity": "sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==",
+      "files": [
+        {
+          "path": "node_modules/serialize-error/node_modules/type-fest/license",
+          "sha256": "64a93ffc0a06a2266dbb57ed7ebe3b56ba66ab337b6347fabdbf86c76819fbae",
+          "source": "https://registry.npmjs.org/type-fest/-/type-fest-0.20.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/signalsmith-stretch",
+      "name": "signalsmith-stretch",
+      "version": "1.3.2",
+      "integrity": "sha512-tJqRbwPCoWLSHXwO29UQ75u72IwPsHns3RG+TKzuOAp7OduJiJMzEtz32JEFbPFQcTR7aiKCIVc+/Kzw8bMZUw==",
+      "files": [
+        {
+          "path": "third-party/upstream/signalsmith-license.txt",
+          "sha256": "ee2ef82481ffb445ecdd4b3a4c1f82c0cddb2da8fe39d8e8dc384fffb3e7f06f",
+          "source": "https://raw.githubusercontent.com/Signalsmith-Audio/signalsmith-stretch/222093b4cc13ddb4d07c826bc3c1559326091731/LICENSE.txt"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/source-map-js",
+      "name": "source-map-js",
+      "version": "1.2.2",
+      "integrity": "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==",
+      "files": [
+        {
+          "path": "node_modules/source-map-js/LICENSE",
+          "sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd",
+          "source": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/strtok3",
+      "name": "strtok3",
+      "version": "10.4.1",
+      "integrity": "sha512-MeSp4vHXiZRXM9K0rSWqTvXMU+YzmGICc5+briMVK+RY8qQ1GRTffFYVpK6cSgV/ueImFIEh3uCJJD3xBh1TaQ==",
+      "files": [
+        {
+          "path": "node_modules/strtok3/LICENSE.txt",
+          "sha256": "c33959fabde25a1b6161d8e0fdc6fdcea1fc48095fe0bd51043247bfd214287f",
+          "source": "https://registry.npmjs.org/strtok3/-/strtok3-10.4.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/tiny-typed-emitter",
+      "name": "tiny-typed-emitter",
+      "version": "2.1.0",
+      "integrity": "sha512-qVtvMxeXbVej0cQWKqVSSAHmKZEHAvxdF8HEUBFWts8h+xEo5m/lEiPakuyZ3BnCBjOD8i24kzNOiOLLgsSxhA==",
+      "files": [
+        {
+          "path": "node_modules/tiny-typed-emitter/LICENSE",
+          "sha256": "4b3faf884ee71eec3df920b66c98fc6618af28e824cf3a32ef3d8774048cc76d",
+          "source": "https://registry.npmjs.org/tiny-typed-emitter/-/tiny-typed-emitter-2.1.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/token-types",
+      "name": "token-types",
+      "version": "6.1.2",
+      "integrity": "sha512-dRXchy+C0IgK8WPC6xvCHFRIWYUbqqdEIKPaKo/AcTUNzwLTK6AH7RjdLWsEZcAN/TBdtfUw3PYEgPr5VPr6ww==",
+      "files": [
+        {
+          "path": "node_modules/token-types/LICENSE.txt",
+          "sha256": "eb0bff8faaba4581e0f09c962e0f795f1f8810191c9d616f3f66f36be4b3a5dc",
+          "source": "https://registry.npmjs.org/token-types/-/token-types-6.1.2.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/type-fest",
+      "name": "type-fest",
+      "version": "3.13.1",
+      "integrity": "sha512-tLq3bSNx+xSpwvAJnzrK0Ep5CLNWjvFTOp71URMaAEWBfRb9nnJiBoUe0tF8bI4ZFO3omgBR6NvnbzVUT3Ly4g==",
+      "files": [
+        {
+          "path": "third-party/upstream/type-fest-license.txt",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://raw.githubusercontent.com/sindresorhus/type-fest/v3.13.1/license-mit"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/uint8array-extras",
+      "name": "uint8array-extras",
+      "version": "1.6.0",
+      "integrity": "sha512-8iAasVS4wUx0gPLjH8Xtz2PeDzTSiy8QiLGu2DT3X5GU+egFEQhpnbtkehbAwjvDcxIERmCYcysiODFmE3Ud0Q==",
+      "files": [
+        {
+          "path": "node_modules/uint8array-extras/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/uint8array-extras/-/uint8array-extras-1.6.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/universalify",
+      "name": "universalify",
+      "version": "2.0.1",
+      "integrity": "sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==",
+      "files": [
+        {
+          "path": "node_modules/universalify/LICENSE",
+          "sha256": "3fda5977c0904e226190b4e21d64340c1731e2142d6fe5f3dee0090a216b8b63",
+          "source": "https://registry.npmjs.org/universalify/-/universalify-2.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/vue",
+      "name": "vue",
+      "version": "3.5.43",
+      "integrity": "sha512-o5qZoksdnjIKvW1srZ3ab7pcDNYAerBjRe54D0LBLfRdCYFrSgBHVXokMas35czQc0//lmx4/tuY4ZNQ+Rf2Ng==",
+      "files": [
+        {
+          "path": "node_modules/vue/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/vue/-/vue-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/wanakana",
+      "name": "wanakana",
+      "version": "5.3.1",
+      "integrity": "sha512-OSDqupzTlzl2LGyqTdhcXcl6ezMiFhcUwLBP8YKaBIbMYW1wAwDvupw2T9G9oVaKT9RmaSpyTXjxddFPUcFFIw==",
+      "files": [
+        {
+          "path": "node_modules/wanakana/LICENSE",
+          "sha256": "a2b910e52e70524d13946b7936c1accbb8531461fafaaa21cc1eb5088a8b86df",
+          "source": "https://registry.npmjs.org/wanakana/-/wanakana-5.3.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/win-guid",
+      "name": "win-guid",
+      "version": "0.2.1",
+      "integrity": "sha512-gEIQU4mkgl2OPeoNrWflcJFJ3Ae2BPd4eCsHHA/XikslkIVms/nHhvnvzIZV7VLmBvtFlDOzLt9rrZT+n6D67A==",
+      "files": [
+        {
+          "path": "node_modules/win-guid/LICENSE.txt",
+          "sha256": "eb0bff8faaba4581e0f09c962e0f795f1f8810191c9d616f3f66f36be4b3a5dc",
+          "source": "https://registry.npmjs.org/win-guid/-/win-guid-0.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/ws",
+      "name": "ws",
+      "version": "8.22.0",
+      "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==",
+      "files": [
+        {
+          "path": "node_modules/ws/LICENSE",
+          "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef",
+          "source": "https://registry.npmjs.org/ws/-/ws-8.22.0.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/zlibjs",
+      "name": "zlibjs",
+      "version": "0.3.1",
+      "integrity": "sha512-+J9RrgTKOmlxFSDHo0pI1xM6BLVUv+o0ZT9ANtCxGkjIVCCUdx9alUF8Gm+dGLKbkkkidWIHFDZHDMpfITt4+w==",
+      "files": [
+        {
+          "path": "node_modules/zlibjs/LICENSE",
+          "sha256": "131afe3f7bdce1698beb292fb8de1a968de01bce876122a60ef5db230471c866",
+          "source": "https://registry.npmjs.org/zlibjs/-/zlibjs-0.3.1.tgz"
+        }
+      ]
+    }
+  ],
+  "additional": [
+    {
+      "id": "Microsoft DirectML",
+      "version": "1.15.4",
+      "owner": {
+        "path": "node_modules/onnxruntime-node",
+        "version": "1.30.0"
+      },
+      "note": "EULA and accompanying notices from the official NuGet 1.15.4 package. ONNX Runtime uses a differently signed build with the same PE payload; provenance is recorded in the repair report.",
+      "files": [
+        {
+          "path": "third-party/upstream/directml-LICENSE.txt.txt",
+          "sha256": "a05138e3a085ff60a44881eedfa58dccb03ecc1d7b1f6ae888418e8c2fec4b8d",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#LICENSE.txt"
+        },
+        {
+          "path": "third-party/upstream/directml-LICENSE-CODE.txt.txt",
+          "sha256": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#LICENSE-CODE.txt"
+        },
+        {
+          "path": "third-party/upstream/directml-ThirdPartyNotices.txt.txt",
+          "sha256": "2c95795c13ff48a58b6ed916f37901c23d964b5d9d601af422f17ad2172e7950",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#ThirdPartyNotices.txt"
+        }
+      ],
+      "artifacts": [
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+          "sha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625"
+        },
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
+          "sha256": "508c362f5673483dd3a086379c392795b2e42d10d5e6f3f90ebd7ac21c97af67"
+        },
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
+          "sha256": "ddd428464069b84414d34ec1796c7c2a69c33a976e4b0390692629e394f92fa1"
+        }
+      ]
+    },
+    {
+      "id": "Signalsmith embedded runtime supplementary notices",
+      "version": "notice snapshots 2026-10-18",
+      "owner": {
+        "path": "node_modules/signalsmith-stretch",
+        "version": "1.3.2"
+      },
+      "note": "Signalsmith 1.3.2 published JS matches commit 222093b4cc13ddb4d07c826bc3c1559326091731. Its build uses Signalsmith Linear and Emscripten but does not pin their revisions/toolchain. These preserved supplemental upstream notices do not assert an independently verified compiler version or complete native provenance.",
+      "files": [
+        {
+          "path": "third-party/upstream/linear-license.txt",
+          "sha256": "072b5e9eb5b22880bdf6256324654cf3ce53dba828edb911921121e1be09d9c3",
+          "source": "https://raw.githubusercontent.com/Signalsmith-Audio/linear/146b26f91b48835d665fa0498d64d9617818d27a/LICENSE.txt"
+        },
+        {
+          "path": "third-party/upstream/emscripten-license.txt",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/LICENSE"
+        },
+        {
+          "path": "third-party/upstream/emscripten-authors.txt",
+          "sha256": "b865d6074c7f13366cad82990ba58bbe0a3f3eccf5fa47e50aa02693de4e895e",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/AUTHORS"
+        },
+        {
+          "path": "third-party/upstream/musl-copyright.txt",
+          "sha256": "b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/system/lib/libc/musl/COPYRIGHT"
+        },
+        {
+          "path": "third-party/upstream/libcxx-license.txt",
+          "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/system/lib/libcxx/LICENSE.TXT"
+        }
+      ]
+    }
+  ],
+  "preservedFiles": [
+    {
+      "sourcePath": "LICENSE.md",
+      "location": "asar",
+      "targetPath": "LICENSE.md",
+      "sha256": "c23210308619cc26a1c670950b1045778a8d717d03d2747fd29083cb086d345e"
+    },
+    {
+      "sourcePath": "THIRD_PARTY_NOTICES.md",
+      "location": "asar",
+      "targetPath": "THIRD_PARTY_NOTICES.md",
+      "sha256": "df35508bea3ad798d711f84a8b75257f1b15fe2a97b05da52f6b0152bb09306d"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf",
+      "sha256": "a04b166a260e67635bff99512355a14de459620df6451d1ee72b4d072370df55"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/HinaMincho-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/HinaMincho-Regular.ttf",
+      "sha256": "8395fafa0c2721b4b5c274031e1336fea0f703d908b175ee21f8ba2f1ad566a0"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/jf-open-huninn-2.1.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/jf-open-huninn-2.1.ttf",
+      "sha256": "9d5bf4932d31fe94c18cd8cfddc98bc1b14ce10f4e354c682179db290a99c825"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/Keifont.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/Keifont.ttf",
+      "sha256": "d5795bdff960c2b2ec5727ffeb79d836f8f11dac3015f6e16089a912e9cced6f"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/LICENSE-KEIFONT-APACHE-2.0.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/LICENSE-KEIFONT-APACHE-2.0.txt",
+      "sha256": "666ad890866740b226a1d9fd246eca9b725ea174b5c35ba3f8987be0b97f77a1"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf",
+      "sha256": "8e7c15901dca87f1451b356dda594f7d092ba252a5dcc47da74523a242493c36"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-GENEI-ANTIQUE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-GENEI-ANTIQUE.txt",
+      "sha256": "c46ac0488b54750fad2f247404fdeb11f7f7fd614806958a24d63b7f8d15d562"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-HINA-MINCHO.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-HINA-MINCHO.txt",
+      "sha256": "6d06a1b6a66b1f1085c10d2caeda767701eb1815c25da607fb8607359452ae84"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-MPLUS-ROUNDED-1C.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-MPLUS-ROUNDED-1C.txt",
+      "sha256": "9b7cbb54c083e9c21e63952c08389c5fc7691351fb70729e47c91917bfe60097"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL.txt",
+      "sha256": "0db78e79bb9231c8449ff7aeb9a25ec833dc94c36c3f00879f94b0146959a053"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-GENEI-ANTIQUE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-GENEI-ANTIQUE.txt",
+      "sha256": "de8bd503169ad4be30043ad256d248048c969837b0931afb98853287460b666e"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-HINA-MINCHO.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-HINA-MINCHO.txt",
+      "sha256": "aa8c639917297c378530a91b16cdb17953e94f0d6a75ebd96835d0bf713a8314"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-KEIFONT.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-KEIFONT.txt",
+      "sha256": "c5dbf1f9c3035c1a54fe01349557ddacaabf877275a5d8131dc3fc578ac3a2c6"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-MPLUS-ROUNDED-1C.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-MPLUS-ROUNDED-1C.txt",
+      "sha256": "84f8a00d62cbc4ba553669bc2bf64bb564191a7b00cfae0faed032b961b535ff"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE.txt",
+      "sha256": "62f548dc0c3841f613d8a49c15634c20980437d743b0157d510f5422a972dd3f"
+    },
+    {
+      "sourcePath": "node_modules/electron/dist/LICENSE",
+      "location": "app",
+      "targetPath": "LICENSE.electron.txt",
+      "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
+    },
+    {
+      "sourcePath": "node_modules/electron/dist/LICENSES.chromium.html",
+      "location": "app",
+      "targetPath": "LICENSES.chromium.html",
+      "sha256": "c971fa90cb787337e9df73773f3b43cd5621f035e53cded439bd927b3b759e0c"
+    }
+  ],
+  "noticeSha256": "2f13b901b80334afd1f9233d8a9c910af793a10dfdc3813804f219a3f760e299"
+}

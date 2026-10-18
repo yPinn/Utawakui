@@ -29,13 +29,14 @@ describe('runtime configuration boundaries', () => {
     }
   });
 
-  it('packages only fixed app-owned Python workers and Audio catalogs', () => {
+  it('packages fixed notices, app-owned Python workers and Audio catalogs', () => {
     const builder = yaml.load(read('electron-builder.yml'), {
       schema: yaml.JSON_SCHEMA,
     });
     const resources = builder.extraResources.map((entry) => entry.from);
 
     expect(resources).toEqual([
+      'third-party',
       'resources/audio-processing/audio_python_worker.py',
       'resources/audio-processing/refined_worker.py',
       'resources/audio-processing/structure_analysis_worker.py',

@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "path": "node_modules/onnxruntime-node",
+      "version": "1.30.0",
+      "files": [
+        {
+          "path": "upstream/onnx-license.txt",
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+        },
+        {
+          "path": "upstream/onnx-notices.txt",
+          "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/onnxruntime-common",
+      "version": "1.30.0",
+      "files": [
+        {
+          "path": "upstream/onnx-license.txt",
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/koroman",
+      "version": "1.0.16",
+      "files": [
+        {
+          "path": "upstream/koroman-license.txt",
+          "sha256": "8e140c804d0226d197db528f1653ede195ab254935b4fa18bc81f1ea455614ca",
+          "source": "https://raw.githubusercontent.com/gerosyab/koroman/e529729b923f8a9d9acc62b2c9c0887b00e9bd88/LICENSE"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/signalsmith-stretch",
+      "version": "1.3.2",
+      "files": [
+        {
+          "path": "upstream/signalsmith-license.txt",
+          "sha256": "ee2ef82481ffb445ecdd4b3a4c1f82c0cddb2da8fe39d8e8dc384fffb3e7f06f",
+          "source": "https://raw.githubusercontent.com/Signalsmith-Audio/signalsmith-stretch/222093b4cc13ddb4d07c826bc3c1559326091731/LICENSE.txt"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/type-fest",
+      "version": "3.13.1",
+      "files": [
+        {
+          "path": "upstream/type-fest-license.txt",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://raw.githubusercontent.com/sindresorhus/type-fest/v3.13.1/license-mit"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/gsap",
+      "version": "3.15.0",
+      "files": [
+        {
+          "path": "upstream/gsap-standard-license.txt",
+          "sha256": "9860b8b06d9ed430a80e114567bd3fdcf1d77cd56194c5cf295d6b3ea4cf6707",
+          "source": "https://gsap.com/community/standard-license/"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/lazy-val",
+      "version": "1.0.5",
+      "files": [
+        {
+          "path": "upstream/lazy-val-package.txt",
+          "sha256": "a5096f95098452cf6fe5c8ac9be8f13f59ab7c9f605ba5ef92c91b2c505744f0",
+          "source": "https://raw.githubusercontent.com/develar/lazy-val/b69ad4119f1b19bdab13c61ee2fcc88d46b89071/package.json"
+        },
+        {
+          "path": "upstream/lazy-val-mit.txt",
+          "sha256": "0f1ca09980799447d14722bb1c678b499bdc73e9a62c0c4ced5b61d3aa0b018c",
+          "source": "https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/MIT.txt"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/kissfft-js",
+      "version": "0.1.8",
+      "license": "MIT AND BSD-3-Clause",
+      "files": []
+    }
+  ],
+  "additional": [
+    {
+      "id": "Microsoft DirectML",
+      "version": "1.15.4",
+      "owner": {
+        "path": "node_modules/onnxruntime-node",
+        "version": "1.30.0"
+      },
+      "note": "EULA and accompanying notices from the official NuGet 1.15.4 package. ONNX Runtime uses a differently signed build with the same PE payload; provenance is recorded in the repair report.",
+      "files": [
+        {
+          "path": "upstream/directml-LICENSE.txt.txt",
+          "sha256": "a05138e3a085ff60a44881eedfa58dccb03ecc1d7b1f6ae888418e8c2fec4b8d",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#LICENSE.txt"
+        },
+        {
+          "path": "upstream/directml-LICENSE-CODE.txt.txt",
+          "sha256": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#LICENSE-CODE.txt"
+        },
+        {
+          "path": "upstream/directml-ThirdPartyNotices.txt.txt",
+          "sha256": "2c95795c13ff48a58b6ed916f37901c23d964b5d9d601af422f17ad2172e7950",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#ThirdPartyNotices.txt"
+        }
+      ],
+      "artifacts": [
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+          "sha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625"
+        },
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
+          "sha256": "508c362f5673483dd3a086379c392795b2e42d10d5e6f3f90ebd7ac21c97af67"
+        },
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
+          "sha256": "ddd428464069b84414d34ec1796c7c2a69c33a976e4b0390692629e394f92fa1"
+        }
+      ]
+    },
+    {
+      "id": "Signalsmith embedded runtime supplementary notices",
+      "version": "notice snapshots 2026-10-18",
+      "owner": {
+        "path": "node_modules/signalsmith-stretch",
+        "version": "1.3.2"
+      },
+      "note": "Signalsmith 1.3.2 published JS matches commit 222093b4cc13ddb4d07c826bc3c1559326091731. Its build uses Signalsmith Linear and Emscripten but does not pin their revisions/toolchain. These preserved supplemental upstream notices do not assert an independently verified compiler version or complete native provenance.",
+      "files": [
+        {
+          "path": "upstream/linear-license.txt",
+          "sha256": "072b5e9eb5b22880bdf6256324654cf3ce53dba828edb911921121e1be09d9c3",
+          "source": "https://raw.githubusercontent.com/Signalsmith-Audio/linear/146b26f91b48835d665fa0498d64d9617818d27a/LICENSE.txt"
+        },
+        {
+          "path": "upstream/emscripten-license.txt",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/LICENSE"
+        },
+        {
+          "path": "upstream/emscripten-authors.txt",
+          "sha256": "b865d6074c7f13366cad82990ba58bbe0a3f3eccf5fa47e50aa02693de4e895e",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/AUTHORS"
+        },
+        {
+          "path": "upstream/musl-copyright.txt",
+          "sha256": "b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/system/lib/libc/musl/COPYRIGHT"
+        },
+        {
+          "path": "upstream/libcxx-license.txt",
+          "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/system/lib/libcxx/LICENSE.TXT"
+        }
+      ]
+    }
+  ],
+  "preservedFiles": [
+    {
+      "sourcePath": "LICENSE.md",
+      "location": "asar",
+      "targetPath": "LICENSE.md"
+    },
+    {
+      "sourcePath": "THIRD_PARTY_NOTICES.md",
+      "location": "asar",
+      "targetPath": "THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/HinaMincho-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/HinaMincho-Regular.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/jf-open-huninn-2.1.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/jf-open-huninn-2.1.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/Keifont.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/Keifont.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/LICENSE-KEIFONT-APACHE-2.0.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/LICENSE-KEIFONT-APACHE-2.0.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-GENEI-ANTIQUE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-GENEI-ANTIQUE.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-HINA-MINCHO.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-HINA-MINCHO.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-MPLUS-ROUNDED-1C.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-MPLUS-ROUNDED-1C.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-GENEI-ANTIQUE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-GENEI-ANTIQUE.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-HINA-MINCHO.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-HINA-MINCHO.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-KEIFONT.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-KEIFONT.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-MPLUS-ROUNDED-1C.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-MPLUS-ROUNDED-1C.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE.txt"
+    },
+    {
+      "sourcePath": "node_modules/electron/dist/LICENSE",
+      "location": "app",
+      "targetPath": "LICENSE.electron.txt"
+    },
+    {
+      "sourcePath": "node_modules/electron/dist/LICENSES.chromium.html",
+      "location": "app",
+      "targetPath": "LICENSES.chromium.html"
+    }
+  ]
+}

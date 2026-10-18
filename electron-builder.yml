@@ -12,6 +12,7 @@ productName: Utawakui
 # Keep packaging deterministic even if a developer checkout has an older
 # Electron distribution locked by a running dev session.
 electronVersion: 43.7.8
+afterPack: scripts/afterPackThirdPartyNotices.cjs
 # Must equal APP_NAME / app.setName() in electron/main.js — this is the
 # folder name under app.getPath('userData'). A mismatch here silently moves
 # config.json and the downloaded .onnx models out from under an existing
@@ -116,6 +117,12 @@ asarUnpack:
 # PyTorch runtime remain explicit, removable downloads under userData; no
 # interpreter, provider package, or model is bundled into the base installer.
 extraResources:
+  # Full texts stay readable outside ASAR, with pinned version/checksum metadata.
+  - from: third-party
+    to: third-party
+    filter:
+      - NOTICES.txt
+      - manifest.json
   - from: resources/audio-processing/audio_python_worker.py
     to: audio-processing/audio_python_worker.py
   - from: resources/audio-processing/refined_worker.py

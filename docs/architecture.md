@@ -942,6 +942,8 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 
 ## Packaging Boundary
 
+完整第三方授權集合以 `third-party/NOTICES.txt`／`manifest.json` 經 `extraResources` 交付至 `resources/third-party/`；離線 generator 及 afterPack／unsigned-package verifier 檢查版本、全文與指定 native binary。原始 Electron／Chromium 及字型 notices 繼續各自保留，按需下載的權利義務不混入基礎 installer 已驗證範圍。
+
 - `dist/` 是 Vite renderer output；`overlay/` 不進入 Vite bundle。
 - 封裝固定使用 Electron 43.7.8，並關閉 Node options environment 與 Node CLI inspect
   fuses、開啟 embedded ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給

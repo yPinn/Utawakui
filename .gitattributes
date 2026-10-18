@@ -1,9 +1,14 @@
 # Keep repository text files stable across Windows/macOS/Linux.
 * text=auto eol=lf
 
-# Windows command scripts are the only text files that should keep CRLF.
+# Authored Windows command scripts keep CRLF.
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# Reviewed license originals and the aggregate preserve upstream bytes exactly.
+# Line-ending conversion would invalidate their recorded source/delivery hashes.
+third-party/upstream/** -text
+third-party/NOTICES.txt -text
 
 # Binary assets and packaged/runtime artifacts must never be line-normalized.
 *.png binary

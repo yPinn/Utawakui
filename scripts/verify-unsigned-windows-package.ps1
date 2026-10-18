@@ -61,6 +61,12 @@ try {
     }
   }
 
+  & $NodeExecutable scripts/third-party-notices.mjs `
+    --app-out-dir (Join-Path $releaseDirectory 'win-unpacked')
+  if ($LASTEXITCODE -ne 0) {
+    throw 'Complete third-party license and attribution verification failed'
+  }
+
   & $NodeExecutable `
     scripts/release-contract-cli.mjs `
     artifacts `

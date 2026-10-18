@@ -35,5 +35,13 @@ describe('Utawakui license policy', () => {
 
     expect(builderConfig.files).toContain('LICENSE.md');
     expect(builderConfig.files).toContain('THIRD_PARTY_NOTICES.md');
+    expect(builderConfig.afterPack).toBe(
+      'scripts/afterPackThirdPartyNotices.cjs',
+    );
+    expect(builderConfig.extraResources).toContainEqual({
+      from: 'third-party',
+      to: 'third-party',
+      filter: ['NOTICES.txt', 'manifest.json'],
+    });
   });
 });
