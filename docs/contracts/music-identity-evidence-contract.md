@@ -157,6 +157,23 @@ Lyrics adapter 會同時保留 legacy 有損 lexical comparison 與 raw version 
 instrumental 且至少 T1／T2 compatible 的候選；capability ordering、grouping、provider request、
 parser、refetch、fingerprint 與 save-time guard 仍留在 lyrics consumer／provider owner。
 
+手動綜合搜尋的重分類使用與 provider 相同的 query-plan identity，包含本次輸入的歌名與
+演唱者，不回頭改用原曲 metadata。LRCLIB／NetEase 的 candidate summary 以 main-owned
+`matchEvidence` 保留 title／artist lexical scores 與有效時長差，讓別名、繁簡轉換與
+LRCLIB timing-end 補正的證據在綜合層仍有效。它不是可由 renderer 提交的分數；綜合層仍
+重新套用統一 thresholds 與 raw version mismatch gate，不直接信任 provider 的 band。
+原始 provider duration／差值仍供畫面呈現，補正值只用於符合判斷與排序。
+
+綜合排序依序比較 band、時長區間、tier、同區間時長差、warning 數與穩定 provider／ID。
+時長區間為 ≤4 秒、≤15 秒、≤45 秒、超過45秒與未知；同區間的 tier 順序為完整 T2、
+T1、部分 T2、T0、instrumental、unsupported。這保留逐字動畫能力的優先性，同時避免
+逐字能力蓋過明顯較弱的時長證據。錄音組與組內來源使用相同排序，renderer 不再依 ID
+重排非推薦來源。Automatic acquisition 仍只接受 exact 且至少 T1／T2 compatible 的候選。
+
+搜尋畫面預設呈現前3個符合錄音組，每組來源不截斷。其餘符合組使用正式 `UiDisclosure`
+保留於同一分區，重新搜尋時收合；下方 related 分區不接收僅因超過3組而被移出的符合結果。
+此限制只控制預設呈現，不刪除 main 的搜尋結果或改變 provider 請求上限。
+
 ## Phase 4 import policy adapter
 
 `electron/lib/importRecordingPolicy.js` 把 `trackIdentity.js` 或 import resolver 已選定的 canonical

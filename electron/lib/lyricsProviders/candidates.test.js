@@ -4,6 +4,10 @@ import {
   selectAutomaticLyricsCandidate,
 } from './candidates.js';
 import { describe, expect, it } from 'vitest';
+import {
+  rankNeteaseCandidates,
+  summarizeNeteaseCandidate,
+} from '../netease/candidate.js';
 
 function candidate(overrides = {}) {
   return {
@@ -41,6 +45,102 @@ const track = {
 };
 
 describe('unified lyrics provider candidates', () => {
+  it('keeps provider alias evidence when classifying the unified result', () => {
+    const identity = { title: '夜に駆ける', artist: 'YOASOBI', duration: 180 };
+    const [match] = rankNeteaseCandidates(identity, [
+      {
+        id: 42,
+        trackName: '向夜晚奔去',
+        artistName: 'YOASOBI',
+        artists: ['YOASOBI'],
+        albumName: '',
+        duration: 180,
+        aliases: ['夜に駆ける'],
+        translatedTitles: [],
+        yrcLyrics: '[1000,1000](1000,1000,0)Word',
+        lrcLyrics: '[00:01.000]Word',
+      },
+    ]);
+    const aggregated = aggregateLyricsProviderResults(identity, [
+      result('netease', [summarizeNeteaseCandidate(match)]),
+    ]);
+    expect(aggregated.recordingGroups.best).toHaveLength(1);
+    expect(aggregated.candidates[0].matchBand).toBe('exact');
+  });
+
+  it('prioritizes duration reliability before tier but tier before small differences', () => {
+    const nearT1 = {
+      ...candidate({ id: 1, durationDelta: 5 }),
+      providerId: 'lrclib',
+      matchBand: 'strong',
+    };
+    const nearT2 = {
+      ...candidate({
+        id: 2,
+        durationDelta: 12,
+        capability: { level: 'T2', partial: false },
+      }),
+      providerId: 'netease',
+      matchBand: 'strong',
+    };
+    const distantT2 = { ...nearT2, id: 3, durationDelta: 44 };
+    expect(
+      [distantT2, nearT1, nearT2].sort(compareUnifiedLyricsCandidates),
+    ).toEqual([nearT2, nearT1, distantT2]);
+  });
+
+  it('retains effective duration evidence without discarding provider metadata', () => {
+    const aggregated = aggregateLyricsProviderResults(track, [
+      result('lrclib', [
+        candidate({
+          duration: 100,
+          durationDelta: 80,
+          matchEvidence: { titleScore: 1, artistScore: 1, durationDelta: 2 },
+        }),
+      ]),
+    ]);
+    expect(aggregated.candidates[0]).toMatchObject({
+      matchBand: 'exact',
+      duration: 100,
+      durationDelta: 80,
+    });
+  });
+
+  it('does not let alias evidence override a raw version mismatch', () => {
+    const aggregated = aggregateLyricsProviderResults(track, [
+      result('lrclib', [
+        candidate({
+          trackName: 'Song (Live)',
+          matchEvidence: { titleScore: 1, artistScore: 1, durationDelta: 0 },
+        }),
+      ]),
+    ]);
+    expect(aggregated.recordingGroups.best).toHaveLength(0);
+    expect(aggregated.candidates[0].matchBand).toBe('related');
+  });
+
+  it('keeps full T2 first within the exact duration window and known timing ahead of unknown', () => {
+    const lineTimed = {
+      ...candidate({ durationDelta: 0 }),
+      providerId: 'lrclib',
+    };
+    const wordTimed = {
+      ...candidate({
+        id: 2,
+        durationDelta: 4,
+        capability: { level: 'T2', partial: false },
+      }),
+      providerId: 'netease',
+    };
+    expect([lineTimed, wordTimed].sort(compareUnifiedLyricsCandidates)[0]).toBe(
+      wordTimed,
+    );
+    const unknownWordTimed = { ...wordTimed, durationDelta: null };
+    expect(
+      [unknownWordTimed, lineTimed].sort(compareUnifiedLyricsCandidates)[0],
+    ).toBe(lineTimed);
+  });
+
   it('keeps recording relevance ahead of richer timing', () => {
     const exactLineTimed = {
       ...candidate(),

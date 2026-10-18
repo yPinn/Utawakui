@@ -167,6 +167,11 @@ function summarizeNeteaseCandidate(match) {
     warnings: match.analysis.warnings,
     matchBand: match.matchBand,
     matchReasons: [],
+    matchEvidence: {
+      titleScore: match.titleScore,
+      artistScore: match.artistScore,
+      durationDelta: match.durationDelta,
+    },
     durationDelta: match.durationDelta,
     durationDeltaSigned: match.durationDeltaSigned,
     previewFingerprint: fingerprintNeteaseRecord(record),

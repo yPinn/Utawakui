@@ -17,14 +17,19 @@ const CAPABILITY_ORDER = Object.freeze({
   unsupported: 5,
 });
 const MAX_INVALID_RECORD_COUNT = 1_000;
+const DURATION_MATCH_WINDOWS = Object.freeze({
+  exact: 4,
+  close: 15,
+  strong: 45,
+});
 const UNIFIED_MATCH_RULES = Object.freeze({
   exact: {
     title: 1,
     artist: 1,
-    duration: 4,
+    duration: DURATION_MATCH_WINDOWS.exact,
     requiresArtist: true,
   },
-  strong: { title: 0.82, artist: 0.8, duration: 45 },
+  strong: { title: 0.82, artist: 0.8, duration: DURATION_MATCH_WINDOWS.strong },
 });
 
 function trackIdentity(track) {
@@ -36,19 +41,30 @@ function trackIdentity(track) {
   };
 }
 
-function unifiedMatchBand(track, candidate) {
+function unifiedMatch(track, candidate) {
   const identity = trackIdentity(track);
   const evidence = compareLyricsRecordingIdentity(identity, candidate);
-  return classifyLyricsMatch(
+  // Provider projections retain query/alias evidence computed in main, rather
+  // than asking display metadata to prove a translated title a second time.
+  const match = candidate.matchEvidence;
+  const matchBand = classifyLyricsMatch(
     {
       ...evidence,
       scores: {
         ...evidence.scores,
-        artist: evidence.hasArtist ? evidence.scores.artist : 1,
+        title: match?.titleScore ?? evidence.scores.title,
+        artist: evidence.hasArtist
+          ? (match?.artistScore ?? evidence.scores.artist)
+          : 1,
+      },
+      duration: {
+        ...evidence.duration,
+        delta: match?.durationDelta ?? evidence.duration.delta,
       },
     },
     UNIFIED_MATCH_RULES,
   );
+  return { matchBand, durationDelta: evidence.duration.delta };
 }
 
 function capabilityOrder(candidate) {
@@ -61,15 +77,31 @@ function stableCandidateId(candidate) {
   return Number.isSafeInteger(candidate.id) ? candidate.id : 0;
 }
 
+function candidateDurationDelta(candidate) {
+  return candidate.matchEvidence?.durationDelta ?? candidate.durationDelta;
+}
+
+function durationOrder(candidate) {
+  // Tier determines animation quality within comparable duration evidence;
+  // it must not promote a substantially less compatible recording.
+  const delta = candidateDurationDelta(candidate);
+  if (!Number.isFinite(delta)) return 4;
+  if (delta <= DURATION_MATCH_WINDOWS.exact) return 0;
+  if (delta <= DURATION_MATCH_WINDOWS.close) return 1;
+  if (delta <= DURATION_MATCH_WINDOWS.strong) return 2;
+  return 3;
+}
+
 function compareUnifiedLyricsCandidates(first, second) {
   return (
     (BAND_ORDER[first.matchBand] ?? BAND_ORDER.related) -
       (BAND_ORDER[second.matchBand] ?? BAND_ORDER.related) ||
+    durationOrder(first) - durationOrder(second) ||
     capabilityOrder(first) - capabilityOrder(second) ||
     Number(Boolean(first.capability?.partial)) -
       Number(Boolean(second.capability?.partial)) ||
-    (first.durationDelta ?? Number.MAX_SAFE_INTEGER) -
-      (second.durationDelta ?? Number.MAX_SAFE_INTEGER) ||
+    (candidateDurationDelta(first) ?? Number.MAX_SAFE_INTEGER) -
+      (candidateDurationDelta(second) ?? Number.MAX_SAFE_INTEGER) ||
     (first.warnings?.length ?? 0) - (second.warnings?.length ?? 0) ||
     String(first.providerId).localeCompare(String(second.providerId), 'en') ||
     stableCandidateId(first) - stableCandidateId(second)
@@ -177,7 +209,7 @@ function aggregateLyricsProviderResults(track, providerResults) {
           ...candidate,
           providerId: result.provider,
           candidateKey: `${result.provider}:${candidate.id}`,
-          matchBand: unifiedMatchBand(track, candidate),
+          ...unifiedMatch(track, candidate),
         }),
       ),
     )

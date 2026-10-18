@@ -344,6 +344,11 @@ function summarizeLrclibCandidate(match, previewLineLimit = 5) {
     warnings: match.warnings,
     matchBand: match.band,
     matchReasons: match.matchReasons,
+    matchEvidence: {
+      titleScore: match.titleScore,
+      artistScore: match.artistScore,
+      durationDelta: match.effectiveDurationDelta,
+    },
     durationDelta: match.durationDelta,
     durationDeltaSigned: match.durationDeltaSigned,
     previewFingerprint: fingerprintLrclibRecord(record),

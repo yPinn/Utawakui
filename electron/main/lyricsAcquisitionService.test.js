@@ -28,6 +28,35 @@ function record(overrides = {}) {
 
 const track = { id: 'track', title: 'Song', artist: 'Artist', duration: 180 };
 
+it('classifies combined manual results against the submitted query identity', async () => {
+  const provider = client({
+    getExact: vi.fn().mockResolvedValue({
+      status: 'ok',
+      record: record({ trackName: 'Moonlight', artistName: 'Nova' }),
+    }),
+    search: vi.fn().mockResolvedValue({
+      status: 'ok',
+      records: [record({ trackName: 'Moonlight', artistName: 'Nova' })],
+    }),
+  });
+  const service = createLyricsAcquisitionService({
+    requireFeatureGate: vi.fn(),
+    featureId: 'lyrics-flow',
+    client: provider,
+    neteaseProvider: unavailableNeteaseProvider(),
+    betterLyricsProvider: unavailableNeteaseProvider(),
+  });
+  const result = await service.searchProviderCandidates('all', track, {
+    query: { title: 'Moonlight', artist: 'Nova' },
+  });
+  expect(result.recordingGroups.best).toHaveLength(1);
+  expect(result.candidates[0]).toMatchObject({
+    trackName: 'Moonlight',
+    artistName: 'Nova',
+    matchBand: 'exact',
+  });
+});
+
 function unavailableNeteaseProvider(overrides = {}) {
   return {
     searchCandidates: vi.fn().mockResolvedValue({

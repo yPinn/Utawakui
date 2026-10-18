@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const { buildLrclibQueryPlan } = require('../lib/lrclib/query.js');
 
 const {
   getTrackLyricsState,
@@ -376,7 +377,10 @@ function createLyricsAcquisitionService({
         track,
         options,
       );
-      return aggregateLyricsProviderResults(track, results);
+      return aggregateLyricsProviderResults(
+        buildLrclibQueryPlan(track, options.query).identity,
+        results,
+      );
     }
     return searchOneProvider(providerId, track, options);
   }
