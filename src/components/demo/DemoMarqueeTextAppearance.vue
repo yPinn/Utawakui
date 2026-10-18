@@ -5,7 +5,7 @@ import DemoMarqueeTextPrimitive from './DemoMarqueeTextPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiMarqueeText · 單行過長文字',
+    title: '未採用提案 · 過長文字',
     note: '過長文字在指向或聚焦時揭露一次，到達末端後停留；離開後回到開頭。',
     component: DemoCandidateMarqueeText,
     densities: [
@@ -18,10 +18,7 @@ const LAYERS = [
 
 <template>
   <div class="demo-marquee-appearance">
-    <p class="demo-marquee-appearance__intro">
-      <strong>UiMarqueeText 是單行過長文字的顯示方式。</strong>
-      寬度、文字層級與操作意義仍由所在畫面決定。
-    </p>
+    <p class="demo-marquee-appearance__intro">單行長文字在指向或聚焦時揭露。</p>
 
     <section
       v-for="layer in LAYERS"

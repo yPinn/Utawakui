@@ -17,6 +17,13 @@ export const UI_DEMO_GROUPS = Object.freeze([
       { key: 'core-minimums', title: '核心最小尺寸' },
       { key: 'density', title: '密度與尺寸' },
       { key: 'artwork-ramp', title: '封面尺寸階層' },
+    ],
+  },
+  {
+    key: 'layout',
+    title: '版面與容器',
+    description: '捲動、標題、分隔與內容容器。',
+    sections: [
       {
         key: 'scrollbar',
         title: '捲動條外觀',
@@ -52,7 +59,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
   {
     key: 'inputs',
     title: '輸入元件',
-    description: '欄位 anatomy、狀態、驗證與尺寸。',
+    description: '文字輸入、選擇與驗證狀態。',
     sections: [
       { key: 'field', title: '欄位共用外觀', components: ['UiField'] },
       {
@@ -128,7 +135,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
   {
     key: 'navigation',
     title: '導覽元件',
-    description: '同一工作區內的分頁切換。',
+    description: '分頁、路徑、模式切換與展開內容。',
     sections: [
       { key: 'tabs', title: '分頁導覽', components: ['UiTabs'] },
       {
@@ -240,7 +247,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
   {
     key: 'track-collections',
     title: '集合曲目表',
-    description: '比較不同集合的欄位、狀態與窄版呈現。',
+    description: '組合範例：集合欄位、曲目狀態與窄版呈現。',
     sections: [
       {
         key: 'track-collection-grid',

@@ -24,8 +24,7 @@ const HORIZONTAL_ITEMS = Object.freeze([
 <template>
   <div class="demo-scrollbar-appearance">
     <p class="demo-scrollbar-appearance__note">
-      以下直接使用 production `UiScrollLayout`；捲動由 native viewport
-      負責，overlay rail 不改變內容座標。
+      使用正式 UiScrollLayout；覆蓋式軌道不改變內容座標。
     </p>
 
     <div class="demo-scrollbar-grid">
@@ -86,10 +85,7 @@ const HORIZONTAL_ITEMS = Object.freeze([
     >
       <header class="demo-scrollbar-layout-proof__header">
         <h4 id="demo-scrollbar-overlay-proof-title">Layout reserve</h4>
-        <p>
-          無溢位時 rail 不顯示；有溢位時由 layout wrapper
-          保留安全邊界，內容座標維持不變。
-        </p>
+        <p>溢位才顯示軌道，並保留內容安全邊界。</p>
       </header>
 
       <div class="demo-scrollbar-layout-proof__grid">

@@ -5,7 +5,7 @@ const LAYERS = [
   {
     key: 'candidate',
     title: '正式元件 UiActionMenu',
-    note: 'Trigger-neutral compound primitive；完整 menu keyboard、viewport collision 與精簡 icon／label／submenu lanes。',
+    note: '鍵盤導覽、子選單與視窗邊界避讓。',
   },
 ];
 </script>
@@ -13,9 +13,7 @@ const LAYERS = [
 <template>
   <div class="demo-action-menu-appearance">
     <p class="demo-action-menu-appearance__intro">
-      <strong>UiActionMenu 是一組短動作的浮動選單。</strong>
-      Caller 擁有 Ellipsis／右鍵 trigger、anchor 與產品 action；選單擁有
-      item、焦點、碰撞與關閉。
+      短動作選單，支援鍵盤導覽與子選單。
     </p>
 
     <section

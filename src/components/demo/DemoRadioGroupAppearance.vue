@@ -67,8 +67,7 @@ function reset() {
     <section class="demo-input-states__section">
       <h4>排列、內容與停用</h4>
       <p class="demo-input-states__copy">
-        使用原生方向鍵切換，停用選項會被跳過。Hover／Focus
-        請直接操作標本；RadioGroup 不提供 invalid 或 readonly 狀態。
+        方向鍵切換並略過停用項目；無 invalid／readonly 狀態。
       </p>
       <div class="demo-input-states__grid">
         <article
@@ -97,7 +96,7 @@ function reset() {
     <section class="demo-input-states__section" data-radio-recovery>
       <h4>解除鎖定與恢復</h4>
       <p class="demo-input-states__copy">
-        解除鎖定後可變更選值；再次鎖定保留選值，不清空設定。
+        解除鎖定可變更選值；再次鎖定保留值。
       </p>
       <UiSwitch
         id="demo-radio-unlock"

@@ -6,7 +6,7 @@ import DemoCollageThumbProduction from './DemoCollageThumbProduction.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiCollageThumb · 集合封面',
+    title: '未採用提案 · 集合封面',
     note: '零首與無曲目共用空位置；一首使用完整方形，二至四首才進入等分四格。',
     component: DemoCandidateCollageThumb,
   },
@@ -16,10 +16,7 @@ const LAYERS = [
 <template>
   <div class="demo-collage-thumb-appearance">
     <p class="demo-collage-thumb-appearance__intro">
-      <strong>UiCollageThumb 表示一個集合的封面位置。</strong>
-      它把不同來源比例裁進 caller
-      指定的正方形，並解析自訂集合封面、單一成員、四格成員拼貼與空集合；內部只共用曲目圖像內容，不承接裁切選擇、單曲
-      public contract 或資料列操作。
+      自訂封面、單曲、四格拼貼與空集合。
     </p>
 
     <section
@@ -28,7 +25,7 @@ const LAYERS = [
     >
       <header class="demo-collage-thumb-layer__header">
         <h4>正式 UiCollageThumb</h4>
-        <p>載入、缺圖與恢復行為；下方另列未採用提案。</p>
+        <p>載入、缺圖與恢復；下方為未採用提案。</p>
       </header>
       <DemoCollageThumbProduction />
     </section>

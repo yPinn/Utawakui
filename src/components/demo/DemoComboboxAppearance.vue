@@ -129,13 +129,10 @@ function reset() {
     <section class="demo-input-states__section">
       <h4>模式、選項與驗證</h4>
       <p class="demo-input-states__copy">
-        可輸入模式可搜尋現有選項；Select-only
-        不接受文字輸入。試著輸入沒有結果的內容，再按 Escape
-        還原。輸入法確認字詞不會提交選項。
+        可輸入模式支援搜尋；僅選取模式不接受文字。Escape
+        還原，輸入法確認不會提交選項。
       </p>
-      <p class="demo-input-states__copy">
-        這組錯誤標本固定驗證條件，下方恢復範例會隨選值更新錯誤。
-      </p>
+      <p class="demo-input-states__copy">固定錯誤預覽；下方範例可操作恢復。</p>
       <div class="demo-input-states__grid">
         <article
           v-for="entry in CASES"
@@ -165,7 +162,7 @@ function reset() {
     <section class="demo-input-states__section" data-combobox-recovery>
       <h4>錯誤恢復與暫停選擇</h4>
       <p class="demo-input-states__copy">
-        兩個欄位都要求選擇既有來源。選取後清除錯誤；暫停時關閉選單並保留值，重設會再次顯示錯誤。
+        選取來源後清除錯誤；暫停保留值，重設再次顯示錯誤。
       </p>
       <div :key="revision" class="demo-input-states__case">
         <UiSwitch id="demo-combobox-lock" v-model="locked" label="暫停選擇" />

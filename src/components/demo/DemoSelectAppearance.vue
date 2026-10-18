@@ -241,8 +241,8 @@ const STATES = [
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 Select',
-    note: '自有 closed indicator、ellipsis 與 overflow tooltip；popup 寬度仍由 Chromium／Windows 決定。',
+    title: '未採用提案 · 選擇欄位',
+    note: '自訂箭頭、文字裁切與提示；選單寬度由系統決定。',
     component: DemoCandidateSelect,
     sizes: [
       ['standard', 'Standard · 36 CSS px', 'Windows Chromium rendered · 36'],
@@ -283,9 +283,7 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-select-appearance">
     <p class="demo-select-appearance__intro">
-      <strong>Select 沿用 Field，且沒有 readonly。</strong>
-      Closed indicator 可比較；原生 popup 寬度與選項呈現由 Chromium／Windows
-      擁有。
+      原生選擇欄位，無唯讀狀態；選單外觀與寬度由系統決定。
     </p>
 
     <section
@@ -303,7 +301,7 @@ function coverageFor(layer, state) {
       <section class="demo-select-foundation">
         <header class="demo-select-subsection__header">
           <h5>基礎尺寸與寬度</h5>
-          <p>Control 高度來自 Field；寬度及任何上限都由 parent layout 擁有。</p>
+          <p>高度沿用 Field，寬度由版面決定。</p>
         </header>
 
         <div class="demo-select-contracts" aria-label="Select 尺寸責任">
@@ -364,10 +362,7 @@ function coverageFor(layer, state) {
       <section class="demo-select-anatomy-block">
         <header class="demo-select-subsection__header">
           <h5>Owned anatomy</h5>
-          <p>
-            Field 擁有 label／support；Select 擁有 closed control。提案 接管
-            indicator，popup 與語意仍維持 native。
-          </p>
+          <p>提案自訂箭頭；選單與操作語意維持原生。</p>
         </header>
 
         <div class="demo-select-anatomy">
@@ -455,7 +450,7 @@ function coverageFor(layer, state) {
       <section class="demo-select-content-review">
         <header class="demo-select-subsection__header">
           <h5>內容行為</h5>
-          <p>使用真實 option 與受控值；說明文字留在 control 外。</p>
+          <p>操作選項可更新值。</p>
         </header>
         <div class="demo-select-content-list">
           <article
@@ -482,7 +477,7 @@ function coverageFor(layer, state) {
       <section class="demo-select-state-review">
         <header class="demo-select-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>Required pristine 不自動報錯；Hover／Focus 為靜態比較標本。</p>
+          <p>必填未填不自動報錯；Hover／Focus 為固定預覽。</p>
         </header>
         <div class="demo-select-state-list">
           <article
@@ -547,7 +542,7 @@ function coverageFor(layer, state) {
       <section class="demo-select-validation">
         <header class="demo-select-subsection__header">
           <h5>Hint → Error 與 ARIA</h5>
-          <p>Auto 為預設；Error 取代 Hint，Reserved 仍是 layout-owned 候選。</p>
+          <p>錯誤取代提示；預留訊息空間僅為版面提案。</p>
         </header>
         <div class="demo-select-validation__replacement">
           <article>
@@ -583,8 +578,7 @@ function coverageFor(layer, state) {
           </article>
         </div>
         <p class="demo-select-validation__note">
-          External id 先保留，Field 再附加 active Hint 或 Error id；不新增
-          UiField reserved API。
+          保留外部描述，並加入目前提示或錯誤的關聯。
         </p>
       </section>
 

@@ -95,8 +95,7 @@ const DENSITY_CONTRACTS = Object.freeze([
 <template>
   <div class="demo-density">
     <p class="demo-density__note">
-      視窗化／還原使用 Compact；最大化／全螢幕使用 Standard。只列出目前 active
-      token，不另存一份元件或頁面的尺寸狀態。
+      視窗化使用 Compact；最大化／全螢幕使用 Standard。
     </p>
 
     <div class="demo-density__grid">

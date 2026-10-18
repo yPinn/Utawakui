@@ -14,6 +14,7 @@ import DemoTrackCollectionProposal from './DemoTrackCollectionProposal.vue';
 
 const GROUP_COMPONENTS = Object.freeze({
   foundations: DemoFoundations,
+  layout: DemoFoundations,
   inputs: DemoInputs,
   actions: DemoActions,
   navigation: DemoNavigation,

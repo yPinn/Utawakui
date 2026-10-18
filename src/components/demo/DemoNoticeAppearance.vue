@@ -6,8 +6,8 @@ import DemoNoticePrimitive from './DemoNoticePrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiNotice · 內嵌通知',
-    note: '靠近相關內容的結構化訊息；圖示、標題／說明與選用操作共同表達一件事，是否即時宣告由使用畫面決定。',
+    title: '未採用提案 · 內嵌通知',
+    note: '圖示、訊息與選用操作；此提案的宣告方式與正式元件不同。',
     component: DemoCandidateNotice,
     densities: [
       {
@@ -23,8 +23,7 @@ const LAYERS = [
 <template>
   <div class="demo-notice-appearance">
     <p class="demo-notice-appearance__intro">
-      <strong>UiNotice 保留為共用的結構化內嵌通知。</strong>
-      跨功能的使用數量只證明有共用需求，不能單獨決定元件歸屬。是否使用它取決於訊息與內容的關係、組成與顯示時間；固定通知由外層通知容器負責。
+      靠近相關內容顯示訊息與操作；固定通知另由通知容器管理。
     </p>
 
     <section

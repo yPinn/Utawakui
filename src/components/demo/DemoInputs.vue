@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import UiColorField from '../ui/UiColorField.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoProductionSample from './DemoProductionSample.vue';
 import DemoRadioGroupAppearance from './DemoRadioGroupAppearance.vue';
 import DemoSwitchAppearance from './DemoSwitchAppearance.vue';
 import DemoComboboxAppearance from './DemoComboboxAppearance.vue';
@@ -30,6 +31,11 @@ const sampleColor = ref('#8296d0');
       :title="section.title"
       :component-label="section.components?.join(' · ')"
     >
+      <DemoProductionSample
+        v-if="section.key === 'select'"
+        :kind="section.key"
+      />
+
       <DemoSearchBoxAppearance v-if="section.key === 'search-box'" />
 
       <template v-else-if="section.key === 'field'">
@@ -62,8 +68,7 @@ const sampleColor = ref('#8296d0');
           hint="輸入六位 hex，或使用系統色彩選擇器。"
         />
         <p class="demo-sample-caption">
-          目前值：{{ sampleColor }}。模板相容性與設定持久化仍由 feature caller
-          負責。
+          目前值：{{ sampleColor }}，僅供本頁預覽。
         </p>
       </div>
 

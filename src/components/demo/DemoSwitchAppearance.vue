@@ -59,8 +59,7 @@ function reset() {
     <section class="demo-input-states__section">
       <h4>選值與驗證狀態</h4>
       <p class="demo-input-states__copy">
-        Hover／Focus
-        不移除錯誤邊框。這組標本固定驗證條件，下方恢復範例才隨選值更新錯誤。
+        指向與聚焦仍保留錯誤邊框；下方可操作恢復。
       </p>
       <div class="demo-input-states__grid">
         <article
@@ -103,7 +102,7 @@ function reset() {
     <section class="demo-input-states__section" data-switch-recovery>
       <h4>錯誤恢復與再次驗證</h4>
       <p class="demo-input-states__copy">
-        此範例要求啟用更新檢查。開啟即清除錯誤；關閉會再次顯示錯誤，暫停修改不清除選值。
+        開啟更新檢查即清除錯誤；關閉再次顯示錯誤，暫停保留值。
       </p>
       <UiSwitch id="demo-switch-lock" v-model="locked" label="暫停修改" />
       <UiSwitch

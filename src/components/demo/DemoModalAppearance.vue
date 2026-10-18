@@ -5,8 +5,8 @@ import DemoModalProduction from './DemoModalProduction.vue';
 const LAYERS = Object.freeze([
   {
     key: 'candidate',
-    title: '未採用提案 UiModal',
-    note: 'Greenfield raised shell＋on-raised 欄位層級；384／512／768px、固定 header／footer 與 body-only scroll。',
+    title: '未採用提案 · 對話框',
+    note: '固定標題與操作列，僅內容區捲動。',
   },
 ]);
 </script>

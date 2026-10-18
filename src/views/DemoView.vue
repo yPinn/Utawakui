@@ -14,7 +14,7 @@ import UiPageHeader from '../components/ui/UiPageHeader.vue';
     <template #header>
       <UiPageHeader title="UI 元件型錄" title-id="demo-catalogue-title">
         <template #description>
-          正式元件與少量未採用提案的回歸檢查；頁面流程以 production View 為準。
+          狀態矩陣為固定預覽，互動請操作正式範例。
         </template>
       </UiPageHeader>
     </template>

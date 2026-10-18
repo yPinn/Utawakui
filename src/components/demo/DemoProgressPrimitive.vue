@@ -101,10 +101,7 @@ const CONTENT_ITEMS = [
     <section class="demo-progress-block demo-progress-role">
       <header class="demo-progress-subsection__header">
         <h5>使用時機</h5>
-        <p>
-          有可量測進度或暫時無法估算時間的工作可使用
-          UiProgress；工作結果與後續操作由所在畫面顯示。
-        </p>
+        <p>用於已知或不確定進度；結果與操作另行呈現。</p>
       </header>
 
       <div class="demo-progress-role__grid">
@@ -136,10 +133,7 @@ const CONTENT_ITEMS = [
     <section class="demo-progress-block demo-progress-geometry">
       <header class="demo-progress-subsection__header">
         <h5>尺寸與內容結構</h5>
-        <p>
-          Standard／Compact 都使用 8px 進度軌與 2px
-          細圓角。標籤可換行，數值保持對齊；密度跟隨整體設定。
-        </p>
+        <p>兩種密度皆使用 8px 進度軌；標籤換行，數值對齊。</p>
       </header>
 
       <div class="demo-progress-density-list">
@@ -174,10 +168,7 @@ const CONTENT_ITEMS = [
     <section class="demo-progress-block demo-progress-states">
       <header class="demo-progress-subsection__header">
         <h5>進度狀態</h5>
-        <p>
-          0、部分、完成與自訂總數都顯示可靠數值；無法估算時只顯示不確定進度，不假裝為
-          0%。
-        </p>
+        <p>可顯示 0、部分或完成；不確定進度不顯示百分比。</p>
       </header>
 
       <div class="demo-progress-state-list">
@@ -199,10 +190,7 @@ const CONTENT_ITEMS = [
     <section class="demo-progress-block demo-progress-content">
       <header class="demo-progress-subsection__header">
         <h5>窄內容與多語</h5>
-        <p>
-          長
-          CJK／Latin／多語標籤與沒有自然斷點的檔名都留在窄框內；數值不與標籤重疊。
-        </p>
+        <p>長標籤留在窄框內，不與數值重疊。</p>
       </header>
 
       <div class="demo-progress-content-list">
@@ -229,9 +217,7 @@ const CONTENT_ITEMS = [
     <section class="demo-progress-block demo-progress-recipes">
       <header class="demo-progress-subsection__header">
         <h5>任務情境</h5>
-        <p>
-          進度元件呈現目前進展；所在區域決定是否忙碌，重要階段與最後結果另以完整句子說明。
-        </p>
+        <p>忙碌狀態與重要結果由所在畫面說明。</p>
       </header>
 
       <div class="demo-progress-recipe-list">
@@ -275,9 +261,7 @@ const CONTENT_ITEMS = [
     <section class="demo-progress-block demo-progress-contract">
       <header class="demo-progress-subsection__header">
         <h5>輔助技術與公開介面</h5>
-        <p>
-          進度軌使用原生語意與可見標籤；不確定進度不帶數值。頻繁更新不逐次朗讀，重要階段由所在畫面另行說明。
-        </p>
+        <p>原生進度語意；不逐次朗讀頻繁更新。</p>
       </header>
 
       <div class="demo-progress-aria-list">

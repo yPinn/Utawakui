@@ -53,11 +53,9 @@ describe('DemoHintAppearance', () => {
       'Zod／validator issue 先由表單轉成可顯示的在地化訊息',
     );
     expect(html).toContain('invalid／error 與欄位關聯由 UiField 負責');
-    expect(html).toContain('UiHint 目前保留為相容元件');
-    expect(html).toContain(
-      '跨功能使用只證明這種文字樣式可共用，不代表一定需要獨立 Vue 元件',
-    );
-    expect(html).toContain('正式遷移前仍需比較共用文字樣式與各功能自行組合');
+    expect(html).toContain('欄位說明與通知使用各自元件');
+    expect(html).toContain('獨立補充說明；欄位與通知另用對應元件');
+    expect(html).toContain('靜態文字不主動宣告');
     expect(html).not.toContain('跨 feature、無領域知識的 shared primitive');
     expect(html).toContain('不負責欄位說明、結構化通知或空狀態版面');
     expect(primitiveSource).not.toMatch(/import\s+UiField|import\s+UiNotice/u);

@@ -137,10 +137,7 @@ function recordAction(label) {
     <section class="demo-notice-block demo-notice-role">
       <header class="demo-notice-subsection__header">
         <h5>使用時機</h5>
-        <p>
-          UiNotice
-          用於靠近相關內容的結構化訊息；依訊息與內容的關係、組成與顯示時間選用，不以顏色或使用數量判斷。結構化內容支持共用元件的責任；欄位說明、一般輔助文字與固定通知容器各自負責。
-        </p>
+        <p>靠近相關內容顯示結構化訊息；欄位說明與固定通知另行處理。</p>
       </header>
 
       <div class="demo-notice-role__grid">
@@ -154,7 +151,7 @@ function recordAction(label) {
         </article>
         <article data-notice-role="supporting-text">
           <strong>一般輔助文字</strong>
-          <span>UiHint 目前保留為相容元件</span>
+          <span>UiHint 用於純文字說明</span>
         </article>
         <article data-notice-role="modal">
           <strong>對話框</strong>
@@ -171,8 +168,7 @@ function recordAction(label) {
       <header class="demo-notice-subsection__header">
         <h5>尺寸與內容結構</h5>
         <p>
-          內容包含裝飾性狀態圖示，標題或說明至少顯示一項，也可加入選用的情境操作；密度只改內距與操作高度下限，不縮小
-          14px 文字。提案重用已審查的 Status Icon：20px 狀態圖示與 14px
+          標題或說明至少一項，可附操作。20px 狀態圖示與 14px
           首行置中對齊，圖示與文字間距固定為 8px。
         </p>
       </header>
@@ -228,11 +224,7 @@ function recordAction(label) {
     <section class="demo-notice-block demo-notice-content">
       <header class="demo-notice-subsection__header">
         <h5>長內容與換行</h5>
-        <p>
-          長
-          CJK／Latin／多語內容自然換行；沒有自然斷點的長文字由外層檢查框承接，不讓整個
-          F8 畫面水平溢出。
-        </p>
+        <p>多語與長文字應留在窄框內。</p>
       </header>
 
       <div class="demo-notice-content-list">
@@ -259,10 +251,7 @@ function recordAction(label) {
     <section class="demo-notice-block demo-notice-tones">
       <header class="demo-notice-subsection__header">
         <h5>訊息類型</h5>
-        <p>
-          內容類型、格式與來源說明預設使用
-          Neutral；狀態色只加速掃描，文字與圖示形狀仍保留完整語意。
-        </p>
+        <p>一般說明用中性色；狀態以文字與圖示共同表達。</p>
       </header>
 
       <div class="demo-notice-tone-list">
@@ -284,9 +273,7 @@ function recordAction(label) {
     <section class="demo-notice-block demo-notice-actions">
       <header class="demo-notice-subsection__header">
         <h5>操作行為</h5>
-        <p>
-          元件只回報使用者按下操作；重試、前往其他畫面與處理中狀態由整合畫面負責。內嵌位置由所在畫面決定；固定位置、堆疊、關閉與顯示時間由通知容器負責。
-        </p>
+        <p>操作結果由所在畫面處理；固定通知由通知容器管理。</p>
       </header>
 
       <div class="demo-notice-action-list">
@@ -333,9 +320,7 @@ function recordAction(label) {
     <section class="demo-notice-block demo-notice-contract">
       <header class="demo-notice-subsection__header">
         <h5>輔助技術與公開介面</h5>
-        <p>
-          訊息類型不決定宣告急迫性；announcement role 由擁有更新時機的流程決定。
-        </p>
+        <p>宣告時機與急迫性由更新流程決定。</p>
       </header>
 
       <div class="demo-notice-aria-list">

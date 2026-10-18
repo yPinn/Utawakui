@@ -205,8 +205,8 @@ const SEARCH_STATES = [
 const SEARCH_LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案基礎',
-    note: '使用 Field 外框與 Search anatomy；比較狀態外觀與覆蓋責任。',
+    title: '正式 UiSearchBox',
+    note: '搜尋輸入、清除與驗證狀態。',
     sizes: [
       ['standard', 'Standard', 'Standard 36 CSS px'],
       ['compact', 'Compact', 'Compact 32 CSS px'],
@@ -273,12 +273,7 @@ function coverageFor(layer, state, index) {
 
 <template>
   <div class="demo-search-appearance">
-    <p class="demo-search-appearance__intro">
-      <strong
-        >Search Box 組合單行搜尋輸入與 Clear action；結果回饋由 caller
-        擁有。</strong
-      >
-    </p>
+    <p class="demo-search-appearance__intro">搜尋輸入與清除；結果另行呈現。</p>
 
     <section
       v-for="layer in SEARCH_LAYERS"
@@ -429,9 +424,7 @@ function coverageFor(layer, state, index) {
       <section class="demo-search-state-review" data-search-state-review="true">
         <header class="demo-search-state-review__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>
-            先看實際狀態，再確認 Surface、Boundary、Query、Clear 與 Semantics。
-          </p>
+          <p>輸入、清除與驗證狀態。</p>
         </header>
 
         <div class="demo-search-state-list">
@@ -490,7 +483,7 @@ function coverageFor(layer, state, index) {
           </table>
         </UiScrollRegion>
         <p class="demo-search-state-review__boundary">
-          Loading、結果、無結果與搜尋錯誤由使用 Search Box 的 consumer 呈現。
+          載入、搜尋結果與錯誤由所在畫面呈現。
         </p>
       </section>
 

@@ -5,8 +5,8 @@ import DemoStatusIconPrimitive from './DemoStatusIconPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiStatusIcon',
-    note: '24／20px 非互動狀態 glyph；語意色使用低強度 supporting surface、細邊界與固定 16-unit icon。',
+    title: '樣式預覽 · UiStatusIcon',
+    note: '狀態圖示與語意色，不提供操作。',
     component: DemoCandidateStatusIcon,
     sizes: [
       ['standard', 'Standard · 24 CSS px'],
@@ -20,8 +20,7 @@ const LAYERS = [
 <template>
   <div class="demo-status-icon-appearance">
     <p class="demo-status-icon-appearance__intro">
-      <strong>UiStatusIcon 是非互動狀態 glyph。</strong>
-      有文字用 UiChip；可點擊用 Button。
+      非互動狀態圖示；文字狀態用 UiChip，操作用按鈕。
     </p>
 
     <section

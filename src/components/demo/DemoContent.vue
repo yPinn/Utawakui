@@ -1,5 +1,6 @@
 <script setup>
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoProductionSample from './DemoProductionSample.vue';
 import DemoCollageThumbAppearance from './DemoCollageThumbAppearance.vue';
 import DemoMarqueeTextAppearance from './DemoMarqueeTextAppearance.vue';
 import DemoPhotoFramePrimitive from './DemoPhotoFramePrimitive.vue';
@@ -20,6 +21,11 @@ defineProps({
       :title="section.title"
       :component-label="section.components?.join(' · ')"
     >
+      <DemoProductionSample
+        v-if="['marquee-text', 'track-rows'].includes(section.key)"
+        :kind="section.key"
+      />
+
       <DemoMarqueeTextAppearance v-if="section.key === 'marquee-text'" />
       <DemoTrackThumbAppearance v-else-if="section.key === 'track-thumb'" />
       <DemoCollageThumbAppearance v-else-if="section.key === 'collage-thumb'" />

@@ -41,7 +41,7 @@ describe('production scrollbar catalogue specimen', () => {
     expect(html).toContain('data-scrollbar-layout-proof="overlay"');
     expect(html).toContain('data-scrollbar-overflow="none"');
     expect(html).toContain('data-scrollbar-overflow="present"');
-    expect(html).toContain('內容座標維持不變');
+    expect(html).toContain('覆蓋式軌道不改變內容座標');
   });
 
   it('uses the shared layout composition over the native scroll authority', async () => {

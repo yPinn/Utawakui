@@ -5,8 +5,8 @@ import DemoHintPrimitive from './DemoHintPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiHint · 輔助文字',
-    note: '用於獨立、非互動且可自然換行的短說明；欄位關聯、即時宣告與位置由所在畫面決定。',
+    title: '樣式預覽 · UiHint',
+    note: '可換行的短說明；宣告時機由使用畫面決定。',
     component: DemoCandidateHint,
     densities: [
       ['standard', 'Standard · 14 CSS px／1.4'],
@@ -19,9 +19,7 @@ const LAYERS = [
 <template>
   <div class="demo-hint-appearance">
     <p class="demo-hint-appearance__intro">
-      <strong>UiHint 目前保留為相容元件；F8 以獨立輔助文字檢查。</strong>
-      跨功能使用只證明這種文字樣式可共用，不代表一定需要獨立 Vue
-      元件。正式遷移前仍需比較共用文字樣式與各功能自行組合；它不是欄位說明、結構化通知或專用空狀態。
+      獨立輔助文字；欄位說明與通知使用各自元件。
     </p>
 
     <section

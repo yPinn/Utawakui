@@ -21,7 +21,7 @@ describe('DemoView Folder page boundary', () => {
     expect(source).toContain('mode="workspace"');
     expect(source).toContain('<UiPageHeader');
     expect(html).toContain('UI 元件型錄');
-    expect(html).toContain('正式元件與少量未採用提案的回歸檢查');
+    expect(html).toContain('狀態矩陣為固定預覽，互動請操作正式範例。');
     expect(source).toMatch(/\.demo-view\s*\{[^}]*inline-size:\s*100%;/su);
   });
 

@@ -94,7 +94,7 @@ function visibleText(html) {
 describe('DemoCollageThumbAppearance', () => {
   it('states collection ownership without absorbing single-track or row behavior', async () => {
     const html = await renderToString(createSSRApp(DemoCollageThumbAppearance));
-    expect(html).toContain('UiCollageThumb 表示一個集合的封面位置');
+    expect(html).toContain('自訂封面、單曲、四格拼貼與空集合');
     expect(html).toContain('缺圖與壞圖共用相同的預設封面選擇');
     expect(html).toContain('選取、播放與導覽由所在區域負責');
     expect(primitiveSource).not.toMatch(/import\s+UiTrackThumb/u);

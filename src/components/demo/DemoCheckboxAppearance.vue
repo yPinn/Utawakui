@@ -206,8 +206,8 @@ const LAYERS = [
   {
     key: 'candidate',
     className: 'demo-checkbox-layer--candidate',
-    title: '已核准 Checkbox 規格',
-    note: '保留單一標本，供正式元件回歸檢查。',
+    title: '正式 UiCheckbox',
+    note: '核取、部分選取與驗證狀態。',
     geometryNote: 'Visual indicator 固定 16px；target 隨離散 density 映射。',
     contracts: [
       'Visual indicator · 16 CSS px',
@@ -251,8 +251,7 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-checkbox-appearance">
     <p class="demo-checkbox-appearance__intro">
-      <strong>Checkbox 支援 Boolean／mixed，且沒有 readonly。</strong>
-      正式元件保留 native input，並以 project-owned indicator 擴大整列命中區。
+      支援勾選與部分選取；無唯讀狀態。
     </p>
 
     <section
@@ -299,10 +298,7 @@ function coverageFor(layer, state) {
       <section class="demo-checkbox-anatomy-block">
         <header class="demo-checkbox-subsection__header">
           <h5>Owned anatomy</h5>
-          <p>
-            UiField 擁有 label／support；Checkbox 擁有 input、indicator 與 row
-            hit target。
-          </p>
+          <p>整列可點擊切換。</p>
         </header>
         <div class="demo-checkbox-anatomy">
           <component
@@ -345,9 +341,7 @@ function coverageFor(layer, state) {
       <section class="demo-checkbox-content-review">
         <header class="demo-checkbox-subsection__header">
           <h5>內容與換行</h5>
-          <p>
-            Consent／setting labels 保留完整文字並自然換行，不截斷行動語意。
-          </p>
+          <p>標籤完整換行，不截斷同意內容。</p>
         </header>
         <div class="demo-checkbox-content-list">
           <article
@@ -371,9 +365,7 @@ function coverageFor(layer, state) {
       <section class="demo-checkbox-state-review">
         <header class="demo-checkbox-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>
-            Indeterminate 是集合摘要投影；Required pristine 不自動顯示 Error。
-          </p>
+          <p>部分選取表示集合摘要；必填未填不會自動報錯。</p>
         </header>
         <div class="demo-checkbox-state-list">
           <article
@@ -440,7 +432,7 @@ function coverageFor(layer, state) {
       <section class="demo-checkbox-validation">
         <header class="demo-checkbox-subsection__header">
           <h5>Hint → Error 與 ARIA</h5>
-          <p>Auto 為預設；Error 取代 Hint，並合併 caller 提供的描述 id。</p>
+          <p>錯誤訊息取代提示，保留其他描述關聯。</p>
         </header>
         <div class="demo-checkbox-validation__replacement">
           <article>

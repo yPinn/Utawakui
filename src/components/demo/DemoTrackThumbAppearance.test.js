@@ -66,7 +66,7 @@ describe('DemoTrackThumbAppearance', () => {
   });
   it('keeps single-track identity separate from collection and row ownership', async () => {
     const html = await renderToString(createSSRApp(DemoTrackThumbAppearance));
-    expect(html).toContain('UiTrackThumb 表示單一曲目的方形封面');
+    expect(html).toContain('單曲封面、替代圖片與載入狀態');
     expect(html).toContain('集合封面與拼貼由 UiCollageThumb 負責');
     expect(html).toContain('操作、播放狀態與資料列排版由所在區域負責');
     expect(primitiveSource).not.toMatch(/import\s+UiCollageThumb/u);

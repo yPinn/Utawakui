@@ -195,8 +195,8 @@ const STATES = [
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 Text Field',
-    note: '沿用已核定 Field 外殼；此區只新增單行輸入本體的候選規格。',
+    title: '正式 UiTextField',
+    note: '單行輸入、長文字與驗證狀態。',
     sizes: [
       ['standard', 'Standard', '36 CSS px'],
       ['compact', 'Compact', '32 CSS px'],
@@ -245,9 +245,7 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-text-field-appearance">
     <p class="demo-text-field-appearance__intro">
-      <strong
-        >Text Field 只擁有單行輸入；Label、Hint／Error 沿用 Field。</strong
-      >
+      單行輸入，共用欄位標籤、提示與錯誤。
     </p>
 
     <section
@@ -266,7 +264,7 @@ function coverageFor(layer, state) {
       <section class="demo-text-field-foundation" data-text-field-foundation>
         <header class="demo-text-field-subsection__header">
           <h5>基礎性質</h5>
-          <p>先量 control，再看內容；寬度測試槽不是元件 token。</p>
+          <p>控制尺寸與寬度。</p>
         </header>
 
         <div class="demo-text-field-foundation__grid">
@@ -353,7 +351,7 @@ function coverageFor(layer, state) {
       <section class="demo-text-field-content-review">
         <header class="demo-text-field-subsection__header">
           <h5>內容行為</h5>
-          <p>所有名稱與說明位於 control 外；輸入本體維持相同高度。</p>
+          <p>說明置於欄位外，不影響輸入高度。</p>
         </header>
         <div class="demo-text-field-content-list">
           <article
@@ -383,10 +381,7 @@ function coverageFor(layer, state) {
       >
         <header class="demo-text-field-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>
-            Readonly 使用跨 Field 家族核定的 quiet surface，保留選取、複製與
-            keyboard focus。
-          </p>
+          <p>唯讀保留選取、複製與鍵盤焦點。</p>
         </header>
         <div class="demo-text-field-state-list">
           <article

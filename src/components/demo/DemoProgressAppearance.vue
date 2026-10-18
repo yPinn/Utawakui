@@ -5,8 +5,7 @@ import DemoProgressPrimitive from './DemoProgressPrimitive.vue';
 <template>
   <div class="demo-progress-appearance">
     <p class="demo-progress-appearance__intro">
-      <strong>UiProgress 是有標籤的進度指示器。</strong>
-      它只呈現工作進度；工作結果與後續操作由所在畫面顯示。
+      顯示有標籤的進度；結果與操作另行呈現。
     </p>
 
     <section class="demo-progress-layer" data-progress-source="production">

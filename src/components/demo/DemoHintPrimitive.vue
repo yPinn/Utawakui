@@ -54,11 +54,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-role">
       <header class="demo-hint-subsection__header">
         <h5>使用時機</h5>
-        <p>
-          UiHint
-          目前保留為相容元件。跨功能使用只證明輔助文字樣式可共用，不能單獨證明未來仍需要獨立
-          Vue 元件；正式遷移前仍要比較共用文字樣式與各功能自行組合。
-        </p>
+        <p>獨立補充說明；欄位與通知另用對應元件。</p>
       </header>
 
       <div class="demo-hint-role__grid">
@@ -67,7 +63,7 @@ const TONE_ITEMS = [
           <component :is="layer.component" tone="muted">
             此段落僅供預覽，不會變更歌曲資料。
           </component>
-          <span>只呈現補充說明；是否保留獨立元件仍待後續審查</span>
+          <span>純文字補充說明</span>
         </article>
         <article data-hint-role="field">
           <strong>欄位驗證訊息</strong>
@@ -90,10 +86,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-density">
       <header class="demo-hint-subsection__header">
         <h5>文字尺寸</h5>
-        <p>
-          Caption 維持 14px／1.4；Standard 與 Compact 不改文字尺寸，也不建立
-          control height。密度只影響外層排版。
-        </p>
+        <p>兩種密度皆使用 14px／1.4 文字。</p>
       </header>
 
       <div class="demo-hint-density-list">
@@ -114,9 +107,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-anatomy">
       <header class="demo-hint-subsection__header">
         <h5>內容結構</h5>
-        <p>
-          只包含原生段落與可見文字；圖示、操作、標題組合、背景與位置不屬於輔助文字本身。
-        </p>
+        <p>純文字段落，不包含圖示、操作或背景。</p>
       </header>
 
       <div class="demo-hint-anatomy-list">
@@ -138,10 +129,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-content">
       <header class="demo-hint-subsection__header">
         <h5>長內容與換行</h5>
-        <p>
-          一般
-          CJK／Latin／多語句子自然換行；沒有自然斷點的長文字仍應留在外層檢查框內。
-        </p>
+        <p>多語與長文字應在窄框內換行。</p>
       </header>
 
       <div class="demo-hint-content-list">
@@ -169,12 +157,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-tones">
       <header class="demo-hint-subsection__header">
         <h5>訊息類型</h5>
-        <p>
-          UiHint 不加入固定的「類型：」前綴。內容類型、格式與來源說明預設使用
-          Neutral；若 legacy
-          相容色仍被使用，句子本身說明狀態，顏色只輔助掃描。需要標題、圖示或操作時使用
-          UiNotice。
-        </p>
+        <p>一般說明使用中性色；狀態需以文字說清楚，圖示或操作使用 UiNotice。</p>
       </header>
 
       <div class="demo-hint-tone-list">
@@ -194,9 +177,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-recipes">
       <header class="demo-hint-subsection__header">
         <h5>使用情境</h5>
-        <p>
-          元件只負責文字。內距、對齊、可用寬度、空狀態位置與即時宣告時機由使用畫面決定。
-        </p>
+        <p>寬度、位置與宣告時機由所在畫面決定。</p>
       </header>
 
       <div class="demo-hint-recipe-list">
@@ -248,9 +229,7 @@ const TONE_ITEMS = [
     <section class="demo-hint-block demo-hint-contract">
       <header class="demo-hint-subsection__header">
         <h5>輔助技術與公開介面</h5>
-        <p>
-          靜態文字保留段落語意；只有掌握更新時機的畫面才加入即時宣告。訊息顏色不自行建立警示，語言與文字方向沿用原生屬性。
-        </p>
+        <p>靜態文字不主動宣告；即時更新由所在畫面設定。</p>
       </header>
 
       <div class="demo-hint-aria-list">

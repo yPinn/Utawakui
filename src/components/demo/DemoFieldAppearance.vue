@@ -124,8 +124,8 @@ const FIELD_STATES = [
 const FIELD_LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案外觀',
-    note: '尚未套用正式元件；本區由 F8 的 Token v2 scope 驅動。',
+    title: '正式 UiField',
+    note: '標籤、提示、錯誤與輸入狀態。',
     labelSelection: ['complete', 'Select none'],
     disabledFeedback: ['complete', 'Not-allowed · Select none'],
     readonlySurface: ['complete', 'Quiet surface'],
@@ -163,10 +163,7 @@ function coverageFor(layer, state, index) {
 
 <template>
   <div class="demo-field-appearance">
-    <p class="demo-field-appearance__intro">
-      <strong>Field 統一 Label、control、Hint／Error 的排列與狀態語法。</strong>
-      各輸入元件只補自己的 control 結構。
-    </p>
+    <p class="demo-field-appearance__intro">共用標籤、提示與錯誤排列。</p>
 
     <section
       v-for="layer in FIELD_LAYERS"
@@ -184,7 +181,7 @@ function coverageFor(layer, state, index) {
       <section class="demo-field-foundation" data-field-foundation="true">
         <header class="demo-field-subsection__header">
           <h5>基礎性質</h5>
-          <p>先確認控制本體，再檢查文字與狀態；寬度由使用它的 layout 決定。</p>
+          <p>控制尺寸與寬度。</p>
         </header>
 
         <div class="demo-field-foundation__grid">
@@ -281,7 +278,7 @@ function coverageFor(layer, state, index) {
               </div>
             </div>
             <p class="demo-field-foundation__boundary">
-              Leading／Trailing 由具體元件負責，不建立通用 accessory slot。
+              前後附加內容由各輸入元件提供。
             </p>
           </section>
         </div>
@@ -290,7 +287,7 @@ function coverageFor(layer, state, index) {
       <section class="demo-field-state-review">
         <header class="demo-field-subsection__header">
           <h5>狀態外觀</h5>
-          <p>先看實際結果，再由覆蓋矩陣確認每個狀態是否有完整設定。</p>
+          <p>狀態外觀與覆蓋範圍。</p>
         </header>
 
         <div class="demo-field-layer__states">

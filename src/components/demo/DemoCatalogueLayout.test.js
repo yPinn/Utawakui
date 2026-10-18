@@ -36,6 +36,7 @@ const trackCollectionSource = readSource('./DemoTrackCollectionProposal.vue');
 
 const GROUP_COMPONENTS = {
   foundations: DemoFoundations,
+  layout: DemoFoundations,
   inputs: DemoInputs,
   actions: DemoActions,
   navigation: DemoNavigation,

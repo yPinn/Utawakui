@@ -300,9 +300,7 @@ function variantNote(variant) {
     <section class="demo-tabs-block demo-tabs-anatomy-block">
       <header class="demo-tabs-subsection__header">
         <h5>Owned anatomy</h5>
-        <p>
-          Tab list 負責選取與 focus；每個 tab 必須能追蹤到 parent-owned panel。
-        </p>
+        <p>每個分頁連結對應內容。</p>
       </header>
       <div class="demo-tabs-anatomy">
         <div class="demo-tabs-anatomy__specimen">
@@ -409,7 +407,7 @@ function variantNote(variant) {
     <section class="demo-tabs-block demo-tabs-state-review">
       <header class="demo-tabs-subsection__header">
         <h5>狀態外觀</h5>
-        <p>比較 Default 至 Disabled；所有狀態不改變 control 幾何。</p>
+        <p>各狀態維持相同尺寸。</p>
       </header>
       <div class="demo-tabs-state-list">
         <article
@@ -453,7 +451,7 @@ function variantNote(variant) {
     <section class="demo-tabs-block demo-tabs-keyboard">
       <header class="demo-tabs-subsection__header">
         <h5>Keyboard／ARIA</h5>
-        <p>Automatic activation 適用即時 panels；方向鍵移動時同步顯示內容。</p>
+        <p>方向鍵切換分頁並同步顯示內容。</p>
       </header>
       <component
         :is="layer.component"

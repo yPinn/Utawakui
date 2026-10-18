@@ -6,8 +6,8 @@ import DemoArtworkStates from './DemoArtworkStates.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiTrackThumb · 單曲封面',
-    note: '有效封面優先；沒有可用封面時顯示穩定的預設圖片，並保留獨立封面的名稱關係。',
+    title: '未採用提案 · 單曲封面',
+    note: '有效封面優先，缺圖時使用預設圖片。',
     component: DemoCandidateTrackThumb,
     densities: [
       {
@@ -56,14 +56,13 @@ const LAYERS = [
 <template>
   <div class="demo-track-thumb-appearance">
     <p class="demo-track-thumb-appearance__intro">
-      <strong>UiTrackThumb 表示單一曲目的方形封面位置。</strong>
-      它維持封面、替代內容與空內容的固定位置；集合封面和資料列有各自的責任。
+      單曲封面、替代圖片與載入狀態。
     </p>
 
     <section class="demo-track-thumb-layer" data-artwork-source="production">
       <header class="demo-track-thumb-layer__header">
         <h4>正式 UiArtworkLoading／UiArtworkReveal</h4>
-        <p>正式載入與 hover／focus 組合；下方單曲封面提案獨立保留。</p>
+        <p>正式載入與操作揭露；下方為未採用提案。</p>
       </header>
       <DemoArtworkStates />
     </section>

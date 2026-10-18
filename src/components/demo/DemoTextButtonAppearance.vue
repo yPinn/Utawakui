@@ -6,7 +6,7 @@ import DemoTextButtonRecipes from './DemoTextButtonRecipes.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2／已遷移 UiTextButton',
+    title: '正式 UiTextButton',
     note: '預設無底線；hover／focus-visible 顯示底線。',
     component: UiTextButton,
     appearanceContract: '預設無底線 · hover／focus-visible underline',

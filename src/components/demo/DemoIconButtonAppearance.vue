@@ -7,12 +7,12 @@ import DemoIconButtonRecipes from './DemoIconButtonRecipes.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2／已遷移 UiIconButton',
+    title: '正式 UiIconButton',
     note: 'Routine target 隨 density 為 36／32px；44px lg 只用於 Primary transport 等明確強調角色。',
     component: UiIconButton,
     actionComponent: UiButton,
     actionVariant: 'secondary',
-    fieldNote: '提案同列 control boxes · 36／32px',
+    fieldNote: '同列控制項 · Standard／Compact',
     stateNote:
       'Ghost／Accent／Command／Overlay 皆有 authored hover 與 pressed。',
     sizes: [

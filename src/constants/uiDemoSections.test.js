@@ -6,9 +6,27 @@ import {
 } from './uiDemoSections.js';
 
 describe('UI demo component order', () => {
+  it('separates foundation scales from reusable layout components', () => {
+    const foundations = UI_DEMO_GROUPS.find(
+      (group) => group.key === 'foundations',
+    );
+    const layout = UI_DEMO_GROUPS.find((group) => group.key === 'layout');
+    expect(foundations.sections.every((section) => !section.components)).toBe(
+      true,
+    );
+    expect(layout.sections.map((section) => section.key)).toEqual([
+      'scrollbar',
+      'page-header',
+      'separator',
+      'stack',
+      'surface',
+      'kbd',
+    ]);
+  });
   it('keeps the conventional component groups before the dedicated track collection proposal', () => {
     expect(UI_DEMO_GROUPS.map((group) => group.key)).toEqual([
       'foundations',
+      'layout',
       'inputs',
       'actions',
       'navigation',
@@ -24,7 +42,7 @@ describe('UI demo component order', () => {
       UI_DEMO_GROUPS.find((group) => group.key === 'track-collections'),
     ).toMatchObject({
       title: '集合曲目表',
-      description: '比較不同集合的欄位、狀態與窄版呈現。',
+      description: '組合範例：集合欄位、曲目狀態與窄版呈現。',
       sections: [{ title: '檢視與互動' }],
     });
   });
@@ -130,6 +148,7 @@ describe('UI demo component order', () => {
   it('uses Traditional Chinese display labels while preserving stable keys', () => {
     expect(UI_DEMO_GROUPS.map((group) => group.title)).toEqual([
       '基礎規範',
+      '版面與容器',
       '輸入元件',
       '操作元件',
       '導覽元件',

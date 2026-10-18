@@ -4,8 +4,8 @@ import DemoTrackRowPrimitive from './DemoTrackRowPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiTrackRow · 曲目識別列',
-    note: '提案 primitives；Standard 52／40px，Compact 44／36px。',
+    title: '未採用提案 · 曲目列',
+    note: '獨立列樣式；操作與外觀不代表正式 UiTrackRow。',
   },
 ];
 </script>
@@ -13,8 +13,7 @@ const LAYERS = [
 <template>
   <div class="demo-track-row-appearance">
     <p class="demo-track-row-appearance__intro">
-      <strong>UiTrackRow 只排一列曲目識別。</strong>
-      流程、排序與操作結果由 caller 擁有。
+      顯示曲目名稱、歌手與操作；不管理排序。
     </p>
 
     <section

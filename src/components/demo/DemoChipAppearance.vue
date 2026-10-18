@@ -5,8 +5,8 @@ import DemoChipPrimitive from './DemoChipPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiChip',
-    note: '非互動的短狀態／屬性標籤；不透明語意文字搭配低強度 surface 與邊界。',
+    title: '樣式預覽 · UiChip',
+    note: '短狀態與屬性標籤，不提供操作。',
     component: DemoCandidateChip,
     sizes: [
       ['standard', 'Standard · 24 CSS px'],
@@ -19,8 +19,7 @@ const LAYERS = [
 <template>
   <div class="demo-chip-appearance">
     <p class="demo-chip-appearance__intro">
-      <strong>UiChip 是非互動的短狀態／屬性／數量標籤。</strong>
-      互動需求改用對應 control。
+      顯示短狀態、屬性或數量，不提供操作。
     </p>
 
     <section

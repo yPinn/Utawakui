@@ -5,8 +5,8 @@ import UiTextarea from '../ui/UiTextarea.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案',
-    note: 'Readonly 使用 quiet surface；文字、選取與 keyboard focus 保持完整。',
+    title: '正式唯讀欄位',
+    note: '唯讀保留文字選取、複製與鍵盤焦點。',
   },
 ];
 
@@ -44,13 +44,10 @@ function stateNote(layer, state) {
     <header class="demo-field-readonly__header">
       <div>
         <h5>Field family 狀態語法</h5>
-        <p>
-          Editable 接受輸入；Readonly 是有效內容且可閱讀、選取與複製；Disabled
-          表示目前不可操作。
-        </p>
+        <p>可編輯接受輸入；唯讀可選取與複製；停用不可操作。</p>
       </div>
       <p class="demo-field-readonly__boundary">
-        Feature Gate 是獨立 gated flow，不是 readonly／disabled。
+        功能未啟用與唯讀、停用是不同狀態。
       </p>
     </header>
 

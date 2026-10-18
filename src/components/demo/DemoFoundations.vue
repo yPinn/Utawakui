@@ -111,9 +111,7 @@ const SYSTEM_COLOR_SWATCHES = [
     >
       <div v-if="section.key === 'system-palette'" class="demo-review-block">
         <p class="demo-review-note">
-          <strong>中性系統介面。</strong>
-          Canvas、Surface 與一般控制保持低干擾；Indigo
-          暫時只負責主題、選取與焦點。
+          中性色為介面基底；Indigo 用於主題、選取與焦點。
         </p>
         <div class="demo-swatches">
           <figure
@@ -141,11 +139,7 @@ const SYSTEM_COLOR_SWATCHES = [
         v-else-if="section.key === 'folder-palette'"
         class="demo-review-block"
       >
-        <p class="demo-review-note">
-          <strong>高彩度只屬於 Folder。</strong>
-          下列為 Mosby Files 的視覺參考樣本，尚未寫入
-          token；用來確認分類物件需要的色彩強度。
-        </p>
+        <p class="demo-review-note">Folder 高彩度參考樣本，尚未寫入 token。</p>
         <div class="demo-folder-swatches" aria-label="Folder 高彩度參考樣本">
           <figure
             v-for="folder in FOLDER_REFERENCE_SWATCHES"
@@ -188,9 +182,7 @@ const SYSTEM_COLOR_SWATCHES = [
             <UiButton variant="accent">儲存變更</UiButton>
           </template>
         </UiPageHeader>
-        <p class="demo-sample-caption">
-          標題與動作保持同一基線；窄幅時仍保留清楚的操作名稱。
-        </p>
+        <p class="demo-sample-caption">標題與操作對齊，窄幅時保留操作名稱。</p>
       </div>
 
       <div
@@ -207,9 +199,7 @@ const SYSTEM_COLOR_SWATCHES = [
           <UiSeparator orientation="vertical" :decorative="false" />
           <span>右側</span>
         </div>
-        <p class="demo-sample-caption">
-          分隔線只擁有方向、邊界 token 與語意；外距由 caller layout 負責。
-        </p>
+        <p class="demo-sample-caption">水平與垂直分隔；外距由版面決定。</p>
       </div>
 
       <div v-else-if="section.key === 'stack'" class="demo-stack-samples">
@@ -223,11 +213,7 @@ const SYSTEM_COLOR_SWATCHES = [
           <span>標籤二</span>
           <span>標籤三</span>
         </UiStack>
-        <p class="demo-sample-caption">
-          只擁有
-          display:flex／direction／gap／align／justify／wrap；其餘版面責任（寬度、padding、捲動）由
-          caller 擁有。
-        </p>
+        <p class="demo-sample-caption">排列方向、間距、對齊與換行。</p>
       </div>
 
       <div v-else-if="section.key === 'surface'" class="demo-surface-samples">
@@ -241,8 +227,7 @@ const SYSTEM_COLOR_SWATCHES = [
           <code>tone="{{ sample.tone }}" radius="{{ sample.radius }}"</code>
         </UiSurface>
         <p class="demo-sample-caption">
-          只擁有 border／border-radius／background；padding、display、gap
-          等版面責任由 caller 擁有。
+          面板背景、邊界與圓角；內距由版面決定。
         </p>
       </div>
 
@@ -250,9 +235,7 @@ const SYSTEM_COLOR_SWATCHES = [
         <span><UiKbd>F8</UiKbd> 開啟元件型錄</span>
         <span><UiKbd>Esc</UiKbd> 關閉目前浮層</span>
         <span><UiKbd>Ctrl</UiKbd> + <UiKbd>K</UiKbd> 快速操作範例</span>
-        <p class="demo-sample-caption">
-          只顯示caller提供的快捷鍵；command註冊、平台映射與可用狀態不屬於Kbd。
-        </p>
+        <p class="demo-sample-caption">僅顯示快捷鍵，不註冊操作。</p>
       </div>
     </DemoCatalogueSection>
   </div>

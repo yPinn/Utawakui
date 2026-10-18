@@ -90,11 +90,7 @@ const LONG_TITLE =
 <template>
   <div class="demo-typography">
     <div class="demo-typography__intro">
-      <p>
-        <strong>Electron 原生系統字型。</strong>
-        控制面板沿用 Windows UI 字型堆疊，不下載或內嵌額外 UI 字型；Overlay
-        依各輸出模板另行管理。
-      </p>
+      <p>控制面板使用 Windows 系統字型；Overlay 由各模板設定。</p>
       <code>
         Segoe UI Variable Text → Segoe UI → Microsoft JhengHei UI → system-ui
       </code>
@@ -133,9 +129,7 @@ const LONG_TITLE =
         >
           {{ LONG_TITLE }}
         </p>
-        <p class="demo-type-check__note">
-          所有長標題只佔一行；容器不足時顯示省略號，不改為兩行。
-        </p>
+        <p class="demo-type-check__note">標題維持單行，過長時顯示省略號。</p>
       </section>
 
       <section class="demo-type-check" aria-labelledby="demo-numerals-title">
@@ -159,9 +153,7 @@ const LONG_TITLE =
         <p class="demo-type-check__languages">
           繁體中文 · English · かな／カナ · 한글
         </p>
-        <p class="demo-type-check__note">
-          不加裝飾性字距，依作業系統提供的字型覆蓋穩定顯示。
-        </p>
+        <p class="demo-type-check__note">字型覆蓋依作業系統提供。</p>
       </section>
     </div>
   </div>

@@ -269,8 +269,8 @@ const LAYERS = [
   {
     key: 'candidate',
     className: 'demo-range-layer--candidate',
-    title: 'Token v2／已遷移 UiRange',
-    note: '正式 UiRange 保留 native input 數值與互動權威；共用 control primitive 只擁有 track／fill／thumb 與 pointer preview。',
+    title: '正式 UiRange',
+    note: '拖曳或使用方向鍵調整數值，指向軌道可預覽。',
     geometryNote:
       '完整軌道 target 隨離散 density 映射；6px track 固定，16px thumb 只在互動時顯示。',
     contracts: [
@@ -336,8 +336,7 @@ function candidatePreviewProps(layer, formatValue) {
 <template>
   <div class="demo-range-appearance">
     <p class="demo-range-appearance__intro">
-      <strong>Range 是具 numeric value 的連續／離散調整。</strong>
-      沒有 empty、required 或 readonly state。
+      連續或離散數值調整；無空值、必填或唯讀狀態。
     </p>
 
     <section
@@ -405,10 +404,7 @@ function candidatePreviewProps(layer, formatValue) {
       <section class="demo-range-anatomy-block">
         <header class="demo-range-subsection__header">
           <h5>Owned anatomy</h5>
-          <p>
-            UiField 擁有 label／support；Range 擁有 native
-            input、track、fill、thumb 與 optional value output。
-          </p>
+          <p>標籤、軌道、滑塊與選用數值。</p>
         </header>
         <div class="demo-range-anatomy">
           <component
@@ -462,8 +458,8 @@ function candidatePreviewProps(layer, formatValue) {
         <header class="demo-range-subsection__header">
           <h5>數值與格式內容</h5>
           <p>
-            modelValue 保持 Number；valueText 描述目前值並供
-            aria-valuetext，formatValue 只格式化 hover preview。
+            modelValue 為數字；valueText 描述目前值，formatValue
+            格式化指向預覽。
           </p>
         </header>
         <div class="demo-range-content-list">
@@ -493,10 +489,7 @@ function candidatePreviewProps(layer, formatValue) {
       <section class="demo-range-stops" data-range-stops>
         <header class="demo-range-subsection__header">
           <h5>離散 stops</h5>
-          <p>
-            0／25／50／75／100 · native step 25。吸附仍由 input 數值域負責；少量
-            ticks 只在需要表達離散選擇時出現。
-          </p>
+          <p>每格 25，依原生 step 吸附；刻度標示離散選項。</p>
         </header>
         <div class="demo-range-stops__specimen">
           <component
@@ -527,11 +520,7 @@ function candidatePreviewProps(layer, formatValue) {
       <section class="demo-range-state-review">
         <header class="demo-range-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>
-            Range 沒有 empty／filled 二分；min、mid、max 都是有效值。Rest 隱藏
-            thumb；hover 顯示 pointer preview，鍵盤焦點顯示 thumb 與 focus
-            ring。
-          </p>
+          <p>最小、中間與最大值皆有效；指向顯示預覽，鍵盤焦點顯示滑塊。</p>
         </header>
         <div class="demo-range-state-list">
           <article
@@ -597,10 +586,7 @@ function candidatePreviewProps(layer, formatValue) {
       <section class="demo-range-validation">
         <header class="demo-range-subsection__header">
           <h5>Hint → Error 與 ARIA</h5>
-          <p>
-            Auto 為預設；Error 取代 Hint，aria-valuetext 與 caller description
-            同時保留。
-          </p>
+          <p>錯誤取代提示，保留數值與其他描述。</p>
         </header>
         <div class="demo-range-validation__replacement">
           <article>

@@ -4,6 +4,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiNotificationHost from '../ui/UiNotificationHost.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoProductionSample from './DemoProductionSample.vue';
 import DemoChipAppearance from './DemoChipAppearance.vue';
 import DemoHintAppearance from './DemoHintAppearance.vue';
 import DemoNoticeAppearance from './DemoNoticeAppearance.vue';
@@ -25,8 +26,8 @@ function showNotification() {
       lifecycle: 'transient',
       announcement: 'polite',
       tone: 'success',
-      title: '外觀設定已儲存',
-      message: '這是 development-only fixed host 範例。',
+      title: '範例通知',
+      message: '這是展示訊息，不會儲存設定。',
       dismissible: true,
     },
   ];
@@ -48,6 +49,13 @@ function dismissNotification({ id }) {
       :title="section.title"
       :component-label="section.components?.join(' · ')"
     >
+      <DemoProductionSample
+        v-if="
+          ['chips', 'status-icons', 'hints', 'notices'].includes(section.key)
+        "
+        :kind="section.key"
+      />
+
       <DemoChipAppearance v-if="section.key === 'chips'" />
 
       <DemoStatusIconAppearance v-else-if="section.key === 'status-icons'" />
@@ -64,9 +72,7 @@ function dismissNotification({ id }) {
           pattern="staggered"
           aria-label="正在載入外觀預設"
         />
-        <p class="demo-sample-caption">
-          Placeholder不取得fetch lifecycle；caller必須提供完整loading名稱。
-        </p>
+        <p class="demo-sample-caption">顯示載入占位，並提供可讀的載入名稱。</p>
       </div>
 
       <div
@@ -76,9 +82,7 @@ function dismissNotification({ id }) {
         <UiButton variant="accent" @click="showNotification">
           顯示固定通知
         </UiButton>
-        <p class="demo-sample-caption">
-          Host只管理顯示佇列、timer與dismiss；訊息政策及action結果仍由caller擁有。
-        </p>
+        <p class="demo-sample-caption">通知會自動消失，也可手動關閉。</p>
         <UiNotificationHost
           :items="notificationItems"
           @dismiss="dismissNotification"

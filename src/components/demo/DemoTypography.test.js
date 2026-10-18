@@ -17,8 +17,8 @@ describe('DemoTypography', () => {
   it('documents the native Electron type stack and seven semantic roles', async () => {
     const html = await renderToString(createSSRApp(DemoTypography));
 
-    expect(html).toContain('Electron 原生系統字型');
-    expect(html).toContain('不下載或內嵌額外 UI 字型');
+    expect(html).toContain('控制面板使用 Windows 系統字型');
+    expect(html).toContain('Overlay 由各模板設定');
     expect(html).toContain('Display／Emphasis');
     expect(html).toContain('Page Heading');
     expect(html).toContain('Section Title');

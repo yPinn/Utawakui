@@ -8,8 +8,8 @@ import UiTextField from '../ui/UiTextField.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2／已遷移 UiButton',
-    note: '一般文字動作使用穩定單行與 36／32px target；純圖示操作仍由 UiIconButton 擁有。',
+    title: '正式 UiButton',
+    note: '文字按鈕維持單行；純圖示操作使用 UiIconButton。',
     overflowNote: '受限寬度採靜態單行 ellipsis；按鈕文案不使用 marquee。',
     secondaryVariant: 'secondary',
     secondaryLabel: 'Secondary',
@@ -132,9 +132,7 @@ function stateProps(state, variant) {
       <section class="demo-button-subsection">
         <header class="demo-button-subsection__header">
           <h5>尺寸與寬度</h5>
-          <p>
-            Standard／Compact 是離散尺寸；按鈕預設維持 intrinsic inline size。
-          </p>
+          <p>尺寸依密度切換；預設寬度隨內容。</p>
         </header>
         <div class="demo-button-size-grid">
           <article
@@ -212,10 +210,7 @@ function stateProps(state, variant) {
       <section class="demo-button-subsection">
         <header class="demo-button-subsection__header">
           <h5>Field composition</h5>
-          <p>
-            同列先對齊 control box，而非不同字重的文字 baseline；隱藏 label
-            保留可存取名稱，不用空白 label 墊高。
-          </p>
+          <p>同列控制項對齊；隱藏標籤仍保留可存取名稱。</p>
         </header>
         <div class="demo-button-field-grid">
           <article
@@ -253,9 +248,7 @@ function stateProps(state, variant) {
       <section class="demo-button-subsection">
         <header class="demo-button-subsection__header">
           <h5>Owned anatomy</h5>
-          <p>
-            一般按鈕只擁有 optional leading icon、label 與 loading replacement。
-          </p>
+          <p>可包含前置圖示、文字與載入狀態。</p>
         </header>
         <div class="demo-button-anatomy">
           <div class="demo-button-anatomy__specimens">
@@ -383,9 +376,7 @@ function stateProps(state, variant) {
       <section class="demo-button-subsection">
         <header class="demo-button-subsection__header">
           <h5>Async 與 ARIA</h5>
-          <p>
-            Loading 阻止重複觸發；active 只供視覺，toggle 語意由 caller 明示。
-          </p>
+          <p>載入時禁止重複操作；切換按鈕需設定 aria-pressed。</p>
         </header>
         <div class="demo-button-async-grid">
           <article>

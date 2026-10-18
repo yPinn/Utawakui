@@ -196,8 +196,8 @@ const STATES = [
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 Textarea',
-    note: '沿用候選 Field 外框；多行本體只定義 rows、換行、溢位與 resize。',
+    title: '正式 UiTextarea',
+    note: '多行輸入、換行、捲動與調整大小。',
     floor: 'Standard 72／Compact 64 CSS px',
     heightCases: [
       ['standard-floor', 2, 'Standard hard floor', '2 rows · 72 CSS px'],
@@ -242,9 +242,7 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-textarea-appearance">
     <p class="demo-textarea-appearance__intro">
-      <strong
-        >Textarea 沿用 Field，只增加多行高度與 resize／overflow 行為。</strong
-      >
+      多行輸入，支援調整大小與捲動。
     </p>
 
     <section
@@ -262,7 +260,7 @@ function coverageFor(layer, state) {
       <section class="demo-textarea-foundation">
         <header class="demo-textarea-subsection__header">
           <h5>基礎性質</h5>
-          <p>先檢查 rows 與 hard floor，再檢查流體寬度及內部解剖。</p>
+          <p>行數、尺寸與寬度。</p>
         </header>
 
         <div class="demo-textarea-contracts" aria-label="Textarea 尺寸責任">
@@ -364,7 +362,7 @@ function coverageFor(layer, state) {
       <section class="demo-textarea-content-review">
         <header class="demo-textarea-subsection__header">
           <h5>內容行為</h5>
-          <p>名稱與規格留在 control 外，Textarea 本身只承載可編輯內容。</p>
+          <p>欄位內僅放可編輯內容。</p>
         </header>
         <div class="demo-textarea-content-list">
           <article
@@ -392,10 +390,7 @@ function coverageFor(layer, state) {
       <section class="demo-textarea-state-review">
         <header class="demo-textarea-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>
-            Readonly 使用跨 Field 家族核定的 quiet surface，保留選取、複製與
-            keyboard focus。
-          </p>
+          <p>唯讀保留選取、複製與鍵盤焦點。</p>
         </header>
         <div class="demo-textarea-state-list">
           <article

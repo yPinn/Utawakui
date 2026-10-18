@@ -4,6 +4,7 @@ import UiBreadcrumb from '../ui/UiBreadcrumb.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoProductionSample from './DemoProductionSample.vue';
 import DemoTabsAppearance from './DemoTabsAppearance.vue';
 
 defineProps({
@@ -33,6 +34,8 @@ const sampleTrail = [
       :title="section.title"
       :component-label="section.components?.join(' · ')"
     >
+      <DemoProductionSample v-if="section.key === 'tabs'" :kind="section.key" />
+
       <DemoTabsAppearance v-if="section.key === 'tabs'" />
 
       <div
@@ -41,8 +44,7 @@ const sampleTrail = [
       >
         <UiBreadcrumb :items="sampleTrail" aria-label="匯入路徑" />
         <p class="demo-sample-caption">
-          最後一項自動視為目前位置，不可互動；中段收合尚未實作，超出寬度時採
-          native 水平捲動，與 Tabs／Segmented Control 一致。
+          最後一項表示目前位置；過長路徑可水平捲動。
         </p>
       </div>
 
@@ -55,10 +57,7 @@ const sampleTrail = [
           :items="sampleModes"
           aria-label="分析模式"
         />
-        <p class="demo-sample-caption">
-          單選語意與 roving focus 由元件負責；filter、mode 與 persistence 仍由
-          caller 負責。
-        </p>
+        <p class="demo-sample-caption">使用方向鍵切換選項，略過停用項目。</p>
       </div>
 
       <div
@@ -66,10 +65,10 @@ const sampleTrail = [
         class="demo-disclosure-sample"
       >
         <UiDisclosure v-model:open="disclosureOpen" label="來源證據">
-          這裡放caller-owned內容；使用者資料與說明文字仍可選取。
+          展開內容可放置說明與操作，文字可選取。
         </UiDisclosure>
         <p class="demo-sample-caption">
-          Native details擁有展開語意；不把summary包成第二個Icon Button。
+          點擊標題，或聚焦後按 Enter／空白鍵展開。
         </p>
       </div>
     </DemoCatalogueSection>

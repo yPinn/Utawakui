@@ -5,7 +5,7 @@ import DemoTabsPrimitive from './DemoTabsPrimitive.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: '未採用提案 UiTabs',
+    title: '樣式預覽 · UiTabs',
     note: 'Panel 與 Bar 都維持真實 tab／tabpanel；外觀 variant 不改變互動語意。',
     component: DemoCandidateTabs,
     sizes: [
@@ -19,8 +19,7 @@ const LAYERS = [
 <template>
   <div class="demo-tabs-appearance">
     <p class="demo-tabs-appearance__intro">
-      <strong>Tabs 只切換同一工作區內互斥 panels。</strong>
-      Filter、mode switch 與全域 navigation 不使用 UiTabs。
+      切換同一區域的內容頁；模式選擇使用分段控制。
     </p>
 
     <section

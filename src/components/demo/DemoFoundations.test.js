@@ -47,8 +47,8 @@ describe('DemoFoundations review', () => {
       createSSRApp(DemoFoundations, { sections }),
     );
 
-    expect(html).toContain('中性系統介面');
-    expect(html).toContain('高彩度只屬於 Folder');
+    expect(html).toContain('中性色為介面基底');
+    expect(html).toContain('Folder 高彩度參考樣本');
     expect(html).toContain('參考樣本，尚未寫入 token');
     expect(html).toContain('Mildliner');
     expect(html).toContain('色票來源，不是筆觸外觀');

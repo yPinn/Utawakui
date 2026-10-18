@@ -74,8 +74,8 @@ describe('DemoProgressAppearance', () => {
 
   it('keeps the primitive separate from task lifecycle and result messaging', async () => {
     const html = await renderToString(createSSRApp(DemoProgressAppearance));
-    expect(html).toContain('UiProgress 是有標籤的進度指示器');
-    expect(html).toContain('工作結果與後續操作由所在畫面顯示');
+    expect(html).toContain('顯示有標籤的進度');
+    expect(html).toContain('結果與操作另行呈現');
     expect(html).toContain('不負責取消、重試、關閉或通知佇列');
     expect(html).toContain('完成或失敗不靠進度條顏色單獨表達');
     expect(progressSource).not.toMatch(

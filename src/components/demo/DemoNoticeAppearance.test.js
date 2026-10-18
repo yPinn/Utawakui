@@ -73,13 +73,13 @@ describe('DemoNoticeAppearance', () => {
   });
   it('keeps inline notice, field support, modal, toast, and banner ownership separate', async () => {
     const html = await renderToString(createSSRApp(DemoNoticeAppearance));
-    expect(html).toContain('共用的結構化內嵌通知');
+    expect(html).toContain('靠近相關內容顯示訊息與操作');
     expect(html).toContain('欄位與說明／錯誤之間的關聯由 UiField 負責');
-    expect(html).toContain('UiHint 目前保留為相容元件');
-    expect(html).toContain('跨功能的使用數量只證明有共用需求');
+    expect(html).toContain('UiHint 用於純文字說明');
+    expect(html).toContain('宣告時機與急迫性由更新流程決定');
     expect(html).toContain('Modal 負責焦點保護與中斷流程');
     expect(html).toContain('負責位置、尺寸、佇列、關閉與顯示時間');
-    expect(html).toContain('結構化內容支持共用元件的責任');
+    expect(html).toContain('欄位說明與固定通知另行處理');
     expect(html).not.toContain('UiHint owns standalone supporting text');
     expect(primitiveSource).not.toMatch(
       /import\s+UiField|import\s+UiHint|import\s+UiModal/u,
