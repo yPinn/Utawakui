@@ -26,6 +26,8 @@ defineProps({
 
 <style scoped>
 .ui-button-group {
+  min-width: 0;
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
@@ -47,7 +49,12 @@ defineProps({
 }
 
 .ui-button-group :deep(.ui-btn) {
+  border: 0;
   border-radius: 0;
+}
+
+.ui-button-group :deep(.ui-btn:focus-visible) {
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-button-group :deep(.ui-btn + .ui-btn) {

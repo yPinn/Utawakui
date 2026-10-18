@@ -1,4 +1,5 @@
 <script setup>
+import { nextTick, useTemplateRef, watch } from 'vue';
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 
 const props = defineProps({
@@ -7,6 +8,26 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:open', 'toggle']);
+const summaryRef = useTemplateRef('summary');
+const bodyRef = useTemplateRef('body');
+
+watch(
+  () => props.open,
+  (open) => {
+    if (open) return;
+    const document = globalThis.document;
+    const active = document?.activeElement;
+    if (!active || !bodyRef.value?.contains?.(active)) return;
+    nextTick(() => {
+      if (
+        document.activeElement === active ||
+        document.activeElement === document.body
+      ) {
+        summaryRef.value?.focus();
+      }
+    });
+  },
+);
 
 function handleToggle(event) {
   const nextOpen = Boolean(event.currentTarget.open);
@@ -17,7 +38,7 @@ function handleToggle(event) {
 
 <template>
   <details class="ui-disclosure" :open="props.open" @toggle="handleToggle">
-    <summary class="ui-disclosure__summary">
+    <summary ref="summary" class="ui-disclosure__summary">
       <ChevronRight
         class="ui-disclosure__indicator"
         :size="ICON_SIZE"
@@ -27,7 +48,7 @@ function handleToggle(event) {
         <slot name="summary">{{ props.label }}</slot>
       </span>
     </summary>
-    <div class="ui-disclosure__body">
+    <div ref="body" class="ui-disclosure__body">
       <slot />
     </div>
   </details>
@@ -82,6 +103,7 @@ function handleToggle(event) {
 
 .ui-disclosure__label {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ui-disclosure__body {

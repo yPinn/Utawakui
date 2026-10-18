@@ -23,7 +23,9 @@ describe('DisplayPage', () => {
     expect(editMode).toBeGreaterThan(-1);
     expect(editMode).toBeLessThan(galleryMode);
     expect(html).toContain('aria-checked="true" tabindex="0"');
-    expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->工作臺/);
+    expect(html).toMatch(
+      /aria-checked="true"[^>]*><span class="ui-segmented-control__label"[^>]*><!--\[-->工作臺/,
+    );
     expect(html).toContain('aria-label="輸出設定"');
     expect(html).not.toContain('id="obs-output-settings-tab"');
   });
@@ -62,7 +64,9 @@ describe('DisplayPage', () => {
     try {
       const html = await renderDisplayPage();
 
-      expect(html).toMatch(/aria-checked="true"[^>]*><!--\[-->模板庫/);
+      expect(html).toMatch(
+        /aria-checked="true"[^>]*><span class="ui-segmented-control__label"[^>]*><!--\[-->模板庫/,
+      );
       expect(html).toMatch(
         /id="output-kind-lyrics-tab"[^>]*aria-selected="true"/,
       );
