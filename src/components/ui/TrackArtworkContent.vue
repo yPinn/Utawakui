@@ -1,5 +1,5 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { getTrackInitial } from '../../utils/trackDisplay.js';
 import { getTrackThumbFallbackArtwork } from './trackThumbFallback.js';
 
@@ -19,6 +19,7 @@ const props = defineProps({
 
 const failedCustomImageKey = shallowRef('');
 const failedFallbackImageKey = shallowRef('');
+const sourceAttempt = shallowRef(0);
 const trackIdentity = computed(() =>
   String(props.track?.id ?? props.track?.title ?? ''),
 );
@@ -26,29 +27,62 @@ const customImageUrl = computed(() => props.track?.thumbnailUrl || '');
 const fallbackArtwork = computed(() =>
   getTrackThumbFallbackArtwork(props.track),
 );
+
+// A source/identity change starts a new attempt, including removing and then
+// restoring the same URL. Ordinary metadata edits must not retry a broken image.
+watch(
+  [trackIdentity, customImageUrl],
+  ([identity], [previousIdentity]) => {
+    sourceAttempt.value += 1;
+    failedCustomImageKey.value = '';
+    // The bundled fallback is a separate resource, stable for this identity.
+    if (identity !== previousIdentity) failedFallbackImageKey.value = '';
+  },
+  { flush: 'sync' },
+);
+
+function imageCandidate(kind, url) {
+  const failureKey = JSON.stringify([kind, trackIdentity.value, url]);
+  const key = JSON.stringify([
+    sourceAttempt.value,
+    kind,
+    trackIdentity.value,
+    url,
+  ]);
+  return {
+    kind,
+    key,
+    failureKey,
+    url,
+    onError: () => handleImageError(kind, key, failureKey),
+  };
+}
+
 const activeImage = computed(() => {
-  const customKey = `custom:${trackIdentity.value}:${customImageUrl.value}`;
-  if (customImageUrl.value && failedCustomImageKey.value !== customKey) {
-    return { kind: 'custom', key: customKey, url: customImageUrl.value };
+  const custom = imageCandidate('custom', customImageUrl.value);
+  if (custom.url && failedCustomImageKey.value !== custom.failureKey) {
+    return custom;
   }
 
   const fallbackUrl = fallbackArtwork.value?.url;
-  const fallbackKey = `fallback:${trackIdentity.value}:${fallbackUrl}`;
-  if (fallbackUrl && failedFallbackImageKey.value !== fallbackKey) {
-    return { kind: 'fallback', key: fallbackKey, url: fallbackUrl };
+  const fallback = imageCandidate('fallback', fallbackUrl);
+  if (fallback.url && failedFallbackImageKey.value !== fallback.failureKey) {
+    return fallback;
   }
 
   return undefined;
 });
 
-function handleImageError() {
-  if (activeImage.value?.kind === 'custom') {
-    failedCustomImageKey.value = activeImage.value.key;
+function handleImageError(kind, key, failureKey) {
+  // Handlers belong to the img that created them, never to the next source.
+  if (activeImage.value?.key !== key) return;
+  if (kind === 'custom') {
+    failedCustomImageKey.value = failureKey;
     return;
   }
 
-  if (activeImage.value?.kind === 'fallback') {
-    failedFallbackImageKey.value = activeImage.value.key;
+  if (kind === 'fallback') {
+    failedFallbackImageKey.value = failureKey;
   }
 }
 </script>
@@ -58,6 +92,8 @@ function handleImageError() {
     class="ui-track-artwork"
     :data-track-artwork-state="activeImage?.kind ?? 'initial'"
   >
+    <!-- Object listeners bind this attempt's snapshot instead of a cached
+         Vue method-path wrapper that reads activeImage again on dispatch. -->
     <img
       v-if="activeImage"
       :key="activeImage.key"
@@ -68,7 +104,7 @@ function handleImageError() {
       :loading="loading"
       :decoding="decoding"
       draggable="false"
-      @error="handleImageError"
+      v-on="{ error: activeImage.onError }"
     />
     <span v-else class="ui-track-artwork__initial">
       {{ getTrackInitial(track) }}

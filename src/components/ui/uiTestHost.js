@@ -7,7 +7,12 @@ import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 
 const { createRenderer, h, ssrContextKey } = Vue;
 
-export function attachClientRender(component, filename, importMetaUrl) {
+export function attachClientRender(
+  component,
+  filename,
+  importMetaUrl,
+  { cacheHandlers = false } = {},
+) {
   const source = fs.readFileSync(new URL(filename, importMetaUrl), 'utf8');
   const { descriptor } = parse(source, { filename });
   const bindingMetadata =
@@ -18,6 +23,7 @@ export function attachClientRender(component, filename, importMetaUrl) {
     mode: 'function',
     prefixIdentifiers: true,
     bindingMetadata,
+    cacheHandlers,
   });
   component.render = new Function('Vue', code)(Vue);
 }
