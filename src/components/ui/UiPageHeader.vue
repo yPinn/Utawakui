@@ -24,6 +24,7 @@ defineProps({
 
 <style scoped>
 .ui-page-header {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-1);
@@ -31,12 +32,16 @@ defineProps({
 
 .ui-page-header__row {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
   align-items: center;
   justify-content: space-between;
 }
 
 /* Headline tier — DESIGN.md names major view titles explicitly. */
 .ui-page-header__title {
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin: 0;
   font-size: var(--ui-type-heading-size);
   font-weight: var(--ui-type-heading-weight);
@@ -46,6 +51,8 @@ defineProps({
 
 .ui-page-header__actions {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   align-items: center;
   gap: var(--ui-space-2);
 }
@@ -53,6 +60,7 @@ defineProps({
 .ui-page-header__description {
   margin: 0;
   max-width: 70ch;
+  overflow-wrap: anywhere;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
   font-weight: var(--ui-type-caption-weight);
