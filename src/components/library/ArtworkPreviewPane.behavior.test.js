@@ -36,7 +36,7 @@ describe('ArtworkPreviewPane behavior contract', () => {
     expect(source).toContain('aria-label="封面操作"');
     expect(source).toContain(':loading="artworkPreparing"');
     expect(source).toContain('loading-label="準備預覽中"');
-    expect(source).toContain('intent="danger"');
+    expect(source).not.toContain('intent="danger"');
     expect(source).toMatch(
       /\.artwork-preview__actions\s*\{[^}]*inline-size:\s*var\(--track-metadata-preview-size\)[^}]*justify-content:\s*flex-end/msu,
     );

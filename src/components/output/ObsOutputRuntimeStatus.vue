@@ -49,6 +49,7 @@ const runtimeStatus = computed(() =>
       v-else
       class="obs-output-runtime-status__command"
       :icon="Power"
+      variant="secondary"
       :disabled="busy"
       @click="emit('stop')"
     >

@@ -137,9 +137,38 @@ function selectNextIncomplete() {
   annotation.selectNextIncomplete();
 }
 
-function removeBoundary(index) {
-  if (!annotation.selectedCase.value) return;
-  annotation.removeBoundary(annotation.selectedCase.value.id, index);
+async function removeBoundary(index) {
+  const referenceCase = annotation.selectedCase.value;
+  if (index <= 0 || !referenceCase?.referenceSections?.[index]) return;
+  const sectionsSnapshot = JSON.stringify(
+    referenceCase.referenceSections.map((section) => [
+      section.startMs,
+      section.endMs,
+      section.role ?? null,
+    ]),
+  );
+  const confirmed = await confirmAction({
+    title: '合併標註段落？',
+    message: '目前段落會與上一段合併，原邊界會被移除。',
+    detail: '角色不同時會清除角色標註；變更會自動儲存。',
+    confirmLabel: '合併段落',
+    intent: 'danger',
+  });
+  const current = annotation.selectedCase.value;
+  if (
+    confirmed &&
+    current?.id === referenceCase.id &&
+    current.trackId === referenceCase.trackId &&
+    JSON.stringify(
+      current.referenceSections.map((section) => [
+        section.startMs,
+        section.endMs,
+        section.role ?? null,
+      ]),
+    ) === sectionsSnapshot
+  ) {
+    annotation.removeBoundary(referenceCase.id, index);
+  }
 }
 
 function updateBpm(value) {
@@ -203,6 +232,7 @@ onUnmounted(structureSignals.clear);
         </UiButton>
         <UiButton
           variant="accent"
+          :intent="annotation.dirty.value ? 'danger' : 'neutral'"
           :disabled="annotation.loading.value || annotation.saving.value"
           @click="openWorklist"
         >

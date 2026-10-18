@@ -426,6 +426,27 @@ function openArtistIdentity() {
   if (artistPage.value?.id) artistIdentityOpen.value = true;
 }
 
+async function confirmClearArtistPhoto() {
+  const artist = artistPage.value;
+  if (!artist?.photoUrl) return;
+  const { id, photoUrl } = artist;
+  const confirmed = await confirmAction({
+    title: '移除藝人照片？',
+    subject: artist.name,
+    message: '目前的藝人照片會被移除，曲目與藝人資料會保留。',
+    detail: '移除後需重新選擇或搜尋照片。',
+    confirmLabel: '移除照片',
+    intent: 'danger',
+  });
+  if (
+    !confirmed ||
+    artistPage.value?.id !== id ||
+    artistPage.value.photoUrl !== photoUrl
+  )
+    return;
+  await clearArtistPhoto(id);
+}
+
 function handleCollectionMenuAction(value) {
   if (value?.action === ARTIST_IDENTITY_ACTIONS.manage) {
     openArtistIdentity();
@@ -436,7 +457,7 @@ function handleCollectionMenuAction(value) {
       artistPhotoCandidates.openForArtist(artistPage.value);
     }
   } else if (value?.action === ARTIST_PHOTO_ACTIONS.clear) {
-    if (artistPage.value) clearArtistPhoto(artistPage.value.id);
+    void confirmClearArtistPhoto();
   } else {
     handlePlaylistMenuAction(value);
   }
@@ -501,6 +522,7 @@ const collectionMoreContent = computed(() => {
                     kind: 'action',
                     label: '移除藝人照片',
                     icon: Trash2,
+                    intent: 'danger',
                     value: { action: ARTIST_PHOTO_ACTIONS.clear },
                   },
                 ]),
@@ -720,6 +742,40 @@ async function handleTrackMenuSelect(value) {
   closeAddMenu();
 }
 
+async function confirmRemovePlaylistTrack(track, playlistId) {
+  const playlist = playlistState.playlists.find(
+    (item) => item.id === playlistId,
+  );
+  if (
+    !playlist ||
+    playlist.kind !== 'playlist' ||
+    !playlist.trackIds.includes(track.id)
+  )
+    return;
+  const confirmed = await confirmAction({
+    title: '從播放清單移除曲目？',
+    subject: track.title,
+    meta: playlist.name || '播放清單',
+    message: '只會移除此清單中的曲目安排，曲庫歌曲與音檔會保留。',
+    detail: '之後可重新加入清單。',
+    confirmLabel: '移除曲目',
+    intent: 'danger',
+  });
+  if (!confirmed) return;
+  const current = playlistState.playlists.find(
+    (item) => item.id === playlistId,
+  );
+  if (current?.kind !== 'playlist' || !current.trackIds.includes(track.id))
+    return;
+  const removed = await removeTrackFromPlaylist(playlistId, track.id);
+  if (
+    removed &&
+    playlistState.selectedId === playlistId &&
+    selectedTrackId.value === track.id
+  )
+    selectedTrackId.value = null;
+}
+
 async function applyTrackMenuAction(track, value) {
   if (value.action === TRACK_MENU_ACTIONS.createPlaylist) {
     const playlist = await createPlaylistAction();
@@ -731,8 +787,7 @@ async function applyTrackMenuAction(track, value) {
   } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
     trackMetadataEditor.open(track);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromPlaylist) {
-    removeTrackFromPlaylist(value.playlistId, track.id);
-    if (selectedTrackId.value === track.id) selectedTrackId.value = null;
+    await confirmRemovePlaylistTrack(track, value.playlistId);
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
     jumpToAlbum(track);
   } else if (value.action === TRACK_MENU_ACTIONS.deleteTrack) {

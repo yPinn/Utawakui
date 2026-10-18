@@ -173,5 +173,6 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   與其他
   dated evidence。
 - Visual system：[Token v2 元件檢查契約](contracts/token-v2-component-review.md)、
-  [Token v2 完整替換契約](contracts/token-v2-replacement.md)。
+  [Token v2 完整替換契約](contracts/token-v2-replacement.md)、
+  [操作層級與確認契約](contracts/action-intent-and-confirmation.md)。
 - Archive：[Lyrics T2 implementation plan](archive/lyrics-t2-implementation-plan.md)。

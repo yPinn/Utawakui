@@ -150,6 +150,7 @@ const content = computed(() => {
       kind: 'action',
       label: '從播放清單移除',
       icon: ListMinus,
+      intent: 'danger',
       value: {
         action: TRACK_MENU_ACTIONS.removeFromPlaylist,
         playlistId: props.removeFromPlaylistId,

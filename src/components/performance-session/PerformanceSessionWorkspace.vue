@@ -91,7 +91,11 @@ const selectedCollectionKindLabel = computed(() =>
   selectedPlaylist.value?.kind === 'album' ? '專輯' : '清單',
 );
 const collectionActionLabel = computed(() =>
-  selectedPlaylist.value?.kind === 'album' ? '從專輯建立' : '從清單建立',
+  hasItems.value
+    ? '取代待唱安排'
+    : selectedPlaylist.value?.kind === 'album'
+      ? '從專輯建立'
+      : '從清單建立',
 );
 
 onMounted(initialize);
@@ -241,9 +245,10 @@ async function prepareSelectedCollection() {
         <UiButton
           v-if="selectedPlaylist"
           :icon="ListPlus"
+          :intent="hasItems ? 'danger' : 'neutral'"
           :loading="state.isSaving"
           loading-label="建立中"
-          :title="`以目前${selectedCollectionKindLabel}「${selectedCollectionLabel}」建立待唱安排`"
+          :title="`以目前${selectedCollectionKindLabel}「${selectedCollectionLabel}」${hasItems ? '取代現有' : '建立'}待唱安排`"
           @click="prepareSelectedCollection"
         >
           {{ collectionActionLabel }}

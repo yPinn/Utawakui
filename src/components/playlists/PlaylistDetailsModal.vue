@@ -115,6 +115,7 @@ function cancel() {
               :icon="X"
               label="移除封面"
               variant="overlay"
+              intent="danger"
               :disabled="saving"
               @click="emit('clearCover')"
             />

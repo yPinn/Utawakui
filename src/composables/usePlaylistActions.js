@@ -130,9 +130,24 @@ async function chooseCover() {
 async function clearCover() {
   if (editDetailsIsSaving.value) return;
   const playlist = editDetailsPlaylist.value;
-  if (!playlist) return;
+  if (!playlist?.coverUrl || playlist.kind === 'album') return;
+  const coverUrl = playlist.coverUrl;
   editDetailsIsSaving.value = true;
   try {
+    const confirmed = await confirmAction({
+      title: '移除播放清單封面？',
+      subject: playlistDisplayName(playlist),
+      message: '目前的自訂封面會被移除，歌曲與其他資訊會保留。',
+      detail: '移除後需重新選擇封面才能恢復。',
+      confirmLabel: '移除封面',
+      intent: 'danger',
+    });
+    if (
+      !confirmed ||
+      editDetailsPlaylist.value?.id !== playlist.id ||
+      editDetailsPlaylist.value.coverUrl !== coverUrl
+    )
+      return;
     await clearPlaylistCoverAction(playlist.id);
   } finally {
     editDetailsIsSaving.value = false;

@@ -81,7 +81,6 @@ const previewTrack = computed(() =>
         v-if="currentTrack.thumbnailUrl"
         :icon="Trash2"
         label="移除封面"
-        intent="danger"
         :disabled="disabled"
         @click="emit('clear')"
       />

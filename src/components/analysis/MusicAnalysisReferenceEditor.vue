@@ -338,6 +338,7 @@ onUnmounted(() => {
             +100
           </UiButton>
           <UiButton
+            intent="danger"
             :aria-label="
               '移除 ' + formatReferenceTime(section.startMs) + ' 邊界'
             "

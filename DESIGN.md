@@ -1289,6 +1289,7 @@ Performer sync controls are intentionally narrow: delay 0.1 seconds, reset, adva
 - **Primary:** accent-filled, used sparingly for the main action in a local context.
 - **Ghost:** transparent at rest, neutral hover fill, used for toolbar and repeated actions.
 - **Destructive intent:** use `intent="danger"` only for irreversible deletion or an explicitly confirmed loss. Keep it orthogonal to Accent／Secondary／Ghost hierarchy; do not add a parallel `danger` variant or infer danger from a label containing「清除」、「停止」or「取消」.
+- **Action confirmation scope:** immediate persisted cover／photo removal and playlist membership loss use the existing confirmation owner; artwork draft removal remains neutral until the editor's Save. Automatically saved annotation merges require confirmation when they remove boundaries／roles. BGM Emergency Cut retains its explicitly defined danger emphasis and immediate response. Cross-feature decisions and stale-target guards are documented in the [action intent contract](docs/contracts/action-intent-and-confirmation.md).
 - **Focus:** visible 2px focus ring with 1-2px offset.
 - **Touch baseline:** desktop buttons can be compact, but touch-responsive surfaces should preserve at least `44pt` iOS / `48dp` Android target guidance.
 
