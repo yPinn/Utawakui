@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createSSRApp, nextTick, reactive } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import LyricsSourceControl from './LyricsSourceControl.vue';
-import UiSelect from '../ui/UiSelect.vue';
+import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiButton from '../ui/UiButton.vue';
 import {
   attachClientRender,
@@ -16,8 +17,9 @@ import {
 
 for (const [component, path] of [
   [LyricsSourceControl, './LyricsSourceControl.vue'],
-  [UiSelect, '../ui/UiSelect.vue'],
+  [UiCombobox, '../ui/UiCombobox.vue'],
   [UiField, '../ui/UiField.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiButton, '../ui/UiButton.vue'],
 ])
   attachClientRender(component, path, import.meta.url);
@@ -36,12 +38,39 @@ function setup(overrides = {}) {
   });
   const mounted = mount(LyricsSourceControl, props);
   app = mounted.app;
-  const select = () => findAll(mounted.root, (n) => n.type === 'select')[0];
-  const button = () => findAll(mounted.root, (n) => n.type === 'button')[0];
+  const select = () =>
+    findAll(mounted.root, (n) => n.props.role === 'combobox')[0];
+  const button = () =>
+    findAll(mounted.root, (n) => n.props['aria-label'] === '管理歌詞來源')[0];
   return { ...mounted, props, select, button };
 }
 
 describe('shared lyrics source entry', () => {
+  it('restores displayed content after source labels and availability change', async () => {
+    const { props, select } = setup({
+      sources: [
+        {
+          filename: 'one.lrc',
+          kind: 'lrclib',
+          label: '日本語／中文／A long source label',
+        },
+      ],
+    });
+    expect(textContent(select())).toContain('日本語／中文');
+    props.sources = [{ filename: 'one.lrc', kind: 'lrclib', label: '短' }];
+    await nextTick();
+    expect(textContent(select())).toBe('LRCLIB / 短');
+    props.sources = [];
+    props.selectedSourceFilename = '';
+    await nextTick();
+    expect(select().props.disabled).toBe(true);
+    expect(textContent(select())).toBe('尚無歌詞來源');
+    props.sources = [{ filename: 'two.lrc', kind: 'manual', label: '恢復' }];
+    props.selectedSourceFilename = 'two.lrc';
+    await nextTick();
+    expect(select().props.disabled).toBe(false);
+    expect(textContent(select())).toContain('恢復');
+  });
   it('renders labelled controls with or without sources using the production template', async () => {
     for (const sources of [[], [{ filename: 'one.lrc' }]]) {
       const html = await renderToString(
@@ -56,8 +85,11 @@ describe('shared lyrics source entry', () => {
   });
   it('switches a saved source through the canonical parent action', () => {
     const { props, select } = setup();
-    expect(select().props.value).toBe('one.lrc');
-    trigger(select(), 'onChange', { target: { value: 'two.lrc' } });
+    expect(select().type).toBe('button');
+    expect(select().props['aria-expanded']).toBe(false);
+    for (const key of ['ArrowDown', 'End', 'Enter']) {
+      trigger(select(), 'onKeydown', { key, preventDefault: vi.fn() });
+    }
     expect(props.onSourceChange).toHaveBeenCalledWith('two.lrc');
   });
 
@@ -96,10 +128,12 @@ describe('shared lyrics source entry', () => {
       new URL('./LyricsSourceControl.vue', import.meta.url),
       'utf8',
     );
-    expect(source).toContain('<UiSelect');
+    expect(source).toContain('<UiCombobox');
     expect(source).toContain('<UiButton');
     expect(source).not.toContain('<select');
     expect(source).not.toMatch(/(?:font-size|background|border-radius|color):/);
     expect(source).toContain('var(--ui-space-2)');
+    expect(source).toContain(':deep(.lyrics-source-control__select)');
+    expect(source).toContain('flex-shrink: 0;');
   });
 });

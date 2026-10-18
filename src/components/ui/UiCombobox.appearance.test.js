@@ -7,6 +7,27 @@ const source = fs.readFileSync(
 );
 
 describe('UiCombobox appearance contract', () => {
+  it('separates flat and grouped options and reserves a token gap before the arrow', () => {
+    for (const selector of [
+      '.ui-combobox__listbox :deep(.ui-combobox__listbox-viewport)',
+      '.ui-combobox__group-options',
+    ]) {
+      const rule = source
+        .slice(source.lastIndexOf(`${selector} {`))
+        .split('}')[0];
+      expect(rule).toContain('display: flex;');
+      expect(rule).toContain('flex-direction: column;');
+      expect(rule).toContain('gap: var(--ui-space-1);');
+    }
+    expect(source).toMatch(
+      /padding-inline-end:\s*calc\(\s*var\(--ui-field-padding-inline\)\s*\+\s*var\(--ui-space-4\)\s*\+\s*var\(--ui-space-2\)\s*\);/s,
+    );
+  });
+  it('truncates the actual option text container while preserving its indicator', () => {
+    expect(source).toMatch(
+      /\.ui-combobox__option-content\s*\{[^}]*min-width:\s*0;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/s,
+    );
+  });
   it('keeps the input in the field family and the listbox in the floating family', () => {
     expect(source).toMatch(
       /\.ui-combobox__native\s*\{[^}]*border-radius:\s*var\(--ui-field-radius\);/s,

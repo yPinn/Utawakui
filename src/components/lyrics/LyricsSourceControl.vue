@@ -2,7 +2,7 @@
 import { computed, useId } from 'vue';
 import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
-import UiSelect from '../ui/UiSelect.vue';
+import UiCombobox from '../ui/UiCombobox.vue';
 
 const props = defineProps({
   sources: { type: Array, default: () => [] },
@@ -32,18 +32,20 @@ function manageSources() {
 
 <template>
   <div class="lyrics-source-control">
-    <UiSelect
+    <UiCombobox
       :id="selectId"
       class="lyrics-source-control__select"
       label="歌詞來源"
       aria-label="歌詞來源"
       :label-hidden="labelHidden"
       :model-value="selectedSourceFilename"
-      :options="options"
+      :items="options"
+      :editable="false"
       :disabled="!hasSelectedTrack || isLoading || sources.length === 0"
       @update:model-value="changeSource"
     />
     <UiButton
+      class="lyrics-source-control__manage"
       variant="secondary"
       :disabled="!hasSelectedTrack"
       title="搜尋、匯入與管理歌詞來源"
@@ -63,8 +65,12 @@ function manageSources() {
   min-width: 0;
 }
 
-.lyrics-source-control__select {
+.lyrics-source-control :deep(.lyrics-source-control__select) {
   flex: 1 1 0;
   min-width: 0;
+}
+
+.lyrics-source-control__manage {
+  flex-shrink: 0;
 }
 </style>

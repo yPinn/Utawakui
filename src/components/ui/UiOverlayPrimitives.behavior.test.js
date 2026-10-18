@@ -659,4 +659,45 @@ describe('UiPopover', () => {
     expect(onClose).toHaveBeenCalledWith('external-scroll');
     expect(popoverSource).toContain('panelRef.value?.contains(event.target)');
   });
+
+  it('keeps an owned combobox popup inside the popover interaction boundary', async () => {
+    const onClose = vi.fn();
+    mount(
+      UiPopover,
+      { open: true, ariaLabel: '來源選項', onClose },
+      {
+        default: () =>
+          h(
+            'button',
+            {
+              role: 'combobox',
+              'aria-controls': 'source-options',
+              'aria-expanded': true,
+            },
+            '來源',
+          ),
+      },
+    );
+    await nextTick();
+    const panel = findAll(body, (node) => node.props.role === 'dialog')[0];
+    const control = findAll(panel, (node) => node.props.role === 'combobox')[0];
+    control.getAttribute = (name) => control.props[name];
+    control.closest = () => control;
+    panel.querySelectorAll = () => [control];
+    const popup = { id: 'source-options' };
+    const option = {
+      closest: (selector) => (selector === '[role="listbox"]' ? popup : null),
+    };
+    documentListeners.get('pointerdown')({ target: option });
+    windowListeners.get('scroll')({ target: option });
+    windowListeners.get('keydown')({ key: 'Escape', target: control });
+    expect(onClose).not.toHaveBeenCalled();
+    popup.id = 'unrelated-options';
+    documentListeners.get('pointerdown')({ target: option });
+    expect(onClose).toHaveBeenCalledWith('outside-pointer');
+    onClose.mockClear();
+    control.closest = () => null;
+    windowListeners.get('keydown')({ key: 'Escape', target: control });
+    expect(onClose).toHaveBeenCalledWith('escape');
+  });
 });

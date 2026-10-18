@@ -19,6 +19,34 @@ const scrollRegionSource = fs.readFileSync(
 );
 
 describe('UiActionMenu appearance contract', () => {
+  it('bounds accessory text so a long disabled reason cannot displace the label or chevron', () => {
+    expect(menuSource).toContain("hasTrailing ? 'fit-content(50%)' : ''");
+    expect(menuSource).toMatch(
+      /\.ui-action-menu__trailing\s*\{[^}]*min-width:\s*0;[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;/s,
+    );
+  });
+  it('shares combobox row and accessory gaps in pinned and scrolling lists', () => {
+    for (const selector of [
+      '.ui-action-menu__pinned',
+      '.ui-action-menu :deep(.ui-action-menu__viewport)',
+    ]) {
+      const rule = menuSource
+        .slice(menuSource.indexOf(`${selector} {`))
+        .split('}')[0];
+      expect(rule).toContain('display: flex;');
+      expect(rule).toContain('flex-direction: column;');
+      expect(rule).toContain('gap: var(--ui-space-1);');
+    }
+    expect(menuSource).toMatch(
+      /\.ui-action-menu__item\s*\{[^}]*column-gap:\s*var\(--ui-space-2\);/s,
+    );
+    expect(menuSource).toMatch(
+      /:deep\(\.ui-action-menu__viewport\) > \.ui-action-menu__separator\s*\{[^}]*margin-block:\s*0;/s,
+    );
+    expect(menuSource).toMatch(
+      /\.ui-action-menu__label\s*\{[^}]*min-width:\s*0;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/s,
+    );
+  });
   it('builds nested menu geometry from semantic floating recipes', () => {
     expect(menuSource).toContain('const FLOATING_GAP_REM = 0.5;');
     expect(menuSource).toContain(

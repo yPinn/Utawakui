@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { h, nextTick, reactive } from 'vue';
+import { h, nextTick, reactive, toRaw } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiCombobox from './UiCombobox.vue';
 import UiField from './UiField.vue';
@@ -98,6 +98,57 @@ function groups() {
 }
 
 describe('UiCombobox', () => {
+  it('tracks the control width while open and disconnects its resize observer', async () => {
+    const observers = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback) {
+          this.callback = callback;
+          this.observe = vi.fn();
+          this.disconnect = vi.fn();
+          observers.push(this);
+        }
+      },
+    );
+    const props = reactive({
+      id: 'resizing',
+      label: '來源',
+      editable: false,
+      items: ITEMS,
+    });
+    const { app, root } = mount(UiCombobox, props);
+    const control = input(root);
+    const observer = observers[0];
+    expect(observer.observe.mock.calls[0][0].props.id).toBe(control.props.id);
+    let width = 210;
+    toRaw(observer.observe.mock.calls[0][0]).getBoundingClientRect = () => ({
+      left: 20,
+      right: 20 + width,
+      top: 30,
+      bottom: 66,
+      width,
+      height: 36,
+    });
+    trigger(control, 'onClick');
+    await nextTick();
+    await nextTick();
+    const surface = () =>
+      findAll(body, (node) =>
+        String(node.props.class).split(' ').includes('ui-combobox__listbox'),
+      )[0];
+    expect(surface().props.style.width).toBe('210px');
+    width = 150;
+    observer.callback();
+    await nextTick();
+    expect(surface().props.style.width).toBe('150px');
+    props.editable = true;
+    await nextTick();
+    await nextTick();
+    expect(observer.observe.mock.calls.at(-1)[0].type).toBe('input');
+    app.unmount();
+    expect(observer.disconnect).toHaveBeenCalledTimes(2);
+  });
   it('ignores the composition-ending Enter with keyCode 229, then accepts a new Enter', async () => {
     const update = vi.fn();
     const { app, root } = mount(UiCombobox, {

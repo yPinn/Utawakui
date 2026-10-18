@@ -88,7 +88,14 @@ function requestClose(reason) {
 }
 
 function isRelatedFloatingSurface(target) {
-  return Boolean(target?.closest?.('.ui-action-menu'));
+  if (target?.closest?.('.ui-action-menu')) return true;
+  const listbox = target?.closest?.('[role="listbox"]');
+  if (!listbox?.id) return false;
+  return Array.from(
+    panelRef.value?.querySelectorAll?.('[role="combobox"]') ?? [],
+  ).some((control) =>
+    control.getAttribute('aria-controls')?.split(/\s+/).includes(listbox.id),
+  );
 }
 
 function handleOutsidePointer(event) {
@@ -107,7 +114,9 @@ function handleKeydown(event) {
   if (
     !props.open ||
     event.key !== 'Escape' ||
-    isRelatedFloatingSurface(event.target)
+    isRelatedFloatingSurface(event.target) ||
+    (panelRef.value?.contains(event.target) &&
+      event.target?.closest?.('[role="combobox"][aria-expanded="true"]'))
   ) {
     return;
   }

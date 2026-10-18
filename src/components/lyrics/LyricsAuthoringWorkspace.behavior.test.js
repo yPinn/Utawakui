@@ -11,6 +11,7 @@ import LyricsSourceControl from './LyricsSourceControl.vue';
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
@@ -53,6 +54,7 @@ attachClientRender(LyricsDisplayControls, './LyricsDisplayControls.vue');
 attachClientRender(UiSegmentedControl, '../ui/UiSegmentedControl.vue');
 attachClientRender(UiScrollLayout, '../ui/UiScrollLayout.vue');
 attachClientRender(UiSelect, '../ui/UiSelect.vue');
+attachClientRender(UiCombobox, '../ui/UiCombobox.vue');
 attachClientRender(UiField, '../ui/UiField.vue');
 attachClientRender(UiTextField, '../ui/UiTextField.vue');
 attachClientRender(
@@ -86,7 +88,7 @@ function selectReading(root, label) {
 }
 
 function hostNode(type, text = '') {
-  return { type, text, props: {}, children: [], parent: null };
+  return { type, text, props: {}, children: [], parent: null, focus: vi.fn() };
 }
 
 const renderer = createRenderer({
@@ -550,9 +552,12 @@ describe('Lyrics workspace control contracts', () => {
       onIncreaseFontSize: handlers.increase,
     });
 
-    findByProp(root, 'aria-label', '歌詞來源').props.onChange({
-      target: { value: 'main.lrc' },
-    });
+    for (const key of ['ArrowDown', 'Enter']) {
+      findByProp(root, 'aria-label', '歌詞來源').props.onKeydown({
+        key,
+        preventDefault: vi.fn(),
+      });
+    }
     findByProp(root, 'aria-label', '管理歌詞來源').props.onClick();
     selectReading(root, '假名');
     expect(nodeText(root)).not.toContain('已自動套用');

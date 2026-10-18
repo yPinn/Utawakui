@@ -4,6 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
 import LyricsSourceControl from './LyricsSourceControl.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -25,6 +26,7 @@ for (const [component, file] of [
   [LyricsDisplayControls, './LyricsDisplayControls.vue'],
   [LyricsSourceControl, './LyricsSourceControl.vue'],
   [UiSelect, '../ui/UiSelect.vue'],
+  [UiCombobox, '../ui/UiCombobox.vue'],
   [UiField, '../ui/UiField.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiSegmentedControl, '../ui/UiSegmentedControl.vue'],
@@ -91,7 +93,12 @@ describe('shared display control interactions', () => {
           n.props['aria-label'] === label ||
           (n.type === 'button' && textContent(n).trim() === label),
       )[0];
-    trigger(control('歌詞來源'), 'onChange', { target: { value: 'a.lrc' } });
+    for (const key of ['ArrowDown', 'End', 'Enter']) {
+      trigger(control('歌詞來源'), 'onKeydown', {
+        key,
+        preventDefault: vi.fn(),
+      });
+    }
     trigger(control('管理歌詞來源'), 'onClick');
     trigger(control('歌詞文字顯示'), 'onChange', {
       target: { value: 'original' },

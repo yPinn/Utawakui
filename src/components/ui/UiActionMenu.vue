@@ -157,7 +157,7 @@ function layoutFor(items) {
   const columns = [
     hasIcon ? 'var(--ui-space-4)' : '',
     'minmax(0, 1fr)',
-    hasTrailing ? 'max-content' : '',
+    hasTrailing ? 'fit-content(50%)' : '',
     hasSubmenu ? 'var(--ui-space-4)' : '',
   ].filter(Boolean);
   return {
@@ -194,6 +194,7 @@ function measuredRect(element) {
 
 function estimatedHeight(content, itemCount) {
   const rowHeight = customLengthPixels('--ui-floating-row-min-height', 2);
+  const rowGap = customLengthPixels('--ui-space-1', 0.25);
   const filterHeight =
     content?.kind === 'filterable-actions'
       ? customLengthPixels('--ui-field-height', 2.25) +
@@ -201,7 +202,9 @@ function estimatedHeight(content, itemCount) {
       : 0;
   return Math.min(
     customLengthPixels('--ui-action-menu-max-block-size', MAX_MENU_HEIGHT_REM),
-    filterHeight + Math.max(1, itemCount) * rowHeight,
+    filterHeight +
+      Math.max(1, itemCount) * rowHeight +
+      Math.max(0, itemCount - 1) * rowGap,
   );
 }
 
@@ -1078,6 +1081,9 @@ onUnmounted(() => {
 }
 
 .ui-action-menu__pinned {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
   flex: 0 0 auto;
   padding: var(--ui-floating-list-padding);
   padding-block-end: 0;
@@ -1096,6 +1102,9 @@ onUnmounted(() => {
 }
 
 .ui-action-menu :deep(.ui-action-menu__viewport) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
   padding: var(--ui-floating-list-padding);
 }
 
@@ -1103,6 +1112,13 @@ onUnmounted(() => {
   + .ui-action-menu__body
   :deep(.ui-action-menu__viewport) {
   padding-block-start: 0;
+}
+
+.ui-action-menu__body[data-overflow-y='true'] :deep(.ui-action-menu__viewport) {
+  padding-inline-end: max(
+    var(--ui-floating-list-padding),
+    calc(var(--ui-scrollbar-visual-reserve) + var(--ui-space-1))
+  );
 }
 
 .ui-action-menu__empty {
@@ -1173,6 +1189,10 @@ onUnmounted(() => {
   background: var(--ui-color-border);
 }
 
+.ui-action-menu :deep(.ui-action-menu__viewport) > .ui-action-menu__separator {
+  margin-block: 0;
+}
+
 .ui-action-menu__icon-slot,
 .ui-action-menu__chevron-slot {
   display: inline-flex;
@@ -1200,6 +1220,10 @@ onUnmounted(() => {
 }
 
 .ui-action-menu__trailing {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   justify-self: end;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);

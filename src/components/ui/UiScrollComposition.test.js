@@ -74,4 +74,13 @@ describe('scroll content spacing ownership', () => {
       ':deep(.ui-tabs__list)',
     );
   });
+
+  it.each(['UiCombobox', 'UiActionMenu'])(
+    '%s separates option paint from the vertical thumb',
+    (name) => {
+      expect(read(`./${name}.vue`)).toMatch(
+        /\[data-overflow-y='true'\][^{]*\{\s*padding-inline-end:\s*max\(\s*var\(--ui-floating-list-padding\),\s*calc\(var\(--ui-scrollbar-visual-reserve\) \+ var\(--ui-space-1\)\)\s*\);/su,
+      );
+    },
+  );
 });

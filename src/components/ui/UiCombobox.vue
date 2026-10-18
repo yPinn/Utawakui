@@ -62,6 +62,17 @@ const listboxRoot = () => listboxRef.value?.root;
 const listboxViewport = () => listboxRef.value?.viewport;
 
 let frameId = 0;
+let controlResizeObserver;
+
+watch(
+  () => props.editable,
+  async () => {
+    await nextTick();
+    if (!controlResizeObserver || !controlRef.value) return;
+    controlResizeObserver.disconnect();
+    controlResizeObserver.observe(controlRef.value);
+  },
+);
 
 const listboxId = `${props.id}-listbox`;
 
@@ -400,10 +411,18 @@ onMounted(() => {
   document.addEventListener('pointerdown', onOutsidePointer, true);
   window.addEventListener('scroll', onOutsideScroll, true);
   window.addEventListener('resize', onResize);
+  if (typeof ResizeObserver === 'function' && controlRef.value) {
+    controlResizeObserver = new ResizeObserver(() =>
+      scheduleFrame(updatePosition),
+    );
+    controlResizeObserver.observe(controlRef.value);
+  }
 });
 
 onBeforeUnmount(() => {
   release(closeFromGate);
+  controlResizeObserver?.disconnect();
+  controlResizeObserver = undefined;
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   window.cancelAnimationFrame(frameId);
   document.removeEventListener('pointerdown', onOutsidePointer, true);
@@ -579,7 +598,9 @@ onBeforeUnmount(() => {
   min-width: 0;
   min-height: var(--ui-field-height);
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
-  padding-inline-end: calc(var(--ui-field-padding-inline) + var(--ui-space-4));
+  padding-inline-end: calc(
+    var(--ui-field-padding-inline) + var(--ui-space-4) + var(--ui-space-2)
+  );
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
   background: var(--ui-field-bg);
@@ -662,12 +683,23 @@ onBeforeUnmount(() => {
 }
 
 .ui-combobox__listbox :deep(.ui-combobox__listbox-viewport) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
   block-size: auto;
   max-block-size: inherit;
   margin: 0;
   padding: var(--ui-floating-list-padding);
   overscroll-behavior: contain;
   list-style: none;
+}
+
+.ui-combobox__listbox[data-overflow-y='true']
+  :deep(.ui-combobox__listbox-viewport) {
+  padding-inline-end: max(
+    var(--ui-floating-list-padding),
+    calc(var(--ui-scrollbar-visual-reserve) + var(--ui-space-1))
+  );
 }
 
 .ui-combobox__option {
@@ -692,6 +724,8 @@ onBeforeUnmount(() => {
   min-width: 0;
   flex: 1 1 auto;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ui-combobox__option-indicator {
@@ -709,6 +743,12 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.ui-combobox__group-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
 }
 
 .ui-combobox__group-label {
