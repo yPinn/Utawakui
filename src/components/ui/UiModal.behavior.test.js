@@ -144,6 +144,47 @@ describe('UiModal behavior', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps scrolling as the default and lets a workspace own its single inner scroll region', async () => {
+    const mode = ref('scroll');
+    const app = renderer.createApp({
+      setup: () => () =>
+        h(
+          UiModal,
+          { open: true, title: '有界工作區', bodyMode: mode.value },
+          {
+            default: () =>
+              h('div', { 'data-test': 'workspace-content' }, '同一份內容'),
+          },
+        ),
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
+    app.mount(hostNode('root'));
+    await nextTick();
+    expect(
+      findAll(body, (n) =>
+        String(n.props?.class).includes('ui-scroll-region__viewport'),
+      ),
+    ).toHaveLength(1);
+    mode.value = 'workspace';
+    await nextTick();
+    expect(
+      findAll(body, (n) =>
+        String(n.props?.class).includes('ui-scroll-region__viewport'),
+      ),
+    ).toHaveLength(0);
+    expect(
+      findAll(body, (n) =>
+        String(n.props?.class).includes('ui-modal__workspace-body'),
+      ),
+    ).toHaveLength(1);
+    expect(
+      findAll(body, (n) => n.props?.['data-test'] === 'workspace-content'),
+    ).toHaveLength(1);
+    expect(textContent(body)).toContain('同一份內容');
+    app.unmount();
+  });
+
   it('captures focus when mounted open and restores it on unmount', async () => {
     const app = renderer.createApp({
       setup: () => () => h(UiModal, { open: true, title: '已開啟的確認' }),

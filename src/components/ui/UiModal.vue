@@ -62,6 +62,11 @@ const props = defineProps({
     validator: (value) => ['dialog', 'document', 'media'].includes(value),
   },
   fixedHeight: { type: Boolean, default: false },
+  bodyMode: {
+    type: String,
+    default: 'scroll',
+    validator: (value) => ['scroll', 'workspace'].includes(value),
+  },
   closeDisabled: { type: Boolean, default: false },
   dismissOnBackdrop: { type: Boolean, default: false },
   selectable: { type: Boolean, default: true },
@@ -321,13 +326,19 @@ onUnmounted(() => {
             </div>
           </div>
           <UiScrollRegion
-            v-if="presentation !== 'media'"
+            v-if="presentation !== 'media' && bodyMode === 'scroll'"
             class="ui-modal__body"
             axis="vertical"
             viewport-class="ui-modal__body-viewport"
           >
             <slot />
           </UiScrollRegion>
+          <div
+            v-else-if="presentation !== 'media'"
+            class="ui-modal__body ui-modal__workspace-body"
+          >
+            <slot />
+          </div>
           <div v-else class="ui-modal__media-body">
             <slot />
           </div>
@@ -427,14 +438,22 @@ onUnmounted(() => {
   min-block-size: 0;
 }
 
-.ui-modal__body :deep(.ui-modal__body-viewport) {
+.ui-modal__body :deep(.ui-modal__body-viewport),
+.ui-modal__workspace-body {
   padding: var(--ui-modal-focus-safe-inset) var(--ui-modal-content-inset)
     var(--ui-modal-content-inset);
   scroll-padding-block: var(--ui-modal-focus-safe-inset);
   overscroll-behavior: contain;
 }
 
-.ui-modal--with-footer .ui-modal__body :deep(.ui-modal__body-viewport) {
+.ui-modal__workspace-body {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: clip;
+}
+
+.ui-modal--with-footer .ui-modal__body :deep(.ui-modal__body-viewport),
+.ui-modal--with-footer .ui-modal__workspace-body {
   padding-block-end: var(--ui-modal-section-gap);
 }
 

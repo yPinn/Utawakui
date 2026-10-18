@@ -176,7 +176,7 @@ describe('UiModal appearance contract', () => {
       /\.ui-modal\s*\{[\s\S]*?--ui-modal-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
     );
     expect(modalSource).toMatch(
-      /\.ui-modal__body :deep\(\.ui-modal__body-viewport\)\s*\{[\s\S]*?padding:\s*var\(--ui-modal-focus-safe-inset\)\s+var\(--ui-modal-content-inset\)\s+var\(--ui-modal-content-inset\);[\s\S]*?scroll-padding-block:\s*var\(--ui-modal-focus-safe-inset\);/u,
+      /\.ui-modal__body :deep\(\.ui-modal__body-viewport\),\s*\.ui-modal__workspace-body\s*\{[\s\S]*?padding:\s*var\(--ui-modal-focus-safe-inset\)\s+var\(--ui-modal-content-inset\)\s+var\(--ui-modal-content-inset\);[\s\S]*?scroll-padding-block:\s*var\(--ui-modal-focus-safe-inset\);/u,
     );
     expect(modalSource).toMatch(
       /\.ui-modal__header\s*\{[\s\S]*?padding:[\s\S]*?max\(\s*0rem,\s*calc\(\s*var\(--ui-modal-section-gap\)\s*-\s*var\(--ui-modal-focus-safe-inset\)\s*\)\s*\);/u,
