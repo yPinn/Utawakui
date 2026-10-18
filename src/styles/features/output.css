@@ -7,6 +7,11 @@
   --ui-output-side-width-default: 18rem;
   --ui-output-side-width-max: 24rem;
   --ui-output-main-width-min: 16rem;
+  /* Display-space cells: the full checker tile contains two cells. */
+  --ui-output-preview-checker-cell: 8px;
+  --ui-output-preview-checker-tile: calc(
+    var(--ui-output-preview-checker-cell) * 2
+  );
   --ui-output-preview-inset: max(
     var(--ui-space-3),
     calc(var(--ui-focus-width) + var(--ui-focus-offset))

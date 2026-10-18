@@ -70,7 +70,8 @@
         var(--ovl-color-surface) 0 75%,
         var(--ovl-color-surface-soft) 0
       )
-      0 0 / var(--ovl-primitive-space-6) var(--ovl-primitive-space-6);
+      0 0 / var(--ovl-inspection-checker-tile)
+      var(--ovl-inspection-checker-tile);
   }
 
   :root[data-overlay-backdrop='dark'] .lyrics-workbench__backdrop {

@@ -348,7 +348,7 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain("url.searchParams.set('workbench', '1')");
     expect(previewSource).toContain("url.searchParams.set('backdrop'");
     expect(previewSource).not.toContain("searchParams.set('preview'");
-    expect(previewSource).toContain('var(--ui-color-surface)');
+    expect(previewSource).toContain('var(--ui-output-preview-canvas)');
     expect(previewSource).toContain('var(--ui-color-canvas)');
     expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
     expect(previewSource).toContain('ObsWidgetCapturePreview');

@@ -39,6 +39,8 @@
     --ovl-primitive-color-kinetic-candy-light: #f33a52;
     --ovl-primitive-color-ornate-paper: #fff8ec;
     --ovl-primitive-color-ornate-echo: rgb(255 255 255 / 18%);
+    /* Standalone inspection: 8px cells, two per repeating tile. */
+    --ovl-inspection-checker-tile: 16px;
     --ovl-primitive-space-1: 0.25rem;
     --ovl-primitive-space-2: 0.5rem;
     --ovl-primitive-space-3: 0.75rem;

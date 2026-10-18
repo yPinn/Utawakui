@@ -998,7 +998,7 @@ in the row as well as selectable artboards. Their shared-height canvas regions s
 centered and preserve artboard bottom alignment. Gallery details use the same size component opposite preview
 tools, with sample／motion context on a separate row to fit a narrow inspector.
 Gallery retains its bounded, scrollable detail preview rather than adopting the
-Workbench's larger stage size. Preview scaling never changes output resolution. The canvas stage and Gallery
+Workbench's larger stage size. Preview scaling never changes output resolution. Transparency checkers use fixed 8px CSS cells (16px repeating tiles) in display space. Workbench frames own checker paint outside the scaled iframe, whose inspection backdrop is transparent; Gallery mockups use the same cell size. Canvas framing stays centered without changing template content alignment. Embedded preview iframes use `color-scheme: normal` to match Overlay documents and preserve canvas transparency under dark control-panel chrome. The canvas stage and Gallery
 canvas well reserve `--ui-output-preview-inset`, derived from shared spacing and
 focus-outset tokens, so the complete artboard border and selection ring remain
 visible. Lyrics fitting subtracts computed stage padding before calculating scale.

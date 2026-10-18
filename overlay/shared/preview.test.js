@@ -34,8 +34,25 @@ describe('overlay preview fallback', () => {
     expect(document.documentElement.dataset.overlayGuide).toBe('true');
   });
 
+  it('replaces a standalone checker with a transparent embedded inspection canvas', () => {
+    const document = {
+      documentElement: { dataset: { overlayBackdrop: 'checker' } },
+    };
+    applyPreviewCanvas(document, {
+      workbenchMode: true,
+      location: { search: '?workbench=1&backdrop=transparent' },
+    });
+    expect(document.documentElement.dataset.overlayBackdrop).toBe(
+      'transparent',
+    );
+    expect(document.documentElement.dataset.overlayWorkbench).toBe('true');
+  });
+
   it('allows only local inspection backdrop ids', () => {
     expect(inspectionBackdrop({ search: '?backdrop=checker' })).toBe('checker');
+    expect(inspectionBackdrop({ search: '?backdrop=transparent' })).toBe(
+      'transparent',
+    );
     expect(inspectionBackdrop({ search: '?backdrop=dark' })).toBe('dark');
     expect(inspectionBackdrop({ search: '?backdrop=light' })).toBe('light');
     expect(inspectionBackdrop({ search: '?backdrop=provider-value' })).toBe('');

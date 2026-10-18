@@ -43,7 +43,7 @@ describe('ObsOverlayPreview', () => {
 
     expect(html).toContain('data-backdrop="checker"');
     expect(html).toMatch(
-      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;backdrop=checker&amp;guide=1&amp;reload=\d+"/,
+      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;backdrop=transparent&amp;guide=1&amp;reload=\d+"/,
     );
     expect(html).not.toContain('obs-streamer-preview');
     expect(html.match(/<iframe/g)).toHaveLength(1);
@@ -100,7 +100,7 @@ describe('ObsOverlayPreview', () => {
     const html = await renderPreview();
 
     expect(html).toContain(
-      'overlay/lyrics?workbench=1&amp;backdrop=checker&amp;guide=1&amp;reload=',
+      'overlay/lyrics?workbench=1&amp;backdrop=transparent&amp;guide=1&amp;reload=',
     );
     expect(html).not.toContain('lyricsDebug');
   });
@@ -125,7 +125,7 @@ describe('ObsOverlayPreview', () => {
     );
   });
 
-  it('keeps the inspection backdrop query for widget capture previews', async () => {
+  it('delegates widget checker paint to its unscaled renderer frame', async () => {
     const html = await renderPreview({
       activeKind: 'now-playing',
       captureSize: 'small',
@@ -133,6 +133,41 @@ describe('ObsOverlayPreview', () => {
       previewUrl: 'http://127.0.0.1:8700/overlay/now-playing',
     });
 
-    expect(html).toContain('backdrop=checker');
+    expect(html).toContain('backdrop=transparent');
+  });
+  it('matches the Overlay color scheme so dark app chrome cannot force an opaque iframe canvas', () => {
+    for (const [source, selector] of [
+      [componentSource, 'obs-overlay-preview__iframe'],
+      [
+        readFileSync(
+          new URL('./ObsWidgetCapturePreview.vue', import.meta.url),
+          'utf8',
+        ),
+        'obs-widget-capture-preview__iframe',
+      ],
+    ]) {
+      const rule = source.match(
+        new RegExp('\\.' + selector + '\\s*\\{([^}]+)\\}'),
+      )?.[1];
+      expect(rule).toMatch(/color-scheme:\s*normal;/u);
+    }
+  });
+
+  it('keeps checker cells in display space outside the transformed capture canvas', () => {
+    const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
+    const tokens = read('../../styles/features/output.css');
+    expect(tokens).toContain('--ui-output-preview-checker-cell: 8px');
+    expect(tokens).toContain('var(--ui-output-preview-checker-cell) * 2');
+    for (const source of [
+      componentSource,
+      read('./ObsWidgetCapturePreview.vue'),
+      read('./ObsTemplateMockup.base.css'),
+    ]) {
+      expect(source).toContain('0 0 / var(--ui-output-preview-checker-tile)');
+    }
+    expect(componentSource).toContain('var(--ui-output-preview-canvas) 25%');
+    expect(componentSource).toContain(
+      'var(--ui-output-preview-backdrop-dark) 0 50%',
+    );
   });
 });

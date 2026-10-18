@@ -256,12 +256,13 @@ onBeforeUnmount(() => {
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
   background: conic-gradient(
-      var(--ui-color-surface) 25%,
-      var(--ui-color-surface-raised) 0 50%,
-      var(--ui-color-surface) 0 75%,
-      var(--ui-color-surface-raised) 0
+      var(--ui-output-preview-canvas) 25%,
+      var(--ui-output-preview-backdrop-dark) 0 50%,
+      var(--ui-output-preview-canvas) 0 75%,
+      var(--ui-output-preview-backdrop-dark) 0
     )
-    0 0 / var(--ui-space-6) var(--ui-space-6);
+    0 0 / var(--ui-output-preview-checker-tile)
+    var(--ui-output-preview-checker-tile);
   transition:
     border-color var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
     box-shadow var(--ui-motion-duration-fast) var(--ui-motion-easing-standard);
@@ -286,6 +287,8 @@ onBeforeUnmount(() => {
 }
 
 .obs-widget-capture-preview__iframe {
+  /* Match the Overlay document, preserving transparency in dark app chrome. */
+  color-scheme: normal;
   position: absolute;
   inset: 0;
   display: block;

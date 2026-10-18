@@ -29,7 +29,8 @@
         var(--ovl-color-surface) 0 75%,
         var(--ovl-color-surface-soft) 0
       )
-      0 0 / var(--ovl-primitive-space-6) var(--ovl-primitive-space-6);
+      0 0 / var(--ovl-inspection-checker-tile)
+      var(--ovl-inspection-checker-tile);
   }
 
   html[data-overlay-backdrop='dark'],
@@ -40,6 +41,11 @@
   html[data-overlay-backdrop='light'],
   html[data-overlay-backdrop='light'] body {
     background: var(--ovl-primitive-color-paper);
+  }
+
+  html[data-overlay-backdrop='transparent'],
+  html[data-overlay-backdrop='transparent'] body {
+    background: transparent;
   }
 
   body {

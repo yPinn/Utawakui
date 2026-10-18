@@ -136,7 +136,8 @@
       var(--ui-output-preview-backdrop-checker-a) 0 75%,
       var(--ui-output-preview-backdrop-checker-b) 0
     )
-    0 0 / 4cqi 4cqi;
+    0 0 / var(--ui-output-preview-checker-tile)
+    var(--ui-output-preview-checker-tile);
 }
 
 .obs-template-mockup__content {

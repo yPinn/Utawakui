@@ -81,11 +81,13 @@ const inspectionUrl = computed(() => {
     url.searchParams.set('workbench', '1');
     // Opt-in lyrics diagnostics: keep them out of production preview iframes.
     if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');
-    url.searchParams.set('backdrop', props.previewBackdrop);
-    url.searchParams.set('guide', props.showLyricsGuide ? '1' : '0');
-  } else {
-    url.searchParams.set('backdrop', props.previewBackdrop);
   }
+  // The unscaled renderer frame owns checker paint.
+  const iframeBackdrop =
+    props.previewBackdrop === 'checker' ? 'transparent' : props.previewBackdrop;
+  url.searchParams.set('backdrop', iframeBackdrop);
+  if (isLyrics.value)
+    url.searchParams.set('guide', props.showLyricsGuide ? '1' : '0');
   url.searchParams.set('reload', previewReloadToken);
   return url.toString();
 });
@@ -316,12 +318,13 @@ onBeforeUnmount(() => {
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
   background: conic-gradient(
-      var(--ui-color-surface) 25%,
-      var(--ui-color-surface-raised) 0 50%,
-      var(--ui-color-surface) 0 75%,
-      var(--ui-color-surface-raised) 0
+      var(--ui-output-preview-canvas) 25%,
+      var(--ui-output-preview-backdrop-dark) 0 50%,
+      var(--ui-output-preview-canvas) 0 75%,
+      var(--ui-output-preview-backdrop-dark) 0
     )
-    0 0 / var(--ui-space-6) var(--ui-space-6);
+    0 0 / var(--ui-output-preview-checker-tile)
+    var(--ui-output-preview-checker-tile);
 }
 
 .obs-overlay-preview__stage {
@@ -345,6 +348,8 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__iframe {
+  /* Match the Overlay document, preserving transparency in dark app chrome. */
+  color-scheme: normal;
   position: absolute;
   z-index: var(--ui-output-preview-layer-output);
   inset: 0;

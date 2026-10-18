@@ -1,4 +1,9 @@
-const INSPECTION_BACKDROPS = new Set(['checker', 'dark', 'light']);
+const INSPECTION_BACKDROPS = new Set([
+  'checker',
+  'dark',
+  'light',
+  'transparent',
+]);
 
 export function isPreviewMode(location) {
   return new URLSearchParams(location?.search ?? '').get('preview') === '1';
