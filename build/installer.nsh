@@ -6,6 +6,7 @@
 ; checkboxes on the uninstaller components page.
 
 !include "FileFunc.nsh"
+!include "installer-maintenance.nsh"
 
 ; ADR 0002 keeps the packaged exe named electron.exe, which would otherwise
 ; leak into the install path too. Override APP_FILENAME only, so install
@@ -23,36 +24,61 @@
 ; addLangs, and NSIS resolves $(...) at compile time regardless of macro
 ; expansion order.
 ; ---------------------------------------------------------------------------
+; The builder inserts this data-options page before the uninstall welcome.
+!ifdef BUILD_UNINSTALLER
+  !define MUI_PAGE_HEADER_TEXT "$(utaCleanupTitle)"
+  !define MUI_PAGE_HEADER_SUBTEXT "$(utaCleanupSubtitle)"
+  !define MUI_COMPONENTSPAGE_TEXT_TOP "$(utaCleanupText)"
+!endif
+
 !macro customHeader
+  ; Keep native dialog sizing, with the same Windows CJK family as the app.
+  SetFont /LANG=${LANG_TRADCHINESE} "Microsoft JhengHei UI" 9
+  SetFont /LANG=${LANG_ENGLISH} "Segoe UI" 9
+  DirText "$(utaDirectoryText)"
+  !ifndef BUILD_UNINSTALLER
+    !insertmacro utaMaintenanceStrings
+  !endif
+
+  LangString utaDirectoryText ${LANG_TRADCHINESE} "選擇 Utawakui 的安裝資料夾。"
+  LangString utaDirectoryText ${LANG_ENGLISH} "Choose where to install Utawakui."
+
+  LangString utaCleanupTitle ${LANG_TRADCHINESE} "選擇要刪除的資料"
+  LangString utaCleanupTitle ${LANG_ENGLISH} "Choose data to delete"
+  LangString utaCleanupSubtitle ${LANG_TRADCHINESE} "所有清理選項預設皆不勾選。"
+  LangString utaCleanupSubtitle ${LANG_ENGLISH} "All cleanup options are unchecked by default."
+  LangString utaCleanupText ${LANG_TRADCHINESE} "資料預設保留；刪除全部應用程式資料時，其中的工具、模型與曲庫也會刪除。"
+  LangString utaCleanupText ${LANG_ENGLISH} "Data is kept by default. Deleting all app data also removes any tools, models and library files stored within it."
+
   LangString utaWelcomeTitle ${LANG_TRADCHINESE} "安裝 Utawakui"
   LangString utaWelcomeTitle ${LANG_ENGLISH} "Install Utawakui"
 
-  LangString utaWelcomeText ${LANG_TRADCHINESE} "Utawakui 是本機媒體曲庫與播放控制工具，可支援歌詞工作區、音訊處理與對外輸出等相關流程。安裝後即可使用曲庫、播放、匯入與設定。$\r$\n$\r$\n外部來源、歌詞來源、音訊處理與對外輸出屬於進階功能，需由你在設定頁啟用；啟用或準備時，才會依需求連線、下載工具或產生處理結果。$\r$\n$\r$\n解除安裝預設只移除應用程式；設定、已準備工具與曲庫資料會保留，並可於解除安裝時另行選擇清除。"
-  LangString utaWelcomeText ${LANG_ENGLISH} "Utawakui is a local media library and playback control tool that can support lyrics workspace, audio processing, and public output workflows. Installing sets up the library, playback, import, and settings.$\r$\n$\r$\nExternal sources, lyrics sources, audio processing, and public output are advanced features that you enable in Settings. They connect, download tools, or generate processed results only when enabled or prepared.$\r$\n$\r$\nUninstalling removes only the application by default; settings, prepared tools, and library data are kept unless you choose to remove them during uninstall."
+  LangString utaWelcomeText ${LANG_TRADCHINESE} "Utawakui 提供本機曲庫管理與播放控制。$\r$\n$\r$\n外部來源、線上歌詞、音訊處理與對外輸出，可在設定中另行啟用；所需工具與模型可依需求下載。$\r$\n$\r$\n解除安裝時，預設保留設定、已下載的工具與曲庫。"
+  LangString utaWelcomeText ${LANG_ENGLISH} "Utawakui manages and plays your local music library.$\r$\n$\r$\nExternal sources, online lyrics, audio processing and public output can be enabled in Settings. Download their tools and models as needed.$\r$\nUninstalling keeps your settings, downloaded tools and library by default."
 
   LangString utaUnWelcomeTitle ${LANG_TRADCHINESE} "解除安裝 Utawakui"
   LangString utaUnWelcomeTitle ${LANG_ENGLISH} "Uninstall Utawakui"
 
-  LangString utaUnWelcomeText ${LANG_TRADCHINESE} "解除安裝會移除 Utawakui 應用程式，以及安裝器留下的快取。$\r$\n$\r$\n下一頁可分別勾選是否一併刪除：已下載的功能工具與模型、應用程式設定，以及你的本機曲庫資料夾。三項預設皆不勾選。$\r$\n$\r$\n若檔案正被占用，清理會在重新開機後完成。"
-  LangString utaUnWelcomeText ${LANG_ENGLISH} "Uninstalling removes the Utawakui application and the cache left behind by the installer.$\r$\n$\r$\nOn the next page you can separately choose to also delete: downloaded tools and models, application settings, and your local music library folder. All three are unchecked by default.$\r$\n$\r$\nIf files are in use, cleanup finishes after a restart."
+  LangString utaUnWelcomeText ${LANG_TRADCHINESE} "將移除 Utawakui 應用程式與安裝快取。$\r$\n$\r$\n只有先前勾選的資料項目會一併刪除。刪除全部應用程式資料時，其中的工具、模型與曲庫也會刪除。$\r$\n若部分檔案仍被占用，可能需要重新啟動電腦才能完成清理。"
+  LangString utaUnWelcomeText ${LANG_ENGLISH} "Utawakui and its installer cache will be removed.$\r$\n$\r$\nOnly the data options you selected will also be deleted. Deleting all app data includes any tools, models and library files stored within it.$\r$\nIf some files are in use, a restart may be needed to finish cleanup."
 
   LangString utaShortcutTitle ${LANG_TRADCHINESE} "安裝選項"
   LangString utaShortcutTitle ${LANG_ENGLISH} "Install options"
 
-  LangString utaShortcutSubtitle ${LANG_TRADCHINESE} "選擇常用捷徑。"
-  LangString utaShortcutSubtitle ${LANG_ENGLISH} "Choose common shortcuts."
+  LangString utaShortcutSubtitle ${LANG_TRADCHINESE} "選擇是否建立桌面捷徑。"
+  LangString utaShortcutSubtitle ${LANG_ENGLISH} "Choose whether to create a desktop shortcut."
 
-  LangString utaShortcutText ${LANG_TRADCHINESE} "Utawakui 一律會建立開始功能表捷徑，讓 Windows 正確識別應用程式與播放狀態。桌面捷徑可依你的偏好選擇。"
-  LangString utaShortcutText ${LANG_ENGLISH} "Utawakui always creates a Start Menu shortcut so Windows can identify the app and now-playing state correctly. The desktop shortcut is optional."
+  LangString utaShortcutText ${LANG_TRADCHINESE} "將建立開始功能表捷徑。你也可以選擇建立桌面捷徑。"
+  LangString utaShortcutText ${LANG_ENGLISH} "A Start Menu shortcut will be created. You can also add a desktop shortcut."
 
   LangString utaDesktopShortcut ${LANG_TRADCHINESE} "建立桌面捷徑"
   LangString utaDesktopShortcut ${LANG_ENGLISH} "Create a desktop shortcut"
 
-  LangString utaSecDeps ${LANG_TRADCHINESE} "清除已下載的功能工具與模型 (yt-dlp / ffmpeg / 分離模型)"
-  LangString utaSecDeps ${LANG_ENGLISH} "Delete downloaded tools and models (yt-dlp / ffmpeg / separation models)"
+  LangString utaSecDeps ${LANG_TRADCHINESE} "刪除已下載的工具與模型"
+  LangString utaSecDeps ${LANG_ENGLISH} "Delete downloaded tools and models"
 
-  LangString utaSecAppData ${LANG_TRADCHINESE} "清除應用程式設定與資料 (%APPDATA%\Utawakui)"
-  LangString utaSecAppData ${LANG_ENGLISH} "Delete application settings and data (%APPDATA%\Utawakui)"
+  LangString utaSecAppData ${LANG_TRADCHINESE} "刪除全部應用程式資料（含設定、快取、工具與模型）"
+  LangString utaSecAppData ${LANG_ENGLISH} "Delete all app data (settings, cache, tools and models)"
 
   LangString utaSecLibrary ${LANG_TRADCHINESE} "刪除本機曲庫資料夾"
   LangString utaSecLibrary ${LANG_ENGLISH} "Delete local music library folder"
@@ -65,6 +91,7 @@
 !macroend
 
 !macro customPageAfterChangeDir
+  !insertmacro utaMaintenancePage
   Var /GLOBAL utaShortcutOptionsPage
   Var /GLOBAL utaDesktopShortcutCheckbox
   Var /GLOBAL isNoDesktopShortcut
@@ -72,7 +99,9 @@
   Page custom utaShortcutOptionsPage utaShortcutOptionsLeave
 
   Function utaShortcutOptionsPage
+    Call utaDetectInstalledVersion
     ${if} ${isUpdated}
+    ${orIf} $utaInstallAction != "install"
       Abort
     ${endIf}
 

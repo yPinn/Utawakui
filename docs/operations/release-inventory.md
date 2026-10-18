@@ -59,7 +59,21 @@ Windows packaging is configured in `electron-builder.yml`.
   All cleanup checkboxes default to unchecked. Cleanup uses
   `RMDir /r /REBOOTOK`, so locked folders may finish deleting after a reboot.
 - Installer copy discloses that advanced features are enabled and prepared from
-  Settings. The uninstaller welcome page explains that data cleanup is opt-in.
+  Settings. The uninstall data-options page explains the inclusive app-data
+  deletion before selection; the standard template displays it before the welcome
+  page. All app-data cleanup includes downloaded tools/models and any library
+  stored within that directory.
+- The same full installer supports reinstalling the same version to restore
+  program files. `build/installer-maintenance.nsh` compares local uninstall
+  registry versions in the selected scope with the installer version; it displays
+  Reinstall or Update and blocks older installers before replacing files,
+  including silent installs and all-users replacement of a current-user copy.
+  It does not query a feed or download another installer. Data retention applies
+  outside the installation directory; separately downloaded tools/models are
+  retained, not repaired. Windows Apps' native Repair action remains disabled;
+  maintenance starts by running the full installer again.
+  See the [isolated maintenance acceptance record](installer-maintenance-verification-2026-10-18.md)
+  for exercised scenarios, final-page evidence and scope limits.
 - Pull requests and `main` pushes always run the ordinary Ubuntu preflight. Draft
   and documentation-only pull requests stop there; ready code pull requests run
   tests without coverage, while `main` and manual runs retain coverage. A
@@ -143,8 +157,9 @@ draft workflow, and explicit download/restart actions.
 
 ## Installer Profile Boundary
 
-The installer names the shipped payload as **核心安裝** and describes
-feature-gated capabilities as **工作流程擴充**.
+The installer delivers one complete application payload. Optional capabilities
+are enabled and prepared separately in Settings; the welcome copy does not use
+the former “核心安裝／工作流程擴充” labels or promise selectable payloads.
 
 This is intentionally not a selectable "Basic vs Ext" component split yet:
 
