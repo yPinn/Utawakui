@@ -109,8 +109,12 @@ watch(
 );
 
 function setItemElement(id, element) {
+  const previous = itemElements.get(id);
+  if (previous === element) return;
+  if (previous) resizeObserver?.unobserve(previous);
   if (element) itemElements.set(id, element);
   else itemElements.delete(id);
+  if (element) resizeObserver?.observe(element);
 }
 
 function elementSize(element) {
@@ -526,6 +530,7 @@ onMounted(async () => {
   if (typeof ResizeObserver === 'function') {
     resizeObserver = new ResizeObserver(scheduleReclamp);
     if (clampBounds.value) resizeObserver.observe(clampBounds.value);
+    itemElements.forEach((element) => resizeObserver.observe(element));
     const canvasRoot = clampBounds.value?.closest?.(
       '[data-folder-artifact-canvas]',
     );
