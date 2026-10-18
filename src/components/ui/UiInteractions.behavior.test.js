@@ -230,7 +230,7 @@ describe('shared UI interaction contracts', () => {
     );
     expect(source).toContain("'ui-search-box__control--clearable': modelValue");
     expect(source).toMatch(
-      /\.ui-search-box__control--clearable\s*\{[^}]*padding-inline-end:\s*var\(--ui-search-clear-hit-size\);/su,
+      /\.ui-search-box__control--clearable\s*\{[^}]*padding-inline-end:\s*calc\(\s*var\(--ui-search-clear-hit-size\) \+ var\(--ui-space-2\)\s*\);/su,
     );
     app.unmount();
   });

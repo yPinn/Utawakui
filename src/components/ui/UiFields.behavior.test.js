@@ -258,6 +258,48 @@ describe('shared field accessibility and data flow', () => {
     rangeMount.app.unmount();
   });
 
+  it('keeps full native option labels and field associations through content recovery', async () => {
+    const long = '中文／日本語の長い選択肢／A very long option label';
+    const props = reactive({
+      id: 'native-source',
+      label: '來源',
+      name: 'source',
+      modelValue: 7,
+      hint: '選擇來源',
+      options: [{ value: 7, label: long }],
+    });
+    const { root, app } = mount(UiSelect, props);
+    const select = findAll(root, (node) => node.type === 'select')[0];
+    const indicator = findAll(root, (node) =>
+      String(node.props.class || '').includes('ui-select__indicator'),
+    )[0];
+    expect(indicator.props['aria-hidden']).toBe('true');
+    expect(select.props).toMatchObject({
+      id: 'native-source',
+      name: 'source',
+      value: 7,
+      'aria-describedby': 'native-source-hint',
+    });
+    expect(findAll(root, (node) => node.type === 'label')[0].props.for).toBe(
+      'native-source',
+    );
+    expect(
+      textContent(findAll(root, (node) => node.type === 'option')[0]),
+    ).toBe(long);
+    props.options = [{ value: 7, label: '短' }];
+    await nextTick();
+    expect(
+      textContent(findAll(root, (node) => node.type === 'option')[0]),
+    ).toBe('短');
+    expect(select.props.value).toBe(7);
+    props.options = [{ value: 7, label: long }];
+    await nextTick();
+    expect(
+      textContent(findAll(root, (node) => node.type === 'option')[0]),
+    ).toBe(long);
+    app.unmount();
+  });
+
   it('groups native select options without changing the selected value contract', () => {
     const update = vi.fn();
     const selectMount = mount(UiSelect, {

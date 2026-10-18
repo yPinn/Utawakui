@@ -15,6 +15,14 @@ const playlistEditorSource = fs.readFileSync(
 );
 
 describe('UiTextField appearance ownership', () => {
+  it('keeps the shared field inset and native horizontal editing without accessory reserve', () => {
+    expect(textFieldSource).toContain(
+      'padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);',
+    );
+    expect(textFieldSource).toContain('min-width: 0');
+    expect(textFieldSource).not.toMatch(/text-overflow:|padding-inline-end:/u);
+  });
+
   it('uses the shared field-value recipe for its default text', () => {
     expect(textFieldSource).toMatch(
       /\.ui-text-field\s*\{[^}]*font-size:\s*var\(--ui-field-font-size\);[^}]*font-weight:\s*var\(--ui-field-font-weight\);[^}]*line-height:\s*var\(--ui-field-line-height\);/s,

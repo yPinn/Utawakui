@@ -26,7 +26,9 @@ const controlId = computed(() => props.id || `ui-search-${generatedId}`);
 const inputRef = useTemplateRef('input');
 
 function clear() {
-  if (!props.disabled) emit('update:modelValue', '');
+  if (props.disabled) return;
+  emit('update:modelValue', '');
+  focus();
 }
 
 function focus() {
@@ -110,7 +112,7 @@ defineExpose({ focus });
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--ui-space-1);
+  gap: var(--ui-space-2);
   width: 100%;
   min-width: 0;
   min-height: var(--ui-search-box-height);
@@ -124,7 +126,7 @@ defineExpose({ focus });
 }
 
 .ui-search-box__control--clearable {
-  padding-inline-end: var(--ui-search-clear-hit-size);
+  padding-inline-end: calc(var(--ui-search-clear-hit-size) + var(--ui-space-2));
 }
 
 .ui-search-box__icon {
@@ -132,7 +134,7 @@ defineExpose({ focus });
 }
 
 .ui-search-box__control--icon-cell {
-  gap: var(--ui-field-padding-inline);
+  gap: var(--ui-space-2);
   padding-block: 0;
   padding-inline-start: 0;
 }
@@ -198,16 +200,16 @@ defineExpose({ focus });
   cursor: pointer;
 }
 
-.ui-search-box__clear:hover {
+.ui-search-box__clear:hover:not(:disabled) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
 
-.ui-search-box__clear:active {
+.ui-search-box__clear:active:not(:disabled) {
   background: var(--ui-color-surface-active);
 }
 
-.ui-search-box__clear:focus-visible {
+.ui-search-box__clear:focus-visible:not(:disabled) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }

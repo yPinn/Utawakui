@@ -22,6 +22,22 @@ describe('UiSelect native popup surface', () => {
     expect(source).not.toMatch(
       /option:(?:hover|checked)|optgroup:(?:hover|checked)/u,
     );
-    expect(source).not.toMatch(/appearance:\s*none|!important/u);
+    expect(source).not.toContain('!important');
+  });
+
+  it('reserves the same arrow slot and text gap as Combobox without truncating option data', () => {
+    expect(source).toContain('appearance: none');
+    expect(source).toContain(
+      'var(--ui-field-padding-inline) + var(--ui-space-4) + var(--ui-space-2)',
+    );
+    expect(source).toContain('text-overflow: ellipsis');
+    expect(source).toContain('white-space: nowrap');
+    expect(source).toContain('overflow: hidden');
+    expect(source).toContain(
+      'inset-inline-end: var(--ui-field-padding-inline)',
+    );
+    expect(source).toContain('pointer-events: none');
+    expect(source).toContain('.ui-select:disabled + .ui-select__indicator');
+    expect(source).toContain('{{ option.label }}');
   });
 });
