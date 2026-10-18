@@ -23,6 +23,19 @@ for (const [component, filename] of [
   attachClientRender(component, filename, import.meta.url);
 }
 describe('DemoIconButtonAppearance', () => {
+  it('shows focusable ARIA-disabled examples for every formal variant', async () => {
+    const html = await renderToString(createSSRApp(DemoIconButtonAppearance));
+    const row = html.match(
+      /<article[^>]*data-icon-button-state="aria-disabled"[\s\S]*?<\/article>/u,
+    )?.[0];
+    expect(row).toBeDefined();
+    expect(row.match(/aria-disabled="true"/gu)).toHaveLength(4);
+    expect(row).not.toMatch(/\sdisabled(?:\s|=|>)/u);
+    expect(html).toContain(
+      'aria-disabled 保留 focus／Tooltip，阻止滑鼠與 Enter／Space 啟用',
+    );
+    expect(html).not.toContain('aria-disabled 只有樣式');
+  });
   it('replaces only the Icon Button sample with the staged appearance review', () => {
     expect(actionsSource).toContain(
       "import DemoIconButtonAppearance from './DemoIconButtonAppearance.vue';",

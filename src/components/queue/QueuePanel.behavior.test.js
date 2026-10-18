@@ -463,7 +463,9 @@ describe('QueuePanel shared Dock content', () => {
     expect(rowSource).not.toMatch(
       /\.queue-track__drop-indicator\s*\{[^}]*(?:background|block-size|box-shadow):/su,
     );
-    expect(trackRowSource).toContain('<slot name="overlay" />');
+    expect(trackRowSource).toContain(
+      '<slot name="overlay" :disabled="disabled" />',
+    );
   });
 
   it('does not paint-contain any Queue row state surface based on reorder capability', () => {

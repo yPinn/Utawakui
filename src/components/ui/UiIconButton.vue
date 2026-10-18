@@ -1,6 +1,7 @@
 <script setup>
 import { computed, mergeProps, useAttrs } from 'vue';
 import { ICON_SIZE, Loader2 } from '../../icons/index.js';
+import { nativeButtonAttrs } from './buttonAttrs.js';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { isTooltipPlacement, useTooltip } from './useTooltip.js';
 
@@ -65,7 +66,10 @@ const {
 });
 
 function buttonAttrs(triggerProps) {
-  const forwardedAttrs = { ...attrs };
+  const forwardedAttrs = nativeButtonAttrs(
+    attrs,
+    props.disabled || props.loading,
+  );
   Reflect.deleteProperty(forwardedAttrs, 'aria-label');
   return mergeProps(forwardedAttrs, triggerProps);
 }
@@ -147,23 +151,23 @@ function buttonAttrs(triggerProps) {
     box-sizing: border-box;
   }
 
-  .ui-icon-btn--accent:not(:disabled):active {
+  .ui-icon-btn--accent:not(:disabled):not([aria-disabled='true']):active {
     background: var(--ui-color-accent-active);
   }
 
-  .ui-icon-btn--command:not(:disabled):hover {
+  .ui-icon-btn--command:not(:disabled):not([aria-disabled='true']):hover {
     background: var(--ui-color-command-surface-hover);
   }
 
-  .ui-icon-btn--command:not(:disabled):active {
+  .ui-icon-btn--command:not(:disabled):not([aria-disabled='true']):active {
     background: var(--ui-color-command-surface-active);
   }
 
-  .ui-icon-btn--overlay:not(:disabled):hover {
+  .ui-icon-btn--overlay:not(:disabled):not([aria-disabled='true']):hover {
     background: var(--ui-color-overlay-scrim-hover);
   }
 
-  .ui-icon-btn--overlay:not(:disabled):active {
+  .ui-icon-btn--overlay:not(:disabled):not([aria-disabled='true']):active {
     background: var(--ui-color-overlay-scrim-active);
   }
 }
@@ -208,12 +212,12 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-text-muted);
 }
 
-.ui-icon-btn--ghost:not(:disabled):hover {
+.ui-icon-btn--ghost:not(:disabled):not([aria-disabled='true']):hover {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
 
-.ui-icon-btn--ghost:not(:disabled):active {
+.ui-icon-btn--ghost:not(:disabled):not([aria-disabled='true']):active {
   background: var(--ui-color-surface-active);
   color: var(--ui-color-text);
 }
@@ -223,12 +227,16 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-accent);
 }
 
-.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):hover {
+.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-accent);
 }
 
-.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):active {
+.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):not(
+    [aria-disabled='true']
+  ):active {
   background: var(--ui-color-surface-active);
   color: var(--ui-color-accent);
 }
@@ -238,7 +246,7 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-accent-contrast);
 }
 
-.ui-icon-btn--accent:not(:disabled):hover {
+.ui-icon-btn--accent:not(:disabled):not([aria-disabled='true']):hover {
   background: var(--ui-color-accent-hover);
 }
 
@@ -258,12 +266,16 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-button-danger-text);
 }
 
-.ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):hover {
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
   background: var(--ui-button-danger-surface-hover);
   color: var(--ui-button-danger-text);
 }
 
-.ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):active {
+.ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):not(
+    [aria-disabled='true']
+  ):active {
   background: var(--ui-button-danger-surface-active);
   color: var(--ui-button-danger-text);
 }
@@ -273,13 +285,17 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-button-danger-text);
 }
 
-.ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):hover {
+.ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
   border-color: var(--ui-button-danger-border);
   background: var(--ui-button-danger-surface-hover);
   color: var(--ui-button-danger-text);
 }
 
-.ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):active {
+.ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):not(
+    [aria-disabled='true']
+  ):active {
   border-color: var(--ui-button-danger-border);
   background: var(--ui-button-danger-surface-active);
   color: var(--ui-button-danger-text);
@@ -291,13 +307,21 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-button-danger-contrast);
 }
 
-.ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):hover,
-.ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):hover {
+.ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover,
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
   background: var(--ui-button-danger-fill-hover);
 }
 
-.ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):active,
-.ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):active {
+.ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):not(
+    [aria-disabled='true']
+  ):active,
+.ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):not(
+    [aria-disabled='true']
+  ):active {
   background: var(--ui-button-danger-fill-active);
 }
 

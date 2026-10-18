@@ -1,9 +1,8 @@
 <script setup>
 import {
   computed,
-  nextTick,
+  onBeforeUnmount,
   onMounted,
-  onUnmounted,
   ref,
   shallowRef,
   useAttrs,
@@ -18,12 +17,6 @@ const props = defineProps({
 });
 defineOptions({ inheritAttrs: false });
 const attrs = useAttrs();
-
-// Trailing gap the scrolling text leaves before it reverses — the CSS
-// padding-right must equal this exactly for the marquee's travel distance
-// to look right, so it's set as a CSS custom property from here rather
-// than duplicated as a separate `1rem` literal in the stylesheet.
-const MARQUEE_BUFFER_PX = 16;
 
 const rootRef = ref(null);
 const textRef = ref(null);
@@ -46,6 +39,7 @@ const {
   disabled: tooltipDisabled,
   describedBy: true,
 });
+defineExpose({ triggerProps: tooltipTriggerProps });
 const rootProps = computed(() => ({
   ...attrs,
   ...tooltipTriggerProps.value,
@@ -57,11 +51,11 @@ const marqueeDuration = computed(() => {
 const marqueeStyle = computed(() => ({
   '--ui-marquee-distance': `${distance.value}px`,
   '--ui-marquee-duration': marqueeDuration.value,
-  '--ui-marquee-buffer': `${MARQUEE_BUFFER_PX}px`,
 }));
 
 let resizeObserver;
 let frameId = 0;
+let mounted = false;
 
 function setRoot(value) {
   rootRef.value = value?.$el ?? value;
@@ -69,26 +63,29 @@ function setRoot(value) {
 }
 
 function measure() {
+  if (!mounted) return;
   cancelAnimationFrame(frameId);
   frameId = requestAnimationFrame(() => {
     const root = rootRef.value;
     const text = textRef.value;
     if (!root || !text) return;
-
-    // text.scrollWidth already includes the MARQUEE_BUFFER_PX padding-right
-    // that .ui-marquee--overflow applies once isOverflowing is true — back
-    // it out before recomputing, or a re-measure of an already-overflowing
-    // row (e.g. after a legitimate ancestor resize) double-counts the
-    // buffer into `distance` on top of the one added below.
-    const appliedBuffer = isOverflowing.value ? MARQUEE_BUFFER_PX : 0;
+    if (!(root.clientWidth > 0 && root.clientHeight > 0)) {
+      isOverflowing.value = false;
+      distance.value = 0;
+      return;
+    }
+    // Reduced motion removes the trailing padding. Read the rendered value
+    // rather than inferring it from the overflow class or a fixed pixel gap.
+    const appliedBuffer = parseFloat(getComputedStyle(text).paddingRight) || 0;
     const naturalScrollWidth = text.scrollWidth - appliedBuffer;
     const overflow = Math.ceil(naturalScrollWidth - root.clientWidth);
-    distance.value = Math.max(0, overflow + MARQUEE_BUFFER_PX);
     isOverflowing.value = overflow > 1;
+    distance.value = isOverflowing.value ? overflow : 0;
   });
 }
 
 onMounted(() => {
+  mounted = true;
   if (typeof ResizeObserver === 'function') {
     resizeObserver = new ResizeObserver(measure);
     // Observe only the root, not the text span: the text's size changes *because*
@@ -98,6 +95,8 @@ onMounted(() => {
     // size inputs (content change, font swap) are covered by the displayText watcher
     // below and document.fonts.ready.
     if (rootRef.value) resizeObserver.observe(rootRef.value);
+  } else {
+    globalThis.window?.addEventListener?.('resize', measure);
   }
   measure();
   // A row that mounts before its font finishes loading measures against
@@ -109,15 +108,15 @@ onMounted(() => {
   document.fonts?.ready?.then(measure);
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  mounted = false;
   cancelAnimationFrame(frameId);
   resizeObserver?.disconnect();
+  if (!resizeObserver)
+    globalThis.window?.removeEventListener?.('resize', measure);
 });
 
-watch(displayText, async () => {
-  await nextTick();
-  measure();
-});
+watch(displayText, measure, { flush: 'post' });
 </script>
 
 <template>
@@ -128,7 +127,9 @@ watch(displayText, async () => {
     :class="{ 'ui-marquee--overflow': isOverflowing }"
     :style="marqueeStyle"
   >
-    <span ref="textRef" class="ui-marquee__text">{{ displayText }}</span>
+    <span :key="displayText" ref="textRef" class="ui-marquee__text">{{
+      displayText
+    }}</span>
   </span>
   <UiTooltipSurface
     :open="tooltipOpen"
@@ -159,7 +160,7 @@ watch(displayText, async () => {
 
 .ui-marquee--overflow .ui-marquee__text {
   max-width: none;
-  padding-right: var(--ui-marquee-buffer);
+  padding-right: var(--ui-space-4);
   will-change: transform;
   animation: ui-marquee-scroll var(--ui-marquee-duration) ease-in-out 0.8s
     infinite alternate;
@@ -173,7 +174,9 @@ watch(displayText, async () => {
 
   80%,
   100% {
-    transform: translateX(calc(var(--ui-marquee-distance) * -1));
+    transform: translateX(
+      calc((var(--ui-marquee-distance) + var(--ui-space-4)) * -1)
+    );
   }
 }
 

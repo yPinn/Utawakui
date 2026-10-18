@@ -66,6 +66,7 @@ const STATES = [
   ['focus', 'Focus-visible'],
   ['active', 'Active toggle'],
   ['disabled', 'Disabled'],
+  ['aria-disabled', 'ARIA-disabled · 可聚焦'],
   ['loading', 'Loading'],
 ];
 
@@ -109,6 +110,7 @@ function stateProps(state, variant) {
     loading: state === 'loading',
     loadingLabel: '正在保存',
     'aria-pressed': state === 'active' ? true : undefined,
+    'aria-disabled': state === 'aria-disabled' ? true : undefined,
   };
 }
 </script>

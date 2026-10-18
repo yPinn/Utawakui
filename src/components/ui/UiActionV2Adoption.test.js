@@ -40,8 +40,12 @@ describe('Token v2 shared primitive adoption', () => {
     expect(buttonSource).toContain('text-overflow: ellipsis;');
     expect(buttonSource).toContain('user-select: none;');
     expect(buttonSource).toContain('.ui-btn--secondary');
-    expect(buttonSource).toContain('.ui-btn--secondary:not(:disabled):active');
-    expect(buttonSource).toContain('.ui-btn--accent:not(:disabled):active');
+    expect(buttonSource).toContain(
+      ".ui-btn--secondary:not(:disabled):not([aria-disabled='true']):active",
+    );
+    expect(buttonSource).toContain(
+      ".ui-btn--accent:not(:disabled):not([aria-disabled='true']):active",
+    );
     expect(buttonSource).toMatch(
       /\.ui-btn--ghost:not\(:disabled\)(?::not\(\[aria-disabled='true'\]\))?:active/u,
     );
@@ -49,13 +53,13 @@ describe('Token v2 shared primitive adoption', () => {
 
   it('adopts complete Accent and Overlay Icon Button feedback', () => {
     expect(iconButtonSource).toContain(
-      '.ui-icon-btn--accent:not(:disabled):active',
+      ".ui-icon-btn--accent:not(:disabled):not([aria-disabled='true']):active",
     );
     expect(iconButtonSource).toContain(
-      '.ui-icon-btn--overlay:not(:disabled):hover',
+      ".ui-icon-btn--overlay:not(:disabled):not([aria-disabled='true']):hover",
     );
     expect(iconButtonSource).toContain(
-      '.ui-icon-btn--overlay:not(:disabled):active',
+      ".ui-icon-btn--overlay:not(:disabled):not([aria-disabled='true']):active",
     );
   });
 
@@ -65,10 +69,10 @@ describe('Token v2 shared primitive adoption', () => {
     );
     expect(iconButtonSource).toContain('.ui-icon-btn--command {');
     expect(iconButtonSource).toContain(
-      '.ui-icon-btn--command:not(:disabled):hover',
+      ".ui-icon-btn--command:not(:disabled):not([aria-disabled='true']):hover",
     );
     expect(iconButtonSource).toContain(
-      '.ui-icon-btn--command:not(:disabled):active',
+      ".ui-icon-btn--command:not(:disabled):not([aria-disabled='true']):active",
     );
     expect(iconButtonSource).toMatch(
       /\.ui-icon-btn--command\s*\{[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-color-command-border\);[^}]*background:\s*var\(--ui-color-command-surface\);[^}]*color:\s*var\(--ui-color-command-foreground\);/su,

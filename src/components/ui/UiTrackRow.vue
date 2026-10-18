@@ -1,7 +1,7 @@
 <script setup>
 // `lead`/`trail` slots cover what differs between callers (a checkbox, a
 // status label) without forking the CSS per caller.
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
 import UiOverflowTooltip from './UiOverflowTooltip.vue';
@@ -21,6 +21,8 @@ const props = defineProps({
   // shared quiet selection surface.
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
+  // Disables owned actions; callers receive the same state through slots.
+  disabled: { type: Boolean, default: false },
   // A compound row may contain independently focusable actions without making
   // the entire row one action. Keep its group feedback separate from
   // `interactive`, which owns the full-row button and selection contract.
@@ -73,6 +75,7 @@ const emit = defineEmits([
 ]);
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
+const titleOverflowOwner = shallowRef(null);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
 const displayDuration = computed(() => props.track?.duration);
 const resolvedActionLabel = computed(
@@ -87,17 +90,28 @@ const thumbTrack = computed(() => ({
 }));
 
 function activateFromRowContent(event) {
-  if (!props.interactive) return;
+  if (!props.interactive || props.disabled) return;
   const selection = event.view?.getSelection?.();
   if (selection && !selection.isCollapsed) return;
   emit('rowClick', event);
 }
 
+function handleRowClick(event) {
+  if (!props.disabled) emit('rowClick', event);
+}
+
+function handleRowDblclick(event) {
+  if (!props.disabled) emit('rowDblclick', event);
+}
+
 function handleActionKeydown(event) {
+  if (props.disabled) return;
   emit('actionKeydown', event);
-  if (event.key !== 'Enter' || !props.activateOnEnter) return;
+  titleOverflowOwner.value?.triggerProps.onKeydown(event);
+  if (event.defaultPrevented || event.key !== 'Enter' || !props.activateOnEnter)
+    return;
   event.preventDefault();
-  emit('activate', event);
+  if (!event.repeat) emit('activate', event);
 }
 </script>
 
@@ -108,36 +122,43 @@ function handleActionKeydown(event) {
       'ui-track--active': active,
       'ui-track--current': current,
       'ui-track--interactive': interactive,
+      'ui-track--disabled': disabled,
       'ui-track--state-surface': stateSurface,
       'ui-track--state-surface-active': stateSurfaceActive,
     }"
     :aria-current="current ? 'true' : undefined"
+    :aria-disabled="disabled ? 'true' : undefined"
   >
     <button
       v-if="interactive"
       type="button"
       class="ui-track__action"
+      :disabled="disabled"
       :aria-label="resolvedActionLabel"
       :aria-description="selectionAction ? actionDescription : undefined"
       :aria-pressed="selectionAction ? active : undefined"
       :aria-keyshortcuts="actionKeyboardShortcuts"
-      @click="emit('rowClick', $event)"
-      @dblclick="emit('rowDblclick', $event)"
+      :aria-describedby="titleOverflowOwner?.triggerProps['aria-describedby']"
+      @focusin="titleOverflowOwner?.triggerProps.onFocusin($event)"
+      @focusout="titleOverflowOwner?.triggerProps.onFocusout($event)"
+      @click="handleRowClick"
+      @dblclick="handleRowDblclick"
       @keydown="handleActionKeydown"
     ></button>
     <span
       v-if="$slots.lead"
       class="ui-track__lead"
       @click="activateFromRowContent"
-      @dblclick="emit('rowDblclick', $event)"
+      @dblclick="handleRowDblclick"
     >
-      <slot name="lead" />
+      <slot name="lead" :disabled="disabled" />
     </span>
     <button
       v-if="artworkClickable"
       type="button"
       class="ui-track__artwork-action"
-      @click.stop="emit('artworkClick', $event)"
+      :disabled="disabled"
+      @click.stop="!disabled && emit('artworkClick', $event)"
       @dblclick.stop
     >
       <span class="ui-visually-hidden">{{ artworkLabel }}</span>
@@ -149,7 +170,7 @@ function handleActionKeydown(event) {
         :decoding="thumbDecoding"
       >
         <template v-if="$slots.artworkOverlay" #overlay>
-          <slot name="artworkOverlay" />
+          <slot name="artworkOverlay" :disabled="disabled" />
         </template>
       </UiTrackThumb>
     </button>
@@ -164,7 +185,7 @@ function handleActionKeydown(event) {
     <div
       class="ui-track__info"
       @click="activateFromRowContent"
-      @dblclick="emit('rowDblclick', $event)"
+      @dblclick="handleRowDblclick"
     >
       <UiTextButton
         v-if="titleClickable"
@@ -172,25 +193,30 @@ function handleActionKeydown(event) {
         :text="displayTitle"
         :aria-label="titleAriaLabel"
         :overflow="overflow"
-        @click.stop="emit('titleClick')"
+        :disabled="disabled"
+        @click.stop="!disabled && emit('titleClick')"
         @dblclick.stop
       />
       <UiMarqueeText
         v-else-if="overflow === 'marquee'"
+        ref="titleOverflowOwner"
         class="ui-track__title"
         :text="displayTitle"
+        :tooltip-enabled="!disabled"
       />
       <UiOverflowTooltip
         v-else
+        ref="titleOverflowOwner"
         class="ui-track__title ui-track__title-text"
         :text="displayTitle"
+        :tooltip-enabled="!disabled"
       >
         {{ displayTitle }}
       </UiOverflowTooltip>
       <!-- Callers may replace the artist line content (e.g. per-artist
            destinations); the lane, typography and row semantics stay here. -->
       <span v-if="displayArtist" class="ui-track__artist">
-        <slot name="artist">{{ displayArtist }}</slot>
+        <slot name="artist" :disabled="disabled">{{ displayArtist }}</slot>
       </span>
     </div>
     <span v-if="displayDuration && !hideDuration" class="ui-track__duration">{{
@@ -200,11 +226,11 @@ function handleActionKeydown(event) {
       v-if="$slots.trail"
       class="ui-track__trail"
       @click="activateFromRowContent"
-      @dblclick="emit('rowDblclick', $event)"
+      @dblclick="handleRowDblclick"
     >
-      <slot name="trail" />
+      <slot name="trail" :disabled="disabled" />
     </span>
-    <slot name="overlay" />
+    <slot name="overlay" :disabled="disabled" />
   </li>
 </template>
 
@@ -363,5 +389,37 @@ function handleActionKeydown(event) {
 .ui-track--interactive .ui-track__thumb,
 .ui-track--interactive .ui-track__duration {
   pointer-events: none;
+}
+
+.ui-track--disabled {
+  opacity: var(--ui-opacity-disabled);
+  cursor: default;
+}
+
+.ui-track--disabled .ui-track__action,
+.ui-track--disabled .ui-track__artwork-action {
+  cursor: default;
+}
+
+/* Disabled wins over hover, focus-within and a transient pressed surface;
+   selection remains an independent identity cue. */
+.ui-track.ui-track--disabled[aria-disabled='true']::before {
+  background: transparent;
+}
+
+.ui-track.ui-track--disabled.ui-track--active[aria-disabled='true']::before {
+  background: var(--ui-track-row-selected-surface);
+}
+
+.ui-track--disabled :deep(.ui-marquee__text) {
+  max-width: 100%;
+  padding-right: 0;
+  animation: none;
+  will-change: auto;
+}
+
+/* The row owns disabled opacity once, including its title action. */
+.ui-track--disabled :deep(.ui-text-btn:disabled) {
+  opacity: 1;
 }
 </style>

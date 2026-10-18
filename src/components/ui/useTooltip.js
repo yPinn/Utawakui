@@ -31,15 +31,17 @@ export function useTooltip(options) {
       ? { 'aria-describedby': tooltipId }
       : {}),
     onPointerenter: scheduleShow,
-    onPointerleave: scheduleHide,
+    onPointerleave: handlePointerleave,
     onFocusin: handleFocusin,
-    onFocusout: scheduleHide,
+    onFocusout: handleFocusout,
     onKeydown: handleKeydown,
   }));
 
   let openTimer;
   let closeTimer;
   let viewportListenersAttached = false;
+  let pointerInside = false;
+  let keyboardFocused = false;
 
   function canShow() {
     return !toValue(options.disabled) && Boolean(toValue(options.text));
@@ -94,7 +96,7 @@ export function useTooltip(options) {
 
   function show() {
     if (!canShow()) return;
-    clearTimeout(closeTimer);
+    clearTimers();
     attachViewportListeners();
     open.value = true;
     nextTick(updatePosition);
@@ -108,16 +110,33 @@ export function useTooltip(options) {
     ) {
       return;
     }
+    keyboardFocused = true;
     show();
   }
 
   function scheduleShow(event) {
-    if (event?.pointerType === 'touch' || !canShow()) return;
+    if (event?.pointerType === 'touch') return;
+    pointerInside = true;
     clearTimers();
+    if (!canShow()) return;
+    if (open.value) return;
     openTimer = setTimeout(show, Math.max(0, toValue(options.delayMs) ?? 500));
   }
 
+  function handlePointerleave() {
+    pointerInside = false;
+    clearTimeout(openTimer);
+    openTimer = undefined;
+    scheduleHide();
+  }
+
+  function handleFocusout() {
+    keyboardFocused = false;
+    scheduleHide();
+  }
+
   function scheduleHide() {
+    if (pointerInside || keyboardFocused) return;
     clearTimers();
     closeTimer = setTimeout(
       () => {
@@ -142,7 +161,16 @@ export function useTooltip(options) {
 
   watch(canShow, (available) => {
     if (!available) hideNow();
+    else if (keyboardFocused) show();
+    else if (pointerInside) scheduleShow();
   });
+
+  watch(
+    () => toValue(options.text),
+    () => {
+      if (open.value) nextTick(updatePosition);
+    },
+  );
 
   onBeforeUnmount(() => {
     clearTimers();

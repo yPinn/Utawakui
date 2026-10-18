@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { createSSRApp } from 'vue';
+import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import { Download } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
@@ -24,6 +26,15 @@ for (const [component, filename] of [
   attachClientRender(component, filename, import.meta.url);
 }
 describe('DemoButtonAppearance', () => {
+  it('shows focusable ARIA-disabled specimens through the formal primitive', async () => {
+    const html = await renderToString(createSSRApp(DemoButtonAppearance));
+    const row = html.match(
+      /<article[^>]*data-button-state="aria-disabled"[\s\S]*?<\/article>/u,
+    )?.[0];
+    expect(row).toBeDefined();
+    expect(row.match(/aria-disabled="true"/gu)).toHaveLength(2);
+    expect(row).not.toMatch(/\sdisabled(?:\s|=|>)/u);
+  });
   it('replaces only the Buttons sample with the staged appearance review', () => {
     expect(actionsSource).toContain(
       "import DemoButtonAppearance from './DemoButtonAppearance.vue';",

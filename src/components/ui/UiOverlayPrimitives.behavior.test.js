@@ -80,6 +80,79 @@ afterEach(() => {
 });
 
 describe('UiTooltip', () => {
+  it('keeps keyboard focus ownership when pointer hover leaves, then closes after blur', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '焦點提示', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+    trigger(button, 'onFocusin', { target: { matches: () => true } });
+    await nextTick();
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(surfaces()).toHaveLength(1);
+    trigger(button, 'onFocusout');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(surfaces()).toHaveLength(0);
+    mounted.app.unmount();
+  });
+
+  it('keeps pointer hover ownership when focus leaves, then closes after pointer exit', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '滑鼠提示', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(300);
+    trigger(button, 'onFocusin', { target: { matches: () => true } });
+    trigger(button, 'onFocusout');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(surfaces()).toHaveLength(1);
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(surfaces()).toHaveLength(0);
+    mounted.app.unmount();
+  });
+
+  it('does not reopen from a pending hover timer after focused Escape dismissal', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '可關閉提示', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    trigger(button, 'onFocusin', { target: { matches: () => true } });
+    await nextTick();
+    trigger(button, 'onKeydown', { key: 'Escape', stopPropagation: vi.fn() });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    mounted.app.unmount();
+  });
+
   it('sizes to its content before applying the shared maximum and viewport clamp', () => {
     expect(tooltipSurfaceSource).toMatch(
       /\.ui-tooltip\s*\{[^}]*inline-size:\s*max-content;[^}]*max-inline-size:\s*min\(/su,

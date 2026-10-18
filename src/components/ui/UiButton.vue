@@ -4,6 +4,7 @@
 // shared app tooltip instead of Chromium's native tooltip.
 import { computed, mergeProps, useAttrs } from 'vue';
 import { ICON_SIZE, Loader2 } from '../../icons/index.js';
+import { nativeButtonAttrs } from './buttonAttrs.js';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { isTooltipPlacement, useTooltip } from './useTooltip.js';
 
@@ -55,9 +56,13 @@ const {
 });
 
 function buttonAttrs(tooltipTriggerProps) {
+  const forwardedAttrs = nativeButtonAttrs(
+    attrs,
+    props.disabled || props.loading,
+  );
   return hasOwnedTooltip.value
-    ? mergeProps(attrs, tooltipTriggerProps)
-    : { ...attrs };
+    ? mergeProps(forwardedAttrs, tooltipTriggerProps)
+    : forwardedAttrs;
 }
 </script>
 
@@ -149,12 +154,12 @@ function buttonAttrs(tooltipTriggerProps) {
     color: var(--ui-color-text);
   }
 
-  .ui-btn--secondary:not(:disabled):active {
+  .ui-btn--secondary:not(:disabled):not([aria-disabled='true']):active {
     border-color: var(--ui-color-border-strong);
     background: var(--ui-color-surface-active);
   }
 
-  .ui-btn--accent:not(:disabled):active {
+  .ui-btn--accent:not(:disabled):not([aria-disabled='true']):active {
     background: var(--ui-color-accent-active);
   }
 
@@ -173,7 +178,9 @@ function buttonAttrs(tooltipTriggerProps) {
     color: var(--ui-button-danger-text);
   }
 
-  .ui-btn--intent-danger.ui-btn--accent:not(:disabled):active {
+  .ui-btn--intent-danger.ui-btn--accent:not(:disabled):not(
+      [aria-disabled='true']
+    ):active {
     background: var(--ui-button-danger-fill-active);
   }
 }
@@ -231,7 +238,7 @@ function buttonAttrs(tooltipTriggerProps) {
   color: var(--ui-color-accent-contrast);
 }
 
-.ui-btn--accent:not(:disabled):hover {
+.ui-btn--accent:not(:disabled):not([aria-disabled='true']):hover {
   background: var(--ui-color-accent-hover);
 }
 
@@ -264,7 +271,9 @@ function buttonAttrs(tooltipTriggerProps) {
   color: var(--ui-button-danger-contrast);
 }
 
-.ui-btn--intent-danger.ui-btn--accent:not(:disabled):hover {
+.ui-btn--intent-danger.ui-btn--accent:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
   background: var(--ui-button-danger-fill-hover);
 }
 

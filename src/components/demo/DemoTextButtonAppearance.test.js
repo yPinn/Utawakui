@@ -158,7 +158,7 @@ describe('DemoTextButtonAppearance', () => {
     expect(marquee).toHaveLength(0);
     expect(textContent(clampText)).toBe('A deliberately long headline title');
     expect(currentSource).toMatch(
-      /\.ui-text-btn__text--clamp\s*\{[\s\S]*?-webkit-line-clamp:\s*2;/u,
+      /\.ui-text-btn\s+:deep\(\.ui-text-btn__text--clamp\)\s*\{[\s\S]*?-webkit-line-clamp:\s*2;/u,
     );
     mounted.app.unmount();
   });

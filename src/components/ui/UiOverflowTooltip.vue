@@ -1,5 +1,12 @@
 <script setup>
-import { computed, shallowRef, useAttrs, watch } from 'vue';
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  shallowRef,
+  useAttrs,
+  watch,
+} from 'vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { isTooltipPlacement, useTooltip } from './useTooltip.js';
 
@@ -8,6 +15,7 @@ defineOptions({ inheritAttrs: false });
 const props = defineProps({
   as: { type: [String, Object], default: 'span' },
   text: { type: [String, Number], default: '' },
+  tooltipEnabled: { type: Boolean, default: true },
   placement: {
     type: String,
     default: 'top',
@@ -17,8 +25,13 @@ const props = defineProps({
 
 const attrs = useAttrs();
 const isOverflowing = shallowRef(false);
+const rootElement = shallowRef(null);
+let resizeObserver;
+let mounted = false;
 const displayText = computed(() => String(props.text ?? ''));
-const disabled = computed(() => !isOverflowing.value || !displayText.value);
+const disabled = computed(
+  () => !props.tooltipEnabled || !isOverflowing.value || !displayText.value,
+);
 const {
   open,
   position,
@@ -32,16 +45,26 @@ const {
   describedBy: true,
 });
 
+defineExpose({ triggerProps: tooltipTriggerProps });
+
 const rootProps = computed(() => ({
   ...attrs,
   ...tooltipTriggerProps.value,
+  ref: setRoot,
   onPointerenter: handlePointerenter,
   onFocusin: handleFocusin,
 }));
 
-function measure(element) {
+function setRoot(value) {
+  rootElement.value = value?.$el ?? value;
+  tooltipTriggerProps.value.ref(value);
+}
+
+function measure(element = rootElement.value) {
   isOverflowing.value = Boolean(
     element &&
+    element.clientWidth > 0 &&
+    element.clientHeight > 0 &&
     (element.scrollWidth > element.clientWidth ||
       element.scrollHeight > element.clientHeight),
   );
@@ -57,8 +80,37 @@ function handleFocusin(event) {
   tooltipTriggerProps.value.onFocusin(event);
 }
 
-watch(displayText, () => {
-  isOverflowing.value = false;
+const remeasure = () => measure();
+watch(displayText, remeasure, { flush: 'post' });
+watch(
+  rootElement,
+  (element, previous) => {
+    if (previous) resizeObserver?.unobserve(previous);
+    if (element) resizeObserver?.observe(element);
+    measure(element);
+  },
+  { flush: 'post' },
+);
+
+onMounted(() => {
+  mounted = true;
+  if (typeof ResizeObserver === 'function') {
+    resizeObserver = new ResizeObserver(remeasure);
+    if (rootElement.value) resizeObserver.observe(rootElement.value);
+  } else {
+    globalThis.window?.addEventListener?.('resize', remeasure);
+  }
+  remeasure();
+  globalThis.document?.fonts?.ready?.then(() => {
+    if (mounted) remeasure();
+  });
+});
+
+onBeforeUnmount(() => {
+  mounted = false;
+  resizeObserver?.disconnect();
+  if (!resizeObserver)
+    globalThis.window?.removeEventListener?.('resize', remeasure);
 });
 </script>
 

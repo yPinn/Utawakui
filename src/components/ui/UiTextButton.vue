@@ -1,9 +1,10 @@
 <script setup>
 // Wraps overflow text in a real <button> so a caller can make it its own
 // click target, separate from a row's primary action. Marquee remains the
-// default; high-volume surfaces can opt into static ellipsis to avoid one
-// ResizeObserver and animation lane per row, and headlines into a clamp.
-import { computed } from 'vue';
+// default; high-volume surfaces can opt into static ellipsis to avoid an
+// animation lane per row, and headlines into a clamp.
+import { computed, mergeProps, shallowRef, useAttrs } from 'vue';
+import { nativeButtonAttrs } from './buttonAttrs.js';
 import UiMarqueeText from './UiMarqueeText.vue';
 import UiOverflowTooltip from './UiOverflowTooltip.vue';
 
@@ -18,22 +19,60 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['click']);
+defineOptions({ inheritAttrs: false });
+const attrs = useAttrs();
+const overflowOwner = shallowRef(null);
 const displayText = computed(() => String(props.text ?? ''));
+
+function isDisabled() {
+  return (
+    attrs.disabled === '' ||
+    Boolean(attrs.disabled) ||
+    attrs['aria-disabled'] === true ||
+    attrs['aria-disabled'] === 'true'
+  );
+}
+
+function buttonAttrs() {
+  // The button owns keyboard focus; its measured text child owns the hint.
+  const trigger = overflowOwner.value?.triggerProps ?? {};
+  return mergeProps(nativeButtonAttrs(attrs, isDisabled()), {
+    'aria-describedby':
+      [attrs['aria-describedby'], trigger['aria-describedby']]
+        .filter(Boolean)
+        .join(' ') || undefined,
+    onFocusin: trigger.onFocusin,
+    onFocusout: trigger.onFocusout,
+    onKeydown: trigger.onKeydown,
+  });
+}
+
+function handleClick(event) {
+  if (!isDisabled()) emit('click', event);
+}
 </script>
 
 <template>
   <button
     type="button"
     class="ui-text-btn"
+    v-bind="buttonAttrs()"
     :aria-label="ariaLabel"
-    @click.stop="emit('click', $event)"
+    @click.stop="handleClick"
   >
-    <UiMarqueeText v-if="overflow === 'marquee'" :text="displayText" />
+    <UiMarqueeText
+      v-if="overflow === 'marquee'"
+      ref="overflowOwner"
+      :text="displayText"
+      :tooltip-enabled="!isDisabled()"
+    />
     <UiOverflowTooltip
       v-else
+      ref="overflowOwner"
       class="ui-text-btn__text"
       :class="{ 'ui-text-btn__text--clamp': overflow === 'clamp' }"
       :text="displayText"
+      :tooltip-enabled="!isDisabled()"
     >
       {{ displayText }}
     </UiOverflowTooltip>
@@ -78,13 +117,14 @@ const displayText = computed(() => String(props.text ?? ''));
     user-select: none;
   }
 
-  .ui-text-btn:disabled {
+  .ui-text-btn:disabled,
+  .ui-text-btn[aria-disabled='true'] {
     opacity: var(--ui-opacity-disabled);
     cursor: default;
   }
 }
 
-.ui-text-btn__text {
+.ui-text-btn :deep(.ui-text-btn__text) {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -95,7 +135,7 @@ const displayText = computed(() => String(props.text ?? ''));
 /* Headline callers wrap to two lines instead of one. The clip hides line
    three, so callers need title leading or looser to keep the last line's
    underline inside the box. */
-.ui-text-btn__text--clamp {
+.ui-text-btn :deep(.ui-text-btn__text--clamp) {
   display: -webkit-box;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -105,12 +145,23 @@ const displayText = computed(() => String(props.text ?? ''));
 
 /* Both overflow owners are child components. Reach their painted text roots
    explicitly so inserting a Tooltip wrapper cannot sever hover/focus paint. */
-.ui-text-btn:not(:disabled):hover :deep(.ui-marquee__text),
-.ui-text-btn:focus-visible :deep(.ui-marquee__text),
-.ui-text-btn:not(:disabled):hover :deep(.ui-text-btn__text),
-.ui-text-btn:focus-visible :deep(.ui-text-btn__text) {
+.ui-text-btn:not(:disabled):not([aria-disabled='true']):hover
+  :deep(.ui-marquee__text),
+.ui-text-btn:not(:disabled):not([aria-disabled='true']):focus-visible
+  :deep(.ui-marquee__text),
+.ui-text-btn:not(:disabled):not([aria-disabled='true']):hover
+  :deep(.ui-text-btn__text),
+.ui-text-btn:not(:disabled):not([aria-disabled='true']):focus-visible
+  :deep(.ui-text-btn__text) {
   text-decoration: underline;
   text-underline-offset: 0.18em;
+}
+
+.ui-text-btn:is(:disabled, [aria-disabled='true']) :deep(.ui-marquee__text) {
+  max-width: 100%;
+  padding-right: 0;
+  animation: none;
+  will-change: auto;
 }
 
 .ui-text-btn:focus-visible {

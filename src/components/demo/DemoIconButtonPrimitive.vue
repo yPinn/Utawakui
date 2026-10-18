@@ -53,6 +53,7 @@ const STATES = [
   ['active', 'Active toggle'],
   ['loading', 'Loading'],
   ['disabled', 'Disabled'],
+  ['aria-disabled', 'ARIA-disabled · 可聚焦'],
 ];
 
 const COVERAGE = {
@@ -165,6 +166,7 @@ function stateProps(state, variant) {
     loading: state === 'loading',
     loadingLabel: `${variant} 處理中`,
     'aria-pressed': state === 'active' ? true : undefined,
+    'aria-disabled': state === 'aria-disabled' ? true : undefined,
   };
 }
 </script>
@@ -347,7 +349,8 @@ function stateProps(state, variant) {
       <header class="demo-icon-button-subsection__header">
         <h6>ARIA 與行為</h6>
         <p>
-          視覺 active 不推導 toggle semantics；native disabled 才會阻止互動。
+          視覺 active 不推導 toggle semantics；disabled／loading 阻止互動並移出
+          Tab 順序，aria-disabled 保留聚焦與提示，但不執行動作。
         </p>
       </header>
       <div class="demo-icon-button-aria">
@@ -369,7 +372,9 @@ function stateProps(state, variant) {
           <li>label 是 required accessible name；SVG 固定 aria-hidden。</li>
           <li>title optional，未提供時 defaults to label。</li>
           <li>aria-pressed／expanded／controls 由 caller 擁有。</li>
-          <li>aria-disabled 只有樣式不等於 native disabled 行為。</li>
+          <li>
+            aria-disabled 保留 focus／Tooltip，阻止滑鼠與 Enter／Space 啟用。
+          </li>
         </ul>
       </div>
     </section>

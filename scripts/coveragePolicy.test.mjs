@@ -53,6 +53,7 @@ describe('coverage policy', () => {
       'src/components/track/trackCollectionLayout.js',
       'src/components/track/trackCollectionProfiles.js',
       'src/components/ui/fieldAttrs.js',
+      'src/components/ui/buttonAttrs.js',
       'src/components/ui/floatingPosition.js',
       'src/bgm/handoffCoordinator.js',
       'src/composables/usePlaylistActions.js',

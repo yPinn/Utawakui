@@ -68,8 +68,12 @@ describe('shared UI interaction contracts', () => {
       /\.ui-icon-btn--stretch\s*\{[^}]*min-width:\s*var\(--ui-icon-btn-size\);[^}]*min-height:\s*var\(--ui-icon-btn-size\);[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
     );
     expect(source).toContain('--ui-icon-button-size-override');
-    expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):hover');
-    expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):active');
+    expect(source).toContain(
+      ".ui-icon-btn--ghost:not(:disabled):not([aria-disabled='true']):hover",
+    );
+    expect(source).toContain(
+      ".ui-icon-btn--ghost:not(:disabled):not([aria-disabled='true']):active",
+    );
     app.unmount();
   });
 
@@ -79,11 +83,11 @@ describe('shared UI interaction contracts', () => {
       'utf8',
     );
 
-    expect(source).toContain(
-      '.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):hover',
+    expect(source.replace(/\s+/gu, '')).toContain(
+      ".ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):not([aria-disabled='true']):hover",
     );
-    expect(source).toContain(
-      '.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):active',
+    expect(source.replace(/\s+/gu, '')).toContain(
+      ".ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):not([aria-disabled='true']):active",
     );
     expect(source).toContain('@media (forced-colors: active)');
     expect(source).toMatch(

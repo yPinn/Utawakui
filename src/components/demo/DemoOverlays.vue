@@ -35,6 +35,7 @@ const popoverOpen = ref(false);
         </UiTooltip>
         <UiOverflowTooltip
           class="demo-overflow-tooltip"
+          tabindex="0"
           text="只有實際截斷時才顯示完整名稱"
         />
         <p class="demo-sample-caption">
@@ -68,12 +69,17 @@ const popoverOpen = ref(false);
 </template>
 
 <style scoped>
-.demo-overflow-tooltip {
+.demo-overlays :deep(.demo-overflow-tooltip) {
   display: block;
   max-inline-size: 10rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.demo-overlays :deep(.demo-overflow-tooltip:focus-visible) {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 </style>
 
