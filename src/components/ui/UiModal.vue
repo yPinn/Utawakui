@@ -59,7 +59,7 @@ const props = defineProps({
   presentation: {
     type: String,
     default: 'dialog',
-    validator: (value) => ['dialog', 'media'].includes(value),
+    validator: (value) => ['dialog', 'document', 'media'].includes(value),
   },
   fixedHeight: { type: Boolean, default: false },
   closeDisabled: { type: Boolean, default: false },
@@ -452,6 +452,23 @@ onUnmounted(() => {
 .ui-modal--notice {
   --ui-modal-inline-size: var(--ui-modal-inline-size-medium);
   --ui-modal-max-block-size: var(--ui-modal-max-block-size-medium);
+}
+
+/* A reading sheet shares the dialog's scroll, footer and keyboard owners. */
+.ui-modal--document {
+  --ui-modal-content-inset: var(--ui-space-6);
+  --ui-modal-section-gap: var(--ui-space-5);
+  --ui-modal-footer-inset-block: var(--ui-space-4);
+  --ui-field-bg: var(--ui-color-surface-raised);
+  --ui-field-bg-hover: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly: var(--ui-color-surface);
+
+  background: var(--ui-color-surface);
+  border-radius: var(--ui-radius-xs);
+}
+
+.ui-modal--document .ui-modal__title {
+  font-family: var(--ui-font-family-base);
 }
 
 .ui-modal--wide {

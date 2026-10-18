@@ -107,7 +107,9 @@ describe('UiModal appearance contract', () => {
     expect(modalSource).toContain(
       "presentation: {\n    type: String,\n    default: 'dialog',",
     );
-    expect(modalSource).toContain("['dialog', 'media'].includes(value)");
+    expect(modalSource).toContain(
+      "['dialog', 'document', 'media'].includes(value)",
+    );
     expect(modalSource).toContain('`ui-modal--${presentation}`');
     expect(modalSource).toContain(
       "'ui-visually-hidden': presentation === 'media'",

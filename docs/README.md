@@ -155,7 +155,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [consecutive update evidence](operations/update-acceptance-template.md)、
   [release inventory](operations/release-inventory.md)、
   [release runbook](operations/release-runbook.md)。
-- Governance：[legal compliance](governance/legal-compliance.md)。
+- Governance：[legal compliance](governance/legal-compliance.md)、[五個功能說明的行為、權利與來源查核](governance/feature-notice-review-2026-10-18.md)、[公開發行的服務／模型／元件授權核對](governance/release-license-review-2026-10-18.md)。
 - Research：[競品調查（2026-09-25）](research/competitive-research.md)、
   [Track Collection Row／Grid 收束提案（2026-10-14）](research/track-collection-row-consolidation-proposal-2026-10-14.md)、
   [線上封面來源與跨語言 identity 評估（2026-09-27）](research/online-artwork-provider-evaluation-2026-09-27.md)、

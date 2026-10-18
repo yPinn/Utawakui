@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const confirmedProviderFlow = {
   featureId: 'provider-flow',
-  noticeVersion: 'provider-flow-notice-v4',
+  noticeVersion: 'provider-flow-notice-v5',
   confirmedAt: '2026-08-20T00:00:00.000Z',
   enabled: true,
 };

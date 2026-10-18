@@ -74,7 +74,7 @@ const lyricsSourceFingerprint = 'a'.repeat(64);
 
 const confirmedLyricsFlow = {
   featureId: 'lyrics-flow',
-  noticeVersion: 'feature-notice-v3',
+  noticeVersion: 'lyrics-flow-notice-v4',
   confirmedAt: '2026-08-20T00:00:00.000Z',
   enabled: true,
 };

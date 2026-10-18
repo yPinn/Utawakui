@@ -132,7 +132,7 @@ describe('useArtistIndex', () => {
     getFeatureConfirmationsMock.mockResolvedValue({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'provider-flow-notice-v4',
+        noticeVersion: 'provider-flow-notice-v5',
         confirmedAt: '2026-10-12T06:00:00.000Z',
         enabled: true,
       },
@@ -165,7 +165,7 @@ describe('useArtistIndex', () => {
     getFeatureConfirmationsMock.mockResolvedValue({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'provider-flow-notice-v4',
+        noticeVersion: 'provider-flow-notice-v5',
         confirmedAt: '2026-10-12T06:00:00.000Z',
         enabled: true,
       },

@@ -1,0 +1,673 @@
+{
+  "checkedAt": "2026-10-18",
+  "scope": "Read-only local evidence. Installed RECORD matching is not independent archive verification. All dependency paths are relative.",
+  "sourceFiles": {
+    "package-lock.json": "e33fa59e406680f17936740b181a2ebd19e4afde382b967edd67bf368bc84ca4",
+    "shared/featureDependencies.json": "9d723c6abcb00b369d1e5e2fdb0fdbeca103da7e35d6f61c125215c26080d813",
+    "resources/audio-processing/analysis-beat-this-py314-lock.json": "ebb4817c330708ffa01910ace72316ded5e9075490825e423b186c55efa398a6",
+    "electron-builder.yml": "8bcdbc1a6420da5e8df82f7a10c4eb175450baa27868aff28871f72084d40146"
+  },
+  "packagedSnapshot": {
+    "checkedAt": "2026-10-18",
+    "archiveSha256": "b4caaf831261cda7a750deb6234dde7ac968366ac8b6af0a0a04ddab8f14ec0a",
+    "appVersion": "0.4.0",
+    "noticeFiles": [
+      "\\node_modules\\@borewit\\text-codec\\LICENSE.txt",
+      "\\node_modules\\@msgpack\\msgpack\\LICENSE",
+      "\\node_modules\\@napolab\\texture-bridge\\THIRD-PARTY-NOTICES",
+      "\\node_modules\\@napolab\\texture-bridge-core\\LICENSE",
+      "\\node_modules\\@napolab\\texture-bridge-win32-x64-msvc\\THIRD-PARTY-NOTICES",
+      "\\node_modules\\@tokenizer\\inflate\\LICENSE",
+      "\\node_modules\\adm-zip\\LICENSE",
+      "\\node_modules\\argparse\\LICENSE",
+      "\\node_modules\\async\\LICENSE",
+      "\\node_modules\\async\\eachOfLimit.js",
+      "\\node_modules\\async\\forEachOfLimit.js",
+      "\\node_modules\\async\\internal\\eachOfLimit.js",
+      "\\node_modules\\builder-util-runtime\\LICENSE",
+      "\\node_modules\\content-type\\LICENSE",
+      "\\node_modules\\crypto-js\\LICENSE",
+      "\\node_modules\\debug\\LICENSE",
+      "\\node_modules\\define-data-property\\LICENSE",
+      "\\node_modules\\define-properties\\LICENSE",
+      "\\node_modules\\doublearray\\LICENSE.txt",
+      "\\node_modules\\electron-updater\\LICENSE",
+      "\\node_modules\\electron-updater\\node_modules\\js-yaml\\LICENSE",
+      "\\node_modules\\es-define-property\\LICENSE",
+      "\\node_modules\\es-errors\\LICENSE",
+      "\\node_modules\\escape-string-regexp\\license",
+      "\\node_modules\\eventemitter3\\LICENSE",
+      "\\node_modules\\file-type\\license",
+      "\\node_modules\\fs-extra\\LICENSE",
+      "\\node_modules\\global-agent\\LICENSE",
+      "\\node_modules\\global-agent\\node_modules\\semver\\LICENSE",
+      "\\node_modules\\globalthis\\LICENSE",
+      "\\node_modules\\gopd\\LICENSE",
+      "\\node_modules\\graceful-fs\\LICENSE",
+      "\\node_modules\\has-property-descriptors\\LICENSE",
+      "\\node_modules\\ieee754\\LICENSE",
+      "\\node_modules\\isomorphic-ws\\LICENSE",
+      "\\node_modules\\js-yaml\\LICENSE",
+      "\\node_modules\\jsonfile\\LICENSE",
+      "\\node_modules\\kissfft-js\\COPYING",
+      "\\node_modules\\kuromoji\\LICENSE-2.0.txt",
+      "\\node_modules\\kuromoji\\NOTICE.md",
+      "\\node_modules\\lodash\\LICENSE",
+      "\\node_modules\\lodash.escaperegexp\\LICENSE",
+      "\\node_modules\\lodash.isequal\\LICENSE",
+      "\\node_modules\\matcher\\license",
+      "\\node_modules\\media-typer\\LICENSE",
+      "\\node_modules\\ms\\license.md",
+      "\\node_modules\\music-metadata\\LICENSE.txt",
+      "\\node_modules\\neverthrow\\LICENSE",
+      "\\node_modules\\object-keys\\LICENSE",
+      "\\node_modules\\obs-websocket-js\\LICENSE.md",
+      "\\node_modules\\opencc-js\\LICENSE",
+      "\\node_modules\\opencc-js\\LICENSES",
+      "\\node_modules\\opencc-js\\LICENSES\\Apache-2.0.txt",
+      "\\node_modules\\opencc-js\\THIRD_PARTY_LICENSES.md",
+      "\\node_modules\\sax\\LICENSE.md",
+      "\\node_modules\\semver\\LICENSE",
+      "\\node_modules\\serialize-error\\license",
+      "\\node_modules\\serialize-error\\node_modules\\type-fest\\license",
+      "\\node_modules\\strtok3\\LICENSE.txt",
+      "\\node_modules\\tiny-typed-emitter\\LICENSE",
+      "\\node_modules\\token-types\\LICENSE.txt",
+      "\\node_modules\\uint8array-extras\\license",
+      "\\node_modules\\universalify\\LICENSE",
+      "\\node_modules\\wanakana\\LICENSE",
+      "\\node_modules\\win-guid\\LICENSE.txt",
+      "\\node_modules\\ws\\LICENSE",
+      "\\node_modules\\zlibjs\\LICENSE",
+      "\\LICENSE.md",
+      "\\THIRD_PARTY_NOTICES.md",
+      "\\shared\\assets\\fonts\\LICENSE-KEIFONT-APACHE-2.0.txt",
+      "\\shared\\assets\\fonts\\OFL-GENEI-ANTIQUE.txt",
+      "\\shared\\assets\\fonts\\OFL-HINA-MINCHO.txt",
+      "\\shared\\assets\\fonts\\OFL-MPLUS-ROUNDED-1C.txt",
+      "\\shared\\assets\\fonts\\OFL.txt"
+    ],
+    "packages": {
+      "onnxruntime-node": {
+        "version": "1.30.0",
+        "license": "MIT"
+      },
+      "onnxruntime-common": {
+        "version": "1.30.0",
+        "license": "MIT"
+      },
+      "koroman": {
+        "version": "1.0.16",
+        "license": "MIT"
+      },
+      "gsap": {
+        "version": "3.15.0",
+        "license": "Standard 'no charge' license: https://gsap.com/standard-license."
+      },
+      "kissfft-js": {
+        "version": "0.1.8",
+        "license": "MIT"
+      },
+      "opencc-js": {
+        "version": "1.4.2",
+        "license": "MIT AND Apache-2.0"
+      },
+      "kuromoji": {
+        "version": "0.1.2",
+        "license": "Apache-2.0"
+      }
+    }
+  },
+  "npmRoots": [
+    {
+      "name": "@napolab/texture-bridge-core",
+      "version": "0.15.0",
+      "license": "MIT",
+      "integrity": "sha512-M6PZxfsl5LtrVSXBSzjPO9pqmntiDxIpaTgtDRdqhFVFXwx4ppqNOlb0MX54rzY8bpwWRUmcsAj8xj6eJZyKoA=="
+    },
+    {
+      "name": "builder-util-runtime",
+      "version": "9.7.0",
+      "license": "MIT",
+      "integrity": "sha512-g/kR520giAFYkSXTzcmF3kqQq7wi8F6N6SzeDgZrqTBN+VHdmgWOyTdD1yD7AATDId/yXLvuP34CxW46/BwCdw=="
+    },
+    {
+      "name": "electron-updater",
+      "version": "6.8.9",
+      "license": "MIT",
+      "integrity": "sha512-ZhVxM9iGONUpZGI1FxdMRgJjUFXi7AYGVa5PwKlO1tV1/4zDxQmfKpXOHVztKrd6L9rLcFjERvi1Mf2vxyTkig=="
+    },
+    {
+      "name": "gsap",
+      "version": "3.15.0",
+      "license": "Standard 'no charge' license: https://gsap.com/standard-license.",
+      "integrity": "sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A=="
+    },
+    {
+      "name": "js-yaml",
+      "version": "5.4.3",
+      "license": "MIT",
+      "integrity": "sha512-yzzNtgczwgoVHNigCyKTXcQJU4Y8t/ikU4UxXW0BvrLfHTGWZhsNcOT2s/a7vn81/4KqVnNmHjaUEPlvWnNwVw=="
+    },
+    {
+      "name": "kissfft-js",
+      "version": "0.1.8",
+      "license": "MIT",
+      "integrity": "sha512-P3kZXvlFGYe+7N9RJvve5bpq9P0S1tZroSbqmiJZzYi6DlLJMrFpr/CFLpySIYJpZ4WJLYQE17Pj7QY3LNhfxA=="
+    },
+    {
+      "name": "koroman",
+      "version": "1.0.16",
+      "license": "MIT",
+      "integrity": "sha512-jW7SZ+BCOupGposHY1JXZ8bh6fFNkKYO/7w2aKx76Zav2jAopGtXQw99luIe94BvRViU9DxIPGY1Efwt0N0p8g=="
+    },
+    {
+      "name": "kuromoji",
+      "version": "0.1.2",
+      "license": "Apache-2.0",
+      "integrity": "sha512-V0dUf+C2LpcPEXhoHLMAop/bOht16Dyr+mDiIE39yX3vqau7p80De/koFqpiTcL1zzdZlc3xuHZ8u5gjYRfFaQ=="
+    },
+    {
+      "name": "music-metadata",
+      "version": "12.2.0",
+      "license": "MIT",
+      "integrity": "sha512-nyqJ4s0wVz91D24x/WdvzNRFJU3DryddKuBaBZXPakEUz3ZA90xB68XURfJYF8MMsfy50yG+PHTEt4r2+l8R3Q=="
+    },
+    {
+      "name": "obs-websocket-js",
+      "version": "5.0.8",
+      "license": "MIT",
+      "integrity": "sha512-QDnQJMr5wuCoYugK02ggZ1/cvESs4KJDEK+UhGg0Ry35jnY8tK1Xr3KoPjKyoD6sd8G+WdtIdzuY+yUyPtogQQ=="
+    },
+    {
+      "name": "onnxruntime-node",
+      "version": "1.30.0",
+      "license": "MIT",
+      "integrity": "sha512-twhs1C2C/BFkz1yc5OY0KIU2GUq6DURO7hD4bx5Q2Qy3nAMJwRXW8xU3NVczE29VA9lolLOYepoD8fjTGOfIqw=="
+    },
+    {
+      "name": "opencc-js",
+      "version": "1.4.2",
+      "license": "MIT AND Apache-2.0",
+      "integrity": "sha512-EdcspgdROiCCZDM+jZR6Pa670xW+EW2QhctPBQ8gRjg6lrx4IHEl+2s+kt5izk/TkxVRgdWuFgaGkaEdIUfdaw=="
+    },
+    {
+      "name": "sax",
+      "version": "1.6.1",
+      "license": "BlueOak-1.0.0",
+      "integrity": "sha512-42tBVwLWnaQvW5zc4HbZrTuWccECCZfBi92FDuwtqxasH+JbPB3/FOKb1m222K42R4WxuxzzMsTswfzgtSu64Q=="
+    },
+    {
+      "name": "wanakana",
+      "version": "5.3.1",
+      "license": "MIT",
+      "integrity": "sha512-OSDqupzTlzl2LGyqTdhcXcl6ezMiFhcUwLBP8YKaBIbMYW1wAwDvupw2T9G9oVaKT9RmaSpyTXjxddFPUcFFIw=="
+    },
+    {
+      "name": "ws",
+      "version": "8.22.0",
+      "license": "MIT",
+      "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg=="
+    },
+    {
+      "name": "vue",
+      "version": "3.5.43",
+      "license": "MIT",
+      "integrity": "sha512-o5qZoksdnjIKvW1srZ3ab7pcDNYAerBjRe54D0LBLfRdCYFrSgBHVXokMas35czQc0//lmx4/tuY4ZNQ+Rf2Ng=="
+    },
+    {
+      "name": "@lucide/vue",
+      "version": "1.52.0",
+      "license": "ISC",
+      "integrity": "sha512-Gwr6c14jhY6BscoFU+B9OKsr7lg8RTAKOLgW0e61kkFwkt9Q7CZmB9AyJcvhoqapEJgRg2bFoeAcO+cqpgKzEQ=="
+    },
+    {
+      "name": "signalsmith-stretch",
+      "version": "1.3.2",
+      "license": "MIT",
+      "integrity": "sha512-tJqRbwPCoWLSHXwO29UQ75u72IwPsHns3RG+TKzuOAp7OduJiJMzEtz32JEFbPFQcTR7aiKCIVc+/Kzw8bMZUw=="
+    },
+    {
+      "name": "electron",
+      "version": "43.7.8",
+      "license": "MIT",
+      "integrity": "sha512-h9qnttBn9b+pmnJjagrpjvK97Wb9WbsyIB03BV6NnhnPqSq1Jw7500hNkqHPkosHCE0zL/806v4zf9d3VrII0w=="
+    }
+  ],
+  "managedProvider": [
+    {
+      "role": "python-embed",
+      "version": "3.14.7",
+      "sha256": "d297e5ff019966817ad8502465176139f2d3d840fa4ed84b13bed399a6ab1f15",
+      "downloadUrl": "https://www.python.org/ftp/python/3.14.7/python-3.14.7-embed-amd64.zip",
+      "license": "Python-2.0",
+      "licenseUrl": "https://docs.python.org/3.14/license.html"
+    },
+    {
+      "role": "yt-dlp-wheel",
+      "version": "2026.08.19",
+      "sha256": "1d57897e94c6665a0a6f9bc54b34e584284e32c034ffab3a7df25d8f7b24eedf",
+      "downloadUrl": "https://files.pythonhosted.org/packages/69/b2/8cd1613f56eed7ceb64fbd4df3f1c01246bfb098e6f398228bafda22b80b/yt_dlp-2026.8.19-py3-none-any.whl",
+      "license": "Unlicense",
+      "licenseUrl": "https://github.com/yt-dlp/yt-dlp/blob/2026.08.19/LICENSE"
+    },
+    {
+      "role": "ytmusicapi-wheel",
+      "version": "1.12.3",
+      "sha256": "f65db840907a43ca23b29bd563951a1e390fbe2089d7aa4ddbe2043824b2acd9",
+      "downloadUrl": "https://files.pythonhosted.org/packages/29/ad/6d471ea9d81e1f59a4d01badda21e7f3f508b94ed171c677b6547b292f73/ytmusicapi-1.12.3-py3-none-any.whl",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/sigma67/ytmusicapi/blob/1.12.3/LICENSE"
+    },
+    {
+      "role": "requests-wheel",
+      "version": "2.34.2",
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+      "downloadUrl": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+      "license": "Apache-2.0",
+      "licenseUrl": "https://github.com/psf/requests/blob/v2.34.2/LICENSE"
+    },
+    {
+      "role": "urllib3-wheel",
+      "version": "2.8.0",
+      "sha256": "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3",
+      "downloadUrl": "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/urllib3/urllib3/blob/2.8.0/LICENSE.txt"
+    },
+    {
+      "role": "certifi-wheel",
+      "version": "2026.7.22",
+      "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+      "downloadUrl": "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl",
+      "license": "MPL-2.0",
+      "licenseUrl": "https://github.com/certifi/python-certifi/blob/2026.07.22/LICENSE"
+    },
+    {
+      "role": "charset-normalizer-wheel",
+      "version": "3.5.2",
+      "sha256": "e4e81e09c1578b8df602e3db08b0b3ea0a6947ad612f52bf8dc5ea8d47691f0c",
+      "downloadUrl": "https://files.pythonhosted.org/packages/d1/78/5ed86f743d4bc350db307e7636419a0a5ee1d91806d30c7f667bd5c80dae/charset_normalizer-3.5.2-cp314-cp314-win_amd64.whl",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/jawah/charset_normalizer/blob/3.5.2/LICENSE"
+    },
+    {
+      "role": "idna-wheel",
+      "version": "3.20",
+      "sha256": "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c",
+      "downloadUrl": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl",
+      "license": "BSD-3-Clause",
+      "licenseUrl": "https://github.com/kjd/idna/blob/v3.20/LICENSE.md"
+    },
+    {
+      "role": "bgutil-provider-exe",
+      "version": "0.8.1",
+      "sha256": "25d6b05c79176aa792454c3d1727922ca47e56cf11cb1e866615d751819b14a0",
+      "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/download/v0.8.1/bgutil-pot-windows-x86_64.exe",
+      "license": "GPL-3.0-or-later",
+      "licenseUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE"
+    },
+    {
+      "role": "bgutil-plugin",
+      "version": "0.8.1",
+      "sha256": "99fd83b98fa93b193d6a3b69dc74410d76e7a2b889868c54d16121cac9060344",
+      "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/download/v0.8.1/bgutil-ytdlp-pot-provider-rs.zip",
+      "license": "GPL-3.0-or-later",
+      "licenseUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE"
+    }
+  ],
+  "audioPython": [
+    {
+      "name": "beat-this",
+      "version": "1.1.0",
+      "declaredLicense": "MIT",
+      "artifactSha256": "3f2b2d1e027c6dac380bf80c71555e3c28a4036a7f1af20129a945915a72a645",
+      "licenseFiles": [
+        {
+          "path": "beat_this-1.1.0.dist-info/licenses/LICENSE",
+          "sha256": "909ab6549794a18e9bb243aacfadda4a5f308436fc2846f350755c53c4f06ae1",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "torch",
+      "version": "2.11.0",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "2b4e811728bd0cc58fb2b0948fe939a1ee2bf1422f6025be2fca4c7bd9d79718",
+      "licenseFiles": [
+        {
+          "path": "torch-2.11.0.dist-info/LICENSE",
+          "sha256": "cf5ec789ea8e9fcaba4766fcde2d6804312a1295e55b176a31c7a2982efc6090",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "torch-2.11.0.dist-info/NOTICE",
+          "sha256": "1c3dec6c0342c7ed9e12af59b296c7bb1d394af5cf881db74191cc8299efce5c",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "torchaudio",
+      "version": "2.11.0",
+      "declaredLicense": "BSD-2-Clause",
+      "artifactSha256": "1424638adb8bb40087bc7b6eb103e8e4fe398210f09076f33b7b5e61501b5d66",
+      "licenseFiles": [
+        {
+          "path": "torchaudio-2.11.0.dist-info/licenses/LICENSE",
+          "sha256": "32638e179931bfe551eabf67b0e67a13b483e166b58dd7263634ab7f89f396f5",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "setuptools",
+      "version": "81.0.0",
+      "declaredLicense": "MIT",
+      "artifactSha256": "fdd925d5c5d9f62e4b74b30d6dd7828ce236fd6ed998a08d81de62ce5a6310d6",
+      "licenseFiles": [
+        {
+          "path": "setuptools-81.0.0.dist-info/licenses/LICENSE",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.7.0",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279",
+      "licenseFiles": [
+        {
+          "path": "fsspec-2026.7.0.dist-info/licenses/LICENSE",
+          "sha256": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762",
+      "licenseFiles": [
+        {
+          "path": "networkx-3.6.1.dist-info/licenses/LICENSE.txt",
+          "sha256": "3cf7c3a179d817b23b8b8568211769fefdf93797d207d984b8b2fa24d0220b33",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.2",
+      "declaredLicense": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "artifactSha256": "7587f53dfbd5edc0f7b87c6217b4c6d2d1f2ef9c3da70bc1315e7db5f8d7ec9d",
+      "licenseFiles": [
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/LICENSE.txt",
+          "sha256": "a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+          "sha256": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+          "sha256": "aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+          "sha256": "d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+          "sha256": "b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+          "sha256": "a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+          "sha256": "585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+          "sha256": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+          "sha256": "19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/ma/LICENSE",
+          "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/LICENSE.md",
+          "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+          "sha256": "cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+          "sha256": "92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+          "sha256": "41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+          "sha256": "322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+          "sha256": "28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "numpy-2.5.2.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+          "sha256": "454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5",
+      "licenseFiles": [
+        {
+          "path": "sympy-1.14.0.dist-info/licenses/LICENSE",
+          "sha256": "07a5e9819f727b4986ad2829c7a29a6320d42575f720eb24d71b7fef573a0286",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c",
+      "licenseFiles": [
+        {
+          "path": "mpmath-1.3.0.dist-info/LICENSE",
+          "sha256": "c26cae81da4508e5e249985777a33821f183223ebb74d7f8cfbf90fe7eef2fb7",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "declaredLicense": "PSF-2.0",
+      "artifactSha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "licenseFiles": [
+        {
+          "path": "typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "einops",
+      "version": "0.8.2",
+      "declaredLicense": "MIT",
+      "artifactSha256": "54058201ac7087911181bfec4af6091bb59380360f069276601256a76af08193",
+      "licenseFiles": [
+        {
+          "path": "einops-0.8.2.dist-info/licenses/LICENSE",
+          "sha256": "30d984364296f51ffaecad4b01ee127e95250c5068918d4b66fc96206723e434",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.4",
+      "declaredLicense": "MIT",
+      "artifactSha256": "22e58ca3b1ae3b98993b762d7338367ae64fe50252bf78d59da3bfebcdf1cedd",
+      "licenseFiles": [
+        {
+          "path": "filelock-3.32.4.dist-info/licenses/LICENSE",
+          "sha256": "608c89d5060ae9921adccf3236695bc654a9946e12323ef6c021dfa04e294d48",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "jinja2",
+      "version": "3.1.6",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67",
+      "licenseFiles": [
+        {
+          "path": "jinja2-3.1.6.dist-info/licenses/LICENSE.txt",
+          "sha256": "3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.3",
+      "declaredLicense": "BSD-3-Clause",
+      "artifactSha256": "bdc919ead48f234740ad807933cdf545180bfbe9342c2bb451556db2ed958581",
+      "licenseFiles": [
+        {
+          "path": "markupsafe-3.0.3.dist-info/licenses/LICENSE.txt",
+          "sha256": "4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "rotary-embedding-torch",
+      "version": "0.9.1",
+      "declaredLicense": "MIT",
+      "artifactSha256": "489ef53e21ab4c4eb35c0c97b551d724f5eea71c2bca39acb8fee8d88b142a76",
+      "licenseFiles": [
+        {
+          "path": "rotary_embedding_torch-0.9.1.dist-info/licenses/LICENSE",
+          "sha256": "fe74654058fe2ba069808dbf36defd6e207baf8859f36366a6a3ceae5aa6ecc5",
+          "matchesInstalledRecord": true
+        }
+      ]
+    },
+    {
+      "name": "soxr",
+      "version": "1.1.0",
+      "declaredLicense": "LGPL-2.1-or-later",
+      "artifactSha256": "6ae2a174bffea94e8ead857dad85999d3f49f091774dbad5b046c0417d7092f4",
+      "licenseFiles": [
+        {
+          "path": "soxr-1.1.0.dist-info/licenses/COPYING.LGPL",
+          "sha256": "317dfba8116739654c8c2d8acbc9c7edfcf34e3932e7a4b15307435228f98c3a",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "soxr-1.1.0.dist-info/licenses/LICENSE-libsoxr.txt",
+          "sha256": "73b946c198ad27fc2ae7bea2de6ec6d1b6c0733340d1759a450150271347e5af",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "soxr-1.1.0.dist-info/licenses/LICENSE-PFFFT.txt",
+          "sha256": "7847a2f45a0da613240a7e542980677c16613b1c8258190c15f8bf275032bb2d",
+          "matchesInstalledRecord": true
+        },
+        {
+          "path": "soxr-1.1.0.dist-info/licenses/LICENSE.txt",
+          "sha256": "16ce7f03077f25fac6a9b89fdf6136927595f6b85db9197381ee99c1ecba357b",
+          "matchesInstalledRecord": true
+        }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "uvr-mdxnet-kara-2",
+      "version": "UVR_MDXNET_KARA_2",
+      "expectedSha256": "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4",
+      "installedSha256": "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4"
+    },
+    {
+      "id": "uvr-mdxnet-inst-hq-4",
+      "version": "UVR-MDX-NET-Inst_HQ_4",
+      "expectedSha256": "3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8",
+      "installedSha256": "3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8"
+    },
+    {
+      "id": "uvr-mdxnet-inst-hq-3",
+      "version": "UVR-MDX-NET-Inst_HQ_3",
+      "expectedSha256": "317554b07fe1ea5279a77f2b1520a41ea4b93432560c4ffd08792c30fddf9adc",
+      "installedSha256": null
+    }
+  ],
+  "ffmpeg": {
+    "resolvedVersion": "9.0.1",
+    "archiveSha256": "fec81ae03971d9dd4be3ebe02e263bd2ec1d789483f931bdba5f5715e65da2e9",
+    "executableSha256": "72a489eccd008c2ec2c0a5856c5c75bc3d8bbfa90166c4566865c246445e6aa3",
+    "upstreamLicensePresent": true,
+    "generatedLicenseIsSummary": true
+  },
+  "bgutil": {
+    "installedExecutableSha256": "25d6b05c79176aa792454c3d1727922ca47e56cf11cb1e866615d751819b14a0",
+    "pluginArchiveFiles": [
+      "yt_dlp_plugins/",
+      "yt_dlp_plugins/extractor/",
+      "yt_dlp_plugins/extractor/getpot_bgutil_http.py",
+      "yt_dlp_plugins/extractor/getpot_bgutil_cli.py",
+      "yt_dlp_plugins/extractor/getpot_bgutil.py"
+    ],
+    "upstreamLicenseTextSha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  "directml": {
+    "fileVersion": "1.15.4+241025-1615.1.dml-1.15.fac7597",
+    "nodeModulesSha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625",
+    "packagedSha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625",
+    "licenseUrl": "https://www.nuget.org/packages/Microsoft.AI.DirectML/1.15.4/License"
+  }
+}

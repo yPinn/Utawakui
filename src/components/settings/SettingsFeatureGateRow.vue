@@ -7,6 +7,8 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
+import AppFeatureNoticeDocument from '../layout/AppFeatureNoticeDocument.vue';
+import { getFeatureGate } from '../../constants/featureGates.js';
 
 const props = defineProps({
   gate: { type: Object, required: true },
@@ -44,10 +46,11 @@ watch(
 // Available whether the gate is enabled or not — the declaration is what
 // enabling it means, which is exactly what someone deciding whether to
 // enable (or reconsidering an already-enabled gate) needs to re-read.
-// AppFeatureNoticeModal.vue only ever shows this once, at the moment of
-// enabling.
+// AppFeatureNoticeModal.vue owns the enablement confirmation; this entry
+// only opens the shared document for reading.
 const isNoticeOpen = shallowRef(false);
-const hasNotice = computed(() => props.gate.body?.length > 0);
+const noticeFeature = computed(() => getFeatureGate(props.gate.id));
+const hasNotice = computed(() => Boolean(noticeFeature.value));
 const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
 </script>
 
@@ -92,21 +95,13 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
     <UiModal
       v-if="hasNotice"
       :open="isNoticeOpen"
-      :title="gate.title"
-      size="notice"
+      :title="noticeFeature.documentTitle"
+      size="wide"
+      max-block-size="medium"
+      presentation="document"
       @close="isNoticeOpen = false"
     >
-      <div class="settings-feature-gate-row__notice">
-        <p
-          v-if="gate.description"
-          class="settings-feature-gate-row__notice-summary"
-        >
-          {{ gate.description }}
-        </p>
-        <ul class="settings-feature-gate-row__notice-list">
-          <li v-for="line in gate.body" :key="line">{{ line }}</li>
-        </ul>
-      </div>
+      <AppFeatureNoticeDocument :feature="noticeFeature" />
     </UiModal>
 
     <div v-if="shouldShowItems" class="settings-feature-gate-row__items">
@@ -153,37 +148,6 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
 .settings-feature-gate-row--highlighted {
   background: var(--ui-color-warning-soft);
   box-shadow: 0 0 0 1px var(--ui-color-warning);
-}
-
-/* Mirrors AppFeatureNoticeModal.vue's .feature-notice* treatment — same
-   declaration text, same modal shell, just reachable after enabling too. */
-.settings-feature-gate-row__notice {
-  display: grid;
-  gap: var(--ui-space-3);
-  max-width: 65ch;
-}
-
-.settings-feature-gate-row__notice-summary {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-body-weight);
-  line-height: var(--ui-type-body-line-height);
-}
-
-.settings-feature-gate-row__notice-list {
-  display: grid;
-  gap: var(--ui-space-2);
-  margin: 0;
-  padding-left: var(--ui-space-4);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-body-weight);
-  line-height: var(--ui-type-body-line-height);
-}
-
-.settings-feature-gate-row__notice-list li {
-  padding-left: var(--ui-space-1);
 }
 
 .settings-feature-gate-row__items {
