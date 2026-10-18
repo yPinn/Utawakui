@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { finished } from 'node:stream/promises';
+import { createPackage, extractFile } from '@electron/asar';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   collectThirdPartyNotices,
@@ -116,7 +118,6 @@ describe('complete packaged third-party notices', () => {
         path.join(resources, 'third-party', name),
       );
     }
-    const { createPackage } = await import('@electron/asar');
     const source = path.join(root, 'app');
     fs.mkdirSync(source);
     fs.cpSync(
@@ -124,7 +125,19 @@ describe('complete packaged third-party notices', () => {
       path.join(source, 'node_modules'),
       { recursive: true },
     );
-    await createPackage(source, path.join(resources, 'app.asar'));
+    // createPackage resolves to the archive stream after end(), before its
+    // final bytes necessarily reach disk. Verify only a finished fixture.
+    await finished(
+      await createPackage(source, path.join(resources, 'app.asar')),
+    );
+    expect(
+      extractFile(
+        path.join(resources, 'app.asar'),
+        path.join('node_modules', 'demo', 'package.json'),
+      ),
+    ).toEqual(
+      fs.readFileSync(path.join(source, 'node_modules/demo/package.json')),
+    );
     expect(
       verifyPackagedThirdPartyNotices(root, output, options).packages,
     ).toHaveLength(1);
@@ -161,8 +174,9 @@ describe('complete packaged third-party notices', () => {
         path.join(relocated, 'package.json'),
         JSON.stringify({ name: 'demo', version }),
       );
-      const { createPackage } = await import('@electron/asar');
-      await createPackage(source, path.join(resources, 'app.asar'));
+      await finished(
+        await createPackage(source, path.join(resources, 'app.asar')),
+      );
       if (version === '1.0.0') {
         expect(
           verifyPackagedThirdPartyNotices(root, output, options).packages,
