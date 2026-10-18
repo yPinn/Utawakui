@@ -9,6 +9,7 @@ import {
 } from '../ui/uiTestHost.js';
 import UiTabs from '../ui/UiTabs.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import DemoCandidateTabs from './DemoCandidateTabs.vue';
 const navigationSource = readFileSync(
   new URL('./DemoNavigation.vue', import.meta.url),
@@ -18,6 +19,7 @@ for (const [component, filename] of [
   [DemoCandidateTabs, './DemoCandidateTabs.vue'],
   [UiTabs, '../ui/UiTabs.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

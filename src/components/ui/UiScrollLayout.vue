@@ -27,6 +27,11 @@ const props = defineProps({
     default: 'auto',
     validator: (value) => ['auto', 'hidden'].includes(value),
   },
+  scrollbarReserve: {
+    type: String,
+    default: 'stable',
+    validator: (value) => ['stable', 'overflow'].includes(value),
+  },
   contentTag: {
     type: [String, Object],
     default: 'div',
@@ -63,6 +68,7 @@ defineExpose({ root, viewport, scrollTo });
     :viewport-style="props.viewportStyle"
     :scrollbar-visibility="props.scrollbarVisibility"
     :data-scrollbar-visibility="props.scrollbarVisibility"
+    :data-scrollbar-reserve="props.scrollbarReserve"
   >
     <component
       :is="props.contentTag"
@@ -97,6 +103,14 @@ defineExpose({ root, viewport, scrollTo });
   --ui-scroll-layout-reserve-block-end: var(
     --ui-scroll-layout-scrollbar-visual-reserve
   );
+}
+
+.ui-scroll-layout[data-scrollbar-reserve='overflow'][data-overflow-x='false'] {
+  --ui-scroll-layout-reserve-block-end: 0rem;
+}
+
+.ui-scroll-layout[data-scrollbar-reserve='overflow'][data-overflow-y='false'] {
+  --ui-scroll-layout-reserve-inline-end: 0rem;
 }
 
 .ui-scroll-layout[data-scrollbar-visibility='hidden'] {

@@ -184,11 +184,14 @@ describe('UiScrollRegion production migration', () => {
 
   it.each(batchTwoConsumers)(
     'migrates the $name compound scroll owner to the shared primitive',
-    ({ source }) => {
-      expect(source).toContain(
-        "import UiScrollRegion from './UiScrollRegion.vue'",
-      );
-      expect(source).toContain('<UiScrollRegion');
+    ({ name, source }) => {
+      const component = ['breadcrumb', 'tabs', 'segmented control'].includes(
+        name,
+      )
+        ? 'UiScrollLayout'
+        : 'UiScrollRegion';
+      expect(source).toContain(`import ${component} from './${component}.vue'`);
+      expect(source).toContain(`<${component}`);
       expect(source).not.toContain('scrollbar-color:');
       expect(source).not.toContain('scrollbar-width:');
     },
@@ -200,7 +203,7 @@ describe('UiScrollRegion production migration', () => {
 
     expect(comboboxSource).toContain('viewport-tag="ul"');
     expect(comboboxSource).toContain('role="listbox"');
-    expect(breadcrumbSource).toContain('viewport-tag="ol"');
+    expect(breadcrumbSource).toContain('content-tag="ol"');
     expect(breadcrumbSource).toContain('<nav class="ui-breadcrumb"');
   });
 

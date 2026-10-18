@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import UiButton from '../ui/UiButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import {
   attachClientRender,
@@ -15,6 +16,7 @@ import PerformerSyncControls from './PerformerSyncControls.vue';
 for (const [component, filename] of [
   [UiButton, '../ui/UiButton.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiSegmentedControl, '../ui/UiSegmentedControl.vue'],
   [PerformerDisplayControls, './PerformerDisplayControls.vue'],
   [PerformerSyncControls, './PerformerSyncControls.vue'],

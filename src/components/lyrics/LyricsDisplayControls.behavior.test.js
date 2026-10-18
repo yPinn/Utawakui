@@ -9,6 +9,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
@@ -29,6 +30,7 @@ for (const [component, file] of [
   [UiSegmentedControl, '../ui/UiSegmentedControl.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],

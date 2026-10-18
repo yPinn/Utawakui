@@ -8,6 +8,7 @@ import UiSearchBox from './UiSearchBox.vue';
 import UiStatusIcon from './UiStatusIcon.vue';
 import UiTabs from './UiTabs.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
+import UiScrollLayout from './UiScrollLayout.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import UiTooltip from './UiTooltip.vue';
 import { Volume2 } from '../../icons/index.js';
@@ -27,6 +28,7 @@ for (const [component, filename] of [
   [UiStatusIcon, './UiStatusIcon.vue'],
   [UiTabs, './UiTabs.vue'],
   [UiScrollRegion, './UiScrollRegion.vue'],
+  [UiScrollLayout, './UiScrollLayout.vue'],
   [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
   [UiTooltip, './UiTooltip.vue'],
 ]) {

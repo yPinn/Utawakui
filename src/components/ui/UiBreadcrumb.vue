@@ -1,10 +1,10 @@
 <script setup>
 // A navigation trail, not a second Tabs. Overflow is intentionally left to
-// the shared horizontal Scroll Region (matching UiTabs/UiSegmentedControl) — no
+// the shared horizontal Scroll Layout (matching UiTabs/UiSegmentedControl) — no
 // ellipsis-collapse of middle items is implemented because no real consumer
 // needs it yet; add that behavior only once one does.
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
-import UiScrollRegion from './UiScrollRegion.vue';
+import UiScrollLayout from './UiScrollLayout.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -13,6 +13,10 @@ const props = defineProps({
 
 const emit = defineEmits(['select']);
 
+function select(item, index) {
+  if (!item.disabled && !isCurrent(index)) emit('select', item, index);
+}
+
 function isCurrent(index) {
   return index === props.items.length - 1;
 }
@@ -20,11 +24,12 @@ function isCurrent(index) {
 
 <template>
   <nav class="ui-breadcrumb" :aria-label="ariaLabel">
-    <UiScrollRegion
+    <UiScrollLayout
+      scrollbar-reserve="overflow"
       class="ui-breadcrumb__scroll"
       axis="horizontal"
-      viewport-tag="ol"
-      viewport-class="ui-breadcrumb__list"
+      content-tag="ol"
+      content-class="ui-breadcrumb__list"
     >
       <li
         v-for="(item, index) in items"
@@ -47,7 +52,7 @@ function isCurrent(index) {
           v-else-if="item.href && !item.disabled"
           class="ui-breadcrumb__link"
           :href="item.href"
-          @click="emit('select', item, index)"
+          @click="select(item, index)"
           >{{ item.label }}</a
         >
         <button
@@ -55,12 +60,12 @@ function isCurrent(index) {
           type="button"
           class="ui-breadcrumb__link"
           :disabled="item.disabled"
-          @click="emit('select', item, index)"
+          @click="select(item, index)"
         >
           {{ item.label }}
         </button>
       </li>
-    </UiScrollRegion>
+    </UiScrollLayout>
   </nav>
 </template>
 
@@ -71,15 +76,23 @@ function isCurrent(index) {
 }
 
 .ui-breadcrumb__scroll {
+  --ui-scroll-layout-padding-block-start: 0rem;
+  --ui-scroll-layout-padding-block-end: 0rem;
+  --ui-scroll-layout-padding-inline-start: 0rem;
+  --ui-scroll-layout-padding-inline-end: 0rem;
+
   min-width: 0;
   max-width: 100%;
+}
+
+.ui-breadcrumb__scroll[data-overflow-x='true'] {
+  --ui-scroll-layout-padding-block-end: var(--ui-space-1);
 }
 
 .ui-breadcrumb__scroll :deep(.ui-breadcrumb__list) {
   display: flex;
   align-items: center;
   margin: 0;
-  padding: 0;
   list-style: none;
   overscroll-behavior-inline: contain;
 }

@@ -11,6 +11,9 @@ const source = readFileSync(
 );
 
 describe('DemoCatalogueWorkspace', () => {
+  it('lets formal Tabs own their scrollbar spacing', () => {
+    expect(source).not.toContain(':deep(.ui-tabs__list)');
+  });
   it('uses formal tabs and one vertical scroll layout', async () => {
     const html = await renderToString(createSSRApp(DemoCatalogueWorkspace));
 

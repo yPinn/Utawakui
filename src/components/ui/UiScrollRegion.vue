@@ -376,6 +376,10 @@ watch(
 <style scoped>
 .ui-scroll-region {
   position: relative;
+  /* Keep percentage-height viewports inside a flex parent's final size. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   min-inline-size: 0;
   min-block-size: 0;
   overflow: clip;

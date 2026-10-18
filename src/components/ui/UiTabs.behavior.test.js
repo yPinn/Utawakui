@@ -3,6 +3,7 @@ import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiTabs from './UiTabs.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
+import UiScrollLayout from './UiScrollLayout.vue';
 import {
   attachClientRender,
   findAll,
@@ -13,6 +14,7 @@ import {
 
 attachClientRender(UiTabs, './UiTabs.vue', import.meta.url);
 attachClientRender(UiScrollRegion, './UiScrollRegion.vue', import.meta.url);
+attachClientRender(UiScrollLayout, './UiScrollLayout.vue', import.meta.url);
 
 const source = readFileSync(new URL('./UiTabs.vue', import.meta.url), 'utf8');
 

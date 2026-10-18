@@ -1,6 +1,6 @@
 <script setup>
-import { computed, nextTick, useTemplateRef } from 'vue';
-import UiScrollRegion from './UiScrollRegion.vue';
+import { computed, nextTick, useTemplateRef, watch } from 'vue';
+import UiScrollLayout from './UiScrollLayout.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -21,7 +21,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'reselect']);
 const groupRef = useTemplateRef('group');
-const optionRefs = useTemplateRef('options');
+const optionRefs = new Map();
 
 function itemDisabled(item) {
   return props.disabled || Boolean(item.disabled);
@@ -35,6 +35,32 @@ const focusId = computed(() =>
     ? props.modelValue
     : enabledItems.value[0]?.id,
 );
+
+function setOptionRef(id, element) {
+  if (element) optionRefs.set(id, element);
+  else optionRefs.delete(id);
+}
+
+// Preserve an existing keyboard owner when a focused item disappears or disables.
+// Selection remains caller-owned; updates outside this group never steal focus.
+watch(enabledItems, () => {
+  const document = globalThis.document;
+  const active = document?.activeElement;
+  const focused = [...optionRefs].find(([, element]) => element === active);
+  if (
+    !focused ||
+    enabledItems.value.some((item) => Object.is(item.id, focused[0]))
+  )
+    return;
+  nextTick(() => {
+    if (
+      document.activeElement === active ||
+      document.activeElement === document.body
+    ) {
+      optionRefs.get(focusId.value)?.focus();
+    }
+  });
+});
 
 function select(item, allowReselect = false) {
   if (itemDisabled(item)) return;
@@ -59,7 +85,12 @@ function moveFocus(item, event) {
     'Home',
     'End',
   ];
-  if (!keys.includes(event.key) || enabledItems.value.length === 0) return;
+  if (
+    itemDisabled(item) ||
+    !keys.includes(event.key) ||
+    enabledItems.value.length === 0
+  )
+    return;
 
   event.preventDefault();
   event.stopPropagation();
@@ -92,10 +123,7 @@ function moveFocus(item, event) {
   const target = enabledItems.value[targetIndex];
   select(target);
   nextTick(() => {
-    const sourceIndex = props.items.findIndex((candidate) =>
-      Object.is(candidate.id, target.id),
-    );
-    optionRefs.value?.[sourceIndex]?.focus();
+    (optionRefs.get(target.id) || optionRefs.get(focusId.value))?.focus();
   });
 }
 </script>
@@ -110,16 +138,17 @@ function moveFocus(item, event) {
     :aria-orientation="orientation"
     :dir="dir === 'auto' ? undefined : dir"
   >
-    <UiScrollRegion
+    <UiScrollLayout
+      scrollbar-reserve="overflow"
       class="ui-segmented-control__scroll"
       :axis="orientation === 'horizontal' ? 'horizontal' : 'vertical'"
-      viewport-class="ui-segmented-control__options"
+      content-class="ui-segmented-control__options"
       :scrollbar-visibility="orientation === 'horizontal' ? 'auto' : 'hidden'"
     >
       <button
         v-for="item in items"
         :key="item.id"
-        ref="options"
+        :ref="(element) => setOptionRef(item.id, element)"
         type="button"
         class="ui-segmented-control__option"
         :class="{
@@ -136,16 +165,19 @@ function moveFocus(item, event) {
         @click="select(item, true)"
         @keydown="moveFocus(item, $event)"
       >
-        <slot name="label" :item="item">{{ item.label }}</slot>
+        <span class="ui-segmented-control__label">
+          <slot name="label" :item="item">{{ item.label }}</slot>
+        </span>
         <slot name="after" :item="item" />
       </button>
-    </UiScrollRegion>
+    </UiScrollLayout>
   </div>
 </template>
 
 <style scoped>
 .ui-segmented-control {
   min-width: 0;
+  max-width: 100%;
   display: inline-block;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
@@ -153,6 +185,11 @@ function moveFocus(item, event) {
 }
 
 .ui-segmented-control__scroll {
+  --ui-scroll-layout-padding-block-start: var(--ui-space-1);
+  --ui-scroll-layout-padding-block-end: var(--ui-space-1);
+  --ui-scroll-layout-padding-inline-start: var(--ui-space-1);
+  --ui-scroll-layout-padding-inline-end: var(--ui-space-1);
+
   max-width: 100%;
 }
 
@@ -160,7 +197,6 @@ function moveFocus(item, event) {
   display: flex;
   align-items: stretch;
   gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
 }
 
 .ui-segmented-control--vertical
@@ -174,6 +210,7 @@ function moveFocus(item, event) {
 }
 
 .ui-segmented-control__option {
+  flex: 0 0 auto;
   min-width: 0;
   min-height: var(--ui-control-height);
   display: inline-flex;
@@ -200,9 +237,16 @@ function moveFocus(item, event) {
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
-.ui-segmented-control__option:hover:not(:disabled) {
+.ui-segmented-control__option:where(:hover:not(:disabled)) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
+}
+
+.ui-segmented-control__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ui-segmented-control__option:focus-visible {

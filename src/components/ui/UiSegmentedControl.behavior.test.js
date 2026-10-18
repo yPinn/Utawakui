@@ -3,6 +3,7 @@ import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiSegmentedControl from './UiSegmentedControl.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
+import UiScrollLayout from './UiScrollLayout.vue';
 import {
   attachClientRender,
   findAll,
@@ -17,6 +18,7 @@ attachClientRender(
   import.meta.url,
 );
 attachClientRender(UiScrollRegion, './UiScrollRegion.vue', import.meta.url);
+attachClientRender(UiScrollLayout, './UiScrollLayout.vue', import.meta.url);
 
 const ITEMS = [
   { id: 'library', label: '曲庫' },
@@ -238,7 +240,7 @@ describe('UiSegmentedControl', () => {
     expect(source).toMatch(
       /\.ui-segmented-control__option--selected\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-bold\);/su,
     );
-    expect(source).toContain('<UiScrollRegion');
+    expect(source).toContain('<UiScrollLayout');
     expect(source).toContain(
       "orientation === 'horizontal' ? 'auto' : 'hidden'",
     );

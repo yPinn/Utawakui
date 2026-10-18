@@ -26,6 +26,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 
@@ -50,6 +51,7 @@ attachClientRender(LyricsPreparationBar, './LyricsPreparationBar.vue');
 attachClientRender(LyricsSourceControl, './LyricsSourceControl.vue');
 attachClientRender(LyricsDisplayControls, './LyricsDisplayControls.vue');
 attachClientRender(UiSegmentedControl, '../ui/UiSegmentedControl.vue');
+attachClientRender(UiScrollLayout, '../ui/UiScrollLayout.vue');
 attachClientRender(UiSelect, '../ui/UiSelect.vue');
 attachClientRender(UiField, '../ui/UiField.vue');
 attachClientRender(UiTextField, '../ui/UiTextField.vue');

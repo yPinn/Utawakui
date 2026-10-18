@@ -8,6 +8,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import {
   attachClientRender,
   findAll,
@@ -24,6 +25,7 @@ for (const [component, file] of [
   [UiButton, '../ui/UiButton.vue'],
   [UiTabs, '../ui/UiTabs.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
 ]) {
   attachClientRender(component, file, import.meta.url);
 }

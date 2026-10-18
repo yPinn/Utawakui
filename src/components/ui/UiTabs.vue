@@ -1,6 +1,6 @@
 <script setup>
-import { computed, nextTick, useTemplateRef } from 'vue';
-import UiScrollRegion from './UiScrollRegion.vue';
+import { computed, nextTick, useTemplateRef, watch } from 'vue';
+import UiScrollLayout from './UiScrollLayout.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -21,7 +21,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:activeId']);
-const tabRefs = useTemplateRef('tabs');
+const tabRefs = new Map();
+const groupRef = useTemplateRef('group');
 
 const enabledItems = computed(() =>
   props.items.filter((item) => !item.disabled),
@@ -42,6 +43,32 @@ function panelId(item) {
     : undefined;
 }
 
+function setOptionRef(id, element) {
+  if (element) tabRefs.set(id, element);
+  else tabRefs.delete(id);
+}
+
+// Preserve an existing keyboard owner when a focused item disappears or disables.
+// Selection remains caller-owned; updates outside this group never steal focus.
+watch(enabledItems, () => {
+  const document = globalThis.document;
+  const active = document?.activeElement;
+  const focused = [...tabRefs].find(([, element]) => element === active);
+  if (
+    !focused ||
+    enabledItems.value.some((item) => Object.is(item.id, focused[0]))
+  )
+    return;
+  nextTick(() => {
+    if (
+      document.activeElement === active ||
+      document.activeElement === document.body
+    ) {
+      tabRefs.get(focusId.value)?.focus();
+    }
+  });
+});
+
 function select(item) {
   if (!item.disabled && item.id !== props.activeId) {
     emit('update:activeId', item.id);
@@ -50,7 +77,12 @@ function select(item) {
 
 function moveFocus(item, event) {
   const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
-  if (!keys.includes(event.key) || enabledItems.value.length === 0) return;
+  if (
+    item.disabled ||
+    !keys.includes(event.key) ||
+    enabledItems.value.length === 0
+  )
+    return;
   event.preventDefault();
 
   const currentIndex = Math.max(
@@ -58,11 +90,17 @@ function moveFocus(item, event) {
     enabledItems.value.findIndex((candidate) => candidate.id === item.id),
   );
   let targetIndex = currentIndex;
-  if (event.key === 'ArrowLeft') {
+  const rtl =
+    typeof globalThis.getComputedStyle === 'function' &&
+    globalThis.getComputedStyle(groupRef.value).direction === 'rtl';
+  if (
+    (event.key === 'ArrowLeft' && !rtl) ||
+    (event.key === 'ArrowRight' && rtl)
+  ) {
     targetIndex =
       (currentIndex - 1 + enabledItems.value.length) %
       enabledItems.value.length;
-  } else if (event.key === 'ArrowRight') {
+  } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
     targetIndex = (currentIndex + 1) % enabledItems.value.length;
   } else if (event.key === 'Home') {
     targetIndex = 0;
@@ -73,31 +111,30 @@ function moveFocus(item, event) {
   const target = enabledItems.value[targetIndex];
   select(target);
   nextTick(() => {
-    const sourceIndex = props.items.findIndex(
-      (candidate) => candidate.id === target.id,
-    );
-    tabRefs.value?.[sourceIndex]?.focus();
+    (tabRefs.get(target.id) || tabRefs.get(focusId.value))?.focus();
   });
 }
 </script>
 
 <template>
   <div
+    ref="group"
     class="ui-tabs"
     :class="[`ui-tabs--${variant}`, `ui-tabs--${distribution}`]"
     role="tablist"
     :aria-label="ariaLabel"
   >
-    <UiScrollRegion
+    <UiScrollLayout
+      scrollbar-reserve="overflow"
       class="ui-tabs__scroll"
       axis="horizontal"
-      viewport-class="ui-tabs__list"
+      content-class="ui-tabs__list"
     >
       <button
         v-for="item in items"
         :id="tabId(item)"
         :key="item.id"
-        ref="tabs"
+        :ref="(element) => setOptionRef(item.id, element)"
         type="button"
         class="ui-tabs__tab"
         :class="{ 'is-active': item.id === activeId }"
@@ -110,10 +147,12 @@ function moveFocus(item, event) {
         @click="select(item)"
         @keydown="moveFocus(item, $event)"
       >
-        <slot name="label" :item="item">{{ item.label }}</slot>
+        <span class="ui-tabs__label">
+          <slot name="label" :item="item">{{ item.label }}</slot>
+        </span>
         <slot name="after" :item="item" />
       </button>
-    </UiScrollRegion>
+    </UiScrollLayout>
   </div>
 </template>
 
@@ -124,7 +163,16 @@ function moveFocus(item, event) {
 }
 
 .ui-tabs__scroll {
+  --ui-scroll-layout-padding-block-start: 0rem;
+  --ui-scroll-layout-padding-block-end: 0rem;
+  --ui-scroll-layout-padding-inline-start: 0rem;
+  --ui-scroll-layout-padding-inline-end: 0rem;
+
   max-width: 100%;
+}
+
+.ui-tabs__scroll[data-overflow-x='true'] {
+  --ui-scroll-layout-padding-block-end: var(--ui-space-1);
 }
 
 .ui-tabs__scroll :deep(.ui-tabs__list) {
@@ -147,6 +195,7 @@ function moveFocus(item, event) {
 
 .ui-tabs--equal .ui-tabs__tab {
   flex: 1 1 0;
+  min-width: 0;
   justify-content: center;
 }
 
@@ -190,9 +239,16 @@ function moveFocus(item, event) {
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
-.ui-tabs__tab:hover:not(:disabled) {
+.ui-tabs__tab:where(:hover:not(:disabled)) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
+}
+
+.ui-tabs__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ui-tabs__tab:focus-visible {
