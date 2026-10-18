@@ -1,10 +1,9 @@
 <script setup>
-import { computed, shallowRef, watch } from 'vue';
-import { Video } from '../../icons/index.js';
+import { computed, nextTick, shallowRef, watch } from 'vue';
+import { Play, Power, Video } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
-import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import obsConnectionValues from '../../../shared/obsConnectionValues.json';
@@ -31,6 +30,13 @@ const props = defineProps({
   hasStoredPassword: { type: Boolean, default: false },
   isSaving: { type: Boolean, default: false },
   error: { type: String, default: '' },
+  fieldErrors: { type: Object, default: () => ({}) },
+  validationAttempt: { type: Number, default: 0 },
+  readError: { type: String, default: '' },
+  saveError: { type: String, default: '' },
+  passwordError: { type: String, default: '' },
+  connectionError: { type: String, default: '' },
+  isLoading: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -38,6 +44,8 @@ const emit = defineEmits([
   'update:port',
   'update:password',
   'update:skipThresholdSeconds',
+  'refreshSettings',
+  'refreshStatus',
   'save',
   'clearPassword',
   'retryConnect',
@@ -72,10 +80,16 @@ const RETRYABLE_LIFECYCLES = Object.freeze([
 const lifecycle = computed(
   () => props.status?.observed?.lifecycle ?? 'disabled',
 );
-const statusLabel = computed(
-  () => LIFECYCLE_LABELS[lifecycle.value] ?? lifecycle.value,
+const statusLabel = computed(() =>
+  props.status.statusReadError
+    ? '無法讀取'
+    : (LIFECYCLE_LABELS[lifecycle.value] ?? lifecycle.value),
 );
-const statusTone = computed(() => LIFECYCLE_TONES[lifecycle.value] ?? 'muted');
+const statusTone = computed(() =>
+  props.status.statusReadError
+    ? 'warning'
+    : (LIFECYCLE_TONES[lifecycle.value] ?? 'muted'),
+);
 const isEnabled = computed(() => props.status?.desired?.enabled === true);
 const canRetry = computed(
   () =>
@@ -97,12 +111,33 @@ const outputSummary = computed(() => {
   return parts.join('・');
 });
 
+const fieldRefs = {};
+watch(
+  () => props.validationAttempt,
+  async () => {
+    const errors = props.fieldErrors;
+    const first = Object.keys(errors).find((key) => errors[key]);
+    if (!first) return;
+    isConnectionSettingsOpen.value = true;
+    await nextTick();
+    fieldRefs[first]?.focus?.();
+  },
+);
 const isConnectionSettingsOpen = shallowRef(false);
 watch(
-  () => [props.error, props.status?.error, isEnabled.value, lifecycle.value],
+  () => [
+    props.error,
+    props.readError,
+    props.saveError,
+    props.status?.error,
+    isEnabled.value,
+    lifecycle.value,
+  ],
   () => {
     if (
       props.error ||
+      props.readError ||
+      props.saveError ||
       props.status?.error ||
       (isEnabled.value && lifecycle.value === 'disconnected')
     ) {
@@ -121,7 +156,7 @@ watch(
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
-      guidance="只讀取直播、錄影與時間戳，不會變更場景。"
+      guidance="讀取直播／錄影與時間標記，不變更場景。"
       variant="nested"
     >
       <template #actions>
@@ -133,17 +168,46 @@ watch(
         >
           重試連線
         </UiButton>
-        <UiCheckbox
+        <UiButton
           v-if="featureEnabled"
           id="obs-integration-enabled"
-          label="啟用"
-          aria-label="啟用 OBS 連線"
-          :model-value="isEnabled"
-          :disabled="isSaving"
-          @update:model-value="emit('save', { enabled: $event })"
-        />
+          :icon="isEnabled ? Power : Play"
+          :variant="isEnabled ? 'secondary' : 'accent'"
+          :aria-label="isEnabled ? '停止 OBS 連線' : '連線至 OBS'"
+          :disabled="isSaving || isLoading || Boolean(readError)"
+          @click="emit('save', { enabled: !isEnabled })"
+          >{{ isEnabled ? '停止連線' : '連線' }}</UiButton
+        >
+      </template>
+      <template
+        v-if="status?.error || connectionError || status.statusReadError"
+        #feedback
+      >
+        <UiHint
+          v-if="status?.error || connectionError"
+          tone="warning"
+          role="alert"
+          >{{ status?.error?.message || connectionError }}</UiHint
+        >
+        <UiHint v-if="status.statusReadError" tone="danger" role="alert">{{
+          status.statusReadError
+        }}</UiHint>
+        <UiButton
+          v-if="status.statusReadError"
+          variant="ghost"
+          @click="emit('refreshStatus')"
+          >重新讀取 OBS 狀態</UiButton
+        >
       </template>
     </SettingsDocumentItem>
+    <UiHint v-if="readError" tone="danger" role="alert">{{ readError }}</UiHint>
+    <UiButton
+      v-if="readError"
+      variant="ghost"
+      :loading="isLoading"
+      @click="emit('refreshSettings')"
+      >重新讀取 OBS 設定</UiButton
+    >
 
     <div
       v-if="(!featureEnabled || !isEnabled) && hasStoredPassword"
@@ -153,35 +217,59 @@ watch(
       <UiButton
         variant="ghost"
         :disabled="isSaving"
+        intent="danger"
         @click="emit('clearPassword')"
       >
         移除密碼
       </UiButton>
     </div>
 
+    <UiHint
+      v-if="passwordError && (!featureEnabled || !isEnabled)"
+      tone="danger"
+      role="alert"
+      >{{ passwordError }}</UiHint
+    >
+
     <UiDisclosure
-      v-if="featureEnabled && isEnabled"
+      v-if="
+        featureEnabled &&
+        (isEnabled || saveError || Object.values(fieldErrors).some(Boolean))
+      "
       v-model:open="isConnectionSettingsOpen"
+      class="settings-section__disclosure"
       label="伺服器與場次設定"
     >
       <div class="obs-integration-settings-block__form">
         <div class="obs-integration-settings-block__connection">
           <UiTextField
             id="obs-integration-host"
+            :ref="
+              (instance) => {
+                fieldRefs.host = instance;
+              }
+            "
+            :error="fieldErrors.host"
             class="obs-integration-settings-block__host"
             label="主機"
             :model-value="host"
             :placeholder="DEFAULT_HOST"
-            :disabled="isSaving"
+            :disabled="isSaving || isLoading || Boolean(readError)"
             @update:model-value="emit('update:host', $event)"
           />
           <UiTextField
             id="obs-integration-port"
+            :ref="
+              (instance) => {
+                fieldRefs.port = instance;
+              }
+            "
+            :error="fieldErrors.port"
             class="obs-integration-settings-block__port"
             label="連接埠"
             :model-value="port"
             :placeholder="DEFAULT_PORT"
-            :disabled="isSaving"
+            :disabled="isSaving || isLoading || Boolean(readError)"
             @update:model-value="emit('update:port', $event)"
           />
         </div>
@@ -189,6 +277,12 @@ watch(
         <div class="obs-integration-settings-block__credential">
           <UiTextField
             id="obs-integration-password"
+            :ref="
+              (instance) => {
+                fieldRefs.password = instance;
+              }
+            "
+            :error="fieldErrors.password"
             class="obs-integration-settings-block__password"
             label="密碼"
             type="password"
@@ -196,29 +290,43 @@ watch(
             :placeholder="hasStoredPassword ? '已設定；留空不變更' : ''"
             :maxlength="MAX_PASSWORD_LENGTH"
             autocomplete="off"
-            :disabled="isSaving"
+            :disabled="isSaving || isLoading || Boolean(readError)"
             @update:model-value="emit('update:password', $event)"
           />
           <UiButton
             v-if="hasStoredPassword"
             variant="ghost"
-            :disabled="isSaving"
+            :disabled="isSaving || isLoading || Boolean(readError)"
+            intent="danger"
             @click="emit('clearPassword')"
           >
             移除密碼
           </UiButton>
         </div>
 
+        <UiHint v-if="passwordError && isEnabled" tone="danger" role="alert">{{
+          passwordError
+        }}</UiHint>
+
         <UiTextField
           id="obs-integration-skip-threshold"
+          :ref="
+            (instance) => {
+              fieldRefs.skipThresholdSeconds = instance;
+            }
+          "
+          :error="fieldErrors.skipThresholdSeconds"
           label="略過門檻（秒）"
           :model-value="skipThresholdSeconds"
           placeholder="10"
           hint="短於此秒數就換下一首，且不記錄；0 表示停用。"
-          :disabled="isSaving"
+          :disabled="isSaving || isLoading || Boolean(readError)"
           @update:model-value="emit('update:skipThresholdSeconds', $event)"
         />
 
+        <UiHint v-if="saveError" tone="danger" role="alert">{{
+          saveError
+        }}</UiHint>
         <div class="obs-integration-settings-block__submit">
           <UiButton
             variant="accent"
@@ -237,20 +345,7 @@ watch(
       </UiButton>
     </div>
 
-    <UiNotice
-      v-if="error"
-      tone="danger"
-      title="OBS 設定發生問題"
-      :message="error"
-      compact
-    />
-    <UiNotice
-      v-else-if="status?.error"
-      tone="warning"
-      title="OBS 連線失敗"
-      :message="status.error.message"
-      compact
-    />
+    <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
   </div>
 </template>
 
@@ -270,7 +365,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
-  padding-inline-start: var(--ui-space-2);
+  padding-inline-start: var(--settings-copy-inset, 0);
 }
 
 .obs-integration-settings-block__stored-credential {
@@ -278,7 +373,7 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-2);
-  padding-inline-start: var(--ui-space-2);
+  padding-inline-start: var(--settings-copy-inset, 0);
   color: var(--ui-color-text-muted);
 }
 
@@ -286,7 +381,7 @@ watch(
   /* Host and port stay tightly paired (--ui-space-2) — they're one address,
      not two unrelated fields. */
   display: flex;
-  align-items: end;
+  align-items: start;
   gap: var(--ui-space-2);
 }
 
@@ -299,12 +394,12 @@ watch(
   /* Fixed to what a 1-5 digit port number actually needs, not stretched to
      match the host field — equal-width columns for unequal content is the
      "monotonous grid" this replaces. */
-  flex: 0 0 6.5rem;
+  flex: 0 0 var(--settings-port-inline-size);
 }
 
 .obs-integration-settings-block__credential {
   display: flex;
-  align-items: end;
+  align-items: start;
   gap: var(--ui-space-2);
 }
 
@@ -317,5 +412,10 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: var(--ui-space-2);
+}
+
+.obs-integration-settings-block__export {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

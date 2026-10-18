@@ -30,7 +30,7 @@ const sectionSources = [
 const source = [viewSource, ...sectionSources].join('\n');
 
 describe('SettingsView document composition', () => {
-  it('renders five ordered Folder sections without legacy tabs or an inner page scroll', () => {
+  it('composes seven functional areas through five ownership components without legacy tabs or an inner page scroll', () => {
     const sectionComponents = [
       'SettingsLibrarySection',
       'SettingsAudioSection',
@@ -47,7 +47,7 @@ describe('SettingsView document composition', () => {
     }
 
     expect(
-      sectionSources.every((section) => section.includes('AppFolderSection')),
+      sectionSources.every((section) => section.includes('SettingsSection')),
     ).toBe(true);
     expect(source).toContain('SettingsDocumentItem');
     expect(source).not.toContain(
@@ -71,7 +71,7 @@ describe('SettingsView document composition', () => {
     expect(applicationSource).toContain('title="應用程式"');
     expect(applicationSource).toContain('<WindowsBackgroundSettingsRow');
     expect(applicationSource).toContain('<AppUpdateSettingsRow');
-    expect(optionalSource).toContain('title="選用功能"');
+    expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
     expect(supportSource).toContain('title="支援與維護"');
     expect(supportSource).toContain('<FeedbackReportSettingsRow');
@@ -90,7 +90,7 @@ describe('SettingsView document composition', () => {
 
   it('groups optional gates by user-facing purpose without a redundant introduction', () => {
     expect(source).not.toContain('使用前請閱讀各功能說明，再選擇是否啟用。');
-    expect(source).toContain("title: '來源與內容'");
+    expect(source).toContain("title: '外部來源與歌詞'");
     expect(source).toContain("title: '本機音訊處理'");
     expect(source).toContain("title: '公開輸出與 OBS'");
     expect(optionalSource).toContain('v-for="group in optionalFeatureGroups"');
@@ -117,7 +117,7 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain('<PlaybackHistorySettingsRow');
     expect(librarySource).toContain(':record-count="recentItems.length"');
     expect(librarySource).toContain('@clear="handleClearPlaybackHistory"');
-    expect(source).toContain('initializePlaybackHistory();');
+    expect(source).toContain('initializePlaybackHistory(),');
     expect(source).toContain("title: '清除最近播放紀錄？'");
     expect(source).toContain('播放佇列、播放清單、OBS 場次與錯誤紀錄會保留。');
   });
@@ -129,7 +129,7 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain('@set-policy="libraryStorage.setPolicy"');
     expect(librarySource).toContain('@cleanup="handleCleanupLibraryStorage"');
     expect(librarySource).toContain('<LibraryMetadataSettingsRow />');
-    expect(source).toContain('libraryStorage.initialize();');
+    expect(source).toContain('libraryStorage.initialize(),');
     expect(source).toContain('libraryStorage.dispose');
     expect(source).toContain("title: '清除去人聲版本？'");
     expect(source).not.toContain('useLibraryMetadataMaintenance');
@@ -152,7 +152,12 @@ describe('SettingsView behavior wiring', () => {
 
     expect(gateRowStart).toBeGreaterThan(-1);
     expect(bpmRow).toBeGreaterThan(gateRowStart);
-    expect(gpuRow).toBeGreaterThan(bpmRow);
+    expect(
+      optionalSource.indexOf('<MusicAnalysisPreferenceRow', gateRowStart),
+    ).toBeLessThan(gpuRow);
+    expect(bpmRow).toBeGreaterThan(
+      optionalSource.indexOf('<template #tools>', gateRowStart),
+    );
     expect(gateRowEnd).toBeGreaterThan(gpuRow);
     expect(optionalSource.slice(bpmRow, gateRowEnd)).toMatch(
       /gate\.id\s*===\s*FEATURE_IDS\.AUDIO_PROCESSING_FLOW\s*&&\s*gate\.enabled/u,

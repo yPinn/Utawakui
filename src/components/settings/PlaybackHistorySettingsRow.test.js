@@ -25,6 +25,13 @@ async function renderRow(props = {}) {
 }
 
 describe('PlaybackHistorySettingsRow', () => {
+  it('marks a failed read as unknown and offers one local retry', async () => {
+    const html = await renderRow({ error: '讀取失敗', readError: '讀取失敗' });
+    expect(html).toContain('尚未確認播放紀錄');
+    expect(html).toContain('重新讀取');
+    expect(html).not.toContain('尚無播放紀錄');
+    expect(html).not.toContain('>無紀錄<');
+  });
   it('shows the local playback-history count and one overflow trigger', async () => {
     const html = await renderRow({ recordCount: 7 });
 
@@ -36,11 +43,13 @@ describe('PlaybackHistorySettingsRow', () => {
     expect(html).not.toContain('清除播放紀錄');
   });
 
-  it('keeps clear as a neutral list action disabled while empty or busy', () => {
+  it('marks persisted history deletion as destructive and disables it while empty or busy', () => {
     expect(source).toContain("label: '清除播放紀錄'");
     expect(source).toContain('icon: ListX');
     expect(source).not.toContain('Trash2');
-    expect(source).not.toContain('danger: true');
+    expect(source.match(/\{\s*id: 'clear',[^}]*\}/u)?.[0]).toContain(
+      "intent: 'danger'",
+    );
     expect(source).toMatch(
       /disabled:\s*props\.isLoading\s*\|\|\s*props\.isClearing\s*\|\|\s*props\.recordCount === 0/u,
     );

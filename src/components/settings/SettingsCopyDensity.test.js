@@ -37,31 +37,27 @@ describe('Settings copy density', () => {
     expect(librarySource).not.toContain('下載與匯入的曲目會存放在這裡。');
     expect(audioOutputSource).not.toContain('將伴奏送到直播或錄影軟體。');
     expect(updateSource).not.toContain('下載與安裝由你決定。');
-    expect(updateSource).toContain('僅自動檢查；下載與安裝仍由你決定。');
+    expect(updateSource).toContain('自動檢查；下載與安裝需手動確認。');
     expect(updateSource).not.toContain('查看目前版本與更新狀態。');
   });
 
   it('keeps decision-changing consequences while shortening routine guidance', () => {
     expect(librarySource).toContain('切換位置不會搬移既有曲目。');
     expect(metadataSource).toContain(
-      '只用已保存的來源資料；不連線，也不覆蓋無法確認的手動編輯。',
+      '只用已存資料；不連線，保留無法確認的手動編輯。',
     );
-    expect(historySource).toContain('自動保存最近播放；清除不影響佇列或歌單。');
+    expect(historySource).toContain('自動保存；清除不影響佇列或歌單。');
     expect(windowsSource).toContain(
-      '背景執行會保留播放、OBS 連線與輸出；最小化仍縮到 Windows 工作列。',
+      '背景執行保留播放、OBS 與輸出；最小化仍在工作列。',
     );
-    expect(obsSource).toContain('只讀取直播、錄影與時間戳，不會變更場景。');
+    expect(obsSource).toContain('讀取直播／錄影與時間標記，不變更場景。');
   });
 
   it('uses concise supporting copy for integrations and support actions', () => {
-    expect(audioOutputSource).toContain(
-      '選擇直播或錄影軟體接收伴奏的虛擬裝置。',
-    );
+    expect(audioOutputSource).toContain('選擇直播／錄影用的虛擬裝置。');
     expect(outputSource).toContain('供 Browser Source 顯示歌詞與曲目。');
-    expect(outputSource).toContain(
-      '實驗性：將透明歌詞畫面輸出至 Spout2 軟體。',
-    );
-    expect(feedbackSource).toContain('回報問題、提出功能建議或反映內容來源。');
-    expect(supportSource).toContain('查看公告、分享心得或聯絡開發者。');
+    expect(outputSource).toContain('實驗性：將透明歌詞送至 Spout2。');
+    expect(feedbackSource).toContain('提出建議或回報內容來源。');
+    expect(supportSource).toContain('公告、交流與開發者聯絡。');
   });
 });

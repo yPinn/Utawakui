@@ -14,6 +14,16 @@ afterEach(() => {
 });
 
 describe('FeedbackReportModal', () => {
+  it('associates required description feedback with the textarea', async () => {
+    const feedback = useFeedbackReport();
+    feedback.openReport();
+    await feedback.goToPreview();
+    const html = await renderModal();
+    expect(html).toContain('aria-describedby="feedback-description-error"');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('簡短描述');
+    expect(html).not.toContain('ui-notice--warning');
+  });
   it('renders nothing when the report is closed', async () => {
     useFeedbackReport().closeReport();
     const html = await renderModal();

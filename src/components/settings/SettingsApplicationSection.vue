@@ -3,7 +3,7 @@ import { onMounted } from 'vue';
 import { useAppInfo } from '../../composables/useAppInfo.js';
 import { useAppUpdate } from '../../composables/useAppUpdate.js';
 import { useWindowsIntegrationSettings } from '../../composables/useWindowsIntegrationSettings.js';
-import AppFolderSection from '../layout/AppFolderSection.vue';
+import SettingsSection from './SettingsSection.vue';
 import AppUpdateSettingsRow from './AppUpdateSettingsRow.vue';
 import WindowsBackgroundSettingsRow from './WindowsBackgroundSettingsRow.vue';
 
@@ -28,7 +28,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <AppFolderSection
+  <SettingsSection
     id="settings-application"
     class="settings-application-section"
     title="應用程式"
@@ -37,7 +37,11 @@ onMounted(() => {
     <WindowsBackgroundSettingsRow
       :behavior="windowsIntegrationSettings.windowCloseBehavior.value"
       :busy="windowsIntegrationSettings.preferenceBusy.value"
-      :error="windowsIntegrationSettings.preferenceError.value"
+      :error="windowsIntegrationSettings.preferenceSaveError.value"
+      :read-error="windowsIntegrationSettings.preferenceReadError.value"
+      :reading="windowsIntegrationSettings.preferenceReading.value"
+      :loaded="windowsIntegrationSettings.preferenceLoaded.value"
+      @refresh-preference="windowsIntegrationSettings.refreshPreference"
       @set-behavior="windowsIntegrationSettings.setWindowCloseBehavior"
     />
     <AppUpdateSettingsRow
@@ -54,22 +58,19 @@ onMounted(() => {
       :info-error="appInfoState.error"
       :auto-check-enabled="appUpdateState.autoCheckEnabled"
       :auto-check-busy="appUpdateState.autoCheckBusy"
-      :auto-check-error="appUpdateState.autoCheckError"
+      :auto-check-error="appUpdateState.autoCheckSaveError"
+      :auto-check-read-error="appUpdateState.autoCheckReadError"
+      :auto-check-loaded="appUpdateState.autoCheckLoaded ?? true"
+      :auto-check-reading="appUpdateState.autoCheckReading"
+      :status-read-error="appUpdateState.statusReadError"
+      :action-error="appUpdateState.actionError"
+      @refresh-auto-check="refreshAppUpdateAutoCheck"
+      @refresh-status="refreshAppUpdateStatus"
+      @refresh-info="refreshAppInfo"
       @check="checkForAppUpdate"
       @download="downloadAppUpdate"
       @install="installAppUpdate"
       @set-auto-check="setAppUpdateAutoCheck"
     />
-  </AppFolderSection>
+  </SettingsSection>
 </template>
-
-<style scoped>
-.settings-application-section {
-  min-inline-size: 0;
-  scroll-margin-block-start: var(--ui-space-4);
-}
-
-.settings-application-section:focus {
-  outline: none;
-}
-</style>

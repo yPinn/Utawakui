@@ -56,12 +56,10 @@ describe('SettingsDocumentItem', () => {
     expect(html).not.toContain('settings-document-item__supporting-copy');
   });
 
-  it('supports capability and nested document hierarchy without changing its public anatomy', async () => {
-    const capability = await renderItem({ variant: 'capability' });
+  it('supports one level of settings under a feature header', async () => {
     const nested = await renderItem({ variant: 'nested' });
 
-    expect(capability).toContain('settings-document-item--capability');
     expect(nested).toContain('settings-document-item--nested');
-    expect(nested).toContain('<h5');
+    expect(nested).toContain('<h4');
   });
 });

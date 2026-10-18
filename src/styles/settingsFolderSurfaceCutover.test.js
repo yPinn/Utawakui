@@ -37,6 +37,9 @@ const tokenSource = readSource('./tokens.css');
 const settingsDocumentItemSource = readSource(
   '../components/settings/SettingsDocumentItem.vue',
 );
+const settingsSectionSource = readSource(
+  '../components/settings/SettingsSection.vue',
+);
 const settingsFeatureGateRowSource = readSource(
   '../components/settings/SettingsFeatureGateRow.vue',
 );
@@ -142,7 +145,7 @@ describe('Settings Folder surface cutover', () => {
   it('reflows Settings content from the Folder container instead of the viewport', () => {
     const responsiveSources = [
       settingsViewSource,
-      settingsCapabilitiesSectionSource,
+      settingsSectionSource,
       settingsDocumentItemSource,
       settingsFeatureGateRowSource,
       libraryStorageSettingsRowSource,
@@ -150,23 +153,25 @@ describe('Settings Folder surface cutover', () => {
 
     for (const source of responsiveSources) {
       expect(source).not.toMatch(/@media\s*\(max-width:/u);
-      expect(source).toContain('@container app-folder-layout');
+      expect(source).toMatch(
+        /@container (app-folder-layout|settings-section)/u,
+      );
     }
 
     expect(settingsViewSource).toContain(
       '@container app-folder-layout (max-width: 56.25rem)',
     );
     expect(settingsCapabilitiesSectionSource).toContain(
-      '@container app-folder-layout (max-width: 56.25rem)',
+      'var(--settings-section-gap',
+    );
+    expect(settingsSectionSource).toContain(
+      '@container settings-section (max-width: 48rem)',
     );
     expect(settingsDocumentItemSource).toContain(
-      '@container app-folder-layout (max-width: 56.25rem)',
-    );
-    expect(settingsDocumentItemSource).toContain(
-      '@container app-folder-layout (max-width: 42.5rem)',
+      '@container settings-section (max-width: 40rem)',
     );
     expect(settingsFeatureGateRowSource).toContain(
-      '@container app-folder-layout (max-width: 42.5rem)',
+      '@container settings-section (max-width: 30rem)',
     );
     expect(libraryStorageSettingsRowSource).toContain(
       '@container app-folder-layout (max-width: 35rem)',
@@ -176,32 +181,32 @@ describe('Settings Folder surface cutover', () => {
   it('keeps default windowed rows compact and delays one-column stacking until the Folder is truly narrow', () => {
     const windowedTier = settingsDocumentItemSource.slice(
       settingsDocumentItemSource.indexOf(
-        '@container app-folder-layout (max-width: 56.25rem)',
+        '@container settings-section (max-width: 48rem)',
       ),
       settingsDocumentItemSource.indexOf(
-        '@container app-folder-layout (max-width: 42.5rem)',
+        '@container settings-section (max-width: 40rem)',
       ),
     );
     const narrowTier = settingsDocumentItemSource.slice(
       settingsDocumentItemSource.indexOf(
-        '@container app-folder-layout (max-width: 42.5rem)',
+        '@container settings-section (max-width: 40rem)',
       ),
     );
 
     expect(windowedTier).toMatch(
-      /\.settings-document-item\s*\{[^}]*gap:\s*var\(--ui-space-3\);[^}]*padding-block:\s*var\(--ui-space-3\);/su,
+      /\.settings-document-item\s*\{[^}]*gap:\s*var\(--ui-space-3\);/su,
     );
     expect(windowedTier).not.toContain(
       'grid-template-columns: minmax(0, 1fr);',
     );
-    expect(windowedTier).toMatch(
-      /\.settings-document-item--nested\s*\{[^}]*padding-block:\s*var\(--ui-space-2\);/su,
+    expect(settingsSectionSource).toMatch(
+      /@container settings-section \(max-width: 48rem\)[\s\S]*--settings-row-padding-block: var\(--ui-space-3\);[\s\S]*--settings-child-padding-block: var\(--ui-space-2\);/u,
     );
     expect(narrowTier).toMatch(
       /\.settings-document-item\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/su,
     );
     expect(narrowTier).toMatch(
-      /\.settings-document-item__icon\s*\{[^}]*display:\s*none;/su,
+      /\.settings-document-item__icon\s*\{[^}]*visibility:\s*hidden;/su,
     );
   });
 
@@ -218,20 +223,18 @@ describe('Settings Folder surface cutover', () => {
     }
   });
 
-  it('rebuilds Settings as five ordered Folder sections while preserving its actions and modal flows', () => {
-    const sectionTitles = [
-      '曲庫與儲存',
-      '音訊輸出',
-      '應用程式',
-      '選用功能',
-      '支援與維護',
-    ];
+  it('rebuilds Settings as seven functional sections while preserving its actions and modal flows', () => {
+    const sectionTitles = ['曲庫與儲存', '音訊輸出', '應用程式', '支援與維護'];
     let previousPosition = -1;
     for (const title of sectionTitles) {
       const position = settingsDocumentSource.indexOf(`title="${title}"`);
       expect(position, title).toBeGreaterThan(previousPosition);
       previousPosition = position;
     }
+    for (const title of ['外部來源與歌詞', '本機音訊處理', '公開輸出與 OBS']) {
+      expect(settingsCapabilitiesSectionSource).toContain(`title: '${title}'`);
+    }
+    expect(settingsCapabilitiesSectionSource).not.toContain('title="選用功能"');
     for (const component of [
       'SettingsLibrarySection',
       'SettingsAudioSection',
@@ -242,17 +245,19 @@ describe('Settings Folder surface cutover', () => {
       expect(settingsViewSource, component).toContain(`<${component}`);
     }
     for (const component of [
-      'AppFolderSection',
+      'SettingsSection',
       'SettingsDocumentItem',
       'SettingsFeatureGateRow',
       'AudioOutputSettingsBlock',
       'ObsIntegrationSettingsBlock',
       'CaptureDeviceModal',
       'FfmpegSourceModal',
-      'FeedbackReportModal',
-      'ObsSessionExportModal',
     ]) {
       expect(settingsDocumentSource, component).toContain(`<${component}`);
+    }
+    for (const component of ['FeedbackReportModal', 'ObsSessionExportModal']) {
+      expect(appSource, component).toContain(`<${component}`);
+      expect(settingsDocumentSource, component).not.toContain(`<${component}`);
     }
     expect(settingsDocumentSource).not.toContain('<SettingsBlock');
     expect(settingsDocumentSource).not.toContain('<SettingsActionRow');

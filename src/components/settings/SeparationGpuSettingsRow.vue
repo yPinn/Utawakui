@@ -1,16 +1,20 @@
 <script setup>
 import { Cpu } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
-import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 defineProps({
   gpuAcceleration: { type: Boolean, default: true },
   preferenceBusy: { type: Boolean, default: false },
   preferenceError: { type: String, default: '' },
+  readError: { type: String, default: '' },
+  reading: { type: Boolean, default: false },
+  loaded: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['setGpuAcceleration']);
+const emit = defineEmits(['setGpuAcceleration', 'refreshPreference']);
 </script>
 
 <template>
@@ -18,7 +22,7 @@ const emit = defineEmits(['setGpuAcceleration']);
     <SettingsDocumentItem
       :icon="Cpu"
       title="人聲分離"
-      guidance="無法使用 GPU 時，會自動改用 CPU。"
+      guidance="GPU 無法使用時改用 CPU。"
       variant="nested"
     >
       <template #actions>
@@ -26,20 +30,25 @@ const emit = defineEmits(['setGpuAcceleration']);
           id="separation-gpu-acceleration"
           label="GPU 加速"
           aria-label="使用 GPU 加速人聲分離"
-          :model-value="gpuAcceleration"
-          :disabled="preferenceBusy"
+          :model-value="loaded ? gpuAcceleration : false"
+          :disabled="preferenceBusy || reading || !loaded"
+          :error="preferenceError"
           @update:model-value="emit('setGpuAcceleration', $event)"
         />
       </template>
+      <template v-if="readError || !loaded" #feedback>
+        <UiHint :tone="readError ? 'danger' : 'muted'" role="status">{{
+          readError || '讀取中；尚未確認已儲存設定。'
+        }}</UiHint>
+        <UiButton
+          v-if="readError"
+          variant="ghost"
+          :loading="reading"
+          @click="emit('refreshPreference')"
+          >重新讀取</UiButton
+        >
+      </template>
     </SettingsDocumentItem>
-
-    <UiNotice
-      v-if="preferenceError"
-      tone="danger"
-      title="GPU 加速設定未儲存"
-      :message="preferenceError"
-      compact
-    />
   </div>
 </template>
 

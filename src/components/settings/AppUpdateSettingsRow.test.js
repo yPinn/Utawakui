@@ -26,6 +26,7 @@ describe('AppUpdateSettingsRow', () => {
     expect(html).not.toContain('aria-label="檢查更新"');
     expect(html).not.toContain('aria-describedby="ui-tooltip-');
     expect(html).not.toContain('title="檢查更新 Utawakui"');
+    expect(html).not.toContain('settings-document-item__feedback');
   });
 
   it('shows explicit download and restart actions for the update lifecycle', async () => {
@@ -85,7 +86,7 @@ describe('AppUpdateSettingsRow', () => {
     const html = await renderRow({ phase: 'idle' });
 
     expect(html).toContain('自動檢查');
-    expect(html).toContain('僅自動檢查；下載與安裝仍由你決定。');
+    expect(html).toContain('自動檢查；下載與安裝需手動確認。');
     expect(html).not.toContain('查看目前版本與更新狀態。');
     expect(html).not.toContain('啟動時只檢查；');
   });
@@ -96,7 +97,7 @@ describe('AppUpdateSettingsRow', () => {
       infoError: '版本資訊暫時無法取得。',
     });
 
-    expect(html).toContain('僅自動檢查；下載與安裝仍由你決定。');
+    expect(html).toContain('自動檢查；下載與安裝需手動確認。');
     expect(html).toContain('版本資訊暫時無法取得。');
   });
 
@@ -106,7 +107,7 @@ describe('AppUpdateSettingsRow', () => {
       autoCheckError: '請再試一次。',
     });
 
-    expect(html).toContain('自動檢查設定未儲存');
+    expect(html).toContain('aria-describedby="app-update-auto-check-error"');
     expect(html).toContain('請再試一次。');
   });
 

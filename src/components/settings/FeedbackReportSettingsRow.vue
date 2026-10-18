@@ -10,7 +10,7 @@ const emit = defineEmits(['open']);
   <SettingsDocumentItem
     :icon="MessageSquare"
     title="回報問題"
-    guidance="回報問題、提出功能建議或反映內容來源。"
+    guidance="提出建議或回報內容來源。"
   >
     <template #actions>
       <UiIconButton

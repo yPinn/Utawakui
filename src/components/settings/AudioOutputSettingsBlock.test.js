@@ -23,7 +23,7 @@ describe('AudioOutputSettingsBlock', () => {
 
     expect(html).not.toContain('>音訊輸出<');
     expect(html).toContain('擷取輸出裝置');
-    expect(html).toContain('選擇直播或錄影軟體接收伴奏的虛擬裝置');
+    expect(html).toContain('選擇直播／錄影用的虛擬裝置');
     expect(html).not.toContain('將伴奏送到直播或錄影軟體');
     expect(html).not.toContain('OBS 擷取裝置');
     expect(html).not.toContain('OBS 用的虛擬音效裝置');

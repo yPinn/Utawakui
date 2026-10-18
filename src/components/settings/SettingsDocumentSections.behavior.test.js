@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   installAppUpdate: vi.fn(),
   isFeatureEnabled: vi.fn(() => false),
   openDiagnosticsFolder: vi.fn(),
+  openDownloadDir: vi.fn(),
   prepareDependency: vi.fn(),
   recordError: vi.fn(),
   refreshAppInfo: vi.fn(),
@@ -68,7 +69,7 @@ vi.mock('../../composables/useImportSession.js', async () => {
       refreshConfig: mocks.refreshImportConfig,
       chooseDownloadDir: mocks.chooseDownloadDir,
       resetDownloadDir: mocks.resetDownloadDir,
-      openDownloadDir: vi.fn(),
+      openDownloadDir: mocks.openDownloadDir,
     }),
   };
 });
@@ -83,6 +84,9 @@ vi.mock('../../composables/useLibraryStorage.js', async () => {
       saving: shallowRef(false),
       cleaning: shallowRef(false),
       error: shallowRef(''),
+      readError: shallowRef(''),
+      saveError: shallowRef(''),
+      refresh: vi.fn(),
       lastCleanup: shallowRef(null),
       initialize: mocks.initializeStorage,
       dispose: mocks.disposeStorage,
@@ -155,7 +159,14 @@ vi.mock('../../composables/useMusicAnalysisSettings.js', async () => {
       preferenceBusy: shallowRef(false),
       stageLabel: shallowRef(''),
       capabilityError: shallowRef(''),
+      capabilityReadError: shallowRef(''),
+      refreshCapability: vi.fn(),
+      refreshPreference: vi.fn(),
       preferenceError: shallowRef(''),
+      preferenceSaveError: shallowRef(''),
+      preferenceReadError: shallowRef(''),
+      preferenceLoaded: shallowRef(true),
+      preferenceReading: shallowRef(false),
       initialize: mocks.initializeMusicAnalysis,
       dispose: mocks.disposeMusicAnalysis,
       setAutoAnalyze: vi.fn(),
@@ -173,6 +184,10 @@ vi.mock('../../composables/useSeparationSettings.js', async () => {
       gpuAcceleration: shallowRef(false),
       preferenceBusy: shallowRef(false),
       preferenceError: shallowRef(''),
+      preferenceSaveError: shallowRef(''),
+      preferenceReadError: shallowRef(''),
+      preferenceLoaded: shallowRef(true),
+      preferenceReading: shallowRef(false),
       refreshPreference: mocks.refreshSeparationPreference,
       setGpuAcceleration: vi.fn(),
     }),
@@ -191,6 +206,14 @@ vi.mock('../../composables/useObsIntegrationSettings.js', async () => {
       hasStoredPassword: shallowRef(false),
       isSaving: shallowRef(false),
       error: shallowRef(''),
+      readError: shallowRef(''),
+      saveError: shallowRef(''),
+      passwordError: shallowRef(''),
+      connectionError: shallowRef(''),
+      fieldErrors: shallowRef({}),
+      validationAttempt: shallowRef(0),
+      isLoading: shallowRef(false),
+      refreshStatus: vi.fn(),
       refreshSettings: mocks.refreshObsSettings,
       save: vi.fn(),
       clearPassword: vi.fn(),
@@ -247,6 +270,10 @@ vi.mock('../../composables/useWindowsIntegrationSettings.js', async () => {
       windowCloseBehavior: shallowRef('quit'),
       preferenceBusy: shallowRef(false),
       preferenceError: shallowRef(''),
+      preferenceSaveError: shallowRef(''),
+      preferenceReadError: shallowRef(''),
+      preferenceLoaded: shallowRef(true),
+      preferenceReading: shallowRef(false),
       refreshPreference: mocks.refreshWindowsPreference,
       setWindowCloseBehavior: vi.fn(),
     }),
@@ -299,11 +326,11 @@ vi.mock('../../composables/useAudioOutput.js', async () => {
   };
 });
 
-vi.mock('../layout/AppFolderSection.vue', async () => {
+vi.mock('./SettingsSection.vue', async () => {
   const { h } = await vi.importActual('vue');
   return {
     default: {
-      name: 'AppFolderSectionStub',
+      name: 'SettingsSectionStub',
       setup(_props, { slots }) {
         return () => h('section', null, slots.default?.());
       },
@@ -497,6 +524,20 @@ describe('Settings document section behavior', () => {
     expect(mocks.disposeStorage).toHaveBeenCalledOnce();
   });
 
+  it('routes settings folder actions to notification feedback', async () => {
+    const app = mountSetup(SettingsLibrarySection);
+    await nextTick();
+    app._instance.setupState.handleDownloadDirMenuSelect('choose');
+    app._instance.setupState.handleDownloadDirMenuSelect('reset');
+    expect(mocks.chooseDownloadDir).toHaveBeenCalledWith({
+      notifyFailure: true,
+    });
+    expect(mocks.resetDownloadDir).toHaveBeenCalledWith({
+      notifyFailure: true,
+    });
+    app.unmount();
+  });
+
   it('derives the capture-device label and owns modal open and close events', async () => {
     const root = hostNode('root');
     const app = renderer.createApp(SettingsAudioSection);
@@ -524,6 +565,23 @@ describe('Settings document section behavior', () => {
     expect(modalButton.props['data-open']).toBe('false');
 
     app.unmount();
+  });
+
+  it('starts storage subscription before a pending folder read can outlive the section', async () => {
+    let finish;
+    mocks.refreshImportConfig.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const app = mountSetup(SettingsLibrarySection);
+    expect(mocks.initializeStorage).toHaveBeenCalledOnce();
+    app.unmount();
+    expect(mocks.disposeStorage).toHaveBeenCalledOnce();
+    finish();
+    await nextTick();
+    expect(mocks.initializeStorage).toHaveBeenCalledOnce();
   });
 
   it('runs the application and support refresh lifecycles from their section owners', async () => {
@@ -584,6 +642,6 @@ describe('Settings document section behavior', () => {
     }
 
     app.unmount();
-    expect(mocks.disposeMusicAnalysis).toHaveBeenCalledOnce();
+    expect(mocks.disposeMusicAnalysis).not.toHaveBeenCalled();
   });
 });

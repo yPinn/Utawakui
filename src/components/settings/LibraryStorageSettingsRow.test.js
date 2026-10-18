@@ -62,11 +62,12 @@ describe('LibraryStorageSettingsRow', () => {
     expect(source).toContain('只清去人聲，歌曲保留');
     expect(source).toContain('<UiIconButton');
     expect(source).toContain('label="清理去人聲空間"');
-    expect(source).not.toContain('<UiButton');
+    expect(source).toContain('loading-label="清理中"');
+    expect(source).toContain('@click=' + '"emit(\'refresh\')"');
     expect(source).not.toContain('>清理<');
   });
 
-  it('shows loading, error, and completed-cleanup states with short copy', async () => {
+  it('keeps loading and errors but does not replay completed cleanup snapshots', async () => {
     expect(await renderRow({ storage: null, loading: true })).toContain(
       '計算中',
     );
@@ -81,15 +82,23 @@ describe('LibraryStorageSettingsRow', () => {
           remainingBytesToFree: 0,
         },
       }),
-    ).toContain('已釋放 8 GB');
+    ).not.toContain('已釋放 8 GB');
   });
 
-  it('keeps storage errors outside the disclosure even after manual collapse', async () => {
-    const html = await renderRow({ error: '目前無法讀取曲庫空間。' });
-
-    expect(html).toMatch(/<details\b[^>]*\bopen/);
-    expect(html.slice(html.indexOf('</details>'))).toContain(
-      '目前無法讀取曲庫空間。',
-    );
-  });
+  it.each([
+    [{ error: '設定未儲存。' }, '空間設定未儲存'],
+    [{ readError: '目前無法讀取曲庫空間。' }, '無法讀取空間資訊'],
+  ])(
+    'keeps the failure visible in the summary when details are collapsed',
+    async (props, label) => {
+      const html = await renderRow(props);
+      expect(html).toMatch(/<details\b[^>]*\bopen/);
+      expect(
+        html.slice(html.indexOf('<summary'), html.indexOf('</summary>')),
+      ).toContain(label);
+      expect(
+        html.slice(html.indexOf('</summary>'), html.indexOf('</details>')),
+      ).toContain(props.error || props.readError);
+    },
+  );
 });

@@ -19,6 +19,7 @@ vi.mock('./SettingsDocumentItem.vue', () => ({
           props.status,
           props.value,
           slots.actions?.(),
+          slots.feedback?.(),
         ]),
   },
 }));
@@ -52,6 +53,14 @@ vi.mock('../ui/UiNotice.vue', () => ({
     setup: (props) => () => h('p', { role: 'alert' }, props.message),
   },
 }));
+vi.mock('../ui/UiHint.vue', () => ({
+  default: {
+    setup:
+      (_, { slots }) =>
+      () =>
+        h('p', slots.default?.()),
+  },
+}));
 vi.mock('../ui/UiModal.vue', () => ({ default: { render: () => null } }));
 vi.mock('../ui/UiIconButton.vue', () => ({ default: { render: () => null } }));
 vi.mock('./SettingsDependencyActions.vue', () => ({
@@ -61,11 +70,13 @@ vi.mock('./SettingsDependencyActions.vue', () => ({
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
+import SettingsDependencyList from './SettingsDependencyList.vue';
 
 for (const [component, path] of [
   [UiDisclosure, '../ui/UiDisclosure.vue'],
   [ObsIntegrationSettingsBlock, './ObsIntegrationSettingsBlock.vue'],
   [SettingsFeatureGateRow, './SettingsFeatureGateRow.vue'],
+  [SettingsDependencyList, './SettingsDependencyList.vue'],
 ]) {
   attachClientRender(component, path, import.meta.url);
 }
@@ -87,6 +98,23 @@ function obsProps() {
 }
 
 describe('Settings progressive disclosure', () => {
+  it('uses explicit connection actions independently of the feature-enabled status', async () => {
+    const props = obsProps();
+    const save = vi.fn();
+    const { app, root } = mount(ObsIntegrationSettingsBlock, {
+      ...props,
+      onSave: save,
+    });
+    const button = findAll(
+      root,
+      (node) => node.props.id === 'obs-integration-enabled',
+    )[0];
+    expect(button.type).toBe('button');
+    expect(textContent(button)).toContain('停止連線');
+    trigger(button, 'onClick');
+    expect(save).toHaveBeenCalledWith({ enabled: false });
+    app.unmount();
+  });
   it('retains the OBS draft and mounted fields across native disclosure toggles', async () => {
     const props = obsProps();
     props['onUpdate:host'] = (host) => {
@@ -193,6 +221,7 @@ describe('Settings progressive disclosure', () => {
     props.highlighted = false;
     await nextTick();
     props.items[0].statusTone = 'warning';
+    props.items[0].needsAttention = true;
     await nextTick();
     expect(details.props.open).toBe(true);
     expect(textContent(find(root, 'summary'))).toContain('1 項待處理');

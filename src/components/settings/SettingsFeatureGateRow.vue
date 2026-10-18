@@ -1,48 +1,46 @@
 <script setup>
-import { computed, shallowRef, useSlots, watch } from 'vue';
-import { Info, Loader2, Plus } from '../../icons/index.js';
-import SettingsDocumentItem from './SettingsDocumentItem.vue';
-import SettingsDependencyActions from './SettingsDependencyActions.vue';
+import { computed, shallowRef, useId } from 'vue';
+import { ICON_SIZE, Info, Loader2, Plus } from '../../icons/index.js';
+import SettingsDependencyList from './SettingsDependencyList.vue';
+import UiChip from '../ui/UiChip.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
-import UiDisclosure from '../ui/UiDisclosure.vue';
 import AppFeatureNoticeDocument from '../layout/AppFeatureNoticeDocument.vue';
 import { getFeatureGate } from '../../constants/featureGates.js';
 
 const props = defineProps({
   gate: { type: Object, required: true },
+  hasSettings: { type: Boolean, default: false },
+  retainSettings: { type: Boolean, default: false },
+  additionalToolCount: { type: Number, default: 0 },
+  additionalToolBusy: { type: Boolean, default: false },
+  additionalToolAttention: { type: Boolean, default: false },
+  additionalToolLoaded: { type: Boolean, default: true },
   items: { type: Array, default: () => [] },
   actionLabel: { type: String, required: true },
   disableEnableAction: { type: Boolean, default: false },
   highlighted: { type: Boolean, default: false },
+  requestNotice: { type: Object, default: null },
 });
 
-const emit = defineEmits(['enable', 'itemAction', 'itemAdvancedAction']);
-const slots = useSlots();
-
-const hasItems = computed(() => props.items.length > 0);
-const shouldShowItems = computed(
-  () => props.gate.enabled && (hasItems.value || Boolean(slots.items)),
+const emit = defineEmits([
+  'enable',
+  'itemAction',
+  'itemAdvancedAction',
+  'noticeAction',
+  'requestAction',
+]);
+const titleId = `settings-feature-${useId()}`;
+const showSettings = computed(
+  () => props.hasSettings && (props.gate.enabled || props.retainSettings),
 );
-const isDependencySettingsOpen = shallowRef(false);
-const dependencyAttentionCount = computed(
-  () => props.items.filter((item) => item.statusTone !== 'success').length,
+const showTools = computed(
+  () =>
+    props.gate.enabled &&
+    (props.items.length > 0 || props.additionalToolCount > 0),
 );
-const dependencySummary = computed(() => {
-  const status = dependencyAttentionCount.value
-    ? `${dependencyAttentionCount.value} 項待處理`
-    : '已就緒';
-  return `工具與模型 · ${props.items.length} 項 · ${status}`;
-});
-watch(
-  () => props.highlighted || dependencyAttentionCount.value > 0,
-  (needsAttention) => {
-    if (needsAttention) isDependencySettingsOpen.value = true;
-  },
-  { immediate: true },
-);
-
 // Available whether the gate is enabled or not — the declaration is what
 // enabling it means, which is exactly what someone deciding whether to
 // enable (or reconsidering an already-enabled gate) needs to re-read.
@@ -55,20 +53,35 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
 </script>
 
 <template>
-  <div
+  <article
+    :aria-labelledby="titleId"
     class="settings-feature-gate-row"
     :class="{ 'settings-feature-gate-row--highlighted': highlighted }"
   >
-    <SettingsDocumentItem
-      :icon="gate.icon"
-      :title="gate.title"
-      :description="gate.description"
-      :status="gate.status"
-      :status-tone="gate.tone"
-      variant="capability"
-      title-tag="h4"
-    >
-      <template #actions>
+    <header class="settings-feature-gate-row__header">
+      <div class="settings-feature-gate-row__identity">
+        <component
+          :is="gate.icon"
+          v-if="gate.icon"
+          class="settings-feature-gate-row__icon"
+          :size="ICON_SIZE"
+          aria-hidden="true"
+        />
+        <div>
+          <h3 :id="titleId" class="settings-feature-gate-row__title">
+            {{ gate.title }}
+          </h3>
+          <p
+            v-if="gate.description"
+            class="settings-feature-gate-row__description"
+          >
+            {{ gate.description }}
+          </p>
+        </div>
+      </div>
+      <div class="settings-feature-gate-row__actions">
+        <UiChip v-if="gate.status" :tone="gate.tone">{{ gate.status }}</UiChip>
+
         <UiIconButton
           v-if="hasNotice"
           :icon="Info"
@@ -89,9 +102,18 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
         >
           {{ actionLabel }}
         </UiButton>
-      </template>
-    </SettingsDocumentItem>
+      </div>
+    </header>
 
+    <UiNotice
+      v-if="requestNotice"
+      tone="warning"
+      :title="requestNotice.title"
+      :message="requestNotice.message"
+      :action-label="requestNotice.actionLabel"
+      compact
+      @action="emit('requestAction')"
+    />
     <UiModal
       v-if="hasNotice"
       :open="isNoticeOpen"
@@ -104,66 +126,97 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
       <AppFeatureNoticeDocument :feature="noticeFeature" />
     </UiModal>
 
-    <div v-if="shouldShowItems" class="settings-feature-gate-row__items">
-      <UiDisclosure
-        v-if="hasItems"
-        v-model:open="isDependencySettingsOpen"
-        :label="dependencySummary"
+    <div
+      v-if="showSettings || showTools"
+      class="settings-feature-gate-row__body"
+    >
+      <div v-if="showSettings" class="settings-feature-gate-row__settings">
+        <slot name="settings" />
+      </div>
+      <SettingsDependencyList
+        v-if="showTools"
+        :items="items"
+        :additional-count="additionalToolCount"
+        :additional-busy="additionalToolBusy"
+        :additional-attention="additionalToolAttention"
+        :additional-loaded="additionalToolLoaded"
+        :highlighted="highlighted"
+        @item-action="emit('itemAction', $event)"
+        @item-advanced-action="emit('itemAdvancedAction', $event)"
+        @notice-action="emit('noticeAction', $event)"
       >
-        <SettingsDocumentItem
-          v-for="item in items"
-          :key="item.id"
-          :icon="item.icon"
-          :title="item.title || item.name"
-          :status="item.status"
-          :status-tone="item.statusTone"
-          :guidance="item.description"
-          variant="nested"
-        >
-          <template #actions>
-            <SettingsDependencyActions
-              :item="item"
-              @primary-action="emit('itemAction', $event)"
-              @advanced-action="emit('itemAdvancedAction', $event)"
-            />
-          </template>
-        </SettingsDocumentItem>
-      </UiDisclosure>
-      <slot name="items" />
+        <slot name="tools" />
+      </SettingsDependencyList>
     </div>
-  </div>
+  </article>
 </template>
 
 <style scoped>
 .settings-feature-gate-row {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-  border-radius: var(--ui-radius-md);
-  transition:
-    background-color var(--ui-motion-duration-fast),
-    box-shadow var(--ui-motion-duration-fast);
+  min-inline-size: 0;
+  scroll-margin-block-start: var(--ui-space-4);
 }
-
+.settings-feature-gate-row:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
 .settings-feature-gate-row--highlighted {
-  background: var(--ui-color-warning-soft);
-  box-shadow: 0 0 0 1px var(--ui-color-warning);
+  outline: var(--ui-border-width) solid var(--ui-color-warning);
 }
-
-.settings-feature-gate-row__items {
-  min-width: 0;
+.settings-feature-gate-row__header {
+  min-inline-size: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  padding-block: var(--settings-row-padding-block, var(--ui-space-4));
+}
+.settings-feature-gate-row__identity {
+  min-inline-size: 0;
+  flex: 1 1 0;
   display: grid;
-  gap: var(--ui-space-1);
-  padding-block: var(--ui-space-1);
-  padding-inline-start: var(--ui-space-2);
-  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
+  grid-template-columns: var(--ui-icon-button-size-md) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-space-3);
 }
-
-@container app-folder-layout (max-width: 42.5rem) {
-  .settings-feature-gate-row__items {
-    padding-block: 0;
-    padding-inline-start: 0;
-    border-inline-start: none;
+.settings-feature-gate-row__icon {
+  justify-self: center;
+  margin-block-start: var(--ui-space-1);
+  color: var(--ui-color-accent);
+}
+.settings-feature-gate-row__title {
+  margin: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-type-label-line-height);
+}
+.settings-feature-gate-row__description {
+  margin: var(--ui-space-1) 0 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+}
+.settings-feature-gate-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+}
+.settings-feature-gate-row__body {
+  min-inline-size: 0;
+}
+.settings-feature-gate-row__settings > :deep(* + *) {
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+@container settings-section (max-width: 30rem) {
+  .settings-feature-gate-row__icon {
+    visibility: hidden;
+  }
+  .settings-feature-gate-row__actions {
+    margin-inline-start: auto;
   }
 }
 </style>

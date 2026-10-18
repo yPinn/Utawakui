@@ -24,7 +24,6 @@ async function renderRow(props = {}) {
             canRepair: true,
             canRemove: true,
           },
-          autoAnalyze: true,
           stageLabel: '分析功能已就緒',
           ...props,
         }),
@@ -33,15 +32,14 @@ async function renderRow(props = {}) {
 }
 
 describe('MusicAnalysisSettingsRow', () => {
-  it('keeps the title and automatic option on one line while preserving the local-processing note', async () => {
+  it('shows component management independently of the automatic analysis preference', async () => {
     const html = await renderRow();
 
     expect(html).toContain('BPM 分析');
-    expect(html).toContain('在本機分析 BPM 與節拍，不會上傳歌曲。');
+    expect(html).not.toContain('供本機 BPM 與節拍分析使用。');
     expect(html).not.toContain('title="在本機分析 BPM 與節拍，不會上傳歌曲。"');
-    expect(html).toContain('自動分析');
-    expect(html).toContain('aria-label="匯入歌曲後自動分析 BPM 與節拍"');
-    expect(html).toContain('checked');
+    expect(html).not.toContain('自動分析');
+    expect(html).not.toContain('auto-music-analysis');
     expect(html).toContain('BPM 分析選項');
     expect(html).not.toContain('settings-action-row__value');
     expect(html).not.toContain('產生 BPM 與節拍資料');
@@ -99,13 +97,11 @@ describe('MusicAnalysisSettingsRow', () => {
     expect(html).toContain('修復 BPM 分析');
   });
 
-  it('shows bounded preference and capability errors', async () => {
+  it('shows bounded capability errors', async () => {
     const html = await renderRow({
       capabilityError: '目前無法讀取分析功能狀態，請重新啟動後再試。',
-      preferenceError: '目前無法儲存自動分析設定，請再試一次。',
     });
 
     expect(html).toContain('目前無法讀取分析功能狀態');
-    expect(html).toContain('目前無法儲存自動分析設定');
   });
 });

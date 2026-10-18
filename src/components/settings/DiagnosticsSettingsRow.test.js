@@ -25,6 +25,20 @@ function buttonTag(html, label) {
 }
 
 describe('DiagnosticsSettingsRow', () => {
+  it('does not describe a failed read as an empty log', async () => {
+    const html = await renderRow({
+      notice: {
+        title: '無法讀取錯誤紀錄',
+        message: '請稍後再試。',
+        actionLabel: '重新讀取',
+        operation: 'list',
+      },
+    });
+    expect(html).toContain('尚未確認近期紀錄');
+    expect(html).not.toContain('沒有近期錯誤');
+    expect(html).not.toContain('>無紀錄<');
+    expect(html.match(/role="alert"/g)).toHaveLength(1);
+  });
   it('shows export as the one visible primary action plus an overflow menu trigger', async () => {
     const html = await renderRow({ recordCount: 4 });
 
@@ -70,7 +84,7 @@ describe('DiagnosticsSettingsRow', () => {
     expect(buttonTag(loadingHtml, '錯誤紀錄選項')).not.toContain('disabled');
   });
 
-  it('treats clearing projected records as a neutral list action', () => {
+  it('marks deletion of persisted diagnostics as destructive rather than only clearing a projection', () => {
     const source = readFileSync(
       new URL('./DiagnosticsSettingsRow.vue', import.meta.url),
       'utf8',
@@ -78,7 +92,9 @@ describe('DiagnosticsSettingsRow', () => {
 
     expect(source).toContain('icon: ListX');
     expect(source).not.toContain('Trash2');
-    expect(source).not.toContain('danger: true');
+    expect(source.match(/\{\s*id: 'clear',[^}]*\}/u)?.[0]).toContain(
+      "intent: 'danger'",
+    );
   });
 
   it('renders safe notices without exposing diagnostic event details', async () => {
@@ -91,7 +107,7 @@ describe('DiagnosticsSettingsRow', () => {
       },
     });
 
-    expect(html).toContain('ui-notice');
+    expect(html).toContain('ui-hint--danger');
     expect(html).toContain('無法讀取錯誤紀錄');
     expect(html).not.toContain('source');
     expect(html).not.toContain('operation');

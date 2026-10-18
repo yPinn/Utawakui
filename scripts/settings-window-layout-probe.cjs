@@ -63,7 +63,10 @@ function collectLayout(label) {
   }
 
   const layoutWidth = layout.getBoundingClientRect().width;
-  const expectedColumns = layoutWidth <= 680 ? 1 : 2;
+  const sectionWidth = regularRow
+    .closest('.settings-section')
+    .getBoundingClientRect().width;
+  const expectedColumns = sectionWidth <= 640 ? 1 : 2;
   const rowStyle = getComputedStyle(regularRow);
   const renderedColumns = rowStyle.gridTemplateColumns
     .split(/\s+/u)
@@ -112,12 +115,31 @@ function collectLayout(label) {
   const nestedPadding = nestedRow
     ? Number.parseFloat(getComputedStyle(nestedRow).paddingBlockStart)
     : null;
+  const contentAlignment = selectAll('.settings-section__content').map(
+    (content) => {
+      const labels = [
+        ...content.querySelectorAll(
+          '.settings-document-item__title, .settings-feature-gate-row__title, .settings-section__disclosure > .ui-disclosure__summary > .ui-disclosure__label',
+        ),
+      ].filter(
+        (element) =>
+          element.getClientRects().length &&
+          element.getBoundingClientRect().width,
+      );
+      const expectedStart = labels[0]?.getBoundingClientRect().left;
+      return labels.every(
+        (label) =>
+          Math.abs(label.getBoundingClientRect().left - expectedStart) <= 1,
+      );
+    },
+  );
 
   return {
     label,
     viewport: { width: innerWidth, height: innerHeight },
     dockExpanded: Boolean(select('.app-right-dock--expanded')),
     layoutWidth: Math.round(layoutWidth),
+    sectionWidth: Math.round(sectionWidth),
     expectedColumns,
     renderedColumns,
     horizontalOverflow,
@@ -137,11 +159,14 @@ function collectLayout(label) {
     ),
     regularPadding: Number.parseFloat(rowStyle.paddingBlockStart),
     nestedPadding,
+    contentAligned: contentAlignment.every(Boolean),
   };
 }
 
 function validateMeasurement(measurement) {
   const failures = [];
+  if (!measurement.contentAligned)
+    failures.push('settings labels do not share the chapter content text axis');
   if (measurement.renderedColumns !== measurement.expectedColumns) {
     failures.push(
       `expected ${measurement.expectedColumns} row columns, got ${measurement.renderedColumns}`,

@@ -8,7 +8,8 @@ import { computed } from 'vue';
 import { RefreshCw } from '../../icons/index.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import UiButton from '../ui/UiButton.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -70,45 +71,67 @@ const hasSession = computed(
             hint="用於校正 VOD 開頭，會從所有時間戳扣除。"
             @update:model-value="exportState.offsetSeconds.value = $event"
           />
-          <UiIconButton
-            :icon="RefreshCw"
-            label="重新讀取"
-            @click="exportState.open()"
-          />
         </div>
 
-        <UiNotice
-          v-for="issue in exportState.result.value.issues"
-          :key="issue.code"
-          tone="warning"
-          :message="issue.message"
-          compact
-        />
+        <UiDisclosure
+          v-if="exportState.result.value.issues.length"
+          :label="`章節有 ${exportState.result.value.issues.length} 項需確認`"
+        >
+          <UiHint tone="warning">時間戳未自動調整，請確認以下問題。</UiHint>
+          <ul class="obs-session-export-modal__issues">
+            <li
+              v-for="(issue, index) in exportState.result.value.issues"
+              :key="`${issue.code}-${index}`"
+            >
+              {{ issue.message }}
+            </li>
+          </ul>
+        </UiDisclosure>
 
         <UiTextarea
           id="obs-session-export-text"
           label="YouTube 章節"
           :model-value="exportState.result.value.text"
           :rows="10"
-          disabled
+          readonly
+          hint="可選取文字後按 Ctrl+C 手動複製。"
         />
 
         <div class="obs-session-export-modal__actions">
-          <UiButton variant="accent" @click="exportState.copyChapters()">
+          <UiButton
+            variant="accent"
+            :disabled="!exportState.result.value.text"
+            @click="exportState.copyChapters()"
+          >
             複製章節
           </UiButton>
           <span
             v-if="exportState.copyState.value.message"
             class="obs-session-export-modal__copy-feedback"
+            role="status"
             >{{ exportState.copyState.value.message }}</span
           >
         </div>
       </template>
+      <UiButton
+        :icon="RefreshCw"
+        variant="ghost"
+        :loading="exportState.isLoading.value"
+        @click="exportState.open()"
+        >重新讀取場次</UiButton
+      >
     </div>
   </UiModal>
 </template>
 
 <style scoped>
+.obs-session-export-modal__issues {
+  margin: var(--ui-space-2) 0 0;
+  padding-inline-start: var(--ui-space-5);
+  color: var(--ui-color-warning);
+  font-size: var(--ui-type-caption-size);
+}
+
 .obs-session-export-modal {
   min-width: 0;
   display: grid;

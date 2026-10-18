@@ -1,33 +1,35 @@
 <script setup>
 import { computed } from 'vue';
 import { Cpu, Download, Trash2, Wrench } from '../../icons/index.js';
-import UiCheckbox from '../ui/UiCheckbox.vue';
-import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 
 const props = defineProps({
   capability: { type: Object, default: null },
-  autoAnalyze: { type: Boolean, default: true },
   capabilityBusy: { type: Boolean, default: false },
-  preferenceBusy: { type: Boolean, default: false },
   stageLabel: { type: String, default: '' },
+  progressPercent: { type: Number, default: null },
   capabilityError: { type: String, default: '' },
-  preferenceError: { type: String, default: '' },
+  capabilityReadError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['setAutoAnalyze', 'prepare', 'repair', 'remove']);
+const emit = defineEmits(['prepare', 'repair', 'remove', 'refreshCapability']);
 
 const installed = computed(() => props.capability?.installed === true);
 const damaged = computed(() => props.capability?.status === 'damaged');
 const status = computed(() => {
-  if (props.capabilityBusy) return props.stageLabel || '準備中';
+  if (props.capabilityReadError) return '無法讀取';
+  if (props.capabilityBusy)
+    return `${props.stageLabel || '準備中'}${Number.isFinite(props.progressPercent) ? ` ${Math.round(props.progressPercent)}%` : ''}`;
   if (props.capability?.status === 'ready') return '可使用';
   if (damaged.value) return '需要修復';
   if (props.capability?.status === 'missing') return '未準備';
   return '無法讀取';
 });
 const statusTone = computed(() => {
+  if (props.capabilityReadError) return 'warning';
   if (props.capabilityBusy) return 'info';
   if (props.capability?.status === 'ready') return 'success';
   return 'warning';
@@ -81,21 +83,12 @@ function handleAdvancedAction({ action }) {
   <div class="music-analysis-settings-row">
     <SettingsDocumentItem
       :icon="Cpu"
-      title="BPM 分析"
+      title="BPM 分析元件"
       :status="status"
       :status-tone="statusTone"
-      guidance="在本機分析 BPM 與節拍，不會上傳歌曲。"
       variant="nested"
     >
       <template #actions>
-        <UiCheckbox
-          id="auto-music-analysis"
-          label="自動分析"
-          aria-label="匯入歌曲後自動分析 BPM 與節拍"
-          :model-value="autoAnalyze"
-          :disabled="preferenceBusy"
-          @update:model-value="emit('setAutoAnalyze', $event)"
-        />
         <SettingsDependencyActions
           v-if="hasManagementActions"
           :item="actionItem"
@@ -103,22 +96,22 @@ function handleAdvancedAction({ action }) {
           @advanced-action="handleAdvancedAction"
         />
       </template>
+      <template v-if="capabilityError || capabilityReadError" #feedback>
+        <UiHint v-if="capabilityError" tone="danger" role="alert">{{
+          capabilityError
+        }}</UiHint>
+        <UiHint v-if="capabilityReadError" tone="danger" role="alert">{{
+          capabilityReadError
+        }}</UiHint>
+        <UiButton
+          v-if="capabilityReadError"
+          variant="ghost"
+          :disabled="capabilityBusy"
+          @click="emit('refreshCapability')"
+          >重新讀取 BPM 狀態</UiButton
+        >
+      </template>
     </SettingsDocumentItem>
-
-    <UiNotice
-      v-if="capabilityError"
-      tone="danger"
-      title="BPM 分析元件無法使用"
-      :message="capabilityError"
-      compact
-    />
-    <UiNotice
-      v-if="preferenceError"
-      tone="danger"
-      title="自動分析設定未儲存"
-      :message="preferenceError"
-      compact
-    />
   </div>
 </template>
 

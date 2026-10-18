@@ -1,4 +1,4 @@
-import { createSSRApp, h } from 'vue';
+import { createCommentVNode, createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
@@ -18,25 +18,43 @@ function renderRow(enabled) {
               body: [],
             },
             actionLabel: '啟用處理',
+            hasSettings: true,
           },
-          { items: () => h('div', 'BPM 分析') },
+          { settings: () => h('div', 'BPM 分析') },
         ),
     }),
   );
 }
 
 describe('SettingsFeatureGateRow', () => {
+  it('does not create a child surface for an enabled feature with an empty supplied slot', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            SettingsFeatureGateRow,
+            {
+              gate: { id: 'lyrics-flow', title: '歌詞來源', enabled: true },
+              actionLabel: '啟用',
+            },
+            { items: () => createCommentVNode('v-if') },
+          ),
+      }),
+    );
+    expect(html).not.toContain('settings-feature-gate-row__items');
+    expect(html).not.toContain('settings-feature-gate-row__body');
+  });
   it('groups optional feature-specific controls under an enabled gate', async () => {
     const html = await renderRow(true);
 
-    expect(html).toContain('settings-feature-gate-row__items');
+    expect(html).toContain('settings-feature-gate-row__settings');
     expect(html).toContain('BPM 分析');
   });
 
   it('hides feature-specific controls while the gate is disabled', async () => {
     const html = await renderRow(false);
 
-    expect(html).not.toContain('settings-feature-gate-row__items');
+    expect(html).not.toContain('settings-feature-gate-row__settings');
     expect(html).not.toContain('BPM 分析');
   });
 

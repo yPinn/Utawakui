@@ -6,10 +6,9 @@ import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import { usePersistentDiagnostics } from '../../composables/usePersistentDiagnostics.js';
-import AppFolderSection from '../layout/AppFolderSection.vue';
+import SettingsSection from './SettingsSection.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import DiagnosticsSettingsRow from './DiagnosticsSettingsRow.vue';
-import FeedbackReportModal from './FeedbackReportModal.vue';
 import FeedbackReportSettingsRow from './FeedbackReportSettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
@@ -67,7 +66,7 @@ onMounted(refreshDiagnostics);
 </script>
 
 <template>
-  <AppFolderSection
+  <SettingsSection
     id="settings-support"
     class="settings-support-section"
     title="支援與維護"
@@ -91,7 +90,7 @@ onMounted(refreshDiagnostics);
     <SettingsDocumentItem
       :icon="ExternalLink"
       title="社群 Discord"
-      guidance="查看公告、分享心得或聯絡開發者。"
+      guidance="公告、交流與開發者聯絡。"
     >
       <template #actions>
         <UiIconButton
@@ -114,18 +113,5 @@ onMounted(refreshDiagnostics);
       @notice-action="handleDiagnosticsNoticeAction"
       @report-issue="handleReportIssueFromDiagnostics"
     />
-
-    <FeedbackReportModal />
-  </AppFolderSection>
+  </SettingsSection>
 </template>
-
-<style scoped>
-.settings-support-section {
-  min-inline-size: 0;
-  scroll-margin-block-start: var(--ui-space-4);
-}
-
-.settings-support-section:focus {
-  outline: none;
-}
-</style>

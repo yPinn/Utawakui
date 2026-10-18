@@ -4,7 +4,7 @@
 // props, since useFeedbackReport() is a module singleton any entry point
 // (an error notice's action, this general Settings row) can already open
 // without prop drilling.
-import { computed } from 'vue';
+import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { formatFeedbackReportReference } from '../../../shared/feedbackReference.mjs';
 import {
   DIAGNOSTICS_ALLOWED_KINDS,
@@ -33,8 +33,23 @@ const {
   exportFallback,
 } = useFeedbackReport();
 
+const descriptionField = useTemplateRef('descriptionField');
+watch(
+  () => state.validationAttempt,
+  async () => {
+    if (!state.descriptionError) return;
+    await nextTick();
+    descriptionField.value?.focus();
+  },
+);
+
 const reportReference = computed(() =>
   formatFeedbackReportReference(state.reportId),
+);
+const visibleNotice = computed(() =>
+  state.step === 'preview' && state.notice
+    ? { ...state.notice, actionLabel: '' }
+    : state.notice,
 );
 
 function kindLabel(kind) {
@@ -82,6 +97,7 @@ function handleNoticeAction(operation) {
 
         <UiSelect
           id="feedback-kind"
+          :disabled="state.isLoading"
           label="類別"
           :model-value="state.kind"
           :options="FEEDBACK_KIND_OPTIONS"
@@ -90,6 +106,9 @@ function handleNoticeAction(operation) {
 
         <UiTextarea
           id="feedback-description"
+          ref="descriptionField"
+          :disabled="state.isLoading"
+          :error="state.descriptionError"
           label="說明"
           :model-value="state.description"
           :maxlength="MAX_DESCRIPTION_LENGTH"
@@ -102,6 +121,7 @@ function handleNoticeAction(operation) {
         <UiTextField
           v-if="state.kind === FEEDBACK_KINDS.CONTENT"
           id="feedback-track-label"
+          :disabled="state.isLoading"
           label="歌曲資訊（選填）"
           :model-value="state.trackLabel"
           :maxlength="MAX_TRACK_LABEL_LENGTH"
@@ -112,6 +132,7 @@ function handleNoticeAction(operation) {
         <UiCheckbox
           v-if="DIAGNOSTICS_ALLOWED_KINDS.has(state.kind)"
           id="feedback-include-diagnostics"
+          :disabled="state.isLoading"
           label="附上最近的錯誤紀錄"
           :model-value="state.includeDiagnostics"
           @update:model-value="
@@ -121,6 +142,7 @@ function handleNoticeAction(operation) {
 
         <UiTextField
           id="feedback-contact"
+          :disabled="state.isLoading"
           label="聯絡方式（選填）"
           :model-value="state.contact"
           :maxlength="MAX_CONTACT_LENGTH"
@@ -131,7 +153,7 @@ function handleNoticeAction(operation) {
 
         <UiNotice
           v-if="state.notice"
-          :notice="state.notice"
+          :notice="visibleNotice"
           compact
           @action="handleNoticeAction(state.notice.operation)"
         />
@@ -204,10 +226,21 @@ function handleNoticeAction(operation) {
 
         <UiNotice
           v-if="state.notice"
-          :notice="state.notice"
+          :notice="visibleNotice"
           compact
           @action="handleNoticeAction(state.notice.operation)"
         />
+        <div class="feedback-report__fallback">
+          <p class="feedback-report__intro">
+            無法送出時可另存檔案；另存不會自動傳送，仍需自行傳給開發者。
+          </p>
+          <UiButton
+            variant="ghost"
+            :disabled="state.isLoading"
+            @click="exportFallback"
+            >另存檔案</UiButton
+          >
+        </div>
 
         <div class="feedback-report__actions">
           <UiButton
@@ -294,5 +327,17 @@ function handleNoticeAction(operation) {
   display: flex;
   justify-content: flex-end;
   gap: var(--ui-space-2);
+}
+
+.feedback-report__fallback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2) var(--ui-space-3);
+}
+
+.feedback-report__fallback .feedback-report__intro {
+  flex: 1 1 16rem;
 }
 </style>

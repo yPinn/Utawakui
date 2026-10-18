@@ -2,14 +2,12 @@
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import { Ellipsis, FolderOpen, RotateCcw } from '../../icons/index.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
-import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
 import { useImportSession } from '../../composables/useImportSession.js';
 import { useLibraryStorage } from '../../composables/useLibraryStorage.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
-import AppFolderSection from '../layout/AppFolderSection.vue';
+import SettingsSection from './SettingsSection.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
-import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import LibraryMetadataSettingsRow from './LibraryMetadataSettingsRow.vue';
@@ -29,14 +27,10 @@ const {
   state: playbackHistoryState,
   recentItems,
   initialize: initializePlaybackHistory,
+  refresh: refreshPlaybackHistory,
   clear: clearPlaybackHistory,
 } = usePlaybackHistory();
 const { confirm: confirmAction } = useAppConfirmation();
-const { recordError } = useAppDiagnostics();
-
-const maintenanceMessage = shallowRef('');
-const maintenanceTone = shallowRef('muted');
-const isClearingPlaybackHistory = shallowRef(false);
 const isDownloadDirMenuOpen = shallowRef(false);
 const downloadDirMenuAnchorEl = shallowRef(null);
 
@@ -89,8 +83,8 @@ function closeDownloadDirMenu() {
 
 function handleDownloadDirMenuSelect(actionId) {
   closeDownloadDirMenu();
-  if (actionId === 'choose') chooseDownloadDir();
-  else if (actionId === 'reset') resetDownloadDir();
+  if (actionId === 'choose') chooseDownloadDir({ notifyFailure: true });
+  else if (actionId === 'reset') resetDownloadDir({ notifyFailure: true });
 }
 
 async function handleClearPlaybackHistory() {
@@ -103,12 +97,7 @@ async function handleClearPlaybackHistory() {
   });
   if (!confirmed) return;
 
-  isClearingPlaybackHistory.value = true;
-  try {
-    await clearPlaybackHistory();
-  } finally {
-    isClearingPlaybackHistory.value = false;
-  }
+  await clearPlaybackHistory();
 }
 
 async function handleCleanupLibraryStorage() {
@@ -123,21 +112,11 @@ async function handleCleanupLibraryStorage() {
 }
 
 async function initializeSection() {
-  try {
-    await refreshConfig();
-  } catch (err) {
-    maintenanceMessage.value = recordError(err, {
-      code: 'SETTINGS_LOAD_FAILED',
-      title: '設定讀取失敗',
-      message: '目前無法讀取設定，請再試一次。',
-      source: 'settings',
-      operation: 'load',
-      context: { retryable: true },
-    }).message;
-    maintenanceTone.value = 'danger';
-  }
-  initializePlaybackHistory();
-  libraryStorage.initialize();
+  await Promise.all([
+    refreshConfig(),
+    initializePlaybackHistory(),
+    libraryStorage.initialize(),
+  ]);
 }
 
 onMounted(initializeSection);
@@ -145,7 +124,7 @@ onUnmounted(() => libraryStorage.dispose());
 </script>
 
 <template>
-  <AppFolderSection
+  <SettingsSection
     id="settings-library"
     class="settings-library-section"
     title="曲庫與儲存"
@@ -154,20 +133,27 @@ onUnmounted(() => libraryStorage.dispose());
     <SettingsDocumentItem
       :icon="FolderOpen"
       title="曲庫位置"
-      :value="importState.downloadDir || '讀取中'"
+      :value="
+        importState.downloadDir ||
+        (importState.configError ? '尚未確認曲庫位置' : '讀取中')
+      "
       :status="
-        !importState.isDownloadDirAvailable
-          ? '無法使用'
-          : importState.isDefaultDir
-            ? '預設'
-            : '自訂'
+        importState.configError
+          ? '無法讀取'
+          : !importState.isDownloadDirAvailable
+            ? '無法使用'
+            : importState.isDefaultDir
+              ? '預設'
+              : '自訂'
       "
       :status-tone="
-        !importState.isDownloadDirAvailable
-          ? 'danger'
-          : importState.isDefaultDir
-            ? 'muted'
-            : 'accent'
+        importState.configError
+          ? 'warning'
+          : !importState.isDownloadDirAvailable
+            ? 'danger'
+            : importState.isDefaultDir
+              ? 'muted'
+              : 'accent'
       "
       guidance="切換位置不會搬移既有曲目。"
     >
@@ -176,7 +162,7 @@ onUnmounted(() => libraryStorage.dispose());
           :icon="FolderOpen"
           label="開啟曲庫資料夾"
           :disabled="!importState.isDownloadDirAvailable"
-          @click="openDownloadDir"
+          @click="openDownloadDir({ notifyFailure: true })"
         />
         <UiIconButton
           :icon="Ellipsis"
@@ -197,13 +183,23 @@ onUnmounted(() => libraryStorage.dispose());
     </SettingsDocumentItem>
 
     <UiNotice
-      v-if="!importState.isDownloadDirAvailable"
+      v-if="!importState.configError && !importState.isDownloadDirAvailable"
       tone="danger"
       title="曲庫位置無法使用"
       :message="downloadDirUnavailableMessage"
       action-label="選擇其他資料夾"
       compact
-      @action="chooseDownloadDir"
+      @action="chooseDownloadDir({ notifyFailure: true })"
+    />
+
+    <UiNotice
+      v-if="importState.configError"
+      tone="danger"
+      title="曲庫位置無法讀取"
+      :message="importState.configError"
+      action-label="重新讀取"
+      compact
+      @action="refreshConfig()"
     />
 
     <LibraryStorageSettingsRow
@@ -212,13 +208,15 @@ onUnmounted(() => libraryStorage.dispose());
       :loading="libraryStorage.loading.value"
       :saving="libraryStorage.saving.value"
       :cleaning="libraryStorage.cleaning.value"
-      :error="libraryStorage.error.value"
-      :last-cleanup="libraryStorage.lastCleanup.value"
+      :error="libraryStorage.saveError.value"
+      :read-error="libraryStorage.readError.value"
+      @refresh="libraryStorage.refresh"
       @set-policy="libraryStorage.setPolicy"
       @cleanup="handleCleanupLibraryStorage"
     />
 
     <UiDisclosure
+      class="settings-library-section__details settings-section__disclosure"
       label="曲目資訊與播放紀錄"
       :open="Boolean(playbackHistoryState.error)"
     >
@@ -226,43 +224,21 @@ onUnmounted(() => libraryStorage.dispose());
 
       <PlaybackHistorySettingsRow
         :record-count="recentItems.length"
-        :is-loading="!playbackHistoryState.isInitialized"
-        :is-clearing="isClearingPlaybackHistory"
+        :is-loading="
+          !playbackHistoryState.isInitialized || playbackHistoryState.isReading
+        "
+        :is-clearing="playbackHistoryState.isClearing"
+        :error="playbackHistoryState.error || ''"
+        :read-error="playbackHistoryState.readError || ''"
         @clear="handleClearPlaybackHistory"
+        @refresh="refreshPlaybackHistory"
       />
     </UiDisclosure>
-    <UiNotice
-      v-if="playbackHistoryState.error"
-      tone="warning"
-      title="播放紀錄未更新"
-      :message="playbackHistoryState.error"
-      compact
-    />
-
-    <UiNotice
-      v-if="maintenanceMessage && maintenanceTone === 'danger'"
-      tone="danger"
-      title="維護操作未完成"
-      :message="maintenanceMessage"
-      compact
-    />
-    <UiHint
-      v-else-if="maintenanceMessage"
-      :tone="maintenanceTone"
-      role="status"
-    >
-      {{ maintenanceMessage }}
-    </UiHint>
-  </AppFolderSection>
+  </SettingsSection>
 </template>
 
 <style scoped>
-.settings-library-section {
-  min-inline-size: 0;
-  scroll-margin-block-start: var(--ui-space-4);
-}
-
-.settings-library-section:focus {
-  outline: none;
+.settings-library-section__details {
+  border-block-end: 0;
 }
 </style>

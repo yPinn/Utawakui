@@ -23,6 +23,22 @@ async function renderBlock(props = {}) {
 }
 
 describe('ObsIntegrationSettingsBlock', () => {
+  it('associates each invalid input while keeping the connection fault visible once', async () => {
+    const html = await renderBlock({
+      fieldErrors: { host: '主機格式錯誤', port: '連接埠範圍錯誤' },
+      status: {
+        desired: { enabled: true },
+        observed: { lifecycle: 'error' },
+        error: { message: 'OBS 驗證失敗' },
+      },
+    });
+    expect(html).toContain('aria-describedby="obs-integration-host-error"');
+    expect(html).toContain('aria-describedby="obs-integration-port-error"');
+    expect(html).toContain('主機格式錯誤');
+    expect(html).toContain('連接埠範圍錯誤');
+    expect(html.split('OBS 驗證失敗')).toHaveLength(2);
+    expect(html.indexOf('OBS 驗證失敗')).toBeLessThan(html.indexOf('<details'));
+  });
   it('names the reusable session export by its time-marker data, not one destination format', async () => {
     const html = await renderBlock();
 
@@ -35,6 +51,11 @@ describe('ObsIntegrationSettingsBlock', () => {
     const empty = await renderBlock({ hasStoredPassword: false });
 
     expect(stored).toContain('移除密碼');
+    expect(
+      stored
+        .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
+        ?.filter((button) => button.includes('移除密碼')),
+    ).toEqual([expect.stringContaining('ui-btn--intent-danger')]);
     expect(empty).not.toContain('移除密碼');
   });
 
@@ -60,10 +81,15 @@ describe('ObsIntegrationSettingsBlock', () => {
     for (const html of [featureDisabled, connectionDisabled]) {
       expect(html).toContain('已儲存 OBS 密碼');
       expect(html).toContain('移除密碼');
+      expect(
+        html
+          .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
+          ?.filter((button) => button.includes('移除密碼')),
+      ).toEqual([expect.stringContaining('ui-btn--intent-danger')]);
       expect(html).not.toContain('id="obs-integration-password"');
     }
-    expect(featureDisabled).not.toContain('aria-label="啟用 OBS 連線"');
-    expect(connectionDisabled).toContain('aria-label="啟用 OBS 連線"');
+    expect(featureDisabled).not.toContain('aria-label="連線至 OBS"');
+    expect(connectionDisabled).toContain('aria-label="連線至 OBS"');
   });
 
   it('bounds the password field and disables credential actions while saving', async () => {
@@ -89,14 +115,14 @@ describe('ObsIntegrationSettingsBlock', () => {
       },
     });
 
-    expect(html).toContain('OBS 連線失敗');
+    expect(html).toContain('role="alert"');
     expect(html).toContain('OBS 密碼錯誤或未設定。');
   });
 
   it('uses a neutral settings title so the message can name the exact problem', async () => {
     const html = await renderBlock({ error: '無法移除密碼，請再試一次。' });
 
-    expect(html).toContain('OBS 設定發生問題');
+    expect(html).toContain('role="alert"');
     expect(html).toContain('無法移除密碼，請再試一次。');
   });
 

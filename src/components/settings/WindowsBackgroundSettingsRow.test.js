@@ -12,6 +12,16 @@ async function renderRow(props = {}) {
 }
 
 describe('WindowsBackgroundSettingsRow', () => {
+  it('keeps an unconfirmed preference disabled with a local read retry', async () => {
+    const html = await renderRow({
+      loaded: false,
+      readError: '無法讀取關閉行為',
+    });
+    expect(html).toContain('重新讀取');
+    expect(html).toMatch(/<select[^>]*disabled/);
+    expect(html).not.toContain('關閉行為未儲存');
+    expect(html).toContain('無法讀取關閉行為');
+  });
   it('explains all close choices and asks by default', async () => {
     const html = await renderRow();
 
@@ -19,9 +29,7 @@ describe('WindowsBackgroundSettingsRow', () => {
     expect(html).toContain('每次詢問');
     expect(html).toContain('在系統匣背景執行');
     expect(html).toContain('結束');
-    expect(html).toContain(
-      '背景執行會保留播放、OBS 連線與輸出；最小化仍縮到 Windows 工作列。',
-    );
+    expect(html).toContain('背景執行保留播放、OBS 與輸出；最小化仍在工作列。');
     expect(html).toContain('class="ui-select" value="ask"');
   });
 
@@ -37,7 +45,7 @@ describe('WindowsBackgroundSettingsRow', () => {
       error: '目前無法儲存關閉行為，請再試一次。',
     });
 
-    expect(html).toContain('關閉行為未儲存');
+    expect(html).toContain('aria-describedby="windows-close-behavior-error"');
     expect(html).toContain('目前無法儲存關閉行為');
   });
 });

@@ -63,14 +63,15 @@ describe('Settings document section ownership', () => {
   });
 
   it('keeps gate, dependency, optional-tool, and deep-link behavior together', () => {
-    expect(capabilitiesSource).toContain('title="選用功能"');
+    expect(capabilitiesSource).toContain("title: '外部來源與歌詞'");
+    expect(capabilitiesSource).toContain('<SettingsSection');
     expect(capabilitiesSource).toContain('useFeatureGates');
     expect(capabilitiesSource).toContain('useFeatureDependencies');
     expect(capabilitiesSource).toContain('useFeatureGateAccess');
     expect(capabilitiesSource).toContain('revealSettingsTarget');
     expect(capabilitiesSource).toContain('<SettingsFeatureGateRow');
     expect(capabilitiesSource).toContain('<FfmpegSourceModal');
-    expect(capabilitiesSource).toContain('<ObsSessionExportModal');
+    expect(capabilitiesSource).not.toContain('<ObsSessionExportModal');
   });
 
   it('keeps feedback, announcements, and diagnostics with the support section', () => {
@@ -80,6 +81,6 @@ describe('Settings document section ownership', () => {
     expect(supportSource).toContain('useAppAnnouncement');
     expect(supportSource).toContain('<FeedbackReportSettingsRow');
     expect(supportSource).toContain('<DiagnosticsSettingsRow');
-    expect(supportSource).toContain('<FeedbackReportModal');
+    expect(supportSource).not.toContain('<FeedbackReportModal');
   });
 });

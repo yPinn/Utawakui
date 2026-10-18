@@ -4,6 +4,23 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./App.vue', import.meta.url), 'utf8');
 
 describe('App shell right Dock', () => {
+  it('owns one instance of each singleton report modal outside Settings', () => {
+    expect(source.match(/<FeedbackReportModal\s*\/>/gu)).toHaveLength(1);
+    expect(source.match(/<ObsSessionExportModal\s*\/>/gu)).toHaveLength(1);
+    for (const [file, component] of [
+      [
+        './components/settings/SettingsSupportSection.vue',
+        'FeedbackReportModal',
+      ],
+      [
+        './components/settings/SettingsCapabilitiesSection.vue',
+        'ObsSessionExportModal',
+      ],
+    ])
+      expect(
+        readFileSync(new URL(file, import.meta.url), 'utf8'),
+      ).not.toContain(`<${component}`);
+  });
   it('owns one notification host outside the switched page content', () => {
     expect(source.match(/<AppNotificationHost\s*\/>/gu)).toHaveLength(1);
     expect(source).toContain(

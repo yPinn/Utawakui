@@ -18,10 +18,12 @@ import AppSurfaceBoundary from './components/layout/AppSurfaceBoundary.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
+import AppNotificationHost from './components/layout/AppNotificationHost.vue';
+import FeedbackReportModal from './components/settings/FeedbackReportModal.vue';
+import ObsSessionExportModal from './components/settings/ObsSessionExportModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import BgmPlayer from './components/bgm/BgmPlayer.vue';
-import AppNotificationHost from './components/layout/AppNotificationHost.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import LibraryPage from './pages/LibraryPage.vue';
@@ -533,6 +535,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
       @queue-activate="toggleQueueSurface"
     />
     <AppNotificationHost />
+    <FeedbackReportModal />
+    <ObsSessionExportModal />
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
     <AppConfirmationModal />

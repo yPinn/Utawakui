@@ -15,7 +15,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'default',
-    validator: (value) => ['default', 'capability', 'nested'].includes(value),
+    validator: (value) => ['default', 'nested'].includes(value),
   },
   titleTag: {
     type: String,
@@ -27,13 +27,13 @@ const props = defineProps({
 const slots = useSlots();
 const titleId = `settings-document-item-${useId()}`;
 const resolvedTitleTag = computed(
-  () => props.titleTag || (props.variant === 'nested' ? 'h5' : 'h3'),
+  () => props.titleTag || (props.variant === 'nested' ? 'h4' : 'h3'),
 );
 const supportingCopy = computed(() =>
   [props.description, props.guidance].filter(Boolean).join(' '),
 );
 const hasDetail = computed(() =>
-  Boolean(props.value || props.status || slots.actions),
+  Boolean(props.value || props.status || slots.actions || slots.feedback),
 );
 </script>
 
@@ -44,7 +44,11 @@ const hasDetail = computed(() =>
     :aria-labelledby="titleId"
   >
     <div class="settings-document-item__lead">
-      <div v-if="icon" class="settings-document-item__icon" aria-hidden="true">
+      <div
+        v-if="icon && variant !== 'nested'"
+        class="settings-document-item__icon"
+        aria-hidden="true"
+      >
         <component :is="icon" :size="ICON_SIZE" />
       </div>
 
@@ -81,6 +85,9 @@ const hasDetail = computed(() =>
       <div v-if="$slots.actions" class="settings-document-item__actions">
         <slot name="actions" />
       </div>
+      <div v-if="$slots.feedback" class="settings-document-item__feedback">
+        <slot name="feedback" />
+      </div>
     </div>
   </div>
 </template>
@@ -92,20 +99,20 @@ const hasDetail = computed(() =>
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   align-items: start;
   gap: var(--ui-space-5);
-  padding-block: var(--ui-space-4);
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.settings-document-item--capability {
-  padding: var(--ui-space-4);
-  border-block-end: 0;
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
+  padding-block: var(--settings-row-padding-block, var(--ui-space-4));
 }
 
 .settings-document-item--nested {
-  padding-block: var(--ui-space-2);
+  padding-block: var(--settings-child-padding-block, var(--ui-space-3));
+  padding-inline-start: var(
+    --settings-copy-inset,
+    calc(var(--ui-icon-button-size-md) + var(--ui-space-3))
+  );
   gap: var(--ui-space-3);
+}
+
+.settings-document-item--nested .settings-document-item__lead {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .settings-document-item__lead {
@@ -132,7 +139,11 @@ const hasDetail = computed(() =>
 }
 
 .settings-document-item__copy {
+  grid-column: 2;
   gap: var(--ui-space-1);
+}
+.settings-document-item--nested .settings-document-item__copy {
+  grid-column: 1;
 }
 
 .settings-document-item__title,
@@ -159,6 +170,7 @@ const hasDetail = computed(() =>
 }
 
 .settings-document-item__detail {
+  justify-self: stretch;
   justify-items: end;
   gap: var(--ui-space-3);
 }
@@ -181,8 +193,18 @@ const hasDetail = computed(() =>
   white-space: nowrap;
 }
 
+.settings-document-item__feedback {
+  min-inline-size: 0;
+  inline-size: 100%;
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-1);
+  overflow-wrap: anywhere;
+}
+
 .settings-document-item__actions {
   min-inline-size: 0;
+  inline-size: 100%;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -190,33 +212,30 @@ const hasDetail = computed(() =>
   gap: var(--ui-space-2);
 }
 
-@container app-folder-layout (max-width: 56.25rem) {
+@container settings-section (max-width: 48rem) {
   .settings-document-item {
     gap: var(--ui-space-3);
-    padding-block: var(--ui-space-3);
-  }
-
-  .settings-document-item--nested {
-    padding-block: var(--ui-space-2);
   }
 }
 
-@container app-folder-layout (max-width: 42.5rem) {
+@container settings-section (max-width: 40rem) {
+  .settings-document-item--nested .settings-document-item__detail {
+    padding-inline-start: 0;
+  }
   .settings-document-item {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .settings-document-item__lead {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .settings-document-item__icon {
-    display: none;
+    grid-template-columns: var(--ui-icon-button-size-md) minmax(0, 1fr);
   }
 
   .settings-document-item__detail {
     justify-items: start;
-    padding-inline-start: 0;
+    padding-inline-start: var(
+      --settings-copy-inset,
+      calc(var(--ui-icon-button-size-md) + var(--ui-space-3))
+    );
   }
 
   .settings-document-item__current-state {
@@ -229,6 +248,12 @@ const hasDetail = computed(() =>
 
   .settings-document-item__actions {
     justify-content: flex-start;
+  }
+}
+
+@container settings-section (max-width: 30rem) {
+  .settings-document-item__icon {
+    visibility: hidden;
   }
 }
 </style>

@@ -18,14 +18,15 @@ import SettingsSupportSection from '../components/settings/SettingsSupportSectio
 
 <style scoped>
 .settings-view {
+  --settings-section-gap: var(--ui-space-6);
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-7);
+  gap: var(--settings-section-gap);
 }
 
 @container app-folder-layout (max-width: 56.25rem) {
   .settings-view {
-    gap: var(--ui-space-6);
+    --settings-section-gap: var(--ui-space-5);
   }
 }
 </style>

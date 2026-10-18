@@ -2,7 +2,7 @@
 import { computed, shallowRef } from 'vue';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { usePlayer } from '../../composables/usePlayer.js';
-import AppFolderSection from '../layout/AppFolderSection.vue';
+import SettingsSection from './SettingsSection.vue';
 import AudioOutputSettingsBlock from './AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from './CaptureDeviceModal.vue';
 
@@ -20,7 +20,7 @@ const captureDeviceLabel = computed(() => {
 </script>
 
 <template>
-  <AppFolderSection
+  <SettingsSection
     id="settings-audio"
     class="settings-audio-section"
     title="音訊輸出"
@@ -37,16 +37,5 @@ const captureDeviceLabel = computed(() => {
       :open="isCaptureDeviceModalOpen"
       @close="isCaptureDeviceModalOpen = false"
     />
-  </AppFolderSection>
+  </SettingsSection>
 </template>
-
-<style scoped>
-.settings-audio-section {
-  min-inline-size: 0;
-  scroll-margin-block-start: var(--ui-space-4);
-}
-
-.settings-audio-section:focus {
-  outline: none;
-}
-</style>

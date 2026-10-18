@@ -5,7 +5,7 @@ import { formatDownloadProgress } from '../../utils/appUpdateProgress.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const props = defineProps({
@@ -35,9 +35,22 @@ const props = defineProps({
   autoCheckEnabled: { type: Boolean, default: true },
   autoCheckBusy: { type: Boolean, default: false },
   autoCheckError: { type: String, default: '' },
+  autoCheckReadError: { type: String, default: '' },
+  autoCheckLoaded: { type: Boolean, default: true },
+  autoCheckReading: { type: Boolean, default: false },
+  statusReadError: { type: String, default: '' },
+  actionError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['check', 'download', 'install', 'setAutoCheck']);
+const emit = defineEmits([
+  'check',
+  'download',
+  'install',
+  'setAutoCheck',
+  'refreshAutoCheck',
+  'refreshStatus',
+  'refreshInfo',
+]);
 
 const availableVersionLabel = computed(() =>
   props.availableVersion ? `v${props.availableVersion}` : '新版本',
@@ -89,6 +102,12 @@ const updatePresentation = computed(() => {
 });
 
 const rowPresentation = computed(() => {
+  if (props.statusReadError)
+    return {
+      value: props.statusReadError,
+      status: '無法讀取',
+      tone: 'warning',
+    };
   if (!props.currentVersion) {
     return {
       value: props.infoError ? '版本資訊無法取得' : '讀取中',
@@ -142,7 +161,7 @@ function handleAction() {
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"
-      description="僅自動檢查；下載與安裝仍由你決定。"
+      description="自動檢查；下載與安裝需手動確認。"
       :guidance="infoError"
     >
       <template #actions>
@@ -150,8 +169,11 @@ function handleAction() {
           id="app-update-auto-check"
           label="自動檢查"
           aria-label="自動檢查更新"
-          :model-value="autoCheckEnabled"
-          :disabled="!enabled || autoCheckBusy"
+          :model-value="autoCheckLoaded && autoCheckEnabled"
+          :error="autoCheckError"
+          :disabled="
+            !enabled || autoCheckBusy || autoCheckReading || !autoCheckLoaded
+          "
           @update:model-value="emit('setAutoCheck', $event)"
         />
         <template v-if="action">
@@ -175,15 +197,46 @@ function handleAction() {
           </UiButton>
         </template>
       </template>
+      <template
+        v-if="
+          infoError ||
+          autoCheckReadError ||
+          !autoCheckLoaded ||
+          statusReadError ||
+          (actionError && phase !== 'error')
+        "
+        #feedback
+      >
+        <UiButton v-if="infoError" variant="ghost" @click="emit('refreshInfo')"
+          >重新讀取版本資訊</UiButton
+        >
+        <UiHint
+          v-if="autoCheckReadError || !autoCheckLoaded"
+          :tone="autoCheckReadError ? 'danger' : 'muted'"
+          role="status"
+          >{{ autoCheckReadError || '讀取中；尚未確認自動檢查設定。' }}</UiHint
+        >
+        <UiButton
+          v-if="autoCheckReadError"
+          variant="ghost"
+          :loading="autoCheckReading"
+          @click="emit('refreshAutoCheck')"
+          >重新讀取自動檢查設定</UiButton
+        >
+        <UiButton
+          v-if="statusReadError"
+          variant="ghost"
+          @click="emit('refreshStatus')"
+          >重新讀取更新狀態</UiButton
+        >
+        <UiHint
+          v-if="actionError && phase !== 'error'"
+          tone="danger"
+          role="alert"
+          >{{ actionError }}</UiHint
+        >
+      </template>
     </SettingsDocumentItem>
-
-    <UiNotice
-      v-if="autoCheckError"
-      tone="danger"
-      title="自動檢查設定未儲存"
-      :message="autoCheckError"
-      compact
-    />
   </div>
 </template>
 

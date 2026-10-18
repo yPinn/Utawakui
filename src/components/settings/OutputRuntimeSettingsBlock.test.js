@@ -84,15 +84,15 @@ describe('OutputRuntimeSettingsBlock', () => {
     expect(html).toContain('畫面比聲音快就調大，慢就調小。');
     expect(html).not.toContain('可用連接埠');
     expect(html).toMatch(/<details\b(?![^>]*\bopen)[^>]*>/);
-    expect(html).toContain('連接埠與畫面同步設定');
+    expect(html).toContain('Browser Source 連接埠與同步');
   });
 
   it('offers available ports when the configured port is taken', async () => {
     runtime.value = createRuntime({ suggestedPorts: [8701, 8702] });
     const html = await render();
 
-    expect(html).toContain('連接埠被占用');
-    expect(html).toContain('請選擇下方可用的連接埠。');
+    expect(html).toContain('此連接埠被占用，請選擇可用連接埠。');
+    expect(html).toContain('aria-describedby="output-runtime-port-error"');
     expect(html).toContain('aria-label="可用連接埠"');
     expect(html).toContain('8701');
     expect(html).toMatch(/<details\b[^>]*\bopen/);
@@ -107,6 +107,31 @@ describe('OutputRuntimeSettingsBlock', () => {
     expect(html).toContain('60 FPS');
   });
 
+  it.each([-2000, -1, 5000])(
+    'accepts the supported display delay %s',
+    async (delay) => {
+      runtime.value = createRuntime({
+        settings: { autoStart: true, port: 8700, displayDelayMs: delay },
+      });
+      expect(await render()).not.toContain('id="output-display-delay-error"');
+    },
+  );
+
+  it('keeps unrelated slot errors out of service settings', async () => {
+    runtime.value = createRuntime({
+      error: '版面儲存失敗',
+      errors: { 'save-slot': '版面儲存失敗' },
+    });
+    expect(await render()).not.toContain('版面儲存失敗');
+  });
+
+  it('does not present a read failure as a stopped service', async () => {
+    runtime.value = createRuntime({ errors: { status: '無法讀取輸出狀態' } });
+    const html = await render();
+    expect(html).toContain('無法讀取');
+    expect(html).not.toContain('服務已停止');
+  });
+
   it('locks frame rate while Spout2 is sending and offers stop', async () => {
     spout.value = createSpout('sending');
     const html = await render();
@@ -114,6 +139,19 @@ describe('OutputRuntimeSettingsBlock', () => {
     expect(html).toMatch(/role="radiogroup"[^>]*aria-label="Spout2 幀率"/);
     expect(html).toMatch(/role="radio"[^>]*disabled/);
     expect(html).toContain('停止');
+  });
+
+  it('uses neutral secondary stops for reversible services, matching the OBS connection', async () => {
+    runtime.value = createRuntime({ status: { running: true } });
+    spout.value = createSpout('sending');
+    const stops = (await render())
+      .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
+      .filter((button) => />\s*停止\s*</u.test(button));
+    expect(stops).toHaveLength(2);
+    for (const button of stops) {
+      expect(button).toContain('ui-btn--secondary');
+      expect(button).toContain('ui-btn--intent-neutral');
+    }
   });
 
   it('explains unsupported platforms instead of the sender surface', async () => {

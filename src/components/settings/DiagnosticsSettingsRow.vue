@@ -11,7 +11,8 @@ import {
 } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const props = defineProps({
@@ -71,6 +72,7 @@ const menuContent = computed(() => ({
           value: 'clear',
           label: '清除紀錄',
           icon: ListX,
+          intent: 'danger',
           disabled: props.isLoading || props.recordCount === 0,
         },
       ],
@@ -116,15 +118,25 @@ function handleMenuSelect(actionId) {
       :icon="ListChecks"
       title="錯誤紀錄"
       :value="
-        isLoading
-          ? '讀取中'
-          : recordCount > 0
-            ? `${recordCount} 筆近期錯誤`
-            : '沒有近期錯誤'
+        notice
+          ? '尚未確認近期紀錄'
+          : isLoading
+            ? '讀取中'
+            : recordCount > 0
+              ? `${recordCount} 筆近期錯誤`
+              : '沒有近期錯誤'
       "
-      :status="recordCount > 0 ? '有紀錄' : '無紀錄'"
-      :status-tone="recordCount > 0 ? 'warning' : 'muted'"
-      guidance="協助排查播放、匯入或音訊處理問題。"
+      :status="
+        notice
+          ? '無法讀取'
+          : isLoading
+            ? '讀取中'
+            : recordCount > 0
+              ? '有紀錄'
+              : '無紀錄'
+      "
+      :status-tone="notice || recordCount > 0 ? 'warning' : 'muted'"
+      guidance="排查播放、匯入與音訊處理。"
     >
       <template #actions>
         <UiIconButton
@@ -141,6 +153,18 @@ function handleMenuSelect(actionId) {
           @click="openMenu"
         />
       </template>
+      <template v-if="notice" #feedback>
+        <UiHint tone="danger" role="alert"
+          >{{ notice.title }}：{{ notice.message }}</UiHint
+        >
+        <UiButton
+          v-if="notice.actionLabel"
+          variant="ghost"
+          :loading="isLoading"
+          @click="emit('noticeAction', notice.operation)"
+          >{{ notice.actionLabel }}</UiButton
+        >
+      </template>
     </SettingsDocumentItem>
 
     <UiActionMenu
@@ -150,13 +174,6 @@ function handleMenuSelect(actionId) {
       :content="menuContent"
       @select="handleMenuSelect"
       @close="closeMenu"
-    />
-
-    <UiNotice
-      v-if="notice"
-      :notice="notice"
-      compact
-      @action="emit('noticeAction', notice.operation)"
     />
   </div>
 </template>

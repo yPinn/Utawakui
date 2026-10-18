@@ -1,12 +1,13 @@
 <script setup>
 import { computed } from 'vue';
 import storageValues from '../../../shared/libraryStorageValues.json';
+import { formatBytes } from '../../utils/format.js';
 import { Trash2 } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiNotice from '../ui/UiNotice.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
 
 const props = defineProps({
@@ -16,10 +17,10 @@ const props = defineProps({
   saving: { type: Boolean, default: false },
   cleaning: { type: Boolean, default: false },
   error: { type: String, default: '' },
-  lastCleanup: { type: Object, default: null },
+  readError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['set-policy', 'cleanup']);
+const emit = defineEmits(['set-policy', 'cleanup', 'refresh']);
 
 const limitOptions = storageValues.separationLimitOptionsBytes.map((value) => ({
   value,
@@ -27,30 +28,11 @@ const limitOptions = storageValues.separationLimitOptionsBytes.map((value) => ({
 }));
 
 const summary = computed(() => {
+  if (props.readError) return '無法讀取空間資訊';
+  if (props.error) return '空間設定未儲存';
   if (!props.storage) return props.loading ? '計算中' : '尚無資料';
   return `${formatBytes(props.storage.totalBytes)} 已使用 · ${formatBytes(props.storage.driveFreeBytes)} 可用`;
 });
-
-const cleanupMessage = computed(() => {
-  if (props.cleaning) return '清理中';
-  if (!props.lastCleanup) return '';
-  if (!props.lastCleanup.freedBytes) return '目前不需清理';
-  return `已釋放 ${formatBytes(props.lastCleanup.freedBytes, false)}`;
-});
-
-function formatBytes(bytes, includeDecimal = true) {
-  if (!Number.isFinite(bytes) || bytes < 0) return '—';
-  const units = [
-    ['TB', 1024 ** 4],
-    ['GB', 1024 ** 3],
-    ['MB', 1024 ** 2],
-    ['KB', 1024],
-  ];
-  const [unit, divisor] = units.find(([, size]) => bytes >= size) ?? ['B', 1];
-  const value = bytes / divisor;
-  const digits = includeDecimal && value < 100 && value % 1 !== 0 ? 1 : 0;
-  return `${value.toFixed(digits)} ${unit}`;
-}
 
 function updatePolicy(fields) {
   emit('set-policy', { ...props.policy, ...fields });
@@ -60,14 +42,18 @@ function updatePolicy(fields) {
 <template>
   <div class="library-storage-settings-row">
     <UiDisclosure
-      class="library-storage"
+      class="library-storage settings-section__disclosure"
       label="查看曲庫空間"
-      :open="Boolean(error)"
+      :open="Boolean(error || readError)"
     >
       <template #summary>
         <span class="library-storage__summary-copy">
           <span class="library-storage__title">曲庫空間</span>
-          <span class="library-storage__status">{{ summary }}</span>
+          <span
+            class="library-storage__status"
+            :class="{ 'library-storage__status--error': error || readError }"
+            >{{ summary }}</span
+          >
           <span class="ui-visually-hidden">查看曲庫空間</span>
         </span>
       </template>
@@ -95,7 +81,7 @@ function updatePolicy(fields) {
               class="library-storage__auto-manage"
               label="自動管理去人聲"
               :model-value="policy.autoManageSeparation"
-              :disabled="saving || cleaning"
+              :disabled="saving || cleaning || loading || Boolean(readError)"
               @update:model-value="
                 updatePolicy({ autoManageSeparation: $event })
               "
@@ -106,7 +92,7 @@ function updatePolicy(fields) {
               label="上限"
               :model-value="policy.separationLimitBytes"
               :options="limitOptions"
-              :disabled="saving || cleaning"
+              :disabled="saving || cleaning || loading || Boolean(readError)"
               @update:model-value="
                 updatePolicy({ separationLimitBytes: $event })
               "
@@ -114,6 +100,9 @@ function updatePolicy(fields) {
             <UiIconButton
               :icon="Trash2"
               label="清理去人聲空間"
+              intent="danger"
+              :loading="cleaning"
+              loading-label="清理中"
               :disabled="saving || cleaning || storage.separationBytes === 0"
               @click="emit('cleanup')"
             />
@@ -121,26 +110,24 @@ function updatePolicy(fields) {
 
           <div class="library-storage__feedback">
             <UiHint>只清去人聲，歌曲保留。</UiHint>
-            <UiHint
-              v-if="cleanupMessage"
-              :tone="cleaning ? 'muted' : 'success'"
-              role="status"
-            >
-              {{ cleanupMessage }}
-            </UiHint>
           </div>
         </template>
 
         <UiHint v-else-if="loading">計算中</UiHint>
+        <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
+        <UiHint v-if="readError" tone="danger" role="alert">{{
+          readError
+        }}</UiHint>
+        <UiButton
+          v-if="readError"
+          class="library-storage__read-retry"
+          variant="ghost"
+          :loading="loading"
+          @click="emit('refresh')"
+          >重新讀取曲庫空間</UiButton
+        >
       </div>
     </UiDisclosure>
-    <UiNotice
-      v-if="error"
-      tone="danger"
-      title="曲庫空間未更新"
-      :message="error"
-      compact
-    />
   </div>
 </template>
 
@@ -151,6 +138,10 @@ function updatePolicy(fields) {
   gap: var(--ui-space-2);
 }
 
+.library-storage {
+  border-block: 0;
+}
+
 .library-storage__summary-copy {
   min-width: 0;
   display: grid;
@@ -159,7 +150,7 @@ function updatePolicy(fields) {
 
 .library-storage__title {
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
+  font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-title-weight);
   line-height: var(--ui-type-label-line-height);
 }
@@ -172,10 +163,19 @@ function updatePolicy(fields) {
   font-variant-numeric: tabular-nums;
 }
 
+.library-storage__status--error {
+  color: var(--ui-color-danger);
+}
+
 .library-storage__body {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-3);
+  padding-inline-start: var(--settings-copy-inset, 0);
+}
+
+.library-storage__read-retry {
+  justify-self: end;
 }
 
 .library-storage__categories {
@@ -208,7 +208,7 @@ function updatePolicy(fields) {
 
 .library-storage__controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(8rem, 0.45fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.45fr) auto;
   align-items: end;
   gap: var(--ui-space-2);
   padding-block-start: var(--ui-space-3);

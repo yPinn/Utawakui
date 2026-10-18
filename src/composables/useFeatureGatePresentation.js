@@ -37,12 +37,27 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
 
   const enablingFeatureId = shallowRef(null);
 
-  const FEATURE_GATE_LABELS = {
-    'provider-flow': '外部來源',
-    'lyrics-flow': '歌詞來源',
-    'audio-processing-flow': '音訊處理',
-    'public-output-flow': '對外輸出',
-    'obs-integration': 'OBS 連線',
+  const FEATURE_GATE_COPY = {
+    'provider-flow': {
+      title: '外部來源',
+      description: '搜尋外部素材並保存至曲庫。',
+    },
+    'lyrics-flow': {
+      title: '歌詞來源',
+      description: '查詢外部歌詞／字幕，選擇後保存。',
+    },
+    'audio-processing-flow': {
+      title: '音訊處理',
+      description: '本機分析、轉檔與人聲分離。',
+    },
+    'public-output-flow': {
+      title: '對外輸出',
+      description: '輸出曲目、歌詞與封面。',
+    },
+    'obs-integration': {
+      title: 'OBS 連線',
+      description: '讀取直播／錄影狀態並記錄場次。',
+    },
   };
 
   const DEPENDENCY_ADVANCED_ACTIONS = Object.freeze({
@@ -184,6 +199,15 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
                 : '未準備';
     return {
       ...dependency,
+      notice: featureDependencyState.errorsById?.[dependency.id] ?? null,
+      busy: isBusy,
+      needsAttention:
+        Boolean(
+          featureDependencyState.readError ||
+          featureDependencyState.errorsById?.[dependency.id],
+        ) ||
+        (!isBusy &&
+          (updateAvailable || (!installed && !systemFfmpegAvailable))),
       title,
       description: isFfmpeg
         ? '供本機音訊處理使用。'
@@ -193,18 +217,20 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
             ? '供本機人聲分離使用。'
             : '需先下載。',
       value: dependencyValueLabel(current),
-      status,
-      statusTone: progress
-        ? 'info'
-        : updateAvailable
-          ? 'warning'
-          : installed
-            ? 'success'
-            : preparing
-              ? 'info'
-              : systemFfmpegAvailable
+      status: featureDependencyState.readError ? '無法讀取' : status,
+      statusTone: featureDependencyState.readError
+        ? 'warning'
+        : progress
+          ? 'info'
+          : updateAvailable
+            ? 'warning'
+            : installed
+              ? 'success'
+              : preparing
                 ? 'info'
-                : 'warning',
+                : systemFfmpegAvailable
+                  ? 'info'
+                  : 'warning',
       icon: isFfmpeg ? Wrench : isModel ? Cpu : Download,
       // ffmpeg's primary action always opens FfmpegSourceModal.vue (see
       // SettingsCapabilitiesSection.vue's handleWorkflowItemAction) rather than downloading
@@ -218,7 +244,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
             : isYtdlp && installed
               ? null
               : Download,
-      actionDisabled: isBusy,
+      actionDisabled: isBusy || Boolean(featureDependencyState.readError),
       actionLabel: isFfmpeg
         ? installed
           ? 'FFmpeg 來源設定'
@@ -265,14 +291,22 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
         enablingFeatureId.value === gate.id;
       return {
         id: gate.id,
-        title: FEATURE_GATE_LABELS[gate.id] ?? gate.title,
+        title: FEATURE_GATE_COPY[gate.id]?.title ?? gate.title,
         // No separate "value" line here — a gate's value would just be a
         // second, slightly longer restatement of `title` (e.g. "音訊處理" /
         // "人聲分離與音訊處理"). description already carries the one sentence
         // that adds real information.
-        description: gate.summary,
-        status: enabled ? '已啟用' : '未啟用',
-        tone: enabled ? 'success' : 'gated',
+        description: FEATURE_GATE_COPY[gate.id]?.description ?? gate.summary,
+        status: featureGateState.readError
+          ? '無法讀取'
+          : enabled
+            ? '已啟用'
+            : '未啟用',
+        tone: featureGateState.readError
+          ? 'warning'
+          : enabled
+            ? 'success'
+            : 'gated',
         icon: enabled ? ListChecks : CircleAlert,
         enabled,
         isBusy,
@@ -312,6 +346,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
 
   function isGateActionDisabled(gate) {
     return (
+      Boolean(featureGateState.readError) ||
       gate.enabled ||
       Boolean(enablingFeatureId.value) ||
       Boolean(featureGateState.pendingFeatureId) ||

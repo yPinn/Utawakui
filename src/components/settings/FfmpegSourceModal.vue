@@ -19,6 +19,7 @@ import { FEATURE_DEPENDENCIES } from '../../constants/featureDependencies.js';
 import { useFeatureDependencies } from '../../composables/useFeatureDependencies.js';
 import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
@@ -45,6 +46,7 @@ const detection = shallowRef(props.initialDetection);
 const isDetecting = shallowRef(false);
 const isSwitching = shallowRef(false);
 const switchError = shallowRef('');
+const detectionError = shallowRef('');
 
 function hasDetectBridge() {
   return (
@@ -54,10 +56,17 @@ function hasDetectBridge() {
 }
 
 async function redetect() {
-  if (!hasDetectBridge() || isDetecting.value) return;
+  if (isDetecting.value) return;
+  if (!hasDetectBridge()) {
+    detectionError.value = '無法檢查系統 FFmpeg，請重新啟動後再試。';
+    return;
+  }
   isDetecting.value = true;
   try {
     detection.value = await window.Utawakui.detectSystemFfmpeg();
+    detectionError.value = '';
+  } catch {
+    detectionError.value = '無法檢查系統 FFmpeg，請重新檢查。';
   } finally {
     isDetecting.value = false;
   }
@@ -76,7 +85,11 @@ const currentDependency = computed(
   () => featureDependencyState.byId[FFMPEG_DEPENDENCY_ID],
 );
 const currentSource = computed(() =>
-  currentDependency.value?.source === 'system' ? 'system' : 'managed',
+  !currentDependency.value || featureDependencyState.readError
+    ? null
+    : currentDependency.value.source === 'system'
+      ? 'system'
+      : 'managed',
 );
 
 const progress = computed(
@@ -91,6 +104,7 @@ const managedProgressLabel = computed(() => {
   return '準備中…';
 });
 const systemSourceCaption = computed(() => {
+  if (detectionError.value) return '無法讀取';
   if (isDetecting.value) return '檢查中';
   if (detection.value?.ok) return '可使用';
   if (detection.value) return '未找到可用版本';
@@ -119,7 +133,9 @@ const managedSourceDetail = computed(() =>
     .join(' · '),
 );
 
-const isSystemSelectable = computed(() => Boolean(detection.value?.ok));
+const isSystemSelectable = computed(
+  () => !detectionError.value && Boolean(detection.value?.ok),
+);
 const isBusy = computed(
   () => isSwitching.value || featureDependencyState.preparingIds.size > 0,
 );
@@ -266,6 +282,17 @@ async function chooseManaged() {
           重新檢查
         </UiButton>
       </div>
+      <UiHint v-if="detectionError" tone="danger" role="alert">{{
+        detectionError
+      }}</UiHint>
+      <UiHint
+        v-if="featureDependencyState.errorsById?.[FFMPEG_DEPENDENCY_ID]"
+        tone="danger"
+        role="alert"
+        >{{ featureDependencyState.errorsById[FFMPEG_DEPENDENCY_ID].title }}：{{
+          featureDependencyState.errorsById[FFMPEG_DEPENDENCY_ID].message
+        }}</UiHint
+      >
 
       <UiNotice
         v-if="switchError"

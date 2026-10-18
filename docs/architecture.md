@@ -247,14 +247,34 @@ view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 act
 Navigation history 由 module-scope `useNavigationHistory.js` 單獨擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：它觀察 `useAppView` 與 `usePlaylists` 的位置狀態，只記錄目的地、Library workspace／選取目標與 Settings 返回來源，不記錄播放、佇列、搜尋、排序或 Performance tool。堆疊與位置模型是純邏輯（`navigationHistoryStack.js`、`navigationLocation.js`）；還原走 `useAppView.restoreLocation()`，不增加 root-entry revision。Settings 的返回優先沿歷史回到前一筆，無法對應時退回 `returnFromSettings()`。
 歷史走訪的輸入由 `inputBindingRegistry.js` 宣告、`useNavigationInput.js` 收斂：滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command`（`electron/main/appCommands.js`）共用同一個走訪出口，內含浮層守衛與短時間去重。
 `SettingsPage` 擁有隨活頁紙移動的 Folder header、唯一 page Scroll Region 與 registered local overlay host；
-`SettingsView` 只依序組合曲庫、音訊、應用程式、選用功能與支援五個連續章節。各 focused section component
-持有自己的 lifecycle、確認、deep-link 與 dialog 行為；頁內沒有第二層 tabs 或 Scroll Region。一般設定項目使用平面
-`SettingsDocumentItem`，只有巢狀 capability workflow 使用次層 surface。雙欄與 Separation select 的特殊 geometry
+`SettingsView` 保留曲庫、音訊、應用程式、選用功能與支援五個 domain composition owner；選用功能 owner
+分別呈現外部來源與歌詞、本機音訊處理、公開輸出與 OBS，因此文件共有七個可見功能章節。各 focused section component
+持有自己的 lifecycle、確認、deep-link 與區段 dialog 行為；共用回饋與章節彈窗由 Shell 各掛載一份，切頁仍由原 module owner 與 modal stack 管理。頁內沒有第二層 tabs 或 Scroll Region。一般設定項目使用平面
+`SettingsDocumentItem`；`SettingsSection` 統一章節標題與內容 surface、分隔線與 container reflow。
+`SettingsFeatureGateRow` 擁有真正的功能標題、啟用流程與明確的 settings／tools 內容；
+`SettingsDependencyList` 收納元件管理，不接手 domain lifecycle。BPM 自動分析偏好與元件管理分為兩列。
+雙欄與 Separation select 的特殊 geometry
 由各自 component-local custom property 擁有，不回填 core token graph。
 設定章節的 markup 與 deep-link target 維持完整掛載；只有選用功能的系統 FFmpeg
 提示偵測經 `useOnFirstVisible` 延到該區段進入可視範圍，卸載時解除 observer。
 Modal 的手動重新偵測不受影響。設定草稿、區段訂閱與 module-scope 的更新／OBS／
 dependency 即時狀態仍各自維持原有 owner，不因延後提示偵測而中斷。
+
+Renderer 操作通知由 `useAppNotifications.js` 保存公開投影與私有 action callback，
+`App.vue` 只掛載一個 `AppNotificationHost`，沿 app-shell overlay host 呈現正式
+`UiNotificationHost`。通知不持有 domain state 或 IPC 權威；設定中的診斷清除／匯出、
+播放紀錄清除、去人聲清理結果與資料夾操作失敗由當次 operation 發送，持續讀取故障留頁內。
+同 operation 替換、取消、重試與跨頁生命週期見
+[Settings 操作回饋契約](contracts/settings-operation-feedback.md)。
+`useTaskNotification.js` 以原 domain 的事件更新同一投影，覆蓋更新下載、dependency
+管理與 BPM 元件；不建立任務 registry 或第二份執行狀態。`UiModal` 與通知共用
+`useUiModalStack.js` 的既有鍵盤 stack，模態窗期間暫存通知及倒數，避免覆蓋操作。
+已顯示通知被暫時隱藏時保留剩餘倒數，舊 action 失敗不取代新結果。
+曲庫空間的 `useLibraryStorage` 按 bridge 共用操作與 snapshot，mounted consumer 只管理訂閱；
+Windows／GPU／自動分析設定透過 `useSettingsPreference` 的 bridge／key 共用偏好 owner，
+切頁不重建正在執行的寫入。讀取 revision 與操作 busy 仍屬 domain，不移入通知 owner。
+OBS 設定 wrapper 同樣按原 connection state 共用，保留切頁中的操作結果；離頁清除
+write-only 密碼輸入，不將密碼保存在通知或持久化草稿。
 
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主
@@ -793,11 +813,12 @@ phase，完成後 `info.json` 的 duration 才是 library index 與 optional lyr
 Music Analysis Workbench 同樣以 `src/composables/useMusicAnalysisWorkbench.js` 作為唯一
 session state 與 public facade，負責 track selection、library／isolated signal owner、共用
 phase/error/notice、初始化順序及既有 `useMusicAnalysisBatch.js` composition；
-`src/composables/analysis/useMusicAnalysisCapability.js` 負責 capability status、準備／修復／
-移除與 bounded setup progress；`src/composables/analysis/useMusicAnalysisJob.js` 負責單曲
-analysis progress、status polling、run／cancel 與 sidecar reconciliation。兩個內部 owner
-只接收具名 dependencies 與同一份 session state，不自行建立 reactive state、不互相 import，
-也不取代獨立的 batch owner。
+`src/composables/analysis/useMusicAnalysisCapabilitySession.js` 按 renderer bridge 共用一份
+capability projection 與進度訂閱，跨 Settings／Workbench 生命週期；內部
+`useMusicAnalysisCapability.js` 負責 status、準備／修復／移除與 bounded setup progress。
+`src/composables/analysis/useMusicAnalysisJob.js` 維持 workbench 內的單曲 analysis progress、
+status polling、run／cancel 與 sidecar reconciliation。內部 owner 接收具名 dependencies，
+不互相 import，也不取代獨立 batch owner；離開 Settings 不停止 capability 訂閱。
 
 一般使用者的 Music Analysis lifecycle 位於 Settings：
 `src/composables/useMusicAnalysisSettings.js` 負責 boolean-only 自動分析偏好與既有
