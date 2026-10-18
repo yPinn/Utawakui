@@ -167,7 +167,7 @@ export function useSeparationPreparation({
       );
       if (!enabled) return null;
 
-      return enqueue(trackIds, mode, regenerate);
+      return await enqueue(trackIds, mode, regenerate);
     } finally {
       activeAction.value = '';
     }
@@ -176,6 +176,15 @@ export function useSeparationPreparation({
   function startUnpreparedTracks() {
     return enqueueTracks(unpreparedTracks.value, {
       action: 'start',
+      regenerate: false,
+    });
+  }
+
+  function startUnpreparedTrack(trackId) {
+    const track = unpreparedTracks.value.find(({ id }) => id === trackId);
+    if (!track) return null;
+    return enqueueTracks([track], {
+      action: 'single',
       regenerate: false,
     });
   }
@@ -200,6 +209,7 @@ export function useSeparationPreparation({
     isStarting,
     isRestarting,
     startUnpreparedTracks,
+    startUnpreparedTrack,
     restartPreparedTracks,
   };
 }

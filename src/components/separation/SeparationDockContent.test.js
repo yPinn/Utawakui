@@ -10,7 +10,7 @@ describe('SeparationDockContent copy and controls', () => {
   it('presents a concise accompaniment workflow without implementation jargon', () => {
     expect(source).toContain('label="來源"');
     expect(source).toContain('label="模式"');
-    expect(source).toContain('開始準備');
+    expect(source).toContain('加入處理佇列');
     expect(source).toContain('<SeparationPreparationList');
     expect(source).toContain('<SeparationToolbarList');
     expect(source).toContain('selectedSourceId');
@@ -31,12 +31,12 @@ describe('SeparationDockContent copy and controls', () => {
     expect(source).not.toMatch(/模型|runtime|recipe|執行提供者/u);
   });
 
-  it('keeps one text primary action and delegates lifecycle controls to the queue sections', () => {
-    expect(source.match(/<UiButton\b/gu)).toHaveLength(1);
+  it('keeps accessible icon actions and delegates lifecycle controls to the queue sections', () => {
+    expect(source.match(/<UiIconButton\b/gu)).toHaveLength(2);
+    expect(source).not.toContain('<UiButton');
+    expect(source).toContain('label="加入處理佇列"');
     expect(source).not.toContain('separation-dock-content__controls');
-    expect(source).not.toContain(
-      "import UiIconButton from '../ui/UiIconButton.vue'",
-    );
+    expect(source).toContain('label="預覽伴奏處理歌單"');
     expect(source).toContain(':paused="isPaused"');
     expect(source).toContain(':pausing="isPausing"');
     expect(source).toContain('@pause="pause"');
@@ -73,8 +73,15 @@ describe('SeparationDockContent copy and controls', () => {
     expect(workspace).toContain(':options="modeOptions"');
     expect(workspace).toContain('@click="startUnpreparedTracks"');
     expect(workspace).toContain(':loading="isStarting"');
-    expect(workspace).toContain('開始準備');
-    expect(workspace).not.toContain('UiIconButton');
+    expect(workspace).toContain('加入處理佇列');
+    expect(workspace.indexOf('id="separation-dock-mode"')).toBeLessThan(
+      workspace.indexOf('label="預覽伴奏處理歌單"'),
+    );
+    expect(workspace.indexOf('label="預覽伴奏處理歌單"')).toBeLessThan(
+      workspace.indexOf('label="加入處理佇列"'),
+    );
+    expect(source).toContain('grid-template-columns: minmax(0, 1fr) auto auto');
+    expect(workspace).not.toContain('separation-dock-content__source-row');
     expect(source).toMatch(
       /\.separation-dock-content__source-option-primary\s*\{[^}]*color:\s*var\(--ui-color-text\);[^}]*font-weight:\s*var\(--ui-type-label-weight\);[^}]*line-height:\s*var\(--ui-type-label-line-height\);/s,
     );
@@ -89,9 +96,9 @@ describe('SeparationDockContent copy and controls', () => {
     );
     expect(source).toContain('ensureArtistIndex();');
     expect(source).toContain("const emit = defineEmits(['navigate']);");
-    expect(
-      source.match(/@navigate="emit\('navigate', \$event\)"/gu),
-    ).toHaveLength(2);
+    expect(source).toContain('@navigate="navigateFromPreview"');
+    expect(source).toContain("emit('navigate', destination)");
+    expect(source).toContain('@navigate="emit(\'navigate\', $event)"');
   });
 
   it('renders ordered, active, unfinished, and completed sections', () => {

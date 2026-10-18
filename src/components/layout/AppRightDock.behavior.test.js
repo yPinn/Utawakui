@@ -245,11 +245,31 @@ describe('AppRightDock', () => {
     expect(source).toMatch(
       /\.app-right-dock--collapsed\s+\.app-right-dock__content\s*\{[^}]*opacity:\s*0;[^}]*transform:/su,
     );
-    expect(source).not.toMatch(/transition:\s*width/u);
+    // Geometry snaps after the composited exit; it is never interpolated.
+    expect(source).toContain('width 0s linear var(--ui-motion-duration-fast)');
+    expect(source).toContain('height 0s linear var(--ui-motion-duration-fast)');
     expect(source).toContain('--ui-motion-easing-enter');
     expect(source).toContain('--ui-motion-easing-exit');
     expect(source).toContain("data-ui-motion='reduced'");
     expect(source).toContain('prefers-reduced-motion: reduce');
+  });
+
+  it('lets a bottom-origin surface own motion without adding a parent displacement', () => {
+    const { app, root } = mount(AppRightDock, {
+      expanded: false,
+      motionOrigin: 'bottom',
+      label: '播放佇列',
+      contentId: 'queue-motion',
+    });
+    const aside = findAll(root, (node) => node.type === 'aside')[0];
+    expect(String(aside.props.class)).toContain('app-right-dock--bottom');
+    expect(source).toMatch(
+      /\.app-right-dock--bottom \.app-right-dock__content\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;/su,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock--bottom\.app-right-dock--expanded\s*\{[^}]*transition:\s*none;/su,
+    );
+    app.unmount();
   });
 
   it('uses shared optical and spacing tokens for the expanded resize axis', () => {

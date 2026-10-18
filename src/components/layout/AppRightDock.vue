@@ -15,6 +15,11 @@ const props = defineProps({
   label: { type: String, default: '右側區塊' },
   expandLabel: { type: String, default: '展開右側區塊' },
   contentId: { type: String, required: true },
+  motionOrigin: {
+    type: String,
+    default: 'end',
+    validator: (value) => ['end', 'bottom'].includes(value),
+  },
 });
 
 const emit = defineEmits(['expand', 'toggleExpanded']);
@@ -52,6 +57,7 @@ function handleResizeKeydown(event) {
     :class="{
       'app-right-dock--expanded': expanded,
       'app-right-dock--collapsed': !expanded,
+      'app-right-dock--bottom': motionOrigin === 'bottom',
     }"
     tone="surface"
     radius="sm"
@@ -195,6 +201,29 @@ function handleResizeKeydown(event) {
     visibility 0s linear var(--ui-motion-duration-fast);
 }
 
+/* Queue owns its vertical motion at the surface layer, including physical
+   Dock collapse. Keep the full clipping box until that exit finishes, then
+   snap to the restore control; never animate layout geometry. */
+.app-right-dock--bottom {
+  transition:
+    width 0s linear var(--ui-motion-duration-fast),
+    height 0s linear var(--ui-motion-duration-fast);
+}
+
+.app-right-dock--bottom.app-right-dock--expanded {
+  transition: none;
+}
+
+.app-right-dock--bottom .app-right-dock__content {
+  opacity: 1;
+  transform: none;
+  transition: visibility 0s linear 0s;
+}
+
+.app-right-dock--bottom.app-right-dock--collapsed .app-right-dock__content {
+  transition: visibility 0s linear var(--ui-motion-duration-fast);
+}
+
 .app-right-dock__handle {
   position: absolute;
   z-index: var(--ui-layer-raised);
@@ -231,12 +260,14 @@ function handleResizeKeydown(event) {
   background: var(--ui-color-focus);
 }
 
+:global(:root[data-ui-motion='reduced'] .app-right-dock--bottom),
 :global(:root[data-ui-motion='reduced'] .app-right-dock__content),
 :global(:root[data-ui-motion='reduced'] .app-right-dock__handle::after) {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-right-dock--bottom,
   .app-right-dock__content,
   .app-right-dock__handle::after {
     transition: none;

@@ -22,6 +22,7 @@ import { formatElapsedClock } from '../../utils/format.js';
 
 const props = defineProps({
   preparationActive: { type: Boolean, default: false },
+  preparationActionLabel: { type: String, default: '展開匯入' },
   preparationControls: { type: String, default: '' },
   preparationStatus: { type: String, default: 'idle' },
   preparationStatusLabel: { type: String, default: '' },
@@ -90,9 +91,6 @@ const performerLabel = computed(() =>
 );
 const settingsLabel = computed(() =>
   props.updateAvailable ? '設定（有可用更新）' : '設定',
-);
-const preparationActionLabel = computed(() =>
-  props.preparationActive ? '收合曲目準備' : '展開曲目準備',
 );
 const bgmActionLabel = computed(() => {
   const action = props.bgmActive ? '收合 BGM 播放器' : '展開 BGM 播放器';
@@ -245,7 +243,6 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           :class="`app-title-bar__preparation--${preparationTone}`"
           :icon="ListChecks"
           :label="preparationActionLabel"
-          title="曲目準備"
           :tooltip-suffix="preparationTooltipSuffix"
           variant="ghost"
           size="md"

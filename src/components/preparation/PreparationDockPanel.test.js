@@ -49,9 +49,9 @@ describe('PreparationDockPanel', () => {
     );
   });
 
-  it('remembers the selected preparation tab for the current app session', () => {
+  it('receives the shared preparation tab from the shell', () => {
     expect(source).toContain(
-      "const activePreparationTab = shallowRef('import')",
+      "activePreparationTab: { type: String, default: 'import' }",
     );
     expect(source).toContain(':active-id="activePreparationTab"');
     expect(source).toContain(':separation-controller="separationController"');
@@ -60,7 +60,8 @@ describe('PreparationDockPanel', () => {
   it('links both tabpanels and resets the shared Dock scroll position after switching', () => {
     expect(source).toContain('ref="dockPanel"');
     expect(source).toContain('function selectTab(tabId)');
-    expect(source).toContain('activePreparationTab.value = tabId');
+    expect(source).toContain("emit('update:activePreparationTab', tabId)");
+    expect(source).toContain('() => props.activePreparationTab');
     expect(source).toContain('dockPanel.value?.scrollTo({ top: 0 })');
     expect(source).toContain('id="preparation-dock-import-panel"');
     expect(source).toContain('aria-labelledby="preparation-dock-import-tab"');
@@ -72,7 +73,7 @@ describe('PreparationDockPanel', () => {
   });
 
   it('collapses before a Preparation artist destination changes the workspace', () => {
-    expect(source).toContain("const emit = defineEmits(['collapse']);");
+    expect(source).toContain("'collapse', 'update:activePreparationTab'");
     expect(source).toContain('@navigate="emit(\'collapse\')"');
   });
 });

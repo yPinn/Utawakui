@@ -127,12 +127,11 @@ describe('SeparationToolbarList', () => {
       source.indexOf('v-if="completedItemsNewestFirst.length > 0"'),
       source.indexOf('<UiActionMenu'),
     );
-    expect(pendingSection).toContain(':icon="ListMinus"');
+    expect(pendingSection).toContain(':icon="ListX"');
     expect(pendingSection).toContain('label="清除待處理"');
     expect(completedSection).toContain(
       '<UiButton @click="emit(\'clearCompleted\')">清除紀錄</UiButton>',
     );
-    expect(source).not.toContain('ListX');
     expect(source).toContain('skipped: Object.freeze({ icon: BadgeCheck');
     expect(source).not.toContain('Trash2');
     expect(source).not.toContain('danger: true');

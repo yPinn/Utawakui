@@ -241,6 +241,8 @@ function handleActionKeydown(event) {
   display: flex;
   align-items: center;
   gap: var(--ui-track-row-gap);
+  /* Grid list parents must be able to shrink the row before text ellipsizes. */
+  min-inline-size: 0;
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   border-radius: var(--ui-track-row-radius, var(--ui-radius-md));

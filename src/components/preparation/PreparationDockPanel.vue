@@ -1,33 +1,35 @@
 <script setup>
-import { nextTick, shallowRef, useTemplateRef } from 'vue';
+import { useTemplateRef, watch } from 'vue';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import ImportDockContent from '../import/ImportDockContent.vue';
 import SeparationDockContent from '../separation/SeparationDockContent.vue';
 
-defineProps({
+const props = defineProps({
   active: { type: Boolean, default: false },
+  activePreparationTab: { type: String, default: 'import' },
   separationController: { type: Object, required: true },
 });
 
-const emit = defineEmits(['collapse']);
+const emit = defineEmits(['collapse', 'update:activePreparationTab']);
 const preparationTabs = [
   { id: 'import', label: '匯入' },
   { id: 'separation', label: '伴奏處理' },
 ];
 
-// Module scope would leak across renderer instances in tests. This component is
-// retained after its first shell mount, so local state still remembers the
-// selected tab for the lifetime of the app session.
-const activePreparationTab = shallowRef('import');
 const dockPanel = useTemplateRef('dockPanel');
 
 function selectTab(tabId) {
-  activePreparationTab.value = tabId;
-  nextTick(() => {
-    dockPanel.value?.scrollTo({ top: 0 });
-  });
+  emit('update:activePreparationTab', tabId);
 }
+
+watch(
+  () => props.activePreparationTab,
+  () => {
+    dockPanel.value?.scrollTo({ top: 0 });
+  },
+  { flush: 'post' },
+);
 </script>
 
 <template>
@@ -71,6 +73,7 @@ function selectTab(tabId) {
       tabindex="0"
     >
       <SeparationDockContent
+        :active="active && activePreparationTab === 'separation'"
         :separation-controller="separationController"
         @navigate="emit('collapse')"
       />

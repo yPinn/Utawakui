@@ -1,0 +1,225 @@
+import { h, nextTick, shallowReactive, shallowRef } from 'vue';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  attachClientRender,
+  findAll,
+  mount,
+  textContent,
+  trigger,
+} from '../ui/uiTestHost.js';
+
+const fixture = vi.hoisted(() => ({}));
+vi.mock('../../composables/useSeparationPreparation.js', () => ({
+  useSeparationPreparation: () => fixture.preparation,
+}));
+vi.mock('../../composables/useLibrary.js', () => ({
+  useLibrary: () => ({ tracksById: shallowRef(new Map()) }),
+}));
+vi.mock('../../composables/useArtistIndex.js', () => ({
+  useArtistIndex: () => ({ ensureLoaded: vi.fn() }),
+}));
+vi.mock('../../composables/useAppView.js', () => ({
+  useAppView: () => ({ openSettings: vi.fn() }),
+}));
+vi.mock('../ui/UiModal.vue', () => ({
+  default: {
+    props: ['open'],
+    setup:
+      (props, { slots, emit }) =>
+      () =>
+        props.open
+          ? h('dialog', [
+              h('button', {
+                id: 'close-preview',
+                onClick: () => emit('close'),
+              }),
+              slots.default?.(),
+            ])
+          : null,
+  },
+}));
+vi.mock('../ui/UiIconButton.vue', () => ({
+  default: {
+    props: ['label'],
+    emits: ['click'],
+    setup:
+      (props, { emit }) =>
+      () =>
+        h('button', {
+          'aria-label': props.label,
+          onClick: () => emit('click'),
+        }),
+  },
+}));
+vi.mock('../ui/UiCombobox.vue', () => ({
+  default: { setup: () => () => h('select') },
+}));
+vi.mock('../ui/UiSelect.vue', () => ({
+  default: { setup: () => () => h('select') },
+}));
+vi.mock('../ui/UiHint.vue', () => ({
+  default: {
+    setup:
+      (_, { slots }) =>
+      () =>
+        h('p', slots.default?.()),
+  },
+}));
+vi.mock('./SeparationToolbarList.vue', () => ({
+  default: { setup: () => () => h('section', { id: 'queue' }) },
+}));
+vi.mock('./SeparationPreparationList.vue', () => ({
+  default: {
+    props: ['unpreparedTracks', 'preparedTracks'],
+    setup:
+      (props, { emit }) =>
+      () =>
+        h('section', { id: 'preview-list' }, [
+          ...props.unpreparedTracks.map((track) => h('span', track.title)),
+          ...props.preparedTracks.map((track) => h('span', track.title)),
+          h('button', {
+            id: 'start-one',
+            onClick: () => emit('startTrack', props.unpreparedTracks[0].id),
+          }),
+          h('button', {
+            id: 'restart',
+            onClick: () => emit('restartPrepared'),
+          }),
+          h('button', {
+            id: 'navigate',
+            onClick: () => emit('navigate', { kind: 'artist', id: 'artist' }),
+          }),
+        ]),
+  },
+}));
+import SeparationDockContent from './SeparationDockContent.vue';
+attachClientRender(
+  SeparationDockContent,
+  './SeparationDockContent.vue',
+  import.meta.url,
+);
+const node = (root, id) => findAll(root, (n) => n.props.id === id)[0];
+const dialogs = (root) => findAll(root, (n) => n.type === 'dialog');
+function open(root) {
+  trigger(
+    findAll(root, (n) => n.props['aria-label'] === '預覽伴奏處理歌單')[0],
+    'onClick',
+  );
+}
+
+beforeEach(() => {
+  const tracks = Array.from({ length: 20 }, (_, id) => ({
+    id: String(id),
+    title: `Song ${id}`,
+  }));
+  fixture.preparation = {
+    selectedMode: shallowRef('general'),
+    modeOptions: shallowRef([]),
+    selectedSourceId: shallowRef('source'),
+    sourceOptions: shallowRef([
+      { label: '歌單', options: [{ value: 'source', label: '我的歌單' }] },
+    ]),
+    sourceTracks: shallowRef(tracks),
+    unpreparedTracks: shallowRef(tracks.slice(0, 15)),
+    preparedTracks: shallowRef(tracks.slice(15)),
+    planHint: shallowRef('15 首'),
+    isBusy: shallowRef(false),
+    isStarting: shallowRef(false),
+    startUnpreparedTracks: vi.fn(),
+    startUnpreparedTrack: vi.fn(),
+    restartPreparedTracks: vi.fn(),
+  };
+});
+function setup(onNavigate = vi.fn()) {
+  const props = shallowReactive({
+    active: true,
+    separationController: {
+      queue: shallowRef({ items: [{ status: 'pending', trackId: 'queued' }] }),
+    },
+    onNavigate,
+  });
+  return { ...mount(SeparationDockContent, props), props };
+}
+describe('accompaniment source preview', () => {
+  it('adds the requested preview track without closing the modal or invoking batch start', async () => {
+    const { root, app } = setup();
+    open(root);
+    await nextTick();
+    trigger(node(root, 'start-one'), 'onClick');
+    expect(
+      fixture.preparation.startUnpreparedTrack,
+    ).toHaveBeenCalledExactlyOnceWith('0');
+    expect(fixture.preparation.startUnpreparedTracks).not.toHaveBeenCalled();
+    expect(dialogs(root)).toHaveLength(1);
+    app.unmount();
+  });
+  it('updates concise source status as work completes, without repeating the active progress', async () => {
+    const { root, app, props } = setup();
+    fixture.preparation.sourceTracks.value = [{ id: 'new' }, { id: 'work' }];
+    props.separationController.queue.value = {
+      items: [{ trackId: 'work', recipeId: 'general', status: 'running' }],
+    };
+    await nextTick();
+    const summary = () =>
+      findAll(root, (n) => n.props['aria-label'] === '目前來源處理狀態')[0];
+    expect(textContent(summary())).toBe('待處理 1');
+    props.separationController.queue.value = {
+      items: [{ trackId: 'work', recipeId: 'general', status: 'completed' }],
+    };
+    await nextTick();
+    expect(textContent(summary())).toBe('待處理 1已完成 1');
+    fixture.preparation.sourceTracks.value = [{ id: 'other' }];
+    await nextTick();
+    expect(textContent(summary())).toBe('待處理 1');
+    app.unmount();
+  });
+  it('keeps the queue visible and renders all source preview rows only inside the modal', async () => {
+    const { root, app } = setup();
+    expect(node(root, 'queue')).toBeTruthy();
+    expect(node(root, 'preview-list')).toBeUndefined();
+    open(root);
+    await nextTick();
+    expect(dialogs(root)).toHaveLength(1);
+    expect(
+      findAll(node(root, 'preview-list'), (n) => n.type === 'span'),
+    ).toHaveLength(20);
+    trigger(node(root, 'close-preview'), 'onClick');
+    await nextTick();
+    expect(dialogs(root)).toHaveLength(0);
+    trigger(
+      findAll(root, (n) => n.props['aria-label'] === '加入處理佇列')[0],
+      'onClick',
+    );
+    expect(fixture.preparation.startUnpreparedTracks).toHaveBeenCalledOnce();
+    app.unmount();
+  });
+  it('forwards restart and closes before forwarding navigation', async () => {
+    const navigate = vi.fn();
+    const { root, app } = setup(navigate);
+    open(root);
+    await nextTick();
+    trigger(node(root, 'restart'), 'onClick');
+    expect(fixture.preparation.restartPreparedTracks).toHaveBeenCalledOnce();
+    trigger(node(root, 'navigate'), 'onClick');
+    await nextTick();
+    expect(navigate).toHaveBeenCalledWith({ kind: 'artist', id: 'artist' });
+    expect(dialogs(root)).toHaveLength(0);
+    app.unmount();
+  });
+  it('closes when leaving the tab or changing the selected source', async () => {
+    const { root, app, props } = setup();
+    open(root);
+    await nextTick();
+    props.active = false;
+    await nextTick();
+    expect(dialogs(root)).toHaveLength(0);
+    props.active = true;
+    await nextTick();
+    open(root);
+    await nextTick();
+    fixture.preparation.selectedSourceId.value = 'other';
+    await nextTick();
+    expect(dialogs(root)).toHaveLength(0);
+    app.unmount();
+  });
+});

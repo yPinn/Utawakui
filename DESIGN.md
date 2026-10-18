@@ -1338,6 +1338,8 @@ Performer sync controls are intentionally narrow: delay 0.1 seconds, reset, adva
 
 ### Panels / Menus
 
+- **Playback destinations and motion:** Playback Info「開啟歌詞」opens Performance live lyrics; authoring remains an explicit「編輯歌詞」action. Queue enters upward from the bottom PlayerBar and exits downward, including first mount, foreground switches and Dock collapse／restore. The Queue surface owns this displacement once; its parent does not add horizontal or vertical travel. Keep the full clipping box through exit, then snap to the local restore-control boundary. App and system reduced-motion preferences remove both travel and delayed collapse.
+
 - **Progressive disclosure:** use `UiDisclosure` for collapsible settings groups. Its native `details` / `summary` owns disclosure interaction; slotted fields stay mounted while collapsed so drafts and lifecycle subscriptions survive. The feature owns error / setup-target expansion through `open` or `v-model:open`; recovery notices and actions that must remain available stay outside the collapsed body. `UiDisclosure` is an adopted production primitive, not a catalogue-only component.
 
 - **Panels:** use `surface` or `surface-raised`, with stable padding from the spacing scale.
@@ -1383,6 +1385,7 @@ Performer sync controls are intentionally narrow: delay 0.1 seconds, reset, adva
 - **Do** use rem-based spacing and type tokens as the baseline.
 - **Do** define dark and light theme token values before declaring a visual direction complete.
 - **Do** keep component states explicit: default, hover, focus, active, selected, disabled, loading, processing, error.
+- **Do** place the primary action at the right end of a horizontal action group, with secondary actions before it; keep DOM and keyboard order aligned with the visual order.
 - **Do** use iOS `44pt` and Android `48dp` touch-target guidance when designing narrow or touch-capable surfaces.
 - **Do** separate control-panel tokens from OBS overlay tokens.
 - **Do** design safe-area and keyboard-inset behavior for responsive or mobile-like surfaces.

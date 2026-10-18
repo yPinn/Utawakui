@@ -87,12 +87,12 @@ describe('AppTitleBar', () => {
     expect(source).toContain(
       "preparationStatusLabel: { type: String, default: '' }",
     );
-    expect(source).toContain('const preparationActionLabel = computed(');
-    expect(source).toContain("? '收合曲目準備'");
-    expect(source).toContain(": '展開曲目準備'");
+    expect(source).toContain(
+      "preparationActionLabel: { type: String, default: '展開匯入' }",
+    );
     expect(source).toContain('const preparationTooltipSuffix = computed(');
     expect(source).toContain(':label="preparationActionLabel"');
-    expect(source).toContain('title="曲目準備"');
+    expect(source).not.toContain('title="曲目準備"');
     expect(source).toContain(':tooltip-suffix="preparationTooltipSuffix"');
     expect(source).not.toContain('`曲目準備；${props.preparationStatusLabel}`');
     expect(source).toContain(

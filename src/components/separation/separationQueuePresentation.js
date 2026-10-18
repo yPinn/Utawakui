@@ -47,6 +47,42 @@ export function separationPlanSummary(tracks = []) {
   return `${count} · 最多新增${estimate.label}`;
 }
 
+export function separationSourceStatus(tracks = [], items = [], recipeId) {
+  const queued = new Map();
+  const openStatuses = new Set(['pending', 'checking', 'running']);
+  for (const item of items) {
+    if (item.recipeId !== recipeId) continue;
+    // Retrying an old entry keeps its position before newer history.
+    if (
+      openStatuses.has(queued.get(item.trackId)) &&
+      !openStatuses.has(item.status)
+    )
+      continue;
+    queued.set(item.trackId, item.status);
+  }
+  const counts = { pending: 0, completed: 0, attention: 0 };
+  for (const track of tracks) {
+    const status = queued.get(track.id);
+    if (status === 'pending') counts.pending++;
+    else if (status === 'checking' || status === 'running') continue;
+    else if (status === 'failed' || status === 'cancelled') counts.attention++;
+    else if (
+      status === 'completed' ||
+      status === 'skipped' ||
+      track.separation?.results?.[recipeId]
+    )
+      counts.completed++;
+    else counts.pending++;
+  }
+  return [
+    ['pending', '待處理'],
+    ['completed', '已完成'],
+    ['attention', '未完成'],
+  ]
+    .filter(([id]) => counts[id] > 0)
+    .map(([id, label]) => ({ id, label, count: counts[id] }));
+}
+
 export function separationItemLabel(item) {
   switch (item?.status) {
     case 'pending':

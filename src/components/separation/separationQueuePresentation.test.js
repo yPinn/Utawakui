@@ -6,9 +6,81 @@ import {
   separationQueueIndicator,
   separationItemLabel,
   separationQueueSummary,
+  separationSourceStatus,
 } from './separationQueuePresentation.js';
 
 describe('separation queue presentation', () => {
+  it('prioritizes a retried open entry over newer terminal history for the same track', () => {
+    const tracks = [{ id: 'track' }];
+    for (const status of ['pending', 'checking', 'running']) {
+      const items = [
+        { trackId: 'track', recipeId: 'general', status },
+        { trackId: 'track', recipeId: 'general', status: 'completed' },
+      ];
+      const expected =
+        status === 'pending'
+          ? [{ id: 'pending', label: '待處理', count: 1 }]
+          : [];
+      expect(separationSourceStatus(tracks, items, 'general')).toEqual(
+        expected,
+      );
+      expect(
+        separationSourceStatus(tracks, [...items].reverse(), 'general'),
+      ).toEqual(expected);
+    }
+  });
+  it('summarizes only the selected source and recipe without counting the single active track', () => {
+    const tracks = [
+      { id: 'new' },
+      { id: 'pending' },
+      { id: 'active' },
+      { id: 'checking' },
+      { id: 'saved', separation: { results: { general: {} } } },
+      { id: 'done' },
+      { id: 'skipped' },
+      { id: 'failed' },
+      { id: 'cancelled' },
+      { id: 'other-mode', separation: { results: { quick: {} } } },
+    ];
+    const items = [
+      ['pending', 'pending'],
+      ['active', 'running'],
+      ['checking', 'checking'],
+      ['done', 'completed'],
+      ['skipped', 'skipped'],
+      ['failed', 'failed'],
+      ['cancelled', 'cancelled'],
+      ['outside-source', 'completed'],
+    ].map(([trackId, status]) => ({ trackId, status, recipeId: 'general' }));
+    items.push({
+      trackId: 'other-mode',
+      status: 'completed',
+      recipeId: 'quick',
+    });
+    expect(separationSourceStatus(tracks, items, 'general')).toEqual([
+      { id: 'pending', label: '待處理', count: 3 },
+      { id: 'completed', label: '已完成', count: 3 },
+      { id: 'attention', label: '未完成', count: 2 },
+    ]);
+    expect(separationSourceStatus([], items, 'general')).toEqual([]);
+  });
+
+  it('keeps completed state when queue history is cleared and hides zero counts', () => {
+    expect(
+      separationSourceStatus(
+        [{ id: 'saved', separation: { results: { general: {} } } }],
+        [],
+        'general',
+      ),
+    ).toEqual([{ id: 'completed', label: '已完成', count: 1 }]);
+    expect(
+      separationSourceStatus(
+        [{ id: 'active' }],
+        [{ trackId: 'active', recipeId: 'general', status: 'running' }],
+        'general',
+      ),
+    ).toEqual([]);
+  });
   it('builds one ordered plan from current, manually queued, and source tracks', () => {
     expect(
       buildSeparationPlan({

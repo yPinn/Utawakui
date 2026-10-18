@@ -7,6 +7,7 @@ import {
   CircleDashed,
   CircleX,
   ListMinus,
+  ListX,
   Pause,
   Play,
   RotateCcw,
@@ -288,16 +289,16 @@ function dragItem(item) {
       <template #trailing>
         <div class="separation-toolbar-list__section-actions">
           <UiIconButton
+            :icon="ListX"
+            label="清除待處理"
+            @click="emit('clearPending')"
+          />
+          <UiIconButton
             v-if="paused"
             :icon="Play"
             label="繼續處理"
             variant="accent"
             @click="emit('resume')"
-          />
-          <UiIconButton
-            :icon="ListMinus"
-            label="清除待處理"
-            @click="emit('clearPending')"
           />
         </div>
       </template>

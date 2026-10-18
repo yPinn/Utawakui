@@ -278,10 +278,17 @@ describe('App shell right Dock', () => {
 
   it('routes playback and preparation triggers to the Dock', () => {
     expect(source).toContain('@toggle-preparation="togglePreparationSurface"');
-    expect(source).toContain(
-      'rightDock.toggleSurface(RIGHT_DOCK_SURFACE_PREPARATION)',
-    );
+    expect(source).toContain('rightDock.cyclePreparation()');
     expect(source).toContain(':preparation-active="preparationExpanded"');
+    expect(source).toContain(
+      ':preparation-action-label="rightDock.preparationActionLabel.value"',
+    );
+    expect(source).toContain(
+      ':active-preparation-tab="rightDock.preparationTab.value"',
+    );
+    expect(source).toContain(
+      '@update:active-preparation-tab="rightDock.selectPreparationTab"',
+    );
     expect(source).toContain(':preparation-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).not.toContain(':session-active=');
     expect(source).not.toContain('@toggle-session=');
@@ -319,9 +326,7 @@ describe('App shell right Dock', () => {
       source.indexOf('function openBgmPlayer'),
     );
     expect(handler).toContain('rememberRightDockTrigger');
-    expect(handler).toContain(
-      'rightDock.toggleSurface(RIGHT_DOCK_SURFACE_PREPARATION)',
-    );
+    expect(handler).toContain('rightDock.cyclePreparation()');
     expect(handler).not.toContain('setActiveView');
     expect(source).toContain('@toggle-preparation="togglePreparationSurface"');
     expect(source).not.toContain('<AppPlaylistSidebar @open-import');
@@ -332,15 +337,29 @@ describe('App shell right Dock', () => {
       'v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_QUEUE]"',
     );
     expect(source).toContain(':active="queueExpanded"');
-    expect(source).toContain(
-      "'shell__dock-surface--active': queueSurfaceActive",
-    );
+    expect(source).toContain("'shell__dock-surface--active': queueExpanded");
     expect(source).not.toMatch(/<QueuePanel[\s\S]*?v-show=/u);
     expect(source).toMatch(
       /\.shell__dock-surface\s*\{[^}]*position:\s*absolute;[^}]*opacity:\s*0;[^}]*transform:\s*translateX/su,
     );
     expect(source).toMatch(
       /\.shell__dock-surface--active\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*translateX\(0\)/su,
+    );
+  });
+
+  it('gives the PlayerBar Queue a single bottom-origin motion owner', () => {
+    expect(source).toContain(':motion-origin="');
+    expect(source).toMatch(
+      /restorableDockSurface === RIGHT_DOCK_SURFACE_QUEUE\s*\? 'bottom'\s*: 'end'/u,
+    );
+    expect(source).toContain(
+      'class="shell__dock-surface shell__dock-surface--queue"',
+    );
+    expect(source).toMatch(
+      /\.shell__dock-surface--queue\s*\{[^}]*transform:\s*translateY\(var\(--ui-space-3\)\)/su,
+    );
+    expect(source).toMatch(
+      /\.shell__dock-surface--queue\.shell__dock-surface--active\s*\{[^}]*transform:\s*translateY\(0\)/su,
     );
   });
 

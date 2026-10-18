@@ -6,7 +6,7 @@ import {
 } from '../constants/separationPresets.js';
 import { useSeparationPreparation } from './useSeparationPreparation.js';
 
-function setup({ enabled = true } = {}) {
+function setup({ enabled = true, enqueueAvailable = true } = {}) {
   const enqueue = vi.fn().mockResolvedValue({});
   const requireFeatureGate = vi.fn().mockResolvedValue(enabled);
   const queue = shallowRef({ items: [] });
@@ -60,7 +60,7 @@ function setup({ enabled = true } = {}) {
     (collection) => collectionTracks.get(collection?.id) ?? [],
   );
   const preparation = useSeparationPreparation({
-    enqueue,
+    enqueue: enqueueAvailable ? enqueue : undefined,
     playbackQueue: {
       currentTrack: shallowRef({ id: 'current', duration: 60 }),
       queuedTracks: shallowRef([
@@ -204,6 +204,86 @@ describe('useSeparationPreparation', () => {
     expect(preparation.isRestarting.value).toBe(false);
   });
 
+  it('adds only the requested unprepared source track through the existing gate and recipe', async () => {
+    const { preparation, enqueue, requireFeatureGate } = setup();
+    preparation.selectedMode.value = 'quick';
+    await preparation.startUnpreparedTrack('manual');
+    expect(requireFeatureGate).toHaveBeenCalledWith(
+      'audio-processing-flow',
+      expect.objectContaining({ operation: 'enqueue' }),
+    );
+    expect(enqueue).toHaveBeenCalledExactlyOnceWith(['manual'], 'quick', false);
+  });
+
+  it('rejects unknown, already prepared, and already queued single-track intents', async () => {
+    const { preparation, enqueue, requireFeatureGate, queue } = setup();
+    await preparation.startUnpreparedTrack('unknown');
+    await preparation.startUnpreparedTrack('manual');
+    queue.value = {
+      items: [
+        {
+          trackId: 'current',
+          recipeId: DEFAULT_SEPARATION_PRESET_ID,
+          status: 'pending',
+        },
+      ],
+    };
+    await preparation.startUnpreparedTrack('current');
+    expect(requireFeatureGate).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it('keeps a single-track click snapshot and blocks repeat clicks until enqueue settles', async () => {
+    const { preparation, enqueue, requireFeatureGate } = setup();
+    let resolveGate;
+    let resolveEnqueue;
+    requireFeatureGate.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveGate = resolve;
+        }),
+    );
+    enqueue.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEnqueue = resolve;
+        }),
+    );
+    const pending = preparation.startUnpreparedTrack('current');
+    expect(preparation.isBusy.value).toBe(true);
+    await preparation.startUnpreparedTrack('source');
+    preparation.selectedMode.value = 'quick';
+    preparation.selectedSourceId.value = 'collection:playlist-1';
+    resolveGate(true);
+    await Promise.resolve();
+    expect(enqueue).toHaveBeenCalledExactlyOnceWith(
+      ['current'],
+      DEFAULT_SEPARATION_PRESET_ID,
+      false,
+    );
+    expect(preparation.isBusy.value).toBe(true);
+    await preparation.startUnpreparedTrack('playlist-a');
+    resolveEnqueue({ ok: true });
+    await pending;
+    expect(preparation.isBusy.value).toBe(false);
+    expect(enqueue).toHaveBeenCalledOnce();
+  });
+
+  it('resets busy after denied setup or a failed single-track enqueue', async () => {
+    const { preparation, enqueue, requireFeatureGate } = setup({
+      enabled: false,
+    });
+    await preparation.startUnpreparedTrack('current');
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(preparation.isBusy.value).toBe(false);
+    requireFeatureGate.mockResolvedValue(true);
+    enqueue.mockRejectedValue(new Error('enqueue failed'));
+    await expect(preparation.startUnpreparedTrack('current')).rejects.toThrow(
+      'enqueue failed',
+    );
+    expect(preparation.isBusy.value).toBe(false);
+  });
+
   it('excludes same-recipe queue entries without hiding another recipe', () => {
     const { preparation, queue } = setup();
     queue.value = {
@@ -291,5 +371,52 @@ describe('useSeparationPreparation', () => {
       'manual',
       'source',
     ]);
+  });
+
+  it('does not request a gate for an empty source or a missing enqueue capability', async () => {
+    const empty = setup();
+    empty.preparation.selectedSourceId.value = 'collection:playlist-2';
+    await empty.preparation.startUnpreparedTracks();
+    expect(empty.requireFeatureGate).not.toHaveBeenCalled();
+    const unavailable = setup({ enqueueAvailable: false });
+    await unavailable.preparation.startUnpreparedTrack('current');
+    expect(unavailable.requireFeatureGate).not.toHaveBeenCalled();
+    expect(unavailable.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates collection candidates and ignores entries without a track identity', () => {
+    const { preparation, resolveCollectionTracks, queue } = setup();
+    resolveCollectionTracks.mockReturnValue([
+      null,
+      {},
+      { id: 'one' },
+      { id: 'one' },
+      { id: 'two' },
+    ]);
+    preparation.selectedSourceId.value = 'collection:playlist-1';
+    queue.value = null;
+    expect(preparation.unpreparedTracks.value.map((track) => track.id)).toEqual(
+      ['one', 'two'],
+    );
+  });
+
+  it('keeps albums without known artist metadata selectable', () => {
+    const { preparation, playlistState } = setup();
+    playlistState.playlists.push({
+      id: 'album-new',
+      kind: 'album',
+      name: 'Unknown artist album',
+      trackIds: [],
+    });
+    const options = preparation.sourceOptions.value.flatMap(
+      (option) => option.options ?? [option],
+    );
+    expect(
+      options.find((option) => option.value === 'collection:album-new'),
+    ).toEqual({
+      value: 'collection:album-new',
+      label: 'Unknown artist album',
+      primaryLabel: 'Unknown artist album',
+    });
   });
 });

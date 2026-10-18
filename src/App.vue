@@ -317,7 +317,7 @@ function toggleQueueSurface() {
 
 function togglePreparationSurface() {
   rememberRightDockTrigger();
-  rightDock.toggleSurface(RIGHT_DOCK_SURFACE_PREPARATION);
+  rightDock.cyclePreparation();
 }
 
 function openBgmPlayer() {
@@ -418,6 +418,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     <AppTitleBar
       class="shell__titlebar"
       :preparation-active="preparationExpanded"
+      :preparation-action-label="rightDock.preparationActionLabel.value"
       :preparation-controls="RIGHT_DOCK_CONTENT_ID"
       :preparation-status="preparationIndicator.state"
       :preparation-status-label="preparationIndicator.label"
@@ -479,6 +480,11 @@ useKeyboardShortcuts({ internalViewShortcuts });
           :label="rightDockLabel"
           :expand-label="rightDockExpandLabel"
           :content-id="RIGHT_DOCK_CONTENT_ID"
+          :motion-origin="
+            restorableDockSurface === RIGHT_DOCK_SURFACE_QUEUE
+              ? 'bottom'
+              : 'end'
+          "
           @expand="expandRightDock"
           @toggle-expanded="toggleRightDockExpanded"
         >
@@ -499,9 +505,9 @@ useKeyboardShortcuts({ internalViewShortcuts });
           />
           <QueuePanel
             v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_QUEUE]"
-            class="shell__dock-surface"
+            class="shell__dock-surface shell__dock-surface--queue"
             :class="{
-              'shell__dock-surface--active': queueSurfaceActive,
+              'shell__dock-surface--active': queueExpanded,
             }"
             :active="queueExpanded"
             :aria-hidden="!queueExpanded"
@@ -516,9 +522,11 @@ useKeyboardShortcuts({ internalViewShortcuts });
               'shell__dock-surface--active': preparationSurfaceActive,
             }"
             :active="preparationExpanded"
+            :active-preparation-tab="rightDock.preparationTab.value"
             :separation-controller="separationQueue"
             :aria-hidden="!preparationExpanded"
             :inert="!preparationExpanded"
+            @update:active-preparation-tab="rightDock.selectPreparationTab"
             @collapse="collapseRightDock"
           />
         </AppRightDock>
@@ -727,6 +735,23 @@ useKeyboardShortcuts({ internalViewShortcuts });
     visibility 0s linear 0s;
 }
 
+.shell__dock-surface--queue {
+  transform: translateY(var(--ui-space-3));
+}
+
+.shell__dock-surface--queue.shell__dock-surface--active {
+  transform: translateY(0);
+}
+
+/* The Queue is lazily mounted on its first request. Subsequent requests
+   transition the retained surface; the first uses the same bottom origin. */
+@starting-style {
+  .shell__dock-surface--queue.shell__dock-surface--active {
+    opacity: 0;
+    transform: translateY(var(--ui-space-3));
+  }
+}
+
 :global(:root[data-ui-motion='reduced'] .shell__dock-surface) {
   transition: none;
 }
@@ -747,8 +772,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     position: absolute;
     z-index: var(--ui-z-sticky);
     inset-inline-end: var(--ui-shell-edge-inset-inline);
-    inset-block-end: var(--ui-shell-content-inset-block);
-    padding-top: 0;
+    inset-block: 0 var(--ui-shell-content-inset-block);
   }
 
   .shell__main--dock-expanded .shell__dock {

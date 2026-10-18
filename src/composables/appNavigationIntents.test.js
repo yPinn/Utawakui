@@ -17,11 +17,12 @@ describe('contextual app navigation intents', () => {
   });
 
   it('separates Lyrics authoring and live-reading intents at their entry points', () => {
-    const authoringSource = readSource('../views/StudioLibraryContextView.vue');
+    const contextSource = readSource('../views/StudioLibraryContextView.vue');
     const liveSource = readSource('../components/playback/PlayerBar.vue');
 
-    expect(authoringSource).toContain('openLyricsAuthoring');
-    expect(authoringSource).not.toContain("setActiveView('lyrics')");
+    expect(contextSource).toContain('openLiveLyrics');
+    expect(contextSource).not.toContain('openLyricsAuthoring');
+    expect(contextSource).not.toContain("setActiveView('lyrics')");
     expect(liveSource).toContain('openLiveLyrics');
     expect(liveSource).not.toContain("setActiveView('lyrics')");
   });

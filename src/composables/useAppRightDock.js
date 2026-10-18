@@ -21,6 +21,7 @@ const mountedSurfaces = reactive({
 });
 const isExpanded = shallowRef(false);
 const lastSurface = shallowRef(null);
+const preparationTab = shallowRef('import');
 
 const hasSurfaces = computed(() =>
   SURFACE_PRIORITY.some((surface) => surfaces[surface]),
@@ -32,6 +33,32 @@ const topSurface = computed(() => {
   }
   return null;
 });
+const preparationActionLabel = computed(() => {
+  if (!isExpanded.value || topSurface.value !== RIGHT_DOCK_SURFACE_PREPARATION)
+    return '展開匯入';
+  return preparationTab.value === 'import' ? '切換伴奏處理' : '折疊曲目準備';
+});
+
+function selectPreparationTab(tab) {
+  if (!['import', 'separation'].includes(tab)) {
+    throw new RangeError(`Unknown preparation tab: ${tab}`);
+  }
+  preparationTab.value = tab;
+}
+
+function cyclePreparation() {
+  if (
+    !isExpanded.value ||
+    topSurface.value !== RIGHT_DOCK_SURFACE_PREPARATION
+  ) {
+    selectPreparationTab('import');
+    showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
+  } else if (preparationTab.value === 'import') {
+    selectPreparationTab('separation');
+  } else {
+    setExpanded(false);
+  }
+}
 
 function assertSurface(surface) {
   if (!SURFACE_PRIORITY.includes(surface)) {
@@ -127,6 +154,10 @@ export function useAppRightDock() {
     hasSurfaces,
     topSurface,
     lastSurface: readonly(lastSurface),
+    preparationTab: readonly(preparationTab),
+    preparationActionLabel,
+    selectPreparationTab,
+    cyclePreparation,
     showSurface,
     hideSurface,
     forgetSurface,

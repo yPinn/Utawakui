@@ -1,21 +1,26 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
+import { Info, ListPlus } from '../../icons/index.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { useSeparationPreparation } from '../../composables/useSeparationPreparation.js';
-import UiButton from '../ui/UiButton.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import SeparationPreparationList from './SeparationPreparationList.vue';
 import SeparationToolbarList from './SeparationToolbarList.vue';
+import { separationSourceStatus } from './separationQueuePresentation.js';
 
 const props = defineProps({
+  active: { type: Boolean, default: false },
   separationController: { type: Object, required: true },
 });
 const emit = defineEmits(['navigate']);
+const previewOpen = shallowRef(false);
 
 const { tracksById } = useLibrary();
 const { ensureLoaded: ensureArtistIndex } = useArtistIndex();
@@ -46,8 +51,35 @@ const {
   isBusy,
   isStarting,
   startUnpreparedTracks,
+  startUnpreparedTrack,
   restartPreparedTracks,
 } = useSeparationPreparation({ enqueue, queue, tracksById });
+
+const sourceLabel = computed(() => {
+  const options = sourceOptions.value.flatMap(
+    (option) => option.options ?? [option],
+  );
+  return (
+    options.find(({ value }) => value === selectedSourceId.value)?.label ?? ''
+  );
+});
+
+const sourceStatus = computed(() =>
+  separationSourceStatus(
+    sourceTracks.value,
+    queue.value?.items ?? [],
+    selectedMode.value,
+  ),
+);
+
+watch([() => props.active, selectedSourceId], () => {
+  previewOpen.value = false;
+});
+
+function navigateFromPreview(destination) {
+  previewOpen.value = false;
+  emit('navigate', destination);
+}
 
 const activeItems = computed(() =>
   (queue.value?.items ?? []).filter(({ status }) =>
@@ -84,6 +116,33 @@ function trackFor(item) {
 
 <template>
   <div class="separation-dock-content">
+    <UiModal
+      :open="previewOpen"
+      title="伴奏處理歌單預覽"
+      size="wide"
+      @close="previewOpen = false"
+    >
+      <div class="separation-dock-content__preview">
+        <UiHint>{{ sourceLabel }} · {{ sourceTracks.length }} 首</UiHint>
+        <UiHint v-if="unpreparedTracks.length > 0">{{ planHint }}</UiHint>
+        <SeparationPreparationList
+          v-if="unpreparedTracks.length > 0 || preparedTracks.length > 0"
+          :unprepared-tracks="unpreparedTracks"
+          :prepared-tracks="preparedTracks"
+          :busy="isBusy"
+          @start-track="startUnpreparedTrack"
+          @restart-prepared="restartPreparedTracks"
+          @navigate="navigateFromPreview"
+        />
+        <UiHint v-else padded center>
+          {{
+            sourceTracks.length === 0
+              ? '此來源沒有曲目'
+              : '此來源的曲目已在處理佇列中'
+          }}
+        </UiHint>
+      </div>
+    </UiModal>
     <div class="separation-dock-content__setup">
       <UiCombobox
         id="separation-dock-source"
@@ -117,18 +176,34 @@ function trackFor(item) {
           label-hidden
           :options="modeOptions"
         />
-        <UiButton
+        <UiIconButton
+          :icon="Info"
+          label="預覽伴奏處理歌單"
+          aria-haspopup="dialog"
+          :aria-expanded="previewOpen"
+          @click="previewOpen = true"
+        />
+        <UiIconButton
+          :icon="ListPlus"
+          label="加入處理佇列"
           variant="accent"
           :disabled="isBusy || unpreparedTracks.length === 0"
           :loading="isStarting"
-          loading-label="開始中"
+          loading-label="加入中"
           @click="startUnpreparedTracks"
-        >
-          開始準備
-        </UiButton>
+        />
       </div>
     </div>
-    <UiHint v-if="unpreparedTracks.length > 0">{{ planHint }}</UiHint>
+    <UiHint
+      v-if="sourceStatus.length > 0"
+      class="separation-dock-content__status"
+      aria-label="目前來源處理狀態"
+      role="status"
+    >
+      <span v-for="item in sourceStatus" :key="item.id">
+        {{ item.label }} {{ item.count }}
+      </span>
+    </UiHint>
 
     <UiNotice
       v-if="error"
@@ -140,15 +215,7 @@ function trackFor(item) {
       @action="openSettings"
     />
 
-    <SeparationPreparationList
-      v-if="unpreparedTracks.length > 0 || preparedTracks.length > 0"
-      :unprepared-tracks="unpreparedTracks"
-      :prepared-tracks="preparedTracks"
-      :busy="isBusy"
-      @restart-prepared="restartPreparedTracks"
-      @navigate="emit('navigate', $event)"
-    />
-    <UiHint v-else-if="sourceTracks.length === 0" padded center>
+    <UiHint v-if="sourceTracks.length === 0" padded center>
       此來源沒有曲目
     </UiHint>
 
@@ -186,6 +253,24 @@ function trackFor(item) {
   gap: var(--ui-space-2);
 }
 
+.separation-dock-content__preview {
+  display: grid;
+  gap: var(--ui-space-3);
+  min-inline-size: 0;
+}
+
+.separation-dock-content__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-1) var(--ui-space-2);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.separation-dock-content__status span {
+  white-space: nowrap;
+}
+
 .separation-dock-content__source,
 .separation-dock-content__mode {
   min-inline-size: 0;
@@ -193,7 +278,7 @@ function trackFor(item) {
 
 .separation-dock-content__actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--ui-space-2);
 }
