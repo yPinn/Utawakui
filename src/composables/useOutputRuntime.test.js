@@ -1142,6 +1142,25 @@ describe('output source handshake', () => {
 });
 
 describe('output runtime actions', () => {
+  it('preserves settings failures across healthy runtime and settings reads', async () => {
+    const runtime = await loadRuntime();
+    bridge.updateOutputSettings.mockRejectedValueOnce(new Error('private'));
+    await runtime.updateSettings({
+      autoStart: false,
+      port: 8701,
+      displayDelayMs: 0,
+    });
+    await runtime.refreshStatus();
+    await runtime.refreshSettings();
+    expect(runtime.state.errors['save-settings']).toContain('未儲存');
+    expect(runtime.state.errors.status).toBeUndefined();
+    await runtime.updateSettings({
+      autoStart: false,
+      port: 8701,
+      displayDelayMs: 0,
+    });
+    expect(runtime.state.errors['save-settings']).toBeUndefined();
+  });
   async function initializeRuntime() {
     const runtime = await loadRuntime();
     const initialization = runtime.initialize();

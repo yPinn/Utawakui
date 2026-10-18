@@ -61,7 +61,7 @@ describe('Music Analysis settings owner', () => {
     await expect(settings.setAutoAnalyze(false)).resolves.toBe(false);
     expect(settings.autoAnalyze.value).toBe(true);
     expect(settings.preferenceError.value).toBe(
-      '目前無法儲存自動分析設定，請再試一次。',
+      '目前無法儲存自動分析設定，已恢復原設定。',
     );
   });
 
@@ -72,16 +72,15 @@ describe('Music Analysis settings owner', () => {
 
     expect(settings.autoAnalyze.value).toBe(true);
     expect(settings.preferenceError.value).toBe(
-      '目前無法讀取自動分析設定，請重新啟動後再試。',
+      '目前無法讀取自動分析設定，請重新讀取。',
     );
   });
 
-  it('releases the capability progress subscription on disposal', async () => {
+  it('shares the capability subscription across settings wrappers', async () => {
     const { settings, unsubscribe } = createHarness();
     await settings.initialize();
 
-    settings.dispose();
-
-    expect(unsubscribe).toHaveBeenCalledOnce();
+    await settings.initialize();
+    expect(unsubscribe).not.toHaveBeenCalled();
   });
 });

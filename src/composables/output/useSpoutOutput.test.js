@@ -42,6 +42,19 @@ afterEach(() => {
 });
 
 describe('useSpoutOutput', () => {
+  it('does not clear a configuration failure when status refresh succeeds', async () => {
+    bridge.setSpoutOutputFrameRateProfile.mockRejectedValueOnce(
+      new Error('private'),
+    );
+    const { useSpoutOutput } = await loadComposable();
+    const spout = useSpoutOutput();
+    await spout.setFrameRateProfile('reduced');
+    await spout.refresh();
+    expect(spout.state.errors['set-frame-rate-profile']).toContain('幀率');
+    expect(spout.state.errors.refresh).toBeUndefined();
+    await spout.setFrameRateProfile('reduced');
+    expect(spout.state.errors['set-frame-rate-profile']).toBeUndefined();
+  });
   it('refreshes, configures, starts, and stops through fixed bridge methods', async () => {
     const { useSpoutOutput } = await loadComposable();
     const spout = useSpoutOutput();

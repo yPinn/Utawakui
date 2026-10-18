@@ -3,6 +3,20 @@ const GROUPED_INTEGER_FORMATTER = new Intl.NumberFormat('zh-TW', {
   maximumFractionDigits: 0,
 });
 
+export function formatBytes(bytes, includeDecimal = true) {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—';
+  const units = [
+    ['TB', 1024 ** 4],
+    ['GB', 1024 ** 3],
+    ['MB', 1024 ** 2],
+    ['KB', 1024],
+  ];
+  const [unit, divisor] = units.find(([, size]) => bytes >= size) ?? ['B', 1];
+  const value = bytes / divisor;
+  const digits = includeDecimal && value < 100 && value % 1 !== 0 ? 1 : 0;
+  return `${value.toFixed(digits)} ${unit}`;
+}
+
 export function formatGroupedInteger(value, fallback = '—') {
   if (!Number.isFinite(value)) return fallback;
   return GROUPED_INTEGER_FORMATTER.format(Math.trunc(value));

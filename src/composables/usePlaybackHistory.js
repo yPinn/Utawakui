@@ -3,13 +3,20 @@ import { useLibrary } from './useLibrary.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
 import { createPlaybackQualificationTracker } from '../utils/playbackHistoryQualification.js';
+import { useAppNotifications } from './useAppNotifications.js';
 
 const state = reactive({
   entries: [],
   // Main-owned trackId → qualified play count; null until loaded.
   playCounts: null,
   isInitialized: false,
-  error: null,
+  readError: null,
+  updateError: null,
+  isReading: false,
+  isClearing: false,
+  get error() {
+    return this.readError || this.updateError;
+  },
 });
 
 const { tracksById, initialize: initializeLibrary } = useLibrary();
@@ -18,6 +25,7 @@ const { onEnded, onPlaybackProgress } = usePlayer();
 let initializationPromise = null;
 let unsubscribeProgress = null;
 let unsubscribeEnded = null;
+let historyRevision = 0;
 
 const recentItems = computed(() =>
   state.entries
@@ -45,11 +53,14 @@ function currentSourceContext() {
 
 async function recordQualifiedTrack(trackId) {
   if (typeof window === 'undefined' || !window.Utawakui) return;
+  const current = ++historyRevision;
+  state.isReading = false;
   try {
-    state.entries = await window.Utawakui.recordRecentPlayback(
+    const entries = await window.Utawakui.recordRecentPlayback(
       trackId,
       currentSourceContext(),
     );
+    if (current === historyRevision) state.entries = entries;
     // Main counted this same event; mirror it instead of refetching the map.
     if (state.playCounts) {
       state.playCounts = {
@@ -57,9 +68,10 @@ async function recordQualifiedTrack(trackId) {
         [trackId]: (state.playCounts[trackId] ?? 0) + 1,
       };
     }
-    state.error = null;
+    if (current === historyRevision) state.updateError = null;
   } catch {
-    state.error = '最近播放紀錄暫時無法更新。';
+    if (current === historyRevision)
+      state.updateError = '最近播放紀錄暫時無法更新。';
   }
 }
 
@@ -78,6 +90,8 @@ function subscribeToPlayback() {
 
 function initialize() {
   if (initializationPromise) return initializationPromise;
+  const current = ++historyRevision;
+  state.isReading = true;
   initializationPromise = (async () => {
     subscribeToPlayback();
     const bridge =
@@ -94,10 +108,14 @@ function initialize() {
     await initializeLibrary();
     if (bridge) {
       try {
-        state.entries = await historyRequest;
-        state.error = null;
+        const entries = await historyRequest;
+        if (current === historyRevision) {
+          state.entries = entries;
+          state.readError = null;
+        }
       } catch {
-        state.error = '最近播放紀錄暫時無法讀取。';
+        if (current === historyRevision)
+          state.readError = '最近播放紀錄暫時無法讀取。';
       }
     }
     try {
@@ -107,20 +125,63 @@ function initialize() {
       state.playCounts = null;
     }
     state.isInitialized = true;
+    if (current === historyRevision) state.isReading = false;
   })();
   return initializationPromise;
 }
 
-async function clear() {
-  if (typeof window === 'undefined' || !window.Utawakui) {
-    state.entries = [];
-    return;
-  }
+async function refresh() {
+  if (state.isReading || state.isClearing) return false;
+  const current = ++historyRevision;
+  state.isReading = true;
   try {
-    state.entries = await window.Utawakui.clearRecentPlaybackHistory();
-    state.error = null;
+    const entries = await window.Utawakui.getRecentPlaybackHistory();
+    if (current !== historyRevision) return false;
+    if (!Array.isArray(entries))
+      throw new TypeError('invalid playback history');
+    state.entries = entries;
+    state.readError = null;
+    return true;
   } catch {
-    state.error = '最近播放紀錄暫時無法清除。';
+    if (current === historyRevision)
+      state.readError = '最近播放紀錄暫時無法讀取。';
+    return false;
+  } finally {
+    if (current === historyRevision) state.isReading = false;
+  }
+}
+
+async function clear() {
+  if (state.isClearing) return false;
+  const current = ++historyRevision;
+  state.isReading = false;
+  state.isClearing = true;
+  const notifications = useAppNotifications();
+  try {
+    const entries = await window.Utawakui.clearRecentPlaybackHistory();
+    if (!Array.isArray(entries))
+      throw new TypeError('invalid playback history');
+    if (current === historyRevision) {
+      state.entries = entries;
+      state.readError = null;
+      state.updateError = null;
+    }
+    notifications.notify({
+      key: 'playback-history-clear',
+      title: '播放紀錄已清除',
+      message: '播放佇列與歌單已保留。',
+    });
+    return true;
+  } catch {
+    notifications.notify({
+      key: 'playback-history-clear',
+      tone: 'danger',
+      title: '播放紀錄未清除',
+      message: '最近播放紀錄暫時無法清除，請再試一次。',
+    });
+    return false;
+  } finally {
+    state.isClearing = false;
   }
 }
 
@@ -144,6 +205,7 @@ export function usePlaybackHistory() {
     recentItems,
     playCountOf,
     initialize,
+    refresh,
     clear,
     dispose,
   };

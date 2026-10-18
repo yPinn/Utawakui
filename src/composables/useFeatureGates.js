@@ -9,7 +9,11 @@ const state = reactive({
   pendingFeatureId: null,
   isLoading: false,
   isSaving: false,
-  error: '',
+  get error() {
+    return this.confirmError || this.readError;
+  },
+  readError: '',
+  confirmError: '',
 });
 
 let refreshPromise = null;
@@ -55,7 +59,7 @@ function isFeatureEnabled(featureId) {
 
 async function refreshConfirmations() {
   if (!hasBridge()) {
-    state.error = '需要重新啟動應用程式才能使用新版功能啟用確認。';
+    state.readError = '需要重新啟動應用程式才能使用新版功能啟用確認。';
     return state.confirmations;
   }
 
@@ -64,11 +68,11 @@ async function refreshConfirmations() {
     refreshPromise = window.Utawakui.getFeatureConfirmations()
       .then((confirmations) => {
         state.confirmations = normalizeConfirmations(confirmations);
-        state.error = '';
+        state.readError = '';
         return state.confirmations;
       })
       .catch((err) => {
-        state.error = recordError(err, {
+        state.readError = recordError(err, {
           code: 'FEATURE_GATE_LIST_FAILED',
           title: '功能狀態讀取失敗',
           message: '目前無法讀取功能狀態，請再試一次。',
@@ -105,7 +109,7 @@ async function ensureFeatureGate(featureId) {
 
   if (pendingResolve) settlePending(false);
 
-  state.error = '';
+  state.confirmError = '';
   state.pendingFeatureId = featureId;
   return new Promise((resolve) => {
     pendingResolve = resolve;
@@ -136,11 +140,11 @@ function confirmPendingFeature() {
         throw new Error('invalid feature confirmation response');
       }
       state.confirmations[featureId] = confirmation;
-      state.error = '';
+      state.confirmError = '';
       settlePending(true);
       return true;
     } catch (err) {
-      state.error = recordError(err, {
+      state.confirmError = recordError(err, {
         code: 'FEATURE_GATE_CONFIRM_FAILED',
         title: '功能未啟用',
         message: '目前無法啟用這項功能，請再試一次。',
@@ -159,7 +163,7 @@ function confirmPendingFeature() {
 
 function cancelPendingFeature() {
   if (state.isSaving) return;
-  state.error = '';
+  state.confirmError = '';
   settlePending(false);
 }
 

@@ -1,4 +1,4 @@
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 
 const CAPABILITY_STAGE_LABELS = Object.freeze({
   starting: '準備下載',
@@ -36,8 +36,11 @@ function capabilityErrorMessage(operation) {
 
 export function useMusicAnalysisCapability(options = {}) {
   const { state, capability, bridge, isBatchActive = () => false } = options;
+  const readError = shallowRef('');
+  let errorOperation = '';
   let unsubscribeProgress = null;
   let disposed = false;
+  let revision = 0;
 
   const ready = computed(
     () =>
@@ -75,6 +78,7 @@ export function useMusicAnalysisCapability(options = {}) {
         ? { percent: Math.min(100, Math.max(0, payload.percent)) }
         : {}),
     };
+    options.onProgress?.();
   }
 
   function subscribeProgress() {
@@ -84,15 +88,28 @@ export function useMusicAnalysisCapability(options = {}) {
   }
 
   async function refreshStatus() {
+    if (state.capabilityBusy) return capability.value;
+    const current = ++revision;
     if (typeof bridge?.getMusicStructureCapabilityStatus !== 'function') {
       capability.value = unavailableCapability();
+      readError.value = '目前無法讀取分析功能狀態，請重新啟動後再試。';
       return capability.value;
     }
     try {
-      capability.value = await bridge.getMusicStructureCapabilityStatus();
-      state.capabilityError = '';
+      const status = await bridge.getMusicStructureCapabilityStatus();
+      if (!status || typeof status.status !== 'string')
+        throw new TypeError('invalid capability status');
+      if (current !== revision) return capability.value;
+      capability.value = status;
+      readError.value = '';
+      if (errorOperation === 'read') state.capabilityError = '';
     } catch {
-      state.capabilityError = '目前無法讀取分析功能狀態，請重新啟動後再試。';
+      if (current !== revision) return capability.value;
+      readError.value = '目前無法讀取分析功能狀態，請重新讀取。';
+      if (!state.capabilityError || errorOperation === 'read') {
+        state.capabilityError = readError.value;
+        errorOperation = 'read';
+      }
     }
     return capability.value;
   }
@@ -106,16 +123,24 @@ export function useMusicAnalysisCapability(options = {}) {
       return null;
     }
     state.capabilityBusy = true;
-    state.capabilityError = '';
+    revision += 1;
+    subscribeProgress();
     state.capabilityProgress = { stage: 'starting', percent: 0 };
+    options.onActionStart?.(operation);
     try {
       capability.value = await bridge[bridgeMethod]();
+      state.capabilityError = '';
+      readError.value = '';
+      errorOperation = '';
       state.capabilityProgress = capability.value?.installed
         ? { stage: 'ready', percent: 100 }
         : null;
+      options.onActionComplete?.(operation, capability.value);
       return capability.value;
     } catch {
       state.capabilityError = capabilityErrorMessage(operation);
+      errorOperation = operation;
+      options.onActionError?.(operation, state.capabilityError);
       return null;
     } finally {
       state.capabilityBusy = false;
@@ -143,6 +168,10 @@ export function useMusicAnalysisCapability(options = {}) {
   return {
     ready,
     busy,
+    readError,
+    error: computed(() =>
+      errorOperation === 'read' ? '' : state.capabilityError,
+    ),
     progressPercent,
     stageLabel,
     subscribeProgress,

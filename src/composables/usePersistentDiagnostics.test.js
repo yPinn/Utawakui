@@ -13,6 +13,37 @@ async function loadComposable(bridge) {
 }
 
 describe('usePersistentDiagnostics', () => {
+  it('keeps a late pre-clear read from restoring removed records', async () => {
+    let finish;
+    const diagnostics = await loadComposable({
+      listRecentDiagnostics: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      clearDiagnostics: vi.fn().mockResolvedValue({ ok: true }),
+    });
+    const reading = diagnostics.refresh();
+    await diagnostics.clear();
+    finish([{}, {}]);
+    await reading;
+    expect(diagnostics.state.recordCount).toBe(0);
+    expect(diagnostics.state.isLoading).toBe(false);
+  });
+  it('coalesces repeated export requests while a save dialog is open', async () => {
+    let finish;
+    const exportDiagnostics = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const diagnostics = await loadComposable({ exportDiagnostics });
+    const first = diagnostics.exportBundle();
+    const second = diagnostics.exportBundle();
+    expect(exportDiagnostics).toHaveBeenCalledOnce();
+    finish({ ok: true });
+    await Promise.all([first, second]);
+  });
   it('loads only a bounded record count for the non-technical settings summary', async () => {
     const listRecentDiagnostics = vi.fn().mockResolvedValue([
       { id: 'one', message: 'private diagnostic detail' },
@@ -58,8 +89,10 @@ describe('usePersistentDiagnostics', () => {
     await diagnostics.clear();
 
     expect(diagnostics.state.recordCount).toBe(0);
-    expect(diagnostics.state.notice).toMatchObject({
-      severity: 'success',
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(diagnostics.state.notice).toBeNull();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      tone: 'success',
       title: '錯誤紀錄已清除',
       message: '已移除這台電腦上的錯誤紀錄。',
     });
@@ -76,7 +109,9 @@ describe('usePersistentDiagnostics', () => {
 
     await diagnostics.openFolder();
 
-    expect(diagnostics.state.notice).toMatchObject({
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(diagnostics.state.notice).toBeNull();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
       title: '無法開啟錯誤紀錄資料夾',
       message: '請稍後再試一次。',
     });
@@ -91,8 +126,10 @@ describe('usePersistentDiagnostics', () => {
 
     await expect(diagnostics.exportBundle()).resolves.toBe(true);
 
-    expect(diagnostics.state.notice).toMatchObject({
-      severity: 'success',
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(diagnostics.state.notice).toBeNull();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      tone: 'success',
       title: '已匯出錯誤紀錄',
     });
   });
@@ -106,6 +143,26 @@ describe('usePersistentDiagnostics', () => {
     await expect(diagnostics.exportBundle()).resolves.toBe(true);
 
     expect(diagnostics.state.notice).toBeNull();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(useAppNotifications().items.value).toEqual([]);
+  });
+
+  it('does not offer an unconfirmed destructive retry and keeps counts on clear failure', async () => {
+    const diagnostics = await loadComposable({
+      listRecentDiagnostics: vi.fn().mockResolvedValue([{}, {}]),
+      clearDiagnostics: vi.fn().mockResolvedValue({ ok: false }),
+    });
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    await diagnostics.refresh();
+    await diagnostics.clear();
+    expect(diagnostics.state.recordCount).toBe(2);
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      tone: 'danger',
+      title: '無法清除錯誤紀錄',
+    });
+    expect(useAppNotifications().items.value[0]).not.toHaveProperty(
+      'actionLabel',
+    );
   });
 
   it('uses one safe recovery notice when export fails', async () => {
@@ -117,9 +174,33 @@ describe('usePersistentDiagnostics', () => {
 
     await expect(diagnostics.exportBundle()).resolves.toBe(false);
 
-    expect(diagnostics.state.notice).toMatchObject({
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(diagnostics.state.notice).toBeNull();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
       title: '無法匯出錯誤紀錄',
       message: '請稍後再試一次。',
     });
+  });
+
+  it('preserves read failures when exporting and retries only the failed export', async () => {
+    const exportDiagnostics = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValue({ ok: true });
+    const diagnostics = await loadComposable({
+      listRecentDiagnostics: vi.fn().mockRejectedValue(new Error('private')),
+      exportDiagnostics,
+    });
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    await diagnostics.refresh();
+    await diagnostics.exportBundle();
+    await useAppNotifications().runAction(
+      useAppNotifications().items.value[0].id,
+    );
+    expect(exportDiagnostics).toHaveBeenCalledTimes(2);
+    expect(diagnostics.state.notice.title).toBe('無法讀取錯誤紀錄');
+    expect(useAppNotifications().items.value.map(({ title }) => title)).toEqual(
+      ['已匯出錯誤紀錄'],
+    );
   });
 });

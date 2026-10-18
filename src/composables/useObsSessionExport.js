@@ -29,30 +29,41 @@ const clipboard = useClipboardFeedback({
       ? window.Utawakui.copyObsText(value)
       : Promise.reject(new Error('clipboard unavailable')),
   maxLength: CHAPTERS_MAX_COPY_LENGTH,
+  persistError: true,
 });
+let loadRevision = 0;
 
 function hasOutput(kind) {
   return (state.session?.entries ?? []).some((entry) => entry?.[kind]);
 }
 
 async function open() {
+  if (state.isLoading) return;
+  const current = ++loadRevision;
+  clipboard.dispose();
   state.isOpen = true;
   state.isLoading = true;
   state.error = '';
   try {
-    state.session = await obs.getLatestSession();
+    const session = await obs.getLatestSession();
+    if (current !== loadRevision) return;
+    state.session = session;
     if (!hasOutput(state.source)) {
       state.source = hasOutput('record') ? 'record' : 'stream';
     }
   } catch {
+    if (current !== loadRevision) return;
     state.error = '目前無法讀取場次紀錄，請再試一次。';
   } finally {
-    state.isLoading = false;
+    if (current === loadRevision) state.isLoading = false;
   }
 }
 
 function close() {
+  loadRevision += 1;
+  state.isLoading = false;
   state.isOpen = false;
+  clipboard.dispose();
 }
 
 const offsetMs = computed(() => {

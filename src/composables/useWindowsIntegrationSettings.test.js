@@ -64,7 +64,7 @@ describe('Windows integration settings owner', () => {
 
     expect(settings.windowCloseBehavior.value).toBe('ask');
     expect(settings.preferenceError.value).toBe(
-      '目前無法儲存關閉行為，請再試一次。',
+      '目前無法儲存關閉行為，已恢復原設定。',
     );
   });
 
@@ -123,7 +123,7 @@ describe('Windows integration settings owner', () => {
 
     expect(settings.windowCloseBehavior.value).toBe('ask');
     expect(settings.preferenceError.value).toBe(
-      '目前無法讀取關閉行為，請重新啟動後再試。',
+      '目前無法讀取關閉行為，請重新讀取。',
     );
   });
 });

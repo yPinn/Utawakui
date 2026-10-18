@@ -1,4 +1,8 @@
 import { computed, reactive, readonly } from 'vue';
+import { useTaskNotification } from './useTaskNotification.js';
+import { useAppView } from './useAppView.js';
+import { formatDownloadProgress } from '../utils/appUpdateProgress.js';
+import { useSettingsPreference } from './useSettingsPreference.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 const { recordError } = useAppDiagnostics();
@@ -14,6 +18,14 @@ const PHASES = new Set([
   'error',
 ]);
 
+const autoCheck = useSettingsPreference({
+  initialValue: true,
+  read: () => window.Utawakui.getAppUpdateAutoCheck(),
+  write: (enabled) => window.Utawakui.setAppUpdateAutoCheck(enabled),
+  validate: (value) => typeof value === 'boolean',
+  readMessage: '無法讀取自動檢查設定，請重新讀取。',
+  saveMessage: '自動檢查設定未儲存，已恢復原設定。',
+});
 const state = reactive({
   enabled: false,
   phase: 'disabled',
@@ -24,9 +36,30 @@ const state = reactive({
   downloadEtaSeconds: null,
   releaseDate: null,
   error: null,
-  autoCheckEnabled: true,
-  autoCheckBusy: false,
-  autoCheckError: null,
+  get autoCheckEnabled() {
+    return autoCheck.value.value;
+  },
+  get autoCheckBusy() {
+    return autoCheck.busy.value;
+  },
+  get autoCheckError() {
+    return autoCheck.error.value || null;
+  },
+  get autoCheckReadError() {
+    return autoCheck.readError.value;
+  },
+  get autoCheckSaveError() {
+    return autoCheck.saveError.value;
+  },
+  get autoCheckLoaded() {
+    return autoCheck.loaded.value;
+  },
+  get autoCheckReading() {
+    return autoCheck.reading.value;
+  },
+  statusReadError: '',
+  actionError: '',
+  actionOperation: '',
 });
 
 // True whenever the user has something to act on — drives the passive
@@ -37,6 +70,37 @@ const updateReady = computed(
 );
 
 let unsubscribe = null;
+let downloadFeedback = null;
+let downloadRequest = null;
+let statusEventRevision = 0;
+function beginDownloadFeedback() {
+  if (downloadFeedback) return;
+  downloadFeedback = useTaskNotification({
+    key: 'task:app-update',
+    title: 'Utawakui 更新下載中',
+    action: () => useAppView().openSettings('application'),
+  });
+}
+function finishDownloadFeedback(failed = false) {
+  if (!downloadFeedback) return;
+  downloadFeedback.finish(
+    failed
+      ? {
+          title: '更新下載未完成',
+          message: '請檢查網路連線後再試一次。',
+          tone: 'danger',
+          actionLabel: '重試下載',
+          action: downloadAppUpdate,
+        }
+      : {
+          title: '更新已下載，可安裝',
+          message: '安裝會重新啟動 Utawakui，請在適合的時間操作。',
+          actionLabel: '查看更新',
+          action: () => useAppView().openSettings('application'),
+        },
+  );
+  downloadFeedback = null;
+}
 
 function hasBridge(method) {
   return (
@@ -68,29 +132,66 @@ function applyStatus(status) {
     typeof status.error === 'string' && status.error
       ? '更新失敗，請再試一次。'
       : null;
+  if (state.phase === 'downloading') {
+    beginDownloadFeedback();
+    downloadFeedback.progress(formatDownloadProgress(state), state.progress);
+  } else if (state.phase === 'downloaded') finishDownloadFeedback();
+  else if (state.phase === 'error') finishDownloadFeedback(true);
 }
 
 function ensureSubscription() {
   if (unsubscribe || !hasBridge('onAppUpdateStatus')) return;
-  unsubscribe = window.Utawakui.onAppUpdateStatus(applyStatus);
+  unsubscribe = window.Utawakui.onAppUpdateStatus((status) => {
+    statusEventRevision += 1;
+    applyStatus(status);
+  });
 }
 
 async function invoke(method) {
   ensureSubscription();
   if (!hasBridge(method)) {
+    if (method === 'getAppUpdateStatus')
+      state.statusReadError = '無法讀取更新狀態，請重新啟動後再試。';
+    else state.actionError = '請重新啟動 Utawakui 後再試。';
+    if (method === 'downloadAppUpdate') finishDownloadFeedback(true);
     state.error = '請重新啟動 Utawakui 後再試。';
     return;
   }
+  const revision = statusEventRevision;
   try {
-    applyStatus(await window.Utawakui[method]());
+    const status = await window.Utawakui[method]();
+    if (!status || !PHASES.has(status.phase))
+      throw new TypeError('invalid update status');
+    if (revision === statusEventRevision) applyStatus(status);
+    if (method === 'getAppUpdateStatus') state.statusReadError = '';
+    else if (state.actionOperation === method) {
+      state.actionError = '';
+      state.actionOperation = '';
+    }
   } catch (error) {
-    state.error = recordError(error, {
+    // A newer authoritative completion supersedes this request's transport
+    // failure. Do not pair a successful download with an obsolete error.
+    if (
+      revision !== statusEventRevision &&
+      (method === 'getAppUpdateStatus' ||
+        (method === 'downloadAppUpdate' && state.phase === 'downloaded'))
+    )
+      return;
+    if (method === 'downloadAppUpdate') finishDownloadFeedback(true);
+    const message = recordError(error, {
       code: 'APP_UPDATE_ACTION_FAILED',
       title: '更新失敗',
       message: '更新失敗，請再試一次。',
       source: 'app-update',
       operation: method,
     }).message;
+    state.error = message;
+    if (method === 'getAppUpdateStatus')
+      state.statusReadError = '無法讀取更新狀態，請重新讀取。';
+    else {
+      state.actionError = message;
+      state.actionOperation = method;
+    }
   }
 }
 
@@ -103,49 +204,25 @@ function checkForAppUpdate() {
 }
 
 function downloadAppUpdate() {
-  return invoke('downloadAppUpdate');
+  if (downloadRequest) return downloadRequest;
+  if (state.phase === 'downloading') return Promise.resolve();
+  beginDownloadFeedback();
+  downloadRequest = invoke('downloadAppUpdate').finally(() => {
+    downloadRequest = null;
+    if (!['downloading', 'downloaded', 'error'].includes(state.phase)) {
+      downloadFeedback?.discard();
+      downloadFeedback = null;
+    }
+  });
+  return downloadRequest;
 }
 
 function installAppUpdate() {
   return invoke('installAppUpdate');
 }
 
-async function refreshAppUpdateAutoCheck() {
-  if (!hasBridge('getAppUpdateAutoCheck')) return state.autoCheckEnabled;
-  try {
-    state.autoCheckEnabled =
-      (await window.Utawakui.getAppUpdateAutoCheck()) !== false;
-    state.autoCheckError = null;
-  } catch {
-    state.autoCheckError = '無法讀取自動檢查設定。請重新啟動後再試。';
-  }
-  return state.autoCheckEnabled;
-}
-
-async function setAppUpdateAutoCheck(enabled) {
-  if (
-    typeof enabled !== 'boolean' ||
-    state.autoCheckBusy ||
-    !hasBridge('setAppUpdateAutoCheck')
-  ) {
-    return false;
-  }
-  const previous = state.autoCheckEnabled;
-  state.autoCheckEnabled = enabled;
-  state.autoCheckBusy = true;
-  state.autoCheckError = null;
-  try {
-    state.autoCheckEnabled =
-      (await window.Utawakui.setAppUpdateAutoCheck(enabled)) === true;
-    return true;
-  } catch {
-    state.autoCheckEnabled = previous;
-    state.autoCheckError = '請再試一次。';
-    return false;
-  } finally {
-    state.autoCheckBusy = false;
-  }
-}
+const refreshAppUpdateAutoCheck = autoCheck.refresh;
+const setAppUpdateAutoCheck = autoCheck.save;
 
 export function useAppUpdate() {
   ensureSubscription();

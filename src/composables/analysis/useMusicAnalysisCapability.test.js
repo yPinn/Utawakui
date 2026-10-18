@@ -52,7 +52,7 @@ describe('Music Analysis capability owner', () => {
     expect(harness.owner.stageLabel.value).toBe('分析功能需要修復');
     await harness.owner.refreshStatus();
     expect(harness.state.capabilityError).toBe(
-      '目前無法讀取分析功能狀態，請重新啟動後再試。',
+      '目前無法讀取分析功能狀態，請重新讀取。',
     );
 
     harness.capability.value = { status: 'missing' };

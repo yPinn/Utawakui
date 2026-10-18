@@ -1753,6 +1753,51 @@ describe('useImportSession', () => {
       expect(openDownloadDirMock).toHaveBeenCalledOnce();
     });
 
+    it('reports settings folder failures globally without overwriting import status', async () => {
+      const session = await loadImportSession();
+      const { useAppNotifications } = await import('./useAppNotifications.js');
+      getConfigMock.mockRejectedValueOnce(new Error('read failed'));
+      await session.refreshConfig();
+      const priorStatus = session.state.status;
+      for (const [method, bridge] of [
+        ['chooseDownloadDir', chooseDownloadDirMock],
+        ['resetDownloadDir', resetDownloadDirMock],
+        ['openDownloadDir', openDownloadDirMock],
+      ]) {
+        bridge.mockRejectedValueOnce(new Error('E:\\private'));
+        await expect(session[method]({ notifyFailure: true })).resolves.toBe(
+          false,
+        );
+      }
+      expect(useAppNotifications().items.value).toHaveLength(3);
+      expect(session.state.status).toBe(priorStatus);
+      expect(JSON.stringify(useAppNotifications().items.value)).not.toContain(
+        'private',
+      );
+      await useAppNotifications().runAction(
+        useAppNotifications().items.value[2].id,
+      );
+      expect(openDownloadDirMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps cancelled folder selection quiet and surfaces config refresh failure', async () => {
+      const session = await loadImportSession();
+      const { useAppNotifications } = await import('./useAppNotifications.js');
+      await session.chooseDownloadDir({ notifyFailure: true });
+      expect(useAppNotifications().items.value).toEqual([]);
+      getConfigMock.mockRejectedValueOnce(new Error('private'));
+      await expect(
+        session.resetDownloadDir({ notifyFailure: true }),
+      ).resolves.toBe(false);
+      expect(useAppNotifications().items.value[0].title).toBe(
+        '曲庫位置無法讀取',
+      );
+      expect(session.state.configError).toBeTruthy();
+      await session.refreshConfig();
+      expect(session.state.configError).toBe('');
+      expect(useAppNotifications().items.value).toHaveLength(0);
+    });
+
     it('contains download-directory bridge failures', async () => {
       const session = await loadImportSession();
 

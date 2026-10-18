@@ -66,11 +66,13 @@ describe('useFeatureGates', () => {
       'state',
     ]);
     expect(Object.keys(gates.state).sort()).toEqual([
+      'confirmError',
       'confirmations',
       'error',
       'isLoading',
       'isSaving',
       'pendingFeatureId',
+      'readError',
     ]);
     expect(isReadonly(gates.state)).toBe(true);
     expect(gates.pendingFeature.value).toBeNull();

@@ -16,12 +16,22 @@ const state = reactive({
   isStarting: false,
   isStopping: false,
   error: '',
+  errors: {},
 });
 let unsubscribeStatus = null;
+
+function clearFailure(operation) {
+  const message = state.errors[operation];
+  delete state.errors[operation];
+  if (state.error === message) state.error = '';
+}
 
 function applyStatus(status) {
   if (!status || typeof status !== 'object') return;
   state.status = status;
+  if (status.observed?.lifecycle) clearFailure('refresh');
+  if (status.observed?.lifecycle === 'sending') clearFailure('start');
+  if (status.observed?.lifecycle === 'stopped') clearFailure('stop');
 }
 
 function ensureStatusSubscription() {
@@ -37,6 +47,7 @@ function ensureStatusSubscription() {
 
 function setFailure(error, operation, code, message) {
   state.error = message;
+  state.errors[operation] = message;
   const { recordError } = useAppDiagnostics();
   recordError(error, {
     source: 'spout-output',
@@ -54,8 +65,11 @@ export function useSpoutOutput() {
   async function refresh() {
     state.isRefreshing = true;
     try {
-      state.status = await globalThis.window.Utawakui.getSpoutOutputStatus();
-      state.error = '';
+      const status = await globalThis.window.Utawakui.getSpoutOutputStatus();
+      if (!status?.observed?.lifecycle)
+        throw new TypeError('invalid Spout status');
+      applyStatus(status);
+      clearFailure('refresh');
       return true;
     } catch (error) {
       setFailure(
@@ -75,9 +89,9 @@ export function useSpoutOutput() {
       return false;
     }
     state.isStarting = true;
-    state.error = '';
     try {
-      state.status = await globalThis.window.Utawakui.startSpoutOutput();
+      applyStatus(await globalThis.window.Utawakui.startSpoutOutput());
+      clearFailure('start');
       return true;
     } catch (error) {
       setFailure(
@@ -97,9 +111,9 @@ export function useSpoutOutput() {
       return false;
     }
     state.isStopping = true;
-    state.error = '';
     try {
-      state.status = await globalThis.window.Utawakui.stopSpoutOutput();
+      applyStatus(await globalThis.window.Utawakui.stopSpoutOutput());
+      clearFailure('stop');
       return true;
     } catch (error) {
       setFailure(
@@ -124,12 +138,13 @@ export function useSpoutOutput() {
       return false;
     }
     state.isConfiguring = true;
-    state.error = '';
     try {
-      state.status =
+      applyStatus(
         await globalThis.window.Utawakui.setSpoutOutputFrameRateProfile(
           frameRateProfile,
-        );
+        ),
+      );
+      clearFailure('set-frame-rate-profile');
       return true;
     } catch (error) {
       setFailure(

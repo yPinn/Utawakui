@@ -873,6 +873,8 @@ server 分開呈現 liveness、source readiness 與 content/state updates。
 Renderer Output ownership 分成三層：`src/composables/useOutputRuntime.js` 保留唯一
 public singleton facade，負責 status／settings、port recovery、start／stop、slot
 persistence、diagnostics 與初始化組合；
+內部 `src/composables/output/useOutputRuntimeStatus.js` 接收同一 state 與具名 callbacks，
+集中 status normalization、各操作錯誤與 healthy recovery，不建立第二份 state 或持有 IPC；
 `src/composables/output/useOutputProjectionPublisher.js` 負責
 player／queue／lyrics／既有日文 reading／music structure projection、document-before-state
 envelope 排序、continuity／`sourceEpoch`、各 stream

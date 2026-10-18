@@ -20,7 +20,11 @@ const state = reactive({
   notice: null,
   previewPayload: null,
   reportId: null,
+  descriptionError: '',
+  validationAttempt: 0,
 });
+
+let requestRevision = 0;
 
 function bridgeMethod(name) {
   const method = globalThis.window?.Utawakui?.[name];
@@ -48,6 +52,9 @@ function failureNotice({
 // the general Settings entry) should never bleed a stale kind/description
 // into each other.
 function resetDraft({ kind, errorRecord } = {}) {
+  requestRevision += 1;
+  state.descriptionError = '';
+  state.validationAttempt = 0;
   const nextKind = Object.values(FEEDBACK_KINDS).includes(kind)
     ? kind
     : FEEDBACK_KINDS.BUG;
@@ -73,6 +80,8 @@ function openReport(options) {
 }
 
 function closeReport() {
+  requestRevision += 1;
+  state.isLoading = false;
   state.open = false;
 }
 
@@ -81,7 +90,21 @@ function closeReport() {
 // shows a checked box the main process will silently ignore for a
 // non-bug report.
 function updateDraft(patch) {
-  Object.assign(state, patch);
+  if (state.isLoading) return;
+  for (const key of [
+    'kind',
+    'description',
+    'contact',
+    'trackLabel',
+    'includeDiagnostics',
+  ]) {
+    if (Object.hasOwn(patch, key)) state[key] = patch[key];
+  }
+  if (state.validationAttempt)
+    state.descriptionError = state.description.trim()
+      ? ''
+      : '簡短描述你遇到的狀況，才能繼續預覽。';
+  state.previewPayload = null;
   if (patch.kind) {
     state.includeDiagnostics = DIAGNOSTICS_DEFAULT_BY_KIND[patch.kind] ?? false;
   }
@@ -98,15 +121,13 @@ function currentInput() {
 }
 
 async function goToPreview() {
-  if (!state.description.trim()) {
-    state.notice = normalizeAppError(null, {
-      code: 'FEEDBACK_DESCRIPTION_REQUIRED',
-      severity: 'warning',
-      title: '請先填寫說明',
-      message: '簡短描述你遇到的狀況，才能繼續預覽。',
-      source: 'feedback',
-      operation: 'preview',
-    });
+  if (state.isLoading) return false;
+  state.validationAttempt += 1;
+  state.descriptionError = state.description.trim()
+    ? ''
+    : '簡短描述你遇到的狀況，才能繼續預覽。';
+  if (state.descriptionError) {
+    state.notice = null;
     return false;
   }
 
@@ -114,50 +135,59 @@ async function goToPreview() {
   if (!buildPreview) {
     state.notice = failureNotice({
       title: '需要重新啟動',
+      actionLabel: '',
       message: '重新啟動後即可送出回饋。',
       operation: 'preview',
     });
     return false;
   }
 
+  const current = ++requestRevision;
   state.isLoading = true;
   state.notice = null;
   try {
     const result = await buildPreview(currentInput());
+    if (current !== requestRevision) return false;
     if (!result?.ok) throw new Error('feedback preview failed');
     state.previewPayload = result.payload;
     state.step = 'preview';
     return true;
   } catch {
+    if (current !== requestRevision) return false;
     state.notice = failureNotice({
       title: '無法建立預覽',
       operation: 'preview',
     });
     return false;
   } finally {
-    state.isLoading = false;
+    if (current === requestRevision) state.isLoading = false;
   }
 }
 
 function backToCompose() {
+  if (state.isLoading) return;
   state.step = 'compose';
   state.notice = null;
 }
 
 async function submitReport() {
+  if (state.isLoading) return false;
   const submit = bridgeMethod('submitFeedback');
   if (!submit) {
     state.notice = failureNotice({
       title: '需要重新啟動',
+      actionLabel: '',
       operation: 'submit',
     });
     return false;
   }
 
+  const current = ++requestRevision;
   state.isLoading = true;
   state.notice = null;
   try {
     const result = await submit(currentInput());
+    if (current !== requestRevision) return false;
     if (!result?.ok) {
       const message =
         result?.errorCode === 'FEEDBACK_RATE_LIMITED'
@@ -175,6 +205,7 @@ async function submitReport() {
     state.step = 'result';
     return true;
   } catch {
+    if (current !== requestRevision) return false;
     state.notice = failureNotice({
       title: '送出失敗',
       message: '目前無法送出，你可以改成另存成檔案自行傳給開發者。',
@@ -183,11 +214,12 @@ async function submitReport() {
     });
     return false;
   } finally {
-    state.isLoading = false;
+    if (current === requestRevision) state.isLoading = false;
   }
 }
 
 async function exportFallback() {
+  if (state.isLoading) return false;
   const exportFn = bridgeMethod('exportFeedbackFallback');
   if (!exportFn) {
     state.notice = failureNotice({
@@ -197,31 +229,38 @@ async function exportFallback() {
     return false;
   }
 
+  const previousNotice = state.notice;
+  const current = ++requestRevision;
   state.isLoading = true;
   state.notice = null;
   try {
     const result = await exportFn(currentInput());
+    if (current !== requestRevision) return false;
     // A cancelled save dialog is expected control flow, matching
     // usePersistentDiagnostics.js's exportBundle().
-    if (result?.cancelled) return true;
+    if (result?.cancelled) {
+      state.notice = previousNotice;
+      return true;
+    }
     if (!result?.ok) throw new Error('feedback export failed');
     state.notice = normalizeAppError(null, {
       code: 'FEEDBACK_EXPORTED',
       severity: 'success',
       title: '已另存檔案',
-      message: '檔案已儲存在你選擇的位置，你可以自行傳給開發者。',
+      message: '檔案已儲存，尚未傳送；請自行將檔案傳給開發者。',
       source: 'feedback',
       operation: 'export-fallback',
     });
     return true;
   } catch {
+    if (current !== requestRevision) return false;
     state.notice = failureNotice({
       title: '無法另存檔案',
       operation: 'export-fallback',
     });
     return false;
   } finally {
-    state.isLoading = false;
+    if (current === requestRevision) state.isLoading = false;
   }
 }
 

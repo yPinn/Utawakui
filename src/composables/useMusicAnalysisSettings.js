@@ -1,5 +1,6 @@
-import { computed, reactive, shallowRef } from 'vue';
-import { useMusicAnalysisCapability } from './analysis/useMusicAnalysisCapability.js';
+import { useMusicAnalysisCapabilitySession } from './analysis/useMusicAnalysisCapabilitySession.js';
+
+import { useSettingsPreference } from './useSettingsPreference.js';
 
 function resolveBridge(bridge) {
   if (bridge) return bridge;
@@ -9,82 +10,48 @@ function resolveBridge(bridge) {
 
 export function useMusicAnalysisSettings(options = {}) {
   const bridge = resolveBridge(options.bridge);
-  const capability = shallowRef(null);
-  const autoAnalyze = shallowRef(true);
-  const state = reactive({
-    capabilityProgress: null,
-    capabilityBusy: false,
-    capabilityError: '',
-    preferenceBusy: false,
-    preferenceError: '',
-  });
-  const capabilityOwner = useMusicAnalysisCapability({
-    state,
-    capability,
-    bridge,
+  const { capability, owner: capabilityOwner } =
+    useMusicAnalysisCapabilitySession({ bridge });
+  const preference = useSettingsPreference({
+    scope: bridge,
+    key: 'auto-music-analysis',
+    initialValue: true,
+    read: () => bridge.getAutoMusicAnalysis(),
+    write: (value) => bridge.setAutoMusicAnalysis(value),
+    validate: (value) => typeof value === 'boolean',
+    readMessage: '目前無法讀取自動分析設定，請重新讀取。',
+    saveMessage: '目前無法儲存自動分析設定，已恢復原設定。',
   });
   let initialized = false;
-
-  async function refreshPreference() {
-    if (typeof bridge?.getAutoMusicAnalysis !== 'function') {
-      state.preferenceError = '目前無法讀取自動分析設定，請重新啟動後再試。';
-      return autoAnalyze.value;
-    }
-    try {
-      autoAnalyze.value = (await bridge.getAutoMusicAnalysis()) !== false;
-      state.preferenceError = '';
-    } catch {
-      state.preferenceError = '目前無法讀取自動分析設定，請重新啟動後再試。';
-    }
-    return autoAnalyze.value;
-  }
 
   async function initialize() {
     if (!initialized) {
       initialized = true;
       capabilityOwner.subscribeProgress();
     }
-    await Promise.all([capabilityOwner.refreshStatus(), refreshPreference()]);
-  }
-
-  async function setAutoAnalyze(enabled) {
-    if (
-      typeof enabled !== 'boolean' ||
-      state.preferenceBusy ||
-      typeof bridge?.setAutoMusicAnalysis !== 'function'
-    ) {
-      return false;
-    }
-    const previous = autoAnalyze.value;
-    autoAnalyze.value = enabled;
-    state.preferenceBusy = true;
-    state.preferenceError = '';
-    try {
-      autoAnalyze.value = (await bridge.setAutoMusicAnalysis(enabled)) === true;
-      return true;
-    } catch {
-      autoAnalyze.value = previous;
-      state.preferenceError = '目前無法儲存自動分析設定，請再試一次。';
-      return false;
-    } finally {
-      state.preferenceBusy = false;
-    }
+    await Promise.all([capabilityOwner.refreshStatus(), preference.refresh()]);
   }
 
   return {
     capability,
-    autoAnalyze,
+    autoAnalyze: preference.value,
     capabilityBusy: capabilityOwner.busy,
-    capabilityError: computed(() => state.capabilityError),
-    preferenceBusy: computed(() => state.preferenceBusy),
-    preferenceError: computed(() => state.preferenceError),
+    capabilityError: capabilityOwner.error,
+    capabilityReadError: capabilityOwner.readError,
+    refreshCapability: capabilityOwner.refreshStatus,
+    preferenceBusy: preference.busy,
+    preferenceReading: preference.reading,
+    preferenceLoaded: preference.loaded,
+    preferenceReadError: preference.readError,
+    preferenceSaveError: preference.saveError,
+    preferenceError: preference.error,
+    refreshPreference: preference.refresh,
     progressPercent: capabilityOwner.progressPercent,
     stageLabel: capabilityOwner.stageLabel,
     initialize,
-    setAutoAnalyze,
+    setAutoAnalyze: preference.save,
     prepare: capabilityOwner.prepare,
     repair: capabilityOwner.repair,
     remove: capabilityOwner.remove,
-    dispose: capabilityOwner.dispose,
   };
 }

@@ -70,6 +70,52 @@ async function loadFeatureDependencies() {
 }
 
 describe('useFeatureDependencies', () => {
+  it('does not publish a pre-operation read over the completed dependency', async () => {
+    const deferred = createDeferred();
+    listFeatureDependenciesMock.mockReturnValue(deferred.promise);
+    const owner = (
+      await import('./useFeatureDependencies.js')
+    ).useFeatureDependencies();
+    const reading = owner.refreshDependencies();
+    await owner.prepareDependency(DEPENDENCY_ID);
+    const prepared = owner.state.byId[DEPENDENCY_ID];
+    deferred.resolve([]);
+    await reading;
+    expect(owner.state.byId[DEPENDENCY_ID]).toEqual(prepared);
+    expect(owner.state.isLoading).toBe(false);
+  });
+  it('keeps one projection per tool attempt and retries the failed operation', async () => {
+    const pending = createDeferred();
+    repairFeatureDependencyMock.mockImplementationOnce(() => pending.promise);
+    const owner = await loadFeatureDependencies();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    const request = owner.repairDependency(DEPENDENCY_ID);
+    const id = notifications.items.value[0].id;
+    progressCallback({
+      dependencyId: DEPENDENCY_ID,
+      stage: 'downloading',
+      percent: 37,
+    });
+    await owner.prepareDependency(DEPENDENCY_ID);
+    expect(prepareFeatureDependencyMock).not.toHaveBeenCalled();
+    expect(notifications.items.value[0]).toMatchObject({
+      id,
+      progress: 37,
+      message: '下載中',
+    });
+    pending.reject(new Error('private path'));
+    await request;
+    expect(notifications.items.value[0]).toMatchObject({
+      id,
+      tone: 'danger',
+      lifecycle: 'persistent',
+    });
+    await notifications.runAction(id);
+    expect(repairFeatureDependencyMock).toHaveBeenCalledTimes(2);
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0].tone).toBe('success');
+  });
   it('exposes one bounded state owner and subscribes to dependency events', async () => {
     const dependencies = await loadFeatureDependencies();
 
@@ -84,9 +130,11 @@ describe('useFeatureDependencies', () => {
       'actionIds',
       'byId',
       'error',
+      'errorsById',
       'isLoading',
       'preparingIds',
       'progressById',
+      'readError',
     ]);
     expect(updatedCallback).toBeTypeOf('function');
     expect(progressCallback).toBeTypeOf('function');
@@ -294,6 +342,19 @@ describe('useFeatureDependencies', () => {
       expect(dependencies.state.error.message).not.toContain('private.exe');
     },
   );
+
+  it('keeps each tool failure through unrelated refreshes and successful actions', async () => {
+    repairFeatureDependencyMock.mockRejectedValueOnce(new Error('private'));
+    const dependencies = await loadFeatureDependencies();
+    await dependencies.repairDependency(DEPENDENCY_ID);
+    await dependencies.refreshDependencies();
+    await dependencies.prepareDependency('other-model');
+    expect(dependencies.state.errorsById[DEPENDENCY_ID].operation).toBe(
+      'repair',
+    );
+    await dependencies.repairDependency(DEPENDENCY_ID);
+    expect(dependencies.state.errorsById[DEPENDENCY_ID]).toBeUndefined();
+  });
 
   it('reports unavailable optional maintenance bridges without invoking work', async () => {
     delete bridge.removeFeatureDependency;

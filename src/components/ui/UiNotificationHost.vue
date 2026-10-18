@@ -5,6 +5,7 @@ import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import { customLengthPixels } from './floatingPosition.js';
 import UiIconButton from './UiIconButton.vue';
 import UiNotice from './UiNotice.vue';
+import UiProgress from './UiProgress.vue';
 
 const overlayHost = useUiOverlayHost();
 
@@ -12,6 +13,7 @@ const LIFECYCLES = new Set(['persistent', 'progress', 'transient']);
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
+  suspended: { type: Boolean, default: false },
   maxVisible: {
     type: Number,
     default: 3,
@@ -23,13 +25,28 @@ const props = defineProps({
     validator: (value) => ['compact', 'standard'].includes(value),
   },
   ariaLabel: { type: String, default: '通知' },
+  inlineSize: {
+    type: Number,
+    default: null,
+    validator: (value) => Number.isFinite(value) && value > 0,
+  },
 });
+
+const hostStyle = computed(() =>
+  props.inlineSize === null
+    ? null
+    : {
+        '--ui-notification-preferred-inline-size': `${props.inlineSize}px`,
+        '--ui-notification-min-inline-size': `${props.inlineSize}px`,
+        '--ui-notification-max-inline-size': `${props.inlineSize}px`,
+      },
+);
 
 const emit = defineEmits(['action', 'dismiss']);
 const timerState = new Map();
 const swipeState = reactive(new Map());
 const visibleItems = computed(() =>
-  props.items
+  (props.suspended ? [] : props.items)
     .filter(
       (item) =>
         item &&
@@ -37,6 +54,7 @@ const visibleItems = computed(() =>
         item.id !== null &&
         (item.title || item.message),
     )
+    .toSorted((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
     .slice(0, props.maxVisible),
 );
 let mounted = false;
@@ -111,20 +129,33 @@ function ensureTimer(item) {
       timer: undefined,
     };
     timerState.set(item.id, state);
+    schedule(item, state);
+  } else if (state.timer === undefined && state.startedAt === 0) {
+    schedule(item, state);
   }
-  schedule(item, state);
 }
 
 function syncTimers() {
   const visibleIds = new Set(visibleItems.value.map((item) => item.id));
+  const itemsById = new Map(props.items.map((item) => [item.id, item]));
   for (const [id, state] of timerState) {
-    if (!visibleIds.has(id)) {
+    if (!itemsById.has(id)) {
       clearTimer(state);
       timerState.delete(id);
       swipeState.delete(id);
+    } else if (!visibleIds.has(id)) {
+      pause(itemsById.get(id), 'hidden');
+      // Hover/focus cannot survive removal of the visible article.
+      state.paused.delete('pointer');
+      state.paused.delete('focus');
+      swipeState.delete(id);
     }
   }
-  for (const item of visibleItems.value) ensureTimer(item);
+  for (const item of visibleItems.value) {
+    ensureTimer(item);
+    resume(item, 'hidden');
+  }
+  if (mounted && typeof document !== 'undefined') syncDocumentVisibility();
 }
 
 function pause(item, source) {
@@ -225,6 +256,22 @@ function itemStyle(item) {
   return { '--ui-notification-drag-x': `${swipeFor(item).offset}px` };
 }
 
+function freezeLeavePosition(element) {
+  // The shelf is bottom-anchored and shrinks as a row leaves. Preserve its
+  // layout distance from that bottom so the exiting row cannot jump into Player.
+  const inset = Math.max(
+    0,
+    (element.parentNode?.clientHeight ?? 0) -
+      (element.offsetTop ?? 0) -
+      (element.offsetHeight ?? 0),
+  );
+  element.style.insetBlockEnd = `${inset}px`;
+}
+
+function cancelLeavePosition(element) {
+  element.style.insetBlockEnd = '';
+}
+
 watch(
   () =>
     visibleItems.value.map((item) => [
@@ -264,7 +311,11 @@ onBeforeUnmount(() => {
       name="ui-notification"
       appear
       class="ui-notification-host"
+      :style="hostStyle"
+      :hidden="suspended || undefined"
       :aria-label="visibleItems.length ? props.ariaLabel : undefined"
+      @before-leave="freezeLeavePosition"
+      @leave-cancelled="cancelLeavePosition"
     >
       <article
         v-for="item in visibleItems"
@@ -298,7 +349,26 @@ onBeforeUnmount(() => {
           role="presentation"
           aria-live="off"
           @action="emit('action', item.id)"
-        />
+        >
+          <template v-if="lifecycleFor(item) === 'progress'" #details>
+            <div class="ui-notification-host__progress">
+              <UiProgress
+                :label="item.title"
+                label-hidden
+                :value="item.progress ?? 0"
+                :value-text="
+                  Number.isFinite(item.progress)
+                    ? `${Math.round(item.progress)}%`
+                    : ''
+                "
+                :indeterminate="!Number.isFinite(item.progress)"
+              />
+              <span v-if="Number.isFinite(item.progress)" aria-hidden="true"
+                >{{ Math.round(item.progress) }}%</span
+              >
+            </div>
+          </template>
+        </UiNotice>
         <UiIconButton
           v-if="item.dismissible"
           class="ui-notification-host__close"
@@ -313,6 +383,21 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.ui-notification-host[hidden] {
+  display: none;
+}
+
+.ui-notification-host__progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding-block-start: var(--ui-space-1);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-variant-numeric: tabular-nums;
+}
+
 .ui-notification-host {
   position: fixed;
   z-index: var(--ui-z-toast);
@@ -331,6 +416,8 @@ onBeforeUnmount(() => {
     calc(100vw - (2 * var(--ui-notification-safe-inset)))
   );
   display: grid;
+  container-type: inline-size;
+  container-name: ui-notification;
   gap: var(--ui-notification-stack-gap);
   pointer-events: none;
 }
@@ -341,6 +428,9 @@ onBeforeUnmount(() => {
   position: relative;
   min-inline-size: 0;
   max-inline-size: 100%;
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface-raised);
+  opacity: 1;
   pointer-events: auto;
   -webkit-user-select: none;
   user-select: none;
@@ -379,21 +469,18 @@ onBeforeUnmount(() => {
 }
 
 .ui-notification-enter-active {
-  will-change: transform, opacity;
-  transition:
-    opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard),
-    transform var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard);
+  will-change: transform;
+  transition: transform var(--ui-motion-duration-feedback)
+    var(--ui-motion-easing-standard);
 }
 
 .ui-notification-leave-active {
   position: absolute;
   inline-size: 100%;
   pointer-events: none;
-  will-change: transform, opacity;
-  transition:
-    opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
-    transform var(--ui-motion-duration-fast) var(--ui-motion-easing-standard);
+  will-change: transform;
+  transition: transform var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .ui-notification-move {
@@ -404,8 +491,17 @@ onBeforeUnmount(() => {
 .ui-notification-enter-from,
 .ui-notification-leave-to {
   --ui-notification-motion-y: var(--ui-notification-motion-offset);
+}
 
-  opacity: 0;
+@container ui-notification (max-width: 20rem) {
+  .ui-notification-host__item .ui-notification-host__notice {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ui-notification-host__notice :deep(.ui-notice__action) {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
 
 :global(:root[data-ui-motion='reduced'] .ui-notification-host__item) {

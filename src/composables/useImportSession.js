@@ -12,6 +12,8 @@ import { useImportSourceResolution } from './import/useImportSourceResolution.js
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { registerProviderImportActivity } from './usePreparationActivity.js';
+import { useAppNotifications } from './useAppNotifications.js';
+const notifications = useAppNotifications();
 const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
 
@@ -25,6 +27,7 @@ const state = reactive({
   isDefaultDir: true,
   isDownloadDirAvailable: true,
   downloadDirIssue: null,
+  configError: '',
   sourceKind: 'idle', // 'idle' | 'playlist' | 'single' — input source shape
   singleTrack: null,
   singleResolution: null,
@@ -283,50 +286,101 @@ function getTrackStatusClass(track) {
   return track.status || 'pending';
 }
 
-async function refreshConfig() {
+function reportDirectoryFailure(
+  error,
+  operation,
+  message,
+  notifyFailure,
+  action,
+) {
+  reportImportError(error, operation, message);
+  if (notifyFailure) {
+    notifications.notify({
+      key: `library-directory-${operation}`,
+      title:
+        operation === 'read-settings'
+          ? '曲庫位置無法讀取'
+          : '曲庫資料夾操作未完成',
+      message,
+      tone: 'danger',
+      actionLabel: '重試',
+      action,
+    });
+  } else {
+    setStatus(message, 'error');
+  }
+}
+
+async function refreshConfig({ notifyFailure = false } = {}) {
   try {
     const config = await window.Utawakui.getConfig();
     state.downloadDir = config.downloadDir;
     state.isDefaultDir = config.isDefault;
     state.isDownloadDirAvailable = config.available !== false;
     state.downloadDirIssue = config.reason || null;
+    state.configError = '';
+    notifications.clear('library-directory-read-settings');
     return true;
   } catch (error) {
-    reportImportError(error, 'read-settings', '目前無法讀取匯入設定。');
-    setStatus('目前無法讀取匯入設定，請再試一次。', 'error');
+    state.configError = '目前無法讀取曲庫位置，請再試一次。';
+    reportDirectoryFailure(
+      error,
+      'read-settings',
+      '目前無法讀取匯入設定，請再試一次。',
+      notifyFailure,
+      () => refreshConfig({ notifyFailure: true }),
+    );
     return false;
   }
 }
 
-async function chooseDownloadDir() {
+async function chooseDownloadDir({ notifyFailure = false } = {}) {
   try {
     await window.Utawakui.chooseDownloadDir();
-    return refreshConfig();
+    notifications.clear('library-directory-choose-folder');
+    return refreshConfig({ notifyFailure });
   } catch (error) {
-    reportImportError(error, 'choose-folder', '下載資料夾未變更。');
-    setStatus('下載資料夾未變更，請再試一次。', 'error');
+    reportDirectoryFailure(
+      error,
+      'choose-folder',
+      '下載資料夾未變更，請再試一次。',
+      notifyFailure,
+      () => chooseDownloadDir({ notifyFailure: true }),
+    );
     return false;
   }
 }
 
-async function resetDownloadDir() {
+async function resetDownloadDir({ notifyFailure = false } = {}) {
   try {
     await window.Utawakui.resetDownloadDir();
-    return refreshConfig();
+    notifications.clear('library-directory-reset-folder');
+    return refreshConfig({ notifyFailure });
   } catch (error) {
-    reportImportError(error, 'reset-folder', '下載資料夾未重設。');
-    setStatus('下載資料夾未重設，請再試一次。', 'error');
+    reportDirectoryFailure(
+      error,
+      'reset-folder',
+      '下載資料夾未重設，請再試一次。',
+      notifyFailure,
+      () => resetDownloadDir({ notifyFailure: true }),
+    );
     return false;
   }
 }
 
-async function openDownloadDir() {
+async function openDownloadDir({ notifyFailure = false } = {}) {
   try {
     await window.Utawakui.openDownloadDir();
+    notifications.clear('library-directory-open-folder');
     return true;
   } catch (error) {
-    reportImportError(error, 'open-folder', '目前無法開啟下載資料夾。');
-    setStatus('目前無法開啟下載資料夾，請再試一次。', 'error');
+    reportDirectoryFailure(
+      error,
+      'open-folder',
+      '目前無法開啟下載資料夾，請再試一次。',
+      notifyFailure,
+      () => openDownloadDir({ notifyFailure: true }),
+    );
     return false;
   }
 }

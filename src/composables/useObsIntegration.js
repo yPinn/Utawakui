@@ -19,9 +19,11 @@ const state = reactive({
     recording: { active: false, timecode: null, durationMs: null },
   },
   error: null,
+  statusReadError: '',
 });
 
 let unsubscribe = null;
+let statusRevision = 0;
 
 function hasBridge(method) {
   return (
@@ -32,6 +34,8 @@ function hasBridge(method) {
 
 function applyStatus(status) {
   if (!status) return;
+  ++statusRevision;
+  state.statusReadError = '';
   state.desired = { ...state.desired, ...status.desired };
   state.observed = {
     ...state.observed,
@@ -49,11 +53,19 @@ function ensureSubscription() {
 
 async function refreshObsStatus() {
   ensureSubscription();
-  if (!hasBridge('getObsStatus')) return;
+  if (!hasBridge('getObsStatus')) {
+    state.statusReadError = '無法讀取 OBS 連線狀態，請重新啟動後再試。';
+    return;
+  }
+  const current = statusRevision;
   try {
-    applyStatus(await window.Utawakui.getObsStatus());
+    const status = await window.Utawakui.getObsStatus();
+    if (current !== statusRevision) return;
+    if (!status?.observed?.lifecycle) throw new TypeError('invalid OBS status');
+    applyStatus(status);
   } catch {
-    // no-op — state just keeps its last known value.
+    if (current !== statusRevision) return;
+    state.statusReadError = '無法讀取 OBS 連線狀態，請重新讀取。';
   }
 }
 

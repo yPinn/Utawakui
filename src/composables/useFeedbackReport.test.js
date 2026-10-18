@@ -15,6 +15,40 @@ function stubBridge(methods) {
 }
 
 describe('useFeedbackReport', () => {
+  it('keeps description validation on the field and clears it when corrected', async () => {
+    stubBridge({});
+    const feedback = await loadFeedbackReport();
+    feedback.openReport();
+    await feedback.goToPreview();
+    expect(feedback.state.descriptionError).toContain('描述');
+    expect(feedback.state.notice).toBeNull();
+    feedback.updateDraft({ description: '播放時出現雜音' });
+    expect(feedback.state.descriptionError).toBe('');
+  });
+
+  it('ignores a late preview after closing and opening a different report', async () => {
+    let finish;
+    const buildFeedbackPreview = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    stubBridge({ buildFeedbackPreview });
+    const feedback = await loadFeedbackReport();
+    feedback.openReport();
+    feedback.updateDraft({ description: '舊草稿' });
+    const pending = feedback.goToPreview();
+    expect(await feedback.goToPreview()).toBe(false);
+    feedback.closeReport();
+    feedback.openReport();
+    feedback.updateDraft({ description: '新草稿' });
+    finish({ ok: true, payload: { description: '舊草稿' } });
+    await pending;
+    expect(feedback.state.step).toBe('compose');
+    expect(feedback.state.description).toBe('新草稿');
+    expect(feedback.state.previewPayload).toBeNull();
+  });
   it('opens with a fresh bug draft by default', async () => {
     stubBridge({});
     const feedback = await loadFeedbackReport();
@@ -72,9 +106,8 @@ describe('useFeedbackReport', () => {
     const ok = await feedback.goToPreview();
 
     expect(ok).toBe(false);
-    expect(feedback.state.notice).toMatchObject({
-      code: 'FEEDBACK_DESCRIPTION_REQUIRED',
-    });
+    expect(feedback.state.notice).toBeNull();
+    expect(feedback.state.descriptionError).toContain('描述');
     expect(buildFeedbackPreview).not.toHaveBeenCalled();
   });
 
@@ -150,6 +183,21 @@ describe('useFeedbackReport', () => {
 
     expect(feedback.state.notice.message).toContain('送出太多次');
     expect(feedback.state.notice.actionLabel).toBe('另存檔案');
+  });
+
+  it('preserves a submission failure when the fallback save dialog is cancelled', async () => {
+    stubBridge({
+      submitFeedback: vi.fn().mockResolvedValue({ ok: false }),
+      exportFeedbackFallback: vi.fn().mockResolvedValue({ cancelled: true }),
+    });
+    const feedback = await loadFeedbackReport();
+    feedback.openReport();
+    feedback.updateDraft({ description: '播放中斷' });
+    await feedback.submitReport();
+    const notice = feedback.state.notice;
+    await feedback.exportFallback();
+    expect(feedback.state.notice).toEqual(notice);
+    expect(feedback.state.description).toBe('播放中斷');
   });
 
   it('treats a cancelled export-fallback dialog as success with no notice', async () => {

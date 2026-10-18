@@ -34,6 +34,7 @@ const unavailableState = Object.freeze({
   isSavingSettings: false,
   preferenceError: '',
   error: '',
+  errors: Object.freeze({}),
 });
 
 const unavailableRuntime = Object.freeze({

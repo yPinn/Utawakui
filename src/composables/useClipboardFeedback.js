@@ -11,9 +11,11 @@ export function useClipboardFeedback({
   // generated text blob (e.g. a YouTube chapter list) scales with content
   // length rather than being bounded like those.
   maxLength = MAX_COPY_LENGTH,
+  persistError = false,
 } = {}) {
   const state = shallowRef(IDLE_STATE);
   let resetTimer = null;
+  let revision = 0;
 
   function clearPendingReset() {
     if (resetTimer === null) return;
@@ -29,6 +31,7 @@ export function useClipboardFeedback({
   }
 
   async function copy(value, label, messages = {}) {
+    const current = ++revision;
     const successMessage = messages.successMessage ?? `已複製 ${label}`;
     const errorMessage =
       messages.errorMessage ?? `無法複製${label}，請手動選取文字`;
@@ -42,7 +45,7 @@ export function useClipboardFeedback({
         tone: 'error',
         message: errorMessage,
       };
-      resetLater();
+      if (!persistError) resetLater();
       return false;
     }
 
@@ -51,20 +54,23 @@ export function useClipboardFeedback({
         throw new Error('clipboard action unavailable');
       }
       await writeText(value);
+      if (current !== revision) return false;
       state.value = { tone: 'success', message: successMessage };
       resetLater();
       return true;
     } catch {
+      if (current !== revision) return false;
       state.value = {
         tone: 'error',
         message: errorMessage,
       };
-      resetLater();
+      if (!persistError) resetLater();
       return false;
     }
   }
 
   function dispose() {
+    revision += 1;
     clearPendingReset();
     state.value = IDLE_STATE;
   }

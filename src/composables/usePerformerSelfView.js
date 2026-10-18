@@ -4,6 +4,7 @@ import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import { applyPerformerLyricsOffsetIntent } from '../utils/performerOffsetIntent.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { useAppNotifications } from './useAppNotifications.js';
 import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
@@ -25,6 +26,8 @@ const {
 } = useLyrics();
 const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
 const { recordError } = useAppDiagnostics();
+const notifications = useAppNotifications();
+let errorOperation = null;
 
 const state = reactive({
   open: false,
@@ -53,7 +56,8 @@ function bridgeMethod(name) {
 }
 
 function reportPerformerError(error, operation, message) {
-  return recordError(error, {
+  errorOperation = operation;
+  const publicMessage = recordError(error, {
     code: `PERFORMER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
     title: '表演者畫面未完成',
     message,
@@ -61,6 +65,15 @@ function reportPerformerError(error, operation, message) {
     operation,
     context: { retryable: true },
   }).message;
+  notifications.notify({
+    key: 'performer-view',
+    title: '表演者畫面操作未完成',
+    message: publicMessage,
+    tone: 'danger',
+    actionLabel: '重試',
+    action: toggle,
+  });
+  return publicMessage;
 }
 
 function applyStatus(status = {}) {
@@ -159,6 +172,11 @@ const publisher = createLatestAsyncPublisher(
 async function refreshStatus() {
   try {
     applyStatus(await bridgeMethod('getPerformerViewStatus')());
+    if (errorOperation === 'status') {
+      state.error = '';
+      errorOperation = null;
+      notifications.clear('performer-view');
+    }
     return state.open;
   } catch (error) {
     state.error = reportPerformerError(
@@ -175,6 +193,8 @@ async function open() {
   try {
     applyStatus(await bridgeMethod('openPerformerView')(currentSnapshot()));
     state.error = '';
+    errorOperation = null;
+    notifications.clear('performer-view');
     return true;
   } catch (error) {
     state.error = reportPerformerError(
@@ -193,6 +213,8 @@ async function close() {
   try {
     applyStatus(await bridgeMethod('closePerformerView')());
     state.error = '';
+    errorOperation = null;
+    notifications.clear('performer-view');
     return true;
   } catch (error) {
     state.error = reportPerformerError(

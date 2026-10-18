@@ -43,6 +43,57 @@ vi.mock('./usePlayer.js', () => ({
 }));
 
 describe('usePlaybackHistory integration', () => {
+  it('does not restore pre-clear history when initialization returns late', async () => {
+    let finish;
+    window.Utawakui.getRecentPlaybackHistory = () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      });
+    harness.clearRecentPlaybackHistory.mockResolvedValue([]);
+    const history = (
+      await import('./usePlaybackHistory.js')
+    ).usePlaybackHistory();
+    const reading = history.initialize();
+    await Promise.resolve();
+    await history.clear();
+    finish([{ trackId: 'track-a', playedAt: '2026-10-18' }]);
+    await reading;
+    expect(history.state.entries).toEqual([]);
+  });
+  it('can retry reading history without duplicating playback subscriptions', async () => {
+    window.Utawakui.getRecentPlaybackHistory.mockRejectedValueOnce(
+      Error('private'),
+    );
+    const history = (
+      await import('./usePlaybackHistory.js')
+    ).usePlaybackHistory();
+    await history.initialize();
+    expect(history.state.error).toContain('無法讀取');
+    const listener = harness.onProgress;
+    await history.refresh();
+    expect(history.state.error).toBeNull();
+    expect(history.state.entries).toHaveLength(1);
+    expect(harness.onProgress).toBe(listener);
+  });
+  it('notifies once for explicit clearing, and leaves failure details out of the row', async () => {
+    const { usePlaybackHistory } = await import('./usePlaybackHistory.js');
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const history = usePlaybackHistory();
+    harness.clearRecentPlaybackHistory.mockRejectedValueOnce(
+      new Error('private'),
+    );
+    await expect(history.clear()).resolves.toBe(false);
+    expect(history.state.error).toBeNull();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '播放紀錄未清除',
+      tone: 'danger',
+    });
+    harness.clearRecentPlaybackHistory.mockResolvedValueOnce([]);
+    await expect(history.clear()).resolves.toBe(true);
+    expect(history.state.entries).toEqual([]);
+    expect(useAppNotifications().items.value).toHaveLength(1);
+    expect(useAppNotifications().items.value[0].title).toBe('播放紀錄已清除');
+  });
   beforeEach(() => {
     vi.resetModules();
     harness.onEnded = null;

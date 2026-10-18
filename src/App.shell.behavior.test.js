@@ -4,6 +4,13 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./App.vue', import.meta.url), 'utf8');
 
 describe('App shell right Dock', () => {
+  it('owns one notification host outside the switched page content', () => {
+    expect(source.match(/<AppNotificationHost\s*\/>/gu)).toHaveLength(1);
+    expect(source).toContain(
+      "import AppNotificationHost from './components/layout/AppNotificationHost.vue'",
+    );
+    expect(source).not.toContain('shell__notice');
+  });
   it('uses a dedicated dark substrate around the light Folder surface', () => {
     expect(source).toMatch(
       /\.shell\s*\{[^}]*background:\s*var\(--ui-color-shell-substrate\);/su,
@@ -75,7 +82,11 @@ describe('App shell right Dock', () => {
     expect(source).toContain(':performer-active="performerView.state.open"');
     expect(source).toContain(':performer-busy="performerView.state.isOpening"');
     expect(source).toContain('@toggle-performer="performerView.toggle"');
-    expect(source).toContain('@action="performerView.toggle"');
+    const owner = readFileSync(
+      new URL('./composables/usePerformerSelfView.js', import.meta.url),
+      'utf8',
+    );
+    expect(owner).toContain('action: toggle');
   });
 
   it('routes product destinations through Page composition owners', () => {

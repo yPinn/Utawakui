@@ -24,6 +24,38 @@ function trackEntry(overrides = {}) {
 }
 
 describe('useObsSessionExport', () => {
+  it('retains copy failure until close and ignores a late load from a closed modal', async () => {
+    vi.useFakeTimers();
+    const getObsLatestSession = vi
+      .fn()
+      .mockResolvedValue({ entries: [trackEntry()] });
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getObsLatestSession,
+        copyObsText: vi.fn().mockRejectedValue(new Error('private')),
+      },
+    });
+    const owner = await loadExport();
+    await owner.open();
+    await owner.copyChapters();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(owner.copyState.value.tone).toBe('error');
+    owner.close();
+    expect(owner.copyState.value.tone).toBe('idle');
+    let finish;
+    getObsLatestSession.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const request = owner.open();
+    owner.close();
+    finish({ entries: [trackEntry({ title: '過期資料' })] });
+    await request;
+    expect(owner.session.value.entries[0].title).not.toBe('過期資料');
+    vi.useRealTimers();
+  });
   it('open() loads the latest session and projects it into chapters', async () => {
     const session = {
       id: 'sess_1',

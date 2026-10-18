@@ -28,10 +28,10 @@ const title = computed(
   >
     <AppFeatureNoticeDocument v-if="pendingFeature" :feature="pendingFeature">
       <UiNotice
-        v-if="state.error"
+        v-if="state.confirmError"
         tone="danger"
         title="功能未啟用"
-        :message="state.error"
+        :message="state.confirmError"
         compact
       />
     </AppFeatureNoticeDocument>

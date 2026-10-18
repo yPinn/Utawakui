@@ -1,4 +1,8 @@
 import { reactive, readonly } from 'vue';
+import {
+  INITIAL_OUTPUT_STATUS,
+  useOutputRuntimeStatus,
+} from './output/useOutputRuntimeStatus.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
@@ -12,30 +16,6 @@ import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
 import { usePlaylists } from './usePlaylists.js';
 
-const EMPTY_STATUS = Object.freeze({
-  running: false,
-  host: OUTPUT_RUNTIME_VALUES.host,
-  port: OUTPUT_RUNTIME_VALUES.defaultPort,
-  revision: 0,
-  httpUrl: null,
-  wsUrl: null,
-  clients: 0,
-  bootId: null,
-  sourceEpoch: null,
-  desired: {
-    running: false,
-    port: OUTPUT_RUNTIME_VALUES.defaultPort,
-    displayDelayMs: OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
-  },
-  observed: {
-    serviceLifecycle: 'stopped',
-    sourceSynchronization: 'unavailable',
-    unavailableReason: 'renderer_not_connected',
-    clients: 0,
-  },
-  effective: { host: null, port: null, sourceEpoch: null },
-  error: null,
-});
 const { initialize: initializeLibrary } = useLibrary();
 const { initialize: initializePlaylists } = usePlaylists();
 const { initialize: initializeLyrics } = useLyrics();
@@ -48,7 +28,7 @@ const {
 const { recordError } = useAppDiagnostics();
 
 const state = reactive({
-  status: { ...EMPTY_STATUS },
+  status: { ...INITIAL_OUTPUT_STATUS },
   settings: {
     autoStart: true,
     port: OUTPUT_RUNTIME_VALUES.defaultPort,
@@ -66,6 +46,7 @@ const state = reactive({
   isSavingSettings: false,
   preferenceError: '',
   error: '',
+  errors: {},
 });
 
 let initializationPromise = null;
@@ -83,44 +64,12 @@ function technicalErrorMessage(error) {
   return error instanceof Error ? error.message : String(error);
 }
 
-function reportOutputError(error, operation, message) {
-  return recordError(error, {
-    code: `OUTPUT_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-    title: '輸出操作未完成',
-    message,
-    source: 'output',
-    operation,
-    context: { retryable: true },
-  }).message;
-}
-
-function applyStatus(value = {}) {
-  state.status = {
-    ...EMPTY_STATUS,
-    ...value,
-    desired: { ...EMPTY_STATUS.desired, ...value.desired },
-    observed: { ...EMPTY_STATUS.observed, ...value.observed },
-    effective: { ...EMPTY_STATUS.effective, ...value.effective },
-    running: value.running === true,
-  };
-}
-
-async function surfaceStatusError(
-  status,
-  { operation, message, clearWhenHealthy = true },
-) {
-  const statusError = status?.error?.message ?? '';
-  if (statusError) {
-    state.error = reportOutputError(new Error(statusError), operation, message);
-    if (isOutputPortConflict(statusError)) await suggestPorts();
-    else state.suggestedPorts = [];
-    return true;
-  }
-
-  if (clearWhenHealthy) state.error = '';
-  state.suggestedPorts = [];
-  return false;
-}
+const {
+  reportOutputError,
+  clearOutputFailure,
+  applyStatus,
+  surfaceStatusError,
+} = useOutputRuntimeStatus({ state, recordError, suggestPorts });
 
 const preferencesController = createOutputPreferencesController({
   getRecentColors: () => state.preferences.recentColors,
@@ -177,6 +126,7 @@ async function refreshStatus() {
   try {
     const status = await bridgeMethod('getOutputStatus')();
     applyStatus(status);
+    clearOutputFailure('status');
     await surfaceStatusError(status, {
       operation: 'status',
       message: '輸出服務未啟動，請檢查連接埠後再試一次。',
@@ -207,6 +157,7 @@ async function refreshSettings() {
         : OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
     };
     state.error = '';
+    clearOutputFailure('load-settings');
     return state.settings;
   } catch (error) {
     state.error = reportOutputError(
@@ -260,6 +211,12 @@ async function updateSettings(settings) {
     applyStatus(result.status);
     state.suggestedPorts = [];
     state.error = '';
+    clearOutputFailure('save-settings');
+    clearOutputFailure('load-settings');
+    await surfaceStatusError(result.status, {
+      operation: 'save-settings',
+      message: '輸出服務發生異常，請檢查連接埠。',
+    });
     return true;
   } catch (error) {
     const technicalMessage = technicalErrorMessage(error);
@@ -287,7 +244,15 @@ async function start() {
   state.isStarting = true;
   try {
     applyStatus(await bridgeMethod('startOutput')());
+    clearOutputFailure('start');
     state.error = '';
+    if (
+      await surfaceStatusError(state.status, {
+        operation: 'start',
+        message: '輸出服務未啟動，請檢查連接埠。',
+      })
+    )
+      return false;
     state.suggestedPorts = [];
     if (!projectionPublisher.isHandshakeComplete()) {
       await projectionPublisher.publishCurrentProjection();
@@ -312,7 +277,15 @@ async function stop() {
   state.isStopping = true;
   try {
     applyStatus(await bridgeMethod('stopOutput')());
+    clearOutputFailure('stop');
     state.error = '';
+    if (
+      await surfaceStatusError(state.status, {
+        operation: 'stop',
+        message: '輸出服務未停止，請再試一次。',
+      })
+    )
+      return false;
     state.suggestedPorts = [];
     return true;
   } catch (error) {

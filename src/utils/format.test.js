@@ -5,7 +5,21 @@ import {
   formatGroupedInteger,
   formatLongDuration,
   formatAddedDate,
+  formatBytes,
 } from './format.js';
+
+describe('formatBytes', () => {
+  it('shares capacity formatting between settings values and cleanup results', () => {
+    expect(formatBytes(0)).toBe('0 B');
+    expect(formatBytes(8)).toBe('8 B');
+    expect(formatBytes(1536)).toBe('1.5 KB');
+    expect(formatBytes(1536, false)).toBe('2 KB');
+    expect(formatBytes(8 * 1024 ** 3)).toBe('8 GB');
+    expect(formatBytes(1024 ** 4)).toBe('1 TB');
+    expect(formatBytes(-1)).toBe('—');
+    expect(formatBytes(NaN)).toBe('—');
+  });
+});
 
 describe('formatGroupedInteger', () => {
   it('groups integer values every three digits with the product locale', () => {

@@ -1,6 +1,6 @@
 <script>
 // Shared by every UiModal instance in this renderer.
-const openModalStack = [];
+import { openModalStack } from '../../composables/useUiModalStack.js';
 
 function rebaseOpenModalStack() {
   openModalStack.forEach((entry, index) => {

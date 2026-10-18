@@ -1,5 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLibraryStorage } from './useLibraryStorage.js';
+import { useAppNotifications } from './useAppNotifications.js';
+
+beforeEach(() => {
+  const notifications = useAppNotifications();
+  for (const { id } of notifications.items.value) notifications.dismiss(id);
+});
 
 function snapshot(overrides = {}) {
   return {
@@ -62,6 +68,41 @@ function createHarness(overrides = {}) {
 }
 
 describe('library storage settings owner', () => {
+  it('retains one cleanup across remount and rejects stale reads', async () => {
+    let finishRead, finishCleanup;
+    const { bridge, owner } = createHarness({
+      getLibraryStorage: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            finishRead = resolve;
+          }),
+      ),
+      cleanupLibraryStorage: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            finishCleanup = resolve;
+          }),
+      ),
+    });
+    const reading = owner.initialize();
+    const cleaning = owner.cleanup();
+    owner.dispose();
+    const remounted = useLibraryStorage({ bridge });
+    await remounted.initialize();
+    expect(remounted.cleaning.value).toBe(true);
+    await expect(remounted.cleanup()).resolves.toBe(false);
+    finishCleanup(
+      snapshot({ storage: { ...snapshot().storage, separationBytes: 0 } }),
+    );
+    await cleaning;
+    finishRead(snapshot());
+    await reading;
+    expect(remounted.storage.value.separationBytes).toBe(0);
+    expect(remounted.cleaning.value).toBe(false);
+    expect(bridge.cleanupLibraryStorage).toHaveBeenCalledOnce();
+    expect(useAppNotifications().items.value).toHaveLength(1);
+    remounted.dispose();
+  });
   it('loads one snapshot and refreshes after library changes', async () => {
     const { bridge, owner, notifyLibraryUpdated } = createHarness();
 
@@ -106,6 +147,26 @@ describe('library storage settings owner', () => {
       removedCount: 1,
       remainingBytesToFree: 0,
     });
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '去人聲版本已清理',
+      tone: 'success',
+      message: '已釋放 8 B。原始歌曲已保留。',
+    });
+    await owner.refresh();
+    expect(useAppNotifications().items.value).toHaveLength(1);
+  });
+
+  it('reports a no-op cleanup without creating a retained row message', async () => {
+    const { owner } = createHarness({
+      cleanupLibraryStorage: vi
+        .fn()
+        .mockResolvedValue(snapshot({ cleanup: { freedBytes: 0 } })),
+    });
+    await owner.cleanup();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '目前不需清理',
+      lifecycle: 'transient',
+    });
   });
 
   it('uses bounded user copy and releases its library subscription', async () => {
@@ -117,5 +178,46 @@ describe('library storage settings owner', () => {
     expect(owner.error.value).toBe('目前無法讀取曲庫空間。');
     owner.dispose();
     expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
+  it('does not notify for historical cleanup snapshots or policy changes', async () => {
+    const { owner } = createHarness({
+      getLibraryStorage: vi
+        .fn()
+        .mockResolvedValue(snapshot({ cleanup: { freedBytes: 8 } })),
+    });
+    await owner.initialize();
+    await owner.setPolicy(owner.policy.value);
+    expect(useAppNotifications().items.value).toEqual([]);
+  });
+
+  it('keeps a policy failure separate from later successful space reads', async () => {
+    const { owner } = createHarness({
+      setLibraryStoragePolicy: vi.fn().mockRejectedValue(new Error('private')),
+    });
+    await owner.refresh();
+    const originalPolicy = owner.policy.value;
+    await owner.setPolicy({ ...originalPolicy, autoManageSeparation: true });
+    await owner.refresh();
+    expect(owner.readError.value).toBe('');
+    expect(owner.saveError.value).toContain('已保留原設定');
+    expect(owner.policy.value).toEqual(originalPolicy);
+  });
+
+  it('moves cleanup failures out of the row without exposing private errors', async () => {
+    const { owner } = createHarness({
+      cleanupLibraryStorage: vi
+        .fn()
+        .mockRejectedValue(new Error('E:\\private')),
+    });
+    await expect(owner.cleanup()).resolves.toBe(false);
+    expect(owner.error.value).toBe('');
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '去人聲版本未清理',
+      tone: 'danger',
+    });
+    expect(JSON.stringify(useAppNotifications().items.value)).not.toContain(
+      'private',
+    );
   });
 });

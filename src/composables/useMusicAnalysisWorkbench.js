@@ -1,5 +1,5 @@
-import { computed, reactive, readonly, shallowRef } from 'vue';
-import { useMusicAnalysisCapability } from './analysis/useMusicAnalysisCapability.js';
+import { computed, reactive, readonly } from 'vue';
+import { useMusicAnalysisCapabilitySession } from './analysis/useMusicAnalysisCapabilitySession.js';
 import { useMusicAnalysisJob } from './analysis/useMusicAnalysisJob.js';
 import { useLibrary } from './useLibrary.js';
 import { useMusicAnalysisBatch } from './useMusicAnalysisBatch.js';
@@ -26,7 +26,8 @@ export function useMusicAnalysisWorkbench(options = {}) {
     options.signalOwner ??
     createMusicStructureSignals({ bridge: options.bridge });
   const bridge = resolveBridge(options.bridge);
-  const capability = shallowRef(null);
+  const capabilitySession = useMusicAnalysisCapabilitySession({ bridge });
+  const { capability, owner: capabilityOwner } = capabilitySession;
   const state = reactive({
     selectedTrackId: '',
     activeJob: null,
@@ -34,9 +35,15 @@ export function useMusicAnalysisWorkbench(options = {}) {
     phase: 'idle',
     error: '',
     notice: '',
-    capabilityProgress: null,
-    capabilityBusy: false,
-    capabilityError: '',
+    get capabilityProgress() {
+      return capabilitySession.state.capabilityProgress;
+    },
+    get capabilityBusy() {
+      return capabilitySession.state.capabilityBusy;
+    },
+    get capabilityError() {
+      return capabilitySession.state.capabilityError;
+    },
     initialized: false,
   });
 
@@ -57,12 +64,6 @@ export function useMusicAnalysisWorkbench(options = {}) {
   );
   const isBusy = computed(() => state.phase !== 'idle');
   const phaseLabel = computed(() => PHASE_LABELS[state.phase] ?? state.phase);
-  const capabilityOwner = useMusicAnalysisCapability({
-    state,
-    capability,
-    bridge,
-    isBatchActive: () => batch.active.value,
-  });
   const capabilityReady = capabilityOwner.ready;
   const capabilityBusy = capabilityOwner.busy;
   const canAnalyze = computed(
@@ -269,7 +270,6 @@ export function useMusicAnalysisWorkbench(options = {}) {
   function dispose() {
     disposed = true;
     jobOwner.dispose();
-    capabilityOwner.dispose();
     batch.dispose();
   }
 

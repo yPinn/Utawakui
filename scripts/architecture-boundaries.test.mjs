@@ -188,6 +188,12 @@ describe('architecture ownership boundaries', () => {
     expect(runtime).toContain(
       "from './output/useOutputProjectionPublisher.js'",
     );
+    expect(runtime).toContain("from './output/useOutputRuntimeStatus.js'");
+    const status = read('src/composables/output/useOutputRuntimeStatus.js');
+    expect(status).toContain('state.errors[key] = notice.message');
+    expect(status).not.toContain('window.Utawakui');
+    expect(status).not.toContain('startOutput');
+    expect(status).not.toContain('reactive(');
     expect(runtime).not.toContain('projectDynamicOutputState');
     expect(runtime).not.toContain('createLatestAsyncPublisher');
     expect(publisher).toContain('useOutputProjectionPublisher');
@@ -255,7 +261,18 @@ describe('architecture ownership boundaries', () => {
     const job = read('src/composables/analysis/useMusicAnalysisJob.js');
 
     expect(facade.split(/\r?\n/u).length).toBeLessThan(380);
-    expect(facade).toContain("from './analysis/useMusicAnalysisCapability.js'");
+    expect(facade).toContain(
+      "from './analysis/useMusicAnalysisCapabilitySession.js'",
+    );
+    const capabilitySession = read(
+      'src/composables/analysis/useMusicAnalysisCapabilitySession.js',
+    );
+    expect(capabilitySession).toContain(
+      "from './useMusicAnalysisCapability.js'",
+    );
+    expect(capabilitySession).toContain('new WeakMap()');
+    expect(capabilitySession).not.toContain('useMusicAnalysisJob');
+    expect(capabilitySession).not.toContain('useMusicAnalysisBatch');
     expect(facade).toContain("from './analysis/useMusicAnalysisJob.js'");
     expect(facade).not.toContain('CAPABILITY_STAGE_LABELS');
     expect(facade).not.toContain('normalizedProgress');

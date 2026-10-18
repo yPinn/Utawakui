@@ -26,6 +26,27 @@ function readyStatus(overrides = {}) {
 }
 
 describe('useObsIntegration', () => {
+  it('does not let a late read override newer pushed connection state', async () => {
+    let listener, finish;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: (callback) => {
+          listener = callback;
+          return vi.fn();
+        },
+        getObsStatus: () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      },
+    });
+    const obs = await loadObsIntegration();
+    const reading = obs.refreshObsStatus();
+    listener(readyStatus());
+    finish(readyStatus({ observed: { lifecycle: 'disconnected' } }));
+    await reading;
+    expect(obs.state.observed.lifecycle).toBe('ready');
+  });
   it('refreshes from the preload bridge and applies pushed status', async () => {
     let statusListener;
     const unsubscribe = vi.fn();
@@ -87,6 +108,7 @@ describe('useObsIntegration', () => {
 
     await expect(obs.refreshObsStatus()).resolves.toBeUndefined();
     expect(obs.state.observed.lifecycle).toBe('disabled');
+    expect(obs.state.statusReadError).toContain('無法讀取');
   });
 
   it('updateObsSettings forwards to the bridge and applies the returned status', async () => {

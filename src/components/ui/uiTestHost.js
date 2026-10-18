@@ -32,6 +32,9 @@ export function hostNode(type, text = '') {
     props: {},
     children: [],
     parent: null,
+    get ownerDocument() {
+      return globalThis.document;
+    },
     style: {},
     classList: {
       add: (...names) => names.forEach((name) => classNames.add(name)),

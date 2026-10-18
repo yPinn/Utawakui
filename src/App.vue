@@ -21,7 +21,7 @@ import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import BgmPlayer from './components/bgm/BgmPlayer.vue';
-import UiNotice from './components/ui/UiNotice.vue';
+import AppNotificationHost from './components/layout/AppNotificationHost.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import LibraryPage from './pages/LibraryPage.vue';
@@ -532,16 +532,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
       @artwork-activate="toggleMetadataSurface"
       @queue-activate="toggleQueueSurface"
     />
-    <UiNotice
-      v-if="performerView.state.error"
-      class="shell__notice"
-      tone="danger"
-      title="表演者畫面操作未完成"
-      :message="performerView.state.error"
-      action-label="重試"
-      compact
-      @action="performerView.toggle"
-    />
+    <AppNotificationHost />
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
     <AppConfirmationModal />
@@ -766,13 +757,5 @@ useKeyboardShortcuts({ internalViewShortcuts });
 
 .shell__player {
   grid-area: player;
-}
-
-.shell__notice {
-  position: fixed;
-  z-index: var(--ui-z-toast);
-  right: var(--ui-space-4);
-  bottom: calc(var(--ui-player-bar-height) + var(--ui-space-4));
-  max-width: min(30rem, calc(100vw - 2 * var(--ui-space-4)));
 }
 </style>

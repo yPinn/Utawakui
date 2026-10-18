@@ -40,7 +40,7 @@ describe('Separation GPU acceleration settings owner', () => {
     await expect(settings.setGpuAcceleration(false)).resolves.toBe(false);
     expect(settings.gpuAcceleration.value).toBe(true);
     expect(settings.preferenceError.value).toBe(
-      '目前無法儲存 GPU 加速設定，請再試一次。',
+      '目前無法儲存 GPU 加速設定，已恢復原設定。',
     );
   });
 
@@ -53,7 +53,7 @@ describe('Separation GPU acceleration settings owner', () => {
 
     expect(settings.gpuAcceleration.value).toBe(true);
     expect(settings.preferenceError.value).toBe(
-      '目前無法讀取 GPU 加速設定，請重新啟動後再試。',
+      '目前無法讀取 GPU 加速設定，請重新讀取。',
     );
   });
 });

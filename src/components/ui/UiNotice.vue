@@ -72,6 +72,7 @@ const role = computed(() =>
       <p v-if="resolvedMessage" class="ui-notice__message">
         {{ resolvedMessage }}
       </p>
+      <slot name="details" />
     </div>
     <UiButton
       v-if="resolvedActionLabel"

@@ -11,6 +11,103 @@ async function loadAppUpdate() {
 }
 
 describe('useAppUpdate', () => {
+  it('keeps a pushed download completion when the pending request later rejects', async () => {
+    let listener, reject;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onAppUpdateStatus: (callback) => {
+          listener = callback;
+          return vi.fn();
+        },
+        downloadAppUpdate: () =>
+          new Promise((_, fail) => {
+            reject = fail;
+          }),
+      },
+    });
+    const update = await loadAppUpdate();
+    const pending = update.downloadAppUpdate();
+    listener({ phase: 'downloaded', enabled: true });
+    reject(Error('private'));
+    await pending;
+    expect(update.state.phase).toBe('downloaded');
+    expect(update.state.actionError).toBe('');
+    expect(update.state.error).toBeNull();
+  });
+  it('projects one cross-page download through progress and completion without auto-installing or replaying', async () => {
+    let statusListener, finish;
+    const installAppUpdate = vi.fn();
+    const downloadAppUpdate = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onAppUpdateStatus: (listener) => {
+          statusListener = listener;
+          return vi.fn();
+        },
+        downloadAppUpdate,
+        installAppUpdate,
+      },
+    });
+    const update = await loadAppUpdate();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    const request = update.downloadAppUpdate();
+    const duplicate = update.downloadAppUpdate();
+    const id = notifications.items.value[0].id;
+    statusListener({ phase: 'downloading', enabled: true, progress: 61 });
+    expect(notifications.items.value[0]).toMatchObject({
+      id,
+      progress: 61,
+      lifecycle: 'progress',
+    });
+    statusListener({
+      phase: 'downloaded',
+      enabled: true,
+      availableVersion: '0.5.0',
+    });
+    finish({ phase: 'downloading', enabled: true, progress: 0 });
+    await Promise.all([request, duplicate]);
+    expect(update.state.phase).toBe('downloaded');
+    expect(downloadAppUpdate).toHaveBeenCalledOnce();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({
+      id,
+      title: '更新已下載，可安裝',
+      actionLabel: '查看更新',
+    });
+    statusListener({ phase: 'downloaded', enabled: true });
+    expect(notifications.items.value).toHaveLength(1);
+    await notifications.runAction(id);
+    expect(installAppUpdate).not.toHaveBeenCalled();
+    expect(
+      (await import('./useAppView.js')).useAppView().settingsSection.value,
+    ).toBe('application');
+  });
+  it('keeps an action failure visible independently of a successful status read', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getAppUpdateStatus: vi
+          .fn()
+          .mockResolvedValue({ enabled: true, phase: 'idle' }),
+        checkForAppUpdate: vi
+          .fn()
+          .mockRejectedValueOnce(new Error('private'))
+          .mockResolvedValue({ enabled: true, phase: 'not-available' }),
+      },
+    });
+    const update = await loadAppUpdate();
+    await update.checkForAppUpdate();
+    await update.refreshAppUpdateStatus();
+    expect(update.state.statusReadError).toBe('');
+    expect(update.state.actionError).toContain('更新失敗');
+    await update.checkForAppUpdate();
+    expect(update.state.actionError).toBe('');
+  });
   it('loads status and applies main-process status events', async () => {
     let statusListener;
     const unsubscribe = vi.fn();
@@ -113,7 +210,9 @@ describe('useAppUpdate', () => {
 
     await appUpdate.setAppUpdateAutoCheck(false);
     expect(appUpdate.state.autoCheckEnabled).toBe(true);
-    expect(appUpdate.state.autoCheckError).toBe('請再試一次。');
+    expect(appUpdate.state.autoCheckError).toBe(
+      '自動檢查設定未儲存，已恢復原設定。',
+    );
   });
 
   it('routes fixed check, download, and install actions through preload', async () => {

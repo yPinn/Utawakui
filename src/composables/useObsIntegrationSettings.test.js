@@ -22,6 +22,81 @@ function deferred() {
 }
 
 describe('useObsIntegrationSettings', () => {
+  it.each(['success', 'failure'])(
+    'retains a pending save and its %s across page scopes without retaining the password',
+    async (outcome) => {
+      const pending = deferred();
+      const updateObsSettings = vi.fn(() => pending.promise);
+      vi.stubGlobal('window', { Utawakui: { updateObsSettings } });
+      const { effectScope } = await import('vue');
+      const { useObsIntegrationSettings } =
+        await import('./useObsIntegrationSettings.js');
+      const scope = effectScope();
+      const first = scope.run(() => useObsIntegrationSettings());
+      first.password.value = 'private-test-secret';
+      const saving = first.save({ enabled: true });
+      scope.stop();
+      const remounted = useObsIntegrationSettings();
+      expect(remounted.password.value).toBe('');
+      expect(remounted.isSaving.value).toBe(true);
+      await expect(remounted.save({ enabled: false })).resolves.toBe(false);
+      if (outcome === 'failure') pending.reject(Error('private'));
+      else pending.resolve({});
+      await saving;
+      if (outcome === 'failure')
+        expect(remounted.saveError.value).toContain('無法儲存');
+      else expect(remounted.hasStoredPassword.value).toBe(true);
+      expect(remounted.isSaving.value).toBe(false);
+      expect(updateObsSettings).toHaveBeenCalledOnce();
+    },
+  );
+  it('reports every invalid field without replacing a persistent connection fault', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        getObsStatus: vi.fn().mockResolvedValue({
+          desired: { enabled: true },
+          observed: { lifecycle: 'error' },
+          error: { message: '無法連線' },
+        }),
+        getObsSettings: vi
+          .fn()
+          .mockResolvedValue({ host: 'localhost', port: 4455 }),
+        updateObsSettings: vi.fn(),
+      },
+    });
+    const settings = await loadSettings();
+    await settings.refreshSettings();
+    settings.host.value = 'http://bad';
+    settings.port.value = '0';
+    settings.skipThresholdSeconds.value = '-1';
+    expect(await settings.save({ enabled: true })).toBe(false);
+    expect(settings.fieldErrors.value.host).toContain('主機');
+    expect(settings.fieldErrors.value.port).toContain('連接埠');
+    expect(settings.fieldErrors.value.skipThresholdSeconds).toContain('略過');
+    expect(settings.status.error.message).toBeTruthy();
+    settings.port.value = '4455';
+    expect(settings.fieldErrors.value.port).toBe('');
+    expect(settings.fieldErrors.value.host).toBeTruthy();
+    expect(window.Utawakui.updateObsSettings).not.toHaveBeenCalled();
+  });
+
+  it('keeps settings read and password removal failures separate from saving', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        getObsSettings: vi.fn().mockRejectedValue(new Error('private')),
+        clearObsPassword: vi.fn().mockRejectedValue(new Error('private')),
+        updateObsSettings: vi.fn().mockResolvedValue({}),
+      },
+    });
+    const settings = await loadSettings();
+    await settings.refreshSettings();
+    expect(settings.readError.value).toContain('讀取');
+    await settings.clearPassword();
+    expect(settings.passwordError.value).toContain('移除');
+    expect(settings.saveError.value).toBe('');
+  });
   it('loads existing settings and reports whether a password is already stored', async () => {
     vi.stubGlobal('window', {
       Utawakui: {
