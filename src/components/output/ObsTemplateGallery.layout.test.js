@@ -1,5 +1,4 @@
 import { renderToString } from '@vue/server-renderer';
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
@@ -23,20 +22,22 @@ async function renderGallery(empty = false) {
 }
 
 describe('Output Gallery bounded Folder composition', () => {
-  it('uses Caption for operator metadata without changing miniature preview typography', () => {
-    const source = readFileSync(
-      new URL('./ObsTemplateGallery.vue', import.meta.url),
-      'utf8',
+  it('keeps catalogue tiles to static artwork and title while retaining detail copy', async () => {
+    const html = await renderGallery();
+    expect(html).not.toContain('obs-template-thumb__meta');
+    const tiles = [
+      ...html.matchAll(
+        /<button[^>]*class="obs-template-thumb[\s\S]*?<\/button>/gu,
+      ),
+    ];
+    expect(tiles).toHaveLength(1);
+    expect(tiles[0][0]).toContain('obs-template-thumbnail');
+    expect(tiles[0][0]).toContain('obs-template-thumb__name');
+    expect(tiles[0][0]).not.toContain('ui-chip');
+    const preset = getOutputWorkbenchData().templates.find(
+      (item) => item.id === 'queue-board',
     );
-    const metadata = source.match(
-      /\.obs-template-thumb__meta\s*\{([^}]+)\}/u,
-    )?.[1];
-    expect(metadata).toContain('var(--ui-type-caption-size)');
-    expect(metadata).toContain('var(--ui-type-caption-weight)');
-    expect(metadata).toContain('var(--ui-type-caption-line-height)');
-    expect(metadata).not.toContain(
-      '--ui-output-template-thumb-title-font-size',
-    );
+    expect(html).toContain(preset.detail);
   });
 
   it('keeps identity and apply outside the scrolling preview and description', async () => {

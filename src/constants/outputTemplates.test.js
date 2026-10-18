@@ -18,9 +18,7 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'kinetic-pop': '霓彩跳字',
   'ornate-vertical': '華綴直書',
   'manga-frame': '漫畫對白',
-  'focus-line': '聚焦歌詞',
   'art-card': '星染黑膠',
-  'now-next': '浮光光碟',
   'cover-player': '封面播放卡',
 });
 
@@ -68,34 +66,12 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontWeight',
     'furigana',
   ],
-  'focus-line': [
-    'paletteId',
-    'lookAmount',
-    'fontFamily',
-    'fontScale',
-    'fontWeight',
-    'contrastStyle',
-    'surface',
-    'alignment',
-    'spacingDensity',
-    'contentWidth',
-  ],
   'art-card': [
     'paletteId',
     'lookAmount',
     'fontFamily',
     'fontScale',
     'fontWeight',
-  ],
-  'now-next': [
-    'paletteId',
-    'lookAmount',
-    'fontFamily',
-    'fontScale',
-    'fontWeight',
-    'surface',
-    'alignment',
-    'spacingDensity',
   ],
   'cover-player': [
     'paletteId',
@@ -127,6 +103,17 @@ function visibleTemplateCopy(template) {
 }
 
 describe('output template registry', () => {
+  it('does not offer retired templates and uses supported defaults', () => {
+    const data = getOutputWorkbenchData();
+    expect(data.templates.map((template) => template.id)).not.toContain(
+      'focus-line',
+    );
+    expect(data.templates.map((template) => template.id)).not.toContain(
+      'now-next',
+    );
+    expect(data.slotDefaults.lyrics.templateId).toBe('karaoke-stack');
+    expect(data.slotDefaults['now-playing'].templateId).toBe('art-card');
+  });
   it('orders templates by output kind and template order', () => {
     const templates = [
       { id: 'late-lyrics', kind: 'lyrics', order: 90, name: 'Late Lyrics' },
@@ -137,7 +124,7 @@ describe('output template registry', () => {
 
     expect(
       orderOutputTemplates(templates).map((template) => template.id),
-    ).toEqual(['queue', 'focus', 'late-lyrics', 'now']);
+    ).toEqual(['focus', 'late-lyrics', 'queue', 'now']);
   });
 
   it('groups templates without dropping unknown future kinds', () => {
@@ -163,18 +150,18 @@ describe('output template registry', () => {
     const templateIds = new Set(data.templates.map((template) => template.id));
 
     expect(OUTPUT_TEMPLATE_KINDS.map((kind) => kind.id)).toEqual([
-      'setlist',
       'lyrics',
+      'setlist',
       'now-playing',
     ]);
     expect(OUTPUT_TEMPLATE_KINDS.map((kind) => kind.label)).toEqual([
-      '歌單',
       '歌詞',
+      '歌單',
       '播放中',
     ]);
     expect(Object.keys(data.slotDefaults)).toEqual([
-      'setlist',
       'lyrics',
+      'setlist',
       'now-playing',
     ]);
     for (const slot of data.slotDefinitions) {
@@ -185,7 +172,7 @@ describe('output template registry', () => {
     ).toEqual(['left', 'left', 'left']);
     expect(
       Object.values(data.slotDefaults).map((slot) => slot.settings.captureSize),
-    ).toEqual(['large', 'full', 'small']);
+    ).toEqual(['full', 'large', 'small']);
     const kineticFields = data.templates.find(
       (template) => template.id === 'kinetic-pop',
     ).appearanceFields;
@@ -371,7 +358,6 @@ describe('output template registry', () => {
       'kinetic-pop',
       'ornate-vertical',
       'manga-frame',
-      'focus-line',
     ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
@@ -426,7 +412,6 @@ describe('output template registry', () => {
         ]),
       ),
     ).toMatchObject({
-      'focus-line': { id: 'generic-caption', version: 1, available: true },
       'karaoke-stack': { id: 'classic-ktv', version: 1, available: true },
       'kinetic-pop': { id: 'kinetic-pop', version: 1, available: true },
       'ornate-vertical': {
@@ -514,7 +499,6 @@ describe('output template registry', () => {
       })),
     ).toEqual([
       { id: 'art-card', name: '星染黑膠', order: 10 },
-      { id: 'now-next', name: '浮光光碟', order: 20 },
       { id: 'cover-player', name: '封面播放卡', order: 30 },
     ]);
     expect(

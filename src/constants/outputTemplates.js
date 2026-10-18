@@ -49,27 +49,6 @@ export const OUTPUT_PREVIEW_SCENE = deepFreeze({
 
 const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
-    id: 'now-next',
-    kind: 'now-playing',
-    order: 20,
-    name: '浮光光碟',
-    availability: {
-      summary: '不需要封面，即可顯示目前曲目與下一首。',
-    },
-    summary: '光碟反光與歌曲資訊構成的橫向版面。',
-    detail: '左側光碟映出柔和反光，右側並列目前曲目與下一首，適合狹長畫面。',
-    preview: {
-      layoutLabel: '光碟＋曲目',
-      motionLabel: '柔光反射',
-    },
-    tags: ['透明光碟', '橫向資訊', '輕量動態'],
-    settings: [
-      { label: '顯示', value: '目前曲目、下一首' },
-      { label: '密度', value: '緊湊' },
-      { label: '背景', value: '透明／半透明' },
-    ],
-  },
-  {
     id: 'queue-board',
     kind: 'setlist',
     order: 20,
@@ -89,27 +68,6 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
       { label: '密度', value: '易讀' },
       { label: '紀錄', value: '最近八首' },
       { label: '動態', value: '超出時滾動' },
-    ],
-  },
-  {
-    id: 'focus-line',
-    kind: 'lyrics',
-    order: 50,
-    name: '聚焦歌詞',
-    availability: {
-      summary: '只需要目前行與下一行文字。',
-    },
-    summary: '強調目前行，弱化下一行提示。',
-    detail: '目前行置中成為視覺焦點，下一行以低對比預告，適合多數演出。',
-    preview: {
-      layoutLabel: '目前＋下一行',
-      motionLabel: '柔和淡入',
-    },
-    tags: ['當前行', '下一行', '高可讀'],
-    settings: [
-      { label: '顯示', value: '目前行、下一行' },
-      { label: '文字', value: '描邊、陰影、置中' },
-      { label: '切換', value: '淡入淡出' },
     ],
   },
   {

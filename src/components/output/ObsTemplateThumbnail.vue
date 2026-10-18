@@ -1,11 +1,14 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { getOutputTemplateThumbnail } from '../../utils/outputTemplateThumbnails.js';
-import ObsTemplateMockup from './ObsTemplateMockup.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
-  scene: { type: Object, default: () => ({}) },
+  loading: {
+    type: String,
+    default: 'lazy',
+    validator: (value) => ['lazy', 'eager'].includes(value),
+  },
 });
 
 const failedSource = shallowRef(null);
@@ -32,18 +35,12 @@ function markThumbnailFailed() {
       height="720"
       alt=""
       aria-hidden="true"
-      loading="lazy"
+      :loading="loading"
       decoding="async"
       draggable="false"
       @error="markThumbnailFailed"
     />
-    <ObsTemplateMockup
-      v-else
-      :preset="preset"
-      :scene="scene"
-      size="thumbnail"
-      :animated="false"
-    />
+    <span v-else class="obs-template-thumbnail__unavailable">暫無縮圖</span>
   </div>
 </template>
 
@@ -55,6 +52,16 @@ function markThumbnailFailed() {
   aspect-ratio: var(--ui-output-preview-aspect-ratio);
   overflow: hidden;
   border-radius: var(--ui-radius-sm);
+  background: var(--ui-output-preview-canvas);
+}
+
+.obs-template-thumbnail__unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--ui-output-preview-text-muted);
+  font-size: var(--ui-type-caption-size);
 }
 
 .obs-template-thumbnail {

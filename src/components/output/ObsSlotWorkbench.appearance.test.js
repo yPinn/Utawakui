@@ -54,20 +54,6 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ['alignment'],
     ],
     [
-      'now-next',
-      [
-        'paletteId',
-        'lookAmount',
-        'fontFamily',
-        'fontScale',
-        'fontWeight',
-        'alignment',
-        'surface',
-        'spacingDensity',
-      ],
-      [],
-    ],
-    [
       'art-card',
       ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
       ['alignment', 'surface'],

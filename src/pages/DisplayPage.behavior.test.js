@@ -1,10 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import DisplayPage from './DisplayPage.vue';
 import { useOutputWorkspaceNavigation } from '../composables/useOutputWorkspaceNavigation.js';
+import { OUTPUT_SLOT_DEFINITIONS } from '../constants/outputTemplates.js';
 
-const outputKindIds = ['setlist', 'lyrics', 'now-playing'];
+const outputKindIds = OUTPUT_SLOT_DEFINITIONS.map((slot) => slot.id);
+const defaultKind = outputKindIds[0];
+
+beforeEach(() => {
+  const navigation = useOutputWorkspaceNavigation();
+  navigation.selectPage('workbench');
+  navigation.selectKind(defaultKind, outputKindIds);
+});
 
 function renderDisplayPage() {
   return renderToString(
@@ -32,9 +40,9 @@ describe('DisplayPage', () => {
 
   it('renders three output categories while keeping one template grid active', async () => {
     const html = await renderDisplayPage();
-    const setlistOption = html.indexOf('歌單');
-    const lyricsOption = html.indexOf('歌詞');
-    const nowPlayingOption = html.indexOf('播放中');
+    const renderedKindIds = [
+      ...html.matchAll(/id="output-kind-([^"\s]+)-tab"/gu),
+    ].map((match) => match[1]);
 
     expect(html).toContain('模板庫');
     expect(html).toContain('工作台');
@@ -45,21 +53,26 @@ describe('DisplayPage', () => {
     expect(html).toContain('歌單');
     expect(html).toContain('歌詞');
     expect(html).toContain('aria-label="輸出畫面"');
-    expect(setlistOption).toBeGreaterThan(-1);
-    expect(setlistOption).toBeLessThan(lyricsOption);
-    expect(lyricsOption).toBeLessThan(nowPlayingOption);
+    expect(renderedKindIds).toEqual(outputKindIds);
     expect(html).not.toContain('>封面</button>');
     expect(html).toMatch(
-      /id="output-kind-setlist-tab"[^>]*aria-selected="true"/,
+      new RegExp(
+        `id="output-kind-${defaultKind}-tab"[^>]*aria-selected="true"`,
+        'u',
+      ),
     );
-    expect(html).toContain('黑幕歌單');
+    expect(html).toContain('經典伴唱');
+    expect(
+      html.match(/class="[^"\n]*\bobs-template-gallery__grid\b[^"\n]*"/gu),
+    ).toHaveLength(1);
     expect(html).not.toContain('聚焦歌詞');
   });
 
   it('reopens the last page and kind selected during this renderer session', async () => {
     const navigation = useOutputWorkspaceNavigation();
+    const rememberedKind = outputKindIds.at(-1);
     navigation.selectPage('gallery');
-    navigation.selectKind('lyrics', outputKindIds);
+    navigation.selectKind(rememberedKind, outputKindIds);
 
     try {
       const html = await renderDisplayPage();
@@ -68,11 +81,14 @@ describe('DisplayPage', () => {
         /aria-checked="true"[^>]*><span class="ui-segmented-control__label"[^>]*><!--\[-->模板庫/,
       );
       expect(html).toMatch(
-        /id="output-kind-lyrics-tab"[^>]*aria-selected="true"/,
+        new RegExp(
+          `id="output-kind-${rememberedKind}-tab"[^>]*aria-selected="true"`,
+          'u',
+        ),
       );
     } finally {
       navigation.selectPage('workbench');
-      navigation.selectKind('setlist', outputKindIds);
+      navigation.selectKind(defaultKind, outputKindIds);
     }
   });
 });

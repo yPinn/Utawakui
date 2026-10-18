@@ -239,7 +239,16 @@ Escape 返回 trigger，非 modal Tab 仍可離開。逐字校時入口與草稿
 同樣使用 workspace mode；Workbench stage／inspector 與 Gallery grid／detail
 各自擁有 bounded scroll。Workbench 的 Widget 尺寸由 preview option caption 單一表達，Lyrics
 固定尺寸留在 preview footer；inspector 只保留模板 identity、短暫 save feedback、
-error 與實際設定，模板描述留在 Gallery。Lyrics preview 以可用寬、高較小者縮放完整 16:9 畫布；
+error 與實際設定，模板描述留在 Gallery。Gallery 的縮圖與選中預覽預設只讀取 bundled 圖片；
+缺圖不建立 live mockup。`ObsTemplatePreviewStage` 擁有單一預覽生命週期，滑鼠停留 250ms
+或明確播放後才動態匯入 `ObsTemplateMockup`；離開 hover、切換模板與卸載都使 pending
+結果失效。手動播放可持續至暫停或切換，觸控與 reduced-motion 不觸發 hover 自動播放。
+Gallery 的靜態／動態層共用固定 16:9 frame，Widget capture 在其中 letterbox；Workbench
+仍使用實際輸出尺寸。Template allowlist 不再包含 `focus-line`／`now-next`；舊 slot
+讀取時由既有 normalization 回退為 Lyrics 的 `karaoke-stack` 與 Now Playing 的
+`art-card`，新套用仍須通過同一 allowlist。純 presentation／appearance helpers 保留舊
+ID 的相容解析，不使它們重新成為可選或可套用模板。
+Lyrics preview 以可用寬、高較小者縮放完整 16:9 畫布；
 inspection composition 依 runtime 狀態維持單一 owner：服務未啟動時由控制台 frame 繪製，live
 cross-origin iframe 存在時由 iframe 內的 bounded Workbench query 繪製人物參考與
 checker／dark／light；copied route 不帶這些參數；

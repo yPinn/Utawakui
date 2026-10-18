@@ -24,6 +24,30 @@ describe('outputSlots', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
+  it('replaces retired saved templates and rejects selecting them again', () => {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 4,
+        slots: {
+          lyrics: { templateId: 'focus-line', settings: {} },
+          'now-playing': { templateId: 'now-next', settings: {} },
+        },
+      }),
+    );
+    const loaded = loadOutputSlots(dir);
+    expect(loaded.slots.lyrics.templateId).toBe('karaoke-stack');
+    expect(loaded.slots['now-playing'].templateId).toBe('art-card');
+    for (const [kind, templateId] of [
+      ['lyrics', 'focus-line'],
+      ['now-playing', 'now-next'],
+    ]) {
+      expect(() =>
+        upsertOutputSlot(dir, kind, { templateId, settings: {} }),
+      ).toThrow();
+    }
+  });
+
   it('returns an empty v4 document when overlays.json is missing', () => {
     const document = loadOutputSlots(dir);
     expect(document.version).toBe(4);
@@ -32,11 +56,11 @@ describe('outputSlots', () => {
       savedColors: [],
     });
     expect(Object.keys(document.slots)).toEqual([
-      'setlist',
       'lyrics',
+      'setlist',
       'now-playing',
     ]);
-    expect(document.slots.lyrics.templateId).toBe('focus-line');
+    expect(document.slots.lyrics.templateId).toBe('karaoke-stack');
     expect(document.slots).toMatchObject({
       'now-playing': { settings: { captureSize: 'small' } },
       setlist: { settings: { captureSize: 'large' } },
@@ -48,13 +72,13 @@ describe('outputSlots', () => {
     const saved = saveOutputSlots(dir, {
       slots: {
         'now-playing': {
-          templateId: 'now-next',
+          templateId: 'art-card',
           styleSetIds: ['runtime-source'],
           settings: { alignment: 'left', showArtist: true },
           machinePath: 'C:\\Users\\User\\secret.css',
         },
         lyrics: {
-          templateId: 'focus-line',
+          templateId: 'karaoke-stack',
           styleSetIds: ['lyrics-type', 'lyrics-type'],
           settings: {
             fontFamily: 'serif',
@@ -69,12 +93,12 @@ describe('outputSlots', () => {
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
-          templateId: 'now-next',
+          templateId: 'art-card',
           styleSetIds: ['runtime-source'],
           settings: { alignment: 'left', showArtist: true },
         },
         lyrics: {
-          templateId: 'focus-line',
+          templateId: 'karaoke-stack',
           styleSetIds: ['lyrics-type'],
           settings: { fontFamily: 'serif' },
         },
@@ -92,8 +116,8 @@ describe('outputSlots', () => {
         version: 1,
         selectedProfileId: 'lyrics-alt',
         profiles: [
-          { id: 'now-main', templateId: 'now-next', settings: {} },
-          { id: 'lyrics-main', templateId: 'focus-line', settings: {} },
+          { id: 'now-main', templateId: 'art-card', settings: {} },
+          { id: 'lyrics-main', templateId: 'karaoke-stack', settings: {} },
           {
             id: 'lyrics-alt',
             templateId: 'karaoke-stack',
@@ -109,7 +133,7 @@ describe('outputSlots', () => {
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
-          templateId: 'now-next',
+          templateId: 'art-card',
           styleSetIds: [],
           settings: {},
         },
@@ -175,7 +199,7 @@ describe('outputSlots', () => {
             settings: { fontFamily: 'serif', captureSize: 'full' },
           },
           'now-playing': {
-            templateId: 'now-next',
+            templateId: 'art-card',
             settings: { fontFamily: 'serif', captureSize: 'small' },
           },
         },
@@ -215,11 +239,11 @@ describe('outputSlots', () => {
   it('upserts only the addressed kind and rejects cross-kind templates', () => {
     setOutputRecentColors(dir, ['#112233']);
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'focus-line',
+      templateId: 'karaoke-stack',
       settings: { alignment: 'center' },
     });
     upsertOutputSlot(dir, 'now-playing', {
-      templateId: 'now-next',
+      templateId: 'art-card',
       settings: { alignment: 'left' },
     });
     upsertOutputSlot(dir, 'lyrics', {
@@ -229,7 +253,7 @@ describe('outputSlots', () => {
 
     expect(loadOutputSlots(dir).slots).toMatchObject({
       'now-playing': {
-        templateId: 'now-next',
+        templateId: 'art-card',
         settings: { alignment: 'left' },
       },
       lyrics: {
@@ -258,7 +282,7 @@ describe('outputSlots', () => {
       '#445566',
     ]);
     expect(loadOutputSlots(dir)).toEqual(saved);
-    expect(saved.slots.lyrics.templateId).toBe('focus-line');
+    expect(saved.slots.lyrics.templateId).toBe('karaoke-stack');
   });
 
   it('persists a bounded saved palette without changing recent colors or slots', () => {
@@ -276,7 +300,7 @@ describe('outputSlots', () => {
       savedColors: ['#aabbcc', '#445566'],
     });
     expect(loadOutputSlots(dir)).toEqual(saved);
-    expect(saved.slots.lyrics.templateId).toBe('focus-line');
+    expect(saved.slots.lyrics.templateId).toBe('karaoke-stack');
   });
 
   it('round-trips bundled Lyrics template ids with appearance settings', () => {
@@ -306,7 +330,7 @@ describe('outputSlots', () => {
 
     expect(() =>
       upsertOutputSlot(dir, 'lyrics', {
-        templateId: 'focus-line',
+        templateId: 'karaoke-stack',
         settings: {},
       }),
     ).not.toThrow();
@@ -340,7 +364,7 @@ describe('outputSlots', () => {
     );
 
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'focus-line',
+      templateId: 'karaoke-stack',
       settings: { fontFamily: localFont, captureSize: 'full' },
     });
     expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
@@ -373,7 +397,7 @@ describe('outputSlots', () => {
     );
 
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'focus-line',
+      templateId: 'karaoke-stack',
       settings: {
         lyricsPresentationPolicyId: 'literal',
         captureSize: 'full',
@@ -451,7 +475,7 @@ describe('outputSlots', () => {
 
   it('persists widget capture sizes and normalizes invalid or Lyrics values', () => {
     upsertOutputSlot(dir, 'now-playing', {
-      templateId: 'now-next',
+      templateId: 'art-card',
       settings: { captureSize: 'medium' },
     });
     upsertOutputSlot(dir, 'now-playing', {
@@ -463,7 +487,7 @@ describe('outputSlots', () => {
       settings: { captureSize: 'medium' },
     });
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'focus-line',
+      templateId: 'karaoke-stack',
       settings: { captureSize: 'small' },
     });
 
@@ -476,7 +500,7 @@ describe('outputSlots', () => {
 
   it('backs up corrupted documents and refuses newer versions', () => {
     fs.writeFileSync(filePath, '{ invalid json');
-    expect(loadOutputSlots(dir).slots.lyrics.templateId).toBe('focus-line');
+    expect(loadOutputSlots(dir).slots.lyrics.templateId).toBe('karaoke-stack');
     expect(
       fs
         .readdirSync(dir)

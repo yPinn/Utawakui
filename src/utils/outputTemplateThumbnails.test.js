@@ -3,8 +3,14 @@ import {
   buildOutputTemplateThumbnailRegistry,
   getOutputTemplateThumbnail,
 } from './outputTemplateThumbnails.js';
+import { OUTPUT_TEMPLATES } from '../constants/outputTemplates.js';
 
 describe('bundled output template thumbnails', () => {
+  it('supplies a static asset for every registered template', () => {
+    for (const preset of OUTPUT_TEMPLATES) {
+      expect(getOutputTemplateThumbnail(preset.id), preset.id).toBeTruthy();
+    }
+  });
   it('keys Vite asset URLs by the existing template id filename', () => {
     const registry = buildOutputTemplateThumbnailRegistry({
       '../assets/output-template-thumbnails/focus-line.webp':

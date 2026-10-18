@@ -2,6 +2,13 @@
   "version": 1,
   "slots": [
     {
+      "id": "lyrics",
+      "label": "歌詞",
+      "path": "/overlay/lyrics",
+      "defaultTemplateId": "karaoke-stack",
+      "defaultStyleSetIds": ["runtime-source", "lyrics-type"]
+    },
+    {
       "id": "setlist",
       "label": "歌單",
       "path": "/overlay/setlist",
@@ -9,24 +16,15 @@
       "defaultStyleSetIds": ["runtime-source", "setlist-layout"]
     },
     {
-      "id": "lyrics",
-      "label": "歌詞",
-      "path": "/overlay/lyrics",
-      "defaultTemplateId": "focus-line",
-      "defaultStyleSetIds": ["runtime-source", "lyrics-type"]
-    },
-    {
       "id": "now-playing",
       "label": "播放中",
       "path": "/overlay/now-playing",
-      "defaultTemplateId": "now-next",
+      "defaultTemplateId": "art-card",
       "defaultStyleSetIds": ["runtime-source"]
     }
   ],
   "templateKinds": {
-    "now-next": "now-playing",
     "queue-board": "setlist",
-    "focus-line": "lyrics",
     "karaoke-stack": "lyrics",
     "kinetic-pop": "lyrics",
     "ornate-vertical": "lyrics",
@@ -36,15 +34,37 @@
     "cover-player": "now-playing"
   },
   "templateCaptureSizes": {
-    "now-next": { "default": "small", "supported": ["small"] },
-    "queue-board": { "default": "large", "supported": ["large"] },
-    "focus-line": { "default": "full", "supported": ["full"] },
-    "karaoke-stack": { "default": "full", "supported": ["full"] },
-    "kinetic-pop": { "default": "full", "supported": ["full"] },
-    "ornate-vertical": { "default": "full", "supported": ["full"] },
-    "live-stage": { "default": "full", "supported": ["full"] },
-    "manga-frame": { "default": "full", "supported": ["full"] },
-    "art-card": { "default": "small", "supported": ["small"] },
-    "cover-player": { "default": "medium", "supported": ["medium"] }
+    "queue-board": {
+      "default": "large",
+      "supported": ["large"]
+    },
+    "karaoke-stack": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "kinetic-pop": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "ornate-vertical": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "live-stage": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "manga-frame": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "art-card": {
+      "default": "small",
+      "supported": ["small"]
+    },
+    "cover-player": {
+      "default": "medium",
+      "supported": ["medium"]
+    }
   }
 }

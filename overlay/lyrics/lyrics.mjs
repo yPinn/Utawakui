@@ -1769,6 +1769,7 @@ function boot() {
   });
   if (previewMode) {
     renderLyricsFrameSafely(elements, PREVIEW_FRAME, {
+      templateId: 'karaoke-stack',
       gsap,
       reportError,
       reducedMotion: true,
@@ -1776,6 +1777,7 @@ function boot() {
     });
   }
   frameScheduler = createLyricsFrameScheduler({
+    templateId: 'karaoke-stack',
     onFrame: (frame) => {
       const visibleFrame = withPreviewFallback(
         frame,
@@ -1798,7 +1800,7 @@ function boot() {
         kineticMaterial: normalizeOverlayAppearance(slot?.settings)
           .kineticMaterial,
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
-        templateId: slot?.templateId,
+        templateId: slot?.templateId ?? 'karaoke-stack',
       });
     },
     onSnapshot: (snapshot) => frameScheduler.update(snapshot),

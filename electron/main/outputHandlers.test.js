@@ -130,14 +130,14 @@ describe('output handlers', () => {
       version: 4,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
-        'now-playing': { templateId: 'now-next' },
+        'now-playing': { templateId: 'art-card' },
         setlist: { templateId: 'queue-board' },
-        lyrics: { templateId: 'focus-line' },
+        lyrics: { templateId: 'karaoke-stack' },
       },
     });
 
     await ipcMain.handlers.get('output-slots:upsert')(null, 'lyrics', {
-      templateId: 'focus-line',
+      templateId: 'karaoke-stack',
       styleSetIds: ['lyrics-type'],
       settings: { alignment: 'center' },
       machinePath: 'C:\\secret.css',
@@ -158,7 +158,7 @@ describe('output handlers', () => {
         settings: { alignment: 'left' },
       },
       lyrics: {
-        templateId: 'focus-line',
+        templateId: 'karaoke-stack',
         styleSetIds: ['lyrics-type'],
         settings: { alignment: 'center' },
       },

@@ -78,11 +78,6 @@ const filteredTemplates = computed(() => {
   );
 });
 
-// Plain availability is the default; only surface exceptions such as 建議 or 尚未提供.
-function showsAvailability(preset) {
-  return Boolean(preset.availability) && preset.availability.label !== '可用';
-}
-
 function selectPreset(id) {
   emit('update:selectedPresetId', id);
 }
@@ -152,30 +147,16 @@ function applyPreset(preset) {
                   @click="selectPreset(preset.id)"
                   @dblclick="applyPreset(preset)"
                 >
-                  <ObsTemplateThumbnail
-                    :preset="preset"
-                    :scene="previewScene"
-                  />
+                  <ObsTemplateThumbnail :preset="preset" />
                   <div class="obs-template-thumb__body">
                     <span class="obs-template-thumb__name">
                       {{ preset.name }}
                     </span>
-                    <UiChip
-                      v-if="showsAvailability(preset)"
-                      :tone="preset.availability.tone ?? 'muted'"
-                    >
-                      {{ preset.availability.label }}
-                    </UiChip>
                     <Check
                       v-if="preset.id === appliedPresetIds[preset.kind]"
                       :size="ICON_SIZE"
                       aria-label="已套用"
                     />
-                  </div>
-                  <div class="obs-template-thumb__meta">
-                    <span>{{ preset.preview.layoutLabel }}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{{ preset.preview.motionLabel }}</span>
                   </div>
                 </button>
               </template>
@@ -291,7 +272,7 @@ function applyPreset(preset) {
     minmax(min(100%, var(--ui-output-gallery-tile-min-width)), 1fr)
   );
   align-content: start;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-3);
   min-width: 0;
 }
 
@@ -299,10 +280,10 @@ function applyPreset(preset) {
   min-width: 0;
   min-height: var(--ui-output-template-thumb-min-height);
   display: grid;
-  grid-template-rows: auto minmax(var(--ui-control-height), auto) auto;
+  grid-template-rows: auto minmax(var(--ui-control-height), auto);
   align-content: start;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2);
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface);
@@ -328,7 +309,6 @@ function applyPreset(preset) {
 }
 
 .obs-template-thumb__body,
-.obs-template-thumb__meta,
 .obs-template-gallery__heading,
 .obs-template-gallery__tags,
 .obs-template-gallery__actions {
@@ -340,21 +320,7 @@ function applyPreset(preset) {
   flex: 1;
   gap: var(--ui-space-2);
   min-width: 0;
-}
-
-.obs-template-thumb__meta {
-  gap: var(--ui-space-1);
-  min-width: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-  white-space: nowrap;
-}
-
-.obs-template-thumb__meta > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding-inline: var(--ui-space-2);
 }
 
 .obs-template-thumb__name {
@@ -362,9 +328,9 @@ function applyPreset(preset) {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-label-size);
+  font-size: var(--ui-type-body-size);
   font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
+  line-height: var(--ui-type-body-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

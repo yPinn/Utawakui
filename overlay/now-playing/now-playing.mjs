@@ -14,11 +14,7 @@ import {
 } from './artworkLayout.mjs';
 import { createArtworkMotionController } from './artworkMotion.mjs';
 
-const NOW_PLAYING_TEMPLATE_IDS = new Set([
-  'now-next',
-  'art-card',
-  'cover-player',
-]);
+const NOW_PLAYING_TEMPLATE_IDS = new Set(['art-card', 'cover-player']);
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
@@ -47,7 +43,7 @@ const EMPTY_FRAME = Object.freeze({
 });
 
 export function normalizeNowPlayingTemplateId(value) {
-  return NOW_PLAYING_TEMPLATE_IDS.has(value) ? value : 'now-next';
+  return NOW_PLAYING_TEMPLATE_IDS.has(value) ? value : 'art-card';
 }
 
 export function initialNowPlayingFrame(previewMode) {
@@ -55,7 +51,7 @@ export function initialNowPlayingFrame(previewMode) {
 }
 
 export function initialNowPlayingTemplateId(location, previewMode) {
-  if (!previewMode) return 'now-next';
+  if (!previewMode) return 'art-card';
   const value = new URLSearchParams(location?.search ?? '').get('template');
   return normalizeNowPlayingTemplateId(value);
 }

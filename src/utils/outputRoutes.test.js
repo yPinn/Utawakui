@@ -46,7 +46,7 @@ describe('output template routes', () => {
       running: true,
       httpUrl: 'http://127.0.0.1:8700',
     });
-    expect(Object.keys(urls)).toEqual(['setlist', 'lyrics', 'now-playing']);
+    expect(Object.keys(urls)).toEqual(['lyrics', 'setlist', 'now-playing']);
     expect(urls['now-playing'].obsUrl).toBe(
       'http://127.0.0.1:8700/overlay/now-playing',
     );

@@ -71,17 +71,17 @@ describe('Now Playing template runtime', () => {
   it('accepts a template query only on the bounded preview route', () => {
     const location = { search: '?preview=1&template=art-card' };
     expect(initialNowPlayingTemplateId(location, true)).toBe('art-card');
-    expect(initialNowPlayingTemplateId(location, false)).toBe('now-next');
+    expect(initialNowPlayingTemplateId(location, false)).toBe('art-card');
     expect(
       initialNowPlayingTemplateId({ search: '?template=unknown' }, true),
-    ).toBe('now-next');
+    ).toBe('art-card');
   });
 
-  it('owns all three track-information layouts', () => {
-    expect(normalizeNowPlayingTemplateId('now-next')).toBe('now-next');
+  it('accepts the two remaining layouts and falls back for retired ids', () => {
+    expect(normalizeNowPlayingTemplateId('now-next')).toBe('art-card');
     expect(normalizeNowPlayingTemplateId('art-card')).toBe('art-card');
     expect(normalizeNowPlayingTemplateId('cover-player')).toBe('cover-player');
-    expect(normalizeNowPlayingTemplateId('unknown')).toBe('now-next');
+    expect(normalizeNowPlayingTemplateId('unknown')).toBe('art-card');
     expect(isArtworkTemplate('now-next')).toBe(false);
     expect(isArtworkTemplate('art-card')).toBe(true);
     expect(isArtworkTemplate('cover-player')).toBe(true);

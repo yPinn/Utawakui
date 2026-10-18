@@ -12,6 +12,7 @@ const PREVIEW_BACKDROPS = Object.freeze([
 
 const props = defineProps({
   modelValue: { type: String, default: 'dark' },
+  disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(['update:modelValue']);
 
@@ -33,6 +34,7 @@ const label = computed(
 <template>
   <UiIconButton
     :icon="current.icon"
+    :disabled="disabled"
     :label="label"
     :data-backdrop="current.id"
     @click="emit('update:modelValue', next.id)"

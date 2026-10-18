@@ -13,33 +13,8 @@ const templateRegistrySource = readFileSync(
 );
 
 describe('Now Playing template mockup', () => {
-  it('mirrors the public 3／1／6 CD player composition', () => {
-    expect(mockupSource).toContain('obs-template-mockup__now-player');
-    expect(mockupSource).toContain('obs-template-mockup__now-player-shell');
-    expect(mockupSource).toContain('obs-template-mockup__now-disc');
-    expect(mockupSource).toContain('obs-template-mockup__now-information');
-    expect(mockupSource).toContain(
-      'grid-template-columns: repeat(10, minmax(0, 1fr));',
-    );
-    expect(mockupSource).toMatch(
-      /\.obs-template-mockup__now-player\s*{[^}]*grid-column:\s*1\s*\/\s*span 3;/s,
-    );
-    expect(mockupSource).toMatch(
-      /\.obs-template-mockup__now-information\s*{[^}]*grid-column:\s*5\s*\/\s*span 6;/s,
-    );
-  });
-
-  it('describes the composition with concise Chinese gallery copy', () => {
-    const nowPlayingStart = templateRegistrySource.indexOf("id: 'now-next'");
-    const setlistStart = templateRegistrySource.indexOf("id: 'queue-board'");
-    const nowPlayingDefinition = templateRegistrySource.slice(
-      nowPlayingStart,
-      setlistStart,
-    );
-
-    expect(nowPlayingDefinition).toContain("name: '浮光光碟'");
-    expect(nowPlayingDefinition).toContain("layoutLabel: '光碟＋曲目'");
-    expect(nowPlayingDefinition).toContain("tags: ['透明光碟'");
+  it('does not register the retired disc template', () => {
+    expect(templateRegistrySource).not.toContain("id: 'now-next'");
   });
 
   it('mirrors the 50／50 黑膠主題 hierarchy in the Workbench preview', () => {

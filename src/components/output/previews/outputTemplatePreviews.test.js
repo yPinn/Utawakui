@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import OUTPUT_TEMPLATE_VALUES from '../../../../shared/outputTemplateValues.json';
-import CaptionPreview from './CaptionPreview.vue';
-import NowNextPreview from './NowNextPreview.vue';
+import KaraokeStackPreview from './KaraokeStackPreview.vue';
+import ArtCardPreview from './ArtCardPreview.vue';
 import QueueBoardPreview from './QueueBoardPreview.vue';
 import { outputTemplatePreviewFor } from './outputTemplatePreviews.js';
 
@@ -21,14 +21,14 @@ describe('output template preview registry', () => {
 
   it('falls back by kind, then to the Now Playing preview', () => {
     expect(outputTemplatePreviewFor({ id: 'unknown', kind: 'lyrics' })).toBe(
-      CaptionPreview,
+      KaraokeStackPreview,
     );
     expect(outputTemplatePreviewFor({ id: 'unknown', kind: 'setlist' })).toBe(
       QueueBoardPreview,
     );
     expect(outputTemplatePreviewFor({ id: 'unknown', kind: 'other' })).toBe(
-      NowNextPreview,
+      ArtCardPreview,
     );
-    expect(outputTemplatePreviewFor(null)).toBe(NowNextPreview);
+    expect(outputTemplatePreviewFor(null)).toBe(ArtCardPreview);
   });
 });

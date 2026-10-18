@@ -185,10 +185,10 @@ adapters 評估，目前不做 OBS native plugin。
 - Snapshot 不包含 filesystem path、provider payload 或任意 renderer HTML。
 - Artwork 只透過 public track id 解析 allowlisted thumbnail。
 - 現行三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；Now Playing 提供
-  `now-next`（浮光光碟，預設）、`art-card`、`cover-player` 三個模板。Output
+  `art-card`（星染黑膠，預設）、`cover-player` 兩個模板。Output
   Instance／Presentation Pack 是未來擴充方向，不應提前宣稱已完成。
-- Lyrics 提供 `focus-line`（聚焦歌詞，預設）、`karaoke-stack`、`live-stage`、
-  `kinetic-pop`、`ornate-vertical`、`manga-frame` 六個模板。各 slot 的預設模板在模板庫
+- Lyrics 提供 `karaoke-stack`（經典伴唱，預設）、`live-stage`、
+  `kinetic-pop`、`ornate-vertical`、`manga-frame` 五個模板。各 slot 的預設模板在模板庫
   標示「建議」，其餘標示「可用」。
 - 模板庫所有模板共用 `src/constants/outputPreviewSample.json` 的同一份示例曲目與歌詞，
   只呈現動畫與樣式差異；預覽依模板的擷取尺寸（Lyrics 1920×1080、widget 480 寬）

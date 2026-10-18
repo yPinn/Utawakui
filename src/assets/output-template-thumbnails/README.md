@@ -15,5 +15,12 @@ Use a 16:9 image at 1280 × 720. Prefer WebP or AVIF and keep each image under
 that does not encode well in the preferred formats.
 
 Only one image format may exist for a template id. The renderer discovers these
-files through Vite and uses the current programmatic mockup until an image is
-supplied or when an image cannot be decoded.
+files through Vite. Every registered template must have a static image; missing
+or undecodable images show a lightweight placeholder without mounting a live
+preview. The Gallery's selected preview also starts with this static image and
+loads its dynamic mockup only after pointer dwell or an explicit play action.
+
+The `queue-board`, `kinetic-pop`, `ornate-vertical` and
+`cover-player` JPEGs were rendered from the existing programmatic templates and
+fixed sample scene at 1280 × 720 with animation disabled. They are derived
+project artwork, not additional third-party source images.

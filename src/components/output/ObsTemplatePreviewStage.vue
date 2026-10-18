@@ -1,11 +1,11 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, shallowRef, watch } from 'vue';
 import { Pause, Play } from '../../icons/index.js';
 import UiStack from '../ui/UiStack.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
-import ObsTemplateMockup from './ObsTemplateMockup.vue';
+import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 
@@ -18,8 +18,13 @@ const captureSize = computed(() =>
   captureSizeForKind(props.preset?.kind, null, props.preset?.id),
 );
 
-const isMotionPlaying = ref(true);
-const backdrop = ref('dark');
+const previewMode = shallowRef('static');
+const previewFailed = shallowRef(false);
+const isMotionPlaying = computed(() => previewMode.value !== 'static');
+const backdrop = shallowRef('dark');
+let hoverTimer;
+let previewRequest = 0;
+const livePreview = shallowRef(null);
 const motionIcon = computed(() => (isMotionPlaying.value ? Pause : Play));
 const motionLabel = computed(() =>
   isMotionPlaying.value ? '暫停動態預覽' : '播放動態預覽',
@@ -28,13 +33,66 @@ const motionLabel = computed(() =>
 watch(
   () => props.preset?.id,
   () => {
-    isMotionPlaying.value = true;
+    stopPreview();
+    previewFailed.value = false;
   },
+  { flush: 'sync' },
 );
 
-function toggleMotion() {
-  isMotionPlaying.value = !isMotionPlaying.value;
+function cancelHover() {
+  clearTimeout(hoverTimer);
+  hoverTimer = undefined;
 }
+
+function stopPreview() {
+  cancelHover();
+  previewRequest += 1;
+  livePreview.value = null;
+  previewMode.value = 'static';
+}
+
+async function startPreview(mode) {
+  cancelHover();
+  const request = ++previewRequest;
+  previewMode.value = mode;
+  previewFailed.value = false;
+  try {
+    const { default: component } = await import('./ObsTemplateMockup.vue');
+    if (request === previewRequest) livePreview.value = component;
+  } catch {
+    if (request !== previewRequest) return;
+    stopPreview();
+    previewFailed.value = true;
+  }
+}
+
+function startHover(event) {
+  if (
+    event.pointerType === 'touch' ||
+    isMotionPlaying.value ||
+    globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
+    return;
+  cancelHover();
+  hoverTimer = setTimeout(() => {
+    hoverTimer = undefined;
+    void startPreview('hover');
+  }, 250);
+}
+
+function leaveHover() {
+  cancelHover();
+  if (previewMode.value === 'hover') stopPreview();
+}
+
+function toggleMotion() {
+  if (isMotionPlaying.value) stopPreview();
+  else {
+    void startPreview('manual');
+  }
+}
+
+onBeforeUnmount(stopPreview);
 </script>
 
 <template>
@@ -53,7 +111,10 @@ function toggleMotion() {
         align="center"
         :gap="2"
       >
-        <ObsPreviewBackdropToggle v-model="backdrop" />
+        <ObsPreviewBackdropToggle
+          v-model="backdrop"
+          :disabled="!isMotionPlaying"
+        />
         <UiIconButton
           :icon="motionIcon"
           :label="motionLabel"
@@ -74,15 +135,37 @@ function toggleMotion() {
       </UiStack>
     </header>
 
-    <div class="obs-template-preview-stage__canvas-group">
-      <ObsTemplateMockup
-        :preset="preset"
-        :scene="scene"
-        size="detail"
-        :animated="isMotionPlaying"
-        :backdrop="backdrop"
-      />
+    <div
+      class="obs-template-preview-stage__canvas-group"
+      @pointerenter="startHover"
+      @pointerleave="leaveHover"
+      @pointercancel="leaveHover"
+    >
+      <div class="obs-template-preview-stage__frame">
+        <ObsTemplateThumbnail
+          :key="preset?.id"
+          :preset="preset"
+          loading="eager"
+        />
+        <div v-if="livePreview" class="obs-template-preview-stage__live">
+          <component
+            :is="livePreview"
+            :key="preset?.id"
+            :preset="preset"
+            :scene="scene"
+            size="thumbnail"
+            :animated="true"
+            :backdrop="backdrop"
+          />
+        </div>
+      </div>
     </div>
+    <span
+      v-if="previewFailed"
+      class="obs-template-preview-stage__motion"
+      role="status"
+      >動態預覽載入失敗，請重試</span
+    >
   </section>
 </template>
 
@@ -98,9 +181,33 @@ function toggleMotion() {
   padding: var(--ui-output-preview-inset);
   background: var(--ui-color-canvas);
   min-inline-size: 0;
-  display: grid;
-  justify-items: center;
-  gap: var(--ui-space-2);
+  /* This wrapper has one canvas. Grid intrinsic sizing repeatedly lays out the
+     nested, container-relative preview when switching templates. */
+  display: block;
+}
+
+.obs-template-preview-stage__frame {
+  position: relative;
+  max-inline-size: var(--ui-output-gallery-preview-max-width);
+  aspect-ratio: var(--ui-output-preview-aspect-ratio);
+  margin-inline: auto;
+}
+
+.obs-template-preview-stage__live {
+  position: absolute;
+  inset: 0;
+  animation: obs-template-preview-reveal var(--ui-motion-duration-standard)
+    var(--ui-motion-easing-enter) both;
+}
+
+@keyframes obs-template-preview-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .obs-template-preview-stage__labels,

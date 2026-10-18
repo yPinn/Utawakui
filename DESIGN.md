@@ -1060,9 +1060,7 @@ leaves the shared setting row as the sole owner of label／control column alignm
 The shared appearance schema owns the inspector hierarchy: Color Treatment, Custom
 Color when supported, Typography, Readability, Background, Layout, Motion, then
 Content Visibility. Templates omit empty groups but cannot redefine their relative
-order. `queue-board` and
-`now-next` additionally expose spacing density; `focus-line`
-exposes text contrast, spacing density, and content width. Existing font, alignment,
+order. `queue-board` additionally exposes spacing density. Existing font, alignment,
 surface-opacity preset, furigana, Kinetic material／arrangement, and Ornate position
 controls remain available only where their CSS or runtime consumes them. Controls
 fixed by an artwork layout stay absent instead of presenting settings with no

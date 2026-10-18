@@ -22,7 +22,7 @@
   );
   --ui-output-gallery-preview-max-width: 19.5rem; /* medium template demo, not the editing canvas */
   --ui-output-gallery-preview-max-height: 20rem; /* tall widget demo stays above the description */
-  --ui-output-gallery-tile-min-width: 10rem; /* dense media-browser tile with readable names */
+  --ui-output-gallery-tile-min-width: 14rem; /* image-led tiles; two columns in the default Gallery pane */
   --ui-output-workbench-stage-max-width: 64rem; /* large 16:9 preview without indefinite upscaling */
   --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */

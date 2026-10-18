@@ -31,8 +31,9 @@ describe('Output canvas size captions', () => {
       const size = captureSizeForKind(preset.kind, null, preset.id);
       expect(html).toContain(`${size.width} × ${size.height}`);
       expect(html.indexOf('obs-preview-caption')).toBeLessThan(
-        html.indexOf('obs-template-mockup__canvas'),
+        html.indexOf('obs-template-thumbnail__frame'),
       );
+      expect(html).not.toContain('obs-template-mockup__canvas');
     },
   );
 

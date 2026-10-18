@@ -44,7 +44,6 @@ const outputConsumerPaths = [
   '../components/output/previews/CoverPlayerPreview.css',
   '../components/output/previews/KaraokeStackPreview.css',
   '../components/output/previews/LiveStagePreview.css',
-  '../components/output/previews/NowNextPreview.css',
   '../components/output/previews/QueueBoardPreview.css',
   '../components/output/ObsWidgetCapturePreview.vue',
 ];

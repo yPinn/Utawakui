@@ -212,17 +212,18 @@ describe('OBS output workspace layout contract', () => {
 
   it('keeps thumbnails static and animates only the selected detail preview', () => {
     expect(componentSource).toContain(':scene="previewScene"');
-    expect(thumbnailSource).toContain(':animated="false"');
-    expect(previewStageSource).toContain('<ObsTemplateMockup');
-    expect(previewStageSource).toContain(':animated="isMotionPlaying"');
+    expect(thumbnailSource).not.toContain('ObsTemplateMockup');
+    expect(previewStageSource).toContain("import('./ObsTemplateMockup.vue')");
+    expect(previewStageSource).toContain('v-if="livePreview"');
+    expect(previewStageSource).toContain(':animated="true"');
     expect(previewStageSource).toContain('暫停動態預覽');
     expect(previewStageSource).toContain('播放動態預覽');
     expect(previewStageSource).toContain('固定示例');
-    expect(previewStageSource).toContain(
-      '<ObsPreviewBackdropToggle v-model="backdrop" />',
-    );
+    expect(previewStageSource).toContain(':disabled="!isMotionPlaying"');
     expect(previewStageSource).toContain(':backdrop="backdrop"');
-    expect(previewStageSource).toContain("const backdrop = ref('dark');");
+    expect(previewStageSource).toContain(
+      "const backdrop = shallowRef('dark');",
+    );
     // One cycling button; order is dark, light, then the transparency check.
     expect(backdropToggleSource).toContain('<UiIconButton');
     expect(backdropToggleSource).toContain(
