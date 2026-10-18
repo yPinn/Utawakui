@@ -926,6 +926,8 @@ if (!gotSingleInstanceLock) {
 
     registerImportHandlers({
       ipcMain,
+      readClipboardText: () => clipboard.readText(),
+      getMainWindow: windowState.getMainWindow,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       requireFeatureGate,

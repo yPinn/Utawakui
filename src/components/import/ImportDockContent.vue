@@ -5,7 +5,6 @@ import {
   ExternalLink,
   FolderPlus,
   RefreshCw,
-  Search,
   Square,
 } from '../../icons/index.js';
 import { useImportSession } from '../../composables/useImportSession.js';
@@ -18,7 +17,7 @@ import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiSearchBox from '../ui/UiSearchBox.vue';
+import ImportSourceField from './ImportSourceField.vue';
 import ImportReviewModal from './ImportReviewModal.vue';
 import ImportSourceRow from './ImportSourceRow.vue';
 
@@ -250,26 +249,14 @@ watch(
           @click="openYoutubeMusicSearch"
         />
       </template>
-      <form
-        class="import-dock-content__source-form"
-        @submit.prevent="resolveSource"
-      >
-        <UiSearchBox
-          :model-value="state.input"
-          label="歌曲名稱或外部來源連結"
-          placeholder="搜尋歌名、歌手或貼上連結"
-          :disabled="sourceBusy"
-          @update:model-value="setInput"
-        />
-        <UiIconButton
-          :icon="Search"
-          label="搜尋外部來源"
-          variant="accent"
-          :disabled="!state.input.trim() || sourceBusy"
-          :aria-busy="state.isResolving"
-          @click="resolveSource"
-        />
-      </form>
+      <ImportSourceField
+        :model-value="state.input"
+        :active="active"
+        :busy="sourceBusy"
+        :resolving="state.isResolving"
+        @update:model-value="setInput"
+        @resolve="resolveSource"
+      />
 
       <UiNotice
         v-if="showExternalStatus && state.statusType === 'error'"
@@ -328,14 +315,6 @@ watch(
 .import-dock-content {
   display: grid;
   gap: var(--ui-right-dock-section-gap);
-  min-inline-size: 0;
-}
-
-.import-dock-content__source-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
   min-inline-size: 0;
 }
 

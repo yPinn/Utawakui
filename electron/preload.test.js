@@ -71,6 +71,7 @@ const MAIN_INVOKE_CHANNELS = [
   'folder-page-objects:save-layout',
   'folder-page-objects:update-note',
   'folder-page-objects:update-photo-text',
+  'import:clipboard-suggestion',
   'import:resolve-source',
   'library:apply-artist-identity-candidate',
   'library:apply-artist-photo-candidate',
@@ -434,6 +435,16 @@ describe('main preload bridge', () => {
         'candidate_abcdefghijklmn',
       ],
     ]);
+  });
+
+  it('requests an import clipboard suggestion without forwarding renderer arguments', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.getImportClipboardSuggestion('private text', {
+      channel: 'arbitrary',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'import:clipboard-suggestion',
+    );
   });
 
   it('exposes only fixed invoke, send, and subscription channels', async () => {

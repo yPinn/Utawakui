@@ -57,6 +57,7 @@ describe('coverage policy', () => {
       'src/components/ui/floatingPosition.js',
       'src/bgm/handoffCoordinator.js',
       'src/composables/usePlaylistActions.js',
+      'src/composables/import/useImportClipboardSuggestion.js',
       'src/composables/useMusicAnalysisSettings.js',
       'src/constants/featureGates.js',
       'src/utils/lyrics.js',

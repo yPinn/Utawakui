@@ -17,8 +17,19 @@ function normalizeImportInput(value) {
 }
 
 function parseUrl(value) {
+  if (typeof value !== 'string' || value.length > MAX_IMPORT_INPUT_LENGTH)
+    return null;
+  const input = value.trim();
+  if (/[\s\p{Cc}]/u.test(input)) return null;
   try {
-    return new URL(value);
+    const url = new URL(input);
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.username ||
+      url.password
+    )
+      return null;
+    return url;
   } catch {
     return null;
   }
@@ -26,6 +37,35 @@ function parseUrl(value) {
 
 function normalizedHost(url) {
   return url.hostname.toLocaleLowerCase().replace(/^www\./u, '');
+}
+
+// Shared by manual import classification and clipboard suggestions. Keep only
+// source identity; never inherit tracking, playback position, or user parameters.
+function parseImportSourceUrl(value) {
+  const url = parseUrl(value);
+  if (!url) return null;
+  const isMusicHost = normalizedHost(url) === 'music.youtube.com';
+  const origin = isMusicHost
+    ? 'https://music.youtube.com'
+    : 'https://www.youtube.com';
+  const playlistId = extractPlaylistId(url.href);
+  if (playlistId) {
+    const isAlbum = classifyPlaylistKind(playlistId) === 'album';
+    return {
+      kind: isMusicHost && isAlbum ? 'youtube-music-album' : 'youtube-playlist',
+      input: `${origin}/playlist?list=${playlistId}`,
+      playlistId,
+    };
+  }
+  const videoId = extractVideoId(url.href);
+  if (videoId) {
+    return {
+      kind: isMusicHost ? 'youtube-music-video' : 'youtube-video',
+      input: `${origin}/watch?v=${videoId}`,
+      videoId,
+    };
+  }
+  return null;
 }
 
 function classifyImportInput(value) {
@@ -39,29 +79,12 @@ function classifyImportInput(value) {
     return { kind: 'invalid', reason: 'input-too-long', input: '' };
   }
 
-  const url = /^[a-z][a-z\d+.-]*:\/\//iu.test(input) ? parseUrl(input) : null;
-  const playlistId = extractPlaylistId(input);
-  if (playlistId) {
-    const isMusicHost = normalizedHost(url) === 'music.youtube.com';
-    const isAlbum = classifyPlaylistKind(playlistId) === 'album';
-    return {
-      kind: isMusicHost && isAlbum ? 'youtube-music-album' : 'youtube-playlist',
-      input,
-      playlistId,
-    };
-  }
+  const source = parseImportSourceUrl(rawInput);
+  if (source) return source;
 
-  const videoId = extractVideoId(input);
-  if (videoId) {
-    return {
-      kind:
-        url && normalizedHost(url) === 'music.youtube.com'
-          ? 'youtube-music-video'
-          : 'youtube-video',
-      input,
-      videoId,
-    };
-  }
+  const isUrl = /^[a-z][a-z\d+.-]*:\/\//iu.test(rawInput.trim());
+  const url = isUrl ? parseUrl(rawInput) : null;
+  if (isUrl && !url) return { kind: 'unsupported-url', input: '' };
 
   if (url) {
     const host = normalizedHost(url);
@@ -87,5 +110,6 @@ module.exports = {
   MAX_IMPORT_INPUT_LENGTH,
   MAX_SEARCH_QUERY_LENGTH,
   classifyImportInput,
+  parseImportSourceUrl,
   normalizeImportInput,
 };

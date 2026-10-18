@@ -6,7 +6,10 @@ const {
   fetchPlaylist,
 } = require('../lib/downloader');
 const { searchPlaybackCandidates } = require('../lib/playbackSearch');
-const { classifyImportInput } = require('../lib/importInput');
+const {
+  classifyImportInput,
+  parseImportSourceUrl,
+} = require('../lib/importInput');
 const { downloadErrorText } = require('../lib/youtubeAttempts');
 const {
   classifyDownloadFailure,
@@ -199,6 +202,8 @@ function registerImportHandlers({
   fetchPlaylistMetadata = fetchPlaylist,
   fetchYoutubeMetadata = fetchMetadata,
   searchYoutubeCandidates = searchPlaybackCandidates,
+  readClipboardText = () => '',
+  getMainWindow = () => null,
   listLibraryTracks = listTracks,
   providerDownloadScheduler = createProviderDownloadScheduler(),
   saveProviderIndexEntry = saveIndexEntry,
@@ -206,6 +211,24 @@ function registerImportHandlers({
 }) {
   const providerDownloadTasks = new Map();
   const runLibraryFinalize = createSerialTaskLane();
+
+  // Local suggestion only: no provider/runtime/network operation. Never return
+  // arbitrary clipboard text or tracking parameters to the renderer.
+  ipcMain.handle('import:clipboard-suggestion', async (event) => {
+    const window = getMainWindow();
+    if (
+      !window?.isFocused() ||
+      event?.sender !== window.webContents ||
+      event?.senderFrame !== window.webContents.mainFrame
+    )
+      return '';
+    try {
+      const value = await readClipboardText();
+      return parseImportSourceUrl(value)?.input || '';
+    } catch {
+      return '';
+    }
+  });
 
   function onSearchDiagnostics(summary) {
     const context = boundedSearchDiagnostics(summary);

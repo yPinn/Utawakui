@@ -54,6 +54,153 @@ function registerDownload(overrides = {}) {
   };
 }
 
+describe('import clipboard suggestion boundary', () => {
+  function clipboardHarness(value) {
+    const sender = { mainFrame: {} };
+    const readClipboardText = vi.fn().mockResolvedValue(value);
+    const harness = registerDownload({
+      readClipboardText,
+      getMainWindow: () => ({ webContents: sender, isFocused: () => true }),
+    });
+    return {
+      ...harness,
+      readClipboardText,
+      event: { sender, senderFrame: sender.mainFrame },
+    };
+  }
+
+  it.each([
+    [
+      'https://youtu.be/abcdefghijk?si=private',
+      'https://www.youtube.com/watch?v=abcdefghijk',
+    ],
+    [
+      'https://music.youtube.com/watch?v=abcdefghijk',
+      'https://music.youtube.com/watch?v=abcdefghijk',
+    ],
+    [
+      'https://www.youtube.com/playlist?list=PL12345',
+      'https://www.youtube.com/playlist?list=PL12345',
+    ],
+    [
+      'https://music.youtube.com/playlist?list=OLAK5uy_test',
+      'https://music.youtube.com/playlist?list=OLAK5uy_test',
+    ],
+  ])(
+    'returns a bounded supported URL for %s without provider access',
+    async (input, expected) => {
+      const view = clipboardHarness(input);
+      await expect(
+        view.handlers.get('import:clipboard-suggestion')(view.event),
+      ).resolves.toBe(expected);
+      expect(view.getProviderRunner).not.toHaveBeenCalled();
+      expect(view.requireFeatureGate).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    'password',
+    'abcdefghijk',
+    'https://example.com',
+    'https://youtube.com.evil.test/watch?v=abcdefghijk',
+    'file://youtube.com/watch?v=abcdefghijk',
+    'https://user:secret@youtube.com/watch?v=abcdefghijk',
+    'https://open.spotify.com/track/123',
+    'hello https://youtu.be/abcdefghijk',
+    'x'.repeat(4097),
+    'https://youtu.be/abcdefghijk\nhttps://example.com',
+    null,
+  ])('does not expose unrelated clipboard text: %s', async (value) => {
+    const view = clipboardHarness(value);
+    await expect(
+      view.handlers.get('import:clipboard-suggestion')(view.event),
+    ).resolves.toBe('');
+  });
+
+  it('refuses another sender or a subframe before reading', async () => {
+    const view = clipboardHarness('https://youtu.be/abcdefghijk');
+    const handler = view.handlers.get('import:clipboard-suggestion');
+    expect(await handler({ sender: {}, senderFrame: {} })).toBe('');
+    expect(await handler({ ...view.event, senderFrame: {} })).toBe('');
+    expect(view.readClipboardText).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'https://youtu.be/abcdefghijk?si=private&t=30#personal',
+      'https://www.youtube.com/watch?v=abcdefghijk',
+    ],
+    [
+      'https://music.youtube.com/watch?v=abcdefghijk&pp=personal',
+      'https://music.youtube.com/watch?v=abcdefghijk',
+    ],
+  ])(
+    'resolves manual paste and the clipboard suggestion through the same canonical URL: %s',
+    async (raw, expected) => {
+      const fetchYoutubeMetadata = vi
+        .fn()
+        .mockResolvedValue({ title: 'Song', artist: 'Artist', duration: 180 });
+      const sender = { mainFrame: {} };
+      const view = registerDownload({
+        readClipboardText: () => raw,
+        getMainWindow: () => ({ webContents: sender, isFocused: () => true }),
+        fetchYoutubeMetadata,
+        searchYoutubeCandidates: vi.fn().mockResolvedValue([]),
+        listLibraryTracks: () => [],
+      });
+      const suggested = await view.handlers.get('import:clipboard-suggestion')({
+        sender,
+        senderFrame: sender.mainFrame,
+      });
+      const manual = await view.handlers.get('import:resolve-source')(
+        null,
+        raw,
+      );
+      const clipboard = await view.handlers.get('import:resolve-source')(
+        null,
+        suggested,
+      );
+      expect(suggested).toBe(expected);
+      expect(manual).toEqual(clipboard);
+      expect(manual.resolution.input).toBe(expected);
+      expect(fetchYoutubeMetadata).toHaveBeenCalledWith('abcdefghijk', {
+        runner: { run: true },
+      });
+      expect(JSON.stringify(manual)).not.toMatch(
+        /private|personal|si=|pp=|t=30/,
+      );
+    },
+  );
+
+  it.each([
+    'file://youtube.com/watch?v=abcdefghijk',
+    'https://user:secret@youtube.com/watch?v=abcdefghijk',
+    'https://youtu.be/abcdefghijk\nhttps://example.com',
+  ])(
+    'rejects the same unsafe pasted URL before provider work: %s',
+    async (raw) => {
+      const view = clipboardHarness(raw);
+      expect(
+        await view.handlers.get('import:clipboard-suggestion')(view.event),
+      ).toBe('');
+      expect(
+        await view.handlers.get('import:resolve-source')(null, raw),
+      ).toEqual({ kind: 'unsupported', reason: 'unsupported-url' });
+      expect(view.getProviderRunner).not.toHaveBeenCalled();
+    },
+  );
+
+  it('silently handles unavailable clipboard access', async () => {
+    const view = clipboardHarness('');
+    view.readClipboardText.mockRejectedValue(
+      new Error('private clipboard error'),
+    );
+    await expect(
+      view.handlers.get('import:clipboard-suggestion')(view.event),
+    ).resolves.toBe('');
+  });
+});
+
 describe('generic import source resolution', () => {
   it('resolves a text query through yt-dlp search and returns native candidates', async () => {
     const searchYoutubeCandidates = vi.fn().mockResolvedValue([

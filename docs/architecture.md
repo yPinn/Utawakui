@@ -105,7 +105,14 @@ header、單一 scroll owner 與 content inset；播放 queue authority 仍由
 只保留一個固定 `ListChecks`「曲目準備」controlled disclosure。Dock 與 Queue／Recently Played
 沿用相同的固定 `UiTabs` bar header 與 linked tabpanels，在 `ImportDockContent.vue` 與
 `SeparationDockContent.vue` 間切換；兩個 feature content 不再各自建立 Dock header、導覽 chrome
-或 scroll shell。外部來源清單由 Renderer 以固定兩個 worker 投影工作，但 Main 的
+或 scroll shell。`ImportSourceField.vue` 在使用者聚焦空白外部來源欄位時，透過窄域
+`import:clipboard-suggestion` intent 請 Main 讀取剪貼簿；Main 驗證前景主視窗與主 frame，
+僅回傳支援的 YouTube／YT Music canonical 連結。剪貼簿偵測與手動貼上送出共用
+`electron/lib/importInput.js` 的 `parseImportSourceUrl`：只保留來源 id、移除追蹤與播放位置參數，
+並一致拒絕非 HTTP(S)、帶帳密或含內部空白／控制字元的網址；一般文字搜尋與裸 video id
+仍由 `classifyImportInput` 處理。Renderer 以 session 記憶略過的連結，
+欄位下方提示只在明確按「貼上連結」時填入，不自動解析或下載；晚到結果受欄位、busy、
+Dock active 與卸載失效保護，不記錄或持久化剪貼簿內容。外部來源清單由 Renderer 以固定兩個 worker 投影工作，但 Main 的
 `providerDownloadScheduler` 才是全域 admission owner：最多同時執行兩個不同 track id，重複 id
 共用同一個工作，queued／active 都可由 bounded track-id intent 取消。每首下載完成後才進入固定
 concurrency-one 的 library finalize lane，依序寫入索引、安排 optional sidecars／分析並套用 storage

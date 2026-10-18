@@ -467,6 +467,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('yt:fetch-playlist', input),
   resolveImportInput: (input) =>
     ipcRenderer.invoke('import:resolve-source', input),
+  getImportClipboardSuggestion: () =>
+    ipcRenderer.invoke('import:clipboard-suggestion'),
   resolveImportSource: (input) =>
     ipcRenderer.invoke('yt:resolve-import-source', input),
   fetchVideoMetadata: (input) => ipcRenderer.invoke('yt:fetch-metadata', input),
