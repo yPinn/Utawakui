@@ -157,7 +157,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [安裝精靈與重新安裝驗證](operations/installer-maintenance-verification-2026-10-18.md)、
   [release runbook](operations/release-runbook.md)。
 - Governance：[legal compliance](governance/legal-compliance.md)、[五個功能說明的行為、權利與來源查核](governance/feature-notice-review-2026-10-18.md)、[公開發行的服務／模型／元件授權核對](governance/release-license-review-2026-10-18.md)、[安裝包授權全文補正](governance/packaged-notices-repair-2026-10-18.md)。
-- Research：[競品調查（2026-09-25）](research/competitive-research.md)、
+- Research：[T1 聲學切分研究收斂與實作評估（2026-10-19）](research/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)、
+  [競品調查（2026-09-25）](research/competitive-research.md)、
   [Track Collection Row／Grid 收束提案（2026-10-14）](research/track-collection-row-consolidation-proposal-2026-10-14.md)、
   [線上封面來源與跨語言 identity 評估（2026-09-27）](research/online-artwork-provider-evaluation-2026-09-27.md)、
   [MusicBrainz artist 覆蓋率實測（2026-10-05）](research/musicbrainz-artist-coverage-2026-10-05.md)、
