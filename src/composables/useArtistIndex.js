@@ -9,6 +9,8 @@ import { useLibrary } from './useLibrary.js';
 // the library track list changes; main caches sidecar reads, so refetch is cheap.
 const state = reactive({
   index: null,
+  isLoading: false,
+  isInitialized: false,
   error: null,
   isMutating: false,
   identityLookup: {
@@ -70,6 +72,7 @@ async function refresh() {
     return;
   }
   const revision = ++requestRevision;
+  state.isLoading = !state.index;
   try {
     const index = await window.Utawakui.getArtistIndex();
     if (revision !== requestRevision) return;
@@ -86,6 +89,11 @@ async function refresh() {
       operation: 'artist-index',
       context: { retryable: true },
     });
+  } finally {
+    if (revision === requestRevision) {
+      state.isLoading = false;
+      state.isInitialized = true;
+    }
   }
 }
 

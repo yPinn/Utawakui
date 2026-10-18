@@ -399,6 +399,8 @@ function handleActionKeydown(event) {
   z-index: var(--ui-layer-raised);
 }
 
+.library-track-row__ordinal,
+.library-track-row__ordinal-text,
 .library-track-row__identity,
 .library-track-row__semantic,
 .library-track-row__duration {

@@ -10,6 +10,27 @@ const source = readFileSync(
 );
 
 describe('LibraryAlbumSupportingContent', () => {
+  it('reserves album cards only for initial reads and keeps existing albums during refresh', async () => {
+    const render = (relatedAlbums) =>
+      renderToString(
+        createSSRApp({
+          render: () =>
+            h(LibraryAlbumSupportingContent, {
+              artist: 'Aimer',
+              albumsTitle: '專輯',
+              loading: true,
+              relatedAlbums,
+            }),
+        }),
+      );
+    const waiting = await render([]);
+    expect(waiting).toContain('aria-busy="true"');
+    expect(waiting.match(/library-album-card--skeleton/g)).toHaveLength(4);
+    expect(waiting).not.toContain('開啟專輯：');
+    const loaded = await render([{ id: 'a', name: 'Album', tracks: [] }]);
+    expect(loaded).toContain('開啟專輯：Album');
+    expect(loaded).not.toContain('library-album-card--skeleton');
+  });
   it('renders local related albums as paper supporting content', async () => {
     const html = await renderToString(
       createSSRApp({

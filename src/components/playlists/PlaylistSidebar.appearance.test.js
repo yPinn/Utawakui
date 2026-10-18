@@ -221,7 +221,13 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).toContain(
       "import UiIconButton from '../ui/UiIconButton.vue';",
     );
-    expect(source.match(/<UiIconButton/gu)).toHaveLength(2);
+    const createButtons = source
+      .match(/<UiIconButton\b[\s\S]*?\/>/gu)
+      .filter((tag) => tag.includes(':icon="Plus"'));
+    expect(createButtons).toHaveLength(2);
+    expect(
+      createButtons.every((tag) => tag.includes('variant="command"')),
+    ).toBe(true);
     expect(source.match(/variant="command"/gu)).toHaveLength(2);
     expect(source).not.toContain('variant="entry"');
     expect(source.match(/:icon="Plus"/gu)).toHaveLength(2);
@@ -282,7 +288,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source.match(/placement: 'end'/gu)).toHaveLength(2);
     expect(source.match(/<UiTooltipSurface/gu)).toHaveLength(2);
     expect(source.match(/placement="end"/gu)).toHaveLength(2);
-    expect(source).not.toMatch(/\stitle="/u);
+    expect(source).not.toMatch(/<(?:button|span|div|nav)\b[^>]*\stitle="/u);
   });
 
   it('mixes albums and artists in one reference tier after playlists and loads it after the library', () => {

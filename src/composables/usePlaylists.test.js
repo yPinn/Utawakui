@@ -82,6 +82,107 @@ async function importPlaylists() {
 }
 
 describe('initial load', () => {
+  it('does not resolve initialization before the latest queued read settles', async () => {
+    const older = createDeferred();
+    const latest = createDeferred();
+    listPlaylistsMock
+      .mockReturnValueOnce(older.promise)
+      .mockReturnValueOnce(latest.promise);
+    const playlists = await importPlaylists();
+    let initialized = false;
+    const startup = playlists.initialize().then(() => {
+      initialized = true;
+    });
+    const currentRead = playlists.refresh();
+    older.resolve([{ id: 'stale', trackIds: [] }]);
+    await flushMicrotasks();
+    expect(initialized).toBe(false);
+    expect(playlists.state.isInitialized).toBe(false);
+    latest.resolve([{ id: 'current', trackIds: [] }]);
+    await Promise.all([startup, currentRead]);
+    expect(playlists.state.isInitialized).toBe(true);
+    expect(playlists.state.playlists[0].id).toBe('current');
+  });
+  it.each(['resolve', 'reject'])(
+    'discards a superseded queued read %s without publishing data or error',
+    async (outcome) => {
+      const older = createDeferred();
+      const latest = createDeferred();
+      listPlaylistsMock
+        .mockReturnValueOnce(older.promise)
+        .mockReturnValueOnce(latest.promise);
+      const { state, refresh, select } = await importPlaylists();
+      select('current');
+      const oldRead = refresh();
+      const newRead = refresh();
+      if (outcome === 'resolve') older.resolve([{ id: 'stale', trackIds: [] }]);
+      else older.reject(new Error('stale error'));
+      await oldRead;
+      expect(state.playlists).toEqual([]);
+      expect(state.error).toBeNull();
+      expect(state.hasLoaded).toBe(false);
+      expect(state.selectedId).toBe('current');
+      expect(state.isLoading).toBe(true);
+      latest.resolve([{ id: 'current', trackIds: [] }]);
+      await newRead;
+      expect(state.playlists[0].id).toBe('current');
+      expect(state.selectedId).toBe('current');
+      expect(state.isLoading).toBe(false);
+    },
+  );
+  it('settles without a desktop bridge instead of leaving an initial placeholder active', async () => {
+    vi.stubGlobal('window', undefined);
+    const playlists = await loadPlaylists();
+    expect(playlists.state.isLoading).toBe(false);
+    expect(playlists.state.isInitialized).toBe(true);
+  });
+  it('keeps the initial wait active when another queued read is still pending after a failure', async () => {
+    const first = createDeferred();
+    const second = createDeferred();
+    listPlaylistsMock
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    const { state, refresh } = await importPlaylists();
+    const firstRead = refresh();
+    const secondRead = refresh();
+    first.reject(new Error('read failed'));
+    await firstRead;
+    expect(state.isLoading).toBe(true);
+    second.resolve([]);
+    await secondRead;
+    expect(state.isLoading).toBe(false);
+    expect(state.hasLoaded).toBe(true);
+  });
+  it('settles initial loading on failure, supports retry, and keeps collections during refresh', async () => {
+    const first = createDeferred();
+    listPlaylistsMock.mockReturnValueOnce(first.promise);
+    const { state, initialize, refresh } = await importPlaylists();
+    const initialization = initialize();
+    expect(state.isLoading).toBe(true);
+    first.reject(new Error('read failed'));
+    await initialization;
+    expect(state.isLoading).toBe(false);
+    expect(state.isInitialized).toBe(true);
+    expect(state.hasLoaded).toBe(false);
+    const retry = createDeferred();
+    listPlaylistsMock.mockReturnValueOnce(retry.promise);
+    const retrying = refresh();
+    expect(state.isLoading).toBe(true);
+    const collections = [{ id: 'p1', name: 'Encore', trackIds: [] }];
+    retry.resolve(collections);
+    await retrying;
+    expect(state.hasLoaded).toBe(true);
+    expect(state.error).toBeNull();
+    const update = createDeferred();
+    listPlaylistsMock.mockReturnValueOnce(update.promise);
+    const updating = refresh();
+    expect(state.isLoading).toBe(false);
+    expect(state.playlists).toEqual(collections);
+    update.reject(new Error('refresh failed'));
+    await updating;
+    expect(state.playlists).toEqual(collections);
+    expect(state.isLoading).toBe(false);
+  });
   it('does not fetch or subscribe at module import time', async () => {
     const { state } = await importPlaylists();
 

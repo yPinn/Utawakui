@@ -1,4 +1,4 @@
-import { computed, reactive, readonly } from 'vue';
+import { computed, reactive, readonly, watch } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
 
@@ -7,6 +7,9 @@ import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
 
 const state = reactive({
   playlists: [],
+  isLoading: true,
+  isInitialized: false,
+  hasLoaded: false,
   // null means "全部曲目" (no playlist selected, show the full library).
   selectedId: null,
   // Which Library browse mode is shown when nothing is selected —
@@ -39,6 +42,7 @@ const ERROR_PRESENTATION = Object.freeze({
 let pending = Promise.resolve();
 let unsubscribeLibraryUpdated = null;
 let initializationPromise = null;
+let readRevision = 0;
 
 // Clear selection whenever the selected playlist disappears.
 function applyPlaylists(playlists) {
@@ -66,7 +70,11 @@ function formatError(prefix, err) {
   }).message;
 }
 
-function enqueue(operation, errorPrefix, { clearErrorOnSuccess = true } = {}) {
+function enqueue(
+  operation,
+  errorPrefix,
+  { clearErrorOnSuccess = true, isCurrent = null } = {},
+) {
   if (typeof window === 'undefined' || !window.Utawakui) {
     return Promise.resolve();
   }
@@ -74,10 +82,12 @@ function enqueue(operation, errorPrefix, { clearErrorOnSuccess = true } = {}) {
   const task = pending.then(async () => {
     try {
       const playlists = await operation();
+      if (isCurrent && !isCurrent()) return null;
       applyPlaylists(playlists);
       if (clearErrorOnSuccess) state.error = null;
       return playlists;
     } catch (err) {
+      if (isCurrent && !isCurrent()) return null;
       state.error = formatError(errorPrefix, err);
       return null;
     }
@@ -87,16 +97,34 @@ function enqueue(operation, errorPrefix, { clearErrorOnSuccess = true } = {}) {
   return pending;
 }
 
-function refresh() {
-  return enqueue(() => window.Utawakui.listPlaylists(), '讀取歌單失敗', {
-    clearErrorOnSuccess: false,
-  });
+async function refresh() {
+  const revision = ++readRevision;
+  state.isLoading = !state.hasLoaded;
+  try {
+    const result = await enqueue(
+      () => window.Utawakui.listPlaylists(),
+      '讀取歌單失敗',
+      {
+        clearErrorOnSuccess: !state.hasLoaded,
+        isCurrent: () => revision === readRevision,
+      },
+    );
+    if (revision === readRevision && Array.isArray(result))
+      state.hasLoaded = true;
+    return result;
+  } finally {
+    if (revision === readRevision) state.isLoading = false;
+  }
 }
 
 function initialize() {
   if (initializationPromise) return initializationPromise;
   initializationPromise = (async () => {
-    if (typeof window === 'undefined' || !window.Utawakui) return;
+    if (typeof window === 'undefined' || !window.Utawakui) {
+      state.isLoading = false;
+      state.isInitialized = true;
+      return;
+    }
     // Covers two cases with one subscription: (1) another part of the app
     // changed playlists.json indirectly (track deletion cascades — see
     // main.js's library:delete-track handler), and (2) the download
@@ -104,7 +132,15 @@ function initialize() {
     // specifically so this singleton doesn't keep serving a stale
     // directory's playlists (and worse, write them back into the new one).
     unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
-    await refresh();
+    const initialRead = refresh();
+    if (state.isLoading) {
+      await new Promise((resolve) =>
+        watch(() => state.isLoading, resolve, { once: true, flush: 'post' }),
+      );
+    } else {
+      await initialRead;
+    }
+    state.isInitialized = true;
   })();
   return initializationPromise;
 }
@@ -349,6 +385,7 @@ export function usePlaylists() {
   return {
     state: readonly(state),
     initialize,
+    refresh,
     selectedPlaylist,
     select,
     selectArtist,

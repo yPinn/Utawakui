@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, ref } from 'vue';
+import { computed, reactive, readonly, ref, watch } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 
@@ -55,27 +55,35 @@ const state = reactive({
   tracks: enrichedTracks,
   isLoading: true,
   isInitialized: false,
+  hasLoaded: false,
   error: null,
 });
 
 let unsubscribeLibraryUpdated = null;
 let initializationPromise = null;
+let readRevision = 0;
 
 const tracksById = computed(
   () => new Map(state.tracks.map((track) => [track.id, track])),
 );
 
 async function refresh(options) {
+  const revision = ++readRevision;
+  state.isLoading = !state.hasLoaded;
   if (typeof window === 'undefined' || !window.Utawakui) {
     state.isLoading = false;
     return;
   }
   try {
-    rawTracks.value = options
+    const tracks = options
       ? await window.Utawakui.listTracks(options)
       : await window.Utawakui.listTracks();
+    if (revision !== readRevision) return;
+    rawTracks.value = tracks;
+    state.hasLoaded = true;
     state.error = null;
   } catch (err) {
+    if (revision !== readRevision) return;
     state.error = recordError(err, {
       code: 'LIBRARY_LIST_FAILED',
       title: '曲庫讀取失敗',
@@ -86,7 +94,7 @@ async function refresh(options) {
       context: { retryable: true },
     });
   } finally {
-    state.isLoading = false;
+    if (revision === readRevision) state.isLoading = false;
   }
 }
 
@@ -97,7 +105,15 @@ function initialize() {
     if (typeof window !== 'undefined' && window.Utawakui) {
       unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
     }
-    await Promise.all([refresh(), playlistInitialization]);
+    const initialRead = refresh();
+    // A superseded initial response cannot finish hydration. Observe the
+    // current initial read's settled state, including a newer failure.
+    const hydration = state.isLoading
+      ? new Promise((resolve) =>
+          watch(() => state.isLoading, resolve, { once: true, flush: 'post' }),
+        )
+      : initialRead;
+    await Promise.all([hydration, playlistInitialization]);
     state.isInitialized = true;
   })();
   return initializationPromise;

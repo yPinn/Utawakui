@@ -48,6 +48,134 @@ async function importLibrary() {
 }
 
 describe('initial load', () => {
+  it('can finish hydration from the latest read while the superseded read is unresolved', async () => {
+    const older = Promise.withResolvers();
+    listTracksMock
+      .mockReturnValueOnce(older.promise)
+      .mockResolvedValueOnce([{ id: 'current' }]);
+    const library = await importLibrary();
+    let initialized = false;
+    const startup = library.initialize().then(() => {
+      initialized = true;
+    });
+    await library.refresh();
+    await flushMicrotasks();
+    expect(initialized).toBe(true);
+    expect(library.state.isInitialized).toBe(true);
+    older.resolve([{ id: 'stale' }]);
+    await startup;
+    await flushMicrotasks();
+    expect(library.state.tracks[0].id).toBe('current');
+  });
+  it('waits for the current snapshot when initialization is superseded', async () => {
+    const older = Promise.withResolvers();
+    const latest = Promise.withResolvers();
+    listTracksMock
+      .mockReturnValueOnce(older.promise)
+      .mockReturnValueOnce(latest.promise);
+    const library = await importLibrary();
+    let initialized = false;
+    const startup = library.initialize().then(() => {
+      initialized = true;
+    });
+    const currentRead = library.refresh();
+    older.resolve([{ id: 'stale' }]);
+    await flushMicrotasks();
+    expect(initialized).toBe(false);
+    expect(library.state.isInitialized).toBe(false);
+    latest.resolve([{ id: 'current' }]);
+    await Promise.all([startup, currentRead]);
+    expect(library.state.isInitialized).toBe(true);
+    expect(library.state.tracks[0].id).toBe('current');
+  });
+  it.each(['resolve', 'reject'])(
+    'ignores an older %s while the latest read is pending',
+    async (outcome) => {
+      const older = Promise.withResolvers();
+      const latest = Promise.withResolvers();
+      listTracksMock
+        .mockReturnValueOnce(older.promise)
+        .mockReturnValueOnce(latest.promise);
+      const { state, refresh } = await importLibrary();
+      const oldRead = refresh();
+      const newRead = refresh();
+      if (outcome === 'resolve') older.resolve([{ id: 'stale' }]);
+      else older.reject(new Error('stale error'));
+      await oldRead;
+      expect(state.tracks).toEqual([]);
+      expect(state.error).toBeNull();
+      expect(state.hasLoaded).toBe(false);
+      expect(state.isLoading).toBe(true);
+      latest.resolve([{ id: 'current' }]);
+      await newRead;
+      expect(state.tracks[0].id).toBe('current');
+      expect(state.isLoading).toBe(false);
+    },
+  );
+
+  it.each(['resolve', 'reject'])(
+    'keeps the latest successful snapshot after a late %s',
+    async (outcome) => {
+      const older = Promise.withResolvers();
+      listTracksMock
+        .mockReturnValueOnce(older.promise)
+        .mockResolvedValueOnce([{ id: 'current' }]);
+      const { state, refresh } = await importLibrary();
+      const oldRead = refresh();
+      await refresh();
+      if (outcome === 'resolve') older.resolve([{ id: 'stale' }]);
+      else older.reject(new Error('stale error'));
+      await oldRead;
+      expect(state.tracks[0].id).toBe('current');
+      expect(state.error).toBeNull();
+      expect(state.isLoading).toBe(false);
+    },
+  );
+
+  it('settles the latest failed read without waiting for an older request', async () => {
+    const older = Promise.withResolvers();
+    listTracksMock
+      .mockReturnValueOnce(older.promise)
+      .mockRejectedValueOnce(new Error('current failure'));
+    const { state, refresh } = await importLibrary();
+    const oldRead = refresh();
+    await refresh();
+    const error = state.error;
+    expect(error).toBeTruthy();
+    expect(state.isLoading).toBe(false);
+    older.resolve([{ id: 'stale' }]);
+    await oldRead;
+    expect(state.tracks).toEqual([]);
+    expect(state.error).toEqual(error);
+    expect(state.hasLoaded).toBe(false);
+  });
+  it('settles without a desktop bridge instead of leaving an initial placeholder active', async () => {
+    vi.stubGlobal('window', undefined);
+    const library = await loadLibrary();
+    expect(library.state.isLoading).toBe(false);
+    expect(library.state.isInitialized).toBe(true);
+  });
+  it('re-enters loading for initial retry and preserves tracks on a failed background refresh', async () => {
+    listTracksMock.mockRejectedValueOnce(new Error('read failed'));
+    const { state, refresh } = await loadLibrary();
+    let finish;
+    listTracksMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const retry = refresh();
+    expect(state.isLoading).toBe(true);
+    finish([{ id: 'kept', title: 'Keep me' }]);
+    await retry;
+    expect(state.hasLoaded).toBe(true);
+    listTracksMock.mockRejectedValueOnce(new Error('refresh failed'));
+    const update = refresh();
+    expect(state.isLoading).toBe(false);
+    expect(state.tracks[0].id).toBe('kept');
+    await update;
+    expect(state.tracks[0].id).toBe('kept');
+  });
   it('does not fetch or subscribe at module import time', async () => {
     const { state } = await importLibrary();
 

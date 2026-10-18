@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { nextTick, reactive } from 'vue';
 import TrackTable from './TrackTable.vue';
+import UiSkeleton from '../ui/UiSkeleton.vue';
 import TrackCollectionRow from './TrackCollectionRow.vue';
 import TrackTableColumnChooser from './TrackTableColumnChooser.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
@@ -24,6 +26,7 @@ import {
 
 for (const [component, filename] of [
   [TrackTable, './TrackTable.vue'],
+  [UiSkeleton, '../ui/UiSkeleton.vue'],
   [TrackCollectionRow, './TrackCollectionRow.vue'],
   [TrackTableColumnChooser, './TrackTableColumnChooser.vue'],
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
@@ -79,6 +82,116 @@ const rowSource = readFileSync(
   new URL('./TrackCollectionRow.vue', import.meta.url),
   'utf8',
 );
+
+describe('initial table loading', () => {
+  afterEach(() => vi.useRealTimers());
+  it('reveals delayed placeholders and keeps the existing header when content arrives', async () => {
+    vi.useFakeTimers();
+    const props = reactive({
+      loading: true,
+      entries: [],
+      density: 'compact',
+      collectionKind: 'artist',
+    });
+    const { root, app } = mount(TrackTable, props);
+    const header = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__header'),
+    )[0];
+    expect(
+      findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__body--waiting'),
+      ),
+    ).toHaveLength(1);
+    vi.advanceTimersByTime(180);
+    await nextTick();
+    expect(
+      findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__body--waiting'),
+      ),
+    ).toHaveLength(0);
+    const row = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__skeleton-row'),
+    )[0];
+    expect(rowRoles(row)).toEqual(rowRoles(header));
+    props.entries = entries;
+    props.loading = false;
+    await nextTick();
+    expect(
+      findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__header'),
+      )[0],
+    ).toBe(header);
+    expect(
+      findAll(root, (node) =>
+        classIncludes(node, 'library-track-table__skeleton-row'),
+      ),
+    ).toHaveLength(0);
+    expect(textContent(root)).toContain('第一首歌');
+    const body = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__body'),
+    )[0];
+    expect(classIncludes(body, 'ui-loading-content-enter')).toBe(true);
+    expect(classIncludes(header, 'ui-loading-content-enter')).toBe(false);
+    trigger(body, 'onAnimationend', { target: body, currentTarget: body });
+    await nextTick();
+    expect(classIncludes(body, 'ui-loading-content-enter')).toBe(false);
+    props.loading = true;
+    props.entries = [...entries];
+    await nextTick();
+    expect(classIncludes(body, 'ui-loading-content-enter')).toBe(false);
+    app.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('does not fade a new destination using the previous destination placeholder', async () => {
+    vi.useFakeTimers();
+    const props = reactive({
+      loading: true,
+      entries: [],
+      contentKey: 'artist:a',
+    });
+    const { root, app } = mount(TrackTable, props);
+    vi.advanceTimersByTime(180);
+    await nextTick();
+    props.contentKey = 'artist:b';
+    props.loading = false;
+    props.entries = entries;
+    await nextTick();
+    expect(textContent(root)).toContain('第一首歌');
+    expect(
+      findAll(root, (node) => classIncludes(node, 'ui-loading-content-enter')),
+    ).toHaveLength(0);
+    app.unmount();
+  });
+  it('reserves non-interactive rows with the same column projection and removes them for real data', () => {
+    const { root, app } = mount(TrackTable, { loading: true, entries: [] });
+    expect(
+      findAll(root, (node) => node.props?.['aria-busy'] === true),
+    ).toHaveLength(1);
+    const placeholders = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes(
+        'library-track-table__skeleton-row',
+      ),
+    );
+    expect(placeholders).toHaveLength(6);
+    expect(
+      placeholders.every((node) => node.props['aria-hidden'] === 'true'),
+    ).toBe(true);
+    expect(
+      findAll(placeholders[0], (node) => node.type === 'button'),
+    ).toHaveLength(0);
+    const header = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__header'),
+    )[0];
+    expect(rowRoles(placeholders[0])).toEqual(rowRoles(header));
+    app.unmount();
+    const loaded = mount(TrackTable, { loading: true, entries });
+    expect(textContent(loaded.root)).toContain('第一首歌');
+    expect(
+      findAll(loaded.root, (node) => node.props?.['aria-busy'] === true),
+    ).toHaveLength(0);
+    loaded.app.unmount();
+  });
+});
 
 function classIncludes(node, className) {
   return String(node.props?.class ?? '')
@@ -706,6 +819,28 @@ describe('TrackTable production collection contract', () => {
     expect(onTrackDragStart).toHaveBeenCalledWith(tracks[0], dragEvent);
     expect(onMoveTrack).toHaveBeenCalledWith('track-a', 1);
     app.unmount();
+  });
+
+  it('lets ordinal presentation pass pointer hits through to row selection', () => {
+    for (const selector of [
+      '.library-track-row__ordinal',
+      '.library-track-row__ordinal-text',
+    ]) {
+      const rules = [...rowSource.matchAll(/([^{}]+)\{([^{}]*)\}/gu)];
+      expect(
+        rules.some(
+          ([, selectors, declarations]) =>
+            selectors
+              .split(',')
+              .map((value) => value.trim())
+              .includes(selector) &&
+            /pointer-events:\s*none;/u.test(declarations),
+        ),
+      ).toBe(true);
+    }
+    expect(rowSource).toMatch(
+      /\.library-track-row:hover \.library-track-row__playback-control,[^{}]+\{[^}]*pointer-events:\s*auto;/u,
+    );
   });
 
   it('shares the centered ordinal slot between number and playback control', () => {

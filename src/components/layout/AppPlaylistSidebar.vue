@@ -15,7 +15,7 @@ import {
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
-const { tracksById } = useLibrary();
+const { tracksById, state: libraryState } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
 const { openLibraryContent } = useAppView();
 const {
@@ -69,6 +69,7 @@ async function handleResizeKeydown(event) {
       id="app-playlist-sidebar-content"
       class="app-playlist-sidebar__content"
       :tracks-by-id="tracksById"
+      :library-loading="libraryState.isLoading"
       :library-view="playlistState.libraryView"
       :compact="sidebarCompact"
       @library-view-select="setLibraryView"

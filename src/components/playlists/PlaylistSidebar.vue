@@ -8,12 +8,14 @@ import {
   ListEnd,
   ListPlus,
   Plus,
+  RefreshCw,
 } from '../../icons/index.js';
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
 import {
   artistSearchTexts,
   deriveArtistPage,
@@ -31,6 +33,9 @@ import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiSkeleton from '../ui/UiSkeleton.vue';
+import '../../styles/loading.css';
+import UiNotice from '../ui/UiNotice.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 
@@ -39,9 +44,11 @@ const props = defineProps({
   tracksById: { type: Map, default: () => new Map() },
   libraryView: { type: String, default: 'all' },
   compact: { type: Boolean, default: false },
+  libraryLoading: { type: Boolean, default: false },
 });
 
-const { state, select, selectArtist, create, reorderPlaylist } = usePlaylists();
+const { state, select, selectArtist, create, reorderPlaylist, refresh } =
+  usePlaylists();
 const collectionPlayback = useCollectionPlayback();
 const {
   state: artistIndexState,
@@ -129,6 +136,14 @@ const normalizedSearchQuery = computed(() =>
   searchQuery.value.trim().toLocaleLowerCase(),
 );
 const hasSearchQuery = computed(() => normalizedSearchQuery.value.length > 0);
+// Search results are not the data-read authority: an unmatched query must
+// never turn already-loaded collections back into placeholders.
+const initialLoading = computed(
+  () =>
+    (state.isLoading || props.libraryLoading || artistIndexState.isLoading) &&
+    state.playlists.length === 0 &&
+    !artistIndexState.index?.artists?.length,
+);
 
 // Album subtitle uses derived artist; mixed playlists show kind only.
 function subtitleFor(playlist) {
@@ -269,6 +284,14 @@ const hasVisibleCollectionItems = computed(
     visiblePlaylistItems.value.length > 0 ||
     visibleAlbumItems.value.length > 0 ||
     visibleArtistItems.value.length > 0,
+);
+
+const { skeletonVisible, revealContent, finishReveal } = useDeferredLoading(
+  initialLoading,
+  {
+    identity: () => normalizedSearchQuery.value,
+    hasContent: () => hasVisibleCollectionItems.value,
+  },
 );
 
 const menuContext = ref(null);
@@ -546,9 +569,61 @@ function startDrag(playlist, event) {
       :scrollbar-visibility="compact ? 'hidden' : 'auto'"
       tabindex="0"
       aria-label="播放清單與參照內容"
+      :aria-busy="initialLoading || undefined"
       @contextmenu="openGlobalMenu"
     >
-      <div class="playlist-sidebar__list">
+      <div
+        class="playlist-sidebar__list"
+        :class="{ 'ui-loading-content-enter': revealContent }"
+        @animationend.self="finishReveal"
+      >
+        <span v-if="initialLoading" class="ui-visually-hidden" role="status"
+          >正在讀取播放清單與參照內容</span
+        >
+        <div
+          v-if="initialLoading"
+          :class="{ 'playlist-sidebar__skeleton--waiting': !skeletonVisible }"
+          aria-hidden="true"
+          class="playlist-sidebar__skeleton"
+        >
+          <div
+            v-for="index in 6"
+            :key="index"
+            class="playlist-sidebar__item playlist-sidebar__skeleton-row"
+          >
+            <UiSkeleton
+              shape="block"
+              class="playlist-sidebar__skeleton-thumb"
+            />
+            <UiSkeleton
+              :lines="2"
+              pattern="staggered"
+              class="playlist-sidebar__info"
+            />
+          </div>
+        </div>
+        <template v-else-if="state.error && !state.hasLoaded">
+          <template v-if="compact">
+            <span class="ui-visually-hidden" role="status"
+              >播放清單讀取未完成</span
+            >
+            <UiIconButton
+              class="playlist-sidebar__retry"
+              :icon="RefreshCw"
+              label="重試讀取播放清單"
+              @click="refresh"
+            />
+          </template>
+          <UiNotice
+            v-else
+            tone="danger"
+            title="播放清單讀取未完成"
+            :message="state.error"
+            action-label="重試"
+            compact
+            @action="refresh"
+          />
+        </template>
         <PlaylistSidebarRow
           v-for="playlist in visiblePlaylistItems"
           :key="playlist.id"
@@ -620,7 +695,7 @@ function startDrag(playlist, event) {
         </template>
 
         <p
-          v-if="hasSearchQuery && !hasVisibleCollectionItems"
+          v-if="!initialLoading && hasSearchQuery && !hasVisibleCollectionItems"
           class="playlist-sidebar__empty"
         >
           沒有符合的集合
@@ -686,6 +761,30 @@ function startDrag(playlist, event) {
   min-width: 0;
   flex-direction: column;
   gap: var(--ui-playlist-list-gap);
+}
+
+.playlist-sidebar__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-playlist-list-gap);
+}
+
+.playlist-sidebar__retry {
+  align-self: center;
+}
+
+.playlist-sidebar__skeleton--waiting {
+  visibility: hidden;
+}
+
+.playlist-sidebar__skeleton-row {
+  cursor: default;
+  pointer-events: none;
+}
+
+.playlist-sidebar__skeleton-thumb {
+  --ui-skeleton-block-min-block-size: var(--ui-sidebar-artwork-size);
+  flex: 0 0 var(--ui-sidebar-artwork-size);
 }
 
 .playlist-sidebar__divider {

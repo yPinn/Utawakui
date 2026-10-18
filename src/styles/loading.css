@@ -1,0 +1,15 @@
+/* Content handoff after a visible skeleton. Components import this shared
+   control-panel recipe; the platform-only base stylesheet stays neutral. */
+.ui-loading-content-enter {
+  animation: ui-loading-content-enter var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-enter);
+}
+
+@keyframes ui-loading-content-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -202,8 +202,9 @@ describe('Library browse workspace composition', () => {
       'const { albumEntries, albumSupportingContent } = useLibraryAlbumContext()',
     );
     expect(viewSource).toContain(
-      'v-if="albumSupportingContent?.relatedAlbums.length > 0"',
+      ':related-albums="albumSupportingContent?.relatedAlbums ?? []"',
     );
+    expect(viewSource).toContain(':loading="albumGridLoading"');
     expect(viewSource).not.toContain(
       ':summary="albumSupportingContent.summary"',
     );

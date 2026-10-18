@@ -80,6 +80,53 @@ async function load() {
 }
 
 describe('useArtistIndex', () => {
+  it('does not let a superseded failure clear the current initial loading state', async () => {
+    const { artistIndex } = await load();
+    const older = Promise.withResolvers();
+    const latest = Promise.withResolvers();
+    getArtistIndexMock
+      .mockReturnValueOnce(older.promise)
+      .mockReturnValueOnce(latest.promise);
+    const oldRead = artistIndex.refresh();
+    const newRead = artistIndex.refresh();
+    older.reject(new Error('stale failure'));
+    await oldRead;
+    expect(artistIndex.state.isLoading).toBe(true);
+    expect(artistIndex.state.error).toBeNull();
+    expect(artistIndex.state.index).toBeNull();
+    latest.resolve({ artists: [{ id: 'current' }], trackArtistIds: {} });
+    await newRead;
+    expect(artistIndex.state.isLoading).toBe(false);
+    expect(artistIndex.state.index.artists[0].id).toBe('current');
+  });
+  it('settles a failed first read, waits again on retry, and keeps the index during background reads', async () => {
+    const { artistIndex } = await load();
+    getArtistIndexMock.mockRejectedValueOnce(new Error('read failed'));
+    const failed = artistIndex.refresh();
+    expect(artistIndex.state.isLoading).toBe(true);
+    await failed;
+    expect(artistIndex.state.isLoading).toBe(false);
+    expect(artistIndex.state.isInitialized).toBe(true);
+    let finish;
+    getArtistIndexMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const retry = artistIndex.refresh();
+    expect(artistIndex.state.isLoading).toBe(true);
+    finish({ artists: [], trackArtistIds: {} });
+    await retry;
+    expect(artistIndex.state.isLoading).toBe(false);
+    getArtistIndexMock.mockRejectedValueOnce(new Error('refresh failed'));
+    const background = artistIndex.refresh();
+    expect(artistIndex.state.isLoading).toBe(false);
+    await background;
+    expect(artistIndex.state.index).toEqual({
+      artists: [],
+      trackArtistIds: {},
+    });
+  });
   it('does not request the index until an artist surface asks for it', async () => {
     const { artistIndex } = await load();
     await flushMicrotasks();

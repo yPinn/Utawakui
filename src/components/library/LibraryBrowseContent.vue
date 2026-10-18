@@ -155,6 +155,18 @@ const isAlbumReferenceSelected = computed(() =>
 );
 // Artist pages are derived read-only references (ADR 0022).
 const isArtistSelected = computed(() => mode.value === 'artist');
+const initialCollectionLoading = computed(
+  () =>
+    libraryState.isLoading ||
+    playlistState.isLoading ||
+    (isArtistSelected.value && artistIndexState.isLoading && !artistPage.value),
+);
+const albumGridLoading = computed(
+  () =>
+    libraryState.isLoading ||
+    playlistState.isLoading ||
+    artistIndexState.isLoading,
+);
 
 const { density: trackListDensity, setDensity: setTrackListDensity } =
   useTrackListDensity();
@@ -201,6 +213,17 @@ const collectionSourceId = computed(() => {
     artistPage.value?.id ??
     null
   );
+});
+
+// Presentation identity follows navigation intent, including an artist whose
+// derived index has not arrived yet. It must not change when data resolves.
+const collectionContentKey = computed(() => {
+  if (playlistState.selectedId) return `playlist:${playlistState.selectedId}`;
+  if (playlistState.selectedArtistId)
+    return `artist:${playlistState.selectedArtistId}`;
+  if (playlistState.selectedAlbumReference)
+    return `album-reference:${playlistState.selectedAlbumReference}`;
+  return `library:${playlistState.libraryView}`;
 });
 
 const playlistTracks = computed(() =>
@@ -1056,20 +1079,32 @@ onMounted(async () => {
         :variant="contentFieldVariant"
         aria-label="曲目清單與狀態"
       >
-        <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
-
         <UiNotice
-          v-else-if="libraryState.error"
+          v-if="
+            !initialCollectionLoading &&
+            libraryState.error &&
+            !libraryState.hasLoaded
+          "
           :notice="libraryState.error"
           compact
           @action="refreshLibrary"
         />
 
-        <UiHint v-else-if="libraryState.tracks.length === 0">
+        <UiHint
+          v-else-if="
+            !initialCollectionLoading && libraryState.tracks.length === 0
+          "
+        >
           還沒有任何曲目——使用左側的「匯入曲目」開始建立曲庫。
         </UiHint>
 
         <template v-else>
+          <UiNotice
+            v-if="libraryState.error"
+            :notice="libraryState.error"
+            compact
+            @action="refreshLibrary"
+          />
           <UiNotice
             v-if="pageError"
             tone="danger"
@@ -1078,14 +1113,23 @@ onMounted(async () => {
             compact
           />
 
-          <UiHint v-if="isArtistSelected && !artistPage" role="status">
+          <UiHint
+            v-if="!initialCollectionLoading && isArtistSelected && !artistPage"
+            role="status"
+          >
             載入中…
           </UiHint>
-          <UiHint v-else-if="visibleTableEntries.length === 0">
+          <UiHint
+            v-else-if="
+              !initialCollectionLoading && visibleTableEntries.length === 0
+            "
+          >
             {{ tableEmptyText }}
           </UiHint>
           <TrackTable
             v-else
+            :loading="initialCollectionLoading"
+            :content-key="collectionContentKey"
             :entries="visibleTableEntries"
             :collection-kind="tableCollectionKind"
             :column-preferences="currentTableColumnPreferences"
@@ -1121,18 +1165,29 @@ onMounted(async () => {
       </AppFolderContentField>
 
       <LibraryAlbumSupportingContent
-        v-if="albumSupportingContent?.relatedAlbums.length > 0"
-        :artist="albumSupportingContent.artist"
-        :related-albums="albumSupportingContent.relatedAlbums"
+        v-if="
+          mode === 'album' &&
+          (albumGridLoading || albumSupportingContent?.relatedAlbums.length > 0)
+        "
+        :artist="albumSupportingContent?.artist ?? ''"
+        :albums-title="albumSupportingContent?.artist ? '' : '相關專輯'"
+        :related-albums="albumSupportingContent?.relatedAlbums ?? []"
+        :loading="albumGridLoading"
+        :content-key="collectionContentKey"
         :playing-album-id="playingSupportingAlbumId"
         @select-album="selectPlaylistAction"
         @play-album="toggleSupportingAlbumPlayback"
       />
 
       <LibraryAlbumSupportingContent
-        v-else-if="artistPage && artistPage.albums.length > 0"
-        :artist="artistPage.name"
-        :related-albums="artistPage.albums"
+        v-else-if="
+          isArtistSelected &&
+          (albumGridLoading || artistPage?.albums.length > 0)
+        "
+        :artist="artistPage?.name ?? pageTitle"
+        :related-albums="artistPage?.albums ?? []"
+        :loading="albumGridLoading"
+        :content-key="collectionContentKey"
         :playing-album-id="playingSupportingAlbumId"
         albums-title="專輯"
         @select-album="selectPlaylistAction"

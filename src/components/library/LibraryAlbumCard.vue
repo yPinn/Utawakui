@@ -4,11 +4,13 @@ import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiSkeleton from '../ui/UiSkeleton.vue';
 
 const ALBUM_ARTWORK_SIZE = ARTWORK_SIZE.xl;
 
 const props = defineProps({
-  album: { type: Object, required: true },
+  album: { type: Object, default: null },
+  loading: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
 });
 
@@ -25,34 +27,48 @@ function playAlbum(event) {
 </script>
 
 <template>
-  <div class="library-album-card" data-artwork-reveal-scope="focus-within">
-    <button
-      type="button"
-      class="library-album-card__open"
-      :aria-label="`開啟專輯：${album.name}`"
-      @click="selectAlbum"
-    />
-    <UiCollageThumb
-      class="library-album-card__artwork"
-      :cover-url="album.coverUrl"
-      :tracks="album.tracks"
-      :can-collage="false"
-      :size="ALBUM_ARTWORK_SIZE"
-    />
-    <UiArtworkReveal class="library-album-card__play">
-      <PlaybackPrimaryButton
-        :playing="playing"
-        :play-label="`播放專輯：${album.name}`"
-        :pause-label="`暫停專輯：${album.name}`"
-        @click="playAlbum"
+  <div
+    class="library-album-card"
+    :class="{ 'library-album-card--skeleton': loading }"
+    :aria-hidden="loading ? 'true' : undefined"
+    data-artwork-reveal-scope="focus-within"
+  >
+    <template v-if="loading">
+      <UiSkeleton shape="block" class="library-album-card__skeleton-artwork" />
+      <div class="library-album-card__copy">
+        <UiSkeleton class="library-album-card__skeleton-title" />
+        <UiSkeleton class="library-album-card__skeleton-year" />
+      </div>
+    </template>
+    <template v-else-if="album">
+      <button
+        type="button"
+        class="library-album-card__open"
+        :aria-label="`開啟專輯：${album.name}`"
+        @click="selectAlbum"
       />
-    </UiArtworkReveal>
-    <span class="library-album-card__copy">
-      <strong :lang="contentLangAttribute(album.name, album.artist)">{{
-        album.name
-      }}</strong>
-      <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
-    </span>
+      <UiCollageThumb
+        class="library-album-card__artwork"
+        :cover-url="album.coverUrl"
+        :tracks="album.tracks"
+        :can-collage="false"
+        :size="ALBUM_ARTWORK_SIZE"
+      />
+      <UiArtworkReveal class="library-album-card__play">
+        <PlaybackPrimaryButton
+          :playing="playing"
+          :play-label="`播放專輯：${album.name}`"
+          :pause-label="`暫停專輯：${album.name}`"
+          @click="playAlbum"
+        />
+      </UiArtworkReveal>
+      <span class="library-album-card__copy">
+        <strong :lang="contentLangAttribute(album.name, album.artist)">{{
+          album.name
+        }}</strong>
+        <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
+      </span>
+    </template>
   </div>
 </template>
 
@@ -79,6 +95,31 @@ function playAlbum(event) {
 .library-album-card:hover,
 .library-album-card:focus-within {
   background: var(--ui-color-surface-hover);
+}
+
+.library-album-card--skeleton {
+  pointer-events: none;
+}
+
+.library-album-card__skeleton-artwork {
+  --ui-skeleton-block-min-block-size: var(--ui-artwork-size-xl);
+  inline-size: var(--ui-artwork-size-xl);
+  aspect-ratio: 1;
+}
+
+.library-album-card__skeleton-title {
+  min-block-size: calc(
+    var(--ui-type-label-size) * var(--ui-type-label-line-height)
+  );
+  align-content: center;
+}
+
+.library-album-card__skeleton-year {
+  min-block-size: calc(
+    var(--ui-type-caption-size) * var(--ui-type-caption-line-height)
+  );
+  inline-size: 48%;
+  align-content: center;
 }
 
 .library-album-card:has(.library-album-card__open:active) {

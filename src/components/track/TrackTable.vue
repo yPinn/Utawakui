@@ -2,6 +2,9 @@
 import { computed, shallowRef, toRef, watch } from 'vue';
 import { ChevronDown, ICON_SIZE } from '../../icons/index.js';
 import { useTrackCollectionColumns } from '../../composables/useTrackCollectionColumns.js';
+import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
+import UiSkeleton from '../ui/UiSkeleton.vue';
+import '../../styles/loading.css';
 import TrackCollectionRow from './TrackCollectionRow.vue';
 import TrackTableColumnChooser from './TrackTableColumnChooser.vue';
 import {
@@ -21,6 +24,8 @@ const VARIANT_KIND = Object.freeze({
 
 const props = defineProps({
   entries: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+  contentKey: { type: String, default: '' },
   collectionKind: {
     type: String,
     default: '',
@@ -74,8 +79,18 @@ const emit = defineEmits([
   'trackDragEnd',
 ]);
 
+const initialLoading = computed(
+  () => props.loading && props.entries.length === 0,
+);
 const resolvedCollectionKind = computed(
   () => props.collectionKind || VARIANT_KIND[props.variant],
+);
+const { skeletonVisible, revealContent, finishReveal } = useDeferredLoading(
+  initialLoading,
+  {
+    identity: () => props.contentKey || resolvedCollectionKind.value,
+    hasContent: () => props.entries.length > 0,
+  },
 );
 const profile = computed(() =>
   trackCollectionProfile(resolvedCollectionKind.value),
@@ -285,7 +300,11 @@ function reorderHeaderFromKeyboard(column, event) {
     }"
     :data-track-table-variant="variant"
     :data-collection-kind="resolvedCollectionKind"
+    :aria-busy="initialLoading || undefined"
   >
+    <span v-if="initialLoading" class="ui-visually-hidden" role="status"
+      >正在讀取曲目</span
+    >
     <div ref="header" class="library-track-table__header" :style="gridStyle">
       <span
         v-for="column in layout.columns"
@@ -397,9 +416,53 @@ function reorderHeaderFromKeyboard(column, event) {
     </div>
 
     <ul
+      v-if="initialLoading"
       class="library-track-table__body"
+      :class="{ 'library-track-table__body--waiting': !skeletonVisible }"
+      aria-hidden="true"
+    >
+      <li
+        v-for="index in 6"
+        :key="index"
+        class="library-track-table__skeleton-row"
+        :style="gridStyle"
+        aria-hidden="true"
+      >
+        <span
+          v-for="column in layout.columns"
+          :key="column.role"
+          :data-track-column="column.role"
+          class="library-track-table__skeleton-cell"
+        >
+          <template v-if="column.role === 'identity'">
+            <UiSkeleton
+              v-if="profile.showArtwork && density !== 'compact'"
+              shape="block"
+              class="library-track-table__skeleton-artwork"
+            />
+            <UiSkeleton
+              class="library-track-table__skeleton-copy"
+              :class="{
+                'library-track-table__skeleton-copy--stacked':
+                  density !== 'compact' && profile.showArtist,
+              }"
+              :lines="density === 'compact' || !profile.showArtist ? 1 : 2"
+              pattern="staggered"
+            />
+          </template>
+          <UiSkeleton
+            v-else-if="!['spacer', 'actions'].includes(column.role)"
+          />
+        </span>
+      </li>
+    </ul>
+    <ul
+      v-else
+      class="library-track-table__body"
+      :class="{ 'ui-loading-content-enter': revealContent }"
       role="list"
       :aria-label="label || profile.accessibleLabel"
+      @animationend.self="finishReveal"
     >
       <TrackCollectionRow
         v-for="entry in projectedEntries"
@@ -499,6 +562,50 @@ function reorderHeaderFromKeyboard(column, event) {
   padding: 0;
   background: var(--ui-color-surface);
   list-style: none;
+}
+
+.library-track-table__body--waiting {
+  visibility: hidden;
+}
+
+.library-track-table__skeleton-row {
+  min-width: 0;
+  min-height: var(--ui-track-row-min-height);
+  display: grid;
+  grid-template-columns: var(--library-track-table-grid);
+  align-items: center;
+  gap: var(--ui-track-row-gap);
+  padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
+  border-bottom: var(--ui-border-width) solid
+    var(--ui-folder-ledger-rule, var(--ui-color-border));
+}
+
+.library-track-table--compact .library-track-table__skeleton-row {
+  min-height: var(--ui-track-row-compact-min-height);
+}
+
+.library-track-table__skeleton-cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-track-row-gap);
+}
+
+.library-track-table__skeleton-cell > .ui-skeleton {
+  flex: 1;
+}
+
+.library-track-table__skeleton-cell > .library-track-table__skeleton-artwork {
+  --ui-skeleton-block-min-block-size: var(--ui-track-row-thumb-size);
+  flex: 0 0 var(--ui-track-row-thumb-size);
+}
+
+.library-track-table__skeleton-copy--stacked {
+  min-block-size: calc(
+    var(--ui-type-body-compact-size) * var(--ui-type-body-compact-line-height) +
+      var(--ui-type-caption-size) * var(--ui-type-caption-line-height)
+  );
+  align-content: center;
 }
 
 .library-track-table__header-column--reorderable {
