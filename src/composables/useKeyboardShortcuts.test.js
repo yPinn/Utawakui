@@ -89,6 +89,24 @@ function dispatchKey(key, modifiers = {}) {
 const EDITABLE_TARGET = { tagName: 'INPUT' };
 
 describe('useKeyboardShortcuts', () => {
+  it.each(['ArrowDown', 'ArrowUp'])(
+    'leaves native SELECT %s to the control without adjusting player volume',
+    async (key) => {
+      await setupShortcuts();
+      const preventDefault = dispatchKey(key, {
+        target: { tagName: 'SELECT' },
+      });
+      expect(preventDefault).not.toHaveBeenCalled();
+      expect(player.setVolume).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains destination shortcuts while a native SELECT is focused', async () => {
+    const appView = await setupShortcuts();
+    const preventDefault = dispatchKey('F2', { target: { tagName: 'SELECT' } });
+    expect(appView.activeView.value).toBe('performance');
+    expect(preventDefault).toHaveBeenCalledOnce();
+  });
   it('maps F1-F3 to Library, Performance, and Display while leaving F4 unused', async () => {
     const appView = await setupShortcuts();
 

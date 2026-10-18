@@ -7,9 +7,10 @@ describe('isEditableTarget', () => {
     expect(isEditableTarget(undefined)).toBe(false);
   });
 
-  it('is true for INPUT and TEXTAREA elements', () => {
+  it('is true for INPUT, TEXTAREA and native SELECT controls', () => {
     expect(isEditableTarget({ tagName: 'INPUT' })).toBe(true);
     expect(isEditableTarget({ tagName: 'TEXTAREA' })).toBe(true);
+    expect(isEditableTarget({ tagName: 'SELECT' })).toBe(true);
   });
 
   it('is true for a contenteditable element regardless of tag', () => {

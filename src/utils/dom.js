@@ -3,6 +3,7 @@ export function isEditableTarget(target) {
   return (
     target.tagName === 'INPUT' ||
     target.tagName === 'TEXTAREA' ||
+    target.tagName === 'SELECT' ||
     target.isContentEditable
   );
 }
