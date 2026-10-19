@@ -1,179 +1,50 @@
 # 文件導覽與決策現況
 
-這是 Utawakui 文件的單一入口。`docs/` 根目錄只保留會持續維護的產品入口；其他
-文件依用途分類，避免研究、歷史計畫與現行規格混在一起。
-
-## 目錄結構
-
-```text
-docs/
-  README.md       文件入口、分類與決策現況
-  spec.md         產品範圍、功能現況與方向
-  architecture.md 現行 runtime 與 dependency boundaries
-  adr/            已接受決策與取捨歷史
-  contracts/      可驗證的 protocol、security、sidecar 與 quality gates
-  operations/     發布、diagnostics、packaging 與 startup 操作文件
-  governance/     合規與專案治理參考
-  research/       有日期或明確研究範圍的 benchmark、spike 與競品證據
-  archive/        已完成但仍需追溯的執行計畫
-  releases/       版本化 release notes；可先準備目前版本草稿，發布後即成為歷史紀錄
-```
-
-## 保留與歸檔判斷
-
-| 分類                                      | 處理         | 理由                                                                                         |
-| ----------------------------------------- | ------------ | -------------------------------------------------------------------------------------------- |
-| `README.md`、`spec.md`、`architecture.md` | 根目錄保留   | 是所有讀者的 live entry，不應被歷史資料淹沒。                                                |
-| `adr/`                                    | 全部保留     | 即使已 superseded，仍保存當時限制、取捨與後續決策鏈。                                        |
-| `contracts/`                              | 全部保留     | 對應 validator、fixtures、IPC、sidecars 或 future acceptance boundary。                      |
-| `operations/`                             | 全部保留     | 直接支援 release、support、diagnostics 與效能回歸。                                          |
-| `governance/`                             | 保留         | 合規立場與 dependency license 邊界仍影響產品和發布。                                         |
-| `research/`                               | 集中保存     | 不作為目前狀態來源，但 ADR 與模型選擇需要可追溯證據。                                        |
-| `archive/`                                | 歸檔、不刪除 | Lyrics T2 plan 已完成；contract 才是現行規範，但 plan 仍解釋遷移順序。                       |
-| `releases/`                               | 逐版本保留   | 目前版本可先準備發布草稿；版本公開後描述的是已發行 artifact，不能再用目前 source tree 覆寫。 |
+先依問題選入口；產品狀態、實作邊界、操作與當輪證據分別維護，避免重複描述形成不同版本。
 
 ## 文件權責
 
-| 文件                        | 唯一責任                                               | 不應承擔                                   |
-| --------------------------- | ------------------------------------------------------ | ------------------------------------------ |
-| [Root README](../README.md) | 對使用者與 contributor 的產品／開發入口                | 完整 roadmap、低階架構或歷史決策           |
-| [PRODUCT](../PRODUCT.md)    | 穩定定位、承諾、原則、非目標與語氣                     | 隨實作變動的功能狀態                       |
-| [DESIGN](../DESIGN.md)      | Renderer 視覺系統、token 規則與元件慣例                | 產品範圍或功能完成度                       |
-| [產品規格](spec.md)         | 現行產品範圍、完成度、方向與 open decisions            | Module 級實作細節                          |
-| [架構圖](architecture.md)   | 現行 runtime ownership、資料、gate、依賴與 diagnostics | 未落地功能承諾                             |
-| [ADR](adr/)                 | 決策原因、取捨與採用狀態                               | 每次功能進度或操作手冊                     |
-| [Contracts](contracts/)     | 可驗證的資料、security 與 acceptance boundaries        | 整體產品介紹                               |
-| [Operations](operations/)   | 現行操作與維護程序                                     | 產品定位或歷史研究                         |
-| [Research](research/)       | Point-in-time evidence                                 | 目前產品狀態                               |
-| [Archive](archive/)         | 已完成計畫的追溯                                       | 現行 backlog                               |
-| `tasks/`（如存在）          | `.gitignore` 下的短期 scratch、fixture 與本機驗證輸出  | Durable knowledge、產品 backlog 或完成歷史 |
+| 要查什麼         | 入口                            | 維護範圍                            |
+| ---------------- | ------------------------------- | ----------------------------------- |
+| 產品／開發起點   | [專案README](../README.md)      | 使用者與contributor入口             |
+| 定位與非目標     | [PRODUCT](../PRODUCT.md)        | 穩定承諾與產品邊界                  |
+| 功能現況與待決策 | [產品規格](spec.md)             | 唯一產品狀態表與方向                |
+| Runtime與依賴    | [架構圖](architecture.md)       | 現行ownership、資料、安全與封裝邊界 |
+| 視覺與元件規則   | [DESIGN](../DESIGN.md)          | 現行renderer設計系統                |
+| 決策原因         | [ADR索引](adr/README.md)        | 決策效力與取捨，非完成清單          |
+| 可驗證行為       | [契約索引](contracts/README.md) | Protocol、資料、安全及驗收門檻      |
+| 模型／方案研究   | [研究索引](research/README.md)  | 當輪方法、分母、環境與限制          |
 
-判斷衝突時：產品意圖看 spec 與仍有效的 ADR；目前行為以 code、registry、tests 與
-packaged verification 為證據；package 內容看 release inventory。若兩者不一致，
-應記錄並修正差異，不把 research、archive 或 task list 當成替代來源。
+產品意圖看規格與有效ADR；目前行為以code、registry、tests與封裝驗證核對。封裝內容以[release inventory](operations/release-inventory.md)為準；研究或tasks不取代以上來源。
 
 ## 目前產品快照
 
-詳細與最新狀態以 [產品規格](spec.md) 完整表格為準，以下僅供快速定位。
-
-- Local library、playback、queue、playlists、可發聲節拍器、App CPU／RAM 顯示與
-  Windows shell integration 已是預設核心；首次按 X 會詢問背景執行或退出，且可記住選擇，
-  Settings 也能改回每次詢問。
-- 演唱工具「待唱安排」是場次準備 workspace：可從 playlist／album 建立 current draft、逐曲連結與
-  驗證 session-local 名稱、貼上臨時曲目並在重啟後恢復。BGM monitor 基礎 slice 已加入本機
-  曲庫清單、獨立右側 BGM player 與演唱播放器互斥交接；app-owned OBS capture、場次
-  confirmed-playing snapshot／公開投影仍是下一階段。
-- Lyrics canonical timing、provider acquisition、reading、Self-View 與 Overlay 主路徑
-  已建立；剩餘重點是人工視覺驗收與操作 polish。
-- `quick`／`general` audio processing 與 Music Analysis（BPM／節拍分析）已是產品能力；
-  Windows x64 封裝版已驗收 DirectML GPU acceleration 與 CPU fallback，Refined 與其他
-  高品質可選包仍受 benchmark／dependency gate 限制。
-- OBS Browser Source MVP 已具備三個固定 slot、Gallery、Workbench、Projection Hub
-  與 content/state convergence；instance／pack model 仍是後續方向。
-- 唯讀 OBS WebSocket 連線已可取得直播／錄影狀態與時間戳，並依曲目變更保存本機
-  session history；場次時間標記目前可輸出為 YouTube 章節文字。它不控制 scene／source，
-  也不取代 Browser Source。
-- Windows x64 已有手動啟動的實驗性 Spout2 Lyrics sender；Browser Source 仍是支援基線，正式支援尚待實機相容性驗收。
-- Provider assist 已改為 app-managed Python `yt-dlp` runtime，且只存在於明確啟用的
-  advanced flow。
-- Installer、startup trace、diagnostics 與 unsigned updater runtime 已建立；unsigned
-  channel 是現行接受邊界。App-level signed manifest 的 exact binding、可輪替多簽章
-  契約與分權 workflow 已完成，但 production key 尚未配置、gate 仍關閉。Ordinary CI
-  已有從 `scripts/release-baselines.json` 釘選的已發布 installer 覆蓋安裝候選版的
-  驗證 gate；v0.4.0 已公開，經 production stable feed 的應用內更新證據仍待補齊。
-- 使用者回饋（錯誤回報／功能請求／體驗意見／內容問題）共用一套預覽後送出流程已實作；
-  relay 獨立部署，不進封裝安裝檔。
-
-更細的狀態只維護在 [產品規格](spec.md)。
+只維護[規格的功能現況表](spec.md#3-目前功能現況)，本入口不再複製各功能的交付狀態。
 
 ## ADR 現況對照
 
-| ADR                                                                    | 目前效力                         | 現況／方向                                                                                                                                           |
-| ---------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [0001](adr/0001-standalone-ytdlp-no-plugin-support.md)                 | 已被 0005 取代                   | Standalone executable 限制仍是有效證據；產品已改用 app-managed Python。                                                                              |
-| [0002](adr/0002-packaged-exe-kept-as-electron-exe.md)                  | 現行                             | Executable 維持 `electron.exe`，產品 identity 由 installer／AUMID 提供。                                                                             |
-| [0003](adr/0003-japanese-reading-analyzer-stack.md)                    | 已實作                           | 日文 reading 使用 kuromoji + wanakana。                                                                                                              |
-| [0004](adr/0004-korean-romanization-package.md)                        | 已實作                           | 韓文 romanization 使用 koroman。                                                                                                                     |
-| [0005](adr/0005-python-ytdlp-provider-engine.md)                       | 已實作                           | Provider runtime、plugin 與 sidecar 由 app 原子準備和驗證。                                                                                          |
-| [0006](adr/0006-loopback-output-websocket-runtime.md)                  | 已實作                           | Loopback HTTP + `ws` 是目前 Browser Source transport。                                                                                               |
-| [0007](adr/0007-public-release-app-updates.md)                         | 已實作                           | Public feed、updater 與 unsigned boundary 已建立；installed-upgrade CI gate 已有；v0.4.0 已公開，production-feed 應用內更新 acceptance 仍待補齊。    |
-| [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 主路徑已實作                     | Main diagnostics、Settings 控制與顯式 redacted export 已建立；F6 dev workbench 與獨立單檔 HTML 檢視工具已提供；domain wrappers 持續增量導入。        |
-| [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作                         | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                                                                                      |
-| [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作                     | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                                     |
-| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中                           | 現行仍是三個固定 slot；instance／pack model 尚未交付。                                                                                               |
-| [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作                       | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                                |
-| [0013](adr/0013-external-integration-planes.md)                        | 部分實作                         | Browser Source 是支援基線；唯讀 OBS WebSocket adapter 已實作，Spout2 Lyrics sender 為 Windows x64 實驗性原型；寫入式 automation 尚未開放。           |
-| [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research             | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                               |
-| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作                           | YT Music Songs 優先、YouTube 補足的錄音 discovery；另允許單一受限、匿名、人工確認的缺圖 artist-photo Innertube 例外。                                |
-| [0016](adr/0016-user-feedback-intake.md)                               | 已實作                           | 錯誤回報／功能請求／體驗意見／內容問題共用一套預覽後送出流程；relay 獨立部署，不進封裝安裝檔。                                                       |
-| [0017](adr/0017-directml-execution-provider-for-mdx-separation.md)     | 已接受／已實作                   | `quick`／`general` 預設嘗試 DirectML GPU acceleration，失敗時自動改走 CPU；Windows x64 封裝版驗收已完成。                                            |
-| [0018](adr/0018-signed-update-manifest.md)                             | 已接受／待 production activation | Exact artifact binding、多簽章 rotation 與 package／sign／publish 分權已完成；目前僅有 development public key，production gate 明確關閉。            |
-| [0019](adr/0019-signalsmith-stretch-pitch-transpose.md)                | Proposed／已實作                 | Pitch transpose 已改用 Signalsmith Stretch；程式與單元測試完成，仍待實際聽感驗收。                                                                   |
-| [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                                     |
-| [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                                  |
-| [0022](adr/0022-artist-identity-and-organization.md)                   | 主路徑已實作                     | Stable artist entity、merge／split／display override／undo、顯式 MusicBrainz identity lookup 與照片相容遷移已建立；主動 alias 建議與本機 tags 後續。 |
-| [0023](adr/0023-renderer-destination-and-workspace-model.md)           | 已接受／Phase 0–5 已實作         | Renderer 已收斂為曲庫／演唱工具／畫面輸出／設定四個 Folder 目的地；Import 是共用曲目準備 Right Dock 任務，舊 destination／Utility adapter 已移除。   |
-| [0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)     | 已接受／已實作                   | WMA、AIFF、ALAC、APE、WavPack 與 CAF 採 Main-owned 明示 FLAC 相容轉檔；直接匯入不依賴 FFmpeg。                                                       |
-| [0025](adr/0025-renderer-navigation-history.md)                        | 已接受／歷史模型已實作           | Renderer 自管導覽歷史堆疊，只記錄目的地與曲庫位置；Settings 返回沿歷史回退；滑鼠側鍵、Alt+←／→、瀏覽器鍵與 Windows app-command 已接。                |
+26份決策見[ADR索引](adr/README.md)。原文Status描述決策接受／取代，不等於程式、人工驗收或正式啟用都已完成。
 
 ## 常用文件
 
-- Lyrics：[Multi-source search](contracts/multi-source-lyrics-search-contract.md)、
-  [LRCLIB acquisition](contracts/lrclib-acquisition-contract.md)、
-  [timing](contracts/lyrics-timing-contract.md)、
-  [reading quality](contracts/lyrics-reading-quality-contract.md)、
-  [provider evaluation corpus](contracts/lyrics-provider-evaluation-corpus.md)、
-  [NetEase acquisition](contracts/netease-acquisition-contract.md)、
-  [AMLL retired-source compatibility](contracts/amll-acquisition-contract.md)、
-  [Better Lyrics cache acquisition](contracts/betterlyrics-acquisition-contract.md)、
-  [NetEase isolated validation (historical)](contracts/netease-isolated-technical-validation.md)、
-  [Musixmatch reserve adapter](contracts/musixmatch-reserve-adapter.md)。
-- Performer：[提詞與窄域控制契約](contracts/performer-prompter-contract.md)。
-- Output：[runtime hardening](contracts/output-runtime-hardening.md)、
-  [asset security](contracts/overlay-asset-security.md)、
-  [pack model](contracts/overlay-pack-contract.md)。
-- Music analysis：[producer contract](contracts/music-analysis-contract.md)、
-  [BPM quality gate](contracts/music-analysis-bpm-quality-gate.md)、
-  [BPM local-run config](contracts/music-analysis-bpm-run-config-template.json)、
-  [BPM runtime-smoke config](contracts/music-analysis-bpm-smoke-run-config-template.json)、
-  [M2 quality gate](contracts/music-analysis-m2-quality-gate.md)。
-- Integrations：[adapter contract](contracts/integration-adapter-contract.md)。
-- Playback：[播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)、
-  [演出場次準備契約](contracts/performance-session-preparation.md)、
-  [BGM 待機播放契約](contracts/bgm-standby-lane.md)、
-  [曲目試聽契約](contracts/track-preview.md)。
-- Input：[輸入綁定契約](contracts/input-bindings.md)。
-- Library：[曲庫空間管理契約](contracts/library-storage-management.md)、
-  [曲目編輯契約](contracts/track-editing.md)。
-- Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)、
-  [artist photo provider contract](contracts/artist-photo-provider.md)。
-- Codebase：[naming contract](contracts/codebase-naming.md)。
-- Operations：[diagnostics rollout](operations/diagnostics-rollout.md)、
-  [startup baseline](operations/startup-performance-baseline.md)、
-  [CI usage policy](operations/ci-usage.md)、
-  [manual acceptance](operations/manual-acceptance.md)、
-  [consecutive update evidence](operations/update-acceptance-template.md)、
-  [release inventory](operations/release-inventory.md)、
-  [安裝精靈與重新安裝驗證](operations/installer-maintenance-verification-2026-10-18.md)、
-  [release runbook](operations/release-runbook.md)。
-- Governance：[legal compliance](governance/legal-compliance.md)、[五個功能說明的行為、權利與來源查核](governance/feature-notice-review-2026-10-18.md)、[公開發行的服務／模型／元件授權核對](governance/release-license-review-2026-10-18.md)、[安裝包授權全文補正](governance/packaged-notices-repair-2026-10-18.md)。
-- Research：[T1 聲學切分研究收斂與實作評估（2026-10-19）](research/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)、
-  [競品調查（2026-09-25）](research/competitive-research.md)、
-  [Track Collection Row／Grid 收束提案（2026-10-14）](research/track-collection-row-consolidation-proposal-2026-10-14.md)、
-  [線上封面來源與跨語言 identity 評估（2026-09-27）](research/online-artwork-provider-evaluation-2026-09-27.md)、
-  [MusicBrainz artist 覆蓋率實測（2026-10-05）](research/musicbrainz-artist-coverage-2026-10-05.md)、
-  [演出者照片來源實測（2026-10-05）](research/artist-photo-sources-2026-10-05.md)、
-  [BPM normalization study](research/music-analysis-bpm-normalization-2026-08-28.md)、
-  [Visual System Discovery](research/visual-system-discovery-2026-08-25.md)、
-  [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、
-  [Visual System Foundation](research/visual-system-foundation-2026-08-28.md)、
-  [UI Component Foundation](research/ui-component-foundation-2026-08-28.md)、
-  [Apple HIG Alignment Review](research/apple-hig-alignment-review-2026-09-15.md)、
-  [LRCLIB T2 validation](research/lrclib-t2-live-validation-2026-08-24.md)、
-  [NetEase isolated validation report](research/netease-isolated-technical-validation-2026-08-28.md)
-  與其他
-  dated evidence。
-- Visual system：[Token v2 元件檢查契約](contracts/token-v2-component-review.md)、
-  [Token v2 完整替換契約](contracts/token-v2-replacement.md)、
-  [操作層級與確認契約](contracts/action-intent-and-confirmation.md)。
-- Archive：[Lyrics T2 implementation plan](archive/lyrics-t2-implementation-plan.md)。
+| 工作           | 文件                                                                                                                                                                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 歌詞模型選型   | [收斂結論](research/lyrics-alignment-summary.md)、[本機研究試用與聽查](operations/lyrics-alignment-research.md)                                                                                                                                          |
+| 功能／資料契約 | [契約索引](contracts/README.md)：歌詞、匯入、播放安排、BGM、Output、整合與UI規則                                                                                                                                                                         |
+| 發布與安裝     | [release runbook](operations/release-runbook.md)、[安裝／重裝驗證](operations/installer-maintenance-verification-2026-10-18.md)、[更新驗收範本](operations/update-acceptance-template.md)、[release notes範本](operations/release-notes-template.md)     |
+| 驗證與效能     | [人工驗收](operations/manual-acceptance.md)、[CI規則](operations/ci-usage.md)、[啟動效能基準](operations/startup-performance-baseline.md)                                                                                                                |
+| 錯誤診斷       | [diagnostics操作與rollout](operations/diagnostics-rollout.md)                                                                                                                                                                                            |
+| 權利與公開發行 | [合規參考](governance/legal-compliance.md)、[功能說明查核](governance/feature-notice-review-2026-10-18.md)、[服務／模型／元件查核](governance/release-license-review-2026-10-18.md)、[封裝notices補正](governance/packaged-notices-repair-2026-10-18.md) |
+| 發行紀錄       | [v0.4.0](releases/v0.4.0.md)、[v0.3.0](releases/v0.3.0.md)、[v0.2.0](releases/v0.2.0.md)、[v0.1.2](releases/v0.1.2.md)、[v0.1.1](releases/v0.1.1.md)                                                                                                     |
+| 歷史計畫       | [Lyrics T2計畫](archive/lyrics-t2-implementation-plan.md)；現行行為仍以契約為準                                                                                                                                                                          |
+
+## 目錄結構
+
+`adr/`放決策；`contracts/`放可驗證邊界；`operations/`放可執行操作；`governance/`放權利與治理證據；`research/`放當輪研究；`archive/`放完成計畫；`releases/`放版本紀錄。`docs/`根目錄只保留本入口、規格與架構圖。
+
+## 保留與歸檔判斷
+
+- 更新產品狀態改spec；更新架構／契約改對應文件，不在索引追加一份進度敘述。
+- 跨批次研究先更新該題的結論入口；新數據留日期報告與JSON，區分來源、分母及未驗證項。操作命令集中operations或工具README。
+- 保留已取代ADR、當輪證據、舊版release與歷史計畫；不因後續結論改變而覆寫舊數字或刪除追溯路徑。
+- `tasks/`是ignored的本機scratch，不是持久產品狀態或對外操作來源。

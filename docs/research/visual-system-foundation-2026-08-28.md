@@ -761,8 +761,10 @@ meaning. Reduced motion takes precedence over the constrained performance profil
 Review artifact:
 [Controlled Dossier dark／light folder interior](architectural-slate-folder-interior.png).
 
-Inactive candidate source:
-[`src/styles/tokens-v2.css`](../../src/styles/tokens-v2.css).
+Historical inactive candidate source: `src/styles/tokens-v2.css` (no longer
+present in the current tree). The current contract is
+[`src/styles/tokens.css`](../../src/styles/tokens.css); delivery boundaries are
+recorded in the [Token v2 replacement contract](../contracts/token-v2-replacement.md).
 
 ### Isolated Workspace Prototype Snapshot
 
