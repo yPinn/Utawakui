@@ -10,7 +10,7 @@ import UiTabs from '../ui/UiTabs.vue';
 
 const PERFORMANCE_TOOLS = Object.freeze([
   Object.freeze({ id: 'live-lyrics', label: '歌詞' }),
-  Object.freeze({ id: 'session', label: '待唱安排' }),
+  Object.freeze({ id: 'session', label: '播放安排' }),
 ]);
 
 const { performanceTool, selectPerformanceTool } = useAppView();

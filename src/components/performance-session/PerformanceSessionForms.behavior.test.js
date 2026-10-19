@@ -86,10 +86,10 @@ describe('Performance Session forms preserve product intents', () => {
     mounted = mount(Editor, { item: readyItem, onSaveDisplay });
     expect(textContent(mounted.root)).toContain('曲庫原名');
     expect(findAll(mounted.root, (n) => n.type === 'input')).toHaveLength(0);
-    trigger(button('調整本場顯示'), 'onClick');
+    trigger(button('調整顯示名稱'), 'onClick');
     await nextTick();
     await type('performance-session-display-title', '修正本場曲名');
-    trigger(button('儲存本場顯示'), 'onClick');
+    trigger(button('儲存顯示名稱'), 'onClick');
     expect(onSaveDisplay).toHaveBeenCalledWith({
       displayTitle: '修正本場曲名',
       displayArtist: '本場第二行',
@@ -100,12 +100,12 @@ describe('Performance Session forms preserve product intents', () => {
   it('cancels edits and resets draft fields when the occurrence changes', async () => {
     const props = reactive({ item: { ...readyItem } });
     mounted = mount(Editor, props);
-    trigger(button('調整本場顯示'), 'onClick');
+    trigger(button('調整顯示名稱'), 'onClick');
     await nextTick();
     await type('performance-session-display-title', 'Unsaved');
     trigger(button('取消'), 'onClick');
     await nextTick();
-    trigger(button('調整本場顯示'), 'onClick');
+    trigger(button('調整顯示名稱'), 'onClick');
     await nextTick();
     expect(input('performance-session-display-title').props.value).toBe(
       '本場曲名',
@@ -116,7 +116,7 @@ describe('Performance Session forms preserve product intents', () => {
       displayTitle: '下一首',
     };
     await nextTick();
-    expect(button('調整本場顯示')).toBeTruthy();
+    expect(button('調整顯示名稱')).toBeTruthy();
     expect(textContent(mounted.root)).not.toContain('Unsaved');
   });
 
@@ -150,10 +150,10 @@ describe('Performance Session forms preserve product intents', () => {
       onCancel = vi.fn();
     const props = reactive({ saving: false, onCreate, onCancel });
     mounted = mount(Manual, props);
-    expect(button('加入場次').props.disabled).toBe(true);
+    expect(button('加入待播').props.disabled).toBe(true);
     await type('performance-session-manual-display-title', '外部伴奏');
     await type('performance-session-manual-display-artist', '版本資訊');
-    trigger(button('加入場次'), 'onClick');
+    trigger(button('加入待播'), 'onClick');
     expect(onCreate).toHaveBeenCalledWith({
       displayTitle: '外部伴奏',
       displayArtist: '版本資訊',
@@ -162,7 +162,7 @@ describe('Performance Session forms preserve product intents', () => {
     expect(onCancel).toHaveBeenCalledOnce();
     props.saving = true;
     await nextTick();
-    expect(button('加入場次').props.disabled).toBe(true);
+    expect(button('加入待播').props.disabled).toBe(true);
     expect(button('取消').props.disabled).toBe(true);
   });
 });

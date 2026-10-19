@@ -76,14 +76,14 @@ const {
   setTempoRate,
   onEnded,
 } = usePlayer();
+const { state: queueState, toggleShuffle } = usePlaybackQueue();
 const {
-  state: queueState,
-  canGoNext,
-  nextTrack,
-  restartSourceQueue,
-  toggleShuffle,
-} = usePlaybackQueue();
-const { playQueuedTrack, playPrevious, playNext } = usePlaybackTransport();
+  playPrevious,
+  playNext,
+  playAfterEnded,
+  canPlayNext,
+  arrangementActive,
+} = usePlaybackTransport();
 const { state: metronomeState } = useMetronome();
 // PlayerBar is mounted exactly once for the app's lifetime, making this the
 // natural single place to wire the metronome to whatever track is loaded.
@@ -459,15 +459,6 @@ function showCurrentTrackLyrics() {
   openLiveLyrics();
 }
 
-function playNextAfterEnded() {
-  const next =
-    nextTrack() ||
-    (state.playbackMode === PLAYBACK_MODES.repeatList
-      ? restartSourceQueue()
-      : null);
-  playQueuedTrack(next);
-}
-
 function selectSeparationPreset(presetId) {
   const track = currentSeparationTrack.value;
   if (!track) return;
@@ -492,7 +483,7 @@ function togglePlayerToolsPanel() {
 let unsubscribeEnded;
 
 onMounted(() => {
-  unsubscribeEnded = onEnded(playNextAfterEnded);
+  unsubscribeEnded = onEnded(playAfterEnded);
 });
 
 onUnmounted(() => {
@@ -563,7 +554,7 @@ onUnmounted(() => {
         <UiButton
           :icon="Shuffle"
           :active="queueState.isShuffle"
-          :disabled="!canShuffle"
+          :disabled="!canShuffle || arrangementActive"
           aria-label="隨機播放"
           :aria-pressed="queueState.isShuffle"
           title="隨機播放"
@@ -583,7 +574,7 @@ onUnmounted(() => {
         />
         <UiButton
           :icon="SkipForward"
-          :disabled="!canGoNext"
+          :disabled="!canPlayNext"
           aria-label="下一首"
           title="下一首"
           @click="playNext"
@@ -592,6 +583,7 @@ onUnmounted(() => {
           :icon="playbackModeIcon"
           :active="playbackModeActive"
           :aria-label="playbackModeActionLabel"
+          :disabled="arrangementActive"
           :aria-pressed="playbackModeActive"
           :title="playbackModeActionLabel"
           @click="cyclePlaybackMode"

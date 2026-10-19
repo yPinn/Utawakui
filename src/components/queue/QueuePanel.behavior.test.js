@@ -68,6 +68,24 @@ const sectionCss = compileScopedStyles(sectionSource, 'QueueSection.vue');
 const panelCss = compileScopedStyles(source, 'QueuePanel.vue');
 
 describe('QueuePanel shared Dock content', () => {
+  it('keeps the original tabs and adds a separate button for arrangement switching', () => {
+    expect(source).not.toContain('UiSelect');
+    expect(source).toContain('切換播放安排');
+    expect(source).toContain('切換一般佇列');
+    expect(source).toContain(':icon="MicVocal"');
+    expect(source).toContain(
+      ':aria-pressed="dock.queueVariant.value === \'arrangement\'"',
+    );
+    expect(source).toContain("{ id: 'queue', label: '佇列' }");
+    expect(source).toContain("{ id: 'recent', label: '最近播放' }");
+  });
+  it('gives arrangement its own header tabs linked to controlled panels', () => {
+    expect(source).toContain(':items="arrangementTabs"');
+    expect(source).toContain(':active-id="dock.arrangementTab.value"');
+    expect(source).toContain('tab-id-prefix="arrangement-dock"');
+    expect(source).toContain('@update:active-id="dock.selectArrangementTab"');
+    expect(source).not.toContain('queue-panel__mode-label');
+  });
   it('is a content layer rather than a floating PlayerBarPanel', () => {
     expect(source).toContain('<AppRightDockPanel');
     expect(source).toContain(
@@ -230,10 +248,10 @@ describe('QueuePanel shared Dock content', () => {
     expect(sectionSource).toContain(':active="track.id === selectedTrackId"');
     expect(sectionSource).toContain("'activateTrack'");
     expect(rowSource).toContain(
-      '@row-dblclick="interactive && emit(\'activate\', track)"',
+      '@row-dblclick="interactive && !playbackDisabled && emit(\'activate\', track)"',
     );
     expect(rowSource).toContain(
-      '@artwork-click="emit(\'togglePlayback\', track)"',
+      '@artwork-click="!playbackDisabled && emit(\'togglePlayback\', track)"',
     );
     expect(rowSource).not.toContain('title-clickable');
     expect(rowSource).not.toContain('titleClick');

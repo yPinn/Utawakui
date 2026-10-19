@@ -33,6 +33,7 @@ describe('config', () => {
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'light',
+      autoShowArrangementOnObs: false,
       performerReadingScale: 'desk',
       performerWindowBounds: null,
       sidebarWidth: 64,
@@ -65,6 +66,16 @@ describe('config', () => {
   it('round-trips downloadDir through save/load', () => {
     saveConfig(configPath, { downloadDir: '/some/path' });
     expect(loadConfig(configPath).downloadDir).toBe('/some/path');
+  });
+  it('keeps OBS Dock auto display opt-in and persists only a boolean', () => {
+    expect(loadConfig(configPath).autoShowArrangementOnObs).toBe(false);
+    saveConfig(configPath, { autoShowArrangementOnObs: true });
+    expect(loadConfig(configPath).autoShowArrangementOnObs).toBe(true);
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ autoShowArrangementOnObs: 'true' }),
+    );
+    expect(loadConfig(configPath).autoShowArrangementOnObs).toBe(false);
   });
 
   it('round-trips a valid performer reading scale and normalizes invalid data', () => {
@@ -118,6 +129,7 @@ describe('config', () => {
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'light',
+      autoShowArrangementOnObs: false,
       performerReadingScale: 'desk',
       performerWindowBounds: null,
       sidebarWidth: 64,

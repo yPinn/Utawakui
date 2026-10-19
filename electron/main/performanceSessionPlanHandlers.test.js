@@ -34,6 +34,8 @@ function emptyPlan() {
 
 function createStore(overrides = {}) {
   return {
+    recoverProgress: vi.fn(),
+    setProgress: vi.fn(() => emptyPlan()),
     getProjected: vi.fn(() => emptyPlan()),
     replaceFromCollection: vi.fn(() => emptyPlan()),
     appendLibraryTrack: vi.fn(() => emptyPlan()),
@@ -41,6 +43,7 @@ function createStore(overrides = {}) {
     appendPlaceholders: vi.fn(() => emptyPlan()),
     updateItem: vi.fn(() => emptyPlan()),
     moveItem: vi.fn(() => emptyPlan()),
+    reorderItem: vi.fn(() => emptyPlan()),
     duplicateItem: vi.fn(() => emptyPlan()),
     removeItem: vi.fn(() => emptyPlan()),
     setReviewCursor: vi.fn(() => emptyPlan()),
@@ -84,6 +87,21 @@ function parseAppError(error) {
 }
 
 describe('registerPerformanceSessionPlanHandlers', () => {
+  it('recovers once per library and does not interrupt a playing item on ordinary refresh', async () => {
+    const { handlers, store } = register();
+    await handlers.get('performance-session-plan:get')();
+    await handlers.get('performance-session-plan:set-progress')(null, {
+      itemId: 'i1',
+      expectedProgressRevision: 0,
+      progress: 'playing',
+    });
+    await handlers.get('performance-session-plan:get')();
+    expect(store.recoverProgress).toHaveBeenCalledOnce();
+    expect(store.setProgress).toHaveBeenCalledWith(
+      { itemId: 'i1', expectedProgressRevision: 0, progress: 'playing' },
+      expect.any(Map),
+    );
+  });
   it('registers only the exact session preparation intents', () => {
     const { handlers } = register();
 
@@ -94,7 +112,9 @@ describe('registerPerformanceSessionPlanHandlers', () => {
       'performance-session-plan:append-manual-item',
       'performance-session-plan:append-placeholders',
       'performance-session-plan:update-item',
+      'performance-session-plan:set-progress',
       'performance-session-plan:move-item',
+      'performance-session-plan:reorder-item',
       'performance-session-plan:duplicate-item',
       'performance-session-plan:remove-item',
       'performance-session-plan:set-review-cursor',
@@ -221,6 +241,11 @@ describe('registerPerformanceSessionPlanHandlers', () => {
         [{ itemId: 'item-1', offset: 1 }],
       ],
       ['performance-session-plan:duplicate-item', 'duplicateItem', ['item-1']],
+      [
+        'performance-session-plan:reorder-item',
+        'reorderItem',
+        [{ itemId: 'item-1', targetItemId: 'item-2', position: 'after' }],
+      ],
       ['performance-session-plan:remove-item', 'removeItem', ['item-1']],
       [
         'performance-session-plan:set-review-cursor',

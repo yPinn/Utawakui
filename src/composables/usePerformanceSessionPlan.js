@@ -127,6 +127,33 @@ function duplicateItem(itemId) {
     window.Utawakui.duplicatePerformanceSessionPlanItem(itemId),
   );
 }
+function reorderItem(itemId, targetItemId, position) {
+  return enqueue(() =>
+    window.Utawakui.reorderPerformanceSessionPlanItem({
+      itemId,
+      targetItemId,
+      position,
+    }),
+  );
+}
+
+async function duplicateItemForPlayback(itemId) {
+  let createdItemId = null;
+  const saved = await enqueue(async () => {
+    // Read identity inside the serialized operation. A different queued append
+    // must never be mistaken for this replay's newly created occurrence.
+    const existingIds = new Set(state.plan.items.map((item) => item.itemId));
+    const result =
+      await window.Utawakui.duplicatePerformanceSessionPlanItem(itemId);
+    if (result?.ok === true) {
+      createdItemId =
+        result.plan?.items.find((item) => !existingIds.has(item.itemId))
+          ?.itemId ?? null;
+    }
+    return result;
+  });
+  return saved ? createdItemId : null;
+}
 
 function removeItem(itemId) {
   return enqueue(() =>
@@ -144,6 +171,19 @@ function clear() {
   return enqueue(() => window.Utawakui.clearPerformanceSessionPlan());
 }
 
+function setProgress(itemId, progress) {
+  // Resolve the revision inside the serialized task: playing and ended can
+  // arrive before the prior IPC response, without dropping either transition.
+  return enqueue(() => {
+    const item = findItem(itemId);
+    return window.Utawakui.setPerformanceSessionPlanProgress({
+      itemId,
+      expectedProgressRevision: item?.progressRevision ?? 0,
+      progress,
+    });
+  });
+}
+
 export function usePerformanceSessionPlan() {
   return {
     state: readonly(state),
@@ -157,9 +197,12 @@ export function usePerformanceSessionPlan() {
     saveDisplay,
     relinkItem,
     moveItem,
+    reorderItem,
     duplicateItem,
+    duplicateItemForPlayback,
     removeItem,
     selectItem,
     clear,
+    setProgress,
   };
 }

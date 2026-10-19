@@ -44,6 +44,26 @@ for (const [component, filename] of [
 }
 
 describe('AppRightDockPanel', () => {
+  it('keeps an optional summary in fixed chrome outside the content scroll', () => {
+    const view = mount(
+      AppRightDockPanel,
+      { title: '播放安排', collapseLabel: '收合' },
+      {
+        summary: () => 'Arrangement totals',
+        default: () => 'Scrollable tracks',
+      },
+    );
+    const chrome = findAll(view.root, (node) =>
+      String(node.props.class).includes('app-right-dock-panel__chrome'),
+    )[0];
+    const viewport = findAll(view.root, (node) =>
+      String(node.props.class).includes('ui-scroll-region__viewport'),
+    )[0];
+    expect(textContent(chrome)).toContain('Arrangement totals');
+    expect(textContent(viewport)).not.toContain('Arrangement totals');
+    expect(textContent(viewport)).toContain('Scrollable tracks');
+    view.app.unmount();
+  });
   it('maps Dock content insets into the shared scroll-layout boundary', () => {
     for (const [layoutRole, featureRole] of [
       ['block-start', 'content-inset'],

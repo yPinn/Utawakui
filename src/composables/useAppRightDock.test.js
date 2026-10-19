@@ -1,6 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('useAppRightDock', () => {
+  it('retains arrangement tab selection across manual mode switches and collapse', async () => {
+    const { useAppRightDock } = await import('./useAppRightDock.js');
+    const dock = useAppRightDock();
+    dock.showQueueVariant('arrangement');
+    dock.selectArrangementTab('history');
+    dock.selectQueueVariant('queue');
+    dock.setExpanded(false);
+    dock.showQueueVariant('arrangement');
+    expect(dock.arrangementTab.value).toBe('history');
+    expect(() => dock.selectArrangementTab('obs')).toThrow(RangeError);
+    expect(dock.arrangementTab.value).toBe('history');
+  });
+  it('manually selects arrangement without OBS and preserves selection through collapse', async () => {
+    const { useAppRightDock } = await import('./useAppRightDock.js');
+    const dock = useAppRightDock();
+    dock.showQueueVariant('arrangement');
+    expect(dock.topSurface.value).toBe('queue');
+    expect(dock.queueVariant.value).toBe('arrangement');
+    dock.setExpanded(false);
+    expect(dock.queueVariant.value).toBe('arrangement');
+    dock.setExpanded(true);
+    expect(dock.isExpanded.value).toBe(true);
+    dock.selectQueueVariant('queue');
+    expect(dock.queueVariant.value).toBe('queue');
+    expect(() => dock.selectQueueVariant('obs')).toThrow(RangeError);
+  });
   beforeEach(() => {
     vi.resetModules();
   });

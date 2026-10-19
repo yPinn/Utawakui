@@ -8,6 +8,7 @@ const props = defineProps({
   subtitle: { type: String, default: '' },
   collapseLabel: { type: String, required: true },
   ariaLabel: { type: String, default: '' },
+  workspace: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['collapse']);
@@ -45,9 +46,14 @@ defineExpose({ scrollTo });
           <slot name="identity" />
         </template>
       </AppRightDockHeader>
+      <div v-if="$slots.summary" class="app-right-dock-panel__summary">
+        <slot name="summary" />
+      </div>
     </div>
 
+    <div v-if="workspace" class="app-right-dock-panel__workspace"><slot /></div>
     <UiScrollLayout
+      v-else
       ref="scrollRegion"
       class="app-right-dock-panel__scroll"
       axis="vertical"
@@ -87,6 +93,10 @@ defineExpose({ scrollTo });
   box-shadow: var(--ui-right-dock-sticky-shadow);
 }
 
+.app-right-dock-panel__summary {
+  padding: var(--ui-space-2) var(--ui-right-dock-content-inset);
+}
+
 .app-right-dock-panel__scroll {
   --ui-scroll-layout-padding-block-start: var(--ui-right-dock-content-inset);
   --ui-scroll-layout-padding-block-end: var(--ui-right-dock-content-inset);
@@ -105,6 +115,14 @@ defineExpose({ scrollTo });
   display: flex;
   flex-direction: column;
   gap: var(--ui-right-dock-section-gap);
+}
+.app-right-dock-panel__workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
+  padding-inline: var(--ui-right-dock-content-inset);
 }
 
 :global(:root[data-ui-motion='reduced'] .app-right-dock-panel__chrome) {

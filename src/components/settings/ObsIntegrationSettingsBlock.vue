@@ -4,6 +4,8 @@ import { Play, Power, Video } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
+import { usePlaybackDockPreference } from '../../composables/usePlaybackDockPreference.js';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import obsConnectionValues from '../../../shared/obsConnectionValues.json';
@@ -12,6 +14,7 @@ import obsSessionValues from '../../../shared/obsSessionValues.json';
 const MAX_PASSWORD_LENGTH = obsConnectionValues.maxPasswordLength;
 const DEFAULT_HOST = obsConnectionValues.defaultHost;
 const DEFAULT_PORT = String(obsConnectionValues.defaultPort);
+const dockPreference = usePlaybackDockPreference();
 
 const props = defineProps({
   status: { type: Object, required: true },
@@ -200,6 +203,21 @@ watch(
         >
       </template>
     </SettingsDocumentItem>
+    <UiCheckbox
+      id="obs-auto-arrangement-dock"
+      label="OBS 連線後顯示播放安排"
+      hint="預設關閉。僅依 WebSocket 已連線狀態顯示側欄；可隨時收合或切換，不會開始播放。"
+      :model-value="dockPreference.value.value"
+      :disabled="dockPreference.busy.value || dockPreference.reading.value"
+      :error="dockPreference.error.value"
+      @update:model-value="dockPreference.save"
+    />
+    <UiButton
+      v-if="dockPreference.readError.value"
+      variant="ghost"
+      @click="dockPreference.refresh"
+      >重新讀取顯示偏好</UiButton
+    >
     <UiHint v-if="readError" tone="danger" role="alert">{{ readError }}</UiHint>
     <UiButton
       v-if="readError"

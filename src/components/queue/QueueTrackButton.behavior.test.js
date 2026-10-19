@@ -68,6 +68,8 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     expect(html).toContain('ui-track--active');
     expect(html).toContain('ui-track--current');
     expect(html).not.toContain('<li role="button"');
+    expect(html).not.toContain('queue-track__ordinal');
+    expect(html).not.toContain('ui-track__lead');
     expect(html).not.toContain('<li tabindex="0"');
     expect(html).not.toContain('aria-pressed');
     expect(html).toContain('class="ui-track__action"');

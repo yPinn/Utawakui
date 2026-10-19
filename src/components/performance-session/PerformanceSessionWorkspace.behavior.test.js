@@ -23,6 +23,13 @@ const performanceSource = readFileSync(
 );
 
 describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
+  it('keeps the original board and continuous control mounted independently of Dock visibility', () => {
+    expect(workspaceSource).not.toContain('v-if="!arrangementDockVisible"');
+    expect(workspaceSource).not.toContain('props.tracks.slice(0, 50)');
+    expect(workspaceSource).toContain('顯示播放安排側欄');
+    expect(workspaceSource).toContain('收合播放安排側欄');
+    expect(workspaceSource).toContain(':aria-pressed="arrangementDockVisible"');
+  });
   it('keeps library search as the fixed primary entry and manual creation secondary', () => {
     expect(workspaceSource).toContain('v-model="librarySearchQuery"');
     expect(workspaceSource).toContain('搜尋曲庫並加入');
@@ -71,12 +78,17 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).toContain(
       'container-name: performance-session-workspace;',
     );
-    expect(workspaceSource).toContain(
-      '@container performance-session-workspace (max-width: 48.75rem)',
+    const boardSource = readFileSync(
+      new URL('./PerformanceSessionBoard.vue', import.meta.url),
+      'utf8',
     );
-    expect(workspaceSource).toContain(
-      'grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);',
+    expect(boardSource).toContain(
+      '@container performance-session-workspace (max-width: 43rem)',
     );
+    expect(boardSource).toContain(
+      'grid-template-columns: repeat(2, minmax(0, 1fr));',
+    );
+    expect(boardSource).toContain('grid-template-rows: auto minmax(0, 1fr);');
     expect(workspaceSource).not.toContain('minmax(360px');
     expect(workspaceSource).not.toContain('minmax(320px');
     expect(workspaceSource).not.toContain('@media (max-width: 780px)');
@@ -123,7 +135,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     ).toBeLessThan(
       paneSource.indexOf('performance-session-review-pane__actions'),
     );
-    expect(reviewSource).toContain('調整本場顯示');
+    expect(reviewSource).toContain('調整顯示名稱');
     expect(reviewSource).not.toContain('確認本首');
     expect(reviewSource).not.toContain('確認並下一首');
     expect(reviewSource).not.toContain('完成確認後');
@@ -155,19 +167,21 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(manualSource).not.toContain('label="演出者（選填）"');
   });
 
-  it('names the implemented preparation surface as the editable upcoming plan', () => {
-    expect(workspaceSource).toContain('aria-label="待唱安排"');
-    expect(workspaceSource).toContain('只安排尚未開始的曲目');
-    expect(workspaceSource).toContain('aria-label="待唱清單"');
-    expect(workspaceSource).toContain('搜尋曲庫並加入待唱');
-    expect(planListSource).toContain('aria-label="待唱順序"');
+  it('makes local playback available without an active broadcast', () => {
+    expect(workspaceSource).toContain('aria-label="播放安排"');
+    expect(workspaceSource).toContain('安排曲目，隨時播放');
+    expect(workspaceSource).toContain('<PerformanceSessionBoard');
+    expect(workspaceSource).toContain('搜尋曲庫並加入待播');
+    expect(planListSource).toContain("history ? '播放結果' : '待播順序'");
     expect(workspaceSource).not.toContain('title="演唱中"');
     expect(workspaceSource).not.toContain('title="已唱紀錄"');
   });
 
   it('summarizes readiness as one operator decision instead of six counters', () => {
-    expect(workspaceSource).toContain('state.plan.summary.needsAttention');
-    expect(workspaceSource).toContain('全部可演出');
+    expect(workspaceSource).toContain('pendingAttention');
+    expect(workspaceSource).toContain('playback.pendingItems.value');
+    expect(workspaceSource).not.toContain('全部可演出');
+    expect(workspaceSource).toContain('首需處理');
     expect(workspaceSource).not.toContain('待確認');
     expect(workspaceSource).not.toContain('待連結');
     expect(workspaceSource).not.toContain('曲庫資料已變更 {{');
@@ -176,7 +190,8 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('confirms occurrence removal without offering a library deletion path', () => {
     expect(workspaceSource).toContain('@remove="confirmRemoveItem"');
     expect(workspaceSource).toContain('function confirmRemoveItem(itemId)');
-    expect(workspaceSource).toContain("title: '從待唱移除歌曲？'");
+    expect(workspaceSource).toContain("'從待播移除歌曲？'");
+    expect(workspaceSource).toContain("'移除這筆播放紀錄？'");
     expect(workspaceSource).toContain("confirmLabel: '移除歌曲'");
     expect(workspaceSource).toContain('曲庫歌曲會保留');
     expect(workspaceSource).toContain('removeItem(itemId)');

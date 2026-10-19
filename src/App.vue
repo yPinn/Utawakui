@@ -59,6 +59,7 @@ import {
   useAppRightDock,
 } from './composables/useAppRightDock.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
+import { usePlaybackDockDisplay } from './composables/usePlaybackDockDisplay.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 import { prefetchWhenIdle } from './utils/idlePrefetch.js';
@@ -179,6 +180,7 @@ onMounted(announcement.initialize);
 const { width: sidebarWidth } = useSidebarWidth();
 const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
+usePlaybackDockDisplay();
 const preparationActivity = usePreparationActivity();
 const separationQueue = useSeparationQueue();
 provide(SEPARATION_QUEUE_KEY, separationQueue);

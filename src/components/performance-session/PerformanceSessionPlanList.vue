@@ -6,6 +6,9 @@ import {
   Copy,
   Ellipsis,
   Trash2,
+  Play,
+  ListPlus,
+  SkipForward,
 } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -18,9 +21,18 @@ const props = defineProps({
   tracks: { type: Array, default: () => [] },
   selectedItemId: { type: String, default: null },
   saving: { type: Boolean, default: false },
+  history: { type: Boolean, default: false },
+  reviewable: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['select', 'move', 'duplicate', 'remove']);
+const emit = defineEmits([
+  'select',
+  'move',
+  'duplicate',
+  'remove',
+  'play',
+  'skip',
+]);
 
 const menuOpen = shallowRef(false);
 const menuAnchorEl = shallowRef(null);
@@ -33,6 +45,9 @@ const STATUS_PRESENTATION = Object.freeze({
   unavailable: { label: '音檔缺少', tone: 'danger' },
   'source-changed': { label: '資料已變更', tone: 'warning' },
   'needs-attention': { label: '需處理', tone: 'warning' },
+  completed: { label: '已完成', tone: 'success' },
+  skipped: { label: '已略過', tone: 'muted' },
+  interrupted: { label: '已中止', tone: 'warning' },
 });
 
 const tracksById = computed(
@@ -48,9 +63,11 @@ const presentationRows = computed(() =>
       item,
       index,
       position: index + 1,
-      status:
-        STATUS_PRESENTATION[item.status] ??
-        STATUS_PRESENTATION['needs-attention'],
+      status: props.history
+        ? STATUS_PRESENTATION[item.progress]
+        : Object.hasOwn(STATUS_PRESENTATION, item.status)
+          ? STATUS_PRESENTATION[item.status]
+          : STATUS_PRESENTATION['needs-attention'],
       track:
         canonicalTrack ??
         (item.linkedTrack
@@ -77,6 +94,23 @@ const menuAnchor = computed(() => ({
 const menuContent = computed(() => ({
   kind: 'actions',
   groups: [
+    ...(!props.history
+      ? [
+          {
+            id: 'playback',
+            items: [
+              {
+                id: 'skip',
+                kind: 'action',
+                label: '略過這首',
+                value: 'skip',
+                icon: SkipForward,
+                disabled: props.saving,
+              },
+            ],
+          },
+        ]
+      : []),
     {
       id: 'reorder',
       items: [
@@ -109,7 +143,7 @@ const menuContent = computed(() => ({
         {
           id: 'duplicate',
           kind: 'action',
-          label: '複製待唱項目',
+          label: props.history ? '再次加入待播' : '複製待播項目',
           value: 'duplicate',
           icon: Copy,
           disabled: props.saving || !activeMenuItem.value,
@@ -117,7 +151,7 @@ const menuContent = computed(() => ({
         {
           id: 'remove',
           kind: 'action',
-          label: '從待唱移除',
+          label: props.history ? '移除紀錄' : '從待播移除',
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -125,7 +159,7 @@ const menuContent = computed(() => ({
         },
       ],
     },
-  ],
+  ].filter((group) => !props.history || group.id !== 'reorder'),
 }));
 
 function closeMenu() {
@@ -144,6 +178,11 @@ function openMenu(event, itemId) {
 function handleMenuSelect(action) {
   const item = activeMenuItem.value;
   if (!item || props.saving) {
+    closeMenu();
+    return;
+  }
+  if (action === 'skip') {
+    emit('skip', item.itemId);
     closeMenu();
     return;
   }
@@ -187,7 +226,7 @@ watch(
       axis="vertical"
       content-tag="ol"
       content-class="performance-session-plan-list"
-      aria-label="待唱順序"
+      :aria-label="history ? '播放結果' : '待播順序'"
     >
       <UiTrackRow
         v-for="row in presentationRows"
@@ -195,9 +234,10 @@ watch(
         class="performance-session-plan-entry"
         :track="row.track"
         :title="row.item.displayTitle"
-        :artist="row.item.displayArtist"
+        :artist="row.item.displayArtist || row.status?.label || ''"
         :active="row.item.itemId === selectedItemId"
-        interactive
+        :interactive="!history && reviewable"
+        hide-duration
         state-surface
         :state-surface-active="menuOpen && menuItemId === row.item.itemId"
         selection-action
@@ -216,10 +256,32 @@ watch(
             {{ row.position }}
           </span>
         </template>
+        <template #artist>
+          <span class="performance-session-plan-entry__secondary">
+            <span
+              v-if="row.item.displayArtist"
+              class="performance-session-plan-entry__secondary-text"
+              >{{ row.item.displayArtist }}</span
+            >
+            <UiChip
+              v-if="row.status"
+              class="performance-session-plan-entry__status"
+              :tone="row.status.tone"
+              >{{ row.status.label }}</UiChip
+            >
+          </span>
+        </template>
         <template #trail>
-          <UiChip v-if="row.status" :tone="row.status.tone">
-            {{ row.status.label }}
-          </UiChip>
+          <UiIconButton
+            :icon="history ? ListPlus : Play"
+            :label="
+              history
+                ? `再次加入待播：${row.item.displayTitle}`
+                : `播放：${row.item.displayTitle}`
+            "
+            :disabled="saving || (!history && row.item.ready === false)"
+            @click.stop="emit(history ? 'duplicate' : 'play', row.item.itemId)"
+          />
           <UiIconButton
             :icon="Ellipsis"
             :label="`第 ${row.position} 首「${row.item.displayTitle}」的更多操作`"
@@ -290,5 +352,21 @@ watch(
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
+}
+
+.performance-session-plan-entry__secondary {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  min-inline-size: 0;
+}
+.performance-session-plan-entry__secondary-text {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.performance-session-plan-entry__status {
+  flex: 0 0 auto;
 }
 </style>

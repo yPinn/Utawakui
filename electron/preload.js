@@ -375,6 +375,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     return () => ipcRenderer.removeListener('ui-density:changed', listener);
   },
   getUiTheme: () => ipcRenderer.invoke('config:get-ui-theme'),
+  getObsArrangementDock: () =>
+    ipcRenderer.invoke('config:get-obs-arrangement-dock'),
+  setObsArrangementDock: (enabled) =>
+    ipcRenderer.invoke('config:set-obs-arrangement-dock', enabled),
   setUiTheme: (theme) => ipcRenderer.invoke('config:set-ui-theme', theme),
   initialSidebarWidth: readInitialSidebarWidth(),
   getSidebarWidth: () => ipcRenderer.invoke('config:get-sidebar-width'),
@@ -845,6 +849,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
   clearPlaylistCover: (id) => ipcRenderer.invoke('playlists:clear-cover', id),
   getPerformanceSessionPlan: () =>
     ipcRenderer.invoke('performance-session-plan:get'),
+  setPerformanceSessionPlanProgress: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:set-progress', {
+      itemId: intent?.itemId,
+      expectedProgressRevision: intent?.expectedProgressRevision,
+      progress: intent?.progress,
+    }),
   replacePerformanceSessionPlanFromCollection: (intent) =>
     ipcRenderer.invoke(
       'performance-session-plan:replace-from-collection',
@@ -874,6 +884,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   duplicatePerformanceSessionPlanItem: (itemId) =>
     ipcRenderer.invoke('performance-session-plan:duplicate-item', itemId),
+  reorderPerformanceSessionPlanItem: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:reorder-item', {
+      itemId: intent?.itemId,
+      targetItemId: intent?.targetItemId,
+      position: intent?.position,
+    }),
   removePerformanceSessionPlanItem: (itemId) =>
     ipcRenderer.invoke('performance-session-plan:remove-item', itemId),
   setPerformanceSessionPlanReviewCursor: (itemId) =>

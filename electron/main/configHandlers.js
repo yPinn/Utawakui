@@ -53,6 +53,39 @@ function registerConfigHandlers({
   applyAppUpdateAutoCheck = () => undefined,
   applyWindowCloseBehavior = () => undefined,
 }) {
+  ipcMain.handle('config:get-obs-arrangement-dock', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-obs-arrangement-dock',
+        code: 'OBS_ARRANGEMENT_DOCK_READ_FAILED',
+        title: '無法讀取播放安排顯示偏好',
+        message: '目前無法讀取播放安排顯示偏好，請重試。',
+      },
+      () => getConfig().autoShowArrangementOnObs === true,
+    ),
+  );
+  ipcMain.handle('config:set-obs-arrangement-dock', async (_event, enabled) => {
+    if (typeof enabled !== 'boolean')
+      throw createValidationError(
+        'OBS_ARRANGEMENT_DOCK_INVALID',
+        '無法儲存播放安排顯示偏好',
+        '指定的顯示偏好無效。',
+      );
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-obs-arrangement-dock',
+        code: 'OBS_ARRANGEMENT_DOCK_UPDATE_FAILED',
+        title: '無法儲存播放安排顯示偏好',
+        message: '目前無法儲存播放安排顯示偏好，請重試。',
+      },
+      () => {
+        updateConfig({ autoShowArrangementOnObs: enabled });
+        return getConfig().autoShowArrangementOnObs === true;
+      },
+    );
+  });
   ipcMain.handle('config:get', async () =>
     runConfigOperation(
       {

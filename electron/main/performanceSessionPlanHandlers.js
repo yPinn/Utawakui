@@ -80,6 +80,7 @@ function registerPerformanceSessionPlanHandlers({
   now = Date.now,
 }) {
   let scan = null;
+  const recoveredDirectories = new Set();
 
   function operationContext({ reuseRecentScan = false } = {}) {
     const directory = resolveDownloadDir(getConfig());
@@ -95,10 +96,15 @@ function registerPerformanceSessionPlanHandlers({
         tracksById: new Map(tracks.map((track) => [track.id, track])),
       };
     }
+    const store = createStore({ directory });
+    if (!recoveredDirectories.has(directory)) {
+      store.recoverProgress();
+      recoveredDirectories.add(directory);
+    }
     return {
       directory,
       tracksById: scan.tracksById,
-      store: createStore({ directory }),
+      store,
     };
   }
 
@@ -176,7 +182,9 @@ function registerPerformanceSessionPlanHandlers({
       'appendPlaceholders',
     ],
     ['performance-session-plan:update-item', 'update', 'updateItem'],
+    ['performance-session-plan:set-progress', 'update', 'setProgress'],
     ['performance-session-plan:move-item', 'move', 'moveItem', true],
+    ['performance-session-plan:reorder-item', 'move', 'reorderItem', true],
     [
       'performance-session-plan:duplicate-item',
       'duplicate',

@@ -14,6 +14,16 @@ const props = defineProps({
   draggable: { type: Boolean, default: false },
   menuOpen: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
+  playbackDisabled: { type: Boolean, default: false },
+  playbackLabel: { type: String, default: undefined },
+  artistText: { type: String, default: undefined },
+  ordinal: {
+    type: Number,
+    default: null,
+    validator: (value) =>
+      value === null || (Number.isInteger(value) && value > 0),
+  },
+  ordinalLabel: { type: String, default: '' },
   dropPosition: {
     type: String,
     default: null,
@@ -35,7 +45,9 @@ const emit = defineEmits([
 ]);
 
 const artworkActionLabel = computed(
-  () => `${props.playing ? '暫停' : '播放'}：${props.track.title}`,
+  () =>
+    props.playbackLabel ??
+    `${props.playing ? '暫停' : '播放'}：${props.track.title}`,
 );
 
 const DRAG_EXCLUDED_ACTIONS =
@@ -75,14 +87,15 @@ function handleDragEnd(event) {
     data-artwork-reveal-scope="focus-within"
     :class="{ 'right-dock-track--menu-open': menuOpen }"
     :track="track"
+    :artist="artistText"
     :active="active"
     :current="current"
     :interactive="interactive"
     state-surface
     :state-surface-active="menuOpen"
-    :activate-on-enter="interactive"
+    :activate-on-enter="interactive && !playbackDisabled"
     :action-label="interactive ? `選取：${track.title}` : undefined"
-    artwork-clickable
+    :artwork-clickable="!playbackDisabled"
     :artwork-label="artworkActionLabel"
     hide-duration
     overflow="ellipsis"
@@ -90,9 +103,9 @@ function handleDragEnd(event) {
     thumb-decoding="async"
     :draggable="draggable"
     @row-click="interactive && emit('select', track)"
-    @row-dblclick="interactive && emit('activate', track)"
-    @activate="interactive && emit('activate', track)"
-    @artwork-click="emit('togglePlayback', track)"
+    @row-dblclick="interactive && !playbackDisabled && emit('activate', track)"
+    @activate="interactive && !playbackDisabled && emit('activate', track)"
+    @artwork-click="!playbackDisabled && emit('togglePlayback', track)"
     @contextmenu.prevent.stop="emit('openMenu', { track, event: $event })"
     @pointerdown="handlePointerDown"
     @pointerup="resetDragOrigin"
@@ -103,14 +116,23 @@ function handleDragEnd(event) {
     @drop="emit('drop', $event)"
     @dragend="handleDragEnd"
   >
-    <template #artworkOverlay>
+    <template v-if="ordinal !== null" #lead>
+      <span
+        class="queue-track__ordinal"
+        :aria-label="ordinalLabel || `第 ${ordinal} 首`"
+        >{{ ordinal }}</span
+      >
+    </template>
+    <template v-if="!playbackDisabled" #artworkOverlay>
       <RightDockTrackArtworkCue :playing="playing" />
     </template>
     <template #artist>
       <TrackArtistCredits
+        v-if="artistText === undefined"
         :track="track"
         @navigate="emit('navigateArtist', $event)"
       />
+      <span v-else class="queue-track__artist-label">{{ artistText }}</span>
     </template>
     <template #trail>
       <slot name="trail">
@@ -133,6 +155,18 @@ function handleDragEnd(event) {
 </template>
 
 <style scoped>
+.queue-track__ordinal {
+  min-inline-size: var(--ui-space-3);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+.queue-track__artist-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .queue-track__drop-indicator {
   position: absolute;
   inset-inline: 0;

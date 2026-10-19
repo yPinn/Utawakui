@@ -194,14 +194,15 @@ Output 的 `AppFolderPage surface="canvas"` 填滿 Folder 內緣；`ObsOutputSpl
 工作臺保留 preview 工具與外觀 draft authority，將原工具 Teleport 到共用工具 slot；
 模板庫搜尋只篩選陳列，不改 browse／applied 分工。外部 Dock reservation 不參與此分配。
 `PerformancePage` 固定以 workspace mode 組合 `PerformanceWorkspace`，以 `UiTabs` 依序切換「歌詞」與
-「待唱安排」；直接進入演唱工具預設開啟歌詞，明確的待唱準備 intent 仍開啟待唱安排。
+「播放安排」；直接進入演唱工具預設開啟歌詞，明確的準備 intent 開啟播放安排。
 兩個工具都以 `AppFolderWorkspaceToolbar` 呈現情境與動作，pane 直接放在紙面、以 ledger
-rule 分隔。「待唱安排」進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
-與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。
+rule 分隔。「播放安排」進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
+以頂部單曲 NP 與下方待播／已完成兩個累積清單組合；清單各自擁有 bounded scroll，Folder page 不建立第二個 scroll owner。
 Ordered plan／搜尋結果保留 `UiScrollLayout` 的內容安全預留；項目編輯與手動新增共用
-feature-local `PerformanceSessionReviewPane` 的 scroll／固定 footer 對齊，表單仍各自持有 draft、validation 與 intent。
+feature-local `PerformanceSessionReviewPane` 的 scroll／固定 footer 對齊，按需以 `UiModal` 開啟；表單仍各自持有 draft、validation 與 intent。
 唯讀曲庫資料直接以平面 ledger 分組呈現，不增加另一張卡片。Shell 內的
-Titlebar 與 Right Dock 不再提供重複的場次入口；selected playlist／album 的「從清單建立」／
+Titlebar 不提供重複場次入口；Right Dock 沿用 Queue surface 的一般／安排 variant，以獨立按鈕切換，Folder 主區排版維持原樣。
+selected playlist／album 的「從清單建立」／
 「從專輯建立」動作由 workspace toolbar 持有，既有 draft 的取代仍先確認。`PerformanceLyricsWorkspace`
 與曲庫的 `LyricsAuthoringWorkspace` 共用 `useLyrics`／`useLyricsReading` module-scope owner：現場可在既有來源間
 `selectSource`、缺讀音時呼叫 `generateReading`，並以 `openLyricsAuthoring` 前往曲庫歌詞編輯。
@@ -686,7 +687,7 @@ paused；corrupt 或失效 current track 會降級並清除 snapshot。
 
 演出場次準備由 `electron/lib/performanceSessionPlan.js` 在 library root 原子保存一份
 `performance-session-plan.json` current draft；schema 只接受 bounded source／item／track ids、
-item mode、session-local labels、verification compatibility state、cursor、revision 與 timestamp。
+item mode、session-local labels、verification compatibility state、cursor、revision、progress／progressRevision 與 timestamp。
 `electron/main/performanceSessionPlanHandlers.js` 每次操作都以 main-derived playlist 與 library projection 驗證
 canonical order 與 track availability，preload 只暴露固定 intent。Renderer 的 module-scope
 `usePerformanceSessionPlan.js` 序列化 mutation 並消費完整 projected snapshot；Setlist preparation
@@ -697,12 +698,29 @@ duplicate、reorder 與 remove，不借用 playback Queue。曲庫刪除只解�
 track link，保留 authored label 供 operator 修復。Session details 將 canonical title／artist 視為唯讀
 projection，不提供或轉送 global metadata editor intent；display save 只送 session-local labels，relink
 才可另送既有 track id，兩者都不呼叫 library metadata write handler。
-`PerformanceSessionWorkspace.vue` 是 inactive preparation 的單一可見 owner；selected
-playlist／album 的明確建立／取代 intent 與完整 list＋review editor 都留在「待唱安排」。
-`usePerformanceSessionWorkspace.js` 只協調 Performance 內的 workspace open／return state，不擁有
-任何 session data。Titlebar 與 Right Dock 不投影第二份 preparation summary。BGM／演唱 transport
-handoff 已接線，但 active item
-progress、confirmed-playing session projection 與 OBS history commit 仍未接線。完整邊界見
+`PerformanceSessionWorkspace.vue` 持有編排、selected playlist／album 的建立／取代與按需 editor。
+Right Dock 的 `PerformanceSessionDockContent.vue` 消費既有 module-scope owners；主區維持原 Board／PlanList。
+唯一 NP 由 `PerformanceSessionCurrent.vue` 重用 QueueSection／QueueTrackButton，保留真實封面播放／暫停、
+selection／menu 與場次完成／停止；manual 不提供音訊操作，busy 仍可停止取消。
+`PerformanceSessionSummary.vue` 在 AppRightDockPanel 可選 summary slot 消費原 plan／library／playback，
+以 `performanceSessionSummary.js` 投影共用固定統計；計數以 occurrence 為單位，曲目長度與未知／略過／中止分開，沒有新增時鐘或持久化 owner。
+待播與完成的顯示序號透過 QueueTrackButton 的 optional ordinal 進入原 UiTrackRow lead；完成先編號再倒序，Recent 無序號的預設不變。
+待播使用 `PerformanceSessionQueueList.vue` 組合既有 QueueTrackButton／useDragReorder，保留 selection、
+封面 action、更多選項與拖放配方。itemId 識別 occurrence；固定 reorder-item intent 由 main 驗證 queued source／target
+後一次原子保存，不連續寫入多次 renderer 計算的相鄰 offset，progress revision 與結果 labels 維持。
+其中已完成 tab 由 `PerformanceSessionCompletedList.vue` 以既有 `RecentPlaybackList`／QueueTrackButton 呈現，
+只有 completed occurrence、最新在上，沿用 Dock 的單一 scroll，不帶 NP／連續播放／重複結果標題。
+封面重播透過原 duplicate intent 的序列化 main response 取得新 itemId，再交給原 arrangement playback owner，保留舊結果。
+Dock 展開／切換只改變側欄呈現，主頁維持原本搜尋與完整編排；兩個呈現使用不同 heading IDs，消費同一個播放進度 owner。
+`usePerformanceSessionPlaybackController.js` 協調 occurrence identity、confirmed playing、單一 NP、完成／略過／中止與連續播放；
+`usePerformanceSessionPlayback.js` 提供 module-scope owner，與 `usePlaybackTransport` 共用 PlayerBar／SMTC／ended 的下一首決策。
+HTML audio 維持唯一 timing／play-state authority；一般 Queue 與安排不各自註冊自動前進。OBS、公開輸出或 live／record 皆不是本地進度的前置條件。
+Main 的 set-progress intent 以獨立 progressRevision 驗證轉換；每個 library 在 process 首次操作時把殘留 playing 恢復為 interrupted，結果保留而不自動發聲。
+`usePerformanceSessionWorkspace.js` 只協調 open／return state。`usePlaybackDockDisplay` 消費原有 playback ownership 與 OBS 狀態；
+獨立的預設關閉 boolean 偏好只控制 ready 後顯示，手動收合不被同連線的更新覆蓋，不形成播放 gate。
+`performanceSessionOutput.js` 在安排 ownership 期間從 confirmed current snapshot 與 completed progress 產生既有公開 queue／playback 投影；
+sourceName 沿用 plan source，canonical id 仍解析 media／lyrics／artwork，未開始草稿與略過／中止不冒充完成。普通播放保留原投影。
+BGM 沿用既有音訊交接；安排的 session-local label／manual／completed history 專屬公開投影與 OBS history commit 尚未接線。完整邊界見
 [演出場次準備契約](contracts/performance-session-preparation.md)。
 
 BGM 準備由 `electron/lib/bgmStandbyPlan.js` 在 library root 原子保存

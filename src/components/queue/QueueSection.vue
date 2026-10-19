@@ -15,6 +15,9 @@ const props = defineProps({
   currentTrackId: { type: String, default: null },
   playingTrackId: { type: String, default: null },
   playerPlaying: { type: Boolean, default: false },
+  artistText: { type: String, default: undefined },
+  playbackDisabled: { type: Boolean, default: false },
+  playbackLabel: { type: String, default: undefined },
   draggableItems: { type: Boolean, default: false },
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
@@ -98,6 +101,9 @@ function openTrackMenu(track, payload) {
           'queue-section__item--dragging': draggingTrackId === track.id,
         }"
         :track="track"
+        :artist-text="artistText"
+        :playback-disabled="playbackDisabled"
+        :playback-label="playbackLabel"
         :active="track.id === selectedTrackId"
         :current="track.id === currentTrackId"
         :playing="playerPlaying && track.id === playingTrackId"

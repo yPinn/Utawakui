@@ -92,10 +92,12 @@ beforeEach(() => {
     appendPerformanceSessionPlanPlaceholders: vi.fn(),
     updatePerformanceSessionPlanItem: vi.fn(),
     movePerformanceSessionPlanItem: vi.fn(),
+    reorderPerformanceSessionPlanItem: vi.fn(),
     duplicatePerformanceSessionPlanItem: vi.fn(),
     removePerformanceSessionPlanItem: vi.fn(),
     setPerformanceSessionPlanReviewCursor: vi.fn(),
     clearPerformanceSessionPlan: vi.fn(),
+    setPerformanceSessionPlanProgress: vi.fn(),
     recordDiagnostic: vi.fn().mockResolvedValue({ ok: true }),
     onLibraryUpdated: vi.fn((callback) => {
       libraryUpdatedCallback = callback;
@@ -116,6 +118,101 @@ async function importSessionPlan() {
 }
 
 describe('usePerformanceSessionPlan', () => {
+  it('forwards a drag as occurrence identities through the existing serialized plan owner', async () => {
+    const session = await importSessionPlan();
+    await session.initialize();
+    api.reorderPerformanceSessionPlanItem.mockResolvedValue({
+      ok: true,
+      plan: emptyPlan(),
+    });
+    expect(
+      await session.reorderItem(
+        'first-occurrence',
+        'second-occurrence',
+        'after',
+      ),
+    ).toBe(true);
+    expect(
+      api.reorderPerformanceSessionPlanItem,
+    ).toHaveBeenCalledExactlyOnceWith({
+      itemId: 'first-occurrence',
+      targetItemId: 'second-occurrence',
+      position: 'after',
+    });
+  });
+  it('returns the replay clone identity from its own serialized main response', async () => {
+    api.getPerformanceSessionPlan.mockResolvedValue({
+      ok: true,
+      plan: planWithItems([item({ progress: 'completed' })]),
+    });
+    const session = await importSessionPlan();
+    await session.initialize();
+    api.appendPerformanceSessionPlanLibraryTrack.mockResolvedValue({
+      ok: true,
+      plan: planWithItems([
+        item({ progress: 'completed' }),
+        item({ itemId: 'other' }),
+      ]),
+    });
+    api.duplicatePerformanceSessionPlanItem.mockResolvedValue({
+      ok: true,
+      plan: planWithItems([
+        item({ progress: 'completed' }),
+        item({ itemId: 'other' }),
+        item({ itemId: 'replay', progress: 'queued' }),
+      ]),
+    });
+    const earlierAppend = session.appendLibraryTrack('track-1');
+    const replay = session.duplicateItemForPlayback('item-1');
+    await earlierAppend;
+    expect(await replay).toBe('replay');
+    expect(session.state.plan.items[0].progress).toBe('completed');
+  });
+  it('returns no replay identity after a failed mutation', async () => {
+    const session = await importSessionPlan();
+    await session.initialize();
+    api.duplicatePerformanceSessionPlanItem.mockResolvedValue({
+      ok: false,
+      error: { code: 'SESSION_PLAN_ITEM_NOT_FOUND', message: '找不到項目' },
+    });
+    expect(await session.duplicateItemForPlayback('gone')).toBeNull();
+  });
+  it('serializes confirmed start and immediate finish with the latest progress revision', async () => {
+    api.getPerformanceSessionPlan.mockResolvedValue({
+      ok: true,
+      plan: planWithItems([item({ progress: 'queued', progressRevision: 0 })]),
+    });
+    const first = createDeferred();
+    api.setPerformanceSessionPlanProgress
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValueOnce({
+        ok: true,
+        plan: planWithItems([
+          item({ progress: 'completed', progressRevision: 2 }),
+        ]),
+      });
+    const sessionPlan = await importSessionPlan();
+    await sessionPlan.initialize();
+    const start = sessionPlan.setProgress('item-1', 'playing');
+    const end = sessionPlan.setProgress('item-1', 'completed');
+    await Promise.resolve();
+    expect(api.setPerformanceSessionPlanProgress).toHaveBeenCalledTimes(1);
+    first.resolve({
+      ok: true,
+      plan: planWithItems([item({ progress: 'playing', progressRevision: 1 })]),
+    });
+    await Promise.all([start, end]);
+    expect(api.setPerformanceSessionPlanProgress.mock.calls).toEqual([
+      [{ itemId: 'item-1', expectedProgressRevision: 0, progress: 'playing' }],
+      [
+        {
+          itemId: 'item-1',
+          expectedProgressRevision: 1,
+          progress: 'completed',
+        },
+      ],
+    ]);
+  });
   it('loads the persisted current draft once through explicit initialization', async () => {
     const loaded = planWithItems([item()]);
     api.getPerformanceSessionPlan.mockResolvedValue({ ok: true, plan: loaded });

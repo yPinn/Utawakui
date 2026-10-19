@@ -115,12 +115,12 @@ function cancelEditing() {
   <PerformanceSessionReviewPane
     class="performance-session-editor"
     aria-labelledby="performance-session-editor-title"
-    body-label="待唱項目設定內容"
+    body-label="待播項目設定內容"
   >
     <div v-if="item" class="performance-session-editor__body">
       <header class="performance-session-editor__header">
         <p class="performance-session-editor__eyebrow">
-          {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
+          {{ item.mode === 'manual' ? '手動項目' : '待播曲目' }}
         </p>
         <h2
           id="performance-session-editor-title"
@@ -198,7 +198,7 @@ function cancelEditing() {
           id="performance-session-display-title"
           v-model="displayTitle"
           label="顯示曲名"
-          hint="只用於本場輸出，不會修改曲庫曲名。"
+          hint="只用於這份安排，不會修改曲庫曲名。"
           :maxlength="200"
           required
         />
@@ -246,12 +246,12 @@ function cancelEditing() {
           :disabled="saving || !canSave"
           @click="submit"
         >
-          {{ needsTrackRecovery ? '連結既有歌曲' : '儲存本場顯示' }}
+          {{ needsTrackRecovery ? '連結既有歌曲' : '儲存顯示名稱' }}
         </UiButton>
       </template>
       <template v-else>
         <UiButton variant="secondary" :disabled="saving" @click="startEditing">
-          調整本場顯示
+          調整顯示名稱
         </UiButton>
       </template>
     </template>

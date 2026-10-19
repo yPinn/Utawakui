@@ -10,6 +10,34 @@ const source = readFileSync(
 );
 
 describe('RecentPlaybackList', () => {
+  it('supports completed-copy and playback-disabled entries while retaining the shared row recipe', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(RecentPlaybackList, {
+            entries: [
+              {
+                key: 'done',
+                track: {
+                  id: 'gone',
+                  title: 'Finished title',
+                  artist: 'Canonical artist',
+                },
+                artistText: 'Committed artist',
+                playbackDisabled: true,
+              },
+            ],
+            menuContext: 'completed',
+            openMenuKey: 'completed:done',
+          }),
+      }),
+    );
+    expect(html).toContain('Committed artist');
+    expect(html).not.toContain('Canonical artist');
+    expect(html).not.toContain('aria-label="播放：Finished title"');
+    expect(html).not.toContain('class="ui-track__artwork-action"');
+    expect(html).toContain('aria-expanded="true"');
+  });
   it('renders explicit replay and menu targets for every history entry', async () => {
     const html = await renderToString(
       createSSRApp({
@@ -97,11 +125,14 @@ describe('RecentPlaybackList', () => {
 
   it('forwards each normalized history identity to the shared track menu owner', () => {
     expect(source).toContain("'openTrackMenu'");
-    expect(source).toContain("context: 'recent'");
-    expect(source).toContain('key: `recent:${entry.key}`');
+    expect(source).toContain(
+      "menuContext: { type: String, default: 'recent' }",
+    );
+    expect(source).toContain('context: props.menuContext');
+    expect(source).toContain('key: `${props.menuContext}:${entry.key}`');
     expect(source).toContain('@open-menu="openTrackMenu(entry, $event)"');
     expect(source).toMatch(
-      /:menu-open="openMenuKey === `recent:\$\{entry\.key\}`"/u,
+      /:menu-open="openMenuKey === `\$\{menuContext\}:\$\{entry\.key\}`"/u,
     );
   });
 

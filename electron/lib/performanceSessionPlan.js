@@ -21,8 +21,17 @@ const VERIFICATION_STATES = new Set(['unreviewed', 'verified']);
 const ITEM_MODES = new Set(['library-track', 'manual', 'placeholder']);
 const ORIGINS = new Set(['collection', 'paste', 'live', 'manual', 'duplicate']);
 const COLLECTION_KINDS = new Set(['playlist', 'album']);
+const PROGRESS_STATES = new Set([
+  'queued',
+  'playing',
+  'completed',
+  'skipped',
+  'interrupted',
+]);
 
 const VALIDATION_MESSAGES = Object.freeze({
+  SESSION_PLAN_CURRENT_ITEM: '請先完成或停止目前曲目，再修改這份安排。',
+  SESSION_PLAN_HISTORY_ITEM: '已播放的紀錄不能直接修改，請再次加入待播後調整。',
   SESSION_PLAN_REPLACE_REQUIRED: '目前已有場次草稿，請先確認是否取代。',
   SESSION_PLAN_ITEM_LIMIT_EXCEEDED: '場次草稿最多可包含 500 首曲目。',
   SESSION_PLAN_DISPLAY_TITLE_REQUIRED: '請輸入顯示曲名或項目名稱。',
@@ -216,6 +225,17 @@ function sanitizePersistedItem(value) {
     origin: value.origin,
     sourceSnapshot: sanitizeSourceSnapshot(value.sourceSnapshot),
     revision: value.revision,
+    progress: PROGRESS_STATES.has(value.progress) ? value.progress : 'queued',
+    progressRevision:
+      Number.isSafeInteger(value.progressRevision) &&
+      value.progressRevision >= 0
+        ? value.progressRevision
+        : 0,
+    progressUpdatedAt:
+      typeof value.progressUpdatedAt === 'string' &&
+      !Number.isNaN(Date.parse(value.progressUpdatedAt))
+        ? new Date(value.progressUpdatedAt).toISOString()
+        : null,
   };
 }
 
@@ -269,6 +289,12 @@ function normalizeTracksById(value) {
       .filter((track) => isBoundedTrackId(track?.id))
       .map((track) => [track.id, track]),
   );
+}
+
+function assertNoCurrent(document) {
+  if (document.items.some((item) => item.progress === 'playing')) {
+    throw validationError('SESSION_PLAN_CURRENT_ITEM');
+  }
 }
 
 function projectDocument(document, tracksByIdValue) {
@@ -416,6 +442,9 @@ function createPerformanceSessionPlanStore({
       origin,
       sourceSnapshot,
       revision: 1,
+      progress: 'queued',
+      progressRevision: 0,
+      progressUpdatedAt: null,
     };
   }
 
@@ -440,6 +469,60 @@ function createPerformanceSessionPlanStore({
 
   function getProjected(tracksById) {
     return projectDocument(load(), tracksById);
+  }
+
+  // Called once per library by main at process startup, never by refresh.
+  function recoverProgress() {
+    return mutate((draft) => {
+      let changed = false;
+      for (const item of draft.items) {
+        if (item.progress !== 'playing') continue;
+        item.progress = 'interrupted';
+        item.progressRevision += 1;
+        item.progressUpdatedAt = now().toISOString();
+        changed = true;
+      }
+      return changed;
+    });
+  }
+
+  function setProgress(intent, tracksById) {
+    if (
+      !intent ||
+      !isBoundedId(intent.itemId) ||
+      !Number.isSafeInteger(intent.expectedProgressRevision) ||
+      intent.expectedProgressRevision < 0 ||
+      !PROGRESS_STATES.has(intent.progress)
+    ) {
+      throw validationError('SESSION_PLAN_INTENT_INVALID');
+    }
+    const document = mutate((draft) => {
+      const item = draft.items.find((entry) => entry.itemId === intent.itemId);
+      if (!item) throw validationError('SESSION_PLAN_ITEM_NOT_FOUND');
+      if (item.progressRevision !== intent.expectedProgressRevision) {
+        throw validationError('SESSION_PLAN_STALE_REVISION');
+      }
+      const allowed =
+        item.progress === 'queued'
+          ? ['playing', 'skipped']
+          : item.progress === 'playing'
+            ? ['completed', 'interrupted']
+            : [];
+      if (!allowed.includes(intent.progress))
+        throw validationError('SESSION_PLAN_INTENT_INVALID');
+      if (intent.progress === 'playing') {
+        assertNoCurrent(draft);
+        const projected = projectDocument(draft, tracksById).items.find(
+          (entry) => entry.itemId === item.itemId,
+        );
+        if (!projected.ready)
+          throw validationError('SESSION_PLAN_TRACK_UNAVAILABLE');
+      }
+      item.progress = intent.progress;
+      item.progressRevision += 1;
+      item.progressUpdatedAt = now().toISOString();
+    });
+    return projectDocument(document, tracksById);
   }
 
   function replaceFromCollection({
@@ -480,6 +563,7 @@ function createPerformanceSessionPlanStore({
           updatedAt: draft.updatedAt,
         });
       }
+      assertNoCurrent(draft);
       draft.source = source;
       draft.items = nextItems;
       draft.reviewCursorItemId = nextItems[0]?.itemId ?? null;
@@ -566,6 +650,13 @@ function createPerformanceSessionPlanStore({
       );
       if (index < 0) throw validationError('SESSION_PLAN_ITEM_NOT_FOUND');
       const current = draft.items[index];
+      if (current.progress !== 'queued') {
+        throw validationError(
+          current.progress === 'playing'
+            ? 'SESSION_PLAN_CURRENT_ITEM'
+            : 'SESSION_PLAN_HISTORY_ITEM',
+        );
+      }
       if (
         !Number.isSafeInteger(intent.expectedRevision) ||
         intent.expectedRevision !== current.revision
@@ -672,7 +763,9 @@ function createPerformanceSessionPlanStore({
           ? { ...current.sourceSnapshot }
           : null,
       });
-      draft.items.splice(index + 1, 0, duplicate);
+      if (current.progress === 'queued')
+        draft.items.splice(index + 1, 0, duplicate);
+      else draft.items.push(duplicate);
       draft.reviewCursorItemId = duplicate.itemId;
     });
     return projectDocument(document, tracksById);
@@ -691,7 +784,14 @@ function createPerformanceSessionPlanStore({
         (item) => item.itemId === intent.itemId,
       );
       if (index < 0) throw validationError('SESSION_PLAN_ITEM_NOT_FOUND');
-      const targetIndex = index + intent.offset;
+      let targetIndex = index + intent.offset;
+      // The visible pending list excludes current/history occurrences.
+      while (
+        targetIndex >= 0 &&
+        targetIndex < draft.items.length &&
+        draft.items[targetIndex].progress !== 'queued'
+      )
+        targetIndex += intent.offset;
       if (targetIndex < 0 || targetIndex >= draft.items.length) return false;
       const [moved] = draft.items.splice(index, 1);
       moved.revision += 1;
@@ -701,10 +801,57 @@ function createPerformanceSessionPlanStore({
     return projectDocument(document, tracksById);
   }
 
+  function reorderItem(intent, tracksById) {
+    if (
+      !intent ||
+      !isBoundedId(intent.itemId) ||
+      !isBoundedId(intent.targetItemId) ||
+      !['before', 'after'].includes(intent.position)
+    ) {
+      throw validationError('SESSION_PLAN_INTENT_INVALID');
+    }
+    const document = mutate((draft) => {
+      const item = draft.items.find((item) => item.itemId === intent.itemId);
+      const target = draft.items.find(
+        (item) => item.itemId === intent.targetItemId,
+      );
+      if (!item || !target)
+        throw validationError('SESSION_PLAN_ITEM_NOT_FOUND');
+      for (const entry of [item, target]) {
+        if (entry.progress !== 'queued')
+          throw validationError(
+            entry.progress === 'playing'
+              ? 'SESSION_PLAN_CURRENT_ITEM'
+              : 'SESSION_PLAN_HISTORY_ITEM',
+          );
+      }
+      if (item === target) return false;
+      const pending = draft.items.filter(
+        (entry) => entry.progress === 'queued',
+      );
+      const originalIndex = pending.indexOf(item);
+      pending.splice(originalIndex, 1);
+      const desiredIndex =
+        pending.indexOf(target) + (intent.position === 'after' ? 1 : 0);
+      if (desiredIndex === originalIndex) return false;
+      draft.items.splice(draft.items.indexOf(item), 1);
+      draft.items.splice(
+        draft.items.indexOf(target) + (intent.position === 'after' ? 1 : 0),
+        0,
+        item,
+      );
+      item.revision += 1;
+      draft.reviewCursorItemId = item.itemId;
+    });
+    return projectDocument(document, tracksById);
+  }
+
   function removeItem(itemId, tracksById) {
     const document = mutate((draft) => {
       const index = draft.items.findIndex((item) => item.itemId === itemId);
       if (index < 0) throw validationError('SESSION_PLAN_ITEM_NOT_FOUND');
+      if (draft.items[index].progress === 'playing')
+        throw validationError('SESSION_PLAN_CURRENT_ITEM');
       draft.items.splice(index, 1);
       if (draft.reviewCursorItemId === itemId) {
         draft.reviewCursorItemId =
@@ -727,6 +874,7 @@ function createPerformanceSessionPlanStore({
 
   function clear(tracksById) {
     const document = mutate((draft) => {
+      assertNoCurrent(draft);
       if (draft.items.length === 0 && !draft.source) return false;
       draft.source = null;
       draft.reviewCursorItemId = null;
@@ -760,7 +908,10 @@ function createPerformanceSessionPlanStore({
     clear,
     duplicateItem,
     getProjected,
+    recoverProgress,
+    setProgress,
     moveItem,
+    reorderItem,
     removeItem,
     replaceFromCollection,
     setReviewCursor,

@@ -58,6 +58,7 @@ const DEFAULTS = {
   downloadDir: null,
   featureConfirmations: {},
   uiTheme: 'light',
+  autoShowArrangementOnObs: false,
   performerReadingScale: 'desk',
   performerWindowBounds: null,
   sidebarWidth: SIDEBAR_WIDTH_MIN, // Start collapsed unless a width is saved.
@@ -341,6 +342,7 @@ function loadConfigSnapshot(configPath) {
       uiTheme: UI_THEMES.includes(data.uiTheme)
         ? data.uiTheme
         : DEFAULTS.uiTheme,
+      autoShowArrangementOnObs: data.autoShowArrangementOnObs === true,
       performerReadingScale: normalizePerformerReadingScale(
         data.performerReadingScale,
       ),

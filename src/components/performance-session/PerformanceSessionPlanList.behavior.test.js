@@ -134,6 +134,24 @@ async function openItemMenu(root, label) {
 }
 
 describe('PerformanceSessionPlanList', () => {
+  it('keeps the direct play action separate from row selection and the settings modal', () => {
+    const onPlay = vi.fn();
+    const onSelect = vi.fn();
+    const mounted = mount(PerformanceSessionPlanList, {
+      items: [items[0]],
+      tracks,
+      onPlay,
+      onSelect,
+    });
+    const stopPropagation = vi.fn();
+    trigger(buttonWithText(mounted.root, '播放：First song'), 'onClick', {
+      stopPropagation,
+    });
+    expect(stopPropagation).toHaveBeenCalledOnce();
+    expect(onPlay).toHaveBeenCalledWith('item-1');
+    expect(onSelect).not.toHaveBeenCalled();
+    mounted.app.unmount();
+  });
   it('uses one semantic scrolling ordered list without a duplicated table header', () => {
     const mounted = mount(PerformanceSessionPlanList, {
       items,
@@ -181,7 +199,8 @@ describe('PerformanceSessionPlanList', () => {
     expect(artwork.props.src).toBe(
       'utawakui-media://track/track-1/thumbnail.jpg',
     );
-    expect(textContent(row)).toContain('4:05');
+    expect(textContent(row)).not.toContain('4:05'); // board prioritizes identity, status and the direct play action
+    expect(textContent(row)).toContain('播放：First song');
     mounted.app.unmount();
   });
 
@@ -226,10 +245,10 @@ describe('PerformanceSessionPlanList', () => {
     trigger(buttonWithText(body, '下移一位'), 'onClick');
 
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
-    trigger(buttonWithText(body, '複製待唱項目'), 'onClick');
+    trigger(buttonWithText(body, '複製待播項目'), 'onClick');
 
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
-    trigger(buttonWithText(body, '從待唱移除'), 'onClick');
+    trigger(buttonWithText(body, '從待播移除'), 'onClick');
 
     expect(onSelect).toHaveBeenCalledWith('item-2');
     expect(onMove).toHaveBeenCalledWith('item-2', 1);

@@ -57,7 +57,7 @@ function create() {
           id="performance-session-manual-display-title"
           v-model="displayTitle"
           label="曲名／項目名稱"
-          hint="只用於本場顯示，不會建立曲庫歌曲。"
+          hint="只用於這份安排，不會建立曲庫歌曲。"
           :maxlength="200"
           required
         />
@@ -78,7 +78,7 @@ function create() {
         :disabled="saving || !displayTitle.trim()"
         @click="create"
       >
-        加入場次
+        加入待播
       </UiButton>
     </template>
   </PerformanceSessionReviewPane>

@@ -36,9 +36,15 @@ let libraryHydration;
 let playlistHydration;
 let lyricsHydration;
 let bridge;
+let arrangementActive;
+let arrangementCurrent;
+let arrangementPlanState;
 
 beforeEach(() => {
   vi.resetModules();
+  arrangementActive = shallowRef(false);
+  arrangementCurrent = shallowRef(null);
+  arrangementPlanState = reactive({ plan: { source: null, items: [] } });
   playerState = reactive({
     track: null,
     isPlaying: false,
@@ -173,6 +179,15 @@ beforeEach(() => {
   vi.doMock('./usePlayer.js', () => ({
     usePlayer: () => ({ state: playerState }),
   }));
+  vi.doMock('./usePerformanceSessionPlayback.js', () => ({
+    usePerformanceSessionPlayback: () => ({
+      ownsPlayback: arrangementActive,
+      currentItem: arrangementCurrent,
+    }),
+  }));
+  vi.doMock('./usePerformanceSessionPlan.js', () => ({
+    usePerformanceSessionPlan: () => ({ state: arrangementPlanState }),
+  }));
   vi.doMock('./usePlaybackQueue.js', () => ({
     usePlaybackQueue: () => ({
       state: queueState,
@@ -257,6 +272,81 @@ it('preserves the exact public runtime API', async () => {
 });
 
 describe('output source handshake', () => {
+  it('publishes arrangement labels and confirmed results, then returns to ordinary playback without modifying either owner', async () => {
+    const runtime = await loadRuntime();
+    playerState.track = { id: 'track-1', title: 'Canonical', url: 'private' };
+    playerState.playbackPhase = 'paused';
+    arrangementPlanState.plan = {
+      source: { name: 'Tonight' },
+      items: [
+        {
+          itemId: 'done',
+          trackId: 'track-1',
+          displayTitle: 'Encore',
+          progress: 'completed',
+        },
+        {
+          itemId: 'now',
+          trackId: 'track-1',
+          displayTitle: 'Live version',
+          progress: 'playing',
+        },
+        {
+          itemId: 'skipped',
+          trackId: 'track-1',
+          displayTitle: 'Skipped',
+          progress: 'skipped',
+        },
+      ],
+    };
+    arrangementCurrent.value = { ...arrangementPlanState.plan.items[1] };
+    arrangementActive.value = true;
+    const initializing = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initializing;
+    const envelopes = () =>
+      bridge.publishOutputSnapshot.mock.calls.map(([envelope]) => envelope);
+    const document = () =>
+      envelopes()
+        .filter((e) => e.stream === 'queue.document')
+        .at(-1).payload.document;
+    expect(document()).toMatchObject({
+      sourceName: 'Tonight',
+      items: [
+        { state: 'played', track: { title: 'Encore' } },
+        { state: 'current', track: { title: 'Live version' } },
+      ],
+    });
+    expect(envelopes().at(-1).payload.playback).toMatchObject({
+      status: 'paused',
+      track: { id: 'track-1', title: 'Live version' },
+    });
+    const documentsBeforeClock = envelopes().filter(
+      (e) => e.stream === 'queue.document',
+    ).length;
+    playerState.currentTime = 12;
+    await flushMicrotasks();
+    expect(
+      envelopes().filter((e) => e.stream === 'queue.document'),
+    ).toHaveLength(documentsBeforeClock);
+    expect(envelopes().at(-1).payload.playback.positionMs).toBe(12000);
+    arrangementPlanState.plan.items[1].progress = 'completed';
+    arrangementCurrent.value = null;
+    await flushMicrotasks();
+    expect(document().items.map((i) => i.state)).toEqual(['played', 'played']);
+    queueState.sourceName = 'Album';
+    queueState.currentTrack = playerState.track;
+    arrangementActive.value = false;
+    await flushMicrotasks();
+    expect(document()).toMatchObject({
+      sourceName: 'Album',
+      items: [{ state: 'current', track: { title: 'Canonical' } }],
+    });
+    expect(playerState.track.title).toBe('Canonical');
+    expect(arrangementPlanState.plan.items[0].progress).toBe('completed');
+  });
   it('has no IPC or hydration side effects at module import time', async () => {
     await loadRuntime();
 

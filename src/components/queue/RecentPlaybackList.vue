@@ -12,6 +12,11 @@ const props = defineProps({
   playerPlaying: { type: Boolean, default: false },
   openMenuKey: { type: String, default: '' },
   selectedEntryKey: { type: String, default: null },
+  busy: { type: Boolean, default: false },
+  menuContext: { type: String, default: 'recent' },
+  emptyMessage: { type: String, default: '尚無最近播放紀錄' },
+  loadingMessage: { type: String, default: '讀取最近播放…' },
+  errorTitle: { type: String, default: '最近播放未更新' },
 });
 
 const emit = defineEmits([
@@ -30,8 +35,9 @@ function openTrackMenu(entry, payload) {
   emit('openTrackMenu', {
     track: entry.track,
     event: payload.event,
-    context: 'recent',
-    key: `recent:${entry.key}`,
+    context: props.menuContext,
+    key: `${props.menuContext}:${entry.key}`,
+    entry,
   });
 }
 </script>
@@ -42,22 +48,27 @@ function openTrackMenu(entry, payload) {
       v-if="error"
       compact
       tone="warning"
-      title="最近播放未更新"
+      :title="errorTitle"
       :message="error"
     />
-    <UiHint v-if="loading">讀取最近播放…</UiHint>
-    <UiHint v-else-if="entries.length === 0">尚無最近播放紀錄</UiHint>
+    <UiHint v-if="loading">{{ loadingMessage }}</UiHint>
+    <UiHint v-else-if="entries.length === 0">{{ emptyMessage }}</UiHint>
     <ul v-else class="recent-playback__list">
       <QueueTrackButton
         v-for="entry in entries"
         :key="entry.key"
         class="recent-playback__item"
         :track="entry.track"
+        :ordinal="entry.ordinal"
+        :ordinal-label="entry.ordinalLabel"
         :active="entry.key === selectedEntryKey"
         :current="entry.track.id === currentTrackId"
         :draggable="false"
-        :menu-open="openMenuKey === `recent:${entry.key}`"
+        :menu-open="openMenuKey === `${menuContext}:${entry.key}`"
         :playing="isEntryPlaying(entry)"
+        :artist-text="entry.artistText"
+        :playback-disabled="busy || entry.playbackDisabled === true"
+        :playback-label="entry.playbackLabel"
         @select="emit('selectEntry', entry)"
         @activate="emit('activateEntry', entry)"
         @toggle-playback="emit('toggleEntryPlayback', entry)"

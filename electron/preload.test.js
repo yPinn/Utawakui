@@ -32,6 +32,8 @@ const MAIN_INVOKE_CHANNELS = [
   'config:get-audio-preferences',
   'config:get-sidebar-width',
   'config:get-ui-theme',
+  'config:get-obs-arrangement-dock',
+  'config:set-obs-arrangement-dock',
   'config:get-auto-music-analysis',
   'config:get-separation-gpu-acceleration',
   'config:get-app-update-auto-check',
@@ -168,9 +170,11 @@ const MAIN_INVOKE_CHANNELS = [
   'performance-session-plan:duplicate-item',
   'performance-session-plan:get',
   'performance-session-plan:move-item',
+  'performance-session-plan:reorder-item',
   'performance-session-plan:remove-item',
   'performance-session-plan:replace-from-collection',
   'performance-session-plan:set-review-cursor',
+  'performance-session-plan:set-progress',
   'performance-session-plan:update-item',
   'playback-history:clear',
   'playback-history:get',
@@ -378,6 +382,37 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'ui-density:changed',
       listener,
+    );
+  });
+
+  it('bounds local arrangement progress to an occurrence, revision and state', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.setPerformanceSessionPlanProgress({
+      itemId: 'i1',
+      expectedProgressRevision: 2,
+      progress: 'completed',
+      path: 'private',
+      trackId: 'spoofed',
+      url: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'performance-session-plan:set-progress',
+      { itemId: 'i1', expectedProgressRevision: 2, progress: 'completed' },
+    );
+  });
+  it('allows only occurrence identities and a bounded drag position across the reorder bridge', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.reorderPerformanceSessionPlanItem({
+      itemId: 'i1',
+      targetItemId: 'i2',
+      position: 'after',
+      trackId: 'spoofed',
+      url: 'private',
+      path: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'performance-session-plan:reorder-item',
+      { itemId: 'i1', targetItemId: 'i2', position: 'after' },
     );
   });
 

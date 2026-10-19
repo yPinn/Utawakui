@@ -102,10 +102,26 @@ function register(overrides = {}) {
 }
 
 describe('registerConfigHandlers', () => {
+  it('validates and persists the independent OBS Dock display preference', async () => {
+    const { ipcMain, updateConfig } = register();
+    const get = ipcMain.handlers.get('config:get-obs-arrangement-dock');
+    const set = ipcMain.handlers.get('config:set-obs-arrangement-dock');
+    expect(await get()).toBe(false);
+    for (const invalid of [1, 'true', null, {}, []])
+      await expect(set({}, invalid)).rejects.toThrow();
+    expect(updateConfig).not.toHaveBeenCalled();
+    expect(await set({}, true)).toBe(true);
+    expect(await get()).toBe(true);
+    expect(updateConfig).toHaveBeenCalledExactlyOnceWith({
+      autoShowArrangementOnObs: true,
+    });
+  });
   it('registers only machine-config and download-directory intents', () => {
     const { ipcMain } = register();
 
     expect([...ipcMain.handlers.keys()]).toEqual([
+      'config:get-obs-arrangement-dock',
+      'config:set-obs-arrangement-dock',
       'config:get',
       'config:choose-download-dir',
       'config:reset-download-dir',

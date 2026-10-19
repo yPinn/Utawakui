@@ -19,12 +19,22 @@ import RecentPlaybackList from './RecentPlaybackList.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiTabs from '../ui/UiTabs.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import { MicVocal } from '../../icons/index.js';
+import PerformanceSessionDockContent from '../performance-session/PerformanceSessionDockContent.vue';
+import PerformanceSessionSummary from '../performance-session/PerformanceSessionSummary.vue';
+import { useAppRightDock } from '../../composables/useAppRightDock.js';
 
 defineProps({
   active: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close', 'collapse']);
+const dock = useAppRightDock();
+const arrangementTabs = [
+  { id: 'pending', label: '待播' },
+  { id: 'history', label: '已完成' },
+];
 
 const {
   state: playerState,
@@ -239,6 +249,10 @@ const {
     ref="dockPanel"
     class="queue-panel"
     title="播放清單"
+    :workspace="
+      dock.queueVariant.value === 'arrangement' &&
+      dock.arrangementTab.value !== 'history'
+    "
     collapse-label="摺疊播放佇列"
     aria-label="播放清單"
     @collapse="emit('collapse')"
@@ -294,19 +308,61 @@ const {
     </template>
 
     <template #identity>
-      <UiTabs
-        :items="tabs"
-        :active-id="activeTab"
-        aria-label="播放清單檢視"
-        tab-id-prefix="queue-panel"
-        panel-id-prefix="queue-panel"
-        variant="bar"
-        @update:active-id="selectTab"
-      />
+      <div class="queue-panel__view-controls">
+        <UiTabs
+          v-if="dock.queueVariant.value === 'queue'"
+          :items="tabs"
+          :active-id="activeTab"
+          aria-label="播放清單檢視"
+          tab-id-prefix="queue-panel"
+          panel-id-prefix="queue-panel"
+          variant="bar"
+          @update:active-id="selectTab"
+        />
+        <UiTabs
+          v-else
+          :items="arrangementTabs"
+          :active-id="dock.arrangementTab.value"
+          aria-label="播放安排紀錄"
+          tab-id-prefix="arrangement-dock"
+          panel-id-prefix="arrangement-dock"
+          variant="bar"
+          @update:active-id="dock.selectArrangementTab"
+        />
+        <UiIconButton
+          :icon="MicVocal"
+          :label="
+            dock.queueVariant.value === 'arrangement'
+              ? '切換一般佇列'
+              : '切換播放安排'
+          "
+          :active="dock.queueVariant.value === 'arrangement'"
+          :aria-pressed="dock.queueVariant.value === 'arrangement'"
+          tooltip-placement="bottom"
+          @click="
+            dock.selectQueueVariant(
+              dock.queueVariant.value === 'arrangement'
+                ? 'queue'
+                : 'arrangement',
+            )
+          "
+        />
+      </div>
     </template>
 
+    <template
+      v-if="active && dock.queueVariant.value === 'arrangement'"
+      #summary
+    >
+      <PerformanceSessionSummary />
+    </template>
+
+    <PerformanceSessionDockContent
+      v-if="active && dock.queueVariant.value === 'arrangement'"
+    />
+
     <div
-      v-show="activeTab === 'queue'"
+      v-show="activeTab === 'queue' && dock.queueVariant.value === 'queue'"
       id="queue-panel-queue-panel"
       class="queue-panel__content"
       role="tabpanel"
@@ -397,7 +453,7 @@ const {
     </div>
 
     <div
-      v-show="activeTab === 'recent'"
+      v-show="activeTab === 'recent' && dock.queueVariant.value === 'queue'"
       id="queue-panel-recent-panel"
       class="queue-panel__content"
       role="tabpanel"
@@ -424,6 +480,16 @@ const {
 </template>
 
 <style scoped>
+.queue-panel__view-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-inline-size: 0;
+}
+.queue-panel__view-controls > :first-child {
+  flex: 1;
+  min-inline-size: 0;
+}
 .queue-panel__content {
   min-width: 0;
   -webkit-user-select: none;

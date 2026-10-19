@@ -14,6 +14,9 @@ import { useLyricsReading } from '../useLyricsReading.js';
 import { useMusicStructureSignals } from '../useMusicStructureSignals.js';
 import { usePlaybackQueue } from '../usePlaybackQueue.js';
 import { usePlayer } from '../usePlayer.js';
+import { usePerformanceSessionPlayback } from '../usePerformanceSessionPlayback.js';
+import { usePerformanceSessionPlan } from '../usePerformanceSessionPlan.js';
+import { projectPerformanceSessionOutput } from '../../utils/performanceSessionOutput.js';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -36,6 +39,16 @@ export function useOutputProjectionPublisher({
 }) {
   const { state: playerState } = usePlayer();
   const { state: queueState, upcomingTracks } = usePlaybackQueue();
+  const arrangement = usePerformanceSessionPlayback();
+  const { state: arrangementPlanState } = usePerformanceSessionPlan();
+  const arrangementProjection = computed(() =>
+    arrangement.ownsPlayback.value
+      ? projectPerformanceSessionOutput({
+          plan: arrangementPlanState.plan,
+          current: arrangement.currentItem.value,
+        })
+      : null,
+  );
   const { tracksById: libraryTracksById } = useLibrary();
   const {
     state: lyricsState,
@@ -70,6 +83,7 @@ export function useOutputProjectionPublisher({
   let lastReadingLoadKey = null;
 
   function queueInput() {
+    if (arrangementProjection.value) return arrangementProjection.value.queue;
     return {
       historyEntries: queueState.historyEntries,
       currentTrack: queueState.currentTrack,
@@ -103,7 +117,14 @@ export function useOutputProjectionPublisher({
   const projectedDynamicState = computed(() =>
     projectDynamicOutputState(
       {
-        player: playerState,
+        player: arrangementProjection.value
+          ? arrangement.currentItem.value?.mode === 'manual'
+            ? arrangementProjection.value.player
+            : {
+                ...playerState,
+                track: arrangementProjection.value.queue.currentTrack,
+              }
+          : playerState,
         output: { displayDelayMs: getDisplayDelayMs() },
         lyrics: {
           offsetSeconds: lyricsState.offsetSeconds,

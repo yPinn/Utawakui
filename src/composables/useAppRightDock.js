@@ -22,6 +22,26 @@ const mountedSurfaces = reactive({
 const isExpanded = shallowRef(false);
 const lastSurface = shallowRef(null);
 const preparationTab = shallowRef('import');
+const queueVariant = shallowRef('queue');
+const arrangementTab = shallowRef('pending');
+
+function selectArrangementTab(tab) {
+  if (!['pending', 'history'].includes(tab))
+    throw new RangeError(`Unknown arrangement tab: ${tab}`);
+  arrangementTab.value = tab;
+}
+
+function selectQueueVariant(variant) {
+  if (!['queue', 'arrangement'].includes(variant))
+    throw new RangeError(`Unknown queue variant: ${variant}`);
+  queueVariant.value = variant;
+}
+
+function showQueueVariant(variant) {
+  selectQueueVariant(variant);
+  surfaces[RIGHT_DOCK_SURFACE_PREPARATION] = false;
+  showSurface(RIGHT_DOCK_SURFACE_QUEUE);
+}
 
 const hasSurfaces = computed(() =>
   SURFACE_PRIORITY.some((surface) => surfaces[surface]),
@@ -155,6 +175,11 @@ export function useAppRightDock() {
     topSurface,
     lastSurface: readonly(lastSurface),
     preparationTab: readonly(preparationTab),
+    queueVariant: readonly(queueVariant),
+    arrangementTab: readonly(arrangementTab),
+    selectArrangementTab,
+    selectQueueVariant,
+    showQueueVariant,
     preparationActionLabel,
     selectPreparationTab,
     cyclePreparation,
