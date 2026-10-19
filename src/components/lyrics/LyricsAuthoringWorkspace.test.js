@@ -128,8 +128,8 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
   });
 
   it('keeps internal granularity out of the idle workspace and shows timing tools contextually', () => {
-    expect(workspaceSource).toContain(
-      '<div v-if="timingDraft" class="lyrics-timing-stack">',
+    expect(workspaceSource).toMatch(
+      /<div\s+v-if="timingDraft \|\| showsAcousticPreview"\s+class="lyrics-timing-stack"\s*>/u,
     );
     expect(timingToolbarSource).toContain('逐字校時');
     expect(timingToolbarSource).toContain('已記錄');
@@ -148,8 +148,8 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
   });
 
   it('keeps the live tool in the bounded reader row with or without timing tools', () => {
-    expect(workspaceSource).toContain(
-      '<div v-if="timingDraft" class="lyrics-timing-stack">',
+    expect(workspaceSource).toMatch(
+      /<div\s+v-if="timingDraft \|\| showsAcousticPreview"\s+class="lyrics-timing-stack"\s*>/u,
     );
     expect(workspaceSource).toContain('class="lyrics-stage__live-tool"');
     expect(workspaceSource).toMatch(

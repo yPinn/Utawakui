@@ -135,6 +135,7 @@ const sourceDocuments = useLyricsSourceDocuments({
 });
 const {
   lyricsTiming,
+  lyricsAcousticEstimate,
   loadSelectedLyrics,
   waitForSelectedLyricsLoad,
   adjustOffset,
@@ -429,6 +430,7 @@ export function useLyrics() {
     selectedLyrics,
     selectedSource,
     lyricsTiming: readonly(lyricsTiming),
+    lyricsAcousticEstimate: readonly(lyricsAcousticEstimate),
     lyricsDocument,
     displayLyricsDocument,
     lyricsTextVariant: readonly(lyricsTextVariant),

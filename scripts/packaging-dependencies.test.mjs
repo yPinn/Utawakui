@@ -67,6 +67,63 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('ships the optional lyrics environment probe/catalog without private research assets', () => {
+    for (const filename of [
+      'lyrics_acoustic_probe.py',
+      'lyrics-acoustic-catalog.json',
+    ]) {
+      expect(builder.extraResources).toContainEqual({
+        from: `resources/audio-processing/${filename}`,
+        to: `audio-processing/${filename}`,
+      });
+    }
+    const catalog = JSON.parse(
+      readFileSync(
+        path.join(
+          root,
+          'resources/audio-processing/lyrics-acoustic-catalog.json',
+        ),
+        'utf8',
+      ),
+    );
+    expect(catalog.productUse).toBe('blocked');
+    expect(catalog.blockReason).toBe('weights-evidence-pending');
+    expect(builder.files).not.toContain('scripts/research/**/*');
+  });
+  it('excludes private lyric research workers and model bindings from the shipped app', () => {
+    for (const file of [
+      'scripts/research/lyricsAcoustic/frontend.cjs',
+      'scripts/research/lyricsAcoustic/decoder.py',
+      'scripts/research/lyricsAcoustic/job.cjs',
+      'scripts/research/lyricsAcoustic/manifest.json',
+    ]) {
+      const included = builder.files.some(
+        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+      );
+      const excluded = builder.files.some(
+        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+      );
+      expect(included && !excluded).toBe(false);
+    }
+  });
+  it('keeps model-independent lyric estimate runtime inside existing packaged source boundaries', () => {
+    expect(builder.files).toContain('electron/**/*');
+    expect(builder.files).toContain('shared/**/*');
+    for (const file of [
+      'electron/lib/library/lyricsAcousticEstimates.js',
+      'electron/main/lyrics/acousticEstimateHandlers.js',
+      'shared/lyricsAcousticEstimate.mjs',
+      'shared/presentation/lyricsAcousticPreview.mjs',
+    ]) {
+      expect(
+        readFileSync(path.join(root, file), 'utf8').length,
+      ).toBeGreaterThan(0);
+    }
+    expect(
+      typeof require('./electron/lib/library/lyricsAcousticEstimates.js')
+        .loadTrackAcousticEstimate,
+    ).toBe('function');
+  });
   it('packages the preview session initializer while excluding its tests', () => {
     for (const [file, expected] of [
       ['electron/main/previewSession.js', true],

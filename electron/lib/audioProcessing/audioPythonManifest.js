@@ -12,6 +12,7 @@ const AUDIO_PYTHON_ENVIRONMENT_IDS = Object.freeze([
   'separation-cpu',
   'analysis-structure',
   'combined-ml',
+  'lyrics-alignment',
 ]);
 const ANALYSIS_SIGNAL_IDS = Object.freeze([
   'tempo',

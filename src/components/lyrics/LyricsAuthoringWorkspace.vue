@@ -11,6 +11,7 @@ import { formatDuration } from '../../utils/format.js';
 import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
 import { canEditTimingLine } from '../../utils/lyricsTiming.js';
 import LyricsLiveTool from './LyricsLiveTool.vue';
+import LyricsAcousticPreview from './LyricsAcousticPreview.vue';
 import LyricsPreparationBar from './LyricsPreparationBar.vue';
 import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
@@ -81,6 +82,22 @@ const isTrackPickerOpen = ref(false);
 const editingReadingLineIndex = ref(null);
 const readingLineDraft = ref('');
 const editMode = ref('preview');
+const acousticEstimate = computed(
+  () => lyrics.lyricsAcousticEstimate?.value ?? { status: 'missing' },
+);
+const showsAcousticPreview = computed(
+  () => acousticEstimate.value.status !== 'missing',
+);
+const acousticSourceKey = computed(
+  () =>
+    `${selectedTrack.value?.id ?? ''}/${selectedSource.value?.filename ?? ''}`,
+);
+const selectedDurationMs = computed(() =>
+  selectedTrack.value?.id === playerState.track?.id &&
+  Number.isFinite(playerState.duration)
+    ? playerState.duration * 1000
+    : null,
+);
 const isSavingReading = ref(false);
 const hasEditingDraft = computed(
   () => Boolean(timingDraft.value) || editingReadingLineIndex.value !== null,
@@ -361,8 +378,22 @@ async function commitTimingDocument() {
           compact
         />
       </div>
-      <div v-if="timingDraft" class="lyrics-timing-stack">
+      <div
+        v-if="timingDraft || showsAcousticPreview"
+        class="lyrics-timing-stack"
+      >
+        <LyricsAcousticPreview
+          v-if="showsAcousticPreview"
+          :document="lyricsDocument"
+          :estimate="acousticEstimate"
+          :source-key="acousticSourceKey"
+          :position-ms="currentLyricsPositionMs"
+          :offset-ms="Math.round(state.offsetSeconds * 1000)"
+          :duration-ms="selectedDurationMs"
+          :disabled="isEditingLocked || editMode !== 'preview'"
+        />
         <LyricsTimingToolbar
+          v-if="timingDraft"
           :can-undo="canUndoTiming"
           :can-save="canCommitTiming"
           :completed-boundaries="completedTimingBoundaries"
@@ -374,6 +405,7 @@ async function commitTimingDocument() {
           @cancel="cancelTiming"
         />
         <LyricsSegmentEditor
+          v-if="timingDraft"
           :draft="timingDraft"
           :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
           :is-saving="state.timingSave.isSaving"

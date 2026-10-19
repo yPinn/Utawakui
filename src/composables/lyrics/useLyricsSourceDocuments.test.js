@@ -28,6 +28,43 @@ function setup(prepareLyrics) {
 }
 
 describe('lyrics source preparation boundary', () => {
+  it('loads optional estimates without delaying canonical lyrics and isolates late responses', async () => {
+    const { state, selectedTrack, owner } = setup();
+    let finish;
+    window.Utawakui.getLyricsAcousticEstimate = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({ status: 'stale' });
+    await owner.loadSelectedLyrics();
+    expect(state.lyricsText).toBe('a中文');
+    expect(state.isLoadingLyrics).toBe(false);
+    selectedTrack.value = { id: 'b' };
+    await owner.loadSelectedLyrics();
+    await owner.waitForSelectedAcousticEstimate();
+    finish({ status: 'ready', preview: { estimateId: 'old' } });
+    await Promise.resolve();
+    expect(owner.lyricsAcousticEstimate.value).toEqual({ status: 'stale' });
+    expect(state.lyricsText).toBe('b中文');
+  });
+
+  it('preserves canonical playback when optional estimate loading fails', async () => {
+    const { state, owner } = setup();
+    window.Utawakui.getLyricsAcousticEstimate = vi
+      .fn()
+      .mockRejectedValue(new Error('private path'));
+    await owner.loadSelectedLyrics();
+    await owner.waitForSelectedAcousticEstimate();
+    expect(owner.lyricsAcousticEstimate.value).toEqual({
+      status: 'unavailable',
+    });
+    expect(state.lyricsText).toBe('a中文');
+    expect(state.error).toBeNull();
+  });
   it('loads immediately when no custom preparation step is provided', async () => {
     const { state, owner } = setup();
     await owner.loadSelectedLyrics();

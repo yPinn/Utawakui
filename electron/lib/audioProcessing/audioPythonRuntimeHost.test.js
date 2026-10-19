@@ -74,6 +74,7 @@ describe('AudioPythonRuntimeHost', () => {
       'separation-cpu',
       'analysis-structure',
       'combined-ml',
+      'lyrics-alignment',
     ]);
 
     expect(host.getRuntimeArtifactPaths('cpython-3.13.x', HASH_A)).toEqual(

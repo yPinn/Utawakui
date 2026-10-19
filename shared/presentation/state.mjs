@@ -169,7 +169,7 @@ function authoredLineSegments(line) {
     : null;
 }
 
-function presentationLineSegments(snapshot, lines, lineIndex) {
+export function presentationLineSegments(snapshot, lines, lineIndex) {
   const line = lines[lineIndex];
   const authored = authoredLineSegments(line);
   if (authored) return { segments: authored, timingSource: 't2' };

@@ -284,6 +284,7 @@ describe('useLyrics', () => {
         'isReloading',
         'isSelectedTrackPlaying',
         'lyricLines',
+        'lyricsAcousticEstimate',
         'lyricsDocument',
         'lyricsTextVariant',
         'lyricsTiming',

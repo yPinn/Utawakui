@@ -16,9 +16,30 @@ export function useLyricsSourceDocuments({
   // Timing documents can contain thousands of immutable lines and segments.
   // Replacing a shallow ref avoids recursively proxying each snapshot.
   const lyricsTiming = shallowRef(EMPTY_TIMING);
+  const lyricsAcousticEstimate = shallowRef({ status: 'missing' });
   let lyricsRequestId = 0;
   let offsetSaveRequestId = 0;
   let selectedLyricsLoad = Promise.resolve();
+  let selectedAcousticLoad = Promise.resolve();
+
+  async function loadAcousticEstimate(trackId, filename, requestId) {
+    if (typeof window.Utawakui?.getLyricsAcousticEstimate !== 'function')
+      return;
+    const isCurrent = () =>
+      requestId === lyricsRequestId &&
+      selectedTrack.value?.id === trackId &&
+      state.selectedSourceFilename === filename;
+    try {
+      const result = await window.Utawakui.getLyricsAcousticEstimate(
+        trackId,
+        filename,
+      );
+      if (isCurrent())
+        lyricsAcousticEstimate.value = result ?? { status: 'missing' };
+    } catch {
+      if (isCurrent()) lyricsAcousticEstimate.value = { status: 'unavailable' };
+    }
+  }
 
   async function performSelectedLyricsLoad() {
     const track = selectedTrack.value;
@@ -33,6 +54,8 @@ export function useLyricsSourceDocuments({
     state.offsetSave.isSaving = false;
     state.offsetSave.error = null;
     lyricsTiming.value = EMPTY_TIMING;
+    lyricsAcousticEstimate.value = { status: 'missing' };
+    selectedAcousticLoad = Promise.resolve();
     if (!track || !filename) return;
 
     if (typeof window.Utawakui?.getTrackLyrics !== 'function') {
@@ -54,6 +77,11 @@ export function useLyricsSourceDocuments({
         : 0;
       lyricsTiming.value = result?.timing ?? EMPTY_TIMING;
       state.error = null;
+      selectedAcousticLoad = loadAcousticEstimate(
+        track.id,
+        filename,
+        requestId,
+      );
     } catch (error) {
       if (requestId !== lyricsRequestId) return;
       state.error = reportLyricsError(
@@ -288,6 +316,8 @@ export function useLyricsSourceDocuments({
 
   return {
     lyricsTiming,
+    lyricsAcousticEstimate,
+    waitForSelectedAcousticEstimate: () => selectedAcousticLoad,
     loadSelectedLyrics,
     waitForSelectedLyricsLoad,
     adjustOffset,

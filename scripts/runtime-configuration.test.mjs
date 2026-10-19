@@ -38,6 +38,8 @@ describe('runtime configuration boundaries', () => {
     expect(resources).toEqual([
       'third-party',
       'resources/audio-processing/audio_python_worker.py',
+      'resources/audio-processing/lyrics_acoustic_probe.py',
+      'resources/audio-processing/lyrics-acoustic-catalog.json',
       'resources/audio-processing/refined_worker.py',
       'resources/audio-processing/structure_analysis_worker.py',
       'resources/audio-processing/analysis-structure-model.json',

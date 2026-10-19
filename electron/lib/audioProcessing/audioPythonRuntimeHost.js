@@ -21,12 +21,18 @@ const AUDIO_PYTHON_ENVIRONMENT_IDS = Object.freeze([
   'separation-cpu',
   'analysis-structure',
   'combined-ml',
+  'lyrics-alignment',
 ]);
 const AUDIO_PYTHON_CAPABILITY_IDS = Object.freeze([
   'refined',
   'structure-analysis',
+  'lyrics-acoustic',
 ]);
-const AUDIO_PYTHON_MODEL_KINDS = Object.freeze(['separation', 'analysis']);
+const AUDIO_PYTHON_MODEL_KINDS = Object.freeze([
+  'separation',
+  'analysis',
+  'alignment',
+]);
 const SAFE_COMPONENT_RE = /^[a-z0-9][a-z0-9._-]{0,127}$/i;
 const SAFE_JOB_ID_RE = /^[a-z0-9][a-z0-9-]{0,127}$/i;
 const SHA256_RE = /^[a-f0-9]{64}$/;
@@ -208,12 +214,16 @@ function validateCapability(capabilityId, capability) {
   assertHash(capability.model.manifestHash, 'model manifest');
 
   const mappingIsValid =
-    capabilityId === 'refined'
-      ? ['separation-cpu', 'combined-ml'].includes(capability.environment.id) &&
-        capability.model.kind === 'separation'
-      : ['analysis-structure', 'combined-ml'].includes(
-          capability.environment.id,
-        ) && capability.model.kind === 'analysis';
+    capabilityId === 'lyrics-acoustic'
+      ? capability.environment.id === 'lyrics-alignment' &&
+        capability.model.kind === 'alignment'
+      : capabilityId === 'refined'
+        ? ['separation-cpu', 'combined-ml'].includes(
+            capability.environment.id,
+          ) && capability.model.kind === 'separation'
+        : ['analysis-structure', 'combined-ml'].includes(
+            capability.environment.id,
+          ) && capability.model.kind === 'analysis';
   if (!mappingIsValid) {
     throw new Error('invalid audio Python capability mapping');
   }
@@ -420,6 +430,7 @@ function createAudioPythonRuntimeHost({
     getCurrentActivation,
     acquireCurrentGeneration,
     canCollectGeneration,
+    hasActiveGenerationLeases: () => leaseCounts.size > 0,
     createJobWorkspace,
   };
 }

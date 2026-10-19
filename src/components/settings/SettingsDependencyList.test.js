@@ -33,3 +33,11 @@ it('reveals active work so its progress and controls remain visible', async () =
   expect(html).toContain('1 項處理中');
   expect(html).toMatch(/<details\b[^>]*\bopen/);
 });
+it('counts both optional capabilities without collapsing their busy or attention totals', async () => {
+  const html = await render({
+    additionalCount: 2,
+    additionalBusy: 2,
+    additionalAttention: 2,
+  });
+  expect(html).toContain('工具與模型 · 2 項 · 2 項處理中 · 2 項待處理');
+});

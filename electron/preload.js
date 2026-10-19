@@ -665,6 +665,20 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
+  getLyricsAcousticEstimate: (trackId, filename) =>
+    ipcRenderer.invoke('lyrics:get-acoustic-estimate', trackId, filename),
+  getLyricsAcousticCapabilityStatus: () =>
+    ipcRenderer.invoke('lyrics-acoustic:status'),
+  prepareLyricsAcousticCapability: () =>
+    ipcRenderer.invoke('lyrics-acoustic:prepare'),
+  verifyLyricsAcousticCapability: () =>
+    ipcRenderer.invoke('lyrics-acoustic:verify'),
+  repairLyricsAcousticCapability: () =>
+    ipcRenderer.invoke('lyrics-acoustic:repair'),
+  removeLyricsAcousticCapability: () =>
+    ipcRenderer.invoke('lyrics-acoustic:remove'),
+  cancelLyricsAcousticCapability: () =>
+    ipcRenderer.invoke('lyrics-acoustic:cancel'),
   getTrackMusicStructure: (trackId) =>
     ipcRenderer.invoke('music-structure:get-track', trackId),
   openMusicAnalysisBenchmarkReview: () =>

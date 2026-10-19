@@ -234,6 +234,36 @@ Escape 返回 trigger，非 modal Tab 仍可離開。逐字校時入口與草稿
 既有讀音 annotation spans，最後才使用保留空白的分段。讀音片段只是建議，不等於精準詞界，
 不新增 tokenizer、不猜測內部時間；所有邊界有效且相對初始草稿有時間變更才開放儲存，復原回原值則停用。
 伴奏處理不再重複放在歌詞工具列，沿用 shell「曲目準備」的 separation 工作流。
+
+T1 聲學估計的第一階段另存 `lyrics/acoustic-estimates/<sourceFilename>.json`，
+由 `lyricsAcousticEstimates.js` 驗證來源／timing／音訊與方法身分、限制大小並原子保存。
+`lyrics:get-acoustic-estimate` 只讀取已登記 track／source，無 sidecar 不讀取整首音訊；
+`useLyricsSourceDocuments` 在 canonical 歌詞發布後獨立載入，拒絕舊 request 的結果。
+`useLyricsAcousticPreview` 僅擁有該來源的 session 啟用選擇，共用純投影沿用正式 T2 優先、
+現行 T1 估算及整句回退。`LyricsAcousticPreview` 在 authoring 工作區顯示原文與詞塊起點，
+不把估計寫進 canonical segments。應用內預設只接受合成 fixture profile，沒有歌曲模型產生 worker
+或 Output extension；Self-View／Overlay 保持既有時間來源。
+`scripts/research/lyricsAcoustic/` 另提供不進封裝的私有研究 CLI，以固定本機資產、
+有上下文的 bounded windows、受控 Node／Python 子程序及明確 internal method profile
+驗證中日歌曲。它不註冊產品 capability／activation 或 renderer start intent；CLI 內的
+scheduler instance 也不代表已接入 app 的全域重工作排程。模型資料仍由正式 loader 預設拒用，
+可見研究驗收只在隔離 composition 注入 profile；預覽可區分模型與合成來源。
+`scripts/research/lyricsFreshEvaluation/`另提供HubertFA＋small獨立內容檢查、聽查與試用，
+不建立產品producer。研究選型及各輪證據見[收斂結論](research/lyrics-alignment-summary.md)，
+開發者執行步驟見[研究試用手冊](operations/lyrics-alignment-research.md)。
+`electron/lib/lyricsAcoustic/` 另提供 main-owned 選配環境生命週期：固定 catalog／SHA、
+獨立 `lyrics-acoustic` capability／`lyrics-alignment` environment／`alignment` model，
+共用 Audio Python host 與 app heavy-job scheduler，Provider Python 不共用。
+Settings 透過單一 `useLyricsAcousticCapability` owner 與六個零參數固定 IPC，手動準備、
+真實 Python／Node ONNX 載入驗證、修復、取消及移除；掛載與重啟只讀狀態，不載入模型。
+staging 完整驗證及 probe 後才發布 activation；失敗取消保留舊 activation／歌詞，
+檢查所有 generation lease、共享 runtime，移除 journal 支援重啟後繼續清理。
+正式 catalog 仍被 `weights-evidence-pending` 擋住，沒有預設下載或歌曲 start intent；
+default sidecar loader 仍拒用研究模型。資源與驗收邊界見
+[生命週期報告](research/lyrics-acoustic-lifecycle-2026-10-19.md)。
+資料與後續 gate 見 [ADR 0026](adr/0026-t1-acoustic-estimates.md) 與
+[聲學估計契約](contracts/lyrics-acoustic-estimate-contract.md)。
+
 來源、讀音與字級收在工具列的「顯示」`UiPopover`，歌詞以 `LyricsDocumentPanel` 的 `presentation="sheet"` 印在紙面（目前行螢光筆、讀音印在上方）。Library 內的
 歌詞編輯同樣使用 workspace mode，Folder page 不建立 document scroll；
 `LyricsDocumentPanel`、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。Output
@@ -1011,7 +1041,8 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 - `dist/` 是 Vite renderer output；`overlay/` 不進入 Vite bundle。
 - 封裝固定使用 Electron 43.7.8，並關閉 Node options environment 與 Node CLI inspect
   fuses、開啟 embedded ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給
-  ADR 0005 的 yt-dlp EJS runtime；`GrantFileProtocolExtraPrivileges` 暫時保留給主
+  ADR 0005 的 yt-dlp EJS runtime 及 ADR 0026 固定、受控的 ONNX 環境 probe；
+  兩條 Node 子程序路徑都遷移後才可關閉。`GrantFileProtocolExtraPrivileges` 暫時保留給主
   renderer 的 `file://` 載入。兩者都要在替代 runtime／app-owned scheme 完成後才能關閉。
 - `electron/`、`shared/` 與內建 resources 進入 `app.asar`，需要外部解析或執行的檔案
   由明確 `asarUnpack`／`extraResources` 規則交付。

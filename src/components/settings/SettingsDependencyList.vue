@@ -9,8 +9,8 @@ import SettingsDependencyActions from './SettingsDependencyActions.vue';
 const props = defineProps({
   items: { type: Array, default: () => [] },
   additionalCount: { type: Number, default: 0 },
-  additionalBusy: { type: Boolean, default: false },
-  additionalAttention: { type: Boolean, default: false },
+  additionalBusy: { type: [Boolean, Number], default: false },
+  additionalAttention: { type: [Boolean, Number], default: false },
   additionalLoaded: { type: Boolean, default: true },
   highlighted: { type: Boolean, default: false },
 });

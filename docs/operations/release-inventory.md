@@ -21,9 +21,28 @@ Windows packaging is configured in `electron-builder.yml`.
 - Electron runtime: 43.7.8, pinned in both the npm lock and
   `electron-builder.yml` so packaging cannot silently reuse an older local
   distribution.
+
+The manual lyrics acoustic environment lifecycle ships as application code under
+`electron/lib/lyricsAcoustic/` plus explicit extra resources
+`resources/audio-processing/lyrics_acoustic_probe.py` and
+`resources/audio-processing/lyrics-acoustic-catalog.json`. The Python unit test,
+private research workers, local Python environments, model archives and weights
+are excluded. The catalog remains blocked pending weight evidence; there is no
+default preparation or song-generation intent. Settings status reads install
+nothing. Accepted-catalog preparation, when released, uses the independent Audio
+Python `lyrics-alignment` environment and `alignment` model paths; no provider
+environment or existing analysis/separation environment is modified.
+Verify both extra-resource paths in the package, the catalog gate and zero
+startup downloads. Lifecycle tests cover real local archive preparation/probes,
+repair rollback, cancellation, all-generation lease checks, shared runtime
+preservation and journal-based removal retry. This is separate from a fresh
+network install or signed-installer acceptance; see the
+[verification record](../research/lyrics-acoustic-lifecycle-2026-10-19.md).
+
 - Packaged fuses: Node options environment and Node CLI inspect disabled;
   embedded ASAR integrity and only-load-from-ASAR enabled. Run-as-Node remains
-  enabled only for the ADR 0005 yt-dlp EJS runtime, and file-protocol extra
+  enabled for the ADR 0005 yt-dlp EJS runtime and ADR 0026's fixed app-owned
+  bounded ONNX environment probe, and file-protocol extra
   privileges remain enabled only while the main renderer loads from `file://`.
 - Renderer output: `dist/`, loaded by `electron/main/windowState.js`.
   Pure deferred-loader sources under `src/utils/` are bundled by Vite into this
@@ -295,6 +314,21 @@ When adding a dependency, classify it before installing:
 - If it is only for tests/lint/build scripts, put it in `devDependencies`.
 
 ## Packaging Locations
+
+The model-independent lyric estimate validator/storage stays under the existing
+`electron/**/*` and `shared/**/*` app.asar rules. The authoring preview compiles
+into `dist/`; its synthetic fixtures and native acceptance outputs in ignored
+`tasks/` are not release assets. This phase adds no weight, Python environment,
+worker, extraResource or new asarUnpack path. Model and Output integration remain
+separately gated by ADR 0026.
+
+The private Phase 2 candidate workers and binding manifest live only in
+`scripts/research/lyricsAcoustic/`, outside builder's shipped-source allowlist.
+Packaging tests assert that the Node/Python workers and model manifest remain
+excluded. Research assets, runtime configuration, song copies and results are
+local inputs/outputs, not extraResources. This adds no product capability, model
+download, Python environment lock or activation entry. Existing application
+source rules cover the explicit internal storage-method option and preview label.
 
 | Artifact                                                                                               | Contents                                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -78,6 +78,15 @@ const {
   loadStructureAnalysisCapabilityCatalog,
 } = require('./lib/audioProcessing/structureAnalysisCapability');
 const {
+  createLyricsAcousticCapability,
+} = require('./lib/lyricsAcoustic/capability');
+const { loadLyricsAcousticCatalog } = require('./lib/lyricsAcoustic/catalog');
+const { prepareLyricsArtifacts } = require('./lib/lyricsAcoustic/artifacts');
+const { probeLyricsEnvironment } = require('./lib/lyricsAcoustic/probe');
+const {
+  registerLyricsAcousticCapabilityHandlers,
+} = require('./main/lyrics/acousticCapabilityHandlers');
+const {
   registerHeavyJobSchedulerLifecycle,
 } = require('./main/heavyJobSchedulerLifecycle');
 const { createDiagnosticsService } = require('./lib/diagnostics');
@@ -502,10 +511,54 @@ if (!gotSingleInstanceLock) {
         }),
         getActiveJob: () =>
           structureAnalysisService.getActiveJob() ??
-          (structureAnalysisBatchService.hasActiveBatch()
+          (structureAnalysisBatchService.hasActiveBatch() ||
+          heavyJobScheduler.isBusy()
             ? { jobId: 'batch', trackId: 'batch' }
             : null),
       });
+    let lyricsAcousticCapability = null;
+    try {
+      const { catalog, pythonProbePath } = loadLyricsAcousticCatalog({
+        appPath: app.getAppPath(),
+        isPackaged: isPackagedRuntime,
+        resourcesPath: process.resourcesPath,
+      });
+      lyricsAcousticCapability = createLyricsAcousticCapability({
+        host: audioPythonRuntimeHost,
+        catalog,
+        prepare: prepareLyricsArtifacts,
+        probe: (options) =>
+          probeLyricsEnvironment({ ...options, pythonProbePath }),
+        scheduler: heavyJobScheduler,
+        isOtherSetupBusy: () =>
+          structureAnalysisCapabilityService.getStatus().busy,
+        onCleanupError: (error) =>
+          recordDiagnostic({
+            process: 'main',
+            level: 'error',
+            source: 'lyrics-acoustic-environment',
+            operation: 'cleanup',
+            code: 'LYRICS_ENV_CLEANUP_FAILED',
+            error,
+          }),
+      });
+    } catch (error) {
+      recordDiagnostic({
+        process: 'main',
+        level: 'error',
+        source: 'lyrics-acoustic-environment',
+        operation: 'catalog',
+        code: 'LYRICS_ENV_CATALOG_FAILED',
+        error,
+      });
+    }
+    registerLyricsAcousticCapabilityHandlers({
+      ipcMain,
+      capability: lyricsAcousticCapability,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+      recordDiagnostic,
+    });
     const structureAnalysisAutoQueue = createStructureAnalysisAutoQueue({
       getConfig: configState.getConfig,
       isFeatureEnabled: isFeatureGateEnabled,

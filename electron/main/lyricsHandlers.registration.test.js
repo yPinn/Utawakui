@@ -6,6 +6,7 @@ const EXPECTED_LYRICS_CHANNELS = [
   'lyrics:delete-reading',
   'lyrics:delete-source',
   'lyrics:generate-reading',
+  'lyrics:get-acoustic-estimate',
   'lyrics:get-reading',
   'lyrics:get-track',
   'lyrics:import-file',

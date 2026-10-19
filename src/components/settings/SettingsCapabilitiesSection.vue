@@ -24,6 +24,8 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import FfmpegSourceModal from './FfmpegSourceModal.vue';
 import MusicAnalysisSettingsRow from './MusicAnalysisSettingsRow.vue';
+import LyricsAcousticSettingsRow from './LyricsAcousticSettingsRow.vue';
+import { useLyricsAcousticCapability } from '../../composables/lyrics/useLyricsAcousticCapability.js';
 import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 import OutputRuntimeSettingsBlock from './OutputRuntimeSettingsBlock.vue';
 import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
@@ -77,6 +79,15 @@ const {
   repairDependency,
 } = useFeatureDependencies();
 const musicAnalysisSettings = useMusicAnalysisSettings();
+const lyricsAcousticCapability = useLyricsAcousticCapability();
+const lyricsToolNeedsAttention = computed(() =>
+  Boolean(
+    lyricsAcousticCapability.error.value ||
+    ['damaged', 'remove-pending', 'unavailable', 'unverified'].includes(
+      lyricsAcousticCapability.capability.value?.status,
+    ),
+  ),
+);
 const separationSettings = useSeparationSettings();
 const obsIntegrationSettings = useObsIntegrationSettings();
 const obsSessionExport = useObsSessionExport();
@@ -206,6 +217,17 @@ async function handleRemoveMusicAnalysis() {
   await musicAnalysisSettings.remove();
 }
 
+async function handleRemoveLyricsAcoustic() {
+  const confirmed = await confirmAction({
+    title: '移除歌詞音訊輔助元件？',
+    message: '只移除此能力的運算元件。',
+    detail: '歌曲、歌詞、人工校時與既有輔助資料都會保留。',
+    confirmLabel: '移除元件',
+    intent: 'danger',
+  });
+  if (confirmed) await lyricsAcousticCapability.remove();
+}
+
 async function handleClearObsPassword() {
   const confirmed = await confirmAction({
     title: '移除 OBS 密碼？',
@@ -292,6 +314,7 @@ onMounted(() => {
   refreshConfirmations();
   refreshDependencies();
   musicAnalysisSettings.initialize();
+  lyricsAcousticCapability.refresh();
   separationSettings.refreshPreference();
   obsIntegrationSettings.refreshSettings();
 });
@@ -351,22 +374,27 @@ onMounted(() => {
             obsIntegrationSettings.hasStoredPassword.value
           "
           :additional-tool-count="
-            gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW ? 1 : 0
+            gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW ? 2 : 0
           "
           :additional-tool-loaded="
             gate.id !== FEATURE_IDS.AUDIO_PROCESSING_FLOW ||
-            Boolean(
+            (Boolean(
               musicAnalysisSettings.capability.value ||
               musicAnalysisSettings.capabilityReadError.value,
-            )
+            ) &&
+              Boolean(
+                lyricsAcousticCapability.capability.value ||
+                lyricsAcousticCapability.error.value,
+              ))
           "
           :additional-tool-busy="
             gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
-            musicAnalysisSettings.capabilityBusy.value
+            Number(musicAnalysisSettings.capabilityBusy.value) +
+              Number(lyricsAcousticCapability.busy.value)
           "
           :additional-tool-attention="
             gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
-            musicToolNeedsAttention
+            Number(musicToolNeedsAttention) + Number(lyricsToolNeedsAttention)
           "
           :highlighted="
             featureGateAccessState.request?.featureId === gate.id &&
@@ -467,6 +495,21 @@ onMounted(() => {
               @prepare="musicAnalysisSettings.prepare"
               @repair="musicAnalysisSettings.repair"
               @remove="handleRemoveMusicAnalysis"
+            />
+            <LyricsAcousticSettingsRow
+              v-if="
+                gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
+              "
+              :capability="lyricsAcousticCapability.capability.value"
+              :busy="lyricsAcousticCapability.busy.value"
+              :operation="lyricsAcousticCapability.operation.value"
+              :error="lyricsAcousticCapability.error.value"
+              @refresh="lyricsAcousticCapability.refresh"
+              @prepare="lyricsAcousticCapability.prepare"
+              @verify="lyricsAcousticCapability.verify"
+              @repair="lyricsAcousticCapability.repair"
+              @remove="handleRemoveLyricsAcoustic"
+              @cancel="lyricsAcousticCapability.cancel"
             />
           </template>
         </SettingsFeatureGateRow>

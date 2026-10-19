@@ -27,8 +27,8 @@ directories:
 # loads its main renderer from file://, so GrantFileProtocolExtraPrivileges must
 # remain enabled until that UI moves behind an app-owned custom scheme.
 electronFuses:
-  # Approved compatibility exception: ADR 0005 provider EJS uses the packaged
-  # executable as its managed Node runtime until that dependency is migrated.
+  # Bounded app-owned Node subprocesses: ADR 0005 provider EJS and ADR 0026
+  # ONNX environment probes use the packaged executable as their Node runtime.
   runAsNode: true
   enableNodeOptionsEnvironmentVariable: false
   enableNodeCliInspectArguments: false
@@ -125,6 +125,10 @@ extraResources:
       - manifest.json
   - from: resources/audio-processing/audio_python_worker.py
     to: audio-processing/audio_python_worker.py
+  - from: resources/audio-processing/lyrics_acoustic_probe.py
+    to: audio-processing/lyrics_acoustic_probe.py
+  - from: resources/audio-processing/lyrics-acoustic-catalog.json
+    to: audio-processing/lyrics-acoustic-catalog.json
   - from: resources/audio-processing/refined_worker.py
     to: audio-processing/refined_worker.py
   - from: resources/audio-processing/structure_analysis_worker.py
