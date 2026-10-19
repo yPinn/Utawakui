@@ -1,10 +1,58 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { downloadPinned, runStages } from './trial.cjs';
+import { download, downloadPinned, runStages } from './trial.cjs';
 const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
+it('retains its cancellation listener until cleanup so signal-exit cannot terminate early', async () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'lyrics-cli-cancel-'));
+  const root = path.join(parent, 'downloads');
+  const originalListeners = new Set(process.rawListeners('SIGINT'));
+  let cancellationListenerPresent = false;
+  // signal-exit checks whether any application handler remains before resending
+  // the signal. Simulate that check without signalling the test runner itself.
+  const foreignListener = () => {
+    cancellationListenerPresent = process
+      .rawListeners('SIGINT')
+      .some(
+        (listener) =>
+          !originalListeners.has(listener) && listener !== foreignListener,
+      );
+  };
+  vi.stubGlobal('fetch', async () => {
+    process.on('SIGINT', foreignListener);
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1]));
+          const ownedListeners = process
+            .rawListeners('SIGINT')
+            .filter((listener) => !originalListeners.has(listener));
+          for (const listener of ownedListeners)
+            listener.call(process, 'SIGINT');
+        },
+      }),
+    );
+  });
+  try {
+    await expect(download(root)).rejects.toThrow();
+    expect(cancellationListenerPresent).toBe(true);
+    expect(fs.readdirSync(root)).toEqual([]);
+    expect(
+      process
+        .rawListeners('SIGINT')
+        .filter(
+          (listener) =>
+            !originalListeners.has(listener) && listener !== foreignListener,
+        ),
+    ).toEqual([]);
+  } finally {
+    process.removeListener('SIGINT', foreignListener);
+    vi.unstubAllGlobals();
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
 it('streams fixed artifacts to a new destination and rejects corrupt bytes without publication', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lyrics-trial-'));
   const bytes = Buffer.from('verified model'),

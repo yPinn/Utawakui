@@ -7,7 +7,7 @@
 - 在repo根目錄執行，使用既有npm環境與受驗證的模型／FFmpeg。Provider Python不共用。
 - 下列路徑記錄2026-10-19這台工作區；換環境須提供自己的絕對路徑及固定資產config。Git checkout不附歌曲、權重、private config或人工標註。
 - 本批19列聽查包綁定固定16案與原收據，不能換歌後沿用既有答案或hash；新音訊可另外使用trial。
-- 服務只綁127.0.0.1，需保持終端執行。以下port可改；不要把本機URL當永久部署。實際畫面／播放仍待人工確認，先前代理開啟因自動審核服務容量不足未執行。
+- 服務只綁127.0.0.1，需保持終端執行。以下port可改；不要把本機URL當永久部署。本機瀏覽器已驗證中日案例播放、比較面板與草稿匯出／載入；歌詞內容及起音仍由本人聽判。
 
 ## 直接聽查
 
@@ -18,6 +18,19 @@ node scripts/research/lyricsFreshEvaluation/listeningPage.cjs serve E:\Utawakui\
 ```
 
 先按「播放此句」或「播放前後文」，獨立填內容及起音。秒數使用整段音訊時鐘；不確定的起音留空。再展開四候選比較，最後由本人勾選完成。播放、模型結果與代理條件都不會自動變成人工判斷；這是風險定向抽查，不稱盲測。
+
+左欄由上到下的前15列就是原優先案例；最後4列為漏詞對照。可依序完成，不必先執行模型：
+
+| 案例                              | 優先檢查                                                     |
+| --------------------------------- | ------------------------------------------------------------ |
+| r-019、r-032、r-048               | 整句合成靜音；比較HubertFA原詞塊與加small後的回退            |
+| r-040                             | 中文正常句是否被small誤拒；繁簡與時間窗影響                  |
+| r-037、r-042、r-006、r-028、r-004 | 日文早／晚起音、缺詞界與長尾；獨立聽判，provider時間只作對照 |
+| r-047                             | 日文重複片語及缺詞界，注意同句不同occurrence                 |
+| r-045                             | 長尾改善的對照案例                                           |
+| r-052                             | 混合文字／英文的既有不支援回退，不當成ASR誤拒                |
+| r-033、r-010、r-005               | 正規化後仍應擋住的錯配對照                                   |
+| r-012、r-025、r-021、r-014        | 額外漏詞對照；警示不等於補字或確認完整                       |
 
 「備份草稿」保留未完成內容與起音；「匯出人工標記」只輸出明確完成的判斷，未完成列保持 pending。兩種檔案均可用頁面上的載入功能恢復；JSON 匯出不會覆寫原53列 labels。審查者代號是本人填寫，沒有獨立身分驗證。
 
@@ -31,11 +44,11 @@ node scripts/research/lyricsFreshEvaluation/listeningReview.cjs E:\Utawakui\.tmp
 
 ## 本機試用及下載
 
-新增 `trial.cjs`，只跑原HubertFA和Whisper small；不用Qwen、Torch或GPU。現有本機環境已通過資產驗證與4案實推論：中文／日文正常、中文靜音、中文漏詞。v1 在推論前明確限制 WAV、`main.vtt`、中日案例，輸出必須是全新絕對目錄。原音訊只讀，生成檔在隔離副本；沒有 App 設定／IPC／activation 寫入。
+`trial.cjs`只跑原HubertFA和Whisper small；不用Qwen、Torch或GPU。本機已從本輪固定下載資產手動準備全新的隔離環境，通過資產驗證與4案實推論：中文／日文正常、中文靜音、中文漏詞。v1 在推論前明確限制 WAV、`main.vtt`、中日案例，輸出必須是全新絕對目錄。原音訊只讀，生成檔在隔離副本；沒有 App 設定／IPC／activation 寫入。
 
 ```powershell
-node scripts/research/lyricsFreshEvaluation/trial.cjs verify tasks/acoustic-phase2-runtime.json .tmp/lyrics-new-eval/config.json
-node scripts/research/lyricsFreshEvaluation/trial.cjs run tasks/acoustic-phase2-runtime.json .tmp/lyrics-new-eval/config.json tasks/lyrics-hfa-small-trial-cases.json .tmp/lyrics-new-eval/references.json E:\Utawakui\.tmp\my-hfa-small-trial
+node scripts/research/lyricsFreshEvaluation/trial.cjs verify .tmp/hfa-trial-environment-20261019/hfa-runtime.json .tmp/hfa-trial-environment-20261019/small-config.json
+node scripts/research/lyricsFreshEvaluation/trial.cjs run .tmp/hfa-trial-environment-20261019/hfa-runtime.json .tmp/hfa-trial-environment-20261019/small-config.json tasks/lyrics-hfa-small-trial-cases.json .tmp/lyrics-new-eval/references.json E:\Utawakui\.tmp\my-hfa-small-trial
 ```
 
 `verify` 只表示固定資產通過檢查，會標記尚未載入驗證；`run` 才實際載入兩模型、保留 raw ASR 並產生 `preview.json`。預覽包含原T1和獨立模型詞塊，不是產品可自動套用的 sidecar。缺少內容證據為未知，不偽裝已確認。取消使用 Ctrl+C；取消／載入失敗不會建立完成的 preview，也不覆寫原歌詞。已完成的研究副本可保留診斷，下一次改用全新目錄。
@@ -46,9 +59,17 @@ node scripts/research/lyricsFreshEvaluation/trial.cjs run tasks/acoustic-phase2-
 node scripts/research/lyricsFreshEvaluation/trial.cjs download E:\Utawakui\.tmp\my-hfa-small-downloads
 ```
 
-9個檔案合計778,532,833 bytes（約0.779GB）：CPython embed、兩個wheel、原HubertFA archive、兩個固定source檔及source LICENSE、Whisper.cpp CPU binary archive與small權重。下載逐塊限量／SHA驗證，取消或錯誤不發布該檔案；全部下載成功的receipt仍明確標記「尚未安裝」。本輪未重新連線下載或驗收全新安裝；既有npm依賴、FFmpeg、解壓空間與研究音訊另計，不將0.779GB冒稱完整安裝或峰值容量。
+9個檔案合計778,532,833 bytes（約0.779GB）：CPython embed、兩個wheel、原HubertFA archive、兩個固定source檔及source LICENSE、Whisper.cpp CPU binary archive與small權重。本輪已實際重新下載全部檔案並核對大小／SHA。下載逐塊限量／SHA驗證，取消或錯誤不發布該檔案；全部下載成功的receipt仍明確標記「尚未安裝」。
 
-其他機器須依 [HubertFA環境說明](../../scripts/research/lyricsAcoustic/README.md#local-assets)準備隔離 runtime／wheel 目錄，並依固定manifest核對模型、vendor與FFmpeg。small使用CPU `whisper-cli.exe`、同版本DLL及`ggml-small.bin`；另建專用raw目錄，以既有候選工具的`snapshot`產生本機asset manifest。程式不依賴本機Qwen資產；目前這台的config雖含其他候選，trial只讀small分支。下載完成不等於可執行環境，此流程不是新的自動安裝器，也不寫Provider Python。
+本輪手動組裝的模型、獨立Python、兩個套件、vendor與source license合計997,022,752 bytes（約0.997GB），另重用既有222,248,960 bytes的FFmpeg及repo Node依賴。保留下載與解壓後資產約需1.776GB，研究音訊、副本、raw結果與暫存另計；這不是峰值磁碟／RAM承諾，也不是全新機器的一鍵安裝驗收。
+
+其他機器須依 [HubertFA環境說明](../../scripts/research/lyricsAcoustic/README.md#local-assets)準備隔離 runtime／wheel 目錄，並依固定manifest核對模型、vendor與FFmpeg。small使用CPU `whisper-cli.exe`、同版本DLL及`ggml-small.bin`；另建專用raw目錄，以既有候選工具的`snapshot`產生本機asset manifest。程式不依賴本機Qwen資產；上方新config只含small，舊config即使含其他候選，trial也只讀small分支。下載完成不等於可執行環境，此流程不是新的自動安裝器，也不寫Provider Python。
+
+## 本輪流程驗證
+
+兩模型各自的推論中取消與載入失敗均已實測：原歌詞、既有估計SHA不變，owned worker退出、jobs清空。下載串流收到官方資料後取消，也沒有成品或partial。修正研究CLI的SIGINT listener生命週期，讓相依套件不會在清理前重新送出中斷；實際coordinator的SIGINT檢查確認取消後沒有完成preview，也不啟動下一模型。這是同處理器的程式化驗證，沒有宣稱已人工操作所有終端的Ctrl+C。
+
+本機HTTP十份去重音訊的HEAD／206 Range／416及拒絕寫入已驗證；瀏覽器可播放、展開比較、匯出並載入未完成草稿。原53列人工資料仍全部pending，不能據此回報真人誤接受／誤拒率。先前間歇worker失敗的歷史紀錄保留；單輪成功不表示已排除所有環境穩定性問題。
 
 ## 重建本批聽查包
 

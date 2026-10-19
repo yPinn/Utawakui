@@ -24,7 +24,9 @@ Installed non-cache environment bytes contribute to the method identity.
 The vendor folder contains `tools/decoder.py` and `tools/align_word.py` from the
 pinned source. Remove only the optional
 `from tools.plot import plot_force_alignment_prob, plot_non_lexical_phonemes`
-import from the decoder. Normalize source line endings to LF for hashing.
+import text from the decoder, retaining that line as an empty line. Normalize
+source line endings to LF for hashing; the resulting decoder must match the
+manifest's 12,134 bytes and SHA, rather than deleting the entire line ending.
 Unexpected vendor source files are rejected; the worker compiles the two verified
 sources in an isolated namespace, without package initializers or cached bytecode.
 Environment imports use an empty per-job cache prefix.

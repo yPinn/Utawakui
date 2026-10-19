@@ -97,7 +97,9 @@ async function download(root) {
   fs.mkdirSync(root);
   const controller = new AbortController(),
     cancel = () => controller.abort();
-  process.once('SIGINT', cancel);
+  // Keep an application handler until cleanup finishes. signal-exit may resend
+  // SIGINT immediately if a once-listener has already removed itself.
+  process.on('SIGINT', cancel);
   try {
     for (const artifact of pins.artifacts) {
       if (path.basename(artifact.filename) !== artifact.filename)
@@ -179,7 +181,8 @@ async function run(hfaFile, smallFile, casesFile, referencesFile, output) {
   fs.mkdirSync(output);
   const controller = new AbortController(),
     cancel = () => controller.abort();
-  process.once('SIGINT', cancel);
+  // Cancellation must retain signal ownership while owned workers are closing.
+  process.on('SIGINT', cancel);
   const sourceFiles = [
       __filename,
       require.resolve('./trialJobs.cjs'),
