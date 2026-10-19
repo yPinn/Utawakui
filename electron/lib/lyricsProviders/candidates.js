@@ -3,6 +3,10 @@
 const crypto = require('crypto');
 const { normalizeForCompare } = require('../musicTitle.js');
 const {
+  compareLyricsTimelines,
+  isLyricsTimelineEvidence,
+} = require('./timelineComparison.js');
+const {
   classifyLyricsMatch,
   compareLyricsRecordingIdentity,
   isAutomaticLyricsCandidate,
@@ -215,6 +219,55 @@ function aggregateLyricsProviderResults(track, providerResults) {
     )
     .sort(compareUnifiedLyricsCandidates);
   const grouped = groupCandidates(candidates);
+  // Signatures remain main-only. Notices never enter ranking warnings or saves.
+  const evidenceByKey = new Map(
+    results.flatMap((result) =>
+      Object.entries(result.timelineEvidenceById || {}).map(
+        ([id, evidence]) => [`${result.provider}:${id}`, evidence],
+      ),
+    ),
+  );
+  for (const group of grouped) {
+    // Comparison availability must not depend on recommendation capability.
+    const reference = group.candidates.find(
+      (candidate) =>
+        Number.isFinite(candidate.duration) &&
+        candidate.duration > 0 &&
+        /^[a-f0-9]{64}$/u.test(candidate.previewFingerprint) &&
+        isLyricsTimelineEvidence(evidenceByKey.get(candidate.candidateKey)),
+    );
+    if (!reference) continue;
+    const differences = group.candidates.flatMap((candidate) => {
+      if (candidate === reference) return [];
+      if (!compareLyricsRecordingIdentity(reference, candidate).artist.exact)
+        return [];
+      if (
+        !Number.isFinite(reference.duration) ||
+        reference.duration <= 0 ||
+        !Number.isFinite(candidate.duration) ||
+        candidate.duration <= 0 ||
+        !/^[a-f0-9]{64}$/u.test(reference.previewFingerprint) ||
+        !/^[a-f0-9]{64}$/u.test(candidate.previewFingerprint)
+      )
+        return [];
+      const comparison = compareLyricsTimelines(
+        evidenceByKey.get(reference.candidateKey),
+        evidenceByKey.get(candidate.candidateKey),
+      );
+      return comparison
+        ? [
+            {
+              referenceCandidateKey: reference.candidateKey,
+              candidateKey: candidate.candidateKey,
+              referenceFingerprint: reference.previewFingerprint,
+              candidateFingerprint: candidate.previewFingerprint,
+              ...comparison,
+            },
+          ]
+        : [];
+    });
+    if (differences.length) group.timelineDifferences = differences;
+  }
   const flattened = grouped.flatMap((group) => group.candidates);
   const status = aggregateStatus(results);
   const partial =

@@ -19,6 +19,9 @@ const {
 } = require('../lib/lrclib');
 const { createNeteaseAcquisitionProvider } = require('../lib/netease');
 const {
+  projectLyricsCandidateResult,
+} = require('../lib/lyricsProviders/timelineComparison.js');
+const {
   aggregateLyricsProviderResults,
   selectAutomaticLyricsCandidate,
 } = require('../lib/lyricsProviders/candidates.js');
@@ -252,7 +255,19 @@ function createLyricsAcquisitionService({
     return cached.result;
   }
 
-  function cacheSearchResult(key, result, trackId) {
+  function invalidateChangedCandidateSearches(providerId, track) {
+    const identityKey = candidateSearchKey(providerId, track, {});
+    for (const [key, cached] of candidateSearchCache) {
+      if (cached.identityKey === identityKey) candidateSearchCache.delete(key);
+    }
+    for (const [key, search] of candidateSearchesInFlight) {
+      if (search.identityKey !== identityKey) continue;
+      search.invalidated = true;
+      candidateSearchesInFlight.delete(key);
+    }
+  }
+
+  function cacheSearchResult(key, result, track, providerId) {
     if (result?.status !== 'ok' || candidateCacheTtlMs <= 0) return;
     if (
       candidateSearchCache.size >= MAX_CACHED_CANDIDATE_SEARCHES &&
@@ -263,14 +278,20 @@ function createLyricsAcquisitionService({
     candidateSearchCache.set(key, {
       result,
       storedAt: now(),
-      trackId: boundedTrackKey(trackId),
+      trackId: boundedTrackKey(track?.id),
+      identityKey: candidateSearchKey(providerId, track, {}),
     });
   }
 
   function startProviderCandidateSearch(providerId, track, options, signal) {
     if (providerId === 'lrclib') {
       return observeProviderOperation('search', () =>
-        searchLrclibCandidates(track, { ...options, client, signal }),
+        searchLrclibCandidates(track, {
+          ...options,
+          client,
+          signal,
+          includeTimelineEvidence: true,
+        }),
       );
     }
     if (providerId === 'betterlyrics') {
@@ -279,7 +300,11 @@ function createLyricsAcquisitionService({
       );
     }
     return observeProviderOperation('netease-search', () =>
-      neteaseProvider.searchCandidates(track, { ...options, signal }),
+      neteaseProvider.searchCandidates(track, {
+        ...options,
+        signal,
+        includeTimelineEvidence: true,
+      }),
     );
   }
 
@@ -293,7 +318,7 @@ function createLyricsAcquisitionService({
     const cached = readCachedSearch(key, providerId);
     if (cached) return Promise.resolve(cached);
     const existing = candidateSearchesInFlight.get(key);
-    if (existing) return existing;
+    if (existing) return existing.operation;
 
     const cancelSuperseded = searchControl.cancelSuperseded !== false;
     const previous = activeCandidateSearches.get(providerId);
@@ -305,6 +330,11 @@ function createLyricsAcquisitionService({
       activeCandidateSearches.set(providerId, { key, controller });
     }
     const startedAt = now();
+    const search = {
+      identityKey: candidateSearchKey(providerId, track, {}),
+      invalidated: false,
+      operation: null,
+    };
     const operation = (async () => {
       try {
         const result = await startProviderCandidateSearch(
@@ -313,16 +343,23 @@ function createLyricsAcquisitionService({
           options,
           controller.signal,
         );
-        cacheSearchResult(key, result, track?.id);
+        if (!search.invalidated) {
+          cacheSearchResult(key, result, track, providerId);
+        }
         writeSearchMetric(providerId, {
           cacheHit: false,
           durationMs: Math.max(0, now() - startedAt),
           candidateCount: result?.candidates?.length ?? 0,
           status: result?.status || 'error',
         });
-        return result;
+        // A late pre-change result must not restore known-stale timeline evidence.
+        return search.invalidated
+          ? projectLyricsCandidateResult(result)
+          : result;
       } finally {
-        candidateSearchesInFlight.delete(key);
+        if (candidateSearchesInFlight.get(key) === search) {
+          candidateSearchesInFlight.delete(key);
+        }
         if (
           cancelSuperseded &&
           activeCandidateSearches.get(providerId)?.controller === controller
@@ -331,13 +368,16 @@ function createLyricsAcquisitionService({
         }
       }
     })();
-    candidateSearchesInFlight.set(key, operation);
+    search.operation = operation;
+    candidateSearchesInFlight.set(key, search);
     return operation;
   }
 
   async function searchCandidates(track, options = {}) {
     requireLyricsFlow();
-    return searchOneProvider('lrclib', track, options);
+    return projectLyricsCandidateResult(
+      await searchOneProvider('lrclib', track, options),
+    );
   }
 
   async function searchProviderSet(providerIds, track, options, searchControl) {
@@ -382,7 +422,9 @@ function createLyricsAcquisitionService({
         results,
       );
     }
-    return searchOneProvider(providerId, track, options);
+    return projectLyricsCandidateResult(
+      await searchOneProvider(providerId, track, options),
+    );
   }
 
   async function fetchRecord(recordId) {
@@ -406,7 +448,11 @@ function createLyricsAcquisitionService({
     );
     candidateSavesInFlight.set(saveKey, operation);
     try {
-      return await operation;
+      const result = await operation;
+      if (result?.status === 'record-changed') {
+        invalidateChangedCandidateSearches('lrclib', options?.track);
+      }
+      return result;
     } finally {
       if (candidateSavesInFlight.get(saveKey) === operation) {
         candidateSavesInFlight.delete(saveKey);
@@ -431,7 +477,11 @@ function createLyricsAcquisitionService({
     );
     candidateSavesInFlight.set(saveKey, operation);
     try {
-      return await operation;
+      const result = await operation;
+      if (result?.status === 'record-changed') {
+        invalidateChangedCandidateSearches(providerId, options?.track);
+      }
+      return result;
     } finally {
       if (candidateSavesInFlight.get(saveKey) === operation) {
         candidateSavesInFlight.delete(saveKey);

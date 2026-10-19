@@ -56,6 +56,9 @@ network install or signed-installer acceptance; see the
   `outputServer.js`.
 - Worker/runtime JS that must resolve outside asar: `electron/lib/**/*`,
   unpacked through `asarUnpack`.
+  The main-only lyrics timeline comparison helper uses this existing inclusion;
+  its colocated tests remain excluded. It adds no assets, dependencies, model
+  downloads or persistent artifacts.
 - Repository boundary: fixed worker scripts and runtime catalogs under
   `resources/audio-processing/` plus the bounded YT Music artist-photo worker
   under `resources/provider/` are source-controlled and packaged explicitly;

@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
 import {
   ArrowLeft,
+  MessageSquare,
   Pencil,
   Plus,
   Search,
@@ -9,6 +10,8 @@ import {
   Trash2,
 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
+import { buildLyricsIssueReport } from '../../utils/lyricsIssueReport.js';
 import {
   describeLyricsSourceTier,
   formatLyricsSourceLabel,
@@ -34,11 +37,13 @@ const emit = defineEmits(['close']);
 
 const {
   state,
+  selectedTrack,
   selectedLyrics,
   setSourceLabel,
   deleteSource,
   backfillSourceLabels,
 } = useLyrics();
+const feedback = useFeedbackReport();
 
 const activeView = ref('sources');
 const searchTriggerRef = useTemplateRef('searchTrigger');
@@ -187,6 +192,18 @@ async function loadSourceTiers(requestId) {
 function sourceTierLabel(source) {
   return formatLyricsSourceTier(sourceTiers.value.get(source.filename));
 }
+
+function reportSource(source) {
+  if (!selectedTrack?.value || isDeletingSource.value) return;
+  feedback.openReport(
+    buildLyricsIssueReport({
+      track: selectedTrack.value,
+      source,
+      tier: sourceTiers.value.get(source.filename),
+      offsetMs: sourceOffsetMs(source),
+    }),
+  );
+}
 </script>
 
 <template>
@@ -321,6 +338,11 @@ function sourceTierLabel(source) {
                 </span>
               </span>
               <div class="lyrics-source-manager__row-actions">
+                <UiIconButton
+                  :icon="MessageSquare"
+                  label="回報這個歌詞來源的問題"
+                  @click="reportSource(source)"
+                />
                 <UiIconButton
                   :icon="Pencil"
                   label="編輯標籤"

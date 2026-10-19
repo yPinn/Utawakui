@@ -9,6 +9,10 @@ const {
 } = require('./candidate.js');
 const { createNeteaseClient } = require('./client.js');
 const { saveNeteaseRecord } = require('./storage.js');
+const { parseLrcLines } = require('../lrclib/lrc.js');
+const {
+  buildLyricsTimelineEvidence,
+} = require('../lyricsProviders/timelineComparison.js');
 
 const SHA256_RE = /^[a-f0-9]{64}$/u;
 const TARGET_USABLE_CANDIDATES = 3;
@@ -61,8 +65,14 @@ function providerFailure(result, extra = {}) {
   };
 }
 
-function buildCandidateResult(track, records, invalidRecordCount) {
-  const candidates = rankNeteaseCandidates(track, records).map((match) => ({
+function buildCandidateResult(
+  track,
+  records,
+  invalidRecordCount,
+  includeTimelineEvidence = false,
+) {
+  const matches = rankNeteaseCandidates(track, records);
+  const candidates = matches.map((match) => ({
     ...summarizeNeteaseCandidate(match),
     saveState: 'unsaved',
     alreadySaved: false,
@@ -78,6 +88,19 @@ function buildCandidateResult(track, records, invalidRecordCount) {
       ),
     },
     invalidRecordCount,
+    ...(includeTimelineEvidence
+      ? {
+          timelineEvidenceById: Object.fromEntries(
+            matches.map((match) => [
+              match.record.id,
+              buildLyricsTimelineEvidence(
+                match.analysis.document?.lines ??
+                  parseLrcLines(match.record.lrcLyrics),
+              ),
+            ]),
+          ),
+        }
+      : {}),
   };
 }
 
@@ -182,7 +205,12 @@ function createNeteaseAcquisitionProvider(options = {}) {
     if (records.length === 0 && firstFailure) {
       return providerFailure(firstFailure, { candidates: [], groups: null });
     }
-    return buildCandidateResult(plan.identity, records, invalidRecordCount);
+    return buildCandidateResult(
+      plan.identity,
+      records,
+      invalidRecordCount,
+      searchOptions.includeTimelineEvidence,
+    );
   }
 
   async function saveCandidate({
@@ -200,9 +228,8 @@ function createNeteaseAcquisitionProvider(options = {}) {
       throw new Error('netease preview fingerprint is invalid');
     }
     const plan = buildLrclibQueryPlan(track, query);
-    const cachedRecords = cachedRecordsByIdentity.get(
-      identityCacheKey(plan.identity),
-    );
+    const identityKey = identityCacheKey(plan.identity);
+    const cachedRecords = cachedRecordsByIdentity.get(identityKey);
     const metadata = cachedRecords?.get(candidateId);
     if (!metadata) {
       return {
@@ -224,6 +251,16 @@ function createNeteaseAcquisitionProvider(options = {}) {
           reason: 'record-mismatch',
         };
       }
+      // Detach older hydration writers while retaining other candidate metadata
+      // and the changed preview for an explicit confirm/save or broaden search.
+      const refreshedRecords = new Map([
+        ...cachedRecords,
+        ...(cachedRecordsByIdentity.get(identityKey) || []),
+        [candidateId, record],
+      ]);
+      const currentRecords = recordsForSearch(identityKey, false);
+      for (const [id, current] of refreshedRecords)
+        currentRecords.set(id, current);
       return {
         provider: 'netease',
         status: 'record-changed',

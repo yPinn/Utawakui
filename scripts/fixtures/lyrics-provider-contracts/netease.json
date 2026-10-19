@@ -1,0 +1,1289 @@
+{
+  "schemaVersion": 1,
+  "provider": "netease",
+  "recordedAt": "2026-10-19T09:38:35.293Z",
+  "records": [
+    {
+      "key": "6d1a26d276b9c1668ba82e21f31cc82390e6adfd21a57ff8ff42150c3c64db59",
+      "status": 200,
+      "headers": {},
+      "body": {
+        "result": {
+          "songs": [
+            {
+              "no": 7,
+              "rt": "xxxxxxxxxxxxxxxxxx",
+              "copyright": 1,
+              "fee": 1,
+              "privilege": {
+                "flag": 4,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 3986017,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": true,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 0,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 100,
+              "dt": 242373,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 3986017,
+              "sq": {
+                "br": 916481,
+                "fid": 0,
+                "size": 27766346,
+                "vd": -47393,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "xx",
+              "publishTime": 1213632000007,
+              "cf": "",
+              "originCoverType": 1,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 9697742,
+                "vd": -47397,
+                "sr": 44100
+              },
+              "mv": 376215,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxx xx xxxx xx xxxxx xxx xxx xxx xxxxxxx",
+                "tns": [],
+                "pic_str": "xxxxxxxxxxxxxxxxx",
+                "id": 403157,
+                "pic": 18569651881855120
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 3879123,
+                "vd": -43113,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 5818662,
+                "vd": -44787,
+                "sr": 44100
+              },
+              "version": 70,
+              "cp": 7002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 104,
+              "name": "xxxx xx xxxx",
+              "tns": ["xxxx"],
+              "mark": 17180139520
+            },
+            {
+              "no": 9,
+              "copyright": 1,
+              "fee": 8,
+              "privilege": {
+                "flag": 260,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 504079334,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": false,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 1,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 20,
+              "dt": 150987,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 504079334,
+              "sq": {
+                "br": 441680,
+                "fid": 0,
+                "size": 8336034,
+                "vd": 12445,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1333296000007,
+              "cf": "",
+              "originCoverType": 0,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 6041644,
+                "vd": 12435,
+                "sr": 44100
+              },
+              "mv": 0,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxx xxxx xxxx xxxxxx xxxx xxxxxxxx xxxx x",
+                "tns": [],
+                "pic_str": "xxxxxxxxxxxxxxxxx",
+                "id": 36133995,
+                "pic": 18353048091609056
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 2416684,
+                "vd": 17027,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 3625004,
+                "vd": 15116,
+                "sr": 44100
+              },
+              "version": 11,
+              "cp": 1416618,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 45,
+              "name": "xxxx xx xxxx",
+              "mark": 270336
+            },
+            {
+              "no": 9,
+              "rt": "",
+              "copyright": 1,
+              "fee": 1,
+              "privilege": {
+                "flag": 4,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 26830946,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": true,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 0,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 85,
+              "dt": 298333,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 26830946,
+              "sq": {
+                "br": 945855,
+                "fid": 0,
+                "size": 35272510,
+                "vd": -53124,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1353254400000,
+              "cf": "",
+              "originCoverType": 0,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 11935913,
+                "vd": -53130,
+                "sr": 44100
+              },
+              "mv": 0,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxx xxxx",
+                "tns": [],
+                "pic_str": "xxxxxxxxxxxxxxxxxx",
+                "id": 2565143,
+                "pic": 109951166140738240
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 4774391,
+                "vd": -49006,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 7161565,
+                "vd": -50554,
+                "sr": 44100
+              },
+              "version": 39,
+              "cp": 7002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 73,
+              "name": "xxxx xx xxxx xxxxxx",
+              "mark": 17180139520
+            },
+            {
+              "no": 6,
+              "rt": "xxxxxxxxxxxxxxxxxx",
+              "copyright": 1,
+              "fee": 1,
+              "privilege": {
+                "flag": 4,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 3985869,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": true,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 0,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 70,
+              "dt": 324133,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 3985869,
+              "sq": {
+                "br": 995894,
+                "fid": 0,
+                "size": 40350334,
+                "vd": -65128,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1242144000007,
+              "cf": "",
+              "originCoverType": 1,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 12968272,
+                "vd": -65135,
+                "sr": 44100
+              },
+              "mv": 0,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxxxxxxxxxxxxxxxxxxxx xxxxxx",
+                "tns": [],
+                "pic_str": "xxxxxxxxxxxxxxxxxx",
+                "id": 403145,
+                "pic": 109951166267877570
+              },
+              "l": {
+                "br": 128001,
+                "fid": 0,
+                "size": 5187335,
+                "vd": -61022,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192001,
+                "fid": 0,
+                "size": 7780981,
+                "vd": -62550,
+                "sr": 44100
+              },
+              "version": 42,
+              "cp": 7002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 76,
+              "name": "xxxx xx xxxx xxxxx xx xxxxxx xxxxx",
+              "mark": 17180139520
+            },
+            {
+              "no": 1,
+              "rt": "",
+              "copyright": 1,
+              "fee": 8,
+              "privilege": {
+                "flag": 4,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 1318772804,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": false,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 1,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 25,
+              "dt": 251066,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 1318772804,
+              "sq": {
+                "br": 1074445,
+                "fid": 0,
+                "size": 33719667,
+                "vd": -80153,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "xx",
+              "publishTime": 1539792000000,
+              "cf": "",
+              "originCoverType": 0,
+              "h": {
+                "br": 320001,
+                "fid": 0,
+                "size": 10045693,
+                "vd": -80166,
+                "sr": 44100
+              },
+              "mv": 290027,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxx xx xxxx xxxxx xx xxxxxx xxxxxx",
+                "tns": [],
+                "pic_str": "xxxxxxxxxxxxxxxxxx",
+                "id": 73972590,
+                "pic": 109951163690467250
+              },
+              "l": {
+                "br": 128001,
+                "fid": 0,
+                "size": 4018303,
+                "vd": -76094,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192001,
+                "fid": 0,
+                "size": 6027433,
+                "vd": -77599,
+                "sr": 44100
+              },
+              "version": 8,
+              "cp": 7002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 42,
+              "name": "xxxx xx xxxx xxxxx xx xxxxxx xxxxxx",
+              "mark": 17180139520
+            },
+            {
+              "no": 45,
+              "rt": "",
+              "copyright": 1,
+              "fee": 1,
+              "privilege": {
+                "flag": 4,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 1806489382,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": true,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 0,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 15,
+              "dt": 242373,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 1806489382,
+              "sq": {
+                "br": 916481,
+                "fid": 0,
+                "size": 27766346,
+                "vd": -48202,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "xx",
+              "publishTime": 1608825600000,
+              "cf": "",
+              "originCoverType": 1,
+              "mv": 0,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxxx xxx xxxx",
+                "tns": [],
+                "pic_str": "xxxxxxxxxxxxxxxxxx",
+                "id": 120790463,
+                "pic": 109951165560745460
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 3879123,
+                "vd": -43113,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 5818662,
+                "vd": -44787,
+                "sr": 44100
+              },
+              "version": 11,
+              "cp": 7002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 45,
+              "name": "xxxx xx xxxx",
+              "mark": 270336
+            },
+            {
+              "no": 4,
+              "rt": "xxxxxxxxxxxxxxxxxx",
+              "copyright": 1,
+              "fee": 0,
+              "privilege": {
+                "flag": 256,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxx",
+                "rightSource": 0,
+                "maxbr": 320000,
+                "id": 3985758,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": false,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 320000,
+                "downloadMaxBrLevel": "xxxxxx",
+                "cp": 1,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 320000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 65,
+              "dt": 283000,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 3985758,
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1311264000007,
+              "cf": "",
+              "originCoverType": 0,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 11354050,
+                "vd": -16100,
+                "sr": 44100
+              },
+              "mv": 0,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxxxx xxxxxxxxx xxxxxx",
+                "tns": [],
+                "id": 403130,
+                "pic": 1764716162587644
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 4541733,
+                "vd": -11799,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 6812505,
+                "vd": -13500,
+                "sr": 44100
+              },
+              "version": 21,
+              "cp": 5003,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 55,
+              "name": "xxxx xx xxxx xxxxxx",
+              "mark": 262144
+            },
+            {
+              "no": 7,
+              "copyright": 0,
+              "fee": 8,
+              "privilege": {
+                "flag": 260,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxx",
+                "rightSource": 0,
+                "maxbr": 320000,
+                "id": 33187386,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": false,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 320000,
+                "downloadMaxBrLevel": "xxxxxx",
+                "cp": 1,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 320000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 10,
+              "dt": 237000,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 33187386,
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1394553600007,
+              "cf": "",
+              "originCoverType": 0,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 9506524,
+                "vd": -29153,
+                "sr": 44100
+              },
+              "mv": 236051,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxx xx xxx xxxxxx xxxxxxxx xx xxxx xxxx",
+                "tns": [],
+                "id": 3188054,
+                "pic": 7746059418716335
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 3802635,
+                "vd": -24976,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 5703932,
+                "vd": -26569,
+                "sr": 44100
+              },
+              "version": 32,
+              "cp": 14002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 66,
+              "name": "xxxx xx xxxx xxxxxx",
+              "mark": 17180139520
+            },
+            {
+              "no": 12,
+              "copyright": 0,
+              "fee": 0,
+              "privilege": {
+                "flag": 256,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxx",
+                "rightSource": 0,
+                "maxbr": 192000,
+                "id": 32803505,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 0
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": false,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 192000,
+                "downloadMaxBrLevel": "xxxxxx",
+                "cp": 1,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 192000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 10,
+              "dt": 236000,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 32803505,
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1199116800000,
+              "cf": "",
+              "originCoverType": 0,
+              "mv": 321365,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxxxxxxx xxxx xxx xxx xxxxxx",
+                "tns": [],
+                "id": 3171239,
+                "pic": 7968160767146135
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 3786042,
+                "vd": -46925,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 5678979,
+                "vd": -48604,
+                "sr": 44100
+              },
+              "version": 20,
+              "cp": 0,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 54,
+              "name": "xxxx xx xxxx xxxxxx",
+              "mark": 262144
+            },
+            {
+              "no": 7,
+              "rt": "xxxxxxxxxxxxxxxxxx",
+              "copyright": 1,
+              "fee": 1,
+              "privilege": {
+                "flag": 4,
+                "code": 0,
+                "dlLevel": "xxxx",
+                "subp": 1,
+                "fl": 0,
+                "fee": 0,
+                "dl": 0,
+                "plLevel": "xxxx",
+                "maxBrLevel": "xxxxxxxx",
+                "rightSource": 0,
+                "maxbr": 999000,
+                "id": 22459466,
+                "sp": 7,
+                "payed": 0,
+                "rscl": 0,
+                "st": -100,
+                "chargeInfoList": [
+                  {
+                    "rate": 128000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 192000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 320000,
+                    "chargeType": 1
+                  },
+                  {
+                    "rate": 999000,
+                    "chargeType": 1
+                  }
+                ],
+                "freeTrialPrivilege": {
+                  "userConsumable": false,
+                  "resConsumable": true,
+                  "cannotListenReason": 1
+                },
+                "downloadMaxbr": 999000,
+                "downloadMaxBrLevel": "xxxxxxxx",
+                "cp": 0,
+                "preSell": false,
+                "playMaxBrLevel": "xxxxxxxx",
+                "cs": false,
+                "toast": false,
+                "playMaxbr": 999000,
+                "flLevel": "xxxx",
+                "pl": 0
+              },
+              "mst": 9,
+              "pst": 0,
+              "pop": 70,
+              "dt": 241426,
+              "rtype": 0,
+              "s_id": 0,
+              "rtUrls": [],
+              "resourceState": true,
+              "id": 22459466,
+              "sq": {
+                "br": 914615,
+                "fid": 0,
+                "size": 27601577,
+                "vd": -47388,
+                "sr": 44100
+              },
+              "st": 0,
+              "cd": "x",
+              "publishTime": 1227196800007,
+              "cf": "",
+              "originCoverType": 1,
+              "h": {
+                "br": 320000,
+                "fid": 0,
+                "size": 9660125,
+                "vd": -47393,
+                "sr": 44100
+              },
+              "mv": 376215,
+              "al": {
+                "picUrl": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "name": "xxxx xx xxxx x xxxxxxxxxx xxxxx xxxxxxxxxxx xxxxx xxxxxxxx",
+                "tns": [],
+                "id": 2055142,
+                "pic": 6642149743977181
+              },
+              "l": {
+                "br": 128000,
+                "fid": 0,
+                "size": 3864076,
+                "vd": -43109,
+                "sr": 44100
+              },
+              "m": {
+                "br": 192000,
+                "fid": 0,
+                "size": 5796093,
+                "vd": -44787,
+                "sr": 44100
+              },
+              "version": 59,
+              "cp": 7002,
+              "alia": [],
+              "djId": 0,
+              "single": 0,
+              "ar": [
+                {
+                  "name": "xxxxxxxx",
+                  "tns": ["xxxx"],
+                  "alias": [],
+                  "id": 89365
+                }
+              ],
+              "ftype": 0,
+              "t": 0,
+              "v": 93,
+              "name": "xxxx xx xxxx",
+              "mark": 17180139520
+            }
+          ],
+          "songCount": 342
+        },
+        "code": 200,
+        "trp": {
+          "rules": [
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          ]
+        }
+      }
+    },
+    {
+      "key": "e29804415ac11cb06c212420cf6d72b6ac57f7980562e9efe16df5015954bf88",
+      "status": 200,
+      "headers": {},
+      "body": {
+        "sgc": false,
+        "sfy": false,
+        "qfy": false,
+        "transUser": {
+          "id": 1307546,
+          "status": 99,
+          "demand": 1,
+          "userid": 3128257,
+          "nickname": "xxxxxxxxxx",
+          "uptime": 1427877409650
+        },
+        "lyricUser": {
+          "id": 1307529,
+          "status": 99,
+          "demand": 0,
+          "userid": 30565982,
+          "nickname": "xxxxxx",
+          "uptime": 1427877409650
+        },
+        "lrc": {
+          "version": 125,
+          "lyric": "{\"t\":0,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxxxx xxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":1000,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxxxx xxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":2000,\"c\":[{\"tx\":\"xxxx \"},{\"tx\":\"xxxxx xxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxxx xxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxx xxxxxxx\"}]}\n[00:11.340]\n[00:13.340]x xxxx xx xxxx xxx xxxxx\n[00:17.080]xxxx xxxxx xxxx xxxx x xxxx xxx xxxx\n[00:19.720]xxx xx xxx xxxxxxx x xxxxx xxxxx\n[00:23.840]xxxxx xxx xxxxxxx x xxxx xx xxx\n[00:28.090]\n[00:41.270]x xxxx xx xxxx xxx xxxx\n[00:44.800]xxxx xxx xxxx xx xx xxxxxxx xxxx\n[00:48.030]xxxxxx xx xxx xxxxx xxxxx xxxxx\n[00:51.840]xxxx xxx xxx xxxx xx xxxxx xxxx xxxx xxx xxxxxx\n[00:55.050]xxx xxxxxx x xxxx xxx xxx\n[00:58.670]xxxx xxx xxxxx xxxx xxxxxx xx xx\n[01:01.758]xxx x xxxxxxxxxx xxxx xx xxxxxxx xxxxx\n[01:05.659]xxxx xxxxxxx xx xxxxx xxxxxxx xx xxxx\n[01:08.688]\n[01:09.537]x xxxx xxxxxxxxx xxxxx xxx xxxxxxx\n[01:13.147]xxxxx xxxxxxx xxxxxx xxx xxxxxxx\n[01:16.730]xx xx xxxxxx xx xxxxx xxx xxxxxx\n[01:20.147]xx xxxxxxxxxxxx xx x xxxxxxx xxxxx\n[01:23.700]xxx xxxx xxxxxx x xxxxx xxxxxxx\n[01:27.099]xxxx xxx xx xxxxx xxx xxxxxx xxxxx xx xxxxxx xxxx\n[01:33.560]xxxx xxx xxxx x xxxxx xxx xxxxx\n[01:39.188]\n[01:50.477]xx xxx xxx xxxxxx xxx xxxx xxxx\n[01:54.665]xxxx xxxx xxx xxxxx xx xxx xx xxx\n[01:57.075]xxxxxxxxx xxxxxxx xxx xxx xxxxx xx xxxxx\n[02:01.025]xxxxxx xxxxxxxx xxxxxxx xxxx xxx xxxxxx\n[02:02.924]xxxxxxxxxxxxxxx xxxx\n[02:07.867]xxx xx xxxx xx x xxxxxx xxxxx\n[02:11.036]xxxx x xxxxxx xx x xxxxxx xxxxxx\n[02:15.073]xx xxx xxxxx xxxx xxxxx xx xxxxx\n[02:17.664]\n[02:19.074]x xxxx xxxxxxxxx xxxxx xxx xxxxxxx\n[02:22.464]xxxxx xxxxxxx xxxxxx xxx xxxxxxx\n[02:25.984]xx xx xxxxxx xx xxxxx xxx xxxxxx\n[02:29.464]xx xxxxxxxxxxxx xx x xxxxxxx xxxxx\n[02:34.096]xxx xxxx xxxxxx x xxxxx xxxxxxx\n[02:36.715]x xxxx xxxxx xxxxx xxxxx xxxx xx xxxx\n[02:39.616]xxxxx xx xxxxxx xxxx\n[02:42.465]xxx xxxx xxx xxxx x xxxxx xxx xxxxx\n[02:47.066]\n[02:59.455]xxxxxxx xxxx xxxxx\n[03:15.432]xxxx xxxxxxxxx xxxxx xxx xxxxxxx\n[03:18.451]xxxxx xxxxxxx xxxxxx xxx xxxxxxx\n[03:21.884]xx xx xxxxxx xx xxxxx xxx xxxxxx\n[03:25.241]xx xxxxxxxxxxxx xx x xxxxxxx xxxxx\n[03:28.812]xxx xxxx xxxxxx x xxxxx xxxxxxx\n[03:32.232]x xxxx xxxxx xxxxx xxxxx xxxx xx xxxx\n[03:35.733]xxxxx xx xxxxxx xxxx\n[03:38.673]xxx xxxx xxx xxxx x xxxxx xxx xxxxx\n[03:42.863]\n{\"t\":237373,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxxxx xxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":237685,\"c\":[{\"tx\":\"xxxx \"},{\"tx\":\"xxxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":237997,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxxxxx xxxxx\"}]}\n{\"t\":238309,\"c\":[{\"tx\":\"xxxxx \"},{\"tx\":\"xxxx xxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxx xxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxx xxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxxx xxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxxxx xxxx\"}]}\n{\"t\":238621,\"c\":[{\"tx\":\"xxxxx \"},{\"tx\":\"xxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":238933,\"c\":[{\"tx\":\"xxxx \"},{\"tx\":\"xxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":239245,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":239557,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":239869,\"c\":[{\"tx\":\"xx \"},{\"tx\":\"xxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":240181,\"c\":[{\"tx\":\"xxxx \"},{\"tx\":\"xxxx xxxxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":240493,\"c\":[{\"tx\":\"xxxx \"},{\"tx\":\"xxxxx xxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":240805,\"c\":[{\"tx\":\"xxxxx \"},{\"tx\":\"xxxxxxx xxxxxx xxxxxxx\"}]}\n{\"t\":241117,\"c\":[{\"tx\":\"xxxxxx \"},{\"tx\":\"xxxx xxxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxxx xxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxxxx xx xxxxxx\"}]}\n{\"t\":241429,\"c\":[{\"tx\":\"xxx \"},{\"tx\":\"xxxxxxxx xxxxxxxxxx\"}]}\n{\"t\":241741,\"c\":[{\"tx\":\"xxxx \"},{\"tx\":\"xxxxx xxxxxx\",\"li\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"or\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]}\n{\"t\":242053,\"c\":[{\"tx\":\"xxxxxx \"},{\"tx\":\"xxx xxxxxx\"},{\"tx\":\"x\"},{\"tx\":\"xxxxx xxxxx\"}]}\n"
+        },
+        "klyric": {
+          "version": 0,
+          "lyric": ""
+        },
+        "tlyric": {
+          "version": 125,
+          "lyric": "[00:11.340]\n[00:13.340]xxxxxxxxx\n[00:17.080]xxxxxxxxxx\n[00:19.720]xxxxxxxxxxx\n[00:23.840]xxxxxxxxxxxx\n[00:28.090]\n[00:41.270]xxxxxxxxx\n[00:44.800]xxxxxxxxxxxxx\n[00:48.030]xxxxxxxxxx\n[00:51.840]xxxxxxxxxxxxxx\n[00:55.050]xxxxxxxxx\n[00:58.670]xxxxxxxxx\n[01:01.758]xxxxxxxx\n[01:05.659]xxxxxxxxxx\n[01:08.688]\n[01:09.537]xxxxxxxxxxx\n[01:13.147]xxxxxxxxxxxxxx\n[01:16.730]xxxxxxxxxxxx\n[01:20.147]xxxxxxxxxxx\n[01:23.700]xxxxxxxxxxx\n[01:27.099]xxxxxxxxxxxxxxxxxxxx\n[01:33.560]xxxxxxxxxx\n[01:39.188]\n[01:50.477]xxxxxxxx\n[01:54.665]xxxxxxxxxx\n[01:57.075]xxxxxxxx\n[02:01.025]xxxxxxxxxxxx\n[02:02.924]xxxxxxxx\n[02:07.867]xxxxxxxxxx\n[02:11.036]xxxxxxxxxxx\n[02:15.073]xxxxxxxxxxxxx\n[02:17.664]\n[02:19.074]xxxxxxxxxxx\n[02:22.464]xxxxxxxxxxxxxx\n[02:25.984]xxxxxxxxxxxx\n[02:29.464]xxxxxxxxxxx\n[02:34.096]xxxxxxxxxxx\n[02:36.715]xxxxxxxxxxxxx\n[02:39.616]xxxxxxxxx\n[02:42.465]xxxxxxxxxx\n[02:47.066]\n[02:59.455]xxxxx\n[03:15.432]xxxxxxxxxxx\n[03:18.451]xxxxxxxxxxxxxx\n[03:21.884]xxxxxxxxxxxx\n[03:25.241]xxxxxxxxxxx\n[03:28.812]xxxxxxxxxxx\n[03:32.232]xxxxxxxxxxxxx\n[03:35.733]xxxxxxxxx\n[03:38.673]xxxxxxxxxx\n[03:42.863]"
+        },
+        "romalrc": {
+          "version": 0,
+          "lyric": ""
+        },
+        "code": 200
+      }
+    }
+  ]
+}

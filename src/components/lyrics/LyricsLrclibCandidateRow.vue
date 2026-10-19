@@ -23,9 +23,16 @@ const props = defineProps({
   providerLabel: { type: String, default: 'LRCLIB' },
   showProvider: { type: Boolean, default: false },
   recommended: { type: Boolean, default: false },
+  timelineMessage: { type: String, default: null },
 });
 
-const emit = defineEmits(['toggle', 'save', 'confirmChanged', 'cancelChanged']);
+const emit = defineEmits([
+  'toggle',
+  'save',
+  'confirmChanged',
+  'cancelChanged',
+  'report',
+]);
 const previewId = `lyrics-candidate-preview-${useId()}`;
 
 const presentedCandidate = computed(
@@ -82,7 +89,7 @@ function previewLineHasTiming(line) {
         class="lyrics-lrclib-candidate-row__toggle"
         :aria-expanded="expanded"
         :aria-controls="previewId"
-        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，建議來源' : ''}`"
+        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，建議來源' : ''}${timelineMessage ? '，來源時間有差異' : ''}`"
         @click="emit('toggle')"
       >
         <span class="lyrics-lrclib-candidate-row__info">
@@ -129,6 +136,7 @@ function previewLineHasTiming(line) {
           </span>
         </span>
         <div class="lyrics-lrclib-candidate-row__metadata">
+          <UiChip v-if="timelineMessage" tone="info">時間有差異</UiChip>
           <div
             v-if="candidate.alreadySaved"
             class="lyrics-lrclib-candidate-row__saved-status"
@@ -182,6 +190,12 @@ function previewLineHasTiming(line) {
       </UiSurface>
 
       <UiNotice
+        v-if="timelineMessage"
+        tone="info"
+        :message="timelineMessage"
+        compact
+      />
+      <UiNotice
         v-if="changedCandidate"
         tone="warning"
         title="來源內容已更新"
@@ -206,6 +220,13 @@ function previewLineHasTiming(line) {
           </ul>
         </div>
 
+        <UiButton
+          variant="ghost"
+          :disabled="saveDisabled"
+          @click="emit('report')"
+        >
+          回報歌詞問題
+        </UiButton>
         <div
           v-if="!importMessage && (changedCandidate || !candidate.alreadySaved)"
           class="lyrics-lrclib-candidate-row__footer"

@@ -368,6 +368,7 @@ export function useLyricsAcquisition({
   ) {
     const track = state.tracks.find((item) => item.id === trackId);
     if (!track) return null;
+    const searchRequestId = candidateSearchRequestId;
     if (!(await ensureLyricsFlow())) return null;
 
     const genericSave = preferLegacyBridge
@@ -393,7 +394,26 @@ export function useLyricsAcquisition({
         typeof genericSave === 'function'
           ? await genericSave(providerId, ...args)
           : await legacySave(...args);
-      if (result?.status === 'record-changed') return result;
+      if (result?.status === 'record-changed') {
+        if (
+          searchRequestId === candidateSearchRequestId &&
+          state.candidateSearch.trackId === track.id
+        ) {
+          const key = candidateKey(candidate, providerId);
+          for (const group of [
+            ...state.candidateSearch.recordingGroups.best,
+            ...state.candidateSearch.recordingGroups.related,
+          ]) {
+            if (!Array.isArray(group.timelineDifferences)) continue;
+            group.timelineDifferences = group.timelineDifferences.filter(
+              (difference) =>
+                difference.referenceCandidateKey !== key &&
+                difference.candidateKey !== key,
+            );
+          }
+        }
+        return result;
+      }
       if (result?.status !== 'saved' || !result.source) {
         const reason = result?.reason || 'unknown';
         state.manualSave.error = reportLyricsError(

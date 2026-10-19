@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import LyricsLrclibCandidateRow from './LyricsLrclibCandidateRow.vue';
+import { candidateTimelineDifference } from '../../utils/lrclibPresentation.js';
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -10,7 +11,13 @@ const props = defineProps({
   changedCandidates: { type: Map, default: () => new Map() },
   showProvider: { type: Boolean, default: false },
 });
-const emit = defineEmits(['toggle', 'save', 'confirmChanged', 'cancelChanged']);
+const emit = defineEmits([
+  'toggle',
+  'save',
+  'confirmChanged',
+  'cancelChanged',
+  'report',
+]);
 
 const orderedCandidates = computed(() => {
   const candidates = [...(props.group.candidates || [])];
@@ -45,6 +52,9 @@ function changedCandidate(candidate) {
         :saving="savingKey === candidate.candidateKey"
         :save-disabled="saveDisabled"
         :changed-candidate="changedCandidate(candidate)"
+        :timeline-message="
+          candidateTimelineDifference(group, candidate, changedCandidates)
+        "
         :provider-label="providerLabel(candidate)"
         :show-provider="showProvider || hasAlternatives"
         :recommended="
@@ -55,6 +65,7 @@ function changedCandidate(candidate) {
         @save="emit('save', candidate)"
         @confirm-changed="emit('confirmChanged', changedCandidate(candidate))"
         @cancel-changed="emit('cancelChanged', candidate)"
+        @report="emit('report', changedCandidate(candidate) || candidate)"
       />
     </ul>
   </li>

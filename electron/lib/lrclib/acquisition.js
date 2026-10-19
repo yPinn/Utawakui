@@ -7,6 +7,9 @@ const {
 const { createLrclibClient } = require('./client.js');
 const { buildLrclibQueryPlan } = require('./query.js');
 const { createLrclibRequestScheduler } = require('./scheduler.js');
+const {
+  buildLyricsTimelineEvidence,
+} = require('../lyricsProviders/timelineComparison.js');
 
 const LRCLIB_PROVIDER = 'lrclib';
 const MAX_MANUAL_CANDIDATES = 20;
@@ -96,7 +99,12 @@ function isCurrentAutoSaveCompatible(match) {
   );
 }
 
-function buildCandidateResult(identity, records, invalidRecordCount = 0) {
+function buildCandidateResult(
+  identity,
+  records,
+  invalidRecordCount = 0,
+  includeTimelineEvidence = false,
+) {
   const matches = rankLrclibCandidateMatches(identity, records).slice(
     0,
     MAX_MANUAL_CANDIDATES,
@@ -115,6 +123,16 @@ function buildCandidateResult(identity, records, invalidRecordCount = 0) {
       ),
     },
     invalidRecordCount,
+    ...(includeTimelineEvidence
+      ? {
+          timelineEvidenceById: Object.fromEntries(
+            matches.map((match) => [
+              match.record.id,
+              buildLyricsTimelineEvidence(match.previewLines),
+            ]),
+          ),
+        }
+      : {}),
   };
 }
 
@@ -185,6 +203,7 @@ async function searchLrclibCandidates(track, options = {}) {
     plan.identity,
     records,
     invalidRecordCount,
+    options.includeTimelineEvidence,
   );
   if (constrained.groups.best.length === 0) {
     for (const query of plan.recoveryQueries || []) {
@@ -198,7 +217,12 @@ async function searchLrclibCandidates(track, options = {}) {
       invalidRecordCount += recovered.invalidRecordCount;
     }
   }
-  return buildCandidateResult(plan.identity, records, invalidRecordCount);
+  return buildCandidateResult(
+    plan.identity,
+    records,
+    invalidRecordCount,
+    options.includeTimelineEvidence,
+  );
 }
 
 async function fetchLrclibRecord(recordId, options = {}) {

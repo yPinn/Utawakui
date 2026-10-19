@@ -204,6 +204,7 @@ describe('createLyricsAcquisitionService', () => {
     expect(requireFeatureGate).toHaveBeenCalledTimes(4);
     expect(neteaseProvider.searchCandidates).toHaveBeenCalledWith(track, {
       signal: expect.any(AbortSignal),
+      includeTimelineEvidence: true,
     });
     expect(neteaseProvider.saveCandidate).toHaveBeenCalledWith({
       track,

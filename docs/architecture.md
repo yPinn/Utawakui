@@ -816,7 +816,16 @@ canonical `lyricsDocument` 仍供 timing／reading authoring，衍生 `displayLy
 allowlisted `all` intent
 平行執行各來源、容納 partial failure，再以來源中立的錄音相關性與 timing capability 排序，
 同錄音只在 presentation group 中提供來源替代項。每個 provider 仍保有自己的 scheduler、
-parser、save-time refetch 與 provenance；跨來源不拼接歌詞。成功 discovery 使用 bounded
+parser、save-time refetch 與 provenance；跨來源不拼接歌詞。
+`electron/lib/lyricsProviders/timelineComparison.js` 只從已取得的完整行起點建立 main-only
+有界文字簽章；aggregate 在同錄音 group 內投影唯讀的來源時間差摘要，獨立於推薦排序與
+automatic acquisition。Renderer 沿用 candidate row／preview，只接收數值與 fingerprint；
+`useLyricsAcquisition` 在當次搜尋的 save-time `record-changed` 移除過期摘要，取消更新不恢復。
+Main 同時失效該 provider／track identity 的 discovery cache 與在途查詢重用；舊結果晚到時
+不回填 cache 或重新提供時間比較 evidence，且不移除取代它的新查詢。NetEase broaden
+保留的 hydrated record 只在記憶體更新為 save-time refetch 預覽，重新取得仍由明確搜尋觸發。
+此路徑不讀寫來源選擇、offset 或 authored timing，不增加 request、模型、IPC 或 sidecar。
+成功 discovery 使用 bounded
 main-memory TTL cache，相同 in-flight query 去重，同來源的新 query abort 舊 query。NetEase
 使用固定 HTTPS origin 的 bounded direct client，先做 metadata gate，再自適應取得足夠候選
 的歌詞；逐筆驗證完整 YRC 才建立 T2 canonical timing sidecar，沒有有效 YRC 時只如實保存
@@ -1023,8 +1032,12 @@ Spout helper 與 Chromium child-process failure 仍由各自 owner／Chromium re
 IPC throw。Payload 建構重用既有 `buildDiagnosticsSupportBundle` 與
 `service.listRecent`；只有錯誤回報可夾帶最近 50 筆事件，其餘三種回饋類別
 完全不夾帶。Renderer 端 `src/composables/useFeedbackReport.js` 是唯一
-module singleton，任何入口（錯誤通知的 action、Settings 常駐入口）都呼叫
-同一個 `openReport()`，不建立第二份草稿狀態。CSP 沒有 `connect-src`，所以
+module singleton，任何入口（錯誤通知的 action、Settings 常駐入口、歌詞候選列與來源管理）都呼叫
+同一個 `openReport()`，不建立第二份草稿狀態。`src/utils/lyricsIssueReport.js` 只把有界的
+可見歌曲／來源 metadata、同步層級與已知 offset 投影成可編輯的 content 草稿，不附歌詞、
+音訊、檔名／路徑或 timing document，不修改 Lyrics owner。回報沿既有預覽／送出／JSON
+fallback；開發端人工重現後才回到清理 fixture 或合成回歸測試，不自動變更 reviewed corpus。
+CSP 沒有 `connect-src`，所以
 上傳請求只能由 main 發出；relay（`services/feedback-relay/`）獨立部署，不
 在 `electron-builder.yml` 的封裝範圍內，也不受任何 feature gate 保護——
 每次送出前的強制預覽才是實際防護。Production client 固定送到

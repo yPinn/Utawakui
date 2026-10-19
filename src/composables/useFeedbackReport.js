@@ -3,6 +3,8 @@ import { normalizeAppError } from '../utils/appErrors.js';
 import {
   DIAGNOSTICS_DEFAULT_BY_KIND,
   FEEDBACK_KINDS,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TRACK_LABEL_LENGTH,
 } from '../constants/feedback.js';
 
 // Module-level singleton (same shape as usePersistentDiagnostics.js) so any
@@ -51,7 +53,19 @@ function failureNotice({
 // previous one: different entry points (a specific error's "回報" action vs.
 // the general Settings entry) should never bleed a stale kind/description
 // into each other.
-function resetDraft({ kind, errorRecord } = {}) {
+function boundedPrefill(value, limit) {
+  if (typeof value !== 'string') return '';
+  return Array.from(value.slice(0, limit * 2))
+    .filter((character) => {
+      const point = character.codePointAt(0);
+      return (point > 31 && point !== 127) || [9, 10, 13].includes(point);
+    })
+    .join('')
+    .trim()
+    .slice(0, limit);
+}
+
+function resetDraft({ kind, errorRecord, description, trackLabel } = {}) {
   requestRevision += 1;
   state.descriptionError = '';
   state.validationAttempt = 0;
@@ -59,13 +73,21 @@ function resetDraft({ kind, errorRecord } = {}) {
     ? kind
     : FEEDBACK_KINDS.BUG;
   state.kind = nextKind;
-  state.description = errorRecord
-    ? `發生問題：${errorRecord.title || ''}${
-        errorRecord.message ? ` — ${errorRecord.message}` : ''
-      }\n\n`
-    : '';
+  state.description = boundedPrefill(
+    typeof description === 'string'
+      ? description
+      : errorRecord
+        ? `發生問題：${errorRecord.title || ''}${
+            errorRecord.message ? ` — ${errorRecord.message}` : ''
+          }\n\n`
+        : '',
+    MAX_DESCRIPTION_LENGTH,
+  );
   state.contact = '';
-  state.trackLabel = '';
+  state.trackLabel =
+    nextKind === FEEDBACK_KINDS.CONTENT
+      ? boundedPrefill(trackLabel, MAX_TRACK_LABEL_LENGTH)
+      : '';
   state.includeDiagnostics = DIAGNOSTICS_DEFAULT_BY_KIND[nextKind] ?? false;
   state.step = 'compose';
   state.isLoading = false;

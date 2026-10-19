@@ -3,6 +3,8 @@
 狀態：已實作。
 建立日期：2026-08-29。
 
+開發用 HTTP 契約錄製／離線重播見[操作手冊](../operations/lyrics-provider-contracts.md)。樣本只供格式回歸，不改產品取得政策，不作命中率或語意品質證據。
+
 ## 產品行為
 
 `所有線上來源` 是手動歌詞搜尋的主要入口，仍受 `lyrics-flow` gate 保護。Main 只對
@@ -44,6 +46,36 @@ artist、recording-version marker 與 duration，先分成 `exact`、`strong`、
 
 Group 是搜尋 presentation，不是新的歌詞 artifact。不同來源的 line、word、translation
 或 timing 永遠不互相拼接。
+
+## 來源時間軸差異提示
+
+手動 `all` 搜尋在既有同錄音 group 內，另提供唯讀的來源行起點比較。目前只重用 LRCLIB
+與 NetEase 已取得的完整 T1／T2 原文行資料；不增加 hydration、網路請求、模型、IPC channel
+或持久化資料。比較基準取排序中第一筆具有有效 evidence、已知正時長與 fingerprint 的來源，
+獨立於推薦來源；Better Lyrics 仍依原流程提供預覽，不因缺少 evidence 遮蔽其他來源間的比較。
+
+Main 暫存每來源最多 128 個全曲分布的唯一文字 SHA-256／行起點，繁簡、Unicode 寬度、大小寫
+及標點只在比較時正規化，不改寫歌詞。重複句、短句、超過 2,000 字元的單行與可辨識的製作
+credit 不作配對；輸入超過 5,000 行或總文字 100,000 字元時不產生 evidence。簽章只留 main 記憶體與
+既有有界 discovery cache，個別來源與 aggregate 的公開結果均不暴露此資料。
+
+兩來源須具有 exact artist identity、合法 fingerprint，並符合原同錄音分組。至少五個唯一句
+依相同順序配對，覆蓋較大樣本集合至少一半，兩邊配對跨度各至少十秒，所有時間差不超過
+十五秒且最大與最小差距不超過 500 ms，才接受其中位數作為相對偏移。只有絕對差超過一秒
+才回傳提示；renderer 只收到相對來源 key、兩份 fingerprint、偏移與配對行數。
+
+既有候選列以「時間有差異」標記，展開後說明相對哪個來源早／晚與比對行數，並提醒這不代表
+哪份較準。提示不進入排序 warnings，不改推薦、自動取得、儲存、使用中來源、來源偏移或人工
+T2；儲存仍經使用者操作與既有 refetch／fingerprint 驗證。任一 fingerprint 不符時隱藏；
+save-time 發現 `record-changed` 會在目前 track／search generation 移除相關摘要，取消更新也
+不恢復，重新搜尋才重新建立。不影響其他比較，晚到舊 save 回應也不移除新搜尋的摘要。
+Main 在 `record-changed` 時同步失效該 provider／track identity 的各查詢與模式快取；已在途的
+舊查詢不再被重用、回填快取或提供時間比較 evidence，也不會清掉取代它的新查詢。
+NetEase 的 broaden 會保留 hydrated records，因此只更新其記憶體中的已 refetch 預覽，
+不寫入來源或接受更新。重新取得仍須明確搜尋，不自動增加請求或保存。
+
+此提示比較 provider 原始行起點，不比對本機校時後結果，不做逐字對齊或準確度判定。
+抽樣、文字差異、重複句、局部漂移或資料不足都可能沒有提示；沒有提示不代表同步準確。
 
 ## 查詢成本與生命週期
 
@@ -95,6 +127,12 @@ AMLL acquisition 已退出 renderer 入口、main provider allowlist 與 `all` f
 handler 提供讀取與刪除相容，不屬於本搜尋契約。
 
 ## Renderer contract
+
+候選展開列與來源管理可開啟既有 `content` feedback 草稿，僅預填有界歌曲／來源 metadata、
+同步層級與已保存來源的已知偏移。更新待確認時只回報當下預覽，不確認保存；取消回報保留
+原畫面、選擇、offset 與人工 T2。此入口不新增網路、IPC channel 或 relay schema，送出仍由
+使用者在既有預覽流程明確操作；失敗可沿用 JSON fallback。回報不自動進入 reviewed corpus，
+人工重現與清理回歸流程見[歌詞問題案例回流](../operations/lyrics-issue-feedback.md)。
 
 跨來源候選使用 `providerId:id` 的 stable `candidateKey`，避免不同來源相同數字 id 互相覆寫。
 Renderer 維持單一 acquisition state owner，保存展開列與 saving state 時均使用此 key。

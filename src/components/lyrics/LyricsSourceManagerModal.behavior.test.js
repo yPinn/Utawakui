@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, nextTick, reactive } from 'vue';
+import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import Modal from './LyricsSourceManagerModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -7,6 +8,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -78,6 +80,7 @@ for (const [component, path] of [
   [UiHint, '../ui/UiHint.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
   [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ])
   attachClientRender(component, path, import.meta.url);
 
@@ -93,6 +96,11 @@ beforeEach(() => {
       offsetSeconds: 0,
     }),
     selectedLyrics: computed(() => ({ sources: sources.items })),
+    selectedTrack: computed(() => ({
+      id: 'track',
+      title: 'Test song',
+      artist: 'Artist',
+    })),
     setSourceLabel: vi.fn(),
     deleteSource: vi.fn(),
     backfillSourceLabels: vi.fn(async () => {}),
@@ -100,6 +108,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   app?.unmount();
+  useFeedbackReport().closeReport();
   vi.unstubAllGlobals();
 });
 
@@ -116,6 +125,44 @@ function setup() {
 }
 
 describe('local lyrics collection modal navigation', () => {
+  it('opens a content draft for the reported source while preserving current selection and timing', async () => {
+    sources.items = [
+      { filename: 'active.lrc', kind: 'lrclib', offsetMs: 100 },
+      { filename: 'other.lrc', kind: 'netease', offsetMs: 2300 },
+    ];
+    domain.state.selectedSourceFilename = 'active.lrc';
+    domain.state.offsetSeconds = -1.4;
+    domain.state.lyricsText = 'PRIVATE LYRICS';
+    domain.state.timingDocument = { lines: ['PRIVATE TIMING'] };
+    const before = JSON.stringify(domain.state);
+    const { root, props } = setup();
+    const feedback = useFeedbackReport();
+    const reportButtons = findAll(
+      root,
+      (n) =>
+        n.type === 'button' &&
+        textContent(n).trim() === '回報這個歌詞來源的問題',
+    );
+    expect(reportButtons).toHaveLength(2);
+    trigger(reportButtons[0], 'onClick');
+    expect(feedback.state).toMatchObject({
+      open: true,
+      kind: 'content',
+      trackLabel: 'Artist - Test song',
+      step: 'compose',
+      includeDiagnostics: false,
+    });
+    expect(feedback.state.description).toContain('-1400 ms');
+    expect(feedback.state.description).not.toContain('PRIVATE');
+    feedback.closeReport();
+    trigger(reportButtons[1], 'onClick');
+    expect(feedback.state.description).toContain('+2300 ms');
+    feedback.closeReport();
+    expect(JSON.stringify(domain.state)).toBe(before);
+    expect(props.open).toBe(true);
+    expect(domain.setSourceLabel).not.toHaveBeenCalled();
+    expect(domain.deleteSource).not.toHaveBeenCalled();
+  });
   it('keeps one search entry on the empty collection and returns focus after combined search', async () => {
     const { root, button } = setup();
     expect(

@@ -668,6 +668,88 @@ describe('useLyrics', () => {
     expect(recordDiagnosticMock).not.toHaveBeenCalled();
   });
 
+  it('invalidates only affected timeline summaries until a fresh search, ignoring late saves', async () => {
+    const candidate = {
+      id: 42,
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:42',
+      matchBand: 'exact',
+      previewFingerprint: 'a'.repeat(64),
+    };
+    const affected = {
+      referenceCandidateKey: 'lrclib:42',
+      candidateKey: 'netease:42',
+    };
+    const unaffected = {
+      referenceCandidateKey: 'lrclib:7',
+      candidateKey: 'netease:7',
+    };
+    const result = () => ({
+      provider: 'all',
+      status: 'ok',
+      candidates: [candidate],
+      recordingGroups: {
+        best: [
+          {
+            matchBand: 'exact',
+            candidates: [candidate],
+            timelineDifferences: [affected, unaffected],
+          },
+        ],
+        related: [
+          {
+            matchBand: 'related',
+            candidates: [],
+            timelineDifferences: [
+              {
+                ...affected,
+                referenceCandidateKey: 'netease:8',
+                candidateKey: 'lrclib:42',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    searchLyricsProviderCandidatesMock.mockImplementation(async () => result());
+    saveLyricsProviderCandidateMock.mockResolvedValue({
+      status: 'record-changed',
+      candidate: { ...candidate, previewFingerprint: 'b'.repeat(64) },
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    await lyrics.searchLyricsProviderCandidates('all');
+    const sourceBefore = lyrics.state.selectedSourceFilename;
+    await lyrics.saveLyricsProviderCandidate('lrclib', candidate);
+    expect(
+      lyrics.state.candidateSearch.recordingGroups.best[0].timelineDifferences,
+    ).toEqual([unaffected]);
+    expect(
+      lyrics.state.candidateSearch.recordingGroups.related[0]
+        .timelineDifferences,
+    ).toEqual([]);
+    expect(lyrics.state.candidateSearch.candidates[0]).toEqual(candidate);
+    expect(lyrics.state.selectedSourceFilename).toBe(sourceBefore);
+    await lyrics.searchLyricsProviderCandidates('all');
+    expect(
+      lyrics.state.candidateSearch.recordingGroups.best[0].timelineDifferences,
+    ).toEqual([affected, unaffected]);
+    let resolveSave;
+    saveLyricsProviderCandidateMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    const pending = lyrics.saveLyricsProviderCandidate('lrclib', candidate);
+    await vi.waitFor(() => expect(resolveSave).toBeTypeOf('function'));
+    await lyrics.searchLyricsProviderCandidates('all');
+    resolveSave({ status: 'record-changed', candidate });
+    await pending;
+    expect(
+      lyrics.state.candidateSearch.recordingGroups.best[0].timelineDifferences,
+    ).toEqual([affected, unaffected]);
+  });
+
   it('keeps a changed record pending until confirmation, then regroups it', async () => {
     const original = {
       id: 42,

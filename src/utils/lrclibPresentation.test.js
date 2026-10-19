@@ -1,9 +1,63 @@
 import { describe, expect, it } from 'vitest';
 import {
   candidateImportMessage,
+  candidateTimelineDifference,
   capabilityLabel,
   warningLabels,
 } from './lrclibPresentation.js';
+
+describe('bounded timeline comparison presentation', () => {
+  it('declines unverified metrics, pending updates and fingerprints rather than rendering a diagnosis', () => {
+    const candidate = {
+      candidateKey: 'netease:1',
+      previewFingerprint: 'b'.repeat(64),
+    };
+    const reference = {
+      candidateKey: 'lrclib:1',
+      previewFingerprint: 'a'.repeat(64),
+      providerId: 'lrclib',
+    };
+    const comparison = {
+      candidateKey: candidate.candidateKey,
+      referenceCandidateKey: reference.candidateKey,
+      candidateFingerprint: 'b'.repeat(64),
+      referenceFingerprint: 'a'.repeat(64),
+      offsetMs: 2000,
+      matchedLineCount: 8,
+    };
+    const group = {
+      candidates: [candidate, reference],
+      timelineDifferences: [comparison],
+    };
+    expect(candidateTimelineDifference(group, candidate)).toContain(
+      '晚約 2 秒',
+    );
+    for (const patch of [
+      { offsetMs: 999 },
+      { offsetMs: 15001 },
+      { offsetMs: 2000.5 },
+      { matchedLineCount: 4 },
+      { matchedLineCount: 129 },
+      { matchedLineCount: Number.NaN },
+      { candidateFingerprint: 'changed' },
+      { referenceFingerprint: 'changed' },
+    ])
+      expect(
+        candidateTimelineDifference(
+          { ...group, timelineDifferences: [{ ...comparison, ...patch }] },
+          candidate,
+        ),
+      ).toBeNull();
+    expect(
+      candidateTimelineDifference(
+        group,
+        candidate,
+        new Map([['netease:1', {}]]),
+      ),
+    ).toBeNull();
+    expect(candidateTimelineDifference({}, candidate)).toBeNull();
+  });
+});
 
 describe('LRCLIB candidate presentation', () => {
   it('describes timing capability without exposing parser vocabulary', () => {

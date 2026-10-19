@@ -4,6 +4,7 @@ import {
   selectAutomaticLyricsCandidate,
 } from './candidates.js';
 import { describe, expect, it } from 'vitest';
+import { buildLyricsTimelineEvidence } from './timelineComparison.js';
 import {
   rankNeteaseCandidates,
   summarizeNeteaseCandidate,
@@ -43,6 +44,96 @@ const track = {
   album: 'Album',
   duration: 180,
 };
+
+describe('same-recording timeline notices', () => {
+  function timed(provider, offset, overrides = {}) {
+    const lines = Array.from({ length: 8 }, (_, i) => ({
+      text: `Unique line number ${i}`,
+      start: 10 + i * 10 + offset,
+    }));
+    return result(provider, [candidate(overrides)], {
+      timelineEvidenceById: { 1: buildLyricsTimelineEvidence(lines) },
+    });
+  }
+
+  it('adds only a bounded group summary, preserving candidate order and automatic choice', () => {
+    const sources = [timed('lrclib', 0), timed('netease', 2)];
+    const before = structuredClone(sources);
+    const actual = aggregateLyricsProviderResults(track, sources);
+    expect(actual.recordingGroups.best[0].timelineDifferences).toEqual([
+      {
+        referenceCandidateKey: 'lrclib:1',
+        candidateKey: 'netease:1',
+        referenceFingerprint: 'a'.repeat(64),
+        candidateFingerprint: 'a'.repeat(64),
+        offsetMs: 2000,
+        matchedLineCount: 8,
+      },
+    ]);
+    expect(actual.candidates.map((c) => c.candidateKey)).toEqual([
+      'lrclib:1',
+      'netease:1',
+    ]);
+    expect(selectAutomaticLyricsCandidate(actual.candidates).candidateKey).toBe(
+      'lrclib:1',
+    );
+    expect(actual.candidates.every((c) => c.warnings.length === 0)).toBe(true);
+    expect(JSON.stringify(actual)).not.toMatch(
+      /timelineEvidenceById|unique-line-starts-v1|Unique line number/,
+    );
+    expect(sources).toEqual(before);
+  });
+
+  it('never compares other recordings, unknown durations or missing fingerprints', () => {
+    for (const override of [
+      { trackName: 'Song (Live)' },
+      { duration: 190 },
+      { artistName: 'Another Artist' },
+      { duration: null },
+      { previewFingerprint: null },
+    ]) {
+      const actual = aggregateLyricsProviderResults(track, [
+        timed('lrclib', 0),
+        timed('netease', 2, override),
+      ]);
+      expect(
+        [
+          ...actual.recordingGroups.best,
+          ...actual.recordingGroups.related,
+        ].every((g) => !g.timelineDifferences),
+        JSON.stringify(override),
+      ).toBe(true);
+    }
+  });
+
+  it('compares available timelines even when the recommended source has no evidence', () => {
+    const better = result('betterlyrics', [
+      candidate({
+        capability: { level: 'T2', partial: false },
+        compatibility: { t0: true, t1: true, t2: true },
+      }),
+    ]);
+    const actual = aggregateLyricsProviderResults(track, [
+      better,
+      timed('lrclib', 0),
+      timed('netease', 2),
+    ]);
+    const group = actual.recordingGroups.best[0];
+    expect(group.recommendedCandidateKey).toBe('betterlyrics:1');
+    expect(group.candidates.map((item) => item.candidateKey)).toEqual([
+      'betterlyrics:1',
+      'lrclib:1',
+      'netease:1',
+    ]);
+    expect(group.timelineDifferences).toEqual([
+      expect.objectContaining({
+        referenceCandidateKey: 'lrclib:1',
+        candidateKey: 'netease:1',
+        offsetMs: 2000,
+      }),
+    ]);
+  });
+});
 
 describe('unified lyrics provider candidates', () => {
   it('keeps provider alias evidence when classifying the unified result', () => {

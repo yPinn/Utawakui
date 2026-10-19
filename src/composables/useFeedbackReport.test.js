@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildLyricsIssueReport } from '../utils/lyricsIssueReport.js';
+import { buildFeedbackPayload } from '../../electron/lib/feedback/payload.js';
+import { validateFeedbackPayload } from '../../services/feedback-relay/src/validate.js';
 
 afterEach(() => {
   vi.resetModules();
@@ -15,6 +18,98 @@ function stubBridge(methods) {
 }
 
 describe('useFeedbackReport', () => {
+  it('keeps a lyrics case compatible with main/relay preview and offline fallback', async () => {
+    const build = (input) =>
+      buildFeedbackPayload({
+        ...input,
+        reportId: 'f2b3d676-2c4d-42a7-a7a7-600144a03bb9',
+        createdAt: '2026-10-19T00:00:00.000Z',
+        environment: { appVersion: '0.4.0', platform: 'win32' },
+      });
+    let exported;
+    const buildFeedbackPreview = vi.fn(async (input) => ({
+      ok: true,
+      payload: build(input).payload,
+    }));
+    const submitFeedback = vi.fn(async () => ({ ok: false }));
+    const exportFeedbackFallback = vi.fn(async (input) => {
+      exported = JSON.parse(JSON.stringify(build(input).payload));
+      return { ok: true, cancelled: false };
+    });
+    stubBridge({
+      buildFeedbackPreview,
+      submitFeedback,
+      exportFeedbackFallback,
+    });
+    const context = {
+      track: { title: 'Song', artist: 'Artist' },
+      source: {
+        kind: 'lrclib',
+        provider: { recordId: 42 },
+        filename: 'private.lrc',
+      },
+      tier: 'T2',
+      offsetMs: 700,
+    };
+    const original = JSON.stringify(context);
+    const feedback = await loadFeedbackReport();
+    feedback.openReport(buildLyricsIssueReport(context));
+    expect(buildFeedbackPreview).not.toHaveBeenCalled();
+    feedback.updateDraft({
+      description: feedback.state.description + '\n副歌開始約 50 秒時提早。',
+    });
+    await feedback.goToPreview();
+    expect(validateFeedbackPayload(feedback.state.previewPayload)).toEqual({
+      ok: true,
+    });
+    expect(feedback.state.previewPayload).not.toHaveProperty('diagnostics');
+    await feedback.submitReport();
+    expect(feedback.state.notice.actionLabel).toBe('另存檔案');
+    await feedback.exportFallback();
+    expect(validateFeedbackPayload(exported)).toEqual({ ok: true });
+    expect(exported.description).toContain('+700 ms');
+    expect(exported.description).toContain('50 秒');
+    expect(JSON.stringify(exported)).not.toContain('private.lrc');
+    expect(JSON.stringify(context)).toBe(original);
+  });
+  it('opens a bounded editable prefill without preview, sending, exporting or stale fields', async () => {
+    const methods = {
+      buildFeedbackPreview: vi.fn(),
+      submitFeedback: vi.fn(),
+      exportFeedbackFallback: vi.fn(),
+    };
+    stubBridge(methods);
+    const feedback = await loadFeedbackReport();
+    feedback.openReport();
+    feedback.updateDraft({
+      description: 'old',
+      contact: 'old contact',
+      trackLabel: 'old track',
+    });
+    feedback.openReport({
+      kind: 'content',
+      description: 'Draft\u0000' + 'x'.repeat(2100),
+      trackLabel: 'Song' + 'y'.repeat(220),
+    });
+    expect(feedback.state.description).toHaveLength(2000);
+    expect(feedback.state.description).not.toContain('\u0000');
+    expect(feedback.state.trackLabel).toHaveLength(200);
+    expect(feedback.state.contact).toBe('');
+    expect(feedback.state).toMatchObject({
+      kind: 'content',
+      includeDiagnostics: false,
+      previewPayload: null,
+      step: 'compose',
+    });
+    for (const method of Object.values(methods))
+      expect(method).not.toHaveBeenCalled();
+    feedback.updateDraft({ description: 'My observation' });
+    expect(feedback.state.description).toBe('My observation');
+    feedback.closeReport();
+    feedback.openReport({ kind: 'feature' });
+    expect(feedback.state.description).toBe('');
+    expect(feedback.state.trackLabel).toBe('');
+  });
   it('keeps description validation on the field and clears it when corrected', async () => {
     stubBridge({});
     const feedback = await loadFeedbackReport();

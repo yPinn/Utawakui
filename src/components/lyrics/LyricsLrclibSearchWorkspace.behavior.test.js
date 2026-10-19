@@ -251,6 +251,22 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const Workspace = await loadWorkspaceComponent();
     const { app, root } = mount(Workspace, { providerId: 'all' });
     await vi.waitFor(() => expect(nodeText(root)).toContain('Version 3'));
+    const { useFeedbackReport } =
+      await import('../../composables/useFeedbackReport.js');
+    findButtonByText(root, '回報歌詞問題').props.onClick();
+    const feedback = useFeedbackReport();
+    expect(feedback.state).toMatchObject({
+      open: true,
+      kind: 'content',
+      trackLabel: 'Artist - Song',
+      step: 'compose',
+      includeDiagnostics: false,
+    });
+    expect(feedback.state.description).toContain('Version 1');
+    expect(feedback.state.description).toContain('LRCLIB');
+    expect(saveLyricsCandidate).not.toHaveBeenCalled();
+    feedback.closeReport();
+    await nextTick();
     expect(nodeText(root)).not.toContain('Version 4');
     expect(nodeText(root)).toContain('Version 6');
     expect(

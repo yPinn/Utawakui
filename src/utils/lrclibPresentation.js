@@ -59,3 +59,50 @@ export function warningLabels(warnings, capability = null) {
     .map((warning) => warningLabel(warning, capability))
     .filter(Boolean);
 }
+
+export function candidateTimelineDifference(
+  group,
+  candidate,
+  changedCandidates,
+) {
+  const comparison = group?.timelineDifferences?.find(
+    (item) => item.candidateKey === candidate.candidateKey,
+  );
+  if (
+    !comparison ||
+    changedCandidates?.has(candidate.candidateKey) ||
+    changedCandidates?.has(comparison.referenceCandidateKey)
+  )
+    return null;
+  const reference = group.candidates.find(
+    (item) => item.candidateKey === comparison.referenceCandidateKey,
+  );
+  if (
+    !/^[a-f0-9]{64}$/u.test(comparison.referenceFingerprint) ||
+    !/^[a-f0-9]{64}$/u.test(comparison.candidateFingerprint)
+  )
+    return null;
+  if (
+    !reference ||
+    reference.previewFingerprint !== comparison.referenceFingerprint ||
+    candidate.previewFingerprint !== comparison.candidateFingerprint
+  )
+    return null;
+  const labels = {
+    lrclib: 'LRCLIB',
+    netease: '網易雲音樂',
+    betterlyrics: 'Better Lyrics',
+  };
+  const { offsetMs, matchedLineCount } = comparison;
+  if (
+    !Number.isSafeInteger(offsetMs) ||
+    Math.abs(offsetMs) <= 1000 ||
+    Math.abs(offsetMs) > 15000 ||
+    !Number.isSafeInteger(matchedLineCount) ||
+    matchedLineCount < 5 ||
+    matchedLineCount > 128
+  )
+    return null;
+  const seconds = Number((Math.abs(offsetMs) / 1000).toFixed(1));
+  return `比 ${labels[reference.providerId] || '同組參考來源'} 的來源時間${offsetMs > 0 ? '晚' : '早'}約 ${seconds} 秒（比對 ${matchedLineCount} 行）。可展開其他來源的預覽比較；這不代表哪份較準。`;
+}

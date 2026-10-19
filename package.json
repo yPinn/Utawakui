@@ -36,6 +36,7 @@
     "analysis:evaluate-bpm": "node scripts/music-analysis-bpm-evaluation.mjs",
     "analysis:evaluate": "node scripts/music-analysis-evaluation.mjs",
     "lyrics:evaluate-providers": "node scripts/lyrics-provider-corpus-cli.mjs",
+    "lyrics:contracts": "node scripts/lyrics-provider-contract-cli.mjs",
     "lyrics:evaluate-readings": "node scripts/lyrics-reading-evaluation.mjs",
     "lyrics:prepare-reading-corpus": "node scripts/lyrics-reading-local-corpus.mjs",
     "lyrics:review-readings": "node scripts/lyrics-reading-review-cli.mjs",

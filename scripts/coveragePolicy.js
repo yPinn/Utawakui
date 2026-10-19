@@ -48,6 +48,8 @@ const coveragePolicy = Object.freeze({
     'scripts/lyrics-provider-corpus-candidates.mjs',
     'scripts/lyrics-provider-corpus-runner.mjs',
     'scripts/lyrics-provider-corpus-cli.mjs',
+    'scripts/lyrics-provider-contracts.mjs',
+    'scripts/lyrics-provider-contract-cli.mjs',
     'scripts/lyrics-provider-corpus-metadata.mjs',
     'scripts/lyrics-provider-corpus-prepare.mjs',
     'scripts/lyrics-provider-corpus-prepare-cli.mjs',

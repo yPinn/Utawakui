@@ -9,6 +9,8 @@ import {
 } from 'vue';
 import { Search } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
+import { buildLyricsIssueReport } from '../../utils/lyricsIssueReport.js';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -27,6 +29,7 @@ const props = defineProps({
 });
 
 const lyrics = useLyrics();
+const feedback = useFeedbackReport();
 const { state, selectedTrack, clearCandidateSearch } = lyrics;
 const searchLyricsProviderCandidates =
   lyrics.searchLyricsProviderCandidates ||
@@ -297,6 +300,19 @@ function toggleCandidate(candidate) {
   const key = candidateKey(candidate);
   expandedKey.value = expandedKey.value === key ? null : key;
 }
+
+function reportCandidate(candidate) {
+  if (!trackContext || savingKey.value !== null) return;
+  feedback.openReport(
+    buildLyricsIssueReport({
+      track: trackContext,
+      candidate: {
+        ...candidate,
+        providerId: candidate.providerId || props.providerId,
+      },
+    }),
+  );
+}
 </script>
 
 <template>
@@ -467,6 +483,7 @@ function toggleCandidate(candidate) {
               @save="handleSave"
               @confirm-changed="handleSave"
               @cancel-changed="setChangedCandidate($event, null)"
+              @report="reportCandidate"
             />
           </UiSurface>
           <UiDisclosure
@@ -494,6 +511,7 @@ function toggleCandidate(candidate) {
                 @save="handleSave"
                 @confirm-changed="handleSave"
                 @cancel-changed="setChangedCandidate($event, null)"
+                @report="reportCandidate"
               />
             </UiSurface>
           </UiDisclosure>
@@ -522,6 +540,7 @@ function toggleCandidate(candidate) {
               @save="handleSave"
               @confirm-changed="handleSave"
               @cancel-changed="setChangedCandidate($event, null)"
+              @report="reportCandidate"
             />
           </UiSurface>
         </section>
