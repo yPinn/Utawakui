@@ -1,0 +1,236 @@
+{
+  "date": "2026-10-19",
+  "status": "research-verified-product-optional-path-incomplete",
+  "allocation": {
+    "basicRequiresModel": false,
+    "proposedGeneration": "separate-optional-capability",
+    "officialActivation": false,
+    "defaultDownload": false,
+    "settingsLifecycleImplemented": false
+  },
+  "reload": {
+    "rounds": [
+      [
+        {
+          "language": "zh",
+          "seconds": 4.049507800000001,
+          "readyLines": 7,
+          "lines": 7,
+          "workersClosed": true,
+          "temporaryClean": true,
+          "samePredictions": true,
+          "defaultStatus": "stale",
+          "explicitStatus": "ready"
+        },
+        {
+          "language": "ja",
+          "seconds": 4.4447785,
+          "readyLines": 9,
+          "lines": 9,
+          "workersClosed": true,
+          "temporaryClean": true,
+          "samePredictions": true,
+          "defaultStatus": "stale",
+          "explicitStatus": "ready"
+        }
+      ],
+      [
+        {
+          "language": "zh",
+          "seconds": 3.7743208,
+          "readyLines": 7,
+          "lines": 7,
+          "workersClosed": true,
+          "temporaryClean": true,
+          "samePredictions": true,
+          "defaultStatus": "stale",
+          "explicitStatus": "ready"
+        },
+        {
+          "language": "ja",
+          "seconds": 6.1322356,
+          "readyLines": 9,
+          "lines": 9,
+          "workersClosed": true,
+          "temporaryClean": true,
+          "samePredictions": true,
+          "defaultStatus": "stale",
+          "explicitStatus": "ready"
+        }
+      ]
+    ],
+    "freshCoordinatorProcesses": 2,
+    "modelLoads": 4,
+    "methodMatchesPrevious": true,
+    "environmentUnchanged": true,
+    "missingPaths": [
+      {
+        "field": "modelDir",
+        "missingRejected": true
+      },
+      {
+        "field": "vendorDir",
+        "missingRejected": true
+      },
+      {
+        "field": "environmentPath",
+        "missingRejected": true
+      },
+      {
+        "field": "pythonPath",
+        "missingRejected": true
+      },
+      {
+        "field": "ffmpegPath",
+        "missingRejected": true
+      }
+    ],
+    "bytes": {
+      "model": 415233473,
+      "environment": 45252986,
+      "runtime": 24010954
+    },
+    "scope": "Local CPU cold-process reloads; OS file cache not flushed; no installer or managed activation acceptance"
+  },
+  "pathGuard": {
+    "missingSiblingExecutableRejected": true,
+    "wrongSiblingFileRejected": true
+  },
+  "native": {
+    "checks": [
+      {
+        "label": "zh default main/preload status stale",
+        "pass": true
+      },
+      {
+        "label": "zh canonical T1 available",
+        "pass": true
+      },
+      {
+        "label": "zh unavailable model cannot enable",
+        "pass": true
+      },
+      {
+        "label": "zh HTML audio playback clock available",
+        "pass": true
+      },
+      {
+        "label": "zh no model-ready claim",
+        "pass": true
+      },
+      {
+        "label": "ja default main/preload status missing",
+        "pass": true
+      },
+      {
+        "label": "ja canonical T1 available",
+        "pass": true
+      },
+      {
+        "label": "ja unavailable model cannot enable",
+        "pass": true
+      },
+      {
+        "label": "ja HTML audio playback clock available",
+        "pass": true
+      },
+      {
+        "label": "ja no model-ready claim",
+        "pass": true
+      },
+      {
+        "label": "authored T2 remains available without model environment",
+        "pass": true
+      },
+      {
+        "label": "fresh profile installs no Audio Python runtime/environment/model",
+        "pass": true
+      },
+      {
+        "label": "no new preview Vue warnings",
+        "pass": true
+      }
+    ],
+    "themes": ["light", "dark"],
+    "methodInjected": false,
+    "installedAudioPythonAssets": false,
+    "warningCount": 4,
+    "scope": "isolated visible dev Electron; no installer/OBS/human acceptance"
+  },
+  "bytes": {
+    "model": 415233473,
+    "environment": 45252986,
+    "runtime": 24010954,
+    "vendor": 24909,
+    "environmentWithExistingCache": 47448609,
+    "incrementalWithoutCache": 460511368,
+    "incrementalWithPinnedRuntime": 484522322,
+    "wheelSourcesOnly": 13437830,
+    "exclusions": [
+      "application",
+      "existing Node dependencies",
+      "FFmpeg",
+      "archive cache",
+      "staging and concurrent repair versions",
+      "job PCM/logits and sidecars"
+    ],
+    "finalDownloadBundleMeasured": false
+  },
+  "checks": {
+    "focusedFiles": 16,
+    "focusedTests": 137,
+    "coreCoverageTests": 40,
+    "coreCoverage": {
+      "lines": {
+        "total": 505,
+        "covered": 481,
+        "skipped": 0,
+        "pct": 95.24
+      },
+      "statements": {
+        "total": 555,
+        "covered": 518,
+        "skipped": 0,
+        "pct": 93.33
+      },
+      "functions": {
+        "total": 83,
+        "covered": 79,
+        "skipped": 0,
+        "pct": 95.18
+      },
+      "branches": {
+        "total": 325,
+        "covered": 271,
+        "skipped": 0,
+        "pct": 83.38
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    }
+  },
+  "sourceFiles": {
+    "assets.cjs": "7e80c80a680b53411d1a7775d8e0fd84b9425b5ed4f1a2d441c1a1ee15fd4147",
+    "assets.test.mjs": "9fb35dc46dfc4497a72369b2abe0301bb57fdc5e4254dfd96bb9a3bc583acda4",
+    "job.cjs": "a4503dac766fe0fc8b369ee9cb3092a743d5232ce18929ea75b78beeafa66161",
+    "frontend.cjs": "e255d929b7aab3d2c6b695f5bd5c60c14b42fae7c2ce6619aad2863f8b2697dc",
+    "decoder.py": "81297990646989a19ccd15f60deca9331cb742ff6538665153a011a98b21a3fd",
+    "protocol.cjs": "c765b22f95efda84fb1d3910d2b181ff631683a9c96b9aef8f3ba835929d7552"
+  },
+  "previousPhase2SnapshotPreserved": true,
+  "outstanding": [
+    "managed catalog and complete asset evidence",
+    "Settings preparation/repair/removal",
+    "capability and immutable environment identity",
+    "runtime and worker readiness probe",
+    "activation and shared scheduler lease",
+    "trusted main profile and cache-after-removal policy",
+    "fresh install/interruption/rollback/packaged offline smoke",
+    "source metadata handling and wrong-content rejection",
+    "low-memory concurrent playback validation"
+  ]
+}

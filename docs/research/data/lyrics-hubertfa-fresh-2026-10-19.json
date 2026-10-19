@@ -1,0 +1,2982 @@
+{
+  "date": "2026-10-19",
+  "scope": "same fresh corpus; frozen methods; provider timing and constructed output proxies; no human accuracy claim",
+  "inputSha256": "e1417b47c22aa3279394d25e254ee5b25db3e4b793941968cc27c623fb29a179",
+  "referenceSha256": "e2f29c64564893a6000e985931e66495f95841d870b69d915f0b68ac874f9222",
+  "rawResultsSha256": {
+    "qwen": "1dc1afc11a0e840b810fe24ab8c292082f417a04349fd411d56df4336701e084",
+    "hubertfa": "ea459de2143dcf70fdc6f7d7f336e7721d07519da68ccaab2e4ab72d58ae6d90",
+    "small": "b191d31e9db34a706cbf4ed9a4b960d4d396b09a200bbfedae11e9c2c4739264"
+  },
+  "contentMaskSha256": "a90478a24ff2eeb92d2c15120e699d76cc17b60ef72e7b19e1c7a4faa2741011",
+  "contentCounterfactual": "frozen script-fold decisions applied to both methods, no retiming or product sidecars",
+  "models": {
+    "hubertfa": {
+      "kind": "model",
+      "id": "hubertfa-research",
+      "version": "phase2-v1",
+      "modelManifestSha256": "ce1510682a164bb5937c3a9ffbf5b400baa3983a6ec35d97f9a80cafd5782b82",
+      "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+      "decoderVersion": "hfa-occurrence-81297990646989a1",
+      "g2pVersion": "original-g2p-c765b22f95efda84",
+      "chunkerVersion": "intl-text-c765b22f95efda84",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "qwen": {
+      "kind": "model",
+      "id": "qwen-candidate-research",
+      "version": "paired-v1",
+      "modelManifestSha256": "b63a74def480dee6dc8115cf7d51924f755965ad01488944da61aafd7da83320",
+      "environmentLockSha256": "7d577d93427783ea055246c44226b5692b892fa8c5e4e76d31e5d5f2d71a3ceb",
+      "decoderVersion": "candidate-ac126c21b5c67c9e",
+      "g2pVersion": "upstream-v1",
+      "chunkerVersion": "frozen-intl-v1",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "small": {
+      "kind": "model",
+      "id": "small-candidate-research",
+      "version": "paired-v1",
+      "modelManifestSha256": "7588617be3fb6ad80f18d864de07aed2a4cf9c504699c5d192ebafaf20f27e36",
+      "environmentLockSha256": "ecd681e00b24451886bdc9f28f9625ebb2f17d3a6d7e030dec4f94e9e52dad7e",
+      "decoderVersion": "candidate-ac126c21b5c67c9e",
+      "g2pVersion": "upstream-v1",
+      "chunkerVersion": "frozen-intl-v1",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    }
+  },
+  "baseline": {
+    "requested": 140,
+    "scorable": 35,
+    "measured": 35,
+    "missing": 0,
+    "within100": 15,
+    "onset100": 0.42857142857142855,
+    "over500": 2,
+    "over1000": 1,
+    "medianMs": 124.57142857142753,
+    "p90Ms": 408.33333333333394
+  },
+  "results": {
+    "qwen": {
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 29,
+        "missing": 6,
+        "within100": 12,
+        "onset100": 0.34285714285714286,
+        "over500": 5,
+        "over1000": 0,
+        "medianMs": 129,
+        "p90Ms": 677
+      },
+      "normalReadyLines": 25,
+      "normalTotalLines": 29,
+      "perNormal": [
+        {
+          "id": "zh-1-normal",
+          "language": "zh",
+          "score": {
+            "requested": 35,
+            "scorable": 0,
+            "noReference": 35,
+            "retained": 33,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_0",
+              "score": {
+                "requested": 7,
+                "scorable": 0,
+                "noReference": 7,
+                "retained": 7,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_2",
+              "score": {
+                "requested": 10,
+                "scorable": 0,
+                "noReference": 10,
+                "retained": 8,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "zh-2-normal",
+          "language": "zh",
+          "score": {
+            "requested": 30,
+            "scorable": 0,
+            "noReference": 30,
+            "retained": 29,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_0",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 4,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_2",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_5",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_6",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-1-normal",
+          "language": "ja",
+          "score": {
+            "requested": 38,
+            "scorable": 19,
+            "noReference": 19,
+            "retained": 15,
+            "measured": 13,
+            "onset100": 0.10526315789473684,
+            "coverage": 0.6842105263157895,
+            "medianMs": 185,
+            "p90Ms": 867
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_0",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_2",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_4",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 1,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.5,
+                "errorsMs": [169]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_5",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 1,
+                "errorsMs": [677, 290]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 5,
+                "noReference": 0,
+                "retained": 1,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.2,
+                "errorsMs": [652]
+              }
+            },
+            {
+              "lineIndex": 7,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_7",
+              "score": {
+                "requested": 3,
+                "scorable": 3,
+                "noReference": 0,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 1,
+                "errorsMs": [905, 867, 129]
+              }
+            },
+            {
+              "lineIndex": 8,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_8",
+              "score": {
+                "requested": 5,
+                "scorable": 3,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.6666666666666666,
+                "errorsMs": [191, 185]
+              }
+            },
+            {
+              "lineIndex": 9,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_9",
+              "score": {
+                "requested": 5,
+                "scorable": 4,
+                "noReference": 1,
+                "retained": 4,
+                "within100": 2,
+                "onset100": 0.5,
+                "coverage": 1,
+                "errorsMs": [107, 151, 54, 49]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-2-normal",
+          "language": "ja",
+          "score": {
+            "requested": 37,
+            "scorable": 16,
+            "noReference": 21,
+            "retained": 30,
+            "measured": 16,
+            "onset100": 0.625,
+            "coverage": 1,
+            "medianMs": 58,
+            "p90Ms": 400
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_0",
+              "score": {
+                "requested": 6,
+                "scorable": 2,
+                "noReference": 4,
+                "retained": 4,
+                "within100": 1,
+                "onset100": 0.5,
+                "coverage": 1,
+                "errorsMs": [99, 340]
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+              "score": {
+                "requested": 7,
+                "scorable": 3,
+                "noReference": 4,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 0.6666666666666666,
+                "coverage": 1,
+                "errorsMs": [58, 41, 147]
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_2",
+              "score": {
+                "requested": 1,
+                "scorable": 0,
+                "noReference": 1,
+                "retained": 1,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 1,
+                "onset100": 0.3333333333333333,
+                "coverage": 1,
+                "errorsMs": [54, 102, 400]
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 4,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [42, 1, 12]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_5",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 0.6666666666666666,
+                "coverage": 1,
+                "errorsMs": [18, 144, 44]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 2,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 1,
+                "onset100": 0.5,
+                "coverage": 1,
+                "errorsMs": [53, 643]
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "variant": "normal",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-normal",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "phrase-mismatch",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-phrase-mismatch",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-phrase-mismatch",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-phrase-mismatch",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-phrase-mismatch",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "missing-text",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-missing-text",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "missing-audio",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 0,
+          "details": [
+            {
+              "id": "zh-1-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "zh-2-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "ja-1-missing-audio",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            }
+          ]
+        }
+      ]
+    },
+    "hubertfa": {
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 30,
+        "missing": 5,
+        "within100": 22,
+        "onset100": 0.6285714285714286,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 56,
+        "p90Ms": 419
+      },
+      "normalReadyLines": 25,
+      "normalTotalLines": 29,
+      "perNormal": [
+        {
+          "id": "zh-1-normal",
+          "language": "zh",
+          "score": {
+            "requested": 35,
+            "scorable": 0,
+            "noReference": 35,
+            "retained": 35,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_0",
+              "score": {
+                "requested": 7,
+                "scorable": 0,
+                "noReference": 7,
+                "retained": 7,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_2",
+              "score": {
+                "requested": 10,
+                "scorable": 0,
+                "noReference": 10,
+                "retained": 10,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "zh-2-normal",
+          "language": "zh",
+          "score": {
+            "requested": 30,
+            "scorable": 0,
+            "noReference": 30,
+            "retained": 29,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_0",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 4,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_2",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_5",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_6",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-1-normal",
+          "language": "ja",
+          "score": {
+            "requested": 38,
+            "scorable": 19,
+            "noReference": 19,
+            "retained": 17,
+            "measured": 14,
+            "onset100": 0.3684210526315789,
+            "coverage": 0.7368421052631579,
+            "medianMs": 102,
+            "p90Ms": 496
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_0",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_2",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_4",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 2,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.5,
+                "errorsMs": [496]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_5",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 2,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [64, 56]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 5,
+                "noReference": 0,
+                "retained": 3,
+                "within100": 3,
+                "onset100": 0.6,
+                "coverage": 0.6,
+                "errorsMs": [12, 37, 35]
+              }
+            },
+            {
+              "lineIndex": 7,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_7",
+              "score": {
+                "requested": 3,
+                "scorable": 3,
+                "noReference": 0,
+                "retained": 3,
+                "within100": 1,
+                "onset100": 0.3333333333333333,
+                "coverage": 1,
+                "errorsMs": [5, 130, 350]
+              }
+            },
+            {
+              "lineIndex": 8,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_8",
+              "score": {
+                "requested": 5,
+                "scorable": 3,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 1,
+                "onset100": 0.3333333333333333,
+                "coverage": 0.6666666666666666,
+                "errorsMs": [41, 102]
+              }
+            },
+            {
+              "lineIndex": 9,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_9",
+              "score": {
+                "requested": 5,
+                "scorable": 4,
+                "noReference": 1,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.75,
+                "errorsMs": [348, 442, 532]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-2-normal",
+          "language": "ja",
+          "score": {
+            "requested": 37,
+            "scorable": 16,
+            "noReference": 21,
+            "retained": 33,
+            "measured": 16,
+            "onset100": 0.9375,
+            "coverage": 1,
+            "medianMs": 49,
+            "p90Ms": 73
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_0",
+              "score": {
+                "requested": 6,
+                "scorable": 2,
+                "noReference": 4,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [71, 21]
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+              "score": {
+                "requested": 7,
+                "scorable": 3,
+                "noReference": 4,
+                "retained": 7,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [17, 8, 35]
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_2",
+              "score": {
+                "requested": 1,
+                "scorable": 0,
+                "noReference": 1,
+                "retained": 1,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 0.6666666666666666,
+                "coverage": 1,
+                "errorsMs": [73, 419, 31]
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 4,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [33, 69, 28]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_5",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [49, 66, 14]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 2,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 2,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [51, 64]
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "variant": "normal",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-normal",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "phrase-mismatch",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-phrase-mismatch",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-phrase-mismatch",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-phrase-mismatch",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-phrase-mismatch",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "missing-text",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-missing-text",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "missing-audio",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-missing-audio",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-missing-audio",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-missing-audio",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-audio",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        }
+      ]
+    },
+    "qwen-small-fold": {
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 29,
+        "missing": 6,
+        "within100": 12,
+        "onset100": 0.34285714285714286,
+        "over500": 5,
+        "over1000": 0,
+        "medianMs": 129,
+        "p90Ms": 677
+      },
+      "normalReadyLines": 25,
+      "normalTotalLines": 29,
+      "perNormal": [
+        {
+          "id": "zh-1-normal",
+          "language": "zh",
+          "score": {
+            "requested": 35,
+            "scorable": 0,
+            "noReference": 35,
+            "retained": 33,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_0",
+              "score": {
+                "requested": 7,
+                "scorable": 0,
+                "noReference": 7,
+                "retained": 7,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_2",
+              "score": {
+                "requested": 10,
+                "scorable": 0,
+                "noReference": 10,
+                "retained": 8,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "zh-2-normal",
+          "language": "zh",
+          "score": {
+            "requested": 30,
+            "scorable": 0,
+            "noReference": 30,
+            "retained": 29,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_0",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 4,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_2",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_5",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_6",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-1-normal",
+          "language": "ja",
+          "score": {
+            "requested": 38,
+            "scorable": 19,
+            "noReference": 19,
+            "retained": 15,
+            "measured": 13,
+            "onset100": 0.10526315789473684,
+            "coverage": 0.6842105263157895,
+            "medianMs": 185,
+            "p90Ms": 867
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_0",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_2",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_4",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 1,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.5,
+                "errorsMs": [169]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_5",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 1,
+                "errorsMs": [677, 290]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 5,
+                "noReference": 0,
+                "retained": 1,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.2,
+                "errorsMs": [652]
+              }
+            },
+            {
+              "lineIndex": 7,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_7",
+              "score": {
+                "requested": 3,
+                "scorable": 3,
+                "noReference": 0,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 1,
+                "errorsMs": [905, 867, 129]
+              }
+            },
+            {
+              "lineIndex": 8,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_8",
+              "score": {
+                "requested": 5,
+                "scorable": 3,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.6666666666666666,
+                "errorsMs": [191, 185]
+              }
+            },
+            {
+              "lineIndex": 9,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_9",
+              "score": {
+                "requested": 5,
+                "scorable": 4,
+                "noReference": 1,
+                "retained": 4,
+                "within100": 2,
+                "onset100": 0.5,
+                "coverage": 1,
+                "errorsMs": [107, 151, 54, 49]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-2-normal",
+          "language": "ja",
+          "score": {
+            "requested": 37,
+            "scorable": 16,
+            "noReference": 21,
+            "retained": 30,
+            "measured": 16,
+            "onset100": 0.625,
+            "coverage": 1,
+            "medianMs": 58,
+            "p90Ms": 400
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_0",
+              "score": {
+                "requested": 6,
+                "scorable": 2,
+                "noReference": 4,
+                "retained": 4,
+                "within100": 1,
+                "onset100": 0.5,
+                "coverage": 1,
+                "errorsMs": [99, 340]
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+              "score": {
+                "requested": 7,
+                "scorable": 3,
+                "noReference": 4,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 0.6666666666666666,
+                "coverage": 1,
+                "errorsMs": [58, 41, 147]
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_2",
+              "score": {
+                "requested": 1,
+                "scorable": 0,
+                "noReference": 1,
+                "retained": 1,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 1,
+                "onset100": 0.3333333333333333,
+                "coverage": 1,
+                "errorsMs": [54, 102, 400]
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 4,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [42, 1, 12]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_5",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 0.6666666666666666,
+                "coverage": 1,
+                "errorsMs": [18, 144, 44]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 2,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 1,
+                "onset100": 0.5,
+                "coverage": 1,
+                "errorsMs": [53, 643]
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "variant": "normal",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-normal",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "phrase-mismatch",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 0,
+          "details": [
+            {
+              "id": "zh-1-phrase-mismatch",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "zh-2-phrase-mismatch",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "ja-1-phrase-mismatch",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-phrase-mismatch",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            }
+          ]
+        },
+        {
+          "variant": "missing-text",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-missing-text",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "missing-audio",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 0,
+          "details": [
+            {
+              "id": "zh-1-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "zh-2-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "ja-1-missing-audio",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            }
+          ]
+        }
+      ]
+    },
+    "hubertfa-small-fold": {
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 30,
+        "missing": 5,
+        "within100": 22,
+        "onset100": 0.6285714285714286,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 56,
+        "p90Ms": 419
+      },
+      "normalReadyLines": 25,
+      "normalTotalLines": 29,
+      "perNormal": [
+        {
+          "id": "zh-1-normal",
+          "language": "zh",
+          "score": {
+            "requested": 35,
+            "scorable": 0,
+            "noReference": 35,
+            "retained": 35,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_0",
+              "score": {
+                "requested": 7,
+                "scorable": 0,
+                "noReference": 7,
+                "retained": 7,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_2",
+              "score": {
+                "requested": 10,
+                "scorable": 0,
+                "noReference": 10,
+                "retained": 10,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "zh-2-normal",
+          "language": "zh",
+          "score": {
+            "requested": 30,
+            "scorable": 0,
+            "noReference": 30,
+            "retained": 29,
+            "measured": 0,
+            "onset100": null,
+            "coverage": null,
+            "medianMs": null,
+            "p90Ms": null
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_0",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 4,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_2",
+              "score": {
+                "requested": 5,
+                "scorable": 0,
+                "noReference": 5,
+                "retained": 5,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 0,
+                "noReference": 6,
+                "retained": 6,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_5",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_6",
+              "score": {
+                "requested": 4,
+                "scorable": 0,
+                "noReference": 4,
+                "retained": 3,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-1-normal",
+          "language": "ja",
+          "score": {
+            "requested": 38,
+            "scorable": 19,
+            "noReference": 19,
+            "retained": 17,
+            "measured": 14,
+            "onset100": 0.3684210526315789,
+            "coverage": 0.7368421052631579,
+            "medianMs": 102,
+            "p90Ms": 496
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_0",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_2",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_3",
+              "score": {
+                "requested": 3,
+                "scorable": 0,
+                "noReference": 3,
+                "retained": 0,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_4",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 2,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.5,
+                "errorsMs": [496]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_5",
+              "score": {
+                "requested": 4,
+                "scorable": 2,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 2,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [64, 56]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 5,
+                "noReference": 0,
+                "retained": 3,
+                "within100": 3,
+                "onset100": 0.6,
+                "coverage": 0.6,
+                "errorsMs": [12, 37, 35]
+              }
+            },
+            {
+              "lineIndex": 7,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_7",
+              "score": {
+                "requested": 3,
+                "scorable": 3,
+                "noReference": 0,
+                "retained": 3,
+                "within100": 1,
+                "onset100": 0.3333333333333333,
+                "coverage": 1,
+                "errorsMs": [5, 130, 350]
+              }
+            },
+            {
+              "lineIndex": 8,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_8",
+              "score": {
+                "requested": 5,
+                "scorable": 3,
+                "noReference": 2,
+                "retained": 3,
+                "within100": 1,
+                "onset100": 0.3333333333333333,
+                "coverage": 0.6666666666666666,
+                "errorsMs": [41, 102]
+              }
+            },
+            {
+              "lineIndex": 9,
+              "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_9",
+              "score": {
+                "requested": 5,
+                "scorable": 4,
+                "noReference": 1,
+                "retained": 3,
+                "within100": 0,
+                "onset100": 0,
+                "coverage": 0.75,
+                "errorsMs": [348, 442, 532]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ja-2-normal",
+          "language": "ja",
+          "score": {
+            "requested": 37,
+            "scorable": 16,
+            "noReference": 21,
+            "retained": 33,
+            "measured": 16,
+            "onset100": 0.9375,
+            "coverage": 1,
+            "medianMs": 49,
+            "p90Ms": 73
+          },
+          "rows": [
+            {
+              "lineIndex": 0,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_0",
+              "score": {
+                "requested": 6,
+                "scorable": 2,
+                "noReference": 4,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [71, 21]
+              }
+            },
+            {
+              "lineIndex": 1,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+              "score": {
+                "requested": 7,
+                "scorable": 3,
+                "noReference": 4,
+                "retained": 7,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [17, 8, 35]
+              }
+            },
+            {
+              "lineIndex": 2,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_2",
+              "score": {
+                "requested": 1,
+                "scorable": 0,
+                "noReference": 1,
+                "retained": 1,
+                "within100": 0,
+                "onset100": null,
+                "coverage": null,
+                "errorsMs": []
+              }
+            },
+            {
+              "lineIndex": 3,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_3",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 2,
+                "onset100": 0.6666666666666666,
+                "coverage": 1,
+                "errorsMs": [73, 419, 31]
+              }
+            },
+            {
+              "lineIndex": 4,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_4",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 4,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [33, 69, 28]
+              }
+            },
+            {
+              "lineIndex": 5,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_5",
+              "score": {
+                "requested": 6,
+                "scorable": 3,
+                "noReference": 3,
+                "retained": 6,
+                "within100": 3,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [49, 66, 14]
+              }
+            },
+            {
+              "lineIndex": 6,
+              "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_6",
+              "score": {
+                "requested": 5,
+                "scorable": 2,
+                "noReference": 3,
+                "retained": 3,
+                "within100": 2,
+                "onset100": 1,
+                "coverage": 1,
+                "errorsMs": [51, 64]
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "variant": "normal",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-normal",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-normal",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "phrase-mismatch",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 0,
+          "details": [
+            {
+              "id": "zh-1-phrase-mismatch",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "zh-2-phrase-mismatch",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "ja-1-phrase-mismatch",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-phrase-mismatch",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            }
+          ]
+        },
+        {
+          "variant": "missing-text",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 3,
+          "details": [
+            {
+              "id": "zh-1-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "zh-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            },
+            {
+              "id": "ja-1-missing-text",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-text",
+              "supported": true,
+              "ready": true,
+              "reason": null
+            }
+          ]
+        },
+        {
+          "variant": "missing-audio",
+          "cases": 4,
+          "supportedTargets": 3,
+          "readyTargets": 0,
+          "details": [
+            {
+              "id": "zh-1-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "zh-2-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            },
+            {
+              "id": "ja-1-missing-audio",
+              "supported": false,
+              "ready": false,
+              "reason": "unsupported-language"
+            },
+            {
+              "id": "ja-2-missing-audio",
+              "supported": true,
+              "ready": false,
+              "reason": "missing-boundaries"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "human": {
+    "total": 53,
+    "reviewed": 0,
+    "uncertain": 0,
+    "manualOnsets": 0
+  },
+  "priority": [
+    {
+      "sampleId": "r-019",
+      "caseId": "zh-1-missing-audio",
+      "lineIndex": 1,
+      "priority": "P0",
+      "reason": "HubertFA produced chunks during exact constructed silence",
+      "startMs": 6840,
+      "endMs": 11750,
+      "audioSha256": "6bed9cd8cd6b523c30e39db581bb2a65289f969b0fc190bbb4d6e2f7e9c9f73d",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-032",
+      "caseId": "zh-2-missing-audio",
+      "lineIndex": 1,
+      "priority": "P0",
+      "reason": "HubertFA produced chunks during exact constructed silence",
+      "startMs": 6730,
+      "endMs": 10980,
+      "audioSha256": "cfcd355749a52b36f5f5e5287880c08c0c8f727bc67b6901593c0dd8af706268",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-048",
+      "caseId": "ja-2-missing-audio",
+      "lineIndex": 1,
+      "priority": "P0",
+      "reason": "HubertFA produced chunks during exact constructed silence",
+      "startMs": 2553,
+      "endMs": 6022,
+      "audioSha256": "a99eec77b594816e0c67562a680094de16002a396068572d08dd4930c8fcffda",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-040",
+      "caseId": "zh-2-normal",
+      "lineIndex": 6,
+      "priority": "P0",
+      "reason": "small normal rejection: script and T1/ASR clock mismatch",
+      "startMs": 26770,
+      "endMs": 29130,
+      "audioSha256": "68e1372f62b41495fe4dd309b720a2d0fde33de0fe2a7e0a76e31549a5eb37f0",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-037",
+      "caseId": "ja-1-normal",
+      "lineIndex": 7,
+      "priority": "P0",
+      "reason": "two model onsets >800ms from provider",
+      "startMs": 20812,
+      "endMs": 23567,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-042",
+      "caseId": "ja-1-normal",
+      "lineIndex": 6,
+      "priority": "P0",
+      "reason": "four missing internal cuts and >500ms tail",
+      "startMs": 18461,
+      "endMs": 20812,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-006",
+      "caseId": "ja-1-normal",
+      "lineIndex": 5,
+      "priority": "P0",
+      "reason": "model onset later than provider by 677ms",
+      "startMs": 16014,
+      "endMs": 18461,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-028",
+      "caseId": "ja-2-normal",
+      "lineIndex": 6,
+      "priority": "P0",
+      "reason": "inflection onset early by 643ms",
+      "startMs": 25731,
+      "endMs": 27731,
+      "audioSha256": "550924536844df2f37c435fbe64276338dc49dd0baa64d6a338549f0501d4f26",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-004",
+      "caseId": "ja-1-normal",
+      "lineIndex": 4,
+      "priority": "P1",
+      "reason": "model first spans precede T1 and long/zero duration",
+      "startMs": 13463,
+      "endMs": 16014,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-047",
+      "caseId": "ja-1-normal",
+      "lineIndex": 8,
+      "priority": "P1",
+      "reason": "repeated phrase and missing internal cut",
+      "startMs": 23567,
+      "endMs": 26045,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-045",
+      "caseId": "ja-2-normal",
+      "lineIndex": 4,
+      "priority": "P1",
+      "reason": "control: Qwen improves baseline >1s tail",
+      "startMs": 10902,
+      "endMs": 15067,
+      "audioSha256": "550924536844df2f37c435fbe64276338dc49dd0baa64d6a338549f0501d4f26",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-052",
+      "caseId": "ja-1-normal",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: mixed-script policy decline, not model error",
+      "startMs": 4607,
+      "endMs": 6151,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-033",
+      "caseId": "zh-1-phrase-mismatch",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: retain mismatch detection after normalization",
+      "startMs": 6840,
+      "endMs": 11750,
+      "audioSha256": "a48961d6ab21208c9d70289300199f4a71e35adbcc3a24451007f5c4ada20f15",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-010",
+      "caseId": "zh-2-phrase-mismatch",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: retain mismatch detection after normalization",
+      "startMs": 6730,
+      "endMs": 10980,
+      "audioSha256": "de2a505750a2473573d37d77fdae493628c26111126b45c380fc0e64fe2e548f",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-005",
+      "caseId": "ja-2-phrase-mismatch",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: retain mismatch detection after normalization",
+      "startMs": 2553,
+      "endMs": 6022,
+      "audioSha256": "c1faeabfc98e41b65410ee22ac48c9dbd662602684f213236f5c47a1695e7c0c",
+      "reviewed": false
+    }
+  ],
+  "humanManifestSha256": "dc42566a5982e1170692ac63addac00bda3c1b4a36c0566737a192d0cad960e0",
+  "hubertfaVerification": {
+    "checks": [
+      {
+        "id": "zh-1-normal",
+        "lines": 5,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 10,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-1-phrase-mismatch",
+        "lines": 5,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 10,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-1-missing-text",
+        "lines": 5,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 10,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-1-missing-audio",
+        "lines": 5,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 10,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-2-normal",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-2-phrase-mismatch",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-2-missing-text",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "zh-2-missing-audio",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "ja-1-normal",
+        "lines": 10,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 20,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 2
+      },
+      {
+        "id": "ja-1-phrase-mismatch",
+        "lines": 10,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 20,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 2
+      },
+      {
+        "id": "ja-1-missing-text",
+        "lines": 10,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 20,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 2
+      },
+      {
+        "id": "ja-1-missing-audio",
+        "lines": 10,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 20,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 2
+      },
+      {
+        "id": "ja-2-normal",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "ja-2-phrase-mismatch",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "ja-2-missing-text",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      },
+      {
+        "id": "ja-2-missing-audio",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      }
+    ]
+  },
+  "licenseLocal": {
+    "archiveSha256": "48bd6dbcc293e47cc6cbcc556baf575e3d91d61d0ac88ddeccd6098f8f346fa2",
+    "modelSha256": "4722c13e1d5c1d740ec69c9121f5ec37a88d534aba7637bafb480208be170183",
+    "archiveEntries": [
+      {
+        "name": "1218_hfa_model_new_dict/",
+        "bytes": 0
+      },
+      {
+        "name": "1218_hfa_model_new_dict/config.json",
+        "bytes": 447
+      },
+      {
+        "name": "1218_hfa_model_new_dict/ds-zh-pinyin-lite.txt",
+        "bytes": 6494
+      },
+      {
+        "name": "1218_hfa_model_new_dict/ds_cmudict-07b.txt",
+        "bytes": 3402616
+      },
+      {
+        "name": "1218_hfa_model_new_dict/japanese_dict_full.txt",
+        "bytes": 1564
+      },
+      {
+        "name": "1218_hfa_model_new_dict/model.onnx",
+        "bytes": 415220874
+      },
+      {
+        "name": "1218_hfa_model_new_dict/VERSION",
+        "bytes": 1
+      },
+      {
+        "name": "1218_hfa_model_new_dict/vocab.json",
+        "bytes": 4093
+      }
+    ],
+    "archiveComment": "",
+    "metadataFields": [
+      {
+        "field": 1,
+        "value": 8
+      },
+      {
+        "field": 2,
+        "utf8": "onnx.compose.merge_models"
+      },
+      {
+        "field": 3,
+        "utf8": "1.0"
+      },
+      {
+        "field": 4,
+        "utf8": ""
+      },
+      {
+        "field": 5,
+        "value": 1
+      }
+    ],
+    "hasMetadataProps": false,
+    "archiveLicenseFiles": []
+  },
+  "productionHashes": {
+    "electron/lib/lyricsAcoustic/artifacts.js": "851562b5340740e1511d7ca2beeda724a17fc4b90683f453f755b12175680b11",
+    "electron/lib/lyricsAcoustic/capability.js": "7c81585ec8592ed8b3b861f6aa2e92f5740e1a4aa05cc6e0f0d41cb13df9fda5",
+    "electron/lib/lyricsAcoustic/catalog.js": "e7ccf11dd800aaf630a0ed5b0eda415753ad3552e998c34f6fded1fc2f67dd81",
+    "electron/lib/lyricsAcoustic/integrity.js": "c4f8bc4962455635a1af0c0b863f6ae534548fd865bb9d6e285ba97595513185",
+    "electron/lib/lyricsAcoustic/probe.js": "20e7ca51cbe6d606f8b4166829f765631731e563bb2a13b2d90f54b2bf37090c",
+    "electron/main/lyrics/acousticCapabilityHandlers.js": "6451dc7a9e385da12e71ff27c50542596c2855f8ebc236015503ce18790f17ad",
+    "resources/audio-processing/lyrics-acoustic-catalog.json": "8f3ee3511965b5055291b11ddf41d4ae8db878f28de8b2098c289a5807bb4321",
+    "resources/audio-processing/lyrics_acoustic_probe.py": "0a87cca975f6c8d2d3081a79c0a38be20ebcffbf02c71b38e73c93b48e0e0687",
+    "src/composables/lyrics/useLyricsAcousticCapability.js": "a154ac81e5c5de77cd2f1c1db74ab2acc529ed434e6bd9b01fcccb6c2dbaa503",
+    "src/components/settings/LyricsAcousticSettingsRow.vue": "7554f45afa39ae84c7097585539a1b78efc8f620a1e558723a691d0e36224f4d",
+    "src/components/settings/SettingsCapabilitiesSection.vue": "c1a7f461a224511fd872b07c06efa3da6b5b174670b232aa2701c03c41e71be4"
+  },
+  "productionBoundariesUnchanged": 11,
+  "sourceHashes": {
+    "scripts/research/lyricsFreshEvaluation/hubertComparison.cjs": "e8dd70a17838acf2f4ea6bb254d6d81ab95506b3d05aa4cbda3809105b94f95b",
+    "scripts/research/lyricsFreshEvaluation/review.cjs": "8f1e279ae8afe9a7f6b0c1f9a8e7415ad50cf671041a2e3921252a1406e33d9e",
+    "scripts/research/lyricsAcoustic/evaluate.cjs": "3bb816aeecc76690452e08d85a3e29ed316c5980644bf1b42a1ceaf94086dc42",
+    "scripts/research/lyricsAcoustic/protocol.cjs": "c765b22f95efda84fb1d3910d2b181ff631683a9c96b9aef8f3ba835929d7552"
+  },
+  "limitations": [
+    "35 timing references are Japanese external provider internal cuts, not manually verified ground truth; Chinese has none",
+    "Four songs; paired constructed variants are not independent recordings or natural live/cover versions",
+    "First JA target is policy-unsupported English; only three supported target groups",
+    "Two full recipes differ in sample rate, frontend/G2P, and decoder constraints; no isolated network-only causal claim",
+    "Counterfactual content rescue can restore bad timings elsewhere; stress completeness not established",
+    "Root Apache-2.0 license and download instructions do not by themselves settle the exact release weight/dictionary scope"
+  ]
+}

@@ -1,5 +1,7 @@
 # 歌詞對齊第一輪實測與漸進模型選型
 
+本文保留當輪研究與分母；目前跨批次選型及未決項集中在[研究結論](lyrics-alignment-summary.md)。
+
 目前收斂建議見[研究收斂與實作評估](lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)；本輪結果仍保留原始任務與樣本條件。
 
 日期：2026-10-18。[前期研究與現行環境分析](lyrics-audio-alignment-evaluation-2026-10-18.md)的執行追蹤。

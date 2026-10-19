@@ -1,5 +1,7 @@
 # 逐字歌詞音訊對齊研究與環境配置評估
 
+本文保留當輪研究與分母；目前跨批次選型及未決項集中在[研究結論](lyrics-alignment-summary.md)。
+
 本次研究的決策建議、最新容量與實作順序，集中於[研究收斂與實作評估](lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)。本文保留前期方法研究，實量與任務邊界以後續報告為準。
 
 研究日期：2026-10-18。適用於 Utawakui 的 Windows x64 本機歌曲準備流程。

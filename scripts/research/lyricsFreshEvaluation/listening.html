@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>歌詞詞塊聽查 · Utawakui 研究</title>
+    <link rel="stylesheet" href="listening.css" />
+    <script src="packet-data.js" defer></script>
+    <script src="listeningApp.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>歌詞詞塊聽查</h1>
+        <p>
+          先聽、獨立標記，再展開模型結果。15 個優先案例＋4
+          個漏詞對照；這是風險抽查，並非盲測。
+        </p>
+      </div>
+      <div class="export">
+        <label
+          >審查者代號
+          <input
+            id="reviewer"
+            maxlength="80"
+            autocomplete="off"
+            placeholder="例如 listener01" /></label
+        ><button id="draft-export" type="button">備份草稿</button
+        ><button id="export" type="button">匯出人工標記</button
+        ><label class="import"
+          >載入先前標記
+          <input id="import" type="file" accept=".json,application/json"
+        /></label>
+      </div>
+    </header>
+    <p id="feedback" role="status" aria-live="polite">正在載入本機資料。</p>
+    <div class="workspace">
+      <nav aria-label="聽查案例">
+        <p id="progress"></p>
+        <ol id="samples"></ol>
+      </nav>
+      <main>
+        <div class="navigation">
+          <button id="previous" type="button">上一案</button>
+          <h2 id="sample-title"></h2>
+          <button id="next" type="button">下一案</button>
+        </div>
+        <p id="lyric" class="lyric"></p>
+        <audio
+          id="audio"
+          controls
+          preload="metadata"
+          aria-label="本案音訊"
+        ></audio>
+        <div class="transport">
+          <button id="play-line" type="button">播放此句</button
+          ><button id="play-context" type="button">播放前後文</button
+          ><label><input id="loop" type="checkbox" /> 重複播放</label
+          ><label
+            >速度
+            <select id="speed">
+              <option value="0.75">0.75×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.25">1.25×</option>
+            </select></label
+          ><output id="clock">0.000 s</output>
+        </div>
+        <p class="hint">
+          表中的秒數是整段音訊時間；未能確定的起音請留空。播放不會自動完成標記。
+        </p>
+        <fieldset>
+          <legend>內容判斷</legend>
+          <div class="fields">
+            <label
+              >聽到的內容
+              <select id="content">
+                <option value="">尚未判斷</option>
+                <option value="exact">與顯示歌詞相符</option>
+                <option value="missing-displayed-lyrics">
+                  有唱，但顯示歌詞漏字
+                </option>
+                <option value="unperformed-lyrics">顯示了未唱出的歌詞</option>
+                <option value="different-content">唱的內容不同</option>
+                <option value="uncertain">無法確定</option>
+              </select></label
+            ><label
+              >把握程度
+              <select id="confidence">
+                <option value="">尚未選擇</option>
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高</option>
+              </select></label
+            >
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>獨立起音</legend>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>從這個詞開始</th>
+                  <th>起音（秒）</th>
+                  <th>取播放位置</th>
+                </tr>
+              </thead>
+              <tbody id="onsets"></tbody>
+            </table>
+          </div>
+        </fieldset>
+        <label class="notes"
+          >備註
+          <textarea
+            id="notes"
+            maxlength="4000"
+            rows="2"
+            placeholder="例如：拖音、聽不清、段落或版本不同"
+          ></textarea>
+        </label>
+        <label class="reviewed"
+          ><input id="reviewed" type="checkbox" />
+          我已完成這一案的人工判斷</label
+        >
+        <details id="comparison">
+          <summary>比較模型結果</summary>
+          <p id="reason"></p>
+          <p id="completeness"></p>
+          <div id="proposals"></div>
+          <p class="hint">
+            模型色塊只表示起點後的顯示區間，不代表唱音結束。點詞塊可移到該起點；請勿把模型時間直接當人工答案。
+          </p>
+        </details>
+        <p class="hint">
+          未完成的內容與起音請用「備份草稿」保存；「匯出人工標記」只納入勾選完成的判斷。本頁不會寫入
+          App、原始 labels 或正式歌詞。
+        </p>
+      </main>
+    </div>
+  </body>
+</html>

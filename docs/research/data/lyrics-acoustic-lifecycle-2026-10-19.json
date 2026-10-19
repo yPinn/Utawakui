@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-19",
+  "scope": "manual-optional-environment-lifecycle",
+  "production": {
+    "productUse": "blocked",
+    "blockReason": "weights-evidence-pending",
+    "defaultDownload": false,
+    "defaultResearchMethodAccepted": false,
+    "songProducer": false,
+    "outputExtension": false
+  },
+  "artifacts": {
+    "runtimeArchive": {
+      "filename": "python-3.14.7-embed-amd64.zip",
+      "url": "https://www.python.org/ftp/python/3.14.7/python-3.14.7-embed-amd64.zip",
+      "sizeBytes": 12673227,
+      "sha256": "d297e5ff019966817ad8502465176139f2d3d840fa4ed84b13bed399a6ab1f15"
+    },
+    "modelArchive": {
+      "filename": "1218_hfa_model_new_dict.zip",
+      "url": "https://github.com/wolfgitpr/HubertFA/releases/download/v0.0.7/1218_hfa_model_new_dict.zip",
+      "sizeBytes": 256589553,
+      "sha256": "48bd6dbcc293e47cc6cbcc556baf575e3d91d61d0ac88ddeccd6098f8f346fa2"
+    },
+    "packageArchives": [
+      {
+        "name": "pypinyin",
+        "version": "0.55.0",
+        "artifact": {
+          "filename": "pypinyin-0.55.0-py2.py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/b9/7b/4cabc76fcc21c3c7d5c671d8783984d30ac9d3bb387c4ba784fca3cdfa3a/pypinyin-0.55.0-py2.py3-none-any.whl",
+          "sizeBytes": 840203,
+          "sha256": "d53b1e8ad2cdb815fb2cb604ed3123372f5a28c6f447571244aca36fc62a286f"
+        }
+      },
+      {
+        "name": "numpy",
+        "version": "2.5.2",
+        "artifact": {
+          "filename": "numpy-2.5.2-cp314-cp314-win_amd64.whl",
+          "url": "https://files.pythonhosted.org/packages/15/5c/7bcbd5b11f94199073320410cddcbb80cee62415bfeb540874b265c2d922/numpy-2.5.2-cp314-cp314-win_amd64.whl",
+          "sizeBytes": 12597627,
+          "sha256": "7587f53dfbd5edc0f7b87c6217b4c6d2d1f2ef9c3da70bc1315e7db5f8d7ec9d"
+        }
+      }
+    ],
+    "catalogDownloadBytes": 282700610,
+    "previousPinnedInstalledBytesExcludingCacheAndStaging": 484522322,
+    "installedBytesEstimate": 485000000
+  },
+  "realLocalAcceptance": {
+    "statuses": ["ready", "unverified", "ready", "ready", "ready", "missing"],
+    "actualArchivePreparation": true,
+    "localOnly": true,
+    "shippedCatalogBlocked": true,
+    "syntheticRuntimeArchive": false,
+    "officialRuntimeArchive": true,
+    "modelAndWheelBytesPinned": true,
+    "actualPythonAndOnnxWarmup": true,
+    "failedRepairKeptActivation": true,
+    "cancelledRepairKeptActivation": true,
+    "ownedWorkersGone": true,
+    "lyricsUnchanged": true,
+    "removeUnsharedRuntime": true,
+    "temporaryClean": true,
+    "executionHost": "Electron-as-Node",
+    "evidenceId": "lyrics-env-real-1792355696295",
+    "runtimeArchiveRepackedFixture": false,
+    "freshNetworkInstall": false,
+    "officialRuntimeArchiveDownloaded": true,
+    "osOfflineTest": false
+  },
+  "nativeDefaultPath": {
+    "checks": [
+      {
+        "label": "shipped catalog is blocked over actual preload/main",
+        "pass": true
+      },
+      {
+        "label": "manual preparation cannot bypass the catalog gate",
+        "pass": true
+      },
+      {
+        "label": "idle cancellation is harmless",
+        "pass": true
+      },
+      {
+        "label": "removal with no installed environment is harmless",
+        "pass": true
+      },
+      {
+        "label": "light Settings explains bounded gate",
+        "pass": true
+      },
+      {
+        "label": "dark Settings explains bounded gate",
+        "pass": true
+      },
+      {
+        "label": "zh default main/preload status stale",
+        "pass": true
+      },
+      {
+        "label": "zh canonical T1 available",
+        "pass": true
+      },
+      {
+        "label": "zh unavailable model cannot enable",
+        "pass": true
+      },
+      {
+        "label": "zh HTML audio playback clock available",
+        "pass": true
+      },
+      {
+        "label": "zh no model-ready claim",
+        "pass": true
+      },
+      {
+        "label": "ja default main/preload status missing",
+        "pass": true
+      },
+      {
+        "label": "ja canonical T1 available",
+        "pass": true
+      },
+      {
+        "label": "ja unavailable model cannot enable",
+        "pass": true
+      },
+      {
+        "label": "ja HTML audio playback clock available",
+        "pass": true
+      },
+      {
+        "label": "ja no model-ready claim",
+        "pass": true
+      },
+      {
+        "label": "authored T2 remains available without model environment",
+        "pass": true
+      },
+      {
+        "label": "fresh profile installs no Audio Python runtime/environment/model",
+        "pass": true
+      },
+      {
+        "label": "no new preview Vue warnings",
+        "pass": true
+      }
+    ],
+    "methodInjected": false,
+    "visible": true,
+    "evidenceId": "lyrics-env-visible-1792355099362",
+    "vueWarningCount": 4,
+    "existingWarningComponents": ["UiPopover", "UiTooltip"],
+    "captures": [
+      {
+        "name": "settings-light.png",
+        "width": 1200,
+        "height": 850
+      },
+      {
+        "name": "settings-dark.png",
+        "width": 960,
+        "height": 650
+      }
+    ],
+    "reviewDisposition": "ship",
+    "reviewScope": "captured blocked settings state only",
+    "dedicatedReviewRolesAvailable": false,
+    "substitution": "fresh default agents using degraded contracts",
+    "designDocumentation": "No changes; ordinary extension"
+  },
+  "verification": {
+    "fullSuite": {
+      "files": 886,
+      "passed": 8464,
+      "skipped": 1
+    },
+    "focusedCoverage": {
+      "files": 7,
+      "tests": 33,
+      "lines": 89.9,
+      "branches": 82.89,
+      "statements": 88.52,
+      "functions": 85.55
+    },
+    "pythonTests": 2,
+    "pythonSharedSysRestored": true,
+    "codeSecurityReview": "APPROVE",
+    "pythonReview": "APPROVE",
+    "eslint": true,
+    "markdown": true,
+    "build": true,
+    "packagedProbe": {
+      "packagedCatalogIdentical": true,
+      "packagedProbeIdentical": true,
+      "shippedGateBlocked": true,
+      "packagedAsarOnnxWarmup": true,
+      "packagedElectronAsNode": true
+    },
+    "packagedStartup": {
+      "packagedStartup": true,
+      "interactiveShell": true,
+      "firstPaint": true,
+      "baselineComplete": false,
+      "controlledTermination": true,
+      "isolatedProfile": true,
+      "noAudioAssetsInstalled": true,
+      "traceEvents": 7
+    }
+  },
+  "sourceHashes": {
+    "electron/lib/lyricsAcoustic/artifacts.js": "851562b5340740e1511d7ca2beeda724a17fc4b90683f453f755b12175680b11",
+    "electron/lib/lyricsAcoustic/capability.js": "7c81585ec8592ed8b3b861f6aa2e92f5740e1a4aa05cc6e0f0d41cb13df9fda5",
+    "electron/lib/lyricsAcoustic/catalog.js": "e7ccf11dd800aaf630a0ed5b0eda415753ad3552e998c34f6fded1fc2f67dd81",
+    "electron/lib/lyricsAcoustic/integrity.js": "c4f8bc4962455635a1af0c0b863f6ae534548fd865bb9d6e285ba97595513185",
+    "electron/lib/lyricsAcoustic/probe.js": "20e7ca51cbe6d606f8b4166829f765631731e563bb2a13b2d90f54b2bf37090c",
+    "electron/main/lyrics/acousticCapabilityHandlers.js": "6451dc7a9e385da12e71ff27c50542596c2855f8ebc236015503ce18790f17ad",
+    "resources/audio-processing/lyrics-acoustic-catalog.json": "8f3ee3511965b5055291b11ddf41d4ae8db878f28de8b2098c289a5807bb4321",
+    "resources/audio-processing/lyrics_acoustic_probe.py": "0a87cca975f6c8d2d3081a79c0a38be20ebcffbf02c71b38e73c93b48e0e0687",
+    "src/composables/lyrics/useLyricsAcousticCapability.js": "a154ac81e5c5de77cd2f1c1db74ab2acc529ed434e6bd9b01fcccb6c2dbaa503",
+    "src/components/settings/LyricsAcousticSettingsRow.vue": "7554f45afa39ae84c7097585539a1b78efc8f620a1e558723a691d0e36224f4d",
+    "src/components/settings/SettingsCapabilitiesSection.vue": "c1a7f461a224511fd872b07c06efa3da6b5b174670b232aa2701c03c41e71be4"
+  },
+  "limitations": [
+    "production weight gate remains closed",
+    "no song quality reevaluation",
+    "no low-RAM or GPU acceptance",
+    "not a signed installer or fresh network installation",
+    "corrupt shared activation or invalid removal journal requires diagnostic recovery",
+    "no arbitrary power-loss rollback SLA"
+  ]
+}

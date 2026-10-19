@@ -1,0 +1,2253 @@
+{
+  "date": "2026-10-19",
+  "status": "private-research-only",
+  "model": {
+    "release": "v0.0.7",
+    "sourceRevision": "521281fe52dcedb8f970ca200dc4f00fc2869b08",
+    "method": {
+      "kind": "model",
+      "id": "hubertfa-research",
+      "version": "phase2-v1",
+      "modelManifestSha256": "ce1510682a164bb5937c3a9ffbf5b400baa3983a6ec35d97f9a80cafd5782b82",
+      "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+      "decoderVersion": "hfa-occurrence-81297990646989a1",
+      "g2pVersion": "original-g2p-c765b22f95efda84",
+      "chunkerVersion": "intl-text-c765b22f95efda84",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "weightsDistribution": "unresolved; no product activation or download change"
+  },
+  "receipts": {
+    "inferenceInputSha256": "af1a937d67a00f5f410749b37a9e9d14e42789005bc094dd069eb28250f44c5c",
+    "referenceSha256": "92b2e4ff1960d2f8efed21429596a7df7ca32ece5885df275d26c76054e401d6",
+    "inferenceReferenceSha256": "9dfeb8ac65d6e2a460eb0353f29b5fa9c87affd7ab56cd781b3d01dc8294530e",
+    "evaluationSha256": "3bb816aeecc76690452e08d85a3e29ed316c5980644bf1b42a1ceaf94086dc42",
+    "scoringCorrection": "External references are case-scoped; inference input bytes unchanged, existing predictions reused."
+  },
+  "hardware": {
+    "cpu": "AMD Ryzen 7 7700 8-Core Processor",
+    "logicalCpus": 16,
+    "totalReportedRamBytes": 67817906176,
+    "platform": "win32",
+    "arch": "x64",
+    "frontendThreads": 4
+  },
+  "groups": {
+    "development/independent-mora-aggregated-word/ja/mix": {
+      "songs": 1,
+      "A": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 26,
+        "measured": 16,
+        "onset100": 0.3125,
+        "coverage": 1,
+        "medianMs": 225.14285714285688,
+        "p90Ms": 543.3333333333339
+      },
+      "D": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 24,
+        "measured": 15,
+        "onset100": 0.875,
+        "coverage": 0.9375,
+        "medianMs": 6,
+        "p90Ms": 90
+      }
+    },
+    "development/independent-mora-aggregated-word/ja/quick": {
+      "songs": 1,
+      "A": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 26,
+        "measured": 16,
+        "onset100": 0.3125,
+        "coverage": 1,
+        "medianMs": 225.14285714285688,
+        "p90Ms": 543.3333333333339
+      },
+      "D": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 24,
+        "measured": 15,
+        "onset100": 0.9375,
+        "coverage": 0.9375,
+        "medianMs": 5,
+        "p90Ms": 75
+      }
+    },
+    "confirmation/independent-character/zh/mix": {
+      "songs": 4,
+      "A": {
+        "requested": 102,
+        "scorable": 102,
+        "noReference": 0,
+        "retained": 102,
+        "measured": 102,
+        "onset100": 0.28431372549019607,
+        "coverage": 1,
+        "medianMs": 250.5,
+        "p90Ms": 635
+      },
+      "D": {
+        "requested": 102,
+        "scorable": 102,
+        "noReference": 0,
+        "retained": 101,
+        "measured": 101,
+        "onset100": 0.7745098039215687,
+        "coverage": 0.9901960784313726,
+        "medianMs": 56,
+        "p90Ms": 312
+      }
+    },
+    "confirmation/provider-comparison/ja/mix": {
+      "songs": 4,
+      "A": {
+        "requested": 148,
+        "scorable": 108,
+        "noReference": 40,
+        "retained": 148,
+        "measured": 108,
+        "onset100": 0.4074074074074074,
+        "coverage": 1,
+        "medianMs": 129.9090909090919,
+        "p90Ms": 375.31578947368416
+      },
+      "D": {
+        "requested": 148,
+        "scorable": 108,
+        "noReference": 40,
+        "retained": 132,
+        "measured": 98,
+        "onset100": 0.7777777777777778,
+        "coverage": 0.9074074074074074,
+        "medianMs": 40,
+        "p90Ms": 130
+      }
+    },
+    "confirmation/independent-character/zh/quick": {
+      "songs": 4,
+      "A": {
+        "requested": 102,
+        "scorable": 102,
+        "noReference": 0,
+        "retained": 102,
+        "measured": 102,
+        "onset100": 0.28431372549019607,
+        "coverage": 1,
+        "medianMs": 250.5,
+        "p90Ms": 635
+      },
+      "D": {
+        "requested": 102,
+        "scorable": 102,
+        "noReference": 0,
+        "retained": 101,
+        "measured": 101,
+        "onset100": 0.8137254901960784,
+        "coverage": 0.9901960784313726,
+        "medianMs": 47,
+        "p90Ms": 124
+      }
+    },
+    "confirmation/provider-comparison/ja/quick": {
+      "songs": 4,
+      "A": {
+        "requested": 148,
+        "scorable": 108,
+        "noReference": 40,
+        "retained": 148,
+        "measured": 108,
+        "onset100": 0.4074074074074074,
+        "coverage": 1,
+        "medianMs": 129.9090909090919,
+        "p90Ms": 375.31578947368416
+      },
+      "D": {
+        "requested": 148,
+        "scorable": 108,
+        "noReference": 40,
+        "retained": 134,
+        "measured": 100,
+        "onset100": 0.7870370370370371,
+        "coverage": 0.9259259259259259,
+        "medianMs": 31,
+        "p90Ms": 107
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "pjs056-mix",
+      "songId": "pjs056",
+      "language": "ja",
+      "tier": "independent-mora-aggregated-word",
+      "phase": "development",
+      "variant": "mix",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-mora-reference",
+      "A": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 26,
+        "measured": 16,
+        "onset100": 0.3125,
+        "coverage": 1,
+        "medianMs": 225.14285714285688,
+        "p90Ms": 543.3333333333339
+      },
+      "D": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 24,
+        "measured": 15,
+        "onset100": 0.875,
+        "coverage": 0.9375,
+        "medianMs": 6,
+        "p90Ms": 90
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 16000,
+            "peak": 0.46066954731941223,
+            "seconds": 2.1253054000000002,
+            "analyzedLines": 3,
+            "lineCount": 3
+          }
+        ],
+        "frontendPeakRssBytes": 768450560,
+        "pythonPeakRssBytes": 90431488,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.2430062,
+        "coordinatorPeakRssBytes": 747532288,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 3,
+      "totalLines": 3
+    },
+    {
+      "id": "pjs056-quick",
+      "songId": "pjs056",
+      "language": "ja",
+      "tier": "independent-mora-aggregated-word",
+      "phase": "development",
+      "variant": "quick",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-mora-reference",
+      "A": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 26,
+        "measured": 16,
+        "onset100": 0.3125,
+        "coverage": 1,
+        "medianMs": 225.14285714285688,
+        "p90Ms": 543.3333333333339
+      },
+      "D": {
+        "requested": 26,
+        "scorable": 16,
+        "noReference": 10,
+        "retained": 24,
+        "measured": 15,
+        "onset100": 0.9375,
+        "coverage": 0.9375,
+        "medianMs": 5,
+        "p90Ms": 75
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 16000,
+            "peak": 0.2714727222919464,
+            "seconds": 2.2261272,
+            "analyzedLines": 3,
+            "lineCount": 3
+          }
+        ],
+        "frontendPeakRssBytes": 768864256,
+        "pythonPeakRssBytes": 90697728,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.2787992999999998,
+        "coordinatorPeakRssBytes": 821940224,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 3,
+      "totalLines": 3
+    },
+    {
+      "id": "confirm-mir-00-0-mix",
+      "songId": "confirm-mir-00",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 33,
+        "scorable": 33,
+        "noReference": 0,
+        "retained": 33,
+        "measured": 33,
+        "onset100": 0.36363636363636365,
+        "coverage": 1,
+        "medianMs": 208.75,
+        "p90Ms": 489.75
+      },
+      "D": {
+        "requested": 33,
+        "scorable": 33,
+        "noReference": 0,
+        "retained": 33,
+        "measured": 33,
+        "onset100": 1,
+        "coverage": 1,
+        "medianMs": 34,
+        "p90Ms": 81
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.5166059732437134,
+            "seconds": 2.5434243000000007,
+            "analyzedLines": 7,
+            "lineCount": 7
+          }
+        ],
+        "frontendPeakRssBytes": 903471104,
+        "pythonPeakRssBytes": 91082752,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.3372783,
+        "coordinatorPeakRssBytes": 821940224,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 7,
+      "totalLines": 7
+    },
+    {
+      "id": "confirm-mir-01-0-mix",
+      "songId": "confirm-mir-01",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 23,
+        "scorable": 23,
+        "noReference": 0,
+        "retained": 23,
+        "measured": 23,
+        "onset100": 0.17391304347826086,
+        "coverage": 1,
+        "medianMs": 306,
+        "p90Ms": 631
+      },
+      "D": {
+        "requested": 23,
+        "scorable": 23,
+        "noReference": 0,
+        "retained": 23,
+        "measured": 23,
+        "onset100": 0.7391304347826086,
+        "coverage": 1,
+        "medianMs": 60,
+        "p90Ms": 332
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.5039525032043457,
+            "seconds": 2.5776337999999996,
+            "analyzedLines": 5,
+            "lineCount": 5
+          }
+        ],
+        "frontendPeakRssBytes": 903421952,
+        "pythonPeakRssBytes": 90906624,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.3949603000000006,
+        "coordinatorPeakRssBytes": 821940224,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 5,
+      "totalLines": 5
+    },
+    {
+      "id": "confirm-mir-02-0-mix",
+      "songId": "confirm-mir-02",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 20,
+        "scorable": 20,
+        "noReference": 0,
+        "retained": 20,
+        "measured": 20,
+        "onset100": 0.1,
+        "coverage": 1,
+        "medianMs": 433,
+        "p90Ms": 1127
+      },
+      "D": {
+        "requested": 20,
+        "scorable": 20,
+        "noReference": 0,
+        "retained": 20,
+        "measured": 20,
+        "onset100": 0.8,
+        "coverage": 1,
+        "medianMs": 45,
+        "p90Ms": 129
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.5058261156082153,
+            "seconds": 2.5661536999999988,
+            "analyzedLines": 4,
+            "lineCount": 4
+          }
+        ],
+        "frontendPeakRssBytes": 903270400,
+        "pythonPeakRssBytes": 92221440,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.3444049999999987,
+        "coordinatorPeakRssBytes": 821940224,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 4,
+      "totalLines": 4
+    },
+    {
+      "id": "confirm-mir-03-0-mix",
+      "songId": "confirm-mir-03",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 26,
+        "scorable": 26,
+        "noReference": 0,
+        "retained": 26,
+        "measured": 26,
+        "onset100": 0.4230769230769231,
+        "coverage": 1,
+        "medianMs": 119.83333333333212,
+        "p90Ms": 482.75
+      },
+      "D": {
+        "requested": 26,
+        "scorable": 26,
+        "noReference": 0,
+        "retained": 25,
+        "measured": 25,
+        "onset100": 0.5,
+        "coverage": 0.9615384615384616,
+        "medianMs": 96,
+        "p90Ms": 1268
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.5094429850578308,
+            "seconds": 2.4229002999999976,
+            "analyzedLines": 6,
+            "lineCount": 6
+          }
+        ],
+        "frontendPeakRssBytes": 903856128,
+        "pythonPeakRssBytes": 90542080,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.170986099999998,
+        "coordinatorPeakRssBytes": 821940224,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 6,
+      "totalLines": 6
+    },
+    {
+      "id": "confirm-local-ja-00-mix",
+      "songId": "confirm-local-ja-00",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 45,
+        "scorable": 23,
+        "noReference": 22,
+        "retained": 45,
+        "measured": 23,
+        "onset100": 0.2608695652173913,
+        "coverage": 1,
+        "medianMs": 134.81818181818198,
+        "p90Ms": 301.6315789473683
+      },
+      "D": {
+        "requested": 45,
+        "scorable": 23,
+        "noReference": 22,
+        "retained": 42,
+        "measured": 22,
+        "onset100": 0.6956521739130435,
+        "coverage": 0.9565217391304348,
+        "medianMs": 58,
+        "p90Ms": 134
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 23682,
+            "peak": 1.0251455307006836,
+            "seconds": 2.3114608999999984,
+            "analyzedLines": 9,
+            "lineCount": 9
+          }
+        ],
+        "frontendPeakRssBytes": 881299456,
+        "pythonPeakRssBytes": 90165248,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.2534324000000017,
+        "coordinatorPeakRssBytes": 832184320,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 9,
+      "totalLines": 9
+    },
+    {
+      "id": "confirm-local-ja-01-mix",
+      "songId": "confirm-local-ja-01",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 40,
+        "scorable": 40,
+        "noReference": 0,
+        "retained": 40,
+        "measured": 40,
+        "onset100": 0.425,
+        "coverage": 1,
+        "medianMs": 140,
+        "p90Ms": 405
+      },
+      "D": {
+        "requested": 40,
+        "scorable": 40,
+        "noReference": 0,
+        "retained": 35,
+        "measured": 35,
+        "onset100": 0.8,
+        "coverage": 0.875,
+        "medianMs": 17,
+        "p90Ms": 100
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 21280,
+            "peak": 1.045069694519043,
+            "seconds": 2.1968269,
+            "analyzedLines": 8,
+            "lineCount": 8
+          }
+        ],
+        "frontendPeakRssBytes": 849248256,
+        "pythonPeakRssBytes": 89223168,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.099503000000001,
+        "coordinatorPeakRssBytes": 832909312,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 8,
+      "totalLines": 8
+    },
+    {
+      "id": "confirm-local-ja-02-mix",
+      "songId": "confirm-local-ja-02",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 34,
+        "scorable": 16,
+        "noReference": 18,
+        "retained": 34,
+        "measured": 16,
+        "onset100": 0.4375,
+        "coverage": 1,
+        "medianMs": 121.20000000000073,
+        "p90Ms": 952
+      },
+      "D": {
+        "requested": 34,
+        "scorable": 16,
+        "noReference": 18,
+        "retained": 30,
+        "measured": 16,
+        "onset100": 0.8125,
+        "coverage": 1,
+        "medianMs": 79,
+        "p90Ms": 148
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 24021,
+            "peak": 1.0515861511230469,
+            "seconds": 2.3123277000000018,
+            "analyzedLines": 5,
+            "lineCount": 5
+          }
+        ],
+        "frontendPeakRssBytes": 889921536,
+        "pythonPeakRssBytes": 90226688,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.2341993,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 5,
+      "totalLines": 5
+    },
+    {
+      "id": "confirm-local-ja-03-mix",
+      "songId": "confirm-local-ja-03",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "mix",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 29,
+        "scorable": 29,
+        "noReference": 0,
+        "retained": 29,
+        "measured": 29,
+        "onset100": 0.4827586206896552,
+        "coverage": 1,
+        "medianMs": 101.81818181818016,
+        "p90Ms": 350.7692307692305
+      },
+      "D": {
+        "requested": 29,
+        "scorable": 29,
+        "noReference": 0,
+        "retained": 25,
+        "measured": 25,
+        "onset100": 0.7931034482758621,
+        "coverage": 0.8620689655172413,
+        "medianMs": 41,
+        "p90Ms": 92
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 23660,
+            "peak": 1.0740845203399658,
+            "seconds": 2.4515499000000016,
+            "analyzedLines": 5,
+            "lineCount": 5
+          }
+        ],
+        "frontendPeakRssBytes": 881324032,
+        "pythonPeakRssBytes": 91213824,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.388922999999999,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 5,
+      "totalLines": 5
+    },
+    {
+      "id": "confirm-mir-00-0-quick",
+      "songId": "confirm-mir-00",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 33,
+        "scorable": 33,
+        "noReference": 0,
+        "retained": 33,
+        "measured": 33,
+        "onset100": 0.36363636363636365,
+        "coverage": 1,
+        "medianMs": 208.75,
+        "p90Ms": 489.75
+      },
+      "D": {
+        "requested": 33,
+        "scorable": 33,
+        "noReference": 0,
+        "retained": 33,
+        "measured": 33,
+        "onset100": 0.9696969696969697,
+        "coverage": 1,
+        "medianMs": 29,
+        "p90Ms": 81
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.35808074474334717,
+            "seconds": 2.8196636999999973,
+            "analyzedLines": 7,
+            "lineCount": 7
+          }
+        ],
+        "frontendPeakRssBytes": 903647232,
+        "pythonPeakRssBytes": 90517504,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.572505599999997,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 7,
+      "totalLines": 7
+    },
+    {
+      "id": "confirm-mir-01-0-quick",
+      "songId": "confirm-mir-01",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 23,
+        "scorable": 23,
+        "noReference": 0,
+        "retained": 23,
+        "measured": 23,
+        "onset100": 0.17391304347826086,
+        "coverage": 1,
+        "medianMs": 306,
+        "p90Ms": 631
+      },
+      "D": {
+        "requested": 23,
+        "scorable": 23,
+        "noReference": 0,
+        "retained": 23,
+        "measured": 23,
+        "onset100": 0.782608695652174,
+        "coverage": 1,
+        "medianMs": 59,
+        "p90Ms": 125
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.3438085913658142,
+            "seconds": 2.4557416999999986,
+            "analyzedLines": 5,
+            "lineCount": 5
+          }
+        ],
+        "frontendPeakRssBytes": 903692288,
+        "pythonPeakRssBytes": 91377664,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.1598938999999957,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 5,
+      "totalLines": 5
+    },
+    {
+      "id": "confirm-mir-02-0-quick",
+      "songId": "confirm-mir-02",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 20,
+        "scorable": 20,
+        "noReference": 0,
+        "retained": 20,
+        "measured": 20,
+        "onset100": 0.1,
+        "coverage": 1,
+        "medianMs": 433,
+        "p90Ms": 1127
+      },
+      "D": {
+        "requested": 20,
+        "scorable": 20,
+        "noReference": 0,
+        "retained": 20,
+        "measured": 20,
+        "onset100": 0.85,
+        "coverage": 1,
+        "medianMs": 46,
+        "p90Ms": 102
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.2802577614784241,
+            "seconds": 2.399174699999996,
+            "analyzedLines": 4,
+            "lineCount": 4
+          }
+        ],
+        "frontendPeakRssBytes": 903507968,
+        "pythonPeakRssBytes": 92368896,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.1452062000000005,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 4,
+      "totalLines": 4
+    },
+    {
+      "id": "confirm-mir-03-0-quick",
+      "songId": "confirm-mir-03",
+      "language": "zh",
+      "tier": "independent-character",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "oracle-outer-t1-text-only-groups",
+      "referenceKind": "independent-human",
+      "A": {
+        "requested": 26,
+        "scorable": 26,
+        "noReference": 0,
+        "retained": 26,
+        "measured": 26,
+        "onset100": 0.4230769230769231,
+        "coverage": 1,
+        "medianMs": 119.83333333333212,
+        "p90Ms": 482.75
+      },
+      "D": {
+        "requested": 26,
+        "scorable": 26,
+        "noReference": 0,
+        "retained": 25,
+        "measured": 25,
+        "onset100": 0.6153846153846154,
+        "coverage": 0.9615384615384616,
+        "medianMs": 83,
+        "p90Ms": 314
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 25000,
+            "peak": 0.3208426237106323,
+            "seconds": 2.395560400000002,
+            "analyzedLines": 6,
+            "lineCount": 6
+          }
+        ],
+        "frontendPeakRssBytes": 903565312,
+        "pythonPeakRssBytes": 90583040,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 3.107978000000003,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 6,
+      "totalLines": 6
+    },
+    {
+      "id": "confirm-local-ja-00-quick",
+      "songId": "confirm-local-ja-00",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 45,
+        "scorable": 23,
+        "noReference": 22,
+        "retained": 45,
+        "measured": 23,
+        "onset100": 0.2608695652173913,
+        "coverage": 1,
+        "medianMs": 134.81818181818198,
+        "p90Ms": 301.6315789473683
+      },
+      "D": {
+        "requested": 45,
+        "scorable": 23,
+        "noReference": 22,
+        "retained": 43,
+        "measured": 22,
+        "onset100": 0.782608695652174,
+        "coverage": 0.9565217391304348,
+        "medianMs": 59,
+        "p90Ms": 103
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 23682,
+            "peak": 0.6905590295791626,
+            "seconds": 2.4194600000000066,
+            "analyzedLines": 9,
+            "lineCount": 9
+          }
+        ],
+        "frontendPeakRssBytes": 882044928,
+        "pythonPeakRssBytes": 90046464,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.3253621000000058,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 9,
+      "totalLines": 9
+    },
+    {
+      "id": "confirm-local-ja-01-quick",
+      "songId": "confirm-local-ja-01",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 40,
+        "scorable": 40,
+        "noReference": 0,
+        "retained": 40,
+        "measured": 40,
+        "onset100": 0.425,
+        "coverage": 1,
+        "medianMs": 140,
+        "p90Ms": 405
+      },
+      "D": {
+        "requested": 40,
+        "scorable": 40,
+        "noReference": 0,
+        "retained": 37,
+        "measured": 37,
+        "onset100": 0.875,
+        "coverage": 0.925,
+        "medianMs": 18,
+        "p90Ms": 58
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 21280,
+            "peak": 0.9429328441619873,
+            "seconds": 2.222031600000002,
+            "analyzedLines": 8,
+            "lineCount": 8
+          }
+        ],
+        "frontendPeakRssBytes": 849297408,
+        "pythonPeakRssBytes": 89501696,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.103828999999998,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 8,
+      "totalLines": 8
+    },
+    {
+      "id": "confirm-local-ja-02-quick",
+      "songId": "confirm-local-ja-02",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 34,
+        "scorable": 16,
+        "noReference": 18,
+        "retained": 34,
+        "measured": 16,
+        "onset100": 0.4375,
+        "coverage": 1,
+        "medianMs": 121.20000000000073,
+        "p90Ms": 952
+      },
+      "D": {
+        "requested": 34,
+        "scorable": 16,
+        "noReference": 18,
+        "retained": 29,
+        "measured": 16,
+        "onset100": 0.75,
+        "coverage": 1,
+        "medianMs": 69,
+        "p90Ms": 170
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 24021,
+            "peak": 0.8196154236793518,
+            "seconds": 2.3797936999999947,
+            "analyzedLines": 5,
+            "lineCount": 5
+          }
+        ],
+        "frontendPeakRssBytes": 890437632,
+        "pythonPeakRssBytes": 89800704,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.3227537999999988,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 5,
+      "totalLines": 5
+    },
+    {
+      "id": "confirm-local-ja-03-quick",
+      "songId": "confirm-local-ja-03",
+      "language": "ja",
+      "tier": "provider-comparison",
+      "phase": "confirmation",
+      "variant": "quick",
+      "t1Kind": "provided-t1",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 29,
+        "scorable": 29,
+        "noReference": 0,
+        "retained": 29,
+        "measured": 29,
+        "onset100": 0.4827586206896552,
+        "coverage": 1,
+        "medianMs": 101.81818181818016,
+        "p90Ms": 350.7692307692305
+      },
+      "D": {
+        "requested": 29,
+        "scorable": 29,
+        "noReference": 0,
+        "retained": 25,
+        "measured": 25,
+        "onset100": 0.6896551724137931,
+        "coverage": 0.8620689655172413,
+        "medianMs": 23,
+        "p90Ms": 266
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 0,
+            "endMs": 23660,
+            "peak": 0.7130855321884155,
+            "seconds": 2.3658965000000025,
+            "analyzedLines": 5,
+            "lineCount": 5
+          }
+        ],
+        "frontendPeakRssBytes": 881909760,
+        "pythonPeakRssBytes": 90976256,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 3.2302288999999944,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 5,
+      "totalLines": 5
+    },
+    {
+      "id": "full-existing-zh-6b4e4980",
+      "songId": "full-existing-zh-6b4e4980",
+      "language": "zh",
+      "tier": "full-local",
+      "phase": "existing",
+      "variant": "mix",
+      "t1Kind": "provided-t1-projected-from-canonical",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 417,
+        "scorable": 417,
+        "noReference": 0,
+        "retained": 416,
+        "measured": 416,
+        "onset100": 0.486810551558753,
+        "coverage": 0.9976019184652278,
+        "medianMs": 106.3636363636324,
+        "p90Ms": 385.7142857142826
+      },
+      "D": {
+        "requested": 417,
+        "scorable": 417,
+        "noReference": 0,
+        "retained": 349,
+        "measured": 349,
+        "onset100": 0.7793764988009593,
+        "coverage": 0.8369304556354916,
+        "medianMs": 29,
+        "p90Ms": 89
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 15130,
+            "endMs": 45130,
+            "peak": 1.504447340965271,
+            "seconds": 2.7860360999999974,
+            "analyzedLines": 10,
+            "lineCount": 10
+          },
+          {
+            "index": 1,
+            "startMs": 41770,
+            "endMs": 71770,
+            "peak": 1.5488991737365723,
+            "seconds": 1.7851465000000026,
+            "analyzedLines": 9,
+            "lineCount": 9
+          },
+          {
+            "index": 2,
+            "startMs": 65910,
+            "endMs": 95910,
+            "peak": 1.5488991737365723,
+            "seconds": 1.7716143999999914,
+            "analyzedLines": 11,
+            "lineCount": 11
+          },
+          {
+            "index": 3,
+            "startMs": 90890,
+            "endMs": 120890,
+            "peak": 1.5455379486083984,
+            "seconds": 1.7859120000000113,
+            "analyzedLines": 11,
+            "lineCount": 11
+          },
+          {
+            "index": 4,
+            "startMs": 115540,
+            "endMs": 145540,
+            "peak": 1.5490138530731201,
+            "seconds": 1.7176182000000118,
+            "analyzedLines": 10,
+            "lineCount": 10
+          },
+          {
+            "index": 5,
+            "startMs": 139510,
+            "endMs": 169510,
+            "peak": 1.5298335552215576,
+            "seconds": 1.5026168999999936,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 6,
+            "startMs": 162310,
+            "endMs": 192310,
+            "peak": 1.5214099884033203,
+            "seconds": 1.4728353999999964,
+            "analyzedLines": 6,
+            "lineCount": 6
+          },
+          {
+            "index": 7,
+            "startMs": 186230,
+            "endMs": 216230,
+            "peak": 1.5039169788360596,
+            "seconds": 1.540118199999997,
+            "analyzedLines": 8,
+            "lineCount": 8
+          },
+          {
+            "index": 8,
+            "startMs": 212670,
+            "endMs": 242670,
+            "peak": 1.5653183460235596,
+            "seconds": 1.5370634999999893,
+            "analyzedLines": 11,
+            "lineCount": 11
+          },
+          {
+            "index": 9,
+            "startMs": 240620,
+            "endMs": 270620,
+            "peak": 1.560908317565918,
+            "seconds": 1.6403648000000104,
+            "analyzedLines": 6,
+            "lineCount": 6
+          },
+          {
+            "index": 10,
+            "startMs": 259600,
+            "endMs": 289600,
+            "peak": 1.5198960304260254,
+            "seconds": 1.6208482999999978,
+            "analyzedLines": 2,
+            "lineCount": 2
+          }
+        ],
+        "frontendPeakRssBytes": 1469349888,
+        "pythonPeakRssBytes": 96395264,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 20.0355116,
+        "coordinatorPeakRssBytes": 835772416,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 84,
+      "totalLines": 104
+    },
+    {
+      "id": "full-existing-ja-25b328d6",
+      "songId": "full-existing-ja-25b328d6",
+      "language": "ja",
+      "tier": "full-local",
+      "phase": "existing",
+      "variant": "mix",
+      "t1Kind": "provided-t1-projected-from-canonical",
+      "referenceKind": "external-provider",
+      "A": {
+        "requested": 390,
+        "scorable": 170,
+        "noReference": 220,
+        "retained": 390,
+        "measured": 170,
+        "onset100": 0.3235294117647059,
+        "coverage": 1,
+        "medianMs": 181.84615384615608,
+        "p90Ms": 725.666666666657
+      },
+      "D": {
+        "requested": 390,
+        "scorable": 170,
+        "noReference": 220,
+        "retained": 319,
+        "measured": 156,
+        "onset100": 0.6294117647058823,
+        "coverage": 0.9176470588235294,
+        "medianMs": 60,
+        "p90Ms": 155
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 18085,
+            "endMs": 48085,
+            "peak": 1.5835578441619873,
+            "seconds": 3.089306800000006,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 1,
+            "startMs": 39385,
+            "endMs": 69385,
+            "peak": 1.5982418060302734,
+            "seconds": 1.791671000000002,
+            "analyzedLines": 11,
+            "lineCount": 11
+          },
+          {
+            "index": 2,
+            "startMs": 65059,
+            "endMs": 95059,
+            "peak": 1.5713666677474976,
+            "seconds": 1.508047399999996,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 3,
+            "startMs": 97008,
+            "endMs": 127008,
+            "peak": 1.6397008895874023,
+            "seconds": 1.5510803000000015,
+            "analyzedLines": 7,
+            "lineCount": 7
+          },
+          {
+            "index": 4,
+            "startMs": 121698,
+            "endMs": 151698,
+            "peak": 1.606093406677246,
+            "seconds": 1.5692927999999957,
+            "analyzedLines": 10,
+            "lineCount": 10
+          },
+          {
+            "index": 5,
+            "startMs": 147103,
+            "endMs": 177103,
+            "peak": 1.585737943649292,
+            "seconds": 1.5273311000000103,
+            "analyzedLines": 4,
+            "lineCount": 4
+          },
+          {
+            "index": 6,
+            "startMs": 167934,
+            "endMs": 197934,
+            "peak": 1.568051815032959,
+            "seconds": 1.48422619999999,
+            "analyzedLines": 1,
+            "lineCount": 1
+          },
+          {
+            "index": 7,
+            "startMs": 188396,
+            "endMs": 218396,
+            "peak": 1.6387031078338623,
+            "seconds": 1.7707840999999898,
+            "analyzedLines": 6,
+            "lineCount": 6
+          },
+          {
+            "index": 8,
+            "startMs": 214211,
+            "endMs": 244211,
+            "peak": 1.6717112064361572,
+            "seconds": 1.7006411999999982,
+            "analyzedLines": 4,
+            "lineCount": 4
+          }
+        ],
+        "frontendPeakRssBytes": 1460822016,
+        "pythonPeakRssBytes": 92573696,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 16.934755600000003,
+        "coordinatorPeakRssBytes": 875094016,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 53,
+      "totalLines": 58
+    },
+    {
+      "id": "full-new-zh-3fa4a179",
+      "songId": "full-new-zh-3fa4a179",
+      "language": "zh",
+      "tier": "full-local",
+      "phase": "new",
+      "variant": "mix",
+      "t1Kind": "provided-t1-projected-from-canonical",
+      "referenceKind": "unlabelled",
+      "A": {
+        "requested": 235,
+        "scorable": 0,
+        "noReference": 235,
+        "retained": 235,
+        "measured": 0,
+        "onset100": null,
+        "coverage": null,
+        "medianMs": null,
+        "p90Ms": null
+      },
+      "D": {
+        "requested": 235,
+        "scorable": 0,
+        "noReference": 235,
+        "retained": 181,
+        "measured": 0,
+        "onset100": null,
+        "coverage": null,
+        "medianMs": null,
+        "p90Ms": null
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 9350,
+            "endMs": 39350,
+            "peak": 1.6477842330932617,
+            "seconds": 2.914756300000008,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 1,
+            "startMs": 35500,
+            "endMs": 65500,
+            "peak": 1.6477842330932617,
+            "seconds": 1.539969000000012,
+            "analyzedLines": 8,
+            "lineCount": 8
+          },
+          {
+            "index": 2,
+            "startMs": 59440,
+            "endMs": 89440,
+            "peak": 1.5524580478668213,
+            "seconds": 1.6273839999999908,
+            "analyzedLines": 8,
+            "lineCount": 8
+          },
+          {
+            "index": 3,
+            "startMs": 85010,
+            "endMs": 115010,
+            "peak": 1.6117795705795288,
+            "seconds": 1.5288842999999905,
+            "analyzedLines": 9,
+            "lineCount": 9
+          }
+        ],
+        "frontendPeakRssBytes": 1446785024,
+        "pythonPeakRssBytes": 90316800,
+        "sourceRole": "mix",
+        "language": "zh",
+        "seconds": 8.340157999999995,
+        "coordinatorPeakRssBytes": 875094016,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 30,
+      "totalLines": 37
+    },
+    {
+      "id": "full-new-ja-21f9a4c7",
+      "songId": "full-new-ja-21f9a4c7",
+      "language": "ja",
+      "tier": "full-local",
+      "phase": "new",
+      "variant": "mix",
+      "t1Kind": "provided-t1-projected-from-canonical",
+      "referenceKind": "unlabelled",
+      "A": {
+        "requested": 259,
+        "scorable": 0,
+        "noReference": 259,
+        "retained": 259,
+        "measured": 0,
+        "onset100": null,
+        "coverage": null,
+        "medianMs": null,
+        "p90Ms": null
+      },
+      "D": {
+        "requested": 259,
+        "scorable": 0,
+        "noReference": 259,
+        "retained": 208,
+        "measured": 0,
+        "onset100": null,
+        "coverage": null,
+        "medianMs": null,
+        "p90Ms": null
+      },
+      "metrics": {
+        "recipe": {
+          "sampleRate": 44100,
+          "maxWindowMs": 30000,
+          "maxLineMs": 20000,
+          "contextMs": 2000,
+          "paddingMs": 350,
+          "maxDurationMs": 1800000,
+          "maxMessageBytes": 2097152,
+          "silencePeak": 1e-8
+        },
+        "windows": [
+          {
+            "index": 0,
+            "startMs": 19010,
+            "endMs": 49010,
+            "peak": 1.469800353050232,
+            "seconds": 2.8809737000000024,
+            "analyzedLines": 4,
+            "lineCount": 4
+          },
+          {
+            "index": 1,
+            "startMs": 44850,
+            "endMs": 74850,
+            "peak": 1.469800353050232,
+            "seconds": 1.6963212000000059,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 2,
+            "startMs": 69120,
+            "endMs": 99120,
+            "peak": 1.48232102394104,
+            "seconds": 1.5644947000000102,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 3,
+            "startMs": 115620,
+            "endMs": 145620,
+            "peak": 1.444387435913086,
+            "seconds": 1.5580457999999926,
+            "analyzedLines": 4,
+            "lineCount": 4
+          },
+          {
+            "index": 4,
+            "startMs": 141550,
+            "endMs": 171550,
+            "peak": 1.478124976158142,
+            "seconds": 1.4935359000000026,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 5,
+            "startMs": 165750,
+            "endMs": 195750,
+            "peak": 1.5568097829818726,
+            "seconds": 1.4614291000000086,
+            "analyzedLines": 5,
+            "lineCount": 5
+          },
+          {
+            "index": 6,
+            "startMs": 189460,
+            "endMs": 219460,
+            "peak": 1.4954860210418701,
+            "seconds": 1.4876706999999878,
+            "analyzedLines": 2,
+            "lineCount": 2
+          },
+          {
+            "index": 7,
+            "startMs": 228980,
+            "endMs": 258980,
+            "peak": 1.5676133632659912,
+            "seconds": 1.5207122999999991,
+            "analyzedLines": 4,
+            "lineCount": 4
+          },
+          {
+            "index": 8,
+            "startMs": 254010,
+            "endMs": 284010,
+            "peak": 1.518934726715088,
+            "seconds": 1.471904800000004,
+            "analyzedLines": 3,
+            "lineCount": 3
+          }
+        ],
+        "frontendPeakRssBytes": 1461293056,
+        "pythonPeakRssBytes": 95985664,
+        "sourceRole": "mix",
+        "language": "ja",
+        "seconds": 16.0479482,
+        "coordinatorPeakRssBytes": 875094016,
+        "remainingOwnedPids": []
+      },
+      "readyLines": 37,
+      "totalLines": 40
+    }
+  ],
+  "negative": [
+    {
+      "id": "negative-silence",
+      "readyLines": 0,
+      "totalLines": 7,
+      "reasons": {
+        "no-evidence": 7
+      },
+      "seconds": 0.8993411000000001,
+      "windows": 1
+    },
+    {
+      "id": "negative-quiet",
+      "readyLines": 6,
+      "totalLines": 7,
+      "reasons": {
+        "missing-boundaries": 1
+      },
+      "seconds": 3.4878340000000003,
+      "windows": 1
+    },
+    {
+      "id": "negative-korean",
+      "readyLines": 0,
+      "totalLines": 7,
+      "reasons": {
+        "unsupported-language": 7
+      },
+      "seconds": 0.8633020000000006,
+      "windows": 0
+    },
+    {
+      "id": "negative-mixed",
+      "readyLines": 0,
+      "totalLines": 7,
+      "reasons": {
+        "unsupported-language": 7
+      },
+      "seconds": 0.8539988000000003,
+      "windows": 0
+    },
+    {
+      "id": "negative-wrong-audio",
+      "readyLines": 7,
+      "totalLines": 7,
+      "reasons": {},
+      "seconds": 3.2812635999999995,
+      "windows": 1
+    },
+    {
+      "id": "negative-music-only",
+      "readyLines": 7,
+      "totalLines": 7,
+      "reasons": {},
+      "seconds": 3.2845774999999993,
+      "windows": 1
+    },
+    {
+      "id": "negative-offset",
+      "readyLines": 7,
+      "totalLines": 7,
+      "reasons": {},
+      "seconds": 3.510262599999998,
+      "windows": 1
+    }
+  ],
+  "cancellation": {
+    "error": "research job cancelled or closed",
+    "workers": 2,
+    "workersGone": true,
+    "cancelSeconds": 0.03416930000000002,
+    "sidecarUnchanged": true,
+    "temporaryChildren": [],
+    "defaultLoadStatus": "stale",
+    "privateLoadStatus": "ready",
+    "methodMatchesEvaluation": true
+  },
+  "verification": {
+    "primary": {
+      "checks": [
+        {
+          "id": "pjs056-mix",
+          "lines": 3,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 6,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "pjs056-quick",
+          "lines": 3,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 6,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-00-0-mix",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-01-0-mix",
+          "lines": 5,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 10,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-02-0-mix",
+          "lines": 4,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 8,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-03-0-mix",
+          "lines": 6,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 12,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-00-mix",
+          "lines": 9,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 18,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-01-mix",
+          "lines": 8,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 16,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-02-mix",
+          "lines": 5,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 10,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-03-mix",
+          "lines": 5,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 10,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-00-0-quick",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-01-0-quick",
+          "lines": 5,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 10,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-02-0-quick",
+          "lines": 4,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 8,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-mir-03-0-quick",
+          "lines": 6,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 12,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-00-quick",
+          "lines": 9,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 18,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-01-quick",
+          "lines": 8,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 16,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-02-quick",
+          "lines": 5,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 10,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "confirm-local-ja-03-quick",
+          "lines": 5,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 10,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "full-existing-zh-6b4e4980",
+          "lines": 104,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 208,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 38
+        },
+        {
+          "id": "full-existing-ja-25b328d6",
+          "lines": 58,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 116,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 23
+        },
+        {
+          "id": "full-new-zh-3fa4a179",
+          "lines": 37,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 74,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 2
+        },
+        {
+          "id": "full-new-ja-21f9a4c7",
+          "lines": 40,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 80,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 16
+        }
+      ]
+    },
+    "negative": {
+      "checks": [
+        {
+          "id": "negative-silence",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "negative-quiet",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "negative-korean",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 7
+        },
+        {
+          "id": "negative-mixed",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 7
+        },
+        {
+          "id": "negative-wrong-audio",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "negative-music-only",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        },
+        {
+          "id": "negative-offset",
+          "lines": 7,
+          "textPreserved": true,
+          "forwardAndBackwardSamples": 14,
+          "t2AndT1Fallback": true,
+          "offsetAndTextStale": true,
+          "ownedWorkersClosed": true,
+          "repeatedOccurrences": 0
+        }
+      ]
+    },
+    "native": {
+      "checks": 18,
+      "themes": ["light", "dark"],
+      "scope": "isolated visible Electron; explicit private profile injection; not formal activation, OBS or human acceptance"
+    }
+  },
+  "sourceFiles": {
+    "assets.cjs": "077995f7778fee14c075ce61a2f2cab5dc73d7b558188271aafc2aab76c583bc",
+    "decoder.py": "81297990646989a19ccd15f60deca9331cb742ff6538665153a011a98b21a3fd",
+    "decoder_test.py": "cd454dded889c21d1bab055345b0e2d73b337a92d5ebfe4c935bd32428615393",
+    "evaluate.cjs": "3bb816aeecc76690452e08d85a3e29ed316c5980644bf1b42a1ceaf94086dc42",
+    "frontend.cjs": "e255d929b7aab3d2c6b695f5bd5c60c14b42fae7c2ce6619aad2863f8b2697dc",
+    "job.cjs": "a4503dac766fe0fc8b369ee9cb3092a743d5232ce18929ea75b78beeafa66161",
+    "manifest.json": "cd6644a1c11d38398ae8b8ce515df35c3602866d498f8fee52024d0630f62c28",
+    "process.cjs": "6fb587698c3fd8fa91f18e61c45051101d3484cdb560aa5416737bd70abeb462",
+    "protocol.cjs": "c765b22f95efda84fb1d3910d2b181ff631683a9c96b9aef8f3ba835929d7552",
+    "verify.cjs": "20ac153245313d6a346cbb98f713c66c4d4a1814314be5a98c9f371d54ed013a"
+  }
+}

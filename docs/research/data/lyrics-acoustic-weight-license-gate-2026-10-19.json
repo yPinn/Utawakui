@@ -1,0 +1,912 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-19",
+  "scope": "weight use and distribution evidence; no gate relaxation",
+  "evidenceId": "lyrics-license-1792356087883",
+  "hubertFA": {
+    "sourceRevision": "521281fe52dcedb8f970ca200dc4f00fc2869b08",
+    "currentMainRevision": "b3f086966946255a05b0ccb69c865c8e3e806e0a",
+    "sourceDeclaredLicense": "Apache-2.0",
+    "latestLicenseMatchesPinned": true,
+    "officialRelease": {
+      "tag": "v0.0.7",
+      "url": "https://github.com/wolfgitpr/HubertFA/releases/tag/v0.0.7",
+      "publishedAt": "2025-12-30T10:27:49Z",
+      "assets": [
+        {
+          "assetId": 334436583,
+          "filename": "1218_hfa_model_new_dict.zip",
+          "sizeBytes": 256589553,
+          "upstreamDigest": "sha256:48bd6dbcc293e47cc6cbcc556baf575e3d91d61d0ac88ddeccd6098f8f346fa2",
+          "url": "https://github.com/wolfgitpr/HubertFA/releases/download/v0.0.7/1218_hfa_model_new_dict.zip"
+        }
+      ]
+    },
+    "archiveLocalSha256": "48bd6dbcc293e47cc6cbcc556baf575e3d91d61d0ac88ddeccd6098f8f346fa2",
+    "archiveMatchesCurrentOfficialDigest": true,
+    "archiveEntries": [
+      {
+        "filename": "1218_hfa_model_new_dict/config.json",
+        "sizeBytes": 447
+      },
+      {
+        "filename": "1218_hfa_model_new_dict/ds-zh-pinyin-lite.txt",
+        "sizeBytes": 6494
+      },
+      {
+        "filename": "1218_hfa_model_new_dict/ds_cmudict-07b.txt",
+        "sizeBytes": 3402616
+      },
+      {
+        "filename": "1218_hfa_model_new_dict/japanese_dict_full.txt",
+        "sizeBytes": 1564
+      },
+      {
+        "filename": "1218_hfa_model_new_dict/model.onnx",
+        "sizeBytes": 415220874
+      },
+      {
+        "filename": "1218_hfa_model_new_dict/VERSION",
+        "sizeBytes": 1
+      },
+      {
+        "filename": "1218_hfa_model_new_dict/vocab.json",
+        "sizeBytes": 4093
+      }
+    ],
+    "archiveHasLicenseNoticeOrReadme": false,
+    "modelPin": {
+      "bytes": 415220874,
+      "sha256": "4722c13e1d5c1d740ec69c9121f5ec37a88d534aba7637bafb480208be170183"
+    },
+    "usedModelFiles": [
+      "config.json",
+      "ds-zh-pinyin-lite.txt",
+      "japanese_dict_full.txt",
+      "model.onnx",
+      "VERSION",
+      "vocab.json"
+    ],
+    "weightsPermissionFinding": "insufficient explicit checkpoint-specific evidence for product use/distribution; not a prohibition finding",
+    "upstreamIssuesAndPullRequestsRead": 13,
+    "licenseKeywordSearchResults": 0,
+    "searchAbsenceIsNotProofOfNoPermission": true,
+    "possibleBase": {
+      "id": "TencentGameMate/chinese-hubert-base",
+      "revision": "fce0375452b1dd6c080ac3248d423d4d037bc831",
+      "declaredLicense": "mit",
+      "files": [
+        {
+          "filename": "pytorch_model.bin",
+          "sizeBytes": 377552987,
+          "upstreamLfsSha256": "2fefccd26c2794a583b80f6f7210c721873cb7ebae2c1cde3baf9b27855e24d8"
+        }
+      ],
+      "weightsDownloadedThisStudy": false,
+      "licenseEvidence": "model-repository declaration; not product acceptance"
+    },
+    "baseRevisionForReleasedCheckpointEstablished": false,
+    "thirdPartyGtSingerLicenseDoesNotApplyToThisCheckpoint": true
+  },
+  "candidates": {
+    "qwen": {
+      "id": "Qwen/Qwen3-ForcedAligner-0.6B",
+      "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+      "declaredLicense": "apache-2.0",
+      "files": [
+        {
+          "filename": "model.safetensors",
+          "sizeBytes": 1835544544,
+          "upstreamLfsSha256": "47831d0e82f96b20e9034dba01a075ee06436654719f6a68289e49f1b65ce0e7"
+        }
+      ],
+      "weightsDownloadedThisStudy": false,
+      "licenseEvidence": "model-repository declaration; not product acceptance",
+      "codeRevision": "7c6daf77a2421100f5fb066495372c00129d39ff",
+      "allRepositoryFiles": [
+        {
+          "filename": ".gitattributes",
+          "sizeBytes": 1519
+        },
+        {
+          "filename": "README.md",
+          "sizeBytes": 57456
+        },
+        {
+          "filename": "chat_template.json",
+          "sizeBytes": 1161
+        },
+        {
+          "filename": "config.json",
+          "sizeBytes": 5982
+        },
+        {
+          "filename": "generation_config.json",
+          "sizeBytes": 115
+        },
+        {
+          "filename": "merges.txt",
+          "sizeBytes": 1671853
+        },
+        {
+          "filename": "model.safetensors",
+          "sizeBytes": 1835544544
+        },
+        {
+          "filename": "preprocessor_config.json",
+          "sizeBytes": 330
+        },
+        {
+          "filename": "tokenizer_config.json",
+          "sizeBytes": 12666
+        },
+        {
+          "filename": "vocab.json",
+          "sizeBytes": 2776833
+        }
+      ],
+      "allRepositoryBytes": 1840072459,
+      "alignerLanguages": [
+        "Chinese",
+        "Cantonese",
+        "English",
+        "German",
+        "Spanish",
+        "French",
+        "Italian",
+        "Portuguese",
+        "Russian",
+        "Korean",
+        "Japanese"
+      ],
+      "officialAlignerAudioType": "Speech",
+      "asrSingingClaimsNotInherited": true,
+      "requiresSeparateLockedEnvironmentAssessment": true
+    },
+    "whisperCpp": {
+      "id": "ggerganov/whisper.cpp",
+      "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+      "declaredLicense": "mit",
+      "files": [
+        {
+          "filename": "ggml-base-q5_1.bin",
+          "sizeBytes": 59707625,
+          "upstreamLfsSha256": "422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898"
+        },
+        {
+          "filename": "ggml-base.bin",
+          "sizeBytes": 147951465,
+          "upstreamLfsSha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe"
+        },
+        {
+          "filename": "ggml-small-q5_1.bin",
+          "sizeBytes": 190085487,
+          "upstreamLfsSha256": "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb"
+        },
+        {
+          "filename": "ggml-small.bin",
+          "sizeBytes": 487601967,
+          "upstreamLfsSha256": "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b"
+        }
+      ],
+      "weightsDownloadedThisStudy": false,
+      "licenseEvidence": "model-repository declaration; not product acceptance",
+      "codeRevision": "0c7be696371069e0baa2515ed7aa08d5a5473aa6",
+      "upstreamWhisperCodeRevision": "86098128c0b4f24f0e2aa2994de830614b474227",
+      "upstreamExplicitCodeAndWeightsLicense": "MIT",
+      "predefinedTranscriptAlignmentAdapterStillRequired": true,
+      "quantizedTimingQualityUntested": true
+    },
+    "mfa": {
+      "codeRevision": "93411fc0df3bc770dfd34c4282dc136fdf6e8dcb",
+      "modelRepositoryRevision": "d6eff86a42c6a90b641e17dfdf7a16555b934483",
+      "codeLicense": "MIT",
+      "modelAndSelectedDictionaryLicense": "CC-BY-4.0",
+      "acoustic": [
+        {
+          "tag": "acoustic-mandarin_mfa-v3.0.0",
+          "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/tag/acoustic-mandarin_mfa-v3.0.0",
+          "publishedAt": "2024-02-25T22:50:43Z",
+          "assets": [
+            {
+              "assetId": 153523851,
+              "filename": "mandarin_mfa.zip",
+              "sizeBytes": 92103335,
+              "upstreamDigest": null,
+              "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/download/acoustic-mandarin_mfa-v3.0.0/mandarin_mfa.zip"
+            }
+          ]
+        },
+        {
+          "tag": "acoustic-japanese_mfa-v3.0.0",
+          "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/tag/acoustic-japanese_mfa-v3.0.0",
+          "publishedAt": "2024-02-24T00:08:28Z",
+          "assets": [
+            {
+              "assetId": 153269158,
+              "filename": "japanese_mfa.zip",
+              "sizeBytes": 92191596,
+              "upstreamDigest": null,
+              "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/download/acoustic-japanese_mfa-v3.0.0/japanese_mfa.zip"
+            }
+          ]
+        }
+      ],
+      "dictionary": [
+        {
+          "tag": "dictionary-japanese_mfa-v3.0.0",
+          "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/tag/dictionary-japanese_mfa-v3.0.0",
+          "publishedAt": "2024-02-24T00:12:45Z",
+          "assets": [
+            {
+              "assetId": 153269633,
+              "filename": "japanese_mfa.dict",
+              "sizeBytes": 21264022,
+              "upstreamDigest": null,
+              "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/download/dictionary-japanese_mfa-v3.0.0/japanese_mfa.dict"
+            }
+          ]
+        },
+        {
+          "tag": "dictionary-mandarin_china_mfa-v3.0.0",
+          "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/tag/dictionary-mandarin_china_mfa-v3.0.0",
+          "publishedAt": "2024-02-25T22:53:34Z",
+          "assets": [
+            {
+              "assetId": 153524123,
+              "filename": "mandarin_china_mfa.dict",
+              "sizeBytes": 4076905,
+              "upstreamDigest": null,
+              "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/download/dictionary-mandarin_china_mfa-v3.0.0/mandarin_china_mfa.dict"
+            }
+          ]
+        },
+        {
+          "tag": "dictionary-mandarin_taiwan_mfa-v3.0.0",
+          "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/tag/dictionary-mandarin_taiwan_mfa-v3.0.0",
+          "publishedAt": "2024-02-25T22:53:46Z",
+          "assets": [
+            {
+              "assetId": 153524148,
+              "filename": "mandarin_taiwan_mfa.dict",
+              "sizeBytes": 808117,
+              "upstreamDigest": null,
+              "url": "https://github.com/MontrealCorpusTools/mfa-models/releases/download/dictionary-mandarin_taiwan_mfa-v3.0.0/mandarin_taiwan_mfa.dict"
+            }
+          ]
+        }
+      ],
+      "weightsDownloadedThisStudy": false,
+      "partialPayloadBytesTaiwan": 206367070,
+      "partialPayloadBytesChina": 209635858,
+      "fullEnvironmentBytes": null
+    },
+    "ctc": {
+      "zh": {
+        "id": "jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn",
+        "revision": "99ccb2737be22b8bb50dcfcc39ad4d567fb90cfd",
+        "declaredLicense": "apache-2.0",
+        "files": [
+          {
+            "filename": "pytorch_model.bin",
+            "sizeBytes": 1276296151,
+            "upstreamLfsSha256": "de031fd4b29e0c0667e5346450fadfe1326c89936b888b59c4ede608db763ee4"
+          }
+        ],
+        "weightsDownloadedThisStudy": false,
+        "licenseEvidence": "model-repository declaration; not product acceptance"
+      },
+      "ja": {
+        "id": "jonatasgrosman/wav2vec2-large-xlsr-53-japanese",
+        "revision": "cf031e020336460d15a417eba710bbc5bb43be9a",
+        "declaredLicense": "apache-2.0",
+        "files": [
+          {
+            "filename": "pytorch_model.bin",
+            "sizeBytes": 1271531927,
+            "upstreamLfsSha256": "4f6821dcd79770fcd4c11487c4ee5c040b3a7e1863425224014ba5ea8fbc1b67"
+          }
+        ],
+        "weightsDownloadedThisStudy": false,
+        "licenseEvidence": "model-repository declaration; not product acceptance"
+      },
+      "base": {
+        "id": "facebook/wav2vec2-large-xlsr-53",
+        "revision": "c3f9d884181a224a6ac87bf8885c84d1cff3384f",
+        "declaredLicense": "apache-2.0",
+        "files": [
+          {
+            "filename": "pytorch_model.bin",
+            "sizeBytes": 1269737156,
+            "upstreamLfsSha256": "314340227371a608f71adcd5f0de5933824fe77e55822aa4b24dba9c1c364dcb"
+          }
+        ],
+        "weightsDownloadedThisStudy": false,
+        "licenseEvidence": "model-repository declaration; not product acceptance"
+      },
+      "combinedWeightBytes": 2547828078,
+      "onnxConversionNotPerformed": true
+    }
+  },
+  "excluded": {
+    "mmsFA": {
+      "declaredLicense": "CC-BY-NC-4.0",
+      "source": "https://docs.pytorch.org/audio/stable/generated/torchaudio.pipelines.MMS_FA.html",
+      "decision": "not a general product option without sufficient separate permission"
+    },
+    "hubertGtSinger": {
+      "id": "Silasimo/HubertFA-GTSinger",
+      "revision": "278a3554d33cfd0fbdf2c0c2eb5a3fa7876ec0b1",
+      "declaredLicense": "cc-by-nc-sa-4.0",
+      "files": [
+        {
+          "filename": ".gitattributes",
+          "sizeBytes": 1519,
+          "upstreamLfsSha256": null
+        },
+        {
+          "filename": "GTSinger.ckpt",
+          "sizeBytes": 54140074,
+          "upstreamLfsSha256": "c4ad175b09d04a203e4e3df74e916784992a82e4e3fc3141316206de2c849972"
+        },
+        {
+          "filename": "README.md",
+          "sizeBytes": 1535,
+          "upstreamLfsSha256": null
+        },
+        {
+          "filename": "config.yaml",
+          "sizeBytes": 3093,
+          "upstreamLfsSha256": null
+        },
+        {
+          "filename": "datasets.yaml",
+          "sizeBytes": 1043,
+          "upstreamLfsSha256": null
+        },
+        {
+          "filename": "vocab.yaml",
+          "sizeBytes": 702,
+          "upstreamLfsSha256": null
+        }
+      ],
+      "weightsDownloadedThisStudy": false,
+      "licenseEvidence": "model-repository declaration; not product acceptance",
+      "decision": "NC-SA scope and English declaration; separate checkpoint from original HubertFA"
+    },
+    "sofa": {
+      "codeDeclaredLicense": "MIT",
+      "decision": "exact checkpoint/dictionary permission still needs review; code-only evidence not enough"
+    },
+    "whisperX": {
+      "decision": "workflow does not provide a unified license for all dependent model weights"
+    }
+  },
+  "product": {
+    "catalogSha256": "8f3ee3511965b5055291b11ddf41d4ae8db878f28de8b2098c289a5807bb4321",
+    "productUse": "blocked",
+    "blockReason": "weights-evidence-pending",
+    "productionSourceHashesUnchanged": {
+      "electron/lib/lyricsAcoustic/artifacts.js": "851562b5340740e1511d7ca2beeda724a17fc4b90683f453f755b12175680b11",
+      "electron/lib/lyricsAcoustic/capability.js": "7c81585ec8592ed8b3b861f6aa2e92f5740e1a4aa05cc6e0f0d41cb13df9fda5",
+      "electron/lib/lyricsAcoustic/catalog.js": "e7ccf11dd800aaf630a0ed5b0eda415753ad3552e998c34f6fded1fc2f67dd81",
+      "electron/lib/lyricsAcoustic/integrity.js": "c4f8bc4962455635a1af0c0b863f6ae534548fd865bb9d6e285ba97595513185",
+      "electron/lib/lyricsAcoustic/probe.js": "20e7ca51cbe6d606f8b4166829f765631731e563bb2a13b2d90f54b2bf37090c",
+      "electron/main/lyrics/acousticCapabilityHandlers.js": "6451dc7a9e385da12e71ff27c50542596c2855f8ebc236015503ce18790f17ad",
+      "resources/audio-processing/lyrics-acoustic-catalog.json": "8f3ee3511965b5055291b11ddf41d4ae8db878f28de8b2098c289a5807bb4321",
+      "resources/audio-processing/lyrics_acoustic_probe.py": "0a87cca975f6c8d2d3081a79c0a38be20ebcffbf02c71b38e73c93b48e0e0687",
+      "src/composables/lyrics/useLyricsAcousticCapability.js": "a154ac81e5c5de77cd2f1c1db74ab2acc529ed434e6bd9b01fcccb6c2dbaa503",
+      "src/components/settings/LyricsAcousticSettingsRow.vue": "7554f45afa39ae84c7097585539a1b78efc8f620a1e558723a691d0e36224f4d",
+      "src/components/settings/SettingsCapabilitiesSection.vue": "c1a7f461a224511fd872b07c06efa3da6b5b174670b232aa2701c03c41e71be4"
+    },
+    "modelDownloadsAdded": false,
+    "defaultDownloadsAdded": false,
+    "sourceOrRuntimeChanges": false,
+    "upstreamMessagesSent": false,
+    "modelInferenceTestsThisStudy": 0,
+    "dependencyInstallationsThisStudy": 0,
+    "allCandidateProductAcceptance": false
+  },
+  "evidenceSources": [
+    {
+      "name": "hubertRelease",
+      "url": "https://api.github.com/repos/wolfgitpr/HubertFA/releases/tags/v0.0.7",
+      "status": 200,
+      "bytes": 4731,
+      "sha256": "c8eb9e853f9dbe72976657098ee58e49d0ad1576d8b8f56390db6f11fc20b383",
+      "retrievedAt": "2026-10-18T20:41:28.262Z"
+    },
+    {
+      "name": "hubertMain",
+      "url": "https://api.github.com/repos/wolfgitpr/HubertFA/commits/main",
+      "status": 200,
+      "bytes": 5682,
+      "sha256": "bf787946d505d09688e09db3f2b98e21413a582a1a2afb837897ee6cb5c6eebd",
+      "retrievedAt": "2026-10-18T20:41:28.299Z"
+    },
+    {
+      "name": "hubertTree",
+      "url": "https://api.github.com/repos/wolfgitpr/HubertFA/git/trees/521281fe52dcedb8f970ca200dc4f00fc2869b08?recursive=1",
+      "status": 200,
+      "bytes": 41228,
+      "sha256": "82cf22585c4ad3905d555afe2eb2102c90fe5f5eb9300454e8c5e5e47e420cfb",
+      "retrievedAt": "2026-10-18T20:41:28.293Z"
+    },
+    {
+      "name": "hubertReadme",
+      "url": "https://raw.githubusercontent.com/wolfgitpr/HubertFA/521281fe52dcedb8f970ca200dc4f00fc2869b08/README.MD",
+      "status": 200,
+      "bytes": 11054,
+      "sha256": "746b30ed7abf2017ad8151a68b70fdbe144b3658c9b14b42e3bdf383ce52ab3d",
+      "retrievedAt": "2026-10-18T20:41:28.452Z"
+    },
+    {
+      "name": "hubertLicense",
+      "url": "https://raw.githubusercontent.com/wolfgitpr/HubertFA/521281fe52dcedb8f970ca200dc4f00fc2869b08/LICENSE",
+      "status": 200,
+      "bytes": 11444,
+      "sha256": "e5a51cf1e64a50a2b89f95dced5d7aa6c14bed16feaae2bef6a3cf940458aebc",
+      "retrievedAt": "2026-10-18T20:41:28.418Z"
+    },
+    {
+      "name": "hubertConfig",
+      "url": "https://raw.githubusercontent.com/wolfgitpr/HubertFA/521281fe52dcedb8f970ca200dc4f00fc2869b08/configs/force_alignment.yaml",
+      "status": 200,
+      "bytes": 3085,
+      "sha256": "2d2279efe0a6b6694d400fda8b0a16d06d492fc0801ac7ddb3179a469cd3e11f",
+      "retrievedAt": "2026-10-18T20:41:28.313Z"
+    },
+    {
+      "name": "hubertIssues",
+      "url": "https://api.github.com/repos/wolfgitpr/HubertFA/issues?state=all&per_page=100",
+      "status": 200,
+      "bytes": 45183,
+      "sha256": "a96d8a02b0e9063f026b7e5aa508498b61867ed81e9bf7cd41b5ef6a20d73c7f",
+      "retrievedAt": "2026-10-18T20:41:28.389Z"
+    },
+    {
+      "name": "qwenModel",
+      "url": "https://huggingface.co/api/models/Qwen/Qwen3-ForcedAligner-0.6B?blobs=true",
+      "status": 200,
+      "bytes": 4278,
+      "sha256": "f67f2374f23d8df866a977032d3350ebb1c5f80143e405087caac423001c7283",
+      "retrievedAt": "2026-10-18T20:41:28.230Z"
+    },
+    {
+      "name": "qwenRepo",
+      "url": "https://api.github.com/repos/QwenLM/Qwen3-ASR/commits/main",
+      "status": 200,
+      "bytes": 6368,
+      "sha256": "6d1871675a50b956430982c021b481d86bc25bb85dbe287e174593c805b49c18",
+      "retrievedAt": "2026-10-18T20:41:28.277Z"
+    },
+    {
+      "name": "whisperRepo",
+      "url": "https://api.github.com/repos/openai/whisper/commits/main",
+      "status": 200,
+      "bytes": 9381,
+      "sha256": "beea4c198fd72f2abb2625b2823a36daa761c413e73b199e99fc4c7df1f516b6",
+      "retrievedAt": "2026-10-18T20:41:28.277Z"
+    },
+    {
+      "name": "whisperCppRepo",
+      "url": "https://api.github.com/repos/ggml-org/whisper.cpp/commits/master",
+      "status": 200,
+      "bytes": 5383,
+      "sha256": "f7956a61dd8f69977121d4db34607af7d89adf018154cdadca21bdaf522620fb",
+      "retrievedAt": "2026-10-18T20:41:28.279Z"
+    },
+    {
+      "name": "whisperBaseModel",
+      "url": "https://huggingface.co/api/models/openai/whisper-base?blobs=true",
+      "status": 200,
+      "bytes": 10131,
+      "sha256": "e312035e4ed7f6528d53305655aba1e04389c836ef5d4ad0e69d92643f1189c2",
+      "retrievedAt": "2026-10-18T20:41:28.242Z"
+    },
+    {
+      "name": "whisperSmallModel",
+      "url": "https://huggingface.co/api/models/openai/whisper-small?blobs=true",
+      "status": 200,
+      "bytes": 10421,
+      "sha256": "df16c64a53ea7eb2beb5f71b973ff3f18c053455b34212c9d0d4abc647795b98",
+      "retrievedAt": "2026-10-18T20:41:28.248Z"
+    },
+    {
+      "name": "whisperCppModel",
+      "url": "https://huggingface.co/api/models/ggerganov/whisper.cpp?blobs=true",
+      "status": 200,
+      "bytes": 12621,
+      "sha256": "a427c28b6b13ea92de966aa321a8655682ff58d0794186bdce4cea55c5cdd581",
+      "retrievedAt": "2026-10-18T20:41:28.228Z"
+    },
+    {
+      "name": "ctcZhModel",
+      "url": "https://huggingface.co/api/models/jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn?blobs=true",
+      "status": 200,
+      "bytes": 6774,
+      "sha256": "e2a7a37ee12b7eceec05dc3453cfb11ba77e6b0532a72cd53bc79bbf4beb8f8f",
+      "retrievedAt": "2026-10-18T20:41:28.228Z"
+    },
+    {
+      "name": "ctcJaModel",
+      "url": "https://huggingface.co/api/models/jonatasgrosman/wav2vec2-large-xlsr-53-japanese?blobs=true",
+      "status": 200,
+      "bytes": 3446,
+      "sha256": "cfe022dd8b1d38d8d5e2ceb46b9b278d572fc3e176849ad394982c6da7dd0146",
+      "retrievedAt": "2026-10-18T20:41:28.226Z"
+    },
+    {
+      "name": "ctcBaseModel",
+      "url": "https://huggingface.co/api/models/facebook/wav2vec2-large-xlsr-53?blobs=true",
+      "status": 200,
+      "bytes": 3744,
+      "sha256": "15a813606e98a77dfa67b2d1ef0e8060af484a1eb8e3a18e30c289759e4b593d",
+      "retrievedAt": "2026-10-18T20:41:28.229Z"
+    },
+    {
+      "name": "chineseHubertModel",
+      "url": "https://huggingface.co/api/models/TencentGameMate/chinese-hubert-base?blobs=true",
+      "status": 200,
+      "bytes": 2467,
+      "sha256": "8552105426e34db40bfb0000dd33dc81f1b1089112d8f058000ffd73c4171e09",
+      "retrievedAt": "2026-10-18T20:41:28.238Z"
+    },
+    {
+      "name": "mmsModel",
+      "url": "https://huggingface.co/api/models/facebook/mms-1b-all?blobs=true",
+      "status": 200,
+      "bytes": 650018,
+      "sha256": "0a96080fe49da6d413782dd4708adc223e3757536feaf1655b826f9b36d18693",
+      "retrievedAt": "2026-10-18T20:41:28.357Z"
+    },
+    {
+      "name": "hubertGtSinger",
+      "url": "https://huggingface.co/api/models/Silasimo/HubertFA-GTSinger?blobs=true",
+      "status": 200,
+      "bytes": 1258,
+      "sha256": "a6d49fe8b13b57c16a96900782652466c1e4ba0f915646bcc5542a1afab01ff5",
+      "retrievedAt": "2026-10-18T20:41:28.261Z"
+    },
+    {
+      "name": "mfaRepo",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/Montreal-Forced-Aligner/commits/main",
+      "status": 200,
+      "bytes": 6214,
+      "sha256": "9bbc17069121b420a47ee40de7b111989d4e2f0a30a8ee06de877b725232c108",
+      "retrievedAt": "2026-10-18T20:41:28.394Z"
+    },
+    {
+      "name": "mfaModelsRepo",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/commits/main",
+      "status": 200,
+      "bytes": 6399,
+      "sha256": "890664339aacb139d74d3ed696dc7fa05be68f9661759329d8fa27af25ea3d50",
+      "retrievedAt": "2026-10-18T20:41:28.638Z"
+    },
+    {
+      "name": "mfaMandarinRelease",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/releases/tags/acoustic-mandarin_mfa-v3.0.0",
+      "status": 200,
+      "bytes": 11603,
+      "sha256": "287e0e58aa650fd964b510e558f58142533886b0cb4459ac6bd05c948b002e1b",
+      "retrievedAt": "2026-10-18T20:41:28.297Z"
+    },
+    {
+      "name": "mfaJapaneseRelease",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/releases/tags/acoustic-japanese_mfa-v3.0.0",
+      "status": 200,
+      "bytes": 11389,
+      "sha256": "951fdf6dbb926fb807c8ac6d32db9ea6e281e92c1d75b85d3650c8190d39a62e",
+      "retrievedAt": "2026-10-18T20:41:28.577Z"
+    },
+    {
+      "name": "hubertLatestLicense",
+      "url": "https://raw.githubusercontent.com/wolfgitpr/HubertFA/b3f086966946255a05b0ccb69c865c8e3e806e0a/LICENSE",
+      "status": 200,
+      "bytes": 11444,
+      "sha256": "e5a51cf1e64a50a2b89f95dced5d7aa6c14bed16feaae2bef6a3cf940458aebc",
+      "retrievedAt": "2026-10-18T20:42:11.795Z"
+    },
+    {
+      "name": "hubertLatestReadme",
+      "url": "https://raw.githubusercontent.com/wolfgitpr/HubertFA/b3f086966946255a05b0ccb69c865c8e3e806e0a/README.MD",
+      "status": 200,
+      "bytes": 11038,
+      "sha256": "78bd9e1675ec454e547dc37f4344f6288119e7291457d151c1b0fb51d1a38a80",
+      "retrievedAt": "2026-10-18T20:42:11.793Z"
+    },
+    {
+      "name": "hubertDiscussion",
+      "url": "https://github.com/wolfgitpr/HubertFA/discussions/2",
+      "status": 200,
+      "bytes": 255577,
+      "sha256": "9cc22675f4a46b89faccc3ae27cccfc027584eebbbe4757921d637c9d4f9d79b",
+      "retrievedAt": "2026-10-18T20:42:11.783Z"
+    },
+    {
+      "name": "hubertIssuesSearch",
+      "url": "https://api.github.com/search/issues?q=repo%3Awolfgitpr%2FHubertFA+license+OR+commercial+OR+%E6%8E%88%E6%9D%83+OR+%E5%95%86%E7%94%A8",
+      "status": 200,
+      "bytes": 79,
+      "sha256": "c9938edecb99d754b2d039ac9eec320a94c769b6a6417921e2dcbef9e2fe01a0",
+      "retrievedAt": "2026-10-18T20:42:11.648Z"
+    },
+    {
+      "name": "chineseHubertReadme",
+      "url": "https://huggingface.co/TencentGameMate/chinese-hubert-base/raw/fce0375452b1dd6c080ac3248d423d4d037bc831/README.md",
+      "status": 200,
+      "bytes": 1190,
+      "sha256": "971ccb8e419d76ee1facfaefe55e1a112ec3c5cd5a1d4aa192debe51f2ec24f8",
+      "retrievedAt": "2026-10-18T20:42:11.562Z"
+    },
+    {
+      "name": "qwenCard",
+      "url": "https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B/raw/c7cbfc2048c462b0d63a45797104fc9db3ad62b7/README.md",
+      "status": 200,
+      "bytes": 57456,
+      "sha256": "5058416891bc47a2051557765997e8c42f8eb78a0e33c3e775bd17d4b0ba4d50",
+      "retrievedAt": "2026-10-18T20:42:11.570Z"
+    },
+    {
+      "name": "qwenConfig",
+      "url": "https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B/raw/c7cbfc2048c462b0d63a45797104fc9db3ad62b7/config.json",
+      "status": 200,
+      "bytes": 5982,
+      "sha256": "d616c65d46c4b90bdc651b0a0963ea932732241140f337f9bb6b0335a9c8ef09",
+      "retrievedAt": "2026-10-18T20:42:11.569Z"
+    },
+    {
+      "name": "qwenLicense",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-ASR/7c6daf77a2421100f5fb066495372c00129d39ff/LICENSE",
+      "status": 200,
+      "bytes": 11343,
+      "sha256": "a44a6081c73ad75f0255bb2bb5cab74ef1829565a895a24e53a4f11290ab7655",
+      "retrievedAt": "2026-10-18T20:42:11.720Z"
+    },
+    {
+      "name": "qwenPyproject",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-ASR/7c6daf77a2421100f5fb066495372c00129d39ff/pyproject.toml",
+      "status": 200,
+      "bytes": 1304,
+      "sha256": "073b776779667e112aa809df94f0dcc5b1caa3cdd031f0f9f01af29749b5df14",
+      "retrievedAt": "2026-10-18T20:42:11.797Z"
+    },
+    {
+      "name": "qwenAlignerCode",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-ASR/7c6daf77a2421100f5fb066495372c00129d39ff/qwen_asr/inference/qwen3_forced_aligner.py",
+      "status": 200,
+      "bytes": 16411,
+      "sha256": "fb586127507c5980d11c6d848b530e652afad3ae0707cba6eb0c90377b2a2111",
+      "retrievedAt": "2026-10-18T20:42:11.698Z"
+    },
+    {
+      "name": "whisperReadme",
+      "url": "https://raw.githubusercontent.com/openai/whisper/86098128c0b4f24f0e2aa2994de830614b474227/README.md",
+      "status": 200,
+      "bytes": 8246,
+      "sha256": "38c180c2a8d8ba628a3e131ad42bf06c8a51bb681efb30fbe28d5a0f4b65f288",
+      "retrievedAt": "2026-10-18T20:42:11.808Z"
+    },
+    {
+      "name": "whisperLicense",
+      "url": "https://raw.githubusercontent.com/openai/whisper/86098128c0b4f24f0e2aa2994de830614b474227/LICENSE",
+      "status": 200,
+      "bytes": 1063,
+      "sha256": "b5d65a59060e68c4ff940e1eddfa6f94b2d68fdf58ed7f4dd57721c997e35e9d",
+      "retrievedAt": "2026-10-18T20:42:11.494Z"
+    },
+    {
+      "name": "whisperTiming",
+      "url": "https://raw.githubusercontent.com/openai/whisper/86098128c0b4f24f0e2aa2994de830614b474227/whisper/timing.py",
+      "status": 200,
+      "bytes": 12697,
+      "sha256": "bb091c973c428697012f0f8d1b4f5f3a605cd93c5d1c129957f712a6a878a59c",
+      "retrievedAt": "2026-10-18T20:42:11.783Z"
+    },
+    {
+      "name": "whisperCppReadme",
+      "url": "https://raw.githubusercontent.com/ggml-org/whisper.cpp/0c7be696371069e0baa2515ed7aa08d5a5473aa6/README.md",
+      "status": 200,
+      "bytes": 40988,
+      "sha256": "43451813ec96b5ea286c6d676f467bdffb053224c110c257ce3d67d911e774e7",
+      "retrievedAt": "2026-10-18T20:42:11.786Z"
+    },
+    {
+      "name": "whisperCppLicense",
+      "url": "https://raw.githubusercontent.com/ggml-org/whisper.cpp/0c7be696371069e0baa2515ed7aa08d5a5473aa6/LICENSE",
+      "status": 200,
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "retrievedAt": "2026-10-18T20:42:11.715Z"
+    },
+    {
+      "name": "whisperCppModels",
+      "url": "https://raw.githubusercontent.com/ggml-org/whisper.cpp/0c7be696371069e0baa2515ed7aa08d5a5473aa6/models/README.md",
+      "status": 200,
+      "bytes": 5745,
+      "sha256": "bad04fef13f1556cc9cc93c46022e47dbcea94814032faaa4aac2e168314b2b7",
+      "retrievedAt": "2026-10-18T20:42:11.785Z"
+    },
+    {
+      "name": "whisperCppCard",
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/raw/5359861c739e955e79d9a303bcbc70fb988958b1/README.md",
+      "status": 200,
+      "bytes": 3196,
+      "sha256": "21fd967098804f33fc84e803fb0e5ab7666d71801f4027cf28a65e7af09c1758",
+      "retrievedAt": "2026-10-18T20:42:11.568Z"
+    },
+    {
+      "name": "mfaLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/Montreal-Forced-Aligner/93411fc0df3bc770dfd34c4282dc136fdf6e8dcb/LICENSE",
+      "status": 200,
+      "bytes": 1066,
+      "sha256": "ffaac053ec76f9df77885df9102299bf0950f3ca5b3dfd04b898aee0c77bc605",
+      "retrievedAt": "2026-10-18T20:42:11.730Z"
+    },
+    {
+      "name": "mfaMandarinLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/d6eff86a42c6a90b641e17dfdf7a16555b934483/acoustic/mandarin/mfa/v3.0.0/LICENSE",
+      "status": 200,
+      "bytes": 18650,
+      "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+      "retrievedAt": "2026-10-18T20:42:11.825Z"
+    },
+    {
+      "name": "mfaJapaneseLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/d6eff86a42c6a90b641e17dfdf7a16555b934483/acoustic/japanese/mfa/v3.0.0/LICENSE",
+      "status": 200,
+      "bytes": 18650,
+      "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+      "retrievedAt": "2026-10-18T20:42:11.766Z"
+    },
+    {
+      "name": "mfaMandarinDictRelease",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/releases/tags/dictionary-mandarin_mfa-v3.0.0",
+      "status": 404,
+      "bytes": 133,
+      "sha256": "010563d2cfb8f1e87f700936ce59ee3a33364da46e3db41b0049227918ece74d",
+      "retrievedAt": "2026-10-18T20:42:11.610Z"
+    },
+    {
+      "name": "mfaJapaneseDictRelease",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/releases/tags/dictionary-japanese_mfa-v3.0.0",
+      "status": 200,
+      "bytes": 8316,
+      "sha256": "386cdbf8af1695b5aa253573358539f04312e2764128a505790f7f2cf2b57a6e",
+      "retrievedAt": "2026-10-18T20:42:11.611Z"
+    },
+    {
+      "name": "mfaMandarinDictLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/d6eff86a42c6a90b641e17dfdf7a16555b934483/dictionary/mandarin/mfa/v3.0.0/LICENSE",
+      "status": 404,
+      "bytes": 14,
+      "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+      "retrievedAt": "2026-10-18T20:42:11.740Z"
+    },
+    {
+      "name": "mfaJapaneseDictLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/d6eff86a42c6a90b641e17dfdf7a16555b934483/dictionary/japanese/mfa/v3.0.0/LICENSE",
+      "status": 200,
+      "bytes": 18650,
+      "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+      "retrievedAt": "2026-10-18T20:42:11.822Z"
+    },
+    {
+      "name": "mfaInstallation",
+      "url": "https://montreal-forced-aligner.readthedocs.io/en/latest/getting_started.html",
+      "status": 200,
+      "bytes": 25097,
+      "sha256": "656e104cbcbc2aa9c3f85e05ab1b62b72e0628133ffca93b3d66ecd5146ba798",
+      "retrievedAt": "2026-10-18T20:42:11.632Z"
+    },
+    {
+      "name": "ctcZhCard",
+      "url": "https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn/raw/99ccb2737be22b8bb50dcfcc39ad4d567fb90cfd/README.md",
+      "status": 200,
+      "bytes": 7722,
+      "sha256": "9b14283ce428f729bfbf8a82313f61e76d83c760b5a72f2fadf516523ff412b7",
+      "retrievedAt": "2026-10-18T20:42:11.569Z"
+    },
+    {
+      "name": "ctcJaCard",
+      "url": "https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-japanese/raw/cf031e020336460d15a417eba710bbc5bb43be9a/README.md",
+      "status": 200,
+      "bytes": 8634,
+      "sha256": "5b903915e4edb98bf7a5a7f6be42792458272c73cbff07f5c2f8f33765f8f070",
+      "retrievedAt": "2026-10-18T20:42:11.569Z"
+    },
+    {
+      "name": "ctcBaseCard",
+      "url": "https://huggingface.co/facebook/wav2vec2-large-xlsr-53/raw/c3f9d884181a224a6ac87bf8885c84d1cff3384f/README.md",
+      "status": 200,
+      "bytes": 2288,
+      "sha256": "ed9a3f408a32dfaac3507d493373ae0077c151f69b6c2184c13071b3dabbea17",
+      "retrievedAt": "2026-10-18T20:42:11.568Z"
+    },
+    {
+      "name": "apacheTerms",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0",
+      "status": 200,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "retrievedAt": "2026-10-18T20:42:11.570Z"
+    },
+    {
+      "name": "ccByTerms",
+      "url": "https://creativecommons.org/licenses/by/4.0/legalcode.en",
+      "status": 200,
+      "bytes": 48742,
+      "sha256": "58230517b7895aa219ff46a6ed63e67057a1582fb9ea054b16728a8c13525650",
+      "retrievedAt": "2026-10-18T20:42:11.649Z"
+    },
+    {
+      "name": "mmsFaDocumentation",
+      "url": "https://docs.pytorch.org/audio/stable/generated/torchaudio.pipelines.MMS_FA.html",
+      "status": 200,
+      "bytes": 34662,
+      "sha256": "bdbd9b5edda012dbcc693d3cbfa7ee97c83bd82d837edc8380140041158454a6",
+      "retrievedAt": "2026-10-18T20:42:11.879Z"
+    },
+    {
+      "name": "mfaChinaDictRelease",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/releases/tags/dictionary-mandarin_china_mfa-v3.0.0",
+      "status": 200,
+      "bytes": 8934,
+      "sha256": "c6242087cd5417da9829a2ee3b0276fa65acf5edd71597fb1ff3692d8c1ee06c",
+      "retrievedAt": "2026-10-18T20:43:54.625Z"
+    },
+    {
+      "name": "mfaTaiwanDictRelease",
+      "url": "https://api.github.com/repos/MontrealCorpusTools/mfa-models/releases/tags/dictionary-mandarin_taiwan_mfa-v3.0.0",
+      "status": 200,
+      "bytes": 8897,
+      "sha256": "f8dfdae32031332d0ba34d7babc134c813c82045297890894a611501b0d62a08",
+      "retrievedAt": "2026-10-18T20:43:54.613Z"
+    },
+    {
+      "name": "mfaChinaDictLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/d6eff86a42c6a90b641e17dfdf7a16555b934483/dictionary/mandarin/china_mfa/v3.0.0/LICENSE",
+      "status": 200,
+      "bytes": 18650,
+      "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+      "retrievedAt": "2026-10-18T20:43:54.758Z"
+    },
+    {
+      "name": "mfaTaiwanDictLicense",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/d6eff86a42c6a90b641e17dfdf7a16555b934483/dictionary/mandarin/taiwan_mfa/v3.0.0/LICENSE",
+      "status": 200,
+      "bytes": 18650,
+      "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+      "retrievedAt": "2026-10-18T20:43:54.757Z"
+    },
+    {
+      "name": "mfaReadme",
+      "url": "https://raw.githubusercontent.com/MontrealCorpusTools/Montreal-Forced-Aligner/93411fc0df3bc770dfd34c4282dc136fdf6e8dcb/README.md",
+      "status": 200,
+      "bytes": 4334,
+      "sha256": "6d2984839ae2ab96e894791bacad79c7a7b75d8cb0f498458ee372766eed0bc5",
+      "retrievedAt": "2026-10-18T20:43:54.793Z"
+    }
+  ],
+  "verification": {
+    "focusedFiles": 3,
+    "focusedTests": 8,
+    "markdownFiles": 139,
+    "formattedDocuments": 3,
+    "relativeLinks": 105,
+    "unchangedProductionHashes": 11,
+    "allSizeArithmetic": true,
+    "privacy": true,
+    "indexEmpty": true,
+    "fullSuiteRunThisStudy": false,
+    "buildRunThisStudy": false,
+    "scopeReason": "research documents only; production sources unchanged"
+  },
+  "limitations": [
+    "metadata hashes record retrieved evidence; alternative weight hashes/sizes not locally verified",
+    "no alternative singing alignment benchmark or full-environment capacity measurement",
+    "no comprehensive legal assurance for all training data and third-party rights",
+    "HubertFA evidence search is bounded to recorded primary sources; absence is not proof of prohibition"
+  ]
+}

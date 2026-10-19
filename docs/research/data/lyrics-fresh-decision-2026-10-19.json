@@ -1,0 +1,406 @@
+{
+  "date": "2026-10-19",
+  "scope": "private controlled corpus; no formal model gate or default-download changes",
+  "inputSha256": "e1417b47c22aa3279394d25e254ee5b25db3e4b793941968cc27c623fb29a179",
+  "referenceSha256": "e2f29c64564893a6000e985931e66495f95841d870b69d915f0b68ac874f9222",
+  "resultSha256": {
+    "qwen": "1dc1afc11a0e840b810fe24ab8c292082f417a04349fd411d56df4336701e084",
+    "smallChecked": "9c478e79fe56561d4eda6c744c73d9f9d6e0188f897264553343ea03739e75e9"
+  },
+  "methods": {
+    "qwen": {
+      "kind": "model",
+      "id": "qwen-candidate-research",
+      "version": "paired-v1",
+      "modelManifestSha256": "b63a74def480dee6dc8115cf7d51924f755965ad01488944da61aafd7da83320",
+      "environmentLockSha256": "7d577d93427783ea055246c44226b5692b892fa8c5e4e76d31e5d5f2d71a3ceb",
+      "decoderVersion": "candidate-ac126c21b5c67c9e",
+      "g2pVersion": "upstream-v1",
+      "chunkerVersion": "frozen-intl-v1",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "small": {
+      "kind": "model",
+      "id": "small-candidate-research",
+      "version": "paired-v1",
+      "modelManifestSha256": "7588617be3fb6ad80f18d864de07aed2a4cf9c504699c5d192ebafaf20f27e36",
+      "environmentLockSha256": "ecd681e00b24451886bdc9f28f9625ebb2f17d3a6d7e030dec4f94e9e52dad7e",
+      "decoderVersion": "candidate-ac126c21b5c67c9e",
+      "g2pVersion": "upstream-v1",
+      "chunkerVersion": "frozen-intl-v1",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "qwenSmall": {
+      "kind": "model",
+      "id": "qwen-small-content-research",
+      "version": "fresh-v1",
+      "modelManifestSha256": "cad141869e7a5602a2e261037e443baa37d4b23b40eea95391aa7dd01f3b6d94",
+      "environmentLockSha256": "135eca367b9130178c7011f7a3a60e524c65752b0f80ea1996f53756829e97c7",
+      "decoderVersion": "candidate-ac126c21b5c67c9e",
+      "g2pVersion": "upstream-v1",
+      "chunkerVersion": "frozen-intl-v1",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    }
+  },
+  "researchSourceHashes": {
+    "cases.cjs": "5e5077a5e825cf40059ac2594d7af01fec674c723815ea08bc4be30601e2eb48",
+    "cases.test.mjs": "9080d35a930d75133d0b0faabd710ffd93937470da4cc36a0fdd9ac1a853b018",
+    "compare.cjs": "e249cec5f41c17ddc95e51ccca43f4d0cf9a238938de9f1048fc195b73236ebe",
+    "content.cjs": "0e115c8e3e9360b716adc06005b495342cc097113e072c8039817d59f4ed1a0d",
+    "content.test.mjs": "05f97ff5f3d28f591830724527baf08ad33a8872ab92ef07493f91eb686690b5",
+    "prepare.cjs": "4372722f0a72fa15102d59af5ee03db18f388af6d23e81a4d603f1db7f8909f5",
+    "review.cjs": "8f1e279ae8afe9a7f6b0c1f9a8e7415ad50cf671041a2e3921252a1406e33d9e",
+    "review.test.mjs": "6c500d638e4de7d123409933dc458d0b5bba6492e44a43629027c9edd030119a",
+    "summarize.cjs": "e5254f184e78b58b91a8f1026f606269360624b045544cc9af194cc90708055f"
+  },
+  "humanAudit": {
+    "total": 53,
+    "reviewed": 0,
+    "uncertain": 0,
+    "manualOnsets": 0,
+    "pending": 53,
+    "manifestSha256": "dc42566a5982e1170692ac63addac00bda3c1b4a36c0566737a192d0cad960e0",
+    "receiptSha256": "940de9b16bf191c596fd3a72723863c897ace87b84b4cb20c8ece0776f0bd0c1"
+  },
+  "corpus": {
+    "independentSongs": 4,
+    "byLanguage": {
+      "zh": 2,
+      "ja": 2
+    },
+    "cases": 16,
+    "selection": "two per language; JA prefers available external provider fine timing; stable track-id tie break; minimum 3 complete coarse lines; first interior omittable phrase; first later different phrase donor; no outcome selection",
+    "variantNote": "phrase-mismatch is synthetic donor-phrase substitution, not a natural alternate version; missing-audio is exact whole-phrase silence, not isolated vocal removal; missing-text retains valid surviving words",
+    "humanReviewed": 0,
+    "humanOnsets": 0
+  },
+  "conditions": [
+    {
+      "variant": "normal",
+      "cases": 4,
+      "supportedTargetGroups": 3,
+      "qwenTargetReady": 3,
+      "smallCheckedTargetReady": 3,
+      "smallTargetRejected": 0,
+      "extraContentWarnings": 0,
+      "details": [
+        {
+          "songId": "zh-1",
+          "qwenReady": true,
+          "checkedReady": true,
+          "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+          "reject": false,
+          "compatibility": 1,
+          "asrCharacters": 13,
+          "sourceCharacters": 11,
+          "matchedCharacters": 11,
+          "extraCharacters": 2,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "zh-2",
+          "qwenReady": true,
+          "checkedReady": true,
+          "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+          "reject": false,
+          "compatibility": 0.7142857142857143,
+          "asrCharacters": 11,
+          "sourceCharacters": 7,
+          "matchedCharacters": 5,
+          "extraCharacters": 6,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "ja-1",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+          "reject": false,
+          "missingAsr": true
+        },
+        {
+          "songId": "ja-2",
+          "qwenReady": true,
+          "checkedReady": true,
+          "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+          "reject": false,
+          "compatibility": 0.8461538461538461,
+          "asrCharacters": 14,
+          "sourceCharacters": 13,
+          "matchedCharacters": 11,
+          "extraCharacters": 3,
+          "extraContentWarning": false
+        }
+      ]
+    },
+    {
+      "variant": "phrase-mismatch",
+      "cases": 4,
+      "supportedTargetGroups": 3,
+      "qwenTargetReady": 3,
+      "smallCheckedTargetReady": 0,
+      "smallTargetRejected": 3,
+      "extraContentWarnings": 0,
+      "details": [
+        {
+          "songId": "zh-1",
+          "qwenReady": true,
+          "checkedReady": false,
+          "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+          "reject": true,
+          "compatibility": 0.09090909090909091,
+          "asrCharacters": 12,
+          "sourceCharacters": 11,
+          "matchedCharacters": 1,
+          "extraCharacters": 11,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "zh-2",
+          "qwenReady": true,
+          "checkedReady": false,
+          "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+          "reject": true,
+          "compatibility": 0.14285714285714285,
+          "asrCharacters": 10,
+          "sourceCharacters": 7,
+          "matchedCharacters": 1,
+          "extraCharacters": 9,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "ja-1",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+          "reject": false,
+          "missingAsr": true
+        },
+        {
+          "songId": "ja-2",
+          "qwenReady": true,
+          "checkedReady": false,
+          "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+          "reject": true,
+          "compatibility": 0.07692307692307693,
+          "asrCharacters": 12,
+          "sourceCharacters": 13,
+          "matchedCharacters": 1,
+          "extraCharacters": 11,
+          "extraContentWarning": false
+        }
+      ]
+    },
+    {
+      "variant": "missing-text",
+      "cases": 4,
+      "supportedTargetGroups": 3,
+      "qwenTargetReady": 3,
+      "smallCheckedTargetReady": 3,
+      "smallTargetRejected": 0,
+      "extraContentWarnings": 0,
+      "details": [
+        {
+          "songId": "zh-1",
+          "qwenReady": true,
+          "checkedReady": true,
+          "lineId": "lyr_5f88e620b915b6f16cd5dcd4a73dda38445e7b5baa99460275000798cb629478_0qywnzk_l_1",
+          "reject": false,
+          "compatibility": 1,
+          "asrCharacters": 13,
+          "sourceCharacters": 9,
+          "matchedCharacters": 9,
+          "extraCharacters": 4,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "zh-2",
+          "qwenReady": true,
+          "checkedReady": true,
+          "lineId": "lyr_93df6fb35e7a3801bd3cfeae2e397e8a9903c0f2d7783f81a19a74fd114c4b91_0qywnzk_l_1",
+          "reject": false,
+          "compatibility": 0.6,
+          "asrCharacters": 11,
+          "sourceCharacters": 5,
+          "matchedCharacters": 3,
+          "extraCharacters": 8,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "ja-1",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_85c9a9365841e8a5ea889fe030519b65f9a307bf592dfe763c80ed649301fb26_0qywnzk_l_1",
+          "reject": false,
+          "missingAsr": true
+        },
+        {
+          "songId": "ja-2",
+          "qwenReady": true,
+          "checkedReady": true,
+          "lineId": "lyr_1701ba257a8bb8c17bf099bdaa81f24ca1a5754e7b01b5234a7afbe324ff685c_0qywnzk_l_1",
+          "reject": false,
+          "compatibility": 0.9090909090909091,
+          "asrCharacters": 14,
+          "sourceCharacters": 11,
+          "matchedCharacters": 10,
+          "extraCharacters": 4,
+          "extraContentWarning": false
+        }
+      ]
+    },
+    {
+      "variant": "missing-audio",
+      "cases": 4,
+      "supportedTargetGroups": 3,
+      "qwenTargetReady": 0,
+      "smallCheckedTargetReady": 0,
+      "smallTargetRejected": 3,
+      "extraContentWarnings": 0,
+      "details": [
+        {
+          "songId": "zh-1",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_0e9b7c8d3237a7251868e317e77b9ad5fe1a6a7cb3bd64ff2fedfddf01aea706_0qywnzk_l_1",
+          "reject": true,
+          "compatibility": 0.09090909090909091,
+          "asrCharacters": 6,
+          "sourceCharacters": 11,
+          "matchedCharacters": 1,
+          "extraCharacters": 5,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "zh-2",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_d42b3b2a3f44af45708b7cc46b9d102d5c551a6409f270188ac30e098f796017_0qywnzk_l_1",
+          "reject": true,
+          "compatibility": 0.14285714285714285,
+          "asrCharacters": 5,
+          "sourceCharacters": 7,
+          "matchedCharacters": 1,
+          "extraCharacters": 4,
+          "extraContentWarning": false
+        },
+        {
+          "songId": "ja-1",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_256e5655f74ea76f6904b2a76853783cda0b68533e87d117ac2345a739ceab93_0qywnzk_l_1",
+          "reject": false,
+          "missingAsr": true
+        },
+        {
+          "songId": "ja-2",
+          "qwenReady": false,
+          "checkedReady": false,
+          "lineId": "lyr_015cd7c108457930b8d37b93c4188fe0b638755f7aff042458505203b7700542_0qywnzk_l_1",
+          "reject": true,
+          "compatibility": 0.07692307692307693,
+          "asrCharacters": 4,
+          "sourceCharacters": 13,
+          "matchedCharacters": 1,
+          "extraCharacters": 3,
+          "extraContentWarning": false
+        }
+      ]
+    }
+  ],
+  "normalOutput": {
+    "qwenReadyLines": 25,
+    "checkedReadyLines": 24,
+    "totalLines": 29
+  },
+  "externalProviderAgreement": {
+    "note": "not human accuracy; fine provider references only for new Japanese; normal clips only to avoid counting manipulated duplicates; internal cuts only, excluding T1 first anchors",
+    "noteCorrection": "Earlier prose incorrectly said first anchors were included; frozen scoreCuts and all numerical results unchanged.",
+    "qwen": {
+      "cases": 4,
+      "requested": 140,
+      "scorable": 35,
+      "measured": 29,
+      "missing": 6,
+      "within100": 12,
+      "over500": 5,
+      "over1000": 0,
+      "medianMs": 129,
+      "p90Ms": 677
+    },
+    "coarseBaseline": {
+      "cases": 4,
+      "requested": 140,
+      "scorable": 35,
+      "measured": 35,
+      "missing": 0,
+      "within100": 15,
+      "over500": 2,
+      "over1000": 1,
+      "medianMs": 124.57142857142753,
+      "p90Ms": 408.33333333333394
+    },
+    "checked": {
+      "cases": 4,
+      "requested": 140,
+      "scorable": 35,
+      "measured": 29,
+      "missing": 6,
+      "within100": 12,
+      "over500": 5,
+      "over1000": 0,
+      "medianMs": 129,
+      "p90Ms": 677
+    }
+  },
+  "timing": {
+    "qwen": {
+      "totalSeconds": 268.40632810000005,
+      "medianCaseSeconds": 16.778111299999996,
+      "peakRssBytes": 6100336640,
+      "ownedWorkersClosed": true
+    },
+    "small": {
+      "totalSeconds": 186.43583709999996,
+      "medianCaseSeconds": 10.633457599999995,
+      "peakRssBytes": null,
+      "ownedWorkersClosed": true
+    },
+    "note": "cold model per case, CPU serial; summing case times describes this research harness, not warm full-song latency"
+  },
+  "capacity": {
+    "unit": "decimal bytes; logical installed payload; excludes app/OS/music/results/UV/job caches; includes current Python caches",
+    "qwenOwnedBytes": 2902670349,
+    "smallIncrementBytes": 508450607,
+    "qwenSmallOwnedBytes": 3411120956,
+    "ffmpegBytes": 222248960,
+    "qwenSmallIncludingFfmpegBytes": 3633369916,
+    "installationPeakBytes": null,
+    "lowRamAcceptance": false,
+    "gpuAcceptance": false
+  },
+  "sourceHashes": {
+    "electron/lib/lyricsAcoustic/artifacts.js": "851562b5340740e1511d7ca2beeda724a17fc4b90683f453f755b12175680b11",
+    "electron/lib/lyricsAcoustic/capability.js": "7c81585ec8592ed8b3b861f6aa2e92f5740e1a4aa05cc6e0f0d41cb13df9fda5",
+    "electron/lib/lyricsAcoustic/catalog.js": "e7ccf11dd800aaf630a0ed5b0eda415753ad3552e998c34f6fded1fc2f67dd81",
+    "electron/lib/lyricsAcoustic/integrity.js": "c4f8bc4962455635a1af0c0b863f6ae534548fd865bb9d6e285ba97595513185",
+    "electron/lib/lyricsAcoustic/probe.js": "20e7ca51cbe6d606f8b4166829f765631731e563bb2a13b2d90f54b2bf37090c",
+    "electron/main/lyrics/acousticCapabilityHandlers.js": "6451dc7a9e385da12e71ff27c50542596c2855f8ebc236015503ce18790f17ad",
+    "resources/audio-processing/lyrics-acoustic-catalog.json": "8f3ee3511965b5055291b11ddf41d4ae8db878f28de8b2098c289a5807bb4321",
+    "resources/audio-processing/lyrics_acoustic_probe.py": "0a87cca975f6c8d2d3081a79c0a38be20ebcffbf02c71b38e73c93b48e0e0687",
+    "src/composables/lyrics/useLyricsAcousticCapability.js": "a154ac81e5c5de77cd2f1c1db74ab2acc529ed434e6bd9b01fcccb6c2dbaa503",
+    "src/components/settings/LyricsAcousticSettingsRow.vue": "7554f45afa39ae84c7097585539a1b78efc8f620a1e558723a691d0e36224f4d",
+    "src/components/settings/SettingsCapabilitiesSection.vue": "c1a7f461a224511fd872b07c06efa3da6b5b174670b232aa2701c03c41e71be4"
+  },
+  "productionBoundaryUnchanged": 11,
+  "limitations": [
+    "4 songs are not representative population; paired variants are not independent samples",
+    "New Chinese clips have no external fine references; no timing accuracy claim",
+    "External provider timing and construction proxies do not establish human false-accept or false-reject rates",
+    "True live/cover alternate versions and overlapping vocals remain untested in this new corpus",
+    "Unknown/missing ASR passes through original Qwen research estimates; content checker is not a guarantee of safety or accuracy"
+  ]
+}

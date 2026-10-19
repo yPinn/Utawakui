@@ -1,0 +1,278 @@
+:root {
+  color-scheme: light dark;
+  font-family: 'Segoe UI', 'Microsoft JhengHei UI', system-ui, sans-serif;
+  background: Canvas;
+  color: CanvasText;
+  line-height: 1.5;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0 auto;
+  padding: 1.5rem;
+  max-width: 82rem;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid GrayText;
+}
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+p {
+  margin: 0.5rem 0;
+}
+header p,
+.hint {
+  max-width: 75ch;
+  font-size: 0.9rem;
+}
+.export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: end;
+  max-width: 28rem;
+}
+label {
+  display: block;
+}
+input,
+select,
+button,
+textarea {
+  font: inherit;
+  accent-color: Highlight;
+}
+button,
+select,
+input:not([type='checkbox']),
+textarea {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid GrayText;
+  border-radius: 0.25rem;
+  background: Field;
+  color: FieldText;
+}
+button {
+  cursor: pointer;
+  background: ButtonFace;
+  color: ButtonText;
+}
+button:hover:not(:disabled) {
+  outline: 1px solid Highlight;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: 3px;
+}
+::selection {
+  background: Highlight;
+  color: HighlightText;
+}
+::placeholder {
+  color: GrayText;
+}
+input {
+  caret-color: Highlight;
+}
+input[type='checkbox'] {
+  width: 1.1rem;
+  height: 1.1rem;
+  vertical-align: middle;
+}
+#feedback {
+  min-height: 1.5rem;
+  margin: 1rem 0;
+}
+.import {
+  font-size: 0.85rem;
+}
+.import input {
+  font-size: 0.85rem;
+  width: 100%;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: 2rem;
+}
+nav {
+  border-right: 1px solid GrayText;
+  padding-right: 1rem;
+}
+nav ol {
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+nav li {
+  margin-bottom: 0.3rem;
+}
+nav button {
+  width: 100%;
+  text-align: left;
+}
+nav button[aria-current='true'] {
+  border-color: Highlight;
+  font-weight: 650;
+}
+.navigation,
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+.navigation {
+  justify-content: space-between;
+}
+.lyric {
+  margin: 1.2rem 0;
+  font-size: 1.35rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+audio {
+  width: 100%;
+  margin: 0.4rem 0 0.8rem;
+}
+.transport output {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+fieldset {
+  min-width: 0;
+  margin: 1.25rem 0 0;
+  padding: 0.75rem 0;
+  border: 0;
+  border-top: 1px solid GrayText;
+}
+legend {
+  padding-right: 0.75rem;
+  font-weight: 650;
+}
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.fields select {
+  display: block;
+  margin-top: 0.25rem;
+  max-width: 100%;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, GrayText 45%, transparent);
+}
+th {
+  font-size: 0.85rem;
+}
+td input {
+  width: 7rem;
+  font-variant-numeric: tabular-nums;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.notes {
+  margin: 1rem 0;
+}
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  resize: vertical;
+}
+.reviewed {
+  margin: 1rem 0 1.5rem;
+  font-weight: 650;
+}
+details {
+  border-top: 1px solid GrayText;
+  padding: 1rem 0;
+}
+summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.proposal {
+  padding: 0.65rem 0;
+}
+.proposal h3 {
+  font-size: 0.95rem;
+  margin: 0.3rem 0;
+}
+.chunks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.chunks button {
+  white-space: pre-wrap;
+}
+.chunks button[data-active='true'] {
+  background: Highlight;
+  color: HighlightText;
+}
+.chunks small {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+}
+@media (max-width: 800px) {
+  body {
+    padding: 1rem;
+  }
+  header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  nav {
+    border-right: 0;
+    border-bottom: 1px solid GrayText;
+    padding: 0 0 0.75rem;
+  }
+  nav ol {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+  }
+  nav button {
+    width: max-content;
+  }
+  .navigation h2 {
+    order: -1;
+    width: 100%;
+  }
+  .transport output {
+    margin-left: 0;
+  }
+}

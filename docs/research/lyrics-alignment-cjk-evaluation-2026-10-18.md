@@ -1,5 +1,7 @@
 # 中日韓歌詞對齊實測、品質檢查與漸進環境選型
 
+本文保留當輪研究與分母；目前跨批次選型及未決項集中在[研究結論](lyrics-alignment-summary.md)。
+
 本次研究的採用範圍與實作先後，見[研究收斂與實作評估](lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)。本文完整起訖結論不可當成後續 T1 詞塊起點任務的直接排名。
 
 日期：2026-10-18。接續[現行實作與方法研究](lyrics-audio-alignment-evaluation-2026-10-18.md)及[第一輪實測](lyrics-alignment-pilot-2026-10-18.md)。本輪完成實際模型推論、既有分離器消融、活動／重複句／段落檢查，以及產品 Python 與安裝器布局驗證。所有容量採十進位：1 GB＝1,000,000,000 bytes；容量不等於 RAM。

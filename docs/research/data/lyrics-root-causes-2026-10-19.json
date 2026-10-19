@@ -1,0 +1,1562 @@
+{
+  "date": "2026-10-19",
+  "scope": "exploratory pure postprocess; not persisted product estimates",
+  "rawReplaySha256": "a90478a24ff2eeb92d2c15120e699d76cc17b60ef72e7b19e1c7a4faa2741011",
+  "captureSha256": "0a138a8887503bb59b7cbcbe5a5dc21382c00bf37c31980094aba8898a8ab115",
+  "captureResultsSha256": "0a2921fa5589134c77c2350d10a9c6e26492114db94f44872a324dbcc69b34c6",
+  "captureMethod": {
+    "kind": "model",
+    "id": "qwen-candidate-research",
+    "version": "paired-v1",
+    "modelManifestSha256": "b63a74def480dee6dc8115cf7d51924f755965ad01488944da61aafd7da83320",
+    "environmentLockSha256": "7d577d93427783ea055246c44226b5692b892fa8c5e4e76d31e5d5f2d71a3ceb",
+    "decoderVersion": "candidate-ac126c21b5c67c9e",
+    "g2pVersion": "upstream-v1",
+    "chunkerVersion": "frozen-intl-v1",
+    "nodeVersion": "24.17.0",
+    "icuVersion": "78.3"
+  },
+  "reproducedNormalCases": [
+    {
+      "id": "zh-1-normal",
+      "reproduced": true,
+      "audioSha256": "819173c67f0408284d983d3850e743718eb811db2589bf71f45d9f2b988470b0",
+      "canonicalSha256": "aa0c41daf20fe2a22d2ba471bd3d4251526aa0364e5c85f507289fe816c94185"
+    },
+    {
+      "id": "zh-2-normal",
+      "reproduced": true,
+      "audioSha256": "68e1372f62b41495fe4dd309b720a2d0fde33de0fe2a7e0a76e31549a5eb37f0",
+      "canonicalSha256": "87f47307385ca57c74aa211c953a8b59fe84395ae74c6b3deef47807e57c3c09"
+    },
+    {
+      "id": "ja-1-normal",
+      "reproduced": true,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "canonicalSha256": "8605d8b933000eb1714fe6b92f3e03f7bf66a524a412fd42774c0d8a2b92b558"
+    },
+    {
+      "id": "ja-2-normal",
+      "reproduced": true,
+      "audioSha256": "550924536844df2f37c435fbe64276338dc49dd0baa64d6a338549f0501d4f26",
+      "canonicalSha256": "6ada790f0769147c28c054ffe58c3f48531b60e237a7cb64e1bd90ba77202d2d"
+    }
+  ],
+  "rules": {
+    "neighborRadiusMs": 1500,
+    "minNeighborCoverage": 0.8,
+    "minNeighborMatches": 4
+  },
+  "fresh": {
+    "inputSha256": "e1417b47c22aa3279394d25e254ee5b25db3e4b793941968cc27c623fb29a179",
+    "referenceSha256": "e2f29c64564893a6000e985931e66495f95841d870b69d915f0b68ac874f9222",
+    "qwenResultsSha256": "1dc1afc11a0e840b810fe24ab8c292082f417a04349fd411d56df4336701e084",
+    "smallResultsSha256": "b191d31e9db34a706cbf4ed9a4b960d4d396b09a200bbfedae11e9c2c4739264",
+    "profiles": {
+      "baseline": {
+        "readyLines": 90,
+        "normalReady": 24,
+        "contentRejections": 9,
+        "score": {
+          "requested": 556,
+          "scorable": 133,
+          "measured": 103,
+          "missing": 30,
+          "within100": 43,
+          "over500": 18,
+          "over1000": 1,
+          "p90Ms": 677
+        },
+        "caseReady": [
+          {
+            "id": "zh-1-normal",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": 4
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": 4
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": 6
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": 6
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": 5
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": 5
+          }
+        ],
+        "constructedTargets": [
+          {
+            "id": "zh-1-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": false
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": true
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": false
+          }
+        ]
+      },
+      "script-fold": {
+        "readyLines": 92,
+        "normalReady": 25,
+        "contentRejections": 7,
+        "score": {
+          "requested": 556,
+          "scorable": 133,
+          "measured": 103,
+          "missing": 30,
+          "within100": 43,
+          "over500": 18,
+          "over1000": 1,
+          "p90Ms": 677
+        },
+        "caseReady": [
+          {
+            "id": "zh-1-normal",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": 4
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": 4
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": 5
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": 5
+          }
+        ],
+        "constructedTargets": [
+          {
+            "id": "zh-1-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": false
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": true
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": false
+          }
+        ]
+      },
+      "neighbor-rescue": {
+        "readyLines": 92,
+        "normalReady": 25,
+        "contentRejections": 7,
+        "score": {
+          "requested": 556,
+          "scorable": 133,
+          "measured": 103,
+          "missing": 30,
+          "within100": 43,
+          "over500": 18,
+          "over1000": 1,
+          "p90Ms": 677
+        },
+        "caseReady": [
+          {
+            "id": "zh-1-normal",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": 4
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": 4
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": 5
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": 5
+          }
+        ],
+        "constructedTargets": [
+          {
+            "id": "zh-1-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": false
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": true
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": false
+          }
+        ]
+      },
+      "advisory": {
+        "readyLines": 96,
+        "normalReady": 25,
+        "contentRejections": 0,
+        "score": {
+          "requested": 556,
+          "scorable": 133,
+          "measured": 106,
+          "missing": 27,
+          "within100": 44,
+          "over500": 19,
+          "over1000": 2,
+          "p90Ms": 677
+        },
+        "caseReady": [
+          {
+            "id": "zh-1-normal",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": 5
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": 4
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": 6
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": 6
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": 7
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": 5
+          }
+        ],
+        "constructedTargets": [
+          {
+            "id": "zh-1-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-1-phrase-mismatch",
+            "ready": true
+          },
+          {
+            "id": "zh-1-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "zh-2-normal",
+            "ready": true
+          },
+          {
+            "id": "zh-2-phrase-mismatch",
+            "ready": true
+          },
+          {
+            "id": "zh-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "zh-2-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-1-normal",
+            "ready": false
+          },
+          {
+            "id": "ja-1-phrase-mismatch",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-text",
+            "ready": false
+          },
+          {
+            "id": "ja-1-missing-audio",
+            "ready": false
+          },
+          {
+            "id": "ja-2-normal",
+            "ready": true
+          },
+          {
+            "id": "ja-2-phrase-mismatch",
+            "ready": true
+          },
+          {
+            "id": "ja-2-missing-text",
+            "ready": true
+          },
+          {
+            "id": "ja-2-missing-audio",
+            "ready": false
+          }
+        ]
+      }
+    }
+  },
+  "older": {
+    "inputSha256": "af1a937d67a00f5f410749b37a9e9d14e42789005bc094dd069eb28250f44c5c",
+    "referenceSha256": "92b2e4ff1960d2f8efed21429596a7df7ca32ece5885df275d26c76054e401d6",
+    "qwenResultsSha256": "3f58fbaa50f20a6184f47192896a7013b2d654d094afad883aa5594e32217229",
+    "smallResultsSha256": "53a812978ff282412aeaacff4edb3e9bf3ae58066295a14510c56d46f62a3d0e",
+    "profiles": {
+      "baseline": {
+        "readyLines": 283,
+        "normalReady": 0,
+        "contentRejections": 12,
+        "score": {
+          "requested": 1853,
+          "scorable": 1039,
+          "measured": 803,
+          "missing": 236,
+          "within100": 579,
+          "over500": 54,
+          "over1000": 27,
+          "p90Ms": 313
+        },
+        "caseReady": [
+          {
+            "id": "pjs056-mix",
+            "ready": 3
+          },
+          {
+            "id": "pjs056-quick",
+            "ready": 3
+          },
+          {
+            "id": "confirm-mir-00-0-mix",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-00-mix",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-mix",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-03-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-00-0-quick",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-quick",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-quick",
+            "ready": 3
+          },
+          {
+            "id": "confirm-local-ja-00-quick",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-quick",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-local-ja-03-quick",
+            "ready": 5
+          },
+          {
+            "id": "full-existing-zh-6b4e4980",
+            "ready": 75
+          },
+          {
+            "id": "full-existing-ja-25b328d6",
+            "ready": 49
+          },
+          {
+            "id": "full-new-zh-3fa4a179",
+            "ready": 28
+          },
+          {
+            "id": "full-new-ja-21f9a4c7",
+            "ready": 33
+          }
+        ],
+        "constructedTargets": []
+      },
+      "script-fold": {
+        "readyLines": 285,
+        "normalReady": 0,
+        "contentRejections": 10,
+        "score": {
+          "requested": 1853,
+          "scorable": 1039,
+          "measured": 806,
+          "missing": 233,
+          "within100": 579,
+          "over500": 55,
+          "over1000": 28,
+          "p90Ms": 320
+        },
+        "caseReady": [
+          {
+            "id": "pjs056-mix",
+            "ready": 3
+          },
+          {
+            "id": "pjs056-quick",
+            "ready": 3
+          },
+          {
+            "id": "confirm-mir-00-0-mix",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-00-mix",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-mix",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-03-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-00-0-quick",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-quick",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-quick",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-00-quick",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-quick",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-local-ja-03-quick",
+            "ready": 5
+          },
+          {
+            "id": "full-existing-zh-6b4e4980",
+            "ready": 75
+          },
+          {
+            "id": "full-existing-ja-25b328d6",
+            "ready": 49
+          },
+          {
+            "id": "full-new-zh-3fa4a179",
+            "ready": 29
+          },
+          {
+            "id": "full-new-ja-21f9a4c7",
+            "ready": 33
+          }
+        ],
+        "constructedTargets": []
+      },
+      "neighbor-rescue": {
+        "readyLines": 285,
+        "normalReady": 0,
+        "contentRejections": 10,
+        "score": {
+          "requested": 1853,
+          "scorable": 1039,
+          "measured": 806,
+          "missing": 233,
+          "within100": 579,
+          "over500": 55,
+          "over1000": 28,
+          "p90Ms": 320
+        },
+        "caseReady": [
+          {
+            "id": "pjs056-mix",
+            "ready": 3
+          },
+          {
+            "id": "pjs056-quick",
+            "ready": 3
+          },
+          {
+            "id": "confirm-mir-00-0-mix",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-00-mix",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-mix",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-03-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-00-0-quick",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-quick",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-quick",
+            "ready": 4
+          },
+          {
+            "id": "confirm-local-ja-00-quick",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-quick",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-local-ja-03-quick",
+            "ready": 5
+          },
+          {
+            "id": "full-existing-zh-6b4e4980",
+            "ready": 75
+          },
+          {
+            "id": "full-existing-ja-25b328d6",
+            "ready": 49
+          },
+          {
+            "id": "full-new-zh-3fa4a179",
+            "ready": 29
+          },
+          {
+            "id": "full-new-ja-21f9a4c7",
+            "ready": 33
+          }
+        ],
+        "constructedTargets": []
+      },
+      "advisory": {
+        "readyLines": 294,
+        "normalReady": 0,
+        "contentRejections": 0,
+        "score": {
+          "requested": 1853,
+          "scorable": 1039,
+          "measured": 821,
+          "missing": 218,
+          "within100": 585,
+          "over500": 57,
+          "over1000": 30,
+          "p90Ms": 330
+        },
+        "caseReady": [
+          {
+            "id": "pjs056-mix",
+            "ready": 3
+          },
+          {
+            "id": "pjs056-quick",
+            "ready": 3
+          },
+          {
+            "id": "confirm-mir-00-0-mix",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-mix",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-mix",
+            "ready": 6
+          },
+          {
+            "id": "confirm-local-ja-00-mix",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-mix",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-local-ja-03-mix",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-00-0-quick",
+            "ready": 7
+          },
+          {
+            "id": "confirm-mir-01-0-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-mir-02-0-quick",
+            "ready": 4
+          },
+          {
+            "id": "confirm-mir-03-0-quick",
+            "ready": 6
+          },
+          {
+            "id": "confirm-local-ja-00-quick",
+            "ready": 9
+          },
+          {
+            "id": "confirm-local-ja-01-quick",
+            "ready": 8
+          },
+          {
+            "id": "confirm-local-ja-02-quick",
+            "ready": 5
+          },
+          {
+            "id": "confirm-local-ja-03-quick",
+            "ready": 5
+          },
+          {
+            "id": "full-existing-zh-6b4e4980",
+            "ready": 78
+          },
+          {
+            "id": "full-existing-ja-25b328d6",
+            "ready": 49
+          },
+          {
+            "id": "full-new-zh-3fa4a179",
+            "ready": 30
+          },
+          {
+            "id": "full-new-ja-21f9a4c7",
+            "ready": 33
+          }
+        ],
+        "constructedTargets": []
+      }
+    }
+  },
+  "stress": {
+    "inputSha256": "119c51bc29089e72dc00cb4cea5028ac5bcb7086052f7df57329638dd5c51294",
+    "referenceSha256": null,
+    "qwenResultsSha256": "3eea2ecca05e9492ae868260159f943298c157aa97af7ef8d9fbc4ec6b0d051d",
+    "smallResultsSha256": "4e6498d7356f292348e74dcda8061d8c149a055f58d771cea69e211472f9949b",
+    "profiles": {
+      "baseline": {
+        "readyLines": 8,
+        "normalReady": 0,
+        "contentRejections": 6,
+        "score": {
+          "requested": 179,
+          "scorable": 0,
+          "measured": 0,
+          "missing": 0,
+          "within100": 0,
+          "over500": 0,
+          "over1000": 0,
+          "p90Ms": null
+        },
+        "caseReady": [
+          {
+            "id": "negative-silence",
+            "ready": 0
+          },
+          {
+            "id": "negative-quiet",
+            "ready": 0
+          },
+          {
+            "id": "negative-korean",
+            "ready": 0
+          },
+          {
+            "id": "negative-mixed",
+            "ready": 0
+          },
+          {
+            "id": "negative-wrong-audio",
+            "ready": 1
+          },
+          {
+            "id": "negative-music-only",
+            "ready": 0
+          },
+          {
+            "id": "negative-offset",
+            "ready": 7
+          }
+        ],
+        "constructedTargets": []
+      },
+      "script-fold": {
+        "readyLines": 8,
+        "normalReady": 0,
+        "contentRejections": 6,
+        "score": {
+          "requested": 179,
+          "scorable": 0,
+          "measured": 0,
+          "missing": 0,
+          "within100": 0,
+          "over500": 0,
+          "over1000": 0,
+          "p90Ms": null
+        },
+        "caseReady": [
+          {
+            "id": "negative-silence",
+            "ready": 0
+          },
+          {
+            "id": "negative-quiet",
+            "ready": 0
+          },
+          {
+            "id": "negative-korean",
+            "ready": 0
+          },
+          {
+            "id": "negative-mixed",
+            "ready": 0
+          },
+          {
+            "id": "negative-wrong-audio",
+            "ready": 1
+          },
+          {
+            "id": "negative-music-only",
+            "ready": 0
+          },
+          {
+            "id": "negative-offset",
+            "ready": 7
+          }
+        ],
+        "constructedTargets": []
+      },
+      "neighbor-rescue": {
+        "readyLines": 8,
+        "normalReady": 0,
+        "contentRejections": 6,
+        "score": {
+          "requested": 179,
+          "scorable": 0,
+          "measured": 0,
+          "missing": 0,
+          "within100": 0,
+          "over500": 0,
+          "over1000": 0,
+          "p90Ms": null
+        },
+        "caseReady": [
+          {
+            "id": "negative-silence",
+            "ready": 0
+          },
+          {
+            "id": "negative-quiet",
+            "ready": 0
+          },
+          {
+            "id": "negative-korean",
+            "ready": 0
+          },
+          {
+            "id": "negative-mixed",
+            "ready": 0
+          },
+          {
+            "id": "negative-wrong-audio",
+            "ready": 1
+          },
+          {
+            "id": "negative-music-only",
+            "ready": 0
+          },
+          {
+            "id": "negative-offset",
+            "ready": 7
+          }
+        ],
+        "constructedTargets": []
+      },
+      "advisory": {
+        "readyLines": 10,
+        "normalReady": 0,
+        "contentRejections": 0,
+        "score": {
+          "requested": 179,
+          "scorable": 0,
+          "measured": 0,
+          "missing": 0,
+          "within100": 0,
+          "over500": 0,
+          "over1000": 0,
+          "p90Ms": null
+        },
+        "caseReady": [
+          {
+            "id": "negative-silence",
+            "ready": 0
+          },
+          {
+            "id": "negative-quiet",
+            "ready": 0
+          },
+          {
+            "id": "negative-korean",
+            "ready": 0
+          },
+          {
+            "id": "negative-mixed",
+            "ready": 0
+          },
+          {
+            "id": "negative-wrong-audio",
+            "ready": 3
+          },
+          {
+            "id": "negative-music-only",
+            "ready": 0
+          },
+          {
+            "id": "negative-offset",
+            "ready": 7
+          }
+        ],
+        "constructedTargets": []
+      }
+    }
+  },
+  "timing": [
+    {
+      "profile": "captured-exact",
+      "score": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 29,
+        "missing": 6,
+        "within100": 12,
+        "over500": 5,
+        "over1000": 0,
+        "p90Ms": 677
+      }
+    },
+    {
+      "profile": "span-interpolation",
+      "score": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 33,
+        "missing": 2,
+        "within100": 12,
+        "over500": 5,
+        "over1000": 0,
+        "p90Ms": 652
+      }
+    },
+    {
+      "profile": "disagreement-fallback",
+      "score": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 34,
+        "missing": 1,
+        "within100": 10,
+        "over500": 3,
+        "over1000": 1,
+        "p90Ms": 428
+      }
+    }
+  ],
+  "priority": [
+    {
+      "sampleId": "r-040",
+      "caseId": "zh-2-normal",
+      "lineIndex": 6,
+      "priority": "P0",
+      "reason": "small normal rejection: script and T1/ASR clock mismatch",
+      "startMs": 26770,
+      "endMs": 29130,
+      "audioSha256": "68e1372f62b41495fe4dd309b720a2d0fde33de0fe2a7e0a76e31549a5eb37f0",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-037",
+      "caseId": "ja-1-normal",
+      "lineIndex": 7,
+      "priority": "P0",
+      "reason": "two model onsets >800ms from provider",
+      "startMs": 20812,
+      "endMs": 23567,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-042",
+      "caseId": "ja-1-normal",
+      "lineIndex": 6,
+      "priority": "P0",
+      "reason": "four missing internal cuts and >500ms tail",
+      "startMs": 18461,
+      "endMs": 20812,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-006",
+      "caseId": "ja-1-normal",
+      "lineIndex": 5,
+      "priority": "P0",
+      "reason": "model onset later than provider by 677ms",
+      "startMs": 16014,
+      "endMs": 18461,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-028",
+      "caseId": "ja-2-normal",
+      "lineIndex": 6,
+      "priority": "P0",
+      "reason": "inflection onset early by 643ms",
+      "startMs": 25731,
+      "endMs": 27731,
+      "audioSha256": "550924536844df2f37c435fbe64276338dc49dd0baa64d6a338549f0501d4f26",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-004",
+      "caseId": "ja-1-normal",
+      "lineIndex": 4,
+      "priority": "P1",
+      "reason": "model first spans precede T1 and long/zero duration",
+      "startMs": 13463,
+      "endMs": 16014,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-047",
+      "caseId": "ja-1-normal",
+      "lineIndex": 8,
+      "priority": "P1",
+      "reason": "repeated phrase and missing internal cut",
+      "startMs": 23567,
+      "endMs": 26045,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-045",
+      "caseId": "ja-2-normal",
+      "lineIndex": 4,
+      "priority": "P1",
+      "reason": "control: Qwen improves baseline >1s tail",
+      "startMs": 10902,
+      "endMs": 15067,
+      "audioSha256": "550924536844df2f37c435fbe64276338dc49dd0baa64d6a338549f0501d4f26",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-052",
+      "caseId": "ja-1-normal",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: mixed-script policy decline, not model error",
+      "startMs": 4607,
+      "endMs": 6151,
+      "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-033",
+      "caseId": "zh-1-phrase-mismatch",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: retain mismatch detection after normalization",
+      "startMs": 6840,
+      "endMs": 11750,
+      "audioSha256": "a48961d6ab21208c9d70289300199f4a71e35adbcc3a24451007f5c4ada20f15",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-010",
+      "caseId": "zh-2-phrase-mismatch",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: retain mismatch detection after normalization",
+      "startMs": 6730,
+      "endMs": 10980,
+      "audioSha256": "de2a505750a2473573d37d77fdae493628c26111126b45c380fc0e64fe2e548f",
+      "reviewed": false
+    },
+    {
+      "sampleId": "r-005",
+      "caseId": "ja-2-phrase-mismatch",
+      "lineIndex": 1,
+      "priority": "P1",
+      "reason": "control: retain mismatch detection after normalization",
+      "startMs": 2553,
+      "endMs": 6022,
+      "audioSha256": "c1faeabfc98e41b65410ee22ac48c9dbd662602684f213236f5c47a1695e7c0c",
+      "reviewed": false
+    }
+  ],
+  "human": {
+    "total": 53,
+    "priority": 12,
+    "reviewed": 0,
+    "onsets": 0,
+    "packetSha256": "dc42566a5982e1170692ac63addac00bda3c1b4a36c0566737a192d0cad960e0"
+  },
+  "scoreCorrection": "35 scorable cuts are internal only; scoreCuts excludes cuts[0] and final end; earlier prose claiming T1 first anchors was wrong, numbers unchanged",
+  "sourceHashes": {
+    "electron/lib/lyricsAcoustic/artifacts.js": "851562b5340740e1511d7ca2beeda724a17fc4b90683f453f755b12175680b11",
+    "electron/lib/lyricsAcoustic/capability.js": "7c81585ec8592ed8b3b861f6aa2e92f5740e1a4aa05cc6e0f0d41cb13df9fda5",
+    "electron/lib/lyricsAcoustic/catalog.js": "e7ccf11dd800aaf630a0ed5b0eda415753ad3552e998c34f6fded1fc2f67dd81",
+    "electron/lib/lyricsAcoustic/integrity.js": "c4f8bc4962455635a1af0c0b863f6ae534548fd865bb9d6e285ba97595513185",
+    "electron/lib/lyricsAcoustic/probe.js": "20e7ca51cbe6d606f8b4166829f765631731e563bb2a13b2d90f54b2bf37090c",
+    "electron/main/lyrics/acousticCapabilityHandlers.js": "6451dc7a9e385da12e71ff27c50542596c2855f8ebc236015503ce18790f17ad",
+    "resources/audio-processing/lyrics-acoustic-catalog.json": "8f3ee3511965b5055291b11ddf41d4ae8db878f28de8b2098c289a5807bb4321",
+    "resources/audio-processing/lyrics_acoustic_probe.py": "0a87cca975f6c8d2d3081a79c0a38be20ebcffbf02c71b38e73c93b48e0e0687",
+    "src/composables/lyrics/useLyricsAcousticCapability.js": "a154ac81e5c5de77cd2f1c1db74ab2acc529ed434e6bd9b01fcccb6c2dbaa503",
+    "src/components/settings/LyricsAcousticSettingsRow.vue": "7554f45afa39ae84c7097585539a1b78efc8f620a1e558723a691d0e36224f4d",
+    "src/components/settings/SettingsCapabilitiesSection.vue": "c1a7f461a224511fd872b07c06efa3da6b5b174670b232aa2701c03c41e71be4"
+  },
+  "productionBoundaryUnchanged": 11,
+  "researchSourceHashes": {
+    "cases.cjs": "5e5077a5e825cf40059ac2594d7af01fec674c723815ea08bc4be30601e2eb48",
+    "cases.test.mjs": "9080d35a930d75133d0b0faabd710ffd93937470da4cc36a0fdd9ac1a853b018",
+    "compare.cjs": "e249cec5f41c17ddc95e51ccca43f4d0cf9a238938de9f1048fc195b73236ebe",
+    "content.cjs": "0e115c8e3e9360b716adc06005b495342cc097113e072c8039817d59f4ed1a0d",
+    "content.test.mjs": "05f97ff5f3d28f591830724527baf08ad33a8872ab92ef07493f91eb686690b5",
+    "cropLeading.cjs": "c9b2854243b821028f56899e38cfa6a42abbed1aab49afbad65b7b4353883df4",
+    "cropLeading.test.mjs": "ecd1f83d9d642d8afaed74752e143b54e362bb54f8101f77767a37fc6778d725",
+    "diagnoseQwen.cjs": "4ca05febdc70169850f8c46139388fca30eca96cc632f3db54487b725d4fc383",
+    "lowCost.cjs": "599a4f12497003a2b066c5fad99a82f13dd13d0faa6500d5336ba040fe059491",
+    "lowCost.test.mjs": "b34ec952432ed8f219b12e0c675236b93cc0a5130c25379a50f14ea33b550ef9",
+    "lowCostReplay.cjs": "e18bd555147cae1ddb8670db439ffff40670ae149927183fda355773177034a2",
+    "prepare.cjs": "4372722f0a72fa15102d59af5ee03db18f388af6d23e81a4d603f1db7f8909f5",
+    "review.cjs": "8f1e279ae8afe9a7f6b0c1f9a8e7415ad50cf671041a2e3921252a1406e33d9e",
+    "review.test.mjs": "6c500d638e4de7d123409933dc458d0b5bba6492e44a43629027c9edd030119a",
+    "summarize.cjs": "2e06e11b3a29ffc8e50ecc7326e8104e5aede9b00cd0684979547528f0ab18be"
+  },
+  "boundDependencyHashes": [
+    "e18bd555147cae1ddb8670db439ffff40670ae149927183fda355773177034a2",
+    "599a4f12497003a2b066c5fad99a82f13dd13d0faa6500d5336ba040fe059491",
+    "0e115c8e3e9360b716adc06005b495342cc097113e072c8039817d59f4ed1a0d",
+    "8f1e279ae8afe9a7f6b0c1f9a8e7415ad50cf671041a2e3921252a1406e33d9e",
+    "4ca05febdc70169850f8c46139388fca30eca96cc632f3db54487b725d4fc383",
+    "5009384a6bdc904babee967a8bb9928e3c92288ec8a89ed036d53257e74cd8ab"
+  ],
+  "limitations": [
+    "Exploratory methods designed after observing failures; not held-out validation",
+    "Provider fine clocks are not human truth",
+    "No new weights downloaded, no performance comparison for MMS/GTSinger/MFA/SOFA",
+    "Span interpolation creates estimated internal cuts, not new acoustic evidence",
+    "Content rescue and timing accuracy are separate; human review remains pending"
+  ],
+  "crop": {
+    "resultsSha256": "b28be80c705206110de0a15a31c6f52873dbf8bf6f69f689e84d3215844f16cc",
+    "evidenceSha256": "2bd42536555040154306b2a621d66634ee2b70a14bddd28b6234bec58f2620b0",
+    "method": {
+      "kind": "model",
+      "id": "qwen-leading-crop-research",
+      "version": "crop-v1",
+      "modelManifestSha256": "b63a74def480dee6dc8115cf7d51924f755965ad01488944da61aafd7da83320",
+      "environmentLockSha256": "a1d7e315b8a3e7c38029a4f7fc083abddb57fe2f4cb104eecb4f501f947b203e",
+      "decoderVersion": "candidate-ac126c21b5c67c9e",
+      "g2pVersion": "upstream-v1",
+      "chunkerVersion": "frozen-intl-v1",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "codeSha256": "c9b2854243b821028f56899e38cfa6a42abbed1aab49afbad65b7b4353883df4",
+    "validatorSha256": "8f1e279ae8afe9a7f6b0c1f9a8e7415ad50cf671041a2e3921252a1406e33d9e",
+    "score": {
+      "requested": 75,
+      "scorable": 35,
+      "measured": 26,
+      "missing": 9,
+      "within100": 13,
+      "over500": 3,
+      "over1000": 0,
+      "p90Ms": 643
+    },
+    "cases": [
+      {
+        "id": "ja-1-normal",
+        "crops": [11463],
+        "audioSha256": "384f90b296f5dd14d2ace8635e977ffc2851df58dcb37487ac0fbed478796982"
+      },
+      {
+        "id": "ja-2-normal",
+        "crops": [0],
+        "audioSha256": "550924536844df2f37c435fbe64276338dc49dd0baa64d6a338549f0501d4f26"
+      }
+    ],
+    "controlReproduced": true,
+    "verification": [
+      {
+        "id": "ja-1-normal",
+        "lines": 10,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 20,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 2
+      },
+      {
+        "id": "ja-2-normal",
+        "lines": 7,
+        "textPreserved": true,
+        "forwardAndBackwardSamples": 14,
+        "t2AndT1Fallback": true,
+        "offsetAndTextStale": true,
+        "ownedWorkersClosed": true,
+        "repeatedOccurrences": 0
+      }
+    ]
+  }
+}

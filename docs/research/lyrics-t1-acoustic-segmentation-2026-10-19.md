@@ -1,5 +1,7 @@
 # T1 句內聲學切分實測與模型環境評估
 
+本文保留當輪研究與分母；目前跨批次選型及未決項集中在[研究結論](lyrics-alignment-summary.md)。
+
 研究收斂與實作邊界見[實作評估入口](lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)。本文保留本輪實驗證據，並非產品已採用狀態。
 
 日期：2026-10-19。接續[中日韓完整起訖對齊實測](lyrics-alignment-cjk-evaluation-2026-10-18.md)，本輪改以「已有正確整句文字及 T1，改善詞塊切換與高亮起點」為目標，依序執行 A 現行估算、B 人聲起音與序列約束、C 節拍弱約束、D 歌唱專用音素模型。時間與容量為實測；未改產品 registry、activation 或使用者歌詞。
