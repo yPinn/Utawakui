@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { setTimeout as delay } from 'node:timers/promises';
 import { createInterface } from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 
@@ -149,8 +151,10 @@ function writeTemporaryJson(outputPath, value, label) {
   );
   const payload = privateJsonPayload(value, label);
   let descriptor;
+  let created = false;
   try {
     descriptor = fs.openSync(temporaryPath, 'wx', 0o600);
+    created = true;
     fs.writeFileSync(descriptor, payload);
     fs.fsyncSync(descriptor);
     fs.closeSync(descriptor);
@@ -165,7 +169,7 @@ function writeTemporaryJson(outputPath, value, label) {
       }
     }
     try {
-      fs.rmSync(temporaryPath, { force: true });
+      if (created) fs.rmSync(temporaryPath, { force: true });
     } catch {
       // The private directory remains restricted and future runs use a new id.
     }
@@ -173,13 +177,49 @@ function writeTemporaryJson(outputPath, value, label) {
   }
 }
 
-function publishPrivateJson(outputPath, value, label) {
+function publishPrivateJson(
+  outputPath,
+  value,
+  label,
+  { mutable = false } = {},
+) {
   if (fs.existsSync(outputPath)) {
     throw new TypeError(`${label} already exists`);
   }
   const temporaryPath = writeTemporaryJson(outputPath, value, label);
   try {
-    fs.linkSync(temporaryPath, outputPath);
+    if (mutable && process.platform === 'win32') {
+      // A hardlink followed by staging unlink can leave the JSON survivor
+      // persistently unreplaceable in Windows Temp. File.Move on the same volume
+      // publishes the independent file atomically and refuses an existing target.
+      // PowerShell is already required for the private ACL and session mutex.
+      const result = spawnSync(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          'try { [IO.File]::Move($env:UTAWAKUI_REVIEW_STAGE, $env:UTAWAKUI_REVIEW_TARGET); exit 0 } catch { exit 1 }',
+        ],
+        {
+          env: {
+            ...process.env,
+            UTAWAKUI_REVIEW_STAGE: temporaryPath,
+            UTAWAKUI_REVIEW_TARGET: outputPath,
+          },
+          windowsHide: true,
+          timeout: 10000,
+          stdio: 'ignore',
+        },
+      );
+      if (result.error) throw result.error;
+      if (result.status !== 0)
+        throw new TypeError(
+          `${label} could not be published without overwriting`,
+        );
+    } else {
+      fs.linkSync(temporaryPath, outputPath);
+    }
   } finally {
     fs.rmSync(temporaryPath, { force: true });
   }
@@ -317,18 +357,44 @@ function releaseReviewLock(lock) {
   fs.rmSync(lock.lockPath);
 }
 
-function replacePrivateJson(outputPath, previousValue, value, label) {
+async function replacePrivateJson(
+  outputPath,
+  previousValue,
+  value,
+  label,
+  assertLease,
+) {
   const lockPath = `${outputPath}.lock`;
   let lock;
   try {
     lock = acquireReviewLock(lockPath);
-    const currentValue = readBoundedPrivateJson(outputPath, label);
-    if (JSON.stringify(currentValue) !== JSON.stringify(previousValue)) {
-      throw new TypeError('private reading reviews changed in another session');
-    }
     const temporaryPath = writeTemporaryJson(outputPath, value, label);
     try {
-      fs.renameSync(temporaryPath, outputPath);
+      for (let attempt = 0; ; attempt++) {
+        // Yielding for Windows sharing violations must not permit a stale save.
+        assertLease();
+        const currentValue = readBoundedPrivateJson(outputPath, label);
+        if (JSON.stringify(currentValue) !== JSON.stringify(previousValue)) {
+          throw new TypeError(
+            'private reading reviews changed in another session',
+          );
+        }
+        try {
+          fs.renameSync(temporaryPath, outputPath);
+          break;
+        } catch (error) {
+          // Readers without FILE_SHARE_DELETE can briefly deny replacement even
+          // after our own handles close. Keep the original and both locks intact;
+          // never unlink/copy over the destination to work around this denial.
+          if (
+            process.platform !== 'win32' ||
+            !['EPERM', 'EACCES', 'EBUSY'].includes(error.code) ||
+            attempt >= 20
+          )
+            throw error;
+          await delay(100);
+        }
+      }
     } finally {
       fs.rmSync(temporaryPath, { force: true });
     }
@@ -384,7 +450,9 @@ function loadManifest(paths, corpus) {
 
 function initializeManifest(paths, corpus) {
   const manifest = createLocalReadingReviewManifest(corpus);
-  publishPrivateJson(paths.reviews, manifest, 'private reading reviews');
+  publishPrivateJson(paths.reviews, manifest, 'private reading reviews', {
+    mutable: true,
+  });
   return manifest;
 }
 
@@ -470,11 +538,12 @@ async function reviewInteractively({
         caseId: review.caseId,
         decision: 'skipped',
       });
-      replacePrivateJson(
+      await replacePrivateJson(
         paths.reviews,
         previousManifest,
         manifest,
         'private reading reviews',
+        assertLease,
       );
       consoleLike.log('saved=skipped');
       continue;
@@ -515,11 +584,12 @@ async function reviewInteractively({
       cohort,
       ...(segmentEdits ? { segmentEdits } : {}),
     });
-    replacePrivateJson(
+    await replacePrivateJson(
       paths.reviews,
       previousManifest,
       manifest,
       'private reading reviews',
+      assertLease,
     );
     consoleLike.log('saved=approved');
   }
@@ -575,11 +645,12 @@ export async function runLyricsReadingReviewCli(options = {}) {
       const previousManifest = structuredClone(manifest);
       const caseId = undoLastLocalReadingReview(corpus, manifest);
       if (caseId) {
-        replacePrivateJson(
+        await replacePrivateJson(
           paths.reviews,
           previousManifest,
           manifest,
           'private reading reviews',
+          () => lease.assertHeld(),
         );
       }
       consoleLike.log(`undo=${caseId ? 'ok' : 'none'}`);

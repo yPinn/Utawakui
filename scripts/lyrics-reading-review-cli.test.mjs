@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildLocalLyricsReadingCorpus } from './lib/lyricsReadingCorpus/localCorpus.mjs';
 import {
@@ -95,6 +97,355 @@ function sourceCases(source) {
 }
 
 describe('local lyrics reading review CLI', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('initializes an independent mutable file without hardlink publication and never clobbers an existing manifest', async () => {
+    const { privateRoot, paths } = privateFixture();
+    const link = vi.spyOn(fs, 'linkSync');
+    await runCli({
+      argv: ['init'],
+      privateRoot,
+      consoleLike: outputCollector().consoleLike,
+    });
+    if (process.platform === 'win32') expect(link).not.toHaveBeenCalled();
+    expect(fs.statSync(paths.reviews).nlink).toBe(1);
+    const original = fs.readFileSync(paths.reviews, 'utf8');
+    await expect(
+      runCli({
+        argv: ['init'],
+        privateRoot,
+        consoleLike: outputCollector().consoleLike,
+      }),
+    ).rejects.toThrow('already exists');
+    expect(fs.readFileSync(paths.reviews, 'utf8')).toBe(original);
+    await runCli({
+      argv: ['review'],
+      privateRoot,
+      prompt: promptAnswers('s', 'q'),
+      consoleLike: outputCollector().consoleLike,
+    });
+    expect(JSON.parse(fs.readFileSync(paths.reviews)).reviews[0].decision).toBe(
+      'skipped',
+    );
+  });
+
+  it.runIf(process.platform === 'win32')(
+    'publishes only complete initialization and refuses a destination created during staging',
+    async () => {
+      const { privateRoot, paths, source } = privateFixture();
+      const competing = `${JSON.stringify(createLocalReadingReviewManifest(source))}\n`;
+      const sync = fs.fsyncSync;
+      vi.spyOn(fs, 'fsyncSync').mockImplementation((descriptor) => {
+        expect(fs.existsSync(paths.reviews)).toBe(false);
+        const staged = fs
+          .readdirSync(privateRoot)
+          .find((name) => name.endsWith('.tmp'));
+        expect(() =>
+          validateLocalReadingReviewManifest(
+            source,
+            JSON.parse(fs.readFileSync(path.join(privateRoot, staged))),
+          ),
+        ).not.toThrow();
+        sync(descriptor);
+        fs.writeFileSync(paths.reviews, competing, { flag: 'wx' });
+      });
+      await expect(
+        runCli({
+          argv: ['init'],
+          privateRoot,
+          consoleLike: outputCollector().consoleLike,
+        }),
+      ).rejects.toThrow('without overwriting');
+      expect(fs.readFileSync(paths.reviews, 'utf8')).toBe(competing);
+      expect(
+        fs.readdirSync(privateRoot).filter((name) => name.endsWith('.tmp')),
+      ).toEqual([]);
+    },
+  );
+
+  it.each(['writeFileSync', 'fsyncSync'])(
+    'removes only its own incomplete initial manifest after %s fails',
+    async (method) => {
+      const { privateRoot, paths } = privateFixture();
+      const failure = Object.assign(new Error('storage failed'), {
+        code: 'ENOSPC',
+      });
+      vi.spyOn(fs, method).mockImplementation(() => {
+        expect(fs.existsSync(paths.reviews)).toBe(false);
+        throw failure;
+      });
+      await expect(
+        runCli({
+          argv: ['init'],
+          privateRoot,
+          consoleLike: outputCollector().consoleLike,
+        }),
+      ).rejects.toBe(failure);
+      expect(fs.existsSync(paths.reviews)).toBe(false);
+      vi.restoreAllMocks();
+      await runCli({
+        argv: ['init'],
+        privateRoot,
+        consoleLike: outputCollector().consoleLike,
+      });
+      expect(() =>
+        validateLocalReadingReviewManifest(
+          sourceCorpus(),
+          JSON.parse(fs.readFileSync(paths.reviews)),
+        ),
+      ).not.toThrow();
+    },
+  );
+
+  it.runIf(process.platform === 'win32')(
+    'saves after a real Windows reader releases its non-delete-sharing handle',
+    async () => {
+      const { privateRoot, paths } = privateFixture();
+      await runCli({
+        argv: ['init'],
+        privateRoot,
+        consoleLike: outputCollector().consoleLike,
+      });
+      // FileShare.ReadWrite allows our safety reads but prevents atomic replacement.
+      const child = spawn(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          "$f=[System.IO.File]::Open($env:READING_REVIEW_TEST_FILE,'Open','Read','ReadWrite'); try { [Console]::Out.WriteLine('ready'); [Console]::In.ReadLine() | Out-Null } finally { $f.Dispose() }",
+        ],
+        {
+          env: { ...process.env, READING_REVIEW_TEST_FILE: paths.reviews },
+          windowsHide: true,
+          timeout: 5000,
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
+      );
+      const exited = once(child, 'exit');
+      let denials = 0;
+      try {
+        const ready = await Promise.race([
+          once(child.stdout, 'data'),
+          exited.then(() => {
+            throw new Error('reader exited before readiness');
+          }),
+        ]);
+        expect(String(ready[0]).trim()).toBe('ready');
+        const rename = fs.renameSync;
+        vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+          try {
+            return rename(from, to);
+          } catch (error) {
+            if (to === paths.reviews) {
+              expect(error.code).toBe('EPERM');
+              denials++;
+              if (!child.stdin.writableEnded) child.stdin.end('\n');
+            }
+            throw error;
+          }
+        });
+        const output = outputCollector();
+        await runCli({
+          argv: ['review'],
+          privateRoot,
+          prompt: promptAnswers('a', '1', 'q'),
+          consoleLike: output.consoleLike,
+        });
+        expect(denials).toBeGreaterThan(0);
+        expect(output.lines).toContain('saved=approved');
+        expect(
+          JSON.parse(fs.readFileSync(paths.reviews)).reviews.filter(
+            ({ decision }) => decision === 'approved',
+          ),
+        ).toHaveLength(1);
+        expect(
+          fs
+            .readdirSync(privateRoot)
+            .filter((name) => /\.(tmp|lock)$/.test(name)),
+        ).toEqual([]);
+      } finally {
+        if (!child.stdin.writableEnded) child.stdin.end('\n');
+        await exited;
+      }
+    },
+  );
+
+  it.each([
+    ['EPERM', 'skip'],
+    ['EACCES', 'approve'],
+    ['EBUSY', 'undo'],
+  ])(
+    'retries transient %s during %s only on Windows while retaining locks and the original',
+    async (code, action) => {
+      const { privateRoot, paths } = privateFixture();
+      await runCli({
+        argv: ['init'],
+        privateRoot,
+        consoleLike: outputCollector().consoleLike,
+      });
+      if (action === 'undo') {
+        await runCli({
+          argv: ['review'],
+          privateRoot,
+          prompt: promptAnswers('s', 'q'),
+          consoleLike: outputCollector().consoleLike,
+        });
+      }
+      const original = fs.readFileSync(paths.reviews, 'utf8');
+      const rename = fs.renameSync;
+      let attempts = 0;
+      let released = false;
+      const denial = Object.assign(new Error('sharing denied'), { code });
+      vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+        if (to === paths.reviews) {
+          attempts++;
+          expect(released).toBe(false);
+          expect(fs.existsSync(`${paths.reviews}.lock`)).toBe(true);
+          expect(fs.readFileSync(paths.reviews, 'utf8')).toBe(original);
+          if (attempts < 3) throw denial;
+        }
+        return rename(from, to);
+      });
+      const output = outputCollector();
+      const saving = runCli({
+        argv: [action === 'undo' ? 'undo' : 'review'],
+        privateRoot,
+        prompt:
+          action === 'approve'
+            ? promptAnswers('a', '1', 'q')
+            : promptAnswers('s', 'q'),
+        consoleLike: output.consoleLike,
+        async acquireSessionLease() {
+          return {
+            assertHeld() {},
+            async release() {
+              released = true;
+            },
+          };
+        },
+      });
+      if (process.platform === 'win32') {
+        await saving;
+        expect(attempts).toBeGreaterThanOrEqual(3);
+        expect(output.lines).toContain(
+          action === 'undo'
+            ? 'undo=ok'
+            : action === 'approve'
+              ? 'saved=approved'
+              : 'saved=skipped',
+        );
+      } else {
+        await expect(saving).rejects.toBe(denial);
+        expect(attempts).toBe(1);
+      }
+      expect(released).toBe(true);
+      expect(
+        fs
+          .readdirSync(privateRoot)
+          .filter((name) => /\.(tmp|lock)$/.test(name)),
+      ).toEqual([]);
+    },
+  );
+
+  it.each(['EPERM', 'ENOSPC', 'EXDEV'])(
+    'preserves the original and reports %s when replacement cannot succeed',
+    async (code) => {
+      const { privateRoot, paths } = privateFixture();
+      await runCli({
+        argv: ['init'],
+        privateRoot,
+        consoleLike: outputCollector().consoleLike,
+      });
+      const original = fs.readFileSync(paths.reviews, 'utf8');
+      const denial = Object.assign(new Error('cannot rename'), { code });
+      const rename = vi.spyOn(fs, 'renameSync').mockImplementation(() => {
+        throw denial;
+      });
+      const output = outputCollector();
+      await expect(
+        runCli({
+          argv: ['review'],
+          privateRoot,
+          prompt: promptAnswers('s', 'q'),
+          consoleLike: output.consoleLike,
+        }),
+      ).rejects.toBe(denial);
+      expect(rename).toHaveBeenCalledTimes(
+        code === 'EPERM' && process.platform === 'win32' ? 21 : 1,
+      );
+      expect(fs.readFileSync(paths.reviews, 'utf8')).toBe(original);
+      expect(output.lines).not.toContain('saved=skipped');
+      expect(
+        fs
+          .readdirSync(privateRoot)
+          .filter((name) => /\.(tmp|lock)$/.test(name)),
+      ).toEqual([]);
+    },
+  );
+
+  it
+    .runIf(process.platform === 'win32')
+    .each(['changed', 'hardlinked', 'lease-lost'])(
+    'aborts a retry when the destination or lease becomes %s',
+    async (change) => {
+      const { privateRoot, paths } = privateFixture();
+      await runCli({
+        argv: ['review'],
+        privateRoot,
+        prompt: promptAnswers('s', 'q'),
+        consoleLike: outputCollector().consoleLike,
+      });
+      const original = fs.readFileSync(paths.reviews, 'utf8');
+      let leaseHeld = true;
+      const rename = vi.spyOn(fs, 'renameSync').mockImplementation(() => {
+        // This event-loop turn runs during the retry wait, after the first validation.
+        setImmediate(() => {
+          if (change === 'hardlinked')
+            fs.linkSync(paths.reviews, path.join(privateRoot, 'other.json'));
+          if (change === 'lease-lost') leaseHeld = false;
+          if (change === 'changed') {
+            const manifest = JSON.parse(original);
+            manifest.reviews[0].decision = 'pending';
+            fs.writeFileSync(paths.reviews, JSON.stringify(manifest));
+          }
+        });
+        throw Object.assign(new Error('sharing denied'), { code: 'EPERM' });
+      });
+      const output = outputCollector();
+      await expect(
+        runCli({
+          argv: ['undo'],
+          privateRoot,
+          consoleLike: output.consoleLike,
+          async acquireSessionLease() {
+            return {
+              assertHeld() {
+                if (!leaseHeld) throw new Error('lease lost');
+              },
+              async release() {},
+            };
+          },
+        }),
+      ).rejects.toThrow(
+        change === 'changed'
+          ? 'changed in another session'
+          : change === 'hardlinked'
+            ? /private reading reviews/
+            : 'lease lost',
+      );
+      expect(rename).toHaveBeenCalledTimes(1);
+      expect(output.lines).not.toContain('undo=ok');
+      if (change !== 'changed')
+        expect(fs.readFileSync(paths.reviews, 'utf8')).toBe(original);
+      expect(
+        fs
+          .readdirSync(privateRoot)
+          .filter((name) => /\.(tmp|lock)$/.test(name)),
+      ).toEqual([]);
+    },
+  );
+
   it('auto-initializes, accepts one case, saves it, and resumes without editing JSON', async () => {
     const { privateRoot, paths, source } = privateFixture();
     const output = outputCollector();

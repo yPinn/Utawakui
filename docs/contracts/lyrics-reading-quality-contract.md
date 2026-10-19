@@ -221,7 +221,14 @@ analyzer result merely because it looks plausible. If the recording context or a
 trusted reference is unavailable, skip the case rather than guessing. Progress is
 saved atomically after each decision. A short-lived single-writer lock plus a
 predecessor comparison rejects a stale concurrent session instead of overwriting
-newer decisions. On Windows, a deterministic OS named mutex is held for the whole
+newer decisions. Initialization also publishes a complete file without overwriting
+an existing manifest. On Windows, the mutable review manifest uses a same-directory
+non-overwriting move rather than hardlink publication followed by staging unlink;
+that hardlink lifecycle can leave JSON files persistently unreplaceable in Temp.
+Later atomic replacements retry Windows `EPERM`, `EACCES`, or `EBUSY` at most 20
+times with 100 ms waits. Both locks remain held, and each attempt revalidates the
+session lease, artifact safety, and predecessor contents. Exhaustion preserves the
+original; other failures are not retried. On Windows, a deterministic OS named mutex is held for the whole
 review, undo, or export session; a second session is rejected before it reads or
 displays a case, and the OS releases the mutex when its helper exits. The inner
 file lock records a bounded PID, creation time, and random owner token; an expired
