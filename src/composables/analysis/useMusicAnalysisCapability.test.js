@@ -43,6 +43,145 @@ function createHarness(options = {}) {
 }
 
 describe('Music Analysis capability owner', () => {
+  it('separates read failures from action errors and clears each on recovery', async () => {
+    const harness = createHarness();
+    harness.bridge.getMusicStructureCapabilityStatus.mockRejectedValueOnce(
+      new Error('private read failure'),
+    );
+    await harness.owner.refreshStatus();
+    expect(harness.owner.readError.value).toBeTruthy();
+    expect(harness.owner.error.value).toBe('');
+
+    await harness.owner.refreshStatus();
+    expect(harness.owner.readError.value).toBe('');
+    expect(harness.state.capabilityError).toBe('');
+    expect(harness.owner.stageLabel.value).toBe('分析功能已就緒');
+
+    harness.bridge.repairMusicStructureCapability.mockRejectedValueOnce(
+      new Error('private repair failure'),
+    );
+    await harness.owner.repair();
+    const actionError = harness.owner.error.value;
+    expect(actionError).toBe('分析功能修復未完成，請再試一次。');
+    harness.bridge.getMusicStructureCapabilityStatus.mockRejectedValueOnce(
+      new Error('private read failure'),
+    );
+    await harness.owner.refreshStatus();
+    expect(harness.owner.readError.value).toBeTruthy();
+    expect(harness.owner.error.value).toBe(actionError);
+    await harness.owner.refreshStatus();
+    expect(harness.owner.readError.value).toBe('');
+    expect(harness.owner.error.value).toBe(actionError);
+
+    harness.bridge.repairMusicStructureCapability.mockResolvedValueOnce({
+      status: 'ready',
+      installed: true,
+    });
+    await harness.owner.repair();
+    expect(harness.owner.error.value).toBe('');
+  });
+
+  it.each([null, {}, { status: 7 }])(
+    'rejects malformed status %j while retaining the last valid capability',
+    async (status) => {
+      const harness = createHarness({ capability: { status: 'missing' } });
+      harness.bridge.getMusicStructureCapabilityStatus.mockResolvedValue(
+        status,
+      );
+      await harness.owner.refreshStatus();
+      expect(harness.capability.value).toEqual({ status: 'missing' });
+      expect(harness.owner.readError.value).toBe(
+        '目前無法讀取分析功能狀態，請重新讀取。',
+      );
+    },
+  );
+
+  it.each(['resolve', 'reject'])(
+    'ignores a stale status %s after maintenance changes the capability',
+    async (settlement) => {
+      const harness = createHarness();
+      let settle;
+      harness.bridge.getMusicStructureCapabilityStatus.mockReturnValue(
+        new Promise((resolve, reject) => {
+          settle = () =>
+            settlement === 'resolve'
+              ? resolve({ status: 'missing' })
+              : reject(new Error('stale private failure'));
+        }),
+      );
+      const reading = harness.owner.refreshStatus();
+      const installed = { status: 'ready', installed: true };
+      harness.bridge.prepareMusicStructureCapability.mockResolvedValue(
+        installed,
+      );
+      await harness.owner.prepare();
+      settle();
+      await reading;
+      expect(harness.capability.value).toBe(installed);
+      expect(harness.owner.readError.value).toBe('');
+      expect(harness.owner.error.value).toBe('');
+    },
+  );
+
+  it('falls back safely when status and progress bridges are unavailable', async () => {
+    const harness = createHarness({
+      bridge: {
+        getMusicStructureCapabilityStatus: undefined,
+        onMusicStructureCapabilityProgress: undefined,
+      },
+    });
+    harness.owner.subscribeProgress();
+    await harness.owner.refreshStatus();
+    expect(harness.capability.value).toMatchObject({
+      status: 'unavailable',
+      installed: false,
+      canPrepare: false,
+    });
+    expect(harness.owner.stageLabel.value).toBe('目前無法管理分析功能');
+    expect(harness.owner.readError.value).toContain('重新啟動');
+    harness.owner.dispose();
+    expect(harness.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('blocks concurrent maintenance and status reads until work settles', async () => {
+    const harness = createHarness();
+    let finish;
+    harness.bridge.prepareMusicStructureCapability.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const preparing = harness.owner.prepare();
+    expect(harness.owner.busy.value).toBe(true);
+    await harness.owner.refreshStatus();
+    await harness.owner.remove();
+    expect(
+      harness.bridge.getMusicStructureCapabilityStatus,
+    ).not.toHaveBeenCalled();
+    expect(
+      harness.bridge.removeMusicStructureCapability,
+    ).not.toHaveBeenCalled();
+    finish({ status: 'ready', installed: true });
+    await preparing;
+    expect(harness.owner.busy.value).toBe(false);
+  });
+
+  it('accepts indeterminate progress but rejects non-finite percentages', () => {
+    const harness = createHarness();
+    harness.owner.subscribeProgress();
+    harness.progress({ stage: 'installing-runtime' });
+    expect(harness.state.capabilityProgress).toEqual({
+      stage: 'installing-runtime',
+    });
+    expect(harness.owner.progressPercent.value).toBeNull();
+    harness.progress({ stage: 'ready', percent: Number.NaN });
+    harness.progress({ stage: 'ready', percent: Infinity });
+    expect(harness.state.capabilityProgress.stage).toBe('installing-runtime');
+    harness.progress({ stage: 'downloading-runtime', percent: -5 });
+    expect(harness.owner.progressPercent.value).toBe(0);
+    harness.owner.dispose();
+  });
+
   it('projects bounded status labels and read failures', async () => {
     const harness = createHarness({ capability: { status: 'damaged' } });
     harness.bridge.getMusicStructureCapabilityStatus.mockRejectedValue(

@@ -96,6 +96,94 @@ function findItem(presentation, gateId, dependencyId) {
 }
 
 describe('useFeatureGatePresentation', () => {
+  it('shows unreadable dependency truth and disables actions until recovery', async () => {
+    const presentation = await loadPresentation();
+    const dependencies = await loadFeatureDependencyOwner();
+    listFeatureDependenciesMock.mockRejectedValueOnce(
+      new Error('private status'),
+    );
+    await dependencies.refreshDependencies();
+    const unreadable = findItem(
+      presentation,
+      'audio-processing-flow',
+      'uvr-mdxnet-kara-2',
+    );
+    expect(unreadable).toMatchObject({
+      status: '無法讀取',
+      statusTone: 'warning',
+      needsAttention: true,
+      actionDisabled: true,
+    });
+    await dependencies.refreshDependencies();
+    expect(
+      findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-kara-2'),
+    ).toMatchObject({ status: '未準備', actionDisabled: false });
+  });
+
+  it('keeps failed gate reads visibly disabled without enabling or downloading', async () => {
+    const presentation = await loadPresentation();
+    const gates = await loadFeatureGateOwner();
+    getFeatureConfirmationsMock.mockRejectedValueOnce(
+      new Error('private gate state'),
+    );
+    await gates.refreshConfirmations();
+    const row = findGateRow(presentation, 'audio-processing-flow');
+    expect(row).toMatchObject({
+      status: '無法讀取',
+      tone: 'warning',
+      enabled: false,
+    });
+    expect(presentation.isGateActionDisabled(row)).toBe(true);
+    expect(confirmFeatureGateMock).not.toHaveBeenCalled();
+    expect(prepareFeatureDependencyMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['repairDependency', 'repair', '修復中'],
+    ['removeDependency', 'remove', '移除中'],
+  ])(
+    'projects %s for installed models without offering duplicate work',
+    async (method, actionId, label) => {
+      const pending = createDeferred();
+      const action =
+        method === 'repairDependency'
+          ? repairFeatureDependencyMock
+          : removeFeatureDependencyMock;
+      action.mockReturnValueOnce(pending.promise);
+      const presentation = await loadPresentation();
+      const dependencies = await loadFeatureDependencyOwner();
+      const installed = {
+        id: 'uvr-mdxnet-kara-2',
+        kind: 'model',
+        installed: true,
+      };
+      updatedCallback([installed]);
+      const working = dependencies[method](installed.id);
+      const item = findItem(
+        presentation,
+        'audio-processing-flow',
+        installed.id,
+      );
+      expect(item).toMatchObject({
+        busy: true,
+        actionDisabled: true,
+        actionIcon: null,
+      });
+      expect(
+        item.advancedActions.find(({ id }) => id === actionId),
+      ).toMatchObject({ label, disabled: true });
+      expect(item.advancedActions.every(({ disabled }) => disabled)).toBe(true);
+      pending.resolve({
+        ...installed,
+        installed: method === 'repairDependency',
+      });
+      await working;
+      expect(
+        findItem(presentation, 'audio-processing-flow', installed.id).busy,
+      ).toBe(false);
+    },
+  );
+
   it('projects the complete gate registry with concise labels and counts', async () => {
     getFeatureConfirmationsMock.mockResolvedValue({
       'provider-flow': validConfirmation('provider-flow'),

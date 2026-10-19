@@ -70,6 +70,116 @@ async function loadFeatureDependencies() {
 }
 
 describe('useFeatureDependencies', () => {
+  it.each(['prepareDependency', 'repairDependency'])(
+    'skips refresh while %s is active',
+    async (method) => {
+      const pending = createDeferred();
+      const action =
+        method === 'prepareDependency'
+          ? prepareFeatureDependencyMock
+          : repairFeatureDependencyMock;
+      action.mockReturnValue(pending.promise);
+      const owner = await loadFeatureDependencies();
+      const working = owner[method](DEPENDENCY_ID);
+      await owner.refreshDependencies();
+      expect(listFeatureDependenciesMock).not.toHaveBeenCalled();
+      expect(owner.state.isLoading).toBe(false);
+      pending.resolve({ id: DEPENDENCY_ID, installed: true });
+      await working;
+    },
+  );
+
+  it('clears a failed read on recovery without reviving a stale rejected read', async () => {
+    listFeatureDependenciesMock.mockRejectedValueOnce(
+      new Error('private read'),
+    );
+    const owner = await loadFeatureDependencies();
+    await owner.refreshDependencies();
+    expect(owner.state.readError.code).toBe('FEATURE_DEPENDENCY_STATUS_FAILED');
+    await owner.refreshDependencies();
+    expect(owner.state.error).toBeNull();
+    expect(owner.state.readError).toBeNull();
+
+    const stale = createDeferred();
+    listFeatureDependenciesMock.mockReturnValueOnce(stale.promise);
+    const reading = owner.refreshDependencies();
+    updatedCallback([{ id: DEPENDENCY_ID, installed: true }]);
+    stale.reject(new Error('stale private read'));
+    await reading;
+    expect(owner.state.byId[DEPENDENCY_ID].installed).toBe(true);
+    expect(owner.state.error).toBeNull();
+    expect(owner.state.isLoading).toBe(false);
+  });
+
+  it('handles empty update and progress events without starting work', async () => {
+    const owner = await loadFeatureDependencies();
+    updatedCallback([{ id: DEPENDENCY_ID, installed: true }]);
+    updatedCallback();
+    progressCallback();
+    expect(owner.state.byId).toEqual({});
+    expect(owner.state.progressById).toEqual({});
+    expect(prepareFeatureDependencyMock).not.toHaveBeenCalled();
+  });
+
+  it('retries a failed prepare from its notification and clears its scoped error', async () => {
+    prepareFeatureDependencyMock.mockRejectedValueOnce(
+      new Error('private prepare'),
+    );
+    const owner = await loadFeatureDependencies();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    await owner.prepareDependency(DEPENDENCY_ID);
+    const notice = notifications.items.value[0];
+    expect(notice).toMatchObject({ tone: 'danger', actionLabel: '重試' });
+    await notifications.runAction(notice.id);
+    expect(prepareFeatureDependencyMock).toHaveBeenCalledTimes(2);
+    expect(owner.state.error).toBeNull();
+    expect(owner.state.errorsById[DEPENDENCY_ID]).toBeUndefined();
+    expect(owner.state.byId[DEPENDENCY_ID].installed).toBe(true);
+  });
+
+  it.each([
+    ['yt-dlp-provider-tool', 'sources'],
+    [DEPENDENCY_ID, 'processing'],
+  ])(
+    'opens the %s settings from a failed removal without retrying it',
+    async (id, section) => {
+      removeFeatureDependencyMock.mockRejectedValueOnce(
+        new Error('private removal'),
+      );
+      const owner = await loadFeatureDependencies();
+      const { useAppNotifications } = await import('./useAppNotifications.js');
+      const { useAppView } = await import('./useAppView.js');
+      const notifications = useAppNotifications();
+      await owner.removeDependency(id);
+      const notice = notifications.items.value[0];
+      expect(notice.actionLabel).toBe('查看設定');
+      await notifications.runAction(notice.id);
+      expect(useAppView().activeView.value).toBe('settings');
+      expect(useAppView().settingsSection.value).toBe(section);
+      expect(removeFeatureDependencyMock).toHaveBeenCalledTimes(1);
+      expect(owner.state.errorsById[id].operation).toBe('remove');
+    },
+  );
+
+  it('projects indeterminate progress for unknown stages during preparation', async () => {
+    const pending = createDeferred();
+    prepareFeatureDependencyMock.mockReturnValueOnce(pending.promise);
+    const owner = await loadFeatureDependencies();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    const preparing = owner.prepareDependency(DEPENDENCY_ID);
+    progressCallback({ dependencyId: DEPENDENCY_ID, stage: 'future-stage' });
+    expect(notifications.items.value[0]).toMatchObject({
+      message: '處理中',
+      progress: null,
+    });
+    pending.resolve({ id: DEPENDENCY_ID, installed: true });
+    await preparing;
+    expect(owner.state.progressById).toEqual({});
+    expect(notifications.items.value[0].tone).toBe('success');
+  });
+
   it('does not publish a pre-operation read over the completed dependency', async () => {
     const deferred = createDeferred();
     listFeatureDependenciesMock.mockReturnValue(deferred.promise);

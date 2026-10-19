@@ -37,7 +37,7 @@ function capabilityErrorMessage(operation) {
 export function useMusicAnalysisCapability(options = {}) {
   const { state, capability, bridge, isBatchActive = () => false } = options;
   const readError = shallowRef('');
-  let errorOperation = '';
+  const errorOperation = shallowRef('');
   let unsubscribeProgress = null;
   let disposed = false;
   let revision = 0;
@@ -102,13 +102,13 @@ export function useMusicAnalysisCapability(options = {}) {
       if (current !== revision) return capability.value;
       capability.value = status;
       readError.value = '';
-      if (errorOperation === 'read') state.capabilityError = '';
+      if (errorOperation.value === 'read') state.capabilityError = '';
     } catch {
       if (current !== revision) return capability.value;
       readError.value = '目前無法讀取分析功能狀態，請重新讀取。';
-      if (!state.capabilityError || errorOperation === 'read') {
+      if (!state.capabilityError || errorOperation.value === 'read') {
         state.capabilityError = readError.value;
-        errorOperation = 'read';
+        errorOperation.value = 'read';
       }
     }
     return capability.value;
@@ -131,7 +131,7 @@ export function useMusicAnalysisCapability(options = {}) {
       capability.value = await bridge[bridgeMethod]();
       state.capabilityError = '';
       readError.value = '';
-      errorOperation = '';
+      errorOperation.value = '';
       state.capabilityProgress = capability.value?.installed
         ? { stage: 'ready', percent: 100 }
         : null;
@@ -139,7 +139,7 @@ export function useMusicAnalysisCapability(options = {}) {
       return capability.value;
     } catch {
       state.capabilityError = capabilityErrorMessage(operation);
-      errorOperation = operation;
+      errorOperation.value = operation;
       options.onActionError?.(operation, state.capabilityError);
       return null;
     } finally {
@@ -170,7 +170,7 @@ export function useMusicAnalysisCapability(options = {}) {
     busy,
     readError,
     error: computed(() =>
-      errorOperation === 'read' ? '' : state.capabilityError,
+      errorOperation.value === 'read' ? '' : state.capabilityError,
     ),
     progressPercent,
     stageLabel,
