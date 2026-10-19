@@ -17,7 +17,8 @@ describe('SeparationDockContent copy and controls', () => {
     expect(source).toContain('sourceOptions');
     expect(source).toContain('startUnpreparedTracks');
     expect(source).toContain('restartPreparedTracks');
-    expect(source).toContain('v-if="unpreparedTracks.length > 0"');
+    expect(source).toContain(':hint="storageHint"');
+    expect(source).toContain('estimate.knownTracks === estimate.totalTracks');
     expect(source).toContain('此來源沒有曲目');
     expect(source).not.toContain('prepareAgain');
     expect(source).not.toContain('尚未加入處理');

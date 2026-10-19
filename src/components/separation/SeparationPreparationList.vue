@@ -27,8 +27,10 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
           :track="track"
           navigation="artist"
           hide-duration
+          state-surface
           overflow="ellipsis"
           thumb-loading="lazy"
+          thumb-decoding="async"
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
@@ -62,8 +64,10 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
           :track="track"
           navigation="artist"
           hide-duration
+          state-surface
           overflow="ellipsis"
           thumb-loading="lazy"
+          thumb-decoding="async"
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
@@ -94,5 +98,11 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
 
 .separation-preparation-list :deep(.app-right-dock-section__header) {
   min-block-size: var(--ui-control-height);
+}
+
+@container (max-width: 42rem) {
+  .separation-preparation-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

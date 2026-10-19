@@ -53,6 +53,7 @@ function deferredPlatformLabel(platform) {
 
 export function useImportSourceResolution({
   state,
+  getDraftRevision = () => 0,
   clearPreview,
   ensureProviderFlow,
   handleProviderSetupError,
@@ -74,6 +75,8 @@ export function useImportSourceResolution({
 
   async function resolveSource() {
     const input = state.input.trim();
+    let revision = getDraftRevision();
+    const isCurrent = () => revision === getDraftRevision();
     if (!input) {
       clearPreview();
       setStatus();
@@ -86,13 +89,19 @@ export function useImportSourceResolution({
       state.isResolving = false;
       return;
     }
+    if (!isCurrent()) {
+      state.isResolving = false;
+      return;
+    }
 
     clearPreview();
+    revision = getDraftRevision();
     setStatus();
 
     try {
       if (typeof window.Utawakui.resolveImportInput === 'function') {
         const result = await window.Utawakui.resolveImportInput(input);
+        if (!isCurrent()) return;
         if (result?.kind === 'deferred') {
           setStatus(
             `${deferredPlatformLabel(result.platform)} 連結轉換尚未開放`,
@@ -149,6 +158,7 @@ export function useImportSourceResolution({
       }
 
       const playlistResult = await window.Utawakui.fetchYoutubePlaylist(input);
+      if (!isCurrent()) return;
       const entries = playlistResult?.entries;
       if (entries && entries.length > 0) {
         state.sourceKind = 'playlist';
@@ -169,6 +179,7 @@ export function useImportSourceResolution({
 
       if (typeof window.Utawakui.resolveImportSource === 'function') {
         const resolution = await window.Utawakui.resolveImportSource(input);
+        if (!isCurrent()) return;
         state.sourceKind = 'single';
         state.singleResolution = resolution;
         state.selectedCandidateId = candidateId(
@@ -194,10 +205,12 @@ export function useImportSourceResolution({
       }
 
       const metadata = await window.Utawakui.fetchVideoMetadata(input);
+      if (!isCurrent()) return;
       state.sourceKind = 'single';
       state.singleTrack = createPreviewTrack(metadata);
       setStatus();
     } catch (error) {
+      if (!isCurrent()) return;
       clearPreview();
       if (handleProviderSetupError(error)) return;
       const appError = normalizeAppError(error, {

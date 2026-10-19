@@ -203,7 +203,7 @@ describe('architecture ownership boundaries', () => {
     expect(publisher).not.toContain('upsertOutputSlot');
   });
 
-  it('keeps Import session state separate from resolution and execution workflows', () => {
+  it('keeps Import drafts in the facade and accepted work in execution', () => {
     const resolutionPath = resolve(
       root,
       'src/composables/import/useImportSourceResolution.js',
@@ -236,7 +236,9 @@ describe('architecture ownership boundaries', () => {
     expect(execution).not.toContain('fetchYoutubePlaylist');
     expect(execution).not.toContain('markRaw');
     expect(resolution).not.toContain('reactive(');
-    expect(execution).not.toContain('reactive(');
+    expect(facade).toContain('const state = reactive(');
+    expect(execution).not.toMatch(/\bstate\s*=\s*reactive\(/u);
+    expect(execution).toContain('activity: readonly(internal)');
     expect(resolution).not.toContain('useImportExecution');
     expect(execution).not.toContain('useImportSourceResolution');
   });

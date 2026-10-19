@@ -1,4 +1,4 @@
-import { computed, reactive, readonly } from 'vue';
+import { computed, reactive, readonly, shallowRef } from 'vue';
 import {
   IMPORT_FILTERS,
   filterPlaylistImportTracks,
@@ -47,7 +47,7 @@ const state = reactive({
   isImporting: false,
 });
 const readonlyState = readonly(state);
-registerProviderImportActivity(readonlyState);
+const draftRevision = shallowRef(0);
 
 const playlistStats = computed(() =>
   getPlaylistImportStats(state.playlistTracks),
@@ -183,12 +183,13 @@ async function ensureProviderFlow({
   operation = 'resolve-source',
   message = '請先到設定啟用外部來源，才能解析或下載線上歌曲。',
 } = {}) {
+  const revision = draftRevision.value;
   const enabled = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
     source: 'import',
     operation,
     message,
   });
-  if (!enabled) {
+  if (!enabled && revision === draftRevision.value) {
     setStatus('請先到設定啟用外部來源', 'pending');
   }
   return enabled;
@@ -220,6 +221,8 @@ function setTrackSelected(trackId, selected) {
 }
 
 function clearPreview() {
+  draftRevision.value++;
+  state.isImporting = false;
   state.sourceKind = 'idle';
   state.singleTrack = null;
   state.singleResolution = null;
@@ -231,22 +234,23 @@ function clearPreview() {
   state.collectionThumbnailUrl = null;
   state.createdPlaylistId = null;
   state.activeFilter = 'all';
-  importExecution.resetCancellation();
 }
 
 const importExecution = useImportExecution({
   state,
+  getDraftRevision: () => draftRevision.value,
   canConfirmImport,
   canRetryFailed,
-  dominantFailureCode,
   ensureProviderFlow,
   handleProviderSetupError,
   reportImportError,
   setStatus,
 });
+registerProviderImportActivity(importExecution.activity);
 
 const sourceResolution = useImportSourceResolution({
   state,
+  getDraftRevision: () => draftRevision.value,
   clearPreview,
   ensureProviderFlow,
   handleProviderSetupError,
@@ -387,6 +391,12 @@ async function openDownloadDir({ notifyFailure = false } = {}) {
 
 export function useImportSession() {
   return {
+    activity: importExecution.activity,
+    currentBatchId: computed(importExecution.currentBatchId),
+    submitImport: importExecution.submitImport,
+    cancelBatch: importExecution.cancelBatch,
+    retryBatch: importExecution.retryBatch,
+    dismissBatch: importExecution.dismissBatch,
     state: readonlyState,
     playlistStats,
     dominantFailureCode,

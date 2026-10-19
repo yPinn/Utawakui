@@ -55,7 +55,8 @@ describe('contextual capability boundaries after the destination cutover', () =>
       '../components/import/ImportReviewModal.vue',
     );
     expect(importDockSource).toContain('<ImportReviewModal');
-    expect(importReviewSource).toContain('<ImportCollectionReview />');
+    expect(importReviewSource).toContain('<ImportCollectionReview v-else');
+    expect(importReviewSource).toContain('<ImportBatchReview v-if="batch"');
     expect(importReviewSource).not.toContain('ProviderImportPanel');
     expect(internalViewsBranch).toContain(
       "'lyrics-provider-review': defineAsyncComponent",

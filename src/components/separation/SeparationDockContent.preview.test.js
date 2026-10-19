@@ -23,19 +23,36 @@ vi.mock('../../composables/useAppView.js', () => ({
 }));
 vi.mock('../ui/UiModal.vue', () => ({
   default: {
-    props: ['open'],
+    props: ['open', 'size', 'maxBlockSize', 'bodyMode', 'selectable'],
     setup:
       (props, { slots, emit }) =>
       () =>
         props.open
-          ? h('dialog', [
-              h('button', {
-                id: 'close-preview',
-                onClick: () => emit('close'),
-              }),
-              slots.default?.(),
-            ])
+          ? h(
+              'dialog',
+              {
+                'data-size': props.size,
+                'data-cap': props.maxBlockSize,
+                'data-body': props.bodyMode,
+                'data-selectable': props.selectable,
+              },
+              [
+                h('button', {
+                  id: 'close-preview',
+                  onClick: () => emit('close'),
+                }),
+                slots.default?.(),
+              ],
+            )
           : null,
+  },
+}));
+vi.mock('../ui/UiScrollLayout.vue', () => ({
+  default: {
+    setup:
+      (_, { slots }) =>
+      () =>
+        h('div', slots.default?.()),
   },
 }));
 vi.mock('../ui/UiIconButton.vue', () => ({
@@ -93,6 +110,12 @@ vi.mock('./SeparationPreparationList.vue', () => ({
   },
 }));
 import SeparationDockContent from './SeparationDockContent.vue';
+import PreparationReviewLayout from '../preparation/PreparationReviewLayout.vue';
+attachClientRender(
+  PreparationReviewLayout,
+  '../preparation/PreparationReviewLayout.vue',
+  import.meta.url,
+);
 attachClientRender(
   SeparationDockContent,
   './SeparationDockContent.vue',
@@ -141,6 +164,29 @@ function setup(onNavigate = vi.fn()) {
   return { ...mount(SeparationDockContent, props), props };
 }
 describe('accompaniment source preview', () => {
+  it('uses the shared bounded workspace and keeps only source, total, and a complete storage estimate', async () => {
+    fixture.preparation.unpreparedTracks.value = [
+      { id: 'one', title: 'One', duration: 180 },
+    ];
+    const { root, app } = setup();
+    open(root);
+    await nextTick();
+    const dialog = dialogs(root)[0];
+    expect(dialog.props['data-size']).toBe('wide');
+    expect(dialog.props['data-cap']).toBe('medium');
+    expect(dialog.props['data-body']).toBe('workspace');
+    expect(dialog.props['data-selectable']).toBe(false);
+    expect(textContent(dialog)).toContain('我的歌單 · 20 首');
+    expect(textContent(dialog)).toContain('最多新增約 61 MB');
+    expect(textContent(dialog)).not.toContain('1 首 · 最多新增');
+    fixture.preparation.unpreparedTracks.value = [
+      { id: 'one', duration: 180 },
+      { id: 'unknown' },
+    ];
+    await nextTick();
+    expect(textContent(dialogs(root)[0])).not.toContain('最多新增');
+    app.unmount();
+  });
   it('adds the requested preview track without closing the modal or invoking batch start', async () => {
     const { root, app } = setup();
     open(root);

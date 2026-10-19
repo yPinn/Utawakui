@@ -12,6 +12,8 @@ import {
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import ImportCollectionTrackStatus from './ImportCollectionTrackStatus.vue';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
@@ -56,8 +58,20 @@ const sections = computed(() =>
       id: 'completed',
       label: '已完成',
       tracks: selectedTracks.value.filter(
-        (track) => track.alreadyDownloaded || track.status === 'done',
+        (track) => !track.alreadyDownloaded && track.status === 'done',
       ),
+    },
+    {
+      id: 'cancelled',
+      label: '已停止',
+      tracks: selectedTracks.value.filter(
+        (track) => track.status === 'cancelled',
+      ),
+    },
+    {
+      id: 'local',
+      label: '已在曲庫',
+      tracks: selectedTracks.value.filter((track) => track.alreadyDownloaded),
     },
   ].filter((section) => section.tracks.length > 0),
 );
@@ -70,27 +84,20 @@ function failureLabel(track) {
 
 <template>
   <div class="import-execution-list">
-    <section
+    <AppRightDockSection
       v-for="section in sections"
       :key="section.id"
       class="import-execution-list__section"
-      :aria-labelledby="`import-execution-${section.id}`"
+      :heading="`${section.label} · ${section.tracks.length} 首`"
     >
-      <header class="import-execution-list__header">
-        <h4 :id="`import-execution-${section.id}`">
-          {{ section.label }}
-          <span class="import-execution-list__count">{{
-            section.tracks.length
-          }}</span>
-        </h4>
+      <template v-if="section.id === 'failed'" #trailing>
         <UiIconButton
-          v-if="section.id === 'failed'"
           :icon="RefreshCw"
           label="重試未完成曲目"
           :disabled="retryDisabled"
           @click="emit('retryFailed')"
         />
-      </header>
+      </template>
 
       <ul class="import-execution-list__rows">
         <UiTrackRow
@@ -99,6 +106,7 @@ function failureLabel(track) {
           class="import-execution-list__row"
           :track="executionTrack(source)"
           state-surface
+          hide-duration
           overflow="ellipsis"
           thumb-loading="lazy"
           thumb-decoding="async"
@@ -117,9 +125,18 @@ function failureLabel(track) {
               :label="failureLabel(source)"
             />
           </template>
+          <template v-else-if="section.id === 'cancelled'" #trail>
+            <UiStatusIcon :icon="Square" tone="muted" label="已停止" />
+          </template>
+          <template
+            v-else-if="['completed', 'local'].includes(section.id)"
+            #trail
+          >
+            <ImportCollectionTrackStatus :track="source" />
+          </template>
         </UiTrackRow>
       </ul>
-    </section>
+    </AppRightDockSection>
   </div>
 </template>
 
@@ -127,37 +144,11 @@ function failureLabel(track) {
 .import-execution-list {
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-side-panel-section-gap);
+  gap: var(--ui-right-dock-section-gap);
 }
 
-.import-execution-list__section {
-  min-inline-size: 0;
-  display: grid;
-  gap: var(--ui-side-panel-content-gap);
-}
-
-.import-execution-list__header {
-  min-inline-size: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
-}
-
-.import-execution-list__header h4 {
-  min-inline-size: 0;
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.import-execution-list__count {
-  margin-inline-start: var(--ui-space-1);
-  color: var(--ui-color-text-muted);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--ui-type-caption-weight);
+.import-execution-list :deep(.app-right-dock-section__header) {
+  min-block-size: var(--ui-control-height);
 }
 
 .import-execution-list__rows {

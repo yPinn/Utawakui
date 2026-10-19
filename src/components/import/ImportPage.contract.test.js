@@ -62,34 +62,43 @@ describe('Import preparation composition contract', () => {
     expect(modal).toContain('<UiModal');
     expect(modal).toContain('size="wide"');
     expect(modal).toContain('max-block-size="medium"');
+    expect(modal).toContain('body-mode="workspace"');
+    expect(modal).toContain(':selectable="false"');
     expect(modal).not.toContain('fixed-height');
-    expect(modal).toContain('<ImportCollectionReview />');
-    expect(modal).toContain('<template #footer>');
+    expect(modal).toContain('<ImportCollectionReview v-else');
+    expect(modal).toContain('<ImportBatchReview');
+    expect(modal).toContain('#footer');
     expect(modal).not.toContain('ProviderImportPanel');
     expect(modal).not.toContain('selectionSummary');
     expect(modal).not.toContain('<UiHint');
   });
 
-  it('keeps collection confirmation in shared controls inside the modal-owned body', () => {
+  it('keeps the summary fixed and gives collection rows one workspace scroll owner', () => {
     const review = readSource('./ImportCollectionReview.vue');
+    const layout = readSource('../preparation/PreparationReviewLayout.vue');
+    const selection = readSource('./ImportCollectionSelectionList.vue');
     const status = readSource('./ImportCollectionTrackStatus.vue');
 
-    expect(review).toContain('<UiSegmentedControl');
-    expect(review).toContain('<UiTrackRow');
-    expect(review).toContain('state-surface');
-    expect(review).toContain('overflow="ellipsis"');
+    expect(review).not.toContain('<UiSegmentedControl');
+    expect(selection).toContain('<UiTrackRow');
+    expect(selection).toContain('state-surface');
+    expect(selection).toContain('overflow="ellipsis"');
     expect(review).toContain('<UiIconButton');
     expect(review).not.toContain("import UiButton from '../ui/UiButton.vue';");
     expect(review).not.toContain('filter-tab');
     expect(review).not.toContain('preview-panel');
     expect(review).not.toContain('<input');
     expect(review).not.toContain('UiScrollRegion');
-    expect(review).not.toContain('UiScrollLayout');
+    expect(review).toContain('<PreparationReviewLayout');
+    expect(layout.match(/<UiScrollLayout\b/gu)).toHaveLength(1);
+    expect(layout).toContain('user-select: text');
+    expect(selection).toContain('hide-duration');
+    expect(selection).not.toContain('UiScrollLayout');
 
-    expect(review).toContain('<UiCheckbox');
-    expect(review).toContain('<ImportCollectionTrackStatus');
-    expect(review).not.toContain('<TrackTable');
-    expect(review).not.toContain('variant="review"');
+    expect(selection).toContain('<UiCheckbox');
+    expect(selection).toContain('<ImportCollectionTrackStatus');
+    expect(selection).not.toContain('<TrackTable');
+    expect(selection).not.toContain('variant="review"');
     expect(status).toContain('<UiStatusIcon');
     expect(status).not.toContain('QueueTrackButton');
   });

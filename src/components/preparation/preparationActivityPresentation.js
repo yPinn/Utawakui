@@ -5,6 +5,11 @@ function nonNegativeCount(value) {
 }
 
 function providerFailureCount(providerImport) {
+  if (Array.isArray(providerImport?.batches)) {
+    return providerImport.batches.filter((batch) =>
+      ['failed', 'cancelled'].includes(batch.phase),
+    ).length;
+  }
   const playlistFailures = Array.isArray(providerImport?.playlistTracks)
     ? providerImport.playlistTracks.filter(({ status }) => status === 'error')
         .length

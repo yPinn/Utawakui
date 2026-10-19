@@ -15,6 +15,9 @@ const reviewSource = readSource('../components/import/ImportReviewModal.vue');
 const collectionReviewSource = readSource(
   '../components/import/ImportCollectionReview.vue',
 );
+const collectionSelectionSource = readSource(
+  '../components/import/ImportCollectionSelectionList.vue',
+);
 const collectionStatusSource = readSource(
   '../components/import/ImportCollectionTrackStatus.vue',
 );
@@ -51,15 +54,18 @@ describe('Import Token v2 surface cutover', () => {
     expect(dockSource).toContain('<ImportReviewModal');
     expect(reviewSource).toContain('size="wide"');
     expect(reviewSource).not.toContain('fixed-height');
-    expect(reviewSource).toContain('<ImportCollectionReview />');
-    expect(reviewSource).toContain('<template #footer>');
+    expect(reviewSource).toContain('<ImportCollectionReview v-else');
+    expect(reviewSource).toContain('<ImportBatchReview v-if="batch"');
+    expect(reviewSource).toContain('#footer');
     expect(reviewSource).not.toContain('ProviderImportPanel');
-    expect(collectionReviewSource).toContain('<UiSegmentedControl');
+    expect(collectionReviewSource).toContain('<PreparationReviewLayout');
     expect(collectionReviewSource).not.toContain('UiScroll');
-    expect(collectionReviewSource).toContain('@click="retryFailedTracks"');
-    expect(collectionReviewSource).toContain('<UiTrackRow');
-    expect(collectionReviewSource).toContain('state-surface');
-    expect(collectionReviewSource).toContain('<UiCheckbox');
+    expect(collectionReviewSource).toContain(
+      '@retry-failed="retryFailedTracks"',
+    );
+    expect(collectionSelectionSource).toContain('<UiTrackRow');
+    expect(collectionSelectionSource).toContain('state-surface');
+    expect(collectionSelectionSource).toContain('<UiCheckbox');
     expect(collectionStatusSource).toContain('<UiStatusIcon');
     expect(collectionReviewSource).not.toContain('<TrackTable');
     expect(trackTableSource).not.toContain("props.variant === 'review'");
@@ -70,6 +76,7 @@ describe('Import Token v2 surface cutover', () => {
       dockSource,
       rowSource,
       collectionReviewSource,
+      collectionSelectionSource,
       collectionStatusSource,
       trackTableSource,
     ]) {

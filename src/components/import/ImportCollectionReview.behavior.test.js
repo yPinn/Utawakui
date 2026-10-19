@@ -1,67 +1,146 @@
-import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { h, nextTick, reactive, computed } from 'vue';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  attachClientRender,
+  findAll,
+  mount,
+  textContent,
+  trigger,
+} from '../ui/uiTestHost.js';
+import { getPlaylistImportStats } from '../../utils/importPlaylist.js';
+import UiHint from '../ui/UiHint.vue';
+import PreparationReviewLayout from '../preparation/PreparationReviewLayout.vue';
 
-const readSource = (path) =>
-  readFileSync(new URL(path, import.meta.url), 'utf8');
+const fixture = vi.hoisted(() => ({}));
+vi.mock('../../composables/useImportSession.js', () => ({
+  useImportSession: () => fixture.session,
+}));
+vi.mock('../ui/UiScrollLayout.vue', () => ({
+  default: {
+    setup: (_, { slots, expose }) => {
+      expose({ scrollTo: (...args) => fixture.scrollTo(...args) });
+      return () => h('div', { 'data-scroll': true }, slots.default?.());
+    },
+  },
+}));
+vi.mock('../ui/UiIconButton.vue', () => ({
+  default: {
+    props: ['label', 'disabled'],
+    emits: ['click'],
+    setup:
+      (props, { emit }) =>
+      () =>
+        h('button', {
+          'aria-label': props.label,
+          disabled: props.disabled,
+          onClick: () => emit('click'),
+        }),
+  },
+}));
+vi.mock('./ImportCollectionSelectionList.vue', () => ({
+  default: {
+    props: ['tracks'],
+    setup: (props) => () =>
+      h('div', { id: 'selection' }, props.tracks.map((t) => t.title).join('|')),
+  },
+}));
+vi.mock('./ImportCollectionExecutionList.vue', () => ({
+  default: { setup: () => () => h('div', { id: 'execution' }, '執行佇列') },
+}));
+import Review from './ImportCollectionReview.vue';
+attachClientRender(Review, './ImportCollectionReview.vue', import.meta.url);
+attachClientRender(UiHint, '../ui/UiHint.vue', import.meta.url);
+attachClientRender(
+  PreparationReviewLayout,
+  '../preparation/PreparationReviewLayout.vue',
+  import.meta.url,
+);
+const action = (root, label) =>
+  findAll(root, (node) => node.props['aria-label'] === label)[0];
+const has = (root, id) =>
+  findAll(root, (node) => node.props.id === id).length > 0;
 
-describe('Import collection review composition', () => {
-  it('uses UiTrackRow inside the existing modal scroll owner', () => {
-    const source = readSource('./ImportCollectionReview.vue');
+beforeEach(() => {
+  fixture.scrollTo = vi.fn();
+  const state = reactive({
+    collectionKind: 'album',
+    playlistTitle: '測試專輯',
+    isImporting: false,
+    playlistTracks: [
+      { id: 'one', title: '第一首', status: 'pending', selected: true },
+      { id: 'two', title: '尚未選取', status: 'pending', selected: false },
+      {
+        id: 'local',
+        title: '原有曲目',
+        status: 'pending',
+        alreadyDownloaded: true,
+        selected: true,
+      },
+    ],
+  });
+  fixture.session = {
+    state,
+    playlistStats: computed(() => getPlaylistImportStats(state.playlistTracks)),
+    dominantFailureCode: computed(() => null),
+    allSelected: computed(() => false),
+    setTrackSelected: vi.fn(),
+    toggleSelectAll: vi.fn(),
+    cancelTrackDownload: vi.fn(),
+    canRetryFailed: computed(() => true),
+    retryFailedTracks: vi.fn(),
+  };
+});
 
-    expect(source).toContain('<UiSegmentedControl');
-    expect(source).toContain("import UiTrackRow from '../ui/UiTrackRow.vue';");
-    expect(source).toContain('<UiTrackRow');
-    expect(source).toContain('<ul');
-    expect(source).toContain('aria-label="匯入曲目確認"');
-    expect(source).toContain('<template #lead>');
-    expect(source).toContain('<UiCheckbox');
-    expect(source).toContain('<template #trail>');
-    expect(source).toContain('<ImportCollectionTrackStatus');
-    expect(source).toContain('state-surface');
-    expect(source).toContain('overflow="ellipsis"');
-    expect(source).not.toContain('<TrackTable');
-    expect(source).not.toContain('variant="review"');
-    expect(source).not.toContain('ImportCollectionTrackRow');
-    expect(source).toContain('@update:model-value="setActiveFilter"');
-    expect(source).not.toContain('filter-tab');
-    expect(source).not.toContain('preview-panel');
-    expect(source).not.toContain('<input');
-    expect(source).not.toContain('UiScrollRegion');
-    expect(source).not.toContain('UiScrollLayout');
+describe('Import collection review lifecycle', () => {
+  it('keeps only source and total above the list, leaving selection counts to the footer', () => {
+    const mounted = mount(Review);
+    expect(textContent(mounted.root)).toContain('測試專輯');
+    expect(textContent(mounted.root)).toContain('測試專輯 · 3 首');
+    expect(textContent(mounted.root)).not.toContain('專輯 · 3 首已選取');
+    expect(textContent(mounted.root)).not.toContain('已選取');
+    expect(has(mounted.root, 'selection')).toBe(true);
+    mounted.app.unmount();
   });
 
-  it('keeps bulk operations compact without removing their accessible names', () => {
-    const source = readSource('./ImportCollectionReview.vue');
-
-    expect(source).toContain(
-      "import UiIconButton from '../ui/UiIconButton.vue';",
-    );
-    expect(source).not.toContain("import UiButton from '../ui/UiButton.vue';");
-    expect(source.match(/<UiIconButton\b/gu)).toHaveLength(3);
-    expect(source).toContain('label="選取未下載"');
-    expect(source).toContain(`:label="allSelected ? '取消全選' : '全選'"`);
-    expect(source).toContain('label="重試未完成曲目"');
+  it('can return to selection after execution without changing unselected songs', async () => {
+    const mounted = mount(Review);
+    const state = fixture.session.state;
+    state.isImporting = true;
+    state.playlistTracks[0].status = 'downloading';
+    await nextTick();
+    expect(has(mounted.root, 'execution')).toBe(true);
+    expect(action(mounted.root, '返回選取曲目')).toBeUndefined();
+    state.playlistTracks[0].status = 'done';
+    state.isImporting = false;
+    await nextTick();
+    trigger(action(mounted.root, '返回選取曲目'), 'onClick');
+    await nextTick();
+    expect(has(mounted.root, 'selection')).toBe(true);
+    expect(textContent(mounted.root)).toContain('尚未選取');
+    expect(fixture.scrollTo).toHaveBeenLastCalledWith({ top: 0 });
+    expect(state.playlistTracks[1].selected).toBe(false);
+    trigger(action(mounted.root, '檢視下載進度'), 'onClick');
+    await nextTick();
+    expect(has(mounted.root, 'execution')).toBe(true);
+    mounted.app.unmount();
   });
 
-  it('keeps normal identity success quiet while preserving actionable row states', () => {
-    const statusSource = readSource('./ImportCollectionTrackStatus.vue');
-
-    expect(statusSource).toContain("!== 'identified'");
-    expect(statusSource).toContain('<UiStatusIcon');
-    expect(statusSource).toContain(':spinning="status === \'downloading\'"');
-  });
-
-  it('switches from selection chrome to the compact execution queue after work starts', () => {
-    const source = readSource('./ImportCollectionReview.vue');
-
-    expect(source).toContain(
-      "import ImportCollectionExecutionList from './ImportCollectionExecutionList.vue';",
-    );
-    expect(source).toContain('const executionMode = computed(');
-    expect(source).toContain('<ImportCollectionExecutionList');
-    expect(source).toContain('v-if="executionMode"');
-    expect(source).toContain('@cancel="cancelTrackDownload"');
-    expect(source).toContain('@retry-failed="retryFailedTracks"');
-    expect(source).toContain('v-else');
+  it('forces execution for a new batch and resets the view when the source changes', async () => {
+    const state = fixture.session.state;
+    state.playlistTracks[0].status = 'error';
+    const mounted = mount(Review);
+    trigger(action(mounted.root, '返回選取曲目'), 'onClick');
+    await nextTick();
+    state.isImporting = true;
+    await nextTick();
+    expect(has(mounted.root, 'execution')).toBe(true);
+    state.isImporting = false;
+    state.playlistTracks = [
+      { id: 'new', title: '新來源', selected: true, status: 'pending' },
+    ];
+    await nextTick();
+    expect(has(mounted.root, 'selection')).toBe(true);
+    expect(action(mounted.root, '檢視下載進度')).toBeUndefined();
+    mounted.app.unmount();
   });
 });

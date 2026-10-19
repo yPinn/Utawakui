@@ -9,11 +9,15 @@ import UiCombobox from '../ui/UiCombobox.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import PreparationReviewLayout from '../preparation/PreparationReviewLayout.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import SeparationPreparationList from './SeparationPreparationList.vue';
 import SeparationToolbarList from './SeparationToolbarList.vue';
-import { separationSourceStatus } from './separationQueuePresentation.js';
+import {
+  estimateSeparationOutput,
+  separationSourceStatus,
+} from './separationQueuePresentation.js';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -47,7 +51,6 @@ const {
   sourceTracks,
   unpreparedTracks,
   preparedTracks,
-  planHint,
   isBusy,
   isStarting,
   startUnpreparedTracks,
@@ -71,6 +74,13 @@ const sourceStatus = computed(() =>
     selectedMode.value,
   ),
 );
+
+const storageHint = computed(() => {
+  const estimate = estimateSeparationOutput(unpreparedTracks.value);
+  return estimate.label && estimate.knownTracks === estimate.totalTracks
+    ? `最多新增${estimate.label}`
+    : '';
+});
 
 watch([() => props.active, selectedSourceId], () => {
   previewOpen.value = false;
@@ -118,13 +128,19 @@ function trackFor(item) {
   <div class="separation-dock-content">
     <UiModal
       :open="previewOpen"
-      title="伴奏處理歌單預覽"
+      title="伴奏處理"
       size="wide"
+      max-block-size="medium"
+      body-mode="workspace"
+      :selectable="false"
       @close="previewOpen = false"
     >
-      <div class="separation-dock-content__preview">
-        <UiHint>{{ sourceLabel }} · {{ sourceTracks.length }} 首</UiHint>
-        <UiHint v-if="unpreparedTracks.length > 0">{{ planHint }}</UiHint>
+      <PreparationReviewLayout
+        :source="sourceLabel"
+        :count="sourceTracks.length"
+        :hint="storageHint"
+        list-label="伴奏處理曲目"
+      >
         <SeparationPreparationList
           v-if="unpreparedTracks.length > 0 || preparedTracks.length > 0"
           :unprepared-tracks="unpreparedTracks"
@@ -141,7 +157,7 @@ function trackFor(item) {
               : '此來源的曲目已在處理佇列中'
           }}
         </UiHint>
-      </div>
+      </PreparationReviewLayout>
     </UiModal>
     <div class="separation-dock-content__setup">
       <UiCombobox
@@ -251,12 +267,6 @@ function trackFor(item) {
 .separation-dock-content__setup {
   display: grid;
   gap: var(--ui-space-2);
-}
-
-.separation-dock-content__preview {
-  display: grid;
-  gap: var(--ui-space-3);
-  min-inline-size: 0;
 }
 
 .separation-dock-content__status {

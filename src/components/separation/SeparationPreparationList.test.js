@@ -15,6 +15,7 @@ describe('SeparationPreparationList', () => {
       id: `track-${id}`,
       title: `Preview song ${id}`,
       artist: 'Artist',
+      duration: 121,
     }));
     const html = await renderToString(
       createSSRApp({
@@ -27,6 +28,9 @@ describe('SeparationPreparationList', () => {
     expect(html).toContain('沒有已有伴奏的曲目');
     expect(html.match(/class="ui-track /gu)).toHaveLength(8);
     expect(html).toContain('Preview song 7');
+    expect(html).not.toContain('ui-track__duration');
+    expect(html).toContain('ui-track--state-surface');
+    expect(html).toContain('decoding="async"');
     expect(html).toMatch(/<button[^>]*disabled/);
   });
 

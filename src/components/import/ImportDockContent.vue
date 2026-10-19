@@ -20,6 +20,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import ImportSourceField from './ImportSourceField.vue';
 import ImportReviewModal from './ImportReviewModal.vue';
 import ImportSourceRow from './ImportSourceRow.vue';
+import ImportActivityMonitor from './ImportActivityMonitor.vue';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -32,6 +33,11 @@ const {
 } = useLocalImport();
 const {
   state,
+  activity,
+  currentBatchId,
+  cancelBatch,
+  retryBatch,
+  dismissBatch,
   playlistStats,
   setInput,
   resolveSource,
@@ -42,8 +48,21 @@ const {
 } = useImportSession();
 
 const reviewOpen = shallowRef(false);
+const reviewBatchId = shallowRef(null);
+const reviewBatch = computed(
+  () =>
+    activity.batches.find((batch) => batch.id === reviewBatchId.value) || null,
+);
+const monitorBatches = computed(() => {
+  const latestComplete = [...activity.batches]
+    .reverse()
+    .find((batch) => batch.phase === 'completed');
+  return activity.batches.filter(
+    (batch) => batch.phase !== 'completed' || batch === latestComplete,
+  );
+});
 const sourceBusy = computed(
-  () => state.isResolving || state.isOpeningDiscovery || state.isImporting,
+  () => state.isResolving || state.isOpeningDiscovery,
 );
 const showLocalStatus = computed(
   () =>
@@ -136,7 +155,7 @@ function actionForCandidate(candidate) {
 
 function candidateActionDisabled(candidate) {
   if (statusForCandidate(candidate) === 'downloading') return false;
-  return sourceBusy.value;
+  return sourceBusy.value || state.isImporting;
 }
 
 async function downloadCandidate(candidate) {
@@ -150,7 +169,22 @@ async function downloadCandidate(candidate) {
 }
 
 function openCollectionReview() {
+  reviewBatchId.value = state.isImporting ? currentBatchId.value : null;
   reviewOpen.value = true;
+}
+
+function openBatchReview(batchId) {
+  reviewBatchId.value = batchId;
+  reviewOpen.value = true;
+}
+
+function handleSubmitted(batchId) {
+  reviewBatchId.value = batchId;
+}
+
+function dismissWork(batchId) {
+  if (reviewBatchId.value === batchId) reviewOpen.value = false;
+  dismissBatch(batchId);
 }
 
 watch(
@@ -159,28 +193,15 @@ watch(
     if (!active) reviewOpen.value = false;
   },
 );
-
-watch(
-  () => state.isImporting,
-  (isImporting, wasImporting) => {
-    if (
-      reviewOpen.value &&
-      wasImporting &&
-      !isImporting &&
-      state.statusType === 'success'
-    ) {
-      reviewOpen.value = false;
-    }
-  },
-);
 </script>
 
 <template>
   <div class="import-dock-content">
     <ImportReviewModal
       :open="reviewOpen"
-      :close-disabled="state.isImporting"
+      :batch="reviewBatch"
       @close="reviewOpen = false"
+      @submitted="handleSubmitted"
     />
 
     <AppRightDockSection heading="本機音訊">
@@ -303,11 +324,19 @@ watch(
           :status="collectionStatus"
           row-action
           :action-label="`檢視 ${collectionSummary.title}`"
-          :action-disabled="state.isImporting"
           @action="openCollectionReview"
         />
       </ul>
     </AppRightDockSection>
+    <ImportActivityMonitor
+      v-for="batch in monitorBatches"
+      :key="batch.id"
+      :batch="batch"
+      @review="openBatchReview"
+      @cancel="cancelBatch"
+      @retry="retryBatch"
+      @dismiss="dismissWork"
+    />
   </div>
 </template>
 

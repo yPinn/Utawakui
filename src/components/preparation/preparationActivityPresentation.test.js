@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { preparationActivityIndicator } from './preparationActivityPresentation.js';
 
 describe('preparation activity presentation', () => {
+  it('keeps background import attention independent of the current source draft', () => {
+    expect(
+      preparationActivityIndicator({
+        providerImport: {
+          isImporting: false,
+          batches: [{ phase: 'failed', saveError: true }],
+        },
+      }),
+    ).toEqual({ state: 'attention', label: '匯入未完成' });
+    expect(
+      preparationActivityIndicator({
+        providerImport: { isImporting: true, batches: [{ phase: 'running' }] },
+      }),
+    ).toEqual({ state: 'running', label: '匯入中' });
+  });
   it('keeps idle preparation quiet after completed history', () => {
     expect(preparationActivityIndicator()).toEqual({
       state: 'idle',

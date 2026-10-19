@@ -800,9 +800,10 @@ label／delete 與手動匯入。Musixmatch path 不加入 candidate search／sa
 composable 接受具名 dependency，不互相 import；reading aid 與 timing editor 繼續由既有
 獨立 composable 持有，不建立第二份 Lyrics state。
 
-Import renderer 也維持單一 session state：`src/composables/useImportSession.js` 保留
-`useImportSession()` readonly public facade、computed UI projection、selection／filter、共用
-status/error 與 download-directory adapter；
+Import renderer 維持單一 module-scope session owner：`src/composables/useImportSession.js`
+提供 readonly draft／accepted activity facade、computed UI projection、selection／filter、
+草稿 status/error 與 download-directory adapter。草稿以 revision 隔離來源回應與舊工作寫回；
+確認後的單曲／批次快照不隨新搜尋、Modal 關閉或 Dock 換頁清除；
 `src/composables/import/useImportSourceResolution.js` 負責 provider-backed text／URL、
 playlist／single resolution、candidate selection 與 structured-clone-safe preview；main 的
 `electron/lib/importInput.js` 先將 bounded intent 分類，`playbackSearch.js` 只組合固定
@@ -818,9 +819,15 @@ Spotify／Apple Music URL 目前只回傳 deferred 狀態，不觸發外站 requ
 現有 session owner 只發出
 「以目前文字開啟 YT Music」意圖；系統瀏覽器的帳號／cookie 不進入 Electron，結果必須由
 使用者複製回既有 allowlisted input；
-`src/composables/import/useImportExecution.js` 負責 single／batch download、cancel／retry、
-partial failure aggregation 與 playlist／album persistence。兩個內部 composable 只接收同一份
-session state 與具名 callbacks，不自行建立 reactive state，也不互相 import。
+`src/composables/import/useImportExecution.js` 持有 accepted batches 與共用兩路下載提交池，
+同曲 in-flight consumer 去重、逐首／整批停止與重試，以及 playlist／album finalizing。
+同來源的 collection 寫入依序合併成功成員，已下載歌曲不因清單儲存失敗而重下載。
+Main 原有 scheduler、feature gate、下載與逐首曲庫提交仍是執行邊界；不新增 progress IPC。
+Dock 與 Modal 只投影同一批次 id：Dock 延遲顯示件數監看、持續保留未完成結果，Modal
+可關閉並重開唯讀明細。每批最多 500 個不同 track id，最多保留 50 批 session 記錄，
+滿額時先清除舊成功記錄，不清除執行中或失敗工作；不持久化或宣稱重啟續傳。
+兩個內部 composable 接收具名 dependencies，不互相 import。詳細狀態、取消與驗證邊界見
+[匯入工作 session 契約](contracts/import-task-session.md)。
 
 候選搜尋的 duration 是預覽資訊；下載階段會由 yt-dlp 對 main-derived video id 再做 metadata
 phase，完成後 `info.json` 的 duration 才是 library index 與 optional lyrics acquisition 的本機

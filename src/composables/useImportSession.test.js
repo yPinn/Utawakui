@@ -136,6 +136,374 @@ function deferred() {
 }
 
 describe('useImportSession', () => {
+  it('projects the dominant failed download reason independently of accepted batch status', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Failure summary',
+      entries: ['one', 'two', 'three', 'four'].map((id) => ({ id, title: id })),
+    });
+    downloadAudioMock.mockImplementation(async (id) => {
+      if (id === 'four') return { title: id };
+      throw new Error(
+        `utawakui-download-failed:${id === 'three' ? 'disk-full' : 'network-error'}`,
+      );
+    });
+    const session = await loadImportSession();
+    expect(session.dominantFailureCode.value).toBeNull();
+    session.setInput('summary');
+    await session.resolveSource();
+    await session.confirmImport();
+    expect(session.dominantFailureCode.value).toBe('network-error');
+    expect(session.activity.batches[0].phase).toBe('failed');
+    expect(session.state.playlistTracks[3].status).toBe('done');
+  });
+
+  it('rejects oversized selections without accepting or starting partial work', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Oversized',
+      entries: Array.from({ length: 501 }, (_, index) => ({
+        id: `song-${index}`,
+      })),
+    });
+    const session = await loadImportSession();
+    session.setInput('oversized');
+    await session.resolveSource();
+    expect(await session.submitImport()).toBeNull();
+    expect(session.activity.batches).toHaveLength(0);
+    expect(downloadAudioMock).not.toHaveBeenCalled();
+    expect(session.state.status).toContain('請分批匯入');
+  });
+
+  it('retains fifty unfinished batches and requires a terminal record to be dismissed before accepting more', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValue({
+      title: 'Retryable',
+      entries: [{ id: 'one' }],
+    });
+    downloadAudioMock.mockRejectedValue(new Error('network unavailable'));
+    const session = await loadImportSession();
+    for (let index = 0; index < 50; index++) {
+      session.setInput(`source-${index}`);
+      await session.resolveSource();
+      await session.confirmImport();
+    }
+    session.setInput('overflow');
+    await session.resolveSource();
+    expect(await session.submitImport()).toBeNull();
+    expect(session.activity.batches).toHaveLength(50);
+    expect(
+      session.activity.batches.every((batch) => batch.phase === 'failed'),
+    ).toBe(true);
+    expect(downloadAudioMock).toHaveBeenCalledTimes(50);
+    const oldId = session.activity.batches[0].id;
+    expect(session.dismissBatch(oldId)).toBe(true);
+    await session.confirmImport();
+    expect(session.activity.batches).toHaveLength(50);
+    expect(session.activity.batches.some((batch) => batch.id === oldId)).toBe(
+      false,
+    );
+    expect(downloadAudioMock).toHaveBeenCalledTimes(51);
+  });
+
+  it('treats a prior batch success as local membership in a later selection of the same draft', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Selections',
+      entries: [{ id: 'one' }, { id: 'two' }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'one' });
+    const session = await loadImportSession();
+    session.setInput('selections');
+    await session.resolveSource();
+    session.setTrackSelected('two', false);
+    await session.confirmImport();
+    const remaining = deferred();
+    downloadAudioMock.mockReturnValueOnce(remaining.promise);
+    session.setTrackSelected('two', true);
+    const id = await session.submitImport();
+    const batch = session.activity.batches.find((b) => b.id === id);
+    expect(batch.tracks.find((t) => t.id === 'one')).toMatchObject({
+      alreadyDownloaded: true,
+      downloadRequired: false,
+    });
+    expect(batch.tracks.filter((t) => t.downloadRequired)).toHaveLength(1);
+    expect(downloadAudioMock.mock.calls.map(([trackId]) => trackId)).toEqual([
+      'one',
+      'two',
+    ]);
+    remaining.resolve({ title: 'two' });
+    await vi.waitFor(() => expect(batch.phase).toBe('completed'));
+    expect(setPlaylistTracksMock.mock.calls.at(-1)[1]).toEqual(['one', 'two']);
+  });
+  it('keeps an accepted batch and its collection target intact while resolving another source', async () => {
+    fetchYoutubePlaylistMock
+      .mockResolvedValueOnce({
+        title: 'First batch',
+        entries: [
+          { id: 'first', title: 'First', alreadyDownloaded: false },
+          { id: 'local', title: 'Local', alreadyDownloaded: true },
+        ],
+      })
+      .mockResolvedValueOnce({
+        title: 'Second batch',
+        entries: [{ id: 'second', title: 'Second', alreadyDownloaded: false }],
+      });
+    const first = deferred();
+    downloadAudioMock.mockImplementation((id) =>
+      id === 'first' ? first.promise : Promise.resolve({ title: id }),
+    );
+    const session = await loadImportSession();
+    session.setInput('first-source');
+    await session.resolveSource();
+    const id = await session.submitImport();
+    expect(session.activity.batches[0].id).toBe(id);
+    session.setInput('second-source');
+    await session.resolveSource();
+    expect(session.currentBatchId.value).toBe(null);
+    expect(session.state.playlistTitle).toBe('Second batch');
+    expect(session.state.isImporting).toBe(false);
+    first.resolve({ title: 'First' });
+    await vi.waitFor(() =>
+      expect(session.activity.batches[0].phase).toBe('completed'),
+    );
+    expect(createPlaylistMock).toHaveBeenCalledWith('First batch');
+    expect(setPlaylistTracksMock).toHaveBeenLastCalledWith(
+      nextPlaylistId('First batch'),
+      ['first', 'local'],
+    );
+    expect(session.state.playlistTitle).toBe('Second batch');
+    expect(session.state.playlistTracks.map((t) => t.id)).toEqual(['second']);
+    expect(session.activity.batches[0].tracks.map((t) => t.id)).toEqual([
+      'first',
+      'local',
+    ]);
+  });
+
+  it('shares in-flight songs across batches and keeps two global download slots', async () => {
+    fetchYoutubePlaylistMock
+      .mockResolvedValueOnce({
+        title: 'A',
+        entries: [{ id: 'shared' }, { id: 'a' }],
+      })
+      .mockResolvedValueOnce({
+        title: 'B',
+        entries: [{ id: 'shared' }, { id: 'b' }],
+      });
+    const gates = new Map(['shared', 'a', 'b'].map((id) => [id, deferred()]));
+    downloadAudioMock.mockImplementation((id) => gates.get(id).promise);
+    const session = await loadImportSession();
+    session.setInput('a-source');
+    await session.resolveSource();
+    const a = await session.submitImport();
+    session.setInput('b-source');
+    await session.resolveSource();
+    const b = await session.submitImport();
+    expect(downloadAudioMock.mock.calls.map(([id]) => id)).toEqual([
+      'shared',
+      'a',
+    ]);
+    await session.cancelBatch(a);
+    expect(cancelAudioDownloadMock).toHaveBeenCalledWith('a');
+    expect(cancelAudioDownloadMock).not.toHaveBeenCalledWith('shared');
+    gates.get('a').resolve({ title: 'a' });
+    await vi.waitFor(() => expect(downloadAudioMock).toHaveBeenCalledWith('b'));
+    gates.get('shared').resolve({ title: 'shared' });
+    gates.get('b').resolve({ title: 'b' });
+    await vi.waitFor(() =>
+      expect(
+        session.activity.batches.find((batch) => batch.id === b).phase,
+      ).toBe('completed'),
+    );
+    expect(
+      downloadAudioMock.mock.calls.filter(([id]) => id === 'shared'),
+    ).toHaveLength(1);
+    expect(session.activity.batches.find((batch) => batch.id === a).phase).toBe(
+      'cancelled',
+    );
+  });
+
+  it('keeps collection finalization separate and retries a failed save without downloading again', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Save batch',
+      entries: [{ id: 'one' }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'one' });
+    const save = deferred();
+    setPlaylistTracksMock.mockImplementationOnce(() => save.promise);
+    const session = await loadImportSession();
+    session.setInput('save');
+    await session.resolveSource();
+    const id = await session.submitImport();
+    await vi.waitFor(() =>
+      expect(session.activity.batches[0].phase).toBe('finalizing'),
+    );
+    save.reject(new Error('private save path'));
+    await vi.waitFor(() =>
+      expect(session.activity.batches[0].phase).toBe('failed'),
+    );
+    expect(session.activity.batches[0].saveError).toBe(true);
+    await session.retryBatch(id);
+    expect(session.activity.batches[0].phase).toBe('completed');
+    expect(downloadAudioMock).toHaveBeenCalledOnce();
+    expect(createPlaylistMock).toHaveBeenCalledOnce();
+  });
+
+  it('waits for an abandoned download to settle before retrying the same key, without blocking other keys', async () => {
+    fetchYoutubePlaylistMock
+      .mockResolvedValueOnce({ title: 'Cancel', entries: [{ id: 'same' }] })
+      .mockResolvedValueOnce({
+        title: 'New',
+        entries: [{ id: 'same' }, { id: 'other' }],
+      });
+    const old = deferred(),
+      next = deferred(),
+      other = deferred();
+    let sameCalls = 0;
+    downloadAudioMock.mockImplementation((id) =>
+      id === 'same'
+        ? ++sameCalls === 1
+          ? old.promise
+          : next.promise
+        : other.promise,
+    );
+    const session = await loadImportSession();
+    session.setInput('cancel');
+    await session.resolveSource();
+    const id = await session.submitImport();
+    await session.cancelBatch(id);
+    session.setInput('new');
+    await session.resolveSource();
+    const nextId = await session.submitImport();
+    expect(downloadAudioMock.mock.calls.map(([id]) => id)).toEqual([
+      'same',
+      'other',
+    ]);
+    old.resolve({ title: 'abandoned' });
+    await vi.waitFor(() => expect(sameCalls).toBe(2));
+    next.resolve({ title: 'same' });
+    other.resolve({ title: 'other' });
+    await vi.waitFor(() =>
+      expect(session.activity.batches.find((b) => b.id === nextId).phase).toBe(
+        'completed',
+      ),
+    );
+  });
+
+  it('does not change a submitted selection or create duplicate work during double submission', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Snapshot',
+      entries: [{ id: 'one' }, { id: 'two' }],
+    });
+    const gate = deferred();
+    downloadAudioMock.mockImplementation(() => gate.promise);
+    const session = await loadImportSession();
+    session.setInput('snapshot');
+    await session.resolveSource();
+    session.setTrackSelected('two', false);
+    const [a, b] = await Promise.all([
+      session.submitImport(),
+      session.submitImport(),
+    ]);
+    expect(a).toBe(b);
+    expect(downloadAudioMock).toHaveBeenCalledOnce();
+    session.setTrackSelected('two', true);
+    expect(session.activity.batches[0].tracks.map((t) => t.id)).toEqual([
+      'one',
+    ]);
+    gate.resolve({ title: 'one' });
+    await vi.waitFor(() =>
+      expect(session.activity.batches[0].phase).toBe('completed'),
+    );
+  });
+
+  it.each(['success', 'failure'])(
+    'keeps a failed cancellation visible until the surviving download settles with %s',
+    async (outcome) => {
+      fetchYoutubePlaylistMock
+        .mockResolvedValueOnce({ title: 'A', entries: [{ id: 'same' }] })
+        .mockResolvedValueOnce({ title: 'B', entries: [{ id: 'same' }] });
+      const download = deferred(),
+        cancel = deferred();
+      downloadAudioMock.mockReturnValue(download.promise);
+      cancelAudioDownloadMock.mockReturnValueOnce(cancel.promise);
+      const session = await loadImportSession();
+      session.setInput('a');
+      await session.resolveSource();
+      const id = await session.submitImport();
+      const stopping = session.cancelBatch(id);
+      const repeatedStop = session.cancelTrackDownload('same', id);
+      session.setInput('b');
+      await session.resolveSource();
+      const other = await session.submitImport();
+      cancel.reject(new Error('private cancellation failure'));
+      expect(await stopping).toBe(false);
+      expect(await repeatedStop).toBe(false);
+      expect(cancelAudioDownloadMock).toHaveBeenCalledOnce();
+      expect(session.activity.batches[0].cancelError).toBe(true);
+      expect(session.activity.batches[0].phase).toBe('running');
+      expect(downloadAudioMock).toHaveBeenCalledOnce();
+      if (outcome === 'success') download.resolve({ title: 'same' });
+      else download.reject(new Error('network unavailable'));
+      await vi.waitFor(() =>
+        expect(
+          session.activity.batches.every(
+            (b) => b.phase === (outcome === 'success' ? 'completed' : 'failed'),
+          ),
+        ).toBe(true),
+      );
+      expect(
+        session.activity.batches.find((b) => b.id === other).tracks[0].status,
+      ).toBe(outcome === 'success' ? 'done' : 'error');
+      expect(
+        session.activity.batches.every((batch) => !batch.cancelError),
+      ).toBe(true);
+    },
+  );
+
+  it('preserves successful membership across overlapping batches for the same source collection', async () => {
+    fetchYoutubePlaylistMock
+      .mockResolvedValueOnce({
+        title: 'Shared collection',
+        entries: [{ id: 'one' }],
+      })
+      .mockResolvedValueOnce({
+        title: 'Shared collection',
+        entries: [{ id: 'two' }],
+      });
+    const one = deferred(),
+      two = deferred();
+    downloadAudioMock.mockImplementation((id) =>
+      id === 'one' ? one.promise : two.promise,
+    );
+    const session = await loadImportSession();
+    session.setInput('same-source');
+    await session.resolveSource();
+    await session.submitImport();
+    await session.resolveSource();
+    await session.submitImport();
+    one.resolve({ title: 'one' });
+    two.resolve({ title: 'two' });
+    await vi.waitFor(() =>
+      expect(
+        session.activity.batches.every((b) => b.phase === 'completed'),
+      ).toBe(true),
+    );
+    expect(createPlaylistMock).toHaveBeenCalledOnce();
+    expect(new Set(setPlaylistTracksMock.mock.calls.at(-1)[1])).toEqual(
+      new Set(['one', 'two']),
+    );
+  });
+
+  it('ignores a source response superseded by a newer input', async () => {
+    const gate = deferred();
+    fetchYoutubePlaylistMock.mockReturnValueOnce(gate.promise);
+    const session = await loadImportSession();
+    session.setInput('old');
+    const resolving = session.resolveSource();
+    await flushPromises();
+    session.setInput('new');
+    gate.resolve({ title: 'Old', entries: [{ id: 'old' }] });
+    await resolving;
+    expect(session.state.input).toBe('new');
+    expect(session.state.playlistTracks).toBe(null);
+  });
   it('opens the current query in YT Music after checking the provider gate', async () => {
     const session = await loadImportSession();
 
@@ -200,14 +568,18 @@ describe('useImportSession', () => {
     const session = await loadImportSession();
 
     expect(Object.keys(session).sort()).toEqual([
+      'activity',
       'allSelected',
       'canConfirmImport',
       'canRetryFailed',
       'canUseConfirmButton',
+      'cancelBatch',
       'cancelTrackDownload',
       'chooseDownloadDir',
       'confirmImport',
       'confirmImportLabel',
+      'currentBatchId',
+      'dismissBatch',
       'dominantFailureCode',
       'filterOptions',
       'getTrackStatusClass',
@@ -217,6 +589,7 @@ describe('useImportSession', () => {
       'refreshConfig',
       'resetDownloadDir',
       'resolveSource',
+      'retryBatch',
       'retryFailedTracks',
       'selectImportCandidate',
       'selectMissingTracks',
@@ -225,6 +598,7 @@ describe('useImportSession', () => {
       'setInput',
       'setTrackSelected',
       'state',
+      'submitImport',
       'toggleSelectAll',
       'visiblePlaylistTracks',
     ]);
@@ -1000,6 +1374,41 @@ describe('useImportSession', () => {
     );
   });
 
+  it('imports remaining selections in a second batch while retaining local and completed membership', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Two batches',
+      entries: [
+        { id: 'first', title: 'First', alreadyDownloaded: false },
+        { id: 'later', title: 'Later', alreadyDownloaded: false },
+        { id: 'local', title: 'Local', alreadyDownloaded: true },
+      ],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'ok' });
+    const session = await loadImportSession();
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    session.setTrackSelected('later', false);
+    expect(session.confirmImportLabel.value).toBe('下載 1 首');
+    await session.confirmImport();
+    expect(setPlaylistTracksMock).toHaveBeenLastCalledWith(
+      nextPlaylistId('Two batches'),
+      ['first', 'local'],
+    );
+
+    session.setTrackSelected('later', true);
+    expect(session.confirmImportLabel.value).toBe('下載 1 首');
+    await session.confirmImport();
+    expect(downloadAudioMock.mock.calls.map(([id]) => id)).toEqual([
+      'first',
+      'later',
+    ]);
+    expect(createPlaylistMock).toHaveBeenCalledOnce();
+    expect(setPlaylistTracksMock).toHaveBeenLastCalledWith(
+      nextPlaylistId('Two batches'),
+      ['first', 'later', 'local'],
+    );
+  });
+
   it('downloads at most two playlist tracks concurrently and leaves later tracks pending', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
@@ -1702,6 +2111,42 @@ describe('useImportSession', () => {
   });
 
   describe('download directory config', () => {
+    it.each([
+      ['refreshConfig', () => getConfigMock, 'library-directory-read-settings'],
+      [
+        'chooseDownloadDir',
+        () => chooseDownloadDirMock,
+        'library-directory-choose-folder',
+      ],
+      [
+        'resetDownloadDir',
+        () => resetDownloadDirMock,
+        'library-directory-reset-folder',
+      ],
+    ])(
+      'retries %s from its notification without replacing the import draft',
+      async (method, getBridge, key) => {
+        const session = await loadImportSession();
+        const { useAppNotifications } =
+          await import('./useAppNotifications.js');
+        const bridge = getBridge();
+        bridge.mockRejectedValueOnce(new Error('private folder failure'));
+        session.setInput('keep this draft');
+        await expect(session[method]({ notifyFailure: true })).resolves.toBe(
+          false,
+        );
+        const notifications = useAppNotifications();
+        const notice = notifications.items.value.find(
+          (item) => item.key === key,
+        );
+        expect(notice.actionLabel).toBe('重試');
+        await expect(notifications.runAction(notice.id)).resolves.toBe(true);
+        expect(bridge).toHaveBeenCalledTimes(2);
+        expect(notifications.items.value).toHaveLength(0);
+        expect(session.state.input).toBe('keep this draft');
+      },
+    );
+
     it('refreshConfig loads the current download directory from the backend', async () => {
       getConfigMock.mockResolvedValueOnce({
         downloadDir: '/music/utawakui',

@@ -18,9 +18,15 @@ import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import ImportCollectionExecutionList from './ImportCollectionExecutionList.vue';
+import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
+import ImportCollectionTrackStatus from './ImportCollectionTrackStatus.vue';
 
 for (const [component, filename] of [
   [ImportCollectionExecutionList, './ImportCollectionExecutionList.vue'],
+  [AppRightDockSection, '../layout/AppRightDockSection.vue'],
+  [UiSeparator, '../ui/UiSeparator.vue'],
+  [ImportCollectionTrackStatus, './ImportCollectionTrackStatus.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
@@ -68,7 +74,11 @@ describe('Import collection execution list', () => {
     expect(html).toContain('Done');
     expect(html).toContain('Already local');
     expect(html).not.toContain('aria-label="待下載"');
-    expect(html).not.toContain('aria-label="完成"');
+    expect(html).toContain('已完成 · 1 首');
+    expect(html).toContain('已在曲庫 · 1 首');
+    const localSection = html.slice(html.indexOf('已在曲庫 · 1 首'));
+    expect(localSection).toContain('Already local');
+    expect(localSection).not.toContain('>Done<');
   });
 
   it('offers a per-track stop only for active rows', () => {
