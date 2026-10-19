@@ -667,6 +667,25 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   getLyricsAcousticEstimate: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-acoustic-estimate', trackId, filename),
+  getLyricsResearchStatus: () => ipcRenderer.invoke('lyrics-research:status'),
+  getExperimentalLyricsStatus: () =>
+    ipcRenderer.invoke('lyrics-experimental:status'),
+  setExperimentalLyricsEnabled: (enabled) =>
+    ipcRenderer.invoke('lyrics-experimental:enable', enabled),
+  cancelExperimentalLyrics: (trackId) =>
+    ipcRenderer.invoke('lyrics-experimental:cancel', trackId),
+  retryExperimentalLyrics: (trackId) =>
+    ipcRenderer.invoke('lyrics-experimental:retry', trackId),
+  getExperimentalLyricsEstimate: (trackId, filename) =>
+    ipcRenderer.invoke('lyrics-experimental:estimate', trackId, filename),
+  prepareLyricsResearch: () => ipcRenderer.invoke('lyrics-research:prepare'),
+  verifyLyricsResearch: () => ipcRenderer.invoke('lyrics-research:verify'),
+  removeLyricsResearch: () => ipcRenderer.invoke('lyrics-research:remove'),
+  cancelLyricsResearch: () => ipcRenderer.invoke('lyrics-research:cancel'),
+  inspectLyricsResearch: (intent) =>
+    ipcRenderer.invoke('lyrics-research:inspect', intent),
+  previewLyricsResearch: (intent) =>
+    ipcRenderer.invoke('lyrics-research:preview', intent),
   getLyricsAcousticCapabilityStatus: () =>
     ipcRenderer.invoke('lyrics-acoustic:status'),
   prepareLyricsAcousticCapability: () =>

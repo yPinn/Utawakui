@@ -241,9 +241,9 @@ T1 聲學估計的第一階段另存 `lyrics/acoustic-estimates/<sourceFilename>
 `useLyricsSourceDocuments` 在 canonical 歌詞發布後獨立載入，拒絕舊 request 的結果。
 `useLyricsAcousticPreview` 僅擁有該來源的 session 啟用選擇，共用純投影沿用正式 T2 優先、
 現行 T1 估算及整句回退。`LyricsAcousticPreview` 在 authoring 工作區顯示原文與詞塊起點，
-不把估計寫進 canonical segments。應用內預設只接受合成 fixture profile，沒有歌曲模型產生 worker
+不把估計寫進 canonical segments。正式歌詞路徑預設只接受合成 fixture profile，未接入歌曲模型產生 worker
 或 Output extension；Self-View／Overlay 保持既有時間來源。
-`scripts/research/lyricsAcoustic/` 另提供不進封裝的私有研究 CLI，以固定本機資產、
+`scripts/research/lyricsAcoustic/` 另提供不進封裝的私有研究 CLI（App 試用只明列打包其必要推論模組），以固定本機資產、
 有上下文的 bounded windows、受控 Node／Python 子程序及明確 internal method profile
 驗證中日歌曲。它不註冊產品 capability／activation 或 renderer start intent；CLI 內的
 scheduler instance 也不代表已接入 app 的全域重工作排程。模型資料仍由正式 loader 預設拒用，
@@ -251,6 +251,8 @@ scheduler instance 也不代表已接入 app 的全域重工作排程。模型�
 `scripts/research/lyricsFreshEvaluation/`另提供HubertFA＋small獨立內容檢查、聽查與試用，
 不建立產品producer。研究選型及各輪證據見[收斂結論](research/lyrics-alignment-summary.md)，
 開發者執行步驟見[研究試用手冊](operations/lyrics-alignment-research.md)。
+App 設定頁的獨立研究入口由 `electron/lib/lyricsResearch/` 管理隔離下載、完整性、載入及唯讀曲目片段；`main/lyrics/researchHandlers.js` 僅接收有界研究意圖。重用明列允許的研究推論／內容檢查模組與兩個純歌詞 parser 檔，不載入 Vite 或 CLI。模型／parser 延後至研究操作才載入。環境在 userData `lyrics-research/installed`，不寫正式 Audio Python activation；共享 heavy-job scheduler 排程並在取消／退出等 owned workers 關閉後清理。片段預覽由 `useLyricsResearch` 持有，播放仍用 `usePlayer`。另有預設關閉的 `experimentalLyricsAfterSeparation`：分離成果發佈後經 `lyricsResearch/automatic.js` 接續整曲分析，重啟後先實際驗證已安裝環境，不自動下載。結果由 `estimates.js` 驗證後原子寫入各曲目 `lyrics/experimental-estimates/`，固定配方與完整輸入身分失效即回退。`useLyrics` 內的 `useExperimentalLyrics` 另持有手動套用狀態，只交付本機閱讀區起點 frame；原生 T2／T1、canonical 文件、正式 loader、Self-View 及 Output 不受覆寫。取消與失敗只影響歌詞工作，不回滾伴奏。
+
 `electron/lib/lyricsAcoustic/` 另提供 main-owned 選配環境生命週期：固定 catalog／SHA、
 獨立 `lyrics-acoustic` capability／`lyrics-alignment` environment／`alignment` model，
 共用 Audio Python host 與 app heavy-job scheduler，Provider Python 不共用。

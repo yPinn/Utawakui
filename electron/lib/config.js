@@ -72,6 +72,7 @@ const DEFAULTS = {
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
+  experimentalLyricsAfterSeparation: false,
   // Whether quick/general separation tries the DirectML execution provider
   // before CPU. See ADR 0017 — this is a boolean product intent, not a
   // renderer-chosen execution-provider name; main still owns the actual
@@ -365,6 +366,8 @@ function loadConfigSnapshot(configPath) {
         typeof data.separationGpuAcceleration === 'boolean'
           ? data.separationGpuAcceleration
           : DEFAULTS.separationGpuAcceleration,
+      experimentalLyricsAfterSeparation:
+        data.experimentalLyricsAfterSeparation === true,
       autoCheckAppUpdates:
         typeof data.autoCheckAppUpdates === 'boolean'
           ? data.autoCheckAppUpdates

@@ -19,6 +19,7 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
 const props = defineProps({
+  experimentalFrame: { type: Object, default: null },
   documentId: { type: String, default: '' },
   error: { type: String, default: '' },
   isLoading: { type: Boolean, default: false },
@@ -92,6 +93,36 @@ const lyricsLang = computed(() =>
 const romanizationLang = computed(() =>
   lyricsLang.value ? `${lyricsLang.value}-Latn` : undefined,
 );
+const experimentalReadingSegments = computed(() => {
+  const frame = props.experimentalFrame;
+  const line = props.lines[props.activeLineIndex];
+  const segments = props.readingLines[props.activeLineIndex]?.segments ?? [];
+  if (
+    !frame ||
+    frame.lineId !== line?.lineId ||
+    frame.text !== line.text ||
+    segments.map((segment) => segment.t).join('') !== line.text
+  )
+    return new Set();
+  let cursor = 0,
+    activeStart = -1,
+    activeEnd = -1;
+  for (const chunk of frame.chunks) {
+    if (chunk.state === 'active') {
+      activeStart = cursor;
+      activeEnd = cursor + chunk.text.length;
+    }
+    cursor += chunk.text.length;
+  }
+  cursor = 0;
+  const selected = new Set();
+  segments.forEach((segment, index) => {
+    const end = cursor + segment.t.length;
+    if (cursor < activeEnd && end > activeStart) selected.add(index);
+    cursor = end;
+  });
+  return selected;
+});
 // Sheet readings float over their word, so neighbours get explicit room.
 const rubyGaps = computed(() =>
   props.presentation === 'sheet' && showsFurigana.value
@@ -381,17 +412,49 @@ watch(
                       >
                         <ruby
                           v-if="segment.r"
+                          :class="
+                            index === activeLineIndex &&
+                            experimentalReadingSegments.has(segmentIndex)
+                              ? 'lyrics-line__experimental-active'
+                              : undefined
+                          "
                           :style="rubyGapStyle(index, segmentIndex)"
                           >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
                         >
                         <span
-                          v-else-if="rubyGapStyle(index, segmentIndex)"
+                          v-else-if="
+                            rubyGapStyle(index, segmentIndex) ||
+                            (index === activeLineIndex &&
+                              experimentalReadingSegments.has(segmentIndex))
+                          "
                           class="lyrics-line__ruby-gap"
+                          :class="{
+                            'lyrics-line__experimental-active':
+                              index === activeLineIndex &&
+                              experimentalReadingSegments.has(segmentIndex),
+                          }"
                           :style="rubyGapStyle(index, segmentIndex)"
                           >{{ segment.t }}</span
                         >
                         <template v-else>{{ segment.t }}</template>
                       </template>
+                    </template>
+                    <template
+                      v-else-if="
+                        experimentalFrame?.lineId === line.lineId &&
+                        experimentalFrame.text === line.text &&
+                        index === activeLineIndex
+                      "
+                    >
+                      <span
+                        v-for="chunk in experimentalFrame.chunks"
+                        :key="chunk.chunkId"
+                        :class="{
+                          'lyrics-line__experimental-active':
+                            chunk.state === 'active',
+                        }"
+                        >{{ chunk.text }}</span
+                      >
                     </template>
                     <template v-else>{{ line.text }}</template>
                   </span></span
@@ -445,6 +508,11 @@ watch(
 </template>
 
 <style scoped>
+.lyrics-line__experimental-active {
+  background: var(--ui-color-accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
 .lyrics-document {
   position: relative;
   min-width: 0;

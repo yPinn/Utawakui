@@ -277,6 +277,7 @@ describe('useLyrics', () => {
         'currentTrackId',
         'deleteSource',
         'displayLyricsDocument',
+        'experimentalLyrics',
         'ensureLyricsFlow',
         'importManualLyricsFile',
         'importManualLyricsText',

@@ -4,6 +4,7 @@ import LyricsLiveControls from './LyricsLiveControls.vue';
 import '../../styles/features/lyrics.css';
 
 defineProps({
+  experimentalFrame: { type: Object, default: null },
   documentId: { type: String, default: '' },
   error: { type: String, default: '' },
   isLoading: { type: Boolean, default: false },
@@ -48,6 +49,7 @@ const emit = defineEmits([
 <template>
   <section class="lyrics-live-tool" aria-label="演唱歌詞工具">
     <LyricsDocumentPanel
+      :experimental-frame="experimentalFrame"
       :document-id="documentId"
       :error="error"
       :is-loading="isLoading"

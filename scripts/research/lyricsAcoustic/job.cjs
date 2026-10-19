@@ -193,7 +193,12 @@ function startResearchJob({
         if (!decoder) {
           decoder = group.rpc(binding.config.pythonPath, [
             '-I',
-            path.join(__dirname, 'decoder.py'),
+            '-B',
+            '-X',
+            `pycache_prefix=${path.join(workspace, 'cache')}`,
+            path
+              .join(__dirname, 'decoder.py')
+              .replace(/\.asar([\\/])/u, '.asar.unpacked$1'),
           ]);
           const info = await ask(decoder, 'initialize', {
             config: binding.config,

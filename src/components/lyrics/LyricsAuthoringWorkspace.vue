@@ -12,6 +12,7 @@ import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
 import { canEditTimingLine } from '../../utils/lyricsTiming.js';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsAcousticPreview from './LyricsAcousticPreview.vue';
+import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
 import LyricsPreparationBar from './LyricsPreparationBar.vue';
 import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
@@ -366,6 +367,9 @@ async function commitTimingDocument() {
           />
         </template>
       </LyricsWorkspaceHeader>
+      <LyricsExperimentalEstimate
+        :disabled="isEditingLocked || editMode !== 'preview'"
+      />
       <div v-if="editMode !== 'preview'" class="lyrics-edit-context">
         <UiHint role="status">{{ editingHelp }}</UiHint>
         <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')"
@@ -414,6 +418,9 @@ async function commitTimingDocument() {
         />
       </div>
       <LyricsLiveTool
+        :experimental-frame="
+          editMode === 'preview' ? lyrics.experimentalLyrics?.frame.value : null
+        "
         class="lyrics-stage__live-tool"
         :document-id="lyricsDocument.documentId"
         :error="state.error || ''"

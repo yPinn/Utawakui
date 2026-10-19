@@ -53,6 +53,7 @@ function registerSeparationHandlers({
   heavyJobScheduler,
   recordDiagnostic,
   onQueueUpdate = () => undefined,
+  onSeparationComplete = () => undefined,
   // Injectable overrides (not vi.mock) are this codebase's established seam
   // for handler tests — same convention as libraryHandlers.js's
   // `findLibraryTrackRecord = findTrackRecord` and importHandlers.js's
@@ -212,6 +213,22 @@ function registerSeparationHandlers({
             recordDiagnostic,
           });
           notifyLibraryUpdated();
+          // Publication succeeded. Lyrics are an independent opt-in job;
+          // even a scheduling failure must preserve this successful accompaniment.
+          try {
+            onSeparationComplete(trackId);
+          } catch (error) {
+            try {
+              recordDiagnostic?.({
+                source: 'separation',
+                operation: 'enqueue-experimental-lyrics',
+                code: 'LYRICS_EXPERIMENTAL_ENQUEUE_FAILED',
+                error,
+              });
+            } catch {
+              /* Optional diagnostics. */
+            }
+          }
           return result;
         },
       );

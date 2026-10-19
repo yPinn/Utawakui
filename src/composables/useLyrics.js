@@ -7,6 +7,7 @@ import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLyricsAcquisition } from './lyrics/useLyricsAcquisition.js';
 import { useLyricsSourceDocuments } from './lyrics/useLyricsSourceDocuments.js';
+import { useExperimentalLyrics } from './lyrics/useExperimentalLyrics.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
   deriveLyricsPlaybackState,
@@ -203,6 +204,14 @@ const playbackState = computed(() =>
     Number.isFinite(playerState.duration) ? playerState.duration * 1000 : null,
   ),
 );
+const experimentalLyrics = useExperimentalLyrics({
+  document: lyricsDocument,
+  trackId: () => state.selectedTrackId,
+  filename: () => state.selectedSourceFilename,
+  offsetMs: () => Math.round(state.offsetSeconds * 1000),
+  positionMs: currentLyricsPositionMs,
+  variant: lyricsTextVariant,
+});
 
 function setLyricsTextVariant(variant) {
   if (!Object.values(LYRICS_TEXT_VARIANTS).includes(variant)) return false;
@@ -433,6 +442,7 @@ export function useLyrics() {
     lyricsAcousticEstimate: readonly(lyricsAcousticEstimate),
     lyricsDocument,
     displayLyricsDocument,
+    experimentalLyrics,
     lyricsTextVariant: readonly(lyricsTextVariant),
     lyricLines,
     activeLine,

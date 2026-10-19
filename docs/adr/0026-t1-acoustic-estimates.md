@@ -107,6 +107,20 @@ Electron-as-Node mode, alongside ADR 0005's existing provider EJS exception.
 Keep `RunAsNode` enabled until both uses have replacements. The probe path and
 model path are main-derived; renderer cannot request a script or executable.
 
+## Experimental post-separation extension (2026-10-20)
+
+The owner approved a default-off experimental path: automatic generation after
+successful separation, followed by manual application in the local lyrics reader.
+This extends the isolated research decision without enabling default downloads,
+the blocked formal catalog, canonical T2 writes or Output. Human timing acceptance
+remains deferred. Weight/dictionary rights evidence remains unresolved; an
+experimental label does not resolve it. Lifecycle and storage are defined by the
+[experimental contract](../contracts/lyrics-acoustic-estimate-contract.md#opt-in-experimental-post-separation-generation).
+
+Accompaniment and lyrics have independent outcomes/cancellation. Reuse original-mix
+inference with bounded whole-song windows; separate validated storage and explicit,
+reversible application preserve authored timing.
+
 ## Alternatives and consequences
 
 - Canonical T2 insertion would hide uncertainty and allow estimate refresh to

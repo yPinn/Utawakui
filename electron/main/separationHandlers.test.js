@@ -90,6 +90,50 @@ function createQueueHarness() {
 }
 
 describe('registerSeparationHandlers', () => {
+  it.each(['success', 'failure', 'cancelled', 'enqueue-error'])(
+    'keeps post-separation lyrics independent: %s',
+    async (mode) => {
+      const onSeparationComplete = vi.fn(() => {
+        if (mode === 'enqueue-error') throw Error('lyrics queue failed');
+      });
+      const handlers = register({
+        onSeparationComplete,
+        createSeparationEngineJob: () => ({
+          result:
+            mode === 'failure' || mode === 'cancelled'
+              ? Promise.reject(
+                  Error(
+                    mode === 'cancelled'
+                      ? 'audio-processing job cancelled'
+                      : 'engine failed',
+                  ),
+                )
+              : Promise.resolve({ stemsPath: 'C:\\stems.wav' }),
+          cancel: vi.fn(),
+        }),
+        heavyJobScheduler: {
+          schedule: ({ start }) => start().result,
+          cancel: vi.fn(),
+        },
+        findSeparationTrackRecord: () => ({ id: 'track-1' }),
+        resolveSeparationsOutputDir: () => 'separations-dir',
+        resolveSeparationInputAudioPath: () => 'input.mp3',
+        resolveUserDataDir: () => 'C:\\AppData\\Utawakui',
+      });
+      const operation = handlers.get('separation:run')(
+        null,
+        'track-1',
+        'quick',
+      );
+      if (mode === 'failure' || mode === 'cancelled') {
+        await expect(operation).rejects.toThrow();
+        expect(onSeparationComplete).not.toHaveBeenCalled();
+      } else {
+        await expect(operation).resolves.toHaveProperty('stemsUrl');
+        expect(onSeparationComplete).toHaveBeenCalledWith('track-1');
+      }
+    },
+  );
   it('registers the fixed separation and queue intents', () => {
     const handlers = register();
     expect([...handlers.keys()]).toEqual([

@@ -2,6 +2,8 @@
 import SettingsApplicationSection from '../components/settings/SettingsApplicationSection.vue';
 import SettingsAudioSection from '../components/settings/SettingsAudioSection.vue';
 import SettingsCapabilitiesSection from '../components/settings/SettingsCapabilitiesSection.vue';
+import LyricsResearchSettingsBlock from '../components/settings/LyricsResearchSettingsBlock.vue';
+import LyricsExperimentalQueueSettings from '../components/settings/LyricsExperimentalQueueSettings.vue';
 import SettingsLibrarySection from '../components/settings/SettingsLibrarySection.vue';
 import SettingsSupportSection from '../components/settings/SettingsSupportSection.vue';
 </script>
@@ -12,6 +14,8 @@ import SettingsSupportSection from '../components/settings/SettingsSupportSectio
     <SettingsAudioSection />
     <SettingsApplicationSection />
     <SettingsCapabilitiesSection />
+    <LyricsResearchSettingsBlock />
+    <LyricsExperimentalQueueSettings />
     <SettingsSupportSection />
   </div>
 </template>

@@ -1,0 +1,206 @@
+'use strict';
+const { isBoundedTrackId } = require('../library/paths');
+const DOWNLOAD_BYTES = 778532833;
+function validateIntent(intent) {
+  if (
+    !intent ||
+    Object.getPrototypeOf(intent) !== Object.prototype ||
+    Object.keys(intent).sort().join(',') !== 'language,lineIndex,trackId' ||
+    !isBoundedTrackId(intent.trackId) ||
+    !['zh', 'ja'].includes(intent.language) ||
+    !Number.isSafeInteger(intent.lineIndex) ||
+    intent.lineIndex < 0 ||
+    intent.lineIndex > 9999
+  )
+    throw Error('invalid research intent');
+}
+function createResearchService({
+  environment,
+  loadInput,
+  runPreview,
+  scheduler,
+  isSetupBusy = () => false,
+  loadAutomaticInput,
+  publishEstimate,
+  isAnalysisAllowed = () => false,
+  isInputCurrent = () => true,
+}) {
+  let active = null,
+    verified = false,
+    damaged = false,
+    stage = '';
+  function status() {
+    return {
+      researchOnly: true,
+      status: damaged
+        ? 'damaged'
+        : verified
+          ? 'ready'
+          : environment.exists()
+            ? 'unverified'
+            : 'missing',
+      busy: Boolean(active),
+      operation: active?.name ?? '',
+      stage,
+      downloadBytes: DOWNLOAD_BYTES,
+      installedBytesEstimate: 997022752,
+      timingAcceptance: 'pending',
+    };
+  }
+  async function execute(name, task, invalidateOnError = () => true) {
+    if (active || isSetupBusy()) throw Error('research environment busy');
+    const controller = new AbortController();
+    const entry = { name, controller, result: null };
+    active = entry;
+    stage = name;
+    const run = async () => {
+      controller.signal.throwIfAborted();
+      return task({
+        signal: controller.signal,
+        onProgress: (next) => {
+          stage = next;
+        },
+      });
+    };
+    entry.result = (async () => {
+      try {
+        const value = scheduler
+          ? await scheduler.schedule({
+              jobId: 'lyrics-research',
+              start: () => ({
+                result: run(),
+                cancel: async () => {
+                  controller.abort();
+                },
+              }),
+            })
+          : await run();
+        controller.signal.throwIfAborted();
+        damaged = false;
+        return value ?? { ...status(), busy: false, operation: '', stage: '' };
+      } catch (error) {
+        if (controller.signal.aborted)
+          return {
+            ...status(),
+            busy: false,
+            cancelled: true,
+            operation: '',
+            stage: '',
+          };
+        if (invalidateOnError()) {
+          verified = false;
+          damaged = true;
+        }
+        throw error;
+      } finally {
+        active = null;
+        stage = '';
+      }
+    })();
+    return entry.result;
+  }
+  async function verify(options) {
+    verified = false;
+    await environment.verify(options);
+    options.signal.throwIfAborted();
+    verified = true;
+  }
+  return {
+    status,
+    isAnalysisBusy: () => Boolean(active) || isSetupBusy(),
+    prepare: () =>
+      execute('prepare', async (options) => {
+        verified = false;
+        await environment.prepare(options);
+        await verify(options);
+      }),
+    verify: () => execute('verify', verify),
+    remove: () =>
+      execute('remove', async (options) => {
+        verified = false;
+        await environment.remove(options);
+      }),
+    async inspect(intent) {
+      validateIntent(intent);
+      const input = await loadInput(intent);
+      return {
+        sourceLabel: input.sourceLabel,
+        lines: input.canonical.lines.map((line, index) => ({
+          index,
+          text: line.text,
+          startMs: line.startMs,
+          endMs: line.endMs,
+        })),
+      };
+    },
+    async preview(intent) {
+      validateIntent(intent);
+      if (!verified) throw Error('research load verification required');
+      return execute('preview', async (options) => {
+        const input = await loadInput(intent);
+        const value = await runPreview(input, {
+          ...options,
+          language: intent.language,
+          lineIndex: intent.lineIndex,
+        });
+        options.signal.throwIfAborted();
+        if ((await loadInput(intent)).identity !== input.identity)
+          throw Error('research source changed');
+        return value;
+      });
+    },
+    async analyze(trackId) {
+      if (!isBoundedTrackId(trackId) || !isAnalysisAllowed())
+        throw Error('experimental analysis unavailable');
+      let environmentFailure = false;
+      return execute(
+        'analyze',
+        async (options) => {
+          if (!isAnalysisAllowed())
+            throw Error('experimental analysis disabled');
+          const input = await loadAutomaticInput(trackId);
+          if (!input) return { status: 'skipped' };
+          if (!verified) {
+            environmentFailure = true;
+            await verify(options);
+            environmentFailure = false;
+          }
+          if (!isAnalysisAllowed())
+            throw Error('experimental analysis disabled');
+          environmentFailure = true;
+          const value = await runPreview(input, {
+            ...options,
+            language: input.language,
+            lineIndex: 0,
+            wholeSong: true,
+          });
+          environmentFailure = false;
+          options.signal.throwIfAborted();
+          const current = await loadAutomaticInput(trackId);
+          if (current?.identity !== input.identity)
+            throw Error('experimental source changed');
+          return publishEstimate(
+            input,
+            value,
+            () =>
+              !options.signal.aborted &&
+              isAnalysisAllowed() &&
+              isInputCurrent(input),
+          );
+        },
+        () => environmentFailure,
+      );
+    },
+    async cancel() {
+      const entry = active;
+      if (entry) {
+        entry.controller.abort();
+        // Queued work must be removed too; active work owns asynchronous cleanup.
+        if (scheduler) await scheduler.cancel('lyrics-research');
+        await entry.result.catch(() => {});
+      }
+      return status();
+    },
+  };
+}
+module.exports = { createResearchService, validateIntent };

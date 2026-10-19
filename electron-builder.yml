@@ -47,8 +47,27 @@ publish:
   releaseType: release
 
 files:
+  - src/utils/lyrics.js
+  - src/utils/lyricsDocument.js
+  - scripts/research/lyricsAcoustic/assets.cjs
+  - scripts/research/lyricsAcoustic/process.cjs
+  - scripts/research/lyricsAcoustic/protocol.cjs
+  - scripts/research/lyricsAcoustic/job.cjs
+  - scripts/research/lyricsAcoustic/frontend.cjs
+  - scripts/research/lyricsAcoustic/decoder.py
+  - scripts/research/lyricsAcoustic/manifest.json
+  - scripts/research/lyricsAlignmentCandidates/protocol.cjs
+  - scripts/research/lyricsAlignmentCandidates/tokenStarts.cjs
+  - scripts/research/lyricsAlignmentCandidates/quality.cjs
+  - scripts/research/lyricsAlignmentCandidates/qualityConservative.cjs
+  - scripts/research/lyricsFreshEvaluation/content.cjs
+  - scripts/research/lyricsFreshEvaluation/lowCost.cjs
+  - scripts/research/lyricsFreshEvaluation/completeness.cjs
+  - scripts/research/lyricsFreshEvaluation/trial-assets.json
   - dist/**/*
   - electron/**/*
+  # Experimental post-separation lyrics reuses the fixed research environment;
+  # only its coordinator/store ship here, never downloaded models or results.
   - '!electron/**/*.test.js'
   # Main only reads the shell icon; the renderer's PNG icons ship via dist/.
   - public/assets/icons/app-icon.ico
@@ -85,6 +104,9 @@ files:
   - '!node_modules/opencc-js/types/**/*'
 
 asarUnpack:
+  - scripts/research/lyricsAcoustic/manifest.json
+  - scripts/research/lyricsAcoustic/frontend.cjs
+  - scripts/research/lyricsAcoustic/decoder.py
   # Native N-API module — onnxruntime.dll/DirectML.dll must land in the same
   # unpacked directory as the .node binding, so the whole bin/ tree is
   # unpacked rather than just **/*.node.

@@ -245,3 +245,53 @@ human labels versus external/model references separately. The existing benchmark
 is a regression reference, not a universal production SLA. Release defaults require
 new-song checks and visible acceptance; rest/sung-end or Korean claims require
 separate evidence.
+
+## Opt-in experimental post-separation generation
+
+`experimentalLyricsAfterSeparation` defaults to false. Explicit enablement plus the
+existing audio-processing gate permits successful accompaniment publication to
+enqueue an independent lyrics job. Failed/cancelled/skipped separation does not
+enqueue; enabling does not scan old tracks, download assets or apply estimates.
+Admission, execution and publication recheck permission. Disabling cancels analysis;
+lyrics failure/cancellation never changes a completed accompaniment result.
+
+Reuse the fixed research environment. Missing/damaged environments skip with a
+status; installed but unverified environments receive a real load probe inside the
+shared scheduler before inference. No formal catalog or runtime activation changes.
+Unresolved weight/dictionary use and redistribution evidence remains unresolved;
+the experimental label is not permission evidence.
+
+Whole-song inference uses the original mix, existing 30-second bounded windows and
+occurrence IDs, at most 1,000 lines/windows and a 30-minute source. HubertFA and small
+subprocess groups each have a 20-minute deadline. Separation completion is a trigger,
+not evidence for guide-vocal input. Native T2 bypasses alignment; contradictions
+decline chunks, missing evidence stays unknown, unsupported/missing boundaries
+retain T1. Human timing acceptance remains pending for this experimental trial.
+
+Main stores validated estimates in
+`tracks/<trackId>/lyrics/experimental-estimates/<sourceFilename>.json`, separate from
+canonical timing and the formal loader. Bind source/audio/timing/offset/canonical
+identity, asset/environment pins, recipe and Node/ICU versions. Recheck inputs and
+selection before atomic publication; cancelled/failed/stale runs preserve earlier
+estimates. Reads are bounded and validated. Queue status is session-local, bounded
+to 100 tracks; estimates survive restart, application does not.
+
+Explicit lyrics-page application affects only the local authoring/performance
+reader's starts-only frame. Source/document/offset/estimate reload clears application.
+Canonical documents, Self-View and Output projections stay unchanged. T2 and declined
+T1 retain their behavior. Chinese conversion reuses segment text projection; text
+mismatches retain normal display. Furigana retains its existing reading layout.
+No estimated singing-end/progress is exposed.
+
+Five main-frame-only IPC actions are `lyrics-experimental:status`, `enable`, `cancel`,
+`retry`, `estimate`. Enable accepts one boolean, cancel/retry one bounded track ID,
+estimate a bounded ID and existing subtitle filename. Main derives all paths,
+executables, models and download pins; renderer cannot write estimate data.
+
+## Isolated in-App research intent
+
+The separate Settings research entry exposes only `lyrics-research:status/prepare/verify/remove/cancel/inspect/preview` to the trusted main-window frame. Environment operations have no arguments; inspect/preview accept exactly `{ trackId, language: 'zh' | 'ja', lineIndex }`. Main derives the preferred/fallback language source, source/audio/timing identity, executable paths, fixed official download pins and isolated userData storage. No formal gate, catalog or default preparation changes.
+
+One shared heavy-job scheduler owns research download/load/inference through cancellation and cleanup, including app quit. Complete install trees are checked against shipped hashes; both HubertFA and small must load before ready. Restart requires explicit verification. A replacement is probed in staging before exchange, failure preserves the previous installation, and retry/removal target only research-owned paths.
+
+Preview copies audio/text into an owned workspace; the library is read-only. It selects at most ten lines over a roughly 30-second acoustic window. Original T2 segments remain authoritative, usable HubertFA T1 chunks may be shown with the frozen small content mask, and declined lines retain T1. Missing content evidence remains unknown; insertion warnings never retime or insert lyrics. The source/audio/timing/offset identity must still match after inference. Cancellation or failure publishes no preview; renderer selection/library changes invalidate displayed results. Previews are session-only and never reach canonical sidecars, Self-View or Output. Playback uses the existing HTML-audio player clock. Human timing acceptance remains pending.

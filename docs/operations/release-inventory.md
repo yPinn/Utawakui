@@ -26,8 +26,8 @@ The manual lyrics acoustic environment lifecycle ships as application code under
 `electron/lib/lyricsAcoustic/` plus explicit extra resources
 `resources/audio-processing/lyrics_acoustic_probe.py` and
 `resources/audio-processing/lyrics-acoustic-catalog.json`. The Python unit test,
-private research workers, local Python environments, model archives and weights
-are excluded. The catalog remains blocked pending weight evidence; there is no
+research CLIs/private bindings/corpora, local Python environments, model archives and weights
+are excluded; the isolated App research runtime has a separate exact allowlist below. The catalog remains blocked pending weight evidence; there is no
 default preparation or song-generation intent. Settings status reads install
 nothing. Accepted-catalog preparation, when released, uses the independent Audio
 Python `lyrics-alignment` environment and `alignment` model paths; no provider
@@ -326,12 +326,12 @@ worker, extraResource or new asarUnpack path. Model and Output integration remai
 separately gated by ADR 0026.
 
 The private Phase 2 candidate workers and binding manifest live only in
-`scripts/research/lyricsAcoustic/`, outside builder's shipped-source allowlist.
-Packaging tests assert that the Node/Python workers and model manifest remain
-excluded. Research assets, runtime configuration, song copies and results are
-local inputs/outputs, not extraResources. This adds no product capability, model
-download, Python environment lock or activation entry. Existing application
-source rules cover the explicit internal storage-method option and preview label.
+`scripts/research/lyricsAcoustic/`; its private CLI remains outside the shipped allowlist, while the isolated App research modules are explicitly listed below.
+Packaging tests now assert the exact research runtime allowlist described below,
+while private CLIs, bindings, corpora and downloaded assets remain excluded.
+The original Phase 2 CLI still adds no formal capability or activation; the separate
+App entry owns explicit manual research downloads and its isolated environment.
+Existing application source rules cover the internal storage-method option and preview label.
 
 | Artifact                                                                                               | Contents                                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -462,3 +462,20 @@ After changing gates or dependencies:
   unmarked folder must hide the library option. Replacing the ownership marker
   content, or selecting a populated folder that the app did not previously claim,
   must also hide the option and preserve that folder during uninstall.
+
+## Isolated lyrics research runtime
+
+The same packaged runtime also supports default-off experimental post-separation
+generation via `automatic.js`, `estimates.js` and the five fixed
+`experimentalHandlers.js` IPC actions. They are covered by the existing
+`electron/**/*` inclusion and `electron/lib/**/*` unpack rules; no additional
+worker, dependency, default download or weight is bundled. Results are local derived
+files, never release assets. The formal catalog remains blocked. Verify the
+independent queue, restart load verification and manual local-reader application
+as well as the isolated research preview.
+
+The Settings entry ships `electron/lib/lyricsResearch/`, its narrow `electron/main/lyrics/researchHandlers.js` IPC and renderer owner/component. It never activates the blocked formal lyrics-acoustic catalog. No startup/status/default downloads occur; manual downloads go directly to fixed upstream URLs and install under userData `lyrics-research/`, separate from Provider Python and Audio Python activation. No model weights, private configs, evaluation songs or human labels are distributed.
+
+Builder explicitly includes only acoustic `assets/process/protocol/job/frontend.cjs`, `decoder.py`, `manifest.json`; candidate `protocol/tokenStarts/quality/qualityConservative.cjs`; fresh-evaluation `content/lowCost/completeness.cjs` and `trial-assets.json`. The two pure `src/utils/lyrics.js` and `lyricsDocument.js` sources are also shipped for main-side canonical normalization; they have no Vite or renderer globals. These are curated runtime modules, not a recursive scripts inclusion.
+
+Python needs the real unpacked `decoder.py` plus adjacent `manifest.json`; both are explicitly in asarUnpack. The ONNX frontend is also unpacked, and fixed Node worker launches explicitly set Run-as-Node. Production Node dependencies are reused; no new npm package is introduced. Verify the allowlist closure and a packaged load/preview, including real Python paths and both model loaders. Human time accuracy and formal distribution permission remain separate pending acceptance.

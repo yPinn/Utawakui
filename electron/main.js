@@ -552,6 +552,114 @@ if (!gotSingleInstanceLock) {
         error,
       });
     }
+    const {
+      createResearchEnvironment,
+    } = require('./lib/lyricsResearch/environment');
+    const { createResearchService } = require('./lib/lyricsResearch/service');
+    const {
+      registerLyricsResearchHandlers,
+    } = require('./main/lyrics/researchHandlers');
+    const researchRoot = path.join(app.getPath('userData'), 'lyrics-research');
+    const researchEnvironment = createResearchEnvironment({
+      root: researchRoot,
+      getFfmpegPath: () =>
+        getPreparedFfmpegPath(
+          app.getPath('userData'),
+          configState.getConfig().systemFfmpegPath,
+        ),
+      probe: (...args) =>
+        require('./lib/lyricsResearch/engine').probeResearchModels(...args),
+    });
+    const lyricsResearchService = createResearchService({
+      environment: researchEnvironment,
+      scheduler: heavyJobScheduler,
+      isSetupBusy: () =>
+        structureAnalysisCapabilityService.getStatus().busy ||
+        Boolean(lyricsAcousticCapability?.getStatus().busy),
+      loadInput: (intent) =>
+        require('./lib/lyricsResearch/input').loadResearchInput(
+          configState.resolveDownloadDir(configState.getConfig()),
+          intent,
+        ),
+      runPreview: (input, options) =>
+        require('./lib/lyricsResearch/engine').runResearchPreview(input, {
+          ...options,
+          config: researchEnvironment.paths(),
+          jobsRoot: path.join(researchRoot, 'jobs'),
+        }),
+      loadAutomaticInput: (trackId) =>
+        require('./lib/lyricsResearch/input').loadAutomaticResearchInput(
+          configState.resolveDownloadDir(configState.getConfig()),
+          trackId,
+        ),
+      isInputCurrent: (input) =>
+        require('./lib/lyricsResearch/input').automaticInputCurrent(
+          configState.resolveDownloadDir(configState.getConfig()),
+          input,
+        ),
+      isAnalysisAllowed: () =>
+        configState.getConfig().experimentalLyricsAfterSeparation === true &&
+        isFeatureGateEnabled(
+          configState.getConfig(),
+          FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+        ),
+      publishEstimate: (input, result, isCurrent) =>
+        require('./lib/lyricsResearch/estimates').saveExperimentalEstimate(
+          input,
+          result,
+          isCurrent,
+        ),
+    });
+    const experimentalLyricsQueue =
+      require('./lib/lyricsResearch/automatic').createExperimentalLyricsQueue({
+        getConfig: configState.getConfig,
+        updateConfig: configState.updateConfig,
+        isAllowed: () =>
+          isFeatureGateEnabled(
+            configState.getConfig(),
+            FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+          ),
+        research: lyricsResearchService,
+        onComplete: notifyLibraryUpdated,
+        onError: (error) =>
+          recordDiagnostic({
+            source: 'lyrics-experimental',
+            operation: 'analyze',
+            code: 'LYRICS_EXPERIMENTAL_FAILED',
+            error,
+          }),
+      });
+    require('./main/lyrics/experimentalHandlers').registerLyricsExperimentalHandlers(
+      {
+        ipcMain,
+        queue: experimentalLyricsQueue,
+        recordDiagnostic,
+        loadEstimate: async (trackId, filename) => {
+          if (
+            !configState.getConfig().experimentalLyricsAfterSeparation ||
+            !isFeatureGateEnabled(
+              configState.getConfig(),
+              FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+            )
+          )
+            return { status: 'disabled' };
+          const input =
+            await require('./lib/lyricsResearch/input').loadResearchInput(
+              configState.resolveDownloadDir(configState.getConfig()),
+              { trackId, language: 'zh', lineIndex: 0 },
+              { filename },
+            );
+          return require('./lib/lyricsResearch/estimates').loadExperimentalEstimate(
+            input,
+          );
+        },
+      },
+    );
+    registerLyricsResearchHandlers({
+      ipcMain,
+      service: lyricsResearchService,
+      recordDiagnostic,
+    });
     registerLyricsAcousticCapabilityHandlers({
       ipcMain,
       capability: lyricsAcousticCapability,
@@ -1004,6 +1112,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
       onQueueUpdate: windowState.setSeparationQueueStatus,
+      onSeparationComplete: experimentalLyricsQueue.enqueue,
       recordDiagnostic,
       enforceLibraryStoragePolicy,
     });

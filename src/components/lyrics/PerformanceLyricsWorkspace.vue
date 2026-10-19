@@ -8,6 +8,7 @@ import { trackContentLang } from '../../utils/contentLanguage.js';
 import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
 import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
+import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -144,7 +145,9 @@ onMounted(initialize);
       </template>
     </AppFolderWorkspaceToolbar>
 
+    <LyricsExperimentalEstimate />
     <LyricsLiveTool
+      :experimental-frame="lyrics.experimentalLyrics?.frame.value"
       class="performance-lyrics-workspace__reader"
       :document-id="lyricsDocument.documentId"
       :error="state.error || ''"

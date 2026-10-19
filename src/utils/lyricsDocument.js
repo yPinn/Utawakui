@@ -1,4 +1,4 @@
-import timingValues from '../../shared/lyricsTimingValues.json';
+import timingValues from '../../shared/lyricsTimingValues.json' with { type: 'json' };
 import { parseLyricsText } from './lyrics.js';
 
 const SHA256_RE = /^[a-f0-9]{64}$/;

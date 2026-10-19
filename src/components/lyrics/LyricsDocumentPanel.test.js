@@ -35,6 +35,46 @@ function render(props) {
 }
 
 describe('LyricsDocumentPanel presentation', () => {
+  it('renders manually applied starts only on the matching active line and preserves normal text on mismatch', async () => {
+    const frame = {
+      lineId: 'b',
+      text: '汚れたい',
+      chunks: [
+        { chunkId: 'one', text: '汚れ', state: 'past' },
+        { chunkId: 'two', text: 'たい', state: 'active' },
+      ],
+    };
+    const html = await render({ experimentalFrame: frame });
+    expect(html).toContain('lyrics-line__experimental-active');
+    expect(html).toContain('たい</span>');
+    expect(
+      await render({ experimentalFrame: { ...frame, text: 'other version' } }),
+    ).not.toContain('class="lyrics-line__experimental-active"');
+    expect(
+      await render({ experimentalFrame: frame, activeLineIndex: 0 }),
+    ).not.toContain('class="lyrics-line__experimental-active"');
+  });
+  it('keeps furigana and highlights matching reading segments without rewriting them', async () => {
+    const frame = {
+      lineId: 'b',
+      text: '汚れたい',
+      chunks: [
+        { chunkId: 'one', text: '汚れ', state: 'past' },
+        { chunkId: 'two', text: 'たい', state: 'active' },
+      ],
+    };
+    const html = await render({
+      experimentalFrame: frame,
+      showsReadingAid: true,
+      readingVariant: 'furigana',
+      readingLines: [
+        null,
+        { segments: [{ t: '汚れ', r: 'よごれ' }, { t: 'たい' }] },
+      ],
+    });
+    expect(html).toMatch(/<rt[^>]*>よごれ<\/rt>/u);
+    expect(html).toMatch(/lyrics-line__experimental-active[^>]*>たい<\/span>/u);
+  });
   it('keeps the list look by default and prints the sheet on request', async () => {
     expect(await render()).not.toContain('lyrics-preview--sheet');
     const sheet = await render({ presentation: 'sheet' });
@@ -75,7 +115,7 @@ describe('LyricsDocumentPanel presentation', () => {
     };
     const sheet = await render({ ...props, presentation: 'sheet' });
     expect(sheet).toContain('lyrics-line--ruby');
-    expect(sheet).toMatch(/<ruby style="--lyrics-ruby-gap:1em;"/u);
+    expect(sheet).toMatch(/<ruby[^>]* style="--lyrics-ruby-gap:1em;"/u);
     expect(sheet).toMatch(
       /<span class="lyrics-line__ruby-gap" style="--lyrics-ruby-gap:1em;"/u,
     );

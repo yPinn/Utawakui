@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  loadResearchInput,
+  loadAutomaticResearchInput,
+  automaticInputCurrent,
+} from './input.js';
+import {
+  saveTrackLyricsManifest,
+  setLyricsSourcePreference,
+  setLyricsSourceOffset,
+} from '../library/lyrics.js';
+import { saveTrackLyricsTiming } from '../library/lyricsTiming.js';
+let root, track;
+beforeEach(() => {
+  root = fs.mkdtempSync(path.join(os.tmpdir(), 'research-input-'));
+  track = path.join(root, 'tracks/song');
+  fs.mkdirSync(path.join(track, 'lyrics'), { recursive: true });
+  fs.writeFileSync(path.join(track, 'audio.wav'), 'fixture audio');
+  fs.writeFileSync(
+    path.join(track, 'lyrics/main.vtt'),
+    'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n今天測試\n',
+  );
+  fs.writeFileSync(
+    path.join(track, 'lyrics/ja.vtt'),
+    'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n今日の歌\n',
+  );
+  fs.writeFileSync(
+    path.join(root, 'library.json'),
+    JSON.stringify({ version: 1, tracks: { song: { duration: 30 } } }),
+  );
+  saveTrackLyricsManifest(track, [
+    { filename: 'main.vtt', kind: 'manual', language: 'zh' },
+    { filename: 'ja.vtt', kind: 'manual', language: 'ja' },
+  ]);
+});
+afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+const intent = { trackId: 'song', language: 'zh', lineIndex: 0 };
+describe('main-derived research input', () => {
+  it('automatic selection uses supported source preference and invalidates a changed selection', async () => {
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    const original = await loadAutomaticResearchInput(root, 'song');
+    expect(original.language).toBe('zh');
+    expect(automaticInputCurrent(root, original)).toBe(true);
+    setLyricsSourcePreference(track, 'ja.vtt', 'user');
+    expect(automaticInputCurrent(root, original)).toBe(false);
+    expect((await loadAutomaticResearchInput(root, 'song')).language).toBe(
+      'ja',
+    );
+  });
+  it('resolves preferred lyrics and offset in main, detects source/audio changes without writing previews', async () => {
+    const a = await loadResearchInput(root, intent);
+    expect(a.canonical.lines[0].text).toBe('今天測試');
+    setLyricsSourcePreference(track, 'ja.vtt', 'user');
+    setLyricsSourceOffset(track, 'ja.vtt', 200);
+    const b = await loadResearchInput(root, intent);
+    expect(b.source.filename).toBe('ja.vtt');
+    expect(b.source.offsetMs).toBe(200);
+    expect(b.identity).not.toBe(a.identity);
+    fs.appendFileSync(path.join(track, 'audio.wav'), 'changed');
+    expect((await loadResearchInput(root, intent)).identity).not.toBe(
+      b.identity,
+    );
+    expect(fs.existsSync(path.join(track, 'lyrics/acoustic'))).toBe(false);
+  });
+  it('preserves canonical T2 sidecars and invalidates changes', async () => {
+    const a = await loadResearchInput(root, intent);
+    const canonical = structuredClone(a.canonical);
+    canonical.granularity = 'T2';
+    canonical.lines[0].segments = [
+      { segmentId: 'one', text: '今天', startMs: 1000, endMs: 2000 },
+      { segmentId: 'two', text: '測試', startMs: 2000, endMs: 4000 },
+    ];
+    saveTrackLyricsTiming(
+      track,
+      'main.vtt',
+      a.canonical.source.sha256,
+      canonical,
+    );
+    const b = await loadResearchInput(root, intent);
+    expect(b.canonical.lines[0].segments).toHaveLength(2);
+    expect(b.identity).not.toBe(a.identity);
+  });
+  it('rejects untimed sources, excessive duration and unsafe ids', async () => {
+    await expect(
+      loadResearchInput(root, { ...intent, trackId: '../outside' }),
+    ).rejects.toThrow();
+    fs.writeFileSync(path.join(root, 'library.json'), '{}');
+    await expect(loadResearchInput(root, intent)).rejects.toThrow('duration');
+  });
+});

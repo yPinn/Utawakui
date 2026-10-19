@@ -40,6 +40,7 @@ describe('config', () => {
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
+      experimentalLyricsAfterSeparation: false,
       separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
       windowCloseBehavior: 'ask',
@@ -62,6 +63,18 @@ describe('config', () => {
       },
     });
   });
+  it.each([true, false, 'true', 1, null])(
+    'experimental lyrics requires a literal opt-in (%j)',
+    (value) => {
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify({ experimentalLyricsAfterSeparation: value }),
+      );
+      expect(loadConfig(configPath).experimentalLyricsAfterSeparation).toBe(
+        value === true,
+      );
+    },
+  );
 
   it('round-trips downloadDir through save/load', () => {
     saveConfig(configPath, { downloadDir: '/some/path' });
@@ -137,6 +150,7 @@ describe('config', () => {
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
       separationGpuAcceleration: true,
+      experimentalLyricsAfterSeparation: false,
       autoCheckAppUpdates: true,
       windowCloseBehavior: 'ask',
       lastSeenAnnouncementVersion: null,

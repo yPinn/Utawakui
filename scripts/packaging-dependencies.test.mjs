@@ -90,12 +90,15 @@ describe('packaged dependency boundary', () => {
     expect(catalog.blockReason).toBe('weights-evidence-pending');
     expect(builder.files).not.toContain('scripts/research/**/*');
   });
-  it('excludes private lyric research workers and model bindings from the shipped app', () => {
+  it('ships only the bounded research runtime, never private bindings, corpus or CLI', () => {
     for (const file of [
       'scripts/research/lyricsAcoustic/frontend.cjs',
       'scripts/research/lyricsAcoustic/decoder.py',
       'scripts/research/lyricsAcoustic/job.cjs',
       'scripts/research/lyricsAcoustic/manifest.json',
+      'electron/lib/lyricsResearch/automatic.js',
+      'electron/lib/lyricsResearch/estimates.js',
+      'electron/main/lyrics/experimentalHandlers.js',
     ]) {
       const included = builder.files.some(
         (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
@@ -103,8 +106,36 @@ describe('packaged dependency boundary', () => {
       const excluded = builder.files.some(
         (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
       );
-      expect(included && !excluded).toBe(false);
+      expect(included && !excluded).toBe(true);
     }
+  });
+  it('keeps research CLIs, credentials, downloads and evaluation data excluded', () => {
+    for (const file of [
+      'scripts/research/lyricsFreshEvaluation/trial.cjs',
+      'scripts/research/lyricsAcoustic/evaluate.cjs',
+      'scripts/research/lyricsAlignmentCandidates/qwen_worker.py',
+      '.tmp/hfa-runtime.json',
+      'tasks/labels.json',
+    ]) {
+      expect(
+        builder.files.some(
+          (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+        ),
+      ).toBe(false);
+    }
+    for (const file of [
+      'src/utils/lyrics.js',
+      'src/utils/lyricsDocument.js',
+      'scripts/research/lyricsFreshEvaluation/trial-assets.json',
+    ])
+      expect(builder.files).toContain(file);
+    for (const file of ['frontend.cjs', 'decoder.py'])
+      expect(builder.asarUnpack).toContain(
+        'scripts/research/lyricsAcoustic/' + file,
+      );
+    expect(
+      require('./electron/lib/lyricsResearch/engine.js').runResearchPreview,
+    ).toBeTypeOf('function');
   });
   it('keeps model-independent lyric estimate runtime inside existing packaged source boundaries', () => {
     expect(builder.files).toContain('electron/**/*');

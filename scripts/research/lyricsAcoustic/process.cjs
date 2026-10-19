@@ -46,7 +46,10 @@ function createProcessGroup({
   function launch(executable, args) {
     if (failure) throw failure;
     const child = spawn(executable, args, {
-      env,
+      env:
+        executable === process.execPath
+          ? { ...env, ELECTRON_RUN_AS_NODE: '1' }
+          : env,
       shell: false,
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],

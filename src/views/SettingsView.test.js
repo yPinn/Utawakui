@@ -20,22 +20,28 @@ const optionalSource = readSource(
 const supportSource = readSource(
   '../components/settings/SettingsSupportSection.vue',
 );
+const researchSource = readSource(
+  '../components/settings/LyricsResearchSettingsBlock.vue',
+);
 const sectionSources = [
   librarySource,
   audioSource,
   applicationSource,
   optionalSource,
+  researchSource,
   supportSource,
 ];
 const source = [viewSource, ...sectionSources].join('\n');
 
 describe('SettingsView document composition', () => {
-  it('composes seven functional areas through five ownership components without legacy tabs or an inner page scroll', () => {
+  it('composes independent core, optional, research and support sections without legacy tabs or an inner page scroll', () => {
     const sectionComponents = [
       'SettingsLibrarySection',
       'SettingsAudioSection',
       'SettingsApplicationSection',
       'SettingsCapabilitiesSection',
+      'LyricsResearchSettingsBlock',
+      'LyricsExperimentalQueueSettings',
       'SettingsSupportSection',
     ];
     let previousStart = -1;
@@ -73,6 +79,8 @@ describe('SettingsView document composition', () => {
     expect(applicationSource).toContain('<AppUpdateSettingsRow');
     expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
+    expect(optionalSource).not.toContain('LyricsResearchSettingsBlock');
+    expect(researchSource).toContain('title="本機歌詞研究試用"');
     expect(supportSource).toContain('title="支援與維護"');
     expect(supportSource).toContain('<FeedbackReportSettingsRow');
     expect(supportSource).toContain('<DiagnosticsSettingsRow');
