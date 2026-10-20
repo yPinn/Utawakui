@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-20",
+  "basis": "current dirty checkout; source/static asset audit; no live OBS acceptance",
+  "templates": [
+    {
+      "id": "queue-board",
+      "kind": "setlist",
+      "capture": {
+        "default": "large",
+        "supported": ["large"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "fontFamily",
+        "fontScale",
+        "fontWeight",
+        "surface",
+        "spacingDensity"
+      ],
+      "timing": null,
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/queue-board.jpg",
+        "bytes": 20155,
+        "width": 1280,
+        "height": 720,
+        "sha256": "9f1f04006e72b066f6b558eb7a15c6e9cb60ec5bc6fcd4ed5bc9acf7ca8edc14"
+      }
+    },
+    {
+      "id": "karaoke-stack",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "appearanceKeys": ["paletteId", "lookAmount", "fontScale"],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "estimated-segments",
+        "t2Progress": "source-mapped-phrases",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": true,
+          "beatPhase": true,
+          "sections": true
+        },
+        "scheduler": ["ktv", "beat-phase", "music-sections"],
+        "presentationPolicyIds": []
+      },
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/karaoke-stack.jpg",
+        "bytes": 42197,
+        "width": 1199,
+        "height": 887,
+        "sha256": "5eec604553c811c36d0da4f59cf2b98d1a4717a0e0996a6febc86c599b6b9b9f"
+      }
+    },
+    {
+      "id": "kinetic-pop",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "fontScale",
+        "kineticMaterial",
+        "kineticArrangement"
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "weighted-phrases",
+        "t2Progress": "source-mapped-phrases",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines", "kinetic-phrases"],
+        "presentationPolicyIds": []
+      },
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/kinetic-pop.jpg",
+        "bytes": 25620,
+        "width": 1280,
+        "height": 720,
+        "sha256": "cdd5e6945e6c2876c76c528d59815a79fc500b99df9d530eba838c5e92f528a5"
+      }
+    },
+    {
+      "id": "ornate-vertical",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "textColor",
+        "accentColor",
+        "fontFamily",
+        "fontScale",
+        "positionAnchor",
+        "positionOffsetX",
+        "positionOffsetY"
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "line-entry",
+        "t2Progress": "not-consumed",
+        "usesSourceMappedTiming": false,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines"],
+        "presentationPolicyIds": []
+      },
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/ornate-vertical.jpg",
+        "bytes": 15638,
+        "width": 1280,
+        "height": 720,
+        "sha256": "e2255408ec2aaf7160f481de33059c388279d82b1f17deed6ea671f5de8abdba"
+      }
+    },
+    {
+      "id": "live-stage",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "fontFamily",
+        "fontScale",
+        "contrastStyle"
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "weighted-pages",
+        "t2Progress": "source-mapped-pages",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines", "live-stage-card", "live-stage-captions"],
+        "presentationPolicyIds": ["broadcast-compact", "balanced", "literal"],
+        "defaultPresentationPolicyId": "broadcast-compact"
+      },
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/live-stage.jpg",
+        "bytes": 333646,
+        "width": 2048,
+        "height": 1365,
+        "sha256": "458710dfb75d68aad7c2d74beee3555e54e3f22a04069d2f76a2b242c9baa27d"
+      }
+    },
+    {
+      "id": "manga-frame",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "fontFamily",
+        "fontScale",
+        "fontWeight",
+        "furigana"
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "line-entry",
+        "t2Progress": "source-mapped-bubbles",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-segments", "manga-bubbles"],
+        "presentationPolicyIds": []
+      },
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/manga-frame.jpg",
+        "bytes": 100974,
+        "width": 750,
+        "height": 422,
+        "sha256": "535a111b87dec823ad1379b07c5cdb55d5fa1893fe261b2702e475d06d79889d"
+      }
+    },
+    {
+      "id": "art-card",
+      "kind": "now-playing",
+      "capture": {
+        "default": "small",
+        "supported": ["small"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "fontFamily",
+        "fontScale",
+        "fontWeight"
+      ],
+      "timing": null,
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/art-card.jpg",
+        "bytes": 119217,
+        "width": 1194,
+        "height": 669,
+        "sha256": "9c48dd7a88a178e8f062a208b06422f49cf60d49bda2632f5cd04bcd772b6731"
+      }
+    },
+    {
+      "id": "cover-player",
+      "kind": "now-playing",
+      "capture": {
+        "default": "medium",
+        "supported": ["medium"]
+      },
+      "appearanceKeys": [
+        "paletteId",
+        "lookAmount",
+        "fontScale",
+        "fontWeight",
+        "surface"
+      ],
+      "timing": null,
+      "thumbnail": {
+        "path": "src/assets/output-template-thumbnails/cover-player.jpg",
+        "bytes": 22822,
+        "width": 1280,
+        "height": 720,
+        "sha256": "8ab4d890bec4ae9edc3466e384af0b24ec4b769e542bef96f0c5087deae0beff"
+      }
+    }
+  ],
+  "verification": {
+    "uniqueFiles": 73,
+    "uniqueTests": 757,
+    "statuses": {
+      "passed": 757
+    }
+  }
+}

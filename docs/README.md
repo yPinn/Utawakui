@@ -40,6 +40,10 @@
 
 ## 目錄結構
 
+外觀方向、set 標準與共用 Output 基礎的分階段工作，統一見[現行外觀計畫](governance/appearance-sets-plan.md)。八模板盤點與市場／早期提案由該入口連結，不再並列維護實作方向。
+
+服務／模型／套件的逐項版本與授權證據見[依賴查核](governance/community-dependency-boundaries-2026-10-20.md)；限流與重試行為見[外部服務請求契約](contracts/external-service-request-policy.md)。
+
 `adr/`放決策；`contracts/`放可驗證邊界；`operations/`放可執行操作；`governance/`放權利與治理證據；`research/`放當輪研究；`archive/`放完成計畫；`releases/`放版本紀錄。`docs/`根目錄只保留本入口、規格與架構圖。
 
 ## 保留與歸檔判斷

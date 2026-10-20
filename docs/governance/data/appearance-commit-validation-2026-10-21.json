@@ -172,5 +172,19 @@
       "docs/governance/data/qwen-research-pypi-license-metadata-2026-10-20.json",
       "docs/research/appearance-support-models-market-plan-2026-10-20.md"
     ]
+  },
+  "integrationVerification": {
+    "parent": "913f5d9742f92b06df7e44dfdefe66ad967e1191",
+    "testFiles": 93,
+    "tests": 1019,
+    "passed": 1019,
+    "failed": 0,
+    "baseline": "8 templates / 32 scenarios, zero issues",
+    "eslint": "passed",
+    "prettier": "passed",
+    "localMarkdownTargets": "passed",
+    "markdown": "171 documents, zero issues",
+    "build": "passed; existing large-chunk warning",
+    "scope": "Rebased classified delivery onto completed parallel lyrics commits; no new full OBS/visual/endurance measurement"
   }
 }

@@ -210,4 +210,4 @@ CPU 是 Electron 各 process percentCPUUsage 相加；working set／private byte
 
 ## 分類提交前核對（2026-10-21）
 
-只含本對話交付內容的獨立 index 快照通過91檔996項相關測試、八模板／32情境基線、focused lint／格式、文件連結、167份Markdown與build；不依賴其他未提交的混語、提詞器、BGM或研究功能。設定核對與範圍見[提交前驗證紀錄](../governance/data/appearance-commit-validation-2026-10-21.json)。這輪沒有重跑完整可見／OBS／耐久測量，歷史圖像及封裝資料仍依各自來源hash解讀。
+只含本對話交付內容的獨立 index 快照通過91檔996項相關測試、八模板／32情境基線、focused lint／格式、文件連結、167份Markdown與build；不依賴其他未提交的混語、提詞器、BGM或研究功能。接上已完成的並行提交後，再驗93檔1019項測試、171份Markdown、lint／格式／連結與build皆通過。設定核對與範圍見[提交前驗證紀錄](../governance/data/appearance-commit-validation-2026-10-21.json)。這輪沒有重跑完整可見／OBS／耐久測量，歷史圖像及封裝資料仍依各自來源hash解讀。

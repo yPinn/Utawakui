@@ -1,0 +1,2478 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-20",
+  "scope": "Community project; locked dependency metadata and existing reviewed notices, not a blanket grant",
+  "roots": [
+    {
+      "name": "@napolab/texture-bridge-core",
+      "version": "0.15.0",
+      "license": "MIT",
+      "role": "Spout 輸出 helper；native binding 另含 BSD notices"
+    },
+    {
+      "name": "builder-util-runtime",
+      "version": "9.7.0",
+      "license": "MIT",
+      "role": "桌面更新 runtime"
+    },
+    {
+      "name": "electron-updater",
+      "version": "6.8.9",
+      "license": "MIT",
+      "role": "GitHub 更新流程"
+    },
+    {
+      "name": "gsap",
+      "version": "3.15.0",
+      "license": "GSAP Standard No Charge",
+      "role": "Browser Source 動畫"
+    },
+    {
+      "name": "js-yaml",
+      "version": "5.4.3",
+      "license": "MIT",
+      "role": "模型／設定資料解析"
+    },
+    {
+      "name": "kissfft-js",
+      "version": "0.1.8",
+      "license": "MIT AND BSD-3-Clause",
+      "role": "音訊頻譜；wrapper MIT＋KissFFT BSD"
+    },
+    {
+      "name": "koroman",
+      "version": "1.0.16",
+      "license": "MIT",
+      "role": "韓文讀音"
+    },
+    {
+      "name": "kuromoji",
+      "version": "0.1.2",
+      "license": "Apache-2.0",
+      "role": "日文字典／讀音"
+    },
+    {
+      "name": "music-metadata",
+      "version": "12.2.0",
+      "license": "MIT",
+      "role": "本機音訊標籤／container metadata"
+    },
+    {
+      "name": "obs-websocket-js",
+      "version": "5.0.8",
+      "license": "MIT",
+      "role": "可選 OBS 唯讀連線"
+    },
+    {
+      "name": "onnxruntime-node",
+      "version": "1.30.0",
+      "license": "MIT",
+      "role": "分離／研究推論；DirectML binary 另有 EULA"
+    },
+    {
+      "name": "opencc-js",
+      "version": "1.4.2",
+      "license": "MIT AND Apache-2.0",
+      "role": "繁簡轉換及 generated dictionary"
+    },
+    {
+      "name": "sax",
+      "version": "1.6.1",
+      "license": "BlueOak-1.0.0",
+      "role": "XML／TTML parser"
+    },
+    {
+      "name": "wanakana",
+      "version": "5.3.1",
+      "license": "MIT",
+      "role": "日文假名／羅馬字"
+    },
+    {
+      "name": "ws",
+      "version": "8.22.0",
+      "license": "MIT",
+      "role": "本機 Output WebSocket"
+    },
+    {
+      "name": "electron",
+      "version": "43.7.8",
+      "license": "MIT",
+      "role": "桌面 shell／Chromium，位於 devDependencies 仍隨安裝包交付"
+    },
+    {
+      "name": "vue",
+      "version": "3.5.43",
+      "license": "MIT",
+      "role": "renderer runtime，位於 devDependencies"
+    },
+    {
+      "name": "@lucide/vue",
+      "version": "1.52.0",
+      "license": "ISC",
+      "role": "renderer 圖示，位於 devDependencies"
+    },
+    {
+      "name": "signalsmith-stretch",
+      "version": "1.3.2",
+      "license": "MIT",
+      "role": "renderer pitch／tempo JS／WASM，位於 devDependencies"
+    }
+  ],
+  "developmentRoots": [
+    {
+      "name": "@commitlint/cli",
+      "version": "21.2.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@commitlint/config-conventional",
+      "version": "21.2.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@eslint/js",
+      "version": "10.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@vitejs/plugin-vue",
+      "version": "6.0.9",
+      "license": "MIT"
+    },
+    {
+      "name": "@vitest/coverage-istanbul",
+      "version": "4.1.11",
+      "license": "MIT"
+    },
+    {
+      "name": "@vitest/coverage-v8",
+      "version": "4.1.11",
+      "license": "MIT"
+    },
+    {
+      "name": "adm-zip",
+      "version": "0.6.1",
+      "license": "MIT"
+    },
+    {
+      "name": "concurrently",
+      "version": "10.0.5",
+      "license": "MIT"
+    },
+    {
+      "name": "electron-builder",
+      "version": "26.17.0",
+      "license": "MIT"
+    },
+    {
+      "name": "eslint",
+      "version": "10.12.0",
+      "license": "MIT"
+    },
+    {
+      "name": "eslint-config-prettier",
+      "version": "10.1.8",
+      "license": "MIT"
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "version": "10.11.1",
+      "license": "MIT"
+    },
+    {
+      "name": "globals",
+      "version": "17.13.0",
+      "license": "MIT"
+    },
+    {
+      "name": "husky",
+      "version": "9.1.7",
+      "license": "MIT"
+    },
+    {
+      "name": "lint-staged",
+      "version": "17.6.0",
+      "license": "MIT"
+    },
+    {
+      "name": "markdownlint-cli2",
+      "version": "0.23.3",
+      "license": "MIT"
+    },
+    {
+      "name": "prettier",
+      "version": "3.9.9",
+      "license": "MIT"
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "license": "ISC"
+    },
+    {
+      "name": "vite",
+      "version": "8.3.3",
+      "license": "MIT"
+    },
+    {
+      "name": "vitest",
+      "version": "4.1.11",
+      "license": "MIT"
+    },
+    {
+      "name": "wait-on",
+      "version": "9.5.1",
+      "license": "MIT"
+    }
+  ],
+  "provider": [
+    {
+      "name": "Python embeddable package",
+      "role": "python-embed",
+      "version": "3.14.7",
+      "license": "Python-2.0",
+      "url": "https://docs.python.org/3.14/license.html"
+    },
+    {
+      "name": "yt-dlp Python wheel",
+      "role": "yt-dlp-wheel",
+      "version": "2026.08.19",
+      "license": "Unlicense",
+      "url": "https://github.com/yt-dlp/yt-dlp/blob/2026.08.19/LICENSE"
+    },
+    {
+      "name": "ytmusicapi Python wheel",
+      "role": "ytmusicapi-wheel",
+      "version": "1.12.3",
+      "license": "MIT",
+      "url": "https://github.com/sigma67/ytmusicapi/blob/1.12.3/LICENSE"
+    },
+    {
+      "name": "Requests Python wheel",
+      "role": "requests-wheel",
+      "version": "2.34.2",
+      "license": "Apache-2.0",
+      "url": "https://github.com/psf/requests/blob/v2.34.2/LICENSE"
+    },
+    {
+      "name": "urllib3 Python wheel",
+      "role": "urllib3-wheel",
+      "version": "2.8.0",
+      "license": "MIT",
+      "url": "https://github.com/urllib3/urllib3/blob/2.8.0/LICENSE.txt"
+    },
+    {
+      "name": "certifi Python wheel",
+      "role": "certifi-wheel",
+      "version": "2026.7.22",
+      "license": "MPL-2.0",
+      "url": "https://github.com/certifi/python-certifi/blob/2026.07.22/LICENSE"
+    },
+    {
+      "name": "charset-normalizer Python wheel",
+      "role": "charset-normalizer-wheel",
+      "version": "3.5.2",
+      "license": "MIT",
+      "url": "https://github.com/jawah/charset_normalizer/blob/3.5.2/LICENSE"
+    },
+    {
+      "name": "idna Python wheel",
+      "role": "idna-wheel",
+      "version": "3.20",
+      "license": "BSD-3-Clause",
+      "url": "https://github.com/kjd/idna/blob/v3.20/LICENSE.md"
+    },
+    {
+      "name": "bgutil Rust PO-token provider",
+      "role": "bgutil-provider-exe",
+      "version": "0.8.1",
+      "license": "GPL-3.0-or-later",
+      "url": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE"
+    },
+    {
+      "name": "bgutil Rust yt-dlp plugin",
+      "role": "bgutil-plugin",
+      "version": "0.8.1",
+      "license": "GPL-3.0-or-later",
+      "url": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/blob/0.8.1/LICENSE"
+    },
+    {
+      "name": "FFmpeg essentials build",
+      "version": "release",
+      "license": "GPL-3.0",
+      "url": "https://ffmpeg.org/legal.html"
+    }
+  ],
+  "audioPython": [
+    {
+      "name": "beat-this",
+      "version": "1.1.0",
+      "dependencies": [
+        "numpy",
+        "torch",
+        "torchaudio",
+        "einops",
+        "rotary-embedding-torch",
+        "soxr"
+      ],
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://pypi.org/project/beat-this/1.1.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "torch",
+      "version": "2.11.0",
+      "dependencies": [
+        "filelock",
+        "typing-extensions",
+        "setuptools",
+        "sympy",
+        "networkx",
+        "jinja2",
+        "fsspec"
+      ],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/torch/2.11.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "torchaudio",
+      "version": "2.11.0",
+      "dependencies": ["torch"],
+      "license": {
+        "spdx": "BSD-2-Clause",
+        "evidenceUrl": "https://pypi.org/project/torchaudio/2.11.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "setuptools",
+      "version": "81.0.0",
+      "dependencies": [],
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://pypi.org/project/setuptools/81.0.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.7.0",
+      "dependencies": [],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/fsspec/2026.7.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "dependencies": [],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/networkx/3.6.1/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.2",
+      "dependencies": [],
+      "license": {
+        "spdx": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+        "evidenceUrl": "https://pypi.org/project/numpy/2.5.2/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "dependencies": ["mpmath"],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/sympy/1.14.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "dependencies": [],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/mpmath/1.3.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "dependencies": [],
+      "license": {
+        "spdx": "PSF-2.0",
+        "evidenceUrl": "https://pypi.org/project/typing-extensions/4.16.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "einops",
+      "version": "0.8.2",
+      "dependencies": [],
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://pypi.org/project/einops/0.8.2/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.4",
+      "dependencies": [],
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://pypi.org/project/filelock/3.32.4/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "jinja2",
+      "version": "3.1.6",
+      "dependencies": ["markupsafe"],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/Jinja2/3.1.6/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.3",
+      "dependencies": [],
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidenceUrl": "https://pypi.org/project/MarkupSafe/3.0.3/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "rotary-embedding-torch",
+      "version": "0.9.1",
+      "dependencies": ["einops", "torch"],
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://pypi.org/project/rotary-embedding-torch/0.9.1/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    },
+    {
+      "name": "soxr",
+      "version": "1.1.0",
+      "dependencies": ["numpy"],
+      "license": {
+        "spdx": "LGPL-2.1-or-later",
+        "evidenceUrl": "https://pypi.org/project/soxr/1.1.0/",
+        "productUse": "accepted",
+        "reason": null
+      }
+    }
+  ],
+  "qwenResearch": [
+    {
+      "name": "accelerate",
+      "version": "1.12.0",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/accelerate/1.12.0/json"
+    },
+    {
+      "name": "audioread",
+      "version": "3.1.0",
+      "license": "MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/audioread/3.1.0/json"
+    },
+    {
+      "name": "av",
+      "version": "19.0.1",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/av/19.0.1/json"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.10.18",
+      "license": "Mozilla Public License 2.0 (MPL 2.0)",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/certifi/2026.10.18/json"
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1",
+      "license": "MIT-0",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/cffi/2.1.1/json"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "license": "MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/charset-normalizer/3.5.2/json"
+    },
+    {
+      "name": "cloudpickle",
+      "version": "3.1.2",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/cloudpickle/3.1.2/json"
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/colorama/0.4.6/json"
+    },
+    {
+      "name": "cython",
+      "version": "3.3.0",
+      "license": "Apache-2.0",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/cython/3.3.0/json"
+    },
+    {
+      "name": "decorator",
+      "version": "5.3.1",
+      "license": "BSD-2-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/decorator/5.3.1/json"
+    },
+    {
+      "name": "dynet38",
+      "version": "2.2",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/dynet38/2.2/json"
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.3",
+      "license": "MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/filelock/3.32.3/json"
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.7.0",
+      "license": "BSD-3-Clause（同版 Audio Python lock）",
+      "note": "PyPI 缺 license 欄位；依同版既有 lock，不代表 Qwen wheel 已比對"
+    },
+    {
+      "name": "huggingface-hub",
+      "version": "0.36.2",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/huggingface-hub/0.36.2/json"
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/idna/3.20/json"
+    },
+    {
+      "name": "jinja2",
+      "version": "3.1.6",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/jinja2/3.1.6/json"
+    },
+    {
+      "name": "joblib",
+      "version": "1.6.0",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/joblib/1.6.0/json"
+    },
+    {
+      "name": "lazy-loader",
+      "version": "0.6",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/lazy-loader/0.6/json"
+    },
+    {
+      "name": "librosa",
+      "version": "0.11.0",
+      "license": "ISC License (ISCL)",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/librosa/0.11.0/json"
+    },
+    {
+      "name": "llvmlite",
+      "version": "0.50.0",
+      "license": "BSD-2-Clause AND Apache-2.0 WITH LLVM-exception",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/llvmlite/0.50.0/json"
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.3",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/markupsafe/3.0.3/json"
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/mpmath/1.3.0/json"
+    },
+    {
+      "name": "msgpack",
+      "version": "1.2.3",
+      "license": "Apache-2.0",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/msgpack/1.2.3/json"
+    },
+    {
+      "name": "nagisa",
+      "version": "0.2.11",
+      "license": "MIT License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/nagisa/0.2.11/json"
+    },
+    {
+      "name": "narwhals",
+      "version": "2.27.1",
+      "license": "MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/narwhals/2.27.1/json"
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/networkx/3.6.1/json"
+    },
+    {
+      "name": "numba",
+      "version": "0.68.0",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/numba/0.68.0/json"
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.4",
+      "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/numpy/2.5.4/json"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "license": "Apache-2.0 OR BSD-2-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/packaging/26.3/json"
+    },
+    {
+      "name": "pillow",
+      "version": "13.0.0",
+      "license": "MIT-CMU",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/pillow/13.0.0/json"
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.13.4",
+      "license": "MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/platformdirs/4.13.4/json"
+    },
+    {
+      "name": "pooch",
+      "version": "1.9.0",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/pooch/1.9.0/json"
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/psutil/7.2.2/json"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.11",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/pycparser/3.11/json"
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3",
+      "license": "MIT License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/pyyaml/6.0.3/json"
+    },
+    {
+      "name": "qwen-omni-utils",
+      "version": "0.0.8",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/qwen-omni-utils/0.0.8/json"
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29",
+      "license": "Apache-2.0 AND CNRI-Python",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/regex/2026.9.29/json"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/requests/2.34.2/json"
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/safetensors/0.8.0/json"
+    },
+    {
+      "name": "scikit-learn",
+      "version": "1.9.1",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/scikit-learn/1.9.1/json"
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/scipy/1.18.1/json"
+    },
+    {
+      "name": "setuptools",
+      "version": "78.1.0",
+      "license": "MIT License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/setuptools/78.1.0/json"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "license": "MIT License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/six/1.17.0/json"
+    },
+    {
+      "name": "soundfile",
+      "version": "0.13.1",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/soundfile/0.13.1/json"
+    },
+    {
+      "name": "sox",
+      "version": "1.5.0",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/sox/1.5.0/json"
+    },
+    {
+      "name": "soxr",
+      "version": "1.1.0",
+      "license": "LGPL-2.1-or-later",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對；native／外部程式條件須另核",
+      "evidence": "https://pypi.org/pypi/soxr/1.1.0/json"
+    },
+    {
+      "name": "soynlp",
+      "version": "0.0.493",
+      "license": "GNU General Public License v3 (GPLv3)",
+      "note": "GPLv3：研究環境有此包；正式提供前需核對 Python worker 組合／散布義務或替代",
+      "evidence": "https://pypi.org/pypi/soynlp/0.0.493/json"
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "license": "BSD License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/sympy/1.14.0/json"
+    },
+    {
+      "name": "threadpoolctl",
+      "version": "3.7.0",
+      "license": "BSD-3-Clause",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/threadpoolctl/3.7.0/json"
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.2",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/tokenizers/0.22.2/json"
+    },
+    {
+      "name": "torch",
+      "version": "2.9.1+cpu",
+      "license": "BSD-3-Clause（upstream code）",
+      "note": "2.9.1+cpu 不在 PyPI 同名版；CPU wheel 及內嵌程式仍待逐項核對",
+      "evidence": "https://github.com/pytorch/pytorch/blob/v2.9.1/LICENSE"
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1",
+      "license": "MPL-2.0 AND MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/tqdm/4.70.1/json"
+    },
+    {
+      "name": "transformers",
+      "version": "4.57.6",
+      "license": "Apache Software License",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/transformers/4.57.6/json"
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "license": "PSF-2.0",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/typing-extensions/4.16.0/json"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "license": "MIT",
+      "note": "PyPI 固定版 metadata；exact wheel／native 附文未逐檔核對",
+      "evidence": "https://pypi.org/pypi/urllib3/2.8.0/json"
+    }
+  ],
+  "noticePackages": [
+    {
+      "name": "@babel/helper-string-parser",
+      "version": "7.29.7",
+      "path": "node_modules/@babel/helper-string-parser",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@babel/helper-string-parser/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "source": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.29.7",
+      "path": "node_modules/@babel/helper-validator-identifier",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@babel/helper-validator-identifier/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "source": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@babel/parser",
+      "version": "7.29.9",
+      "path": "node_modules/@babel/parser",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@babel/parser/LICENSE",
+          "sha256": "2e97627cb278aa7556fb9e8817368302301a595b6c7582512b8d74c57b773652",
+          "source": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.9.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@babel/types",
+      "version": "7.29.8",
+      "path": "node_modules/@babel/types",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@babel/types/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "source": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@borewit/text-codec",
+      "version": "0.2.2",
+      "path": "node_modules/@borewit/text-codec",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@borewit/text-codec/LICENSE.txt",
+          "sha256": "5b3af80f317313a8b8c227b0c8bffae67728cfec1786137b0553e625f2affec9",
+          "source": "https://registry.npmjs.org/@borewit/text-codec/-/text-codec-0.2.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@jridgewell/sourcemap-codec",
+      "version": "1.6.0",
+      "path": "node_modules/@jridgewell/sourcemap-codec",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@jridgewell/sourcemap-codec/LICENSE",
+          "sha256": "769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c",
+          "source": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@lucide/vue",
+      "version": "1.52.0",
+      "path": "node_modules/@lucide/vue",
+      "license": "ISC",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@lucide/vue/LICENSE",
+          "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
+          "source": "https://registry.npmjs.org/@lucide/vue/-/vue-1.52.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@msgpack/msgpack",
+      "version": "2.8.0",
+      "path": "node_modules/@msgpack/msgpack",
+      "license": "ISC",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@msgpack/msgpack/LICENSE",
+          "sha256": "d95a411bcdadac85d678a99367ff51719e53539fa5ee9994943cd760c4ae64e4",
+          "source": "https://registry.npmjs.org/@msgpack/msgpack/-/msgpack-2.8.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@napolab/texture-bridge",
+      "version": "0.15.0",
+      "path": "node_modules/@napolab/texture-bridge",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@napolab/texture-bridge/THIRD-PARTY-NOTICES",
+          "sha256": "691a25129a5bcd42d4911b89320fbac1243598c933ce7b726ae5346eb618ed0b",
+          "source": "https://registry.npmjs.org/@napolab/texture-bridge/-/texture-bridge-0.15.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@napolab/texture-bridge-core",
+      "version": "0.15.0",
+      "path": "node_modules/@napolab/texture-bridge-core",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@napolab/texture-bridge-core/LICENSE",
+          "sha256": "b944e306e242c5b3641b48a5877847ede2f3d945b8bb219703246827fada5968",
+          "source": "https://registry.npmjs.org/@napolab/texture-bridge-core/-/texture-bridge-core-0.15.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@napolab/texture-bridge-win32-x64-msvc",
+      "version": "0.15.0",
+      "path": "node_modules/@napolab/texture-bridge-win32-x64-msvc",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@napolab/texture-bridge-win32-x64-msvc/THIRD-PARTY-NOTICES",
+          "sha256": "691a25129a5bcd42d4911b89320fbac1243598c933ce7b726ae5346eb618ed0b",
+          "source": "https://registry.npmjs.org/@napolab/texture-bridge-win32-x64-msvc/-/texture-bridge-win32-x64-msvc-0.15.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@tokenizer/inflate",
+      "version": "0.4.1",
+      "path": "node_modules/@tokenizer/inflate",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@tokenizer/inflate/LICENSE",
+          "sha256": "5bb0e8b566dee0e946cafd9bbed359eb0494580df86457876b4f41bba5c77b25",
+          "source": "https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.4.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@tokenizer/token",
+      "version": "0.3.0",
+      "path": "node_modules/@tokenizer/token",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@tokenizer/token/README.md",
+          "sha256": "a88c936c259cc261d5b37a2433735e9819e01f824bdc26e644d46ccd3055c8d7",
+          "source": "https://registry.npmjs.org/@tokenizer/token/-/token-0.3.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/compiler-core",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/compiler-core",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-core/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "entities",
+      "version": "7.0.1",
+      "path": "node_modules/@vue/compiler-core/node_modules/entities",
+      "license": "BSD-2-Clause",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-core/node_modules/entities/LICENSE",
+          "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+          "source": "https://registry.npmjs.org/entities/-/entities-7.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "path": "node_modules/@vue/compiler-core/node_modules/estree-walker",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-core/node_modules/estree-walker/LICENSE",
+          "sha256": "8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e",
+          "source": "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/compiler-dom",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/compiler-dom",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-dom/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/compiler-sfc",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/compiler-sfc",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-sfc/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "path": "node_modules/@vue/compiler-sfc/node_modules/estree-walker",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-sfc/node_modules/estree-walker/LICENSE",
+          "sha256": "8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e",
+          "source": "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/compiler-ssr",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/compiler-ssr",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/compiler-ssr/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/reactivity",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/reactivity",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/reactivity/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/runtime-core",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/runtime-core",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/runtime-core/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/runtime-dom",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/runtime-dom",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/runtime-dom/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/server-renderer",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/server-renderer",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/server-renderer/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "@vue/shared",
+      "version": "3.5.43",
+      "path": "node_modules/@vue/shared",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/@vue/shared/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/@vue/shared/-/shared-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "adm-zip",
+      "version": "0.6.1",
+      "path": "node_modules/adm-zip",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/adm-zip/LICENSE",
+          "sha256": "6bb5b2d4c07d793ca928daa63a8899c6914fafb5ac3aa04ec10cae07f3d57dca",
+          "source": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.6.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "argparse",
+      "version": "2.0.1",
+      "path": "node_modules/argparse",
+      "license": "Python-2.0",
+      "noticeFiles": [
+        {
+          "path": "node_modules/argparse/LICENSE",
+          "sha256": "de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23",
+          "source": "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "builder-util-runtime",
+      "version": "9.7.0",
+      "path": "node_modules/builder-util-runtime",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/builder-util-runtime/LICENSE",
+          "sha256": "bed8d0ab3e6031817f775a641ff37313b0f5591bc8ba0ed79b978dafbd4231ce",
+          "source": "https://registry.npmjs.org/builder-util-runtime/-/builder-util-runtime-9.7.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "content-type",
+      "version": "3.1.1",
+      "path": "node_modules/content-type",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/content-type/LICENSE",
+          "sha256": "257aed98914108e91a337912727b6a802eef218248507f74b76faffaff517a38",
+          "source": "https://registry.npmjs.org/content-type/-/content-type-3.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "crypto-js",
+      "version": "4.2.0",
+      "path": "node_modules/crypto-js",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/crypto-js/LICENSE",
+          "sha256": "f729d14b7e1bf8adca0dcc38b93b929d14d53fcd5db56c3d1c9b2daa7aa69396",
+          "source": "https://registry.npmjs.org/crypto-js/-/crypto-js-4.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "csstype",
+      "version": "3.2.3",
+      "path": "node_modules/csstype",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/csstype/LICENSE",
+          "sha256": "11d55bd4541c75ee7879547ac49089c489163dae49551389713c3d026cab383e",
+          "source": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz"
+        }
+      ]
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "path": "node_modules/debug",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/debug/LICENSE",
+          "sha256": "3a61c6c96caf5c1d9b623fb9b04c822b783dfcb78aa7e49c76a3f643e6ed7f95",
+          "source": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz"
+        }
+      ]
+    },
+    {
+      "name": "define-data-property",
+      "version": "1.1.4",
+      "path": "node_modules/define-data-property",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/define-data-property/LICENSE",
+          "sha256": "b41d08bc3624d8c436fc80237d73ebb361985a67f4504bbcd703e5ca2b27254c",
+          "source": "https://registry.npmjs.org/define-data-property/-/define-data-property-1.1.4.tgz"
+        }
+      ]
+    },
+    {
+      "name": "define-properties",
+      "version": "1.2.1",
+      "path": "node_modules/define-properties",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/define-properties/LICENSE",
+          "sha256": "00d402c2bbe7c67369bd01ce2c16b8ed46ccc949a1ee2d6bb8f9606afa8c7434",
+          "source": "https://registry.npmjs.org/define-properties/-/define-properties-1.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "doublearray",
+      "version": "0.0.2",
+      "path": "node_modules/doublearray",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/doublearray/LICENSE.txt",
+          "sha256": "3f16fbaaaf98d1ba9ad570a1b79799d4932198324b382aa4cad1270fd09f02e3",
+          "source": "https://registry.npmjs.org/doublearray/-/doublearray-0.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "electron-updater",
+      "version": "6.8.9",
+      "path": "node_modules/electron-updater",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/electron-updater/LICENSE",
+          "sha256": "bed8d0ab3e6031817f775a641ff37313b0f5591bc8ba0ed79b978dafbd4231ce",
+          "source": "https://registry.npmjs.org/electron-updater/-/electron-updater-6.8.9.tgz"
+        }
+      ]
+    },
+    {
+      "name": "js-yaml",
+      "version": "4.3.2",
+      "path": "node_modules/electron-updater/node_modules/js-yaml",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/electron-updater/node_modules/js-yaml/LICENSE",
+          "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+          "source": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.3.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "semver",
+      "version": "7.7.4",
+      "path": "node_modules/electron-updater/node_modules/semver",
+      "license": "ISC",
+      "noticeFiles": [
+        {
+          "path": "node_modules/electron-updater/node_modules/semver/LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b",
+          "source": "https://registry.npmjs.org/semver/-/semver-7.7.4.tgz"
+        }
+      ]
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "path": "node_modules/es-define-property",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/es-define-property/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292",
+          "source": "https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0",
+      "path": "node_modules/es-errors",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/es-errors/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292",
+          "source": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "escape-string-regexp",
+      "version": "4.0.0",
+      "path": "node_modules/escape-string-regexp",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/escape-string-regexp/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "eventemitter3",
+      "version": "5.0.4",
+      "path": "node_modules/eventemitter3",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/eventemitter3/LICENSE",
+          "sha256": "3aecc12b1cb28832b5f65ab64291de96568c3f236a74d646281b4491f7bcadbf",
+          "source": "https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.4.tgz"
+        }
+      ]
+    },
+    {
+      "name": "file-type",
+      "version": "22.1.1",
+      "path": "node_modules/file-type",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/file-type/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/file-type/-/file-type-22.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "fs-extra",
+      "version": "10.1.0",
+      "path": "node_modules/fs-extra",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/fs-extra/LICENSE",
+          "sha256": "1e76029602ae9b21cc4e612db2496d92febed882ba13ba745f8b3309e85f9d39",
+          "source": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "global-agent",
+      "version": "4.1.3",
+      "path": "node_modules/global-agent",
+      "license": "BSD-3-Clause",
+      "noticeFiles": [
+        {
+          "path": "node_modules/global-agent/LICENSE",
+          "sha256": "2aabdab5d0ce03a7314def8222988c2da4ba593ae82ae312439e5e306001dbae",
+          "source": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.3.tgz"
+        }
+      ]
+    },
+    {
+      "name": "globalthis",
+      "version": "1.0.4",
+      "path": "node_modules/globalthis",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/globalthis/LICENSE",
+          "sha256": "acfaf437865d82f0fa9b9cdcae8b550bed8d011adaa5b42d973191caf99f62a8",
+          "source": "https://registry.npmjs.org/globalthis/-/globalthis-1.0.4.tgz"
+        }
+      ]
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0",
+      "path": "node_modules/gopd",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/gopd/LICENSE",
+          "sha256": "d90bf0a089da4cf43d644ed240a0b3825dcdb705e64e38371d56995a4cc9e4c5",
+          "source": "https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "graceful-fs",
+      "version": "4.2.11",
+      "path": "node_modules/graceful-fs",
+      "license": "ISC",
+      "noticeFiles": [
+        {
+          "path": "node_modules/graceful-fs/LICENSE",
+          "sha256": "f65c5d9f22a317b2a10803bd1868461ce6499c2ed7217bc80c0cc772a748789c",
+          "source": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz"
+        }
+      ]
+    },
+    {
+      "name": "gsap",
+      "version": "3.15.0",
+      "path": "node_modules/gsap",
+      "license": "GSAP Standard No Charge",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/gsap-standard-license.txt",
+          "sha256": "9860b8b06d9ed430a80e114567bd3fdcf1d77cd56194c5cf295d6b3ea4cf6707",
+          "source": "https://gsap.com/community/standard-license/"
+        }
+      ]
+    },
+    {
+      "name": "has-property-descriptors",
+      "version": "1.0.2",
+      "path": "node_modules/has-property-descriptors",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/has-property-descriptors/LICENSE",
+          "sha256": "0f0ca96f50793990031ebc488a38f7292ff70bce8ab6a8e5eeda674abc32ccdf",
+          "source": "https://registry.npmjs.org/has-property-descriptors/-/has-property-descriptors-1.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "ieee754",
+      "version": "1.2.1",
+      "path": "node_modules/ieee754",
+      "license": "BSD-3-Clause",
+      "noticeFiles": [
+        {
+          "path": "node_modules/ieee754/LICENSE",
+          "sha256": "18d45466ba3253deae04667e267a91ea8de8548f18c1125264d1c9db28194cc1",
+          "source": "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "isomorphic-ws",
+      "version": "5.0.0",
+      "path": "node_modules/isomorphic-ws",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/isomorphic-ws/LICENSE",
+          "sha256": "12a66fee27259312cf2101ac5a17f009da37dffdfcd051f821116a74ae9bf841",
+          "source": "https://registry.npmjs.org/isomorphic-ws/-/isomorphic-ws-5.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "js-yaml",
+      "version": "5.4.3",
+      "path": "node_modules/js-yaml",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/js-yaml/LICENSE",
+          "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+          "source": "https://registry.npmjs.org/js-yaml/-/js-yaml-5.4.3.tgz"
+        }
+      ]
+    },
+    {
+      "name": "jsonfile",
+      "version": "6.2.1",
+      "path": "node_modules/jsonfile",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/jsonfile/LICENSE",
+          "sha256": "a9801fb52ba22ef808682a094da8a7a480584b7ed0dfd0d888ab543616335031",
+          "source": "https://registry.npmjs.org/jsonfile/-/jsonfile-6.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "kissfft-js",
+      "version": "0.1.8",
+      "path": "node_modules/kissfft-js",
+      "license": "MIT AND BSD-3-Clause",
+      "noticeFiles": [
+        {
+          "path": "node_modules/kissfft-js/COPYING",
+          "sha256": "146ddc8ff7530a4a48b89050cfda5f6ef6c771a2f889d7472abe0f06e1f545c0",
+          "source": "https://registry.npmjs.org/kissfft-js/-/kissfft-js-0.1.8.tgz"
+        }
+      ]
+    },
+    {
+      "name": "koroman",
+      "version": "1.0.16",
+      "path": "node_modules/koroman",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/koroman-license.txt",
+          "sha256": "8e140c804d0226d197db528f1653ede195ab254935b4fa18bc81f1ea455614ca",
+          "source": "https://raw.githubusercontent.com/gerosyab/koroman/e529729b923f8a9d9acc62b2c9c0887b00e9bd88/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "kuromoji",
+      "version": "0.1.2",
+      "path": "node_modules/kuromoji",
+      "license": "Apache-2.0",
+      "noticeFiles": [
+        {
+          "path": "node_modules/kuromoji/LICENSE-2.0.txt",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "source": "https://registry.npmjs.org/kuromoji/-/kuromoji-0.1.2.tgz"
+        },
+        {
+          "path": "node_modules/kuromoji/NOTICE.md",
+          "sha256": "fab84e2471dada5afa7ea4226b629f3fda414f9b50b62b4f832f8b57fe9addd7",
+          "source": "https://registry.npmjs.org/kuromoji/-/kuromoji-0.1.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "async",
+      "version": "2.6.4",
+      "path": "node_modules/kuromoji/node_modules/async",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/kuromoji/node_modules/async/LICENSE",
+          "sha256": "d9fed24f132985934fca621c4dc1dfb53e03377a24d0568d424383d7eaa9c0ac",
+          "source": "https://registry.npmjs.org/async/-/async-2.6.4.tgz"
+        }
+      ]
+    },
+    {
+      "name": "lazy-val",
+      "version": "1.0.5",
+      "path": "node_modules/lazy-val",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/lazy-val-package.txt",
+          "sha256": "a5096f95098452cf6fe5c8ac9be8f13f59ab7c9f605ba5ef92c91b2c505744f0",
+          "source": "https://raw.githubusercontent.com/develar/lazy-val/b69ad4119f1b19bdab13c61ee2fcc88d46b89071/package.json"
+        },
+        {
+          "path": "third-party/upstream/lazy-val-mit.txt",
+          "sha256": "0f1ca09980799447d14722bb1c678b499bdc73e9a62c0c4ced5b61d3aa0b018c",
+          "source": "https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/MIT.txt"
+        }
+      ]
+    },
+    {
+      "name": "lodash",
+      "version": "4.18.1",
+      "path": "node_modules/lodash",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/lodash/LICENSE",
+          "sha256": "f71e8ed126b46346494aad5486874cd8f0aafe95092ed67d2e3cb6110f939abc",
+          "source": "https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "lodash.escaperegexp",
+      "version": "4.1.2",
+      "path": "node_modules/lodash.escaperegexp",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/lodash.escaperegexp/LICENSE",
+          "sha256": "ffd8b33b354585f4ce119f19c53728281e48a97b074491eb6bf6d5c5ff305272",
+          "source": "https://registry.npmjs.org/lodash.escaperegexp/-/lodash.escaperegexp-4.1.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "lodash.isequal",
+      "version": "4.5.0",
+      "path": "node_modules/lodash.isequal",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/lodash.isequal/LICENSE",
+          "sha256": "e159c6d48c989185448658f276375bfb2300362ec6d4ae5525a2d49c4bcb947d",
+          "source": "https://registry.npmjs.org/lodash.isequal/-/lodash.isequal-4.5.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "magic-string",
+      "version": "0.30.21",
+      "path": "node_modules/magic-string",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/magic-string/LICENSE",
+          "sha256": "1cbe51b907662f6cb1492b16c359384a595180bf0e4d101603ed525e75c4e484",
+          "source": "https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz"
+        }
+      ]
+    },
+    {
+      "name": "matcher",
+      "version": "4.0.0",
+      "path": "node_modules/matcher",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/matcher/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/matcher/-/matcher-4.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "media-typer",
+      "version": "2.0.0",
+      "path": "node_modules/media-typer",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/media-typer/LICENSE",
+          "sha256": "bd47ce7b88c7759630d1e2b9fcfa170a0f1fde522be09e13fb1581a79d090400",
+          "source": "https://registry.npmjs.org/media-typer/-/media-typer-2.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "path": "node_modules/ms",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/ms/license.md",
+          "sha256": "1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801",
+          "source": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz"
+        }
+      ]
+    },
+    {
+      "name": "music-metadata",
+      "version": "12.2.0",
+      "path": "node_modules/music-metadata",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/music-metadata/LICENSE.txt",
+          "sha256": "ab27d7574bc6d292302b0b49c2e1ad6f0d88031822dce486257c085c7d83133c",
+          "source": "https://registry.npmjs.org/music-metadata/-/music-metadata-12.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "nanoid",
+      "version": "3.3.20",
+      "path": "node_modules/nanoid",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/nanoid/LICENSE",
+          "sha256": "da4db1480d9beea3483a2eda5c53b22238d0827d57da162b48f122e04d2d9987",
+          "source": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.20.tgz"
+        }
+      ]
+    },
+    {
+      "name": "neverthrow",
+      "version": "8.2.0",
+      "path": "node_modules/neverthrow",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/neverthrow/LICENSE",
+          "sha256": "3f4f7f9d7c4a9965aeef4a9c95de38f73ecbab96bed68d320a224a74dfcaa973",
+          "source": "https://registry.npmjs.org/neverthrow/-/neverthrow-8.2.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "object-keys",
+      "version": "1.1.1",
+      "path": "node_modules/object-keys",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/object-keys/LICENSE",
+          "sha256": "5640e5cbe2e9f57f6ccfdd8dbfbeadb875495bdbcb69d2666ce3177ccd0942e4",
+          "source": "https://registry.npmjs.org/object-keys/-/object-keys-1.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "obs-websocket-js",
+      "version": "5.0.8",
+      "path": "node_modules/obs-websocket-js",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/obs-websocket-js/LICENSE.md",
+          "sha256": "16133688d687deaf097d26c17da876b2c4e08cce798219c95e2908b1eba34f8e",
+          "source": "https://registry.npmjs.org/obs-websocket-js/-/obs-websocket-js-5.0.8.tgz"
+        }
+      ]
+    },
+    {
+      "name": "onnxruntime-common",
+      "version": "1.30.0",
+      "path": "node_modules/onnxruntime-common",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/onnx-license.txt",
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "onnxruntime-node",
+      "version": "1.30.0",
+      "path": "node_modules/onnxruntime-node",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/onnx-license.txt",
+          "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+        },
+        {
+          "path": "third-party/upstream/onnx-notices.txt",
+          "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt"
+        }
+      ]
+    },
+    {
+      "name": "opencc-js",
+      "version": "1.4.2",
+      "path": "node_modules/opencc-js",
+      "license": "MIT AND Apache-2.0",
+      "noticeFiles": [
+        {
+          "path": "node_modules/opencc-js/LICENSE",
+          "sha256": "960f7fc16d8baa126802316a7df9078a383af4fb6bc60033adb28e85c08d5e5e",
+          "source": "https://registry.npmjs.org/opencc-js/-/opencc-js-1.4.2.tgz"
+        },
+        {
+          "path": "node_modules/opencc-js/THIRD_PARTY_LICENSES.md",
+          "sha256": "42c7dbe71c178fcca97ba945e9ac9ff360fb69bbfea4cb50556f6c65bfa59806",
+          "source": "https://registry.npmjs.org/opencc-js/-/opencc-js-1.4.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "picocolors",
+      "version": "1.1.1",
+      "path": "node_modules/picocolors",
+      "license": "ISC",
+      "noticeFiles": [
+        {
+          "path": "node_modules/picocolors/LICENSE",
+          "sha256": "6582629e2979466878f6014313dcc2f3756c9616148682227ce3063dde310750",
+          "source": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.29",
+      "path": "node_modules/postcss",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/postcss/LICENSE",
+          "sha256": "5be1f3465bba68a626777f984878814aaf35e7ef8e9fd314d469bcf887050fb8",
+          "source": "https://registry.npmjs.org/postcss/-/postcss-8.5.29.tgz"
+        }
+      ]
+    },
+    {
+      "name": "sax",
+      "version": "1.6.1",
+      "path": "node_modules/sax",
+      "license": "BlueOak-1.0.0",
+      "noticeFiles": [
+        {
+          "path": "node_modules/sax/LICENSE.md",
+          "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004",
+          "source": "https://registry.npmjs.org/sax/-/sax-1.6.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "path": "node_modules/semver",
+      "license": "ISC",
+      "noticeFiles": [
+        {
+          "path": "node_modules/semver/LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b",
+          "source": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz"
+        }
+      ]
+    },
+    {
+      "name": "serialize-error",
+      "version": "8.1.0",
+      "path": "node_modules/serialize-error",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/serialize-error/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/serialize-error/-/serialize-error-8.1.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "type-fest",
+      "version": "0.20.2",
+      "path": "node_modules/serialize-error/node_modules/type-fest",
+      "license": "(MIT OR CC0-1.0)；附文選 MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/serialize-error/node_modules/type-fest/license",
+          "sha256": "64a93ffc0a06a2266dbb57ed7ebe3b56ba66ab337b6347fabdbf86c76819fbae",
+          "source": "https://registry.npmjs.org/type-fest/-/type-fest-0.20.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "signalsmith-stretch",
+      "version": "1.3.2",
+      "path": "node_modules/signalsmith-stretch",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/signalsmith-license.txt",
+          "sha256": "ee2ef82481ffb445ecdd4b3a4c1f82c0cddb2da8fe39d8e8dc384fffb3e7f06f",
+          "source": "https://raw.githubusercontent.com/Signalsmith-Audio/signalsmith-stretch/222093b4cc13ddb4d07c826bc3c1559326091731/LICENSE.txt"
+        }
+      ]
+    },
+    {
+      "name": "source-map-js",
+      "version": "1.2.2",
+      "path": "node_modules/source-map-js",
+      "license": "BSD-3-Clause",
+      "noticeFiles": [
+        {
+          "path": "node_modules/source-map-js/LICENSE",
+          "sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd",
+          "source": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "strtok3",
+      "version": "10.4.1",
+      "path": "node_modules/strtok3",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/strtok3/LICENSE.txt",
+          "sha256": "c33959fabde25a1b6161d8e0fdc6fdcea1fc48095fe0bd51043247bfd214287f",
+          "source": "https://registry.npmjs.org/strtok3/-/strtok3-10.4.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "tiny-typed-emitter",
+      "version": "2.1.0",
+      "path": "node_modules/tiny-typed-emitter",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/tiny-typed-emitter/LICENSE",
+          "sha256": "4b3faf884ee71eec3df920b66c98fc6618af28e824cf3a32ef3d8774048cc76d",
+          "source": "https://registry.npmjs.org/tiny-typed-emitter/-/tiny-typed-emitter-2.1.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "token-types",
+      "version": "6.1.2",
+      "path": "node_modules/token-types",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/token-types/LICENSE.txt",
+          "sha256": "eb0bff8faaba4581e0f09c962e0f795f1f8810191c9d616f3f66f36be4b3a5dc",
+          "source": "https://registry.npmjs.org/token-types/-/token-types-6.1.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "type-fest",
+      "version": "3.13.1",
+      "path": "node_modules/type-fest",
+      "license": "(MIT OR CC0-1.0)；附文選 MIT",
+      "noticeFiles": [
+        {
+          "path": "third-party/upstream/type-fest-license.txt",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://raw.githubusercontent.com/sindresorhus/type-fest/v3.13.1/license-mit"
+        }
+      ]
+    },
+    {
+      "name": "uint8array-extras",
+      "version": "1.6.0",
+      "path": "node_modules/uint8array-extras",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/uint8array-extras/license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+          "source": "https://registry.npmjs.org/uint8array-extras/-/uint8array-extras-1.6.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "universalify",
+      "version": "2.0.1",
+      "path": "node_modules/universalify",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/universalify/LICENSE",
+          "sha256": "3fda5977c0904e226190b4e21d64340c1731e2142d6fe5f3dee0090a216b8b63",
+          "source": "https://registry.npmjs.org/universalify/-/universalify-2.0.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "vue",
+      "version": "3.5.43",
+      "path": "node_modules/vue",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/vue/LICENSE",
+          "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+          "source": "https://registry.npmjs.org/vue/-/vue-3.5.43.tgz"
+        }
+      ]
+    },
+    {
+      "name": "wanakana",
+      "version": "5.3.1",
+      "path": "node_modules/wanakana",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/wanakana/LICENSE",
+          "sha256": "a2b910e52e70524d13946b7936c1accbb8531461fafaaa21cc1eb5088a8b86df",
+          "source": "https://registry.npmjs.org/wanakana/-/wanakana-5.3.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "win-guid",
+      "version": "0.2.1",
+      "path": "node_modules/win-guid",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/win-guid/LICENSE.txt",
+          "sha256": "eb0bff8faaba4581e0f09c962e0f795f1f8810191c9d616f3f66f36be4b3a5dc",
+          "source": "https://registry.npmjs.org/win-guid/-/win-guid-0.2.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "ws",
+      "version": "8.22.0",
+      "path": "node_modules/ws",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/ws/LICENSE",
+          "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef",
+          "source": "https://registry.npmjs.org/ws/-/ws-8.22.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "zlibjs",
+      "version": "0.3.1",
+      "path": "node_modules/zlibjs",
+      "license": "MIT",
+      "noticeFiles": [
+        {
+          "path": "node_modules/zlibjs/LICENSE",
+          "sha256": "131afe3f7bdce1698beb292fb8de1a968de01bce876122a60ef5db230471c866",
+          "source": "https://registry.npmjs.org/zlibjs/-/zlibjs-0.3.1.tgz"
+        }
+      ]
+    }
+  ],
+  "additional": [
+    {
+      "id": "Microsoft DirectML",
+      "version": "1.15.4",
+      "owner": {
+        "path": "node_modules/onnxruntime-node",
+        "version": "1.30.0"
+      },
+      "note": "EULA and accompanying notices from the official NuGet 1.15.4 package. ONNX Runtime uses a differently signed build with the same PE payload; provenance is recorded in the repair report.",
+      "files": [
+        {
+          "path": "third-party/upstream/directml-LICENSE.txt.txt",
+          "sha256": "a05138e3a085ff60a44881eedfa58dccb03ecc1d7b1f6ae888418e8c2fec4b8d",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#LICENSE.txt"
+        },
+        {
+          "path": "third-party/upstream/directml-LICENSE-CODE.txt.txt",
+          "sha256": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#LICENSE-CODE.txt"
+        },
+        {
+          "path": "third-party/upstream/directml-ThirdPartyNotices.txt.txt",
+          "sha256": "2c95795c13ff48a58b6ed916f37901c23d964b5d9d601af422f17ad2172e7950",
+          "source": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg#ThirdPartyNotices.txt"
+        }
+      ],
+      "artifacts": [
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+          "sha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625"
+        },
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
+          "sha256": "508c362f5673483dd3a086379c392795b2e42d10d5e6f3f90ebd7ac21c97af67"
+        },
+        {
+          "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
+          "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
+          "sha256": "ddd428464069b84414d34ec1796c7c2a69c33a976e4b0390692629e394f92fa1"
+        }
+      ]
+    },
+    {
+      "id": "Signalsmith embedded runtime supplementary notices",
+      "version": "notice snapshots 2026-10-18",
+      "owner": {
+        "path": "node_modules/signalsmith-stretch",
+        "version": "1.3.2"
+      },
+      "note": "Signalsmith 1.3.2 published JS matches commit 222093b4cc13ddb4d07c826bc3c1559326091731. Its build uses Signalsmith Linear and Emscripten but does not pin their revisions/toolchain. These preserved supplemental upstream notices do not assert an independently verified compiler version or complete native provenance.",
+      "files": [
+        {
+          "path": "third-party/upstream/linear-license.txt",
+          "sha256": "072b5e9eb5b22880bdf6256324654cf3ce53dba828edb911921121e1be09d9c3",
+          "source": "https://raw.githubusercontent.com/Signalsmith-Audio/linear/146b26f91b48835d665fa0498d64d9617818d27a/LICENSE.txt"
+        },
+        {
+          "path": "third-party/upstream/emscripten-license.txt",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/LICENSE"
+        },
+        {
+          "path": "third-party/upstream/emscripten-authors.txt",
+          "sha256": "b865d6074c7f13366cad82990ba58bbe0a3f3eccf5fa47e50aa02693de4e895e",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/AUTHORS"
+        },
+        {
+          "path": "third-party/upstream/musl-copyright.txt",
+          "sha256": "b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/system/lib/libc/musl/COPYRIGHT"
+        },
+        {
+          "path": "third-party/upstream/libcxx-license.txt",
+          "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+          "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/5f63ff2e370da7e6fffd8f54379860bdd18118f9/system/lib/libcxx/LICENSE.TXT"
+        }
+      ]
+    }
+  ],
+  "inputHashes": {
+    "package-lock.json": "e33fa59e406680f17936740b181a2ebd19e4afde382b967edd67bf368bc84ca4",
+    "third-party/manifest.json": "5e5bc30fbe54c6ae8bbead47c82d9a5cdd47d6640f87056338e6edbb479463e5",
+    "shared/featureDependencies.json": "9d723c6abcb00b369d1e5e2fdb0fdbeca103da7e35d6f61c125215c26080d813",
+    "resources/audio-processing/analysis-beat-this-py314-lock.json": "ebb4817c330708ffa01910ace72316ded5e9075490825e423b186c55efa398a6"
+  },
+  "modelManifests": {
+    "separation": [
+      {
+        "id": "uvr-mdxnet-kara-2",
+        "featureId": "audio-processing-flow",
+        "kind": "model",
+        "platform": "win32",
+        "arch": "x64",
+        "modelId": "kara2",
+        "name": "人聲分離模型（快速）",
+        "version": "UVR_MDXNET_KARA_2",
+        "license": "MIT",
+        "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+        "sourceUrl": "https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models",
+        "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR_MDXNET_KARA_2.onnx",
+        "sha256": "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4",
+        "expectedSize": 52786726,
+        "fileRelativePath": "UVR_MDXNET_KARA_2.onnx"
+      },
+      {
+        "id": "uvr-mdxnet-inst-hq-4",
+        "featureId": "audio-processing-flow",
+        "kind": "model",
+        "platform": "win32",
+        "arch": "x64",
+        "modelId": "inst-hq4",
+        "name": "人聲分離模型（推薦）",
+        "version": "UVR-MDX-NET-Inst_HQ_4",
+        "license": "MIT",
+        "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+        "sourceUrl": "https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models",
+        "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_4.onnx",
+        "sha256": "3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8",
+        "expectedSize": 59074342,
+        "fileRelativePath": "UVR-MDX-NET-Inst_HQ_4.onnx",
+        "supersedes": ["uvr-mdxnet-inst-hq-3"]
+      },
+      {
+        "id": "uvr-mdxnet-inst-hq-3",
+        "featureId": "audio-processing-flow",
+        "kind": "model",
+        "platform": "win32",
+        "arch": "x64",
+        "modelId": "inst-hq3",
+        "name": "人聲分離模型（舊版）",
+        "version": "UVR-MDX-NET-Inst_HQ_3",
+        "license": "MIT",
+        "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+        "sourceUrl": "https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models",
+        "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_3.onnx",
+        "sha256": "317554b07fe1ea5279a77f2b1520a41ea4b93432560c4ffd08792c30fddf9adc",
+        "expectedSize": 66759214,
+        "fileRelativePath": "UVR-MDX-NET-Inst_HQ_3.onnx",
+        "deprecated": true
+      }
+    ],
+    "analysis": [
+      {
+        "schemaVersion": 1,
+        "manifestKind": "model",
+        "kind": "analysis",
+        "id": "beat-this-small0",
+        "version": "1.1.0-small0",
+        "architecture": "beat-this",
+        "wrapper": {
+          "package": "beat-this",
+          "version": "1.1.0",
+          "model": "small0"
+        },
+        "signals": ["tempo", "beats", "downbeats"],
+        "files": [
+          {
+            "role": "weights",
+            "filename": "small0.ckpt",
+            "url": "https://cloud.cp.jku.at/public.php/dav/files/7ik4RrBKTS273gp/small0.ckpt",
+            "sizeBytes": 8451101,
+            "sha256": "6074be2c4d490c5f6101fcc374a1ec72ae93456e23bb6019783b849f5dc7d47b",
+            "license": {
+              "spdx": "MIT",
+              "evidenceUrl": "https://github.com/CPJKU/beat_this/blob/v1.1.0/LICENSE",
+              "productUse": "accepted",
+              "reason": null
+            }
+          }
+        ],
+        "distribution": {
+          "status": "product-downloadable",
+          "reason": null
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "manifestKind": "model",
+        "kind": "analysis",
+        "id": "beat-this-final0",
+        "version": "1.1.0-final0",
+        "architecture": "beat-this",
+        "wrapper": {
+          "package": "beat-this",
+          "version": "1.1.0",
+          "model": "final0"
+        },
+        "signals": ["tempo", "beats", "downbeats"],
+        "files": [
+          {
+            "role": "weights",
+            "filename": "final0.ckpt",
+            "url": "https://cloud.cp.jku.at/public.php/dav/files/7ik4RrBKTS273gp/final0.ckpt",
+            "sizeBytes": 81058141,
+            "sha256": "8c328b45f59d8dd3dff219253ff6a8d6482be57d0133a29140e2febbf8eb8331",
+            "license": {
+              "spdx": "MIT",
+              "evidenceUrl": "https://github.com/CPJKU/beat_this/blob/v1.1.0/LICENSE",
+              "productUse": "accepted",
+              "reason": null
+            }
+          }
+        ],
+        "distribution": {
+          "status": "product-downloadable",
+          "reason": null
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "manifestKind": "model",
+        "kind": "analysis",
+        "id": "all-in-one-harmonix-fold0",
+        "version": "harmonix-fold0-htdemucs-v1",
+        "architecture": "all-in-one-with-htdemucs",
+        "wrapper": {
+          "package": "all-in-one-infer",
+          "version": "3.1.0",
+          "model": "harmonix-fold0"
+        },
+        "signals": ["tempo", "beats", "downbeats", "sections"],
+        "files": [
+          {
+            "role": "structure-checkpoint",
+            "filename": "harmonix-fold0-0vra4ys2.pth",
+            "url": "https://huggingface.co/taejunkim/allinone/resolve/main/harmonix-fold0-0vra4ys2.pth",
+            "sizeBytes": 1400571,
+            "sha256": "0db596dfb0995f41d62f6267d76a9d54c046f1649bd35e1dbeca0c5f9a7b8acd",
+            "license": {
+              "spdx": "CC-BY-NC-SA-4.0",
+              "evidenceUrl": "https://github.com/openmirlab/all-in-one-infer/blob/main/src/allin1_infer/config/checkpoints.toml",
+              "productUse": "blocked",
+              "reason": "The upstream checkpoint manifest restricts Harmonix weights to non-commercial use."
+            }
+          },
+          {
+            "role": "separation-checkpoint",
+            "filename": "955717e8-8726e21a.th",
+            "url": "https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th",
+            "sizeBytes": 84141911,
+            "sha256": "8726e21a993978c7ba086d3872e7608d7d5bfca646ca4aca459ffda844faa8b4",
+            "license": {
+              "spdx": null,
+              "evidenceUrl": null,
+              "productUse": "blocked",
+              "reason": "The reviewed provenance records the official source and digest but no standalone checkpoint product-use grant."
+            }
+          },
+          {
+            "role": "separation-config",
+            "filename": "htdemucs.yaml",
+            "url": "https://raw.githubusercontent.com/openmirlab/demucs-infer/v4.2.2/demucs_infer/remote/htdemucs.yaml",
+            "sizeBytes": 21,
+            "sha256": "239c445d0b14454d541ad8bd9bb271c9e536d267e8a4625208744cbb2e7bb66c",
+            "license": {
+              "spdx": "MIT",
+              "evidenceUrl": "https://github.com/openmirlab/demucs-infer/blob/v4.2.2/LICENSE",
+              "productUse": "accepted",
+              "reason": null
+            }
+          }
+        ],
+        "distribution": {
+          "status": "benchmark-only",
+          "reason": "The Harmonix weights are non-commercial and the HTDemucs checkpoint lacks a standalone reviewed product-use grant."
+        }
+      }
+    ],
+    "lyrics": {
+      "id": "hubertfa-zh-ja",
+      "productUse": "blocked",
+      "evidence": {
+        "source": "https://github.com/wolfgitpr/HubertFA/releases/tag/v0.0.7",
+        "weightsUse": "unresolved",
+        "weightsRedistribution": "unresolved"
+      }
+    },
+    "researchCandidates": {
+      "qwen": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "sourceRevision": "7c6daf77a2421100f5fb066495372c00129d39ff",
+        "runtime": "CPython 3.12.12 python-build-standalone 20260211",
+        "dtype": "float32",
+        "dependencies": [
+          "accelerate==1.12.0",
+          "audioread==3.1.0",
+          "av==19.0.1",
+          "certifi==2026.10.18",
+          "cffi==2.1.1",
+          "charset-normalizer==3.5.2",
+          "cloudpickle==3.1.2",
+          "colorama==0.4.6",
+          "cython==3.3.0",
+          "decorator==5.3.1",
+          "dynet38==2.2",
+          "filelock==3.32.3",
+          "fsspec==2026.7.0",
+          "huggingface-hub==0.36.2",
+          "idna==3.20",
+          "jinja2==3.1.6",
+          "joblib==1.6.0",
+          "lazy-loader==0.6",
+          "librosa==0.11.0",
+          "llvmlite==0.50.0",
+          "markupsafe==3.0.3",
+          "mpmath==1.3.0",
+          "msgpack==1.2.3",
+          "nagisa==0.2.11",
+          "narwhals==2.27.1",
+          "networkx==3.6.1",
+          "numba==0.68.0",
+          "numpy==2.5.4",
+          "packaging==26.3",
+          "pillow==13.0.0",
+          "platformdirs==4.13.4",
+          "pooch==1.9.0",
+          "psutil==7.2.2",
+          "pycparser==3.11",
+          "pyyaml==6.0.3",
+          "qwen-omni-utils==0.0.8",
+          "regex==2026.9.29",
+          "requests==2.34.2",
+          "safetensors==0.8.0",
+          "scikit-learn==1.9.1",
+          "scipy==1.18.1",
+          "setuptools==78.1.0",
+          "six==1.17.0",
+          "soundfile==0.13.1",
+          "sox==1.5.0",
+          "soxr==1.1.0",
+          "soynlp==0.0.493",
+          "sympy==1.14.0",
+          "threadpoolctl==3.7.0",
+          "tokenizers==0.22.2",
+          "torch==2.9.1+cpu",
+          "tqdm==4.70.1",
+          "transformers==4.57.6",
+          "typing-extensions==4.16.0",
+          "urllib3==2.8.0"
+        ]
+      },
+      "whisper": {
+        "release": {
+          "tag": "v1.9.2",
+          "target": "306c88f4d1286aec1bf96e544632897886af5501",
+          "publishedAt": "2026-08-04T15:31:37Z",
+          "binaryAssetId": 501504923
+        },
+        "modelsRevision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+        "modelKinds": ["base", "small"],
+        "profiles": [
+          "dtw-point control",
+          "token-start whole-window fallback",
+          "token-start valid-cuts replay"
+        ],
+        "inferencePythonRequired": false
+      }
+    }
+  }
+}

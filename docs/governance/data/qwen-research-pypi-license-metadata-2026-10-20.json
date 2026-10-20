@@ -1,0 +1,792 @@
+{
+  "checkedAt": "2026-10-20",
+  "scope": "PyPI exact-version metadata only; not wheel/binary license verification",
+  "results": [
+    {
+      "name": "accelerate",
+      "version": "1.12.0",
+      "source": "https://pypi.org/pypi/accelerate/1.12.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/huggingface/accelerate"
+      }
+    },
+    {
+      "name": "audioread",
+      "version": "3.1.0",
+      "source": "https://pypi.org/pypi/audioread/3.1.0/json",
+      "status": 200,
+      "licenseExpression": "MIT",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/beetbox/audioread/issues",
+        "Homepage": "https://github.com/beetbox/audioread",
+        "Repository": "https://github.com/beetbox/audioread"
+      }
+    },
+    {
+      "name": "av",
+      "version": "19.0.1",
+      "source": "https://pypi.org/pypi/av/19.0.1/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/PyAV-Org/PyAV/issues",
+        "Source Code": "https://github.com/PyAV-Org/PyAV",
+        "homepage": "https://pyav.basswood.io"
+      }
+    },
+    {
+      "name": "certifi",
+      "version": "2026.10.18",
+      "source": "https://pypi.org/pypi/certifi/2026.10.18/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "MPL-2.0",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/certifi/python-certifi",
+        "Source": "https://github.com/certifi/python-certifi"
+      }
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1",
+      "source": "https://pypi.org/pypi/cffi/2.1.1/json",
+      "status": 200,
+      "licenseExpression": "MIT-0",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://cffi.readthedocs.io/en/latest/whatsnew.html",
+        "Contact": "https://groups.google.com/forum/#!forum/python-cffi",
+        "Documentation": "https://cffi.readthedocs.io/",
+        "Download": "https://github.com/python-cffi/cffi/releases",
+        "Issue Tracker": "https://github.com/python-cffi/cffi/issues",
+        "Source Code": "https://github.com/python-cffi/cffi"
+      }
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "source": "https://pypi.org/pypi/charset-normalizer/3.5.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "MIT",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md",
+        "Code": "https://github.com/jawah/charset_normalizer",
+        "Documentation": "https://charset-normalizer.readthedocs.io/",
+        "Issue tracker": "https://github.com/jawah/charset_normalizer/issues"
+      }
+    },
+    {
+      "name": "cloudpickle",
+      "version": "3.1.2",
+      "source": "https://pypi.org/pypi/cloudpickle/3.1.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD-3-Clause",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Homepage": "https://github.com/cloudpipe/cloudpickle"
+      }
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "source": "https://pypi.org/pypi/colorama/0.4.6/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Homepage": "https://github.com/tartley/colorama"
+      }
+    },
+    {
+      "name": "cython",
+      "version": "3.3.0",
+      "source": "https://pypi.org/pypi/cython/3.3.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache-2.0",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/cython/cython/issues/",
+        "Documentation": "https://cython.readthedocs.io/",
+        "Donate": "https://cython.readthedocs.io/en/latest/src/donating.html",
+        "Homepage": "https://cython.org/",
+        "Source Code": "https://github.com/cython/cython",
+        "User Group": "https://groups.google.com/g/cython-users"
+      }
+    },
+    {
+      "name": "decorator",
+      "version": "5.3.1",
+      "source": "https://pypi.org/pypi/decorator/5.3.1/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD-2-Clause",
+      "licenseClassifiers": [],
+      "projectUrls": {}
+    },
+    {
+      "name": "dynet38",
+      "version": "2.2",
+      "source": "https://pypi.org/pypi/dynet38/2.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache 2.0",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/taishi-i/dynet"
+      }
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.3",
+      "source": "https://pypi.org/pypi/filelock/3.32.3/json",
+      "status": 200,
+      "licenseExpression": "MIT",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Documentation": "https://py-filelock.readthedocs.io",
+        "Homepage": "https://github.com/tox-dev/py-filelock",
+        "Source": "https://github.com/tox-dev/py-filelock",
+        "Tracker": "https://github.com/tox-dev/py-filelock/issues"
+      }
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.7.0",
+      "source": "https://pypi.org/pypi/fsspec/2026.7.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://filesystem-spec.readthedocs.io/en/latest/changelog.html",
+        "Documentation": "https://filesystem-spec.readthedocs.io/en/latest/",
+        "Homepage": "https://github.com/fsspec/filesystem_spec"
+      }
+    },
+    {
+      "name": "huggingface-hub",
+      "version": "0.36.2",
+      "source": "https://pypi.org/pypi/huggingface-hub/0.36.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/huggingface/huggingface_hub"
+      }
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "source": "https://pypi.org/pypi/idna/3.20/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://github.com/kjd/idna/blob/master/HISTORY.md",
+        "Issue tracker": "https://github.com/kjd/idna/issues",
+        "Source": "https://github.com/kjd/idna"
+      }
+    },
+    {
+      "name": "jinja2",
+      "version": "3.1.6",
+      "source": "https://pypi.org/pypi/jinja2/3.1.6/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Changes": "https://jinja.palletsprojects.com/changes/",
+        "Chat": "https://discord.gg/pallets",
+        "Documentation": "https://jinja.palletsprojects.com/",
+        "Donate": "https://palletsprojects.com/donate",
+        "Source": "https://github.com/pallets/jinja/"
+      }
+    },
+    {
+      "name": "joblib",
+      "version": "1.6.0",
+      "source": "https://pypi.org/pypi/joblib/1.6.0/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Homepage": "https://joblib.readthedocs.io",
+        "Source": "https://github.com/joblib/joblib"
+      }
+    },
+    {
+      "name": "lazy-loader",
+      "version": "0.6",
+      "source": "https://pypi.org/pypi/lazy-loader/0.6/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Home": "https://scientific-python.org/specs/spec-0001/",
+        "Source": "https://github.com/scientific-python/lazy-loader"
+      }
+    },
+    {
+      "name": "librosa",
+      "version": "0.11.0",
+      "source": "https://pypi.org/pypi/librosa/0.11.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "ISC",
+      "licenseClassifiers": ["License :: OSI Approved :: ISC License (ISCL)"],
+      "projectUrls": {
+        "Discussion forum": "https://groups.google.com/g/librosa",
+        "Documentation": "https://librosa.org/doc",
+        "Download": "https://github.com/librosa/librosa/releases",
+        "Homepage": "https://librosa.org",
+        "Source": "https://github.com/librosa/librosa",
+        "Tracker": "https://github.com/librosa/librosa/issues"
+      }
+    },
+    {
+      "name": "llvmlite",
+      "version": "0.50.0",
+      "source": "https://pypi.org/pypi/llvmlite/0.50.0/json",
+      "status": 200,
+      "licenseExpression": "BSD-2-Clause AND Apache-2.0 WITH LLVM-exception",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Homepage": "http://llvmlite.readthedocs.io",
+        "Source": "https://github.com/numba/llvmlite"
+      }
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.3",
+      "source": "https://pypi.org/pypi/markupsafe/3.0.3/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changes": "https://markupsafe.palletsprojects.com/page/changes/",
+        "Chat": "https://discord.gg/pallets",
+        "Documentation": "https://markupsafe.palletsprojects.com/",
+        "Donate": "https://palletsprojects.com/donate",
+        "Source": "https://github.com/pallets/markupsafe/"
+      }
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "source": "https://pypi.org/pypi/mpmath/1.3.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Documentation": "http://mpmath.org/doc/current/",
+        "Homepage": "http://mpmath.org/",
+        "Source": "https://github.com/fredrik-johansson/mpmath",
+        "Tracker": "https://github.com/fredrik-johansson/mpmath/issues"
+      }
+    },
+    {
+      "name": "msgpack",
+      "version": "1.2.3",
+      "source": "https://pypi.org/pypi/msgpack/1.2.3/json",
+      "status": 200,
+      "licenseExpression": "Apache-2.0",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://github.com/msgpack/msgpack-python/blob/main/CHANGELOG.md",
+        "Documentation": "https://msgpack-python.readthedocs.io/",
+        "Homepage": "https://msgpack.org/",
+        "Repository": "https://github.com/msgpack/msgpack-python/",
+        "Tracker": "https://github.com/msgpack/msgpack-python/issues"
+      }
+    },
+    {
+      "name": "nagisa",
+      "version": "0.2.11",
+      "source": "https://pypi.org/pypi/nagisa/0.2.11/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "MIT License",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Download": "https://github.com/taishi-i/nagisa/archive/0.2.11.tar.gz",
+        "Homepage": "https://github.com/taishi-i/nagisa"
+      }
+    },
+    {
+      "name": "narwhals",
+      "version": "2.27.1",
+      "source": "https://pypi.org/pypi/narwhals/2.27.1/json",
+      "status": 200,
+      "licenseExpression": "MIT",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/narwhals-dev/narwhals/issues",
+        "Documentation": "https://narwhals-dev.github.io/narwhals/",
+        "Homepage": "https://github.com/narwhals-dev/narwhals",
+        "Repository": "https://github.com/narwhals-dev/narwhals"
+      }
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "source": "https://pypi.org/pypi/networkx/3.6.1/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/networkx/networkx/issues",
+        "Documentation": "https://networkx.org/documentation/stable/",
+        "Homepage": "https://networkx.org/",
+        "Source Code": "https://github.com/networkx/networkx"
+      }
+    },
+    {
+      "name": "numba",
+      "version": "0.68.0",
+      "source": "https://pypi.org/pypi/numba/0.68.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Homepage": "https://numba.pydata.org"
+      }
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.4",
+      "source": "https://pypi.org/pypi/numpy/2.5.4/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "documentation": "https://numpy.org/doc/",
+        "download": "https://pypi.org/project/numpy/#files",
+        "homepage": "https://numpy.org",
+        "release notes": "https://numpy.org/doc/stable/release",
+        "source": "https://github.com/numpy/numpy",
+        "tracker": "https://github.com/numpy/numpy/issues"
+      }
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "source": "https://pypi.org/pypi/packaging/26.3/json",
+      "status": 200,
+      "licenseExpression": "Apache-2.0 OR BSD-2-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Documentation": "https://packaging.pypa.io/",
+        "Source": "https://github.com/pypa/packaging"
+      }
+    },
+    {
+      "name": "pillow",
+      "version": "13.0.0",
+      "source": "https://pypi.org/pypi/pillow/13.0.0/json",
+      "status": 200,
+      "licenseExpression": "MIT-CMU",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://github.com/python-pillow/Pillow/releases",
+        "Documentation": "https://pillow.readthedocs.io",
+        "Funding": "https://tidelift.com/lifter/search/pypi/pillow",
+        "Homepage": "https://python-pillow.org",
+        "Mastodon": "https://fosstodon.org/@pillow",
+        "Release notes": "https://pillow.readthedocs.io/en/stable/releasenotes/index.html",
+        "Security": "https://pillow.readthedocs.io/en/stable/handbook/security.html",
+        "Source": "https://github.com/python-pillow/Pillow"
+      }
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.13.4",
+      "source": "https://pypi.org/pypi/platformdirs/4.13.4/json",
+      "status": 200,
+      "licenseExpression": "MIT",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Changelog": "https://platformdirs.readthedocs.io/en/latest/changelog.html",
+        "Documentation": "https://platformdirs.readthedocs.io",
+        "Homepage": "https://github.com/tox-dev/platformdirs",
+        "Source": "https://github.com/tox-dev/platformdirs",
+        "Tracker": "https://github.com/tox-dev/platformdirs/issues"
+      }
+    },
+    {
+      "name": "pooch",
+      "version": "1.9.0",
+      "source": "https://pypi.org/pypi/pooch/1.9.0/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/fatiando/pooch/issues",
+        "Changelog": "https://www.fatiando.org/pooch/latest/changes.html",
+        "Documentation": "https://www.fatiando.org/pooch",
+        "Source Code": "https://github.com/fatiando/pooch"
+      }
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "source": "https://pypi.org/pypi/psutil/7.2.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD-3-Clause",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Homepage": "https://github.com/giampaolo/psutil"
+      }
+    },
+    {
+      "name": "pycparser",
+      "version": "3.11",
+      "source": "https://pypi.org/pypi/pycparser/3.11/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Homepage": "https://github.com/eliben/pycparser"
+      }
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3",
+      "source": "https://pypi.org/pypi/pyyaml/6.0.3/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "MIT",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/yaml/pyyaml/issues",
+        "CI": "https://github.com/yaml/pyyaml/actions",
+        "Documentation": "https://pyyaml.org/wiki/PyYAMLDocumentation",
+        "Download": "https://pypi.org/project/PyYAML/",
+        "Homepage": "https://pyyaml.org/",
+        "Mailing lists": "http://lists.sourceforge.net/lists/listinfo/yaml-core",
+        "Source Code": "https://github.com/yaml/pyyaml"
+      }
+    },
+    {
+      "name": "qwen-omni-utils",
+      "version": "0.0.8",
+      "source": "https://pypi.org/pypi/qwen-omni-utils/0.0.8/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache-2.0",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/QwenLM/Qwen2-VL/tree/main/qwen-vl-utils",
+        "Issues": "https://github.com/QwenLM/Qwen2-VL/issues",
+        "Repository": "https://github.com/QwenLM/Qwen2-VL.git"
+      }
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29",
+      "source": "https://pypi.org/pypi/regex/2026.9.29/json",
+      "status": 200,
+      "licenseExpression": "Apache-2.0 AND CNRI-Python",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Homepage": "https://github.com/mrabarnett/mrab-regex"
+      }
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "source": "https://pypi.org/pypi/requests/2.34.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache-2.0",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Documentation": "https://requests.readthedocs.io",
+        "Source": "https://github.com/psf/requests"
+      }
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "source": "https://pypi.org/pypi/safetensors/0.8.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/huggingface/safetensors",
+        "Source": "https://github.com/huggingface/safetensors"
+      }
+    },
+    {
+      "name": "scikit-learn",
+      "version": "1.9.1",
+      "source": "https://pypi.org/pypi/scikit-learn/1.9.1/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "download": "https://pypi.org/project/scikit-learn/#files",
+        "homepage": "https://scikit-learn.org",
+        "release notes": "https://scikit-learn.org/stable/whats_new",
+        "source": "https://github.com/scikit-learn/scikit-learn",
+        "tracker": "https://github.com/scikit-learn/scikit-learn/issues"
+      }
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "source": "https://pypi.org/pypi/scipy/1.18.1/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Copyright (c) 2001-2002 Enthought, Inc. 2003, SciPy Developers.\n         All rights reserved.\n         \n         Redistribution and use in source and binary forms, with or without\n         modification, are permitted provided that the following conditions\n         are met:\n         \n         1. Redistributions of source code must retain the above copyright\n            notice, this list of conditions and the following disclaimer.\n         \n         2. Redistributions in binary form must reproduce the above\n            copyright notice, this list of conditions and the following\n            discl",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "documentation": "https://docs.scipy.org/doc/scipy/",
+        "download": "https://github.com/scipy/scipy/releases",
+        "homepage": "https://scipy.org/",
+        "source": "https://github.com/scipy/scipy",
+        "tracker": "https://github.com/scipy/scipy/issues"
+      }
+    },
+    {
+      "name": "setuptools",
+      "version": "78.1.0",
+      "source": "https://pypi.org/pypi/setuptools/78.1.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Changelog": "https://setuptools.pypa.io/en/stable/history.html",
+        "Documentation": "https://setuptools.pypa.io/",
+        "Source": "https://github.com/pypa/setuptools"
+      }
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "source": "https://pypi.org/pypi/six/1.17.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "MIT",
+      "licenseClassifiers": ["License :: OSI Approved :: MIT License"],
+      "projectUrls": {
+        "Homepage": "https://github.com/benjaminp/six"
+      }
+    },
+    {
+      "name": "soundfile",
+      "version": "0.13.1",
+      "source": "https://pypi.org/pypi/soundfile/0.13.1/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD 3-Clause License",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Homepage": "https://github.com/bastibe/python-soundfile"
+      }
+    },
+    {
+      "name": "sox",
+      "version": "1.5.0",
+      "source": "https://pypi.org/pypi/sox/1.5.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD-3-Clause",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Download": "https://github.com/rabitt/pysox/releases",
+        "Homepage": "https://github.com/rabitt/pysox"
+      }
+    },
+    {
+      "name": "soxr",
+      "version": "1.1.0",
+      "source": "https://pypi.org/pypi/soxr/1.1.0/json",
+      "status": 200,
+      "licenseExpression": "LGPL-2.1-or-later",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/dofuuz/python-soxr/issues",
+        "Documentation": "https://python-soxr.readthedocs.io",
+        "Homepage": "https://github.com/dofuuz/python-soxr",
+        "Release Notes": "https://github.com/dofuuz/python-soxr/releases",
+        "Source": "https://github.com/dofuuz/python-soxr"
+      }
+    },
+    {
+      "name": "soynlp",
+      "version": "0.0.493",
+      "source": "https://pypi.org/pypi/soynlp/0.0.493/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/lovit/soynlp"
+      }
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "source": "https://pypi.org/pypi/sympy/1.14.0/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "BSD",
+      "licenseClassifiers": ["License :: OSI Approved :: BSD License"],
+      "projectUrls": {
+        "Homepage": "https://sympy.org",
+        "Source": "https://github.com/sympy/sympy"
+      }
+    },
+    {
+      "name": "threadpoolctl",
+      "version": "3.7.0",
+      "source": "https://pypi.org/pypi/threadpoolctl/3.7.0/json",
+      "status": 200,
+      "licenseExpression": "BSD-3-Clause",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "homepage": "https://github.com/joblib/threadpoolctl"
+      }
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.2",
+      "source": "https://pypi.org/pypi/tokenizers/0.22.2/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/huggingface/tokenizers",
+        "Source": "https://github.com/huggingface/tokenizers"
+      }
+    },
+    {
+      "name": "torch",
+      "version": "2.9.1+cpu",
+      "source": "https://pypi.org/pypi/torch/2.9.1%2Bcpu/json",
+      "status": 404
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1",
+      "source": "https://pypi.org/pypi/tqdm/4.70.1/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "MPL-2.0 AND MIT",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "changelog": "https://tqdm.github.io/releases",
+        "homepage": "https://tqdm.github.io",
+        "repository": "https://github.com/tqdm/tqdm",
+        "wiki": "https://github.com/tqdm/tqdm/wiki"
+      }
+    },
+    {
+      "name": "transformers",
+      "version": "4.57.6",
+      "source": "https://pypi.org/pypi/transformers/4.57.6/json",
+      "status": 200,
+      "licenseExpression": null,
+      "licenseTextPrefix": "Apache 2.0 License",
+      "licenseClassifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "projectUrls": {
+        "Homepage": "https://github.com/huggingface/transformers"
+      }
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "source": "https://pypi.org/pypi/typing-extensions/4.16.0/json",
+      "status": 200,
+      "licenseExpression": "PSF-2.0",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Bug Tracker": "https://github.com/python/typing_extensions/issues",
+        "Changes": "https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation": "https://typing-extensions.readthedocs.io/",
+        "Home": "https://github.com/python/typing_extensions",
+        "Q & A": "https://github.com/python/typing/discussions",
+        "Repository": "https://github.com/python/typing_extensions"
+      }
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "source": "https://pypi.org/pypi/urllib3/2.8.0/json",
+      "status": 200,
+      "licenseExpression": "MIT",
+      "licenseTextPrefix": "",
+      "licenseClassifiers": [],
+      "projectUrls": {
+        "Changelog": "https://github.com/urllib3/urllib3/blob/main/CHANGES.rst",
+        "Code": "https://github.com/urllib3/urllib3",
+        "Documentation": "https://urllib3.readthedocs.io",
+        "Issue tracker": "https://github.com/urllib3/urllib3/issues",
+        "Security policy": "https://urllib3.readthedocs.io/en/latest/security.html"
+      }
+    }
+  ]
+}
