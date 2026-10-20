@@ -48,8 +48,8 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
       path.join(rootDirectory, 'DESIGN.md'),
       'utf8',
     );
-    const architecture = fs.readFileSync(
-      path.join(rootDirectory, 'docs', 'architecture.md'),
+    const appearanceContract = fs.readFileSync(
+      path.join(rootDirectory, 'docs', 'contracts', 'output-appearance.md'),
       'utf8',
     );
     const releaseInventory = fs.readFileSync(
@@ -97,7 +97,7 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
     );
     expect(notices).toContain('GenEi Antique');
     expect(design).toContain('Utawakui GenEi Antique');
-    expect(architecture).toContain('GenEi Antique');
+    expect(appearanceContract).toContain('GenEi Antique');
     expect(releaseInventory).toContain(
       'shared/assets/fonts/GenEiAntiqueNv6-M.ttf',
     );
