@@ -7,6 +7,7 @@
 - [匯入session與批次互動](import-task-session.md)
 - [曲庫空間管理](library-storage-management.md)
 - [曲目編輯](track-editing.md)
+- [Folder 頁面物件](folder-page-objects.md)
 - [曲目試聽](track-preview.md)
 - [播放紀錄與啟動恢復](playback-history-and-resume.md)
 - [本地播放安排與場次進度](performance-session-preparation.md)
