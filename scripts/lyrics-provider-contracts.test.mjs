@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as yaml from 'js-yaml';
 import { createLrclibClient } from '../electron/lib/lrclib/client.js';
+import { createLrclibRequestScheduler } from '../electron/lib/lrclib/scheduler.js';
 import { createNeteaseClient } from '../electron/lib/netease/client.js';
 import { analyzeNeteaseLyrics } from '../electron/lib/netease/yrc.js';
 import {
@@ -261,30 +262,65 @@ describe('record and offline replay through production clients', () => {
     ).rejects.toThrow(/detail/);
   });
 
-  it('replays retries in sequence and reports unused or exhausted recordings', async () => {
+  it('replays an eligible 503 retry in sequence and reports unused or exhausted recordings', async () => {
     const live = vi
       .fn()
       .mockResolvedValueOnce(
-        new Response('{}', { status: 429, headers: { 'Retry-After': '0' } }),
+        new Response('{}', { status: 503, headers: { 'Retry-After': '1' } }),
       )
       .mockResolvedValueOnce(new Response(JSON.stringify(record())));
     const recorder = createContractRecorder('lrclib', live);
-    await createLrclibClient({ fetch: recorder.fetch, scheduler }).getExact(
-      query,
-    );
+    const run = async (fetch) => {
+      let time = 0;
+      const now = () => time;
+      const wait = vi.fn(async (delayMs) => {
+        time += delayMs;
+      });
+      const scheduler = createLrclibRequestScheduler({
+        intervalMs: 0,
+        now,
+        wait,
+      });
+      const result = await createLrclibClient({
+        fetch,
+        scheduler,
+        now,
+      }).getExact(query);
+      expect(wait).toHaveBeenCalledExactlyOnceWith(1000);
+      return result;
+    };
+    expect(await run(recorder.fetch)).toMatchObject({ status: 'ok' });
+    expect(live).toHaveBeenCalledTimes(2);
+    expect(recorder.snapshot().records).toHaveLength(2);
     const replay = createContractReplay(recorder.snapshot());
     expect(() => replay.assertConsumed()).toThrow(/unconsumed/);
-    expect(
-      (
-        await createLrclibClient({ fetch: replay.fetch, scheduler }).getExact(
-          query,
-        )
-      ).status,
-    ).toBe('ok');
+    expect(await run(replay.fetch)).toMatchObject({ status: 'ok' });
     replay.assertConsumed();
     await expect(
       replay.fetch(new URL('https://lrclib.net/api/get')),
     ).rejects.toThrow(/unrecorded/);
+  });
+
+  it('records and replays a rate limit without consuming a success response or retrying', async () => {
+    const live = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response('{}', { status: 429, headers: { 'Retry-After': '60' } }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(record())));
+    const recorder = createContractRecorder('lrclib', live);
+    const result = { status: 'error', reason: 'rate-limited' };
+    await expect(
+      createLrclibClient({ fetch: recorder.fetch, scheduler }).getExact(query),
+    ).resolves.toEqual(result);
+    expect(live).toHaveBeenCalledOnce();
+    expect(recorder.snapshot().records).toHaveLength(1);
+    const replay = createContractReplay(recorder.snapshot());
+    await expect(
+      createLrclibClient({ fetch: replay.fetch, scheduler }).getExact(query),
+    ).resolves.toEqual(result);
+    replay.assertConsumed();
+    expect(live).toHaveBeenCalledOnce();
   });
 
   it('detects a recorded provider schema drift through the real normalizer', async () => {

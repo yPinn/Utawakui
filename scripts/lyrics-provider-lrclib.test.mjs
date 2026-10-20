@@ -214,25 +214,59 @@ describe('LRCLIB evaluation probe', () => {
     });
   });
 
-  it('cancels a long Retry-After scheduler wait at the probe deadline', async () => {
-    const fetch = vi.fn().mockResolvedValue(
-      new Response('', {
-        status: 429,
-        headers: { 'Retry-After': '60' },
-      }),
+  it.each([
+    [429, 'rate-limited'],
+    [503, 'service-unavailable'],
+  ])(
+    'returns a long Retry-After HTTP %s without waiting or retrying',
+    async (status, failureCode) => {
+      const fetch = vi.fn().mockResolvedValue(
+        new Response('', {
+          status,
+          headers: { 'Retry-After': '60' },
+        }),
+      );
+      const scheduler = createLrclibRequestScheduler({ intervalMs: 0 });
+      const defer = vi.spyOn(scheduler, 'deferFor');
+      const probe = createLrclibEvaluationProbe({
+        fetch,
+        scheduler,
+        probeTimeoutMs: 20,
+      });
+
+      await expect(
+        probe({ providerId: 'lrclib', reference: reference() }),
+      ).resolves.toMatchObject({
+        request: { status: 'failed', failureCode },
+        catalogStatus: 'not-evaluated',
+      });
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(defer).not.toHaveBeenCalled();
+    },
+  );
+
+  it('cancels an eligible short 503 retry wait at the probe deadline', async () => {
+    const fetch = vi.fn().mockImplementation(
+      async () =>
+        new Response('', {
+          status: 503,
+          headers: { 'Retry-After': '1' },
+        }),
     );
+    const scheduler = createLrclibRequestScheduler({ intervalMs: 0 });
+    const defer = vi.spyOn(scheduler, 'deferFor');
     const probe = createLrclibEvaluationProbe({
       fetch,
-      scheduler: createLrclibRequestScheduler({ intervalMs: 0 }),
+      scheduler,
       probeTimeoutMs: 20,
     });
-
     await expect(
       probe({ providerId: 'lrclib', reference: reference() }),
     ).resolves.toMatchObject({
       request: { status: 'failed', failureCode: 'timeout' },
       catalogStatus: 'not-evaluated',
     });
+    expect(defer).toHaveBeenCalledExactlyOnceWith(1000);
     expect(fetch).toHaveBeenCalledOnce();
   });
 
