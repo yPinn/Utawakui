@@ -337,7 +337,7 @@ isolated historical probe and does not add it to this registry. On 2026-08-29 th
 owner separately approved an experimental product source that uses a bounded,
 fixed-origin direct HTTP client without that reverse package. The two profiles do
 not share runtime or eligibility claims. The historical probe remains defined by
-the [NetEase validation contract](netease-isolated-technical-validation.md); the
+the [NetEase validation contract](../archive/netease-isolated-technical-validation.md); the
 product source is defined by the
 [NetEase acquisition contract](lyrics-sources.md).
 

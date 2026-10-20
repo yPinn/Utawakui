@@ -188,7 +188,7 @@ Public Output 繼續只使用 `--ovl-*`。控制台 Output preview 可以保留�
 
 ## Component 與程式命名治理
 
-一般 repository 命名以 [Codebase Naming Contract](codebase-naming.md) 為準。本節只定義 Token v2 replacement 會碰到的 UI layer、domain vocabulary 與 rename gate。
+一般 repository 命名以 [Codebase Naming Contract](../contracts/codebase-naming.md) 為準。本節只定義 Token v2 replacement 會碰到的 UI layer、domain vocabulary 與 rename gate。
 
 ### Layer suffix
 

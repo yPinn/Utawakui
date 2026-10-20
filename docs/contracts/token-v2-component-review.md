@@ -17,7 +17,7 @@ Studio Library live Candidate 與 Setlist Current 比較頁均已移除。完整
 Current 對照層。已採用元件只呈現正式實作；未解決差距最多保留一個明確標示為
 尚未採用的提案標本。
 Production surface 替換、fail-closed scope、legacy ratchet 與 final deletion 的完成紀錄
-由 [Token v2 完整替換契約](token-v2-replacement.md) 管理；本文件不再作 migration
+由 [Token v2 完整替換契約](../archive/token-v2-replacement.md) 管理；本文件不再作 migration
 status source，也不建立 compatibility fallback。
 
 ## 核准順序

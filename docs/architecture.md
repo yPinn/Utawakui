@@ -37,7 +37,7 @@
 - `useAppView.js` 單獨擁有目的地狀態。Library／Performance／Display／Settings 進入 `AppFolderLayout`＋`AppFolderPage`；`LibraryPage`、`PerformancePage`、`DisplayPage`、`SettingsPage` 是各目的地的組合 owner。
 - 導覽歷史由 `useNavigationHistory.js` 擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：只記目的地、Library 選取與 Settings 返回來源，不記播放、佇列、搜尋或排序。滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command` 經 `inputBindingRegistry.js`／`useNavigationInput.js` 共用同一出口。
 - `openSettings()` 首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings 目的地；Titlebar、F9、Tray 與依賴設定請求共用此 action。
-- Token：Main 與 Performer 的 `#app` 在 mount 前登記為 v2 surface，兩個 entry 只載入 `src/styles/tokens.css`。Token v1 已全部移除，source gate 禁止回流（[Token v2 替換](contracts/token-v2-replacement.md)）。`overlay/` 只用 `--ovl-*`，兩者互不匯入。
+- Token：Main 與 Performer 的 `#app` 在 mount 前登記為 v2 surface，兩個 entry 只載入 `src/styles/tokens.css`。Token v1 已全部移除，source gate 禁止回流（[Token v2 替換](archive/token-v2-replacement.md)）。`overlay/` 只用 `--ovl-*`，兩者互不匯入。
 - Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 以 `constants/internalTools.js` 分為 Operations（F5 音樂分析、F6 Diagnostics）與 Evaluation（Music M2、F7 歌詞 provider 語料），一次只掛載一個工作台，不改變 gate 或 IPC 邊界。
 
 ### 曲庫瀏覽

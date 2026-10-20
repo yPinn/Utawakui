@@ -14,7 +14,7 @@
 
 本輪英文共 9 案、10 個出現位置；兩個刪詞構造僅一個警告。混語曲庫掃描 278 首／285 來源／14,160 行，有 59 句文字候選，其中僅 1 句具有可用原生 T2 邊界、54 句缺時間、4 句切換過快。這些分母不等於一般準確率。
 
-操作及聽查集中於[本機研究試用手冊](lyrics-alignment-research.md)。證據與限制見[英文實測](../research/lyrics-alignment/lyrics-english-validation-2026-10-20.md)、[混語第一階段](../research/lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)、[GPU 評估](../research/audio/processing-gpu-shared-preference-2026-10-21.md)；歷史報告保留當時結果，不改寫成新一輪通過。
+操作及聽查集中於[本機研究試用手冊](../operations/lyrics-alignment-research.md)。證據與限制見[英文實測](../research/lyrics-alignment/lyrics-english-validation-2026-10-20.md)、[混語第一階段](../research/lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)、[GPU 評估](../research/audio/processing-gpu-shared-preference-2026-10-21.md)；歷史報告保留當時結果，不改寫成新一輪通過。
 
 ## 提交與驗證
 

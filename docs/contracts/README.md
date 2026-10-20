@@ -21,7 +21,6 @@
 - [Provider驗證語料](lyrics-provider-evaluation-corpus.md)
 - [外部服務限流與重試](external-service-request-policy.md)
 - [歌詞來源：搜尋、自動取得與各來源](lyrics-sources.md)
-- [NetEase歷史隔離驗證](netease-isolated-technical-validation.md)
 - [Self-View提詞與窄域控制](performer-prompter-contract.md)
 
 ## 音樂分析與識別
@@ -43,5 +42,4 @@
 - [輸入綁定](input-bindings.md)
 - [Settings操作回饋](settings-operation-feedback.md)
 - [Token v2元件檢查](token-v2-component-review.md)
-- [Token v2替換驗收](token-v2-replacement.md)
 - [程式命名](codebase-naming.md)
