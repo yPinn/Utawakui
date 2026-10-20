@@ -3,7 +3,7 @@
 const { MBID_RE } = require('./identifiers');
 const { hasControlCharacters } = require('../textGuards');
 const { PROJECT_URL, appUserAgent } = require('../userAgent.js');
-const { readBoundedText } = require('../lrclib/client.js');
+const { parseRetryAfterMs, readBoundedText } = require('../lrclib/client.js');
 const {
   createProviderRequestScheduler,
 } = require('../providerRequestScheduler.js');
@@ -17,11 +17,50 @@ const DEFAULT_SEARCH_LIMIT = 8;
 const MAX_PROVIDER_RECORDS = 25;
 const MAX_QUERY_CHARS = 200;
 const MAX_CACHE_ENTRIES = 64;
+const MAX_AUTOMATIC_RETRY_DELAY_MS = 5_000;
+const MAX_FAILURE_BACKOFF_MS = 5 * 60 * 1000;
 const LUCENE_SPECIAL_RE = /([+\-&|!(){}[\]^"~*?:\\/])/gu;
 
 const sharedMusicBrainzScheduler = createProviderRequestScheduler({
   intervalMs: DEFAULT_REQUEST_INTERVAL_MS,
 });
+// Share service health across artist/artwork clients using the same scheduler.
+const trafficStates = new WeakMap();
+
+function trafficStateFor(scheduler) {
+  if (!trafficStates.has(scheduler)) {
+    trafficStates.set(scheduler, {
+      blockedUntil: 0,
+      failures: 0,
+      httpStatus: null,
+    });
+  }
+  return trafficStates.get(scheduler);
+}
+
+function serviceFailure(httpStatus) {
+  return {
+    status: 'error',
+    reason: httpStatus === 429 ? 'rate-limited' : 'service-unavailable',
+    httpStatus,
+  };
+}
+
+function failureDelay(response, currentTime, failures) {
+  const retryAfterMs = parseRetryAfterMs(
+    response.headers.get('retry-after'),
+    currentTime,
+  );
+  if (
+    retryAfterMs !== null &&
+    retryAfterMs > 0 &&
+    Number.isSafeInteger(Math.ceil(currentTime + retryAfterMs))
+  ) {
+    return Math.max(DEFAULT_REQUEST_INTERVAL_MS, retryAfterMs);
+  }
+  const initialDelay = response.status === 429 ? 30_000 : 5_000;
+  return Math.min(MAX_FAILURE_BACKOFF_MS, initialDelay * 2 ** (failures - 1));
+}
 
 function buildMusicBrainzUserAgent() {
   return appUserAgent(PROJECT_URL);
@@ -288,6 +327,7 @@ function createMusicBrainzClient(options = {}) {
     ? options.fetch
     : globalThis.fetch;
   const scheduler = options.scheduler || sharedMusicBrainzScheduler;
+  const traffic = trafficStateFor(scheduler);
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
@@ -327,18 +367,26 @@ function createMusicBrainzClient(options = {}) {
     const cacheKey = url.href;
     const hit = cached(cacheKey);
     if (hit) return hit;
+    if (traffic.blockedUntil > now()) {
+      return serviceFailure(traffic.httpStatus);
+    }
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let response;
       let signal;
+      let retryAllowed = false;
       try {
-        response = await scheduler.schedule(
-          () => {
+        const scheduled = await scheduler.schedule(
+          async () => {
+            // Requests queued before a failure must also observe its cooldown.
+            if (traffic.blockedUntil > now()) {
+              return { failure: serviceFailure(traffic.httpStatus) };
+            }
             const timeoutSignal = AbortSignal.timeout(timeoutMs);
             signal = requestOptions.signal
               ? AbortSignal.any([requestOptions.signal, timeoutSignal])
               : timeoutSignal;
-            return fetchFn(url, {
+            const fetched = await fetchFn(url, {
               method: 'GET',
               redirect: 'error',
               headers: {
@@ -347,16 +395,40 @@ function createMusicBrainzClient(options = {}) {
               },
               signal,
             });
+            if (fetched.status === 429 || fetched.status === 503) {
+              const currentTime = now();
+              traffic.failures = Math.min(traffic.failures + 1, 7);
+              const delayMs = failureDelay(
+                fetched,
+                currentTime,
+                traffic.failures,
+              );
+              traffic.blockedUntil = currentTime + delayMs;
+              traffic.httpStatus = fetched.status;
+              retryAllowed =
+                fetched.status === 503 &&
+                attempt === 0 &&
+                delayMs <= MAX_AUTOMATIC_RETRY_DELAY_MS;
+              // Record deferral before releasing the queue; never wait a long
+              // Retry-After in the UI. New calls fail fast while cooling down.
+              if (retryAllowed) scheduler.deferFor(delayMs);
+            } else if (fetched.ok) {
+              traffic.failures = 0;
+              traffic.blockedUntil = 0;
+              traffic.httpStatus = null;
+            }
+            return { response: fetched };
           },
           { signal: requestOptions.signal },
         );
+        if (scheduled.failure) return scheduled.failure;
+        response = scheduled.response;
       } catch (error) {
         return classifyTransportFailure(error);
       }
 
-      if (response.status === 503 && attempt === 0) {
+      if (retryAllowed) {
         await response.body?.cancel().catch(() => undefined);
-        scheduler.deferFor(DEFAULT_REQUEST_INTERVAL_MS);
         continue;
       }
       if (!response.ok) {
