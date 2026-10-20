@@ -1005,12 +1005,29 @@ Browser Source 只能讀取 canonical snapshot 與 allowlisted media，路由涵
 的 track id 經 `/media/artwork/` 解析縮圖；snapshot 不包含 `utawakui-media:` URL、
 absolute path 或 provider payload。Public WebSocket 不接受 playback commands。
 
+三個 Browser Source boot adapter 共用 `overlay/shared/lifecycle.mjs`：host 擁有
+pagehide／visibility、native reduced-motion 與 FontFaceSet readiness 訂閱，inactive
+期間只保留最新 snapshot。恢復時先由原 scheduler／controller 靜態收斂，再恢復後續動態；
+不重播舊換曲，也不改正常藝術配方。`runtime.mjs` 繼續持有 socket、重連與 identity／revision
+權威，停止時清理 socket listeners、延遲快照／重連 timer 與 trace rAF，忽略舊 socket
+及已取消的排隊 callback。字型通知不載入新資產、不阻擋首幀；詳見
+[host 生命週期契約](contracts/output-host-lifecycle.md)。
+
 App-owned Overlay choreography 透過 exact allowlist 提供的 GSAP browser asset 執行；
 GSAP recipe 持有可中斷的 playhead、sequencing、reduced-motion 與 lifecycle cleanup，
 但只消費 canonical projection，不建立第二份播放狀態。CSS 仍持有 layout、material、
 transform origin、靜態 state 與簡單且非歌曲同步的 transition；兩個引擎不得同時持有
 同一 animated property。控制面板的 Gallery mockup 可使用輕量 CSS preview，真實
 Workbench iframe 則沿用 Browser Source runtime。
+
+`shared/presentation/outputPreviewScene.mjs` 是小型合成示例及固定 clock 的共用來源；
+Gallery 的 immutable scene facade 與 Overlay 的明確 preview fallback 直接使用 canonical
+selectors 與既有設定 normalization。Workbench 仍使用真實 projection，不把示例發布進
+正式 Hub；空資料不自動變成示範。舊 renderer sample JSON 與三個 route 的自寫 frame 已移除。
+Gallery 靜態圖片仍是參考資產，縮略動畫保留原藝術 recipe 並標出省略範圍，不能代替正式
+timing／分頁／資產驗收；詳見[預覽一致性契約](contracts/output-preview-consistency.md)。
+
+開發用 `scripts/output-appearance-audit.mjs` 以隔離 Electron profile、F1／F3 合成資料及正式 Output server 產生分層證據，不進 shipping runtime，也不增加 HTTP／IPC 入口。F5 的 scripts/output-performance-probe.mjs 沿用同一隔離邊界，凍結實際 Output 靜態依賴並記錄合成 workload 的程序資源；不等同真實 App／OBS 負載。重跑與限制集中在[驗收 runbook](operations/output-appearance-acceptance.md#f4-隔離-capture-重跑)。
 
 `electron/lib/outputServer.js` 保留 public service API、WebSocket lifecycle 與 projection
 delivery ownership；`electron/lib/outputServer/http.js` 是獨立的唯讀 HTTP delivery plane，

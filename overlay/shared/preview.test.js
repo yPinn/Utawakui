@@ -6,9 +6,49 @@ import {
   isPreviewMode,
   isWorkbenchMode,
   withPreviewFallback,
+  previewSceneForSlot,
 } from './preview.mjs';
+import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
+import registry from '../../shared/outputTemplateValues.json';
 
 describe('overlay preview fallback', () => {
+  it('uses each slot default and keeps an unmarked or unavailable document unchanged', () => {
+    for (const [kind, templateId] of [
+      ['lyrics', 'karaoke-stack'],
+      ['setlist', 'queue-board'],
+      ['now-playing', 'art-card'],
+    ]) {
+      expect(previewSceneForSlot(kind).templateId).toBe(templateId);
+    }
+    const document = { documentElement: { dataset: {} } };
+    applyPreviewCanvas(document);
+    expect(document.documentElement.dataset).toEqual({});
+    expect(() => applyPreviewCanvas(null)).not.toThrow();
+    expect(inspectionBackdrop()).toBe('');
+    expect(inspectionGuideVisible()).toBe(true);
+    expect(isPreviewMode()).toBe(false);
+    expect(isWorkbenchMode()).toBe(false);
+  });
+  it.each(Object.entries(registry.templateKinds))(
+    '%s shares the Gallery scene and template settings',
+    (templateId, kind) => {
+      const slot = {
+        templateId,
+        settings: { fontScale: 'large', lookAmount: 70 },
+      };
+      expect(previewSceneForSlot(kind, slot)).toEqual(
+        createOutputPreviewScene({ kind, templateId, settings: slot.settings }),
+      );
+      const empty = { visible: false, revision: 9 };
+      expect(
+        withPreviewFallback(
+          empty,
+          previewSceneForSlot(kind, slot).frame,
+          false,
+        ),
+      ).toBe(empty);
+    },
+  );
   it('recognizes only the explicit preview query', () => {
     expect(isPreviewMode({ search: '?preview=1' })).toBe(true);
     expect(isPreviewMode({ search: '?preview=0' })).toBe(false);

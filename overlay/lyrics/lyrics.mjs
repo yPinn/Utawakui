@@ -1,4 +1,4 @@
-import { createOverlayConnection } from '../shared/runtime.mjs';
+import { createOverlayHost } from '../shared/lifecycle.mjs';
 import {
   applyOverlayAppearance,
   normalizeOverlayAppearance,
@@ -8,6 +8,7 @@ import {
   isPreviewMode,
   isWorkbenchMode,
   withPreviewFallback,
+  previewSceneForSlot,
 } from '../shared/preview.mjs';
 import {
   nextPresentationBoundaryDelayMs,
@@ -21,10 +22,6 @@ import {
   createLyricsPresentationDocumentCache,
 } from '../shared/lyricsPresentation.mjs';
 import { normalizeLyricsPresentationPolicyId } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
-import {
-  adaptOrnateVerticalLyricsPresentation,
-  createOrnateVerticalDocumentContext,
-} from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import {
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
@@ -49,34 +46,6 @@ import {
   stopOrnateVerticalTransition,
 } from './ornateVertical.mjs';
 
-const PREVIEW_ORNATE_LINES = Object.freeze([
-  '夜が明けるまで言葉を残していく',
-  '言葉だけが残る',
-]);
-const PREVIEW_ORNATE_VERTICAL = Object.freeze(
-  adaptOrnateVerticalLyricsPresentation(PREVIEW_ORNATE_LINES[0], {
-    documentContext: createOrnateVerticalDocumentContext(PREVIEW_ORNATE_LINES),
-    lineIndex: 0,
-  }),
-);
-const PREVIEW_FRAME = Object.freeze({
-  revision: 0,
-  visible: true,
-  currentText: '一つずつ こぼした音が',
-  nextText: '重なって歌になる',
-  language: 'ja',
-  lineIndex: 0,
-  currentVisibleLineIndex: 0,
-  nextVisibleLineIndex: 1,
-  ornateVertical: PREVIEW_ORNATE_VERTICAL,
-  liveStage: {
-    active: true,
-    cardVisible: true,
-    trackId: 'preview-track',
-    title: '如果可以',
-    artist: '韋禮安',
-  },
-});
 const MIN_PRESENTATION_CONFIDENCE = 0.5;
 const PRESENTATION_SECTION_ROLES = new Set([
   'intro',
@@ -1745,19 +1714,11 @@ function boot() {
   if (!elements.root || !elements.current || !elements.next) return;
 
   const gsap = globalThis.gsap ?? null;
-  let reducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches;
+  let reducedMotion = false;
+  let settling = false;
   let frameScheduler = null;
-  const motionMedia = gsap?.matchMedia?.() ?? null;
-  motionMedia?.add(
-    { reducedMotion: '(prefers-reduced-motion: reduce)' },
-    (context) => {
-      reducedMotion = context.conditions?.reducedMotion === true;
-      frameScheduler?.refresh();
-    },
-  );
   const previewMode = isPreviewMode(window.location);
+  let previewScene = previewSceneForSlot('lyrics');
   const workbenchMode = isWorkbenchMode(window.location);
   const trace = createLyricsDiagnostics({ location: window.location });
   const reportError = createLyricsErrorReporter({ location: window.location });
@@ -1768,7 +1729,7 @@ function boot() {
     location: window.location,
   });
   if (previewMode) {
-    renderLyricsFrameSafely(elements, PREVIEW_FRAME, {
+    renderLyricsFrameSafely(elements, previewScene.frame, {
       templateId: 'karaoke-stack',
       gsap,
       reportError,
@@ -1781,20 +1742,33 @@ function boot() {
     onFrame: (frame) => {
       const visibleFrame = withPreviewFallback(
         frame,
-        PREVIEW_FRAME,
+        previewScene.frame,
         previewMode,
       );
       renderLyricsFrameSafely(elements, visibleFrame, {
         gsap,
         reportError,
-        reducedMotion,
+        reducedMotion: reducedMotion || settling,
         trace,
       });
     },
   });
-  const connection = createOverlayConnection({
+  const host = createOverlayHost({
     kind: 'lyrics',
+    previewMode,
+    onReducedMotion: (value) => {
+      reducedMotion = value;
+      frameScheduler.refresh();
+    },
+    onFontsChanged: () => frameScheduler.refresh(),
+    onActivity: (active) => {
+      if (!active) {
+        frameScheduler.suspend();
+        destroyLyricsAnimations(elements, { gsap });
+      }
+    },
     onConfig: (slot) => {
+      previewScene = previewSceneForSlot('lyrics', slot);
       applyOverlayAppearance(document, slot);
       frameScheduler.setPresentationSettings({
         kineticMaterial: normalizeOverlayAppearance(slot?.settings)
@@ -1803,22 +1777,20 @@ function boot() {
         templateId: slot?.templateId ?? 'karaoke-stack',
       });
     },
-    onSnapshot: (snapshot) => frameScheduler.update(snapshot),
-    onStatus: (status) => {
-      if (status !== 'connected') frameScheduler.suspend();
+    onSnapshot: (snapshot, { recovering }) => {
+      settling = recovering;
+      try {
+        frameScheduler.update(snapshot);
+      } finally {
+        settling = false;
+      }
     },
-  });
-  connection.start();
-  window.addEventListener(
-    'pagehide',
-    () => {
+    onDispose: () => {
       frameScheduler.stop();
       destroyLyricsAnimations(elements, { gsap });
-      motionMedia?.revert();
-      connection.stop();
     },
-    { once: true },
-  );
+  });
+  host.start();
 }
 
 if (typeof document !== 'undefined') boot();

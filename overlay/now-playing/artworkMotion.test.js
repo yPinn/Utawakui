@@ -1,6 +1,41 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createArtworkMotionController } from './artworkMotion.mjs';
 
+describe('F2 artwork recovery', () => {
+  it('settles latest content and kills old transitions without replaying their timeline', () => {
+    const { gsap, timelines } = gsapHarness();
+    const commitFrame = vi.fn();
+    const controller = createArtworkMotionController({
+      ...scene(),
+      gsap,
+      commitFrame,
+    });
+    const initial = {
+      visible: true,
+      trackId: 'a',
+      title: 'A',
+      playbackStatus: 'playing',
+      positionMs: 0,
+      durationMs: 10000,
+    };
+    controller.update({ active: true, frame: initial });
+    controller.suspend();
+    const count = timelines.length;
+    controller.update({
+      active: true,
+      frame: { ...initial, trackId: 'c' },
+      settle: true,
+    });
+    expect(timelines).toHaveLength(count);
+    expect(timelines[0].kill).toHaveBeenCalled();
+    expect(timelines[0].play).not.toHaveBeenCalled();
+    expect(commitFrame).toHaveBeenLastCalledWith(
+      expect.objectContaining({ trackId: 'c' }),
+    );
+    controller.destroy();
+  });
+});
+
 function gsapHarness() {
   const spinTween = {
     kill: vi.fn(),

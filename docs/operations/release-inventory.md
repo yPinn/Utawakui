@@ -318,6 +318,31 @@ When adding a dependency, classify it before installing:
 
 ## Packaging Locations
 
+F3 adds `shared/presentation/outputPreviewScene.mjs` under the existing
+`shared/**/*` rule and one exact HTTP module route. It contains only the small
+app-owned synthetic showcase and pure adapters; the adjacent test is excluded.
+The obsolete renderer preview JSON is removed. F1 pressure fixtures, the isolated
+Vite/Electron validation entry and screenshots remain outside runtime packaging.
+
+F4 `scripts/output-appearance-audit.mjs`, `outputAppearanceAudit.mjs` and
+`output-appearance-capture.cjs`, their tests and `tasks/output-appearance-audit-*`
+reports/profiles/captures are development tooling only. Thumbnail provenance JSON
+is checked by source tests, not imported into renderer runtime. Existing explicit
+packaging/HTTP allowlists exclude all of these; no runtime asset or dependency
+moved and no new public route, extraResource or asarUnpack rule is needed.
+
+The shared Browser Source host (`overlay/shared/lifecycle.mjs`) ships under the
+existing `overlay/**/*` rule and its one exact HTTP static route. Its adjacent
+test is excluded by `!overlay/**/*.test.js`; no new dependency, extraResource or
+asarUnpack path is required. F2 packaging tests cover both this inclusion and the
+continued exclusion of F1 tooling and fixtures.
+
+The F1 appearance baseline CLI and tests (`scripts/outputAppearanceBaseline.mjs`
+and its test), plus `scripts/fixtures/output/`, are development-only inputs. They
+are outside the explicit runtime file allowlist and are not imported by the
+production preview or Output routes. No F1 fixture, font or synthetic cover is
+added to `dist/`, shared runtime assets, extraResources or asarUnpack.
+
 The model-independent lyric estimate validator/storage stays under the existing
 `electron/**/*` and `shared/**/*` app.asar rules. The authoring preview compiles
 into `dist/`; its synthetic fixtures and native acceptance outputs in ignored
@@ -495,3 +520,7 @@ The Settings entry ships `electron/lib/lyricsResearch/`, its narrow `electron/ma
 Builder explicitly includes only acoustic `assets/process/protocol/job/frontend.cjs`, `decoder.py`, `manifest.json`; candidate `protocol/tokenStarts/quality/qualityConservative.cjs`; fresh-evaluation `content/lowCost/completeness.cjs` and `trial-assets.json`. The two pure `src/utils/lyrics.js` and `lyricsDocument.js` sources are also shipped for main-side canonical normalization; they have no Vite or renderer globals. These are curated runtime modules, not a recursive scripts inclusion.
 
 Python needs the real unpacked `decoder.py` plus adjacent `manifest.json`; both are explicitly in asarUnpack. The ONNX frontend is also unpacked, and fixed Node worker launches explicitly set Run-as-Node. Production Node dependencies are reused; no new npm package is introduced. Verify the allowlist closure and a packaged load/preview, including real Python paths and both model loaders. Human time accuracy and formal distribution permission remain separate pending acceptance.
+
+## F5 Output development probes
+
+scripts/outputPerformanceProbe.mjs、scripts/output-performance-probe.mjs 與 scripts/output-performance-driver.cjs 僅供開發驗收。沿用 F4 exact entry allowlist、隔離 profile、取消與 owned-process cleanup；不新增 public HTTP／IPC。tasks 下的 frozen runtime-inputs／tool-source／合成圖片／PNG／JSONL／封裝副本不屬於發行資產。包裝排除與 Output HTTP 404 tests 覆蓋 F5 工具；沒有新增 runtime 依賴或搬移檔案。startup-performance 的 --port／child environment 修正也只影響測量工具。

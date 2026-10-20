@@ -418,6 +418,36 @@ describe('outputServer', () => {
     expect(runtime.status).toBe(200);
     expect(runtime.headers.get('content-type')).toContain('text/javascript');
 
+    const lifecycle = await fetch(
+      `${status.httpUrl}/overlay/shared/lifecycle.mjs`,
+    );
+    expect(lifecycle.status).toBe(200);
+    expect(lifecycle.headers.get('content-type')).toContain('text/javascript');
+    expect(await lifecycle.text()).toContain('createOverlayHost');
+    const scene = await fetch(
+      `${status.httpUrl}/shared/presentation/outputPreviewScene.mjs`,
+    );
+    expect(scene.status).toBe(200);
+    expect(scene.headers.get('content-type')).toContain('text/javascript');
+    expect(await scene.text()).toContain('showcase-t1-v1');
+    expect(
+      (await fetch(`${status.httpUrl}/scripts/fixtures/output/scenarios.json`))
+        .status,
+    ).toBe(404);
+    for (const privatePath of [
+      '/scripts/output-appearance-audit.mjs',
+      '/scripts/output-appearance-capture.cjs',
+      '/scripts/outputAppearanceAudit.mjs',
+      '/scripts/output-performance-driver.cjs',
+      '/scripts/outputPerformanceProbe.mjs',
+      '/src/assets/output-template-thumbnails/provenance.json',
+    ])
+      expect((await fetch(`${status.httpUrl}${privatePath}`)).status).toBe(404);
+    const unknownLifecycle = await fetch(
+      `${status.httpUrl}/overlay/shared/lifecycle-private.mjs`,
+    );
+    expect(unknownLifecycle.status).toBe(404);
+
     const preview = await fetch(`${status.httpUrl}/overlay/shared/preview.mjs`);
     expect(preview.status).toBe(200);
     expect(preview.headers.get('content-type')).toContain('text/javascript');

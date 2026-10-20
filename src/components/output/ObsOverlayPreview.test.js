@@ -25,6 +25,19 @@ function renderPreview(props = {}) {
 }
 
 describe('ObsOverlayPreview', () => {
+  it.each(['lyrics', 'now-playing', 'setlist'])(
+    'keeps %s Workbench live and strips demo/sample parameters',
+    async (kind) => {
+      const html = await renderPreview({
+        activeKind: kind,
+        previewUrl: `http://127.0.0.1:8700/overlay/${kind}?preview=1&sample=private&template=unknown#private`,
+      });
+      expect(html).not.toContain('preview=1');
+      expect(html).not.toContain('sample=private');
+      expect(html).not.toContain('template=unknown');
+      expect(html).not.toContain('#private');
+    },
+  );
   afterEach(() => {
     vi.unstubAllEnvs();
   });

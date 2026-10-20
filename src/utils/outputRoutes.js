@@ -50,6 +50,8 @@ export function buildOutputDropUrl(obsUrl, kind, captureSizeId) {
   const size = captureSizeById(kind, captureSizeId);
   if (!obsUrl || !label || !size) return null;
   const url = new URL(obsUrl);
+  url.search = '';
+  url.hash = '';
   url.searchParams.set('layer-name', `Utawakui ${label}`);
   url.searchParams.set('layer-width', String(size.width));
   url.searchParams.set('layer-height', String(size.height));

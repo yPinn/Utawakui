@@ -1,9 +1,10 @@
-import { createOverlayConnection } from '../shared/runtime.mjs';
+import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { applyOverlayAppearance } from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
   withPreviewFallback,
+  previewSceneForSlot,
 } from '../shared/preview.mjs';
 import { selectArtworkFrame } from '../shared/state.mjs';
 import {
@@ -15,19 +16,6 @@ import {
 import { createArtworkMotionController } from './artworkMotion.mjs';
 
 const NOW_PLAYING_TEMPLATE_IDS = new Set(['art-card', 'cover-player']);
-
-const PREVIEW_FRAME = Object.freeze({
-  revision: 0,
-  visible: true,
-  title: '夜に駆ける',
-  artist: 'YOASOBI',
-  nextTitle: 'Stellar Stellar',
-  trackId: 'preview-track',
-  playbackStatus: 'playing',
-  positionMs: 65000,
-  durationMs: 185000,
-  progress: 65 / 185,
-});
 
 const EMPTY_FRAME = Object.freeze({
   revision: 0,
@@ -47,7 +35,7 @@ export function normalizeNowPlayingTemplateId(value) {
 }
 
 export function initialNowPlayingFrame(previewMode) {
-  return previewMode ? PREVIEW_FRAME : EMPTY_FRAME;
+  return previewMode ? previewSceneForSlot('now-playing').frame : EMPTY_FRAME;
 }
 
 export function initialNowPlayingTemplateId(location, previewMode) {
@@ -133,32 +121,24 @@ function boot() {
       prepareArtworkSleeve(artworkElements.incoming, frame),
     clearPreparedFrame: () => clearArtworkSleeve(artworkElements.incoming),
   });
-  let reducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches;
-  const motionMedia = gsap?.matchMedia?.() ?? null;
-  artworkMotion.setReducedMotion(reducedMotion);
-  motionMedia?.add(
-    {
-      motionAllowed: '(prefers-reduced-motion: no-preference)',
-      reducedMotion: '(prefers-reduced-motion: reduce)',
-    },
-    (context) => {
-      reducedMotion = context.conditions?.reducedMotion === true;
-      artworkMotion.setReducedMotion(reducedMotion);
-    },
-  );
   const previewMode = isPreviewMode(window.location);
   let activeTemplateId = initialNowPlayingTemplateId(
     window.location,
     previewMode,
   );
   let currentFrame = initialNowPlayingFrame(previewMode);
+  let previewScene = previewSceneForSlot('now-playing', {
+    templateId: activeTemplateId,
+  });
 
-  function renderCurrentFrame() {
+  function renderCurrentFrame({ recovering = false } = {}) {
     if (activeTemplateId === 'art-card') {
       compactElements.root.hidden = true;
-      artworkMotion.update({ active: true, frame: currentFrame });
+      artworkMotion.update({
+        active: true,
+        frame: currentFrame,
+        settle: recovering,
+      });
       return;
     }
 
@@ -173,37 +153,36 @@ function boot() {
 
   applyOverlayAppearance(document, { templateId: activeTemplateId });
   applyPreviewCanvas(document, { previewMode, location: window.location });
-  if (previewMode) renderCurrentFrame();
-
-  const connection = createOverlayConnection({
+  const host = createOverlayHost({
     kind: 'now-playing',
+    previewMode,
+    onReducedMotion: (value) => artworkMotion.setReducedMotion(value),
+    onActivity: (active, { recovering } = {}) => {
+      if (!active) artworkMotion.suspend();
+      else if (previewMode && recovering)
+        renderCurrentFrame({ recovering: true });
+    },
     onConfig: (slot) => {
       activeTemplateId = normalizeNowPlayingTemplateId(slot?.templateId);
+      previewScene = previewSceneForSlot('now-playing', {
+        ...slot,
+        templateId: activeTemplateId,
+      });
       applyOverlayAppearance(document, slot);
-      renderCurrentFrame();
+      if (host.active) renderCurrentFrame();
     },
-    onSnapshot: (snapshot) => {
+    onSnapshot: (snapshot, context) => {
       currentFrame = withPreviewFallback(
         selectArtworkFrame(snapshot),
-        PREVIEW_FRAME,
+        previewScene.frame,
         previewMode,
       );
-      renderCurrentFrame();
+      renderCurrentFrame(context);
     },
-    onStatus: (status) => {
-      if (status !== 'connected') artworkMotion.suspend();
-    },
+    onDispose: () => artworkMotion.destroy(),
   });
-  connection.start();
-  window.addEventListener(
-    'pagehide',
-    () => {
-      artworkMotion.destroy();
-      motionMedia?.revert();
-      connection.stop();
-    },
-    { once: true },
-  );
+  host.start();
+  if (previewMode) renderCurrentFrame();
 }
 
 if (typeof document !== 'undefined') boot();

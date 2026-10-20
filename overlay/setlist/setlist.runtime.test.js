@@ -1,11 +1,55 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
-import { setlistHistoryChange, setlistHistoryIdentity } from './setlist.mjs';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  createHistoryMeasurementController,
+  setlistHistoryChange,
+  setlistHistoryIdentity,
+} from './setlist.mjs';
 import { setlistHistoryPageOffsets } from './setlistMotion.mjs';
 
 const runtime = readFileSync(new URL('./setlist.mjs', import.meta.url), 'utf8');
 
 describe('Setlist completed-song rendering', () => {
+  it('cancels measurements while inactive and after disposal, then remeasures without old reveal', () => {
+    const request = vi.fn(() => 7);
+    const cancel = vi.fn();
+    const disconnect = vi.fn();
+    const observe = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', request);
+    vi.stubGlobal('cancelAnimationFrame', cancel);
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = observe;
+        disconnect = disconnect;
+      },
+    );
+    try {
+      const refresh = vi.fn();
+      const measurement = createHistoryMeasurementController(
+        { history: {}, historyViewport: {} },
+        { refresh },
+      );
+      measurement.schedule({ revealLatest: true });
+      measurement.suspend();
+      expect(cancel).toHaveBeenCalledWith(7);
+      measurement.schedule({ revealLatest: true });
+      expect(request).toHaveBeenCalledOnce();
+      measurement.resume();
+      request.mock.calls.at(-1)[0]();
+      expect(refresh).toHaveBeenLastCalledWith({
+        force: true,
+        revealLatest: false,
+      });
+      measurement.stop();
+      measurement.schedule();
+      measurement.resume();
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(disconnect).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it('keeps a fitting history on one static page', () => {
     expect(
       setlistHistoryPageOffsets({

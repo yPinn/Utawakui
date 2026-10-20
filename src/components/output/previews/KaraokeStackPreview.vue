@@ -37,6 +37,12 @@ const ktvDisplayPhrases = computed(() => [
 ]);
 const ktvCurrent = computed(
   () =>
+    (props.scene?.frame?.ktv
+      ? {
+          text: props.scene.frame.ktv.currentText,
+          role: props.scene.frame.ktv.currentRole,
+        }
+      : null) ??
     ktvDisplayPhrases.value[0] ?? {
       text: ktvCurrentSource.value.text,
       role: ktvCurrentSource.value.role,
@@ -44,6 +50,12 @@ const ktvCurrent = computed(
 );
 const ktvNext = computed(
   () =>
+    (props.scene?.frame?.ktv
+      ? {
+          text: props.scene.frame.ktv.nextText,
+          role: props.scene.frame.ktv.nextRole,
+        }
+      : null) ??
     ktvDisplayPhrases.value[1] ?? {
       text: ktvNextSource.value.text,
       role: ktvNextSource.value.role,
@@ -57,6 +69,7 @@ const ktvNext = computed(
   >
     <span class="obs-template-mockup__ktv-lines">
       <span
+        v-if="!scene.frame?.ktv || scene.frame.ktv.countIn"
         class="obs-template-mockup__ktv-count-in"
         :data-ktv-role="ktvCurrent.role"
         aria-hidden="true"
@@ -68,7 +81,13 @@ const ktvNext = computed(
       </span>
       <strong
         class="obs-template-mockup__ktv-line"
-        data-ktv-lane="a"
+        :data-ktv-lane="
+          scene.frame?.ktv
+            ? scene.frame.ktv.currentLaneIndex % 2 === 0
+              ? 'a'
+              : 'b'
+            : 'a'
+        "
         :data-ktv-role="ktvCurrent.role"
       >
         <span class="obs-template-mockup__ktv-line-base">
@@ -80,8 +99,16 @@ const ktvNext = computed(
       </strong>
       <strong
         class="obs-template-mockup__ktv-line"
-        data-ktv-held="true"
-        data-ktv-lane="b"
+        :data-ktv-held="
+          scene.frame?.ktv ? String(scene.frame.ktv.nextHeld) : 'true'
+        "
+        :data-ktv-lane="
+          scene.frame?.ktv
+            ? scene.frame.ktv.nextLaneIndex % 2 === 0
+              ? 'a'
+              : 'b'
+            : 'b'
+        "
         :data-ktv-role="ktvNext.role"
       >
         {{ ktvNext.text }}

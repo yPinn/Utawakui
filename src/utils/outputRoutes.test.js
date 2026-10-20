@@ -7,6 +7,21 @@ import {
 } from './outputRoutes.js';
 
 describe('output template routes', () => {
+  it('keeps inspection and sample flags out of copied OBS drop URLs', () => {
+    const url = new URL(
+      buildOutputDropUrl(
+        'http://127.0.0.1:8700/overlay/lyrics?preview=1&workbench=1&backdrop=dark&guide=1#private',
+        'lyrics',
+        'full',
+      ),
+    );
+    expect([...url.searchParams.keys()]).toEqual([
+      'layer-name',
+      'layer-width',
+      'layer-height',
+    ]);
+    expect(url.hash).toBe('');
+  });
   it('maps three independent kinds to stable routes', () => {
     expect(outputPathForKind('now-playing')).toBe('/overlay/now-playing');
     expect(outputPathForKind('setlist')).toBe('/overlay/setlist');

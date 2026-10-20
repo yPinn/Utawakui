@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import { previewSceneForSlot } from '../shared/preview.mjs';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,8 +48,14 @@ describe('Ornate Vertical layout contract', () => {
   it('provides structured sample units when preview mode has no live lyrics', () => {
     const source = fs.readFileSync(path.join(directory, 'lyrics.mjs'), 'utf8');
 
-    expect(source).toContain('PREVIEW_ORNATE_VERTICAL');
-    expect(source).toContain('ornateVertical: PREVIEW_ORNATE_VERTICAL');
-    expect(source).toContain('夜が明けるまで言葉を残していく');
+    expect(source).toContain("previewSceneForSlot('lyrics'");
+    expect(source).not.toContain('PREVIEW_ORNATE_VERTICAL');
+    const frame = previewSceneForSlot('lyrics', {
+      templateId: 'ornate-vertical',
+    }).frame;
+    expect(frame.ornateVertical.segments.length).toBeGreaterThan(0);
+    expect(
+      frame.ornateVertical.segments.flatMap(({ units }) => units).length,
+    ).toBeGreaterThan(0);
   });
 });

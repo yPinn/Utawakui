@@ -132,8 +132,17 @@ export function createSetlistCurrentMotionController({
     );
   }
 
-  function update(frame) {
+  function update(frame, { settle: settleFrame = false } = {}) {
     if (destroyed) return;
+    if (settleFrame) {
+      killTransition();
+      presented = true;
+      pendingFrame = frame;
+      commitPendingFrame();
+      clearCurrentMotion();
+      setMotionState('idle');
+      return;
+    }
     const nextTrackIdentity = currentTrackIdentity(frame);
 
     if (!presented) {
@@ -498,9 +507,13 @@ export function createSetlistHistoryMotionController({
     historyEntryTween?.pause?.();
   }
 
-  function resume() {
+  function resume({ reset = false } = {}) {
     if (destroyed || !suspended) return;
     suspended = false;
+    if (reset) {
+      refresh({ force: true });
+      return;
+    }
     historyTimeline?.play?.();
     historyEntryTween?.play?.();
   }

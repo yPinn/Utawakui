@@ -5,6 +5,43 @@ import {
   setlistHistoryPageOffsets,
 } from './setlistMotion.mjs';
 
+describe('F2 setlist recovery', () => {
+  it('rebuilds history paging at current geometry instead of playing an old reveal', () => {
+    const { gsap, timelines } = gsapHarness();
+    const controller = createSetlistHistoryMotionController({
+      ...historyScene(),
+      gsap,
+    });
+    controller.refresh({ revealLatest: true });
+    const old = timelines[0];
+    controller.suspend();
+    controller.resume({ reset: true });
+    expect(old.kill).toHaveBeenCalled();
+    expect(old.play).not.toHaveBeenCalled();
+    controller.destroy();
+  });
+  it('settles current content without resuming an old switch', () => {
+    const { gsap, timelines } = gsapHarness();
+    const commitFrame = vi.fn();
+    const controller = createSetlistCurrentMotionController({
+      current: {},
+      root: { dataset: {} },
+      gsap,
+      commitFrame,
+    });
+    controller.update(frame('a'));
+    controller.update(frame('b'));
+    controller.suspend();
+    controller.update(frame('c'), { settle: true });
+    controller.resume();
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].kill).toHaveBeenCalled();
+    expect(timelines[0].play).not.toHaveBeenCalled();
+    expect(commitFrame).toHaveBeenLastCalledWith(frame('c'));
+    controller.destroy();
+  });
+});
+
 function gsapHarness() {
   const timelines = [];
   const gsap = {

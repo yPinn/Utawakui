@@ -16,10 +16,8 @@ import {
 const lifecycle = vi.hoisted(() => ({
   mounts: 0,
   unmounts: 0,
-  loadGate: null,
 }));
 vi.mock('./ObsTemplateMockup.vue', async () => {
-  await lifecycle.loadGate;
   return {
     default: {
       props: ['preset'],
@@ -102,6 +100,24 @@ afterEach(() => {
 });
 
 describe('static-first selected template preview', () => {
+  it('discards a pending automatic import if reduced motion changes before it resolves', async () => {
+    const view = setup();
+    trigger(view.canvas(), 'onPointerenter', { pointerType: 'mouse' });
+    vi.advanceTimersByTime(250);
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    await settlePreview();
+    expect(view.live()).toHaveLength(0);
+    expect(view.play().props['aria-label']).toBe('播放動態預覽');
+  });
+  it('cancels pending hover when reduced motion is enabled before dwell ends', async () => {
+    const view = setup();
+    trigger(view.canvas(), 'onPointerenter', { pointerType: 'mouse' });
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    await vi.advanceTimersByTimeAsync(250);
+    await settlePreview();
+    expect(view.live()).toHaveLength(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
   it('switches images without constructing live previews', async () => {
     const view = setup();
     expect(findAll(view.root, (n) => n.type === 'img')).toHaveLength(1);
@@ -133,18 +149,13 @@ describe('static-first selected template preview', () => {
   });
 
   it('discards an import that finishes after selection changes', async () => {
-    let release;
-    lifecycle.loadGate = new Promise((resolve) => {
-      release = resolve;
-    });
     const view = setup();
     trigger(view.canvas(), 'onPointerenter', { pointerType: 'mouse' });
-    await vi.advanceTimersByTimeAsync(250);
+    // Keep the import promise pending even if another case warmed its module cache.
+    vi.advanceTimersByTime(250);
     view.selected.value = presets[1];
     await nextTick();
-    release();
     await settlePreview();
-    lifecycle.loadGate = null;
     expect(lifecycle.mounts).toBe(0);
     expect(view.live()).toHaveLength(0);
   });

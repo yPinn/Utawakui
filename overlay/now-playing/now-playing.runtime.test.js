@@ -64,7 +64,7 @@ describe('Now Playing template runtime', () => {
     expect(initialNowPlayingFrame(true)).toMatchObject({
       visible: true,
       trackId: 'preview-track',
-      playbackStatus: 'playing',
+      playbackStatus: 'paused',
     });
   });
 

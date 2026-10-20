@@ -12,7 +12,7 @@ import {
 } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
-import OUTPUT_PREVIEW_SAMPLE from './outputPreviewSample.json';
+import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
@@ -33,19 +33,8 @@ function deepFreeze(value) {
   return value;
 }
 
-// Every template previews the same editable sample (outputPreviewSample.json).
-export const OUTPUT_PREVIEW_SCENE = deepFreeze({
-  ...structuredClone(OUTPUT_PREVIEW_SAMPLE),
-  lyrics: {
-    language: OUTPUT_PREVIEW_SAMPLE.lyrics.language,
-    current: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
-    next: OUTPUT_PREVIEW_SAMPLE.lyrics.next,
-    reading: {
-      text: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
-      segments: structuredClone(OUTPUT_PREVIEW_SAMPLE.lyrics.reading),
-    },
-  },
-});
+// Immutable compatibility facade; each preview projects this same snapshot for its template.
+export const OUTPUT_PREVIEW_SCENE = deepFreeze(createOutputPreviewScene());
 
 const OUTPUT_TEMPLATE_DEFINITIONS = [
   {

@@ -74,7 +74,9 @@ watch([completedTracks, () => props.size], async () => {
     <span class="obs-template-mockup__setlist-current">
       <span class="obs-template-mockup__setlist-header">
         <span class="obs-template-mockup__setlist-label">Now Singing</span>
-        <strong class="obs-template-mockup__setlist-source">Tonight</strong>
+        <strong class="obs-template-mockup__setlist-source">{{
+          scene.sourceName ?? ''
+        }}</strong>
       </span>
       <span class="obs-template-mockup__setlist-current-track">
         <strong class="obs-template-mockup__setlist-current-title">

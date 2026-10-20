@@ -204,6 +204,34 @@ describe('packaged dependency boundary', () => {
     }
   });
 
+  it('packages the F2 Overlay host while excluding its tests and F1 fixture tooling', () => {
+    for (const [file, expected] of [
+      ['overlay/shared/lifecycle.mjs', true],
+      ['overlay/shared/lifecycle.test.js', false],
+      ['shared/presentation/outputPreviewScene.mjs', true],
+      ['shared/presentation/outputPreviewScene.test.js', false],
+      ['scripts/outputAppearanceBaseline.mjs', false],
+      ['scripts/fixtures/output/scenarios.json', false],
+      ['scripts/fixtures/output/cover.png', false],
+      ['scripts/outputAppearanceAudit.mjs', false],
+      ['scripts/output-appearance-audit.mjs', false],
+      ['scripts/output-appearance-capture.cjs', false],
+      ['scripts/output-appearance-audit.test.mjs', false],
+      ['scripts/outputPerformanceProbe.mjs', false],
+      ['scripts/output-performance-probe.mjs', false],
+      ['scripts/output-performance-driver.cjs', false],
+      ['src/assets/output-template-thumbnails/provenance.json', false],
+    ]) {
+      const included = builder.files.some(
+        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+      );
+      const excluded = builder.files.some(
+        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+      );
+      expect(included && !excluded).toBe(expected);
+    }
+  });
+
   it('declares every package the packaged runtime loads as a dependency', () => {
     const undeclared = bareSpecifiers()
       .filter(({ name }) => !dependencies.has(name))

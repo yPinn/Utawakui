@@ -39,6 +39,9 @@
 ## Output與外部整合
 
 - [Output runtime防護](output-runtime-hardening.md)
+- [八模板顯示設定、來源與F1基線](output-appearance-baseline.md)
+- [Output共用host生命週期與F2驗收邊界](output-host-lifecycle.md)
+- [Gallery／Workbench／Output預覽資料與F3限制](output-preview-consistency.md)
 - [Overlay資產安全](overlay-asset-security.md)
 - [Overlay pack契約／後續方向](overlay-pack-contract.md)
 - [整合adapter邊界](integration-adapter-contract.md)

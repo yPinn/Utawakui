@@ -13,10 +13,11 @@ describe('Classic KTV gallery mockup', () => {
     const branch = readObsTemplatePreviewSource('KaraokeStack');
 
     expect(branch).toContain('obs-template-mockup__ktv-lines');
-    expect(branch).toContain('data-ktv-lane="a"');
-    expect(branch).toContain('data-ktv-lane="b"');
+    expect(branch).toContain(':data-ktv-lane=');
+    expect(branch).toContain('scene.frame.ktv.currentLaneIndex');
+    expect(branch).toContain('scene.frame.ktv.nextLaneIndex');
     expect(branch).toContain(':data-ktv-role="ktvCurrent.role"');
-    expect(branch).toContain('data-ktv-held="true"');
+    expect(branch).toContain('scene.frame.ktv.nextHeld');
     expect(branch).toContain('{{ ktvCurrent.text }}');
     expect(branch).toContain('{{ ktvNext.text }}');
     expect(branch).toContain('obs-template-mockup__ktv-line-fill');

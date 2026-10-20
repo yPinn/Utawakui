@@ -9,7 +9,7 @@ import {
   orderOutputTemplates,
 } from './outputTemplates.js';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
-import OUTPUT_PREVIEW_SAMPLE from './outputPreviewSample.json';
+import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'queue-board': '黑幕歌單',
@@ -516,29 +516,19 @@ describe('output template registry', () => {
     ).toBe(false);
   });
 
-  it('builds one shared preview scene from the editable sample for every template', () => {
+  it('builds an immutable shared scenario facade and returns independent consumer data', () => {
     const data = getOutputWorkbenchData();
-
-    expect(OUTPUT_PREVIEW_SCENE.track).toEqual(OUTPUT_PREVIEW_SAMPLE.track);
-    expect(OUTPUT_PREVIEW_SCENE.queue).toEqual(OUTPUT_PREVIEW_SAMPLE.queue);
-    expect(OUTPUT_PREVIEW_SCENE.lyrics).toEqual({
-      language: OUTPUT_PREVIEW_SAMPLE.lyrics.language,
-      current: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
-      next: OUTPUT_PREVIEW_SAMPLE.lyrics.next,
-      reading: {
-        text: OUTPUT_PREVIEW_SAMPLE.lyrics.current,
-        segments: OUTPUT_PREVIEW_SAMPLE.lyrics.reading,
-      },
-    });
+    const expected = createOutputPreviewScene();
+    expect(OUTPUT_PREVIEW_SCENE).toEqual(expected);
     expect(
-      OUTPUT_PREVIEW_SAMPLE.lyrics.reading
+      OUTPUT_PREVIEW_SCENE.lyrics.reading.segments
         .map((segment) => segment.text)
         .join(''),
-    ).toBe(OUTPUT_PREVIEW_SAMPLE.lyrics.current);
+    ).toBe(OUTPUT_PREVIEW_SCENE.lyrics.current);
     expect(Object.isFrozen(OUTPUT_PREVIEW_SCENE.lyrics.reading.segments)).toBe(
       true,
     );
-    expect(OUTPUT_PREVIEW_SCENE.label).toBe(OUTPUT_PREVIEW_SAMPLE.label);
+    expect(OUTPUT_PREVIEW_SCENE.label).toBe(expected.label);
     expect(data.previewScene).toEqual(OUTPUT_PREVIEW_SCENE);
     expect(
       data.templates.every(
@@ -551,9 +541,7 @@ describe('output template registry', () => {
     ).toBe(true);
 
     data.previewScene.track.title = 'changed';
-    expect(OUTPUT_PREVIEW_SCENE.track.title).toBe(
-      OUTPUT_PREVIEW_SAMPLE.track.title,
-    );
+    expect(OUTPUT_PREVIEW_SCENE.track.title).toBe(expected.track.title);
   });
 
   it('labels each slot default as 建議 and every other template as 可用', () => {

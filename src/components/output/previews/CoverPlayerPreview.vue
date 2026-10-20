@@ -29,11 +29,14 @@ const track = computed(() => props.scene?.track ?? {});
     </span>
     <span class="obs-template-mockup__cover-player-controls">
       <span class="obs-template-mockup__progress">
-        <span class="obs-template-mockup__progress-fill" />
+        <span
+          class="obs-template-mockup__progress-fill"
+          :style="{ width: `${(scene.playback?.progress ?? 0) * 100}%` }"
+        />
       </span>
       <span class="obs-template-mockup__timeline">
-        <span>0:23</span>
-        <span>-3:27</span>
+        <span>{{ scene.playback?.elapsed ?? '0:00' }}</span>
+        <span>{{ scene.playback?.remaining ?? '-0:00' }}</span>
       </span>
       <span class="obs-template-mockup__transport">
         <span>⇄</span>

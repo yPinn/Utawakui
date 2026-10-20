@@ -26,12 +26,14 @@ describe('Kinetic Pop gallery mockup', () => {
       'v-for="(row, rowIndex) in kineticPreviewLine.rows"',
     );
     expect(kineticMarkup).toContain('v-for="(unit, unitIndex) in row.units"');
-    expect(source).toContain("kineticMaterial: 'candy-rim'");
+    expect(source).toContain(
+      "kineticMaterial: lyrics.value.kinetic?.material ?? 'candy-rim'",
+    );
     expect(source).not.toContain("material: 'solid-outline', text:");
     expect(source).not.toContain("material: 'chromatic-depth', text:");
     expect(source).toContain('adaptKineticPopLyricsPresentation');
     expect(source).toContain(
-      'const presentation = adaptKineticPopLyricsPresentation(lyrics.value.current, {',
+      'adaptKineticPopLyricsPresentation(lyrics.value.current, {',
     );
     expect(source).toContain('rows: presentation.rows.map');
     expect(source).toContain('units: row.units.map');

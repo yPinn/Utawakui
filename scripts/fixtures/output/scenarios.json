@@ -1,0 +1,327 @@
+{
+  "version": 1,
+  "provenance": "Self-authored synthetic test data; no external provider or personal media",
+  "baseSnapshot": {
+    "version": 2,
+    "revision": 1,
+    "generatedAt": "2026-10-20T00:00:00.000Z",
+    "displayDelayMs": 0,
+    "playback": {
+      "status": "playing",
+      "positionMs": 5000,
+      "durationMs": 32000,
+      "rate": 1,
+      "track": {
+        "id": "synthetic-track-a",
+        "title": "合成測試曲甲",
+        "artist": "測試演唱者甲"
+      }
+    },
+    "queue": {
+      "sourceName": "合成驗收場次",
+      "items": [
+        {
+          "state": "played",
+          "track": {
+            "id": "synthetic-played",
+            "title": "已唱測試項",
+            "artist": "測試演唱者"
+          }
+        },
+        {
+          "state": "current",
+          "track": {
+            "id": "synthetic-track-a",
+            "title": "合成測試曲甲",
+            "artist": "測試演唱者甲"
+          }
+        },
+        {
+          "state": "queued",
+          "track": {
+            "id": "synthetic-track-b",
+            "title": "合成測試曲乙",
+            "artist": "測試演唱者乙"
+          }
+        }
+      ]
+    },
+    "lyrics": {
+      "trackId": "synthetic-track-a",
+      "source": {
+        "language": "zh-Hant"
+      },
+      "synced": true,
+      "offsetMs": 0,
+      "activeLineIndex": 0,
+      "lines": [
+        {
+          "lineId": "synthetic-line-a",
+          "text": "測試第一行",
+          "startMs": 0,
+          "endMs": 8000
+        },
+        {
+          "lineId": "synthetic-line-b",
+          "text": "測試第二行",
+          "startMs": 8000,
+          "endMs": 16000
+        },
+        {
+          "lineId": "synthetic-line-c",
+          "text": "測試第三行",
+          "startMs": 16000,
+          "endMs": 24000
+        }
+      ]
+    }
+  },
+  "languageSamples": {
+    "zh-Hant": [
+      "測試短句",
+      "這是一段用來檢查長句排版與標點邊界的合成測試文字，不是歌曲歌詞。"
+    ],
+    "ja": [
+      "試験の短文",
+      "これは文字の折り返しと読みやすさを確かめるための試験文です。"
+    ],
+    "ko": [
+      "짧은 시험 문장",
+      "이 문장은 긴 글자 배치와 문장 부호의 표시를 확인하기 위한 합성 시험 문장입니다."
+    ],
+    "en": [
+      "Short test line",
+      "A deliberately long synthetic test caption checks wrapping, punctuation, and uninterrupted-word-example-layout-boundaries."
+    ]
+  },
+  "cases": [
+    {
+      "id": "playing-t1",
+      "category": "projection"
+    },
+    {
+      "id": "empty",
+      "category": "projection",
+      "empty": true
+    },
+    {
+      "id": "missing-artwork",
+      "category": "asset",
+      "environment": {
+        "artwork": "missing"
+      }
+    },
+    {
+      "id": "image-error",
+      "category": "asset",
+      "environment": {
+        "artwork": "decode-error"
+      }
+    },
+    {
+      "id": "missing-reading",
+      "category": "lyrics",
+      "environment": {
+        "reading": "missing"
+      }
+    },
+    {
+      "id": "missing-duration",
+      "category": "projection",
+      "playback": {
+        "durationMs": 0
+      }
+    },
+    {
+      "id": "playing-t0",
+      "category": "lyrics",
+      "timing": "T0"
+    },
+    {
+      "id": "playing-t2",
+      "category": "lyrics",
+      "timing": "T2"
+    },
+    {
+      "id": "paused",
+      "category": "projection",
+      "playback": {
+        "status": "paused"
+      }
+    },
+    {
+      "id": "seek-forward",
+      "category": "projection",
+      "playback": {
+        "status": "seeking",
+        "positionMs": 18000
+      }
+    },
+    {
+      "id": "seek-backward",
+      "category": "projection",
+      "playback": {
+        "status": "seeking",
+        "positionMs": 1000
+      }
+    },
+    {
+      "id": "track-change",
+      "category": "projection",
+      "track": "b"
+    },
+    {
+      "id": "rapid-track-changes",
+      "category": "runtime",
+      "track": "c",
+      "steps": [
+        {
+          "event": "track",
+          "track": "b"
+        },
+        {
+          "event": "track",
+          "track": "c"
+        }
+      ]
+    },
+    {
+      "id": "natural-end",
+      "category": "projection",
+      "playback": {
+        "status": "ended",
+        "positionMs": 32000
+      }
+    },
+    {
+      "id": "source-unavailable",
+      "category": "runtime",
+      "environment": {
+        "sourceStatus": "unavailable"
+      }
+    },
+    {
+      "id": "source-syncing",
+      "category": "runtime",
+      "environment": {
+        "sourceStatus": "syncing"
+      }
+    },
+    {
+      "id": "source-ready",
+      "category": "runtime",
+      "environment": {
+        "sourceStatus": "ready"
+      }
+    },
+    {
+      "id": "source-reconnect",
+      "category": "runtime",
+      "steps": [
+        {
+          "event": "disconnect"
+        },
+        {
+          "event": "source-ready",
+          "bootId": "synthetic-boot-b",
+          "sourceEpoch": "synthetic-epoch-b",
+          "revision": 0
+        }
+      ]
+    },
+    {
+      "id": "reduced-motion-initial",
+      "category": "manual",
+      "environment": {
+        "reducedMotion": true
+      }
+    },
+    {
+      "id": "reduced-motion-toggle",
+      "category": "manual",
+      "steps": [
+        {
+          "event": "reduced-motion",
+          "value": false
+        },
+        {
+          "event": "reduced-motion",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "font-denied",
+      "category": "asset",
+      "environment": {
+        "font": "denied"
+      }
+    },
+    {
+      "id": "font-missing",
+      "category": "asset",
+      "environment": {
+        "font": "missing-in-output"
+      }
+    },
+    {
+      "id": "font-delayed",
+      "category": "asset",
+      "environment": {
+        "font": "delayed"
+      }
+    },
+    {
+      "id": "capture-declared",
+      "category": "manual"
+    },
+    {
+      "id": "language-zh-Hant-short",
+      "category": "language",
+      "language": "zh-Hant",
+      "length": "short"
+    },
+    {
+      "id": "language-zh-Hant-long",
+      "category": "language",
+      "language": "zh-Hant",
+      "length": "long"
+    },
+    {
+      "id": "language-ja-short",
+      "category": "language",
+      "language": "ja",
+      "length": "short"
+    },
+    {
+      "id": "language-ja-long",
+      "category": "language",
+      "language": "ja",
+      "length": "long"
+    },
+    {
+      "id": "language-ko-short",
+      "category": "language",
+      "language": "ko",
+      "length": "short"
+    },
+    {
+      "id": "language-ko-long",
+      "category": "language",
+      "language": "ko",
+      "length": "long"
+    },
+    {
+      "id": "language-en-short",
+      "category": "language",
+      "language": "en",
+      "length": "short"
+    },
+    {
+      "id": "language-en-long",
+      "category": "language",
+      "language": "en",
+      "length": "long"
+    }
+  ]
+}

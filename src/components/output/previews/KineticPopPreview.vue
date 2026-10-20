@@ -17,9 +17,11 @@ const kineticPreviewArrangement = computed(
   () => lyrics.value.kinetic?.arrangement ?? 'straight',
 );
 const kineticPreviewLine = computed(() => {
-  const presentation = adaptKineticPopLyricsPresentation(lyrics.value.current, {
-    kineticMaterial: 'candy-rim',
-  });
+  const presentation =
+    props.scene?.frame?.kineticPop ??
+    adaptKineticPopLyricsPresentation(lyrics.value.current, {
+      kineticMaterial: lyrics.value.kinetic?.material ?? 'candy-rim',
+    });
   let unitIndex = 0;
   return {
     ...presentation,

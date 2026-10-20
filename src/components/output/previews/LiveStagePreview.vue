@@ -15,8 +15,10 @@ const track = computed(() => props.scene?.track ?? {});
 const lyrics = computed(() => props.scene?.lyrics ?? {});
 const liveStageLines = computed(
   () =>
-    adaptLiveStageLyricsPresentation(analyzeLyricsSource(lyrics.value.current))
-      .lines,
+    adaptLiveStageLyricsPresentation(
+      analyzeLyricsSource(lyrics.value.current),
+      { lyricsPresentationPolicyId: props.scene?.lyricsPresentationPolicyId },
+    ).lines,
 );
 </script>
 
@@ -38,6 +40,7 @@ const liveStageLines = computed(
       <span v-for="line in liveStageLines" :key="line">{{ line }}</span>
     </strong>
     <span
+      v-if="scene.frame?.liveStage?.cardVisible ?? true"
       class="obs-template-mockup__live-stage-card obs-template-mockup__animated-primary"
     >
       <span class="obs-template-mockup__live-stage-card-mark">

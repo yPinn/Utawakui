@@ -23,7 +23,7 @@ ${fs.readFileSync(
     );
     expect(source).toContain("'ornate-vertical': OrnateVerticalPreview,");
     expect(source).toContain(':animated="animated"');
-    expect(source).toContain(':scene="scene"');
+    expect(source).toContain(':scene="previewScene"');
   });
 
   it('uses shared presentation and motion rules for a two-line animated comparison', () => {

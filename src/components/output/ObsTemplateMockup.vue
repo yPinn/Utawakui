@@ -1,12 +1,14 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, toRaw } from 'vue';
 import { normalizeOutputAppearance } from '../../../shared/outputAppearance.mjs';
+import { createOutputPreviewScene } from '../../../shared/presentation/outputPreviewScene.mjs';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 import { outputTemplatePreviewFor } from './previews/outputTemplatePreviews.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
   scene: { type: Object, default: () => ({}) },
+  settings: { type: Object, default: null },
   size: {
     type: String,
     default: 'detail',
@@ -21,9 +23,40 @@ const props = defineProps({
 });
 
 const previewComponent = computed(() => outputTemplatePreviewFor(props.preset));
+const effectiveSettings = computed(
+  () =>
+    props.settings ??
+    (props.scene?.templateId === props.preset?.id
+      ? {
+          ...props.scene?.appearance,
+          lyricsPresentationPolicyId: props.scene?.lyricsPresentationPolicyId,
+        }
+      : {}),
+);
+const previewScene = computed(() => {
+  const options = {
+    kind: props.preset?.kind ?? 'lyrics',
+    templateId: props.preset?.id,
+    settings: effectiveSettings.value,
+  };
+  // An explicit snapshot/clock can be supplied for parity inspection. Normal Gallery uses the shared example.
+  if (props.scene?.snapshot)
+    return createOutputPreviewScene({
+      ...options,
+      snapshot: toRaw(props.scene.snapshot),
+      nowMs: props.scene.frameTimeMs,
+      scenarioId: props.scene.scenarioId,
+    });
+  const base = createOutputPreviewScene(options);
+  return Object.keys(props.scene ?? {}).length
+    ? { ...base, ...props.scene, frame: undefined }
+    : base;
+});
 // Previews show the template as applied: its own default font, weight, surface.
 const appearance = computed(() =>
-  normalizeOutputAppearance({}, { templateId: props.preset?.id }),
+  normalizeOutputAppearance(effectiveSettings.value, {
+    templateId: props.preset?.id,
+  }),
 );
 // Widgets preview at their own capture size; lyrics use the 1920×1080 canvas.
 const canvasStyle = computed(() => {
@@ -48,6 +81,8 @@ const canvasStyle = computed(() => {
     :data-template-id="preset?.id ?? 'generic'"
     :data-motion="animated ? 'playing' : 'paused'"
     :data-backdrop="backdrop"
+    :data-scenario-id="previewScene.scenarioId"
+    :data-frame-time="previewScene.frameTimeMs"
     :data-appearance-font="appearance.fontFamily"
     :data-appearance-weight="appearance.fontWeight"
     :data-appearance-surface="appearance.surface"
@@ -57,7 +92,8 @@ const canvasStyle = computed(() => {
     <div class="obs-template-mockup__canvas">
       <component
         :is="previewComponent"
-        :scene="scene"
+        v-if="!previewScene.frame || previewScene.frame.visible"
+        :scene="previewScene"
         :size="size"
         :animated="animated"
       />

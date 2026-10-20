@@ -8,6 +8,7 @@ import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
+import { outputPreviewLimitations } from '../../constants/outputPreviewLimitations.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -29,6 +30,7 @@ const motionIcon = computed(() => (isMotionPlaying.value ? Pause : Play));
 const motionLabel = computed(() =>
   isMotionPlaying.value ? '暫停動態預覽' : '播放動態預覽',
 );
+const limitations = computed(() => outputPreviewLimitations(props.preset?.id));
 
 watch(
   () => props.preset?.id,
@@ -58,7 +60,15 @@ async function startPreview(mode) {
   previewFailed.value = false;
   try {
     const { default: component } = await import('./ObsTemplateMockup.vue');
-    if (request === previewRequest) livePreview.value = component;
+    if (request !== previewRequest) return;
+    if (
+      mode === 'hover' &&
+      globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) {
+      stopPreview();
+      return;
+    }
+    livePreview.value = component;
   } catch {
     if (request !== previewRequest) return;
     stopPreview();
@@ -76,6 +86,8 @@ function startHover(event) {
   cancelHover();
   hoverTimer = setTimeout(() => {
     hoverTimer = undefined;
+    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+      return;
     void startPreview('hover');
   }, 250);
 }
@@ -128,7 +140,9 @@ onBeforeUnmount(stopPreview);
         align="center"
         :gap="2"
       >
-        <UiChip tone="muted">{{ scene.label ?? '固定示例' }}</UiChip>
+        <UiChip tone="muted">{{
+          isMotionPlaying ? (scene.label ?? '合成固定示例') : '風格參考圖'
+        }}</UiChip>
         <span class="obs-template-preview-stage__motion">
           {{ preset?.preview?.motionLabel ?? '靜態' }}
         </span>
@@ -160,6 +174,11 @@ onBeforeUnmount(stopPreview);
         </div>
       </div>
     </div>
+    <span
+      class="obs-template-preview-stage__motion obs-template-preview-stage__limitations"
+      role="note"
+      >靜態圖僅供風格參考。{{ limitations.join('') }}</span
+    >
     <span
       v-if="previewFailed"
       class="obs-template-preview-stage__motion"
@@ -239,5 +258,10 @@ onBeforeUnmount(stopPreview);
   line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.obs-template-preview-stage__limitations {
+  white-space: normal;
+  overflow: visible;
 }
 </style>

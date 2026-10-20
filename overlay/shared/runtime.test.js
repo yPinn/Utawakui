@@ -41,6 +41,104 @@ function snapshot(revision, overrides = {}) {
 }
 
 describe('overlay WebSocket runtime', () => {
+  it('cancels trace animation frames and ignores already queued trace callbacks on stop', () => {
+    FakeWebSocket.instances = [];
+    const frames = new Map();
+    let id = 0;
+    const fetchImpl = vi.fn();
+    const cancelAnimationFrame = vi.fn((key) => frames.delete(key));
+    const connection = createOverlayConnection({
+      location: {
+        protocol: 'http:',
+        host: 'localhost',
+        search: '?startupTrace=1',
+      },
+      WebSocketImpl: FakeWebSocket,
+      fetchImpl,
+      performance: { timeOrigin: 0, now: () => 1 },
+      requestAnimationFrame: (callback) => {
+        frames.set(++id, callback);
+        return id;
+      },
+      cancelAnimationFrame,
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+    });
+    connection.start();
+    FakeWebSocket.instances[0].emit('message', {
+      data: JSON.stringify({ type: 'state.snapshot', snapshot: snapshot(1) }),
+    });
+    const queued = [...frames.values()][0];
+    connection.stop();
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
+    expect(frames.size).toBe(0);
+    queued();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+  it('does not deliver already queued delayed snapshots after stop', () => {
+    FakeWebSocket.instances = [];
+    const onSnapshot = vi.fn();
+    const timers = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: 'localhost' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot,
+      now: () => Date.parse('2026-08-22T00:00:00.000Z'),
+      schedule: (fn) => {
+        timers.push(fn);
+        return timers.length;
+      },
+      cancelSchedule: vi.fn(),
+    });
+    connection.start();
+    FakeWebSocket.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(2, { displayDelayMs: 500 }),
+      }),
+    });
+    expect(timers).toHaveLength(1);
+    connection.stop();
+    timers[0]();
+    expect(onSnapshot).not.toHaveBeenCalled();
+  });
+  it('ignores queued events from closed sockets after stop or a new connection', () => {
+    FakeWebSocket.instances = [];
+    const onSnapshot = vi.fn();
+    const onStatus = vi.fn();
+    const timers = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: 'localhost' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot,
+      onStatus,
+      schedule: (fn) => {
+        timers.push(fn);
+        return timers.length;
+      },
+      cancelSchedule: vi.fn(),
+    });
+    connection.start();
+    const old = FakeWebSocket.instances[0];
+    old.emit('open');
+    old.emit('close');
+    timers[0]();
+    const fresh = FakeWebSocket.instances[1];
+    fresh.emit('open');
+    old.emit('message', {
+      data: JSON.stringify({ type: 'state.snapshot', snapshot: snapshot(99) }),
+    });
+    old.emit('close');
+    expect(onSnapshot).not.toHaveBeenCalled();
+    expect(timers).toHaveLength(1);
+    connection.stop();
+    fresh.emit('open');
+    fresh.emit('message', {
+      data: JSON.stringify({ type: 'state.snapshot', snapshot: snapshot(100) }),
+    });
+    expect(onStatus).toHaveBeenLastCalledWith('stopped');
+    expect(onSnapshot).not.toHaveBeenCalled();
+  });
   it('builds same-host ws and wss URLs', () => {
     expect(
       buildWebSocketUrl({ protocol: 'http:', host: '127.0.0.1:8700' }),

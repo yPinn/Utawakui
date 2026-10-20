@@ -73,3 +73,30 @@ export function applyOverlayAppearance(document, slot) {
 export function overlayAppearanceOptionIds() {
   return outputAppearanceOptionIds();
 }
+
+// Observe the browser's existing font pipeline; never load files or delay first render.
+export function createOverlayFontObserver(document, onSettled) {
+  const fonts = document?.fonts;
+  let disposed = false;
+  const ready = () => {
+    if (!disposed) onSettled('ready');
+  };
+  const fallback = () => {
+    if (!disposed) onSettled('fallback');
+  };
+  if (!fonts) {
+    fallback();
+    return () => {
+      disposed = true;
+    };
+  }
+  fonts.addEventListener?.('loadingdone', ready);
+  fonts.addEventListener?.('loadingerror', fallback);
+  Promise.resolve(fonts.ready).then(ready, fallback);
+  return () => {
+    if (disposed) return;
+    disposed = true;
+    fonts.removeEventListener?.('loadingdone', ready);
+    fonts.removeEventListener?.('loadingerror', fallback);
+  };
+}

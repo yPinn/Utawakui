@@ -74,10 +74,10 @@ const hasRuntimeTemplate = computed(() => Boolean(props.previewUrl));
 const inspectionUrl = computed(() => {
   if (!props.previewUrl) return null;
   const url = new URL(props.previewUrl);
+  url.search = '';
+  url.hash = '';
   if (isLyrics.value) {
     url.pathname = '/overlay/lyrics';
-    url.search = '';
-    url.hash = '';
     url.searchParams.set('workbench', '1');
     // Opt-in lyrics diagnostics: keep them out of production preview iframes.
     if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');

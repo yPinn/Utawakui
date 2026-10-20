@@ -1,3 +1,19 @@
+import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
+
+export function previewSceneForSlot(kind, slot) {
+  return createOutputPreviewScene({
+    kind,
+    templateId:
+      slot?.templateId ??
+      {
+        lyrics: 'karaoke-stack',
+        setlist: 'queue-board',
+        'now-playing': 'art-card',
+      }[kind],
+    settings: slot?.settings,
+  });
+}
+
 const INSPECTION_BACKDROPS = new Set([
   'checker',
   'dark',

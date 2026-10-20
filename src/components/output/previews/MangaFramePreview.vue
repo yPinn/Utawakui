@@ -28,7 +28,10 @@ const mangaBubbles = computed(() => {
     ...bubble,
     layout: mangaFrameTextLayout(bubble.text, bubbles.length, {
       language: lyrics.value.language,
-      readingLine: lyrics.value.reading,
+      readingLine:
+        props.scene?.appearance?.furigana === 'off'
+          ? undefined
+          : lyrics.value.reading,
       sourceRanges: bubble.sourceRanges,
     }),
     order: index + 1,

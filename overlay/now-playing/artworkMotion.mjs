@@ -682,12 +682,16 @@ export function createArtworkMotionController({
     syncSpin();
   }
 
-  function update({ active: nextActive, frame } = {}) {
+  function update({ active: nextActive, frame, settle = false } = {}) {
     if (destroyed || !frame) return;
     active = nextActive === true;
     const wasSuspended = suspended;
     suspended = false;
     observePlaybackStatus(frame.playbackStatus);
+    if (settle) {
+      settleStatic(frame);
+      return;
+    }
 
     if (!active) {
       killSceneTimeline();

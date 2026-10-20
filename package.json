@@ -31,6 +31,8 @@
     "license:write": "node scripts/third-party-notices.mjs --write",
     "license:verify": "node scripts/third-party-notices.mjs",
     "perf:startup": "node scripts/startup-performance.mjs",
+    "output:baseline": "node scripts/outputAppearanceBaseline.mjs",
+    "output:audit": "node scripts/output-appearance-audit.mjs",
     "analysis:benchmark-real": "node scripts/music-analysis-real-song-benchmark.mjs",
     "analysis:benchmark-bpm": "node scripts/music-analysis-real-song-benchmark.mjs",
     "analysis:evaluate-bpm": "node scripts/music-analysis-bpm-evaluation.mjs",

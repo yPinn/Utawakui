@@ -54,8 +54,11 @@ not this UI checklist.
 - [ ] Verify gated auto-start, the four compatibility URLs, initial snapshot,
       reconnect, client count, port conflict recovery, artwork fallback, and URL
       updates in a real OBS Browser Source.
-- [ ] Verify widget surfaces fill their Small／Medium／Large canvas as authored,
-      including Now／Next, Art Card, Simple Black B, and Cover Player fallbacks.
+- [ ] Verify all eight active templates against their declared capture sizes and
+      the [appearance acceptance checklist](output-appearance-acceptance.md):
+      queue-board, karaoke-stack, kinetic-pop, ornate-vertical, live-stage,
+      manga-frame, art-card, and cover-player. Legacy Now／Next and Simple Black B
+      names do not count as additional active templates or universal size support.
 - [ ] When M1／M2 analysis is available, verify Lyrics cues without regressing M0,
       pause, seek, reconnect, or reduced-motion fallback.
 - [ ] Enable the OBS integration against an authenticated OBS WebSocket 5 instance;

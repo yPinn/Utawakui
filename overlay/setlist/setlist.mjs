@@ -1,31 +1,16 @@
-import { createOverlayConnection } from '../shared/runtime.mjs';
+import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { applyOverlayAppearance } from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
   withPreviewFallback,
+  previewSceneForSlot,
 } from '../shared/preview.mjs';
 import { selectSetlistFrame } from '../shared/state.mjs';
 import {
   createSetlistCurrentMotionController,
   createSetlistHistoryMotionController,
 } from './setlistMotion.mjs';
-
-const PREVIEW_FRAME = Object.freeze({
-  revision: 0,
-  visible: true,
-  sourceName: 'Tonight',
-  current: { trackId: 'preview-current', title: '怪物', artist: 'YOASOBI' },
-  history: [
-    { trackId: 'preview-1', title: '群青', artist: 'YOASOBI' },
-    {
-      trackId: 'preview-2',
-      title: 'Stellar Stellar',
-      artist: '星街すいせい',
-    },
-    { trackId: 'preview-3', title: '花に亡霊', artist: 'ヨルシカ' },
-  ],
-});
 
 function trackIdentity(track) {
   return [track?.trackId, track?.title, track?.artist]
@@ -109,20 +94,33 @@ function renderFrame(elements, frame, renderState, scheduleHistoryMeasurement) {
   }
 }
 
-function createHistoryMeasurementController(elements, historyMotion) {
+export function createHistoryMeasurementController(elements, historyMotion) {
   let measurementFrame = null;
   let revealLatest = false;
+  let force = false;
+  let suspended = false;
+  let stopped = false;
 
   const measure = () => {
     measurementFrame = null;
     const shouldRevealLatest = revealLatest;
+    const shouldForce = force;
     revealLatest = false;
-    historyMotion.refresh({ revealLatest: shouldRevealLatest });
+    force = false;
+    if (!stopped && !suspended)
+      historyMotion.refresh({
+        force: shouldForce,
+        revealLatest: shouldRevealLatest,
+      });
   };
 
   const schedule = (options = {}) => {
+    if (stopped) return;
     revealLatest ||= options.revealLatest === true;
+    force ||= options.force === true;
     if (measurementFrame !== null) cancelAnimationFrame(measurementFrame);
+    measurementFrame = null;
+    if (suspended) return;
     measurementFrame = requestAnimationFrame(measure);
   };
 
@@ -132,8 +130,22 @@ function createHistoryMeasurementController(elements, historyMotion) {
 
   return {
     schedule,
-    stop() {
+    suspend() {
+      suspended = true;
       if (measurementFrame !== null) cancelAnimationFrame(measurementFrame);
+      measurementFrame = null;
+    },
+    resume() {
+      if (stopped) return;
+      suspended = false;
+      revealLatest = false;
+      schedule({ force: true });
+    },
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      if (measurementFrame !== null) cancelAnimationFrame(measurementFrame);
+      measurementFrame = null;
       resizeObserver.disconnect();
     },
   };
@@ -142,7 +154,7 @@ function createHistoryMeasurementController(elements, historyMotion) {
 function setMotionSuspended(controllers, suspended) {
   for (const controller of controllers) {
     if (suspended) controller.suspend();
-    else controller.resume();
+    else controller.resume({ reset: true });
   }
 }
 
@@ -162,6 +174,7 @@ function boot() {
 
   const gsap = globalThis.gsap ?? null;
   const previewMode = isPreviewMode(window.location);
+  let previewScene = previewSceneForSlot('setlist');
   const renderState = { history: [] };
   const historyMotion = createSetlistHistoryMotionController({
     gsap,
@@ -181,65 +194,44 @@ function boot() {
     root: elements.root,
   });
   const motionControllers = [currentMotion, historyMotion];
-  let connectionStatus = previewMode ? 'connected' : 'disconnected';
-  let reducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches;
-  const motionMedia = gsap?.matchMedia?.() ?? null;
   const applyReducedMotion = (value) => {
-    reducedMotion = value === true;
     for (const controller of motionControllers) {
-      controller.setReducedMotion(reducedMotion);
+      controller.setReducedMotion(value);
     }
   };
-  applyReducedMotion(reducedMotion);
-  motionMedia?.add(
-    { reducedMotion: '(prefers-reduced-motion: reduce)' },
-    (context) => applyReducedMotion(context.conditions?.reducedMotion === true),
-  );
-  const syncMotionActivity = () => {
-    setMotionSuspended(
-      motionControllers,
-      document.hidden || (!previewMode && connectionStatus !== 'connected'),
-    );
-  };
-  const handleVisibilityChange = () => syncMotionActivity();
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  syncMotionActivity();
 
   applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, { previewMode, location: window.location });
-  if (previewMode) currentMotion.update(PREVIEW_FRAME);
-
-  const connection = createOverlayConnection({
+  const host = createOverlayHost({
     kind: 'setlist',
-    onConfig: (slot) => applyOverlayAppearance(document, slot),
-    onSnapshot: (snapshot) => {
+    previewMode,
+    onReducedMotion: applyReducedMotion,
+    onActivity: (active) => {
+      setMotionSuspended(motionControllers, !active);
+      if (active) historyMeasurement.resume();
+      else historyMeasurement.suspend();
+    },
+    onFontsChanged: () => historyMeasurement.schedule({ force: true }),
+    onConfig: (slot) => {
+      previewScene = previewSceneForSlot('setlist', slot);
+      applyOverlayAppearance(document, slot);
+    },
+    onSnapshot: (snapshot, { recovering }) => {
       const frame = withPreviewFallback(
         selectSetlistFrame(snapshot),
-        PREVIEW_FRAME,
+        previewScene.frame,
         previewMode,
       );
-      currentMotion.update(frame);
+      currentMotion.update(frame, { settle: recovering });
     },
-    onStatus: (status) => {
-      connectionStatus = status;
-      syncMotionActivity();
-    },
-  });
-  connection.start();
-  window.addEventListener(
-    'pagehide',
-    () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      motionMedia?.revert?.();
+    onDispose: () => {
       historyMeasurement.stop();
       currentMotion.destroy();
       historyMotion.destroy();
-      connection.stop();
     },
-    { once: true },
-  );
+  });
+  host.start();
+  if (previewMode) currentMotion.update(previewScene.frame);
 }
 
 if (typeof document !== 'undefined') boot();

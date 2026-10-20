@@ -1,0 +1,1524 @@
+{
+  "version": 1,
+  "appearanceSchemaVersion": 5,
+  "captureSizes": {
+    "small": { "width": 480, "height": 270 },
+    "medium": { "width": 480, "height": 540 },
+    "large": { "width": 480, "height": 810 },
+    "full": { "width": 1920, "height": 1080 }
+  },
+  "interpretation": {
+    "default": "Baseline control and initial value; does not mean all controls are initially visible",
+    "opt": "Explicit selection; existing default remains active until changed",
+    "advanced": "Bounded artistic-role override; only where a verified consumer exists"
+  },
+  "fieldPolicy": {
+    "paletteId": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "lookAmount": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fontFamily": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fontScale": {
+      "level": "default",
+      "scope": "slot-template",
+      "activation": "template-default"
+    },
+    "fontWeight": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "surface": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "spacingDensity": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "kineticMaterial": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "kineticArrangement": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "textColor": {
+      "level": "advanced",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "accentColor": {
+      "level": "advanced",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "positionAnchor": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "positionOffsetX": {
+      "level": "advanced",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "positionOffsetY": {
+      "level": "advanced",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "contrastStyle": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "furigana": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    }
+  },
+  "projectShared": {
+    "automaticCrossTemplateSync": false,
+    "sharedSemantics": [
+      "schema",
+      "look-ids",
+      "validation",
+      "motion-preference",
+      "fallback",
+      "source-policy"
+    ],
+    "persistedWorkspacePreferences": ["recentColors", "savedColors"],
+    "precedence": [
+      "mandatory-security-and-accessibility",
+      "template-capability",
+      "valid-slot-template-value",
+      "template-default"
+    ],
+    "globalProjectDocument": "not-implemented"
+  },
+  "assetPolicy": {
+    "installedFontBytesTransferred": false,
+    "installedFonts": {
+      "status": "implemented-opt-in",
+      "templates": ["live-stage"],
+      "descriptorOnly": true
+    },
+    "localFontFiles": {
+      "status": "planned-not-implemented"
+    },
+    "localAppearanceImages": {
+      "status": "not-implemented"
+    },
+    "trackArtwork": {
+      "owner": "main-managed-library",
+      "templates": ["art-card", "cover-player"],
+      "rendererSelection": "track-id",
+      "arbitraryPaths": false
+    },
+    "sharedPackRedistribution": "not-implemented"
+  },
+  "productionEntrypoints": [
+    "overlay/lyrics/lyrics.mjs",
+    "overlay/setlist/setlist.mjs",
+    "overlay/now-playing/now-playing.mjs",
+    "overlay/shared/preview.mjs",
+    "shared/outputAppearance.mjs",
+    "src/constants/outputTemplates.js"
+  ],
+  "templates": [
+    {
+      "id": "queue-board",
+      "kind": "setlist",
+      "capture": {
+        "default": "large",
+        "supported": ["large"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontFamily",
+          "order": 10,
+          "label": "字型",
+          "control": "select",
+          "defaultValue": "sans",
+          "options": [
+            {
+              "id": "sans",
+              "label": "無襯線"
+            },
+            {
+              "id": "serif",
+              "label": "襯線"
+            },
+            {
+              "id": "rounded",
+              "label": "圓體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontWeight",
+          "order": 30,
+          "label": "字重",
+          "control": "select",
+          "defaultValue": "semibold",
+          "options": [
+            {
+              "id": "regular",
+              "label": "一般"
+            },
+            {
+              "id": "semibold",
+              "label": "中粗"
+            },
+            {
+              "id": "bold",
+              "label": "粗體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "surface",
+          "order": 10,
+          "label": "背景透明度",
+          "control": "select",
+          "defaultValue": "solid",
+          "options": [
+            {
+              "id": "transparent",
+              "label": "透明"
+            },
+            {
+              "id": "soft",
+              "label": "半透明"
+            },
+            {
+              "id": "solid",
+              "label": "實底"
+            }
+          ],
+          "group": "surface",
+          "groupLabel": "背景",
+          "groupOrder": 50
+        },
+        {
+          "key": "spacingDensity",
+          "order": 60,
+          "label": "間距",
+          "control": "select",
+          "defaultValue": "normal",
+          "options": [
+            {
+              "id": "compact",
+              "label": "緊湊"
+            },
+            {
+              "id": "normal",
+              "label": "標準"
+            },
+            {
+              "id": "relaxed",
+              "label": "寬鬆"
+            }
+          ],
+          "group": "layout",
+          "groupLabel": "版面",
+          "groupOrder": 60
+        }
+      ],
+      "timing": null,
+      "lockedInvariants": [
+        "current-and-played-membership",
+        "history-page-transition"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "karaoke-stack",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "estimated-segments",
+        "t2Progress": "source-mapped-phrases",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": true,
+          "beatPhase": true,
+          "sections": true
+        },
+        "scheduler": ["ktv", "beat-phase", "music-sections"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "two-lane-order",
+        "source-timing-mask",
+        "count-in-recipe",
+        "bundled-font-role"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "kinetic-pop",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "kineticMaterial",
+          "order": 20,
+          "label": "文字材質",
+          "control": "select",
+          "defaultValue": "candy-rim",
+          "options": [
+            {
+              "id": "solid-outline",
+              "label": "樣式 1｜單色黑框"
+            },
+            {
+              "id": "candy-rim",
+              "label": "樣式 2｜漸層白框"
+            },
+            {
+              "id": "chromatic-depth",
+              "label": "樣式 3｜右下錯位"
+            },
+            {
+              "id": "cycle",
+              "label": "三款依句序切換"
+            }
+          ],
+          "group": "readability",
+          "groupLabel": "可讀性",
+          "groupOrder": 40
+        },
+        {
+          "key": "kineticArrangement",
+          "order": 20,
+          "label": "文字排列",
+          "control": "select",
+          "defaultValue": "straight",
+          "options": [
+            {
+              "id": "straight",
+              "label": "端正"
+            },
+            {
+              "id": "subtle-offset",
+              "label": "些微偏移"
+            }
+          ],
+          "group": "layout",
+          "groupLabel": "版面",
+          "groupOrder": 60
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "weighted-phrases",
+        "t2Progress": "source-mapped-phrases",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines", "kinetic-phrases"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "three-layer-paint-order",
+        "source-phrase-boundaries",
+        "bundled-font-roles"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "ornate-vertical",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "textColor",
+          "order": 10,
+          "label": "文字色",
+          "control": "color",
+          "defaultValue": "#fff8ec",
+          "group": "custom-color",
+          "groupLabel": "自訂色彩",
+          "groupOrder": 20
+        },
+        {
+          "key": "accentColor",
+          "order": 20,
+          "label": "藝術墨影",
+          "control": "color",
+          "defaultValue": "#ffffff",
+          "group": "custom-color",
+          "groupLabel": "自訂色彩",
+          "groupOrder": 20
+        },
+        {
+          "key": "fontFamily",
+          "order": 10,
+          "label": "字型",
+          "control": "select",
+          "defaultValue": "ornate",
+          "options": [
+            {
+              "id": "ornate",
+              "label": "華麗明朝（Hina Mincho）"
+            },
+            {
+              "id": "antique",
+              "label": "古典明朝（GenEi Antique）"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "positionAnchor",
+          "order": 30,
+          "label": "顯示位置",
+          "control": "select",
+          "editor": "position-grid",
+          "defaultValue": "center-right",
+          "options": [
+            {
+              "id": "top-right",
+              "label": "右上"
+            },
+            {
+              "id": "center-right",
+              "label": "右中"
+            },
+            {
+              "id": "bottom-right",
+              "label": "右下"
+            }
+          ],
+          "group": "layout",
+          "groupLabel": "版面",
+          "groupOrder": 60
+        },
+        {
+          "key": "positionOffsetX",
+          "order": 40,
+          "label": "水平微調",
+          "control": "range",
+          "signed": true,
+          "defaultValue": 0,
+          "min": -12,
+          "max": 12,
+          "step": 1,
+          "unit": "%",
+          "group": "layout",
+          "groupLabel": "版面",
+          "groupOrder": 60
+        },
+        {
+          "key": "positionOffsetY",
+          "order": 50,
+          "label": "垂直微調",
+          "control": "range",
+          "signed": true,
+          "defaultValue": 0,
+          "min": -25,
+          "max": 25,
+          "step": 1,
+          "unit": "%",
+          "group": "layout",
+          "groupLabel": "版面",
+          "groupOrder": 60
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "line-entry",
+        "t2Progress": "not-consumed",
+        "usesSourceMappedTiming": false,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "vertical-rl",
+        "two-column-maximum",
+        "source-line-handoff",
+        "grapheme-reveal"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "bounded",
+          "reason": "Right-side anchors and bounded offsets only"
+        },
+        "customColors": {
+          "status": "bounded",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "live-stage",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontFamily",
+          "order": 10,
+          "label": "字型",
+          "control": "select",
+          "defaultValue": "sans",
+          "options": [
+            {
+              "id": "sans",
+              "label": "無襯線"
+            },
+            {
+              "id": "serif",
+              "label": "襯線"
+            },
+            {
+              "id": "rounded",
+              "label": "圓體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30,
+          "editor": "font-family",
+          "allowLocalFonts": true
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "contrastStyle",
+          "order": 10,
+          "label": "文字對比",
+          "control": "select",
+          "defaultValue": "balanced",
+          "options": [
+            {
+              "id": "clean",
+              "label": "無描邊"
+            },
+            {
+              "id": "balanced",
+              "label": "標準描邊"
+            },
+            {
+              "id": "strong-outline",
+              "label": "強描邊"
+            }
+          ],
+          "group": "readability",
+          "groupLabel": "可讀性",
+          "groupOrder": 40
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "weighted-pages",
+        "t2Progress": "source-mapped-pages",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines", "live-stage-card", "live-stage-captions"],
+        "presentationPolicyIds": ["broadcast-compact", "balanced", "literal"],
+        "defaultPresentationPolicyId": "broadcast-compact"
+      },
+      "lockedInvariants": [
+        "title-card-time-window",
+        "caption-paging",
+        "template-brand-mark"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": [
+        "installed-font-must-exist-in-OBS-environment",
+        "missing-font-fallback-manual-pending"
+      ]
+    },
+    {
+      "id": "manga-frame",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontFamily",
+          "order": 10,
+          "label": "字型",
+          "control": "select",
+          "defaultValue": "antique",
+          "options": [
+            {
+              "id": "sans",
+              "label": "無襯線"
+            },
+            {
+              "id": "serif",
+              "label": "襯線"
+            },
+            {
+              "id": "rounded",
+              "label": "圓體"
+            },
+            {
+              "id": "antique",
+              "label": "古典明朝（GenEi Antique）"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontWeight",
+          "order": 30,
+          "label": "字重",
+          "control": "select",
+          "defaultValue": "bold",
+          "options": [
+            {
+              "id": "regular",
+              "label": "一般"
+            },
+            {
+              "id": "semibold",
+              "label": "中粗"
+            },
+            {
+              "id": "bold",
+              "label": "粗體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "furigana",
+          "order": 10,
+          "label": "假名標音",
+          "control": "select",
+          "defaultValue": "auto",
+          "options": [
+            {
+              "id": "auto",
+              "label": "有資料時顯示"
+            },
+            {
+              "id": "off",
+              "label": "關閉"
+            }
+          ],
+          "group": "content",
+          "groupLabel": "內容顯示",
+          "groupOrder": 80
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "line-entry",
+        "t2Progress": "source-mapped-bubbles",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-segments", "manga-bubbles"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "ruby-atomicity",
+        "safe-frame-layout",
+        "source-bubble-timing"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "art-card",
+      "kind": "now-playing",
+      "capture": {
+        "default": "small",
+        "supported": ["small"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontFamily",
+          "order": 10,
+          "label": "字型",
+          "control": "select",
+          "defaultValue": "sans",
+          "options": [
+            {
+              "id": "sans",
+              "label": "無襯線"
+            },
+            {
+              "id": "serif",
+              "label": "襯線"
+            },
+            {
+              "id": "rounded",
+              "label": "圓體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontWeight",
+          "order": 30,
+          "label": "字重",
+          "control": "select",
+          "defaultValue": "bold",
+          "options": [
+            {
+              "id": "regular",
+              "label": "一般"
+            },
+            {
+              "id": "semibold",
+              "label": "中粗"
+            },
+            {
+              "id": "bold",
+              "label": "粗體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        }
+      ],
+      "timing": null,
+      "lockedInvariants": [
+        "sleeve-swap-state-machine",
+        "vinyl-playhead",
+        "validated-artwork-route"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "cover-player",
+      "kind": "now-playing",
+      "capture": {
+        "default": "medium",
+        "supported": ["medium"]
+      },
+      "fields": [
+        {
+          "key": "paletteId",
+          "order": 10,
+          "label": "Look",
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original",
+              "label": "模板原色"
+            },
+            {
+              "id": "warm",
+              "label": "暖色舞台"
+            },
+            {
+              "id": "cool",
+              "label": "冷色舞台"
+            },
+            {
+              "id": "monochrome",
+              "label": "黑白"
+            },
+            {
+              "id": "high-contrast",
+              "label": "高對比"
+            }
+          ],
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "lookAmount",
+          "order": 20,
+          "label": "強度",
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupLabel": "色彩處理",
+          "groupOrder": 10
+        },
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "fontWeight",
+          "order": 30,
+          "label": "字重",
+          "control": "select",
+          "defaultValue": "bold",
+          "options": [
+            {
+              "id": "regular",
+              "label": "一般"
+            },
+            {
+              "id": "semibold",
+              "label": "中粗"
+            },
+            {
+              "id": "bold",
+              "label": "粗體"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "surface",
+          "order": 10,
+          "label": "背景透明度",
+          "control": "select",
+          "defaultValue": "solid",
+          "options": [
+            {
+              "id": "transparent",
+              "label": "透明"
+            },
+            {
+              "id": "soft",
+              "label": "半透明"
+            },
+            {
+              "id": "solid",
+              "label": "實底"
+            }
+          ],
+          "group": "surface",
+          "groupLabel": "背景",
+          "groupOrder": 50
+        }
+      ],
+      "timing": null,
+      "lockedInvariants": [
+        "validated-artwork-route",
+        "playback-progress-authority"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    }
+  ]
+}

@@ -64,6 +64,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/setlist/setlistMotion.mjs': ['setlist', 'setlistMotion.mjs'],
   '/overlay/shared/appearance.css': ['shared', 'appearance.css'],
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
+  '/overlay/shared/lifecycle.mjs': ['shared', 'lifecycle.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
   '/overlay/shared/fallback.css': ['shared', 'fallback.css'],
   '/overlay/shared/lyricsPresentation.mjs': [
@@ -152,6 +153,10 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'mangaFrameContract.mjs',
   ],
   '/shared/presentation/state.mjs': ['presentation', 'state.mjs'],
+  '/shared/presentation/outputPreviewScene.mjs': [
+    'presentation',
+    'outputPreviewScene.mjs',
+  ],
 });
 const OVERLAY_MIME_TYPES = Object.freeze({
   '.css': 'text/css; charset=utf-8',

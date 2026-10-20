@@ -8,6 +8,13 @@ not authorize executable third-party templates. The implementation must convert
 these rules into shared validators, fixtures, and limits before enabling remote
 content installation.
 
+Current implementation boundary, 2026-10-20: Live Stage can select a descriptor
+for an already installed local font after an explicit trusted control-panel
+request. This does not import or transmit font files. General appearance image
+imports, font-file imports and pack installation below remain planning policy,
+not delivered capabilities. See the [F1 appearance baseline](output-appearance-baseline.md)
+for the implemented source boundaries and template-specific controls.
+
 ## Trust boundaries
 
 - The Electron main process is the only download, verification, extraction, and

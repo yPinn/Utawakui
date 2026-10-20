@@ -290,8 +290,22 @@ function createOverlayTraceReporter(options) {
   const performance = options.performance ?? window.performance;
   const requestFrame =
     options.requestAnimationFrame ?? window.requestAnimationFrame.bind(window);
+  const cancelFrame =
+    options.cancelAnimationFrame ??
+    globalThis.window?.cancelAnimationFrame?.bind(globalThis.window);
+  const frames = new Set();
+  let stopped = false;
   let instanceReported = false;
   let frameReported = false;
+
+  function scheduleFrame(callback) {
+    let id = null;
+    id = requestFrame(() => {
+      frames.delete(id);
+      if (!stopped) callback();
+    });
+    frames.add(id);
+  }
 
   function report(name) {
     const atUnixMs = performance.timeOrigin + performance.now();
@@ -309,11 +323,11 @@ function createOverlayTraceReporter(options) {
   }
 
   function onSnapshot(snapshot) {
-    if (instanceReported || snapshot.revision <= 0) return;
+    if (stopped || instanceReported || snapshot.revision <= 0) return;
     instanceReported = true;
     report('first-instance-ready');
-    requestFrame(() => {
-      requestFrame(() => {
+    scheduleFrame(() => {
+      scheduleFrame(() => {
         if (frameReported) return;
         frameReported = true;
         report('first-rendered-frame');
@@ -321,7 +335,14 @@ function createOverlayTraceReporter(options) {
     });
   }
 
-  return { onSnapshot };
+  return {
+    onSnapshot,
+    stop() {
+      stopped = true;
+      for (const id of frames) cancelFrame?.(id);
+      frames.clear();
+    },
+  };
 }
 
 export function createOverlayConnection(options = {}) {
@@ -337,6 +358,7 @@ export function createOverlayConnection(options = {}) {
   const traceReporter = createOverlayTraceReporter({ ...options, location });
 
   let socket = null;
+  let removeSocketListeners = () => {};
   let reconnectTimer = null;
   let reconnectAttempt = 0;
   let lastReceivedRevision = -1;
@@ -388,6 +410,7 @@ export function createOverlayConnection(options = {}) {
 
     let timer = null;
     timer = schedule(() => {
+      if (!snapshotTimers.has(timer)) return;
       snapshotTimers.delete(timer);
       deliverSnapshot(snapshot, allowEqualRevision);
     }, remainingMs);
@@ -412,17 +435,31 @@ export function createOverlayConnection(options = {}) {
 
   function connect() {
     if (stopped) return;
+    reconnectTimer = null;
     onStatus(reconnectAttempt === 0 ? 'connecting' : 'reconnecting');
-    socket = new WebSocketImpl(
+    const currentSocket = new WebSocketImpl(
       buildWebSocketUrl(location),
       OUTPUT_V3_SUBPROTOCOL,
     );
+    socket = currentSocket;
+    const removers = [];
+    const listen = (type, callback) => {
+      const guarded = (event) => {
+        if (!stopped && socket === currentSocket) callback(event);
+      };
+      currentSocket.addEventListener(type, guarded);
+      removers.push(() => currentSocket.removeEventListener?.(type, guarded));
+    };
+    removeSocketListeners = () => {
+      for (const remove of removers) remove();
+      removers.length = 0;
+    };
 
-    socket.addEventListener('open', () => {
+    listen('open', () => {
       reconnectAttempt = 0;
       onStatus('connected');
     });
-    socket.addEventListener('message', (event) => {
+    listen('message', (event) => {
       const message = parseOutputMessage(event.data);
       if (!message) return;
       if (message.type === 'overlay.config.snapshot') {
@@ -515,8 +552,9 @@ export function createOverlayConnection(options = {}) {
         }
       }
     });
-    socket.addEventListener('close', () => {
-      if (stopped) return;
+    listen('close', () => {
+      removeSocketListeners();
+      socket = null;
       resetProjection(null);
       reconnectAttempt += 1;
       onStatus('reconnecting');
@@ -524,7 +562,13 @@ export function createOverlayConnection(options = {}) {
         INITIAL_RECONNECT_DELAY_MS * 2 ** (reconnectAttempt - 1),
         MAX_RECONNECT_DELAY_MS,
       );
-      reconnectTimer = schedule(connect, delay);
+      let timer = null;
+      timer = schedule(() => {
+        if (reconnectTimer !== timer) return;
+        reconnectTimer = null;
+        connect();
+      }, delay);
+      reconnectTimer = timer;
     });
   }
 
@@ -555,11 +599,13 @@ export function createOverlayConnection(options = {}) {
   function stop() {
     if (stopped) return;
     stopped = true;
+    traceReporter.stop?.();
     if (reconnectTimer !== null) cancelSchedule(reconnectTimer);
     reconnectTimer = null;
     resetProjection(null);
     lastConfigRevision = -1;
     activeDisplayDelayMs = null;
+    removeSocketListeners();
     socket?.close();
     socket = null;
     onStatus('stopped');

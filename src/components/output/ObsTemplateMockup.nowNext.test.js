@@ -28,7 +28,9 @@ describe('Widget gallery mockups', () => {
       'utf8',
     );
 
-    expect(shell).toContain('normalizeOutputAppearance({}, { templateId:');
+    expect(shell).toContain(
+      'normalizeOutputAppearance(effectiveSettings.value,',
+    );
     for (const attribute of ['font', 'weight', 'surface']) {
       expect(shell).toContain(`:data-appearance-${attribute}=`);
     }
