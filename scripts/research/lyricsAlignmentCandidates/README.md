@@ -116,7 +116,7 @@ previous estimate/source bytes. Unit fixtures alone do not establish lifecycle
 acceptance. The dated research report records the measured capacity, results,
 fallback evidence, limitations and adoption decision.
 
-See the [paired evaluation report](../../../docs/research/lyrics-alignment-candidates-2026-10-19.md)
+See the [paired evaluation report](../../../docs/research/lyrics-alignment/lyrics-alignment-candidates-2026-10-19.md)
 and its durable data. The measured Windows venv launcher also starts an interpreter
 descendant; cancellation acceptance additionally checked that process tree, rather
 than relying only on the direct-child group inventory. No managed product
@@ -150,7 +150,7 @@ node scripts/research/lyricsAlignmentCandidates/qualityReplay.cjs <config.json> 
 compatibility is separate so ambiguous repeats never become content mismatch.
 `qualityConservative.cjs` treats insufficient evidence as unknown. VAD is advisory;
 two ASR models share biases. These are research policies, not calibrated confidence
-or accepted production gates. The [quality report](../../../docs/research/lyrics-qwen-quality-2026-10-19.md)
+or accepted production gates. The [quality report](../../../docs/research/lyrics-alignment/lyrics-qwen-quality-2026-10-19.md)
 records the loss of correct cuts, remaining wrong-audio acceptance and actual
-resource cost; the [method comparison](../../../docs/research/lyrics-alignment-methods-comparison-2026-10-19.md)
+resource cost; the [method comparison](../../../docs/research/lyrics-alignment/lyrics-alignment-methods-comparison-2026-10-19.md)
 covers other feasible routes and their unverified requirements.

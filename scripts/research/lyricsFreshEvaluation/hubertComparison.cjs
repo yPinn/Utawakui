@@ -100,7 +100,9 @@ async function compare(root, lowcostFile, output) {
     maskBytes = read(lowcostFile),
     mask = JSON.parse(maskBytes);
   const previous = JSON.parse(
-    read('docs/research/data/lyrics-root-causes-2026-10-19.json'),
+    read(
+      'docs/research/lyrics-alignment/data/lyrics-root-causes-2026-10-19.json',
+    ),
   );
   if (
     q.inputSha256 !== sha(ib) ||

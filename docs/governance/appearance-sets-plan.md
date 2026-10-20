@@ -15,7 +15,7 @@
 | 目前方向、交付標準與共用基礎下一步 | 本文件                                                                                                                               |
 | 八模板逐項問題、原始判斷與快照     | [模板盤點](appearance-template-gap-audit-2026-10-20.md)與[資料](data/appearance-template-audit-2026-10-20.json)，保留 dated evidence |
 | 元件／模型／服務適用條件與版本     | [依賴查核](community-dependency-boundaries-2026-10-20.md)，不在實作計畫複製完整清單                                                  |
-| 三種收費模式與競品／市場證據       | [市場比較](../research/appearance-support-models-market-plan-2026-10-20.md)，保留研究，不再作現行實作入口                            |
+| 三種收費模式與競品／市場證據       | [市場比較](../research/product/appearance-support-models-market-plan-2026-10-20.md)，保留研究，不再作現行實作入口                    |
 | 早期功能分層的推導與未採用選項     | [歸檔提案](../archive/community-feature-tiers-plan-2026-10-20.md)，供追溯，不續寫新計畫                                              |
 
 共用基礎階段不改八模板的美術、字型選擇、配色、構圖、動態 recipe 或藝術節奏；不新增 Template／slot／instance 能力，不改 feature gate 語意。
@@ -25,7 +25,7 @@
 ## 已確認的取得方向
 
 未來每個額外 set 個別單次取得，新作品另計，已取得作品範圍內的修復不另收；純自願支持與作品取得分開。現有模板都只是待改善素材，不安排當期合集、定價或上架。
-不同取得途徑可以授予同一作品使用權，但目前不建立點數／廣告系統。Discord、充值、任務與合作贈送等比較只保留在[市場研究](../research/appearance-support-models-market-plan-2026-10-20.md)，不繼續擴張本輪共用基礎工作。
+不同取得途徑可以授予同一作品使用權，但目前不建立點數／廣告系統。Discord、充值、任務與合作贈送等比較只保留在[市場研究](../research/product/appearance-support-models-market-plan-2026-10-20.md)，不繼續擴張本輪共用基礎工作。
 
 ## 實作階段與依賴順序
 

@@ -1,7 +1,7 @@
 # App startup and settings profile — 2026-10-18
 
 This is a current-source optimization observation, separate from the packaged
-release baseline in [startup-performance-baseline.md](../operations/startup-performance-baseline.md).
+release baseline in [startup-performance-baseline.md](../../operations/startup-performance-baseline.md).
 It does not establish a startup budget.
 
 ## Method and limits

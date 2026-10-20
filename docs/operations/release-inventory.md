@@ -37,7 +37,7 @@ startup downloads. Lifecycle tests cover real local archive preparation/probes,
 repair rollback, cancellation, all-generation lease checks, shared runtime
 preservation and journal-based removal retry. This is separate from a fresh
 network install or signed-installer acceptance; see the
-[verification record](../research/lyrics-acoustic-lifecycle-2026-10-19.md).
+[verification record](../research/lyrics-alignment/lyrics-acoustic-lifecycle-2026-10-19.md).
 
 - Packaged fuses: Node options environment and Node CLI inspect disabled;
   embedded ASAR integrity and only-load-from-ASAR enabled. Run-as-Node remains

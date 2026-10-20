@@ -178,7 +178,7 @@ Qwen／Whisper 的 private research configs、環境、素材與結果不納入 
 
 ## Qwen 私人研究環境依賴索引
 
-依 [2026-10-19 研究收據](../research/data/lyrics-alignment-candidates-2026-10-19.json) 列出55包；本輪取得54包的 PyPI 固定版本 metadata，另保留[查詢快照](data/qwen-research-pypi-license-metadata-2026-10-20.json)。這是研究取用及宣告授權清單，不是已核對所有 wheel／native binaries 的產品 lock。`torch==2.9.1+cpu` 不在 PyPI 同名版，不能用不同 artifact 取代其驗證。
+依 [2026-10-19 研究收據](../research/lyrics-alignment/data/lyrics-alignment-candidates-2026-10-19.json) 列出55包；本輪取得54包的 PyPI 固定版本 metadata，另保留[查詢快照](data/qwen-research-pypi-license-metadata-2026-10-20.json)。這是研究取用及宣告授權清單，不是已核對所有 wheel／native binaries 的產品 lock。`torch==2.9.1+cpu` 不在 PyPI 同名版，不能用不同 artifact 取代其驗證。
 
 | 套件                 | 版本       | license 證據                                                                                  | 限制／狀態                                                                           |
 | -------------------- | ---------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |

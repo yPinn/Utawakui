@@ -290,7 +290,7 @@ CC BY-NC `diffq-fixed`; the selected Viperx-1297 checkpoint has no established
 weight redistribution/product-use grant; and cross-target pip resolution omitted
 CPython 3.13's `audioop-lts` marker. These inputs remain research evidence and
 must not be published or activated. See the
-[Refined lock spike](../research/audio-python-separation-cpu-spike-2026-08-23.md).
+[Refined lock spike](../research/audio/audio-python-separation-cpu-spike-2026-08-23.md).
 
 The follow-up upstream survey found no accepted RoFormer-only dependency extra,
 strict-offline flag, or no-fallback release. The exact 0.44.5 wheel can be rebuilt
@@ -347,7 +347,7 @@ acceptance are closed.
 - [All-In-One Infer project metadata](https://raw.githubusercontent.com/openmirlab/all-in-one-infer/main/pyproject.toml)
 - [All-In-One checkpoint manifest](https://raw.githubusercontent.com/openmirlab/all-in-one-infer/main/src/allin1_infer/config/checkpoints.toml)
 - [Python embeddable package](https://docs.python.org/3/using/windows.html#the-embeddable-package)
-- [Refined separation-cpu lock spike](../research/audio-python-separation-cpu-spike-2026-08-23.md)
-- [Music analysis model survey](../research/music-analysis-model-survey-2026-08-24.md)
-- [Analysis Structure CPU spike](../research/audio-python-analysis-structure-spike-2026-08-24.md)
-- [Beat This M1 CPU spike](../research/audio-python-beat-this-m1-spike-2026-08-24.md)
+- [Refined separation-cpu lock spike](../research/audio/audio-python-separation-cpu-spike-2026-08-23.md)
+- [Music analysis model survey](../research/audio/music-analysis-model-survey-2026-08-24.md)
+- [Analysis Structure CPU spike](../research/audio/audio-python-analysis-structure-spike-2026-08-24.md)
+- [Beat This M1 CPU spike](../research/audio/audio-python-beat-this-m1-spike-2026-08-24.md)

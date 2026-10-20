@@ -28,7 +28,9 @@ async function loadFresh(root) {
     read(path.join(root, 'hubertfa-comparison/comparison.json')),
   );
   const publicReceipt = JSON.parse(
-    read('docs/research/data/lyrics-hubertfa-fresh-2026-10-19.json'),
+    read(
+      'docs/research/lyrics-alignment/data/lyrics-hubertfa-fresh-2026-10-19.json',
+    ),
   );
   if (!isDeepStrictEqual(comparison, publicReceipt))
     throw Error('public comparison receipt changed');

@@ -47,12 +47,12 @@
 
 程式與契約入口：
 
-- [Lyrics timing contract](../contracts/lyrics-timing-contract.md) 與 [ADR 0010](../adr/0010-lyrics-timing-granularity-and-output-content-split.md)。
-- [T1 估算投影](../../shared/presentation/state.mjs)、[文字權重](../../shared/presentation/lyricsTimingUnits.mjs)。
-- [編輯器切分](../../src/utils/lyricsTiming.js)、[手動時間編輯](../../src/composables/useLyricsTimingEditor.js)。
-- [分離 recipes](../../electron/lib/audioProcessing/recipes.js)、[四聲道產生](../../electron/lib/vocalSeparation.js)。
-- [分析來源](../../electron/lib/library/musicStructure.js)、[分析 job](../../electron/lib/audioProcessing/structureAnalysisJob.js)、[Python worker](../../resources/audio-processing/structure_analysis_worker.py)。
-- [Audio Python host](../../electron/lib/audioProcessing/audioPythonRuntimeHost.js)、[現有 Python lock](../../resources/audio-processing/analysis-beat-this-py314-lock.json)。
+- [Lyrics timing contract](../../contracts/lyrics-timing-contract.md) 與 [ADR 0010](../../adr/0010-lyrics-timing-granularity-and-output-content-split.md)。
+- [T1 估算投影](../../../shared/presentation/state.mjs)、[文字權重](../../../shared/presentation/lyricsTimingUnits.mjs)。
+- [編輯器切分](../../../src/utils/lyricsTiming.js)、[手動時間編輯](../../../src/composables/useLyricsTimingEditor.js)。
+- [分離 recipes](../../../electron/lib/audioProcessing/recipes.js)、[四聲道產生](../../../electron/lib/vocalSeparation.js)。
+- [分析來源](../../../electron/lib/library/musicStructure.js)、[分析 job](../../../electron/lib/audioProcessing/structureAnalysisJob.js)、[Python worker](../../../resources/audio-processing/structure_analysis_worker.py)。
+- [Audio Python host](../../../electron/lib/audioProcessing/audioPythonRuntimeHost.js)、[現有 Python lock](../../../resources/audio-processing/analysis-beat-this-py314-lock.json)。
 
 目前 normalizer／sidecar validator 能證明結構、文字串接與時間順序合法，無法證明歌聲真的在該時間唱出該字。來源的「逐字同步」與模型的品質判定必須分開。
 
@@ -171,7 +171,7 @@ ASR 可以同時提供文字和粗時間；attention／DTW 可進一步產生字
 
 [faster-whisper 上游 benchmark](https://github.com/SYSTRAN/faster-whisper#benchmark) 以 13 分鐘音訊測 ASR：i7-12700K／8 threads 的 small INT8 為 1 分 42 秒、RAM 1477 MB；RTX 3070 Ti 8 GB 的 large-v2 FP16 為 1 分 03 秒、VRAM 4525 MB。後者 batch 8 為 17 秒、6090 MB。這些是上游特定版本與輸入的 ASR 結果，沒有包含分離、歌唱對齊、下載、冷啟動或 OBS 競爭，不能等比例當成 Utawakui 的每首耗時。
 
-本專案既有 [Beat This! CPU spike](audio-python-beat-this-m1-spike-2026-08-24.md) 的真實歌曲單次 small0 測量約 5.15–12.55 秒、peak working set 約 452–500 MB。它只證明既有節拍分析的執行成本，不代表字詞對齊的效能或準確率。
+本專案既有 [Beat This! CPU spike](../audio/audio-python-beat-this-m1-spike-2026-08-24.md) 的真實歌曲單次 small0 測量約 5.15–12.55 秒、peak working set 約 452–500 MB。它只證明既有節拍分析的執行成本，不代表字詞對齊的效能或準確率。
 
 Qwen 原生模型卡約 0.9B 參數，單純按每參數 2／4 bytes 算，權重約為 1.8／3.6 GB 十進位容量。這只是權重下限，另有 activation、音訊、attention、runtime、載入暫存；不能據此宣稱 2 GB VRAM 可跑完整流程。4 分鐘的現有 44.1 kHz 四聲道 16-bit PCM 約 84.7 MB，解碼與模型特徵也會另占空間。
 
@@ -306,13 +306,13 @@ Qwen 原生模型卡約 0.9B 參數，單純按每參數 2／4 bytes 算，權�
 | ONNX 分離    | App 內的 `onnxruntime-node`／DirectML、Main worker、FFmpeg decode                                  | quick KARA2 52.79 MB；general Inst HQ4 59.07 MB，兩者合計 111.86 MB 權重 | 可重用原曲與 guide vocals；能執行其他相容 ONNX graph，不代表已有對齊前後處理 |
 | 選配節拍分析 | CPython 3.14.7、Torch 2.11.0 CPU、TorchAudio 2.11.0、NumPy 2.5.2 等 16 packages、Beat This! small0 | 完整下載 159,368,729 bytes；UI 安裝估計 557,000,000 bytes                | 是新增 Torch 對齊器最合理的環境基準，不必重新假設使用者要裝整套不同 Python   |
 
-第二列的下載拆分：Python archive 12.67 MB、environment wheels 138.24 MB、small0 8.45 MB。557 MB 是現行程式的安裝估計，不是本輪重新安裝量測。來源為 [固定 capability catalog](../../electron/lib/audioProcessing/structureAnalysisCapability.js)、[runtime manifest](../../resources/audio-processing/audio-python-runtime-3.14.7.json)、[environment lock](../../resources/audio-processing/analysis-beat-this-py314-lock.json) 與模型 manifests。
+第二列的下載拆分：Python archive 12.67 MB、environment wheels 138.24 MB、small0 8.45 MB。557 MB 是現行程式的安裝估計，不是本輪重新安裝量測。來源為 [固定 capability catalog](../../../electron/lib/audioProcessing/structureAnalysisCapability.js)、[runtime manifest](../../../resources/audio-processing/audio-python-runtime-3.14.7.json)、[environment lock](../../../resources/audio-processing/analysis-beat-this-py314-lock.json) 與模型 manifests。
 
 `final0` 的 manifest 是 81.06 MB。若保留 small0 再加 final0，新增是 81.06 MB；若完成切換並移除 small0，淨增是 72.61 MB。現行 Settings 的安裝 catalog 固定 small0，不能因 final0 manifest 存在就宣稱使用者已能選它。它只改善節拍分析的候選能力，不新增歌詞對齊能力。
 
 ### 能共用環境不代表目前已會去重
 
-[ADR 0014](../adr/0014-audio-python-runtime-family.md) 容許 runtime family、聯合環境與模型分離管理。但 [目前 installer](../../electron/lib/audioProcessing/audioPythonArtifactPreparation.js) 為每個 lock 將所有 wheels 解到獨立 site-packages，沒有跨 lock 的 package hardlink 或 wheel artifact cache。因此：
+[ADR 0014](../../adr/0014-audio-python-runtime-family.md) 容許 runtime family、聯合環境與模型分離管理。但 [目前 installer](../../../electron/lib/audioProcessing/audioPythonArtifactPreparation.js) 為每個 lock 將所有 wheels 解到獨立 site-packages，沒有跨 lock 的 package hardlink 或 wheel artifact cache。因此：
 
 - 相同 exact Python runtime artifact 可以由 Audio Python capabilities 共用；Provider Python 仍是不同 family。
 - 新增獨立 alignment environment 時，Torch／NumPy 等會有另一份磁碟副本，下載也不能直接扣掉已安裝 packages。
@@ -405,7 +405,7 @@ CUDA 表格還不是完整環境：需核對 TorchAudio、其他 DLL／package�
 
 CPU 實際採 FP32／BF16 要按 operator 及裝置驗證。這些只是 tensor 容量下限，不能作整機 RAM 最低需求；順序執行時模型部分看最大同時存活集合，不把磁碟上的 A＋S＋L 全部相加當成必要 RAM。
 
-更早需要處理的是安裝器：[downloadBuffer](../../electron/lib/featureDependencies/download.js) 先累積 chunks，最後 `Buffer.concat`，model preparation 再驗 hash 與原子寫入。1.84 GB 權重在 concat 瞬間可能同時保有 chunks 和整塊 buffer，光資料就約 3.67 GB；4.08 GB 權重可達約 8.15 GB，還未含 app 與其他配置。這是依目前程式推導的配置量，不是 RSS 實測。推出 GB 級模型／CUDA pack 前，應先改成受限串流下載、增量 hash 與磁碟 staging，否則「磁碟裝得下」仍可能在安裝期間耗盡 RAM。
+更早需要處理的是安裝器：[downloadBuffer](../../../electron/lib/featureDependencies/download.js) 先累積 chunks，最後 `Buffer.concat`，model preparation 再驗 hash 與原子寫入。1.84 GB 權重在 concat 瞬間可能同時保有 chunks 和整塊 buffer，光資料就約 3.67 GB；4.08 GB 權重可達約 8.15 GB，還未含 app 與其他配置。這是依目前程式推導的配置量，不是 RSS 實測。推出 GB 級模型／CUDA pack 前，應先改成受限串流下載、增量 hash 與磁碟 staging，否則「磁碟裝得下」仍可能在安裝期間耗盡 RAM。
 
 模型更新時保留舊檔和 staging，因此更新一個 1.85 GB 模型需額外容納新版本約 1.85 GB；若另留下載 cache 還要再算。不可一律宣稱更新只需要最終淨增空間。
 

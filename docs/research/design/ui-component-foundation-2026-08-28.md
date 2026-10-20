@@ -3,7 +3,7 @@
 2026-09-07 note: this is the foundation implementation record. The owner has since
 required an F8 sequential review of Foundation and each component before returning
 to the F7 View candidate. Current status and the next Select phase are maintained
-in [Token v2 Component Review](../contracts/token-v2-component-review.md).
+in [Token v2 Component Review](../../contracts/token-v2-component-review.md).
 
 Status: implemented foundation candidate; a development-only real-library Setlist
 slice now supports Candidate selection, playback, and local reorder, while full

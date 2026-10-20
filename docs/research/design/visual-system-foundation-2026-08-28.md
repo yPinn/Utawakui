@@ -4,7 +4,7 @@
 direction, but its “immediate next phase” section is historical. The owner inserted
 the sequential F8 Foundation／component review gate before F7 View acceptance.
 Current status and next decisions are maintained in
-[Token v2 Component Review](../contracts/token-v2-component-review.md).
+[Token v2 Component Review](../../contracts/token-v2-component-review.md).
 
 Status: implemented development candidate — the foundation, shared-component
 contracts, and native F7 real-library slice have passed automated verification.
@@ -763,8 +763,8 @@ Review artifact:
 
 Historical inactive candidate source: `src/styles/tokens-v2.css` (no longer
 present in the current tree). The current contract is
-[`src/styles/tokens.css`](../../src/styles/tokens.css); delivery boundaries are
-recorded in the [Token v2 replacement contract](../contracts/token-v2-replacement.md).
+[`src/styles/tokens.css`](../../../src/styles/tokens.css); delivery boundaries are
+recorded in the [Token v2 replacement contract](../../contracts/token-v2-replacement.md).
 
 ### Isolated Workspace Prototype Snapshot
 

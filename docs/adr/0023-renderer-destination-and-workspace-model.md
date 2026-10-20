@@ -28,7 +28,7 @@ The existing destination names create three problems:
    page ownership.
 
 The competitor evidence in
-[competitive research](../research/competitive-research.md) supports lowering the
+[competitive research](../research/product/competitive-research.md) supports lowering the
 entry cost with user-language tasks such as singing and display. Utawakui cannot
 collapse to only those two destinations, however, because the local library is
 the product's durable content root rather than a setup detail.

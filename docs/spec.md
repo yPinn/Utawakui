@@ -311,11 +311,11 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
 6. 是否要投入原生 OBS 音訊輸出（例如自製 libobs plugin），做為 Browser Source／系統音訊
    裝置之外的第三條輸出路徑？這需要一併評估 libobs（GPL-2.0-or-later）的散布條件、
    行程內崩潰風險，以及第三方原生程式碼是否應隔離。見
-   [競品調查 §5.2](research/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目) 與
-   [§6 權利、平台與隱私邊界](research/competitive-research.md#6-權利平台與隱私邊界)。
+   [競品調查 §5.2](research/product/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目) 與
+   [§6 權利、平台與隱私邊界](research/product/competitive-research.md#6-權利平台與隱私邊界)。
 7. 是否要加入「無伴奏演出」項目，讓清唱／自彈自唱不需要假媒體檔就能進入 now
    playing／待播／已唱？仍需決定 track 的最小必要欄位與手動／計時結束方式。見
-   [競品調查 §5.1](research/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
+   [競品調查 §5.1](research/product/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
 8. BGM monitor 基礎已實作單 deck fade／預設 25% 正常音量／手動 Talk 衰減／Emergency Cut、
    transition／silence 預設與整合式場間音樂控制；仍需決定 accompaniment／loudness policy 與
    預設 capture profile。

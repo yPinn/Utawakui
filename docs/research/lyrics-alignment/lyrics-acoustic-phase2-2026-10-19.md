@@ -6,7 +6,7 @@
 
 HubertFA 候選已接通第一階段的獨立估計資料。中日文短窗口重現研究收益，整首 bounded-window 處理、文字保留、T1／T2 回退與實際取消也已驗證。錯音訊及純伴奏仍可產生合法結果，因此尚不適合自動套用或成為預設。
 
-版本化入口為 [研究工具與操作方式](../../scripts/research/lyricsAcoustic/README.md)、[固定 manifest](../../scripts/research/lyricsAcoustic/manifest.json) 與[去識別量測資料](data/lyrics-acoustic-phase2-2026-10-19.json)。前輪任務與容量依據見[研究收斂](lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)及 [A／B／C／D 報告](lyrics-t1-acoustic-segmentation-2026-10-19.md)。本報告不取代 [acoustic estimate contract](../contracts/lyrics-acoustic-estimate-contract.md)。
+版本化入口為 [研究工具與操作方式](../../../scripts/research/lyricsAcoustic/README.md)、[固定 manifest](../../../scripts/research/lyricsAcoustic/manifest.json) 與[去識別量測資料](data/lyrics-acoustic-phase2-2026-10-19.json)。前輪任務與容量依據見[研究收斂](lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)及 [A／B／C／D 報告](lyrics-t1-acoustic-segmentation-2026-10-19.md)。本報告不取代 [acoustic estimate contract](../../contracts/lyrics-acoustic-estimate-contract.md)。
 
 後續的[Basic／選配環境稽核](lyrics-acoustic-environment-readiness-2026-10-19.md)另記基本情境、重新載入與產品生命週期缺口；本報告的模型結果及 source hashes 保留為當時快照。
 

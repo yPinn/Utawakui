@@ -4,7 +4,7 @@
 
 ## 研究問題
 
-[ADR 0022](../adr/0022-artist-identity-and-organization.md) 的 artist 頁與 sidebar 演出者列需要一張代表演出者的圖片。初版借用演出者最新專輯的封面，但專輯封面代表的是發行，不是演出者，owner 不希望直接採用。本研究回答：有沒有穩定、合規、覆蓋率足夠的演出者照片來源？
+[ADR 0022](../../adr/0022-artist-identity-and-organization.md) 的 artist 頁與 sidebar 演出者列需要一張代表演出者的圖片。初版借用演出者最新專輯的封面，但專輯封面代表的是發行，不是演出者，owner 不希望直接採用。本研究回答：有沒有穩定、合規、覆蓋率足夠的演出者照片來源？
 
 本研究只保存彙總結果；實測對象是一份實際曲庫中會出現在 sidebar 的 21 位演出者（擁有專輯或至少 2 首曲目）。
 
@@ -25,7 +25,7 @@
   - 名稱不以「- Topic」結尾（例如 `Ado`、`周杰倫 Jay Chou`）：頭像是演出者形象圖。
   - 名稱以「- Topic」結尾（例如 `Yitai Wang - Topic`）：頭像是某張專輯封面，YouTube 與 YT Music 都相同。
 - 頻道不一定屬於每一位 credited 演出者：客演者會出現在主唱的頻道曲目上，團體也可能使用不同名稱的頻道（例如 `BTS` 對 `BANGTANTV`）。因此配對必須以「該演出者為第一署名的曲目」的多數頻道決定，不能比對頻道名稱。
-- 直接讀取頻道頁 HTML 的 `og:image` 也能取得同一張圖，但屬於 [ADR 0015](../adr/0015-recording-first-provider-discovery.md) 拒絕的網頁抓取；產品必須走 app-managed yt-dlp。
+- 直接讀取頻道頁 HTML 的 `og:image` 也能取得同一張圖，但屬於 [ADR 0015](../../adr/0015-recording-first-provider-discovery.md) 拒絕的網頁抓取；產品必須走 app-managed yt-dlp。
 - 讀取一個頻道約 1 秒，回傳的圖片位於 `yt3.googleusercontent.com`。
 
 ### Wikidata／Commons

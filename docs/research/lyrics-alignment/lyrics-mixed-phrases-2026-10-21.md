@@ -30,4 +30,4 @@
 
 目前主要缺口是混語 T1 的時間證據。現有 HubertFA 路徑仍可能拒絕混語，超過 20 秒的單句模型限制亦不變；先做顯示分組不能解決這兩項問題。後續應先抽查這 59 句的文字分組品質，再評估同一組既有字典／音素表的混語對齊，以及實際人聲停頓的收益。沒有足夠證據時繼續保留整句，不先擴大自動切換範圍。
 
-操作見[本機試用手冊](../operations/lyrics-alignment-research.md)，規則見[獨立估計契約](../contracts/lyrics-acoustic-estimate-contract.md#mixed-long-line-display-phrases)。私有原句、時間與視窗證據留在 ignored tasks，不隨專案分發。正式 gate、預設下載與權重使用界線維持不變。
+操作見[本機試用手冊](../../operations/lyrics-alignment-research.md)，規則見[獨立估計契約](../../contracts/lyrics-acoustic-estimate-contract.md#mixed-long-line-display-phrases)。私有原句、時間與視窗證據留在 ignored tasks，不隨專案分發。正式 gate、預設下載與權重使用界線維持不變。

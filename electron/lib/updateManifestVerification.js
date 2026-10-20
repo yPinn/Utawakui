@@ -186,7 +186,7 @@ function matchManifestToUpdateDescriptor(manifest, descriptor) {
 
 // Deterministic serialization: sorted keys, no whitespace. Mirrors the
 // canonicalize() shape EliteSand Pro's update-signature.js uses for the same
-// problem (see docs/research/competitive-research.md) — not copied code, the
+// problem (see docs/research/product/competitive-research.md) — not copied code, the
 // same well-known technique (a manifest's signature must cover exactly one
 // unambiguous byte sequence, independent of object key insertion order).
 function canonicalizeManifest(manifest) {

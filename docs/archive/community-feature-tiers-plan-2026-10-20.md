@@ -5,7 +5,7 @@
 日期：2026-10-20。狀態：供討論的提案，尚未採用或實作。
 本文件依目前程式、registry 與 [spec](../spec.md) 分類功能；不改現有 gate、功能可用性或付款權限。
 完整版本、逐項直接／間接依賴與證據見[依賴授權查核](../governance/community-dependency-boundaries-2026-10-20.md)及其 JSON 索引。
-單包、當期／全未來解鎖、持續支持及市場策略的比較，見[外觀贊助模式與市場策略提案](../research/appearance-support-models-market-plan-2026-10-20.md)。
+單包、當期／全未來解鎖、持續支持及市場策略的比較，見[外觀贊助模式與市場策略提案](../research/product/appearance-support-models-market-plan-2026-10-20.md)。
 
 本輪修訂：免費提供功能，預設只提供最小 default 外觀 set；未來額外自有 set 個別單次取得。
 現有模板完成度均不足以商品交付；下表是功能與依賴分類，不是可售清單。作品標準與點數評估見[外觀 set 標準草案](../governance/appearance-sets-plan.md)。

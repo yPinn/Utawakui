@@ -104,7 +104,7 @@ product-level choices remain in
 [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
 
 The adopted visual direction comes from
-[Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):
+[Visual System Foundation](docs/research/design/visual-system-foundation-2026-08-28.md):
 Direction B／Studio Library, Architectural Slate, semantic status signals and the
 Controlled Dossier folder interior. Folder exterior material remains owned by
 `AppFolderLayout`; feature surfaces own their content and approved artwork.

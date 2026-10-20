@@ -110,14 +110,14 @@ CPU 四 threads 的 65 窗口模型前端合計約 96.7 秒，窗口後取樣最
 
 ## 證據索引與文件分工
 
-| 文件                                                                                                                                          | 保留用途                                                            |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| [現行實作與方法研究](lyrics-audio-alignment-evaluation-2026-10-18.md)                                                                         | 上游方法、模型來源、初始環境預算；預算由實量更新，不再作容量承諾    |
-| [第一輪實測](lyrics-alignment-pilot-2026-10-18.md)                                                                                            | 英文／多語 pilot、分離與 post-snap 邊界、負向控制                   |
-| [中日韓完整起訖實測](lyrics-alignment-cjk-evaluation-2026-10-18.md)                                                                           | 完整起訖、活動、重複、段落、Qwen／CTC 完整環境成本                  |
-| [T1 A／B／C／D 實測](lyrics-t1-acoustic-segmentation-2026-10-19.md)                                                                           | 本提案主要量測、任務分母、HubertFA 版本／hash、二套件環境及失敗行為 |
-| [現行 timing contract](../contracts/lyrics-timing-contract.md)、[ADR 0010](../adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 目前仍有效的 timing 與 presentation 邊界；本提案不自動修改          |
-| [ADR 0014](../adr/0014-audio-python-runtime-family.md)、[架構圖](../architecture.md)                                                          | 現有 runtime／生命週期；新增能力須按正式變更更新                    |
+| 文件                                                                                                                                                | 保留用途                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [現行實作與方法研究](lyrics-audio-alignment-evaluation-2026-10-18.md)                                                                               | 上游方法、模型來源、初始環境預算；預算由實量更新，不再作容量承諾    |
+| [第一輪實測](lyrics-alignment-pilot-2026-10-18.md)                                                                                                  | 英文／多語 pilot、分離與 post-snap 邊界、負向控制                   |
+| [中日韓完整起訖實測](lyrics-alignment-cjk-evaluation-2026-10-18.md)                                                                                 | 完整起訖、活動、重複、段落、Qwen／CTC 完整環境成本                  |
+| [T1 A／B／C／D 實測](lyrics-t1-acoustic-segmentation-2026-10-19.md)                                                                                 | 本提案主要量測、任務分母、HubertFA 版本／hash、二套件環境及失敗行為 |
+| [現行 timing contract](../../contracts/lyrics-timing-contract.md)、[ADR 0010](../../adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 目前仍有效的 timing 與 presentation 邊界；本提案不自動修改          |
+| [ADR 0014](../../adr/0014-audio-python-runtime-family.md)、[架構圖](../../architecture.md)                                                          | 現有 runtime／生命週期；新增能力須按正式變更更新                    |
 
 模型授權與 upstream 來源沿用各證據報告的精確連結及版本，本文件未重新取得新模型或加入新的上游效果主張。ignored `tasks/` 的音訊、私有參考及原始輸出只供本機追查；正式實作前把 protocol、去識別合成 fixture、版本／hash 與執行方式移入可版本管理的評估工具，不能讓產品驗收依賴本機 scratch。
 

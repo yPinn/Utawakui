@@ -90,7 +90,7 @@ configuration boundaries are described in the investigation linked below.
 Compare matching session modes, library contents and executable builds. A fresh
 profile is not an OS-cold cache. The 2026-10-18 investigation, counterfactual
 controls and limitations are recorded in
-[Output first-frame profile investigation](../research/output-first-frame-profile-2026-10-18.md).
+[Output first-frame profile investigation](../research/engineering/output-first-frame-profile-2026-10-18.md).
 
 ## F5 2026-10-20 封裝快照
 

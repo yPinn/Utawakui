@@ -4,7 +4,7 @@
 單 deck monitor、互斥 handoff 與演出安排內的 BGM 控制的基礎 slice 已實作；app-owned OBS
 capture routing、confirmed-start session snapshot／公開投影、完整現場導覽與實際錄音聽感仍
 是 release gate。競品證據見
-[競品調查 §5.1](../research/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
+[競品調查 §5.1](../research/product/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
 
 ## 產品角色
 

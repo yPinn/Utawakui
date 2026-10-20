@@ -8,7 +8,7 @@
 
 ## Basic 與選配的判斷
 
-本報告將 Basic 解讀為[產品規格的預設核心](../spec.md#21-預設核心)。目前只有一份應用安裝 payload，沒有 Basic／Ext 可選安裝包；可選能力各自從 Settings 準備，見[安裝邊界](../operations/release-inventory.md#installer-profile-boundary)。
+本報告將 Basic 解讀為[產品規格的預設核心](../../spec.md#21-預設核心)。目前只有一份應用安裝 payload，沒有 Basic／Ext 可選安裝包；可選能力各自從 Settings 準備，見[安裝邊界](../../operations/release-inventory.md#installer-profile-boundary)。
 
 建議維持以下分工，而非把候選環境放進預設安裝：
 

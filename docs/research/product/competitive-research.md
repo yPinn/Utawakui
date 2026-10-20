@@ -2,7 +2,7 @@
 
 > 研究日期：2026-09-25（第四輪；首次調查為 2026-08-13；Setlista 版本補查：2026-10-02）。本文是產品與工程判斷用的 dated evidence，不構成法律意見，也不是 Utawakui 現況來源。
 >
-> Utawakui 的目前狀態以[產品規格](../spec.md)與[文件導覽](../README.md)為準。前三輪完整內容保留在 Git history；本輪只保留仍影響決策的現況、變化與證據限制。
+> Utawakui 的目前狀態以[產品規格](../../spec.md)與[文件導覽](../../README.md)為準。前三輪完整內容保留在 Git history；本輪只保留仍影響決策的現況、變化與證據限制。
 
 ## 1. 範圍與證據規則
 
@@ -199,7 +199,7 @@ EliteSand Pro 的優勢不只在 provider 數量；`1.0.6` 把日文發音分析
 歌詞展示權利。
 
 本輪只重新查證競品現況，沒有重新審核 YouTube、Twitch、Spotify 或各司法管轄區的政策。Utawakui
-的合規立場仍以[法律合規指南](../governance/legal-compliance.md)為準，不在本研究複製政策全文。
+的合規立場仍以[法律合規指南](../../governance/legal-compliance.md)為準，不在本研究複製政策全文。
 
 歌回救星新增 privacy notice 可證明其公開揭露已改善；它仍是廠商自述，不能代替封包觀察或實機
 隱私稽核。EliteSand Pro 與歌回救星的 native／model dependency 也仍受各自授權與散布條件約束。

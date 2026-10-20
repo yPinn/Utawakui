@@ -35,7 +35,7 @@ local tracks never appear.
 The [music identity contract](../contracts/music-identity-evidence-contract.md)
 forbids the shared identity layer from emitting canonical artist entities and
 requires an ADR before any identity is persisted. Its research basis
-([artwork provider evaluation](../research/online-artwork-provider-evaluation-2026-09-27.md))
+([artwork provider evaluation](../research/metadata/online-artwork-provider-evaluation-2026-09-27.md))
 already states the target shape: tracks keep their credited form, while credits
 link to a stable entity; merges without a trusted external id stay local,
 confirmed and reversible.
@@ -100,7 +100,7 @@ Played keep plain artist text.
 ### Artist photos
 
 Artist rows and pages show an artist photo, never a borrowed album cover
-([research](../research/artist-photo-sources-2026-10-05.md)). Resolution and
+([research](../research/metadata/artist-photo-sources-2026-10-05.md)). Resolution and
 precedence are:
 
 1. A user-selected local image.

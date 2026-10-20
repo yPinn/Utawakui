@@ -14,7 +14,7 @@
 [Visual Direction Options](visual-direction-options-2026-08-25.md)、
 [Visual System Foundation](visual-system-foundation-2026-08-28.md)、
 [UI Component Foundation](ui-component-foundation-2026-08-28.md) 或根目錄
-[DESIGN.md](../../DESIGN.md)。本文件只記錄比對結果與待 owner 決定的候選項目；
+[DESIGN.md](../../../DESIGN.md)。本文件只記錄比對結果與待 owner 決定的候選項目；
 任何採用都必須回到既有的 F8 owner checkpoint 流程逐項核准，不得因為本文件存在
 就視為已核准。
 

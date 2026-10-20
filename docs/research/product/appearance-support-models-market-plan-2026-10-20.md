@@ -1,13 +1,13 @@
 # 外觀贊助模式與市場策略比較
 
-研究紀錄：保留 2026-10-20 的模式比較、來源與限制，不在本文件續寫實作計畫。已收斂方向、作品標準與實作順序見[現行計畫](../governance/appearance-sets-plan.md)。
+研究紀錄：保留 2026-10-20 的模式比較、來源與限制，不在本文件續寫實作計畫。已收斂方向、作品標準與實作順序見[現行計畫](../../governance/appearance-sets-plan.md)。
 
 日期：2026-10-20（Asia/Taipei）。狀態：規劃提案，未實作或上架。
 方向已確認為功能免費、最小 default 外觀 set 免費、額外自有外觀 set 贊助解鎖；既有 gate、依賴與第三方權利條件仍適用。
-本提案接續[功能分層規劃](../archive/community-feature-tiers-plan-2026-10-20.md)，比較付款與未來作品範圍，並依[既有競品研究](competitive-research.md)補查市場策略。
+本提案接續[功能分層規劃](../../archive/community-feature-tiers-plan-2026-10-20.md)，比較付款與未來作品範圍，並依[既有競品研究](competitive-research.md)補查市場策略。
 
 依本輪明確化方向，未來採 by-set 單次取得，各 set 分別提供；不以「當期」或首發合集作為目前方案。現有模板完成度不足，不視為可售作品。
-日後的作品身份、交付、驗收與點數取捨見[外觀 set 標準草案](../governance/appearance-sets-plan.md)。
+日後的作品身份、交付、驗收與點數取捨見[外觀 set 標準草案](../../governance/appearance-sets-plan.md)。
 持續贊助先作自願支持，不綁每月新作、不出租既有演出外觀。暫不承諾一次付款包含所有未來作品。
 這是依單人社群專案、作品數量與維護負擔作出的建議，不是市場銷量或價格驗證結論。
 

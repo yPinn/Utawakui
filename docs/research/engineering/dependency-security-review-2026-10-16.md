@@ -13,8 +13,8 @@ The independent package pins `@neteasecloudmusicapienhanced/api` 4.40.1. It is u
 only by the explicit NetEase evaluation CLI and one-shot worker, outside the
 desktop startup path and production dependency closure. The product's NetEase
 acquisition adapter is a separate implementation; see the
-[acquisition contract](../contracts/netease-acquisition-contract.md). The
-[release inventory](../operations/release-inventory.md) and
+[acquisition contract](../../contracts/netease-acquisition-contract.md). The
+[release inventory](../../operations/release-inventory.md) and
 `electron-builder.yml` retain their existing package boundaries.
 
 Evidence was collected using read-only `gh api` open-alert queries, both npm

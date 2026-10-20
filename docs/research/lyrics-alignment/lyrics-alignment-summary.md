@@ -1,6 +1,6 @@
 # 歌詞音訊對齊：研究結論
 
-整理日期：2026-10-21。本頁集中跨批次研究的選型與未決項；產品可用狀態以[規格](../spec.md#3-目前功能現況)為準，實作邊界以[聲學估計契約](../contracts/lyrics-acoustic-estimate-contract.md)為準。
+整理日期：2026-10-21。本頁集中跨批次研究的選型與未決項；產品可用狀態以[規格](../../spec.md#3-目前功能現況)為準，實作邊界以[聲學估計契約](../../contracts/lyrics-acoustic-estimate-contract.md)為準。
 
 ## 目前結論
 
@@ -44,7 +44,7 @@ HubertFA單獨仍接受3／3片語錯配與3／3整句靜音目標；加內容�
 
 ## 環境、權重與開放條件
 
-本機研究流程不需要Qwen、Torch或GPU。9個固定資產下載合計778,532,833 bytes（約0.779GB）；這不含既有Node依賴、FFmpeg、解壓／安裝峰值或研究音訊，不能當完整環境容量。下載完成與資產驗證也不等於模型已載入；可執行步驟見[研究試用手冊](../operations/lyrics-alignment-research.md)。
+本機研究流程不需要Qwen、Torch或GPU。9個固定資產下載合計778,532,833 bytes（約0.779GB）；這不含既有Node依賴、FFmpeg、解壓／安裝峰值或研究音訊，不能當完整環境容量。下載完成與資產驗證也不等於模型已載入；可執行步驟見[研究試用手冊](../../operations/lyrics-alignment-research.md)。
 
 原HubertFA repo的Apache-2.0與small的既有授權證據分開記錄；特定HubertFA release權重及附帶字典的適用範圍仍未充分確認。這是證據未決，不是已證明禁止或侵權；原HubertFA也不能直接套用另一份GTSinger checkpoint的NC條款。開源、非商用或官方直下載不會自行補足未知範圍，詳見[權重查核](lyrics-hubertfa-fresh-2026-10-19.md#開源專案的非商用手動選配)。
 
@@ -57,4 +57,4 @@ HubertFA單獨仍接受3／3片語錯配與3／3整句靜音目標；加內容�
 | 新曲HubertFA／Qwen時間、錯配與授權artifact | [新曲配對報告](lyrics-hubertfa-fresh-2026-10-19.md)                       |
 | 漏詞警示、正常保留、試用與已知失敗         | [HubertFA＋small當輪報告](lyrics-hfa-small-listening-trial-2026-10-19.md) |
 | small誤拒與Qwen日文退步根因                | [根因與低成本消融](lyrics-root-causes-and-noncommercial-2026-10-19.md)    |
-| 其他模型／環境與早期測試                   | [研究索引](README.md#歌詞時間與聲學對齊)                                  |
+| 其他模型／環境與早期測試                   | [研究索引](../README.md#歌詞時間與聲學對齊)                               |

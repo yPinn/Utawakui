@@ -38,7 +38,7 @@ not this UI checklist.
 - [ ] Repeat the accepted LRCLIB flow with a legitimately held matching track:
       search, save, reload, segment edit, playback, pause, and seek. The prior live
       evidence is recorded in
-      [LRCLIB T2 validation](../research/lrclib-t2-live-validation-2026-08-24.md).
+      [LRCLIB T2 validation](../research/lyrics-providers/lrclib-t2-live-validation-2026-08-24.md).
 - [ ] Verify Lyrics Overlay T0／T1／T2 wrapping and progress through pause, seek,
       track change, reconnect, reduced motion, and missing-content fallback.
 - [ ] Verify Live Stage preserves the fixed lower-left typography and title-card

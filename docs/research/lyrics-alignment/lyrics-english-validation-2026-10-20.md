@@ -38,4 +38,4 @@
 
 可見 App／Browser Source 已驗證手動套用與停用同步影響既有 T2 樣式、來源 T2 優先、切換來源、校時變更後估計失效，以及受控安裝完整性失敗時保留 T1。漏詞警告在重新讀取估計後仍保留，產生候選不等於已套用。原始來源／音訊／模型雜湊未變更，沒有新模型下載。
 
-人工時間驗收維持 pending。這輪完成的是英文實驗路徑與保守回退，沒有解除權重分發、正式功能或預設下載 gate。操作方式見[試用手冊](../operations/lyrics-alignment-research.md)，契約見[獨立估計契約](../contracts/lyrics-acoustic-estimate-contract.md)。原始音訊、私人歌詞與可見視窗證據留在 ignored 本機 tasks，未隨文件分發。
+人工時間驗收維持 pending。這輪完成的是英文實驗路徑與保守回退，沒有解除權重分發、正式功能或預設下載 gate。操作方式見[試用手冊](../../operations/lyrics-alignment-research.md)，契約見[獨立估計契約](../../contracts/lyrics-acoustic-estimate-contract.md)。原始音訊、私人歌詞與可見視窗證據留在 ignored 本機 tasks，未隨文件分發。

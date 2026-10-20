@@ -4,7 +4,7 @@
 
 ## 研究問題
 
-[ADR 0022](../adr/0022-artist-identity-and-organization.md) 採用 MusicBrainz 作為 artist identity 的外部來源。實作前需要回答三件事：
+[ADR 0022](../../adr/0022-artist-identity-and-organization.md) 採用 MusicBrainz 作為 artist identity 的外部來源。實作前需要回答三件事：
 
 1. 以實際曲庫的演出者來說，MusicBrainz artist 搜尋的命中率有多少？
 2. 只靠名稱完全吻合，能不能安全地連到正確的 artist？

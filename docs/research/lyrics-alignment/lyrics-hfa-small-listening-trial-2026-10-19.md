@@ -22,11 +22,11 @@
 
 ## 直接聽查
 
-操作、標記與匯入步驟集中在[研究試用手冊](../operations/lyrics-alignment-research.md#直接聽查)；本輪選原53列中的15優先＋4漏詞對照，人工結果仍pending。
+操作、標記與匯入步驟集中在[研究試用手冊](../../operations/lyrics-alignment-research.md#直接聽查)；本輪選原53列中的15優先＋4漏詞對照，人工結果仍pending。
 
 ## 本機試用及下載
 
-驗證／推論／取消、固定資產下載及環境準備見[研究試用手冊](../operations/lyrics-alignment-research.md#本機試用及下載)。此流程與App正式gate分開，下載成功不表示已安裝或取得權重分發許可。
+驗證／推論／取消、固定資產下載及環境準備見[研究試用手冊](../../operations/lyrics-alignment-research.md#本機試用及下載)。此流程與App正式gate分開，下載成功不表示已安裝或取得權重分發許可。
 
 ## 證據與限制
 

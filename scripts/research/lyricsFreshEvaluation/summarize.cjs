@@ -97,7 +97,9 @@ async function summarize(root, outputFile) {
     ),
   });
   const previous = JSON.parse(
-      fs.readFileSync('docs/research/data/lyrics-qwen-quality-2026-10-19.json'),
+      fs.readFileSync(
+        'docs/research/lyrics-alignment/data/lyrics-qwen-quality-2026-10-19.json',
+      ),
     ),
     sourceHashes = {};
   for (const [file, before] of Object.entries(previous.sourceHashes)) {

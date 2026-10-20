@@ -13,14 +13,14 @@ ADR 0010 remains the canonical T0/T1/T2 baseline. The new estimate does not chan
 ## Context
 
 The current research synthesis is maintained in the
-[alignment conclusions](../research/lyrics-alignment-summary.md); dated reports
+[alignment conclusions](../research/lyrics-alignment/lyrics-alignment-summary.md); dated reports
 remain evidence for their own corpus and do not activate a production model.
 
 The requested improvement starts with matching lyric text and timed lines. Audio
 evidence may improve the start of a displayed word or phrase without establishing
 its sung end, correcting the line's location, or verifying that the text exists.
 
-The [research assessment](../research/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)
+The [research assessment](../research/lyrics-alignment/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)
 consolidates four evidence reports. HubertFA with existing Japanese reading tools
 is the preferred Mandarin/Japanese research candidate for this task. Its measured
 increment is approximately 0.466 GB when the tested Audio Python runtime exists.
@@ -89,11 +89,11 @@ Output integration require the later acceptance gates above.
 The second-phase private research CLI now connects the fixed candidate to this
 sidecar and validates bounded whole-song processing and cancellation. It remains
 outside the shipped application and has no activation or download entry. Its
-[evaluation](../research/lyrics-acoustic-phase2-2026-10-19.md) supports continued
+[evaluation](../research/lyrics-alignment/lyrics-acoustic-phase2-2026-10-19.md) supports continued
 research, while wrong-content and accompaniment acceptance still block automatic
 application. This does not accept a new product model profile.
 
-The subsequent [lifecycle implementation](../research/lyrics-acoustic-lifecycle-2026-10-19.md)
+The subsequent [lifecycle implementation](../research/lyrics-alignment/lyrics-acoustic-lifecycle-2026-10-19.md)
 adds separate manual preparation, actual load validation, repair, cancellation and
 retryable removal to the application host/scheduler and Settings. Its shipped
 catalog stays blocked; only isolated acceptance composition enables local pinned

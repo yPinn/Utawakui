@@ -172,7 +172,7 @@ padding. It serializes jobs with the existing scheduler class, validates local
 asset hashes and method identity, closes both workers before publication, and
 checks the deadline again after asset verification and in the final save guard.
 Research profile storage is independent of application activation or runtime
-installation. The [Phase 2 report](../research/lyrics-acoustic-phase2-2026-10-19.md)
+installation. The [Phase 2 report](../research/lyrics-alignment/lyrics-acoustic-phase2-2026-10-19.md)
 records actual quality, fallback, resource and cancellation evidence.
 
 The application now separately allowlists capability `lyrics-acoustic`, environment
@@ -203,7 +203,7 @@ The shipped catalog remains `productUse: blocked` with
 this gate is closed. A prepared environment does not enable the research method
 in the default sidecar loader or add a song producer. Model use, song-job admission
 and Output still require their separate gates. See the
-[lifecycle verification](../research/lyrics-acoustic-lifecycle-2026-10-19.md).
+[lifecycle verification](../research/lyrics-alignment/lyrics-acoustic-lifecycle-2026-10-19.md).
 
 The following song-generation boundary remains required before product integration.
 

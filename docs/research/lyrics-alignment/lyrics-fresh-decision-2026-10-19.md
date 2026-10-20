@@ -65,11 +65,11 @@
 | 授權證據不完整     | 原 HubertFA 實際 release、尚未鎖定的 SOFA checkpoint／字典                                                                                                                                                            | 維持 blocked；程式 MIT 或能下載不會補足特定權重權利                                                      |
 | 來源標示互相衝突   | [作者 allinone 權重 MIT 標示](https://huggingface.co/taejunkim/allinone)與[wrapper 的 Harmonix NC-SA 標示](https://github.com/openmirlab/all-in-one-infer/blob/main/src/allin1_infer/config/checkpoints.toml)         | 維持 blocked、待釐清；不直接斷言所有 allinone 權重均明文禁止商用                                         |
 
-產品目前不收費、使用者願承擔風險，都不會自行取得本產品缺少的使用／分發授權。GPL 等有條件開源不等於禁止商用；FFmpeg 等完整配方的分發義務須另履行。歌曲、錄音、歌詞的權利也與模型授權分開，不內建或公開散布此次研究曲庫。既有詳細判準見[權重 gate](lyrics-acoustic-weight-license-gate-2026-10-19.md)與[發行授權核對](../governance/release-license-review-2026-10-18.md)。
+產品目前不收費、使用者願承擔風險，都不會自行取得本產品缺少的使用／分發授權。GPL 等有條件開源不等於禁止商用；FFmpeg 等完整配方的分發義務須另履行。歌曲、錄音、歌詞的權利也與模型授權分開，不內建或公開散布此次研究曲庫。既有詳細判準見[權重 gate](lyrics-acoustic-weight-license-gate-2026-10-19.md)與[發行授權核對](../../governance/release-license-review-2026-10-18.md)。
 
 ## 人工抽查與採用條件
 
-本機入口 `.tmp/lyrics-new-eval/human-review/README.md`：53 列，正常案例的 29 句全部納入，確保非目標誤拒與長尾不被漏掉；另外 24 列為衍生案例目標／控制句。先獨立聽內容及標詞塊起音，再揭盲看 A／B 時間。所有列初始 pending；沒有代簽人工標註。音檔、候選結果、來源、UTF-16 詞塊、揭盲表都有身分驗證，竄換音訊或交換方法映射會拒絕匯入。操作與命令見[研究工具說明](../../scripts/research/lyricsFreshEvaluation/README.md)。
+本機入口 `.tmp/lyrics-new-eval/human-review/README.md`：53 列，正常案例的 29 句全部納入，確保非目標誤拒與長尾不被漏掉；另外 24 列為衍生案例目標／控制句。先獨立聽內容及標詞塊起音，再揭盲看 A／B 時間。所有列初始 pending；沒有代簽人工標註。音檔、候選結果、來源、UTF-16 詞塊、揭盲表都有身分驗證，竄換音訊或交換方法映射會拒絕匯入。操作與命令見[研究工具說明](../../../scripts/research/lyricsFreshEvaluation/README.md)。
 
 人工內容相符但原 Qwen 詞塊被 small 移除才計誤拒；唱了不同詞或未唱卻仍出詞塊才計誤接受。漏詞另算完整性。人工可判讀的起點用固定分母比較 ≤100ms、>500ms、>1000ms 與缺界，pending／uncertain 不進分母。來源 provider 的逐字時間不能代替人工真值。
 

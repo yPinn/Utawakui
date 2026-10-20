@@ -19,7 +19,7 @@
 | all-in-one 歌曲段落                    | 分析與內部 htdemucs 分離固定 CPU                                      | 驗證整條 GPU 推論鏈                | 不能只驗 Beat This! 就宣稱段落分析已加速；額外模型／環境依各自能力管理                                                     |
 | 文字規則、長句候選、來源映射與一般 DSP | CPU                                                                   | 先維持 CPU                         | 成本低；搬到 GPU 的傳輸與啟動成本可能抵銷收益                                                                              |
 
-程式依據：`electron/lib/vocalSeparation.js`、`electron/main/separationHandlers.js`、`electron/lib/config.js`、`src/components/settings/SeparationGpuSettingsRow.vue`、`scripts/research/lyricsAcoustic/frontend.cjs`、`electron/lib/lyricsAcoustic/probe.js`、`scripts/research/lyricsAcoustic/decoder.py`、`electron/lib/lyricsResearch/engine.js`、`scripts/research/lyricsFreshEvaluation/trial-assets.json`、`resources/audio-processing/structure_analysis_worker.py` 與現有 analysis lock。既有分離決策見 [ADR-0017](../adr/0017-directml-execution-provider-for-mdx-separation.md)。
+程式依據：`electron/lib/vocalSeparation.js`、`electron/main/separationHandlers.js`、`electron/lib/config.js`、`src/components/settings/SeparationGpuSettingsRow.vue`、`scripts/research/lyricsAcoustic/frontend.cjs`、`electron/lib/lyricsAcoustic/probe.js`、`scripts/research/lyricsAcoustic/decoder.py`、`electron/lib/lyricsResearch/engine.js`、`scripts/research/lyricsFreshEvaluation/trial-assets.json`、`resources/audio-processing/structure_analysis_worker.py` 與現有 analysis lock。既有分離決策見 [ADR-0017](../../adr/0017-directml-execution-provider-for-mdx-separation.md)。
 
 ## 本機確認與限制
 
