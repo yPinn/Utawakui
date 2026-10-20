@@ -67,8 +67,10 @@ export function createLocalArtistSummary(
   if (!identity) return null;
 
   const artistIds = artistIndex?.trackArtistIds?.[currentTrack?.id];
+  // Main preserves performer credit order; the card represents its first artist,
+  // while the track and credit links retain the complete collaboration.
   const indexedArtist =
-    Array.isArray(artistIds) && artistIds.length === 1
+    Array.isArray(artistIds) && artistIds.length > 0
       ? artistIndex?.artists?.find((artist) => artist.id === artistIds[0])
       : null;
   const indexedTrackIds = indexedArtist

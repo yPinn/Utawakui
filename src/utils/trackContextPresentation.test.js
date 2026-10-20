@@ -138,6 +138,74 @@ describe('track context presentation', () => {
     });
   });
 
+  it('uses the first credited artist for collaborations while preserving full credits', () => {
+    const current = Object.freeze({
+      id: 'collaboration',
+      artist: '高爾宣 OSN, Skot Suyama 陶山',
+      album: '#osnrap',
+    });
+    const solo = { id: 'solo', artist: 'OSN', album: 'Another album' };
+    const guestSolo = { id: 'guest-solo', artist: 'Skot Suyama 陶山' };
+    const index = {
+      artists: [
+        {
+          id: 'artist-guest',
+          name: 'Skot Suyama 陶山',
+          trackIds: [current.id, guestSolo.id],
+        },
+        {
+          id: 'artist-primary',
+          name: '高爾宣 OSN',
+          photoUrl: 'utawakui-media://artist/primary/photo.jpg',
+          trackIds: [current.id, solo.id],
+        },
+      ],
+      trackArtistIds: {
+        [current.id]: Object.freeze(['artist-primary', 'artist-guest']),
+      },
+    };
+
+    expect(
+      createLocalArtistSummary(current, [current, solo, guestSolo], index),
+    ).toEqual({
+      artistId: 'artist-primary',
+      name: '高爾宣 OSN',
+      photoUrl: 'utawakui-media://artist/primary/photo.jpg',
+      trackCount: 2,
+      albumCount: 2,
+      tracks: [current, solo],
+    });
+    expect(current.artist).toBe('高爾宣 OSN, Skot Suyama 陶山');
+    expect(index.trackArtistIds[current.id]).toEqual([
+      'artist-primary',
+      'artist-guest',
+    ]);
+  });
+
+  it.each([
+    null,
+    { artists: [], trackArtistIds: {} },
+    {
+      artists: [{ id: 'guest', name: 'Guest', trackIds: ['current'] }],
+      trackArtistIds: { current: ['missing-primary', 'guest'] },
+    },
+  ])(
+    'keeps the complete credit when the primary artist cannot be resolved (%j)',
+    (index) => {
+      const current = {
+        id: 'current',
+        artist: 'Singer, Guest',
+        album: 'Album',
+      };
+      expect(createLocalArtistSummary(current, [current], index)).toEqual({
+        name: 'Singer, Guest',
+        trackCount: 1,
+        albumCount: 1,
+        tracks: [current],
+      });
+    },
+  );
+
   it('projects local track capabilities in natural language without overstating playback state', () => {
     expect(
       createTrackReadiness(
