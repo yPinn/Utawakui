@@ -136,7 +136,7 @@ handler 提供讀取與刪除相容，不屬於本搜尋契約。
 
 跨來源候選使用 `providerId:id` 的 stable `candidateKey`，避免不同來源相同數字 id 互相覆寫。
 Renderer 維持單一 acquisition state owner，保存展開列與 saving state 時均使用此 key。
-同一 recording group 預設只顯示推薦來源，使用者可明確展開替代來源。
+同一 recording group 直接列出推薦與其他來源；搜尋完成預設展開首組推薦來源的預覽，其他列由使用者展開。
 
 Aggregate 的每筆 `providerStatuses` 只投影 provider、status 與 reason。Renderer 不為個別
 來源的正常零結果或 `unavailable`（例如 Better Lyrics `cache-miss`）增加提示；Better Lyrics
