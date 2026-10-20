@@ -670,6 +670,8 @@
   --ui-button-group-border: var(--ui-color-border);
   --ui-button-group-bg-raised: var(--ui-color-surface-raised);
   --ui-button-group-shadow-raised: var(--ui-shadow-overlay);
+  --ui-segmented-selected-foreground: var(--ui-color-text);
+  --ui-segmented-selected-indicator: var(--ui-color-control-boundary);
   --ui-checkbox-size: var(--ui-space-4);
   --ui-switch-track-width: var(--ui-space-6);
   --ui-switch-track-height: var(--ui-space-4);
@@ -1016,6 +1018,9 @@
   --ui-color-border: var(--ui-color-chrome-border);
   --ui-color-border-strong: var(--ui-palette-neutral-500);
   --ui-color-control-boundary: var(--ui-palette-neutral-300);
+
+  --ui-segmented-selected-foreground: var(--ui-color-text);
+  --ui-segmented-selected-indicator: var(--ui-color-control-boundary);
 
   --ui-color-accent: var(--ui-palette-indigo-400);
   --ui-color-accent-hover: var(--ui-palette-indigo-300);

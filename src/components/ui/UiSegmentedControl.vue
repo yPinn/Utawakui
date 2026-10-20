@@ -261,7 +261,20 @@ function moveFocus(item, event) {
 
 .ui-segmented-control__option--selected {
   background: var(--ui-color-surface-selected);
-  color: var(--ui-color-accent);
+  color: var(--ui-segmented-selected-foreground);
+  box-shadow: inset 0 0 0 var(--ui-border-width)
+    var(--ui-segmented-selected-indicator);
   font-weight: var(--ui-font-weight-bold);
+}
+
+@media (forced-colors: active) {
+  .ui-segmented-control__option--selected {
+    outline: var(--ui-border-width) solid Highlight;
+    outline-offset: var(--ui-focus-offset-inset);
+  }
+
+  .ui-segmented-control__option:focus-visible {
+    outline: var(--ui-focus-width) solid Highlight;
+  }
 }
 </style>

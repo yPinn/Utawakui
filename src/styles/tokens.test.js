@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(548);
+    expect(uniqueNames.size).toBe(550);
     expect(uniqueNames).toContain('--ui-scrollbar-visual-reserve');
     expect(uniqueNames).toContain('--ui-action-menu-max-block-size');
     expect(uniqueNames).toContain('--ui-textarea-font-size');
@@ -629,6 +629,7 @@ describe('Studio Library workspace prototype isolation', () => {
       ['--ui-color-text', '--ui-color-surface'],
       ['--ui-color-text', '--ui-color-surface-raised'],
       ['--ui-color-text', '--ui-color-surface-selected'],
+      ['--ui-segmented-selected-foreground', '--ui-color-surface-selected'],
       ['--ui-color-text-muted', '--ui-color-canvas'],
       ['--ui-color-text-muted', '--ui-color-surface'],
       ['--ui-color-text-muted', '--ui-color-surface-selected'],
@@ -688,6 +689,20 @@ describe('Studio Library workspace prototype isolation', () => {
         '--ui-color-surface-hover',
         '--ui-color-surface-selected',
       ]) {
+        expect(
+          contrastRatio(
+            resolveColor('--ui-segmented-selected-foreground', definitions),
+            resolveColor('--ui-color-surface-selected', definitions),
+          ),
+          'segmented selection text',
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          contrastRatio(
+            resolveColor('--ui-segmented-selected-indicator', definitions),
+            resolveColor(background, definitions),
+          ),
+          `segmented selection on ${background}`,
+        ).toBeGreaterThanOrEqual(3);
         expect(
           contrastRatio(
             resolveColor('--ui-color-control-boundary', definitions),

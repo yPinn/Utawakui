@@ -229,7 +229,8 @@ describe('UiSegmentedControl', () => {
     for (const token of [
       '--ui-control-height',
       '--ui-color-surface-selected',
-      '--ui-color-accent',
+      '--ui-segmented-selected-foreground',
+      '--ui-segmented-selected-indicator',
       '--ui-color-focus',
       '--ui-motion-duration-feedback',
     ]) {
