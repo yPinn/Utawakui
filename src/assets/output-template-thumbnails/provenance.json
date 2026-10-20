@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "basis": "docs/governance/data/appearance-template-audit-2026-10-20.json",
+  "generation": {
+    "tool": "scripts/output-appearance-audit.mjs",
+    "source": "self-authored synthetic fixtures; no private media",
+    "overwriteBundledAssets": false,
+    "requiredReview": "Inspect content, rights, crop, dimensions and runtime match before a separately authorized replacement"
+  },
+  "templates": {
+    "queue-board": {
+      "file": "queue-board.jpg",
+      "sha256": "9f1f04006e72b066f6b558eb7a15c6e9cb60ec5bc6fcd4ed5bc9acf7ca8edc14",
+      "content": "legacy-programmatic-capture",
+      "rights": "derived-project-artwork-per-legacy-readme",
+      "delivery": "pending-current-runtime-review",
+      "humanReview": "not-tested"
+    },
+    "karaoke-stack": {
+      "file": "karaoke-stack.jpg",
+      "sha256": "5eec604553c811c36d0da4f59cf2b98d1a4717a0e0996a6febc86c599b6b9b9f",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested"
+    },
+    "kinetic-pop": {
+      "file": "kinetic-pop.jpg",
+      "sha256": "cdd5e6945e6c2876c76c528d59815a79fc500b99df9d530eba838c5e92f528a5",
+      "content": "legacy-programmatic-capture",
+      "rights": "derived-project-artwork-per-legacy-readme",
+      "delivery": "pending-current-runtime-review",
+      "humanReview": "not-tested"
+    },
+    "ornate-vertical": {
+      "file": "ornate-vertical.jpg",
+      "sha256": "e2255408ec2aaf7160f481de33059c388279d82b1f17deed6ea671f5de8abdba",
+      "content": "legacy-programmatic-capture",
+      "rights": "derived-project-artwork-per-legacy-readme",
+      "delivery": "pending-current-runtime-review",
+      "humanReview": "not-tested"
+    },
+    "live-stage": {
+      "file": "live-stage.jpg",
+      "sha256": "458710dfb75d68aad7c2d74beee3555e54e3f22a04069d2f76a2b242c9baa27d",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested"
+    },
+    "manga-frame": {
+      "file": "manga-frame.jpg",
+      "sha256": "535a111b87dec823ad1379b07c5cdb55d5fa1893fe261b2702e475d06d79889d",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested"
+    },
+    "art-card": {
+      "file": "art-card.jpg",
+      "sha256": "9c48dd7a88a178e8f062a208b06422f49cf60d49bda2632f5cd04bcd772b6731",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested"
+    },
+    "cover-player": {
+      "file": "cover-player.jpg",
+      "sha256": "8ab4d890bec4ae9edc3466e384af0b24ec4b769e542bef96f0c5087deae0beff",
+      "content": "legacy-programmatic-capture",
+      "rights": "derived-project-artwork-per-legacy-readme",
+      "delivery": "pending-current-runtime-review",
+      "humanReview": "not-tested"
+    }
+  }
+}

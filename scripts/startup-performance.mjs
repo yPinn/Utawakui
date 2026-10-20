@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import featureGates from '../shared/featureGates.json' with { type: 'json' };
 import startupTraceValues from '../shared/startupTraceValues.json' with { type: 'json' };
+import outputRuntimeValues from '../shared/outputRuntimeValues.json' with { type: 'json' };
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const DEFAULT_EXE = path.resolve('release', 'win-unpacked', 'electron.exe');
@@ -155,6 +156,7 @@ export function parseArguments(argv) {
     warmRuns: 5,
     timeoutMs: 60_000,
     probeSession: 'profile',
+    outputPort: outputRuntimeValues.defaultPort,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index];
@@ -167,6 +169,15 @@ export function parseArguments(argv) {
       options.warmRuns = requirePositiveInteger(value, 'warmRuns');
     } else if (flag === '--timeout-ms') {
       options.timeoutMs = requirePositiveInteger(value, 'timeoutMs');
+    } else if (flag === '--port') {
+      const port = Number(value);
+      if (
+        !Number.isSafeInteger(port) ||
+        port < outputRuntimeValues.minPort ||
+        port > outputRuntimeValues.maxPort
+      )
+        throw Error('port outside Output range');
+      options.outputPort = port;
     } else if (flag === '--probe-session') {
       if (!['profile', 'memory'].includes(value)) {
         throw new TypeError('probe-session must be profile or memory');
@@ -180,7 +191,7 @@ export function parseArguments(argv) {
   return options;
 }
 
-async function seedProfile(profilePath) {
+async function seedProfile(profilePath, outputPort) {
   await fs.mkdir(profilePath, { recursive: true });
   const libraryPath = path.join(profilePath, 'library');
   await fs.mkdir(libraryPath, { recursive: true });
@@ -201,7 +212,7 @@ async function seedProfile(profilePath) {
           },
           outputRuntime: {
             autoStart: true,
-            port: 8700,
+            port: outputPort,
             displayDelayMs: 0,
           },
         },
@@ -232,6 +243,12 @@ export function buildStartupArguments({
   ];
 }
 
+export function buildStartupEnvironment(environment = process.env) {
+  const result = { ...environment };
+  delete result.ELECTRON_RUN_AS_NODE;
+  return result;
+}
+
 function runPackagedApp({
   exePath,
   profilePath,
@@ -243,7 +260,7 @@ function runPackagedApp({
     const child = spawn(
       exePath,
       buildStartupArguments({ profilePath, tracePath, probeSession }),
-      { stdio: 'ignore', windowsHide: true },
+      { stdio: 'ignore', windowsHide: true, env: buildStartupEnvironment() },
     );
     let timedOut = false;
     const timeout = setTimeout(() => {
@@ -288,7 +305,7 @@ async function main() {
       tracesRoot,
       `${String(index + 1).padStart(2, '0')}-${run.scenario}.jsonl`,
     );
-    await seedProfile(profilePath);
+    await seedProfile(profilePath, options.outputPort);
     process.stderr.write(
       `[startup-performance] ${index + 1}/${plan.length} ${run.scenario}\n`,
     );
@@ -317,6 +334,7 @@ async function main() {
       storageClass: 'not-measured',
       libraryProfile: 'isolated-empty',
       probeSession: options.probeSession,
+      outputPort: options.outputPort,
     },
     runCounts: {
       cold: options.coldRuns,

@@ -4,8 +4,46 @@ import {
   getOutputTemplateThumbnail,
 } from './outputTemplateThumbnails.js';
 import { OUTPUT_TEMPLATES } from '../constants/outputTemplates.js';
+import provenance from '../assets/output-template-thumbnails/provenance.json';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 describe('bundled output template thumbnails', () => {
+  it('requires one traceable content record per active template without blessing filename-only matches', () => {
+    expect(Object.keys(provenance.templates).sort()).toEqual(
+      OUTPUT_TEMPLATES.map((p) => p.id).sort(),
+    );
+    const blocked = [];
+    for (const preset of OUTPUT_TEMPLATES) {
+      const record = provenance.templates[preset.id];
+      expect(record.file).toBe(`${preset.id}.jpg`);
+      const bytes = readFileSync(
+        new URL(
+          `../assets/output-template-thumbnails/${record.file}`,
+          import.meta.url,
+        ),
+      );
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+        record.sha256,
+      );
+      expect(record.humanReview).toBe('not-tested');
+      if (record.content === 'style-reference') {
+        blocked.push(preset.id);
+        expect(record.delivery).toBe('blocked-G01');
+        expect(record.rights).toBe('unverified');
+      } else {
+        expect(record.content).toBe('legacy-programmatic-capture');
+        expect(record.delivery).toBe('pending-current-runtime-review');
+      }
+    }
+    expect(blocked.sort()).toEqual([
+      'art-card',
+      'karaoke-stack',
+      'live-stage',
+      'manga-frame',
+    ]);
+    expect(provenance.generation.overwriteBundledAssets).toBe(false);
+  });
   it('supplies a static asset for every registered template', () => {
     for (const preset of OUTPUT_TEMPLATES) {
       expect(getOutputTemplateThumbnail(preset.id), preset.id).toBeTruthy();

@@ -6,6 +6,7 @@ import {
   summarizeRuns,
   buildStartupArguments,
   parseArguments,
+  buildStartupEnvironment,
 } from './startup-performance.mjs';
 
 const completeTrace = (offset = 0) => [
@@ -79,6 +80,23 @@ const completeTrace = (offset = 0) => [
 ];
 
 describe('startup performance harness', () => {
+  it('allows an explicit in-range isolated Output port instead of competing with the user App', () => {
+    expect(parseArguments(['--port', '18700']).outputPort).toBe(18700);
+    for (const port of ['0', '49152', 'x'])
+      expect(() => parseArguments(['--port', port])).toThrow();
+  });
+  it('launches Electron even when the agent parent is running in Node mode', () => {
+    const original = {
+      ELECTRON_RUN_AS_NODE: '1',
+      SYSTEMROOT: 'Windows',
+      SYNTHETIC: 'keep',
+    };
+    expect(buildStartupEnvironment(original)).toEqual({
+      SYSTEMROOT: 'Windows',
+      SYNTHETIC: 'keep',
+    });
+    expect(original.ELECTRON_RUN_AS_NODE).toBe('1');
+  });
   it('rejects an older executable that ignores the requested memory-probe flag', () => {
     const legacy = completeTrace();
     expect(() =>

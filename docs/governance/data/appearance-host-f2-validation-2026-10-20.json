@@ -1,0 +1,476 @@
+{
+  "version": 1,
+  "phase": "F2",
+  "date": "2026-10-20",
+  "source": {
+    "head": "a0a5374da94447b7ceffaf95db22a8162963aa2b",
+    "worktree": "dirty; F2 changes uncommitted, other existing work preserved",
+    "files": [
+      {
+        "file": "overlay/shared/lifecycle.mjs",
+        "sha256": "39f7250832e59a9551de8346ba163d61d50ca8f66d283d3161cc0c8fc05e4b9d"
+      },
+      {
+        "file": "overlay/shared/appearance.mjs",
+        "sha256": "79f009846c72603ba8f6626448916d3e2d05cd41a705b6e9244dbaeeffaeca88"
+      },
+      {
+        "file": "overlay/shared/runtime.mjs",
+        "sha256": "78ab3664780252800c52f1d4503e0249e8cdb03da71a875863d19315a2a7ce66"
+      },
+      {
+        "file": "overlay/lyrics/lyrics.mjs",
+        "sha256": "77b5f6f876a4dc060223e540952abd8fd674e6e8bc4ef31ea4d4475e6105175b"
+      },
+      {
+        "file": "overlay/setlist/setlist.mjs",
+        "sha256": "2fcd6f65052c7f1c6280f8f0e95dd34c8dc1fb6ee6a4d5bb786a25d6fec51d3c"
+      },
+      {
+        "file": "overlay/setlist/setlistMotion.mjs",
+        "sha256": "2f46d592c7196cc4c75a0cb2d50679664e61133a52a325bf15077c73179b0b8f"
+      },
+      {
+        "file": "overlay/now-playing/now-playing.mjs",
+        "sha256": "b0bea1bd9d4d80b8e910d1a35aca198228ff38314dd2df8232a580b619901d57"
+      },
+      {
+        "file": "overlay/now-playing/artworkMotion.mjs",
+        "sha256": "172c40188bb0fe2f264f9267ec4831ea7c6d97087b891c45d23405fb9eb7eecf"
+      },
+      {
+        "file": "electron/lib/outputServer/http.js",
+        "sha256": "696057194e015b27a6f8b4815538ef805d1a8224abc56a04b5a29db3222d0ea1"
+      }
+    ]
+  },
+  "tests": {
+    "files": 80,
+    "passed": 872,
+    "failed": 0,
+    "raw": "tasks/output-f2-verified-20261020.json"
+  },
+  "coverage": {
+    "scope": [
+      "overlay/shared/lifecycle.mjs",
+      "overlay/shared/appearance.mjs",
+      "overlay/shared/runtime.mjs"
+    ],
+    "statements": 95.01,
+    "branches": 86.62,
+    "functions": 94.28,
+    "lines": 98.67,
+    "hostLines": 100,
+    "raw": "tasks/output-f2-final-coverage-20261020"
+  },
+  "f1": {
+    "templates": 8,
+    "scenarios": 32,
+    "issues": 0
+  },
+  "visibleElectron": {
+    "electron": "43.7.8",
+    "chrome": "150.0.7871.250",
+    "node": "24.21.0",
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "evidence": "visible-electron-browser-source",
+    "obs": "not-tested",
+    "javascriptErrors": 0,
+    "raw": "tasks/output-f2-browser-20261020/report.json",
+    "baseline": [
+      {
+        "file": "overlay/shared/runtime.mjs",
+        "baseline": "1a1120be1d040ee4d76efec528032e650b06fcfbb114fe6ae38c0bd39d233cdc",
+        "f2": "78ab3664780252800c52f1d4503e0249e8cdb03da71a875863d19315a2a7ce66"
+      },
+      {
+        "file": "overlay/shared/appearance.mjs",
+        "baseline": "0479a82cbd76dd8d56ba4872d0ddb598e72e197ceecf32fe8e7e46168cbac30c",
+        "f2": "79f009846c72603ba8f6626448916d3e2d05cd41a705b6e9244dbaeeffaeca88"
+      },
+      {
+        "file": "overlay/lyrics/lyrics.mjs",
+        "baseline": "2472e5ca6ee832c04173f7263c303dcd10ca26962159cfddd1d105902f0f2868",
+        "f2": "77b5f6f876a4dc060223e540952abd8fd674e6e8bc4ef31ea4d4475e6105175b"
+      },
+      {
+        "file": "overlay/setlist/setlist.mjs",
+        "baseline": "df28a0ac9cc7a411a88598511362effaabc03b9bead2cd2bd2d58dae7af7dd15",
+        "f2": "2fcd6f65052c7f1c6280f8f0e95dd34c8dc1fb6ee6a4d5bb786a25d6fec51d3c"
+      },
+      {
+        "file": "overlay/setlist/setlistMotion.mjs",
+        "baseline": "d8d42221d7e323323fa6beb704bc7df45f7392694d9ebbf34e00d1d2186a1b1f",
+        "f2": "2f46d592c7196cc4c75a0cb2d50679664e61133a52a325bf15077c73179b0b8f"
+      },
+      {
+        "file": "overlay/now-playing/now-playing.mjs",
+        "baseline": "f356a9921a65a33cfc26aa410d70881db9c85bd8567e4892bbb4bb7ccbae9d99",
+        "f2": "b0bea1bd9d4d80b8e910d1a35aca198228ff38314dd2df8232a580b619901d57"
+      },
+      {
+        "file": "overlay/now-playing/artworkMotion.mjs",
+        "baseline": "636d597b51a3db920ea7a95813247e68f1c173cfff42ebd5b4d9d9fde82ea537",
+        "f2": "172c40188bb0fe2f264f9267ec4831ea7c6d97087b891c45d23405fb9eb7eecf"
+      }
+    ],
+    "conditions": {
+      "playbackStatus": "paused",
+      "positionMs": 5000,
+      "timing": "T1",
+      "initialMotion": "reduce",
+      "widgetZoom": 1,
+      "lyricsZoom": 0.75,
+      "lyricsCssViewport": "1920x1080",
+      "lyricsCapturePixels": "1440x810",
+      "background": "#202020"
+    },
+    "cases": [
+      {
+        "template": "queue-board",
+        "mode": "f2",
+        "dimensions": {
+          "width": 480,
+          "height": 810
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 1,
+        "capturePixels": {
+          "width": 480,
+          "height": 810
+        },
+        "viewport": {
+          "width": 480,
+          "height": 810,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 388800,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-queue-board.png",
+          "sha256": "78ae0c72360f084a8900026af62c1bb9f8fe9cbd74449870a47eed368cc3fcb1"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-queue-board.png",
+          "sha256": "78ae0c72360f084a8900026af62c1bb9f8fe9cbd74449870a47eed368cc3fcb1"
+        }
+      },
+      {
+        "template": "karaoke-stack",
+        "mode": "f2",
+        "dimensions": {
+          "width": 1920,
+          "height": 1080
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 0.75,
+        "capturePixels": {
+          "width": 1440,
+          "height": 810
+        },
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 1166400,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-karaoke-stack.png",
+          "sha256": "0f7fce85923f6ba2b92171ee79ac7f5aeea598bca818e80d1128b52fbb5b6db6"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-karaoke-stack.png",
+          "sha256": "0f7fce85923f6ba2b92171ee79ac7f5aeea598bca818e80d1128b52fbb5b6db6"
+        }
+      },
+      {
+        "template": "kinetic-pop",
+        "mode": "f2",
+        "dimensions": {
+          "width": 1920,
+          "height": 1080
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 0.75,
+        "capturePixels": {
+          "width": 1440,
+          "height": 810
+        },
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 1166400,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-kinetic-pop.png",
+          "sha256": "e1b906da86c9abbdaf204287d5a7902f67193f6d1b334ea23124297d7e452946"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-kinetic-pop.png",
+          "sha256": "e1b906da86c9abbdaf204287d5a7902f67193f6d1b334ea23124297d7e452946"
+        }
+      },
+      {
+        "template": "ornate-vertical",
+        "mode": "f2",
+        "dimensions": {
+          "width": 1920,
+          "height": 1080
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 0.75,
+        "capturePixels": {
+          "width": 1440,
+          "height": 810
+        },
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 1166400,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-ornate-vertical.png",
+          "sha256": "2ab8fad01801bb3931dc3f5d09cf5d663c752deacb74894bdc7601fe3b59068c"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-ornate-vertical.png",
+          "sha256": "2ab8fad01801bb3931dc3f5d09cf5d663c752deacb74894bdc7601fe3b59068c"
+        }
+      },
+      {
+        "template": "live-stage",
+        "mode": "f2",
+        "dimensions": {
+          "width": 1920,
+          "height": 1080
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "missing-installed-font-css-fallback",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 0.75,
+        "capturePixels": {
+          "width": 1440,
+          "height": 810
+        },
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "reduced": true
+        },
+        "fontFallback": "\"F2 Missing Font Example\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 1166400,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-live-stage.png",
+          "sha256": "b0e281818486e397186505acb7ebe5ed7af9c7dc94a195e64910af8fb383cb27"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-live-stage.png",
+          "sha256": "b0e281818486e397186505acb7ebe5ed7af9c7dc94a195e64910af8fb383cb27"
+        }
+      },
+      {
+        "template": "manga-frame",
+        "mode": "f2",
+        "dimensions": {
+          "width": 1920,
+          "height": 1080
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 0.75,
+        "capturePixels": {
+          "width": 1440,
+          "height": 810
+        },
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 1166400,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-manga-frame.png",
+          "sha256": "6a054f8c3f40231cb67963268f55778644607c534680f1a39673c36bde596cf8"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-manga-frame.png",
+          "sha256": "6a054f8c3f40231cb67963268f55778644607c534680f1a39673c36bde596cf8"
+        }
+      },
+      {
+        "template": "art-card",
+        "mode": "f2",
+        "dimensions": {
+          "width": 480,
+          "height": 270
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 1,
+        "capturePixels": {
+          "width": 480,
+          "height": 270
+        },
+        "viewport": {
+          "width": 480,
+          "height": 270,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 129600,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-art-card.png",
+          "sha256": "d024aacc82266fa847d13e73e9a68bd8da848f20d21cb5f39ea8e57349a11f65"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-art-card.png",
+          "sha256": "d024aacc82266fa847d13e73e9a68bd8da848f20d21cb5f39ea8e57349a11f65"
+        }
+      },
+      {
+        "template": "cover-player",
+        "mode": "f2",
+        "dimensions": {
+          "width": 480,
+          "height": 540
+        },
+        "checks": [
+          "loaded-config",
+          "F1-paused-content",
+          "font-ready",
+          "declared-viewport",
+          "reduced-motion-initial",
+          "native-motion-toggle",
+          "hidden-latest-only-resume",
+          "reconnect-new-boot-epoch-revision-zero",
+          "pagehide-closes-websocket"
+        ],
+        "zoomFactor": 1,
+        "capturePixels": {
+          "width": 480,
+          "height": 540
+        },
+        "viewport": {
+          "width": 480,
+          "height": 540,
+          "reduced": true
+        },
+        "baselinePixelComparison": {
+          "changedPixels": 0,
+          "totalPixels": 259200,
+          "ratio": 0
+        },
+        "baselineImage": {
+          "file": "tasks/output-f2-browser-20261020/baseline-cover-player.png",
+          "sha256": "4675e8488b4e16db6cb332f296218223295e9155b89b587402f5881a1063baff"
+        },
+        "f2Image": {
+          "file": "tasks/output-f2-browser-20261020/f2-cover-player.png",
+          "sha256": "4675e8488b4e16db6cb332f296218223295e9155b89b587402f5881a1063baff"
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "Real OBS, transparent-alpha composition and long-duration performance not tested.",
+    "Pixel parity is for one fixed paused/reduced-motion scenario, not every animation frame.",
+    "Font readiness rejection/error/delay are unit-tested; visible missing-family fallback is Live Stage only.",
+    "F3 preview parity, template art, payment and remote packs not implemented."
+  ]
+}

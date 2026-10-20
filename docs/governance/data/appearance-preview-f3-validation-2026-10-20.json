@@ -1,0 +1,868 @@
+{
+  "version": 1,
+  "phase": "F3",
+  "date": "2026-10-20",
+  "head": "a0a5374da94447b7ceffaf95db22a8162963aa2b",
+  "worktree": "dirty; uncommitted F3 implementation, existing unrelated work preserved",
+  "sources": [
+    {
+      "file": "shared/presentation/outputPreviewScene.mjs",
+      "sha256": "4046bf9188786cd58092c5f70445c848d8ffeddee80c0abb10646d659671d42e"
+    },
+    {
+      "file": "overlay/shared/preview.mjs",
+      "sha256": "698755f7a8467a074a672619caccc01c5f0cf90c7597cee7ea8cf5f2a7cb3b8d"
+    },
+    {
+      "file": "overlay/lyrics/lyrics.mjs",
+      "sha256": "5f418d1d63de6bd0ba2001b8f796e6eaaadccef7e0fcbf0506a307b11753e194"
+    },
+    {
+      "file": "overlay/setlist/setlist.mjs",
+      "sha256": "0cd1ab5ea32d5a7d056b3c236dc4ace92e87cf33ddecf9a3064a3df6a91178ec"
+    },
+    {
+      "file": "overlay/now-playing/now-playing.mjs",
+      "sha256": "d5ff7a40293ac956368dbbd51f2f5029c0da11009f46db42d479b53a94f4e2ae"
+    },
+    {
+      "file": "src/constants/outputTemplates.js",
+      "sha256": "3cfbbbd0d7996b0089c83a30c48c860253e6d704aba491670dc2ca07521153bd"
+    },
+    {
+      "file": "src/constants/outputPreviewLimitations.js",
+      "sha256": "4a4e4ece1c42082a320f58a6a8a8c71bb39d8c76c53ca6a8b540f8190c0da33f"
+    },
+    {
+      "file": "src/components/output/ObsTemplateMockup.vue",
+      "sha256": "21cdb7ef01b9ffa6dc97e00d13c6eb2010ad3f088199e2f05fb789d370c9cb46"
+    },
+    {
+      "file": "src/components/output/ObsTemplatePreviewStage.vue",
+      "sha256": "bc207d7feebb2492c009f687f993345eb56565e58f8aa0bf8db328ee6c1fa7fc"
+    },
+    {
+      "file": "src/components/output/ObsOverlayPreview.vue",
+      "sha256": "1a86d701589e63ac543d3c6af378d1ac05af40b763216fe307f507cf83d36e1c"
+    },
+    {
+      "file": "src/components/output/previews/KaraokeStackPreview.vue",
+      "sha256": "933b5f1ba0bddb02ef660a3cfe4c390ed07a5c6707ad34fc4ead0e4910e68539"
+    },
+    {
+      "file": "src/components/output/previews/KineticPopPreview.vue",
+      "sha256": "49db47ab02c0ebfac42d9b3e74ef1c87ff86c038dc048461afffb2f2828d2091"
+    },
+    {
+      "file": "src/components/output/previews/MangaFramePreview.vue",
+      "sha256": "50bc0abbcbeeb7eeafb5a423d6d41d7dd29d4ade53bf726cdaf5dc651833628a"
+    },
+    {
+      "file": "src/components/output/previews/LiveStagePreview.vue",
+      "sha256": "4c892747f84dd01522d07a49c6e4b5976ccb36eda75600e3c844919e91042f50"
+    },
+    {
+      "file": "src/components/output/previews/QueueBoardPreview.vue",
+      "sha256": "598c1562493b69817d09bca29a989a92d5f08d4a8b2715f3f1c9a9d2622c0c4c"
+    },
+    {
+      "file": "src/components/output/previews/CoverPlayerPreview.vue",
+      "sha256": "5a0fa9af3a10222c881d5dcdf5aeba3ed1e8fcb73740db866a19afc7e6765ffa"
+    },
+    {
+      "file": "src/styles/tokens.css",
+      "sha256": "6f480809194acebf850b2bb4d91949d3bb74a7a47bea1ebd449e63dbfb9c3910"
+    },
+    {
+      "file": "src/styles/base.css",
+      "sha256": "234fb4c62e92676efc7d194d23e13da3ad295f885494121c768a225b25401984"
+    },
+    {
+      "file": "src/styles/features/output.css",
+      "sha256": "fd909ecaeda1731373673ca8474fdb54726e0eadd514f5775f37f249c51a4b8d"
+    }
+  ],
+  "scenario": {
+    "id": "showcase-t1-v1",
+    "frameTimeMs": 1792454400000,
+    "playbackStatus": "paused",
+    "positionMs": 5000,
+    "durationMs": 32000,
+    "timing": "T1",
+    "motion": "reduce",
+    "provenance": "self-authored synthetic text and reading; text artwork fallback"
+  },
+  "tests": {
+    "files": 84,
+    "passed": 923,
+    "failed": 0,
+    "raw": "tasks/output-f3-verified-20261020.json"
+  },
+  "coverage": {
+    "scope": [
+      "overlay/shared/preview.mjs",
+      "shared/presentation/outputPreviewScene.mjs",
+      "src/constants/outputPreviewLimitations.js"
+    ],
+    "statements": 100,
+    "branches": 94.91,
+    "functions": 100,
+    "lines": 100,
+    "raw": "tasks/output-f3-final-coverage-20261020/coverage-summary.json"
+  },
+  "f1": {
+    "templates": 8,
+    "scenarios": 32,
+    "issues": 0
+  },
+  "visibleElectron": {
+    "electron": "43.7.8",
+    "chrome": "150.0.7871.250",
+    "node": "24.21.0",
+    "appVersion": "0.4.0",
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "obs": "not-tested",
+    "javascriptErrors": 0,
+    "gallery": [
+      {
+        "id": "queue-board",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "sans",
+        "bounds": {
+          "width": 189.625,
+          "height": 319.984375
+        }
+      },
+      {
+        "id": "karaoke-stack",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "sans",
+        "bounds": {
+          "width": 312,
+          "height": 175.5
+        }
+      },
+      {
+        "id": "kinetic-pop",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "sans",
+        "bounds": {
+          "width": 312,
+          "height": 175.5
+        }
+      },
+      {
+        "id": "ornate-vertical",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "ornate",
+        "bounds": {
+          "width": 312,
+          "height": 175.5
+        }
+      },
+      {
+        "id": "live-stage",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "sans",
+        "bounds": {
+          "width": 312,
+          "height": 175.5
+        }
+      },
+      {
+        "id": "manga-frame",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "antique",
+        "bounds": {
+          "width": 312,
+          "height": 175.5
+        }
+      },
+      {
+        "id": "art-card",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "sans",
+        "bounds": {
+          "width": 312,
+          "height": 175.5
+        }
+      },
+      {
+        "id": "cover-player",
+        "scenarioId": "showcase-t1-v1",
+        "frameTime": 1792454400000,
+        "frameParity": true,
+        "defaults": "sans",
+        "bounds": {
+          "width": 284.4375,
+          "height": 319.984375
+        }
+      }
+    ],
+    "runtime": [
+      {
+        "id": "queue-board",
+        "mode": "preview",
+        "viewport": {
+          "width": 480,
+          "height": 810,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "queue-board",
+        "mode": "workbench",
+        "viewport": {
+          "width": 480,
+          "height": 810,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "queue-board",
+        "mode": "output",
+        "viewport": {
+          "width": 480,
+          "height": 810,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 810
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "karaoke-stack",
+        "mode": "preview",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "karaoke-stack",
+        "mode": "workbench",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": "true"
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "karaoke-stack",
+        "mode": "output",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "kinetic-pop",
+        "mode": "preview",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "kinetic-pop",
+        "mode": "workbench",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": "true"
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "kinetic-pop",
+        "mode": "output",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "ornate-vertical",
+        "mode": "preview",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "ornate-vertical",
+        "mode": "workbench",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": "true"
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "ornate-vertical",
+        "mode": "output",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "live-stage",
+        "mode": "preview",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "live-stage",
+        "mode": "workbench",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": "true"
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "live-stage",
+        "mode": "output",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "manga-frame",
+        "mode": "preview",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "manga-frame",
+        "mode": "workbench",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": "true"
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "manga-frame",
+        "mode": "output",
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 0.75,
+        "capture": {
+          "width": 1440,
+          "height": 810
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "art-card",
+        "mode": "preview",
+        "viewport": {
+          "width": 480,
+          "height": 270,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 270
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "art-card",
+        "mode": "workbench",
+        "viewport": {
+          "width": 480,
+          "height": 270,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 270
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "art-card",
+        "mode": "output",
+        "viewport": {
+          "width": 480,
+          "height": 270,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 270
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      },
+      {
+        "id": "cover-player",
+        "mode": "preview",
+        "viewport": {
+          "width": 480,
+          "height": 540,
+          "preview": "true",
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 540
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "cover-player",
+        "mode": "workbench",
+        "viewport": {
+          "width": 480,
+          "height": 540,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 540
+        },
+        "canonicalContent": true
+      },
+      {
+        "id": "cover-player",
+        "mode": "output",
+        "viewport": {
+          "width": 480,
+          "height": 540,
+          "preview": null,
+          "workbench": null
+        },
+        "zoomFactor": 1,
+        "capture": {
+          "width": 480,
+          "height": 540
+        },
+        "canonicalContent": true,
+        "customSettingsDelivered": true,
+        "unavailableClearsWithoutSample": true,
+        "pixelParity": {
+          "workbenchVsOutput": 0,
+          "previewVsOutput": 0
+        }
+      }
+    ],
+    "limitationsLabel": {
+      "text": "靜態圖僅供風格參考。此處展示預設外觀與合成動態示意；自訂設定與實際輸出請在工作臺確認。掃色只作示意，不代表逐字同步結果。",
+      "wrap": "normal"
+    },
+    "images": [
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-art-card.png",
+        "sha256": "22f637140c7f77ba8da01a90589bf8f0d38f345d8fc2038c8c087862fe04cbd0",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-cover-player.png",
+        "sha256": "cd6e2bfbe6d13a009d08dd6b5e3631c79bc9c24e98c9213d678cd61d366fa072",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-karaoke-stack.png",
+        "sha256": "fe0c8434719d325f07012a649d887221d4b3b6174e76369f62d64f471a1807a1",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-kinetic-pop.png",
+        "sha256": "81c680f0ce7a21a540e907e31da7cb464369979c31e301debd2ce7e6d7a7b089",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-live-stage.png",
+        "sha256": "05f3c4621c6c9d681533e06ebe3dbccca276cf874e7eec68dc9d326813640bfa",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-manga-frame.png",
+        "sha256": "071f9a3b09b19826552790ae37c143d3e9cdac4e53850da96e15a92a118c33ad",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-ornate-vertical.png",
+        "sha256": "cf1a29277d0f93b5f2c268c38b9b89d002e2ea24a2c2c031686c06cbe02fa6bd",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-queue-board.png",
+        "sha256": "37b131e032884c1131c1dd6f3995a06fb23af2dc99951e1bfb2704d990bfd182",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/gallery-stage-limitations.png",
+        "sha256": "541f56f6c236cb198035d8f0729624ee82537be0730e8073efc27d83a0f25956",
+        "width": 900,
+        "height": 750
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-art-card.png",
+        "sha256": "e868bc6523425963ad1c17b7a46501f408dd86d2282aa22c62efc4fb81f151b2",
+        "width": 480,
+        "height": 270
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-cover-player.png",
+        "sha256": "0f6dda8ad76412e89e7b294aa022b7b4bbf707a13130d7c2d95d2557bb285be5",
+        "width": 480,
+        "height": 540
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-karaoke-stack.png",
+        "sha256": "3f5d25ed07641566af17bbaeccfc000e3c392806cb0814bbf3e13b923f2187e5",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-kinetic-pop.png",
+        "sha256": "a2c3c04c9acd38d30549178c69ecbb7000842540c4babf7ac6d83e1a70dd8c5e",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-live-stage.png",
+        "sha256": "e60c8b9a44832f2c769f8b7949d961e517841364801fd4c81c9ea45a03340fc1",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-manga-frame.png",
+        "sha256": "e93e1ee4a2828dd91631884a671b0c6177c2c8756e9354c36f54230fdabf4df1",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-ornate-vertical.png",
+        "sha256": "22750aa11323c1ebe5f89d1d8b618a5cdc11d76bd430103a257b9cdad212f7e8",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/output-queue-board.png",
+        "sha256": "170395cda83ca973d2a3634f34df7d93ad3f91de902ce918dbd5ff03b21dec67",
+        "width": 480,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-art-card.png",
+        "sha256": "e868bc6523425963ad1c17b7a46501f408dd86d2282aa22c62efc4fb81f151b2",
+        "width": 480,
+        "height": 270
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-cover-player.png",
+        "sha256": "0f6dda8ad76412e89e7b294aa022b7b4bbf707a13130d7c2d95d2557bb285be5",
+        "width": 480,
+        "height": 540
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-karaoke-stack.png",
+        "sha256": "3f5d25ed07641566af17bbaeccfc000e3c392806cb0814bbf3e13b923f2187e5",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-kinetic-pop.png",
+        "sha256": "a2c3c04c9acd38d30549178c69ecbb7000842540c4babf7ac6d83e1a70dd8c5e",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-live-stage.png",
+        "sha256": "e60c8b9a44832f2c769f8b7949d961e517841364801fd4c81c9ea45a03340fc1",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-manga-frame.png",
+        "sha256": "e93e1ee4a2828dd91631884a671b0c6177c2c8756e9354c36f54230fdabf4df1",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-ornate-vertical.png",
+        "sha256": "22750aa11323c1ebe5f89d1d8b618a5cdc11d76bd430103a257b9cdad212f7e8",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/preview-queue-board.png",
+        "sha256": "170395cda83ca973d2a3634f34df7d93ad3f91de902ce918dbd5ff03b21dec67",
+        "width": 480,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-art-card.png",
+        "sha256": "e868bc6523425963ad1c17b7a46501f408dd86d2282aa22c62efc4fb81f151b2",
+        "width": 480,
+        "height": 270
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-cover-player.png",
+        "sha256": "0f6dda8ad76412e89e7b294aa022b7b4bbf707a13130d7c2d95d2557bb285be5",
+        "width": 480,
+        "height": 540
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-karaoke-stack.png",
+        "sha256": "3f5d25ed07641566af17bbaeccfc000e3c392806cb0814bbf3e13b923f2187e5",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-kinetic-pop.png",
+        "sha256": "a2c3c04c9acd38d30549178c69ecbb7000842540c4babf7ac6d83e1a70dd8c5e",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-live-stage.png",
+        "sha256": "e60c8b9a44832f2c769f8b7949d961e517841364801fd4c81c9ea45a03340fc1",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-manga-frame.png",
+        "sha256": "e93e1ee4a2828dd91631884a671b0c6177c2c8756e9354c36f54230fdabf4df1",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-ornate-vertical.png",
+        "sha256": "22750aa11323c1ebe5f89d1d8b618a5cdc11d76bd430103a257b9cdad212f7e8",
+        "width": 1440,
+        "height": 810
+      },
+      {
+        "file": "tasks/output-f3-browser-20261020/workbench-queue-board.png",
+        "sha256": "170395cda83ca973d2a3634f34df7d93ad3f91de902ce918dbd5ff03b21dec67",
+        "width": 480,
+        "height": 810
+      }
+    ],
+    "raw": "tasks/output-f3-browser-20261020/report.json"
+  },
+  "removed": [
+    "src/constants/outputPreviewSample.json",
+    "route-local hardcoded PREVIEW_FRAME examples"
+  ],
+  "limitations": [
+    "Gallery remains an abbreviated default-style/CSS demonstration; static reference images were not replaced.",
+    "Pixel parity covers runtime demo/Workbench/public Output at a single fixed paused T1/reduced-motion observation, not every animation frame.",
+    "FHD CSS viewport 1920x1080 uses zoom 0.75 and 1440x810 captures; Widget zoom is 1.",
+    "Captures use BrowserWindow background #202020; real OBS and transparent-alpha composition are not validated.",
+    "Long-duration performance, F4 capture tooling, payment and remote packs are outside this phase."
+  ]
+}

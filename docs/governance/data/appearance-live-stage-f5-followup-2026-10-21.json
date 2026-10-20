@@ -1,0 +1,1368 @@
+{
+  "schemaVersion": 1,
+  "phase": "F5 Live Stage follow-up",
+  "capturedAt": "2026-10-20T16:14:29.293Z",
+  "status": "resolved for reproduced module-load failure; short baseline passed",
+  "cause": {
+    "classification": "incomplete shared Browser Source module graph during parallel source edits; harness lacked preflight and executed live server instead of frozen server",
+    "missingRoute": "/shared/presentation/lyricsPhraseBreaks.mjs",
+    "oldSuccess": "gBOH1j state.mjs did not import the new module",
+    "oldFailures": "Xs41wS and IlVuds state.mjs imported the new module, but frozen HTTP allowlist returned 404",
+    "current": "existing current HTTP allowlist already includes the route; no production/template fix needed",
+    "scope": "shared lyrics module boot, not a Live Stage-specific animation or resource stall"
+  },
+  "historical": [
+    {
+      "file": "tasks/output-appearance-audit-f5-gBOH1j/report.json",
+      "sha256": "3031e563ee4d552e7d0d7e2c44604d3e29dc3e7752f11a7fcbbf28f51d263d9e",
+      "id": "gBOH1j",
+      "status": "passed",
+      "state": {
+        "file": "shared/presentation/state.mjs",
+        "sha256": "4c654cc4abeb2536454a0331edefa726c888041f959d1a537455fcda9f8cd7f0"
+      },
+      "http": {
+        "file": "electron/lib/outputServer/http.js",
+        "sha256": "735bc58bb45259b1dff097d2872b46b5bd952f1b28d80f44ea10abc479210556"
+      }
+    },
+    {
+      "file": "tasks/output-appearance-audit-f5-Xs41wS/report.json",
+      "sha256": "951978dd2c180d4fd1b27082ee6c449e401e06087df47eb168e383300e7e994b",
+      "id": "Xs41wS",
+      "status": "failed",
+      "state": {
+        "file": "shared/presentation/state.mjs",
+        "sha256": "31c48ae40d2be739581de98d1a39110034fc5088da0ba89b8a4a249dd35adf23"
+      },
+      "http": {
+        "file": "electron/lib/outputServer/http.js",
+        "sha256": "735bc58bb45259b1dff097d2872b46b5bd952f1b28d80f44ea10abc479210556"
+      }
+    },
+    {
+      "file": "tasks/output-appearance-audit-f5-IlVuds/report.json",
+      "sha256": "23b40a33422a75f03c9b2560eff13a56c5f22081c10b8aa75e390b5c02f170ca",
+      "id": "IlVuds",
+      "status": "failed",
+      "state": {
+        "file": "shared/presentation/state.mjs",
+        "sha256": "31c48ae40d2be739581de98d1a39110034fc5088da0ba89b8a4a249dd35adf23"
+      },
+      "http": {
+        "file": "electron/lib/outputServer/http.js",
+        "sha256": "735bc58bb45259b1dff097d2872b46b5bd952f1b28d80f44ea10abc479210556"
+      }
+    }
+  ],
+  "replay": {
+    "file": "tasks/output-f5-live-stage-module-replay-20261021.json",
+    "sha256": "91ecdcaa19666bb6d5a7e3eaf26849a62b8577fa8e00ac910a4ef79328b1799c",
+    "results": [
+      {
+        "source": "gBOH1j",
+        "status": "passed",
+        "routes": [
+          "/overlay/lyrics/lyrics.mjs",
+          "/overlay/shared/lifecycle.mjs",
+          "/overlay/shared/appearance.mjs",
+          "/overlay/shared/preview.mjs",
+          "/overlay/shared/state.mjs",
+          "/shared/presentation/lyricsRhythm.mjs",
+          "/overlay/shared/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsPresentationPolicies.mjs",
+          "/overlay/shared/mangaFrameContract.mjs",
+          "/overlay/lyrics/mangaFrame.mjs",
+          "/overlay/lyrics/liveStage.mjs",
+          "/overlay/lyrics/kineticPop.mjs",
+          "/overlay/lyrics/ornateVertical.mjs",
+          "/overlay/shared/runtime.mjs",
+          "/shared/outputAppearance.mjs",
+          "/shared/presentation/outputPreviewScene.mjs",
+          "/shared/presentation/state.mjs",
+          "/shared/presentation/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsTemplateCapabilities.mjs",
+          "/shared/presentation/mangaFrameContract.mjs",
+          "/shared/presentation/kineticPopMotion.mjs",
+          "/shared/presentation/ornateVerticalMotion.mjs",
+          "/shared/presentation/lyricsTimingUnits.mjs",
+          "/shared/presentation/lyricsSourceMapping.mjs",
+          "/shared/presentation/ornateVerticalPresentation.mjs"
+        ],
+        "failures": []
+      },
+      {
+        "source": "Xs41wS",
+        "status": "failed",
+        "routes": [
+          "/overlay/lyrics/lyrics.mjs",
+          "/overlay/shared/lifecycle.mjs",
+          "/overlay/shared/appearance.mjs",
+          "/overlay/shared/preview.mjs",
+          "/overlay/shared/state.mjs",
+          "/shared/presentation/lyricsRhythm.mjs",
+          "/overlay/shared/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsPresentationPolicies.mjs",
+          "/overlay/shared/mangaFrameContract.mjs",
+          "/overlay/lyrics/mangaFrame.mjs",
+          "/overlay/lyrics/liveStage.mjs",
+          "/overlay/lyrics/kineticPop.mjs",
+          "/overlay/lyrics/ornateVertical.mjs",
+          "/overlay/shared/runtime.mjs",
+          "/shared/outputAppearance.mjs",
+          "/shared/presentation/outputPreviewScene.mjs",
+          "/shared/presentation/state.mjs",
+          "/shared/presentation/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsTemplateCapabilities.mjs",
+          "/shared/presentation/mangaFrameContract.mjs",
+          "/shared/presentation/kineticPopMotion.mjs",
+          "/shared/presentation/ornateVerticalMotion.mjs",
+          "/shared/presentation/lyricsTimingUnits.mjs",
+          "/shared/presentation/lyricsPhraseBreaks.mjs",
+          "/shared/presentation/lyricsSourceMapping.mjs",
+          "/shared/presentation/ornateVerticalPresentation.mjs"
+        ],
+        "failures": [
+          {
+            "route": "/shared/presentation/lyricsPhraseBreaks.mjs",
+            "reason": "HTTP 404"
+          }
+        ]
+      },
+      {
+        "source": "IlVuds",
+        "status": "failed",
+        "routes": [
+          "/overlay/lyrics/lyrics.mjs",
+          "/overlay/shared/lifecycle.mjs",
+          "/overlay/shared/appearance.mjs",
+          "/overlay/shared/preview.mjs",
+          "/overlay/shared/state.mjs",
+          "/shared/presentation/lyricsRhythm.mjs",
+          "/overlay/shared/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsPresentationPolicies.mjs",
+          "/overlay/shared/mangaFrameContract.mjs",
+          "/overlay/lyrics/mangaFrame.mjs",
+          "/overlay/lyrics/liveStage.mjs",
+          "/overlay/lyrics/kineticPop.mjs",
+          "/overlay/lyrics/ornateVertical.mjs",
+          "/overlay/shared/runtime.mjs",
+          "/shared/outputAppearance.mjs",
+          "/shared/presentation/outputPreviewScene.mjs",
+          "/shared/presentation/state.mjs",
+          "/shared/presentation/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsTemplateCapabilities.mjs",
+          "/shared/presentation/mangaFrameContract.mjs",
+          "/shared/presentation/kineticPopMotion.mjs",
+          "/shared/presentation/ornateVerticalMotion.mjs",
+          "/shared/presentation/lyricsTimingUnits.mjs",
+          "/shared/presentation/lyricsPhraseBreaks.mjs",
+          "/shared/presentation/lyricsSourceMapping.mjs",
+          "/shared/presentation/ornateVerticalPresentation.mjs"
+        ],
+        "failures": [
+          {
+            "route": "/shared/presentation/lyricsPhraseBreaks.mjs",
+            "reason": "HTTP 404"
+          }
+        ]
+      },
+      {
+        "source": "current",
+        "status": "passed",
+        "routes": [
+          "/overlay/lyrics/lyrics.mjs",
+          "/overlay/shared/lifecycle.mjs",
+          "/overlay/shared/appearance.mjs",
+          "/overlay/shared/preview.mjs",
+          "/overlay/shared/state.mjs",
+          "/shared/presentation/lyricsRhythm.mjs",
+          "/overlay/shared/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsPresentationPolicies.mjs",
+          "/overlay/shared/mangaFrameContract.mjs",
+          "/overlay/lyrics/mangaFrame.mjs",
+          "/overlay/lyrics/liveStage.mjs",
+          "/overlay/lyrics/kineticPop.mjs",
+          "/overlay/lyrics/ornateVertical.mjs",
+          "/overlay/shared/runtime.mjs",
+          "/shared/outputAppearance.mjs",
+          "/shared/presentation/outputPreviewScene.mjs",
+          "/shared/presentation/state.mjs",
+          "/shared/presentation/lyricsPresentation.mjs",
+          "/shared/presentation/lyricsTemplateCapabilities.mjs",
+          "/shared/presentation/mangaFrameContract.mjs",
+          "/shared/presentation/kineticPopMotion.mjs",
+          "/shared/presentation/ornateVerticalMotion.mjs",
+          "/shared/presentation/lyricsTimingUnits.mjs",
+          "/shared/presentation/lyricsPhraseBreaks.mjs",
+          "/shared/presentation/lyricsSourceMapping.mjs",
+          "/shared/presentation/ornateVerticalPresentation.mjs"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  "failFast": {
+    "file": "tasks/output-f5-live-stage-failfast-20261021.json",
+    "sha256": "f7d56087a3f59328f404f7b1c133070a8b0518f612d4d65be0bbef197bf9aa0e",
+    "dir": "tasks\\output-appearance-audit-f5-jg9Ciw",
+    "expectedFailureVerified": true,
+    "elapsedMs": 747,
+    "checksBeforeFailure": 0,
+    "modulePreflight": {
+      "status": "failed",
+      "routes": [
+        "/overlay/lyrics/lyrics.mjs",
+        "/overlay/shared/lifecycle.mjs",
+        "/overlay/shared/appearance.mjs",
+        "/overlay/shared/preview.mjs",
+        "/overlay/shared/state.mjs",
+        "/shared/presentation/lyricsRhythm.mjs",
+        "/overlay/shared/lyricsPresentation.mjs",
+        "/shared/presentation/lyricsPresentationPolicies.mjs",
+        "/overlay/shared/mangaFrameContract.mjs",
+        "/overlay/lyrics/mangaFrame.mjs",
+        "/overlay/lyrics/liveStage.mjs",
+        "/overlay/lyrics/kineticPop.mjs",
+        "/overlay/lyrics/ornateVertical.mjs",
+        "/overlay/shared/runtime.mjs",
+        "/shared/outputAppearance.mjs",
+        "/shared/presentation/outputPreviewScene.mjs",
+        "/shared/presentation/state.mjs",
+        "/shared/presentation/lyricsPresentation.mjs",
+        "/shared/presentation/lyricsTemplateCapabilities.mjs",
+        "/shared/presentation/mangaFrameContract.mjs",
+        "/shared/presentation/kineticPopMotion.mjs",
+        "/shared/presentation/ornateVerticalMotion.mjs",
+        "/shared/presentation/lyricsTimingUnits.mjs",
+        "/shared/presentation/lyricsPhraseBreaks.mjs",
+        "/shared/presentation/lyricsSourceMapping.mjs",
+        "/shared/presentation/ornateVerticalPresentation.mjs"
+      ],
+      "failures": [
+        {
+          "route": "/shared/presentation/lyricsPhraseBreaks.mjs",
+          "reason": "HTTP 404"
+        }
+      ]
+    },
+    "profileCleanup": "passed"
+  },
+  "shortBaseline": {
+    "file": "tasks/output-appearance-audit-f5-bxPUwH/report.json",
+    "sha256": "cd403f74cd17c72e345bf8708575874acec9d2b0c4da75626af4957360308c4a",
+    "schemaVersion": 1,
+    "phase": "F5",
+    "status": "passed",
+    "source": {
+      "commit": "b1f854b1258453da6212804e639589fd04f9d2ed",
+      "dirty": true,
+      "files": [
+        {
+          "file": "electron/lib/outputDeliveryQueue.js",
+          "sha256": "5fab9d5505fe5616a9a2eca02af103baa1a1a030520ec2b2be28c77792d86199"
+        },
+        {
+          "file": "electron/lib/outputServer.js",
+          "sha256": "cacdf11efccef55a23e83e8897808859d05b99e114fc8c676f3dc000c1c63199"
+        },
+        {
+          "file": "electron/lib/outputServer/http.js",
+          "sha256": "9b555be15f08341cd7ea60676cf7a8bfa5235263dc3b7266ab171856ded6ec36"
+        },
+        {
+          "file": "node_modules/gsap/dist/gsap.min.js",
+          "sha256": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "file": "node_modules/ws/index.js",
+          "sha256": "924564d5be26d59b9682c4263f68320e48dde7240bd2d1ad17ec305537429dd2"
+        },
+        {
+          "file": "node_modules/ws/lib/buffer-util.js",
+          "sha256": "8b0a45739132f82e25ea13163780abf547ccfe989267f3eb7abb475beec92da3"
+        },
+        {
+          "file": "node_modules/ws/lib/constants.js",
+          "sha256": "391e823142b8b370e55a2fd32b022deaf03b8415c56000009674ebc86a0b4f86"
+        },
+        {
+          "file": "node_modules/ws/lib/event-target.js",
+          "sha256": "c45d3c6e12d170c860c0c3f1a050aa0f864d9806632b609a1e607d675aba128c"
+        },
+        {
+          "file": "node_modules/ws/lib/extension.js",
+          "sha256": "852564f0f6b460287043803eae732666fb5610f676874354fc89f06aa4e986ed"
+        },
+        {
+          "file": "node_modules/ws/lib/limiter.js",
+          "sha256": "e0469d4b83f6ba764b15f80e1766b75c136fbff68f048f4c050f0b1c7f065f69"
+        },
+        {
+          "file": "node_modules/ws/lib/permessage-deflate.js",
+          "sha256": "16a91536988a53c23047ee5882392068728a839a244178c3b09b8c54982f58b0"
+        },
+        {
+          "file": "node_modules/ws/lib/receiver.js",
+          "sha256": "a6ada33c9a2d54eaf595824b821ea89ca2c6395f89aa06755c52142148274884"
+        },
+        {
+          "file": "node_modules/ws/lib/sender.js",
+          "sha256": "d0791d30c3defd44dcabbddb879a901c757993fea2c00a7ffea01d53b23b4b77"
+        },
+        {
+          "file": "node_modules/ws/lib/stream.js",
+          "sha256": "a56fcb6e2b152097ee820b6f5410b1f71e59819b45d08d9f8bda588fe39070ec"
+        },
+        {
+          "file": "node_modules/ws/lib/subprotocol.js",
+          "sha256": "be3f6323d6f549568577dcba9004c1479d95c65a7abb0fe0c582875b9fac0b7c"
+        },
+        {
+          "file": "node_modules/ws/lib/validation.js",
+          "sha256": "41ce8e83d0d434132e1704895fedb91f6703a701b42d91c80954ab29b2845593"
+        },
+        {
+          "file": "node_modules/ws/lib/websocket-server.js",
+          "sha256": "6d8dd89a841748c80445fd5fcdb5ba8005369b53cc3525135e11304c8b9c55e5"
+        },
+        {
+          "file": "node_modules/ws/lib/websocket.js",
+          "sha256": "7ccf305925f0cdb74e06b75b4c84de134b1bd771a220ef409b24520def08128f"
+        },
+        {
+          "file": "overlay/lyrics/index.html",
+          "sha256": "4d8804699451e3b9a50fd81d612816b58973d2522e83365151b82b3810fe982f"
+        },
+        {
+          "file": "overlay/lyrics/kineticPop.mjs",
+          "sha256": "bbabc8f9ffb0fc5876d241f1f993419c3ef669bd4b8fc4bb73e26eb8875a2e39"
+        },
+        {
+          "file": "overlay/lyrics/liveStage.mjs",
+          "sha256": "7069388699cc8bfcd9df17ba131471ab6942eaec6508c194e32130624798e6dc"
+        },
+        {
+          "file": "overlay/lyrics/lyrics.css",
+          "sha256": "bdf9c74282c5172aa699f39bff9ee2635df227ca99b364ca3d9d88693be3c299"
+        },
+        {
+          "file": "overlay/lyrics/lyrics.mjs",
+          "sha256": "eb9fbd73acc1e0e4163efb40a0b304c1ed3496ea276ea0a46f9346fe8209f26b"
+        },
+        {
+          "file": "overlay/lyrics/mangaFrame.mjs",
+          "sha256": "8f9b1797c06ba57c880776ebe6f47b842e7e8cb7ef03ca0098b7c9f526d34336"
+        },
+        {
+          "file": "overlay/lyrics/ornateVertical.mjs",
+          "sha256": "c0d89870873955c8d53c9e7c2715000c3a44385f61e4bc617a7c2c1f2af87fa2"
+        },
+        {
+          "file": "overlay/now-playing/artwork.css",
+          "sha256": "91837094acf507e714ddc9f68ac38f3a0890fe5aa7c4777ed6a01ce4fdd46873"
+        },
+        {
+          "file": "overlay/now-playing/artworkLayout.mjs",
+          "sha256": "1ab5cae93f325d9be182517adcd5c4c4c47d115b7bb074e89aae913534fb80f3"
+        },
+        {
+          "file": "overlay/now-playing/artworkMotion.mjs",
+          "sha256": "172c40188bb0fe2f264f9267ec4831ea7c6d97087b891c45d23405fb9eb7eecf"
+        },
+        {
+          "file": "overlay/now-playing/index.html",
+          "sha256": "114a55cb3df3c65d9fc75f084db4d461099745414919662f20563e3f30387ba7"
+        },
+        {
+          "file": "overlay/now-playing/now-playing.css",
+          "sha256": "c4533d109f2cb081a3facbd7c33a61de11cdcf8c5324ec017e95acb581dc5f18"
+        },
+        {
+          "file": "overlay/now-playing/now-playing.mjs",
+          "sha256": "d5ff7a40293ac956368dbbd51f2f5029c0da11009f46db42d479b53a94f4e2ae"
+        },
+        {
+          "file": "overlay/setlist/index.html",
+          "sha256": "4f274626803a394db3ea0f55d8d44ffbe42cfbcd794875bbf28ed3468b1c1dc4"
+        },
+        {
+          "file": "overlay/setlist/setlist.css",
+          "sha256": "ebe9153a51fa7e7fb3df54f44311f9577f44a7d7ec780857716be4631a90bc2f"
+        },
+        {
+          "file": "overlay/setlist/setlist.mjs",
+          "sha256": "0cd1ab5ea32d5a7d056b3c236dc4ace92e87cf33ddecf9a3064a3df6a91178ec"
+        },
+        {
+          "file": "overlay/setlist/setlistMotion.mjs",
+          "sha256": "2f46d592c7196cc4c75a0cb2d50679664e61133a52a325bf15077c73179b0b8f"
+        },
+        {
+          "file": "overlay/shared/appearance.css",
+          "sha256": "5d694eab4265f2c2cbb58d30456aa613d001dd941a69ab7f62da3fbeaa364ed3"
+        },
+        {
+          "file": "overlay/shared/appearance.mjs",
+          "sha256": "79f009846c72603ba8f6626448916d3e2d05cd41a705b6e9244dbaeeffaeca88"
+        },
+        {
+          "file": "overlay/shared/base.css",
+          "sha256": "87b89df8d66b570d593a19e2a3c5a0d20dbf1e5a218665750ac8094ef9fc0686"
+        },
+        {
+          "file": "overlay/shared/fallback.css",
+          "sha256": "62bf31aab741d7d2592b1b7cb38e37e17ddc99e8657a985792aa556519133fe6"
+        },
+        {
+          "file": "overlay/shared/lifecycle.mjs",
+          "sha256": "39f7250832e59a9551de8346ba163d61d50ca8f66d283d3161cc0c8fc05e4b9d"
+        },
+        {
+          "file": "overlay/shared/lyricsPresentation.mjs",
+          "sha256": "01ec0b0b7a39766ba2cd0ff362b6dda79febcaa5317af4c6199c3e02e7b1375b"
+        },
+        {
+          "file": "overlay/shared/mangaFrameContract.mjs",
+          "sha256": "f57ead9a9f5138c5acc48fc496568117602bd2df8e82e8194258034608b3633e"
+        },
+        {
+          "file": "overlay/shared/preview.mjs",
+          "sha256": "698755f7a8467a074a672619caccc01c5f0cf90c7597cee7ea8cf5f2a7cb3b8d"
+        },
+        {
+          "file": "overlay/shared/runtime.mjs",
+          "sha256": "1bca0d42b56ce7dda1ee68f180c72bd7f756fe5f5eb2e66569d29dc8bb01a5cc"
+        },
+        {
+          "file": "overlay/shared/state.mjs",
+          "sha256": "d3b5eb904cf7bedbb9f44ba5c0234aef0db52c793c0a450405de74b4840bcf84"
+        },
+        {
+          "file": "overlay/shared/tokens.css",
+          "sha256": "7b26aa1a9bb4988b59d2c65b71da2f570e718b5cd8e32589edd72435eeed1d3c"
+        },
+        {
+          "file": "overlay/workbench/streamer-guide.png",
+          "sha256": "bf5150965650f7db956cac2ba34bbe7866c7fc8f001349fc683e5f5bb4b10261"
+        },
+        {
+          "file": "package-lock.json",
+          "sha256": "e33fa59e406680f17936740b181a2ebd19e4afde382b967edd67bf368bc84ca4"
+        },
+        {
+          "file": "package.json",
+          "sha256": "3d564f38f0fda47218eee364445ea5dce5b95d5ac936a4cbbf507421d5518abf"
+        },
+        {
+          "file": "scripts/fixtures/output/appearance-baseline.json",
+          "sha256": "3ca4e9d2651382e736d82c825e525635ff1272758a9b8fcc83d77d26abee194b"
+        },
+        {
+          "file": "scripts/fixtures/output/scenarios.json",
+          "sha256": "6ff0adc814e13b96ad9b841669541f1046e5958286bec95b465e4b49a238569e"
+        },
+        {
+          "file": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf",
+          "sha256": "a04b166a260e67635bff99512355a14de459620df6451d1ee72b4d072370df55"
+        },
+        {
+          "file": "shared/assets/fonts/HinaMincho-Regular.ttf",
+          "sha256": "8395fafa0c2721b4b5c274031e1336fea0f703d908b175ee21f8ba2f1ad566a0"
+        },
+        {
+          "file": "shared/assets/fonts/Keifont.ttf",
+          "sha256": "d5795bdff960c2b2ec5727ffeb79d836f8f11dac3015f6e16089a912e9cced6f"
+        },
+        {
+          "file": "shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf",
+          "sha256": "8e7c15901dca87f1451b356dda594f7d092ba252a5dcc47da74523a242493c36"
+        },
+        {
+          "file": "shared/assets/fonts/jf-open-huninn-2.1.ttf",
+          "sha256": "9d5bf4932d31fe94c18cd8cfddc98bc1b14ce10f4e354c682179db290a99c825"
+        },
+        {
+          "file": "shared/lyricsTimingValues.json",
+          "sha256": "74ade80760f1fa8ad29453055ecd97457035939a2beca86e5a8df7cfd47f1c64"
+        },
+        {
+          "file": "shared/musicStructureContractValues.json",
+          "sha256": "998f730a6ba6c24a572d1a872ef306502f22c7ec53c9454f8e525e2446a9633a"
+        },
+        {
+          "file": "shared/outputAppearance.mjs",
+          "sha256": "6d3ea1d6883600f38b6d8b20250bd1fd2eb779fcf675e2e0aa3731d090a5401e"
+        },
+        {
+          "file": "shared/outputContract.js",
+          "sha256": "a2dd6205c209999077f86de464e5be46bac760fbf7e723de6defecaaf620ada2"
+        },
+        {
+          "file": "shared/outputContractValues.json",
+          "sha256": "d222010a0b9eb7b1e8250d3c98b7cbd54f0cee0459d1c3ed36f62a2898dab1e6"
+        },
+        {
+          "file": "shared/outputRuntimeValues.json",
+          "sha256": "b1d6ba33340bd71927522f60abbda047d7520e96f36bd3c78f978abc69c737f6"
+        },
+        {
+          "file": "shared/outputStreamContract.js",
+          "sha256": "71c663212d4c4fe0fa3cdbe6eeb6c423728fe292a52f10f67b4e5d5455dd2bf8"
+        },
+        {
+          "file": "shared/performerContractValues.json",
+          "sha256": "e5f8f673dc1a030924e4582e811e58515c921f76efb57e744528193511165a87"
+        },
+        {
+          "file": "shared/presentation/kineticPopMotion.mjs",
+          "sha256": "f91e83b30938c954e01c74680d75e9ed9e5177ec43ffcf24c2c8add8ba2ece02"
+        },
+        {
+          "file": "shared/presentation/lyricsPhraseBreaks.mjs",
+          "sha256": "e5e1e24079237cecc08df30c7badfa3d1bc1994d9008858f6a5ec26b7fbeef35"
+        },
+        {
+          "file": "shared/presentation/lyricsPresentation.mjs",
+          "sha256": "7a709cc192cab0cd0c920577efff73d960b103b88a7af6226d4efe5f378fbcda"
+        },
+        {
+          "file": "shared/presentation/lyricsPresentationPolicies.mjs",
+          "sha256": "9135073fd53e17ee0e3ad5681aefa6e33340a84190c38e2cd66dc1279620d4bf"
+        },
+        {
+          "file": "shared/presentation/lyricsRhythm.mjs",
+          "sha256": "e43ea5bd289883e3bed6a76c5cbc4335a22837aadf48bdad5cca5cfa30a852c5"
+        },
+        {
+          "file": "shared/presentation/lyricsSourceMapping.mjs",
+          "sha256": "56cf0ace1a7afc745666d5f0b2cb710039c188a3286b014fac6bf220250957bf"
+        },
+        {
+          "file": "shared/presentation/lyricsTemplateCapabilities.mjs",
+          "sha256": "5a92a13c6ebe8737456cbe1894118dd03076622553de4293795e009d56271680"
+        },
+        {
+          "file": "shared/presentation/lyricsTimingUnits.mjs",
+          "sha256": "3533e14a0037d88f8c55e1efce3b17ab2d80f46ac76bdf2d79a18a5c410ebe3d"
+        },
+        {
+          "file": "shared/presentation/mangaFrameContract.mjs",
+          "sha256": "97d78731e15b5afb0a108f8dc06e0f825cad9305d1797abc7f208b345e669e02"
+        },
+        {
+          "file": "shared/presentation/ornateVerticalMotion.mjs",
+          "sha256": "fcd351b6e86baf60a60574efc3447a105b2ce7c23028704356e6584bbe0e23be"
+        },
+        {
+          "file": "shared/presentation/ornateVerticalPresentation.mjs",
+          "sha256": "601b17f3fef083fe95f73fa6571d68c33098fbffc9ae5926d4ac7dbdb0822521"
+        },
+        {
+          "file": "shared/presentation/outputPreviewScene.mjs",
+          "sha256": "4046bf9188786cd58092c5f70445c848d8ffeddee80c0abb10646d659671d42e"
+        },
+        {
+          "file": "shared/presentation/state.mjs",
+          "sha256": "7ee102a32702c5dda729078c6b66a5a3add1be41384a5b9d61b5d220f60933e9"
+        },
+        {
+          "file": "shared/startupTraceValues.json",
+          "sha256": "330216b532b5d8745a80a84c888032e6e9c1e218ff8243974f5200de5b35af2c"
+        },
+        {
+          "file": "scripts/outputPerformanceProbe.mjs",
+          "sha256": "55e0c3fc213d25196199a8ae0ccd4a4609a8f0bd70f3355b930fb365c9eea331"
+        },
+        {
+          "file": "scripts/output-performance-probe.mjs",
+          "sha256": "98803c12472a4e2f18b9f4fccb6880ba1e3b8a45b9c5d385f694fcaf18da00d8"
+        },
+        {
+          "file": "scripts/output-performance-driver.cjs",
+          "sha256": "338008885a88e304603405067b56a8bd78e9c698a44b91a7888598a050cf2154"
+        }
+      ]
+    },
+    "options": {
+      "mode": "baseline",
+      "minutes": 5,
+      "templates": ["live-stage"]
+    },
+    "checks": [
+      {
+        "templateId": "live-stage",
+        "status": "passed",
+        "label": "baseline",
+        "firstObservedMs": 207.08650000000011,
+        "settings": {
+          "paletteId": "original",
+          "lookAmount": 100,
+          "fontFamily": "sans",
+          "fontScale": "medium",
+          "fontWeight": "semibold",
+          "contrastStyle": "balanced",
+          "alignment": "left",
+          "surface": "transparent",
+          "furigana": "auto",
+          "kineticMaterial": "candy-rim",
+          "kineticArrangement": "straight",
+          "textColor": "#fff8ec",
+          "accentColor": "#ffffff",
+          "positionAnchor": "center-right",
+          "positionOffsetX": 0,
+          "positionOffsetY": 0,
+          "spacingDensity": "normal",
+          "contentWidth": "standard",
+          "captureSize": "full"
+        },
+        "capture": {
+          "file": "live-stage-live-stage-baseline.png",
+          "sha256": "19b373c44e1795b4586247e38b0ab626b9bea435cd711ce8109a54f9e79be2f6",
+          "dimensions": {
+            "width": 1440,
+            "height": 810
+          },
+          "zoomFactor": 0.75,
+          "alpha": {
+            "pixels": 1166400,
+            "transparent": 0,
+            "partial": 0,
+            "opaque": 1166400
+          },
+          "observation": {
+            "viewport": {
+              "width": 1920,
+              "height": 1080
+            },
+            "hidden": false,
+            "template": "live-stage",
+            "motion": false,
+            "fonts": [
+              {
+                "family": "Utawakui Open Huninn",
+                "status": "unloaded"
+              },
+              {
+                "family": "Utawakui M PLUS Rounded 1c",
+                "status": "unloaded"
+              },
+              {
+                "family": "Utawakui Keifont",
+                "status": "unloaded"
+              },
+              {
+                "family": "Utawakui GenEi Antique",
+                "status": "unloaded"
+              },
+              {
+                "family": "Utawakui Hina Mincho",
+                "status": "unloaded"
+              }
+            ],
+            "bodyBackground": "none",
+            "dataset": {
+              "ovlPalette": "original",
+              "ovlFont": "sans",
+              "ovlScale": "medium",
+              "ovlWeight": "semibold",
+              "ovlAlign": "left",
+              "ovlSurface": "transparent",
+              "ovlFurigana": "auto",
+              "ovlKineticMaterial": "candy-rim",
+              "ovlKineticArrangement": "straight",
+              "ovlContrast": "balanced",
+              "ovlDensity": "normal",
+              "ovlContentWidth": "standard",
+              "ovlPosition": "center-right",
+              "ovlTemplate": "live-stage"
+            }
+          }
+        }
+      }
+    ],
+    "samples": [
+      {
+        "label": "live-stage:playing",
+        "durationMs": 10007,
+        "sampleIntervalMs": 5000,
+        "summary": {
+          "budgets": null,
+          "warmup": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 1.8453555795392695,
+              "last": 1.8453555795392695,
+              "min": 1.8453555795392695,
+              "max": 1.8453555795392695,
+              "mean": 1.8453555795392695,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 636424,
+              "last": 636424,
+              "min": 636424,
+              "max": 636424,
+              "mean": 636424,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 258168,
+              "last": 258168,
+              "min": 258168,
+              "max": 258168,
+              "mean": 258168,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 177044,
+              "last": 177044,
+              "min": 177044,
+              "max": 177044,
+              "mean": 177044,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "steady": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.661998992788426,
+              "last": 0.661998992788426,
+              "min": 0.661998992788426,
+              "max": 0.661998992788426,
+              "mean": 0.661998992788426,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 640700,
+              "last": 640700,
+              "min": 640700,
+              "max": 640700,
+              "mean": 640700,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 264496,
+              "last": 264496,
+              "min": 264496,
+              "max": 264496,
+              "mean": 264496,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 176336,
+              "last": 176336,
+              "min": 176336,
+              "max": 176336,
+              "mean": 176336,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "method": "Descriptive time-series ranges; no independent-run percentile or leak claim"
+        },
+        "lastDelivery": {
+          "deliveredMessages": 56,
+          "deliveredBytes": 34920,
+          "replacedMessages": 0,
+          "replacedBytes": 0,
+          "droppedMessages": 0,
+          "droppedBytes": 0,
+          "disconnectedClients": 0,
+          "queuedBytes": 0
+        }
+      },
+      {
+        "label": "live-stage:paused",
+        "durationMs": 10004,
+        "sampleIntervalMs": 5000,
+        "summary": {
+          "budgets": null,
+          "warmup": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.9829695117977438,
+              "last": 0.9829695117977438,
+              "min": 0.9829695117977438,
+              "max": 0.9829695117977438,
+              "mean": 0.9829695117977438,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 641504,
+              "last": 641504,
+              "min": 641504,
+              "max": 641504,
+              "mean": 641504,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 269628,
+              "last": 269628,
+              "min": 269628,
+              "max": 269628,
+              "mean": 269628,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 178472,
+              "last": 178472,
+              "min": 178472,
+              "max": 178472,
+              "mean": 178472,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "steady": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.7170638063956385,
+              "last": 0.7170638063956385,
+              "min": 0.7170638063956385,
+              "max": 0.7170638063956385,
+              "mean": 0.7170638063956385,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 640316,
+              "last": 640316,
+              "min": 640316,
+              "max": 640316,
+              "mean": 640316,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 265744,
+              "last": 265744,
+              "min": 265744,
+              "max": 265744,
+              "mean": 265744,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 177944,
+              "last": 177944,
+              "min": 177944,
+              "max": 177944,
+              "mean": 177944,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "method": "Descriptive time-series ranges; no independent-run percentile or leak claim"
+        },
+        "lastDelivery": {
+          "deliveredMessages": 103,
+          "deliveredBytes": 64219,
+          "replacedMessages": 0,
+          "replacedBytes": 0,
+          "droppedMessages": 0,
+          "droppedBytes": 0,
+          "disconnectedClients": 0,
+          "queuedBytes": 0
+        }
+      },
+      {
+        "label": "live-stage:empty",
+        "durationMs": 10005,
+        "sampleIntervalMs": 5000,
+        "summary": {
+          "budgets": null,
+          "warmup": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.531162305739483,
+              "last": 0.531162305739483,
+              "min": 0.531162305739483,
+              "max": 0.531162305739483,
+              "mean": 0.531162305739483,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 641020,
+              "last": 641020,
+              "min": 641020,
+              "max": 641020,
+              "mean": 641020,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 266628,
+              "last": 266628,
+              "min": 266628,
+              "max": 266628,
+              "mean": 266628,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 177276,
+              "last": 177276,
+              "min": 177276,
+              "max": 177276,
+              "mean": 177276,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "steady": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.9039085509239504,
+              "last": 0.9039085509239504,
+              "min": 0.9039085509239504,
+              "max": 0.9039085509239504,
+              "mean": 0.9039085509239504,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 643224,
+              "last": 643224,
+              "min": 643224,
+              "max": 643224,
+              "mean": 643224,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 266984,
+              "last": 266984,
+              "min": 266984,
+              "max": 266984,
+              "mean": 266984,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 177148,
+              "last": 177148,
+              "min": 177148,
+              "max": 177148,
+              "mean": 177148,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "method": "Descriptive time-series ranges; no independent-run percentile or leak claim"
+        },
+        "lastDelivery": {
+          "deliveredMessages": 150,
+          "deliveredBytes": 87547,
+          "replacedMessages": 0,
+          "replacedBytes": 0,
+          "droppedMessages": 0,
+          "droppedBytes": 0,
+          "disconnectedClients": 0,
+          "queuedBytes": 0
+        }
+      },
+      {
+        "label": "live-stage:rapid",
+        "durationMs": 10011,
+        "sampleIntervalMs": 5000,
+        "summary": {
+          "budgets": null,
+          "warmup": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.9264490182389198,
+              "last": 0.9264490182389198,
+              "min": 0.9264490182389198,
+              "max": 0.9264490182389198,
+              "mean": 0.9264490182389198,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 637004,
+              "last": 637004,
+              "min": 637004,
+              "max": 637004,
+              "mean": 637004,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 267704,
+              "last": 267704,
+              "min": 267704,
+              "max": 267704,
+              "mean": 267704,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 178220,
+              "last": 178220,
+              "min": 178220,
+              "max": 178220,
+              "mean": 178220,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "steady": {
+            "samples": 1,
+            "cpuPercent": {
+              "samples": 1,
+              "first": 0.5821871663353817,
+              "last": 0.5821871663353817,
+              "min": 0.5821871663353817,
+              "max": 0.5821871663353817,
+              "mean": 0.5821871663353817,
+              "delta": 0
+            },
+            "workingSetKb": {
+              "samples": 1,
+              "first": 639384,
+              "last": 639384,
+              "min": 639384,
+              "max": 639384,
+              "mean": 639384,
+              "delta": 0
+            },
+            "privateBytesKb": {
+              "samples": 1,
+              "first": 262856,
+              "last": 262856,
+              "min": 262856,
+              "max": 262856,
+              "mean": 262856,
+              "delta": 0
+            },
+            "gpuProcessWorkingSetKb": {
+              "samples": 1,
+              "first": 178528,
+              "last": 178528,
+              "min": 178528,
+              "max": 178528,
+              "mean": 178528,
+              "delta": 0
+            },
+            "queuedBytes": {
+              "samples": 1,
+              "first": 0,
+              "last": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0,
+              "delta": 0
+            }
+          },
+          "method": "Descriptive time-series ranges; no independent-run percentile or leak claim"
+        },
+        "lastDelivery": {
+          "deliveredMessages": 281,
+          "deliveredBytes": 167416,
+          "replacedMessages": 0,
+          "replacedBytes": 0,
+          "droppedMessages": 0,
+          "droppedBytes": 0,
+          "disconnectedClients": 0,
+          "queuedBytes": 0
+        }
+      }
+    ],
+    "errors": [],
+    "startedAt": "2026-10-20T16:11:21.215Z",
+    "versions": {
+      "app": "0.4.0",
+      "electron": "43.7.8",
+      "chromium": "150.0.7871.250",
+      "node": "24.21.0",
+      "windows": "10.0.26300",
+      "logicalCpuCount": 16,
+      "totalMemoryMiB": 64676,
+      "obs": "not-tested"
+    },
+    "gpu": {
+      "features": {
+        "2d_canvas": "disabled_software",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "disabled_software",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "disabled_off",
+        "rasterization": "disabled_software",
+        "raw_draw": "disabled_off_ok",
+        "skia_graphite": "disabled_off",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "disabled_software",
+        "video_encode": "disabled_software",
+        "webgl": "disabled_off",
+        "webgpu": "disabled_off",
+        "webnn": "disabled_off"
+      },
+      "basic": {
+        "auxAttributes": {
+          "amdSwitchable": false,
+          "canSupportThreadedTextureMailbox": false,
+          "directMLFeatureLevel": "Not supported",
+          "dx12FeatureLevel": "Not supported",
+          "glImplementationParts": "(gl=none,angle=none)",
+          "glResetNotificationStrategy": 0,
+          "inProcessGpu": true,
+          "initializationTime": 0,
+          "isAsan": false,
+          "isClangCoverage": false,
+          "jpegDecodeAcceleratorSupported": false,
+          "optimus": false,
+          "overlayInfo": {
+            "bgra8OverlaySupport": "NONE",
+            "directComposition": false,
+            "nv12OverlaySupport": "NONE",
+            "p010OverlaySupport": "NONE",
+            "rgb10a2OverlaySupport": "NONE",
+            "supportsOverlays": false,
+            "yuy2OverlaySupport": "NONE"
+          },
+          "passthroughCmdDecoder": false,
+          "sandboxed": false,
+          "skiaBackendType": "None",
+          "subpixelFontRendering": true,
+          "supportsD3dSharedImages": false,
+          "supportsDirectML": false,
+          "supportsDx12": false,
+          "supportsVulkan": false,
+          "targetCpuBits": 64,
+          "visibilityCallbackCallCount": 0,
+          "vulkanVersion": "Not supported"
+        },
+        "gpuDevice": [
+          {
+            "active": false,
+            "deviceId": 11524,
+            "deviceString": "NVIDIA GeForce RTX 5060 Ti",
+            "driverVersion": "32.0.16.1714",
+            "gpuPreference": 3,
+            "revision": 161,
+            "subSysId": -1978593213,
+            "vendorId": 4318
+          },
+          {
+            "active": false,
+            "deviceId": 5710,
+            "deviceString": "AMD Radeon(TM) Graphics",
+            "driverVersion": "32.0.21042.62",
+            "gpuPreference": 2,
+            "revision": 197,
+            "subSysId": -2005462973,
+            "vendorId": 4098
+          },
+          {
+            "active": false,
+            "deviceId": 140,
+            "deviceString": "Microsoft Basic Render Driver",
+            "driverVersion": "10.0.26100.9711",
+            "gpuPreference": 0,
+            "revision": 0,
+            "subSysId": 0,
+            "vendorId": 5140
+          }
+        ]
+      },
+      "vram": "not-measured"
+    },
+    "limits": [
+      "Synthetic Output-only Electron workload; no actual App player, audio, private library or OBS process measured.",
+      "Lyrics CSS1920x1080 at zoom0.75; widgets zoom1. CPU is sum of Electron-reported process percentCPUUsage; working sets in KiB.",
+      "GPU-process RAM is not GPU VRAM. No FPS, no whole-system resource claim, no performance budget.",
+      "Occluded-window backgrounding disabled explicitly; captures may overlap. Static and temporal checks do not certify complete artistic animation fidelity."
+    ],
+    "resourcesBeforeWindows": {
+      "at": "2026-10-20T16:11:21.349Z",
+      "cpuPercent": 0,
+      "workingSetKb": 147092,
+      "privateBytesKb": 34196,
+      "gpuProcessWorkingSetKb": null,
+      "gpuVramKb": null,
+      "processCount": 1,
+      "clients": 0,
+      "queuedBytes": 0,
+      "droppedMessages": 0,
+      "replacedMessages": 0,
+      "disconnectedClients": 0
+    },
+    "modulePreflight": {
+      "status": "passed",
+      "routes": [
+        "/overlay/lyrics/lyrics.mjs",
+        "/overlay/shared/lifecycle.mjs",
+        "/overlay/shared/appearance.mjs",
+        "/overlay/shared/preview.mjs",
+        "/overlay/shared/state.mjs",
+        "/shared/presentation/lyricsRhythm.mjs",
+        "/overlay/shared/lyricsPresentation.mjs",
+        "/shared/presentation/lyricsPresentationPolicies.mjs",
+        "/overlay/shared/mangaFrameContract.mjs",
+        "/overlay/lyrics/mangaFrame.mjs",
+        "/overlay/lyrics/liveStage.mjs",
+        "/overlay/lyrics/kineticPop.mjs",
+        "/overlay/lyrics/ornateVertical.mjs",
+        "/overlay/shared/runtime.mjs",
+        "/shared/outputAppearance.mjs",
+        "/shared/presentation/outputPreviewScene.mjs",
+        "/shared/presentation/state.mjs",
+        "/shared/presentation/lyricsPresentation.mjs",
+        "/shared/presentation/lyricsTemplateCapabilities.mjs",
+        "/shared/presentation/mangaFrameContract.mjs",
+        "/shared/presentation/kineticPopMotion.mjs",
+        "/shared/presentation/ornateVerticalMotion.mjs",
+        "/shared/presentation/lyricsTimingUnits.mjs",
+        "/shared/presentation/lyricsPhraseBreaks.mjs",
+        "/shared/presentation/lyricsSourceMapping.mjs",
+        "/shared/presentation/ornateVerticalPresentation.mjs"
+      ],
+      "failures": []
+    },
+    "progress": {
+      "label": "live-stage:rapid",
+      "elapsedMs": 5004,
+      "latest": {
+        "elapsedMs": 5004,
+        "cpuPercent": 0.5821871663353817,
+        "workingSetKb": 639384,
+        "privateBytesKb": 262856,
+        "gpuProcessWorkingSetKb": 178528,
+        "gpuVramKb": null,
+        "processCount": 4,
+        "clients": 1,
+        "queuedBytes": 0,
+        "droppedMessages": 0,
+        "replacedMessages": 0,
+        "disconnectedClients": 0
+      }
+    },
+    "finishedAt": "2026-10-20T16:12:07.666Z",
+    "profileCleanup": "passed"
+  },
+  "verification": {
+    "file": "tasks/output-f5-live-stage-tests-20261021.json",
+    "sha256": "c102e0606915c6f88e058a093d7f71ee91afac7defc222fa577d01fd5154b429",
+    "files": 7,
+    "tests": 174,
+    "passed": 174,
+    "coverage": {
+      "lines": {
+        "total": 145,
+        "covered": 141,
+        "skipped": 0,
+        "pct": 97.24
+      },
+      "statements": {
+        "total": 159,
+        "covered": 154,
+        "skipped": 0,
+        "pct": 96.85
+      },
+      "functions": {
+        "total": 31,
+        "covered": 31,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 142,
+        "covered": 130,
+        "skipped": 0,
+        "pct": 91.54
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "eslint": "passed (three changed tooling files)",
+    "format": "passed",
+    "build": "passed; existing large-chunk warning",
+    "packaging": "existing exclusion/server boundary tests passed; no runtime files moved or dependency added",
+    "visual": "inspected live-stage-live-stage-baseline.png; root visible, normal motion preference and synthetic latest content; not artistic/OBS acceptance"
+  },
+  "limits": [
+    "Only four 10-second workloads, with two samples per workload. No endurance, p95 or regression budget claim.",
+    "First observation includes navigation plus reload, not a cold-frame performance metric.",
+    "No real OBS, private media, actual App audio or installed executable retest.",
+    "Original failed reports remain failed; this follow-up resolves their cause and provides new evidence."
+  ]
+}

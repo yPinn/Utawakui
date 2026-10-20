@@ -1,6 +1,7 @@
 # Output Template Thumbnails
 
-These are project-owned preview images bundled into the renderer at build time.
+These preview images are bundled into the renderer at build time. Their presence
+does not establish content accuracy or redistribution rights; see `provenance.json`.
 They are not user-selected local media and must not be routed through preload,
 IPC, or the Output server.
 
@@ -24,3 +25,25 @@ The `queue-board`, `kinetic-pop`, `ornate-vertical` and
 `cover-player` JPEGs were rendered from the existing programmatic templates and
 fixed sample scene at 1280 × 720 with animation disabled. They are derived
 project artwork, not additional third-party source images.
+
+## Provenance and replacement review
+
+`provenance.json` maps every active template to the existing image hash and its
+content status. Four images (`karaoke-stack`, `live-stage`, `manga-frame`,
+`art-card`) are style references, not runtime captures; their rights remain
+unverified and G01 remains a delivery blocker. The other four are legacy
+programmatic captures per the earlier record, pending current-runtime review.
+No image is automatically approved by filename, successful decoding or a hash.
+
+Generate inspection captures with `npm run output:audit`. The tool writes fresh
+artifacts under ignored `tasks/output-appearance-audit-*`, never here. It uses
+synthetic text and existing procedural graphics, with no private library or
+external artwork. Its default native widget sizes and scaled FHD captures are
+inspection inputs, not ready-made 1280 × 720 Gallery assets.
+
+For a separately authorized replacement, retain the original reference and record
+the source commit/dirty hashes, tool report, scene/time, settings, CSS viewport,
+PNG size/zoom, fonts/artwork, rights basis, and human content/crop review. Generate
+the final 16:9 crop separately; never stretch a widget screenshot to claim a native
+16:9 layout. Update the image and provenance together after review. See the
+[acceptance runbook](../../../docs/operations/output-appearance-acceptance.md).

@@ -91,3 +91,18 @@ Compare matching session modes, library contents and executable builds. A fresh
 profile is not an OS-cold cache. The 2026-10-18 investigation, counterfactual
 controls and limitations are recorded in
 [Output first-frame profile investigation](../research/output-first-frame-profile-2026-10-18.md).
+
+## F5 2026-10-20 封裝快照
+
+F5 以當輪 dirty checkout 的固定來源快照重建 Windows unpacked artifact，未覆寫既有 release、未安裝 installer。正常 afterPack 與 Electron fuses 通過，73 個 Output closure 檔案與 ASAR bytes 一致；工具與 fixtures 不進 artifact。來源 manifest／exe／ASAR hashes 見[版本化紀錄](../governance/data/appearance-integration-f5-validation-2026-10-20.json)，原始資料在 tasks/output-f5-package-Omvt0X 與 tasks/output-f5-package-evidence.json。後續並行修改不自動成為此快照的一部分。
+
+以 --port 18700（profile）及 18701（memory）避免現有 App 的 8700 衝突；首次 8700 EADDRINUSE 失敗保留，沒有關閉使用者 App。工具啟動 child 前移除 ELECTRON_RUN_AS_NODE，新增有界 --port 選項，未修改正式 main／preload。Electron 43.7.8／Chromium 150.0.7871.250，Windows 10.0.26300、16 logical CPU、64,676 MiB RAM；主 GPU RTX 5060 Ti。每種模式 cold 5、warm prime 1 不計、warm 5；fresh profile 不等同 OS cold cache。
+
+| Session | Milestone            | Cold p50 / p95 ms   | Warm p50 / p95 ms  |
+| ------- | -------------------- | ------------------- | ------------------ |
+| profile | interactive shell    | 663.862 / 824.809   | 597.737 / 933.573  |
+| profile | first rendered frame | 1782.609 / 1853.017 | 658.102 / 1022.173 |
+| memory  | interactive shell    | 667.380 / 780.645   | 667.905 / 801.701  |
+| memory  | first rendered frame | 730.680 / 830.345   | 728.750 / 876.201  |
+
+p95 使用 nearest-rank，五筆時就是最大值；只作本機描述，不宣稱統計穩定或產品加速。profile 與 memory 是 session 初始化控制，必須分開比較。原始 startup-performance.json 分別在 tasks/output-f5-startup-current-port18700-20261020 與 tasks/output-f5-startup-memory-port18701-20261020；無真實音訊／大曲庫／OBS 場景負載，完整演出可靠性仍待驗。

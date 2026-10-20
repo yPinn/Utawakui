@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-20T16:52:44.520Z",
+  "scope": "MusicBrainz protection, Output F1-F5, community and appearance governance; independent index snapshot excludes parallel features",
+  "parent": "b1f854b1258453da6212804e639589fd04f9d2ed",
+  "snapshotTreeBeforeThisDocumentationRecord": "74f3b2144ebea72239a78e4e9bf0f21d001adf74",
+  "verification": {
+    "testFiles": 91,
+    "tests": 996,
+    "passed": 996,
+    "failed": 0,
+    "coverage": {
+      "lines": {
+        "total": 480,
+        "covered": 456,
+        "skipped": 0,
+        "pct": 95
+      },
+      "statements": {
+        "total": 528,
+        "covered": 497,
+        "skipped": 0,
+        "pct": 94.12
+      },
+      "functions": {
+        "total": 105,
+        "covered": 103,
+        "skipped": 0,
+        "pct": 98.09
+      },
+      "branches": {
+        "total": 425,
+        "covered": 390,
+        "skipped": 0,
+        "pct": 91.76
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "baseline": {
+      "templates": 8,
+      "scenarios": 32,
+      "issues": []
+    },
+    "eslint": "passed for selected JS/CJS/MJS/Vue",
+    "prettier": "passed for selected source/docs/data",
+    "markdown": "167 documents, zero issues",
+    "localMarkdownTargets": "all selected document targets exist",
+    "build": "passed; existing large-chunk and plugin-timing warnings",
+    "packaging": "dependency closure, exclusions and exact-route tests passed; no new installer built"
+  },
+  "settings": {
+    "packageManager": "npm",
+    "dependencyChanges": false,
+    "publicRoutesAdded": [
+      "/overlay/shared/lifecycle.mjs",
+      "/shared/presentation/outputPreviewScene.mjs"
+    ],
+    "gatesOrPaymentsAdded": false,
+    "performanceDefaultMinutes": 5,
+    "explicitEnduranceMinutes": 60,
+    "existingThumbnailBytesChanged": false,
+    "unverifiedReferenceThumbnails": 4
+  },
+  "scopeLimitations": [
+    "Historical F2-F5 captures and packaged startup reports retain their original dirty-source hashes; the final selective snapshot was verified with automated tests/build, not a new full OBS/visual/endurance campaign.",
+    "First snapshot test attempt retained four environment failures (Git worktree/index context and runtime dependency junction). Correct-context rerun passed without product changes.",
+    "Existing staged BGM document and other working-tree features are excluded and preserved."
+  ],
+  "groups": {
+    "musicbrainz": [
+      "electron/lib/musicbrainz/client.js",
+      "electron/lib/musicbrainz/client.test.js"
+    ],
+    "runtime": [
+      "docs/contracts/README.md",
+      "docs/contracts/overlay-asset-security.md",
+      "docs/operations/manual-acceptance.md",
+      "overlay/lyrics/lyrics.mjs",
+      "overlay/lyrics/ornateVerticalLayout.test.js",
+      "overlay/now-playing/artworkMotion.mjs",
+      "overlay/now-playing/artworkMotion.test.js",
+      "overlay/now-playing/now-playing.mjs",
+      "overlay/now-playing/now-playing.runtime.test.js",
+      "overlay/setlist/setlist.mjs",
+      "overlay/setlist/setlist.runtime.test.js",
+      "overlay/setlist/setlistMotion.mjs",
+      "overlay/setlist/setlistMotion.test.js",
+      "overlay/shared/appearance.mjs",
+      "overlay/shared/preview.mjs",
+      "overlay/shared/preview.test.js",
+      "overlay/shared/runtime.mjs",
+      "overlay/shared/runtime.test.js",
+      "package.json",
+      "src/components/output/ObsOverlayPreview.test.js",
+      "src/components/output/ObsOverlayPreview.vue",
+      "src/components/output/ObsTemplateMockup.karaoke.test.js",
+      "src/components/output/ObsTemplateMockup.kineticPop.test.js",
+      "src/components/output/ObsTemplateMockup.nowNext.test.js",
+      "src/components/output/ObsTemplateMockup.ornateVertical.test.js",
+      "src/components/output/ObsTemplateMockup.vue",
+      "src/components/output/ObsTemplatePreviewStage.behavior.test.js",
+      "src/components/output/ObsTemplatePreviewStage.vue",
+      "src/components/output/previews/CoverPlayerPreview.vue",
+      "src/components/output/previews/KaraokeStackPreview.vue",
+      "src/components/output/previews/KineticPopPreview.vue",
+      "src/components/output/previews/LiveStagePreview.vue",
+      "src/components/output/previews/MangaFramePreview.vue",
+      "src/components/output/previews/QueueBoardPreview.vue",
+      "src/constants/outputPreviewSample.json",
+      "src/constants/outputTemplates.js",
+      "src/constants/outputTemplates.test.js",
+      "src/utils/outputRoutes.js",
+      "src/utils/outputRoutes.test.js",
+      "docs/contracts/output-appearance-baseline.md",
+      "docs/contracts/output-host-lifecycle.md",
+      "docs/contracts/output-preview-consistency.md",
+      "overlay/shared/lifecycle.mjs",
+      "overlay/shared/lifecycle.test.js",
+      "scripts/fixtures/output/README.md",
+      "scripts/fixtures/output/appearance-baseline.json",
+      "scripts/fixtures/output/cover.png",
+      "scripts/fixtures/output/scenarios.json",
+      "scripts/outputAppearanceBaseline.mjs",
+      "scripts/outputAppearanceBaseline.test.mjs",
+      "shared/presentation/outputPreviewScene.mjs",
+      "shared/presentation/outputPreviewScene.test.js",
+      "src/components/output/ObsTemplateMockup.scene.test.js",
+      "src/constants/outputPreviewLimitations.js",
+      "src/constants/outputPreviewLimitations.test.js",
+      "docs/architecture.md",
+      "docs/operations/release-inventory.md",
+      "electron/lib/outputServer/http.js",
+      "electron/lib/outputServer.test.js",
+      "scripts/packaging-dependencies.test.mjs"
+    ],
+    "tooling": [
+      "docs/operations/startup-performance-baseline.md",
+      "scripts/startup-performance.mjs",
+      "scripts/startup-performance.test.mjs",
+      "src/assets/output-template-thumbnails/README.md",
+      "src/utils/outputTemplateThumbnails.test.js",
+      "docs/governance/data/appearance-host-f2-validation-2026-10-20.json",
+      "docs/governance/data/appearance-integration-f5-validation-2026-10-20.json",
+      "docs/governance/data/appearance-live-stage-f5-followup-2026-10-21.json",
+      "docs/governance/data/appearance-preview-f3-validation-2026-10-20.json",
+      "docs/governance/data/appearance-tooling-f4-validation-2026-10-20.json",
+      "docs/operations/output-appearance-acceptance.md",
+      "scripts/output-appearance-audit.mjs",
+      "scripts/output-appearance-audit.test.mjs",
+      "scripts/output-appearance-capture.cjs",
+      "scripts/output-performance-driver.cjs",
+      "scripts/output-performance-probe.mjs",
+      "scripts/outputAppearanceAudit.mjs",
+      "scripts/outputAppearanceAudit.test.mjs",
+      "scripts/outputPerformanceProbe.mjs",
+      "scripts/outputPerformanceProbe.test.mjs",
+      "src/assets/output-template-thumbnails/provenance.json"
+    ],
+    "governance": [
+      "docs/README.md",
+      "docs/archive/community-feature-tiers-plan-2026-10-20.md",
+      "docs/governance/appearance-sets-plan.md",
+      "docs/governance/appearance-template-gap-audit-2026-10-20.md",
+      "docs/governance/community-dependency-boundaries-2026-10-20.md",
+      "docs/governance/data/appearance-template-audit-2026-10-20.json",
+      "docs/governance/data/community-dependency-inventory-2026-10-20.json",
+      "docs/governance/data/qwen-research-pypi-license-metadata-2026-10-20.json",
+      "docs/research/appearance-support-models-market-plan-2026-10-20.md"
+    ]
+  }
+}
