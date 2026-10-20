@@ -317,6 +317,43 @@ describe('UiModal behavior', () => {
     },
   );
 
+  it.each(['lost', 'inside', 'closed', 'covered'])(
+    'restores lost focus after unlocking only for the active dialog (%s)',
+    async (mode) => {
+      const locked = ref(true),
+        open = ref(true),
+        covered = ref(false);
+      const app = renderer.createApp({
+        setup: () => () => [
+          h(UiModal, {
+            open: open.value,
+            title: '儲存表單',
+            closeDisabled: locked.value,
+          }),
+          covered.value ? h(UiModal, { open: true, title: '上層表單' }) : null,
+        ],
+      });
+      app.provide(ssrContextKey, { modules: new Set() });
+      app.provide(UI_OVERLAY_HOST_KEY, body);
+      app.mount(hostNode('root'));
+      await nextTick();
+      animationFrames.splice(0).forEach((callback) => callback());
+      const dialog = findAll(body, (n) => n.props?.role === 'dialog')[0];
+      const field = { focus: vi.fn() };
+      dialog.querySelectorAll.mockReturnValue([field]);
+      document.body = hostNode('body');
+      document.activeElement = mode === 'inside' ? field : document.body;
+      if (mode === 'closed') open.value = false;
+      if (mode === 'covered') covered.value = true;
+      locked.value = false;
+      await nextTick();
+      animationFrames.splice(0).forEach((callback) => callback());
+      const focusCalls = field.focus.mock.calls.length;
+      app.unmount();
+      expect(focusCalls).toBe(mode === 'lost' ? 1 : 0);
+    },
+  );
+
   it('closes on Escape and restores focus to the opening control', async () => {
     const open = ref(false);
     const close = vi.fn(() => {

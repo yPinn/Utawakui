@@ -203,6 +203,14 @@ function onWindowKeydown(event) {
 // deliberately excluded: a fallback selector would match the header's close
 // button (first in DOM order), and an Enter right after opening would close the
 // modal and discard the draft, the Enter-driven fragility this modal replaces.
+function focusFirstField() {
+  const dialog = dialogRef.value;
+  const field = Array.from(
+    dialog?.querySelectorAll('input, textarea, select') ?? [],
+  ).find(isAvailableFocusTarget);
+  (field || dialog)?.focus();
+}
+
 function openModal() {
   registerOpenModal();
   pendingFocusRestore = null;
@@ -210,11 +218,7 @@ function openModal() {
   const revision = ++focusRevision;
   window.requestAnimationFrame(() => {
     if (!props.open || !isTopModal() || revision !== focusRevision) return;
-    const dialog = dialogRef.value;
-    const field = Array.from(
-      dialog?.querySelectorAll('input, textarea, select') ?? [],
-    ).find(isAvailableFocusTarget);
-    (field || dialog)?.focus();
+    focusFirstField();
   });
 }
 
@@ -230,6 +234,28 @@ watch(
     unregisterOpenModal();
     pendingFocusRestore = previouslyFocused;
     previouslyFocused = null;
+  },
+);
+
+// Disabling a focused submit button during a commit can drop native focus to
+// the body. If the commit fails and this dialog stays open, recover through the
+// same field-focus owner without stealing a surviving focus or a stacked dialog.
+watch(
+  () => props.closeDisabled,
+  (locked) => {
+    if (locked || !props.open || typeof window === 'undefined') return;
+    const revision = focusRevision;
+    window.requestAnimationFrame(() => {
+      if (
+        !props.open ||
+        props.closeDisabled ||
+        !isTopModal() ||
+        revision !== focusRevision ||
+        document.activeElement !== document.body
+      )
+        return;
+      focusFirstField();
+    });
   },
 );
 
