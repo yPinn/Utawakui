@@ -71,7 +71,7 @@ ADR 0014's `analysis-structure` or validated `combined-ml` environment and never
 turns its four-stem Demucs intermediate into the Refined product default.
 
 The versioned field, persistence, fallback, and rollout boundary lives in the
-[Music Analysis Contract](../contracts/music-analysis-contract.md). Automatic analysis is
+[Music Analysis Contract](../contracts/music-analysis.md). Automatic analysis is
 not a prerequisite for T2 implementation or normal playback.
 
 ### Keep timing as a derived sidecar
@@ -212,7 +212,7 @@ stable line／segment id, or provenance is rewritten.
 
 - [Lyrics timing contract](../contracts/lyrics-timing-contract.md)
 - [T2 implementation plan](../archive/lyrics-t2-implementation-plan.md)
-- [Music analysis contract](../contracts/music-analysis-contract.md)
+- [Music analysis contract](../contracts/music-analysis.md)
 - [ADR 0006: Loopback Output WebSocket Runtime](0006-loopback-output-websocket-runtime.md)
 - [ADR 0012: State Convergence and Startup Phases](0012-state-convergence-and-startup-phases.md)
 - [ADR 0014: Audio Python Runtime Family](0014-audio-python-runtime-family.md)

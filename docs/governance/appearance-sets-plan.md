@@ -8,7 +8,7 @@
 ## 文件分工與本輪範圍
 
 本文件收斂已確認方向、set 標準與接下來的共用基礎實作順序。產品現況仍只維護 [spec](../spec.md)；runtime 與安全契約仍依有效 ADR／contracts。
-下列階段保留共用基礎的工作拆分；本輪接續完成 F3，不改模板外觀或付款。設定可調程度與來源以[顯示契約](../contracts/output-appearance-baseline.md)為準；可見驗收依[八模板清單](../operations/output-appearance-acceptance.md)記錄，不以基線通過代替實機結果。
+下列階段保留共用基礎的工作拆分；本輪接續完成 F3，不改模板外觀或付款。設定可調程度與來源以[顯示契約](../contracts/output-appearance.md)為準；可見驗收依[八模板清單](../operations/output-appearance-acceptance.md)記錄，不以基線通過代替實機結果。
 
 | 要查什麼                           | 唯一主要入口                                                                                                                         |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -43,7 +43,7 @@ F1 完成後可分別研究 F2／F3，但整合時仍逐階段驗收，避免同
 ## Set 的身份與範圍標準
 
 商業上的一個 set 是對外宣告的作品範圍，不必等於一個技術壓縮包或單一模板。
-沿用 [ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md)與 [Overlay Pack Contract](../contracts/overlay-pack-contract.md)的 Template、Official Style Set、Presentation Pack 與版本分工，不另造競爭的 runtime 模型。
+沿用 [ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md)與 [Overlay Pack Contract](../contracts/overlay-pack.md)的 Template、Official Style Set、Presentation Pack 與版本分工，不另造競爭的 runtime 模型。
 
 | 項目         | 未來必須明定的標準                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -92,13 +92,13 @@ ownership 決定能否選用該作品；既有 feature gate 決定是否啟用�
 
 ## 已交付與驗收邊界
 
-| 階段 | 現行模組與契約                                                                                                                  | 已驗與限制                                                               |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| F1   | scripts/outputAppearanceBaseline.mjs、fixtures；[顯示設定與來源契約](../contracts/output-appearance-baseline.md)                | 八模板／32情境結構與設定邊界；不能當作畫面全矩陣通過                     |
-| F2   | overlay/shared/lifecycle.mjs 與三入口；[host 契約](../contracts/output-host-lifecycle.md)                                       | 清理、重連、字型 fallback、native reduced motion；正常動畫 recipe 不變   |
-| F3   | shared/presentation/outputPreviewScene.mjs、Gallery／Workbench adapters；[預覽契約](../contracts/output-preview-consistency.md) | 同一安全場景、設定語意與來源邊界；縮略版不是 pixel parity 或作品驗收     |
-| F4   | scripts/output-appearance-audit.mjs、capture driver、thumbnail provenance                                                       | 可重跑 capture／取消／來源 hashes；不自動替換八張縮圖或核准素材權利      |
-| F5   | scripts/output-performance-probe.mjs、短測 driver、startup-performance                                                          | 八模板本機整合、封裝快照啟動、短時資源觀測；真實 OBS／安裝版／耐久仍待驗 |
+| 階段 | 現行模組與契約                                                                                                         | 已驗與限制                                                               |
+| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| F1   | scripts/outputAppearanceBaseline.mjs、fixtures；[顯示設定與來源契約](../contracts/output-appearance.md)                | 八模板／32情境結構與設定邊界；不能當作畫面全矩陣通過                     |
+| F2   | overlay/shared/lifecycle.mjs 與三入口；[host 契約](../contracts/output-runtime.md)                                     | 清理、重連、字型 fallback、native reduced motion；正常動畫 recipe 不變   |
+| F3   | shared/presentation/outputPreviewScene.mjs、Gallery／Workbench adapters；[預覽契約](../contracts/output-appearance.md) | 同一安全場景、設定語意與來源邊界；縮略版不是 pixel parity 或作品驗收     |
+| F4   | scripts/output-appearance-audit.mjs、capture driver、thumbnail provenance                                              | 可重跑 capture／取消／來源 hashes；不自動替換八張縮圖或核准素材權利      |
+| F5   | scripts/output-performance-probe.mjs、短測 driver、startup-performance                                                 | 八模板本機整合、封裝快照啟動、短時資源觀測；真實 OBS／安裝版／耐久仍待驗 |
 
 工具重跑、環境、逐階段驗證數據、歷史失敗與證據連結集中在[驗收 runbook](../operations/output-appearance-acceptance.md)；冷暖啟動仍以[啟動基準](../operations/startup-performance-baseline.md#f5-2026-10-20-封裝快照)為權威。版本化 JSON 保留當時 dirty-source hashes，不代表之後所有工作目錄版本都已通過。
 

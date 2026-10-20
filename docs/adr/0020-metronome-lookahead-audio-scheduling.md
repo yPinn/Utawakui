@@ -197,7 +197,7 @@ never written back to the track, player tempo, or analysis sidecar.
 - [ADR 0019: Signalsmith Stretch replaces SoundTouchJS](0019-signalsmith-stretch-pitch-transpose.md)
   (same "Web Audio quality/timing can't be automated, document and ask the
   user to listen" posture)
-- [Music Analysis Contract](../contracts/music-analysis-contract.md)
+- [Music Analysis Contract](../contracts/music-analysis.md)
   (constraints a future BPM-sync feature would need to satisfy)
 - `docs/governance/legal-compliance.md` §8.4, §11 (bundled-sample-media
   governance burden that synthesis avoids)

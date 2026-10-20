@@ -30,7 +30,7 @@ not by adding completed history here.
 
 The 30-song M2 corpus, independent annotation, privacy fields, and activation
 thresholds belong to the
-[Music Analysis M2 quality gate](../contracts/music-analysis-m2-quality-gate.md),
+[Music Analysis M2 quality gate](../contracts/music-analysis.md),
 not this UI checklist.
 
 ## Lyrics And Presentation

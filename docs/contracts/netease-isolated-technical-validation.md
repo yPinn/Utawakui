@@ -4,7 +4,7 @@
 建立日期：2026-08-28。
 
 > 本契約保留當時的隔離驗證與 Sentinel 判定規則，不再是現行產品接入契約。現行邊界見
-> [NetEase 歌詞取得契約](netease-acquisition-contract.md)。
+> [NetEase 歌詞取得契約](lyrics-sources.md)。
 
 ## 目的與非目標
 

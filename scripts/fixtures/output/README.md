@@ -29,4 +29,4 @@ cases therefore retain pending runtime/manual evidence.
 Baseline values are per slot/template, not a global user project or theme sync.
 `not-exposed` differs from a template invariant and from an unimplemented file
 import. The distinction and the eight-template manual checklist are documented in
-[the appearance contract](../../../docs/contracts/output-appearance-baseline.md).
+[the appearance contract](../../../docs/contracts/output-appearance.md).

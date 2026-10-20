@@ -342,7 +342,7 @@ acceptance are closed.
 
 - [ADR 0009: Tiered audio-processing recipes](0009-tiered-audio-processing-runtime.md)
 - [ADR 0010: Lyrics timing granularity](0010-lyrics-timing-granularity-and-output-content-split.md)
-- [Music analysis contract](../contracts/music-analysis-contract.md)
+- [Music analysis contract](../contracts/music-analysis.md)
 - [python-audio-separator project metadata](https://raw.githubusercontent.com/nomadkaraoke/python-audio-separator/main/pyproject.toml)
 - [All-In-One Infer project metadata](https://raw.githubusercontent.com/openmirlab/all-in-one-infer/main/pyproject.toml)
 - [All-In-One checkpoint manifest](https://raw.githubusercontent.com/openmirlab/all-in-one-infer/main/src/allin1_infer/config/checkpoints.toml)

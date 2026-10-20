@@ -20,31 +20,21 @@
 - [讀音品質與人工驗收](lyrics-reading-quality-contract.md)
 - [Provider驗證語料](lyrics-provider-evaluation-corpus.md)
 - [外部服務限流與重試](external-service-request-policy.md)
-- [多來源搜尋與選擇](multi-source-lyrics-search-contract.md)
-- [LRCLIB取得／保存](lrclib-acquisition-contract.md)
-- [NetEase取得](netease-acquisition-contract.md)
-- [Better Lyrics手動快取取得](betterlyrics-acquisition-contract.md)
-- [AMLL退役來源相容](amll-acquisition-contract.md)
-- [Musixmatch備援規劃](musixmatch-reserve-adapter.md)
+- [歌詞來源：搜尋、自動取得與各來源](lyrics-sources.md)
 - [NetEase歷史隔離驗證](netease-isolated-technical-validation.md)
 - [Self-View提詞與窄域控制](performer-prompter-contract.md)
 
 ## 音樂分析與識別
 
-- [分析producer／資料契約](music-analysis-contract.md)
-- [BPM品質門檻](music-analysis-bpm-quality-gate.md)
-- [M2真實歌曲門檻](music-analysis-m2-quality-gate.md)
+- [音樂分析：資料、投影與品質門檻](music-analysis.md)
 - [音樂identity與evidence](music-identity-evidence-contract.md)
 - [演出者照片來源](artist-photo-provider.md)
 
 ## Output與外部整合
 
-- [Output runtime防護](output-runtime-hardening.md)
-- [八模板顯示設定、來源與F1基線](output-appearance-baseline.md)
-- [Output共用host生命週期與F2驗收邊界](output-host-lifecycle.md)
-- [Gallery／Workbench／Output預覽資料與F3限制](output-preview-consistency.md)
-- [Overlay資產安全](overlay-asset-security.md)
-- [Overlay pack契約／後續方向](overlay-pack-contract.md)
+- [Output runtime：投影、傳輸與頁面生命週期](output-runtime.md)
+- [Output 外觀：欄位、模板、本機來源與預覽](output-appearance.md)
+- [Overlay pack 與資產安全（規劃）](overlay-pack.md)
 - [整合adapter邊界](integration-adapter-contract.md)
 
 ## 操作介面與共同規則
@@ -55,7 +45,3 @@
 - [Token v2元件檢查](token-v2-component-review.md)
 - [Token v2替換驗收](token-v2-replacement.md)
 - [程式命名](codebase-naming.md)
-
-## 分析測試範本
-
-[BPM benchmark](music-analysis-bpm-benchmark-template.json)、[完整run config](music-analysis-bpm-run-config-template.json)、[runtime smoke config](music-analysis-bpm-smoke-run-config-template.json)、[M2 benchmark](music-analysis-m2-benchmark-template.json)。範本用途與門檻以所屬契約為準。

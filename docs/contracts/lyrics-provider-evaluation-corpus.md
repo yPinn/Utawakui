@@ -339,7 +339,7 @@ fixed-origin direct HTTP client without that reverse package. The two profiles d
 not share runtime or eligibility claims. The historical probe remains defined by
 the [NetEase validation contract](netease-isolated-technical-validation.md); the
 product source is defined by the
-[NetEase acquisition contract](netease-acquisition-contract.md).
+[NetEase acquisition contract](lyrics-sources.md).
 
 ## Result Boundary
 

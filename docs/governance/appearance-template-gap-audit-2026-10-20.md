@@ -41,7 +41,7 @@
 | Set 交付       | 固定三 slot、八 template ids 與 placeholder styleSetIds                                                        | 沒有正式逐 set 內容／版本清單或 remote pack activation；作品 identity 與交付 schema 仍在規劃，不是已有付費 set |
 | 效能與實機     | 已有啟動／first-frame 調查與 baseline；測試有清理與降級                                                        | 不能代替八模板個別 OBS／冷載／壓力／長時間紀錄；H3 契約也保留未定預算與矩陣                                    |
 
-主要來源：[模板 registry](../../shared/outputTemplateValues.json)、[外觀 schema](../../shared/outputAppearance.mjs)、[歌詞能力表](../../shared/presentation/lyricsTemplateCapabilities.mjs)、[共用 connection](../../overlay/shared/runtime.mjs)、[pack contract](../contracts/overlay-pack-contract.md)、[Output hardening](../contracts/output-runtime-hardening.md)。
+主要來源：[模板 registry](../../shared/outputTemplateValues.json)、[外觀 schema](../../shared/outputAppearance.mjs)、[歌詞能力表](../../shared/presentation/lyricsTemplateCapabilities.mjs)、[共用 connection](../../overlay/shared/runtime.mjs)、[pack contract](../contracts/overlay-pack.md)、[Output hardening](../contracts/output-runtime.md)。
 
 ## 八模板逐項盤點
 

@@ -146,7 +146,7 @@ adapter must demonstrate that it is absent from the startup critical path when
 disabled.
 
 The executable checklist lives in
-[`docs/contracts/output-runtime-hardening.md`](../contracts/output-runtime-hardening.md).
+[`docs/contracts/output-runtime-hardening.md`](../contracts/output-runtime.md).
 
 ## Rejected options
 
@@ -176,7 +176,7 @@ The executable checklist lives in
 
 ## References
 
-- [Output runtime hardening contract](../contracts/output-runtime-hardening.md)
+- [Output runtime hardening contract](../contracts/output-runtime.md)
 - [ADR 0010: Lyrics Timing Granularity](0010-lyrics-timing-granularity-and-output-content-split.md)
 - [ADR 0011: Overlay Instances and Presentation Packs](0011-overlay-instances-and-presentation-pack-delivery.md)
 - [Electron performance guidance](https://www.electronjs.org/docs/latest/tutorial/performance)

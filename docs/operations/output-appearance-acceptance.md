@@ -1,7 +1,7 @@
 # 八模板 Output 驗收清單
 
 更新日期：2026-10-21。F1–F5 本機範圍與 Live Stage 補驗已有紀錄；真實 OBS、完整耐久與人工作品驗收仍待完成。以下為重跑方法、驗收範圍與當輪證據，不代表八模板全矩陣通過。
-設定值域、default／opt／advanced、模板不變條件與本機來源以[顯示契約](../contracts/output-appearance-baseline.md)為準；後續階段見[現行計畫](../governance/appearance-sets-plan.md)。
+設定值域、default／opt／advanced、模板不變條件與本機來源以[顯示契約](../contracts/output-appearance.md)為準；後續階段見[現行計畫](../governance/appearance-sets-plan.md)。
 
 首次真人操作先做下節的 default pack 短輪次；其餘章節保留工程重跑與歷史證據。本節只制定步驟，尚未執行真實 OBS 驗收。
 
@@ -179,7 +179,7 @@ Electron 43.7.8／Chromium 150.0.7871.250，隔離 Gallery 元件頁與正式 Ou
 
 84 份／923 項 tests、F1 八模板／32 情境結構基線、ESLint、格式、Markdown、build 與封裝依賴檢查通過。共用 scene／preview adapter／限制 metadata coverage S100／B94.91／F100／L100。
 Kinetic 在可見驗證發現的固定第一句問題已改用當前 canonical phrase；Art Card 啟動縮放差異由測試視窗固定 zoom 後重新載入排除，沒有改藝術 CSS／配方或把非零像素當通過。
-真實 OBS、alpha 合成與長時間效能仍未驗。F3 當輪到此停止；後續 F4 見下節，完整縮略限制見[一致性契約](../contracts/output-preview-consistency.md)。
+真實 OBS、alpha 合成與長時間效能仍未驗。F3 當輪到此停止；後續 F4 見下節，完整縮略限制見[一致性契約](../contracts/output-appearance.md)。
 
 ## F4 隔離 capture 重跑
 

@@ -69,7 +69,7 @@ not be silently downgraded and overwritten.
 
 T2 segment timing and M1/M2 music cues are independent. Segment timing may be
 imported or manually authored with no analyzer installed. Music cues live in the
-separate [Music Analysis Contract](music-analysis-contract.md) and do not infer
+separate [Music Analysis Contract](music-analysis.md) and do not infer
 word boundaries or silently trigger vocal separation.
 
 All bundled Lyrics templates receive the same optional `lyricsRhythm`
@@ -319,6 +319,6 @@ paths, edit flags, and worker state remain private. A reading change advances th
 - [ADR 0010: Lyrics Timing Granularity](../adr/0010-lyrics-timing-granularity-and-output-content-split.md)
 - [ADR 0012: State Convergence and Startup Phases](../adr/0012-state-convergence-and-startup-phases.md)
 - [ADR 0014: Audio Python Runtime Family](../adr/0014-audio-python-runtime-family.md)
-- [Music Analysis Contract](music-analysis-contract.md)
+- [Music Analysis Contract](music-analysis.md)
 - [T2 implementation plan](../archive/lyrics-t2-implementation-plan.md)
-- [Output Runtime Hardening Contract](output-runtime-hardening.md)
+- [Output Runtime Hardening Contract](output-runtime.md)

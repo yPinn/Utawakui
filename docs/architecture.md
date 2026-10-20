@@ -839,20 +839,20 @@ generation 會在相關工作完成後回收。音訊 import 不等待此背景�
 diagnostic，不隱藏已提交來源。歌詞
 manifest 的可選 preference 由 main 持久化，renderer 採 user preference 優先，
 automatic preference 不覆寫使用者選擇。完整契約見
-[多來源歌詞搜尋契約](contracts/multi-source-lyrics-search-contract.md)與
-[Better Lyrics 快取來源取得契約](contracts/betterlyrics-acquisition-contract.md)。Better Lyrics
+[多來源歌詞搜尋契約](contracts/lyrics-sources.md)與
+[Better Lyrics 快取來源取得契約](contracts/lyrics-sources.md)。Better Lyrics
 使用固定公開 cache-first API，不接受
 API key 或 Apple token；其回應缺少實際命中 metadata，因此維持手動預覽／保存且不自動取得。
 Bounded SAX TTML parser 只把完整 primary authored spans 投影為 T2，背景／翻譯／羅馬字 lane
 不混入單線 canonical timing。退役前保存的 AMLL source／timing／artifact 維持可讀與可刪除，
 但 `amll` 不在 renderer 入口、main allowlist 或 `all` fan-out；相容邊界見
-[AMLL 退役相容契約](contracts/amll-acquisition-contract.md)。
+[AMLL 退役相容契約](contracts/lyrics-sources.md)。
 此 composable 也保留沒有
 production UI caller 的 Musixmatch official-API probe compatibility path；
 `src/composables/lyrics/useLyricsSourceDocuments.js` 負責本機來源讀取、offset、timing、
 label／delete 與手動匯入。Musixmatch path 不加入 candidate search／save 或自動取得；它只
 作為未來取得付費 API 後的備用接線，詳細邊界見
-[Musixmatch reserve adapter contract](contracts/musixmatch-reserve-adapter.md)。兩個內部
+[Musixmatch reserve adapter contract](contracts/lyrics-sources.md)。兩個內部
 composable 接受具名 dependency，不互相 import；reading aid 與 timing editor 繼續由既有
 獨立 composable 持有，不建立第二份 Lyrics state。
 
@@ -997,7 +997,7 @@ pagehide／visibility、native reduced-motion 與 FontFaceSet readiness 訂閱�
 不重播舊換曲，也不改正常藝術配方。`runtime.mjs` 繼續持有 socket、重連與 identity／revision
 權威，停止時清理 socket listeners、延遲快照／重連 timer 與 trace rAF，忽略舊 socket
 及已取消的排隊 callback。字型通知不載入新資產、不阻擋首幀；詳見
-[host 生命週期契約](contracts/output-host-lifecycle.md)。
+[host 生命週期契約](contracts/output-runtime.md)。
 
 App-owned Overlay choreography 透過 exact allowlist 提供的 GSAP browser asset 執行；
 GSAP recipe 持有可中斷的 playhead、sequencing、reduced-motion 與 lifecycle cleanup，
@@ -1011,7 +1011,7 @@ Gallery 的 immutable scene facade 與 Overlay 的明確 preview fallback 直接
 selectors 與既有設定 normalization。Workbench 仍使用真實 projection，不把示例發布進
 正式 Hub；空資料不自動變成示範。舊 renderer sample JSON 與三個 route 的自寫 frame 已移除。
 Gallery 靜態圖片仍是參考資產，縮略動畫保留原藝術 recipe 並標出省略範圍，不能代替正式
-timing／分頁／資產驗收；詳見[預覽一致性契約](contracts/output-preview-consistency.md)。
+timing／分頁／資產驗收；詳見[預覽一致性契約](contracts/output-appearance.md)。
 
 開發用 `scripts/output-appearance-audit.mjs` 以隔離 Electron profile、F1／F3 合成資料及正式 Output server 產生分層證據，不進 shipping runtime，也不增加 HTTP／IPC 入口。F5 的 scripts/output-performance-probe.mjs 沿用同一隔離邊界，凍結實際 Output 靜態依賴並記錄合成 workload 的程序資源；不等同真實 App／OBS 負載。重跑與限制集中在[驗收 runbook](operations/output-appearance-acceptance.md#f4-隔離-capture-重跑)。
 
