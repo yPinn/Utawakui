@@ -52,6 +52,19 @@
 
 Setlist 只公開目前演唱曲目與已唱紀錄，不投影待唱。480×810 是擷取尺寸而非固定版面：queue-board 以約兩成高度保留目前歌曲，其餘給已唱紀錄，兩區只以固定 spacing 分隔；最近八首依播放順序向下排列，超出時才自動垂直滾動。
 
+## 歌詞模板呈現
+
+歌詞呈現分兩層：`lyricsTimingUnits.mjs` 只把 T1 fallback 切成無語意的 `{ text, weight }` 單元，原文換行、空白與標點無損附著；`lyricsPresentation.mjs` 再依版本化的 Generic／KTV／Kinetic Pop／Ornate Vertical／Manga／Live Stage profile 解讀為 phrase、role、bubble 或 caption page。Browser Source 依 document id、revision、language 與 profile 快取靜態結果，`state.mjs` 投影動態 frame 與下一個 boundary。`lyricsTemplateCapabilities.mjs` 是各模板 T1／T2、source mapping、music cue 與 scheduler wake 的唯一宣告。模板分句不回寫 canonical timing，T2 永遠優先；raw LRC／VTT parser 不進模板。
+
+- **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1）；唯一消費 beat phase 與段落的模板（見[音樂分析](music-analysis.md)）。
+- **live-stage**：轉播精簡（移除可判定的 filler、連續重複與 CJK 顯示標點）、平衡分行、忠實原文三個 policy，都保留 canonical `sourceText` 與 line／segment identity。Caption 先列出 1／2、2／1、2／2 候選，依容量、作者與跨語邊界、附著性與幾何選解，不為個別歌曲加例外。多頁且有 T2 時以 `lyricsSourceMapping.mjs` 映回來源區間插值，失敗才用 T1 權重。
+- **manga-frame**：依 document language、實際假名或既有讀音投影 `ja`／`other`。預設封裝 GenEi Antique 6.0a，可改 sans／serif／rounded；ruby 繼承對話框字體。可從 `lyrics.document` 取得已存在且 identity 相符的日文讀音；publisher 只讀 sidecar，不為 OBS 啟動讀音 worker。
+- **ornate-vertical**：以 grapheme 保留原文，連續漢字為一個 reveal 單元、假名逐字、標點附著前一單元、拉丁字母與數字成詞；整份文件最多一個漢字群組成為同尺寸藝術詞。長句依原文斷點、標點與日文詞邊界拆成至多兩欄，不切連續漢字、不建立新 timing。`ornateVerticalMotion.mjs` 提供 Browser Source 與 Gallery 共用的 stagger／裁切揭示，不用位移旋轉縮放；換句時舊句完整淡出後新句才進場，seek、來源中斷與 reduced motion 直接 commit。字型為封裝的 Hina Mincho 與 GenEi Antique。
+- **kinetic-pop**：依 source line index 輪替三種材質；每個計時行任一時刻只有一列，行內作者空白編譯成依字重分配 `lineProgress` 的連續 phrases，有 T2 時以 source mapping 對齊起點。無空白的過長內容須由上游斷行，模板不以第二列掩蓋。Glyph 以輸出畫布為中心，超寬內容向兩側等量溢出。`kineticPopMotion.mjs` 共用 28ms 內重複的 burst delay 與可選的八相位 rest pose（「端正」為零偏移，「些微偏移」才保留傾斜、基線與尺寸差）；三個材質 track 共用每字姿態，fill 先畫、細白 stroke 後畫。字型為 M PLUS Rounded 1c 與 Keifont。
+- **混語長句**：`lyricsPhraseBreaks.mjs` 提供最多兩段的顯示候選，只在來源 T2 或已套用 T1+ 的精確起點切換；無時間、粗詞塊或過快切換保留整句，不插值。Kinetic Pop 與來源視窗的預覽共用同一組時間。
+
+所有封裝字型、來源 checksum 與授權位於 `shared/assets/fonts/`，只經 Output server exact allowlist 提供，Renderer 預覽與 Browser Source 用同一份檔案，不依賴遠端 webfont。GSAP recipe 持有可中斷的 playhead、sequencing、reduced motion 與清理，CSS 持有版面、材質與靜態狀態，兩者不同時控制同一屬性。
+
 ## 本機字型與圖片
 
 | 來源                        | 現況                                                                  | 界線                                                                     |
