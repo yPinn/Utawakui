@@ -190,9 +190,10 @@ adapters 評估，目前不做 OBS native plugin。
 - Lyrics 提供 `karaoke-stack`（經典伴唱，預設）、`live-stage`、
   `kinetic-pop`、`ornate-vertical`、`manga-frame` 五個模板。各 slot 的預設模板在模板庫
   標示「建議」，其餘標示「可用」。
-- 模板庫所有模板共用 `src/constants/outputPreviewSample.json` 的同一份示例曲目與歌詞，
-  只呈現動畫與樣式差異；預覽依模板的擷取尺寸（Lyrics 1920×1080、widget 480 寬）
-  等比縮放，縮圖與詳情使用同一比例，並可切換暗色、亮色與透明背景。
+- 模板庫動態縮略與明確示範頁共用 `shared/presentation/outputPreviewScene.mjs` 的合成資料、
+  固定時間與 canonical 設定／投影語意；Workbench 仍讀即時資料，空態不自動填示範。
+  靜態圖只作風格參考，縮略動態的時序／分頁／資產限制有明列。預覽依模板擷取尺寸
+  等比縮放／letterbox，並保留背景檢查；個別模板外觀與動畫 recipe 未因此重設。
 - Setlist 的基礎公開契約只顯示目前演唱曲目與已唱紀錄，不投影待唱佇列，預設模板為
   `queue-board`（黑幕歌單）。480×810 是 large widget 的擷取尺寸，非模板本身的固定
   版面：模板以約兩成高度保留目前歌曲焦點區，已唱紀錄取得其餘可用高度；兩區只以
