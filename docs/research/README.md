@@ -78,6 +78,7 @@
 | 文件                                                                                            | 用途       |
 | ----------------------------------------------------------------------------------------------- | ---------- |
 | [競品調查與需求線索](competitive-research.md)                                                   | 日期見本文 |
+| [外觀贊助模式與市場策略比較](appearance-support-models-market-plan-2026-10-20.md)               | 2026-10-20 |
 | [Track Collection Row／Grid收束提案](track-collection-row-consolidation-proposal-2026-10-14.md) | 2026-10-14 |
 | [v0.4.0公開網站內容核對稿](public-site-content-v0.4.0.md)                                       | 日期見本文 |
 | [早期視覺探索](visual-system-discovery-2026-08-25.md)                                           | 2026-08-25 |
