@@ -195,6 +195,13 @@ scheduler。MusicBrainz 全 App 共用 1.1 秒 request interval；CAA 只接受 
 回傳的 legacy HTTP asset 只會在已 allowlist host 上 canonicalize 為 HTTPS。兩個 adapter 都不接收
 Renderer URL、檔案路徑或任意 query field。
 
+MusicBrainz 的 429／503 冷卻由同一 scheduler 的 clients 共用，送出前會重查，涵蓋已排隊的
+查詢。有效 `Retry-After` 秒數或 HTTP date 決定冷卻期限，至少保留 1.1 秒間隔；沒有有效提示時，
+503 從 5 秒、429 從 30 秒開始依連續失敗倍增，預設退避最多 5 分鐘。上游明示的更長期限不截短。
+只有第一次 503 且等待不超過 5 秒時自動重試一次；其餘冷卻直接回既有 bounded error，
+不讓介面等待整段期限，也不建立背景重試。既有快取命中仍可使用，但不清除冷卻；新的成功
+HTTP 回應才重設失敗次數。這些狀態只存在本次 App process，不新增磁碟紀錄或對外 telemetry。
+
 `electron/lib/artwork/releasePolicy.js` 是 artwork consumer policy。它使用 shared recording
 evidence 的 title／artist／album／duration／ISRC／version axes，但由 artwork 自己評估
 Official／Pseudo／Bootleg／Promotion、Album／Single／EP、Compilation／Live／Remix、年份、
