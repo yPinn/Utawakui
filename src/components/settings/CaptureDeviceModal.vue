@@ -1,13 +1,6 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
-import {
-  Cable,
-  Check,
-  CircleX,
-  Headphones,
-  ICON_SIZE,
-  Info,
-} from '../../icons/index.js';
+import { Cable, Headphones, ICON_SIZE, Info } from '../../icons/index.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import {
@@ -15,13 +8,13 @@ import {
   groupDevicesByIdentity,
   isVirtualCableDevice,
 } from '../../utils/audioDeviceLabel.js';
-import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiRadioGroup from '../ui/UiRadioGroup.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import VirtualCableGuideModal from './VirtualCableGuideModal.vue';
 
 // A dedicated modal rather than a UiActionMenu row list — real Windows
@@ -76,31 +69,57 @@ const deviceRows = computed(() => {
     );
   virtual.sort(bySortOrder);
   other.sort(bySortOrder);
-  const showGroupHeadings = virtual.length > 0 && other.length > 0;
   return [
-    ...virtual.map((device, index) => ({
+    ...virtual.map((device) => ({
       ...device,
       icon: Cable,
-      groupLabel: showGroupHeadings && index === 0 ? '虛擬音效裝置' : null,
+      category: 'virtual',
     })),
-    ...other.map((device, index) => ({
+    ...other.map((device) => ({
       ...device,
       icon: Headphones,
-      groupLabel: showGroupHeadings && index === 0 ? '其他輸出裝置' : null,
+      category: 'other',
     })),
   ];
 });
 
-// A merged row can represent more than one deviceId (see
-// groupDevicesByIdentity) — match against any of them, not just the one
-// this modal would persist going forward, so a selection saved before the
-// merge (e.g. literally 'default') still shows as selected.
-function isSelected(row) {
-  return row.deviceIds.includes(playerState.captureDeviceId);
-}
-
+// Resolve saved default/communications aliases to the canonical visible option.
+const selectedDevice = computed(() => {
+  if (!playerState.captureDeviceId) return 0;
+  return (
+    deviceRows.value.find((row) =>
+      row.deviceIds.includes(playerState.captureDeviceId),
+    )?.canonicalDeviceId ?? playerState.captureDeviceId
+  );
+});
+const deviceGroups = computed(() => {
+  const virtual = deviceRows.value.filter((row) => row.category === 'virtual');
+  const other = deviceRows.value.filter((row) => row.category === 'other');
+  return [
+    {
+      id: 'off',
+      label: '擷取音訊',
+      hideHeading: true,
+      items: [{ id: 0, label: offOptionLabel.value, roleBadges: [] }],
+    },
+    ...[
+      { id: 'virtual', label: '虛擬音效裝置', rows: virtual },
+      { id: 'other', label: '其他輸出裝置', rows: other },
+    ]
+      .filter((group) => group.rows.length)
+      .map((group) => ({
+        ...group,
+        hideHeading: !virtual.length || !other.length,
+        items: group.rows.map((row) => ({
+          ...row,
+          id: row.canonicalDeviceId,
+          label: row.label || '未命名的輸出裝置',
+        })),
+      })),
+  ];
+});
 function choose(deviceId) {
-  selectDevice(deviceId);
+  selectDevice(deviceId === 0 ? null : deviceId);
 }
 </script>
 
@@ -109,104 +128,64 @@ function choose(deviceId) {
     :open="open"
     title="選擇擷取輸出裝置"
     size="wide"
+    max-block-size="small"
+    body-mode="workspace"
     @close="emit('close')"
   >
+    <template #header-actions>
+      <UiIconButton
+        :icon="Info"
+        label="如何選擇擷取裝置"
+        @click="isGuideOpen = true"
+      />
+    </template>
     <div class="capture-device-modal">
-      <div class="capture-device-modal__intro">
-        <p class="capture-device-modal__description">
-          選擇直播或錄影軟體要擷取的輸出裝置。
-        </p>
-        <UiButton
-          class="capture-device-modal__guide-btn"
-          :icon="Info"
-          @click="isGuideOpen = true"
-        >
-          如何選擇？
-        </UiButton>
-      </div>
-
-      <UiScrollRegion
+      <p class="capture-device-modal__description">
+        選擇直播或錄影軟體要擷取的輸出裝置，選擇後立即套用。
+      </p>
+      <UiScrollLayout
         class="capture-device-modal__list"
-        axis="both"
-        viewport-tag="ul"
-        viewport-class="capture-device-modal__list-viewport"
+        content-class="capture-device-modal__options"
+        axis="vertical"
       >
-        <li>
-          <button
-            type="button"
-            class="capture-device-modal__row"
-            :class="{
-              'capture-device-modal__row--active': !playerState.captureDeviceId,
-            }"
-            @click="choose(null)"
-          >
-            <CircleX :size="ICON_SIZE" aria-hidden="true" />
-            <span class="capture-device-modal__label">{{
-              offOptionLabel
-            }}</span>
-            <UiStatusIcon
-              v-if="!playerState.captureDeviceId"
-              :icon="Check"
-              tone="accent"
-              label="已選取"
-            />
-          </button>
-        </li>
-        <template v-for="device in deviceRows" :key="device.canonicalDeviceId">
-          <li
-            v-if="device.groupLabel"
-            class="capture-device-modal__group-heading"
-          >
-            {{ device.groupLabel }}
-          </li>
-          <li>
-            <button
-              type="button"
-              class="capture-device-modal__row"
-              :class="{
-                'capture-device-modal__row--active': isSelected(device),
-              }"
-              @click="choose(device.canonicalDeviceId)"
-            >
+        <UiRadioGroup
+          v-for="group in deviceGroups"
+          :key="group.id"
+          name="capture-output-device"
+          :legend="group.label"
+          :legend-hidden="group.hideHeading"
+          :items="group.items"
+          :model-value="selectedDevice"
+          @update:model-value="choose"
+        >
+          <template #label="{ item }">
+            <span class="capture-device-modal__option-label">
               <component
-                :is="device.icon"
+                :is="item.icon"
+                v-if="item.icon"
                 :size="ICON_SIZE"
                 aria-hidden="true"
               />
-              <span class="capture-device-modal__label">{{
-                device.label || `裝置 ${device.canonicalDeviceId.slice(0, 12)}`
-              }}</span>
+              <span class="capture-device-modal__label">{{ item.label }}</span>
               <UiChip
-                v-for="badge in device.roleBadges"
+                v-for="badge in item.roleBadges"
                 :key="badge"
-                tone="accent"
+                tone="muted"
+                >{{ badge }}</UiChip
               >
-                {{ badge }}
-              </UiChip>
-              <UiStatusIcon
-                v-if="isSelected(device)"
-                :icon="Check"
-                tone="accent"
-                label="已選取"
-              />
-            </button>
-          </li>
-        </template>
-      </UiScrollRegion>
-
-      <UiHint v-if="devices.length === 0" padded>
-        找不到可用裝置。請先安裝虛擬音效裝置。
-      </UiHint>
-
+            </span>
+          </template>
+        </UiRadioGroup>
+      </UiScrollLayout>
+      <UiHint v-if="devices.length === 0"
+        >找不到可用裝置。請先安裝虛擬音效裝置。</UiHint
+      >
       <UiNotice
         v-if="captureErrorNotice"
-        tone="danger"
-        :title="captureErrorNotice.title"
-        :message="captureErrorNotice.message"
+        :notice="captureErrorNotice"
         compact
       />
     </div>
-
     <VirtualCableGuideModal :open="isGuideOpen" @close="isGuideOpen = false" />
   </UiModal>
 </template>
@@ -216,92 +195,48 @@ function choose(deviceId) {
   --capture-device-modal-focus-safe-inset: calc(
     var(--ui-focus-width) + var(--ui-focus-offset)
   );
-
-  display: grid;
-  gap: var(--ui-space-3);
-}
-
-.capture-device-modal__intro {
+  min-block-size: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--ui-space-3);
 }
-
 .capture-device-modal__description {
-  flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
   line-height: var(--ui-type-caption-line-height);
 }
-
-.capture-device-modal__guide-btn {
-  flex-shrink: 0;
-  color: var(--ui-color-accent);
-  white-space: nowrap;
-}
-
 .capture-device-modal__list {
-  max-height: min(52vh, 420px);
+  --ui-scroll-layout-padding-block-start: var(
+    --capture-device-modal-focus-safe-inset
+  );
+  --ui-scroll-layout-padding-block-end: var(
+    --capture-device-modal-focus-safe-inset
+  );
+  --ui-scroll-layout-padding-inline-start: var(
+    --capture-device-modal-focus-safe-inset
+  );
+  --ui-scroll-layout-padding-inline-end: var(
+    --capture-device-modal-focus-safe-inset
+  );
+  min-block-size: 0;
+  flex: 1 1 auto;
 }
-
-.capture-device-modal__list :deep(.capture-device-modal__list-viewport) {
-  block-size: auto;
-  max-block-size: inherit;
+.capture-device-modal__list :deep(.capture-device-modal__options) {
   display: grid;
-  gap: var(--ui-space-1);
-  margin: 0;
-  padding: var(--capture-device-modal-focus-safe-inset);
-  scroll-padding: var(--capture-device-modal-focus-safe-inset);
-  list-style: none;
+  gap: var(--ui-space-3);
 }
-
-.capture-device-modal__row {
+.capture-device-modal__option-label {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--ui-space-2);
-  width: 100%;
-  min-height: var(--ui-control-height);
-  padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
-  text-align: left;
-  cursor: pointer;
 }
-
-.capture-device-modal__row:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.capture-device-modal__row:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.capture-device-modal__row--active {
-  border-color: var(--ui-color-accent);
-  background: var(--ui-color-accent-soft);
-}
-
-.capture-device-modal__group-heading {
-  padding: var(--ui-space-2) var(--ui-space-1) 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-caption-line-height);
-}
-
 .capture-device-modal__label {
-  min-width: 0;
+  min-inline-size: 0;
   flex: 1;
-  /* Deliberately no truncation — see the top-of-file comment for why this
-     modal exists instead of a context menu. */
   overflow-wrap: anywhere;
 }
 </style>

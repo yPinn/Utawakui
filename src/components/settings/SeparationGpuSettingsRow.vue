@@ -22,13 +22,13 @@ const emit = defineEmits(['setGpuAcceleration', 'refreshPreference']);
     <SettingsDocumentItem
       :icon="Cpu"
       title="人聲分離"
-      guidance="GPU 無法使用時改用 CPU。"
+      guidance="優先使用顯示卡加速；無法使用時改用處理器。"
       variant="nested"
     >
       <template #actions>
         <UiCheckbox
           id="separation-gpu-acceleration"
-          label="GPU 加速"
+          label="顯示卡加速（GPU）"
           aria-label="使用 GPU 加速人聲分離"
           :model-value="loaded ? gpuAcceleration : false"
           :disabled="preferenceBusy || reading || !loaded"

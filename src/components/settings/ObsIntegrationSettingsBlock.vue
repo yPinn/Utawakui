@@ -1,10 +1,18 @@
 <script setup>
 import { computed, nextTick, shallowRef, watch } from 'vue';
-import { Play, Power, Video } from '../../icons/index.js';
+import {
+  Download,
+  Play,
+  Power,
+  RefreshCw,
+  Trash2,
+  Video,
+} from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import { usePlaybackDockPreference } from '../../composables/usePlaybackDockPreference.js';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
@@ -155,7 +163,7 @@ watch(
   <div class="obs-integration-settings-block">
     <SettingsDocumentItem
       :icon="Video"
-      title="WebSocket 連線"
+      title="OBS 連線狀態"
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
@@ -164,14 +172,6 @@ watch(
     >
       <template #actions>
         <UiButton
-          v-if="canRetry"
-          variant="ghost"
-          :loading="isSaving"
-          @click="emit('retryConnect')"
-        >
-          重試連線
-        </UiButton>
-        <UiButton
           v-if="featureEnabled"
           id="obs-integration-enabled"
           :icon="isEnabled ? Power : Play"
@@ -179,7 +179,15 @@ watch(
           :aria-label="isEnabled ? '停止 OBS 連線' : '連線至 OBS'"
           :disabled="isSaving || isLoading || Boolean(readError)"
           @click="emit('save', { enabled: !isEnabled })"
-          >{{ isEnabled ? '停止連線' : '連線' }}</UiButton
+          >{{ isEnabled ? '停止' : '連線' }}</UiButton
+        >
+        <UiButton
+          v-if="canRetry"
+          :icon="RefreshCw"
+          variant="accent"
+          :disabled="isSaving || isLoading"
+          @click="emit('retryConnect')"
+          >重試連線</UiButton
         >
       </template>
       <template
@@ -203,21 +211,6 @@ watch(
         >
       </template>
     </SettingsDocumentItem>
-    <UiCheckbox
-      id="obs-auto-arrangement-dock"
-      label="OBS 連線後顯示播放安排"
-      hint="預設關閉。僅依 WebSocket 已連線狀態顯示側欄；可隨時收合或切換，不會開始播放。"
-      :model-value="dockPreference.value.value"
-      :disabled="dockPreference.busy.value || dockPreference.reading.value"
-      :error="dockPreference.error.value"
-      @update:model-value="dockPreference.save"
-    />
-    <UiButton
-      v-if="dockPreference.readError.value"
-      variant="ghost"
-      @click="dockPreference.refresh"
-      >重新讀取顯示偏好</UiButton
-    >
     <UiHint v-if="readError" tone="danger" role="alert">{{ readError }}</UiHint>
     <UiButton
       v-if="readError"
@@ -250,13 +243,10 @@ watch(
     >
 
     <UiDisclosure
-      v-if="
-        featureEnabled &&
-        (isEnabled || saveError || Object.values(fieldErrors).some(Boolean))
-      "
+      v-if="featureEnabled"
       v-model:open="isConnectionSettingsOpen"
       class="settings-section__disclosure"
-      label="伺服器與場次設定"
+      label="連線與場次紀錄設定"
     >
       <div class="obs-integration-settings-block__form">
         <div class="obs-integration-settings-block__connection">
@@ -310,16 +300,19 @@ watch(
             autocomplete="off"
             :disabled="isSaving || isLoading || Boolean(readError)"
             @update:model-value="emit('update:password', $event)"
-          />
-          <UiButton
-            v-if="hasStoredPassword"
-            variant="ghost"
-            :disabled="isSaving || isLoading || Boolean(readError)"
-            intent="danger"
-            @click="emit('clearPassword')"
           >
-            移除密碼
-          </UiButton>
+            <template #action>
+              <UiIconButton
+                v-if="hasStoredPassword && isEnabled"
+                :icon="Trash2"
+                label="移除密碼"
+                variant="ghost"
+                :disabled="isSaving || isLoading || Boolean(readError)"
+                intent="danger"
+                @click="emit('clearPassword')"
+              />
+            </template>
+          </UiTextField>
         </div>
 
         <UiHint v-if="passwordError && isEnabled" tone="danger" role="alert">{{
@@ -334,10 +327,10 @@ watch(
             }
           "
           :error="fieldErrors.skipThresholdSeconds"
-          label="略過門檻（秒）"
+          label="場次紀錄門檻（秒）"
           :model-value="skipThresholdSeconds"
           placeholder="10"
-          hint="短於此秒數就換下一首，且不記錄；0 表示停用。"
+          hint="播放未滿指定秒數便切歌時，不列入場次紀錄；0 表示停用此篩選。"
           :disabled="isSaving || isLoading || Boolean(readError)"
           @update:model-value="emit('update:skipThresholdSeconds', $event)"
         />
@@ -349,19 +342,52 @@ watch(
           <UiButton
             variant="accent"
             :loading="isSaving"
+            :disabled="isLoading || Boolean(readError)"
             @click="emit('save', { enabled: true })"
           >
-            儲存設定
+            {{
+              !isEnabled ? '儲存並連線' : canRetry ? '儲存並重連' : '儲存設定'
+            }}
           </UiButton>
         </div>
       </div>
     </UiDisclosure>
 
-    <div v-if="featureEnabled" class="obs-integration-settings-block__export">
-      <UiButton variant="ghost" @click="emit('exportChapters')">
-        匯出時間標記
-      </UiButton>
-    </div>
+    <SettingsDocumentItem
+      title="播放安排側欄"
+      guidance="連線至 OBS 後顯示「播放安排」；可隨時收合，不會自動播放。"
+      variant="nested"
+    >
+      <template #actions>
+        <UiCheckbox
+          id="obs-auto-arrangement-dock"
+          label="連線後自動顯示"
+          :model-value="dockPreference.value.value"
+          :disabled="dockPreference.busy.value || dockPreference.reading.value"
+          :error="dockPreference.error.value"
+          @update:model-value="dockPreference.save"
+        />
+      </template>
+      <template v-if="dockPreference.readError.value" #feedback>
+        <UiButton variant="ghost" @click="dockPreference.refresh"
+          >重新讀取顯示偏好</UiButton
+        >
+      </template>
+    </SettingsDocumentItem>
+    <SettingsDocumentItem
+      v-if="featureEnabled"
+      title="場次時間標記"
+      guidance="匯出直播或錄影的曲目時間，可用於影片章節。"
+      variant="nested"
+    >
+      <template #actions>
+        <UiIconButton
+          :icon="Download"
+          label="匯出時間標記"
+          @click="emit('exportChapters')"
+        />
+      </template>
+    </SettingsDocumentItem>
 
     <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
   </div>
@@ -430,10 +456,5 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: var(--ui-space-2);
-}
-
-.obs-integration-settings-block__export {
-  display: flex;
-  justify-content: flex-end;
 }
 </style>

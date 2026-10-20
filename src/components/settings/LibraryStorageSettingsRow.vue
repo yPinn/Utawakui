@@ -79,7 +79,7 @@ function updatePolicy(fields) {
             <UiCheckbox
               id="auto-manage-separation-storage"
               class="library-storage__auto-manage"
-              label="自動管理去人聲"
+              label="自動清理去人聲版本"
               :model-value="policy.autoManageSeparation"
               :disabled="saving || cleaning || loading || Boolean(readError)"
               @update:model-value="
@@ -89,7 +89,7 @@ function updatePolicy(fields) {
             <UiSelect
               id="separation-storage-limit"
               class="library-storage__limit"
-              label="上限"
+              label="去人聲容量上限"
               :model-value="policy.separationLimitBytes"
               :options="limitOptions"
               :disabled="saving || cleaning || loading || Boolean(readError)"
@@ -109,7 +109,9 @@ function updatePolicy(fields) {
           </div>
 
           <div class="library-storage__feedback">
-            <UiHint>只清去人聲，歌曲保留。</UiHint>
+            <UiHint
+              >超過上限或磁碟空間不足時，清理去人聲版本；原始歌曲保留。啟用後會立即檢查。</UiHint
+            >
           </div>
         </template>
 

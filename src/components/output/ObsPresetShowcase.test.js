@@ -443,10 +443,8 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain(':height="PREVIEW_CANVAS_HEIGHT"');
     expect(settingsSource).toContain('<UiTextField');
     expect(settingsSource).toContain('inputmode="numeric"');
-    expect(settingsSource).toContain('@change="commitSettings()"');
-    expect(settingsSource).toContain(
-      '@keydown.enter.prevent="commitSettings()"',
-    );
+    expect(settingsSource).not.toContain('@change="commitSettings()"');
+    expect(settingsSource).toContain('@click="commitSettings()"');
     expect(settingsSource).not.toContain('type="number"');
     expect(settingsSource).not.toContain('step="1"');
     expect(settingsSource).not.toContain(':icon="Check"');

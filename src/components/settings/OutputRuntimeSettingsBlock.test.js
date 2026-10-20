@@ -162,9 +162,9 @@ describe('OutputRuntimeSettingsBlock', () => {
     expect(html).not.toContain('Utawakui.Lyrics · 1920');
   });
 
-  it('commits text fields on change or Enter and skips unchanged values', () => {
-    expect(source).toContain('@change="commitSettings()"');
-    expect(source).toContain('@keydown.enter.prevent="commitSettings()"');
+  it('requires explicit save for connection fields and skips unchanged values', () => {
+    expect(source).not.toContain('@change="commitSettings()"');
+    expect(source).toContain('@click="commitSettings()"');
     expect(source).toContain('next.displayDelayMs === currentDelay');
     expect(source).not.toContain('type="number"');
   });

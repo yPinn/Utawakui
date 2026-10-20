@@ -48,6 +48,9 @@ const libraryStorageSettingsRowSource = readSource(
 );
 
 const settingsRenderGraphPaths = [
+  '../components/settings/LyricsResearchSettingsBlock.vue',
+  '../components/settings/LyricsResearchPreviewTools.vue',
+  '../components/settings/LyricsExperimentalQueueSettings.vue',
   '../components/separation/SeparationPresetControl.vue',
   '../components/settings/CaptureDeviceModal.vue',
   '../components/settings/FfmpegSourceModal.vue',
@@ -168,7 +171,7 @@ describe('Settings Folder surface cutover', () => {
       '@container settings-section (max-width: 48rem)',
     );
     expect(settingsDocumentItemSource).toContain(
-      '@container settings-section (max-width: 40rem)',
+      '@container settings-section (max-width: 32rem)',
     );
     expect(settingsFeatureGateRowSource).toContain(
       '@container settings-section (max-width: 30rem)',
@@ -184,12 +187,12 @@ describe('Settings Folder surface cutover', () => {
         '@container settings-section (max-width: 48rem)',
       ),
       settingsDocumentItemSource.indexOf(
-        '@container settings-section (max-width: 40rem)',
+        '@container settings-section (max-width: 32rem)',
       ),
     );
     const narrowTier = settingsDocumentItemSource.slice(
       settingsDocumentItemSource.indexOf(
-        '@container settings-section (max-width: 40rem)',
+        '@container settings-section (max-width: 32rem)',
       ),
     );
 

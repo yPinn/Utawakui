@@ -17,7 +17,7 @@ const emit = defineEmits(['setAutoAnalyze', 'refreshPreference']);
 
 <template>
   <SettingsDocumentItem
-    title="BPM 與節拍分析"
+    title="歌曲速度與節拍（BPM）"
     guidance="匯入後在本機分析，不上傳歌曲。"
     variant="nested"
   >

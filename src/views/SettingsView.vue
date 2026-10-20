@@ -3,7 +3,6 @@ import SettingsApplicationSection from '../components/settings/SettingsApplicati
 import SettingsAudioSection from '../components/settings/SettingsAudioSection.vue';
 import SettingsCapabilitiesSection from '../components/settings/SettingsCapabilitiesSection.vue';
 import LyricsResearchSettingsBlock from '../components/settings/LyricsResearchSettingsBlock.vue';
-import LyricsExperimentalQueueSettings from '../components/settings/LyricsExperimentalQueueSettings.vue';
 import SettingsLibrarySection from '../components/settings/SettingsLibrarySection.vue';
 import SettingsSupportSection from '../components/settings/SettingsSupportSection.vue';
 </script>
@@ -12,10 +11,10 @@ import SettingsSupportSection from '../components/settings/SettingsSupportSectio
   <div class="settings-view">
     <SettingsLibrarySection />
     <SettingsAudioSection />
+    <SettingsCapabilitiesSection>
+      <template #after-processing><LyricsResearchSettingsBlock /></template>
+    </SettingsCapabilitiesSection>
     <SettingsApplicationSection />
-    <SettingsCapabilitiesSection />
-    <LyricsResearchSettingsBlock />
-    <LyricsExperimentalQueueSettings />
     <SettingsSupportSection />
   </div>
 </template>

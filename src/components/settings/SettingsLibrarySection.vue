@@ -102,10 +102,10 @@ async function handleClearPlaybackHistory() {
 
 async function handleCleanupLibraryStorage() {
   const confirmed = await confirmAction({
-    title: '清除去人聲版本？',
-    message: '所有去人聲版本都會被清除。',
-    detail: '原始歌曲會保留，之後可以重新產生。',
-    confirmLabel: '清除版本',
+    title: '清理去人聲空間？',
+    message: '將依容量設定與磁碟空間需求，清理可重新產生的去人聲版本。',
+    detail: '原始歌曲會保留，需要時可重新產生去人聲版本。',
+    confirmLabel: '清理空間',
     intent: 'danger',
   });
   if (confirmed) await libraryStorage.cleanup();
@@ -216,7 +216,7 @@ onUnmounted(() => libraryStorage.dispose());
     />
 
     <UiDisclosure
-      class="settings-library-section__details settings-section__disclosure"
+      class="settings-section__disclosure"
       label="曲目資訊與播放紀錄"
       :open="Boolean(playbackHistoryState.error)"
     >
@@ -236,9 +236,3 @@ onUnmounted(() => libraryStorage.dispose());
     </UiDisclosure>
   </SettingsSection>
 </template>
-
-<style scoped>
-.settings-library-section__details {
-  border-block-end: 0;
-}
-</style>

@@ -4,10 +4,11 @@
 // every field down as props, since useObsSessionExport() is a module
 // singleton the trigger button (ObsIntegrationSettingsBlock.vue) can already
 // open without prop drilling between unrelated components.
-import { computed } from 'vue';
+import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { RefreshCw } from '../../icons/index.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
@@ -26,16 +27,68 @@ const SOURCE_ITEMS = Object.freeze([
 const hasSession = computed(
   () => (exportState.session.value?.entries?.length ?? 0) > 0,
 );
+const offsetField = useTemplateRef('offsetField');
+const content = useTemplateRef('content');
+watch(
+  () => exportState.isLoading.value,
+  async (loading) => {
+    if (loading || !exportState.isOpen.value) return;
+    await nextTick();
+    if (!exportState.isOpen.value) return;
+    if (typeof document !== 'undefined') {
+      const active = document.activeElement;
+      const dialog = content.value?.closest('[role="dialog"]');
+      if (
+        active &&
+        active !== document.body &&
+        active !== dialog &&
+        active !== content.value
+      )
+        return;
+    }
+    if (hasSession.value && !exportState.error.value)
+      offsetField.value?.focus();
+    else content.value?.focus();
+  },
+);
 </script>
 
 <template>
   <UiModal
     :open="exportState.isOpen.value"
     title="匯出場次時間軸"
-    size="wide"
+    size="notice"
+    max-block-size="small"
     @close="exportState.close()"
   >
-    <div class="obs-session-export-modal">
+    <template #header-actions>
+      <UiIconButton
+        :icon="RefreshCw"
+        label="重新讀取場次"
+        :loading="exportState.isLoading.value"
+        @click="exportState.open()"
+      />
+      <UiButton
+        variant="accent"
+        aria-label="複製章節"
+        :disabled="!exportState.canCopy.value"
+        @click="exportState.copyChapters()"
+        >{{
+          exportState.copyState.value.tone === 'success' ? '已複製' : '複製'
+        }}</UiButton
+      >
+    </template>
+    <div ref="content" class="obs-session-export-modal" tabindex="-1">
+      <UiHint
+        v-if="exportState.copyState.value.message"
+        :tone="
+          exportState.copyState.value.tone === 'error' ? 'danger' : 'muted'
+        "
+        :role="
+          exportState.copyState.value.tone === 'error' ? 'alert' : 'status'
+        "
+        >{{ exportState.copyState.value.message }}</UiHint
+      >
       <p
         v-if="exportState.isLoading.value"
         class="obs-session-export-modal__status"
@@ -57,24 +110,38 @@ const hasSession = computed(
 
       <template v-else>
         <div class="obs-session-export-modal__controls">
-          <UiSegmentedControl
-            :model-value="exportState.source.value"
-            :items="SOURCE_ITEMS"
-            aria-label="時間來源"
-            @update:model-value="exportState.source.value = $event"
-          />
+          <div class="obs-session-export-modal__source">
+            <span class="obs-session-export-modal__label" aria-hidden="true"
+              >時間來源</span
+            >
+            <UiSegmentedControl
+              :model-value="exportState.source.value"
+              :items="SOURCE_ITEMS"
+              aria-label="時間來源"
+              @update:model-value="exportState.source.value = $event"
+            />
+          </div>
           <UiTextField
             id="obs-session-export-offset"
+            ref="offsetField"
             label="偏移量（秒）"
             :model-value="exportState.offsetSeconds.value"
             placeholder="0"
-            hint="用於校正 VOD 開頭，會從所有時間戳扣除。"
+            inputmode="numeric"
+            :error="exportState.offsetError.value"
+            aria-describedby="obs-session-export-offset-hint"
             @update:model-value="exportState.offsetSeconds.value = $event"
           />
         </div>
+        <UiHint id="obs-session-export-offset-hint"
+          >用於校正 VOD 開頭，會從所有時間戳扣除。</UiHint
+        >
 
         <UiDisclosure
-          v-if="exportState.result.value.issues.length"
+          v-if="
+            !exportState.offsetError.value &&
+            exportState.result.value.issues.length
+          "
           :label="`章節有 ${exportState.result.value.issues.length} 項需確認`"
         >
           <UiHint tone="warning">時間戳未自動調整，請確認以下問題。</UiHint>
@@ -89,37 +156,16 @@ const hasSession = computed(
         </UiDisclosure>
 
         <UiTextarea
+          v-if="!exportState.offsetError.value"
           id="obs-session-export-text"
           label="YouTube 章節"
           :model-value="exportState.result.value.text"
-          :rows="10"
+          :rows="7"
           readonly
           hint="可選取文字後按 Ctrl+C 手動複製。"
         />
-
-        <div class="obs-session-export-modal__actions">
-          <UiButton
-            variant="accent"
-            :disabled="!exportState.result.value.text"
-            @click="exportState.copyChapters()"
-          >
-            複製章節
-          </UiButton>
-          <span
-            v-if="exportState.copyState.value.message"
-            class="obs-session-export-modal__copy-feedback"
-            role="status"
-            >{{ exportState.copyState.value.message }}</span
-          >
-        </div>
+        <UiHint v-else>輸入有效偏移量後即可預覽及複製章節。</UiHint>
       </template>
-      <UiButton
-        :icon="RefreshCw"
-        variant="ghost"
-        :loading="exportState.isLoading.value"
-        @click="exportState.open()"
-        >重新讀取場次</UiButton
-      >
     </div>
   </UiModal>
 </template>
@@ -137,6 +183,10 @@ const hasSession = computed(
   display: grid;
   gap: var(--ui-space-3);
 }
+.obs-session-export-modal:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
 
 .obs-session-export-modal__status {
   margin: 0;
@@ -146,20 +196,19 @@ const hasSession = computed(
 }
 
 .obs-session-export-modal__controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--ui-space-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-space-3);
 }
-
-.obs-session-export-modal__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
+.obs-session-export-modal__source {
+  display: grid;
+  gap: var(--ui-space-1);
 }
-
-.obs-session-export-modal__copy-feedback {
+.obs-session-export-modal__label {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 </style>

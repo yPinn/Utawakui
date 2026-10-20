@@ -10,6 +10,6 @@ import SettingsDocumentItem from './SettingsDocumentItem.vue';
     value="啟動時整理名稱、歌手、專輯與年份"
     status="自動"
     status-tone="success"
-    guidance="只用已存資料；不連線，保留無法確認的手動編輯。"
+    guidance="僅使用已儲存的資訊，不連線；無法確認的內容保留你的編輯。"
   />
 </template>

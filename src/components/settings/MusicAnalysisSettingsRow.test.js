@@ -36,7 +36,7 @@ describe('MusicAnalysisSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('BPM 分析');
-    expect(html).not.toContain('供本機 BPM 與節拍分析使用。');
+    expect(html).not.toContain('供本機 歌曲速度與節拍（BPM）使用。');
     expect(html).not.toContain('title="在本機分析 BPM 與節拍，不會上傳歌曲。"');
     expect(html).not.toContain('自動分析');
     expect(html).not.toContain('auto-music-analysis');

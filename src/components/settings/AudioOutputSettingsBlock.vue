@@ -21,7 +21,7 @@ const emit = defineEmits(['selectDevice']);
       :value="deviceLabel"
       :status="enabled ? '已啟用' : '未啟用'"
       :status-tone="enabled ? 'success' : 'muted'"
-      guidance="選擇直播／錄影用的虛擬裝置。"
+      guidance="供直播或錄影軟體擷取音訊；與本機聆聽裝置分開設定。"
     >
       <template #actions>
         <UiIconButton

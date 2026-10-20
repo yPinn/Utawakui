@@ -27,16 +27,22 @@ describe('FeedbackReportModal', () => {
   it('renders nothing when the report is closed', async () => {
     useFeedbackReport().closeReport();
     const html = await renderModal();
-    expect(html).not.toContain('意見回饋');
+    expect(html).not.toContain('回報與建議');
   });
 
   it('shows the diagnostics checkbox but not the track label field for a bug report', async () => {
     useFeedbackReport().openReport({ kind: 'bug' });
     const html = await renderModal();
 
-    expect(html).toContain('意見回饋');
+    expect(html).toContain('回報與建議');
     expect(html).toContain('附上最近的錯誤紀錄');
     expect(html).not.toContain('歌曲資訊');
+    const toolbar = html.slice(
+      html.indexOf('class="ui-modal__header-actions"'),
+      html.indexOf('class="ui-modal__body'),
+    );
+    expect(toolbar).toContain('預覽');
+    expect(html).not.toContain('feedback-report__actions');
   });
 
   it('uses the notice modal size for its multi-step compose/preview flow', async () => {
@@ -90,6 +96,18 @@ describe('FeedbackReportModal', () => {
     expect(html).toContain('3');
     expect(html).not.toContain('schemaVersion');
     expect(html).not.toContain('{');
+    const toolbar = html.slice(
+      html.indexOf('class="ui-modal__header-actions"'),
+      html.indexOf('class="ui-modal__body'),
+    );
+    expect(toolbar).toContain('返回編輯');
+    expect(toolbar).toContain('另存檔案');
+    expect(toolbar.indexOf('返回編輯')).toBeLessThan(
+      toolbar.indexOf('另存檔案'),
+    );
+    expect(toolbar.indexOf('另存檔案')).toBeLessThan(
+      toolbar.indexOf('送出回饋'),
+    );
   });
 
   it('renders a compact report reference while retaining the full submitted id', async () => {

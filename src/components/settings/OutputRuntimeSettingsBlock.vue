@@ -33,20 +33,25 @@ const draftDisplayDelayMs = shallowRef(
 );
 
 watch(
-  () => outputState.settings,
-  (settings) => {
-    draftPort.value = String(settings.port);
-    draftDisplayDelayMs.value = String(
-      settings.displayDelayMs ?? OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
-    );
+  () => outputState.settings.port,
+  (port) => {
+    draftPort.value = String(port);
   },
-  { deep: true },
+);
+watch(
+  () =>
+    outputState.settings.displayDelayMs ??
+    OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
+  (delay) => {
+    draftDisplayDelayMs.value = String(delay);
+  },
 );
 
 const busy = computed(
   () =>
     outputState.isStarting ||
     outputState.isStopping ||
+    outputState.isLoadingSettings ||
     outputState.isSavingSettings,
 );
 const spoutBusy = computed(
@@ -152,18 +157,24 @@ const spoutOperationError = computed(
   () => spoutState.errors?.start || spoutState.errors?.stop || '',
 );
 
-function commitSettings(overrides = {}) {
-  if (busy.value || !isPortValid.value || !isDisplayDelayValid.value) return;
+function commitSettings(overrides) {
+  if (busy.value || settingsReadError.value) return;
+  if (!overrides && (!isPortValid.value || !isDisplayDelayValid.value)) return;
   const current = outputState.settings;
-  const next = {
-    autoStart: overrides.autoStart ?? current.autoStart,
-    port: Number(overrides.port ?? draftPort.value),
-    displayDelayMs: Number(
-      overrides.displayDelayMs ?? draftDisplayDelayMs.value,
-    ),
-  };
   const currentDelay =
     current.displayDelayMs ?? OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs;
+  const next = overrides
+    ? {
+        autoStart: current.autoStart,
+        port: current.port,
+        displayDelayMs: currentDelay,
+        ...overrides,
+      }
+    : {
+        autoStart: current.autoStart,
+        port: Number(draftPort.value),
+        displayDelayMs: Number(draftDisplayDelayMs.value),
+      };
   if (
     next.autoStart === current.autoStart &&
     next.port === current.port &&
@@ -176,7 +187,6 @@ function commitSettings(overrides = {}) {
 
 function chooseSuggestedPort(port) {
   draftPort.value = String(port);
-  commitSettings({ port });
 }
 
 onMounted(() => {
@@ -194,7 +204,7 @@ onMounted(() => {
         :value="serviceStatus.detail"
         :status="serviceStatus.label"
         :status-tone="serviceStatus.tone"
-        guidance="供 Browser Source 顯示歌詞與曲目。"
+        guidance="供直播或錄影軟體的「瀏覽器來源」顯示歌詞與曲目。"
         variant="nested"
       >
         <template #actions>
@@ -282,8 +292,6 @@ onMounted(() => {
                     : ''
               "
               :disabled="busy || Boolean(settingsReadError)"
-              @change="commitSettings()"
-              @keydown.enter.prevent="commitSettings()"
             />
             <UiTextField
               id="output-display-delay"
@@ -298,10 +306,12 @@ onMounted(() => {
                   : ''
               "
               :disabled="busy || Boolean(settingsReadError)"
-              @change="commitSettings()"
-              @keydown.enter.prevent="commitSettings()"
             />
           </div>
+
+          <UiHint
+            >修改後按「儲存設定」套用；變更連接埠後，請更新直播軟體的來源網址。</UiHint
+          >
 
           <UiHint
             v-if="settingsError && !hasPortConflict"
@@ -326,6 +336,19 @@ onMounted(() => {
               {{ port }}
             </UiButton>
           </div>
+          <div class="output-runtime-settings-block__submit">
+            <UiButton
+              variant="accent"
+              :disabled="
+                busy ||
+                Boolean(settingsReadError) ||
+                !isPortValid ||
+                !isDisplayDelayValid
+              "
+              @click="commitSettings()"
+              >儲存設定</UiButton
+            >
+          </div>
         </div>
       </UiDisclosure>
     </div>
@@ -336,7 +359,7 @@ onMounted(() => {
       :value="spoutReadError ? '尚未確認 Spout2 狀態' : spoutValue"
       :status="spoutReadError ? '無法讀取' : spoutPresentation.label"
       :status-tone="spoutReadError ? 'warning' : spoutPresentation.tone"
-      guidance="實驗性：將透明歌詞送至 Spout2。"
+      guidance="實驗性：傳送透明背景歌詞，供支援 Spout2 的軟體接收。"
       variant="nested"
     >
       <template #actions>
@@ -431,6 +454,10 @@ onMounted(() => {
   display: flex;
   align-items: start;
   gap: var(--ui-space-3);
+}
+.output-runtime-settings-block__submit {
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* Five port digits; the delay field keeps room for its hint. */

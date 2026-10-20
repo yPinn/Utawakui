@@ -7,6 +7,7 @@ const { releaseRepository } = require('../../shared/appUpdateValues.json');
 const EXTERNAL_TARGETS = Object.freeze({
   'vb-cable': 'https://vb-audio.com/Cable/',
   voicemeeter: 'https://vb-audio.com/Voicemeeter/',
+  'vb-audio-licensing': 'https://vb-audio.com/Services/licensing.htm',
   // The public update feed identity (see electron-builder.yml's
   // provider/owner/repo and ADR 0007) — the release list page, not a
   // deep link to one version, so no version-string validation is needed.

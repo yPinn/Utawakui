@@ -7,15 +7,17 @@ const source = readFileSync(
 );
 
 describe('CaptureDeviceModal appearance contract', () => {
-  it('keeps each outward row focus ring inside the nested scroll viewport', () => {
+  it('uses shared modal bounds and one workspace scroll owner with focus-safe padding', () => {
+    expect(source).toContain('body-mode="workspace"');
+    expect(source).toContain('max-block-size="small"');
+    expect(source).toContain('<UiScrollLayout');
+    expect(source).not.toContain('420px');
+    expect(source).toContain('<UiRadioGroup');
     expect(source).toMatch(
       /\.capture-device-modal\s*\{[\s\S]*?--capture-device-modal-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
     );
-    expect(source).toMatch(
-      /\.capture-device-modal__list :deep\(\.capture-device-modal__list-viewport\)\s*\{[\s\S]*?padding:\s*var\(--capture-device-modal-focus-safe-inset\);[\s\S]*?scroll-padding:\s*var\(--capture-device-modal-focus-safe-inset\);/u,
-    );
-    expect(source).toMatch(
-      /\.capture-device-modal__row:focus-visible\s*\{[\s\S]*?outline-offset:\s*var\(--ui-focus-offset\);/u,
-    );
+    expect(source).toContain('--ui-scroll-layout-padding-inline-start: var(');
+    expect(source).toContain('--ui-scroll-layout-padding-inline-end: var(');
+    expect(source).not.toContain('.capture-device-modal__row:focus-visible');
   });
 });

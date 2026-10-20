@@ -13,7 +13,7 @@ describe('FeedbackReportSettingsRow', () => {
   it('shows a single entry point for feedback', async () => {
     const html = await renderRow();
 
-    expect(html).toContain('回報問題');
-    expect(html.match(/>回報問題</gu)).toHaveLength(1);
+    expect(html).toContain('回報與建議');
+    expect(html.match(/>回報與建議</gu)).toHaveLength(1);
   });
 });

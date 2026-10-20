@@ -8,8 +8,10 @@ const source = readFileSync(
 
 describe('FfmpegSourceModal copy', () => {
   it('explains the choice and recovery with concise actions', () => {
-    expect(source).toContain('使用電腦上的 FFmpeg，或由 Utawakui 下載並管理。');
-    expect(source).toContain('系統 FFmpeg');
+    expect(source).toContain(
+      '選擇工具來源，再按「使用此版本」或「準備並使用」套用。',
+    );
+    expect(source).toContain('電腦上的 FFmpeg');
     expect(source).toContain('由 Utawakui 下載並管理');
     expect(source).toContain('Utawakui 管理版本');
     expect(source).toContain('重新檢查');

@@ -24,6 +24,72 @@ function trackEntry(overrides = {}) {
 }
 
 describe('useObsSessionExport', () => {
+  it('invalidates copy feedback when the preview changes while clipboard work is pending', async () => {
+    let finish;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getObsLatestSession: async () => ({
+          entries: [trackEntry({ stream: { timecode: '00:01:00.000' } })],
+        }),
+        copyObsText: () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      },
+    });
+    const owner = await loadExport();
+    await owner.open();
+    const pending = owner.copyChapters();
+    owner.offsetSeconds.value = '30';
+    finish();
+    expect(await pending).toBe(false);
+    expect(owner.copyState.value.tone).toBe('idle');
+    expect(owner.result.value.text).toBe('0:30 Song A');
+    owner.close();
+  });
+  it.each(['-1', 'invalid', '1.5', '9007199254740992'])(
+    'does not copy chapters with an invalid offset %s',
+    async (input) => {
+      const copyObsText = vi.fn(async () => true);
+      vi.stubGlobal('window', {
+        Utawakui: {
+          getObsLatestSession: async () => ({ entries: [trackEntry()] }),
+          copyObsText,
+        },
+      });
+      const owner = await loadExport();
+      await owner.open();
+      owner.offsetSeconds.value = input;
+      expect(await owner.copyChapters()).toBe(false);
+      expect(copyObsText).not.toHaveBeenCalled();
+      expect(owner.offsetError.value).toContain('整數秒');
+      owner.close();
+    },
+  );
+  it('cannot copy a retained session while reloading, after read failure, or after close', async () => {
+    let rejectRead;
+    const getObsLatestSession = vi
+      .fn()
+      .mockResolvedValueOnce({ entries: [trackEntry()] })
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectRead = reject;
+          }),
+      );
+    const copyObsText = vi.fn(async () => true);
+    vi.stubGlobal('window', { Utawakui: { getObsLatestSession, copyObsText } });
+    const owner = await loadExport();
+    await owner.open();
+    const pending = owner.open();
+    expect(await owner.copyChapters()).toBe(false);
+    rejectRead(new Error('private'));
+    await pending;
+    expect(await owner.copyChapters()).toBe(false);
+    owner.close();
+    expect(await owner.copyChapters()).toBe(false);
+    expect(copyObsText).not.toHaveBeenCalled();
+  });
   it('retains copy failure until close and ignores a late load from a closed modal', async () => {
     vi.useFakeTimers();
     const getObsLatestSession = vi

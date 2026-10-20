@@ -66,7 +66,7 @@ function collectLayout(label) {
   const sectionWidth = regularRow
     .closest('.settings-section')
     .getBoundingClientRect().width;
-  const expectedColumns = sectionWidth <= 640 ? 1 : 2;
+  const expectedColumns = sectionWidth <= 512 ? 1 : 2;
   const rowStyle = getComputedStyle(regularRow);
   const renderedColumns = rowStyle.gridTemplateColumns
     .split(/\s+/u)
@@ -97,6 +97,25 @@ function collectLayout(label) {
       actionRect.right <= itemRect.right + 1
     );
   });
+  const actionAlignment = actions.map((element) => {
+    const item = element.closest('.settings-document-item');
+    const lead = item.querySelector('.settings-document-item__lead');
+    const actionRect = element.getBoundingClientRect();
+    const leadRect = lead.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    const inline = actionRect.left >= leadRect.right - 1;
+    return (
+      Math.abs(actionRect.right - itemRect.right) <= 1 &&
+      (!inline ||
+        Math.abs(
+          (actionRect.top +
+            actionRect.bottom -
+            leadRect.top -
+            leadRect.bottom) /
+            2,
+        ) <= 1)
+    );
+  });
   const valueStyles = values.map((element) => {
     const style = getComputedStyle(element);
     const rect = element.getBoundingClientRect();
@@ -119,17 +138,21 @@ function collectLayout(label) {
     (content) => {
       const labels = [
         ...content.querySelectorAll(
-          '.settings-document-item__title, .settings-feature-gate-row__title, .settings-section__disclosure > .ui-disclosure__summary > .ui-disclosure__label',
+          '.settings-document-item__title, .settings-feature-gate-row__title, .settings-section__disclosure > .ui-disclosure__summary > .ui-disclosure__label, .lyrics-settings__notice',
         ),
       ].filter(
         (element) =>
           element.getClientRects().length &&
           element.getBoundingClientRect().width,
       );
-      const expectedStart = labels[0]?.getBoundingClientRect().left;
+      const textStart = (element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return range.getBoundingClientRect().left;
+      };
+      const expectedStart = labels[0] && textStart(labels[0]);
       return labels.every(
-        (label) =>
-          Math.abs(label.getBoundingClientRect().left - expectedStart) <= 1,
+        (label) => Math.abs(textStart(label) - expectedStart) <= 1,
       );
     },
   );
@@ -146,6 +169,7 @@ function collectLayout(label) {
     overflowOwnerClasses: overflowOwners.map((element) => element.className),
     actionCount: actions.length,
     actionsContained: actionContainment.every(Boolean),
+    actionsAligned: actionAlignment.every(Boolean),
     valueCount: values.length,
     overflowingValueCount: valueStyles.filter((value) => value.overflowing)
       .length,
@@ -194,6 +218,11 @@ function validateMeasurement(measurement) {
   }
   if (!measurement.actionCount || !measurement.actionsContained) {
     failures.push('row actions are missing or extend outside their rows');
+  }
+  if (!measurement.actionsAligned) {
+    failures.push(
+      'row actions do not share the information center or trailing edge',
+    );
   }
   if (
     !measurement.valueCount ||

@@ -10,7 +10,7 @@ const render = (props) =>
 describe('music analysis preference', () => {
   it('keeps the everyday setting separate from component management', async () => {
     const html = await render({ autoAnalyze: true });
-    expect(html).toContain('BPM 與節拍分析');
+    expect(html).toContain('歌曲速度與節拍（BPM）');
     expect(html).toContain('不上傳歌曲');
     expect(html).toContain('checked');
     expect(html).not.toContain('準備 BPM 分析');

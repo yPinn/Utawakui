@@ -55,6 +55,9 @@ describe('DiagnosticsSettingsRow', () => {
       /class="ui-visually-hidden"[^>]*>錯誤紀錄選項<\/span>/u,
     );
     expect(html).toContain('aria-haspopup="menu"');
+    expect(html.indexOf('>匯出錯誤紀錄</span>')).toBeLessThan(
+      html.indexOf('>錯誤紀錄選項</span>'),
+    );
     // Refresh/open-folder/clear move behind the overflow menu instead of
     // sitting as their own always-visible icon buttons.
     expect(html).not.toContain('aria-label="重新讀取"');

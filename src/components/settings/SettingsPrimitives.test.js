@@ -37,6 +37,12 @@ describe('settings document presentation', () => {
           violations.push(`${name}: ${property}: ${value.trim()}`);
         if (/#(?:[a-f\d]{3,8})\b|\b(?:rgb|hsl)a?\(/iu.test(value))
           violations.push(`${name}: ${property}: ${value.trim()}`);
+        if (
+          /^(?:font-size|font-weight|line-height)$/u.test(property) &&
+          !value.includes('var(') &&
+          value.trim() !== 'inherit'
+        )
+          violations.push(`${name}: ${property}: ${value.trim()}`);
       }
     }
     expect(violations).toEqual([]);

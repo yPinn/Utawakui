@@ -251,7 +251,7 @@ scheduler instance 也不代表已接入 app 的全域重工作排程。模型�
 `scripts/research/lyricsFreshEvaluation/`另提供HubertFA＋small獨立內容檢查、聽查與試用，
 不建立產品producer。研究選型及各輪證據見[收斂結論](research/lyrics-alignment-summary.md)，
 開發者執行步驟見[研究試用手冊](operations/lyrics-alignment-research.md)。
-App 設定頁的獨立研究入口由 `electron/lib/lyricsResearch/` 管理隔離下載、完整性、載入及唯讀曲目片段；`main/lyrics/researchHandlers.js` 僅接收有界研究意圖。重用明列允許的研究推論／內容檢查模組與兩個純歌詞 parser 檔，不載入 Vite 或 CLI。模型／parser 延後至研究操作才載入。環境在 userData `lyrics-research/installed`，不寫正式 Audio Python activation；共享 heavy-job scheduler 排程並在取消／退出等 owned workers 關閉後清理。片段預覽由 `useLyricsResearch` 持有，播放仍用 `usePlayer`。另有預設關閉的 `experimentalLyricsAfterSeparation`：分離成果發佈後經 `lyricsResearch/automatic.js` 接續整曲分析，重啟後先實際驗證已安裝環境，不自動下載。結果由 `estimates.js` 驗證後原子寫入各曲目 `lyrics/experimental-estimates/`，固定配方與完整輸入身分失效即回退。`useLyrics` 內的 `useExperimentalLyrics` 另持有手動套用狀態，只交付本機閱讀區起點 frame；原生 T2／T1、canonical 文件、正式 loader、Self-View 及 Output 不受覆寫。取消與失敗只影響歌詞工作，不回滾伴奏。
+App 設定頁以單一「歌詞分段提示（實驗性）」章節整合環境狀態與自動分析偏好；環境管理及片段研究工具預設收合，取消／重試在外層可見。片段工具只在展開時初始化曲庫，收合清除預覽但不取消工作。獨立研究服務由 `electron/lib/lyricsResearch/` 管理隔離下載、完整性、載入及唯讀曲目片段；`main/lyrics/researchHandlers.js` 僅接收有界研究意圖。重用明列允許的研究推論／內容檢查模組與兩個純歌詞 parser 檔，不載入 Vite 或 CLI。模型／parser 延後至研究操作才載入。環境在 userData `lyrics-research/installed`，不寫正式 Audio Python activation；共享 heavy-job scheduler 排程並在取消／退出等 owned workers 關閉後清理。片段預覽由 `useLyricsResearch` 持有，播放仍用 `usePlayer`。另有預設關閉的 `experimentalLyricsAfterSeparation`：分離成果發佈後經 `lyricsResearch/automatic.js` 接續整曲分析，重啟後先實際驗證已安裝環境，不自動下載。結果由 `estimates.js` 驗證後原子寫入各曲目 `lyrics/experimental-estimates/`，固定配方與完整輸入身分失效即回退。`useLyrics` 內的 `useExperimentalLyrics` 另持有手動套用狀態，只交付本機閱讀區起點 frame；原生 T2／T1、canonical 文件、正式 loader、Self-View 及 Output 不受覆寫。取消與失敗只影響歌詞工作，不回滾伴奏。
 
 `electron/lib/lyricsAcoustic/` 另提供 main-owned 選配環境生命週期：固定 catalog／SHA、
 獨立 `lyrics-acoustic` capability／`lyrics-alignment` environment／`alignment` model，
@@ -297,7 +297,7 @@ Navigation history 由 module-scope `useNavigationHistory.js` 單獨擁有（[AD
 歷史走訪的輸入由 `inputBindingRegistry.js` 宣告、`useNavigationInput.js` 收斂：滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command`（`electron/main/appCommands.js`）共用同一個走訪出口，內含浮層守衛與短時間去重。
 `SettingsPage` 擁有隨活頁紙移動的 Folder header、唯一 page Scroll Region 與 registered local overlay host；
 `SettingsView` 保留曲庫、音訊、應用程式、選用功能與支援五個 domain composition owner；選用功能 owner
-分別呈現外部來源與歌詞、本機音訊處理、公開輸出與 OBS，因此文件共有七個可見功能章節。各 focused section component
+分別呈現外部來源與歌詞、本機音訊處理、公開輸出與 OBS；SettingsView 透過 after-processing slot 將獨立實驗性歌詞章節放在處理之後，應用程式與支援放在文件末端，因此文件共有八個可見功能章節。各 focused section component
 持有自己的 lifecycle、確認、deep-link 與區段 dialog 行為；共用回饋與章節彈窗由 Shell 各掛載一份，切頁仍由原 module owner 與 modal stack 管理。頁內沒有第二層 tabs 或 Scroll Region。一般設定項目使用平面
 `SettingsDocumentItem`；`SettingsSection` 統一章節標題與內容 surface、分隔線與 container reflow。
 `SettingsFeatureGateRow` 擁有真正的功能標題、啟用流程與明確的 settings／tools 內容；

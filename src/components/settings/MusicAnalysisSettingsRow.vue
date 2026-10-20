@@ -84,6 +84,7 @@ function handleAdvancedAction({ action }) {
     <SettingsDocumentItem
       :icon="Cpu"
       title="BPM 分析元件"
+      description="分析歌曲速度與節拍所需的工具。"
       :status="status"
       :status-tone="statusTone"
       variant="nested"

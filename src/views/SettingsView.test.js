@@ -38,10 +38,9 @@ describe('SettingsView document composition', () => {
     const sectionComponents = [
       'SettingsLibrarySection',
       'SettingsAudioSection',
-      'SettingsApplicationSection',
       'SettingsCapabilitiesSection',
       'LyricsResearchSettingsBlock',
-      'LyricsExperimentalQueueSettings',
+      'SettingsApplicationSection',
       'SettingsSupportSection',
     ];
     let previousStart = -1;
@@ -80,7 +79,9 @@ describe('SettingsView document composition', () => {
     expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
     expect(optionalSource).not.toContain('LyricsResearchSettingsBlock');
-    expect(researchSource).toContain('title="本機歌詞研究試用"');
+    expect(researchSource).toContain('title="歌詞分段提示（實驗性）"');
+    expect(researchSource).toContain('<LyricsExperimentalQueueSettings />');
+    expect(viewSource).not.toContain('LyricsExperimentalQueueSettings');
     expect(supportSource).toContain('title="支援與維護"');
     expect(supportSource).toContain('<FeedbackReportSettingsRow');
     expect(supportSource).toContain('<DiagnosticsSettingsRow');
@@ -139,7 +140,7 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain('<LibraryMetadataSettingsRow />');
     expect(source).toContain('libraryStorage.initialize(),');
     expect(source).toContain('libraryStorage.dispose');
-    expect(source).toContain("title: '清除去人聲版本？'");
+    expect(source).toContain("title: '清理去人聲空間？'");
     expect(source).not.toContain('useLibraryMetadataMaintenance');
   });
 

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import Component from './LyricsExperimentalQueueSettings.vue';
+import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import UiChip from '../ui/UiChip.vue';
 import {
   attachClientRender,
   mount,
@@ -13,18 +15,6 @@ vi.mock('../../composables/useLibrary.js', () => ({
     state: { tracks: [{ id: 'song', title: '測試歌曲' }] },
   }),
 }));
-vi.mock('./SettingsSection.vue', async () => {
-  const { h } = await import('vue');
-  return {
-    default: {
-      props: ['title'],
-      setup:
-        (props, { slots }) =>
-        () =>
-          h('section', [props.title, slots.default?.()]),
-    },
-  };
-});
 vi.mock('../ui/UiCheckbox.vue', async () => {
   const { h } = await import('vue');
   return {
@@ -82,6 +72,12 @@ const button = (text) =>
   )[0];
 beforeEach(() => {
   attachClientRender(
+    SettingsDocumentItem,
+    './SettingsDocumentItem.vue',
+    import.meta.url,
+  );
+  attachClientRender(UiChip, '../ui/UiChip.vue', import.meta.url);
+  attachClientRender(
     Component,
     './LyricsExperimentalQueueSettings.vue',
     import.meta.url,
@@ -110,7 +106,7 @@ describe('experimental lyrics settings workflow', () => {
     const input = findAll(mounted.root, (node) => node.type === 'input')[0];
     expect(input.props.checked).toBe(false);
     expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
-    expect(textContent(mounted.root)).toContain('不會自動下載模型');
+    expect(textContent(mounted.root)).toContain('不會自動下載工具');
     trigger(input, 'onChange', { target: { checked: true } });
     await flush();
     expect(bridge.setExperimentalLyricsEnabled).toHaveBeenCalledWith(true);
@@ -125,15 +121,38 @@ describe('experimental lyrics settings workflow', () => {
     mounted = mount(Component);
     await flush();
     expect(textContent(mounted.root)).toContain('測試歌曲');
-    trigger(button('取消詞塊分析'), 'onClick');
+    trigger(button('取消分析'), 'onClick');
     await flush();
     expect(bridge.cancelExperimentalLyrics).toHaveBeenCalledWith('song');
     snapshot.items[0].status = 'failed';
     await vi.advanceTimersByTimeAsync(1000);
     await flush();
-    expect(textContent(mounted.root)).toContain('伴奏仍可用');
-    trigger(button('重試詞塊分析'), 'onClick');
+    expect(textContent(mounted.root)).toContain('伴奏仍可使用');
+    trigger(button('重試分析'), 'onClick');
     await flush();
     expect(bridge.retryExperimentalLyrics).toHaveBeenCalledWith('song');
+  });
+  it('retains the audio-processing prerequisite without activating it or downloading', async () => {
+    snapshot.allowed = false;
+    mounted = mount(Component);
+    await flush();
+    const input = findAll(mounted.root, (node) => node.type === 'input')[0];
+    expect(input.props.disabled).toBe(true);
+    expect(input.props.checked).toBe(false);
+    expect(textContent(mounted.root)).toContain('請先啟用音訊處理功能');
+    expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
+  });
+  it('keeps cancellation failure bounded and the original lyrics/accompaniment available', async () => {
+    snapshot.items = [{ trackId: 'song', status: 'running' }];
+    bridge.cancelExperimentalLyrics.mockRejectedValueOnce(
+      Error('private path'),
+    );
+    mounted = mount(Component);
+    await flush();
+    trigger(button('取消分析'), 'onClick');
+    await flush();
+    expect(textContent(mounted.root)).toContain('伴奏與原有歌詞仍可使用');
+    expect(textContent(mounted.root)).not.toContain('private path');
+    expect(button('取消分析')).toBeDefined();
   });
 });

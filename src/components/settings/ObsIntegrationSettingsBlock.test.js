@@ -23,6 +23,27 @@ async function renderBlock(props = {}) {
 }
 
 describe('ObsIntegrationSettingsBlock', () => {
+  it('puts reconnect after stop as the primary recovery action and blocks saving unread settings', async () => {
+    const status = {
+      desired: { enabled: true },
+      observed: { lifecycle: 'error' },
+      error: null,
+    };
+    const html = await renderBlock({ status });
+    const buttons = html.match(/<button\b[^>]*>[\s\S]*?<\/button>/gu);
+    const retry = buttons.find((button) => button.includes('重試連線'));
+    expect(retry).toContain('ui-btn--accent');
+    expect(html.indexOf('停止 OBS 連線')).toBeLessThan(
+      html.indexOf('重試連線'),
+    );
+    expect(html).toContain('儲存並重連');
+    const blocked = await renderBlock({ status, readError: '無法讀取設定' });
+    expect(
+      blocked
+        .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
+        .find((button) => button.includes('儲存並重連')),
+    ).toContain('disabled');
+  });
   it('associates each invalid input while keeping the connection fault visible once', async () => {
     const html = await renderBlock({
       fieldErrors: { host: '主機格式錯誤', port: '連接埠範圍錯誤' },
@@ -55,7 +76,7 @@ describe('ObsIntegrationSettingsBlock', () => {
       stored
         .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
         ?.filter((button) => button.includes('移除密碼')),
-    ).toEqual([expect.stringContaining('ui-btn--intent-danger')]);
+    ).toEqual([expect.stringMatching(/ui-(?:icon-)?btn--intent-danger/u)]);
     expect(empty).not.toContain('移除密碼');
   });
 
@@ -86,10 +107,11 @@ describe('ObsIntegrationSettingsBlock', () => {
           .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
           ?.filter((button) => button.includes('移除密碼')),
       ).toEqual([expect.stringContaining('ui-btn--intent-danger')]);
-      expect(html).not.toContain('id="obs-integration-password"');
     }
     expect(featureDisabled).not.toContain('aria-label="連線至 OBS"');
+    expect(featureDisabled).not.toContain('id="obs-integration-password"');
     expect(connectionDisabled).toContain('aria-label="連線至 OBS"');
+    expect(connectionDisabled).toContain('id="obs-integration-password"');
   });
 
   it('bounds the password field and disables credential actions while saving', async () => {

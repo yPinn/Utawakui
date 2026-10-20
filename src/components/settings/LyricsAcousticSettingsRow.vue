@@ -58,15 +58,15 @@ function advanced({ action }) {
 <template>
   <SettingsDocumentItem
     title="歌詞音訊輔助元件"
-    description="管理中文、日文詞塊分析所需元件。"
+    description="估算中文、日文歌詞的分段時間所需工具。"
     :status="busy ? '環境操作中' : status"
     :status-tone="capability?.status === 'ready' ? 'success' : 'muted'"
     variant="nested"
   >
     <template #actions>
       <UiButton
-        v-if="capability?.canVerify"
-        variant="secondary"
+        v-if="capability?.canVerify && !busy"
+        variant="accent"
         :disabled="busy"
         @click="emit('verify')"
         >驗證載入</UiButton

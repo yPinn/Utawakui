@@ -70,6 +70,15 @@ const offsetMs = computed(() => {
   const parsed = Number.parseInt(state.offsetSeconds, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed * 1000 : 0;
 });
+const offsetError = computed(() => {
+  const value = String(state.offsetSeconds).trim();
+  const number = Number(value);
+  return /^\d+$/u.test(value) &&
+    Number.isSafeInteger(number) &&
+    number <= Math.floor(Number.MAX_SAFE_INTEGER / 1000)
+    ? ''
+    : '請輸入 0 或正整數秒。';
+});
 
 const result = computed(() =>
   projectYoutubeChapters(state.session?.entries ?? [], {
@@ -77,8 +86,17 @@ const result = computed(() =>
     source: state.source,
   }),
 );
+const canCopy = computed(
+  () =>
+    state.isOpen &&
+    !state.isLoading &&
+    !state.error &&
+    !offsetError.value &&
+    Boolean(result.value.text),
+);
 
 async function copyChapters() {
+  if (!canCopy.value) return false;
   return clipboard.copy(result.value.text, 'YouTube 章節文字', {
     successMessage: '章節已複製',
     errorMessage: '無法複製章節，請手動選取內容',
@@ -92,16 +110,20 @@ export function useObsSessionExport() {
     source: computed({
       get: () => state.source,
       set: (value) => {
+        if (value !== state.source) clipboard.dispose();
         state.source = value;
       },
     }),
     offsetSeconds: computed({
       get: () => state.offsetSeconds,
       set: (value) => {
+        if (value !== state.offsetSeconds) clipboard.dispose();
         state.offsetSeconds = value;
       },
     }),
     result,
+    offsetError,
+    canCopy,
     isLoading: computed(() => state.isLoading),
     error: computed(() => state.error),
     copyState: clipboard.state,

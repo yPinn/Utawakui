@@ -1,7 +1,7 @@
 <script setup>
-import { ExternalLink } from '../../icons/index.js';
+import { ExternalLink, Info } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 
 // Informational only — no selection state here, unlike CaptureDeviceModal.
@@ -17,16 +17,12 @@ const TOOLS = [
   {
     id: 'vb-cable',
     name: 'VB-CABLE',
-    tag: '適合單一音源',
-    tagTone: 'success',
-    description: '安裝與設定較簡單。免費。',
+    description: '將一個應用程式的聲音傳送至另一個，適合單一音源。',
   },
   {
     id: 'voicemeeter',
     name: 'VoiceMeeter',
-    tag: '混合多個音源',
-    tagTone: 'info',
-    description: '可同時混合多個聲音來源。免費。',
+    description: '混合麥克風、伴奏等多個聲音來源後再輸出。',
   },
 ];
 
@@ -38,10 +34,18 @@ function openDownload(targetId) {
 <template>
   <UiModal
     :open="open"
-    title="選擇虛擬音效裝置"
-    size="wide"
+    title="虛擬音效工具"
+    size="notice"
+    max-block-size="small"
     @close="emit('close')"
   >
+    <template #header-actions>
+      <UiIconButton
+        :icon="Info"
+        label="查看官方授權說明"
+        @click="openDownload('vb-audio-licensing')"
+      />
+    </template>
     <div class="virtual-cable-guide">
       <p class="virtual-cable-guide__intro">
         讓 Utawakui 將伴奏直接送到直播或錄影軟體，不需實體接線。
@@ -56,7 +60,6 @@ function openDownload(targetId) {
           <div class="virtual-cable-guide__copy">
             <div class="virtual-cable-guide__heading">
               <h3 class="virtual-cable-guide__name">{{ tool.name }}</h3>
-              <UiChip :tone="tool.tagTone">{{ tool.tag }}</UiChip>
             </div>
             <p class="virtual-cable-guide__description">
               {{ tool.description }}
@@ -67,6 +70,10 @@ function openDownload(targetId) {
           </UiButton>
         </li>
       </ul>
+      <p class="virtual-cable-guide__description">
+        兩者均採 Donationware
+        授權，可依使用情況自主定價贊助；專業或組織使用另有付費授權要求，請先確認官方條件。
+      </p>
     </div>
   </UiModal>
 </template>
@@ -97,10 +104,10 @@ function openDownload(targetId) {
   grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-canvas);
+  padding-block: var(--ui-space-3);
+}
+.virtual-cable-guide__row + .virtual-cable-guide__row {
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 @media (max-width: 560px) {

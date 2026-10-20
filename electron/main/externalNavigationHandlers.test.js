@@ -35,12 +35,14 @@ describe('registerExternalNavigationHandlers', () => {
     expect(Object.keys(EXTERNAL_TARGETS).sort()).toEqual([
       'community-discord',
       'release-notes',
+      'vb-audio-licensing',
       'vb-cable',
       'voicemeeter',
     ]);
   });
 
   it.each([
+    ['vb-audio-licensing', 'https://vb-audio.com/Services/licensing.htm'],
     ['vb-cable', 'https://vb-audio.com/Cable/'],
     ['voicemeeter', 'https://vb-audio.com/Voicemeeter/'],
     ['release-notes', 'https://github.com/yPinn/Utawakui-Releases/releases'],

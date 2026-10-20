@@ -37,14 +37,14 @@ describe('Settings copy density', () => {
     expect(librarySource).not.toContain('下載與匯入的曲目會存放在這裡。');
     expect(audioOutputSource).not.toContain('將伴奏送到直播或錄影軟體。');
     expect(updateSource).not.toContain('下載與安裝由你決定。');
-    expect(updateSource).toContain('自動檢查；下載與安裝需手動確認。');
+    expect(updateSource).toContain('可自動檢查更新；下載與安裝需手動確認。');
     expect(updateSource).not.toContain('查看目前版本與更新狀態。');
   });
 
   it('keeps decision-changing consequences while shortening routine guidance', () => {
     expect(librarySource).toContain('切換位置不會搬移既有曲目。');
     expect(metadataSource).toContain(
-      '只用已存資料；不連線，保留無法確認的手動編輯。',
+      '僅使用已儲存的資訊，不連線；無法確認的內容保留你的編輯。',
     );
     expect(historySource).toContain('自動保存；清除不影響佇列或歌單。');
     expect(windowsSource).toContain(
@@ -54,10 +54,18 @@ describe('Settings copy density', () => {
   });
 
   it('uses concise supporting copy for integrations and support actions', () => {
-    expect(audioOutputSource).toContain('選擇直播／錄影用的虛擬裝置。');
-    expect(outputSource).toContain('供 Browser Source 顯示歌詞與曲目。');
-    expect(outputSource).toContain('實驗性：將透明歌詞送至 Spout2。');
-    expect(feedbackSource).toContain('提出建議或回報內容來源。');
+    expect(audioOutputSource).toContain(
+      '供直播或錄影軟體擷取音訊；與本機聆聽裝置分開設定。',
+    );
+    expect(outputSource).toContain(
+      '供直播或錄影軟體的「瀏覽器來源」顯示歌詞與曲目。',
+    );
+    expect(outputSource).toContain(
+      '實驗性：傳送透明背景歌詞，供支援 Spout2 的軟體接收。',
+    );
+    expect(feedbackSource).toContain(
+      '回報使用問題、提出建議，或反映歌曲與歌詞來源問題。',
+    );
     expect(supportSource).toContain('公告、交流與開發者聯絡。');
   });
 });

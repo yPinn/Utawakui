@@ -62,7 +62,9 @@ vi.mock('../ui/UiHint.vue', () => ({
   },
 }));
 vi.mock('../ui/UiModal.vue', () => ({ default: { render: () => null } }));
-vi.mock('../ui/UiIconButton.vue', () => ({ default: { render: () => null } }));
+vi.mock('../ui/UiIconButton.vue', () => ({
+  default: { props: ['label'], setup: (p) => () => h('button', p.label) },
+}));
 vi.mock('./SettingsDependencyActions.vue', () => ({
   default: { render: () => null },
 }));
@@ -98,6 +100,39 @@ function obsProps() {
 }
 
 describe('Settings progressive disclosure', () => {
+  it('lets a first-time user configure OBS before making a connection request', async () => {
+    const props = obsProps();
+    props.status.desired.enabled = false;
+    props.status.observed.lifecycle = 'disabled';
+    const save = vi.fn();
+    props['onUpdate:host'] = (host) => {
+      props.host = host;
+    };
+    const { app, root } = mount(ObsIntegrationSettingsBlock, {
+      ...props,
+      onSave: save,
+    });
+    const details = find(root, 'details');
+    expect(details).toBeDefined();
+    expect(details.props.open).toBe(false);
+    toggle(details, true);
+    await nextTick();
+    const host = findAll(
+      root,
+      (node) => node.props.id === 'obs-integration-host',
+    )[0];
+    trigger(host, 'onInput', { target: { value: 'studio.local' } });
+    expect(props.host).toBe('studio.local');
+    expect(save).not.toHaveBeenCalled();
+    const connect = findAll(
+      root,
+      (node) =>
+        node.type === 'button' && textContent(node).includes('儲存並連線'),
+    )[0];
+    trigger(connect, 'onClick');
+    expect(save).toHaveBeenCalledWith({ enabled: true });
+    app.unmount();
+  });
   it('uses explicit connection actions independently of the feature-enabled status', async () => {
     const props = obsProps();
     const save = vi.fn();
@@ -110,7 +145,7 @@ describe('Settings progressive disclosure', () => {
       (node) => node.props.id === 'obs-integration-enabled',
     )[0];
     expect(button.type).toBe('button');
-    expect(textContent(button)).toContain('停止連線');
+    expect(textContent(button)).toBe('停止');
     trigger(button, 'onClick');
     expect(save).toHaveBeenCalledWith({ enabled: false });
     app.unmount();

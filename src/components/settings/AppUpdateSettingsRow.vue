@@ -161,7 +161,7 @@ function handleAction() {
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"
-      description="自動檢查；下載與安裝需手動確認。"
+      description="可自動檢查更新；下載與安裝需手動確認。"
       :guidance="infoError"
     >
       <template #actions>

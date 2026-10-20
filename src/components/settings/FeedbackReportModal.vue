@@ -5,6 +5,7 @@
 // (an error notice's action, this general Settings row) can already open
 // without prop drilling.
 import { computed, nextTick, useTemplateRef, watch } from 'vue';
+import { ArrowLeft, Download } from '../../icons/index.js';
 import { formatFeedbackReportReference } from '../../../shared/feedbackReference.mjs';
 import {
   DIAGNOSTICS_ALLOWED_KINDS,
@@ -16,6 +17,7 @@ import {
 } from '../../constants/feedback.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -34,6 +36,31 @@ const {
 } = useFeedbackReport();
 
 const descriptionField = useTemplateRef('descriptionField');
+const previewSummary = useTemplateRef('previewSummary');
+const resultMessage = useTemplateRef('resultMessage');
+function focusCurrentStep() {
+  if (state.step === 'compose') descriptionField.value?.focus();
+  else if (state.step === 'preview') previewSummary.value?.focus();
+  else if (state.step === 'result') resultMessage.value?.focus();
+}
+watch(
+  () => state.step,
+  async () => {
+    if (!state.open) return;
+    await nextTick();
+    if (!state.open) return;
+    focusCurrentStep();
+  },
+);
+watch(
+  () => state.isLoading,
+  async (loading) => {
+    if (loading || !state.open || typeof document === 'undefined') return;
+    await nextTick();
+    if (state.open && document.activeElement === document.body)
+      focusCurrentStep();
+  },
+);
 watch(
   () => state.validationAttempt,
   async () => {
@@ -47,9 +74,7 @@ const reportReference = computed(() =>
   formatFeedbackReportReference(state.reportId),
 );
 const visibleNotice = computed(() =>
-  state.step === 'preview' && state.notice
-    ? { ...state.notice, actionLabel: '' }
-    : state.notice,
+  state.notice ? { ...state.notice, actionLabel: '' } : null,
 );
 
 function kindLabel(kind) {
@@ -70,30 +95,49 @@ const descriptionPlaceholder = computed(
     DESCRIPTION_PLACEHOLDER_BY_KIND[state.kind] ||
     DESCRIPTION_PLACEHOLDER_BY_KIND[FEEDBACK_KINDS.BUG],
 );
-
-function handleNoticeAction(operation) {
-  if (operation === 'preview') {
-    goToPreview();
-    return;
-  }
-  if (operation === 'submit' || operation === 'export-fallback') {
-    exportFallback();
-  }
-}
 </script>
 
 <template>
   <UiModal
     :open="state.open"
-    title="意見回饋"
+    title="回報與建議"
     size="notice"
+    max-block-size="small"
     @close="closeReport"
   >
+    <template v-if="state.step !== 'result'" #header-actions>
+      <UiButton
+        v-if="state.step === 'compose'"
+        variant="accent"
+        :loading="state.isLoading"
+        @click="goToPreview"
+        >預覽</UiButton
+      >
+      <template v-else-if="state.step === 'preview'">
+        <UiIconButton
+          :icon="ArrowLeft"
+          label="返回編輯"
+          :disabled="state.isLoading"
+          @click="backToCompose"
+        />
+        <UiIconButton
+          :icon="Download"
+          label="另存檔案"
+          :disabled="state.isLoading"
+          @click="exportFallback"
+        />
+        <UiButton
+          variant="accent"
+          aria-label="送出回饋"
+          :loading="state.isLoading"
+          @click="submitReport"
+          >送出</UiButton
+        >
+      </template>
+    </template>
     <div class="feedback-report">
       <template v-if="state.step === 'compose'">
-        <p class="feedback-report__intro">
-          回報錯誤、建議功能或分享使用感受。送出前可先預覽。
-        </p>
+        <p class="feedback-report__intro">填寫問題或建議，預覽確認後再送出。</p>
 
         <UiSelect
           id="feedback-kind"
@@ -112,7 +156,7 @@ function handleNoticeAction(operation) {
           label="說明"
           :model-value="state.description"
           :maxlength="MAX_DESCRIPTION_LENGTH"
-          :rows="6"
+          :rows="4"
           :placeholder="descriptionPlaceholder"
           required
           @update:model-value="(value) => updateDraft({ description: value })"
@@ -151,35 +195,18 @@ function handleNoticeAction(operation) {
           @update:model-value="(value) => updateDraft({ contact: value })"
         />
 
-        <UiNotice
-          v-if="state.notice"
-          :notice="visibleNotice"
-          compact
-          @action="handleNoticeAction(state.notice.operation)"
-        />
-
-        <div class="feedback-report__actions">
-          <UiButton
-            variant="ghost"
-            :disabled="state.isLoading"
-            @click="closeReport"
-          >
-            取消
-          </UiButton>
-          <UiButton
-            variant="accent"
-            :loading="state.isLoading"
-            @click="goToPreview"
-          >
-            預覽
-          </UiButton>
-        </div>
+        <UiNotice v-if="state.notice" :notice="visibleNotice" compact />
       </template>
 
       <template v-else-if="state.step === 'preview'">
         <p class="feedback-report__intro">確認以下內容後送出。</p>
 
-        <dl class="feedback-report__summary">
+        <dl
+          ref="previewSummary"
+          class="feedback-report__summary"
+          tabindex="-1"
+          aria-label="回報內容預覽"
+        >
           <div class="feedback-report__row">
             <dt>類別</dt>
             <dd>{{ kindLabel(state.previewPayload?.kind) }}</dd>
@@ -224,51 +251,21 @@ function handleNoticeAction(operation) {
           </div>
         </dl>
 
-        <UiNotice
-          v-if="state.notice"
-          :notice="visibleNotice"
-          compact
-          @action="handleNoticeAction(state.notice.operation)"
-        />
+        <UiNotice v-if="state.notice" :notice="visibleNotice" compact />
         <div class="feedback-report__fallback">
           <p class="feedback-report__intro">
             無法送出時可另存檔案；另存不會自動傳送，仍需自行傳給開發者。
           </p>
-          <UiButton
-            variant="ghost"
-            :disabled="state.isLoading"
-            @click="exportFallback"
-            >另存檔案</UiButton
-          >
-        </div>
-
-        <div class="feedback-report__actions">
-          <UiButton
-            variant="ghost"
-            :disabled="state.isLoading"
-            @click="backToCompose"
-          >
-            上一步
-          </UiButton>
-          <UiButton
-            variant="accent"
-            :loading="state.isLoading"
-            @click="submitReport"
-          >
-            送出回饋
-          </UiButton>
         </div>
       </template>
 
       <template v-else-if="state.step === 'result'">
-        <p class="feedback-report__intro">回饋已送出，謝謝！</p>
+        <p ref="resultMessage" class="feedback-report__intro" tabindex="-1">
+          回饋已送出，謝謝！
+        </p>
         <p v-if="reportReference" class="feedback-report__report-id">
           回報碼：{{ reportReference }}
         </p>
-
-        <div class="feedback-report__actions">
-          <UiButton variant="accent" @click="closeReport">關閉</UiButton>
-        </div>
       </template>
     </div>
   </UiModal>
@@ -291,6 +288,11 @@ function handleNoticeAction(operation) {
   display: grid;
   gap: var(--ui-space-3);
   margin: 0;
+}
+.feedback-report__summary:focus-visible,
+.feedback-report__intro[tabindex]:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .feedback-report__row {
@@ -321,12 +323,6 @@ function handleNoticeAction(operation) {
   font-size: var(--ui-font-size-sm);
   -webkit-user-select: text;
   user-select: text;
-}
-
-.feedback-report__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
 }
 
 .feedback-report__fallback {

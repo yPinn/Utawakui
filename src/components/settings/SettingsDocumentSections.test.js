@@ -16,8 +16,8 @@ describe('Settings document section ownership', () => {
     const sectionComponents = [
       'SettingsLibrarySection',
       'SettingsAudioSection',
-      'SettingsApplicationSection',
       'SettingsCapabilitiesSection',
+      'SettingsApplicationSection',
       'SettingsSupportSection',
     ];
     let previousPosition = -1;
@@ -41,7 +41,7 @@ describe('Settings document section ownership', () => {
     expect(librarySource).toContain('usePlaybackHistory');
     expect(librarySource).toContain('<LibraryStorageSettingsRow');
     expect(librarySource).toContain('<PlaybackHistorySettingsRow');
-    expect(librarySource).toContain("title: '清除去人聲版本？'");
+    expect(librarySource).toContain("title: '清理去人聲空間？'");
     expect(librarySource).toContain("title: '清除最近播放紀錄？'");
   });
 

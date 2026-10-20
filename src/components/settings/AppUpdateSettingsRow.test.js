@@ -86,7 +86,7 @@ describe('AppUpdateSettingsRow', () => {
     const html = await renderRow({ phase: 'idle' });
 
     expect(html).toContain('自動檢查');
-    expect(html).toContain('自動檢查；下載與安裝需手動確認。');
+    expect(html).toContain('可自動檢查更新；下載與安裝需手動確認。');
     expect(html).not.toContain('查看目前版本與更新狀態。');
     expect(html).not.toContain('啟動時只檢查；');
   });
@@ -97,7 +97,7 @@ describe('AppUpdateSettingsRow', () => {
       infoError: '版本資訊暫時無法取得。',
     });
 
-    expect(html).toContain('自動檢查；下載與安裝需手動確認。');
+    expect(html).toContain('可自動檢查更新；下載與安裝需手動確認。');
     expect(html).toContain('版本資訊暫時無法取得。');
   });
 
