@@ -2,6 +2,7 @@
 
 const { MBID_RE } = require('../musicbrainz/identifiers');
 const { appUserAgent } = require('../userAgent.js');
+const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 const { readBoundedText } = require('../lrclib/client.js');
 
 const COVER_ART_ARCHIVE_BASE_URL = 'https://coverartarchive.org';
@@ -128,6 +129,7 @@ function createCoverArtArchiveClient(options = {}) {
   const fetchFn = Object.hasOwn(options, 'fetch')
     ? options.fetch
     : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   const scheduler = options.scheduler || directScheduler;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
@@ -181,7 +183,7 @@ function createCoverArtArchiveClient(options = {}) {
       for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
         response = await scheduler.schedule(
           () =>
-            fetchFn(currentUrl, {
+            requestGuard.fetch(currentUrl, {
               method: 'GET',
               redirect: 'manual',
               headers: {

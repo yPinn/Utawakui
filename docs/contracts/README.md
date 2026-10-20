@@ -18,6 +18,7 @@
 - [獨立聲學詞塊估計](lyrics-acoustic-estimate-contract.md)
 - [讀音品質與人工驗收](lyrics-reading-quality-contract.md)
 - [Provider驗證語料](lyrics-provider-evaluation-corpus.md)
+- [外部服務限流與重試](external-service-request-policy.md)
 - [多來源搜尋與選擇](multi-source-lyrics-search-contract.md)
 - [LRCLIB取得／保存](lrclib-acquisition-contract.md)
 - [NetEase取得](netease-acquisition-contract.md)

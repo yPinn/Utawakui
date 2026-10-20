@@ -1,5 +1,6 @@
 'use strict';
 const fs = require('node:fs');
+const { createProviderRequestGuard } = require('../providerServiceCooldown');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const {
@@ -25,14 +26,16 @@ async function downloadArtifact(artifact, { signal, fetchImpl = fetch } = {}) {
     !/^[a-f0-9]{64}$/.test(artifact.sha256)
   )
     throw Error('invalid lyrics environment artifact');
-  const response = await fetchImpl(url.href, {
+  const response = await createProviderRequestGuard(fetchImpl).fetch(url.href, {
     signal: AbortSignal.any([
       AbortSignal.timeout(5 * 60000),
       ...(signal ? [signal] : []),
     ]),
   });
-  if (!response.ok || !response.body)
+  if (!response.ok || !response.body) {
+    await response.body?.cancel?.().catch(() => undefined);
     throw Error('lyrics environment download failed');
+  }
   const chunks = [];
   let total = 0;
   try {

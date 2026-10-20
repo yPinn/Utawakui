@@ -1,4 +1,5 @@
 'use strict';
+const { createProviderRequestGuard } = require('../providerServiceCooldown');
 const fs = require('node:fs'),
   crypto = require('node:crypto');
 const { Readable, Transform } = require('node:stream');
@@ -30,8 +31,14 @@ async function downloadPinned(
   };
   let owned = false;
   try {
-    const response = await fetchImpl(url.href, options);
-    if (!response.ok || !response.body) throw Error('research download failed');
+    const response = await createProviderRequestGuard(fetchImpl).fetch(
+      url.href,
+      options,
+    );
+    if (!response.ok || !response.body) {
+      await response.body?.cancel?.().catch(() => undefined);
+      throw Error('research download failed');
+    }
     const digest = crypto.createHash('sha256');
     let bytes = 0;
     const output = fs.createWriteStream(temporary, { flags: 'wx' });

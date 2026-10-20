@@ -463,6 +463,13 @@ After changing gates or dependencies:
   content, or selecting a populated folder that the app did not previously claim,
   must also hide the option and preserve that folder during uninstall.
 
+## External service cooldown helper
+
+The pure `electron/lib/providerServiceCooldown.js` helper is covered by the existing
+`electron/**/*` inclusion and `electron/lib/**/*` unpack rules. It adds no dependency,
+asset, executable or download endpoint. Its adjacent unit and integration `.test.js`
+files remain excluded by the existing packaging test exclusion.
+
 ## Isolated lyrics research runtime
 
 The same packaged runtime also supports default-off experimental post-separation

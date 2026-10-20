@@ -1,5 +1,10 @@
 # 現行架構圖
 
+外部服務流量保護的共用純模組為 `electron/lib/providerServiceCooldown.js`：歌詞、CAA／圖片、
+Musixmatch probe、回報、獨立更新 manifest、dependency／pinned 研究下載及來源 album 縮圖，在既有 transport／scheduler
+內檢查 process-local origin 冷卻，不接管 gate、URL／redirect 驗證或 Window lifecycle。
+MusicBrainz 保留既有專屬政策；詳見[外部服務請求契約](contracts/external-service-request-policy.md)。
+
 本文件只描述 production code 已採用的 ownership 與 dependency boundaries。產品範圍
 以 [spec.md](spec.md) 為準，決策理由保留在 [ADR](adr/)，詳細 protocol 則由 focused
 contracts 與 tests 管理。

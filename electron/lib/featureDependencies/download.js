@@ -1,4 +1,5 @@
 'use strict';
+const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 
 const crypto = require('crypto');
 
@@ -142,7 +143,9 @@ async function downloadBuffer(
   const idle = createIdleAbort(idleTimeoutMs);
   let response;
   try {
-    response = await fetchImpl(url, { signal: idle.signal });
+    response = await createProviderRequestGuard(fetchImpl).fetch(url, {
+      signal: idle.signal,
+    });
   } catch (error) {
     idle.disarm();
     throw isAbortLike(error)
@@ -177,7 +180,9 @@ async function downloadText(
 ) {
   let response;
   try {
-    response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+    response = await createProviderRequestGuard(fetchImpl).fetch(url, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
   } catch (error) {
     throw isAbortLike(error)
       ? timeoutError('Feature dependency metadata request timed out')

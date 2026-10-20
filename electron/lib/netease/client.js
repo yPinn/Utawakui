@@ -3,6 +3,7 @@
 const { appUserAgent } = require('../userAgent.js');
 const { readBoundedText } = require('../lrclib/client.js');
 const { createLrclibRequestScheduler } = require('../lrclib/scheduler.js');
+const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 
 const NETEASE_API_BASE_URL = 'https://interface.music.163.com';
 const NETEASE_SEARCH_PATH = '/api/cloudsearch/pc';
@@ -140,6 +141,7 @@ function createNeteaseClient(options = {}) {
   const fetchFn = Object.hasOwn(options, 'fetch')
     ? options.fetch
     : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   const scheduler = options.scheduler || sharedNeteaseRequestScheduler;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
@@ -158,7 +160,7 @@ function createNeteaseClient(options = {}) {
           signal = requestOptions.signal
             ? AbortSignal.any([requestOptions.signal, timeoutSignal])
             : timeoutSignal;
-          return fetchFn(new URL(pathname, NETEASE_API_BASE_URL), {
+          return requestGuard.fetch(new URL(pathname, NETEASE_API_BASE_URL), {
             method: 'POST',
             redirect: 'error',
             headers: {
@@ -187,7 +189,15 @@ function createNeteaseClient(options = {}) {
     }
     const bounded = await readBoundedText(response, maxResponseBytes, signal);
     if (bounded.status === 'error') return bounded;
-    return parseJson(bounded.text);
+    const parsed = parseJson(bounded.text);
+    if (parsed.status === 'ok') {
+      requestGuard.recordFailure(
+        new URL(pathname, NETEASE_API_BASE_URL),
+        parsed.value?.code,
+        response.headers.get('retry-after'),
+      );
+    }
+    return parsed;
   }
 
   async function search(query, requestOptions) {

@@ -1,6 +1,7 @@
 'use strict';
 
 const { appUserAgent } = require('../userAgent.js');
+const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 const { isAllowedCoverArtUrl } = require('../coverArtArchive/client.js');
 
 const DEFAULT_IMAGE_TIMEOUT_MS = 15_000;
@@ -169,6 +170,7 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
   const fetchFn = Object.hasOwn(options, 'fetch')
     ? options.fetch
     : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   if (typeof fetchFn !== 'function') {
     return { status: 'error', reason: 'fetch-unavailable' };
   }
@@ -200,7 +202,7 @@ async function downloadValidatedArtwork(urlValue, options = {}) {
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
     let response;
     try {
-      response = await fetchFn(currentUrl, {
+      response = await requestGuard.fetch(currentUrl, {
         method: 'GET',
         redirect: 'manual',
         headers: {

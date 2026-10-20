@@ -7,6 +7,7 @@
 // main-process network call to a fixed, non-renderer-suppliable URL.
 
 const { appUserAgent } = require('./userAgent.js');
+const { createProviderRequestGuard } = require('./providerServiceCooldown.js');
 // Generic streamed-response reader with no lrclib-specific behavior — see
 // feedback/client.js's identical reuse of this helper.
 const { readBoundedText } = require('./lrclib/client.js');
@@ -49,6 +50,7 @@ function createUpdateManifestClient(options = {}) {
     'fetch',
   );
   const fetchFn = hasInjectedFetch ? options.fetch : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
@@ -66,7 +68,7 @@ function createUpdateManifestClient(options = {}) {
     let requestSignal;
     try {
       requestSignal = AbortSignal.timeout(timeoutMs);
-      response = await fetchFn(manifestUrlForVersion(version), {
+      response = await requestGuard.fetch(manifestUrlForVersion(version), {
         method: 'GET',
         headers: { 'User-Agent': userAgent },
         // Unlike feedback/client.js's direct POST endpoint, a GitHub Releases

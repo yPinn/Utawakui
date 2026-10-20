@@ -1,6 +1,7 @@
 'use strict';
 
 const { normalizeText } = require('./musicTitle.js');
+const { createProviderRequestGuard } = require('./providerServiceCooldown.js');
 const { parseLrcLines, readJsonResponse } = require('./lrclib.js');
 
 const MUSIXMATCH_API_BASE_URL = 'https://api.musixmatch.com/ws/1.1';
@@ -123,6 +124,7 @@ async function probeMusixmatchLyrics(track, options = {}) {
   }
 
   const fetchFn = options.fetch || globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   if (typeof fetchFn !== 'function') {
     return {
       provider: MUSIXMATCH_PROVIDER,
@@ -140,7 +142,7 @@ async function probeMusixmatchLyrics(track, options = {}) {
 
   let response;
   try {
-    response = await fetchFn(url, {
+    response = await requestGuard.fetch(url, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch {
@@ -152,6 +154,12 @@ async function probeMusixmatchLyrics(track, options = {}) {
   }
 
   const payload = await readJsonResponse(response);
+  if (response.ok)
+    requestGuard.recordFailure(
+      url,
+      parseMusixmatchHeader(payload).statusCode,
+      response.headers.get('retry-after'),
+    );
   if (!response.ok) {
     return {
       provider: MUSIXMATCH_PROVIDER,

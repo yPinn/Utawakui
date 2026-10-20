@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const { setTimeout: sleepFor } = require('node:timers/promises');
 const { appUserAgent } = require('../userAgent.js');
+const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 const { DEFAULT_AMLL_TTML_RESPONSE_BYTES } = require('../amll/ttml.js');
 
 const BETTER_LYRICS_API_BASE_URL = 'https://lyrics-api.boidu.dev';
@@ -157,6 +158,7 @@ function createBetterLyricsClient(options = {}) {
   const fetchFn = Object.hasOwn(options, 'fetch')
     ? options.fetch
     : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   const scheduler = options.scheduler || sharedScheduler;
   const timeoutMs = Math.min(60_000, Math.max(1, options.timeoutMs ?? 12_000));
 
@@ -174,7 +176,7 @@ function createBetterLyricsClient(options = {}) {
     try {
       response = await scheduler.schedule(
         () =>
-          fetchFn(buildBetterLyricsUrl(normalized), {
+          requestGuard.fetch(buildBetterLyricsUrl(normalized), {
             headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
             redirect: 'error',
             signal,

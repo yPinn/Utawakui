@@ -168,7 +168,7 @@ describe('createLrclibClient', () => {
     });
   });
 
-  it('honors a bounded Retry-After once through the shared scheduler', async () => {
+  it('does not truncate Retry-After or automatically retry a rate limit', async () => {
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(
@@ -182,10 +182,12 @@ describe('createLrclibClient', () => {
       maxRetryAfterMs: 1000,
     });
 
-    await expect(client.getById(42)).resolves.toMatchObject({ status: 'ok' });
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(scheduler.deferFor).toHaveBeenCalledWith(1000);
-    expect(scheduler.schedule).toHaveBeenCalledTimes(2);
+    await expect(client.getById(42)).resolves.toMatchObject({
+      reason: 'rate-limited',
+    });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(scheduler.deferFor).not.toHaveBeenCalled();
+    expect(scheduler.schedule).toHaveBeenCalledOnce();
   });
 
   it('retries one eligible 503 and classifies a repeated outage', async () => {
@@ -195,14 +197,29 @@ describe('createLrclibClient', () => {
         new Response('', { status: 503, headers: { 'Retry-After': '0' } }),
       );
     const scheduler = immediateScheduler();
+    const realNow = Date.now;
+    let currentTime = realNow();
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
+    scheduler.deferFor.mockImplementation((delayMs) => {
+      currentTime += delayMs;
+    });
+    fetch.mockImplementation(() =>
+      Promise.resolve(
+        new Response('', { status: 503, headers: { 'Retry-After': '2' } }),
+      ),
+    );
     const client = createLrclibClient({ fetch, scheduler });
 
-    await expect(client.getById(42)).resolves.toEqual({
-      status: 'error',
-      reason: 'service-unavailable',
-    });
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(scheduler.deferFor).toHaveBeenCalledWith(0);
+    try {
+      await expect(client.getById(42)).resolves.toEqual({
+        status: 'error',
+        reason: 'service-unavailable',
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(scheduler.deferFor).toHaveBeenCalledWith(2000);
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   it('returns bounded HTTP failures and maps a search 404 to no records', async () => {

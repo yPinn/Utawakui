@@ -1,4 +1,5 @@
 'use strict';
+const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 
 const { appUserAgent } = require('../userAgent.js');
 const {
@@ -44,6 +45,7 @@ function createFeedbackClient(options = {}) {
     'fetch',
   );
   const fetchFn = hasInjectedFetch ? options.fetch : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   const baseUrl = options.baseUrl;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
@@ -66,7 +68,7 @@ function createFeedbackClient(options = {}) {
       requestSignal = requestOptions.signal
         ? AbortSignal.any([requestOptions.signal, timeoutSignal])
         : timeoutSignal;
-      response = await fetchFn(baseUrl, {
+      response = await requestGuard.fetch(baseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

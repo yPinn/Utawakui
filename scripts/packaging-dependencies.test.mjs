@@ -67,6 +67,39 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('ships the shared service cooldown helper while excluding its tests', () => {
+    const helper = 'electron/lib/providerServiceCooldown.js';
+    expect(runtimeSources.some(({ file }) => file === helper)).toBe(true);
+    expect(
+      builder.files.some(
+        (glob) => !glob.startsWith('!') && path.matchesGlob(helper, glob),
+      ),
+    ).toBe(true);
+    expect(
+      builder.files.some(
+        (glob) =>
+          glob.startsWith('!') && path.matchesGlob(helper, glob.slice(1)),
+      ),
+    ).toBe(false);
+    expect(
+      builder.asarUnpack.some((glob) => path.matchesGlob(helper, glob)),
+    ).toBe(true);
+    for (const file of [
+      'electron/lib/providerServiceCooldown.test.js',
+      'electron/lib/providerServiceCooldown.integration.test.js',
+    ]) {
+      expect(
+        builder.files.some(
+          (glob) =>
+            glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+        ),
+      ).toBe(true);
+    }
+    expect(
+      require('./electron/lib/providerServiceCooldown.js')
+        .createProviderRequestGuard,
+    ).toBeTypeOf('function');
+  });
   it('ships the optional lyrics environment probe/catalog without private research assets', () => {
     for (const filename of [
       'lyrics_acoustic_probe.py',

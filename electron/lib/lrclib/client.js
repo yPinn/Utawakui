@@ -3,11 +3,15 @@
 const { PROJECT_URL, appUserAgent } = require('../userAgent.js');
 const { normalizeLrclibRecord } = require('./record.js');
 const { sharedLrclibRequestScheduler } = require('./scheduler.js');
+const {
+  createProviderRequestGuard,
+  parseRetryAfterMs,
+} = require('../providerServiceCooldown.js');
 
 const LRCLIB_API_BASE_URL = 'https://lrclib.net';
 const DEFAULT_REQUEST_TIMEOUT_MS = 8000;
 const DEFAULT_MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
-const DEFAULT_MAX_RETRY_AFTER_MS = 60_000;
+const DEFAULT_MAX_RETRY_AFTER_MS = 5_000;
 
 function buildLrclibUserAgent() {
   return appUserAgent(PROJECT_URL);
@@ -29,18 +33,6 @@ function classifyTransportFailure(error) {
     return { status: 'error', reason: 'timeout' };
   }
   return { status: 'error', reason: 'offline' };
-}
-
-function parseRetryAfterMs(value, now = Date.now()) {
-  if (typeof value !== 'string' || value.trim().length === 0) return null;
-  const normalized = value.trim();
-  if (/^-?\d+(?:\.\d+)?$/u.test(normalized)) {
-    const seconds = Number(normalized);
-    return seconds >= 0 ? seconds * 1000 : null;
-  }
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return null;
-  return Math.max(0, timestamp - now);
 }
 
 async function readBoundedText(response, maxResponseBytes, signal) {
@@ -130,12 +122,16 @@ function createLrclibClient(options = {}) {
     'fetch',
   );
   const fetchFn = hasInjectedFetch ? options.fetch : globalThis.fetch;
+  const requestGuard = createProviderRequestGuard(fetchFn, options);
   const scheduler = options.scheduler || sharedLrclibRequestScheduler;
   const baseUrl = options.baseUrl || LRCLIB_API_BASE_URL;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
-  const maxRetryAfterMs = options.maxRetryAfterMs ?? DEFAULT_MAX_RETRY_AFTER_MS;
+  const maxRetryAfterMs = Math.min(
+    options.maxRetryAfterMs ?? DEFAULT_MAX_RETRY_AFTER_MS,
+    DEFAULT_MAX_RETRY_AFTER_MS,
+  );
   const userAgent = options.userAgent || buildLrclibUserAgent();
   const acquisitionSignal = options.signal;
 
@@ -148,9 +144,10 @@ function createLrclibClient(options = {}) {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let response;
       let requestSignal;
+      let retryAllowed = false;
       try {
         response = await scheduler.schedule(
-          () => {
+          async () => {
             const requestTimeoutSignal = AbortSignal.timeout(timeoutMs);
             const externalSignals = [
               acquisitionSignal,
@@ -160,10 +157,20 @@ function createLrclibClient(options = {}) {
               externalSignals.length > 0
                 ? AbortSignal.any([...externalSignals, requestTimeoutSignal])
                 : requestTimeoutSignal;
-            return fetchFn(url, {
+            const fetched = await requestGuard.fetch(url, {
               headers: { 'User-Agent': userAgent },
               signal: requestSignal,
             });
+            const delayMs = parseRetryAfterMs(
+              fetched.headers.get('retry-after'),
+            );
+            retryAllowed =
+              attempt === 0 &&
+              fetched.status === 503 &&
+              delayMs > 0 &&
+              delayMs <= maxRetryAfterMs;
+            if (retryAllowed) scheduler.deferFor(delayMs);
+            return fetched;
           },
           { signal: requestOptions.signal || acquisitionSignal },
         );
@@ -171,15 +178,8 @@ function createLrclibClient(options = {}) {
         return classifyTransportFailure(error);
       }
 
-      const retryAfterMs = parseRetryAfterMs(
-        response.headers.get('retry-after'),
-      );
-      const isRetryable =
-        response.status === 429 ||
-        (response.status === 503 && retryAfterMs !== null);
-      if (attempt === 0 && isRetryable && retryAfterMs !== null) {
+      if (retryAllowed) {
         await response.body?.cancel().catch(() => undefined);
-        scheduler.deferFor(Math.min(retryAfterMs, maxRetryAfterMs));
         continue;
       }
 

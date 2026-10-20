@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { createProviderRequestGuard } = require('../providerServiceCooldown');
 const { atomicWriteBuffer, atomicCopyFileSync } = require('../atomicWrite');
 const {
   IMAGE_EXTENSIONS,
@@ -133,10 +134,15 @@ async function writePlaylistCoverFromUrl(
 
     try {
       const response = await Promise.race([
-        fetchImpl(imageUrl, { signal: controller.signal }),
+        createProviderRequestGuard(fetchImpl).fetch(imageUrl, {
+          signal: controller.signal,
+        }),
         deadline,
       ]);
-      if (!response.ok) return null;
+      if (!response.ok) {
+        await response.body?.cancel?.().catch(() => undefined);
+        return null;
+      }
 
       const declaredLength = Number(response.headers.get('content-length'));
       if (
