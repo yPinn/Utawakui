@@ -16,13 +16,13 @@ const sha = (value) =>
 const method = Object.freeze({
   kind: 'model',
   id: 'experimental-hfa-small-cpu',
-  version: '1',
+  version: '2',
   modelManifestSha256: sha(
     require('../../../scripts/research/lyricsFreshEvaluation/trial-assets.json'),
   ),
   environmentLockSha256: sha(require('./installed-pins.json')),
-  decoderVersion: 'hfa-small-content-v1',
-  g2pVersion: 'hfa-zh-ja-v1',
+  decoderVersion: 'hfa-small-content-v2',
+  g2pVersion: 'hfa-zh-ja-en-v2',
   chunkerVersion: 'hfa-starts-v1',
   nodeVersion: process.versions.node,
   icuVersion: process.versions.icu,
@@ -38,11 +38,57 @@ function location(input) {
     ),
   );
 }
-function preview(estimate) {
+function validationSummary(lines) {
+  const summary = {
+    checked: 0,
+    supported: 0,
+    uncertain: 0,
+    contradictions: 0,
+    missingLyrics: 0,
+    silent: 0,
+  };
+  const keys = {
+    supported: 'supported',
+    insufficient: 'uncertain',
+    contradiction: 'contradictions',
+    'possible-missing-lyrics': 'missingLyrics',
+    silence: 'silent',
+  };
+  for (const line of lines) {
+    if (line.segments?.length || !Object.hasOwn(keys, line.content)) continue;
+    summary.checked++;
+    summary[keys[line.content]]++;
+  }
+  return summary.checked ? summary : null;
+}
+function validSummary(value, max) {
+  if (
+    !value ||
+    Object.keys(value).sort().join(',') !==
+      'checked,contradictions,missingLyrics,silent,supported,uncertain'
+  )
+    return false;
+  if (
+    Object.values(value).some(
+      (n) => !Number.isSafeInteger(n) || n < 0 || n > max,
+    )
+  )
+    return false;
+  return (
+    value.checked ===
+    value.supported +
+      value.uncertain +
+      value.contradictions +
+      value.missingLyrics +
+      value.silent
+  );
+}
+function preview(estimate, validation) {
   return {
     status: 'ready',
     experimental: true,
     timingAcceptance: 'pending',
+    ...(validation ? { validation: { ...validation } } : {}),
     preview: {
       estimateId: estimate.estimateId,
       documentId: estimate.documentId,
@@ -76,13 +122,22 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
     ),
   );
   const file = location(input);
-  const language = ['zh', 'ja'].includes(input.language)
+  const language = ['zh', 'ja', 'en'].includes(input.language)
     ? input.language
     : null;
+  const validation = language
+    ? validationSummary(
+        input.canonical.lines.map((line) => ({
+          ...line,
+          content: byId.get(line.lineId)?.content,
+        })),
+      )
+    : null;
   const bytes = JSON.stringify({
-    version: language ? 2 : 1,
+    version: validation ? 3 : language ? 2 : 1,
     identity: language ? sha([input.identity, language]) : input.identity,
     ...(language ? { analysisLanguage: language } : {}),
+    ...(validation ? { validation } : {}),
     estimate,
   });
   if (Buffer.byteLength(bytes) > 2097152)
@@ -92,7 +147,7 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   contained(input.trackDir, `${file}.tmp`);
   atomicWriteText(file, bytes);
-  return preview(estimate);
+  return preview(estimate, validation);
 }
 function loadExperimentalEstimate(input) {
   let raw;
@@ -112,15 +167,25 @@ function loadExperimentalEstimate(input) {
   }
   try {
     if (
-      ![1, 2].includes(raw.version) ||
+      ![1, 2, 3].includes(raw.version) ||
       Object.keys(raw).sort().join(',') !==
-        (raw.version === 2
-          ? 'analysisLanguage,estimate,identity,version'
-          : 'estimate,identity,version') ||
-      (raw.version === 2 && !['zh', 'ja'].includes(raw.analysisLanguage))
+        (raw.version === 3
+          ? 'analysisLanguage,estimate,identity,validation,version'
+          : raw.version === 2
+            ? 'analysisLanguage,estimate,identity,version'
+            : 'estimate,identity,version') ||
+      (raw.version >= 2 && !['zh', 'ja', 'en'].includes(raw.analysisLanguage))
     )
       return { status: 'unsupported' };
     const estimate = validateAcousticEstimate(raw.estimate);
+    if (
+      raw.version === 3 &&
+      !validSummary(
+        raw.validation,
+        input.canonical.lines.filter((line) => !line.segments?.length).length,
+      )
+    )
+      return { status: 'corrupt' };
     if (
       estimate.source.filename === input.source.filename &&
       estimate.source.offsetUsedMs !== (input.source.offsetMs ?? 0)
@@ -128,7 +193,7 @@ function loadExperimentalEstimate(input) {
       return { status: 'stale', reason: 'offset-changed' };
     if (
       raw.identity !==
-        (raw.version === 2
+        (raw.version >= 2
           ? sha([input.identity, raw.analysisLanguage])
           : input.identity) ||
       JSON.stringify(estimate.method) !== JSON.stringify(method)
@@ -142,7 +207,7 @@ function loadExperimentalEstimate(input) {
     );
     if (JSON.stringify(estimate) !== JSON.stringify(rebuilt))
       return { status: 'stale' };
-    return preview(estimate);
+    return preview(estimate, raw.version === 3 ? raw.validation : null);
   } catch {
     return { status: 'corrupt' };
   }

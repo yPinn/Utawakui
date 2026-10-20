@@ -6,8 +6,11 @@
 
 ## 歌詞時間與聲學對齊
 
+最新混語顯示階段見[混語長句兩段顯示](lyrics-mixed-phrases-2026-10-21.md)：目前使用既有精確時間，混語 T1 推論及人工語意／時間驗收仍待後續。
+
 | 文件                                                                                            | 日期       |
 | ----------------------------------------------------------------------------------------------- | ---------- |
+| [純英文 T1+、內容檢查與 modal／Output 回退](lyrics-english-validation-2026-10-20.md)            | 2026-10-20 |
 | [HubertFA＋small漏詞／誤拒、試用驗證與失敗紀錄](lyrics-hfa-small-listening-trial-2026-10-19.md) | 2026-10-19 |
 | [原HubertFA新曲配對、錯配與特定權重查核](lyrics-hubertfa-fresh-2026-10-19.md)                   | 2026-10-19 |
 | [small誤拒、Qwen日文退步與低成本消融](lyrics-root-causes-and-noncommercial-2026-10-19.md)       | 2026-10-19 |

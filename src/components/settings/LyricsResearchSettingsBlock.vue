@@ -77,7 +77,7 @@ onUnmounted(() => clearInterval(timer));
     <SettingsDocumentItem
       :icon="Captions"
       title="歌詞分析工具"
-      description="估算中文、日文歌詞的分段時間。"
+      description="估算中文、日文與英文歌詞的分段時間。"
       guidance="下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 可用空間。"
       :status="statusLabel"
       :status-tone="statusTone"

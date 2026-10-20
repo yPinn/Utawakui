@@ -45,6 +45,27 @@ beforeEach(async () => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 describe('separate experimental estimate persistence', () => {
+  it('persists bounded validation warnings separately from timing and rejects inconsistent summaries', async () => {
+    result.lines[0].content = 'possible-missing-lyrics';
+    const saved = await saveExperimentalEstimate(
+      { ...input, language: 'en' },
+      result,
+      () => true,
+    );
+    expect(saved.validation).toMatchObject({ checked: 1, missingLyrics: 1 });
+    expect(loadExperimentalEstimate(input).validation).toEqual(
+      saved.validation,
+    );
+    const file = path.join(
+      track,
+      'lyrics/experimental-estimates/main.vtt.json',
+    );
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    expect(raw.version).toBe(3);
+    raw.validation.checked = 0;
+    fs.writeFileSync(file, JSON.stringify(raw));
+    expect(loadExperimentalEstimate(input).status).toBe('corrupt');
+  });
   it('binds a manually resolved language while remaining readable without changing source language', async () => {
     await saveExperimentalEstimate(
       { ...input, language: 'ja' },

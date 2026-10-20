@@ -75,8 +75,10 @@ beforeEach(() => {
     ownedGroup: (_signal, run) =>
       run({
         capture: vi.fn(async (_exe, args) =>
-          Buffer.alloc(
-            Math.round(Number(args[args.indexOf('-t') + 1]) * 64000),
+          Buffer.from(
+            new Float32Array(
+              Math.round(Number(args[args.indexOf('-t') + 1]) * 16000),
+            ).fill(0.1).buffer,
           ),
         ),
       }),
@@ -87,6 +89,37 @@ beforeEach(() => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 describe('bounded research preview orchestration', () => {
+  it('retains T1 on locally silent lines even if alignment and ASR hallucinate matching content', async () => {
+    dependencies.ownedGroup = (_signal, run) =>
+      run({
+        capture: async (_exe, args) =>
+          Buffer.alloc(
+            Math.round(Number(args[args.indexOf('-t') + 1]) * 64000),
+          ),
+      });
+    const result = await runResearchPreview(input, options, dependencies);
+    expect(result.lines[0]).toMatchObject({
+      mode: 'T1',
+      chunks: [],
+      content: 'silence',
+    });
+    expect(result.lines[1].mode).toBe('T2');
+  });
+  it('keeps weak English evidence as T1 and reports real stage window counts', async () => {
+    input.canonical.lines[0].text = 'I will always love you';
+    options.language = 'en';
+    dependencies.whisper.mockResolvedValueOnce([]);
+    const result = await runResearchPreview(input, options, dependencies);
+    expect(result.lines[0]).toMatchObject({
+      mode: 'T1',
+      content: 'insufficient',
+    });
+    expect(options.onProgress).toHaveBeenCalledWith({
+      stage: 'content',
+      completed: 2,
+      total: 2,
+    });
+  });
   it('whole-song processing includes later occurrences while preview stays bounded', async () => {
     input.durationMs = 90000;
     input.canonical.lines.push({
@@ -132,7 +165,7 @@ describe('bounded research preview orchestration', () => {
     dependencies.whisper.mockResolvedValueOnce([]);
     expect(
       (await runResearchPreview(input, options, dependencies)).lines[0],
-    ).toMatchObject({ mode: 'research', content: 'unconfirmed' });
+    ).toMatchObject({ mode: 'research', content: 'insufficient' });
   });
   it('cancels the HFA job, waits for its result, and clears temporary copies', async () => {
     let fail;

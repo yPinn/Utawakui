@@ -100,10 +100,13 @@ async function verifyAssets(config, manifest = pinned) {
   });
   const environmentFingerprint = await treeFingerprint(config.environmentPath);
   const code = Object.fromEntries(
-    ['protocol.cjs', 'decoder.py', 'frontend.cjs', 'job.cjs'].map((name) => [
-      name,
-      sha(fs.readFileSync(path.join(__dirname, name))),
-    ]),
+    [
+      'protocol.cjs',
+      'english.cjs',
+      'decoder.py',
+      'frontend.cjs',
+      'job.cjs',
+    ].map((name) => [name, sha(fs.readFileSync(path.join(__dirname, name)))]),
   );
   const dependencies = Object.fromEntries(
     ['onnxruntime-node', 'kuromoji', 'wanakana'].map((name) => [
@@ -141,7 +144,7 @@ async function verifyAssets(config, manifest = pinned) {
     ),
     environmentLockSha256,
     decoderVersion: `hfa-occurrence-${code['decoder.py'].slice(0, 16)}`,
-    g2pVersion: `original-g2p-${code['protocol.cjs'].slice(0, 16)}`,
+    g2pVersion: `original-g2p-${sha(code['protocol.cjs'] + code['english.cjs']).slice(0, 16)}`,
     chunkerVersion: `intl-text-${code['protocol.cjs'].slice(0, 16)}`,
     nodeVersion: process.versions.node,
     icuVersion: process.versions.icu,

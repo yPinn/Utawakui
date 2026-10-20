@@ -532,6 +532,9 @@ describe('outputServer', () => {
 
     expect(graph.failures).toEqual([]);
     expect(graph.routes).toContain(
+      '/shared/presentation/lyricsPhraseBreaks.mjs',
+    );
+    expect(graph.routes).toContain(
       '/shared/presentation/lyricsPresentation.mjs',
     );
   });

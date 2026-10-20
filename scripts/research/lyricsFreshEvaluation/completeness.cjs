@@ -3,6 +3,7 @@ const OpenCC = require('opencc-js/t2cn');
 const wanakana = require('wanakana');
 const { checkLowCost } = require('./lowCost.cjs');
 const { contentRules } = require('./content.cjs');
+const { comparisonWords } = require('../lyricsAcoustic/english.cjs');
 const simplify = OpenCC.Converter({ from: 'tw', to: 'cn' });
 const completenessRules = Object.freeze({
   minAnchorCharacters: 2,
@@ -10,6 +11,7 @@ const completenessRules = Object.freeze({
   maxInsertionCharacters: 8,
 });
 function normalized(text, language) {
+  if (language === 'en') return comparisonWords(text);
   let value = text.normalize('NFKC').toLowerCase();
   value = language === 'zh' ? simplify(value) : wanakana.toHiragana(value);
   return [...value.replace(/[^\p{L}\p{M}\p{N}]/gu, '')];
@@ -36,17 +38,19 @@ function assessCompleteness(line, evidence, profile = 'script-fold') {
   const decision =
     usable === evidence ? baseline : checkLowCost(line, usable, 'script-fold');
   const source = normalized(line.text, evidence.language);
-  const target = usable.spans
-    .filter((s) => {
-      const clock =
-        Math.round(s.start * 1000) + evidence.windowStartMs + evidence.offsetMs;
-      return (
-        s.boundary !== false &&
-        clock >= line.startMs - contentRules.paddingMs &&
-        clock <= line.endMs + contentRules.paddingMs
-      );
-    })
-    .flatMap((s) => normalized(s.text, evidence.language));
+  const matchingSpans = usable.spans.filter((s) => {
+    const clock =
+      Math.round(s.start * 1000) + evidence.windowStartMs + evidence.offsetMs;
+    return (
+      s.boundary !== false &&
+      clock >= line.startMs - contentRules.paddingMs &&
+      clock <= line.endMs + contentRules.paddingMs
+    );
+  });
+  const target =
+    evidence.language === 'en'
+      ? normalized(matchingSpans.map((s) => s.text).join(''), 'en')
+      : matchingSpans.flatMap((s) => normalized(s.text, evidence.language));
   const unknown = {
     ...decision,
     insertionWarning: false,
@@ -54,6 +58,38 @@ function assessCompleteness(line, evidence, profile = 'script-fold') {
     insertionState: 'unknown',
   };
   if (source.length < completenessRules.minAnchorCharacters * 2) return unknown;
+  if (evidence.language === 'en') {
+    if (decision.evidenceState !== 'supported') return unknown;
+    const positions = (a, b) => {
+      const result = [];
+      for (let j = 0; j < target.length - 1; j++)
+        if (target[j] === a && target[j + 1] === b) result.push(j);
+      return result;
+    };
+    let insertionCharacters = 0;
+    const gaps = new Set();
+    for (let i = 1; i < source.length - 2; i++) {
+      const before = positions(source[i - 1], source[i]);
+      const after = positions(source[i + 1], source[i + 2]);
+      if (before.length !== 1 || after.length !== 1) continue;
+      const gap = after[0] - before[0] - 2;
+      if (
+        gap < 1 ||
+        gap > completenessRules.maxInsertionCharacters ||
+        gaps.has(before[0])
+      )
+        continue;
+      gaps.add(before[0]);
+      insertionCharacters += gap;
+    }
+    return {
+      ...decision,
+      insertionCharacters,
+      insertionWarning: insertionCharacters > 0,
+      insertionState:
+        insertionCharacters > 0 ? 'possible-missing-text' : 'unknown',
+    };
+  }
   const earliest = [],
     latest = [];
   let index = 0;
@@ -69,7 +105,10 @@ function assessCompleteness(line, evidence, profile = 'script-fold') {
   for (let i = 1; i < source.length - 2; i++) {
     const gap = earliest[i + 1] - earliest[i] - 1;
     if (
-      gap >= completenessRules.minInsertionCharacters &&
+      gap >=
+        (evidence.language === 'en'
+          ? 1
+          : completenessRules.minInsertionCharacters) &&
       gap <= completenessRules.maxInsertionCharacters &&
       earliest[i] - earliest[i - 1] === 1 &&
       earliest[i + 2] - earliest[i + 1] === 1

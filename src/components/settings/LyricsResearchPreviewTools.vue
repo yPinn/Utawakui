@@ -116,6 +116,7 @@ async function playLine(line) {
         :options="[
           { value: 'zh', label: '中文' },
           { value: 'ja', label: '日文' },
+          { value: 'en', label: '英文' },
         ]"
         :disabled="research.busy.value"
       />

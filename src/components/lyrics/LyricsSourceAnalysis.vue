@@ -5,7 +5,10 @@ import { useExperimentalLyricsQueue } from '../../composables/lyrics/useExperime
 import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiProgress from '../ui/UiProgress.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import LyricsPhrasePreview from './LyricsPhrasePreview.vue';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -15,12 +18,14 @@ const lyrics = useLyrics();
 const experiment = lyrics.experimentalLyrics;
 const queue = useExperimentalLyricsQueue();
 const language = shallowRef('auto'),
-  saving = shallowRef(false);
+  saving = shallowRef(false),
+  detailsOpen = shallowRef(false);
 const languageId = `lyrics-source-analysis-${useId()}`;
 const languageOptions = [
   { value: 'auto', label: '自動辨識' },
   { value: 'zh', label: '中文' },
   { value: 'ja', label: '日文' },
+  { value: 'en', label: '英文' },
 ];
 const sourceLabel = computed(() =>
   lyrics.selectedSource.value
@@ -97,9 +102,7 @@ const jobDescription = computed(() => {
   if (busy.value)
     return item.value.sourceFilename && !currentItem.value
       ? '此曲的其他來源正在分析，可取消後分析目前來源。'
-      : item.value.status === 'pending'
-        ? '等待分析；完成後仍需手動套用。'
-        : '正在準備環境與分析；完成後仍需手動套用。';
+      : '';
   if (currentItem.value?.status === 'failed')
     return '分析失敗；原有歌詞與伴奏仍可使用，可重新分析。';
   if (currentItem.value?.status === 'cancelled')
@@ -108,14 +111,54 @@ const jobDescription = computed(() => {
   return (
     {
       'source-changed': '選用來源已變更，請確認目前來源後重新分析。',
-      'language-unknown': '無法可靠辨識歌詞語言，請指定中文或日文後重試。',
-      'language-unsupported': '目前支援中文與日文，請確認後指定分析語言。',
+      'language-unknown':
+        '無法可靠辨識歌詞語言，請指定中文、日文或英文後重試。',
+      'language-unsupported':
+        '目前支援中文、日文與英文，請確認後指定分析語言。',
       'lyrics-missing': '沒有歌詞來源，請先加入時間歌詞。',
       'untimed-lyrics': '目前來源沒有可分析的整句時間。',
       'native-t2': '來源 T2 已提供逐字時間，直接沿用。',
       'environment-missing': '請先至設定準備歌詞分析工具。',
     }[currentItem.value.reason] ?? '目前來源無法分析，請確認語言與整句時間。'
   );
+});
+const stageLabels = {
+  verify: '檢查環境',
+  load: '載入模型',
+  alignment: '對齊詞塊',
+  hubertfa: '對齊詞塊',
+  content: '查核歌詞內容',
+  small: '載入內容檢查',
+};
+const progress = computed(() =>
+  busy.value && item.value.status === 'running' ? item.value.progress : null,
+);
+const progressLabel = computed(() =>
+  item.value?.status === 'pending'
+    ? '等待分析'
+    : (stageLabels[progress.value?.stage ?? queue.state.value?.stage] ??
+      '準備分析'),
+);
+const statusMessage = computed(() => {
+  if (jobDescription.value) return jobDescription.value;
+  if (availability.value) return availability.value;
+  if (busy.value) return '';
+  if (experiment.needsReanalysis.value)
+    return '校時已變更，請重新分析；目前沿用來源時間。';
+  if (readyCount.value)
+    return (
+      'T1+ · ' +
+      (experiment.applied.value ? '使用中' : '未套用') +
+      ' · ' +
+      readyCount.value +
+      ' 句模型詞塊，其餘沿用來源時間。' +
+      (experiment.estimate.value.validation?.missingLyrics
+        ? ` 疑似漏詞 ${experiment.estimate.value.validation.missingLyrics} 句，套用前請確認。`
+        : '')
+    );
+  if (!['missing', 'disabled'].includes(experiment.estimate.value.status))
+    return '目前沒有可套用的詞塊，沿用來源時間；請重新分析。';
+  return '';
 });
 const hasPrevious = computed(
   () =>
@@ -160,6 +203,7 @@ watch(
   () => [lyrics.state.selectedTrackId, lyrics.state.selectedSourceFilename],
   () => {
     language.value = 'auto';
+    detailsOpen.value = false;
   },
 );
 onScopeDispose(() => clearInterval(timer));
@@ -175,25 +219,20 @@ onScopeDispose(() => clearInterval(timer));
       <strong>詞塊分析（實驗性）</strong>
       <span>目前來源：{{ sourceLabel }}</span>
     </div>
-    <UiHint v-if="availability">{{ availability }}</UiHint>
-    <UiHint v-if="experiment.needsReanalysis.value" role="status"
-      >校時已變更，請重新分析；目前沿用來源時間。</UiHint
-    >
-    <UiHint
-      v-else-if="
-        !readyCount &&
-        !['missing', 'disabled'].includes(experiment.estimate.value.status)
-      "
-      >目前沒有可套用的詞塊，沿用原有歌詞；可重新分析。</UiHint
-    >
-    <UiHint v-if="readyCount" role="status"
-      >T1+ 模型估計 · {{ experiment.applied.value ? '使用中' : '未套用' }} ·
-      {{ readyCount }} 句模型詞塊，其餘沿用來源 T2／整句時間。</UiHint
-    >
-    <UiHint v-if="jobDescription" role="status">{{ jobDescription }}</UiHint>
     <UiHint v-if="queue.error.value" tone="danger" role="alert">{{
       queue.error.value
     }}</UiHint>
+    <UiHint v-else-if="statusMessage" role="status">{{ statusMessage }}</UiHint>
+    <UiProgress
+      v-if="busy"
+      :label="progressLabel"
+      :indeterminate="!progress"
+      :value="progress?.completed ?? 0"
+      :max="progress?.total ?? 1"
+      :value-text="
+        progress ? progress.completed + ' / ' + progress.total + ' 段音訊' : ''
+      "
+    />
     <div class="lyrics-source-analysis__actions">
       <UiSelect
         v-if="hasT1"
@@ -233,11 +272,19 @@ onScopeDispose(() => clearInterval(timer));
         >
       </div>
     </div>
-    <UiHint v-if="hasT1"
-      >依目前校時定位音訊；語言只影響本次分析。T1+
-      尚未通過人工時間驗收，套用至歌詞與支援詞塊的 Output 模板，來源 T2
-      優先。</UiHint
-    >
+    <UiHint v-if="hasT1">完成後手動套用；T1+ 時間仍待人工驗收。</UiHint>
+    <UiDisclosure v-if="hasT1" v-model:open="detailsOpen" label="分析說明">
+      <UiHint
+        >依目前校時分析，語言只作用本次；變更來源或校時後需重新分析。來源 T2
+        優先，未通過的句子沿用 T1；套用同步至支援詞塊的 Output 模板。</UiHint
+      >
+    </UiDisclosure>
+    <LyricsPhrasePreview
+      :document="
+        experiment.outputDocument?.value ?? lyrics.lyricsDocument.value
+      "
+      :position-ms="lyrics.currentLyricsPositionMs?.value ?? null"
+    />
   </section>
 </template>
 

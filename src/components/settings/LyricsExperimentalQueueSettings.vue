@@ -17,15 +17,16 @@ const languageOptions = [
   { value: 'auto', label: '自動辨識' },
   { value: 'zh', label: '中文' },
   { value: 'ja', label: '日文' },
+  { value: 'en', label: '英文' },
 ];
 const skipLabels = {
   'source-changed': '選用來源已變更，請至可用歌詞確認後重新分析。',
   'environment-missing': '請先下載並檢查分析工具。',
   'lyrics-missing': '沒有歌詞來源，請先加入時間歌詞。',
   'language-unknown':
-    '來源語言未知，內容無法可靠辨識；請指定中文或日文後重試。',
+    '來源語言未知，內容無法可靠辨識；請指定中文、日文或英文後重試。',
   'language-unsupported':
-    '來源標示其他語言；目前支援中文與日文，可確認後指定語言重試。',
+    '來源標示其他語言；目前支援中文、日文與英文，可確認後指定語言重試。',
   'native-t2': '目前來源已有逐字時間，直接沿用，不需要重新分析。',
   'untimed-lyrics': '目前來源沒有可分析的整句時間，請先準備時間歌詞。',
 };

@@ -332,6 +332,15 @@ while private CLIs, bindings, corpora and downloaded assets remain excluded.
 The original Phase 2 CLI still adds no formal capability or activation; the separate
 App entry owns explicit manual research downloads and its isolated environment.
 Existing application source rules cover the internal storage-method option and preview label.
+Mixed lyric display planning adds `shared/presentation/lyricsPhraseBreaks.mjs`
+under the existing `shared/**/*` package rule and one exact Browser Source module
+route. It has no model, worker, new dependency or additional unpacked payload;
+its tests remain excluded. The closed HTTP module-graph test checks delivery.
+
+The explicit research runtime allowlist also includes `scripts/research/lyricsAcoustic/english.cjs`
+for English word ranges and comparison normalization. It runs in main; no additional
+weight, runtime download or unpacked worker is introduced. The existing pinned model
+archive already contains the English dictionary, which is now explicitly verified.
 
 | Artifact                                                                                               | Contents                                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |

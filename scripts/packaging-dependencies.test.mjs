@@ -128,6 +128,7 @@ describe('packaged dependency boundary', () => {
       'scripts/research/lyricsAcoustic/frontend.cjs',
       'scripts/research/lyricsAcoustic/decoder.py',
       'scripts/research/lyricsAcoustic/job.cjs',
+      'scripts/research/lyricsAcoustic/english.cjs',
       'scripts/research/lyricsAcoustic/manifest.json',
       'electron/lib/lyricsResearch/automatic.js',
       'electron/lib/lyricsResearch/estimates.js',

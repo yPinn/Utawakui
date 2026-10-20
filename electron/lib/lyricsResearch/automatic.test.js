@@ -17,6 +17,36 @@ function setup() {
   return { service, config, research };
 }
 describe('opt-in post-separation lyrics queue', () => {
+  it('exposes progress only for the running owner and clears it on cancel', async () => {
+    let finish;
+    const { service, research } = setup();
+    await service.setEnabled(true);
+    research.status.mockReturnValue({
+      status: 'ready',
+      busy: false,
+      stage: 'content',
+      progress: { stage: 'content', completed: 2, total: 4 },
+    });
+    research.analyze.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    research.cancel.mockImplementation(async () => finish({ cancelled: true }));
+    service.enqueue('first', 'en');
+    service.enqueue('next', 'en');
+    await vi.waitFor(() => expect(research.analyze).toHaveBeenCalled());
+    expect(service.status().items[0].progress).toEqual({
+      stage: 'content',
+      completed: 2,
+      total: 4,
+    });
+    expect(service.status().items[1]).not.toHaveProperty('progress');
+    await service.cancel();
+    expect(service.status().items.every((i) => !i.progress)).toBe(true);
+  });
+
   it('keeps a bounded selected source on manual requests', async () => {
     const { service, research } = setup();
     await service.setEnabled(true);

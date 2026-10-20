@@ -544,8 +544,19 @@ function kineticPopVisualUnits(value) {
   return units;
 }
 
-function kineticPopPhrases(text) {
-  return [...text.matchAll(/\S+/gu)].map((match) => {
+function kineticPopPhrases(text, ranges = null) {
+  const groups =
+    ranges ??
+    [...text.matchAll(/\S+/gu)].map((match) => ({
+      sourceStart: match.index,
+      sourceEnd: match.index + match[0].length,
+    }));
+  return groups.map((range) => {
+    const raw = text.slice(range.sourceStart, range.sourceEnd);
+    const match = {
+      0: raw.trim(),
+      index: range.sourceStart + raw.length - raw.trimStart().length,
+    };
     const phraseText = match[0];
     const units = kineticPopVisualUnits(phraseText);
     return {
@@ -579,7 +590,7 @@ export function adaptKineticPopLyricsPresentation(value, options = {}) {
   const trimmedText = sourceText.trim();
   const text = trimmedText.replace(/\s+/gu, ' ');
   const sourceUnits = kineticPopVisualUnits(text);
-  const phrases = kineticPopPhrases(trimmedText);
+  const phrases = kineticPopPhrases(trimmedText, options.phraseRanges);
   const phraseBreakProgresses = kineticPopPhraseBreakProgresses(phrases);
   const lineProgress = Number.isFinite(options.lineProgress)
     ? Math.min(1, Math.max(0, options.lineProgress))

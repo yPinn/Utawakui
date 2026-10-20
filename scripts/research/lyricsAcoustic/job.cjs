@@ -188,6 +188,11 @@ function startResearchJob({
           for (const lineId of window.lineIds)
             reasonsByLine[lineId] = 'no-evidence';
           metrics.windows.push({ ...window, peak, silence: true });
+          onProgress({
+            stage: 'window-done',
+            window: window.index,
+            total: plan.windows.length,
+          });
           continue;
         }
         if (!decoder) {
@@ -221,7 +226,14 @@ function startResearchJob({
           }
           ready.push({ ...input, prepared });
         }
-        if (!ready.length) continue;
+        if (!ready.length) {
+          onProgress({
+            stage: 'window-done',
+            window: window.index,
+            total: plan.windows.length,
+          });
+          continue;
+        }
         fs.writeFileSync(path.join(workspace, `${prefix}.pcm`), bytes);
         if (!frontend) {
           frontend = group.rpc(process.execPath, [
@@ -305,6 +317,7 @@ function startResearchJob({
         });
         onProgress({
           stage: 'window-done',
+          total: plan.windows.length,
           window: window.index,
           pids: group.pids(),
         });

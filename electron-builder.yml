@@ -52,6 +52,7 @@ files:
   - scripts/research/lyricsAcoustic/assets.cjs
   - scripts/research/lyricsAcoustic/process.cjs
   - scripts/research/lyricsAcoustic/protocol.cjs
+  - scripts/research/lyricsAcoustic/english.cjs
   - scripts/research/lyricsAcoustic/job.cjs
   - scripts/research/lyricsAcoustic/frontend.cjs
   - scripts/research/lyricsAcoustic/decoder.py

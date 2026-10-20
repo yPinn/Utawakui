@@ -1,5 +1,6 @@
 'use strict';
 const wanakana = require('wanakana');
+const { comparisonWords } = require('../lyricsAcoustic/english.cjs');
 const {
   conservativeRules,
 } = require('../lyricsAlignmentCandidates/qualityConservative.cjs');
@@ -12,6 +13,7 @@ const contentRules = Object.freeze({
   minExtraCharacters: 3,
 });
 function normalize(text, language) {
+  if (language === 'en') return comparisonWords(text);
   const normalized = text.normalize('NFKC').toLowerCase();
   return [
     ...(language === 'ja'
@@ -37,7 +39,7 @@ function lcsLength(a, b) {
 function checkContent(line, evidence) {
   const { language, windowStartMs, offsetMs, durationMs, spans } = evidence;
   if (
-    !['zh', 'ja'].includes(language) ||
+    !['zh', 'ja', 'en'].includes(language) ||
     !Number.isSafeInteger(windowStartMs) ||
     !Number.isSafeInteger(offsetMs) ||
     !Number.isFinite(durationMs) ||
@@ -52,6 +54,8 @@ function checkContent(line, evidence) {
     throw Error('content evidence');
   const source = normalize(line.text, language),
     target = [];
+  const englishText = [],
+    englishTimed = [];
   let previous = -1,
     bytes = 0,
     timedCharacters = 0;
@@ -76,18 +80,44 @@ function checkContent(line, evidence) {
         clock > line.endMs + contentRules.paddingMs)
     )
       continue;
+    if (language === 'en') {
+      englishText.push(span.text);
+      if (timed) englishTimed.push(span.text);
+    }
     const chars = normalize(span.text, language);
     target.push(...chars);
     if (timed) timedCharacters += chars.length;
   }
+  if (language === 'en') {
+    target.splice(
+      0,
+      target.length,
+      ...normalize(englishText.join(''), language),
+    );
+    timedCharacters = normalize(englishTimed.join(''), language).length;
+  }
   const matched = lcsLength(source, target),
     compatibility = source.length ? matched / source.length : 0,
     extra = Math.max(0, target.length - matched);
+  const timedCoverage =
+    language === 'en' && source.length
+      ? lcsLength(source, normalize(englishTimed.join(''), language)) /
+        source.length
+      : compatibility;
+  const reject =
+    source.length > 0 &&
+    timedCharacters >=
+      (language === 'en' ? 4 : contentRules.minAsrCharacters) &&
+    compatibility <= contentRules.maxContradictionCoverage;
   return {
-    reject:
-      source.length > 0 &&
-      timedCharacters >= contentRules.minAsrCharacters &&
-      compatibility <= contentRules.maxContradictionCoverage,
+    evidenceState: reject
+      ? 'contradiction'
+      : timedCharacters >=
+            (language === 'en' ? 2 : contentRules.minAsrCharacters) &&
+          timedCoverage >= 0.8
+        ? 'supported'
+        : 'insufficient',
+    reject,
     compatibility,
     asrCharacters: timedCharacters,
     sourceCharacters: source.length,

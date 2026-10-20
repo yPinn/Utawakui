@@ -51,12 +51,14 @@ function createResearchEnvironment({
   async function verifyAt(directory, options) {
     const ffmpegPath = getFfmpegPath();
     if (!ffmpegPath) throw Error('FFmpeg preparation required');
+    options.onProgress('verify');
     await verifyInstalled(directory, options.signal);
     const config = researchPaths(directory, ffmpegPath);
     await require('../../../scripts/research/lyricsAcoustic/assets.cjs').verifyAssets(
       config,
     );
     options.signal.throwIfAborted();
+    options.onProgress('load');
     await probe(config, options);
     options.signal.throwIfAborted();
   }

@@ -124,6 +124,16 @@ async function probeResearchModels(config, { signal }) {
         workspace,
       });
       if (!response.ok) throw Error('research decoder load failed');
+      const english = await decoder.request({
+        id: 2,
+        command: 'prepare',
+        language: 'en',
+        words: [
+          { text: 'love', roman: ['love'] },
+          { text: "don't", roman: ["don't"] },
+        ],
+      });
+      if (!english.ok) throw Error('research English dictionary load failed');
       await whisper(config, group, workspace, Buffer.alloc(3 * 64000), 'zh');
     });
   } finally {
@@ -199,7 +209,11 @@ async function runResearchPreview(
       input.text,
     );
     signal.throwIfAborted();
-    onProgress('hubertfa');
+    onProgress(
+      plans.length
+        ? { stage: 'alignment', completed: 0, total: plans.length }
+        : 'hubertfa',
+    );
     const job = start({
       binding,
       trackDir,
@@ -208,6 +222,18 @@ async function runResearchPreview(
       durationMs: input.durationMs,
       language,
       jobsRoot: path.join(workspace, 'workers'),
+      onProgress: (event) => {
+        if (
+          event.stage === 'window-done' &&
+          Number.isInteger(event.window) &&
+          plans.length
+        )
+          onProgress({
+            stage: 'alignment',
+            completed: Math.min(plans.length, event.window + 1),
+            total: plans.length,
+          });
+      },
       isCurrent: () => !signal.aborted,
     });
     const cancel = () => {
@@ -225,8 +251,18 @@ async function runResearchPreview(
     }
     onProgress('small');
     const decisions = new Map();
+    const contentTotal =
+      language === 'en'
+        ? plans.reduce((sum, window) => sum + window.lineIds.length, 0)
+        : plans.length;
+    let completedWindows = 0;
     await withGroup(signal, async (group) => {
       for (const window of plans) {
+        onProgress({
+          stage: 'content',
+          completed: completedWindows,
+          total: contentTotal,
+        });
         signal.throwIfAborted();
         const bytes = await group.capture(
           config.ffmpegPath,
@@ -260,27 +296,102 @@ async function runResearchPreview(
           Math.abs(bytes.length / 64 - (window.endMs - window.startMs)) > 100
         )
           throw Error('research PCM duration');
-        const spans = await transcribe(
-          config,
-          group,
-          workspace,
-          bytes,
-          language,
-        );
+        const spans =
+          language === 'en'
+            ? null
+            : await transcribe(config, group, workspace, bytes, language);
         for (const line of canonical.lines.filter((line) =>
           window.lineIds.includes(line.lineId),
         )) {
-          decisions.set(
-            line.lineId,
-            assessCompleteness(line, {
-              language,
-              windowStartMs: window.startMs,
-              offsetMs: input.source.offsetMs ?? 0,
-              durationMs: window.endMs - window.startMs,
-              spans,
-            }),
+          const begin = Math.round(
+            (line.startMs - (input.source.offsetMs ?? 0) - window.startMs) * 16,
           );
+          const end = Math.round(
+            (line.endMs - (input.source.offsetMs ?? 0) - window.startMs) * 16,
+          );
+          let peak = 0;
+          for (
+            let i = Math.max(0, begin);
+            i < Math.min(bytes.length / 4, end);
+            i++
+          ) {
+            const value = bytes.readFloatLE(i * 4);
+            if (!Number.isFinite(value)) throw Error('research nonfinite PCM');
+            peak = Math.max(peak, Math.abs(value));
+          }
+          if (
+            begin >= 0 &&
+            end <= bytes.length / 4 &&
+            end > begin &&
+            peak <= 1e-6
+          ) {
+            decisions.set(line.lineId, {
+              reject: true,
+              silent: true,
+              evidenceState: 'insufficient',
+            });
+          } else if (language === 'en') {
+            // A local blind transcript avoids assigning a 30-second segment's
+            // approximate token clocks to the wrong lyric occurrence.
+            const left = Math.max(0, begin - 8000),
+              right = Math.min(bytes.length / 4, end + 8000);
+            const local = bytes.subarray(left * 4, right * 4);
+            const localStart = window.startMs + left / 16;
+            const duration = local.length / 64;
+            const localSpans = await transcribe(
+              config,
+              group,
+              workspace,
+              local,
+              language,
+            );
+            signal.throwIfAborted();
+            decisions.set(
+              line.lineId,
+              assessCompleteness(
+                {
+                  ...line,
+                  startMs: Math.round(
+                    localStart + (input.source.offsetMs ?? 0),
+                  ),
+                  endMs: Math.round(
+                    localStart + duration + (input.source.offsetMs ?? 0),
+                  ),
+                },
+                {
+                  language,
+                  windowStartMs: Math.round(localStart),
+                  offsetMs: input.source.offsetMs ?? 0,
+                  durationMs: duration,
+                  spans: localSpans,
+                },
+              ),
+            );
+          } else {
+            decisions.set(
+              line.lineId,
+              assessCompleteness(line, {
+                language,
+                windowStartMs: window.startMs,
+                offsetMs: input.source.offsetMs ?? 0,
+                durationMs: window.endMs - window.startMs,
+                spans,
+              }),
+            );
+          }
+          if (language === 'en')
+            onProgress({
+              stage: 'content',
+              completed: ++completedWindows,
+              total: contentTotal,
+            });
         }
+        if (language !== 'en')
+          onProgress({
+            stage: 'content',
+            completed: ++completedWindows,
+            total: contentTotal,
+          });
       }
     });
     signal.throwIfAborted();
@@ -299,18 +410,23 @@ async function runResearchPreview(
         const decision = decisions.get(line.lineId);
         const native = Boolean(line.segments?.length);
         const chunks =
-          !native && !decision?.reject && estimate?.status === 'ready'
+          !native &&
+          !decision?.reject &&
+          (language !== 'en' || decision?.evidenceState === 'supported') &&
+          estimate?.status === 'ready'
             ? estimate.chunks
             : [];
         return {
           ...line,
           chunks,
           mode: native ? 'T2' : chunks.length ? 'research' : 'T1',
-          content: decision?.reject
-            ? 'contradiction'
-            : decision?.insertionWarning
-              ? 'possible-missing-lyrics'
-              : 'unconfirmed',
+          content: decision?.silent
+            ? 'silence'
+            : decision?.reject
+              ? 'contradiction'
+              : decision?.insertionWarning
+                ? 'possible-missing-lyrics'
+                : (decision?.evidenceState ?? 'unconfirmed'),
         };
       }),
     };

@@ -29,6 +29,10 @@
     "vocab.json": {
       "bytes": 4093,
       "sha256": "0c581e79b2feaea6c5615e1c2620cabfc7a5f07cea74df5c331e5c81210f8115"
+    },
+    "ds_cmudict-07b.txt": {
+      "bytes": 3402616,
+      "sha256": "8c9301c6981039e23fbfaa3c8e09e83b2eca2bd969f2acc475ec491cbaac3de6"
     }
   },
   "vendor": {

@@ -142,7 +142,7 @@ class ResearchDecoder:
         self.config = json.loads((model / "config.json").read_text(encoding="utf-8"))["mel_spec_config"]
         self.hop = self.config["hop_size"] / self.config["sample_rate"]
         self.dictionaries = {}
-        for language, filename in [("zh", "ds-zh-pinyin-lite.txt"), ("ja", "japanese_dict_full.txt")]:
+        for language, filename in [("zh", "ds-zh-pinyin-lite.txt"), ("ja", "japanese_dict_full.txt"), ("en", "ds_cmudict-07b.txt")]:
             self.dictionaries[language] = dict(
                 (parts[0], parts[1].split()) for line in (model / filename).read_text(encoding="utf-8").splitlines()
                 if len(parts := line.split("\t")) == 2

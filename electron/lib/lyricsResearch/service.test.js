@@ -22,6 +22,43 @@ function setup(overrides = {}) {
   return { service, calls, environment };
 }
 describe('independent local research lifecycle', () => {
+  it('publishes bounded per-stage progress, ignores private/late updates and clears it after cancellation', async () => {
+    let report, finish;
+    const runPreview = vi.fn((_input, options) => {
+      report = options.onProgress;
+      return new Promise((r) => {
+        finish = r;
+      });
+    });
+    const input = { identity: 'same', language: 'en' };
+    const { service } = setup({
+      loadAutomaticInput: async () => input,
+      runPreview,
+      publishEstimate: async () => ({ status: 'ready' }),
+      isAnalysisAllowed: () => true,
+    });
+    const result = service.analyze('one', 'en');
+    await vi.waitFor(() => expect(runPreview).toHaveBeenCalled());
+    report({ stage: 'alignment', completed: 2, total: 5 });
+    expect(service.status().progress).toEqual({
+      stage: 'alignment',
+      completed: 2,
+      total: 5,
+    });
+    report({ stage: 'alignment', completed: 99, total: 5, path: 'private' });
+    expect(service.status().progress).toEqual({
+      stage: 'alignment',
+      completed: 2,
+      total: 5,
+    });
+    const cancel = service.cancel();
+    finish({ lines: [] });
+    await cancel;
+    await result;
+    report({ stage: 'content', completed: 1, total: 1 });
+    expect(service.status().progress).toBeNull();
+  });
+
   it('binds a modal request to its selected source before loading and before publishing', async () => {
     const publishEstimate = vi.fn();
     const runPreview = vi.fn(async () => ({ lines: [] }));

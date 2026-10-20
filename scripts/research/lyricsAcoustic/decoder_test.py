@@ -12,6 +12,16 @@ spec.loader.exec_module(worker)
 
 
 class OccurrenceTests(unittest.TestCase):
+    def test_english_dictionary_contractions_and_oov_are_explicit(self):
+        decoder = worker.ResearchDecoder()
+        decoder.dictionaries = {"en": {"don't": ["d", "ow", "n", "t"]}}
+        decoder.vocab = {"vocab": {"SP": 0, "en/d": 1, "en/ow": 2, "en/n": 3, "en/t": 4}}
+        result = decoder.prepare({"language": "en", "words": [{"text": "don’t", "roman": ["don't"]}]})
+        self.assertEqual(result["words"], ["don’t"])
+        self.assertEqual(result["phones"], ["SP", "en/d", "en/ow", "en/n", "en/t", "SP"])
+        with self.assertRaises(ValueError):
+            decoder.prepare({"language": "en", "words": [{"text": "inventedword", "roman": ["inventedword"]}]})
+
     def test_only_pinned_source_executes_not_init_or_cached_bytecode(self):
         previous = {name: sys.modules.get(name) for name in ["tools", "tools.align_word", "tools.decoder"]}
         try:

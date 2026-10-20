@@ -11,7 +11,7 @@ function validateIntent(intent) {
     Object.getPrototypeOf(intent) !== Object.prototype ||
     Object.keys(intent).sort().join(',') !== 'language,lineIndex,trackId' ||
     !isBoundedTrackId(intent.trackId) ||
-    !['zh', 'ja'].includes(intent.language) ||
+    !['zh', 'ja', 'en'].includes(intent.language) ||
     !Number.isSafeInteger(intent.lineIndex) ||
     intent.lineIndex < 0 ||
     intent.lineIndex > 9999
@@ -32,7 +32,8 @@ function createResearchService({
   let active = null,
     verified = false,
     damaged = false,
-    stage = '';
+    stage = '',
+    progress = null;
   function status() {
     return {
       researchOnly: true,
@@ -46,6 +47,7 @@ function createResearchService({
       busy: Boolean(active),
       operation: active?.name ?? '',
       stage,
+      progress: progress ? { ...progress } : null,
       downloadBytes: DOWNLOAD_BYTES,
       installedBytesEstimate: 997022752,
       timingAcceptance: 'pending',
@@ -62,7 +64,26 @@ function createResearchService({
       return task({
         signal: controller.signal,
         onProgress: (next) => {
-          stage = next;
+          if (active !== entry || controller.signal.aborted) return;
+          if (typeof next === 'string') {
+            stage = next;
+            progress = null;
+            return;
+          }
+          if (
+            !next ||
+            Object.keys(next).sort().join(',') !== 'completed,stage,total' ||
+            !['alignment', 'content'].includes(next.stage) ||
+            !Number.isSafeInteger(next.total) ||
+            next.total < 1 ||
+            next.total > 1000 ||
+            !Number.isSafeInteger(next.completed) ||
+            next.completed < 0 ||
+            next.completed > next.total
+          )
+            return;
+          stage = next.stage;
+          progress = { stage, completed: next.completed, total: next.total };
         },
       });
     };
@@ -99,6 +120,7 @@ function createResearchService({
       } finally {
         active = null;
         stage = '';
+        progress = null;
       }
     })();
     return entry.result;

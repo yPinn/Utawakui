@@ -498,6 +498,7 @@
   }
 
   :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__kinetic-unit {
+    white-space: pre;
     display: inline-grid;
     transform-origin: 50% 70%;
   }

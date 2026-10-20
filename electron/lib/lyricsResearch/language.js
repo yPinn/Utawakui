@@ -1,6 +1,6 @@
 'use strict';
 
-const ANALYSIS_LANGUAGES = Object.freeze(['auto', 'zh', 'ja']);
+const ANALYSIS_LANGUAGES = Object.freeze(['auto', 'zh', 'ja', 'en']);
 const SKIP_REASONS = Object.freeze([
   'lyrics-missing',
   'language-unknown',
@@ -19,7 +19,7 @@ function resolveAnalysisLanguage(metadata, text, requested = 'auto') {
   const base = String(metadata ?? '')
     .toLowerCase()
     .split(/[-_]/u)[0];
-  if (base === 'zh' || base === 'ja')
+  if (base === 'zh' || base === 'ja' || base === 'en')
     return { language: base, origin: 'metadata' };
   if (/^[a-z]{2,3}$/u.test(base) && !['und', 'mul'].includes(base))
     return { reason: 'language-unsupported' };
@@ -41,6 +41,35 @@ function resolveAnalysisLanguage(metadata, text, requested = 'auto') {
   const markers = count(/[的了是在我你他她們这這着著没沒把與与嗎吗為为]/gu);
   if (kana === 0 && hangul === 0 && han >= 12 && markers >= 3 && han >= latin)
     return { language: 'zh', origin: 'content' };
+  if (
+    kana === 0 &&
+    han === 0 &&
+    hangul === 0 &&
+    latin >= 24 &&
+    count(/\p{L}/gu) === latin
+  ) {
+    const words = value.toLowerCase().match(/[a-z]+(?:['’][a-z]+)*/gu) ?? [];
+    const markers = new Set(
+      words.filter((w) =>
+        [
+          'i',
+          'you',
+          'the',
+          'and',
+          'will',
+          'not',
+          'your',
+          'with',
+          'are',
+          'have',
+          'my',
+          'never',
+        ].includes(w),
+      ),
+    );
+    if (words.length >= 8 && markers.size >= 4)
+      return { language: 'en', origin: 'content' };
+  }
   return { reason: 'language-unknown' };
 }
 module.exports = { isAnalysisLanguage, resolveAnalysisLanguage, SKIP_REASONS };

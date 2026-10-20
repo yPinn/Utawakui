@@ -258,9 +258,9 @@ scheduler instance 也不代表已接入 app 的全域重工作排程。模型�
 開發者執行步驟見[研究試用手冊](operations/lyrics-alignment-research.md)。
 App 設定頁以單一「歌詞分段提示（實驗性）」章節整合環境狀態與自動分析偏好；環境管理及片段研究工具預設收合，取消／重試在外層可見。片段工具只在展開時初始化曲庫，收合清除預覽但不取消工作。獨立研究服務由 `electron/lib/lyricsResearch/` 管理隔離下載、完整性、載入及唯讀曲目片段；`main/lyrics/researchHandlers.js` 僅接收有界研究意圖。重用明列允許的研究推論／內容檢查模組與兩個純歌詞 parser 檔，不載入 Vite 或 CLI。模型／parser 延後至研究操作才載入。環境在 userData `lyrics-research/installed`，不寫正式 Audio Python activation；共享 heavy-job scheduler 排程並在取消／退出等 owned workers 關閉後清理。片段預覽由 `useLyricsResearch` 持有，播放仍用 `usePlayer`。另有預設關閉的 `experimentalLyricsAfterSeparation`：分離成果發佈後經 `lyricsResearch/automatic.js` 接續整曲分析，重啟後先實際驗證已安裝環境，不自動下載。結果由 `estimates.js` 驗證後原子寫入各曲目 `lyrics/experimental-estimates/`，固定配方與完整輸入身分失效即回退。`useLyrics` 內的 `useExperimentalLyrics` 另持有手動套用狀態，交付本機閱讀區起點 frame 與套用時的完整 Output 呈現文件；原生 T2／T1、canonical 文件、正式 loader 及 Self-View 不受覆寫。取消與失敗只影響歌詞工作，不回滾伴奏。
 
-`lyricsResearch/language.js` 在 main 以歌詞正文辨識未知來源的中／日語言，證據不足時保留未知；單次重試可附 `auto | zh | ja`，由 IPC、queue 及 service 重新驗證。它不寫來源語言、偏好或校時。跳過原因區分缺來源、語言、整句時間與既有 T2；解析出的語言綁定在 version-two 獨立估計 envelope，舊版估計仍可讀取。
+`lyricsResearch/language.js` 在 main 以歌詞正文辨識未知來源的中／日／英語言，證據不足時保留未知；單次重試可附 `auto | zh | ja | en`，由 IPC、queue 及 service 重新驗證。它不寫來源語言、偏好或校時。跳過原因區分缺來源、語言、整句時間與既有 T2；解析出的語言綁定在獨立估計 envelope；version-three 另保存有界內容查核摘要，舊版結構仍可讀，但舊驗證配方需重做。英文使用已安裝 CMU 字典與 small 的逐句盲轉錄；字典外詞或不足證據回退 T1，不增加環境下載。
 
-`LyricsSourceManagerModal` 組合 `LyricsSourceAnalysis`，只對目前選用來源提供單次語言、分析／重新分析、取消與手動套用／停用。沿用 `useExperimentalLyricsQueue` 與 `useLyrics` 的套用 owner，不另持有 canonical 文件或播放時鐘；來源視窗關閉／切至搜尋後停止 polling。手動 retry 可附 bounded expected filename，queue 保留該意圖，producer 於載入與發布前核對 main-owned 選用來源；不改來源偏好。T1+ 僅表示可用模型估計，與來源 T1／T2 及套用狀態分開；來源 T2 仍逐句優先。offset 已參與音訊定位，變更即解除套用並使舊估計失效，讀回提供 bounded offset-changed 原因以提示重做；沒有自動修正版本長度或伸縮時間軸。正式 gate、預設下載與人工時間 pending 不變。
+`LyricsSourceManagerModal` 組合 `LyricsSourceAnalysis`，只對目前選用來源提供單次語言、分析／重新分析、取消與手動套用／停用。沿用 `useExperimentalLyricsQueue` 與 `useLyrics` 的套用 owner，不另持有 canonical 文件或播放時鐘；來源視窗關閉／切至搜尋後停止 polling。視窗用單一狀態、預設收合說明與 UiProgress 呈現；main 驗證 stage／completed／total，queue 只附在 running owner 上，取消／完成清除。準備無百分比，已知階段顯示實際音訊工作計數，沒有 ETA。手動 retry 可附 bounded expected filename，queue 保留該意圖，producer 於載入與發布前核對 main-owned 選用來源；不改來源偏好。T1+ 僅表示可用模型估計，與來源 T1／T2 及套用狀態分開；來源 T2 仍逐句優先。offset 已參與音訊定位，變更即解除套用並使舊估計失效，讀回提供 bounded offset-changed 原因以提示重做；沒有自動修正版本長度或伸縮時間軸。正式 gate、預設下載與人工時間 pending 不變。
 
 Output 套用沿用同一 applied owner 與現有 T2 模板樣式，不加顯示模式。`useExperimentalLyrics.outputDocument` 經既有字形轉換提供完整但不改 canonical 的 projection；`useOutputProjectionPublisher` 以原 v3 lyrics.document／state revisions 發布。line 的可選 `estimatedStarts` version-one extension 由 `shared/outputStreamContract.js` 嚴格驗證，Browser Source runtime 保留後交共用 frame；native segments 優先、模型 active progress／remainingMs 為 null，只按起點高亮／換詞。source-mapped 模板沿用既有 bubble／phrase／page 佈局，模型詞塊內不內插新時間；scheduler 共用 player clock。舊 v3 client 剝除未知欄位及 v2 compatibility 皆沿用 T1；Output gate、重連與 content-before-state 不變。
 
@@ -979,6 +979,8 @@ managed executable 存在時降級，Settings status 與 processing runtime 不�
 失去進度時終止 child。下載 URL、實際路徑、stderr 與 cancellation token 都留在 main。
 
 ## Output Boundary
+
+混語長句的顯示候選由 `shared/presentation/lyricsPhraseBreaks.mjs` 統一提供，保留原文範圍與來源 T2／已套用 T1+ 的精確起點；無時間、粗詞塊或過快切換保留整句，不使用插值或字數均分。`LyricsPhrasePreview` 在來源 modal 預設收合，消費既有文件及歌詞時鐘；Kinetic Pop 的 frame 與 boundary scheduler 使用同一組兩段時間。這是文字規則的第一階段顯示路徑，不增加混語模型推論、權重下載、持久化 owner 或公共 snapshot 欄位，人工語意／時間仍待驗收。
 
 Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 則是所有外部投影的
 收斂邊界。Envelope 使用 `bootId`、`sourceEpoch` 與 revision 排除 stale source；Output

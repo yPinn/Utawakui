@@ -39,6 +39,26 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 const intent = { trackId: 'song', language: 'zh', lineIndex: 0 };
 describe('main-derived research input', () => {
+  it('routes an English preferred source without changing its language, preference or offset', async () => {
+    fs.writeFileSync(
+      path.join(track, 'lyrics/main.vtt'),
+      'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nI will always love you and I will never let you go\n',
+    );
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'und', offsetMs: -500 },
+    ]);
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    const before = fs.readFileSync(path.join(track, 'lyrics/lyrics.json'));
+    expect(await loadAutomaticResearchInput(root, 'song')).toMatchObject({
+      language: 'en',
+      languageOrigin: 'content',
+      source: { filename: 'main.vtt', language: 'und', offsetMs: -500 },
+    });
+    expect(fs.readFileSync(path.join(track, 'lyrics/lyrics.json'))).toEqual(
+      before,
+    );
+  });
+
   it('analyzes the preferred und source by body without changing its metadata or offset', async () => {
     fs.writeFileSync(
       path.join(track, 'lyrics/main.vtt'),

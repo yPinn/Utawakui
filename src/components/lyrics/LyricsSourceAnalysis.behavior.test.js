@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, reactive, shallowRef } from 'vue';
 import Component from './LyricsSourceAnalysis.vue';
+import UiProgress from '../ui/UiProgress.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
+import LyricsPhrasePreview from './LyricsPhrasePreview.vue';
 import {
   attachClientRender,
   mount,
@@ -115,7 +118,14 @@ beforeEach(() => {
     retry: vi.fn(async () => {}),
     cancel: vi.fn(async () => {}),
   });
+  attachClientRender(UiProgress, '../ui/UiProgress.vue', import.meta.url);
+  attachClientRender(UiDisclosure, '../ui/UiDisclosure.vue', import.meta.url);
   attachClientRender(Component, './LyricsSourceAnalysis.vue', import.meta.url);
+  attachClientRender(
+    LyricsPhrasePreview,
+    './LyricsPhrasePreview.vue',
+    import.meta.url,
+  );
 });
 afterEach(() => {
   mounted?.app.unmount();
@@ -128,6 +138,52 @@ function setup() {
 }
 
 describe('selected source analysis in available lyrics', () => {
+  it('offers English and shows actual per-stage progress with indeterminate preparation', async () => {
+    setup();
+    await flush();
+    expect(textContent(mounted.root)).toContain('英文');
+    trigger(findAll(mounted.root, (n) => n.type === 'select')[0], 'onChange', {
+      target: { value: 'en' },
+    });
+    await flush();
+    trigger(button('分析詞塊'), 'onClick');
+    await flush();
+    expect(mocks.queue.retry).toHaveBeenCalledWith('song', 'en', 'active.lrc');
+    mocks.queue.state.value = {
+      ...mocks.queue.state.value,
+      stage: 'verify',
+      items: [{ trackId: 'song', status: 'running' }],
+    };
+    await flush();
+    let meter = findAll(mounted.root, (n) => n.type === 'progress')[0];
+    expect(meter.props.value).toBeUndefined();
+    expect(meter.props['aria-label']).toBe('檢查環境');
+    mocks.queue.state.value = {
+      ...mocks.queue.state.value,
+      items: [
+        {
+          trackId: 'song',
+          status: 'running',
+          progress: { stage: 'alignment', completed: 2, total: 5 },
+        },
+      ],
+    };
+    await flush();
+    meter = findAll(mounted.root, (n) => n.type === 'progress')[0];
+    expect(meter.props.value).toBe(2);
+    expect(meter.props.max).toBe(5);
+    expect(textContent(mounted.root)).toContain('2 / 5 段音訊');
+    expect(button('取消分析')).toBeDefined();
+    expect(
+      findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
+    ).toBe(false);
+    mocks.queue.state.value = {
+      ...mocks.queue.state.value,
+      items: [{ trackId: 'song', status: 'cancelled' }],
+    };
+    await flush();
+    expect(findAll(mounted.root, (n) => n.type === 'progress')).toHaveLength(0);
+  });
   it('starts only the current source with a one-job language and keeps selection/offset untouched', async () => {
     setup();
     await flush();
@@ -142,6 +198,18 @@ describe('selected source analysis in available lyrics', () => {
     expect(JSON.stringify(mocks.domain.state)).toBe(before);
     expect(owner.setApplied).not.toHaveBeenCalled();
   });
+  it('shows a short omission warning while keeping application a manual action', async () => {
+    owner.estimate.value = {
+      status: 'ready',
+      validation: { missingLyrics: 1 },
+    };
+    owner.prepared.value = { status: 'ready', lines: [{ status: 'ready' }] };
+    setup();
+    await flush();
+    expect(textContent(mounted.root)).toContain('疑似漏詞 1 句');
+    expect(owner.setApplied).not.toHaveBeenCalled();
+  });
+
   it('shares manual application, exposes partial fallback, and never applies automatically', async () => {
     owner.prepared.value = {
       status: 'ready',

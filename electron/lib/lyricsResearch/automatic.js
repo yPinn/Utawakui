@@ -26,13 +26,21 @@ function createExperimentalLyricsQueue({
       return { status: 'damaged', busy: false };
     }
   }
-  const status = () => ({
-    enabled: getConfig().experimentalLyricsAfterSeparation === true,
-    allowed: isAllowed(),
-    environmentStatus: environmentStatus().status,
-    stage: environmentStatus().stage ?? '',
-    items: items.map((item) => ({ ...item })),
-  });
+  const status = () => {
+    const environment = environmentStatus();
+    return {
+      enabled: getConfig().experimentalLyricsAfterSeparation === true,
+      allowed: isAllowed(),
+      environmentStatus: environment.status,
+      stage: environment.stage ?? '',
+      items: items.map((item) => ({
+        ...item,
+        ...(item === active && item.status === 'running'
+          ? { progress: environment.progress ?? null }
+          : {}),
+      })),
+    };
+  };
   function requestDrain() {
     if (draining || retryTimer || !items.some((i) => i.status === 'pending'))
       return;

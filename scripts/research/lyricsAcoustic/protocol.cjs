@@ -1,6 +1,7 @@
 'use strict';
 
 const wanakana = require('wanakana');
+const { englishUnits } = require('./english.cjs');
 const recipe = Object.freeze({
   sampleRate: 44100,
   maxWindowMs: 30000,
@@ -28,6 +29,7 @@ function textCuts(text, language) {
 }
 
 function lexicalUnits(text, language) {
+  if (language === 'en') return englishUnits(text);
   if (
     !['zh', 'ja'].includes(language) ||
     typeof text !== 'string' ||

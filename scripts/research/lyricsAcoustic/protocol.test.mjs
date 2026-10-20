@@ -10,6 +10,36 @@ const {
 } = protocol;
 
 describe('research acoustic text and window protocol', () => {
+  it('uses only explicit small cardinal pronunciations and leaves ambiguous numbers unsupported', () => {
+    expect(lexicalUnits('I have 2 dreams', 'en')[2]).toMatchObject({
+      text: '2',
+      roman: ['two'],
+    });
+    expect(() => lexicalUnits('I have 01 dreams', 'en')).toThrow();
+    expect(() => lexicalUnits('In 2024', 'en')).toThrow();
+  });
+  it('preserves English word ranges, contractions and punctuation without accepting mixed script', () => {
+    const text = '  I don’t want your good-bye!';
+    const units = lexicalUnits(text, 'en');
+    expect(units.map((w) => w.text)).toEqual([
+      'I',
+      'don’t',
+      'want',
+      'your',
+      'good',
+      'bye',
+    ]);
+    expect(units.every((w) => text.slice(w.from, w.to) === w.text)).toBe(true);
+    const cuts = textCuts(text, 'en');
+    expect(
+      cuts
+        .slice(0, -1)
+        .map((from, i) => text.slice(from, cuts[i + 1]))
+        .join(''),
+    ).toBe(text);
+    expect(() => lexicalUnits('I love 你', 'en')).toThrow();
+  });
+
   it('selects text-only original ranges including punctuation and surrogate pairs', () => {
     const text = '  你好，世界！';
     const cuts = textCuts(text, 'zh');

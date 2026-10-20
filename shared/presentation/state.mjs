@@ -8,6 +8,7 @@ import {
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 import { estimatedLyricsTextUnits } from './lyricsTimingUnits.mjs';
+import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
 import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
 import { normalizeLyricsPresentationPolicyId } from './lyricsPresentationPolicies.mjs';
@@ -328,8 +329,29 @@ function mangaBubbleStartMs(bubble, segments) {
   return interpolateSourceTimeAtOffset(segments, sourceStart);
 }
 
+function mixedKineticPhrasing(line) {
+  if (!line) return null;
+  const plan = planLyricsPhrases(line);
+  if (plan.status === 'unchanged') return null;
+  const leading = line.text.length - line.text.trimStart().length;
+  const length = line.text.trim().length;
+  const phraseRanges =
+    plan.status === 'ready'
+      ? plan.phrases.map((p) => ({
+          sourceStart: Math.max(0, p.sourceStart - leading),
+          sourceEnd: Math.min(length, p.sourceEnd - leading),
+        }))
+      : [{ sourceStart: 0, sourceEnd: length }];
+  return { plan, phraseRanges };
+}
+
 function kineticPopPhraseTimeline(snapshot, lines, lineIndex, presentation) {
   const line = lines[lineIndex];
+  const mixed = mixedKineticPhrasing(line);
+  if (mixed)
+    return mixed.plan.status === 'ready'
+      ? mixed.plan.phrases.map((p) => ({ startMs: p.startMs }))
+      : null;
   const displayText = displayableLyricsText(line?.text);
   const segments = authoredSegmentsForDisplay(
     line,
@@ -572,9 +594,11 @@ function nextKineticPopPhraseBoundaryDelayMs(snapshot, options = {}) {
 
   const positionMs = lyricsPositionMs(snapshot, nowMs);
   const lineProgress = boundedProgress(positionMs, line.startMs, lineEndMs);
+  const mixed = mixedKineticPhrasing(line);
+  if (mixed?.plan.status === 'unresolved') return null;
   const presentation = adaptKineticPopLyricsPresentation(
     displayableLyricsText(line.text),
-    { lineProgress },
+    { lineProgress, phraseRanges: mixed?.phraseRanges },
   );
   const exactTimeline = kineticPopPhraseTimeline(
     snapshot,
@@ -1752,12 +1776,17 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           lyricsPositionMs(snapshot, nowMs),
         )
       : null;
+  const mixedKinetic =
+    templateId === 'kinetic-pop'
+      ? mixedKineticPhrasing(lines[frame.lineIndex])
+      : null;
   const kineticPopBase =
     templateId === 'kinetic-pop'
       ? adaptKineticPopLyricsPresentation(frame.currentText, {
           lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex,
           lineProgress: frame.lineProgress,
           kineticMaterial: options.kineticMaterial,
+          phraseRanges: mixedKinetic?.phraseRanges,
         })
       : null;
   const kineticPopTimeline =
@@ -1784,6 +1813,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           kineticMaterial: options.kineticMaterial,
           phraseIndex: kineticPopPhraseIndex,
           phraseTimingSource: frame.currentTimingSource,
+          phraseRanges: mixedKinetic?.phraseRanges,
         })
       : kineticPopBase;
   const liveStageTimeline =

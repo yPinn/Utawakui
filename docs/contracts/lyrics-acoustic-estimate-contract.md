@@ -318,7 +318,7 @@ clock, automatic Output start, gate/default download change, or timing acceptanc
 
 Five main-frame-only IPC actions are `lyrics-experimental:status`, `enable`, `cancel`,
 `retry`, `estimate`. Enable accepts one boolean, cancel one bounded track ID;
-retry accepts one bounded track ID plus an optional `auto | zh | ja` analysis language,
+retry accepts one bounded track ID plus an optional `auto | zh | ja | en` analysis language,
 and optionally a bounded subtitle filename after that language. The filename is an
 expected current selection, not a source-selection command: the producer checks it
 before model loading and before publication. A changed selection skips or rejects
@@ -333,8 +333,10 @@ silently replaced. A manual language is a single-job intent, preserved only on i
 session-local queue item for retry, and never writes source metadata, preference or offset.
 Skip reasons distinguish absent lyrics, unknown/unsupported language, absent T1 timing
 and existing native T2. Native T2 bypasses inference. Version-two estimate envelopes bind
-the resolved `analysisLanguage` with the existing input identity; version-one estimates
-remain readable. The normal lyrics-page loader needs no language override or model load.
+the resolved `analysisLanguage` with the existing input identity; version-one and
+version-two envelopes remain parseable. Version three additionally validates a bounded
+content summary (supported, uncertain, contradictions, possible missing lyrics and
+silent lines); it does not add or certify word timing. The normal lyrics-page loader needs no language override or model load.
 
 `LyricsSourceManagerModal` composes a current-source `LyricsSourceAnalysis` panel;
 language, retry, cancellation and manual apply/disable reuse the existing queue and
@@ -352,11 +354,68 @@ requires regeneration; validated stale envelopes expose only `reason: offset-cha
 when their bound offset differs, including after restart. There is no global offset
 estimation or duration/time-warp correction. Human timing acceptance stays pending.
 
+### Mixed long-line display phrases
+
+`shared/presentation/lyricsPhraseBreaks.mjs` proposes at most two lossless source
+ranges for long Latin/CJK mixed text. Punctuation and substantial script-transition
+boundaries are candidates; a short borrowed word, matched quotation interior or
+ambiguous monolingual line does not force a split. These are conservative text
+rules, not a semantic model, language-identification result or breath detector.
+
+A timed plan requires full source reconstruction and an exact native T2 segment
+start at the chosen boundary, or an exact applied T1+ chunk start when native T2
+is absent. There is no interpolation within a word/chunk and no word-weighted
+substitute. Invalid/coarse/overlapping timing or less than 1.2 seconds for either
+display phrase preserves the whole line. The minimum is a display stability rule,
+not evidence of a sung pause. Native T2 takes priority even when its coarse timing
+cannot support the proposed split. Repeated occurrences use their own clocks.
+
+The available-lyrics modal exposes a collapsed `LyricsPhrasePreview`, with up to
+20 candidate lines from the selected document. It consumes the existing lyrics
+clock and the existing applied Output projection; source/offset invalidation drops
+model timing through the same owner. Untimed candidates are visibly text-only.
+Kinetic Pop is the first consuming template: it switches the two complete phrases
+at their exact onsets and uses the same timeline in its boundary scheduler.
+Other templates keep their existing layout contracts. Canonical text, timings,
+source preference, public snapshot shape and apply/disable state are unchanged.
+
+This display path does not add mixed-language HubertFA inference, support for
+over-20-second model windows, new weights or new default downloads. Mixed T1
+without accepted word onsets remains T1. Human phrase-quality and timing acceptance
+remain pending; the current formal gates remain unchanged.
+
+### English and content validation
+
+Pure English uses the existing ONNX model, bundled pinned CMU dictionary and multilingual
+small. No new weight or environment download is added. Words retain original UTF-16
+ranges, punctuation and display spelling; comparison alone expands common contractions
+and cardinal digits 0–20. Ambiguous numbers, dictionary-outside words and mixed-script
+lines retain T1 rather than inventing pronunciations. Latin script alone is insufficient
+for automatic English routing; explicit English metadata or one-job selection is supported.
+
+English content checking transcribes each bounded line crop with 500 ms context on each
+side, without expected lyrics. This avoids treating coarse 30-second ASR token clocks as
+accurate word boundaries. Positive matching must have timed evidence; weak evidence
+retains T1, strong contradictions reject model starts, and uniquely located adjacent-word
+anchors may warn of omitted words without retiming or rewriting text. Each repeated
+occurrence is checked in its own audio crop. Chinese/Japanese retain the existing
+conservative content policy. A near-digital-silence check rejects starts even if a decoder
+hallucinates matching text; this is not a general vocal-activity detector.
+
+The validation recipe is versioned, so prior estimates require regeneration. Source T2,
+canonical T1, offset and manual application ownership are unchanged. The source modal
+shows one main status, keeps explanatory copy collapsed, and projects actual stage
+progress using the shared progress primitive. Preparation is indeterminate; alignment
+counts audio windows, English content checking counts line crops, and Chinese/Japanese
+content checking counts windows. These are stage work counts, never a whole-song ETA
+or a claim that human timing review passed. Main allowlists and bounds progress fields;
+only the running queue owner exposes them, and cancellation/completion clears them.
+
 ## Isolated in-App research intent
 
 Settings groups research environment readiness and the experimental automatic-analysis preference in one section. Environment management and fragment research tools start collapsed; status reads do not download or load models. Cancellation and queue retry stay accessible when those tools are closed. Collapsing fragment tools invalidates the preview without cancelling ongoing work. Apply/disable remains on the lyrics page.
 
-The research entry exposes only `lyrics-research:status/prepare/verify/remove/cancel/inspect/preview` to the trusted main-window frame. Environment operations have no arguments; inspect/preview accept exactly `{ trackId, language: 'zh' | 'ja', lineIndex }`. Main derives the preferred/fallback language source, source/audio/timing identity, executable paths, fixed official download pins and isolated userData storage. No formal gate, catalog or default preparation changes.
+The research entry exposes only `lyrics-research:status/prepare/verify/remove/cancel/inspect/preview` to the trusted main-window frame. Environment operations have no arguments; inspect/preview accept exactly `{ trackId, language: 'zh' | 'ja' | 'en', lineIndex }`. Main derives the preferred/fallback language source, source/audio/timing identity, executable paths, fixed official download pins and isolated userData storage. No formal gate, catalog or default preparation changes.
 
 One shared heavy-job scheduler owns research download/load/inference through cancellation and cleanup, including app quit. Complete install trees are checked against shipped hashes; both HubertFA and small must load before ready. Restart requires explicit verification. A replacement is probed in staging before exchange, failure preserves the previous installation, and retry/removal target only research-owned paths.
 
