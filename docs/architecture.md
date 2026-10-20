@@ -795,6 +795,7 @@ Worklet 保持由 Vite 提供的 self-hosted URL，沒有放寬 CSP。Capture �
 
 BGM transport 與演唱播放器分開：`src/bgm/audioDeck.js` 擁有第二個 HTML audio element、lazy
 AudioContext 與單一 logical gain bus；現行只連到系統預設 monitor destination。
+Chromium 自然 EOF 的 pause→ended 由 usePlayer 保留給 ended terminal owner，不投影為操作暫停，以免略過 post-roll。
 `src/bgm/handoffCoordinator.js` 分開仲裁目前 BGM request 與 performance 後 deferred restore，並擁有
 exact-zero fade gate、monotonic pre-roll／post-roll、manual hold 與 stale generation；performance
 start 取得優先權後會立即重置 BGM transport，BGM control／source action 不得取消其 fade／pre-roll。

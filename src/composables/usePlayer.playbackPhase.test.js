@@ -160,3 +160,38 @@ describe('playback phase', () => {
     expect(player.state.playbackPhase).toBe('ended');
   });
 });
+
+describe('native EOF pause boundary', () => {
+  it('lets ended own terminal notification when Chromium emits pause first, but preserves real pause near EOF', async () => {
+    const { usePlayer, cleanupPlayerResources } =
+      await import('./usePlayer.js');
+    const player = usePlayer();
+    const paused = vi.fn(),
+      ended = vi.fn();
+    player.onPaused(paused);
+    player.onEnded(ended);
+    await player.playTrack({
+      id: 'eof',
+      title: 'EOF',
+      url: 'utawakui-media://track/eof/audio.wav',
+    });
+    const audio = MockAudio.latest;
+    audio.duration = 120;
+    audio.dispatch('playing');
+    audio.currentTime = 119.99;
+    audio.ended = false;
+    audio.dispatch('pause');
+    expect(paused).toHaveBeenCalledOnce();
+    audio.dispatch('playing');
+    paused.mockClear();
+    audio.currentTime = 120;
+    audio.ended = true;
+    audio.dispatch('pause');
+    expect(paused).not.toHaveBeenCalled();
+    expect(ended).not.toHaveBeenCalled();
+    audio.dispatch('ended');
+    expect(ended).toHaveBeenCalledOnce();
+    expect(player.state.playbackPhase).toBe('ended');
+    cleanupPlayerResources();
+  });
+});

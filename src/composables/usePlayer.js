@@ -140,6 +140,9 @@ function handlePlay() {
 function handlePause() {
   state.isPlaying = false;
   state.currentTime = audio.currentTime || 0;
+  // Chromium queues pause before ended at natural EOF. Only ended owns this
+  // terminal boundary; treating it as an operator pause skips BGM post-roll.
+  if (audio.ended) return;
   state.playbackPhase = state.track ? 'paused' : 'idle';
   if (!state.track) return;
   const pausedEvent = {
