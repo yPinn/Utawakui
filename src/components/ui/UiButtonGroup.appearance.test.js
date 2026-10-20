@@ -20,10 +20,10 @@ describe('UiButtonGroup appearance ownership', () => {
       /\.ui-button-group\s*\{[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-button-group-border\);[^}]*overflow:\s*hidden;/s,
     );
     expect(groupSource).toMatch(
-      /\.ui-button-group :deep\(\.ui-btn\)\s*\{[^}]*border-radius:\s*0;/s,
+      /\.ui-button-group :deep\(:is\(\.ui-btn, \.ui-icon-btn\)\)\s*\{[^}]*border-radius:\s*0;/s,
     );
     expect(groupSource).toMatch(
-      /\.ui-button-group :deep\(\.ui-btn \+ \.ui-btn\)\s*\{[^}]*border-inline-start:\s*var\(--ui-border-width\) solid\s+var\(--ui-button-group-border\);/s,
+      /\.ui-button-group\s+:deep\(:is\(\.ui-btn, \.ui-icon-btn\) \+ :is\(\.ui-btn, \.ui-icon-btn\)\)\s*\{[^}]*border-inline-start:\s*var\(--ui-border-width\) solid\s+var\(--ui-button-group-border\);/s,
     );
   });
 

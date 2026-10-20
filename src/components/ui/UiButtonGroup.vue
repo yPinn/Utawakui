@@ -48,16 +48,17 @@ defineProps({
   box-shadow: var(--ui-button-group-shadow-raised);
 }
 
-.ui-button-group :deep(.ui-btn) {
+.ui-button-group :deep(:is(.ui-btn, .ui-icon-btn)) {
   border: 0;
   border-radius: 0;
 }
 
-.ui-button-group :deep(.ui-btn:focus-visible) {
+.ui-button-group :deep(:is(.ui-btn, .ui-icon-btn):focus-visible) {
   outline-offset: var(--ui-focus-offset-inset);
 }
 
-.ui-button-group :deep(.ui-btn + .ui-btn) {
+.ui-button-group
+  :deep(:is(.ui-btn, .ui-icon-btn) + :is(.ui-btn, .ui-icon-btn)) {
   border-inline-start: var(--ui-border-width) solid
     var(--ui-button-group-border);
 }

@@ -140,10 +140,10 @@ describe('Disclosure and ButtonGroup recovery', () => {
     );
     expect(group).toContain('max-width: 100%');
     expect(group).toContain('min-width: 0');
-    expect(group).toContain(':deep(.ui-btn:focus-visible)');
+    expect(group).toContain(':deep(:is(.ui-btn, .ui-icon-btn):focus-visible)');
     expect(group).toContain('outline-offset: var(--ui-focus-offset-inset)');
     expect(group).toMatch(
-      /\.ui-button-group :deep\(\.ui-btn\)\s*\{[^}]*border:\s*0;/su,
+      /\.ui-button-group :deep\(:is\(\.ui-btn, \.ui-icon-btn\)\)\s*\{[^}]*border:\s*0;/su,
     );
   });
 });
