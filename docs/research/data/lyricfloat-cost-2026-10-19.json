@@ -1,0 +1,535 @@
+{
+  "checkedAt": "2026-10-19T09:38:41.052Z",
+  "commit": "f448c24a8af1dace06d1203ca826c404347f3dfd",
+  "packages": [
+    {
+      "name": "pip",
+      "version": "26.2.1",
+      "filename": "pip-26.2.1-py3-none-any.whl",
+      "bytes": 1816632,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "filename": "packaging-26.3-py3-none-any.whl",
+      "bytes": 129956,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0",
+      "filename": "setuptools-84.0.0-py3-none-any.whl",
+      "bytes": 818216,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "wheel",
+      "version": "0.48.0",
+      "filename": "wheel-0.48.0-py3-none-any.whl",
+      "bytes": 33320,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1",
+      "filename": "anyio-4.15.1-py3-none-any.whl",
+      "bytes": 132079,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "av",
+      "version": "19.0.1",
+      "filename": "av-19.0.1-cp312-abi3-win_amd64.whl",
+      "bytes": 28149519,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "filename": "certifi-2026.7.22-py3-none-any.whl",
+      "bytes": 136983,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "filename": "charset_normalizer-3.5.2-cp312-cp312-win_amd64.whl",
+      "bytes": 207486,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "click",
+      "version": "8.5.0",
+      "filename": "click-8.5.0-py3-none-any.whl",
+      "bytes": 125251,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "filename": "colorama-0.4.6-py2.py3-none-any.whl",
+      "bytes": 25335,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "ctranslate2",
+      "version": "4.8.2",
+      "filename": "ctranslate2-4.8.2-cp312-cp312-win_amd64.whl",
+      "bytes": 19222069,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "demucs",
+      "version": "4.1.0",
+      "filename": "demucs-4.1.0-py3-none-any.whl",
+      "bytes": 100567,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "einops",
+      "version": "0.8.2",
+      "filename": "einops-0.8.2-py3-none-any.whl",
+      "bytes": 65638,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "faster-whisper",
+      "version": "1.2.1",
+      "filename": "faster_whisper-1.2.1-py3-none-any.whl",
+      "bytes": 1118909,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "filelock",
+      "version": "4.0.12",
+      "filename": "filelock-4.0.12-py3-none-any.whl",
+      "bytes": 111732,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "filename": "flatbuffers-25.12.19-py2.py3-none-any.whl",
+      "bytes": 26661,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.9.0",
+      "filename": "fsspec-2026.9.0-py3-none-any.whl",
+      "bytes": 221738,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "filename": "h11-0.16.0-py3-none-any.whl",
+      "bytes": 37515,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.7.0",
+      "filename": "hf_xet-1.7.0-cp38-abi3-win_amd64.whl",
+      "bytes": 3822644,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "filename": "httpcore-1.0.9-py3-none-any.whl",
+      "bytes": 78784,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "filename": "httpx-0.28.1-py3-none-any.whl",
+      "bytes": 73517,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "1.33.0",
+      "filename": "huggingface_hub-1.33.0-py3-none-any.whl",
+      "bytes": 846435,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "filename": "idna-3.20-py3-none-any.whl",
+      "bytes": 69583,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "filename": "jinja2-3.1.6-py3-none-any.whl",
+      "bytes": 134899,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "julius",
+      "version": "0.2.8",
+      "filename": "julius-0.2.8-py3-none-any.whl",
+      "bytes": 21819,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "lameenc",
+      "version": "1.8.4",
+      "filename": "lameenc-1.8.4-cp312-cp312-win_amd64.whl",
+      "bytes": 153045,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "llvmlite",
+      "version": "0.50.0",
+      "filename": "llvmlite-0.50.0-cp312-cp312-win_amd64.whl",
+      "bytes": 41865553,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.4",
+      "filename": "markupsafe-3.0.4-cp312-cp312-win_amd64.whl",
+      "bytes": 14303,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "more-itertools",
+      "version": "11.1.0",
+      "filename": "more_itertools-11.1.0-py3-none-any.whl",
+      "bytes": 72226,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "filename": "mpmath-1.3.0-py3-none-any.whl",
+      "bytes": 536198,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "networkx",
+      "version": "3.7",
+      "filename": "networkx-3.7-py3-none-any.whl",
+      "bytes": 2142205,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "numba",
+      "version": "0.68.0",
+      "filename": "numba-0.68.0-cp312-cp312-win_amd64.whl",
+      "bytes": 2830891,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.3",
+      "filename": "numpy-2.5.3-cp312-cp312-win_amd64.whl",
+      "bytes": 12567828,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.30.0",
+      "filename": "onnxruntime-1.30.0-cp312-cp312-win_amd64.whl",
+      "bytes": 14311470,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "openai-whisper",
+      "version": "20250625",
+      "filename": "openai_whisper-20250625.tar.gz",
+      "bytes": 803191,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "filename": "packaging-26.3-py3-none-any.whl",
+      "bytes": 129956,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "protobuf",
+      "version": "7.36.2",
+      "filename": "protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+      "bytes": 456514,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "filename": "pyyaml-6.0.3-cp312-cp312-win_amd64.whl",
+      "bytes": 154003,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29",
+      "filename": "regex-2026.9.29-cp312-cp312-win_amd64.whl",
+      "bytes": 280334,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "filename": "requests-2.34.2-py3-none-any.whl",
+      "bytes": 73075,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "filename": "safetensors-0.8.0-cp310-abi3-win_amd64.whl",
+      "bytes": 355540,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "sphn",
+      "version": "0.2.1",
+      "filename": "sphn-0.2.1-cp312-cp312-win_amd64.whl",
+      "bytes": 1608626,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "stable-ts",
+      "version": "2.19.1",
+      "filename": "stable_ts-2.19.1.tar.gz",
+      "bytes": 189132,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "filename": "sympy-1.14.0-py3-none-any.whl",
+      "bytes": 6299353,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "tiktoken",
+      "version": "0.14.0",
+      "filename": "tiktoken-0.14.0-cp312-cp312-win_amd64.whl",
+      "bytes": 941208,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.23.2",
+      "filename": "tokenizers-0.23.2-cp310-abi3-win_amd64.whl",
+      "bytes": 2863236,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "torch",
+      "version": "2.14.1",
+      "filename": "torch-2.14.1-cp312-cp312-win_amd64.whl",
+      "bytes": 124113906,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "torchaudio",
+      "version": "2.11.0",
+      "filename": "torchaudio-2.11.0-cp312-cp312-win_amd64.whl",
+      "bytes": 328663,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1",
+      "filename": "tqdm-4.70.1-py3-none-any.whl",
+      "bytes": 80199,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "filename": "typing_extensions-4.16.0-py3-none-any.whl",
+      "bytes": 45571,
+      "hashMatches": true,
+      "error": null
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "filename": "urllib3-2.8.0-py3-none-any.whl",
+      "bytes": 135717,
+      "hashMatches": true,
+      "error": null
+    }
+  ],
+  "models": [
+    {
+      "repo": "Systran/faster-whisper-base",
+      "revision": "ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66",
+      "files": [
+        {
+          "type": "file",
+          "oid": "c7d9f3332a950355d5a77d85000f05e6f45435ea",
+          "size": 1477,
+          "path": ".gitattributes"
+        },
+        {
+          "type": "file",
+          "oid": "cddfec65ffb3e3df45d2234f09f3d261bf9a9c0a",
+          "size": 1991,
+          "path": "README.md"
+        },
+        {
+          "type": "file",
+          "oid": "867cf1a0fece1394e01d55e287ba2f09a577c046",
+          "size": 2309,
+          "path": "config.json"
+        },
+        {
+          "type": "file",
+          "oid": "433870823f3f64fd6baaec3f61319124ba5033fd",
+          "size": 145217532,
+          "lfs": {
+            "oid": "d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9",
+            "size": 145217532,
+            "pointerSize": 134
+          },
+          "xetHash": "0c4d8d814973160f53608ff0aa1618a90abbce9ed632bbc54930475ba82ce973",
+          "path": "model.bin"
+        },
+        {
+          "type": "file",
+          "oid": "7818adb6de9fa3064d3ff81226fdd675be1f6344",
+          "size": 2203239,
+          "path": "tokenizer.json"
+        },
+        {
+          "type": "file",
+          "oid": "c9074644d9d1205686f16d411564729461324b75",
+          "size": 459861,
+          "path": "vocabulary.txt"
+        }
+      ]
+    },
+    {
+      "repo": "adefossez/HTDemucs",
+      "revision": "cbc8a9b1a87023b7fd74e7b3412e6321c0eab003",
+      "files": [
+        {
+          "type": "file",
+          "oid": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+          "size": 1519,
+          "path": ".gitattributes"
+        },
+        {
+          "type": "file",
+          "oid": "d90752a70e08aef077caace58c612a9db54580d9",
+          "size": 12087,
+          "path": "955717e8.json"
+        },
+        {
+          "type": "file",
+          "oid": "19f9cd301f3f630eab2f25a98047ae99edebc84f",
+          "size": 84025440,
+          "lfs": {
+            "oid": "d9fa14133cfcc034a6758923bb3a8ca9f8dfd0b582134643bbf83f72c17576dd",
+            "size": 84025440,
+            "pointerSize": 133
+          },
+          "xetHash": "d6487147b31512c1f65182852fe1c24c3ab2416ec3f29dcca4a566e96ce15fd6",
+          "path": "955717e8.safetensors"
+        },
+        {
+          "type": "file",
+          "oid": "0c1beee7c19039f9d98c7a81f9efab8116e0f06a",
+          "size": 647,
+          "path": "README.md"
+        },
+        {
+          "type": "file",
+          "oid": "0d5f2089fa3e1a0335d93de070f6802598cd4a4d",
+          "size": 21,
+          "path": "htdemucs.yaml"
+        }
+      ]
+    }
+  ],
+  "python": {
+    "status": 200,
+    "bytes": 11133606,
+    "version": "3.12.10"
+  },
+  "schemaVersion": 1,
+  "summary": {
+    "uniquePackageCount": 50,
+    "uniquePackageBytes": 270749274,
+    "pythonBytes": 11133606,
+    "whisperBytes": 147882941,
+    "demucsBytes": 84025461,
+    "deduplicatedArtifactBytes": 513791282,
+    "installedBytes": null,
+    "peakInstallBytes": null,
+    "peakMemoryBytes": null,
+    "qualityComparison": null
+  },
+  "method": "Official metadata only; exact package filenames and SHA256 matched to the pinned lock. Packaging appears in both build and runtime lists and is counted once. Model selection follows the pinned worker fetch logic. No installation or new model inference.",
+  "sources": {
+    "lock": "https://github.com/Din0326/LyricFloat/blob/f448c24a8af1dace06d1203ca826c404347f3dfd/src/lyricfloat/align/runtime_lock.json",
+    "worker": "https://github.com/Din0326/LyricFloat/blob/f448c24a8af1dace06d1203ca826c404347f3dfd/src/lyricfloat/align/worker.py",
+    "packageMetadata": "https://pypi.org/pypi/<name>/<version>/json",
+    "modelMetadata": [
+      "https://huggingface.co/api/models/Systran/faster-whisper-base/tree/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66?recursive=true",
+      "https://huggingface.co/api/models/adefossez/HTDemucs/tree/cbc8a9b1a87023b7fd74e7b3412e6321c0eab003?recursive=true"
+    ],
+    "python": "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip"
+  }
+}

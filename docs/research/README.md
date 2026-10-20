@@ -13,6 +13,9 @@
 | 文件                                                                                            | 日期       |
 | ----------------------------------------------------------------------------------------------- | ---------- |
 | [純英文 T1+、內容檢查與 modal／Output 回退](lyrics-english-validation-2026-10-20.md)            | 2026-10-20 |
+| [模型配對人工聽查案例](lyrics-model-pair-listening-2026-10-19.md)                               | 2026-10-19 |
+| [模型配對：原混音、既有guide與完整環境成本](lyrics-model-pairing-2026-10-19.md)                 | 2026-10-19 |
+| [LyricFloat 校時配方的效果與完整環境成本重評](lyricfloat-cost-2026-10-19.md)                    | 2026-10-19 |
 | [HubertFA＋small漏詞／誤拒、試用驗證與失敗紀錄](lyrics-hfa-small-listening-trial-2026-10-19.md) | 2026-10-19 |
 | [原HubertFA新曲配對、錯配與特定權重查核](lyrics-hubertfa-fresh-2026-10-19.md)                   | 2026-10-19 |
 | [small誤拒、Qwen日文退步與低成本消融](lyrics-root-causes-and-noncommercial-2026-10-19.md)       | 2026-10-19 |

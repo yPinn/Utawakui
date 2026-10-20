@@ -1,0 +1,1255 @@
+{
+  "date": "2026-10-19",
+  "downloadBytes": 0,
+  "newSeparationRuns": 0,
+  "inputSha256": "e1417b47c22aa3279394d25e254ee5b25db3e4b793941968cc27c623fb29a179",
+  "referenceSha256": "e2f29c64564893a6000e985931e66495f95841d870b69d915f0b68ac874f9222",
+  "guideCasesSha256": "be8b40df94c431cdab6bbf94faa0056bb3c416b586d31e344c5083f8584d0ee5",
+  "preparation": {
+    "caseCount": 8,
+    "denominatorSourceCount": 16,
+    "tracks": [
+      {
+        "songId": "zh-1",
+        "status": "missing-existing-separation"
+      },
+      {
+        "songId": "zh-2",
+        "status": "matched-existing-general",
+        "artifactSha256": "563cf4c5d6001f6f093b9c3d3a27e3babcec9cc92c3157fd48e9c56fa0b46107",
+        "bytes": 79384764,
+        "profileId": "mdx-inst-hq4-v1",
+        "sourceBinding": "same-track folder + unchanged original SHA + compensated-reconstruction correlation at independently measured audio lag; manifest has no source SHA",
+        "cropShiftMs": -1,
+        "correlation": 0.9999129409191615,
+        "gain": 0.5217299527189401,
+        "inputFormat": "mono16k float32; HFA worker resamples44.1k, Whisper16k",
+        "guideFilter": "pan=mono|c0=0.5*c2+0.5*c3"
+      },
+      {
+        "songId": "ja-1",
+        "status": "matched-existing-general",
+        "artifactSha256": "8a3eaac6bc2da625728bed4d8039a2e694a8202b8b429526e601b0fd9cbb1ba5",
+        "bytes": 76154756,
+        "profileId": "mdx-inst-hq4-v1",
+        "sourceBinding": "same-track folder + unchanged original SHA + compensated-reconstruction correlation at independently measured audio lag; manifest has no source SHA",
+        "cropShiftMs": -1,
+        "correlation": 0.9978808513540218,
+        "gain": 0.45383206144498844,
+        "inputFormat": "mono16k float32; HFA worker resamples44.1k, Whisper16k",
+        "guideFilter": "pan=mono|c0=0.5*c2+0.5*c3"
+      },
+      {
+        "songId": "ja-2",
+        "status": "unverified-audio-correspondence",
+        "clock": {
+          "songId": "ja-2",
+          "aSamples": 479880,
+          "bSamples": 480000,
+          "zeroLag": 0.10067766431463547,
+          "best": {
+            "lagSamples": 46,
+            "lagMs": 2.875,
+            "correlation": 0.2289109761713967
+          }
+        }
+      }
+    ],
+    "additionalDownloads": 0,
+    "newSeparationRuns": 0
+  },
+  "clockAudit": [
+    {
+      "songId": "zh-2",
+      "full": {
+        "sampleRate": 16000,
+        "referenceSamples": 480000,
+        "candidateSamples": 480000,
+        "zeroLag": 0.182405106434419,
+        "best": {
+          "lagSamples": -16,
+          "lagMs": -1,
+          "correlation": 0.9999999946712984
+        }
+      },
+      "firstHalf": {
+        "sampleRate": 16000,
+        "referenceSamples": 240000,
+        "candidateSamples": 240000,
+        "zeroLag": -0.016522370937258023,
+        "best": {
+          "lagSamples": -16,
+          "lagMs": -1,
+          "correlation": 0.99999999801974
+        }
+      },
+      "secondHalf": {
+        "sampleRate": 16000,
+        "referenceSamples": 240000,
+        "candidateSamples": 240000,
+        "zeroLag": 0.28432842337511494,
+        "best": {
+          "lagSamples": -16,
+          "lagMs": -1,
+          "correlation": 0.9999999929401945
+        }
+      }
+    },
+    {
+      "songId": "ja-1",
+      "full": {
+        "sampleRate": 16000,
+        "referenceSamples": 480000,
+        "candidateSamples": 480000,
+        "zeroLag": 0.3782552486382027,
+        "best": {
+          "lagSamples": -16,
+          "lagMs": -1,
+          "correlation": 0.9962303786068369
+        }
+      },
+      "firstHalf": {
+        "sampleRate": 16000,
+        "referenceSamples": 240000,
+        "candidateSamples": 240000,
+        "zeroLag": 0.49675778256790754,
+        "best": {
+          "lagSamples": -16,
+          "lagMs": -1,
+          "correlation": 0.9964439042275781
+        }
+      },
+      "secondHalf": {
+        "sampleRate": 16000,
+        "referenceSamples": 240000,
+        "candidateSamples": 240000,
+        "zeroLag": 0.27376401212322843,
+        "best": {
+          "lagSamples": -16,
+          "lagMs": -1,
+          "correlation": 0.9960406295541758
+        }
+      }
+    },
+    {
+      "songId": "ja-2",
+      "full": {
+        "sampleRate": 16000,
+        "referenceSamples": 479880,
+        "candidateSamples": 480000,
+        "zeroLag": 0.10067248158719126,
+        "best": {
+          "lagSamples": 46,
+          "lagMs": 2.875,
+          "correlation": 0.22891872802225097
+        }
+      },
+      "firstHalf": {
+        "sampleRate": 16000,
+        "referenceSamples": 239940,
+        "candidateSamples": 239940,
+        "zeroLag": 0.13892260271162357,
+        "best": {
+          "lagSamples": 183,
+          "lagMs": 11.4375,
+          "correlation": 0.30295250811328234
+        }
+      },
+      "secondHalf": {
+        "sampleRate": 16000,
+        "referenceSamples": 239940,
+        "candidateSamples": 240060,
+        "zeroLag": 0.06560204903097033,
+        "best": {
+          "lagSamples": 46,
+          "lagMs": 2.875,
+          "correlation": 0.16186268966820144
+        }
+      }
+    }
+  ],
+  "methods": {
+    "hfaMix": {
+      "resultsSha256": "ea459de2143dcf70fdc6f7d7f336e7721d07519da68ccaab2e4ab72d58ae6d90",
+      "method": {
+        "kind": "model",
+        "id": "hubertfa-research",
+        "version": "phase2-v1",
+        "modelManifestSha256": "ce1510682a164bb5937c3a9ffbf5b400baa3983a6ec35d97f9a80cafd5782b82",
+        "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+        "decoderVersion": "hfa-occurrence-81297990646989a1",
+        "g2pVersion": "original-g2p-c765b22f95efda84",
+        "chunkerVersion": "intl-text-c765b22f95efda84",
+        "nodeVersion": "24.17.0",
+        "icuVersion": "78.3"
+      },
+      "wallSeconds": 68.9210495
+    },
+    "hfaGuide": {
+      "resultsSha256": "76aa725bf8a05caf38f8e0ca73333f3237add49592d0ccd68c5570768a2811b3",
+      "method": {
+        "kind": "model",
+        "id": "hubertfa-research",
+        "version": "phase2-v1",
+        "modelManifestSha256": "ce1510682a164bb5937c3a9ffbf5b400baa3983a6ec35d97f9a80cafd5782b82",
+        "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+        "decoderVersion": "hfa-occurrence-81297990646989a1",
+        "g2pVersion": "original-g2p-c765b22f95efda84",
+        "chunkerVersion": "intl-text-c765b22f95efda84",
+        "nodeVersion": "24.17.0",
+        "icuVersion": "78.3"
+      },
+      "wallSeconds": 73.2439703
+    },
+    "baseMix": {
+      "resultsSha256": "6dfa26871c326e56b76f981fd2be43660b55857aec81c1f0a129f9bb28b0655b",
+      "method": {
+        "kind": "model",
+        "id": "base-candidate-research",
+        "version": "paired-v1",
+        "modelManifestSha256": "27e2409bea6f450941cc7cc6019e3e7dd3966acbe6681c3a85660f305aeab6c1",
+        "environmentLockSha256": "65853898f5ef36aec8313d3cceb89ff2f94cb39c6e6537d579bc67f3c9441609",
+        "decoderVersion": "candidate-380f0127866b6a6a",
+        "g2pVersion": "upstream-v1",
+        "chunkerVersion": "frozen-intl-v1",
+        "nodeVersion": "24.17.0",
+        "icuVersion": "78.3"
+      },
+      "wallSeconds": 81.71901179999999
+    },
+    "smallMix": {
+      "resultsSha256": "b191d31e9db34a706cbf4ed9a4b960d4d396b09a200bbfedae11e9c2c4739264",
+      "method": {
+        "kind": "model",
+        "id": "small-candidate-research",
+        "version": "paired-v1",
+        "modelManifestSha256": "7588617be3fb6ad80f18d864de07aed2a4cf9c504699c5d192ebafaf20f27e36",
+        "environmentLockSha256": "ecd681e00b24451886bdc9f28f9625ebb2f17d3a6d7e030dec4f94e9e52dad7e",
+        "decoderVersion": "candidate-ac126c21b5c67c9e",
+        "g2pVersion": "upstream-v1",
+        "chunkerVersion": "frozen-intl-v1",
+        "nodeVersion": "24.17.0",
+        "icuVersion": "78.3"
+      },
+      "wallSeconds": 186.43583709999996
+    },
+    "baseGuide": {
+      "resultsSha256": "0ec115bb0b88c4aea1a806aee58f02665db2a3f27379dcb21a5d6a16db32e639",
+      "method": {
+        "kind": "model",
+        "id": "base-candidate-research",
+        "version": "paired-v1",
+        "modelManifestSha256": "27e2409bea6f450941cc7cc6019e3e7dd3966acbe6681c3a85660f305aeab6c1",
+        "environmentLockSha256": "31664083035ffa61814c0a35ce4cb11f51a29067f9b0d955c86dc894d9896504",
+        "decoderVersion": "candidate-380f0127866b6a6a",
+        "g2pVersion": "upstream-v1",
+        "chunkerVersion": "frozen-intl-v1",
+        "nodeVersion": "24.17.0",
+        "icuVersion": "78.3"
+      },
+      "wallSeconds": 44.992201000000016
+    },
+    "smallGuide": {
+      "resultsSha256": "ed32df4d27f4bb662ed40b9c549c696c1b7aa89838fd4f1a7ad927b610b2d794",
+      "method": {
+        "kind": "model",
+        "id": "small-candidate-research",
+        "version": "paired-v1",
+        "modelManifestSha256": "7588617be3fb6ad80f18d864de07aed2a4cf9c504699c5d192ebafaf20f27e36",
+        "environmentLockSha256": "e2936286a29aaf3dd8470fba445b41a98afa947e87441f57337ffc2c73203a9f",
+        "decoderVersion": "candidate-380f0127866b6a6a",
+        "g2pVersion": "upstream-v1",
+        "chunkerVersion": "frozen-intl-v1",
+        "nodeVersion": "24.17.0",
+        "icuVersion": "78.3"
+      },
+      "wallSeconds": 93.8851133
+    }
+  },
+  "cost": {
+    "createdAt": "2026-10-19T10:44:50.264Z",
+    "units": "logical file bytes; no physical allocation or continuously observed install peak; __pycache__ excluded",
+    "additionalDownloadsBytes": 0,
+    "components": {
+      "runtime": {
+        "logicalFileBytes": 24647334,
+        "contentUniqueBytes": 24647334,
+        "duplicateCopyBytes": 0,
+        "fileCount": 37
+      },
+      "environment": {
+        "logicalFileBytes": 45252986,
+        "contentUniqueBytes": 45246276,
+        "duplicateCopyBytes": 6710,
+        "fileCount": 1031
+      },
+      "models/hubertfa": {
+        "logicalFileBytes": 418636089,
+        "contentUniqueBytes": 418636089,
+        "duplicateCopyBytes": 0,
+        "fileCount": 7
+      },
+      "vendor/hubertfa": {
+        "logicalFileBytes": 24292,
+        "contentUniqueBytes": 24292,
+        "duplicateCopyBytes": 0,
+        "fileCount": 2
+      },
+      "vendor/whisper/Release": {
+        "logicalFileBytes": 20848640,
+        "contentUniqueBytes": 20820992,
+        "duplicateCopyBytes": 27648,
+        "fileCount": 37
+      },
+      "notices": {
+        "logicalFileBytes": 11444,
+        "contentUniqueBytes": 11444,
+        "duplicateCopyBytes": 0,
+        "fileCount": 1
+      },
+      "base": {
+        "logicalFileBytes": 147951465,
+        "contentUniqueBytes": 147951465,
+        "duplicateCopyBytes": 0,
+        "fileCount": 1
+      },
+      "small": {
+        "logicalFileBytes": 487601967,
+        "contentUniqueBytes": 487601967,
+        "duplicateCopyBytes": 0,
+        "fileCount": 1
+      },
+      "ffmpeg": {
+        "logicalFileBytes": 222248960,
+        "contentUniqueBytes": 222248960,
+        "duplicateCopyBytes": 0,
+        "fileCount": 1
+      },
+      "node": {
+        "logicalFileBytes": 92299080,
+        "contentUniqueBytes": 92299080,
+        "duplicateCopyBytes": 0,
+        "fileCount": 1
+      },
+      "nodeInferenceDependencies": {
+        "logicalFileBytes": 355949674,
+        "contentUniqueBytes": 311127762,
+        "duplicateCopyBytes": 44821912,
+        "fileCount": 1078
+      }
+    },
+    "requiredNodePackages": [
+      "adm-zip",
+      "async",
+      "define-data-property",
+      "define-properties",
+      "doublearray",
+      "es-define-property",
+      "es-errors",
+      "escape-string-regexp",
+      "global-agent",
+      "globalthis",
+      "gopd",
+      "has-property-descriptors",
+      "kuromoji",
+      "matcher",
+      "object-keys",
+      "onnxruntime-common",
+      "onnxruntime-node",
+      "opencc-js",
+      "semver",
+      "serialize-error",
+      "type-fest",
+      "wanakana",
+      "zlibjs"
+    ],
+    "hfaStandalone": {
+      "logicalFileBytes": 1159069859,
+      "contentUniqueBytes": 1114241237,
+      "duplicateCopyBytes": 44828622,
+      "fileCount": 2158
+    },
+    "hfaBase": {
+      "logicalFileBytes": 1327869964,
+      "contentUniqueBytes": 1283013694,
+      "duplicateCopyBytes": 44856270,
+      "fileCount": 2196
+    },
+    "hfaSmall": {
+      "logicalFileBytes": 1667520466,
+      "contentUniqueBytes": 1622664196,
+      "duplicateCopyBytes": 44856270,
+      "fileCount": 2196
+    },
+    "bothPairs": {
+      "logicalFileBytes": 1815471931,
+      "contentUniqueBytes": 1770615661,
+      "duplicateCopyBytes": 44856270,
+      "fileCount": 2197
+    },
+    "excluded": "App/OS, complete npm development host, Node normalize Vite loader dependencies, download archives/cache, research audio/output and existing separation model/runtime/results; listed separately or unknown, never assumed free",
+    "fullRepositoryResearchHost": {
+      "nodeModulesBytes": 1820599599,
+      "nodeModulesFiles": 50915,
+      "excluded": [
+        "node_modules/.vite",
+        "node_modules/.cache",
+        "__pycache__",
+        "OS/App/source checkout/audio/cache/archives/outputs"
+      ],
+      "hfaBytes": 2623719784,
+      "hfaBaseBytes": 2792519889,
+      "hfaSmallBytes": 3132170391,
+      "bothBytes": 3280121856
+    }
+  },
+  "resources": {
+    "overall": {
+      "sampleCount": 198,
+      "processCount": 65,
+      "observedConcurrentWorkingSetBytes": 1934974976,
+      "maxSingleProcessPeakWorkingSetBytes": 982208512
+    },
+    "stages": [
+      {
+        "stage": "hubertfa",
+        "wallSeconds": 78.5650485,
+        "memory": {
+          "sampleCount": 66,
+          "processCount": 34,
+          "observedConcurrentWorkingSetBytes": 1934974976,
+          "maxSingleProcessPeakWorkingSetBytes": 960925696
+        },
+        "observedOwnProcessNames": ["conhost", "node", "python"]
+      },
+      {
+        "stage": "base",
+        "wallSeconds": 45.6966357,
+        "memory": {
+          "sampleCount": 44,
+          "processCount": 19,
+          "observedConcurrentWorkingSetBytes": 1090101248,
+          "maxSingleProcessPeakWorkingSetBytes": 960925696
+        },
+        "observedOwnProcessNames": ["conhost", "node", "whisper-cli"]
+      },
+      {
+        "stage": "small",
+        "wallSeconds": 94.73729009999998,
+        "memory": {
+          "sampleCount": 88,
+          "processCount": 18,
+          "observedConcurrentWorkingSetBytes": 1682685952,
+          "maxSingleProcessPeakWorkingSetBytes": 982208512
+        },
+        "observedOwnProcessNames": ["conhost", "node", "whisper-cli"]
+      }
+    ],
+    "samplePeriodMsRequested": 700,
+    "discardedRaceOrNonOwnedRows": 39,
+    "scope": "per-snapshot live ancestry rooted at owned coordinator, includes Node worker/decoder/FFmpeg/ASR/conhost; excludes PowerShell observer and stale/reused PIDs. Working-set sums may double-count shared pages; sampled concurrent maximum is not true peak or minimum physical RAM. Phase boundaries use elapsed stage durations with small startup offset"
+  },
+  "results": {
+    "all-mix-hfa": {
+      "normal": {
+        "totalLines": 29,
+        "readyLines": 25,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 29
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 3
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 3
+        },
+        {
+          "variant": "missing-text",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 3
+        },
+        {
+          "variant": "missing-audio",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 3
+        }
+      ],
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 30,
+        "missing": 5,
+        "within100": 22,
+        "onset100": 0.6285714285714286,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 56,
+        "p90Ms": 419
+      },
+      "caseCount": 16
+    },
+    "all-mix-hfa-base": {
+      "normal": {
+        "totalLines": 29,
+        "readyLines": 25,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 29
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 3
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 3,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 1,
+          "unknownContent": 3
+        },
+        {
+          "variant": "missing-audio",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 3,
+          "warnings": 0,
+          "unknownContent": 0
+        }
+      ],
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 30,
+        "missing": 5,
+        "within100": 22,
+        "onset100": 0.6285714285714286,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 56,
+        "p90Ms": 419
+      },
+      "caseCount": 16
+    },
+    "all-mix-hfa-small": {
+      "normal": {
+        "totalLines": 29,
+        "readyLines": 25,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 29
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 3
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 3,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 3,
+          "rejected": 0,
+          "warnings": 2,
+          "unknownContent": 3
+        },
+        {
+          "variant": "missing-audio",
+          "total": 4,
+          "supported": 3,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 3,
+          "warnings": 0,
+          "unknownContent": 0
+        }
+      ],
+      "timing": {
+        "requested": 140,
+        "scorable": 35,
+        "measured": 30,
+        "missing": 5,
+        "within100": 22,
+        "onset100": 0.6285714285714286,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 56,
+        "p90Ms": 419
+      },
+      "caseCount": 16
+    },
+    "paired-mix-hfa": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 13,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 17
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 7,
+        "onset100": 0.3684210526315789,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 102,
+        "p90Ms": 496
+      },
+      "caseCount": 8
+    },
+    "paired-mix-hfa-base": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 13,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 17
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 1,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 7,
+        "onset100": 0.3684210526315789,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 102,
+        "p90Ms": 496
+      },
+      "caseCount": 8
+    },
+    "paired-mix-hfa-small": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 13,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 17
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 1,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 7,
+        "onset100": 0.3684210526315789,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 102,
+        "p90Ms": 496
+      },
+      "caseCount": 8
+    },
+    "paired-mix-hfa-guide-base": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 12,
+        "rejectedLines": 1,
+        "warningLines": 0,
+        "unknownContentLines": 16
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 7,
+        "onset100": 0.3684210526315789,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 102,
+        "p90Ms": 496
+      },
+      "caseCount": 8
+    },
+    "paired-mix-hfa-guide-small": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 7,
+        "rejectedLines": 6,
+        "warningLines": 0,
+        "unknownContentLines": 11
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 11,
+        "missing": 8,
+        "within100": 4,
+        "onset100": 0.21052631578947367,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 130,
+        "p90Ms": 496
+      },
+      "caseCount": 8
+    },
+    "paired-guide-hfa": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 13,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 17
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 11,
+        "onset100": 0.5789473684210527,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 55,
+        "p90Ms": 490
+      },
+      "caseCount": 8
+    },
+    "paired-guide-hfa-mix-small": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 13,
+        "rejectedLines": 0,
+        "warningLines": 0,
+        "unknownContentLines": 17
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 1,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 11,
+        "onset100": 0.5789473684210527,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 55,
+        "p90Ms": 490
+      },
+      "caseCount": 8
+    },
+    "paired-guide-hfa-base": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 12,
+        "rejectedLines": 1,
+        "warningLines": 0,
+        "unknownContentLines": 16
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 14,
+        "missing": 5,
+        "within100": 11,
+        "onset100": 0.5789473684210527,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 55,
+        "p90Ms": 490
+      },
+      "caseCount": 8
+    },
+    "paired-guide-hfa-small": {
+      "normal": {
+        "totalLines": 17,
+        "readyLines": 7,
+        "rejectedLines": 6,
+        "warningLines": 0,
+        "unknownContentLines": 11
+      },
+      "conditions": [
+        {
+          "variant": "normal",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "phrase-mismatch",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        },
+        {
+          "variant": "missing-text",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 0,
+          "rejected": 1,
+          "warnings": 0,
+          "unknownContent": 0
+        },
+        {
+          "variant": "missing-audio",
+          "total": 2,
+          "supported": 1,
+          "unsupported": 1,
+          "ready": 1,
+          "rejected": 0,
+          "warnings": 0,
+          "unknownContent": 1
+        }
+      ],
+      "timing": {
+        "requested": 68,
+        "scorable": 19,
+        "measured": 11,
+        "missing": 8,
+        "within100": 8,
+        "onset100": 0.42105263157894735,
+        "over500": 1,
+        "over1000": 0,
+        "medianMs": 55,
+        "p90Ms": 490
+      },
+      "caseCount": 8
+    }
+  },
+  "protection": {
+    "filesChecked": 46,
+    "allBeforeAfterShaEqual": true,
+    "originalAudioAndLyricsMatchSelection": true,
+    "humanLabelsReviewed": 0
+  },
+  "storage": {
+    "newMainBaseRunBytes": 31135495,
+    "newGuideResearchTreeBytes": 62125928,
+    "newRawAsrBytes": 488687,
+    "rawAsrFiles": 32,
+    "reusedAcceptedSeparationBytes": 155539520,
+    "failedPreparationScratchBytes": 51041,
+    "trueTemporaryDiskPeakBytes": null,
+    "physicalAllocationMeasured": false,
+    "newResearchLogicalBytes": 93801151
+  },
+  "utilityHashes": {
+    "scripts/research/lyricsFreshEvaluation/pairingMetrics.cjs": "287de65fb6ed570f3db269beec0a3973710c30b6898f585886b40b711b26e9a5",
+    "scripts/research/lyricsFreshEvaluation/pairingMetrics.test.mjs": "15aedf39e40f64349ce15116b09a9be6236386f7564aa9c4d8ddfdf9a9c6303f"
+  },
+  "limitations": [
+    "Provider references are not human gold; Chinese has no fine timing; original 53 labels remain pending",
+    "All16 mix cohort has four songs and only three supported targets per constructed condition; accepted guide subset has two songs and one supported target",
+    "Guide cohort selected by existing asset availability and independent signal correspondence, not random sampling",
+    "Two accepted stems need -1ms research crop adjustment; original16k frozen inputs retained, HFA resamples44.1k and Whisper16k through existing workers",
+    "ASR content rejection changes coverage but never corrects onset timing; unknown is not correct",
+    "Existing separation manifest lacks source SHA; waveform correspondence is extra evidence, not a newly certified provenance guarantee",
+    "Full repository npm host is measured installed development footprint, not minimum product runtime; support-file subtotal and new-machine dependency needs are separate",
+    "No new model downloads, new separation jobs, stable-ts/faster-whisper/Demucs runs or fresh-install peak measurements",
+    "Memory is sampled sum of owned process working sets, may double-count shared pages, with approximate phase boundaries; no RAM requirement claim",
+    "Historical HFA/small mixed results reused with their exact identities; runtime conditions are not a controlled latency comparison"
+  ]
+}
