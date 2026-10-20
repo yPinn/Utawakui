@@ -30,6 +30,7 @@ function sourceIdentity(track, source) {
 export function useCurrentTrackLyricsPreview({
   currentTrack,
   playerState,
+  liveOffset = null,
   textVariant = DEFAULT_LYRICS_TEXT_VARIANT,
   loadLyrics = readTrackLyrics,
   textVariantLoader = lyricsTextVariantLoader,
@@ -112,9 +113,17 @@ export function useCurrentTrackLyricsPreview({
     ) {
       return Number.NaN;
     }
-    const offsetMs = Number.isInteger(loadedSource.value?.offsetMs)
-      ? loadedSource.value.offsetMs
-      : 0;
+    // The lyrics owner can be ahead of disk while a save is pending or failed.
+    // Only use its live adjustment for this exact loaded track and source.
+    const live = unref(liveOffset);
+    const offsetMs =
+      live?.trackId === loadedTrackId.value &&
+      live?.sourceFilename === loadedSource.value?.filename &&
+      Number.isFinite(live?.offsetMs)
+        ? live.offsetMs
+        : Number.isInteger(loadedSource.value?.offsetMs)
+          ? loadedSource.value.offsetMs
+          : 0;
     return playerState.currentTime * 1000 + offsetMs;
   });
   const playbackState = computed(() =>

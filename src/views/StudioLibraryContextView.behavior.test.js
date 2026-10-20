@@ -12,6 +12,9 @@ const fixtures = vi.hoisted(() => ({
   player: null,
   queue: null,
   playlists: null,
+  lyrics: null,
+  previewOptions: null,
+  artistIndex: null,
   select: vi.fn(),
   selectArtist: vi.fn(),
   play: vi.fn(),
@@ -45,25 +48,26 @@ vi.mock('../composables/usePlaylists.js', () => ({
 }));
 vi.mock('../composables/useArtistIndex.js', () => ({
   useArtistIndex: () => ({
-    state: {
-      index: {
-        artists: [{ id: 'artist-singer', name: 'Singer', trackIds: ['song'] }],
-        trackArtistIds: { song: ['artist-singer'] },
-      },
-    },
+    state: fixtures.artistIndex,
     ensureLoaded: vi.fn(),
   }),
 }));
 vi.mock('../composables/useLyrics.js', () => ({
-  useLyrics: () => ({ lyricsTextVariant: ref('original') }),
+  useLyrics: () => ({
+    state: fixtures.lyrics,
+    lyricsTextVariant: ref('original'),
+  }),
 }));
 vi.mock('../composables/useCurrentTrackLyricsPreview.js', () => ({
-  useCurrentTrackLyricsPreview: () => ({
-    preview: ref(null),
-    document: ref(null),
-    isLoading: ref(false),
-    error: ref(null),
-  }),
+  useCurrentTrackLyricsPreview: (options) => {
+    fixtures.previewOptions = options;
+    return {
+      preview: ref(null),
+      document: ref(null),
+      isLoading: ref(false),
+      error: ref(null),
+    };
+  },
 }));
 vi.mock('../components/playback/context/TrackContextPanel.vue', () => ({
   default: defineComponent({
@@ -105,6 +109,18 @@ describe('Metadata CTA navigation destinations', () => {
       track: { id: 'song', title: 'Song', artist: 'Singer' },
       isPlaying: true,
     });
+    fixtures.artistIndex = reactive({
+      index: {
+        artists: [{ id: 'artist-singer', name: 'Singer', trackIds: ['song'] }],
+        trackArtistIds: { song: ['artist-singer'] },
+      },
+    });
+    fixtures.lyrics = reactive({
+      selectedTrackId: 'song',
+      selectedSourceFilename: 'song.lrc',
+      isLoadingLyrics: false,
+      offsetSeconds: 0,
+    });
     fixtures.queue = reactive({
       sourceId: 'collection',
       sourceName: 'Collection',
@@ -120,6 +136,31 @@ describe('Metadata CTA navigation destinations', () => {
       ],
     });
     useAppView().openLyricsAuthoring();
+  });
+
+  it('provides reactive source-scoped live offset and withholds the loading context', () => {
+    const { app } = mount(ContextView);
+    const { liveOffset } = fixtures.previewOptions;
+    expect(liveOffset?.value).toEqual({
+      trackId: 'song',
+      sourceFilename: 'song.lrc',
+      offsetMs: 0,
+    });
+    fixtures.lyrics.offsetSeconds = -0.1;
+    expect(liveOffset.value.offsetMs).toBe(-100);
+    fixtures.lyrics.isLoadingLyrics = true;
+    expect(liveOffset.value).toBeNull();
+    fixtures.lyrics.selectedTrackId = 'other';
+    fixtures.lyrics.selectedSourceFilename = 'other.lrc';
+    fixtures.lyrics.offsetSeconds = 0.2;
+    fixtures.lyrics.isLoadingLyrics = false;
+    expect(liveOffset.value).toEqual({
+      trackId: 'other',
+      sourceFilename: 'other.lrc',
+      offsetMs: 200,
+    });
+    expect(fixtures.play).not.toHaveBeenCalled();
+    app.unmount();
   });
 
   it('opens Performance live lyrics from authoring without changing playback', () => {
@@ -159,6 +200,31 @@ describe('Metadata CTA navigation destinations', () => {
     expect(fixtures.selectArtist).toHaveBeenCalledWith('artist-singer');
     expect(useAppView().libraryWorkspace.value).toBe('browse');
     expect(useAppView().activeView.value).toBe('library');
+    app.unmount();
+  });
+
+  it('opens the primary artist for a collaboration and preserves playback credits', () => {
+    fixtures.player.track.artist = 'Singer, Guest';
+    fixtures.artistIndex.index.artists.push({
+      id: 'artist-guest',
+      name: 'Guest',
+      trackIds: ['song'],
+    });
+    fixtures.artistIndex.index.trackArtistIds.song = [
+      'artist-singer',
+      'artist-guest',
+    ];
+    const { app, root } = mount(ContextView);
+
+    click(root, 'openArtist');
+
+    expect(fixtures.selectArtist).toHaveBeenCalledExactlyOnceWith(
+      'artist-singer',
+    );
+    expect(useAppView().activeView.value).toBe('library');
+    expect(fixtures.player.track.artist).toBe('Singer, Guest');
+    expect(fixtures.player.isPlaying).toBe(true);
+    expect(fixtures.play).not.toHaveBeenCalled();
     app.unmount();
   });
 

@@ -39,7 +39,16 @@ const { openLiveLyrics } = useAppView();
 const { state: artistIndexState, ensureLoaded: ensureArtistIndex } =
   useArtistIndex();
 ensureArtistIndex();
-const { lyricsTextVariant } = useLyrics();
+const { state: lyricsState, lyricsTextVariant } = useLyrics();
+const liveLyricsOffset = computed(() =>
+  lyricsState.isLoadingLyrics
+    ? null
+    : {
+        trackId: lyricsState.selectedTrackId,
+        sourceFilename: lyricsState.selectedSourceFilename,
+        offsetMs: Math.round(lyricsState.offsetSeconds * 1000),
+      },
+);
 
 // The audio element-backed player state is the currently playing authority.
 // Queue state supplies the same identity before playback starts and owns every
@@ -62,6 +71,7 @@ const {
 } = useCurrentTrackLyricsPreview({
   currentTrack: currentLyricsTrack,
   playerState,
+  liveOffset: liveLyricsOffset,
   textVariant: lyricsTextVariant,
 });
 

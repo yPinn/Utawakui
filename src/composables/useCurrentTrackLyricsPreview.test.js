@@ -74,6 +74,7 @@ function deferred() {
 
 function createHarness({
   selectedTrack = track('a'),
+  liveOffset,
   loadLyrics,
   textVariantLoader,
 } = {}) {
@@ -88,6 +89,7 @@ function createHarness({
     useCurrentTrackLyricsPreview({
       currentTrack,
       playerState,
+      liveOffset,
       textVariant: ref('original'),
       loadLyrics,
       textVariantLoader,
@@ -97,6 +99,141 @@ function createHarness({
 }
 
 describe('current-track lyrics preview', () => {
+  it('does not follow the live context until the loaded track is actually playing', async () => {
+    const { playerState, result, scope } = createHarness({
+      liveOffset: ref({ trackId: 'a', sourceFilename: 'a.vtt', offsetMs: 100 }),
+      loadLyrics: async () =>
+        lyricsResult('a.vtt', 'First line', 'Second line'),
+    });
+    await vi.waitFor(() => expect(result.loadedTrackId.value).toBe('a'));
+    playerState.currentTime = 2.95;
+    playerState.track = { id: 'b' };
+    expect(result.preview.value.lines[0].text).toBe('First line');
+    playerState.track = { id: 'a' };
+    expect(result.preview.value.lines[0].text).toBe('Second line');
+    scope.stop();
+  });
+
+  it('contains a failed read and recovers when the current source changes', async () => {
+    const reason = new Error('read failed');
+    const loadLyrics = vi
+      .fn()
+      .mockRejectedValueOnce(reason)
+      .mockResolvedValueOnce(
+        lyricsResult('replacement.vtt', 'Recovered', 'Second line'),
+      );
+    const { currentTrack, result, scope } = createHarness({ loadLyrics });
+    await vi.waitFor(() => expect(result.error.value).toBe(reason));
+    expect(result.preview.value).toBeNull();
+    expect(result.isLoading.value).toBe(false);
+    currentTrack.value = track('a', 'replacement.vtt');
+    await vi.waitFor(() =>
+      expect(result.preview.value?.lines[0].text).toBe('Recovered'),
+    );
+    expect(result.error.value).toBeNull();
+    scope.stop();
+  });
+
+  it('reads through the preload bridge and tolerates its absence', async () => {
+    const read = vi.fn(async () =>
+      lyricsResult('a.vtt', 'Bridge line', 'Second line'),
+    );
+    vi.stubGlobal('window', { Utawakui: { getTrackLyrics: read } });
+    const first = createHarness();
+    try {
+      await vi.waitFor(() =>
+        expect(first.result.preview.value?.lines[0].text).toBe('Bridge line'),
+      );
+      expect(read).toHaveBeenCalledWith('a', 'a.vtt');
+    } finally {
+      first.scope.stop();
+      vi.unstubAllGlobals();
+    }
+    vi.stubGlobal('window', undefined);
+    const second = createHarness();
+    try {
+      await vi.waitFor(() =>
+        expect(second.result.loadedTrackId.value).toBe('a'),
+      );
+      expect(second.result.preview.value).toBeNull();
+      expect(second.result.isLoading.value).toBe(false);
+    } finally {
+      second.scope.stop();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('follows live advance, delay and reset without reloading or waiting for saved metadata', async () => {
+    const liveOffset = ref({
+      trackId: 'a',
+      sourceFilename: 'a.vtt',
+      offsetMs: 0,
+    });
+    const loadLyrics = vi.fn(async () =>
+      lyricsResult('a.vtt', 'First line', 'Second line'),
+    );
+    const { playerState, result, scope } = createHarness({
+      liveOffset,
+      loadLyrics,
+    });
+    await vi.waitFor(() => expect(result.loadedTrackId.value).toBe('a'));
+    const document = result.document.value;
+    playerState.currentTime = 2.95;
+    expect(result.preview.value.lines[0].text).toBe('First line');
+
+    liveOffset.value.offsetMs = 100;
+    expect(result.preview.value.lines[0].text).toBe('Second line');
+    playerState.currentTime = 3.05;
+    liveOffset.value.offsetMs = -100;
+    expect(result.preview.value.lines[0].text).toBe('First line');
+    liveOffset.value.offsetMs = 0;
+    expect(result.preview.value.lines[0].text).toBe('Second line');
+    expect(result.document.value).toBe(document);
+    expect(loadLyrics).toHaveBeenCalledOnce();
+    scope.stop();
+  });
+
+  it.each([
+    { trackId: 'other', sourceFilename: 'a.vtt', offsetMs: -1000 },
+    { trackId: 'a', sourceFilename: 'other.vtt', offsetMs: -1000 },
+    { trackId: 'a', sourceFilename: 'a.vtt', offsetMs: Number.NaN },
+    null,
+  ])(
+    'keeps the saved source offset when live context does not match: %j',
+    async (value) => {
+      const { playerState, result, scope } = createHarness({
+        liveOffset: ref(value),
+        loadLyrics: async () =>
+          lyricsResult('a.vtt', 'First line', 'Second line', 1000),
+      });
+      await vi.waitFor(() => expect(result.loadedTrackId.value).toBe('a'));
+      playerState.currentTime = 2.5;
+      expect(result.preview.value.lines[0].text).toBe('Second line');
+      scope.stop();
+    },
+  );
+
+  it('uses the latest live offset after a delayed source read, including an explicit zero', async () => {
+    const pending = deferred();
+    const liveOffset = ref({
+      trackId: 'a',
+      sourceFilename: 'a.vtt',
+      offsetMs: 100,
+    });
+    const { playerState, result, scope } = createHarness({
+      liveOffset,
+      loadLyrics: () => pending.promise,
+    });
+    playerState.currentTime = 2.95;
+    liveOffset.value.offsetMs = 0;
+    pending.resolve(lyricsResult('a.vtt', 'First line', 'Second line', 1000));
+    await vi.waitFor(() => expect(result.loadedTrackId.value).toBe('a'));
+    expect(result.preview.value.lines[0].text).toBe('First line');
+    liveOffset.value.offsetMs = 100;
+    expect(result.preview.value.lines[0].text).toBe('Second line');
+    scope.stop();
+  });
+
   it('keeps the preview empty during conversion preparation and discards cancelled loads', async () => {
     const pending = deferred();
     const prepare = vi
