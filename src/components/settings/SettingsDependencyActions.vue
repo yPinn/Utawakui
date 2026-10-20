@@ -64,6 +64,7 @@ function handleMenuSelect(actionId) {
       v-if="item.actionIcon"
       :icon="primaryIcon"
       :label="item.actionLabel"
+      variant="accent"
       :disabled="item.actionDisabled"
       :aria-disabled="item.actionDisabled ? 'true' : undefined"
       @click="emit('primaryAction', item.id)"

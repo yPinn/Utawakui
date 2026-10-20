@@ -24,6 +24,28 @@ async function renderItem(props = {}, slots = {}) {
 }
 
 describe('SettingsDocumentItem', () => {
+  it('keeps state with its description and feedback outside the action group', async () => {
+    const html = await renderItem(
+      {},
+      {
+        actions: () => h('button', '操作'),
+        feedback: () => h('p', '操作失敗'),
+      },
+    );
+    expect(html.indexOf('settings-document-item__current-state')).toBeLessThan(
+      html.indexOf('settings-document-item__actions'),
+    );
+    expect(html).not.toContain('settings-document-item__detail');
+    expect(html).toMatch(
+      /settings-document-item__actions[^>]*>[\s\S]*?<button[^>]*>操作<\/button>[\s\S]*?<\/div><div[^>]*settings-document-item__feedback/u,
+    );
+  });
+  it('announces changing process status only when the caller opts in', async () => {
+    expect(await renderItem({ statusLive: true })).toMatch(
+      /class="ui-chip[^>]*role="status"/u,
+    );
+    expect(await renderItem()).not.toContain('role="status"');
+  });
   it('renders one readable document field with its state and action together', async () => {
     const html = await renderItem(
       {},

@@ -17,6 +17,7 @@ const props = defineProps({
   additionalToolCount: { type: Number, default: 0 },
   additionalToolBusy: { type: [Boolean, Number], default: false },
   additionalToolAttention: { type: [Boolean, Number], default: false },
+  additionalToolUnavailable: { type: Number, default: 0 },
   additionalToolLoaded: { type: Boolean, default: true },
   items: { type: Array, default: () => [] },
   actionLabel: { type: String, required: true },
@@ -139,6 +140,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
         :additional-count="additionalToolCount"
         :additional-busy="additionalToolBusy"
         :additional-attention="additionalToolAttention"
+        :additional-unavailable="additionalToolUnavailable"
         :additional-loaded="additionalToolLoaded"
         :highlighted="highlighted"
         @item-action="emit('itemAction', $event)"

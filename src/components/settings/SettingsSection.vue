@@ -75,6 +75,9 @@ const headingId = `settings-section-${useId()}`;
 .settings-section__content > :deep(* + *) {
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
+.settings-section__content :deep(.settings-section__disclosure) {
+  border-block-end: 0;
+}
 .settings-section__content
   :deep(.settings-section__disclosure > .ui-disclosure__summary) {
   display: grid;

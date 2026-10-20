@@ -23,6 +23,13 @@ it('does not label an unread component as ready', async () => {
     await render({ additionalCount: 1, additionalLoaded: false }),
   ).toContain('讀取中');
 });
+it('separates unavailable capabilities from readiness without opening a recovery flow', async () => {
+  const html = await render({ additionalCount: 2, additionalUnavailable: 1 });
+  expect(html).toContain('1 項未開放');
+  expect(html).not.toContain('已就緒');
+  expect(html).not.toContain('待處理');
+  expect(html).toMatch(/<details\b(?![^>]*\bopen)[^>]*>/);
+});
 it('reveals a failed component and keeps the summary actionable', async () => {
   const html = await render({ additionalCount: 1, additionalAttention: true });
   expect(html).toContain('1 項待處理');

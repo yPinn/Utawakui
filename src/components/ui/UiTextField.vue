@@ -52,29 +52,44 @@ defineExpose({ focus });
     :label-hidden="labelHidden"
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
-      <input
-        v-bind="nativeControlAttrs(attrs)"
-        :id="id"
-        ref="input"
-        class="ui-text-field"
-        :class="`ui-text-field--${textRole}`"
-        :type="type"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :maxlength="maxlength"
-        :autocomplete="autocomplete"
-        :dir="dir"
-        :required="required"
-        :disabled="disabled"
-        :aria-describedby="describedBy"
-        :aria-invalid="fieldInvalid || undefined"
-        @input="emit('update:modelValue', $event.target.value)"
-      />
+      <div class="ui-text-field__control-row">
+        <input
+          v-bind="nativeControlAttrs(attrs)"
+          :id="id"
+          ref="input"
+          class="ui-text-field"
+          :class="`ui-text-field--${textRole}`"
+          :type="type"
+          :value="modelValue"
+          :placeholder="placeholder"
+          :maxlength="maxlength"
+          :autocomplete="autocomplete"
+          :dir="dir"
+          :required="required"
+          :disabled="disabled"
+          :aria-describedby="describedBy"
+          :aria-invalid="fieldInvalid || undefined"
+          @input="emit('update:modelValue', $event.target.value)"
+        />
+        <slot name="action" />
+      </div>
     </template>
   </UiField>
 </template>
 
 <style scoped>
+.ui-text-field__control-row {
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+.ui-text-field__control-row > .ui-text-field {
+  flex: 1 1 0;
+}
+.ui-text-field__control-row :slotted(button) {
+  flex: 0 0 auto;
+}
 .ui-text-field {
   width: 100%;
   min-width: 0;

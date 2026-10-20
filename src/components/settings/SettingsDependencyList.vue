@@ -11,6 +11,7 @@ const props = defineProps({
   additionalCount: { type: Number, default: 0 },
   additionalBusy: { type: [Boolean, Number], default: false },
   additionalAttention: { type: [Boolean, Number], default: false },
+  additionalUnavailable: { type: Number, default: 0 },
   additionalLoaded: { type: Boolean, default: true },
   highlighted: { type: Boolean, default: false },
 });
@@ -31,6 +32,9 @@ const summary = computed(() => {
     [
       busyCount.value ? `${busyCount.value} 項處理中` : '',
       attentionCount.value ? `${attentionCount.value} 項待處理` : '',
+      props.additionalUnavailable
+        ? `${props.additionalUnavailable} 項未開放`
+        : '',
     ]
       .filter(Boolean)
       .join(' · ') || (props.additionalLoaded ? '已就緒' : '讀取中');
@@ -87,9 +91,6 @@ watch(
 </template>
 
 <style scoped>
-.settings-dependency-list {
-  border-block-end: 0;
-}
 .settings-dependency-list__rows > :deep(* + *) {
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
