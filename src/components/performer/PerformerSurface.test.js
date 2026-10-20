@@ -3,6 +3,7 @@ import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import PerformerSurface from './PerformerSurface.vue';
+import { selectPerformerFrame } from '../../../shared/presentation/performerFrame.mjs';
 
 const surfaceSource = readFileSync(
   new URL('./PerformerSurface.vue', import.meta.url),
@@ -65,12 +66,57 @@ function render(props = {}) {
 }
 
 describe('PerformerSurface', () => {
+  it.each(['off', 'furigana', 'romaji'])(
+    'renders only the selected %s aid for both cues',
+    async (variant) => {
+      const value = {
+        state: {
+          playback: { status: 'paused', positionMs: 1500, track: { id: 'a' } },
+          lyrics: {
+            trackId: 'a',
+            source: { language: 'ja' },
+            synced: true,
+            lines: [
+              { text: '現在', startMs: 1000, endMs: 3000 },
+              { text: '次', startMs: 3000, endMs: 5000 },
+            ],
+          },
+        },
+        readings: {
+          variant,
+          lines: [
+            {
+              text: '現在',
+              romaji: 'genzai',
+              segments: [{ text: '現在', reading: 'げんざい' }],
+            },
+            {
+              text: '次',
+              romaji: 'tsugi',
+              segments: [{ text: '次', reading: 'つぎ' }],
+            },
+          ],
+        },
+      };
+      const html = await render({ frame: selectPerformerFrame(value) });
+      expect(html).toContain('現在');
+      expect(html).toContain('次');
+      expect(html.includes('<ruby')).toBe(variant === 'furigana');
+      expect(html.includes('げんざい')).toBe(variant === 'furigana');
+      expect(html.includes('つぎ')).toBe(variant === 'furigana');
+      expect(html.includes('genzai')).toBe(variant === 'romaji');
+      expect(html.includes('tsugi')).toBe(variant === 'romaji');
+      expect(html).not.toContain('無讀音資料');
+    },
+  );
+
   it('keeps product mode and reading distance explicit', async () => {
     const html = await render({ mode: 'combined', readingScale: 'stage' });
     expect(html).toContain('data-mode="combined"');
     expect(html).toContain('data-reading-scale="stage"');
     expect(html).toContain('aria-label="歌詞同步微調"');
-    expect(html).toContain('aria-label="閱讀距離"');
+    expect(html).toContain('aria-label="提詞器操作列"');
+    expect(html).toContain('顯示設定');
     expect(html).toContain('延後 0.1 秒');
     expect(html).toContain('提前 0.1 秒');
   });
@@ -107,7 +153,7 @@ describe('PerformerSurface', () => {
       'border-color: var(--ui-color-accent)',
     );
     expect(cueSource).toMatch(
-      /\.performer-lyric-cue__reading\s*\{[^}]*color:\s*var\(--ui-color-text-subtle\)/su,
+      /\.performer-lyric-cue__reading\s*\{[^}]*color:\s*var\(--ui-performer-secondary-foreground\)/su,
     );
     expect(cueSource).toMatch(
       /\.performer-lyric-cue--current \.performer-lyric-cue__reading\s*\{[^}]*color:\s*var\(--ui-color-text-muted\)/su,
@@ -155,5 +201,7 @@ describe('PerformerSurface', () => {
     expect(html).not.toContain('<script>alert(1)</script>');
     expect(html).toContain('同步調整未儲存，請再試一次。');
     expect(html).toContain('重試');
+    expect(html).toContain('ui-notice--danger');
+    expect(html).toContain('role="alert"');
   });
 });

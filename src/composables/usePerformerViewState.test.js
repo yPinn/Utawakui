@@ -57,6 +57,7 @@ describe('usePerformerViewState', () => {
       getReadingScale: vi.fn().mockResolvedValue('stage'),
       setReadingScale: vi.fn().mockResolvedValue('near'),
       adjustLyricsOffset: vi.fn().mockResolvedValue(true),
+      control: vi.fn().mockResolvedValue(true),
       close: vi.fn().mockResolvedValue({ open: false }),
       minimize: vi.fn().mockResolvedValue({ open: true }),
       toggleAlwaysOnTop: vi.fn().mockResolvedValue({
@@ -99,6 +100,40 @@ describe('usePerformerViewState', () => {
       fullScreen: true,
       alwaysOnTop: true,
     });
+  });
+
+  it('routes toolbar commands with the displayed context, guards pending calls and reports bounded failures', async () => {
+    bridge.getSnapshot.mockResolvedValue({
+      state: {
+        revision: 9,
+        playback: { status: 'paused', track: { id: 'a' } },
+      },
+    });
+    const state = usePerformerViewState();
+    await lifecycle.mounted[0]();
+    let finish;
+    bridge.control.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const pending = state.control('play');
+    expect(state.controlPending.value).toBe(true);
+    expect(await state.control('pause')).toBe(false);
+    expect(await state.control('reading-romaji')).toBe(true);
+    expect(state.controlPending.value).toBe(true);
+    finish(true);
+    expect(await pending).toBe(true);
+    expect(bridge.control).toHaveBeenCalledWith({
+      action: 'play',
+      revision: 9,
+      trackId: 'a',
+    });
+    expect(state.controlPending.value).toBe(false);
+    bridge.control.mockResolvedValueOnce(false);
+    expect(await state.control('reading-romaji')).toBe(false);
+    expect(state.error.value).toBe('主控制台目前無法完成操作，請再試一次。');
   });
 
   it('normalizes command state and clears an earlier public error', async () => {

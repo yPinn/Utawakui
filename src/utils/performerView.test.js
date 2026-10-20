@@ -41,6 +41,7 @@ function snapshot() {
     },
     readings: {
       trackId: 'track-1',
+      variant: 'romaji',
       lines: [{ text: 'first', romaji: 'first reading', segments: [] }, null],
     },
   };

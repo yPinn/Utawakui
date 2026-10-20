@@ -1,4 +1,5 @@
 import { activeLyricIndex, playbackPositionMs } from './state.mjs';
+import { normalizePerformerReadingVariant } from '../performerViewContract.mjs';
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -53,6 +54,15 @@ function lyricsOffset(snapshot, lyrics) {
   };
 }
 
+function selectedReading(line, variant) {
+  if (!line || variant === 'off') return null;
+  return {
+    text: line.text,
+    ...(variant === 'romaji' && line.romaji ? { romaji: line.romaji } : {}),
+    segments: variant === 'furigana' ? line.segments : [],
+  };
+}
+
 export function selectPerformerFrame(snapshot, options = {}) {
   const state = snapshot?.state ?? {};
   const lyrics = state.lyrics ?? {};
@@ -66,6 +76,9 @@ export function selectPerformerFrame(snapshot, options = {}) {
   const readingLines = Array.isArray(snapshot?.readings?.lines)
     ? snapshot.readings.lines
     : [];
+  const readingVariant = normalizePerformerReadingVariant(
+    snapshot?.readings?.variant,
+  );
   const nextTrack = (
     Array.isArray(state.queue?.items) ? state.queue.items : []
   ).find((item) => item?.state === 'queued')?.track;
@@ -83,6 +96,10 @@ export function selectPerformerFrame(snapshot, options = {}) {
     trackId: text(track?.id),
     mode,
     playbackStatus: text(state.playback?.status),
+    readingVariant,
+    readingVariants: snapshot?.readings?.availableVariants ?? [],
+    readingPreparing: snapshot?.readings?.preparing === true,
+    readingError: text(snapshot?.readings?.error),
     track: track
       ? {
           id: text(track.id),
@@ -92,13 +109,19 @@ export function selectPerformerFrame(snapshot, options = {}) {
       : null,
     currentLine: activeIndex >= 0 ? (lines[activeIndex] ?? null) : null,
     currentReading:
-      activeIndex >= 0 ? (readingLines[activeIndex] ?? null) : null,
+      activeIndex >= 0
+        ? selectedReading(readingLines[activeIndex], readingVariant)
+        : null,
     nextLine: upcomingIndex >= 0 ? (lines[upcomingIndex] ?? null) : null,
     nextReading:
-      upcomingIndex >= 0 ? (readingLines[upcomingIndex] ?? null) : null,
-    readingExpected: ['ja', 'ko'].some((language) =>
-      text(lyrics.source?.language).startsWith(language),
-    ),
+      upcomingIndex >= 0
+        ? selectedReading(readingLines[upcomingIndex], readingVariant)
+        : null,
+    readingExpected:
+      readingVariant !== 'off' &&
+      ['ja', 'ko'].some((language) =>
+        text(lyrics.source?.language).startsWith(language),
+      ),
     nextTrack: nextTrack
       ? { title: text(nextTrack.title), artist: text(nextTrack.artist) }
       : null,

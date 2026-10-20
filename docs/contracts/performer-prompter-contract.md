@@ -6,23 +6,38 @@
 
 `PerformerSurface` 接受顯式 `mode`，目前 Electron shell 使用 `prompter`。`remote` 與 `combined` 是未來 transport adapter 可使用的組合語意，不得由 viewport 寬度自動推測。
 
-| Mode     | 主要責任                           | 本切片狀態                                |
-| -------- | ---------------------------------- | ----------------------------------------- |
-| prompter | 目前／下一句、讀音、狀態與同步微調 | Electron Performer 已接入                 |
-| remote   | 操作優先的窄域遙控                 | 只保留 component contract，未接 transport |
-| combined | 寬型平板的讀詞與控制組合           | 可組合 layout，未增加播放控制             |
+| Mode     | 主要責任                           | 本切片狀態                                            |
+| -------- | ---------------------------------- | ----------------------------------------------------- |
+| prompter | 目前／下一句、讀音、狀態與同步微調 | Electron Performer 已接入                             |
+| remote   | 操作優先的窄域遙控                 | 只保留 component contract，未接 transport             |
+| combined | 寬型平板的讀詞與控制組合           | 可組合 layout；限定本機播放／暫停，未接遠端 transport |
 
 閱讀距離另以 `near`、`desk`、`stage` 三段顯式設定，依 surface 保存。Responsive reflow 只改變排列、空間與操作目標，不改變 mode，也不自動猜測觀看距離。切換閱讀距離只重組讀詞 typography、line measure 與 cue rhythm，不得改動 Electron window bounds。
 
 ## 顯示層級
 
-Performer 是讀詞工具，不是資訊 dashboard。目前句是唯一高顯著層；目前讀音、下一句與下一句讀音依序降低對比與字重。曲名／藝人、播放狀態、Key／Tempo、同步微調與閱讀距離屬 quiet edge chrome，不得回復為與歌詞競爭的框狀 status chips、全寬分隔或裝飾 surface。
+Performer 是讀詞工具，不是資訊 dashboard。目前句是唯一高顯著層；目前讀音、下一句與下一句讀音以字級、字重與間距建立層次，資訊文字仍須在當下背景達到正常文字 4.5:1 或大字 3:1。次要資訊使用 `--ui-performer-secondary-foreground`，不以全域 subtle 色或 opacity 降低整區可讀性。次句假名在 near／desk／stage 使用 14／16／18px，獨立於目前句的 55% ruby 比例。曲名／藝人、播放狀態、Key／Tempo、同步微調與閱讀距離屬 quiet edge chrome，不得回復為與歌詞競爭的框狀 status chips、全寬分隔或裝飾 surface。
 
 控制仍須持續可見並保有完整 focus、disabled、saving、error 與 retry 狀態；低干擾不等於 hover-only 或隱藏功能。下一首等 optional context 只有真實資料存在時才渲染，不以「未排定」或空容器長期占位。
+
+顯示設定沿用 `UiPopover` 的 panel style 介面，以 feature width token 約束在 15rem，保留共用 viewport cap／scroll，使用語意 border 輪廓；錯誤文案換行而不擴寬浮層。浮層標籤用 muted 角色。共用 `UiSegmentedControl` 的 selected foreground／indicator tokens 分別擁有文字與可辨選取邊界，不在 feature 以 deep selector 改 paint。Offset 儲存失敗沿用 `UiNotice` 的 danger 表面、正常文字及重試 action。
 
 ## 權威與資料流
 
 HTML audio element、`usePlayer`、`usePlaybackQueue` 與 `useLyrics` 保持唯一 renderer owner。主 renderer 產生版本化 Performer snapshot；main 驗證後交給 sandboxed Performer window。Performer 只從 snapshot 建立 pure frame，不維護播放 clock 或 lyrics document。
+
+讀音顯示沿用歌詞頁的 `useLyricsReading.variant` session preference，不在提詞器另存一份。
+Snapshot 的 `readings.variant` 只接受 `off`、`furigana`、`romaji`；舊 snapshot 缺欄位時回退 `off`，main 拒絕其他已提供值。
+Pure frame 對目前與下一句一併套用選項：關閉時不顯示讀音也不提示缺讀音，假名只提供 ruby，羅馬字只提供輔助文字行。
+切換時透過現有 snapshot publisher 更新已開啟的提詞器；關閉後重新開啟使用目前選項，閱讀距離與歌詞 offset 不受影響。
+
+底部 `PerformerActionBar` 使用正式 `UiButtonGroup` 組合播放控制、歌詞同步及顯示工具，三區間使用垂直 `UiSeparator`。
+播放／暫停各自只發出固定 `play`／`pause` intent，仍由主 renderer 的 HTML audio element 與 `usePlayer` 執行，不提供切歌、seek 或第二個播放狀態。
+讀音與閱讀距離收在「顯示設定」`UiPopover`；讀音選擇使用 `reading-off`／`reading-furigana`／`reading-romaji` action 回到同一個主 renderer owner。
+新的固定 `performer-view:control` 僅授予 Performer main frame，preload 只傳 action、revision 與 track id；main 驗證後轉送主 renderer。
+播放操作驗證最近發布的 revision 與目前曲目，讀音操作另外驗證目前歌詞曲目、來源及可用選項；視窗關閉後拒絕新操作。
+讀音準備沿用 `useLyricsDisplay`，其 detached scope 由提詞器生命週期擁有，讓主頁不在歌詞頁時仍能載入／缺檔才產生；關閉時停止該 scope，不建立第二份偏好或文件。
+Snapshot 的 `readings.availableVariants`、`preparing` 與 bounded `error` 只投影目前設定能力與準備狀態；圖示使用可存取名稱、Tooltip、鍵盤焦點及 disabled 狀態。
 
 同步控制只允許 `delay`、`reset`、`advance`、`retry` 四種 action。Intent 只包含 action、snapshot revision 與 track id，不包含 filename、path、任意秒數或 IPC channel。Main 驗證固定 schema 後轉送主 renderer；主 renderer 必須同時確認：
 

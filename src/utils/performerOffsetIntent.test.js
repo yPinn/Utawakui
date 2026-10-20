@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyPerformerLyricsOffsetIntent } from './performerOffsetIntent.js';
+import {
+  applyPerformerLyricsOffsetIntent,
+  applyPerformerControlIntent,
+} from './performerOffsetIntent.js';
 
 function dependencies(overrides = {}) {
   return {
@@ -21,6 +24,91 @@ function dependencies(overrides = {}) {
 }
 
 describe('applyPerformerLyricsOffsetIntent', () => {
+  it('rejects invalid, absent, unsupported and stale toolbar contexts without mutating owners', async () => {
+    const deps = dependencies({
+      play: vi.fn(),
+      pause: vi.fn(),
+      selectReadingVariant: vi.fn(),
+      canSelectReadingVariant: () => false,
+    });
+    const intent = { action: 'play', revision: 8, trackId: 'track-1' };
+    expect(await applyPerformerControlIntent(null, deps)).toBe(false);
+    expect(
+      await applyPerformerControlIntent(
+        { ...intent, action: 'reading-romaji' },
+        deps,
+      ),
+    ).toBe(false);
+    expect(
+      await applyPerformerControlIntent(intent, {
+        ...deps,
+        getPublishedContext: () => null,
+      }),
+    ).toBe(false);
+    expect(
+      await applyPerformerControlIntent(intent, {
+        ...deps,
+        getCurrentContext: () => null,
+      }),
+    ).toBe(false);
+    expect(
+      await applyPerformerControlIntent(intent, {
+        ...deps,
+        getCurrentContext: () => ({ playerTrackId: 'other' }),
+      }),
+    ).toBe(false);
+    expect(deps.play).not.toHaveBeenCalled();
+    expect(deps.selectReadingVariant).not.toHaveBeenCalled();
+  });
+  it.each(['play', 'pause'])(
+    'routes %s to the player even without lyrics',
+    async (action) => {
+      const deps = dependencies();
+      deps.getPublishedContext = () => ({
+        playerTrackId: 'track-1',
+        lyricsTrackId: null,
+      });
+      deps.getCurrentContext = () => ({
+        playerTrackId: 'track-1',
+        lyricsTrackId: null,
+      });
+      deps.play = vi.fn();
+      deps.pause = vi.fn();
+      expect(
+        await applyPerformerControlIntent(
+          { action, revision: 8, trackId: 'track-1' },
+          deps,
+        ),
+      ).toBe(true);
+      expect(deps[action]).toHaveBeenCalledOnce();
+    },
+  );
+  it('rejects stale playback and stale-source reading operations, then accepts a current reading selection', async () => {
+    const deps = dependencies();
+    deps.play = vi.fn();
+    deps.selectReadingVariant = vi.fn();
+    deps.canSelectReadingVariant = () => true;
+    const intent = { action: 'play', revision: 8, trackId: 'wrong' };
+    expect(await applyPerformerControlIntent(intent, deps)).toBe(false);
+    expect(deps.play).not.toHaveBeenCalled();
+    expect(
+      await applyPerformerControlIntent(
+        { ...intent, action: 'reading-romaji', trackId: 'track-1' },
+        deps,
+      ),
+    ).toBe(true);
+    expect(deps.selectReadingVariant).toHaveBeenCalledWith('romaji');
+    deps.getCurrentContext = () => ({
+      ...deps.getPublishedContext(8),
+      sourceFilename: 'other.lrc',
+    });
+    expect(
+      await applyPerformerControlIntent(
+        { ...intent, action: 'reading-off', trackId: 'track-1' },
+        deps,
+      ),
+    ).toBe(false);
+  });
   it.each([
     ['delay', 'adjustOffset', -0.1],
     ['advance', 'adjustOffset', 0.1],

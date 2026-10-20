@@ -31,6 +31,10 @@ function snapshot() {
   };
   value.readings = {
     trackId: 'track-1',
+    variant: 'furigana',
+    availableVariants: [],
+    preparing: false,
+    error: '',
     lines: [
       {
         text: '夜に駆ける',
@@ -50,6 +54,67 @@ function snapshot() {
 }
 
 describe('performer snapshot contract', () => {
+  it.each([
+    { availableVariants: ['off', 'off'] },
+    { availableVariants: ['unexpected'] },
+    { availableVariants: 'romaji' },
+    { preparing: 'yes' },
+    { error: 'x'.repeat(241) },
+  ])('rejects unbounded reading toolbar status %j', (fields) => {
+    const value = snapshot();
+    Object.assign(value.readings, fields);
+    expect(() => parsePerformerSnapshot(value)).toThrow('readings');
+  });
+  it('rejects malformed reading content and mismatched track identity', () => {
+    const invalidValues = [
+      { ...snapshot().readings, lines: null },
+      { ...snapshot().readings, lines: [] },
+      { ...snapshot().readings, trackId: 'other' },
+      {
+        ...snapshot().readings,
+        lines: [{ text: '夜に駆ける', segments: null }],
+      },
+      {
+        ...snapshot().readings,
+        lines: [
+          {
+            text: '夜に駆ける',
+            segments: Array.from({ length: 161 }, () => ({ text: '夜' })),
+          },
+        ],
+      },
+    ];
+    for (const readings of invalidValues) {
+      const value = snapshot();
+      value.readings = readings;
+      expect(() => parsePerformerSnapshot(value)).toThrow('readings');
+    }
+  });
+
+  it.each(['off', 'furigana', 'romaji'])(
+    'preserves reading variant %s through main validation',
+    (variant) => {
+      const value = snapshot();
+      value.readings.variant = variant;
+      expect(parsePerformerSnapshot(value).readings.variant).toBe(variant);
+    },
+  );
+
+  it('defaults old snapshots without a reading preference to off', () => {
+    const value = snapshot();
+    delete value.readings.variant;
+    expect(parsePerformerSnapshot(value).readings.variant).toBe('off');
+  });
+
+  it.each(['both', '', null, true, 1])(
+    'rejects unsupported reading variant %j',
+    (variant) => {
+      const value = snapshot();
+      value.readings.variant = variant;
+      expect(() => parsePerformerSnapshot(value)).toThrow('readings.variant');
+    },
+  );
+
   it('creates a valid idle snapshot', () => {
     expect(
       createEmptyPerformerSnapshot({

@@ -11,6 +11,7 @@ const IPC_CHANNEL_CAPABILITIES = Object.freeze({
   'performer-view:get-status': IPC_CAPABILITIES.MAIN_OR_PERFORMER,
   'performer-view:get-snapshot': IPC_CAPABILITIES.MAIN_OR_PERFORMER,
   'performer-view:adjust-lyrics-offset': IPC_CAPABILITIES.PERFORMER,
+  'performer-view:control': IPC_CAPABILITIES.PERFORMER,
   'performer-view:get-reading-scale': IPC_CAPABILITIES.PERFORMER,
   'performer-view:set-reading-scale': IPC_CAPABILITIES.PERFORMER,
   'performer-view:close': IPC_CAPABILITIES.MAIN_OR_PERFORMER,

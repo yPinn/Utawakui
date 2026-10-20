@@ -4,12 +4,14 @@ const {
   isPerformerReadingScale,
   normalizePerformerReadingScale,
   parsePerformerLyricsOffsetIntent,
+  parsePerformerControlIntent,
 } = require('../../shared/performerViewContract.mjs');
 
 function registerPerformerViewHandlers({
   ipcMain,
   manager,
   sendLyricsOffsetIntent = () => false,
+  sendControlIntent = () => false,
   getConfig = () => ({}),
   updateConfig = () => {},
 }) {
@@ -22,6 +24,9 @@ function registerPerformerViewHandlers({
   );
   ipcMain.handle('performer-view:get-status', () => manager.getStatus());
   ipcMain.handle('performer-view:get-snapshot', () => manager.getSnapshot());
+  ipcMain.handle('performer-view:control', (event, value) =>
+    sendControlIntent(parsePerformerControlIntent(value)),
+  );
   ipcMain.handle('performer-view:adjust-lyrics-offset', (event, value) =>
     sendLyricsOffsetIntent(parsePerformerLyricsOffsetIntent(value)),
   );

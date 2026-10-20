@@ -1,12 +1,12 @@
 <script setup>
 import PerformerCueStack from './PerformerCueStack.vue';
-import PerformerDisplayControls from './PerformerDisplayControls.vue';
+import PerformerActionBar from './PerformerActionBar.vue';
 import PerformerNextTrack from './PerformerNextTrack.vue';
-import PerformerSyncControls from './PerformerSyncControls.vue';
 import PerformerTrackContext from './PerformerTrackContext.vue';
 
 defineProps({
   frame: { type: Object, required: true },
+  pending: { type: Boolean, default: false },
   mode: {
     type: String,
     default: 'prompter',
@@ -19,7 +19,7 @@ defineProps({
   },
 });
 
-defineEmits(['sync-action', 'update:readingScale']);
+defineEmits(['control', 'sync-action', 'update:readingScale']);
 </script>
 
 <template>
@@ -39,16 +39,14 @@ defineEmits(['sync-action', 'update:readingScale']);
           class="performer-surface__next"
           :track="frame.nextTrack"
         />
-        <div class="performer-surface__control-deck">
-          <PerformerSyncControls
-            :offset="frame.lyricsOffset"
-            @action="$emit('sync-action', $event)"
-          />
-          <PerformerDisplayControls
-            :reading-scale="readingScale"
-            @update:reading-scale="$emit('update:readingScale', $event)"
-          />
-        </div>
+        <PerformerActionBar
+          :frame="frame"
+          :reading-scale="readingScale"
+          :pending="pending"
+          @control="$emit('control', $event)"
+          @sync-action="$emit('sync-action', $event)"
+          @update:reading-scale="$emit('update:readingScale', $event)"
+        />
       </section>
     </div>
   </main>
@@ -66,6 +64,7 @@ defineEmits(['sync-action', 'update:readingScale']);
   );
   --ui-performer-cue-next-font-size: var(--ui-performer-cue-next-size-desk);
   --ui-performer-reading-font-size: var(--ui-performer-reading-size-desk);
+  --ui-performer-next-ruby-font-size: var(--ui-performer-next-ruby-size-desk);
 
   container-name: performer-surface;
   container-type: size;
@@ -101,6 +100,7 @@ defineEmits(['sync-action', 'update:readingScale']);
   );
   --ui-performer-cue-next-font-size: var(--ui-performer-cue-next-size-near);
   --ui-performer-reading-font-size: var(--ui-performer-reading-size-near);
+  --ui-performer-next-ruby-font-size: var(--ui-performer-next-ruby-size-near);
 }
 
 .performer-surface[data-reading-scale='stage'] {
@@ -113,6 +113,7 @@ defineEmits(['sync-action', 'update:readingScale']);
   );
   --ui-performer-cue-next-font-size: var(--ui-performer-cue-next-size-stage);
   --ui-performer-reading-font-size: var(--ui-performer-reading-size-stage);
+  --ui-performer-next-ruby-font-size: var(--ui-performer-next-ruby-size-stage);
 }
 
 .performer-surface__cue-region {
@@ -124,8 +125,7 @@ defineEmits(['sync-action', 'update:readingScale']);
   scrollbar-width: thin;
 }
 
-.performer-surface__utility-rail,
-.performer-surface__control-deck {
+.performer-surface__utility-rail {
   min-width: 0;
   display: grid;
 }
@@ -134,16 +134,8 @@ defineEmits(['sync-action', 'update:readingScale']);
   gap: var(--ui-space-2);
 }
 
-.performer-surface__control-deck {
-  gap: var(--ui-space-3);
-}
-
-.performer-surface[data-mode='remote'] .performer-surface__control-deck {
-  align-self: center;
-}
-
 @container performer-surface (min-width: 48rem) {
-  .performer-surface__control-deck {
+  .performer-surface__utility-rail {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--ui-space-5);

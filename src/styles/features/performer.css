@@ -1,4 +1,6 @@
 [data-ui-system] {
+  --ui-performer-secondary-foreground: var(--ui-color-text-muted);
+  --ui-performer-settings-inline-size: 15rem;
   --ui-performer-lyrics-max-width-near: 72rem;
   --ui-performer-lyrics-max-width-desk: 64rem;
   --ui-performer-lyrics-max-width-stage: 56rem;
@@ -15,5 +17,8 @@
   --ui-performer-cue-gap-comfortable-desk: var(--ui-space-5);
   --ui-performer-cue-gap-comfortable-stage: var(--ui-space-6);
   --ui-performer-ruby-font-size: 55%;
+  --ui-performer-next-ruby-size-near: var(--ui-font-size-sm);
+  --ui-performer-next-ruby-size-desk: var(--ui-font-size-md);
+  --ui-performer-next-ruby-size-stage: var(--ui-font-size-lg);
   --ui-performer-action-min-block-size: var(--ui-control-height);
 }

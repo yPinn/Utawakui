@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('UtawakuiPerformer', {
   initialUiTheme: readInitialUiTheme(),
   getSnapshot: () => ipcRenderer.invoke('performer-view:get-snapshot'),
   getWindowState: () => ipcRenderer.invoke('performer-view:get-status'),
+  control: (intent) =>
+    ipcRenderer.invoke('performer-view:control', lyricsOffsetIntent(intent)),
   adjustLyricsOffset: (intent) =>
     ipcRenderer.invoke(
       'performer-view:adjust-lyrics-offset',

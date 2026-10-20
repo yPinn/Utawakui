@@ -75,6 +75,7 @@ describe('trusted IPC main boundary', () => {
 
     trusted.handle('performer-view:close', () => 'closed');
     trusted.handle('performer-view:adjust-lyrics-offset', () => 'adjusted');
+    trusted.handle('performer-view:control', () => 'controlled');
     trusted.handle('performer-view:get-status', () => 'status');
     trusted.handle('diagnostics:record-renderer', () => 'recorded');
 
@@ -89,6 +90,12 @@ describe('trusted IPC main boundary', () => {
         createEvent(performer),
       ),
     ).resolves.toBe('adjusted');
+    await expect(
+      rawIpcMain.handles.get('performer-view:control')(createEvent(performer)),
+    ).resolves.toBe('controlled');
+    await expect(
+      rawIpcMain.handles.get('performer-view:control')(createEvent(main)),
+    ).rejects.toThrow();
 
     for (const channel of [
       'performer-view:get-status',
@@ -112,6 +119,7 @@ describe('trusted IPC main boundary', () => {
       'performer-view:get-status': 'main-or-performer',
       'performer-view:get-snapshot': 'main-or-performer',
       'performer-view:adjust-lyrics-offset': 'performer',
+      'performer-view:control': 'performer',
       'performer-view:get-reading-scale': 'performer',
       'performer-view:set-reading-scale': 'performer',
       'performer-view:close': 'main-or-performer',

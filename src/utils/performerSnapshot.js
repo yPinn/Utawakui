@@ -1,4 +1,5 @@
 import performerValues from '../../shared/performerContractValues.json';
+import { normalizePerformerReadingVariant } from '../../shared/performerViewContract.mjs';
 import { projectOutputSnapshot } from './outputSnapshot.js';
 
 function projectReadingLine(line, lyricText) {
@@ -82,6 +83,15 @@ export function projectPerformerSnapshot(input = {}, options = {}) {
     },
     readings: {
       trackId: state.lyrics.trackId,
+      variant: normalizePerformerReadingVariant(input.readings?.variant),
+      availableVariants: Array.isArray(input.readings?.availableVariants)
+        ? input.readings.availableVariants
+        : [],
+      preparing: input.readings?.preparing === true,
+      error:
+        typeof input.readings?.error === 'string'
+          ? input.readings.error.slice(0, MAX_PUBLIC_ERROR_LENGTH)
+          : '',
       lines: state.lyrics.lines.map((line, index) =>
         projectReadingLine(readingLines[index], line.text),
       ),

@@ -41,6 +41,7 @@ function snapshot() {
     },
     readings: {
       trackId: 'track-1',
+      variant: 'romaji',
       lines: [{ text: 'first', romaji: 'first reading', segments: [] }, null],
     },
     controls: {
@@ -54,6 +55,72 @@ function snapshot() {
 }
 
 describe('selectPerformerFrame', () => {
+  it('keeps an absent snapshot idle with reading disabled', () => {
+    expect(selectPerformerFrame()).toMatchObject({
+      mode: 'idle',
+      currentReading: null,
+      nextReading: null,
+      readingExpected: false,
+      keyLabel: '原調',
+      tempoLabel: '100%',
+      nextTrack: null,
+    });
+  });
+
+  it.each(['off', 'furigana', 'romaji'])(
+    'applies %s to both current and next reading without changing lyrics or offset',
+    (variant) => {
+      const value = snapshot();
+      value.readings.variant = variant;
+      value.readings.lines = ['first', 'second'].map((text) => ({
+        text,
+        romaji: `${text} romaji`,
+        segments: [{ text, reading: `${text} kana` }],
+      }));
+      const result = selectPerformerFrame(value, {
+        nowMs: Date.parse(value.state.generatedAt) + 200,
+      });
+      for (const [key, text] of [
+        ['currentReading', 'first'],
+        ['nextReading', 'second'],
+      ]) {
+        expect(result[key]).toEqual(
+          variant === 'off'
+            ? null
+            : {
+                text,
+                ...(variant === 'romaji' ? { romaji: `${text} romaji` } : {}),
+                segments:
+                  variant === 'furigana'
+                    ? [{ text, reading: `${text} kana` }]
+                    : [],
+              },
+        );
+      }
+      expect(result.readingExpected).toBe(variant !== 'off');
+      expect(result.currentLine.text).toBe('first');
+      expect(result.nextLine.text).toBe('second');
+      expect(result.lyricsOffset.milliseconds).toBe(-200);
+    },
+  );
+
+  it('keeps reading disabled when the preference is missing and preserves enabled missing-data notices', () => {
+    const value = snapshot();
+    delete value.readings.variant;
+    let result = selectPerformerFrame(value, {
+      nowMs: Date.parse(value.state.generatedAt) + 200,
+    });
+    expect(result.currentReading).toBeNull();
+    expect(result.readingExpected).toBe(false);
+    value.readings.variant = 'furigana';
+    value.readings.lines = [null, null];
+    result = selectPerformerFrame(value, {
+      nowMs: Date.parse(value.state.generatedAt) + 200,
+    });
+    expect(result.currentReading).toBeNull();
+    expect(result.readingExpected).toBe(true);
+  });
+
   it('projects the live cue and bounded sync-control state', () => {
     expect(
       selectPerformerFrame(snapshot(), {

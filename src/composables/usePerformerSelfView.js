@@ -1,7 +1,18 @@
-import { computed, reactive, readonly, watch } from 'vue';
-import { alignReadings } from '../utils/lyrics.js';
+import {
+  computed,
+  effectScope,
+  reactive,
+  readonly,
+  shallowRef,
+  watch,
+} from 'vue';
+import { alignReadings, detectLyricsScript } from '../utils/lyrics.js';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
-import { applyPerformerLyricsOffsetIntent } from '../utils/performerOffsetIntent.js';
+import {
+  applyPerformerLyricsOffsetIntent,
+  applyPerformerControlIntent,
+} from '../utils/performerOffsetIntent.js';
+import { useLyricsDisplay } from './useLyricsDisplay.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
@@ -12,7 +23,7 @@ import { usePlayer } from './usePlayer.js';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
-const { state: playerState } = usePlayer();
+const { state: playerState, play, pause } = usePlayer();
 const { state: queueState, upcomingTracks } = usePlaybackQueue();
 const {
   state: lyricsState,
@@ -24,7 +35,11 @@ const {
   resetOffset,
   retryOffsetSave,
 } = useLyrics();
-const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
+const {
+  variant: readingVariant,
+  getDoc: getReadingDoc,
+  loadReading,
+} = useLyricsReading();
 const { recordError } = useAppDiagnostics();
 const notifications = useAppNotifications();
 let errorOperation = null;
@@ -41,6 +56,9 @@ let initialized = false;
 let revision = 0;
 let unsubscribeStatus = null;
 let unsubscribeLyricsOffsetIntent = null;
+let unsubscribeControlIntent = null;
+let readingDisplayScope = null;
+const readingDisplay = shallowRef(null);
 let stopProjectionWatch = null;
 let stopReadingWatch = null;
 const publishedContexts = new Map();
@@ -80,6 +98,32 @@ function applyStatus(status = {}) {
   state.open = status.open === true;
   state.fullScreen = status.fullScreen === true;
   state.alwaysOnTop = status.alwaysOnTop === true;
+  if (!state.open) {
+    readingDisplayScope?.stop();
+    readingDisplayScope = null;
+    readingDisplay.value = null;
+  }
+}
+
+const availableReadingVariants = computed(() => {
+  const script = detectLyricsScript(
+    lyricLines.value.map((line) => line.text).join(''),
+  );
+  return script === 'ja'
+    ? ['off', 'furigana', 'romaji']
+    : script === 'ko'
+      ? ['off', 'romaji']
+      : [];
+});
+
+function selectReadingVariant(variant) {
+  if (!readingDisplayScope) {
+    readingDisplayScope = effectScope(true);
+    readingDisplay.value = readingDisplayScope.run(() =>
+      useLyricsDisplay({ lyrics: useLyrics(), reading: useLyricsReading() }),
+    );
+  }
+  return readingDisplay.value.selectReadingVariant(variant);
 }
 
 const alignedReadings = computed(() => {
@@ -109,7 +153,15 @@ function projectionInput() {
       offsetSeconds: lyricsState.offsetSeconds,
       offsetSave: lyricsState.offsetSave,
     },
-    readings: { lines: alignedReadings.value },
+    readings: {
+      variant: readingVariant?.value,
+      lines: alignedReadings.value,
+      availableVariants: availableReadingVariants.value,
+      preparing:
+        readingDisplay.value?.isPreparingReading.value === true ||
+        readingDisplay.value?.isGeneratingReading.value === true,
+      error: readingDisplay.value?.readingError.value ?? '',
+    },
   };
 }
 
@@ -153,6 +205,22 @@ function handleLyricsOffsetIntent(intent) {
     adjustOffset,
     resetOffset,
     retryOffsetSave,
+  });
+}
+
+function handleControlIntent(intent) {
+  if (!state.open) return Promise.resolve(false);
+  return applyPerformerControlIntent(intent, {
+    getPublishedContext: (revision) => publishedContexts.get(revision) ?? null,
+    getCurrentContext: currentLyricsContext,
+    play,
+    pause,
+    canSelectReadingVariant: (variant) =>
+      availableReadingVariants.value.includes(variant),
+    selectReadingVariant,
+  }).catch((error) => {
+    reportPerformerError(error, 'control', '提詞器操作未完成，請再試一次。');
+    return false;
   });
 }
 
@@ -244,6 +312,10 @@ async function initialize() {
     unsubscribeLyricsOffsetIntent =
       window.Utawakui.onPerformerLyricsOffsetIntent(handleLyricsOffsetIntent);
   }
+  if (typeof window.Utawakui?.onPerformerControlIntent === 'function') {
+    unsubscribeControlIntent =
+      window.Utawakui.onPerformerControlIntent(handleControlIntent);
+  }
   stopProjectionWatch = watch(projectedState, () => {
     if (state.open) publisher.request(currentSnapshot());
   });
@@ -260,6 +332,8 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unsubscribeStatus?.();
     unsubscribeLyricsOffsetIntent?.();
+    unsubscribeControlIntent?.();
+    readingDisplayScope?.stop();
     stopProjectionWatch?.();
     stopReadingWatch?.();
   });

@@ -18,7 +18,7 @@ defineProps({
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
 }
@@ -42,7 +42,7 @@ defineProps({
 }
 
 .performer-next-track small {
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
   font-size: var(--ui-font-size-sm);
 }
 </style>

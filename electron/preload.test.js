@@ -255,6 +255,7 @@ const MAIN_EVENT_CHANNELS = [
   'obs:status',
   'performer-view:status',
   'performer-view:lyrics-offset-intent',
+  'performer-view:control-intent',
   'player:command',
   'separation:progress',
   'separation:queue-progress',
@@ -1597,6 +1598,23 @@ describe('main preload bridge', () => {
 });
 
 describe('performer preload bridge', () => {
+  it('strips private and arbitrary fields from toolbar commands', async () => {
+    const bridge = await loadBridge(
+      './performerPreload.js',
+      'UtawakuiPerformer',
+    );
+    await bridge.control({
+      action: 'play',
+      revision: 3,
+      trackId: 'a',
+      url: 'private',
+      filename: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'performer-view:control',
+      { action: 'play', revision: 3, trackId: 'a' },
+    );
+  });
   it('exposes the fixed performer command and event allowlists', async () => {
     const bridge = await loadBridge(
       './performerPreload.js',
@@ -1624,6 +1642,7 @@ describe('performer preload bridge', () => {
         'diagnostics:record-renderer',
         'performer-view:close',
         'performer-view:adjust-lyrics-offset',
+        'performer-view:control',
         'performer-view:get-reading-scale',
         'performer-view:get-snapshot',
         'performer-view:get-status',

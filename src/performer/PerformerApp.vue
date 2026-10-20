@@ -15,6 +15,8 @@ const {
   error,
   frame,
   readingScale,
+  control,
+  controlPending,
   windowState,
   adjustLyricsOffset,
   close,
@@ -40,6 +42,8 @@ const {
       :frame="frame"
       mode="prompter"
       :reading-scale="readingScale"
+      :pending="controlPending"
+      @control="control"
       @sync-action="adjustLyricsOffset"
       @update:reading-scale="setReadingScale"
     />

@@ -48,7 +48,7 @@ const modeMessages = {
 .performer-cue-stack__state,
 .performer-cue-stack__reading-status {
   margin: 0;
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
 }
 
 .performer-cue-stack__state {

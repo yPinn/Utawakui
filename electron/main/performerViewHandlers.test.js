@@ -12,6 +12,28 @@ function createIpcMain() {
 }
 
 describe('performer view handlers', () => {
+  it('strips toolbar intent payloads before forwarding and rejects arbitrary controls', () => {
+    const ipcMain = createIpcMain(),
+      sendControlIntent = vi.fn(() => true);
+    registerPerformerViewHandlers({ ipcMain, manager: {}, sendControlIntent });
+    const handle = ipcMain.handlers.get('performer-view:control');
+    expect(
+      handle(null, {
+        action: 'play',
+        revision: 3,
+        trackId: 'a',
+        url: 'private',
+      }),
+    ).toBe(true);
+    expect(sendControlIntent).toHaveBeenCalledWith({
+      action: 'play',
+      revision: 3,
+      trackId: 'a',
+    });
+    expect(() =>
+      handle(null, { action: 'next', revision: 3, trackId: 'a' }),
+    ).toThrow('control intent');
+  });
   it('publishes before opening and delegates read-only window commands', async () => {
     const ipcMain = createIpcMain();
     const manager = {

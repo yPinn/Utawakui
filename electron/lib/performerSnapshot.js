@@ -3,6 +3,10 @@
 const { parseOutputSnapshot } = require('../../shared/outputContract');
 const performerValues = require('../../shared/performerContractValues.json');
 const outputValues = require('../../shared/outputContractValues.json');
+const {
+  isPerformerReadingVariant,
+  normalizePerformerReadingVariant,
+} = require('../../shared/performerViewContract.mjs');
 
 const MAX_TEXT_LENGTH = 2000;
 const MAX_TRACK_ID_LENGTH = 200;
@@ -85,6 +89,36 @@ function parseReadingLine(value, path, lyricText) {
 
 function parseReadings(value, lyrics) {
   const readings = record(value, 'readings');
+  if (
+    readings.variant !== undefined &&
+    !isPerformerReadingVariant(readings.variant)
+  ) {
+    invalid('readings.variant', 'expected off, furigana or romaji');
+  }
+  const availableVariants = readings.availableVariants ?? [];
+  if (
+    !Array.isArray(availableVariants) ||
+    availableVariants.length > 3 ||
+    new Set(availableVariants).size !== availableVariants.length ||
+    !availableVariants.every(isPerformerReadingVariant)
+  ) {
+    invalid(
+      'readings.availableVariants',
+      'expected unique supported reading variants',
+    );
+  }
+  const preparing =
+    readings.preparing === undefined
+      ? false
+      : boolean(readings.preparing, 'readings.preparing');
+  const error =
+    readings.error === undefined
+      ? ''
+      : boundedString(
+          readings.error,
+          'readings.error',
+          MAX_PUBLIC_ERROR_LENGTH,
+        );
   if (!Array.isArray(readings.lines)) {
     invalid('readings.lines', 'expected an array');
   }
@@ -100,6 +134,10 @@ function parseReadings(value, lyrics) {
   }
   return {
     trackId,
+    variant: normalizePerformerReadingVariant(readings.variant),
+    availableVariants: [...availableVariants],
+    preparing,
+    error,
     lines: readings.lines.map((line, index) =>
       parseReadingLine(
         line,

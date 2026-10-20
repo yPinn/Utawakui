@@ -989,6 +989,12 @@ if (!gotSingleInstanceLock) {
     registerPerformerViewHandlers({
       ipcMain,
       manager: performerWindowManager,
+      sendControlIntent: (intent) => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow || mainWindow.isDestroyed()) return false;
+        mainWindow.webContents.send('performer-view:control-intent', intent);
+        return true;
+      },
       sendLyricsOffsetIntent: (intent) => {
         const mainWindow = windowState.getMainWindow();
         if (!mainWindow || mainWindow.isDestroyed()) return false;

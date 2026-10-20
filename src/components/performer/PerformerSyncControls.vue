@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from 'vue';
-import UiButton from '../ui/UiButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiButtonGroup from '../ui/UiButtonGroup.vue';
+import { Minus, Plus, RotateCcw } from '../../icons/index.js';
 
 const props = defineProps({
   offset: {
@@ -41,46 +44,44 @@ const offsetLabel = computed(() => {
       <span v-else role="status">無同步歌詞</span>
       <span v-if="offset.saving" role="status">儲存中</span>
     </div>
-    <div class="performer-sync-controls__actions">
-      <UiButton
+    <UiButtonGroup
+      class="performer-sync-controls__actions"
+      label="歌詞時間偏移"
+    >
+      <UiIconButton
         class="performer-sync-controls__button"
+        :icon="Minus"
+        label="延後 0.1 秒"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'delay')"
-      >
-        延後 0.1 秒
-      </UiButton>
-      <UiButton
+      />
+      <UiIconButton
         class="performer-sync-controls__button"
+        :icon="RotateCcw"
+        label="歸零"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'reset')"
-      >
-        歸零
-      </UiButton>
-      <UiButton
+      />
+      <UiIconButton
         class="performer-sync-controls__button"
+        :icon="Plus"
+        label="提前 0.1 秒"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'advance')"
-      >
-        提前 0.1 秒
-      </UiButton>
-    </div>
-    <div
+      />
+    </UiButtonGroup>
+    <UiNotice
       v-if="offset.available && offset.error"
       class="performer-sync-controls__error"
-      role="alert"
-    >
-      <span>{{ offset.error }}</span>
-      <UiButton
-        class="performer-sync-controls__button"
-        variant="ghost"
-        @click="$emit('action', 'retry')"
-      >
-        重試
-      </UiButton>
-    </div>
+      :message="offset.error"
+      tone="danger"
+      action-label="重試"
+      compact
+      @action="$emit('action', 'retry')"
+    />
   </section>
 </template>
 
@@ -94,8 +95,7 @@ const offsetLabel = computed(() => {
 }
 
 .performer-sync-controls__status,
-.performer-sync-controls__actions,
-.performer-sync-controls__error {
+.performer-sync-controls__actions {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
@@ -122,14 +122,10 @@ const offsetLabel = computed(() => {
 }
 
 .performer-sync-controls__error {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
+  flex-basis: 100%;
 }
 
-.performer-sync-controls__error {
-  flex-basis: 100%;
-  color: var(--ui-color-danger);
+.performer-sync-controls__error :deep(.ui-notice__action) {
+  min-block-size: var(--ui-performer-action-min-block-size);
 }
 </style>

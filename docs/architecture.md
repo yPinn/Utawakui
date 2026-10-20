@@ -61,8 +61,8 @@ HTTP iframe 重用已初始化的 store；立即進入時仍可能有剩餘等�
 Raw Electron `ipcMain` 只在 composition root 交給
 `electron/main/ipcSenderPolicy.js`。所有未特別列出的 channel 預設只接受目前主視窗的
 main frame；Performer 只獲得自身 window controls、snapshot／status、renderer diagnostic、
-三段 reading-scale preference 與固定 lyrics offset action。後兩者是明確 Performer-only
-capability；offset intent 只允許 action、revision 與 track id，main 驗證後轉送主 renderer，
+三段 reading-scale preference、固定 lyrics offset action，以及播放／暫停和讀音三值的窄域 control intent。這些寫入操作是明確 Performer-only
+capability；offset／control intent 只允許 action、revision 與 track id，main 驗證後轉送主 renderer，
 不得包含來源 filename、路徑或任意 offset。驗證同時比對 `event.sender`、`event.senderFrame` 與 owner
 `webContents.mainFrame`，所以同一視窗內的 subframe 也不繼承 preload capability。拒絕事件
 只記錄一次 bounded channel／capability／kind，不跨 IPC 暴露 URL 或 frame details。
@@ -223,6 +223,7 @@ pending request依track／source／document identity合併，切換內容或卸�
 不持有第二份讀音文件或 generation state；`useLyricsReading` 仍驗證 canonical identity、
 合併底層 load 並持有 generation 鎖。字級使用共用 session-only「小／標準／大」偏好，
 對應既有明確 typography tiers，不使用比例縮放，也不新增 persistence。
+Performer snapshot 同時投影同一 `useLyricsReading.variant`；main 驗證 `off`／`furigana`／`romaji`，pure frame 對目前與下一句選取對應讀音，不建立第二份偏好。
 `LyricsDisplayControls` 共用來源、文字、讀音、字級與 busy／error UI；閱讀頁採 stacked，
 編輯頁的 `LyricsPreparationBar` 同樣收進「顯示」popover，不再常駐整排設定。兩者都使用 `UiSelect`、
 `UiSegmentedControl`、`UiIconButton`、`UiHint`／`UiNotice`，重選讀音即可重試。

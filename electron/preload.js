@@ -522,6 +522,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
   publishPerformerSnapshot: (snapshot) =>
     ipcRenderer.invoke('performer-view:publish', snapshot),
   getPerformerViewStatus: () => ipcRenderer.invoke('performer-view:get-status'),
+  onPerformerControlIntent: (callback) => {
+    const listener = (event, intent) => callback(intent);
+    ipcRenderer.on('performer-view:control-intent', listener);
+    return () =>
+      ipcRenderer.removeListener('performer-view:control-intent', listener);
+  },
   onPerformerViewStatus: (callback) => {
     const listener = (event, status) => callback(status);
     ipcRenderer.on('performer-view:status', listener);

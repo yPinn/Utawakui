@@ -40,7 +40,7 @@ const hasRuby = computed(() =>
 <style scoped>
 .performer-lyric-cue {
   min-width: 0;
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
   text-align: center;
 }
 
@@ -68,7 +68,7 @@ const hasRuby = computed(() =>
 
 .performer-lyric-cue__reading {
   margin-top: var(--ui-space-2);
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
   font-size: var(--ui-performer-reading-font-size);
   line-height: var(--ui-type-body-line-height);
 }
@@ -79,12 +79,13 @@ const hasRuby = computed(() =>
 }
 
 .performer-lyric-cue rt {
-  color: var(--ui-color-text-subtle);
-  font-size: var(--ui-performer-ruby-font-size);
+  color: var(--ui-performer-secondary-foreground);
+  font-size: var(--ui-performer-next-ruby-font-size);
   font-weight: var(--ui-type-body-weight);
 }
 
 .performer-lyric-cue--current rt {
   color: var(--ui-color-accent);
+  font-size: var(--ui-performer-ruby-font-size);
 }
 </style>

@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { projectPerformerSnapshot } from './performerSnapshot.js';
 
 describe('projectPerformerSnapshot', () => {
+  it.each(['off', 'furigana', 'romaji'])(
+    'projects the shared reading preference %s',
+    (variant) => {
+      expect(
+        projectPerformerSnapshot({ readings: { variant } }).readings.variant,
+      ).toBe(variant);
+    },
+  );
+
   it('reuses canonical player/queue/lyrics projection and aligns readings', () => {
     const result = projectPerformerSnapshot(
       {

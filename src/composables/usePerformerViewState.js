@@ -14,6 +14,9 @@ export function usePerformerViewState() {
   });
   const error = shallowRef('');
   const readingScale = shallowRef('desk');
+  const controlPending = shallowRef(false);
+  let controlRequests = 0;
+  let playbackPending = false;
 
   let boundaryTimer = null;
   let unsubscribeSnapshot = null;
@@ -151,6 +154,38 @@ export function usePerformerViewState() {
     }
   }
 
+  async function control(action) {
+    const displayed = frame.value;
+    const playbackAction = action === 'play' || action === 'pause';
+    if (!displayed.trackId || (playbackAction && playbackPending)) return false;
+    if (playbackAction) playbackPending = true;
+    controlRequests += 1;
+    controlPending.value = true;
+    try {
+      if (
+        (await bridgeMethod('control')({
+          action,
+          revision: displayed.revision,
+          trackId: displayed.trackId,
+        })) !== true
+      )
+        throw new Error('Performer control context unavailable');
+      error.value = '';
+      return true;
+    } catch (cause) {
+      error.value = reportError(
+        cause,
+        'control',
+        '主控制台目前無法完成操作，請再試一次。',
+      );
+      return false;
+    } finally {
+      controlRequests -= 1;
+      controlPending.value = controlRequests > 0;
+      if (playbackAction) playbackPending = false;
+    }
+  }
+
   onMounted(async () => {
     try {
       unsubscribeSnapshot = bridgeMethod('onSnapshot')(applySnapshot);
@@ -179,6 +214,8 @@ export function usePerformerViewState() {
     error,
     frame,
     readingScale,
+    controlPending,
+    control,
     windowState,
     adjustLyricsOffset,
     close: () => runWindowCommand('close'),

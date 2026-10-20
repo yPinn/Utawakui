@@ -66,7 +66,7 @@ const statusLabels = {
 }
 
 .performer-track-context__copy span {
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
 }
@@ -77,7 +77,7 @@ const statusLabels = {
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: var(--ui-space-3);
-  color: var(--ui-color-text-subtle);
+  color: var(--ui-performer-secondary-foreground);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
