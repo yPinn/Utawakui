@@ -91,9 +91,9 @@ BGM 使用獨立控制面，不共用也不擴張底部 `PlayerBar`。`PlayerBar
 播放器的 artwork、metadata、progress、transport、音量與演出工具；BGM 不得讓其中任何
 控制變成雙重用途或依 lane 切換語意。
 
-`BgmPlayer.vue` 是演出安排的場間音樂組合，重用 `BgmCurrentSource`、`BgmPlayerTransport`、`BgmTrackPicker` 與 `bgmPresentation`。App 在生命週期開始初始化唯一 `useBgmSession`；頁面及 Dock 的 mount／unmount 只改 presentation，不初始化、停止或重建 deck。主頁顯示來源、單一 operational status、播放／暫停、Talk 與立即停止；音量／進度由同列圖示開啟共用 UiPopover，Escape 返回觸發按鈕；選曲按需展開。跨頁只在 BGM 輸出、交接或錯誤時由既有安排 Dock 提供狀態返回入口、Talk 與急停；主頁可見時不重複顯示。沒有 titlebar BGM disclosure、浮動面板、拖曳或 Pin，也不擴張 PlayerBar。
+`BgmPlayer.vue` 是演出安排的場間音樂組合，重用 `BgmCurrentSource`、`BgmPlayerTransport`、`BgmTrackPicker` 與 `bgmPresentation`。App 在生命週期開始初始化唯一 `useBgmSession`；頁面及 Dock 的 mount／unmount 只改 presentation，不初始化、停止或重建 deck。主頁與安排 Dock 共用來源、單一 operational status、播放／暫停、Talk 與立即停止；音量／進度由同列圖示開啟共用 UiPopover，Escape 返回觸發按鈕；選曲按需展開。安排 Dock 透過固定 footer 呈現，待命、切頁及 tabs 切換時都保留，清單獨立捲動。沒有 titlebar BGM disclosure、浮動面板、拖曳或 Pin，也不擴張 PlayerBar。
 
-主頁的 source picker 與音量／進度分開展開。選曲只取代單一 BGM 來源與位置，不開始播放；成功後收起搜尋並把仍在 picker 的鍵盤焦點回到來源按鈕。跨頁快捷因急停而退場時，把其內焦點交回既有安排 Dock 模式按鈕，不搶走外部焦點。Talk 與急停始終沿用相同 transport variant，不複製 phase map 或按鈕條件。
+主頁與 Dock 的 source picker 和音量／進度分開展開。選曲只取代單一 BGM 來源與位置，不開始播放；成功後收起搜尋並把仍在 picker 的鍵盤焦點回到來源按鈕。Dock 急停後仍保留固定控制；Talk 與急停沿用相同 transport，不複製 phase map 或按鈕條件。
 
 播放權限不依賴 OBS live／record。BGM 不進一般 Queue、演出 occurrence、統計或公開畫面；Space、media keys 與既有播放快捷仍只控制演唱播放器。LIVE／REC 由既有 titlebar 呈現，不在 BGM 重複資訊。只顯示頁面、改來源、收合 Dock、切頁與清除安排都不隱式播放或刪除 BGM 設定；若清除停止正在演出的曲目，仍由既有 terminal handoff 決定恢復。
 
@@ -397,8 +397,8 @@ capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
 23. inactive 可由演出安排中的相同 transport 明確試播 monitor；不得宣稱 OBS capture 已驗證。音量／進度與本機搜尋按需展開，不遮蔽 Talk／急停。
 24. live／record 模式變化保留既有 coordinator policy，不建立第二份頁面 session 或 deck；第一次發聲仍需明確 intent。
 25. App 啟動離線不建立 reconnecting session，confirmed inactive 沿用原 session-exit 與取消 pending transition 邊界。
-26. 主頁完整控制與安排 Dock 快捷共用 presentation／actions，Dock 只在跨頁且輸出、交接或錯誤時投影；不強制展開 Dock。
-27. 切頁及 mount／unmount 不改音訊。成功選曲及快捷退場有明確焦點返回，不新增浮動外框／移動／Pin。
+26. 主頁與安排 Dock 底欄共用完整 presentation／actions；待命及主頁可見時保留底欄，不強制展開 Dock。
+27. 切頁及 mount／unmount 不改音訊。成功選曲有明確焦點返回，不新增浮動外框／移動／Pin。
 28. 曲名單行截斷，phase／deferred restore／public error 使用同一句 operational status，Play／Pause 不依待唱順位命名。
 29. Text placeholder、unreviewed、unlinked 或 source-unavailable item 不能進入 prepared handoff；
     其他 ready item 與 BGM 不受影響，operator 可回到 preparation 修正或 skip。
@@ -410,7 +410,7 @@ capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
 
 ## 後續文件與實作門檻
 
-- UI placement 已整合於演出安排，跨頁只保留既有 Dock 的必要快捷；可見 Electron 視窗與 native media handoff 另記驗收證據。
+- UI placement 已整合於演出安排及 Dock 固定底欄；可見 Electron 視窗與 native media handoff 另記驗收證據。
 - Prepared performance item、session-local label、verification 與 draft persistence 的 owner 依
   [演出場次準備契約](performance-session-preparation.md)；BGM coordinator 只 snapshot current
   eligible revision 並執行互斥 handoff，不建立第二份 plan state。

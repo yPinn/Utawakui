@@ -10,7 +10,7 @@ import UiTabs from '../ui/UiTabs.vue';
 
 const PERFORMANCE_TOOLS = Object.freeze([
   Object.freeze({ id: 'live-lyrics', label: '歌詞' }),
-  Object.freeze({ id: 'session', label: '播放安排' }),
+  Object.freeze({ id: 'session', label: '演出安排' }),
 ]);
 
 const { performanceTool, selectPerformanceTool } = useAppView();
@@ -84,6 +84,8 @@ onMounted(initializeLibrary);
 }
 
 .performance-workspace__session-boundary {
+  container-type: size;
+  container-name: performance-session-boundary;
   display: flex;
   flex-direction: column;
   min-height: 0;

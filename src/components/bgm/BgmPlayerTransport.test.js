@@ -150,3 +150,21 @@ describe('BgmPlayerTransport', () => {
     expect(source).toContain("emit('commitPosition')");
   });
 });
+
+describe('session and Dock reuse one BGM safety transport', () => {
+  it('keeps the fixed Dock transport complete and opens details on demand', async () => {
+    const html = await renderToString(
+      createSSRApp(BgmPlayerTransport, {
+        variant: 'dock',
+        phase: 'bgm-playing',
+        audibleLane: 'bgm',
+        currentTrack: { id: 'a', title: 'BGM' },
+      }),
+    );
+    expect(html).toContain('Talk');
+    expect(html).toContain('立即停止 BGM（不淡出）');
+    expect(html).not.toContain('BGM 進度');
+    expect(html).toContain('BGM 音量與進度');
+    expect(html).toContain('暫停 BGM');
+  });
+});

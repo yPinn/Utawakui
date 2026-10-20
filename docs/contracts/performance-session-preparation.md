@@ -21,7 +21,7 @@ playlist／album 名稱，不是播放權限，也不要求先建立直播場次
 | Performance session playback coordinator | 將明確 item start 與 audio request／playbackRevision 關聯，協調單一 NP 與下一首          |
 | usePlaybackTransport                     | PlayerBar、系統媒體鍵、自然 ended 的共用分派；安排作用時使用安排順序，其餘使用一般 Queue |
 | OBS history                              | 直播／錄影的附加時間標記與章節，不是本地完成紀錄的權威                                   |
-| Public projection                        | 沿用現有 player／lyrics／queue 的 gated projection，不直接發布 operator 的待播安排       |
+| Public projection                        | 沿用現有 player／lyrics／queue 的 gated projection，不直接發布 operator 的待唱安排       |
 
 安排不複製一般 playback Queue 的去重模型；它保有 occurrence identity，但與一般 Queue
 共用播放器與 transport 分派。同一時刻只有一個下一首決策 owner。安排播放中，PlayerBar
@@ -51,7 +51,7 @@ placeholder／unavailable 必須先修復。正常 ready 不增加重複確認�
 
 | 進度        | 行為                                                                         |
 | ----------- | ---------------------------------------------------------------------------- |
-| queued      | 待播，可排序、開始或明確略過                                                 |
+| queued      | 待唱，可排序、開始或明確略過                                                 |
 | playing     | 已收到該 occurrence 的 confirmed audio playing，或使用者明確開始 manual item |
 | completed   | 自然 ended，或使用者明確標記完成；暫停與提前切歌不算完成                     |
 | skipped     | 尚未開始的 item 被明確略過                                                   |
@@ -59,7 +59,7 @@ placeholder／unavailable 必須先修復。正常 ready 不增加重複確認�
 
 Main 同時最多允許一筆 playing。queued 只可轉 playing／skipped；playing 可轉
 completed／interrupted；結果不直接改回 queued。
-再次加入建立新的 occurrence 並放到待播尾端，保留原紀錄。
+再次加入建立新的 occurrence 並放到待唱尾端，保留原紀錄。
 
 Renderer 為每次開始建立 request identity，並比對 canonical track id 及 playbackRevision。
 按下播放、BGM pre-roll 或 buffering 不代表 confirmed playing；只有 playing 事件才寫入進度。
@@ -67,7 +67,7 @@ Pause、seek、buffering 與 resume 保持同一 occurrence。重複／過期 en
 
 連續播放預設開啟，自然完成或標記完成後接續下一個 ready item；關閉則單首後停止。
 略過或停止本身不自動開始下一首；明確下一首會中止目前項目並開始下一個 ready item。
-播放失敗不記完成、不自動前進；未確認開始的失敗 item 留在待播。
+播放失敗不記完成、不自動前進；未確認開始的失敗 item 留在待唱。
 保存進度失敗時顯示可恢復錯誤，不冒稱完成或繼續自動前進。
 
 Manual 只代表外部音訊或自行伴奏，以明確開始／完成操作管理，不送入 HTML audio、不假造播放時間。
@@ -76,9 +76,13 @@ BGM 保持既有明確啟用與音訊互斥流程，OBS 狀態不成為本地播
 
 ## Folder 介面
 
-上方為精簡的單曲 NP 橫列，同時只能顯示零或一首曲目及真實播放階段。
-下方主要空間是待播與已完成兩個累積清單，使用各自的 UiScrollLayout；標題與數量不進清單捲動。
-略過／中止以明確結果標示，不加入已完成數量。窄版壓縮單曲區與分區間距，保留兩個並排清單的可用高度。
+主頁名為「演出安排」。實際來源（無來源時省略上下文名稱）、總項目數與已知總長由共用工具列集中呈現；未知時長、略過與中止數由同列「安排明細」圖示開啟 UiPopover，不重複分區計數。欄位 validation 留在 Modal，不讓草稿錯誤使主頁／Dock 統計失效。
+
+PerformanceSessionCurrent 同時供主頁與 Dock 使用，共用 occurrence snapshot、phase 與動作 guard。主頁將目前項目、連續播放與場間音樂放在清單之前。目前項目的封面／文字與 BGM 起線一致，動作對齊同一右側邊緣；空態只顯示提示與開始操作，不增加可見標題。BGM 沿用原音訊 owner，不列入安排項目、時長或紀錄。來源匯入／取代與清除收進最右的 UiActionMenu，保留原確認與 danger 語意。
+
+下方是待唱及完整演出紀錄（completed／skipped／interrupted），寬版 3:2，優先驗證預設 1280×850 Compact 與 280px Dock；Board 依實際容器寬度在 43rem 以下使用 UiTabs。各清單維持自己的 UiScrollLayout，標題與計數不進清單捲動。縮窄時保留已在紀錄區的焦點；搜尋與手動新增共用一列，低寬可換行；搜尋結果有獨立標題與數量，不取代待唱清單。紀錄的再次加入在既有選單中，不保留第二個壓縮曲名的行內操作。
+
+窄視窗的演出安排與開啟的 Dock 各有實際欄位，不以 overlay 遮住主頁操作；一般頁維持原 shell 行為。極短的 session boundary（20rem 以下）沿用 Folder sheet 最小內容高度與工作區 UiScrollLayout，保證控制和清單可捲動到達，不把清單擠為零高度。其他尺寸維持 bounded panes。
 
 曲目使用 UiTrackRow，從 canonical track 解析 artwork／metadata，再套 occurrence 顯示名稱。
 按鈕、狀態、搜尋、欄位、捲動及編輯視窗沿用正式 primitives 與現有 semantic tokens。
@@ -88,11 +92,11 @@ Folder 紙面與 ledger rules 提供分區，不複製 track anatomy、不增加
 搜尋曲庫直接加入 ready item，不強制進入 editor。現有 playlist／album 可經明確取代確認建立安排。
 移除／清除只影響本安排；清除／取代會先停止目前項目，main 也拒絕破壞性修改仍在 playing 的 item。
 正在播放與已有結果的項目不直接編輯名稱或重新連結；目前顯示使用 start snapshot。
-需要不同名稱時再次加入待播後調整，避免改寫本次或既有結果。
+需要不同名稱時再次加入待唱後調整，避免改寫本次或既有結果。
 
 ## Persistence、恢復與公開資料
 
-重啟保留待播、已完成、略過、中止及 review cursor。Main 對每個 library 在該 process
+重啟保留待唱、已完成、略過、中止及 review cursor。Main 對每個 library 在該 process
 第一次操作時執行一次 recovery，將殘留 playing 記為 interrupted；一般 refresh 不做 recovery。
 不自動發聲、不自動開始下一首、不恢復假的 currently playing。
 
@@ -104,7 +108,7 @@ queue.document 與 state.snapshot；`performanceSessionOutput.js` 只在安排�
 時從既有 plan progress 與 runtime current snapshot 產生 presentation，沒有另一份可寫 queue。
 sourceName 沿用來源清單名稱，無來源時為「播放安排」；不新增獨立可編輯的場次標題。
 僅 confirmed playing 的目前項目與 completed 項目使用該 occurrence 的 displayTitle／displayArtist。
-同曲多次完成保留多筆，skipped／interrupted／queued 不列為完成，也不公開待播草稿。
+同曲多次完成保留多筆，skipped／interrupted／queued 不列為完成，也不公開待唱草稿。
 本機曲目仍以 canonical track id 解析 media／artwork／lyrics timing；manual 使用 itemId，
 無 audio clock／duration。既有100筆公開上限保留目前與最近完成紀錄。外部播放接手後恢復一般 Queue 投影。
 OBS 章節仍是原有獨立時間標記服務，本次不遷移其歷史檔或宣稱與 completed 同義。
@@ -112,47 +116,61 @@ OBS 章節仍是原有獨立時間標記服務，本次不遷移其歷史檔或�
 ## Right Dock
 
 沿用 Queue surface，保留一般佇列／最近播放 tabs，另以 MicVocal 獨立按鈕切換播放安排 variant，隨時可手動開啟。
-安排自帶待播／已完成 tabs，與一般模式 tabs 共用 Dock header 的位置，兩者都使用 UiTabs。
+安排 Dock 自帶「待唱清單／演出紀錄」tabs（後者僅為 completed 子集；略過／中止在主頁演出紀錄），與一般模式 tabs 共用 Dock header 的位置，兩者都使用 UiTabs。
 arrangementTab 由 useAppRightDock 持有，header 與側欄 panels 共用它；切換模式／收合不清除選擇。
-待播 tab 的唯一 NP 使用 PerformanceSessionCurrent，直接重用 QueueSection／QueueTrackButton 的現正播放區，
+待唱 tab 的唯一 NP 使用 PerformanceSessionCurrent，直接重用 QueueSection／QueueTrackButton 的現正播放區，
 保留選取、封面播放／暫停、Enter／雙擊與更多選項，並以既有 UiButton 顯示場次停止／標記完成。
 顯示名稱使用 occurrence snapshot，artwork 來自 canonical 曲目；播放／暫停與狀態仍來自唯一播放器。
 manual 顯示手動進行中，不提供假音訊操作；載入時停止仍可取消，未確認開始前不能標記完成。
-完成、停止與空狀態的播放第一首沿用原 playback owner，不依賴 OBS 或直播／錄製。
+完成、停止與空狀態的開始播放沿用原 playback owner，不依賴 OBS 或直播／錄製。
 QueueSection 新增可選的歌手文字與播放停用／標籤，普通 Queue 預設行為維持原樣。
-Dock header 下方以 AppRightDockPanel 的可選 summary slot 固定顯示來源與精簡統計，待播／已完成共用。
+Dock header 下方以 AppRightDockPanel 的可選 summary slot 只顯示總數與時長，待唱／已完成共用。
+有未知時長時標示「已知」，全未知顯示「時長未知」；來源與各狀態／未知時長數明細在 Folder 主頁呈現。
+兩個 surface 共用 PerformanceSessionSummary 與同一份純投影，不新增播放或統計狀態 owner。
 performanceSessionSummary 只投影既有 plan occurrence、runtime current id 與曲庫 duration；
-同曲多次排入各算一筆，顯示總數、已知曲目總長與待播／目前播放／完成數，略過與中止分列。
-載入中的 current 從待播移除但尚未算完成，已提交的 terminal result 優先，不重複計數。
+同曲多次排入各算一筆，顯示總數、已知曲目總長與待唱／目前播放／完成數，略過與中止分列。
+載入中的 current 從待唱移除但尚未算完成，已提交的 terminal result 優先，不重複計數。
 manual、缺少曲庫資料、零／負／非有限或非數字的 duration 列為時長未知；已有有效長度的缺檔項目仍可計長度。
-未知時長不補零，全部未知時已知總長顯示「—」；空安排為 0:00。總長包含各狀態的已知曲目長度，並非實際演唱耗時。
-待播序號從 1 依目前順序顯示，排序／移除後重算；完成先按完成順序編號，再以最新在上顯示，略過／中止不占完成序號。
+未知時長不補零，全部未知時主頁已知總長顯示「—」；空安排為 0:00。總長包含各狀態的已知曲目長度，並非實際演唱耗時。
+待唱序號從 1 依目前順序顯示，排序／移除後重算；完成先按完成順序編號，再以最新在上顯示，略過／中止不占完成序號。
 序號以 QueueTrackButton 的可選 ordinal／ordinalLabel 使用 UiTrackRow lead；RecentPlaybackList 轉送 entry 序號。
 普通 Queue／Recent 不傳序號時不增加 lead 或空白欄位。序號是目前清單位置，不是 durable occurrence identity，刪除紀錄後會重算。
 已完成 tab 比照 Recent，是獨立歷史清單，使用同一個 RecentPlaybackList／QueueTrackButton 與 Dock 單一 scroll，
 不重複展示 NP、連續播放、結果標題／數量、ordinal 或狀態 badge。僅列 completed，最新在上，itemId 為 entry key；
 同曲多次完成不合併，保留該次名稱與歌手、canonical artwork。略過／中止仍可在主區結果清單查看。
-選取、封面重播與更多選項沿用 Recent 互動；重播經既有 duplicate intent 建立新 queued occurrence，再交給原 playback owner 開始，
-原 completed 不變。新增 ID 只從該次序列化 main response 解析，不從未來的 renderer snapshot 猜測。
-手動項目以「開始」明確啟動，缺檔／未 ready 項目保留可見但不可直接播放；選單提供再次加入待播及移除該次紀錄。
+選取與更多選項沿用 Recent 外觀；封面是純圖片，不提供播放按鈕、Enter 或雙擊重播。
+選單提供再次加入待唱及移除該次紀錄；再次加入僅經既有 duplicate intent 建立 queued occurrence，不立即播放，原 completed 不變。
+手動與缺檔／未 ready 項目保留可見；一般 Recent 預設播放能力不變。
 一般 Recent 的資料、預設文案、播放／藝人導航與 canonical metadata 操作不因重用而改變。
 既有 PlanList 的 track row、排序、略過、移除與再次加入都呼叫相同 owner；Dock 不另持有播放進度。
-側欄待播使用 PerformanceSessionQueueList，直接沿用 QueueTrackButton 的選取、封面開始／播放、Enter／雙擊、
-hover／focus 更多選項與拖放指示。無 ordinal、獨立 play trail 或重製 track anatomy；主區仍使用原 PlanList。
-canonical artwork 與 occurrence 顯示名稱分離，缺檔／未 ready 禁止播放，manual 以「開始」明確執行；
+側欄待唱使用 PerformanceSessionQueueList，沿用 QueueTrackButton 的選取、hover／focus 更多選項與拖放指示。
+封面為純圖片，移除封面、Enter 及雙擊的直接開始入口；不增加獨立 play trail 或重製 track anatomy，主區仍使用原 PlanList。
+canonical artwork 與 occurrence 顯示名稱分離，缺檔／未 ready 與 manual 項目維持原資料邊界；
 相關提示使用既有第二行文字，不另建狀態色或控制樣式。
-待播 selection／menu／drag 都以 itemId 識別，同曲多次排入不合併。
+待唱 selection／menu／drag 都以 itemId 識別，同曲多次排入不合併。
 拖放沿用 useDragReorder 的 before／after 與 action exclusion，提交固定 reorder-item intent
 （itemId／targetItemId／position）；main 以最新文件確認兩者仍 queued，在同一次原子 mutation 完成搬移。
 無效／已開始／已有結果的 target 拒絕；不以 renderer 連續多次 ±1 寫入模擬拖放。選單上下移、複製、略過與移除仍用原操作。
-Folder 主區維持既有搜尋、單曲 NP 與待播／已完成雙清單，不因 Dock 展開或模式切換而替換內容。
-Workspace toolbar 的獨立按鈕只顯示／收合播放安排側欄，不重排主區，也不開始歌曲。
-其他頁面與 Dock 收合不停止播放。開始一段安排 ownership 顯示安排 Dock，連續下一首不反覆搶回使用者選擇。
+Folder 主區保留搜尋、共用目前項目、場間音樂與待唱／演出紀錄，不因 Dock 展開或模式切換而替換內容。
+安排 Dock 底部固定呈現場間音樂來源與 transport，兩個 tabs 及主頁可見時都保留；清單捲動與 footer 分開。
+演出模式使用低調暖紅細框；只有 OBS ready／degraded 且對應輸出 active、狀態讀取沒有錯誤時，才加強框色與顯示 LIVE／REC。
+OBS 斷線或讀取失敗清除輸出強調，本地播放及 BGM 不因此停止或開始。
+Workspace toolbar 的獨立按鈕只顯示／收合播放安排側欄，依可用寬度自然重排，但不開始歌曲。
+主頁可見時，Dock 不重複目前項目、連續播放與 operational Notice，只保留精簡摘要及清單；切至其他頁面才恢復既有快捷控制。其他頁面與 Dock 收合不停止播放。開始一段安排 ownership 顯示安排 Dock，連續下一首不反覆搶回使用者選擇。
 
 OBS 設定提供預設關閉的「OBS 連線後顯示播放安排」，由 main 保存 bounded boolean。
 它只消費既有 OBS WebSocket ready／degraded 狀態，不另掃描系統程序；首次 ready 或明確開啟偏好時顯示，
 同一連線的時鐘更新、degraded recovery 不再打開。手動收合／切換優先；重新連線可再次顯示。
 關閉偏好、OBS 斷線或未直播／未錄製都不停止本地播放，也不自動開始歌曲或啟用 Output gate。
+
+## 表單與動作文案
+
+播放安排的新增／設定表單經 PerformanceSessionReviewPane 組合 UiModal：使用 default 寬度、small 高度上限與自然高度。
+標題、body scroll、內距、固定 footer、鍵盤焦點與保存中 dismissal lock 皆由 UiModal 擁有。
+手動新增只保留 shell 標題與一段用途說明；不再疊加內層捲動、重複標題或固定空白高度。
+
+主頁與 Dock 的安排啟動按鈕共用「開始播放」動作描述，不以「第一首」綁定當前清單順位。
+可用性仍由原 canStart／busy 管理；播放／暫停及顯示／收合等真正不同的動作保留各自準確名稱。
 
 ## 驗收
 

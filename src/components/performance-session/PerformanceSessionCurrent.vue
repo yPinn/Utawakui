@@ -4,8 +4,15 @@ import { Check, Play, Pause, Square } from '../../icons/index.js';
 import QueueSection from '../queue/QueueSection.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiHint from '../ui/UiHint.vue';
 
 const props = defineProps({
+  variant: {
+    type: String,
+    default: 'dock',
+    validator: (value) => ['dock', 'workspace'].includes(value),
+  },
   current: { type: Object, default: null },
   playerTrack: { type: Object, default: null },
   tracks: { type: Array, default: () => [] },
@@ -119,8 +126,41 @@ watch(
 </script>
 
 <template>
-  <div class="performance-session-current">
+  <div
+    class="performance-session-current"
+    :class="[
+      `performance-session-current--${variant}`,
+      { 'performance-session-current--empty': !track },
+    ]"
+  >
+    <section
+      v-if="variant === 'workspace'"
+      class="performance-session-current__workspace"
+      aria-label="目前項目"
+    >
+      <ul v-if="track" class="performance-session-current__identity">
+        <UiTrackRow
+          :track="track"
+          :artist="track.artist || phaseLabel"
+          current
+          hide-duration
+          overflow="ellipsis"
+        >
+          <template #artist>
+            <span v-if="track.artist">{{ track.artist }} · </span>
+            <span
+              class="performance-session-current__phase"
+              role="status"
+              aria-live="polite"
+              >{{ phaseLabel }}</span
+            >
+          </template>
+        </UiTrackRow>
+      </ul>
+      <UiHint v-else>尚未開始播放</UiHint>
+    </section>
     <QueueSection
+      v-else
       title="現正播放"
       menu-context="arrangement-current"
       empty-text="尚未開始播放"
@@ -150,7 +190,17 @@ watch(
         >
       </template>
     </QueueSection>
-    <div v-if="current || !track" class="performance-session-current__actions">
+    <div
+      v-if="current || !track || variant === 'workspace'"
+      class="performance-session-current__actions"
+    >
+      <UiButton
+        v-if="variant === 'workspace' && track && !manual"
+        :icon="phase === 'playing' ? Pause : Play"
+        :disabled="playbackDisabled"
+        @click="toggle"
+        >{{ phase === 'playing' ? '暫停' : '播放' }}</UiButton
+      >
       <template v-if="current">
         <UiButton :icon="Square" @click="emit('stop')">停止</UiButton>
         <UiButton
@@ -162,13 +212,14 @@ watch(
         >
       </template>
       <UiButton
-        v-else
+        v-else-if="!track"
         :icon="Play"
         variant="accent"
         :disabled="busy || !canStart"
         @click="emit('startFirst')"
-        >播放第一首</UiButton
+        >開始播放</UiButton
       >
+      <slot name="options" />
     </div>
     <UiActionMenu
       :open="!!menuAnchor"
@@ -195,6 +246,36 @@ watch(
 .performance-session-current__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--ui-space-2);
+}
+
+.performance-session-current--workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ui-space-3);
+}
+.performance-session-current__workspace {
+  min-inline-size: 0;
+}
+.performance-session-current__identity {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.performance-session-current--workspace .performance-session-current__actions {
+  justify-content: flex-end;
+}
+@container performance-session-workspace (max-width: 32rem) {
+  .performance-session-current--workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container performance-session-workspace (min-width:24rem) and (max-width:32rem) {
+  .performance-session-current--workspace.performance-session-current--empty {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
 }
 </style>

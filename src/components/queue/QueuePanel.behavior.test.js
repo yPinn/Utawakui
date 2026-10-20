@@ -70,7 +70,7 @@ const panelCss = compileScopedStyles(source, 'QueuePanel.vue');
 describe('QueuePanel shared Dock content', () => {
   it('keeps the original tabs and adds a separate button for arrangement switching', () => {
     expect(source).not.toContain('UiSelect');
-    expect(source).toContain('切換播放安排');
+    expect(source).toContain('切換演出安排');
     expect(source).toContain('切換一般佇列');
     expect(source).toContain(':icon="MicVocal"');
     expect(source).toContain(
@@ -248,10 +248,10 @@ describe('QueuePanel shared Dock content', () => {
     expect(sectionSource).toContain(':active="track.id === selectedTrackId"');
     expect(sectionSource).toContain("'activateTrack'");
     expect(rowSource).toContain(
-      '@row-dblclick="interactive && !playbackDisabled && emit(\'activate\', track)"',
+      '@row-dblclick="interactive && canPlay && emit(\'activate\', track)"',
     );
     expect(rowSource).toContain(
-      '@artwork-click="!playbackDisabled && emit(\'togglePlayback\', track)"',
+      '@artwork-click="canPlay && emit(\'togglePlayback\', track)"',
     );
     expect(rowSource).not.toContain('title-clickable');
     expect(rowSource).not.toContain('titleClick');

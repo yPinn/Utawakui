@@ -31,6 +31,12 @@ describe('Performance Session Folder composition', () => {
     expect(source).toContain('<PerformanceSessionReviewPane');
     expect(source).toContain('#actions');
     expect(source).not.toContain('UiScrollRegion');
+    if (file.includes('Manual')) {
+      expect(source).toContain('title="新增手動項目"');
+      expect(source).not.toContain('<h2');
+      expect(source).toContain('<UiHint>');
+      return;
+    }
     expect(source).toContain('var(--ui-type-title-size)');
     expect(source).toContain('var(--ui-type-title-weight)');
     expect(source).toContain('var(--ui-type-title-line-height)');
@@ -48,7 +54,7 @@ describe('Performance Session Folder composition', () => {
         render: () =>
           h(
             PerformanceSessionReviewPane,
-            { bodyLabel: '項目內容' },
+            { title: '曲目設定', bodyLabel: '項目內容' },
             {
               default: () => h('p', 'Scrollable form'),
               actions: () => h('button', 'Save'),
@@ -57,14 +63,17 @@ describe('Performance Session Folder composition', () => {
       }),
     );
     expect(html).toContain('aria-label="項目內容"');
-    expect(html).toContain('tabindex="0"');
-    expect(html).toContain('ui-scroll-layout__content');
+    expect(html).toContain('role="dialog" tabindex="-1"');
+    expect(html).toContain('ui-modal__body-viewport');
     expect(html.indexOf('Scrollable form')).toBeLessThan(
-      html.indexOf('performance-session-review-pane__actions'),
+      html.indexOf('ui-modal__footer'),
     );
     const source = read('./PerformanceSessionReviewPane.vue');
-    expect(source).toContain('var(--ui-scrollbar-visual-reserve)');
-    expect(source).toContain('var(--ui-scroll-layout-reserve-inline-end)');
+    expect(source).toContain('<UiModal');
+    expect(source).toContain('#footer');
+    expect(source).toContain('max-block-size="small"');
+    expect(source).not.toContain('fixed-height');
+    expect(source).not.toContain('<UiScrollLayout');
     expect(source).not.toContain('var(--ui-scrollbar-lane-size)');
   });
 

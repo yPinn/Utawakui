@@ -2,6 +2,7 @@
 import { shallowRef, useTemplateRef } from 'vue';
 import AppRightDockHeader from './AppRightDockHeader.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -63,6 +64,12 @@ defineExpose({ scrollTo });
         <slot />
       </div>
     </UiScrollLayout>
+    <footer v-if="$slots.footer" class="app-right-dock-panel__footer">
+      <UiSeparator />
+      <div class="app-right-dock-panel__footer-content">
+        <slot name="footer" />
+      </div>
+    </footer>
   </section>
 </template>
 
@@ -115,6 +122,13 @@ defineExpose({ scrollTo });
   display: flex;
   flex-direction: column;
   gap: var(--ui-right-dock-section-gap);
+}
+.app-right-dock-panel__footer {
+  flex: 0 0 auto;
+  min-inline-size: 0;
+}
+.app-right-dock-panel__footer-content {
+  padding: var(--ui-space-2) var(--ui-right-dock-content-inset);
 }
 .app-right-dock-panel__workspace {
   display: flex;

@@ -48,3 +48,12 @@ describe('AppFolderWorkspaceToolbar', () => {
     expect(source).not.toMatch(/border-radius|background:/u);
   });
 });
+
+it('omits invented context and its empty summary when only facts are available', async () => {
+  const html = await render(
+    { context: '' },
+    { status: () => h('span', '共 2 項') },
+  );
+  expect(html).toContain('共 2 項');
+  expect(html).not.toContain('app-folder-workspace-toolbar__summary');
+});

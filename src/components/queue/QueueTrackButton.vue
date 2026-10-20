@@ -15,6 +15,7 @@ const props = defineProps({
   menuOpen: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
   playbackDisabled: { type: Boolean, default: false },
+  playbackActions: { type: Boolean, default: true },
   playbackLabel: { type: String, default: undefined },
   artistText: { type: String, default: undefined },
   ordinal: {
@@ -48,6 +49,9 @@ const artworkActionLabel = computed(
   () =>
     props.playbackLabel ??
     `${props.playing ? '暫停' : '播放'}：${props.track.title}`,
+);
+const canPlay = computed(
+  () => props.playbackActions && !props.playbackDisabled,
 );
 
 const DRAG_EXCLUDED_ACTIONS =
@@ -93,9 +97,9 @@ function handleDragEnd(event) {
     :interactive="interactive"
     state-surface
     :state-surface-active="menuOpen"
-    :activate-on-enter="interactive && !playbackDisabled"
+    :activate-on-enter="interactive && canPlay"
     :action-label="interactive ? `選取：${track.title}` : undefined"
-    :artwork-clickable="!playbackDisabled"
+    :artwork-clickable="canPlay"
     :artwork-label="artworkActionLabel"
     hide-duration
     overflow="ellipsis"
@@ -103,9 +107,9 @@ function handleDragEnd(event) {
     thumb-decoding="async"
     :draggable="draggable"
     @row-click="interactive && emit('select', track)"
-    @row-dblclick="interactive && !playbackDisabled && emit('activate', track)"
-    @activate="interactive && !playbackDisabled && emit('activate', track)"
-    @artwork-click="!playbackDisabled && emit('togglePlayback', track)"
+    @row-dblclick="interactive && canPlay && emit('activate', track)"
+    @activate="interactive && canPlay && emit('activate', track)"
+    @artwork-click="canPlay && emit('togglePlayback', track)"
     @contextmenu.prevent.stop="emit('openMenu', { track, event: $event })"
     @pointerdown="handlePointerDown"
     @pointerup="resetDragOrigin"
@@ -123,7 +127,7 @@ function handleDragEnd(event) {
         >{{ ordinal }}</span
       >
     </template>
-    <template v-if="!playbackDisabled" #artworkOverlay>
+    <template v-if="canPlay" #artworkOverlay>
       <RightDockTrackArtworkCue :playing="playing" />
     </template>
     <template #artist>

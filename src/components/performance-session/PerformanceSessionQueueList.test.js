@@ -37,7 +37,7 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
         entry('two', 'Encore occurrence'),
       ],
     });
-    expect(html.match(/class="ui-track__artwork-action"/g)).toHaveLength(2);
+    expect(html).not.toContain('class="ui-track__artwork-action"');
     expect(
       html.match(/class="[^"]*queue-track right-dock-track /g),
     ).toHaveLength(2);
@@ -49,10 +49,10 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
     expect(html.match(/draggable="true"/g)).toHaveLength(2);
     expect(html.match(/aria-haspopup="menu"/g)).toHaveLength(2);
     expect(html).not.toMatch(/performance-session-plan-entry__ordinal|ui-chip/);
-    expect(html).toContain('aria-label="待播第 1 首"');
-    expect(html).toContain('aria-label="待播第 2 首"');
+    expect(html).toContain('aria-label="待唱第 1 首"');
+    expect(html).toContain('aria-label="待唱第 2 首"');
     const rows = html.match(/<li\b[\s\S]*?<\/li>/g);
-    expect(rows[0]).toContain('待播第 1 首');
+    expect(rows[0]).toContain('待唱第 1 首');
     expect(rows[0]).toContain('First occurrence');
   });
   it('renumbers the displayed pending order after reorder or removal', async () => {
@@ -63,13 +63,13 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
       ],
     });
     const rows = html.match(/<li\b[\s\S]*?<\/li>/g);
-    expect(rows[0]).toContain('待播第 1 首');
+    expect(rows[0]).toContain('待唱第 1 首');
     expect(rows[0]).toContain('Encore occurrence');
-    expect(rows[1]).toContain('待播第 2 首');
+    expect(rows[1]).toContain('待唱第 2 首');
     expect(rows[1]).toContain('First occurrence');
     const single = await render({ items: [entry('two', 'Encore occurrence')] });
-    expect(single).toContain('待播第 1 首');
-    expect(single).not.toContain('待播第 2 首');
+    expect(single).toContain('待唱第 1 首');
+    expect(single).not.toContain('待唱第 2 首');
   });
   it('keeps manual starts explicit and missing tracks visible without false playback', async () => {
     const html = await render({
@@ -82,11 +82,11 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
         entry('gone', 'Missing', { trackId: 'gone', ready: false }),
       ],
     });
-    expect(html).toContain('開始：Manual');
+    expect(html).not.toContain('開始：Manual');
     expect(html).toContain('手動項目');
     expect(html).toContain('音檔無法使用');
     expect(html).toContain('Missing');
-    expect(html.match(/class="ui-track__artwork-action"/g)).toHaveLength(1);
+    expect(html).not.toContain('class="ui-track__artwork-action"');
   });
   it('disables playback and drag during mutations and keeps an actionable empty state', async () => {
     const html = await render({
@@ -95,6 +95,6 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
     });
     expect(html).not.toContain('class="ui-track__artwork-action"');
     expect(html).not.toContain('draggable="true"');
-    expect(await render()).toContain('沒有待播曲目');
+    expect(await render()).toContain('沒有待唱曲目');
   });
 });

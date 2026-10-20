@@ -44,6 +44,28 @@ for (const [component, filename] of [
 }
 
 describe('AppRightDockPanel', () => {
+  it.each([false, true])(
+    'keeps its footer outside the content scroll owner (workspace=%s)',
+    (workspace) => {
+      const view = mount(
+        AppRightDockPanel,
+        {
+          title: 'Dock',
+          collapseLabel: '收合',
+          workspace,
+        },
+        {
+          default: () => h('div', 'Content'),
+          footer: () => h('button', 'BGM'),
+        },
+      );
+      const footer = findAll(view.root, (node) => node.type === 'footer')[0];
+      expect(footer).toBeDefined();
+      expect(footer.parent.type).toBe('section');
+      expect(textContent(footer)).toBe('BGM');
+      view.app.unmount();
+    },
+  );
   it('keeps an optional summary in fixed chrome outside the content scroll', () => {
     const view = mount(
       AppRightDockPanel,

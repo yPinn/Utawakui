@@ -245,10 +245,10 @@ describe('PerformanceSessionPlanList', () => {
     trigger(buttonWithText(body, '下移一位'), 'onClick');
 
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
-    trigger(buttonWithText(body, '複製待播項目'), 'onClick');
+    trigger(buttonWithText(body, '複製待唱項目'), 'onClick');
 
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
-    trigger(buttonWithText(body, '從待播移除'), 'onClick');
+    trigger(buttonWithText(body, '從待唱移除'), 'onClick');
 
     expect(onSelect).toHaveBeenCalledWith('item-2');
     expect(onMove).toHaveBeenCalledWith('item-2', 1);
@@ -262,6 +262,26 @@ describe('PerformanceSessionPlanList', () => {
     mounted.app.unmount();
   });
 
+  it('keeps history requeue in the shared menu so the compact row prioritizes identity and result', async () => {
+    const onDuplicate = vi.fn();
+    const mounted = mount(PerformanceSessionPlanList, {
+      items: [{ ...items[0], progress: 'completed' }],
+      tracks,
+      history: true,
+      onDuplicate,
+    });
+    expect(
+      findAll(
+        mounted.root,
+        (node) =>
+          node.type === 'button' && textContent(node).includes('再次加入待唱'),
+      ),
+    ).toHaveLength(0);
+    await openItemMenu(mounted.root, '第 1 首「First song」的更多操作');
+    trigger(buttonWithText(body, '再次加入待唱'), 'onClick');
+    expect(onDuplicate).toHaveBeenCalledWith('item-1');
+    mounted.app.unmount();
+  });
   it('disables impossible boundary moves in the menu', async () => {
     const mounted = mount(PerformanceSessionPlanList, {
       items,

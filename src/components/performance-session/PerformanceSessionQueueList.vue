@@ -18,14 +18,7 @@ const props = defineProps({
   tracks: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
 });
-const emit = defineEmits([
-  'play',
-  'move',
-  'reorder',
-  'skip',
-  'duplicate',
-  'remove',
-]);
+const emit = defineEmits(['move', 'reorder', 'skip', 'duplicate', 'remove']);
 const selectedItemId = shallowRef(null);
 const menuItemId = shallowRef(null);
 const menuAnchor = shallowRef(null);
@@ -126,7 +119,7 @@ const menuContent = computed(() => ({
         {
           id: 'duplicate',
           kind: 'action',
-          label: '複製待播項目',
+          label: '複製待唱項目',
           value: 'duplicate',
           icon: Copy,
           disabled: props.saving,
@@ -134,7 +127,7 @@ const menuContent = computed(() => ({
         {
           id: 'remove',
           kind: 'action',
-          label: '從待播移除',
+          label: '從待唱移除',
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -158,9 +151,6 @@ function openMenu(row, { event }) {
       ? { kind: 'point', x: event.clientX ?? 0, y: event.clientY ?? 0 }
       : { kind: 'element', element: event.currentTarget };
 }
-function play(row) {
-  if (!props.saving && !row.disabled) emit('play', row.id);
-}
 function selectAction(action) {
   const id = menuItemId.value;
   const index = menuIndex.value;
@@ -183,7 +173,7 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
     class="performance-session-queue-scroll"
     content-tag="ul"
     content-class="performance-session-queue-list"
-    aria-label="待播順序"
+    aria-label="待唱順序"
   >
     <QueueTrackButton
       v-for="row in rows"
@@ -197,17 +187,16 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
       }"
       :track="row.track"
       :ordinal="row.ordinal"
-      :ordinal-label="`待播第 ${row.ordinal} 首`"
+      :ordinal-label="`待唱第 ${row.ordinal} 首`"
       :artist-text="row.artist"
       :active="selectedItemId === row.id"
       :playback-disabled="saving || row.disabled"
+      :playback-actions="false"
       :playback-label="row.playbackLabel"
       :menu-open="menuItemId === row.id"
       :draggable="!saving && rows.length > 1"
       :drop-position="dropTargetId === row.id ? dropPosition : null"
       @select="selectedItemId = row.id"
-      @activate="play(row)"
-      @toggle-playback="play(row)"
       @open-menu="openMenu(row, $event)"
       @drag-start="startDrag(row, $event)"
       @drag-over="updateDropTarget(row, $event)"
@@ -216,14 +205,14 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
       @drag-end="clearDragState"
     />
     <li v-if="!rows.length">
-      <UiHint>沒有待播曲目。可在「演唱工具 → 播放安排」搜尋並加入。</UiHint>
+      <UiHint>沒有待唱曲目。可在「演唱工具 → 演出安排」搜尋並加入。</UiHint>
     </li>
   </UiScrollLayout>
   <UiActionMenu
     :open="menuIndex >= 0"
     :anchor="menuAnchor"
     :content="menuContent"
-    aria-label="待播曲目操作"
+    aria-label="待唱曲目操作"
     @select="selectAction"
     @close="closeMenu"
   />

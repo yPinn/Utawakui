@@ -9,9 +9,11 @@ import {
 } from '../../composables/useAppRightDockWidth.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
+import { useObsIntegration } from '../../composables/useObsIntegration.js';
 
 const props = defineProps({
   expanded: { type: Boolean, required: true },
+  performance: { type: Boolean, default: false },
   label: { type: String, default: '右側區塊' },
   expandLabel: { type: String, default: '展開右側區塊' },
   contentId: { type: String, required: true },
@@ -24,6 +26,24 @@ const props = defineProps({
 
 const emit = defineEmits(['expand', 'toggleExpanded']);
 const dockWidth = useAppRightDockWidth();
+const { state: obsState } = useObsIntegration();
+const obsConnected = computed(
+  () =>
+    !obsState.statusReadError &&
+    ['ready', 'degraded'].includes(obsState.observed.lifecycle),
+);
+const isLive = computed(
+  () =>
+    props.performance &&
+    obsConnected.value &&
+    obsState.observed.streaming.active,
+);
+const isRecording = computed(
+  () =>
+    props.performance &&
+    obsConnected.value &&
+    obsState.observed.recording.active,
+);
 const rootStyle = computed(() => ({
   '--ui-right-dock-width': `${dockWidth.width.value}px`,
 }));
@@ -58,6 +78,9 @@ function handleResizeKeydown(event) {
       'app-right-dock--expanded': expanded,
       'app-right-dock--collapsed': !expanded,
       'app-right-dock--bottom': motionOrigin === 'bottom',
+      'app-right-dock--performance': performance,
+      'app-right-dock--live': isLive,
+      'app-right-dock--recording': isRecording,
     }"
     tone="surface"
     radius="sm"
@@ -147,6 +170,22 @@ function handleResizeKeydown(event) {
   width: var(--ui-right-dock-width);
   height: 100%;
   overflow: hidden;
+}
+
+.app-right-dock--performance::after {
+  border-color: color-mix(
+    in srgb,
+    var(--ui-color-live) 45%,
+    var(--ui-color-border)
+  );
+}
+.app-right-dock--live::after,
+.app-right-dock--recording::after {
+  border-color: var(--ui-color-live);
+}
+.app-right-dock--live,
+.app-right-dock--recording {
+  --ui-right-dock-sticky-background: var(--ui-color-live-soft);
 }
 
 .app-right-dock--collapsed {

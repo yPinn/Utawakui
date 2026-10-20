@@ -7,7 +7,6 @@ import {
   Ellipsis,
   Trash2,
   Play,
-  ListPlus,
   SkipForward,
 } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
@@ -143,7 +142,7 @@ const menuContent = computed(() => ({
         {
           id: 'duplicate',
           kind: 'action',
-          label: props.history ? '再次加入待播' : '複製待播項目',
+          label: props.history ? '再次加入待唱' : '複製待唱項目',
           value: 'duplicate',
           icon: Copy,
           disabled: props.saving || !activeMenuItem.value,
@@ -151,7 +150,7 @@ const menuContent = computed(() => ({
         {
           id: 'remove',
           kind: 'action',
-          label: props.history ? '移除紀錄' : '從待播移除',
+          label: props.history ? '移除紀錄' : '從待唱移除',
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -226,7 +225,7 @@ watch(
       axis="vertical"
       content-tag="ol"
       content-class="performance-session-plan-list"
-      :aria-label="history ? '播放結果' : '待播順序'"
+      :aria-label="history ? '播放結果' : '待唱順序'"
     >
       <UiTrackRow
         v-for="row in presentationRows"
@@ -273,14 +272,11 @@ watch(
         </template>
         <template #trail>
           <UiIconButton
-            :icon="history ? ListPlus : Play"
-            :label="
-              history
-                ? `再次加入待播：${row.item.displayTitle}`
-                : `播放：${row.item.displayTitle}`
-            "
-            :disabled="saving || (!history && row.item.ready === false)"
-            @click.stop="emit(history ? 'duplicate' : 'play', row.item.itemId)"
+            v-if="!history"
+            :icon="Play"
+            :label="`播放：${row.item.displayTitle}`"
+            :disabled="saving || row.item.ready === false"
+            @click.stop="emit('play', row.item.itemId)"
           />
           <UiIconButton
             :icon="Ellipsis"

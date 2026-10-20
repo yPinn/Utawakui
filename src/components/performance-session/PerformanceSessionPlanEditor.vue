@@ -14,7 +14,7 @@ const props = defineProps({
   validationError: { type: Object, default: null },
 });
 
-const emit = defineEmits(['saveDisplay', 'relink']);
+const emit = defineEmits(['saveDisplay', 'relink', 'close']);
 
 const displayTitle = shallowRef('');
 const displayArtist = shallowRef('');
@@ -114,13 +114,16 @@ function cancelEditing() {
 <template>
   <PerformanceSessionReviewPane
     class="performance-session-editor"
+    title="曲目設定"
+    :saving="saving"
     aria-labelledby="performance-session-editor-title"
-    body-label="待播項目設定內容"
+    body-label="待唱項目設定內容"
+    @close="emit('close')"
   >
     <div v-if="item" class="performance-session-editor__body">
       <header class="performance-session-editor__header">
         <p class="performance-session-editor__eyebrow">
-          {{ item.mode === 'manual' ? '手動項目' : '待播曲目' }}
+          {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
         </p>
         <h2
           id="performance-session-editor-title"

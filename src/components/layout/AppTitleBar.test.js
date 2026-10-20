@@ -18,15 +18,13 @@ describe('AppTitleBar', () => {
     const controlsEnd = source.indexOf('</div>', controlsStart);
     const controlsSource = source.slice(controlsStart, controlsEnd);
     const preparationIndex = controlsSource.indexOf(':icon="ListChecks"');
-    const bgmIndex = controlsSource.indexOf(':icon="Music2"');
     const performerIndex = controlsSource.indexOf(':icon="PictureInPicture2"');
     const themeIndex = controlsSource.indexOf(':icon="isLight ? Moon : Sun"');
     const resourcesIndex = source.indexOf('class="app-title-bar__resources"');
 
     expect(controlsStart).toBeGreaterThan(-1);
     expect(preparationIndex).toBeGreaterThan(-1);
-    expect(bgmIndex).toBeGreaterThan(preparationIndex);
-    expect(performerIndex).toBeGreaterThan(bgmIndex);
+    expect(performerIndex).toBeGreaterThan(preparationIndex);
     expect(themeIndex).toBeGreaterThan(performerIndex);
     expect(resourcesIndex).toBeGreaterThan(-1);
     expect(source).not.toContain('class="app-title-bar__status-cluster"');
@@ -39,7 +37,6 @@ describe('AppTitleBar', () => {
 
   it('keeps only live/global utilities in the titlebar', () => {
     const preparationIndex = source.indexOf(':icon="ListChecks"');
-    const bgmIndex = source.indexOf(':icon="Music2"');
     const performerIndex = source.indexOf(':icon="PictureInPicture2"');
     const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
     const settingsIndex = source.indexOf(':icon="Settings"');
@@ -49,27 +46,17 @@ describe('AppTitleBar', () => {
     expect(source).not.toContain('sessionActive');
     expect(source).not.toContain('toggleSession');
     expect(preparationIndex).toBeGreaterThan(-1);
-    expect(bgmIndex).toBeGreaterThan(preparationIndex);
-    expect(performerIndex).toBeGreaterThan(bgmIndex);
+    expect(performerIndex).toBeGreaterThan(preparationIndex);
     expect(themeIndex).toBeGreaterThan(performerIndex);
     expect(settingsIndex).toBeGreaterThan(themeIndex);
-    expect(source.match(/variant="ghost"/gu)).toHaveLength(5);
+    expect(source.match(/variant="ghost"/gu)).toHaveLength(4);
     expect(source).not.toContain('variant="overlay"');
   });
 
-  it('exposes BGM as its own disclosure instead of a session action', () => {
-    expect(source).toContain('Music2,');
-    expect(source).toContain('bgmActive: { type: Boolean, default: false }');
-    expect(source).toContain("bgmControls: { type: String, default: '' }");
-    expect(source).toContain("bgmStatus: { type: String, default: 'idle' }");
-    expect(source).toContain("bgmStatusLabel: { type: String, default: '' }");
-    expect(source).toContain("'toggleBgm'");
-    expect(source).toContain(':label="bgmActionLabel"');
-    expect(source).toContain('`app-title-bar__bgm--${props.bgmStatus}`');
-    expect(source).toContain(':active="bgmActive"');
-    expect(source).toContain(':aria-expanded="bgmActive"');
-    expect(source).toContain(':aria-controls="bgmControls || undefined"');
-    expect(source).toContain('@click="emit(\'toggleBgm\')"');
+  it('leaves BGM ownership in the session workspace', () => {
+    expect(source).not.toContain('Music2');
+    expect(source).not.toContain('toggleBgm');
+    expect(source).not.toContain('bgmActive');
   });
 
   it('opens Import and accompaniment work through one controlled preparation toggle', () => {
@@ -134,15 +121,13 @@ describe('AppTitleBar', () => {
       '<span class="app-title-bar__obs-label">REC</span>',
     );
     const preparationIndex = source.indexOf(':icon="ListChecks"');
-    const bgmIndex = source.indexOf(':icon="Music2"');
     const performerIndex = source.indexOf(':icon="PictureInPicture2"');
     const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
     const settingsIndex = source.indexOf(':icon="Settings"');
 
     expect(recordIndex).toBeGreaterThan(liveIndex);
     expect(preparationIndex).toBeGreaterThan(recordIndex);
-    expect(bgmIndex).toBeGreaterThan(preparationIndex);
-    expect(performerIndex).toBeGreaterThan(bgmIndex);
+    expect(performerIndex).toBeGreaterThan(preparationIndex);
     expect(themeIndex).toBeGreaterThan(performerIndex);
     expect(settingsIndex).toBeGreaterThan(themeIndex);
   });

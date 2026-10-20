@@ -6,8 +6,6 @@ import {
   onMounted,
   onUnmounted,
   provide,
-  ref,
-  shallowRef,
   watch,
 } from 'vue';
 import AppFolderLayout from './components/layout/AppFolderLayout.vue';
@@ -23,7 +21,7 @@ import FeedbackReportModal from './components/settings/FeedbackReportModal.vue';
 import ObsSessionExportModal from './components/settings/ObsSessionExportModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
-import BgmPlayer from './components/bgm/BgmPlayer.vue';
+import { useBgmSession } from './composables/useBgmSession.js';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import LibraryPage from './pages/LibraryPage.vue';
@@ -189,9 +187,9 @@ onUnmounted(separationQueue.dispose);
 const { state: playerState } = usePlayer();
 const { currentTrack: queueCurrentTrack } = usePlaybackQueue();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
-const BGM_PLAYER_ID = 'app-bgm-player';
-const bgmPlayerOpen = ref(false);
-const bgmStatus = shallowRef({ state: 'idle', label: '' });
+// Audio authority outlives the session page and its Dock projection.
+const bgmSession = useBgmSession();
+onMounted(bgmSession.initialize);
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
@@ -205,6 +203,7 @@ const views = {
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const {
   activeView,
+  performanceTool,
   isSettingsView,
   setActiveView,
   openSettings,
@@ -322,20 +321,6 @@ function togglePreparationSurface() {
   rightDock.cyclePreparation();
 }
 
-function openBgmPlayer() {
-  bgmPlayerOpen.value = true;
-}
-
-function closeBgmPlayer() {
-  if (!bgmPlayerOpen.value) return;
-  bgmPlayerOpen.value = false;
-}
-
-function toggleBgmPlayer() {
-  if (bgmPlayerOpen.value) closeBgmPlayer();
-  else openBgmPlayer();
-}
-
 function closeDockSurface(surface) {
   rememberRightDockTrigger();
   rightDock.hideSurface(surface);
@@ -424,16 +409,11 @@ useKeyboardShortcuts({ internalViewShortcuts });
       :preparation-controls="RIGHT_DOCK_CONTENT_ID"
       :preparation-status="preparationIndicator.state"
       :preparation-status-label="preparationIndicator.label"
-      :bgm-active="bgmPlayerOpen"
-      :bgm-controls="BGM_PLAYER_ID"
-      :bgm-status="bgmStatus.state"
-      :bgm-status-label="bgmStatus.label"
       :performer-active="performerView.state.open"
       :performer-busy="performerView.state.isOpening"
       :settings-active="isSettingsView"
       :update-available="appUpdateReady"
       @toggle-preparation="togglePreparationSurface"
-      @toggle-bgm="toggleBgmPlayer"
       @toggle-performer="performerView.toggle"
       @toggle-settings="toggleSettings"
     />
@@ -444,6 +424,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
       class="shell__main shell__main--with-dock"
       :class="{
         'shell__main--dock-expanded': rightDockExpanded,
+        'shell__main--session':
+          activeView === 'performance' && performanceTool === 'session',
       }"
     >
       <div class="shell__workspace">
@@ -462,15 +444,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
           </AppFolderLayout>
         </AppSurfaceBoundary>
       </div>
-      <div class="shell__bgm-boundary">
-        <BgmPlayer
-          :id="BGM_PLAYER_ID"
-          class="shell__bgm-player"
-          :open="bgmPlayerOpen"
-          @request-close="closeBgmPlayer"
-          @status-change="bgmStatus = $event"
-        />
-      </div>
+
       <div
         class="shell__dock"
         :class="{
@@ -479,6 +453,9 @@ useKeyboardShortcuts({ internalViewShortcuts });
       >
         <AppRightDock
           :expanded="rightDockExpanded"
+          :performance="
+            queueSurfaceActive && rightDock.queueVariant.value === 'arrangement'
+          "
           :label="rightDockLabel"
           :expand-label="rightDockExpandLabel"
           :content-id="RIGHT_DOCK_CONTENT_ID"
@@ -669,28 +646,6 @@ useKeyboardShortcuts({ internalViewShortcuts });
   padding-top: var(--ui-shell-content-inset-block);
 }
 
-.shell__bgm-boundary {
-  position: absolute;
-  z-index: var(--ui-z-floating);
-  inset-block-start: var(--ui-shell-content-inset-block);
-  inset-block-end: var(--ui-shell-content-inset-block);
-  inset-inline-start: var(--ui-shell-workspace-inline-start);
-  /* The Dock bay stabilizes the in-flow workspace, but it is not a clipping
-     boundary for shell-owned floating surfaces. Keep one invariant movement
-     plane across both Dock states and paint the player above the Dock. */
-  inset-inline-end: var(--ui-shell-edge-inset-inline);
-  min-inline-size: 0;
-  min-block-size: 0;
-  pointer-events: none;
-}
-
-.shell__bgm-player {
-  position: absolute;
-  inset-inline-end: 0;
-  inset-block-end: 0;
-  pointer-events: auto;
-}
-
 .shell__dock {
   display: flex;
   justify-content: flex-end;
@@ -782,6 +737,13 @@ useKeyboardShortcuts({ internalViewShortcuts });
     z-index: var(--ui-z-sticky);
     inset-block: 0 var(--ui-shell-content-inset-block);
     inset-inline-end: var(--ui-shell-edge-inset-inline);
+  }
+  .shell__main--session.shell__main--dock-expanded {
+    grid-template-columns: minmax(0, 1fr) var(--ui-right-dock-width);
+    gap: var(--ui-space-3);
+  }
+  .shell__main--session.shell__main--dock-expanded .shell__dock {
+    position: static;
   }
 }
 

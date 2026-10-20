@@ -5,16 +5,23 @@ import {
   Pause,
   Play,
   Square,
+  SlidersHorizontal,
   Volume2,
   VolumeX,
 } from '../../icons/index.js';
 import { formatDuration } from '../../utils/format.js';
 import audioControlValues from '../../../shared/audioControlValues.json';
 import UiButton from '../ui/UiButton.vue';
+import UiPopover from '../ui/UiPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
+  variant: {
+    type: String,
+    default: 'full',
+    validator: (value) => ['full', 'session', 'dock'].includes(value),
+  },
   phase: { type: String, required: true },
   audibleLane: { type: String, default: null },
   currentTrack: { type: Object, default: null },
@@ -38,6 +45,7 @@ const emit = defineEmits([
   'commitPosition',
 ]);
 
+const detailsOpen = shallowRef(props.variant === 'full');
 const volumeDraft = shallowRef(props.volume);
 watch(
   () => props.volume,
@@ -90,26 +98,11 @@ function updatePosition(value) {
 </script>
 
 <template>
-  <section class="bgm-transport" aria-label="BGM 播放控制">
-    <div class="bgm-transport__progress">
-      <span class="bgm-transport__time">{{
-        formatDuration(currentTime, '0:00')
-      }}</span>
-      <UiRangeControl
-        class="bgm-transport__progress-range"
-        :model-value="currentTime"
-        :min="0"
-        :max="duration"
-        :step="0.1"
-        :disabled="!currentTrack || duration <= 0"
-        :value-text="formatDuration(currentTime, '0:00')"
-        :format-value="(value) => formatDuration(value, '0:00')"
-        aria-label="BGM 進度"
-        @update:model-value="updatePosition"
-        @change="emit('commitPosition')"
-      />
-    </div>
-
+  <section
+    class="bgm-transport"
+    :class="`bgm-transport--${variant}`"
+    aria-label="BGM 播放控制"
+  >
     <div class="bgm-transport__controls">
       <UiIconButton
         :icon="primaryAction.icon"
@@ -130,27 +123,7 @@ function updatePosition(value) {
       >
         Talk
       </UiButton>
-      <div class="bgm-transport__audio" role="group" aria-label="BGM 音量">
-        <UiIconButton
-          :icon="isMuted ? VolumeX : Volume2"
-          :label="isMuted ? '取消 BGM 靜音' : 'BGM 靜音'"
-          :active="isMuted"
-          :aria-pressed="isMuted"
-          @click="emit('setMuted', !isMuted)"
-        />
-        <UiRangeControl
-          class="bgm-transport__volume"
-          :model-value="volumeDraft"
-          :min="audioControlValues.bgmVolume.min"
-          :max="audioControlValues.bgmVolume.max"
-          :step="audioControlValues.bgmVolume.step"
-          :value-text="`${Math.round(volumeDraft * 100)}%`"
-          :format-value="(value) => `${Math.round(value * 100)}%`"
-          aria-label="BGM 音量"
-          @update:model-value="updateVolume"
-          @change="emit('commitVolume', volumeDraft)"
-        />
-      </div>
+
       <UiIconButton
         class="bgm-transport__cut"
         :icon="Square"
@@ -159,6 +132,65 @@ function updatePosition(value) {
         :disabled="!canCutBgm"
         @click="emit('cut')"
       />
+      <UiPopover
+        aria-label="BGM 音量與進度"
+        focus-on-open
+        :placement="variant === 'dock' ? 'top-end' : 'bottom-end'"
+        :panel-style="{ inlineSize: 'var(--ui-bgm-player-inline-size)' }"
+        :open="detailsOpen"
+        @update:open="detailsOpen = $event"
+      >
+        <template #trigger="{ triggerProps }">
+          <UiIconButton
+            v-bind="triggerProps"
+            :icon="SlidersHorizontal"
+            label="BGM 音量與進度"
+            :active="detailsOpen"
+            @click="detailsOpen = !detailsOpen"
+          />
+        </template>
+        <div class="bgm-transport__details">
+          <div class="bgm-transport__progress">
+            <span class="bgm-transport__time">{{
+              formatDuration(currentTime, '0:00')
+            }}</span>
+            <UiRangeControl
+              class="bgm-transport__progress-range"
+              :model-value="currentTime"
+              :min="0"
+              :max="duration"
+              :step="0.1"
+              :disabled="!currentTrack || duration <= 0"
+              :value-text="formatDuration(currentTime, '0:00')"
+              :format-value="(value) => formatDuration(value, '0:00')"
+              aria-label="BGM 進度"
+              @update:model-value="updatePosition"
+              @change="emit('commitPosition')"
+            />
+          </div>
+          <div class="bgm-transport__audio" role="group" aria-label="BGM 音量">
+            <UiIconButton
+              :icon="isMuted ? VolumeX : Volume2"
+              :label="isMuted ? '取消 BGM 靜音' : 'BGM 靜音'"
+              :active="isMuted"
+              :aria-pressed="isMuted"
+              @click="emit('setMuted', !isMuted)"
+            />
+            <UiRangeControl
+              class="bgm-transport__volume"
+              :model-value="volumeDraft"
+              :min="audioControlValues.bgmVolume.min"
+              :max="audioControlValues.bgmVolume.max"
+              :step="audioControlValues.bgmVolume.step"
+              :value-text="`${Math.round(volumeDraft * 100)}%`"
+              :format-value="(value) => `${Math.round(value * 100)}%`"
+              aria-label="BGM 音量"
+              @update:model-value="updateVolume"
+              @change="emit('commitVolume', volumeDraft)"
+            />
+          </div>
+        </div>
+      </UiPopover>
     </div>
   </section>
 </template>
@@ -170,19 +202,14 @@ function updatePosition(value) {
   gap: var(--ui-space-2);
 }
 
-.bgm-transport__controls,
-.bgm-transport__progress {
-  align-items: center;
-}
-
-.bgm-transport__progress,
-.bgm-transport__controls {
-  -webkit-user-select: none;
-  user-select: none;
+.bgm-transport__details {
+  display: grid;
+  gap: var(--ui-space-2);
 }
 
 .bgm-transport__progress {
   display: grid;
+  align-items: center;
   grid-template-columns: var(--ui-bgm-player-time-inline-size) minmax(0, 1fr);
   gap: var(--ui-space-2);
   color: var(--ui-color-text-muted);
@@ -203,15 +230,11 @@ function updatePosition(value) {
 }
 
 .bgm-transport__controls {
-  display: grid;
-  grid-template-columns: var(--ui-icon-button-size-md) auto minmax(0, 1fr) var(
-      --ui-icon-button-size-md
-    );
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--ui-space-1);
-}
-
-.bgm-transport__talk {
-  align-self: center;
 }
 
 .bgm-transport__audio {

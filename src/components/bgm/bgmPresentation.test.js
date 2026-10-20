@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  projectBgmOperationalStatus,
-  projectBgmShellStatus,
-} from './bgmPresentation.js';
+import { projectBgmOperationalStatus } from './bgmPresentation.js';
 
 describe('BGM presentation projection', () => {
   it.each([
@@ -42,29 +39,5 @@ describe('BGM presentation projection', () => {
       accessibleLabel: 'BGM 操作失敗：BGM 音訊輸出暫時無法使用。',
       tone: 'danger',
     });
-  });
-
-  it.each([
-    [{ phase: 'idle' }, { state: 'idle', label: '' }],
-    [
-      { phase: 'bgm-playing', audibleLane: 'bgm' },
-      { state: 'playing', label: 'BGM 播放中' },
-    ],
-    [
-      { phase: 'stopping-bgm', audibleLane: 'bgm' },
-      { state: 'transition', label: 'BGM 淡出中' },
-    ],
-    [{ phase: 'track-preroll' }, { state: 'transition', label: '曲前留白' }],
-    [{ phase: 'postroll-silence' }, { state: 'transition', label: '曲後留白' }],
-    [
-      { phase: 'track-active', audibleLane: 'performance' },
-      { state: 'idle', label: '' },
-    ],
-    [
-      { phase: 'manual-hold', error: 'BGM 音訊輸出暫時無法使用。' },
-      { state: 'attention', label: 'BGM 操作失敗' },
-    ],
-  ])('projects only actionable shell status for %o', (input, expected) => {
-    expect(projectBgmShellStatus(input)).toEqual(expected);
   });
 });

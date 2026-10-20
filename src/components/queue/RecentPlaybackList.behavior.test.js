@@ -96,7 +96,9 @@ describe('RecentPlaybackList', () => {
     expect(source).toContain(':active="entry.key === selectedEntryKey"');
     expect(source).toContain(':draggable="false"');
     expect(source).toContain('@select="emit(\'selectEntry\', entry)"');
-    expect(source).toContain('@activate="emit(\'activateEntry\', entry)"');
+    expect(source).toContain(
+      '@activate="playbackActions && emit(\'activateEntry\', entry)"',
+    );
     expect(source).toContain("'artistNavigate'");
     expect(source).toContain(
       '@navigate-artist="emit(\'artistNavigate\', $event)"',
@@ -116,7 +118,7 @@ describe('RecentPlaybackList', () => {
     expect(source).toContain(':message="error"');
     expect(source).toContain(':playing="isEntryPlaying(entry)"');
     expect(source).toContain(
-      '@toggle-playback="emit(\'toggleEntryPlayback\', entry)"',
+      '@toggle-playback="playbackActions && emit(\'toggleEntryPlayback\', entry)"',
     );
     expect(source).not.toContain("'clear'");
     expect(source).not.toContain("emit('clear')");

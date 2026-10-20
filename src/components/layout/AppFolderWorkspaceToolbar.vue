@@ -11,8 +11,12 @@ defineProps({
 <template>
   <header class="app-folder-workspace-toolbar">
     <div class="app-folder-workspace-toolbar__context">
-      <p class="app-folder-workspace-toolbar__summary">
-        <span class="app-folder-workspace-toolbar__title" :lang="contextLang">
+      <p v-if="context || meta" class="app-folder-workspace-toolbar__summary">
+        <span
+          v-if="context"
+          class="app-folder-workspace-toolbar__title"
+          :lang="contextLang"
+        >
           {{ context }}
         </span>
         <span
@@ -94,6 +98,8 @@ defineProps({
 
 .app-folder-workspace-toolbar__status,
 .app-folder-workspace-toolbar__actions {
+  min-inline-size: 0;
+  max-inline-size: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

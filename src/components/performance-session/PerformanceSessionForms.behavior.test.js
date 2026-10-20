@@ -11,6 +11,8 @@ import {
 import Editor from './PerformanceSessionPlanEditor.vue';
 import Manual from './PerformanceSessionManualItemForm.vue';
 import Pane from './PerformanceSessionReviewPane.vue';
+import UiModal from '../ui/UiModal.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
@@ -24,6 +26,8 @@ import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 for (const [component, path] of [
   [Editor, './PerformanceSessionPlanEditor.vue'],
   [Manual, './PerformanceSessionManualItemForm.vue'],
+  [UiModal, '../ui/UiModal.vue'],
+  [UiIconButton, '../ui/UiIconButton.vue'],
   [Pane, './PerformanceSessionReviewPane.vue'],
   [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
@@ -51,7 +55,7 @@ beforeEach(() => {
     innerHeight: 850,
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    requestAnimationFrame: (cb) => cb(),
+    requestAnimationFrame: vi.fn(() => 1),
     cancelAnimationFrame: vi.fn(),
   });
 });
@@ -62,10 +66,10 @@ afterEach(() => {
 });
 const button = (text) =>
   findAll(
-    mounted.root,
+    mounted.overlayHost,
     (n) => n.type === 'button' && textContent(n).trim() === text,
   )[0];
-const input = (id) => findAll(mounted.root, (n) => n.props.id === id)[0];
+const input = (id) => findAll(mounted.overlayHost, (n) => n.props.id === id)[0];
 async function type(id, value) {
   trigger(input(id), 'onInput', { target: { value } });
   await nextTick();
@@ -84,8 +88,11 @@ describe('Performance Session forms preserve product intents', () => {
   it('keeps canonical metadata read-only and saves only session display fields', async () => {
     const onSaveDisplay = vi.fn();
     mounted = mount(Editor, { item: readyItem, onSaveDisplay });
-    expect(textContent(mounted.root)).toContain('曲庫原名');
-    expect(findAll(mounted.root, (n) => n.type === 'input')).toHaveLength(0);
+    await nextTick();
+    expect(textContent(mounted.overlayHost)).toContain('曲庫原名');
+    expect(
+      findAll(mounted.overlayHost, (n) => n.type === 'input'),
+    ).toHaveLength(0);
     trigger(button('調整顯示名稱'), 'onClick');
     await nextTick();
     await type('performance-session-display-title', '修正本場曲名');
@@ -100,6 +107,7 @@ describe('Performance Session forms preserve product intents', () => {
   it('cancels edits and resets draft fields when the occurrence changes', async () => {
     const props = reactive({ item: { ...readyItem } });
     mounted = mount(Editor, props);
+    await nextTick();
     trigger(button('調整顯示名稱'), 'onClick');
     await nextTick();
     await type('performance-session-display-title', 'Unsaved');
@@ -117,7 +125,7 @@ describe('Performance Session forms preserve product intents', () => {
     };
     await nextTick();
     expect(button('調整顯示名稱')).toBeTruthy();
-    expect(textContent(mounted.root)).not.toContain('Unsaved');
+    expect(textContent(mounted.overlayHost)).not.toContain('Unsaved');
   });
 
   it('requires a recovery track and emits a bounded relink intent', async () => {
@@ -132,6 +140,7 @@ describe('Performance Session forms preserve product intents', () => {
       tracks: [{ id: 'track-2', title: 'Recovery' }],
       onRelink,
     });
+    await nextTick();
     expect(button('連結既有歌曲').props.disabled).toBe(true);
     trigger(input('performance-session-track-link'), 'onChange', {
       target: { value: 'track-2' },
@@ -150,10 +159,17 @@ describe('Performance Session forms preserve product intents', () => {
       onCancel = vi.fn();
     const props = reactive({ saving: false, onCreate, onCancel });
     mounted = mount(Manual, props);
-    expect(button('加入待播').props.disabled).toBe(true);
+    await nextTick();
+    expect(button('加入待唱').props.disabled).toBe(true);
     await type('performance-session-manual-display-title', '外部伴奏');
     await type('performance-session-manual-display-artist', '版本資訊');
-    trigger(button('加入待播'), 'onClick');
+    expect(button('加入待唱').props.type).toBe('submit');
+    expect(button('加入待唱').props.form).toBe(
+      'performance-session-manual-form',
+    );
+    trigger(input('performance-session-manual-form'), 'onSubmit', {
+      preventDefault: vi.fn(),
+    });
     expect(onCreate).toHaveBeenCalledWith({
       displayTitle: '外部伴奏',
       displayArtist: '版本資訊',
@@ -162,7 +178,11 @@ describe('Performance Session forms preserve product intents', () => {
     expect(onCancel).toHaveBeenCalledOnce();
     props.saving = true;
     await nextTick();
-    expect(button('加入待播').props.disabled).toBe(true);
+    expect(button('加入待唱').props.disabled).toBe(true);
     expect(button('取消').props.disabled).toBe(true);
+    trigger(input('performance-session-manual-form'), 'onSubmit', {
+      preventDefault: vi.fn(),
+    });
+    expect(onCreate).toHaveBeenCalledOnce();
   });
 });

@@ -1,4 +1,5 @@
 <script setup>
+import { useTemplateRef } from 'vue';
 import { Music2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
@@ -10,6 +11,8 @@ defineProps({
   pickerControls: { type: String, default: '' },
 });
 const emit = defineEmits(['togglePicker']);
+const pickerButton = useTemplateRef('pickerButton');
+defineExpose({ focusPicker: () => pickerButton.value?.$el?.focus() });
 </script>
 
 <template>
@@ -17,7 +20,7 @@ const emit = defineEmits(['togglePicker']);
     <UiTrackThumb
       :track="track"
       class="bgm-current-source__artwork"
-      size="var(--ui-bgm-player-artwork-size)"
+      size="var(--ui-track-row-thumb-size)"
       radius="var(--ui-radius-sm)"
     >
       <Music2 aria-hidden="true" />
@@ -26,6 +29,7 @@ const emit = defineEmits(['togglePicker']);
       <div class="bgm-current-source__identity">
         <strong>{{ track?.title ?? '尚未選擇 BGM' }}</strong>
         <UiButton
+          ref="pickerButton"
           class="bgm-current-source__change"
           :active="pickerExpanded"
           :aria-expanded="pickerExpanded"
@@ -43,7 +47,7 @@ const emit = defineEmits(['togglePicker']);
         aria-live="polite"
       >
         <component :is="status.icon" v-if="status.icon" aria-hidden="true" />
-        <span>{{ status.label }}</span>
+        <span>場間音樂 · {{ status.label }}</span>
       </span>
     </div>
   </div>
@@ -52,10 +56,11 @@ const emit = defineEmits(['togglePicker']);
 <style scoped>
 .bgm-current-source {
   display: flex;
-  block-size: var(--ui-bgm-player-artwork-size);
+  min-block-size: var(--ui-track-row-min-height);
+  padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   min-inline-size: 0;
   align-items: center;
-  gap: var(--ui-space-2);
+  gap: var(--ui-track-row-gap);
 }
 
 .bgm-current-source__copy {
@@ -80,7 +85,7 @@ const emit = defineEmits(['togglePicker']);
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-title-size);
+  font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-title-weight);
   line-height: var(--ui-type-label-line-height);
 }

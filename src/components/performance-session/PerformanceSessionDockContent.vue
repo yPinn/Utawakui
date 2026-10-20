@@ -5,6 +5,7 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
+import { useAppView } from '../../composables/useAppView.js';
 import { useAppRightDock } from '../../composables/useAppRightDock.js';
 import PerformanceSessionCurrent from './PerformanceSessionCurrent.vue';
 import PerformanceSessionQueueList from './PerformanceSessionQueueList.vue';
@@ -24,6 +25,11 @@ const confirmed = computed(() =>
       item.itemId === playback.currentItem.value?.itemId &&
       item.progress === 'playing',
   ),
+);
+const { activeView, performanceTool } = useAppView();
+const mainPageVisible = computed(
+  () =>
+    activeView.value === 'performance' && performanceTool.value === 'session',
 );
 const busy = computed(() => plan.state.isSaving || playback.state.busy);
 async function remove(itemId) {
@@ -47,18 +53,23 @@ onMounted(plan.initialize);
   <template v-else>
     <UiNotice
       v-if="
-        plan.state.error || plan.state.validationError || playback.state.error
+        !mainPageVisible &&
+        (plan.state.error ||
+          (!plan.state.validationError?.field && plan.state.validationError) ||
+          playback.state.error)
       "
       compact
       tone="warning"
-      title="播放安排未更新"
+      title="演出安排未更新"
       :message="
         plan.state.error ||
-        plan.state.validationError?.message ||
+        (!plan.state.validationError?.field &&
+          plan.state.validationError?.message) ||
         playback.state.error
       "
     />
     <UiCheckbox
+      v-if="!mainPageVisible"
       id="dock-arrangement-continuous"
       label="連續播放"
       :model-value="playback.state.continuous"
@@ -71,6 +82,7 @@ onMounted(plan.initialize);
       aria-labelledby="arrangement-dock-pending-tab"
     >
       <PerformanceSessionCurrent
+        v-if="!mainPageVisible"
         :current="playback.currentItem.value"
         :player-track="playback.ownsPlayback.value ? null : player.track"
         :tracks="library.tracks"
@@ -87,7 +99,6 @@ onMounted(plan.initialize);
         :items="playback.pendingItems.value"
         :tracks="library.tracks"
         :saving="busy"
-        @play="playback.start"
         @skip="playback.skip"
         @move="plan.moveItem"
         @reorder="plan.reorderItem"

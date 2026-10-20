@@ -3,10 +3,11 @@ import { shallowRef } from 'vue';
 import { Plus } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
 import PerformanceSessionReviewPane from './PerformanceSessionReviewPane.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
-defineProps({
+const props = defineProps({
   saving: { type: Boolean, default: false },
   validationError: { type: Object, default: null },
 });
@@ -16,7 +17,7 @@ const displayTitle = shallowRef('');
 const displayArtist = shallowRef('');
 
 function create() {
-  if (!displayTitle.value.trim()) return;
+  if (props.saving || !displayTitle.value.trim()) return;
   emit('create', {
     displayTitle: displayTitle.value,
     displayArtist: displayArtist.value,
@@ -27,22 +28,15 @@ function create() {
 <template>
   <PerformanceSessionReviewPane
     class="performance-session-manual"
-    aria-labelledby="performance-session-manual-title"
+    title="新增手動項目"
+    :saving="saving"
     body-label="新增手動項目內容"
+    @close="emit('cancel')"
   >
     <div class="performance-session-manual__body">
-      <header class="performance-session-manual__header">
-        <p class="performance-session-manual__eyebrow">其他音訊來源</p>
-        <h2
-          id="performance-session-manual-title"
-          class="performance-session-manual__title"
-        >
-          新增手動項目
-        </h2>
-        <p class="performance-session-manual__description">
-          適用自行伴奏或外部播放；若由 Utawakui 播放，請先匯入曲庫。
-        </p>
-      </header>
+      <UiHint>
+        適用自行伴奏或外部播放；若由 Utawakui 播放，請先匯入曲庫。
+      </UiHint>
 
       <UiNotice
         v-if="validationError"
@@ -52,7 +46,11 @@ function create() {
         compact
       />
 
-      <form class="performance-session-manual__form" @submit.prevent="create">
+      <form
+        id="performance-session-manual-form"
+        class="performance-session-manual__form"
+        @submit.prevent="create"
+      >
         <UiTextField
           id="performance-session-manual-display-title"
           v-model="displayTitle"
@@ -76,9 +74,10 @@ function create() {
         :icon="Plus"
         variant="accent"
         :disabled="saving || !displayTitle.trim()"
-        @click="create"
+        type="submit"
+        form="performance-session-manual-form"
       >
-        加入待播
+        加入待唱
       </UiButton>
     </template>
   </PerformanceSessionReviewPane>
@@ -89,37 +88,6 @@ function create() {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
-}
-
-.performance-session-manual__eyebrow,
-.performance-session-manual__title,
-.performance-session-manual__description {
-  margin: 0;
-}
-
-.performance-session-manual__eyebrow,
-.performance-session-manual__description {
-  color: var(--ui-color-text-muted);
-}
-
-.performance-session-manual__eyebrow {
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.performance-session-manual__title {
-  margin-top: var(--ui-space-1);
-  font-size: var(--ui-type-title-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
-}
-
-.performance-session-manual__description {
-  margin-top: var(--ui-space-2);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-body-weight);
-  line-height: var(--ui-type-body-line-height);
 }
 
 .performance-session-manual__form {

@@ -126,15 +126,15 @@ describe('completed arrangement uses the Recent list recipe', () => {
       },
     ];
     const html = await render();
-    expect(html).toContain('開始：External accompaniment');
+    expect(html).not.toContain('開始：External accompaniment');
     expect(html).toContain('Missing file');
     expect(html).not.toContain('aria-label="播放：Missing file"');
-    expect(html.match(/class="ui-track__artwork-action"/g)).toHaveLength(1);
+    expect(html).not.toContain('class="ui-track__artwork-action"');
     expect(html.match(/aria-haspopup="menu"/g)).toHaveLength(2);
   });
   it('uses completion-specific empty copy', async () => {
     const html = await render();
-    expect(html).toContain('尚無已完成紀錄');
+    expect(html).toContain('尚無演出紀錄');
     expect(html).not.toContain('尚無最近播放紀錄');
   });
 });

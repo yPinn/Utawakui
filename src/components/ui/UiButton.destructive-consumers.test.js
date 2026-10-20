@@ -69,13 +69,6 @@ describe('UiButton destructive consumers', () => {
       '../lyrics/LyricsSourceManagerModal.vue',
       'pendingDeleteSource',
     ],
-    [
-      'session draft clearing',
-      '../performance-session/PerformanceSessionWorkspace.vue',
-      '@click="clearDraft"',
-      '../performance-session/PerformanceSessionWorkspace.vue',
-      'useAppConfirmation',
-    ],
   ])(
     'marks %s without changing its confirmation owner',
     (_, path, action, confirmationPath, confirmationEvidence) => {
@@ -96,6 +89,21 @@ describe('UiButton destructive consumers', () => {
     },
   );
 
+  it('keeps session clear and replacement in danger menu items with the original confirmation owner', () => {
+    const workspace = source(
+      '../performance-session/PerformanceSessionWorkspace.vue',
+    );
+    expect(workspace.match(/id: 'clear',[\s\S]*?disabled:/u)?.[0]).toContain(
+      "intent: 'danger'",
+    );
+    expect(workspace.match(/id: 'prepare',[\s\S]*?disabled:/u)?.[0]).toContain(
+      "intent: hasItems.value ? 'danger' : 'default'",
+    );
+    expect(workspace).toContain('await clearDraft()');
+    expect(workspace).toContain('await prepareSelectedCollection()');
+    expect(workspace).toContain('useAppConfirmation');
+    expect(workspace).not.toContain('window.confirm');
+  });
   it('keeps library track deletion in the shared danger menu with confirmation in Setlist', () => {
     const trackMenu = source('../track/TrackActionMenu.vue');
     expect(trackMenu).toMatch(
@@ -154,11 +162,6 @@ describe('UiButton destructive consumers', () => {
     );
   });
   it.each([
-    [
-      '../performance-session/PerformanceSessionWorkspace.vue',
-      '@click="prepareSelectedCollection"',
-      "hasItems ? 'danger' : 'neutral'",
-    ],
     [
       '../analysis/MusicAnalysisReferenceAnnotation.vue',
       '@click="openWorklist"',

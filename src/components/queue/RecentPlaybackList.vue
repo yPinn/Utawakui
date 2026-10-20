@@ -13,6 +13,7 @@ const props = defineProps({
   openMenuKey: { type: String, default: '' },
   selectedEntryKey: { type: String, default: null },
   busy: { type: Boolean, default: false },
+  playbackActions: { type: Boolean, default: true },
   menuContext: { type: String, default: 'recent' },
   emptyMessage: { type: String, default: '尚無最近播放紀錄' },
   loadingMessage: { type: String, default: '讀取最近播放…' },
@@ -68,10 +69,11 @@ function openTrackMenu(entry, payload) {
         :playing="isEntryPlaying(entry)"
         :artist-text="entry.artistText"
         :playback-disabled="busy || entry.playbackDisabled === true"
+        :playback-actions="playbackActions"
         :playback-label="entry.playbackLabel"
         @select="emit('selectEntry', entry)"
-        @activate="emit('activateEntry', entry)"
-        @toggle-playback="emit('toggleEntryPlayback', entry)"
+        @activate="playbackActions && emit('activateEntry', entry)"
+        @toggle-playback="playbackActions && emit('toggleEntryPlayback', entry)"
         @navigate-artist="emit('artistNavigate', $event)"
         @open-menu="openTrackMenu(entry, $event)"
       />

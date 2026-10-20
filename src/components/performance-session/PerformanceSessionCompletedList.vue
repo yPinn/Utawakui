@@ -55,7 +55,7 @@ const menuContent = computed(() => ({
         {
           id: 'requeue',
           kind: 'action',
-          label: '再次加入待播',
+          label: '再次加入待唱',
           value: 'requeue',
           icon: Copy,
           disabled: busy.value || !menuEntry.value,
@@ -86,10 +86,6 @@ function openMenu({ entry, event }) {
     event.type === 'contextmenu'
       ? { kind: 'point', x: event.clientX ?? 0, y: event.clientY ?? 0 }
       : { kind: 'element', element: event.currentTarget };
-}
-function replay(entry) {
-  if (busy.value || entry.playbackDisabled) return;
-  void playback.replay(entry.key);
 }
 async function selectAction(action) {
   const entry = menuEntry.value;
@@ -130,23 +126,22 @@ watch([busy, menuEntry], ([saving, entry]) => {
         playback.state.error ||
         ''
       "
-      error-title="已完成紀錄未更新"
-      loading-message="讀取已完成紀錄…"
-      empty-message="尚無已完成紀錄"
+      error-title="演出紀錄未更新"
+      loading-message="讀取演出紀錄…"
+      empty-message="尚無演出紀錄"
       menu-context="completed"
       :busy="busy"
+      :playback-actions="false"
       :selected-entry-key="selectedEntryKey"
       :open-menu-key="menuKey ? `completed:${menuKey}` : ''"
       @select-entry="selectedEntryKey = $event.key"
-      @activate-entry="replay"
-      @toggle-entry-playback="replay"
       @open-track-menu="openMenu"
     />
     <UiActionMenu
       :open="Boolean(menuEntry)"
       :anchor="menuAnchor"
       :content="menuContent"
-      aria-label="已完成曲目操作"
+      aria-label="演出紀錄操作"
       @select="selectAction"
       @close="closeMenu"
     />

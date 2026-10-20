@@ -584,9 +584,6 @@ describe('Studio Library workspace prototype isolation', () => {
       /\.shell__main\s*\{[^}]*padding-left:\s*var\(--ui-shell-workspace-inline-start\);[^}]*padding-right:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/su,
     );
     expect(app).toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*inset-inline-start:\s*var\(--ui-shell-workspace-inline-start\);[^}]*\}/su,
-    );
-    expect(app).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );
     expect(tokens).not.toContain('--ui-shell-sidebar-inset-block');

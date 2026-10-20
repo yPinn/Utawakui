@@ -166,87 +166,13 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('internalContextDefinitions');
   });
 
-  it('places one standalone BGM player outside PlayerBar and Right Dock presentation ownership', () => {
-    expect(source).toContain(
-      "import BgmPlayer from './components/bgm/BgmPlayer.vue';",
-    );
-    expect(source).toContain('<BgmPlayer');
-    expect(source).toContain('class="shell__bgm-player"');
-    expect(source).toContain(':open="bgmPlayerOpen"');
-    expect(source).toContain('@request-close="closeBgmPlayer"');
-    expect(source).toContain('@status-change="bgmStatus = $event"');
-    expect(source).not.toContain('useBgmSession');
-    expect(source).not.toContain('LiveSessionCard');
-
-    const cardIndex = source.indexOf('<BgmPlayer');
-    const dockIndex = source.indexOf('<AppRightDock');
-    const playerIndex = source.indexOf('<PlayerBar');
-    expect(cardIndex).toBeLessThan(dockIndex);
-    expect(cardIndex).toBeLessThan(playerIndex);
+  it('initializes the shared BGM controller at App lifetime without mounting a floating player', () => {
+    expect(source).toContain('const bgmSession = useBgmSession();');
+    expect(source).toContain('onMounted(bgmSession.initialize);');
+    expect(source).not.toContain('<BgmPlayer');
+    expect(source).not.toContain('shell__bgm-boundary');
+    expect(source).not.toContain('toggleBgmPlayer');
     expect(source).not.toContain('RIGHT_DOCK_SURFACE_BGM');
-  });
-
-  it('keeps the mini player and workspace disclosure independently mounted', () => {
-    const dockTriggerHandlers = source.slice(
-      source.indexOf('function toggleMetadataSurface'),
-      source.indexOf('function openBgmPlayer'),
-    );
-    const bgmHandlers = source.slice(
-      source.indexOf('function openBgmPlayer'),
-      source.indexOf('function closeDockSurface'),
-    );
-    const dockExpandHandler = source.slice(
-      source.indexOf('function expandRightDock'),
-      source.indexOf('function handleRightDockKeydown'),
-    );
-
-    expect(dockTriggerHandlers).not.toContain('bgmPlayerOpen.value = false');
-    expect(bgmHandlers).not.toContain('rightDock.setExpanded(false)');
-    expect(dockExpandHandler).not.toContain('bgmPlayerOpen.value = false');
-    expect(source).not.toContain('shell__bgm-boundary--beside-dock');
-  });
-
-  it('lets the movable BGM player overlap the reserved Dock bay within one stable shell boundary', () => {
-    expect(source).toContain('class="shell__bgm-boundary"');
-    expect(source).not.toContain('shell__bgm-boundary--beside-dock');
-    expect(source).toMatch(
-      /<div[^>]*class="shell__bgm-boundary"[\s\S]*?<BgmPlayer[\s\S]*?<\/div>/u,
-    );
-    expect(source).toMatch(
-      /<main[\s\S]*?class="shell__main shell__main--with-dock"[\s\S]*?class="shell__bgm-boundary"[\s\S]*?class="shell__dock"[\s\S]*?<\/main>/u,
-    );
-    expect(source).toMatch(
-      /\.shell__main\s*\{[^}]*position:\s*relative;[^}]*min-width:\s*0;[^}]*min-height:\s*0;/su,
-    );
-    expect(source).toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*position:\s*absolute;[^}]*inset-block-start:\s*var\(--ui-shell-content-inset-block\);[^}]*inset-block-end:\s*var\(--ui-shell-content-inset-block\);[^}]*pointer-events:\s*none;/su,
-    );
-    expect(source).not.toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*inset-block-end:\s*calc\(/su,
-    );
-    expect(source).toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*z-index:\s*var\(--ui-z-floating\);[^}]*inset-inline-end:\s*var\(--ui-shell-edge-inset-inline\);/su,
-    );
-    expect(source).toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*inset-inline-start:\s*var\(--ui-shell-workspace-inline-start\);/su,
-    );
-    expect(source).toMatch(
-      /\.shell__main\s*\{[^}]*padding-left:\s*var\(--ui-shell-workspace-inline-start\);/su,
-    );
-    expect(source).not.toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*inset-inline-start:\s*var\(--ui-shell-edge-inset-inline\);/su,
-    );
-    expect(source).not.toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*inset-inline-end:\s*calc\([^}]*var\(--ui-right-dock-width\)/su,
-    );
-    expect(source).not.toMatch(
-      /@media[^{}]*\{[\s\S]*?\.shell__bgm-boundary(?:--beside-dock)?\s*\{/u,
-    );
-    expect(source).toMatch(
-      /\.shell__bgm-player\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*0;[^}]*inset-block-end:\s*0;[^}]*pointer-events:\s*auto;/su,
-    );
-    expect(source).not.toContain('--ui-bgm-player-inline-size:');
-    expect(source).not.toContain('--ui-bgm-player-min-inline-size:');
   });
 
   it('keeps the collapsed Dock bay reserved while reducing its visible control to a local restore action', () => {
@@ -292,11 +218,6 @@ describe('App shell right Dock', () => {
     expect(source).toContain(':preparation-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).not.toContain(':session-active=');
     expect(source).not.toContain('@toggle-session=');
-    expect(source).toContain(':bgm-active="bgmPlayerOpen"');
-    expect(source).toContain(':bgm-controls="BGM_PLAYER_ID"');
-    expect(source).toContain(':bgm-status="bgmStatus.state"');
-    expect(source).toContain(':bgm-status-label="bgmStatus.label"');
-    expect(source).toContain('@toggle-bgm="toggleBgmPlayer"');
     expect(source).toContain(':artwork-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).toContain(':queue-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).toContain('@artwork-activate="toggleMetadataSurface"');
@@ -323,7 +244,7 @@ describe('App shell right Dock', () => {
   it('toggles preparation directly from the titlebar without switching the current destination', () => {
     const handler = source.slice(
       source.indexOf('function togglePreparationSurface'),
-      source.indexOf('function openBgmPlayer'),
+      source.indexOf('function closeDockSurface'),
     );
     expect(handler).toContain('rememberRightDockTrigger');
     expect(handler).toContain('rightDock.cyclePreparation()');

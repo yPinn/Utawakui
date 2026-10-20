@@ -26,8 +26,8 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('keeps the original board and continuous control mounted independently of Dock visibility', () => {
     expect(workspaceSource).not.toContain('v-if="!arrangementDockVisible"');
     expect(workspaceSource).not.toContain('props.tracks.slice(0, 50)');
-    expect(workspaceSource).toContain('顯示播放安排側欄');
-    expect(workspaceSource).toContain('收合播放安排側欄');
+    expect(workspaceSource).toContain('顯示演出安排側欄');
+    expect(workspaceSource).toContain('收合演出安排側欄');
     expect(workspaceSource).toContain(':aria-pressed="arrangementDockVisible"');
   });
   it('keeps library search as the fixed primary entry and manual creation secondary', () => {
@@ -57,7 +57,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
       /\.performance-session-workspace\s*\{[^}]*flex:\s*1[^}]*overflow:\s*hidden/su,
     );
     expect(workspaceSource).toMatch(
-      /\.performance-session-workspace__grid\s*\{[^}]*flex:\s*1[^}]*min-height:\s*0/su,
+      /\.performance-session-workspace__grid\s*\{[^}]*flex:\s*1[^}]*min-height:\s*calc/su,
     );
     expect(workspaceSource).not.toContain('min-height: 560px');
     expect(workspaceSource).not.toContain('calc(100vh - 230px)');
@@ -82,11 +82,9 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
       new URL('./PerformanceSessionBoard.vue', import.meta.url),
       'utf8',
     );
+    expect(boardSource).toContain('entry.contentRect.width <= 43 * rem');
     expect(boardSource).toContain(
-      '@container performance-session-workspace (max-width: 43rem)',
-    );
-    expect(boardSource).toContain(
-      'grid-template-columns: repeat(2, minmax(0, 1fr));',
+      'grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);',
     );
     expect(boardSource).toContain('grid-template-rows: auto minmax(0, 1fr);');
     expect(workspaceSource).not.toContain('minmax(360px');
@@ -130,10 +128,13 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     );
     expect(reviewSource).toContain('PerformanceSessionReviewPane');
     expect(reviewSource).toContain('#actions');
-    expect(
-      paneSource.indexOf('performance-session-review-pane__scroll'),
-    ).toBeLessThan(
-      paneSource.indexOf('performance-session-review-pane__actions'),
+    expect(paneSource).toContain('<UiModal');
+    expect(paneSource.indexOf('<slot />')).toBeLessThan(
+      paneSource.indexOf('#footer'),
+    );
+    expect(paneSource).not.toContain('fixed-height');
+    expect(workspaceSource).toContain(
+      '<PerformanceSessionSummary :show-source="false" />',
     );
     expect(reviewSource).toContain('調整顯示名稱');
     expect(reviewSource).not.toContain('確認本首');
@@ -168,11 +169,10 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   });
 
   it('makes local playback available without an active broadcast', () => {
-    expect(workspaceSource).toContain('aria-label="播放安排"');
-    expect(workspaceSource).toContain('安排曲目，隨時播放');
+    expect(workspaceSource).toContain('aria-label="演出安排"');
     expect(workspaceSource).toContain('<PerformanceSessionBoard');
-    expect(workspaceSource).toContain('搜尋曲庫並加入待播');
-    expect(planListSource).toContain("history ? '播放結果' : '待播順序'");
+    expect(workspaceSource).toContain('搜尋曲庫並加入待唱');
+    expect(planListSource).toContain("history ? '播放結果' : '待唱順序'");
     expect(workspaceSource).not.toContain('title="演唱中"');
     expect(workspaceSource).not.toContain('title="已唱紀錄"');
   });
@@ -181,7 +181,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).toContain('pendingAttention');
     expect(workspaceSource).toContain('playback.pendingItems.value');
     expect(workspaceSource).not.toContain('全部可演出');
-    expect(workspaceSource).toContain('首需處理');
+    expect(workspaceSource).toContain('項需處理');
     expect(workspaceSource).not.toContain('待確認');
     expect(workspaceSource).not.toContain('待連結');
     expect(workspaceSource).not.toContain('曲庫資料已變更 {{');
@@ -190,7 +190,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('confirms occurrence removal without offering a library deletion path', () => {
     expect(workspaceSource).toContain('@remove="confirmRemoveItem"');
     expect(workspaceSource).toContain('function confirmRemoveItem(itemId)');
-    expect(workspaceSource).toContain("'從待播移除歌曲？'");
+    expect(workspaceSource).toContain("'從待唱移除歌曲？'");
     expect(workspaceSource).toContain("'移除這筆播放紀錄？'");
     expect(workspaceSource).toContain("confirmLabel: '移除歌曲'");
     expect(workspaceSource).toContain('曲庫歌曲會保留');
@@ -198,18 +198,13 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).not.toContain('deleteTrack');
   });
 
-  it('puts destructive clearing before the truthful return action in the header', () => {
-    const actionsStart = workspaceSource.indexOf('<template #actions>');
-    const actionsEnd = workspaceSource.indexOf('</template>', actionsStart);
-    const actions = workspaceSource.slice(actionsStart, actionsEnd);
-    const clearIndex = actions.indexOf('@click="clearDraft"');
-    const returnIndex = actions.indexOf('@click="emit(\'close\')"');
-
-    expect(actions).toContain(':icon="Trash2"');
-    expect(actions).toContain(':icon="ArrowLeft"');
-    expect(actions).toContain('返回');
-    expect(actions).not.toContain('完成');
-    expect(clearIndex).toBeGreaterThan(-1);
-    expect(returnIndex).toBeGreaterThan(clearIndex);
+  it('groups current control and session BGM above independent searchable lists and puts clearing in more options', () => {
+    expect(workspaceSource).toContain('<PerformanceSessionCurrent');
+    expect(workspaceSource).toContain('<BgmPlayer');
+    expect(workspaceSource).toContain('<template #pending>');
+    expect(workspaceSource).not.toContain('v-else-if="playback.pendingItems');
+    expect(workspaceSource).toContain("label: '清除安排'");
+    expect(workspaceSource).toContain('@select="selectWorkspaceAction"');
+    expect(workspaceSource).toContain('label="演出安排的更多選項"');
   });
 });

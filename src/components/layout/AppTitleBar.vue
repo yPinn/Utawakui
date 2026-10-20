@@ -8,7 +8,6 @@ import {
   ICON_SIZE,
   ListChecks,
   MemoryStick,
-  Music2,
   Moon,
   PictureInPicture2,
   Settings,
@@ -26,10 +25,6 @@ const props = defineProps({
   preparationControls: { type: String, default: '' },
   preparationStatus: { type: String, default: 'idle' },
   preparationStatusLabel: { type: String, default: '' },
-  bgmActive: { type: Boolean, default: false },
-  bgmControls: { type: String, default: '' },
-  bgmStatus: { type: String, default: 'idle' },
-  bgmStatusLabel: { type: String, default: '' },
   performerActive: { type: Boolean, default: false },
   performerBusy: { type: Boolean, default: false },
   settingsActive: { type: Boolean, default: false },
@@ -38,7 +33,6 @@ const props = defineProps({
 
 const emit = defineEmits([
   'togglePreparation',
-  'toggleBgm',
   'togglePerformer',
   'toggleSettings',
 ]);
@@ -92,10 +86,6 @@ const performerLabel = computed(() =>
 const settingsLabel = computed(() =>
   props.updateAvailable ? '設定（有可用更新）' : '設定',
 );
-const bgmActionLabel = computed(() => {
-  const action = props.bgmActive ? '收合 BGM 播放器' : '展開 BGM 播放器';
-  return props.bgmStatusLabel ? `${action} · ${props.bgmStatusLabel}` : action;
-});
 const preparationTooltipSuffix = computed(() =>
   props.preparationStatusLabel ? ` · ${props.preparationStatusLabel}` : '',
 );
@@ -251,19 +241,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           :aria-controls="preparationControls || undefined"
           @click="emit('togglePreparation')"
         />
-        <UiIconButton
-          data-app-bgm-trigger
-          class="app-title-bar__bgm"
-          :class="`app-title-bar__bgm--${props.bgmStatus}`"
-          :icon="Music2"
-          :label="bgmActionLabel"
-          variant="ghost"
-          size="md"
-          :active="bgmActive"
-          :aria-expanded="bgmActive"
-          :aria-controls="bgmControls || undefined"
-          @click="emit('toggleBgm')"
-        />
+
         <UiIconButton
           :icon="PictureInPicture2"
           :label="performerLabel"
@@ -492,29 +470,6 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   .app-title-bar__preparation.app-title-bar__preparation--attention:hover,
 .app-title-bar__controls
   .app-title-bar__preparation.app-title-bar__preparation--attention:active {
-  color: var(--ui-color-danger);
-}
-
-.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--playing,
-.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--playing:hover,
-.app-title-bar__controls
-  .app-title-bar__bgm.app-title-bar__bgm--playing:active {
-  color: var(--ui-color-accent);
-}
-
-.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--transition,
-.app-title-bar__controls
-  .app-title-bar__bgm.app-title-bar__bgm--transition:hover,
-.app-title-bar__controls
-  .app-title-bar__bgm.app-title-bar__bgm--transition:active {
-  color: var(--ui-color-warning);
-}
-
-.app-title-bar__controls .app-title-bar__bgm.app-title-bar__bgm--attention,
-.app-title-bar__controls
-  .app-title-bar__bgm.app-title-bar__bgm--attention:hover,
-.app-title-bar__controls
-  .app-title-bar__bgm.app-title-bar__bgm--attention:active {
   color: var(--ui-color-danger);
 }
 

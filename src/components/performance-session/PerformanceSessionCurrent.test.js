@@ -67,7 +67,29 @@ describe('arrangement current uses the Queue current section', () => {
   it('keeps an actionable empty state without inventing a current track', async () => {
     const html = await render({ canStart: true });
     expect(html).toContain('尚未開始播放');
-    expect(html).toContain('播放第一首');
+    expect(html).toContain('開始播放');
     expect(html).not.toContain('queue-track right-dock-track');
   });
+});
+
+describe('shared workspace current presentation', () => {
+  it('uses the same occurrence snapshot and completion guard without inventing manual playback', async () => {
+    const html = await render({
+      variant: 'workspace',
+      current: { ...current, mode: 'manual' },
+      confirmed: false,
+      busy: true,
+    });
+    expect(html).toContain('目前項目');
+    expect(html).toContain('手動進行中');
+    expect(html).not.toContain('播放：Stage title');
+    expect(html).toMatch(/<button[^>]*disabled[^>]*>[\s\S]*?標記完成/);
+  });
+});
+
+it('keeps the workspace empty state actionable without an extra visible heading', async () => {
+  const html = await render({ variant: 'workspace', canStart: true });
+  expect(html).toContain('aria-label="目前項目"');
+  expect(html).toContain('開始播放');
+  expect(html).not.toContain('<h2');
 });

@@ -82,24 +82,3 @@ export function projectBgmOperationalStatus({
     accessibleLabel: `${status.accessibleLabel}，曲後恢復 BGM`,
   };
 }
-
-export function projectBgmShellStatus({
-  phase = 'idle',
-  audibleLane = null,
-  error = '',
-} = {}) {
-  if (error) return { state: 'attention', label: 'BGM 操作失敗' };
-  if (phase === 'stopping-bgm') {
-    return { state: 'transition', label: 'BGM 淡出中' };
-  }
-  if (phase === 'track-preroll') {
-    return { state: 'transition', label: '曲前留白' };
-  }
-  if (phase === 'postroll-silence') {
-    return { state: 'transition', label: '曲後留白' };
-  }
-  if (phase === 'bgm-playing' || audibleLane === 'bgm') {
-    return { state: 'playing', label: 'BGM 播放中' };
-  }
-  return { state: 'idle', label: '' };
-}

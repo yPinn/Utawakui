@@ -34,7 +34,7 @@ describe('BgmCurrentSource', () => {
     expect(html).toContain('>更換<');
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('aria-controls="bgm-track-picker"');
-    expect(source).toContain('size="var(--ui-bgm-player-artwork-size)"');
+    expect(source).toContain('size="var(--ui-track-row-thumb-size)"');
     expect(source).toContain("emit('togglePicker')");
     expect(source).not.toContain('UiChip');
   });

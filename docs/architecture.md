@@ -145,8 +145,7 @@ Dock 的 expanded resize width、persistent desktop reserved bay、compact overl
 屬於 shell，不得回流到 PlayerBar 或 playlist component。Pointer／keyboard resize separator 只在
 expanded state 掛載；collapsed restore control 只保留按鈕局部邊界，不保留全高 rail、resize hit target
 或 value semantics。Shell-owned bay仍維持workspace幾何，但其空白wrapper不承接pointer hit testing。
-Shell 以 `--ui-shell-workspace-inline-start` 同時定義 Folder 主內容起線與 BGM movable boundary
-左界；BGM 仍可覆蓋 Right Dock，right／bottom bounds 不依 Dock 展開狀態改寫。
+Shell 以 `--ui-shell-workspace-inline-start` 定義 Folder 主內容起線；場間音樂位於演出安排內容中，隨主頁可用寬度重排。
 Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
 tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
 只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow
@@ -163,24 +162,9 @@ shared `UiTrackRow` 不持有排序 semantics。最近播放由 feature adapter 
 或整列 activation。
 可重用的曲目身分導覽位於 `src/components/track/TrackIdentityRow.vue`，而非 `ui/` primitive：它以 opt-in `none／album／artist／identity` recipe 組合 `UiTrackRow`、`TrackArtistCredits` 與既有 `useAlbumNavigation`。只有能解析到本機專輯或 canonical artist 的文字才成為 CTA；目的地不存在時保持純文字。adapter 在切換 Library destination 前同步發出 `navigate`，讓 Modal／Dock caller先收合；封面動作、整列選取、播放、排序、trail狀態仍由各feature owner持有。
 
-shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titlebar disclosure 開啟／關閉，
-啟動時常駐初始化 `useBgmSession` 並轉送即時 Titlebar status；完整視覺面板
-`BgmPlayerPanel.vue` 到首次開啟才非同步載入。首開後保留面板實例，關閉只移除其 surface，
-因此搜尋、Pin 與移動位置不重建；關閉期間仍保留 controller、還原、安全 gate 與狀態訂閱。
-視覺面板
-在 bounded body 內組合 `BgmTrackPicker.vue` 的本機曲庫搜尋／單曲取代，並以
-`BgmPlayerTransport.vue` 呈現目前 BGM、進度與安全控制。它預設位於 PlayerBar 上方並避開 desktop
-persistent Dock bay；compact viewport只在Dock overlay展開時避開其footprint。它不是場次面板或 Right Dock surface；Dock footprint 只決定 home anchor／safe edge，
-不得覆寫 player-owned inline-size。使用者可在 shell 安全範圍移動並 Pin 位置。
-`BgmCurrentSource.vue` 將曲名限制為單行，並整合單一 operational status 與 source-picker disclosure；
-phase／deferred restore／bounded public error 由 pure `bgmPresentation.js` 合成一句狀態，不保留獨立
-badge width slot。`BgmPlayerTransport.vue` 固定 progress 與 action slots；Play／Pause 共用同一節點，
-Talk 是可見文字 toggle，Mute＋Volume 是同一 audio group，Emergency Cut 使用 shared danger intent。
-Inactive 時可用同一 transport 明確試播本機 monitor，但不顯示 `OBS 未確認`；已確認 live／record（同時作用時
-`live > record`）與 reconnecting 只更新 quiet session context，不覆寫使用者明確關閉。BGM feature 另向
-App emit bounded Titlebar status projection，Shell 只中繼，不直接讀 audio controller。Titlebar presentation與source picker是正交狀態；
-關閉完整player不停止deck或取消handoff，重新開啟時投影目前狀態。元件只消費
-`useBgmSession.js` 的 readonly 投影與 actions，不成為 PlayerBar 模式或 Folder artifact。
+`BgmPlayer.vue` 是演出安排的場間音樂組合，重用 `BgmCurrentSource`、`BgmPlayerTransport`、`BgmTrackPicker` 與 `bgmPresentation`。App 在生命週期開始初始化唯一 `useBgmSession`；頁面及 Dock 的 mount／unmount 只改 presentation，不初始化、停止或重建 deck。主頁與安排 Dock 共用來源、單一 operational status、播放／暫停、Talk 與立即停止；音量／進度由同列圖示開啟共用 UiPopover，Escape 返回觸發按鈕；選曲按需展開。安排 Dock 以 `AppRightDockPanel` 的固定 footer 呈現 BGM，待命、主頁可見及 tabs 切換時都保留；清單捲動不帶走控制。演唱與交接時仍由同一 controller 鎖定播放，不搶占歌曲。沒有 titlebar BGM disclosure、浮動面板、拖曳或 Pin，也不擴張 PlayerBar。
+
+安排 Dock tabs 為「待唱清單／演出紀錄」。待唱及完成紀錄的 `QueueTrackButton`／`RecentPlaybackList` 以 `playbackActions=false` 關閉封面、Enter 與雙擊啟動；選取、排序、管理選單仍由 feature owner 持有，普通 Queue／Recent 預設不變。Shell 的演出模式細框與真實 OBS LIVE／REC 強框分開；輸出狀態只讀既有 OBS projection，斷線或狀態讀取失敗不沿用舊 active 旗標。
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Library／
 Performance／Display 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
@@ -206,7 +190,7 @@ rule 分隔。「播放安排」進入 `performance-session-workspace` boundary�
 Ordered plan／搜尋結果保留 `UiScrollLayout` 的內容安全預留；項目編輯與手動新增共用
 feature-local `PerformanceSessionReviewPane` 的 scroll／固定 footer 對齊，按需以 `UiModal` 開啟；表單仍各自持有 draft、validation 與 intent。
 唯讀曲庫資料直接以平面 ledger 分組呈現，不增加另一張卡片。Shell 內的
-Titlebar 不提供重複場次入口；Right Dock 沿用 Queue surface 的一般／安排 variant，以獨立按鈕切換，Folder 主區排版維持原樣。
+Titlebar 不提供重複場次入口；Right Dock 沿用 Queue surface 的一般／安排 variant，以獨立按鈕切換，Folder 主區依實際可用寬度使用 3:2 清單或窄版分頁；主頁可見時 Dock 不重複目前項目與連續播放。
 selected playlist／album 的「從清單建立」／
 「從專輯建立」動作由 workspace toolbar 持有，既有 draft 的取代仍先確認。`PerformanceLyricsWorkspace`
 與曲庫的 `LyricsAuthoringWorkspace` 共用 `useLyrics`／`useLyricsReading` module-scope owner：現場可在既有來源間
