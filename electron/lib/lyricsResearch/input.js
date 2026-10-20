@@ -16,6 +16,7 @@ const {
   normalizeLyricsDocument,
 } = require('../../../src/utils/lyricsDocument.js');
 const { validateIntent } = require('./service');
+const { isAnalysisLanguage, resolveAnalysisLanguage } = require('./language');
 async function loadResearchInput(libraryDir, intent, { filename } = {}) {
   validateIntent(intent);
   const trackDir = resolveTrackDir(libraryDir, intent.trackId);
@@ -76,7 +77,13 @@ async function loadResearchInput(libraryDir, intent, { filename } = {}) {
       .digest('hex'),
   };
 }
-async function loadAutomaticResearchInput(libraryDir, trackId) {
+async function loadAutomaticResearchInput(
+  libraryDir,
+  trackId,
+  requestedLanguage = 'auto',
+) {
+  if (!isAnalysisLanguage(requestedLanguage))
+    throw Error('invalid analysis language');
   const trackDir = resolveTrackDir(libraryDir, trackId);
   if (!trackDir) throw Error('research track missing');
   contained(libraryDir, trackDir);
@@ -84,16 +91,63 @@ async function loadAutomaticResearchInput(libraryDir, trackId) {
   const preferred = state.sources.find(
     (source) => source.filename === state.preference?.filename,
   );
+  const skipped = (reason) => ({ status: 'skipped', reason });
+  if (!state.sources.length) return skipped('lyrics-missing');
+  function readDocument(source) {
+    const file = contained(
+      libraryDir,
+      path.join(trackDir, 'lyrics', source.filename),
+    );
+    if (fs.statSync(file).size > 2097152) throw Error('research lyrics budget');
+    return normalizeLyricsDocument(
+      readTrackLyrics(libraryDir, trackId, source.filename),
+    );
+  }
+  function body(source) {
+    return readDocument(source)
+      .lines.map((line) => line.text)
+      .join('\n');
+  }
   const source =
     preferred ??
-    state.sources.find((s) => ['zh', 'ja'].includes(s.language?.split('-')[0]));
-  const language = source?.language?.split('-')[0];
-  if (!['zh', 'ja'].includes(language)) return null;
-  const input = await loadResearchInput(libraryDir, {
-    trackId,
-    language,
-    lineIndex: 0,
-  });
+    state.sources.find(
+      (s) => resolveAnalysisLanguage(s.language, '').language,
+    ) ??
+    state.sources.find(
+      (s) => resolveAnalysisLanguage(s.language, body(s)).language,
+    ) ??
+    state.sources[0];
+  const parsed = readDocument(source);
+  if (
+    !parsed.lines.some(
+      (line) =>
+        !line.segments?.length &&
+        Number.isSafeInteger(line.startMs) &&
+        Number.isSafeInteger(line.endMs),
+    )
+  )
+    return skipped(
+      parsed.lines.some((line) => line.segments?.length)
+        ? 'native-t2'
+        : 'untimed-lyrics',
+    );
+  const resolution = resolveAnalysisLanguage(
+    source.language,
+    body(source),
+    requestedLanguage,
+  );
+  if (!resolution.language) return skipped(resolution.reason);
+  const input = await loadResearchInput(
+    libraryDir,
+    {
+      trackId,
+      language: resolution.language,
+      lineIndex: 0,
+    },
+    { filename: source.filename },
+  );
+  if (input.selection !== JSON.stringify(state))
+    throw Error('research source changed');
   if (
     !input.canonical.lines.some(
       (line) =>
@@ -102,8 +156,22 @@ async function loadAutomaticResearchInput(libraryDir, trackId) {
         Number.isSafeInteger(line.endMs),
     )
   )
-    return null;
-  return { ...input, language };
+    return skipped(
+      input.canonical.lines.some((line) => line.segments?.length)
+        ? 'native-t2'
+        : 'untimed-lyrics',
+    );
+  const currentResolution = resolveAnalysisLanguage(
+    input.source.language,
+    input.canonical.lines.map((line) => line.text).join('\n'),
+    requestedLanguage,
+  );
+  if (!currentResolution.language) return skipped(currentResolution.reason);
+  return {
+    ...input,
+    language: currentResolution.language,
+    languageOrigin: currentResolution.origin,
+  };
 }
 function automaticInputCurrent(libraryDir, input) {
   try {

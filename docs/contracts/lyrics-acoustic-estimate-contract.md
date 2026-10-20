@@ -276,21 +276,87 @@ selection before atomic publication; cancelled/failed/stale runs preserve earlie
 estimates. Reads are bounded and validated. Queue status is session-local, bounded
 to 100 tracks; estimates survive restart, application does not.
 
-Explicit lyrics-page application affects only the local authoring/performance
-reader's starts-only frame. Source/document/offset/estimate reload clears application.
-Canonical documents, Self-View and Output projections stay unchanged. T2 and declined
-T1 retain their behavior. Chinese conversion reuses segment text projection; text
+Explicit lyrics-page application affects the local authoring/performance
+reader's starts-only frame and supporting Output templates. Source/document/offset/estimate reload clears application.
+Canonical documents and Self-View projections stay unchanged. The explicit manual
+application also reaches supporting Output templates through the optional starts-only
+extension below. T2 and declined T1 retain their behavior. Chinese conversion reuses segment text projection; text
 mismatches retain normal display. Furigana retains its existing reading layout.
 No estimated singing-end/progress is exposed.
 
+### Experimental Output application
+
+The existing apply/disable intent controls local lyrics and Output together; there
+is no new visual mode, template, or second application flag. `useExperimentalLyrics`
+builds a complete clock-independent presentation document, retaining canonical
+granularity, native segments and text conversion. Only applied, identity/offset-matched
+ready lines supply model starts. Offset/source/document invalidation or disable
+immediately removes that projection; cancellation/failure retains canonical lyrics
+and accompaniment. Prior valid estimates may still be manually applied.
+
+Output v3 lines may contain `estimatedStarts: { version: 1, segments: [...] }`;
+each entry contains exactly `segmentId`, `text`, `startMs`. Main validates version,
+keys, bounded nonempty arrays/text, unique IDs, monotonic integer onsets within a
+finite parent interval, full text reconstruction, document bytes and the shared
+total segment budget. Native segments and model starts cannot coexist on one
+published line. Canonical granularity is still derived only from native segments.
+Private filenames, paths, model pins and inferred singing ends are not transmitted.
+Older v3 parsers/clients strip the unknown optional field and retain T1; the new
+parser rejects unsupported versions/malformed evidence without replacing accepted
+content. The existing legacy v2 compatibility projection remains T1-only.
+
+The publisher uses existing content revisions and content-before-state ordering,
+including reconnect. Browser Source assembly preserves the validated extension.
+Shared presentation frames use internal `model-starts` provenance but feed the
+existing T2 node/layout paths: focus-line and karaoke-stack use binary onset
+highlight with no active continuous progress or sweep duration; manga-frame,
+kinetic-pop and live-stage use existing source-mapped bubble/phrase/page layouts.
+Offsets inside one model chunk map to its onset, never a linearly invented time.
+Ornate-vertical does not consume native T2 and keeps its existing presentation.
+Schedulers use the same player clock, offset, rate and display delay; no second
+clock, automatic Output start, gate/default download change, or timing acceptance.
+
 Five main-frame-only IPC actions are `lyrics-experimental:status`, `enable`, `cancel`,
-`retry`, `estimate`. Enable accepts one boolean, cancel/retry one bounded track ID,
+`retry`, `estimate`. Enable accepts one boolean, cancel one bounded track ID;
+retry accepts one bounded track ID plus an optional `auto | zh | ja` analysis language,
+and optionally a bounded subtitle filename after that language. The filename is an
+expected current selection, not a source-selection command: the producer checks it
+before model loading and before publication. A changed selection skips or rejects
+publication without switching sources. Automatic separation jobs retain the existing
+main-owned source derivation without a renderer filename.
 estimate a bounded ID and existing subtitle filename. Main derives all paths,
 executables, models and download pins; renderer cannot write estimate data.
 
+Unknown source languages use conservative script/grammar evidence from lyric body text;
+insufficient or mixed evidence stays unknown. Explicit unsupported metadata is not
+silently replaced. A manual language is a single-job intent, preserved only on its
+session-local queue item for retry, and never writes source metadata, preference or offset.
+Skip reasons distinguish absent lyrics, unknown/unsupported language, absent T1 timing
+and existing native T2. Native T2 bypasses inference. Version-two estimate envelopes bind
+the resolved `analysisLanguage` with the existing input identity; version-one estimates
+remain readable. The normal lyrics-page loader needs no language override or model load.
+
+`LyricsSourceManagerModal` composes a current-source `LyricsSourceAnalysis` panel;
+language, retry, cancellation and manual apply/disable reuse the existing queue and
+`useLyrics` application owner. It polls only while the source view is open; completion
+invalidates the estimate read once, stable status polls do not clear application.
+Authoring drafts and pending/failed offset saves block analysis/application. Source
+rows retain canonical T1/T2 provenance; a ready model estimate is labelled T1+ with
+separate application state and usable-line count, never persisted as native T2.
+Mixed documents retain native T2 per line and fall back to T1 where needed.
+
+Analysis windows use `line.startMs - offsetMs`, and model starts map back with
+`windowStartMs + modelStartMs + offsetMs`. Playback compares against its existing
+offset-adjusted lyrics clock. Changing offset immediately clears application and
+requires regeneration; validated stale envelopes expose only `reason: offset-changed`
+when their bound offset differs, including after restart. There is no global offset
+estimation or duration/time-warp correction. Human timing acceptance stays pending.
+
 ## Isolated in-App research intent
 
-The separate Settings research entry exposes only `lyrics-research:status/prepare/verify/remove/cancel/inspect/preview` to the trusted main-window frame. Environment operations have no arguments; inspect/preview accept exactly `{ trackId, language: 'zh' | 'ja', lineIndex }`. Main derives the preferred/fallback language source, source/audio/timing identity, executable paths, fixed official download pins and isolated userData storage. No formal gate, catalog or default preparation changes.
+Settings groups research environment readiness and the experimental automatic-analysis preference in one section. Environment management and fragment research tools start collapsed; status reads do not download or load models. Cancellation and queue retry stay accessible when those tools are closed. Collapsing fragment tools invalidates the preview without cancelling ongoing work. Apply/disable remains on the lyrics page.
+
+The research entry exposes only `lyrics-research:status/prepare/verify/remove/cancel/inspect/preview` to the trusted main-window frame. Environment operations have no arguments; inspect/preview accept exactly `{ trackId, language: 'zh' | 'ja', lineIndex }`. Main derives the preferred/fallback language source, source/audio/timing identity, executable paths, fixed official download pins and isolated userData storage. No formal gate, catalog or default preparation changes.
 
 One shared heavy-job scheduler owns research download/load/inference through cancellation and cleanup, including app quit. Complete install trees are checked against shipped hashes; both HubertFA and small must load before ready. Restart requires explicit verification. A replacement is probed in staging before exchange, failure preserves the previous installation, and retry/removal target only research-owned paths.
 

@@ -587,10 +587,11 @@ if (!gotSingleInstanceLock) {
           config: researchEnvironment.paths(),
           jobsRoot: path.join(researchRoot, 'jobs'),
         }),
-      loadAutomaticInput: (trackId) =>
+      loadAutomaticInput: (trackId, language) =>
         require('./lib/lyricsResearch/input').loadAutomaticResearchInput(
           configState.resolveDownloadDir(configState.getConfig()),
           trackId,
+          language,
         ),
       isInputCurrent: (input) =>
         require('./lib/lyricsResearch/input').automaticInputCurrent(

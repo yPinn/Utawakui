@@ -7,6 +7,46 @@ import {
 } from './outputStreamProjection.js';
 
 describe('output stream projection', () => {
+  it('allowlists model starts as a separate extension without promoting canonical T1 to T2', () => {
+    const projected = projectLyricsOutputDocument({
+      trackId: 'song',
+      document: {
+        documentId: 'doc',
+        granularity: 'T1',
+        lines: [
+          {
+            lineId: 'one',
+            text: '今天唱歌',
+            startMs: 1000,
+            endMs: 5000,
+            estimatedStarts: {
+              version: 1,
+              privatePath: 'secret',
+              segments: [
+                {
+                  segmentId: 'a',
+                  text: '今天',
+                  startMs: 1200,
+                  endMs: 2000,
+                  privatePath: 'secret',
+                },
+                { segmentId: 'b', text: '唱歌', startMs: 3000 },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    expect(projected.granularity).toBe('T1');
+    expect(projected.lines[0].estimatedStarts).toEqual({
+      version: 1,
+      segments: [
+        { segmentId: 'a', text: '今天', startMs: 1200 },
+        { segmentId: 'b', text: '唱歌', startMs: 3000 },
+      ],
+    });
+    expect(JSON.stringify(projected)).not.toContain('secret');
+  });
   it('projects canonical T2 lyrics without source filenames or private fields', () => {
     const document = projectLyricsOutputDocument({
       trackId: 'track-1',

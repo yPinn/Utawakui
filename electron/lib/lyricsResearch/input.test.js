@@ -39,6 +39,69 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 const intent = { trackId: 'song', language: 'zh', lineIndex: 0 };
 describe('main-derived research input', () => {
+  it('analyzes the preferred und source by body without changing its metadata or offset', async () => {
+    fs.writeFileSync(
+      path.join(track, 'lyrics/main.vtt'),
+      'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n我在夜裡想著你，你的聲音讓我忘了時間，我們還在這裡等著明天。\n',
+    );
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'und', offsetMs: -500 },
+      { filename: 'ja.vtt', kind: 'manual', language: 'ja' },
+    ]);
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    const before = fs.readFileSync(
+      path.join(track, 'lyrics/lyrics.json'),
+      'utf8',
+    );
+    const input = await loadAutomaticResearchInput(root, 'song');
+    expect(input).toMatchObject({
+      language: 'zh',
+      languageOrigin: 'content',
+      source: { filename: 'main.vtt', language: 'und', offsetMs: -500 },
+    });
+    expect(
+      fs.readFileSync(path.join(track, 'lyrics/lyrics.json'), 'utf8'),
+    ).toBe(before);
+  });
+  it('returns an explicit unknown reason and accepts one-task manual language without switching source', async () => {
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'und' },
+    ]);
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+      status: 'skipped',
+      reason: 'language-unknown',
+    });
+    expect(await loadAutomaticResearchInput(root, 'song', 'ja')).toMatchObject({
+      language: 'ja',
+      languageOrigin: 'manual',
+      source: { filename: 'main.vtt' },
+    });
+  });
+  it('distinguishes existing T2 from missing sources and missing line timing', async () => {
+    const input = await loadResearchInput(root, intent);
+    const canonical = structuredClone(input.canonical);
+    canonical.granularity = 'T2';
+    canonical.lines[0].segments = [
+      { segmentId: 'whole', text: '今天測試', startMs: 1000, endMs: 4000 },
+    ];
+    saveTrackLyricsTiming(
+      track,
+      'main.vtt',
+      input.canonical.source.sha256,
+      canonical,
+    );
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+      status: 'skipped',
+      reason: 'native-t2',
+    });
+    fs.rmSync(path.join(track, 'lyrics'), { recursive: true });
+    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+      status: 'skipped',
+      reason: 'lyrics-missing',
+    });
+  });
   it('automatic selection uses supported source preference and invalidates a changed selection', async () => {
     setLyricsSourcePreference(track, 'main.vtt', 'user');
     const original = await loadAutomaticResearchInput(root, 'song');

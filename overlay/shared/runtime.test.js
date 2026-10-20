@@ -292,6 +292,12 @@ describe('overlay WebSocket runtime', () => {
               startMs: 0,
               endMs: 1000,
               endInferred: true,
+              estimatedStarts: {
+                version: 1,
+                segments: [
+                  { segmentId: 'model-first', text: 'first', startMs: 0 },
+                ],
+              },
             },
             { lineId: 'line-2', text: 'second', startMs: 1000, endMs: null },
           ],
@@ -334,6 +340,10 @@ describe('overlay WebSocket runtime', () => {
 
     expect(configs).toEqual(['karaoke-stack']);
     expect(received).toHaveLength(1);
+    expect(received[0].lyrics.lines[0].estimatedStarts).toEqual({
+      version: 1,
+      segments: [{ segmentId: 'model-first', text: 'first', startMs: 0 }],
+    });
     expect(received[0]).toMatchObject({
       version: 2,
       revision: 7,

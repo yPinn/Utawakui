@@ -470,6 +470,7 @@ async function commitTimingDocument() {
       @close="isTrackPickerOpen = false"
     />
     <LyricsSourceManagerModal
+      :analysis-disabled="isEditingLocked || editMode !== 'preview'"
       :open="isSourceManagerOpen"
       @close="isSourceManagerOpen = false"
     />

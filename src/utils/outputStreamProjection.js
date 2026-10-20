@@ -35,6 +35,16 @@ function projectLine(line) {
     ...(Array.isArray(line.segments)
       ? { segments: line.segments.map(projectSegment) }
       : {}),
+    ...(line.estimatedStarts
+      ? {
+          estimatedStarts: {
+            version: line.estimatedStarts.version,
+            segments: line.estimatedStarts.segments.map(
+              ({ segmentId, text, startMs }) => ({ segmentId, text, startMs }),
+            ),
+          },
+        }
+      : {}),
   };
 }
 

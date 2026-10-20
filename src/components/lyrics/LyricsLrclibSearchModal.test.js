@@ -31,8 +31,8 @@ describe('online lyrics search modal contract', () => {
     expect(manager).toContain('可用歌詞');
     expect(manager).toContain('aria-label="可使用的歌詞"');
     expect(manager).toContain('ref="searchTrigger"');
-    expect(manager).toContain(
-      ":size=\"activeView === 'search' ? 'wide' : 'notice'\"",
+    expect(manager.replace(/\s+/gu, ' ')).toContain(
+      "activeView === 'search' || selectedLyrics.sources.length ? 'wide' : 'notice'",
     );
     expect(manager).toContain('max-block-size="small"');
     expect(manager).toContain(
@@ -83,7 +83,7 @@ describe('online lyrics search modal contract', () => {
       'formatLyricsSourceOffset(sourceOffsetMs(source))',
     );
     expect(manager).toMatch(
-      /\.lyrics-source-manager__row\s*\{[^}]*--ui-lyrics-source-meta-width:\s*6rem;/s,
+      /\.lyrics-source-manager__row\s*\{[^}]*--ui-lyrics-source-meta-width:\s*9rem;/s,
     );
     expect(manager).not.toMatch(
       /\.lyrics-source-manager__row\s*\{[^}]*justify-content:\s*space-between;/s,
@@ -92,7 +92,7 @@ describe('online lyrics search modal contract', () => {
       /\.lyrics-source-manager__row-label\s*\{[^}]*flex:\s*1;/s,
     );
     expect(manager).toMatch(
-      /\.lyrics-source-manager__row-meta\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(--ui-space-5\) minmax\(0, 1fr\);[^}]*column-gap:\s*0;[^}]*flex:\s*0 0 var\(--ui-lyrics-source-meta-width\);[^}]*width:\s*var\(--ui-lyrics-source-meta-width\);/s,
+      /\.lyrics-source-manager__row-meta\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\);[^}]*column-gap:\s*0;[^}]*flex:\s*0 0 var\(--ui-lyrics-source-meta-width\);[^}]*width:\s*var\(--ui-lyrics-source-meta-width\);/s,
     );
     expect(manager).not.toMatch(
       /\.lyrics-source-manager__row-meta\s*\{[^}]*border-inline-start:/s,

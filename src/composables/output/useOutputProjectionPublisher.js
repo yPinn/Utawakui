@@ -55,6 +55,7 @@ export function useOutputProjectionPublisher({
     selectedTrack: lyricsTrack,
     selectedSource: lyricsSource,
     displayLyricsDocument,
+    experimentalLyrics,
     activeLineId,
     activeSegmentId,
   } = useLyrics();
@@ -98,7 +99,8 @@ export function useOutputProjectionPublisher({
     return projectLyricsOutputDocument({
       trackId,
       source: lyricsSource.value,
-      document: displayLyricsDocument.value,
+      document:
+        experimentalLyrics?.outputDocument.value ?? displayLyricsDocument.value,
       readingDocument: getReadingDoc(trackId, lyricsSource.value?.filename),
     });
   });

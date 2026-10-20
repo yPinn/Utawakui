@@ -51,22 +51,51 @@ function setup(bridge) {
   const getBridge = () =>
     bridge ?? { getExperimentalLyricsEstimate: async () => estimate };
   const positionMs = shallowRef(3500),
+    trackId = shallowRef('song'),
     offsetMs = shallowRef(0),
     filename = shallowRef('zh.vtt');
   const scope = effectScope();
   const owner = scope.run(() =>
     useExperimentalLyrics({
       document,
-      trackId: () => 'song',
+      trackId,
       filename,
       positionMs,
       offsetMs,
       getBridge,
     }),
   );
-  return { owner, scope, document, positionMs, offsetMs, filename };
+  return { owner, scope, document, positionMs, offsetMs, filename, trackId };
 }
 describe('manual experimental lyric application', () => {
+  it('does not send transient track/source pairs while selection changes synchronously', async () => {
+    const read = vi.fn(async () => ({ status: 'missing' }));
+    const { scope, trackId, filename } = setup({
+      getExperimentalLyricsEstimate: read,
+    });
+    await nextTick();
+    read.mockClear();
+    trackId.value = 'new-song';
+    filename.value = 'new-source.lrc';
+    await nextTick();
+    await nextTick();
+    expect(read.mock.calls).toEqual([['new-song', 'new-source.lrc']]);
+    scope.stop();
+  });
+  it('explains offset invalidation immediately and clears it only for a matching new estimate', async () => {
+    const { owner, scope, offsetMs, filename } = setup();
+    await nextTick();
+    owner.setApplied(true);
+    offsetMs.value = -500;
+    expect(owner.needsReanalysis.value).toBe(true);
+    expect(owner.applied.value).toBe(false);
+    expect(owner.outputDocument.value).toBeNull();
+    await nextTick();
+    expect(owner.needsReanalysis.value).toBe(true);
+    filename.value = 'other.lrc';
+    expect(owner.needsReanalysis.value).toBe(false);
+    scope.stop();
+  });
   it('never auto-applies; displays starts only after intent, preserving canonical T2 and T1 fallback', async () => {
     const { owner, scope, document, positionMs } = setup();
     await nextTick();
@@ -74,6 +103,20 @@ describe('manual experimental lyric application', () => {
     expect(owner.applied.value).toBe(false);
     expect(owner.frame.value).toBeNull();
     owner.setApplied(true);
+    expect(owner.outputDocument.value.lines[0].estimatedStarts).toEqual({
+      version: 1,
+      segments: [
+        { segmentId: 'model-a', text: '今天', startMs: 1000 },
+        { segmentId: 'model-b', text: '唱歌', startMs: 3000 },
+      ],
+    });
+    expect(owner.outputDocument.value.granularity).toBe('T1');
+    expect(owner.outputDocument.value.lines[1].segments).toEqual(
+      original.lines[1].segments,
+    );
+    expect(owner.outputDocument.value.lines[2]).not.toHaveProperty(
+      'estimatedStarts',
+    );
     expect(owner.frame.value.chunks[1]).toMatchObject({
       text: '唱歌',
       state: 'active',
@@ -85,6 +128,7 @@ describe('manual experimental lyric application', () => {
     expect(owner.frame.value).toBeNull();
     expect(document.value).toEqual(original);
     owner.setApplied(false);
+    expect(owner.outputDocument.value).toBeNull();
     expect(owner.frame.value).toBeNull();
     scope.stop();
   });
@@ -96,6 +140,7 @@ describe('manual experimental lyric application', () => {
       ),
     });
     filename.value = 'ja.vtt';
+    await nextTick();
     resolves[1]({ status: 'missing' });
     resolves[0]({ status: 'ready', preview: { documentId: 'old' } });
     await nextTick();

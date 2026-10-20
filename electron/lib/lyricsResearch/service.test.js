@@ -22,6 +22,56 @@ function setup(overrides = {}) {
   return { service, calls, environment };
 }
 describe('independent local research lifecycle', () => {
+  it('binds a modal request to its selected source before loading and before publishing', async () => {
+    const publishEstimate = vi.fn();
+    const runPreview = vi.fn(async () => ({ lines: [] }));
+    const loadAutomaticInput = vi.fn(async () => ({
+      identity: 'same',
+      language: 'ja',
+      source: { filename: 'other.lrc' },
+    }));
+    const { service, calls } = setup({
+      loadAutomaticInput,
+      runPreview,
+      publishEstimate,
+      isAnalysisAllowed: () => true,
+    });
+    expect(await service.analyze('one', 'ja', 'active.lrc')).toEqual({
+      status: 'skipped',
+      reason: 'source-changed',
+    });
+    expect(calls).toEqual([]);
+    expect(runPreview).not.toHaveBeenCalled();
+    loadAutomaticInput.mockResolvedValueOnce({
+      identity: 'same',
+      language: 'ja',
+      source: { filename: 'active.lrc' },
+    });
+    await expect(service.analyze('one', 'ja', 'active.lrc')).rejects.toThrow(
+      'source changed',
+    );
+    expect(publishEstimate).not.toHaveBeenCalled();
+    await expect(
+      service.analyze('one', 'ja', '../outside.lrc'),
+    ).rejects.toThrow();
+  });
+  it('forwards a one-task language and returns precise skips before loading models', async () => {
+    const loadAutomaticInput = vi.fn(async () => ({
+      status: 'skipped',
+      reason: 'native-t2',
+    }));
+    const { service, calls } = setup({
+      loadAutomaticInput,
+      isAnalysisAllowed: () => true,
+    });
+    expect(await service.analyze('one', 'ja')).toEqual({
+      status: 'skipped',
+      reason: 'native-t2',
+    });
+    expect(loadAutomaticInput).toHaveBeenCalledWith('one', 'ja');
+    expect(calls).toEqual([]);
+    await expect(service.analyze('one', 'ko')).rejects.toThrow();
+  });
   it('automatic analysis verifies a cold installed environment, processes the whole song and publishes only current results', async () => {
     const input = { identity: 'current', language: 'ja' };
     const publishEstimate = vi.fn(async (_input, _result, current) => {

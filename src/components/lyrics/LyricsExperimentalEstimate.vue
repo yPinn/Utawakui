@@ -10,15 +10,18 @@ defineProps({ disabled: { type: Boolean, default: false } });
   <div
     v-if="
       experiment &&
-      experiment.estimate.value.status !== 'missing' &&
+      (experiment.needsReanalysis.value ||
+        experiment.estimate.value.status !== 'missing') &&
       experiment.estimate.value.status !== 'disabled'
     "
     class="lyrics-experimental-estimate"
   >
     <UiHint>{{
-      experiment.prepared.value.status === 'ready'
-        ? '實驗詞塊已產生；尚未通過人工時間驗收。僅套用本機歌詞，原生 T2 優先，無可用詞塊時沿用 T1。'
-        : '實驗詞塊目前不可用，沿用原有歌詞。'
+      experiment.needsReanalysis.value
+        ? '校時已變更，請至可用歌詞重新分析；目前沿用來源時間。'
+        : experiment.prepared.value.status === 'ready'
+          ? '實驗詞塊已產生；尚未通過人工時間驗收。套用至歌詞與支援詞塊的 Output 模板，來源 T2 優先，無可用詞塊時沿用 T1。'
+          : '實驗詞塊目前不可用，沿用原有歌詞。'
     }}</UiHint>
     <UiButton
       :active="experiment.applied.value"

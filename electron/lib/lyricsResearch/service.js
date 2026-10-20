@@ -1,5 +1,9 @@
 'use strict';
-const { isBoundedTrackId } = require('../library/paths');
+const {
+  isBoundedTrackId,
+  isLyricsSubtitleFilename,
+} = require('../library/paths');
+const { isAnalysisLanguage } = require('./language');
 const DOWNLOAD_BYTES = 778532833;
 function validateIntent(intent) {
   if (
@@ -149,8 +153,15 @@ function createResearchService({
         return value;
       });
     },
-    async analyze(trackId) {
-      if (!isBoundedTrackId(trackId) || !isAnalysisAllowed())
+    async analyze(trackId, language = 'auto', sourceFilename) {
+      if (
+        !isBoundedTrackId(trackId) ||
+        !isAnalysisLanguage(language) ||
+        (sourceFilename !== undefined &&
+          (!isLyricsSubtitleFilename(sourceFilename) ||
+            sourceFilename.length > 240)) ||
+        !isAnalysisAllowed()
+      )
         throw Error('experimental analysis unavailable');
       let environmentFailure = false;
       return execute(
@@ -158,8 +169,14 @@ function createResearchService({
         async (options) => {
           if (!isAnalysisAllowed())
             throw Error('experimental analysis disabled');
-          const input = await loadAutomaticInput(trackId);
+          const input = await loadAutomaticInput(trackId, language);
           if (!input) return { status: 'skipped' };
+          if (input.status === 'skipped') return input;
+          if (
+            sourceFilename !== undefined &&
+            input.source?.filename !== sourceFilename
+          )
+            return { status: 'skipped', reason: 'source-changed' };
           if (!verified) {
             environmentFailure = true;
             await verify(options);
@@ -176,8 +193,13 @@ function createResearchService({
           });
           environmentFailure = false;
           options.signal.throwIfAborted();
-          const current = await loadAutomaticInput(trackId);
-          if (current?.identity !== input.identity)
+          const current = await loadAutomaticInput(trackId, language);
+          if (
+            current?.identity !== input.identity ||
+            (sourceFilename !== undefined &&
+              current?.source?.filename !== sourceFilename) ||
+            current?.language !== input.language
+          )
             throw Error('experimental source changed');
           return publishEstimate(
             input,

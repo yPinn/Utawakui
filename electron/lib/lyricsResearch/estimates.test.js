@@ -45,6 +45,34 @@ beforeEach(async () => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 describe('separate experimental estimate persistence', () => {
+  it('binds a manually resolved language while remaining readable without changing source language', async () => {
+    await saveExperimentalEstimate(
+      { ...input, language: 'ja' },
+      result,
+      () => true,
+    );
+    const file = path.join(
+      track,
+      'lyrics/experimental-estimates/main.vtt.json',
+    );
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    expect(raw.version).toBe(2);
+    expect(raw.analysisLanguage).toBe('ja');
+    expect(loadExperimentalEstimate(input).status).toBe('ready');
+    expect(
+      loadExperimentalEstimate({
+        ...input,
+        identity: 'offset changed',
+        source: { ...input.source, offsetMs: -500 },
+      }),
+    ).toEqual({ status: 'stale', reason: 'offset-changed' });
+    raw.analysisLanguage = 'zh';
+    fs.writeFileSync(file, JSON.stringify(raw));
+    expect(loadExperimentalEstimate(input).status).toBe('stale');
+    raw.analysisLanguage = 'ko';
+    fs.writeFileSync(file, JSON.stringify(raw));
+    expect(loadExperimentalEstimate(input).status).toBe('unsupported');
+  });
   it('roundtrips a validated separate estimate without changing canonical lyrics', async () => {
     const text = fs.readFileSync(path.join(track, 'lyrics/main.vtt'));
     expect(loadExperimentalEstimate(input).status).toBe('missing');

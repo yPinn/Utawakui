@@ -1,5 +1,9 @@
 'use strict';
-const { isBoundedTrackId } = require('../library/paths');
+const {
+  isBoundedTrackId,
+  isLyricsSubtitleFilename,
+} = require('../library/paths');
+const { isAnalysisLanguage, SKIP_REASONS } = require('./language');
 
 function createExperimentalLyricsQueue({
   getConfig,
@@ -66,13 +70,25 @@ function createExperimentalLyricsQueue({
         active = item;
         item.status = 'running';
         try {
-          const result = await research.analyze(item.trackId);
+          const result = item.sourceFilename
+            ? await research.analyze(
+                item.trackId,
+                item.analysisLanguage,
+                item.sourceFilename,
+              )
+            : item.analysisLanguage === 'auto'
+              ? await research.analyze(item.trackId)
+              : await research.analyze(item.trackId, item.analysisLanguage);
           if (item.status === 'cancelled' || result?.cancelled || !enabled())
             item.status = 'cancelled';
           else {
             item.status = result?.status === 'skipped' ? 'skipped' : 'ready';
             item.reason =
-              result?.status === 'skipped' ? 'unsupported-lyrics' : null;
+              result?.status === 'skipped'
+                ? SKIP_REASONS.includes(result.reason)
+                  ? result.reason
+                  : 'unsupported-lyrics'
+                : null;
             if (item.status === 'ready') {
               try {
                 onComplete(item.trackId);
@@ -99,9 +115,13 @@ function createExperimentalLyricsQueue({
       draining = false;
     }
   }
-  function enqueue(trackId) {
+  function enqueue(trackId, analysisLanguage = 'auto', sourceFilename) {
     if (
       !isBoundedTrackId(trackId) ||
+      !isAnalysisLanguage(analysisLanguage) ||
+      (sourceFilename !== undefined &&
+        (!isLyricsSubtitleFilename(sourceFilename) ||
+          sourceFilename.length > 240)) ||
       !enabled() ||
       items.some(
         (i) =>
@@ -118,7 +138,13 @@ function createExperimentalLyricsQueue({
     }
     const old = items.findIndex((i) => i.trackId === trackId);
     if (old >= 0) items.splice(old, 1);
-    items.push({ trackId, status: 'pending', reason: null });
+    items.push({
+      trackId,
+      status: 'pending',
+      reason: null,
+      analysisLanguage,
+      ...(sourceFilename !== undefined ? { sourceFilename } : {}),
+    });
     requestDrain();
     return true;
   }

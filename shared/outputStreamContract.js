@@ -189,6 +189,53 @@ function parseLine(value, path, usedIds, counters) {
     }
   }
 
+  let estimatedStarts;
+  if (line.estimatedStarts !== undefined) {
+    const extensionPath = `${path}.estimatedStarts`;
+    const extension = record(line.estimatedStarts, extensionPath);
+    strictKeys(extension, extensionPath, new Set(['version', 'segments']));
+    if (
+      extension.version !== 1 ||
+      segments?.length ||
+      startMs === null ||
+      endMs === null ||
+      !Array.isArray(extension.segments) ||
+      extension.segments.length === 0 ||
+      extension.segments.length > timingValues.maxSegmentsPerLine
+    )
+      invalid(
+        extensionPath,
+        'expected version-one starts on a bounded T1 line',
+      );
+    counters.segments += extension.segments.length;
+    if (counters.segments > timingValues.maxTotalSegments)
+      invalid(extensionPath, 'too many segments');
+    let previous = startMs;
+    const starts = extension.segments.map((raw, index) => {
+      const at = `${extensionPath}.segments[${index}]`;
+      const entry = record(raw, at);
+      strictKeys(entry, at, new Set(['segmentId', 'text', 'startMs']));
+      const segmentId = id(entry.segmentId, `${at}.segmentId`);
+      const text = string(
+        entry.text,
+        `${at}.text`,
+        timingValues.maxTextLength,
+        false,
+      );
+      const start = integer(entry.startMs, `${at}.startMs`, {
+        min: startMs,
+        max: endMs,
+      });
+      if (usedIds.has(segmentId) || start < previous)
+        invalid(at, 'duplicate id or non-monotonic start');
+      usedIds.add(segmentId);
+      previous = start;
+      return { segmentId, text, startMs: start };
+    });
+    if (starts.map((entry) => entry.text).join('') !== text)
+      invalid(extensionPath, 'text must preserve the parent line');
+    estimatedStarts = { version: 1, segments: starts };
+  }
   return {
     lineId,
     text,
@@ -196,6 +243,7 @@ function parseLine(value, path, usedIds, counters) {
     endMs,
     ...(line.endInferred === true ? { endInferred: true } : {}),
     ...(segments ? { segments } : {}),
+    ...(estimatedStarts ? { estimatedStarts } : {}),
   };
 }
 

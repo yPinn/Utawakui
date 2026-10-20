@@ -59,6 +59,34 @@ vi.mock('../ui/UiHint.vue', async () => {
     },
   };
 });
+vi.mock('../ui/UiSelect.vue', async () => {
+  const { h } = await import('vue');
+  return {
+    default: {
+      props: ['modelValue', 'options', 'label', 'hint', 'disabled'],
+      emits: ['update:modelValue'],
+      setup:
+        (props, { emit }) =>
+        () =>
+          h('label', [
+            props.label,
+            props.hint,
+            h(
+              'select',
+              {
+                value: props.modelValue,
+                disabled: props.disabled,
+                onChange: (event) =>
+                  emit('update:modelValue', event.target.value),
+              },
+              props.options.map((o) =>
+                h('option', { value: o.value }, o.label),
+              ),
+            ),
+          ]),
+    },
+  };
+});
 let mounted, snapshot, bridge;
 const flush = async () => {
   await nextTick();
@@ -100,6 +128,37 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('experimental lyrics settings workflow', () => {
+  it('explains an unknown language and sends a manual choice as one-task intent only', async () => {
+    snapshot = {
+      enabled: true,
+      allowed: true,
+      items: [
+        { trackId: 'song', status: 'skipped', reason: 'language-unknown' },
+      ],
+    };
+    mounted = mount(Component);
+    await flush();
+    expect(textContent(mounted.root)).toContain('來源語言未知');
+    const select = findAll(mounted.root, (node) => node.type === 'select')[0];
+    trigger(select, 'onChange', { target: { value: 'ja' } });
+    await flush();
+    trigger(button('重試分析'), 'onClick');
+    await flush();
+    expect(bridge.retryExperimentalLyrics).toHaveBeenCalledWith('song', 'ja');
+    expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
+  });
+  it('distinguishes native T2 and does not offer unnecessary re-analysis', async () => {
+    snapshot.items = [
+      { trackId: 'song', status: 'skipped', reason: 'native-t2' },
+    ];
+    mounted = mount(Component);
+    await flush();
+    expect(textContent(mounted.root)).toContain('已有逐字時間');
+    expect(button('重試分析')).toBeUndefined();
+    expect(
+      findAll(mounted.root, (node) => node.type === 'select'),
+    ).toHaveLength(0);
+  });
   it('starts unchecked, performs only explicit opt-in and never downloads', async () => {
     mounted = mount(Component);
     await flush();

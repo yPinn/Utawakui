@@ -4,6 +4,7 @@ import { useExperimentalLyricsQueue } from '../../composables/lyrics/useExperime
 import { useLibrary } from '../../composables/useLibrary.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import { Captions } from '../../icons/index.js';
@@ -11,6 +12,41 @@ const queue = useExperimentalLyricsQueue();
 const library = useLibrary();
 const id = `lyrics-experimental-${useId()}`,
   saving = shallowRef(false);
+const languageChoices = shallowRef(new Map());
+const languageOptions = [
+  { value: 'auto', label: '自動辨識' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日文' },
+];
+const skipLabels = {
+  'source-changed': '選用來源已變更，請至可用歌詞確認後重新分析。',
+  'environment-missing': '請先下載並檢查分析工具。',
+  'lyrics-missing': '沒有歌詞來源，請先加入時間歌詞。',
+  'language-unknown':
+    '來源語言未知，內容無法可靠辨識；請指定中文或日文後重試。',
+  'language-unsupported':
+    '來源標示其他語言；目前支援中文與日文，可確認後指定語言重試。',
+  'native-t2': '目前來源已有逐字時間，直接沿用，不需要重新分析。',
+  'untimed-lyrics': '目前來源沒有可分析的整句時間，請先準備時間歌詞。',
+};
+function selectedLanguage(item) {
+  return (
+    languageChoices.value.get(item.trackId) ?? item.analysisLanguage ?? 'auto'
+  );
+}
+function setLanguage(trackId, value) {
+  if (languageOptions.some((option) => option.value === value))
+    languageChoices.value = new Map([
+      ...languageChoices.value,
+      [trackId, value],
+    ]);
+}
+function retry(item) {
+  const language = selectedLanguage(item);
+  return language === 'auto'
+    ? queue.retry(item.trackId)
+    : queue.retry(item.trackId, language);
+}
 let timer;
 const items = computed(() =>
   (queue.state.value?.items ?? []).map((item) => ({
@@ -41,9 +77,8 @@ const items = computed(() =>
       failed: '伴奏仍可使用，可重試分析。',
       cancelled: '伴奏仍可使用，可重新分析。',
       skipped:
-        item.reason === 'environment-missing'
-          ? '請先下載並檢查分析工具。'
-          : '沒有可分析的中文或日文歌詞。',
+        skipLabels[item.reason] ??
+        '目前來源無法分析，請確認歌詞語言與整句時間。',
     }[item.status],
   })),
 );
@@ -120,13 +155,33 @@ onUnmounted(() => clearInterval(timer));
           @click="queue.cancel(item.trackId)"
           >取消分析</UiButton
         >
-        <UiButton
-          v-else-if="['failed', 'cancelled', 'skipped'].includes(item.status)"
-          variant="ghost"
-          :disabled="!queue.state.value?.enabled || !queue.state.value?.allowed"
-          @click="queue.retry(item.trackId)"
-          >重試分析</UiButton
+        <div
+          v-else-if="
+            ['failed', 'cancelled', 'skipped'].includes(item.status) &&
+            item.reason !== 'native-t2'
+          "
+          class="lyrics-experimental-queue__retry"
         >
+          <UiSelect
+            :id="`${id}-${item.trackId}-language`"
+            label="本次分析語言"
+            hint="只影響本次分析，不修改來源或校時。"
+            :model-value="selectedLanguage(item)"
+            :options="languageOptions"
+            :disabled="
+              !queue.state.value?.enabled || !queue.state.value?.allowed
+            "
+            @update:model-value="setLanguage(item.trackId, $event)"
+          />
+          <UiButton
+            variant="ghost"
+            :disabled="
+              !queue.state.value?.enabled || !queue.state.value?.allowed
+            "
+            @click="retry(item)"
+            >重試分析</UiButton
+          >
+        </div>
       </template>
     </SettingsDocumentItem>
   </div>
@@ -138,5 +193,12 @@ onUnmounted(() => clearInterval(timer));
 }
 .lyrics-experimental-queue > :deep(* + *) {
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+.lyrics-experimental-queue__retry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--ui-space-2);
+  min-inline-size: 0;
 }
 </style>

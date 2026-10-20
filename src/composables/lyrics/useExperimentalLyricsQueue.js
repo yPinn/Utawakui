@@ -8,18 +8,32 @@ export function useExperimentalLyricsQueue() {
     const current = ++read;
     try {
       const value = await window.Utawakui?.getExperimentalLyricsStatus();
-      if (current === read) state.value = value ?? null;
+      if (current === read) {
+        const completed = (value?.items ?? []).some(
+          (item) =>
+            item.status === 'ready' &&
+            state.value?.items?.some(
+              (previous) =>
+                previous.trackId === item.trackId &&
+                ['pending', 'running'].includes(previous.status),
+            ),
+        );
+        state.value = value ?? null;
+        if (completed) revision.value++;
+      }
     } catch {
       error.value = '無法讀取詞塊分析狀態，請重試。';
     }
   }
-  async function action(name, value) {
+  async function action(name, value, ...extra) {
     error.value = '';
     ++read;
     try {
-      await window.Utawakui[
+      const result = await window.Utawakui[
         `${name}ExperimentalLyrics${name === 'set' ? 'Enabled' : ''}`
-      ](value);
+      ](value, ...extra);
+      if (name === 'retry' && result?.queued === false)
+        throw Error('analysis not queued');
       revision.value++;
     } catch {
       error.value = '操作未完成，伴奏與原有歌詞仍可使用。';
@@ -33,6 +47,6 @@ export function useExperimentalLyricsQueue() {
     refresh,
     setEnabled: (value) => action('set', value),
     cancel: (trackId) => action('cancel', trackId),
-    retry: (trackId) => action('retry', trackId),
+    retry: (trackId, ...language) => action('retry', trackId, ...language),
   };
 }

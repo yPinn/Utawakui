@@ -29,9 +29,11 @@ import UiSurface from '../ui/UiSurface.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import LyricsLrclibSearchWorkspace from './LyricsLrclibSearchWorkspace.vue';
 import LyricsManualImportPanel from './LyricsManualImportPanel.vue';
+import LyricsSourceAnalysis from './LyricsSourceAnalysis.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  analysisDisabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(['close']);
 
@@ -42,6 +44,7 @@ const {
   setSourceLabel,
   deleteSource,
   backfillSourceLabels,
+  experimentalLyrics,
 } = useLyrics();
 const feedback = useFeedbackReport();
 
@@ -190,7 +193,26 @@ async function loadSourceTiers(requestId) {
 }
 
 function sourceTierLabel(source) {
-  return formatLyricsSourceTier(sourceTiers.value.get(source.filename));
+  const tier = sourceTiers.value.get(source.filename);
+  if (tier === 'T2') return '來源 T2';
+  if (tier === 'T1' && hasModelChunks(source)) return 'T1+';
+  return formatLyricsSourceTier(tier);
+}
+
+function hasModelChunks(source) {
+  return (
+    source.filename === state.selectedSourceFilename &&
+    experimentalLyrics?.prepared.value.status === 'ready' &&
+    experimentalLyrics.prepared.value.lines.some(
+      (line) => line.status === 'ready',
+    )
+  );
+}
+
+function sourceTierDescription(source) {
+  return hasModelChunks(source)
+    ? `${describeLyricsSourceTier(sourceTiers.value.get(source.filename))}；T1+ 模型估計，${experimentalLyrics.applied.value ? '使用中' : '未套用'}，未通過人工時間驗收`
+    : describeLyricsSourceTier(sourceTiers.value.get(source.filename));
 }
 
 function reportSource(source) {
@@ -210,7 +232,11 @@ function reportSource(source) {
   <UiModal
     :open="open"
     :title="modalTitle"
-    :size="activeView === 'search' ? 'wide' : 'notice'"
+    :size="
+      activeView === 'search' || selectedLyrics.sources.length
+        ? 'wide'
+        : 'notice'
+    "
     max-block-size="small"
     :body-mode="activeView === 'search' ? 'workspace' : 'scroll'"
     @close="handleModalClose"
@@ -323,13 +349,11 @@ function reportSource(source) {
               </span>
               <span
                 class="lyrics-source-manager__row-meta"
-                :aria-label="`${describeLyricsSourceTier(sourceTiers.get(source.filename))}，時間偏移 ${formatLyricsSourceOffset(sourceOffsetMs(source))}`"
+                :aria-label="`${sourceTierDescription(source)}，時間偏移 ${formatLyricsSourceOffset(sourceOffsetMs(source))}`"
               >
                 <UiOverflowTooltip
                   class="lyrics-source-manager__row-tier"
-                  :text="
-                    describeLyricsSourceTier(sourceTiers.get(source.filename))
-                  "
+                  :text="sourceTierDescription(source)"
                 >
                   {{ sourceTierLabel(source) }}
                 </UiOverflowTooltip>
@@ -366,6 +390,11 @@ function reportSource(source) {
           @saved="isManualImportOpen = false"
         />
       </section>
+      <LyricsSourceAnalysis
+        v-if="experimentalLyrics && state.selectedSourceFilename"
+        :active="open && activeView === 'sources'"
+        :disabled="analysisDisabled || isDeletingSource"
+      />
     </div>
   </UiModal>
 </template>
@@ -387,7 +416,7 @@ function reportSource(source) {
 }
 
 .lyrics-source-manager__row {
-  --ui-lyrics-source-meta-width: 6rem;
+  --ui-lyrics-source-meta-width: 9rem;
 
   display: flex;
   align-items: center;
@@ -420,7 +449,7 @@ function reportSource(source) {
 
 .lyrics-source-manager__row-meta {
   display: grid;
-  grid-template-columns: var(--ui-space-5) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
   column-gap: 0;
   flex: 0 0 var(--ui-lyrics-source-meta-width);

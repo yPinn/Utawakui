@@ -959,7 +959,7 @@ function renderMangaLyrics(elements, frame, options) {
     renderMangaText(documentApi, text, textLayout);
     applyMangaBubbleTiming(
       bubble,
-      frame.currentTimingSource === 't2'
+      ['t2', 'model-starts'].includes(frame.currentTimingSource)
         ? frame.mangaBubbleTiming?.[index]
         : null,
       frame,
@@ -1260,7 +1260,7 @@ function mangaBubbleTargets(elements) {
 function mangaEnteringBubbleTargets(elements, frame) {
   const targets = mangaBubbleTargets(elements);
   if (
-    frame.currentTimingSource !== 't2' ||
+    !['t2', 'model-starts'].includes(frame.currentTimingSource) ||
     !Array.isArray(frame.mangaBubbleTiming)
   ) {
     return targets;
@@ -1351,7 +1351,7 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
       timeline,
       incomingBubbles,
       'enter',
-      token.frame.currentTimingSource !== 't2',
+      !['t2', 'model-starts'].includes(token.frame.currentTimingSource),
     );
     return;
   }
@@ -1367,7 +1367,7 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
       timeline,
       incomingBubbles,
       'enter',
-      token.frame.currentTimingSource !== 't2',
+      !['t2', 'model-starts'].includes(token.frame.currentTimingSource),
     );
   });
 }

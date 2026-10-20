@@ -117,6 +117,65 @@ function dynamicPayload(overrides = {}) {
 }
 
 describe('output projection envelope', () => {
+  it('preserves validated starts in the split stream while legacy output safely retains T1', () => {
+    const hub = createOutputProjectionHub({ bootId: BOOT_ID });
+    hub.connectSource(SOURCE_ID);
+    const content = structuredClone(lyricsPayload);
+    content.document.lines[0].estimatedStarts = {
+      version: 1,
+      segments: [{ segmentId: 'model-a', text: '歌詞', startMs: 1200 }],
+    };
+    hub.publish(streamEnvelope('lyrics.document', 1, content), SOURCE_ID);
+    hub.publish(streamEnvelope('queue.document', 1, queuePayload), SOURCE_ID);
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 1, dynamicPayload()),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.getProjection().streams.lyrics.document.lines[0].estimatedStarts,
+    ).toEqual(content.document.lines[0].estimatedStarts);
+    expect(hub.getProjection().snapshot.lyrics.lines[0]).not.toHaveProperty(
+      'estimatedStarts',
+    );
+    const invalidContent = structuredClone(content);
+    invalidContent.document.lines[0].estimatedStarts.version = 2;
+    expect(() =>
+      hub.publish(
+        streamEnvelope('lyrics.document', 2, invalidContent, {
+          kind: 'update',
+        }),
+        SOURCE_ID,
+      ),
+    ).toThrow();
+    expect(
+      hub.getProjection().streams.lyrics.document.lines[0].estimatedStarts
+        .version,
+    ).toBe(1);
+    expect(
+      hub.publish(
+        streamEnvelope('lyrics.document', 3, lyricsPayload, { kind: 'update' }),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.publish(
+        streamEnvelope(
+          'state.snapshot',
+          2,
+          dynamicPayload({
+            lyrics: { ...dynamicPayload().lyrics, documentRevision: 3 },
+          }),
+          { kind: 'update' },
+        ),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.getProjection().streams.lyrics.document.lines[0],
+    ).not.toHaveProperty('estimatedStarts');
+  });
   it('validates a v3 envelope while preserving the canonical v2 payload', () => {
     const value = envelope();
 

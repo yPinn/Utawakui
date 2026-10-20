@@ -674,8 +674,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics-experimental:enable', enabled),
   cancelExperimentalLyrics: (trackId) =>
     ipcRenderer.invoke('lyrics-experimental:cancel', trackId),
-  retryExperimentalLyrics: (trackId) =>
-    ipcRenderer.invoke('lyrics-experimental:retry', trackId),
+  retryExperimentalLyrics: (trackId, ...language) =>
+    ipcRenderer.invoke('lyrics-experimental:retry', trackId, ...language),
   getExperimentalLyricsEstimate: (trackId, filename) =>
     ipcRenderer.invoke('lyrics-experimental:estimate', trackId, filename),
   prepareLyricsResearch: () => ipcRenderer.invoke('lyrics-research:prepare'),

@@ -74,6 +74,7 @@ let pointerScrollStart = null;
 const measuredRubyScale = shallowRef(1);
 const readerHeight = shallowRef('0px');
 let readerObserver;
+let readerFrame = 0;
 
 const activeLineId = computed(() => {
   if (props.activeLineIndex < 0) return null;
@@ -159,18 +160,30 @@ function measureReader() {
     measuredRubyScale.value = rubySize / mainSize;
 }
 
+function scheduleReaderResize() {
+  if (readerFrame) return;
+  readerFrame = requestAnimationFrame(() => {
+    readerFrame = 0;
+    measureReader();
+    if (isFollowingActiveLine.value) void scrollActiveLineIntoView();
+  });
+}
+
 onMounted(() => {
   measureReader();
   const viewport = panelViewport();
   if (viewport && typeof ResizeObserver === 'function') {
-    readerObserver = new ResizeObserver(() => {
-      measureReader();
-      if (isFollowingActiveLine.value) void scrollActiveLineIntoView();
-    });
-    readerObserver.observe(viewport);
+    // Reader padding depends on its height. Observe the stable outer box and
+    // defer writes so neither this observer nor the scroll chrome feeds back
+    // into the current ResizeObserver delivery cycle.
+    readerObserver = new ResizeObserver(scheduleReaderResize);
+    readerObserver.observe(viewport, { box: 'border-box' });
   }
 });
-onUnmounted(() => readerObserver?.disconnect());
+onUnmounted(() => {
+  readerObserver?.disconnect();
+  if (readerFrame) cancelAnimationFrame(readerFrame);
+});
 
 function canSeekLine(line) {
   return Number.isFinite(line?.start);

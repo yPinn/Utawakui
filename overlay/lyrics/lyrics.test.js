@@ -138,6 +138,53 @@ function kineticLineUnits(line) {
 }
 
 describe('lyrics overlay renderer', () => {
+  it('paints model starts through the existing T2 segment nodes without a continuous sweep', () => {
+    const model = domElements(),
+      native = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '今天唱歌',
+      nextText: '',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      currentTimingSource: 'model-starts',
+      currentSegments: [
+        {
+          segmentId: 'a',
+          text: '今天',
+          state: 'active',
+          progress: null,
+          remainingMs: null,
+        },
+        {
+          segmentId: 'b',
+          text: '唱歌',
+          state: 'upcoming',
+          progress: 0,
+          remainingMs: null,
+        },
+      ],
+    };
+    renderLyricsFrame(model, frame, { templateId: 'focus-line' });
+    renderLyricsFrame(
+      native,
+      { ...frame, currentTimingSource: 't2' },
+      { templateId: 'focus-line' },
+    );
+    expect(model.current.dataset.segmented).toBe('true');
+    expect(model.current.children.map((n) => n.className)).toEqual(
+      native.current.children.map((n) => n.className),
+    );
+    expect(
+      model.current.children[0].style.values['--ovl-segment-progress'],
+    ).toBe('100%');
+    expect(
+      model.current.children[1].style.values['--ovl-segment-progress'],
+    ).toBe('0%');
+    for (const node of model.current.children)
+      expect(node.animate).not.toHaveBeenCalled();
+  });
   it('exposes the same bounded rhythm reference to every lyrics template', () => {
     const frame = {
       revision: 1,

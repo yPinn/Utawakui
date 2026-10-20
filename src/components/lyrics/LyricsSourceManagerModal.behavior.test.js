@@ -19,6 +19,19 @@ import {
 
 const domain = vi.hoisted(() => ({}));
 vi.mock('../../composables/useLyrics.js', () => ({ useLyrics: () => domain }));
+vi.mock('./LyricsSourceAnalysis.vue', async () => {
+  const { h } = await import('vue');
+  return {
+    default: {
+      props: ['active', 'disabled'],
+      setup: (p) => () =>
+        h('div', {
+          'data-analysis-active': p.active,
+          'data-analysis-disabled': p.disabled,
+        }),
+    },
+  };
+});
 vi.mock('../ui/UiModal.vue', async () => {
   const { h } = await import('vue');
   return {
@@ -104,6 +117,7 @@ beforeEach(() => {
     setSourceLabel: vi.fn(),
     deleteSource: vi.fn(),
     backfillSourceLabels: vi.fn(async () => {}),
+    experimentalLyrics: null,
   });
 });
 afterEach(() => {
@@ -125,6 +139,46 @@ function setup() {
 }
 
 describe('local lyrics collection modal navigation', () => {
+  it('distinguishes selected model chunks from canonical T1 and source T2 without changing sources', async () => {
+    sources.items = [
+      { filename: 'active.lrc', kind: 'lrclib', offsetMs: -500 },
+      { filename: 'native.lrc', kind: 'manual', offsetMs: 0 },
+    ];
+    domain.state.selectedSourceFilename = 'active.lrc';
+    domain.state.offsetSeconds = -0.5;
+    domain.experimentalLyrics = {
+      prepared: computed(() => ({
+        status: 'ready',
+        lines: [{ status: 'ready' }],
+      })),
+      applied: computed(() => false),
+    };
+    window.Utawakui = {
+      getTrackLyrics: vi.fn(async (_id, name) => ({
+        text:
+          name === 'active.lrc'
+            ? '[00:01.00]今天唱歌\n[00:04.00]再見'
+            : '[00:01.00]<00:01.00>今天<00:02.00>唱歌\n[00:04.00]再見',
+      })),
+    };
+    const { root, props } = setup();
+    await nextTick();
+    await nextTick();
+    await nextTick();
+    expect(textContent(root)).toContain('T1+');
+    expect(textContent(root)).toContain('來源 T2');
+    expect(textContent(root)).toContain('-0.5s');
+    expect(
+      findAll(root, (n) => n.props['data-analysis-active'] === true),
+    ).toHaveLength(1);
+    props.analysisDisabled = true;
+    await nextTick();
+    expect(
+      findAll(root, (n) => n.props['data-analysis-disabled'] === true),
+    ).toHaveLength(1);
+    expect(domain.state.selectedSourceFilename).toBe('active.lrc');
+    expect(domain.state.offsetSeconds).toBe(-0.5);
+  });
   it('opens a content draft for the reported source while preserving current selection and timing', async () => {
     sources.items = [
       { filename: 'active.lrc', kind: 'lrclib', offsetMs: 100 },

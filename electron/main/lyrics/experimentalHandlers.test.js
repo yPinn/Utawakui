@@ -30,12 +30,26 @@ describe('bounded experimental lyrics IPC', () => {
     ).toEqual({ queued: true });
     await handlers.get('lyrics-experimental:estimate')(null, 'song', 'zh.vtt');
     expect(queue.setEnabled).toHaveBeenCalledWith(true);
+    await handlers.get('lyrics-experimental:retry')(null, 'song', 'ja');
+    expect(queue.enqueue).toHaveBeenCalledWith('song', 'ja');
+    await handlers.get('lyrics-experimental:retry')(
+      null,
+      'song',
+      'auto',
+      'active.lrc',
+    );
+    expect(queue.enqueue).toHaveBeenCalledWith('song', 'auto', 'active.lrc');
     expect(loadEstimate).toHaveBeenCalledWith('song', 'zh.vtt');
     for (const [operation, args] of [
       ['status', [true]],
       ['enable', ['true']],
       ['cancel', ['../x']],
       ['retry', [{ model: 'x' }]],
+      ['retry', ['song', 'ko']],
+      ['retry', ['song', { language: 'ja' }]],
+      ['retry', ['song', 'ja', 'extra']],
+      ['retry', ['song', 'ja', '../active.lrc']],
+      ['retry', ['song', 'ja', 'active.lrc', true]],
       ['estimate', ['song', '../zh.vtt']],
       ['estimate', ['song', 'zh.vtt', 'extra']],
     ])

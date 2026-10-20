@@ -15,6 +15,54 @@ const identity = {
   revision: 1,
 };
 
+describe('bounded model-start extension', () => {
+  function modelEnvelope() {
+    const value = lyricsEnvelope();
+    value.payload.document.granularity = 'T1';
+    delete value.payload.document.lines[0].segments;
+    value.payload.document.lines[0].estimatedStarts = {
+      version: 1,
+      segments: [
+        { segmentId: 'model-a', text: '歌詞', startMs: 1200 },
+        { segmentId: 'model-b', text: 'です', startMs: 2200 },
+      ],
+    };
+    return value;
+  }
+  it('keeps canonical T1 provenance and never adds a model singing end', () => {
+    const value = modelEnvelope();
+    delete value.payload.document.source.privatePath;
+    expect(parseOutputStreamEnvelope(value, 'boot-1')).toEqual(value);
+  });
+  it.each([
+    (extension) => {
+      extension.version = 2;
+    },
+    (extension) => {
+      extension.segments[0].endMs = 2000;
+    },
+    (extension) => {
+      extension.segments[0].startMs = 999;
+    },
+    (extension) => {
+      extension.segments[1].startMs = 1100;
+    },
+    (extension) => {
+      extension.segments[1].startMs = 3001;
+    },
+    (extension) => {
+      extension.segments[0].text = '錯字';
+    },
+    (extension) => {
+      extension.segments[1].segmentId = 'model-a';
+    },
+  ])('rejects malformed model-start evidence', (mutate) => {
+    const value = modelEnvelope();
+    mutate(value.payload.document.lines[0].estimatedStarts);
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow();
+  });
+});
+
 function lyricsEnvelope(overrides = {}) {
   return {
     ...identity,

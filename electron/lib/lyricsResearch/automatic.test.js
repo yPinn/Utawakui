@@ -17,6 +17,36 @@ function setup() {
   return { service, config, research };
 }
 describe('opt-in post-separation lyrics queue', () => {
+  it('keeps a bounded selected source on manual requests', async () => {
+    const { service, research } = setup();
+    await service.setEnabled(true);
+    expect(service.enqueue('track', 'auto', '../bad.lrc')).toBe(false);
+    service.enqueue('track', 'auto', 'active.lrc');
+    await vi.waitFor(() =>
+      expect(service.status().items[0].status).toBe('ready'),
+    );
+    expect(research.analyze).toHaveBeenCalledWith(
+      'track',
+      'auto',
+      'active.lrc',
+    );
+    expect(service.status().items[0].sourceFilename).toBe('active.lrc');
+  });
+  it('forwards manual language and preserves a bounded skip reason without downloads', async () => {
+    const { service, research } = setup();
+    await service.setEnabled(true);
+    research.analyze.mockResolvedValueOnce({
+      status: 'skipped',
+      reason: 'language-unknown',
+    });
+    service.enqueue('track', 'ja');
+    await vi.waitFor(() =>
+      expect(service.status().items[0].reason).toBe('language-unknown'),
+    );
+    expect(research.analyze).toHaveBeenCalledWith('track', 'ja');
+    expect(service.status().items[0].analysisLanguage).toBe('ja');
+    expect(service.enqueue('other', 'ko')).toBe(false);
+  });
   it('rechecks the feature gate and drains queued work without starting it when closed', async () => {
     let allowed = true;
     const config = { experimentalLyricsAfterSeparation: true };

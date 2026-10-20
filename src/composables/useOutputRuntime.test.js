@@ -39,8 +39,10 @@ let bridge;
 let arrangementActive;
 let arrangementCurrent;
 let arrangementPlanState;
+let experimentalLyrics;
 
 beforeEach(() => {
+  experimentalLyrics = { outputDocument: shallowRef(null) };
   vi.resetModules();
   arrangementActive = shallowRef(false);
   arrangementCurrent = shallowRef(null);
@@ -201,6 +203,7 @@ beforeEach(() => {
       selectedSource: selectedLyricsSource,
       lyricsDocument,
       displayLyricsDocument,
+      experimentalLyrics,
       lyricLines: { value: [] },
       activeLineIndex: { value: -1 },
       activeLineId,
@@ -405,6 +408,72 @@ describe('output source handshake', () => {
           message.stream === 'state.snapshot' && message.kind === 'full',
       ),
     ).toHaveLength(1);
+  });
+
+  it('publishes applied model starts before state, and disables them through the existing document stream', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    selectedLyricsTrack.value = { id: 'track-1' };
+    selectedLyricsSource.value = { filename: 'source.lrc', language: 'ja' };
+    lyricsDocument.value = {
+      documentId: 'doc',
+      granularity: 'T1',
+      lines: [{ lineId: 'line', text: '歌詞です', startMs: 1000, endMs: 5000 }],
+    };
+    const canonical = structuredClone(lyricsDocument.value);
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    bridge.publishOutputSnapshot.mockClear();
+    experimentalLyrics.outputDocument.value = {
+      ...canonical,
+      lines: [
+        {
+          ...canonical.lines[0],
+          estimatedStarts: {
+            version: 1,
+            segments: [
+              { segmentId: 'model-a', text: '歌詞', startMs: 1200 },
+              { segmentId: 'model-b', text: 'です', startMs: 3000 },
+            ],
+          },
+        },
+      ],
+    };
+    await flushMicrotasks();
+    const messages = bridge.publishOutputSnapshot.mock.calls.map(
+      ([value]) => value,
+    );
+    const contentIndex = messages.findIndex(
+      (m) => m.stream === 'lyrics.document',
+    );
+    const stateIndex = messages.findIndex((m) => m.stream === 'state.snapshot');
+    expect(contentIndex).toBeGreaterThanOrEqual(0);
+    expect(stateIndex).toBeGreaterThan(contentIndex);
+    expect(
+      messages[contentIndex].payload.document.lines[0].estimatedStarts.version,
+    ).toBe(1);
+    expect(messages[stateIndex].payload.lyrics.documentRevision).toBe(
+      messages[contentIndex].revision,
+    );
+    const epoch = messages[stateIndex].sourceEpoch;
+    bridge.publishOutputSnapshot.mockClear();
+    experimentalLyrics.outputDocument.value = null;
+    lyricsState.offsetSeconds = 0.1;
+    await flushMicrotasks();
+    const fallback = bridge.publishOutputSnapshot.mock.calls.map(
+      ([value]) => value,
+    );
+    expect(
+      fallback.find((m) => m.stream === 'lyrics.document').payload.document,
+    ).toEqual({ ...canonical, trackId: 'track-1', source: { language: 'ja' } });
+    expect(fallback.find((m) => m.stream === 'state.snapshot')).toMatchObject({
+      sourceEpoch: epoch,
+      payload: { lyrics: { offsetMs: 100 } },
+    });
+    expect(lyricsDocument.value).toEqual(canonical);
   });
 
   it('publishes the derived display lyrics document while keeping canonical authoring private', async () => {

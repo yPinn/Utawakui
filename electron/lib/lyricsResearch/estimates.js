@@ -76,9 +76,13 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
     ),
   );
   const file = location(input);
+  const language = ['zh', 'ja'].includes(input.language)
+    ? input.language
+    : null;
   const bytes = JSON.stringify({
-    version: 1,
-    identity: input.identity,
+    version: language ? 2 : 1,
+    identity: language ? sha([input.identity, language]) : input.identity,
+    ...(language ? { analysisLanguage: language } : {}),
     estimate,
   });
   if (Buffer.byteLength(bytes) > 2097152)
@@ -108,13 +112,25 @@ function loadExperimentalEstimate(input) {
   }
   try {
     if (
-      raw.version !== 1 ||
-      Object.keys(raw).sort().join(',') !== 'estimate,identity,version'
+      ![1, 2].includes(raw.version) ||
+      Object.keys(raw).sort().join(',') !==
+        (raw.version === 2
+          ? 'analysisLanguage,estimate,identity,version'
+          : 'estimate,identity,version') ||
+      (raw.version === 2 && !['zh', 'ja'].includes(raw.analysisLanguage))
     )
       return { status: 'unsupported' };
     const estimate = validateAcousticEstimate(raw.estimate);
     if (
-      raw.identity !== input.identity ||
+      estimate.source.filename === input.source.filename &&
+      estimate.source.offsetUsedMs !== (input.source.offsetMs ?? 0)
+    )
+      return { status: 'stale', reason: 'offset-changed' };
+    if (
+      raw.identity !==
+        (raw.version === 2
+          ? sha([input.identity, raw.analysisLanguage])
+          : input.identity) ||
       JSON.stringify(estimate.method) !== JSON.stringify(method)
     )
       return { status: 'stale' };

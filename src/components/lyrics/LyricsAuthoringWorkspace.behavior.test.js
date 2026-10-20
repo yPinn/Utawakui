@@ -177,6 +177,65 @@ function nodeText(node) {
 }
 
 describe('Lyrics workspace control contracts', () => {
+  it('defers reader resize writes, coalesces the latest size and cancels them on unmount', async () => {
+    const observers = [];
+    const frames = new Map();
+    let frameId = 0;
+    vi.stubGlobal('requestAnimationFrame', (callback) => {
+      frames.set(++frameId, callback);
+      return frameId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id) => frames.delete(id));
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback) {
+          this.callback = callback;
+          this.observe = vi.fn();
+          this.disconnect = vi.fn();
+          observers.push(this);
+        }
+      },
+    );
+    let panel;
+    try {
+      panel = mount(LyricsDocumentPanel, {
+        trackCount: 1,
+        hasSelectedTrack: true,
+        hasSelectedSource: true,
+        lines: [{ lineId: 'first', start: 1, text: 'First line' }],
+      });
+      await nextTick();
+      const reader = findByProp(panel.root, 'aria-label', '歌詞內容');
+      const document = findAll(panel.root, (node) =>
+        node.props?.class?.includes('lyrics-document'),
+      )[0];
+      const observer = observers.at(-1);
+      expect(Vue.toRaw(observer.observe.mock.calls[0][0])).toBe(reader);
+      expect(observer.observe.mock.calls[0][1]).toEqual({ box: 'border-box' });
+      frames.clear();
+      reader.clientHeight = 300;
+      observer.callback();
+      reader.clientHeight = 450;
+      observer.callback();
+      await nextTick();
+      expect(document.props.style['--lyrics-reader-height']).toBe('0px');
+      expect(frames.size).toBe(1);
+      const callback = frames.values().next().value;
+      frames.clear();
+      callback();
+      await nextTick();
+      expect(document.props.style['--lyrics-reader-height']).toBe('450px');
+      observer.callback();
+      panel.app.unmount();
+      expect(observer.disconnect).toHaveBeenCalledOnce();
+      expect(frames.size).toBe(0);
+    } finally {
+      panel?.app.unmount();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('keeps document display events semantic and keyed by stable line id', () => {
     const seekLine = vi.fn();
     const editTiming = vi.fn();

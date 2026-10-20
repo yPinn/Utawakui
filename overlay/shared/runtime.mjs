@@ -202,6 +202,9 @@ function assembleSplitSnapshot(
     endMs: line.endMs,
     ...(line.endInferred === true ? { endInferred: true } : {}),
     ...(Array.isArray(line.segments) ? { segments: line.segments } : {}),
+    ...(line.estimatedStarts?.version === 1
+      ? { estimatedStarts: line.estimatedStarts }
+      : {}),
   }));
   return {
     version: OUTPUT_STATE_VERSION,
