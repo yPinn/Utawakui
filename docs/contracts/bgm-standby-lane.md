@@ -91,9 +91,13 @@ BGM 使用獨立控制面，不共用也不擴張底部 `PlayerBar`。`PlayerBar
 播放器的 artwork、metadata、progress、transport、音量與演出工具；BGM 不得讓其中任何
 控制變成雙重用途或依 lane 切換語意。
 
-`BgmPlayer.vue` 是演出安排的場間音樂組合，重用 `BgmCurrentSource`、`BgmPlayerTransport`、`BgmTrackPicker` 與 `bgmPresentation`。App 在生命週期開始初始化唯一 `useBgmSession`；頁面及 Dock 的 mount／unmount 只改 presentation，不初始化、停止或重建 deck。主頁與安排 Dock 共用來源、單一 operational status、播放／暫停、Talk 與立即停止；音量／進度由同列圖示開啟共用 UiPopover，Escape 返回觸發按鈕；選曲按需展開。安排 Dock 透過固定 footer 呈現，待命、切頁及 tabs 切換時都保留，清單獨立捲動。沒有 titlebar BGM disclosure、浮動面板、拖曳或 Pin，也不擴張 PlayerBar。
+`BgmPlayer.vue` 是演出安排的場間音樂組合，重用 `BgmCurrentSource`、`BgmPlayerTransport`、`BgmTrackPicker` 與 `bgmPresentation`。App 在生命週期開始初始化唯一 `useBgmSession`；頁面及 Dock 的 mount／unmount 只改 presentation，不初始化、停止或重建 deck。BGM 操作集中於安排 Dock footer；主頁移除重複控制，既有更多選項的「顯示 BGM」開啟側欄並選取待唱分頁。Dock 提供來源、單一 operational status、播放／暫停、Talk 與立即停止；進度與音量常駐 transport，移除調整圖示及其 Popover；選曲搜尋仍按需展開。安排 Dock 透過固定 footer 呈現，待唱分頁保留兩段顯示；演出紀錄分頁隱藏 BGM 並關閉來源搜尋，返回待唱仍保留原收展狀態，清單獨立捲動。沒有 titlebar BGM disclosure、浮動面板、拖曳或 Pin，也不擴張 PlayerBar。
 
-主頁與 Dock 的 source picker 和音量／進度分開展開。選曲只取代單一 BGM 來源與位置，不開始播放；成功後收起搜尋並把仍在 picker 的鍵盤焦點回到來源按鈕。Dock 急停後仍保留固定控制；Talk 與急停沿用相同 transport，不複製 phase map 或按鈕條件。
+Dock 僅 source picker 使用搜尋浮層；進度／音量直接排列在 transport。Dock 依序呈現共用曲目列、固定時間欄／進度 Range、狀態／更換／急停一行、壓低／靜音／音量一行。播放／暫停整併到封面，Dock 不重複顯示獨立播放按鈕。最窄 272px Dock 也保留兩行底部控制，不另外換出第三行；排列不得由曲名、來源、metadata 或播放狀態決定。來源按鈕以共用 `UiPopover` 向上開啟搜尋浮層，不把搜尋／結果插入 footer flow；空查詢、搜尋結果、無結果及更換來源前後，曲目區與 transport 保持固定位置。開啟時焦點進入搜尋，Escape 關閉並返回來源按鈕，點擊外部沿用 Popover 關閉規則。選曲只取代單一 BGM 來源與位置，不開始播放；失敗保留搜尋與錯誤，成功後收起搜尋並把仍在 picker 的鍵盤焦點回到來源按鈕。Dock 急停後仍保留固定控制；Talk 與急停沿用相同 transport，不複製 phase map 或按鈕條件。
+
+Dock 預設收合為曲目資訊區，保留共用封面、曲名、歌手、目前時間／總長、可拖曳進度及展開按鈕。封面與其他 Track Row 共用 `UiTrackArtworkButton` 及 `RightDockTrackArtworkCue`，同一實心圖示、scrim、hover／focus reveal、外側焦點框與 click／double-click 邊界；hover 或 keyboard focus 顯示播放／暫停；與完整 transport 共用 primary-action 投影，演唱交接期間仍鎖定，不能由封面繞過。展開才揭露來源搜尋、狀態與混音工具／音量；收合僅隱藏細節並關閉搜尋，不重建 transport、不發出音訊 intent。展開／收合沿用同一按鈕與焦點，提供 aria-expanded／aria-controls；收合期間的錯誤以按鈕 danger 語意與完整 accessible label 保留提示。主頁保留演唱操作，不再掛載 BGM 控制。
+
+曲目 identity 與底部 PlayerBar 共用 `PlaybackTrackIdentity`：封面、曲名省略／完整提示、專輯導覽與歌手 credits 都取自 canonical track，BGM 狀態由 feature 在進度下方的 context row 保留單一固定行，不插入共用曲目元件，也不改變封面／標題／歌手幾何。BGM 與 PlayerBar 仍各自消費原本的 audio owner，僅共用呈現元件，不共享播放狀態或增加音訊元素。
 
 播放權限不依賴 OBS live／record。BGM 不進一般 Queue、演出 occurrence、統計或公開畫面；Space、media keys 與既有播放快捷仍只控制演唱播放器。LIVE／REC 由既有 titlebar 呈現，不在 BGM 重複資訊。只顯示頁面、改來源、收合 Dock、切頁與清除安排都不隱式播放或刪除 BGM 設定；若清除停止正在演出的曲目，仍由既有 terminal handoff 決定恢復。
 
@@ -159,6 +163,7 @@ audio element 正在播放、已暫停或已結束。
 
 - fade-in／fade-out 使用 BGM bus gain automation，不修改原始音訊或 item gain trim；
 - Talk／Dim 是使用者明確控制的 BGM bus attenuation，不偵測 microphone activity；
+- 操作面以無麥克風圖示的「壓低 BGM」按鈕呈現，pressed state 表示衰減已啟用；啟用後的 accessible name 保留可見名稱，並提示「按下恢復 BGM 音量」。Dock 沿用此標示及原有衰減邏輯；
 - Talk／Dim 解除後只能回到當時有效的 BGM target gain，不能越過 mute、item trim 或 master
   volume；
 - 更換 BGM 時若正在播放，依序執行 current fade-out、原子替換 deck source、play confirmed、
@@ -394,10 +399,10 @@ capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
     base gain 預設為 25%。
 22. transition 進行中修改 fade／Dim／silence 設定，只影響下一次 transition；當前 automation
     依其建立時的 snapshot 完成或被新 transport intent 明確取消。
-23. inactive 可由演出安排中的相同 transport 明確試播 monitor；不得宣稱 OBS capture 已驗證。音量／進度與本機搜尋按需展開，不遮蔽 Talk／急停。
+23. inactive 可由演出安排中的相同 transport 明確試播 monitor；不得宣稱 OBS capture 已驗證。進度／音量常駐，本機搜尋按需展開，不遮蔽 Talk／急停。
 24. live／record 模式變化保留既有 coordinator policy，不建立第二份頁面 session 或 deck；第一次發聲仍需明確 intent。
 25. App 啟動離線不建立 reconnecting session，confirmed inactive 沿用原 session-exit 與取消 pending transition 邊界。
-26. 主頁與安排 Dock 底欄共用完整 presentation／actions；待命及主頁可見時保留底欄，不強制展開 Dock。
+26. BGM 控制僅由安排 Dock 待唱底欄呈現；主頁不重複掛載，更多選單可直接開啟 BGM，不因切頁或收合停止音訊。
 27. 切頁及 mount／unmount 不改音訊。成功選曲有明確焦點返回，不新增浮動外框／移動／Pin。
 28. 曲名單行截斷，phase／deferred restore／public error 使用同一句 operational status，Play／Pause 不依待唱順位命名。
 29. Text placeholder、unreviewed、unlinked 或 source-unavailable item 不能進入 prepared handoff；

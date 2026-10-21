@@ -4,16 +4,16 @@
 
 ## Runtime Ownership
 
-| Runtime                                               | 責任                                                                                                  | 不可持有                                                 |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| Electron main (`electron/main/`)                      | Window lifecycle、IPC trust boundary、feature gate enforcement、本機服務、diagnostics                 | Renderer reactive state、client 提供的路徑               |
-| Pure main libraries (`electron/lib/`)                 | 檔案系統、provider、處理、依賴與 sidecar 邏輯                                                         | BrowserWindow lifecycle、renderer 呈現                   |
-| Preload (`electron/preload.js`)                       | 固定 channel 的 intent bridge；dev-only channel 依 flag 註冊                                          | Node API passthrough、任意 channel 或路徑 API            |
-| Renderer (`src/`)                                     | Vue UI 與 player／queue／lyrics owners                                                                | Node／Electron import、依賴 URL、模型或執行檔路徑        |
-| Performer window (`electron/main/performerWindow.js`) | 第二個 sandboxed 視窗：提詞器呈現、獨立 preload、snapshot、offset 與播放／讀音 control intent、bounds | 播放／佇列／歌詞權威、來源 identity、renderer 推導的幾何 |
-| Shared (`shared/`)                                    | Scalar JSON 契約與純 cross-runtime 投影                                                               | 檔案系統、Electron、瀏覽器全域、可變服務狀態             |
-| Browser Source (`overlay/`)                           | OBS 交付 adapter、DOM 呈現與獨立 `--ovl-*` tokens                                                     | 控制台 tokens、產品狀態                                  |
-| Spout helper (`electron/main/spoutHelperEntry.js`)    | Offscreen Lyrics surface、native Spout sender、texture 釋放                                           | 核心狀態、renderer IPC                                   |
+| Runtime                                                      | 責任                                                                                                  | 不可持有                                                 |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Electron main (`electron/main/`)                             | Window lifecycle、IPC trust boundary、feature gate enforcement、本機服務、diagnostics                 | Renderer reactive state、client 提供的路徑               |
+| Pure main libraries (`electron/lib/`)                        | 檔案系統、provider、處理、依賴與 sidecar 邏輯                                                         | BrowserWindow lifecycle、renderer 呈現                   |
+| Preload (`electron/preload.js`)                              | 固定 channel 的 intent bridge；dev-only channel 依 flag 註冊                                          | Node API passthrough、任意 channel 或路徑 API            |
+| Renderer (`src/`)                                            | Vue UI 與 player／queue／lyrics owners                                                                | Node／Electron import、依賴 URL、模型或執行檔路徑        |
+| Performer window (`electron/main/windows/prompterWindow.js`) | 第二個 sandboxed 視窗：提詞器呈現、獨立 preload、snapshot、offset 與播放／讀音 control intent、bounds | 播放／佇列／歌詞權威、來源 identity、renderer 推導的幾何 |
+| Shared (`shared/`)                                           | Scalar JSON 契約與純 cross-runtime 投影                                                               | 檔案系統、Electron、瀏覽器全域、可變服務狀態             |
+| Browser Source (`overlay/`)                                  | OBS 交付 adapter、DOM 呈現與獨立 `--ovl-*` tokens                                                     | 控制台 tokens、產品狀態                                  |
+| Spout helper (`electron/main/spoutHelperEntry.js`)           | Offscreen Lyrics surface、native Spout sender、texture 釋放                                           | 核心狀態、renderer IPC                                   |
 
 `electron/main.js` 是 composition root：設定 app identity、註冊 privileged scheme、建立服務，再以具名依賴注入各 domain handler。Handler 不共用 context blob，也不彼此協調；跨 domain 流程由 root 建立的 service 負責。
 
@@ -28,7 +28,10 @@
 
 ### 視窗
 
-- 主視窗 density 由 `electron/main/windowState.js` 依原生狀態投影：視窗化為 `compact`，最大化／全螢幕為 `standard`；初值經 `additionalArguments` 給 preload，之後只經 `ui-density:changed` 更新，`useUiDensity.js` 寫入 document root。
+- `electron/main/windows/outputWindow.js` 管理每種固定 slot 的只讀可見視窗，`outputWindowHandlers.js` 只開放控制台 main frame 的 kind intent；沿用 canonical loopback URL、slot 與尺寸，不建 Output Vite entry。獨立 session 無 preload 且拒絕權限／下載／外部導向。Output runtime 的 slot-change callback 同步內容尺寸，beforeStop 先清理視窗再停止 Spout；控制台實際關閉清理，Tray 隱藏保留。視窗黑色 substrate 與 OBS 擷取限制見 [Output runtime](contracts/output-runtime.md#只讀輸出視窗)。
+- 主視窗與提詞器 owner 集中在 `electron/main/windows/mainWindow.js`／`prompterWindow.js`，分別保留原有 native integration 與獨立視窗生命週期；沒有通用視窗 factory。`shared/rendererEntries.json` 給 Vite、HTML 品牌注入與 main 同一入口對照：主入口仍為根目錄 `index.html`，提詞器 HTML／bootstrap 位於 `src/entries/prompter/`，建置後保留同層級。兩份 preload 仍在 `electron/`，原有 IPC、設定鍵、renderer surface id 與 Spout helper 不變。
+- `shared/appIdentity.json` 是固定品牌與視窗角色（`main`／`prompter`／`output`）的資料來源；不讀 Electron、userData 或設定。Main 保持先 `app.setName()` 再載入 domain 模組。`electron/main/windows/windowIdentity.js` 解析共用 native icon，主視窗與提詞器使用同一資產；Vite 的 `viteAppIdentity.js` 在處理 HTML 前注入標題與 favicon。主視窗仍可隨歌曲更新標題。`output` 角色名稱同樣供只讀 Output 擷取視窗使用。
+- 主視窗 density 由 `electron/main/windows/mainWindow.js` 依原生狀態投影：視窗化為 `compact`，最大化／全螢幕為 `standard`；初值經 `additionalArguments` 給 preload，之後只經 `ui-density:changed` 更新，`useUiDensity.js` 寫入 document root。
 - Performer bounds 由 main config 與 window manager 持有：只接受 `{ x, y, width, height }` normal bounds，move／resize debounce、close 時 flush，排除全螢幕與最大化；依目前 work area 以 32px margin 調回螢幕內，無保存值時 960×540 置中。Renderer 沒有 bounds IPC。
 - `electron/main/previewSession.js` 在 ready 時並行初始化 default session 的 Cookie store（只查詢固定 loopback URL、不送請求、不寫值），讓 Workbench iframe 重用；主畫面與 Output 不等待它。
 
@@ -70,7 +73,7 @@
 - `usePlayer.js` 是 HTML audio event 權威與 transport facade；`player/usePlayerAudioGraph.js` 擁有四聲道 accompaniment／guide-vocal 路由、monitor／capture mix、Signalsmith pitch、capture sink 與清理，不註冊時間事件。Monitor graph lazy 建立；儲存的 capture 裝置須先由 `useAudioOutput.js` 列舉驗證，裝置遺失或錯誤時關閉 capture、清除設定並保留 monitor，不 fallback 到預設喇叭。`pitchProcessorLoader.js` 首次需要時才載入 Signalsmith worklet，失敗可重試，不放寬 CSP。
 - Chromium 自然 EOF 的 pause→ended 由 ended 這個 terminal owner 處理，不投影為操作暫停，以免略過 BGM post-roll。
 - 最近播放與啟動恢復：`usePlaybackHistory.js` 依實際 progress／ended 判定 qualified event；`useRecentPlaybackActivation.js` 以插播方式播放歷史曲目，不重建來源佇列；`usePlaybackResume.js` 只投影與 paused rehydrate。演唱音量與監聽／擷取 level 由 `shared/audioControlValues.json` 定義，存於 `config.json.audioPreferences`，preload 同步 seed 第一幀，`useAudioPreferences.js` 合併寫回。見[播放紀錄契約](contracts/playback-history-and-resume.md)。
-- BGM：`src/bgm/audioDeck.js` 擁有第二個 audio element 與 logical gain bus（目前只連系統預設 monitor）；`src/bgm/handoffCoordinator.js` 仲裁 BGM request、演唱後 deferred restore、fade gate、pre-roll／post-roll 與 stale generation。`useBgmSession.js` 由 App 在啟動時初始化一次，組合 plan、library、OBS、deck、coordinator 與 player 的單一 pre-start hook；`BgmPlayer.vue` 是演出安排主頁與安排 Dock footer 共用的組合，mount／unmount 不改變音訊。BGM 不進 Queue、history、resume、Output、SMTC。見 [BGM 契約](contracts/bgm-standby-lane.md)與 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
+- BGM：`src/bgm/audioDeck.js` 擁有第二個 audio element 與 logical gain bus（目前只連系統預設 monitor）；`src/bgm/handoffCoordinator.js` 仲裁 BGM request、演唱後 deferred restore、fade gate、pre-roll／post-roll 與 stale generation。`useBgmSession.js` 由 App 在啟動時初始化一次，組合 plan、library、OBS、deck、coordinator 與 player 的單一 pre-start hook；`BgmPlayer.vue` 是安排 Dock footer 的場間音樂控制組合，主頁更多選單可導向此處，mount／unmount 不改變音訊。BGM 不進 Queue、history、resume、Output、SMTC。見 [BGM 契約](contracts/bgm-standby-lane.md)與 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
 - 曲目試聽是同一 coordinator 仲裁的第三條、最低優先 lane：`acquirePreview()` 回傳可被搶占的 lease；演唱開始、BGM 播放、進入直播／錄影都會搶占試聽，直播／錄影中直接拒絕。Owner 是 `useTrackPreview.js`（自有 audio element），`TrackPreviewOverlay.vue` 只投影狀態。見[試聽契約](contracts/track-preview.md)。
 - 節拍器 `useMetronome.js` 使用獨立 AudioContext 與 lookahead scheduler；`useMetronomeTrackTempo.js` 只在停止且未手動覆寫時套用通過信心門檻的分析 BPM，不回寫 sidecar。
 
@@ -79,6 +82,8 @@
 - `usePerformanceSessionPlan.js` 序列化 mutation 並消費 main 回傳的完整 snapshot；`usePerformanceSessionPlaybackController.js` 協調 occurrence、confirmed playing、完成／略過／中止與連續播放；`usePerformanceSessionPlayback.js` 與 `usePlaybackTransport` 共用 PlayerBar／SMTC／ended 的下一首決策。一般 Queue 與安排不各自註冊自動前進。
 - `PerformanceSessionWorkspace.vue` 是主頁組合：目前項目、連續播放、場間音樂、待唱與演出紀錄。`PerformanceSessionCurrent.vue` 供主頁與 Dock 共用（保留封面播放／暫停）；`PerformanceSessionQueueList.vue` 與 `PerformanceSessionCompletedList.vue` 關閉清單播放動作，「再次加入」只建立新 occurrence。`PerformanceSessionSummary.vue` 以 `performanceSessionSummary.js` 投影統計，主頁與 Dock 共用。
 - `performanceSessionOutput.js` 在安排持有播放時，從 confirmed current 與 completed progress 產生公開 queue／playback 投影，使用 occurrence 名稱；未開始與略過／中止不冒充完成。
+- `PerformanceSessionHistoryTools.vue` 共用紀錄頁選單、明確封存與封存集合；`PerformanceSessionPlaylistExportModal.vue` 先呈現 main 預覽的合併／排除數再保存。`useObsSessionExport` 指定安排場次後，重讀保持同一身分。
+- 封存集合重用 `PlaylistSidebarRow`／`UiCollageThumb`，main 摘要僅附最多四個去重的 canonical cover ids，不下放整份 items 或路徑。`useAppView.performanceArchiveId` 與既有 navigation history 擁有場次位置；`PerformanceSessionArchive.vue` 在主區重用 Folder document／dossier／Track Row 顯示唯讀 occurrence 原序，`usePerformanceArchive` 隔離載入／重試與切換競態，不改目前安排或播放。
 - 見[演出安排契約](contracts/performance-session-preparation.md)。
 
 ### 歌詞
@@ -109,7 +114,7 @@
 
 ### 視窗關閉與 Tray
 
-- `electron/main/windowsTrayController.js` 持有 tray；`windowState.js` 仍是唯一主視窗 owner。`windowCloseBehavior` 為 `ask`／`tray`／`quit`（預設 `ask`）。`ask` 由 main 產生一次性 request id，經 `windowCloseDecisionBridge.js` 請 renderer 以 `UiModal` 呈現；renderer 逾時或失去回應才退回原生對話框。伴奏處理執行中改用不可記住的一次性確認。
+- `electron/main/windowsTrayController.js` 持有 tray；`mainWindow.js` 仍是唯一主視窗 owner。`windowCloseBehavior` 為 `ask`／`tray`／`quit`（預設 `ask`）。`ask` 由 main 產生一次性 request id，經 `windowCloseDecisionBridge.js` 請 renderer 以 `UiModal` 呈現；renderer 逾時或失去回應才退回原生對話框。伴奏處理執行中改用不可記住的一次性確認。
 - 背景執行先確保 tray 可建立，再隱藏同一視窗，播放與 Output 不重建。Tray 開啟、設定、雙擊與 second-instance 都還原同一視窗。
 - Tray 完全退出、更新安裝、`before-quit` 與 Windows `query-session-end`／`session-end` 先設定 sticky quitting 狀態，close handler 才放行。
 
@@ -143,17 +148,18 @@
 ### 演出安排與 BGM 儲存
 
 - `performanceSessionPlan.js` 在 library root 原子保存 `performance-session-plan.json`，只接受 bounded ids、mode、labels、驗證狀態、cursor、revision 與 progress；`performanceSessionPlanHandlers.js` 每次以 main 推導的 playlist 與曲庫驗證順序與可用性。Set-progress 以獨立 `progressRevision` 驗證；每個 library 在 process 首次操作時把殘留 playing 恢復為 interrupted。
+- `performanceSessionArchive.js` 在同一文件保存 sessionId、逐次時間軸與封存，同次 atomic write 封存並輪替空白新場；舊 id 重試不清新場。`performanceSessionHistoryHandlers.js` 序列化 archive／指定場次讀取／預覽與歌單保存；確認時重算 token，`playlists.savePerformancePlaylist` 一次保存完整歌單與冪等 key。現有 runtime globs 封裝新模組，無外部依賴。
 - `bgmStandbyPlan.js` 原子保存 `bgm-standby.json`：單一 track id、position 與音量／mute／fade／Dim／pre-roll／post-roll（loop 固定）。Schema v3 預設 fade-out 0.6s、pre-roll 0.75s、post-roll 1.0s、fade-in 1.0s、音量 0.25、Talk −12 dB；Talk 不持久化。
 
 ### OBS 與資源監視
 
 - `obsAdapter.js` 只在 `obs-integration` 啟用且期望連線時 lazy 載入 SDK，只讀版本、直播／錄影狀態與時間戳；握手與請求有期限，逾時淘汰 transport 並退避重連，舊連線不得回寫。失敗分類為有限的公開原因，不暴露 endpoint 或例外。密碼只以 `safeStorage` 加密存在獨立檔案，不可用時拒絕設定。
-- `sessionHistoryService.js` 消費 Output 投影的曲目變更，在 OBS 活動時取得時間戳並原子保存本機 session JSON；renderer 只讀並輸出 YouTube 章節。`obsPowerSaveBlocker.js` 只在直播或錄影中防止螢幕休眠。
+- `sessionHistoryService.js` 消費 confirmed performance identity：安排由 main 驗證 sessionId＋itemId，安排外由 App 的 `usePerformanceHistoryObserver` 訂閱 player.onPlaying 後送 epoch／playbackRevision／trackId。OBS ready／degraded 且對應輸出 active 才擷取獨立快照；安排在 progress playing 保存 occurrence，離線時間為 null。標記綁定 main 場次 context，封存先 flush。OBS convenience log 保留既有略過門檻與 Settings 入口，production 不再由 Output trackId 變更觸發。`obsPowerSaveBlocker.js` 只在直播或錄影中防止螢幕休眠。
 - `appUsageService.js` 每 3 秒發布 CPU／RAM；平時只讀 `app.getAppMetrics()`，`heavyJobScheduler` 忙碌時才補量子程序。
 
 ### 音訊處理與分析
 
-- `audioProcessing/separationQueueService.js` 是 main 記憶體內的序列佇列，以 `(trackId, recipeId)` 去重，每首開始前重查 gate、依賴、來源與結果；只有明確重新準備才覆寫。佇列狀態只代表本次 session，manifest 才是結果權威；清除紀錄不刪除結果。`separationHandlers.js` 把狀態送到 `windowState.js`，taskbar 顯示 aggregate progress、paused 或 error。
+- `audioProcessing/separationQueueService.js` 是 main 記憶體內的序列佇列，以 `(trackId, recipeId)` 去重，每首開始前重查 gate、依賴、來源與結果；只有明確重新準備才覆寫。佇列狀態只代表本次 session，manifest 才是結果權威；清除紀錄不刪除結果。`separationHandlers.js` 把狀態送到 `mainWindow.js`，taskbar 顯示 aggregate progress、paused 或 error。
 - `audioProcessing/structureAnalysisAutoQueue.js` 是匯入後的去重單工佇列，重查自動分析偏好、gate、capability 與 sidecar 是否最新，手動分析結束後才執行；失敗不回滾匯入。
 - Renderer：Settings 的 `useMusicAnalysisSettings.js`／`MusicAnalysisSettingsRow.vue` 管理 lifecycle 與自動分析偏好；`analysis/useMusicAnalysisCapabilitySession.js` 依 bridge 共用 capability 投影。F5 工作台 `useMusicAnalysisWorkbench.js` 只做單曲強制執行、批次重跑與診斷；Music M2 的 `useMusicAnalysisReferenceAnnotation.js` 持有人工標註草稿。見[音樂分析契約](contracts/music-analysis.md)。
 
@@ -244,3 +250,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 - Signed manifest foundation：`updateManifestClient.js`、`updateManifestVerification.js` 與 `tools/update-signing/` 把 installer basename／size／SHA-512 綁到 `UpdateInfo`，schema v2 使用 Ed25519 多簽章與 canonical bytes；release workflow 分為 package、sign、publish。`signedManifestEnabled` 仍為 false、只有 development key。Installer 維持 unsigned channel。
 - `obs-websocket-js` 隨 production 依賴封裝，但停用時不載入 SDK、不開 socket。
 - 「有什麼新變化」內建於 `shared/releaseAnnouncement.json`，`useAppAnnouncement.js` 比對 `lastSeenAnnouncementVersion` 只顯示一次；發版流程見 [release notes 範本](operations/release-notes-template.md)。
+
+演出安排的 collection append 由既有 performanceSessionPlanHandlers 解析 sourceId 對應的 main-owned playlist membership，store 共用 collection snapshot builder 並在一次 mutate 內檢查總容量及追加。preload 的固定 append-from-collection intent 只攜帶 sourceId；一般播放queue與演出occurrence保持不同owner，Sidebar以明確動作選目的地。
+
+封存場次追加由固定 append-from-archive intent 只送 sessionId，main 在原 plan store 的一次 mutate 內讀取權威 archives、驗證總容量並建立 queued occurrences；重唱、手動及既有顯示 snapshot 保留，原目前場次與 audio owner 不改。Renderer 的 usePerformanceQueueActions 共用單曲、collection 與archive三種明確來源，封存主頁沿用 CollectionActionRail。

@@ -29,10 +29,16 @@ A history entry is a navigation **location**, never application state:
 | Destination          | `library`, `performance`, `display`, `settings` | `useAppView`   |
 | Library workspace    | destination is `library`                        | `useAppView`   |
 | Library selection    | destination is `library`                        | `usePlaylists` |
+| Performance archive  | destination is `performance`, archive selected  | `useAppView`   |
 | Settings return view | destination is `settings`                       | `useAppView`   |
 
 The library selection is one of: a playlist or source-backed album id, a derived
 artist id, a metadata-derived album reference, or the all／local library view.
+
+A selected archived performance is a read-only collection location identified by
+its session id. Distinct archives have distinct history keys; traversal restores
+that archive without changing the current arrangement or playback. Missing
+archives render their own retryable error, as missing reference albums do.
 
 Not recorded: playback, queue, Right Dock, modals and menus, row selection, search
 text, sort, column preferences, the Performance tool (`session`／`live-lyrics`),

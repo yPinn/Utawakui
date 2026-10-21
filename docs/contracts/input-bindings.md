@@ -102,7 +102,7 @@ Main 端的 `app-command`（`browser-backward`、`browser-forward`）由
 
 ## 系統入口
 
-- 工作列縮圖按鈕（[windowState.js](../../electron/main/windowState.js)）。
+- 工作列縮圖按鈕（[mainWindow.js](../../electron/main/windows/mainWindow.js)）。
 - SMTC 卡片與硬體媒體鍵：註冊 `play`、`pause`、`previoustrack`、`nexttrack`（[useMediaSession.js](../../src/composables/useMediaSession.js)）；上一首／下一首與 PlayerBar 共用 [usePlaybackTransport.js](../../src/composables/usePlaybackTransport.js)。
 - 系統匣導覽。
 - 滑鼠側鍵、瀏覽器導覽鍵與 Windows `app-command`：見上方「Pointer 綁定與歷史走訪」。

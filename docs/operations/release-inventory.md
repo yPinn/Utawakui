@@ -555,3 +555,7 @@ Python needs the real unpacked `decoder.py` plus adjacent `manifest.json`; both 
 ## F5 Output development probes
 
 scripts/outputPerformanceProbe.mjs、scripts/output-performance-probe.mjs 與 scripts/output-performance-driver.cjs 僅供開發驗收。沿用 F4 exact entry allowlist、隔離 profile、取消與 owned-process cleanup；不新增 public HTTP／IPC。tasks 下的 frozen runtime-inputs／tool-source／合成圖片／PNG／JSONL／封裝副本不屬於發行資產。包裝排除與 Output HTTP 404 tests 覆蓋 F5 工具；沒有新增 runtime 依賴或搬移檔案。startup-performance 的 --port／child environment 修正也只影響測量工具。
+
+## Performance session archive and export runtime
+
+`electron/lib/performanceSessionArchive.js` and `electron/main/performanceSessionHistoryHandlers.js` use the existing `electron/**/*` runtime inclusion and `electron/lib/**/*` unpack boundary. No new dependency or external executable is added. `performance-session-plan.json` remains library-owned, with atomic current-session rotation and scalar archives/timelines; `playlists.json` stores populated exports and their idempotency keys. Main-only fixed IPC handles selected-session reads, archive, preview and save; the renderer never supplies storage paths or media URLs. The existing independent OBS session files remain under userData.
