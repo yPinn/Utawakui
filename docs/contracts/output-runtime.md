@@ -56,7 +56,7 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 服務停止／重啟前銷毀所有輸出視窗；主視窗實際關閉與 App 退出也清理。主視窗隱藏至 Tray 不停止輸出。重啟服務後要重新按開啟，不自動彈窗；手動關閉或 renderer failure 後可重試。Browser Source 與 Spout 維持獨立生命週期。
 
-這是原生框架、不透明黑色 substrate 的視窗；模板本身、動畫與透明 CSS 不變，但此交付方式不承諾 OBS alpha。`backgroundThrottling: false` 也不代表最小化後 OBS 一定繼續取樣。實機尺寸、標題與橋接隔離可本機量測；Window Capture 的 alpha、遮擋、最小化及關閉重開辨識依[可見驗收清單](../operations/output-appearance-acceptance.md#w3-視窗擷取短測)另驗。
+這是原生框架、不透明黑色 substrate 的視窗；模板本身、動畫與透明 CSS 不變，但此交付方式不承諾 OBS alpha。`backgroundThrottling: false` 也不代表最小化後 OBS 一定繼續取樣。Window Capture 的環境相關行為與人工結果統一記錄於[W3 視窗擷取短測](../operations/output-appearance-acceptance.md#w3-視窗擷取短測)，不由視窗設定推定通過。
 
 ## Browser Source 頁面生命週期
 
