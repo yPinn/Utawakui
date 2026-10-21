@@ -220,7 +220,8 @@ function createResearchService({
             current?.identity !== input.identity ||
             (sourceFilename !== undefined &&
               current?.source?.filename !== sourceFilename) ||
-            current?.language !== input.language
+            current?.language !== input.language ||
+            JSON.stringify(current?.routing) !== JSON.stringify(input.routing)
           )
             throw Error('experimental source changed');
           return publishEstimate(

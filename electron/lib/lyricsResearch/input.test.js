@@ -39,6 +39,23 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 const intent = { trackId: 'song', language: 'zh', lineIndex: 0 };
 describe('main-derived research input', () => {
+  it('admits an und document by line evidence and keeps its mixed line declined', async () => {
+    fs.writeFileSync(
+      path.join(track, 'lyrics/main.vtt'),
+      'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nDo you enjoy testing?\n\n00:00:05.000 --> 00:00:08.000\n君の local signal\n',
+    );
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'mul', offsetMs: -250 },
+    ]);
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    const before = fs.readFileSync(path.join(track, 'lyrics/lyrics.json'));
+    const input = await loadAutomaticResearchInput(root, 'song');
+    expect(input.routing.lines.map((l) => l.language)).toEqual(['en', null]);
+    expect(input.source.offsetMs).toBe(-250);
+    expect(fs.readFileSync(path.join(track, 'lyrics/lyrics.json'))).toEqual(
+      before,
+    );
+  });
   it('routes an English preferred source without changing its language, preference or offset', async () => {
     fs.writeFileSync(
       path.join(track, 'lyrics/main.vtt'),
@@ -96,6 +113,31 @@ describe('main-derived research input', () => {
       language: 'ja',
       languageOrigin: 'manual',
       source: { filename: 'main.vtt' },
+    });
+  });
+  it('keeps unsupported metadata closed and skips a source containing only mixed T1 lines', async () => {
+    fs.writeFileSync(
+      path.join(track, 'lyrics/main.vtt'),
+      'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nDo you enjoy testing?\n',
+    );
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'ko' },
+    ]);
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+      status: 'skipped',
+      reason: 'language-unsupported',
+    });
+    fs.writeFileSync(
+      path.join(track, 'lyrics/main.vtt'),
+      'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nBright signal 君の文字\n',
+    );
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'ja' },
+    ]);
+    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+      status: 'skipped',
+      reason: 'unsupported-lyrics',
     });
   });
   it('distinguishes existing T2 from missing sources and missing line timing', async () => {

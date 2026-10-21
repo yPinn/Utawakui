@@ -149,6 +149,27 @@ describe('independent local research lifecycle', () => {
     expect(service.status().status).toBe('ready');
     await expect(setup().service.analyze('one')).rejects.toThrow('unavailable');
   });
+  it('does not publish if the per-occurrence routing changes while the primary hint stays the same', async () => {
+    const input = {
+      identity: 'same',
+      language: 'ja',
+      routing: { lines: [{ lineId: 'a', language: 'ja' }] },
+    };
+    const publishEstimate = vi.fn();
+    const { service } = setup({
+      loadAutomaticInput: vi
+        .fn()
+        .mockResolvedValueOnce(input)
+        .mockResolvedValueOnce({
+          ...input,
+          routing: { lines: [{ lineId: 'a', language: 'en' }] },
+        }),
+      isAnalysisAllowed: () => true,
+      publishEstimate,
+    });
+    await expect(service.analyze('one')).rejects.toThrow('source changed');
+    expect(publishEstimate).not.toHaveBeenCalled();
+  });
   it('exposes setup contention to the automatic queue without claiming research ownership', () => {
     const { service } = setup({ isSetupBusy: () => true });
     expect(service.isAnalysisBusy()).toBe(true);

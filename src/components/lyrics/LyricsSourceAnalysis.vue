@@ -112,12 +112,13 @@ const jobDescription = computed(() => {
     {
       'source-changed': '選用來源已變更，請確認目前來源後重新分析。',
       'language-unknown':
-        '無法可靠辨識歌詞語言，請指定中文、日文或英文後重試。',
+        '尚無可可靠分流的句子；可指定主要語言提示後重試，混語句仍沿用 T1。',
       'language-unsupported':
         '目前支援中文、日文與英文，請確認後指定分析語言。',
       'lyrics-missing': '沒有歌詞來源，請先加入時間歌詞。',
       'untimed-lyrics': '目前來源沒有可分析的整句時間。',
       'native-t2': '來源 T2 已提供逐字時間，直接沿用。',
+      'unsupported-lyrics': '目前沒有可分析的單語句；句內混語沿用 T1。',
       'environment-missing': '請先至設定準備歌詞分析工具。',
     }[currentItem.value.reason] ?? '目前來源無法分析，請確認語言與整句時間。'
   );
@@ -140,11 +141,11 @@ const progressLabel = computed(() =>
       '準備分析'),
 );
 const statusMessage = computed(() => {
+  if (!busy.value && experiment.needsReanalysis.value)
+    return '校時已變更，請重新分析；目前沿用來源時間。';
   if (jobDescription.value) return jobDescription.value;
   if (availability.value) return availability.value;
   if (busy.value) return '';
-  if (experiment.needsReanalysis.value)
-    return '校時已變更，請重新分析；目前沿用來源時間。';
   if (readyCount.value)
     return (
       'T1+ · ' +
@@ -238,7 +239,7 @@ onScopeDispose(() => clearInterval(timer));
         v-if="hasT1"
         :id="languageId"
         v-model="language"
-        label="本次分析語言"
+        label="主要語言提示"
         :options="languageOptions"
         :disabled="blocked || busy"
       />
@@ -275,8 +276,9 @@ onScopeDispose(() => clearInterval(timer));
     <UiHint v-if="hasT1">完成後手動套用；T1+ 時間仍待人工驗收。</UiHint>
     <UiDisclosure v-if="hasT1" v-model:open="detailsOpen" label="分析說明">
       <UiHint
-        >依目前校時分析，語言只作用本次；變更來源或校時後需重新分析。來源 T2
-        優先，未通過的句子沿用 T1；套用同步至支援詞塊的 Output 模板。</UiHint
+        >依目前校時逐句分流中／日／英，提示只作用本次；句內混語或證據不足沿用
+        T1。變更來源或校時後需重新分析。來源 T2 優先，未通過的句子沿用
+        T1；套用同步至支援詞塊的 Output 模板。</UiHint
       >
     </UiDisclosure>
     <LyricsPhrasePreview

@@ -327,16 +327,36 @@ main-owned source derivation without a renderer filename.
 estimate a bounded ID and existing subtitle filename. Main derives all paths,
 executables, models and download pins; renderer cannot write estimate data.
 
-Unknown source languages use conservative script/grammar evidence from lyric body text;
-insufficient or mixed evidence stays unknown. Explicit unsupported metadata is not
-silently replaced. A manual language is a single-job intent, preserved only on its
+Unknown source languages use conservative script/grammar evidence from lyric body text.
+Each occurrence has a main-derived language plan: native T2 bypasses inference;
+monolingual Chinese/Japanese/English lines route independently of the source's
+primary language. Source metadata and the manual selection supply a job-local hint
+for ambiguous lines, never force mixed scripts into a monolingual decoder.
+Unknown, unsupported and within-line mixed text retain T1; explicit unsupported
+metadata remains closed. A document without one global language may run when
+some lines have supported routing. A manual hint is preserved only on its
 session-local queue item for retry, and never writes source metadata, preference or offset.
 Skip reasons distinguish absent lyrics, unknown/unsupported language, absent T1 timing
 and existing native T2. Native T2 bypasses inference. Version-two estimate envelopes bind
 the resolved `analysisLanguage` with the existing input identity; version-one and
 version-two envelopes remain parseable. Version three additionally validates a bounded
 content summary (supported, uncertain, contradictions, possible missing lyrics and
-silent lines); it does not add or certify word timing. The normal lyrics-page loader needs no language override or model load.
+silent lines); it does not add or certify word timing. Version four binds the
+versioned per-occurrence routing plan and primary hint with input identity and
+the updated method. Versions one through three remain parseable; old methods
+are stale and require regeneration, without deleting prior files. The normal
+lyrics-page loader needs no language override or model load.
+
+One CPU HubertFA session/window is shared across routed languages; decoder prepare
+and original-text chunk cuts use each line's language. Chinese/Japanese blind
+content checks are deduplicated by window/language; English retains its own line
+crop and 500 ms context. The existing content/silence thresholds are unchanged.
+The content work count is the number of planned window/language checks plus
+English line checks, bounded by the existing line budget. Routing is not content
+evidence: a short English grammatical clause can be an English candidate, but
+must still pass the unchanged timed English content support requirement and
+dictionary preparation. Latin script or dictionary membership alone does not
+establish English. No within-line multilingual phone sequence is produced.
 
 `LyricsSourceManagerModal` composes a current-source `LyricsSourceAnalysis` panel;
 language, retry, cancellation and manual apply/disable reuse the existing queue and

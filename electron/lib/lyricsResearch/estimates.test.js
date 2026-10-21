@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { loadResearchInput } from './input.js';
 import {
@@ -45,6 +46,56 @@ beforeEach(async () => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 describe('separate experimental estimate persistence', () => {
+  it('binds every routed occurrence and retains readable legacy envelopes without accepting old methods', async () => {
+    await saveExperimentalEstimate(input, result, () => true);
+    const file = path.join(
+      track,
+      'lyrics/experimental-estimates/main.vtt.json',
+    );
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    raw.routing.lines[0].language = 'en';
+    fs.writeFileSync(file, JSON.stringify(raw));
+    expect(loadExperimentalEstimate(input).status).toBe('stale');
+    for (const version of [1, 2, 3]) {
+      const legacy = {
+        version,
+        identity:
+          version === 1
+            ? input.identity
+            : createHash('sha256')
+                .update(JSON.stringify([input.identity, 'zh']))
+                .digest('hex'),
+        ...(version >= 2 ? { analysisLanguage: 'zh' } : {}),
+        ...(version === 3
+          ? {
+              validation: {
+                checked: 0,
+                supported: 0,
+                uncertain: 0,
+                contradictions: 0,
+                missingLyrics: 0,
+                silent: 0,
+              },
+            }
+          : {}),
+        estimate: raw.estimate,
+      };
+      fs.writeFileSync(file, JSON.stringify(legacy));
+      expect(loadExperimentalEstimate(input).status).toBe('ready');
+    }
+    raw.estimate.method.version = '2';
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        ...raw,
+        routing: {
+          ...raw.routing,
+          lines: [{ lineId: input.canonical.lines[0].lineId, language: 'zh' }],
+        },
+      }),
+    );
+    expect(loadExperimentalEstimate(input).status).toBe('stale');
+  });
   it('persists bounded validation warnings separately from timing and rejects inconsistent summaries', async () => {
     result.lines[0].content = 'possible-missing-lyrics';
     const saved = await saveExperimentalEstimate(
@@ -61,7 +112,7 @@ describe('separate experimental estimate persistence', () => {
       'lyrics/experimental-estimates/main.vtt.json',
     );
     const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-    expect(raw.version).toBe(3);
+    expect(raw.version).toBe(4);
     raw.validation.checked = 0;
     fs.writeFileSync(file, JSON.stringify(raw));
     expect(loadExperimentalEstimate(input).status).toBe('corrupt');
@@ -77,8 +128,8 @@ describe('separate experimental estimate persistence', () => {
       'lyrics/experimental-estimates/main.vtt.json',
     );
     const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-    expect(raw.version).toBe(2);
-    expect(raw.analysisLanguage).toBe('ja');
+    expect(raw.version).toBe(4);
+    expect(raw.routing.hint).toBe('ja');
     expect(loadExperimentalEstimate(input).status).toBe('ready');
     expect(
       loadExperimentalEstimate({
@@ -87,10 +138,10 @@ describe('separate experimental estimate persistence', () => {
         source: { ...input.source, offsetMs: -500 },
       }),
     ).toEqual({ status: 'stale', reason: 'offset-changed' });
-    raw.analysisLanguage = 'zh';
+    raw.routing.hint = 'zh';
     fs.writeFileSync(file, JSON.stringify(raw));
     expect(loadExperimentalEstimate(input).status).toBe('stale');
-    raw.analysisLanguage = 'ko';
+    raw.routing.hint = 'ko';
     fs.writeFileSync(file, JSON.stringify(raw));
     expect(loadExperimentalEstimate(input).status).toBe('unsupported');
   });

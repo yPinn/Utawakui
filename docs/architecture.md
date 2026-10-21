@@ -93,6 +93,7 @@
 - T1 聲學估計另存 `lyrics/acoustic-estimates/<sourceFilename>.json`，由 `lyricsAcousticEstimates.js` 驗證並原子保存；`useLyricsAcousticPreview` 只持有 session 啟用選擇，不寫入 canonical segments。正式 loader 預設拒用研究模型。見 [ADR 0026](adr/0026-t1-acoustic-estimates.md) 與[聲學估計契約](contracts/lyrics-acoustic-estimate-contract.md)。
 - `electron/lib/lyricsAcoustic/` 持有選配環境生命週期（固定 catalog／SHA、獨立 capability、共用 Audio Python host 與 heavy-job scheduler）；Settings 經 `useLyricsAcousticCapability` 與六個零參數 IPC 操作。正式 catalog 仍被 `weights-evidence-pending` 擋住。
 - 實驗性研究：`electron/lib/lyricsResearch/` 管理隔離下載、完整性、載入與片段；`main/lyrics/researchHandlers.js` 只接收有界意圖；環境在 userData `lyrics-research/installed`，不寫正式 activation。預設關閉的 `experimentalLyricsAfterSeparation` 在分離結果發布後經 `lyricsResearch/automatic.js` 接續分析，結果由 `estimates.js` 驗證後寫入 `lyrics/experimental-estimates/`。`lyricsResearch/language.js` 以歌詞正文辨識中／日／英，證據不足保留未知。
+- 實驗分析由 `lyricsResearch/language.js` 派生逐行語言計畫，`engine.js` 與研究 job 共用同一計畫／CPU 聲學窗，內容查核依行語言執行；來源與手選只作主要語言提示，句內混語維持 T1。估計封套 v4 綁定計畫與配方版本，舊配方需重新分析。
 - `useExperimentalLyrics` 持有手動套用狀態，交付本機閱讀區與 Output（`outputDocument` 經 `useOutputProjectionPublisher` 以既有 v3 revision 發布；line 的可選 `estimatedStarts` 由 `shared/outputStreamContract.js` 驗證）。`LyricsSourceAnalysis` 只對目前來源提供分析、取消與套用。Offset 變更即解除套用。
 - 研究 CLI 在 `scripts/research/`，不進封裝（App 試用只明列所需推論模組）。選型見[研究結論](research/lyrics-alignment/lyrics-alignment-summary.md)，步驟見[試用手冊](operations/lyrics-alignment-research.md)。
 

@@ -23,6 +23,7 @@ const {
 const { runProbe } = require('../lyricsAcoustic/probe');
 const { contained } = require('../lyricsAcoustic/integrity');
 const { verifyInstalled } = require('./environment');
+const { planLineLanguages } = require('./language');
 
 function wav(bytes) {
   const out = Buffer.alloc(44 + bytes.length);
@@ -182,11 +183,17 @@ async function runResearchPreview(
       .slice(0, 10);
   if (!canonical.lines.length)
     throw Error('research line exceeds preview budget');
+  const routing = planLineLanguages(canonical.lines, language);
+  const languages = new Map(
+    routing.lines.map((line) => [line.lineId, line.language]),
+  );
   const plans = planWindows(
     canonical.lines.filter((line) => {
       if (line.segments?.length) return false;
       try {
-        lexicalUnits(line.text, language);
+        const lineLanguage = languages.get(line.lineId);
+        if (!lineLanguage) return false;
+        lexicalUnits(line.text, lineLanguage);
         return true;
       } catch {
         return false;
@@ -221,6 +228,7 @@ async function runResearchPreview(
       canonical,
       durationMs: input.durationMs,
       language,
+      lineLanguages: routing.lines,
       jobsRoot: path.join(workspace, 'workers'),
       onProgress: (event) => {
         if (
@@ -251,10 +259,31 @@ async function runResearchPreview(
     }
     onProgress('small');
     const decisions = new Map();
-    const contentTotal =
-      language === 'en'
-        ? plans.reduce((sum, window) => sum + window.lineIds.length, 0)
-        : plans.length;
+    const contentGroups = new Map(
+      plans.map((window) => {
+        const rows = canonical.lines.filter((line) =>
+          window.lineIds.includes(line.lineId),
+        );
+        return [
+          window.index,
+          [...new Set(rows.map((line) => languages.get(line.lineId)))].map(
+            (lineLanguage) => ({
+              language: lineLanguage,
+              lines: rows.filter(
+                (line) => languages.get(line.lineId) === lineLanguage,
+              ),
+            }),
+          ),
+        ];
+      }),
+    );
+    const contentTotal = [...contentGroups.values()]
+      .flat()
+      .reduce(
+        (sum, entry) =>
+          sum + (entry.language === 'en' ? entry.lines.length : 1),
+        0,
+      );
     let completedWindows = 0;
     await withGroup(signal, async (group) => {
       for (const window of plans) {
@@ -296,102 +325,109 @@ async function runResearchPreview(
           Math.abs(bytes.length / 64 - (window.endMs - window.startMs)) > 100
         )
           throw Error('research PCM duration');
-        const spans =
-          language === 'en'
-            ? null
-            : await transcribe(config, group, workspace, bytes, language);
-        for (const line of canonical.lines.filter((line) =>
-          window.lineIds.includes(line.lineId),
+        for (const { language: lineLanguage, lines } of contentGroups.get(
+          window.index,
         )) {
-          const begin = Math.round(
-            (line.startMs - (input.source.offsetMs ?? 0) - window.startMs) * 16,
-          );
-          const end = Math.round(
-            (line.endMs - (input.source.offsetMs ?? 0) - window.startMs) * 16,
-          );
-          let peak = 0;
-          for (
-            let i = Math.max(0, begin);
-            i < Math.min(bytes.length / 4, end);
-            i++
-          ) {
-            const value = bytes.readFloatLE(i * 4);
-            if (!Number.isFinite(value)) throw Error('research nonfinite PCM');
-            peak = Math.max(peak, Math.abs(value));
-          }
-          if (
-            begin >= 0 &&
-            end <= bytes.length / 4 &&
-            end > begin &&
-            peak <= 1e-6
-          ) {
-            decisions.set(line.lineId, {
-              reject: true,
-              silent: true,
-              evidenceState: 'insufficient',
-            });
-          } else if (language === 'en') {
-            // A local blind transcript avoids assigning a 30-second segment's
-            // approximate token clocks to the wrong lyric occurrence.
-            const left = Math.max(0, begin - 8000),
-              right = Math.min(bytes.length / 4, end + 8000);
-            const local = bytes.subarray(left * 4, right * 4);
-            const localStart = window.startMs + left / 16;
-            const duration = local.length / 64;
-            const localSpans = await transcribe(
-              config,
-              group,
-              workspace,
-              local,
-              language,
-            );
+          signal.throwIfAborted();
+          const spans =
+            lineLanguage === 'en'
+              ? null
+              : await transcribe(config, group, workspace, bytes, lineLanguage);
+          signal.throwIfAborted();
+          for (const line of lines) {
             signal.throwIfAborted();
-            decisions.set(
-              line.lineId,
-              assessCompleteness(
-                {
-                  ...line,
-                  startMs: Math.round(
-                    localStart + (input.source.offsetMs ?? 0),
-                  ),
-                  endMs: Math.round(
-                    localStart + duration + (input.source.offsetMs ?? 0),
-                  ),
-                },
-                {
-                  language,
-                  windowStartMs: Math.round(localStart),
+            const begin = Math.round(
+              (line.startMs - (input.source.offsetMs ?? 0) - window.startMs) *
+                16,
+            );
+            const end = Math.round(
+              (line.endMs - (input.source.offsetMs ?? 0) - window.startMs) * 16,
+            );
+            let peak = 0;
+            for (
+              let i = Math.max(0, begin);
+              i < Math.min(bytes.length / 4, end);
+              i++
+            ) {
+              const value = bytes.readFloatLE(i * 4);
+              if (!Number.isFinite(value))
+                throw Error('research nonfinite PCM');
+              peak = Math.max(peak, Math.abs(value));
+            }
+            if (
+              begin >= 0 &&
+              end <= bytes.length / 4 &&
+              end > begin &&
+              peak <= 1e-6
+            ) {
+              decisions.set(line.lineId, {
+                reject: true,
+                silent: true,
+                evidenceState: 'insufficient',
+              });
+            } else if (lineLanguage === 'en') {
+              // A local blind transcript avoids assigning a 30-second segment's
+              // approximate token clocks to the wrong lyric occurrence.
+              const left = Math.max(0, begin - 8000),
+                right = Math.min(bytes.length / 4, end + 8000);
+              const local = bytes.subarray(left * 4, right * 4);
+              const localStart = window.startMs + left / 16;
+              const duration = local.length / 64;
+              const localSpans = await transcribe(
+                config,
+                group,
+                workspace,
+                local,
+                lineLanguage,
+              );
+              signal.throwIfAborted();
+              decisions.set(
+                line.lineId,
+                assessCompleteness(
+                  {
+                    ...line,
+                    startMs: Math.round(
+                      localStart + (input.source.offsetMs ?? 0),
+                    ),
+                    endMs: Math.round(
+                      localStart + duration + (input.source.offsetMs ?? 0),
+                    ),
+                  },
+                  {
+                    language: lineLanguage,
+                    windowStartMs: Math.round(localStart),
+                    offsetMs: input.source.offsetMs ?? 0,
+                    durationMs: duration,
+                    spans: localSpans,
+                  },
+                ),
+              );
+            } else {
+              decisions.set(
+                line.lineId,
+                assessCompleteness(line, {
+                  language: lineLanguage,
+                  windowStartMs: window.startMs,
                   offsetMs: input.source.offsetMs ?? 0,
-                  durationMs: duration,
-                  spans: localSpans,
-                },
-              ),
-            );
-          } else {
-            decisions.set(
-              line.lineId,
-              assessCompleteness(line, {
-                language,
-                windowStartMs: window.startMs,
-                offsetMs: input.source.offsetMs ?? 0,
-                durationMs: window.endMs - window.startMs,
-                spans,
-              }),
-            );
+                  durationMs: window.endMs - window.startMs,
+                  spans,
+                }),
+              );
+            }
+            if (lineLanguage === 'en')
+              onProgress({
+                stage: 'content',
+                completed: ++completedWindows,
+                total: contentTotal,
+              });
           }
-          if (language === 'en')
+          if (lineLanguage !== 'en')
             onProgress({
               stage: 'content',
               completed: ++completedWindows,
               total: contentTotal,
             });
         }
-        if (language !== 'en')
-          onProgress({
-            stage: 'content',
-            completed: ++completedWindows,
-            total: contentTotal,
-          });
       }
     });
     signal.throwIfAborted();
@@ -412,7 +448,9 @@ async function runResearchPreview(
         const chunks =
           !native &&
           !decision?.reject &&
-          (language !== 'en' || decision?.evidenceState === 'supported') &&
+          languages.get(line.lineId) &&
+          (languages.get(line.lineId) !== 'en' ||
+            decision?.evidenceState === 'supported') &&
           estimate?.status === 'ready'
             ? estimate.chunks
             : [];

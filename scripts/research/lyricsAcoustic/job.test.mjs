@@ -100,6 +100,49 @@ async function setup() {
 }
 
 describe('private model job and existing preview', () => {
+  it('shares one frontend window across differently routed lines and uses their own dictionaries', async () => {
+    const args = await setup();
+    args.canonical.lines[0].endMs = 2400;
+    args.canonical.lines.push({
+      lineId: 'english',
+      text: 'Do you enjoy testing?',
+      startMs: 2500,
+      endMs: 4000,
+    });
+    args.lineLanguages = [
+      { lineId: 'line', language: 'zh' },
+      { lineId: 'english', language: 'en' },
+    ];
+    const original = args.group.rpc;
+    args.group.rpc = (...params) => {
+      const worker = original(...params);
+      return {
+        request: async (request) => {
+          const response = await worker.request(request);
+          if (request.command === 'decode')
+            response.result.spans = response.result.spans.map((span, i) => ({
+              ...span,
+              start: request.begin + 0.5 + i * 0.1,
+            }));
+          return response;
+        },
+      };
+    };
+    const value = await startResearchJob(args).result;
+    expect(args.calls.filter((c) => c.command === 'infer')).toHaveLength(1);
+    expect(
+      args.calls.filter((c) => c.command === 'prepare').map((c) => c.language),
+    ).toEqual(['zh', 'en']);
+    expect(
+      value.estimate.preview.lines.every((l) => l.status === 'ready'),
+    ).toBe(true);
+    await expect(
+      startResearchJob({
+        ...args,
+        lineLanguages: [{ lineId: 'line', language: 'en' }],
+      }).result,
+    ).rejects.toThrow('line languages');
+  });
   it.each(['prepare', 'decode'])(
     'falls back for a worker declining %s instead of inventing boundaries',
     async (command) => {

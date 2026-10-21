@@ -1,4 +1,7 @@
 'use strict';
+const {
+  lexicalUnits,
+} = require('../../../scripts/research/lyricsAcoustic/protocol.cjs');
 
 const ANALYSIS_LANGUAGES = Object.freeze(['auto', 'zh', 'ja', 'en']);
 const SKIP_REASONS = Object.freeze([
@@ -72,4 +75,58 @@ function resolveAnalysisLanguage(metadata, text, requested = 'auto') {
   }
   return { reason: 'language-unknown' };
 }
-module.exports = { isAnalysisLanguage, resolveAnalysisLanguage, SKIP_REASONS };
+function isEnglishClause(text) {
+  const value = text.replace(/^[\p{P}\s]+/u, '');
+  return (
+    lexicalWordCount(value) >= 4 &&
+    (/^(?:do|does|did|can|could|will|would|are|have|has)\s+(?:i|you|we|they|he|she|it)\b/iu.test(
+      value,
+    ) ||
+      /^(?:i|you|we|they|he|she|it)(?:['’](?:m|re|s|ve|ll|d)|\s+(?:am|are|is|was|were|will|would|can|could|have|has|don't|doesn't|didn't))\b/iu.test(
+        value,
+      ))
+  );
+}
+function lineLanguage(line, hint) {
+  if (line.segments?.length) return null;
+  const text = line.text;
+  const cjk = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(
+    text,
+  );
+  const latin = /\p{Script=Latin}/u.test(text);
+  if (cjk && latin) return null;
+  // Text selects a candidate, not content acceptance. Blind timed English
+  // support and dictionary preparation remain required by the existing gates.
+  let language = resolveAnalysisLanguage('und', text).language;
+  if (!language) {
+    if (latin) language = hint === 'en' || isEnglishClause(text) ? 'en' : null;
+    else language = hint === 'auto' ? null : hint;
+  }
+  if (!language) return null;
+  try {
+    lexicalUnits(text, language);
+    return language;
+  } catch {
+    return null;
+  }
+}
+function planLineLanguages(lines, hint = 'auto') {
+  if (!isAnalysisLanguage(hint)) throw Error('invalid analysis language');
+  return {
+    version: 1,
+    hint,
+    lines: lines.map((line) => ({
+      lineId: line.lineId,
+      language: lineLanguage(line, hint),
+    })),
+  };
+}
+function lexicalWordCount(text) {
+  return (text.match(/[a-z]+(?:['’][a-z]+)*/giu) ?? []).length;
+}
+module.exports = {
+  isAnalysisLanguage,
+  resolveAnalysisLanguage,
+  planLineLanguages,
+  SKIP_REASONS,
+};

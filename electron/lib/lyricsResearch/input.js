@@ -16,7 +16,11 @@ const {
   normalizeLyricsDocument,
 } = require('../../../src/utils/lyricsDocument.js');
 const { validateIntent } = require('./service');
-const { isAnalysisLanguage, resolveAnalysisLanguage } = require('./language');
+const {
+  isAnalysisLanguage,
+  resolveAnalysisLanguage,
+  planLineLanguages,
+} = require('./language');
 async function loadResearchInput(libraryDir, intent, { filename } = {}) {
   validateIntent(intent);
   const trackDir = resolveTrackDir(libraryDir, intent.trackId);
@@ -136,12 +140,18 @@ async function loadAutomaticResearchInput(
     body(source),
     requestedLanguage,
   );
-  if (!resolution.language) return skipped(resolution.reason);
+  if (resolution.reason === 'language-unsupported')
+    return skipped(resolution.reason);
+  const hint = resolution.language ?? 'auto';
+  const candidate = planLineLanguages(parsed.lines, hint).lines.find(
+    (l) => l.language,
+  );
+  if (!candidate) return skipped(resolution.reason ?? 'unsupported-lyrics');
   const input = await loadResearchInput(
     libraryDir,
     {
       trackId,
-      language: resolution.language,
+      language: resolution.language ?? candidate.language,
       lineIndex: 0,
     },
     { filename: source.filename },
@@ -166,11 +176,19 @@ async function loadAutomaticResearchInput(
     input.canonical.lines.map((line) => line.text).join('\n'),
     requestedLanguage,
   );
-  if (!currentResolution.language) return skipped(currentResolution.reason);
+  if (currentResolution.reason === 'language-unsupported')
+    return skipped(currentResolution.reason);
+  const routing = planLineLanguages(
+    input.canonical.lines,
+    currentResolution.language ?? 'auto',
+  );
+  if (!routing.lines.some((l) => l.language))
+    return skipped(currentResolution.reason ?? 'unsupported-lyrics');
   return {
     ...input,
-    language: currentResolution.language,
-    languageOrigin: currentResolution.origin,
+    language: routing.hint,
+    languageOrigin: currentResolution.origin ?? 'line-content',
+    routing,
   };
 }
 function automaticInputCurrent(libraryDir, input) {

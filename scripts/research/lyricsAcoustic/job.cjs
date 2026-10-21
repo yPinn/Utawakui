@@ -40,6 +40,7 @@ function startResearchJob({
   canonical,
   durationMs,
   language,
+  lineLanguages,
   jobsRoot,
   isCurrent = () => true,
   onProgress = () => {},
@@ -81,8 +82,22 @@ function startResearchJob({
       const reasonsByLine = {},
         inputs = new Map(),
         chunkResults = new Map();
+      const languages =
+        lineLanguages === undefined
+          ? new Map(snapshot.lines.map((line) => [line.lineId, language]))
+          : new Map(lineLanguages.map((line) => [line.lineId, line.language]));
+      if (
+        (lineLanguages !== undefined &&
+          lineLanguages.length !== snapshot.lines.length) ||
+        languages.size !== snapshot.lines.length ||
+        snapshot.lines.some((line) => !languages.has(line.lineId)) ||
+        [...languages.values()].some(
+          (value) => value !== null && !['zh', 'ja', 'en'].includes(value),
+        )
+      )
+        throw Error('invalid line languages');
       let tokenize;
-      if (language === 'ja')
+      if ([...languages.values()].includes('ja'))
         tokenize = await buildKuromojiTokenizer(
           require('kuromoji'),
           getKuromojiDicPath(),
@@ -92,13 +107,19 @@ function startResearchJob({
           reasonsByLine[line.lineId] = 'no-evidence';
           continue;
         }
+        const lineLanguage = languages.get(line.lineId);
+        if (!lineLanguage) {
+          reasonsByLine[line.lineId] = 'unsupported-language';
+          continue;
+        }
         try {
           inputs.set(line.lineId, {
             line,
+            language: lineLanguage,
             words:
-              language === 'ja'
+              lineLanguage === 'ja'
                 ? japaneseWords(line.text, tokenize)
-                : lexicalUnits(line.text, language),
+                : lexicalUnits(line.text, lineLanguage),
           });
         } catch {
           reasonsByLine[line.lineId] = 'unsupported-language';
@@ -217,7 +238,7 @@ function startResearchJob({
           const prepared = await ask(
             decoder,
             'prepare',
-            { language, words: input.words },
+            { language: input.language, words: input.words },
             true,
           );
           if (!prepared) {
@@ -254,7 +275,7 @@ function startResearchJob({
           metrics.frontendPeakRssBytes,
           inference.peakRssBytes ?? 0,
         );
-        for (const { line, words, prepared } of ready) {
+        for (const { line, words, prepared, language: lineLanguage } of ready) {
           const decoded = await ask(
             decoder,
             'decode',
@@ -297,7 +318,7 @@ function startResearchJob({
           );
           const chunks = buildAcousticChunks(
             line.text,
-            textCuts(line.text, language),
+            textCuts(line.text, lineLanguage),
             starts,
             line.startMs,
             line.endMs,

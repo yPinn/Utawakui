@@ -142,6 +142,7 @@ describe('selected source analysis in available lyrics', () => {
     setup();
     await flush();
     expect(textContent(mounted.root)).toContain('英文');
+    expect(textContent(mounted.root)).toContain('主要語言提示');
     trigger(findAll(mounted.root, (n) => n.type === 'select')[0], 'onChange', {
       target: { value: 'en' },
     });
@@ -281,5 +282,17 @@ describe('selected source analysis in available lyrics', () => {
     expect(button('分析詞塊')).toBeUndefined();
     expect(mocks.queue.retry).not.toHaveBeenCalled();
     expect(owner.setApplied).not.toHaveBeenCalled();
+  });
+  it('shows offset invalidation instead of an older cancelled-job notice', async () => {
+    setup();
+    mocks.queue.state.value = {
+      ...mocks.queue.state.value,
+      items: [{ trackId: 'song', status: 'cancelled' }],
+    };
+    owner.needsReanalysis.value = true;
+    owner.prepared.value = { status: 'stale' };
+    await flush();
+    expect(textContent(mounted.root)).toContain('校時已變更，請重新分析');
+    expect(button('套用詞塊')).toBeUndefined();
   });
 });

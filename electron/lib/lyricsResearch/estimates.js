@@ -11,18 +11,23 @@ const {
 const {
   validateAcousticEstimate,
 } = require('../../../shared/lyricsAcousticEstimate.mjs');
+const {
+  planLineLanguages,
+  isAnalysisLanguage,
+  resolveAnalysisLanguage,
+} = require('./language');
 const sha = (value) =>
   createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const method = Object.freeze({
   kind: 'model',
   id: 'experimental-hfa-small-cpu',
-  version: '2',
+  version: '3',
   modelManifestSha256: sha(
     require('../../../scripts/research/lyricsFreshEvaluation/trial-assets.json'),
   ),
   environmentLockSha256: sha(require('./installed-pins.json')),
-  decoderVersion: 'hfa-small-content-v2',
-  g2pVersion: 'hfa-zh-ja-en-v2',
+  decoderVersion: 'hfa-small-per-line-v3',
+  g2pVersion: 'hfa-zh-ja-en-per-line-v3',
   chunkerVersion: 'hfa-starts-v1',
   nodeVersion: process.versions.node,
   icuVersion: process.versions.icu,
@@ -122,22 +127,23 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
     ),
   );
   const file = location(input);
-  const language = ['zh', 'ja', 'en'].includes(input.language)
-    ? input.language
-    : null;
-  const validation = language
-    ? validationSummary(
-        input.canonical.lines.map((line) => ({
-          ...line,
-          content: byId.get(line.lineId)?.content,
-        })),
-      )
-    : null;
+  const routing = planLineLanguages(
+    input.canonical.lines,
+    input.language ??
+      resolveAnalysisLanguage(input.source.language, '').language ??
+      'auto',
+  );
+  const validation = validationSummary(
+    input.canonical.lines.map((line) => ({
+      ...line,
+      content: byId.get(line.lineId)?.content,
+    })),
+  );
   const bytes = JSON.stringify({
-    version: validation ? 3 : language ? 2 : 1,
-    identity: language ? sha([input.identity, language]) : input.identity,
-    ...(language ? { analysisLanguage: language } : {}),
-    ...(validation ? { validation } : {}),
+    version: 4,
+    identity: sha([input.identity, routing]),
+    routing,
+    validation,
     estimate,
   });
   if (Buffer.byteLength(bytes) > 2097152)
@@ -167,19 +173,24 @@ function loadExperimentalEstimate(input) {
   }
   try {
     if (
-      ![1, 2, 3].includes(raw.version) ||
+      ![1, 2, 3, 4].includes(raw.version) ||
       Object.keys(raw).sort().join(',') !==
-        (raw.version === 3
-          ? 'analysisLanguage,estimate,identity,validation,version'
-          : raw.version === 2
-            ? 'analysisLanguage,estimate,identity,version'
-            : 'estimate,identity,version') ||
-      (raw.version >= 2 && !['zh', 'ja', 'en'].includes(raw.analysisLanguage))
+        (raw.version === 4
+          ? 'estimate,identity,routing,validation,version'
+          : raw.version === 3
+            ? 'analysisLanguage,estimate,identity,validation,version'
+            : raw.version === 2
+              ? 'analysisLanguage,estimate,identity,version'
+              : 'estimate,identity,version') ||
+      ([2, 3].includes(raw.version) &&
+        !['zh', 'ja', 'en'].includes(raw.analysisLanguage)) ||
+      (raw.version === 4 &&
+        (raw.routing?.version !== 1 || !isAnalysisLanguage(raw.routing.hint)))
     )
       return { status: 'unsupported' };
     const estimate = validateAcousticEstimate(raw.estimate);
     if (
-      raw.version === 3 &&
+      (raw.version === 3 || (raw.version === 4 && raw.validation !== null)) &&
       !validSummary(
         raw.validation,
         input.canonical.lines.filter((line) => !line.segments?.length).length,
@@ -192,10 +203,20 @@ function loadExperimentalEstimate(input) {
     )
       return { status: 'stale', reason: 'offset-changed' };
     if (
+      raw.version === 4 &&
+      JSON.stringify(raw.routing) !==
+        JSON.stringify(
+          planLineLanguages(input.canonical.lines, raw.routing.hint),
+        )
+    )
+      return { status: 'stale' };
+    if (
       raw.identity !==
-        (raw.version >= 2
-          ? sha([input.identity, raw.analysisLanguage])
-          : input.identity) ||
+        (raw.version === 4
+          ? sha([input.identity, raw.routing])
+          : raw.version >= 2
+            ? sha([input.identity, raw.analysisLanguage])
+            : input.identity) ||
       JSON.stringify(estimate.method) !== JSON.stringify(method)
     )
       return { status: 'stale' };
@@ -207,7 +228,7 @@ function loadExperimentalEstimate(input) {
     );
     if (JSON.stringify(estimate) !== JSON.stringify(rebuilt))
       return { status: 'stale' };
-    return preview(estimate, raw.version === 3 ? raw.validation : null);
+    return preview(estimate, raw.version >= 3 ? raw.validation : null);
   } catch {
     return { status: 'corrupt' };
   }
