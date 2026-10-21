@@ -102,8 +102,8 @@
     position: absolute;
     inset: 0;
     content: '';
-    background: url('/workbench/streamer-guide.png') center bottom / contain
-      no-repeat;
+    background: url('/overlay/assets/streamer-guide.png') center bottom /
+      contain no-repeat;
     transform: scale(1.35);
     transform-origin: center bottom;
   }

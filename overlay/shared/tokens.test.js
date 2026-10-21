@@ -50,7 +50,8 @@ describe('overlay CSS tokens', () => {
       const baseIndex = html.indexOf('/overlay/shared/base.css');
       const fallbackIndex = html.indexOf('/overlay/shared/fallback.css');
       const tokensIndex = html.indexOf('/overlay/shared/tokens.css');
-      const templateIndex = html.indexOf(`/overlay/${kind}/${kind}.css`);
+      const templateCss = kind === 'now-playing' ? 'artwork' : kind;
+      const templateIndex = html.indexOf(`/overlay/${kind}/${templateCss}.css`);
       const appearanceIndex = html.indexOf('/overlay/shared/appearance.css');
 
       expect(baseIndex).toBeGreaterThan(-1);
@@ -97,8 +98,9 @@ describe('overlay CSS tokens', () => {
     expect(appearance).toContain('@layer ovl-appearance {');
 
     for (const kind of ['lyrics', 'now-playing', 'setlist']) {
+      const templateCss = kind === 'now-playing' ? 'artwork' : kind;
       const styles = fs.readFileSync(
-        new URL(`../${kind}/${kind}.css`, import.meta.url),
+        new URL(`../${kind}/${templateCss}.css`, import.meta.url),
         'utf8',
       );
       expect(styles).toContain('@layer ovl-template {');
@@ -114,7 +116,6 @@ describe('overlay CSS tokens', () => {
   it('keeps raw colors in the shared token layer', () => {
     const templateStyles = [
       '../lyrics/lyrics.css',
-      '../now-playing/now-playing.css',
       '../setlist/setlist.css',
       '../now-playing/artwork.css',
     ].map((relativePath) =>
@@ -130,7 +131,6 @@ describe('overlay CSS tokens', () => {
   it('gives every template a scoped override layer and narrow viewport rules', () => {
     const templateStyles = [
       ['lyrics', '../lyrics/lyrics.css'],
-      ['now-playing', '../now-playing/now-playing.css'],
       ['setlist', '../setlist/setlist.css'],
       ['artwork', '../now-playing/artwork.css'],
     ];
@@ -266,10 +266,6 @@ describe('overlay CSS tokens', () => {
   });
 
   it('authors each widget template for its supported capture heights', () => {
-    const nowPlaying = fs.readFileSync(
-      new URL('../now-playing/now-playing.css', import.meta.url),
-      'utf8',
-    );
     const setlist = fs.readFileSync(
       new URL('../setlist/setlist.css', import.meta.url),
       'utf8',
@@ -282,14 +278,6 @@ describe('overlay CSS tokens', () => {
       ":root[data-ovl-template='cover-player']",
     );
     const coverPlayer = artwork.slice(coverPlayerStart);
-
-    expect(nowPlaying).toContain(
-      '@media (max-width: 42rem) and (max-height: 48rem)',
-    );
-    expect(nowPlaying).toContain(
-      '@media (max-width: 42rem) and (max-height: 24rem)',
-    );
-    expect(nowPlaying).not.toContain('--ovl-template-now-playing-width: 20rem');
 
     expect(setlist).toContain('@media (max-height: 36rem)');
     expect(setlist).not.toContain(
@@ -307,10 +295,6 @@ describe('overlay CSS tokens', () => {
   });
 
   it('centers every widget in its own capture canvas without tier repositioning', () => {
-    const nowPlaying = fs.readFileSync(
-      new URL('../now-playing/now-playing.css', import.meta.url),
-      'utf8',
-    );
     const setlist = fs.readFileSync(
       new URL('../setlist/setlist.css', import.meta.url),
       'utf8',
@@ -325,14 +309,14 @@ describe('overlay CSS tokens', () => {
     const artCard = artwork.slice(0, coverPlayerStart);
     const coverPlayer = artwork.slice(coverPlayerStart);
 
-    for (const styles of [nowPlaying, setlist, artCard, coverPlayer]) {
+    for (const styles of [setlist, artCard, coverPlayer]) {
       expect(styles).toContain('inset-inline-start: 50%;');
       expect(styles).toContain('inset-block-start: 50%;');
       expect(styles).toContain('inset-block-end: auto;');
       expect(styles).toContain('transform: translate(-50%, -50%);');
     }
 
-    for (const styles of [nowPlaying, setlist, artCard]) {
+    for (const styles of [setlist, artCard]) {
       expect(styles).not.toContain(
         'inset-inline-start: var(--ovl-safe-inline);',
       );
@@ -354,10 +338,6 @@ describe('overlay CSS tokens', () => {
   });
 
   it('fills each widget capture canvas inside the shared safe boundary', () => {
-    const nowPlaying = fs.readFileSync(
-      new URL('../now-playing/now-playing.css', import.meta.url),
-      'utf8',
-    );
     const setlist = fs.readFileSync(
       new URL('../setlist/setlist.css', import.meta.url),
       'utf8',
@@ -372,7 +352,7 @@ describe('overlay CSS tokens', () => {
     const artCard = artwork.slice(0, coverPlayerStart);
     const coverPlayer = artwork.slice(coverPlayerStart);
 
-    for (const styles of [nowPlaying, setlist, artCard, coverPlayer]) {
+    for (const styles of [setlist, artCard, coverPlayer]) {
       expect(styles).toMatch(
         /\n\s{4}inline-size: calc\(100% - 2 \* var\(--ovl-safe-inline\)\);/,
       );
@@ -380,20 +360,6 @@ describe('overlay CSS tokens', () => {
         /\n\s{4}block-size: calc\(100% - 2 \* var\(--ovl-safe-block\)\);/,
       );
     }
-
-    expect(nowPlaying).toContain('display: grid;');
-    expect(nowPlaying).toContain(
-      'grid-template-columns: repeat(10, minmax(0, 1fr));',
-    );
-    expect(nowPlaying).toMatch(
-      /\.now-playing-overlay__player\s*{[^}]*grid-column:\s*1\s*\/\s*span 3;/s,
-    );
-    expect(nowPlaying).toMatch(
-      /\.now-playing-overlay__information\s*{[^}]*grid-column:\s*5\s*\/\s*span 6;/s,
-    );
-    expect(nowPlaying).toMatch(
-      /\.now-playing-overlay__next\s*{[^}]*margin-block-start: auto;/s,
-    );
 
     expect(setlist).toContain(
       'grid-template-rows: minmax(9rem, auto) minmax(0, 1fr);',

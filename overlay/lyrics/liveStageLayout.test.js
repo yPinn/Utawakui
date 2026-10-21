@@ -41,7 +41,7 @@ describe('Live Stage overlay layout contract', () => {
     expect(css).toContain(
       ":root[data-overlay-backdrop='checker'] .lyrics-workbench__backdrop",
     );
-    expect(css).toContain("url('/workbench/streamer-guide.png')");
+    expect(css).toContain("url('/overlay/assets/streamer-guide.png')");
   });
 
   it('owns original display-first branding and balanced lower information lanes', () => {

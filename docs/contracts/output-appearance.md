@@ -52,6 +52,8 @@
 
 Setlist 只公開目前演唱曲目與已唱紀錄，不投影待唱。480×810 是擷取尺寸而非固定版面：queue-board 以約兩成高度保留目前歌曲，其餘給已唱紀錄，兩區只以固定 spacing 分隔；最近八首依播放順序向下排列，超出時才自動垂直滾動。
 
+Now Playing 的 `art-card` 與 `cover-player` 共用 `artwork-overlay` 結構及 `artwork.css`，沒有第二份 compact renderer。舊 `now-next` id 在設定讀取邊界回退為 `art-card`，不再交付舊版 HTML／CSS 分支。
+
 ## 歌詞模板呈現
 
 歌詞呈現分兩層：`lyricsTimingUnits.mjs` 只把 T1 fallback 切成無語意的 `{ text, weight }` 單元，原文換行、空白與標點無損附著；`lyricsPresentation.mjs` 再依版本化的 Generic／KTV／Kinetic Pop／Ornate Vertical／Manga／Live Stage profile 解讀為 phrase、role、bubble 或 caption page。Browser Source 依 document id、revision、language 與 profile 快取靜態結果，`state.mjs` 投影動態 frame 與下一個 boundary。`lyricsTemplateCapabilities.mjs` 是各模板 T1／T2、source mapping、music cue 與 scheduler wake 的唯一宣告。模板分句不回寫 canonical timing，T2 永遠優先；raw LRC／VTT parser 不進模板。

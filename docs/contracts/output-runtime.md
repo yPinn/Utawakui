@@ -42,6 +42,8 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 ## Browser Source 頁面生命週期
 
+固定頁面入口為 `/overlay/lyrics`、`/overlay/now-playing` 與 `/overlay/setlist`。Lyrics 的本機檢視直接在同一入口加上有界的 `workbench=1`、`guide=0/1` 與 backdrop 選項，不另包一層 Workbench iframe 頁面。`overlay/assets/streamer-guide.png` 是檢視模式與 renderer 無 runtime fallback 共用的唯一圖片來源；HTTP 僅開放該明列資產，不開放資料夾。
+
 | 模組                          | 責任                                                                      | 不持有                            |
 | ----------------------------- | ------------------------------------------------------------------------- | --------------------------------- |
 | overlay/shared/lifecycle.mjs  | 每頁單一 host；pagehide、visibility、reduced motion、字型通知；啟動與清理 | 播放時鐘、revision 規則、動畫配方 |

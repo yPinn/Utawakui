@@ -7,46 +7,12 @@
     <link rel="stylesheet" href="/overlay/shared/base.css" />
     <link rel="stylesheet" href="/overlay/shared/fallback.css" />
     <link rel="stylesheet" href="/overlay/shared/tokens.css" />
-    <link rel="stylesheet" href="/overlay/now-playing/now-playing.css" />
     <link rel="stylesheet" href="/overlay/now-playing/artwork.css" />
     <link rel="stylesheet" href="/overlay/shared/appearance.css" />
     <script src="/overlay/vendor/gsap.min.js"></script>
     <script type="module" src="/overlay/now-playing/now-playing.mjs"></script>
   </head>
   <body>
-    <main
-      id="now-playing-overlay"
-      class="now-playing-overlay"
-      dir="auto"
-      hidden
-    >
-      <div class="now-playing-overlay__player" aria-hidden="true">
-        <div class="now-playing-overlay__player-shell">
-          <div class="now-playing-overlay__disc">
-            <span class="now-playing-overlay__disc-label">UW</span>
-          </div>
-          <span class="now-playing-overlay__spindle"></span>
-          <span class="now-playing-overlay__pickup"></span>
-          <span class="now-playing-overlay__controls">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
-        </div>
-      </div>
-
-      <section
-        class="now-playing-overlay__information"
-        aria-label="目前播放資訊"
-      >
-        <div class="now-playing-overlay__current">
-          <p id="now-playing-title" class="now-playing-overlay__title"></p>
-          <p id="now-playing-artist" class="now-playing-overlay__artist"></p>
-        </div>
-        <p id="now-playing-next" class="now-playing-overlay__next"></p>
-      </section>
-    </main>
-
     <main id="artwork-overlay" class="artwork-overlay" dir="auto" hidden>
       <div class="artwork-overlay__vinyl-stage">
         <div class="artwork-overlay__album-panel">

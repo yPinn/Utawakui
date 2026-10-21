@@ -357,7 +357,6 @@ describe('outputServer', () => {
       '/overlay/lyrics',
       '/overlay/now-playing',
       '/overlay/setlist',
-      '/workbench/lyrics',
     ]) {
       const response = await fetch(`${status.httpUrl}${route}`);
       expect(response.status).toBe(200);
@@ -370,19 +369,19 @@ describe('outputServer', () => {
 
     expect((await fetch(`${status.httpUrl}/overlay/artwork`)).status).toBe(404);
 
-    const workbench = await fetch(`${status.httpUrl}/workbench/lyrics`);
-    expect(workbench.headers.get('content-security-policy')).toContain(
-      "frame-src 'self'",
-    );
-    expect(workbench.headers.get('content-security-policy')).not.toContain(
-      'localhost',
-    );
-    const workbenchDocument = await workbench.text();
-    expect(workbenchDocument).toContain('href="/overlay/shared/fallback.css"');
-    expect(workbenchDocument).toContain('src="/overlay/lyrics"');
+    for (const route of [
+      '/workbench/lyrics',
+      '/workbench/lyrics/',
+      '/workbench/workbench.css',
+      '/workbench/workbench.mjs',
+      '/workbench/streamer-guide.png',
+      '/overlay/now-playing/now-playing.css',
+    ]) {
+      expect((await fetch(`${status.httpUrl}${route}`)).status).toBe(404);
+    }
 
     const streamerGuide = await fetch(
-      `${status.httpUrl}/workbench/streamer-guide.png`,
+      `${status.httpUrl}/overlay/assets/streamer-guide.png`,
     );
     expect(streamerGuide.status).toBe(200);
     expect(streamerGuide.headers.get('content-type')).toBe('image/png');

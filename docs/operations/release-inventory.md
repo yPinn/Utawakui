@@ -318,6 +318,23 @@ When adding a dependency, classify it before installing:
 
 ## Packaging Locations
 
+`overlay/**/*` ships the three fixed Browser Source pages and their exact-route
+assets; adjacent `*.test.js` files stay excluded. Now Playing ships only
+`artwork.css` for its two current templates. The retired Workbench wrapper
+HTML／CSS／JS and compact Now Playing stylesheet are removed along with their
+HTTP routes. `overlay/assets/streamer-guide.png` is the single source for the
+Lyrics inspection route and the renderer's fallback import; Vite emits the
+renderer copy normally. The existing overlay builder glob includes the moved
+asset without any new unpack rule.
+
+`shared/**/*` includes the canonical JSON／JS／MJS contracts, pure presentation
+modules and font source/license files; `!shared/**/*.test.js` excludes adjacent
+tests. Output appearance uses `shared/outputAppearance.mjs`; the retired
+`outputAppearanceValues.json` marker is not a runtime schema and is no longer
+kept or shipped. The existing builder globs need no additional inclusion or
+unpack rule. Cross-runtime ownership is mapped in the
+[Shared boundary](../architecture.md#shared-boundary).
+
 F3 adds `shared/presentation/outputPreviewScene.mjs` under the existing
 `shared/**/*` rule and one exact HTTP module route. It contains only the small
 app-owned synthetic showcase and pure adapters; the adjacent test is excluded.

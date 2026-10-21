@@ -208,6 +208,7 @@ describe('packaged dependency boundary', () => {
     for (const [file, expected] of [
       ['overlay/shared/lifecycle.mjs', true],
       ['overlay/shared/lifecycle.test.js', false],
+      ['overlay/assets/streamer-guide.png', true],
       ['shared/presentation/outputPreviewScene.mjs', true],
       ['shared/presentation/outputPreviewScene.test.js', false],
       ['scripts/outputAppearanceBaseline.mjs', false],

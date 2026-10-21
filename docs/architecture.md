@@ -200,6 +200,14 @@
 
 `electron/lib/featureDependencies.js` 是相容 barrel，實作分為 registry、download、safe archive、manifests、provider runtime、FFmpeg、models 與 lifecycle。每個 active 依賴對應一個 gate；registry 的 id、版本與相對路徑須經 main 驗證才解析到 `userData/dependencies`，移除以依賴 family root 為單位，不碰曲庫或分離結果。系統與 managed FFmpeg 共用 `resolveFfmpegRuntime()`。HTTP 下載有 connect／idle deadline，PowerShell 解壓有 hard deadline，yt-dlp 子程序以輸出活動重設 idle deadline。外部服務的冷卻由 `providerServiceCooldown.js` 處理，見[外部服務請求契約](contracts/external-service-request-policy.md)。
 
+## Shared Boundary
+
+`shared/` 集中跨 main、renderer、Browser Source 與獨立服務使用的純契約。根目錄 JSON 提供功能 gate／依賴、值域與版本資料；JS／MJS 提供驗證與解析，不持有檔案系統、視窗或服務生命週期。CJS 契約保留 main 的同步 `require()` 用途，不為統一副檔名新增相容入口。
+
+`shared/presentation/` 是 canonical 純呈現與 timing 投影；`overlay/shared/` 保留 Browser Source 路徑轉接。外觀 schema 只在 `shared/outputAppearance.mjs` 維護；Manga 尺寸從 `mangaFrameTextLayout()` 的 layout 結果取得。新增共用函式前先核對這些 owner，避免在各 surface 重寫相同投影。
+
+`shared/assets/fonts/` 保留五套實際使用的字型及各自的來源／授權全文。Renderer CSS 經 `viteSharedAssets.js` 使用封裝內唯一的 shared 字型副本；Output 仍只開放明列的 HTTP module／font routes。封裝與測試邊界見 [release inventory](operations/release-inventory.md#packaging-locations)。
+
 ## Output Boundary
 
 Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有外部投影的收斂點。傳輸、狀態與頁面生命週期見 [Output runtime](contracts/output-runtime.md)，外觀與模板呈現見 [Output 外觀](contracts/output-appearance.md)。

@@ -2,48 +2,12 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
-const styles = readFileSync(
-  new URL('./now-playing.css', import.meta.url),
-  'utf8',
-);
 const artworkStyles = readFileSync(
   new URL('./artwork.css', import.meta.url),
   'utf8',
 );
 
-describe('Now Playing CD player layout', () => {
-  it('reserves a 3／1／6 ten-column composition', () => {
-    expect(styles).toContain(
-      'grid-template-columns: repeat(10, minmax(0, 1fr));',
-    );
-    expect(styles).toMatch(
-      /\.now-playing-overlay__player\s*{[^}]*grid-column:\s*1\s*\/\s*span 3;/s,
-    );
-    expect(styles).toMatch(
-      /\.now-playing-overlay__information\s*{[^}]*grid-column:\s*5\s*\/\s*span 6;/s,
-    );
-  });
-
-  it('builds the player from local structure without reference artwork', () => {
-    const compact = html.slice(
-      html.indexOf('id="now-playing-overlay"'),
-      html.indexOf('</main>'),
-    );
-    for (const className of [
-      'now-playing-overlay__player',
-      'now-playing-overlay__player-shell',
-      'now-playing-overlay__disc',
-      'now-playing-overlay__disc-label',
-      'now-playing-overlay__spindle',
-      'now-playing-overlay__pickup',
-      'now-playing-overlay__controls',
-    ]) {
-      expect(compact).toContain(`class="${className}"`);
-    }
-    expect(html).not.toMatch(/aespa|armageddon|sm entertainment/i);
-    expect(compact).not.toContain('<img');
-  });
-
+describe('Now Playing artwork layouts', () => {
   it('hosts artwork layouts on the same Browser Source document', () => {
     expect(html).toContain('id="artwork-overlay"');
     expect(html).toContain('id="artwork-image"');
@@ -315,15 +279,12 @@ describe('Now Playing CD player layout', () => {
     expect(artworkStyles).not.toContain('transition: width');
   });
 
-  it('keeps current and next song text in the information region', () => {
-    const informationStart = html.indexOf(
-      'class="now-playing-overlay__information"',
-    );
+  it('keeps song identity in the artwork sleeve copy region', () => {
+    const informationStart = html.indexOf('class="artwork-overlay__copy"');
     const information = html.slice(informationStart);
 
     expect(informationStart).toBeGreaterThan(-1);
-    expect(information).toContain('id="now-playing-title"');
-    expect(information).toContain('id="now-playing-artist"');
-    expect(information).toContain('id="now-playing-next"');
+    expect(information).toContain('id="artwork-title"');
+    expect(information).toContain('id="artwork-artist"');
   });
 });

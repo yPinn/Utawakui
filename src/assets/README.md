@@ -1,8 +1,9 @@
 # Renderer Assets
 
-Imported renderer assets belong in this directory. `workbench-streamer-guide.png`
-is a Workbench-only reference and must not be served by the Output server or
-added to an OBS URL.
+Imported renderer assets belong in this directory. The inspection guide has one
+source at `overlay/assets/streamer-guide.png`, shared by the renderer's local
+fallback import and the fixed Output inspection asset route. It appears only
+when the Lyrics preview guide is enabled; normal OBS URLs do not enable it.
 
 Use semantic filenames such as `streamer.png`, `camera-frame.svg`, or
 `stage-guide.webp`. Add category subdirectories only when several related

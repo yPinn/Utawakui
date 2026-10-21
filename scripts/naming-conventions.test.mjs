@@ -95,10 +95,10 @@ describe('codebase naming conventions', () => {
     );
   });
 
-  it('uses a role-based name for the renderer Workbench guide asset', () => {
-    expect(
-      existsSync(resolve(root, 'src/assets/workbench-streamer-guide.png')),
-    ).toBe(true);
+  it('uses a role-based name for the shared Workbench guide asset', () => {
+    expect(existsSync(resolve(root, 'overlay/assets/streamer-guide.png'))).toBe(
+      true,
+    );
     expect(
       existsSync(resolve(root, 'src/assets/output-preview/Reze.png')),
     ).toBe(false);

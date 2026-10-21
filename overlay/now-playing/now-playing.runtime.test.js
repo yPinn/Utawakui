@@ -1,20 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   initialNowPlayingFrame,
   initialNowPlayingTemplateId,
-  isArtworkTemplate,
   normalizeNowPlayingTemplateId,
-  renderNowPlayingTemplate,
 } from './now-playing.mjs';
 
-function compactElements() {
-  return {
-    root: { hidden: true, dataset: {} },
-    title: { textContent: '' },
-    artist: { textContent: '' },
-    next: { textContent: '' },
-  };
-}
+const harness = vi.hoisted(() => ({
+  elements: null,
+  host: null,
+  motion: null,
+  render: vi.fn(),
+  createHost: vi.fn(),
+}));
+vi.mock('../shared/lifecycle.mjs', () => ({
+  createOverlayHost(options) {
+    harness.createHost(options);
+    harness.host = options;
+    return { active: true, start() {} };
+  },
+}));
+vi.mock('./artworkMotion.mjs', () => ({
+  createArtworkMotionController: () => harness.motion,
+}));
+vi.mock('./artworkLayout.mjs', () => ({
+  collectArtworkElements: () => harness.elements,
+  clearArtworkSleeve: vi.fn(),
+  prepareArtworkSleeve: vi.fn(),
+  renderArtworkFrame: harness.render,
+}));
 
 function artworkElements() {
   return {
@@ -38,21 +51,11 @@ function artworkElements() {
     artist: { textContent: '' },
     elapsed: { textContent: '' },
     remaining: { textContent: '' },
+    incoming: {
+      root: {},
+    },
   };
 }
-
-const frame = {
-  revision: 2,
-  visible: true,
-  trackId: '',
-  title: 'Song',
-  artist: 'Singer',
-  nextTitle: 'Next',
-  playbackStatus: 'playing',
-  positionMs: 1000,
-  durationMs: 2000,
-  progress: 0.5,
-};
 
 describe('Now Playing template runtime', () => {
   it('starts live Output empty and reserves sample content for preview mode', () => {
@@ -82,48 +85,55 @@ describe('Now Playing template runtime', () => {
     expect(normalizeNowPlayingTemplateId('art-card')).toBe('art-card');
     expect(normalizeNowPlayingTemplateId('cover-player')).toBe('cover-player');
     expect(normalizeNowPlayingTemplateId('unknown')).toBe('art-card');
-    expect(isArtworkTemplate('now-next')).toBe(false);
-    expect(isArtworkTemplate('art-card')).toBe(true);
-    expect(isArtworkTemplate('cover-player')).toBe(true);
   });
 
-  it('switches visible layouts from config without replacing the connection', () => {
-    const compact = compactElements();
-    const artwork = artworkElements();
-
-    renderNowPlayingTemplate({
-      compactElements: compact,
-      artworkElements: artwork,
-      templateId: 'art-card',
-      frame,
-    });
-    expect(compact.root.hidden).toBe(true);
-    expect(artwork.root.hidden).toBe(false);
-
-    renderNowPlayingTemplate({
-      compactElements: compact,
-      artworkElements: artwork,
-      templateId: 'now-next',
-      frame,
-    });
-    expect(compact.root.hidden).toBe(false);
-    expect(artwork.root.hidden).toBe(true);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
-  it('does not hydrate artwork while the compact layout is active', () => {
-    const compact = compactElements();
-    const artwork = artworkElements();
+  it.each(['art-card', 'cover-player'])(
+    'boots %s without retired DOM and switches the same host between current templates',
+    async (templateId) => {
+      vi.resetModules();
+      harness.elements = artworkElements();
+      harness.host = null;
+      harness.motion = {
+        update: vi.fn(),
+        destroy: vi.fn(),
+        suspend: vi.fn(),
+        setReducedMotion: vi.fn(),
+      };
+      vi.stubGlobal('document', {
+        querySelector(selector) {
+          return selector.startsWith('.artwork-overlay') ? {} : null;
+        },
+      });
+      vi.stubGlobal('window', {
+        location: { search: `?preview=1&template=${templateId}` },
+      });
 
-    renderNowPlayingTemplate({
-      compactElements: compact,
-      artworkElements: artwork,
-      templateId: 'now-next',
-      frame,
-    });
+      await import('./now-playing.mjs');
 
-    expect(compact.root.hidden).toBe(false);
-    expect(artwork.root.hidden).toBe(true);
-    expect(artwork.title.textContent).toBe('');
-    expect(artwork.image.dataset.trackId).toBeUndefined();
-  });
+      expect(harness.createHost).toHaveBeenCalledOnce();
+      expect(harness.motion.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({ active: templateId === 'art-card' }),
+      );
+      for (const next of ['cover-player', 'art-card', 'now-next', 'unknown']) {
+        harness.render.mockClear();
+        harness.host.onConfig({ templateId: next });
+        const artworkMotionActive = next !== 'cover-player';
+        expect(harness.motion.update).toHaveBeenLastCalledWith(
+          expect.objectContaining({ active: artworkMotionActive }),
+        );
+        if (artworkMotionActive) expect(harness.render).not.toHaveBeenCalled();
+        else
+          expect(harness.render).toHaveBeenCalledWith(
+            harness.elements,
+            expect.objectContaining({ visible: true }),
+          );
+        expect(harness.createHost).toHaveBeenCalledOnce();
+      }
+    },
+  );
 });

@@ -44,42 +44,7 @@ export function initialNowPlayingTemplateId(location, previewMode) {
   return normalizeNowPlayingTemplateId(value);
 }
 
-export function isArtworkTemplate(templateId) {
-  return templateId === 'art-card' || templateId === 'cover-player';
-}
-
-export function renderCompactFrame(elements, frame) {
-  elements.root.hidden = !frame.visible;
-  elements.root.dataset.revision = String(frame.revision);
-  elements.title.textContent = frame.title;
-  elements.artist.textContent = frame.artist;
-  elements.next.textContent = frame.nextTitle ? `Next: ${frame.nextTitle}` : '';
-}
-
-export function renderNowPlayingTemplate({
-  compactElements,
-  artworkElements,
-  templateId,
-  frame,
-}) {
-  const artworkActive = isArtworkTemplate(templateId);
-  if (artworkActive) {
-    compactElements.root.hidden = true;
-    renderArtworkFrame(artworkElements, frame);
-    return;
-  }
-
-  artworkElements.root.hidden = true;
-  renderCompactFrame(compactElements, frame);
-}
-
 function boot() {
-  const compactElements = {
-    root: document.querySelector('#now-playing-overlay'),
-    title: document.querySelector('#now-playing-title'),
-    artist: document.querySelector('#now-playing-artist'),
-    next: document.querySelector('#now-playing-next'),
-  };
   const artworkElements = collectArtworkElements(document);
   const artworkMotionElements = {
     root: artworkElements.root,
@@ -102,7 +67,6 @@ function boot() {
     ),
   };
   if (
-    Object.values(compactElements).some((element) => !element) ||
     Object.entries(artworkElements).some(([key, element]) =>
       (key === 'incoming' ? Object.values(element) : [element]).some(
         (value) => !value,
@@ -133,7 +97,6 @@ function boot() {
 
   function renderCurrentFrame({ recovering = false } = {}) {
     if (activeTemplateId === 'art-card') {
-      compactElements.root.hidden = true;
       artworkMotion.update({
         active: true,
         frame: currentFrame,
@@ -143,12 +106,7 @@ function boot() {
     }
 
     artworkMotion.update({ active: false, frame: currentFrame });
-    renderNowPlayingTemplate({
-      compactElements,
-      artworkElements,
-      templateId: activeTemplateId,
-      frame: currentFrame,
-    });
+    renderArtworkFrame(artworkElements, currentFrame);
   }
 
   applyOverlayAppearance(document, { templateId: activeTemplateId });

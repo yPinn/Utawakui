@@ -8,7 +8,6 @@ import {
   MANGA_FRAMES,
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
-  mangaFrameRequiredBlockSizeEm,
   mangaFrameSideForLine,
   mangaFrameTextLayout,
   mangaFrameTextScript,
@@ -258,13 +257,15 @@ describe('manga frame contract', () => {
   });
 
   it('grows the frame instead of resizing the fixed Manga type', () => {
-    expect(mangaFrameRequiredBlockSizeEm()).toBe(1.61);
-    expect(mangaFrameRequiredBlockSizeEm('   ')).toBe(1.61);
-    expect(mangaFrameRequiredBlockSizeEm('短い歌詞')).toBe(6.44);
-    expect(mangaFrameRequiredBlockSizeEm('長'.repeat(8))).toBe(12.89);
-    expect(mangaFrameRequiredBlockSizeEm(`長${' '.repeat(4)}長`)).toBe(
-      mangaFrameRequiredBlockSizeEm('長 長'),
+    expect(mangaFrameTextLayout().requiredBlockSizeEm).toBe(1.61);
+    expect(mangaFrameTextLayout('   ').requiredBlockSizeEm).toBe(1.61);
+    expect(mangaFrameTextLayout('短い歌詞').requiredBlockSizeEm).toBe(6.44);
+    expect(mangaFrameTextLayout('長'.repeat(8)).requiredBlockSizeEm).toBe(
+      12.89,
     );
+    expect(
+      mangaFrameTextLayout(`長${' '.repeat(4)}長`).requiredBlockSizeEm,
+    ).toBe(mangaFrameTextLayout('長 長').requiredBlockSizeEm);
 
     const directory = path.dirname(fileURLToPath(import.meta.url));
     const css = fs.readFileSync(path.join(directory, 'lyrics.css'), 'utf8');
@@ -278,10 +279,10 @@ describe('manga frame contract', () => {
     expect(mangaFrameTextScript('地下鉄')).toBe('cjk');
     expect(mangaFrameTextScript('愛 LOVE')).toBe('mixed');
     expect(mangaFrameTextScript('123')).toBe('other');
-    expect(mangaFrameRequiredBlockSizeEm('STAND-ALONE')).toBe(7.73);
-    expect(mangaFrameRequiredBlockSizeEm('STAND-ALONE')).toBeLessThan(
-      mangaFrameRequiredBlockSizeEm('長'.repeat(11)),
-    );
+    expect(mangaFrameTextLayout('STAND-ALONE').requiredBlockSizeEm).toBe(7.73);
+    expect(
+      mangaFrameTextLayout('STAND-ALONE').requiredBlockSizeEm,
+    ).toBeLessThan(mangaFrameTextLayout('長'.repeat(11)).requiredBlockSizeEm);
   });
 
   it('uses forward five-unit columns before choosing the Manga frame height', () => {

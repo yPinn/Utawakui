@@ -559,10 +559,6 @@ export function mangaFrameTextLayout(text, bubbleCount = 1, options = {}) {
   });
 }
 
-export function mangaFrameRequiredBlockSizeEm(text, bubbleCount = 1) {
-  return mangaFrameTextLayout(text, bubbleCount).requiredBlockSizeEm;
-}
-
 function stableFraction(value) {
   let hash = 2166136261;
   for (const character of String(value)) {

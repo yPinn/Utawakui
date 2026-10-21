@@ -12,9 +12,9 @@ const workbenchPreviewSource = readFileSync(
 );
 
 describe('Workbench streamer preview', () => {
-  it('uses the renderer guide only for the no-runtime fallback', () => {
+  it('imports the shared guide source for the no-runtime fallback', () => {
     expect(workbenchPreviewSource).toContain(
-      "import streamerPreviewImage from '../../assets/workbench-streamer-guide.png'",
+      "import streamerPreviewImage from '../../../overlay/assets/streamer-guide.png'",
     );
     expect(workbenchPreviewSource).toContain('<ObsStreamerPreview');
     expect(workbenchPreviewSource).toContain(

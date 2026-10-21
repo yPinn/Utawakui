@@ -46,7 +46,6 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/ornateVertical.mjs': ['lyrics', 'ornateVertical.mjs'],
   '/overlay/now-playing': ['now-playing', 'index.html'],
   '/overlay/now-playing/': ['now-playing', 'index.html'],
-  '/overlay/now-playing/now-playing.css': ['now-playing', 'now-playing.css'],
   '/overlay/now-playing/now-playing.mjs': ['now-playing', 'now-playing.mjs'],
   '/overlay/now-playing/artwork.css': ['now-playing', 'artwork.css'],
   '/overlay/now-playing/artworkLayout.mjs': [
@@ -79,11 +78,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/shared/runtime.mjs': ['shared', 'runtime.mjs'],
   '/overlay/shared/state.mjs': ['shared', 'state.mjs'],
   '/overlay/shared/tokens.css': ['shared', 'tokens.css'],
-  '/workbench/lyrics': ['workbench', 'lyrics.html'],
-  '/workbench/lyrics/': ['workbench', 'lyrics.html'],
-  '/workbench/workbench.css': ['workbench', 'workbench.css'],
-  '/workbench/workbench.mjs': ['workbench', 'workbench.mjs'],
-  '/workbench/streamer-guide.png': ['workbench', 'streamer-guide.png'],
+  '/overlay/assets/streamer-guide.png': ['assets', 'streamer-guide.png'],
 });
 const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,

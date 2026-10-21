@@ -16,7 +16,7 @@ import {
   useTemplateRef,
 } from 'vue';
 import { Copy, UserRound } from '../../icons/index.js';
-import streamerPreviewImage from '../../assets/workbench-streamer-guide.png';
+import streamerPreviewImage from '../../../overlay/assets/streamer-guide.png';
 import {
   calculateCapturePreviewScale,
   OUTPUT_LYRICS_CAPTURE_SIZE,
