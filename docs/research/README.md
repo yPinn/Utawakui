@@ -6,7 +6,7 @@
 
 入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data/)。
 
-- 10-21：[混語長句兩段顯示](lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)
+- 10-21：[逐句 CPU 分流方法與驗證](lyrics-alignment/lyrics-mixed-cpu-feasibility-2026-10-21.md)、[句內混語有界研究結案](lyrics-alignment/lyrics-mixed-cpu-bounded-2026-10-21.md)、[混語長句兩段顯示](lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)；現行採用決策統一見研究結論。
 - 10-20：[純英文 T1+ 與回退](lyrics-alignment/lyrics-english-validation-2026-10-20.md)
 - 10-19 模型選型：[模型配對與完整成本](lyrics-alignment/lyrics-model-pairing-2026-10-19.md)、[配對聽查案例](lyrics-alignment/lyrics-model-pair-listening-2026-10-19.md)、[LyricFloat 成本](lyrics-alignment/lyricfloat-cost-2026-10-19.md)、[HubertFA＋small 試用](lyrics-alignment/lyrics-hfa-small-listening-trial-2026-10-19.md)、[HubertFA 新曲配對](lyrics-alignment/lyrics-hubertfa-fresh-2026-10-19.md)、[small 誤拒與 Qwen 退步](lyrics-alignment/lyrics-root-causes-and-noncommercial-2026-10-19.md)、[新 16 案對照](lyrics-alignment/lyrics-fresh-decision-2026-10-19.md)、[人聲活動與內容一致性](lyrics-alignment/lyrics-qwen-quality-2026-10-19.md)、[方法族比較](lyrics-alignment/lyrics-alignment-methods-comparison-2026-10-19.md)、[Qwen3／Whisper.cpp 配方](lyrics-alignment/lyrics-alignment-candidates-2026-10-19.md)
 - 10-19 環境與實作：[權重與字典授權](lyrics-alignment/lyrics-acoustic-weight-license-gate-2026-10-19.md)、[環境生命週期](lyrics-alignment/lyrics-acoustic-lifecycle-2026-10-19.md)、[環境完整性](lyrics-alignment/lyrics-acoustic-environment-readiness-2026-10-19.md)、[HubertFA 第二階段](lyrics-alignment/lyrics-acoustic-phase2-2026-10-19.md)、[獨立估計實作評估](lyrics-alignment/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)、[T1 句內切分](lyrics-alignment/lyrics-t1-acoustic-segmentation-2026-10-19.md)
@@ -19,7 +19,9 @@
 
 ## 音訊處理與分析
 
-- [GPU 共用偏好](audio/processing-gpu-shared-preference-2026-10-21.md)（10-21）：目前只有分離接 GPU
+- [HubertFA CPU／DirectML 對照](audio/lyrics-hubertfa-directml-2026-10-21.md)（10-21）：四案實測完成，未接產品
+- [Whisper small GPU 容量與投入](audio/whisper-small-gpu-cost-2026-10-21.md)（10-21）：成本評估完成，GPU 實測暫緩
+- [GPU 共用偏好](audio/processing-gpu-shared-preference-2026-10-21.md)（10-21）：提案暫緩；目前 CPU 足夠，既有分離 DirectML 不變
 - 分離（08-22～23）：[ONNX CPU 基線](audio/audio-processing-baseline-2026-08-22.md)、[模型調查](audio/audio-processing-model-review-2026-08-23.md)、[HQ3／HQ4](audio/audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md)、[CPU lock](audio/audio-python-separation-cpu-spike-2026-08-23.md)
 - 分析（08-24～28）：[Beat This!](audio/audio-python-beat-this-m1-spike-2026-08-24.md)、[結構分析](audio/audio-python-analysis-structure-spike-2026-08-24.md)、[模型調查](audio/music-analysis-model-survey-2026-08-24.md)、[BPM 正規化](audio/music-analysis-bpm-normalization-2026-08-28.md)
 
