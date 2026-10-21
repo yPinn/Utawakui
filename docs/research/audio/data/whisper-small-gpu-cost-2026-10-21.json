@@ -1,0 +1,714 @@
+{
+  "date": "2026-10-21",
+  "scope": "metadata-only; no complete archive/model download, extraction, installation or GPU inference",
+  "version": "v1.9.2",
+  "sourceCommit": "306c88f4d1286aec1bf96e544632897886af5501",
+  "releaseUrl": "https://github.com/ggml-org/whisper.cpp/releases/tag/v1.9.2",
+  "releaseAssetsApi": "https://api.github.com/repos/ggml-org/whisper.cpp/releases/tags/v1.9.2",
+  "zipMetadataMethod": {
+    "eocdBytesPerArchive": 22,
+    "httpStatusRequired": 206,
+    "maxBytesPerRange": 131072,
+    "totalBytesRead": 8929,
+    "readDllOrExePayload": false,
+    "wholeArchiveShaVerified": false,
+    "cpuDirectoryAgreesWithExistingExtraction": true
+  },
+  "assets": [
+    {
+      "entries": [
+        {
+          "compressedBytes": 10140,
+          "name": "Release/bench.exe",
+          "uncompressedBytes": 27648
+        },
+        {
+          "compressedBytes": 10140,
+          "name": "Release/command.exe",
+          "uncompressedBytes": 27648
+        },
+        {
+          "compressedBytes": 289508,
+          "name": "Release/ggml-base.dll",
+          "uncompressedBytes": 666624
+        },
+        {
+          "compressedBytes": 304604,
+          "name": "Release/ggml-cpu-alderlake.dll",
+          "uncompressedBytes": 809984
+        },
+        {
+          "compressedBytes": 319156,
+          "name": "Release/ggml-cpu-cannonlake.dll",
+          "uncompressedBytes": 853504
+        },
+        {
+          "compressedBytes": 319163,
+          "name": "Release/ggml-cpu-cascadelake.dll",
+          "uncompressedBytes": 850944
+        },
+        {
+          "compressedBytes": 304894,
+          "name": "Release/ggml-cpu-haswell.dll",
+          "uncompressedBytes": 811008
+        },
+        {
+          "compressedBytes": 319150,
+          "name": "Release/ggml-cpu-icelake.dll",
+          "uncompressedBytes": 850944
+        },
+        {
+          "compressedBytes": 299516,
+          "name": "Release/ggml-cpu-sandybridge.dll",
+          "uncompressedBytes": 803328
+        },
+        {
+          "compressedBytes": 318996,
+          "name": "Release/ggml-cpu-skylakex.dll",
+          "uncompressedBytes": 852992
+        },
+        {
+          "compressedBytes": 289979,
+          "name": "Release/ggml-cpu-sse42.dll",
+          "uncompressedBytes": 790016
+        },
+        {
+          "compressedBytes": 294440,
+          "name": "Release/ggml-cpu-x64.dll",
+          "uncompressedBytes": 794112
+        },
+        {
+          "compressedBytes": 29600,
+          "name": "Release/ggml.dll",
+          "uncompressedBytes": 67584
+        },
+        {
+          "compressedBytes": 10140,
+          "name": "Release/main.exe",
+          "uncompressedBytes": 27648
+        },
+        {
+          "compressedBytes": 180071,
+          "name": "Release/parakeet-cli.exe",
+          "uncompressedBytes": 372224
+        },
+        {
+          "compressedBytes": 47456,
+          "name": "Release/parakeet-quantize.exe",
+          "uncompressedBytes": 102912
+        },
+        {
+          "compressedBytes": 130709,
+          "name": "Release/parakeet.dll",
+          "uncompressedBytes": 581632
+        },
+        {
+          "compressedBytes": 850287,
+          "name": "Release/SDL2.dll",
+          "uncompressedBytes": 2500096
+        },
+        {
+          "compressedBytes": 10140,
+          "name": "Release/stream.exe",
+          "uncompressedBytes": 27648
+        },
+        {
+          "compressedBytes": 155365,
+          "name": "Release/test-common-utf8.exe",
+          "uncompressedBytes": 324608
+        },
+        {
+          "compressedBytes": 179143,
+          "name": "Release/test-parakeet-full-diffusion.exe",
+          "uncompressedBytes": 369664
+        },
+        {
+          "compressedBytes": 177137,
+          "name": "Release/test-parakeet-full-gb1.exe",
+          "uncompressedBytes": 366080
+        },
+        {
+          "compressedBytes": 177137,
+          "name": "Release/test-parakeet-full-jfk.exe",
+          "uncompressedBytes": 366080
+        },
+        {
+          "compressedBytes": 171772,
+          "name": "Release/test-parakeet.exe",
+          "uncompressedBytes": 354816
+        },
+        {
+          "compressedBytes": 171575,
+          "name": "Release/test-vad-full.exe",
+          "uncompressedBytes": 355328
+        },
+        {
+          "compressedBytes": 171174,
+          "name": "Release/test-vad.exe",
+          "uncompressedBytes": 354304
+        },
+        {
+          "compressedBytes": 83315,
+          "name": "Release/wchess.exe",
+          "uncompressedBytes": 178688
+        },
+        {
+          "compressedBytes": 9259,
+          "name": "Release/whisper-bench.exe",
+          "uncompressedBytes": 20480
+        },
+        {
+          "compressedBytes": 226026,
+          "name": "Release/whisper-cli.exe",
+          "uncompressedBytes": 479232
+        },
+        {
+          "compressedBytes": 84401,
+          "name": "Release/whisper-command.exe",
+          "uncompressedBytes": 176640
+        },
+        {
+          "compressedBytes": 81438,
+          "name": "Release/whisper-lsp.exe",
+          "uncompressedBytes": 180736
+        },
+        {
+          "compressedBytes": 51203,
+          "name": "Release/whisper-quantize.exe",
+          "uncompressedBytes": 111616
+        },
+        {
+          "compressedBytes": 338050,
+          "name": "Release/whisper-server.exe",
+          "uncompressedBytes": 725504
+        },
+        {
+          "compressedBytes": 178017,
+          "name": "Release/whisper-stream.exe",
+          "uncompressedBytes": 378368
+        },
+        {
+          "compressedBytes": 1096019,
+          "name": "Release/whisper-talk-llama.exe",
+          "uncompressedBytes": 2557440
+        },
+        {
+          "compressedBytes": 174846,
+          "name": "Release/whisper-vad-speech-segments.exe",
+          "uncompressedBytes": 362496
+        },
+        {
+          "compressedBytes": 325753,
+          "name": "Release/whisper.dll",
+          "uncompressedBytes": 1368064
+        }
+      ],
+      "metadataBytesRead": 2670,
+      "fullArchiveDownloaded": false,
+      "publishedDigest": "sha256:49dcc16de826f20bd53d44f947a1ae49dfa81f86cad67a64d80820cb192d674a",
+      "name": "whisper-bin-x64.zip",
+      "archiveBytes": 8194445,
+      "totalUncompressedBytes": 20848640,
+      "directoryBytes": 2648,
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.2/whisper-bin-x64.zip"
+    },
+    {
+      "entries": [
+        {
+          "compressedBytes": 10770,
+          "name": "Release/bench.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 10770,
+          "name": "Release/command.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 149750,
+          "name": "Release/cudart32_110.dll",
+          "uncompressedBytes": 467456
+        },
+        {
+          "compressedBytes": 170813,
+          "name": "Release/cudart64_110.dll",
+          "uncompressedBytes": 526848
+        },
+        {
+          "compressedBytes": 669828,
+          "name": "Release/cuinj64_118.dll",
+          "uncompressedBytes": 1317376
+        },
+        {
+          "compressedBytes": 286422,
+          "name": "Release/ggml-base.dll",
+          "uncompressedBytes": 650752
+        },
+        {
+          "compressedBytes": 307569,
+          "name": "Release/ggml-cpu-alderlake.dll",
+          "uncompressedBytes": 806400
+        },
+        {
+          "compressedBytes": 326188,
+          "name": "Release/ggml-cpu-cannonlake.dll",
+          "uncompressedBytes": 850944
+        },
+        {
+          "compressedBytes": 325777,
+          "name": "Release/ggml-cpu-cascadelake.dll",
+          "uncompressedBytes": 848384
+        },
+        {
+          "compressedBytes": 307929,
+          "name": "Release/ggml-cpu-haswell.dll",
+          "uncompressedBytes": 807424
+        },
+        {
+          "compressedBytes": 325778,
+          "name": "Release/ggml-cpu-icelake.dll",
+          "uncompressedBytes": 848384
+        },
+        {
+          "compressedBytes": 296757,
+          "name": "Release/ggml-cpu-sandybridge.dll",
+          "uncompressedBytes": 780800
+        },
+        {
+          "compressedBytes": 326193,
+          "name": "Release/ggml-cpu-skylakex.dll",
+          "uncompressedBytes": 850944
+        },
+        {
+          "compressedBytes": 285028,
+          "name": "Release/ggml-cpu-sse42.dll",
+          "uncompressedBytes": 768000
+        },
+        {
+          "compressedBytes": 285446,
+          "name": "Release/ggml-cpu-x64.dll",
+          "uncompressedBytes": 769024
+        },
+        {
+          "compressedBytes": 240784888,
+          "name": "Release/ggml-cuda.dll",
+          "uncompressedBytes": 536345088
+        },
+        {
+          "compressedBytes": 29219,
+          "name": "Release/ggml.dll",
+          "uncompressedBytes": 66560
+        },
+        {
+          "compressedBytes": 10770,
+          "name": "Release/main.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 1377675,
+          "name": "Release/nvrtc-builtins64_118.dll",
+          "uncompressedBytes": 7909888
+        },
+        {
+          "compressedBytes": 18053144,
+          "name": "Release/nvrtc64_112_0.dll",
+          "uncompressedBytes": 40629248
+        },
+        {
+          "compressedBytes": 185423,
+          "name": "Release/parakeet-cli.exe",
+          "uncompressedBytes": 385536
+        },
+        {
+          "compressedBytes": 43940,
+          "name": "Release/parakeet-quantize.exe",
+          "uncompressedBytes": 96256
+        },
+        {
+          "compressedBytes": 130401,
+          "name": "Release/parakeet.dll",
+          "uncompressedBytes": 571392
+        },
+        {
+          "compressedBytes": 850287,
+          "name": "Release/SDL2.dll",
+          "uncompressedBytes": 2500096
+        },
+        {
+          "compressedBytes": 10770,
+          "name": "Release/stream.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 161191,
+          "name": "Release/test-common-utf8.exe",
+          "uncompressedBytes": 339456
+        },
+        {
+          "compressedBytes": 184651,
+          "name": "Release/test-parakeet-full-diffusion.exe",
+          "uncompressedBytes": 383488
+        },
+        {
+          "compressedBytes": 182683,
+          "name": "Release/test-parakeet-full-gb1.exe",
+          "uncompressedBytes": 379904
+        },
+        {
+          "compressedBytes": 182684,
+          "name": "Release/test-parakeet-full-jfk.exe",
+          "uncompressedBytes": 379904
+        },
+        {
+          "compressedBytes": 177816,
+          "name": "Release/test-parakeet.exe",
+          "uncompressedBytes": 368640
+        },
+        {
+          "compressedBytes": 177630,
+          "name": "Release/test-vad-full.exe",
+          "uncompressedBytes": 369152
+        },
+        {
+          "compressedBytes": 177262,
+          "name": "Release/test-vad.exe",
+          "uncompressedBytes": 368128
+        },
+        {
+          "compressedBytes": 76781,
+          "name": "Release/wchess.exe",
+          "uncompressedBytes": 165376
+        },
+        {
+          "compressedBytes": 9708,
+          "name": "Release/whisper-bench.exe",
+          "uncompressedBytes": 20992
+        },
+        {
+          "compressedBytes": 230176,
+          "name": "Release/whisper-cli.exe",
+          "uncompressedBytes": 489984
+        },
+        {
+          "compressedBytes": 80440,
+          "name": "Release/whisper-command.exe",
+          "uncompressedBytes": 168960
+        },
+        {
+          "compressedBytes": 81677,
+          "name": "Release/whisper-lsp.exe",
+          "uncompressedBytes": 180736
+        },
+        {
+          "compressedBytes": 47367,
+          "name": "Release/whisper-quantize.exe",
+          "uncompressedBytes": 103936
+        },
+        {
+          "compressedBytes": 338071,
+          "name": "Release/whisper-server.exe",
+          "uncompressedBytes": 728576
+        },
+        {
+          "compressedBytes": 183070,
+          "name": "Release/whisper-stream.exe",
+          "uncompressedBytes": 390656
+        },
+        {
+          "compressedBytes": 1096721,
+          "name": "Release/whisper-talk-llama.exe",
+          "uncompressedBytes": 2561536
+        },
+        {
+          "compressedBytes": 180363,
+          "name": "Release/whisper-vad-speech-segments.exe",
+          "uncompressedBytes": 376320
+        },
+        {
+          "compressedBytes": 311483,
+          "name": "Release/whisper.dll",
+          "uncompressedBytes": 1310208
+        }
+      ],
+      "metadataBytesRead": 3095,
+      "fullArchiveDownloaded": false,
+      "publishedDigest": "sha256:1776668730f5594a0b15f930225779e863dd8280397f9ee7c6e47ccf82bbb203",
+      "name": "whisper-cublas-11.8.0-bin-x64.zip",
+      "archiveBytes": 269446789,
+      "totalUncompressedBytes": 607995392,
+      "directoryBytes": 3073,
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.2/whisper-cublas-11.8.0-bin-x64.zip"
+    },
+    {
+      "entries": [
+        {
+          "compressedBytes": 10769,
+          "name": "Release/bench.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 10769,
+          "name": "Release/command.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 70140136,
+          "name": "Release/cublas64_12.dll",
+          "uncompressedBytes": 100033536
+        },
+        {
+          "compressedBytes": 330995298,
+          "name": "Release/cublasLt64_12.dll",
+          "uncompressedBytes": 473551360
+        },
+        {
+          "compressedBytes": 175200,
+          "name": "Release/cudart64_12.dll",
+          "uncompressedBytes": 553984
+        },
+        {
+          "compressedBytes": 286421,
+          "name": "Release/ggml-base.dll",
+          "uncompressedBytes": 650752
+        },
+        {
+          "compressedBytes": 307570,
+          "name": "Release/ggml-cpu-alderlake.dll",
+          "uncompressedBytes": 806400
+        },
+        {
+          "compressedBytes": 326187,
+          "name": "Release/ggml-cpu-cannonlake.dll",
+          "uncompressedBytes": 850944
+        },
+        {
+          "compressedBytes": 325779,
+          "name": "Release/ggml-cpu-cascadelake.dll",
+          "uncompressedBytes": 848384
+        },
+        {
+          "compressedBytes": 307931,
+          "name": "Release/ggml-cpu-haswell.dll",
+          "uncompressedBytes": 807424
+        },
+        {
+          "compressedBytes": 325778,
+          "name": "Release/ggml-cpu-icelake.dll",
+          "uncompressedBytes": 848384
+        },
+        {
+          "compressedBytes": 296758,
+          "name": "Release/ggml-cpu-sandybridge.dll",
+          "uncompressedBytes": 780800
+        },
+        {
+          "compressedBytes": 326193,
+          "name": "Release/ggml-cpu-skylakex.dll",
+          "uncompressedBytes": 850944
+        },
+        {
+          "compressedBytes": 285030,
+          "name": "Release/ggml-cpu-sse42.dll",
+          "uncompressedBytes": 768000
+        },
+        {
+          "compressedBytes": 285447,
+          "name": "Release/ggml-cpu-x64.dll",
+          "uncompressedBytes": 769024
+        },
+        {
+          "compressedBytes": 240731404,
+          "name": "Release/ggml-cuda.dll",
+          "uncompressedBytes": 536766976
+        },
+        {
+          "compressedBytes": 29219,
+          "name": "Release/ggml.dll",
+          "uncompressedBytes": 66560
+        },
+        {
+          "compressedBytes": 10769,
+          "name": "Release/main.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 137435,
+          "name": "Release/nvblas64_12.dll",
+          "uncompressedBytes": 331776
+        },
+        {
+          "compressedBytes": 1190187,
+          "name": "Release/nvrtc-builtins64_124.dll",
+          "uncompressedBytes": 5367808
+        },
+        {
+          "compressedBytes": 19000959,
+          "name": "Release/nvrtc64_120_0.dll",
+          "uncompressedBytes": 44738048
+        },
+        {
+          "compressedBytes": 185423,
+          "name": "Release/parakeet-cli.exe",
+          "uncompressedBytes": 385536
+        },
+        {
+          "compressedBytes": 43940,
+          "name": "Release/parakeet-quantize.exe",
+          "uncompressedBytes": 96256
+        },
+        {
+          "compressedBytes": 130402,
+          "name": "Release/parakeet.dll",
+          "uncompressedBytes": 571392
+        },
+        {
+          "compressedBytes": 850287,
+          "name": "Release/SDL2.dll",
+          "uncompressedBytes": 2500096
+        },
+        {
+          "compressedBytes": 10769,
+          "name": "Release/stream.exe",
+          "uncompressedBytes": 28160
+        },
+        {
+          "compressedBytes": 161193,
+          "name": "Release/test-common-utf8.exe",
+          "uncompressedBytes": 339456
+        },
+        {
+          "compressedBytes": 184652,
+          "name": "Release/test-parakeet-full-diffusion.exe",
+          "uncompressedBytes": 383488
+        },
+        {
+          "compressedBytes": 182684,
+          "name": "Release/test-parakeet-full-gb1.exe",
+          "uncompressedBytes": 379904
+        },
+        {
+          "compressedBytes": 182684,
+          "name": "Release/test-parakeet-full-jfk.exe",
+          "uncompressedBytes": 379904
+        },
+        {
+          "compressedBytes": 177817,
+          "name": "Release/test-parakeet.exe",
+          "uncompressedBytes": 368640
+        },
+        {
+          "compressedBytes": 177631,
+          "name": "Release/test-vad-full.exe",
+          "uncompressedBytes": 369152
+        },
+        {
+          "compressedBytes": 177263,
+          "name": "Release/test-vad.exe",
+          "uncompressedBytes": 368128
+        },
+        {
+          "compressedBytes": 76781,
+          "name": "Release/wchess.exe",
+          "uncompressedBytes": 165376
+        },
+        {
+          "compressedBytes": 9708,
+          "name": "Release/whisper-bench.exe",
+          "uncompressedBytes": 20992
+        },
+        {
+          "compressedBytes": 230177,
+          "name": "Release/whisper-cli.exe",
+          "uncompressedBytes": 489984
+        },
+        {
+          "compressedBytes": 80440,
+          "name": "Release/whisper-command.exe",
+          "uncompressedBytes": 168960
+        },
+        {
+          "compressedBytes": 81678,
+          "name": "Release/whisper-lsp.exe",
+          "uncompressedBytes": 180736
+        },
+        {
+          "compressedBytes": 47368,
+          "name": "Release/whisper-quantize.exe",
+          "uncompressedBytes": 103936
+        },
+        {
+          "compressedBytes": 338073,
+          "name": "Release/whisper-server.exe",
+          "uncompressedBytes": 728576
+        },
+        {
+          "compressedBytes": 183070,
+          "name": "Release/whisper-stream.exe",
+          "uncompressedBytes": 390656
+        },
+        {
+          "compressedBytes": 1096722,
+          "name": "Release/whisper-talk-llama.exe",
+          "uncompressedBytes": 2561536
+        },
+        {
+          "compressedBytes": 180363,
+          "name": "Release/whisper-vad-speech-segments.exe",
+          "uncompressedBytes": 376320
+        },
+        {
+          "compressedBytes": 311483,
+          "name": "Release/whisper.dll",
+          "uncompressedBytes": 1310208
+        }
+      ],
+      "metadataBytesRead": 3164,
+      "fullArchiveDownloaded": false,
+      "publishedDigest": "sha256:443110ddaad70d4290ab2e77179e31cf712035bbc4fad56bb4519a90c917b39c",
+      "name": "whisper-cublas-12.4.0-bin-x64.zip",
+      "archiveBytes": 670611449,
+      "totalUncompressedBytes": 1182142976,
+      "directoryBytes": 3142,
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.2/whisper-cublas-12.4.0-bin-x64.zip"
+    }
+  ],
+  "vulkan": {
+    "fixedSourceCommit": "306c88f4d1286aec1bf96e544632897886af5501",
+    "officialWindowsReleaseAsset": false,
+    "downloadBytes": null,
+    "installedFileBytes": null,
+    "sdkCandidate": "1.4.341.1",
+    "developerSdkDiskGuidance": "approximately 1 GB per LunarG; not an end-user requirement; complete local toolchain cost not measured"
+  },
+  "reuse": {
+    "smallModelBytes": 487601967,
+    "newSmallModelDownloadBytes": 0,
+    "projectSharedCudaRuntime": false,
+    "installedCpuWhisperAllBytes": 20848640
+  },
+  "scenarios": {
+    "notMeasured": true,
+    "baseCpuBatchMs": 47490.341,
+    "baseSmallCpuMs": 37862.953499999996,
+    "scenarios": [
+      {
+        "hypotheticalSmallSpeedup": 2,
+        "cpuHfaBatchSeconds": 28.558864250000003,
+        "cpuHfaTotalSavedPercent": 39.86384673464441,
+        "dmlHfaBatchSeconds": 24.813534249999996
+      },
+      {
+        "hypotheticalSmallSpeedup": 3,
+        "cpuHfaBatchSeconds": 22.248372000000003,
+        "cpuHfaTotalSavedPercent": 53.151795646192554,
+        "dmlHfaBatchSeconds": 18.451598133333334
+      },
+      {
+        "hypotheticalSmallSpeedup": 5,
+        "cpuHfaBatchSeconds": 17.199978200000004,
+        "cpuHfaTotalSavedPercent": 63.78215477543107,
+        "dmlHfaBatchSeconds": 13.362049239999997
+      }
+    ]
+  }
+}

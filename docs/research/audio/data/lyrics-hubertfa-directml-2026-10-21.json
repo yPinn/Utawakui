@@ -1,0 +1,214 @@
+{
+  "date": "2026-10-21",
+  "scope": "four fixed line cases; research only; CPU sufficient decision; no product GPU adoption",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 5060 Ti",
+    "driver": "617.14",
+    "reportedVramMiB": 16311,
+    "node": "24.17.0",
+    "ort": "1.30.0"
+  },
+  "recipe": {
+    "sampleRate": 44100,
+    "maxWindowMs": 30000,
+    "maxLineMs": 20000,
+    "decoderPaddingMs": 350,
+    "englishBlindContextMs": 500,
+    "hfaMethod": {
+      "kind": "model",
+      "id": "hubertfa-research",
+      "version": "phase2-v1",
+      "modelManifestSha256": "aa3eaa505333b9574a7b5c64a03b2e200114574e9aa1f19c61e0ce71f4e9a0f2",
+      "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+      "decoderVersion": "hfa-occurrence-c5ca11a8596e5693",
+      "g2pVersion": "original-g2p-36691ab9da7bc121",
+      "chunkerVersion": "intl-text-28881fcf3c9311bf",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "precision": "float32 I/O; internal DML compute precision not independently measured"
+  },
+  "cases": [
+    {
+      "id": "zh-normal",
+      "requestedInternalCuts": 6,
+      "retainedInternalCuts": 6,
+      "rawChunks": 7,
+      "appliedChunks": 7,
+      "mode": "research",
+      "boundaryRangeEqual": true,
+      "contentEqual": true,
+      "rawChunkOnsetDifferencesMs": [0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "id": "ja-normal",
+      "requestedInternalCuts": 7,
+      "retainedInternalCuts": 7,
+      "rawChunks": 8,
+      "appliedChunks": 8,
+      "mode": "research",
+      "boundaryRangeEqual": true,
+      "contentEqual": true,
+      "rawChunkOnsetDifferencesMs": [0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "id": "en-normal",
+      "requestedInternalCuts": 6,
+      "retainedInternalCuts": 6,
+      "rawChunks": 7,
+      "appliedChunks": 7,
+      "mode": "research",
+      "boundaryRangeEqual": true,
+      "contentEqual": true,
+      "rawChunkOnsetDifferencesMs": [0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "id": "ja-tail",
+      "requestedInternalCuts": 5,
+      "retainedInternalCuts": 3,
+      "rawChunks": 4,
+      "appliedChunks": 0,
+      "mode": "T1",
+      "boundaryRangeEqual": true,
+      "contentEqual": true,
+      "rawChunkOnsetDifferencesMs": [0, 0, 0, 0]
+    }
+  ],
+  "backends": [
+    {
+      "backend": "cpu",
+      "loadMs": 1018.7018999999999,
+      "coldBatchWallMs": 47490.341,
+      "coldInferenceTotalMs": 6913.517400000003,
+      "warmMeanMs": 1665.9886374999996,
+      "warmByCase": [
+        {
+          "id": "zh-normal",
+          "values": [1436.7738000000027, 1535.9300000000003]
+        },
+        {
+          "id": "ja-normal",
+          "values": [1534.0070999999953, 1772.4025000000038]
+        },
+        {
+          "id": "en-normal",
+          "values": [1741.3747999999978, 1959.7243999999992]
+        },
+        {
+          "id": "ja-tail",
+          "values": [1608.931199999999, 1738.7652999999991]
+        }
+      ],
+      "smallWallMs": 37862.953499999996,
+      "smallLoadMs": 1188.77,
+      "frontendPeakRssBytes": 1484681216,
+      "decoderPeakRssBytes": 144252928,
+      "remainingOwnedPids": [],
+      "profileEvents": {
+        "CPUExecutionProvider": 14928
+      },
+      "uniqueNodes": {
+        "CPUExecutionProvider": 1244
+      }
+    },
+    {
+      "backend": "dml",
+      "loadMs": 1190.8864999999998,
+      "coldBatchWallMs": 43899.342599999996,
+      "coldInferenceTotalMs": 2953.176099999996,
+      "warmMeanMs": 154.86353750000126,
+      "warmByCase": [
+        {
+          "id": "zh-normal",
+          "values": [140.48319999999512, 134.79360000000452]
+        },
+        {
+          "id": "ja-normal",
+          "values": [207.7548999999999, 186.664300000004]
+        },
+        {
+          "id": "en-normal",
+          "values": [156.59909999999945, 128.1562000000049]
+        },
+        {
+          "id": "ja-tail",
+          "values": [145.6952999999994, 138.76170000000275]
+        }
+      ],
+      "smallWallMs": 38171.6167,
+      "smallLoadMs": 1216.27,
+      "frontendPeakRssBytes": 602148864,
+      "decoderPeakRssBytes": 143826944,
+      "remainingOwnedPids": [],
+      "profileEvents": {
+        "DmlExecutionProvider": 12504,
+        "CPUExecutionProvider": 2352
+      },
+      "uniqueNodes": {
+        "DmlExecutionProvider": 1042,
+        "CPUExecutionProvider": 196
+      }
+    }
+  ],
+  "batch": {
+    "savedMs": 3590.998400000004,
+    "savedPercent": 7.561534249669852,
+    "assetVerificationMs": 3154.4894
+  },
+  "cancellation": [
+    {
+      "backend": "cpu",
+      "settled": {
+        "completed": false,
+        "error": "research job cancelled or closed"
+      },
+      "closeMs": 5255.248399999997,
+      "remainingOwnedPids": [],
+      "published": false,
+      "kernelEntryIndependentlyObserved": false
+    },
+    {
+      "backend": "dml",
+      "settled": {
+        "completed": false,
+        "error": "research job cancelled or closed"
+      },
+      "closeMs": 119.2387000000017,
+      "remainingOwnedPids": [],
+      "published": false,
+      "kernelEntryIndependentlyObserved": false
+    }
+  ],
+  "resourceLimits": {
+    "smallPeakRssBytes": null,
+    "perProcessVramBytes": null,
+    "wholeCardSampleCount": 83,
+    "wholeCardSampledMinMiB": 2725,
+    "wholeCardSampledMaxMiB": 4446,
+    "samplingCoveredEntireRun": false
+  },
+  "executionCounts": {
+    "compatibilityInference": 1,
+    "normalInference": 24,
+    "cancellationRequests": 2
+  },
+  "assetOrEnvironmentDownloadBytes": 0,
+  "manualTiming": "pending",
+  "limitations": [
+    "CPU then DML; no randomized order or OS cache flush",
+    "Profiling enabled in both sessions",
+    "Batch includes four line cases, not four full songs",
+    "Common asset verification and input freezing excluded from batch timing",
+    "Two missing internal cuts retained in denominator",
+    "Initial frozen-dependency preflight failure preserved; no inference in that failed attempt"
+  ],
+  "qualityComparison": {
+    "requestedInternalCuts": 24,
+    "retainedInternalCuts": 22,
+    "missingInternalCuts": 2,
+    "comparedInternalCuts": 22,
+    "maxInternalOnsetDifferenceMs": 0,
+    "sourceLineAnchorsExcluded": 4,
+    "rawChunkOnsetDifferencesIncludeSourceLineAnchor": true
+  }
+}
