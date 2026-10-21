@@ -28,6 +28,7 @@ const props = defineProps({
 const {
   state: localImportState,
   conversionReviewMessage,
+  skippedResults,
   convertPendingFiles,
   importFiles,
 } = useLocalImport();
@@ -67,6 +68,7 @@ const sourceBusy = computed(
 const showLocalStatus = computed(
   () =>
     Boolean(localImportState.message) &&
+    !localImportState.summaryNotified &&
     !localImportState.conversionReview &&
     (localImportState.statusType !== 'success' ||
       localImportState.imported.length === 0 ||
@@ -246,6 +248,16 @@ watch(
       >
         {{ localImportState.message }}
       </UiHint>
+
+      <ul
+        v-if="skippedResults?.length"
+        class="import-dock-content__rows"
+        aria-label="略過的本機檔案"
+      >
+        <li v-for="(item, index) in skippedResults" :key="index">
+          <UiHint>{{ item.filename }} · {{ item.message }}</UiHint>
+        </li>
+      </ul>
 
       <ul
         v-if="localImportState.imported.length"

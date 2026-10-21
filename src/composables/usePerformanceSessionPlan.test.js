@@ -120,6 +120,153 @@ async function importSessionPlan() {
 }
 
 describe('usePerformanceSessionPlan', () => {
+  it('replaces a previous menu notification with contextual validation for the next attempt', async () => {
+    const session = await importSessionPlan();
+    const notifications = (
+      await import('./useAppNotifications.js')
+    ).useAppNotifications();
+    api.movePerformanceSessionPlanItem
+      .mockRejectedValueOnce(new Error('private'))
+      .mockResolvedValueOnce({
+        ok: false,
+        error: { field: 'itemId', message: '請重新選取項目' },
+      });
+    await session.moveItem('item-1', -1);
+    expect(notifications.items.value).toHaveLength(1);
+    await session.moveItem('item-1', -1);
+    expect(notifications.items.value).toHaveLength(0);
+    expect(session.state.validationError?.field).toBe('itemId');
+  });
+
+  it('leaves another operation failure visible when a menu action recovers', async () => {
+    const session = await importSessionPlan();
+    const notifications = (
+      await import('./useAppNotifications.js')
+    ).useAppNotifications();
+    api.movePerformanceSessionPlanItem
+      .mockRejectedValueOnce(new Error('private'))
+      .mockResolvedValueOnce({ ok: true, plan: emptyPlan() });
+    api.removePerformanceSessionPlanItem.mockRejectedValueOnce(
+      new Error('private'),
+    );
+    await session.moveItem('item-1', -1);
+    await session.removeItem('item-1');
+    expect(notifications.items.value).toHaveLength(2);
+    await session.moveItem('item-1', -1);
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0].title).toBe('演出項目未移除');
+  });
+
+  it.each([
+    ['moveItem', ['item-1', -1], 'movePerformanceSessionPlanItem'],
+    [
+      'reorderItem',
+      ['item-1', 'item-2', 'before'],
+      'reorderPerformanceSessionPlanItem',
+    ],
+    ['duplicateItem', ['item-1'], 'duplicatePerformanceSessionPlanItem'],
+    ['removeItem', ['item-1'], 'removePerformanceSessionPlanItem'],
+    ['clear', [], 'clearPerformanceSessionPlan'],
+  ])(
+    'notifies once for %s failures and clears only its result on recovery',
+    async (method, args, apiMethod) => {
+      const session = await importSessionPlan();
+      const notifications = (
+        await import('./useAppNotifications.js')
+      ).useAppNotifications();
+      api[apiMethod].mockRejectedValue(new Error('E:/private/show.json'));
+      await expect(session[method](...args)).resolves.toBe(false);
+      await expect(session[method](...args)).resolves.toBe(false);
+      expect(session.state.error).toBeNull();
+      expect(session.state.validationError).toBeNull();
+      expect(notifications.items.value).toHaveLength(1);
+      expect(notifications.items.value[0]).toMatchObject({
+        tone: 'danger',
+        lifecycle: 'persistent',
+      });
+      expect(notifications.items.value[0].actionLabel).toBeUndefined();
+      expect(JSON.stringify(notifications.items.value)).not.toMatch(
+        /private|show.json/,
+      );
+      expect(api.recordDiagnostic).toHaveBeenCalled();
+      api[apiMethod].mockResolvedValue({ ok: true, plan: emptyPlan() });
+      await expect(session[method](...args)).resolves.toBe(true);
+      expect(notifications.items.value).toHaveLength(0);
+    },
+  );
+
+  it('routes non-field menu rejection to notify but preserves field validation and read context', async () => {
+    const session = await importSessionPlan();
+    const notifications = (
+      await import('./useAppNotifications.js')
+    ).useAppNotifications();
+    api.getPerformanceSessionPlan.mockRejectedValue(new Error('private read'));
+    await session.refresh();
+    const readError = session.state.error;
+    api.movePerformanceSessionPlanItem.mockResolvedValue({
+      ok: false,
+      error: { code: 'SESSION_PLAN_ITEM_NOT_FOUND', message: '找不到項目' },
+    });
+    await session.moveItem('missing', -1);
+    expect(notifications.items.value[0].message).toBe('找不到項目');
+    expect(session.state.error).toBe(readError);
+    expect(session.state.validationError).toBeNull();
+    api.removePerformanceSessionPlanItem.mockResolvedValue({
+      ok: false,
+      error: { code: 'FIELD_INVALID', field: 'itemId', message: '請重新選取' },
+    });
+    await session.removeItem('missing');
+    expect(session.state.validationError?.field).toBe('itemId');
+    expect(notifications.items.value).toHaveLength(1);
+    api.movePerformanceSessionPlanItem.mockResolvedValue({
+      ok: true,
+      plan: emptyPlan(),
+    });
+    await session.moveItem('item-1', -1);
+    expect(notifications.items.value).toHaveLength(0);
+    expect(session.state.error).toBe(readError);
+    expect(session.state.validationError?.field).toBe('itemId');
+    api.removePerformanceSessionPlanItem.mockResolvedValue({
+      ok: true,
+      plan: emptyPlan(),
+    });
+    await session.removeItem('item-1');
+    expect(session.state.validationError).toBeNull();
+    expect(session.state.error).toBe(readError);
+    api.getPerformanceSessionPlan.mockResolvedValue({
+      ok: true,
+      plan: emptyPlan(),
+    });
+    await session.refresh();
+    expect(session.state.error).toBeNull();
+  });
+
+  it('keeps editor, archive and playback-progress failures inline without a notification', async () => {
+    const session = await importSessionPlan();
+    const notifications = (
+      await import('./useAppNotifications.js')
+    ).useAppNotifications();
+    api.appendPerformanceSessionPlanManualItem.mockRejectedValue(
+      new Error('private'),
+    );
+    await session.appendManualItem({
+      displayTitle: 'draft',
+      displayArtist: '',
+    });
+    expect(session.state.error).toContain('場次草稿未更新');
+    api.archivePerformanceSession = vi
+      .fn()
+      .mockRejectedValue(new Error('private'));
+    await session.archiveSession('show', 'session-1');
+    expect(session.state.error).toContain('場次草稿未更新');
+    api.setPerformanceSessionPlanProgress.mockRejectedValue(
+      new Error('private'),
+    );
+    await session.setProgress('item-1', 'completed');
+    expect(session.state.error).toContain('場次草稿未更新');
+    expect(notifications.items.value).toHaveLength(0);
+  });
+
   it('appends an archive by bounded identity through the existing serialized store', async () => {
     const session = await importSessionPlan();
     api.appendPerformanceSessionPlanFromArchive.mockResolvedValue({

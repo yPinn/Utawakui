@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
+import { useAppNotifications } from './useAppNotifications.js';
 
 export const LIBRARY_FOLDER_USER_OBJECT_LIMIT = 12;
 export const LIBRARY_FOLDER_LAYOUT_SAVE_DELAY_MS = 300;
@@ -39,6 +40,7 @@ function layoutEntry(value) {
 
 export function createLibraryFolderObjects(options = {}) {
   const bridge = resolveBridge(options.bridge);
+  const notifications = useAppNotifications();
   const delayMs =
     Number.isFinite(options.delayMs) && options.delayMs >= 0
       ? options.delayMs
@@ -54,10 +56,13 @@ export function createLibraryFolderObjects(options = {}) {
     removing: false,
     saving: false,
     error: '',
+    readError: '',
   });
-  // One pending layout per page object; the latest edit wins.
-  const pendingEntries = new Map();
-  let pendingPage = null;
+  // Failed writes stay with their original document until an explicit retry or
+  // a newer edit. Only requested batches run; a failed batch never spins.
+  const layoutBatches = new Map();
+  const requestedLayouts = new Set();
+  let inFlightLayout = null;
   let loadRevision = 0;
   let saveTimer = null;
   let workerPromise = null;
@@ -73,6 +78,36 @@ export function createLibraryFolderObjects(options = {}) {
 
   function isActivePage(value) {
     return samePage(page.value, value);
+  }
+
+  function pageKey(value) {
+    return `${value.kind}:${value.id}`;
+  }
+
+  function failure(
+    operation,
+    targetPage,
+    message,
+    { onError } = {},
+    action = null,
+  ) {
+    if (isActivePage(targetPage)) state.error = message;
+    // A departed editor cannot consume a failure behind a different document.
+    if (onError && isActivePage(targetPage) && onError(message) !== false)
+      return;
+    notifications.notify({
+      key: `folder:${operation}:${pageKey(targetPage)}`,
+      title: operation === 'layout' ? '頁面配置未儲存' : '頁面物件操作未完成',
+      message,
+      tone: 'danger',
+      actionLabel: action ? '重試儲存' : '',
+      action,
+    });
+  }
+
+  function recovered(operation, targetPage) {
+    notifications.clear(`folder:${operation}:${pageKey(targetPage)}`);
+    if (isActivePage(targetPage)) state.error = '';
   }
 
   function clearSaveTimer() {
@@ -108,15 +143,34 @@ export function createLibraryFolderObjects(options = {}) {
   async function processSaveQueue() {
     state.saving = true;
     let succeeded = true;
-    while (pendingEntries.size > 0 && !disposed) {
-      const batchPage = pendingPage;
-      const entries = [...pendingEntries.values()];
-      pendingEntries.clear();
+    while (requestedLayouts.size > 0 && !disposed) {
+      const key = requestedLayouts.values().next().value;
+      requestedLayouts.delete(key);
+      const batch = layoutBatches.get(key);
+      if (!batch || batch.entries.size === 0) continue;
+      const entries = [...batch.entries.values()];
+      batch.entries.clear();
+      const batchPage = batch.page;
+      inFlightLayout = { page: batchPage, entries };
       try {
-        await bridge?.saveFolderPageLayout?.({ page: batchPage, entries });
+        await bridge.saveFolderPageLayout({ page: batchPage, entries });
+        recovered('layout', batchPage);
+        if (batch.entries.size === 0) layoutBatches.delete(key);
       } catch {
         succeeded = false;
-        state.error = '目前無法儲存頁面物件配置。';
+        // Newer changes to the same object always win over the failed snapshot.
+        batch.entries = new Map([
+          ...entries.map((entry) => [entry.key, entry]),
+          ...batch.entries,
+        ]);
+        requestedLayouts.delete(key);
+        failure('layout', batchPage, '目前無法儲存頁面物件配置。', {}, () => {
+          if (disposed || !layoutBatches.has(key)) return false;
+          requestedLayouts.add(key);
+          return startWorker();
+        });
+      } finally {
+        inFlightLayout = null;
       }
     }
     state.saving = false;
@@ -127,19 +181,17 @@ export function createLibraryFolderObjects(options = {}) {
     if (workerPromise) return workerPromise;
     workerPromise = processSaveQueue().finally(() => {
       workerPromise = null;
-      if (pendingEntries.size > 0 && !disposed) void startWorker();
+      if (requestedLayouts.size > 0 && !disposed) void startWorker();
     });
     return workerPromise;
   }
 
   async function flush() {
     clearSaveTimer();
-    if (workerPromise) {
-      await workerPromise;
-      return pendingEntries.size > 0 ? flush() : state.error === '';
-    }
-    if (pendingEntries.size > 0) return startWorker();
-    return state.error === '';
+    for (const key of layoutBatches.keys()) requestedLayouts.add(key);
+    if (workerPromise) await workerPromise;
+    else if (requestedLayouts.size > 0) await startWorker();
+    return layoutBatches.size === 0;
   }
 
   async function saveLayout(values, { immediate = false } = {}) {
@@ -148,10 +200,16 @@ export function createLibraryFolderObjects(options = {}) {
       .filter((value) => typeof value?.key === 'string')
       .map(layoutEntry);
     if (entries.length === 0) return false;
-    if (pendingPage && !isActivePage(pendingPage)) await flush();
     mergeLocalLayout(entries);
-    pendingPage = { ...page.value };
-    for (const entry of entries) pendingEntries.set(entry.key, entry);
+    const targetPage = { ...page.value };
+    const key = pageKey(targetPage);
+    let batch = layoutBatches.get(key);
+    if (!batch) {
+      batch = { page: targetPage, entries: new Map() };
+      layoutBatches.set(key, batch);
+    }
+    for (const entry of entries) batch.entries.set(entry.key, entry);
+    requestedLayouts.add(key);
     clearSaveTimer();
     if (immediate || workerPromise) return startWorker();
     saveTimer = setTimeout(() => {
@@ -168,6 +226,7 @@ export function createLibraryFolderObjects(options = {}) {
     setObjects([]);
     freshKeys.value = [];
     state.error = '';
+    state.readError = '';
     if (!nextPage || typeof bridge?.listFolderPageObjects !== 'function') {
       state.loading = false;
       return false;
@@ -178,9 +237,16 @@ export function createLibraryFolderObjects(options = {}) {
       const snapshot = await bridge.listFolderPageObjects(nextPage);
       if (revision !== loadRevision) return false;
       setObjects(snapshot);
+      const pending = layoutBatches.get(pageKey(nextPage));
+      if (samePage(inFlightLayout?.page, nextPage))
+        mergeLocalLayout(inFlightLayout.entries);
+      if (pending) mergeLocalLayout([...pending.entries.values()]);
       return true;
     } catch {
-      if (revision === loadRevision) state.error = '目前無法讀取頁面物件。';
+      if (revision === loadRevision) {
+        state.readError = '目前無法讀取頁面物件。';
+        state.error = state.readError;
+      }
       return false;
     } finally {
       if (revision === loadRevision) state.loading = false;
@@ -206,9 +272,10 @@ export function createLibraryFolderObjects(options = {}) {
       if (result?.status !== 'added' || !result.object) return null;
       freshKeys.value = [...freshKeys.value, result.object.key];
       setObjects([...objects.value, result.object]);
+      recovered('add-photo', activePage);
       return result.object.key;
     } catch {
-      state.error = '目前無法新增頁面照片。';
+      failure('add-photo', activePage, '目前無法新增頁面照片。');
       return null;
     } finally {
       state.adding = false;
@@ -216,7 +283,7 @@ export function createLibraryFolderObjects(options = {}) {
   }
 
   // Creates a note from saved editor content; returns its key or null.
-  async function addNote(content) {
+  async function addNote(content, feedback) {
     if (
       !page.value ||
       state.adding ||
@@ -238,16 +305,17 @@ export function createLibraryFolderObjects(options = {}) {
       if (!isActivePage(activePage) || !note?.key) return null;
       freshKeys.value = [...freshKeys.value, note.key];
       setObjects([...objects.value, note]);
+      recovered('add-note', activePage);
       return note.key;
     } catch {
-      state.error = '目前無法新增頁面便條。';
+      failure('add-note', activePage, '目前無法新增頁面便條。', feedback);
       return null;
     } finally {
       state.adding = false;
     }
   }
 
-  async function updateNote(key, content) {
+  async function updateNote(key, content, feedback) {
     const title = content?.title ?? '';
     const text = content?.text ?? '';
     const paper = content?.paper ?? '';
@@ -260,11 +328,6 @@ export function createLibraryFolderObjects(options = {}) {
       return false;
     }
     const activePage = { ...page.value };
-    objects.value = objects.value.map((object) =>
-      object.key === key
-        ? { ...object, title, text, ...(paper ? { paper } : {}) }
-        : object,
-    );
     try {
       await bridge.updateFolderPageNote({
         page: activePage,
@@ -273,15 +336,22 @@ export function createLibraryFolderObjects(options = {}) {
         text,
         paper,
       });
+      if (!isActivePage(activePage)) return false;
+      objects.value = objects.value.map((object) =>
+        object.key === key
+          ? { ...object, title, text, ...(paper ? { paper } : {}) }
+          : object,
+      );
+      recovered('update-note', activePage);
       return true;
     } catch {
-      state.error = '目前無法儲存頁面便條。';
+      failure('update-note', activePage, '目前無法儲存頁面便條。', feedback);
       return false;
     }
   }
 
   // Main picks the caption paper, so the saved projection replaces the photo.
-  async function updatePhotoText(key, content) {
+  async function updatePhotoText(key, content, feedback) {
     const label = content?.label ?? '';
     const captionTitle = content?.captionTitle ?? '';
     const caption = content?.caption ?? '';
@@ -309,14 +379,15 @@ export function createLibraryFolderObjects(options = {}) {
       objects.value = objects.value.map((object) =>
         object.key === key ? { ...object, ...photo } : object,
       );
+      recovered('photo-text', activePage);
       return true;
     } catch {
-      state.error = '目前無法儲存照片文字。';
+      failure('photo-text', activePage, '目前無法儲存照片文字。', feedback);
       return false;
     }
   }
 
-  async function remove(key) {
+  async function remove(key, feedback) {
     if (
       !page.value ||
       state.removing ||
@@ -335,9 +406,18 @@ export function createLibraryFolderObjects(options = {}) {
       });
       if (!isActivePage(activePage)) return false;
       setObjects(snapshot);
+      const batchKey = pageKey(activePage);
+      const pending = layoutBatches.get(batchKey);
+      pending?.entries.delete(key);
+      if (pending?.entries.size === 0) {
+        layoutBatches.delete(batchKey);
+        requestedLayouts.delete(batchKey);
+        recovered('layout', activePage);
+      }
+      recovered('remove', activePage);
       return true;
     } catch {
-      state.error = '目前無法移除頁面物件。';
+      failure('remove', activePage, '目前無法移除頁面物件。', feedback);
       return false;
     } finally {
       state.removing = false;
@@ -351,7 +431,8 @@ export function createLibraryFolderObjects(options = {}) {
   function dispose() {
     disposed = true;
     clearSaveTimer();
-    pendingEntries.clear();
+    layoutBatches.clear();
+    requestedLayouts.clear();
   }
 
   return {
@@ -363,6 +444,7 @@ export function createLibraryFolderObjects(options = {}) {
     removing: computed(() => state.removing),
     saving: computed(() => state.saving),
     error: computed(() => state.error),
+    readError: computed(() => state.readError),
     limitReached: computed(
       () => userObjectCount.value >= LIBRARY_FOLDER_USER_OBJECT_LIMIT,
     ),

@@ -1,6 +1,12 @@
 import { shallowRef } from 'vue';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMusicAnalysisWorkbench } from './useMusicAnalysisWorkbench.js';
+import { useAppNotifications } from './useAppNotifications.js';
+
+const notifications = useAppNotifications();
+afterEach(() => {
+  for (const item of notifications.items.value) notifications.clear(item.key);
+});
 
 function deferred() {
   let resolve;
@@ -291,11 +297,14 @@ describe('Music Analysis workbench', () => {
 
     expect(harness.workbench.state.activeJob).toBeNull();
     expect(harness.workbench.state.phase).toBe('idle');
-    expect(harness.workbench.state.notice).toContain('分析工作已結束');
-    expect(harness.workbench.state.notice).toContain(
+    expect(harness.workbench.state.notice).toBe('');
+    expect(notifications.items.value[0].title).toBe('分析工作已結束');
+    expect(notifications.items.value[0].message).toContain(
       '若結果未更新，請再執行一次分析',
     );
-    expect(harness.workbench.state.notice).not.toMatch(/sidecar|狀態 API/iu);
+    expect(notifications.items.value[0].message).not.toMatch(
+      /sidecar|狀態 API/iu,
+    );
     expect(harness.signalOwner.loadForTrack).toHaveBeenLastCalledWith(
       'track-2',
     );
@@ -452,7 +461,11 @@ describe('Music Analysis workbench', () => {
       stage: 'complete',
       percent: 100,
     });
-    expect(harness.workbench.state.notice).toBe('分析完成，結果已更新。');
+    expect(harness.workbench.state.notice).toBe('');
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '分析完成',
+      message: '結果已更新。',
+    });
   });
 
   it('cancels the active job and reloads the selected sidecar state', async () => {
@@ -475,9 +488,11 @@ describe('Music Analysis workbench', () => {
     );
     expect(harness.workbench.state.phase).toBe('idle');
     expect(harness.workbench.state.activeJob).toBeNull();
-    expect(harness.workbench.state.notice).toBe(
-      '分析工作已取消，已重新載入目前結果。',
-    );
+    expect(harness.workbench.state.notice).toBe('');
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '分析工作已取消',
+      tone: 'info',
+    });
   });
 
   it('explains unavailable activation without presenting it as a UI failure', async () => {

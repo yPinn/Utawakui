@@ -1,5 +1,6 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { useAppNotifications } from './useAppNotifications.js';
 import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
 
 // Module-scope singleton preserves selection across tab unmounts.
@@ -21,8 +22,10 @@ const state = reactive({
   // Metadata-derived album reference; never persisted as playlist membership.
   selectedAlbumReference: null,
   error: null,
+  actionError: null,
 });
 const { recordError } = useAppDiagnostics();
+const notifications = useAppNotifications();
 
 const ERROR_PRESENTATION = Object.freeze({
   讀取歌單失敗: ['list', '目前無法讀取播放清單，請再試一次。'],
@@ -73,7 +76,7 @@ function formatError(prefix, err) {
 function enqueue(
   operation,
   errorPrefix,
-  { clearErrorOnSuccess = true, isCurrent = null } = {},
+  { read = false, isCurrent = null, onError = null } = {},
 ) {
   if (typeof window === 'undefined' || !window.Utawakui) {
     return Promise.resolve();
@@ -84,11 +87,28 @@ function enqueue(
       const playlists = await operation();
       if (isCurrent && !isCurrent()) return null;
       applyPlaylists(playlists);
-      if (clearErrorOnSuccess) state.error = null;
+      if (read) state.error = null;
+      else {
+        state.actionError = null;
+        notifications.clear(
+          `playlists:${ERROR_PRESENTATION[errorPrefix]?.[0]}`,
+        );
+      }
       return playlists;
     } catch (err) {
       if (isCurrent && !isCurrent()) return null;
-      state.error = formatError(errorPrefix, err);
+      const message = formatError(errorPrefix, err);
+      if (read) state.error = message;
+      else {
+        state.actionError = message;
+        if (!onError || onError(message) === false)
+          notifications.notify({
+            key: `playlists:${ERROR_PRESENTATION[errorPrefix]?.[0]}`,
+            title: errorPrefix,
+            message,
+            tone: 'danger',
+          });
+      }
       return null;
     }
   });
@@ -105,7 +125,7 @@ async function refresh() {
       () => window.Utawakui.listPlaylists(),
       '讀取歌單失敗',
       {
-        clearErrorOnSuccess: !state.hasLoaded,
+        read: true,
         isCurrent: () => revision === readRevision,
       },
     );
@@ -184,10 +204,13 @@ async function create(name) {
   return created ?? null;
 }
 
-async function rename(id, name) {
-  await enqueue(
-    () => window.Utawakui.renamePlaylist(id, name),
-    '重新命名歌單失敗',
+async function rename(id, name, feedback) {
+  return Boolean(
+    await enqueue(
+      () => window.Utawakui.renamePlaylist(id, name),
+      '重新命名歌單失敗',
+      feedback,
+    ),
   );
 }
 
@@ -204,22 +227,37 @@ async function setKind(id, kind) {
   );
 }
 
-async function setDescription(id, description) {
-  await enqueue(
-    () => window.Utawakui.setPlaylistDescription(id, description),
-    '更新歌單說明失敗',
+async function setDescription(id, description, feedback) {
+  return Boolean(
+    await enqueue(
+      () => window.Utawakui.setPlaylistDescription(id, description),
+      '更新歌單說明失敗',
+      feedback,
+    ),
   );
 }
 
 // Opens the native file picker (see main.js's playlists:choose-cover) — a
 // no-op resolves back to the unchanged array, so a cancel doesn't surface
 // as an error.
-async function setCover(id) {
-  await enqueue(() => window.Utawakui.choosePlaylistCover(id), '設定封面失敗');
+async function setCover(id, feedback) {
+  return Boolean(
+    await enqueue(
+      () => window.Utawakui.choosePlaylistCover(id),
+      '設定封面失敗',
+      feedback,
+    ),
+  );
 }
 
-async function clearCover(id) {
-  await enqueue(() => window.Utawakui.clearPlaylistCover(id), '移除封面失敗');
+async function clearCover(id, feedback) {
+  return Boolean(
+    await enqueue(
+      () => window.Utawakui.clearPlaylistCover(id),
+      '移除封面失敗',
+      feedback,
+    ),
+  );
 }
 
 // Create-or-update path for album imports (see useImportSession.js's
@@ -248,7 +286,13 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
     !window.Utawakui ||
     typeof window.Utawakui.reorderPlaylist !== 'function'
   ) {
-    state.error = '請重新啟動應用程式後再調整播放清單順序。';
+    state.actionError = '請重新啟動應用程式後再調整播放清單順序。';
+    notifications.notify({
+      key: 'playlists:reorder',
+      title: '歌單排序未儲存',
+      message: state.actionError,
+      tone: 'danger',
+    });
     return;
   }
 

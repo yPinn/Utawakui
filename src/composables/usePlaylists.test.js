@@ -81,6 +81,52 @@ async function importPlaylists() {
   return usePlaylists();
 }
 
+describe('operation feedback ownership', () => {
+  it('falls back to a shell notice when the editor no longer owns the failure', async () => {
+    const owner = await loadPlaylists();
+    renamePlaylistMock.mockRejectedValueOnce(new Error('disk'));
+    await owner.rename('p1', 'Draft', { onError: () => false });
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      tone: 'danger',
+      message: '變更未儲存，請再試一次。',
+    });
+  });
+  it('keeps read failures inline and sends mutation failures to one notification', async () => {
+    const owner = await loadPlaylists();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    listPlaylistsMock.mockRejectedValueOnce(new Error('read'));
+    await owner.refresh();
+    const readError = owner.state.error;
+    expect(readError).toBeTruthy();
+    expect(notifications.items.value).toHaveLength(0);
+    deletePlaylistMock.mockRejectedValueOnce(new Error('private path'));
+    await owner.remove('p1');
+    expect(owner.state.error).toBe(readError);
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({
+      tone: 'danger',
+      message: '無法刪除播放清單，請再試一次。',
+    });
+    deletePlaylistMock.mockResolvedValueOnce([]);
+    await owner.remove('p1');
+    expect(notifications.items.value).toHaveLength(0);
+    expect(owner.state.error).toBe(readError);
+  });
+
+  it('lets an editor own its failure without producing a hidden shell notice', async () => {
+    const owner = await loadPlaylists();
+    const onError = vi.fn();
+    renamePlaylistMock.mockRejectedValueOnce(new Error('disk'));
+    await expect(owner.rename('p1', 'Draft', { onError })).resolves.toBe(false);
+    expect(onError).toHaveBeenCalledWith('變更未儲存，請再試一次。');
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(useAppNotifications().items.value).toHaveLength(0);
+    expect(owner.state.error).toBeNull();
+  });
+});
+
 describe('initial load', () => {
   it('does not resolve initialization before the latest queued read settles', async () => {
     const older = createDeferred();
@@ -529,9 +575,9 @@ describe('setTracks', () => {
 
     await expect(setTracks('p1', ['t1', 't2'])).resolves.toBe(false);
 
-    expect(state.error).toBe('變更未儲存，請再試一次。');
-    expect(state.error).not.toContain('ENOSPC');
-    expect(state.error).not.toContain('Singer');
+    expect(state.actionError).toBe('變更未儲存，請再試一次。');
+    expect(state.actionError).not.toContain('ENOSPC');
+    expect(state.actionError).not.toContain('Singer');
   });
 });
 
@@ -597,7 +643,7 @@ describe('reorderPlaylist', () => {
       'p1',
       'p2',
     ]);
-    expect(state.error).toBe('請重新啟動應用程式後再調整播放清單順序。');
+    expect(state.actionError).toBe('請重新啟動應用程式後再調整播放清單順序。');
   });
 
   it('optimistically reorders playlists and persists the new order', async () => {
@@ -641,7 +687,7 @@ describe('reorderPlaylist', () => {
     reorderPlaylist('p2', 'p1', 'before');
     await flushMicrotasks();
 
-    expect(state.error).toBe('排序未儲存，請再試一次。');
+    expect(state.actionError).toBe('排序未儲存，請再試一次。');
   });
 
   it('two rapid reorders both compute from the latest optimistic order', async () => {
@@ -711,7 +757,7 @@ describe('mutation chain resilience', () => {
     moveTrack('p1', 't1', 1);
     await flushMicrotasks();
 
-    expect(state.error).toBe('變更未儲存，請再試一次。');
+    expect(state.actionError).toBe('變更未儲存，請再試一次。');
   });
 
   it('clears a previous error after a later successful mutation', async () => {
@@ -725,12 +771,12 @@ describe('mutation chain resilience', () => {
 
     moveTrack('p1', 't1', 1);
     await flushMicrotasks();
-    expect(state.error).toBe('變更未儲存，請再試一次。');
+    expect(state.actionError).toBe('變更未儲存，請再試一次。');
 
     moveTrack('p1', 't1', -1);
     await flushMicrotasks();
 
-    expect(state.error).toBe(null);
+    expect(state.actionError).toBe(null);
   });
 });
 
@@ -759,7 +805,7 @@ describe('rename', () => {
 
     await rename('p1', 'New Name');
 
-    expect(state.error).toBe('變更未儲存，請再試一次。');
+    expect(state.actionError).toBe('變更未儲存，請再試一次。');
   });
 });
 
@@ -786,7 +832,7 @@ describe('remove', () => {
 
     await remove('p1');
 
-    expect(state.error).toBe('無法刪除播放清單，請再試一次。');
+    expect(state.actionError).toBe('無法刪除播放清單，請再試一次。');
   });
 });
 
@@ -825,10 +871,10 @@ describe('actions are inert without the preload bridge', () => {
     vi.stubGlobal('window', {});
     const { rename, state } = await loadPlaylists();
 
-    await expect(rename('p1', 'New Name')).resolves.toBeUndefined();
+    await expect(rename('p1', 'New Name')).resolves.toBe(false);
 
     expect(state.playlists).toEqual([]);
-    expect(state.error).toBe(null);
+    expect(state.actionError).toBe(null);
   });
 });
 
@@ -839,7 +885,7 @@ describe('create', () => {
 
     await expect(create('Encore')).resolves.toBeNull();
 
-    expect(state.error).toBe('無法建立播放清單，請再試一次。');
+    expect(state.actionError).toBe('無法建立播放清單，請再試一次。');
   });
 
   it('stringifies a non-Error rejection instead of crashing', async () => {
@@ -848,7 +894,7 @@ describe('create', () => {
 
     await expect(create('Encore')).resolves.toBeNull();
 
-    expect(state.error).toBe('無法建立播放清單，請再試一次。');
+    expect(state.actionError).toBe('無法建立播放清單，請再試一次。');
   });
 
   it('selects the newly created playlist', async () => {
@@ -913,7 +959,7 @@ describe('setKind', () => {
 
     await setKind('p1', 'album');
 
-    expect(state.error).toBe('變更未儲存，請再試一次。');
+    expect(state.actionError).toBe('變更未儲存，請再試一次。');
   });
 });
 
@@ -942,7 +988,7 @@ describe('setDescription', () => {
 
     await setDescription('p1', '說明');
 
-    expect(state.error).toBe('變更未儲存，請再試一次。');
+    expect(state.actionError).toBe('變更未儲存，請再試一次。');
   });
 });
 
@@ -1000,7 +1046,7 @@ describe('setCover / clearCover', () => {
 
     await setCover('p1');
 
-    expect(state.error).toBe('封面未更新，請再試一次。');
+    expect(state.actionError).toBe('封面未更新，請再試一次。');
   });
 });
 
@@ -1042,6 +1088,6 @@ describe('upsertAlbum', () => {
     });
 
     expect(result).toBeNull();
-    expect(state.error).toBe('專輯未儲存，請再試一次。');
+    expect(state.actionError).toBe('專輯未儲存，請再試一次。');
   });
 });

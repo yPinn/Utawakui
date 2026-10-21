@@ -9,6 +9,27 @@ const pageSource = readSource('./LibraryBrowseWorkspace.vue');
 const viewSource = readSource('./LibraryBrowseContent.vue');
 
 describe('Library browse workspace composition', () => {
+  it('keeps read recovery on the page and operation failures in their owning modal', () => {
+    expect(viewSource).toMatch(
+      /title="播放清單讀取未完成"[\s\S]*?action-label="重試讀取"[\s\S]*?@action="refreshPlaylists"/u,
+    );
+    expect(pageSource).toContain(
+      'v-if="folderPageIdentity && folderObjects.readError.value"',
+    );
+    expect(pageSource).not.toContain(
+      'folderPageIdentity && folderObjects.error.value',
+    );
+    for (const [component, error] of [
+      ['AppFolderNoteEditorModal', 'noteError'],
+      ['AppFolderPhotoTextEditorModal', 'photoTextError'],
+      ['AppFolderNoteReaderModal', 'removalError'],
+      ['FolderAssetPreviewModal', 'removalError'],
+    ]) {
+      expect(pageSource).toMatch(
+        new RegExp(`<${component}[\\s\\S]*?:error="${error}"[\\s\\S]*?/>`, 'u'),
+      );
+    }
+  });
   it('uses ownership-aligned component and composable identities', () => {
     const legacyPaths = [
       '../playlists/SetlistAlbumCard.vue',
@@ -164,14 +185,14 @@ describe('Library browse workspace composition', () => {
       /function selectAddAction[\s\S]*?type === 'note'[\s\S]*?noteEditor\.value = \{ key: null \};[\s\S]*?return;/u,
     );
     expect(pageSource).toMatch(
-      /async function saveNote[\s\S]*?folderObjects\.updateNote\(editor\.key, content\)[\s\S]*?folderObjects\.addNote\(content\)/u,
+      /async function saveNote[\s\S]*?folderObjects\.updateNote\(editor\.key, content, feedback\)[\s\S]*?folderObjects\.addNote\(content, feedback\)/u,
     );
     expect(pageSource).toContain('@edit-note="openNoteEditor"');
     expect(pageSource).toMatch(
       /<AppFolderNoteEditorModal[\s\S]*?:open="Boolean\(noteEditor\)"[\s\S]*?:mode="noteEditor\?\.key \? 'edit' : 'create'"[\s\S]*?@save="saveNote"/u,
     );
     expect(pageSource).toMatch(
-      /async function confirmRemoveObject[\s\S]*?confirmation\.confirm\([\s\S]*?intent: 'danger'[\s\S]*?folderObjects\.remove\(key\)/u,
+      /async function confirmRemoveObject[\s\S]*?confirmation\.confirm\([\s\S]*?intent: 'danger'[\s\S]*?folderObjects\.remove\(key, feedback\)/u,
     );
     expect(pageSource).toMatch(
       /function toggleAddMenu\(event\) \{\s*event\.stopPropagation\(\);/u,

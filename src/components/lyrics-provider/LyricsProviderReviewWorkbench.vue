@@ -97,14 +97,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
       tone="danger"
       @action="review.load"
     />
-    <UiNotice
-      v-else-if="review.exported.value"
-      class="lyrics-review__notice"
-      tone="success"
-      title="語料已匯出"
-      message="固定 corpus 已寫入私有評估目錄。"
-      compact
-    />
 
     <div
       v-if="review.loading.value"

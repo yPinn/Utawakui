@@ -19,6 +19,7 @@ import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const PREVIOUS_KEYS = new Set(['ArrowLeft', 'PageUp']);
 const NEXT_KEYS = new Set(['ArrowRight', 'PageDown']);
@@ -28,6 +29,7 @@ const props = defineProps({
   // The note projection: key, title, text, paper.
   note: { type: Object, default: null },
   removing: { type: Boolean, default: false },
+  error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'afterLeave', 'edit', 'remove']);
@@ -185,6 +187,7 @@ onBeforeUnmount(() => {
         />
       </nav>
     </UiFolderArtifact>
+    <UiNotice v-if="error" :message="error" tone="danger" compact />
   </UiModal>
 </template>
 

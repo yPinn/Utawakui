@@ -5,6 +5,8 @@ import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import { useAppNotifications } from '../../composables/useAppNotifications.js';
+const notifications = useAppNotifications();
 import {
   attachClientRender,
   findAll,
@@ -219,6 +221,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  for (const item of notifications.items.value) notifications.clear(item.key);
   vi.clearAllMocks();
   vi.unstubAllGlobals();
 });
@@ -267,6 +270,12 @@ describe('shared performance history actions', () => {
       '演出場次',
       'current',
     );
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '場次已封存',
+      tone: 'success',
+      lifecycle: 'transient',
+    });
     expect(
       findAll(view.root, (n) => n.props['aria-label'] === '結束並封存場次'),
     ).toHaveLength(0);
@@ -283,8 +292,10 @@ describe('shared performance history actions', () => {
     await click(view.root, '結束並封存');
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
     expect(textContent(view.root)).toContain('尚未停止');
+    expect(notifications.items.value).toHaveLength(0);
     await click(view.root, '結束並封存');
     expect(textContent(view.root)).toContain('原安排仍保留');
+    expect(notifications.items.value).toHaveLength(0);
     await click(view.root, '結束並封存');
     expect(fixture.plan.archiveSession.mock.calls).toEqual([
       ['演出場次', 'current'],

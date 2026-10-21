@@ -53,6 +53,119 @@ async function loadLocalImport() {
 }
 
 describe('useLocalImport', () => {
+  it('keeps a conversion confirmation and gate-disabled flow out of error notifications', async () => {
+    window.Utawakui.getFeatureConfirmations.mockResolvedValue({});
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'a.wma', sourceFormat: 'wma' }],
+      },
+    });
+    const owner = await loadLocalImport();
+    await owner.importFiles();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notices = useAppNotifications().items;
+    expect(notices.value).toHaveLength(1);
+    expect(notices.value[0]).toMatchObject({
+      title: '需要相容轉檔',
+      tone: 'warning',
+    });
+    const id = notices.value[0].id;
+    await owner.convertPendingFiles();
+    expect(convertLocalAudioFilesMock).not.toHaveBeenCalled();
+    expect(notices.value.map((item) => item.id)).toEqual([id]);
+    expect(owner.state.conversionReview).toBeTruthy();
+    expect(owner.state.isConverting).toBe(false);
+  });
+
+  it('summarizes duplicate-only batches as information and retains readable skip reasons', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [],
+      skipped: [{ filename: 'copy.mp3', reason: 'duplicate-content' }],
+    });
+    const owner = await loadLocalImport();
+    await owner.importFiles();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      tone: 'info',
+      lifecycle: 'transient',
+    });
+    expect(owner.skippedResults.value).toEqual([
+      { filename: 'copy.mp3', message: '曲庫已有相同音訊' },
+    ]);
+  });
+  it('publishes one batch summary with a return-to-import action and retains item details', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'song-a', title: 'A' }],
+      skipped: [{ filename: 'private.wav', reason: 'unsupported-codec' }],
+    });
+    const owner = await loadLocalImport();
+    await owner.importFiles();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '本機匯入完成',
+      message: '已複製 1 首，略過 1 個檔案',
+      tone: 'warning',
+      actionLabel: '查看匯入結果',
+    });
+    expect(notifications.items.value[0].message).not.toContain('private.wav');
+    expect(owner.state.skipped).toHaveLength(1);
+    await notifications.runAction(notifications.items.value[0].id);
+    const { useAppRightDock } = await import('./useAppRightDock.js');
+    const dock = useAppRightDock();
+    expect(dock.topSurface.value).toBe('preparation');
+    expect(dock.preparationTab.value).toBe('import');
+    expect(dock.isExpanded.value).toBe(true);
+  });
+
+  it('does not notify cancellation and replaces the previous attempt result on recovery', async () => {
+    const owner = await loadLocalImport();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    await owner.importFiles();
+    expect(notifications.items.value).toHaveLength(0);
+    importLocalAudioFilesMock.mockRejectedValueOnce(new Error('private'));
+    await owner.importFiles();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0].tone).toBe('danger');
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'a' }],
+      skipped: [],
+    });
+    await owner.importFiles();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0].tone).toBe('success');
+  });
+
+  it('summarizes conversion separately from the direct import count', async () => {
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'direct' }],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'a.wma', sourceFormat: 'wma' }],
+      },
+    });
+    convertLocalAudioFilesMock.mockResolvedValueOnce({
+      imported: [{ id: 'converted' }],
+      skipped: [],
+    });
+    const owner = await loadLocalImport();
+    await owner.importFiles();
+    await owner.convertPendingFiles();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(useAppNotifications().items.value).toHaveLength(1);
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '相容轉檔完成',
+      message: '已轉換並匯入 1 首',
+      tone: 'success',
+    });
+    expect(owner.state.imported).toHaveLength(2);
+  });
   it('imports local audio files through the bridge and refreshes the library', async () => {
     importLocalAudioFilesMock.mockResolvedValueOnce({
       imported: [

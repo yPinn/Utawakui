@@ -4,6 +4,7 @@ import { Copy, Download, Ellipsis, FolderPlus } from '../../icons/index.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
+import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { performanceArchiveDate } from '../../utils/performanceArchivePresentation.js';
@@ -19,6 +20,7 @@ import PerformanceSessionPlaylistExportModal from './PerformanceSessionPlaylistE
 
 defineProps({ dock: Boolean });
 const plan = usePerformanceSessionPlan();
+const notifications = useAppNotifications();
 const playback = usePerformanceSessionPlayback();
 const timeline = useObsSessionExport();
 const { state: library } = useLibrary();
@@ -125,6 +127,11 @@ async function archive() {
       return;
     }
     finish.value = null;
+    notifications.notify({
+      key: 'performance-session-archive',
+      title: '場次已封存',
+      message: '可在已封存場次中查看。',
+    });
   } catch {
     error.value = '場次尚未封存，請重試；原安排仍保留。';
   } finally {

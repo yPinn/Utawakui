@@ -36,6 +36,13 @@ const { confirm: confirmAction } = useAppConfirmation();
 // content area is currently showing).
 const editDetailsPlaylistId = ref(null);
 const editDetailsIsSaving = ref(false);
+const editDetailsError = ref('');
+const editorFeedback = {
+  onError: (message) => {
+    if (!editDetailsPlaylist.value) return false;
+    editDetailsError.value = message;
+  },
+};
 
 // The join itself is the "ghost trackId" filter — a track deleted outside
 // the app just silently drops out, per tracks.js's orphan doctrine. Shared
@@ -80,6 +87,7 @@ function openEditDetails() {
   if (editDetailsIsSaving.value) return;
   if (!selectedPlaylist.value) return;
   editDetailsPlaylistId.value = selectedPlaylist.value.id;
+  editDetailsError.value = '';
 }
 
 // Context-menu entry point — the target row may not be the one currently
@@ -92,6 +100,7 @@ function startPlaylistEditDetails(playlistId) {
   );
   if (!playlist) return;
   editDetailsPlaylistId.value = playlist.id;
+  editDetailsError.value = '';
 }
 
 function closeEditDetailsModal() {
@@ -104,12 +113,21 @@ async function saveEditDetails({ name, description }) {
   const playlist = editDetailsPlaylist.value;
   if (!playlist) return;
   editDetailsIsSaving.value = true;
+  editDetailsError.value = '';
   try {
     if (name && name !== playlist.name) {
-      await renamePlaylistAction(playlist.id, name);
+      if (!(await renamePlaylistAction(playlist.id, name, editorFeedback)))
+        return;
     }
     if (description !== playlist.description) {
-      await setPlaylistDescriptionAction(playlist.id, description);
+      if (
+        !(await setPlaylistDescriptionAction(
+          playlist.id,
+          description,
+          editorFeedback,
+        ))
+      )
+        return;
     }
     editDetailsPlaylistId.value = null;
   } finally {
@@ -122,8 +140,9 @@ async function chooseCover() {
   const playlist = editDetailsPlaylist.value;
   if (!playlist) return;
   editDetailsIsSaving.value = true;
+  editDetailsError.value = '';
   try {
-    await setPlaylistCoverAction(playlist.id);
+    await setPlaylistCoverAction(playlist.id, editorFeedback);
   } finally {
     editDetailsIsSaving.value = false;
   }
@@ -135,6 +154,7 @@ async function clearCover() {
   if (!playlist?.coverUrl || playlist.kind === 'album') return;
   const coverUrl = playlist.coverUrl;
   editDetailsIsSaving.value = true;
+  editDetailsError.value = '';
   try {
     const confirmed = await confirmAction({
       title: '移除播放清單封面？',
@@ -150,7 +170,7 @@ async function clearCover() {
       editDetailsPlaylist.value.coverUrl !== coverUrl
     )
       return;
-    await clearPlaylistCoverAction(playlist.id);
+    await clearPlaylistCoverAction(playlist.id, editorFeedback);
   } finally {
     editDetailsIsSaving.value = false;
   }
@@ -232,6 +252,7 @@ export function usePlaylistActions() {
     editDetailsCoverUrl,
     editDetailsDescription,
     editDetailsIsSaving,
+    editDetailsError,
     resolvePlaylistTracks,
     openEditDetails,
     closeEditDetailsModal,

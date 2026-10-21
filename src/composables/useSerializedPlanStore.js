@@ -24,31 +24,50 @@ export function useSerializedPlanStore({
   let activeSaves = 0;
   let initializationPromise = null;
   let unsubscribeLibraryUpdated = null;
+  let validationErrorOperation = null;
 
-  function applyResult(result) {
+  function applyResult(result, onError, operation) {
     if (result?.ok === true && result.plan) {
       state.plan = result.plan;
-      state.error = null;
-      state.validationError = null;
+      if (!onError) {
+        state.error = null;
+      }
+      if (!onError || validationErrorOperation === operation) {
+        state.validationError = null;
+        validationErrorOperation = null;
+      }
       return true;
     }
     if (result?.ok === false && result.error) {
+      if (onError && !result.error.field) {
+        onError(result.error.message);
+        return false;
+      }
       state.validationError = result.error;
+      validationErrorOperation = operation;
       return false;
     }
     throw new Error(invalidResponseMessage);
   }
 
-  function recordOperationError(error, operation) {
-    state.validationError = null;
-    state.error = recordError(error, {
+  function recordOperationError(error, operation, onError) {
+    const message = recordError(error, {
       ...errorPresentation,
       operation,
       context: { retryable: true },
     }).message;
+    if (onError) onError(message);
+    else {
+      state.validationError = null;
+      validationErrorOperation = null;
+      state.error = message;
+    }
   }
 
-  function enqueue(operation, { saving = true, name = 'mutate' } = {}) {
+  function enqueue(
+    operation,
+    { saving = true, name = 'mutate', onError = null } = {},
+  ) {
     if (!hasBridge()) return Promise.resolve(false);
     if (saving) {
       activeSaves += 1;
@@ -57,9 +76,9 @@ export function useSerializedPlanStore({
 
     const task = pending.then(async () => {
       try {
-        return applyResult(await operation());
+        return applyResult(await operation(), onError, name);
       } catch (error) {
-        recordOperationError(error, name);
+        recordOperationError(error, name, onError);
         return false;
       } finally {
         if (saving) {

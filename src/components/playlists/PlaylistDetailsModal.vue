@@ -13,6 +13,7 @@ import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
@@ -30,6 +31,7 @@ const props = defineProps({
   coverUrl: { type: String, default: '' },
   coverTracks: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
+  error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'save', 'chooseCover', 'clearCover']);
@@ -159,6 +161,7 @@ function cancel() {
       </div>
     </div>
 
+    <UiNotice v-if="error" :message="error" tone="danger" compact />
     <template #footer>
       <!-- Footnote sits on the action row so the fields keep the cover's height. -->
       <UiHint v-if="!isAlbum" class="playlist-details__footnote">

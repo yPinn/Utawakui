@@ -4,6 +4,7 @@ import { ImagePlus, Search, Trash2, UserRound } from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
+import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useArtistPhotoCandidates } from '../../composables/useArtistPhotoCandidates.js';
 import { useBgmSession } from '../../composables/useBgmSession.js';
@@ -67,6 +68,7 @@ import {
 const { state, playTrack, clearTrack, toggle } = usePlayer();
 const { confirm: confirmAction } = useAppConfirmation();
 const { recordError } = useAppDiagnostics();
+const notifications = useAppNotifications();
 const {
   state: libraryState,
   tracksById: libraryTracksById,
@@ -83,6 +85,7 @@ const {
 // Rename playlist actions to avoid colliding with file deletion helpers.
 const {
   state: playlistState,
+  refresh: refreshPlaylists,
   selectedPlaylist,
   create: createPlaylistAction,
   select: selectPlaylistAction,
@@ -112,7 +115,6 @@ const trackPreview = useTrackPreview();
 const { handoffState: bgmHandoffState } = useBgmSession();
 
 // Transient UI mode stays local; mutations persist immediately.
-const deleteError = ref(null);
 const selectedTrackId = shallowRef(null);
 const artistIdentityOpen = shallowRef(false);
 const searchQuery = defineModel('searchQuery', {
@@ -176,7 +178,6 @@ const { density: trackListDensity, setDensity: setTrackListDensity } =
 const separationController = useSeparationQueueContext();
 const {
   enqueueingTrackId: vsEnqueuePendingTrackId,
-  error: separationActionError,
   vsQueuedTrackIds,
   queueTrackForSeparation,
   clearError: clearSeparationActionError,
@@ -613,9 +614,7 @@ function trackMenuOptions(track) {
 }
 const addMenuOptions = computed(() => trackMenuOptions(addMenu.value?.track));
 
-const pageError = computed(
-  () => playlistState.error || deleteError.value || separationActionError.value,
-);
+const pageError = computed(() => playlistState.error);
 const visibleTracksEmptyText = computed(() =>
   normalizedSearchQuery.value ? '找不到符合搜尋的曲目。' : '沒有曲目。',
 );
@@ -733,24 +732,35 @@ async function removeTrack(track) {
   });
   if (!confirmed) return;
   clearTrack(track.id);
-  deleteError.value = null;
+  notifications.clear('library-delete-track');
   try {
     const deleted = await window.Utawakui.deleteTrack(track.id);
     if (!deleted) {
-      deleteError.value = '找不到這首曲目，曲庫可能已更新。';
+      notifications.notify({
+        key: 'library-delete-track',
+        title: '曲目未刪除',
+        message: '找不到這首曲目，曲庫可能已更新。',
+        tone: 'warning',
+      });
       return;
     }
     removeTrackFromQueue(track.id);
     if (selectedTrackId.value === track.id) selectedTrackId.value = null;
   } catch (err) {
-    deleteError.value = recordError(err, {
+    const notice = recordError(err, {
       code: 'LIBRARY_DELETE_FAILED',
       title: '無法刪除曲目',
       message: '目前無法刪除曲目，請再試一次。',
       source: 'library',
       operation: 'delete',
       context: { retryable: true },
-    }).message;
+    });
+    notifications.notify({
+      key: 'library-delete-track',
+      title: notice.title,
+      message: notice.message,
+      tone: 'danger',
+    });
   }
 }
 
@@ -1125,9 +1135,11 @@ onMounted(async () => {
           <UiNotice
             v-if="pageError"
             tone="danger"
-            title="曲目操作未完成"
+            title="播放清單讀取未完成"
             :message="pageError"
+            action-label="重試讀取"
             compact
+            @action="refreshPlaylists"
           />
 
           <UiHint

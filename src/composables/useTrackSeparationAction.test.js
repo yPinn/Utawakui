@@ -1,7 +1,13 @@
 import { ref, shallowRef } from 'vue';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SEPARATION_PRESET_ID } from '../constants/separationPresets.js';
 import { useTrackSeparationAction } from './useTrackSeparationAction.js';
+import { useAppNotifications } from './useAppNotifications.js';
+
+afterEach(() => {
+  const notifications = useAppNotifications();
+  for (const item of notifications.items.value) notifications.clear(item.key);
+});
 
 function queueStatus(items = []) {
   return {
@@ -93,6 +99,7 @@ describe('useTrackSeparationAction', () => {
 
     expect(requireFeatureGate).toHaveBeenCalledTimes(1);
     expect(enqueue).not.toHaveBeenCalled();
+    expect(useAppNotifications().items.value).toHaveLength(0);
   });
 
   it('uses the product accompaniment-processing term when enqueue fails', async () => {
@@ -112,5 +119,10 @@ describe('useTrackSeparationAction', () => {
     await action.queueTrackForSeparation(track);
 
     expect(action.error.value).toBe('歌曲目前無法加入伴奏處理佇列。');
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '伴奏處理未加入',
+      tone: 'danger',
+      message: action.error.value,
+    });
   });
 });

@@ -22,8 +22,8 @@ import {
   OUTPUT_LYRICS_CAPTURE_SIZE,
 } from '../../constants/outputCaptureSizes.js';
 import { buildOutputDropUrl } from '../../utils/outputRoutes.js';
+import { useOutputClipboard } from '../../composables/output/useOutputClipboard.js';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiHint from '../ui/UiHint.vue';
 import UiStack from '../ui/UiStack.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
@@ -54,13 +54,12 @@ const emit = defineEmits([
 ]);
 
 const previewReloadToken = claimPreviewReloadToken();
-const copyState = shallowRef('idle');
+const { copy: copyOutputUrl } = useOutputClipboard();
 const previewStage = useTemplateRef('previewStage');
 const previewInfo = useTemplateRef('previewInfo');
 const previewScale = shallowRef(1);
 const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width;
 const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height;
-let copyResetTimer = null;
 let resizeObserver = null;
 
 const isLyrics = computed(() => props.activeKind === 'lyrics');
@@ -138,19 +137,7 @@ function startUrlDrag(event) {
 
 async function copyObsUrl() {
   if (!props.obsUrl) return;
-  try {
-    if (typeof window.Utawakui?.copyOutputUrl !== 'function') {
-      throw new Error('clipboard bridge unavailable');
-    }
-    await window.Utawakui.copyOutputUrl(props.activeKind);
-    copyState.value = 'copied';
-  } catch {
-    copyState.value = 'error';
-  }
-  clearTimeout(copyResetTimer);
-  copyResetTimer = setTimeout(() => {
-    copyState.value = 'idle';
-  }, 1800);
+  return copyOutputUrl(props.activeKind);
 }
 
 onMounted(() => {
@@ -162,7 +149,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  clearTimeout(copyResetTimer);
   resizeObserver?.disconnect();
 });
 </script>
@@ -238,16 +224,6 @@ onBeforeUnmount(() => {
             :width="PREVIEW_CANVAS_WIDTH"
             :height="PREVIEW_CANVAS_HEIGHT"
           />
-
-          <UiHint
-            v-if="copyState !== 'idle'"
-            class="obs-overlay-preview__feedback"
-            :role="copyState === 'error' ? 'alert' : 'status'"
-            aria-live="polite"
-          >
-            <template v-if="copyState === 'copied'"> 已複製 </template>
-            <template v-else-if="copyState === 'error'">複製失敗</template>
-          </UiHint>
         </div>
         <UiStack class="obs-overlay-preview__actions" align="center" :gap="3">
           <UiIconButton

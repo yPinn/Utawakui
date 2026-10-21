@@ -1,5 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useLyricsProviderCorpusReview } from './useLyricsProviderCorpusReview.js';
+import { useAppNotifications } from './useAppNotifications.js';
+
+const notifications = useAppNotifications();
+afterEach(() => {
+  for (const item of notifications.items.value) notifications.clear(item.key);
+});
 
 function candidate(overrides = {}) {
   return {
@@ -62,6 +68,83 @@ function dataset(candidates = [candidate()]) {
 }
 
 describe('useLyricsProviderCorpusReview', () => {
+  it('does not let an older export response replace a newer consumer result', async () => {
+    let finish;
+    const pending = new Promise((resolve) => {
+      finish = resolve;
+    });
+    const bridge = {
+      loadLyricsProviderReview: vi
+        .fn()
+        .mockResolvedValue(dataset([candidate({ decision: 'approved' })])),
+      exportLyricsProviderReviewCorpus: vi
+        .fn()
+        .mockReturnValueOnce(pending)
+        .mockRejectedValueOnce(new Error('private')),
+    };
+    const first = useLyricsProviderCorpusReview(bridge);
+    await first.load();
+    const exporting = first.exportCorpus();
+    await expect(first.exportCorpus()).resolves.toBe(false);
+    const second = useLyricsProviderCorpusReview(bridge);
+    await second.load();
+    await second.exportCorpus();
+    const id = notifications.items.value[0].id;
+    finish({ exported: true });
+    await exporting;
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({ id, tone: 'danger' });
+    expect(bridge.exportLyricsProviderReviewCorpus).toHaveBeenCalledTimes(2);
+  });
+  it('keeps read errors inline while export errors become bounded persistent notifications', async () => {
+    const bridge = {
+      loadLyricsProviderReview: vi
+        .fn()
+        .mockResolvedValueOnce(dataset([candidate({ decision: 'approved' })]))
+        .mockRejectedValueOnce(new Error('private-read')),
+      exportLyricsProviderReviewCorpus: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('E:/private/corpus.json'))
+        .mockResolvedValue({ exported: true }),
+    };
+    const review = useLyricsProviderCorpusReview(bridge);
+    await review.load();
+    await review.load();
+    const readError = review.error.value;
+    expect(notifications.items.value).toHaveLength(0);
+    await expect(review.exportCorpus()).resolves.toBe(false);
+    expect(review.error.value).toEqual(readError);
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '語料尚未匯出',
+      tone: 'danger',
+      lifecycle: 'persistent',
+    });
+    expect(JSON.stringify(notifications.items.value)).not.toContain('private');
+    await review.exportCorpus();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '語料已匯出',
+      tone: 'success',
+    });
+  });
+
+  it('does not publish a false success for an invalid export response or notify a blocked export', async () => {
+    const bridge = {
+      loadLyricsProviderReview: vi
+        .fn()
+        .mockResolvedValueOnce(dataset())
+        .mockResolvedValueOnce(dataset([candidate({ decision: 'approved' })])),
+      exportLyricsProviderReviewCorpus: vi.fn().mockResolvedValue(null),
+    };
+    const review = useLyricsProviderCorpusReview(bridge);
+    await review.load();
+    await expect(review.exportCorpus()).resolves.toBe(false);
+    expect(bridge.exportLyricsProviderReviewCorpus).not.toHaveBeenCalled();
+    expect(notifications.items.value).toHaveLength(0);
+    await review.load();
+    await expect(review.exportCorpus()).resolves.toBe(false);
+    expect(notifications.items.value[0].tone).toBe('danger');
+  });
   it('loads the fixed dataset, selects the first pending case, and seeds a controlled draft', async () => {
     const value = dataset([
       candidate({ decision: 'approved' }),
@@ -338,6 +421,10 @@ describe('useLyricsProviderCorpusReview', () => {
 
     await expect(review.exportCorpus()).resolves.toBe(true);
     expect(bridge.exportLyricsProviderReviewCorpus).toHaveBeenCalledWith();
-    expect(review.exported.value).toBe(true);
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '語料已匯出',
+      tone: 'success',
+      lifecycle: 'transient',
+    });
   });
 });

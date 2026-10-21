@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Modal from './PerformanceSessionPlaylistExportModal.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { useAppNotifications } from '../../composables/useAppNotifications.js';
+const notifications = useAppNotifications();
 import {
   attachClientRender,
   findAll,
@@ -86,6 +88,7 @@ const settle = async () => {
 const saveButton = (root) =>
   findAll(root, (n) => n.type === 'button' && textContent(n) === '另存歌單')[0];
 afterEach(() => {
+  for (const item of notifications.items.value) notifications.clear(item.key);
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
@@ -104,6 +107,69 @@ beforeEach(() =>
   }),
 );
 describe('save performance playlist confirmation', () => {
+  it('keeps a failed write in its dialog, then announces one successful retry even if list refresh fails', async () => {
+    const close = vi.fn();
+    window.Utawakui.savePerformancePlaylist.mockRejectedValueOnce(
+      new Error('E:/private/playlist.json'),
+    );
+    const view = mount(Modal, {
+      open: true,
+      sessionId: 'show',
+      onClose: close,
+    });
+    await settle();
+    trigger(saveButton(view.root), 'onClick');
+    await settle();
+    expect(textContent(view.root)).toContain('歌單尚未保存');
+    expect(textContent(view.root)).not.toContain('private');
+    expect(close).not.toHaveBeenCalled();
+    expect(notifications.items.value).toHaveLength(0);
+    fixture.refresh.mockRejectedValueOnce(new Error('read failed after save'));
+    trigger(saveButton(view.root), 'onClick');
+    await settle();
+    expect(close).toHaveBeenCalledOnce();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0].title).toBe('演出歌單已保存');
+    view.app.unmount();
+  });
+
+  it('guards repeated clicks during a save and waits for its terminal response', async () => {
+    let finish;
+    window.Utawakui.savePerformancePlaylist.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const view = mount(Modal, { open: true, sessionId: 'show' });
+    await settle();
+    const button = saveButton(view.root);
+    trigger(button, 'onClick');
+    trigger(button, 'onClick');
+    expect(window.Utawakui.savePerformancePlaylist).toHaveBeenCalledOnce();
+    expect(notifications.items.value).toHaveLength(0);
+    finish({ ok: true, plan: { playlistId: 'saved' } });
+    await settle();
+    expect(notifications.items.value).toHaveLength(1);
+    view.app.unmount();
+  });
+
+  it('does not announce an invalid success response', async () => {
+    window.Utawakui.savePerformancePlaylist.mockResolvedValue({ ok: true });
+    const close = vi.fn();
+    const view = mount(Modal, {
+      open: true,
+      sessionId: 'show',
+      onClose: close,
+    });
+    await settle();
+    trigger(saveButton(view.root), 'onClick');
+    await settle();
+    expect(notifications.items.value).toHaveLength(0);
+    expect(close).not.toHaveBeenCalled();
+    expect(textContent(view.root)).toContain('歌單尚未保存');
+    view.app.unmount();
+  });
+
   it('shows actual merge, manual and unavailable exclusions before saving one populated playlist', async () => {
     const close = vi.fn(),
       saved = vi.fn();
@@ -130,6 +196,12 @@ describe('save performance playlist confirmation', () => {
     });
     expect(saved).toHaveBeenCalledWith('saved');
     expect(close).toHaveBeenCalledOnce();
+    expect(notifications.items.value).toHaveLength(1);
+    expect(notifications.items.value[0]).toMatchObject({
+      title: '演出歌單已保存',
+      tone: 'success',
+      lifecycle: 'transient',
+    });
     view.app.unmount();
   });
   it('blocks saving an obsolete preview during a scope change and requires a fresh preview after main rejects a stale token', async () => {
@@ -157,6 +229,7 @@ describe('save performance playlist confirmation', () => {
     trigger(saveButton(view.root), 'onClick');
     await settle();
     expect(textContent(view.root)).toContain('請重新檢視');
+    expect(notifications.items.value).toHaveLength(0);
     expect(saveButton(view.root).props.disabled).toBe(true);
     view.app.unmount();
   });

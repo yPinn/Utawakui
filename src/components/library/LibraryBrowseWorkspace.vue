@@ -31,6 +31,9 @@ const confirmation = useAppConfirmation();
 // null when closed; { key } edits an existing note, { key: null } creates.
 const noteEditor = shallowRef(null);
 const noteEditorSaving = ref(false);
+const noteError = ref('');
+const photoTextError = ref('');
+const removalError = ref('');
 // Key of the photo whose instant line and caption are being edited.
 const photoTextKey = shallowRef(null);
 // Key of the long note open on the reading sheet.
@@ -124,13 +127,21 @@ const addObjectLabel = computed(() => {
 
 watch(
   folderPageIdentity,
-  async (page) => {
+  async (page, _previous, onCleanup) => {
+    let current = true;
+    onCleanup(() => {
+      current = false;
+    });
     await folderObjects.flush();
+    if (!current) return;
     previewOpen.value = false;
     selectedAsset.value = null;
     noteEditor.value = null;
     photoTextKey.value = null;
     readerKey.value = null;
+    noteError.value = '';
+    photoTextError.value = '';
+    removalError.value = '';
     addMenuOpen.value = false;
     focusAddButtonAfterPreviewClose = false;
     await folderObjects.load(page);
@@ -152,6 +163,7 @@ async function selectAddAction(type) {
   addMenuOpen.value = false;
   // A note is created only when its editor saves, never as a blank card.
   if (type === 'note') {
+    noteError.value = '';
     noteEditor.value = { key: null };
     return;
   }
@@ -167,6 +179,7 @@ const editedNote = computed(() =>
 );
 
 function openNoteEditor(key) {
+  noteError.value = '';
   noteEditor.value = { key };
 }
 
@@ -179,11 +192,18 @@ async function saveNote(content) {
   const editor = noteEditor.value;
   if (!editor || noteEditorSaving.value) return;
   noteEditorSaving.value = true;
+  noteError.value = '';
+  const feedback = {
+    onError: (message) => {
+      if (noteEditor.value !== editor) return false;
+      noteError.value = message;
+    },
+  };
   try {
     const saved = editor.key
-      ? await folderObjects.updateNote(editor.key, content)
-      : Boolean(await folderObjects.addNote(content));
-    if (saved) noteEditor.value = null;
+      ? await folderObjects.updateNote(editor.key, content, feedback)
+      : Boolean(await folderObjects.addNote(content, feedback));
+    if (saved && noteEditor.value === editor) noteEditor.value = null;
   } finally {
     noteEditorSaving.value = false;
   }
@@ -198,6 +218,7 @@ const editedPhoto = computed(() =>
 );
 
 function openPhotoTextEditor(key) {
+  photoTextError.value = '';
   photoTextKey.value = key;
 }
 
@@ -210,8 +231,16 @@ async function savePhotoText(content) {
   const key = photoTextKey.value;
   if (!key || photoTextSaving.value) return;
   photoTextSaving.value = true;
+  photoTextError.value = '';
+  const feedback = {
+    onError: (message) => {
+      if (photoTextKey.value !== key) return false;
+      photoTextError.value = message;
+    },
+  };
   try {
-    if (!(await folderObjects.updatePhotoText(key, content))) return;
+    if (!(await folderObjects.updatePhotoText(key, content, feedback))) return;
+    if (photoTextKey.value !== key) return;
     photoTextKey.value = null;
     // An open preview shows the saved text without reopening.
     if (selectedAsset.value?.key === key) {
@@ -233,6 +262,7 @@ const readNote = computed(() =>
 );
 
 function openNoteReader(key) {
+  removalError.value = '';
   readerKey.value = key;
 }
 
@@ -243,15 +273,21 @@ function closeNoteReader() {
 
 // The reading sheet closes once its note is gone.
 async function removeReadNote(key) {
-  await confirmRemoveObject(key);
+  removalError.value = '';
+  await confirmRemoveObject(key, {
+    onError: (message) => {
+      removalError.value = message;
+    },
+  });
   if (!folderObjects.objects.value.some((object) => object.key === key)) {
     readerKey.value = null;
   }
 }
 
-async function confirmRemoveObject(key) {
+async function confirmRemoveObject(key, feedback) {
   const object = folderObjects.objects.value.find((entry) => entry.key === key);
   if (!object) return;
+  const targetPageKey = folderPageKey.value;
   const confirmed = await confirmation.confirm(
     object.type === 'photo'
       ? {
@@ -267,12 +303,18 @@ async function confirmRemoveObject(key) {
           intent: 'danger',
         },
   );
-  if (!confirmed || !(await folderObjects.remove(key))) return;
+  if (
+    !confirmed ||
+    targetPageKey !== folderPageKey.value ||
+    !(await folderObjects.remove(key, feedback))
+  )
+    return;
   await nextTick();
   addObjectButton.value?.$el?.focus?.();
 }
 
 function openAsset(key) {
+  removalError.value = '';
   const asset = folderObjects.objects.value.find((entry) => entry.key === key);
   if (!asset) return;
   selectedAsset.value = asset;
@@ -292,13 +334,20 @@ async function finishAssetPreviewClose() {
 }
 
 async function removeAsset(key) {
-  if (!(await folderObjects.remove(key))) return;
+  removalError.value = '';
+  if (
+    !(await folderObjects.remove(key, {
+      onError: (message) => {
+        removalError.value = message;
+      },
+    }))
+  )
+    return;
   focusAddButtonAfterPreviewClose = true;
   closeAssetPreview();
 }
 
 async function retryFolderAssets() {
-  await folderObjects.flush();
   await folderObjects.load(folderPageIdentity.value);
 }
 
@@ -314,10 +363,10 @@ onBeforeUnmount(() => {
     body-label="曲目內容"
   >
     <UiNotice
-      v-if="folderPageIdentity && folderObjects.error.value"
+      v-if="folderPageIdentity && folderObjects.readError.value"
       tone="danger"
-      title="頁面物件操作未完成"
-      :message="folderObjects.error.value"
+      title="頁面物件讀取未完成"
+      :message="folderObjects.readError.value"
       action-label="重試讀取"
       compact
       @action="retryFolderAssets"
@@ -371,6 +420,7 @@ onBeforeUnmount(() => {
     :open="Boolean(readNote)"
     :note="readNote"
     :removing="folderObjects.removing.value"
+    :error="removalError"
     @close="closeNoteReader"
     @edit="openNoteEditor"
     @remove="removeReadNote"
@@ -383,6 +433,7 @@ onBeforeUnmount(() => {
     :text="editedNote?.text ?? ''"
     :paper="editedNote?.paper ?? ''"
     :saving="noteEditorSaving"
+    :error="noteError"
     @close="closeNoteEditor"
     @save="saveNote"
   />
@@ -391,6 +442,7 @@ onBeforeUnmount(() => {
     :open="previewOpen"
     :asset="selectedAsset"
     :removing="folderObjects.removing.value"
+    :error="removalError"
     @close="closeAssetPreview"
     @after-leave="finishAssetPreviewClose"
     @remove="removeAsset"
@@ -401,6 +453,7 @@ onBeforeUnmount(() => {
     :open="Boolean(editedPhoto)"
     :photo="editedPhoto"
     :saving="photoTextSaving"
+    :error="photoTextError"
     @close="closePhotoTextEditor"
     @save="savePhotoText"
   />

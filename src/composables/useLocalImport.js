@@ -5,6 +5,11 @@ import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useLibrary } from './useLibrary.js';
 import { registerLocalImportActivity } from './usePreparationActivity.js';
+import { useAppNotifications } from './useAppNotifications.js';
+import {
+  RIGHT_DOCK_SURFACE_PREPARATION,
+  useAppRightDock,
+} from './useAppRightDock.js';
 
 const CONVERSION_FORMAT_LABELS = Object.freeze({
   aiff: 'AIFF',
@@ -25,6 +30,7 @@ const state = reactive({
   imported: [],
   skipped: [],
   conversionReview: null,
+  summaryNotified: false,
 });
 const readonlyState = readonly(state);
 registerLocalImportActivity(readonlyState);
@@ -32,6 +38,65 @@ registerLocalImportActivity(readonlyState);
 const { refresh: refreshLibrary } = useLibrary();
 const { recordError } = useAppDiagnostics();
 const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
+const notifications = useAppNotifications();
+const RESULT_KEY = 'local-import-result';
+const SKIP_REASONS = Object.freeze({
+  'duplicate-content': '曲庫已有相同音訊',
+  'unsupported-extension': '不支援此檔案格式',
+  'unsupported-codec': '目前無法直接播放此編碼',
+  'unsupported-media': '包含不支援的媒體串流',
+  'missing-file': '找不到檔案',
+  'not-a-file': '不是音訊檔案',
+  'invalid-path': '無法讀取檔案',
+  'invalid-audio': '無法讀取音訊內容',
+  'format-mismatch': '檔案格式與內容不符',
+  'source-changed': '來源檔案已變更，請重新選取',
+  'conversion-failed': '相容轉檔未完成',
+  'import-failed': '匯入未完成',
+});
+const skippedResults = computed(() =>
+  state.skipped.map((item) => ({
+    filename: item.filename,
+    message: SKIP_REASONS[item.reason] ?? '無法匯入此檔案',
+  })),
+);
+
+function notifyResult(conversion = false) {
+  if (state.statusType === 'pending' && !state.conversionReview) return;
+  if (
+    !state.imported.length &&
+    !state.skipped.length &&
+    !state.conversionReview &&
+    state.statusType !== 'error'
+  )
+    return;
+  const error = state.statusType === 'error';
+  const needsAttention =
+    state.skipped.some((item) => item.reason !== 'duplicate-content') ||
+    Boolean(state.conversionReview);
+  const taskLabel = conversion ? '相容轉檔' : '本機匯入';
+  const title =
+    !conversion && state.conversionReview
+      ? '需要相容轉檔'
+      : `${taskLabel}${error ? '未完成' : '完成'}`;
+  let tone = state.statusType === 'idle' ? 'info' : 'success';
+  if (needsAttention) tone = 'warning';
+  if (error) tone = 'danger';
+  notifications.notify({
+    key: RESULT_KEY,
+    title,
+    message: state.message,
+    tone,
+    lifecycle: error || needsAttention ? 'persistent' : 'transient',
+    actionLabel: '查看匯入結果',
+    action() {
+      const dock = useAppRightDock();
+      dock.selectPreparationTab('import');
+      dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
+    },
+  });
+  state.summaryNotified = true;
+}
 
 const conversionReviewMessage = computed(() => {
   const files = state.conversionReview?.files || [];
@@ -164,22 +229,26 @@ function setConversionResult(result) {
 }
 
 async function importFiles() {
-  if (state.isImporting) return;
+  if (state.isImporting || state.isConverting) return;
   if (
     typeof window === 'undefined' ||
     typeof window.Utawakui?.importLocalAudioFiles !== 'function'
   ) {
     state.statusType = 'error';
     state.message = '需要重新啟動應用程式才能使用本機音訊匯入。';
+    notifyResult();
     return;
   }
 
   state.isImporting = true;
   state.statusType = 'idle';
   state.message = '';
+  state.summaryNotified = false;
+  notifications.clear(RESULT_KEY);
   try {
     const result = await window.Utawakui.importLocalAudioFiles();
     setResult(result);
+    notifyResult();
     if (state.imported.length > 0) await refreshLibrary();
   } catch (err) {
     state.statusType = 'error';
@@ -191,42 +260,51 @@ async function importFiles() {
       operation: 'import',
       context: { retryable: true },
     }).message;
+    notifyResult();
   } finally {
     state.isImporting = false;
   }
 }
 
 async function convertPendingFiles() {
-  if (state.isConverting || !state.conversionReview) return;
+  if (state.isImporting || state.isConverting || !state.conversionReview)
+    return;
   if (
     typeof window === 'undefined' ||
     typeof window.Utawakui?.convertLocalAudioFiles !== 'function'
   ) {
     state.statusType = 'error';
     state.message = '需要重新啟動應用程式才能使用相容轉檔。';
-    return;
-  }
-
-  const enabled = await requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
-    title: '需要啟用音訊處理',
-    message: '相容轉檔會在本機建立 FLAC 副本，請先查看並啟用音訊處理。',
-    source: 'local-import',
-    operation: 'compatibility-conversion',
-  });
-  if (!enabled) {
-    state.statusType = 'pending';
-    state.message = '請先在設定啟用音訊處理，再回來執行相容轉檔。';
+    notifyResult(true);
     return;
   }
 
   state.isConverting = true;
-  state.statusType = 'pending';
-  state.message = '正在建立 FLAC 相容副本…';
   try {
+    const enabled = await requireFeatureGate(
+      FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+      {
+        title: '需要啟用音訊處理',
+        message: '相容轉檔會在本機建立 FLAC 副本，請先查看並啟用音訊處理。',
+        source: 'local-import',
+        operation: 'compatibility-conversion',
+      },
+    );
+    if (!enabled) {
+      state.statusType = 'pending';
+      state.message = '請先在設定啟用音訊處理，再回來執行相容轉檔。';
+      return;
+    }
+
+    state.summaryNotified = false;
+    notifications.clear(RESULT_KEY);
+    state.statusType = 'pending';
+    state.message = '正在建立 FLAC 相容副本…';
     const result = await window.Utawakui.convertLocalAudioFiles(
       state.conversionReview.sessionId,
     );
     setConversionResult(result);
+    notifyResult(true);
     if (Array.isArray(result?.imported) && result.imported.length > 0) {
       await refreshLibrary();
     }
@@ -260,6 +338,7 @@ async function convertPendingFiles() {
       operation: 'compatibility-conversion',
       context: { retryable: true },
     }).message;
+    notifyResult(true);
   } finally {
     state.isConverting = false;
   }
@@ -269,6 +348,7 @@ export function useLocalImport() {
   return {
     state: readonlyState,
     conversionReviewMessage,
+    skippedResults,
     convertPendingFiles,
     importFiles,
   };

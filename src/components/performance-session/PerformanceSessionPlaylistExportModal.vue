@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import UiModal from '../ui/UiModal.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiSelect from '../ui/UiSelect.vue';
@@ -20,6 +21,7 @@ const name = ref(''),
   loading = ref(false),
   saving = ref(false);
 const { refresh } = usePlaylists();
+const notifications = useAppNotifications();
 let revision = 0;
 async function load() {
   const current = ++revision;
@@ -90,10 +92,18 @@ async function save() {
       preview.value = null;
       return;
     }
+    const playlistId = result.plan?.playlistId;
+    if (typeof playlistId !== 'string' || !playlistId)
+      throw new Error('invalid saved playlist response');
     // The write already succeeded. A refresh failure must not turn a retry
     // into another create or report that the saved playlist was lost.
     await refresh().catch(() => {});
-    emit('saved', result.plan.playlistId);
+    notifications.notify({
+      key: 'performance-playlist-export',
+      title: '演出歌單已保存',
+      message: '可在曲庫的播放清單中查看。',
+    });
+    emit('saved', playlistId);
     emit('close');
   } catch {
     error.value = '歌單尚未保存，請重試；重試不會重複建立同一份歌單。';

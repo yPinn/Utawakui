@@ -14,6 +14,7 @@ import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -34,6 +35,7 @@ const props = defineProps({
   // The note's own stock in edit mode; a new note starts on a random one.
   paper: { type: String, default: '' },
   saving: { type: Boolean, default: false },
+  error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'save']);
@@ -148,6 +150,7 @@ function cancel() {
       </div>
     </div>
 
+    <UiNotice v-if="error" :message="error" tone="danger" compact />
     <template #footer>
       <UiHint class="app-folder-note-editor__footnote">
         標題可留空，右下角可換紙色。

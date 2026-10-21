@@ -164,8 +164,22 @@ describe('Performer renderer Token v2 cutover', () => {
     expect(trackContextSource).toContain('frame.track?.title');
     expect(trackContextSource).toContain('frame.keyLabel');
     expect(trackContextSource).toContain('frame.tempoLabel');
-    expect(cueStackSource).toContain('frame.currentLine');
-    expect(cueStackSource).toContain('frame.nextLine');
+    // Both the direct projection and the capacity adapter preserve paired cues.
+    const cueFrame = cueStackSource.includes('usePerformerLyricsFit(')
+      ? 'fittedFrame'
+      : 'frame';
+    if (cueFrame === 'fittedFrame')
+      expect(cueStackSource).toContain('computed(() => props.frame)');
+    for (const [attribute, projection] of [
+      ['line', 'currentLine'],
+      ['reading', 'currentReading'],
+      ['line', 'nextLine'],
+      ['reading', 'nextReading'],
+    ]) {
+      expect(cueStackSource).toContain(
+        `:${attribute}="${cueFrame}.${projection}"`,
+      );
+    }
     expect(nextTrackSource).toContain('<footer v-if="track"');
     expect(nextTrackSource).not.toContain('未排定');
     expect(cueSource).toContain('<ruby');

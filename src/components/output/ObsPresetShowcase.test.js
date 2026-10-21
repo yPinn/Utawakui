@@ -496,9 +496,10 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain("emit('suggestPorts')");
     expect(previewSource).toContain('Browser Source 即時預覽');
     expect(previewSource).toContain('label="複製網址"');
-    expect(previewSource).toContain(
-      'window.Utawakui.copyOutputUrl(props.activeKind)',
-    );
+    expect(previewSource).toContain('copyOutputUrl(props.activeKind)');
+    expect(previewSource).toContain('useOutputClipboard');
+    expect(previewSource).not.toContain('copyResetTimer');
+    expect(previewSource).not.toContain('obs-overlay-preview__feedback');
     expect(previewSource).not.toContain('navigator.clipboard');
     expect(preloadSource).toContain(
       "ipcRenderer.invoke('output:copy-url', kind)",

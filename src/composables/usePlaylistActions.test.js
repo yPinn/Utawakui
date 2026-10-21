@@ -4,6 +4,9 @@ import { ref, reactive } from 'vue';
 const mocks = vi.hoisted(() => ({
   confirm: vi.fn(),
   clearCover: vi.fn(),
+  rename: vi.fn(),
+  setDescription: vi.fn(),
+  setCover: vi.fn(),
   enqueueTrack: vi.fn(),
   append: vi.fn(),
   selectTab: vi.fn(),
@@ -37,6 +40,9 @@ vi.mock('./useAppRightDock.js', () => ({
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  mocks.rename.mockResolvedValue(true);
+  mocks.setDescription.mockResolvedValue(true);
+  mocks.setCover.mockResolvedValue(true);
   libraryTracks = ref(new Map());
   const playlist = {
     id: 'p1',
@@ -49,6 +55,13 @@ beforeEach(() => {
     state: reactive({ playlists: [playlist] }),
     selectedPlaylist: ref(playlist),
     clearCover: mocks.clearCover,
+    rename: mocks.rename,
+    setDescription: mocks.setDescription,
+    setCover: mocks.setCover,
+    create: vi.fn().mockResolvedValue({ id: 'new', trackIds: [] }),
+    remove: vi.fn().mockResolvedValue(true),
+    setKind: vi.fn().mockResolvedValue(true),
+    addTracks: vi.fn().mockResolvedValue(true),
   };
 });
 
@@ -115,7 +128,10 @@ describe('playlist cover removal', () => {
     expect(actions.editDetailsPlaylist.value.id).toBe('p1');
     finish(true);
     await pending;
-    expect(mocks.clearCover).toHaveBeenCalledExactlyOnceWith('p1');
+    expect(mocks.clearCover).toHaveBeenCalledExactlyOnceWith(
+      'p1',
+      expect.objectContaining({ onError: expect.any(Function) }),
+    );
     expect(actions.editDetailsIsSaving.value).toBe(false);
   });
   it('does not delete a replacement cover that arrived while confirming', async () => {
@@ -138,5 +154,142 @@ describe('playlist cover removal', () => {
     await actions.clearCover();
     expect(mocks.confirm).not.toHaveBeenCalled();
     expect(mocks.clearCover).not.toHaveBeenCalled();
+  });
+});
+
+describe('details editor failures', () => {
+  it('keeps a failed description editable after a successful rename', async () => {
+    const actions = await loadActions();
+    mocks.setDescription.mockImplementationOnce(
+      async (_id, _value, { onError }) => {
+        onError('說明未儲存');
+        return false;
+      },
+    );
+    await actions.saveEditDetails({ name: '新名稱', description: '草稿說明' });
+    expect(actions.editDetailsPlaylist.value.id).toBe('p1');
+    expect(actions.editDetailsError.value).toBe('說明未儲存');
+    expect(mocks.rename).toHaveBeenCalledOnce();
+  });
+
+  it('keeps all editor actions locked while saving and safely ignores a closed target', async () => {
+    const actions = await loadActions();
+    let finish;
+    mocks.rename.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const pending = actions.saveEditDetails({
+      name: '新名稱',
+      description: undefined,
+    });
+    actions.openEditDetails();
+    await actions.handlePlaylistMenuAction({
+      action: 'edit-details',
+      playlistId: 'p1',
+    });
+    await actions.saveEditDetails({ name: '不能重送', description: 'x' });
+    await actions.chooseCover();
+    await actions.clearCover();
+    expect(mocks.rename).toHaveBeenCalledTimes(1);
+    expect(mocks.setCover).not.toHaveBeenCalled();
+    finish(true);
+    await pending;
+    await actions.saveEditDetails({ name: '忽略', description: 'x' });
+    await actions.chooseCover();
+    playlists.selectedPlaylist.value = null;
+    actions.openEditDetails();
+    expect(actions.editDetailsPlaylist.value).toBeNull();
+  });
+  it('retains the editor and draft error after rename failure, then closes on recovery', async () => {
+    const actions = await loadActions();
+    mocks.rename.mockImplementationOnce(async (_id, _name, { onError }) => {
+      onError('變更未儲存，請再試一次。');
+      return false;
+    });
+    await actions.saveEditDetails({ name: '新名稱', description: '新說明' });
+    expect(actions.editDetailsPlaylist.value.id).toBe('p1');
+    expect(actions.editDetailsError.value).toBe('變更未儲存，請再試一次。');
+    expect(mocks.setDescription).not.toHaveBeenCalled();
+    await actions.saveEditDetails({ name: '新名稱', description: '新說明' });
+    expect(actions.editDetailsPlaylist.value).toBeNull();
+    expect(actions.editDetailsError.value).toBe('');
+  });
+
+  it('keeps cover failures in the open editor', async () => {
+    const actions = await loadActions();
+    mocks.setCover.mockImplementationOnce(async (_id, { onError }) => {
+      onError('封面未更新，請再試一次。');
+      return false;
+    });
+    await actions.chooseCover();
+    expect(actions.editDetailsError.value).toBe('封面未更新，請再試一次。');
+    expect(actions.editDetailsPlaylist.value.id).toBe('p1');
+  });
+});
+
+describe('collection menu operation targets', () => {
+  it('uses canonical collection members for create/add and ignores disappeared targets', async () => {
+    const actions = await loadActions();
+    playlists.state.playlists[0].trackIds = ['a', 'b'];
+    await actions.handlePlaylistMenuAction({
+      action: 'create-playlist',
+      sourcePlaylistId: 'p1',
+    });
+    expect(playlists.addTracks).toHaveBeenCalledWith('new', ['a', 'b']);
+    await actions.handlePlaylistMenuAction({
+      action: 'add-to-playlist',
+      playlistId: 'p1',
+      targetPlaylistId: 'target',
+    });
+    expect(playlists.addTracks).toHaveBeenCalledWith('target', ['a', 'b']);
+    await actions.handlePlaylistMenuAction({
+      action: 'create-playlist',
+      sourcePlaylistId: 'missing',
+    });
+    await actions.handlePlaylistMenuAction({
+      action: 'edit-details',
+      playlistId: 'missing',
+    });
+    expect(actions.editDetailsPlaylist.value.id).toBe('p1');
+  });
+
+  it('confirms deletion, distinguishes album removal, and opens a details target without navigating', async () => {
+    const actions = await loadActions();
+    await actions.handlePlaylistMenuAction({
+      action: 'edit-details',
+      playlistId: 'p1',
+    });
+    expect(actions.editDetailsPlaylist.value.id).toBe('p1');
+    await actions.handlePlaylistMenuAction({
+      action: 'convert-kind',
+      playlistId: 'p1',
+    });
+    expect(playlists.setKind).toHaveBeenCalledWith('p1', 'album');
+    mocks.confirm.mockResolvedValueOnce(false);
+    await actions.confirmDeletePlaylist();
+    expect(playlists.remove).not.toHaveBeenCalled();
+    playlists.state.playlists[0].kind = 'album';
+    await actions.clearCover();
+    expect(mocks.clearCover).not.toHaveBeenCalled();
+    mocks.confirm.mockResolvedValueOnce(true);
+    await actions.handlePlaylistMenuAction({
+      action: 'delete',
+      playlistId: 'p1',
+    });
+    expect(mocks.confirm).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: '移除專輯？', intent: 'danger' }),
+    );
+    expect(playlists.remove).toHaveBeenCalledWith('p1');
+    await actions.handlePlaylistMenuAction({
+      action: 'convert-kind',
+      playlistId: 'p1',
+    });
+    expect(playlists.setKind).toHaveBeenLastCalledWith('p1', 'playlist');
+    playlists.selectedPlaylist.value = null;
+    await actions.confirmDeletePlaylist();
+    actions.closeEditDetailsModal();
+    expect(actions.editDetailsPlaylist.value).toBeNull();
   });
 });

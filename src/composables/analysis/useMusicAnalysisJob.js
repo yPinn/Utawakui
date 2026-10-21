@@ -1,4 +1,9 @@
 import { computed } from 'vue';
+import { useAppNotifications } from '../useAppNotifications.js';
+
+// Only notification ownership is shared across remounted workbenches. Main and
+// the existing job/batch owners remain the authorities for work and progress.
+const notificationOwners = new WeakMap();
 
 const STAGE_LABELS = Object.freeze({
   decoding: '解碼音訊',
@@ -59,6 +64,58 @@ export function useMusicAnalysisJob(options = {}) {
   let statusPollTimer = null;
   let disposed = false;
   let statusPollFailed = false;
+  let requestAttempt = null;
+  const notifications = useAppNotifications();
+  const noticeOwner = bridge
+    ? (notificationOwners.get(bridge) ?? { current: null })
+    : { current: null };
+  if (bridge) notificationOwners.set(bridge, noticeOwner);
+
+  function claimNotice(job, requestPending = false) {
+    const current = noticeOwner.current;
+    if (
+      !requestPending &&
+      current &&
+      ((job.jobId && job.jobId === current.jobId) ||
+        (!current.jobId &&
+          current.requestPending &&
+          job.trackId === current.trackId))
+    ) {
+      if (job.jobId) current.jobId = job.jobId;
+      return current;
+    }
+    const attempt = {
+      ...job,
+      requestPending,
+      announced: false,
+      cancelled: false,
+    };
+    noticeOwner.current = attempt;
+    return attempt;
+  }
+
+  function announce(attempt, title, message, tone = 'success') {
+    if (!attempt || noticeOwner.current !== attempt || attempt.announced)
+      return;
+    attempt.announced = true;
+    notifications.notify({
+      key: 'music-analysis-result',
+      title,
+      message,
+      tone,
+      lifecycle: tone === 'danger' ? 'persistent' : 'transient',
+    });
+  }
+
+  function announceCancellation(attempt) {
+    attempt.cancelled = true;
+    announce(
+      attempt,
+      '分析工作已取消',
+      '可重新分析或繼續查看目前結果。',
+      'info',
+    );
+  }
 
   const stageLabel = computed(() => {
     const stage = state.progress?.stage;
@@ -72,6 +129,7 @@ export function useMusicAnalysisJob(options = {}) {
     if (disposed) return;
     const progress = normalizedProgress(payload);
     if (!progress) return;
+    if (!isBatchActive()) claimNotice(progress);
     state.activeJob = {
       jobId: progress.jobId,
       trackId: progress.trackId,
@@ -91,8 +149,11 @@ export function useMusicAnalysisJob(options = {}) {
       bridge.onTrackMusicStructureAnalysisProgress?.(handleProgress) ?? null;
   }
 
-  function readStatus() {
-    return bridge?.getTrackMusicStructureAnalysisStatus?.();
+  async function readStatus() {
+    const status = await bridge?.getTrackMusicStructureAnalysisStatus?.();
+    if (!disposed && status?.activeJob && !isBatchActive())
+      claimNotice(status.activeJob);
+    return status;
   }
 
   function clearStatusPoll() {
@@ -118,6 +179,8 @@ export function useMusicAnalysisJob(options = {}) {
     const previousJob = state.activeJob;
     const hadActiveBatch = isBatchActive();
     if (disposed || (!previousJob && !hadActiveBatch)) return;
+    const attempt =
+      previousJob && !hadActiveBatch ? claimNotice(previousJob) : null;
     try {
       const [status] = await Promise.all([
         bridge.getTrackMusicStructureAnalysisStatus(),
@@ -132,6 +195,11 @@ export function useMusicAnalysisJob(options = {}) {
         scheduleStatusPoll();
         return;
       }
+      // Batch summary belongs to its panel. A direct request owns its own
+      // terminal response, even when status polling sees idle first.
+      if (hadActiveBatch || (attempt?.requestPending && !status?.activeJob))
+        return;
+      if (attempt && noticeOwner.current !== attempt) return;
       state.activeJob = status?.activeJob ?? null;
       if (state.activeJob) {
         state.phase = 'analyzing';
@@ -140,11 +208,16 @@ export function useMusicAnalysisJob(options = {}) {
       }
       state.phase = 'idle';
       state.progress = null;
-      state.notice =
-        '分析工作已結束，已重新載入最新結果；若結果未更新，請再執行一次分析。';
       if (previousJob && state.selectedTrackId === previousJob.trackId) {
         await signalOwner.loadForTrack(previousJob.trackId);
       }
+      if (!disposed)
+        announce(
+          attempt,
+          '分析工作已結束',
+          '已重新載入最新結果；若結果未更新，請再執行一次分析。',
+          'info',
+        );
     } catch (error) {
       if (disposed) return;
       statusPollFailed = true;
@@ -154,7 +227,19 @@ export function useMusicAnalysisJob(options = {}) {
   }
 
   async function analyzeSelectedTrack() {
-    if (!canAnalyze.value || !bridge?.analyzeTrackMusicStructure) return null;
+    if (
+      disposed ||
+      noticeOwner.current?.requestPending ||
+      !canAnalyze.value ||
+      !bridge?.analyzeTrackMusicStructure
+    )
+      return null;
+    const attempt = claimNotice(
+      { jobId: '', trackId: state.selectedTrackId },
+      true,
+    );
+    requestAttempt = attempt;
+    notifications.clear('music-analysis-result');
     state.error = '';
     state.notice = '';
     state.progress = null;
@@ -162,53 +247,77 @@ export function useMusicAnalysisJob(options = {}) {
     // Main owns the cancellable job before source hashing emits progress.
     state.activeJob = { jobId: '', trackId: state.selectedTrackId };
     try {
-      const result = await bridge.analyzeTrackMusicStructure(
-        state.selectedTrackId,
-      );
-      signalOwner.replaceCurrent(result);
-      const completedJob = state.activeJob ?? {
-        jobId: '',
-        trackId: state.selectedTrackId,
-      };
-      state.progress = {
-        ...completedJob,
-        stage: 'complete',
-        percent: 100,
-      };
-      state.notice = '分析完成，結果已更新。';
+      const result = await bridge.analyzeTrackMusicStructure(attempt.trackId);
+      if (!attempt.cancelled && !disposed) {
+        signalOwner.replaceCurrent(result);
+        state.progress = {
+          jobId: attempt.jobId,
+          trackId: attempt.trackId,
+          stage: 'complete',
+          percent: 100,
+        };
+      }
+      if (!attempt.cancelled) announce(attempt, '分析完成', '結果已更新。');
       return result;
     } catch (error) {
-      state.error = publicErrorMessage(error);
+      if (
+        String(error?.message ?? '').includes('cancelled') ||
+        attempt.cancelled
+      ) {
+        announceCancellation(attempt);
+      } else if (disposed) {
+        announce(attempt, '分析未完成', publicErrorMessage(error), 'danger');
+      } else {
+        state.error = publicErrorMessage(error);
+      }
       return null;
     } finally {
       clearStatusPoll();
-      state.activeJob = null;
-      state.phase = 'idle';
+      attempt.requestPending = false;
+      if (requestAttempt === attempt) {
+        requestAttempt = null;
+        if (!disposed) {
+          state.activeJob = null;
+          state.phase = 'idle';
+        }
+      }
     }
   }
 
   async function cancelAnalysis() {
-    if (!state.activeJob || !bridge?.cancelTrackMusicStructureAnalysis) {
+    if (
+      disposed ||
+      !state.activeJob ||
+      !bridge?.cancelTrackMusicStructureAnalysis
+    ) {
       return false;
     }
+    const attempt = claimNotice(state.activeJob);
     state.error = '';
     state.notice = '';
     state.phase = 'cancelling';
     try {
       const result = await bridge.cancelTrackMusicStructureAnalysis();
-      if (result?.cancelled) {
+      if (
+        result?.cancelled &&
+        noticeOwner.current === attempt &&
+        (!attempt.announced || attempt.cancelled)
+      ) {
+        announceCancellation(attempt);
+        if (disposed) return true;
         clearStatusPoll();
         state.activeJob = null;
         state.progress = null;
         await signalOwner.loadForTrack(state.selectedTrackId);
-        state.notice = '分析工作已取消，已重新載入目前結果。';
       }
       return Boolean(result?.cancelled);
     } catch (error) {
-      state.error = publicErrorMessage(error);
+      if (!disposed && noticeOwner.current === attempt)
+        state.error = publicErrorMessage(error);
       return false;
     } finally {
-      state.phase = state.activeJob ? 'analyzing' : 'idle';
+      if (!disposed && noticeOwner.current === attempt)
+        state.phase = state.activeJob ? 'analyzing' : 'idle';
     }
   }
 

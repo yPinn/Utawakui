@@ -106,8 +106,10 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(form).toContain('Recording MBID（MusicBrainz 錄音 ID）');
     expect(form).toContain('開啟 MusicBrainz');
     expect(form).toContain('複製歌手＋歌名');
-    expect(form).toContain('useClipboardFeedback');
-    expect(form).toContain('runLyricsProviderReviewLookupAction');
+    expect(form).toContain('useLyricsProviderLookupActions');
+    expect(form).toContain('runLookup(props.candidate.id,');
+    expect(form).not.toContain('review-form__copy-feedback');
+    expect(form).not.toContain('useClipboardFeedback');
     expect(form).toContain('aria-live="polite"');
     expect(form).toMatch(/\.review-form__selectable[^}]*user-select:\s*text/s);
     expect(form).not.toContain('navigator.clipboard');

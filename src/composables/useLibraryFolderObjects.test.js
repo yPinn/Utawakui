@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLibraryFolderObjects } from './useLibraryFolderObjects.js';
+import { useAppNotifications } from './useAppNotifications.js';
 
 function deferred() {
   let resolve;
@@ -58,9 +59,221 @@ function bridge(overrides = {}) {
 
 afterEach(() => {
   vi.useRealTimers();
+  const notifications = useAppNotifications();
+  for (const item of notifications.items.value) notifications.clear(item.key);
 });
 
 describe('createLibraryFolderObjects', () => {
+  it('notifies an old document failure after its editor has left without polluting the new page', async () => {
+    let rejectSave;
+    const pending = new Promise((_, reject) => {
+      rejectSave = reject;
+    });
+    const api = bridge({
+      updateFolderPageNote: vi.fn().mockReturnValue(pending),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    const onError = vi.fn();
+    const saving = owner.updateNote('note:n', { text: 'Draft' }, { onError });
+    await owner.load({ kind: 'album', id: 'b' });
+    rejectSave(new Error('private'));
+    await expect(saving).resolves.toBe(false);
+    expect(onError).not.toHaveBeenCalled();
+    expect(owner.error.value).toBe('');
+    expect(owner.readError.value).toBe('');
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      tone: 'danger',
+      message: '目前無法儲存頁面便條。',
+    });
+    owner.dispose();
+  });
+  it('keeps photo text failures in the editor and commits only a successful projection', async () => {
+    const api = bridge({
+      listFolderPageObjects: vi.fn().mockResolvedValue([photo()]),
+      updateFolderPagePhotoText: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('disk'))
+        .mockResolvedValue({ key: 'photo:asset-1', caption: 'Saved' }),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    const onError = vi.fn();
+    await expect(
+      owner.updatePhotoText('photo:asset-1', { caption: 'Draft' }, { onError }),
+    ).resolves.toBe(false);
+    expect(onError).toHaveBeenCalledWith('目前無法儲存照片文字。');
+    expect(useAppNotifications().items.value).toHaveLength(0);
+    await expect(
+      owner.updatePhotoText('photo:asset-1', { caption: 'Saved' }, { onError }),
+    ).resolves.toBe(true);
+    expect(owner.objects.value[0].caption).toBe('Saved');
+    expect(owner.error.value).toBe('');
+    owner.dispose();
+  });
+
+  it('rejects invalid editor fields and ignores a photo save response after navigation', async () => {
+    const pending = deferred();
+    const api = bridge({
+      updateFolderPagePhotoText: vi.fn().mockReturnValue(pending.promise),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await expect(owner.updateNote('note:n', { text: 'x' })).resolves.toBe(
+      false,
+    );
+    await owner.load(playlistPage);
+    await expect(owner.updateNote('note:n', { text: {} })).resolves.toBe(false);
+    await expect(
+      owner.updatePhotoText('photo:a', { caption: {} }),
+    ).resolves.toBe(false);
+    const saving = owner.updatePhotoText('photo:a', { caption: 'Draft' });
+    await owner.load({ kind: 'album', id: 'new' });
+    pending.resolve({ key: 'photo:a', caption: 'Old' });
+    await expect(saving).resolves.toBe(false);
+    expect(owner.objects.value).toEqual([]);
+    expect(useAppNotifications().items.value).toHaveLength(0);
+    owner.dispose();
+  });
+  it('keeps list failures inline and does not publish a notification', async () => {
+    const api = bridge({
+      listFolderPageObjects: vi.fn().mockRejectedValue(new Error('private')),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    expect(owner.readError.value).toBe('目前無法讀取頁面物件。');
+    expect(useAppNotifications().items.value).toHaveLength(0);
+    owner.dispose();
+  });
+
+  it('does not replay a deleted object from a failed layout batch', async () => {
+    const api = bridge({
+      listFolderPageObjects: vi.fn().mockResolvedValue([photo()]),
+      saveFolderPageLayout: vi.fn().mockRejectedValue(new Error('disk')),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    await owner.saveLayout([entry('photo:asset-1')], { immediate: true });
+    await owner.remove('photo:asset-1');
+    const writes = api.saveFolderPageLayout.mock.calls.length;
+    await expect(owner.flush()).resolves.toBe(true);
+    expect(api.saveFolderPageLayout).toHaveBeenCalledTimes(writes);
+    expect(useAppNotifications().items.value).toHaveLength(0);
+    owner.dispose();
+  });
+  it('retains failed layout and retries the write instead of reloading the document', async () => {
+    const api = bridge({
+      saveFolderPageLayout: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('disk'))
+        .mockResolvedValue([]),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    const layout = entry('derived:artist-summary', { type: 'note' });
+    await expect(owner.saveLayout([layout], { immediate: true })).resolves.toBe(
+      false,
+    );
+    const notifications = useAppNotifications();
+    expect(notifications.items.value).toHaveLength(1);
+    const notice = notifications.items.value[0];
+    expect(notice.actionLabel).toBe('重試儲存');
+    await notifications.runAction(notice.id);
+    expect(api.saveFolderPageLayout).toHaveBeenCalledTimes(2);
+    expect(api.saveFolderPageLayout.mock.calls[1][0]).toEqual({
+      page: playlistPage,
+      entries: [layout],
+    });
+    expect(api.listFolderPageObjects).toHaveBeenCalledTimes(1);
+    expect(owner.error.value).toBe('');
+    expect(notifications.items.value).toHaveLength(0);
+    owner.dispose();
+  });
+
+  it('keeps failed writes on their original page and does not retry in a busy loop', async () => {
+    vi.useFakeTimers();
+    const otherPage = { kind: 'album', id: 'b' };
+    const api = bridge({
+      saveFolderPageLayout: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('disk'))
+        .mockResolvedValue([]),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    await owner.saveLayout([entry('derived:a')], { immediate: true });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(api.saveFolderPageLayout).toHaveBeenCalledTimes(1);
+    const notice = useAppNotifications().items.value[0];
+    await owner.load(otherPage);
+    await owner.saveLayout([entry('derived:b')], { immediate: true });
+    await useAppNotifications().runAction(notice.id);
+    expect(
+      api.saveFolderPageLayout.mock.calls.map(([intent]) => intent.page),
+    ).toEqual([playlistPage, otherPage, playlistPage]);
+    expect(owner.page.value).toEqual(otherPage);
+    expect(owner.objects.value.map((value) => value.key)).toEqual([
+      'derived:b',
+    ]);
+    owner.dispose();
+  });
+
+  it('keeps a newer layout when an older in-flight write fails', async () => {
+    let fail;
+    const pending = new Promise((_, reject) => {
+      fail = reject;
+    });
+    const api = bridge({
+      saveFolderPageLayout: vi
+        .fn()
+        .mockReturnValueOnce(pending)
+        .mockResolvedValue([]),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    const saving = owner.saveLayout([entry('derived:a', { order: 1 })], {
+      immediate: true,
+    });
+    const newer = owner.saveLayout([entry('derived:a', { order: 9 })], {
+      immediate: true,
+    });
+    fail(new Error('disk'));
+    await Promise.all([saving, newer]);
+    const notice = useAppNotifications().items.value[0];
+    await useAppNotifications().runAction(notice.id);
+    expect(api.saveFolderPageLayout.mock.calls.at(-1)[0].entries[0].order).toBe(
+      9,
+    );
+    owner.dispose();
+  });
+
+  it('keeps editor failures inline and does not mutate a failed note draft into saved content', async () => {
+    const note = {
+      key: 'note:n',
+      type: 'note',
+      source: 'user',
+      title: 'Saved',
+      text: 'Before',
+    };
+    const api = bridge({
+      listFolderPageObjects: vi.fn().mockResolvedValue([note]),
+      updateFolderPageNote: vi.fn().mockRejectedValue(new Error('disk')),
+    });
+    const owner = createLibraryFolderObjects({ bridge: api });
+    await owner.load(playlistPage);
+    const onError = vi.fn();
+    await expect(
+      owner.updateNote(
+        note.key,
+        { title: 'Draft', text: 'After' },
+        { onError },
+      ),
+    ).resolves.toBe(false);
+    expect(onError).toHaveBeenCalledWith('目前無法儲存頁面便條。');
+    expect(owner.objects.value[0].title).toBe('Saved');
+    expect(owner.readError.value).toBe('');
+    expect(useAppNotifications().items.value).toHaveLength(0);
+    owner.dispose();
+  });
   it('ignores a stale page response after the document changes', async () => {
     const first = deferred();
     const second = deferred();

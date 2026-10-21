@@ -1,6 +1,7 @@
 import { computed, readonly } from 'vue';
 import { useSerializedPlanStore } from './useSerializedPlanStore.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { useAppNotifications } from './useAppNotifications.js';
 
 function createEmptyPlan() {
   return {
@@ -44,6 +45,26 @@ const { state, enqueue, refresh, initialize, dispose } = useSerializedPlanStore(
 );
 
 if (import.meta.hot) import.meta.hot.dispose(dispose);
+
+const notifications = useAppNotifications();
+function enqueueMenuMutation(operation, name, title) {
+  const key = `performance-session:${name}`;
+  return enqueue(
+    () => {
+      notifications.clear(key);
+      return operation();
+    },
+    {
+      name,
+      onError(message) {
+        notifications.notify({ key, title, message, tone: 'danger' });
+      },
+    },
+  ).then((saved) => {
+    if (saved) notifications.clear(key);
+    return saved;
+  });
+}
 
 const selectedItem = computed(
   () =>
@@ -129,23 +150,30 @@ function relinkItem(itemId, fields) {
 }
 
 function moveItem(itemId, offset) {
-  return enqueue(() =>
-    window.Utawakui.movePerformanceSessionPlanItem({ itemId, offset }),
+  return enqueueMenuMutation(
+    () => window.Utawakui.movePerformanceSessionPlanItem({ itemId, offset }),
+    'move',
+    '演出項目未移動',
   );
 }
 
 function duplicateItem(itemId) {
-  return enqueue(() =>
-    window.Utawakui.duplicatePerformanceSessionPlanItem(itemId),
+  return enqueueMenuMutation(
+    () => window.Utawakui.duplicatePerformanceSessionPlanItem(itemId),
+    'duplicate',
+    '演出項目未複製',
   );
 }
 function reorderItem(itemId, targetItemId, position) {
-  return enqueue(() =>
-    window.Utawakui.reorderPerformanceSessionPlanItem({
-      itemId,
-      targetItemId,
-      position,
-    }),
+  return enqueueMenuMutation(
+    () =>
+      window.Utawakui.reorderPerformanceSessionPlanItem({
+        itemId,
+        targetItemId,
+        position,
+      }),
+    'reorder',
+    '演出排序未更新',
   );
 }
 
@@ -168,8 +196,10 @@ async function duplicateItemForPlayback(itemId) {
 }
 
 function removeItem(itemId) {
-  return enqueue(() =>
-    window.Utawakui.removePerformanceSessionPlanItem(itemId),
+  return enqueueMenuMutation(
+    () => window.Utawakui.removePerformanceSessionPlanItem(itemId),
+    'remove',
+    '演出項目未移除',
   );
 }
 
@@ -180,7 +210,11 @@ function selectItem(itemId) {
 }
 
 function clear() {
-  return enqueue(() => window.Utawakui.clearPerformanceSessionPlan());
+  return enqueueMenuMutation(
+    () => window.Utawakui.clearPerformanceSessionPlan(),
+    'clear',
+    '演出安排未清空',
+  );
 }
 function archiveSession(name, sessionId = state.plan.sessionId) {
   return enqueue(

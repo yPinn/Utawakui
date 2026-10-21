@@ -6,12 +6,14 @@ import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiPhotoFrame from '../ui/UiPhotoFrame.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   asset: { type: Object, default: null },
   removing: { type: Boolean, default: false },
+  error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'afterLeave', 'remove', 'editText']);
@@ -64,6 +66,7 @@ async function requestRemoval() {
       />
     </template>
 
+    <UiNotice v-if="error" :message="error" tone="danger" compact />
     <div
       v-if="asset"
       class="folder-asset-preview"

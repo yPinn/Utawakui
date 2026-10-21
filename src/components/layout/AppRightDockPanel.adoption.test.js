@@ -32,7 +32,10 @@ describe('AppRightDockPanel production adoption', () => {
       expect(source).toContain('<AppRightDockPanel');
       expect(source).not.toContain('AppRightDockHeader');
       expect(source).not.toContain('UiScrollRegion');
-      expect(source).not.toContain('--ui-right-dock-');
+      // The Section's public surface color is appearance, not Dock geometry.
+      expect(
+        source.replaceAll('--ui-right-dock-section-surface-background', ''),
+      ).not.toContain('--ui-right-dock-');
       expect(source).not.toContain('hasScrolled');
       expect(source).not.toContain('updateScrollState');
       expect(source).not.toContain('chrome--scrolled');

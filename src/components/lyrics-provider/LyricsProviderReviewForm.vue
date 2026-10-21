@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, useTemplateRef } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import { Copy, ExternalLink } from '../../icons/index.js';
-import { useClipboardFeedback } from '../../composables/useClipboardFeedback.js';
+import { useLyricsProviderLookupActions } from '../../composables/useLyricsProviderLookupActions.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -87,22 +87,7 @@ const lookupQuery = computed(
   () =>
     `${props.candidate.reference.artist} ${props.candidate.reference.title}`,
 );
-const {
-  state: copyState,
-  copy: copyText,
-  dispose: disposeCopyFeedback,
-} = useClipboardFeedback({
-  writeText: (action) => {
-    const runAction =
-      globalThis.window?.Utawakui?.runLyricsProviderReviewLookupAction;
-    if (typeof runAction !== 'function') {
-      return Promise.reject(new Error('review lookup action unavailable'));
-    }
-    return runAction({ candidateId: props.candidate.id, action });
-  },
-});
-
-onBeforeUnmount(disposeCopyFeedback);
+const { run: runLookup } = useLyricsProviderLookupActions();
 
 function update(field, value) {
   emit('update:modelValue', { ...props.modelValue, [field]: value });
@@ -119,22 +104,19 @@ function catalogReachLabel(value) {
 }
 
 function copyCandidateId() {
-  return copyText('copy-candidate-id', '候選 ID');
+  return runLookup(props.candidate.id, 'copy-candidate-id');
 }
 
 function copyRecordingMbid() {
-  return copyText('copy-recording-mbid', 'Recording MBID');
+  return runLookup(props.candidate.id, 'copy-recording-mbid');
 }
 
 function copyLookupQuery() {
-  return copyText('copy-artist-title', '歌手＋歌名');
+  return runLookup(props.candidate.id, 'copy-artist-title');
 }
 
 function openMusicBrainz() {
-  return copyText('open-musicbrainz-recording', 'MusicBrainz', {
-    successMessage: '已開啟 MusicBrainz',
-    errorMessage: '無法開啟 MusicBrainz，請改用 Recording MBID 查詢。',
-  });
+  return runLookup(props.candidate.id, 'open-musicbrainz-recording');
 }
 
 function submitApproval() {
@@ -266,14 +248,6 @@ function submitApproval() {
           </UiStack>
         </div>
       </div>
-      <p
-        class="review-form__copy-feedback"
-        :data-tone="copyState.tone"
-        :role="copyState.tone === 'error' ? 'alert' : 'status'"
-        aria-live="polite"
-      >
-        {{ copyState.message }}
-      </p>
     </section>
 
     <div class="review-form__comparison">
@@ -593,19 +567,6 @@ function submitApproval() {
   justify-content: flex-end;
 }
 
-.review-form__copy-feedback {
-  min-height: var(--ui-space-4);
-  margin: 0;
-  color: var(--ui-color-success);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-compact-line-height);
-  text-align: end;
-}
-
-.review-form__copy-feedback[data-tone='error'] {
-  color: var(--ui-color-danger);
-}
-
 .review-form__selectable {
   user-select: text;
 }
@@ -757,10 +718,6 @@ function submitApproval() {
 
   .review-form__lookup-actions {
     justify-content: flex-start;
-  }
-
-  .review-form__copy-feedback {
-    text-align: start;
   }
 
   .review-form__comparison {

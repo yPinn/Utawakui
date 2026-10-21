@@ -14,6 +14,7 @@ import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -28,6 +29,7 @@ const props = defineProps({
   // The photo projection: imageUrl, frame, ratio, label, captionTitle, caption.
   photo: { type: Object, default: null },
   saving: { type: Boolean, default: false },
+  error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'save']);
@@ -180,6 +182,7 @@ function cancel() {
       </div>
     </div>
 
+    <UiNotice v-if="error" :message="error" tone="danger" compact />
     <template #footer>
       <UiHint class="app-folder-photo-text__footnote">
         清空欄位即可移除文字。

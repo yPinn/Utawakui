@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, ref } from 'vue';
+import { useAppNotifications } from './useAppNotifications.js';
 
 const MAX_TEXT_LENGTH = 256;
 const PUBLIC_LOAD_ERROR = Object.freeze({
@@ -11,11 +12,7 @@ const PUBLIC_SAVE_ERROR = Object.freeze({
   message: '原始審核資料未變更，請重試。',
   actionLabel: '',
 });
-const PUBLIC_EXPORT_ERROR = Object.freeze({
-  title: '語料尚未匯出',
-  message: '所有候選都必須核准，且不能留有待替換項目。',
-  actionLabel: '',
-});
+const exportAttempts = new WeakMap();
 const REJECTION_REASONS = new Set([
   'language-mismatch',
   'genre-mismatch',
@@ -70,7 +67,7 @@ export function useLyricsProviderCorpusReview(
   const loading = ref(false);
   const saving = ref(false);
   const exporting = ref(false);
-  const exported = ref(false);
+  const notifications = useAppNotifications();
   const error = ref(null);
   const selectedStratumId = ref(null);
   const selectedCandidateId = ref(null);
@@ -208,7 +205,6 @@ export function useLyricsProviderCorpusReview(
 
   function replaceDataset(nextDataset) {
     dataset.value = nextDataset;
-    exported.value = false;
   }
 
   function initializeSelection() {
@@ -313,13 +309,27 @@ export function useLyricsProviderCorpusReview(
       return false;
     }
     exporting.value = true;
-    error.value = null;
+    const attempt = {};
+    exportAttempts.set(bridge, attempt);
     try {
-      await bridge.exportLyricsProviderReviewCorpus();
-      exported.value = true;
+      const result = await bridge.exportLyricsProviderReviewCorpus();
+      if (result?.exported !== true)
+        throw new Error('invalid corpus export result');
+      if (exportAttempts.get(bridge) !== attempt) return false;
+      notifications.notify({
+        key: 'lyrics-provider-corpus-export',
+        title: '語料已匯出',
+        message: '固定 corpus 已寫入私有評估目錄。',
+      });
       return true;
     } catch {
-      error.value = { ...PUBLIC_EXPORT_ERROR };
+      if (exportAttempts.get(bridge) !== attempt) return false;
+      notifications.notify({
+        key: 'lyrics-provider-corpus-export',
+        title: '語料尚未匯出',
+        message: '請重新讀取審核資料、確認所有候選已核准後再試一次。',
+        tone: 'danger',
+      });
       return false;
     } finally {
       exporting.value = false;
@@ -331,7 +341,6 @@ export function useLyricsProviderCorpusReview(
     loading: readonly(loading),
     saving: readonly(saving),
     exporting: readonly(exporting),
-    exported: readonly(exported),
     error: readonly(error),
     selectedStratumId,
     selectedCandidateId: readonly(selectedCandidateId),
