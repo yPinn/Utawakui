@@ -83,6 +83,7 @@ describe('PLAYLIST_MENU_ACTIONS', () => {
   it('has stable string values for cross-file dispatch', () => {
     expect(PLAYLIST_MENU_ACTIONS).toEqual({
       addToQueue: 'add-to-queue',
+      addToPerformanceQueue: 'add-to-performance-queue',
       addToPlaylist: 'add-to-playlist',
       editDetails: 'edit-details',
       delete: 'delete',
@@ -98,6 +99,7 @@ describe('TRACK_MENU_ACTIONS', () => {
   it('shares one stable vocabulary across library and Right Dock callers', () => {
     expect(TRACK_MENU_ACTIONS).toEqual({
       addToQueue: 'add-to-queue',
+      addToPerformanceQueue: 'add-to-performance-queue',
       removeFromQueue: 'remove-from-queue',
       addToPlaylist: 'add-to-playlist',
       createPlaylist: 'create-playlist',

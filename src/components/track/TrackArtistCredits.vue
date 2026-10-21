@@ -9,6 +9,7 @@ import UiTextButton from '../ui/UiTextButton.vue';
 
 const props = defineProps({
   track: { type: Object, required: true },
+  navigable: { type: Boolean, default: true },
 });
 
 // `navigate` lets a host surface (e.g. a dialog) dismiss itself first.
@@ -23,6 +24,10 @@ function openArtist(artistId) {
 }
 
 const links = computed(() => {
+  if (!props.navigable) {
+    const text = props.track.artist ?? '';
+    return text ? [{ text, artistId: '' }] : [];
+  }
   const paired = artistCreditLinks(props.track, artistIndexState.index);
   if (paired) return paired;
   const text = props.track.artist ?? '';
@@ -35,7 +40,7 @@ const links = computed(() => {
     <template v-for="(link, index) in links" :key="`${index}:${link.text}`">
       <span v-if="index > 0" class="track-artist-credits__separator">, </span>
       <UiTextButton
-        v-if="link.artistId"
+        v-if="link.artistId && navigable"
         class="track-artist-credits__link"
         :text="link.text"
         overflow="ellipsis"

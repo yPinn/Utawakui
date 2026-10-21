@@ -64,7 +64,11 @@ describe('Performance Session Token v2 surface cutover', () => {
 
   it('composes Session preparation inside the Performance workspace', () => {
     expect(pageSource).toContain('surface-id="performance"');
-    expect(pageSource).toContain('<AppFolderPage mode="workspace"');
+    expect(pageSource).toMatch(/<AppFolderPage\b[^>]*\bmode="workspace"/u);
+    expect(pageSource).toContain(':document-key="performanceArchiveId"');
+    expect(pageSource).toContain(
+      '<PerformanceSessionArchive :session-id="performanceArchiveId"',
+    );
     expect(performanceSource).toContain(
       'surface-id="performance-session-workspace"',
     );

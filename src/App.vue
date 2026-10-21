@@ -22,6 +22,7 @@ import ObsSessionExportModal from './components/settings/ObsSessionExportModal.v
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import { useBgmSession } from './composables/useBgmSession.js';
+import { usePerformanceHistoryObserver } from './composables/usePerformanceHistoryObserver.js';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import LibraryPage from './pages/LibraryPage.vue';
@@ -132,6 +133,7 @@ useUiDensity();
 const closeDecision = useWindowCloseDecision();
 const trayNavigation = useTrayNavigation();
 const playbackHistory = usePlaybackHistory();
+const performanceHistoryObserver = usePerformanceHistoryObserver();
 const playbackResume = usePlaybackResume();
 const audioPreferences = useAudioPreferences();
 audioPreferences.initialize();
@@ -144,6 +146,7 @@ onUnmounted(() => {
   trayNavigation.dispose();
   playbackResume.dispose();
   playbackHistory.dispose();
+  performanceHistoryObserver.dispose();
   void audioPreferences.dispose();
 });
 // Validate and stage the persisted capture device before playback. The capture

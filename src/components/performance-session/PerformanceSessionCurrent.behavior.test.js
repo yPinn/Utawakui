@@ -1,4 +1,4 @@
-import { nextTick, reactive } from 'vue';
+import { h, nextTick, reactive } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import {
   attachClientRender,
@@ -15,7 +15,10 @@ import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -52,7 +55,10 @@ for (const [component, file] of [
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
   [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
+  [UiTrackArtworkButton, '../ui/UiTrackArtworkButton.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
+  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiHint, '../ui/UiHint.vue'],
@@ -77,6 +83,47 @@ const button = (root, label) =>
 const menu = (root) => findAll(root, (n) => n.type === 'menu-probe')[0];
 
 describe('arrangement current shared row intents', () => {
+  it('preserves workspace text buttons and the trailing options slot', () => {
+    const view = mount(
+      PerformanceSessionCurrent,
+      {
+        variant: 'workspace',
+        current,
+        confirmed: true,
+        phase: 'paused',
+      },
+      { options: () => h('span', '連續播放') },
+    );
+    const actions = findAll(view.root, (n) =>
+      String(n.props.class)
+        .split(/\s+/u)
+        .includes('performance-session-current__actions'),
+    )[0];
+    const controls = findAll(actions, (n) => n.type === 'button');
+    expect(controls.map((n) => textContent(n))).toEqual([
+      '播放',
+      '停止',
+      '標記完成',
+    ]);
+    expect(
+      controls.every((n) => String(n.props.class).includes('ui-btn')),
+    ).toBe(true);
+    expect(textContent(actions)).toBe('播放停止標記完成連續播放');
+    view.app.unmount();
+  });
+  it('keeps the completion primary last and the stop secondary as a shared icon button', () => {
+    const view = mount(PerformanceSessionCurrent, { current, confirmed: true });
+    const actions = findAll(view.root, (n) =>
+      String(n.props.class)
+        .split(/\s+/u)
+        .includes('performance-session-current__actions'),
+    )[0];
+    const controls = findAll(actions, (n) => n.type === 'button');
+    expect(controls.map((n) => textContent(n))).toEqual(['停止', '標記完成']);
+    expect(String(controls[0].props.class)).toContain('ui-icon-btn');
+    expect(String(controls[1].props.class)).toContain('ui-btn--accent');
+    view.app.unmount();
+  });
   it('keeps selection separate from cover, Enter and double-click toggle, then resets menu for the next occurrence of the same track', async () => {
     const toggle = vi.fn();
     const props = reactive({

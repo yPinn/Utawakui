@@ -81,7 +81,7 @@ describe('AppRightDock', () => {
     const dockWidth = useAppRightDockWidth();
     const originalWidth = dockWidth.width.value;
     const onToggleExpanded = vi.fn();
-    dockWidth.width.value = 240;
+    dockWidth.setWidth(RIGHT_DOCK_WIDTH_MIN);
     const { app, root } = mount(AppRightDock, {
       expanded: true,
       label: '播放資訊',
@@ -96,7 +96,7 @@ describe('AppRightDock', () => {
       'aria-orientation': 'vertical',
       'aria-valuemin': RIGHT_DOCK_WIDTH_MIN,
       'aria-valuemax': RIGHT_DOCK_WIDTH_MAX,
-      'aria-valuenow': 240,
+      'aria-valuenow': RIGHT_DOCK_WIDTH_MIN,
       'aria-controls': 'app-right-dock-content',
       'aria-expanded': true,
     });
@@ -104,9 +104,9 @@ describe('AppRightDock', () => {
     const left = key('ArrowLeft');
     trigger(handle, 'onKeydown', left);
     expect(left.preventDefault).toHaveBeenCalledOnce();
-    expect(dockWidth.width.value).toBe(248);
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MAX);
     trigger(handle, 'onKeydown', key('ArrowRight'));
-    expect(dockWidth.width.value).toBe(240);
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN);
     trigger(handle, 'onKeydown', key('Home'));
     expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN);
     trigger(handle, 'onKeydown', key('End'));
@@ -160,19 +160,41 @@ describe('AppRightDock', () => {
     }
 
     expect(source).toMatch(
-      /<UiSurface[\s\S]*?data-ui-region="chrome"[\s\S]*?tag="aside"/u,
+      /<UiSurface[\s\S]*?:data-ui-region="performance && expanded \? 'receipt' : 'chrome'"[\s\S]*?tag="aside"/u,
     );
     expect(source).toMatch(
       /\.app-right-dock\.app-right-dock--collapsed\s*\{[^}]*background:\s*transparent;/su,
     );
   });
 
+  it('uses warm receipt semantics only for expanded arrangements', () => {
+    for (const expanded of [true, false]) {
+      const { app, root } = mount(AppRightDock, {
+        expanded,
+        performance: true,
+        contentId: 'receipt',
+      });
+      expect(
+        findAll(root, (n) => n.type === 'aside')[0].props['data-ui-region'],
+      ).toBe(expanded ? 'receipt' : 'chrome');
+      app.unmount();
+    }
+    expect(source).not.toContain(
+      '--ui-right-dock-state-background: var(--ui-color-live-soft)',
+    );
+    expect(source).toContain('border-block-end: var(--ui-border-width) dashed');
+    expect(source).not.toContain('border-block-end: 0;');
+    expect(source).not.toContain('.ui-tabs__tab');
+    expect(source).not.toMatch(
+      /\.app-right-dock--performance :deep\(\.app-right-dock-header\)\s*\{[^}]*gap:/su,
+    );
+  });
   it('re-resolves Dock paint aliases inside the Chrome boundary', () => {
     expect(source).toMatch(
-      /\.app-right-dock\s*\{[^}]*--ui-right-dock-section-surface-background:\s*var\(\s*--ui-color-surface-raised\s*\);/su,
+      /\.app-right-dock\s*\{[^}]*--ui-right-dock-section-surface-background:\s*var\(\s*--ui-right-dock-background\s*\);/su,
     );
     expect(source).toMatch(
-      /\.app-right-dock\s*\{[^}]*--ui-right-dock-sticky-background:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-surface\) 88%,\s*transparent\s*\);/su,
+      /\.app-right-dock\s*\{[^}]*--ui-right-dock-sticky-background:\s*var\(\s*--ui-right-dock-state-background\s*\);/su,
     );
   });
 

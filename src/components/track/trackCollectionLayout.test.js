@@ -11,6 +11,50 @@ function roles(layout) {
 }
 
 describe('track collection layout', () => {
+  it.each(['performance-session', 'performance-archive'])(
+    'gives %s remaining space to identity and anchors the trailing columns',
+    (kind) => {
+      const layout = resolveTrackCollectionLayout({
+        kind,
+        availableWidth: 960,
+      });
+      expect(layout.gridTemplate).toContain(
+        `minmax(${layout.widths.identity}px, 1fr)`,
+      );
+      expect(layout.gridTemplate.split('minmax(')).toHaveLength(2);
+      const spacer = roles(layout).indexOf('spacer');
+      expect(spacer).toBeGreaterThan(0);
+      expect(
+        layout.columns.find((c) => c.role === 'performanceStatus'),
+      ).toMatchObject({ align: 'end', headerAlign: 'end' });
+      expect(layout.widths.performanceStatus).toBe(112);
+    },
+  );
+  it('keeps session actions reachable and collapses status for the owner-provided subtitle at narrow widths', () => {
+    const layout = resolveTrackCollectionLayout({
+      kind: 'performance-session',
+      availableWidth: 251,
+    });
+    expect(roles(layout)).toEqual(['identity', 'spacer', 'performanceActions']);
+    expect(layout.hiddenForWidth).toEqual([
+      'duration',
+      'performanceStatus',
+      'ordinal',
+    ]);
+    expect(layout.requiredWidth).toBeLessThanOrEqual(251);
+    expect(layout.widths.performanceActions).toBe(80);
+  });
+  it('retains archive identity and status within a narrow document after collapsing duration and ordinal', () => {
+    const layout = resolveTrackCollectionLayout({
+      kind: 'performance-archive',
+      availableWidth: 267,
+    });
+    expect(roles(layout)).toEqual(['identity', 'spacer', 'performanceStatus']);
+    expect(layout.hiddenForWidth).toEqual(['duration', 'ordinal']);
+    expect(layout.requiredWidth).toBeLessThanOrEqual(267);
+    expect(layout.widths.identity).toBeGreaterThanOrEqual(112);
+    expect(layout.widths.performanceStatus).toBeGreaterThanOrEqual(112);
+  });
   it('uses the same token-equivalent gap budget before and after CSS measurement', () => {
     const firstFrame = resolveTrackCollectionLayout({
       kind: 'playlist',

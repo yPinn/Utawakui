@@ -68,16 +68,21 @@ const sectionCss = compileScopedStyles(sectionSource, 'QueueSection.vue');
 const panelCss = compileScopedStyles(source, 'QueuePanel.vue');
 
 describe('QueuePanel shared Dock content', () => {
-  it('keeps the original tabs and adds a separate button for arrangement switching', () => {
+  it('uses shared header actions and preserves full-width tabs in both modes', () => {
     expect(source).not.toContain('UiSelect');
+    expect(source).not.toContain('UiSegmentedControl');
     expect(source).toContain('切換演出安排');
     expect(source).toContain('切換一般佇列');
-    expect(source).toContain(':icon="MicVocal"');
+    expect(source).toContain(':icon="Tickets"');
     expect(source).toContain(
       ':aria-pressed="dock.queueVariant.value === \'arrangement\'"',
     );
+    expect(source).not.toContain('MicVocal');
     expect(source).toContain("{ id: 'queue', label: '佇列' }");
     expect(source).toContain("{ id: 'recent', label: '最近播放' }");
+    expect(source).toMatch(
+      /\.queue-panel__view-controls\s*\{[^}]*inline-size:\s*max-content;[^}]*max-inline-size:\s*100%;/su,
+    );
   });
   it('gives arrangement its own header tabs linked to controlled panels', () => {
     expect(source).toContain(':items="arrangementTabs"');
@@ -85,6 +90,10 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain('tab-id-prefix="arrangement-dock"');
     expect(source).toContain('@update:active-id="dock.selectArrangementTab"');
     expect(source).not.toContain('queue-panel__mode-label');
+    expect(source).toContain('scope="completed"');
+    expect(source).toContain(
+      ':active="dock.arrangementTab.value !== \'history\'"',
+    );
   });
   it('is a content layer rather than a floating PlayerBarPanel', () => {
     expect(source).toContain('<AppRightDockPanel');
@@ -115,6 +124,8 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain("import UiTabs from '../ui/UiTabs.vue';");
     expect(source).toContain("const activeTab = shallowRef('queue');");
     expect(source).toContain('variant="bar"');
+    expect(source).toContain('<template #actions>');
+    expect(source).not.toContain('.ui-tabs__tab');
     expect(source).toContain('role="tabpanel"');
     expect(source).not.toContain('queue-panel__chrome--scrolled');
     expect(source).not.toContain('@scroll="updateScrollState"');

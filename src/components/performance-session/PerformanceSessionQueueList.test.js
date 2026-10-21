@@ -49,13 +49,13 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
     expect(html.match(/draggable="true"/g)).toHaveLength(2);
     expect(html.match(/aria-haspopup="menu"/g)).toHaveLength(2);
     expect(html).not.toMatch(/performance-session-plan-entry__ordinal|ui-chip/);
-    expect(html).toContain('aria-label="待唱第 1 首"');
-    expect(html).toContain('aria-label="待唱第 2 首"');
+    expect(html).not.toContain('queue-track__ordinal');
+
     const rows = html.match(/<li\b[\s\S]*?<\/li>/g);
-    expect(rows[0]).toContain('待唱第 1 首');
+    expect(html).not.toContain('queue-track__ordinal');
     expect(rows[0]).toContain('First occurrence');
   });
-  it('renumbers the displayed pending order after reorder or removal', async () => {
+  it('keeps visual occurrence order after reorder or removal without number labels', async () => {
     const html = await render({
       items: [
         entry('two', 'Encore occurrence'),
@@ -63,13 +63,13 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
       ],
     });
     const rows = html.match(/<li\b[\s\S]*?<\/li>/g);
-    expect(rows[0]).toContain('待唱第 1 首');
+    expect(html).not.toContain('queue-track__ordinal');
     expect(rows[0]).toContain('Encore occurrence');
-    expect(rows[1]).toContain('待唱第 2 首');
+    expect(html).not.toContain('queue-track__ordinal');
     expect(rows[1]).toContain('First occurrence');
     const single = await render({ items: [entry('two', 'Encore occurrence')] });
-    expect(single).toContain('待唱第 1 首');
-    expect(single).not.toContain('待唱第 2 首');
+    expect(single).toContain('Encore occurrence');
+    expect(single).not.toContain('queue-track__ordinal');
   });
   it('keeps manual starts explicit and missing tracks visible without false playback', async () => {
     const html = await render({

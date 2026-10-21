@@ -2,9 +2,9 @@ import { ref } from 'vue';
 import { useResizeDrag } from './useResizeDrag.js';
 
 // Shared by the shell-level Dock and every content layer hosted inside it.
-// The bounds retain the reviewed Studio Library Inspector proportions while
-// promoting the geometry to production Queue chrome.
-export const RIGHT_DOCK_WIDTH_MIN = 224; // 14rem
+// The minimum fits both full Bar tabs and the shared action group on one
+// line, including standard-density controls, padding and group gaps.
+export const RIGHT_DOCK_WIDTH_MIN = 272; // 17rem
 export const RIGHT_DOCK_WIDTH_MAX = 280; // 17.5rem
 export const RIGHT_DOCK_WIDTH_KEYBOARD_STEP = 8; // 0.5rem at the app baseline
 

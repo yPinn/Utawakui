@@ -32,7 +32,7 @@ const prototypeCapture = readFileSync(
 const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../main.js', import.meta.url), 'utf8');
 const performerMain = readFileSync(
-  new URL('../performer-main.js', import.meta.url),
+  new URL('../entries/prompter/main.js', import.meta.url),
   'utf8',
 );
 const rootIndex = readFileSync(
@@ -40,7 +40,7 @@ const rootIndex = readFileSync(
   'utf8',
 );
 const performerView = readFileSync(
-  new URL('../../performer-view.html', import.meta.url),
+  new URL('../../src/entries/prompter/index.html', import.meta.url),
   'utf8',
 );
 const app = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');
@@ -129,7 +129,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(html).toContain('data-ui-system="v2"');
     expect(html).toContain('href="../../src/styles/tokens.css"');
     expect(main).toContain("import './styles/tokens.css';");
-    expect(performerMain).toContain("import './styles/tokens.css';");
+    expect(performerMain).toContain("import '../../styles/tokens.css';");
     expect(main).not.toContain('token-v1-invalidation');
     expect(performerMain).not.toContain('token-v1-invalidation');
     expect(rootIndex).not.toContain('styles/tokens.css');
@@ -671,6 +671,13 @@ describe('Studio Library workspace prototype isolation', () => {
   it.each([
     ['dark', {}],
     ['light', tokenBlock(lightTokenSelector)],
+    [
+      'receipt',
+      {
+        ...tokenBlock(lightTokenSelector),
+        ...tokenBlock("[data-ui-system='v2'] [data-ui-region='receipt']"),
+      },
+    ],
     ['chrome', tokenBlock(chromeTokenSelector)],
     [
       'light chrome',

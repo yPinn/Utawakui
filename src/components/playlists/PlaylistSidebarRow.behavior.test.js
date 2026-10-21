@@ -71,6 +71,35 @@ afterEach(() => {
 });
 
 describe('PlaylistSidebarRow aligned collection interaction', () => {
+  it('supports a read-only collection destination and independent trailing action without exposing playback', () => {
+    const select = vi.fn(),
+      togglePlayback = vi.fn();
+    const view = mount(
+      PlaylistSidebarRow,
+      {
+        playlist,
+        subtitle: '封存場次',
+        playbackEnabled: false,
+        onSelect: select,
+        onTogglePlayback: togglePlayback,
+      },
+      { trailing: () => '場次操作' },
+    );
+    const action = findAll(view.root, (n) =>
+      String(n.props.class).includes('playlist-sidebar-row__select'),
+    )[0];
+    trigger(action, 'onClick', { stopPropagation: vi.fn() });
+    trigger(action, 'onDblclick', { stopPropagation: vi.fn() });
+    expect(select).toHaveBeenCalledOnce();
+    expect(togglePlayback).not.toHaveBeenCalled();
+    expect(textContent(view.root)).toContain('場次操作');
+    expect(
+      findAll(view.root, (n) =>
+        String(n.props.class).includes('playlist-sidebar-row__play'),
+      ),
+    ).toHaveLength(0);
+    view.app.unmount();
+  });
   it('uses the shared 40px artwork size inside the 52px sidebar row', () => {
     const mounted = mount(PlaylistSidebarRow, {
       playlist,

@@ -4,6 +4,7 @@ import { Check, Play, Pause, Square } from '../../icons/index.js';
 import QueueSection from '../queue/QueueSection.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiHint from '../ui/UiHint.vue';
 
@@ -202,7 +203,13 @@ watch(
         >{{ phase === 'playing' ? '暫停' : '播放' }}</UiButton
       >
       <template v-if="current">
-        <UiButton :icon="Square" @click="emit('stop')">停止</UiButton>
+        <UiIconButton
+          v-if="variant === 'dock'"
+          :icon="Square"
+          label="停止"
+          @click="emit('stop')"
+        />
+        <UiButton v-else :icon="Square" @click="emit('stop')">停止</UiButton>
         <UiButton
           :icon="Check"
           variant="accent"
@@ -211,6 +218,14 @@ watch(
           >標記完成</UiButton
         >
       </template>
+      <UiIconButton
+        v-else-if="!track && variant === 'dock'"
+        :icon="Play"
+        variant="accent"
+        :disabled="busy || !canStart"
+        label="開始播放"
+        @click="emit('startFirst')"
+      />
       <UiButton
         v-else-if="!track"
         :icon="Play"
@@ -265,6 +280,7 @@ watch(
   padding: 0;
   list-style: none;
 }
+.performance-session-current--dock .performance-session-current__actions,
 .performance-session-current--workspace .performance-session-current__actions {
   justify-content: flex-end;
 }

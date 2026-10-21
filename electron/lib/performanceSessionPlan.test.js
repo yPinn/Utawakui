@@ -37,6 +37,81 @@ describe('createPerformanceSessionPlanStore', () => {
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
+  it('appends the same track as independent queued occurrences without changing the playing item', () => {
+    const tracks = libraryTracks(track('a', 'A'));
+    store.ensureSession(tracks);
+    const first = store.appendLibraryTrack('a', tracks).items[0];
+    store.setProgress(
+      {
+        itemId: first.itemId,
+        expectedProgressRevision: 0,
+        progress: 'playing',
+      },
+      tracks,
+    );
+    const before = store.getProjected(tracks);
+    store.appendLibraryTrack('a', tracks);
+    const after = store.appendLibraryTrack('a', tracks);
+    expect(after.items.map((i) => i.trackId)).toEqual(['a', 'a', 'a']);
+    expect(new Set(after.items.map((i) => i.itemId)).size).toBe(3);
+    expect(after.items[0]).toEqual(before.items[0]);
+    expect(after.items.slice(1).map((i) => i.progress)).toEqual([
+      'queued',
+      'queued',
+    ]);
+    expect(after.sessionId).toBe(before.sessionId);
+    expect(after.timeline).toEqual(before.timeline);
+    // Single-track append retains the existing editor behavior: select the new
+    // occurrence for review. The playback occurrence remains untouched.
+    expect(after.reviewCursorItemId).toBe(after.items[2].itemId);
+  });
+  it('atomically appends ordered collection occurrences during a performance without replacing current data', () => {
+    const tracks = libraryTracks(track('a', 'A'), track('b', 'B'));
+    store.ensureSession(tracks);
+    const old = store.appendLibraryTrack('a', tracks).items[0];
+    store.setProgress(
+      { itemId: old.itemId, expectedProgressRevision: 0, progress: 'playing' },
+      tracks,
+    );
+    store.appendManualItem({ displayTitle: 'Manual' }, tracks);
+    const before = store.getProjected(tracks);
+    const result = store.appendFromCollection({
+      collection: {
+        id: 'p',
+        name: 'Songs',
+        kind: 'playlist',
+        trackIds: ['a', 'a', 'b'],
+      },
+      tracksById: tracks,
+    });
+    expect(result.items.slice(0, 2)).toEqual(before.items);
+    expect(result.items.slice(2).map((i) => i.trackId)).toEqual([
+      'a',
+      'a',
+      'b',
+    ]);
+    expect(new Set(result.items.map((i) => i.itemId)).size).toBe(5);
+    expect(result.sessionId).toBe(before.sessionId);
+    expect(result.source).toEqual(before.source);
+    expect(result.reviewCursorItemId).toBe(before.reviewCursorItemId);
+    const bytes = fs.readFileSync(
+      path.join(dir, PERFORMANCE_SESSION_PLAN_FILENAME),
+    );
+    expect(() =>
+      store.appendFromCollection({
+        collection: {
+          id: 'p',
+          name: 'Too many',
+          kind: 'playlist',
+          trackIds: Array(500).fill('a'),
+        },
+        tracksById: tracks,
+      }),
+    ).toThrow(PerformanceSessionPlanValidationError);
+    expect(
+      fs.readFileSync(path.join(dir, PERFORMANCE_SESSION_PLAN_FILENAME)),
+    ).toEqual(bytes);
+  });
 
   it('returns an inactive empty draft when no file exists', () => {
     expect(store.getProjected(libraryTracks())).toEqual({

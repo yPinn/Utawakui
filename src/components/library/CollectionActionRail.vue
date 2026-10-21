@@ -28,6 +28,7 @@ const props = defineProps({
     default: () => ({ kind: 'actions', groups: [] }),
   },
   showSearch: { type: Boolean, default: true },
+  showDensity: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
   density: {
     type: String,
@@ -92,64 +93,66 @@ function selectMenuAction(value) {
 <template>
   <section class="collection-action-rail" :aria-label="`${entityLabel}操作`">
     <div class="collection-action-rail__actions">
-      <PlaybackPrimaryButton
-        :playing="playing"
-        :disabled="!canPlay"
-        :play-label="`播放${entityLabel}`"
-        :pause-label="`暫停${entityLabel}`"
-        @click="emit('togglePlayback')"
-      />
-      <UiIconButton
-        :icon="GalleryVerticalEnd"
-        :disabled="!canPreview || Boolean(previewBlockedReason)"
-        :label="
-          previewBlockedReason
-            ? `試聽${entityLabel}（${previewBlockedReason}）`
-            : `試聽${entityLabel}`
-        "
-        @click="emit('preview')"
-      />
-      <UiIconButton
-        :icon="Shuffle"
-        :active="shuffleActive"
-        :disabled="!canShuffle"
-        :label="`隨機播放${entityLabel}`"
-        :aria-pressed="shuffleActive"
-        @click="emit('toggleShuffle')"
-      />
-      <UiIconButton
-        :icon="ListEnd"
-        :disabled="!canAddToQueue"
-        :label="`將${entityLabel}新增至佇列`"
-        @click="emit('addToQueue')"
-      />
-      <UiIconButton
-        v-if="entityAction"
-        class="collection-action-rail__extension"
-        :icon="entityAction.icon"
-        :disabled="entityAction.disabled"
-        :label="entityAction.label"
-        :aria-haspopup="entityAction.menuContent ? 'menu' : undefined"
-        :aria-expanded="
-          entityAction.menuContent
-            ? activeMenu === 'entity'
-              ? 'true'
-              : 'false'
-            : undefined
-        "
-        @click="activateEntityAction"
-      />
-      <UiIconButton
-        v-if="hasMoreActions"
-        :icon="Ellipsis"
-        :label="`${entityLabel}的更多操作`"
-        aria-haspopup="menu"
-        :aria-expanded="activeMenu === 'more' ? 'true' : 'false'"
-        @click="openMenu($event, 'more')"
-      />
+      <slot name="actions">
+        <PlaybackPrimaryButton
+          :playing="playing"
+          :disabled="!canPlay"
+          :play-label="`播放${entityLabel}`"
+          :pause-label="`暫停${entityLabel}`"
+          @click="emit('togglePlayback')"
+        />
+        <UiIconButton
+          :icon="GalleryVerticalEnd"
+          :disabled="!canPreview || Boolean(previewBlockedReason)"
+          :label="
+            previewBlockedReason
+              ? `試聽${entityLabel}（${previewBlockedReason}）`
+              : `試聽${entityLabel}`
+          "
+          @click="emit('preview')"
+        />
+        <UiIconButton
+          :icon="Shuffle"
+          :active="shuffleActive"
+          :disabled="!canShuffle"
+          :label="`隨機播放${entityLabel}`"
+          :aria-pressed="shuffleActive"
+          @click="emit('toggleShuffle')"
+        />
+        <UiIconButton
+          :icon="ListEnd"
+          :disabled="!canAddToQueue"
+          :label="`將${entityLabel}新增至佇列`"
+          @click="emit('addToQueue')"
+        />
+        <UiIconButton
+          v-if="entityAction"
+          class="collection-action-rail__extension"
+          :icon="entityAction.icon"
+          :disabled="entityAction.disabled"
+          :label="entityAction.label"
+          :aria-haspopup="entityAction.menuContent ? 'menu' : undefined"
+          :aria-expanded="
+            entityAction.menuContent
+              ? activeMenu === 'entity'
+                ? 'true'
+                : 'false'
+              : undefined
+          "
+          @click="activateEntityAction"
+        />
+        <UiIconButton
+          v-if="hasMoreActions"
+          :icon="Ellipsis"
+          :label="`${entityLabel}的更多操作`"
+          aria-haspopup="menu"
+          :aria-expanded="activeMenu === 'more' ? 'true' : 'false'"
+          @click="openMenu($event, 'more')"
+        />
+      </slot>
     </div>
 
-    <div class="collection-action-rail__tools">
+    <div v-if="showSearch || showDensity" class="collection-action-rail__tools">
       <UiSearchBox
         v-if="showSearch"
         :model-value="searchQuery"
@@ -157,6 +160,7 @@ function selectMenuAction(value) {
         @update:model-value="emit('update:searchQuery', $event)"
       />
       <TrackListDensityMenu
+        v-if="showDensity"
         class="collection-action-rail__density"
         :density="density"
         @update-density="emit('updateDensity', $event)"

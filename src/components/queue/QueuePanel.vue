@@ -4,6 +4,7 @@ import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { usePerformanceQueueActions } from '../../composables/usePerformanceQueueActions.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import { useRecentPlaybackActivation } from '../../composables/useRecentPlaybackActivation.js';
 import { usePlayer } from '../../composables/usePlayer.js';
@@ -20,12 +21,11 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import { MicVocal } from '../../icons/index.js';
+import { Tickets } from '../../icons/index.js';
 import PerformanceSessionDockContent from '../performance-session/PerformanceSessionDockContent.vue';
 import PerformanceSessionSummary from '../performance-session/PerformanceSessionSummary.vue';
 import BgmPlayer from '../bgm/BgmPlayer.vue';
 import { useAppRightDock } from '../../composables/useAppRightDock.js';
-import { useObsIntegration } from '../../composables/useObsIntegration.js';
 
 defineProps({
   active: { type: Boolean, default: false },
@@ -33,22 +33,11 @@ defineProps({
 
 const emit = defineEmits(['close', 'collapse']);
 const dock = useAppRightDock();
+const performanceQueue = usePerformanceQueueActions();
 const arrangementTabs = [
   { id: 'pending', label: '待唱清單' },
   { id: 'history', label: '演出紀錄' },
 ];
-const { state: obsState } = useObsIntegration();
-const obsConnected = computed(
-  () =>
-    !obsState.statusReadError &&
-    ['ready', 'degraded'].includes(obsState.observed.lifecycle),
-);
-const obsLive = computed(
-  () => obsConnected.value && obsState.observed.streaming.active,
-);
-const obsRecording = computed(
-  () => obsConnected.value && obsState.observed.recording.active,
-);
 
 const {
   state: playerState,
@@ -162,6 +151,8 @@ async function handleTrackMenuSelect(value) {
     if (playlist) addTrackToPlaylist(playlist.id, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToQueue) {
     enqueueTrack(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.addToPerformanceQueue) {
+    await performanceQueue.addTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromQueue) {
     removeQueuedTrack(track.id);
     if (selectedTrackId.value === track.id) selectedTrackId.value = null;
@@ -306,6 +297,7 @@ const {
       />
 
       <TrackActionMenu
+        :performance-queue-busy="performanceQueue.state.isSaving"
         :open="Boolean(trackMenu)"
         :anchor="trackMenu?.anchor"
         :track="trackMenu?.track ?? null"
@@ -343,50 +335,43 @@ const {
           variant="bar"
           @update:active-id="dock.selectArrangementTab"
         />
-        <UiIconButton
-          :icon="MicVocal"
-          :label="
-            dock.queueVariant.value === 'arrangement'
-              ? '切換一般佇列'
-              : '切換演出安排'
-          "
-          :active="dock.queueVariant.value === 'arrangement'"
-          :aria-pressed="dock.queueVariant.value === 'arrangement'"
-          tooltip-placement="bottom"
-          @click="
-            dock.selectQueueVariant(
-              dock.queueVariant.value === 'arrangement'
-                ? 'queue'
-                : 'arrangement',
-            )
-          "
-        />
       </div>
     </template>
 
-    <template
-      v-if="active && dock.queueVariant.value === 'arrangement'"
-      #summary
-    >
-      <div class="queue-panel__summary">
-        <PerformanceSessionSummary compact />
-        <span
-          v-if="obsLive || obsRecording"
-          class="queue-panel__broadcast"
-          role="status"
-          aria-label="OBS 輸出狀態"
-        >
-          <span v-if="obsLive">LIVE</span>
-          <span v-if="obsRecording">REC</span>
-        </span>
-      </div>
+    <template #actions>
+      <UiIconButton
+        :icon="Tickets"
+        size="md"
+        :label="
+          dock.queueVariant.value === 'arrangement'
+            ? '切換一般佇列'
+            : '切換演出安排'
+        "
+        :active="dock.queueVariant.value === 'arrangement'"
+        :aria-pressed="dock.queueVariant.value === 'arrangement'"
+        tooltip-placement="bottom"
+        @click="
+          dock.selectQueueVariant(
+            dock.queueVariant.value === 'arrangement' ? 'queue' : 'arrangement',
+          )
+        "
+      />
     </template>
 
     <template
       v-if="active && dock.queueVariant.value === 'arrangement'"
       #footer
     >
-      <BgmPlayer variant="dock" />
+      <div
+        v-if="dock.arrangementTab.value === 'history'"
+        class="queue-panel__footer-summary"
+      >
+        <PerformanceSessionSummary compact scope="completed" />
+      </div>
+      <BgmPlayer
+        variant="dock"
+        :active="dock.arrangementTab.value !== 'history'"
+      />
     </template>
 
     <PerformanceSessionDockContent
@@ -512,30 +497,20 @@ const {
 </template>
 
 <style scoped>
-.queue-panel__summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
+.queue-panel__view-controls,
+.queue-panel__footer-summary,
+.queue-panel :deep(.session-history-tools__archives) {
+  -webkit-user-select: none;
+  user-select: none;
 }
-.queue-panel__broadcast {
-  display: flex;
-  gap: var(--ui-space-2);
-  color: var(--ui-color-live);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
+
+.queue-panel__footer-summary {
+  min-inline-size: 0;
 }
 .queue-panel__view-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
   min-inline-size: 0;
-}
-.queue-panel__view-controls > :first-child {
-  flex: 1;
-  min-inline-size: 0;
+  inline-size: max-content;
+  max-inline-size: 100%;
 }
 .queue-panel__content {
   min-width: 0;

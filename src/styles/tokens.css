@@ -887,6 +887,7 @@
 }
 
 /* Light is a semantic remap of the same primitives, not a color inversion. */
+[data-ui-system='v2'] [data-ui-region='receipt'],
 :root[data-ui-theme='light']
   [data-ui-system='v2'][data-ui-surface-root='true'] {
   --ui-color-scheme: light;
@@ -1077,7 +1078,11 @@
   );
   --ui-color-gated: var(--ui-color-warning);
   --ui-color-gated-bg: var(--ui-color-warning-soft);
+}
 
+/* Recompose control aliases at either local color boundary. */
+[data-ui-system='v2'] [data-ui-region='receipt'],
+[data-ui-system='v2'] [data-ui-region='chrome'] {
   --ui-field-bg: var(--ui-color-surface-raised);
   --ui-field-bg-hover: var(--ui-color-surface-hover);
   --ui-field-bg-readonly: var(--ui-color-surface);
@@ -1135,4 +1140,21 @@
   --ui-scrollbar-thumb-active: var(--ui-color-text);
 
   color: var(--ui-color-text);
+}
+
+/* The arrangement receipt is warm paper even inside the dark application.
+ * Shared controls keep their own geometry, focus and status contracts. */
+[data-ui-system='v2'] [data-ui-region='receipt'] {
+  color-scheme: light;
+  --ui-color-canvas: var(--ui-palette-warm-neutral-50);
+  --ui-color-surface: var(--ui-palette-warm-neutral-50);
+  --ui-color-surface-raised: var(--ui-palette-warm-neutral-100);
+  --ui-color-current: var(--ui-color-accent);
+  --ui-color-current-soft: var(--ui-color-accent-soft);
+  --ui-color-status-outline: var(--ui-color-text);
+  --ui-color-live-soft: var(--ui-color-danger-soft);
+  --ui-color-gated: var(--ui-color-warning);
+  --ui-color-gated-bg: var(--ui-color-warning-soft);
+  --ui-segmented-selected-foreground: var(--ui-color-text);
+  --ui-segmented-selected-indicator: var(--ui-color-control-boundary);
 }

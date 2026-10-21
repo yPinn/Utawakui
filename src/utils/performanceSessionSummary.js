@@ -1,5 +1,19 @@
 // Read-only projection of arrangement occurrences and canonical media lengths.
 // Track lengths are not wall-clock singing time; manual items have no audio clock.
+import { formatGroupedInteger, formatLongDuration } from './format.js';
+
+export function formatPerformanceSessionSummary(summary, items) {
+  const unit = items.every((item) => item.mode === 'library-track')
+    ? '首曲目'
+    : '項';
+  const count = `${formatGroupedInteger(summary.total)} ${unit}`;
+  const duration =
+    summary.total && summary.unknownDurationCount === summary.total
+      ? '時長未知'
+      : `${summary.unknownDurationCount ? '已知 ' : ''}${formatLongDuration(summary.knownDuration)}`;
+  return duration ? `${count}，${duration}` : count;
+}
+
 export function performanceSessionSummary(items, tracks, currentItemId = null) {
   const durations = new Map(tracks.map((track) => [track.id, track.duration]));
   const summary = {

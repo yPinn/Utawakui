@@ -44,6 +44,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  'selectEntry',
+  'entryKeydown',
+  'openEntryMenu',
   'selectTrack',
   'activateTrack',
   'togglePlayback',
@@ -62,7 +65,10 @@ const visibleRoles = computed(
   () => new Set(props.columns.map((column) => column.role)),
 );
 const semanticColumns = computed(() =>
-  props.columns.filter((column) => Boolean(column.textField)),
+  props.columns.filter(
+    (column) =>
+      Boolean(column.textField) && column.role !== 'performanceStatus',
+  ),
 );
 const rowActionDescription = computed(() =>
   props.dragEnabled
@@ -116,12 +122,23 @@ function handleActionKeydown(event) {
     emit('openMenu', props.entry.track, event);
   }
 }
+
+function openContextMenu(event) {
+  if (props.profile.readOnly) return;
+  event.preventDefault();
+  if (props.profile.managedActions) {
+    emit('openEntryMenu', props.entry, event);
+    return;
+  }
+  emit('openMenu', props.entry.track, event);
+}
 </script>
 
 <template>
   <li
     class="library-track-row"
     :class="{
+      'library-track-row--readonly': profile.readOnly || profile.managedActions,
       'library-track-row--compact': density === 'compact',
       'library-track-row--selected': selected,
       'library-track-row--current': current,
@@ -134,7 +151,7 @@ function handleActionKeydown(event) {
     role="listitem"
     :aria-current="current ? 'true' : undefined"
     :draggable="dragEnabled"
-    @contextmenu.prevent="emit('openMenu', entry.track, $event)"
+    @contextmenu="openContextMenu($event)"
     @dragstart="dragEnabled && emit('dragStart', entry.track, $event)"
     @dragover="dragEnabled && emit('dragOver', entry.track, $event)"
     @dragleave="dragEnabled && emit('dragLeave', entry.track, $event)"
@@ -142,6 +159,7 @@ function handleActionKeydown(event) {
     @dragend="dragEnabled && emit('dragEnd')"
   >
     <button
+      v-if="!profile.readOnly && !profile.managedActions"
       type="button"
       class="library-track-row__action"
       :aria-label="`選取：${entry.track.title}`"
@@ -150,6 +168,18 @@ function handleActionKeydown(event) {
       @click.stop="emit('selectTrack', entry.track)"
       @dblclick.stop="emit('activateTrack', entry.track)"
       @keydown="handleActionKeydown"
+    ></button>
+    <button
+      v-else-if="profile.managedActions && entry.interactive"
+      type="button"
+      class="library-track-row__action"
+      :disabled="entry.disabled"
+      :aria-label="entry.actionLabel"
+      :aria-description="entry.actionDescription"
+      aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+      :aria-pressed="selected"
+      @click.stop="!entry.disabled && emit('selectEntry', entry)"
+      @keydown="emit('entryKeydown', entry, $event)"
     ></button>
 
     <span
@@ -163,6 +193,7 @@ function handleActionKeydown(event) {
         {{ entry.ordinalText }}
       </span>
       <UiIconButton
+        v-if="!profile.readOnly && !profile.managedActions"
         class="library-track-row__playback-control"
         :icon="playing ? Pause : Play"
         :label="`${playing ? '暫停' : '播放'}：${entry.track.title}`"
@@ -194,6 +225,7 @@ function handleActionKeydown(event) {
           v-if="entry.track.artist && profile.showArtist"
           class="library-track-row__subtitle"
           :track="entry.track"
+          :navigable="profile.artistNavigation"
         />
       </span>
     </span>
@@ -242,8 +274,16 @@ function handleActionKeydown(event) {
         :data-column-numeric="column.numeric ? 'true' : undefined"
         :lang="column.role === 'release' ? contentLang : undefined"
         :text="entry[column.textField]"
-        @click.stop="emit('selectTrack', entry.track)"
-        @dblclick.stop="emit('activateTrack', entry.track)"
+        @click.stop="
+          !profile.readOnly &&
+          !profile.managedActions &&
+          emit('selectTrack', entry.track)
+        "
+        @dblclick.stop="
+          !profile.readOnly &&
+          !profile.managedActions &&
+          emit('activateTrack', entry.track)
+        "
       >
         {{ entry[column.textField] || '—' }}
       </UiOverflowTooltip>
@@ -259,12 +299,19 @@ function handleActionKeydown(event) {
     <span
       v-if="hasColumn('duration')"
       class="library-track-row__duration"
+      :class="{
+        'library-track-row__duration--plain':
+          profile.readOnly || profile.managedActions,
+      }"
       data-track-column="duration"
       data-column-priority="duration"
       data-column-align="end"
       data-column-numeric="true"
     >
-      <span class="library-track-row__status">
+      <span
+        v-if="!profile.readOnly && !profile.managedActions"
+        class="library-track-row__status"
+      >
         <UiStatusIcon
           v-if="separationReady"
           :icon="BadgeCheck"
@@ -295,18 +342,32 @@ function handleActionKeydown(event) {
     </span>
 
     <span
-      v-if="hasColumn('actions')"
+      v-if="hasColumn('performanceStatus')"
+      class="library-track-row__semantic"
+      data-track-column="performanceStatus"
+      data-column-priority="essential"
+      :data-column-align="columnAlignment('performanceStatus')"
+      ><UiOverflowTooltip :text="entry.performanceStatusText">{{
+        entry.performanceStatusText || '—'
+      }}</UiOverflowTooltip></span
+    >
+
+    <span
+      v-if="hasColumn('actions') || hasColumn('performanceActions')"
       class="library-track-row__actions"
-      data-track-column="actions"
+      :data-track-column="
+        profile.managedActions ? 'performanceActions' : 'actions'
+      "
       data-column-align="end"
     >
-      <UiIconButton
-        class="library-track-row__more-action"
-        :icon="Ellipsis"
-        :label="`更多：${entry.track.title}`"
-        @click.stop="emit('openMenu', entry.track, $event)"
-        @dblclick.stop
-      />
+      <slot name="actions" :entry="entry"
+        ><UiIconButton
+          class="library-track-row__more-action"
+          :icon="Ellipsis"
+          :label="`更多：${entry.track.title}`"
+          @click.stop="emit('openMenu', entry.track, $event)"
+          @dblclick.stop
+      /></slot>
     </span>
   </li>
 </template>
@@ -399,6 +460,10 @@ function handleActionKeydown(event) {
   z-index: var(--ui-layer-raised);
 }
 
+.library-track-row__actions[data-track-column='performanceActions'] {
+  gap: var(--ui-space-2);
+}
+
 .library-track-row__ordinal,
 .library-track-row__ordinal-text,
 .library-track-row__identity,
@@ -448,9 +513,12 @@ function handleActionKeydown(event) {
   pointer-events: auto;
 }
 
-.library-track-row:hover .library-track-row__ordinal-text,
-.library-track-row:focus-within .library-track-row__ordinal-text,
-.library-track-row--current .library-track-row__ordinal-text {
+.library-track-row:not(.library-track-row--readonly):hover
+  .library-track-row__ordinal-text,
+.library-track-row:not(.library-track-row--readonly):focus-within
+  .library-track-row__ordinal-text,
+.library-track-row--current:not(.library-track-row--readonly)
+  .library-track-row__ordinal-text {
   opacity: 0;
 }
 
@@ -501,6 +569,10 @@ function handleActionKeydown(event) {
 
 .library-track-row__duration-text {
   justify-self: end;
+}
+.library-track-row__duration--plain {
+  display: block;
+  text-align: end;
 }
 
 .library-track-row__subtitle,

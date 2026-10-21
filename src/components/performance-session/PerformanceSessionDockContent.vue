@@ -10,6 +10,8 @@ import { useAppRightDock } from '../../composables/useAppRightDock.js';
 import PerformanceSessionCurrent from './PerformanceSessionCurrent.vue';
 import PerformanceSessionQueueList from './PerformanceSessionQueueList.vue';
 import PerformanceSessionCompletedList from './PerformanceSessionCompletedList.vue';
+import PerformanceSessionHistoryTools from './PerformanceSessionHistoryTools.vue';
+import PerformanceBroadcastStatus from './PerformanceBroadcastStatus.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
@@ -26,10 +28,12 @@ const confirmed = computed(() =>
       item.progress === 'playing',
   ),
 );
-const { activeView, performanceTool } = useAppView();
+const { activeView, performanceTool, performanceArchiveId } = useAppView();
 const mainPageVisible = computed(
   () =>
-    activeView.value === 'performance' && performanceTool.value === 'session',
+    activeView.value === 'performance' &&
+    performanceTool.value === 'session' &&
+    !performanceArchiveId.value,
 );
 const busy = computed(() => plan.state.isSaving || playback.state.busy);
 async function remove(itemId) {
@@ -47,9 +51,13 @@ onMounted(plan.initialize);
 </script>
 
 <template>
-  <PerformanceSessionCompletedList
+  <PerformanceSessionHistoryTools
     v-if="dock.arrangementTab.value === 'history'"
-  />
+    dock
+  >
+    <template #current-status><PerformanceBroadcastStatus /></template>
+    <PerformanceSessionCompletedList />
+  </PerformanceSessionHistoryTools>
   <template v-else>
     <UiNotice
       v-if="
@@ -68,13 +76,17 @@ onMounted(plan.initialize);
         playback.state.error
       "
     />
-    <UiCheckbox
-      v-if="!mainPageVisible"
-      id="dock-arrangement-continuous"
-      label="連續播放"
-      :model-value="playback.state.continuous"
-      @update:model-value="playback.setContinuous"
-    />
+    <div class="performance-session-dock__info">
+      <UiCheckbox
+        v-if="!mainPageVisible"
+        id="dock-arrangement-continuous"
+        label="連續播放"
+        :model-value="playback.state.continuous"
+        @update:model-value="playback.setContinuous"
+      />
+      <h3 v-else class="performance-session-dock__heading">待唱順序</h3>
+      <PerformanceBroadcastStatus />
+    </div>
     <div
       id="arrangement-dock-pending-panel"
       class="performance-session-dock__playback"
@@ -110,6 +122,24 @@ onMounted(plan.initialize);
 </template>
 
 <style scoped>
+.performance-session-dock__info {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-right-dock-content-gap);
+  padding-block: var(--ui-right-dock-content-inset);
+  min-block-size: calc(
+    var(--ui-type-label-size) * var(--ui-type-label-line-height) + 2 *
+      (var(--ui-border-width) + var(--ui-right-dock-content-inset))
+  );
+}
+.performance-session-dock__heading {
+  margin: 0;
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
+}
 .performance-session-dock__playback {
   display: flex;
   flex-direction: column;

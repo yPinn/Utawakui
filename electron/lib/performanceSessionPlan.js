@@ -1,5 +1,11 @@
 'use strict';
 
+const {
+  normalizeSessionFields,
+  sessionProjectionFields,
+  createSessionOperations,
+} = require('./performanceSessionArchive');
+
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -43,6 +49,7 @@ const VALIDATION_MESSAGES = Object.freeze({
   SESSION_PLAN_ITEM_NOT_FOUND: '找不到這個場次項目，請重新整理後再試。',
   SESSION_PLAN_STALE_REVISION: '這首曲目已在其他操作中更新，請重新確認。',
   SESSION_PLAN_SOURCE_INVALID: '來源播放清單目前無法建立場次草稿。',
+  SESSION_PLAN_ARCHIVE_NOT_FOUND: '找不到這個封存場次，請重新讀取。',
   SESSION_PLAN_INTENT_INVALID: '場次準備操作無效，請重新整理後再試。',
 });
 
@@ -278,6 +285,7 @@ function normalizeDocument(value) {
     source,
     reviewCursorItemId,
     items,
+    ...normalizeSessionFields(value, sanitizePersistedItem, sanitizeSource),
   };
 }
 
@@ -372,6 +380,7 @@ function projectDocument(document, tracksByIdValue) {
 
   return {
     version: document.version,
+    ...sessionProjectionFields(document),
     updatedAt: document.updatedAt,
     source: document.source,
     reviewCursorItemId: document.reviewCursorItemId,
@@ -399,9 +408,30 @@ function createPerformanceSessionPlanStore({
       throw error;
     }
 
+    let value;
     try {
-      return normalizeDocument(JSON.parse(raw));
-    } catch {
+      value = JSON.parse(raw);
+      return normalizeDocument(value);
+    } catch (error) {
+      // Archives are user-authored history. Fail closed instead of replacing
+      // a malformed archive with an empty, editable document.
+      if (error?.publicValidation) throw error;
+      if (
+        value &&
+        typeof value === 'object' &&
+        ['sessionId', 'archives', 'timeline'].some((key) =>
+          Object.hasOwn(value, key),
+        )
+      ) {
+        throw Object.assign(
+          new Error('場次資料無法讀取；原檔已保留，請先修復資料。'),
+          {
+            code: 'SESSION_ARCHIVE_INVALID',
+            field: null,
+            publicValidation: true,
+          },
+        );
+      }
       backupCorrupted(filePath);
       return emptyDocument();
     }
@@ -486,7 +516,7 @@ function createPerformanceSessionPlanStore({
     });
   }
 
-  function setProgress(intent, tracksById) {
+  function setProgress(intent, tracksById, timelineEntry = null) {
     if (
       !intent ||
       !isBoundedId(intent.itemId) ||
@@ -521,15 +551,13 @@ function createPerformanceSessionPlanStore({
       item.progress = intent.progress;
       item.progressRevision += 1;
       item.progressUpdatedAt = now().toISOString();
+      if (intent.progress === 'playing' && timelineEntry)
+        sessions.attachTimeline(draft, timelineEntry);
     });
     return projectDocument(document, tracksById);
   }
 
-  function replaceFromCollection({
-    collection,
-    tracksById: tracksByIdValue,
-    replaceCurrent = false,
-  }) {
+  function collectionItems(collection, tracksByIdValue) {
     const source = sanitizeSource(collection);
     if (!source || !Array.isArray(collection?.trackIds)) {
       throw validationError('SESSION_PLAN_SOURCE_INVALID');
@@ -555,6 +583,18 @@ function createPerformanceSessionPlanStore({
       );
     }
 
+    return { source, nextItems, tracksById };
+  }
+
+  function replaceFromCollection({
+    collection,
+    tracksById: tracksByIdValue,
+    replaceCurrent = false,
+  }) {
+    const { source, nextItems, tracksById } = collectionItems(
+      collection,
+      tracksByIdValue,
+    );
     const document = mutate((draft) => {
       if (draft.items.length > 0 && !replaceCurrent) {
         throw validationError('SESSION_PLAN_REPLACE_REQUIRED', null, {
@@ -567,6 +607,56 @@ function createPerformanceSessionPlanStore({
       draft.source = source;
       draft.items = nextItems;
       draft.reviewCursorItemId = nextItems[0]?.itemId ?? null;
+    });
+    return projectDocument(document, tracksById);
+  }
+
+  function appendFromCollection({ collection, tracksById: tracksByIdValue }) {
+    const { nextItems, tracksById } = collectionItems(
+      collection,
+      tracksByIdValue,
+    );
+    const document = mutate((draft) => {
+      if (
+        draft.items.length + nextItems.length >
+        PERFORMANCE_SESSION_PLAN_ITEM_LIMIT
+      ) {
+        throw validationError('SESSION_PLAN_ITEM_LIMIT_EXCEEDED');
+      }
+      if (!nextItems.length) return false;
+      draft.items.push(...nextItems);
+    });
+    return projectDocument(document, tracksById);
+  }
+
+  function appendFromArchive(sessionId, tracksById) {
+    if (!isBoundedId(sessionId)) {
+      throw validationError('SESSION_PLAN_INTENT_INVALID', 'sessionId');
+    }
+    const document = mutate((draft) => {
+      const archive = draft.archives?.find((entry) => entry.id === sessionId);
+      if (!archive) throw validationError('SESSION_PLAN_ARCHIVE_NOT_FOUND');
+      if (
+        draft.items.length + archive.items.length >
+        PERFORMANCE_SESSION_PLAN_ITEM_LIMIT
+      )
+        throw validationError('SESSION_PLAN_ITEM_LIMIT_EXCEEDED');
+      if (!archive.items.length) return false;
+      draft.items.push(
+        ...archive.items.map((item) =>
+          createItem({
+            mode: item.mode,
+            trackId: item.trackId,
+            displayTitle: item.displayTitle,
+            displayArtist: item.displayArtist,
+            origin: 'duplicate',
+            verification: item.verification,
+            sourceSnapshot: item.sourceSnapshot
+              ? { ...item.sourceSnapshot }
+              : null,
+          }),
+        ),
+      );
     });
     return projectDocument(document, tracksById);
   }
@@ -901,7 +991,38 @@ function createPerformanceSessionPlanStore({
     return changed;
   }
 
+  function preparePerformanceStart(intent, tracksById) {
+    const current = getProjected(tracksById);
+    const item = current.items.find((i) => i.itemId === intent?.itemId);
+    if (
+      !item ||
+      item.progress !== 'queued' ||
+      item.progressRevision !== intent.expectedProgressRevision ||
+      !item.ready
+    )
+      throw validationError('SESSION_PLAN_STALE_REVISION');
+    assertNoCurrent(load());
+    const session = sessions.ensureSession(tracksById);
+    return {
+      identity: `arrangement:${session.sessionId}:${item.itemId}`,
+      itemId: item.itemId,
+      track: {
+        id: item.trackId ?? `manual-${item.itemId}`,
+        title: item.displayTitle,
+        artist: item.displayArtist,
+      },
+    };
+  }
+  const sessions = createSessionOperations({
+    load,
+    mutate,
+    project: projectDocument,
+    assertNoCurrent,
+    now,
+  });
   return {
+    ...sessions,
+    preparePerformanceStart,
     appendLibraryTrack,
     appendManualItem,
     appendPlaceholders,
@@ -914,6 +1035,8 @@ function createPerformanceSessionPlanStore({
     reorderItem,
     removeItem,
     replaceFromCollection,
+    appendFromCollection,
+    appendFromArchive,
     setReviewCursor,
     unlinkTrack,
     updateItem,

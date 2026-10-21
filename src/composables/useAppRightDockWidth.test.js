@@ -1,6 +1,7 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 // Prepare browser globals before renderer singleton imports.
 vi.hoisted(() => vi.stubGlobal('window', {}));
+import { SIDEBAR_WIDTH_MAX } from './useSidebarWidth.js';
 import {
   RIGHT_DOCK_WIDTH_MAX,
   RIGHT_DOCK_WIDTH_MIN,
@@ -19,11 +20,14 @@ afterEach(() => {
 
 describe('useAppRightDockWidth', () => {
   it('clamps direct and relative keyboard-sized width changes', () => {
+    expect(RIGHT_DOCK_WIDTH_MAX).toBe(SIDEBAR_WIDTH_MAX);
     dockWidth.setWidth(RIGHT_DOCK_WIDTH_MIN - 50);
     expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN);
 
     dockWidth.resizeBy(24);
-    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN + 24);
+    expect(dockWidth.width.value).toBe(
+      Math.min(RIGHT_DOCK_WIDTH_MAX, RIGHT_DOCK_WIDTH_MIN + 24),
+    );
 
     dockWidth.setWidth(RIGHT_DOCK_WIDTH_MAX + 50);
     expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MAX);
@@ -42,7 +46,7 @@ describe('useAppRightDockWidth', () => {
       removeEventListener: vi.fn((type) => listeners.delete(type)),
     };
     const preventDefault = vi.fn();
-    dockWidth.setWidth(240);
+    dockWidth.setWidth(RIGHT_DOCK_WIDTH_MIN);
 
     dockWidth.startResize({
       currentTarget: target,
@@ -54,9 +58,11 @@ describe('useAppRightDockWidth', () => {
     expect(target.setPointerCapture).toHaveBeenCalledWith(7);
     expect(dockWidth.isResizing.value).toBe(false);
 
-    listeners.get('pointermove')({ clientX: 80 });
+    listeners.get('pointermove')({ clientX: 94 });
     expect(dockWidth.isResizing.value).toBe(true);
-    expect(dockWidth.width.value).toBe(260);
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN + 6);
+    listeners.get('pointermove')({ clientX: 70 });
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MAX);
 
     listeners.get('pointerup')();
     expect(target.releasePointerCapture).toHaveBeenCalledWith(7);

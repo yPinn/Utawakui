@@ -23,6 +23,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   activeSource: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
+  playbackEnabled: { type: Boolean, default: true },
   draggable: { type: Boolean, default: false },
   dragging: { type: Boolean, default: false },
   dropBefore: { type: Boolean, default: false },
@@ -120,7 +121,7 @@ function toggleFromArtwork(event) {
     }"
     :draggable="draggable"
     @click="emit('select')"
-    @dblclick="emit('togglePlayback', $event)"
+    @dblclick="playbackEnabled && emit('togglePlayback', $event)"
     @contextmenu="emit('contextmenu', $event)"
     @pointerdown="handlePointerDown"
     @pointerup="resetDragOrigin"
@@ -137,7 +138,7 @@ function toggleFromArtwork(event) {
       class="playlist-sidebar-row__select"
       :aria-current="active ? 'page' : undefined"
       @click.stop="emit('select')"
-      @dblclick.stop="emit('togglePlayback', $event)"
+      @dblclick.stop="playbackEnabled && emit('togglePlayback', $event)"
     >
       <span class="ui-visually-hidden">{{ selectLabel }}</span>
     </button>
@@ -153,7 +154,7 @@ function toggleFromArtwork(event) {
       :uppercase="false"
       :decorative="false"
     >
-      <template #overlay>
+      <template v-if="playbackEnabled" #overlay>
         <UiArtworkReveal>
           <UiIconButton
             :icon="playing ? Pause : Play"
@@ -177,6 +178,14 @@ function toggleFromArtwork(event) {
       </span>
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
+    <div
+      v-if="$slots.trailing"
+      class="playlist-sidebar-row__trailing"
+      @click.stop
+      @dblclick.stop
+    >
+      <slot name="trailing" />
+    </div>
     <UiSeparator
       v-if="dropPosition"
       tone="accent"
@@ -200,6 +209,7 @@ function toggleFromArtwork(event) {
   position: relative;
   isolation: isolate;
   display: flex;
+  min-inline-size: 0;
   align-items: center;
   gap: var(--ui-sidebar-row-gap);
   block-size: var(--ui-sidebar-row-min-height);
@@ -304,7 +314,8 @@ function toggleFromArtwork(event) {
    does not reveal it, so Enter there never implies playback. */
 
 .playlist-sidebar-row__thumb,
-.playlist-sidebar-row__info {
+.playlist-sidebar-row__info,
+.playlist-sidebar-row__trailing {
   position: relative;
   z-index: var(--ui-layer-overlay);
 }
@@ -319,6 +330,12 @@ function toggleFromArtwork(event) {
   transition:
     opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
     visibility 0s linear 0s;
+}
+
+.playlist-sidebar-row__trailing {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
 }
 
 .playlist-sidebar-row__name {

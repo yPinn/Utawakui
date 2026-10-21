@@ -1,10 +1,11 @@
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DockContent from './PerformanceSessionDockContent.vue';
 const fixture = vi.hoisted(() => ({
   activeView: { value: 'performance' },
   performanceTool: { value: 'session' },
+  performanceArchiveId: { value: null },
 }));
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => fixture,
@@ -43,7 +44,18 @@ vi.mock('./PerformanceSessionQueueList.vue', () => ({
   default: { render: () => h('p', '待唱清單') },
 }));
 const render = () => renderToString(createSSRApp(DockContent));
+beforeEach(() => {
+  fixture.performanceArchiveId.value = null;
+});
 describe('Dock control ownership follows the visible session page', () => {
+  it('retains current playback controls when the main page shows an archive instead of the active arrangement', async () => {
+    fixture.activeView.value = 'performance';
+    fixture.performanceTool.value = 'session';
+    fixture.performanceArchiveId.value = 'old';
+    const html = await render();
+    expect(html).toContain('目前播放控制');
+    expect(html).toContain('連續播放');
+  });
   it('keeps the list but omits duplicate playback and continuous controls on the page', async () => {
     fixture.activeView.value = 'performance';
     fixture.performanceTool.value = 'session';

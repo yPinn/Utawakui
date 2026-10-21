@@ -37,6 +37,100 @@ function readSessionFile(dir, sessionId) {
 }
 
 describe('sessionHistoryService', () => {
+  it('records consecutive performances of the same track by confirmed identity, but deduplicates resumes and retransmissions', async () => {
+    const userDataDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'session-occurrence-'),
+    );
+    try {
+      const obsAdapter = fakeObsAdapter({ streaming: true });
+      const service = createSessionHistoryService({
+        userDataDir,
+        obsAdapter,
+        getSkipThresholdMs: () => 0,
+      });
+      const track = { id: 'same', title: 'Repeated', artist: 'Singer' };
+      const first = await service.observePerformance({
+        identity: 'epoch-1:1',
+        track,
+        itemId: 'item-a',
+      });
+      const resumed = await service.observePerformance({
+        identity: 'epoch-1:1',
+        track,
+        itemId: 'item-a',
+      });
+      const second = await service.observePerformance({
+        identity: 'epoch-1:2',
+        track,
+        itemId: 'item-b',
+      });
+      expect(first.id).toBe(resumed.id);
+      expect(second.id).not.toBe(first.id);
+      expect(service.getLatestSession().entries).toHaveLength(2);
+      expect(obsAdapter.requestStreamSnapshot).toHaveBeenCalledTimes(2);
+      expect(second.itemId).toBe('item-b');
+    } finally {
+      fs.rmSync(userDataDir, { recursive: true, force: true });
+    }
+  });
+  it('ignores stale LIVE flags after disconnect and binds an in-flight marker to the original main-owned session context', async () => {
+    const userDataDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'session-marker-'),
+    );
+    try {
+      const obsAdapter = fakeObsAdapter({ streaming: true });
+      obsAdapter.getStatus.mockReturnValue({
+        observed: {
+          lifecycle: 'disconnected',
+          streaming: { active: true },
+          recording: { active: false },
+        },
+      });
+      const onMarker = vi.fn();
+      let context = 'old';
+      const service = createSessionHistoryService({
+        userDataDir,
+        obsAdapter,
+        onMarker,
+        getMarkerContext: () => context,
+        getSkipThresholdMs: () => 0,
+      });
+      const offline = await service.observePerformance({
+        identity: 'offline',
+        track: { id: 'song', title: 'Song' },
+      });
+      expect(offline.stream).toBeNull();
+      expect(await service.addMarker('Offline')).toBeNull();
+      expect(obsAdapter.requestStreamSnapshot).not.toHaveBeenCalled();
+      obsAdapter.getStatus.mockReturnValue({
+        observed: {
+          lifecycle: 'ready',
+          streaming: { active: true },
+          recording: { active: false },
+        },
+      });
+      let resolve;
+      obsAdapter.requestStreamSnapshot.mockImplementation(
+        () =>
+          new Promise((r) => {
+            resolve = r;
+          }),
+      );
+      const pending = service.addMarker('MC');
+      await vi.waitFor(() =>
+        expect(obsAdapter.requestStreamSnapshot).toHaveBeenCalledOnce(),
+      );
+      context = 'new';
+      resolve({ timecode: '00:03:00.000', durationMs: 180000 });
+      await pending;
+      expect(onMarker).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'marker', label: 'MC' }),
+        'old',
+      );
+    } finally {
+      fs.rmSync(userDataDir, { recursive: true, force: true });
+    }
+  });
   let dir;
   let sessionIds;
   let nextSessionId;

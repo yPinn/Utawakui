@@ -218,6 +218,47 @@ function rowRoles(row) {
 }
 
 describe('TrackTable canonical grid', () => {
+  it('keeps occurrence identity for repeated tracks and renders an inert archive ledger', async () => {
+    const props = reactive({
+      collectionKind: 'performance-archive',
+      entries: [
+        {
+          key: 'first',
+          visibleIndex: 0,
+          track: tracks[0],
+          performanceStatusText: '完成',
+        },
+        {
+          key: 'repeat',
+          visibleIndex: 1,
+          track: tracks[0],
+          performanceStatusText: '完成',
+        },
+        {
+          key: 'manual',
+          visibleIndex: 2,
+          track: { id: 'manual', title: '清唱', artist: '現場' },
+          performanceStatusText: '手動曲目 · 完成',
+        },
+      ],
+    });
+    const { root, app } = mount(TrackTable, props);
+    const occurrences = () =>
+      findAll(root, (node) => Boolean(node.props?.['data-occurrence-id']));
+    const repeated = occurrences()[1];
+    expect(
+      occurrences().map((node) => node.props['data-occurrence-id']),
+    ).toEqual(['first', 'repeat', 'manual']);
+    expect(findAll(root, (node) => node.type === 'button')).toHaveLength(0);
+    expect(textContent(root)).toContain('手動曲目 · 完成');
+    props.entries = props.entries.slice(1);
+    await nextTick();
+    expect(occurrences()[0]).toBe(repeated);
+    expect(
+      occurrences().map((node) => node.props['data-occurrence-id']),
+    ).toEqual(['repeat', 'manual']);
+    app.unmount();
+  });
   it('forms one continuous ledger sheet with functional row rules', () => {
     const headerRule = source.match(
       /\.library-track-table__header\s*\{(?<body>[\s\S]*?)\n\}/u,
@@ -262,7 +303,7 @@ describe('TrackTable canonical grid', () => {
       'actions',
     ]);
     expect(rowRoles(row)).toEqual(rowRoles(header));
-    expect(header.props.style).toBe(row.props.style);
+    expect(header.props.style).toEqual(row.props.style);
     const titleSort = findAll(
       header,
       (node) => node.props?.['aria-label'] === '曲目排序',

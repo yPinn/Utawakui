@@ -7,6 +7,7 @@ import {
   ListPlus,
   Pencil,
   Plus,
+  Tickets,
   Trash2,
 } from '../../icons/index.js';
 import {
@@ -36,6 +37,7 @@ const props = defineProps({
   removeFromPlaylistId: { type: String, default: '' },
   canGoToAlbum: { type: Boolean, default: false },
   canDelete: { type: Boolean, default: false },
+  performanceQueueBusy: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['select', 'close']);
@@ -117,6 +119,14 @@ const content = computed(() => {
                   : '',
               value: { action: TRACK_MENU_ACTIONS.addToQueue },
             },
+        {
+          id: 'add-to-performance-queue',
+          kind: 'action',
+          label: '加入演出待唱',
+          icon: Tickets,
+          disabled: props.performanceQueueBusy,
+          value: { action: TRACK_MENU_ACTIONS.addToPerformanceQueue },
+        },
       ],
     },
     {

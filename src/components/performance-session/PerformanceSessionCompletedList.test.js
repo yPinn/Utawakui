@@ -35,10 +35,12 @@ const render = () =>
 beforeEach(() => {
   fixture.playback.historyItems.value = [];
   fixture.library.state.tracks = [];
+  fixture.plan.state.isInitialized = true;
+  fixture.plan.state.error = null;
 });
 
 describe('completed arrangement uses the Recent list recipe', () => {
-  it('keeps separate occurrences in newest-first order with snapshot labels and canonical artwork', async () => {
+  it('keeps separate occurrences in ascending completion order with snapshot labels and canonical artwork', async () => {
     fixture.library.state.tracks = [
       {
         id: 'song',
@@ -85,8 +87,8 @@ describe('completed arrangement uses the Recent list recipe', () => {
     const html = await render();
     expect(html).toContain('recent-playback__list');
     expect(html.match(/recent-playback__item/g)).toHaveLength(2);
-    expect(html.indexOf('New completed')).toBeLessThan(
-      html.indexOf('Old completed'),
+    expect(html.indexOf('Old completed')).toBeLessThan(
+      html.indexOf('New completed'),
     );
     expect(html).toContain('Snapshot artist');
     expect(html).toContain('https://example.test/art.jpg');
@@ -96,14 +98,11 @@ describe('completed arrangement uses the Recent list recipe', () => {
     expect(html).not.toMatch(
       /performance-session-board__current|performance-session-plan-entry__ordinal|ui-chip/,
     );
-    expect(html).toContain('aria-labelledby="arrangement-dock-history-tab"');
-    expect(html).toContain('aria-label="完成第 2 首"');
-    expect(html).toContain('aria-label="完成第 1 首"');
+    expect(html).not.toContain('role="tabpanel"');
+    expect(html).not.toContain('queue-track__ordinal');
     const rows = html.match(/<li\b[\s\S]*?<\/li>/g);
-    expect(rows[0]).toContain('完成第 2 首');
-    expect(rows[0]).toContain('New completed');
-    expect(rows[1]).toContain('完成第 1 首');
-    expect(rows[1]).toContain('Old completed');
+    expect(rows[0]).toContain('Old completed');
+    expect(rows[1]).toContain('New completed');
   });
   it('keeps manual starts explicit and missing files visible without a false play action', async () => {
     fixture.playback.historyItems.value = [
@@ -134,7 +133,67 @@ describe('completed arrangement uses the Recent list recipe', () => {
   });
   it('uses completion-specific empty copy', async () => {
     const html = await render();
-    expect(html).toContain('尚無演出紀錄');
+    expect(html).toContain('尚無完成紀錄，完成後會依序列出。');
     expect(html).not.toContain('尚無最近播放紀錄');
+    expect(html).not.toContain('ui-skeleton');
+    expect(html).not.toContain('recent-playback__item');
+  });
+  it('keeps repeated performances in one flat list across dates without restarting ordinals', async () => {
+    fixture.playback.historyItems.value = [
+      {
+        itemId: 'a',
+        trackId: 'same-song',
+        displayTitle: 'First',
+        progress: 'completed',
+        progressUpdatedAt: new Date(2026, 9, 20, 23, 50).toISOString(),
+      },
+      {
+        itemId: 'b',
+        trackId: 'same-song',
+        displayTitle: 'Second',
+        progress: 'completed',
+        progressUpdatedAt: new Date(2026, 9, 20, 23, 59).toISOString(),
+      },
+      {
+        itemId: 'c',
+        trackId: 'same-song',
+        displayTitle: 'Third',
+        progress: 'completed',
+        progressUpdatedAt: new Date(2026, 9, 21, 0, 1).toISOString(),
+      },
+    ];
+    const html = await render();
+    expect(html.match(/class="recent-playback__list"/g)).toHaveLength(1);
+    expect(html).not.toContain('performance-session-completed-list__day');
+    expect(html).not.toContain('<time');
+    expect(html).not.toContain('完成時間');
+    expect(html.indexOf('First')).toBeLessThan(html.indexOf('Second'));
+    expect(html.indexOf('Second')).toBeLessThan(html.indexOf('Third'));
+    expect(html).not.toContain('queue-track__ordinal');
+    expect(html.match(/recent-playback__item/g)).toHaveLength(3);
+  });
+  it('keeps legacy records under an update warning without adding date placeholders', async () => {
+    fixture.playback.historyItems.value = [
+      {
+        itemId: 'legacy',
+        displayTitle: 'Legacy record',
+        progress: 'completed',
+      },
+    ];
+    fixture.plan.state.error = '更新失敗';
+    const html = await render();
+    expect(html).toContain('演出紀錄未更新');
+    expect(html).toContain('Legacy record');
+    expect(html).not.toContain('日期未記錄');
+    expect(html).not.toContain('完成時間未記錄');
+    expect(html).not.toContain('<time');
+  });
+  it('shows an accessible skeleton only while the first read is pending', async () => {
+    fixture.plan.state.isInitialized = false;
+    const html = await render();
+    expect(html).toContain('讀取演出紀錄…');
+    expect(html).toContain('ui-skeleton--text');
+    expect(html).not.toContain('尚無完成紀錄');
+    expect(html).not.toContain('performance-session-completed-list__day');
   });
 });

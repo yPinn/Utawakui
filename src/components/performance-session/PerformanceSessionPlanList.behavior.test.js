@@ -10,6 +10,9 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 import UiChip from '../ui/UiChip.vue';
+import TrackTable from '../track/TrackTable.vue';
+import TrackCollectionRow from '../track/TrackCollectionRow.vue';
+import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -20,11 +23,15 @@ import UiTextButton from '../ui/UiTextButton.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 
 for (const [component, filename] of [
   [PerformanceSessionPlanList, './PerformanceSessionPlanList.vue'],
+  [TrackTable, '../track/TrackTable.vue'],
+  [TrackCollectionRow, '../track/TrackCollectionRow.vue'],
+  [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
   [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiActionMenu, '../ui/UiActionMenu.vue'],
@@ -36,6 +43,7 @@ for (const [component, filename] of [
   [UiTextButton, '../ui/UiTextButton.vue'],
   [UiTooltip, '../ui/UiTooltip.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
+  [UiTrackArtworkButton, '../ui/UiTrackArtworkButton.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
@@ -45,6 +53,11 @@ for (const [component, filename] of [
 let body;
 
 beforeEach(() => {
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  );
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
   body = hostNode('body');
   vi.stubGlobal('document', {
     activeElement: hostNode('button'),
@@ -134,6 +147,58 @@ async function openItemMenu(root, label) {
 }
 
 describe('PerformanceSessionPlanList', () => {
+  it('reserves one scrollbar lane when history is already inside its outer scroller', () => {
+    for (const history of [false, true]) {
+      const mounted = mount(PerformanceSessionPlanList, {
+        items: [items[0]],
+        tracks,
+        history,
+      });
+      const scroller = findAll(mounted.root, (node) =>
+        String(node.props?.class ?? '').includes(
+          'performance-session-plan-list__body-scroll',
+        ),
+      )[0];
+      expect(scroller.props['data-scrollbar-reserve']).toBe(
+        history ? 'overflow' : 'stable',
+      );
+      mounted.app.unmount();
+    }
+  });
+  it('targets each repeat by occurrence and keeps unavailable playback disabled', async () => {
+    const onPlay = vi.fn(),
+      onSelect = vi.fn(),
+      onDuplicate = vi.fn();
+    const mounted = mount(PerformanceSessionPlanList, {
+      items: [
+        items[0],
+        { ...items[0], itemId: 'repeat' },
+        { ...items[2], ready: false },
+      ],
+      tracks,
+      onPlay,
+      onSelect,
+      onDuplicate,
+    });
+    const plays = findAll(
+      mounted.root,
+      (node) =>
+        node.type === 'button' && textContent(node) === '播放：First song',
+    );
+    trigger(plays[1], 'onClick', { stopPropagation: vi.fn() });
+    trigger(button(mounted.root, '檢查第 2 首：First song'), 'onClick', {
+      stopPropagation: vi.fn(),
+    });
+    await openItemMenu(mounted.root, '第 2 首「First song」的更多操作');
+    trigger(buttonWithText(body, '複製待唱項目'), 'onClick');
+    expect(onPlay).toHaveBeenCalledWith('repeat');
+    expect(onSelect).toHaveBeenCalledWith('repeat');
+    expect(onDuplicate).toHaveBeenCalledWith('repeat');
+    expect(
+      buttonWithText(mounted.root, '播放：Missing audio').props.disabled,
+    ).toBe(true);
+    mounted.app.unmount();
+  });
   it('keeps the direct play action separate from row selection and the settings modal', () => {
     const onPlay = vi.fn();
     const onSelect = vi.fn();
@@ -152,7 +217,7 @@ describe('PerformanceSessionPlanList', () => {
     expect(onSelect).not.toHaveBeenCalled();
     mounted.app.unmount();
   });
-  it('uses one semantic scrolling ordered list without a duplicated table header', () => {
+  it('uses one scrolling table with a single shared header', () => {
     const mounted = mount(PerformanceSessionPlanList, {
       items,
       tracks,
@@ -163,7 +228,7 @@ describe('PerformanceSessionPlanList', () => {
         'performance-session-plan-list__body-scroll',
       ),
     )[0];
-    const orderedLists = findAll(mounted.root, (node) => node.type === 'ol');
+    const orderedLists = findAll(mounted.root, (node) => node.type === 'ul');
 
     expect(scroll).toBeDefined();
     expect(orderedLists).toHaveLength(1);
@@ -171,7 +236,7 @@ describe('PerformanceSessionPlanList', () => {
     mounted.app.unmount();
   });
 
-  it('adapts canonical track information into UiTrackRow while preserving session copy', () => {
+  it('adapts canonical track information into TrackTable while preserving session copy', () => {
     const mounted = mount(PerformanceSessionPlanList, {
       items: [items[0]],
       tracks,
@@ -180,7 +245,7 @@ describe('PerformanceSessionPlanList', () => {
     const row = findAll(mounted.root, (node) =>
       String(node.props?.class ?? '')
         .split(/\s+/u)
-        .includes('ui-track'),
+        .includes('library-track-row'),
     )[0];
     const artwork = findAll(
       row,
@@ -190,8 +255,8 @@ describe('PerformanceSessionPlanList', () => {
     )[0];
 
     expect(row).toBeDefined();
-    expect(String(row.props.class)).toContain('performance-session-plan-entry');
-    expect(String(row.props.class)).toContain('ui-track--active');
+    expect(String(row.props.class)).toContain('library-track-row');
+    expect(String(row.props.class)).toContain('library-track-row--selected');
     expect(textContent(row)).toContain('First song');
     expect(textContent(row)).toContain('Singer A');
     expect(textContent(row)).not.toContain('Canonical library title');
@@ -199,7 +264,7 @@ describe('PerformanceSessionPlanList', () => {
     expect(artwork.props.src).toBe(
       'utawakui-media://track/track-1/thumbnail.jpg',
     );
-    expect(textContent(row)).not.toContain('4:05'); // board prioritizes identity, status and the direct play action
+    expect(textContent(row)).toContain('4:05');
     expect(textContent(row)).toContain('播放：First song');
     mounted.app.unmount();
   });
@@ -213,7 +278,7 @@ describe('PerformanceSessionPlanList', () => {
     const rows = findAll(mounted.root, (node) =>
       String(node.props?.class ?? '')
         .split(/\s+/u)
-        .includes('performance-session-plan-entry'),
+        .includes('library-track-row'),
     );
 
     expect(rows).toHaveLength(3);
@@ -222,7 +287,9 @@ describe('PerformanceSessionPlanList', () => {
     expect(textContent(mounted.root)).not.toContain('待確認');
     expect(textContent(mounted.root)).toContain('手動');
     expect(textContent(mounted.root)).toContain('音檔缺少');
-    expect(String(rows[1].props.class).includes('ui-track--active')).toBe(true);
+    expect(
+      String(rows[1].props.class).includes('library-track-row--selected'),
+    ).toBe(true);
     mounted.app.unmount();
   });
 
@@ -240,7 +307,9 @@ describe('PerformanceSessionPlanList', () => {
       onRemove,
     });
 
-    trigger(button(mounted.root, '檢查第 2 首：找歌中的曲目'), 'onClick');
+    trigger(button(mounted.root, '檢查第 2 首：找歌中的曲目'), 'onClick', {
+      stopPropagation: vi.fn(),
+    });
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
     trigger(buttonWithText(body, '下移一位'), 'onClick');
 

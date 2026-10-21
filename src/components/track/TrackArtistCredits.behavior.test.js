@@ -38,6 +38,15 @@ beforeEach(() => {
 });
 
 describe('TrackArtistCredits', () => {
+  it('keeps a read-only snapshot as plain text even when canonical credits resolve', async () => {
+    const html = await render({
+      track: { id: 'duet', artist: 'Snapshot singer' },
+      navigable: false,
+    });
+    expect(html).toContain('Snapshot singer');
+    expect(html).not.toContain('<button');
+    expect(html).not.toContain('YOASOBI');
+  });
   it('links each credited artist with a named text action', async () => {
     const html = await render({
       track: { id: 'duet', artist: 'YOASOBI, ミドリーズ' },

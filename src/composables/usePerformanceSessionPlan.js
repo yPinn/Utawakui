@@ -61,9 +61,21 @@ function replaceFromCollection(sourceId, replaceCurrent = false) {
   );
 }
 
+function appendFromCollection(sourceId) {
+  return enqueue(() =>
+    window.Utawakui.appendPerformanceSessionPlanFromCollection({ sourceId }),
+  );
+}
+
 function appendPlaceholders(text) {
   return enqueue(() =>
     window.Utawakui.appendPerformanceSessionPlanPlaceholders(text),
+  );
+}
+
+function appendFromArchive(sessionId) {
+  return enqueue(() =>
+    window.Utawakui.appendPerformanceSessionPlanFromArchive({ sessionId }),
   );
 }
 
@@ -170,6 +182,12 @@ function selectItem(itemId) {
 function clear() {
   return enqueue(() => window.Utawakui.clearPerformanceSessionPlan());
 }
+function archiveSession(name, sessionId = state.plan.sessionId) {
+  return enqueue(
+    () => window.Utawakui.archivePerformanceSession({ sessionId, name }),
+    { name: 'archive' },
+  );
+}
 
 function setProgress(itemId, progress) {
   // Resolve the revision inside the serialized task: playing and ended can
@@ -191,6 +209,8 @@ export function usePerformanceSessionPlan() {
     initialize,
     refresh,
     replaceFromCollection,
+    appendFromCollection,
+    appendFromArchive,
     appendLibraryTrack,
     appendManualItem,
     appendPlaceholders,
@@ -203,6 +223,7 @@ export function usePerformanceSessionPlan() {
     removeItem,
     selectItem,
     clear,
+    archiveSession,
     setProgress,
   };
 }

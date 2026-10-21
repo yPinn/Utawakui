@@ -82,8 +82,8 @@ describe('Dock keeps only decision-essential statistics', () => {
     };
     fixture.library.state.tracks = [{ id: 'song', duration: 120 }];
     const compact = await render({ compact: true });
-    expect(compact).toContain('共 2 項');
-    expect(compact).toContain('已知 2:00');
+    expect(compact).toContain('2 項，已知 2 分');
+    expect(compact).not.toContain('2:00');
     for (const label of ['來源清單', '待唱 1', '已完成 1', '另 1 項時長未知'])
       expect(compact).not.toContain(label);
     const full = await render();
@@ -93,7 +93,8 @@ describe('Dock keeps only decision-essential statistics', () => {
     expect(full).not.toContain('<details open');
   });
   it('distinguishes complete length, unknown length, empty, loading and stale data', async () => {
-    expect(await render({ compact: true })).toContain('0:00');
+    expect(await render({ compact: true })).toContain('0 首曲目');
+    expect(await render({ compact: true })).not.toContain('0:00');
     fixture.plan.state.plan.items = [
       { itemId: 'a', mode: 'manual', progress: 'queued' },
     ];
@@ -106,13 +107,13 @@ describe('Dock keeps only decision-essential statistics', () => {
       progress: 'queued',
     };
     fixture.library.state.tracks = [{ id: 'song', duration: 120 }];
-    expect(await render({ compact: true })).toContain('2:00');
+    expect(await render({ compact: true })).toContain('1 首曲目，2 分');
     expect(await render({ compact: true })).not.toContain('已知');
     fixture.plan.state.isInitialized = false;
     expect(await render({ compact: true })).toContain('讀取安排統計');
     fixture.plan.state.error = 'Failed';
     expect(await render({ compact: true })).toContain('統計未更新');
-    expect(await render({ compact: true })).not.toContain('2:00');
+    expect(await render({ compact: true })).not.toContain('2 分');
   });
 });
 
@@ -128,5 +129,51 @@ describe('summary facts remain independent of field validation', () => {
     expect(html).not.toContain('目前播放 0');
     expect(html).not.toContain('待唱 0');
     expect(html).not.toContain('已完成 0');
+  });
+});
+
+describe('receipt summary uses the collection duration formatter', () => {
+  it('counts only completed records for history, retaining correct units for manual records', async () => {
+    fixture.plan.state.plan.items = [
+      {
+        itemId: 'one',
+        mode: 'library-track',
+        trackId: 'one',
+        progress: 'completed',
+      },
+      {
+        itemId: 'two',
+        mode: 'library-track',
+        trackId: 'two',
+        progress: 'queued',
+      },
+      { itemId: 'three', mode: 'manual', progress: 'interrupted' },
+    ];
+    fixture.library.state.tracks = [
+      { id: 'one', duration: 120 },
+      { id: 'two', duration: 3600 },
+    ];
+    expect(await render({ compact: true, scope: 'completed' })).toContain(
+      '1 首曲目，2 分',
+    );
+    fixture.plan.state.plan.items.push({
+      itemId: 'four',
+      mode: 'manual',
+      progress: 'completed',
+    });
+    expect(await render({ compact: true, scope: 'completed' })).toContain(
+      '2 項，已知 2 分',
+    );
+  });
+  it.each([
+    [10, '1 分'],
+    [3900, '1 小時 5 分'],
+    [7200, '2 小時'],
+  ])('formats %s seconds as %s', async (duration, label) => {
+    fixture.plan.state.plan.items = [
+      { itemId: 'one', mode: 'library-track', trackId: 'one' },
+    ];
+    fixture.library.state.tracks = [{ id: 'one', duration }];
+    expect(await render({ compact: true })).toContain(`1 首曲目，${label}`);
   });
 });

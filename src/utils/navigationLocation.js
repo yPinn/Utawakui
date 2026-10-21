@@ -1,6 +1,7 @@
 // Pure navigation-location model for the renderer history (ADR 0025). A location
 // is a place the operator can return to, never application state: playback,
 // queue, search, sort, row selection and the Performance tool are not part of it.
+// An archived performance's session id is a collection location, like a playlist.
 
 export const HISTORY_VIEWS = Object.freeze([
   'library',
@@ -27,6 +28,7 @@ export function createNavigationLocation({
   libraryWorkspace,
   returnView,
   selection,
+  performanceArchiveId,
 }) {
   if (!TRACKED_VIEWS.has(view)) return null;
 
@@ -46,6 +48,17 @@ export function createNavigationLocation({
       workspace,
       returnView: null,
       selection: frozenSelection,
+    });
+  }
+
+  if (view === 'performance' && performanceArchiveId) {
+    return Object.freeze({
+      key: JSON.stringify([view, 'archive', performanceArchiveId]),
+      view,
+      archiveId: performanceArchiveId,
+      workspace: null,
+      returnView: null,
+      selection: null,
     });
   }
 

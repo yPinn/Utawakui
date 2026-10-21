@@ -67,7 +67,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(planListSource).toContain(
       "import UiScrollLayout from '../ui/UiScrollLayout.vue';",
     );
-    expect(planListSource).toContain('content-tag="ol"');
+    expect(planListSource).toContain('collection-kind="performance-session"');
     expect(workspaceSource).toContain('content-tag="ul"');
     expect(workspaceSource).not.toContain(
       "import UiScrollRegion from '../ui/UiScrollRegion.vue';",
@@ -82,33 +82,24 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
       new URL('./PerformanceSessionBoard.vue', import.meta.url),
       'utf8',
     );
-    expect(boardSource).toContain('entry.contentRect.width <= 43 * rem');
-    expect(boardSource).toContain(
-      'grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);',
-    );
+    expect(boardSource).not.toContain('ResizeObserver');
+    expect(boardSource).toContain('grid-template-columns: minmax(0, 1fr);');
     expect(boardSource).toContain('grid-template-rows: auto minmax(0, 1fr);');
     expect(workspaceSource).not.toContain('minmax(360px');
     expect(workspaceSource).not.toContain('minmax(320px');
     expect(workspaceSource).not.toContain('@media (max-width: 780px)');
   });
 
-  it('adapts session occurrences through the shared track-row primitive instead of TrackTable semantics', () => {
+  it('uses the shared occurrence table while feature actions remain in the session owner', () => {
     expect(planListSource).toContain(
-      "import UiTrackRow from '../ui/UiTrackRow.vue';",
+      "import TrackTable from '../track/TrackTable.vue';",
     );
-    expect(planListSource).toContain('<UiTrackRow');
-    expect(planListSource).toContain('<template #lead>');
-    expect(planListSource).toContain('<template #trail>');
-    expect(planListSource).not.toContain('PerformanceSessionPlanRow');
-    expect(planListSource).not.toContain('TrackTable');
-  });
-
-  it('reuses track-row list spacing without a second grid or row-state recipe', () => {
-    expect(planListSource).toContain('var(--ui-track-list-gap)');
+    expect(planListSource).toContain('collection-kind="performance-session"');
+    expect(planListSource).toContain('#row-actions');
+    expect(planListSource).toContain('@select-entry');
+    expect(planListSource).toContain('handleRowKeydown');
     expect(planListSource).not.toContain('grid-template-columns');
     expect(planListSource).not.toContain('--performance-session-plan-grid');
-    expect(planListSource).not.toContain('--ui-track-row-selected-surface');
-    expect(planListSource).not.toContain('draggable');
   });
 
   it('shows the return action only for a contextual entry', () => {
@@ -198,9 +189,12 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).not.toContain('deleteTrack');
   });
 
-  it('groups current control and session BGM above independent searchable lists and puts clearing in more options', () => {
+  it('keeps singing controls above the lists and reveals the single Dock BGM through more options', () => {
     expect(workspaceSource).toContain('<PerformanceSessionCurrent');
-    expect(workspaceSource).toContain('<BgmPlayer');
+    expect(workspaceSource).not.toContain('BgmPlayer');
+    expect(workspaceSource).toContain("label: '顯示 BGM'");
+    expect(workspaceSource).toContain("dock.selectArrangementTab('pending')");
+    expect(workspaceSource).toContain("dock.showQueueVariant('arrangement')");
     expect(workspaceSource).toContain('<template #pending>');
     expect(workspaceSource).not.toContain('v-else-if="playback.pendingItems');
     expect(workspaceSource).toContain("label: '清除安排'");

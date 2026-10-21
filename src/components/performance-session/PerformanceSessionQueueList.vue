@@ -24,12 +24,11 @@ const menuItemId = shallowRef(null);
 const menuAnchor = shallowRef(null);
 const rows = computed(() => {
   const tracks = new Map(props.tracks.map((track) => [track.id, track]));
-  return props.items.map((item, index) => {
+  return props.items.map((item) => {
     const canonical = tracks.get(item.trackId);
     const disabled = !item.ready || (item.mode !== 'manual' && !canonical?.url);
     return {
       id: item.itemId,
-      ordinal: index + 1,
       item,
       track: {
         ...canonical,
@@ -186,8 +185,6 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
         'performance-session-queue-list__item--dragging': draggingId === row.id,
       }"
       :track="row.track"
-      :ordinal="row.ordinal"
-      :ordinal-label="`待唱第 ${row.ordinal} 首`"
       :artist-text="row.artist"
       :active="selectedItemId === row.id"
       :playback-disabled="saving || row.disabled"

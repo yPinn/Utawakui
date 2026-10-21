@@ -434,6 +434,7 @@ onUnmounted(() => setKeyboardListener(false));
         :playlists="playlists"
         :current-track-id="currentTrackId"
         :queued-track-ids="queuedTrackIds"
+        :performance-queue-busy="menuOptions.performanceQueueBusy"
         :remove-from-playlist-id="menuOptions.removeFromPlaylistId"
         :can-go-to-album="menuOptions.canGoToAlbum"
         @select="selectMenuAction"

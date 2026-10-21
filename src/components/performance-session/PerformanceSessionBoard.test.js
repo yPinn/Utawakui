@@ -1,7 +1,14 @@
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import PerformanceSessionBoard from './PerformanceSessionBoard.vue';
+vi.mock('./PerformanceSessionHistoryTools.vue', () => ({
+  default: {
+    setup(_, { slots }) {
+      return () => h('div', slots.default?.());
+    },
+  },
+}));
 
 async function render(props = {}) {
   return renderToString(
@@ -22,8 +29,8 @@ describe('Folder playback board', () => {
       '待唱',
       '演出紀錄',
       'Queued songs',
-      'aria-labelledby="session-pending-title"',
-      'aria-labelledby="session-history-title"',
+      'aria-labelledby="session-board-pending-tab"',
+      'aria-labelledby="session-board-history-tab"',
     ])
       expect(html).toContain(label);
     for (const label of ['開始播放', '目前播放', '已知總長'])

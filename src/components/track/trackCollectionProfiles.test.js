@@ -36,6 +36,8 @@ describe('production track collection profiles', () => {
       'playlist',
       'album',
       'artist',
+      'performance-archive',
+      'performance-session',
     ]);
     expect(trackCollectionColumnRoles('library-all')).toEqual([
       'ordinal',
@@ -200,6 +202,8 @@ describe('production track collection profiles', () => {
       playlist: true,
       album: true,
       artist: true,
+      'performance-archive': false,
+      'performance-session': false,
     });
     expect(
       Object.fromEntries(
@@ -214,6 +218,8 @@ describe('production track collection profiles', () => {
       playlist: true,
       album: false,
       artist: false,
+      'performance-archive': false,
+      'performance-session': false,
     });
     expect(
       Object.fromEntries(
@@ -228,6 +234,8 @@ describe('production track collection profiles', () => {
       playlist: true,
       album: false,
       artist: false,
+      'performance-archive': false,
+      'performance-session': false,
     });
     expect(trackCollectionProfile('album')).toMatchObject({
       ordinalMode: 'source',

@@ -130,6 +130,39 @@ function scrollEvent(target) {
 }
 
 describe('TrackActionMenu behavior model', () => {
+  it.each(['default', 'current', 'queued', 'source', 'recent'])(
+    'allows another performance occurrence for an already playing/queued track in %s',
+    async (context) => {
+      const onSelect = vi.fn();
+      const props = {
+        open: true,
+        track,
+        context,
+        currentTrackId: track.id,
+        queuedTrackIds: [track.id],
+        onSelect,
+      };
+      const mounted = mount(TrackActionMenu, props);
+      const action = buttonByText('加入演出待唱');
+      expect(action.props['aria-disabled']).not.toBe('true');
+      trigger(action, 'onClick', {});
+      await nextTick();
+      expect(onSelect.mock.calls[0][0]).toEqual({
+        action: 'add-to-performance-queue',
+      });
+      mounted.app.unmount();
+    },
+  );
+
+  it('disables the performance destination during a save', () => {
+    const mounted = mount(TrackActionMenu, {
+      open: true,
+      track,
+      performanceQueueBusy: true,
+    });
+    expect(buttonByText('加入演出待唱').props['aria-disabled']).toBe('true');
+    mounted.app.unmount();
+  });
   it('names the menu and restores its origin when Escape closes the stack', () => {
     const onClose = vi.fn();
     const mounted = mount(TrackActionMenu, {

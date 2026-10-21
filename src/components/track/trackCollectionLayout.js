@@ -41,7 +41,9 @@ function columnShrinkPriority(column) {
 
 function insertSpacer(columns) {
   const trailingIndex = columns.findIndex((column) =>
-    ['duration', 'actions'].includes(column.role),
+    ['duration', 'performanceStatus', 'performanceActions', 'actions'].includes(
+      column.role,
+    ),
   );
   const index = trailingIndex >= 0 ? trailingIndex : columns.length;
   return Object.freeze([
@@ -194,13 +196,21 @@ function collapseOrder(kind, normalizedPreferences) {
     ...supplementalDefaults,
     'release',
     'duration',
+    ...(profile.managedActions ? ['performanceStatus'] : []),
+    ...(profile.readOnly || profile.managedActions ? ['ordinal'] : []),
   ].filter((role, index, roles) => roles.indexOf(role) === index);
 }
 
-function templateFor(columns, widths) {
+function templateFor(columns, widths, fillIdentity = false) {
   return columns
     .map((column) =>
-      column.role === 'spacer' ? 'minmax(0, 1fr)' : `${widths[column.role]}px`,
+      column.role === 'identity' && fillIdentity
+        ? `minmax(${widths.identity}px, 1fr)`
+        : column.role === 'spacer'
+          ? fillIdentity
+            ? '0px'
+            : 'minmax(0, 1fr)'
+          : `${widths[column.role]}px`,
     )
     .join(' ');
 }
@@ -293,7 +303,11 @@ export function resolveTrackCollectionLayout({
   return Object.freeze({
     columns: columnsWithSpacer,
     widths: Object.freeze(widths),
-    gridTemplate: templateFor(columnsWithSpacer, widths),
+    gridTemplate: templateFor(
+      columnsWithSpacer,
+      widths,
+      trackCollectionProfile(kind).fillIdentity,
+    ),
     hiddenForWidth: Object.freeze(hiddenForWidth),
     requiredWidth: resolvedRequiredWidth,
     preferences: normalizedPreferences,

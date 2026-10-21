@@ -31,6 +31,7 @@ function start() {
       view: appView.activeView.value,
       libraryWorkspace: appView.libraryWorkspace.value,
       returnView: appView.returnView.value,
+      performanceArchiveId: appView.performanceArchiveId.value,
       selection: {
         playlistId: playlists.state.selectedId,
         artistId: playlists.state.selectedArtistId,

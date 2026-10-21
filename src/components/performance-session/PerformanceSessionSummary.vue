@@ -3,7 +3,10 @@ import { computed, shallowRef } from 'vue';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
-import { performanceSessionSummary } from '../../utils/performanceSessionSummary.js';
+import {
+  performanceSessionSummary,
+  formatPerformanceSessionSummary,
+} from '../../utils/performanceSessionSummary.js';
 import { formatDuration } from '../../utils/format.js';
 import UiHint from '../ui/UiHint.vue';
 import { Info } from '../../icons/index.js';
@@ -11,17 +14,27 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
 const detailsOpen = shallowRef(false);
 
-defineProps({
+const props = defineProps({
   compact: { type: Boolean, default: false },
+  scope: {
+    type: String,
+    default: 'plan',
+    validator: (value) => ['plan', 'completed'].includes(value),
+  },
   showSource: { type: Boolean, default: true },
 });
 
 const plan = usePerformanceSessionPlan();
 const playback = usePerformanceSessionPlayback();
 const { state: library } = useLibrary();
+const summaryItems = computed(() =>
+  props.scope === 'completed'
+    ? plan.state.plan.items.filter((item) => item.progress === 'completed')
+    : plan.state.plan.items,
+);
 const summary = computed(() =>
   performanceSessionSummary(
-    plan.state.plan.items,
+    summaryItems.value,
     library.tracks,
     playback.currentItem.value?.itemId,
   ),
@@ -32,20 +45,16 @@ const durationLabel = computed(() =>
     ? '—'
     : formatDuration(summary.value.knownDuration),
 );
-const compactDurationLabel = computed(() => {
-  if (
-    summary.value.total &&
-    summary.value.unknownDurationCount === summary.value.total
-  )
-    return '時長未知';
-  return summary.value.unknownDurationCount
-    ? '已知 ' + formatDuration(summary.value.knownDuration)
-    : formatDuration(summary.value.knownDuration);
-});
+const compactSummaryLabel = computed(() =>
+  formatPerformanceSessionSummary(summary.value, summaryItems.value),
+);
 </script>
 
 <template>
-  <section class="performance-session-summary" aria-label="演出安排統計">
+  <section
+    class="performance-session-summary"
+    :aria-label="scope === 'completed' ? '演出紀錄統計' : '演出安排統計'"
+  >
     <UiHint
       v-if="!compact && showSource && plan.state.plan.source?.name"
       class="performance-session-summary__source"
@@ -54,10 +63,12 @@ const compactDurationLabel = computed(() => {
     <UiHint v-if="plan.state.error" tone="warning">統計未更新</UiHint>
     <UiHint v-else-if="!plan.state.isInitialized">讀取安排統計…</UiHint>
     <template v-else>
-      <p class="performance-session-summary__totals">
+      <UiHint v-if="compact" class="performance-session-summary__compact">{{
+        compactSummaryLabel
+      }}</UiHint>
+      <p v-else class="performance-session-summary__totals">
         <span>共 {{ summary.total }} 項</span>
-        <span v-if="compact">· {{ compactDurationLabel }}</span>
-        <span v-else>已知總長 {{ durationLabel }}</span>
+        <span>已知總長 {{ durationLabel }}</span>
       </p>
       <UiPopover
         v-if="
@@ -118,5 +129,8 @@ const compactDurationLabel = computed(() => {
   color: var(--ui-color-text);
   font-size: var(--ui-type-label-size);
   line-height: var(--ui-type-label-line-height);
+}
+.performance-session-summary__compact {
+  font-family: var(--ui-font-family-utility);
 }
 </style>

@@ -20,6 +20,7 @@ const state = reactive({
   offsetSeconds: '0',
   isLoading: false,
   error: '',
+  arrangementId: null,
 });
 
 const obs = useObsIntegration();
@@ -37,15 +38,22 @@ function hasOutput(kind) {
   return (state.session?.entries ?? []).some((entry) => entry?.[kind]);
 }
 
-async function open() {
+async function loadSession(arrangementId = null) {
   if (state.isLoading) return;
   const current = ++loadRevision;
   clipboard.dispose();
   state.isOpen = true;
   state.isLoading = true;
   state.error = '';
+  state.arrangementId = arrangementId;
   try {
-    const session = await obs.getLatestSession();
+    let session;
+    if (arrangementId) {
+      const response =
+        await window.Utawakui.getPerformanceSession(arrangementId);
+      if (response?.ok !== true) throw new Error('session unavailable');
+      session = { ...response.plan, entries: response.plan.timeline };
+    } else session = await obs.getLatestSession();
     if (current !== loadRevision) return;
     state.session = session;
     if (!hasOutput(state.source)) {
@@ -127,7 +135,9 @@ export function useObsSessionExport() {
     isLoading: computed(() => state.isLoading),
     error: computed(() => state.error),
     copyState: clipboard.state,
-    open,
+    open: () => loadSession(null),
+    openForArrangement: (sessionId) => loadSession(sessionId),
+    reload: () => loadSession(state.arrangementId),
     close,
     copyChapters,
   };

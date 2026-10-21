@@ -4,6 +4,7 @@
 // from drifting between the emitter and the handler.
 export const PLAYLIST_MENU_ACTIONS = {
   addToQueue: 'add-to-queue',
+  addToPerformanceQueue: 'add-to-performance-queue',
   addToPlaylist: 'add-to-playlist',
   editDetails: 'edit-details',
   delete: 'delete',
@@ -18,6 +19,7 @@ export const PLAYLIST_MENU_ACTIONS = {
 // still decide which actions are available in their own product context.
 export const TRACK_MENU_ACTIONS = {
   addToQueue: 'add-to-queue',
+  addToPerformanceQueue: 'add-to-performance-queue',
   removeFromQueue: 'remove-from-queue',
   addToPlaylist: 'add-to-playlist',
   createPlaylist: 'create-playlist',

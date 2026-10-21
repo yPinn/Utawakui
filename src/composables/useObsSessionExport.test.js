@@ -24,6 +24,41 @@ function trackEntry(overrides = {}) {
 }
 
 describe('useObsSessionExport', () => {
+  it('exports and reloads the selected archived session, preserving repeat occurrences, markers and missing output clocks', async () => {
+    const entries = [
+      trackEntry({ id: 'first' }),
+      trackEntry({
+        id: 'second',
+        stream: { timecode: '00:00:30.000', durationMs: 30000 },
+      }),
+      {
+        id: 'marker',
+        type: 'marker',
+        label: 'MC',
+        stream: { timecode: '00:01:00.000', durationMs: 60000 },
+        record: null,
+      },
+      trackEntry({ id: 'offline', stream: null }),
+    ];
+    const getPerformanceSession = vi.fn(async () => ({
+      ok: true,
+      plan: { id: 'old', name: 'Old show', timeline: entries },
+    }));
+    const getObsLatestSession = vi.fn();
+    vi.stubGlobal('window', {
+      Utawakui: { getPerformanceSession, getObsLatestSession },
+    });
+    const owner = await loadExport();
+    await owner.openForArrangement('old');
+    expect(owner.session.value.entries).toHaveLength(4);
+    expect(owner.result.value.text).toBe('0:00 Song A\n0:30 Song A\n1:00 MC');
+    await owner.reload();
+    expect(getPerformanceSession.mock.calls).toEqual([['old'], ['old']]);
+    expect(getObsLatestSession).not.toHaveBeenCalled();
+    owner.source.value = 'record';
+    expect(owner.canCopy.value).toBe(false);
+    owner.close();
+  });
   it('invalidates copy feedback when the preview changes while clipboard work is pending', async () => {
     let finish;
     vi.stubGlobal('window', {

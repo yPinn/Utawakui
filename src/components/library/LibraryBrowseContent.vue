@@ -15,6 +15,7 @@ import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { usePerformanceQueueActions } from '../../composables/usePerformanceQueueActions.js';
 import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { useScrolledPast } from '../../composables/useScrolledPast.js';
 import { useSeparationQueueContext } from '../../composables/useSeparationQueueContext.js';
@@ -30,6 +31,7 @@ import { normalizeTrackCollectionSort } from '../track/trackCollectionProfiles.j
 import {
   addToPlaylistContent,
   addToPlaylistMenuItem,
+  addToPerformanceQueueMenuItem,
   collectionManageMenuItems,
 } from '../../utils/collectionMenuItems.js';
 import AppFolderCompactBar from '../layout/AppFolderCompactBar.vue';
@@ -93,6 +95,7 @@ const { resolvePlaylistTracks, openEditDetails, handlePlaylistMenuAction } =
   usePlaylistActions();
 const { playCountOf } = usePlaybackHistory();
 const collectionPlayback = useCollectionPlayback();
+const performanceQueue = usePerformanceQueueActions();
 const { canJumpToAlbum, jumpToAlbum } = useAlbumNavigation();
 const {
   state: artistIndexState,
@@ -557,7 +560,18 @@ const collectionMoreContent = computed(() => {
   const playlist = selectedPlaylist.value;
   if (!playlist) return { kind: 'actions', groups: [] };
   const manageItems = collectionManageMenuItems(playlist);
-  const groups = [];
+  const groups = [
+    {
+      id: 'performance-queue',
+      items: [
+        addToPerformanceQueueMenuItem(playlist, {
+          disabled:
+            playlistTracks.value.length === 0 ||
+            performanceQueue.state.isSaving,
+        }),
+      ],
+    },
+  ];
   if (playlistTracks.value.length > 0) {
     const addLabel =
       playlist.kind === 'album' ? '新增專輯至播放清單' : '新增至別的播放清單';
@@ -590,6 +604,7 @@ function trackMenuOptions(track) {
     Boolean(selectedPlaylist.value?.trackIds.includes(track.id));
   return {
     removeFromPlaylistId: inEditablePlaylist ? selectedPlaylist.value.id : '',
+    performanceQueueBusy: performanceQueue.state.isSaving,
     canGoToAlbum: Boolean(
       track && !isAlbumSelected.value && canJumpToAlbum(track),
     ),
@@ -805,6 +820,8 @@ async function applyTrackMenuAction(track, value) {
     if (playlist) addTrackToPlaylist(playlist.id, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToQueue) {
     enqueueTrack(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.addToPerformanceQueue) {
+    await performanceQueue.addTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
@@ -1204,6 +1221,7 @@ onMounted(async () => {
         :remove-from-playlist-id="addMenuOptions.removeFromPlaylistId"
         :can-go-to-album="addMenuOptions.canGoToAlbum"
         :can-delete="addMenuOptions.canDelete"
+        :performance-queue-busy="performanceQueue.state.isSaving"
         @select="handleTrackMenuSelect"
         @close="closeAddMenu"
       />

@@ -16,21 +16,27 @@ function collapseDock() {
 </script>
 
 <template>
-  <header class="app-right-dock-header">
+  <header
+    class="app-right-dock-header"
+    :class="{ 'app-right-dock-header--with-actions': $slots.actions }"
+  >
     <div class="app-right-dock-header__identity">
       <slot name="identity">
         <h2>{{ title }}</h2>
         <p v-if="subtitle">{{ subtitle }}</p>
       </slot>
     </div>
-    <UiIconButton
-      class="app-right-dock-header__collapse"
-      :icon="PanelRightClose"
-      :label="collapseLabel"
-      size="md"
-      tooltip-placement="bottom"
-      @click="collapseDock"
-    />
+    <div class="app-right-dock-header__actions">
+      <slot name="actions" />
+      <UiIconButton
+        class="app-right-dock-header__collapse"
+        :icon="PanelRightClose"
+        :label="collapseLabel"
+        size="md"
+        tooltip-placement="bottom"
+        @click="collapseDock"
+      />
+    </div>
   </header>
 </template>
 
@@ -43,6 +49,19 @@ function collapseDock() {
   gap: var(--ui-space-3);
   padding: var(--ui-right-dock-content-inset);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.app-right-dock-header--with-actions .app-right-dock-header__identity {
+  flex: 1 0 auto;
+  max-inline-size: 100%;
+}
+
+.app-right-dock-header__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--ui-space-3);
+  margin-inline-start: auto;
 }
 
 .app-right-dock-header__identity {

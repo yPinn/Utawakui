@@ -125,6 +125,7 @@ describe('AppRightDockPanel', () => {
       },
       {
         identity: () => 'Identity controls',
+        actions: () => h('button', { type: 'button' }, '切換檢視'),
         default: () => 'Panel content',
       },
     );
@@ -138,6 +139,10 @@ describe('AppRightDockPanel', () => {
     )[0];
 
     expect(panel.props['aria-label']).toBe('播放資訊');
+    const header = findAll(root, (node) => node.type === 'header')[0];
+    expect(
+      findAll(header, (node) => node.type === 'button').map(textContent),
+    ).toEqual(['切換檢視', '摺疊播放資訊']);
     expect(textContent(root)).toContain('Identity controls');
     expect(textContent(root)).toContain('Panel content');
     expect(viewports).toHaveLength(1);

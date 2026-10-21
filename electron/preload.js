@@ -889,6 +889,31 @@ contextBridge.exposeInMainWorld('Utawakui', {
   clearPlaylistCover: (id) => ipcRenderer.invoke('playlists:clear-cover', id),
   getPerformanceSessionPlan: () =>
     ipcRenderer.invoke('performance-session-plan:get'),
+  archivePerformanceSession: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:archive', {
+      sessionId: intent?.sessionId,
+      name: intent?.name,
+    }),
+  getPerformanceSession: (sessionId) =>
+    ipcRenderer.invoke('performance-session-plan:get-session', { sessionId }),
+  previewPerformancePlaylist: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:preview-playlist', {
+      sessionId: intent?.sessionId,
+      scope: intent?.scope,
+    }),
+  savePerformancePlaylist: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:save-playlist', {
+      sessionId: intent?.sessionId,
+      scope: intent?.scope,
+      token: intent?.token,
+      name: intent?.name,
+    }),
+  observeConfirmedPerformance: (intent) =>
+    ipcRenderer.invoke('session-history:confirmed-playing', {
+      epoch: intent?.epoch,
+      playbackRevision: intent?.playbackRevision,
+      trackId: intent?.trackId,
+    }),
   setPerformanceSessionPlanProgress: (intent) =>
     ipcRenderer.invoke('performance-session-plan:set-progress', {
       itemId: intent?.itemId,
@@ -900,6 +925,14 @@ contextBridge.exposeInMainWorld('Utawakui', {
       'performance-session-plan:replace-from-collection',
       performanceSessionPlanReplaceIntent(intent),
     ),
+  appendPerformanceSessionPlanFromCollection: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:append-from-collection', {
+      sourceId: intent?.sourceId,
+    }),
+  appendPerformanceSessionPlanFromArchive: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:append-from-archive', {
+      sessionId: intent?.sessionId,
+    }),
   appendPerformanceSessionPlanPlaceholders: (text) =>
     ipcRenderer.invoke('performance-session-plan:append-placeholders', text),
   appendPerformanceSessionPlanLibraryTrack: (trackId) =>

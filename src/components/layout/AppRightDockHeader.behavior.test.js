@@ -98,6 +98,9 @@ describe('AppRightDockHeader', () => {
 
   it('keeps Dock title and context on distinct semantic type tiers', () => {
     expect(source).toMatch(
+      /\.app-right-dock-header\s*\{[^}]*gap:\s*var\(--ui-space-3\);[^}]*padding:\s*var\(--ui-right-dock-content-inset\);[^}]*border-bottom:\s*var\(--ui-border-width\) solid var\(--ui-color-border\);/su,
+    );
+    expect(source).toMatch(
       /\.app-right-dock-header__identity\s*\{[^}]*flex:\s*1 1 auto;[^}]*min-width:\s*0;[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-side-panel-list-gap\);/su,
     );
     expect(source).toMatch(
@@ -110,5 +113,27 @@ describe('AppRightDockHeader', () => {
     expect(source).not.toMatch(
       /\.app-right-dock-header p\s*\{[^}]*margin-top:/su,
     );
+  });
+
+  it('groups caller actions with collapse on one line without shrinking tabs', () => {
+    const page = mount(
+      AppRightDockHeader,
+      { title: '播放清單', collapseLabel: '摺疊播放清單' },
+      {
+        identity: () => h('div', { role: 'tablist' }, '待唱清單 演出紀錄'),
+        actions: () => h('button', { type: 'button' }, '切換一般佇列'),
+      },
+    );
+    const header = findAll(page.root, (n) => n.type === 'header')[0];
+    const buttons = findAll(header, (n) => n.type === 'button');
+    expect(String(header.props.class)).toContain(
+      'app-right-dock-header--with-actions',
+    );
+    expect(buttons.map(textContent)).toEqual(['切換一般佇列', '摺疊播放清單']);
+    expect(source).not.toContain('flex-wrap: wrap');
+    expect(source).toMatch(
+      /\.app-right-dock-header__actions\s*\{[^}]*flex:\s*0 0 auto;[^}]*gap:\s*var\(--ui-space-3\);/su,
+    );
+    page.app.unmount();
   });
 });

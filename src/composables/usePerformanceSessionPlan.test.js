@@ -88,6 +88,8 @@ beforeEach(() => {
     }),
     replacePerformanceSessionPlanFromCollection: vi.fn(),
     appendPerformanceSessionPlanLibraryTrack: vi.fn(),
+    appendPerformanceSessionPlanFromCollection: vi.fn(),
+    appendPerformanceSessionPlanFromArchive: vi.fn(),
     appendPerformanceSessionPlanManualItem: vi.fn(),
     appendPerformanceSessionPlanPlaceholders: vi.fn(),
     updatePerformanceSessionPlanItem: vi.fn(),
@@ -118,6 +120,36 @@ async function importSessionPlan() {
 }
 
 describe('usePerformanceSessionPlan', () => {
+  it('appends an archive by bounded identity through the existing serialized store', async () => {
+    const session = await importSessionPlan();
+    api.appendPerformanceSessionPlanFromArchive.mockResolvedValue({
+      ok: true,
+      plan: planWithItems([item()]),
+    });
+    expect(await session.appendFromArchive('archived')).toBe(true);
+    expect(
+      api.appendPerformanceSessionPlanFromArchive,
+    ).toHaveBeenCalledExactlyOnceWith({ sessionId: 'archived' });
+    expect(
+      api.replacePerformanceSessionPlanFromCollection,
+    ).not.toHaveBeenCalled();
+  });
+  it('serializes collection append as a bounded source id and accepts the updated current plan', async () => {
+    const session = await importSessionPlan();
+    const result = planWithItems([item()]);
+    api.appendPerformanceSessionPlanFromCollection.mockResolvedValue({
+      ok: true,
+      plan: result,
+    });
+    expect(await session.appendFromCollection('playlist-1')).toBe(true);
+    expect(
+      api.appendPerformanceSessionPlanFromCollection,
+    ).toHaveBeenCalledExactlyOnceWith({ sourceId: 'playlist-1' });
+    expect(session.state.plan.items).toEqual(result.items);
+    expect(
+      api.replacePerformanceSessionPlanFromCollection,
+    ).not.toHaveBeenCalled();
+  });
   it('forwards a drag as occurrence identities through the existing serialized plan owner', async () => {
     const session = await importSessionPlan();
     await session.initialize();

@@ -15,6 +15,7 @@ import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
 import {
   artistSearchTexts,
@@ -27,6 +28,7 @@ import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import {
   addToPlaylistMenuItem,
+  addToPerformanceQueueMenuItem,
   collectionManageMenuItems,
 } from '../../utils/collectionMenuItems.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
@@ -319,6 +321,8 @@ function createCollectionItems() {
   ];
 }
 
+const { state: performancePlan } = usePerformanceSessionPlan();
+
 const menuContent = computed(() => {
   const context = menuContext.value;
   if (!context) return { kind: 'actions', groups: [] };
@@ -344,6 +348,9 @@ const menuContent = computed(() => {
         playlistId: playlist.id,
       },
     },
+    addToPerformanceQueueMenuItem(playlist, {
+      disabled: playlist.trackIds.length === 0 || performancePlan.isSaving,
+    }),
   ];
 
   // Empty collections omit the destination submenu because they contribute

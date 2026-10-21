@@ -83,6 +83,7 @@ export {
   StickyNote,
   Sun,
   Tag,
+  Tickets,
   Trash2,
   Type,
   UserRound,

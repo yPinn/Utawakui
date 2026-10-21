@@ -21,28 +21,30 @@ const entries = computed(() => {
   const completed = playback.historyItems.value.filter(
     (item) => item.progress === 'completed',
   );
-  return completed
-    .slice()
-    .reverse()
-    .map((item, index) => {
-      const canonical = tracks.get(item.trackId);
-      return {
-        key: item.itemId,
-        ordinal: completed.length - index,
-        ordinalLabel: `完成第 ${completed.length - index} 首`,
-        track: {
-          ...canonical,
-          id: item.trackId ?? item.itemId,
-          title: item.displayTitle,
-          artist: item.displayArtist,
-        },
-        artistText: item.displayArtist,
-        playbackDisabled:
-          !item.ready || (item.mode !== 'manual' && !canonical?.url),
-        playbackLabel: `${item.mode === 'manual' ? '開始' : '播放'}：${item.displayTitle}`,
-      };
-    });
+  return completed.map((item) => {
+    const canonical = tracks.get(item.trackId);
+    return {
+      key: item.itemId,
+      track: {
+        ...canonical,
+        id: item.trackId ?? item.itemId,
+        title: item.displayTitle,
+        artist: item.displayArtist,
+      },
+      artistText: item.displayArtist,
+      playbackDisabled:
+        !item.ready || (item.mode !== 'manual' && !canonical?.url),
+      playbackLabel: `${item.mode === 'manual' ? '開始' : '播放'}：${item.displayTitle}`,
+    };
+  });
 });
+const error = computed(
+  () =>
+    plan.state.error ||
+    plan.state.validationError?.message ||
+    playback.state.error ||
+    '',
+);
 const menuEntry = computed(() =>
   entries.value.find((entry) => entry.key === menuKey.value),
 );
@@ -110,25 +112,14 @@ watch([busy, menuEntry], ([saving, entry]) => {
 </script>
 
 <template>
-  <div
-    id="arrangement-dock-history-panel"
-    class="performance-session-completed-list"
-    role="tabpanel"
-    aria-labelledby="arrangement-dock-history-tab"
-    tabindex="0"
-  >
+  <div class="performance-session-completed-list">
     <RecentPlaybackList
       :entries="entries"
       :loading="!plan.state.isInitialized"
-      :error="
-        plan.state.error ||
-        plan.state.validationError?.message ||
-        playback.state.error ||
-        ''
-      "
+      :error="error"
       error-title="演出紀錄未更新"
       loading-message="讀取演出紀錄…"
-      empty-message="尚無演出紀錄"
+      empty-message="尚無完成紀錄，完成後會依序列出。"
       menu-context="completed"
       :busy="busy"
       :playback-actions="false"

@@ -4,6 +4,7 @@ import {
   ListPlus,
   Pencil,
   Plus,
+  Tickets,
   Trash2,
 } from '../icons/index.js';
 import {
@@ -14,6 +15,23 @@ import {
 
 // Presentational menu items shared by the Library collection header and the
 // Sidebar row menu, so labels, icons and action payloads cannot drift.
+
+export function addToPerformanceQueueMenuItem(
+  playlist,
+  { disabled = false } = {},
+) {
+  return {
+    id: 'add-to-performance-queue',
+    kind: 'action',
+    label: '加入演出待唱',
+    icon: Tickets,
+    disabled,
+    value: {
+      action: PLAYLIST_MENU_ACTIONS.addToPerformanceQueue,
+      playlistId: playlist.id,
+    },
+  };
+}
 
 export function addToPlaylistContent(playlists, sourcePlaylistId) {
   const targets = addToPlaylistTargets(playlists, {

@@ -104,7 +104,11 @@ describe('Persistent App Shell Token v2 cutover', () => {
     for (const [path, className] of owners) {
       const source = readSource(path);
       expect(source).toContain(`class="${className}"`);
-      expect(source).toContain('data-ui-region="chrome"');
+      if (className === 'app-right-dock')
+        expect(source).toContain(
+          ":data-ui-region=\"performance && expanded ? 'receipt' : 'chrome'\"",
+        );
+      else expect(source).toContain('data-ui-region="chrome"');
     }
 
     expect(tokens).toMatch(

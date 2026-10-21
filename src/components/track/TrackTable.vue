@@ -46,6 +46,7 @@ const props = defineProps({
   },
   canReorderPlaylistTracks: { type: Boolean, default: false },
   selectedTrackId: { type: String, default: '' },
+  selectedEntryKey: { type: String, default: '' },
   currentTrackId: { type: String, default: '' },
   playingTrackId: { type: String, default: '' },
   draggingTrackId: { type: String, default: '' },
@@ -62,6 +63,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  'selectEntry',
+  'entryKeydown',
+  'openEntryMenu',
   'updateColumnPreferences',
   'layoutChange',
   'toggleSort',
@@ -394,7 +398,9 @@ function reorderHeaderFromKeyboard(column, event) {
           />
 
           <button
-            v-if="column.resizable"
+            v-if="
+              column.resizable && !profile.readOnly && !profile.managedActions
+            "
             type="button"
             class="library-track-table__resize-handle"
             role="separator"
@@ -466,7 +472,14 @@ function reorderHeaderFromKeyboard(column, event) {
     >
       <TrackCollectionRow
         v-for="entry in projectedEntries"
-        :key="entry.track.id"
+        :key="
+          profile.readOnly || profile.managedActions
+            ? entry.key
+            : entry.track.id
+        "
+        :data-occurrence-id="
+          profile.readOnly || profile.managedActions ? entry.key : undefined
+        "
         :entry="entry"
         :profile="profile"
         :columns="layout.columns"
@@ -475,15 +488,22 @@ function reorderHeaderFromKeyboard(column, event) {
         :album-jumpable="albumJumpableTrackIds.has(entry.track.id)"
         :vs-queued="vsQueuedTrackIds.has(entry.track.id)"
         :vs-enqueue-pending="vsEnqueuePendingTrackId === entry.track.id"
-        :selected="selectedTrackId === entry.track.id"
-        :current="currentTrackId === entry.track.id"
-        :playing="playingTrackId === entry.track.id"
+        :selected="
+          profile.managedActions
+            ? selectedEntryKey === entry.key
+            : !profile.readOnly && selectedTrackId === entry.track.id
+        "
+        :current="!profile.readOnly && currentTrackId === entry.track.id"
+        :playing="!profile.readOnly && playingTrackId === entry.track.id"
         :drag-enabled="dragEnabled"
         :dragging="dragEnabled && draggingTrackId === entry.track.id"
         :drop-position="
           dropTargetTrackId === entry.track.id ? dropPosition : ''
         "
         @select-track="emit('selectTrack', $event)"
+        @select-entry="emit('selectEntry', $event)"
+        @entry-keydown="(entry, event) => emit('entryKeydown', entry, event)"
+        @open-entry-menu="(entry, event) => emit('openEntryMenu', entry, event)"
         @activate-track="emit('activateTrack', $event)"
         @toggle-playback="emit('togglePlayback', $event)"
         @navigate-album="emit('navigateAlbum', $event)"
@@ -495,7 +515,11 @@ function reorderHeaderFromKeyboard(column, event) {
         @drag-leave="forwardTrackDragLeave"
         @drop="forwardTrackDrop"
         @drag-end="emit('trackDragEnd')"
-      />
+        ><template
+          v-if="$slots['row-actions']"
+          #actions="{ entry: actionEntry }"
+          ><slot name="row-actions" :entry="actionEntry" /></template
+      ></TrackCollectionRow>
     </ul>
 
     <span

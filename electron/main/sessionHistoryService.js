@@ -10,11 +10,11 @@ const {
 
 const SESSIONS_DIRNAME = 'obs-sessions';
 
-// Detects a track change from the renderer's output projection (the stream
-// outputRuntime.js already forwards to the Browser Source) and, only while OBS
-// reports an active stream/recording, asks obsAdapter.js for an on-demand
-// timecode at that moment. No new IPC channel and no continuous OBS polling,
-// matching the adapter's "react to semantic boundaries" design.
+// Production observes explicit manual starts and confirmed HTML audio starts,
+// keyed by a performance identity rather than trackId. OBS timecodes are captured
+// on demand only while its connection and output are active. Arrangement history
+// persists the returned occurrence independently of this legacy OBS convenience
+// log's skip threshold. No continuous OBS polling.
 //
 // Session boundary (a simple first cut; spec.md §7.1 leaves it open): a session
 // starts on the first track recorded while an output is active and ends
@@ -30,6 +30,8 @@ function createSessionHistoryService({
   // A function, not a frozen value — Settings can change this while the
   // service is already running (see ObsIntegrationSettingsBlock.vue).
   getSkipThresholdMs = () => DEFAULT_SKIP_THRESHOLD_MS,
+  onMarker = () => undefined,
+  getMarkerContext = () => null,
 }) {
   let session = null; // { id, startedAt, entries, filePath } | null
   // Same object reference as `session` for as long as one is active (see
@@ -49,6 +51,7 @@ function createSessionHistoryService({
   // back-to-back events can never race each other's snapshot request or
   // file write.
   let pending = Promise.resolve();
+  const observedPerformances = new Map();
 
   function sessionsDir() {
     return path.join(userDataDir, SESSIONS_DIRNAME);
@@ -114,10 +117,13 @@ function createSessionHistoryService({
     ]);
   }
 
-  async function recordTrackChange(track) {
+  async function recordTrackChange(track, occurrence = null) {
     const status = obsAdapter.getStatus();
-    const streamActive = status.observed.streaming.active;
-    const recordActive = status.observed.recording.active;
+    const connected =
+      !status.observed.lifecycle ||
+      ['ready', 'degraded'].includes(status.observed.lifecycle);
+    const streamActive = connected && status.observed.streaming.active;
+    const recordActive = connected && status.observed.recording.active;
     if (!streamActive && !recordActive) {
       // The output stopped before the pending track ever got a chance to
       // hit the next track change while still live — still has to be
@@ -126,7 +132,17 @@ function createSessionHistoryService({
       if (maybeRetractShortTrack()) persistSession();
       session = null;
       pendingTrackEntry = null;
-      return;
+      return occurrence
+        ? {
+            type: 'track',
+            trackId: track.id,
+            title: track.title,
+            artist: track.artist ?? '',
+            stream: null,
+            record: null,
+            ...occurrence,
+          }
+        : null;
     }
     maybeRetractShortTrack();
     if (!session) startSession();
@@ -144,16 +160,22 @@ function createSessionHistoryService({
       stream,
       record,
       occurredAt: now().toISOString(),
+      ...(occurrence ?? {}),
     };
     session.entries.push(entry);
     pendingTrackEntry = { entry, startedAtMs: now().getTime() };
     persistSession();
+    return entry;
   }
 
   async function addMarkerInternal(label) {
+    const markerContext = getMarkerContext();
     const status = obsAdapter.getStatus();
-    const streamActive = status.observed.streaming.active;
-    const recordActive = status.observed.recording.active;
+    const connected =
+      !status.observed.lifecycle ||
+      ['ready', 'degraded'].includes(status.observed.lifecycle);
+    const streamActive = connected && status.observed.streaming.active;
+    const recordActive = connected && status.observed.recording.active;
     if (!streamActive && !recordActive) return null;
     if (!session) startSession();
 
@@ -169,12 +191,14 @@ function createSessionHistoryService({
       record,
       occurredAt: now().toISOString(),
     };
+    await onMarker({ ...entry, id: crypto.randomUUID() }, markerContext);
     session.entries.push(entry);
     persistSession();
     return entry;
   }
 
-  // Wired as outputRuntime.js's onProjectionChange — fires on every
+  // Compatibility adapter for legacy tests/consumers; production no longer
+  // wires Output publication to recording. This fires on every
   // projection update (lyrics/queue changes included), not just track
   // changes, so this only acts when the resolved track id actually differs
   // from the last one observed.
@@ -212,6 +236,34 @@ function createSessionHistoryService({
     return outcome;
   }
 
+  // Production records only confirmed audio starts (or explicit manual
+  // starts). Stable identity survives pause, seek and projection refreshes.
+  function observePerformance({ identity, track, itemId = null }) {
+    if (
+      typeof identity !== 'string' ||
+      !identity ||
+      identity.length > 512 ||
+      !track?.id
+    )
+      return Promise.reject(new TypeError('invalid performance observation'));
+    if (observedPerformances.has(identity))
+      return observedPerformances.get(identity);
+    const occurrence = {
+      id: crypto.randomUUID(),
+      itemId,
+      occurredAt: now().toISOString(),
+    };
+    const outcome = pending.then(() => recordTrackChange(track, occurrence));
+    observedPerformances.set(identity, outcome);
+    if (observedPerformances.size > 2000)
+      observedPerformances.delete(observedPerformances.keys().next().value);
+    pending = outcome.catch((error) => {
+      observedPerformances.delete(identity);
+      logger.error?.('[session-history] Failed to record performance', error);
+    });
+    return outcome;
+  }
+
   function cloneSession(value) {
     return value ? { ...value, entries: [...value.entries] } : null;
   }
@@ -229,6 +281,8 @@ function createSessionHistoryService({
   }
 
   return {
+    observePerformance,
+    flush: () => pending,
     handleProjectionChange,
     addMarker,
     getCurrentSession,

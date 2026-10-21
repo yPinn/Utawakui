@@ -20,7 +20,6 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import PerformanceSessionCurrent from './PerformanceSessionCurrent.vue';
-import BgmPlayer from '../bgm/BgmPlayer.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import PerformanceSessionBoard from './PerformanceSessionBoard.vue';
@@ -251,6 +250,12 @@ const workspaceMenu = computed(() => ({
     {
       id: 'arrangement',
       items: [
+        {
+          id: 'bgm',
+          kind: 'action',
+          value: 'bgm',
+          label: '顯示 BGM',
+        },
         ...(selectedPlaylist.value
           ? [
               {
@@ -279,6 +284,11 @@ const workspaceMenu = computed(() => ({
 }));
 async function selectWorkspaceAction(action) {
   menuAnchor.value = null;
+  if (action === 'bgm') {
+    dock.selectArrangementTab('pending');
+    dock.showQueueVariant('arrangement');
+    return;
+  }
   if (state.isSaving || playback.state.busy) return;
   if (action === 'prepare') await prepareSelectedCollection();
   if (action === 'clear') await clearDraft();
@@ -378,7 +388,6 @@ async function selectWorkspaceAction(action) {
             />
           </template>
         </PerformanceSessionCurrent>
-        <BgmPlayer />
       </div>
       <PerformanceSessionBoard
         class="performance-session-workspace__grid"
@@ -534,7 +543,9 @@ async function selectWorkspaceAction(action) {
 .performance-session-workspace__grid {
   flex: 1;
   min-height: calc(
-    var(--ui-control-height) * 3 + var(--ui-track-row-min-height)
+    var(--ui-control-height) * 3 + var(--ui-list-header-height) +
+      var(--ui-track-row-min-height) + var(--ui-space-2) * 4 + 2 *
+      (var(--ui-focus-width) + var(--ui-focus-offset))
   );
 }
 .performance-session-workspace__list-scroll {

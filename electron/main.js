@@ -140,6 +140,9 @@ const {
   registerPerformanceSessionPlanHandlers,
 } = require('./main/performanceSessionPlanHandlers');
 const {
+  createPerformanceSessionPlanStore,
+} = require('./lib/performanceSessionPlan');
+const {
   registerBgmStandbyPlanHandlers,
 } = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
@@ -716,17 +719,29 @@ if (!gotSingleInstanceLock) {
       },
       logger: runtimeDiagnosticsLogger,
     });
-    // Created before outputRuntimeController below so its
-    // handleProjectionChange can be wired into createOutputRuntime's
-    // onProjectionChange option at construction time — no separate
-    // subscribe step, and no new IPC channel (see the service's own header
-    // comment for why the existing projection stream is enough).
+    // Confirmed playing events carry an occurrence identity independently
+    // of public Output, so consecutive performances of one track survive.
     const sessionHistoryService = createSessionHistoryService({
       obsAdapter: obsAdapterController,
       userDataDir: app.getPath('userData'),
       logger: runtimeDiagnosticsLogger,
       getSkipThresholdMs: () =>
         configState.getConfig().obsIntegration.skipThresholdMs,
+      getMarkerContext: () => {
+        const directory = configState.resolveDownloadDir(
+          configState.getConfig(),
+        );
+        const sessionId = createPerformanceSessionPlanStore({
+          directory,
+        }).ensureSession(new Map()).sessionId;
+        return { directory, sessionId };
+      },
+      onMarker: (entry, context) => {
+        if (context?.sessionId)
+          createPerformanceSessionPlanStore({
+            directory: context.directory,
+          }).recordMarker(entry, context.sessionId);
+      },
     });
     const playbackPersistence = createPlaybackPersistence({
       userDataDir: app.getPath('userData'),
@@ -765,7 +780,6 @@ if (!gotSingleInstanceLock) {
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
       devFrameOrigin: windowState.isDev ? DEV_SERVER_ORIGIN : null,
       onMilestone: recordMainMilestone,
-      onProjectionChange: sessionHistoryService.handleProjectionChange,
       recordOverlayMilestone: startupTrace.enabled
         ? recordOverlayMilestone
         : null,
@@ -1113,6 +1127,7 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       recordDiagnostic,
+      sessionHistoryService,
     });
 
     registerBgmStandbyPlanHandlers({

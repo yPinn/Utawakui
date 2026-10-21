@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
+const { hasControlCharacters } = require('./textGuards');
 
 // User-authored data: not library metadata and not machine-local config.
 // Lives beside tracks; UUID ids stay stable for future preset references.
@@ -85,6 +86,10 @@ function sanitizePlaylist(entry) {
 
   return {
     id: entry.id,
+    ...(typeof entry.performanceExportKey === 'string' &&
+    /^[a-f0-9]{64}$/.test(entry.performanceExportKey)
+      ? { performanceExportKey: entry.performanceExportKey }
+      : {}),
     name,
     kind,
     ...(source ? { source } : {}),
@@ -373,6 +378,49 @@ function reorderPlaylists(dir, draggedId, targetId, position = 'before') {
   return next;
 }
 
+// Session export is a single populated write. The stable operation key makes
+// a lost IPC reply retry safe without creating another empty user playlist.
+function savePerformancePlaylist(dir, { name, trackIds, exportKey } = {}) {
+  const fail = () =>
+    Object.assign(new Error('無法保存演出歌單，請檢查名稱與曲目預覽。'), {
+      code: 'SESSION_PLAYLIST_INVALID',
+      field: null,
+      publicValidation: true,
+    });
+  if (
+    typeof name !== 'string' ||
+    !name.trim() ||
+    name.trim().length > MAX_NAME_LENGTH ||
+    hasControlCharacters(name) ||
+    !Array.isArray(trackIds) ||
+    !trackIds.length ||
+    trackIds.length > MAX_TRACKS_PER_PLAYLIST ||
+    !trackIds.every(
+      (id) => typeof id === 'string' && id.length > 0 && id.length <= 256,
+    ) ||
+    typeof exportKey !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(exportKey)
+  )
+    throw fail();
+  const playlists = loadPlaylists(dir);
+  const existing = playlists.find((p) => p.performanceExportKey === exportKey);
+  if (existing) return { playlistId: existing.id, playlists };
+  if (playlists.length >= MAX_PLAYLISTS) throw fail();
+  const now = new Date().toISOString(),
+    ids = [...new Set(trackIds)];
+  const playlist = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    kind: 'playlist',
+    trackIds: ids,
+    addedAt: Object.fromEntries(ids.map((id) => [id, now])),
+    performanceExportKey: exportKey,
+  };
+  const next = [...playlists, playlist];
+  writePlaylists(dir, next);
+  return { playlistId: playlist.id, playlists: next };
+}
+
 function setPlaylistTracks(dir, id, trackIds) {
   const playlists = loadPlaylists(dir);
   const index = playlists.findIndex((p) => p.id === id);
@@ -498,5 +546,6 @@ module.exports = {
   setPlaylistDescription,
   setPlaylistKind,
   setPlaylistTracks,
+  savePerformancePlaylist,
   upsertAlbum,
 };

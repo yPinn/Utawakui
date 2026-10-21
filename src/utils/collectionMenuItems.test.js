@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addToPlaylistContent,
+  addToPerformanceQueueMenuItem,
   addToPlaylistMenuItem,
   collectionManageMenuItems,
 } from './collectionMenuItems.js';
@@ -12,6 +13,16 @@ const playlists = [
 ];
 
 describe('collection menu items', () => {
+  it('shares the explicit performance destination between sidebar and the main collection menu', () => {
+    expect(addToPerformanceQueueMenuItem(playlists[0])).toMatchObject({
+      label: '加入演出待唱',
+      disabled: false,
+      value: { action: 'add-to-performance-queue', playlistId: 'source' },
+    });
+    expect(
+      addToPerformanceQueueMenuItem(playlists[0], { disabled: true }).disabled,
+    ).toBe(true);
+  });
   it('builds the add-to-playlist submenu with a create entry and targets', () => {
     const item = addToPlaylistMenuItem(playlists, playlists[0], '新增');
     expect(item).toMatchObject({

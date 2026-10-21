@@ -7,7 +7,7 @@ const source = readFileSync(
 );
 
 describe('CollectionActionRail', () => {
-  it('keeps the stable core action order and search outside the command group', () => {
+  it('preserves the collection action order and search outside the command group', () => {
     const playbackIndex = source.indexOf('<PlaybackPrimaryButton');
     const shuffleIndex = source.indexOf(':icon="Shuffle"');
     // Highlight preview has its own glyph; Headphones means the monitor
@@ -26,6 +26,8 @@ describe('CollectionActionRail', () => {
     expect(extensionIndex).toBeGreaterThan(queueIndex);
     expect(moreIndex).toBeGreaterThan(extensionIndex);
     expect(searchIndex).toBeGreaterThan(moreIndex);
+    expect(source).not.toContain('justify-content: flex-end');
+    expect(source).not.toContain('row-reverse');
   });
 
   it('uses explicit collection capabilities instead of an arbitrary action array', () => {

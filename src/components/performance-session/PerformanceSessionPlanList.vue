@@ -10,10 +10,9 @@ import {
   SkipForward,
 } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
-import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
-import UiTrackRow from '../ui/UiTrackRow.vue';
+import TrackTable from '../track/TrackTable.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -78,6 +77,34 @@ const presentationRows = computed(() =>
             }),
     };
   }),
+);
+
+const hiddenColumns = shallowRef([]);
+const tableEntries = computed(() =>
+  presentationRows.value.map((row) => ({
+    key: row.item.itemId,
+    item: row.item,
+    index: row.index,
+    position: row.position,
+    visibleIndex: row.index,
+    interactive: !props.history && props.reviewable,
+    disabled: props.saving,
+    actionLabel: `檢查第 ${row.position} 首：${row.item.displayTitle}`,
+    actionDescription: '單擊選取；Alt 加上下方向鍵調整順序；選單可複製或移除',
+    performanceStatusText: row.status?.label || '待唱',
+    track: {
+      ...row.track,
+      title: row.item.displayTitle,
+      artist: [
+        row.item.displayArtist,
+        hiddenColumns.value.includes('performanceStatus')
+          ? row.status?.label
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    },
+  })),
 );
 
 const activeMenuItem = computed(() =>
@@ -223,73 +250,42 @@ watch(
     <UiScrollLayout
       class="performance-session-plan-list__body-scroll"
       axis="vertical"
-      content-tag="ol"
+      :scrollbar-reserve="history ? 'overflow' : 'stable'"
       content-class="performance-session-plan-list"
       :aria-label="history ? '播放結果' : '待唱順序'"
     >
-      <UiTrackRow
-        v-for="row in presentationRows"
-        :key="row.item.itemId"
-        class="performance-session-plan-entry"
-        :track="row.track"
-        :title="row.item.displayTitle"
-        :artist="row.item.displayArtist || row.status?.label || ''"
-        :active="row.item.itemId === selectedItemId"
-        :interactive="!history && reviewable"
-        hide-duration
-        state-surface
-        :state-surface-active="menuOpen && menuItemId === row.item.itemId"
-        selection-action
-        action-description="單擊選取；Alt 加上下方向鍵調整順序；選單可複製或移除"
-        action-keyboard-shortcuts="Alt+ArrowUp Alt+ArrowDown"
-        :action-label="`檢查第 ${row.position} 首：${row.item.displayTitle}`"
-        overflow="ellipsis"
-        thumb-loading="lazy"
-        thumb-decoding="async"
-        @row-click="emit('select', row.item.itemId)"
-        @action-keydown="handleRowKeydown($event, row.item, row.index)"
-        @contextmenu.prevent.stop="openMenu($event, row.item.itemId)"
+      <TrackTable
+        collection-kind="performance-session"
+        :entries="tableEntries"
+        :selected-entry-key="selectedItemId || ''"
+        :label="history ? '演出紀錄' : '待唱順序'"
+        @select-entry="emit('select', $event.item.itemId)"
+        @entry-keydown="
+          (entry, event) => handleRowKeydown(event, entry.item, entry.index)
+        "
+        @open-entry-menu="(entry, event) => openMenu(event, entry.item.itemId)"
+        @layout-change="hiddenColumns = $event"
       >
-        <template #lead>
-          <span class="performance-session-plan-entry__ordinal">
-            {{ row.position }}
-          </span>
-        </template>
-        <template #artist>
-          <span class="performance-session-plan-entry__secondary">
-            <span
-              v-if="row.item.displayArtist"
-              class="performance-session-plan-entry__secondary-text"
-              >{{ row.item.displayArtist }}</span
-            >
-            <UiChip
-              v-if="row.status"
-              class="performance-session-plan-entry__status"
-              :tone="row.status.tone"
-              >{{ row.status.label }}</UiChip
-            >
-          </span>
-        </template>
-        <template #trail>
+        <template #row-actions="{ entry }">
           <UiIconButton
             v-if="!history"
             :icon="Play"
-            :label="`播放：${row.item.displayTitle}`"
-            :disabled="saving || row.item.ready === false"
-            @click.stop="emit('play', row.item.itemId)"
+            :label="`播放：${entry.item.displayTitle}`"
+            :disabled="saving || entry.item.ready === false"
+            @click.stop="emit('play', entry.item.itemId)"
           />
           <UiIconButton
             :icon="Ellipsis"
-            :label="`第 ${row.position} 首「${row.item.displayTitle}」的更多操作`"
+            :label="`第 ${entry.position} 首「${entry.item.displayTitle}」的更多操作`"
             :disabled="saving"
             aria-haspopup="menu"
             :aria-expanded="
-              menuOpen && menuItemId === row.item.itemId ? 'true' : 'false'
+              menuOpen && menuItemId === entry.item.itemId ? 'true' : 'false'
             "
-            @click="openMenu($event, row.item.itemId)"
+            @click="openMenu($event, entry.item.itemId)"
           />
         </template>
-      </UiTrackRow>
+      </TrackTable>
     </UiScrollLayout>
 
     <UiActionMenu
@@ -312,7 +308,10 @@ watch(
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  min-height: 0;
+  min-block-size: calc(
+    var(--ui-list-header-height) + var(--ui-track-row-min-height) + 2 *
+      (var(--ui-focus-width) + var(--ui-focus-offset))
+  );
 }
 
 .performance-session-plan-list__body-scroll {
@@ -337,32 +336,8 @@ watch(
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: var(--ui-track-list-gap);
   min-width: 0;
   margin: 0;
   list-style: none;
-}
-
-.performance-session-plan-entry__ordinal {
-  min-inline-size: var(--ui-space-5);
-  color: var(--ui-color-text-muted);
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
-
-.performance-session-plan-entry__secondary {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-  min-inline-size: 0;
-}
-.performance-session-plan-entry__secondary-text {
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.performance-session-plan-entry__status {
-  flex: 0 0 auto;
 }
 </style>

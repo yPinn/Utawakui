@@ -3,6 +3,7 @@ import { computed, shallowRef, watch } from 'vue';
 import { useAlbumNavigation } from '../../../composables/useAlbumNavigation.js';
 import { useLibrary } from '../../../composables/useLibrary.js';
 import { usePlaybackQueue } from '../../../composables/usePlaybackQueue.js';
+import { usePerformanceQueueActions } from '../../../composables/usePerformanceQueueActions.js';
 import { usePlaylists } from '../../../composables/usePlaylists.js';
 import { useTrackMetadataEditor } from '../../../composables/useTrackMetadataEditor.js';
 import { Ellipsis } from '../../../icons/index.js';
@@ -29,6 +30,7 @@ const props = defineProps({
 const emit = defineEmits(['openChange']);
 
 const { refresh: refreshLibrary } = useLibrary();
+const performanceQueue = usePerformanceQueueActions();
 const {
   state: queueState,
   queuedTracks,
@@ -91,6 +93,8 @@ async function handleTrackMenuSelect(value) {
     if (playlist) addTrackToPlaylist(playlist.id, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToQueue) {
     enqueueTrack(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.addToPerformanceQueue) {
+    await performanceQueue.addTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromQueue) {
     removeQueuedTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
@@ -126,6 +130,7 @@ async function handleTrackMenuSelect(value) {
 
     <TrackActionMenu
       v-if="trackMenu"
+      :performance-queue-busy="performanceQueue.state.isSaving"
       :open="Boolean(trackMenu)"
       :anchor="trackMenu.anchor"
       :track="track"

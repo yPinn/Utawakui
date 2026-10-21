@@ -38,6 +38,8 @@ describe('demo track collection profiles', () => {
       'playlist',
       'album',
       'artist',
+      'performance-archive',
+      'performance-session',
     ]);
 
     expect(demoTrackCollectionProfile('library-all')).toMatchObject({
@@ -231,6 +233,8 @@ describe('demo track collection profiles', () => {
       playlist: true,
       album: true,
       artist: true,
+      'performance-archive': false,
+      'performance-session': false,
     });
     expect(
       Object.fromEntries(
@@ -245,6 +249,8 @@ describe('demo track collection profiles', () => {
       playlist: true,
       album: false,
       artist: false,
+      'performance-archive': false,
+      'performance-session': false,
     });
     expect(
       Object.fromEntries(
@@ -259,6 +265,8 @@ describe('demo track collection profiles', () => {
       playlist: true,
       album: false,
       artist: false,
+      'performance-archive': false,
+      'performance-session': false,
     });
     for (const kind of DEMO_TRACK_COLLECTION_KINDS) {
       expect(demoTrackCollectionProfile(kind)).not.toHaveProperty(

@@ -3,6 +3,7 @@ import { useLibrary } from './useLibrary.js';
 import { useAppConfirmation } from './useAppConfirmation.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylists } from './usePlaylists.js';
+import { usePerformanceQueueActions } from './usePerformanceQueueActions.js';
 import {
   PLAYLIST_MENU_ACTIONS,
   playlistDisplayName,
@@ -26,6 +27,7 @@ const {
 } = usePlaylists();
 const { tracksById } = useLibrary();
 const { enqueueTrack } = usePlaybackQueue();
+const performanceQueue = usePerformanceQueueActions();
 const { confirm: confirmAction } = useAppConfirmation();
 
 // Independent of selectedPlaylist — editing must not require first
@@ -204,7 +206,9 @@ async function handlePlaylistMenuAction(value) {
   );
   if (!playlist) return;
 
-  if (value.action === PLAYLIST_MENU_ACTIONS.addToQueue) {
+  if (value.action === PLAYLIST_MENU_ACTIONS.addToPerformanceQueue) {
+    await performanceQueue.addCollection(playlist.id);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.addToQueue) {
     addPlaylistToQueue(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.addToPlaylist) {
     addTracksToPlaylist(value.targetPlaylistId, playlist.trackIds);

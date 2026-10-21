@@ -184,6 +184,11 @@ const MAIN_INVOKE_CHANNELS = [
   'performer-view:open',
   'performer-view:publish',
   'performance-session-plan:append-placeholders',
+  'performance-session-plan:archive',
+  'performance-session-plan:get-session',
+  'performance-session-plan:preview-playlist',
+  'performance-session-plan:save-playlist',
+  'session-history:confirmed-playing',
   'performance-session-plan:append-library-track',
   'performance-session-plan:append-manual-item',
   'performance-session-plan:clear',
@@ -193,6 +198,8 @@ const MAIN_INVOKE_CHANNELS = [
   'performance-session-plan:reorder-item',
   'performance-session-plan:remove-item',
   'performance-session-plan:replace-from-collection',
+  'performance-session-plan:append-from-collection',
+  'performance-session-plan:append-from-archive',
   'performance-session-plan:set-review-cursor',
   'performance-session-plan:set-progress',
   'performance-session-plan:update-item',
@@ -301,6 +308,54 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('forwards only bounded session/export/performance intents, stripping renderer paths and forged timeline/track lists', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const extra = {
+      path: 'private',
+      trackIds: ['spoofed'],
+      timeline: [{ timecode: 'fake' }],
+    };
+    await bridge.archivePerformanceSession({
+      sessionId: 'show',
+      name: 'Show',
+      ...extra,
+    });
+    await bridge.getPerformanceSession('show', 'private');
+    await bridge.previewPerformancePlaylist({
+      sessionId: 'show',
+      scope: 'completed',
+      ...extra,
+    });
+    await bridge.savePerformancePlaylist({
+      sessionId: 'show',
+      scope: 'all',
+      token: 'preview',
+      name: 'Next',
+      ...extra,
+    });
+    await bridge.observeConfirmedPerformance({
+      epoch: 'epoch',
+      playbackRevision: 2,
+      trackId: 'song',
+      ...extra,
+    });
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['performance-session-plan:archive', { sessionId: 'show', name: 'Show' }],
+      ['performance-session-plan:get-session', { sessionId: 'show' }],
+      [
+        'performance-session-plan:preview-playlist',
+        { sessionId: 'show', scope: 'completed' },
+      ],
+      [
+        'performance-session-plan:save-playlist',
+        { sessionId: 'show', scope: 'all', token: 'preview', name: 'Next' },
+      ],
+      [
+        'session-history:confirmed-playing',
+        { epoch: 'epoch', playbackRevision: 2, trackId: 'song' },
+      ],
+    ]);
+  });
   it('requires only Electron, as a sandboxed preload must', () => {
     // Any other require fails at load and leaves the window without a bridge.
     const source = readFileSync(
@@ -1368,8 +1423,24 @@ describe('main preload bridge', () => {
 
   it('exposes only bounded performance session plan intents', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.appendPerformanceSessionPlanFromArchive({
+      sessionId: 'archive-1',
+      items: [],
+      replaceCurrent: true,
+      path: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'performance-session-plan:append-from-archive',
+      { sessionId: 'archive-1' },
+    );
+    electron.ipcRenderer.invoke.mockClear();
 
     bridge.getPerformanceSessionPlan('E:\\private');
+    bridge.appendPerformanceSessionPlanFromCollection({
+      sourceId: 'playlist-1',
+      trackIds: ['untrusted'],
+      replaceCurrent: true,
+    });
     bridge.replacePerformanceSessionPlanFromCollection({
       sourceId: 'playlist-1',
       replaceCurrent: true,
@@ -1422,6 +1493,10 @@ describe('main preload bridge', () => {
 
     expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
       ['performance-session-plan:get'],
+      [
+        'performance-session-plan:append-from-collection',
+        { sourceId: 'playlist-1' },
+      ],
       [
         'performance-session-plan:replace-from-collection',
         { sourceId: 'playlist-1', replaceCurrent: true },

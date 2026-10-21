@@ -38,6 +38,7 @@ function createStore(overrides = {}) {
     setProgress: vi.fn(() => emptyPlan()),
     getProjected: vi.fn(() => emptyPlan()),
     replaceFromCollection: vi.fn(() => emptyPlan()),
+    appendFromCollection: vi.fn(() => emptyPlan()),
     appendLibraryTrack: vi.fn(() => emptyPlan()),
     appendManualItem: vi.fn(() => emptyPlan()),
     appendPlaceholders: vi.fn(() => emptyPlan()),
@@ -87,6 +88,24 @@ function parseAppError(error) {
 }
 
 describe('registerPerformanceSessionPlanHandlers', () => {
+  it('resolves appended collections in main and ignores renderer-supplied membership', async () => {
+    const { handlers, store } = register();
+    await handlers.get('performance-session-plan:append-from-collection')(
+      {},
+      { sourceId: 'playlist-1', collection: { trackIds: ['untrusted'] } },
+    );
+    expect(store.appendFromCollection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: {
+          id: 'playlist-1',
+          name: 'Authoritative name',
+          kind: 'playlist',
+          trackIds: ['t-2', 't-1'],
+        },
+      }),
+    );
+    expect(store.replaceFromCollection).not.toHaveBeenCalled();
+  });
   it('recovers once per library and does not interrupt a playing item on ordinary refresh', async () => {
     const { handlers, store } = register();
     await handlers.get('performance-session-plan:get')();
@@ -108,6 +127,7 @@ describe('registerPerformanceSessionPlanHandlers', () => {
     expect([...handlers.keys()]).toEqual([
       'performance-session-plan:get',
       'performance-session-plan:replace-from-collection',
+      'performance-session-plan:append-from-collection',
       'performance-session-plan:append-library-track',
       'performance-session-plan:append-manual-item',
       'performance-session-plan:append-placeholders',
@@ -119,6 +139,12 @@ describe('registerPerformanceSessionPlanHandlers', () => {
       'performance-session-plan:remove-item',
       'performance-session-plan:set-review-cursor',
       'performance-session-plan:clear',
+      'performance-session-plan:append-from-archive',
+      'performance-session-plan:archive',
+      'performance-session-plan:get-session',
+      'performance-session-plan:preview-playlist',
+      'performance-session-plan:save-playlist',
+      'session-history:confirmed-playing',
     ]);
   });
 

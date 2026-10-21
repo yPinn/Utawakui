@@ -47,6 +47,25 @@ async function openPlaylist({ appView, playlists }, id) {
 }
 
 describe('useNavigationHistory', () => {
+  it('retraces distinct archived sessions without replacing library selection or performance state', async () => {
+    const context = await load();
+    await openPlaylist(context, 'playlist-a');
+    const { appView, history, playlists } = context;
+    appView.openPerformanceArchive('one');
+    await nextTick();
+    appView.openPerformanceArchive('two');
+    await nextTick();
+    expect(history.back()).toBe(true);
+    await nextTick();
+    expect(appView.performanceArchiveId.value).toBe('one');
+    expect(history.back()).toBe(true);
+    await nextTick();
+    expect(appView.activeView.value).toBe('library');
+    expect(playlists.state.selectedId).toBe('playlist-a');
+    expect(history.forward()).toBe(true);
+    await nextTick();
+    expect(appView.performanceArchiveId.value).toBe('one');
+  });
   it('starts with nothing to go back or forward to', async () => {
     const { history } = await load();
 

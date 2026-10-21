@@ -81,7 +81,7 @@ describe('finalized control-panel token system', () => {
   it('loads the stable entry once in every renderer and isolated prototype', () => {
     const entryContracts = [
       ['src/main.js', "import './styles/tokens.css';"],
-      ['src/performer-main.js', "import './styles/tokens.css';"],
+      ['src/entries/prompter/main.js', "import '../../styles/tokens.css';"],
       [
         'prototypes/ui-component-lab/src/main.js',
         "import '../../../src/styles/tokens.css';",

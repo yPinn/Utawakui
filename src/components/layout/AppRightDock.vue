@@ -9,7 +9,6 @@ import {
 } from '../../composables/useAppRightDockWidth.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
-import { useObsIntegration } from '../../composables/useObsIntegration.js';
 
 const props = defineProps({
   expanded: { type: Boolean, required: true },
@@ -26,24 +25,6 @@ const props = defineProps({
 
 const emit = defineEmits(['expand', 'toggleExpanded']);
 const dockWidth = useAppRightDockWidth();
-const { state: obsState } = useObsIntegration();
-const obsConnected = computed(
-  () =>
-    !obsState.statusReadError &&
-    ['ready', 'degraded'].includes(obsState.observed.lifecycle),
-);
-const isLive = computed(
-  () =>
-    props.performance &&
-    obsConnected.value &&
-    obsState.observed.streaming.active,
-);
-const isRecording = computed(
-  () =>
-    props.performance &&
-    obsConnected.value &&
-    obsState.observed.recording.active,
-);
 const rootStyle = computed(() => ({
   '--ui-right-dock-width': `${dockWidth.width.value}px`,
 }));
@@ -71,7 +52,7 @@ function handleResizeKeydown(event) {
 
 <template>
   <UiSurface
-    data-ui-region="chrome"
+    :data-ui-region="performance && expanded ? 'receipt' : 'chrome'"
     tag="aside"
     class="app-right-dock"
     :class="{
@@ -79,8 +60,6 @@ function handleResizeKeydown(event) {
       'app-right-dock--collapsed': !expanded,
       'app-right-dock--bottom': motionOrigin === 'bottom',
       'app-right-dock--performance': performance,
-      'app-right-dock--live': isLive,
-      'app-right-dock--recording': isRecording,
     }"
     tone="surface"
     radius="sm"
@@ -138,12 +117,11 @@ function handleResizeKeydown(event) {
   /* These aliases are first composed at the renderer root. Re-compose them
      inside the regional owner so Chrome foregrounds never sit on a Light
      section or sticky surface inherited from that root. */
-  --ui-right-dock-section-surface-background: var(--ui-color-surface-raised);
-  --ui-right-dock-sticky-background: color-mix(
-    in srgb,
-    var(--ui-color-surface) 88%,
-    transparent
-  );
+  --ui-right-dock-background: var(--ui-color-surface);
+  --ui-right-dock-state-background: var(--ui-right-dock-background);
+  --ui-right-dock-section-surface-background: var(--ui-right-dock-background);
+  --ui-right-dock-sticky-background: var(--ui-right-dock-state-background);
+  --ui-right-dock-footer-background: var(--ui-right-dock-state-background);
 
   /* The Dock is a fixed-density content boundary. Keep the generic Track
      Row mapping available everywhere else while Queue, Recent, and Metadata
@@ -172,20 +150,137 @@ function handleResizeKeydown(event) {
   overflow: hidden;
 }
 
-.app-right-dock--performance::after {
-  border-color: color-mix(
-    in srgb,
-    var(--ui-color-live) 45%,
-    var(--ui-color-border)
+.app-right-dock.app-right-dock--expanded {
+  background: var(--ui-right-dock-background);
+}
+
+/* Paper is a local receipt boundary, never a global theme switch. */
+.app-right-dock--performance {
+  --ui-right-dock-state-background: var(--ui-color-surface);
+  --ui-right-dock-footer-background: var(--ui-color-surface-raised);
+}
+.app-right-dock--performance.app-right-dock--expanded {
+  background: transparent;
+}
+.app-right-dock--performance.app-right-dock--expanded::after {
+  border-color: transparent;
+}
+.app-right-dock--performance .app-right-dock__content {
+  background: var(--ui-color-surface);
+  padding-block: var(--ui-space-1);
+  clip-path: polygon(
+    0% var(--ui-space-1),
+    2% 0%,
+    4% var(--ui-space-1),
+    6% 0%,
+    8% var(--ui-space-1),
+    10% 0%,
+    12% var(--ui-space-1),
+    14% 0%,
+    16% var(--ui-space-1),
+    18% 0%,
+    20% var(--ui-space-1),
+    22% 0%,
+    24% var(--ui-space-1),
+    26% 0%,
+    28% var(--ui-space-1),
+    30% 0%,
+    32% var(--ui-space-1),
+    34% 0%,
+    36% var(--ui-space-1),
+    38% 0%,
+    40% var(--ui-space-1),
+    42% 0%,
+    44% var(--ui-space-1),
+    46% 0%,
+    48% var(--ui-space-1),
+    50% 0%,
+    52% var(--ui-space-1),
+    54% 0%,
+    56% var(--ui-space-1),
+    58% 0%,
+    60% var(--ui-space-1),
+    62% 0%,
+    64% var(--ui-space-1),
+    66% 0%,
+    68% var(--ui-space-1),
+    70% 0%,
+    72% var(--ui-space-1),
+    74% 0%,
+    76% var(--ui-space-1),
+    78% 0%,
+    80% var(--ui-space-1),
+    82% 0%,
+    84% var(--ui-space-1),
+    86% 0%,
+    88% var(--ui-space-1),
+    90% 0%,
+    92% var(--ui-space-1),
+    94% 0%,
+    96% var(--ui-space-1),
+    98% 0%,
+    100% var(--ui-space-1),
+    100% calc(100% - var(--ui-space-1)),
+    98% 100%,
+    96% calc(100% - var(--ui-space-1)),
+    94% 100%,
+    92% calc(100% - var(--ui-space-1)),
+    90% 100%,
+    88% calc(100% - var(--ui-space-1)),
+    86% 100%,
+    84% calc(100% - var(--ui-space-1)),
+    82% 100%,
+    80% calc(100% - var(--ui-space-1)),
+    78% 100%,
+    76% calc(100% - var(--ui-space-1)),
+    74% 100%,
+    72% calc(100% - var(--ui-space-1)),
+    70% 100%,
+    68% calc(100% - var(--ui-space-1)),
+    66% 100%,
+    64% calc(100% - var(--ui-space-1)),
+    62% 100%,
+    60% calc(100% - var(--ui-space-1)),
+    58% 100%,
+    56% calc(100% - var(--ui-space-1)),
+    54% 100%,
+    52% calc(100% - var(--ui-space-1)),
+    50% 100%,
+    48% calc(100% - var(--ui-space-1)),
+    46% 100%,
+    44% calc(100% - var(--ui-space-1)),
+    42% 100%,
+    40% calc(100% - var(--ui-space-1)),
+    38% 100%,
+    36% calc(100% - var(--ui-space-1)),
+    34% 100%,
+    32% calc(100% - var(--ui-space-1)),
+    30% 100%,
+    28% calc(100% - var(--ui-space-1)),
+    26% 100%,
+    24% calc(100% - var(--ui-space-1)),
+    22% 100%,
+    20% calc(100% - var(--ui-space-1)),
+    18% 100%,
+    16% calc(100% - var(--ui-space-1)),
+    14% 100%,
+    12% calc(100% - var(--ui-space-1)),
+    10% 100%,
+    8% calc(100% - var(--ui-space-1)),
+    6% 100%,
+    4% calc(100% - var(--ui-space-1)),
+    2% 100%,
+    0% calc(100% - var(--ui-space-1))
   );
 }
-.app-right-dock--live::after,
-.app-right-dock--recording::after {
-  border-color: var(--ui-color-live);
+.app-right-dock--performance
+  :deep(.app-right-dock-panel__footer > .ui-separator) {
+  background: transparent;
+  border-block-start: var(--ui-border-width) dashed var(--ui-color-border);
 }
-.app-right-dock--live,
-.app-right-dock--recording {
-  --ui-right-dock-sticky-background: var(--ui-color-live-soft);
+.app-right-dock--performance :deep(.performance-session-current) {
+  padding-block-end: var(--ui-space-3);
+  border-block-end: var(--ui-border-width) dashed var(--ui-color-border);
 }
 
 .app-right-dock--collapsed {

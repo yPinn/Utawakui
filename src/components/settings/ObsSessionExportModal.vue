@@ -66,7 +66,7 @@ watch(
         :icon="RefreshCw"
         label="重新讀取場次"
         :loading="exportState.isLoading.value"
-        @click="exportState.open()"
+        @click="exportState.reload()"
       />
       <UiButton
         variant="accent"
@@ -105,10 +105,31 @@ watch(
 
       <p v-else-if="!hasSession" class="obs-session-export-modal__status">
         沒有可匯出的紀錄。連線 OBS
-        並開始直播或錄影後，曲目切換與標記會自動記錄。
+        並開始直播或錄影後，確認開始演出的曲目與標記會自動記錄。
       </p>
 
       <template v-else>
+        <UiHint
+          >場次：{{
+            exportState.session.value.name ||
+            exportState.session.value.id ||
+            exportState.session.value.sessionId
+          }}</UiHint
+        >
+        <UiHint
+          v-if="
+            exportState.session.value.entries.some(
+              (entry) => !entry[exportState.source.value],
+            )
+          "
+          tone="warning"
+          >{{
+            exportState.session.value.entries.filter(
+              (entry) => !entry[exportState.source.value],
+            ).length
+          }}
+          筆缺少所選來源的時間戳，未列入章節；原始場次紀錄仍保留。</UiHint
+        >
         <div class="obs-session-export-modal__controls">
           <div class="obs-session-export-modal__source">
             <span class="obs-session-export-modal__label" aria-hidden="true"

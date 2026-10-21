@@ -2,6 +2,17 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useAppView } from './useAppView.js';
 
 describe('useAppView', () => {
+  it('opens an archive as a contextual performance location and clears it on root or tool navigation', () => {
+    const view = useAppView();
+    view.openPerformanceArchive('archive-one');
+    expect(view.activeView.value).toBe('performance');
+    expect(view.performanceArchiveId.value).toBe('archive-one');
+    view.openPerformancePreparation();
+    expect(view.performanceArchiveId.value).toBe(null);
+    view.openPerformanceArchive('archive-two');
+    view.setActiveView('performance');
+    expect(view.performanceArchiveId.value).toBe(null);
+  });
   beforeEach(() => {
     useAppView().openLibraryContent();
   });

@@ -46,6 +46,9 @@ defineExpose({ scrollTo });
         <template v-if="$slots.identity" #identity>
           <slot name="identity" />
         </template>
+        <template v-if="$slots.actions" #actions>
+          <slot name="actions" />
+        </template>
       </AppRightDockHeader>
       <div v-if="$slots.summary" class="app-right-dock-panel__summary">
         <slot name="summary" />
@@ -128,6 +131,7 @@ defineExpose({ scrollTo });
   min-inline-size: 0;
 }
 .app-right-dock-panel__footer-content {
+  background: var(--ui-right-dock-footer-background, var(--ui-color-surface));
   padding: var(--ui-space-2) var(--ui-right-dock-content-inset);
 }
 .app-right-dock-panel__workspace {

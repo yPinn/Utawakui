@@ -8,8 +8,29 @@ const {
   isPerformanceSessionPlanValidationError,
 } = require('../lib/performanceSessionPlan');
 const { createPlanIpcRunner } = require('./ipcErrorBoundary');
+const {
+  registerPerformanceSessionHistoryHandlers,
+} = require('./performanceSessionHistoryHandlers');
+const {
+  isSessionArchiveValidationError,
+} = require('../lib/performanceSessionArchive');
 
 const OPERATION_ERRORS = Object.freeze({
+  archive: {
+    code: 'PERFORMANCE_SESSION_ARCHIVE_FAILED',
+    title: '場次尚未封存',
+    message: '場次尚未封存，目前資料仍保留，請重試。',
+  },
+  history: {
+    code: 'PERFORMANCE_SESSION_HISTORY_FAILED',
+    title: '演出紀錄未更新',
+    message: '目前無法讀取或保存演出紀錄，請重試。',
+  },
+  export: {
+    code: 'PERFORMANCE_SESSION_EXPORT_FAILED',
+    title: '演出歌單尚未保存',
+    message: '演出歌單尚未保存，請重試。',
+  },
   get: {
     code: 'PERFORMANCE_SESSION_PLAN_GET_FAILED',
     title: '場次草稿無法讀取',
@@ -78,6 +99,7 @@ function registerPerformanceSessionPlanHandlers({
   createStore = ({ directory }) =>
     createPerformanceSessionPlanStore({ directory }),
   now = Date.now,
+  sessionHistoryService = null,
 }) {
   let scan = null;
   const recoveredDirectories = new Set();
@@ -108,22 +130,43 @@ function registerPerformanceSessionPlanHandlers({
     };
   }
 
-  const run = createPlanIpcRunner({
+  const runOperation = createPlanIpcRunner({
     source: 'performance-session-plan',
     operationErrors: OPERATION_ERRORS,
-    isValidationError: isPerformanceSessionPlanValidationError,
+    isValidationError: (error) =>
+      isPerformanceSessionPlanValidationError(error) ||
+      isSessionArchiveValidationError(error),
     validationContextKeys: VALIDATION_CONTEXT_KEYS,
     recordDiagnostic,
   });
+  let pending = Promise.resolve();
+  const run = (operation, work) => {
+    const task = pending.then(() => runOperation(operation, work));
+    pending = task.catch(() => {});
+    return task;
+  };
 
   // Every store mutation takes `(argument, tracksById)`; reorder-style edits
   // may reuse a recent scan.
   function registerMutation(channel, operation, method, options = {}) {
     ipcMain.handle(channel, async (_event, argument) =>
-      run(operation, () => {
+      run(operation, async () => {
         const { store, tracksById } = operationContext({
           reuseRecentScan: options.reuseRecentScan === true,
         });
+        if (
+          method === 'setProgress' &&
+          argument?.progress === 'playing' &&
+          sessionHistoryService
+        ) {
+          const observation = store.preparePerformanceStart(
+            argument,
+            tracksById,
+          );
+          const entry =
+            await sessionHistoryService.observePerformance(observation);
+          return store.setProgress(argument, tracksById, entry);
+        }
         return store[method](argument, tracksById);
       }),
     );
@@ -132,14 +175,25 @@ function registerPerformanceSessionPlanHandlers({
   ipcMain.handle('performance-session-plan:get', async () =>
     run('get', () => {
       const { store, tracksById } = operationContext();
+      if (store.ensureSession) return store.ensureSession(tracksById);
       return store.getProjected(tracksById);
     }),
   );
 
-  ipcMain.handle(
-    'performance-session-plan:replace-from-collection',
-    async (_event, intent) =>
-      run('replace', () => {
+  for (const [channel, operation, method] of [
+    [
+      'performance-session-plan:replace-from-collection',
+      'replace',
+      'replaceFromCollection',
+    ],
+    [
+      'performance-session-plan:append-from-collection',
+      'append',
+      'appendFromCollection',
+    ],
+  ]) {
+    ipcMain.handle(channel, async (_event, intent) =>
+      run(operation, () => {
         const { directory, store, tracksById } = operationContext();
         const playlists = loadPlaylistsList(directory);
         const collection = playlists.find(
@@ -152,7 +206,7 @@ function registerPerformanceSessionPlanHandlers({
             message: '找不到這個播放清單，曲庫可能已更新。',
           });
         }
-        return store.replaceFromCollection({
+        return store[method]({
           collection: {
             id: collection.id,
             name: collection.name,
@@ -163,7 +217,8 @@ function registerPerformanceSessionPlanHandlers({
           replaceCurrent: intent?.replaceCurrent === true,
         });
       }),
-  );
+    );
+  }
 
   for (const [channel, operation, method, reuseRecentScan] of [
     [
@@ -208,6 +263,12 @@ function registerPerformanceSessionPlanHandlers({
       return store.clear(tracksById);
     }),
   );
+  registerPerformanceSessionHistoryHandlers({
+    ipcMain,
+    run,
+    operationContext,
+    sessionHistoryService,
+  });
 }
 
 module.exports = { registerPerformanceSessionPlanHandlers };

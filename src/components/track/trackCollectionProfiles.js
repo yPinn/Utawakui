@@ -6,6 +6,8 @@ export const TRACK_COLLECTION_KINDS = Object.freeze([
   'playlist',
   'album',
   'artist',
+  'performance-archive',
+  'performance-session',
 ]);
 
 const CANONICAL_SEMANTIC_ROLES = Object.freeze([
@@ -19,6 +21,31 @@ const CANONICAL_SEMANTIC_ROLES = Object.freeze([
 const TRACK_ROW_UTILITY_LANE_WIDTH = 24;
 
 const COLUMN_DEFINITIONS = Object.freeze({
+  performanceActions: Object.freeze({
+    role: 'performanceActions',
+    label: '操作',
+    sortKey: null,
+    priority: 'essential',
+    align: 'end',
+    headerAlign: 'end',
+    defaultWidth: 80,
+    minWidth: 80,
+    maxWidth: 80,
+    resizable: false,
+  }),
+  performanceStatus: Object.freeze({
+    role: 'performanceStatus',
+    label: '演出狀態',
+    textField: 'performanceStatusText',
+    sortKey: null,
+    priority: 'essential',
+    align: 'end',
+    headerAlign: 'end',
+    defaultWidth: 112,
+    minWidth: 112,
+    maxWidth: 144,
+    resizable: false,
+  }),
   ordinal: Object.freeze({
     role: 'ordinal',
     label: '#',
@@ -156,6 +183,46 @@ function semanticColumns(...roles) {
 }
 
 const PROFILES = Object.freeze({
+  'performance-session': Object.freeze({
+    kind: 'performance-session',
+    label: '目前場次',
+    accessibleLabel: '目前場次曲目',
+    managedActions: true,
+    fillIdentity: true,
+    showArtwork: true,
+    showArtist: true,
+    semanticColumns: semanticColumns('performanceStatus'),
+    advancedColumns: semanticColumns(),
+    lockedDefaultColumns: Object.freeze(['performanceStatus']),
+    toggleableDefaultColumns: Object.freeze([]),
+    columnWidths: Object.freeze({ identity: 288, minIdentityWidth: 112 }),
+    ordinalMode: 'collection',
+    albumNavigation: false,
+    artistNavigation: false,
+    canSortTrackRows: false,
+    canReorderColumns: false,
+    canReorderPlaylistTracks: false,
+  }),
+  'performance-archive': Object.freeze({
+    kind: 'performance-archive',
+    label: '演出歌單',
+    accessibleLabel: '場次原始順序',
+    readOnly: true,
+    fillIdentity: true,
+    showArtwork: true,
+    showArtist: true,
+    semanticColumns: semanticColumns('performanceStatus'),
+    advancedColumns: semanticColumns(),
+    lockedDefaultColumns: Object.freeze(['performanceStatus']),
+    toggleableDefaultColumns: Object.freeze([]),
+    columnWidths: Object.freeze({ identity: 288, minIdentityWidth: 112 }),
+    ordinalMode: 'collection',
+    albumNavigation: false,
+    artistNavigation: false,
+    canSortTrackRows: false,
+    canReorderColumns: false,
+    canReorderPlaylistTracks: false,
+  }),
   'library-all': Object.freeze({
     kind: 'library-all',
     label: '全部曲目',
@@ -459,6 +526,17 @@ export function normalizeTrackCollectionSort(kind, value = {}) {
 
 export function trackCollectionColumns(kind, preferences = {}) {
   const profile = trackCollectionProfile(kind);
+  if (profile.managedActions) {
+    return Object.freeze(
+      semanticColumns(
+        'ordinal',
+        'identity',
+        'duration',
+        'performanceStatus',
+        'performanceActions',
+      ),
+    );
+  }
   const normalized = normalizeTrackCollectionPreferences(kind, preferences);
   const hiddenDefaultRoles = new Set(normalized.hiddenDefaultColumns);
   const visibleAdvancedRoles = new Set(normalized.visibleAdvanced);
@@ -477,9 +555,11 @@ export function trackCollectionColumns(kind, preferences = {}) {
   return Object.freeze([
     COLUMN_DEFINITIONS.ordinal,
     COLUMN_DEFINITIONS.identity,
+    ...(profile.readOnly ? [COLUMN_DEFINITIONS.duration] : []),
     ...visibleSemanticColumns,
-    COLUMN_DEFINITIONS.duration,
-    COLUMN_DEFINITIONS.actions,
+    ...(!profile.readOnly
+      ? [COLUMN_DEFINITIONS.duration, COLUMN_DEFINITIONS.actions]
+      : []),
   ]);
 }
 
