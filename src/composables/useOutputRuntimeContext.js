@@ -42,6 +42,7 @@ const unavailableRuntime = Object.freeze({
   refreshProjection: async () => false,
   start: async () => false,
   stop: async () => false,
+  openWindow: async () => false,
   refreshSettings: async () => false,
   updateSettings: async () => false,
   loadSlots: async () => false,

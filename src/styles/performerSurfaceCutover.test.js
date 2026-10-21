@@ -31,9 +31,9 @@ const cueSource = readSource('../components/performer/PerformerLyricCue.vue');
 const tokenSource = readSource('./tokens.css');
 const performerFeatureSource = readSource('./features/performer.css');
 const performerWindowSource = readSource(
-  '../../electron/main/performerWindow.js',
+  '../../electron/main/windows/prompterWindow.js',
 );
-const performerPageSource = readSource('../../performer-view.html');
+const performerPageSource = readSource('../../src/entries/prompter/index.html');
 
 const performerConsumerSources = [
   ['PerformerApp.vue', performerAppSource],
@@ -101,8 +101,10 @@ describe('Performer renderer Token v2 cutover', () => {
 
   it('uses the user-facing prompter name without renaming internal contracts', () => {
     expect(toolbarSource).toContain('<span>提詞器</span>');
-    expect(performerWindowSource).toContain("title: 'Utawakui 提詞器'");
-    expect(performerPageSource).toContain('<title>Utawakui 提詞器</title>');
+    expect(performerWindowSource).toContain(
+      "title: getWindowIdentity('prompter').title",
+    );
+    expect(performerPageSource).toContain('<title>%UTAWAKUI_TITLE%</title>');
     expect(toolbarSource).not.toContain('Performer View');
     expect(performerPageSource).not.toContain('Performer View');
     expect(performerWindowSource).toContain(

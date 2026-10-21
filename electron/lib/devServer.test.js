@@ -6,8 +6,8 @@ import { DEV_SERVER_ORIGIN, devServerUrl } from './devServer.js';
 describe('dev server origin', () => {
   it('derives page URLs from the single shared origin', () => {
     expect(DEV_SERVER_ORIGIN).toBe('http://localhost:5173');
-    expect(devServerUrl('performer-view.html')).toBe(
-      'http://localhost:5173/performer-view.html',
+    expect(devServerUrl('src/entries/prompter/index.html')).toBe(
+      'http://localhost:5173/src/entries/prompter/index.html',
     );
   });
 

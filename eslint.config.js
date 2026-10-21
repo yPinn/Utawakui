@@ -12,6 +12,7 @@ module.exports = [
       'dist/**',
       '.tmp/**',
       'release/**',
+      'release-*/**',
       'node_modules/**',
       'tasks/**',
       'prototypes/**/.build/**',

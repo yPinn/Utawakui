@@ -9,7 +9,7 @@ const DEFERRED_SOURCES = new Map([
   ['electron/lib/lyricsReadingWorker.js', 'child-process-entrypoint'],
   ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],
   ['src/main.js', 'renderer-entrypoint'],
-  ['src/performer-main.js', 'renderer-entrypoint'],
+  ['src/entries/prompter/main.js', 'renderer-entrypoint'],
 ]);
 
 const COVERAGE_NEUTRAL_SOURCES = new Map([
@@ -338,7 +338,7 @@ const coveragePolicy = Object.freeze({
       }),
     }),
     Object.freeze({
-      path: 'electron/main/windowState.js',
+      path: 'electron/main/windows/mainWindow.js',
       minimum: Object.freeze({
         statements: 95,
         branches: 82,

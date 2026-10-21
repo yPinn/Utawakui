@@ -4,6 +4,12 @@
 
 ## 產品模式
 
+提詞器只有一個入口：`src/entries/prompter/index.html` 與相鄰的 `main.js`。Main 從 `shared/rendererEntries.json` 推導 development URL 與 `dist/` 下的對應 HTML，視窗由 `electron/main/windows/prompterWindow.js` 管理，仍使用 `electron/performerPreload.js`。原根目錄 HTML 與 `src/performer-main.js` 不再提供平行入口；這次搬遷不改模板、動畫或任何 intent 語意。
+
+共用品牌由 `shared/appIdentity.json` 定義，中文角色為控制台／提詞器／輸出，工程角色為 `main`／`prompter`／`output`。提詞器 native icon 與控制台共用 ICO，HTML favicon 使用同一品牌 PNG；兩者經不同載入機制解析。既有 `performer-view:*` IPC、`UtawakuiPerformer` bridge 與設定鍵保持相容，不因角色命名另存設定。
+
+主題與讀音沿用既有 owner；`performerReadingScale`、`performerWindowBounds` 仍為提詞器專用。置頂只在 manager 存活期間記憶，不跨 App 重啟持久化。共用品牌不合併 preload、權限或視窗生命週期；公開 Output 仍使用獨立模板設定與視覺 tokens。
+
 `PerformerSurface` 接受顯式 `mode`，目前 Electron shell 使用 `prompter`。`remote` 與 `combined` 是未來 transport adapter 可使用的組合語意，不得由 viewport 寬度自動推測。
 
 | Mode     | 主要責任                           | 本切片狀態                                            |

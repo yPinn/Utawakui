@@ -3,13 +3,14 @@
 const {
   createEmptyPerformerSnapshot,
   parsePerformerSnapshot,
-} = require('../lib/performerSnapshot');
+} = require('../../lib/performerSnapshot');
 const {
   MIN_PERFORMER_WINDOW_BOUNDS,
   fitPerformerWindowBounds,
   normalizePerformerWindowBounds,
-} = require('../lib/performerWindowBounds');
-const { hardenWebContentsNavigation } = require('./webContentsSecurity');
+} = require('../../lib/performerWindowBounds');
+const { hardenWebContentsNavigation } = require('../webContentsSecurity');
+const { getWindowIdentity } = require('./windowIdentity');
 
 const BOUNDS_PERSIST_DEBOUNCE_MS = 300;
 
@@ -24,6 +25,7 @@ function createPerformerWindowManager(options) {
     devUrl,
     pagePath,
     preloadPath,
+    iconPath = getWindowIdentity('prompter').icon,
     getDisplayWorkArea = () => null,
     getPersistedBounds = () => null,
     getUiTheme = () => 'light',
@@ -149,7 +151,8 @@ function createPerformerWindowManager(options) {
       minWidth: MIN_PERFORMER_WINDOW_BOUNDS.width,
       minHeight: MIN_PERFORMER_WINDOW_BOUNDS.height,
       backgroundColor: initialTheme === 'light' ? '#dad7d0' : '#191a1e',
-      title: 'Utawakui 提詞器',
+      title: getWindowIdentity('prompter').title,
+      icon: iconPath,
       show: false,
       frame: false,
       autoHideMenuBar: true,

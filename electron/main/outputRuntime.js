@@ -51,6 +51,7 @@ function createOutputRuntime({
   onProjectionChange = () => undefined,
   recordOverlayMilestone = null,
   beforeStop = () => undefined,
+  onOverlaySlotsChange = () => undefined,
   logger = console,
 } = {}) {
   let server = null;
@@ -295,12 +296,14 @@ function createOutputRuntime({
   function setOverlaySlots(slots) {
     overlaySlots = { ...(slots ?? {}) };
     server?.setOverlaySlots?.(overlaySlots);
+    onOverlaySlotsChange();
   }
 
   return {
     attachRenderer,
     connectSource,
     getSettings,
+    getOverlaySlot: (kind) => structuredClone(overlaySlots[kind] ?? null),
     getStatus,
     publish,
     reconcileConfigured,

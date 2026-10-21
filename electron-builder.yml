@@ -5,7 +5,7 @@
 # the question of which convention a root-level *.config.js should follow.
 
 appId: com.utawakui.app
-# Must equal BASE_APP_USER_MODEL_ID in electron/main.js, or the Start Menu
+# Must equal appUserModelId in shared/appIdentity.json, or the Start Menu
 # shortcut's AUMID won't match the running app's, and the SMTC card keeps
 # showing "未知的應用程式" even after installing.
 productName: Utawakui
@@ -13,7 +13,7 @@ productName: Utawakui
 # Electron distribution locked by a running dev session.
 electronVersion: 43.7.8
 afterPack: scripts/afterPackThirdPartyNotices.cjs
-# Must equal APP_NAME / app.setName() in electron/main.js — this is the
+# Must equal productName in shared/appIdentity.json / app.setName() — this is the
 # folder name under app.getPath('userData'). A mismatch here silently moves
 # config.json and the downloaded .onnx models out from under an existing
 # install.
@@ -67,7 +67,10 @@ files:
   - scripts/research/lyricsFreshEvaluation/lowCost.cjs
   - scripts/research/lyricsFreshEvaluation/completeness.cjs
   - scripts/research/lyricsFreshEvaluation/trial-assets.json
+  # Includes nested HTML at dist/src/entries/prompter/index.html.
   - dist/**/*
+  # Window owners live in electron/main/windows/; preloads remain electron/*.
+  # Includes the read-only Output window owner/handler; it loads loopback HTML.
   - electron/**/*
   # Experimental post-separation lyrics reuses the fixed research environment;
   # only its coordinator/store ship here, never downloaded models or results.

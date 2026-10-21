@@ -1,6 +1,6 @@
 'use strict';
 
-// Owns the app's single BrowserWindow plus the taskbar-thumbar/playback-
+// Owns the control-panel BrowserWindow plus the taskbar-thumbar/playback-
 // mirror state that only exists to redraw it, so domain handler modules
 // (electron/main/*Handlers.js) can read/notify the window without each
 // holding their own reference — same pattern as
@@ -9,35 +9,28 @@
 const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
-const { renderGlyphPng } = require('../lib/thumbarIcons');
-const { isBoundedTrackId } = require('../lib/library/paths');
-const { normalizeAudioPreferences } = require('../lib/config');
+const { renderGlyphPng } = require('../../lib/thumbarIcons');
+const { isBoundedTrackId } = require('../../lib/library/paths');
+const { normalizeAudioPreferences } = require('../../lib/config');
 const {
   projectSeparationTaskbarProgress,
-} = require('./separationTaskbarProgress');
-const { readDeveloperOptions } = require('./runtimeEnvironment');
-const { DEV_SERVER_ORIGIN } = require('../lib/devServer');
-const { hardenWebContentsNavigation } = require('./webContentsSecurity');
-const { forwardHistoryAppCommands } = require('./appCommands');
+} = require('../separationTaskbarProgress');
+const { readDeveloperOptions } = require('../runtimeEnvironment');
+const { DEV_SERVER_ORIGIN } = require('../../lib/devServer');
+const { hardenWebContentsNavigation } = require('../webContentsSecurity');
+const { forwardHistoryAppCommands } = require('../appCommands');
 
-// Must equal APP_NAME in electron/main.js (that copy feeds app.setName(),
-// which has to run before any lib require reads app.getPath('userData') —
-// see main.js's own comment — so it can't import this module that early).
-const APP_NAME = 'Utawakui';
-const BASE_APP_USER_MODEL_ID = 'com.utawakui.app';
+const {
+  productName: APP_NAME,
+  appUserModelId: BASE_APP_USER_MODEL_ID,
+} = require('../../../shared/appIdentity.json');
+const rendererEntries = require('../../../shared/rendererEntries.json');
+const { getWindowIdentity } = require('./windowIdentity');
 const UI_DENSITY_COMPACT = 'compact';
 const UI_DENSITY_STANDARD = 'standard';
 const { isDev, openDevTools } = readDeveloperOptions(process.argv);
 
-const iconPath = path.join(
-  __dirname,
-  '..',
-  '..',
-  'public',
-  'assets',
-  'icons',
-  'app-icon.ico',
-);
+const { icon: iconPath } = getWindowIdentity('main');
 
 // Keep the native Windows overlay continuous with persistent chrome and the
 // BrowserWindow substrate continuous with --ui-color-shell-substrate. These
@@ -232,7 +225,7 @@ function createMainWindow(
     icon: iconPath,
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, '..', 'preload.js'),
+      preload: path.join(__dirname, '..', '..', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -302,7 +295,9 @@ function createMainWindow(
   if (isDev) {
     mainWindow.loadURL(DEV_SERVER_ORIGIN);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '..', '..', 'dist', 'index.html'));
+    mainWindow.loadFile(
+      path.join(__dirname, '..', '..', '..', 'dist', rendererEntries.main),
+    );
   }
 
   mainWindow.once('ready-to-show', () => {

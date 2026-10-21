@@ -149,6 +149,7 @@ beforeEach(() => {
         sourceSynchronization: 'ready',
       },
     })),
+    openOutputWindow: vi.fn(async () => ({ kind: 'lyrics' })),
     listOutputSlots: vi.fn(async () => ({
       version: 3,
       slots: {},
@@ -259,6 +260,7 @@ it('preserves the exact public runtime API', async () => {
   expect(Object.keys(runtime).sort()).toEqual([
     'initialize',
     'loadSlots',
+    'openWindow',
     'refreshProjection',
     'refreshSettings',
     'refreshStatus',
@@ -272,6 +274,31 @@ it('preserves the exact public runtime API', async () => {
     'toggleSavedColor',
     'updateSettings',
   ]);
+});
+
+it('opens a read-only window with only a kind intent and contains failures for retry', async () => {
+  const runtime = await loadRuntime();
+  await expect(runtime.openWindow('setlist')).resolves.toBe(true);
+  expect(bridge.openOutputWindow).toHaveBeenCalledWith('setlist');
+  bridge.openOutputWindow.mockRejectedValueOnce(
+    new Error('private main cause'),
+  );
+  await expect(runtime.openWindow('lyrics')).resolves.toBe(false);
+  expect(runtime.state.error).toBe('輸出視窗未開啟，請確認服務已啟動後重試。');
+  expect(runtime.state.isOpeningWindow).toBe(false);
+  await expect(runtime.openWindow('lyrics')).resolves.toBe(true);
+});
+
+it('deduplicates concurrent UI opens while the main operation is pending', async () => {
+  const pending = deferred();
+  bridge.openOutputWindow.mockReturnValueOnce(pending.promise);
+  const runtime = await loadRuntime();
+  const first = runtime.openWindow('lyrics');
+  await flushMicrotasks();
+  await expect(runtime.openWindow('setlist')).resolves.toBe(false);
+  pending.resolve({ kind: 'lyrics' });
+  await expect(first).resolves.toBe(true);
+  expect(bridge.openOutputWindow).toHaveBeenCalledTimes(1);
 });
 
 describe('output source handshake', () => {

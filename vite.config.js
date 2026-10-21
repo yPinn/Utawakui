@@ -6,11 +6,13 @@ const vue = require('@vitejs/plugin-vue');
 const path = require('node:path');
 const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
 const { createSharedAssetsPlugin } = require('./scripts/viteSharedAssets.js');
+const { createAppIdentityPlugin } = require('./scripts/viteAppIdentity.js');
 const {
   createSfcStyleCachePlugin,
 } = require('./scripts/vitestSfcStyleCache.js');
 const { coveragePolicy } = require('./scripts/coveragePolicy.js');
 const devServerValues = require('./shared/devServerValues.json');
+const rendererEntries = require('./shared/rendererEntries.json');
 
 // Child-process CLIs and dictionary/model runtimes run after the unit group so
 // their CPU load cannot push ordinary tests past the default timeout.
@@ -29,6 +31,7 @@ const TIMEOUT_SCALE = process.argv.includes('--coverage') ? 3 : 1;
 module.exports = defineConfig({
   plugins: [
     vue(),
+    createAppIdentityPlugin(),
     createOverlayReloadPlugin(__dirname),
     createSharedAssetsPlugin(),
     createSfcStyleCachePlugin(),
@@ -52,10 +55,12 @@ module.exports = defineConfig({
   },
   build: {
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-        performer: path.resolve(__dirname, 'performer-view.html'),
-      },
+      input: Object.fromEntries(
+        Object.entries(rendererEntries).map(([role, entry]) => [
+          role,
+          path.resolve(__dirname, entry),
+        ]),
+      ),
     },
   },
   test: {

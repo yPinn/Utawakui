@@ -7,14 +7,16 @@ const readSource = (relativePath) =>
 const baseStyles = readSource('./base.css');
 const tokens = readSource('./tokens.css');
 const mainEntry = readSource('../main.js');
-const performerEntry = readSource('../performer-main.js');
+const performerEntry = readSource('../entries/prompter/main.js');
 const mainHtml = readSource('../../index.html');
-const performerHtml = readSource('../../performer-view.html');
+const performerHtml = readSource('../../src/entries/prompter/index.html');
 const studioPrototype = readSource(
   '../../prototypes/studio-library-workspace/index.html',
 );
-const windowState = readSource('../../electron/main/windowState.js');
-const performerWindow = readSource('../../electron/main/performerWindow.js');
+const windowState = readSource('../../electron/main/windows/mainWindow.js');
+const performerWindow = readSource(
+  '../../electron/main/windows/prompterWindow.js',
+);
 
 function cssBlock(selector) {
   return baseStyles.match(
@@ -33,7 +35,9 @@ describe('renderer viewport boundary', () => {
     'registers the %s surface before creating and mounting Vue',
     (renderer, source) => {
       expect(source).toContain(
-        "import { registerRendererSurfaceRoot } from './utils/rendererSurfaceRegistry.js';",
+        renderer === 'main'
+          ? "import { registerRendererSurfaceRoot } from './utils/rendererSurfaceRegistry.js';"
+          : "import { registerRendererSurfaceRoot } from '../../utils/rendererSurfaceRegistry.js';",
       );
       expect(source).toContain(
         `const surfaceRoot = registerRendererSurfaceRoot('${renderer}');`,
@@ -43,7 +47,11 @@ describe('renderer viewport boundary', () => {
       );
       expect(source).toContain('app.mount(surfaceRoot);');
       expect(source).not.toContain('document.documentElement.dataset.uiSystem');
-      expect(source).toContain("import './styles/tokens.css';");
+      expect(source).toContain(
+        renderer === 'main'
+          ? "import './styles/tokens.css';"
+          : "import '../../styles/tokens.css';",
+      );
       expect(source).not.toContain('tokens-v2.css');
       expect(source).not.toContain('token-v1-invalidation');
     },

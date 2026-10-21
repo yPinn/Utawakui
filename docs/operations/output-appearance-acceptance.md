@@ -286,3 +286,17 @@ CPU 是 Electron 各 process percentCPUUsage 相加；working set／private byte
 ## 分類提交前核對（2026-10-21）
 
 只含本對話交付內容的獨立 index 快照通過91檔996項相關測試、八模板／32情境基線、focused lint／格式、文件連結、167份Markdown與build；不依賴其他未提交的混語、提詞器、BGM或研究功能。接上已完成的並行提交後，再驗93檔1019項測試、171份Markdown、lint／格式／連結與build皆通過。設定核對與範圍見[提交前驗證紀錄](../governance/data/appearance-commit-validation-2026-10-21.json)。這輪沒有重跑完整可見／OBS／耐久測量，歷史圖像及封裝資料仍依各自來源hash解讀。
+
+## W3 視窗擷取短測
+
+此段只驗證新的只讀輸出視窗，不開播、不錄影、不做長時間測試。保留原 Browser Source 場景，另建立「Utawakui-Window-W3」供比較。視窗畫面沒有預覽用格紋／人物導覽；透明內容下方的黑色 substrate 是此交付方式的既有限制，不能當作 alpha 已保留。
+
+1. App「畫面輸出」先確認服務執行中，依序選歌單、歌詞、播放中，按 header 的「開啟輸出視窗」。三個名稱應固定為「Utawakui 輸出｜歌單／歌詞／播放中」。再次按同一種類只能還原／聚焦既有視窗。
+2. OBS 新場景逐一新增「視窗擷取」，選完整對應標題。視窗比對優先序設為「視窗標題必須符合」，避免同一 electron.exe 下誤抓控制台或提詞器；關閉擷取游標。記錄 OBS／Windows 版本與擷取方法。先用自動，若改用 Windows 10／Windows Graphics Capture，記錄該選擇並啟用 client area。
+3. 於 OBS 編輯變換確認未 crop、未額外 scale 的來源尺寸：歌單 480×810、歌詞 1920×1080、Art Card 480×270。若目前使用 Cover Player，預期 480×540。尺寸是內容區，不包含原生標題列；大型視窗可能超出螢幕工作區，不以桌面可見部分當作擷取尺寸通過。
+4. 以同一首歌在 App 暫停、播放／繼續、前後 seek、A→B→A；每次操作後比較三個視窗與原 Browser Source 的曲名、封面、歌詞位置及暫停狀態。約 1–2 分鐘即可。名稱應全程不變，記錄錯曲、舊歌詞、凍結或不同步；這不構成逐幀延遲或 FPS 測量。
+5. 分別遮擋視窗、最小化後還原、切換 OBS source 可見性，各停留約 5 秒。記錄是否仍更新、黑屏／凍結以及還原能否恢復；不能因 Electron 已關閉 background throttling 就推定 OBS 可擷取最小化視窗。
+6. 手動關閉一個輸出視窗，確認其他視窗與 Browser Source 繼續工作。再從 App 開啟同類視窗，OBS 應依固定標題重新辨識；若無法，記錄擷取方法與需重選來源的操作。不要接受它自動改抓其他 Utawakui 視窗。
+7. App 停止輸出服務後，三個原生輸出視窗應全部關閉；重新啟動服務不自動彈窗，手動重開後再核對標題與來源恢復。主視窗最小化／隱藏至 Tray 則不應關閉輸出視窗。此項可另做，不需延長播放時間。
+
+需要記錄：三個標題／模板／實際內容尺寸、擷取方法與 title-match 設定、各操作的 pass／fail、異常截圖與恢復方式。透明合成另外在 OBS 放置彩色背景核對；初版只承諾不透明 substrate，沒有 alpha 等價保證，透明需求繼續使用 Browser Source 或另驗 Spout。實際 OBS 的這些項目尚待人工驗收，不以 Electron 短測替代。

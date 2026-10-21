@@ -40,6 +40,24 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 - Server 只綁 `127.0.0.1`，exact route allowlist、明確 media type、`nosniff`、restrictive CSP。
 - Port 衝突是可觀測錯誤，不自動換 port；Output 失敗不能停止本機播放。
 
+## 只讀輸出視窗
+
+控制台「畫面輸出」的「開啟輸出視窗」只傳 `lyrics`／`setlist`／`now-playing` intent。Main 每次開啟重查 `public-output-flow`，從正在執行的 loopback server 與已正規化 slot 推導既有 canonical URL、模板內容尺寸與固定視窗名稱；不接受 renderer 提供 URL、路徑、尺寸或標題。尚未啟動服務時不自動啟動。
+
+| 種類   | 固定視窗名稱          | 內容尺寸                               |
+| ------ | --------------------- | -------------------------------------- |
+| 歌詞   | Utawakui 輸出｜歌詞   | 1920×1080                              |
+| 歌單   | Utawakui 輸出｜歌單   | 480×810                                |
+| 播放中 | Utawakui 輸出｜播放中 | Art Card 480×270；Cover Player 480×540 |
+
+`electron/main/windows/outputWindow.js` 每種最多保留一窗；重複開啟會 restore／show／focus。名稱不隨頁面 title、曲名或模板變更，slot 更新依既有尺寸契約調整內容；Windows 建窗可能先依 work area 裁小，建立後再明確設定 content size。原生框架只供移動、最小化與關閉，不允許手動 resize／最大化／全螢幕；FHD 加上框架可能超出目前螢幕工作區，OBS 應擷取 client area。
+
+視窗直接使用現有 Output 頁面，不新增 renderer entry、播放器、設定副本或模板。它沒有 preload，使用獨立非持久 session，拒絕 permission、popup、外部 navigation／redirect 與下載，關閉 DevTools／Node／webview，保留 sandbox／context isolation／web security，並靜音。`output-window:open` 只接受目前控制台 main frame；提詞器或 Output 不取得控制能力。錯誤在 main 保存私有原因，IPC 只回 bounded、可重試錯誤。
+
+服務停止／重啟前銷毀所有輸出視窗；主視窗實際關閉與 App 退出也清理。主視窗隱藏至 Tray 不停止輸出。重啟服務後要重新按開啟，不自動彈窗；手動關閉或 renderer failure 後可重試。Browser Source 與 Spout 維持獨立生命週期。
+
+這是原生框架、不透明黑色 substrate 的視窗；模板本身、動畫與透明 CSS 不變，但此交付方式不承諾 OBS alpha。`backgroundThrottling: false` 也不代表最小化後 OBS 一定繼續取樣。實機尺寸、標題與橋接隔離可本機量測；Window Capture 的 alpha、遮擋、最小化及關閉重開辨識依[可見驗收清單](../operations/output-appearance-acceptance.md#w3-視窗擷取短測)另驗。
+
 ## Browser Source 頁面生命週期
 
 固定頁面入口為 `/overlay/lyrics`、`/overlay/now-playing` 與 `/overlay/setlist`。Lyrics 的本機檢視直接在同一入口加上有界的 `workbench=1`、`guide=0/1` 與 backdrop 選項，不另包一層 Workbench iframe 頁面。`overlay/assets/streamer-guide.png` 是檢視模式與 renderer 無 runtime fallback 共用的唯一圖片來源；HTTP 僅開放該明列資產，不開放資料夾。

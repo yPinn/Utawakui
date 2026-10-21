@@ -166,7 +166,7 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     system: 'v2',
   }),
   performer: createSurfaceDefinition({
-    entryOwner: 'src/performer-main.js',
+    entryOwner: 'src/entries/prompter/main.js',
     overlayHostId: 'performer-overlay',
     renderer: 'performer',
     surfaceId: 'performer',

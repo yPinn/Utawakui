@@ -1,13 +1,13 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
-import performerWindowModule from './performerWindow.js';
+import performerWindowModule from './prompterWindow.js';
 
 const { createPerformerWindowManager } = performerWindowModule;
 
 class FakeWebContents extends EventEmitter {
   send = vi.fn();
   setWindowOpenHandler = vi.fn();
-  getURL = vi.fn(() => 'http://localhost:5173/performer-view.html');
+  getURL = vi.fn(() => 'http://localhost:5173/src/entries/prompter/index.html');
 }
 
 class FakeWindow extends EventEmitter {
@@ -63,9 +63,10 @@ describe('performer window manager', () => {
     const manager = createPerformerWindowManager({
       BrowserWindow: FakeWindow,
       isDev: true,
-      devUrl: 'http://localhost:5173/performer-view.html',
-      pagePath: 'dist/performer-view.html',
+      devUrl: 'http://localhost:5173/src/entries/prompter/index.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
       preloadPath: 'performerPreload.js',
+      iconPath: 'app-owned-icon.ico',
       getUiTheme: () => 'dark',
       publishStatus,
     });
@@ -91,6 +92,7 @@ describe('performer window manager', () => {
     expect(window.options).toMatchObject({
       backgroundColor: '#191a1e',
       title: 'Utawakui 提詞器',
+      icon: 'app-owned-icon.ico',
     });
     expect(window.options.webPreferences.additionalArguments).toEqual([
       '--ui-theme=dark',
@@ -115,7 +117,7 @@ describe('performer window manager', () => {
       BrowserWindow: FakeWindow,
       isDev: false,
       devUrl: '',
-      pagePath: 'dist/performer-view.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
       preloadPath: 'performerPreload.js',
     });
     const mainWindow = new EventEmitter();
@@ -142,7 +144,7 @@ describe('performer window manager', () => {
       BrowserWindow: FakeWindow,
       isDev: false,
       devUrl: '',
-      pagePath: 'dist/performer-view.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
       preloadPath: 'performerPreload.js',
       getDisplayWorkArea: () => ({ x: 100, y: 40, width: 1280, height: 800 }),
     });
@@ -175,7 +177,7 @@ describe('performer window manager', () => {
         BrowserWindow: FakeWindow,
         isDev: false,
         devUrl: '',
-        pagePath: 'dist/performer-view.html',
+        pagePath: 'dist/src/entries/prompter/index.html',
         preloadPath: 'performerPreload.js',
         getPersistedBounds: () => storedBounds,
         getDisplayWorkArea,
@@ -216,7 +218,7 @@ describe('performer window manager', () => {
       BrowserWindow: FakeWindow,
       isDev: false,
       devUrl: '',
-      pagePath: 'dist/performer-view.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
       preloadPath: 'performerPreload.js',
       getUiTheme: () => 'light',
     });
@@ -237,7 +239,7 @@ describe('performer window manager', () => {
       BrowserWindow: FakeWindow,
       isDev: false,
       devUrl: '',
-      pagePath: 'dist/performer-view.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
       preloadPath: 'performerPreload.js',
     });
 
@@ -258,7 +260,7 @@ describe('performer window manager', () => {
       BrowserWindow: FakeWindow,
       isDev: false,
       devUrl: '',
-      pagePath: 'dist/performer-view.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
       preloadPath: 'performerPreload.js',
       getUiTheme: () => uiTheme,
     });

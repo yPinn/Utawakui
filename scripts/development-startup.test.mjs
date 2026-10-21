@@ -11,7 +11,7 @@ const mainSource = readFileSync(
   'utf8',
 );
 const windowStateSource = readFileSync(
-  new URL('../electron/main/windowState.js', import.meta.url),
+  new URL('../electron/main/windows/mainWindow.js', import.meta.url),
   'utf8',
 );
 const packageJson = JSON.parse(

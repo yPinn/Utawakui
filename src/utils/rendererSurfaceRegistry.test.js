@@ -35,7 +35,7 @@ describe('renderer surface registry', () => {
         system: 'v2',
       },
       performer: {
-        entryOwner: 'src/performer-main.js',
+        entryOwner: 'src/entries/prompter/main.js',
         overlayHostId: 'performer-overlay',
         parentSurfaceId: null,
         renderer: 'performer',

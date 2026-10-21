@@ -171,6 +171,7 @@ const MAIN_INVOKE_CHANNELS = [
   'output-slots:upsert',
   'output:connect-source',
   'output:copy-url',
+  'output-window:open',
   'output:get-settings',
   'output:get-status',
   'output:publish',

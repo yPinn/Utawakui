@@ -23,7 +23,7 @@ const {
   powerSaveBlocker,
 } = require('electron');
 
-const APP_NAME = 'Utawakui';
+const { productName: APP_NAME } = require('../shared/appIdentity.json');
 // Apply Chromium sandboxing before ready and before any BrowserWindow can be
 // created. The helper process repeats the same invariant in its own bootstrap.
 app.enableSandbox();
@@ -97,7 +97,8 @@ const {
   readStartupTraceOptions,
   registerStartupTraceHandler,
 } = require('./lib/startupTrace');
-const windowState = require('./main/windowState');
+const windowState = require('./main/windows/mainWindow');
+const rendererEntries = require('../shared/rendererEntries.json');
 const { createLibraryTrackSnapshot } = require('./main/libraryTrackSnapshot');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
@@ -156,6 +157,8 @@ const {
   registerOutputRuntimeLifecycle,
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
+const { registerOutputWindowHandlers } = require('./main/outputWindowHandlers');
+const { createOutputWindowManager } = require('./main/windows/outputWindow');
 const {
   createSpoutHelperLaunch,
   createSpoutOutputRuntime,
@@ -183,7 +186,9 @@ const {
 const {
   createRuntimeDiagnosticsLogger,
 } = require('./main/runtimeDiagnosticsLogger');
-const { createPerformerWindowManager } = require('./main/performerWindow');
+const {
+  createPerformerWindowManager,
+} = require('./main/windows/prompterWindow');
 const {
   registerPerformerViewHandlers,
 } = require('./main/performerViewHandlers');
@@ -253,6 +258,7 @@ startupTrace.record('process-start', { atUnixMs: performance.timeOrigin });
 
 let performerWindowManager = null;
 let outputRuntimeController = null;
+let outputWindowManager = null;
 let spoutOutputRuntimeController = null;
 let obsAdapterController = null;
 let heavyJobScheduler = null;
@@ -362,6 +368,7 @@ function createConfiguredMainWindow() {
   );
   windowsTrayController?.attachWindow(mainWindow);
   performerWindowManager?.attachMainWindow(mainWindow);
+  outputWindowManager?.attachMainWindow(mainWindow);
   appUsageService?.start();
   mainWindow.once('closed', () => appUsageService?.stop());
   return mainWindow;
@@ -762,8 +769,24 @@ if (!gotSingleInstanceLock) {
       recordOverlayMilestone: startupTrace.enabled
         ? recordOverlayMilestone
         : null,
-      beforeStop: () => spoutOutputRuntimeController?.stop(),
+      beforeStop: async () => {
+        outputWindowManager?.closeAll();
+        await spoutOutputRuntimeController?.stop();
+      },
+      onOverlaySlotsChange: () => outputWindowManager?.syncSlots(),
       logger: runtimeDiagnosticsLogger,
+    });
+    outputWindowManager = createOutputWindowManager({
+      BrowserWindow,
+      getOutputStatus: () => outputRuntimeController.getStatus(),
+      getSlot: (kind) => outputRuntimeController.getOverlaySlot(kind),
+      requireFeatureGate,
+      featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+      onFailure: (error) =>
+        runtimeDiagnosticsLogger.error?.(
+          '[output-window] Renderer stopped',
+          error,
+        ),
     });
     spoutOutputRuntimeController = createSpoutOutputRuntime({
       outputRuntime: outputRuntimeController,
@@ -934,6 +957,13 @@ if (!gotSingleInstanceLock) {
       writeClipboardText: (value) => clipboard.writeText(value),
       logger: runtimeDiagnosticsLogger,
     });
+    registerOutputWindowHandlers({
+      ipcMain,
+      manager: outputWindowManager,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+      recordDiagnostic,
+    });
     registerSpoutOutputHandlers({
       ipcMain,
       runtime: spoutOutputRuntimeController,
@@ -955,9 +985,10 @@ if (!gotSingleInstanceLock) {
     performerWindowManager = createPerformerWindowManager({
       BrowserWindow,
       isDev: windowState.isDev,
-      devUrl: devServerUrl('performer-view.html'),
-      pagePath: path.join(__dirname, '..', 'dist', 'performer-view.html'),
+      devUrl: devServerUrl(rendererEntries.prompter),
+      pagePath: path.join(__dirname, '..', 'dist', rendererEntries.prompter),
       preloadPath: path.join(__dirname, 'performerPreload.js'),
+      iconPath: windowState.getAppIconPath(),
       getPersistedBounds: () => configState.getConfig().performerWindowBounds,
       persistBounds: (bounds) =>
         configState.updateConfig({ performerWindowBounds: bounds }),

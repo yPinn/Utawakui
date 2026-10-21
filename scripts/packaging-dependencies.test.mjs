@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { builtinModules, createRequire } from 'node:module';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -20,14 +20,23 @@ const builtins = new Set([
   'original-fs',
 ]);
 
-// Packaged main, worker and shared runtime code (electron-builder `files`).
+// Working-tree runtime code, including unstaged moves before a commit.
 const runtimeSources = execFileSync(
   'git',
-  ['ls-files', 'electron', 'shared', 'overlay'],
+  [
+    'ls-files',
+    '--cached',
+    '--others',
+    '--exclude-standard',
+    'electron',
+    'shared',
+    'overlay',
+  ],
   { cwd: root, encoding: 'utf8' },
 )
   .split('\n')
   .filter((file) => /\.(c?js|mjs)$/u.test(file) && !/\.test\./u.test(file))
+  .filter((file) => existsSync(path.join(root, file)))
   .map((file) => ({
     file,
     // Whole-line comments only; block-comment stripping would cut globs in strings.
@@ -67,6 +76,37 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('ships session archive/history runtime under existing boundaries while excluding their tests', () => {
+    for (const file of [
+      'electron/lib/performanceSessionArchive.js',
+      'electron/main/performanceSessionHistoryHandlers.js',
+    ]) {
+      expect(runtimeSources.some((source) => source.file === file)).toBe(true);
+      expect(
+        builder.files.some(
+          (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+        ),
+      ).toBe(true);
+      expect(
+        builder.files.some(
+          (glob) =>
+            glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+        ),
+      ).toBe(false);
+      expect(
+        builder.files.some(
+          (glob) =>
+            glob.startsWith('!') &&
+            path.matchesGlob(file.replace('.js', '.test.js'), glob.slice(1)),
+        ),
+      ).toBe(true);
+    }
+    expect(
+      builder.asarUnpack.some((glob) =>
+        path.matchesGlob('electron/lib/performanceSessionArchive.js', glob),
+      ),
+    ).toBe(true);
+  });
   it('keeps synthetic test corpora in source and outside the packaged runtime', () => {
     const fixtures = ['electron/lib/fixtures', 'electron/lib/lrclib/fixtures']
       .flatMap((directory) =>

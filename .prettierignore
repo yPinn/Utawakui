@@ -1,6 +1,9 @@
 node_modules
 dist
 release
+release-*
+tasks
+.tmp
 coverage
 package-lock.json
 .claude

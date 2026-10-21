@@ -1,7 +1,9 @@
 import { watchEffect } from 'vue';
 import { usePlayer } from './usePlayer.js';
 
-const APP_TITLE = 'Utawakui';
+import appIdentity from '../../shared/appIdentity.json';
+
+const APP_TITLE = appIdentity.productName;
 
 // Setting document.title is enough to change the actual OS window title —
 // no IPC needed. Electron's BrowserWindow title option is documented to

@@ -516,6 +516,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getObsLatestSession: () => ipcRenderer.invoke('obs:get-latest-session'),
   copyObsText: (value) => ipcRenderer.invoke('obs:copy-text', value),
   copyOutputUrl: (kind) => ipcRenderer.invoke('output:copy-url', kind),
+  openOutputWindow: (kind) => ipcRenderer.invoke('output-window:open', kind),
   openPerformerView: (snapshot) =>
     ipcRenderer.invoke('performer-view:open', snapshot),
   closePerformerView: () => ipcRenderer.invoke('performer-view:close'),

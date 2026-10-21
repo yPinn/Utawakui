@@ -69,8 +69,8 @@ async function loadWindowState({ isDev = false, openDevTools = false } = {}) {
 
   Module._load = function load(request, parent, isMain) {
     if (request === 'electron') return electron;
-    if (request === '../lib/thumbarIcons') return { renderGlyphPng };
-    if (request === './runtimeEnvironment') {
+    if (request === '../../lib/thumbarIcons') return { renderGlyphPng };
+    if (request === '../runtimeEnvironment') {
       return { readDeveloperOptions: () => ({ isDev, openDevTools }) };
     }
     return originalModuleLoad.call(this, request, parent, isMain);
@@ -82,7 +82,7 @@ async function loadWindowState({ isDev = false, openDevTools = false } = {}) {
   });
 
   try {
-    const imported = await import('./windowState.js');
+    const imported = await import('./mainWindow.js');
     return {
       electron,
       image,

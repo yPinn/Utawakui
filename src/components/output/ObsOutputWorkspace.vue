@@ -4,7 +4,7 @@ import { useAppView } from '../../composables/useAppView.js';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
 import { useOutputAppearanceAutosave } from '../../composables/output/useOutputAppearanceAutosave.js';
-import { Settings } from '../../icons/index.js';
+import { MonitorUp, Settings } from '../../icons/index.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputRuntimeStatus from './ObsOutputRuntimeStatus.vue';
 import ObsTemplateGallery from './ObsTemplateGallery.vue';
@@ -75,6 +75,7 @@ const {
   refreshStatus: refreshOutputStatus,
   start: startOutput,
   stop: stopOutput,
+  openWindow,
   loadSlots,
   saveRecentColor,
   saveSlotSettings,
@@ -124,6 +125,7 @@ const runtimeBusy = computed(
   () =>
     outputState.isStarting ||
     outputState.isStopping ||
+    outputState.isOpeningWindow ||
     outputState.isSavingSettings ||
     outputState.isSavingSlot,
 );
@@ -189,6 +191,12 @@ function queueAppearanceSave(change) {
   );
 }
 
+async function openCaptureWindow() {
+  const kind = activeKind.value;
+  if (!(await appearanceAutosave.flush())) return false;
+  return openWindow(kind);
+}
+
 onMounted(async () => {
   await initializeOutput();
   await refreshOutputStatus();
@@ -232,6 +240,12 @@ onBeforeUnmount(() => {
               :busy="runtimeBusy"
               @start="startOutput"
               @stop="stopOutput"
+            />
+            <UiIconButton
+              :icon="MonitorUp"
+              label="開啟輸出視窗"
+              :disabled="!outputState.status.running || runtimeBusy"
+              @click="openCaptureWindow"
             />
             <UiIconButton
               :icon="Settings"

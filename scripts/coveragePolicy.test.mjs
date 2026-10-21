@@ -18,27 +18,36 @@ it('keeps every explicit coverage-neutral source path resolvable', () => {
   }
 });
 
-function trackedAppSources() {
-  const result = spawnSync('git', ['ls-files'], {
-    cwd: root,
-    encoding: 'utf8',
-  });
+function workspaceAppSources() {
+  const result = spawnSync(
+    'git',
+    ['ls-files', '--cached', '--others', '--exclude-standard'],
+    {
+      cwd: root,
+      encoding: 'utf8',
+    },
+  );
   if (result.status !== 0) throw new Error(result.stderr);
   return result.stdout
     .split(/\r?\n/)
     .filter(Boolean)
+    .filter((file) => fs.existsSync(path.join(root, file)))
     .filter((file) => APP_SOURCE_PATTERN.test(file))
     .filter((file) => !/\.test\.(?:js|mjs)$/.test(file));
 }
 
 describe('coverage policy', () => {
-  it('classifies every tracked application source as measured or deferred', () => {
-    const tracked = trackedAppSources();
+  it('classifies every application source in the working tree as measured or deferred', () => {
+    const sources = workspaceAppSources();
     expect(
-      tracked.length,
+      sources.length,
       'coverage inventory must not be empty',
     ).toBeGreaterThan(0);
-    const unclassified = tracked.filter(
+    expect(sources).toContain('src/entries/prompter/main.js');
+    expect(sources).toContain('electron/main/windows/mainWindow.js');
+    expect(sources).toContain('electron/main/windows/prompterWindow.js');
+    expect(sources).not.toContain('src/performer-main.js');
+    const unclassified = sources.filter(
       (file) => classifyAppSource(file).status === 'unclassified',
     );
 
@@ -50,6 +59,8 @@ describe('coverage policy', () => {
       'electron/lib/downloader.js',
       'electron/lib/audioProcessing/structureAnalysisAutoQueue.js',
       'electron/main/configHandlers.js',
+      'electron/main/windows/mainWindow.js',
+      'electron/main/windows/prompterWindow.js',
       'electron/preload.js',
       'electron/performerPreload.js',
       'overlay/now-playing/now-playing.mjs',
@@ -84,7 +95,7 @@ describe('coverage policy', () => {
     ['electron/lib/lyricsReadingWorker.js', 'child-process-entrypoint'],
     ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],
     ['src/main.js', 'renderer-entrypoint'],
-    ['src/performer-main.js', 'renderer-entrypoint'],
+    ['src/entries/prompter/main.js', 'renderer-entrypoint'],
     ['src/App.vue', 'vue-sfc-runtime'],
     ['src/components/ui/UiButton.vue', 'vue-sfc-runtime'],
   ])('defers %s only at its runtime boundary', (file, reason) => {
@@ -223,7 +234,7 @@ describe('coverage policy', () => {
         'electron/main/lyrics/documentHandlers.js',
         'electron/main/lyrics/readingHandlers.js',
         'electron/main/mediaProtocol.js',
-        'electron/main/windowState.js',
+        'electron/main/windows/mainWindow.js',
         'electron/main/libraryPathSidecar.js',
         'electron/main/outputRuntime.js',
         'electron/preload.js',

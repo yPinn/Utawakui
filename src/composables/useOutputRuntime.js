@@ -40,6 +40,7 @@ const state = reactive({
   slotsLoaded: false,
   isStarting: false,
   isStopping: false,
+  isOpeningWindow: false,
   isLoadingSlots: false,
   isSavingSlot: false,
   isLoadingSettings: false,
@@ -300,6 +301,32 @@ async function stop() {
   }
 }
 
+async function openWindow(kind) {
+  if (state.isOpeningWindow) return false;
+  const enabled = await requireFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW, {
+    source: 'output',
+    operation: 'open-window',
+    message: '請先到設定啟用對外輸出，再開啟輸出視窗。',
+  });
+  if (!enabled || state.isOpeningWindow) return false;
+  state.isOpeningWindow = true;
+  try {
+    const result = await bridgeMethod('openOutputWindow')(kind);
+    clearOutputFailure('open-window');
+    state.error = '';
+    return Boolean(result);
+  } catch (error) {
+    state.error = reportOutputError(
+      error,
+      'open-window',
+      '輸出視窗未開啟，請確認服務已啟動後重試。',
+    );
+    return false;
+  } finally {
+    state.isOpeningWindow = false;
+  }
+}
+
 async function loadSlots(seedSlots = {}) {
   if (state.isLoadingSlots) return;
   state.isLoadingSlots = true;
@@ -407,6 +434,7 @@ export function useOutputRuntime() {
     updateSettings,
     start,
     stop,
+    openWindow,
     loadSlots,
     saveOutputSlot,
     saveRecentColor: preferencesController.saveRecentColor,

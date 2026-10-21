@@ -1,0 +1,11 @@
+{
+  "productName": "Utawakui",
+  "appUserModelId": "com.utawakui.app",
+  "nativeIcon": "public/assets/icons/app-icon.ico",
+  "favicon": "/assets/icons/app-icon.png",
+  "roles": {
+    "main": "控制台",
+    "prompter": "提詞器",
+    "output": "輸出"
+  }
+}
