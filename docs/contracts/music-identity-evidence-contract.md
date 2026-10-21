@@ -106,8 +106,9 @@ duration 先轉成 `durationSeconds`；legacy `secondsFromDuration()` heuristic 
 `electron/lib/trackIdentity.js` 繼續擁有 provider trust、搜尋提示推論與原 named exports；
 `electron/lib/lrclib/matching.js` 繼續擁有 LRCLIB score mapping、version penalty、threshold 與
 automatic selection，只從共享層取得 raw evidence primitives。
-`electron/lib/musicIdentity.js` 使用靜態 CJS named exports，讓 ESM tests 與既有 CJS consumer
-可穩定發現 API。
+現行 consumer 直接匯入 `electron/lib/musicIdentity/` 的 observed track、profiles、query
+variants 或 recording evidence 子模組；各模組保留可靜態發現的 CJS named exports，跨模組
+驗證集中在同目錄的 `primitives.integration.test.js`。不再維護只供測試使用的根目錄 barrel。
 
 Phase 1 的驗收條件是既有 export shape、candidate order、threshold、automatic selection、IPC、
 library 寫入與 packaging 完全不變。

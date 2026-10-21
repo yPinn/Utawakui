@@ -20,7 +20,7 @@ export function useMediaSession() {
           artwork: [
             {
               src: '/assets/icons/app-icon.png',
-              sizes: '1080x1080',
+              sizes: '1024x1024',
               type: 'image/png',
             },
           ],

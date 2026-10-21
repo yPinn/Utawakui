@@ -17,6 +17,7 @@ SPEC.loader.exec_module(PROBE)
 class RequestTests(unittest.TestCase):
     def setUp(self):
         for name, value in [
+            ("version_info", (3, 14, 7)),
             ("path", PROBE.sys.path.copy()),
             ("pycache_prefix", PROBE.sys.pycache_prefix),
             ("dont_write_bytecode", PROBE.sys.dont_write_bytecode),
@@ -85,6 +86,24 @@ class RequestTests(unittest.TestCase):
             ]:
                 with self.assertRaises((ValueError, FileNotFoundError)):
                     PROBE.validate_request({**request, **changes})
+
+    def test_rejects_wrong_host_version_before_importing_packages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            request = {
+                "pythonVersion": "3.14.7",
+                "packages": {"numpy": "2.5.2", "pypinyin": "0.55.0"},
+                "environment": directory,
+                "workspace": directory,
+            }
+            with (
+                patch.object(PROBE.sys, "version_info", (3, 14, 0)),
+                patch.object(PROBE.importlib.metadata, "distributions") as distributions,
+                patch.object(PROBE.importlib, "import_module") as import_module,
+            ):
+                with self.assertRaisesRegex(ValueError, "alignment Python version"):
+                    PROBE.probe(request)
+                distributions.assert_not_called()
+                import_module.assert_not_called()
 
 
 if __name__ == "__main__":

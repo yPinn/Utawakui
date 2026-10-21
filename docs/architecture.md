@@ -131,7 +131,7 @@
 - 藝人整理（[ADR 0022](adr/0022-artist-identity-and-organization.md)）：`artists/artistIndex.js` 依有序演出者 credit 建立分組；`artistOrganization.js` 把已確認 credit 投影到 stable UUID entity，不改寫曲目 metadata。`artists.json` 保存 revision、entities、catalog facts 與最多 20 筆 undo，原子寫入並備份損毀檔；未整理藝人用衍生 hash id，舊 id 有 redirect。Index 在首次請求時才讀取。
 - Merge／split／顯示名稱／undo 經固定 IPC，以 expected revision 防止覆寫；renderer 只傳 id 與最多 200 字的名稱。`artistIdentityService.js` 經全 App 1.1 秒的 MusicBrainz scheduler 自動整理：重查 `provider-flow`、single-flight、每輪最多 64 次，只自動套用有本機曲目佐證的唯一 exact name／alias；相同 MBID 自動合併，split 保存 negative evidence。Renderer 永遠拿不到 MBID 或原始回應。
 - 藝人照片：`artistPhotoService.js` 在 `provider-flow` 開啟時，以 yt-dlp 讀第一署名曲目多數非 Topic 頻道的頭像，經 `artwork/image.js` 驗證下載（只允許兩個 Google 圖片 host）寫入 `artists/<artistId>/`。明確的線上候選搜尋由 `artistPhotoCandidateService.js` 在 Provider Python 做一次匿名 YT Music 查詢，renderer 只拿到 candidate id 與驗證後的 bytes，一律由使用者確認。見[照片契約](contracts/artist-photo-provider.md)。
-- Music identity：`electron/lib/musicIdentity/` 是 provider 中立的逐軸 evidence 純 domain，不連網、不寫檔，也不決定總分或自動保存；歌詞（`lyricsProviders/recordingPolicy.js`）、匯入（`importRecordingPolicy.js`）與封面各自映射並保有自己的門檻。
+- Music identity：`electron/lib/musicIdentity/` 是 provider 中立的逐軸 evidence 純 domain，不連網、不寫檔，也不決定總分或自動保存；歌詞（`lyricsProviders/recordingPolicy.js`）、匯入（`importRecordingPolicy.js`）與封面各自映射並保有自己的門檻。 Consumer 直接匯入所需子模組；跨模組驗證位於同目錄的 integration test。
 - 封面候選：`musicbrainz/`、`coverArtArchive/` adapter、`artwork/discoveryService.js` 的短期 opaque session 與 `artwork/releasePolicy.js`。Main 擁有節流、快取、redirect allowlist 與圖片驗證；renderer 以 blob URL 預覽，不 hotlink。只有曲目資訊的單一 Save 才套用，失敗即還原 `thumbnail`／`artwork.json`。見 [identity 契約](contracts/music-identity-evidence-contract.md)與[曲目編輯契約](contracts/track-editing.md)。
 
 ### Folder 頁面物件

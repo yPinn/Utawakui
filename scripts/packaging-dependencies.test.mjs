@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { builtinModules, createRequire } from 'node:module';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -67,6 +67,43 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('keeps synthetic test corpora in source and outside the packaged runtime', () => {
+    const fixtures = ['electron/lib/fixtures', 'electron/lib/lrclib/fixtures']
+      .flatMap((directory) =>
+        readdirSync(path.join(root, directory), {
+          recursive: true,
+          withFileTypes: true,
+        }),
+      )
+      .filter((entry) => entry.isFile())
+      .map((entry) =>
+        path
+          .relative(root, path.join(entry.parentPath, entry.name))
+          .replaceAll('\\', '/'),
+      );
+    expect(fixtures.length).toBeGreaterThan(0);
+    for (const file of fixtures) {
+      const included = builder.files.some(
+        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+      );
+      const excluded = builder.files.some(
+        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+      );
+      expect(included && !excluded, file).toBe(false);
+    }
+  });
+
+  it('keeps the shared native icon packaged and unpacked for Windows shell APIs', () => {
+    const nativeIcon = 'public/assets/icons/app-icon.ico';
+    expect(builder.win.icon).toBe(nativeIcon);
+    expect(builder.files).toContain(nativeIcon);
+    expect(builder.asarUnpack).toContain(nativeIcon);
+    const icon = readFileSync(path.join(root, nativeIcon));
+    expect(icon.readUInt16LE(0)).toBe(0);
+    expect(icon.readUInt16LE(2)).toBe(1);
+    expect(icon.readUInt16LE(4)).toBeGreaterThan(0);
+  });
+
   it('ships the shared service cooldown helper while excluding its tests', () => {
     const helper = 'electron/lib/providerServiceCooldown.js';
     expect(runtimeSources.some(({ file }) => file === helper)).toBe(true);

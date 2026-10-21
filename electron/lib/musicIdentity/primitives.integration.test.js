@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { buildObservedTrack } from './observedTrack.js';
+import { buildIdentityProfile } from './profiles.js';
+import { buildIdentityQueryVariants } from './queryVariants.js';
+import { candidateIntroducesVersion } from './recordingSignals.js';
 import {
-  buildIdentityProfile,
-  buildIdentityQueryVariants,
-  buildObservedTrack,
-  candidateIntroducesVersion,
   compareRecordingIdentity,
   compareTextEvidence,
   durationDelta,
-  normalizeForCompare,
-} from './musicIdentity.js';
+} from './recordingEvidence.js';
+import { normalizeForCompare } from './text.js';
 
-describe('music identity public domain barrel', () => {
-  it('exposes pure identity primitives without feature policy', () => {
+describe('music identity primitives integration', () => {
+  it('combines identity evidence and query primitives without feature policy', () => {
     const identity = buildObservedTrack({
       title: 'Artist - Song (Official Music Video)',
       artistCredit: 'Label Music',

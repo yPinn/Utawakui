@@ -70,8 +70,11 @@ files:
   # Experimental post-separation lyrics reuses the fixed research environment;
   # only its coordinator/store ship here, never downloaded models or results.
   - '!electron/**/*.test.js'
+  # Synthetic corpora are source-only inputs to tests and benchmark tooling.
+  - '!electron/**/fixtures/**/*'
   # Main only reads the shell icon; the renderer's PNG icons ship via dist/.
   - public/assets/icons/app-icon.ico
+  # Independent Browser Source pages and the single inspection guide source.
   - overlay/**/*
   - '!overlay/**/*.test.js'
   - shared/**/*

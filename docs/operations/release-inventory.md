@@ -283,7 +283,10 @@ keeps only `dist/gsap.min.js` for the Output HTTP plane, and `opencc-js` keeps
 only its UMD `cn2t`／`t2cn` converters plus license files. The renderer copy of
 `opencc-js` is bundled into `dist/` separately and is unaffected. Outside
 `dist/`, the package keeps only `public/assets/icons/app-icon.ico`; the
-renderer's PNG icons already arrive through Vite's `public/` copy.
+renderer's canonical 1024×1024 `app-icon.png` already arrives through Vite's
+`public/` copy for favicons and SMTC artwork. The ICO embeds 16, 32, 48, 64, 128
+and 256 pixel frames for Windows; unused standalone size exports are not kept
+in `public/`, since Vite would copy every export into `dist/`.
 
 Renderer CSS that references `shared/assets/fonts/` is rewritten at build time
 (`scripts/viteSharedAssets.js`) to load the packaged `app.asar/shared/` copy, so
@@ -317,6 +320,15 @@ When adding a dependency, classify it before installing:
 - If it is only for tests/lint/build scripts, put it in `devDependencies`.
 
 ## Packaging Locations
+
+`electron/**/*` includes the main-process runtime, preloads and child-process
+workers. `!electron/**/*.test.js` and `!electron/**/fixtures/**/*` exclude tests
+and synthetic corpora; the latter remain in source for artist-credit, music
+structure and LRCLIB parser regressions and benchmark tooling. Music identity
+consumers load `electron/lib/musicIdentity/` submodules directly; the unused
+root re-export barrel is removed. The generic Audio Python host and Refined
+probe modules remain packaged as the non-activating foundation defined by
+ADR 0014.
 
 `overlay/**/*` ships the three fixed Browser Source pages and their exact-route
 assets; adjacent `*.test.js` files stay excluded. Now Playing ships only

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { effectScope, nextTick, reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -96,10 +97,19 @@ describe('useMediaSession', () => {
     };
     await nextTick();
 
+    const icon = readFileSync(
+      new URL('../../public/assets/icons/app-icon.png', import.meta.url),
+    );
     expect(mediaSession.metadata).toMatchObject({
       title: 'Night Song',
       artist: 'Singer',
-      artwork: [{ src: '/assets/icons/app-icon.png' }],
+      artwork: [
+        {
+          src: '/assets/icons/app-icon.png',
+          sizes: `${icon.readUInt32BE(16)}x${icon.readUInt32BE(20)}`,
+          type: 'image/png',
+        },
+      ],
     });
     expect(mediaSession.playbackState).toBe('paused');
 
