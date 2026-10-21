@@ -7,7 +7,7 @@ prerequisite, and the Batch 3 segment-aware overlay implementation are complete.
 Human visual acceptance in Workbench and OBS remains before the presentation is
 treated as release-approved; later analysis work remains independently gated.
 That acceptance work is tracked as a live near-term item in
-[docs/spec.md §6.1](../spec.md#61-近期公開測試發布後的穩定與安全), not in this archived
+[docs/spec.md §6.1](../spec.md#61-近期穩定與安全), not in this archived
 implementation plan.
 This document converts ADR 0010 and the Lyrics Timing Contract into ordered,
 testable work without pulling M1/M2 analysis, automatic alignment, or

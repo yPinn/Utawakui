@@ -2,22 +2,15 @@
 
 ## Status
 
-Accepted and partially implemented (updated 2026-09-04). The current renderer
-error surface has been audited and migrated to a shared public-message boundary.
-The dependency-free main-owned core implements event
-normalization, redaction, JSONL persistence/recovery, rotation, recent reads,
-managed-file clearing, and fail-open results. Main startup, Electron lifecycle,
-bounded preload/IPC intents, Vue/renderer global capture, and Settings
-count/open/clear/export controls are wired. Explicit export writes a single
-JSON support bundle to a user-selected, main-owned save-dialog destination; a
-cancelled dialog is expected control flow, not a failure. Main domain-handler
-wrappers beyond the completed dependency-handler migration remain incremental
-work.
+Accepted. This ADR preserves the decision and its original context. Current
+operations, runtime owners and scoped follow-up are maintained in the
+[diagnostics guide](../operations/diagnostics-rollout.md); product status belongs
+to the [spec](../spec.md#3-功能現況).
 
 ## Context
 
-Utawakui currently handles many operational failures, but it does not yet have
-one durable diagnostic pipeline.
+At decision time, Utawakui handled many operational failures without one durable
+diagnostic pipeline. The context below records that baseline.
 
 - Main-process domain handlers generally throw ordinary `Error` values through
   `ipcMain.handle`. Provider downloads are an important exception: raw yt-dlp
@@ -302,10 +295,10 @@ happened without turning expected cancellation or recovery into alarming UI.
 
 ## Implementation sequencing
 
-After foundation Batch 2, expansion is intentionally deferred until Phase 2
-error recovery or a packaged-release/support trigger. The ordered file-level
-route, resume triggers, stop conditions, and acceptance checks are recorded in
-[Local diagnostics rollout route](../operations/diagnostics-rollout.md).
+The original foundation pause and completed batches are historical sequencing.
+Further adoption proceeds per operation alongside a concrete recovery need;
+current owners, classified-error exceptions and acceptance requirements are in
+the [diagnostics guide](../operations/diagnostics-rollout.md).
 
 ## References
 

@@ -1,6 +1,6 @@
 # 架構決策索引
 
-本頁索引ADR的決策狀態與主題；功能完成度只維護在[產品規格](../spec.md#3-目前功能現況)，現行ownership見[架構圖](../architecture.md)。Accepted不代表所有交付或人工驗收已完成；Proposed也不代表沒有研究／程式實作，細節以原文Status為準。
+本頁索引ADR的決策狀態與主題；功能完成度只維護在[產品規格](../spec.md#3-功能現況)，現行ownership見[架構圖](../architecture.md)。Accepted不代表所有交付或人工驗收已完成；Proposed也不代表沒有研究／程式實作，細節以原文Status為準。
 
 ## 決策清單
 

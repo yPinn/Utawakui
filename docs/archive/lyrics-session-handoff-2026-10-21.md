@@ -1,5 +1,7 @@
 # 歌詞分析 session 交接
 
+已歸檔：以下為當輪提交與驗證快照，保留原分母與未完成項目，不作目前接手指令。最新方向見[研究結論](../research/lyrics-alignment/lyrics-alignment-summary.md)，操作見[試用手冊](../operations/lyrics-alignment-research.md)。
+
 日期：2026-10-21。這是當輪交接快照，不取代[產品規格](../spec.md)、[架構圖](../architecture.md)或[歌詞估計契約](../contracts/lyrics-acoustic-estimate-contract.md)。本輪使用者授權分類整理及 commit，沒有授權實作 GPU 路徑或新增模型下載。
 
 ## 完成與未完成
@@ -26,40 +28,6 @@
 
 驗證工具的初次沙箱 TEMP rename EPERM、快照未指定 Git root 導致空 inventory，以及挑選 spec 列後的表格對齊失敗均保留紀錄；分別以正常權限驗證、明確的獨立 index／work tree 與該表格式修正後通過，未改產品來掩蓋錯誤。本輪沒有新增可見 App 或 OBS 人工驗收；先前可見 Electron／Browser Source 功能證據與本次原始日誌留在 ignored `tasks/lyrics-english-20261020`、`tasks/lyrics-phrases-20261020`、`tasks/session-handoff-20261021`，不分發私人音訊、歌詞、環境或模型。使用者既有 App 仍需完整重啟才能載入 main／preload／HTTP 變更。
 
-## 下一個 session 提示詞
+## 後續接手
 
-```text
-你接手 E:\Utawakui 的歌詞分析工作。先讀 AGENTS.md、tasks/lessons.md，接著讀
-docs/operations/lyrics-session-handoff-2026-10-21.md、docs/research/README.md，
-以及該交接文件連到的 spec、architecture、估計契約、操作手冊與三份當輪報告。
-
-先核對 git status、最近 commits 及 staged diff。工作目錄仍有大量其他 session
-的並行變更，尤其 BGM 文件原先已有 staged intent；不要 reset、stash、格式化全庫、
-git add . 或把所有 dirty files 視為自己的工作。此交接不是自動授權實作新方案。
-
-已完成純英文實驗路徑、保守內容驗證、精簡 modal／階段進度，以及混語長句
-最多兩段的顯示候選／精確時間對應／收合預覽與 Kinetic Pop 接入。
-混語顯示只用原生 T2 或已手動套用 T1+ 的精確起點；沒有時間就保持整句，
-不按字數均分、不在粗詞塊內插值。混語 HubertFA、真正語意斷句、VAD、
-超 20 秒單句模型分窗與其他模板擴展都尚未完成，不能宣稱已全面支援。
-
-不變條件：實驗功能預設關閉；自動產生、手動套用；來源 T2 優先、T1 回退；
-來源偏好與 offset 不被模型改寫。取消或失敗不影響已成功伴奏與原歌詞。
-正式 gate、預設下載不變；HubertFA 特定權重／字典分發證據未決。
-人工時間及混語語意驗收 pending，只有使用者能確認，不能用模型補填。
-
-最近一項工作僅評估 GPU，尚未授權實作：建議一個「優先使用 GPU」偏好，
-各模組獨立環境／能力／回退；初期重型 GPU 階段協調排隊。
-目前分離已有 DirectML，其餘分析仍固定 CPU。本機 RTX 5060 Ti 約 16 GiB。
-若使用者決定繼續 GPU，先定有界 CPU／DirectML 同權重對照計畫，優先
-HubertFA 並拆解 small 載入／推論成本；不能直接移除 --no-gpu 就宣稱 small
-加速，也不能在既有 immutable Python 環境混裝 CUDA 或改下載預設。
-
-若使用者回到混語品質，先抽查既有 59 句文字候選，再評估混語 T1 時間證據。
-既有英文研究有正常句誤拒與漏詞漏檢；不要降低門檻或把小樣本當一般準確率。
-先提出精簡結論與下一個有界步驟，再依使用者當輪指示執行，不重跑所有模型、
-下載環境或逼迫立即人工聽查。修改 main／preload 後須完整重啟 App 才能驗收。
-
-測試採 npm，維持既有 coverage 門檻；驗證提交範圍而非混合 dirty tree，
-保留失敗及修正證據。除非再次要求，不新增 commit 或 push。
-```
+原接手提示詞已由目前的研究結論、操作手冊與[文件導覽](../README.md)取代。後續工作須先核對現行規格與使用者當輪指示；本快照中的 GPU 下一步、路徑及產品狀態不構成新的執行授權。

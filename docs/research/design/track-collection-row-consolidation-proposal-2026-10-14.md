@@ -1,9 +1,11 @@
 # Track Collection Row／Grid 收束提案
 
 - 日期：2026-10-14
-- 狀態：Owner 已核准 F8-first 方向；semantic-column candidate 待可見驗收，不授權 production component 變更
+- 狀態：歷史提案與 F8 決策快照；不作目前 production 待辦或採用狀態
 - 模式：Operate
 - 範圍：Library 全部曲目、本機檔案、播放清單、專輯與藝人頁的曲目列表
+
+目前 `TrackTable.vue` 已組合 `TrackCollectionRow.vue`、`trackCollectionProfiles.js` 與 `useTrackCollectionColumns.js`，Library caller 明確傳入 collection kind。以下「目前」「待採用」描述的是 10-14 提案時點，不覆蓋後續實作，也不代表本輪新增人工驗收。現行邊界見[架構圖](../../architecture.md#曲庫瀏覽)，視覺規則見 [DESIGN](../../../DESIGN.md)。
 
 ## 1. 文件角色
 
