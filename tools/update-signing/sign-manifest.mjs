@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
-// Local tool: builds and signs update-manifest.json for one release. Never
-// runs as part of the app or CI in this round — see
-// docs/adr/0018-signed-update-manifest.md for what's deliberately deferred.
+// Release tool: builds and signs update-manifest.json for one release.
+// Used locally and by the gated sign job in .github/workflows/release.yml;
+// never bundled with the app. Activation and rotation: see
+// docs/operations/release-runbook.md and docs/adr/0018-signed-update-manifest.md.
 //
 // Usage:
 //   node tools/update-signing/sign-manifest.mjs \

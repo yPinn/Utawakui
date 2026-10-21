@@ -6,12 +6,16 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const prototypeDir = path.resolve(__dirname, '..');
-const outputDir = path.join(prototypeDir, 'screenshots');
+const outputDir =
+  process.env.UTAWAKUI_PROTOTYPE_CAPTURE_OUTPUT_DIR ||
+  path.join(prototypeDir, 'screenshots');
 const captureDataDir = process.env.UTAWAKUI_CAPTURE_USER_DATA;
 const entryUrl = pathToFileURL(path.join(prototypeDir, 'index.html'));
 
 if (!captureDataDir) {
-  throw new Error('Capture must be started through capture-app/run.js');
+  throw new Error(
+    'Capture must be started through prototypes/capture.cjs studio-library-workspace',
+  );
 }
 
 const variants = [

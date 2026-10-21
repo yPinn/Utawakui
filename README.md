@@ -41,22 +41,11 @@ npm run dev
 `npm install` 只準備 JavaScript dependencies。Provider runtime、FFmpeg 與音訊
 模型由應用程式在對應功能啟用後，從 Settings 個別準備；它們不是預設開發依賴。
 
-常用指令：
+`npm run dev` 啟動 Vite 與 Electron；若選擇系統匣背景執行，需從系統匣完整結束
+才會停止 dev server。需要 Chromium DevTools 時使用 `npm run dev:tools`。
 
-| 指令                    | 用途                                                                                 |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `npm run dev`           | 啟動 Vite 與 Electron；若選擇系統匣背景執行，需從系統匣完整結束才會停止 dev server。 |
-| `npm run dev:tools`     | 啟動開發環境並開啟 Chromium DevTools。                                               |
-| `npm run build`         | 建立 renderer production build。                                                     |
-| `npm start`             | Build 後以 production-like `loadFile` 路徑啟動。                                     |
-| `npm run dist:dir`      | 建立未壓縮的 packaged app，供快速驗證。                                              |
-| `npm run dist`          | 建立未簽章 NSIS installer 與 updater metadata。                                      |
-| `npm run lint`          | 執行 ESLint。                                                                        |
-| `npm run lint:md`       | 執行 Markdownlint。                                                                  |
-| `npm run format:check`  | 檢查 Prettier 格式。                                                                 |
-| `npm test`              | 執行完整 Vitest suite。                                                              |
-| `npm run test:coverage` | 執行測試並產生 coverage。                                                            |
-| `npm run perf:startup`  | 量測 packaged startup milestones。                                                   |
+建置、測試、檢查與量測命令集中在 [scripts 導覽](scripts/README.md)；
+發布維護工具見 [tools 導覽](tools/README.md)，發行步驟見[發行手冊](docs/operations/release-runbook.md)。
 
 ## 專案結構
 
@@ -70,6 +59,7 @@ public/     Vite 固定 URL 靜態資產
 build/      Installer resources 與 NSIS hooks
 docs/       產品、架構、ADR、contracts、研究與發行文件
 scripts/    驗證、benchmark、release 與 startup 工具
+tools/      發布維護工具
 ```
 
 ## 文件入口

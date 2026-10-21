@@ -39,7 +39,7 @@ and version checks. A valid fingerprint alone is not a model-ready status.
 This local configuration is a developer preparation path, not an application
 installer. The separate application environment lifecycle has Settings actions,
 but preparation is blocked pending weight evidence and does not generate songs.
-The independent [HubertFA＋small research trial](../lyricsFreshEvaluation/README.md#hubertfa＋small-本機試用與聽查)
+The independent [HubertFA＋small research trial](../lyricsFreshEvaluation/README.md#hubertfasmall-本機試用與聽查)
 adds explicit downloads and isolated previews without changing that gate.
 Basic/optional allocation and loading checks are
 recorded in the [environment readiness audit](../../../docs/research/lyrics-alignment/lyrics-acoustic-environment-readiness-2026-10-19.md).

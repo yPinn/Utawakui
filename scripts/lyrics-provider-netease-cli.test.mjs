@@ -88,11 +88,8 @@ describe('NetEase evaluation CLI contract', () => {
     ).toThrow(/CLI result/i);
   });
 
-  it('keeps the reverse package out of product scripts and production dependencies', () => {
+  it('keeps the reverse package out of root dependencies', () => {
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-    expect(packageJson.scripts['lyrics:netease-evaluation']).toBe(
-      'node scripts/lyrics-provider-netease-cli.mjs',
-    );
     expect(packageJson.dependencies).not.toHaveProperty(
       '@neteasecloudmusicapienhanced/api',
     );

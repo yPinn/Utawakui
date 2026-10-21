@@ -95,7 +95,7 @@ LinkSeg 與 Hybrid-Net 因 checkpoint 權利與 Windows 封裝證據較弱而不
 範本：[BPM 語料](music-analysis-bpm-benchmark-template.json)、[BPM 計分 run config](music-analysis-bpm-run-config-template.json)、[BPM runtime smoke](music-analysis-bpm-smoke-run-config-template.json)、[M2 語料](music-analysis-m2-benchmark-template.json)。先複製到 ignored 目錄再填寫。
 
 ```powershell
-npm run analysis:benchmark-bpm -- tasks/<run-config>.json      # schema v2 計分或 v3 smoke
+npm run analysis:benchmark-real -- tasks/<run-config>.json     # schema v2 計分或 v3 smoke
 npm run analysis:evaluate-bpm -- tasks/<corpus>.json tasks/<results>/bpm-predictions.json tasks/<report>.json
 npm run analysis:benchmark-real -- tasks/<m2-run>.json          # 可加 --case <id>、--force
 npm run analysis:evaluate -- tasks/<m2-real>.json tasks/<m2-report>.json

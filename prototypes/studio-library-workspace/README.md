@@ -1,19 +1,20 @@
 # Studio Library Workspace Prototype
 
-This is an isolated visual-system prototype. It is not a renderer entry point and
-does not import production Vue components, composables, Electron preload APIs, or
-the active `tokens.css` contract.
+This is a historical, isolated visual-system reference. It is not a production
+renderer entry point and does not import production Vue components, composables,
+or Electron preload APIs. It does load the shared `src/styles/tokens.css`, so it
+remains covered by the token and viewport boundary tests.
 
-Run the existing Vite development server:
+For standalone inspection, start a Vite server without starting the desktop app:
 
 ```powershell
-npm run dev
+npm exec -- vite --host 127.0.0.1 --port 5174 --strictPort
 ```
 
 Then open:
 
 ```text
-http://localhost:5173/prototypes/studio-library-workspace/
+http://127.0.0.1:5174/prototypes/studio-library-workspace/
 ```
 
 The Workspace Lab switches theme, density, motion, and static content state. Press
@@ -24,16 +25,11 @@ The Workspace Lab switches theme, density, motion, and static content state. Pre
 ?clean=1&theme=light&density=compact&motion=reduced&scenario=warning
 ```
 
-## In-app development view
+## Historical embed mode
 
-During `npm run dev`, press `F8` in the Utawakui window to open the merged
-Visual System development view, then switch to its Studio Library tab. The real
-Vue shell continues to own the titlebar, Sidebar, Setlist folder tab, and
-PlayerBar; an isolated iframe supplies only the candidate dossier interior and
-follows the active dark／light app theme. Production builds exclude this view
-and its shortcut.
-
-The iframe mode is also directly inspectable at:
+The former Studio Library tab in the app's F8 view was removed after production
+adoption. F8 now opens the component catalogue; it does not mount this prototype.
+The standalone prototype retains its historical embed query for reference:
 
 ```text
 ?embed=dossier&clean=1&theme=dark&density=standard&scenario=populated
@@ -58,9 +54,16 @@ The iframe mode is also directly inspectable at:
 Generate the four reference screenshots through the cleanup-safe capture runner:
 
 ```powershell
-node prototypes/studio-library-workspace/capture-app/run.js
+node prototypes/capture.cjs studio-library-workspace
 ```
 
 The output stays under `prototypes/studio-library-workspace/screenshots/`. The
 runner owns and removes its exact Electron process tree and temporary Chromium
-profile after each run.
+profile after each run. It also produces a separate Ink-framed Paper review image
+under `screenshots/review/`; the four root images are the original committed
+reference set. Captures refresh reference images, not production acceptance.
+
+The interactions above describe this prototype's simulated state only. Current
+product behavior belongs to the [specification](../../docs/spec.md), not this
+historical demo. See the [prototype index](../README.md) for the current component
+lab and shared capture entry.

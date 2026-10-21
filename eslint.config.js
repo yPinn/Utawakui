@@ -14,6 +14,7 @@ module.exports = [
       'release/**',
       'node_modules/**',
       'tasks/**',
+      'prototypes/**/.build/**',
     ],
   },
   {

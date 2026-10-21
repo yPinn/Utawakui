@@ -6,7 +6,7 @@ import { Check, Ellipsis, Play } from '../../../src/icons/index.js';
 import UiButton from '../../../src/components/ui/UiButton.vue';
 import UiCheckbox from '../../../src/components/ui/UiCheckbox.vue';
 import UiChip from '../../../src/components/ui/UiChip.vue';
-import UiContextMenu from '../../../src/components/ui/UiContextMenu.vue';
+import UiActionMenu from '../../../src/components/ui/UiActionMenu.vue';
 import UiField from '../../../src/components/ui/UiField.vue';
 import UiHint from '../../../src/components/ui/UiHint.vue';
 import UiIconButton from '../../../src/components/ui/UiIconButton.vue';
@@ -99,19 +99,44 @@ const modes = [
   { value: 'refined', label: 'Refined', disabled: true },
 ];
 
-const menuItems = [
-  { key: 'queue', label: 'Add to queue', value: 'queue' },
-  { key: 'details', label: 'Open details', value: 'details' },
-  { separator: true },
-  { key: 'remove', label: 'Remove', value: 'remove', danger: true },
-];
+const menuContent = {
+  kind: 'actions',
+  groups: [
+    {
+      id: 'actions',
+      items: [
+        { id: 'queue', kind: 'action', label: 'Add to queue', value: 'queue' },
+        {
+          id: 'details',
+          kind: 'action',
+          label: 'Open details',
+          value: 'details',
+        },
+      ],
+    },
+    {
+      id: 'manage',
+      items: [
+        {
+          id: 'remove',
+          kind: 'action',
+          label: 'Remove',
+          value: 'remove',
+          intent: 'danger',
+        },
+      ],
+    },
+  ],
+};
 </script>
 
 <template>
   <main v-bind="componentLabAttributes" class="component-lab">
     <div v-bind="componentLabOverlayHostAttributes" class="ui-overlay-host" />
     <UiPageHeader title="UI Component Foundation" />
-    <UiHint>Real shared Vue components under isolated candidate tokens.</UiHint>
+    <UiHint
+      >Real shared Vue components under the production token contract.</UiHint
+    >
 
     <section class="lab-toolbar" aria-label="Lab controls">
       <UiSelect
@@ -309,7 +334,14 @@ const menuItems = [
         <h2>Overlays</h2>
         <div class="lab-row">
           <UiButton @click="modalOpen = true">Open modal</UiButton>
-          <UiButton @click="menuOpen = true">Open menu</UiButton>
+          <UiButton
+            data-lab-menu-trigger
+            aria-haspopup="menu"
+            aria-controls="lab-action-menu"
+            :aria-expanded="menuOpen"
+            @click="menuOpen = true"
+            >Open menu</UiButton
+          >
         </div>
       </article>
     </section>
@@ -325,11 +357,11 @@ const menuItems = [
         model-value="Fixture"
       />
     </UiModal>
-    <UiContextMenu
+    <UiActionMenu
+      id="lab-action-menu"
       :open="menuOpen"
-      :x="48"
-      :y="160"
-      :items="menuItems"
+      :anchor="{ kind: 'point', x: 48, y: 160 }"
+      :content="menuContent"
       @close="menuOpen = false"
       @select="menuOpen = false"
     />

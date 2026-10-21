@@ -12,6 +12,20 @@ function read(relativePath) {
 }
 
 describe('runtime configuration boundaries', () => {
+  it('resolves local npm command targets and chained script names', () => {
+    const { scripts } = JSON.parse(read('package.json'));
+    for (const [name, command] of Object.entries(scripts)) {
+      for (const [, target] of command.matchAll(
+        /\b(?:node|-File)\s+(scripts\/[\w./-]+)/g,
+      )) {
+        expect(fs.statSync(path.join(root, target)).isFile(), name).toBe(true);
+      }
+      for (const [, target] of command.matchAll(/\bnpm run ([\w:-]+)/g)) {
+        expect(scripts, name).toHaveProperty(target);
+      }
+    }
+  });
+
   it('keeps local Python runtimes and caches out of version control', () => {
     for (const candidate of [
       '.venv/Scripts/python.exe',

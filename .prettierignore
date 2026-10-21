@@ -4,8 +4,7 @@ release
 coverage
 package-lock.json
 .claude
+prototypes/**/.build/
 
 # Canonical generator output; formatting it breaks byte-for-byte freshness checks.
-src/styles/token-v1-invalidation.generated.css
-src/styles/token-v1-legacy-manifest.generated.json
 third-party/manifest.json

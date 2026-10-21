@@ -5,11 +5,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const labDir = path.resolve(__dirname, '..');
-const outputDir = path.join(labDir, 'screenshots');
+const outputDir =
+  process.env.UTAWAKUI_PROTOTYPE_CAPTURE_OUTPUT_DIR ||
+  path.join(labDir, 'screenshots');
 const captureDataDir = process.env.UTAWAKUI_UI_LAB_USER_DATA;
 
 if (!captureDataDir) {
-  throw new Error('Capture must be started through capture-app/run.js');
+  throw new Error(
+    'Capture must be started through prototypes/capture.cjs ui-component-lab',
+  );
 }
 
 const variants = [
@@ -121,6 +125,19 @@ async function verifyContracts(window) {
     const nextTab = document.getElementById('lab-feedback-tab');
     assert(nextTab.getAttribute('aria-selected') === 'true', 'tab did not select');
     assert(document.activeElement === nextTab, 'tab focus did not move');
+
+    const menuTrigger = document.querySelector('[data-lab-menu-trigger]');
+    assert(menuTrigger, 'action menu trigger is missing');
+    menuTrigger.click();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const menu = document.getElementById('lab-action-menu');
+    assert(menu?.getAttribute('role') === 'menu', 'action menu did not open');
+    const items = [...menu.querySelectorAll('[role="menuitem"]')];
+    assert(items.length === 3, 'action menu entries changed');
+    assert(items[0].textContent.includes('Add to queue'), 'queue action is missing');
+    items[0].click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert(!document.getElementById('lab-action-menu'), 'selection did not close the menu');
 
     return { controls: controls.length };
   })()`);
