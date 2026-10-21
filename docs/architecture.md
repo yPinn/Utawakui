@@ -17,6 +17,8 @@
 
 `electron/main.js` 是 composition root：設定 app identity、註冊 privileged scheme、建立服務，再以具名依賴注入各 domain handler。Handler 不共用 context blob，也不彼此協調；跨 domain 流程由 root 建立的 service 負責。
 
+`src/package.json` 只為 `src/` 宣告 ESM scope；根目錄與 Electron Main／preload 維持 CommonJS。Main 的歌詞研究流程以同步 `require()` 載入無 top-level await 的純歌詞 ESM modules，不依賴 Node 自動語法偵測。封裝同時保留 `src/package.json` 與兩份歌詞模組，避免 packaged runtime 遺失此邊界。
+
 ### 安全不變式
 
 - `electron/entry.js` 是無依賴的 process dispatcher；main 與 Spout helper 在建立任何視窗前呼叫 `app.enableSandbox()`。所有視窗明確設定 `sandbox`、`contextIsolation`、`nodeIntegration: false`、`navigateOnDragDrop: false`、`webSecurity`、`allowRunningInsecureContent: false`、`webviewTag: false`。

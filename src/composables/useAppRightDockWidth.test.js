@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+// Prepare browser globals before renderer singleton imports.
+vi.hoisted(() => vi.stubGlobal('window', {}));
 import {
   RIGHT_DOCK_WIDTH_MAX,
   RIGHT_DOCK_WIDTH_MIN,
@@ -6,6 +8,10 @@ import {
 } from './useAppRightDockWidth.js';
 
 const dockWidth = useAppRightDockWidth();
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 afterEach(() => {
   dockWidth.width.value = RIGHT_DOCK_WIDTH_MAX;

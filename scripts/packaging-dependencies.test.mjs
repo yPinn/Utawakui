@@ -195,6 +195,7 @@ describe('packaged dependency boundary', () => {
       ).toBe(false);
     }
     for (const file of [
+      'src/package.json',
       'src/utils/lyrics.js',
       'src/utils/lyricsDocument.js',
       'scripts/research/lyricsFreshEvaluation/trial-assets.json',

@@ -47,6 +47,8 @@ publish:
   releaseType: release
 
 files:
+  # Preserve the local ESM scope for main-side canonical lyrics normalization.
+  - src/package.json
   - src/utils/lyrics.js
   - src/utils/lyricsDocument.js
   - scripts/research/lyricsAcoustic/assets.cjs
