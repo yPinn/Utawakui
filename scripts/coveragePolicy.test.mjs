@@ -11,6 +11,13 @@ import {
 
 const root = path.resolve(import.meta.dirname, '..');
 
+it('keeps every explicit coverage-neutral source path resolvable', () => {
+  for (const file of coveragePolicy.exclude) {
+    if (classifyAppSource(file)?.status !== 'coverage-neutral') continue;
+    expect(fs.existsSync(path.join(root, file)), file).toBe(true);
+  }
+});
+
 function trackedAppSources() {
   const result = spawnSync('git', ['ls-files'], {
     cwd: root,
@@ -88,11 +95,8 @@ describe('coverage policy', () => {
     'overlay/shared/lyricsPresentation.mjs',
     'overlay/shared/mangaFrameContract.mjs',
     'overlay/shared/state.mjs',
-    'src/components/demo/demoTrackCollectionLayout.js',
     'src/components/demo/demoTrackCollectionProfiles.js',
-    'src/composables/useStudioLibraryInspectorWidth.js',
     'src/icons/index.js',
-    'src/utils/performerView.js',
   ])('marks re-export-only module %s as coverage-neutral', (file) => {
     expect(classifyAppSource(file)).toEqual({
       status: 'coverage-neutral',

@@ -41,7 +41,7 @@ describe('architecture ownership boundaries', () => {
       'src/components/output/MangaFrameSvg.vue',
       'src/components/output/ObsTemplateMockup.vue',
       'src/composables/usePerformerViewState.js',
-      'src/utils/performerView.js',
+      'shared/presentation/performerFrame.mjs',
     ]) {
       expect(read(relativePath)).not.toContain('overlay/shared/');
     }

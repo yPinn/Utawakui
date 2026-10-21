@@ -17,11 +17,8 @@ const COVERAGE_NEUTRAL_SOURCES = new Map([
   ['overlay/shared/mangaFrameContract.mjs', 're-export-only'],
   ['overlay/shared/state.mjs', 're-export-only'],
   ['src/components/demo/demoImageFixtures.js', 'static-fixture'],
-  ['src/components/demo/demoTrackCollectionLayout.js', 're-export-only'],
   ['src/components/demo/demoTrackCollectionProfiles.js', 're-export-only'],
-  ['src/composables/useStudioLibraryInspectorWidth.js', 're-export-only'],
   ['src/icons/index.js', 're-export-only'],
-  ['src/utils/performerView.js', 're-export-only'],
   ['src/components/ui/uiTestHost.js', 'test-infrastructure'],
   // Node/vitest has no real Web Audio implementation (same posture as
   // usePlayerAudioGraph.js's untested half, see ADR 0019 and ADR 0020):

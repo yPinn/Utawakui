@@ -92,10 +92,10 @@ Main 端的 `app-command`（`browser-backward`、`browser-forward`）由
 
 ## Widget 慣例（代表性清單）
 
-- Roving focus：`UiTabs`、`UiSegmentedControl`、`ObsPositionPicker`、`useRovingRadioGroup`（方向鍵、Home／End、RTL）。
+- Roving focus：`UiTabs`、`UiSegmentedControl`、`ObsPositionPicker`（方向鍵、Home／End、RTL）。
 - 選單與下拉：`UiCombobox`、`ObsLookSelect`、各 Action Menu。
 - `TrackTable`：欄位標題鍵盤重排、欄寬鍵盤調整；列 action 鍵。
-- 縮放與移動把手：Sidebar、Right Dock（方向鍵、Home／End、Enter／Space）；BGM 標題列（方向鍵，Shift 加速，Home 復位）。
+- 縮放把手：Sidebar、Right Dock（方向鍵、Home／End、Enter／Space）。
 - 便利貼畫布：方向鍵移動、Enter／Space 啟動、編輯器內按鍵。
 - 演唱計畫列、分離工具列的選單鍵、歌詞面板捲動鍵（暫停跟隨）。
 - Enter 提交：曲目資訊、歌單詳情、藝人身分、資料夾便利貼、歌詞來源、匯入來源、輸出 runtime 設定。

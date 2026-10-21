@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectPerformerFrame } from './performerView.js';
+import { selectPerformerFrame } from './performerFrame.mjs';
 
 function snapshot() {
   return {
@@ -47,7 +47,7 @@ function snapshot() {
   };
 }
 
-describe('selectPerformerFrame', () => {
+describe('selectPerformerFrame legacy snapshots', () => {
   it('projects the live cue, next cue, adjustments, and next track', () => {
     expect(
       selectPerformerFrame(snapshot(), {

@@ -1,28 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEMO_TRACK_COLLECTION_DEFAULT_LAYOUT_METRICS,
-  resolveDemoTrackCollectionLayout,
-  resolveDemoTrackCollectionResizeBounds,
-  resolveDemoTrackCollectionResizeWidth,
-} from './demoTrackCollectionLayout.js';
+  TRACK_COLLECTION_DEFAULT_LAYOUT_METRICS,
+  resolveTrackCollectionLayout,
+  resolveTrackCollectionResizeBounds,
+  resolveTrackCollectionResizeWidth,
+} from './trackCollectionLayout.js';
 
 function roles(layout) {
   return layout.columns.map((column) => column.role);
 }
 
-describe('demo track collection layout', () => {
+describe('track collection layout', () => {
   it('uses the same token-equivalent gap budget before and after CSS measurement', () => {
-    const firstFrame = resolveDemoTrackCollectionLayout({
+    const firstFrame = resolveTrackCollectionLayout({
       kind: 'playlist',
       availableWidth: 704,
     });
-    const measured = resolveDemoTrackCollectionLayout({
+    const measured = resolveTrackCollectionLayout({
       kind: 'playlist',
       availableWidth: 704,
-      ...DEMO_TRACK_COLLECTION_DEFAULT_LAYOUT_METRICS,
+      ...TRACK_COLLECTION_DEFAULT_LAYOUT_METRICS,
     });
 
-    expect(DEMO_TRACK_COLLECTION_DEFAULT_LAYOUT_METRICS).toEqual({
+    expect(TRACK_COLLECTION_DEFAULT_LAYOUT_METRICS).toEqual({
       columnGap: 8,
       inlinePadding: 24,
     });
@@ -30,7 +30,7 @@ describe('demo track collection layout', () => {
   });
 
   it('balances title, album, and the trailing group in the default-window content box', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'library-all',
       availableWidth: 768,
     });
@@ -60,7 +60,7 @@ describe('demo track collection layout', () => {
   it.each(['library-all', 'library-local', 'playlist', 'album', 'artist'])(
     'keeps every default %s field visible in the 768px default-window content box',
     (kind) => {
-      const layout = resolveDemoTrackCollectionLayout({
+      const layout = resolveTrackCollectionLayout({
         kind,
         availableWidth: 768,
       });
@@ -71,7 +71,7 @@ describe('demo track collection layout', () => {
   );
 
   it('distributes wide default layouts by role while retaining a structural flexible gap', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       availableWidth: 1200,
     });
@@ -96,11 +96,11 @@ describe('demo track collection layout', () => {
   });
 
   it('recomputes the profile distribution when visible fields change', () => {
-    const defaults = resolveDemoTrackCollectionLayout({
+    const defaults = resolveTrackCollectionLayout({
       kind: 'playlist',
       availableWidth: 1280,
     });
-    const expanded = resolveDemoTrackCollectionLayout({
+    const expanded = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: {
         visibleAdvanced: ['release', 'membership', 'usage', 'releaseYear'],
@@ -119,7 +119,7 @@ describe('demo track collection layout', () => {
   });
 
   it('treats saved widths as one stable custom layout instead of redistributing neighbors', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: {
         visibleAdvanced: ['release', 'membership'],
@@ -141,7 +141,7 @@ describe('demo track collection layout', () => {
       visibleAdvanced: ['release', 'membership', 'usage', 'releaseYear'],
       widths: { identity: 340, usage: 120 },
     };
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences,
       availableWidth: 1280,
@@ -166,7 +166,7 @@ describe('demo track collection layout', () => {
   });
 
   it('temporarily collapses advanced columns before default semantic columns', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'library-all',
       preferences: {
         visibleAdvanced: ['releaseYear', 'imported'],
@@ -189,7 +189,7 @@ describe('demo track collection layout', () => {
   });
 
   it('preserves structural lanes while data columns absorb default-window pressure', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: ['release', 'membership'] },
       availableWidth: 704,
@@ -206,7 +206,7 @@ describe('demo track collection layout', () => {
   });
 
   it('preserves the minimum identity lane and removes low-priority utility lanes at minimum width', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: ['release', 'membership'] },
       availableWidth: 336,
@@ -227,7 +227,7 @@ describe('demo track collection layout', () => {
   it.each(['library-all', 'library-local', 'playlist', 'album', 'artist'])(
     'keeps the %s profile inside the 336px minimum viewport',
     (kind) => {
-      const layout = resolveDemoTrackCollectionLayout({
+      const layout = resolveTrackCollectionLayout({
         kind,
         availableWidth: 336,
       });
@@ -237,7 +237,7 @@ describe('demo track collection layout', () => {
   );
 
   it('shrinks a saved width only after the remaining donor lanes reach their bounds', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: {
         visibleAdvanced: ['release', 'membership'],
@@ -253,12 +253,12 @@ describe('demo track collection layout', () => {
   });
 
   it('locks the visible role topology while a pointer resize is active', () => {
-    const settled = resolveDemoTrackCollectionLayout({
+    const settled = resolveTrackCollectionLayout({
       kind: 'playlist',
       availableWidth: 720,
     });
     const lockedRoles = roles(settled).filter((role) => role !== 'spacer');
-    const resizing = resolveDemoTrackCollectionLayout({
+    const resizing = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: [], widths: { identity: 720 } },
       availableWidth: 720,
@@ -271,7 +271,7 @@ describe('demo track collection layout', () => {
   });
 
   it('clamps a resized column to its own profile bounds before solving fit', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'artist',
       preferences: {
         visibleAdvanced: ['release', 'releaseYear'],
@@ -288,12 +288,12 @@ describe('demo track collection layout', () => {
   });
 
   it('uses the resolved CSS gap and inline padding in the fit contract', () => {
-    const baseline = resolveDemoTrackCollectionLayout({
+    const baseline = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: ['release', 'membership'] },
       availableWidth: 1200,
     });
-    const measured = resolveDemoTrackCollectionLayout({
+    const measured = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: ['release', 'membership'] },
       availableWidth: 1200,
@@ -308,12 +308,12 @@ describe('demo track collection layout', () => {
   });
 
   it('resizes only the separator start-side column and clamps growth to flexible space', () => {
-    const layout = resolveDemoTrackCollectionLayout({
+    const layout = resolveTrackCollectionLayout({
       kind: 'playlist',
       preferences: { visibleAdvanced: ['release', 'membership'] },
       availableWidth: 1200,
     });
-    const bounds = resolveDemoTrackCollectionResizeBounds({
+    const bounds = resolveTrackCollectionResizeBounds({
       startWidth: layout.widths.identity,
       minWidth: 128,
       maxWidth: 720,
@@ -323,7 +323,7 @@ describe('demo track collection layout', () => {
 
     expect(bounds).toEqual({ minWidth: 128, maxWidth: 490 });
     expect(
-      resolveDemoTrackCollectionResizeWidth({
+      resolveTrackCollectionResizeWidth({
         ...bounds,
         startWidth: layout.widths.identity,
         delta: 48,
@@ -331,7 +331,7 @@ describe('demo track collection layout', () => {
       }),
     ).toBe(470);
     expect(
-      resolveDemoTrackCollectionResizeWidth({
+      resolveTrackCollectionResizeWidth({
         ...bounds,
         startWidth: layout.widths.identity,
         delta: -48,
@@ -339,7 +339,7 @@ describe('demo track collection layout', () => {
       }),
     ).toBe(374);
     expect(
-      resolveDemoTrackCollectionResizeWidth({
+      resolveTrackCollectionResizeWidth({
         ...bounds,
         startWidth: layout.widths.identity,
         delta: 1000,
@@ -353,7 +353,7 @@ describe('demo track collection layout', () => {
     const bounds = { minWidth: 200, maxWidth: 420 };
 
     expect(
-      resolveDemoTrackCollectionResizeWidth({
+      resolveTrackCollectionResizeWidth({
         ...bounds,
         startWidth: 300,
         delta: 40,
@@ -361,7 +361,7 @@ describe('demo track collection layout', () => {
       }),
     ).toBe(260);
     expect(
-      resolveDemoTrackCollectionResizeWidth({
+      resolveTrackCollectionResizeWidth({
         ...bounds,
         startWidth: 300,
         delta: -40,

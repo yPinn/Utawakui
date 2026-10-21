@@ -36,7 +36,7 @@ const candidateSource = readSource('./DemoCandidateTrackThumb.vue');
 const trackArtworkSource = readSource('./DemoCandidateTrackArtwork.vue');
 const tokenSource = readSource('../../styles/tokens.css');
 const uiConstantsSource = readSource('../../constants/ui.js');
-const importCandidateSource = readSource('../import/ImportCandidateOption.vue');
+const importSourceRowSource = readSource('../import/ImportSourceRow.vue');
 const trackRowSource = readSource('../ui/UiTrackRow.vue');
 const queueTrackSource = readSource('../queue/QueueTrackButton.vue');
 const playerArtworkSource = readSource('../playback/PlayerBarArtwork.vue');
@@ -180,12 +180,8 @@ describe('DemoTrackThumbAppearance', () => {
     );
   });
   it('anchors each Current size to its real container and keeps production unchanged', () => {
-    expect(importCandidateSource).toContain(
-      'size="calc(var(--ui-space-5) + var(--ui-space-2))"',
-    );
-    expect(importCandidateSource).toContain(
-      'min-height: calc(var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2))',
-    );
+    expect(importSourceRowSource).toContain('import UiTrackRow');
+    expect(importSourceRowSource).toContain('<UiTrackRow');
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
     expect(tokenSource).toContain('--ui-track-row-min-height: 3.25rem;');
     expect(tokenSource).toContain(
