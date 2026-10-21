@@ -24,7 +24,11 @@ attachClientRender(Surface, './tooltip/UiTooltipSurface.vue', import.meta.url);
 beforeAll(async () => {
   Row = (await import('./UiTrackRow.vue')).default;
   attachClientRender(Row, './UiTrackRow.vue', import.meta.url);
-  for (const f of ['UiTrackThumb', 'TrackArtworkContent']) {
+  for (const f of [
+    'UiTrackThumb',
+    'TrackArtworkContent',
+    'UiTrackArtworkButton',
+  ]) {
     const c = (await import('./' + f + '.vue')).default;
     attachClientRender(c, './' + f + '.vue', import.meta.url);
   }

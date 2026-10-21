@@ -24,8 +24,11 @@ describe('integrated BGM layout contract', () => {
     expect(sources[3]).toContain('<UiScrollLayout');
     expect(sources[0]).not.toContain('UiScrollRegion');
     expect(sources[0]).toContain('@container performance-session-workspace');
-    expect(sources[1]).toContain('<UiPopover');
-    expect(sources[1]).toContain('音量與進度');
+    expect(sources[0]).toContain('<UiPopover');
+    expect(sources[1]).not.toContain('<UiPopover');
+    expect(sources[1]).toContain('bgm-transport__context');
+    expect(sources[1]).toContain('BGM 進度');
+    expect(sources[1]).toContain('BGM 音量');
     expect(sources[1]).toContain('立即停止 BGM');
   });
 });

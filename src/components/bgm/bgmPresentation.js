@@ -5,8 +5,28 @@ import {
   Loader2,
   MicVocal,
   Pause,
+  Play,
   Volume2,
 } from '../../icons/index.js';
+
+export function projectBgmPrimaryAction({
+  phase = 'idle',
+  hasTrack = false,
+} = {}) {
+  const playing = phase === 'bgm-playing';
+  const locked = [
+    'stopping-bgm',
+    'track-preroll',
+    'track-active',
+    'postroll-silence',
+  ].includes(phase);
+  return {
+    intent: playing ? 'pause' : 'play',
+    icon: playing ? Pause : Play,
+    label: playing ? '暫停 BGM' : '播放 BGM',
+    disabled: !playing && (!hasTrack || locked),
+  };
+}
 
 const OPERATIONAL_STATUS = Object.freeze({
   idle: {

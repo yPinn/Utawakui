@@ -10,6 +10,53 @@ const source = readFileSync(
 );
 
 describe('RecentPlaybackList', () => {
+  it.each([
+    { loading: true, error: '', filled: false, skeleton: true, empty: false },
+    { loading: false, error: '', filled: false, skeleton: false, empty: true },
+    {
+      loading: false,
+      error: '讀取失敗',
+      filled: false,
+      skeleton: false,
+      empty: false,
+    },
+    { loading: true, error: '', filled: true, skeleton: false, empty: false },
+    {
+      loading: false,
+      error: '更新失敗',
+      filled: true,
+      skeleton: false,
+      empty: false,
+    },
+  ])(
+    'distinguishes pending, confirmed empty, error and retained content: %j',
+    async ({ loading, error, filled, skeleton, empty }) => {
+      const entries = filled
+        ? [
+            {
+              key: 'existing',
+              track: { id: 'existing', title: 'Existing occurrence' },
+            },
+          ]
+        : [];
+      const html = await renderToString(
+        createSSRApp({
+          render: () =>
+            h(RecentPlaybackList, {
+              entries,
+              loading,
+              error,
+              emptyMessage: 'Empty history',
+            }),
+        }),
+      );
+      expect(html.includes('ui-skeleton--text')).toBe(skeleton);
+      expect(html.includes('Empty history')).toBe(empty);
+      expect(html.includes('Existing occurrence')).toBe(filled);
+      if (error) expect(html).toContain(error);
+      if (loading) expect(html).toContain('aria-busy="true"');
+    },
+  );
   it('supports completed-copy and playback-disabled entries while retaining the shared row recipe', async () => {
     const html = await renderToString(
       createSSRApp({

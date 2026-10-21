@@ -1,6 +1,38 @@
 import { describe, expect, it } from 'vitest';
 
-import { projectBgmOperationalStatus } from './bgmPresentation.js';
+import {
+  projectBgmOperationalStatus,
+  projectBgmPrimaryAction,
+} from './bgmPresentation.js';
+
+describe('shared BGM primary action', () => {
+  it.each([
+    'stopping-bgm',
+    'track-preroll',
+    'track-active',
+    'postroll-silence',
+  ])('locks artwork and transport during %s', (phase) => {
+    expect(projectBgmPrimaryAction({ phase, hasTrack: true })).toMatchObject({
+      intent: 'play',
+      label: '播放 BGM',
+      disabled: true,
+    });
+  });
+  it('allows manual play after performance pause, and pause even when current source disappears', () => {
+    expect(
+      projectBgmPrimaryAction({ phase: 'track-paused', hasTrack: true }),
+    ).toMatchObject({ intent: 'play', disabled: false });
+    expect(projectBgmPrimaryAction({ phase: 'bgm-playing' })).toMatchObject({
+      intent: 'pause',
+      label: '暫停 BGM',
+      disabled: false,
+    });
+    expect(projectBgmPrimaryAction()).toMatchObject({
+      intent: 'play',
+      disabled: true,
+    });
+  });
+});
 
 describe('BGM presentation projection', () => {
   it.each([

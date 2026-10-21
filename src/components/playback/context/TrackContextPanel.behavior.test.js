@@ -34,6 +34,7 @@ import UiTextButton from '../../ui/UiTextButton.vue';
 import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
 import TrackArtworkContent from '../../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../../ui/UiTrackRow.vue';
+import UiTrackArtworkButton from '../../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../../ui/tooltip/UiTooltipSurface.vue';
 import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
@@ -74,6 +75,7 @@ for (const [component, filename] of [
   [UiOverflowTooltip, '../../ui/UiOverflowTooltip.vue'],
   [TrackArtworkContent, '../../ui/TrackArtworkContent.vue'],
   [UiTrackRow, '../../ui/UiTrackRow.vue'],
+  [UiTrackArtworkButton, '../../ui/UiTrackArtworkButton.vue'],
   [UiTrackThumb, '../../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../../ui/tooltip/UiTooltipSurface.vue'],
   [TrackArtistCredits, '../../track/TrackArtistCredits.vue'],

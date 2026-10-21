@@ -1,6 +1,7 @@
 <script setup>
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiSkeleton from '../ui/UiSkeleton.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
 
 const props = defineProps({
@@ -44,7 +45,7 @@ function openTrackMenu(entry, payload) {
 </script>
 
 <template>
-  <div class="recent-playback">
+  <div class="recent-playback" :aria-busy="loading || undefined">
     <UiNotice
       v-if="error"
       compact
@@ -52,9 +53,15 @@ function openTrackMenu(entry, payload) {
       :title="errorTitle"
       :message="error"
     />
-    <UiHint v-if="loading">{{ loadingMessage }}</UiHint>
-    <UiHint v-else-if="entries.length === 0">{{ emptyMessage }}</UiHint>
-    <ul v-else class="recent-playback__list">
+    <UiSkeleton
+      v-if="loading && !error && entries.length === 0"
+      :lines="2"
+      :aria-label="loadingMessage"
+    />
+    <UiHint v-else-if="!loading && !error && entries.length === 0">{{
+      emptyMessage
+    }}</UiHint>
+    <ul v-else-if="entries.length" class="recent-playback__list">
       <QueueTrackButton
         v-for="entry in entries"
         :key="entry.key"

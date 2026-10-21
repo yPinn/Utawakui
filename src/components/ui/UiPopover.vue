@@ -50,6 +50,7 @@ const anchorRef = useTemplateRef('anchor');
 const panelRef = useTemplateRef('panel');
 const panelId = `ui-popover-${useId()}`;
 const position = shallowRef({ left: '0px', top: '0px' });
+let sizeObserver = null;
 const triggerElement = shallowRef(null);
 function registerTrigger(element) {
   triggerElement.value = element?.$el ?? element;
@@ -154,6 +155,19 @@ watch(
   { flush: 'post' },
 );
 
+// Search results and async content can change height after the first anchor pass.
+watch(
+  panelRef,
+  (panel) => {
+    sizeObserver?.disconnect();
+    sizeObserver = null;
+    if (!panel || typeof ResizeObserver === 'undefined') return;
+    sizeObserver = new ResizeObserver(updatePosition);
+    sizeObserver.observe(panel);
+  },
+  { flush: 'post' },
+);
+
 onMounted(() => {
   if (props.open) nextTick(openPanel);
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -164,6 +178,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  sizeObserver?.disconnect();
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   document.removeEventListener('pointerdown', handleOutsidePointer, true);
   window.removeEventListener('keydown', handleKeydown, true);

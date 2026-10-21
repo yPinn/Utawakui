@@ -27,18 +27,24 @@ describe('BgmPlayerTransport', () => {
     expect(html).not.toContain('>失敗<');
     expect(html).not.toContain('目前可聽：BGM');
     expect(html).toContain('暫停 BGM');
-    expect(html).toContain('開啟 Talk（BGM 降低 12 dB）');
-    expect(source).toMatch(/>\s*Talk\s*<\/UiButton>/u);
+    expect(html).toContain('壓低 BGM（降低 12 dB）');
+    expect(source).toMatch(/>\s*壓低 BGM\s*<\/UiButton>/u);
+    const dimButton = html.match(
+      /<button[^>]*bgm-transport__talk[^>]*>[\s\S]*?<\/button>/u,
+    )?.[0];
+    expect(dimButton).toContain('aria-pressed="false"');
+    expect(dimButton).not.toContain('<svg');
+    expect(source).not.toContain('MicVocal');
     expect(html).toContain('立即停止 BGM（不淡出）');
     expect(html).toContain('aria-label="BGM 進度"');
     expect(html).toContain('0:42');
-    expect(html).not.toContain('3:00');
+    expect(html).toContain('3:00');
     expect(source).not.toContain('UiChip');
     expect(source).not.toContain('UiNotice');
     expect(source).not.toContain('場次');
   });
 
-  it('describes Talk as a relative reduction instead of another volume percentage', async () => {
+  it('describes attenuation as a relative reduction and keeps the visible label in its active name', async () => {
     const html = await renderToString(
       createSSRApp(BgmPlayerTransport, {
         phase: 'bgm-playing',
@@ -49,7 +55,14 @@ describe('BgmPlayerTransport', () => {
       }),
     );
 
-    expect(html).toContain('關閉 Talk（恢復原音量）');
+    expect(html).toContain('恢復 BGM 音量');
+    const dimButton = html.match(
+      /<button[^>]*bgm-transport__talk[^>]*>[\s\S]*?<\/button>/u,
+    )?.[0];
+    expect(dimButton).toContain('aria-pressed="true"');
+    expect(dimButton).toContain('aria-label="壓低 BGM（按下恢復 BGM 音量）"');
+    expect(dimButton).toContain('壓低 BGM');
+    expect(dimButton).not.toContain('<svg');
     expect(html).not.toContain('Talk／Dim');
     expect(html).not.toContain('Dim：25%');
   });
@@ -152,7 +165,21 @@ describe('BgmPlayerTransport', () => {
 });
 
 describe('session and Dock reuse one BGM safety transport', () => {
-  it('keeps the fixed Dock transport complete and opens details on demand', async () => {
+  it('places progress above a context row and one operation row at every width', () => {
+    expect(source.indexOf('class="bgm-transport__progress"')).toBeLessThan(
+      source.indexOf('class="bgm-transport__context"'),
+    );
+    expect(source.indexOf('class="bgm-transport__context"')).toBeLessThan(
+      source.indexOf('class="bgm-transport__controls"'),
+    );
+    const context = source.slice(
+      source.indexOf('class="bgm-transport__context"'),
+      source.indexOf('class="bgm-transport__controls"'),
+    );
+    expect(context).toContain('class="bgm-transport__cut"');
+    expect(source).not.toContain('@container');
+  });
+  it('keeps progress and volume mounted directly in the Dock with no adjustment disclosure', async () => {
     const html = await renderToString(
       createSSRApp(BgmPlayerTransport, {
         variant: 'dock',
@@ -161,10 +188,42 @@ describe('session and Dock reuse one BGM safety transport', () => {
         currentTrack: { id: 'a', title: 'BGM' },
       }),
     );
-    expect(html).toContain('Talk');
+    expect(html).toContain('壓低 BGM');
     expect(html).toContain('立即停止 BGM（不淡出）');
-    expect(html).not.toContain('BGM 進度');
-    expect(html).toContain('BGM 音量與進度');
-    expect(html).toContain('暫停 BGM');
+    expect(html).toContain('BGM 進度');
+    expect(html).toContain('BGM 音量');
+    expect(html).not.toContain('BGM 音量與進度');
+    expect(source).not.toContain('UiPopover');
+    expect(source).not.toContain('SlidersHorizontal');
+    expect(source).not.toContain('detailsOpen');
+    expect(source.match(/<UiRangeControl/gu)).toHaveLength(2);
+    expect(html).not.toContain('暫停 BGM');
+    expect(source).toContain('v-if="variant !== \'dock\'"');
+  });
+});
+
+describe('compact track information', () => {
+  it('keeps one progress control while hiding the context and mixer tools', async () => {
+    const html = await renderToString(
+      createSSRApp(BgmPlayerTransport, {
+        variant: 'dock',
+        compact: true,
+        phase: 'idle',
+        currentTrack: { id: 'bgm' },
+        currentTime: 77,
+        duration: 235,
+      }),
+    );
+    expect(html).toContain('1:17');
+    expect(html).toContain('3:55');
+    expect(html).toContain('aria-label="BGM 進度"');
+    for (const name of ['context', 'controls'])
+      expect(html).toMatch(
+        new RegExp(
+          `<div[^>]*class="bgm-transport__${name}"[^>]*style="display:none;"`,
+        ),
+      );
+    expect(html).not.toContain('播放 BGM');
+    expect(html.match(/aria-label="BGM 進度"/g)).toHaveLength(1);
   });
 });

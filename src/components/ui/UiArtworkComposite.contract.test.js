@@ -74,8 +74,8 @@ describe('rounded artwork composite clip', () => {
     const hosts = {
       '../playback/context/TrackContextHero.vue':
         /<UiTrackThumb[\s\S]*?<template #overlay>/u,
-      './UiTrackRow.vue':
-        /<UiTrackThumb[\s\S]*?<template v-if="\$slots\.artworkOverlay" #overlay>/u,
+      './UiTrackArtworkButton.vue':
+        /<UiTrackThumb[\s\S]*?<template v-if="\$slots\.overlay" #overlay\s*>/u,
       '../playlists/PlaylistDetailsModal.vue':
         /<UiCollageThumb[\s\S]*?:decorative="isAlbum"[\s\S]*?<template v-if="!isAlbum" #overlay>/u,
       '../library/LibraryEntityDossier.vue':
@@ -97,7 +97,7 @@ describe('rounded artwork composite clip', () => {
 
   it('drops duplicate clips on wrappers that no longer own the artwork', () => {
     expect(
-      rule(read('./UiTrackRow.vue'), '.ui-track__artwork-action'),
+      rule(read('./UiTrackArtworkButton.vue'), '.ui-track-artwork-button'),
     ).not.toMatch(/overflow:/u);
     expect(
       rule(

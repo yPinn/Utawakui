@@ -1,22 +1,15 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import {
-  MicVocal,
-  Pause,
-  Play,
-  Square,
-  SlidersHorizontal,
-  Volume2,
-  VolumeX,
-} from '../../icons/index.js';
+import { Square, Volume2, VolumeX } from '../../icons/index.js';
+import { projectBgmPrimaryAction } from './bgmPresentation.js';
 import { formatDuration } from '../../utils/format.js';
 import audioControlValues from '../../../shared/audioControlValues.json';
 import UiButton from '../ui/UiButton.vue';
-import UiPopover from '../ui/UiPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
+  compact: { type: Boolean, default: false },
   variant: {
     type: String,
     default: 'full',
@@ -45,7 +38,6 @@ const emit = defineEmits([
   'commitPosition',
 ]);
 
-const detailsOpen = shallowRef(props.variant === 'full');
 const volumeDraft = shallowRef(props.volume);
 watch(
   () => props.volume,
@@ -54,15 +46,6 @@ watch(
   },
 );
 
-const isBgmPlaying = computed(() => props.phase === 'bgm-playing');
-const transportLocked = computed(() =>
-  [
-    'stopping-bgm',
-    'track-preroll',
-    'track-active',
-    'postroll-silence',
-  ].includes(props.phase),
-);
 const canCutBgm = computed(
   () =>
     props.audibleLane === 'bgm' ||
@@ -73,18 +56,18 @@ const dimReductionDb = computed(() =>
 );
 const dimActionLabel = computed(() =>
   props.isDimmed
-    ? '關閉 Talk（恢復原音量）'
-    : `開啟 Talk（BGM 降低 ${dimReductionDb.value} dB）`,
+    ? '壓低 BGM（按下恢復 BGM 音量）'
+    : `壓低 BGM（降低 ${dimReductionDb.value} dB）`,
 );
-const primaryAction = computed(() => ({
-  icon: isBgmPlaying.value ? Pause : Play,
-  label: isBgmPlaying.value ? '暫停 BGM' : '播放 BGM',
-  disabled:
-    !isBgmPlaying.value && (!props.currentTrack || transportLocked.value),
-}));
+const primaryAction = computed(() =>
+  projectBgmPrimaryAction({
+    phase: props.phase,
+    hasTrack: Boolean(props.currentTrack),
+  }),
+);
 
 function activatePrimaryAction() {
-  emit(isBgmPlaying.value ? 'pause' : 'play');
+  if (!primaryAction.value.disabled) emit(primaryAction.value.intent);
 }
 
 function updateVolume(value) {
@@ -103,8 +86,41 @@ function updatePosition(value) {
     :class="`bgm-transport--${variant}`"
     aria-label="BGM 播放控制"
   >
-    <div class="bgm-transport__controls">
+    <div class="bgm-transport__progress">
+      <span class="bgm-transport__time">{{
+        formatDuration(currentTime, '0:00')
+      }}</span>
+      <UiRangeControl
+        class="bgm-transport__progress-range"
+        :model-value="currentTime"
+        :min="0"
+        :max="duration"
+        :step="0.1"
+        :disabled="!currentTrack || duration <= 0"
+        :value-text="formatDuration(currentTime, '0:00')"
+        :format-value="(value) => formatDuration(value, '0:00')"
+        aria-label="BGM 進度"
+        @update:model-value="updatePosition"
+        @change="emit('commitPosition')"
+      />
+      <span class="bgm-transport__time bgm-transport__time--end">{{
+        formatDuration(duration, '0:00')
+      }}</span>
+    </div>
+    <div v-show="!compact" class="bgm-transport__context">
+      <slot name="context" />
       <UiIconButton
+        class="bgm-transport__cut"
+        :icon="Square"
+        label="立即停止 BGM（不淡出）"
+        intent="danger"
+        :disabled="!canCutBgm"
+        @click="emit('cut')"
+      />
+    </div>
+    <div v-show="!compact" class="bgm-transport__controls">
+      <UiIconButton
+        v-if="variant !== 'dock'"
         :icon="primaryAction.icon"
         :label="primaryAction.label"
         variant="accent"
@@ -114,83 +130,36 @@ function updatePosition(value) {
       />
       <UiButton
         class="bgm-transport__talk"
-        :icon="MicVocal"
         :title="dimActionLabel"
         :active="isDimmed"
         :aria-label="dimActionLabel"
         :aria-pressed="isDimmed"
         @click="emit('setDimmed', !isDimmed)"
       >
-        Talk
+        壓低 BGM
       </UiButton>
 
-      <UiIconButton
-        class="bgm-transport__cut"
-        :icon="Square"
-        label="立即停止 BGM（不淡出）"
-        intent="danger"
-        :disabled="!canCutBgm"
-        @click="emit('cut')"
-      />
-      <UiPopover
-        aria-label="BGM 音量與進度"
-        focus-on-open
-        :placement="variant === 'dock' ? 'top-end' : 'bottom-end'"
-        :panel-style="{ inlineSize: 'var(--ui-bgm-player-inline-size)' }"
-        :open="detailsOpen"
-        @update:open="detailsOpen = $event"
-      >
-        <template #trigger="{ triggerProps }">
-          <UiIconButton
-            v-bind="triggerProps"
-            :icon="SlidersHorizontal"
-            label="BGM 音量與進度"
-            :active="detailsOpen"
-            @click="detailsOpen = !detailsOpen"
-          />
-        </template>
-        <div class="bgm-transport__details">
-          <div class="bgm-transport__progress">
-            <span class="bgm-transport__time">{{
-              formatDuration(currentTime, '0:00')
-            }}</span>
-            <UiRangeControl
-              class="bgm-transport__progress-range"
-              :model-value="currentTime"
-              :min="0"
-              :max="duration"
-              :step="0.1"
-              :disabled="!currentTrack || duration <= 0"
-              :value-text="formatDuration(currentTime, '0:00')"
-              :format-value="(value) => formatDuration(value, '0:00')"
-              aria-label="BGM 進度"
-              @update:model-value="updatePosition"
-              @change="emit('commitPosition')"
-            />
-          </div>
-          <div class="bgm-transport__audio" role="group" aria-label="BGM 音量">
-            <UiIconButton
-              :icon="isMuted ? VolumeX : Volume2"
-              :label="isMuted ? '取消 BGM 靜音' : 'BGM 靜音'"
-              :active="isMuted"
-              :aria-pressed="isMuted"
-              @click="emit('setMuted', !isMuted)"
-            />
-            <UiRangeControl
-              class="bgm-transport__volume"
-              :model-value="volumeDraft"
-              :min="audioControlValues.bgmVolume.min"
-              :max="audioControlValues.bgmVolume.max"
-              :step="audioControlValues.bgmVolume.step"
-              :value-text="`${Math.round(volumeDraft * 100)}%`"
-              :format-value="(value) => `${Math.round(value * 100)}%`"
-              aria-label="BGM 音量"
-              @update:model-value="updateVolume"
-              @change="emit('commitVolume', volumeDraft)"
-            />
-          </div>
-        </div>
-      </UiPopover>
+      <div class="bgm-transport__audio" role="group" aria-label="BGM 音量">
+        <UiIconButton
+          :icon="isMuted ? VolumeX : Volume2"
+          :label="isMuted ? '取消 BGM 靜音' : 'BGM 靜音'"
+          :active="isMuted"
+          :aria-pressed="isMuted"
+          @click="emit('setMuted', !isMuted)"
+        />
+        <UiRangeControl
+          class="bgm-transport__volume"
+          :model-value="volumeDraft"
+          :min="audioControlValues.bgmVolume.min"
+          :max="audioControlValues.bgmVolume.max"
+          :step="audioControlValues.bgmVolume.step"
+          :value-text="`${Math.round(volumeDraft * 100)}%`"
+          :format-value="(value) => `${Math.round(value * 100)}%`"
+          aria-label="BGM 音量"
+          @update:model-value="updateVolume"
+          @change="emit('commitVolume', volumeDraft)"
+        />
+      </div>
     </div>
   </section>
 </template>
@@ -202,15 +171,10 @@ function updatePosition(value) {
   gap: var(--ui-space-2);
 }
 
-.bgm-transport__details {
-  display: grid;
-  gap: var(--ui-space-2);
-}
-
 .bgm-transport__progress {
   display: grid;
   align-items: center;
-  grid-template-columns: var(--ui-bgm-player-time-inline-size) minmax(0, 1fr);
+  grid-template-columns: 5ch minmax(0, 1fr) 5ch;
   gap: var(--ui-space-2);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
@@ -219,21 +183,22 @@ function updatePosition(value) {
 }
 
 .bgm-transport__time {
-  inline-size: var(--ui-bgm-player-time-inline-size);
+  inline-size: 5ch;
+  font-variant-numeric: tabular-nums;
   overflow: hidden;
   text-align: end;
   white-space: nowrap;
 }
 
 .bgm-transport__progress-range {
-  min-width: 0;
+  --ui-range-target-size: var(--ui-space-4);
+  min-inline-size: 0;
 }
 
 .bgm-transport__controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
   gap: var(--ui-space-1);
 }
 
@@ -243,10 +208,30 @@ function updatePosition(value) {
   grid-template-columns: var(--ui-icon-button-size-md) minmax(0, 1fr);
   align-items: center;
   gap: var(--ui-space-1);
+  min-inline-size: calc(
+    var(--ui-icon-button-size-md) + var(--ui-space-1) + var(--ui-space-7)
+  );
+}
+.bgm-transport--dock .bgm-transport__controls {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 .bgm-transport__volume {
   inline-size: 100%;
-  min-inline-size: var(--ui-bgm-player-volume-inline-size);
+  min-inline-size: var(--ui-space-7);
+}
+.bgm-transport__time--end {
+  text-align: left;
+}
+.bgm-transport__context {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--ui-space-1);
+  min-inline-size: 0;
+}
+.bgm-transport__cut {
+  grid-column: -2 / -1;
+  justify-self: end;
 }
 </style>

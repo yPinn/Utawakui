@@ -14,6 +14,10 @@ const tokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
+const identitySource = readFileSync(
+  new URL('../track/PlaybackTrackIdentity.vue', import.meta.url),
+  'utf8',
+);
 
 function cssRule(source, selector) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -32,27 +36,28 @@ function iconButtonSource(iconName) {
 
 describe('PlayerBar responsive metadata layout', () => {
   it('keeps the album action as the only tooltip owner for its nested marquee', () => {
-    const albumActionStart = componentSource.indexOf(
+    const albumActionStart = identitySource.indexOf(
       '<UiTooltip v-if="currentTrackAlbum"',
     );
-    const albumActionEnd = componentSource.indexOf(
+    const albumActionEnd = identitySource.indexOf(
       '</UiTooltip>',
       albumActionStart,
     );
-    const albumActionSource = componentSource.slice(
+    const albumActionSource = identitySource.slice(
       albumActionStart,
       albumActionEnd,
     );
 
     expect(albumActionStart).toBeGreaterThan(-1);
     expect(albumActionSource).toContain(':tooltip-enabled="false"');
-    expect(albumActionSource).toContain(':text="state.track.title"');
+    expect(albumActionSource).toContain(':text="track.title"');
+    expect(componentSource).toContain('<PlaybackTrackIdentity');
   });
 
   // The title button inherits font-family, so lang belongs on the wrapper.
   it('tags the title and artist wrapper with the track content language', () => {
-    expect(componentSource).toMatch(
-      /class="player-bar__track-copy"\s*:lang="trackContentLang\(state\.track\)"/u,
+    expect(identitySource).toMatch(
+      /class="playback-track-copy"\s*:lang="trackContentLang\(track\)"/u,
     );
   });
 
@@ -246,8 +251,8 @@ describe('PlayerBar responsive metadata layout', () => {
   });
 
   it('keeps secondary metadata on one clipped line', () => {
-    const copyRule = cssRule(componentSource, '.player-bar__track-copy');
-    const artistRule = cssRule(componentSource, '.player-bar__track-artist');
+    const copyRule = cssRule(identitySource, '.playback-track-copy');
+    const artistRule = cssRule(identitySource, '.playback-track-artist');
 
     expect(copyRule).toMatch(/overflow:\s*hidden/);
     expect(artistRule).toMatch(/overflow:\s*hidden/);
@@ -256,8 +261,8 @@ describe('PlayerBar responsive metadata layout', () => {
   });
 
   it('links the now-playing artists through the shared credits inside the clipped line', () => {
-    expect(componentSource).toMatch(
-      /<span v-if="state\.track\.artist" class="player-bar__track-artist">\s*<TrackArtistCredits :track="state\.track" \/>\s*<\/span>/u,
+    expect(identitySource).toMatch(
+      /<span v-if="track\.artist" class="playback-track-artist">\s*<TrackArtistCredits :track="track" \/>\s*<\/span>/u,
     );
     expect(componentSource).not.toMatch(
       /<TrackArtistCredits[^>]*current-artist-id/u,

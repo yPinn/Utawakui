@@ -7,6 +7,7 @@ import UiMarqueeText from './UiMarqueeText.vue';
 import UiOverflowTooltip from './UiOverflowTooltip.vue';
 import UiTextButton from './UiTextButton.vue';
 import UiTrackThumb from './UiTrackThumb.vue';
+import UiTrackArtworkButton from './UiTrackArtworkButton.vue';
 
 // Either pass a whole `track` object or the flat props individually — the
 // flat props win when both are given, so a caller can override one field
@@ -153,27 +154,20 @@ function handleActionKeydown(event) {
     >
       <slot name="lead" :disabled="disabled" />
     </span>
-    <button
+    <UiTrackArtworkButton
       v-if="artworkClickable"
-      type="button"
       class="ui-track__artwork-action"
       :disabled="disabled"
-      @click.stop="!disabled && emit('artworkClick', $event)"
-      @dblclick.stop
+      :label="artworkLabel"
+      :track="thumbTrack"
+      :loading="thumbLoading"
+      :decoding="thumbDecoding"
+      @activate="emit('artworkClick', $event)"
     >
-      <span class="ui-visually-hidden">{{ artworkLabel }}</span>
-      <UiTrackThumb
-        class="ui-track__thumb"
-        :track="thumbTrack"
-        size="var(--ui-track-row-thumb-size)"
-        :loading="thumbLoading"
-        :decoding="thumbDecoding"
-      >
-        <template v-if="$slots.artworkOverlay" #overlay>
-          <slot name="artworkOverlay" :disabled="disabled" />
-        </template>
-      </UiTrackThumb>
-    </button>
+      <template v-if="$slots.artworkOverlay" #overlay>
+        <slot name="artworkOverlay" :disabled="disabled" />
+      </template>
+    </UiTrackArtworkButton>
     <UiTrackThumb
       v-else
       class="ui-track__thumb"
@@ -323,25 +317,6 @@ function handleActionKeydown(event) {
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-1);
-}
-
-.ui-track__artwork-action {
-  position: relative;
-  width: var(--ui-track-row-thumb-size);
-  height: var(--ui-track-row-thumb-size);
-  flex: 0 0 var(--ui-track-row-thumb-size);
-  padding: 0;
-  border: 0;
-  /* Shapes the focus ring only; UiTrackThumb owns the artwork clip. */
-  border-radius: var(--ui-radius-sm);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.ui-track__artwork-action:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .ui-track__info {

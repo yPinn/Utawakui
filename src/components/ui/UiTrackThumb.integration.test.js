@@ -20,6 +20,7 @@ beforeAll(async () => {
   for (const name of [
     'UiTrackThumb',
     'UiTrackRow',
+    'UiTrackArtworkButton',
     'TrackArtworkContent',
     'UiArtworkOverlay',
     'UiArtworkLoading',

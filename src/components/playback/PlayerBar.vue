@@ -19,7 +19,6 @@ import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { usePlaybackTransport } from '../../composables/usePlaybackTransport.js';
 import { useMetronome } from '../../composables/useMetronome.js';
 import { useMetronomeTrackTempo } from '../../composables/useMetronomeTrackTempo.js';
-import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import {
@@ -38,16 +37,13 @@ import {
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
 import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
-import { trackContentLang } from '../../utils/contentLanguage.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
+import PlaybackTrackIdentity from '../track/PlaybackTrackIdentity.vue';
 import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
-import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiTooltip from '../ui/UiTooltip.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 defineProps({
@@ -89,7 +85,6 @@ const { state: metronomeState } = useMetronome();
 // natural single place to wire the metronome to whatever track is loaded.
 useMetronomeTrackTempo();
 const { activeView, performanceTool, openLiveLyrics } = useAppView();
-const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
 const {
   state: separationState,
@@ -132,13 +127,6 @@ const playbackModeActionLabel = computed(() => {
 const playbackModeActive = computed(
   () => state.playbackMode !== PLAYBACK_MODES.sequence,
 );
-const currentTrackAlbum = computed(() => albumForTrack(state.track));
-const currentTrackAlbumCtaLabel = computed(() => {
-  if (!currentTrackAlbum.value) return '';
-  return `${state.track?.title || '目前歌曲'}，前往專輯：${
-    currentTrackAlbum.value.name || '未命名專輯'
-  }`;
-});
 
 const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
 // Kept mounted (visibility:hidden, not v-if) so the trailing controls and
@@ -448,11 +436,6 @@ const pitchTempoRows = computed(() => [
   },
 ]);
 
-function jumpToCurrentTrackAlbum() {
-  if (!currentTrackAlbum.value) return;
-  jumpToAlbum(state.track);
-}
-
 // useLyrics.js already syncs to whatever's playing, so switching tabs is
 // enough — no track needs to be passed through.
 function showCurrentTrackLyrics() {
@@ -508,46 +491,19 @@ onUnmounted(() => {
       compact
       @action="toggle"
     />
-    <div class="player-bar__track">
-      <PlayerBarArtwork
-        v-if="state.track"
-        class="player-bar__artwork"
-        :track="state.track"
-        :expandable="artworkExpandable"
-        :expanded="artworkExpanded"
-        :controls="artworkControls"
-        @activate="emit('artworkActivate')"
-      />
-      <div class="player-bar__track-copy" :lang="trackContentLang(state.track)">
-        <template v-if="state.track">
-          <UiTooltip v-if="currentTrackAlbum" :text="currentTrackAlbumCtaLabel">
-            <template #trigger="{ triggerProps }">
-              <button
-                v-bind="triggerProps"
-                type="button"
-                class="player-bar__track-title player-bar__track-title-button"
-                :aria-label="currentTrackAlbumCtaLabel"
-                @click="jumpToCurrentTrackAlbum"
-              >
-                <UiMarqueeText
-                  class="player-bar__track-title-marquee"
-                  :text="state.track.title"
-                  :tooltip-enabled="false"
-                />
-              </button>
-            </template>
-          </UiTooltip>
-          <UiMarqueeText
-            v-else
-            class="player-bar__track-title"
-            :text="state.track.title"
-          />
-          <span v-if="state.track.artist" class="player-bar__track-artist">
-            <TrackArtistCredits :track="state.track" />
-          </span>
-        </template>
-      </div>
-    </div>
+    <PlaybackTrackIdentity class="player-bar__track" :track="state.track">
+      <template #artwork>
+        <PlayerBarArtwork
+          v-if="state.track"
+          class="player-bar__artwork"
+          :track="state.track"
+          :expandable="artworkExpandable"
+          :expanded="artworkExpanded"
+          :controls="artworkControls"
+          @activate="emit('artworkActivate')"
+        />
+      </template>
+    </PlaybackTrackIdentity>
 
     <div class="player-bar__center">
       <div class="player-bar__transport">
@@ -765,84 +721,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-}
-
-.player-bar__track-copy {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.player-bar__track-empty {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-}
-
-.player-bar__track-title {
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-  text-decoration: none;
-}
-
-.player-bar__track-title-button {
-  display: block;
-  min-width: 0;
-  width: fit-content;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-text);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.player-bar__track-title-button:hover {
-  color: var(--ui-color-text);
-}
-
-.player-bar__track-title-button :deep(.ui-marquee__text) {
-  text-decoration-line: none;
-  text-decoration-color: currentColor;
-}
-
-.player-bar__track-title-button:hover :deep(.ui-marquee__text),
-.player-bar__track-title-button:focus-visible :deep(.ui-marquee__text) {
-  text-decoration-line: underline;
-  text-decoration-thickness: var(--ui-border-width);
-  text-underline-offset: 0.12em;
-}
-
-.player-bar__track-title-button:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-  border-radius: var(--ui-radius-xs);
-}
-
-.player-bar__track-title-marquee {
-  color: inherit;
-  font-size: var(--ui-font-size-sm);
-  font-weight: inherit;
-  line-height: inherit;
-}
-
-.player-bar__track-artist {
-  display: block;
-  overflow: hidden;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .player-bar__center {

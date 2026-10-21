@@ -217,7 +217,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'track-rows',
         title: '曲目資料列',
-        components: ['UiTrackRow'],
+        components: ['UiTrackRow', 'UiTrackArtworkButton'],
       },
     ],
   },

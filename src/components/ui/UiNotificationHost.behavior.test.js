@@ -416,7 +416,7 @@ describe('UiNotificationHost', () => {
     await nextTick();
     for (const role of ['preferred', 'min', 'max']) {
       expect(host.props.style[`--ui-notification-${role}-inline-size`]).toBe(
-        '224px',
+        `${RIGHT_DOCK_WIDTH_MIN}px`,
       );
     }
     app.unmount();

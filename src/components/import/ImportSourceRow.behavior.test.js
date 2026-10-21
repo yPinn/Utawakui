@@ -17,12 +17,14 @@ import UiTextButton from '../ui/UiTextButton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import ImportSourceRow from './ImportSourceRow.vue';
 
 for (const [component, filename] of [
   [ImportSourceRow, './ImportSourceRow.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
+  [UiTrackArtworkButton, '../ui/UiTrackArtworkButton.vue'],
   [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiMarqueeText, '../ui/UiMarqueeText.vue'],
