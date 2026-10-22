@@ -1,0 +1,172 @@
+{
+  "date": "2026-10-22",
+  "scope": "bounded existing research cache inventory; not entire library scan",
+  "modelRuns": 0,
+  "audioDecodes": 0,
+  "gateReplays": 0,
+  "offsetEstimates": 0,
+  "downloads": 0,
+  "completeSameSongSixAnchorGroups": 0,
+  "privateInventorySha256": "2fbdae276145d6c4dffa668d7fab713bd9c6e67884a590b4f95775d75bf2bdec",
+  "evidenceFilesChecked": 101,
+  "clips": [
+    {
+      "id": "zh-1-normal",
+      "durationMs": 166000,
+      "crop": {
+        "startMs": 16180,
+        "endMs": 46180
+      },
+      "originalGranularity": "T1",
+      "totalLines": 5,
+      "rawFirstPerOriginalThird": [5, 0, 0],
+      "cropSourceHashesMatch": true,
+      "smallRawHashesMatch": true,
+      "smallBindingMatches": true,
+      "cachedContentState": "unknown",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    },
+    {
+      "id": "zh-2-normal",
+      "durationMs": 225000,
+      "crop": {
+        "startMs": 14150,
+        "endMs": 44150
+      },
+      "originalGranularity": "T1",
+      "totalLines": 7,
+      "rawFirstPerOriginalThird": [7, 0, 0],
+      "cropSourceHashesMatch": true,
+      "smallRawHashesMatch": true,
+      "smallBindingMatches": true,
+      "cachedContentState": "unknown",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    },
+    {
+      "id": "ja-1-normal",
+      "durationMs": 216000,
+      "crop": {
+        "startMs": 7804,
+        "endMs": 37804
+      },
+      "originalGranularity": "T2",
+      "totalLines": 10,
+      "rawFirstPerOriginalThird": [6, 0, 0],
+      "cropSourceHashesMatch": true,
+      "smallRawHashesMatch": true,
+      "smallBindingMatches": true,
+      "cachedContentState": "unknown",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    },
+    {
+      "id": "ja-2-normal",
+      "durationMs": 243000,
+      "crop": {
+        "startMs": 0,
+        "endMs": 30000
+      },
+      "originalGranularity": "T2",
+      "totalLines": 7,
+      "rawFirstPerOriginalThird": [7, 0, 0],
+      "cropSourceHashesMatch": true,
+      "smallRawHashesMatch": true,
+      "smallBindingMatches": true,
+      "cachedContentState": "unknown",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    }
+  ],
+  "fullSongs": [
+    {
+      "id": "full-existing-zh-6b4e4980",
+      "durationMs": 290301,
+      "offsetMs": 0,
+      "sourceLineCountsPerThird": [33, 38, 33],
+      "rawSmallWindows": 11,
+      "smallRawHashesAndQualityBindingsMatch": true,
+      "sourceAudioAndClockMatch": true,
+      "canonicalMatch": true,
+      "inputHashMatch": true,
+      "frozenAudioMatches": true,
+      "sourceFileMatches": true,
+      "rawFirstStatus": "missing in all three sections",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    },
+    {
+      "id": "full-existing-ja-25b328d6",
+      "durationMs": 254361,
+      "offsetMs": 0,
+      "sourceLineCountsPerThird": [22, 24, 12],
+      "rawSmallWindows": 9,
+      "smallRawHashesAndQualityBindingsMatch": true,
+      "sourceAudioAndClockMatch": true,
+      "canonicalMatch": true,
+      "inputHashMatch": true,
+      "frozenAudioMatches": true,
+      "sourceFileMatches": true,
+      "rawFirstStatus": "missing in all three sections",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    },
+    {
+      "id": "full-new-zh-3fa4a179",
+      "durationMs": 181201,
+      "offsetMs": 0,
+      "sourceLineCountsPerThird": [18, 19, 0],
+      "rawSmallWindows": 4,
+      "smallRawHashesAndQualityBindingsMatch": true,
+      "sourceAudioAndClockMatch": true,
+      "canonicalMatch": true,
+      "inputHashMatch": true,
+      "frozenAudioMatches": true,
+      "sourceFileMatches": true,
+      "rawFirstStatus": "missing in all three sections",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    },
+    {
+      "id": "full-new-ja-21f9a4c7",
+      "durationMs": 295741,
+      "offsetMs": 0,
+      "sourceLineCountsPerThird": [15, 16, 9],
+      "rawSmallWindows": 9,
+      "smallRawHashesAndQualityBindingsMatch": true,
+      "sourceAudioAndClockMatch": true,
+      "canonicalMatch": true,
+      "inputHashMatch": true,
+      "frozenAudioMatches": true,
+      "sourceFileMatches": true,
+      "rawFirstStatus": "missing in all three sections",
+      "currentSupportedContent": "not-established",
+      "occurrenceVerified": false
+    }
+  ],
+  "english": {
+    "gpuTargetLines": 1,
+    "gpuContentState": "supported",
+    "gpuRawHfaFirst": "missing",
+    "existingCases": 9,
+    "existingOccurrences": 10,
+    "missingProfiles": 7
+  },
+  "exclusions": {
+    "mixedCases": 8,
+    "mixedRawResults": 7,
+    "mixedAccepted": 0,
+    "lineRoutingProfileExists": true,
+    "olderHfaShortCases": 18,
+    "retainedFullHfaJobEntries": 0
+  },
+  "humanTiming": "pending",
+  "limitations": [
+    "No original first onset may be reconstructed from published T1-anchored chunks.",
+    "Old unknown/non-rejected/contentAccepted decisions are not upgraded to current supported content.",
+    "No cross-recipe equivalence or unique occurrence verification was performed.",
+    "Provider timing and raw model starts are not human ground truth.",
+    "Full-song duration thirds are based on existing metadata, not lyrics count or 30-second clip thirds."
+  ]
+}

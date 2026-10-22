@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-22",
+  "scope": "Fixed O1/O2 offline only",
+  "identity": {
+    "matched": true,
+    "offsetMs": 0,
+    "window": [16180, 46180],
+    "originalAndCropClocksEquivalent": true
+  },
+  "recipe": {
+    "historicalCommit": "ff0557a14d56a9cd24a75f75487ac60766b46fd6",
+    "hfaModelManifestSha256": "bb14e6cf70e349ca9445e623560510fdc67f56971d0e222bf5e988794cc53af7",
+    "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+    "physicalHfaAssetsVerified": true,
+    "smallAssetFilesVerified": 39,
+    "observationOnlyChangeVerified": true,
+    "pairedStartsRecorded": 5,
+    "liveDirtyDecoderNotUsed": true,
+    "currentReplayCode": {
+      "scripts/research/lyricsFreshEvaluation/completeness.cjs": "1e91ec087006aab35ce6f29d0a858472d6ff231e76bab3d5ac848e591829d46e",
+      "scripts/research/lyricsFreshEvaluation/lowCost.cjs": "599a4f12497003a2b066c5fad99a82f13dd13d0faa6500d5336ba040fe059491",
+      "scripts/research/lyricsFreshEvaluation/content.cjs": "46f52c136b50ab3c0fc1c76adf146bf05b0cdc0073a622cb63743d36f858f434",
+      "scripts/research/lyricsAlignmentCandidates/tokenStarts.cjs": "e86a535dbc4a64131ed7672b080ba35a028cc438ace191aafe0e4891e6ad1a73",
+      "scripts/research/lyricsAlignmentCandidates/qualityConservative.cjs": "2bc985400e975caceaea03c88e30556bdc49576341c0c53307fafa41771e34f7"
+    }
+  },
+  "tokenClock": {
+    "tokensWithMissingClock": 0,
+    "spans": 68,
+    "windowStartMs": 16180,
+    "offsetMs": 0,
+    "durationMs": 30000
+  },
+  "contentRules": {
+    "maxContradictionCoverage": 0.2,
+    "minAsrCharacters": 4,
+    "paddingMs": 500,
+    "extraRatioWarning": 0.35,
+    "minExtraCharacters": 3
+  },
+  "rows": [
+    {
+      "targetId": "O1",
+      "sourceLine1Based": 1,
+      "sourceT1StartMs": 18180,
+      "evidenceState": "insufficient",
+      "legacyState": "unknown",
+      "reject": false,
+      "compatibility": 0.7142857142857143,
+      "sourceCharacters": 14,
+      "matchedCharacters": 10,
+      "asrCharacters": 13,
+      "insertionWarning": false,
+      "extraContentWarning": false,
+      "rawFirstPresent": true,
+      "usableAsOffsetEvidence": false,
+      "independentHumanOccurrenceConfirmed": false
+    },
+    {
+      "targetId": "O2",
+      "sourceLine1Based": 2,
+      "sourceT1StartMs": 23020,
+      "evidenceState": "supported",
+      "legacyState": "unknown",
+      "reject": false,
+      "compatibility": 1,
+      "sourceCharacters": 11,
+      "matchedCharacters": 11,
+      "asrCharacters": 13,
+      "insertionWarning": false,
+      "extraContentWarning": false,
+      "rawFirstPresent": true,
+      "usableAsOffsetEvidence": true,
+      "independentHumanOccurrenceConfirmed": false
+    }
+  ],
+  "allSixTargets": [
+    {
+      "targetId": "O1",
+      "checked": true,
+      "status": "insufficient"
+    },
+    {
+      "targetId": "O2",
+      "checked": true,
+      "status": "supported"
+    },
+    {
+      "targetId": "O3",
+      "checked": false,
+      "status": "not-run"
+    },
+    {
+      "targetId": "O4",
+      "checked": false,
+      "status": "not-run"
+    },
+    {
+      "targetId": "O5",
+      "checked": false,
+      "status": "not-run"
+    },
+    {
+      "targetId": "O6",
+      "checked": false,
+      "status": "not-run"
+    }
+  ],
+  "decision": "stop: fixed front content evidence insufficient",
+  "modelRuns": 0,
+  "audioDecodes": 0,
+  "newWindows": 0,
+  "contentTargets": 2,
+  "clockEquivalenceChecks": 2,
+  "offsetEstimates": 0,
+  "offsetCandidate": null,
+  "humanTiming": "pending",
+  "unchangedInputFiles": 45,
+  "privateReceiptSha256": "fa283409fa285a76a9428d2ea2d820b0e9f8e29be0dd64f51a0360d37df13983",
+  "limitations": [
+    "Content comparison coverage is not accuracy or timing truth.",
+    "O1 non-rejection is not positive support or proof of wrong lyrics.",
+    "The other four fixed targets were not run.",
+    "Original acoustic recipe compatibility does not validate the modified live product or any new native execution."
+  ]
+}
