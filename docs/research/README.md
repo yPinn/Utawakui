@@ -6,6 +6,8 @@
 
 入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data/)。
 
+- 10-22：[歌詞顯示階段整理](../operations/lyrics-milestone-2026-10-22.md)：長句容量、時鐘配對、中日細時間與本地／Focus 連續填色已實作；保留舊資料回退及冷暖慢值，人工時間品質未驗。
+- 10-22：[T1+ 細部時間與顯示時鐘](lyrics-alignment/lyrics-fine-timing-clock-2026-10-22.md)：實作前研究，確認可擷取細區間與時鐘問題；當輪未實作掃字，後續交付見階段整理。
 - 10-21：[逐句 CPU 分流方法與驗證](lyrics-alignment/lyrics-mixed-cpu-feasibility-2026-10-21.md)、[句內混語有界研究結案](lyrics-alignment/lyrics-mixed-cpu-bounded-2026-10-21.md)、[混語長句兩段顯示](lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)；現行採用決策統一見研究結論。
 - 10-20：[純英文 T1+ 與回退](lyrics-alignment/lyrics-english-validation-2026-10-20.md)
 - 10-19 模型選型：[模型配對與完整成本](lyrics-alignment/lyrics-model-pairing-2026-10-19.md)、[配對聽查案例](lyrics-alignment/lyrics-model-pair-listening-2026-10-19.md)、[LyricFloat 成本](lyrics-alignment/lyricfloat-cost-2026-10-19.md)、[HubertFA＋small 試用](lyrics-alignment/lyrics-hfa-small-listening-trial-2026-10-19.md)、[HubertFA 新曲配對](lyrics-alignment/lyrics-hubertfa-fresh-2026-10-19.md)、[small 誤拒與 Qwen 退步](lyrics-alignment/lyrics-root-causes-and-noncommercial-2026-10-19.md)、[新 16 案對照](lyrics-alignment/lyrics-fresh-decision-2026-10-19.md)、[人聲活動與內容一致性](lyrics-alignment/lyrics-qwen-quality-2026-10-19.md)、[方法族比較](lyrics-alignment/lyrics-alignment-methods-comparison-2026-10-19.md)、[Qwen3／Whisper.cpp 配方](lyrics-alignment/lyrics-alignment-candidates-2026-10-19.md)

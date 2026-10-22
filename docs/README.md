@@ -22,6 +22,12 @@
 - 發布：[release runbook](operations/release-runbook.md)、[安裝／重裝驗證](operations/installer-maintenance-verification-2026-10-18.md)、[更新驗收範本](operations/update-acceptance-template.md)、[release notes 範本](operations/release-notes-template.md)
 - 驗證：[人工驗收](operations/manual-acceptance.md)、[Output 外觀驗收](operations/output-appearance-acceptance.md)、[CI](operations/ci-usage.md)、[啟動效能基準](operations/startup-performance-baseline.md)
 - 診斷與歌詞：[diagnostics](operations/diagnostics-rollout.md)、[歌詞對齊試用](operations/lyrics-alignment-research.md)、[歌詞問題回報](operations/lyrics-issue-feedback.md)、[provider 契約錄製](operations/lyrics-provider-contracts.md)
+- 歌詞顯示時鐘：[本地／Output 採樣配對修正與同案例對照](operations/lyrics-clock-fix-2026-10-22.md)
+- Output 顯示效能：[deadline 與首字樣式準備修正](operations/lyrics-output-tail-fix-2026-10-22.md)
+- T1+ 連續填色：[細時間保留、中日映射與兩端同案例驗證](operations/lyrics-continuous-fill-2026-10-22.md)
+- Output 細填色成本：[首字準備、commit 與冷暖重播對照](operations/lyrics-output-fine-cost-2026-10-22.md)
+- Output 冷啟動長尾：[同次事件鏈、Focus 量測與舊分組資料診斷](operations/lyrics-output-cold-max-2026-10-22.md)
+- 歌詞階段整理：[交付範圍、驗證與尚未解決的時間限制](operations/lyrics-milestone-2026-10-22.md)
 
 ## 權利與治理（governance/）
 
