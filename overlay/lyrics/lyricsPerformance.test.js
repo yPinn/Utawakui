@@ -5,6 +5,54 @@ import {
 } from './lyrics.mjs';
 
 describe('opt-in lyric performance trace', () => {
+  it('retains numeric fine cost summaries without accepting private content', () => {
+    const trace = createLyricsPerformanceTrace({
+      location: { search: '?lyricsTrace=1' },
+    });
+    trace.mark('render-cost', {
+      renderId: 3,
+      renderPhase: 0,
+      finePrepareMs: 1,
+      fineDomMs: 2,
+      fineStyleMs: 3,
+      fineCancelMs: 4,
+      fineAnimateMs: 5,
+      fineLookupMs: 6,
+      fineNodes: 7,
+      fineCells: 8,
+      fineHits: 9,
+      fineMisses: 10,
+      fineCreates: 11,
+      fineCancels: 12,
+      fineReuses: 13,
+      coarseNodes: 14,
+      coarseDomMs: 15,
+      text: 'private',
+    });
+    expect(trace.read().events).toEqual([
+      expect.objectContaining({
+        event: 'render-cost',
+        renderId: 3,
+        renderPhase: 0,
+        finePrepareMs: 1,
+        fineDomMs: 2,
+        fineStyleMs: 3,
+        fineCancelMs: 4,
+        fineAnimateMs: 5,
+        fineLookupMs: 6,
+        fineNodes: 7,
+        fineCells: 8,
+        fineHits: 9,
+        fineMisses: 10,
+        fineCreates: 11,
+        fineCancels: 12,
+        fineReuses: 13,
+        coarseNodes: 14,
+        coarseDomMs: 15,
+      }),
+    ]);
+    expect(JSON.stringify(trace.read())).not.toContain('private');
+  });
   it('is absent by default and accepts only bounded numeric diagnostics', () => {
     expect(
       createLyricsPerformanceTrace({ location: { search: '' } }),

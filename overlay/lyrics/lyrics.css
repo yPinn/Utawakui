@@ -209,7 +209,8 @@
     text-decoration-color: var(--ovl-color-current);
     text-underline-offset: 0.15em;
   }
-  .lyrics-overlay__fine-ink {
+  .lyrics-overlay__fine-ink,
+  .lyrics-overlay__segment.lyrics-overlay__fine-ink {
     position: relative;
     display: inline-block;
     max-inline-size: 100%;

@@ -105,7 +105,7 @@
 - `useExperimentalLyrics` 持有手動套用狀態，交付本機閱讀區與 Output（`outputDocument` 經 `useOutputProjectionPublisher` 以既有 v3 revision 發布；line 的可選 `estimatedStarts` 由 `shared/outputStreamContract.js` 驗證）。`LyricsSourceAnalysis` 只對目前來源提供分析、取消與套用。Offset 變更即解除套用。
 - 長句容量：`shared/presentation/lyricsDisplayLayout.mjs` 持有保真候選、頁面與時間依據，`lyricsDisplayFrame.mjs` 投影既有模板；`overlay/lyrics/lyricsFit.mjs` 與本地 `usePerformerLyricsFit` 各持有 DOM 量測及失效快取，使用同一播放器時鐘，量測不進播放 tick。T1+ 按模型起點立即提示整段，不以相鄰起點／句尾推算主提示的掃完時間；模型起點與 canonical T2 保持分離，讀音、字型與視窗尺寸納入可見驗收。
 - Output 歌詞 scheduler 以絕對 deadline 扣除同步準備／commit 耗時；跨界後有限次重投影，過期 generation 不提交。Focus 在設定、字型與啟用後以可取消工作先讀既有容器樣式，不寫未來歌詞或取代正式 fit。`lyricsTrace=1` 才啟用有界數值 stage trace，預設關閉，不記歌詞文字。見[Output 長尾延遲修正](operations/lyrics-output-tail-fix-2026-10-22.md)。
-- T1+ 本地 document reader 與 Output Focus 另沿用 `estimatedFineTiming` v1：`shared/presentation/lyricsFineFrame.mjs` 持有純範圍／進度投影，`shared/browser/lyricsFinePaint.mjs` 只持有局部 DOM 動畫；`LyricsFineText.vue` 與 `overlay/lyrics/lyricsFine.mjs` 各持有可讀基底與視覺副本。分段底線準時提示，細填色依模型單位時長；小格只分配原單位進度，不增加字時間。內容修訂時驗證轉換重建與範圍，播放不做模型／文字轉換／幾何量測；失效取消、不補播，保留 Output displayDelay。無細資料回原提示，T2 優先、其他模板與 Self-View 維持既有行為。
+- T1+ 本地 document reader 與 Output Focus 另沿用 `estimatedFineTiming` v1：`shared/presentation/lyricsFineFrame.mjs` 持有純範圍／進度投影，`shared/browser/lyricsFinePaint.mjs` 只持有局部 DOM 動畫；`LyricsFineText.vue` 與 `overlay/lyrics/lyricsFine.mjs` 各持有可讀基底與視覺副本。分段底線準時提示，細填色依模型單位時長；小格只分配原單位進度，不增加字時間。內容修訂時驗證轉換重建與範圍，填色畫格不做模型／文字轉換／幾何量測，容量失效與捲動沿原 owner 準備；失效取消、不補播，保留 Output displayDelay。無細資料回原提示，T2 優先、其他模板與 Self-View 維持既有行為。
 - 研究 CLI 在 `scripts/research/`，不進封裝（App 試用只明列所需推論模組）。選型見[研究結論](research/lyrics-alignment/lyrics-alignment-summary.md)，步驟見[試用手冊](operations/lyrics-alignment-research.md)。
 
 ### Settings 與通知

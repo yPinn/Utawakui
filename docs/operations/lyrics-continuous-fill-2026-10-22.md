@@ -84,3 +84,5 @@ Before 504/504、final 510/510 envelopes 接受，12 run 全部 visible、source
 完整回歸 1005 files、9538 passed、1 skipped。最後 fine 前景色補正後另跑 5 files／49 tests，production build 與 ESLint 通過。Producer focused 15 files／151 tests，Python serializer 9 tests；四個顯示核心 runtime 的 focused coverage 為 statements 96.03%、branches 89.34%、functions 95%、lines 97.15%，未降低門檻。封裝邊界、closed HTTP graph、fine 固定上限 3 files／48 tests 通過。
 
 這是 focused coverage，沒有重跑全庫 coverage ratchet 或 installer。真 OBS／音訊裝置／螢幕呈現延遲及自然歌聲人工 timing 真值未驗收。舊結果要取得 fine 需要由既有分析流程重新分析；在此之前仍可套用原粗提示，沒有自動重算曲庫。
+
+首字後續拆分量測與修正見[Output 細填色成本驗證](lyrics-output-fine-cost-2026-10-22.md)。它以本文件的可見連續填色版為新基準，原始 starts-only／fine 分布與限制維持原值。

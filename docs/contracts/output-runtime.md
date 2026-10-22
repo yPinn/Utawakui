@@ -80,6 +80,8 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 ## 效能量測
 
+`lyricsTrace=1` 的 `render-cost` 是每次 render 的數值彙總，`renderPhase` 0 表示排版量測、1 表示正式 commit。文字結構準備、查找、節點建構、進度寫入與動畫建立／取消／重用分開記錄；清理舊行的細動畫取消也計入。Prepare／fit／render／commit 含有巢狀範圍，不能相加為獨立成本；細分項以外的工作仍列為未分配。DOM commit、Chrome paint 與下一次 rAF 觀測分別看待，rAF 不作硬體或 OBS 呈現證據。預設停用，事件有界且只接受數值白名單，不記錄歌詞內容。
+
 Lyrics scheduler 的下一起點是絕對 deadline。Presentation／fit／DOM commit 的同步耗時須從剩餘等待扣除；準備或 commit 期間跨界時按同 snapshot 的當前時間重投影，不能提交舊時間狀態後再等完整舊 delay。每輪最多兩次同步追趕，仍跨界則讓出執行權到單一立即 task；generation、snapshot identity、stop／suspend 阻止舊 callback 提交或清掉新 timer handle。
 
 Focus 的首次樣式準備只讀取既有 current 容器與樣式。它是設定／字型／活動變更後的可取消工作，不提前寫未來歌詞、不產生可用 fit plan、不等待字型或阻擋播放；正式尺寸量測、長句容量與 unfit 恢復路徑照舊。來源或尺寸失效不允許借用不適用的計畫，T1+ 分段起點仍立即提示。

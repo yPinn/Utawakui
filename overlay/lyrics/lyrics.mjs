@@ -112,6 +112,7 @@ const PERFORMANCE_EVENTS = new Set([
   'fonts',
   'config',
   'activity',
+  'render-cost',
 ]);
 const PERFORMANCE_FIELDS = new Set([
   'durationMs',
@@ -126,6 +127,26 @@ const PERFORMANCE_FIELDS = new Set([
   'pass',
   'activeIndex',
   'targetMs',
+  'renderId',
+  'renderPhase',
+  'finePrepareMs',
+  'fineDomMs',
+  'fineLookupMs',
+  'fineStyleMs',
+  'fineCancelMs',
+  'fineAnimateMs',
+  'fineNodes',
+  'fineCells',
+  'fineHits',
+  'fineMisses',
+  'fineCreates',
+  'fineCancels',
+  'fineReuses',
+  'coarseNodes',
+  'coarseDomMs',
+  'fineIndexes',
+  'finePartsHits',
+  'finePartsMisses',
 ]);
 let pagePerformanceTrace = null;
 
@@ -228,7 +249,7 @@ function cancelSegmentPaintAnimation(element, options) {
 function clearLyricsRenderState(element, options) {
   const state = lyricsRenderStates.get(element);
   for (const node of state?.nodes ?? []) {
-    clearFineLyricsText(node);
+    clearFineLyricsText(node, options?.fineCost);
     cancelSegmentPaintAnimation(node, options);
   }
   lyricsRenderStates.delete(element);
@@ -712,7 +733,9 @@ function renderCurrentLyrics(element, frame, options) {
   const structureKey = `${lineKey}\0${segmentStructureKey(segments)}\0${fine ? 'fine' : ''}`;
   let state = lyricsRenderStates.get(element);
   if (state?.mode !== 'segments' || state.structureKey !== structureKey) {
+    const cost = options.fineCost;
     clearLyricsRenderState(element, options);
+    const started = cost?.now();
     setTextContent(element, '');
     const nodes = segments.map((segment) => {
       const segmentElement = documentApi.createElement('span');
@@ -725,6 +748,10 @@ function renderCurrentLyrics(element, frame, options) {
     });
     state = { mode: 'segments', nodes, structureKey };
     lyricsRenderStates.set(element, state);
+    if (cost) {
+      cost.coarseNodes += nodes.length;
+      cost.coarseDomMs += cost.now() - started;
+    }
   }
   element.dataset.segmented = 'true';
   let fineOffset = 0;
@@ -752,6 +779,7 @@ function renderCurrentLyrics(element, frame, options) {
         fineOffset + segment.text.length,
         fine,
         options,
+        frame.timelineDiscontinuity === true,
       );
       fineOffset += segment.text.length;
     }
@@ -1486,7 +1514,53 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearOrnateVerticalPresentation(elements, options);
 }
 
+let performanceRenderId = 0;
+
 export function renderLyricsFrame(elements, sourceFrame, options = {}) {
+  if (!options.onTrace)
+    return renderLyricsFrameInternal(elements, sourceFrame, options);
+  const now = options.measureNow ?? (() => performance.now());
+  const started = now();
+  const cost = {
+    now,
+    renderId: ++performanceRenderId,
+    renderPhase: options.renderPhase ?? 1,
+    finePrepareMs: 0,
+    fineDomMs: 0,
+    fineLookupMs: 0,
+    fineStyleMs: 0,
+    fineCancelMs: 0,
+    fineAnimateMs: 0,
+    fineNodes: 0,
+    fineCells: 0,
+    fineHits: 0,
+    fineMisses: 0,
+    fineCreates: 0,
+    fineCancels: 0,
+    fineReuses: 0,
+    coarseNodes: 0,
+    coarseDomMs: 0,
+    fineIndexes: 0,
+    finePartsHits: 0,
+    finePartsMisses: 0,
+  };
+  try {
+    return renderLyricsFrameInternal(elements, sourceFrame, {
+      ...options,
+      fineCost: cost,
+    });
+  } finally {
+    const fields = { ...cost };
+    delete fields.now;
+    options.onTrace('render-cost', {
+      ...fields,
+      durationMs: now() - started,
+      lineIndex: sourceFrame.lineIndex,
+    });
+  }
+}
+
+function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const templateId = activeTemplateId(elements, options);
   const frame =
     templateId === 'karaoke-stack' ? projectKtvFrame(sourceFrame) : sourceFrame;
@@ -1916,6 +1990,8 @@ function boot() {
         gsap,
         reportError,
         reducedMotion: true,
+        onTrace,
+        renderPhase: 0,
       }),
   });
   function prepareFocusStyles() {
@@ -1957,6 +2033,8 @@ function boot() {
         reportError,
         reducedMotion: reducedMotion || settling,
         trace,
+        onTrace,
+        renderPhase: 1,
       });
     },
   });

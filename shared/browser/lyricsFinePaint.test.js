@@ -12,6 +12,97 @@ function node() {
 }
 const unit = { unitId: 'u', startMs: 1000, endMs: 2000 };
 describe('fine text paint clock', () => {
+  it('reuses only the exact same running clock mapping and invalidates corrections and controls', () => {
+    const el = node();
+    const clock = {
+      positionMs: 1250,
+      sampledAtMs: 10000,
+      rate: 1,
+      playing: true,
+    };
+    const options = { nowMs: 10000, reuse: true };
+    paintLyricsFineUnit(el, unit, clock, options);
+    const animation = el.animate.mock.results[0].value;
+    paintLyricsFineUnit(
+      el,
+      unit,
+      { ...clock, positionMs: 1350, sampledAtMs: 10100 },
+      { ...options, nowMs: 10100 },
+    );
+    expect(animation.cancel).not.toHaveBeenCalled();
+    expect(el.animate).toHaveBeenCalledOnce();
+    expect(el.style.setProperty).toHaveBeenCalledOnce();
+    paintLyricsFineUnit(
+      el,
+      unit,
+      { ...clock, positionMs: 1351, sampledAtMs: 10100 },
+      { ...options, nowMs: 10100 },
+    );
+    expect(animation.cancel).toHaveBeenCalledOnce();
+    expect(el.style.setProperty).toHaveBeenLastCalledWith(
+      '--lyrics-fine-progress',
+      '35.099999999999994%',
+    );
+    paintLyricsFineUnit(el, unit, { ...clock, rate: 2 }, options);
+    expect(el.animate).toHaveBeenCalledTimes(3);
+    paintLyricsFineUnit(el, unit, { ...clock, playing: false }, options);
+    expect(el.animate).toHaveBeenCalledTimes(3);
+    paintLyricsFineUnit(el, unit, clock, { ...options, reducedMotion: true });
+    expect(el.animate).toHaveBeenCalledTimes(3);
+  });
+  it('never reuses a held clock whose advance time changes, or changed paint ranges', () => {
+    const el = node();
+    const clock = {
+      positionMs: 1000,
+      sampledAtMs: 10000,
+      advanceAtMs: 10200,
+      rate: 1,
+      playing: true,
+    };
+    paintLyricsFineUnit(el, unit, clock, { nowMs: 10000, reuse: true });
+    paintLyricsFineUnit(
+      el,
+      unit,
+      { ...clock, advanceAtMs: 10201 },
+      { nowMs: 10000, reuse: true },
+    );
+    expect(el.animate).toHaveBeenCalledTimes(2);
+    paintLyricsFineUnit(el, unit, clock, {
+      nowMs: 10000,
+      reuse: true,
+      paintTo: 0.5,
+    });
+    expect(el.animate).toHaveBeenCalledTimes(3);
+    cancelLyricsFinePaint(el);
+    expect(el.animate.mock.results[2].value.cancel).toHaveBeenCalledOnce();
+  });
+  it('relocates immediately when position and a future hold move together despite an equal future slope', () => {
+    const el = node();
+    const clock = {
+      positionMs: 1000,
+      sampledAtMs: 10000,
+      advanceAtMs: 10200,
+      rate: 1,
+      playing: true,
+    };
+    paintLyricsFineUnit(el, unit, clock, { nowMs: 10000, reuse: true });
+    const animation = el.animate.mock.results[0].value;
+    paintLyricsFineUnit(
+      el,
+      unit,
+      { ...clock, positionMs: 1100, sampledAtMs: 10100, advanceAtMs: 10300 },
+      { nowMs: 10100, reuse: true },
+    );
+    expect(animation.cancel).toHaveBeenCalledOnce();
+    expect(el.style.setProperty).toHaveBeenLastCalledWith(
+      '--lyrics-fine-progress',
+      '10%',
+    );
+    expect(el.animate.mock.calls[1][1]).toMatchObject({
+      delay: 200,
+      duration: 900,
+    });
+  });
   it('starts at the current media position and uses remaining wall time, including commit cost', () => {
     const el = node();
     paintLyricsFineUnit(

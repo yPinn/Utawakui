@@ -139,6 +139,201 @@ function kineticLineUnits(line) {
 }
 
 describe('lyrics overlay renderer', () => {
+  it('reuses fine structure across clock updates and DOM reset, invalidating changed text and times', () => {
+    const elements = domElements();
+    const onTrace = vi.fn();
+    const options = { templateId: 'focus-line', onTrace, reducedMotion: true };
+    const unit = {
+      unitId: 'cache-unit',
+      from: 0,
+      to: 1,
+      startMs: 1000,
+      endMs: 2000,
+    };
+    const frame = {
+      visible: true,
+      currentText: '甲',
+      nextText: '',
+      currentSegments: [
+        { segmentId: 'a', text: '甲', state: 'active', progress: null },
+      ],
+      currentFineTiming: {
+        positionMs: 1500,
+        rate: 1,
+        playing: false,
+        units: [unit],
+      },
+    };
+    renderLyricsFrame(elements, frame, options);
+    const first = elements.current.children[0];
+    expect(first.children).toHaveLength(0);
+    expect(first.dataset.lyricsFineUnit).toBe('cache-unit');
+    expect(first.className).toContain('lyrics-overlay__fine-ink');
+    expect(first.style.values['--lyrics-fine-progress']).toBe('50%');
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({
+        fineNodes: 0,
+        fineIndexes: 1,
+        finePartsMisses: 1,
+      }),
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        currentFineTiming: {
+          ...frame.currentFineTiming,
+          positionMs: 1750,
+          units: [{ ...unit }],
+        },
+      },
+      options,
+    );
+    expect(elements.current.children[0]).toBe(first);
+    expect(first.style.values['--lyrics-fine-progress']).toBe('75%');
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({ fineIndexes: 0, finePartsHits: 1 }),
+    );
+    renderLyricsFrame(
+      elements,
+      { ...frame, currentSegments: [], currentFineTiming: null },
+      options,
+    );
+    expect(first.className).not.toContain('lyrics-overlay__fine-ink');
+    expect(first.dataset.lyricsFineUnit).toBeUndefined();
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        currentFineTiming: { ...frame.currentFineTiming, units: [{ ...unit }] },
+      },
+      options,
+    );
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({ fineIndexes: 0, finePartsHits: 1 }),
+    );
+    const changed = {
+      ...frame,
+      currentFineTiming: {
+        ...frame.currentFineTiming,
+        units: [{ ...unit, endMs: 3000 }],
+      },
+    };
+    renderLyricsFrame(elements, changed, options);
+    expect(
+      elements.current.children[0].style.values['--lyrics-fine-progress'],
+    ).toBe('25%');
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({ fineIndexes: 1, finePartsMisses: 1 }),
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        ...changed,
+        currentText: '乙',
+        currentSegments: [{ ...frame.currentSegments[0], text: '乙' }],
+      },
+      options,
+    );
+    expect(elements.current.textContent).toBe('乙');
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({ fineIndexes: 1 }),
+    );
+  });
+  it('separates fine preparation, node writes and animation work in one bounded render summary', () => {
+    const elements = domElements();
+    const documentApi = elements.current.ownerDocument;
+    documentApi.createElement.mockImplementation((name) => {
+      const node = element(documentApi, name);
+      node.animate.mockImplementation(() => ({ cancel: vi.fn() }));
+      return node;
+    });
+    const onTrace = vi.fn();
+    let at = 0;
+    const options = {
+      templateId: 'focus-line',
+      onTrace,
+      renderPhase: 0,
+      measureNow: () => ++at,
+    };
+    const frame = {
+      visible: true,
+      currentText: '今日',
+      nextText: '',
+      currentSegments: [
+        {
+          segmentId: 'a',
+          text: '今日',
+          state: 'active',
+          progress: null,
+          remainingMs: null,
+        },
+      ],
+      currentFineTiming: {
+        positionMs: 1500,
+        rate: 1,
+        playing: true,
+        units: [{ unitId: 'f', from: 0, to: 2, startMs: 1000, endMs: 2000 }],
+      },
+    };
+    renderLyricsFrame(elements, frame, options);
+    expect(onTrace).toHaveBeenCalledTimes(1);
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({
+        renderPhase: 0,
+        coarseNodes: 1,
+        fineNodes: 2,
+        fineCells: 2,
+        fineMisses: 1,
+        fineCreates: 1,
+      }),
+    );
+    const summary = onTrace.mock.calls[0][1];
+    for (const field of [
+      'finePrepareMs',
+      'fineDomMs',
+      'fineLookupMs',
+      'fineStyleMs',
+      'fineCancelMs',
+      'fineAnimateMs',
+      'coarseDomMs',
+    ])
+      expect(summary[field]).toBeGreaterThanOrEqual(0);
+    renderLyricsFrame(elements, frame, { ...options, renderPhase: 1 });
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({
+        renderPhase: 1,
+        coarseNodes: 0,
+        fineNodes: 0,
+        fineHits: 1,
+        fineCancels: 1,
+      }),
+    );
+    renderLyricsFrame(
+      elements,
+      { ...frame, currentSegments: [], currentFineTiming: null },
+      options,
+    );
+    expect(onTrace).toHaveBeenLastCalledWith(
+      'render-cost',
+      expect.objectContaining({ fineCancels: 1, fineCreates: 0 }),
+    );
+    const disabledClock = vi.fn(() => {
+      throw new Error('disabled cost clock');
+    });
+    renderLyricsFrame(elements, frame, {
+      templateId: 'focus-line',
+      measureNow: disabledClock,
+    });
+    expect(disabledClock).not.toHaveBeenCalled();
+  });
   it('keeps coarse Focus onset nodes while continuously filling fine text and cancelling obsolete paint', () => {
     const elements = domElements();
     const fine = {
