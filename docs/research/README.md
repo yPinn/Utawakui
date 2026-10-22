@@ -6,6 +6,7 @@
 
 入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data/)。
 
+- 10-22：[offset 與內容證據收斂](lyrics-alignment/lyrics-alignment-summary.md#offset-與內容證據)：快取盤點與前段查核完成，O1 不足已停止補測；內容／定位／時間分離仍是提案。原方案與日期證據由研究結論追溯。
 - 10-22：[歌詞顯示階段整理](../operations/lyrics-milestone-2026-10-22.md)：長句容量、時鐘配對、中日細時間與本地／Focus 連續填色已實作；保留舊資料回退及冷暖慢值，人工時間品質未驗。
 - 10-22：[T1+ 細部時間與顯示時鐘](lyrics-alignment/lyrics-fine-timing-clock-2026-10-22.md)：實作前研究，確認可擷取細區間與時鐘問題；當輪未實作掃字，後續交付見階段整理。
 - 10-21：[逐句 CPU 分流方法與驗證](lyrics-alignment/lyrics-mixed-cpu-feasibility-2026-10-21.md)、[句內混語有界研究結案](lyrics-alignment/lyrics-mixed-cpu-bounded-2026-10-21.md)、[混語長句兩段顯示](lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)；現行採用決策統一見研究結論。
