@@ -1,6 +1,8 @@
 # 歌詞內容與時間證據分離：最小研究方案
 
-日期：2026-10-22。僅規劃，尚未實作、重播新判定或執行模型。沿用既有 CPU 模型／環境與固定快取，不下載、不改 offset、不 commit；產品 gate 與現有回退不變。承接[前段重判](lyrics-offset-zh-front-cache-check-2026-10-22.md)及[固定六句計畫](lyrics-offset-zh-six-line-plan-2026-10-22.md)。
+日期：2026-10-22。本頁保留驗證前的最小研究方案，承接[前段重判](lyrics-offset-zh-front-cache-check-2026-10-22.md)及[固定六句計畫](lyrics-offset-zh-six-line-plan-2026-10-22.md)。沿用既有 CPU 模型／環境與固定快取；產品 gate 與現有回退不變。
+
+後續已完成[固定快取最小離線驗證](lyrics-content-time-offline-validation-2026-10-22.md)：O1 的整段文字支持與時間／位置限制可以分開說明，但沒有任何可校時目標；重複句 raw 缺測、漏詞排除仍不足。只建立 ignored 研究 adapter，未改產品、模型、環境或 offset，人工時間仍 pending，原停止結論保留。本輪研究階段結案；下列原方案不表示待自動補跑的工作。
 
 ## 問題與最小邊界
 
