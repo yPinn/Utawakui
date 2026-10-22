@@ -19,6 +19,21 @@ export function usePerformerViewState() {
   let playbackPending = false;
 
   let boundaryTimer = null;
+  let displayBoundaryTimer = null;
+  function setDisplayBoundary(delay) {
+    clearTimeout(displayBoundaryTimer);
+    displayBoundaryTimer = null;
+    if (
+      snapshot.value?.state?.playback?.status !== 'playing' ||
+      !Number.isFinite(delay) ||
+      delay < 0
+    )
+      return;
+    displayBoundaryTimer = setTimeout(() => {
+      clockNow.value = Date.now();
+      scheduleBoundary();
+    }, delay + 1);
+  }
   let unsubscribeSnapshot = null;
   let unsubscribeWindowState = null;
 
@@ -206,11 +221,13 @@ export function usePerformerViewState() {
 
   onUnmounted(() => {
     clearTimeout(boundaryTimer);
+    clearTimeout(displayBoundaryTimer);
     unsubscribeSnapshot?.();
     unsubscribeWindowState?.();
   });
 
   return {
+    setDisplayBoundary,
     error,
     frame,
     readingScale,

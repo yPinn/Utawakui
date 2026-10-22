@@ -82,7 +82,7 @@ describe('source-bound mixed phrase preview', () => {
       currentTarget: { open: true },
     });
     await nextTick();
-    expect(textContent(mounted.root)).toContain('缺少精確切換時間，維持整句');
+    expect(textContent(mounted.root)).toContain('顯示時間估計');
     expect(textContent(mounted.root)).not.toContain('第 2 / 2 段');
   });
   it('does not add a preview for short or monolingual ordinary lines', () => {

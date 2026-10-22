@@ -80,6 +80,9 @@ files:
   # Main only reads the shell icon; the renderer's PNG icons ship via dist/.
   - public/assets/icons/app-icon.ico
   # Independent Browser Source pages and the single inspection guide source.
+  # Includes the local lyricsFit DOM adapter; shared includes display layout/frame planners.
+  # Fine text paint includes lyricsFine.mjs, shared/browser/lyricsFinePaint.mjs,
+  # shared/lyricsFineTiming.mjs with browser-safe, versioned bounds.
   - overlay/**/*
   - '!overlay/**/*.test.js'
   - shared/**/*

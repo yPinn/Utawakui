@@ -39,6 +39,54 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(trackDir, { recursive: true, force: true }));
 
 describe('independent acoustic sidecar storage', () => {
+  it('declines invalid optional producer evidence without losing valid coarse starts', async () => {
+    const legacy = await fixture();
+    const context = await prepareAcousticEstimateContext(trackDir, source);
+    const result = estimates.createAcousticEstimate(
+      context,
+      canonical,
+      [legacy.lines[0].chunks],
+      {
+        fineTimingByLine: [
+          {
+            version: 1,
+            units: [
+              { unitId: 'invalid', from: 0, to: 1, startMs: 900, endMs: 1100 },
+            ],
+          },
+        ],
+      },
+    );
+    expect(result).toEqual(legacy);
+  });
+  it('roundtrips fine evidence with a distinct identity and preserves legacy coarse bytes', async () => {
+    const legacy = await fixture();
+    const context = await prepareAcousticEstimateContext(trackDir, source);
+    const fineTiming = {
+      version: 1,
+      units: [{ unitId: 'fine-0', from: 0, to: 1, startMs: 1100, endMs: 1400 }],
+    };
+    const enriched = estimates.createAcousticEstimate(
+      context,
+      canonical,
+      [legacy.lines[0].chunks],
+      {
+        fineTimingByLine: [fineTiming],
+      },
+    );
+    expect(enriched.schemaVersion).toBe(2);
+    expect(enriched.lines[0].fineTiming).toEqual(fineTiming);
+    expect(enriched.lines[0].chunks).toEqual(legacy.lines[0].chunks);
+    expect(enriched.estimateId).not.toBe(legacy.estimateId);
+    await saveTrackAcousticEstimate(trackDir, source, enriched);
+    expect(
+      (await loadTrackAcousticEstimate(trackDir, source)).preview.lines,
+    ).toEqual(enriched.lines);
+    await saveTrackAcousticEstimate(trackDir, source, legacy);
+    expect(
+      (await loadTrackAcousticEstimate(trackDir, source)).preview.lines,
+    ).toEqual(legacy.lines);
+  });
   it('accepts a research model only with an explicit internal method context', async () => {
     const method = {
       ...(await prepareAcousticEstimateContext(trackDir, source)).method,
@@ -143,6 +191,22 @@ describe('independent acoustic sidecar storage', () => {
       { documentId: 'large-doc', lines },
       chunks,
     );
+    const extraFine = estimates.createAcousticEstimate(
+      context,
+      { documentId: 'large-doc', lines },
+      chunks,
+      {
+        fineTimingByLine: [
+          {
+            version: 1,
+            units: [
+              { unitId: 'one-too-many', from: 0, to: 1, startMs: 1, endMs: 50 },
+            ],
+          },
+        ],
+      },
+    );
+    expect(extraFine).toEqual(input);
     const byteLimit = 2097152;
     expect(Buffer.byteLength(JSON.stringify(input))).toBeLessThanOrEqual(
       byteLimit,

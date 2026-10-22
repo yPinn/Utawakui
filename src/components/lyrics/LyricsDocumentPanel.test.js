@@ -35,6 +35,49 @@ function render(props) {
 }
 
 describe('LyricsDocumentPanel presentation', () => {
+  it('renders fine text ink separately from the instantaneous onset cue and keeps ruby intact', async () => {
+    const frame = {
+      lineId: 'b',
+      text: '汚れたい',
+      chunks: [
+        { chunkId: 'a', text: '汚れ', state: 'active' },
+        { chunkId: 'b', text: 'たい', state: 'upcoming' },
+      ],
+      fineTiming: {
+        version: 1,
+        units: [
+          { unitId: 'fine-a', from: 0, to: 2, startMs: 5000, endMs: 6000 },
+          { unitId: 'fine-b', from: 2, to: 4, startMs: 6100, endMs: 7000 },
+        ],
+      },
+      paintClock: { positionMs: 5250, rate: 1, playing: false },
+    };
+    const html = await render({
+      experimentalFrame: frame,
+      showsReadingAid: true,
+      readingVariant: 'furigana',
+      readingLines: [
+        null,
+        { segments: [{ t: '汚れ', r: 'よごれ' }, { t: 'たい' }] },
+      ],
+    });
+    expect(html).toContain('data-lyrics-fine-unit="fine-a"');
+    expect(html).toContain('--lyrics-fine-progress:50%');
+    expect(html).toMatch(/<rt[^>]*>よごれ<\/rt>/u);
+    expect(html).toContain('lyrics-fine-text__cue');
+    const fineSource = readFileSync(
+      new URL('./LyricsFineText.vue', import.meta.url),
+      'utf8',
+    );
+    expect(fineSource).not.toContain('text-fill-color: transparent');
+    expect(fineSource).toContain('@media (forced-colors: active)');
+    expect(fineSource).toContain('inherits: true;');
+    expect(html).toContain('lyrics-line--fine');
+    expect(rule('.lyrics-line--fine .lyrics-line__row')).toContain(
+      'background: transparent',
+    );
+    expect(rule('.lyrics-line--fine')).toContain('color: var(--ui-color-text)');
+  });
   it('renders manually applied starts only on the matching active line and preserves normal text on mismatch', async () => {
     const frame = {
       lineId: 'b',

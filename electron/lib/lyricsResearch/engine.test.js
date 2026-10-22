@@ -89,6 +89,28 @@ beforeEach(() => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 describe('bounded research preview orchestration', () => {
+  it('retains accepted HFA fine evidence with coarse starts and does not attach it to native T2', async () => {
+    const start = dependencies.startResearchJob;
+    const fineTiming = {
+      version: 1,
+      units: [{ unitId: 'fine-a', from: 0, to: 1, startMs: 1100, endMs: 1400 }],
+    };
+    dependencies.startResearchJob = vi.fn((args) => {
+      const job = start(args);
+      return {
+        ...job,
+        result: job.result.then((value) => {
+          value.estimate.preview.lines.forEach((line) => {
+            line.fineTiming = fineTiming;
+          });
+          return value;
+        }),
+      };
+    });
+    const value = await runResearchPreview(input, options, dependencies);
+    expect(value.lines[0].fineTiming).toEqual(fineTiming);
+    expect(value.lines[1]).not.toHaveProperty('fineTiming');
+  });
   it.each([true, false])(
     'uses each line language for blind evidence, preserves T2 and mixed fallback (English supported: %s)',
     async (supported) => {

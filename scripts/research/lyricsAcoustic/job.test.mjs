@@ -100,6 +100,39 @@ async function setup() {
 }
 
 describe('private model job and existing preview', () => {
+  it('publishes partial word intervals without moving any coarse chunk', async () => {
+    const args = await setup();
+    const baseline = await startResearchJob(args).result;
+    const rpc = args.group.rpc;
+    args.group.rpc = (...params) => {
+      const worker = rpc(...params);
+      return {
+        request: async (request) => {
+          const response = await worker.request(request);
+          if (request.command === 'decode')
+            response.result.spans = response.result.spans.map(
+              (span, index) => ({
+                ...span,
+                end: index === 0 ? 0.9 : span.start + 0.2,
+              }),
+            );
+          return response;
+        },
+      };
+    };
+    const enriched = await startResearchJob(args).result;
+    expect(enriched.estimate.preview.lines[0].chunks).toEqual(
+      baseline.estimate.preview.lines[0].chunks,
+    );
+    expect(enriched.estimate.preview.lines[0].fineTiming.units).toEqual([
+      { unitId: 'line-f-1', from: 1, to: 2, startMs: 1500, endMs: 1700 },
+      { unitId: 'line-f-2', from: 2, to: 3, startMs: 2700, endMs: 2900 },
+      { unitId: 'line-f-3', from: 3, to: 4, startMs: 3000, endMs: 3200 },
+    ]);
+    expect(enriched.estimate.preview.estimateId).not.toBe(
+      baseline.estimate.preview.estimateId,
+    );
+  });
   it('shares one frontend window across differently routed lines and uses their own dictionaries', async () => {
     const args = await setup();
     args.canonical.lines[0].endMs = 2400;
@@ -120,10 +153,10 @@ describe('private model job and existing preview', () => {
         request: async (request) => {
           const response = await worker.request(request);
           if (request.command === 'decode')
-            response.result.spans = response.result.spans.map((span, i) => ({
-              ...span,
-              start: request.begin + 0.5 + i * 0.1,
-            }));
+            response.result.spans = response.result.spans.map((span, i) => {
+              const start = request.begin + 0.5 + i * 0.1;
+              return { ...span, start, end: start + 0.05 };
+            });
           return response;
         },
       };
@@ -136,6 +169,10 @@ describe('private model job and existing preview', () => {
     expect(
       value.estimate.preview.lines.every((l) => l.status === 'ready'),
     ).toBe(true);
+    expect(
+      value.estimate.preview.lines[0].fineTiming.units.length,
+    ).toBeGreaterThan(0);
+    expect(value.estimate.preview.lines[1]).not.toHaveProperty('fineTiming');
     await expect(
       startResearchJob({
         ...args,

@@ -5,6 +5,7 @@ import unittest
 import hashlib
 import sys
 import tempfile
+from types import SimpleNamespace
 
 spec = importlib.util.spec_from_file_location("research_decoder", Path(__file__).with_name("decoder.py"))
 worker = importlib.util.module_from_spec(spec)
@@ -12,6 +13,21 @@ spec.loader.exec_module(worker)
 
 
 class OccurrenceTests(unittest.TestCase):
+    def test_serialized_word_ends_do_not_change_onsets_or_occurrences(self):
+        class NumericEnd:
+            def __float__(self):
+                return 1.6
+
+        spans = worker.serialize_word_spans([0, 2], [
+            SimpleNamespace(start=1.25, end=NumericEnd()),
+            SimpleNamespace(start=2.4, end=float('nan')),
+        ], 0.5)
+        self.assertEqual(spans, [
+            {"index": 0, "start": 1.75, "end": 2.1},
+            {"index": 2, "start": 2.9},
+        ])
+        self.assertEqual(worker.serialize_word_spans([0], [SimpleNamespace(start=1, end=None)], 0),
+                         [{"index": 0, "start": 1.0}])
     def test_english_dictionary_contractions_and_oov_are_explicit(self):
         decoder = worker.ResearchDecoder()
         decoder.dictionaries = {"en": {"don't": ["d", "ow", "n", "t"]}}

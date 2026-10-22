@@ -1,6 +1,7 @@
 import timingValues from './lyricsTimingValues.json' with { type: 'json' };
+import { validateLyricsFineTiming } from './lyricsFineTiming.mjs';
 
-export const ACOUSTIC_ESTIMATE_SCHEMA_VERSION = 1;
+export const ACOUSTIC_ESTIMATE_SCHEMA_VERSION = 2;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/u;
 const SHA = /^[a-f0-9]{64}$/u;
 const REASONS = new Set([
@@ -75,7 +76,8 @@ export function validateAcousticEstimate(raw) {
     'method',
     'lines',
   ]);
-  if (raw.schemaVersion !== ACOUSTIC_ESTIMATE_SCHEMA_VERSION) fail();
+  if (![1, ACOUSTIC_ESTIMATE_SCHEMA_VERSION].includes(raw.schemaVersion))
+    fail();
   const source = record(raw.source, [
     'filename',
     'sha256',
@@ -122,9 +124,11 @@ export function validateAcousticEstimate(raw) {
       method.environmentLockSha256 !== null)
   )
     fail();
-  const lines = validateAcousticEstimateLines(raw.lines);
+  const lines = validateAcousticEstimateLines(raw.lines, {
+    allowFine: raw.schemaVersion === 2,
+  });
   return {
-    schemaVersion: 1,
+    schemaVersion: raw.schemaVersion,
     estimateId: id(raw.estimateId),
     documentId: id(raw.documentId),
     source: {
@@ -145,7 +149,10 @@ export function validateAcousticEstimate(raw) {
   };
 }
 
-export function validateAcousticEstimateLines(rawLines) {
+export function validateAcousticEstimateLines(
+  rawLines,
+  { allowFine = true } = {},
+) {
   if (
     !Array.isArray(rawLines) ||
     !rawLines.length ||
@@ -172,6 +179,9 @@ export function validateAcousticEstimateLines(rawLines) {
       'status',
       'reason',
       'chunks',
+      ...(allowFine && Object.hasOwn(rawLine ?? {}, 'fineTiming')
+        ? ['fineTiming']
+        : []),
     ]);
     const lineId = unique(line.lineId);
     if (
@@ -200,7 +210,12 @@ export function validateAcousticEstimateLines(rawLines) {
     total += line.chunks.length;
     if (total > timingValues.maxTotalSegments) fail();
     if (line.status === 'unsupported') {
-      if (!REASONS.has(line.reason) || line.chunks.length) fail();
+      if (
+        !REASONS.has(line.reason) ||
+        line.chunks.length ||
+        line.fineTiming !== undefined
+      )
+        fail();
       return {
         lineId,
         text: line.text,
@@ -242,6 +257,13 @@ export function validateAcousticEstimateLines(rawLines) {
       return { chunkId, from: chunk.from, to: chunk.to, startMs: chunkStart };
     });
     if (offset !== line.text.length) fail();
+    const fineTiming =
+      line.fineTiming === undefined
+        ? undefined
+        : validateLyricsFineTiming(line.fineTiming, line);
+    for (const unit of fineTiming?.units ?? []) unique(unit.unitId);
+    total += fineTiming?.units.length ?? 0;
+    if (total > timingValues.maxTotalSegments) fail();
     return {
       lineId,
       text: line.text,
@@ -250,6 +272,7 @@ export function validateAcousticEstimateLines(rawLines) {
       status: 'ready',
       reason: null,
       chunks,
+      ...(fineTiming ? { fineTiming } : {}),
     };
   });
 }

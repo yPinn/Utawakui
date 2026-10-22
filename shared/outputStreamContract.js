@@ -6,6 +6,7 @@ const timingValues = require('./lyricsTimingValues.json');
 const musicValues = require('./musicStructureContractValues.json');
 const performerValues = require('./performerContractValues.json');
 const { parseOutputSnapshot } = require('./outputContract');
+const { validateLyricsFineTiming } = require('./lyricsFineTiming.mjs');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
 const OUTPUT_STREAMS = new Set([
@@ -350,6 +351,26 @@ function parseLyricsDocument(value) {
     if (line.startMs !== null) previousLineStart = line.startMs;
     return line;
   });
+  // Reserve all canonical/coarse IDs and their budget first. Optional fine
+  // evidence must never make a later valid line fail validation.
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    const extension = document.lines[index].estimatedFineTiming;
+    if (!line.estimatedStarts || extension === undefined) continue;
+    try {
+      const fine = validateLyricsFineTiming(extension, line);
+      if (
+        fine.units.some((unit) => usedIds.has(unit.unitId)) ||
+        counters.segments + fine.units.length > timingValues.maxTotalSegments
+      )
+        continue;
+      line.estimatedFineTiming = fine;
+      counters.segments += fine.units.length;
+      for (const unit of fine.units) usedIds.add(unit.unitId);
+    } catch {
+      // Invalid optional fine is discarded; accepted coarse cues survive.
+    }
+  }
   lines.forEach((line, index) => {
     const nextStartMs = lines[index + 1]?.startMs;
     if (

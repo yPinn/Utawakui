@@ -42,7 +42,7 @@ rejects unknown schema versions, extra fields and malformed ranges before storag
 
 | Field group     | Required identity or content                                                                                 |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| Header          | `schemaVersion: 1`, opaque `estimateId`, canonical `documentId`                                              |
+| Header          | `schemaVersion: 1` (coarse) or `2` (optional fine intervals), opaque `estimateId`, canonical `documentId`    |
 | Lyrics input    | Source SHA-256, normalizer profile, hash of ordered line ids/text/effective T1 intervals, `offsetUsedMs`     |
 | Audio input     | Content SHA-256, fixed mix/guide role, separation artifact/recipe identity when applicable, decode profile   |
 | Method          | Model manifest hash, environment lock hash, decoder/G2P/chunker versions, relevant Node/ICU version          |
@@ -130,11 +130,35 @@ documents. An acoustic estimate never enters canonical `line.segments`, changes
 document granularity or updates the T2 editor/reading sidecar. A distinct optional
 estimate projection selects the same starts for every supporting surface.
 
-The first supported behavior is start-triggered chunk emphasis held until the
-next start or parent end. That display interval is not a sung-end measurement.
+Model chunks retain start-only evidence. Supporting surfaces highlight the whole
+active chunk immediately at its onset. They do not spread the main highlight
+across the interval to the next onset or parent end: that interval can contain
+pauses or sustained notes, and waiting for it would delay the onset cue.
+Model starts establish no within-chunk sung progress and do not populate
+canonical segment progress or end times. Capacity-based display pages
+keep their separate layout-time provenance and do not imply within-chunk timing.
 A template that only supports continuous sweep must add an explicit compatible
 mode or use its existing T1 fallback. Do not fabricate `endMs` to satisfy that
 template's T2 path. Initial lyric entry remains determined by T1.
+
+Schema two may retain separate `line.fineTiming: { version: 1, units }` evidence.
+Each unit contains exactly `unitId`, source UTF-16 `from`/`to`, `startMs`, `endMs`.
+The current producer takes actual upstream Word ends and existing occurrence ranges
+for Chinese/Japanese only. Positive, non-overlapping, grapheme-safe intervals must
+remain inside their parent before rounding; crossing intervals are declined rather
+than clipped or shifted. Partial evidence leaves missing ranges and gaps intact.
+Method identity binds the fine occurrence mapping recipe. Fine evidence enters the
+estimate ID and strict stored validation. Invalid or over-budget optional producer
+evidence is removed while preserving valid coarse chunks. Schema-one loads remain
+available; old files do not acquire invented ends.
+
+The local document reader and Output Focus use an immediate coarse underline cue
+plus continuous fine ink. Each unit's progress is visually interpolated linearly,
+at its actual duration. Multi-grapheme units have display-only clipping cells so
+they wrap and fill in reading order; cell fractions are never saved or transported
+as character alignment. Completed ink holds across gaps. Missing evidence retains
+onset cues. This is model-estimated unit timing, not validated per-character singing
+accuracy. Other templates and Self-View retain their existing presentation.
 
 Chinese display conversion may apply only with verified original-to-display
 range mapping. An unsafe mapping declines the estimate for that display variant;
@@ -282,7 +306,9 @@ Canonical documents and Self-View projections stay unchanged. The explicit manua
 application also reaches supporting Output templates through the optional starts-only
 extension below. T2 and declined T1 retain their behavior. Chinese conversion reuses segment text projection; text
 mismatches retain normal display. Furigana retains its existing reading layout.
-No estimated singing-end/progress is exposed.
+Canonical progress and T2 remain unchanged. Optional actual model intervals may
+drive continuous fine ink in the local reader and Focus, as specified above;
+adjacent starts are never used to infer a singing end.
 
 ### Experimental Output application
 
@@ -307,9 +333,21 @@ content. The existing legacy v2 compatibility projection remains T1-only.
 
 The publisher uses existing content revisions and content-before-state ordering,
 including reconnect. Browser Source assembly preserves the validated extension.
-Shared presentation frames use internal `model-starts` provenance but feed the
-existing T2 node/layout paths: focus-line and karaoke-stack use binary onset
-highlight with no active continuous progress or sweep duration; manga-frame,
+Shared presentation frames use internal `model-starts` provenance and preserve
+immediate coarse cues; canonical active progress/remaining stay null. Focus may
+also consume `estimatedFineTiming: { version: 1, units }` as a separate sibling.
+Main validates its exact fields, source ranges, intervals and shared budget after
+reserving all coarse IDs/counts; invalid fine is discarded without losing coarse
+content. The publisher strips optional fine if it would exceed document bytes.
+Old readers ignore the sibling and keep starts. No private model context or phones
+are published. The split Browser Source assembler preserves the validated sibling.
+The local reader and Focus share pure fine projection and a browser paint adapter,
+with no per-frame IPC, text conversion or geometry reads. Paint accounts for commit
+cost and the existing intentional Output display-delay hold, cancels on transport
+updates and directly locates current progress instead of replaying missed animation.
+The base glyphs remain readable, including forced-colors; visual duplicates have
+empty alternative text. Ruby and pages decline units that cross unmappable ranges.
+Manga-frame,
 kinetic-pop and live-stage use existing source-mapped bubble/phrase/page layouts.
 Offsets inside one model chunk map to its onset, never a linearly invented time.
 Ornate-vertical does not consume native T2 and keeps its existing presentation.
@@ -343,8 +381,10 @@ version-two envelopes remain parseable. Version three additionally validates a b
 content summary (supported, uncertain, contradictions, possible missing lyrics and
 silent lines); it does not add or certify word timing. Version four binds the
 versioned per-occurrence routing plan and primary hint with input identity and
-the updated method. Versions one through three remain parseable; old methods
-are stale and require regeneration, without deleting prior files. The normal
+the updated method. Version five retains optional schema-two fine intervals and
+binds the Chinese/Japanese occurrence recipe. The immediately preceding method-three
+schema-one estimates remain readable as coarse cues; other old methods remain
+stale without deleting prior files. The normal
 lyrics-page loader needs no language override or model load.
 
 One CPU HubertFA session/window is shared across routed languages; decoder prepare

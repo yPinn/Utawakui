@@ -17,6 +17,7 @@ import { usePlayer } from '../usePlayer.js';
 import { usePerformanceSessionPlayback } from '../usePerformanceSessionPlayback.js';
 import { usePerformanceSessionPlan } from '../usePerformanceSessionPlan.js';
 import { projectPerformanceSessionOutput } from '../../utils/performanceSessionOutput.js';
+import { deriveLyricsPlaybackState } from '../../utils/lyricsDocument.js';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -37,7 +38,7 @@ export function useOutputProjectionPublisher({
   createSourceEpoch = defaultSourceEpoch,
   now = () => new Date().toISOString(),
 }) {
-  const { state: playerState } = usePlayer();
+  const { state: playerState, samplePlaybackClock } = usePlayer();
   const { state: queueState, upcomingTracks } = usePlaybackQueue();
   const arrangement = usePerformanceSessionPlayback();
   const { state: arrangementPlanState } = usePerformanceSessionPlan();
@@ -116,32 +117,55 @@ export function useOutputProjectionPublisher({
     return projectMusicStructureOutputDocument(current);
   });
 
-  const projectedDynamicState = computed(() =>
-    projectDynamicOutputState(
-      {
-        player: arrangementProjection.value
-          ? arrangement.currentItem.value?.mode === 'manual'
-            ? arrangementProjection.value.player
-            : {
-                ...playerState,
-                track: arrangementProjection.value.queue.currentTrack,
+  function projectDynamicState(sample = null) {
+    const manual =
+      arrangementProjection.value &&
+      arrangement.currentItem.value?.mode === 'manual';
+    const player = manual
+      ? arrangementProjection.value.player
+      : {
+          ...playerState,
+          ...(arrangementProjection.value
+            ? { track: arrangementProjection.value.queue.currentTrack }
+            : {}),
+          ...(sample
+            ? {
+                currentTime: sample.positionMs / 1000,
+                tempoRate: sample.rate,
+                playbackPhase: sample.phase,
               }
-          : playerState,
+            : {}),
+        };
+    const active =
+      sample && !manual && lyricsTrack.value?.id === player.track?.id
+        ? deriveLyricsPlaybackState(
+            displayLyricsDocument.value,
+            sample.positionMs + lyricsState.offsetSeconds * 1000,
+            player.duration * 1000 || null,
+          )
+        : {
+            activeLineId: activeLineId.value,
+            activeSegmentId: activeSegmentId.value,
+          };
+    return projectDynamicOutputState(
+      {
+        player,
         output: { displayDelayMs: getDisplayDelayMs() },
         lyrics: {
           offsetSeconds: lyricsState.offsetSeconds,
-          activeLineId: activeLineId.value,
-          activeSegmentId: activeSegmentId.value,
+          activeLineId: active.activeLineId,
+          activeSegmentId: active.activeSegmentId,
           reference: null,
         },
         queue: { reference: null },
         musicStructure: { reference: null },
       },
       {
-        generatedAt: PROJECTION_TIMESTAMP,
+        generatedAt: sample?.sampledAt ?? PROJECTION_TIMESTAMP,
       },
-    ),
-  );
+    );
+  }
+  const projectedDynamicState = computed(() => projectDynamicState());
 
   const continuityKey = computed(
     () =>
@@ -235,18 +259,47 @@ export function useOutputProjectionPublisher({
     };
   }
 
-  async function recoverRejectedState(
-    projection,
-    dynamic,
-    contentRefreshGeneration,
-  ) {
-    sourceEpoch = createSourceEpoch();
-    nextStateRevision = 1;
-    handshakeComplete = false;
-    const accepted = await sendEnvelope('state.snapshot', 'full', 1, {
+  function freshDynamic(projection) {
+    const current = currentProjection();
+    if (
+      current.continuity !== projection.continuity ||
+      current.lyricsDocument !== projection.lyricsDocument ||
+      current.musicStructureDocument !== projection.musicStructureDocument ||
+      current.queueDocument !== projection.queueDocument
+    ) {
+      publisher.request(current);
+      return null;
+    }
+    const sample = samplePlaybackClock({ now });
+    if (
+      sample.trackId !== (playerState.track?.id ?? null) ||
+      sample.continuityRevision !== (playerState.continuityRevision ?? 0)
+    )
+      return null;
+    const dynamic = projectDynamicState(sample);
+    return {
       ...dynamic,
-      generatedAt: now(),
-    });
+      lyrics: {
+        ...dynamic.lyrics,
+        documentId: lyricsReference?.documentId ?? null,
+        documentRevision: lyricsReference?.documentRevision ?? 0,
+      },
+      queue: queueReference,
+      musicStructure: {
+        documentId: musicStructureReference?.documentId ?? null,
+        documentRevision: musicStructureReference?.documentRevision ?? 0,
+      },
+    };
+  }
+
+  async function recoverRejectedState(projection, contentRefreshGeneration) {
+    sourceEpoch = createSourceEpoch();
+    nextStateRevision = 0;
+    handshakeComplete = false;
+    const dynamic = freshDynamic(projection);
+    if (!dynamic) return false;
+    nextStateRevision = 1;
+    const accepted = await sendEnvelope('state.snapshot', 'full', 1, dynamic);
     handshakeComplete = accepted;
     if (accepted) {
       lastContinuity = projection.continuity;
@@ -336,21 +389,9 @@ export function useOutputProjectionPublisher({
     }
 
     if (!queueReference) return false;
+    const dynamic = freshDynamic(projection);
+    if (!dynamic) return false;
     nextStateRevision += 1;
-    const dynamic = {
-      ...projection.dynamicState,
-      generatedAt: now(),
-      lyrics: {
-        ...projection.dynamicState.lyrics,
-        documentId: lyricsReference?.documentId ?? null,
-        documentRevision: lyricsReference?.documentRevision ?? 0,
-      },
-      queue: queueReference,
-      musicStructure: {
-        documentId: musicStructureReference?.documentId ?? null,
-        documentRevision: musicStructureReference?.documentRevision ?? 0,
-      },
-    };
     const accepted = await sendEnvelope(
       'state.snapshot',
       handshakeComplete ? 'update' : 'full',
@@ -359,11 +400,7 @@ export function useOutputProjectionPublisher({
     );
     handshakeComplete = accepted;
     if (!accepted) {
-      return recoverRejectedState(
-        projection,
-        dynamic,
-        contentRefreshGeneration,
-      );
+      return recoverRejectedState(projection, contentRefreshGeneration);
     }
     if (accepted) {
       lastContinuity = projection.continuity;

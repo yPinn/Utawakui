@@ -45,7 +45,7 @@ function snapshot() {
 }
 const nowMs = Date.parse('2026-10-20T00:00:00Z');
 describe('T1+ in existing T2 template presentation', () => {
-  it('uses existing segment frames with start highlights, no continuous progress or sweep deadline', () => {
+  it('uses immediate onset highlights without guessing continuous progress or sung ends', () => {
     const value = snapshot();
     const before = structuredClone(value);
     const frame = selectLyricsOverlayFrame(value, {

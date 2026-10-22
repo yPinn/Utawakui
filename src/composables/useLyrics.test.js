@@ -216,6 +216,12 @@ beforeEach(() => {
   vi.doMock('./usePlayer.js', () => ({
     usePlayer: () => ({
       state: playerState,
+      samplePlaybackClock: () => ({
+        trackId: playerState.track?.id ?? null,
+        positionMs: playerState.currentTime * 1000,
+        phase: playerState.playbackPhase,
+        rate: playerState.tempoRate ?? 1,
+      }),
       playTrack: playTrackMock,
       play: playMock,
       seek: seekMock,

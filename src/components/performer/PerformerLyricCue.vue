@@ -32,7 +32,8 @@ const hasRuby = computed(() =>
       <template v-else>{{ line.text }}</template>
     </p>
     <p v-if="reading?.romaji" class="performer-lyric-cue__reading">
-      {{ reading.romaji }}
+      <span v-if="reading.romajiScope === 'line'">整句讀音：</span
+      >{{ reading.romaji }}
     </p>
   </div>
 </template>

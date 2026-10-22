@@ -11,6 +11,7 @@ import {
   TRANSPOSE_SEMITONES_RANGE,
 } from './player/usePlayerAudioGraph.js';
 import { normalizeAudioPreferences } from '../utils/audioPreferences.js';
+import { createPlaybackClockSampler } from '../utils/playbackClockSample.js';
 
 export {
   GUIDE_VOCAL_LEVEL_RANGE,
@@ -82,6 +83,7 @@ const state = reactive({
 // state. Web Audio consumes its decoded output but never writes transport state.
 const audio = new Audio();
 audio.crossOrigin = 'anonymous';
+const samplePlaybackClock = createPlaybackClockSampler(audio, state);
 
 const audioGraph = usePlayerAudioGraph({
   audio,
@@ -559,6 +561,7 @@ if (import.meta.hot) {
 export function usePlayer() {
   return {
     state: readonly(state),
+    samplePlaybackClock,
     playTrack,
     restorePlaybackState,
     play,

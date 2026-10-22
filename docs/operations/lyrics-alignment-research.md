@@ -49,6 +49,8 @@ Kinetic Pop 是第一個使用此分段時間的 Output 模板；切換來源、
 
 ## 直接聽查
 
+若只先做少量人工時間驗收，使用[3 案／9 點清單](lyrics-timing-manual-acceptance-2026-10-21.md)，不需完成下列全部 19 列，也不需重跑模型；人工狀態維持 pending，直到本人明確確認。
+
 啟動服務後可開啟 [聽查頁](http://127.0.0.1:18744/)。來源在 `.tmp/lyrics-new-eval/listening-v2/`，原15案後附4個漏詞對照，共19列。音訊依SHA去重複製；不需載入任何模型即可聽查。若服務已結束，在 repo 根目錄執行：
 
 ```powershell

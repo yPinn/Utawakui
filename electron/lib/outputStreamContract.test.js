@@ -29,6 +29,58 @@ describe('bounded model-start extension', () => {
     };
     return value;
   }
+  it('accepts separately bounded fine intervals and discards invalid fine without losing starts', () => {
+    const value = modelEnvelope();
+    const line = value.payload.document.lines[0];
+    line.estimatedFineTiming = {
+      version: 1,
+      units: [
+        { unitId: 'fine-a', from: 0, to: 1, startMs: 1250, endMs: 1450 },
+        { unitId: 'fine-b', from: 1, to: 2, startMs: 1500, endMs: 2000 },
+      ],
+    };
+    const parsed = parseOutputStreamEnvelope(value, 'boot-1').payload.document
+      .lines[0];
+    expect(parsed.estimatedFineTiming).toEqual(line.estimatedFineTiming);
+    expect(parsed.estimatedStarts).toEqual(line.estimatedStarts);
+    const later = structuredClone(value);
+    later.payload.document.lines.push({
+      lineId: 'fine-a',
+      text: '次',
+      startMs: 4000,
+      endMs: 5000,
+    });
+    expect(
+      parseOutputStreamEnvelope(later, 'boot-1').payload.document.lines[0],
+    ).not.toHaveProperty('estimatedFineTiming');
+    for (const mutation of [
+      (f) => {
+        f.version = 2;
+      },
+      (f) => {
+        f.units[0].endMs = 1000;
+      },
+      (f) => {
+        f.units[0].from = 10;
+      },
+      (f) => {
+        f.units[1].startMs = 1300;
+      },
+      (f) => {
+        f.units[0].unitId = 'model-a';
+      },
+      (f) => {
+        f.privatePath = 'secret';
+      },
+    ]) {
+      const copy = structuredClone(value);
+      mutation(copy.payload.document.lines[0].estimatedFineTiming);
+      const output = parseOutputStreamEnvelope(copy, 'boot-1').payload.document
+        .lines[0];
+      expect(output).not.toHaveProperty('estimatedFineTiming');
+      expect(output.estimatedStarts).toEqual(line.estimatedStarts);
+    }
+  });
   it('keeps canonical T1 provenance and never adds a model singing end', () => {
     const value = modelEnvelope();
     delete value.payload.document.source.privatePath;

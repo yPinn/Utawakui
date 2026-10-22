@@ -52,6 +52,22 @@ function document() {
 }
 
 describe('independent acoustic estimate validation', () => {
+  it('reads schema-one coarse data and schema-two optional partial fine intervals independently', () => {
+    const legacy = document();
+    expect(validateAcousticEstimate(legacy)).toEqual(legacy);
+    const input = document();
+    input.schemaVersion = 2;
+    input.lines[0].fineTiming = {
+      version: 1,
+      units: [{ unitId: 'fine-0', from: 0, to: 1, startMs: 1100, endMs: 1400 }],
+    };
+    expect(validateAcousticEstimate(input)).toEqual(input);
+    expect(validateAcousticEstimate(input).lines[0].chunks).toEqual(
+      legacy.lines[0].chunks,
+    );
+    input.schemaVersion = 1;
+    expect(() => validateAcousticEstimate(input)).toThrow();
+  });
   it('preserves lossless original ranges and never adds sung ends', () => {
     const input = document();
     const result = validateAcousticEstimate(input);
@@ -69,7 +85,7 @@ describe('independent acoustic estimate validation', () => {
     [
       'schema',
       (d) => {
-        d.schemaVersion = 2;
+        d.schemaVersion = 3;
       },
     ],
     [

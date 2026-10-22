@@ -40,6 +40,8 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 - Server 只綁 `127.0.0.1`，exact route allowlist、明確 media type、`nosniff`、restrictive CSP。
 - Port 衝突是可觀測錯誤，不自動換 port；Output 失敗不能停止本機播放。
 
+發布時鐘必須配對：`usePlayer.samplePlaybackClock()` 在同一同步區段取得實際 audio position、rate、event phase、track／continuity 與 `sampledAt`。Publisher 先完成內容傳送，再確認當前 continuity 與 lyrics／music-structure／queue 文件 identity 仍等於該次投影；已失效則跳過舊 state，排入最新投影。通過後才重新採樣、重建當前動態資料與內容 references，將該 sample 的時間作為 `generatedAt`。拒絕後的 full retry 也重新檢查及採樣，不能只替舊位置換新時間。手動演出項目保留自己的零位置／倍率投影。Wire schema 與 client 既有外推規則不變，不以這項修正宣稱硬體或 OBS 零延遲。
+
 ## 只讀輸出視窗
 
 控制台「畫面輸出」的「開啟輸出視窗」只傳 `lyrics`／`setlist`／`now-playing` intent。Main 每次開啟重查 `public-output-flow`，從正在執行的 loopback server 與已正規化 slot 推導既有 canonical URL、模板內容尺寸與固定視窗名稱；不接受 renderer 提供 URL、路徑、尺寸或標題。尚未啟動服務時不自動啟動。
@@ -77,6 +79,14 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 - Source unavailable／syncing 的空態照常投影，不借示範資料填補。
 
 ## 效能量測
+
+Lyrics scheduler 的下一起點是絕對 deadline。Presentation／fit／DOM commit 的同步耗時須從剩餘等待扣除；準備或 commit 期間跨界時按同 snapshot 的當前時間重投影，不能提交舊時間狀態後再等完整舊 delay。每輪最多兩次同步追趕，仍跨界則讓出執行權到單一立即 task；generation、snapshot identity、stop／suspend 阻止舊 callback 提交或清掉新 timer handle。
+
+Focus 的首次樣式準備只讀取既有 current 容器與樣式。它是設定／字型／活動變更後的可取消工作，不提前寫未來歌詞、不產生可用 fit plan、不等待字型或阻擋播放；正式尺寸量測、長句容量與 unfit 恢復路徑照舊。來源或尺寸失效不允許借用不適用的計畫，T1+ 分段起點仍立即提示。
+
+T1+ 可選 `estimatedFineTiming` sibling 傳送經驗證的模型單位起訖與來源範圍，與原 `estimatedStarts` v1 分開。Main 先保留粗資料的 ID／數量，再驗細資料；不合法或超出剩餘數量的細資料降級為原提示，發布端也避免細資料擠爆文件 bytes。舊 reader 忽略新 sibling。Focus 以分段底線保留即時提示，另用原模型起訖連續填色；不按相鄰起點補唱完時間。填色只更新局部 paint，配合同一投影時鐘與既有 displayDelay hold，沒有逐幀 IPC、量測或平滑等待。字內小格只屬原單位進度的顯示內插，不能當作新逐字時間；原生 T2 與其他模板行為維持。細節見[聲學估計契約](lyrics-acoustic-estimate-contract.md)。
+
+正式歌詞 URL 加 `lyricsTrace=1` 可啟用診斷；`readLyricsPerformanceTrace()` 只回傳當頁記憶體內的數值事件、起始時鐘對照及 dropped 數，最多 4096 筆。事件與欄位有白名單，不含歌詞、檔名、路徑或來源 id，不逐幀寫 console。預設沒有 stage clock／trace 事件成本。這些是 JS 處理時間及 DOM commit 診斷；rAF 觀測、Chromium paint 與實體畫面／OBS 延遲不可混稱。
 
 追蹤以明確 flag 啟用，main、renderer、Output 與 overlay milestone 共用同一時鐘並寫入有界 JSONL。封裝版基線見[啟動效能基準](../operations/startup-performance-baseline.md)；硬體、儲存、曲庫規模、OBS 程序、GPU 記憶體與多實例尚缺代表性證據，因此回歸預算尚未設定。
 

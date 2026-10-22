@@ -5,6 +5,7 @@ import {
 } from '../../../shared/presentation/lyricsAcousticPreview.mjs';
 import { useExperimentalLyricsQueue } from './useExperimentalLyricsQueue.js';
 import { lyricsTextVariantLoader } from '../../utils/lyricsTextVariantLoader.js';
+import { mapLyricsFineText } from '../../../shared/presentation/lyricsFineFrame.mjs';
 
 export function useExperimentalLyrics({
   document,
@@ -13,6 +14,8 @@ export function useExperimentalLyrics({
   offsetMs,
   positionMs,
   variant,
+  playbackState,
+  samplePlaybackClock,
   getBridge = () => window.Utawakui,
 }) {
   const estimate = shallowRef({ status: 'missing' }),
@@ -121,6 +124,28 @@ export function useExperimentalLyrics({
       lines: projected.lines.map((line) => {
         if (!modeled.has(line.lineId)) return line;
         const { segments, ...base } = line;
+        const sourceIndex = canonical.lines.findIndex(
+          (entry) => entry.lineId === line.lineId,
+        );
+        const fine = mapLyricsFineText(
+          canonical.lines[sourceIndex].text,
+          line.text,
+          prepared.value.lines[sourceIndex].fineTiming,
+          (text) =>
+            lyricsTextVariantLoader.project(
+              {
+                ...canonical,
+                lines: [
+                  {
+                    ...canonical.lines[sourceIndex],
+                    text,
+                    segments: undefined,
+                  },
+                ],
+              },
+              { variant: toValue(variant) },
+            ).lines[0].text,
+        );
         return {
           ...base,
           estimatedStarts: {
@@ -131,6 +156,7 @@ export function useExperimentalLyrics({
               startMs,
             })),
           },
+          ...(fine ? { estimatedFineTiming: fine } : {}),
         };
       }),
     };
@@ -147,22 +173,39 @@ export function useExperimentalLyrics({
       value?.timingSource !== 'acoustic-estimate'
     )
       return null;
-    // A private text projection reuses conversion mapping without changing the
-    // canonical document or representing estimated starts as native T2.
-    const projected = lyricsTextVariantLoader.project(
-      {
-        ...canonical,
-        lines: [
-          {
-            ...canonical.lines.find((l) => l.lineId === value.lineId),
-            segments: value.chunks,
-          },
-        ],
-      },
-      { variant: toValue(variant) },
+    // Text conversion and range mapping are prepared per content revision,
+    // never re-run on transport ticks or animation frames.
+    const line = outputDocument.value?.lines.find(
+      (entry) => entry.lineId === value.lineId,
     );
-    const line = projected.lines[0];
-    return { ...value, text: line.text, chunks: line.segments };
+    const fine = line?.estimatedFineTiming;
+    const state = toValue(playbackState);
+    // Depend on transport revisions as well as lyric boundaries; pause/seek/rate
+    // must cancel paint even when the sampled lyric position is unchanged.
+    const revision = `${state?.playbackRevision ?? ''}:${state?.continuityRevision ?? ''}:${state?.playbackPhase ?? ''}:${state?.tempoRate ?? ''}`;
+    const sample = fine ? samplePlaybackClock?.() : null;
+    return {
+      ...value,
+      text: line?.text ?? value.text,
+      chunks: value.chunks.map((chunk, index) => ({
+        ...chunk,
+        text: line?.estimatedStarts?.segments[index]?.text ?? chunk.text,
+      })),
+      ...(fine
+        ? {
+            fineTiming: fine,
+            paintClock: {
+              positionMs: sample
+                ? sample.positionMs + toValue(offsetMs)
+                : toValue(positionMs),
+              sampledAtMs: sample ? Date.parse(sample.sampledAt) : Date.now(),
+              rate: sample?.rate ?? 1,
+              playing: sample?.phase === 'playing',
+              revision,
+            },
+          }
+        : {}),
+    };
   });
   return {
     estimate: readonly(estimate),

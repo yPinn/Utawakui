@@ -1270,6 +1270,51 @@ function splitCaptionRowsAtCjkWordBoundaries(text, rowCount, startRowIndex) {
   return rows.filter(Boolean);
 }
 
+// Shared layout candidates. These are word/typographic rules, not semantic or
+// acoustic evidence. Grapheme fallbacks are supplied by the capacity planner.
+export function lyricsDisplayBreakCandidates(value) {
+  const text = String(value ?? '');
+  const result = new Map();
+  const add = (offset, priority, basis) => {
+    while (offset < text.length && /\s/u.test(text[offset])) offset++;
+    if (offset <= 0 || offset >= text.length) return;
+    if ((result.get(offset)?.priority ?? -1) < priority)
+      result.set(offset, { offset, priority, basis });
+  };
+  for (const match of text.matchAll(/\r?\n|[,，、。！？!?;；:：]|\.(?=\s)/gu))
+    add(
+      match.index + match[0].length,
+      /\n/u.test(match[0]) ? 5 : 4,
+      /\n/u.test(match[0]) ? 'authored' : 'punctuation',
+    );
+  const units = segmentCjkCaptionUnits(text);
+  if (units.length > 1) {
+    for (let end = 1; end < units.length; end++) {
+      const boundary = cjkCaptionBoundary(text, units, end);
+      if (
+        boundary.blocked ||
+        isChineseAttachedBoundary(text, units, end) ||
+        isJapaneseAttachedBoundary(text, units, end)
+      )
+        continue;
+      add(
+        boundary.index,
+        isScriptBoundary(
+          units.map((u) => u.text),
+          end,
+        )
+          ? 3
+          : 2,
+        'word',
+      );
+    }
+  } else {
+    for (const match of text.matchAll(/\s+/gu))
+      add(match.index + match[0].length, 2, 'word');
+  }
+  return [...result.values()].sort((a, b) => a.offset - b.offset);
+}
+
 function splitCaptionRows(text, rowCount, startRowIndex = 0) {
   if (rowCount <= 1) return text ? [text] : [];
   const cjkRows = splitCaptionRowsAtCjkWordBoundaries(

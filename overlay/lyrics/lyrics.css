@@ -1,3 +1,8 @@
+@property --lyrics-fine-progress {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
 @property --ovl-segment-progress {
   syntax: '<percentage>';
   inherits: true;
@@ -196,6 +201,36 @@
     color: var(--ovl-color-text-secondary);
   }
 
+  .lyrics-overlay__segment[data-fine-timing='true'] {
+    background-image: none;
+  }
+  .lyrics-overlay__segment[data-fine-timing='true'][data-segment-state='active'] {
+    text-decoration: underline;
+    text-decoration-color: var(--ovl-color-current);
+    text-underline-offset: 0.15em;
+  }
+  .lyrics-overlay__fine-ink {
+    position: relative;
+    display: inline-block;
+    max-inline-size: 100%;
+    color: var(--ovl-color-text-primary);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .lyrics-overlay__fine-ink::after {
+    position: absolute;
+    inset: 0;
+    content: attr(data-text) / '';
+    color: var(--ovl-color-current);
+    clip-path: inset(-0.2em calc(100% - var(--lyrics-fine-progress)) -0.2em 0);
+    pointer-events: none;
+  }
+  @media (forced-colors: active) {
+    .lyrics-overlay__fine-ink::after {
+      content: none;
+    }
+  }
+
   .lyrics-overlay__next {
     color: var(--ovl-color-text-secondary);
     font-family: var(--ovl-user-font-family);
@@ -261,7 +296,7 @@
     letter-spacing: 0.015em;
     line-height: 1.08;
     overflow-wrap: normal;
-    text-overflow: ellipsis;
+    text-overflow: clip;
     text-shadow: none;
     text-wrap: nowrap;
     white-space: nowrap;
@@ -1133,5 +1168,52 @@
     :root[data-ovl-template='manga-frame'] .lyrics-overlay__manga-bubbles {
       inset-block: max(var(--ovl-safe-block), var(--ovl-primitive-space-2));
     }
+  }
+}
+
+/* Capacity pages retain each template's typography; their text is already
+   measured at this font size. No ellipsis or font shrinking is used. */
+@layer components {
+  .lyrics-overlay[data-fit-active='true'] .lyrics-overlay__current {
+    overflow: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-wrap: wrap;
+  }
+  .lyrics-overlay[data-fit-active='true'] .lyrics-overlay__next {
+    display: none;
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay[data-fit-active='true'] {
+    grid-template-rows: auto;
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay[data-fit-active='true']
+    .lyrics-overlay__current {
+    grid-row: 1;
+    max-inline-size: 100%;
+  }
+}
+@layer components {
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__manga-bubbles[data-manga-fit='true']
+    .lyrics-overlay__manga-bubble {
+    block-size: min(55vh, 100%);
+  }
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__manga-text {
+    overflow: visible;
+  }
+}
+@layer components {
+  .lyrics-fit-status {
+    position: fixed;
+    inset-inline: var(--ovl-safe-inline);
+    inset-block-start: var(--ovl-safe-block);
+    margin: 0;
+    padding: 0.5em 0.75em;
+    color: var(--ovl-color-paper);
+    background: var(--ovl-color-ink);
+    font: 1rem/1.5 sans-serif;
+    z-index: 2;
   }
 }

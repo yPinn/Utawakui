@@ -457,6 +457,11 @@ async function runResearchPreview(
         return {
           ...line,
           chunks,
+          ...(chunks.length &&
+          ['zh', 'ja'].includes(languages.get(line.lineId)) &&
+          estimate.fineTiming
+            ? { fineTiming: estimate.fineTiming }
+            : {}),
           mode: native ? 'T2' : chunks.length ? 'research' : 'T1',
           content: decision?.silent
             ? 'silence'

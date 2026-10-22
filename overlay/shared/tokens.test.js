@@ -207,6 +207,11 @@ describe('overlay CSS tokens', () => {
     expect(lyrics).toContain("[data-segment-state='active']");
     expect(lyrics).toContain("[data-segment-state='upcoming']");
     expect(lyrics).toContain('--ovl-segment-progress');
+    expect(lyrics).toContain('--lyrics-fine-progress');
+    expect(
+      lyrics.slice(0, lyrics.indexOf('@property --ovl-segment-progress')),
+    ).toContain('inherits: true;');
+    expect(lyrics).toContain('@media (forced-colors: active)');
     expect(nonKineticLyrics).not.toContain('background-clip: text');
     expect(nonKineticLyrics).not.toContain(
       '-webkit-text-fill-color: transparent',

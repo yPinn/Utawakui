@@ -205,6 +205,10 @@ function assembleSplitSnapshot(
     ...(line.estimatedStarts?.version === 1
       ? { estimatedStarts: line.estimatedStarts }
       : {}),
+    ...(line.estimatedStarts?.version === 1 &&
+    line.estimatedFineTiming?.version === 1
+      ? { estimatedFineTiming: line.estimatedFineTiming }
+      : {}),
   }));
   return {
     version: OUTPUT_STATE_VERSION,

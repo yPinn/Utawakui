@@ -1,5 +1,6 @@
 import { projectOutputSnapshot } from './outputSnapshot.js';
 import performerValues from '../../shared/performerContractValues.json';
+import timingValues from '../../shared/lyricsTimingValues.json';
 import { detectLyricsScript } from './lyrics.js';
 
 const QUEUE_DOCUMENT_ID = 'queue-current';
@@ -41,6 +42,22 @@ function projectLine(line) {
             version: line.estimatedStarts.version,
             segments: line.estimatedStarts.segments.map(
               ({ segmentId, text, startMs }) => ({ segmentId, text, startMs }),
+            ),
+          },
+        }
+      : {}),
+    ...(line.estimatedFineTiming
+      ? {
+          estimatedFineTiming: {
+            version: line.estimatedFineTiming.version,
+            units: line.estimatedFineTiming.units.map(
+              ({ unitId, from, to, startMs, endMs }) => ({
+                unitId,
+                from,
+                to,
+                startMs,
+                endMs,
+              }),
             ),
           },
         }
@@ -125,7 +142,7 @@ export function projectLyricsOutputDocument({
     return null;
   }
   const reading = projectReadingDocument(source, document, readingDocument);
-  return {
+  const projected = {
     documentId: document.documentId,
     trackId,
     granularity: document.granularity,
@@ -133,6 +150,14 @@ export function projectLyricsOutputDocument({
     lines: Array.isArray(document.lines) ? document.lines.map(projectLine) : [],
     ...(reading ? { reading } : {}),
   };
+  if (
+    projected.lines.some((line) => line.estimatedFineTiming) &&
+    new TextEncoder().encode(JSON.stringify(projected)).byteLength >
+      timingValues.maxDocumentBytes
+  ) {
+    for (const line of projected.lines) delete line.estimatedFineTiming;
+  }
+  return projected;
 }
 
 export function projectQueueOutputDocument(queue = {}) {

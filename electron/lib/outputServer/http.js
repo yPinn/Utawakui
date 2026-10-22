@@ -41,6 +41,8 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
+  '/overlay/lyrics/lyricsFit.mjs': ['lyrics', 'lyricsFit.mjs'],
+  '/overlay/lyrics/lyricsFine.mjs': ['lyrics', 'lyricsFine.mjs'],
   '/overlay/lyrics/liveStage.mjs': ['lyrics', 'liveStage.mjs'],
   '/overlay/lyrics/mangaFrame.mjs': ['lyrics', 'mangaFrame.mjs'],
   '/overlay/lyrics/ornateVertical.mjs': ['lyrics', 'ornateVertical.mjs'],
@@ -84,6 +86,12 @@ const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
 });
 const SHARED_STATIC_ROUTES = Object.freeze({
+  '/shared/lyricsFineTiming.mjs': ['lyricsFineTiming.mjs'],
+  '/shared/browser/lyricsFinePaint.mjs': ['browser', 'lyricsFinePaint.mjs'],
+  '/shared/presentation/lyricsFineFrame.mjs': [
+    'presentation',
+    'lyricsFineFrame.mjs',
+  ],
   '/shared/outputAppearance.mjs': ['outputAppearance.mjs'],
   '/shared/assets/fonts/jf-open-huninn-2.1.ttf': [
     'assets',
@@ -141,6 +149,14 @@ const SHARED_STATIC_ROUTES = Object.freeze({
   '/shared/presentation/lyricsPhraseBreaks.mjs': [
     'presentation',
     'lyricsPhraseBreaks.mjs',
+  ],
+  '/shared/presentation/lyricsDisplayLayout.mjs': [
+    'presentation',
+    'lyricsDisplayLayout.mjs',
+  ],
+  '/shared/presentation/lyricsDisplayFrame.mjs': [
+    'presentation',
+    'lyricsDisplayFrame.mjs',
   ],
   '/shared/presentation/lyricsRhythm.mjs': ['presentation', 'lyricsRhythm.mjs'],
   '/shared/presentation/mangaFrameContract.mjs': [

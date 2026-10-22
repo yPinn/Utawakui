@@ -22,6 +22,7 @@ const {
   close,
   minimize,
   setReadingScale,
+  setDisplayBoundary,
   toggleAlwaysOnTop,
   toggleFullScreen,
 } = usePerformerViewState();
@@ -46,6 +47,7 @@ const {
       @control="control"
       @sync-action="adjustLyricsOffset"
       @update:reading-scale="setReadingScale"
+      @display-boundary="setDisplayBoundary"
     />
     <UiNotice
       v-if="error"

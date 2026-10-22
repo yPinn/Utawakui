@@ -8,6 +8,7 @@ import {
   renderLyricsFrameSafely,
 } from './lyrics.mjs';
 import { ORNATE_VERTICAL_EXIT_DURATION_SECONDS } from '../../shared/presentation/ornateVerticalMotion.mjs';
+import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
 
 function gsapHarness() {
   const timelines = [];
@@ -138,6 +139,110 @@ function kineticLineUnits(line) {
 }
 
 describe('lyrics overlay renderer', () => {
+  it('keeps coarse Focus onset nodes while continuously filling fine text and cancelling obsolete paint', () => {
+    const elements = domElements();
+    const fine = {
+      positionMs: 1500,
+      rate: 1,
+      playing: true,
+      units: [
+        { unitId: 'f1', from: 0, to: 1, startMs: 1000, endMs: 2000 },
+        { unitId: 'f2', from: 1, to: 2, startMs: 2000, endMs: 2500 },
+      ],
+    };
+    const frame = {
+      visible: true,
+      currentText: '今日',
+      nextText: '',
+      currentTimingSource: 'model-starts',
+      currentSegments: [
+        {
+          segmentId: 'a',
+          text: '今日',
+          state: 'active',
+          progress: null,
+          remainingMs: null,
+        },
+      ],
+      currentFineTiming: fine,
+    };
+    renderLyricsFrame(elements, frame, { templateId: 'focus-line' });
+    const coarse = elements.current.children[0];
+    expect(coarse.dataset.segmentState).toBe('active');
+    expect(coarse.style.values['--ovl-segment-progress']).toBe('100%');
+    expect(coarse.children[0].dataset.lyricsFineUnit).toBe('f1');
+    expect(coarse.children[0].style.values['--lyrics-fine-progress']).toBe(
+      '50%',
+    );
+    expect(coarse.children[0].animate.mock.calls[0][1]).toMatchObject({
+      duration: 500,
+      easing: 'linear',
+    });
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        currentFineTiming: { ...fine, positionMs: 1750, playing: false },
+      },
+      { templateId: 'focus-line' },
+    );
+    expect(elements.current.children[0]).toBe(coarse);
+    expect(coarse.children[0].style.values['--lyrics-fine-progress']).toBe(
+      '75%',
+    );
+    expect(coarse.textContent).toBe('今日');
+  });
+  it.each(['focus-line', 'karaoke-stack'])(
+    'highlights a T1+ chunk immediately at its onset in %s despite a long following gap',
+    (templateId) => {
+      const nowMs = Date.parse('2026-10-20T00:00:00Z');
+      const snapshot = {
+        revision: 1,
+        generatedAt: new Date(nowMs).toISOString(),
+        playback: {
+          track: { id: 'onset-song' },
+          status: 'playing',
+          positionMs: 0,
+          sampledAt: new Date(nowMs).toISOString(),
+          rate: 1,
+          durationMs: 12000,
+        },
+        lyrics: {
+          trackId: 'onset-song',
+          synced: true,
+          offsetMs: 0,
+          lines: [
+            {
+              text: '今天唱歌',
+              startMs: 1000,
+              endMs: 11000,
+              estimatedStarts: {
+                version: 1,
+                segments: [
+                  { segmentId: 'a', text: '今天', startMs: 1200 },
+                  { segmentId: 'b', text: '唱歌', startMs: 7200 },
+                ],
+              },
+            },
+          ],
+        },
+      };
+      const elements = domElements();
+      for (const at of [1199, 1200, 1250, 7199, 7200, 7250, 1250]) {
+        snapshot.playback.positionMs = at;
+        const frame = selectLyricsOverlayFrame(snapshot, { nowMs, templateId });
+        renderLyricsFrame(elements, frame, { templateId });
+        const current = elements.current.children;
+        expect(current[0].style.values['--ovl-segment-progress']).toBe(
+          at >= 1200 ? '100%' : '0%',
+        );
+        expect(current[1].style.values['--ovl-segment-progress']).toBe(
+          at >= 7200 ? '100%' : '0%',
+        );
+        for (const node of current) expect(node.animate).not.toHaveBeenCalled();
+      }
+    },
+  );
   it('paints model starts through the existing T2 segment nodes without a continuous sweep', () => {
     const model = domElements(),
       native = domElements();

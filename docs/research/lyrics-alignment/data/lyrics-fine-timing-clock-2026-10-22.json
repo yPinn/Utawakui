@@ -1,0 +1,1019 @@
+{
+  "date": "2026-10-22",
+  "scope": "Existing CPU HuBERTFA detail capture and real-media clock baseline only; immediate T1+ onset behavior retained, no sweep implementation",
+  "model": {
+    "method": {
+      "kind": "model",
+      "id": "hubertfa-research",
+      "version": "phase2-v1",
+      "modelManifestSha256": "bb14e6cf70e349ca9445e623560510fdc67f56971d0e222bf5e988794cc53af7",
+      "environmentLockSha256": "fdf5f899e47b43ff3d26ad0f439d1047cf04da9f4527cf1aa1b70e0940062a27",
+      "decoderVersion": "hfa-occurrence-c5ca11a8596e5693",
+      "g2pVersion": "original-g2p-36691ab9da7bc121",
+      "chunkerVersion": "intl-text-28881fcf3c9311bf",
+      "nodeVersion": "24.17.0",
+      "icuVersion": "78.3"
+    },
+    "observation": {
+      "originalDecoderSha256": "c5ca11a8596e5693ecf86b45bd6a0c2e159fa99a8187853b3cf5b0f391dd21bf",
+      "diagnosticDecoderSha256": "6506f2dc58ff5affdb2d2a243993cd3fffdb139e60e842f9ba6640406ee9c4f5",
+      "onlyChange": "one span-serialization assignment adds existing end/phonemes, no decode change",
+      "pairedDecodesWithIdenticalStartsAndConfidence": 25,
+      "sameSupportedLineSetAsCurrentLanguageRouter": true
+    },
+    "inputs": {
+      "frozenCasesSha256": "e1417b47c22aa3279394d25e254ee5b25db3e4b793941968cc27c623fb29a179",
+      "referencesSha256": "e2f29c64564893a6000e985931e66495f95841d870b69d915f0b68ac874f9222",
+      "naturalCjkClips": 4,
+      "clipDurationMs": 30000,
+      "requestedLines": 29,
+      "decodedLines": 25,
+      "unsupportedMixedLines": 4,
+      "fineDenominator": "Internal lexical units on decoded/supported lines; four unsupported mixed lines remain in the line/coarse-cut denominator and have no meaningful fine-unit denominator",
+      "englishPreflight": {
+        "status": "lyrics-missing",
+        "reference": "none",
+        "diagnosticOnly": true,
+        "inferenceStarted": false,
+        "modelDownloadBytes": 0
+      }
+    },
+    "perCase": [
+      {
+        "id": "zh-1-normal",
+        "language": "zh",
+        "lines": 5,
+        "decodedLines": 5,
+        "declinedLines": 0,
+        "requestedFineInternalOnDecodedLines": 55,
+        "rawFineInternal": 55,
+        "withinLineFineInternal": 55,
+        "requestedCoarseInternalAllLines": 35,
+        "publishedCoarseInternal": 35,
+        "extraRawFineNotInCoarseCuts": 20,
+        "pairedStockAndObserverDecodes": 5,
+        "secondsIncludingPairedDecodeAndIntegrityChecks": 5.1185129
+      },
+      {
+        "id": "zh-2-normal",
+        "language": "zh",
+        "lines": 7,
+        "decodedLines": 7,
+        "declinedLines": 0,
+        "requestedFineInternalOnDecodedLines": 50,
+        "rawFineInternal": 50,
+        "withinLineFineInternal": 49,
+        "requestedCoarseInternalAllLines": 30,
+        "publishedCoarseInternal": 29,
+        "extraRawFineNotInCoarseCuts": 20,
+        "pairedStockAndObserverDecodes": 7,
+        "secondsIncludingPairedDecodeAndIntegrityChecks": 4.779069800000001
+      },
+      {
+        "id": "ja-1-normal",
+        "language": "ja",
+        "lines": 10,
+        "decodedLines": 6,
+        "declinedLines": 4,
+        "requestedFineInternalOnDecodedLines": 21,
+        "rawFineInternal": 21,
+        "withinLineFineInternal": 17,
+        "requestedCoarseInternalAllLines": 38,
+        "publishedCoarseInternal": 17,
+        "extraRawFineNotInCoarseCuts": 2,
+        "pairedStockAndObserverDecodes": 6,
+        "secondsIncludingPairedDecodeAndIntegrityChecks": 4.8977808000000005
+      },
+      {
+        "id": "ja-2-normal",
+        "language": "ja",
+        "lines": 7,
+        "decodedLines": 7,
+        "declinedLines": 0,
+        "requestedFineInternalOnDecodedLines": 40,
+        "rawFineInternal": 40,
+        "withinLineFineInternal": 40,
+        "requestedCoarseInternalAllLines": 37,
+        "publishedCoarseInternal": 33,
+        "extraRawFineNotInCoarseCuts": 7,
+        "pairedStockAndObserverDecodes": 7,
+        "secondsIncludingPairedDecodeAndIntegrityChecks": 4.990704900000001
+      }
+    ],
+    "totals": {
+      "requestedFineInternalOnDecodedLines": 166,
+      "rawFineInternal": 166,
+      "withinLineFineInternal": 161,
+      "requestedCoarseInternalAllLines": 140,
+      "publishedCoarseInternal": 114,
+      "extraRawFineNotInCoarseCuts": 49,
+      "extraWithinLineFineNotInCoarseCuts": 47,
+      "rawWordIntervals": 191,
+      "rawPhoneIntervals": 502,
+      "nonpositiveOrMissingWordEnds": 0,
+      "wordIntervalsOutsideT1Line": 29,
+      "wordStartsBeforeT1Line": 15,
+      "wordStartsAtOrAfterT1End": 4,
+      "wordEndsAfterT1Line": 14,
+      "equalAdjacentWordStarts": 0,
+      "wordDurationMs": {
+        "n": 191,
+        "min": 12.063812762498856,
+        "p50": 329.04967322945777,
+        "p95": 870.634645819664,
+        "max": 1964.0132635831833
+      },
+      "interWordSilenceEstimateMs": {
+        "n": 166,
+        "min": 0,
+        "p50": 9.90393176674661,
+        "p95": 249.4326625019312,
+        "max": 1611.9937573373318
+      },
+      "rawFirstWordVsT1Ms": {
+        "n": 25,
+        "min": -353,
+        "p50": -12.766136199235916,
+        "p95": 274.2202116847038,
+        "max": 868.4905368089676
+      }
+    },
+    "providerProxy": {
+      "definition": "External provider onset references only, not human ground truth; first T1 anchor excluded; fine and coarse domains have distinct denominators",
+      "publishedCoarseCuts": {
+        "requested": 140,
+        "referenceAvailable": 35,
+        "compared": 30,
+        "missingPredictionWithReference": 5,
+        "signedErrorMs": {
+          "n": 30,
+          "min": -348,
+          "p50": 28,
+          "p95": 496,
+          "max": 532
+        },
+        "within100": 22,
+        "between100And500": 7,
+        "over500": 1
+      },
+      "allRequestedFineUnitsOnDecodedLines": {
+        "requested": 166,
+        "referenceAvailable": 40,
+        "compared": 40,
+        "missingPredictionWithReference": 0,
+        "signedErrorMs": {
+          "n": 40,
+          "min": -348,
+          "p50": 35,
+          "p95": 532,
+          "max": 737
+        },
+        "within100": 27,
+        "between100And500": 10,
+        "over500": 3
+      },
+      "additionalFineUnitsOutsideCoarseCuts": {
+        "requested": 49,
+        "referenceAvailable": 8,
+        "compared": 8,
+        "missingPredictionWithReference": 0,
+        "signedErrorMs": {
+          "n": 8,
+          "min": -77,
+          "p50": 15,
+          "p95": 576,
+          "max": 576
+        },
+        "within100": 5,
+        "between100And500": 2,
+        "over500": 1
+      },
+      "endTimeReferencePoints": 0,
+      "humanGroundTruthPoints": 0,
+      "humanAccuracy": null
+    },
+    "limitations": [
+      "Raw intervals precede Whisper small content validation, so valid timestamps are not evidence of correct lyric content",
+      "Word/phone ends are model decoder estimates, not confirmed singing ends",
+      "English source preflight failed before inference; real English detail quality was not rerun",
+      "Chinese has no usable external onset proxy in this batch; Japanese provider references are not human labels",
+      "Retaining phoneme intervals does not establish a grapheme-to-phoneme display mapping for Japanese kanji or English letters"
+    ]
+  },
+  "clock": {
+    "scope": "Real media/currentTime + real usePlayer, experimental owner, Panel, publisher, hub, server and formal Overlay; synthetic library/queue/session/reading source owners",
+    "samples": {
+      "localOnsets": 33,
+      "outputOnsets": 34
+    },
+    "signConvention": "positive = display/state is late relative to actual HTMLAudioElement.currentTime; negative = early",
+    "localDomOnsetLateWallMs": {
+      "n": 33,
+      "p50": 131.2224000000002,
+      "p95": 267.01039999999995,
+      "min": 3.6944000000003143,
+      "max": 274.0504000000001
+    },
+    "outputDomOnsetLateWallMs": {
+      "n": 34,
+      "p50": 3.799627739348216,
+      "p95": 12.159966517467637,
+      "min": -5.949600000000646,
+      "max": 137.36719901149286
+    },
+    "stateSamplingLateMediaMs": {
+      "n": 3794,
+      "p50": 141.48000000000002,
+      "p95": 275.9899999999998,
+      "min": 0,
+      "max": 345.79699999999957
+    },
+    "publicationAnchorLateMediaMs": {
+      "n": 79,
+      "p50": 0.2640000000001237,
+      "p95": 14.215000000000146,
+      "min": -0.43700000000080763,
+      "max": 229.02099999999882
+    },
+    "outputReconstructedLateMediaMsSteady": {
+      "n": 3763,
+      "p50": 0.18389329522460685,
+      "p95": 10.345391559611926,
+      "min": -13.668780329013316,
+      "max": 14.58734224598993
+    },
+    "perPhase": {
+      "normal": {
+        "stateSamplingLateMs": {
+          "n": 1370,
+          "p50": 131.71599999999944,
+          "p95": 252.45000000000073,
+          "min": 0.22100000000000364,
+          "max": 271.2480000000003
+        },
+        "publicationAnchorLateMs": {
+          "n": 26,
+          "p50": 0.3280000000004293,
+          "p95": 0.9500000000002728,
+          "min": -0.0929999999998472,
+          "max": 1.058999999999969
+        },
+        "publicationAckMs": {
+          "n": 26,
+          "p50": 0.5,
+          "p95": 1,
+          "min": 0.300048828125,
+          "max": 1
+        },
+        "outputReconstructedLateMs": {
+          "n": 1337,
+          "p50": 0.02537301992833818,
+          "p95": 5.49765043013258,
+          "min": -7.2770445125759124,
+          "max": 7.7679018554688355
+        },
+        "localDomOnsetLateMediaMs": {
+          "n": 10,
+          "p50": 106.9659999999999,
+          "p95": 259.5720000000001,
+          "min": 26.115999999999985,
+          "max": 259.5720000000001
+        },
+        "outputDomOnsetLateMediaMs": {
+          "n": 11,
+          "p50": 4.517354008021812,
+          "p95": 137.36719901149286,
+          "min": -2.2365649848870817,
+          "max": 137.36719901149286
+        },
+        "localDomOnsetLateWallMs": {
+          "n": 10,
+          "p50": 106.9659999999999,
+          "p95": 259.5720000000001,
+          "min": 26.115999999999985,
+          "max": 259.5720000000001
+        },
+        "outputDomOnsetLateWallMs": {
+          "n": 11,
+          "p50": 4.517354008021812,
+          "p95": 137.36719901149286,
+          "min": -2.2365649848870817,
+          "max": 137.36719901149286
+        }
+      },
+      "pause": {
+        "stateSamplingLateMs": {
+          "n": 0,
+          "p50": null,
+          "p95": null,
+          "min": null,
+          "max": null
+        },
+        "publicationAnchorLateMs": {
+          "n": 2,
+          "p50": 0,
+          "p95": 0,
+          "min": 0,
+          "max": 0
+        },
+        "publicationAckMs": {
+          "n": 2,
+          "p50": 0.300048828125,
+          "p95": 0.699951171875,
+          "min": 0.300048828125,
+          "max": 0.699951171875
+        },
+        "outputReconstructedLateMs": {
+          "n": 0,
+          "p50": null,
+          "p95": null,
+          "min": null,
+          "max": null
+        },
+        "localDomOnsetLateMediaMs": {
+          "n": 0,
+          "p50": null,
+          "p95": null,
+          "min": null,
+          "max": null
+        },
+        "outputDomOnsetLateMediaMs": {
+          "n": 0,
+          "p50": null,
+          "p95": null,
+          "min": null,
+          "max": null
+        },
+        "localDomOnsetLateWallMs": {
+          "n": 0,
+          "p50": null,
+          "p95": null,
+          "min": null,
+          "max": null
+        },
+        "outputDomOnsetLateWallMs": {
+          "n": 0,
+          "p50": null,
+          "p95": null,
+          "min": null,
+          "max": null
+        }
+      },
+      "resume": {
+        "stateSamplingLateMs": {
+          "n": 631,
+          "p50": 135.45100000000002,
+          "p95": 253.55599999999959,
+          "min": 0,
+          "max": 272.28200000000015
+        },
+        "publicationAnchorLateMs": {
+          "n": 13,
+          "p50": 0.019999999999527063,
+          "p95": 0.7719999999999345,
+          "min": 0,
+          "max": 0.7719999999999345
+        },
+        "publicationAckMs": {
+          "n": 13,
+          "p50": 0.5,
+          "p95": 0.60009765625,
+          "min": 0.2001953125,
+          "max": 0.60009765625
+        },
+        "outputReconstructedLateMs": {
+          "n": 631,
+          "p50": 0.7236057285781499,
+          "p95": 6.006234319595933,
+          "min": -8.16106376794778,
+          "max": 7.30673911527083
+        },
+        "localDomOnsetLateMediaMs": {
+          "n": 5,
+          "p50": 102.32300000000032,
+          "p95": 173.2479999999996,
+          "min": 36,
+          "max": 173.2479999999996
+        },
+        "outputDomOnsetLateMediaMs": {
+          "n": 5,
+          "p50": 8.963116410623115,
+          "p95": 10.327733357151374,
+          "min": 3.2647998604888926,
+          "max": 10.327733357151374
+        },
+        "localDomOnsetLateWallMs": {
+          "n": 5,
+          "p50": 102.32300000000032,
+          "p95": 173.2479999999996,
+          "min": 36,
+          "max": 173.2479999999996
+        },
+        "outputDomOnsetLateWallMs": {
+          "n": 5,
+          "p50": 8.963116410623115,
+          "p95": 10.327733357151374,
+          "min": 3.2647998604888926,
+          "max": 10.327733357151374
+        }
+      },
+      "seek": {
+        "stateSamplingLateMs": {
+          "n": 711,
+          "p50": 131.433,
+          "p95": 253.20700000000033,
+          "min": 0.38699999999971624,
+          "max": 271.77399999999943
+        },
+        "publicationAnchorLateMs": {
+          "n": 14,
+          "p50": 0,
+          "p95": 0.94399999999996,
+          "min": -0.09400000000005093,
+          "max": 0.94399999999996
+        },
+        "publicationAckMs": {
+          "n": 14,
+          "p50": 0.5,
+          "p95": 0.699951171875,
+          "min": 0.2998046875,
+          "max": 0.699951171875
+        },
+        "outputReconstructedLateMs": {
+          "n": 711,
+          "p50": 0.2226979015285906,
+          "p95": 5.762847953215896,
+          "min": -8.099453060513042,
+          "max": 8.448878408955352
+        },
+        "localDomOnsetLateMediaMs": {
+          "n": 6,
+          "p50": 89.90800000000036,
+          "p95": 256,
+          "min": 26.570000000000164,
+          "max": 256
+        },
+        "outputDomOnsetLateMediaMs": {
+          "n": 6,
+          "p50": 1.9075247921873597,
+          "p95": 12.159966517467637,
+          "min": -4.14286769084174,
+          "max": 12.159966517467637
+        },
+        "localDomOnsetLateWallMs": {
+          "n": 6,
+          "p50": 89.90800000000036,
+          "p95": 256,
+          "min": 26.570000000000164,
+          "max": 256
+        },
+        "outputDomOnsetLateWallMs": {
+          "n": 6,
+          "p50": 1.9075247921873597,
+          "p95": 12.159966517467637,
+          "min": -4.14286769084174,
+          "max": 12.159966517467637
+        }
+      },
+      "rate": {
+        "stateSamplingLateMs": {
+          "n": 498,
+          "p50": 160.21299999999974,
+          "p95": 315.72599999999966,
+          "min": 0,
+          "max": 345.79699999999957
+        },
+        "publicationAnchorLateMs": {
+          "n": 10,
+          "p50": 0.26600000000053114,
+          "p95": 131.5649999999996,
+          "min": -0.43700000000080763,
+          "max": 131.5649999999996
+        },
+        "publicationAckMs": {
+          "n": 10,
+          "p50": 0.5,
+          "p95": 0.699951171875,
+          "min": 0.400146484375,
+          "max": 0.699951171875
+        },
+        "outputReconstructedLateMs": {
+          "n": 498,
+          "p50": 0.10350665581518115,
+          "p95": 12.975468929838826,
+          "min": -13.666206359355783,
+          "max": 14.58734224598993
+        },
+        "localDomOnsetLateMediaMs": {
+          "n": 5,
+          "p50": 307.9899999999998,
+          "p95": 333.7629999999999,
+          "min": 147.1199999999999,
+          "max": 333.7629999999999
+        },
+        "outputDomOnsetLateMediaMs": {
+          "n": 6,
+          "p50": -5.067842818113604,
+          "p95": 11.279098725734912,
+          "min": -7.437000000000808,
+          "max": 11.279098725734912
+        },
+        "localDomOnsetLateWallMs": {
+          "n": 5,
+          "p50": 246.39199999999983,
+          "p95": 267.01039999999995,
+          "min": 117.69599999999991,
+          "max": 267.01039999999995
+        },
+        "outputDomOnsetLateWallMs": {
+          "n": 6,
+          "p50": -4.054274254490883,
+          "p95": 9.023278980587929,
+          "min": -5.949600000000646,
+          "max": 9.023278980587929
+        }
+      },
+      "offset": {
+        "stateSamplingLateMs": {
+          "n": 584,
+          "p50": 163.79099999999926,
+          "p95": 315.96500000000015,
+          "min": 0,
+          "max": 344.58400000000074
+        },
+        "publicationAnchorLateMs": {
+          "n": 13,
+          "p50": 0.5300000000006548,
+          "p95": 229.02099999999882,
+          "min": -0.43699999999989814,
+          "max": 229.02099999999882
+        },
+        "publicationAckMs": {
+          "n": 13,
+          "p50": 0.5,
+          "p95": 0.60009765625,
+          "min": 0.300048828125,
+          "max": 0.60009765625
+        },
+        "outputReconstructedLateMs": {
+          "n": 586,
+          "p50": 0.0717244085335551,
+          "p95": 13.012611928152182,
+          "min": -13.668780329013316,
+          "max": 14.372819391966914
+        },
+        "localDomOnsetLateMediaMs": {
+          "n": 7,
+          "p50": 181.17799999999988,
+          "p95": 342.5630000000001,
+          "min": 4.618000000000393,
+          "max": 342.5630000000001
+        },
+        "outputDomOnsetLateMediaMs": {
+          "n": 6,
+          "p50": -3.422467456677623,
+          "p95": 4.814031320709546,
+          "min": -5.931360111610047,
+          "max": 4.814031320709546
+        },
+        "localDomOnsetLateWallMs": {
+          "n": 7,
+          "p50": 144.9423999999999,
+          "p95": 274.0504000000001,
+          "min": 3.6944000000003143,
+          "max": 274.0504000000001
+        },
+        "outputDomOnsetLateWallMs": {
+          "n": 6,
+          "p50": -2.7379739653420985,
+          "p95": 3.8512250565676367,
+          "min": -4.745088089288037,
+          "max": 3.8512250565676367
+        }
+      }
+    },
+    "controlAnalysis": {
+      "classification": "Offline analysis only; no product change, no new authority or resampled state used in playback",
+      "publicationGroups": {
+        "startup-or-content": {
+          "anchorLateMediaMs": {
+            "n": 5,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "anchorLateWallMs": {
+            "n": 5,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "counterfactualLateMediaMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          },
+          "counterfactualLateWallMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "same-timeupdate-dispatch": {
+          "anchorLateMediaMs": {
+            "n": 64,
+            "p50": 0.3280000000004293,
+            "p95": 0.94399999999996,
+            "min": -0.43700000000080763,
+            "max": 14.215000000000146
+          },
+          "anchorLateWallMs": {
+            "n": 64,
+            "p50": 0.2889999999997599,
+            "p95": 0.94399999999996,
+            "min": -0.3496000000006461,
+            "max": 11.372000000000117
+          },
+          "counterfactualLateMediaMs": {
+            "n": 61,
+            "p50": 1.791951171875553,
+            "p95": 10.96912207031346,
+            "min": -13.71600000000035,
+            "max": 13.602122070313271
+          },
+          "counterfactualLateWallMs": {
+            "n": 61,
+            "p50": 1.791951171875553,
+            "p95": 8.775297656250768,
+            "min": -10.97280000000028,
+            "max": 10.881697656250617
+          }
+        },
+        "control:pause": {
+          "anchorLateMediaMs": {
+            "n": 2,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "anchorLateWallMs": {
+            "n": 2,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "counterfactualLateMediaMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          },
+          "counterfactualLateWallMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "control:resume": {
+          "anchorLateMediaMs": {
+            "n": 2,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "anchorLateWallMs": {
+            "n": 2,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "counterfactualLateMediaMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          },
+          "counterfactualLateWallMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "control:seek": {
+          "anchorLateMediaMs": {
+            "n": 2,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "anchorLateWallMs": {
+            "n": 2,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          },
+          "counterfactualLateMediaMs": {
+            "n": 1,
+            "p50": -0.2001953125,
+            "p95": -0.2001953125,
+            "min": -0.2001953125,
+            "max": -0.2001953125
+          },
+          "counterfactualLateWallMs": {
+            "n": 1,
+            "p50": -0.2001953125,
+            "p95": -0.2001953125,
+            "min": -0.2001953125,
+            "max": -0.2001953125
+          }
+        },
+        "control:rate": {
+          "anchorLateMediaMs": {
+            "n": 1,
+            "p50": 131.5649999999996,
+            "p95": 131.5649999999996,
+            "min": 131.5649999999996,
+            "max": 131.5649999999996
+          },
+          "anchorLateWallMs": {
+            "n": 1,
+            "p50": 105.25199999999968,
+            "p95": 105.25199999999968,
+            "min": 105.25199999999968,
+            "max": 105.25199999999968
+          },
+          "counterfactualLateMediaMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          },
+          "counterfactualLateWallMs": {
+            "n": 0,
+            "p50": null,
+            "p95": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "control:offset": {
+          "anchorLateMediaMs": {
+            "n": 3,
+            "p50": 227.96500000000015,
+            "p95": 229.02099999999882,
+            "min": -0.43699999999989814,
+            "max": 229.02099999999882
+          },
+          "anchorLateWallMs": {
+            "n": 3,
+            "p50": 182.37200000000013,
+            "p95": 183.21679999999907,
+            "min": -0.34959999999991853,
+            "max": 183.21679999999907
+          },
+          "counterfactualLateMediaMs": {
+            "n": 3,
+            "p50": 13.65606103515529,
+            "p95": 13.724938964844114,
+            "min": 5.57300000000032,
+            "max": 13.724938964844114
+          },
+          "counterfactualLateWallMs": {
+            "n": 3,
+            "p50": 10.924848828124231,
+            "p95": 10.97995117187529,
+            "min": 4.458400000000256,
+            "max": 10.97995117187529
+          }
+        }
+      },
+      "controlWindows": [
+        {
+          "action": "pause",
+          "value": null,
+          "windowMs": 200,
+          "firstPublicationAfterMs": 0.599853515625,
+          "firstPublicationAnchorLateMediaMs": 0,
+          "outputSignedLateMediaMs": {
+            "n": 48,
+            "p50": 0,
+            "p95": 0,
+            "min": -1,
+            "max": 0
+          },
+          "outputSignedLateWallMs": {
+            "n": 48,
+            "p50": 0,
+            "p95": 0,
+            "min": -1,
+            "max": 0
+          },
+          "localStateLateMediaMs": {
+            "n": 48,
+            "p50": 0,
+            "p95": 0,
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "action": "resume",
+          "value": null,
+          "windowMs": 200,
+          "firstPublicationAfterMs": 0.199951171875,
+          "firstPublicationAnchorLateMediaMs": 0,
+          "outputSignedLateMediaMs": {
+            "n": 48,
+            "p50": -0.02814416090313898,
+            "p95": 3.9214462593736243,
+            "min": -3.3042817949317396,
+            "max": 4.601927235918083
+          },
+          "outputSignedLateWallMs": {
+            "n": 48,
+            "p50": -0.02814416090313898,
+            "p95": 3.9214462593736243,
+            "min": -3.3042817949317396,
+            "max": 4.601927235918083
+          },
+          "localStateLateMediaMs": {
+            "n": 48,
+            "p50": 99.9960000000001,
+            "p95": 189.65300000000025,
+            "min": 0,
+            "max": 195.82799999999952
+          }
+        },
+        {
+          "action": "seek",
+          "value": 2.2,
+          "windowMs": 200,
+          "firstPublicationAfterMs": 0.5,
+          "firstPublicationAnchorLateMediaMs": 0,
+          "outputSignedLateMediaMs": {
+            "n": 48,
+            "p50": 0.44940277858540867,
+            "p95": 4.028688019531728,
+            "min": -4.10945073533685,
+            "max": 4.740370013099891
+          },
+          "outputSignedLateWallMs": {
+            "n": 48,
+            "p50": 0.44940277858540867,
+            "p95": 4.028688019531728,
+            "min": -4.10945073533685,
+            "max": 4.740370013099891
+          },
+          "localStateLateMediaMs": {
+            "n": 48,
+            "p50": 94.13299999999981,
+            "p95": 191.83899999999994,
+            "min": 0.38599999999996726,
+            "max": 198.74000000000024
+          }
+        },
+        {
+          "action": "rate",
+          "value": 1.25,
+          "windowMs": 200,
+          "firstPublicationAfterMs": 0.10009765625,
+          "firstPublicationAnchorLateMediaMs": 131.5649999999996,
+          "outputSignedLateMediaMs": {
+            "n": 48,
+            "p50": 101.69877108643868,
+            "p95": 116.75,
+            "min": -1.243000000000393,
+            "max": 126.68937849103804
+          },
+          "outputSignedLateWallMs": {
+            "n": 48,
+            "p50": 81.35901686915095,
+            "p95": 93.4,
+            "min": -0.9944000000003144,
+            "max": 101.35150279283043
+          },
+          "localStateLateMediaMs": {
+            "n": 48,
+            "p50": 151.3110000000006,
+            "p95": 255.6200000000008,
+            "min": 5.751000000000204,
+            "max": 262.5630000000001
+          }
+        },
+        {
+          "action": "offset",
+          "value": 200,
+          "windowMs": 200,
+          "firstPublicationAfterMs": 1.7001953125,
+          "firstPublicationAnchorLateMediaMs": 227.96500000000015,
+          "outputSignedLateMediaMs": {
+            "n": 47,
+            "p50": 6.004853744392676,
+            "p95": 228.09072487356752,
+            "min": -7.384581874479409,
+            "max": 229.04950578387434
+          },
+          "outputSignedLateWallMs": {
+            "n": 47,
+            "p50": 4.803882995514141,
+            "p95": 182.472579898854,
+            "min": -5.907665499583527,
+            "max": 183.23960462709948
+          },
+          "localStateLateMediaMs": {
+            "n": 47,
+            "p50": 119.03800000000047,
+            "p95": 333.0659999999989,
+            "min": 0,
+            "max": 337.5
+          }
+        }
+      ],
+      "frameGaps": {
+        "local": {
+          "n": 4352,
+          "p50": 4.199951171875,
+          "p95": 4.300048828125,
+          "min": 0.400146484375,
+          "max": 50.10009765625
+        },
+        "output": {
+          "n": 4353,
+          "p50": 4.199951171875,
+          "p95": 4.300048828125,
+          "min": 0.099853515625,
+          "max": 138.099853515625
+        },
+        "localOver30Ms": 1,
+        "outputOver30Ms": 1
+      },
+      "timeupdateIntervals": {
+        "n": 66,
+        "p50": 266.099853515625,
+        "p95": 269.199951171875,
+        "min": 69.599853515625,
+        "max": 863.300048828125
+      },
+      "counterfactualLimitations": [
+        "Hypothetical position+paired sampling timestamp extrapolation; not implemented or deployed",
+        "Only evaluated at publications with a preceding genuine timeupdate and no intervening transport/rate discontinuity",
+        "Does not solve semantic/model timing accuracy or first-visible long frame; phase observation remains frame quantized",
+        "Control publications without a valid paired continuous anchor are explicitly ineligible; no fabricated extrapolation through seek/pause/rate change"
+      ]
+    },
+    "sourcesStable": true,
+    "visible": {
+      "local": true,
+      "output": true,
+      "localDocument": "visible",
+      "outputDocument": "visible"
+    },
+    "errors": [],
+    "limitations": [
+      "Synthetic known chunk onsets are timing stimuli, not evidence of model alignment accuracy",
+      "No speaker/headphone/OBS/display hardware latency measurement; webContents muted",
+      "Publisher uses synthetic library/queue/session/music/reading owners; full useLyrics, real library and gates are not integrated",
+      "rAF observation has frame quantization; performance epoch alignment and interpolation are not hardware synchronization",
+      "One bounded idle run; p95 and max are descriptive, not durable performance guarantees"
+    ]
+  },
+  "integrity": {
+    "productChangedFiles": [],
+    "researchSourceChangedFiles": [],
+    "remainingModelWorkspaces": [],
+    "modelDownloadBytes": 0,
+    "productBehaviorChanged": false,
+    "fineTimingPublishedToUserSidecars": false,
+    "privateRawEvidence": {
+      "model/raw.json": "86ba60512d547a874481596834e8f1c0615dca19f1f7d5cd7dab3fd99630b163",
+      "model/summary.json": "6c218fe6f79690096ce50ecfa112470afd41c4ee3f7c3171e3d9f623c774e90a",
+      "clock/report.json": "5da486fc0badae15cc2a7dfa8f8a443f7b3bba6814e667b2e760938fd0ab41e8",
+      "clock/summary.json": "689736155ebe8446cb8f103ab14cf9c5f70af61d92cc7ed8885d5b2fc3855b48",
+      "clock/control-summary.json": "3dc4a20e68605b751002bfe2f4b0d28671881346df88a34515476fe59ce08ade"
+    }
+  },
+  "decision": {
+    "technicalAccessToExistingFineIntervals": "feasible with producer/schema work, not already available to renderer",
+    "temporalQualityForAutomaticFineSweep": "not established",
+    "nextDiscussion": "Fix paired media-clock sampling and local boundary scheduling first; then validate fine intervals against human references before any sweep design"
+  }
+}

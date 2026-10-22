@@ -8,6 +8,7 @@ import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLyricsAcquisition } from './lyrics/useLyricsAcquisition.js';
 import { useLyricsSourceDocuments } from './lyrics/useLyricsSourceDocuments.js';
 import { useExperimentalLyrics } from './lyrics/useExperimentalLyrics.js';
+import { useLyricsClock } from './lyrics/useLyricsClock.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
   deriveLyricsPlaybackState,
@@ -24,7 +25,13 @@ import { toPlayableTrack } from '../utils/playableTrack.js';
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
 const lyricsTextVariant = shallowRef(DEFAULT_LYRICS_TEXT_VARIANT);
 
-const { state: playerState, playTrack, play, seek } = usePlayer();
+const {
+  state: playerState,
+  playTrack,
+  play,
+  seek,
+  samplePlaybackClock,
+} = usePlayer();
 const { setQueue } = usePlaybackQueue();
 const { selectedPlaylist, initialize: initializePlaylists } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
@@ -192,11 +199,7 @@ const isSelectedTrackPlaying = computed(
     playerState.track?.id === state.selectedTrackId,
 );
 const currentTrackId = computed(() => playerState.track?.id ?? null);
-const currentLyricsPositionMs = computed(() =>
-  isSelectedTrackPlaying.value
-    ? (playerState.currentTime + state.offsetSeconds) * 1000
-    : null,
-);
+const currentLyricsPositionMs = shallowRef(null);
 const playbackState = computed(() =>
   deriveLyricsPlaybackState(
     displayLyricsDocument.value,
@@ -205,12 +208,23 @@ const playbackState = computed(() =>
   ),
 );
 const experimentalLyrics = useExperimentalLyrics({
+  playbackState: () => playerState,
+  samplePlaybackClock,
   document: lyricsDocument,
   trackId: () => state.selectedTrackId,
   filename: () => state.selectedSourceFilename,
   offsetMs: () => Math.round(state.offsetSeconds * 1000),
   positionMs: currentLyricsPositionMs,
   variant: lyricsTextVariant,
+});
+const lyricsClock = useLyricsClock({
+  playerState,
+  samplePlaybackClock,
+  selectedTrackId: () => state.selectedTrackId,
+  offsetMs: () => state.offsetSeconds * 1000,
+  document: () =>
+    experimentalLyrics.outputDocument.value ?? displayLyricsDocument.value,
+  positionMs: currentLyricsPositionMs,
 });
 
 function setLyricsTextVariant(variant) {
@@ -424,6 +438,7 @@ if (
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
+    lyricsClock.stop();
     stopPlayerSync();
     stopLibrarySync();
     stopLibraryErrorSync();
@@ -452,7 +467,7 @@ export function useLyrics() {
     playbackState,
     isSelectedTrackPlaying,
     currentTrackId,
-    currentLyricsPositionMs,
+    currentLyricsPositionMs: readonly(currentLyricsPositionMs),
     isReloading,
     initialize,
     refresh,

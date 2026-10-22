@@ -68,6 +68,50 @@ function setup(bridge) {
   return { owner, scope, document, positionMs, offsetMs, filename, trackId };
 }
 describe('manual experimental lyric application', () => {
+  it('carries independent fine ranges to both displays while keeping the coarse onset unchanged', async () => {
+    const unit = { unitId: 'fine', from: 0, to: 1, startMs: 1200, endMs: 1600 };
+    const input = setup();
+    await nextTick();
+    const estimate = JSON.parse(JSON.stringify(input.owner.estimate.value));
+    estimate.preview.lines[0].fineTiming = { version: 1, units: [unit] };
+    input.scope.stop();
+    const { owner, scope, positionMs } = setup({
+      getExperimentalLyricsEstimate: async () => estimate,
+    });
+    await nextTick();
+    owner.setApplied(true);
+    positionMs.value = 1000;
+    expect(owner.frame.value.chunks[0].state).toBe('active');
+    expect(owner.frame.value.fineTiming.units).toEqual([unit]);
+    expect(
+      owner.outputDocument.value.lines[0].estimatedFineTiming.units,
+    ).toEqual([unit]);
+    expect(
+      owner.outputDocument.value.lines[0].estimatedStarts.segments[0].startMs,
+    ).toBe(1000);
+    scope.stop();
+  });
+  it('keeps exact onset highlights without turning the following gap into a delayed sweep', async () => {
+    const { owner, scope, positionMs } = setup();
+    await nextTick();
+    owner.setApplied(true);
+    try {
+      for (const at of [999, 1000, 1050, 2999, 3000, 3050, 1050]) {
+        positionMs.value = at;
+        const chunks = owner.frame.value.chunks;
+        expect(chunks[0].state).toBe(
+          at < 1000 ? 'upcoming' : at < 3000 ? 'active' : 'past',
+        );
+        expect(chunks[1].state).toBe(at < 3000 ? 'upcoming' : 'active');
+        for (const chunk of chunks) {
+          expect(chunk).not.toHaveProperty('progress');
+          expect(chunk).not.toHaveProperty('displaySweep');
+        }
+      }
+    } finally {
+      scope.stop();
+    }
+  });
   it('does not send transient track/source pairs while selection changes synchronously', async () => {
     const read = vi.fn(async () => ({ status: 'missing' }));
     const { scope, trackId, filename } = setup({

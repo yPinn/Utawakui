@@ -89,6 +89,7 @@
 ### 歌詞
 
 - `useLyrics.js` 是唯一 public owner：選曲、播放投影、canonical `lyricsDocument`（給 timing／讀音編輯）與衍生 `displayLyricsDocument`（給工作區與 Output）。中文內容預設以 bundled `opencc-js` 的 `s2tw-v1` 投影為台灣繁體，可切回原文；只依實際 script 判斷，不改寫任何來源、timing 或 id。T2 先整行轉換再依等長邊界切回 segment。`lyricsTextVariantLoader.js` 延遲載入 converter，發布前等待並重查 request identity。
+- `usePlayer.samplePlaybackClock()` 同步唯讀採樣 audio 位置、實際倍率、phase、identity 與配對時間，不回寫 transport state。`useLyrics` 內部的 `lyrics/useLyricsClock.js` 在既有 timeupdate／控制事件與 T1／T2／已套用 T1+ 起點期限重新讀取媒體，只更新歌詞顯示位置；晚到不累加推算位置。Output publisher 在內容傳送 await 後與拒絕重試前重查文件／continuity，再採樣發布，手動演出維持其虛擬投影。細節見[歌詞時間契約](contracts/lyrics-timing-contract.md)與[Output 契約](contracts/output-runtime.md)。
 - 內部 composable 以具名依賴組合、不互相 import：`lyrics/useLyricsAcquisition.js`（手動候選搜尋，與 dormant Musixmatch probe）、`lyrics/useLyricsSourceDocuments.js`（本機來源、offset、timing、label、刪除與匯入）。Main 端行為見[歌詞來源契約](contracts/lyrics-sources.md)。
 - 演唱工具「歌詞」與曲庫歌詞編輯共用 `useLyrics`／`useLyricsReading`；`useLyricsDisplay` 協調顯示選項與讀音準備，不持有第二份讀音文件。兩頁共用 `LyricsSourceControl` 與 `LyricsSourceManagerModal`；文字、讀音修正與時間編輯只在曲庫編輯頁。逐字校時能力由 `lyricsTiming.js` 判斷。
 - 讀音：`useLyricsReading` 驗證 canonical identity、合併讀取並持有產生鎖；讀取失敗不視為缺檔。Reading sidecar v3 由 main 持有 documentId、normalizer profile、來源 fingerprint 與 line identity；文字相容的 v1／v2 原子 re-key 並保留人工修正。日文 worker 先把 kuromoji 欄位轉成中立 token，再交給純 builder。
@@ -100,8 +101,11 @@
 - T1 聲學估計另存 `lyrics/acoustic-estimates/<sourceFilename>.json`，由 `lyricsAcousticEstimates.js` 驗證並原子保存；`useLyricsAcousticPreview` 只持有 session 啟用選擇，不寫入 canonical segments。正式 loader 預設拒用研究模型。見 [ADR 0026](adr/0026-t1-acoustic-estimates.md) 與[聲學估計契約](contracts/lyrics-acoustic-estimate-contract.md)。
 - `electron/lib/lyricsAcoustic/` 持有選配環境生命週期（固定 catalog／SHA、獨立 capability、共用 Audio Python host 與 heavy-job scheduler）；Settings 經 `useLyricsAcousticCapability` 與六個零參數 IPC 操作。正式 catalog 仍被 `weights-evidence-pending` 擋住。
 - 實驗性研究：`electron/lib/lyricsResearch/` 管理隔離下載、完整性、載入與片段；`main/lyrics/researchHandlers.js` 只接收有界意圖；環境在 userData `lyrics-research/installed`，不寫正式 activation。預設關閉的 `experimentalLyricsAfterSeparation` 在分離結果發布後經 `lyricsResearch/automatic.js` 接續分析，結果由 `estimates.js` 驗證後寫入 `lyrics/experimental-estimates/`。`lyricsResearch/language.js` 以歌詞正文辨識中／日／英，證據不足保留未知。
-- 實驗分析由 `lyricsResearch/language.js` 派生逐行語言計畫，`engine.js` 與研究 job 共用同一計畫／CPU 聲學窗，內容查核依行語言執行；來源與手選只作主要語言提示，句內混語維持 T1。估計封套 v4 綁定計畫與配方版本，舊配方需重新分析。
+- 實驗分析由 `lyricsResearch/language.js` 派生逐行語言計畫，`engine.js` 與研究 job 共用同一計畫／CPU 聲學窗，內容查核依行語言執行；來源與手選只作主要語言提示，句內混語維持 T1。估計封套 v5 綁定計畫與細時間配方，schema 2 可另存中日模型 Word 起訖及精確 occurrence 文字範圍；跨框／重疊／缺 end 不補猜。前一配方 schema 1 可繼續載入粗提示。
 - `useExperimentalLyrics` 持有手動套用狀態，交付本機閱讀區與 Output（`outputDocument` 經 `useOutputProjectionPublisher` 以既有 v3 revision 發布；line 的可選 `estimatedStarts` 由 `shared/outputStreamContract.js` 驗證）。`LyricsSourceAnalysis` 只對目前來源提供分析、取消與套用。Offset 變更即解除套用。
+- 長句容量：`shared/presentation/lyricsDisplayLayout.mjs` 持有保真候選、頁面與時間依據，`lyricsDisplayFrame.mjs` 投影既有模板；`overlay/lyrics/lyricsFit.mjs` 與本地 `usePerformerLyricsFit` 各持有 DOM 量測及失效快取，使用同一播放器時鐘，量測不進播放 tick。T1+ 按模型起點立即提示整段，不以相鄰起點／句尾推算主提示的掃完時間；模型起點與 canonical T2 保持分離，讀音、字型與視窗尺寸納入可見驗收。
+- Output 歌詞 scheduler 以絕對 deadline 扣除同步準備／commit 耗時；跨界後有限次重投影，過期 generation 不提交。Focus 在設定、字型與啟用後以可取消工作先讀既有容器樣式，不寫未來歌詞或取代正式 fit。`lyricsTrace=1` 才啟用有界數值 stage trace，預設關閉，不記歌詞文字。見[Output 長尾延遲修正](operations/lyrics-output-tail-fix-2026-10-22.md)。
+- T1+ 本地 document reader 與 Output Focus 另沿用 `estimatedFineTiming` v1：`shared/presentation/lyricsFineFrame.mjs` 持有純範圍／進度投影，`shared/browser/lyricsFinePaint.mjs` 只持有局部 DOM 動畫；`LyricsFineText.vue` 與 `overlay/lyrics/lyricsFine.mjs` 各持有可讀基底與視覺副本。分段底線準時提示，細填色依模型單位時長；小格只分配原單位進度，不增加字時間。內容修訂時驗證轉換重建與範圍，播放不做模型／文字轉換／幾何量測；失效取消、不補播，保留 Output displayDelay。無細資料回原提示，T2 優先、其他模板與 Self-View 維持既有行為。
 - 研究 CLI 在 `scripts/research/`，不進封裝（App 試用只明列所需推論模組）。選型見[研究結論](research/lyrics-alignment/lyrics-alignment-summary.md)，步驟見[試用手冊](operations/lyrics-alignment-research.md)。
 
 ### Settings 與通知

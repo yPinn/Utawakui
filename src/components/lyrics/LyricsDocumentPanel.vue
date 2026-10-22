@@ -17,6 +17,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import LyricsFineText from './LyricsFineText.vue';
 
 const props = defineProps({
   experimentalFrame: { type: Object, default: null },
@@ -355,6 +356,11 @@ watch(
             'lyrics-line--active': index === activeLineIndex,
             'lyrics-line--past': index < activeLineIndex,
             'lyrics-line--ruby': showsFurigana,
+            'lyrics-line--fine':
+              experimentalFrame?.fineTiming &&
+              experimentalFrame.lineId === line.lineId &&
+              experimentalFrame.text === line.text &&
+              index === activeLineIndex,
           }"
         >
           <div
@@ -413,8 +419,22 @@ watch(
               <span class="lyrics-line__text-group" :lang="lyricsLang">
                 <span class="lyrics-line__text"
                   ><span class="lyrics-line__ink">
-                    <template
+                    <LyricsFineText
                       v-if="
+                        experimentalFrame?.fineTiming &&
+                        experimentalFrame.lineId === line.lineId &&
+                        experimentalFrame.text === line.text &&
+                        index === activeLineIndex
+                      "
+                      :frame="experimentalFrame"
+                      :presentation="presentation"
+                      :reading-gaps="rubyGaps[index]"
+                      :reading-segments="
+                        showsFurigana ? readingLines[index]?.segments : null
+                      "
+                    />
+                    <template
+                      v-else-if="
                         showsFurigana && readingLines[index]?.segments?.length
                       "
                     >
@@ -637,6 +657,12 @@ watch(
 }
 .lyrics-line--active .lyrics-line__row {
   background: var(--ui-color-accent);
+}
+.lyrics-line--fine .lyrics-line__row {
+  background: transparent;
+}
+.lyrics-line--fine {
+  color: var(--ui-color-text);
 }
 .lyrics-line__time {
   font-size: var(--ui-font-size-sm);

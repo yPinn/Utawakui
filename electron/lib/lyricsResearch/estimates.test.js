@@ -9,6 +9,7 @@ import {
   loadExperimentalEstimate,
 } from './estimates.js';
 import { saveTrackLyricsManifest } from '../library/lyrics.js';
+import { createAcousticEstimate } from '../library/lyricsAcousticEstimates.js';
 let root, track, input, result;
 beforeEach(async () => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'experimental-estimate-'));
@@ -46,6 +47,113 @@ beforeEach(async () => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 describe('separate experimental estimate persistence', () => {
+  it('preserves coarse publication when optional fine data leaves no room for the wrapper', async () => {
+    await saveExperimentalEstimate(input, result, () => true);
+    const file = path.join(
+      track,
+      'lyrics/experimental-estimates/main.vtt.json',
+    );
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const lines = Array.from({ length: 180 }, (_, i) => ({
+      lineId: `line-${i}`,
+      text: '字'.repeat(100),
+      startMs: i * 10000 + 1000,
+      endMs: i * 10000 + 11000,
+    }));
+    const chunks = lines.map((line, i) => [
+      { chunkId: `chunk-${i}-0`, from: 0, to: 50, startMs: line.startMs },
+      {
+        chunkId: `chunk-${i}-1`,
+        from: 50,
+        to: 100,
+        startMs: line.startMs + 5000,
+      },
+    ]);
+    const fineTimingByLine = lines.map((line, i) => ({
+      version: 1,
+      units: Array.from({ length: 100 }, (_, j) => ({
+        unitId: `fine-${i}-${j}`,
+        from: j,
+        to: j + 1,
+        startMs: line.startMs + j * 100,
+        endMs: line.startMs + j * 100 + 80,
+      })),
+    }));
+    const context = { ...input.context, method: raw.estimate.method };
+    const canonical = { ...input.canonical, lines };
+    const initial = createAcousticEstimate(context, canonical, chunks, {
+      fineTimingByLine,
+    });
+    expect(initial.schemaVersion).toBe(2);
+    let padding = 2097152 - 1000 - Buffer.byteLength(JSON.stringify(initial));
+    expect(padding).toBeGreaterThan(0);
+    for (const fine of fineTimingByLine)
+      for (const unit of fine.units) {
+        const count = Math.min(padding, 128 - unit.unitId.length);
+        unit.unitId += 'x'.repeat(count);
+        padding -= count;
+      }
+    expect(padding).toBe(0);
+    const saved = await saveExperimentalEstimate(
+      { ...input, canonical },
+      {
+        lines: lines.map((line, i) => ({
+          ...line,
+          chunks: chunks[i],
+          fineTiming: fineTimingByLine[i],
+        })),
+      },
+      () => true,
+    );
+    expect(saved.preview.lines.every((line) => !line.fineTiming)).toBe(true);
+    expect(saved.preview.lines.map((line) => line.chunks)).toEqual(chunks);
+    expect(fs.statSync(file).size).toBeLessThanOrEqual(2097152);
+  });
+  it('roundtrips partial fine intervals and still loads the preceding coarse-only method', async () => {
+    const fineTiming = {
+      version: 1,
+      units: [{ unitId: 'fine-0', from: 0, to: 1, startMs: 1100, endMs: 1400 }],
+    };
+    result.lines[0].fineTiming = fineTiming;
+    const saved = await saveExperimentalEstimate(input, result, () => true);
+    expect(saved.preview.lines[0].fineTiming).toEqual(fineTiming);
+    expect(loadExperimentalEstimate(input).preview.lines[0].fineTiming).toEqual(
+      fineTiming,
+    );
+    const file = path.join(
+      track,
+      'lyrics/experimental-estimates/main.vtt.json',
+    );
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    expect(raw.version).toBe(5);
+    expect(raw.estimate.method.chunkerVersion).toContain('occurrence');
+    const previousMethod = {
+      ...raw.estimate.method,
+      version: '3',
+      decoderVersion: 'hfa-small-per-line-v3',
+      g2pVersion: 'hfa-zh-ja-en-per-line-v3',
+      chunkerVersion: 'hfa-starts-v1',
+    };
+    const legacy = createAcousticEstimate(
+      {
+        source: raw.estimate.source,
+        audio: raw.estimate.audio,
+        method: previousMethod,
+      },
+      input.canonical,
+      result.lines.map((line) => line.chunks),
+    );
+    fs.writeFileSync(
+      file,
+      JSON.stringify({ ...raw, version: 4, estimate: legacy }),
+    );
+    const loaded = loadExperimentalEstimate(input);
+    expect(loaded.status).toBe('ready');
+    expect(loaded.preview.lines[0].chunks).toEqual(
+      saved.preview.lines[0].chunks,
+    );
+    expect(loaded.preview.lines[0]).not.toHaveProperty('fineTiming');
+  });
   it('binds every routed occurrence and retains readable legacy envelopes without accepting old methods', async () => {
     await saveExperimentalEstimate(input, result, () => true);
     const file = path.join(
@@ -112,7 +220,7 @@ describe('separate experimental estimate persistence', () => {
       'lyrics/experimental-estimates/main.vtt.json',
     );
     const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-    expect(raw.version).toBe(4);
+    expect(raw.version).toBe(5);
     raw.validation.checked = 0;
     fs.writeFileSync(file, JSON.stringify(raw));
     expect(loadExperimentalEstimate(input).status).toBe('corrupt');
@@ -128,7 +236,7 @@ describe('separate experimental estimate persistence', () => {
       'lyrics/experimental-estimates/main.vtt.json',
     );
     const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-    expect(raw.version).toBe(4);
+    expect(raw.version).toBe(5);
     expect(raw.routing.hint).toBe('ja');
     expect(loadExperimentalEstimate(input).status).toBe('ready');
     expect(

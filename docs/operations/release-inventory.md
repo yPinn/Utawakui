@@ -393,6 +393,22 @@ under the existing `shared/**/*` package rule and one exact Browser Source modul
 route. It has no model, worker, new dependency or additional unpacked payload;
 its tests remain excluded. The closed HTTP module-graph test checks delivery.
 
+Capacity-aware lyrics add `shared/presentation/lyricsDisplayLayout.mjs`,
+`lyricsDisplayFrame.mjs` and `overlay/lyrics/lyricsFit.mjs` under those same
+package rules and exact HTTP module routes. They provide bounded text pages,
+separate display-time provenance and local font/container measurement, with no
+new model, dependency or unpacked payload. Co-located tests remain excluded;
+the closed module-graph delivery test covers all three routes.
+
+Continuous T1+ ink adds `shared/lyricsFineTiming.mjs`,
+`shared/presentation/lyricsFineFrame.mjs`, `shared/browser/lyricsFinePaint.mjs`
+and `overlay/lyrics/lyricsFine.mjs` under the existing package globs. Their exact
+Browser Source routes are JavaScript-only; version-one fine limits are fixed and
+checked against canonical limits without adding a JSON-module syntax requirement.
+The closed module-graph test verifies these routes;
+co-located tests remain excluded. The renderer fine-text component ships through
+Vite. No model, dependency, worker or unpacked payload is added.
+
 The explicit research runtime allowlist also includes `scripts/research/lyricsAcoustic/english.cjs`
 for English word ranges and comparison normalization. It runs in main; no additional
 weight, runtime download or unpacked worker is introduced. The existing pinned model

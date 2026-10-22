@@ -188,6 +188,80 @@ function mapStarts(words, spans, windowStartMs, offsetMs) {
   return result;
 }
 
+// Decoder word indices already name source occurrences, including repeated text.
+// Missing/invalid ends decline only fine paint; coarse starts remain unchanged.
+function mapFineTiming(line, words, spans, windowStartMs, offsetMs) {
+  if (
+    !Array.isArray(spans) ||
+    spans.length > 2000 ||
+    !Array.isArray(words) ||
+    !Number.isSafeInteger(windowStartMs) ||
+    !Number.isSafeInteger(offsetMs) ||
+    typeof line?.text !== 'string' ||
+    line.text.length > 2000 ||
+    !Number.isSafeInteger(line.startMs) ||
+    !Number.isSafeInteger(line.endMs)
+  )
+    return null;
+  const safe = new Set([
+    0,
+    ...Array.from(
+      graphemes.segment(line.text),
+      (p) => p.index + p.segment.length,
+    ),
+  ]);
+  const units = [];
+  let previousIndex = -1,
+    previousTo = 0,
+    previousEnd = line.startMs;
+  let previousRawEnd = line.startMs;
+  for (const span of spans) {
+    const word = words[span?.index];
+    if (!Number.isInteger(span?.index) || span.index <= previousIndex || !word)
+      continue;
+    previousIndex = span.index;
+    if (
+      typeof word.text !== 'string' ||
+      !Number.isSafeInteger(word.from) ||
+      !Number.isSafeInteger(word.to) ||
+      !safe.has(word.from) ||
+      !safe.has(word.to) ||
+      word.from < previousTo ||
+      word.to <= word.from ||
+      line.text.slice(word.from, word.to) !== word.text ||
+      !Number.isFinite(span.start) ||
+      !Number.isFinite(span.end)
+    )
+      continue;
+    const rawStart = span.start * 1000 + windowStartMs + offsetMs;
+    const rawEnd = span.end * 1000 + windowStartMs + offsetMs;
+    // Do not let millisecond rounding turn a crossed frame or overlap into evidence.
+    if (rawStart < previousRawEnd || rawEnd <= rawStart || rawEnd > line.endMs)
+      continue;
+    const startMs = Math.round(rawStart);
+    const endMs = Math.round(rawEnd);
+    if (
+      !Number.isSafeInteger(startMs) ||
+      !Number.isSafeInteger(endMs) ||
+      startMs < previousEnd ||
+      endMs <= startMs ||
+      endMs > line.endMs
+    )
+      continue;
+    units.push({
+      unitId: `${line.lineId}-f-${word.from.toString(36)}`,
+      from: word.from,
+      to: word.to,
+      startMs,
+      endMs,
+    });
+    previousTo = word.to;
+    previousEnd = endMs;
+    previousRawEnd = rawEnd;
+  }
+  return units.length ? { version: 1, units } : null;
+}
+
 function scoreCuts(cuts, references, predictions) {
   const requestedCuts = cuts.slice(1, -1),
     errors = [];
@@ -220,5 +294,6 @@ module.exports = {
   japaneseWords,
   planWindows,
   mapStarts,
+  mapFineTiming,
   scoreCuts,
 };

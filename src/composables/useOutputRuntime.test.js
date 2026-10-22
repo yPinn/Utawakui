@@ -40,8 +40,19 @@ let arrangementActive;
 let arrangementCurrent;
 let arrangementPlanState;
 let experimentalLyrics;
+let mediaPositionMs;
+let samplePlaybackClock;
 
 beforeEach(() => {
+  mediaPositionMs = null;
+  samplePlaybackClock = vi.fn(({ now }) => ({
+    trackId: playerState.track?.id ?? null,
+    continuityRevision: playerState.continuityRevision,
+    positionMs: mediaPositionMs ?? playerState.currentTime * 1000,
+    rate: playerState.tempoRate,
+    phase: playerState.playbackPhase,
+    sampledAt: now(),
+  }));
   experimentalLyrics = { outputDocument: shallowRef(null) };
   vi.resetModules();
   arrangementActive = shallowRef(false);
@@ -180,7 +191,7 @@ beforeEach(() => {
   vi.stubGlobal('window', { Utawakui: bridge });
 
   vi.doMock('./usePlayer.js', () => ({
-    usePlayer: () => ({ state: playerState }),
+    usePlayer: () => ({ state: playerState, samplePlaybackClock }),
   }));
   vi.doMock('./usePerformanceSessionPlayback.js', () => ({
     usePerformanceSessionPlayback: () => ({
@@ -302,6 +313,203 @@ it('deduplicates concurrent UI opens while the main operation is pending', async
 });
 
 describe('output source handshake', () => {
+  async function initializePlaying() {
+    playerState.track = { id: 'a', title: 'A', url: 'media://a' };
+    playerState.playbackPhase = 'playing';
+    playerState.currentTime = 1;
+    const runtime = await loadRuntime();
+    const initializing = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initializing;
+    bridge.publishOutputSnapshot.mockClear();
+    return runtime;
+  }
+
+  it('pairs fresh media with publication time after awaiting documents and on offset/rate updates', async () => {
+    const runtime = await initializePlaying();
+    const pending = deferred();
+    bridge.publishOutputSnapshot.mockImplementationOnce(() => pending.promise);
+    const refresh = runtime.refreshProjection();
+    await flushMicrotasks();
+    mediaPositionMs = 1456;
+    pending.resolve(true);
+    await refresh;
+    const state = bridge.publishOutputSnapshot.mock.calls
+      .map(([e]) => e)
+      .filter((e) => e.stream === 'state.snapshot')
+      .at(-1);
+    expect(state.payload.playback.positionMs).toBe(1456);
+    expect(state.payload.generatedAt).toBe(
+      samplePlaybackClock.mock.results.at(-1).value.sampledAt,
+    );
+    mediaPositionMs = 1666;
+    playerState.tempoRate = 1.25;
+    lyricsState.offsetSeconds = 0.2;
+    await flushMicrotasks();
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.at(-1)[0].payload,
+    ).toMatchObject({
+      playback: { positionMs: 1666, rate: 1.25 },
+      lyrics: { offsetMs: 200 },
+    });
+  });
+
+  it('resamples when rejected state recovery waits for status', async () => {
+    await initializePlaying();
+    bridge.publishOutputSnapshot.mockImplementationOnce(async () => {
+      mediaPositionMs = 1800;
+      return false;
+    });
+    lyricsState.offsetSeconds = 0.1;
+    await flushMicrotasks();
+    const states = bridge.publishOutputSnapshot.mock.calls
+      .map(([e]) => e)
+      .filter((e) => e.stream === 'state.snapshot');
+    expect(states).toHaveLength(2);
+    expect(states[1].payload.playback.positionMs).toBe(1800);
+  });
+
+  it('abandons a rejected state recovery when continuity changed during the response', async () => {
+    await initializePlaying();
+    bridge.publishOutputSnapshot.mockImplementationOnce(async () => {
+      playerState.track = { id: 'b', title: 'B', url: 'media://b' };
+      playerState.continuityRevision++;
+      mediaPositionMs = 50;
+      return false;
+    });
+    lyricsState.offsetSeconds = 0.1;
+    await flushMicrotasks();
+    const states = bridge.publishOutputSnapshot.mock.calls
+      .map(([e]) => e)
+      .filter((e) => e.stream === 'state.snapshot');
+    expect(states[0].payload.playback.track.id).toBe('a');
+    expect(
+      states.slice(1).every((e) => e.payload.playback.track.id === 'b'),
+    ).toBe(true);
+    expect(states.at(-1)).toMatchObject({
+      kind: 'full',
+      payload: { playback: { positionMs: 50 } },
+    });
+  });
+
+  it('skips stale content after a document wait crosses a track continuity change', async () => {
+    const runtime = await initializePlaying();
+    const pending = deferred();
+    bridge.publishOutputSnapshot.mockImplementationOnce(() => pending.promise);
+    const refresh = runtime.refreshProjection();
+    await flushMicrotasks();
+    playerState.track = { id: 'b', title: 'B', url: 'media://b' };
+    playerState.continuityRevision++;
+    mediaPositionMs = 300;
+    await flushMicrotasks();
+    pending.resolve(true);
+    await refresh;
+    const states = bridge.publishOutputSnapshot.mock.calls
+      .map(([e]) => e)
+      .filter((e) => e.stream === 'state.snapshot');
+    expect(states.length).toBeGreaterThan(0);
+    expect(states.every((e) => e.payload.playback.track.id === 'b')).toBe(true);
+    expect(states[0].kind).toBe('full');
+  });
+
+  it('does not reference an old lyrics document if the selected source changes during delivery', async () => {
+    const runtime = await initializePlaying();
+    selectedLyricsTrack.value = { id: 'a' };
+    lyricsDocument.value = {
+      documentId: 'old',
+      granularity: 'T1',
+      lines: [{ lineId: 'one', text: 'Old', startMs: 0, endMs: 5000 }],
+    };
+    await flushMicrotasks();
+    bridge.publishOutputSnapshot.mockClear();
+    const pending = deferred();
+    bridge.publishOutputSnapshot.mockImplementationOnce(() => pending.promise);
+    const refresh = runtime.refreshProjection();
+    await flushMicrotasks();
+    lyricsDocument.value = {
+      documentId: 'new',
+      granularity: 'T1',
+      lines: [{ lineId: 'two', text: 'New', startMs: 1000, endMs: 5000 }],
+    };
+    mediaPositionMs = 1500;
+    await flushMicrotasks();
+    pending.resolve(true);
+    await refresh;
+    const states = bridge.publishOutputSnapshot.mock.calls
+      .map(([e]) => e)
+      .filter((e) => e.stream === 'state.snapshot');
+    expect(states.length).toBeGreaterThan(0);
+    expect(states.every((e) => e.payload.lyrics.documentId === 'new')).toBe(
+      true,
+    );
+    expect(states[0].kind).toBe('update');
+    expect(states.at(-1).payload.lyrics.activeLineId).toBe('two');
+  });
+
+  it('keeps manual arrangement position and rate independent of physical media sampling', async () => {
+    await initializePlaying();
+    mediaPositionMs = 9000;
+    playerState.tempoRate = 1.5;
+    const manual = {
+      itemId: 'manual',
+      mode: 'manual',
+      displayTitle: 'Manual',
+      progress: 'playing',
+    };
+    arrangementPlanState.plan.items = [manual];
+    arrangementCurrent.value = manual;
+    arrangementActive.value = true;
+    await flushMicrotasks();
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.at(-1)[0].payload.playback,
+    ).toMatchObject({
+      positionMs: 0,
+      rate: 1,
+      status: 'playing',
+      track: { id: 'manual' },
+    });
+  });
+
+  it('keeps document replacement within an accepted epoch against the real Projection Hub', async () => {
+    const { createOutputProjectionHub } =
+      await import('../../electron/lib/outputProjection.js');
+    const hub = createOutputProjectionHub({ bootId: 'boot-main' });
+    hub.connectSource('clock-test');
+    const receipts = [];
+    bridge.publishOutputSnapshot.mockImplementation(async (envelope) => {
+      const accepted = hub.publish(envelope, 'clock-test');
+      receipts.push({ envelope, accepted });
+      return accepted;
+    });
+    selectedLyricsTrack.value = { id: 'a' };
+    lyricsDocument.value = {
+      documentId: 'old',
+      granularity: 'T1',
+      lines: [{ lineId: 'one', text: 'Old', startMs: 0, endMs: 5000 }],
+    };
+    const runtime = await initializePlaying();
+    const pending = deferred();
+    bridge.publishOutputSnapshot.mockImplementationOnce(async (envelope) => {
+      const accepted = hub.publish(envelope, 'clock-test');
+      receipts.push({ envelope, accepted });
+      await pending.promise;
+      return accepted;
+    });
+    const refresh = runtime.refreshProjection();
+    await flushMicrotasks();
+    lyricsDocument.value = {
+      documentId: 'new',
+      granularity: 'T1',
+      lines: [{ lineId: 'two', text: 'New', startMs: 0, endMs: 5000 }],
+    };
+    await flushMicrotasks();
+    pending.resolve();
+    await expect(refresh).resolves.toBe(true);
+    expect(receipts.length).toBeGreaterThan(4);
+    expect(receipts.every(({ accepted }) => accepted)).toBe(true);
+  });
   it('publishes arrangement labels and confirmed results, then returns to ordinary playback without modifying either owner', async () => {
     const runtime = await loadRuntime();
     playerState.track = { id: 'track-1', title: 'Canonical', url: 'private' };

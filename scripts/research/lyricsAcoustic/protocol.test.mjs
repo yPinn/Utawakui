@@ -6,10 +6,78 @@ const {
   japaneseWords,
   planWindows,
   mapStarts,
+  mapFineTiming,
   scoreCuts,
 } = protocol;
 
 describe('research acoustic text and window protocol', () => {
+  it('retains actual source occurrences and ends while declining invalid fine units only', () => {
+    const line = {
+      lineId: 'line',
+      text: '你好世界',
+      startMs: 1000,
+      endMs: 4000,
+    };
+    const words = lexicalUnits(line.text, 'zh');
+    const spans = [
+      { index: 0, start: 0.9, end: 1.2 },
+      { index: 1, start: 1.4, end: 1.8 },
+      { index: 2, start: 1.7, end: 2.2 },
+      { index: 3, start: 2.7, end: 3.2 },
+    ];
+    const before = [...mapStarts(words, spans, 0, 0)];
+    expect(mapFineTiming(line, words, spans, 0, 0)).toEqual({
+      version: 1,
+      units: [
+        { unitId: 'line-f-1', from: 1, to: 2, startMs: 1400, endMs: 1800 },
+        { unitId: 'line-f-3', from: 3, to: 4, startMs: 2700, endMs: 3200 },
+      ],
+    });
+    expect([...mapStarts(words, spans, 0, 0)]).toEqual(before);
+    expect(
+      mapFineTiming(line, words, [{ index: 1, start: 2 }], 0, 0),
+    ).toBeNull();
+    expect(
+      mapFineTiming(
+        line,
+        [{ ...words[1], text: '錯' }],
+        [{ index: 0, start: 2, end: 2.2 }],
+        0,
+        0,
+      ),
+    ).toBeNull();
+    expect(
+      mapFineTiming(line, words, [{ index: 0, start: 0.9999, end: 1.4 }], 0, 0),
+    ).toBeNull();
+    expect(
+      mapFineTiming(line, words, [{ index: 0, start: 1.1, end: 4.0001 }], 0, 0),
+    ).toBeNull();
+  });
+  it('maps Japanese mora and kanji words as indivisible source units and never guesses phone cuts', () => {
+    const text = 'きゃ世界';
+    const words = japaneseWords(text, () => [
+      { surface: 'きゃ', reading: 'キャ' },
+      { surface: '世界', reading: 'セカイ' },
+    ]);
+    expect(
+      mapFineTiming(
+        { lineId: 'ja', text, startMs: 1100, endMs: 4100 },
+        words,
+        [
+          { index: 0, start: 0.5, end: 1 },
+          { index: 1, start: 1.2, end: 2.8 },
+        ],
+        500,
+        100,
+      ),
+    ).toEqual({
+      version: 1,
+      units: [
+        { unitId: 'ja-f-0', from: 0, to: 2, startMs: 1100, endMs: 1600 },
+        { unitId: 'ja-f-2', from: 2, to: 4, startMs: 1800, endMs: 3400 },
+      ],
+    });
+  });
   it('uses only explicit small cardinal pronunciations and leaves ambiguous numbers unsupported', () => {
     expect(lexicalUnits('I have 2 dreams', 'en')[2]).toMatchObject({
       text: '2',

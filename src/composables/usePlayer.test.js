@@ -290,6 +290,7 @@ describe('guide vocal defaults', () => {
         'restartTrack',
         'registerBeforePlaybackStart',
         'restorePlaybackState',
+        'samplePlaybackClock',
         'seek',
         'setCaptureGuideVocalOn',
         'setCaptureGuideVocalValue',

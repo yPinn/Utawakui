@@ -306,6 +306,63 @@ sidecars. It carries only aligned `lineId`, line text, and bounded
 paths, edit flags, and worker state remain private. A reading change advances the
 `lyrics.document` content revision before state references it.
 
+## Capacity-aware display pages
+
+The local document reader's display position is owned by `useLyrics`, through
+`lyrics/useLyricsClock.js`. A prepared boundary index includes canonical line and
+segment starts/ends and applied T1+ starts. A deadline only triggers a fresh
+read-only `usePlayer.samplePlaybackClock()` sample of the HTML audio element; it
+never advances a predicted media position or writes transport state. The current
+offset is applied once. Late callbacks select the actual current position, and
+early callbacks reschedule with a minimum four-millisecond timer delay.
+
+Media events, track/continuity, source/application, offset and rate changes
+invalidate the pending deadline. Vue batches transport writes before sampling,
+so a rate change cannot pair new reactive rate intent with an old element rate.
+Paused, buffering, seeking and ended samples do not schedule further deadlines;
+resume resamples. Module disposal stops the watcher and timer. This reduces the
+wait for the next `timeupdate` without a global frame ticker or a second clock.
+T1+ retains its entire active chunk's immediate onset cue. The local document
+reader and Output Focus may add continuous ink from separately retained actual
+model unit intervals. A unit's visual interpolation never supplies canonical
+T2, a guessed end, or additional smoothing delay. Paint cells only divide its
+display progress, preserving wrap and reading order without asserting character
+timestamps. Pause, seek, rate and offset updates cancel obsolete paint.
+
+`lyricsDisplayLayout.mjs` owns bounded single-language and mixed-script display
+pages. It accepts a surface's measured capacity, preserves UTF-16 source ranges
+at grapheme boundaries, and tries usable source-time candidates before falling
+back to display estimates. It never rewrites a source document or canonical tier.
+The existing word/particle rules supply candidates, not semantic understanding.
+
+All six Lyrics templates use this planner through the local `lyricsFit.mjs`
+adapter. Font, appearance and viewport changes invalidate its bounded cache;
+playback updates only select a page and its next deadline on the existing clock.
+Glyphs, ruby, strokes and motion require actual visible-surface verification.
+The local Performer uses the same pure planner with its own content-box measure
+and reading-scale invalidation. The document reader keeps canonical line identity
+and document scrolling. A source-inspector grouping example is explicitly nominal;
+it does not claim the dimensions of a separate Browser Source.
+
+Native T2 remains authoritative per line. Applied T1+ supplies coarse starts;
+optional fine evidence does not alter page timing or promote a timing tier.
+`pageTiming: model-starts` requires matching starts at page boundaries. Other
+boundaries use `pageTiming: layout-estimate`, independently of `sourceTiming`.
+This includes capacity cuts inside a coarse T2/model chunk. No estimated cut is
+published as acoustic evidence. T0/open unresolved intervals do not get invented
+page times. Estimated pages reserve at least 1.2 seconds at the current playback
+rate; insufficient duration/capacity returns `unfit`, preserving the planned
+content for inspection. Preview/Workbench and Performer provide a visible recovery
+hint. Arbitrarily small canvases or excessive text density are not successful
+fits. No font shrinking, ellipsis or dropped pages can establish acceptance.
+
+Completeness is measured after the selected content policy: literal/balanced
+retain source content; Live Stage's existing compact transformations remain
+intentional. Page packing adds no content removal or two-page limit. Partial ruby
+words do not receive a falsely aligned whole-word reading. Where only whole-line
+romaji exists, Performer preserves it as explicitly labelled whole-line reading
+and reserves its height rather than inventing a syllable mapping.
+
 ## Deferred decisions
 
 - automatic alignment provider and confidence representation;

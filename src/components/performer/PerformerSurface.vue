@@ -19,7 +19,12 @@ defineProps({
   },
 });
 
-defineEmits(['control', 'sync-action', 'update:readingScale']);
+defineEmits([
+  'control',
+  'sync-action',
+  'update:readingScale',
+  'display-boundary',
+]);
 </script>
 
 <template>
@@ -31,7 +36,11 @@ defineEmits(['control', 'sync-action', 'update:readingScale']);
     <div class="performer-surface__layout">
       <PerformerTrackContext class="performer-surface__track" :frame="frame" />
       <div class="performer-surface__cue-region">
-        <PerformerCueStack :frame="frame" />
+        <PerformerCueStack
+          :frame="frame"
+          :reading-scale="readingScale"
+          @display-boundary="$emit('display-boundary', $event)"
+        />
       </div>
       <section class="performer-surface__utility-rail" aria-label="提詞工具">
         <PerformerNextTrack

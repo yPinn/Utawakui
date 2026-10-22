@@ -1,9 +1,21 @@
 <script setup>
+import { computed, useTemplateRef } from 'vue';
+import { usePerformerLyricsFit } from '../../composables/usePerformerLyricsFit.js';
 import PerformerLyricCue from './PerformerLyricCue.vue';
 
-defineProps({
+const props = defineProps({
   frame: { type: Object, required: true },
+  readingScale: { type: String, default: 'desk' },
 });
+const emit = defineEmits(['display-boundary']);
+const host = useTemplateRef('host');
+const display = usePerformerLyricsFit(
+  computed(() => props.frame),
+  host,
+  (delay) => emit('display-boundary', delay),
+  { version: () => props.readingScale },
+);
+const fittedFrame = computed(() => display.frame.value);
 
 const modeMessages = {
   idle: '尚未播放曲目',
@@ -14,19 +26,30 @@ const modeMessages = {
 </script>
 
 <template>
-  <section class="performer-cue-stack" aria-live="polite">
-    <p v-if="frame.mode !== 'live'" class="performer-cue-stack__state">
-      {{ modeMessages[frame.mode] }}
+  <section ref="host" class="performer-cue-stack" aria-live="polite">
+    <p v-if="fittedFrame.mode !== 'live'" class="performer-cue-stack__state">
+      {{ modeMessages[fittedFrame.mode] }}
     </p>
     <PerformerLyricCue
-      :line="frame.currentLine"
-      :reading="frame.currentReading"
+      :line="fittedFrame.currentLine"
+      :reading="fittedFrame.currentReading"
       current
     />
-    <PerformerLyricCue :line="frame.nextLine" :reading="frame.nextReading" />
+    <PerformerLyricCue
+      :line="fittedFrame.nextLine"
+      :reading="fittedFrame.nextReading"
+    />
+    <p
+      v-if="display.plan.value?.status === 'unfit'"
+      class="performer-cue-stack__reading-status"
+    >
+      請放大視窗或調整閱讀距離，以完整顯示此句。
+    </p>
     <p
       v-if="
-        frame.mode === 'live' && frame.readingExpected && !frame.currentReading
+        fittedFrame.mode === 'live' &&
+        fittedFrame.readingExpected &&
+        !fittedFrame.currentReading
       "
       class="performer-cue-stack__reading-status"
     >

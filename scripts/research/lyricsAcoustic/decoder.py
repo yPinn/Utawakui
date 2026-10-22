@@ -52,6 +52,21 @@ def word_occurrences(path: list[int], mapping: list[int]) -> list[int]:
     return result
 
 
+def serialize_word_spans(occurrences: list[int], words: list, offset: float) -> list[dict]:
+    """Keep the original onset calculation; missing ends decline fine evidence only."""
+    spans = []
+    for index, word in zip(occurrences, words):
+        span = {"index": int(index), "start": float(word.start) + offset}
+        try:
+            end = float(word.end)
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            end = None
+        if end is not None and math.isfinite(end):
+            span["end"] = end + offset
+        spans.append(span)
+    return spans
+
+
 def phone_sequence(words: list[dict], language: str, dictionary: dict, vocab: dict) -> dict:
     """Keep display words separate from dictionary readings and phone states."""
     phones, mapping, texts = ["SP"], [-1], []
@@ -186,7 +201,7 @@ class ResearchDecoder:
         occurrences = word_occurrences(decoder.ph_idx_seq, supplied["phoneToWord"])
         if len(occurrences) != len(words):
             raise ValueError("word occurrence mismatch")
-        spans = [{"index": int(index), "start": float(word.start) + left * self.hop} for index, word in zip(occurrences, words)]
+        spans = serialize_word_spans(occurrences, words, left * self.hop)
         if not all(math.isfinite(span["start"]) for span in spans) or not math.isfinite(float(confidence)):
             raise ValueError("nonfinite decoder output")
         del frame, edge, decoder, words

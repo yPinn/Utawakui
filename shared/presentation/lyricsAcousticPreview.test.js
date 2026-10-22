@@ -58,7 +58,9 @@ describe('shared chunk preview precedence and fallback', () => {
       ],
     });
     expect(
-      result.chunks.every((c) => !('endMs' in c) && !('progress' in c)),
+      result.chunks.every(
+        (c) => !('endMs' in c) && !('progress' in c) && !('displaySweep' in c),
+      ),
     ).toBe(true);
     expect(frame(fixture(), true, 2700).chunks[1].state).toBe('active');
     expect(

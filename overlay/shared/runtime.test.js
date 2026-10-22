@@ -396,6 +396,18 @@ describe('overlay WebSocket runtime', () => {
                   { segmentId: 'model-first', text: 'first', startMs: 0 },
                 ],
               },
+              estimatedFineTiming: {
+                version: 1,
+                units: [
+                  {
+                    unitId: 'fine-first',
+                    from: 0,
+                    to: 5,
+                    startMs: 100,
+                    endMs: 800,
+                  },
+                ],
+              },
             },
             { lineId: 'line-2', text: 'second', startMs: 1000, endMs: null },
           ],
@@ -441,6 +453,12 @@ describe('overlay WebSocket runtime', () => {
     expect(received[0].lyrics.lines[0].estimatedStarts).toEqual({
       version: 1,
       segments: [{ segmentId: 'model-first', text: 'first', startMs: 0 }],
+    });
+    expect(received[0].lyrics.lines[0].estimatedFineTiming).toEqual({
+      version: 1,
+      units: [
+        { unitId: 'fine-first', from: 0, to: 5, startMs: 100, endMs: 800 },
+      ],
     });
     expect(received[0]).toMatchObject({
       version: 2,

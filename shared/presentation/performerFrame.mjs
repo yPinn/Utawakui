@@ -83,6 +83,14 @@ export function selectPerformerFrame(snapshot, options = {}) {
     Array.isArray(state.queue?.items) ? state.queue.items : []
   ).find((item) => item?.state === 'queued')?.track;
   const track = state.playback?.track ?? null;
+  const currentLine = activeIndex >= 0 ? (lines[activeIndex] ?? null) : null;
+  const effectiveEndMs =
+    currentLine?.endMs ??
+    lines.slice(activeIndex + 1).find((line) => Number.isFinite(line.startMs))
+      ?.startMs ??
+    (Number.isFinite(state.playback?.durationMs)
+      ? state.playback.durationMs + (lyrics.offsetMs ?? 0)
+      : null);
 
   let mode = 'live';
   if (!track) mode = 'idle';
@@ -96,6 +104,10 @@ export function selectPerformerFrame(snapshot, options = {}) {
     trackId: text(track?.id),
     mode,
     playbackStatus: text(state.playback?.status),
+    lyricPositionMs,
+    playbackRate: Number.isFinite(state.playback?.rate)
+      ? state.playback.rate
+      : 1,
     readingVariant,
     readingVariants: snapshot?.readings?.availableVariants ?? [],
     readingPreparing: snapshot?.readings?.preparing === true,
@@ -107,7 +119,12 @@ export function selectPerformerFrame(snapshot, options = {}) {
           artist: text(track.artist),
         }
       : null,
-    currentLine: activeIndex >= 0 ? (lines[activeIndex] ?? null) : null,
+    currentLine:
+      currentLine &&
+      currentLine.endMs == null &&
+      Number.isFinite(effectiveEndMs)
+        ? { ...currentLine, endMs: effectiveEndMs }
+        : currentLine,
     currentReading:
       activeIndex >= 0
         ? selectedReading(readingLines[activeIndex], readingVariant)

@@ -21,16 +21,22 @@ const sha = (value) =>
 const method = Object.freeze({
   kind: 'model',
   id: 'experimental-hfa-small-cpu',
-  version: '3',
+  version: '4',
   modelManifestSha256: sha(
     require('../../../scripts/research/lyricsFreshEvaluation/trial-assets.json'),
   ),
   environmentLockSha256: sha(require('./installed-pins.json')),
-  decoderVersion: 'hfa-small-per-line-v3',
+  decoderVersion: 'hfa-word-intervals-v4',
   g2pVersion: 'hfa-zh-ja-en-per-line-v3',
-  chunkerVersion: 'hfa-starts-v1',
+  chunkerVersion: 'hfa-starts-fine-zh-ja-occurrence-v1',
   nodeVersion: process.versions.node,
   icuVersion: process.versions.icu,
+});
+const previousMethod = Object.freeze({
+  ...method,
+  version: '3',
+  decoderVersion: 'hfa-small-per-line-v3',
+  chunkerVersion: 'hfa-starts-v1',
 });
 function location(input) {
   return contained(
@@ -119,12 +125,17 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
   )
     throw Error('experimental input changed');
   const byId = new Map(result.lines.map((line) => [line.lineId, line]));
-  const estimate = createAcousticEstimate(
+  let estimate = createAcousticEstimate(
     context,
     input.canonical,
     input.canonical.lines.map((line) =>
       line.segments?.length ? [] : (byId.get(line.lineId)?.chunks ?? []),
     ),
+    {
+      fineTimingByLine: input.canonical.lines.map((line) =>
+        line.segments?.length ? undefined : byId.get(line.lineId)?.fineTiming,
+      ),
+    },
   );
   const file = location(input);
   const routing = planLineLanguages(
@@ -139,13 +150,31 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
       content: byId.get(line.lineId)?.content,
     })),
   );
-  const bytes = JSON.stringify({
-    version: 4,
-    identity: sha([input.identity, routing]),
-    routing,
-    validation,
-    estimate,
-  });
+  const serialize = () =>
+    JSON.stringify({
+      version: 5,
+      identity: sha([input.identity, routing]),
+      routing,
+      validation,
+      estimate,
+    });
+  let bytes = serialize();
+  if (
+    Buffer.byteLength(bytes) > 2097152 &&
+    estimate.lines.some((line) => line.fineTiming)
+  ) {
+    estimate = createAcousticEstimate(
+      context,
+      input.canonical,
+      estimate.lines.map((line) => line.chunks),
+      {
+        reasonsByLine: Object.fromEntries(
+          estimate.lines.map((line) => [line.lineId, line.reason]),
+        ),
+      },
+    );
+    bytes = serialize();
+  }
   if (Buffer.byteLength(bytes) > 2097152)
     throw Error('experimental estimate budget');
   // The producer rechecks full input identity; no await between its last check and rename.
@@ -173,9 +202,9 @@ function loadExperimentalEstimate(input) {
   }
   try {
     if (
-      ![1, 2, 3, 4].includes(raw.version) ||
+      ![1, 2, 3, 4, 5].includes(raw.version) ||
       Object.keys(raw).sort().join(',') !==
-        (raw.version === 4
+        (raw.version >= 4
           ? 'estimate,identity,routing,validation,version'
           : raw.version === 3
             ? 'analysisLanguage,estimate,identity,validation,version'
@@ -184,13 +213,13 @@ function loadExperimentalEstimate(input) {
               : 'estimate,identity,version') ||
       ([2, 3].includes(raw.version) &&
         !['zh', 'ja', 'en'].includes(raw.analysisLanguage)) ||
-      (raw.version === 4 &&
+      (raw.version >= 4 &&
         (raw.routing?.version !== 1 || !isAnalysisLanguage(raw.routing.hint)))
     )
       return { status: 'unsupported' };
     const estimate = validateAcousticEstimate(raw.estimate);
     if (
-      (raw.version === 3 || (raw.version === 4 && raw.validation !== null)) &&
+      (raw.version === 3 || (raw.version >= 4 && raw.validation !== null)) &&
       !validSummary(
         raw.validation,
         input.canonical.lines.filter((line) => !line.segments?.length).length,
@@ -203,7 +232,7 @@ function loadExperimentalEstimate(input) {
     )
       return { status: 'stale', reason: 'offset-changed' };
     if (
-      raw.version === 4 &&
+      raw.version >= 4 &&
       JSON.stringify(raw.routing) !==
         JSON.stringify(
           planLineLanguages(input.canonical.lines, raw.routing.hint),
@@ -212,19 +241,32 @@ function loadExperimentalEstimate(input) {
       return { status: 'stale' };
     if (
       raw.identity !==
-        (raw.version === 4
+        (raw.version >= 4
           ? sha([input.identity, raw.routing])
           : raw.version >= 2
             ? sha([input.identity, raw.analysisLanguage])
             : input.identity) ||
-      JSON.stringify(estimate.method) !== JSON.stringify(method)
+      (JSON.stringify(estimate.method) !== JSON.stringify(method) &&
+        !(
+          raw.version < 5 &&
+          estimate.schemaVersion === 1 &&
+          JSON.stringify(estimate.method) === JSON.stringify(previousMethod)
+        ))
     )
       return { status: 'stale' };
     // Rebuilding checks canonical occurrence IDs, text, envelope and the content-addressed estimate ID.
     const rebuilt = createAcousticEstimate(
-      { source: { ...estimate.source }, audio: estimate.audio, method },
+      {
+        source: { ...estimate.source },
+        audio: estimate.audio,
+        method: estimate.method,
+      },
       input.canonical,
       estimate.lines.map((line) => line.chunks),
+      {
+        fineTimingByLine: estimate.lines.map((line) => line.fineTiming),
+        schemaVersion: estimate.schemaVersion,
+      },
     );
     if (JSON.stringify(estimate) !== JSON.stringify(rebuilt))
       return { status: 'stale' };

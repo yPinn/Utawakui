@@ -7,6 +7,49 @@ import {
 } from './outputStreamProjection.js';
 
 describe('output stream projection', () => {
+  it('keeps the coarse document publishable when optional fine exceeds the byte budget', () => {
+    const lines = Array.from({ length: 5000 }, (_, index) => ({
+      lineId: `l-${index}-${'a'.repeat(90)}`,
+      text: '歌',
+      startMs: index * 1000,
+      endMs: index * 1000 + 900,
+      estimatedStarts: {
+        version: 1,
+        segments: [
+          {
+            segmentId: `s-${index}-${'b'.repeat(90)}`,
+            text: '歌',
+            startMs: index * 1000,
+          },
+        ],
+      },
+      estimatedFineTiming: {
+        version: 1,
+        units: [
+          {
+            unitId: `f-${index}-${'c'.repeat(90)}`,
+            from: 0,
+            to: 1,
+            startMs: index * 1000,
+            endMs: index * 1000 + 800,
+          },
+        ],
+      },
+    }));
+    const projected = projectLyricsOutputDocument({
+      trackId: 'song',
+      document: { documentId: 'doc', granularity: 'T1', lines },
+    });
+    expect(projected.lines.every((line) => !line.estimatedFineTiming)).toBe(
+      true,
+    );
+    expect(projected.lines[4999].estimatedStarts).toEqual(
+      lines[4999].estimatedStarts,
+    );
+    expect(
+      new TextEncoder().encode(JSON.stringify(projected)).byteLength,
+    ).toBeLessThanOrEqual(2097152);
+  });
   it('allowlists model starts as a separate extension without promoting canonical T1 to T2', () => {
     const projected = projectLyricsOutputDocument({
       trackId: 'song',
@@ -19,6 +62,20 @@ describe('output stream projection', () => {
             text: '今天唱歌',
             startMs: 1000,
             endMs: 5000,
+            estimatedFineTiming: {
+              version: 1,
+              privatePath: 'secret',
+              units: [
+                {
+                  unitId: 'f',
+                  from: 0,
+                  to: 1,
+                  startMs: 1250,
+                  endMs: 1450,
+                  privatePath: 'secret',
+                },
+              ],
+            },
             estimatedStarts: {
               version: 1,
               privatePath: 'secret',
@@ -38,6 +95,10 @@ describe('output stream projection', () => {
       },
     });
     expect(projected.granularity).toBe('T1');
+    expect(projected.lines[0].estimatedFineTiming).toEqual({
+      version: 1,
+      units: [{ unitId: 'f', from: 0, to: 1, startMs: 1250, endMs: 1450 }],
+    });
     expect(projected.lines[0].estimatedStarts).toEqual({
       version: 1,
       segments: [

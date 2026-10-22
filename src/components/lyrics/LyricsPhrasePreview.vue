@@ -1,6 +1,6 @@
 <script setup>
 import { computed, shallowRef, useId, watch } from 'vue';
-import { planLyricsPhrases } from '../../../shared/presentation/lyricsPhraseBreaks.mjs';
+import { planLyricsDisplay } from '../../../shared/presentation/lyricsDisplayLayout.mjs';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSelect from '../ui/UiSelect.vue';
@@ -15,8 +15,11 @@ const selectId = `lyrics-phrase-preview-${useId()}`;
 const candidates = computed(() => {
   const result = [];
   for (const [index, line] of (props.document?.lines ?? []).entries()) {
-    const plan = planLyricsPhrases(line);
-    if (plan.status === 'unchanged') continue;
+    if (typeof line?.text !== 'string' || line.text.length <= 36) continue;
+    // This source inspector shows grouping examples; the actual template uses
+    // its measured content box, not this nominal preview capacity.
+    const plan = planLyricsDisplay(line, { fits: (text) => text.length <= 36 });
+    if (plan.pages.length <= 1) continue;
     result.push({ value: String(index), label: line.text, line, plan });
     if (result.length >= 20) break;
   }
@@ -39,11 +42,11 @@ const activeIndex = computed(() => {
     !Number.isFinite(props.positionMs)
   )
     return -1;
-  return candidate.value.plan.phrases.findIndex(
+  return candidate.value.plan.pages.findIndex(
     (p) => props.positionMs >= p.startMs && props.positionMs < p.endMs,
   );
 });
-const active = computed(() => candidate.value?.plan.phrases[activeIndex.value]);
+const active = computed(() => candidate.value?.plan.pages[activeIndex.value]);
 watch(
   () => props.document,
   () => {
@@ -69,24 +72,31 @@ watch(
       />
       <template v-if="candidate.plan.status === 'ready'">
         <UiHint
-          >{{ candidate.plan.timingSource === 't2' ? '來源 T2' : '已套用 T1+' }}
+          >{{
+            candidate.plan.pageTiming === 't2'
+              ? '來源 T2'
+              : candidate.plan.pageTiming === 'model-starts'
+                ? '已套用 T1+'
+                : '顯示時間估計'
+          }}
           ·
           {{
-            active ? `第 ${activeIndex + 1} / 2 段` : '播放此句時切換'
+            active
+              ? `第 ${activeIndex + 1} / ${candidate.plan.pages.length} 段`
+              : '播放此句時切換'
           }}</UiHint
         >
         <p class="lyrics-phrase-preview__text">
-          {{ active?.text ?? candidate.plan.phrases[0].text }}
+          {{ active?.text ?? candidate.plan.pages[0].text }}
         </p>
-        <UiHint>Kinetic Pop 依既有起點切換；文字分段仍待確認。</UiHint>
+        <UiHint
+          >文字分組示意；實際行／頁依模板尺寸決定，估計時間不改變來源層級。</UiHint
+        >
       </template>
       <template v-else>
-        <UiHint>缺少精確切換時間，維持整句；以下僅為文字候選。</UiHint>
+        <UiHint>目前沒有可用的分頁時間；以下僅為文字分組。</UiHint>
         <ol class="lyrics-phrase-preview__candidates">
-          <li
-            v-for="phrase in candidate.plan.phrases"
-            :key="phrase.sourceStart"
-          >
+          <li v-for="phrase in candidate.plan.pages" :key="phrase.sourceStart">
             {{ phrase.text }}
           </li>
         </ol>

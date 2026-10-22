@@ -120,14 +120,19 @@ function renderCard(elements, stage, options) {
 }
 
 function renderCaption(elements, frame) {
-  const presentation = adaptLiveStageLyricsPresentation(
-    frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
-    {
-      lineProgress: frame.lineProgress,
-      lyricsPresentationPolicyId: frame.lyricsPresentationPolicyId,
-      pageIndex: frame.liveStagePageIndex,
-    },
-  );
+  const presentation = frame.liveStageDisplayLines
+    ? {
+        lines: frame.liveStageDisplayLines,
+        sourceText: frame.currentText,
+      }
+    : adaptLiveStageLyricsPresentation(
+        frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
+        {
+          lineProgress: frame.lineProgress,
+          lyricsPresentationPolicyId: frame.lyricsPresentationPolicyId,
+          pageIndex: frame.liveStagePageIndex,
+        },
+      );
   const documentApi =
     elements.current.ownerDocument ?? elements.root.ownerDocument;
   delete elements.current.dataset.segmented;

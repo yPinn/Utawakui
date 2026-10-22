@@ -1,4 +1,6 @@
 import { createOverlayHost } from '../shared/lifecycle.mjs';
+import { createLyricsFitController } from './lyricsFit.mjs';
+import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   applyOverlayAppearance,
   normalizeOverlayAppearance,
@@ -92,6 +94,79 @@ export function createLyricsDiagnostics(options = {}) {
   };
 }
 
+const PERFORMANCE_EVENTS = new Set([
+  'receive',
+  'scheduler',
+  'presentation',
+  'prepare',
+  'commit',
+  'schedule',
+  'timer',
+  'select',
+  'boundary',
+  'fit-hit',
+  'fit-measure',
+  'fit-render',
+  'style-prepare',
+  'invalidate',
+  'fonts',
+  'config',
+  'activity',
+]);
+const PERFORMANCE_FIELDS = new Set([
+  'durationMs',
+  'revision',
+  'lineIndex',
+  'segmentIndex',
+  'cacheHit',
+  'probeCount',
+  'deadlineMs',
+  'delayMs',
+  'lateMs',
+  'pass',
+  'activeIndex',
+  'targetMs',
+]);
+let pagePerformanceTrace = null;
+
+export function createLyricsPerformanceTrace(options = {}) {
+  const location = options.location ?? globalThis.location;
+  if (new URLSearchParams(location?.search ?? '').get('lyricsTrace') !== '1')
+    return null;
+  const clock = options.now ?? (() => performance.now());
+  const capacity = Math.max(1, Math.min(8192, options.capacity ?? 4096));
+  const performanceAnchorMs = clock();
+  const wallAnchorMs = (options.wallNow ?? Date.now)();
+  const events = [];
+  let dropped = 0;
+  return {
+    mark(event, fields = {}) {
+      if (!PERFORMANCE_EVENTS.has(event)) return;
+      if (events.length >= capacity) {
+        dropped++;
+        return;
+      }
+      const row = { event, at: clock() };
+      for (const key of PERFORMANCE_FIELDS)
+        if (Number.isFinite(fields[key])) row[key] = fields[key];
+      events.push(row);
+    },
+    read() {
+      return {
+        wallAnchorMs,
+        performanceAnchorMs,
+        timeOriginMs: globalThis.performance?.timeOrigin ?? null,
+        dropped,
+        events: events.map((row) => ({ ...row })),
+      };
+    },
+  };
+}
+
+export function readLyricsPerformanceTrace() {
+  return pagePerformanceTrace?.read() ?? null;
+}
+
 function boundedDiagnosticText(value, maximumLength) {
   const text = String(value ?? '');
   return text.length <= maximumLength
@@ -153,6 +228,7 @@ function cancelSegmentPaintAnimation(element, options) {
 function clearLyricsRenderState(element, options) {
   const state = lyricsRenderStates.get(element);
   for (const node of state?.nodes ?? []) {
+    clearFineLyricsText(node);
     cancelSegmentPaintAnimation(node, options);
   }
   lyricsRenderStates.delete(element);
@@ -629,7 +705,11 @@ function renderCurrentLyrics(element, frame, options) {
   }
 
   clearKtvFallbackProgress(element);
-  const structureKey = `${lineKey}\0${segmentStructureKey(segments)}`;
+  const fine =
+    templateId === 'focus-line' && frame.currentFineTiming?.units?.length
+      ? frame.currentFineTiming
+      : null;
+  const structureKey = `${lineKey}\0${segmentStructureKey(segments)}\0${fine ? 'fine' : ''}`;
   let state = lyricsRenderStates.get(element);
   if (state?.mode !== 'segments' || state.structureKey !== structureKey) {
     clearLyricsRenderState(element, options);
@@ -647,6 +727,8 @@ function renderCurrentLyrics(element, frame, options) {
     lyricsRenderStates.set(element, state);
   }
   element.dataset.segmented = 'true';
+  let fineOffset = 0;
+  const fineText = fine ? segments.map((segment) => segment.text).join('') : '';
   for (const [index, segment] of segments.entries()) {
     const segmentElement = state.nodes[index];
     const progress = Number.isFinite(segment.progress)
@@ -662,6 +744,17 @@ function renderCurrentLyrics(element, frame, options) {
         ? segment.delayMs
         : 0;
     segmentElement.dataset.segmentState = segment.state;
+    if (fine) {
+      renderFineLyricsText(
+        segmentElement,
+        fineText,
+        fineOffset,
+        fineOffset + segment.text.length,
+        fine,
+        options,
+      );
+      fineOffset += segment.text.length;
+    }
     const canAnimate =
       segment.state === 'active' &&
       Number.isFinite(segment.remainingMs) &&
@@ -860,10 +953,20 @@ function renderMangaLyrics(elements, frame, options) {
     return;
   }
 
-  const presentation = adaptMangaLyricsPresentation(
-    frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
-    { language: frame.language },
-  );
+  const presentation = frame.mangaFit
+    ? {
+        bubbles: [
+          {
+            kind: 'main',
+            text: frame.currentText,
+            sourceRanges: [{ start: 0, end: frame.currentText.length }],
+          },
+        ],
+      }
+    : adaptMangaLyricsPresentation(
+        frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
+        { language: frame.language },
+      );
   const bubbles = presentation.bubbles;
   const furiganaEnabled =
     elements.root.ownerDocument?.documentElement?.dataset?.ovlFurigana !==
@@ -894,6 +997,7 @@ function renderMangaLyrics(elements, frame, options) {
   }
 
   group.dataset.mangaCount = String(bubbles.length);
+  group.dataset.mangaFit = String(frame.mangaFit === true);
   group.dataset.mangaLayout = placements
     .map((placement) => placement.side)
     .join('-');
@@ -1579,16 +1683,40 @@ export function createLyricsFrameScheduler(options = {}) {
   );
   const presentationCache =
     options.presentationCache ?? createLyricsPresentationDocumentCache();
+  const onTrace = options.onTrace;
+  const measureNow = options.measureNow ?? (() => performance.now());
+  let lastPresentationDocument;
 
   function clearTimer() {
     if (timer !== null) cancelSchedule(timer);
     timer = null;
   }
 
+  let generation = 0;
+
+  function arm(deadlineMs, currentGeneration) {
+    const delay = Math.max(0, deadlineMs - now());
+    onTrace?.('schedule', { deadlineMs, targetMs: deadlineMs, delayMs: delay });
+    timer = schedule(() => {
+      if (currentGeneration !== generation || stopped) return;
+      timer = null;
+      onTrace?.('timer', { deadlineMs, lateMs: now() - deadlineMs });
+      renderLatest();
+    }, delay);
+  }
+
   function renderLatest() {
     if (stopped || !latestSnapshot) return;
-    const nowMs = now();
-    const lyrics = latestSnapshot.lyrics ?? {};
+    const snapshot = latestSnapshot;
+    const currentGeneration = generation;
+    const enteredAtMs = now();
+    const isCurrent = () =>
+      !stopped &&
+      generation === currentGeneration &&
+      latestSnapshot === snapshot;
+    onTrace?.('scheduler', { revision: snapshot.revision });
+    let stageAt = onTrace ? measureNow() : 0;
+    const lyrics = snapshot.lyrics ?? {};
     const presentationDocument = presentationCache.get(
       {
         documentId: lyrics.documentId,
@@ -1598,44 +1726,97 @@ export function createLyricsFrameScheduler(options = {}) {
       },
       { kineticMaterial, lyricsPresentationPolicyId, templateId },
     );
-    const projectionOptions = {
-      kineticMaterial,
-      lyricsPresentationPolicyId,
-      nowMs,
-      presentationDocument,
-      templateId,
-    };
-    onFrame(selectLyricsOverlayFrame(latestSnapshot, projectionOptions));
-    const delay = nextPresentationBoundaryDelayMs(
-      latestSnapshot,
-      projectionOptions,
-    );
-    if (delay === null) return;
-    timer = schedule(() => {
-      timer = null;
-      renderLatest();
-    }, delay);
+    onTrace?.('presentation', {
+      durationMs: measureNow() - stageAt,
+      cacheHit: Number(lastPresentationDocument === presentationDocument),
+    });
+    if (onTrace) lastPresentationDocument = presentationDocument;
+    // Bound synchronous catch-up. Cold preparation may cross an onset; never
+    // add its cost to a previously calculated relative timer or commit that
+    // stale projection. A second crossing yields to one immediate task.
+    for (let pass = 0; pass < 2; pass++) {
+      const nowMs = pass === 0 ? enteredAtMs : now();
+      const projectionOptions = {
+        kineticMaterial,
+        lyricsPresentationPolicyId,
+        nowMs,
+        presentationDocument,
+        templateId,
+      };
+      stageAt = onTrace ? measureNow() : 0;
+      const frame = selectLyricsOverlayFrame(snapshot, projectionOptions);
+      onTrace?.('select', { durationMs: measureNow() - stageAt, pass });
+      stageAt = onTrace ? measureNow() : 0;
+      const boundaryDelay = nextPresentationBoundaryDelayMs(
+        snapshot,
+        projectionOptions,
+      );
+      onTrace?.('boundary', { durationMs: measureNow() - stageAt, pass });
+      stageAt = onTrace ? measureNow() : 0;
+      const display = options.prepareFrame?.(
+        snapshot,
+        frame,
+        projectionOptions,
+      );
+      onTrace?.('prepare', {
+        durationMs: measureNow() - stageAt,
+        lineIndex: frame.lineIndex,
+        pass,
+      });
+      if (!isCurrent()) return;
+      const delay = Number.isFinite(display?.delayMs)
+        ? Math.min(boundaryDelay ?? Infinity, display.delayMs)
+        : boundaryDelay;
+      const targetMs = delay === null ? null : nowMs + delay;
+      if (targetMs !== null && now() >= targetMs) {
+        if (pass === 0) continue;
+        arm(now(), currentGeneration);
+        return;
+      }
+      stageAt = onTrace ? measureNow() : 0;
+      const visibleFrame = display?.frame ?? frame;
+      onFrame(visibleFrame);
+      onTrace?.('commit', {
+        durationMs: measureNow() - stageAt,
+        lineIndex: frame.lineIndex,
+        activeIndex:
+          visibleFrame.currentSegments?.findIndex(
+            (s) => s.state === 'active',
+          ) ?? -1,
+        pass,
+      });
+      if (!isCurrent()) return;
+      if (targetMs !== null && now() >= targetMs) {
+        if (pass === 0) continue;
+        arm(now(), currentGeneration);
+      } else if (targetMs !== null) arm(targetMs, currentGeneration);
+      return;
+    }
   }
 
   function update(snapshot) {
     if (stopped) return;
+    generation++;
     latestSnapshot = snapshot;
     clearTimer();
     renderLatest();
   }
 
   function stop() {
+    generation++;
     stopped = true;
     clearTimer();
     latestSnapshot = null;
   }
 
   function suspend() {
+    generation++;
     clearTimer();
     latestSnapshot = null;
   }
 
   function refresh() {
+    generation++;
     clearTimer();
     renderLatest();
   }
@@ -1714,9 +1895,33 @@ function boot() {
   if (!elements.root || !elements.current || !elements.next) return;
 
   const gsap = globalThis.gsap ?? null;
+  pagePerformanceTrace = createLyricsPerformanceTrace({
+    location: window.location,
+  });
+  const onTrace = pagePerformanceTrace?.mark;
   let reducedMotion = false;
   let settling = false;
   let frameScheduler = null;
+  const fit = createLyricsFitController({
+    onTrace,
+    inspection:
+      isPreviewMode(window.location) || isWorkbenchMode(window.location),
+    elements,
+    document,
+    window,
+    refresh: () => frameScheduler?.refresh(),
+    renderForMeasurement: (frame, settings) =>
+      renderLyricsFrameSafely(elements, frame, {
+        ...settings,
+        gsap,
+        reportError,
+        reducedMotion: true,
+      }),
+  });
+  function prepareFocusStyles() {
+    if (document.documentElement.dataset.ovlTemplate === 'focus-line')
+      fit.prepareStyles();
+  }
   const previewMode = isPreviewMode(window.location);
   let previewScene = previewSceneForSlot('lyrics');
   const workbenchMode = isWorkbenchMode(window.location);
@@ -1738,7 +1943,9 @@ function boot() {
     });
   }
   frameScheduler = createLyricsFrameScheduler({
+    onTrace,
     templateId: 'karaoke-stack',
+    prepareFrame: fit.prepare,
     onFrame: (frame) => {
       const visibleFrame = withPreviewFallback(
         frame,
@@ -1760,24 +1967,35 @@ function boot() {
       reducedMotion = value;
       frameScheduler.refresh();
     },
-    onFontsChanged: () => frameScheduler.refresh(),
+    onFontsChanged: () => {
+      onTrace?.('fonts');
+      fit.invalidate();
+      prepareFocusStyles();
+      frameScheduler.refresh();
+    },
     onActivity: (active) => {
+      onTrace?.('activity', { activeIndex: Number(active) });
       if (!active) {
+        fit.suspend();
         frameScheduler.suspend();
         destroyLyricsAnimations(elements, { gsap });
-      }
+      } else prepareFocusStyles();
     },
     onConfig: (slot) => {
+      onTrace?.('config');
       previewScene = previewSceneForSlot('lyrics', slot);
       applyOverlayAppearance(document, slot);
+      fit.invalidate();
       frameScheduler.setPresentationSettings({
         kineticMaterial: normalizeOverlayAppearance(slot?.settings)
           .kineticMaterial,
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
         templateId: slot?.templateId ?? 'karaoke-stack',
       });
+      prepareFocusStyles();
     },
     onSnapshot: (snapshot, { recovering }) => {
+      onTrace?.('receive', { revision: snapshot.revision });
       settling = recovering;
       try {
         frameScheduler.update(snapshot);
@@ -1786,6 +2004,7 @@ function boot() {
       }
     },
     onDispose: () => {
+      fit.stop();
       frameScheduler.stop();
       destroyLyricsAnimations(elements, { gsap });
     },

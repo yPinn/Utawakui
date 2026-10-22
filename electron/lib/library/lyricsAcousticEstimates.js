@@ -16,6 +16,9 @@ const values = require('../../../shared/lyricsTimingValues.json');
 const {
   validateAcousticEstimate,
 } = require('../../../shared/lyricsAcousticEstimate.mjs');
+const {
+  validateLyricsFineTiming,
+} = require('../../../shared/lyricsFineTiming.mjs');
 
 const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
 const intervalHash = (lines) =>
@@ -150,7 +153,7 @@ function createAcousticEstimate(
   context,
   canonical,
   chunksByLine,
-  { reasonsByLine = {} } = {},
+  { reasonsByLine = {}, fineTimingByLine = [], schemaVersion } = {},
 ) {
   const lines = canonical.lines.map((line, index) => ({
     lineId: line.lineId,
@@ -164,8 +167,8 @@ function createAcousticEstimate(
         : (reasonsByLine[line.lineId] ?? 'missing-boundaries'),
     chunks: chunksByLine[index]?.length >= 2 ? chunksByLine[index] : [],
   }));
-  const document = validateAcousticEstimate({
-    schemaVersion: 1,
+  let document = validateAcousticEstimate({
+    schemaVersion: schemaVersion ?? 1,
     estimateId: 'pending',
     documentId: canonical.documentId,
     source: { ...context.source, intervalsSha256: intervalHash(lines) },
@@ -173,6 +176,33 @@ function createAcousticEstimate(
     method: context.method,
     lines,
   });
+  const enriched = document.lines.map((line, index) => {
+    if (
+      line.status !== 'ready' ||
+      canonical.lines[index].segments?.length ||
+      !fineTimingByLine[index]
+    )
+      return line;
+    try {
+      return {
+        ...line,
+        fineTiming: validateLyricsFineTiming(fineTimingByLine[index], line),
+      };
+    } catch {
+      return line;
+    }
+  });
+  if (enriched.some((line) => line.fineTiming)) {
+    try {
+      document = validateAcousticEstimate({
+        ...document,
+        schemaVersion: 2,
+        lines: enriched,
+      });
+    } catch {
+      // Optional evidence cannot invalidate coarse data through IDs or byte/count budgets.
+    }
+  }
   document.estimateId = estimateIdentity(document);
   return document;
 }
@@ -227,7 +257,7 @@ async function loadTrackAcousticEstimate(
     }
     return { status: error.code === 'ENOENT' ? 'missing' : 'corrupt' };
   }
-  if (raw?.schemaVersion !== 1) return { status: 'unsupported' };
+  if (![1, 2].includes(raw?.schemaVersion)) return { status: 'unsupported' };
   let document;
   try {
     document = validateAcousticEstimate(raw);

@@ -560,8 +560,17 @@ describe('outputServer', () => {
     );
 
     expect(graph.failures).toEqual([]);
-    expect(graph.routes).toContain(
-      '/shared/presentation/lyricsPhraseBreaks.mjs',
+    expect(graph.routes).toEqual(
+      expect.arrayContaining([
+        '/shared/presentation/lyricsPhraseBreaks.mjs',
+        '/shared/presentation/lyricsDisplayLayout.mjs',
+        '/shared/presentation/lyricsDisplayFrame.mjs',
+        '/shared/presentation/lyricsFineFrame.mjs',
+        '/shared/lyricsFineTiming.mjs',
+        '/shared/browser/lyricsFinePaint.mjs',
+        '/overlay/lyrics/lyricsFine.mjs',
+        '/overlay/lyrics/lyricsFit.mjs',
+      ]),
     );
     expect(graph.routes).toContain(
       '/shared/presentation/lyricsPresentation.mjs',

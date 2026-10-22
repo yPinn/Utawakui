@@ -1,0 +1,2022 @@
+{
+  "date": "2026-10-22",
+  "classification": "Final bounded visible real-media Output tail comparison: 3 fresh-process cold + 3 same-process primed warm before, and same after; trace diagnostics kept separate",
+  "method": {
+    "coldDefinition": "Fresh Electron process, isolated unique profile and newly loaded Output document; OS/font/disk cache is not globally cleared.",
+    "warmDefinition": "Same Electron/Output document first plays the identical source until 1.2s to prime fonts and line-fit, then pauses/seeks0 and clears only observation arrays before the original full playback protocol. Offset content change can legitimately remeasure.",
+    "steadyExclusionMs": 350,
+    "controlWindowMs": 200,
+    "units": "milliseconds; positive late, negative early; media and rate-adjusted wall time kept separate",
+    "firstActivationRule": "Mark seen by phase + known chunk startMs from every raw sample, including transitions inside 350ms control exclusion; only then apply identical steady filter. Replay after seek has distinct phase. Prior active carry-over at phase start also marks seen.",
+    "samePCMDefinition": true
+  },
+  "integrity": {
+    "snapshots": [
+      {
+        "directory": "baseline-runtime",
+        "files": 1432,
+        "unchanged": true,
+        "drift": []
+      },
+      {
+        "directory": "trace-before-runtime",
+        "files": 154,
+        "unchanged": true,
+        "drift": []
+      },
+      {
+        "directory": "after-runtime",
+        "files": 154,
+        "unchanged": true,
+        "drift": []
+      }
+    ],
+    "allUntraced": true,
+    "allAccepted": true,
+    "allSourcesStable": true,
+    "allVisible": true,
+    "allSameScenario": true,
+    "errors": [],
+    "originalRun4Unchanged": true,
+    "untracedEnvelopesAccepted": 1006,
+    "untracedEnvelopesTotal": 1006
+  },
+  "groups": {
+    "before-cold": {
+      "legacyOnsets": {
+        "local": {
+          "media": {
+            "n": 101,
+            "p50": 6.0229999999996835,
+            "p95": 13.61700000000019,
+            "min": 0,
+            "max": 14.574999999999818
+          },
+          "wall": {
+            "n": 101,
+            "p50": 5.856999999999971,
+            "p95": 13.478999999999814,
+            "min": 0,
+            "max": 14.574999999999818
+          }
+        },
+        "output": {
+          "media": {
+            "n": 99,
+            "p50": 4.829999999999927,
+            "p95": 14.18890960878889,
+            "min": -9.330223972562635,
+            "max": 18.824504882812676
+          },
+          "wall": {
+            "n": 99,
+            "p50": 4.74917049351825,
+            "p95": 14.18890960878889,
+            "min": -7.464179178050108,
+            "max": 18.824504882812676
+          }
+        }
+      },
+      "firstActivation": {
+        "local": {
+          "first": {
+            "media": {
+              "n": 101,
+              "p50": 6.0229999999996835,
+              "p95": 13.61700000000019,
+              "min": 0,
+              "max": 14.574999999999818
+            },
+            "wall": {
+              "n": 101,
+              "p50": 5.856999999999971,
+              "p95": 13.478999999999814,
+              "min": 0,
+              "max": 14.574999999999818
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        },
+        "output": {
+          "first": {
+            "media": {
+              "n": 99,
+              "p50": 4.829999999999927,
+              "p95": 14.18890960878889,
+              "min": -9.330223972562635,
+              "max": 18.824504882812676
+            },
+            "wall": {
+              "n": 99,
+              "p50": 4.74917049351825,
+              "p95": 14.18890960878889,
+              "min": -7.464179178050108,
+              "max": 18.824504882812676
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        }
+      },
+      "firstOutputOnset": {
+        "media": {
+          "n": 3,
+          "p50": 16.066827878858362,
+          "p95": 18.824504882812676,
+          "min": 15.794713109634927,
+          "max": 18.824504882812676
+        },
+        "wall": {
+          "n": 3,
+          "p50": 16.066827878858362,
+          "p95": 18.824504882812676,
+          "min": 15.794713109634927,
+          "max": 18.824504882812676
+        }
+      },
+      "cases": [
+        {
+          "id": "cold-1",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792633932535.5,
+            "actualMediaMs": 1018.8245048828127,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 18.824504882812676,
+            "lateWallMs": 18.824504882812676,
+            "previousAt": 1792633932515,
+            "previousMediaMs": 1002.4588202162288
+          },
+          "acceptance": {
+            "total": 85,
+            "accepted": 85
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4355,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 0.89990234375,
+              "max": 53.39990234375
+            },
+            "output": {
+              "n": 4386,
+              "p50": 4.199951171875,
+              "p95": 4.39990234375,
+              "min": 0.60009765625,
+              "max": 20.5
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": [
+              {
+                "at": 1792633931521.3,
+                "gapMs": 53.39990234375,
+                "previousAt": 1792633931467.9001,
+                "active": "",
+                "previousActive": ""
+              }
+            ]
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 5,
+              "output": 5
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "cold-2",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792633973661.5,
+            "actualMediaMs": 1015.7947131096349,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 15.794713109634927,
+            "lateWallMs": 15.794713109634927,
+            "previousAt": 1792633973640.9,
+            "previousMediaMs": 999.3137588211359
+          },
+          "acceptance": {
+            "total": 85,
+            "accepted": 85
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4360,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 0.7998046875,
+              "max": 51.300048828125
+            },
+            "output": {
+              "n": 4388,
+              "p50": 4.199951171875,
+              "p95": 4.39990234375,
+              "min": 0.5,
+              "max": 20.60009765625
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": [
+              {
+                "at": 1792633972653.7002,
+                "gapMs": 51.300048828125,
+                "previousAt": 1792633972602.4001,
+                "active": "",
+                "previousActive": ""
+              }
+            ]
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 11
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 5,
+              "output": 5
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "cold-3",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634014771.3,
+            "actualMediaMs": 1016.0668278788584,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 16.066827878858362,
+            "lateWallMs": 16.066827878858362,
+            "previousAt": 1792634014754.3,
+            "previousMediaMs": 1001.5522351778657
+          },
+          "acceptance": {
+            "total": 85,
+            "accepted": 85
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4359,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 0.699951171875,
+              "max": 47.699951171875
+            },
+            "output": {
+              "n": 4387,
+              "p50": 4.199951171875,
+              "p95": 4.400146484375,
+              "min": 0.300048828125,
+              "max": 17
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": [
+              {
+                "at": 1792634013763.5999,
+                "gapMs": 47.699951171875,
+                "previousAt": 1792634013715.9,
+                "active": "",
+                "previousActive": ""
+              }
+            ]
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 5,
+              "output": 5
+            },
+            "seek": {
+              "local": 5,
+              "output": 5
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        }
+      ]
+    },
+    "before-warm": {
+      "legacyOnsets": {
+        "local": {
+          "media": {
+            "n": 103,
+            "p50": 6.8419999999996435,
+            "p95": 19.475999999999658,
+            "min": 0,
+            "max": 23.26800000000003
+          },
+          "wall": {
+            "n": 103,
+            "p50": 6.348000000001048,
+            "p95": 15.580799999999726,
+            "min": 0,
+            "max": 18.614400000000025
+          }
+        },
+        "output": {
+          "media": {
+            "n": 104,
+            "p50": 5.482000000000426,
+            "p95": 12.405152444216583,
+            "min": -7.437000000000808,
+            "max": 499.7479999999996
+          },
+          "wall": {
+            "n": 104,
+            "p50": 5.412181421845162,
+            "p95": 12.000095913503628,
+            "min": -5.949600000000646,
+            "max": 399.7983999999997
+          }
+        }
+      },
+      "firstActivation": {
+        "local": {
+          "first": {
+            "media": {
+              "n": 103,
+              "p50": 6.8419999999996435,
+              "p95": 19.475999999999658,
+              "min": 0,
+              "max": 23.26800000000003
+            },
+            "wall": {
+              "n": 103,
+              "p50": 6.348000000001048,
+              "p95": 15.580799999999726,
+              "min": 0,
+              "max": 18.614400000000025
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        },
+        "output": {
+          "first": {
+            "media": {
+              "n": 102,
+              "p50": 5.482000000000426,
+              "p95": 12.000095913503628,
+              "min": -7.437000000000808,
+              "max": 19.83795320583704
+            },
+            "wall": {
+              "n": 102,
+              "p50": 5.412181421845162,
+              "p95": 11.868240176702784,
+              "min": -5.949600000000646,
+              "max": 15.87036256466963
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 2,
+              "p50": 4.871882246068708,
+              "p95": 499.7479999999996,
+              "min": 4.871882246068708,
+              "max": 499.7479999999996
+            },
+            "wall": {
+              "n": 2,
+              "p50": 3.8975057968549662,
+              "p95": 399.7983999999997,
+              "min": 3.8975057968549662,
+              "max": 399.7983999999997
+            }
+          }
+        }
+      },
+      "firstOutputOnset": {
+        "media": {
+          "n": 3,
+          "p50": 3.524532407138281,
+          "p95": 9.419999999999959,
+          "min": 0.1579063951411399,
+          "max": 9.419999999999959
+        },
+        "wall": {
+          "n": 3,
+          "p50": 3.524532407138281,
+          "p95": 9.419999999999959,
+          "min": 0.1579063951411399,
+          "max": 9.419999999999959
+        }
+      },
+      "cases": [
+        {
+          "id": "warm-1",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792633953783.3,
+            "actualMediaMs": 1003.5245324071383,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 3.524532407138281,
+            "lateWallMs": 3.524532407138281,
+            "previousAt": 1792633953778.5,
+            "previousMediaMs": 999.9332150116392
+          },
+          "acceptance": {
+            "total": 83,
+            "accepted": 83
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4357,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.60009765625,
+              "max": 6.60009765625
+            },
+            "output": {
+              "n": 4360,
+              "p50": 4.199951171875,
+              "p95": 4.400146484375,
+              "min": 1.60009765625,
+              "max": 6.60009765625
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": []
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 10,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 5
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "warm-2",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792633994879.5,
+            "actualMediaMs": 1009.42,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 9.419999999999959,
+            "lateWallMs": 9.419999999999959,
+            "previousAt": 1792633994875.2998,
+            "previousMediaMs": 999.2957540192925
+          },
+          "acceptance": {
+            "total": 82,
+            "accepted": 82
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4363,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.699951171875,
+              "max": 6.60009765625
+            },
+            "output": {
+              "n": 4365,
+              "p50": 4.199951171875,
+              "p95": 4.5,
+              "min": 1.599853515625,
+              "max": 6.7001953125
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": []
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 11
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 8
+            }
+          }
+        },
+        {
+          "id": "warm-3",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634036060.1,
+            "actualMediaMs": 1000.1579063951411,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 0.1579063951411399,
+            "lateWallMs": 0.1579063951411399,
+            "previousAt": 1792634036055.7002,
+            "previousMediaMs": 997.8738139278032
+          },
+          "acceptance": {
+            "total": 83,
+            "accepted": 83
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4356,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.7998046875,
+              "max": 6.400146484375
+            },
+            "output": {
+              "n": 4358,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.699951171875,
+              "max": 6.39990234375
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": []
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 11
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 5,
+              "output": 5
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        }
+      ]
+    },
+    "after-cold": {
+      "legacyOnsets": {
+        "local": {
+          "media": {
+            "n": 100,
+            "p50": 5.148000000000138,
+            "p95": 13.70199999999977,
+            "min": 0,
+            "max": 23.840000000000146
+          },
+          "wall": {
+            "n": 100,
+            "p50": 5.074999999999818,
+            "p95": 13.70199999999977,
+            "min": 0,
+            "max": 19.072000000000116
+          }
+        },
+        "output": {
+          "media": {
+            "n": 100,
+            "p50": 4,
+            "p95": 10.265818403766389,
+            "min": -9.96305754810237,
+            "max": 14.03399999999965
+          },
+          "wall": {
+            "n": 100,
+            "p50": 3.360800000000745,
+            "p95": 10.265818403766389,
+            "min": -7.970446038481896,
+            "max": 14.03399999999965
+          }
+        }
+      },
+      "firstActivation": {
+        "local": {
+          "first": {
+            "media": {
+              "n": 100,
+              "p50": 5.148000000000138,
+              "p95": 13.70199999999977,
+              "min": 0,
+              "max": 23.840000000000146
+            },
+            "wall": {
+              "n": 100,
+              "p50": 5.074999999999818,
+              "p95": 13.70199999999977,
+              "min": 0,
+              "max": 19.072000000000116
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        },
+        "output": {
+          "first": {
+            "media": {
+              "n": 100,
+              "p50": 4,
+              "p95": 10.265818403766389,
+              "min": -9.96305754810237,
+              "max": 14.03399999999965
+            },
+            "wall": {
+              "n": 100,
+              "p50": 3.360800000000745,
+              "p95": 10.265818403766389,
+              "min": -7.970446038481896,
+              "max": 14.03399999999965
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        }
+      },
+      "firstOutputOnset": {
+        "media": {
+          "n": 3,
+          "p50": 8.113189174705212,
+          "p95": 8.649294952591845,
+          "min": 6.647907690519219,
+          "max": 8.649294952591845
+        },
+        "wall": {
+          "n": 3,
+          "p50": 8.113189174705212,
+          "p95": 8.649294952591845,
+          "min": 6.647907690519219,
+          "max": 8.649294952591845
+        }
+      },
+      "cases": [
+        {
+          "id": "cold-1",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634518148.5,
+            "actualMediaMs": 1008.1131891747052,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 8.113189174705212,
+            "lateWallMs": 8.113189174705212,
+            "previousAt": 1792634518139.9001,
+            "previousMediaMs": 1000.6170000000001
+          },
+          "acceptance": {
+            "total": 85,
+            "accepted": 85
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4367,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 0.800048828125,
+              "max": 48
+            },
+            "output": {
+              "n": 4398,
+              "p50": 4.199951171875,
+              "p95": 4.400146484375,
+              "min": 0.5,
+              "max": 13.60009765625
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": [
+              {
+                "at": 1792634517149.3,
+                "gapMs": 48,
+                "previousAt": 1792634517101.3,
+                "active": "",
+                "previousActive": ""
+              }
+            ]
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 10,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "cold-2",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634559312.9,
+            "actualMediaMs": 1008.6492949525918,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 8.649294952591845,
+            "lateWallMs": 8.649294952591845,
+            "previousAt": 1792634559303.5,
+            "previousMediaMs": 1000.2527476021623
+          },
+          "acceptance": {
+            "total": 85,
+            "accepted": 85
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4361,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1,
+              "max": 47.699951171875
+            },
+            "output": {
+              "n": 4390,
+              "p50": 4.199951171875,
+              "p95": 4.39990234375,
+              "min": 0.400146484375,
+              "max": 13.800048828125
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": [
+              {
+                "at": 1792634558312.7,
+                "gapMs": 47.699951171875,
+                "previousAt": 1792634558265,
+                "active": "",
+                "previousActive": ""
+              }
+            ]
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 11
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 5,
+              "output": 5
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "cold-3",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634600772.1,
+            "actualMediaMs": 1006.6479076905192,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 6.647907690519219,
+            "lateWallMs": 6.647907690519219,
+            "previousAt": 1792634600763.2,
+            "previousMediaMs": 1000
+          },
+          "acceptance": {
+            "total": 85,
+            "accepted": 85
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4355,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 0.699951171875,
+              "max": 50.60009765625
+            },
+            "output": {
+              "n": 4387,
+              "p50": 4.199951171875,
+              "p95": 4.39990234375,
+              "min": 0.89990234375,
+              "max": 13.7001953125
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": [
+              {
+                "at": 1792634599775.3,
+                "gapMs": 50.60009765625,
+                "previousAt": 1792634599724.7,
+                "active": "",
+                "previousActive": ""
+              }
+            ]
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 10,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 5,
+              "output": 5
+            },
+            "seek": {
+              "local": 5,
+              "output": 5
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        }
+      ]
+    },
+    "after-warm": {
+      "legacyOnsets": {
+        "local": {
+          "media": {
+            "n": 103,
+            "p50": 5.117999999999483,
+            "p95": 17.005999999999403,
+            "min": 0,
+            "max": 22.954999999999927
+          },
+          "wall": {
+            "n": 103,
+            "p50": 4.412999999999556,
+            "p95": 13.604799999999523,
+            "min": 0,
+            "max": 18.36399999999994
+          }
+        },
+        "output": {
+          "media": {
+            "n": 103,
+            "p50": 3.2910000000001673,
+            "p95": 10.321068021803512,
+            "min": -10.221999999999753,
+            "max": 18.13799999999901
+          },
+          "wall": {
+            "n": 103,
+            "p50": 3.2910000000001673,
+            "p95": 10.203999999999724,
+            "min": -8.177599999999803,
+            "max": 14.510399999999208
+          }
+        }
+      },
+      "firstActivation": {
+        "local": {
+          "first": {
+            "media": {
+              "n": 103,
+              "p50": 5.117999999999483,
+              "p95": 17.005999999999403,
+              "min": 0,
+              "max": 22.954999999999927
+            },
+            "wall": {
+              "n": 103,
+              "p50": 4.412999999999556,
+              "p95": 13.604799999999523,
+              "min": 0,
+              "max": 18.36399999999994
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        },
+        "output": {
+          "first": {
+            "media": {
+              "n": 103,
+              "p50": 3.2910000000001673,
+              "p95": 10.321068021803512,
+              "min": -10.221999999999753,
+              "max": 18.13799999999901
+            },
+            "wall": {
+              "n": 103,
+              "p50": 3.2910000000001673,
+              "p95": 10.203999999999724,
+              "min": -8.177599999999803,
+              "max": 14.510399999999208
+            }
+          },
+          "reentry": {
+            "media": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            },
+            "wall": {
+              "n": 0,
+              "p50": null,
+              "p95": null,
+              "min": null,
+              "max": null
+            }
+          }
+        }
+      },
+      "firstOutputOnset": {
+        "media": {
+          "n": 3,
+          "p50": -0.00014014182750088366,
+          "p95": 4.097653924020506,
+          "min": -0.21760902168227858,
+          "max": 4.097653924020506
+        },
+        "wall": {
+          "n": 3,
+          "p50": -0.00014014182750088366,
+          "p95": 4.097653924020506,
+          "min": -0.21760902168227858,
+          "max": 4.097653924020506
+        }
+      },
+      "cases": [
+        {
+          "id": "warm-1",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634539270.2,
+            "actualMediaMs": 999.9998598581725,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": -0.00014014182750088366,
+            "lateWallMs": -0.00014014182750088366,
+            "previousAt": 1792634539266,
+            "previousMediaMs": 997.5889999999999
+          },
+          "acceptance": {
+            "total": 82,
+            "accepted": 82
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4358,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.7998046875,
+              "max": 6.60009765625
+            },
+            "output": {
+              "n": 4360,
+              "p50": 4.199951171875,
+              "p95": 4.60009765625,
+              "min": 1.800048828125,
+              "max": 6.5
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": []
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 10,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "warm-2",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634580655,
+            "actualMediaMs": 1004.0976539240205,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": 4.097653924020506,
+            "lateWallMs": 4.097653924020506,
+            "previousAt": 1792634580650.7,
+            "previousMediaMs": 1000
+          },
+          "acceptance": {
+            "total": 83,
+            "accepted": 83
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4361,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.89990234375,
+              "max": 6.39990234375
+            },
+            "output": {
+              "n": 4364,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.89990234375,
+              "max": 6.300048828125
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": []
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 11,
+              "output": 11
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        },
+        {
+          "id": "warm-3",
+          "firstOutputOnset": {
+            "surface": "output",
+            "phase": "normal",
+            "glyph": "甲",
+            "onsetMs": 1000,
+            "observedAt": 1792634621960.5,
+            "actualMediaMs": 999.7823909783177,
+            "offsetMs": 0,
+            "rate": 1,
+            "lateMediaMs": -0.21760902168227858,
+            "lateWallMs": -0.21760902168227858,
+            "previousAt": 1792634621956,
+            "previousMediaMs": 995.3540664523046
+          },
+          "acceptance": {
+            "total": 83,
+            "accepted": 83
+          },
+          "sourcesStable": true,
+          "visible": {
+            "local": true,
+            "output": true,
+            "localDocument": "visible",
+            "outputDocument": "visible"
+          },
+          "errors": [],
+          "frameGaps": {
+            "local": {
+              "n": 4349,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.5,
+              "max": 8.400146484375
+            },
+            "output": {
+              "n": 4352,
+              "p50": 4.199951171875,
+              "p95": 4.300048828125,
+              "min": 1.5,
+              "max": 6.800048828125
+            },
+            "outputOver30Ms": [],
+            "localOver30Ms": []
+          },
+          "phaseOnsetCounts": {
+            "normal": {
+              "local": 10,
+              "output": 10
+            },
+            "pause": {
+              "local": 0,
+              "output": 0
+            },
+            "resume": {
+              "local": 6,
+              "output": 6
+            },
+            "seek": {
+              "local": 6,
+              "output": 6
+            },
+            "rate": {
+              "local": 6,
+              "output": 6
+            },
+            "offset": {
+              "local": 6,
+              "output": 6
+            }
+          }
+        }
+      ]
+    }
+  },
+  "matchedFirstActivations": {
+    "cold": {
+      "local": {
+        "media": {
+          "before": {
+            "n": 98,
+            "p50": 6.0229999999996835,
+            "p95": 13.75799999999981,
+            "min": 0,
+            "max": 14.574999999999818
+          },
+          "after": {
+            "n": 98,
+            "p50": 5.148000000000138,
+            "p95": 13.961999999999989,
+            "min": 0,
+            "max": 23.840000000000146
+          }
+        },
+        "wall": {
+          "before": {
+            "n": 98,
+            "p50": 5.721999999999753,
+            "p95": 13.61700000000019,
+            "min": 0,
+            "max": 14.574999999999818
+          },
+          "after": {
+            "n": 98,
+            "p50": 5.074999999999818,
+            "p95": 13.961999999999989,
+            "min": 0,
+            "max": 19.072000000000116
+          }
+        }
+      },
+      "output": {
+        "media": {
+          "before": {
+            "n": 98,
+            "p50": 4.829999999999927,
+            "p95": 14.18890960878889,
+            "min": -9.330223972562635,
+            "max": 18.824504882812676
+          },
+          "after": {
+            "n": 98,
+            "p50": 4,
+            "p95": 11.82512009533275,
+            "min": -9.96305754810237,
+            "max": 14.03399999999965
+          }
+        },
+        "wall": {
+          "before": {
+            "n": 98,
+            "p50": 4.08331837470223,
+            "p95": 14.18890960878889,
+            "min": -7.464179178050108,
+            "max": 18.824504882812676
+          },
+          "after": {
+            "n": 98,
+            "p50": 3.360800000000745,
+            "p95": 11.82512009533275,
+            "min": -7.970446038481896,
+            "max": 14.03399999999965
+          }
+        }
+      }
+    },
+    "warm": {
+      "local": {
+        "media": {
+          "before": {
+            "n": 102,
+            "p50": 6.8419999999996435,
+            "p95": 19.475999999999658,
+            "min": 0,
+            "max": 23.26800000000003
+          },
+          "after": {
+            "n": 102,
+            "p50": 5.117999999999483,
+            "p95": 17.005999999999403,
+            "min": 0,
+            "max": 22.954999999999927
+          }
+        },
+        "wall": {
+          "before": {
+            "n": 102,
+            "p50": 6.348000000001048,
+            "p95": 15.580799999999726,
+            "min": 0,
+            "max": 18.614400000000025
+          },
+          "after": {
+            "n": 102,
+            "p50": 4.412999999999556,
+            "p95": 13.604799999999523,
+            "min": 0,
+            "max": 18.36399999999994
+          }
+        }
+      },
+      "output": {
+        "media": {
+          "before": {
+            "n": 101,
+            "p50": 5.6097165029350435,
+            "p95": 12.000095913503628,
+            "min": -7.437000000000808,
+            "max": 19.83795320583704
+          },
+          "after": {
+            "n": 101,
+            "p50": 3.2910000000001673,
+            "p95": 10.321068021803512,
+            "min": -10.221999999999753,
+            "max": 18.13799999999901
+          }
+        },
+        "wall": {
+          "before": {
+            "n": 101,
+            "p50": 5.4570851014359505,
+            "p95": 11.868240176702784,
+            "min": -5.949600000000646,
+            "max": 15.87036256466963
+          },
+          "after": {
+            "n": 101,
+            "p50": 3.2910000000001673,
+            "p95": 10.203999999999724,
+            "min": -8.177599999999803,
+            "max": 14.510399999999208
+          }
+        }
+      }
+    }
+  },
+  "unmatchedContext": [
+    {
+      "id": "cold-1",
+      "surface": "local",
+      "side": "beforeOnly",
+      "key": "normal:6000",
+      "missingVariant": "after",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634523145.1,
+        "mediaMs": 6005.377,
+        "stateMs": 5852.286,
+        "lyricClockMs": 5852.339,
+        "rate": 1,
+        "paused": false,
+        "phase": "normal",
+        "offsetMs": 0,
+        "localActive": "癸"
+      },
+      "followingControl": {
+        "at": 1792634523146.2,
+        "action": "pause",
+        "mediaMs": 6006.46,
+        "stateMs": 5852.286
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-1",
+      "surface": "local",
+      "side": "afterOnly",
+      "key": "rate:8500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792633946850.5,
+        "mediaMs": 8496.321,
+        "stateMs": 8300.563,
+        "lyricClockMs": 8300.563,
+        "rate": 1.25,
+        "paused": false,
+        "phase": "rate",
+        "offsetMs": 0,
+        "localActive": "辰"
+      },
+      "followingControl": {
+        "at": 1792633946854.2,
+        "action": "offset",
+        "value": 200,
+        "mediaMs": 8500.563,
+        "stateMs": 8300.563
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-1",
+      "surface": "output",
+      "side": "afterOnly",
+      "key": "rate:8500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792633946850.5,
+        "mediaMs": 8496.321,
+        "stateMs": 8300.563,
+        "lyricClockMs": 8300.563,
+        "rate": 1.25,
+        "paused": false,
+        "phase": "rate",
+        "offsetMs": 0,
+        "localActive": "辰"
+      },
+      "followingControl": {
+        "at": 1792633946854.2,
+        "action": "offset",
+        "value": 200,
+        "mediaMs": 8500.563,
+        "stateMs": 8300.563
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-2",
+      "surface": "local",
+      "side": "beforeOnly",
+      "key": "resume:9000",
+      "missingVariant": "after",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634567916.7998,
+        "mediaMs": 9004.166,
+        "stateMs": 8936,
+        "lyricClockMs": 8936,
+        "rate": 1,
+        "paused": false,
+        "phase": "resume",
+        "offsetMs": 0,
+        "localActive": "巳"
+      },
+      "followingControl": {
+        "at": 1792634567919.7998,
+        "action": "seek",
+        "value": 2.2,
+        "mediaMs": 9007.247,
+        "stateMs": 8936
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-2",
+      "surface": "local",
+      "side": "afterOnly",
+      "key": "rate:8500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792633987993.4001,
+        "mediaMs": 8492.563,
+        "stateMs": 8313.398,
+        "lyricClockMs": 8492.563,
+        "rate": 1.25,
+        "paused": false,
+        "phase": "rate",
+        "offsetMs": 0,
+        "localActive": "辰"
+      },
+      "followingControl": {
+        "at": 1792633987994.6,
+        "action": "offset",
+        "value": 200,
+        "mediaMs": 8505.711,
+        "stateMs": 8313.398
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-2",
+      "surface": "output",
+      "side": "beforeOnly",
+      "key": "resume:9000",
+      "missingVariant": "after",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634567916.7998,
+        "mediaMs": 9004.166,
+        "stateMs": 8936,
+        "lyricClockMs": 8936,
+        "rate": 1,
+        "paused": false,
+        "phase": "resume",
+        "offsetMs": 0,
+        "localActive": "巳"
+      },
+      "followingControl": {
+        "at": 1792634567919.7998,
+        "action": "seek",
+        "value": 2.2,
+        "mediaMs": 9007.247,
+        "stateMs": 8936
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-2",
+      "surface": "output",
+      "side": "afterOnly",
+      "key": "rate:8500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792633987993.4001,
+        "mediaMs": 8492.563,
+        "stateMs": 8313.398,
+        "lyricClockMs": 8492.563,
+        "rate": 1.25,
+        "paused": false,
+        "phase": "rate",
+        "offsetMs": 0,
+        "localActive": "辰"
+      },
+      "followingControl": {
+        "at": 1792633987994.6,
+        "action": "offset",
+        "value": 200,
+        "mediaMs": 8505.711,
+        "stateMs": 8313.398
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "cold-3",
+      "surface": "local",
+      "side": "beforeOnly",
+      "key": "normal:6000",
+      "missingVariant": "after",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634605768.6,
+        "mediaMs": 6003.056,
+        "stateMs": 5850.666,
+        "lyricClockMs": 5850.731,
+        "rate": 1,
+        "paused": false,
+        "phase": "normal",
+        "offsetMs": 0,
+        "localActive": "癸"
+      },
+      "followingControl": {
+        "at": 1792634605772.7,
+        "action": "pause",
+        "mediaMs": 6007.024,
+        "stateMs": 5850.666
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "warm-1",
+      "surface": "output",
+      "side": "afterOnly",
+      "key": "seek:5500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792633965711.7998,
+        "mediaMs": 5506.842,
+        "stateMs": 5375.2519999999995,
+        "lyricClockMs": 5505.954,
+        "rate": 1,
+        "paused": false,
+        "phase": "seek",
+        "offsetMs": 0,
+        "localActive": "癸"
+      },
+      "followingControl": {
+        "at": 1792633965712.2998,
+        "action": "rate",
+        "value": 1.25,
+        "mediaMs": 5507.392000000001,
+        "stateMs": 5375.2519999999995
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "warm-3",
+      "surface": "local",
+      "side": "beforeOnly",
+      "key": "normal:6000",
+      "missingVariant": "after",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634626961.2002,
+        "mediaMs": 6000,
+        "stateMs": 5831.330999999999,
+        "lyricClockMs": 5998.9929999999995,
+        "rate": 1,
+        "paused": false,
+        "phase": "normal",
+        "offsetMs": 0,
+        "localActive": "癸"
+      },
+      "followingControl": {
+        "at": 1792634626962.4001,
+        "action": "pause",
+        "mediaMs": 6000.351000000001,
+        "stateMs": 5831.330999999999
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "warm-3",
+      "surface": "local",
+      "side": "afterOnly",
+      "key": "seek:5500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634048001.5,
+        "mediaMs": 5505.683999999999,
+        "stateMs": 5368,
+        "lyricClockMs": 5368,
+        "rate": 1,
+        "paused": false,
+        "phase": "seek",
+        "offsetMs": 0,
+        "localActive": "壬"
+      },
+      "followingControl": {
+        "at": 1792634048004.7,
+        "action": "rate",
+        "value": 1.25,
+        "mediaMs": 5508.932,
+        "stateMs": 5368
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "warm-3",
+      "surface": "output",
+      "side": "beforeOnly",
+      "key": "normal:6000",
+      "missingVariant": "after",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634626961.2002,
+        "mediaMs": 6000,
+        "stateMs": 5831.330999999999,
+        "lyricClockMs": 5998.9929999999995,
+        "rate": 1,
+        "paused": false,
+        "phase": "normal",
+        "offsetMs": 0,
+        "localActive": "癸"
+      },
+      "followingControl": {
+        "at": 1792634626962.4001,
+        "action": "pause",
+        "mediaMs": 6000.351000000001,
+        "stateMs": 5831.330999999999
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    },
+    {
+      "id": "warm-3",
+      "surface": "output",
+      "side": "afterOnly",
+      "key": "seek:5500",
+      "missingVariant": "before",
+      "nonSteadyTransitions": [],
+      "otherTransitions": [],
+      "phaseEnd": {
+        "at": 1792634048001.5,
+        "mediaMs": 5505.683999999999,
+        "stateMs": 5368,
+        "lyricClockMs": 5368,
+        "rate": 1,
+        "paused": false,
+        "phase": "seek",
+        "offsetMs": 0,
+        "localActive": "壬"
+      },
+      "followingControl": {
+        "at": 1792634048004.7,
+        "action": "rate",
+        "value": 1.25,
+        "mediaMs": 5508.932,
+        "stateMs": 5368
+      },
+      "reason": "No initial same-phase transition was recorded before phase ended; phase endpoint/control brackets retained."
+    }
+  ],
+  "traceDiagnostic": {
+    "beforeCold": {
+      "fitRenderMs": 0.6,
+      "fitMeasureMs": 40.8,
+      "probes": 21,
+      "updateLayoutTreeMs": 34.487,
+      "elements": 33,
+      "scheduleTargetDifferenceMaxMs": 42,
+      "timerLateMaxMs": 4
+    },
+    "conditionalEmptyStyleRead": {
+      "existingGlyphCount": 0,
+      "rootWidth": 0,
+      "currentWidth": 0,
+      "prepareMs": 11.1,
+      "nextFitMs": 6.7
+    },
+    "afterCold": {
+      "fitRenderMs": 0.7,
+      "fitMeasureMs": 6.7,
+      "probes": 21,
+      "largestFitLayoutMs": 2.597,
+      "scheduleTargetDifferenceMaxMs": 0,
+      "timerLateMaxMs": 4,
+      "stylePrepareMs": 16.8,
+      "approxStylePreparationLeadMs": 1170
+    },
+    "afterWarm": {
+      "warmupFitMs": 7.3,
+      "offsetReapplyFitMs": 1.9,
+      "scheduleTargetDifferenceMaxMs": 0,
+      "timerLateMaxMs": 4
+    },
+    "limits": "Single cold/warm diagnostics with Chromium instrumentation, not pooled with untraced runs. After warm recording covers formal offset fit, not warmup; before warm lacks exact navigation anchor."
+  },
+  "evidenceHashes": {
+    "matrix-comparison.json": "9227eed3b87c488ce2e9ea1c322c02fdc4e654735aff4478a8e6d31452df2cce",
+    "first-activation-comparison.json": "d3b9334e6dfe7741145075a8a13349091dde9ebab97446906ed2a23f9be8babe",
+    "delivery.json": "fde54359448a9c0927c809eca8b91f76b628fb057b9b9de1b8c9ebced99d1945",
+    "extreme-inspection.json": "adc1120cf6ca75aaed190b9b6d5d04c7fad4bc9b3cc71af52647796fff7c2f7a",
+    "baseline-runtime-manifest.json": "16d9b1e49fb37c19b79e7cce90ede7d80270b768fd0d6102762dcac0f8a1f0ed",
+    "trace-before-runtime-manifest.json": "9875e9bb717a2803dac6293df7f56d0817d830ab98f8291c0bf5827368959198",
+    "after-runtime-manifest.json": "48910f7b99510d86e961bc3162d8dc0e38bfab711eb9e9e6b147fe751a378354",
+    "run4-13-manifest.json": "dde8664d963352911d59b88068e89707470a519f8d96c0874b512f806cd06f92"
+  },
+  "limitations": [
+    "Only synthetic known onsets in actual native-media/local-owner/publisher/Hub/server/Focus Output chain; not model timing, speaker latency, OBS or all-template acceptance.",
+    "Fresh-process cold does not flush machine OS/font/disk caches. Warm priming is explicitly within the same Electron and Output document.",
+    "Trace and CDP overhead are excluded from the 12 untraced performance cases. Chrome nested style/layout durations are not summed.",
+    "Wall/performance epoch calibration is recorded; sub-ms transport order and control discontinuity pairs are not exact latency proof.",
+    "Legacy all-transition maxima are preserved; earlier-glyph reentry is separately classified after marking seen from all transitions including control exclusions."
+  ]
+}

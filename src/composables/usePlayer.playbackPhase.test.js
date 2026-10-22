@@ -129,6 +129,37 @@ afterEach(() => {
 });
 
 describe('playback phase', () => {
+  it('pairs a read-only actual media sample with its timestamp, identity and event phase', async () => {
+    const { usePlayer } = await import('./usePlayer.js');
+    const player = usePlayer();
+    await player.playTrack({
+      id: 'a',
+      url: 'utawakui-media://track/a/audio.wav',
+    });
+    const audio = MockAudio.latest;
+    audio.dispatch('playing');
+    audio.currentTime = 1.234;
+    audio.playbackRate = 1.25;
+    const sampled = player.samplePlaybackClock({
+      now: () => '2026-10-22T00:00:01.234Z',
+    });
+    expect(sampled).toMatchObject({
+      trackId: 'a',
+      positionMs: 1234,
+      rate: 1.25,
+      phase: 'playing',
+      sampledAt: '2026-10-22T00:00:01.234Z',
+      continuityRevision: player.state.continuityRevision,
+      playbackRevision: player.state.playbackRevision,
+    });
+    expect(player.state.currentTime).toBe(0);
+    audio.dispatch('waiting');
+    expect(player.samplePlaybackClock().phase).toBe('buffering');
+    audio.dispatch('seeking');
+    expect(player.samplePlaybackClock().phase).toBe('seeking');
+    player.pause();
+    expect(player.samplePlaybackClock().phase).toBe('paused');
+  });
   it('follows media readiness and seek events instead of play intent alone', async () => {
     const { usePlayer } = await import('./usePlayer.js');
     const player = usePlayer();

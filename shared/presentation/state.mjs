@@ -8,6 +8,7 @@ import {
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 import { estimatedLyricsTextUnits } from './lyricsTimingUnits.mjs';
+import { projectLyricsFineFrame } from './lyricsFineFrame.mjs';
 import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
 import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
@@ -1710,6 +1711,14 @@ export function selectLyricsFrame(snapshot, options = {}) {
     Number.isFinite(lineEndMs)
       ? Math.max(0, (lineEndMs - positionMs) / playbackRate(snapshot))
       : null;
+  const currentFineTiming =
+    options.templateId === 'focus-line' &&
+    currentSegmentProjection?.timingSource === 'model-starts'
+      ? projectLyricsFineFrame(lines[activeIndex], positionMs, {
+          rate: playbackRate(snapshot),
+          playing: snapshot?.playback?.status === 'playing',
+        })
+      : null;
   const musicStructure = selectMusicStructureFrame(snapshot, options);
   const lyricsRhythm = selectLyricsRhythmFrame(snapshot, {
     lineIndex: activeIndex,
@@ -1730,6 +1739,21 @@ export function selectLyricsFrame(snapshot, options = {}) {
       : {}),
     ...(lineProgress !== null ? { lineProgress } : {}),
     ...(lineRemainingMs !== null ? { lineRemainingMs } : {}),
+    ...(currentFineTiming
+      ? {
+          currentFineTiming: {
+            ...currentFineTiming,
+            sampledAtMs: nowMs,
+            advanceAtMs: Math.max(
+              nowMs,
+              Date.parse(snapshot.generatedAt) +
+                (Number.isSafeInteger(snapshot.displayDelayMs)
+                  ? snapshot.displayDelayMs
+                  : 0),
+            ),
+          },
+        }
+      : {}),
     ...(currentSegments
       ? {
           currentSegments,

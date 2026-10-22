@@ -55,6 +55,16 @@ function snapshot() {
 }
 
 describe('selectPerformerFrame', () => {
+  it('resolves open source ends from the next cue or duration without changing canonical lines', () => {
+    const value = snapshot();
+    value.state.playback.status = 'paused';
+    value.state.playback.positionMs = 1500;
+    value.state.lyrics.lines[0].endMs = null;
+    expect(selectPerformerFrame(value).currentLine.endMs).toBe(2000);
+    value.state.lyrics.lines = [value.state.lyrics.lines[0]];
+    expect(selectPerformerFrame(value).currentLine.endMs).toBe(9800);
+    expect(value.state.lyrics.lines[0].endMs).toBeNull();
+  });
   it('keeps an absent snapshot idle with reading disabled', () => {
     expect(selectPerformerFrame()).toMatchObject({
       mode: 'idle',

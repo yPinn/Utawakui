@@ -10,6 +10,7 @@ const {
   textCuts,
   planWindows,
   mapStarts,
+  mapFineTiming,
 } = require('./protocol.cjs');
 const {
   buildKuromojiTokenizer,
@@ -131,6 +132,7 @@ function startResearchJob({
         selectedSource.offsetMs ?? 0,
       );
       Object.assign(reasonsByLine, plan.declined);
+      const fineResults = new Map();
       const metrics = {
         recipe,
         windows: [],
@@ -325,6 +327,17 @@ function startResearchJob({
             line.lineId,
           );
           if (chunks) chunkResults.set(line.lineId, chunks);
+          const fineTiming =
+            chunks &&
+            ['zh', 'ja'].includes(lineLanguage) &&
+            mapFineTiming(
+              line,
+              words,
+              decoded.spans,
+              window.startMs,
+              context.source.offsetUsedMs,
+            );
+          if (fineTiming) fineResults.set(line.lineId, fineTiming);
         }
         for (const suffix of ['.pcm', '-frame.bin', '-edge.bin'])
           fs.rmSync(path.join(workspace, `${prefix}${suffix}`), {
@@ -354,7 +367,12 @@ function startResearchJob({
         context,
         snapshot,
         snapshot.lines.map((line) => chunkResults.get(line.lineId)),
-        { reasonsByLine },
+        {
+          reasonsByLine,
+          fineTimingByLine: snapshot.lines.map((line) =>
+            fineResults.get(line.lineId),
+          ),
+        },
       );
       const estimate = await saveTrackAcousticEstimate(
         trackDir,
