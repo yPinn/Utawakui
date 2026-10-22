@@ -1,0 +1,383 @@
+{
+  "date": "2026-10-22",
+  "scope": "fixed existing caches; original O1/O2, constructed wrong-phrase/deleted-lyrics controls, and missing repeated-occurrence raw; not nine independent natural cases",
+  "method": "content-time-separated-offline-v1",
+  "fixedTargets": 9,
+  "rawTargets": 7,
+  "missingTargets": 2,
+  "rawContexts": 6,
+  "uniqueRawSha256": 5,
+  "rows": [
+    {
+      "id": "O1",
+      "kind": "normal-fixed-front",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "insufficient",
+        "sourceCharacters": 14,
+        "matchedCharacters": 10,
+        "insertionWarning": false,
+        "extraContentWarning": false
+      },
+      "wholeSegmentText": {
+        "evidenceState": "supported",
+        "reject": false,
+        "compatibility": 0.9285714285714286,
+        "sourceCharacters": 14,
+        "asrCharacters": 14,
+        "matchedCharacters": 13,
+        "extraCharacters": 1,
+        "extraContentWarning": false
+      },
+      "textSelection": "sole-supported-whole-segment",
+      "occurrence": "unverified",
+      "insertion": {
+        "insertionState": "unknown",
+        "insertionWarning": false,
+        "insertionCharacters": 0
+      },
+      "acoustic": {
+        "state": "usable-observation",
+        "reason": "raw-first-and-crop-guards",
+        "leftMarginMs": 299.81178462505363,
+        "rightMarginMs": 5240.1882153749475
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": ["window-edge-completeness-unknown", "omission-not-cleared"],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "O2",
+      "kind": "normal-fixed-front",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "supported",
+        "sourceCharacters": 11,
+        "matchedCharacters": 11,
+        "insertionWarning": false,
+        "extraContentWarning": false
+      },
+      "wholeSegmentText": {
+        "evidenceState": "supported",
+        "reject": false,
+        "compatibility": 1,
+        "sourceCharacters": 11,
+        "asrCharacters": 11,
+        "matchedCharacters": 11,
+        "extraCharacters": 0,
+        "extraContentWarning": false
+      },
+      "textSelection": "sole-supported-whole-segment",
+      "occurrence": "unverified",
+      "insertion": {
+        "insertionState": "unknown",
+        "insertionWarning": false,
+        "insertionCharacters": 0
+      },
+      "acoustic": {
+        "state": "usable-observation",
+        "reason": "raw-first-and-crop-guards",
+        "leftMarginMs": 379.9090626090766,
+        "rightMarginMs": 5230.090937390923
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": ["right-neighbor-unverified", "omission-not-cleared"],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "zh-1-phrase-mismatch",
+      "kind": "wrong-phrase",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "contradiction",
+        "sourceCharacters": 11,
+        "matchedCharacters": 1,
+        "insertionWarning": false,
+        "extraContentWarning": false
+      },
+      "wholeSegmentText": null,
+      "textSelection": null,
+      "occurrence": "unverified",
+      "insertion": {
+        "insertionState": "unknown",
+        "insertionWarning": false,
+        "insertionCharacters": 0
+      },
+      "acoustic": {
+        "state": "missing",
+        "reason": "raw-first-not-retained"
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": [
+        "no-supported-whole-segment",
+        "full-source-occurrence-unverified",
+        "legacy-contradiction-veto",
+        "omission-not-cleared",
+        "acoustic-time-unavailable"
+      ],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "zh-2-phrase-mismatch",
+      "kind": "wrong-phrase",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "contradiction",
+        "sourceCharacters": 7,
+        "matchedCharacters": 1,
+        "insertionWarning": false,
+        "extraContentWarning": false
+      },
+      "wholeSegmentText": null,
+      "textSelection": null,
+      "occurrence": "unverified",
+      "insertion": {
+        "insertionState": "unknown",
+        "insertionWarning": false,
+        "insertionCharacters": 0
+      },
+      "acoustic": {
+        "state": "missing",
+        "reason": "raw-first-not-retained"
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": [
+        "no-supported-whole-segment",
+        "full-source-occurrence-unverified",
+        "legacy-contradiction-veto",
+        "omission-not-cleared",
+        "acoustic-time-unavailable"
+      ],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "zh-1-missing-text",
+      "kind": "deleted-lyrics",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "supported",
+        "sourceCharacters": 9,
+        "matchedCharacters": 9,
+        "insertionWarning": true,
+        "extraContentWarning": false
+      },
+      "wholeSegmentText": {
+        "evidenceState": "supported",
+        "reject": false,
+        "compatibility": 1,
+        "sourceCharacters": 9,
+        "asrCharacters": 11,
+        "matchedCharacters": 9,
+        "extraCharacters": 2,
+        "extraContentWarning": false
+      },
+      "textSelection": "sole-supported-whole-segment",
+      "occurrence": "unverified",
+      "insertion": {
+        "insertionState": "possible-missing-text",
+        "insertionWarning": true,
+        "insertionCharacters": 2
+      },
+      "acoustic": {
+        "state": "missing",
+        "reason": "raw-first-not-retained"
+      },
+      "retainedLegacyWarning": true,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": [
+        "full-source-occurrence-unverified",
+        "right-neighbor-unverified",
+        "omission-or-extra-warning",
+        "omission-not-cleared",
+        "acoustic-time-unavailable"
+      ],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "zh-2-missing-text",
+      "kind": "deleted-lyrics",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "supported",
+        "sourceCharacters": 5,
+        "matchedCharacters": 5,
+        "insertionWarning": true,
+        "extraContentWarning": true
+      },
+      "wholeSegmentText": {
+        "evidenceState": "supported",
+        "reject": false,
+        "compatibility": 1,
+        "sourceCharacters": 5,
+        "asrCharacters": 7,
+        "matchedCharacters": 5,
+        "extraCharacters": 2,
+        "extraContentWarning": false
+      },
+      "textSelection": "sole-supported-whole-segment",
+      "occurrence": "unverified",
+      "insertion": {
+        "insertionState": "possible-missing-text",
+        "insertionWarning": true,
+        "insertionCharacters": 2
+      },
+      "acoustic": {
+        "state": "missing",
+        "reason": "raw-first-not-retained"
+      },
+      "retainedLegacyWarning": true,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": [
+        "full-source-occurrence-unverified",
+        "left-neighbor-unverified",
+        "omission-or-extra-warning",
+        "omission-not-cleared",
+        "acoustic-time-unavailable"
+      ],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "ja-2-missing-text",
+      "kind": "deleted-lyrics",
+      "cache": "verified",
+      "legacy": {
+        "evidenceState": "supported",
+        "sourceCharacters": 11,
+        "matchedCharacters": 10,
+        "insertionWarning": false,
+        "extraContentWarning": false
+      },
+      "wholeSegmentText": {
+        "evidenceState": "supported",
+        "reject": false,
+        "compatibility": 0.9090909090909091,
+        "sourceCharacters": 11,
+        "asrCharacters": 23,
+        "matchedCharacters": 10,
+        "extraCharacters": 13,
+        "extraContentWarning": true
+      },
+      "textSelection": "sole-supported-whole-segment",
+      "occurrence": "ambiguous",
+      "insertion": {
+        "insertionState": "unknown",
+        "insertionWarning": false,
+        "insertionCharacters": 0
+      },
+      "acoustic": {
+        "state": "missing",
+        "reason": "raw-first-not-retained"
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": [
+        "no-monotone-path",
+        "full-source-occurrence-unverified",
+        "segment-supports-multiple-lines",
+        "window-edge-completeness-unknown",
+        "extra-content-warning",
+        "omission-or-extra-warning",
+        "omission-not-cleared",
+        "acoustic-time-unavailable"
+      ],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "repeat-occurrence-1",
+      "kind": "existing-repeat-cache",
+      "cache": "missing",
+      "legacy": {
+        "evidenceState": "insufficient",
+        "sourceCharacters": null,
+        "matchedCharacters": null,
+        "insertionWarning": null,
+        "extraContentWarning": null
+      },
+      "wholeSegmentText": null,
+      "textSelection": null,
+      "occurrence": "missing",
+      "insertion": {
+        "insertionState": "unknown"
+      },
+      "acoustic": {
+        "state": "missing"
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": ["original-profile-and-job-raw-missing"],
+      "humanTiming": "pending"
+    },
+    {
+      "id": "repeat-occurrence-2",
+      "kind": "existing-repeat-cache",
+      "cache": "missing",
+      "legacy": {
+        "evidenceState": "insufficient",
+        "sourceCharacters": null,
+        "matchedCharacters": null,
+        "insertionWarning": null,
+        "extraContentWarning": null
+      },
+      "wholeSegmentText": null,
+      "textSelection": null,
+      "occurrence": "missing",
+      "insertion": {
+        "insertionState": "unknown"
+      },
+      "acoustic": {
+        "state": "missing"
+      },
+      "retainedLegacyWarning": false,
+      "offsetEligible": false,
+      "fallback": "retain-T1-and-offset",
+      "reasons": ["original-profile-and-job-raw-missing"],
+      "humanTiming": "pending"
+    }
+  ],
+  "guards": {
+    "legacyContradictionsPreserved": 2,
+    "legacyInsertionWarningsPreserved": 2,
+    "knownJapaneseInsertionMissStillUnresolved": 1,
+    "repeatRawMissing": 2,
+    "eligibleOffsetTargets": 0
+  },
+  "legacyPureRuleParityChecks": 36,
+  "syntheticTests": 15,
+  "syntheticClock": {
+    "kind": "affine token-clock relocation inside same segment; not natural ASR result",
+    "legacyMatchedBefore": 10,
+    "legacyMatchedAfter": 13,
+    "wholeSegmentTextAndSequenceUnchanged": true
+  },
+  "newModelRuns": 0,
+  "audioDecodes": 0,
+  "newWindows": 0,
+  "downloads": 0,
+  "offsetEstimates": 0,
+  "offsetCandidate": null,
+  "offsetWritten": false,
+  "productChanges": false,
+  "humanTiming": "pending",
+  "privateResultSha256": "df661a9b3b8394a0a1a48ca28a3bbe578cb4348f18c62d284d8260d7a97544d7",
+  "limitations": [
+    "No complete same-song six-anchor group or offset estimate.",
+    "Text support is separate from unique occurrence, acoustic usability and omission safety.",
+    "Japanese deletion is not newly detected; ambiguity and extra content are separate fallback reasons.",
+    "Existing repeat-occurrence raw is missing; synthetic ambiguity checks cannot replace it.",
+    "All new offset outcomes remain blocked by unknown omission safety; zero eligibility is not a measured false-acceptance rate.",
+    "Two fixed-data offline passes were retained; the second separates text diagnostics from failed sequence allocation, without changing thresholds or combined fallback.",
+    "Negative-control raw acoustic first spans were not established by this bounded content validation; published T1 anchors are not substituted."
+  ]
+}
