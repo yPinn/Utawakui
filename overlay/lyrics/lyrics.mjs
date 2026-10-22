@@ -113,6 +113,9 @@ const PERFORMANCE_EVENTS = new Set([
   'config',
   'activity',
   'render-cost',
+  'commit-start',
+  'timer-cancel',
+  'timer-stale',
 ]);
 const PERFORMANCE_FIELDS = new Set([
   'durationMs',
@@ -147,6 +150,24 @@ const PERFORMANCE_FIELDS = new Set([
   'fineIndexes',
   'finePartsHits',
   'finePartsMisses',
+  'cycleId',
+  'timerId',
+  'trigger',
+  'generation',
+  'deliveryId',
+  'callbackAtMs',
+  'armedAtMs',
+  'reasonCode',
+  'fitStyleMs',
+  'fitRootMs',
+  'fitTargetMs',
+  'fitProbeSetupMs',
+  'fitWrappedMs',
+  'fitRowsMs',
+  'fitPlanMs',
+  'fitRootAtMs',
+  'fitTargetAtMs',
+  'fitWrappedAtMs',
 ]);
 let pagePerformanceTrace = null;
 
@@ -159,6 +180,9 @@ export function createLyricsPerformanceTrace(options = {}) {
   const performanceAnchorMs = clock();
   const wallAnchorMs = (options.wallNow ?? Date.now)();
   const events = [];
+  const markTimeline =
+    options.markTimeline ??
+    globalThis.performance?.mark?.bind(globalThis.performance);
   let dropped = 0;
   return {
     mark(event, fields = {}) {
@@ -171,6 +195,11 @@ export function createLyricsPerformanceTrace(options = {}) {
       for (const key of PERFORMANCE_FIELDS)
         if (Number.isFinite(fields[key])) row[key] = fields[key];
       events.push(row);
+      if (
+        (event === 'commit' || event === 'commit-start') &&
+        Number.isSafeInteger(row.cycleId)
+      )
+        markTimeline?.(`lyrics-${event}-${row.cycleId}-${row.pass ?? 0}`);
     },
     read() {
       return {
@@ -1553,6 +1582,7 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
     const fields = { ...cost };
     delete fields.now;
     options.onTrace('render-cost', {
+      ...options.traceContext,
       ...fields,
       durationMs: now() - started,
       lineIndex: sourceFrame.lineIndex,
@@ -1757,33 +1787,70 @@ export function createLyricsFrameScheduler(options = {}) {
   );
   const presentationCache =
     options.presentationCache ?? createLyricsPresentationDocumentCache();
-  const onTrace = options.onTrace;
+  const traceSink = options.onTrace;
   const measureNow = options.measureNow ?? (() => performance.now());
   let lastPresentationDocument;
+  let cycleSerial = 0,
+    timerSerial = 0,
+    deliveryId = 0,
+    armedContext = null;
 
   function clearTimer() {
-    if (timer !== null) cancelSchedule(timer);
+    if (timer !== null) {
+      cancelSchedule(timer);
+      traceSink?.('timer-cancel', { ...armedContext });
+    }
     timer = null;
+    armedContext = null;
   }
 
   let generation = 0;
 
-  function arm(deadlineMs, currentGeneration) {
+  function arm(deadlineMs, currentGeneration, cycle) {
     const delay = Math.max(0, deadlineMs - now());
-    onTrace?.('schedule', { deadlineMs, targetMs: deadlineMs, delayMs: delay });
+    const timerContext = traceSink
+      ? { ...cycle, timerId: ++timerSerial, deadlineMs, armedAtMs: now() }
+      : null;
+    armedContext = timerContext;
+    traceSink?.('schedule', {
+      ...timerContext,
+      targetMs: deadlineMs,
+      delayMs: delay,
+    });
     timer = schedule(() => {
-      if (currentGeneration !== generation || stopped) return;
+      if (currentGeneration !== generation || stopped) {
+        traceSink?.('timer-stale', { ...timerContext });
+        return;
+      }
       timer = null;
-      onTrace?.('timer', { deadlineMs, lateMs: now() - deadlineMs });
-      renderLatest();
+      armedContext = null;
+      renderLatest(1, timerContext);
     }, delay);
   }
 
-  function renderLatest() {
+  function renderLatest(trigger = 0, timerContext = null) {
     if (stopped || !latestSnapshot) return;
     const snapshot = latestSnapshot;
     const currentGeneration = generation;
     const enteredAtMs = now();
+    const cycle = traceSink
+      ? {
+          ...timerContext,
+          cycleId: ++cycleSerial,
+          trigger,
+          generation: currentGeneration,
+          deliveryId,
+          revision: snapshot.revision,
+        }
+      : null;
+    const onTrace = traceSink
+      ? (event, fields = {}) => traceSink(event, { ...cycle, ...fields })
+      : undefined;
+    if (timerContext)
+      onTrace?.('timer', {
+        callbackAtMs: enteredAtMs,
+        lateMs: enteredAtMs - timerContext.deadlineMs,
+      });
     const isCurrent = () =>
       !stopped &&
       generation === currentGeneration &&
@@ -1816,6 +1883,7 @@ export function createLyricsFrameScheduler(options = {}) {
         nowMs,
         presentationDocument,
         templateId,
+        ...(cycle ? { traceContext: { ...cycle, pass } } : {}),
       };
       stageAt = onTrace ? measureNow() : 0;
       const frame = selectLyricsOverlayFrame(snapshot, projectionOptions);
@@ -1844,12 +1912,13 @@ export function createLyricsFrameScheduler(options = {}) {
       const targetMs = delay === null ? null : nowMs + delay;
       if (targetMs !== null && now() >= targetMs) {
         if (pass === 0) continue;
-        arm(now(), currentGeneration);
+        arm(now(), currentGeneration, cycle);
         return;
       }
       stageAt = onTrace ? measureNow() : 0;
       const visibleFrame = display?.frame ?? frame;
-      onFrame(visibleFrame);
+      onTrace?.('commit-start', { lineIndex: frame.lineIndex, pass });
+      onFrame(visibleFrame, projectionOptions.traceContext);
       onTrace?.('commit', {
         durationMs: measureNow() - stageAt,
         lineIndex: frame.lineIndex,
@@ -1862,18 +1931,19 @@ export function createLyricsFrameScheduler(options = {}) {
       if (!isCurrent()) return;
       if (targetMs !== null && now() >= targetMs) {
         if (pass === 0) continue;
-        arm(now(), currentGeneration);
-      } else if (targetMs !== null) arm(targetMs, currentGeneration);
+        arm(now(), currentGeneration, cycle);
+      } else if (targetMs !== null) arm(targetMs, currentGeneration, cycle);
       return;
     }
   }
 
-  function update(snapshot) {
+  function update(snapshot, context) {
     if (stopped) return;
     generation++;
     latestSnapshot = snapshot;
+    if (traceSink) deliveryId = context?.deliveryId ?? 0;
     clearTimer();
-    renderLatest();
+    renderLatest(0);
   }
 
   function stop() {
@@ -1892,7 +1962,7 @@ export function createLyricsFrameScheduler(options = {}) {
   function refresh() {
     generation++;
     clearTimer();
-    renderLatest();
+    renderLatest(2);
   }
 
   function setPresentationSettings(nextSettings = {}) {
@@ -2022,7 +2092,7 @@ function boot() {
     onTrace,
     templateId: 'karaoke-stack',
     prepareFrame: fit.prepare,
-    onFrame: (frame) => {
+    onFrame: (frame, traceContext) => {
       const visibleFrame = withPreviewFallback(
         frame,
         previewScene.frame,
@@ -2035,9 +2105,11 @@ function boot() {
         trace,
         onTrace,
         renderPhase: 1,
+        traceContext,
       });
     },
   });
+  let deliveryId = 0;
   const host = createOverlayHost({
     kind: 'lyrics',
     previewMode,
@@ -2047,7 +2119,7 @@ function boot() {
     },
     onFontsChanged: () => {
       onTrace?.('fonts');
-      fit.invalidate();
+      fit.invalidate(2);
       prepareFocusStyles();
       frameScheduler.refresh();
     },
@@ -2063,7 +2135,7 @@ function boot() {
       onTrace?.('config');
       previewScene = previewSceneForSlot('lyrics', slot);
       applyOverlayAppearance(document, slot);
-      fit.invalidate();
+      fit.invalidate(3);
       frameScheduler.setPresentationSettings({
         kineticMaterial: normalizeOverlayAppearance(slot?.settings)
           .kineticMaterial,
@@ -2073,10 +2145,11 @@ function boot() {
       prepareFocusStyles();
     },
     onSnapshot: (snapshot, { recovering }) => {
-      onTrace?.('receive', { revision: snapshot.revision });
+      const delivery = onTrace ? { deliveryId: ++deliveryId } : undefined;
+      onTrace?.('receive', { revision: snapshot.revision, ...delivery });
       settling = recovering;
       try {
-        frameScheduler.update(snapshot);
+        frameScheduler.update(snapshot, delivery);
       } finally {
         settling = false;
       }

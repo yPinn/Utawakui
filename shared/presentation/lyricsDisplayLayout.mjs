@@ -68,7 +68,12 @@ function partition(
       best = index;
     while (low <= high) {
       const middle = (low + high) >>> 1;
-      if (fits(text.slice(from, boundaries[middle]))) {
+      if (
+        fits(text.slice(from, boundaries[middle]), {
+          sourceStart: from,
+          sourceEnd: boundaries[middle],
+        })
+      ) {
         best = middle;
         low = middle + 1;
       } else high = middle - 1;
@@ -126,8 +131,20 @@ export function planLyricsDisplay(line, options = {}) {
   const start = line.startMs,
     end = options.endMs ?? line.endMs;
   const timing = timingMap({ ...line, endMs: end });
+  // A complete-page capacity proof needs no break candidates or prefix search.
+  // Keep the same page shape and run all timing decisions below unchanged.
   let pages = text.length
-    ? partition(text, options.fits, timing.starts, minimumMs, true, end)
+    ? options.fits(text, { sourceStart: 0, sourceEnd: text.length })
+      ? [
+          {
+            text,
+            sourceStart: 0,
+            sourceEnd: text.length,
+            startMs: null,
+            endMs: null,
+          },
+        ]
+      : partition(text, options.fits, timing.starts, minimumMs, true, end)
     : [];
   if (!pages)
     return {

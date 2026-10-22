@@ -10,6 +10,35 @@ import {
   selectLyricsDisplayPage,
 } from '../../shared/presentation/lyricsDisplayLayout.mjs';
 import { projectLyricsDisplayFrame } from '../../shared/presentation/lyricsDisplayFrame.mjs';
+import { fineTextParts } from '../../shared/presentation/lyricsFineFrame.mjs';
+
+function fineMeasurementSource(line, frame, templateId) {
+  const units = frame.currentFineTiming?.units;
+  const segments = frame.currentSegments;
+  if (
+    templateId !== 'focus-line' ||
+    !units?.length ||
+    !Array.isArray(segments) ||
+    frame.currentText !== line.text ||
+    segments.map((segment) => segment.text).join('') !== line.text
+  )
+    return null;
+  let cursor = 0;
+  const ranges = segments.map((segment) => {
+    const from = cursor;
+    cursor += segment.text.length;
+    return { from, to: cursor };
+  });
+  let index = 0;
+  return {
+    text: line.text,
+    units: units.filter((unit) => {
+      while (index < ranges.length && ranges[index].to <= unit.from) index++;
+      const range = ranges[index];
+      return range && unit.from >= range.from && unit.to <= range.to;
+    }),
+  };
+}
 
 // DOM measurement is local to this Browser Source. It is never sent over IPC.
 function createMeasurement(
@@ -19,6 +48,8 @@ function createMeasurement(
   window,
   reading,
   counters,
+  measureNow,
+  fineSource,
 ) {
   const vertical = ['manga-frame', 'ornate-vertical'].includes(templateId);
   const target =
@@ -28,12 +59,25 @@ function createMeasurement(
           '.lyrics-overlay__kinetic-layer--fill',
         ) ?? elements.current);
   if (!target || !window.innerWidth || !window.innerHeight) return null;
+  let phaseAt = counters ? measureNow() : 0;
   const style = window.getComputedStyle(target);
   const size = parseFloat(style.fontSize);
   if (!Number.isFinite(size) || size <= 0) return null;
+  if (counters) {
+    counters.fitStyleMs += measureNow() - phaseAt;
+    phaseAt = counters.fitRootAtMs = measureNow();
+  }
   const rootRect = elements.root.getBoundingClientRect();
+  if (counters) {
+    counters.fitRootMs += measureNow() - phaseAt;
+    phaseAt = counters.fitTargetAtMs = measureNow();
+  }
   if (rootRect.width <= 0 || rootRect.height <= 0) return null;
   const targetRect = target.getBoundingClientRect();
+  if (counters) {
+    counters.fitTargetMs += measureNow() - phaseAt;
+    phaseAt = measureNow();
+  }
   const lineHeight = parseFloat(style.lineHeight) || size * 1.2;
   const padding = size * (templateId === 'kinetic-pop' ? 0.8 : 0.3);
   let width =
@@ -99,8 +143,10 @@ function createMeasurement(
     context.font = `${style.fontStyle || 'normal'} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
     context.letterSpacing = style.letterSpacing;
   }
+  if (counters) counters.fitProbeSetupMs += measureNow() - phaseAt;
   const measured = new Map(),
-    layouts = new Map();
+    layouts = new Map(),
+    wrappedPages = new Map();
   const fitsLine = (text) => {
     if (measured.has(text)) return measured.get(text);
     probe.textContent = text;
@@ -113,12 +159,17 @@ function createMeasurement(
     return fits;
   };
   const layout = (text) => {
-    if (!layouts.has(text))
+    if (!layouts.has(text)) {
+      const at = counters ? measureNow() : 0;
       layouts.set(text, splitLyricsDisplayRows(text, fitsLine, rows));
+      if (counters) counters.fitRowsMs += measureNow() - at;
+    }
     return layouts.get(text);
   };
+  const pageKey = (text, range) =>
+    `${range?.sourceStart ?? 0}:${range?.sourceEnd ?? text.length}`;
   return {
-    fits: (text) => {
+    fits: (text, range) => {
       // A generous advance budget cheaply rejects obviously excessive text.
       // The actual DOM measurement remains authoritative for every accepted page.
       if (
@@ -130,20 +181,59 @@ function createMeasurement(
         return false;
       // Reject oversized probes with one browser layout before tokenizing rows.
       // This avoids recursively laying out every row of a 2,000-glyph candidate.
-      wrapped.textContent = text;
+      const at = counters ? measureNow() : 0;
+      if (counters && counters.fitWrappedAtMs === null)
+        counters.fitWrappedAtMs = at;
+      const from = range?.sourceStart ?? 0;
+      const to = range?.sourceEnd ?? text.length;
+      if (fineSource?.units.length) {
+        const parts = fineTextParts(
+          fineSource.text,
+          fineSource.units,
+          from,
+          to,
+        );
+        wrapped.replaceChildren(
+          ...parts.map((part) => {
+            if (!part.unitId) return document.createTextNode(part.text);
+            const cell = document.createElement('span');
+            cell.textContent = part.text;
+            // Match only the live ink cell's layout. No pseudo copy or animation.
+            Object.assign(cell.style, {
+              display: 'inline-block',
+              maxInlineSize: '100%',
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'anywhere',
+            });
+            return cell;
+          }),
+        );
+      } else wrapped.textContent = text;
       if (counters) counters.probeCount++;
       const rect = wrapped.getBoundingClientRect();
+      const overflow = vertical
+        ? rect.width > width || wrapped.scrollHeight > height + 1
+        : rect.height > lineHeight * rows * 1.2 ||
+          wrapped.scrollWidth > width + 1;
+      if (counters) counters.fitWrappedMs += measureNow() - at;
+      if (overflow) return false;
+      // Focus wraps the complete page itself; it never consumes row fragments.
+      // A strict DOM proof can skip prefix probes, while whitespace-sensitive
+      // candidates and the other templates retain the existing row planner.
       if (
-        vertical
-          ? rect.width > width || wrapped.scrollHeight > height + 1
-          : rect.height > lineHeight * rows * 1.2 ||
-            wrapped.scrollWidth > width + 1
-      )
-        return false;
+        templateId === 'focus-line' &&
+        !/[\r\n\t]/u.test(text) &&
+        text.trim() === text &&
+        rect.height <= lineHeight * rows + 1
+      ) {
+        wrappedPages.set(pageKey(text, range), rect.height > lineHeight + 1);
+        return true;
+      }
       const result = layout(text);
       return result !== null && result.length <= rows;
     },
     rows: layout,
+    wrappedMultiline: (text, range) => wrappedPages.get(pageKey(text, range)),
     dispose: () => {
       probe.remove();
       wrapped.remove();
@@ -204,8 +294,8 @@ export function createLyricsFitController(options = {}) {
       });
     }, 0);
   }
-  function invalidate() {
-    options.onTrace?.('invalidate');
+  function invalidate(reasonCode = 0) {
+    options.onTrace?.('invalidate', { reasonCode });
     cancelStylePreparation();
     stylesPrepared = false;
     cache.clear();
@@ -214,7 +304,7 @@ export function createLyricsFitController(options = {}) {
     if (stopped || resizeFrame !== null) return;
     resizeFrame = window.requestAnimationFrame(() => {
       resizeFrame = null;
-      invalidate();
+      invalidate(1);
       options.refresh?.();
     });
   }
@@ -262,14 +352,30 @@ export function createLyricsFitController(options = {}) {
       base.currentReading,
     ]);
     let entry = cache.get(key);
-    options.onTrace?.('fit-hit', {
+    const trace = options.onTrace
+      ? (event, fields) =>
+          options.onTrace(event, { ...settings.traceContext, ...fields })
+      : undefined;
+    trace?.('fit-hit', {
       cacheHit: entry ? 1 : 0,
       lineIndex: base.lineIndex,
     });
     if (!entry) {
       const measureNow = options.measureNow ?? (() => performance.now());
       const startedAt = options.onTrace ? measureNow() : 0;
-      const counters = options.onTrace ? { probeCount: 0 } : null;
+      const counters = options.onTrace
+        ? {
+            probeCount: 0,
+            fitStyleMs: 0,
+            fitRootMs: 0,
+            fitTargetMs: 0,
+            fitProbeSetupMs: 0,
+            fitWrappedMs: 0,
+            fitRowsMs: 0,
+            fitPlanMs: 0,
+            fitWrappedAtMs: null,
+          }
+        : null;
       if (elements) elements.root.dataset.fitActive = 'false';
       options.renderForMeasurement?.(
         settings.templateId === 'manga-frame'
@@ -277,7 +383,7 @@ export function createLyricsFitController(options = {}) {
           : frame,
         settings,
       );
-      options.onTrace?.('fit-render', { durationMs: measureNow() - startedAt });
+      trace?.('fit-render', { durationMs: measureNow() - startedAt });
       const measurement =
         options.measure?.(line, settings) ??
         (elements &&
@@ -288,23 +394,44 @@ export function createLyricsFitController(options = {}) {
             window,
             base.currentReading,
             counters,
+            measureNow,
+            fineMeasurementSource(line, base, settings.templateId),
           ));
       if (!measurement) return { frame, delayMs: null };
       try {
-        const plan = planLyricsDisplay(line, { fits: measurement.fits, rate });
+        const planAt = counters ? measureNow() : 0;
+        const plan = planLyricsDisplay(line, {
+          fits: measurement.fits,
+          rate,
+        });
+        const multiline = [];
         entry = {
           plan,
-          rows: plan.pages.map(
-            (p) => measurement.rows(p.text) ?? [{ text: p.text }],
-          ),
+          rows: plan.pages.map((p) => {
+            const wrapped =
+              settings.templateId === 'focus-line'
+                ? measurement.wrappedMultiline?.(p.text, {
+                    sourceStart: p.sourceStart,
+                    sourceEnd: p.sourceEnd,
+                  })
+                : undefined;
+            const rows =
+              typeof wrapped === 'boolean'
+                ? [{ text: p.text }]
+                : (measurement.rows(p.text) ?? [{ text: p.text }]);
+            multiline.push(wrapped ?? rows.length > 1);
+            return rows;
+          }),
+          multiline,
         };
+        if (counters) counters.fitPlanMs += measureNow() - planAt;
         if (cache.size >= 8) cache.delete(cache.keys().next().value);
         cache.set(key, entry);
       } finally {
         measurement.dispose?.();
-        options.onTrace?.('fit-measure', {
+        trace?.('fit-measure', {
+          ...counters,
           durationMs: measureNow() - startedAt,
-          probeCount: counters.probeCount,
           lineIndex: base.lineIndex,
         });
       }
@@ -320,7 +447,8 @@ export function createLyricsFitController(options = {}) {
         : '目前尺寸無法完整顯示此句，請放大來源範圍或調整字級。';
     }
     const rows = entry.rows[selected.index];
-    const active = entry.plan.pages.length > 1 || rows?.length > 1;
+    const active =
+      entry.plan.pages.length > 1 || entry.multiline[selected.index] === true;
     const projected = projectLyricsDisplayFrame(frame, line, entry.plan, at, {
       ...settings,
       rows,

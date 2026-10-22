@@ -1,10 +1,57 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createLyricsPerformanceTrace,
   createLyricsFrameScheduler,
 } from './lyrics.mjs';
 
 describe('opt-in lyric performance trace', () => {
+  it('links finite scheduler and delivery identities to timeline commit marks without private strings', () => {
+    const markTimeline = vi.fn();
+    const trace = createLyricsPerformanceTrace({
+      location: { search: '?lyricsTrace=1' },
+      markTimeline,
+    });
+    trace.mark('commit-start', {
+      cycleId: 2,
+      timerId: 3,
+      trigger: 1,
+      generation: 4,
+      deliveryId: 7,
+      pass: 0,
+      revision: 5,
+      callbackAtMs: 100,
+      armedAtMs: 90,
+      privateText: 'private',
+    });
+    trace.mark('commit', { cycleId: 2, pass: 0, activeIndex: 0 });
+    trace.mark('fit-measure', {
+      cycleId: 2,
+      fitRootMs: 3,
+      fitRootAtMs: 100,
+      fitWrappedMs: 1,
+      text: 'private',
+    });
+    expect(trace.read().events[0]).toMatchObject({
+      event: 'commit-start',
+      cycleId: 2,
+      timerId: 3,
+      trigger: 1,
+      generation: 4,
+      deliveryId: 7,
+      callbackAtMs: 100,
+      armedAtMs: 90,
+    });
+    expect(markTimeline).toHaveBeenCalledWith('lyrics-commit-start-2-0');
+    expect(markTimeline).toHaveBeenCalledWith('lyrics-commit-2-0');
+    expect(trace.read().events[2]).toMatchObject({
+      event: 'fit-measure',
+      cycleId: 2,
+      fitRootMs: 3,
+      fitRootAtMs: 100,
+      fitWrappedMs: 1,
+    });
+    expect(JSON.stringify(trace.read())).not.toContain('private');
+  });
   it('retains numeric fine cost summaries without accepting private content', () => {
     const trace = createLyricsPerformanceTrace({
       location: { search: '?lyricsTrace=1' },
@@ -87,7 +134,7 @@ describe('opt-in lyric performance trace', () => {
   });
 });
 
-function timedScheduler({ prepare, commit } = {}) {
+function timedScheduler({ prepare, commit, trace } = {}) {
   const base = Date.parse('2026-10-22T00:00:00.000Z');
   let clock = base;
   const scheduled = [],
@@ -129,11 +176,12 @@ function timedScheduler({ prepare, commit } = {}) {
     clock += ms;
   };
   const scheduler = createLyricsFrameScheduler({
+    onTrace: trace,
     now: () => clock,
     prepareFrame: (...args) => prepare?.(advance, ...args),
-    onFrame: (frame) => {
+    onFrame: (frame, traceContext) => {
       frames.push(frame);
-      commit?.(advance, frame);
+      commit?.(advance, frame, traceContext);
     },
     schedule: (callback, delay) => {
       scheduled.push({ callback, delay, due: clock - base + delay });
@@ -145,6 +193,55 @@ function timedScheduler({ prepare, commit } = {}) {
 }
 
 describe('deadline work accounting', () => {
+  it('correlates callback, preparation and commit with one cycle and the actual armed timer', () => {
+    const events = [],
+      contexts = [],
+      prepared = [];
+    const c = timedScheduler({
+      trace: (event, fields) => events.push({ event, ...fields }),
+      prepare: (_advance, _snapshot, _frame, options) =>
+        prepared.push(options.traceContext) && undefined,
+      commit: (_advance, _frame, context) => contexts.push(context),
+    });
+    c.scheduler.update(c.snapshot, { deliveryId: 9 });
+    const first = events.find((e) => e.event === 'scheduler');
+    expect(first).toMatchObject({
+      cycleId: 1,
+      trigger: 0,
+      generation: 1,
+      revision: 1,
+      deliveryId: 9,
+    });
+    expect(prepared[0]).toMatchObject({ cycleId: 1, pass: 0, deliveryId: 9 });
+    expect(contexts[0]).toEqual(prepared[0]);
+    const schedule = events.find((e) => e.event === 'schedule');
+    expect(schedule).toMatchObject({ cycleId: 1, timerId: 1, deliveryId: 9 });
+    c.advance(105);
+    c.scheduled[0].callback();
+    const callback = events.find((e) => e.event === 'timer');
+    expect(callback).toMatchObject({
+      cycleId: 2,
+      trigger: 1,
+      timerId: 1,
+      deadlineMs: schedule.deadlineMs,
+      lateMs: 5,
+      deliveryId: 9,
+    });
+    expect(
+      events.find((e) => e.event === 'commit-start' && e.cycleId === 2),
+    ).toMatchObject({ pass: 0, timerId: 1 });
+    expect(
+      events.find((e) => e.event === 'commit' && e.cycleId === 2),
+    ).toMatchObject({ pass: 0, timerId: 1, activeIndex: 0 });
+    c.scheduler.refresh();
+    expect(events.filter((e) => e.event === 'scheduler').at(-1)).toMatchObject({
+      trigger: 2,
+      cycleId: 3,
+      deliveryId: 9,
+    });
+    expect(events.some((e) => e.event === 'timer-cancel')).toBe(true);
+    c.scheduler.stop();
+  });
   it('preserves the newer timer handle when an already queued stale callback fires', () => {
     const c = timedScheduler();
     c.scheduler.update(c.snapshot);

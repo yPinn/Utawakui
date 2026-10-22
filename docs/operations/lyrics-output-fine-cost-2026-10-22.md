@@ -79,6 +79,8 @@ Output 僅重用仍有效、單位／速率／顯示範圍與取樣時鐘對映�
 
 Cold 完整首次起點兩端各 104→104；warm Local 105→101、Output 105→102。缺項位於 pause／seek／rate／offset 的 phase 端點，保留其控制前後取樣、原因及未配對資料。分類由全部 raw transitions 先記首次 activation，再套 steady filter；legacy rows 全部逐值保留，不刪負值或最慢樣本。
 
+這組 cold 最大值回退後續另以同次 deadline／callback／prepare／commit／observer 事件鏈診斷，並執行新的完整交錯比較；見[冷啟動首字與舊分組結果排查](lyrics-output-cold-max-2026-10-22.md)。本頁歷史 cohort 與慢值保留，不以後續批次覆寫。
+
 共同起點 p95 下降，但 cold 最大值仍有回退：Output 14.435→18.628 ms，Local 15.568→15.747 ms。這不是所有時刻都改善或固定延遲上限的證據；也沒有用提早提示、時間偏移或平滑等待換取分布。
 
 最終可見診斷六組涵蓋 plain、容量、ruby、dark／light list 與 starts-only。單字直接沿粗 span 的 Output pseudo clip 有連續中間值，AX 首字只朗讀一次；20 字／四個五字單位在 9 字寬容量下，本地與 Focus 都是三行且 contained。Pause 凍結、gap 保留完成、seek／rate 即時重定位；root 另親自查看最終 plain／容量 Output PNG。原生 T2 沿程式測試回歸，沒有將本輪合成 T1+ 案例冒充新增的 T2 可見測試。

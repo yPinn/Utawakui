@@ -82,9 +82,15 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 `lyricsTrace=1` 的 `render-cost` 是每次 render 的數值彙總，`renderPhase` 0 表示排版量測、1 表示正式 commit。文字結構準備、查找、節點建構、進度寫入與動畫建立／取消／重用分開記錄；清理舊行的細動畫取消也計入。Prepare／fit／render／commit 含有巢狀範圍，不能相加為獨立成本；細分項以外的工作仍列為未分配。DOM commit、Chrome paint 與下一次 rAF 觀測分別看待，rAF 不作硬體或 OBS 呈現證據。預設停用，事件有界且只接受數值白名單，不記錄歌詞內容。
 
+同次 scheduler 執行以 `cycleId`、入口 `trigger`、`generation`、snapshot revision、`deliveryId` 與 `pass` 關聯；排程另以 `timerId` 保留 armed deadline、callback 與取消／過期事件。`commit-start` 和 `commit` 包住正式 DOM 呼叫，數值 timeline marks 可與 Chromium trace 對照。被新 snapshot 取消的 timer 沒有 callback，不能用新 receive 的 commit 當作該 timer 遲到；跨程序 send 也只是 native send 呼叫前的記錄，不等於 socket flush。
+
 Lyrics scheduler 的下一起點是絕對 deadline。Presentation／fit／DOM commit 的同步耗時須從剩餘等待扣除；準備或 commit 期間跨界時按同 snapshot 的當前時間重投影，不能提交舊時間狀態後再等完整舊 delay。每輪最多兩次同步追趕，仍跨界則讓出執行權到單一立即 task；generation、snapshot identity、stop／suspend 阻止舊 callback 提交或清掉新 timer handle。
 
 Focus 的首次樣式準備只讀取既有 current 容器與樣式。它是設定／字型／活動變更後的可取消工作，不提前寫未來歌詞、不產生可用 fit plan、不等待字型或阻擋播放；正式尺寸量測、長句容量與 unfit 恢復路徑照舊。來源或尺寸失效不允許借用不適用的計畫，T1+ 分段起點仍立即提示。
+
+Focus 對完整頁面做嚴格 wrapped DOM 容量檢查，已容納時省略不使用的逐行文字切片量測，仍沿共用時間 planner。接受頁的多行狀態獨立保留，單頁多行照常啟用 fit／隱藏下一句；換行、tab、頭尾空白與未通過嚴格檢查的候選走原 row planner。其他模板與分頁最短停留規則維持。
+
+容量 probe 按同一來源範圍重現實際細填色 grapheme 盒，未有完整 fine 對映的文字保持原文字形態；量測不啟動動畫。共用 planner 為 `fits(text, range)` 提供可選 `sourceStart`／`sourceEnd`，整句通過容量檢查便省略拆分搜尋，之後仍沿原時間判斷。這避免以純文字 kerning／ligature 寬度低估實際細填色行數，也避免重複片語配錯來源位置。
 
 T1+ 可選 `estimatedFineTiming` sibling 傳送經驗證的模型單位起訖與來源範圍，與原 `estimatedStarts` v1 分開。Main 先保留粗資料的 ID／數量，再驗細資料；不合法或超出剩餘數量的細資料降級為原提示，發布端也避免細資料擠爆文件 bytes。舊 reader 忽略新 sibling。Focus 以分段底線保留即時提示，另用原模型起訖連續填色；不按相鄰起點補唱完時間。填色只更新局部 paint，配合同一投影時鐘與既有 displayDelay hold，沒有逐幀 IPC、量測或平滑等待。字內小格只屬原單位進度的顯示內插，不能當作新逐字時間；原生 T2 與其他模板行為維持。細節見[聲學估計契約](lyrics-acoustic-estimate-contract.md)。
 

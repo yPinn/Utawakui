@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   planLyricsDisplay,
   selectLyricsDisplayPage,
@@ -17,6 +17,51 @@ const fits = (text) =>
     .length <= 18;
 
 describe('bounded lyric display pages', () => {
+  it.each([
+    [{}, 'line-estimate', 'layout-estimate', 1000, 25000],
+    [{ startMs: null, endMs: null }, 'line-estimate', null, null, null],
+    [
+      {
+        estimatedStarts: {
+          version: 1,
+          segments: [{ text: '甲乙丙', startMs: 1400 }],
+        },
+      },
+      'model-starts',
+      'model-starts',
+      1400,
+      25000,
+    ],
+    [
+      { segments: [{ text: '甲乙丙', startMs: 1000, endMs: 24000 }] },
+      't2',
+      't2',
+      1000,
+      25000,
+    ],
+  ])(
+    'uses one complete-page capacity check and preserves timing %j',
+    (extra, sourceTiming, pageTiming, startMs, endMs) => {
+      const input = line('甲乙丙', extra);
+      const before = structuredClone(input);
+      const accepts = vi.fn(() => true);
+      const result = planLyricsDisplay(input, { fits: accepts });
+      expect(accepts).toHaveBeenCalledExactlyOnceWith('甲乙丙', {
+        sourceStart: 0,
+        sourceEnd: 3,
+      });
+      expect(result).toEqual({
+        status: startMs === null ? 'untimed' : 'ready',
+        sourceTiming,
+        pageTiming,
+        pages: [
+          { text: '甲乙丙', sourceStart: 0, sourceEnd: 3, startMs, endMs },
+        ],
+      });
+      expect(input).toEqual(before);
+    },
+  );
+
   it.each([
     '沿著海岸慢慢走直到天空放晴，直到想起從前的我們也不願放開彼此的手',
     '君と過ごしたこの街の記憶を抱いて、いつかまた会える日まで歩いてゆこう',
@@ -55,6 +100,51 @@ describe('bounded lyric display pages', () => {
     expect(plan.pages.every((p) => p.startMs === null)).toBe(true);
     expect(selectLyricsDisplayPage(plan, 5000).index).toBe(0);
     expect(nextLyricsDisplayBoundaryMs(plan, 5000)).toBeNull();
+  });
+
+  it('retains single-page rate, short dwell and unresolved-end timing decisions', () => {
+    const input = line('甲乙丙', {
+      endMs: 3000,
+      estimatedStarts: {
+        version: 1,
+        segments: [{ text: '甲乙丙', startMs: 1400 }],
+      },
+    });
+    const plan = planLyricsDisplay(input, { fits: () => true, rate: 2 });
+    expect(plan).toMatchObject({
+      status: 'ready',
+      sourceTiming: 'model-starts',
+      pageTiming: 'layout-estimate',
+      pages: [{ startMs: 1000, endMs: 3000 }],
+    });
+    expect(nextLyricsDisplayBoundaryMs(plan, 1200, 2)).toBeNull();
+    const unresolved = planLyricsDisplay(
+      { ...input, endMs: null },
+      { fits: () => true, rate: 1.25 },
+    );
+    expect(unresolved).toMatchObject({
+      status: 'untimed',
+      pageTiming: null,
+      pages: [{ startMs: null, endMs: null }],
+    });
+  });
+
+  it('passes exact occurrence ranges for repeated candidate text', () => {
+    const text = 'AVAVAVAV';
+    const checks = [];
+    const result = planLyricsDisplay(line(text), {
+      fits: (candidate, range) => {
+        checks.push([candidate, range]);
+        expect(candidate).toBe(text.slice(range.sourceStart, range.sourceEnd));
+        return candidate.length <= 4;
+      },
+    });
+    expect(result.pages.map((p) => [p.sourceStart, p.sourceEnd])).toEqual([
+      [0, 4],
+      [4, 8],
+    ]);
+    expect(checks).toContainEqual(['AVAV', { sourceStart: 0, sourceEnd: 4 }]);
+    expect(checks).toContainEqual(['AVAV', { sourceStart: 4, sourceEnd: 8 }]);
   });
 
   it('uses native T2 before applied starts and never fabricates a model boundary', () => {
@@ -159,6 +249,12 @@ describe('bounded lyric display pages', () => {
     expect(planLyricsDisplay(line('a'.repeat(2001)), { fits }).status).toBe(
       'unsupported',
     );
+    const unused = vi.fn(() => true);
+    expect(planLyricsDisplay(line(''), { fits: unused }).pages).toEqual([]);
+    expect(
+      planLyricsDisplay(line('a'.repeat(2001)), { fits: unused }).status,
+    ).toBe('unsupported');
+    expect(unused).not.toHaveBeenCalled();
   });
 
   it('slices reading ranges without attaching a whole word reading to half a word', () => {

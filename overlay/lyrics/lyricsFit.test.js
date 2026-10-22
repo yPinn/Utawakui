@@ -41,6 +41,7 @@ describe('lyric fit controller lifecycle', () => {
     const make = () => {
       const node = {
         textContent: '',
+        children: [],
         hidden: false,
         className: '',
         style: {},
@@ -48,6 +49,18 @@ describe('lyric fit controller lifecycle', () => {
         remove() {
           probes--;
         },
+      };
+      let contents = '';
+      Object.defineProperty(node, 'textContent', {
+        get: () => contents,
+        set: (value) => {
+          contents = value;
+          node.children = [];
+        },
+      });
+      node.replaceChildren = (...children) => {
+        node.children = children;
+        contents = children.map((child) => child.textContent).join('');
       };
       node.cloneNode = () => {
         const clone = make();
@@ -62,7 +75,7 @@ describe('lyric fit controller lifecycle', () => {
         const wraps = Number.isFinite(capacity)
           ? Math.max(1, Math.ceil(length / capacity))
           : 1;
-        return vertical
+        const rect = vertical
           ? {
               width: wraps * 40,
               height: Number.isFinite(capacity) ? capacity : length,
@@ -71,6 +84,9 @@ describe('lyric fit controller lifecycle', () => {
               width: Number.isFinite(capacity) ? capacity : length,
               height: wraps * 40,
             };
+        return node.style.whiteSpace === 'pre-wrap'
+          ? (options.wrappedBounds?.(rect, node) ?? rect)
+          : rect;
       };
       Object.defineProperty(node, 'scrollWidth', {
         get: () => node.getBoundingClientRect().width,
@@ -96,6 +112,7 @@ describe('lyric fit controller lifecycle', () => {
     };
     const document = {
       createElement: make,
+      createTextNode: (text) => ({ textContent: text }),
       body: {
         append: () => {
           probes++;
@@ -148,6 +165,16 @@ describe('lyric fit controller lifecycle', () => {
     )[1];
     expect(measurement.durationMs).toBeGreaterThanOrEqual(0);
     expect(measurement.probeCount).toBeGreaterThan(0);
+    for (const field of [
+      'fitStyleMs',
+      'fitRootMs',
+      'fitTargetMs',
+      'fitProbeSetupMs',
+      'fitWrappedMs',
+      'fitRowsMs',
+      'fitPlanMs',
+    ])
+      expect(measurement[field]).toBeGreaterThanOrEqual(0);
     expect(
       onTrace.mock.calls.some(
         ([event, fields]) => event === 'fit-hit' && fields.cacheHit === 0,
@@ -166,6 +193,221 @@ describe('lyric fit controller lifecycle', () => {
     );
     s.controller.stop();
   });
+
+  it('does not sample phase clocks when tracing is disabled', () => {
+    const measureNow = vi.fn(() => 123);
+    const s = surface('focus-line', { measureNow });
+    s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(measureNow).not.toHaveBeenCalled();
+    s.controller.stop();
+  });
+
+  it.each([26, 80, 150])(
+    'accepts a %i-glyph Focus page with one wrapped probe and preserves multiline projection',
+    (length) => {
+      const onTrace = vi.fn();
+      const s = surface('focus-line', { onTrace });
+      const text = '甲'.repeat(length);
+      s.snapshot.lyrics.lines[0].text = text;
+      Object.assign(s.frame, {
+        currentText: text,
+        nextText: 'next line',
+        nextSegments: [{ text: 'next line' }],
+      });
+      const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+      expect(
+        onTrace.mock.calls.find(([event]) => event === 'fit-measure')[1]
+          .probeCount,
+      ).toBe(1);
+      expect(s.elements.root.dataset.fitPages).toBe('1');
+      expect(s.elements.root.dataset.fitActive).toBe(String(length > 52));
+      expect(result.frame.currentText).toBe(text);
+      expect(result.frame.nextText).toBe(length > 52 ? '' : 'next line');
+      if (length > 52) expect(result.frame.nextSegments).toBeUndefined();
+      const reads = s.reads();
+      s.controller.prepare(s.snapshot, s.frame, s.settings);
+      expect(s.reads()).toBe(reads);
+      expect(s.probes()).toBe(0);
+      s.controller.stop();
+    },
+  );
+
+  it('does not accept four wrapped Focus rows as a single page', () => {
+    const s = surface('focus-line');
+    const text = '甲'.repeat(170);
+    s.snapshot.lyrics.lines[0].text = text;
+    s.frame.currentText = text;
+    const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(result.frame.displayFit.pageCount).toBeGreaterThan(1);
+    expect(s.elements.root.dataset.fitActive).toBe('true');
+    s.controller.stop();
+  });
+
+  it('measures actual fine boxes and distinguishes repeated source occurrences', () => {
+    const observations = [];
+    const s = surface('focus-line', {
+      wrappedBounds: (rect, node) => {
+        const boxes = node.children.filter(
+          (child) => child.style?.display === 'inline-block',
+        ).length;
+        observations.push([node.textContent, boxes]);
+        return { ...rect, height: node.textContent.length > 4 ? 160 : 40 };
+      },
+    });
+    const text = 'AVAVAVAV';
+    s.snapshot.lyrics.lines[0].text = text;
+    Object.assign(s.frame, {
+      currentText: text,
+      currentSegments: [{ text: 'AVAV' }, { text: 'AVAV' }],
+      currentFineTiming: {
+        units: [
+          { unitId: 'first', from: 0, to: 4, startMs: 1000, endMs: 2000 },
+        ],
+      },
+    });
+    const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(result.frame.displayFit.pageCount).toBe(2);
+    expect(observations).toContainEqual(['AVAV', 4]);
+    expect(observations).toContainEqual(['AVAV', 0]);
+    s.controller.stop();
+  });
+
+  it('rejects four fine rows and keeps partial page/coarse units as plain text', () => {
+    const observations = [];
+    const s = surface('focus-line', {
+      wrappedBounds: (rect, node) => {
+        const boxes = node.children.filter(
+          (child) => child.style?.display === 'inline-block',
+        ).length;
+        observations.push([node.textContent.length, boxes]);
+        return { ...rect, height: boxes > 36 ? 160 : 40 };
+      },
+    });
+    const text = 'AV'.repeat(24);
+    s.snapshot.lyrics.lines[0].text = text;
+    Object.assign(s.frame, {
+      currentText: text,
+      currentSegments: Array.from({ length: 12 }, () => ({ text: 'AVAV' })),
+      currentFineTiming: {
+        units: Array.from({ length: 12 }, (_, i) => ({
+          unitId: String(i),
+          from: i * 4,
+          to: i * 4 + 4,
+          startMs: 1000 + i * 500,
+          endMs: 1300 + i * 500,
+        })),
+      },
+    });
+    const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(result.frame.displayFit.pageCount).toBeGreaterThan(1);
+    expect(observations).toContainEqual([48, 48]);
+    expect(
+      observations.some(([length, boxes]) => length < 48 && boxes < length),
+    ).toBe(true);
+    s.controller.stop();
+  });
+
+  it('does not build fine boxes for a unit crossing a coarse boundary', () => {
+    const boxes = [];
+    const s = surface('focus-line', {
+      wrappedBounds: (rect, node) => {
+        boxes.push(
+          node.children.filter(
+            (child) => child.style?.display === 'inline-block',
+          ).length,
+        );
+        return rect;
+      },
+    });
+    s.snapshot.lyrics.lines[0].text = '甲乙丙丁';
+    Object.assign(s.frame, {
+      currentText: '甲乙丙丁',
+      currentSegments: [{ text: '甲乙' }, { text: '丙丁' }],
+      currentFineTiming: {
+        units: [
+          { unitId: 'cross', from: 1, to: 3, startMs: 1000, endMs: 2000 },
+        ],
+      },
+    });
+    s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(boxes.length).toBeGreaterThan(0);
+    expect(boxes.every((count) => count === 0)).toBe(true);
+    s.controller.stop();
+  });
+
+  it('keeps an impossible page inactive with a boolean dataset value', () => {
+    const s = surface('focus-line', {
+      measure: () => ({ fits: () => false, rows: () => null }),
+    });
+    s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(s.elements.root.dataset.fitStatus).toBe('unfit');
+    expect(s.elements.root.dataset.fitActive).toBe('false');
+    s.controller.stop();
+  });
+
+  it.each([
+    [120, 0, true],
+    [121, 1, true],
+    [121.01, 0, false],
+    [120, 1.01, false],
+  ])(
+    'keeps the strict wrapped proof at height %s and width excess %s',
+    (height, excess, fast) => {
+      const onTrace = vi.fn();
+      const s = surface('focus-line', {
+        onTrace,
+        wrappedBounds: (rect) => ({ width: rect.width + excess, height }),
+      });
+      s.snapshot.lyrics.lines[0].text = '甲乙丙丁';
+      s.frame.currentText = '甲乙丙丁';
+      s.controller.prepare(s.snapshot, s.frame, s.settings);
+      const count = onTrace.mock.calls.find(
+        ([event]) => event === 'fit-measure',
+      )[1].probeCount;
+      if (fast) {
+        expect(count).toBe(1);
+        expect(s.elements.root.dataset.fitActive).toBe('true');
+      } else expect(count).toBeGreaterThan(1);
+      s.controller.stop();
+    },
+  );
+
+  it('keeps row measurement for other templates and injected measurements without wrapped metadata', () => {
+    for (const templateId of ['focus-line', 'kinetic-pop', 'live-stage']) {
+      const rows = vi.fn((text) => [
+        { text: text.slice(0, 2) },
+        { text: text.slice(2) },
+      ]);
+      const s = surface(templateId, {
+        measure: () => ({ fits: () => true, rows }),
+      });
+      s.snapshot.lyrics.lines[0].text = '甲乙丙丁';
+      Object.assign(s.frame, { currentText: '甲乙丙丁', nextText: 'next' });
+      const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+      expect(rows).toHaveBeenCalledWith('甲乙丙丁');
+      expect(s.elements.root.dataset.fitActive).toBe('true');
+      expect(result.frame.nextText).toBe('');
+      if (templateId === 'live-stage')
+        expect(result.frame.liveStageDisplayLines).toEqual(['甲乙', '丙丁']);
+      s.controller.stop();
+    }
+  });
+
+  it.each(['甲\n乙', '甲\n\n乙\n', '\t甲乙', ' 甲乙 '])(
+    'keeps conservative row handling for whitespace-sensitive text %j',
+    (text) => {
+      const onTrace = vi.fn();
+      const s = surface('focus-line', { onTrace });
+      s.snapshot.lyrics.lines[0].text = text;
+      s.frame.currentText = text;
+      s.controller.prepare(s.snapshot, s.frame, s.settings);
+      expect(
+        onTrace.mock.calls.find(([event]) => event === 'fit-measure')[1]
+          .probeCount,
+      ).toBeGreaterThan(1);
+      s.controller.stop();
+    },
+  );
 
   it.each([
     'focus-line',
