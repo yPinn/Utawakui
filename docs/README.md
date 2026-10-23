@@ -36,6 +36,7 @@
 - Focus GPU 與本地呈現：[有限陰影／描邊／填色拆解與螢光筆統一](operations/lyrics-focus-gpu-2026-10-23.md)
 - Focus 陰影最小候選：[兩來源冷暖對照、所有慢值與候選撤回](operations/lyrics-focus-copy-shadow-2026-10-23.md)
 - 歌詞本階段總結：[已保留、已撤回、未解與分類提交紀錄](operations/lyrics-milestone-2026-10-23.md)
+- KTV 交接與補尾修正：[未完成細時間保護、靜態補尾與兩來源驗收](operations/lyrics-handoff-fallback-2026-10-23.md)
 
 ## 權利與治理（governance/）
 

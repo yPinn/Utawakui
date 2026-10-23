@@ -364,6 +364,16 @@ completion. Local and Output deadlines sample their existing media clock at
 these completion boundaries, without an extra tick, silence wait or catch-up
 animation. KTV retains its existing lane/pre-roll/hold presentation and has no
 underline; this does not make paint completion own lane switching.
+For model-starts KTV units, `lyricsKtvHandoff.mjs` protects a separate private
+handoff end through pending complete fine/paint cells that fit the exact source
+range and its coarse renderer partitions. Coarse/model segment ends remain
+unchanged. Selection, completed hold and scheduler use this visibility boundary;
+lane allocation also accounts for its overlap with the next count-in so a
+preparatory lane cannot overwrite the active one. Existing pre-roll windows stay
+available, but cannot displace still-protected text. A following canonical onset
+or phrase start is never postponed: conflicting/crossing protection is declined,
+without cutting a fine unit or fabricating a sub-unit time. T2 and unsupported
+T1 policies are unchanged.
 Capacity pages render the logically active KTV lane, whether its physical node
 is current or next. The companion is hidden only for this existing capacity
 mode; the normal two-lane template, role colors and lack of underline remain.
@@ -381,6 +391,17 @@ retimed, merged or rewritten. A crossing fine unit is retained intact while
 uncovered edges can still receive independently bounded paint estimates.
 Cadence cannot establish an unrecorded breath or a true sung end, and cannot
 guarantee that a missing-tail estimate avoids an unrecorded pause.
+
+After capping an inferred missing-tail display estimate, a positive budget below
+80 ms per visible letter/number/symbol grapheme is rejected as `tail-too-fast`
+and `tail-unknown`. Punctuation and whitespace add no timing weight. Only that
+new estimate is omitted; cue/whole-line completion are recomputed from the
+remaining units. Full unknown tail text keeps its original coarse/static cue,
+including through a KTV visibility handoff protected to the existing next
+canonical onset for that precise tail range. This boundary is not a claimed sung
+end. Retained 19 ms/long fine units are never filtered by this display policy;
+known pauses remain intact. No forced completion, catch-up sweep or new wait is
+introduced.
 
 Short units, long units and long gaps are diagnostic reasons only. They do not
 authorize retiming a suspicious model interval. Song sections and singing
