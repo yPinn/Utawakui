@@ -62,6 +62,11 @@
 }
 
 @layer ovl-constraints {
+  :root {
+    /* Floor for user-scaled element text (ADR 0027). */
+    --ovl-text-min-size: 0.75rem;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

@@ -17,12 +17,15 @@ import {
   normalizeCaptureSizeId,
   supportedCaptureSizeIdsForTemplate,
 } from '../../constants/outputCaptureSizes.js';
+import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
+import ObsPropertySection from './ObsPropertySection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
@@ -72,24 +75,47 @@ function configurationFieldRank(field, key, fallback) {
   return Number.isFinite(field?.[key]) ? field[key] : fallback;
 }
 
-const configurationFields = computed(() =>
-  [...appearanceFields.value, ...presentationFields.value].sort(
-    (left, right) => {
-      const groupDelta =
-        configurationFieldRank(left, 'groupOrder', 100) -
-        configurationFieldRank(right, 'groupOrder', 100);
-      if (groupDelta !== 0) return groupDelta;
-      const fieldDelta =
-        configurationFieldRank(left, 'order', 100) -
-        configurationFieldRank(right, 'order', 100);
-      if (fieldDelta !== 0) return fieldDelta;
-      return String(left.key).localeCompare(String(right.key));
-    },
-  ),
+function sortConfigurationFields(fields) {
+  return [...fields].sort((left, right) => {
+    const groupDelta =
+      configurationFieldRank(left, 'groupOrder', 100) -
+      configurationFieldRank(right, 'groupOrder', 100);
+    if (groupDelta !== 0) return groupDelta;
+    const fieldDelta =
+      configurationFieldRank(left, 'order', 100) -
+      configurationFieldRank(right, 'order', 100);
+    if (fieldDelta !== 0) return fieldDelta;
+    return String(left.key).localeCompare(String(right.key));
+  });
+}
+
+const templateFields = computed(() =>
+  sortConfigurationFields([
+    ...appearanceFields.value,
+    ...presentationFields.value,
+  ]),
+);
+const elementTargets = computed(() => props.preset?.elementTargets ?? []);
+const configurationFields = computed(() => [
+  ...templateFields.value,
+  ...elementTargets.value.flatMap(({ fields }) => fields),
+]);
+const selectedTargetId = shallowRef('template');
+const selectedTarget = computed(() =>
+  elementTargets.value.find(({ id }) => id === selectedTargetId.value),
+);
+const targetOptions = computed(() => [
+  { value: 'template', label: '整個模板' },
+  ...elementTargets.value.map(({ id, label }) => ({ value: id, label })),
+]);
+const visibleFields = computed(() =>
+  selectedTarget.value
+    ? sortConfigurationFields(selectedTarget.value.fields)
+    : templateFields.value,
 );
 const configurationFieldGroups = computed(() => {
   const groups = new Map();
-  for (const field of configurationFields.value) {
+  for (const field of visibleFields.value) {
     const id = field.group ?? 'appearance';
     if (!groups.has(id)) {
       groups.set(id, {
@@ -105,6 +131,9 @@ const configurationFieldGroups = computed(() => {
 const templateId = computed(
   () => props.preset?.id ?? props.outputSlot?.templateId ?? null,
 );
+watch(templateId, () => {
+  selectedTargetId.value = 'template';
+});
 const supportedCaptureSizes = computed(() =>
   supportedCaptureSizeIdsForTemplate(templateId.value, props.activeKind),
 );
@@ -154,10 +183,12 @@ function normalizedControlValue(field, settings) {
   return field.defaultValue;
 }
 
+function isFieldModified(field) {
+  return draft[field.key] !== field.defaultValue;
+}
+
 const isConfigurationAtDefaults = computed(() =>
-  configurationFields.value.every(
-    (field) => draft[field.key] === field.defaultValue,
-  ),
+  configurationFields.value.every((field) => !isFieldModified(field)),
 );
 
 watch(
@@ -235,11 +266,15 @@ function commitSettings() {
   emitSettingsChange('immediate');
 }
 
-function resetAppearance() {
-  for (const field of configurationFields.value) {
+function resetFields(fields) {
+  for (const field of fields) {
     draft[field.key] = field.defaultValue;
   }
   emitSettingsChange('immediate');
+}
+
+function resetAppearance() {
+  resetFields(configurationFields.value);
 }
 </script>
 
@@ -319,41 +354,60 @@ function resetAppearance() {
         compact
       />
 
-      <section
+      <div v-if="elementTargets.length" class="obs-slot-workbench__target">
+        <ObsAppearanceControlRow
+          control-id="output-appearance-target"
+          label="調整對象"
+          :labels-control="false"
+        >
+          <UiSelect
+            id="output-appearance-target"
+            label="調整對象"
+            :model-value="selectedTargetId"
+            :options="targetOptions"
+            label-hidden
+            @update:model-value="selectedTargetId = $event"
+          />
+        </ObsAppearanceControlRow>
+      </div>
+
+      <ObsPropertySection
         v-for="group in configurationFieldGroups"
         :key="group.id"
-        class="obs-slot-workbench__section"
+        :title="group.label"
+        :modified="group.fields.some(isFieldModified)"
+        @reset="resetFields(group.fields)"
       >
-        <h3 class="obs-slot-workbench__section-title">{{ group.label }}</h3>
-        <UiHint v-if="group.id === 'template-presentation'">
-          只調整此模板的歌詞呈現。製作資訊請在歌詞的「共用文字處理」逐行確認；來源、對唱與和聲不會在此處改寫。
-        </UiHint>
-        <UiHint
-          v-if="
-            group.id === 'template-presentation' &&
-            draft.lyricsPresentationPolicyId === 'broadcast-compact'
-          "
-        >
-          轉播精簡會省略部分重複詞與語助詞。需要保留實唱與和聲文字時，請選擇平衡分行或忠實原文。
-        </UiHint>
-        <div class="obs-slot-workbench__fields">
-          <ObsAppearanceField
-            v-for="field in group.fields"
-            :key="field.key"
-            :field="field"
-            :model-value="draft[field.key]"
-            :recent-colors="recentColors"
-            :saved-colors="savedColors"
-            :disabled="
-              field.key === 'lookAmount' && draft.paletteId === 'original'
+        <template #description>
+          <UiHint v-if="group.id === 'template-presentation'">
+            只調整此模板的歌詞呈現。製作資訊請在歌詞的「共用文字處理」逐行確認；來源、對唱與和聲不會在此處改寫。
+          </UiHint>
+          <UiHint
+            v-if="
+              group.id === 'template-presentation' &&
+              draft.lyricsPresentationPolicyId === 'broadcast-compact'
             "
-            @update:model-value="updateAppearanceField(field, $event)"
-            @commit="commitSettings"
-            @commit-color="emit('commitColor', $event)"
-            @toggle-saved-color="emit('toggleSavedColor', $event)"
-          />
-        </div>
-      </section>
+          >
+            轉播精簡會省略部分重複詞與語助詞。需要保留實唱與和聲文字時，請選擇平衡分行或忠實原文。
+          </UiHint>
+        </template>
+        <ObsAppearanceField
+          v-for="field in group.fields"
+          :key="field.key"
+          :field="field"
+          :model-value="draft[field.key]"
+          :recent-colors="recentColors"
+          :saved-colors="savedColors"
+          :disabled="
+            field.key === 'lookAmount' && draft.paletteId === 'original'
+          "
+          :modified="isFieldModified(field)"
+          @update:model-value="updateAppearanceField(field, $event)"
+          @commit="commitSettings"
+          @commit-color="emit('commitColor', $event)"
+          @toggle-saved-color="emit('toggleSavedColor', $event)"
+        />
+      </ObsPropertySection>
     </template>
 
     <template #side-footer>
@@ -408,7 +462,7 @@ function resetAppearance() {
 }
 
 .obs-slot-workbench__inspector-header,
-.obs-slot-workbench__section {
+.obs-slot-workbench__target {
   padding-block: var(--ui-space-3);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
@@ -435,14 +489,7 @@ function resetAppearance() {
   white-space: nowrap;
 }
 
-.obs-slot-workbench__section {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-}
-
-.obs-slot-workbench__title,
-.obs-slot-workbench__section-title {
+.obs-slot-workbench__title {
   margin: 0;
   color: var(--ui-color-text);
   font-weight: var(--ui-type-title-weight);
@@ -456,17 +503,5 @@ function resetAppearance() {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-}
-
-.obs-slot-workbench__section-title {
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.obs-slot-workbench__fields {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
 }
 </style>

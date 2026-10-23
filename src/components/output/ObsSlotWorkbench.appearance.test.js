@@ -5,15 +5,21 @@ import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppeara
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 
-async function renderRegisteredTemplate(templateId, presetOverrides = {}) {
+async function renderRegisteredTemplate(
+  templateId,
+  presetOverrides = {},
+  slotSettings = {},
+) {
   const data = getOutputWorkbenchData();
   const preset = {
     ...data.templates.find((template) => template.id === templateId),
     ...presetOverrides,
   };
+  const slotDefault = data.slotDefaults[preset.kind];
   const outputSlot = {
-    ...data.slotDefaults[preset.kind],
+    ...slotDefault,
     templateId,
+    settings: { ...slotDefault?.settings, ...slotSettings },
   };
 
   return renderToString(
@@ -88,6 +94,50 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     });
 
     expect(html).not.toContain('恢復模板預設');
+  });
+
+  it('marks no field and offers no group reset at template defaults', async () => {
+    const html = await renderRegisteredTemplate('queue-board');
+
+    expect(html).not.toContain('data-modified');
+    expect(html).not.toMatch(/恢復「[^」]+」預設/u);
+  });
+
+  it('marks a modified field and offers a reset for its group only', async () => {
+    const html = await renderRegisteredTemplate(
+      'queue-board',
+      {},
+      { fontWeight: 'bold' },
+    );
+
+    expect(html.match(/data-modified/gu)).toHaveLength(1);
+    expect(html).toContain('恢復「文字」預設');
+    expect(html).not.toContain('恢復「色彩處理」預設');
+    expect(html).not.toContain('恢復「背景」預設');
+  });
+
+  it('offers element targets only for a template that declares elements', async () => {
+    const coverPlayer = await renderRegisteredTemplate('cover-player');
+    const artCard = await renderRegisteredTemplate('art-card');
+
+    expect(coverPlayer).toContain('調整對象');
+    for (const label of ['整個模板', '曲名', '藝人', '進度', '播放鍵']) {
+      expect(coverPlayer).toContain(label);
+    }
+    expect(artCard).not.toContain('調整對象');
+  });
+
+  it('keeps the template view first and counts element changes in the template reset', async () => {
+    const html = await renderRegisteredTemplate(
+      'cover-player',
+      {},
+      { 'element.artist.visible': 'hidden' },
+    );
+
+    expect(html).not.toContain('data-modified');
+    expect(html).toMatch(
+      /<button[^>]*class="[^"]*obs-slot-workbench__reset[^"]*"(?![^>]*disabled)/u,
+    );
   });
 
   it('renders Live Stage presentation policy separately from appearance controls', async () => {

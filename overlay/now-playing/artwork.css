@@ -936,15 +936,45 @@
     white-space: nowrap;
   }
 
+  /* Element scale never shrinks text below the constraints floor or its default size. */
   :root[data-ovl-template='cover-player'] .artwork-overlay__title {
-    font-size: var(--ovl-template-artwork-title-size);
+    font-size: max(
+      min(var(--ovl-text-min-size), var(--ovl-template-artwork-title-size)),
+      calc(
+        var(--ovl-template-artwork-title-size) *
+          var(--ovl-el-title-size-scale, 1)
+      )
+    );
+    font-weight: var(--ovl-el-title-font-weight, var(--ovl-user-font-weight));
     line-height: 1.2;
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__artist {
+    --ovl-template-artwork-artist-size: 0.8125em;
+
     margin-block-start: 0;
-    font-size: 0.8125em;
+    font-size: max(
+      min(var(--ovl-text-min-size), var(--ovl-template-artwork-artist-size)),
+      calc(
+        var(--ovl-template-artwork-artist-size) *
+          var(--ovl-el-artist-size-scale, 1)
+      )
+    );
+    font-weight: var(--ovl-el-artist-font-weight, 500);
     line-height: 1.25;
+  }
+
+  :root[data-ovl-template='cover-player'][data-ovl-el-artist-visible='hidden']
+    .artwork-overlay__artist,
+  :root[data-ovl-template='cover-player'][data-ovl-el-progress-visible='hidden']
+    .artwork-overlay__scrubber,
+  :root[data-ovl-template='cover-player'][data-ovl-el-progress-visible='hidden']
+    .artwork-overlay__timeline,
+  :root[data-ovl-template='cover-player'][data-ovl-el-transport-visible='hidden']
+    .artwork-overlay__transport,
+  :root[data-ovl-template='cover-player'][data-ovl-el-progress-visible='hidden'][data-ovl-el-transport-visible='hidden']
+    .artwork-overlay__player {
+    display: none;
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__player {

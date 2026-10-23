@@ -106,6 +106,7 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'lyricsKtvHandoff.mjs',
   ],
   '/shared/outputAppearance.mjs': ['outputAppearance.mjs'],
+  '/shared/outputTemplateElements.mjs': ['outputTemplateElements.mjs'],
   '/shared/assets/fonts/jf-open-huninn-2.1.ttf': [
     'assets',
     'fonts',

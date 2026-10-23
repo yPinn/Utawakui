@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OUTPUT_APPEARANCE_FIELDS,
   OUTPUT_APPEARANCE_GROUPS,
+  OUTPUT_PROPERTY_FAMILIES,
+  OUTPUT_PROPERTY_TIERS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   carryOutputAppearanceToTemplate,
   normalizeOutputAppearance,
+  normalizeOutputElementAppearance,
   outputAppearanceFieldsForTemplate,
+  outputElementFontWeight,
+  outputElementTargetsForTemplate,
   sanitizeOutputAppearanceSetting,
 } from './outputAppearance.mjs';
 
@@ -27,6 +33,45 @@ describe('output appearance schema', () => {
       { id: 'motion', label: '動態', order: 70 },
       { id: 'content', label: '內容顯示', order: 80 },
     ]);
+  });
+
+  it('declares family, tier, reflow and template scope for every field', () => {
+    for (const field of OUTPUT_APPEARANCE_FIELDS) {
+      expect(OUTPUT_PROPERTY_FAMILIES).toContain(field.family);
+      expect(OUTPUT_PROPERTY_TIERS).toContain(field.tier);
+      expect(typeof field.reflow).toBe('boolean');
+      expect(field.scope).toBe('template');
+    }
+    expect(
+      OUTPUT_APPEARANCE_FIELDS.filter(({ tier }) => tier === 'advanced').map(
+        ({ key }) => key,
+      ),
+    ).toEqual([
+      'textColor',
+      'accentColor',
+      'positionOffsetX',
+      'positionOffsetY',
+    ]);
+    expect(
+      Object.fromEntries(
+        OUTPUT_APPEARANCE_FIELDS.map(({ key, family }) => [key, family]),
+      ),
+    ).toMatchObject({
+      paletteId: 'document',
+      fontScale: 'document',
+      textColor: 'swatch',
+      fontFamily: 'character',
+      kineticMaterial: 'legibility',
+      surface: 'fill',
+      receiptDirection: 'layout',
+      receiptReview: 'motion',
+    });
+  });
+
+  it('has no configuration for the retired now-next template', () => {
+    expect(outputAppearanceFieldsForTemplate('now-next')).toEqual(
+      outputAppearanceFieldsForTemplate('retired-unknown-template'),
+    );
   });
 
   it('exposes the bounded safe-appearance fields for Ornate Vertical', () => {
@@ -222,11 +267,6 @@ describe('output appearance schema', () => {
       fontWeight: 'semibold',
       surface: 'solid',
     });
-    expect(defaultsFor('now-next')).toMatchObject({
-      fontFamily: 'sans',
-      fontWeight: 'bold',
-      surface: 'solid',
-    });
   });
 
   it('opens local font selection only for the Live Stage pilot', () => {
@@ -302,16 +342,6 @@ describe('output appearance schema', () => {
       'surface',
       'spacingDensity',
     ]);
-    expect(keysFor('now-next')).toEqual([
-      'paletteId',
-      'lookAmount',
-      'fontFamily',
-      'fontScale',
-      'fontWeight',
-      'surface',
-      'alignment',
-      'spacingDensity',
-    ]);
     expect(keysFor('art-card')).toEqual([
       'paletteId',
       'lookAmount',
@@ -361,7 +391,6 @@ describe('output appearance schema', () => {
   });
 
   it.each([
-    'now-next',
     'art-card',
     'cover-player',
     'queue-board',
@@ -431,5 +460,67 @@ describe('output appearance schema', () => {
         { fromTemplateId: 'manga-frame', toTemplateId: 'manga-frame' },
       ),
     ).toEqual({ fontFamily: 'sans' });
+  });
+});
+
+describe('output element appearance', () => {
+  it('declares Cover Player elements and leaves other templates without any', () => {
+    const targets = outputElementTargetsForTemplate('cover-player');
+    expect(targets.map(({ id }) => id)).toEqual([
+      'title',
+      'artist',
+      'progress',
+      'transport',
+    ]);
+    expect(targets[0].fields.map(({ key }) => key)).toEqual([
+      'element.title.fontWeight',
+      'element.title.fontSizeScale',
+    ]);
+    for (const field of targets.flatMap(({ fields }) => fields)) {
+      expect(field.scope).toBe('element');
+    }
+    expect(outputElementTargetsForTemplate('art-card')).toEqual([]);
+  });
+
+  it('normalizes element values to their defaults and bounds', () => {
+    expect(
+      normalizeOutputElementAppearance(
+        {
+          'element.title.fontSizeScale': 63,
+          'element.artist.visible': 'hidden',
+          'element.title.visible': 'hidden',
+        },
+        { templateId: 'cover-player' },
+      ),
+    ).toEqual({
+      'element.title.fontWeight': 'inherit',
+      'element.title.fontSizeScale': 80,
+      'element.artist.fontWeight': 'inherit',
+      'element.artist.fontSizeScale': 100,
+      'element.artist.visible': 'hidden',
+      'element.progress.visible': 'shown',
+      'element.transport.visible': 'shown',
+    });
+    expect(outputElementFontWeight('inherit')).toBeUndefined();
+    expect(outputElementFontWeight('bold')).toBe(700);
+  });
+
+  it('drops element values when the next template does not declare them', () => {
+    const settings = {
+      fontWeight: 'regular',
+      'element.artist.visible': 'hidden',
+    };
+    expect(
+      carryOutputAppearanceToTemplate(settings, {
+        fromTemplateId: 'cover-player',
+        toTemplateId: 'art-card',
+      }),
+    ).toEqual({ fontWeight: 'regular' });
+    expect(
+      carryOutputAppearanceToTemplate(settings, {
+        fromTemplateId: 'cover-player',
+        toTemplateId: 'cover-player',
+      }),
+    ).toEqual(settings);
   });
 });

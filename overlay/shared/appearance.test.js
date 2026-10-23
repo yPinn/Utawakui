@@ -312,3 +312,77 @@ describe('overlay appearance', () => {
     }
   });
 });
+
+describe('overlay element appearance', () => {
+  function fakeDocument() {
+    const properties = new Map();
+    return {
+      properties,
+      documentElement: {
+        dataset: {},
+        style: {
+          setProperty: (name, value) => properties.set(name, value),
+          removeProperty: (name) => properties.delete(name),
+        },
+      },
+    };
+  }
+
+  it('projects declared element values and clears them for other templates', () => {
+    const document = fakeDocument();
+    applyOverlayAppearance(document, {
+      templateId: 'cover-player',
+      settings: {
+        'element.title.fontWeight': 'bold',
+        'element.title.fontSizeScale': 110,
+        'element.artist.visible': 'hidden',
+      },
+    });
+
+    expect(document.properties.get('--ovl-el-title-font-weight')).toBe('700');
+    expect(document.properties.get('--ovl-el-title-size-scale')).toBe('1.1');
+    expect(document.properties.has('--ovl-el-artist-size-scale')).toBe(false);
+    expect(document.documentElement.dataset.ovlElArtistVisible).toBe('hidden');
+    expect(
+      document.documentElement.dataset.ovlElProgressVisible,
+    ).toBeUndefined();
+
+    applyOverlayAppearance(document, {
+      templateId: 'art-card',
+      settings: { 'element.artist.visible': 'hidden' },
+    });
+    expect(
+      [...document.properties.keys()].filter((name) =>
+        name.startsWith('--ovl-el-'),
+      ),
+    ).toEqual([]);
+    expect(document.documentElement.dataset.ovlElArtistVisible).toBeUndefined();
+  });
+
+  it('reads element values only from Cover Player rules with a text floor', () => {
+    const artworkCss = readFileSync(
+      fileURLToPath(new URL('../now-playing/artwork.css', import.meta.url)),
+      'utf8',
+    );
+    const baseCss = readFileSync(
+      fileURLToPath(new URL('./base.css', import.meta.url)),
+      'utf8',
+    );
+
+    expect(baseCss).toMatch(
+      /@layer ovl-constraints \{\s*:root \{[^}]*--ovl-text-min-size:/u,
+    );
+    for (const id of ['title', 'artist']) {
+      expect(artworkCss).toContain(`var(--ovl-el-${id}-size-scale, 1)`);
+      expect(artworkCss).toContain(`var(--ovl-el-${id}-font-weight,`);
+    }
+    for (const id of ['artist', 'progress', 'transport']) {
+      expect(artworkCss).toContain(
+        `:root[data-ovl-template='cover-player'][data-ovl-el-${id}-visible='hidden']`,
+      );
+    }
+    expect(
+      artworkCss.match(/--ovl-el-[a-z]+-(?:size-scale|font-weight)/gu).length,
+    ).toBe(4);
+  });
+});

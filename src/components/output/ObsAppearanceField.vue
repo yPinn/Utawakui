@@ -16,6 +16,7 @@ const props = defineProps({
   recentColors: { type: Array, default: () => [] },
   savedColors: { type: Array, default: () => [] },
   disabled: { type: Boolean, default: false },
+  modified: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -73,6 +74,7 @@ function commitColor(value) {
     :control-id="controlId"
     :label="field.label"
     :labels-control="field.control === 'range'"
+    :modified="modified"
     :align-start="
       editor === 'position-grid' ||
       editor === 'font-family' ||

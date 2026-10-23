@@ -3,6 +3,7 @@ import {
   OUTPUT_APPEARANCE_DEFAULTS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   outputAppearanceFieldsForTemplate,
+  outputElementTargetsForTemplate,
 } from '../../shared/outputAppearance.mjs';
 import { lyricsPresentationProfileForTemplate } from '../../shared/presentation/lyricsPresentation.mjs';
 import {
@@ -261,6 +262,10 @@ function presentationFieldsForTemplate(templateId) {
       label: '歌詞呈現策略',
       control: 'select',
       settingKind: 'lyrics-presentation',
+      family: 'document',
+      tier: 'basic',
+      reflow: true,
+      scope: 'template',
       group: CONTENT_CONFIGURATION_GROUP.id,
       groupLabel: CONTENT_CONFIGURATION_GROUP.label,
       groupOrder: CONTENT_CONFIGURATION_GROUP.order,
@@ -289,12 +294,14 @@ export const OUTPUT_TEMPLATES = Object.freeze(
   OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
     const appearanceFields = outputAppearanceFieldsForTemplate(template.id);
     const presentationFields = presentationFieldsForTemplate(template.id);
+    const elementTargets = outputElementTargetsForTemplate(template.id);
     if (template.kind !== 'lyrics') {
       return Object.freeze({
         ...template,
         availability: availabilityForTemplate(template),
         appearanceFields,
         presentationFields,
+        elementTargets,
       });
     }
     const presentationProfile = lyricsPresentationProfileForTemplate(
@@ -309,6 +316,7 @@ export const OUTPUT_TEMPLATES = Object.freeze(
       editableAppearanceKeys: [...presentationProfile.editableAppearanceKeys],
       appearanceFields,
       presentationFields,
+      elementTargets,
       lyricsCapabilities: lyricsTemplateCapabilities(template.id),
       presentationProfile,
     });

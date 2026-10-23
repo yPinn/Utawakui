@@ -3,8 +3,10 @@
 ## Status
 
 Proposed on 2026-10-22; revised the same day after a code boundary review, and
-on 2026-10-23 for the receipt setlist template and schema 6. Nothing here is
-implemented. It amends the "locked" list in
+on 2026-10-23 for the receipt setlist template and schema 6. Accepted on
+2026-10-23 with the phase plan below; P1 (definition attributes and the
+`now-next` removal) P2 (modified marks and group reset in the inspector)
+and P3 (Cover Player element settings) are implemented, later phases are not. It amends the "locked" list in
 [ADR 0011](0011-overlay-instances-and-presentation-pack-delivery.md) and the
 [Overlay Pack contract](../contracts/overlay-pack.md) only for element geometry,
 stacking and visibility; executable layout behavior stays app-owned. The current
@@ -111,8 +113,11 @@ Rules shared by all properties:
   replaces template-specific checks such as Ornate's palette case.
 - **Custom colors override Look** for the same role; clearing the override
   returns the role to Look.
-- **Properties apply to an element's own wrapper** through scoped custom
-  properties, never to the node an animation engine owns.
+- **Properties never touch the node an animation engine owns.** Non-layout
+  element values are element-namespaced custom properties and data attributes
+  on the document root (for example `--ovl-el-title-font-weight` and
+  `data-ovl-el-artist-visible`), read only by the declaring template's CSS.
+  Geometry in P5 additionally requires each element's own wrapper.
 - **Template-scoped values carry** under the existing rules. Element and group
   values carry only between templates that share element structure, such as
   Art Card and Cover Player; otherwise they reset on switch.
@@ -141,15 +146,22 @@ Rules shared by all properties:
 - **Mandatory floors.** `ovl-constraints` gains a minimum rendered text size,
   a minimum outline or shadow when the surface is transparent, and clamping to
   the safe area. Contrast against the unknown OBS background cannot be computed,
-  so legibility relies on these floors.
+  so legibility relies on these floors. P3 adds the text size floor
+  (`--ovl-text-min-size`): element scaling never renders text below the floor
+  or below its unscaled size, whichever is smaller, so default output is
+  unchanged. The transparent-surface outline floor arrives with legibility
+  properties and safe-area clamping with geometry, because each changes
+  existing output.
 
 The existing fields migrate as template-scoped properties in their matching
 family, so current settings keep their meaning. The receipt fields are
 classified as layout (`receiptDirection`) and motion (`receiptReview`,
 `receiptReviewInterval`); their stored keys stay unchanged so saved settings
-remain valid, and later generic catalog names map onto them. The legacy `now-next` and
-`focus-line` configurations are removed in the same migration; `now-next`
-continues to resolve to `art-card` at the settings read boundary.
+remain valid, and later generic catalog names map onto them. The retired
+`now-next` configuration is removed; main already replaces an unregistered
+template id with the slot default when reading settings. `focus-line` stays:
+it is not in the Gallery, but it remains the generic lyrics path behind the
+`generic-caption` profile, its timing capabilities and the renderer default.
 
 ### Layout modes
 
@@ -195,13 +207,17 @@ slot that accepts one. The built-in mark remains fixed.
 
 The resolution order from ADR 0011 is unchanged: template fallback → Style Set
 → User Variant → mandatory constraints. Element and group overrides join the
-same diff, keyed by target id and property key. Unknown target ids are ignored
-at render time and kept in storage, matching existing Variant rules.
+same settings, stored as flat `element.<elementId>.<propertyKey>` keys so the
+existing merge, autosave and key rules apply. Main drops element keys that the
+slot's template does not declare, and switching to such a template clears them.
 
-This raises the Output appearance schema from 6, which added the receipt
-fields, to 7. Main validation moves from a
-flat scalar list to target-keyed overrides with its own size limits, and current
-`overlays.json` settings migrate as template-scoped values.
+P3 raises the Output appearance schema from 6, which added the receipt
+fields, to 7 for the element keys. Saved template settings need no migration.
+Values are still stored in full: an element weight defaults to `inherit`
+(follow the template) and size to a relative 100%, so a stored default never
+overrides a later template-level change. Difference-only storage moves to P6,
+where Style Sets add a second layer and an explicit removal path is needed
+because slot saves merge into existing settings.
 
 ### Workspace
 
@@ -240,20 +256,20 @@ Stage's caption.
 
 ## Phases
 
-| Phase | Delivers                                                                                                                   | Exit condition                                                   |
-| ----- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| P1    | Catalog schema and definition attributes; templates declare elements and groups; storage migration; legacy configs removed | Baseline unchanged; no visible output change                     |
-| P2    | Shared property section/row components with modified mark and per-property reset                                           | Workbench reaches parity with today's inspector                  |
-| P3    | Wrapper-scoped projection and element-scoped non-layout properties on one pilot; constraint floors                         | Endpoints and floors verified on the pilot                       |
-| P4    | Preview-only box reporting, canvas selection and Elements panel                                                            | Selection matches rendered boxes at every supported capture size |
-| P5    | Container-relative refactor per adopting template, then `anchored`／`frame` drag and resize, then reordering               | Baseline diff reviewed; min/max size and edges verified          |
-| P6    | Styles panel backed by Style Set and Variant storage                                                                       | Depends on the pack work in ADR 0011                             |
+| Phase | Delivers                                                                                                                                      | Exit condition                                                                            |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| P1    | Definition attributes (family, scope, tier, reflow) on every field; `now-next` configuration removed                                          | Rendered output and stored settings unchanged; baseline diff adds only the new attributes |
+| P2    | Shared property section/row components with modified mark and group reset (per-field reset only where a control already has one)              | Workbench reaches parity with today's inspector                                           |
+| P3    | Cover Player element declarations; root-level element projection; element weight, size and visibility; schema 7 element keys; text size floor | Endpoints and floor verified on the pilot; saved settings unchanged                       |
+| P4    | Preview-only box reporting, canvas selection and Elements panel                                                                               | Selection matches rendered boxes at every supported capture size                          |
+| P5    | Container-relative refactor per adopting template, then `anchored`／`frame` drag and resize, then reordering                                  | Baseline diff reviewed; min/max size and edges verified                                   |
+| P6    | Styles panel backed by Style Set and Variant storage; difference-only storage                                                                 | Depends on the pack work in ADR 0011                                                      |
 
 The pilot for P3 and P5 is a Now Playing template, Cover Player or Art Card,
 because both have fewer timing invariants than any lyric template. The receipt
 setlist already uses container-relative measurement, but its slot geometry is
-too strict for a pilot. P1 starts only on a clean tree after receipt work is
-committed, since it edits the same catalog, projection and baseline files. Each phase is
+too strict for a pilot. Other templates declare elements only when they adopt
+element scope, so no declaration exists without a consumer. Each phase is
 reviewed and reversible on its own. A template adopts element scope or `frame`
 layout only after its own verification, not as a fleet-wide switch.
 

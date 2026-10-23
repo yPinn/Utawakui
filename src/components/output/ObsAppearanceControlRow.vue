@@ -4,6 +4,7 @@ defineProps({
   label: { type: String, required: true },
   labelsControl: { type: Boolean, default: true },
   alignStart: { type: Boolean, default: false },
+  modified: { type: Boolean, default: false },
 });
 </script>
 
@@ -18,9 +19,21 @@ defineProps({
       :for="controlId"
     >
       {{ label }}
+      <span
+        v-if="modified"
+        class="obs-appearance-control-row__modified"
+        data-modified
+      >
+        <span class="ui-visually-hidden">（已修改）</span>
+      </span>
     </label>
     <span v-else class="obs-appearance-control-row__label" aria-hidden="true">
       {{ label }}
+      <span
+        v-if="modified"
+        class="obs-appearance-control-row__modified"
+        data-modified
+      />
     </span>
     <div class="obs-appearance-control-row__control">
       <slot />
@@ -47,6 +60,16 @@ defineProps({
   font-size: var(--ui-type-caption-size);
   font-weight: var(--ui-type-caption-weight);
   line-height: var(--ui-type-caption-line-height);
+}
+
+.obs-appearance-control-row__modified {
+  display: inline-block;
+  inline-size: var(--ui-space-1);
+  block-size: var(--ui-space-1);
+  margin-inline-start: var(--ui-space-1);
+  vertical-align: middle;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-accent);
 }
 
 .obs-appearance-control-row__control {

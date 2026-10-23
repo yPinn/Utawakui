@@ -1084,6 +1084,24 @@ visible effect. Every registered template receives its appearance metadata from
 the shared schema; a template with no controls also omits the appearance reset
 action.
 
+A field whose value differs from the template default shows a small accent dot
+after its label, with a visually hidden `（已修改）` where the row labels its
+control. Each group heading is composed by `ObsPropertySection` and shows a ghost
+`恢復「<group>」預設` icon action only while one of its fields is modified; the
+action is pulled into the Label line box so revealing it never changes heading
+height or control width. Group reset and the footer's template-wide reset both
+persist immediately. Per-field reset stays limited to the range control's
+existing context-menu reset, because the 4rem label column cannot hold an icon
+action at the shared control size.
+
+A template that declares elements adds one `調整對象` setting row above its
+groups, composed from the shared setting row and `UiSelect`. It defaults to
+`整個模板`, which shows today's template groups; choosing an element replaces
+them with that element's groups only, so the inspector never lists every
+element at once. Changing template returns the target to `整個模板`. The
+canvas selection added later sets the same target rather than adding a second
+inspector mode.
+
 Live Stage alone pilots local font selection. Its font control is a searchable
 combobox: clicking the closed field opens the complete available list and highlights
 the committed family, then brings that option back into the nearest visible portion

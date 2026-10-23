@@ -76,9 +76,13 @@ describe('Cover Player gallery mockup', () => {
     expect(source).toContain(
       `padding: 0 ${canvasRem(0.75)} ${canvasRem(0.75)};`,
     );
+    // Runtime keeps the artist size in a custom property so element scaling can read it.
+    expect(artworkCss).toContain(
+      '--ovl-template-artwork-artist-size: 0.8125em;',
+    );
+    expect(source).toContain('font-size: 0.8125em;');
     for (const declaration of [
       'font-size: 7em;',
-      'font-size: 0.8125em;',
       'font-size: 0.75em;',
       'grid-template-columns: repeat(5, 1fr);',
     ]) {

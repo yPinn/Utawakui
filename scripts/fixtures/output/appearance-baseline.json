@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 6,
+  "appearanceSchemaVersion": 7,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -209,7 +209,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -223,7 +227,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontFamily",
@@ -247,7 +255,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -272,7 +284,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontWeight",
@@ -296,7 +312,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "surface",
@@ -320,7 +340,11 @@
           ],
           "group": "surface",
           "groupLabel": "背景",
-          "groupOrder": 50
+          "groupOrder": 50,
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "spacingDensity",
@@ -344,7 +368,11 @@
           ],
           "group": "layout",
           "groupLabel": "版面",
-          "groupOrder": 60
+          "groupOrder": 60,
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         }
       ],
       "timing": null,
@@ -411,7 +439,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -425,7 +457,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -450,7 +486,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         }
       ],
       "timing": {
@@ -531,7 +571,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -545,7 +589,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -570,7 +618,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "kineticMaterial",
@@ -598,7 +650,11 @@
           ],
           "group": "readability",
           "groupLabel": "可讀性",
-          "groupOrder": 40
+          "groupOrder": 40,
+          "family": "legibility",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "kineticArrangement",
@@ -618,7 +674,11 @@
           ],
           "group": "layout",
           "groupLabel": "版面",
-          "groupOrder": 60
+          "groupOrder": 60,
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         }
       ],
       "timing": {
@@ -698,7 +758,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -712,7 +776,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "textColor",
@@ -722,7 +790,11 @@
           "defaultValue": "#fff8ec",
           "group": "custom-color",
           "groupLabel": "自訂色彩",
-          "groupOrder": 20
+          "groupOrder": 20,
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "accentColor",
@@ -732,7 +804,11 @@
           "defaultValue": "#ffffff",
           "group": "custom-color",
           "groupLabel": "自訂色彩",
-          "groupOrder": 20
+          "groupOrder": 20,
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontFamily",
@@ -752,7 +828,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -777,7 +857,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "positionAnchor",
@@ -802,7 +886,11 @@
           ],
           "group": "layout",
           "groupLabel": "版面",
-          "groupOrder": 60
+          "groupOrder": 60,
+          "family": "layout",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "positionOffsetX",
@@ -817,7 +905,11 @@
           "unit": "%",
           "group": "layout",
           "groupLabel": "版面",
-          "groupOrder": 60
+          "groupOrder": 60,
+          "family": "layout",
+          "tier": "advanced",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "positionOffsetY",
@@ -832,7 +924,11 @@
           "unit": "%",
           "group": "layout",
           "groupLabel": "版面",
-          "groupOrder": 60
+          "groupOrder": 60,
+          "family": "layout",
+          "tier": "advanced",
+          "reflow": false,
+          "scope": "template"
         }
       ],
       "timing": {
@@ -913,7 +1009,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -927,7 +1027,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontFamily",
@@ -953,7 +1057,11 @@
           "groupLabel": "文字",
           "groupOrder": 30,
           "editor": "font-family",
-          "allowLocalFonts": true
+          "allowLocalFonts": true,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -978,7 +1086,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "contrastStyle",
@@ -1002,7 +1114,11 @@
           ],
           "group": "readability",
           "groupLabel": "可讀性",
-          "groupOrder": 40
+          "groupOrder": 40,
+          "family": "legibility",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         }
       ],
       "timing": {
@@ -1086,7 +1202,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -1100,7 +1220,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontFamily",
@@ -1128,7 +1252,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -1153,7 +1281,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontWeight",
@@ -1177,7 +1309,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "furigana",
@@ -1197,7 +1333,11 @@
           ],
           "group": "content",
           "groupLabel": "內容顯示",
-          "groupOrder": 80
+          "groupOrder": 80,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         }
       ],
       "timing": {
@@ -1277,7 +1417,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -1291,7 +1435,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontFamily",
@@ -1315,7 +1463,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -1340,7 +1492,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontWeight",
@@ -1364,7 +1520,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         }
       ],
       "timing": null,
@@ -1432,7 +1592,11 @@
           ],
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "lookAmount",
@@ -1446,7 +1610,11 @@
           "unit": "%",
           "group": "color-treatment",
           "groupLabel": "色彩處理",
-          "groupOrder": 10
+          "groupOrder": 10,
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "fontScale",
@@ -1471,7 +1639,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "fontWeight",
@@ -1495,7 +1667,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "surface",
@@ -1519,7 +1695,11 @@
           ],
           "group": "surface",
           "groupLabel": "背景",
-          "groupOrder": 50
+          "groupOrder": 50,
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         }
       ],
       "timing": null,
@@ -1578,7 +1758,11 @@
           ],
           "group": "typography",
           "groupLabel": "文字",
-          "groupOrder": 30
+          "groupOrder": 30,
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "receiptDirection",
@@ -1598,7 +1782,11 @@
           ],
           "group": "layout",
           "groupLabel": "版面",
-          "groupOrder": 60
+          "groupOrder": 60,
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "scope": "template"
         },
         {
           "key": "receiptReview",
@@ -1618,7 +1806,11 @@
           ],
           "group": "motion",
           "groupLabel": "動態",
-          "groupOrder": 70
+          "groupOrder": 70,
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         },
         {
           "key": "receiptReviewInterval",
@@ -1632,7 +1824,11 @@
           "unit": " 秒",
           "group": "motion",
           "groupLabel": "動態",
-          "groupOrder": 70
+          "groupOrder": 70,
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "scope": "template"
         }
       ],
       "timing": null,

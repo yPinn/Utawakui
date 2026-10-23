@@ -6,6 +6,7 @@ const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const {
   OUTPUT_APPEARANCE_DEFAULTS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
+  isOutputElementSettingKey,
   sanitizeOutputAppearanceSetting,
 } = require('../../shared/outputAppearance.mjs');
 const {
@@ -74,7 +75,10 @@ function sanitizeSettings(value, templateId) {
       if (normalized !== undefined) entries.push([key, normalized]);
       continue;
     }
-    if (Object.hasOwn(OUTPUT_APPEARANCE_DEFAULTS, key)) {
+    if (
+      Object.hasOwn(OUTPUT_APPEARANCE_DEFAULTS, key) ||
+      isOutputElementSettingKey(key)
+    ) {
       const normalized = sanitizeOutputAppearanceSetting(key, setting, {
         templateId,
       });

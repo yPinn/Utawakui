@@ -1,4 +1,6 @@
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 6;
+import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
+
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 7;
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', label: '色彩處理', order: 10 }),
@@ -11,6 +13,21 @@ export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'content', label: '內容顯示', order: 80 }),
 ]);
 
+// Property families and tiers from ADR 0027; `group` stays the Inspector grouping.
+export const OUTPUT_PROPERTY_FAMILIES = Object.freeze([
+  'document',
+  'swatch',
+  'character',
+  'legibility',
+  'fill',
+  'layout',
+  'stacking',
+  'visibility',
+  'motion',
+  'asset',
+]);
+export const OUTPUT_PROPERTY_TIERS = Object.freeze(['basic', 'advanced']);
+
 const COLOR_RE = /^#[0-9a-f]{6}$/iu;
 const MAX_LOCAL_FONT_NAME_LENGTH = 160;
 const UNSAFE_LOCAL_FONT_NAME_RE = /[\\/;{}<>]|(?:url|var)\s*\(/iu;
@@ -21,7 +38,17 @@ const GROUP_MAP = new Map(
 function fieldDefinition(groupId, definition) {
   const group = GROUP_MAP.get(groupId);
   if (!group) throw new Error(`Unknown output appearance group: ${groupId}`);
+  if (!OUTPUT_PROPERTY_FAMILIES.includes(definition.family)) {
+    throw new Error(`Unknown output property family: ${definition.family}`);
+  }
+  if (!OUTPUT_PROPERTY_TIERS.includes(definition.tier)) {
+    throw new Error(`Unknown output property tier: ${definition.tier}`);
+  }
+  if (typeof definition.reflow !== 'boolean') {
+    throw new Error(`Missing output property reflow: ${definition.key}`);
+  }
   return {
+    scope: 'template',
     ...definition,
     group: group.id,
     groupLabel: group.label,
@@ -32,6 +59,9 @@ function fieldDefinition(groupId, definition) {
 const FIELD_DEFINITIONS = [
   fieldDefinition('layout', {
     key: 'receiptDirection',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
     order: 80,
     label: '出紙方向',
     control: 'select',
@@ -43,6 +73,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('motion', {
     key: 'receiptReview',
+    family: 'motion',
+    tier: 'basic',
+    reflow: false,
     order: 10,
     label: '定時回顧歷史',
     control: 'select',
@@ -54,6 +87,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('motion', {
     key: 'receiptReviewInterval',
+    family: 'motion',
+    tier: 'basic',
+    reflow: false,
     order: 20,
     label: '回顧間隔',
     control: 'range',
@@ -65,6 +101,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('color-treatment', {
     key: 'paletteId',
+    family: 'document',
+    tier: 'basic',
+    reflow: false,
     order: 10,
     label: 'Look',
     control: 'select',
@@ -80,6 +119,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('color-treatment', {
     key: 'lookAmount',
+    family: 'document',
+    tier: 'basic',
+    reflow: false,
     order: 20,
     label: '強度',
     control: 'range',
@@ -91,6 +133,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('typography', {
     key: 'fontFamily',
+    family: 'character',
+    tier: 'basic',
+    reflow: true,
     order: 10,
     label: '字型',
     control: 'select',
@@ -105,6 +150,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('typography', {
     key: 'fontScale',
+    family: 'document',
+    tier: 'basic',
+    reflow: true,
     order: 20,
     label: '字級',
     control: 'select',
@@ -118,6 +166,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('typography', {
     key: 'fontWeight',
+    family: 'character',
+    tier: 'basic',
+    reflow: true,
     order: 30,
     label: '字重',
     control: 'select',
@@ -130,6 +181,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('readability', {
     key: 'contrastStyle',
+    family: 'legibility',
+    tier: 'basic',
+    reflow: false,
     order: 10,
     label: '文字對比',
     control: 'select',
@@ -142,6 +196,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'alignment',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
     order: 10,
     label: '對齊',
     control: 'select',
@@ -155,6 +212,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('surface', {
     key: 'surface',
+    family: 'fill',
+    tier: 'basic',
+    reflow: false,
     order: 10,
     label: '背景透明度',
     control: 'select',
@@ -167,6 +227,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('content', {
     key: 'furigana',
+    family: 'document',
+    tier: 'basic',
+    reflow: true,
     order: 10,
     label: '假名標音',
     control: 'select',
@@ -178,6 +241,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('readability', {
     key: 'kineticMaterial',
+    family: 'legibility',
+    tier: 'basic',
+    reflow: false,
     order: 20,
     label: '文字材質',
     control: 'select',
@@ -191,6 +257,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'kineticArrangement',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
     order: 20,
     label: '文字排列',
     control: 'select',
@@ -202,6 +271,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('custom-color', {
     key: 'textColor',
+    family: 'swatch',
+    tier: 'advanced',
+    reflow: false,
     order: 10,
     label: '文字色',
     control: 'color',
@@ -209,6 +281,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('custom-color', {
     key: 'accentColor',
+    family: 'swatch',
+    tier: 'advanced',
+    reflow: false,
     order: 20,
     label: '藝術墨影',
     control: 'color',
@@ -216,6 +291,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'positionAnchor',
+    family: 'layout',
+    tier: 'basic',
+    reflow: false,
     order: 30,
     label: '顯示位置',
     control: 'select',
@@ -235,6 +313,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'positionOffsetX',
+    family: 'layout',
+    tier: 'advanced',
+    reflow: false,
     order: 40,
     label: '水平微調',
     control: 'range',
@@ -247,6 +328,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'positionOffsetY',
+    family: 'layout',
+    tier: 'advanced',
+    reflow: false,
     order: 50,
     label: '垂直微調',
     control: 'range',
@@ -259,6 +343,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'spacingDensity',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
     order: 60,
     label: '間距',
     control: 'select',
@@ -271,6 +358,9 @@ const FIELD_DEFINITIONS = [
   }),
   fieldDefinition('layout', {
     key: 'contentWidth',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
     order: 70,
     label: '內容寬度',
     control: 'select',
@@ -284,6 +374,68 @@ const FIELD_DEFINITIONS = [
 ];
 
 const FIELD_MAP = new Map(FIELD_DEFINITIONS.map((field) => [field.key, field]));
+
+const ELEMENT_FONT_WEIGHTS = Object.freeze({
+  regular: 400,
+  semibold: 600,
+  bold: 700,
+});
+
+const ELEMENT_PROPERTY_DEFINITIONS = Object.freeze(
+  new Map(
+    [
+      fieldDefinition('typography', {
+        key: 'fontWeight',
+        family: 'character',
+        tier: 'basic',
+        reflow: true,
+        scope: 'element',
+        order: 10,
+        label: '字重',
+        control: 'select',
+        defaultValue: 'inherit',
+        options: [
+          { id: 'inherit', label: '跟隨模板' },
+          { id: 'regular', label: '一般' },
+          { id: 'semibold', label: '中粗' },
+          { id: 'bold', label: '粗體' },
+        ],
+      }),
+      fieldDefinition('typography', {
+        key: 'fontSizeScale',
+        family: 'character',
+        tier: 'basic',
+        reflow: true,
+        scope: 'element',
+        order: 20,
+        label: '字級',
+        control: 'range',
+        defaultValue: 100,
+        min: 80,
+        max: 125,
+        step: 5,
+        unit: '%',
+      }),
+      fieldDefinition('content', {
+        key: 'visible',
+        family: 'visibility',
+        tier: 'basic',
+        reflow: true,
+        scope: 'element',
+        order: 10,
+        label: '顯示',
+        control: 'select',
+        defaultValue: 'shown',
+        options: [
+          { id: 'shown', label: '顯示' },
+          { id: 'hidden', label: '隱藏' },
+        ],
+      }),
+    ].map((definition) => [definition.key, definition]),
+  ),
+);
+
+const ELEMENT_SETTING_KEY_RE = /^element.([a-z][a-z0-9-]*).([A-Za-z]+)$/u;
 const BASIC_APPEARANCE_KEYS = Object.freeze([
   'paletteId',
   'lookAmount',
@@ -336,19 +488,6 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'receiptReviewInterval',
     ],
     fields: { fontScale: { defaultValue: 'medium' } },
-  },
-  'now-next': {
-    keys: [
-      'paletteId',
-      'lookAmount',
-      'fontFamily',
-      'fontScale',
-      'fontWeight',
-      'surface',
-      'alignment',
-      'spacingDensity',
-    ],
-    fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'art-card': {
     keys: ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
@@ -572,6 +711,9 @@ export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
 });
 
 export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
+  if (isOutputElementSettingKey(key)) {
+    return sanitizeElementSetting(key, value, options.templateId);
+  }
   const baseField = FIELD_MAP.get(key);
   if (!baseField) return undefined;
   let sanitized;
@@ -652,7 +794,69 @@ export function carryOutputAppearanceToTemplate(settings, options = {}) {
       next[field.key] = field.defaultValue;
     }
   }
+  const targetElementKeys = new Set(
+    outputElementFieldsForTemplate(toTemplateId).map(({ key }) => key),
+  );
+  for (const key of Object.keys(next)) {
+    if (isOutputElementSettingKey(key) && !targetElementKeys.has(key)) {
+      delete next[key];
+    }
+  }
   return next;
+}
+
+export function isOutputElementSettingKey(key) {
+  return typeof key === 'string' && ELEMENT_SETTING_KEY_RE.test(key);
+}
+
+export function outputElementTargetsForTemplate(templateId) {
+  const elements = OUTPUT_TEMPLATE_ELEMENTS[String(templateId ?? '')] ?? [];
+  return elements.map((element) => ({
+    id: element.id,
+    kind: element.kind,
+    label: element.label,
+    fields: element.properties.map((propertyKey) =>
+      cloneField(ELEMENT_PROPERTY_DEFINITIONS.get(propertyKey), {
+        key: `element.${element.id}.${propertyKey}`,
+        propertyKey,
+        elementId: element.id,
+      }),
+    ),
+  }));
+}
+
+export function outputElementFieldsForTemplate(templateId) {
+  return outputElementTargetsForTemplate(templateId).flatMap(
+    ({ fields }) => fields,
+  );
+}
+
+function sanitizeElementSetting(key, value, templateId) {
+  const field = outputElementFieldsForTemplate(templateId).find(
+    (candidate) => candidate.key === key,
+  );
+  if (!field) return undefined;
+  if (field.control === 'range') return sanitizedRangeValue(field, value);
+  return field.options.some((option) => option.id === value)
+    ? value
+    : undefined;
+}
+
+export function normalizeOutputElementAppearance(settings = {}, options = {}) {
+  return Object.fromEntries(
+    outputElementFieldsForTemplate(options.templateId).map((field) => [
+      field.key,
+      sanitizeElementSetting(
+        field.key,
+        settings?.[field.key],
+        options.templateId,
+      ) ?? field.defaultValue,
+    ]),
+  );
+}
+
+export function outputElementFontWeight(value) {
+  return ELEMENT_FONT_WEIGHTS[value];
 }
 
 export function outputAppearanceFieldKeysForTemplate(templateId) {

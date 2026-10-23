@@ -35,7 +35,33 @@
 
 `alignment`、`contentWidth` 存在於 schema，但九個模板都未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
 
-`receipt-setlist` 另提供 `receiptDirection`（down／up，預設down）、`receiptReview`（on／off，預設on）與 `receiptReviewInterval`（5–60秒、step5，預設15）；只公開這三項與字級，不顯示未消費的Look或背景控制。外觀schema為6，舊欄位相容；既存間隔以新範圍正規化。
+每個欄位另宣告 [ADR 0027](../adr/0027-output-template-elements-and-property-workspace.md) 的定義屬性；`group` 仍只決定 Inspector 分組，畫面與儲存不受這些屬性影響。
+
+| 屬性     | 值與目前規則                                                                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `family` | document：Look、強度、字級、讀音、歌詞呈現策略；swatch：兩個自訂色；character：字型、字重；legibility：對比、文字材質；fill：背景；layout：對齊、密度、內容寬度、文字排列、出紙方向、位置與微調；motion：回顧開關與間隔。stacking、visibility、asset 尚無欄位 |
+| `scope`  | 上表欄位皆為 `template`；元素屬性為 `element`，見下方「元素層級設定」                                                                                                                                                                                         |
+| `tier`   | `advanced` 只有 textColor、accentColor、positionOffsetX、positionOffsetY，與上表分級一致；其餘為 `basic`                                                                                                                                                      |
+| `reflow` | 會讓文字重新排版的欄位（字級、字型、字重、讀音、歌詞呈現策略與 layout 中改變尺寸者）為 true；位置、色彩、背景、材質與動態為 false                                                                                                                             |
+
+`receipt-setlist` 另提供 `receiptDirection`（down／up，預設down）、`receiptReview`（on／off，預設on）與 `receiptReviewInterval`（5–60秒、step5，預設15）；只公開這三項與字級，不顯示未消費的Look或背景控制。外觀schema 6 起提供這三項，舊欄位相容；既存間隔以新範圍正規化。
+
+### 元素層級設定
+
+外觀 schema 為 7。元素宣告在 [outputTemplateElements.mjs](../../shared/outputTemplateElements.mjs)，目前只有 cover-player；其他模板沒有元素層級設定。
+
+| 元素      | 屬性                               | 備註                                     |
+| --------- | ---------------------------------- | ---------------------------------------- |
+| title     | fontWeight、fontSizeScale          | 不可隱藏                                 |
+| artist    | fontWeight、fontSizeScale、visible |                                          |
+| progress  | visible                            | 進度條與時間                             |
+| transport | visible                            | 播放鍵；與 progress 都隱藏時收起整個區塊 |
+
+- fontWeight：inherit（跟隨模板）／regular／semibold／bold，預設 inherit；fontSizeScale：80–125% step 5，預設 100；visible：shown／hidden，預設 shown。
+- 儲存為 `element.<元素>.<屬性>` 扁平鍵，值存完整而非差異。Main 只保留該模板宣告的鍵；換到未宣告該元素的模板時清除。
+- Browser Source 在 root 投影 `--ovl-el-<元素>-font-weight`、`--ovl-el-<元素>-size-scale` 與 `data-ovl-el-<元素>-visible`，只由 cover-player 規則讀取，不碰動畫節點。
+- `ovl-constraints` 的 `--ovl-text-min-size`（0.75rem）為縮小下限：元素字級不低於此值與原始字級中較小者，預設輸出不變。
+- Workbench 有元素的模板在 Inspector 頂端提供「調整對象」，預設「整個模板」；選元素時只顯示該元素的屬性群組，底部「恢復模板預設」一併重設元素設定。
 
 ## 九模板
 
