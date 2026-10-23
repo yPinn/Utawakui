@@ -35,6 +35,8 @@ const runtimeStatus = computed(() =>
       </template>
     </UiTooltip>
 
+    <slot />
+
     <UiButton
       v-if="!outputStatus.running"
       class="obs-output-runtime-status__command"

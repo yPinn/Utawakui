@@ -240,18 +240,19 @@ onBeforeUnmount(() => {
               :busy="runtimeBusy"
               @start="startOutput"
               @stop="stopOutput"
-            />
-            <UiIconButton
-              :icon="MonitorUp"
-              label="開啟輸出視窗"
-              :disabled="!outputState.status.running || runtimeBusy"
-              @click="openCaptureWindow"
-            />
-            <UiIconButton
-              :icon="Settings"
-              label="輸出設定"
-              @click="openSettings('output')"
-            />
+            >
+              <UiIconButton
+                :icon="MonitorUp"
+                label="開啟輸出視窗"
+                :disabled="!outputState.status.running || runtimeBusy"
+                @click="openCaptureWindow"
+              />
+              <UiIconButton
+                :icon="Settings"
+                label="輸出設定"
+                @click="openSettings('output')"
+              />
+            </ObsOutputRuntimeStatus>
           </div>
         </div>
       </div>

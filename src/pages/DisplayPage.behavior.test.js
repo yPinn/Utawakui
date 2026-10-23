@@ -35,6 +35,14 @@ describe('DisplayPage', () => {
       /aria-checked="true"[^>]*><span class="ui-segmented-control__label"[^>]*><!--\[-->工作臺/,
     );
     expect(html).toContain('aria-label="輸出設定"');
+    const outputControls = [
+      'obs-output-runtime-status__dot',
+      '開啟輸出視窗</span>',
+      '輸出設定</span>',
+      'obs-output-runtime-status__command',
+    ].map((marker) => html.indexOf(marker));
+    expect(outputControls).not.toContain(-1);
+    expect(outputControls).toEqual([...outputControls].sort((a, b) => a - b));
     expect(html).not.toContain('id="obs-output-settings-tab"');
   });
 
