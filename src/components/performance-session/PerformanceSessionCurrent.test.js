@@ -35,11 +35,12 @@ describe('arrangement current uses the Queue current section', () => {
     expect(html).toContain('暫停：Stage title');
     expect(html).toContain('標記完成');
     expect(html).toContain('停止');
+    expect(html).not.toContain('一般播放 ·');
     expect(html).not.toContain('performance-session-board');
   });
   it('reflects paused audio and supports ordinary player fallback without session actions', async () => {
     const html = await render({ playerTrack: track, phase: 'paused' });
-    expect(html).toContain('已暫停');
+    expect(html).toContain('一般播放 · 已暫停');
     expect(html).toContain('播放：Canonical');
     expect(html).not.toContain('標記完成');
     expect(html).not.toContain('>停止<');

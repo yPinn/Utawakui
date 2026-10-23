@@ -307,7 +307,7 @@ describe('TrackActionMenu behavior model', () => {
 
     expect(menuButtons().map(textContent)).toEqual(
       expect.arrayContaining([
-        '加入佇列',
+        '加入一般佇列',
         '加入播放清單',
         '編輯歌曲',
         '前往專輯',
@@ -323,8 +323,8 @@ describe('TrackActionMenu behavior model', () => {
       context: 'queued',
       playlists,
     });
-    expect(menuButtons().map(textContent)).toContain('從佇列移除');
-    expect(textContent(body)).not.toContain('加入佇列');
+    expect(menuButtons().map(textContent)).toContain('從一般佇列移除');
+    expect(textContent(body)).not.toContain('加入一般佇列');
     queuedMenu.app.unmount();
   });
 

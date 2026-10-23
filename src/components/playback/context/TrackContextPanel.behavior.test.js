@@ -258,7 +258,12 @@ describe('TrackContextPanel', () => {
     expect(source).not.toContain('UiScrollRegion');
     expect(source).not.toContain('TrackContextBlock');
     expect(source).not.toContain('useStudioLibraryInspectorWidth');
-    expect(source).not.toContain('--ui-right-dock-');
+    expect(source.match(/--ui-right-dock-[\w-]+(?=:)/gu)).toEqual([
+      '--ui-right-dock-section-surface-background',
+    ]);
+    expect(source).toMatch(
+      /\.studio-context-inspector\s*\{\s*--ui-right-dock-section-surface-background:\s*var\(--ui-color-surface-raised\);\s*\}/u,
+    );
   });
 
   it('lets the shared section body own subgroup spacing instead of stacking child margins', () => {

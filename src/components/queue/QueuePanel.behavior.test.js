@@ -71,8 +71,10 @@ describe('QueuePanel shared Dock content', () => {
   it('uses shared header actions and preserves full-width tabs in both modes', () => {
     expect(source).not.toContain('UiSelect');
     expect(source).not.toContain('UiSegmentedControl');
-    expect(source).toContain('切換演出安排');
+    expect(source).toContain('切換演出待唱');
     expect(source).toContain('切換一般佇列');
+    expect(source).toContain('兩份佇列各自安排');
+    expect(source).toContain('從待唱開始播放才會留下演出紀錄');
     expect(source).toContain(':icon="Tickets"');
     expect(source).toContain(
       ':aria-pressed="dock.queueVariant.value === \'arrangement\'"',

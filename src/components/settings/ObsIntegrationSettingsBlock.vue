@@ -354,8 +354,8 @@ watch(
     </UiDisclosure>
 
     <SettingsDocumentItem
-      title="播放安排側欄"
-      guidance="連線至 OBS 後顯示「播放安排」；可隨時收合，不會自動播放。"
+      title="演出待唱側欄"
+      guidance="連線至 OBS 後顯示「演出待唱」側欄，可切換「一般播放」。兩份佇列各自安排；此設定只控制側欄顯示，不會自動播放。"
       variant="nested"
     >
       <template #actions>

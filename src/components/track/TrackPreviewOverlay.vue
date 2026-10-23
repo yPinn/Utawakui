@@ -393,7 +393,7 @@ onUnmounted(() => setKeyboardListener(false));
             />
             <UiIconButton
               :icon="ListEnd"
-              :label="isQueued ? '已在佇列' : '加入佇列'"
+              :label="isQueued ? '已在一般佇列' : '加入一般佇列'"
               :disabled="isQueued"
               @click="emit('addToQueue', track)"
             />

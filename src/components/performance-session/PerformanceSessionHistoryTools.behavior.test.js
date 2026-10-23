@@ -20,6 +20,10 @@ const fixture = vi.hoisted(() => ({
   timeline: { openForArrangement: vi.fn() },
   playlist: null,
   openArchive: vi.fn(),
+  addArchive: vi.fn(async () => true),
+}));
+vi.mock('../../composables/usePerformanceQueueActions.js', () => ({
+  usePerformanceQueueActions: () => ({ addArchive: fixture.addArchive }),
 }));
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => ({
@@ -132,7 +136,10 @@ vi.mock('../ui/UiActionMenu.vue', () => ({
                 .map((item) =>
                   h(
                     'button',
-                    { onClick: () => emit('select', item.value) },
+                    {
+                      disabled: item.disabled,
+                      onClick: () => emit('select', item.value),
+                    },
                     item.label,
                   ),
                 ),
@@ -182,6 +189,7 @@ beforeEach(() => {
             name: 'Older show',
             endedAt: '2026-10-20T12:00:00Z',
             completedCount: 2,
+            itemCount: 3,
           },
         ],
       },
@@ -226,6 +234,42 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('shared performance history actions', () => {
+  it('appends the same archive through the shared owner on each Dock menu activation without stopping playback', async () => {
+    const view = mount(Tools, { dock: true });
+    for (let round = 0; round < 2; round++) {
+      await click(view.root, '場次操作：Older show');
+      await click(view.root, '加入演出待唱');
+      expect(button(view.root, '加入演出待唱')).toBeUndefined();
+    }
+    expect(fixture.addArchive.mock.calls).toEqual([['old'], ['old']]);
+    expect(fixture.playback.stop).not.toHaveBeenCalled();
+    expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
+    view.app.unmount();
+  });
+  it('excludes current sessions and non-Dock menus and guards empty or busy archive actions', async () => {
+    const view = mount(Tools, { dock: true });
+    await click(view.root, '目前場次操作');
+    expect(button(view.root, '加入演出待唱')).toBeUndefined();
+    fixture.plan.state.plan.archives[0].itemCount = 0;
+    await settle();
+    await click(view.root, '場次操作：Older show');
+    expect(button(view.root, '加入演出待唱').props.disabled).toBe(true);
+    // Guard stale/forged select events as well as the native disabled button.
+    await click(view.root, '加入演出待唱');
+    fixture.plan.state.plan.archives[0].itemCount = 3;
+    await click(view.root, '場次操作：Older show');
+    fixture.plan.state.isSaving = true;
+    await settle();
+    expect(button(view.root, '加入演出待唱').props.disabled).toBe(true);
+    await click(view.root, '加入演出待唱');
+    expect(fixture.addArchive).not.toHaveBeenCalled();
+    view.app.unmount();
+    fixture.plan.state.isSaving = false;
+    const main = mount(Tools);
+    await click(main.root, '場次操作：Older show');
+    expect(button(main.root, '加入演出待唱')).toBeUndefined();
+    main.app.unmount();
+  });
   it('places inline status beside current-session actions and outside the track rows', () => {
     const view = mount(
       Tools,

@@ -156,6 +156,10 @@ const currentTrackFacts = computed(() => {
 </template>
 
 <style scoped>
+.studio-context-inspector {
+  --ui-right-dock-section-surface-background: var(--ui-color-surface-raised);
+}
+
 .studio-context-inspector__details,
 .studio-context-inspector__source-identity,
 .studio-context-inspector__source-link,

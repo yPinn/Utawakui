@@ -119,6 +119,7 @@ OBS 章節仍是原有獨立時間標記服務，本次不遷移其歷史檔或�
 安排 Dock 自帶「待唱清單／演出紀錄」tabs（後者僅為 completed 子集；略過／中止在主頁演出紀錄），與一般模式 tabs 共用 Dock header 的位置，兩者都使用 UiTabs。
 兩種模式的 header 均維持單行、UiTabs 原生 12px inline padding 與 action group 12px 間距；最小寬度提高為 272px，預設／最大保留 280px，不縮小控制項或將按鈕拆到第二行。
 arrangementTab 由 useAppRightDock 持有，header 與側欄 panels 共用它；切換模式／收合不清除選擇。
+辨識與引導沿用原排版：Tickets 按鈕的 tooltip 說明目前模式、切換目的地與兩份佇列獨立；加入選單明示「加入一般佇列／加入演出待唱」。一般曲庫播放出現在演出頁目前項目時，在既有 phase 文字標示「一般播放」。完成空態說明須先加入演出待唱並從待唱開始，OBS 自動顯示設定則明示只控制側欄顯示、不自動播放。這些說明不新增區塊或改變播放與紀錄契約。
 待唱 tab 的唯一 NP 使用 PerformanceSessionCurrent，直接重用 QueueSection／QueueTrackButton 的現正播放區，
 保留選取、封面播放／暫停、Enter／雙擊與更多選項，並以既有 UiButton 顯示場次停止／標記完成。
 顯示名稱使用 occurrence snapshot，artwork 來自 canonical 曲目；播放／暫停與狀態仍來自唯一播放器。

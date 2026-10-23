@@ -41,8 +41,8 @@ const manual = computed(() => props.current?.mode === 'manual');
 const playbackDisabled = computed(
   () => props.busy || manual.value || props.phase === 'ended',
 );
-const phaseLabel = computed(() =>
-  manual.value
+const phaseLabel = computed(() => {
+  const label = manual.value
     ? '手動進行中'
     : ({
         playing: '播放中',
@@ -52,8 +52,9 @@ const phaseLabel = computed(() =>
         ended: '播放結束',
         error: '播放失敗',
         idle: '準備播放',
-      }[props.phase] ?? '準備播放'),
-);
+      }[props.phase] ?? '準備播放');
+  return !props.current && props.playerTrack ? `一般播放 · ${label}` : label;
+});
 const playbackLabel = computed(
   () =>
     `${props.phase === 'playing' ? '暫停' : '播放'}：${track.value?.title ?? ''}`,

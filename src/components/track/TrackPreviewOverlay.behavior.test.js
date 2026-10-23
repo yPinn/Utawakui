@@ -133,11 +133,11 @@ describe('TrackPreviewOverlay', () => {
 
   it('offers only track actions the row right-click menu also has', async () => {
     const fresh = await renderOverlay();
-    expect(fresh).toContain('加入佇列');
+    expect(fresh).toContain('加入一般佇列');
     expect(fresh).not.toContain('場次草稿');
 
     const done = await renderOverlay({ queuedTrackIds: ['b'] });
-    expect(done).toContain('已在佇列');
+    expect(done).toContain('已在一般佇列');
     // The menu gets the same per-track options as the row right-click.
     expect(source).toContain(
       ':remove-from-playlist-id="menuOptions.removeFromPlaylistId"',
@@ -253,7 +253,7 @@ describe('TrackPreviewOverlay', () => {
       /\.track-preview__play\s*\{[^}]*position:\s*absolute;[^}]*inset-block-end:\s*var\(--ui-space-2\);[^}]*inset-inline-end:\s*var\(--ui-space-2\);/u,
     );
     expect(source.slice(at('rail'), at('skips'))).toMatch(
-      /更多操作[\s\S]*加入佇列/u,
+      /更多操作[\s\S]*加入一般佇列/u,
     );
     // Feed stepping is its own corner zone at the live control size.
     expect(source.slice(at('skips'))).toMatch(

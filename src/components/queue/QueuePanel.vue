@@ -319,7 +319,7 @@ const {
           v-if="dock.queueVariant.value === 'queue'"
           :items="tabs"
           :active-id="activeTab"
-          aria-label="播放清單檢視"
+          aria-label="一般播放佇列與最近播放"
           tab-id-prefix="queue-panel"
           panel-id-prefix="queue-panel"
           variant="bar"
@@ -345,7 +345,12 @@ const {
         :label="
           dock.queueVariant.value === 'arrangement'
             ? '切換一般佇列'
-            : '切換演出安排'
+            : '切換演出待唱'
+        "
+        :title="
+          dock.queueVariant.value === 'arrangement'
+            ? '目前為演出待唱。切換至一般播放佇列；兩份佇列各自安排。'
+            : '目前為一般播放佇列。切換至演出待唱；從待唱開始播放才會留下演出紀錄。'
         "
         :active="dock.queueVariant.value === 'arrangement'"
         :aria-pressed="dock.queueVariant.value === 'arrangement'"
@@ -386,7 +391,9 @@ const {
       aria-labelledby="queue-panel-queue-tab"
       tabindex="0"
     >
-      <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
+      <UiHint v-if="!hasQueue"
+        >一般佇列尚無歌曲。從曲庫播放，或選擇「加入一般佇列」。</UiHint
+      >
 
       <div v-else class="queue-panel__sections">
         <QueueSection

@@ -162,7 +162,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('makes local playback available without an active broadcast', () => {
     expect(workspaceSource).toContain('aria-label="演出安排"');
     expect(workspaceSource).toContain('<PerformanceSessionBoard');
-    expect(workspaceSource).toContain('搜尋曲庫並加入待唱');
+    expect(workspaceSource).toContain('搜尋曲庫並加入演出待唱');
     expect(planListSource).toContain("history ? '播放結果' : '待唱順序'");
     expect(workspaceSource).not.toContain('title="演唱中"');
     expect(workspaceSource).not.toContain('title="已唱紀錄"');

@@ -102,20 +102,20 @@ const content = computed(() => {
           ? {
               id: 'remove-from-queue',
               kind: 'action',
-              label: '從佇列移除',
+              label: '從一般佇列移除',
               icon: ListMinus,
               value: { action: TRACK_MENU_ACTIONS.removeFromQueue },
             }
           : {
               id: 'add-to-queue',
               kind: 'action',
-              label: '加入佇列',
+              label: '加入一般佇列',
               icon: ListEnd,
               disabled: isCurrent || isQueued,
               disabledReason: isCurrent
                 ? '現正播放'
                 : isQueued
-                  ? '已在佇列'
+                  ? '已在一般佇列'
                   : '',
               value: { action: TRACK_MENU_ACTIONS.addToQueue },
             },

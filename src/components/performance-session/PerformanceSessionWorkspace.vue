@@ -402,7 +402,7 @@ async function selectWorkspaceAction(action) {
           <div class="performance-session-workspace__add">
             <UiSearchBox
               v-model="librarySearchQuery"
-              label="搜尋曲庫並加入待唱"
+              label="搜尋曲庫並加入演出待唱"
               placeholder="搜尋曲名或歌手…"
               :disabled="state.isSaving"
             />
@@ -460,7 +460,7 @@ async function selectWorkspaceAction(action) {
             @skip="playback.skip"
           />
           <UiHint v-else padded center
-            >搜尋曲庫加入待唱；外部伴奏可用「新增手動項目」。</UiHint
+            >搜尋曲庫加入演出待唱，從待唱開始播放才會留下演出紀錄；外部伴奏可用「新增手動項目」。</UiHint
           >
         </template>
       </PerformanceSessionBoard>

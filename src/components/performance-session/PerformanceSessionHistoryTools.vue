@@ -1,9 +1,16 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Copy, Download, Ellipsis, FolderPlus } from '../../icons/index.js';
+import {
+  Copy,
+  Download,
+  Ellipsis,
+  FolderPlus,
+  Tickets,
+} from '../../icons/index.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
+import { usePerformanceQueueActions } from '../../composables/usePerformanceQueueActions.js';
 import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { useAppView } from '../../composables/useAppView.js';
@@ -18,8 +25,9 @@ import UiTextField from '../ui/UiTextField.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import PerformanceSessionPlaylistExportModal from './PerformanceSessionPlaylistExportModal.vue';
 
-defineProps({ dock: Boolean });
+const props = defineProps({ dock: Boolean });
 const plan = usePerformanceSessionPlan();
+const performanceQueue = usePerformanceQueueActions();
 const notifications = useAppNotifications();
 const playback = usePerformanceSessionPlayback();
 const timeline = useObsSessionExport();
@@ -52,6 +60,18 @@ const menuContent = computed(() => ({
     {
       id: 'session',
       items: [
+        ...(props.dock && menu.value && !menu.value.current
+          ? [
+              {
+                id: 'pending',
+                kind: 'action',
+                label: '加入演出待唱',
+                value: 'pending',
+                icon: Tickets,
+                disabled: busy.value || !menu.value.itemCount,
+              },
+            ]
+          : []),
         ...(menu.value?.current
           ? [
               {
@@ -100,6 +120,13 @@ function selectAction(action) {
   const selected = menu.value;
   closeMenu();
   if (!selected || busy.value) return;
+  if (
+    action === 'pending' &&
+    props.dock &&
+    !selected.current &&
+    selected.itemCount > 0
+  )
+    void performanceQueue.addArchive(selected.id);
   if (action === 'archive') {
     finish.value = selected;
     name.value = selected.name;

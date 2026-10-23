@@ -340,7 +340,7 @@ const menuContent = computed(() => {
     {
       id: 'add-to-queue',
       kind: 'action',
-      label: '新增至佇列',
+      label: '加入一般佇列',
       icon: ListEnd,
       disabled: playlist.trackIds.length === 0,
       value: {
