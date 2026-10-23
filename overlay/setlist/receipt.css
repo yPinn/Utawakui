@@ -214,9 +214,3 @@
   margin-inline-start: var(--receipt-text-inset);
   align-self: stretch;
 }
-.receipt-setlist__empty {
-  margin: 0;
-  padding-block: calc(20 * var(--receipt-pixel));
-  color: var(--receipt-secondary);
-  font-size: calc(16 * var(--receipt-pixel) * var(--receipt-type-scale));
-}

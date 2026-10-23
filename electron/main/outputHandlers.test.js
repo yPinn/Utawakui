@@ -131,7 +131,7 @@ describe('output handlers', () => {
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': { templateId: 'art-card' },
-        setlist: { templateId: 'queue-board' },
+        setlist: { templateId: 'receipt-setlist' },
         lyrics: { templateId: 'karaoke-stack' },
       },
     });

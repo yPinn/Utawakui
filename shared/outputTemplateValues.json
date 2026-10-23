@@ -12,7 +12,7 @@
       "id": "setlist",
       "label": "歌單",
       "path": "/overlay/setlist",
-      "defaultTemplateId": "queue-board",
+      "defaultTemplateId": "receipt-setlist",
       "defaultStyleSetIds": ["runtime-source", "setlist-layout"]
     },
     {

@@ -119,7 +119,20 @@ describe('output template registry', () => {
       'now-next',
     );
     expect(data.slotDefaults.lyrics.templateId).toBe('karaoke-stack');
+    expect(data.slotDefaults.setlist.templateId).toBe('receipt-setlist');
     expect(data.slotDefaults['now-playing'].templateId).toBe('art-card');
+  });
+  it('puts the recommended receipt first in the setlist gallery', () => {
+    const data = getOutputWorkbenchData();
+    const setlists = data.templateGroups.find(
+      (group) => group.kind === 'setlist',
+    ).templates;
+    expect(setlists.map(({ id }) => id)).toEqual([
+      'receipt-setlist',
+      'queue-board',
+    ]);
+    expect(setlists[0].availability.label).toBe('建議');
+    expect(setlists[1].availability.label).toBe('可用');
   });
   it('orders templates by output kind and template order', () => {
     const templates = [

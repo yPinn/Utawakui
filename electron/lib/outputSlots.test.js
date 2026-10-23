@@ -68,7 +68,10 @@ describe('outputSlots', () => {
     expect(document.slots.lyrics.templateId).toBe('karaoke-stack');
     expect(document.slots).toMatchObject({
       'now-playing': { settings: { captureSize: 'small' } },
-      setlist: { settings: { captureSize: 'large' } },
+      setlist: {
+        templateId: 'receipt-setlist',
+        settings: { captureSize: 'large' },
+      },
       lyrics: { settings: { captureSize: 'full' } },
     });
   });

@@ -14,7 +14,7 @@ export function createReceiptView(host, { gsap = null } = {}) {
         <h2 class="receipt-setlist__label">NOW PLAYING</h2><strong class="receipt-setlist__current-title"></strong><span class="receipt-setlist__current-artist"></span>
       </section>
       <section class="receipt-setlist__history" aria-label="已唱紀錄">
-        <div class="receipt-setlist__viewport"><ol class="receipt-setlist__list"></ol></div><p class="receipt-setlist__empty">尚無已唱紀錄</p>
+        <div class="receipt-setlist__viewport"><ol class="receipt-setlist__list"></ol></div>
       </section>
     </div>
   </section>`;
@@ -25,7 +25,6 @@ export function createReceiptView(host, { gsap = null } = {}) {
   const history = find('history');
   const viewport = find('viewport');
   const list = find('list');
-  const empty = find('empty');
   let visible = false;
   let lastFrame = null;
   let latestFrame = null;
@@ -81,7 +80,6 @@ export function createReceiptView(host, { gsap = null } = {}) {
         }),
       );
     }
-    empty.hidden = frame.history.length > 0;
     viewport.hidden = frame.history.length === 0;
   }
   const motion = createReceiptMotionController({

@@ -39,7 +39,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'receipt-setlist',
     kind: 'setlist',
-    order: 30,
+    order: 10,
     name: '票據歌單',
     availability: { summary: '演出安排提供已唱明細；一般播放顯示播放紀錄。' },
     summary: '黑白熱感紙呈現目前曲目與已唱紀錄。',
