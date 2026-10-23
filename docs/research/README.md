@@ -15,6 +15,14 @@
 - 10-19 環境與實作：[權重與字典授權](lyrics-alignment/lyrics-acoustic-weight-license-gate-2026-10-19.md)、[環境生命週期](lyrics-alignment/lyrics-acoustic-lifecycle-2026-10-19.md)、[環境完整性](lyrics-alignment/lyrics-acoustic-environment-readiness-2026-10-19.md)、[HubertFA 第二階段](lyrics-alignment/lyrics-acoustic-phase2-2026-10-19.md)、[獨立估計實作評估](lyrics-alignment/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md)、[T1 句內切分](lyrics-alignment/lyrics-t1-acoustic-segmentation-2026-10-19.md)
 - 10-18：[中日韓早期實測](lyrics-alignment/lyrics-alignment-cjk-evaluation-2026-10-18.md)、[第一輪實測](lyrics-alignment/lyrics-alignment-pilot-2026-10-18.md)、[初始方法調查](lyrics-alignment/lyrics-audio-alignment-evaluation-2026-10-18.md)
 
+## 歌詞文字預處理
+
+- [來源合塊合成留出結果](lyrics-text-holdout-results-2026-10-23.md)（10-23）：100 新 occurrence、固定 120 請求；110 完成／1 超時停止／9 缺測。空白合句有局部訊號，全體未優於標點對照，和聲與混合塊分類仍有風險；代理參考、無母語盲審，未接產品。
+- [來源合併塊盲測計畫](lyrics-text-blind-validation-plan-2026-10-23.md)（10-23）：C 完整預覽與獨立分類的 100 個新案例設計、多答案／日文依附／空白與長區間負例、同字用途歧義及 120 次請求成本提案；尚未製作正式題目或完成母語盲審，未跑模型、未接產品。
+- [4B 任務分離與候選斷點對照](lyrics-text-qwen-ablation-2026-10-23.md)（10-23）：100 次固定離線對照；完整左右預覽改善拆句，幾何縮減候選有退步；獨立分類保留實唱／對唱／和聲。全部失敗與成本保留，未接產品、未改原文或時間。
+- [Qwen3.5 CPU 實測](lyrics-text-qwen-pilot-2026-10-23.md)（10-23）：2B／4B 各 60 案與 8 次獨立診斷；4B 製作資訊分類較佳，語意分組仍過切／角色落單，未達採用證據；原文及時間未改、未接產品。
+- [模型輔助可行性](lyrics-text-preprocessing-feasibility-2026-10-23.md)（10-23）：五語系 60 個自製案例與規則基線、語意斷句／製作資訊候選、文字與時間保真、本機模型成本及離線實驗規格；未下載／執行文字模型、未接產品。
+
 ## 歌詞來源
 
 - [來源與使用邊界](lyrics-providers/lyrics-provider-commercial-evaluation-2026-08-31.md)（08-31）、[NetEase／Kugou 對照](lyrics-providers/lyrics-provider-technical-evaluation-2026-09-01.md)（09-01）

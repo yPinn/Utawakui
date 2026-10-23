@@ -1,0 +1,3000 @@
+{
+  "date": "2026-10-23",
+  "scope": "Synthetic rule baseline only; no local language model executed.",
+  "baselineModules": {
+    "shared/presentation/lyricsTextProcessing.mjs": "c8c8fefdf8b9b9e8bd1df8ca6304a676027aaf11115bee247af9ca22c488df3e",
+    "shared/presentation/lyricsPresentation.mjs": "0bd5564470c2cf87edf1cbffc671d56da5b5f7c919bb68cdc2975d16f4ad312a"
+  },
+  "corpusSha256": "b8f3acc60d67aa7960ec76b518b029aedeccb48bb38b2ccaa939e16953c0173e",
+  "runtime": {
+    "node": "v24.17.0",
+    "icu": "78.3"
+  },
+  "defaultRetained": 60,
+  "summaries": [
+    {
+      "language": "zh-Hant",
+      "cases": 12,
+      "creditCandidates": 2,
+      "creditReferenceCount": 4,
+      "performedCandidates": ["hant-s1"],
+      "performedCount": 4,
+      "longCases": 4,
+      "referenceBoundaries": 7,
+      "referenceBoundariesInRuleCandidates": 7,
+      "referenceBoundariesSafe": 7,
+      "longRuleCandidateCount": 54
+    },
+    {
+      "language": "zh-Hans",
+      "cases": 12,
+      "creditCandidates": 2,
+      "creditReferenceCount": 4,
+      "performedCandidates": ["hans-s1"],
+      "performedCount": 4,
+      "longCases": 4,
+      "referenceBoundaries": 7,
+      "referenceBoundariesInRuleCandidates": 7,
+      "referenceBoundariesSafe": 7,
+      "longRuleCandidateCount": 57
+    },
+    {
+      "language": "en",
+      "cases": 12,
+      "creditCandidates": 2,
+      "creditReferenceCount": 4,
+      "performedCandidates": ["en-s1"],
+      "performedCount": 4,
+      "longCases": 4,
+      "referenceBoundaries": 7,
+      "referenceBoundariesInRuleCandidates": 7,
+      "referenceBoundariesSafe": 7,
+      "longRuleCandidateCount": 63
+    },
+    {
+      "language": "ja",
+      "cases": 12,
+      "creditCandidates": 2,
+      "creditReferenceCount": 4,
+      "performedCandidates": ["ja-s1"],
+      "performedCount": 4,
+      "longCases": 4,
+      "referenceBoundaries": 7,
+      "referenceBoundariesInRuleCandidates": 7,
+      "referenceBoundariesSafe": 7,
+      "longRuleCandidateCount": 40
+    },
+    {
+      "language": "ko",
+      "cases": 12,
+      "creditCandidates": 2,
+      "creditReferenceCount": 4,
+      "performedCandidates": ["ko-s1"],
+      "performedCount": 4,
+      "longCases": 4,
+      "referenceBoundaries": 7,
+      "referenceBoundariesInRuleCandidates": 7,
+      "referenceBoundariesSafe": 7,
+      "longRuleCandidateCount": 46
+    }
+  ],
+  "rows": [
+    {
+      "id": "hant-c1",
+      "language": "zh-Hant",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-c2",
+      "language": "zh-Hant",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-c3",
+      "language": "zh-Hant",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-c4",
+      "language": "zh-Hant",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-s1",
+      "language": "zh-Hant",
+      "group": "performed",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-s2",
+      "language": "zh-Hant",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-s3",
+      "language": "zh-Hant",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 12,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-s4",
+      "language": "zh-Hant",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-l1",
+      "language": "zh-Hant",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 30,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 11,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-l2",
+      "language": "zh-Hant",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 9,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 20,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-l3",
+      "language": "zh-Hant",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 2,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 15,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hant-l4",
+      "language": "zh-Hant",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 37,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 40,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 42,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 43,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 45,
+          "priority": 3,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-c1",
+      "language": "zh-Hans",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-c2",
+      "language": "zh-Hans",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-c3",
+      "language": "zh-Hans",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-c4",
+      "language": "zh-Hans",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-s1",
+      "language": "zh-Hans",
+      "group": "performed",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-s2",
+      "language": "zh-Hans",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-s3",
+      "language": "zh-Hans",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 12,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-s4",
+      "language": "zh-Hans",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 2,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-l1",
+      "language": "zh-Hans",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 30,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 11,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-l2",
+      "language": "zh-Hans",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 9,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 20,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-l3",
+      "language": "zh-Hans",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 1,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 2,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 15,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "hans-l4",
+      "language": "zh-Hans",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 37,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 40,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 41,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 43,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 45,
+          "priority": 3,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-c1",
+      "language": "en",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-c2",
+      "language": "en",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-c3",
+      "language": "en",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-c4",
+      "language": "en",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 31,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-s1",
+      "language": "en",
+      "group": "performed",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-s2",
+      "language": "en",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 33,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 38,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 45,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 48,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 53,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 58,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-s3",
+      "language": "en",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 33,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 38,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 41,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 44,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-s4",
+      "language": "en",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 36,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 38,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 47,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-l1",
+      "language": "en",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 39,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 41,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 47,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 50,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 61,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 67,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 72,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 76,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 82,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 86,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 91,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 95,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 99,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 102,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 107,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 39,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 82,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-l2",
+      "language": "en",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 31,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 36,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 38,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 43,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 48,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 53,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 60,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 63,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 69,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 75,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 79,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 87,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 93,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 96,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 36,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 69,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-l3",
+      "language": "en",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 52,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 56,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 58,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 63,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 68,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 73,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 79,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 83,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 91,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 52,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 73,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "en-l4",
+      "language": "en",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 33,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 38,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 43,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 46,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 49,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 52,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 60,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 27,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-c1",
+      "language": "ja",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-c2",
+      "language": "ja",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-c3",
+      "language": "ja",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-c4",
+      "language": "ja",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 9,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-s1",
+      "language": "ja",
+      "group": "performed",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-s2",
+      "language": "ja",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-s3",
+      "language": "ja",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-s4",
+      "language": "ja",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 2,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-l1",
+      "language": "ja",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 22,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 30,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 36,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 39,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 13,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 28,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-l2",
+      "language": "ja",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 5,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 10,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 29,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 38,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 14,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 27,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-l3",
+      "language": "ja",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 2,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 30,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 35,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 39,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 25,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 30,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ja-l4",
+      "language": "ja",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 37,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 40,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 43,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 46,
+          "priority": 3,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-c1",
+      "language": "ko",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-c2",
+      "language": "ko",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-c3",
+      "language": "ko",
+      "group": "credit",
+      "ruleKind": "lyric",
+      "candidates": [],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-c4",
+      "language": "ko",
+      "group": "credit",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 13,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-s1",
+      "language": "ko",
+      "group": "performed",
+      "ruleKind": "credit-candidate",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 4,
+          "basis": "punctuation"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-s2",
+      "language": "ko",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 7,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-s3",
+      "language": "ko",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 6,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-s4",
+      "language": "ko",
+      "group": "performed",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 13,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 15,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 31,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-l1",
+      "language": "ko",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 11,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 19,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 21,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 24,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 33,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 36,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 42,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 16,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 33,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-l2",
+      "language": "ko",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 8,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 12,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 16,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 18,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 22,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 26,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 31,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 35,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 39,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 43,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 47,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 51,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 16,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 31,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-l3",
+      "language": "ko",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 3,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 25,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 28,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 35,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 39,
+          "priority": 4,
+          "basis": "punctuation"
+        },
+        {
+          "offset": 44,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 47,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 50,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 32,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          },
+          {
+            "offset": 39,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    },
+    {
+      "id": "ko-l4",
+      "language": "ko",
+      "group": "long",
+      "ruleKind": "lyric",
+      "candidates": [
+        {
+          "offset": 4,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 9,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 14,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 17,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 20,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 23,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 27,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 32,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 37,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 40,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 44,
+          "priority": 2,
+          "basis": "word"
+        },
+        {
+          "offset": 47,
+          "priority": 3,
+          "basis": "word"
+        },
+        {
+          "offset": 55,
+          "priority": 2,
+          "basis": "word"
+        }
+      ],
+      "reference": [
+        [
+          {
+            "offset": 23,
+            "safe": true,
+            "graphemeBoundary": true,
+            "inRuleCandidates": true
+          }
+        ]
+      ],
+      "defaultRetained": true
+    }
+  ],
+  "modelQuality": null,
+  "modelLatency": null
+}

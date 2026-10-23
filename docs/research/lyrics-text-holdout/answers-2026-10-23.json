@@ -1,0 +1,1983 @@
+{
+  "annotation": "agent-authored-unreviewed",
+  "nativeReview": "pending",
+  "cases": [
+    {
+      "lineId": "8931af087864e076",
+      "caseId": "zh-Hant-M1a",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-M1",
+      "referencePartitions": [
+        [
+          "抽屜裡的明信片還沒寄出 ",
+          "你在屋頂替盆栽擋雨 我推開門說今天不用趕路"
+        ],
+        [
+          "抽屜裡的明信片還沒寄出 你在屋頂替盆栽擋雨 ",
+          "我推開門說今天不用趕路"
+        ],
+        [
+          "抽屜裡的明信片還沒寄出 ",
+          "你在屋頂替盆栽擋雨 ",
+          "我推開門說今天不用趕路"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "抽屜裡的明信片還沒寄出",
+        "你在屋頂替盆栽擋雨",
+        "我推開門說今天不用趕路"
+      ],
+      "whitespaceVariant": 0,
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "d41e9fded38771be",
+      "caseId": "zh-Hant-M1b",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-M1",
+      "referencePartitions": [
+        [
+          "抽屜裡的明信片還沒寄出　\t  ",
+          "你在屋頂替盆栽擋雨　\t  我推開門說今天不用趕路"
+        ],
+        [
+          "抽屜裡的明信片還沒寄出　\t  你在屋頂替盆栽擋雨　\t  ",
+          "我推開門說今天不用趕路"
+        ],
+        [
+          "抽屜裡的明信片還沒寄出　\t  ",
+          "你在屋頂替盆栽擋雨　\t  ",
+          "我推開門說今天不用趕路"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "抽屜裡的明信片還沒寄出",
+        "你在屋頂替盆栽擋雨",
+        "我推開門說今天不用趕路"
+      ],
+      "whitespaceVariant": 1,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "fe5016ddace30001",
+      "caseId": "zh-Hant-M1c",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-M1",
+      "referencePartitions": [
+        ["抽屜裡的明信片還沒寄出", "你在屋頂替盆栽擋雨我推開門說今天不用趕路"],
+        ["抽屜裡的明信片還沒寄出你在屋頂替盆栽擋雨", "我推開門說今天不用趕路"],
+        [
+          "抽屜裡的明信片還沒寄出",
+          "你在屋頂替盆栽擋雨",
+          "我推開門說今天不用趕路"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "抽屜裡的明信片還沒寄出",
+        "你在屋頂替盆栽擋雨",
+        "我推開門說今天不用趕路"
+      ],
+      "whitespaceVariant": 2,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "70c7a8e5cb0779c8",
+      "caseId": "zh-Hant-M2",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-M2",
+      "referencePartitions": [
+        [
+          "鐘樓響了三下，",
+          "市場收起遮陽棚；",
+          "孩子抱著紙船跑回來，",
+          "我們把晚餐移到騎樓。"
+        ],
+        [
+          "鐘樓響了三下，",
+          "市場收起遮陽棚；孩子抱著紙船跑回來，",
+          "我們把晚餐移到騎樓。"
+        ],
+        [
+          "鐘樓響了三下，市場收起遮陽棚；",
+          "孩子抱著紙船跑回來，",
+          "我們把晚餐移到騎樓。"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "70e2f1d6d68cc76f",
+      "caseId": "zh-Hant-N1",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-N1",
+      "referencePartitions": [
+        ["我一直珍藏著那枚由你在搬家前親手縫進舊外套內袋的小小木扣子"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 14,
+          "end": 23,
+          "text": "親手縫進舊外套內袋",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "30ce86ec0da9f441",
+      "caseId": "zh-Hant-N2",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-N2",
+      "referencePartitions": [["OH OH 再一次再一次"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "3b3f4e1c91357569",
+      "caseId": "zh-Hant-D1",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-D1",
+      "referencePartitions": [
+        ["[甲] 先把燈留給晚歸的人 ", "[乙] 我會守著這扇門直到你回來"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 6,
+          "text": "[甲] 先把",
+          "reason": "role"
+        },
+        {
+          "start": 14,
+          "end": 20,
+          "text": "[乙] 我會",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "fdf6063c95143f23",
+      "caseId": "zh-Hant-D2",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-D2",
+      "referencePartitions": [
+        ["等收音機播完這首老歌，", "we can start again，不用急著回答我。"],
+        ["等收音機播完這首老歌，we can start again，", "不用急著回答我。"],
+        ["等收音機播完這首老歌，", "we can start again，", "不用急著回答我。"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "366221d4853bb913",
+      "caseId": "zh-Hant-H1",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-H1",
+      "referencePartitions": [
+        ["我把空椅留在身旁（和聲：等你啊等你），", "等門鈴喚醒安靜的走廊。"],
+        ["我把空椅留在身旁（和聲：等你啊等你），等門鈴喚醒安靜的走廊。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 8,
+          "end": 18,
+          "text": "（和聲：等你啊等你）",
+          "reason": "harmony"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "bd9aece5d697e6ab",
+      "caseId": "zh-Hant-A1",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-A1",
+      "referencePartitions": [
+        ["當你終於找到那把備用鑰匙的時候，", "記得替我打開門口的小燈。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 4,
+          "end": 15,
+          "text": "找到那把備用鑰匙的時候",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "4b3fc24330b65edb",
+      "caseId": "zh-Hant-A2",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-A2",
+      "referencePartitions": [
+        ["我捨不得把還沒寫完的便條丟掉，", "只好再替它找一個抽屜。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 4,
+          "end": 14,
+          "text": "把還沒寫完的便條丟掉",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "8ab08d07f1bb264f",
+      "caseId": "zh-Hant-Q1",
+      "language": "zh-Hant",
+      "primary": "split",
+      "family": "zh-Hant-Q1",
+      "referencePartitions": [
+        ["你把「編曲：未完成的夏天」唱了兩遍，", "我才發現那也是我們的暗號。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 2,
+          "end": 13,
+          "text": "「編曲：未完成的夏天」",
+          "reason": "quotation"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "5571c3a1d021d456",
+      "caseId": "zh-Hant-K1",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K1",
+      "referencePartitions": [["作曲：林岸"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "d8dfe0ff8be2b1ee",
+      "caseId": "zh-Hant-K2",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K2",
+      "referencePartitions": [["【編曲 許岑】"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "a7889df84eae539d",
+      "caseId": "zh-Hant-K3",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K3",
+      "referencePartitions": [["[小青] 把窗打開 ", "[阿朗] 我聽見你了"]],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 7,
+          "text": "[小青] 把窗",
+          "reason": "role"
+        },
+        {
+          "start": 10,
+          "end": 18,
+          "text": "[阿朗] 我聽見",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric",
+      "joint": true
+    },
+    {
+      "lineId": "c52799883092cecf",
+      "caseId": "zh-Hant-K4",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K4",
+      "referencePartitions": [["和聲：啊啊（一起唱，別停下）"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "20d86d9635f54678",
+      "caseId": "zh-Hant-K5",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K5",
+      "referencePartitions": [["她唱著「作詞：回家的人」，尾音還繞在樓梯間。"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "86717580636795fc",
+      "caseId": "zh-Hant-K6",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K6",
+      "referencePartitions": [["作詞：江雨 / ", "今夜請把我的名字唱進燈火裡"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "ambiguous",
+      "joint": true,
+      "mixed": true
+    },
+    {
+      "lineId": "1b20c91570624588",
+      "caseId": "zh-Hant-K7a",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K7",
+      "referencePartitions": [["編曲：沉默"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "zh-Hant-identical",
+      "hiddenIntent": "attribution"
+    },
+    {
+      "lineId": "64f5c8c8f8f64aab",
+      "caseId": "zh-Hant-K7b",
+      "language": "zh-Hant",
+      "primary": "classification",
+      "family": "zh-Hant-K7",
+      "referencePartitions": [["編曲：沉默"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "zh-Hant-identical",
+      "hiddenIntent": "performed"
+    },
+    {
+      "lineId": "bc28d8dc461cad9a",
+      "caseId": "zh-Hans-M1a",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-M1",
+      "referencePartitions": [
+        ["院子里的葡萄已经熟了 ", "外婆把竹椅搬到树下 我端着茶等她讲完故事"],
+        ["院子里的葡萄已经熟了 外婆把竹椅搬到树下 ", "我端着茶等她讲完故事"],
+        ["院子里的葡萄已经熟了 ", "外婆把竹椅搬到树下 ", "我端着茶等她讲完故事"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "院子里的葡萄已经熟了",
+        "外婆把竹椅搬到树下",
+        "我端着茶等她讲完故事"
+      ],
+      "whitespaceVariant": 0,
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "fa80051795bdc42f",
+      "caseId": "zh-Hans-M1b",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-M1",
+      "referencePartitions": [
+        [
+          "院子里的葡萄已经熟了  \t　",
+          "外婆把竹椅搬到树下  \t　我端着茶等她讲完故事"
+        ],
+        [
+          "院子里的葡萄已经熟了  \t　外婆把竹椅搬到树下  \t　",
+          "我端着茶等她讲完故事"
+        ],
+        [
+          "院子里的葡萄已经熟了  \t　",
+          "外婆把竹椅搬到树下  \t　",
+          "我端着茶等她讲完故事"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "院子里的葡萄已经熟了",
+        "外婆把竹椅搬到树下",
+        "我端着茶等她讲完故事"
+      ],
+      "whitespaceVariant": 1,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "d7be5b3f6db6d109",
+      "caseId": "zh-Hans-M1c",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-M1",
+      "referencePartitions": [
+        ["院子里的葡萄已经熟了", "外婆把竹椅搬到树下我端着茶等她讲完故事"],
+        ["院子里的葡萄已经熟了外婆把竹椅搬到树下", "我端着茶等她讲完故事"],
+        ["院子里的葡萄已经熟了", "外婆把竹椅搬到树下", "我端着茶等她讲完故事"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "院子里的葡萄已经熟了",
+        "外婆把竹椅搬到树下",
+        "我端着茶等她讲完故事"
+      ],
+      "whitespaceVariant": 2,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "897bd60657ce391e",
+      "caseId": "zh-Hans-M2",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-M2",
+      "referencePartitions": [
+        [
+          "渡口升起第一面旗，",
+          "修船的人卷起衣袖；",
+          "有人喊了一声开饭，",
+          "我们沿着小路走向炊烟。"
+        ],
+        [
+          "渡口升起第一面旗，",
+          "修船的人卷起衣袖；有人喊了一声开饭，",
+          "我们沿着小路走向炊烟。"
+        ],
+        [
+          "渡口升起第一面旗，修船的人卷起衣袖；",
+          "有人喊了一声开饭，",
+          "我们沿着小路走向炊烟。"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "7681f13a43d66f9f",
+      "caseId": "zh-Hans-N1",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-N1",
+      "referencePartitions": [
+        ["你送给我的那本夹着干花和旧电影票的蓝色笔记本一直放在最上层的书架上"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 7,
+          "end": 22,
+          "text": "夹着干花和旧电影票的蓝色笔记本",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "7630ab9bafa6b491",
+      "caseId": "zh-Hans-N2",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-N2",
+      "referencePartitions": [["HEY HEY 还要唱还要唱"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "7422b81c6886cee8",
+      "caseId": "zh-Hans-D1",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-D1",
+      "referencePartitions": [
+        ["[姐姐] 你先坐下来歇一会儿 ", "[弟弟] 等我把桌上的拼图拼完"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 7,
+          "text": "[姐姐] 你先",
+          "reason": "role"
+        },
+        {
+          "start": 15,
+          "end": 22,
+          "text": "[弟弟] 等我",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "fabdd31e48b97811",
+      "caseId": "zh-Hans-D2",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-D2",
+      "referencePartitions": [
+        ["把风筝交给我，", "take your time，我们还赶得上日落。"],
+        ["把风筝交给我，take your time，", "我们还赶得上日落。"],
+        ["把风筝交给我，", "take your time，", "我们还赶得上日落。"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "314e33fafed02194",
+      "caseId": "zh-Hans-H1",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-H1",
+      "referencePartitions": [
+        ["我会沿着你画的箭头前行（合唱：向前向前），", "直到山谷里传来回答。"],
+        ["我会沿着你画的箭头前行（合唱：向前向前），直到山谷里传来回答。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 11,
+          "end": 20,
+          "text": "（合唱：向前向前）",
+          "reason": "harmony"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "cef56c64406b7a23",
+      "caseId": "zh-Hans-A1",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-A1",
+      "referencePartitions": [
+        ["在你把所有没说出口的愿望写进信封之后，", "我们再一起去敲那扇门。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 3,
+          "end": 12,
+          "text": "所有没说出口的愿望",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "ff1fcce2c4813997",
+      "caseId": "zh-Hans-A2",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-A2",
+      "referencePartitions": [
+        ["我始终舍不得让刚学会飞翔的纸鹤停在原地，", "于是又轻轻推开窗。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 6,
+          "end": 19,
+          "text": "让刚学会飞翔的纸鹤停在原地",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "f961f74e1d7ab29b",
+      "caseId": "zh-Hans-Q1",
+      "language": "zh-Hans",
+      "primary": "split",
+      "family": "zh-Hans-Q1",
+      "referencePartitions": [
+        ["你笑着念出“作曲：会发光的石头”，", "小河也跟着哼了起来。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 5,
+          "end": 16,
+          "text": "“作曲：会发光的石头”",
+          "reason": "quotation"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "13f8ef4006779c75",
+      "caseId": "zh-Hans-K1",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K1",
+      "referencePartitions": [["作词：赵禾"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "dc1244106662a31e",
+      "caseId": "zh-Hans-K2",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K2",
+      "referencePartitions": [["【作曲 周苇】"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "0ef63c7f29baa947",
+      "caseId": "zh-Hans-K3",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K3",
+      "referencePartitions": [["[阿宁] 让我先说 ", "[小满] 我一直在听"]],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 7,
+          "text": "[阿宁] 让我",
+          "reason": "role"
+        },
+        {
+          "start": 10,
+          "end": 18,
+          "text": "[小满] 我一直",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric",
+      "joint": true
+    },
+    {
+      "lineId": "b20a952e5ab30ecb",
+      "caseId": "zh-Hans-K4",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K4",
+      "referencePartitions": [["合唱：啦啦啦（别停，跟着我）"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "5c5107f0979145a8",
+      "caseId": "zh-Hans-K5",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K5",
+      "referencePartitions": [["我把“编曲：等花开”当成歌词唱给你听。"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "d05fff145e322769",
+      "caseId": "zh-Hans-K6",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K6",
+      "referencePartitions": [["作曲：宋川 / ", "请把这盏灯带到山的那一边"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "ambiguous",
+      "joint": true,
+      "mixed": true
+    },
+    {
+      "lineId": "2dddf3ff78e3d2f9",
+      "caseId": "zh-Hans-K7a",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K7",
+      "referencePartitions": [["作词：告别"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "zh-Hans-identical",
+      "hiddenIntent": "attribution"
+    },
+    {
+      "lineId": "bb7263d95477f0bb",
+      "caseId": "zh-Hans-K7b",
+      "language": "zh-Hans",
+      "primary": "classification",
+      "family": "zh-Hans-K7",
+      "referencePartitions": [["作词：告别"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "zh-Hans-identical",
+      "hiddenIntent": "performed"
+    },
+    {
+      "lineId": "5eb1de0b5d2d00d9",
+      "caseId": "en-M1a",
+      "language": "en",
+      "primary": "split",
+      "family": "en-M1",
+      "referencePartitions": [
+        [
+          "The bakery opens before sunrise ",
+          "you save the broken chair beside the door I bring a cup for anyone who stays"
+        ],
+        [
+          "The bakery opens before sunrise you save the broken chair beside the door ",
+          "I bring a cup for anyone who stays"
+        ],
+        [
+          "The bakery opens before sunrise ",
+          "you save the broken chair beside the door ",
+          "I bring a cup for anyone who stays"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "The bakery opens before sunrise",
+        "you save the broken chair beside the door",
+        "I bring a cup for anyone who stays"
+      ],
+      "whitespaceVariant": 0,
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "97a13f81dde6be98",
+      "caseId": "en-M1b",
+      "language": "en",
+      "primary": "split",
+      "family": "en-M1",
+      "referencePartitions": [
+        [
+          "The bakery opens before sunrise   \t ",
+          "you save the broken chair beside the door   \t I bring a cup for anyone who stays"
+        ],
+        [
+          "The bakery opens before sunrise   \t you save the broken chair beside the door   \t ",
+          "I bring a cup for anyone who stays"
+        ],
+        [
+          "The bakery opens before sunrise   \t ",
+          "you save the broken chair beside the door   \t ",
+          "I bring a cup for anyone who stays"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "The bakery opens before sunrise",
+        "you save the broken chair beside the door",
+        "I bring a cup for anyone who stays"
+      ],
+      "whitespaceVariant": 1,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "520bb24f43588aef",
+      "caseId": "en-M1c",
+      "language": "en",
+      "primary": "split",
+      "family": "en-M1",
+      "referencePartitions": [
+        [
+          "The bakery opens before sunrise ",
+          "you save the broken chair beside the door I bring a cup for anyone who stays"
+        ],
+        [
+          "The bakery opens before sunrise you save the broken chair beside the door ",
+          "I bring a cup for anyone who stays"
+        ],
+        [
+          "The bakery opens before sunrise ",
+          "you save the broken chair beside the door ",
+          "I bring a cup for anyone who stays"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "The bakery opens before sunrise",
+        "you save the broken chair beside the door",
+        "I bring a cup for anyone who stays"
+      ],
+      "whitespaceVariant": 2,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "3683def16f0e6b6f",
+      "caseId": "en-M2",
+      "language": "en",
+      "primary": "split",
+      "family": "en-M2",
+      "referencePartitions": [
+        [
+          "The ferry sounds its horn; ",
+          "a gull drops from the rail; ",
+          "you wave your scarf above the crowd; ",
+          "I lift the suitcase with the missing wheel."
+        ],
+        [
+          "The ferry sounds its horn; ",
+          "a gull drops from the rail; you wave your scarf above the crowd; ",
+          "I lift the suitcase with the missing wheel."
+        ],
+        [
+          "The ferry sounds its horn; a gull drops from the rail; ",
+          "you wave your scarf above the crowd; ",
+          "I lift the suitcase with the missing wheel."
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "564cbddf53f92b95",
+      "caseId": "en-N1",
+      "language": "en",
+      "primary": "split",
+      "family": "en-N1",
+      "referencePartitions": [
+        [
+          "I still wear the slightly oversized yellow sweater that your little brother knitted for my first winter away from home"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 56,
+          "end": 75,
+          "text": "your little brother",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "ef1d4f963619df1f",
+      "caseId": "en-N2",
+      "language": "en",
+      "primary": "split",
+      "family": "en-N2",
+      "referencePartitions": [["OH OH STAY STAY é🌙"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "a06c5e87cc2d6193",
+      "caseId": "en-D1",
+      "language": "en",
+      "primary": "split",
+      "family": "en-D1",
+      "referencePartitions": [
+        [
+          "[June] Keep a little room for me at the table ",
+          "[Robin] I have kept your place through every season"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 11,
+          "text": "[June] Keep",
+          "reason": "role"
+        },
+        {
+          "start": 46,
+          "end": 60,
+          "text": "[Robin] I have",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "413f107e3d24e069",
+      "caseId": "en-D2",
+      "language": "en",
+      "primary": "split",
+      "family": "en-D2",
+      "referencePartitions": [
+        [
+          "Fold the map along the river, ",
+          "もう迷わないよ, we can ask the moon for directions."
+        ],
+        [
+          "Fold the map along the river, もう迷わないよ, ",
+          "we can ask the moon for directions."
+        ],
+        [
+          "Fold the map along the river, ",
+          "もう迷わないよ, ",
+          "we can ask the moon for directions."
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "772298e08c64942b",
+      "caseId": "en-H1",
+      "language": "en",
+      "primary": "split",
+      "family": "en-H1",
+      "referencePartitions": [
+        [
+          "I will carry the melody (choir: carry it softly), ",
+          "while you find the words you meant to say."
+        ],
+        [
+          "I will carry the melody (choir: carry it softly), while you find the words you meant to say."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 24,
+          "end": 48,
+          "text": "(choir: carry it softly)",
+          "reason": "harmony"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "07c2c25ca875fd78",
+      "caseId": "en-A1",
+      "language": "en",
+      "primary": "split",
+      "family": "en-A1",
+      "referencePartitions": [
+        [
+          "When the person who borrowed your umbrella returns, ",
+          "leave a clean towel by the kitchen door."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 16,
+          "end": 42,
+          "text": "who borrowed your umbrella",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "116579be3b4beb44",
+      "caseId": "en-A2",
+      "language": "en",
+      "primary": "split",
+      "family": "en-A2",
+      "referencePartitions": [
+        [
+          "I don't want to give up the promise we made, ",
+          "even if the letters on the wall begin to fade."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 2,
+          "end": 7,
+          "text": "don't",
+          "reason": "dependency"
+        },
+        {
+          "start": 16,
+          "end": 23,
+          "text": "give up",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "5a4d60b373c670f3",
+      "caseId": "en-Q1",
+      "language": "en",
+      "primary": "split",
+      "family": "en-Q1",
+      "referencePartitions": [
+        [
+          "She sings \"Written by the city that forgot us\", ",
+          "and the empty platform answers in a whisper."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 10,
+          "end": 46,
+          "text": "\"Written by the city that forgot us\"",
+          "reason": "quotation"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "8c427bef188e0bb9",
+      "caseId": "en-K1",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K1",
+      "referencePartitions": [["Music by Mira Vale"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "23578d77bd6c5b5e",
+      "caseId": "en-K2",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K2",
+      "referencePartitions": [["【Arranged by Rowan Lake】"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "4cbcb740b06cd243",
+      "caseId": "en-K3",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K3",
+      "referencePartitions": [
+        ["[Nora] Pass me the tune ", "[Eli] I will take the next verse"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 11,
+          "text": "[Nora] Pass",
+          "reason": "role"
+        },
+        {
+          "start": 24,
+          "end": 36,
+          "text": "[Eli] I will",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric",
+      "joint": true
+    },
+    {
+      "lineId": "6484d0b66af5953a",
+      "caseId": "en-K4",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K4",
+      "referencePartitions": [["Backing vocals: oh oh (all together now)"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "f622cc75e300b36a",
+      "caseId": "en-K5",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K5",
+      "referencePartitions": [
+        ["You sang “Music by the rain” until the kettle answered."]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "0c0c134e74b18933",
+      "caseId": "en-K6",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K6",
+      "referencePartitions": [
+        ["Lyrics by Wren Hall / ", "Keep your hands above the water"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "ambiguous",
+      "joint": true,
+      "mixed": true
+    },
+    {
+      "lineId": "29ba590acfefd7ff",
+      "caseId": "en-K7a",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K7",
+      "referencePartitions": [["Written by Nobody"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "en-identical",
+      "hiddenIntent": "attribution"
+    },
+    {
+      "lineId": "ca186b41a5b91342",
+      "caseId": "en-K7b",
+      "language": "en",
+      "primary": "classification",
+      "family": "en-K7",
+      "referencePartitions": [["Written by Nobody"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "en-identical",
+      "hiddenIntent": "performed"
+    },
+    {
+      "lineId": "618915a15872793f",
+      "caseId": "ja-M1a",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-M1",
+      "referencePartitions": [
+        [
+          "坂のパン屋が窓を開けた ",
+          "向かいの猫があくびをした 僕は昨日の手紙をポケットにしまった"
+        ],
+        [
+          "坂のパン屋が窓を開けた 向かいの猫があくびをした ",
+          "僕は昨日の手紙をポケットにしまった"
+        ],
+        [
+          "坂のパン屋が窓を開けた ",
+          "向かいの猫があくびをした ",
+          "僕は昨日の手紙をポケットにしまった"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "坂のパン屋が窓を開けた",
+        "向かいの猫があくびをした",
+        "僕は昨日の手紙をポケットにしまった"
+      ],
+      "whitespaceVariant": 0,
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "ad6fa0512a4adac1",
+      "caseId": "ja-M1b",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-M1",
+      "referencePartitions": [
+        [
+          "坂のパン屋が窓を開けた　\t　",
+          "向かいの猫があくびをした　\t　僕は昨日の手紙をポケットにしまった"
+        ],
+        [
+          "坂のパン屋が窓を開けた　\t　向かいの猫があくびをした　\t　",
+          "僕は昨日の手紙をポケットにしまった"
+        ],
+        [
+          "坂のパン屋が窓を開けた　\t　",
+          "向かいの猫があくびをした　\t　",
+          "僕は昨日の手紙をポケットにしまった"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "坂のパン屋が窓を開けた",
+        "向かいの猫があくびをした",
+        "僕は昨日の手紙をポケットにしまった"
+      ],
+      "whitespaceVariant": 1,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "05541a17bfc96621",
+      "caseId": "ja-M1c",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-M1",
+      "referencePartitions": [
+        [
+          "坂のパン屋が窓を開けた",
+          "向かいの猫があくびをした僕は昨日の手紙をポケットにしまった"
+        ],
+        [
+          "坂のパン屋が窓を開けた向かいの猫があくびをした",
+          "僕は昨日の手紙をポケットにしまった"
+        ],
+        [
+          "坂のパン屋が窓を開けた",
+          "向かいの猫があくびをした",
+          "僕は昨日の手紙をポケットにしまった"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "坂のパン屋が窓を開けた",
+        "向かいの猫があくびをした",
+        "僕は昨日の手紙をポケットにしまった"
+      ],
+      "whitespaceVariant": 2,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "b3ac773deeead7f3",
+      "caseId": "ja-M2",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-M2",
+      "referencePartitions": [
+        [
+          "祭りの太鼓が止んだら、",
+          "屋台の明かりを数えよう；",
+          "金魚の袋を揺らさずに、",
+          "遠回りして家まで帰ろう。"
+        ],
+        [
+          "祭りの太鼓が止んだら、",
+          "屋台の明かりを数えよう；金魚の袋を揺らさずに、",
+          "遠回りして家まで帰ろう。"
+        ],
+        [
+          "祭りの太鼓が止んだら、屋台の明かりを数えよう；",
+          "金魚の袋を揺らさずに、",
+          "遠回りして家まで帰ろう。"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "64045b01b8f1c995",
+      "caseId": "ja-N1",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-N1",
+      "referencePartitions": [
+        [
+          "君が引っ越す前の日に忘れていった少し欠けた青いマグカップを今でも大切に使っている"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 32,
+          "end": 40,
+          "text": "大切に使っている",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "8c99c3b4af9805fb",
+      "caseId": "ja-N2",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-N2",
+      "referencePartitions": [["ラララ もう一度もう一度"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "2c91de1754e8a79e",
+      "caseId": "ja-D1",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-D1",
+      "referencePartitions": [
+        ["[紬] 先に橋を渡って待っていて ", "[蓮] 君の足音がするまでここにいる"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 6,
+          "text": "[紬] 先に",
+          "reason": "role"
+        },
+        {
+          "start": 17,
+          "end": 23,
+          "text": "[蓮] 君の",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "3a809f57291c6438",
+      "caseId": "ja-D2",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-D2",
+      "referencePartitions": [
+        ["傘をたたんで、", "hold my hand、水たまりを飛び越えよう。"],
+        ["傘をたたんで、hold my hand、", "水たまりを飛び越えよう。"],
+        ["傘をたたんで、", "hold my hand、", "水たまりを飛び越えよう。"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "44c4ad078cd5dea3",
+      "caseId": "ja-H1",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-H1",
+      "referencePartitions": [
+        [
+          "声がかすれても歌い続ける（コーラス：まだ歌える）、",
+          "君が次の言葉を思い出すまで。"
+        ],
+        [
+          "声がかすれても歌い続ける（コーラス：まだ歌える）、君が次の言葉を思い出すまで。"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 12,
+          "end": 24,
+          "text": "（コーラス：まだ歌える）",
+          "reason": "harmony"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "4044a7f8fb856716",
+      "caseId": "ja-A1",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-A1",
+      "referencePartitions": [
+        ["駅の本棚で君の名前を見つけたとき、", "忘れていた約束を思い出した。"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 10,
+          "end": 16,
+          "text": "見つけたとき",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "45a692c2bcc319e8",
+      "caseId": "ja-A2",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-A2",
+      "referencePartitions": [
+        [
+          "帰らないでと小さな声でつぶやいてしまったけれど、",
+          "返事はまだ聞かずにいる。"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 6,
+          "text": "帰らないでと",
+          "reason": "dependency"
+        },
+        {
+          "start": 11,
+          "end": 20,
+          "text": "つぶやいてしまった",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "2aebec4880c637dc",
+      "caseId": "ja-Q1",
+      "language": "ja",
+      "primary": "split",
+      "family": "ja-Q1",
+      "referencePartitions": [
+        [
+          "君が「作詞：ほどけた靴ひも」と歌うたびに、",
+          "僕は歩く速さを少しだけ落とす。"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 2,
+          "end": 14,
+          "text": "「作詞：ほどけた靴ひも」",
+          "reason": "quotation"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "c55beba3bca503b7",
+      "caseId": "ja-K1",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K1",
+      "referencePartitions": [["作詞：水瀬ゆう"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "8eb7f14a8d9a12f4",
+      "caseId": "ja-K2",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K2",
+      "referencePartitions": [["【編曲 星野あき】"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "3e1a48e19b31d29c",
+      "caseId": "ja-K3",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K3",
+      "referencePartitions": [["[澪] ここから歌うよ ", "[律] 次は僕の番だね"]],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 8,
+          "text": "[澪] ここから",
+          "reason": "role"
+        },
+        {
+          "start": 12,
+          "end": 18,
+          "text": "[律] 次は",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric",
+      "joint": true
+    },
+    {
+      "lineId": "22884312f461f1a9",
+      "caseId": "ja-K4",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K4",
+      "referencePartitions": [["コーラス：ラララ（みんなでもう一度）"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "3b356417168e768e",
+      "caseId": "ja-K5",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K5",
+      "referencePartitions": [["「編曲：眠れない街」と君が歌って笑った。"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "8b01dc5f91a551a1",
+      "caseId": "ja-K6",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K6",
+      "referencePartitions": [
+        ["作曲：朝比奈そら / ", "今夜は窓を閉めずに待っていて"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "ambiguous",
+      "joint": true,
+      "mixed": true
+    },
+    {
+      "lineId": "efd7987b343dd214",
+      "caseId": "ja-K7a",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K7",
+      "referencePartitions": [["作詞：さよなら"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "ja-identical",
+      "hiddenIntent": "attribution"
+    },
+    {
+      "lineId": "fcfe08f633290c69",
+      "caseId": "ja-K7b",
+      "language": "ja",
+      "primary": "classification",
+      "family": "ja-K7",
+      "referencePartitions": [["作詞：さよなら"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "ja-identical",
+      "hiddenIntent": "performed"
+    },
+    {
+      "lineId": "4747c703bbef8848",
+      "caseId": "ko-M1a",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-M1",
+      "referencePartitions": [
+        [
+          "우체통에 파란 편지가 도착했어 ",
+          "너는 마당의 작은 의자를 닦았지 나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ],
+        [
+          "우체통에 파란 편지가 도착했어 너는 마당의 작은 의자를 닦았지 ",
+          "나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ],
+        [
+          "우체통에 파란 편지가 도착했어 ",
+          "너는 마당의 작은 의자를 닦았지 ",
+          "나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "우체통에 파란 편지가 도착했어",
+        "너는 마당의 작은 의자를 닦았지",
+        "나는 대답 대신 찻잔 두 개를 꺼냈어"
+      ],
+      "whitespaceVariant": 0,
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "f54bbe0361283fd1",
+      "caseId": "ko-M1b",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-M1",
+      "referencePartitions": [
+        [
+          "우체통에 파란 편지가 도착했어　 \t ",
+          "너는 마당의 작은 의자를 닦았지　 \t 나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ],
+        [
+          "우체통에 파란 편지가 도착했어　 \t 너는 마당의 작은 의자를 닦았지　 \t ",
+          "나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ],
+        [
+          "우체통에 파란 편지가 도착했어　 \t ",
+          "너는 마당의 작은 의자를 닦았지　 \t ",
+          "나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "우체통에 파란 편지가 도착했어",
+        "너는 마당의 작은 의자를 닦았지",
+        "나는 대답 대신 찻잔 두 개를 꺼냈어"
+      ],
+      "whitespaceVariant": 1,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "61f2e2384643e319",
+      "caseId": "ko-M1c",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-M1",
+      "referencePartitions": [
+        [
+          "우체통에 파란 편지가 도착했어 ",
+          "너는 마당의 작은 의자를 닦았지 나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ],
+        [
+          "우체통에 파란 편지가 도착했어 너는 마당의 작은 의자를 닦았지 ",
+          "나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ],
+        [
+          "우체통에 파란 편지가 도착했어 ",
+          "너는 마당의 작은 의자를 닦았지 ",
+          "나는 대답 대신 찻잔 두 개를 꺼냈어"
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "semanticUnits": [
+        "우체통에 파란 편지가 도착했어",
+        "너는 마당의 작은 의자를 닦았지",
+        "나는 대답 대신 찻잔 두 개를 꺼냈어"
+      ],
+      "whitespaceVariant": 2,
+      "joint": false,
+      "timeControl": false
+    },
+    {
+      "lineId": "a4e02626cefefbcb",
+      "caseId": "ko-M2",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-M2",
+      "referencePartitions": [
+        [
+          "운동장의 불이 꺼지면, ",
+          "마지막 공을 주워 담자; ",
+          "네가 신발 끈을 묶는 동안, ",
+          "나는 열린 문을 잡고 있을게."
+        ],
+        [
+          "운동장의 불이 꺼지면, ",
+          "마지막 공을 주워 담자; 네가 신발 끈을 묶는 동안, ",
+          "나는 열린 문을 잡고 있을게."
+        ],
+        [
+          "운동장의 불이 꺼지면, 마지막 공을 주워 담자; ",
+          "네가 신발 끈을 묶는 동안, ",
+          "나는 열린 문을 잡고 있을게."
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "f3eeef98394ba21b",
+      "caseId": "ko-N1",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-N1",
+      "referencePartitions": [
+        [
+          "네가 처음 뜨개질을 배워서 내게 선물했던 조금 삐뚤어진 초록 목도리를 아직도 아껴 두고 있어"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 43,
+          "end": 51,
+          "text": "아껴 두고 있어",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "timeControl": true
+    },
+    {
+      "lineId": "cef4b0545c9a74b8",
+      "caseId": "ko-N2",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-N2",
+      "referencePartitions": [["오 오 다시 다시 가🌙"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "d7725ded3e08bf5d",
+      "caseId": "ko-D1",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-D1",
+      "referencePartitions": [
+        [
+          "[하린] 먼저 네 이야기를 들려줘 ",
+          "[도윤] 끝까지 내 옆에 앉아 있어 줘"
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 7,
+          "text": "[하린] 먼저",
+          "reason": "role"
+        },
+        {
+          "start": 19,
+          "end": 27,
+          "text": "[도윤] 끝까지",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "a879cdccc4e09476",
+      "caseId": "ko-D2",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-D2",
+      "referencePartitions": [
+        [
+          "창가에 기대어 노래해, ",
+          "stay a little longer, 아직 끝내지 못한 이야기가 있어."
+        ],
+        [
+          "창가에 기대어 노래해, stay a little longer, ",
+          "아직 끝내지 못한 이야기가 있어."
+        ],
+        [
+          "창가에 기대어 노래해, ",
+          "stay a little longer, ",
+          "아직 끝내지 못한 이야기가 있어."
+        ]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "db9ebbffb75b5167",
+      "caseId": "ko-H1",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-H1",
+      "referencePartitions": [
+        [
+          "작은 목소리라도 너에게 보낼게 (화음: 들리니 들리니), ",
+          "대답이 올 때까지 이 멜로디를 지킬게."
+        ],
+        [
+          "작은 목소리라도 너에게 보낼게 (화음: 들리니 들리니), 대답이 올 때까지 이 멜로디를 지킬게."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 17,
+          "end": 30,
+          "text": "(화음: 들리니 들리니)",
+          "reason": "harmony"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "joint": true,
+      "timeControl": true
+    },
+    {
+      "lineId": "449487afeb8553bd",
+      "caseId": "ko-A1",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-A1",
+      "referencePartitions": [
+        [
+          "책장 사이에 끼워 둔 사진을 찾았을 때, ",
+          "그날 네가 하던 말을 떠올렸어."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 16,
+          "end": 21,
+          "text": "찾았을 때",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "e1c41844680ad45e",
+      "caseId": "ko-A2",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-A2",
+      "referencePartitions": [
+        [
+          "다시는 놓치지 않겠다고 혼자 약속해 버렸지만, ",
+          "아직 네 앞에서는 말하지 못했어."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 8,
+          "end": 12,
+          "text": "않겠다고",
+          "reason": "dependency"
+        },
+        {
+          "start": 16,
+          "end": 24,
+          "text": "약속해 버렸지만",
+          "reason": "dependency"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "3918821cc4e955bb",
+      "caseId": "ko-Q1",
+      "language": "ko",
+      "primary": "split",
+      "family": "ko-Q1",
+      "referencePartitions": [
+        [
+          "네가 “작사: 접어 둔 지도”라고 노래하면, ",
+          "나는 아무 말 없이 다음 소절을 기다려."
+        ]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 3,
+          "end": 16,
+          "text": "“작사: 접어 둔 지도”",
+          "reason": "quotation"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed"
+    },
+    {
+      "lineId": "37c97be01ebb4903",
+      "caseId": "ko-K1",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K1",
+      "referencePartitions": [["작곡: 서하늘"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "436e22c25cedbf9c",
+      "caseId": "ko-K2",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K2",
+      "referencePartitions": [["【편곡 윤가람】"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "credit-candidate"
+    },
+    {
+      "lineId": "3b09e340f8ceac88",
+      "caseId": "ko-K3",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K3",
+      "referencePartitions": [
+        ["[소연] 내 노래를 받아 줘 ", "[지호] 다음 구절은 내가 부를게"]
+      ],
+      "forbiddenSpans": [
+        {
+          "start": 0,
+          "end": 10,
+          "text": "[소연] 내 노래를",
+          "reason": "role"
+        },
+        {
+          "start": 16,
+          "end": 27,
+          "text": "[지호] 다음 구절은",
+          "reason": "role"
+        }
+      ],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric",
+      "joint": true
+    },
+    {
+      "lineId": "bf8d348e43318b4b",
+      "caseId": "ko-K4",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K4",
+      "referencePartitions": [["화음: 아아아 (함께 다시 불러)"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "27301f03826f58d5",
+      "caseId": "ko-K5",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K5",
+      "referencePartitions": [
+        ["너는 “편곡: 빈 의자”라는 말을 가사처럼 불렀어."]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "lyric"
+    },
+    {
+      "lineId": "e8dfb204a01fddc3",
+      "caseId": "ko-K6",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K6",
+      "referencePartitions": [
+        ["작사: 한여울 / ", "오늘은 이 길의 끝까지 함께 걸어 줘"]
+      ],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "ambiguous",
+      "joint": true,
+      "mixed": true
+    },
+    {
+      "lineId": "6ecd612eff8e135f",
+      "caseId": "ko-K7a",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K7",
+      "referencePartitions": [["작곡: 기다림"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "ko-identical",
+      "hiddenIntent": "attribution"
+    },
+    {
+      "lineId": "6cd20128e16b5531",
+      "caseId": "ko-K7b",
+      "language": "ko",
+      "primary": "classification",
+      "family": "ko-K7",
+      "referencePartitions": [["작곡: 기다림"]],
+      "forbiddenSpans": [],
+      "annotationStatus": "agent-authored-unreviewed",
+      "expectedKind": "unresolvable",
+      "pair": "ko-identical",
+      "hiddenIntent": "performed"
+    }
+  ]
+}

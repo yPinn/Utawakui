@@ -1,0 +1,1005 @@
+{
+  "scope": "New agent-authored synthetic holdout; no native-speaker review",
+  "cases": [
+    {
+      "lineId": "8931af087864e076",
+      "language": "zh-Hant",
+      "text": "抽屜裡的明信片還沒寄出 你在屋頂替盆栽擋雨 我推開門說今天不用趕路",
+      "source": {
+        "documentId": "875df19a64f7cfd1",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "d41e9fded38771be",
+      "language": "zh-Hant",
+      "text": "抽屜裡的明信片還沒寄出　\t  你在屋頂替盆栽擋雨　\t  我推開門說今天不用趕路",
+      "source": {
+        "documentId": "98f8431df748256e",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "fe5016ddace30001",
+      "language": "zh-Hant",
+      "text": "抽屜裡的明信片還沒寄出你在屋頂替盆栽擋雨我推開門說今天不用趕路",
+      "source": {
+        "documentId": "a07c7cdc627b32b1",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "70c7a8e5cb0779c8",
+      "language": "zh-Hant",
+      "text": "鐘樓響了三下，市場收起遮陽棚；孩子抱著紙船跑回來，我們把晚餐移到騎樓。",
+      "source": {
+        "documentId": "a04cd6fc2d34bf84",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "70e2f1d6d68cc76f",
+      "language": "zh-Hant",
+      "text": "我一直珍藏著那枚由你在搬家前親手縫進舊外套內袋的小小木扣子",
+      "source": {
+        "documentId": "bf873f016c1020af",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "30ce86ec0da9f441",
+      "language": "zh-Hant",
+      "text": "OH OH 再一次再一次",
+      "source": {
+        "documentId": "6d6443c19e25f37a",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3b3f4e1c91357569",
+      "language": "zh-Hant",
+      "text": "[甲] 先把燈留給晚歸的人 [乙] 我會守著這扇門直到你回來",
+      "source": {
+        "documentId": "c502964d16b47785",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "fdf6063c95143f23",
+      "language": "zh-Hant",
+      "text": "等收音機播完這首老歌，we can start again，不用急著回答我。",
+      "source": {
+        "documentId": "d14fc13214f5906c",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "366221d4853bb913",
+      "language": "zh-Hant",
+      "text": "我把空椅留在身旁（和聲：等你啊等你），等門鈴喚醒安靜的走廊。",
+      "source": {
+        "documentId": "0c9802daf06c226d",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "bd9aece5d697e6ab",
+      "language": "zh-Hant",
+      "text": "當你終於找到那把備用鑰匙的時候，記得替我打開門口的小燈。",
+      "source": {
+        "documentId": "e8b19a852534e0a4",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "4b3fc24330b65edb",
+      "language": "zh-Hant",
+      "text": "我捨不得把還沒寫完的便條丟掉，只好再替它找一個抽屜。",
+      "source": {
+        "documentId": "d1b5907f4491ddb3",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "8ab08d07f1bb264f",
+      "language": "zh-Hant",
+      "text": "你把「編曲：未完成的夏天」唱了兩遍，我才發現那也是我們的暗號。",
+      "source": {
+        "documentId": "bdd7fde5bd2d22de",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "5571c3a1d021d456",
+      "language": "zh-Hant",
+      "text": "作曲：林岸",
+      "source": {
+        "documentId": "04a9b78433b953d1",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "d8dfe0ff8be2b1ee",
+      "language": "zh-Hant",
+      "text": "【編曲 許岑】",
+      "source": {
+        "documentId": "9f604b0159fcde88",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "a7889df84eae539d",
+      "language": "zh-Hant",
+      "text": "[小青] 把窗打開 [阿朗] 我聽見你了",
+      "source": {
+        "documentId": "7c921b2c04c4936b",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "c52799883092cecf",
+      "language": "zh-Hant",
+      "text": "和聲：啊啊（一起唱，別停下）",
+      "source": {
+        "documentId": "f189bc7e76873a08",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "20d86d9635f54678",
+      "language": "zh-Hant",
+      "text": "她唱著「作詞：回家的人」，尾音還繞在樓梯間。",
+      "source": {
+        "documentId": "b2a5d77a77b3c958",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "86717580636795fc",
+      "language": "zh-Hant",
+      "text": "作詞：江雨 / 今夜請把我的名字唱進燈火裡",
+      "source": {
+        "documentId": "07c62ef722c91b49",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "1b20c91570624588",
+      "language": "zh-Hant",
+      "text": "編曲：沉默",
+      "source": {
+        "documentId": "bdce80a2ae992ec0",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "64f5c8c8f8f64aab",
+      "language": "zh-Hant",
+      "text": "編曲：沉默",
+      "source": {
+        "documentId": "f2ec6d00be05912e",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "bc28d8dc461cad9a",
+      "language": "zh-Hans",
+      "text": "院子里的葡萄已经熟了 外婆把竹椅搬到树下 我端着茶等她讲完故事",
+      "source": {
+        "documentId": "02ccc84a4815f518",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "fa80051795bdc42f",
+      "language": "zh-Hans",
+      "text": "院子里的葡萄已经熟了  \t　外婆把竹椅搬到树下  \t　我端着茶等她讲完故事",
+      "source": {
+        "documentId": "dd13b56d1c24c4cf",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "d7be5b3f6db6d109",
+      "language": "zh-Hans",
+      "text": "院子里的葡萄已经熟了外婆把竹椅搬到树下我端着茶等她讲完故事",
+      "source": {
+        "documentId": "c9c40dabfb6df1f2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "897bd60657ce391e",
+      "language": "zh-Hans",
+      "text": "渡口升起第一面旗，修船的人卷起衣袖；有人喊了一声开饭，我们沿着小路走向炊烟。",
+      "source": {
+        "documentId": "d75fe628b3f61536",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "7681f13a43d66f9f",
+      "language": "zh-Hans",
+      "text": "你送给我的那本夹着干花和旧电影票的蓝色笔记本一直放在最上层的书架上",
+      "source": {
+        "documentId": "cb55e44786fa0a7a",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "7630ab9bafa6b491",
+      "language": "zh-Hans",
+      "text": "HEY HEY 还要唱还要唱",
+      "source": {
+        "documentId": "3fffcb542ca9b3b5",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "7422b81c6886cee8",
+      "language": "zh-Hans",
+      "text": "[姐姐] 你先坐下来歇一会儿 [弟弟] 等我把桌上的拼图拼完",
+      "source": {
+        "documentId": "c1a0a44e83c95b7c",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "fabdd31e48b97811",
+      "language": "zh-Hans",
+      "text": "把风筝交给我，take your time，我们还赶得上日落。",
+      "source": {
+        "documentId": "47f1c123034ad869",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "314e33fafed02194",
+      "language": "zh-Hans",
+      "text": "我会沿着你画的箭头前行（合唱：向前向前），直到山谷里传来回答。",
+      "source": {
+        "documentId": "65eb52379b45458e",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "cef56c64406b7a23",
+      "language": "zh-Hans",
+      "text": "在你把所有没说出口的愿望写进信封之后，我们再一起去敲那扇门。",
+      "source": {
+        "documentId": "b7e930713f3cedcf",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "ff1fcce2c4813997",
+      "language": "zh-Hans",
+      "text": "我始终舍不得让刚学会飞翔的纸鹤停在原地，于是又轻轻推开窗。",
+      "source": {
+        "documentId": "3a6193ddf7ce0be9",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "f961f74e1d7ab29b",
+      "language": "zh-Hans",
+      "text": "你笑着念出“作曲：会发光的石头”，小河也跟着哼了起来。",
+      "source": {
+        "documentId": "a11fd186923d0282",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "13f8ef4006779c75",
+      "language": "zh-Hans",
+      "text": "作词：赵禾",
+      "source": {
+        "documentId": "69ddb0106c24032e",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "dc1244106662a31e",
+      "language": "zh-Hans",
+      "text": "【作曲 周苇】",
+      "source": {
+        "documentId": "af463c2494081fd2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "0ef63c7f29baa947",
+      "language": "zh-Hans",
+      "text": "[阿宁] 让我先说 [小满] 我一直在听",
+      "source": {
+        "documentId": "995cac60fe70b556",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "b20a952e5ab30ecb",
+      "language": "zh-Hans",
+      "text": "合唱：啦啦啦（别停，跟着我）",
+      "source": {
+        "documentId": "8143d5b687de69c1",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "5c5107f0979145a8",
+      "language": "zh-Hans",
+      "text": "我把“编曲：等花开”当成歌词唱给你听。",
+      "source": {
+        "documentId": "aa4c00e31b6e2a2e",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "d05fff145e322769",
+      "language": "zh-Hans",
+      "text": "作曲：宋川 / 请把这盏灯带到山的那一边",
+      "source": {
+        "documentId": "89185b664cfff298",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "2dddf3ff78e3d2f9",
+      "language": "zh-Hans",
+      "text": "作词：告别",
+      "source": {
+        "documentId": "3b3b4750639678da",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "bb7263d95477f0bb",
+      "language": "zh-Hans",
+      "text": "作词：告别",
+      "source": {
+        "documentId": "33a487fc288ff926",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "5eb1de0b5d2d00d9",
+      "language": "en",
+      "text": "The bakery opens before sunrise you save the broken chair beside the door I bring a cup for anyone who stays",
+      "source": {
+        "documentId": "d229fef9696f9c17",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "97a13f81dde6be98",
+      "language": "en",
+      "text": "The bakery opens before sunrise   \t you save the broken chair beside the door   \t I bring a cup for anyone who stays",
+      "source": {
+        "documentId": "e923be0c8d271062",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "520bb24f43588aef",
+      "language": "en",
+      "text": "The bakery opens before sunrise you save the broken chair beside the door I bring a cup for anyone who stays",
+      "source": {
+        "documentId": "fc50aff65cc79950",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3683def16f0e6b6f",
+      "language": "en",
+      "text": "The ferry sounds its horn; a gull drops from the rail; you wave your scarf above the crowd; I lift the suitcase with the missing wheel.",
+      "source": {
+        "documentId": "033c60d37b69214f",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "564cbddf53f92b95",
+      "language": "en",
+      "text": "I still wear the slightly oversized yellow sweater that your little brother knitted for my first winter away from home",
+      "source": {
+        "documentId": "59412f5b4270760c",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "ef1d4f963619df1f",
+      "language": "en",
+      "text": "OH OH STAY STAY é🌙",
+      "source": {
+        "documentId": "843b6fbec581bdae",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "a06c5e87cc2d6193",
+      "language": "en",
+      "text": "[June] Keep a little room for me at the table [Robin] I have kept your place through every season",
+      "source": {
+        "documentId": "3425586a5aae703f",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "413f107e3d24e069",
+      "language": "en",
+      "text": "Fold the map along the river, もう迷わないよ, we can ask the moon for directions.",
+      "source": {
+        "documentId": "c63520e2d304b1a2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "772298e08c64942b",
+      "language": "en",
+      "text": "I will carry the melody (choir: carry it softly), while you find the words you meant to say.",
+      "source": {
+        "documentId": "f0dae4cd30db3881",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "07c2c25ca875fd78",
+      "language": "en",
+      "text": "When the person who borrowed your umbrella returns, leave a clean towel by the kitchen door.",
+      "source": {
+        "documentId": "30d5c73d13108977",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "116579be3b4beb44",
+      "language": "en",
+      "text": "I don't want to give up the promise we made, even if the letters on the wall begin to fade.",
+      "source": {
+        "documentId": "20bf8f4f21d4d4f3",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "5a4d60b373c670f3",
+      "language": "en",
+      "text": "She sings \"Written by the city that forgot us\", and the empty platform answers in a whisper.",
+      "source": {
+        "documentId": "15ed8749ff8c59b8",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "8c427bef188e0bb9",
+      "language": "en",
+      "text": "Music by Mira Vale",
+      "source": {
+        "documentId": "d2b8ff50dc04fe7b",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "23578d77bd6c5b5e",
+      "language": "en",
+      "text": "【Arranged by Rowan Lake】",
+      "source": {
+        "documentId": "521c7da571f58c16",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "4cbcb740b06cd243",
+      "language": "en",
+      "text": "[Nora] Pass me the tune [Eli] I will take the next verse",
+      "source": {
+        "documentId": "dc2cd15f55b95d29",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "6484d0b66af5953a",
+      "language": "en",
+      "text": "Backing vocals: oh oh (all together now)",
+      "source": {
+        "documentId": "be8f4bb8cb69265a",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "f622cc75e300b36a",
+      "language": "en",
+      "text": "You sang “Music by the rain” until the kettle answered.",
+      "source": {
+        "documentId": "9b5214e1a5819daa",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "0c0c134e74b18933",
+      "language": "en",
+      "text": "Lyrics by Wren Hall / Keep your hands above the water",
+      "source": {
+        "documentId": "c46cd922e8326b64",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "29ba590acfefd7ff",
+      "language": "en",
+      "text": "Written by Nobody",
+      "source": {
+        "documentId": "6134ee8deedaa728",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "ca186b41a5b91342",
+      "language": "en",
+      "text": "Written by Nobody",
+      "source": {
+        "documentId": "47c6c8d0ccd0cdc8",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "618915a15872793f",
+      "language": "ja",
+      "text": "坂のパン屋が窓を開けた 向かいの猫があくびをした 僕は昨日の手紙をポケットにしまった",
+      "source": {
+        "documentId": "116847cb733e4f9d",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "ad6fa0512a4adac1",
+      "language": "ja",
+      "text": "坂のパン屋が窓を開けた　\t　向かいの猫があくびをした　\t　僕は昨日の手紙をポケットにしまった",
+      "source": {
+        "documentId": "af4cda26078a4651",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "05541a17bfc96621",
+      "language": "ja",
+      "text": "坂のパン屋が窓を開けた向かいの猫があくびをした僕は昨日の手紙をポケットにしまった",
+      "source": {
+        "documentId": "21dde27ef380296f",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "b3ac773deeead7f3",
+      "language": "ja",
+      "text": "祭りの太鼓が止んだら、屋台の明かりを数えよう；金魚の袋を揺らさずに、遠回りして家まで帰ろう。",
+      "source": {
+        "documentId": "c4df0b37f7ebf635",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "64045b01b8f1c995",
+      "language": "ja",
+      "text": "君が引っ越す前の日に忘れていった少し欠けた青いマグカップを今でも大切に使っている",
+      "source": {
+        "documentId": "0be627b1b79d7adb",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "8c99c3b4af9805fb",
+      "language": "ja",
+      "text": "ラララ もう一度もう一度",
+      "source": {
+        "documentId": "a007ca9b05618dec",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "2c91de1754e8a79e",
+      "language": "ja",
+      "text": "[紬] 先に橋を渡って待っていて [蓮] 君の足音がするまでここにいる",
+      "source": {
+        "documentId": "c8bf717c49759ab2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3a809f57291c6438",
+      "language": "ja",
+      "text": "傘をたたんで、hold my hand、水たまりを飛び越えよう。",
+      "source": {
+        "documentId": "e0dd2e172b49875b",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "44c4ad078cd5dea3",
+      "language": "ja",
+      "text": "声がかすれても歌い続ける（コーラス：まだ歌える）、君が次の言葉を思い出すまで。",
+      "source": {
+        "documentId": "23634b45dd119d13",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "4044a7f8fb856716",
+      "language": "ja",
+      "text": "駅の本棚で君の名前を見つけたとき、忘れていた約束を思い出した。",
+      "source": {
+        "documentId": "c2d7db06a9cc9b97",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "45a692c2bcc319e8",
+      "language": "ja",
+      "text": "帰らないでと小さな声でつぶやいてしまったけれど、返事はまだ聞かずにいる。",
+      "source": {
+        "documentId": "7cb2188c2e472327",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "2aebec4880c637dc",
+      "language": "ja",
+      "text": "君が「作詞：ほどけた靴ひも」と歌うたびに、僕は歩く速さを少しだけ落とす。",
+      "source": {
+        "documentId": "998d1ab7765e2ae3",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "c55beba3bca503b7",
+      "language": "ja",
+      "text": "作詞：水瀬ゆう",
+      "source": {
+        "documentId": "6d62e468b7c84264",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "8eb7f14a8d9a12f4",
+      "language": "ja",
+      "text": "【編曲 星野あき】",
+      "source": {
+        "documentId": "66a3e984579ccbc5",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3e1a48e19b31d29c",
+      "language": "ja",
+      "text": "[澪] ここから歌うよ [律] 次は僕の番だね",
+      "source": {
+        "documentId": "7dac332107f9ae62",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "22884312f461f1a9",
+      "language": "ja",
+      "text": "コーラス：ラララ（みんなでもう一度）",
+      "source": {
+        "documentId": "b9da7311b7144376",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3b356417168e768e",
+      "language": "ja",
+      "text": "「編曲：眠れない街」と君が歌って笑った。",
+      "source": {
+        "documentId": "5fec1def32142186",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "8b01dc5f91a551a1",
+      "language": "ja",
+      "text": "作曲：朝比奈そら / 今夜は窓を閉めずに待っていて",
+      "source": {
+        "documentId": "385d21f31b1ce504",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "efd7987b343dd214",
+      "language": "ja",
+      "text": "作詞：さよなら",
+      "source": {
+        "documentId": "aa5f681430f75567",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "fcfe08f633290c69",
+      "language": "ja",
+      "text": "作詞：さよなら",
+      "source": {
+        "documentId": "6e10fe096cc66e73",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "4747c703bbef8848",
+      "language": "ko",
+      "text": "우체통에 파란 편지가 도착했어 너는 마당의 작은 의자를 닦았지 나는 대답 대신 찻잔 두 개를 꺼냈어",
+      "source": {
+        "documentId": "6b2e2ea6beac06ae",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "f54bbe0361283fd1",
+      "language": "ko",
+      "text": "우체통에 파란 편지가 도착했어　 \t 너는 마당의 작은 의자를 닦았지　 \t 나는 대답 대신 찻잔 두 개를 꺼냈어",
+      "source": {
+        "documentId": "f5099a0239103958",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "61f2e2384643e319",
+      "language": "ko",
+      "text": "우체통에 파란 편지가 도착했어 너는 마당의 작은 의자를 닦았지 나는 대답 대신 찻잔 두 개를 꺼냈어",
+      "source": {
+        "documentId": "fa7d22d5a3bcf714",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "a4e02626cefefbcb",
+      "language": "ko",
+      "text": "운동장의 불이 꺼지면, 마지막 공을 주워 담자; 네가 신발 끈을 묶는 동안, 나는 열린 문을 잡고 있을게.",
+      "source": {
+        "documentId": "62367ec61bd8955b",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "f3eeef98394ba21b",
+      "language": "ko",
+      "text": "네가 처음 뜨개질을 배워서 내게 선물했던 조금 삐뚤어진 초록 목도리를 아직도 아껴 두고 있어",
+      "source": {
+        "documentId": "856bf23bc57fde55",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "cef4b0545c9a74b8",
+      "language": "ko",
+      "text": "오 오 다시 다시 가🌙",
+      "source": {
+        "documentId": "71c85fff7171991f",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "d7725ded3e08bf5d",
+      "language": "ko",
+      "text": "[하린] 먼저 네 이야기를 들려줘 [도윤] 끝까지 내 옆에 앉아 있어 줘",
+      "source": {
+        "documentId": "200028b1d75938a2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "a879cdccc4e09476",
+      "language": "ko",
+      "text": "창가에 기대어 노래해, stay a little longer, 아직 끝내지 못한 이야기가 있어.",
+      "source": {
+        "documentId": "81106e41bfc4d2a2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "db9ebbffb75b5167",
+      "language": "ko",
+      "text": "작은 목소리라도 너에게 보낼게 (화음: 들리니 들리니), 대답이 올 때까지 이 멜로디를 지킬게.",
+      "source": {
+        "documentId": "06cff98fb62dbe25",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "449487afeb8553bd",
+      "language": "ko",
+      "text": "책장 사이에 끼워 둔 사진을 찾았을 때, 그날 네가 하던 말을 떠올렸어.",
+      "source": {
+        "documentId": "b745eedf4f5ec541",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "e1c41844680ad45e",
+      "language": "ko",
+      "text": "다시는 놓치지 않겠다고 혼자 약속해 버렸지만, 아직 네 앞에서는 말하지 못했어.",
+      "source": {
+        "documentId": "c56d7505d3efa706",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3918821cc4e955bb",
+      "language": "ko",
+      "text": "네가 “작사: 접어 둔 지도”라고 노래하면, 나는 아무 말 없이 다음 소절을 기다려.",
+      "source": {
+        "documentId": "f808207573371a35",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "37c97be01ebb4903",
+      "language": "ko",
+      "text": "작곡: 서하늘",
+      "source": {
+        "documentId": "7374d40ef4db3d5b",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "436e22c25cedbf9c",
+      "language": "ko",
+      "text": "【편곡 윤가람】",
+      "source": {
+        "documentId": "e7ca32d91252b510",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "3b09e340f8ceac88",
+      "language": "ko",
+      "text": "[소연] 내 노래를 받아 줘 [지호] 다음 구절은 내가 부를게",
+      "source": {
+        "documentId": "7141a128a91976e3",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "bf8d348e43318b4b",
+      "language": "ko",
+      "text": "화음: 아아아 (함께 다시 불러)",
+      "source": {
+        "documentId": "913273a31690d5de",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "27301f03826f58d5",
+      "language": "ko",
+      "text": "너는 “편곡: 빈 의자”라는 말을 가사처럼 불렀어.",
+      "source": {
+        "documentId": "58f6107e7aae8659",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "e8dfb204a01fddc3",
+      "language": "ko",
+      "text": "작사: 한여울 / 오늘은 이 길의 끝까지 함께 걸어 줘",
+      "source": {
+        "documentId": "a5496364884f50cc",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "6ecd612eff8e135f",
+      "language": "ko",
+      "text": "작곡: 기다림",
+      "source": {
+        "documentId": "4eeae32148bc1e12",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    },
+    {
+      "lineId": "6cd20128e16b5531",
+      "language": "ko",
+      "text": "작곡: 기다림",
+      "source": {
+        "documentId": "849c27e8919315f2",
+        "startMs": 12000,
+        "endMs": 20000
+      }
+    }
+  ]
+}

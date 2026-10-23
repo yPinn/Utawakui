@@ -1,0 +1,501 @@
+{
+  "version": 1,
+  "purpose": "Synthetic text-only feasibility corpus; references are author intent, not model outputs or human listening ground truth.",
+  "constraints": [
+    "retain original text",
+    "do not supply or change timestamps",
+    "suggestions only",
+    "retain every vocal role and harmony",
+    "no automatic omission"
+  ],
+  "modelResults": null,
+  "cases": [
+    {
+      "id": "hant-c1",
+      "language": "zh-Hant",
+      "group": "credit",
+      "text": "作詞：小禾",
+      "indistinguishablePair": "hant-prefix"
+    },
+    {
+      "id": "hant-c2",
+      "language": "zh-Hant",
+      "group": "credit",
+      "text": "作詞 小禾"
+    },
+    {
+      "id": "hant-c3",
+      "language": "zh-Hant",
+      "group": "credit",
+      "text": "【編曲：小川】"
+    },
+    {
+      "id": "hant-c4",
+      "language": "zh-Hant",
+      "group": "credit",
+      "text": "詞曲：小禾／編曲：小川"
+    },
+    {
+      "id": "hant-s1",
+      "language": "zh-Hant",
+      "group": "performed",
+      "text": "作詞：小禾",
+      "indistinguishablePair": "hant-prefix"
+    },
+    {
+      "id": "hant-s2",
+      "language": "zh-Hant",
+      "group": "performed",
+      "text": "[女] 你說別走 [男] 我仍在這裡 [合] 等風再起"
+    },
+    {
+      "id": "hant-s3",
+      "language": "zh-Hant",
+      "group": "performed",
+      "text": "我等著你（啊——別走）我等著你"
+    },
+    {
+      "id": "hant-s4",
+      "language": "zh-Hant",
+      "group": "performed",
+      "text": "你唱著「作詞：今夜的雨」，我唱著明天的光"
+    },
+    {
+      "id": "hant-l1",
+      "language": "zh-Hant",
+      "group": "long",
+      "text": "當最後一班車駛過河岸，我把沒說完的話留給晚風，等你回頭再一起走。",
+      "referencePartitions": [
+        [
+          "當最後一班車駛過河岸，",
+          "我把沒說完的話留給晚風，",
+          "等你回頭再一起走。"
+        ]
+      ]
+    },
+    {
+      "id": "hant-l2",
+      "language": "zh-Hant",
+      "group": "long",
+      "text": "當街燈一盞一盞熄滅我仍把你的名字藏在掌心等黎明帶我們回家",
+      "referencePartitions": [
+        ["當街燈一盞一盞熄滅", "我仍把你的名字藏在掌心", "等黎明帶我們回家"]
+      ]
+    },
+    {
+      "id": "hant-l3",
+      "language": "zh-Hant",
+      "group": "long",
+      "text": "你說【別害怕，夜再深也有星光】我便握緊你的手，沿著河走到天亮。",
+      "referencePartitions": [
+        [
+          "你說【別害怕，夜再深也有星光】",
+          "我便握緊你的手，",
+          "沿著河走到天亮。"
+        ]
+      ]
+    },
+    {
+      "id": "hant-l4",
+      "language": "zh-Hant",
+      "group": "long",
+      "text": "[女] Stay with me 我還在這裡 [男] Stay with me 別讓夢散去（oh oh）🌙",
+      "referencePartitions": [
+        [
+          "[女] Stay with me 我還在這裡 ",
+          "[男] Stay with me 別讓夢散去（oh oh）🌙"
+        ]
+      ]
+    },
+    {
+      "id": "hans-c1",
+      "language": "zh-Hans",
+      "group": "credit",
+      "text": "作词：小禾",
+      "indistinguishablePair": "hans-prefix"
+    },
+    {
+      "id": "hans-c2",
+      "language": "zh-Hans",
+      "group": "credit",
+      "text": "作词 小禾"
+    },
+    {
+      "id": "hans-c3",
+      "language": "zh-Hans",
+      "group": "credit",
+      "text": "【编曲：小川】"
+    },
+    {
+      "id": "hans-c4",
+      "language": "zh-Hans",
+      "group": "credit",
+      "text": "词曲：小禾／编曲：小川"
+    },
+    {
+      "id": "hans-s1",
+      "language": "zh-Hans",
+      "group": "performed",
+      "text": "作词：小禾",
+      "indistinguishablePair": "hans-prefix"
+    },
+    {
+      "id": "hans-s2",
+      "language": "zh-Hans",
+      "group": "performed",
+      "text": "[女] 你说别走 [男] 我仍在这里 [合] 等风再起"
+    },
+    {
+      "id": "hans-s3",
+      "language": "zh-Hans",
+      "group": "performed",
+      "text": "我等着你（啊——别走）我等着你"
+    },
+    {
+      "id": "hans-s4",
+      "language": "zh-Hans",
+      "group": "performed",
+      "text": "你唱着「作词：今夜的雨」，我唱着明天的光"
+    },
+    {
+      "id": "hans-l1",
+      "language": "zh-Hans",
+      "group": "long",
+      "text": "当最后一班车驶过河岸，我把没说完的话留给晚风，等你回头再一起走。",
+      "referencePartitions": [
+        [
+          "当最后一班车驶过河岸，",
+          "我把没说完的话留给晚风，",
+          "等你回头再一起走。"
+        ]
+      ]
+    },
+    {
+      "id": "hans-l2",
+      "language": "zh-Hans",
+      "group": "long",
+      "text": "当街灯一盏一盏熄灭我仍把你的名字藏在掌心等黎明带我们回家",
+      "referencePartitions": [
+        ["当街灯一盏一盏熄灭", "我仍把你的名字藏在掌心", "等黎明带我们回家"]
+      ]
+    },
+    {
+      "id": "hans-l3",
+      "language": "zh-Hans",
+      "group": "long",
+      "text": "你说【别害怕，夜再深也有星光】我便握紧你的手，沿着河走到天亮。",
+      "referencePartitions": [
+        [
+          "你说【别害怕，夜再深也有星光】",
+          "我便握紧你的手，",
+          "沿着河走到天亮。"
+        ]
+      ]
+    },
+    {
+      "id": "hans-l4",
+      "language": "zh-Hans",
+      "group": "long",
+      "text": "[女] Stay with me 我还在这里 [男] Stay with me 别让梦散去（oh oh）🌙",
+      "referencePartitions": [
+        [
+          "[女] Stay with me 我还在这里 ",
+          "[男] Stay with me 别让梦散去（oh oh）🌙"
+        ]
+      ]
+    },
+    {
+      "id": "en-c1",
+      "language": "en",
+      "group": "credit",
+      "text": "Lyrics by: River",
+      "indistinguishablePair": "en-prefix"
+    },
+    {
+      "id": "en-c2",
+      "language": "en",
+      "group": "credit",
+      "text": "Written by River"
+    },
+    {
+      "id": "en-c3",
+      "language": "en",
+      "group": "credit",
+      "text": "[Arranged by: Sky]"
+    },
+    {
+      "id": "en-c4",
+      "language": "en",
+      "group": "credit",
+      "text": "Music by: River / Arranged by: Sky"
+    },
+    {
+      "id": "en-s1",
+      "language": "en",
+      "group": "performed",
+      "text": "Lyrics by: River",
+      "indistinguishablePair": "en-prefix"
+    },
+    {
+      "id": "en-s2",
+      "language": "en",
+      "group": "performed",
+      "text": "[Alice] Don't go [Bob] I'm still here [Both] WE WILL SING AGAIN"
+    },
+    {
+      "id": "en-s3",
+      "language": "en",
+      "group": "performed",
+      "text": "Stay with me (oh, don't go) stay with me OH OH"
+    },
+    {
+      "id": "en-s4",
+      "language": "en",
+      "group": "performed",
+      "text": "You sang “Written by: the rain” and I answered “Music by: the dawn”."
+    },
+    {
+      "id": "en-l1",
+      "language": "en",
+      "group": "long",
+      "text": "When the last train crosses the river, I leave my unfinished words with the wind, and wait for you to turn around.",
+      "referencePartitions": [
+        [
+          "When the last train crosses the river, ",
+          "I leave my unfinished words with the wind, ",
+          "and wait for you to turn around."
+        ]
+      ]
+    },
+    {
+      "id": "en-l2",
+      "language": "en",
+      "group": "long",
+      "text": "When all the streetlights fade away I keep your name inside my hands until the morning leads us home",
+      "referencePartitions": [
+        [
+          "When all the streetlights fade away ",
+          "I keep your name inside my hands ",
+          "until the morning leads us home"
+        ]
+      ]
+    },
+    {
+      "id": "en-l3",
+      "language": "en",
+      "group": "long",
+      "text": "You said \"Don't be afraid, the stars will guide us\" and I held your hand until the morning came.",
+      "referencePartitions": [
+        [
+          "You said \"Don't be afraid, the stars will guide us\" ",
+          "and I held your hand ",
+          "until the morning came."
+        ]
+      ]
+    },
+    {
+      "id": "en-l4",
+      "language": "en",
+      "group": "long",
+      "text": "[Alice] Stay with me ここにいる [Bob] Stay with me 함께 가자 (oh oh) é🌙",
+      "referencePartitions": [
+        [
+          "[Alice] Stay with me ここにいる ",
+          "[Bob] Stay with me 함께 가자 (oh oh) é🌙"
+        ]
+      ]
+    },
+    {
+      "id": "ja-c1",
+      "language": "ja",
+      "group": "credit",
+      "text": "作詞：そら",
+      "indistinguishablePair": "ja-prefix"
+    },
+    { "id": "ja-c2", "language": "ja", "group": "credit", "text": "作詞 そら" },
+    {
+      "id": "ja-c3",
+      "language": "ja",
+      "group": "credit",
+      "text": "【編曲：ひかり】"
+    },
+    {
+      "id": "ja-c4",
+      "language": "ja",
+      "group": "credit",
+      "text": "作曲：そら／編曲：ひかり"
+    },
+    {
+      "id": "ja-s1",
+      "language": "ja",
+      "group": "performed",
+      "text": "作詞：そら",
+      "indistinguishablePair": "ja-prefix"
+    },
+    {
+      "id": "ja-s2",
+      "language": "ja",
+      "group": "performed",
+      "text": "[女] 行かないで [男] ここにいるよ [二人] また歌おう"
+    },
+    {
+      "id": "ja-s3",
+      "language": "ja",
+      "group": "performed",
+      "text": "そばにいて（ああ、行かないで）そばにいて"
+    },
+    {
+      "id": "ja-s4",
+      "language": "ja",
+      "group": "performed",
+      "text": "君は「作詞：夜の雨」と歌い僕は朝の光と答えた"
+    },
+    {
+      "id": "ja-l1",
+      "language": "ja",
+      "group": "long",
+      "text": "最後の電車が川を渡るとき、言えなかった言葉を風に預けて、君が振り向くのを待っている。",
+      "referencePartitions": [
+        [
+          "最後の電車が川を渡るとき、",
+          "言えなかった言葉を風に預けて、",
+          "君が振り向くのを待っている。"
+        ]
+      ]
+    },
+    {
+      "id": "ja-l2",
+      "language": "ja",
+      "group": "long",
+      "text": "街の灯りがひとつずつ消えても君の名前を手のひらに隠して朝が僕らを連れ帰るまで待つ",
+      "referencePartitions": [
+        [
+          "街の灯りがひとつずつ消えても",
+          "君の名前を手のひらに隠して",
+          "朝が僕らを連れ帰るまで待つ"
+        ]
+      ]
+    },
+    {
+      "id": "ja-l3",
+      "language": "ja",
+      "group": "long",
+      "text": "君が【怖がらないで、星が道を照らすよ】と言ったから手を握り、夜明けまで川沿いを歩いた。",
+      "referencePartitions": [
+        [
+          "君が【怖がらないで、星が道を照らすよ】と言ったから",
+          "手を握り、",
+          "夜明けまで川沿いを歩いた。"
+        ]
+      ]
+    },
+    {
+      "id": "ja-l4",
+      "language": "ja",
+      "group": "long",
+      "text": "[女] Stay with me ここにいる [男] Stay with me 明日も一緒に（oh oh）🌙",
+      "referencePartitions": [
+        [
+          "[女] Stay with me ここにいる ",
+          "[男] Stay with me 明日も一緒に（oh oh）🌙"
+        ]
+      ]
+    },
+    {
+      "id": "ko-c1",
+      "language": "ko",
+      "group": "credit",
+      "text": "작사: 하늘",
+      "indistinguishablePair": "ko-prefix"
+    },
+    { "id": "ko-c2", "language": "ko", "group": "credit", "text": "작사 하늘" },
+    {
+      "id": "ko-c3",
+      "language": "ko",
+      "group": "credit",
+      "text": "【편곡: 빛】"
+    },
+    {
+      "id": "ko-c4",
+      "language": "ko",
+      "group": "credit",
+      "text": "작곡: 하늘 / 편곡: 빛"
+    },
+    {
+      "id": "ko-s1",
+      "language": "ko",
+      "group": "performed",
+      "text": "작사: 하늘",
+      "indistinguishablePair": "ko-prefix"
+    },
+    {
+      "id": "ko-s2",
+      "language": "ko",
+      "group": "performed",
+      "text": "[여] 가지 마 [남] 여기 있어 [함께] 다시 노래해"
+    },
+    {
+      "id": "ko-s3",
+      "language": "ko",
+      "group": "performed",
+      "text": "곁에 있어 줘 (아아 가지 마) 곁에 있어 줘"
+    },
+    {
+      "id": "ko-s4",
+      "language": "ko",
+      "group": "performed",
+      "text": "너는 「작사: 밤의 비」를 노래하고 나는 아침의 빛이라 답했어"
+    },
+    {
+      "id": "ko-l1",
+      "language": "ko",
+      "group": "long",
+      "text": "마지막 기차가 강을 건너면, 못다 한 말을 바람에 맡기고, 네가 돌아보기를 기다려.",
+      "referencePartitions": [
+        [
+          "마지막 기차가 강을 건너면, ",
+          "못다 한 말을 바람에 맡기고, ",
+          "네가 돌아보기를 기다려."
+        ]
+      ]
+    },
+    {
+      "id": "ko-l2",
+      "language": "ko",
+      "group": "long",
+      "text": "거리의 불빛이 하나둘 꺼져도 네 이름을 손안에 간직하고 아침이 우리를 집으로 데려올 때까지 기다려",
+      "referencePartitions": [
+        [
+          "거리의 불빛이 하나둘 꺼져도 ",
+          "네 이름을 손안에 간직하고 ",
+          "아침이 우리를 집으로 데려올 때까지 기다려"
+        ]
+      ]
+    },
+    {
+      "id": "ko-l3",
+      "language": "ko",
+      "group": "long",
+      "text": "네가 【두려워하지 마, 별이 길을 비출 거야】라고 말해서 손을 잡고, 새벽까지 강을 따라 걸었어.",
+      "referencePartitions": [
+        [
+          "네가 【두려워하지 마, 별이 길을 비출 거야】라고 말해서 ",
+          "손을 잡고, ",
+          "새벽까지 강을 따라 걸었어."
+        ]
+      ]
+    },
+    {
+      "id": "ko-l4",
+      "language": "ko",
+      "group": "long",
+      "text": "[여] Stay with me 여기 있어 [남] Stay with me 내일도 함께 (oh oh) 가🌙",
+      "referencePartitions": [
+        [
+          "[여] Stay with me 여기 있어 ",
+          "[남] Stay with me 내일도 함께 (oh oh) 가🌙"
+        ]
+      ]
+    }
+  ]
+}

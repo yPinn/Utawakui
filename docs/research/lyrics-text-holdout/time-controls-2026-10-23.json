@@ -1,0 +1,265 @@
+{
+  "scope": "Evaluator-only alternate fixtures; reuse textual results, no model rerun",
+  "cases": [
+    {
+      "lineId": "8931af087864e076",
+      "original": {
+        "documentId": "875df19a64f7cfd1",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "70c7a8e5cb0779c8",
+      "original": {
+        "documentId": "a04cd6fc2d34bf84",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "70e2f1d6d68cc76f",
+      "original": {
+        "documentId": "bf873f016c1020af",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "366221d4853bb913",
+      "original": {
+        "documentId": "0c9802daf06c226d",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "bc28d8dc461cad9a",
+      "original": {
+        "documentId": "02ccc84a4815f518",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "897bd60657ce391e",
+      "original": {
+        "documentId": "d75fe628b3f61536",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "7681f13a43d66f9f",
+      "original": {
+        "documentId": "cb55e44786fa0a7a",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "314e33fafed02194",
+      "original": {
+        "documentId": "65eb52379b45458e",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "5eb1de0b5d2d00d9",
+      "original": {
+        "documentId": "d229fef9696f9c17",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "3683def16f0e6b6f",
+      "original": {
+        "documentId": "033c60d37b69214f",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "564cbddf53f92b95",
+      "original": {
+        "documentId": "59412f5b4270760c",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "772298e08c64942b",
+      "original": {
+        "documentId": "f0dae4cd30db3881",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "618915a15872793f",
+      "original": {
+        "documentId": "116847cb733e4f9d",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "b3ac773deeead7f3",
+      "original": {
+        "documentId": "c4df0b37f7ebf635",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "64045b01b8f1c995",
+      "original": {
+        "documentId": "0be627b1b79d7adb",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "44c4ad078cd5dea3",
+      "original": {
+        "documentId": "23634b45dd119d13",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "4747c703bbef8848",
+      "original": {
+        "documentId": "6b2e2ea6beac06ae",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "a4e02626cefefbcb",
+      "original": {
+        "documentId": "62367ec61bd8955b",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "f3eeef98394ba21b",
+      "original": {
+        "documentId": "856bf23bc57fde55",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    },
+    {
+      "lineId": "db9ebbffb75b5167",
+      "original": {
+        "documentId": "06cff98fb62dbe25",
+        "startMs": 12000,
+        "endMs": 20000
+      },
+      "alternate": {
+        "startMs": 12000,
+        "endMs": 44000
+      },
+      "vocalBoundary": "unknown"
+    }
+  ]
+}
