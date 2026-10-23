@@ -219,6 +219,9 @@ function assembleSplitSnapshot(
     queue: {
       sourceName: queueEntry.document.sourceName,
       items: queueEntry.document.items,
+      ...(queueEntry.document.receipt
+        ? { receipt: queueEntry.document.receipt }
+        : {}),
     },
     lyrics: lyricsDocument
       ? {

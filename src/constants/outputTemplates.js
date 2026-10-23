@@ -37,6 +37,24 @@ export const OUTPUT_PREVIEW_SCENE = deepFreeze(createOutputPreviewScene());
 
 const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
+    id: 'receipt-setlist',
+    kind: 'setlist',
+    order: 30,
+    name: '歌回收據',
+    availability: { summary: '演出安排提供已唱明細；一般播放顯示播放紀錄。' },
+    summary: '黑白熱感紙呈現目前曲目與已唱紀錄。',
+    detail:
+      '唱完即印入一筆，向下出紙為預設，亦可向上出紙；定時回顧最近一百筆已唱明細。',
+    preview: { layoutLabel: '連續小票', motionLabel: '送紙與回顧' },
+    tags: ['熱感小票', '雙向出紙', '歷史回顧'],
+    settings: [
+      { label: '顯示', value: '目前曲目、已唱明細' },
+      { label: '方向', value: '預設向下，可選向上' },
+      { label: '曲名', value: '最多兩行，超長省略' },
+      { label: '回顧', value: '定時回顧，可關閉' },
+    ],
+  },
+  {
     id: 'queue-board',
     kind: 'setlist',
     order: 20,

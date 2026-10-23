@@ -42,6 +42,10 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 發布時鐘必須配對：`usePlayer.samplePlaybackClock()` 在同一同步區段取得實際 audio position、rate、event phase、track／continuity 與 `sampledAt`。Publisher 先完成內容傳送，再確認當前 continuity 與 lyrics／music-structure／queue 文件 identity 仍等於該次投影；已失效則跳過舊 state，排入最新投影。通過後才重新採樣、重建當前動態資料與內容 references，將該 sample 的時間作為 `generatedAt`。拒絕後的 full retry 也重新檢查及採樣，不能只替舊位置換新時間。手動演出項目保留自己的零位置／倍率投影。Wire schema 與 client 既有外推規則不變，不以這項修正宣稱硬體或 OBS 零延遲。
 
+## 收據歌單資料
+
+V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount（0至1000000的安全整數）及history（最多100筆ordinal／track）。ordinal須大於零、嚴格遞增且不超過completedCount；track只保留原有公開id／title／artist，拒絕額外receipt／row欄位。一般queue.items的100筆額度不受影響；receipt明細只來自演出安排確認completed的項目，與一般含切歌的播放歷史分開。Main驗證、相容snapshot與Browser Source split assembler均保留該欄位；舊來源可不提供，收據改標播放紀錄且不觸發完成送紙。詳見[外觀契約](output-appearance.md#收據歌單)。
+
 ## 只讀輸出視窗
 
 控制台「畫面輸出」的「開啟輸出視窗」只傳 `lyrics`／`setlist`／`now-playing` intent。Main 每次開啟重查 `public-output-flow`，從正在執行的 loopback server 與已正規化 slot 推導既有 canonical URL、模板內容尺寸與固定視窗名稱；不接受 renderer 提供 URL、路徑、尺寸或標題。尚未啟動服務時不自動啟動。

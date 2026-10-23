@@ -5,7 +5,10 @@ const runtimeValues = require('./outputRuntimeValues.json');
 const timingValues = require('./lyricsTimingValues.json');
 const musicValues = require('./musicStructureContractValues.json');
 const performerValues = require('./performerContractValues.json');
-const { parseOutputSnapshot } = require('./outputContract');
+const {
+  parseOutputSnapshot,
+  parseReceiptSetlist,
+} = require('./outputContract');
 const { validateLyricsFineTiming } = require('./lyricsFineTiming.mjs');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
@@ -423,6 +426,9 @@ function parseQueueDocument(value) {
       'payload.document.sourceName',
       MAX_LABEL_LENGTH,
     ),
+    ...(document.receipt === undefined
+      ? {}
+      : { receipt: parseReceiptSetlist(document.receipt) }),
     items: document.items.map((rawItem, index) => {
       const path = `payload.document.items[${index}]`;
       const item = record(rawItem, path);
@@ -795,7 +801,11 @@ function assembleOutputSnapshotV2({
     displayDelayMs: state.displayDelayMs,
     playback: state.playback,
     queue: queue
-      ? { sourceName: queue.sourceName, items: queue.items }
+      ? {
+          sourceName: queue.sourceName,
+          items: queue.items,
+          ...(queue.receipt ? { receipt: queue.receipt } : {}),
+        }
       : { sourceName: '', items: [] },
     lyrics: lyrics
       ? {

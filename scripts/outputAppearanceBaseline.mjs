@@ -7,6 +7,7 @@ import {
   outputAppearanceFieldsForTemplate,
 } from '../shared/outputAppearance.mjs';
 import { lyricsTemplateCapabilities } from '../shared/presentation/lyricsTemplateCapabilities.mjs';
+import { selectReceiptSetlistFrame } from '../shared/presentation/receiptSetlist.mjs';
 import {
   selectArtworkFrame,
   selectLyricsOverlayFrame,
@@ -214,7 +215,9 @@ export function projectOutputScenario(templateId, scene) {
     });
   }
   return kind === 'setlist'
-    ? selectSetlistFrame(scene.snapshot)
+    ? templateId === 'receipt-setlist'
+      ? selectReceiptSetlistFrame(scene.snapshot)
+      : selectSetlistFrame(scene.snapshot)
     : selectArtworkFrame(scene.snapshot, { nowMs: scene.nowMs });
 }
 

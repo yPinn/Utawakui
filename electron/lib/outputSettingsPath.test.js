@@ -16,6 +16,9 @@ import { createOutputServer } from './outputServer.js';
 import { upsertOutputSlot } from './outputSlots.js';
 
 const DATASET_TARGETS = Object.freeze({
+  receiptDirection: 'ovlReceiptDirection',
+  receiptReview: 'ovlReceiptReview',
+  receiptReviewInterval: 'ovlReceiptReviewInterval',
   alignment: 'ovlAlign',
   contentWidth: 'ovlContentWidth',
   contrastStyle: 'ovlContrast',

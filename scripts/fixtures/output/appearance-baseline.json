@@ -1,11 +1,23 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 5,
+  "appearanceSchemaVersion": 6,
   "captureSizes": {
-    "small": { "width": 480, "height": 270 },
-    "medium": { "width": 480, "height": 540 },
-    "large": { "width": 480, "height": 810 },
-    "full": { "width": 1920, "height": 1080 }
+    "small": {
+      "width": 480,
+      "height": 270
+    },
+    "medium": {
+      "width": 480,
+      "height": 540
+    },
+    "large": {
+      "width": 480,
+      "height": 810
+    },
+    "full": {
+      "width": 1920,
+      "height": 1080
+    }
   },
   "interpretation": {
     "default": "Baseline control and initial value; does not mean all controls are initially visible",
@@ -89,6 +101,21 @@
       "activation": "explicit-selection"
     },
     "furigana": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "receiptDirection": {
+      "level": "default",
+      "scope": "slot-template",
+      "activation": "template-default"
+    },
+    "receiptReview": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "receiptReviewInterval": {
       "level": "opt",
       "scope": "slot-template",
       "activation": "explicit-selection"
@@ -1519,6 +1546,122 @@
         }
       },
       "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "receipt-setlist",
+      "kind": "setlist",
+      "capture": {
+        "default": "large",
+        "supported": ["large"]
+      },
+      "fields": [
+        {
+          "key": "fontScale",
+          "order": 20,
+          "label": "字級",
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small",
+              "label": "小"
+            },
+            {
+              "id": "medium",
+              "label": "標準"
+            },
+            {
+              "id": "large",
+              "label": "大"
+            }
+          ],
+          "group": "typography",
+          "groupLabel": "文字",
+          "groupOrder": 30
+        },
+        {
+          "key": "receiptDirection",
+          "order": 80,
+          "label": "出紙方向",
+          "control": "select",
+          "defaultValue": "down",
+          "options": [
+            {
+              "id": "down",
+              "label": "向下出紙"
+            },
+            {
+              "id": "up",
+              "label": "向上出紙"
+            }
+          ],
+          "group": "layout",
+          "groupLabel": "版面",
+          "groupOrder": 60
+        },
+        {
+          "key": "receiptReview",
+          "order": 10,
+          "label": "定時回顧歷史",
+          "control": "select",
+          "defaultValue": "on",
+          "options": [
+            {
+              "id": "on",
+              "label": "開啟"
+            },
+            {
+              "id": "off",
+              "label": "關閉"
+            }
+          ],
+          "group": "motion",
+          "groupLabel": "動態",
+          "groupOrder": 70
+        },
+        {
+          "key": "receiptReviewInterval",
+          "order": 20,
+          "label": "回顧間隔",
+          "control": "range",
+          "defaultValue": 60,
+          "min": 30,
+          "max": 180,
+          "step": 15,
+          "unit": " 秒",
+          "group": "motion",
+          "groupLabel": "動態",
+          "groupOrder": 70
+        }
+      ],
+      "timing": null,
+      "lockedInvariants": [
+        "fixed-two-line-slots",
+        "completion-driven-feed",
+        "bounded-timed-review"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Semantic Look exists for all templates; arbitrary artistic-role colors are not universal"
+        }
+      },
+      "localSourceLimitations": [
+        "Most recent 100 completed entries; source-owned total; no arbitrary assets or paths."
+      ]
     }
   ]
 }

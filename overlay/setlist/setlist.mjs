@@ -7,6 +7,8 @@ import {
   previewSceneForSlot,
 } from '../shared/preview.mjs';
 import { selectSetlistFrame } from '../shared/state.mjs';
+import { selectReceiptSetlistFrame } from '../../shared/presentation/receiptSetlist.mjs';
+import { createReceiptView } from './receiptView.mjs';
 import {
   createSetlistCurrentMotionController,
   createSetlistHistoryMotionController,
@@ -173,6 +175,11 @@ function boot() {
   if (Object.values(elements).some((element) => !element)) return;
 
   const gsap = globalThis.gsap ?? null;
+  const receipt = createReceiptView(document.querySelector('#receipt-host'), {
+    gsap,
+  });
+  let receiptMode = false;
+  let active = false;
   const previewMode = isPreviewMode(window.location);
   let previewScene = previewSceneForSlot('setlist');
   const renderState = { history: [] };
@@ -194,7 +201,36 @@ function boot() {
     root: elements.root,
   });
   const motionControllers = [currentMotion, historyMotion];
+  let latestSnapshot = null;
+  function syncTemplateActivity() {
+    receipt.setActive(active && receiptMode);
+    setMotionSuspended(motionControllers, !active || receiptMode);
+    if (active && !receiptMode) historyMeasurement.resume();
+    else historyMeasurement.suspend();
+  }
+  function present(snapshot, { recovering = false } = {}) {
+    latestSnapshot = snapshot;
+    if (receiptMode) {
+      elements.root.hidden = true;
+      receipt.update(
+        withPreviewFallback(
+          selectReceiptSetlistFrame(snapshot),
+          previewScene.frame,
+          previewMode,
+        ),
+        { settle: recovering },
+      );
+      return;
+    }
+    const frame = withPreviewFallback(
+      selectSetlistFrame(snapshot),
+      previewScene.frame,
+      previewMode,
+    );
+    currentMotion.update(frame, { settle: recovering });
+  }
   const applyReducedMotion = (value) => {
+    receipt.setReducedMotion(value);
     for (const controller of motionControllers) {
       controller.setReducedMotion(value);
     }
@@ -206,32 +242,37 @@ function boot() {
     kind: 'setlist',
     previewMode,
     onReducedMotion: applyReducedMotion,
-    onActivity: (active) => {
-      setMotionSuspended(motionControllers, !active);
-      if (active) historyMeasurement.resume();
-      else historyMeasurement.suspend();
+    onActivity: (value) => {
+      active = value;
+      syncTemplateActivity();
     },
-    onFontsChanged: () => historyMeasurement.schedule({ force: true }),
+    onFontsChanged: () => {
+      historyMeasurement.schedule({ force: true });
+      receipt.refresh();
+    },
     onConfig: (slot) => {
+      receiptMode = slot?.templateId === 'receipt-setlist';
+      receipt.setVisible(receiptMode);
+      receipt.configure(slot?.settings);
+      syncTemplateActivity();
+      if (receiptMode) elements.root.hidden = true;
       previewScene = previewSceneForSlot('setlist', slot);
       applyOverlayAppearance(document, slot);
+      if (latestSnapshot) present(latestSnapshot, { recovering: true });
     },
-    onSnapshot: (snapshot, { recovering }) => {
-      const frame = withPreviewFallback(
-        selectSetlistFrame(snapshot),
-        previewScene.frame,
-        previewMode,
-      );
-      currentMotion.update(frame, { settle: recovering });
-    },
+    onSnapshot: present,
     onDispose: () => {
+      receipt.destroy();
       historyMeasurement.stop();
       currentMotion.destroy();
       historyMotion.destroy();
     },
   });
   host.start();
-  if (previewMode) currentMotion.update(previewScene.frame);
+  if (previewMode) {
+    if (receiptMode) receipt.update(previewScene.frame, { settle: true });
+    else currentMotion.update(previewScene.frame);
+  }
 }
 
 if (typeof document !== 'undefined') boot();

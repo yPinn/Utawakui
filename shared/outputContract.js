@@ -107,6 +107,45 @@ function parsePlayback(value) {
   };
 }
 
+function parseReceiptSetlist(value) {
+  const receipt = requireRecord(value, 'queue.receipt');
+  if (
+    Object.keys(receipt).some(
+      (key) => !['completedCount', 'history'].includes(key),
+    )
+  ) {
+    invalid('queue.receipt', 'unsupported field');
+  }
+  const completedCount = requireFiniteNumber(
+    receipt.completedCount,
+    'queue.receipt.completedCount',
+    { integer: true, min: 0, max: 1000000 },
+  );
+  if (
+    !Array.isArray(receipt.history) ||
+    receipt.history.length > MAX_OUTPUT_QUEUE_ITEMS
+  ) {
+    invalid('queue.receipt.history', 'expected a bounded array');
+  }
+  let previousOrdinal = 0;
+  const history = receipt.history.map((rawItem, index) => {
+    const path = `queue.receipt.history[${index}]`;
+    const item = requireRecord(rawItem, path);
+    if (Object.keys(item).some((key) => !['ordinal', 'track'].includes(key)))
+      invalid(path, 'unsupported field');
+    const ordinal = requireFiniteNumber(item.ordinal, `${path}.ordinal`, {
+      integer: true,
+      min: 1,
+      max: completedCount,
+    });
+    if (ordinal <= previousOrdinal)
+      invalid(path, 'expected increasing ordinals');
+    previousOrdinal = ordinal;
+    return { ordinal, track: parseTrack(item.track, `${path}.track`) };
+  });
+  return { completedCount, history };
+}
+
 function parseQueue(value) {
   const queue = requireRecord(value, 'queue');
   if (!Array.isArray(queue.items)) invalid('queue.items', 'expected an array');
@@ -120,6 +159,9 @@ function parseQueue(value) {
       'queue.sourceName',
       MAX_LABEL_LENGTH,
     ),
+    ...(queue.receipt === undefined
+      ? {}
+      : { receipt: parseReceiptSetlist(queue.receipt) }),
     items: queue.items.map((rawItem, index) => {
       const itemPath = `queue.items[${index}]`;
       const item = requireRecord(rawItem, itemPath);
@@ -303,4 +345,5 @@ module.exports = {
   createEmptyOutputSnapshot,
   isOutputSnapshot,
   parseOutputSnapshot,
+  parseReceiptSetlist,
 };

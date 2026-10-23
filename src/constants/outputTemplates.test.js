@@ -12,6 +12,7 @@ import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
+  'receipt-setlist': '歌回收據',
   'queue-board': '黑幕歌單',
   'karaoke-stack': '經典伴唱',
   'live-stage': '舞台轉播',
@@ -23,6 +24,12 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
+  'receipt-setlist': [
+    'fontScale',
+    'receiptDirection',
+    'receiptReview',
+    'receiptReviewInterval',
+  ],
   'queue-board': [
     'paletteId',
     'lookAmount',

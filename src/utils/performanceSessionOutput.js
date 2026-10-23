@@ -18,15 +18,17 @@ export function projectPerformanceSessionOutput({
   });
   const track = confirmed ? publicTrack(current) : null;
   const manual = confirmed && current.mode === 'manual';
+  const completedEntries = items
+    .filter((item) => item.progress === 'completed')
+    .sort((a, b) =>
+      (a.progressUpdatedAt ?? '').localeCompare(b.progressUpdatedAt ?? ''),
+    )
+    .map((item) => ({ track: publicTrack(item) }));
   return {
     queue: {
       sourceName: plan?.source?.name ?? '播放安排',
-      historyEntries: items
-        .filter((item) => item.progress === 'completed')
-        .sort((a, b) =>
-          (a.progressUpdatedAt ?? '').localeCompare(b.progressUpdatedAt ?? ''),
-        )
-        .map((item) => ({ track: publicTrack(item) })),
+      historyEntries: completedEntries,
+      completedEntries,
       currentTrack: track,
       upcomingTracks: [],
     },

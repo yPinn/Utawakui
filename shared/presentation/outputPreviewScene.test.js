@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import registry from '../outputTemplateValues.json';
+import { selectReceiptSetlistFrame } from './receiptSetlist.mjs';
 import streamContract from '../outputStreamContract.js';
 import outputValues from '../outputContractValues.json';
 import { normalizeOutputAppearance } from '../outputAppearance.mjs';
@@ -85,7 +86,9 @@ describe('F3 app-owned preview scene', () => {
         kind === 'lyrics'
           ? selectLyricsOverlayFrame(result.snapshot, options)
           : kind === 'setlist'
-            ? selectSetlistFrame(result.snapshot)
+            ? templateId === 'receipt-setlist'
+              ? selectReceiptSetlistFrame(result.snapshot)
+              : selectSetlistFrame(result.snapshot)
             : selectArtworkFrame(result.snapshot, options);
       expect(result.frame).toEqual(expected);
       expect(result.playback.progress).toBe(5 / 32);

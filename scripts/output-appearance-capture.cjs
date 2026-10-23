@@ -147,7 +147,9 @@ function save() {
         row.kind === 'lyrics'
           ? '#lyrics-overlay'
           : row.kind === 'setlist'
-            ? '#setlist-overlay'
+            ? row.templateId === 'receipt-setlist'
+              ? '#receipt-host'
+              : '#setlist-overlay'
             : '#artwork-overlay';
       await waitFor(
         `document.documentElement.dataset.ovlTemplate===${JSON.stringify(row.templateId)}`,

@@ -63,6 +63,10 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/setlist/setlist.css': ['setlist', 'setlist.css'],
   '/overlay/setlist/setlist.mjs': ['setlist', 'setlist.mjs'],
   '/overlay/setlist/setlistMotion.mjs': ['setlist', 'setlistMotion.mjs'],
+  '/overlay/setlist/receipt.css': ['setlist', 'receipt.css'],
+  '/overlay/setlist/receiptView.mjs': ['setlist', 'receiptView.mjs'],
+  '/overlay/setlist/receiptMotion.mjs': ['setlist', 'receiptMotion.mjs'],
+  '/overlay/setlist/receipt-paper.png': ['setlist', 'receipt-paper.png'],
   '/overlay/shared/appearance.css': ['shared', 'appearance.css'],
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/lifecycle.mjs': ['shared', 'lifecycle.mjs'],
@@ -86,6 +90,10 @@ const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
 });
 const SHARED_STATIC_ROUTES = Object.freeze({
+  '/shared/presentation/receiptSetlist.mjs': [
+    'presentation',
+    'receiptSetlist.mjs',
+  ],
   '/shared/lyricsFineTiming.mjs': ['lyricsFineTiming.mjs'],
   '/shared/browser/lyricsFinePaint.mjs': ['browser', 'lyricsFinePaint.mjs'],
   '/shared/presentation/lyricsFineFrame.mjs': [

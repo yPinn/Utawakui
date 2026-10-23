@@ -1,4 +1,4 @@
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 5;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 6;
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', label: '色彩處理', order: 10 }),
@@ -30,6 +30,39 @@ function fieldDefinition(groupId, definition) {
 }
 
 const FIELD_DEFINITIONS = [
+  fieldDefinition('layout', {
+    key: 'receiptDirection',
+    order: 80,
+    label: '出紙方向',
+    control: 'select',
+    defaultValue: 'down',
+    options: [
+      { id: 'down', label: '向下出紙' },
+      { id: 'up', label: '向上出紙' },
+    ],
+  }),
+  fieldDefinition('motion', {
+    key: 'receiptReview',
+    order: 10,
+    label: '定時回顧歷史',
+    control: 'select',
+    defaultValue: 'on',
+    options: [
+      { id: 'on', label: '開啟' },
+      { id: 'off', label: '關閉' },
+    ],
+  }),
+  fieldDefinition('motion', {
+    key: 'receiptReviewInterval',
+    order: 20,
+    label: '回顧間隔',
+    control: 'range',
+    defaultValue: 60,
+    min: 30,
+    max: 180,
+    step: 15,
+    unit: ' 秒',
+  }),
   fieldDefinition('color-treatment', {
     key: 'paletteId',
     order: 10,
@@ -295,6 +328,15 @@ const LYRICS_FIELD_DEFAULTS = Object.freeze({
 });
 
 const TEMPLATE_CONFIGS = Object.freeze({
+  'receipt-setlist': {
+    keys: [
+      'fontScale',
+      'receiptDirection',
+      'receiptReview',
+      'receiptReviewInterval',
+    ],
+    fields: { fontScale: { defaultValue: 'medium' } },
+  },
   'now-next': {
     keys: [
       'paletteId',

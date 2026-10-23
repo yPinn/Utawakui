@@ -332,6 +332,13 @@ root re-export barrel is removed. The generic Audio Python host and Refined
 probe modules remain packaged as the non-activating foundation defined by
 ADR 0014.
 
+Receipt Setlist ships `overlay/setlist/receiptView.mjs`, `receiptMotion.mjs`,
+`receipt.css` and the generated textless `receipt-paper.png`; its pure frame and
+page helper is `shared/presentation/receiptSetlist.mjs`. Each has an exact static
+HTTP route. Existing overlay/shared globs include them and exclude adjacent tests.
+The renderer preview imports the same DOM, motion and CSS, with Vite emitting its
+copy of the paper plate. No extra dependency or unpack rule is introduced.
+
 `overlay/**/*` ships the three fixed Browser Source pages and their exact-route
 assets; adjacent `*.test.js` files stay excluded. Now Playing ships only
 `artwork.css` for its two current templates. The retired Workbench wrapper

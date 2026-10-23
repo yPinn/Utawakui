@@ -71,6 +71,15 @@
       "rights": "derived-project-artwork-per-legacy-readme",
       "delivery": "pending-current-runtime-review",
       "humanReview": "not-tested"
+    },
+    "receipt-setlist": {
+      "file": "receipt-setlist.jpg",
+      "sha256": "492a8f9a5e11b09de05317e58033ad7a6516e4b1afded155fa8e08b10abf2a65",
+      "content": "current-runtime-capture",
+      "rights": "project-owned-runtime-and-generated-paper",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "Visible Electron Browser Source, synthetic fixtures; tasks/receipt-implementation-20261023/visual-report.json"
     }
   }
 }

@@ -1,6 +1,7 @@
 import { projectOutputSnapshot } from './outputSnapshot.js';
 import performerValues from '../../shared/performerContractValues.json';
 import timingValues from '../../shared/lyricsTimingValues.json';
+import outputValues from '../../shared/outputContractValues.json';
 import { detectLyricsScript } from './lyrics.js';
 
 const QUEUE_DOCUMENT_ID = 'queue-current';
@@ -165,9 +166,36 @@ export function projectQueueOutputDocument(queue = {}) {
     { player: {}, queue, lyrics: {}, output: {} },
     { generatedAt: '1970-01-01T00:00:00.000Z' },
   );
+  const completed = (
+    Array.isArray(queue.completedEntries) ? queue.completedEntries : []
+  ).filter(
+    (entry) =>
+      typeof entry?.track?.id === 'string' && entry.track.id.length > 0,
+  );
+  const completedCount = Math.min(1000000, completed.length);
+  const receipt = {
+    completedCount,
+    history: completed
+      .slice(0, completedCount)
+      .slice(-outputValues.maxQueueItems)
+      .map((entry, index, rows) => ({
+        ordinal: completedCount - rows.length + index + 1,
+        track: {
+          id: entry.track.id,
+          title:
+            typeof entry.track.title === 'string' && entry.track.title
+              ? entry.track.title
+              : entry.track.id,
+          ...(typeof entry.track.artist === 'string' && entry.track.artist
+            ? { artist: entry.track.artist }
+            : {}),
+        },
+      })),
+  };
   return {
     documentId: QUEUE_DOCUMENT_ID,
     ...snapshot.queue,
+    ...(Array.isArray(queue.completedEntries) ? { receipt } : {}),
   };
 }
 

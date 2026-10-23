@@ -30,7 +30,7 @@ describe('Output Gallery bounded Folder composition', () => {
         /<button[^>]*class="obs-template-thumb[\s\S]*?<\/button>/gu,
       ),
     ];
-    expect(tiles).toHaveLength(1);
+    expect(tiles).toHaveLength(2);
     expect(tiles[0][0]).toContain('obs-template-thumbnail');
     expect(tiles[0][0]).toContain('obs-template-thumb__name');
     expect(tiles[0][0]).not.toContain('ui-chip');

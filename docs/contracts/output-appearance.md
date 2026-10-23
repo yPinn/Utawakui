@@ -1,6 +1,6 @@
 # Output 外觀契約
 
-三個 slot、八個模板的可調欄位、本機來源與預覽一致性。分階段計畫見[外觀 set 計畫](../governance/appearance-sets-plan.md)；傳輸與頁面生命週期見 [Output runtime](output-runtime.md)；可見驗收見[驗收清單](../operations/output-appearance-acceptance.md)。
+三個 slot、九個模板的可調欄位、本機來源與預覽一致性。分階段計畫見[外觀 set 計畫](../governance/appearance-sets-plan.md)；傳輸與頁面生命週期見 [Output runtime](output-runtime.md)；可見驗收見[驗收清單](../operations/output-appearance-acceptance.md)。
 
 ## 權威
 
@@ -33,15 +33,18 @@
 | lyricsPresentationPolicyId                       | opt；balanced                     | Live Stage 的 broadcast-compact／balanced／literal，獨立列在模板進階顯示              |
 | captureSize                                      | 依 registry                       | 只開放各模板支援的尺寸                                                                |
 
-`alignment`、`contentWidth` 存在於 schema，但八個模板都未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
+`alignment`、`contentWidth` 存在於 schema，但九個模板都未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
 
-## 八模板
+`receipt-setlist` 另提供 `receiptDirection`（down／up，預設down）、`receiptReview`（on／off，預設on）與 `receiptReviewInterval`（30–180秒、step15，預設60）；只公開這三項與字級，不顯示未消費的Look或背景控制。外觀schema為6，舊欄位相容。
+
+## 九模板
 
 共同預設為 original Look、強度 100、medium 字級；下表只列差異。
 
 | 模板／capture              | 可選與初始值                                                   | Invariant                                                    |
 | -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
 | queue-board／480×810       | 字型 sans、字重 semibold、背景 solid、密度 normal              | current／played membership、history 分頁接續                 |
+| receipt-setlist／480×810   | 字級medium、向下出紙、回顧開啟／60秒                           | 兩行曲名省略、完成才送紙、最近100筆回顧                      |
 | karaoke-stack／1920×1080   | 只有共用 Look／字級                                            | 雙 lane、count-in、timing mask、字型角色                     |
 | kinetic-pop／1920×1080     | 材料 candy-rim、排列 straight                                  | 三層 paint order、phrase source boundaries                   |
 | ornate-vertical／1920×1080 | 字型 ornate／antique；兩色與右側位置                           | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
@@ -110,4 +113,12 @@ Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.jso
 
 ## 驗證
 
-相鄰測試比較八模板 canonical frame、設定正規化、V3 讀音 document、空態、Vue reactive prop 與 URL 隔離。`createAcceptanceMatrix()` 產生逐模板的適用 case 與證據層級；純投影通過不代表 runtime 或人工驗收完成，也不代表作品可上架。真實 OBS、透明合成與長時間效能仍待驗證。
+相鄰測試比較九模板 canonical frame、設定正規化、V3 讀音 document、空態、Vue reactive prop 與 URL 隔離。`createAcceptanceMatrix()` 產生逐模板的適用 case 與證據層級；純投影通過不代表 runtime 或人工驗收完成，也不代表作品可上架。真實 OBS、透明合成與長時間效能仍待驗證。
+
+## 收據歌單
+
+`receipt-setlist` 使用480×810透明外圍與無字熱感紙底圖。SETLIST、來源／計數與NOW PLAYING為固定區塊；向下為預設，向上另選。曲名最多兩行、第二行末省略，原唱一行；每項預留同樣槽位，字級變動後重新量測完整可見列數。一般播放歷史顯示「播放紀錄」，不假稱確認完成。演出安排只以completed項目產生已唱總數與明細；略過、中止不列印，最後一首已完成但沒有下一首仍可顯示。
+
+完成一項僅將該項從固定印字邊界送入歷史，不重印整張。定時回顧僅於溢位時啟動，預設60秒後按完整列分段、每段停6秒、每輪最多3段後直接回最新端；長歷史下輪接續。新完成優先取消回顧，回到最新端送紙並重設計時。Reduced-motion直接安置；inactive／dispose取消timer與tween，恢復或切方向不補播舊列印。
+
+Browser Source與Vue預覽共用receiptView、receiptMotion與receipt.css。正式回顧最多最近100筆來源確認明細，來源總數另計；不是無界整場歷史瀏覽。實機OBS alpha與使用者視覺驗收另記，不以單測／截圖代替。

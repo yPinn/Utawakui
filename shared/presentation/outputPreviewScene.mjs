@@ -1,4 +1,5 @@
 import { normalizeOutputAppearance } from '../outputAppearance.mjs';
+import { selectReceiptSetlistFrame } from './receiptSetlist.mjs';
 import { normalizeLyricsPresentationPolicyId } from './lyricsPresentationPolicies.mjs';
 import {
   selectArtworkFrame,
@@ -121,6 +122,25 @@ export function createOutputPreviewScene({
   const snapshot = suppliedSnapshot
     ? globalThis.structuredClone(suppliedSnapshot)
     : createOutputPreviewSnapshot();
+  if (!suppliedSnapshot && templateId === 'receipt-setlist') {
+    const history = Array.from({ length: 12 }, (_, index) => ({
+      ordinal: index + 1,
+      track: {
+        id: `receipt-example-${index}`,
+        title:
+          index === 10
+            ? '這是一首用來驗證兩行上限與省略號的合成長曲名 — Acoustic Live Session'
+            : `已唱示範曲 ${index + 1}`,
+        ...(index === 9 ? {} : { artist: '示範演唱者' }),
+      },
+    }));
+    snapshot.queue.receipt = { completedCount: 12, history };
+    snapshot.queue.items.find((item) => item.state === 'current').track.title =
+      '合成示範曲 — 用來確認目前曲目兩行文字佔位與超長省略';
+    snapshot.playback.track.title = snapshot.queue.items.find(
+      (item) => item.state === 'current',
+    ).track.title;
+  }
   const appearance = normalizeOutputAppearance(settings, { templateId });
   const lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
     templateId,
@@ -136,7 +156,9 @@ export function createOutputPreviewScene({
     kind === 'lyrics'
       ? selectLyricsOverlayFrame(snapshot, options)
       : kind === 'setlist'
-        ? selectSetlistFrame(snapshot)
+        ? templateId === 'receipt-setlist'
+          ? selectReceiptSetlistFrame(snapshot)
+          : selectSetlistFrame(snapshot)
         : selectArtworkFrame(snapshot, options);
   const lyricsFrame =
     kind === 'lyrics' ? frame : selectLyricsOverlayFrame(snapshot, options);

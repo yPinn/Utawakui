@@ -35,6 +35,11 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlContentWidth = appearance.contentWidth;
   root.dataset.ovlPosition = appearance.positionAnchor;
   root.dataset.ovlTemplate = templateId;
+  root.dataset.ovlReceiptDirection = appearance.receiptDirection;
+  root.dataset.ovlReceiptReview = appearance.receiptReview;
+  root.dataset.ovlReceiptReviewInterval = String(
+    appearance.receiptReviewInterval,
+  );
 
   const usesOrnatePaletteDefaults =
     templateId === 'ornate-vertical' && appearance.paletteId !== 'original';

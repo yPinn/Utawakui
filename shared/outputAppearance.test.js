@@ -150,6 +150,9 @@ describe('output appearance schema', () => {
       contrastStyle: 'balanced',
       spacingDensity: 'normal',
       contentWidth: 'standard',
+      receiptDirection: 'down',
+      receiptReview: 'on',
+      receiptReviewInterval: 60,
     });
 
     expect(

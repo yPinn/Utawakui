@@ -28,10 +28,11 @@ const ids = [
   'manga-frame',
   'art-card',
   'cover-player',
+  'receipt-setlist',
 ];
 
 describe('Output F1 acceptance foundation', () => {
-  it('pins exactly eight active templates and detects capability/default drift', () => {
+  it('pins the active templates and detects capability/default drift', () => {
     const fixtures = loadOutputAppearanceFixtures();
     expect(fixtures.baseline.templates.map(({ id }) => id)).toEqual(ids);
     expect(validateOutputAppearanceBaseline(fixtures)).toEqual([]);
@@ -142,7 +143,7 @@ describe('Output F1 acceptance foundation', () => {
 
   it('does not imply executing reconnect, font or image loading from pure projections', () => {
     const matrix = createAcceptanceMatrix();
-    expect(matrix).toHaveLength(8);
+    expect(matrix).toHaveLength(9);
     for (const template of matrix) {
       expect(
         template.cases.find(({ id }) => id === 'font-denied'),
@@ -393,7 +394,7 @@ describe('Output F1 acceptance foundation', () => {
     );
     expect(JSON.parse(output)).toMatchObject({
       ok: true,
-      templates: 8,
+      templates: 9,
       implementationPhase: 'F1',
     });
   });

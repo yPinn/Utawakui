@@ -39,9 +39,9 @@ describe('F4 bounded Output audit', () => {
         .sourceEpoch,
     ).toBeNull();
   });
-  it('defaults to eight synthetic, paused showcase captures with explicit limits', () => {
+  it('defaults to nine synthetic, paused showcase captures with explicit limits', () => {
     const plan = buildAuditPlan();
-    expect(plan.cases).toHaveLength(8);
+    expect(plan.cases).toHaveLength(9);
     for (const row of plan.cases) {
       expect(row.scenarioId).toBe('showcase-t1-v1');
       expect(row.snapshot.playback.status).toBe('paused');
@@ -49,7 +49,7 @@ describe('F4 bounded Output audit', () => {
       expect(row.settings.captureSize).toBeTruthy();
       expect(row.evidence).toBe('visible-electron-capture');
     }
-    expect(plan.matrix).toHaveLength(256);
+    expect(plan.matrix).toHaveLength(288);
     expect(
       plan.matrix.find(
         (r) => r.templateId === 'art-card' && r.scenarioId === 'playing-t2',

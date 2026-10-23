@@ -31,9 +31,14 @@
     "live-stage": "lyrics",
     "manga-frame": "lyrics",
     "art-card": "now-playing",
-    "cover-player": "now-playing"
+    "cover-player": "now-playing",
+    "receipt-setlist": "setlist"
   },
   "templateCaptureSizes": {
+    "receipt-setlist": {
+      "default": "large",
+      "supported": ["large"]
+    },
     "queue-board": {
       "default": "large",
       "supported": ["large"]
