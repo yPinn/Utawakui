@@ -2,8 +2,9 @@
 
 ## Status
 
-Proposed on 2026-10-22; revised the same day after a code boundary review.
-Nothing here is implemented. It amends the "locked" list in
+Proposed on 2026-10-22; revised the same day after a code boundary review, and
+on 2026-10-23 for the receipt setlist template and schema 6. Nothing here is
+implemented. It amends the "locked" list in
 [ADR 0011](0011-overlay-instances-and-presentation-pack-delivery.md) and the
 [Overlay Pack contract](../contracts/overlay-pack.md) only for element geometry,
 stacking and visibility; executable layout behavior stays app-owned. The current
@@ -13,10 +14,13 @@ authoritative until a phase below is accepted.
 ## Context
 
 Output appearance today is a flat list of settings per template.
-`shared/outputAppearance.mjs` defines 18 fields in eight groups, each template
+`shared/outputAppearance.mjs` defines 21 fields in eight groups, each template
 opts into a subset, and the Workbench inspector renders those groups with one
 template-wide reset. The catalog, main validation and `--ovl-*` projection are
-already a standardized-settings foundation, but three things are missing:
+already a standardized-settings foundation. Schema 6 added three fields used
+only by the receipt setlist (`receiptDirection`, `receiptReview`,
+`receiptReviewInterval`), which shows the catalog growing one template at a
+time. Three things are missing:
 
 1. **No target.** A setting always applies to the whole template. There is no
    way to change only the title, only the next lyric line, or only the surface.
@@ -37,7 +41,9 @@ workspace, and future UI components designed from that model.
 - **Viewport-relative geometry.** `overlay/lyrics/lyricsFit.mjs` sizes text from
   `window.innerWidth`／`innerHeight` fractions, and `lyrics.css` uses `vw`／`vh`
   for Ornate font size and the Manga stage. A box around an element would not
-  reflow its content.
+  reflow its content. The receipt setlist is the exception: `receipt.css`
+  declares an inline-size container and `receiptView.mjs` measures its own
+  history element.
 - **Animated nodes.** GSAP owns transforms on rendered nodes, and ADR 0011
   forbids two engines owning one property.
 - **Coupled elements.** `overlay/now-playing/artworkMotion.mjs` measures sleeve,
@@ -72,7 +78,16 @@ workspace, and future UI components designed from that model.
   inside a group are invariants.
 - Users cannot add, remove or rebind elements in this ADR.
 - A **Property** is drawn from one shared catalog. Templates opt in per element
-  or group and may only narrow ranges or options; they cannot invent controls.
+  or group and may only narrow ranges or options; they do not define controls
+  of their own.
+- A template that needs a new adjustment adds it to the shared catalog through
+  review. The entry belongs to an existing family and takes a generic name
+  where one fits, for example a layout flow direction or a motion review
+  interval rather than a template-named key, so later templates can reuse it.
+- A template may opt out of any family, including Look. The receipt setlist
+  exposes no Look or surface because its paper material is its identity.
+- Display names are separate from template ids. Ids, which stored settings
+  and this ADR use, do not change when a display name is revised.
 
 ### Property definition
 
@@ -129,7 +144,10 @@ Rules shared by all properties:
   so legibility relies on these floors.
 
 The existing fields migrate as template-scoped properties in their matching
-family, so current settings keep their meaning. The legacy `now-next` and
+family, so current settings keep their meaning. The receipt fields are
+classified as layout (`receiptDirection`) and motion (`receiptReview`,
+`receiptReviewInterval`); their stored keys stay unchanged so saved settings
+remain valid, and later generic catalog names map onto them. The legacy `now-next` and
 `focus-line` configurations are removed in the same migration; `now-next`
 continues to resolve to `art-card` at the settings read boundary.
 
@@ -180,7 +198,8 @@ The resolution order from ADR 0011 is unchanged: template fallback → Style Set
 same diff, keyed by target id and property key. Unknown target ids are ignored
 at render time and kept in storage, matching existing Variant rules.
 
-This raises the Output appearance schema version. Main validation moves from a
+This raises the Output appearance schema from 6, which added the receipt
+fields, to 7. Main validation moves from a
 flat scalar list to target-keyed overrides with its own size limits, and current
 `overlays.json` settings migrate as template-scoped values.
 
@@ -203,16 +222,17 @@ flat scalar list to target-keyed overrides with its own size limits, and current
 
 Derived from reading the runtime; not verified.
 
-| Template        | Candidate targets                   | Most permissive layout           | Invariants kept                           |
-| --------------- | ----------------------------------- | -------------------------------- | ----------------------------------------- |
-| queue-board     | current track, history rows, labels | `fixed`                          | section split, history paging             |
-| karaoke-stack   | current／next lanes, count-in       | `fixed`                          | dual lanes, timing mask, part colors      |
-| kinetic-pop     | lyric line                          | later `anchored` on block axis   | canvas-centered inline axis, paint tracks |
-| ornate-vertical | column                              | `anchored`, later `frame` height | at most two columns, grapheme grouping    |
-| live-stage      | caption, title card, brand          | caption `frame` candidate        | brand mark, title-card window             |
-| manga-frame     | bubble stage                        | `fixed`                          | bubble safe layout, ruby atomicity        |
-| art-card        | turntable group, title, artist      | group `anchored`                 | group internals and exchange choreography |
-| cover-player    | artwork, copy, progress             | `frame` candidate, to confirm    | shared structure with art-card            |
+| Template        | Candidate targets                          | Most permissive layout                      | Invariants kept                                            |
+| --------------- | ------------------------------------------ | ------------------------------------------- | ---------------------------------------------------------- |
+| queue-board     | current track, history rows, labels        | `fixed`                                     | section split, history paging                              |
+| receipt-setlist | header, now playing, history window, paper | `fixed`; feed direction is a layout variant | two-line title slots, print on completion, 100-item review |
+| karaoke-stack   | current／next lanes, count-in              | `fixed`                                     | dual lanes, timing mask, part colors                       |
+| kinetic-pop     | lyric line                                 | later `anchored` on block axis              | canvas-centered inline axis, paint tracks                  |
+| ornate-vertical | column                                     | `anchored`, later `frame` height            | at most two columns, grapheme grouping                     |
+| live-stage      | caption, title card, brand                 | caption `frame` candidate                   | brand mark, title-card window                              |
+| manga-frame     | bubble stage                               | `fixed`                                     | bubble safe layout, ruby atomicity                         |
+| art-card        | turntable group, title, artist             | group `anchored`                            | group internals and exchange choreography                  |
+| cover-player    | artwork, copy, progress                    | `frame` candidate, to confirm               | shared structure with art-card                             |
 
 Lyric templates mostly gain element-scoped character, legibility, fill and
 visibility. Free layout is expected mainly in the Now Playing family and Live
@@ -230,7 +250,10 @@ Stage's caption.
 | P6    | Styles panel backed by Style Set and Variant storage                                                                       | Depends on the pack work in ADR 0011                             |
 
 The pilot for P3 and P5 is a Now Playing template, Cover Player or Art Card,
-because both have fewer timing invariants than any lyric template. Each phase is
+because both have fewer timing invariants than any lyric template. The receipt
+setlist already uses container-relative measurement, but its slot geometry is
+too strict for a pilot. P1 starts only on a clean tree after receipt work is
+committed, since it edits the same catalog, projection and baseline files. Each phase is
 reviewed and reversible on its own. A template adopts element scope or `frame`
 layout only after its own verification, not as a fleet-wide switch.
 
