@@ -1,0 +1,676 @@
+{
+  "date": "2026-10-23",
+  "status": "diagnosis-only; no GPU product change",
+  "cohort": {
+    "runs": 8,
+    "cycles": 16,
+    "repetitionsPerSourceVariant": 1,
+    "sources": ["LRCLIB", "NetEase"],
+    "variants": ["baseline", "shadow", "stroke", "fill"],
+    "window": "Original audio natural 1x after seek to 65s; first-second raw rAF at 65–66s. Trace stop requested at >=67s; asynchronous trace flush keeps audio playing beyond this boundary. Actual end is retained per cycle.",
+    "traceEnabled": true,
+    "observer": "Existing raw rAF plus style/geometry probe on local, Focus and KTV; no capturePage during timed runs.",
+    "gpuDriverCache": "Not reset; new Electron process and userData per run, GPU-driver/OS caches uncontrolled.",
+    "scope": "Isolated real player, lyrics owner, clock, publisher, projection hub and formal Output renderers. Local timing harness retains prior unregistered Panel for cohort consistency; it is not full styled-control-panel performance acceptance."
+  },
+  "definitions": {
+    "rawFrame": "Unfiltered consecutive rAF samples within the first media-second. p95 is sorted[floor(n*0.95)]. It is not presented-frame or OBS latency.",
+    "focusProgramWait": "Complete MainLinkLoadEvent::wait events contained in a GPUTask tagged with the Focus renderer PID, on that task thread, overlapping the media window. Sum spans multiple tasks and must not be added to enclosing flush spans.",
+    "focusRasterFlush": "Wall duration in the GPU service, including waits; not pure hardware GPU execution.",
+    "gpuCompileTemporalOnly": "D3DCompile events in the GPU process overlapping the window, including worker threads. May include KTV/other work; renderer attribution is unknown, workers overlap, and sumWorkerMs is not critical-path time.",
+    "frameChain": "exact-aggregation-bridge only when full 64-bit surface/display identity and aggregation bridge exist. Unassigned candidates do not establish presentation cost."
+  },
+  "runs": [
+    {
+      "source": "LRCLIB",
+      "variant": "baseline",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 215,
+            "max": 48.400146484375,
+            "p95": 7.699951171875
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.1650390625,
+          "bufferUsage": 0.16100609302520752,
+          "focusGpuTasks": {
+            "n": 276,
+            "max": 51.097,
+            "p95": 1.093
+          },
+          "focusRasterFlush": {
+            "n": 212,
+            "max": 50.247,
+            "p95": 0.776
+          },
+          "focusProgramWait": {
+            "n": 9,
+            "max": 14.658,
+            "p95": 14.658,
+            "sumMs": 66.79899999999999
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 20,
+            "max": 13.819,
+            "sumWorkerMs": 97.51599999999999,
+            "uniqueShaderSources": 15
+          },
+          "frameChainStatus": "exact-aggregation-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 76438.265
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 241,
+            "max": 4.5,
+            "p95": 4.300048828125
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.086181640625,
+          "bufferUsage": 0.1820579320192337,
+          "focusGpuTasks": {
+            "n": 377,
+            "max": 1.634,
+            "p95": 0.426
+          },
+          "focusRasterFlush": {
+            "n": 238,
+            "max": 1.361,
+            "p95": 0.286
+          },
+          "focusProgramWait": {
+            "n": 0,
+            "max": null,
+            "p95": null,
+            "sumMs": 0
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 2,
+            "max": 2.452,
+            "sumWorkerMs": 4.59,
+            "uniqueShaderSources": 2
+          },
+          "frameChainStatus": "exact-aggregation-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 77549.333
+        }
+      ]
+    },
+    {
+      "source": "NetEase",
+      "variant": "shadow",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 240,
+            "max": 17.199951171875,
+            "p95": 5.10009765625
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.135009765625,
+          "bufferUsage": 0.18464939296245575,
+          "focusGpuTasks": {
+            "n": 301,
+            "max": 12.121,
+            "p95": 0.409
+          },
+          "focusRasterFlush": {
+            "n": 238,
+            "max": 11.724,
+            "p95": 0.285
+          },
+          "focusProgramWait": {
+            "n": 2,
+            "max": 4.852,
+            "p95": 4.852,
+            "sumMs": 8.222000000000001
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 6,
+            "max": 4.663,
+            "sumWorkerMs": 21.629,
+            "uniqueShaderSources": 5
+          },
+          "frameChainStatus": "unassigned-no-parent",
+          "textMismatches": 0,
+          "actualLastMediaMs": 78680
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 241,
+            "max": 8.2001953125,
+            "p95": 4.39990234375
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.114013671875,
+          "bufferUsage": 0.18088415265083313,
+          "focusGpuTasks": {
+            "n": 326,
+            "max": 4.871,
+            "p95": 0.254
+          },
+          "focusRasterFlush": {
+            "n": 237,
+            "max": 4.328,
+            "p95": 0.147
+          },
+          "focusProgramWait": {
+            "n": 1,
+            "max": 2.733,
+            "p95": 2.733,
+            "sumMs": 2.733
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 4,
+            "max": 2.763,
+            "sumWorkerMs": 9.350999999999999,
+            "uniqueShaderSources": 4
+          },
+          "frameChainStatus": "exact-aggregation-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 77338.667
+        }
+      ]
+    },
+    {
+      "source": "LRCLIB",
+      "variant": "stroke",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 219,
+            "max": 46,
+            "p95": 7.099853515625
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.05419921875,
+          "bufferUsage": 0.15893292427062988,
+          "focusGpuTasks": {
+            "n": 241,
+            "max": 47.684,
+            "p95": 1.502
+          },
+          "focusRasterFlush": {
+            "n": 212,
+            "max": 46.784,
+            "p95": 1.033
+          },
+          "focusProgramWait": {
+            "n": 9,
+            "max": 15.201,
+            "p95": 15.201,
+            "sumMs": 67.46400000000001
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 20,
+            "max": 14.519,
+            "sumWorkerMs": 99.59799999999998,
+            "uniqueShaderSources": 15
+          },
+          "frameChainStatus": "exact-aggregation-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 77160
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 241,
+            "max": 4.599853515625,
+            "p95": 4.300048828125
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.10302734375,
+          "bufferUsage": 0.1815701276063919,
+          "focusGpuTasks": {
+            "n": 359,
+            "max": 1.291,
+            "p95": 0.457
+          },
+          "focusRasterFlush": {
+            "n": 237,
+            "max": 1.052,
+            "p95": 0.307
+          },
+          "focusProgramWait": {
+            "n": 0,
+            "max": null,
+            "p95": null,
+            "sumMs": 0
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 2,
+            "max": 2.136,
+            "sumWorkerMs": 3.8,
+            "uniqueShaderSources": 2
+          },
+          "frameChainStatus": "exact-aggregation-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 77421.333
+        }
+      ]
+    },
+    {
+      "source": "NetEase",
+      "variant": "fill",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 229,
+            "max": 54.89990234375,
+            "p95": 5.10009765625
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.09619140625,
+          "bufferUsage": 0.12452743947505951,
+          "focusGpuTasks": {
+            "n": 20,
+            "max": 46.944,
+            "p95": 46.944
+          },
+          "focusRasterFlush": {
+            "n": 7,
+            "max": 45.793,
+            "p95": 45.793
+          },
+          "focusProgramWait": {
+            "n": 6,
+            "max": 9.672,
+            "p95": 9.672,
+            "sumMs": 31.366
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 16,
+            "max": 9.36,
+            "sumWorkerMs": 58.998000000000005,
+            "uniqueShaderSources": 13
+          },
+          "frameChainStatus": "unassigned-no-parent",
+          "textMismatches": 0,
+          "actualLastMediaMs": 75407.41
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 241,
+            "max": 13.5,
+            "p95": 4.39990234375
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.06689453125,
+          "bufferUsage": 0.13548780977725983,
+          "focusGpuTasks": {
+            "n": 12,
+            "max": 7.77,
+            "p95": 7.77
+          },
+          "focusRasterFlush": {
+            "n": 9,
+            "max": 7.223,
+            "p95": 7.223
+          },
+          "focusProgramWait": {
+            "n": 1,
+            "max": 3.531,
+            "p95": 3.531,
+            "sumMs": 3.531
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 4,
+            "max": 3.789,
+            "sumWorkerMs": 12.186,
+            "uniqueShaderSources": 4
+          },
+          "frameChainStatus": "exact-aggregation-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 74508.31999999999
+        }
+      ]
+    },
+    {
+      "source": "LRCLIB",
+      "variant": "fill",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 225,
+            "max": 59.300048828125,
+            "p95": 5.800048828125
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.185302734375,
+          "bufferUsage": 0.12068597227334976,
+          "focusGpuTasks": {
+            "n": 9,
+            "max": 59.224,
+            "p95": 59.224
+          },
+          "focusRasterFlush": {
+            "n": 4,
+            "max": 58.097,
+            "p95": 58.097
+          },
+          "focusProgramWait": {
+            "n": 6,
+            "max": 15.522,
+            "p95": 15.522,
+            "sumMs": 45.135000000000005
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 16,
+            "max": 14.788,
+            "sumWorkerMs": 78.06099999999999,
+            "uniqueShaderSources": 13
+          },
+          "frameChainStatus": "unassigned-no-parent",
+          "textMismatches": 0,
+          "actualLastMediaMs": 73800
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 243,
+            "max": 4.5,
+            "p95": 4.300048828125
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.1630859375,
+          "bufferUsage": 0.1383993923664093,
+          "focusGpuTasks": {
+            "n": 6,
+            "max": 1.078,
+            "p95": 1.078
+          },
+          "focusRasterFlush": {
+            "n": 6,
+            "max": 0.894,
+            "p95": 0.894
+          },
+          "focusProgramWait": {
+            "n": 0,
+            "max": null,
+            "p95": null,
+            "sumMs": 0
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 2,
+            "max": 2.335,
+            "sumWorkerMs": 4.361,
+            "uniqueShaderSources": 2
+          },
+          "frameChainStatus": "unassigned-no-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 74699.223
+        }
+      ]
+    },
+    {
+      "source": "NetEase",
+      "variant": "stroke",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 213,
+            "max": 69.60009765625,
+            "p95": 8.099853515625
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.134033203125,
+          "bufferUsage": 0.16163109242916107,
+          "focusGpuTasks": {
+            "n": 252,
+            "max": 75.867,
+            "p95": 1.397
+          },
+          "focusRasterFlush": {
+            "n": 210,
+            "max": 74.586,
+            "p95": 0.961
+          },
+          "focusProgramWait": {
+            "n": 9,
+            "max": 16.862,
+            "p95": 16.862,
+            "sumMs": 71.125
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 20,
+            "max": 16.11,
+            "sumWorkerMs": 103.86900000000001,
+            "uniqueShaderSources": 15
+          },
+          "frameChainStatus": "unassigned-no-parent",
+          "textMismatches": 0,
+          "actualLastMediaMs": 99488.035
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 239,
+            "max": 16.900146484375,
+            "p95": 4.5
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.1220703125,
+          "bufferUsage": 0.18050305545330048,
+          "focusGpuTasks": {
+            "n": 290,
+            "max": 9.646,
+            "p95": 1.39
+          },
+          "focusRasterFlush": {
+            "n": 233,
+            "max": 8.258,
+            "p95": 1.007
+          },
+          "focusProgramWait": {
+            "n": 1,
+            "max": 3.809,
+            "p95": 3.809,
+            "sumMs": 3.809
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 4,
+            "max": 4.38,
+            "sumWorkerMs": 13.402000000000001,
+            "uniqueShaderSources": 4
+          },
+          "frameChainStatus": "unassigned-no-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 77000
+        }
+      ]
+    },
+    {
+      "source": "LRCLIB",
+      "variant": "shadow",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 235,
+            "max": 10.7998046875,
+            "p95": 6.400146484375
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.078857421875,
+          "bufferUsage": 0.1676371991634369,
+          "focusGpuTasks": {
+            "n": 248,
+            "max": 13.718,
+            "p95": 0.433
+          },
+          "focusRasterFlush": {
+            "n": 232,
+            "max": 13.35,
+            "p95": 0.219
+          },
+          "focusProgramWait": {
+            "n": 2,
+            "max": 5.383,
+            "p95": 5.383,
+            "sumMs": 8.518
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 6,
+            "max": 5.064,
+            "sumWorkerMs": 21.958000000000002,
+            "uniqueShaderSources": 5
+          },
+          "frameChainStatus": "unassigned-no-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 76719.363
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 242,
+            "max": 5.7001953125,
+            "p95": 4.300048828125
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.05322265625,
+          "bufferUsage": 0.1815396398305893,
+          "focusGpuTasks": {
+            "n": 318,
+            "max": 0.45,
+            "p95": 0.308
+          },
+          "focusRasterFlush": {
+            "n": 239,
+            "max": 0.262,
+            "p95": 0.178
+          },
+          "focusProgramWait": {
+            "n": 0,
+            "max": null,
+            "p95": null,
+            "sumMs": 0
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 2,
+            "max": 2.188,
+            "sumWorkerMs": 3.858,
+            "uniqueShaderSources": 2
+          },
+          "frameChainStatus": "unassigned-no-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 77429.333
+        }
+      ]
+    },
+    {
+      "source": "NetEase",
+      "variant": "baseline",
+      "completed": true,
+      "errors": [],
+      "cycles": [
+        {
+          "cycle": "cold",
+          "rawFrame": {
+            "n": 229,
+            "max": 60.800048828125,
+            "p95": 4.5
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.126953125,
+          "bufferUsage": 0.16711890697479248,
+          "focusGpuTasks": {
+            "n": 286,
+            "max": 55.628,
+            "p95": 0.782
+          },
+          "focusRasterFlush": {
+            "n": 225,
+            "max": 54.596,
+            "p95": 0.538
+          },
+          "focusProgramWait": {
+            "n": 9,
+            "max": 10.908,
+            "p95": 10.908,
+            "sumMs": 46.676
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 20,
+            "max": 10.601,
+            "sumWorkerMs": 72.026,
+            "uniqueShaderSources": 15
+          },
+          "frameChainStatus": "unassigned-no-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 74152
+        },
+        {
+          "cycle": "warm",
+          "rawFrame": {
+            "n": 241,
+            "max": 6.400146484375,
+            "p95": 4.300048828125
+          },
+          "anchorsFound": true,
+          "maximumAnchorDifferenceMs": 0.0830078125,
+          "bufferUsage": 0.1813109815120697,
+          "focusGpuTasks": {
+            "n": 315,
+            "max": 4.026,
+            "p95": 0.433
+          },
+          "focusRasterFlush": {
+            "n": 240,
+            "max": 3.802,
+            "p95": 0.27
+          },
+          "focusProgramWait": {
+            "n": 1,
+            "max": 2.108,
+            "p95": 2.108,
+            "sumMs": 2.108
+          },
+          "gpuCompileTemporalOnly": {
+            "n": 4,
+            "max": 2.023,
+            "sumWorkerMs": 6.746,
+            "uniqueShaderSources": 4
+          },
+          "frameChainStatus": "unassigned-no-bridge",
+          "textMismatches": 0,
+          "actualLastMediaMs": 74359.384
+        }
+      ]
+    }
+  ],
+  "conclusion": {
+    "supported": "Removing all Focus text shadows consistently reduces cold first-use program wait and raster flush in these two n=1 diagnostics. Stroke-only and fill-copy-only removal do not remove the cold tail.",
+    "notEstablished": [
+      "Stable FPS/latency improvement in trace-disabled production",
+      "Separate additive stroke/shadow/fill costs",
+      "Exact attribution of every D3DCompile worker to Focus",
+      "Whether keeping base shadow but removing fill-copy shadow is sufficient",
+      "Cause of the original untraced 58.3ms observation"
+    ],
+    "recommendation": "Converge. Keep template appearance, onset and fill unchanged. If an additional product change is approved, only evaluate removing redundant shadow from the fill copy while preserving the base glyph shadow/stroke. No warm-up wait, readiness gate or timing change."
+  }
+}

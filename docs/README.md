@@ -28,6 +28,14 @@
 - Output 細填色成本：[首字準備、commit 與冷暖重播對照](operations/lyrics-output-fine-cost-2026-10-22.md)
 - Output 冷啟動長尾：[同次事件鏈、Focus 量測與舊分組資料診斷](operations/lyrics-output-cold-max-2026-10-22.md)
 - 歌詞階段整理：[交付範圍、驗證與尚未解決的時間限制](operations/lyrics-milestone-2026-10-22.md)
+- KTV／本地填色：[實檔路徑、首字顯示估計與同案例驗證](operations/lyrics-ktv-local-fill-2026-10-22.md)
+- 本地呈現收斂：[只有分段起點的連續掃字與模型時間隔離](operations/lyrics-local-continuity-2026-10-22.md)
+- 來源分析任務：[來源版本、進度與套用隔離及文字完整性核對](operations/lyrics-source-ownership-2026-10-22.md)
+- 歌詞句尾與停留：[有界句尾、KTV 有效列與自然播放／離線活動對照](operations/lyrics-tail-hold-2026-10-22.md)
+- Focus 畫格管線：[提交關聯、容量量測與兩來源冷暖交錯對照](operations/lyrics-focus-frame-2026-10-23.md)
+- Focus GPU 與本地呈現：[有限陰影／描邊／填色拆解與螢光筆統一](operations/lyrics-focus-gpu-2026-10-23.md)
+- Focus 陰影最小候選：[兩來源冷暖對照、所有慢值與候選撤回](operations/lyrics-focus-copy-shadow-2026-10-23.md)
+- 歌詞本階段總結：[已保留、已撤回、未解與分類提交紀錄](operations/lyrics-milestone-2026-10-23.md)
 
 ## 權利與治理（governance/）
 

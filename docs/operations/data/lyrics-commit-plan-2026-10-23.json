@@ -1,0 +1,588 @@
+{
+  "status": "authorized sequence; A/B/C committed after exact-snapshot checks; D records this execution; no push",
+  "groups": [
+    {
+      "id": "A",
+      "title": "feat(lyrics): preserve source text and share output text rules",
+      "scope": "來源保真解析、v3 normalizer 與既有 v2 時間相容；製作資訊只標候選，逐行確認後可撤回 Output 投影；Live Stage 缺省保真，不接新模型",
+      "wholeFiles": [
+        "shared/lrcParsing.mjs",
+        "shared/lrcParsing.test.js",
+        "shared/lyricsTimingValues.json",
+        "shared/presentation/lyricsTextProcessing.mjs",
+        "shared/presentation/lyricsTextProcessing.test.js",
+        "shared/presentation/lyricsPhraseBreaks.mjs",
+        "shared/presentation/lyricsPresentation.mjs",
+        "shared/presentation/lyricsPresentationPolicies.test.js",
+        "shared/presentation/lyricsTemplateCapabilities.mjs",
+        "shared/presentation/lyricsTemplateCapabilities.test.js",
+        "electron/lib/lrclib/lrc.js",
+        "electron/lib/library/lyricsTiming.js",
+        "electron/lib/library/lyricsTiming.test.js",
+        "electron/lib/library/lyrics.test.js",
+        "electron/lib/outputServer/http.js",
+        "electron/lib/outputServer.test.js",
+        "src/utils/lyrics.js",
+        "src/utils/lyrics.test.js",
+        "src/utils/lyricsFidelity.test.js",
+        "src/composables/lyrics/useLyricsTextProcessing.js",
+        "src/composables/lyrics/useLyricsTextProcessing.test.js",
+        "src/composables/output/useOutputProjectionPublisher.js",
+        "src/composables/useOutputRuntime.test.js",
+        "src/components/lyrics/LyricsTextProcessing.vue",
+        "src/components/lyrics/LyricsTextProcessing.test.js",
+        "src/components/lyrics/LyricsAuthoringWorkspace.behavior.test.js",
+        "src/components/output/ObsSlotWorkbench.vue",
+        "src/components/output/ObsSlotWorkbench.appearance.test.js",
+        "src/constants/outputTemplates.js",
+        "src/constants/outputTemplates.test.js",
+        "overlay/shared/lyricsPresentation.test.js",
+        "scripts/fixtures/output/appearance-baseline.json",
+        "scripts/outputAppearanceBaseline.test.mjs",
+        "docs/contracts/lyrics-text-processing.md",
+        "docs/contracts/README.md",
+        "docs/contracts/output-appearance.md",
+        "docs/operations/release-inventory.md"
+      ],
+      "checks": [
+        "解析／normalizer／v2 sidecar 相容與時間守恆",
+        "預設保留實唱／和聲，排除選擇切來源失效",
+        "projection identity／active id／讀音索引",
+        "exact HTTP module allowlist／封裝閉圖",
+        "對此組精確快照的 lint／tests／build／文件鏈結"
+      ]
+    },
+    {
+      "id": "B",
+      "title": "fix(lyrics): scope analysis jobs to lyric source revisions",
+      "scope": "來源版本入列／去重／進度／取消／套用隔離；完成通知不重載全曲庫；沿用既有聲學能力",
+      "wholeFiles": [
+        "electron/lib/library/lyricsAcousticEstimates.js",
+        "electron/lib/lyricsResearch/automatic.js",
+        "electron/lib/lyricsResearch/automatic.test.js",
+        "electron/lib/lyricsResearch/automatic.source.test.js",
+        "electron/lib/lyricsResearch/input.js",
+        "electron/lib/lyricsResearch/input.test.js",
+        "electron/lib/lyricsResearch/service.js",
+        "electron/lib/lyricsResearch/service.test.js",
+        "electron/main.js",
+        "electron/main/lyrics/experimentalHandlers.js",
+        "electron/main/lyrics/experimentalHandlers.test.js",
+        "electron/preload.js",
+        "electron/preload.test.js",
+        "src/composables/lyrics/useExperimentalLyricsQueue.js",
+        "src/composables/lyrics/useExperimentalLyricsQueue.test.js",
+        "docs/operations/lyrics-source-ownership-2026-10-22.md"
+      ],
+      "checks": [
+        "單一 heavy owner／兩來源排隊／版本過期拒收",
+        "job id 取消與 main 身份推導",
+        "不同來源完成不解除套用／晚回應不覆寫",
+        "真 main/preload IPC 完成通知與退訂（完整重啟）",
+        "對此組精確快照的 lint／tests／build／文件鏈結"
+      ]
+    },
+    {
+      "id": "C",
+      "title": "fix(lyrics): unify local cues and bounded paint lifecycle",
+      "scope": "本地螢光筆與藍色時間底線、KTV 細填色無底線、缺字／starts-only 顯示估計、掃完／停留／換句分離及有界句尾；保留 opt-in trace drain 與回歸，不保留撤回原型",
+      "wholeFiles": [
+        "shared/presentation/lyricsAcousticPreview.mjs",
+        "shared/presentation/lyricsDisplayFrame.mjs",
+        "shared/presentation/lyricsDisplayFrame.test.js",
+        "shared/presentation/lyricsDisplayLayout.mjs",
+        "shared/presentation/lyricsDisplayLayout.test.js",
+        "shared/presentation/lyricsFineFrame.mjs",
+        "shared/presentation/lyricsFineFrame.test.js",
+        "shared/presentation/lyricsPaintLifecycle.test.js",
+        "shared/presentation/state.mjs",
+        "overlay/lyrics/lyrics.css",
+        "overlay/lyrics/lyrics.mjs",
+        "overlay/lyrics/lyricsFine.mjs",
+        "overlay/lyrics/lyricsFit.mjs",
+        "overlay/lyrics/lyricsPerformance.test.js",
+        "overlay/shared/tokens.test.js",
+        "src/components/lyrics/LyricsDocumentPanel.vue",
+        "src/components/lyrics/LyricsDocumentPanel.test.js",
+        "src/components/lyrics/LyricsFineText.vue",
+        "src/components/lyrics/LyricsExperimentalEstimate.vue",
+        "src/components/lyrics/LyricsPhrasePreview.vue",
+        "src/components/lyrics/PerformanceLyricsWorkspace.vue",
+        "src/components/settings/LyricsResearchSettingsBlock.vue",
+        "src/views/SettingsView.test.js",
+        "src/composables/lyrics/useLyricsClock.js",
+        "src/composables/lyrics/useLyricsClock.test.js",
+        "docs/operations/lyrics-ktv-local-fill-2026-10-22.md",
+        "docs/operations/data/lyrics-ktv-local-fill-2026-10-22.json",
+        "docs/operations/lyrics-local-continuity-2026-10-22.md",
+        "docs/operations/data/lyrics-local-continuity-2026-10-22.json",
+        "docs/operations/lyrics-tail-hold-2026-10-22.md",
+        "docs/operations/data/lyrics-tail-hold-2026-10-22.json"
+      ],
+      "checks": [
+        "T1／T1+／T2 身分、原起點／已知停頓與完整文字不變",
+        "paintEnd／holdUntil／cueEnds 邊界與不足時 unknown",
+        "部分細時間／原生 T2／starts-only／ruby／分頁／KTV current-next",
+        "本地螢光筆／藍底線／forced-colors；KTV 無底線",
+        "trace drain copied batch／anchor 與計數保留、同句入口及 yield 有字",
+        "精確快照 lint／tests／build；可見模式差分，不追加 GPU 性能實驗"
+      ]
+    },
+    {
+      "id": "D",
+      "title": "docs(lyrics): summarize retained changes and rejected GPU candidates",
+      "scope": "階段狀態、全部慢值／缺測／撤回證據與未解問題；GPU 收斂，不宣稱回退已解決",
+      "wholeFiles": [
+        "docs/README.md",
+        "docs/operations/lyrics-milestone-2026-10-23.md",
+        "docs/operations/data/lyrics-commit-plan-2026-10-23.json",
+        "docs/operations/lyrics-focus-frame-2026-10-23.md",
+        "docs/operations/data/lyrics-focus-frame-2026-10-23.json",
+        "docs/operations/lyrics-focus-gpu-2026-10-23.md",
+        "docs/operations/data/lyrics-focus-gpu-2026-10-23.json",
+        "docs/operations/lyrics-focus-copy-shadow-2026-10-23.md",
+        "docs/operations/data/lyrics-focus-copy-shadow-2026-10-23.json"
+      ],
+      "checks": [
+        "報告／JSON 數值與分母互相核對",
+        "去識別資料不含使用者歌詞／私有路徑／音訊／sidecar",
+        "Markdown／Prettier／本機鏈結",
+        "四組 manifest 覆蓋／歷史基線不重複提交／工作區排除檔不變"
+      ]
+    }
+  ],
+  "partialFiles": [
+    {
+      "path": "src/components/lyrics/LyricsAuthoringWorkspace.vue",
+      "groups": {
+        "A": "LyricsTextProcessing import與文字處理UI",
+        "C": "localLyricsFrame優先於experimentalFrame的本地T2顯示接線"
+      }
+    },
+    {
+      "path": "overlay/lyrics/lyrics.test.js",
+      "groups": {
+        "A": "Broadcast Compact 明確選擇與scheduler Balanced缺省的兩個policy hunks",
+        "C": "KTV細填色／精確fit／同句入口與yield回歸及其新增import"
+      }
+    },
+    {
+      "path": "src/composables/useLyrics.js",
+      "groups": {
+        "A": "useLyricsTextProcessing import／instance／export",
+        "C": "projectNativeLyricsFrame import／localLyricsFrame／export"
+      }
+    },
+    {
+      "path": "src/composables/useLyrics.test.js",
+      "groups": {
+        "A": "lyricsTextProcessing public surface assertion",
+        "C": "localLyricsFrame public surface assertion"
+      }
+    },
+    {
+      "path": "src/composables/lyrics/useExperimentalLyrics.js",
+      "groups": {
+        "B": "queue completions／refreshCompletedSource／來源版本 watcher",
+        "C": "prepareLocalLyricsPaintFrame／projectLyricsPaintLifecycle／paintClock 與 cueEnd"
+      }
+    },
+    {
+      "path": "src/composables/lyrics/useExperimentalLyrics.test.js",
+      "groups": {
+        "B": "完成通知／來源版本／晚回應／套用及校時失效狀態",
+        "C": "顯示估計／fine／starts-only／停頓／首字與時鐘"
+      }
+    },
+    {
+      "path": "src/components/lyrics/LyricsSourceAnalysis.vue",
+      "groups": {
+        "B": "依 sourceFilename/sourceRevision 選任務／jobId cancel",
+        "C": "summarizeAcousticPreview／名稱／掃字說明與計數"
+      }
+    },
+    {
+      "path": "src/components/lyrics/LyricsSourceAnalysis.behavior.test.js",
+      "groups": {
+        "B": "來源版本進度／取消行為",
+        "C": "精簡用詞／細時間計數與顯示說明"
+      }
+    },
+    {
+      "path": "docs/contracts/lyrics-acoustic-estimate-contract.md",
+      "groups": {
+        "B": "來源版本任務／完成刷新／main 身份與 sidecar 相容契約",
+        "C": "本地／KTV／顯示估計及無模型時間回寫契約；先更正舊 static underline without marker 文字"
+      }
+    },
+    {
+      "path": "docs/contracts/lyrics-timing-contract.md",
+      "groups": {
+        "A": "lyrics-source-v3／v2 sidecar fallback 與文字處理連結",
+        "C": "KTV／本地標記／缺時間估計／句尾／trace-drain 與量測界線"
+      }
+    },
+    {
+      "path": "DESIGN.md",
+      "groups": {
+        "A": "共用文字處理／模板進階顯示／Live Stage Balanced 段落",
+        "C": "歌詞 typography recipe；先更正現有無整句標記的過期段落，保留所有非歌詞設計內容"
+      }
+    },
+    {
+      "path": "docs/architecture.md",
+      "groups": {
+        "A": "共用文字處理 owner／Output derived identity",
+        "B": "來源版本任務及完成通知 owner",
+        "C": "KTV／本地進度呈現、paint lifecycle；本地描述同步螢光筆／藍底線"
+      }
+    },
+    {
+      "path": "docs/spec.md",
+      "groups": {
+        "A": "只更新歌詞列的保真解析／逐行可撤回 Output 選擇",
+        "B": "同一歌詞列增列來源版本分析任務",
+        "C": "同一歌詞列增列本地／KTV／缺字顯示估計，禁止一開始整列放入尚未提交功能"
+      },
+      "note": "目前20列diff主要是表格寬度重排，語意只變歌詞列；每階段對該列做必要排版，不把整個混合現況提前提交。"
+    }
+  ],
+  "deferRules": [
+    {
+      "category": "其他 UI／播放佇列／演出安排",
+      "prefixes": [
+        "src/components/performance-session/",
+        "src/components/queue/",
+        "src/components/playback/context/",
+        "src/components/playlists/",
+        "src/components/track/",
+        "src/components/settings/ObsIntegrationSettingsBlock"
+      ],
+      "files": ["docs/contracts/performance-session-preparation.md"]
+    },
+    {
+      "category": "獨立 Output 工作區／ADR 設計",
+      "prefixes": [],
+      "files": [
+        "docs/adr/0027-output-template-elements-and-property-workspace.md",
+        "docs/adr/README.md"
+      ]
+    },
+    {
+      "category": "離線模型／offset 研究另案保留",
+      "prefixes": [
+        "scripts/research/lyricsTextPreprocessing/",
+        "docs/research/lyrics-text-"
+      ],
+      "files": ["docs/research/README.md"]
+    }
+  ],
+  "neverInclude": [
+    "ignored tasks／raw traces／失敗原型程式／使用者 profile／歌詞／音訊／sidecar／模型資產",
+    "已撤回 empty-live-frame／read-before-write／Focus copy-shadow 去重候選",
+    "已提交 offset 研究重整／任何新 BPM、VAD live gate 或語意模型接入"
+  ],
+  "executionGate": "依使用者確認逐組驗證、review、staged/committed bytes核對與hooks後提交；只含白名單歌詞變更，其他工作保留，不push。D為本紀錄提交，不含新產品碼或GPU實驗。",
+  "snapshot": {
+    "head": "f2baf94faae95e63225d5007512249554a732ea4",
+    "changedPaths": 153,
+    "counts": {
+      "partial": 13,
+      "whole": 93,
+      "deferred": 47
+    },
+    "wholeFilesByGroup": {
+      "D": 9,
+      "A": 37,
+      "C": 31,
+      "B": 16
+    }
+  },
+  "deferredFiles": [
+    {
+      "path": "docs/adr/0027-output-template-elements-and-property-workspace.md",
+      "category": "獨立 Output 工作區／ADR 設計"
+    },
+    {
+      "path": "docs/adr/README.md",
+      "category": "獨立 Output 工作區／ADR 設計"
+    },
+    {
+      "path": "docs/contracts/performance-session-preparation.md",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "docs/research/README.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-blind-validation-plan-2026-10-23.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-preprocessing-baseline-2026-10-23.json",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-preprocessing-corpus-2026-10-23.json",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-preprocessing-feasibility-2026-10-23.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-qwen-ablation-2026-10-23.json",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-qwen-ablation-2026-10-23.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-qwen-pilot-2026-10-23.json",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "docs/research/lyrics-text-qwen-pilot-2026-10-23.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/README.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/ablation-study.md",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/ablation.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/ablation.test.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/contract.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/contract.test.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/export.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/exportAblation.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/localCpuRun.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/pilot.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/processLifecycle.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/processLifecycle.test.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/runAblation.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/sample-process.ps1",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/score.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/score.test.mjs",
+      "category": "離線模型／offset 研究另案保留"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionCompletedList.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionCompletedList.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionCurrent.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionCurrent.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionHistoryTools.behavior.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionHistoryTools.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionWorkspace.behavior.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionWorkspace.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/playback/context/TrackContextPanel.behavior.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/playback/context/TrackContextPanel.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/playlists/PlaylistSidebar.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/queue/QueuePanel.behavior.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/queue/QueuePanel.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/settings/ObsIntegrationSettingsBlock.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/settings/ObsIntegrationSettingsBlock.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/track/TrackActionMenu.behavior.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/track/TrackActionMenu.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/track/TrackPreviewOverlay.behavior.test.js",
+      "category": "其他 UI／播放佇列／演出安排"
+    },
+    {
+      "path": "src/components/track/TrackPreviewOverlay.vue",
+      "category": "其他 UI／播放佇列／演出安排"
+    }
+  ],
+  "execution": {
+    "date": "2026-10-23",
+    "commits": [
+      {
+        "group": "A",
+        "hash": "fcf2539e966e02d4a774c6f8e2538c8fc909cf08",
+        "title": "feat(lyrics): preserve source text and share output text rules",
+        "files": 45,
+        "parent": "f2baf94faae95e63225d5007512249554a732ea4",
+        "hooksEnabled": true
+      },
+      {
+        "group": "B",
+        "hash": "b5e48c59568cf7813423428826382c490654a00a",
+        "title": "fix(lyrics): scope analysis jobs to lyric source revisions",
+        "files": 23,
+        "parent": "fcf2539e966e02d4a774c6f8e2538c8fc909cf08",
+        "hooksEnabled": true
+      },
+      {
+        "group": "C",
+        "hash": "1d509f190491927f7dc6724ca2f0190442ee237c",
+        "title": "fix(lyrics): unify local cues and bounded paint lifecycle",
+        "files": 44,
+        "parent": "b5e48c59568cf7813423428826382c490654a00a",
+        "hooksEnabled": true
+      }
+    ],
+    "exactSnapshots": [
+      {
+        "group": "A",
+        "files": 45,
+        "focusedFiles": 19,
+        "focusedTests": 601,
+        "fullFiles": 1009,
+        "passed": 9614,
+        "skipped": 1,
+        "lint": true,
+        "format": true,
+        "markdownFiles": 8,
+        "localLinks": 147,
+        "build": true,
+        "staticReview": "APPROVE"
+      },
+      {
+        "group": "B",
+        "files": 23,
+        "focusedFiles": 9,
+        "focusedTests": 113,
+        "fullFiles": 1010,
+        "passed": 9629,
+        "skipped": 1,
+        "lint": true,
+        "format": true,
+        "markdownFiles": 4,
+        "localLinks": 88,
+        "build": true,
+        "staticReview": "APPROVE",
+        "mainPreloadSmoke": {
+          "isolatedProfile": true,
+          "completionCount": 1,
+          "afterDisposeCount": 1,
+          "ownedProcessesExited": true,
+          "visibleAcceptance": false
+        }
+      },
+      {
+        "group": "C",
+        "files": 44,
+        "focusedFiles": 13,
+        "focusedTests": 318,
+        "fullFiles": 1011,
+        "passed": 9665,
+        "skipped": 1,
+        "lint": true,
+        "format": true,
+        "markdownFiles": 8,
+        "localLinks": 110,
+        "fullMarkdownFiles": 193,
+        "build": true,
+        "staticReview": "APPROVE"
+      }
+    ],
+    "retainedFailures": [
+      "A sandbox focused: 54 fail / 547 pass, loopback EACCES and temp rename EPERM",
+      "A first full: 8 fail / 9606 pass / 1 skip, snapshot Git/root/assets",
+      "A second full: 2 fail / 9612 pass / 1 skip, missing snapshot HEAD and Output dependency closure",
+      "A/B transient index.lock staging failures; no lock deletion",
+      "C first pre-commit backup failure; snapshot index repaired, hooks-enabled retry succeeded"
+    ],
+    "gpuExperimentsRun": false,
+    "newPlaybackMeasurements": false,
+    "newManualOrObsAcceptance": false,
+    "pushed": false,
+    "evidencePolicy": "Earlier slow values, failures, missing observations and unresolved vocal timing/GPU tails remain unchanged. Whole/partial/deferred lists describe the planning snapshot, not current dirty status.",
+    "postFreezeWorkingChanges": "Later local lyric position/presentation and holdout research edits are preserved uncommitted. Checks apply to exact group snapshots, not the later dirty working tree."
+  }
+}
