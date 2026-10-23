@@ -1,6 +1,6 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   loadOutputSlots,
@@ -11,16 +11,21 @@ import {
   upsertOutputSlot,
 } from './outputSlots.js';
 
+// Keep real atomic-rename tests out of the sandbox's restricted TEMP.
+const testTmpRoot = fileURLToPath(new URL('../../.tmp/', import.meta.url));
+
 describe('outputSlots', () => {
   let dir;
   let filePath;
 
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-output-test-'));
+    fs.mkdirSync(testTmpRoot, { recursive: true });
+    dir = fs.mkdtempSync(path.join(testTmpRoot, 'utawakui-output-test-'));
     filePath = path.join(dir, OUTPUT_SLOTS_FILENAME);
   });
 
   afterEach(() => {
+    expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
   });
 

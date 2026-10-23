@@ -1,6 +1,6 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   atomicWriteJson,
@@ -10,16 +10,24 @@ import {
   backupCorrupted,
 } from './atomicWrite.js';
 
+// The Windows sandbox TEMP permits writes but rejects atomic renames.
+// Use the workspace scratch directory, also excluded from Vite watching.
+const testTmpRoot = fileURLToPath(new URL('../../.tmp/', import.meta.url));
+beforeEach(() => {
+  fs.mkdirSync(testTmpRoot, { recursive: true });
+});
+
 describe('atomicWriteJson', () => {
   let dir;
   let filePath;
 
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    dir = fs.mkdtempSync(path.join(testTmpRoot, 'utawakui-atomic-test-'));
     filePath = path.join(dir, 'data.json');
   });
 
   afterEach(() => {
+    expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -48,11 +56,12 @@ describe('atomicWriteText', () => {
   let filePath;
 
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    dir = fs.mkdtempSync(path.join(testTmpRoot, 'utawakui-atomic-test-'));
     filePath = path.join(dir, 'data.txt');
   });
 
   afterEach(() => {
+    expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -68,11 +77,12 @@ describe('atomicWriteBuffer', () => {
   let filePath;
 
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    dir = fs.mkdtempSync(path.join(testTmpRoot, 'utawakui-atomic-test-'));
     filePath = path.join(dir, 'data.bin');
   });
 
   afterEach(() => {
+    expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -90,13 +100,14 @@ describe('atomicCopyFileSync', () => {
   let targetPath;
 
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    dir = fs.mkdtempSync(path.join(testTmpRoot, 'utawakui-atomic-test-'));
     sourcePath = path.join(dir, 'source.png');
     targetPath = path.join(dir, 'target.png');
     fs.writeFileSync(sourcePath, Buffer.from([1, 2, 3, 4]));
   });
 
   afterEach(() => {
+    expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -119,11 +130,12 @@ describe('backupCorrupted', () => {
   let filePath;
 
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    dir = fs.mkdtempSync(path.join(testTmpRoot, 'utawakui-atomic-test-'));
     filePath = path.join(dir, 'data.json');
   });
 
   afterEach(() => {
+    expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
