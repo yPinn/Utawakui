@@ -416,6 +416,12 @@ The closed module-graph test verifies these routes;
 co-located tests remain excluded. The renderer fine-text component ships through
 Vite. No model, dependency, worker or unpacked payload is added.
 
+KTV pending-fine handoff protection adds
+`shared/presentation/lyricsKtvHandoff.mjs` under the existing `shared/**/*`
+package rule and one exact Browser Source module route. The closed HTTP graph
+and packaging tests cover inclusion of the module and exclusion of its adjacent
+test. No builder glob, model, dependency or unpacked payload changes.
+
 The explicit research runtime allowlist also includes `scripts/research/lyricsAcoustic/english.cjs`
 for English word ranges and comparison normalization. It runs in main; no additional
 weight, runtime download or unpacked worker is introduced. The existing pinned model

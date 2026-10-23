@@ -291,6 +291,8 @@ describe('packaged dependency boundary', () => {
       ['shared/presentation/lyricsDisplayLayout.mjs', true],
       ['shared/presentation/lyricsDisplayFrame.mjs', true],
       ['shared/presentation/lyricsFineFrame.mjs', true],
+      ['shared/presentation/lyricsKtvHandoff.mjs', true],
+      ['shared/presentation/lyricsKtvHandoff.test.js', false],
       ['shared/lyricsFineTiming.mjs', true],
       ['shared/lyricsTimingValues.json', true],
       ['shared/browser/lyricsFinePaint.mjs', true],

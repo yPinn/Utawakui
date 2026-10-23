@@ -12,6 +12,7 @@ import {
   projectLyricsFineFrame,
   prepareLyricsPaintFrame,
 } from './lyricsFineFrame.mjs';
+import { ktvHandoffEndMs } from './lyricsKtvHandoff.mjs';
 import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
 import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
@@ -1027,18 +1028,32 @@ function projectKtvDisplayTimeline(
     },
   );
 
+  // Canonical next onsets include source rows that a template may omit.
+  const nextCanonicalStarts = new Map();
+  let nextCanonicalStart = null;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    nextCanonicalStarts.set(i, nextCanonicalStart);
+    if (Number.isFinite(lines[i].startMs))
+      nextCanonicalStart = lines[i].startMs;
+  }
   let previousUnit = null;
   let laneIndex = 0;
-  return units.map((unit) => {
+  return units.map((unit, index) => {
+    const handoffEndMs = ktvHandoffEndMs(
+      lines[unit.sourceLineIndex],
+      unit,
+      nextCanonicalStarts.get(unit.sourceLineIndex),
+      units[index + 1]?.startMs,
+    );
     const entrance = previousUnit
       ? ktvCountInBoundaries(snapshot, unit.startMs, previousUnit.endMs)
       : null;
     const sharesPreviousPage =
       previousUnit &&
-      (!entrance || entrance.visibleStartMs < previousUnit.endMs);
+      (!entrance || entrance.visibleStartMs < previousUnit.handoffEndMs);
     laneIndex = sharesPreviousPage ? laneIndex + 1 : 0;
-    previousUnit = unit;
-    return { ...unit, laneIndex };
+    previousUnit = { ...unit, laneIndex, handoffEndMs };
+    return previousUnit;
   });
 }
 
@@ -1131,7 +1146,7 @@ function ktvEntrances(snapshot, units) {
 
 function activeKtvDisplayUnit(units, positionMs) {
   return units.find(
-    (unit) => positionMs >= unit.startMs && positionMs < unit.endMs,
+    (unit) => positionMs >= unit.startMs && positionMs < unit.handoffEndMs,
   );
 }
 
@@ -1388,8 +1403,8 @@ function selectKtvLyricsFrame(
 
   const completedUnit = units.findLast(
     (unit) =>
-      positionMs >= unit.endMs &&
-      positionMs < unit.endMs + ktvCompletedHoldMs(units, unit),
+      positionMs >= unit.handoffEndMs &&
+      positionMs < unit.handoffEndMs + ktvCompletedHoldMs(units, unit),
   );
   return completedUnit
     ? ktvFrameForUnit(snapshot, units, completedUnit, positionMs, {
@@ -1427,13 +1442,16 @@ function nextKtvBoundaryDelayMs(
     return [
       unit.startMs,
       unit.endMs,
-      unit.endMs + ktvCompletedHoldMs(units, unit),
+      unit.handoffEndMs,
+      unit.handoffEndMs + ktvCompletedHoldMs(units, unit),
       ...segments.flatMap((segment) => [segment.startMs, segment.endMs]),
     ];
   });
   const activeSources = new Set(
     units
-      .filter((unit) => unit.startMs <= positionMs && unit.endMs > positionMs)
+      .filter(
+        (unit) => unit.startMs <= positionMs && unit.handoffEndMs > positionMs,
+      )
       .map((unit) => unit.sourceLineIndex),
   );
   for (const index of activeSources)

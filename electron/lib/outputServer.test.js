@@ -567,6 +567,7 @@ describe('outputServer', () => {
         '/shared/presentation/lyricsTextProcessing.mjs',
         '/shared/presentation/lyricsDisplayFrame.mjs',
         '/shared/presentation/lyricsFineFrame.mjs',
+        '/shared/presentation/lyricsKtvHandoff.mjs',
         '/shared/lyricsFineTiming.mjs',
         '/shared/browser/lyricsFinePaint.mjs',
         '/overlay/lyrics/lyricsFine.mjs',
