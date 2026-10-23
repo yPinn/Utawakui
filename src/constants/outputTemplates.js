@@ -42,10 +42,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'setlist',
     order: 10,
     name: '票據歌單',
-    availability: { summary: '演出安排提供已唱明細；一般播放顯示播放紀錄。' },
-    summary: '黑白熱感紙呈現目前曲目與已唱紀錄。',
-    detail:
-      '唱完即印入一筆，向下出紙為預設，亦可向上出紙；定時回顧最近一百筆已唱明細。',
+    availability: { summary: '演出安排顯示已唱明細，一般播放顯示紀錄。' },
+    summary: '熱感小票風格的曲目與已唱紀錄。',
+    detail: '唱完自動出紙，可切換方向並定時回顧已唱明細。',
     preview: { layoutLabel: '連續小票', motionLabel: '送紙與回顧' },
     tags: ['熱感小票', '雙向出紙', '歷史回顧'],
     settings: [
@@ -61,10 +60,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 20,
     name: '夜色歌單',
     availability: {
-      summary: '只需要目前曲目與已唱紀錄。',
+      summary: '使用目前曲目與已唱紀錄。',
     },
-    summary: '黑底細線排列目前曲目與已唱紀錄。',
-    detail: '目前曲目停在上方，已唱紀錄沿黑幕向下累積；超出範圍後平順滾動。',
+    summary: '黑底細線風格的演唱紀錄。',
+    detail: '目前曲目置頂，已唱紀錄向下累積並平順滾動。',
     preview: {
       layoutLabel: '目前＋已唱',
       motionLabel: '溢位滾動',
@@ -83,11 +82,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 10,
     name: '經典字幕',
     availability: {
-      summary: '有逐字資料時精確掃色，否則依行長平順估算。',
+      summary: '支援逐字掃色，無逐字資料時依行長估算。',
     },
-    summary: '雙行錯位字幕搭配倒數與逐字掃色。',
-    detail:
-      '上下兩列交替接唱，提示點先行倒數，文字隨演唱進度掃色，重現經典伴唱節奏。',
+    summary: '雙行交替、倒數與逐字掃色。',
+    detail: '雙行交替接唱，提示點先行倒數，文字隨進度掃色。',
     preview: {
       layoutLabel: '錯位雙行',
       motionLabel: '逐字掃色',
@@ -108,11 +106,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 30,
     name: '分格對白',
     availability: {
-      summary: '只需要目前行；有日文讀音時可顯示假名。',
+      summary: '使用目前行，可顯示已有的日文讀音。',
     },
-    summary: '歌詞化為左右交替的直書對話框。',
-    detail:
-      '當前歌詞拆成一至三個直書對話框，依句切換人物左右，像漫畫分鏡般接續。',
+    summary: '左右交替的漫畫直書對白。',
+    detail: '歌詞分成一至三個直書對話框，隨句左右交替。',
     preview: {
       layoutLabel: '直書對白',
       motionLabel: '整框淡入',
@@ -132,11 +129,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 25,
     name: '躍動字幕',
     availability: {
-      summary: '逐行歌詞即可；每段歌詞自動交錯跳入。',
+      summary: '使用逐行歌詞。',
     },
-    summary: '粗體漸層白框字，每段逐字交錯跳入。',
-    detail:
-      '預設使用斜向漸層白框字，也可固定單色或錯位材質，或依句切換三款；文字在定點交錯跳入。',
+    summary: '漸層粗體字，逐字交錯跳入。',
+    detail: '文字定點交錯跳入，可固定或輪替三款材質。',
     preview: {
       layoutLabel: '底部跳字',
       motionLabel: '定點交錯',
@@ -157,11 +153,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 28,
     name: '和風直書',
     availability: {
-      summary: '只需要逐行歌詞；日文漢字會自動成組。',
+      summary: '使用逐行歌詞，自動組合日文漢字。',
     },
-    summary: '明朝直書讓漢字成組、假名逐字綴現。',
-    detail:
-      '以華麗明朝體直書，長句會在可信邊界拆成右起雙欄；可調整字色、大小與右側位置。',
+    summary: '明朝直書，漢字成組、假名逐字呈現。',
+    detail: '明朝體直書，長句自動分欄；可調字色、大小與位置。',
     preview: {
       layoutLabel: '華麗直書',
       motionLabel: '群字綴現',
@@ -183,11 +178,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 20,
     name: '舞台字幕',
     availability: {
-      summary: '需要逐行時間；曲目資訊用於開場字卡。',
+      summary: '需逐行時間，開場字卡使用曲目資訊。',
     },
-    summary: '舞台轉播風格的歌詞與開場字卡。',
-    detail:
-      '寬幅歌詞固定在左下；開場時於右下短暫亮出精簡曲目字卡，中央保留給表演者。',
+    summary: '轉播風格的歌詞與開場字卡。',
+    detail: '歌詞置於左下、開場字卡置於右下，中央留給表演者。',
     preview: {
       layoutLabel: '舞台雙行',
       motionLabel: '字卡進場',
@@ -207,11 +201,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 10,
     name: '星空黑膠',
     availability: {
-      summary: '優先使用本機封面，缺圖時顯示曲名首字。',
+      summary: '使用本機封面，缺圖時顯示曲名首字。',
     },
-    summary: '封面與星染唱盤各半的黑膠播放場景。',
-    detail:
-      '左側保留專輯封面，右側唱盤染入歌曲色彩與星塵紋理，隨播放緩慢旋轉。',
+    summary: '專輯封面搭配星染黑膠。',
+    detail: '左側封面、右側星染唱盤，隨播放緩慢旋轉。',
     preview: {
       layoutLabel: '封面＋唱盤',
       motionLabel: '星塵旋轉',
@@ -229,11 +222,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     order: 30,
     name: '封面電台',
     availability: {
-      summary: '使用本機封面與播放時間，缺少時改用替代顯示。',
+      summary: '使用本機封面，缺圖時顯示曲名首字。',
     },
-    summary: '封面取色背景搭配大封面與播放進度。',
-    detail:
-      '480 × 640 直式播放器，封面、靠左曲目與細進度條；三個播放圖示及音量列保留播放器外觀。',
+    summary: '大幅封面搭配取色背景與播放進度。',
+    detail: '直式播放器，呈現封面、曲目、進度與音量。',
     preview: {
       layoutLabel: '直式封面卡',
       motionLabel: '進度同步',

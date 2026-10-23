@@ -292,7 +292,7 @@ describe('output template registry', () => {
     );
     const copy = visibleTemplateCopy(kineticPop);
 
-    expect(copy).toContain('每段逐字交錯跳入');
+    expect(copy).toContain('逐字交錯跳入');
     expect(copy).toContain('逐字定點交錯跳入');
     expect(copy).toContain('可選端正或些微偏移');
     expect(copy).not.toMatch(/短句|長句直切|長句保持穩定/);
@@ -383,8 +383,7 @@ describe('output template registry', () => {
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
     ).toMatchObject({
       kind: 'lyrics',
-      detail:
-        '寬幅歌詞固定在左下；開場時於右下短暫亮出精簡曲目字卡，中央保留給表演者。',
+      detail: '歌詞置於左下、開場字卡置於右下，中央留給表演者。',
       preview: {
         layoutLabel: '舞台雙行',
         motionLabel: '字卡進場',
@@ -477,8 +476,7 @@ describe('output template registry', () => {
         layoutLabel: '華麗直書',
         motionLabel: '群字綴現',
       },
-      detail:
-        '以華麗明朝體直書，長句會在可信邊界拆成右起雙欄；可調整字色、大小與右側位置。',
+      detail: '明朝體直書，長句自動分欄；可調字色、大小與位置。',
       settings: expect.arrayContaining([
         { label: '排版', value: '直書、固定右側' },
         { label: '長句', value: '自動拆成至多兩欄' },

@@ -1,15 +1,14 @@
-const COMMON =
-  '此處展示預設外觀與合成動態示意；自訂設定與實際輸出請在工作臺確認。';
+const COMMON = '預設外觀示意，實際輸出請至工作臺確認。';
 const DETAILS = Object.freeze({
-  'queue-board': '縮略捲動不代表正式輸出的逐頁顯示。',
-  'receipt-setlist': '以合成紀錄預覽；正式回顧最多最近一百筆已唱明細。',
-  'karaoke-stack': '掃色只作示意，不代表逐字同步結果。',
-  'kinetic-pop': '只展示固定句段，不展示整首換句時序。',
-  'ornate-vertical': '兩句循環只作示意，不代表完整換詞時序。',
-  'live-stage': '標題卡與字幕展示固定時間點。',
-  'manga-frame': '對白同時展示，不代表逐框交接與逐字同步。',
-  'art-card': '封面以文字代圖；旋轉不代表實際播放位置。',
-  'cover-player': '封面以文字代圖；動態進度只作示意。',
+  'queue-board': '捲動示意，正式輸出採逐頁顯示。',
+  'receipt-setlist': '使用示例紀錄，正式回顧最多一百筆。',
+  'karaoke-stack': '掃色示意，非實際逐字同步。',
+  'kinetic-pop': '固定句段示意，未呈現整首換句。',
+  'ornate-vertical': '兩句循環示意，未呈現完整換詞。',
+  'live-stage': '字卡與字幕為固定時間點示意。',
+  'manga-frame': '對白同時展示，未呈現交接與逐字同步。',
+  'art-card': '文字封面示意，旋轉不對應播放位置。',
+  'cover-player': '封面與進度僅供示意。',
 });
 
 export function outputPreviewLimitations(templateId) {

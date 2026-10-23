@@ -47,9 +47,11 @@ describe('bundled output template thumbnails', () => {
     }
     expect(blocked.sort()).toEqual([
       'art-card',
+      'cover-player',
       'karaoke-stack',
       'live-stage',
       'manga-frame',
+      'receipt-setlist',
     ]);
     expect(provenance.generation.overwriteBundledAssets).toBe(false);
   });

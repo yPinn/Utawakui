@@ -66,21 +66,21 @@
     },
     "cover-player": {
       "file": "cover-player.jpg",
-      "sha256": "9099e6edbad8cfaef8015309eb4e9c4f22e86a5ab201296232ab35b551ce115f",
-      "content": "current-runtime-capture",
-      "rights": "project-owned-synthetic-artwork",
-      "delivery": "pending-user-visual-acceptance",
+      "sha256": "3c8d0adb2088de270a4e44a72f42e04a94c324b2bcda23ac41f0115dc326838a",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
       "humanReview": "not-tested",
-      "origin": "Visible Electron Browser Source; 480x640 cover-player scaled0.85 on1280x720; synthetic artwork/text; tasks/am-player-adoption-20261023/visual-report.json, 2026-10-23"
+      "origin": "User-provided apple-music-rebrand-icon.jpg, requested as Gallery thumbnail on 2026-10-24; original bytes preserved"
     },
     "receipt-setlist": {
       "file": "receipt-setlist.jpg",
-      "sha256": "0bb20e7b1f1f0e61b0b455a082cff3a74809d0485ce07d9186b25157b4b227b4",
-      "content": "current-runtime-capture",
-      "rights": "project-owned-runtime-and-generated-paper",
-      "delivery": "pending-user-visual-acceptance",
+      "sha256": "8a6abe690fe8fe8ee83da7654d5ab7b6bccac26dcd3eb63f328ecc18fb3f2316",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
       "humanReview": "not-tested",
-      "origin": "Visible Electron Browser Source, synthetic fixtures; tasks/receipt-paper-adoption-20261023/visual-report.json; user-approved paper material study"
+      "origin": "User-provided kqtoc.jpg, requested as Gallery thumbnail on 2026-10-24; original bytes preserved"
     }
   }
 }

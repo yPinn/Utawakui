@@ -141,7 +141,7 @@ onBeforeUnmount(stopPreview);
         :gap="2"
       >
         <UiChip tone="muted">{{
-          isMotionPlaying ? (scene.label ?? '合成固定示例') : '風格參考圖'
+          isMotionPlaying ? '動態示例' : '參考圖'
         }}</UiChip>
         <span class="obs-template-preview-stage__motion">
           {{ preset?.preview?.motionLabel ?? '靜態' }}
@@ -177,7 +177,7 @@ onBeforeUnmount(stopPreview);
     <span
       class="obs-template-preview-stage__motion obs-template-preview-stage__limitations"
       role="note"
-      >靜態圖僅供風格參考。{{ limitations.join('') }}</span
+      >{{ limitations.join('') }}</span
     >
     <span
       v-if="previewFailed"

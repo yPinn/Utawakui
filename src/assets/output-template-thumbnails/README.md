@@ -21,19 +21,24 @@ or undecodable images show a lightweight placeholder without mounting a live
 preview. The Gallery's selected preview also starts with this static image and
 loads its dynamic mockup only after pointer dwell or an explicit play action.
 
-The `queue-board`, `kinetic-pop`, `ornate-vertical` and
-`cover-player` JPEGs were rendered from the existing programmatic templates and
+The `queue-board`, `kinetic-pop` and `ornate-vertical`
+JPEGs were rendered from the existing programmatic templates and
 fixed sample scene at 1280 × 720 with animation disabled. They are derived
 project artwork, not additional third-party source images.
 
 ## Provenance and replacement review
 
 `provenance.json` maps every active template to the existing image hash and its
-content status. Four images (`karaoke-stack`, `live-stage`, `manga-frame`,
-`art-card`) are style references, not runtime captures; their rights remain
-unverified and G01 remains a delivery blocker. The other four are legacy
+content status. Six images (`karaoke-stack`, `live-stage`, `manga-frame`,
+`art-card`, `receipt-setlist`, `cover-player`) are style references, not runtime
+captures; their rights remain unverified and G01 remains a delivery blocker.
+The other three are legacy
 programmatic captures per the earlier record, pending current-runtime review.
 No image is automatically approved by filename, successful decoding or a hash.
+
+On 2026-10-24, the user supplied `kqtoc.jpg` for `receipt-setlist` and
+`apple-music-rebrand-icon.jpg` for `cover-player`. Both retain their original
+bytes; the receipt reference is 4:3 and uses the Gallery's existing cover crop.
 
 Generate inspection captures with `npm run output:audit`. The tool writes fresh
 artifacts under ignored `tasks/output-appearance-audit-*`, never here. It uses
