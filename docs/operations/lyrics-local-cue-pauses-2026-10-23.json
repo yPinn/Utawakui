@@ -1,0 +1,1018 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baseline": "a65de392f05d55b9da5a1fc65783817fe2d507b3",
+  "scope": "Local cue-only known internal pauses; Output source unchanged. No GPU candidate or performance A/B.",
+  "verification": {
+    "fullTests": {
+      "files": 1012,
+      "passed": 9690,
+      "skipped": 1
+    },
+    "initialFullTests": {
+      "passed": 9689,
+      "failed": 1,
+      "reason": "obsolete analysis-copy assertion"
+    },
+    "codeReview": "approved; per-chunk lookup indexed",
+    "focusedCoverage": {
+      "testsPassed": 62,
+      "files": 5,
+      "helperStatements": 100,
+      "helperLines": 100,
+      "helperBranches": 97.29,
+      "helperFunctions": 100
+    }
+  },
+  "limitations": [
+    "Retained Find analyses bind lyrics-source-v2; current normalizer uses v3. Current formal loader correctly reports stale. No migration or model rerun.",
+    "Find replays use previously retained matching v2 documents and estimates with current isolated production modules and copied original audio. Queue/library/reading/arrangement projections are fixed test dependencies; not the complete formal application.",
+    "First natural runs follow static seeks, so they are not cold performance measurements. Output first-natural observers have zero frames, recorded as missing. Warm and known-pause frames are retained.",
+    "Observation adds DOM/style reads, visible overlapping windows and capture overhead. No latency-improvement or OBS acceptance claim.",
+    "Existing end alignment, source missing-text/unsupported lines, long-tail GPU observations and normalizer-version migration remain unresolved."
+  ],
+  "replays": [
+    {
+      "run": "visible-0-final",
+      "source": "LRCLIB",
+      "success": true,
+      "staticChecks": 9,
+      "sourceProfile": "lyrics-source-v2",
+      "local": [
+        {
+          "label": "initialize",
+          "samples": 9,
+          "textMismatches": 0,
+          "frames": {
+            "n": 8,
+            "p95": 7.699951171875,
+            "max": 7.699951171875,
+            "allGapsAbove16Ms": []
+          }
+        },
+        {
+          "label": "first-natural",
+          "samples": 1529,
+          "textMismatches": 0,
+          "frames": {
+            "n": 1528,
+            "p95": 6.2001953125,
+            "max": 10.60009765625,
+            "allGapsAbove16Ms": []
+          }
+        },
+        {
+          "label": "warm-replay",
+          "samples": 1548,
+          "textMismatches": 0,
+          "frames": {
+            "n": 1547,
+            "p95": 6.199951171875,
+            "max": 25.400146484375,
+            "allGapsAbove16Ms": [
+              {
+                "index": 133,
+                "startWallMs": 1792730374964.4,
+                "endWallMs": 1792730374989.8,
+                "ms": 25.400146484375
+              }
+            ]
+          }
+        },
+        {
+          "label": "known-pause",
+          "samples": 2519,
+          "textMismatches": 0,
+          "frames": {
+            "n": 2518,
+            "p95": 6.39990234375,
+            "max": 20.699951171875,
+            "allGapsAbove16Ms": [
+              {
+                "index": 1691,
+                "startWallMs": 1792730388945,
+                "endWallMs": 1792730388962,
+                "ms": 17
+              },
+              {
+                "index": 1766,
+                "startWallMs": 1792730389309.9,
+                "endWallMs": 1792730389326.6,
+                "ms": 16.7001953125
+              },
+              {
+                "index": 2273,
+                "startWallMs": 1792730391579.5,
+                "endWallMs": 1792730391600.2,
+                "ms": 20.699951171875
+              },
+              {
+                "index": 2274,
+                "startWallMs": 1792730391600.2,
+                "endWallMs": 1792730391620.7,
+                "ms": 20.5
+              },
+              {
+                "index": 2355,
+                "startWallMs": 1792730392063.6,
+                "endWallMs": 1792730392084.2,
+                "ms": 20.599853515625
+              },
+              {
+                "index": 2458,
+                "startWallMs": 1792730392635.3,
+                "endWallMs": 1792730392655.8,
+                "ms": 20.5
+              },
+              {
+                "index": 2465,
+                "startWallMs": 1792730392693.3,
+                "endWallMs": 1792730392712.5,
+                "ms": 19.199951171875
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "template": "focus-line",
+          "cycles": [
+            {
+              "label": "first-natural",
+              "samples": 0,
+              "missingObservation": true,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 0,
+                "p95": null,
+                "max": null,
+                "allGapsAbove16Ms": []
+              }
+            },
+            {
+              "label": "warm-replay",
+              "samples": 1547,
+              "missingObservation": false,
+              "partialFillSamples": 15,
+              "underlineSamples": 233,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 1546,
+                "p95": 6.2001953125,
+                "max": 24.7001953125,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 133,
+                    "startWallMs": 1792730374964.4,
+                    "endWallMs": 1792730374989.1,
+                    "ms": 24.7001953125
+                  }
+                ]
+              }
+            },
+            {
+              "label": "known-pause",
+              "samples": 2519,
+              "missingObservation": false,
+              "partialFillSamples": 1,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 2518,
+                "p95": 6.39990234375,
+                "max": 20.60009765625,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 1691,
+                    "startWallMs": 1792730388944.9,
+                    "endWallMs": 1792730388961.9,
+                    "ms": 17
+                  },
+                  {
+                    "index": 1766,
+                    "startWallMs": 1792730389310,
+                    "endWallMs": 1792730389326.6,
+                    "ms": 16.60009765625
+                  },
+                  {
+                    "index": 2273,
+                    "startWallMs": 1792730391579.5,
+                    "endWallMs": 1792730391600.1,
+                    "ms": 20.60009765625
+                  },
+                  {
+                    "index": 2274,
+                    "startWallMs": 1792730391600.1,
+                    "endWallMs": 1792730391620.7,
+                    "ms": 20.599853515625
+                  },
+                  {
+                    "index": 2355,
+                    "startWallMs": 1792730392063.6,
+                    "endWallMs": 1792730392084.2,
+                    "ms": 20.599853515625
+                  },
+                  {
+                    "index": 2458,
+                    "startWallMs": 1792730392635.2,
+                    "endWallMs": 1792730392655.8,
+                    "ms": 20.60009765625
+                  },
+                  {
+                    "index": 2465,
+                    "startWallMs": 1792730392693.4,
+                    "endWallMs": 1792730392712.5,
+                    "ms": 19.10009765625
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "template": "karaoke-stack",
+          "cycles": [
+            {
+              "label": "first-natural",
+              "samples": 0,
+              "missingObservation": true,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 0,
+                "p95": null,
+                "max": null,
+                "allGapsAbove16Ms": []
+              }
+            },
+            {
+              "label": "warm-replay",
+              "samples": 1548,
+              "missingObservation": false,
+              "partialFillSamples": 15,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 1547,
+                "p95": 6.300048828125,
+                "max": 21.39990234375,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 134,
+                    "startWallMs": 1792730374968.8,
+                    "endWallMs": 1792730374990.2,
+                    "ms": 21.39990234375
+                  }
+                ]
+              }
+            },
+            {
+              "label": "known-pause",
+              "samples": 2519,
+              "missingObservation": false,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 2518,
+                "p95": 6.400146484375,
+                "max": 20.699951171875,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 1691,
+                    "startWallMs": 1792730388945,
+                    "endWallMs": 1792730388962,
+                    "ms": 17
+                  },
+                  {
+                    "index": 1766,
+                    "startWallMs": 1792730389310,
+                    "endWallMs": 1792730389326.6,
+                    "ms": 16.60009765625
+                  },
+                  {
+                    "index": 2273,
+                    "startWallMs": 1792730391579.5,
+                    "endWallMs": 1792730391600.1,
+                    "ms": 20.60009765625
+                  },
+                  {
+                    "index": 2274,
+                    "startWallMs": 1792730391600.1,
+                    "endWallMs": 1792730391620.8,
+                    "ms": 20.699951171875
+                  },
+                  {
+                    "index": 2355,
+                    "startWallMs": 1792730392063.5,
+                    "endWallMs": 1792730392084.2,
+                    "ms": 20.699951171875
+                  },
+                  {
+                    "index": 2458,
+                    "startWallMs": 1792730392635.2,
+                    "endWallMs": 1792730392655.8,
+                    "ms": 20.60009765625
+                  },
+                  {
+                    "index": 2465,
+                    "startWallMs": 1792730392693.3,
+                    "endWallMs": 1792730392712.5,
+                    "ms": 19.199951171875
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "privateRawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+    },
+    {
+      "run": "visible-1-final",
+      "source": "NetEase",
+      "success": true,
+      "staticChecks": 9,
+      "sourceProfile": "lyrics-source-v2",
+      "local": [
+        {
+          "label": "initialize",
+          "samples": 9,
+          "textMismatches": 0,
+          "frames": {
+            "n": 8,
+            "p95": 9,
+            "max": 9,
+            "allGapsAbove16Ms": []
+          }
+        },
+        {
+          "label": "first-natural",
+          "samples": 1574,
+          "textMismatches": 0,
+          "frames": {
+            "n": 1573,
+            "p95": 6.10009765625,
+            "max": 10.60009765625,
+            "allGapsAbove16Ms": []
+          }
+        },
+        {
+          "label": "warm-replay",
+          "samples": 1516,
+          "textMismatches": 0,
+          "frames": {
+            "n": 1515,
+            "p95": 6.5,
+            "max": 30.300048828125,
+            "allGapsAbove16Ms": [
+              {
+                "index": 6,
+                "startWallMs": 1792730430075,
+                "endWallMs": 1792730430105.3,
+                "ms": 30.300048828125
+              },
+              {
+                "index": 976,
+                "startWallMs": 1792730434521.8,
+                "endWallMs": 1792730434538.6,
+                "ms": 16.800048828125
+              }
+            ]
+          }
+        },
+        {
+          "label": "known-pause",
+          "samples": 312,
+          "textMismatches": 0,
+          "frames": {
+            "n": 311,
+            "p95": 6.199951171875,
+            "max": 18.800048828125,
+            "allGapsAbove16Ms": [
+              {
+                "index": 58,
+                "startWallMs": 1792730437345.6,
+                "endWallMs": 1792730437364.4001,
+                "ms": 18.800048828125
+              },
+              {
+                "index": 282,
+                "startWallMs": 1792730438402.4001,
+                "endWallMs": 1792730438418.5,
+                "ms": 16.099853515625
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "template": "focus-line",
+          "cycles": [
+            {
+              "label": "first-natural",
+              "samples": 0,
+              "missingObservation": true,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 0,
+                "p95": null,
+                "max": null,
+                "allGapsAbove16Ms": []
+              }
+            },
+            {
+              "label": "warm-replay",
+              "samples": 1516,
+              "missingObservation": false,
+              "partialFillSamples": 13,
+              "underlineSamples": 710,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 1515,
+                "p95": 6.5,
+                "max": 33,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 5,
+                    "startWallMs": 1792730430069.7,
+                    "endWallMs": 1792730430102.7,
+                    "ms": 33
+                  },
+                  {
+                    "index": 976,
+                    "startWallMs": 1792730434521.8,
+                    "endWallMs": 1792730434538.5,
+                    "ms": 16.699951171875
+                  }
+                ]
+              }
+            },
+            {
+              "label": "known-pause",
+              "samples": 299,
+              "missingObservation": false,
+              "partialFillSamples": 2,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 298,
+                "p95": 7.10009765625,
+                "max": 76.199951171875,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 2,
+                    "startWallMs": 1792730437087.9,
+                    "endWallMs": 1792730437164.0999,
+                    "ms": 76.199951171875
+                  },
+                  {
+                    "index": 45,
+                    "startWallMs": 1792730437345.5,
+                    "endWallMs": 1792730437364.3,
+                    "ms": 18.800048828125
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "template": "karaoke-stack",
+          "cycles": [
+            {
+              "label": "first-natural",
+              "samples": 0,
+              "missingObservation": true,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 0,
+                "p95": null,
+                "max": null,
+                "allGapsAbove16Ms": []
+              }
+            },
+            {
+              "label": "warm-replay",
+              "samples": 1515,
+              "missingObservation": false,
+              "partialFillSamples": 11,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 1514,
+                "p95": 6.5,
+                "max": 30.39990234375,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 6,
+                    "startWallMs": 1792730430075,
+                    "endWallMs": 1792730430105.4,
+                    "ms": 30.39990234375
+                  },
+                  {
+                    "index": 975,
+                    "startWallMs": 1792730434521.9,
+                    "endWallMs": 1792730434538.7,
+                    "ms": 16.800048828125
+                  }
+                ]
+              }
+            },
+            {
+              "label": "known-pause",
+              "samples": 313,
+              "missingObservation": false,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 312,
+                "p95": 6.5,
+                "max": 18.800048828125,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 59,
+                    "startWallMs": 1792730437345.5999,
+                    "endWallMs": 1792730437364.4,
+                    "ms": 18.800048828125
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "privateRawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+    }
+  ],
+  "failures": [
+    {
+      "run": "visible-0",
+      "source": "LRCLIB",
+      "success": false,
+      "staticChecks": 9,
+      "sourceProfile": "lyrics-source-v2",
+      "local": [
+        {
+          "label": "initialize",
+          "samples": 8,
+          "textMismatches": 0,
+          "frames": {
+            "n": 7,
+            "p95": 8.300048828125,
+            "max": 8.300048828125,
+            "allGapsAbove16Ms": []
+          }
+        },
+        {
+          "label": "cold",
+          "samples": 1563,
+          "textMismatches": 0,
+          "frames": {
+            "n": 1562,
+            "p95": 6.10009765625,
+            "max": 14.800048828125,
+            "allGapsAbove16Ms": []
+          }
+        },
+        {
+          "label": "warm",
+          "samples": 1519,
+          "textMismatches": 0,
+          "frames": {
+            "n": 1518,
+            "p95": 6.5,
+            "max": 31.099853515625,
+            "allGapsAbove16Ms": [
+              {
+                "index": 130,
+                "startWallMs": 1792730280606.6,
+                "endWallMs": 1792730280637.7,
+                "ms": 31.099853515625
+              }
+            ]
+          }
+        },
+        {
+          "label": "known-pause",
+          "samples": 2675,
+          "textMismatches": 0,
+          "frames": {
+            "n": 2674,
+            "p95": 5.39990234375,
+            "max": 12.699951171875,
+            "allGapsAbove16Ms": []
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "template": "focus-line",
+          "cycles": [
+            {
+              "label": "cold",
+              "samples": 0,
+              "missingObservation": true,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 0,
+                "p95": null,
+                "max": null,
+                "allGapsAbove16Ms": []
+              }
+            },
+            {
+              "label": "warm",
+              "samples": 1517,
+              "missingObservation": false,
+              "partialFillSamples": 18,
+              "underlineSamples": 213,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 1516,
+                "p95": 6.60009765625,
+                "max": 34.099853515625,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 129,
+                    "startWallMs": 1792730280602.2,
+                    "endWallMs": 1792730280636.2998,
+                    "ms": 34.099853515625
+                  }
+                ]
+              }
+            },
+            {
+              "label": "known-pause",
+              "samples": 2675,
+              "missingObservation": false,
+              "partialFillSamples": 1,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 2674,
+                "p95": 5.39990234375,
+                "max": 12.699951171875,
+                "allGapsAbove16Ms": []
+              }
+            }
+          ]
+        },
+        {
+          "template": "karaoke-stack",
+          "cycles": [
+            {
+              "label": "cold",
+              "samples": 0,
+              "missingObservation": true,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 0,
+                "p95": null,
+                "max": null,
+                "allGapsAbove16Ms": []
+              }
+            },
+            {
+              "label": "warm",
+              "samples": 1518,
+              "missingObservation": false,
+              "partialFillSamples": 17,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 1517,
+                "p95": 6.699951171875,
+                "max": 30.800048828125,
+                "allGapsAbove16Ms": [
+                  {
+                    "index": 130,
+                    "startWallMs": 1792730280606.2,
+                    "endWallMs": 1792730280637,
+                    "ms": 30.800048828125
+                  }
+                ]
+              }
+            },
+            {
+              "label": "known-pause",
+              "samples": 2674,
+              "missingObservation": false,
+              "partialFillSamples": 0,
+              "underlineSamples": 0,
+              "overflowSamples": 0,
+              "frames": {
+                "n": 2673,
+                "p95": 5.39990234375,
+                "max": 12.699951171875,
+                "allGapsAbove16Ms": []
+              }
+            }
+          ]
+        }
+      ],
+      "privateRawSha256": "08f50d7065091c6f84beec665fef996234fed90c6e0edf813df2852198435179",
+      "reason": "Pre-onset transport reset incorrectly required a marker; assertion fixed to retain raw pre-onset samples and require marker only after first source onset."
+    }
+  ],
+  "rasen": {
+    "success": true,
+    "granularity": "T2",
+    "lines": 46,
+    "staticChecks": 11,
+    "naturalSamples": 166,
+    "finalSamples": 162,
+    "errors": 0,
+    "actualMainPreloadAndPlayer": true,
+    "isolatedVitePort": 5188,
+    "sourceFilesUnchanged": true,
+    "privateRawSha256": "7b8d94c6e22e3d8c30e579fec646f4b5d2373701533934dcff414af8a69fabb3"
+  },
+  "regression": {
+    "red": {
+      "renderer": 2,
+      "clock": 1,
+      "owner": 1,
+      "initialFixtureError": "fine IDs collided with coarse IDs; corrected without production changes"
+    },
+    "green": {
+      "focusedPassed": 52,
+      "subsequentCapacityCase": 1,
+      "fullPassed": 9690
+    },
+    "preserves": [
+      "original coarse onsets",
+      "full text and readings",
+      "actual fine intervals and known pauses",
+      "native T2 timing",
+      "Output templates and continuous fill",
+      "KTV without underlines"
+    ],
+    "doesNotAdd": [
+      "model end guesses",
+      "smoothing delay",
+      "BPM",
+      "online VAD",
+      "GPU changes"
+    ]
+  },
+  "currentLoaderStatus": [
+    {
+      "source": "lrclib",
+      "status": "stale",
+      "storedProfile": "lyrics-source-v2",
+      "currentProfile": "lyrics-source-v3",
+      "runtime": "24.21.0",
+      "icu": "78.2"
+    },
+    {
+      "source": "netease",
+      "status": "stale",
+      "storedProfile": "lyrics-source-v2",
+      "currentProfile": "lyrics-source-v3",
+      "runtime": "24.21.0",
+      "icu": "78.2"
+    }
+  ],
+  "processCleanup": {
+    "ownedRootProcesses": 5,
+    "remaining": 0
+  },
+  "commitValidation": {
+    "base": "17b617b3c6d41bf4e66cc766052f71196bc8fc4f",
+    "scopePaths": 29,
+    "commits": [
+      {
+        "group": "A",
+        "hash": "5592ee905ee12636a66bc4e5a79209b4610daa7f",
+        "title": "fix(lyrics): preserve local cues across known fine pauses",
+        "paths": 11,
+        "hooksEnabled": true
+      },
+      {
+        "group": "B",
+        "hash": "9325b8148edf557b0f825568bb73c52ea792976b",
+        "title": "fix(lyrics): reuse exact v2 estimates through readonly v3 mapping",
+        "paths": 10,
+        "hooksEnabled": true
+      }
+    ],
+    "checks": {
+      "A": {
+        "focusedFiles": 5,
+        "focusedTests": 62,
+        "relatedFiles": 16,
+        "relatedTests": 243,
+        "lint": true,
+        "format": true,
+        "codeReview": "APPROVE"
+      },
+      "B": {
+        "focusedFiles": 4,
+        "focusedTests": 45,
+        "relatedFiles": 9,
+        "relatedTests": 95,
+        "lint": true,
+        "format": true,
+        "codeReview": "APPROVE"
+      }
+    },
+    "status": "checks-passed-before-document-commit",
+    "newLivePlayback": false,
+    "historicalLiveEvidenceRetained": true,
+    "excluded": "Other UI, queue, Output template and offline research changes are not part of these commits.",
+    "pushed": false,
+    "fullTests": {
+      "files": 1016,
+      "passed": 9746,
+      "skipped": 1
+    },
+    "build": true,
+    "packaging": "Existing packaging/dependency boundary suite passed in full candidate; no new installer or OBS acceptance.",
+    "existingLargeChunkWarningRetained": true,
+    "documentReview": "APPROVE scope, original-field preservation, percentage correction and final exact-candidate evidence",
+    "receipts": {
+      "A-related": {
+        "status": 0,
+        "logSha256": "e9330fcbc6cc7ea4f6b1c0e8587398553ec21abf47003acfca4dd01be166daf4"
+      },
+      "B-tests-1": {
+        "status": 0,
+        "logSha256": "69a2772d6904eb45a46d491a1523d9cd5e2d31cbbd56db95ba29ed4537948f12"
+      },
+      "B-related": {
+        "status": 0,
+        "logSha256": "908e178c9a7ff170bb62c4a512b3db89fbe66e7802cd4efc74d37edaf60a2ace"
+      },
+      "C-full": {
+        "status": 0,
+        "logSha256": "23732128f5cd689ac143cefd41dec64540cf84f69fab240faab93469d290b9eb"
+      },
+      "C-build": {
+        "status": 0,
+        "logSha256": "2f76da2ce10aaea454dd8e1d3aaf5194dc8b1b251f3c3939904229b46d6a622d"
+      }
+    },
+    "failureRetained": "First B focused run had sandbox temp-fixture atomic-rename EPERM (27 failed, 18 passed); identical candidate passed outside sandbox without changing assertions."
+  },
+  "measurementCorrections": {
+    "schemaVersion": 1,
+    "rule": "css-progress-percent-v1",
+    "reason": "The original accepted replay summary applied a 0–1 bound to CSS progress percentages from 0 to 100, undercounting partial-fill samples.",
+    "originalPredicate": "0 < progress < 1",
+    "correctedPredicate": "0 < percent < 100",
+    "scope": "Accepted replays only; original failure observations remain unchanged and are not acceptance evidence.",
+    "existingRawObservationsOnly": true,
+    "newPlayback": false,
+    "originalFieldsRetained": true,
+    "allSlowValuesAndMissingRunsRetained": true,
+    "rows": [
+      {
+        "run": "visible-0-final",
+        "source": "LRCLIB",
+        "template": "focus-line",
+        "label": "first-natural",
+        "totalSamples": 0,
+        "missingObservation": true,
+        "originalPartialFillSamples": 0,
+        "correctedPartialFillSamples": 0,
+        "rawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+      },
+      {
+        "run": "visible-0-final",
+        "source": "LRCLIB",
+        "template": "focus-line",
+        "label": "warm-replay",
+        "totalSamples": 1547,
+        "missingObservation": false,
+        "originalPartialFillSamples": 15,
+        "correctedPartialFillSamples": 1179,
+        "rawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+      },
+      {
+        "run": "visible-0-final",
+        "source": "LRCLIB",
+        "template": "focus-line",
+        "label": "known-pause",
+        "totalSamples": 2519,
+        "missingObservation": false,
+        "originalPartialFillSamples": 1,
+        "correctedPartialFillSamples": 154,
+        "rawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+      },
+      {
+        "run": "visible-0-final",
+        "source": "LRCLIB",
+        "template": "karaoke-stack",
+        "label": "first-natural",
+        "totalSamples": 0,
+        "missingObservation": true,
+        "originalPartialFillSamples": 0,
+        "correctedPartialFillSamples": 0,
+        "rawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+      },
+      {
+        "run": "visible-0-final",
+        "source": "LRCLIB",
+        "template": "karaoke-stack",
+        "label": "warm-replay",
+        "totalSamples": 1548,
+        "missingObservation": false,
+        "originalPartialFillSamples": 15,
+        "correctedPartialFillSamples": 1180,
+        "rawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+      },
+      {
+        "run": "visible-0-final",
+        "source": "LRCLIB",
+        "template": "karaoke-stack",
+        "label": "known-pause",
+        "totalSamples": 2519,
+        "missingObservation": false,
+        "originalPartialFillSamples": 0,
+        "correctedPartialFillSamples": 78,
+        "rawSha256": "8113d1dfb8ffa1bd81de6c92c12d18e948a39e6d7e5fed4b3ffe9528cbc030aa"
+      },
+      {
+        "run": "visible-1-final",
+        "source": "NetEase",
+        "template": "focus-line",
+        "label": "first-natural",
+        "totalSamples": 0,
+        "missingObservation": true,
+        "originalPartialFillSamples": 0,
+        "correctedPartialFillSamples": 0,
+        "rawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+      },
+      {
+        "run": "visible-1-final",
+        "source": "NetEase",
+        "template": "focus-line",
+        "label": "warm-replay",
+        "totalSamples": 1516,
+        "missingObservation": false,
+        "originalPartialFillSamples": 13,
+        "correctedPartialFillSamples": 1154,
+        "rawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+      },
+      {
+        "run": "visible-1-final",
+        "source": "NetEase",
+        "template": "focus-line",
+        "label": "known-pause",
+        "totalSamples": 299,
+        "missingObservation": false,
+        "originalPartialFillSamples": 2,
+        "correctedPartialFillSamples": 122,
+        "rawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+      },
+      {
+        "run": "visible-1-final",
+        "source": "NetEase",
+        "template": "karaoke-stack",
+        "label": "first-natural",
+        "totalSamples": 0,
+        "missingObservation": true,
+        "originalPartialFillSamples": 0,
+        "correctedPartialFillSamples": 0,
+        "rawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+      },
+      {
+        "run": "visible-1-final",
+        "source": "NetEase",
+        "template": "karaoke-stack",
+        "label": "warm-replay",
+        "totalSamples": 1515,
+        "missingObservation": false,
+        "originalPartialFillSamples": 11,
+        "correctedPartialFillSamples": 1154,
+        "rawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+      },
+      {
+        "run": "visible-1-final",
+        "source": "NetEase",
+        "template": "karaoke-stack",
+        "label": "known-pause",
+        "totalSamples": 313,
+        "missingObservation": false,
+        "originalPartialFillSamples": 0,
+        "correctedPartialFillSamples": 134,
+        "rawSha256": "8f05a61cd572377f0001a4b66181532c3b9dd21f131ec94704b6dfa34607adb6"
+      }
+    ]
+  }
+}

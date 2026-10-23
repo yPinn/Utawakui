@@ -36,6 +36,9 @@
 - Focus GPU 與本地呈現：[有限陰影／描邊／填色拆解與螢光筆統一](operations/lyrics-focus-gpu-2026-10-23.md)
 - Focus 陰影最小候選：[兩來源冷暖對照、所有慢值與候選撤回](operations/lyrics-focus-copy-shadow-2026-10-23.md)
 - 歌詞本階段總結：[已保留、已撤回、未解與分類提交紀錄](operations/lyrics-milestone-2026-10-23.md)
+- 本地詞塊提示：[已知停頓、T1+／T2 隔離回歸與舊分析版本限制](operations/lyrics-local-cue-pauses-2026-10-23.md)
+- 舊分析唯讀相容：[v2→v3 嚴格身分證明、正式路徑驗證與保留慢值](operations/lyrics-readonly-compatibility-2026-10-23.md)
+- 句尾階段驗收：[v3 兩來源自然播放、KTV 交接原因與最小 fallback 提案](operations/lyrics-tail-acceptance-2026-10-23.md)
 - KTV 交接與補尾修正：[未完成細時間保護、靜態補尾與兩來源驗收](operations/lyrics-handoff-fallback-2026-10-23.md)
 
 ## 權利與治理（governance/）

@@ -152,8 +152,7 @@ estimate ID and strict stored validation. Invalid or over-budget optional produc
 evidence is removed while preserving valid coarse chunks. Schema-one loads remain
 available; old files do not acquire invented ends.
 
-The local document reader and Output Focus use an immediate coarse underline cue
-plus continuous fine ink. Output KTV uses its own role colors and strokes, with
+Output Focus uses an immediate coarse underline cue plus continuous fine ink. Output KTV uses its own role colors and strokes, with
 continuous glyph fill and no underline. Each unit's progress is interpolated linearly,
 at its actual duration. Multi-grapheme units have display-only clipping cells so
 they wrap and fill in reading order; cell fractions are never saved or transported
@@ -167,19 +166,17 @@ stored fine evidence, never move actual fine times, and never upgrade T1 to T2.
 The first glyph starts filling at the existing onset without a smoothing wait.
 Other templates and Self-View retain their existing presentation.
 
-The local reader also accepts valid applied starts-only results through a separate
-local paint adapter. Bounded coarse starts and the existing line boundary supply
-display-estimated intervals; no singing ends or extra evidence are published.
-Unknown final boundaries stay cue-only. Valid fine intervals and their known pauses
-take priority unchanged; starts-only data cannot identify pauses within a chunk.
-List and sheet always retain the same current-line highlighter, including
-unsupported/unapplied analysis. Timed chunks add immediate thin blue onset
-underlines and continuous thicker blue progress underlines without recoloring
-the glyphs. Whole-line-only timing does not invent word underlines; forced colors
-retain a system-color whole-line outline when background images are removed. Transport
-updates sample the existing media clock and locate paint directly, without an
-extra tick, minimum animation duration or catch-up wait. Output starts-only
-behavior and all template styling remain unchanged by this local fallback.
+The local reader uses the same current-line highlighter and current non-whitespace
+chunk underline for native T2, fine and starts-only T1+ results, in list and sheet.
+There is no local fill animation or cumulative underline. A source-line gap holds
+the last marker without a word cue; unsupported/unapplied analysis retains the marker.
+Validated adjacent fine units within one coarse chunk may suppress only the local
+underline during an evidenced internal pause. Uncovered text does not prove silence,
+and a pause must begin strictly after the coarse onset and end within its boundary.
+The original onset stays immediate, including when fine timing contradicts it.
+The existing audio-element clock resamples at both pause edges; there is no extra
+wait or fabricated model end. This cue-only metadata is never published to Output
+or saved to sidecars. See the [timing contract](lyrics-timing-contract.md#capacity-aware-display-pages).
 
 Chinese display conversion may apply only with verified original-to-display
 range mapping. An unsafe mapping declines the estimate for that display variant;
@@ -353,7 +350,7 @@ application also reaches supporting Output templates through the optional starts
 extension below. T2 and declined T1 retain their behavior. Chinese conversion reuses segment text projection; text
 mismatches retain normal display. Furigana retains its existing reading layout.
 Canonical progress and T2 remain unchanged. Optional actual model intervals may
-drive continuous fine ink in the local reader, Focus and KTV, as specified above;
+drive continuous fine ink in Focus and KTV, and local evidenced cue pauses, as specified above;
 adjacent starts are never used to infer a singing end.
 
 ### Experimental Output application
@@ -432,6 +429,40 @@ binds the Chinese/Japanese occurrence recipe. The immediately preceding method-t
 schema-one estimates remain readable as coarse cues; other old methods remain
 stale without deleting prior files. The normal
 lyrics-page loader needs no language override or model load.
+
+### Read-only normalizer compatibility
+
+The strict current loader remains first. Only a stale v5 envelope with schema-two
+fine evidence, the active method-four recipe, a v2 source profile and a current v3
+pure-T1 fallback document without a timing sidecar may attempt exact compatibility.
+Corrupt/unsupported data and changed offsets cannot enter this path.
+
+Main builds the v2 identity that the current complete content would have had,
+using unchanged source/audio/timing/offset context and file stamps. This is an
+equality witness, not a legacy parser. Its entire historical generation hash must
+match the stored envelope, followed by the unchanged strict routing, recipe and
+content-address validation. A text, occurrence, boundary or end-provenance change
+cannot be repaired by relabeling the profile. Source and audio metadata must also
+match the current context explicitly. Unknown versions and native/manual T2 retain
+their existing authority and are not remapped.
+
+Accepted results receive occurrence-ID mappings and a distinct derived estimate ID
+only in memory. Text, original coarse starts, fine ranges and times, unsupported
+reasons, warnings and known pauses must remain exactly equal; optional-evidence
+loss rejects compatibility. The response carries bounded `compatibility` provenance:
+`rule: normalizer-v2-v3-exact-v1`, `sourceEstimateId`, `fromProfile` and `toProfile`.
+It remains pending human timing acceptance and requires explicit session application.
+No producer, canonical document or stored estimate is rewritten, and failure never
+automatically enqueues analysis.
+
+An eight-entry frozen in-memory memo keys the rule, complete input identity,
+source revision and actual sidecar-byte SHA. It is not persisted. Reads remain
+bounded to 2 MiB; file-descriptor and pathname stamps are checked across preparation,
+including memo hits. The main reader repeats enabled-gate, library-root and captured
+source-current checks after asynchronous input loading and immediately before reply.
+Changed results or sources remain stale. This work runs on source reads, never in
+playback/animation ticks, and adds no smoothing wait or model dependency. The original
+lyrics remain available while loading. Output presentation and KTV styling are unchanged.
 
 One CPU HubertFA session/window is shared across routed languages; decoder prepare
 and original-text chunk cuts use each line's language. Chinese/Japanese blind

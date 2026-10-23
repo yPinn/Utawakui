@@ -329,31 +329,34 @@ so a rate change cannot pair new reactive rate intent with an old element rate.
 Paused, buffering, seeking and ended samples do not schedule further deadlines;
 resume resamples. Module disposal stops the watcher and timer. This reduces the
 wait for the next `timeupdate` without a global frame ticker or a second clock.
-T1+ retains its entire active chunk's immediate onset cue. The local document
-reader and Output Focus/KTV may add continuous ink from separately retained actual
+T1+ retains its entire active chunk's immediate onset cue.
+Output Focus/KTV may add continuous ink from separately retained actual
 model unit intervals. A unit's visual interpolation never supplies canonical
 T2, a guessed end, or additional smoothing delay. Paint cells only divide its
 display progress, preserving wrap and reading order without asserting character
 timestamps. Pause, seek, rate and offset updates cancel obsolete paint.
 The local document reader always marks the current line with its highlighter,
 including unapplied, unavailable and unsupported analysis. Only timed chunks
-add blue underlines: the thin onset cue remains immediate, while a thicker
-clipped underline shows continuous fine progress without recoloring the glyphs.
-Forced colors use a system-color whole-line outline when background images are
-removed. This outline does not imply word timing.
-Local native T2 uses the same progress renderer only for explicitly provided valid
-segment ends; missing native ends remain cue-only. List and sheet keep their
-respective layouts. Output keeps each template's styling: KTV uses glyph fill
-without underlines. Partial model coverage may add explicitly marked display
-estimates bounded by existing coarse/fine times; these remain paint-only and
-never become acoustic evidence or canonical T2.
-Applied starts-only results may use the same local ink renderer with separate
-display estimates between existing coarse starts and a bounded line end. Missing
-final bounds remain static; no fine evidence is manufactured or published.
-Known fine pauses remain holds, while pauses absent from starts-only data are
-unknown. Unapplied/unsupported lines keep the same highlighter with no invented
-word underline.
-Output retains its existing starts-only path and each template's appearance.
+add a blue underline on the current non-whitespace chunk, including across reading
+groups. Native T2 and applied T1+ use the same local cue renderer in list and sheet;
+local glyphs have no continuous fill or cumulative progress underline. The marker
+holds the last source-line start during line gaps, independently of active singing.
+Forced colors retain a system-color whole-line outline. Whole-line-only timing
+does not invent word underlines.
+
+For applied T1+, two adjacent validated fine units covering adjacent original text
+inside the same coarse chunk may define a local cue pause. Its start must be strictly
+after the coarse onset, and its end must not pass the next coarse onset or line end.
+During this half-open interval only the underline is hidden; the marker, full text,
+coarse state and source times remain unchanged. Both edges resample the existing
+media clock without waiting for timeupdate. Missing coverage, missing ends,
+starts-only results and contradictory fine data do not establish silence. No fine
+unit's later onset delays the original coarse cue. Native T2 keeps its original ends.
+
+Output keeps each template's styling and continuous fill; KTV has no underline.
+Partial fine coverage may add explicitly marked display estimates bounded by existing
+coarse/fine times. These remain paint-only, never acoustic evidence or canonical T2.
+Output's starts-only path is unchanged.
 
 Paint completion is separate from source-line ownership. Prepared T1+ paint
 plans expose a display-only `paintEndMs`, `holdUntilMs`, per-coarse `cueEnds`
