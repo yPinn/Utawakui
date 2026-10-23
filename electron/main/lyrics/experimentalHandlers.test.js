@@ -19,6 +19,24 @@ function setup() {
   return { handlers, queue, loadEstimate, recordDiagnostic };
 }
 describe('bounded experimental lyrics IPC', () => {
+  it('awaits admission and accepts only a bounded job id for source-specific cancellation', async () => {
+    const { handlers, queue } = setup();
+    queue.enqueue.mockResolvedValueOnce(false);
+    expect(
+      await handlers.get('lyrics-experimental:retry')(
+        null,
+        'song',
+        'auto',
+        'a.lrc',
+      ),
+    ).toEqual({ queued: false });
+    const jobId = '12345678-1234-1234-1234-123456789abc';
+    await handlers.get('lyrics-experimental:cancel')(null, 'song', jobId);
+    expect(queue.cancel).toHaveBeenCalledWith('song', jobId);
+    await expect(
+      handlers.get('lyrics-experimental:cancel')(null, 'song', '../a.lrc'),
+    ).rejects.toThrow();
+  });
   it('accepts only fixed product intents and never renderer paths or model configuration', async () => {
     const { handlers, queue, loadEstimate } = setup();
     expect(handlers.size).toBe(5);

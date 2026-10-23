@@ -10,6 +10,7 @@ const {
 const { loadIndex } = require('../library/metadataIndex');
 const {
   prepareAcousticEstimateContext,
+  inputsCurrent,
 } = require('../library/lyricsAcousticEstimates');
 const { contained } = require('../lyricsAcoustic/integrity');
 const {
@@ -65,6 +66,9 @@ async function loadResearchInput(libraryDir, intent, { filename } = {}) {
     durationMs > 1800000
   )
     throw Error('research duration unavailable');
+  const identity = createHash('sha256')
+    .update(JSON.stringify([libraryDir, context, canonical]))
+    .digest('hex');
   return {
     trackDir,
     context,
@@ -76,8 +80,11 @@ async function loadResearchInput(libraryDir, intent, { filename } = {}) {
     audioPath,
     audioFilename: path.basename(audioPath),
     durationMs,
-    identity: createHash('sha256')
-      .update(JSON.stringify([libraryDir, context, canonical]))
+    identity,
+    sourceRevision: createHash('sha256')
+      .update(
+        JSON.stringify(['lyrics-source-v1', identity, source.language ?? null]),
+      )
       .digest('hex'),
   };
 }
@@ -85,6 +92,7 @@ async function loadAutomaticResearchInput(
   libraryDir,
   trackId,
   requestedLanguage = 'auto',
+  sourceFilename,
 ) {
   if (!isAnalysisLanguage(requestedLanguage))
     throw Error('invalid analysis language');
@@ -95,7 +103,17 @@ async function loadAutomaticResearchInput(
   const preferred = state.sources.find(
     (source) => source.filename === state.preference?.filename,
   );
-  const skipped = (reason) => ({ status: 'skipped', reason });
+  let input;
+  const skipped = (reason) => ({
+    status: 'skipped',
+    reason,
+    ...(input
+      ? {
+          sourceFilename: input.source.filename,
+          sourceRevision: input.sourceRevision,
+        }
+      : {}),
+  });
   if (!state.sources.length) return skipped('lyrics-missing');
   function readDocument(source) {
     const file = contained(
@@ -113,50 +131,23 @@ async function loadAutomaticResearchInput(
       .join('\n');
   }
   const source =
-    preferred ??
-    state.sources.find(
-      (s) => resolveAnalysisLanguage(s.language, '').language,
-    ) ??
-    state.sources.find(
-      (s) => resolveAnalysisLanguage(s.language, body(s)).language,
-    ) ??
-    state.sources[0];
-  const parsed = readDocument(source);
-  if (
-    !parsed.lines.some(
-      (line) =>
-        !line.segments?.length &&
-        Number.isSafeInteger(line.startMs) &&
-        Number.isSafeInteger(line.endMs),
-    )
-  )
-    return skipped(
-      parsed.lines.some((line) => line.segments?.length)
-        ? 'native-t2'
-        : 'untimed-lyrics',
-    );
-  const resolution = resolveAnalysisLanguage(
-    source.language,
-    body(source),
-    requestedLanguage,
-  );
-  if (resolution.reason === 'language-unsupported')
-    return skipped(resolution.reason);
-  const hint = resolution.language ?? 'auto';
-  const candidate = planLineLanguages(parsed.lines, hint).lines.find(
-    (l) => l.language,
-  );
-  if (!candidate) return skipped(resolution.reason ?? 'unsupported-lyrics');
-  const input = await loadResearchInput(
+    sourceFilename !== undefined
+      ? state.sources.find((s) => s.filename === sourceFilename)
+      : (preferred ??
+        state.sources.find(
+          (s) => resolveAnalysisLanguage(s.language, '').language,
+        ) ??
+        state.sources.find(
+          (s) => resolveAnalysisLanguage(s.language, body(s)).language,
+        ) ??
+        state.sources[0]);
+  if (!source) return skipped('source-changed');
+  input = await loadResearchInput(
     libraryDir,
-    {
-      trackId,
-      language: resolution.language ?? candidate.language,
-      lineIndex: 0,
-    },
+    { trackId, language: 'zh', lineIndex: 0 },
     { filename: source.filename },
   );
-  if (input.selection !== JSON.stringify(state))
+  if (!automaticInputCurrent(libraryDir, input))
     throw Error('research source changed');
   if (
     !input.canonical.lines.some(
@@ -195,7 +186,13 @@ function automaticInputCurrent(libraryDir, input) {
   try {
     return (
       path.resolve(libraryDir) === path.resolve(input.trackDir, '../..') &&
-      JSON.stringify(listTrackLyricsSources(input.trackDir)) === input.selection
+      listTrackLyricsSources(input.trackDir).sources.some(
+        (source) =>
+          source.filename === input.source.filename &&
+          (source.offsetMs ?? 0) === (input.source.offsetMs ?? 0) &&
+          source.language === input.source.language,
+      ) &&
+      inputsCurrent(input.trackDir, input.context)
     );
   } catch {
     return false;

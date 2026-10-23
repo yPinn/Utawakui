@@ -20,6 +20,17 @@ export function useExperimentalLyrics({
 }) {
   const estimate = shallowRef({ status: 'missing' }),
     applied = shallowRef(false);
+  const queue = useExperimentalLyricsQueue();
+  watch(queue.completions, (items) => {
+    if (
+      items.some(
+        (item) =>
+          item.trackId === toValue(trackId) &&
+          item.sourceFilename === toValue(filename),
+      )
+    )
+      void refreshCompletedSource();
+  });
   const offsetInvalidated = shallowRef(false);
   const needsReanalysis = computed(
     () =>
@@ -28,8 +39,34 @@ export function useExperimentalLyrics({
       (estimate.value.status === 'ready' &&
         estimate.value.preview?.offsetUsedMs !== toValue(offsetMs)),
   );
-  const queue = useExperimentalLyricsQueue();
   let request = 0;
+  async function refreshCompletedSource() {
+    const id = toValue(trackId),
+      source = toValue(filename);
+    if (!id || !source) return;
+    const current = ++request;
+    try {
+      const value = await getBridge()?.getExperimentalLyricsEstimate?.(
+        id,
+        source,
+      );
+      if (request !== current) return;
+      if (
+        value?.sourceRevision === estimate.value.sourceRevision &&
+        value?.status === estimate.value.status &&
+        value?.preview?.estimateId === estimate.value.preview?.estimateId
+      )
+        return;
+      applied.value = false;
+      estimate.value = value ?? { status: 'missing' };
+      if (prepared.value.status === 'ready') offsetInvalidated.value = false;
+    } catch {
+      if (request === current) {
+        applied.value = false;
+        estimate.value = { status: 'unavailable' };
+      }
+    }
+  }
   const prepared = computed(() =>
     prepareAcousticPreview(
       toValue(document),
@@ -43,7 +80,6 @@ export function useExperimentalLyrics({
       () => toValue(trackId),
       () => toValue(filename),
       () => toValue(offsetMs),
-      queue.revision,
     ],
     async (values, previous, onCleanup) => {
       if (previous && values[1] === previous[1] && values[2] === previous[2]) {

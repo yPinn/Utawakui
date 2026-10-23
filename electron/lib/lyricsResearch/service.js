@@ -175,7 +175,38 @@ function createResearchService({
         return value;
       });
     },
-    async analyze(trackId, language = 'auto', sourceFilename) {
+    async prepareAnalysis(trackId, language = 'auto', sourceFilename) {
+      if (
+        !isBoundedTrackId(trackId) ||
+        !isAnalysisLanguage(language) ||
+        (sourceFilename !== undefined &&
+          (!isLyricsSubtitleFilename(sourceFilename) ||
+            sourceFilename.length > 240)) ||
+        !isAnalysisAllowed()
+      )
+        throw Error('experimental analysis unavailable');
+      const input =
+        sourceFilename === undefined
+          ? await loadAutomaticInput(trackId, language)
+          : await loadAutomaticInput(trackId, language, sourceFilename);
+      if (!isAnalysisAllowed()) throw Error('experimental analysis disabled');
+      if (!input || input.status === 'skipped')
+        return {
+          status: 'skipped',
+          reason: input?.reason ?? 'lyrics-missing',
+          ...(input?.sourceFilename || sourceFilename
+            ? { sourceFilename: input?.sourceFilename ?? sourceFilename }
+            : {}),
+          ...(input?.sourceRevision
+            ? { sourceRevision: input.sourceRevision }
+            : {}),
+        };
+      return {
+        sourceFilename: input.source.filename,
+        sourceRevision: input.sourceRevision ?? input.identity,
+      };
+    },
+    async analyze(trackId, language = 'auto', sourceFilename, sourceRevision) {
       if (
         !isBoundedTrackId(trackId) ||
         !isAnalysisLanguage(language) ||
@@ -191,12 +222,17 @@ function createResearchService({
         async (options) => {
           if (!isAnalysisAllowed())
             throw Error('experimental analysis disabled');
-          const input = await loadAutomaticInput(trackId, language);
+          const input =
+            sourceFilename === undefined
+              ? await loadAutomaticInput(trackId, language)
+              : await loadAutomaticInput(trackId, language, sourceFilename);
           if (!input) return { status: 'skipped' };
           if (input.status === 'skipped') return input;
           if (
-            sourceFilename !== undefined &&
-            input.source?.filename !== sourceFilename
+            (sourceFilename !== undefined &&
+              input.source?.filename !== sourceFilename) ||
+            (sourceRevision !== undefined &&
+              (input.sourceRevision ?? input.identity) !== sourceRevision)
           )
             return { status: 'skipped', reason: 'source-changed' };
           if (!verified) {
@@ -215,9 +251,14 @@ function createResearchService({
           });
           environmentFailure = false;
           options.signal.throwIfAborted();
-          const current = await loadAutomaticInput(trackId, language);
+          const frozenSource = input.source?.filename ?? sourceFilename;
+          const current =
+            frozenSource === undefined
+              ? await loadAutomaticInput(trackId, language)
+              : await loadAutomaticInput(trackId, language, frozenSource);
           if (
             current?.identity !== input.identity ||
+            current?.sourceRevision !== input.sourceRevision ||
             (sourceFilename !== undefined &&
               current?.source?.filename !== sourceFilename) ||
             current?.language !== input.language ||

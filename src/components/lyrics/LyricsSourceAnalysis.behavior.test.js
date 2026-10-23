@@ -80,7 +80,7 @@ const button = (label) =>
 beforeEach(() => {
   vi.useFakeTimers();
   owner = {
-    estimate: shallowRef({ status: 'missing' }),
+    estimate: shallowRef({ status: 'missing', sourceRevision: 'v1' }),
     prepared: shallowRef({ status: 'missing' }),
     applied: shallowRef(false),
     needsReanalysis: shallowRef(false),
@@ -138,6 +138,63 @@ function setup() {
 }
 
 describe('selected source analysis in available lyrics', () => {
+  it('shows a declined mixed-source reason only for the current source revision', async () => {
+    setup();
+    await flush();
+    mocks.queue.state.value = {
+      ...mocks.queue.state.value,
+      items: [
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'declined',
+          status: 'skipped',
+          reason: 'unsupported-lyrics',
+        },
+      ],
+    };
+    await flush();
+    expect(textContent(mounted.root)).toContain('目前沒有可分析的單語句');
+    owner.estimate.value = { status: 'missing', sourceRevision: 'v2' };
+    await flush();
+    expect(textContent(mounted.root)).not.toContain('目前沒有可分析的單語句');
+  });
+  it('permits another source to queue and ignores stale-version progress', async () => {
+    setup();
+    await flush();
+    mocks.queue.state.value = {
+      ...mocks.queue.state.value,
+      items: [
+        {
+          trackId: 'song',
+          sourceFilename: 'other.lrc',
+          sourceRevision: 'v1',
+          jobId: 'other',
+          status: 'running',
+          progress: { stage: 'alignment', completed: 1, total: 2 },
+        },
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'old',
+          jobId: 'old',
+          status: 'running',
+        },
+      ],
+    };
+    await flush();
+    expect(button('分析詞塊').props.disabled).toBe(false);
+    expect(button('取消分析')).toBeUndefined();
+    expect(findAll(mounted.root, (n) => n.type === 'progress')).toHaveLength(0);
+    trigger(button('分析詞塊'), 'onClick');
+    await flush();
+    expect(mocks.queue.retry).toHaveBeenCalledWith(
+      'song',
+      'auto',
+      'active.lrc',
+    );
+  });
   it('offers English and shows actual per-stage progress with indeterminate preparation', async () => {
     setup();
     await flush();
@@ -153,7 +210,15 @@ describe('selected source analysis in available lyrics', () => {
     mocks.queue.state.value = {
       ...mocks.queue.state.value,
       stage: 'verify',
-      items: [{ trackId: 'song', status: 'running' }],
+      items: [
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'job-active',
+          status: 'running',
+        },
+      ],
     };
     await flush();
     let meter = findAll(mounted.root, (n) => n.type === 'progress')[0];
@@ -164,6 +229,9 @@ describe('selected source analysis in available lyrics', () => {
       items: [
         {
           trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'job-active',
           status: 'running',
           progress: { stage: 'alignment', completed: 2, total: 5 },
         },
@@ -180,7 +248,15 @@ describe('selected source analysis in available lyrics', () => {
     ).toBe(false);
     mocks.queue.state.value = {
       ...mocks.queue.state.value,
-      items: [{ trackId: 'song', status: 'cancelled' }],
+      items: [
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'job-active',
+          status: 'cancelled',
+        },
+      ],
     };
     await flush();
     expect(findAll(mounted.root, (n) => n.type === 'progress')).toHaveLength(0);
@@ -233,22 +309,36 @@ describe('selected source analysis in available lyrics', () => {
     expect(textContent(mounted.root)).toContain('校時已變更，請重新分析');
     expect(button('套用詞塊')).toBeUndefined();
   });
-  it('cancels a track job, preserves the old estimate after failure, and stops polling on close', async () => {
+  it('cancels the source job, preserves the old estimate after failure, and stops polling on close', async () => {
     const props = setup();
     await flush();
     mocks.queue.state.value = {
       ...mocks.queue.state.value,
       items: [
-        { trackId: 'song', sourceFilename: 'active.lrc', status: 'running' },
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'job-active',
+          status: 'running',
+        },
       ],
     };
     await flush();
     trigger(button('取消分析'), 'onClick');
     await flush();
-    expect(mocks.queue.cancel).toHaveBeenCalledWith('song');
+    expect(mocks.queue.cancel).toHaveBeenCalledWith('song', 'job-active');
     mocks.queue.state.value = {
       ...mocks.queue.state.value,
-      items: [{ trackId: 'song', status: 'failed' }],
+      items: [
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'job-active',
+          status: 'failed',
+        },
+      ],
     };
     owner.prepared.value = { status: 'ready', lines: [{ status: 'ready' }] };
     await flush();
@@ -287,7 +377,15 @@ describe('selected source analysis in available lyrics', () => {
     setup();
     mocks.queue.state.value = {
       ...mocks.queue.state.value,
-      items: [{ trackId: 'song', status: 'cancelled' }],
+      items: [
+        {
+          trackId: 'song',
+          sourceFilename: 'active.lrc',
+          sourceRevision: 'v1',
+          jobId: 'job-active',
+          status: 'cancelled',
+        },
+      ],
     };
     owner.needsReanalysis.value = true;
     owner.prepared.value = { status: 'stale' };

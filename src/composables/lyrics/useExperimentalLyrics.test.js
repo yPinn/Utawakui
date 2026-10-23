@@ -24,6 +24,7 @@ function setup(bridge) {
   });
   const estimate = {
     status: 'ready',
+    sourceRevision: 'source-v1',
     preview: {
       estimateId: 'est',
       documentId: 'doc',
@@ -49,7 +50,9 @@ function setup(bridge) {
     },
   };
   const getBridge = () =>
-    bridge ?? { getExperimentalLyricsEstimate: async () => estimate };
+    bridge ?? {
+      getExperimentalLyricsEstimate: async () => structuredClone(estimate),
+    };
   const positionMs = shallowRef(3500),
     trackId = shallowRef('song'),
     offsetMs = shallowRef(0),
@@ -65,9 +68,177 @@ function setup(bridge) {
       getBridge,
     }),
   );
-  return { owner, scope, document, positionMs, offsetMs, filename, trackId };
+  return {
+    owner,
+    scope,
+    document,
+    positionMs,
+    offsetMs,
+    filename,
+    trackId,
+    estimate,
+  };
 }
 describe('manual experimental lyric application', () => {
+  it('clears offset invalidation only when a newly completed current-source result is usable', async () => {
+    let response;
+    const input = setup({
+      getExperimentalLyricsEstimate: async () =>
+        structuredClone(
+          response ?? { status: 'missing', sourceRevision: 'before-offset' },
+        ),
+    });
+    await nextTick();
+    response = structuredClone(input.estimate);
+    input.filename.value = 'other.lrc';
+    await nextTick();
+    await nextTick();
+    input.filename.value = 'zh.vtt';
+    await nextTick();
+    await nextTick();
+    input.owner.setApplied(true);
+    input.offsetMs.value = 100;
+    response = {
+      status: 'stale',
+      reason: 'offset-changed',
+      sourceRevision: 'new-offset',
+    };
+    await nextTick();
+    await nextTick();
+    expect(input.owner.needsReanalysis.value).toBe(true);
+    response = structuredClone(input.estimate);
+    response.sourceRevision = 'new-offset';
+    response.preview.offsetUsedMs = 100;
+    const previousWindow = globalThis.window;
+    globalThis.window = {
+      Utawakui: {
+        getExperimentalLyricsStatus: async () => ({
+          items: [
+            {
+              jobId: 'new-offset-complete',
+              trackId: 'song',
+              sourceFilename: 'zh.vtt',
+              sourceRevision: 'new-offset',
+              status: 'ready',
+            },
+          ],
+        }),
+      },
+    };
+    try {
+      await useExperimentalLyricsQueue().refresh();
+      await nextTick();
+      await nextTick();
+      expect(input.owner.prepared.value.status).toBe('ready');
+      expect(input.owner.needsReanalysis.value).toBe(false);
+    } finally {
+      input.scope.stop();
+      globalThis.window = previousWindow;
+    }
+  });
+  it('ignores an initial missing read arriving after the same-source completion reread', async () => {
+    let finish;
+    const read = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((r) => {
+            finish = r;
+          }),
+      )
+      .mockResolvedValue({ status: 'missing', sourceRevision: 'new-version' });
+    const previousWindow = globalThis.window;
+    globalThis.window = {
+      Utawakui: {
+        getExperimentalLyricsStatus: async () => ({
+          items: [
+            {
+              jobId: 'completed-before-initial-read',
+              trackId: 'song',
+              sourceFilename: 'zh.vtt',
+              sourceRevision: 'new-version',
+              status: 'ready',
+            },
+          ],
+        }),
+      },
+    };
+    const input = setup({ getExperimentalLyricsEstimate: read });
+    try {
+      await useExperimentalLyricsQueue().refresh();
+      await nextTick();
+      await nextTick();
+      finish({ status: 'missing', sourceRevision: 'old-version' });
+      await nextTick();
+      expect(read).toHaveBeenCalledTimes(2);
+      expect(input.owner.estimate.value.sourceRevision).toBe('new-version');
+    } finally {
+      input.scope.stop();
+      globalThis.window = previousWindow;
+    }
+  });
+  it('keeps current application when another source or an old version completes', async () => {
+    const input = setup();
+    await nextTick();
+    input.owner.setApplied(true);
+    let items = [];
+    const previousWindow = globalThis.window;
+    globalThis.window = {
+      Utawakui: {
+        getExperimentalLyricsStatus: async () => ({
+          enabled: true,
+          allowed: true,
+          items,
+        }),
+      },
+    };
+    try {
+      const queue = useExperimentalLyricsQueue();
+      await queue.refresh();
+      items = [
+        {
+          jobId: 'other-source',
+          trackId: 'song',
+          sourceFilename: 'other.lrc',
+          sourceRevision: 'source-v1',
+          status: 'running',
+        },
+      ];
+      await queue.refresh();
+      items = items.map((i) => ({ ...i, status: 'ready' }));
+      await queue.refresh();
+      await nextTick();
+      expect(input.owner.applied.value).toBe(true);
+      items = [
+        {
+          jobId: 'old-version',
+          trackId: 'song',
+          sourceFilename: 'zh.vtt',
+          sourceRevision: 'source-old',
+          status: 'ready',
+        },
+      ];
+      await queue.refresh();
+      await nextTick();
+      expect(input.owner.applied.value).toBe(true);
+      input.estimate.preview.estimateId = 'replacement';
+      items = [
+        {
+          jobId: 'own-version',
+          trackId: 'song',
+          sourceFilename: 'zh.vtt',
+          sourceRevision: 'source-v1',
+          status: 'ready',
+        },
+      ];
+      await queue.refresh();
+      await nextTick();
+      expect(input.owner.applied.value).toBe(false);
+    } finally {
+      globalThis.window = previousWindow;
+      input.scope.stop();
+    }
+  });
   it('carries independent fine ranges to both displays while keeping the coarse onset unchanged', async () => {
     const unit = { unitId: 'fine', from: 0, to: 1, startMs: 1200, endMs: 1600 };
     const input = setup();

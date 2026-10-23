@@ -295,13 +295,38 @@ retain T1. Human timing acceptance remains pending for this experimental trial.
 Main stores validated estimates in
 `tracks/<trackId>/lyrics/experimental-estimates/<sourceFilename>.json`, separate from
 canonical timing and the formal loader. Bind source/audio/timing/offset/canonical
-identity, asset/environment pins, recipe and Node/ICU versions. Recheck inputs and
-selection before atomic publication; cancelled/failed/stale runs preserve earlier
-estimates. Reads are bounded and validated. Queue status is session-local, bounded
-to 100 tracks; estimates survive restart, application does not.
+identity, asset/environment pins, recipe and Node/ICU versions. Recheck the fixed
+source and inputs before atomic publication; cancelled/failed/stale runs preserve
+earlier estimates. Reads are bounded and validated. Queue status is session-local,
+bounded to 100 jobs; estimates survive restart, application does not.
+
+Admission fixes a registered source before the job can run, including automatic
+post-separation requests. Main derives an opaque `sourceRevision` from the existing
+input identity and source-language metadata; the persisted estimate identity and
+sidecar format remain unchanged. Jobs expose a generated `jobId`, track/source,
+revision, language intent and bounded stage progress. The same active source/version
+is deduplicated; different sources or revisions may queue independently behind the
+single heavy-job owner. Execution and publication recheck the captured revision.
+Changing the preferred source does not redirect an admitted job; changing its own
+text, timing, offset, language or audio invalidates it. Identifiable declined sources
+retain their source/version and reason. Missing sources cannot acquire fabricated
+versions. Admission failures return a rejected enqueue and record private diagnostics.
+
+The source panel selects progress by track, filename and current main-derived
+revision. Cancellation sends a bounded job id and affects that job; legacy internal
+track/all cancellation remains available for shutdown and disabling. Renderer sends
+no hashes, paths or model configuration. Completion uses the fixed, zero-payload
+`lyrics-experimental:completed` notification, then a validated status read; it does
+not issue a whole-library reload. Ready jobs are distinguished by job id, including
+jobs that finish between polls. A different source's completion leaves application
+unchanged. Same-source completion re-reads current main state with stale-response
+protection; an identical revision/status/estimate id preserves application, a changed
+result clears it. A newly usable result clears the matching offset-invalidated flag.
+Old-version completion cannot restore its own stale result over the current source.
 
 Explicit lyrics-page application affects the local authoring/performance
-reader's starts-only frame and supporting Output templates. Source/document/offset/estimate reload clears application.
+reader's starts-only frame and supporting Output templates. Source/document/offset
+changes or a changed estimate clear application; a no-change completion read does not.
 Canonical documents and Self-View projections stay unchanged. The explicit manual
 application also reaches supporting Output templates through the optional starts-only
 extension below. T2 and declined T1 retain their behavior. Chinese conversion reuses segment text projection; text

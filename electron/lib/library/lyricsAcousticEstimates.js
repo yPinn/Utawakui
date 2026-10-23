@@ -311,6 +311,7 @@ function deleteTrackAcousticEstimate(trackDir, filename) {
 }
 
 module.exports = {
+  inputsCurrent,
   acousticEstimatePath,
   prepareAcousticEstimateContext,
   createAcousticEstimate,

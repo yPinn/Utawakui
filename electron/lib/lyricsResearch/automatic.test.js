@@ -5,6 +5,10 @@ function setup() {
   const config = { experimentalLyricsAfterSeparation: false };
   const research = {
     status: vi.fn(() => ({ busy: false, status: 'ready' })),
+    prepareAnalysis: vi.fn(async (track, _language, source) => ({
+      sourceFilename: source ?? 'main.lrc',
+      sourceRevision: track + ':v1',
+    })),
     analyze: vi.fn(async () => ({ status: 'ready' })),
     cancel: vi.fn(),
   };
@@ -34,8 +38,8 @@ describe('opt-in post-separation lyrics queue', () => {
         }),
     );
     research.cancel.mockImplementation(async () => finish({ cancelled: true }));
-    service.enqueue('first', 'en');
-    service.enqueue('next', 'en');
+    await service.enqueue('first', 'en');
+    await service.enqueue('next', 'en');
     await vi.waitFor(() => expect(research.analyze).toHaveBeenCalled());
     expect(service.status().items[0].progress).toEqual({
       stage: 'content',
@@ -50,8 +54,8 @@ describe('opt-in post-separation lyrics queue', () => {
   it('keeps a bounded selected source on manual requests', async () => {
     const { service, research } = setup();
     await service.setEnabled(true);
-    expect(service.enqueue('track', 'auto', '../bad.lrc')).toBe(false);
-    service.enqueue('track', 'auto', 'active.lrc');
+    expect(await service.enqueue('track', 'auto', '../bad.lrc')).toBe(false);
+    await service.enqueue('track', 'auto', 'active.lrc');
     await vi.waitFor(() =>
       expect(service.status().items[0].status).toBe('ready'),
     );
@@ -59,6 +63,7 @@ describe('opt-in post-separation lyrics queue', () => {
       'track',
       'auto',
       'active.lrc',
+      'track:v1',
     );
     expect(service.status().items[0].sourceFilename).toBe('active.lrc');
   });
@@ -69,19 +74,28 @@ describe('opt-in post-separation lyrics queue', () => {
       status: 'skipped',
       reason: 'language-unknown',
     });
-    service.enqueue('track', 'ja');
+    await service.enqueue('track', 'ja');
     await vi.waitFor(() =>
       expect(service.status().items[0].reason).toBe('language-unknown'),
     );
-    expect(research.analyze).toHaveBeenCalledWith('track', 'ja');
+    expect(research.analyze).toHaveBeenCalledWith(
+      'track',
+      'ja',
+      'main.lrc',
+      'track:v1',
+    );
     expect(service.status().items[0].analysisLanguage).toBe('ja');
-    expect(service.enqueue('other', 'ko')).toBe(false);
+    expect(await service.enqueue('other', 'ko')).toBe(false);
   });
   it('rechecks the feature gate and drains queued work without starting it when closed', async () => {
     let allowed = true;
     const config = { experimentalLyricsAfterSeparation: true };
     const research = {
       status: () => ({ status: 'ready', busy: false }),
+      prepareAnalysis: vi.fn(async () => ({
+        sourceFilename: 'main.lrc',
+        sourceRevision: 'v1',
+      })),
       analyze: vi.fn(),
       cancel: vi.fn(),
     };
@@ -91,38 +105,43 @@ describe('opt-in post-separation lyrics queue', () => {
       isAllowed: () => allowed,
       research,
     });
-    expect(service.enqueue('../outside')).toBe(false);
-    service.enqueue('one');
+    expect(await service.enqueue('../outside')).toBe(false);
+    const admission = service.enqueue('one');
     allowed = false;
-    await vi.waitFor(() =>
-      expect(service.status().items[0].status).toBe('cancelled'),
-    );
+    expect(await admission).toBe(false);
+    expect(service.status().items).toEqual([]);
     expect(research.analyze).not.toHaveBeenCalled();
     await expect(service.setEnabled('yes')).rejects.toThrow();
     await expect(service.setEnabled(true)).rejects.toThrow();
   });
   it('defaults off and never downloads; enabling does not scan past tracks', async () => {
     const { service, research } = setup();
-    expect(service.enqueue('track')).toBe(false);
+    expect(await service.enqueue('track')).toBe(false);
     await service.setEnabled(true);
     expect(research.analyze).not.toHaveBeenCalled();
-    expect(service.enqueue('track')).toBe(true);
-    expect(service.enqueue('track')).toBe(false);
+    expect(
+      await Promise.all([service.enqueue('track'), service.enqueue('track')]),
+    ).toEqual([true, false]);
     await vi.waitFor(() =>
       expect(service.status().items[0]?.status).toBe('ready'),
     );
-    expect(research.analyze).toHaveBeenCalledWith('track');
+    expect(research.analyze).toHaveBeenCalledWith(
+      'track',
+      'auto',
+      'main.lrc',
+      'track:v1',
+    );
   });
   it('isolates failed analysis and keeps an explicit retry', async () => {
     const { service, research } = setup();
     research.analyze.mockRejectedValueOnce(Error('private failure'));
     await service.setEnabled(true);
-    service.enqueue('track');
+    await service.enqueue('track');
     await vi.waitFor(() =>
       expect(service.status().items[0]?.status).toBe('failed'),
     );
     expect(JSON.stringify(service.status())).not.toContain('private');
-    service.enqueue('track');
+    await service.enqueue('track');
     await vi.waitFor(() =>
       expect(service.status().items[0]?.status).toBe('ready'),
     );
@@ -138,8 +157,8 @@ describe('opt-in post-separation lyrics queue', () => {
     );
     research.cancel.mockImplementation(async () => finish({ cancelled: true }));
     await service.setEnabled(true);
-    service.enqueue('one');
-    service.enqueue('two');
+    await service.enqueue('one');
+    await service.enqueue('two');
     await vi.waitFor(() => expect(finish).toBeTypeOf('function'));
     await service.setEnabled(false);
     await vi.waitFor(() =>
@@ -153,13 +172,13 @@ describe('opt-in post-separation lyrics queue', () => {
     const { service, research } = setup();
     research.status.mockReturnValue({ status: 'missing', busy: false });
     await service.setEnabled(true);
-    service.enqueue('one');
+    await service.enqueue('one');
     await vi.waitFor(() =>
       expect(service.status().items[0]?.reason).toBe('environment-missing'),
     );
     expect(research.analyze).not.toHaveBeenCalled();
     research.status.mockReturnValue({ status: 'ready', busy: true });
-    service.enqueue('two');
+    await service.enqueue('two');
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(research.analyze).not.toHaveBeenCalled();
     await service.cancel('two');
@@ -168,7 +187,7 @@ describe('opt-in post-separation lyrics queue', () => {
     const { service, research } = setup();
     research.isAnalysisBusy = () => true;
     await service.setEnabled(true);
-    service.enqueue('one');
+    await service.enqueue('one');
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(research.analyze).not.toHaveBeenCalled();
     expect(service.status().items[0].status).toBe('pending');

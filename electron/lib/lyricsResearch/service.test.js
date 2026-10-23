@@ -22,6 +22,50 @@ function setup(overrides = {}) {
   return { service, calls, environment };
 }
 describe('independent local research lifecycle', () => {
+  it('retains source/version for a declined source and does not expose its private input', async () => {
+    const { service } = setup({
+      isAnalysisAllowed: () => true,
+      loadAutomaticInput: async () => ({
+        status: 'skipped',
+        reason: 'unsupported-lyrics',
+        sourceFilename: 'mixed.lrc',
+        sourceRevision: 'v1',
+        privatePath: 'private',
+      }),
+    });
+    expect(await service.prepareAnalysis('one', 'auto', 'mixed.lrc')).toEqual({
+      status: 'skipped',
+      reason: 'unsupported-lyrics',
+      sourceFilename: 'mixed.lrc',
+      sourceRevision: 'v1',
+    });
+  });
+  it('captures a source revision without loading models and declines an outdated queued version', async () => {
+    let version = 'v1';
+    const loadAutomaticInput = vi.fn(async (_track, _language, filename) => ({
+      identity: version,
+      language: 'zh',
+      source: { filename: filename ?? 'a.lrc' },
+    }));
+    const runPreview = vi.fn();
+    const { service, calls } = setup({
+      loadAutomaticInput,
+      runPreview,
+      isAnalysisAllowed: () => true,
+    });
+    expect(await service.prepareAnalysis('one', 'auto', 'a.lrc')).toEqual({
+      sourceFilename: 'a.lrc',
+      sourceRevision: 'v1',
+    });
+    version = 'v2';
+    expect(await service.analyze('one', 'auto', 'a.lrc', 'v1')).toEqual({
+      status: 'skipped',
+      reason: 'source-changed',
+    });
+    expect(calls).toEqual([]);
+    expect(runPreview).not.toHaveBeenCalled();
+    expect(loadAutomaticInput).toHaveBeenLastCalledWith('one', 'auto', 'a.lrc');
+  });
   it('publishes bounded per-stage progress, ignores private/late updates and clears it after cancellation', async () => {
     let report, finish;
     const runPreview = vi.fn((_input, options) => {

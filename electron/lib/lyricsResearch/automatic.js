@@ -3,6 +3,7 @@ const {
   isBoundedTrackId,
   isLyricsSubtitleFilename,
 } = require('../library/paths');
+const { randomUUID } = require('node:crypto');
 const { isAnalysisLanguage, SKIP_REASONS } = require('./language');
 
 function createExperimentalLyricsQueue({
@@ -14,6 +15,7 @@ function createExperimentalLyricsQueue({
   onError = () => {},
 }) {
   const items = [];
+  const admissions = new Set();
   let draining = false,
     active = null,
     retryTimer;
@@ -78,15 +80,12 @@ function createExperimentalLyricsQueue({
         active = item;
         item.status = 'running';
         try {
-          const result = item.sourceFilename
-            ? await research.analyze(
-                item.trackId,
-                item.analysisLanguage,
-                item.sourceFilename,
-              )
-            : item.analysisLanguage === 'auto'
-              ? await research.analyze(item.trackId)
-              : await research.analyze(item.trackId, item.analysisLanguage);
+          const result = await research.analyze(
+            item.trackId,
+            item.analysisLanguage,
+            item.sourceFilename,
+            item.sourceRevision,
+          );
           if (item.status === 'cancelled' || result?.cancelled || !enabled())
             item.status = 'cancelled';
           else {
@@ -99,7 +98,7 @@ function createExperimentalLyricsQueue({
                 : null;
             if (item.status === 'ready') {
               try {
-                onComplete(item.trackId);
+                onComplete(item.trackId, item.jobId);
               } catch {
                 /* Optional projection. */
               }
@@ -123,7 +122,7 @@ function createExperimentalLyricsQueue({
       draining = false;
     }
   }
-  function enqueue(trackId, analysisLanguage = 'auto', sourceFilename) {
+  async function enqueue(trackId, analysisLanguage = 'auto', sourceFilename) {
     if (
       !isBoundedTrackId(trackId) ||
       !isAnalysisLanguage(analysisLanguage) ||
@@ -131,37 +130,90 @@ function createExperimentalLyricsQueue({
         (!isLyricsSubtitleFilename(sourceFilename) ||
           sourceFilename.length > 240)) ||
       !enabled() ||
-      items.some(
-        (i) =>
-          i.trackId === trackId && ['pending', 'running'].includes(i.status),
-      )
+      admissions.size +
+        items.filter((i) => ['pending', 'running'].includes(i.status)).length >=
+        100
     )
       return false;
-    if (items.length >= 100) {
-      const expired = items.findIndex(
-        (i) => !['pending', 'running'].includes(i.status),
+    const admission = { trackId, cancelled: false };
+    admissions.add(admission);
+    try {
+      const captured = await research.prepareAnalysis(
+        trackId,
+        analysisLanguage,
+        sourceFilename,
       );
-      if (expired < 0) return false;
-      items.splice(expired, 1);
+      if (admission.cancelled || !enabled() || !captured) return false;
+      const source = captured.sourceFilename;
+      const revision = captured.sourceRevision;
+      if (
+        captured.status !== 'skipped' &&
+        (!isLyricsSubtitleFilename(source) ||
+          source.length > 240 ||
+          typeof revision !== 'string' ||
+          !revision.length ||
+          revision.length > 128)
+      )
+        return false;
+      const same = (i) =>
+        i.trackId === trackId &&
+        i.sourceFilename === source &&
+        i.sourceRevision === revision;
+      if (
+        items.some((i) => same(i) && ['pending', 'running'].includes(i.status))
+      )
+        return false;
+      const old = items.findIndex((i) => same(i));
+      if (old >= 0) items.splice(old, 1);
+      if (items.length >= 100) {
+        const expired = items.findIndex(
+          (i) => !['pending', 'running'].includes(i.status),
+        );
+        if (expired < 0) return false;
+        items.splice(expired, 1);
+      }
+      items.push({
+        jobId: randomUUID(),
+        trackId,
+        sourceFilename: source,
+        sourceRevision: revision,
+        status: captured.status === 'skipped' ? 'skipped' : 'pending',
+        reason:
+          captured.status === 'skipped'
+            ? SKIP_REASONS.includes(captured.reason)
+              ? captured.reason
+              : 'unsupported-lyrics'
+            : null,
+        analysisLanguage,
+      });
+      requestDrain();
+      return true;
+    } catch (error) {
+      try {
+        onError(error);
+      } catch {
+        /* Diagnostics cannot affect playback. */
+      }
+      return false;
+    } finally {
+      admissions.delete(admission);
     }
-    const old = items.findIndex((i) => i.trackId === trackId);
-    if (old >= 0) items.splice(old, 1);
-    items.push({
-      trackId,
-      status: 'pending',
-      reason: null,
-      analysisLanguage,
-      ...(sourceFilename !== undefined ? { sourceFilename } : {}),
-    });
-    requestDrain();
-    return true;
   }
-  async function cancel(trackId) {
-    if (trackId !== undefined && !isBoundedTrackId(trackId))
-      throw Error('invalid experimental track');
+  async function cancel(trackId, jobId) {
+    if (
+      (trackId !== undefined && !isBoundedTrackId(trackId)) ||
+      (jobId !== undefined &&
+        (typeof jobId !== 'string' || !/^[a-f0-9-]{36}$/u.test(jobId)))
+    )
+      throw Error('invalid experimental job');
+    if (jobId === undefined)
+      for (const admission of admissions)
+        if (trackId === undefined || admission.trackId === trackId)
+          admission.cancelled = true;
     for (const item of items) {
       if (
         (trackId === undefined || item.trackId === trackId) &&
+        (jobId === undefined || item.jobId === jobId) &&
         ['pending', 'running'].includes(item.status)
       )
         item.status = 'cancelled';

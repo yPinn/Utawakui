@@ -45,19 +45,18 @@ const nativeOnly = computed(
   () => !hasT1.value && lines.value.some((line) => line.segments?.length),
 );
 const item = computed(() =>
-  queue.state.value?.items?.find(
-    (entry) => entry.trackId === lyrics.state.selectedTrackId,
+  queue.state.value?.items?.findLast(
+    (entry) =>
+      entry.trackId === lyrics.state.selectedTrackId &&
+      entry.sourceFilename === lyrics.state.selectedSourceFilename &&
+      entry.sourceRevision &&
+      entry.sourceRevision === experiment.estimate.value.sourceRevision,
   ),
 );
 const busy = computed(() =>
   ['pending', 'running'].includes(item.value?.status),
 );
-const currentItem = computed(() =>
-  !item.value?.sourceFilename ||
-  item.value.sourceFilename === lyrics.state.selectedSourceFilename
-    ? item.value
-    : null,
-);
+const currentItem = item;
 const readyCount = computed(() =>
   experiment.prepared.value.status === 'ready'
     ? experiment.prepared.value.lines.filter((line) => line.status === 'ready')
@@ -99,10 +98,7 @@ const availability = computed(() => {
   return '';
 });
 const jobDescription = computed(() => {
-  if (busy.value)
-    return item.value.sourceFilename && !currentItem.value
-      ? '此曲的其他來源正在分析，可取消後分析目前來源。'
-      : '';
+  if (busy.value) return '';
   if (currentItem.value?.status === 'failed')
     return '分析失敗；原有歌詞與伴奏仍可使用，可重新分析。';
   if (currentItem.value?.status === 'cancelled')
@@ -179,9 +175,11 @@ async function analyze() {
 }
 async function cancel() {
   if (saving.value) return;
+  const job = item.value;
+  if (!job?.jobId) return;
   saving.value = true;
   try {
-    await queue.cancel(lyrics.state.selectedTrackId);
+    await queue.cancel(job.trackId, job.jobId);
   } finally {
     saving.value = false;
   }

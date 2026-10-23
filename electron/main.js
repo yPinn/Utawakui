@@ -597,11 +597,12 @@ if (!gotSingleInstanceLock) {
           config: researchEnvironment.paths(),
           jobsRoot: path.join(researchRoot, 'jobs'),
         }),
-      loadAutomaticInput: (trackId, language) =>
+      loadAutomaticInput: (trackId, language, sourceFilename) =>
         require('./lib/lyricsResearch/input').loadAutomaticResearchInput(
           configState.resolveDownloadDir(configState.getConfig()),
           trackId,
           language,
+          sourceFilename,
         ),
       isInputCurrent: (input) =>
         require('./lib/lyricsResearch/input').automaticInputCurrent(
@@ -631,7 +632,12 @@ if (!gotSingleInstanceLock) {
             FEATURE_IDS.AUDIO_PROCESSING_FLOW,
           ),
         research: lyricsResearchService,
-        onComplete: notifyLibraryUpdated,
+        onComplete: () => {
+          for (const window of BrowserWindow.getAllWindows()) {
+            if (!window.isDestroyed())
+              window.webContents.send('lyrics-experimental:completed');
+          }
+        },
         onError: (error) =>
           recordDiagnostic({
             source: 'lyrics-experimental',
@@ -660,9 +666,12 @@ if (!gotSingleInstanceLock) {
               { trackId, language: 'zh', lineIndex: 0 },
               { filename },
             );
-          return require('./lib/lyricsResearch/estimates').loadExperimentalEstimate(
-            input,
-          );
+          return {
+            ...require('./lib/lyricsResearch/estimates').loadExperimentalEstimate(
+              input,
+            ),
+            sourceRevision: input.sourceRevision,
+          };
         },
       },
     );

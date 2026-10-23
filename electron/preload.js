@@ -677,10 +677,17 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getLyricsResearchStatus: () => ipcRenderer.invoke('lyrics-research:status'),
   getExperimentalLyricsStatus: () =>
     ipcRenderer.invoke('lyrics-experimental:status'),
+  onExperimentalLyricsCompleted: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('lyrics-experimental:completed', listener);
+    return () => {
+      ipcRenderer.removeListener('lyrics-experimental:completed', listener);
+    };
+  },
   setExperimentalLyricsEnabled: (enabled) =>
     ipcRenderer.invoke('lyrics-experimental:enable', enabled),
-  cancelExperimentalLyrics: (trackId) =>
-    ipcRenderer.invoke('lyrics-experimental:cancel', trackId),
+  cancelExperimentalLyrics: (trackId, ...job) =>
+    ipcRenderer.invoke('lyrics-experimental:cancel', trackId, ...job),
   retryExperimentalLyrics: (trackId, ...language) =>
     ipcRenderer.invoke('lyrics-experimental:retry', trackId, ...language),
   getExperimentalLyricsEstimate: (trackId, filename) =>

@@ -257,6 +257,7 @@ const MAIN_EVENT_CHANNELS = [
   'library:backfill-status',
   'library:updated',
   'lyrics:reading-progress',
+  'lyrics-experimental:completed',
   'music-structure:analysis-progress',
   'music-structure:batch-progress',
   'music-structure:capability-progress',
@@ -308,6 +309,19 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('disposes the lyrics completion listener without returning an IPC object across isolation', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const callback = vi.fn();
+    const dispose = bridge.onExperimentalLyricsCompleted(callback);
+    electron.ipcRenderer.removeListener.mockReturnValueOnce({
+      internal: () => {},
+    });
+    expect(dispose()).toBeUndefined();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
+      'lyrics-experimental:completed',
+      expect.any(Function),
+    );
+  });
   it('forwards only bounded session/export/performance intents, stripping renderer paths and forged timeline/track lists', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     const extra = {

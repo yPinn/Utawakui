@@ -29,13 +29,19 @@ function registerLyricsExperimentalHandlers({
                       isLyricsSubtitleFilename(args[2]) &&
                       args[2].length <= 240)) &&
                   isBoundedTrackId(args[0])
-                : operation === 'estimate'
-                  ? args.length === 2 &&
-                    isBoundedTrackId(args[0]) &&
-                    typeof args[1] === 'string' &&
-                    args[1].length <= 240 &&
-                    isLyricsSubtitleFilename(args[1])
-                  : args.length === 1 && isBoundedTrackId(args[0]);
+                : operation === 'cancel'
+                  ? (args.length === 1 ||
+                      (args.length === 2 &&
+                        typeof args[1] === 'string' &&
+                        /^[a-f0-9-]{36}$/u.test(args[1]))) &&
+                    isBoundedTrackId(args[0])
+                  : operation === 'estimate'
+                    ? args.length === 2 &&
+                      isBoundedTrackId(args[0]) &&
+                      typeof args[1] === 'string' &&
+                      args[1].length <= 240 &&
+                      isLyricsSubtitleFilename(args[1])
+                    : args.length === 1 && isBoundedTrackId(args[0]);
         if (!valid)
           throw createAppError({
             code: 'LYRICS_EXPERIMENTAL_INVALID_INTENT',
@@ -56,11 +62,11 @@ function registerLyricsExperimentalHandlers({
               source: 'lyrics-experimental',
             },
           },
-          () =>
+          async () =>
             operation === 'enable'
               ? queue.setEnabled(args[0])
               : operation === 'retry'
-                ? { queued: queue.enqueue(...args) }
+                ? { queued: await queue.enqueue(...args) }
                 : operation === 'estimate'
                   ? loadEstimate(...args)
                   : queue[operation](...args),

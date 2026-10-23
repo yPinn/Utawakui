@@ -39,6 +39,41 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 const intent = { trackId: 'song', language: 'zh', lineIndex: 0 };
 describe('main-derived research input', () => {
+  it('versions metadata language independently of the preserved estimate identity', async () => {
+    const first = await loadResearchInput(root, intent, {
+      filename: 'main.vtt',
+    });
+    saveTrackLyricsManifest(track, [
+      { filename: 'main.vtt', kind: 'manual', language: 'ja' },
+      { filename: 'ja.vtt', kind: 'manual', language: 'ja' },
+    ]);
+    const next = await loadResearchInput(root, intent, {
+      filename: 'main.vtt',
+    });
+    expect(next.identity).toBe(first.identity);
+    expect(next.sourceRevision).not.toBe(first.sourceRevision);
+    expect(automaticInputCurrent(root, first)).toBe(false);
+  });
+  it('keeps a requested source through preference changes but detects its own revisions', async () => {
+    setLyricsSourcePreference(track, 'ja.vtt', 'user');
+    const input = await loadAutomaticResearchInput(
+      root,
+      'song',
+      'auto',
+      'main.vtt',
+    );
+    expect(input.source.filename).toBe('main.vtt');
+    expect(input.language).toBe('zh');
+    setLyricsSourcePreference(track, 'main.vtt', 'user');
+    expect(automaticInputCurrent(root, input)).toBe(true);
+    setLyricsSourcePreference(track, 'ja.vtt', 'user');
+    expect(automaticInputCurrent(root, input)).toBe(true);
+    fs.appendFileSync(path.join(track, 'lyrics/main.vtt'), '\n');
+    expect(automaticInputCurrent(root, input)).toBe(false);
+    expect(
+      await loadAutomaticResearchInput(root, 'song', 'auto', 'missing.lrc'),
+    ).toMatchObject({ status: 'skipped', reason: 'source-changed' });
+  });
   it('admits an und document by line evidence and keeps its mixed line declined', async () => {
     fs.writeFileSync(
       path.join(track, 'lyrics/main.vtt'),
@@ -105,7 +140,7 @@ describe('main-derived research input', () => {
       { filename: 'main.vtt', kind: 'manual', language: 'und' },
     ]);
     setLyricsSourcePreference(track, 'main.vtt', 'user');
-    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+    expect(await loadAutomaticResearchInput(root, 'song')).toMatchObject({
       status: 'skipped',
       reason: 'language-unknown',
     });
@@ -124,7 +159,7 @@ describe('main-derived research input', () => {
       { filename: 'main.vtt', kind: 'manual', language: 'ko' },
     ]);
     setLyricsSourcePreference(track, 'main.vtt', 'user');
-    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+    expect(await loadAutomaticResearchInput(root, 'song')).toMatchObject({
       status: 'skipped',
       reason: 'language-unsupported',
     });
@@ -135,7 +170,7 @@ describe('main-derived research input', () => {
     saveTrackLyricsManifest(track, [
       { filename: 'main.vtt', kind: 'manual', language: 'ja' },
     ]);
-    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+    expect(await loadAutomaticResearchInput(root, 'song')).toMatchObject({
       status: 'skipped',
       reason: 'unsupported-lyrics',
     });
@@ -154,23 +189,23 @@ describe('main-derived research input', () => {
       canonical,
     );
     setLyricsSourcePreference(track, 'main.vtt', 'user');
-    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+    expect(await loadAutomaticResearchInput(root, 'song')).toMatchObject({
       status: 'skipped',
       reason: 'native-t2',
     });
     fs.rmSync(path.join(track, 'lyrics'), { recursive: true });
-    expect(await loadAutomaticResearchInput(root, 'song')).toEqual({
+    expect(await loadAutomaticResearchInput(root, 'song')).toMatchObject({
       status: 'skipped',
       reason: 'lyrics-missing',
     });
   });
-  it('automatic selection uses supported source preference and invalidates a changed selection', async () => {
+  it('automatic selection freezes its source independently of later preference changes', async () => {
     setLyricsSourcePreference(track, 'main.vtt', 'user');
     const original = await loadAutomaticResearchInput(root, 'song');
     expect(original.language).toBe('zh');
     expect(automaticInputCurrent(root, original)).toBe(true);
     setLyricsSourcePreference(track, 'ja.vtt', 'user');
-    expect(automaticInputCurrent(root, original)).toBe(false);
+    expect(automaticInputCurrent(root, original)).toBe(true);
     expect((await loadAutomaticResearchInput(root, 'song')).language).toBe(
       'ja',
     );
