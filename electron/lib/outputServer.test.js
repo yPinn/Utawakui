@@ -522,6 +522,16 @@ describe('outputServer', () => {
     expect(await artworkMotion.text()).toContain(
       'createArtworkMotionController',
     );
+    const coverMotion = await fetch(
+      `${status.httpUrl}/overlay/now-playing/coverPlayerMotion.mjs`,
+    );
+    expect(coverMotion.status).toBe(200);
+    expect(coverMotion.headers.get('content-type')).toContain(
+      'text/javascript',
+    );
+    expect(await coverMotion.text()).toContain(
+      'createCoverPlayerMotionController',
+    );
 
     const setlistMotion = await fetch(
       `${status.httpUrl}/overlay/setlist/setlistMotion.mjs`,

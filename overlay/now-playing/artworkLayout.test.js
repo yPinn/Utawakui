@@ -4,6 +4,7 @@ import {
   preloadArtworkSource,
   prepareArtworkSleeve,
   renderArtworkFrame,
+  renderArtworkPlayback,
 } from './artworkLayout.mjs';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -45,6 +46,39 @@ function sleeveElements(presentationCache) {
 }
 
 describe('Now Playing artwork layouts', () => {
+  it('updates live controls without replacing outgoing artwork or metadata', () => {
+    const view = elements();
+    renderArtworkFrame(view, {
+      visible: true,
+      trackId: 'A',
+      title: 'Old title',
+      artist: 'Old artist',
+    });
+    renderArtworkPlayback(view, {
+      visible: true,
+      trackId: 'B',
+      title: 'New title',
+      artist: 'New artist',
+      volume: 0.72,
+      muted: true,
+      progress: 0.5,
+      positionMs: 45000,
+      durationMs: 90000,
+    });
+    expect(view.title.textContent).toBe('Old title');
+    expect(view.artist.textContent).toBe('Old artist');
+    expect(view.image.dataset.trackId).toBe('A');
+    expect(view.root.hidden).toBe(false);
+    expect(view.elapsed.textContent).toBe('0:45');
+    expect(view.root.style.setProperty).toHaveBeenCalledWith(
+      '--ovl-artwork-progress-scale',
+      0.5,
+    );
+    expect(view.root.style.setProperty).toHaveBeenLastCalledWith(
+      '--ovl-artwork-volume',
+      '0%',
+    );
+  });
   it('updates effective volume on the same track, restores after mute and clears unavailable state', () => {
     const view = elements();
     const frame = {

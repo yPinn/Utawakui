@@ -1,5 +1,6 @@
-/* Mirrors the 480x640 cover-player surface using canvas-scaled units. */
+/* Both captures share the approved 480x640 design coordinate system. */
 .obs-template-mockup .obs-template-mockup__cover-player {
+  --obs-canvas-rem: calc(100cqi / 30);
   --obs-cover-player-muted: color-mix(
     in srgb,
     var(--obs-preview-ink) 76%,

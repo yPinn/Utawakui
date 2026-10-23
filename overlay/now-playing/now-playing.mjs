@@ -12,8 +12,10 @@ import {
   collectArtworkElements,
   prepareArtworkSleeve,
   renderArtworkFrame,
+  renderArtworkPlayback,
 } from './artworkLayout.mjs';
 import { createArtworkMotionController } from './artworkMotion.mjs';
+import { createCoverPlayerMotionController } from './coverPlayerMotion.mjs';
 
 const NOW_PLAYING_TEMPLATE_IDS = new Set(['art-card', 'cover-player']);
 
@@ -85,6 +87,19 @@ function boot() {
       prepareArtworkSleeve(artworkElements.incoming, frame),
     clearPreparedFrame: () => clearArtworkSleeve(artworkElements.incoming),
   });
+  const coverMotion = createCoverPlayerMotionController({
+    gsap,
+    root: artworkElements.root,
+    current: [
+      document.querySelector('.artwork-overlay__mark'),
+      document.querySelector('.artwork-overlay__copy'),
+    ],
+    commitFrame: (frame) => renderArtworkFrame(artworkElements, frame),
+    commitPlayback: (frame) => renderArtworkPlayback(artworkElements, frame),
+    prepareFrame: (frame) =>
+      prepareArtworkSleeve(artworkElements.incoming, frame),
+    clearPreparedFrame: () => clearArtworkSleeve(artworkElements.incoming),
+  });
   const previewMode = isPreviewMode(window.location);
   let activeTemplateId = initialNowPlayingTemplateId(
     window.location,
@@ -94,9 +109,15 @@ function boot() {
   let previewScene = previewSceneForSlot('now-playing', {
     templateId: activeTemplateId,
   });
+  let renderedTemplateId = null;
+  let reducedMotion = false;
 
   function renderCurrentFrame({ recovering = false } = {}) {
+    const switched = renderedTemplateId !== activeTemplateId;
+    renderedTemplateId = activeTemplateId;
     if (activeTemplateId === 'art-card') {
+      if (switched) coverMotion.update(currentFrame, { active: false });
+      if (switched) artworkMotion.setReducedMotion(reducedMotion);
       artworkMotion.update({
         active: true,
         frame: currentFrame,
@@ -105,8 +126,12 @@ function boot() {
       return;
     }
 
-    artworkMotion.update({ active: false, frame: currentFrame });
-    renderArtworkFrame(artworkElements, currentFrame);
+    if (switched) artworkMotion.update({ active: false, frame: currentFrame });
+    if (switched) coverMotion.setReducedMotion(reducedMotion);
+    coverMotion.update(currentFrame, {
+      active: true,
+      settle: recovering || switched,
+    });
   }
 
   applyOverlayAppearance(document, { templateId: activeTemplateId });
@@ -114,11 +139,20 @@ function boot() {
   const host = createOverlayHost({
     kind: 'now-playing',
     previewMode,
-    onReducedMotion: (value) => artworkMotion.setReducedMotion(value),
+    onReducedMotion: (value) => {
+      reducedMotion = value;
+      if (activeTemplateId === 'art-card')
+        artworkMotion.setReducedMotion(value);
+      else coverMotion.setReducedMotion(value);
+    },
     onActivity: (active, { recovering } = {}) => {
-      if (!active) artworkMotion.suspend();
-      else if (previewMode && recovering)
-        renderCurrentFrame({ recovering: true });
+      if (!active) {
+        artworkMotion.suspend();
+        coverMotion.suspend();
+      } else {
+        coverMotion.resume();
+        if (previewMode && recovering) renderCurrentFrame({ recovering: true });
+      }
     },
     onConfig: (slot) => {
       activeTemplateId = normalizeNowPlayingTemplateId(slot?.templateId);
@@ -137,7 +171,10 @@ function boot() {
       );
       renderCurrentFrame(context);
     },
-    onDispose: () => artworkMotion.destroy(),
+    onDispose: () => {
+      artworkMotion.destroy();
+      coverMotion.destroy();
+    },
   });
   host.start();
   if (previewMode) renderCurrentFrame();

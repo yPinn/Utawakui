@@ -285,6 +285,8 @@ describe('packaged dependency boundary', () => {
   it('packages the F2 Overlay host while excluding its tests and F1 fixture tooling', () => {
     for (const [file, expected] of [
       ['overlay/shared/lifecycle.mjs', true],
+      ['overlay/now-playing/coverPlayerMotion.mjs', true],
+      ['overlay/now-playing/coverPlayerMotion.test.js', false],
       ['overlay/setlist/receiptView.mjs', true],
       ['overlay/setlist/receiptMotion.mjs', true],
       ['overlay/setlist/receipt.css', true],

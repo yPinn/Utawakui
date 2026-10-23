@@ -69,7 +69,7 @@
     },
     "cover-player": {
       "default": "portrait",
-      "supported": ["portrait"]
+      "supported": ["portrait", "portrait-large"]
     }
   }
 }

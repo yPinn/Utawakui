@@ -27,6 +27,7 @@ vi.mock('./artworkLayout.mjs', () => ({
   clearArtworkSleeve: vi.fn(),
   prepareArtworkSleeve: vi.fn(),
   renderArtworkFrame: harness.render,
+  renderArtworkPlayback: vi.fn(),
 }));
 
 function artworkElements() {
@@ -133,6 +134,25 @@ describe('Now Playing template runtime', () => {
             expect.objectContaining({ visible: true }),
           );
         expect(harness.createHost).toHaveBeenCalledOnce();
+        if (next === 'cover-player') {
+          harness.motion.setReducedMotion.mockClear();
+          harness.host.onReducedMotion(true);
+          expect(harness.motion.setReducedMotion).not.toHaveBeenCalled();
+          harness.host.onReducedMotion(false);
+          const updates = harness.motion.update.mock.calls.length;
+          harness.host.onSnapshot({
+            revision: 2,
+            playback: {
+              track: { id: 'current', title: 'Same track' },
+              status: 'paused',
+              positionMs: 1000,
+              durationMs: 90000,
+              volume: 0.35,
+              muted: false,
+            },
+          });
+          expect(harness.motion.update).toHaveBeenCalledTimes(updates);
+        }
       }
     },
   );

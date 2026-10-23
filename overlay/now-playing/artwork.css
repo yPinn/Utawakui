@@ -844,6 +844,11 @@
     display: none;
   }
 
+  /* Keep the approved 30rem × 40rem composition proportional at either capture size. */
+  :root[data-ovl-template='cover-player'] {
+    font-size: min(calc(100vw / 30), calc(100vh / 40));
+  }
+
   :root[data-ovl-template='cover-player'] .artwork-overlay {
     --ovl-template-artwork-title-size: 1.375em;
     --ovl-template-player-track-size: calc(var(--ovl-primitive-space-1) * 0.75);

@@ -67,25 +67,27 @@
 
 歌單slot預設為receipt-setlist，並排列於歌單模板首位；既存合法模板選擇維持原值。共同預設為 original Look、強度 100、medium 字級；下表只列差異。
 
-| 模板／capture              | 可選與初始值                                                   | Invariant                                                    |
-| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
-| queue-board／480×810       | 字型 sans、字重 semibold、背景 solid、密度 normal              | current／played membership、history 分頁接續                 |
-| receipt-setlist／480×810   | 字級medium、向下出紙、回顧開啟／15秒                           | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
-| karaoke-stack／1920×1080   | 只有共用 Look／字級                                            | 雙 lane、count-in、timing mask、字型角色                     |
-| kinetic-pop／1920×1080     | 材料 candy-rim、排列 straight                                  | 三層 paint order、phrase source boundaries                   |
-| ornate-vertical／1920×1080 | 字型 ornate／antique；兩色與右側位置                           | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
-| live-stage／1920×1080      | 字型 sans／本機字型；對比 balanced；文字策略 broadcast-compact | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
-| manga-frame／1920×1080     | 字型 antique／sans／serif／rounded；字重 bold；reading auto    | Ruby atomicity、框內安全版面、bubble timing                  |
-| art-card／480×270          | 字型 sans、字重 bold                                           | 唱片 playhead、封套交換、驗證過的 artwork route              |
-| cover-player／480×640      | 字重 bold、背景 solid                                          | 同一 artwork route 與進度權威                                |
+| 模板／capture                  | 可選與初始值                                                   | Invariant                                                    |
+| ------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------ |
+| queue-board／480×810           | 字型 sans、字重 semibold、背景 solid、密度 normal              | current／played membership、history 分頁接續                 |
+| receipt-setlist／480×810       | 字級medium、向下出紙、回顧開啟／15秒                           | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
+| karaoke-stack／1920×1080       | 只有共用 Look／字級                                            | 雙 lane、count-in、timing mask、字型角色                     |
+| kinetic-pop／1920×1080         | 材料 candy-rim、排列 straight                                  | 三層 paint order、phrase source boundaries                   |
+| ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                           | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
+| live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 broadcast-compact | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
+| manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto    | Ruby atomicity、框內安全版面、bubble timing                  |
+| art-card／480×270              | 字型 sans、字重 bold                                           | 唱片 playhead、封套交換、驗證過的 artwork route              |
+| cover-player／360×480、480×640 | 字重 bold、背景 solid                                          | 同一 artwork route 與進度權威                                |
 
 Setlist 只公開目前演唱曲目與已唱紀錄，不投影待唱。480×810 是擷取尺寸而非固定版面：queue-board 以約兩成高度保留目前歌曲，其餘給已唱紀錄，兩區只以固定 spacing 分隔；最近八首依播放順序向下排列，超出時才自動垂直滾動。
 
 Now Playing 的 `art-card` 與 `cover-player` 共用 `artwork-overlay` 結構及 `artwork.css`，沒有第二份 compact renderer。舊 `now-next` id 在設定讀取邊界回退為 `art-card`，不再交付舊版 HTML／CSS 分支。
 
-`cover-player` 採使用者確認的Apple Music參考比例：專用portrait擷取480×640，舊medium設定正規化為portrait；medium本身仍為480×540。封面方形、曲目資訊靠左，單行超長省略；字級基準為曲名22px、藝人18px。背景依既有封面取色產生暗色暈染，透明／柔和背景仍可選。細進度條與剩餘時間跟隨播放器權威；僅保留上一首、播放／暫停、下一首三個圖示及音量外觀。這些是只讀Output的非互動圖示；音量列同步App主音量與靜音，播放／暫停符號跟隨實際狀態。音量為0或靜音時顯示靜音符號，靜音時滑塊歸零，解除後恢復原設定；沒有音量資料的舊來源保留該列空間但不顯示數值或符號。隱藏transport時一併隱藏音量列。封面沿用已驗證media route，缺圖用曲名首字；不交付參考截圖或其專輯美術。
+`cover-player` 採使用者確認的Apple Music參考比例：預設portrait擷取360×480，portrait-large保留480×640。原portrait設定直接採用較小尺寸，舊medium設定正規化為portrait；medium本身仍為480×540。封面方形、曲目資訊靠左，單行超長省略；480×640設計基準的曲名22px、藝人18px；360×480等比縮為16.5px、13.5px。背景依既有封面取色產生暗色暈染，透明／柔和背景仍可選。細進度條與剩餘時間跟隨播放器權威；僅保留上一首、播放／暫停、下一首三個圖示及音量外觀。這些是只讀Output的非互動圖示；音量列同步App主音量與靜音，播放／暫停符號跟隨實際狀態。音量為0或靜音時顯示靜音符號，靜音時滑塊歸零，解除後恢復原設定；沒有音量資料的舊來源保留該列空間但不顯示數值或符號。隱藏transport時一併隱藏音量列。封面沿用已驗證media route，缺圖用曲名首字；不交付參考截圖或其專輯美術。
 
-Gallery 的 CoverPlayerPreview 沿用相同 480×640 畫布比例，以 canvas 單位縮放封面、metadata、16px 時間行框、進度與控制列；詳細預覽與 16:9 縮圖容器都保留完整直式版面。進度填色與圓點共用同一有界 scene progress，不以假循環或封面位移動畫改變此版型；預設示範封面仍使用既有曲名首字與 feature 色彩 tokens。
+Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，在360×480及480×640擷取尺寸等比呈現，以 canvas 單位縮放封面、metadata、16px 時間行框、進度與控制列；詳細預覽與 16:9 縮圖容器都保留完整直式版面。進度填色與圓點共用同一有界 scene progress，不以假循環或封面位移動畫改變此版型；預設示範封面仍使用既有曲名首字與 feature 色彩 tokens。
+
+封面電台以track id變更觸發160ms淡出、透明時交接封面／曲名／藝人、240ms淡入；音量、靜音、進度及時間不等待此過場，亦不觸發重播。快速連切只交付最新曲目，過期callback失效；reduced-motion、隱藏恢復與模板切換直接settle。Gallery維持固定合成場景，不加入假切歌循環。
 
 ## 歌詞模板呈現
 

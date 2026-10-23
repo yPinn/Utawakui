@@ -859,6 +859,12 @@ export function clearArtworkSleeve(elements) {
 }
 
 export function renderArtworkFrame(elements, frame) {
+  elements.root.hidden = !frame.visible;
+  renderSleeveContent(elements, frame);
+  renderArtworkPlayback(elements, frame);
+}
+
+export function renderArtworkPlayback(elements, frame) {
   const progress = Number.isFinite(frame.progress)
     ? Math.min(1, Math.max(0, frame.progress))
     : 0;
@@ -869,7 +875,6 @@ export function renderArtworkFrame(elements, frame) {
     ? Math.max(0, frame.durationMs)
     : 0;
 
-  elements.root.hidden = !frame.visible;
   elements.root.dataset.revision = String(frame.revision);
   elements.root.dataset.playbackStatus = ['playing', 'paused'].includes(
     frame.playbackStatus,
@@ -888,7 +893,6 @@ export function renderArtworkFrame(elements, frame) {
   elements.root.dataset.volumeMuted = String(
     frame.muted === true || (volumeKnown && frame.volume === 0),
   );
-  renderSleeveContent(elements, frame);
   elements.root.style.setProperty(
     '--ovl-artwork-volume',
     `${effectiveVolume * 100}%`,

@@ -75,7 +75,7 @@ describe('Cover Player gallery mockup', () => {
 
     expect(
       captureSizeForKind('now-playing', null, 'cover-player'),
-    ).toMatchObject({ width: 480, height: 640 });
+    ).toMatchObject({ width: 360, height: 480 });
     expect(artworkCss).toContain('padding: 1.5rem;');
     expect(source).toContain(`padding: ${canvasRem(1.5)};`);
     for (const declaration of [

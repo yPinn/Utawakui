@@ -10,7 +10,8 @@
     { "id": "small", "label": "小", "width": 480, "height": 270, "rows": 1 },
     { "id": "medium", "label": "中", "width": 480, "height": 540, "rows": 2 },
     { "id": "large", "label": "大", "width": 480, "height": 810, "rows": 3 },
-    { "id": "portrait", "label": "直式", "width": 480, "height": 640 }
+    { "id": "portrait", "label": "標準", "width": 360, "height": 480 },
+    { "id": "portrait-large", "label": "大", "width": 480, "height": 640 }
   ],
   "lyricsSize": {
     "id": "full",

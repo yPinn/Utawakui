@@ -52,11 +52,11 @@ V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount�
 
 控制台「畫面輸出」的「開啟輸出視窗」只傳 `lyrics`／`setlist`／`now-playing` intent。Main 每次開啟重查 `public-output-flow`，從正在執行的 loopback server 與已正規化 slot 推導既有 canonical URL、模板內容尺寸與固定視窗名稱；不接受 renderer 提供 URL、路徑、尺寸或標題。尚未啟動服務時不自動啟動。
 
-| 種類   | 固定視窗名稱          | 內容尺寸                               |
-| ------ | --------------------- | -------------------------------------- |
-| 歌詞   | Utawakui 輸出｜歌詞   | 1920×1080                              |
-| 歌單   | Utawakui 輸出｜歌單   | 480×810                                |
-| 播放中 | Utawakui 輸出｜播放中 | Art Card 480×270；Cover Player 480×640 |
+| 種類   | 固定視窗名稱          | 內容尺寸                                              |
+| ------ | --------------------- | ----------------------------------------------------- |
+| 歌詞   | Utawakui 輸出｜歌詞   | 1920×1080                                             |
+| 歌單   | Utawakui 輸出｜歌單   | 480×810                                               |
+| 播放中 | Utawakui 輸出｜播放中 | Art Card 480×270；Cover Player 預設360×480、大480×640 |
 
 `electron/main/windows/outputWindow.js` 每種最多保留一窗；重複開啟會 restore／show／focus。名稱不隨頁面 title、曲名或模板變更，slot 更新依既有尺寸契約調整內容；Windows 建窗可能先依 work area 裁小，建立後再明確設定 content size。原生框架只供移動、最小化與關閉，不允許手動 resize／最大化／全螢幕；FHD 加上框架可能超出目前螢幕工作區，OBS 應擷取 client area。
 

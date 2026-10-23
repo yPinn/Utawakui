@@ -340,8 +340,10 @@ The renderer preview imports the same DOM, motion and CSS, with Vite emitting it
 copies of the paper and grain plates. No extra dependency or unpack rule is introduced.
 
 `overlay/**/*` ships the three fixed Browser Source pages and their exact-route
-assets; adjacent `*.test.js` files stay excluded. Now Playing ships only
-`artwork.css` for its two current templates. The retired Workbench wrapper
+assets; adjacent `*.test.js` files stay excluded. Now Playing shares
+`artwork.css` across its two templates; `coverPlayerMotion.mjs` supplies the
+Cover Player track fade through its exact HTTP route under the same package glob.
+The retired Workbench wrapper
 HTML／CSS／JS and compact Now Playing stylesheet are removed along with their
 HTTP routes. `overlay/assets/streamer-guide.png` is the single source for the
 Lyrics inspection route and the renderer's fallback import; Vite emits the

@@ -58,6 +58,10 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
     'now-playing',
     'artworkMotion.mjs',
   ],
+  '/overlay/now-playing/coverPlayerMotion.mjs': [
+    'now-playing',
+    'coverPlayerMotion.mjs',
+  ],
   '/overlay/setlist': ['setlist', 'index.html'],
   '/overlay/setlist/': ['setlist', 'index.html'],
   '/overlay/setlist/setlist.css': ['setlist', 'setlist.css'],
