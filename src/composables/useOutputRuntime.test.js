@@ -416,6 +416,35 @@ describe('output source handshake', () => {
     });
   });
 
+  it('publishes volume and mute changes while paused without replacing content documents', async () => {
+    playerState.volume = 0.72;
+    playerState.isMuted = false;
+    await initializePlaying();
+    playerState.playbackPhase = 'paused';
+    await flushMicrotasks();
+    bridge.publishOutputSnapshot.mockClear();
+    for (const [volume, muted] of [
+      [0, false],
+      [0.42, false],
+      [1, false],
+      [0.72, true],
+      [0.72, false],
+    ]) {
+      playerState.volume = volume;
+      playerState.isMuted = muted;
+      await flushMicrotasks();
+      expect(bridge.publishOutputSnapshot.mock.calls.at(-1)[0]).toMatchObject({
+        stream: 'state.snapshot',
+        payload: { playback: { volume, muted, status: 'paused' } },
+      });
+    }
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.every(
+        ([envelope]) => envelope.stream === 'state.snapshot',
+      ),
+    ).toBe(true);
+  });
+
   it('resamples when rejected state recovery waits for status', async () => {
     await initializePlaying();
     bridge.publishOutputSnapshot.mockImplementationOnce(async () => {
@@ -512,6 +541,8 @@ describe('output source handshake', () => {
     await initializePlaying();
     mediaPositionMs = 9000;
     playerState.tempoRate = 1.5;
+    playerState.volume = 0.31;
+    playerState.isMuted = true;
     const manual = {
       itemId: 'manual',
       mode: 'manual',
@@ -529,6 +560,8 @@ describe('output source handshake', () => {
       rate: 1,
       status: 'playing',
       track: { id: 'manual' },
+      volume: 0.31,
+      muted: true,
     });
   });
 

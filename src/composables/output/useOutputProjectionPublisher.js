@@ -162,7 +162,11 @@ export function useOutputProjectionPublisher({
     }
     return projectDynamicOutputState(
       {
-        player,
+        player: {
+          ...player,
+          volume: playerState.volume,
+          isMuted: playerState.isMuted,
+        },
         output: { displayDelayMs: getDisplayDelayMs() },
         lyrics: {
           offsetSeconds: lyricsState.offsetSeconds,

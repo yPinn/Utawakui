@@ -2061,6 +2061,10 @@ export function selectArtworkFrame(snapshot, options = {}) {
     positionMs: boundedPositionMs,
     durationMs,
     progress,
+    volume: Number.isFinite(snapshot?.playback?.volume)
+      ? Math.max(0, Math.min(1, snapshot.playback.volume))
+      : null,
+    muted: snapshot?.playback?.muted === true,
   };
 }
 

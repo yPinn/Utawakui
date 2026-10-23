@@ -16,6 +16,34 @@ function emptySnapshot() {
   return createEmptyOutputSnapshot({ generatedAt: GENERATED_AT });
 }
 
+describe('optional playback audio state', () => {
+  it('keeps volume and mute while accepting old snapshots', () => {
+    const value = emptySnapshot();
+    value.playback.volume = 0.7;
+    value.playback.muted = true;
+    expect(parseOutputSnapshot(value).playback).toMatchObject({
+      volume: 0.7,
+      muted: true,
+    });
+    expect(parseOutputSnapshot(emptySnapshot()).playback).not.toHaveProperty(
+      'volume',
+    );
+  });
+  it.each([-0.1, 1.1, NaN, Infinity, '0.5', null])(
+    'rejects invalid volume %s',
+    (volume) => {
+      const value = emptySnapshot();
+      value.playback.volume = volume;
+      expect(() => parseOutputSnapshot(value)).toThrow(/volume/);
+    },
+  );
+  it('rejects nonboolean mute', () => {
+    const value = emptySnapshot();
+    value.playback.muted = 1;
+    expect(() => parseOutputSnapshot(value)).toThrow(/muted/);
+  });
+});
+
 function queueItem(overrides = {}) {
   return {
     state: 'queued',

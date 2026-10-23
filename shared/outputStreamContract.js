@@ -615,11 +615,23 @@ function parseMusicStructureDocument(value) {
 
 function parsePlayback(value) {
   const playback = record(value, 'payload.playback');
+  if (playback.muted !== undefined && typeof playback.muted !== 'boolean') {
+    invalid('payload.playback.muted', 'expected a boolean');
+  }
   if (!PLAYBACK_STATUSES.has(playback.status)) {
     invalid('payload.playback.status', 'unsupported status');
   }
   return {
     status: playback.status,
+    ...(playback.volume !== undefined
+      ? {
+          volume: finite(playback.volume, 'payload.playback.volume', {
+            min: 0,
+            max: 1,
+          }),
+        }
+      : {}),
+    ...(playback.muted !== undefined ? { muted: playback.muted } : {}),
     positionMs: integer(playback.positionMs, 'payload.playback.positionMs'),
     durationMs:
       playback.durationMs === null

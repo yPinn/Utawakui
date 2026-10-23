@@ -167,6 +167,12 @@ export function projectOutputSnapshot(input = {}, options = {}) {
       durationMs,
       rate,
       track,
+      ...(Number.isFinite(player.volume)
+        ? {
+            volume: Math.min(1, Math.max(0, player.volume)),
+            muted: player.isMuted === true,
+          }
+        : {}),
     },
     queue: projectQueue(input.queue),
     lyrics: projectLyrics(input.lyrics, track?.id ?? null),

@@ -72,6 +72,9 @@ function parseTrack(value, path) {
 
 function parsePlayback(value) {
   const playback = requireRecord(value, 'playback');
+  if (playback.muted !== undefined && typeof playback.muted !== 'boolean') {
+    invalid('playback.muted', 'expected a boolean');
+  }
   if (!OUTPUT_PLAYBACK_STATUSES.includes(playback.status)) {
     invalid('playback.status', 'unsupported status');
   }
@@ -90,6 +93,15 @@ function parsePlayback(value) {
 
   return {
     status: playback.status,
+    ...(playback.volume !== undefined
+      ? {
+          volume: requireFiniteNumber(playback.volume, 'playback.volume', {
+            min: 0,
+            max: 1,
+          }),
+        }
+      : {}),
+    ...(playback.muted !== undefined ? { muted: playback.muted } : {}),
     positionMs: requireFiniteNumber(
       playback.positionMs,
       'playback.positionMs',

@@ -240,6 +240,25 @@ function stateEnvelope(overrides = {}) {
 }
 
 describe('output stream contract', () => {
+  it('retains bounded audio state in state envelopes and rejects invalid values', () => {
+    const envelope = stateEnvelope();
+    envelope.payload.playback.volume = 0.42;
+    envelope.payload.playback.muted = false;
+    expect(
+      parseOutputStreamEnvelope(envelope, 'boot-1').payload.playback,
+    ).toMatchObject({ volume: 0.42, muted: false });
+    for (const volume of [-1, 2, NaN, '0.4']) {
+      envelope.payload.playback.volume = volume;
+      expect(() => parseOutputStreamEnvelope(envelope, 'boot-1')).toThrow(
+        /volume/,
+      );
+    }
+    envelope.payload.playback.volume = 0.42;
+    envelope.payload.playback.muted = 'false';
+    expect(() => parseOutputStreamEnvelope(envelope, 'boot-1')).toThrow(
+      /muted/,
+    );
+  });
   it('uses an explicit browser-source subprotocol', () => {
     expect(OUTPUT_V3_SUBPROTOCOL).toBe('utawakui.output.v3');
   });

@@ -29,6 +29,8 @@ export function createOutputPreviewSnapshot() {
       positionMs: 5000,
       durationMs: 32000,
       rate: 1,
+      volume: 0.5,
+      muted: false,
       track: { ...TRACK },
     },
     queue: {

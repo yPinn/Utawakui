@@ -93,6 +93,22 @@ describe('output snapshot contract', () => {
 });
 
 describe('projectOutputSnapshot', () => {
+  it('projects bounded master volume and mute without exposing audio internals', () => {
+    const snapshot = projectOutputSnapshot({
+      player: { volume: 0.37, isMuted: true, masterGain: 'private' },
+    });
+    expect(snapshot.playback).toMatchObject({ volume: 0.37, muted: true });
+    expect(snapshot.playback).not.toHaveProperty('masterGain');
+    expect(
+      projectOutputSnapshot({ player: { volume: 2 } }).playback.volume,
+    ).toBe(1);
+    expect(
+      projectOutputSnapshot({ player: { volume: -1 } }).playback.volume,
+    ).toBe(0);
+    expect(
+      projectOutputSnapshot({ player: { volume: NaN } }).playback,
+    ).not.toHaveProperty('volume');
+  });
   it('projects player, queue, and synced lyrics into the public contract', () => {
     const track = {
       id: 'track-1',
