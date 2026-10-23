@@ -10,6 +10,7 @@ import {
   receiptPageStarts,
   selectReceiptSetlistFrame,
   receiptHistoryAdvanced,
+  receiptPageLayout,
 } from './receiptSetlist.mjs';
 import {
   normalizeOutputAppearance,
@@ -174,6 +175,19 @@ describe('receipt setlist presentation and bounded source contract', () => {
     expect(receiptPageStarts(13, 0, 'down')).toEqual([0]);
   });
 
+  it('packs measured single- and two-line rows without clipping or skipping records', () => {
+    const heights = [70, 96, 70, 70, 96];
+    expect(receiptPageLayout(heights, 240, 'down')).toEqual([
+      { y: 0, height: 236 },
+      { y: -236, height: 166 },
+    ]);
+    expect(receiptPageLayout(heights, 240, 'up')).toEqual([
+      { y: -166, height: 236 },
+      { y: 0, height: 166 },
+    ]);
+    expect(receiptPageLayout([], 240)).toEqual([{ y: 0, height: 0 }]);
+  });
+
   it('prints the first confirmed completion but settles revised older records', () => {
     const first = { ordinal: 1, trackId: 'a', title: 'One', artist: '' };
     const previous = { sourceName: 'A', completedCount: 0, history: [] };
@@ -215,14 +229,14 @@ describe('receipt setlist presentation and bounded source contract', () => {
     expect(normalizeOutputAppearance({}, options)).toMatchObject({
       receiptDirection: 'down',
       receiptReview: 'on',
-      receiptReviewInterval: 60,
+      receiptReviewInterval: 15,
     });
     expect(
       normalizeOutputAppearance(
         { receiptDirection: 'sideways', receiptReviewInterval: 9999 },
         options,
       ),
-    ).toMatchObject({ receiptDirection: 'down', receiptReviewInterval: 180 });
+    ).toMatchObject({ receiptDirection: 'down', receiptReviewInterval: 60 });
     expect(outputAppearanceFieldKeysForTemplate('queue-board')).not.toContain(
       'receiptDirection',
     );

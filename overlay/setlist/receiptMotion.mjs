@@ -11,6 +11,7 @@ export function createReceiptMotionController({
   list,
   render = () => {},
   measure,
+  setViewportHeight = () => {},
   onPhase = () => {},
 }) {
   let frame = null;
@@ -18,7 +19,7 @@ export function createReceiptMotionController({
   let settings = {
     receiptDirection: 'down',
     receiptReview: 'on',
-    receiptReviewInterval: 60,
+    receiptReviewInterval: 15,
   };
   let timer = null;
   let tween = null;
@@ -40,36 +41,58 @@ export function createReceiptMotionController({
   }
   function geometry() {
     const measured = measure();
+    const rowHeight = Math.max(1, measured.rowHeight || 96);
+    const capacity = Math.max(1, measured.capacity || 1);
     return {
-      rowHeight: Math.max(1, measured.rowHeight || 96),
-      capacity: Math.max(1, measured.capacity || 1),
+      rowHeight,
+      totalHeight:
+        measured.totalHeight ?? (frame?.history.length ?? 0) * rowHeight,
+      feedHeight: measured.feedHeight || rowHeight,
+      pages:
+        measured.pages ??
+        receiptPageStarts(
+          frame?.history.length ?? 0,
+          capacity,
+          settings.receiptDirection,
+        ).map((start) => ({
+          y: start === 0 ? 0 : -start * rowHeight,
+          height:
+            Math.min(capacity, (frame?.history.length ?? 0) - start) *
+            rowHeight,
+        })),
     };
   }
+  function usePage(page) {
+    if (Number.isFinite(page.height)) setViewportHeight(page.height);
+    return page.y;
+  }
   function latestY() {
-    const { rowHeight, capacity } = geometry();
-    return settings.receiptDirection === 'up'
-      ? (capacity - (frame?.history.length ?? 0)) * rowHeight
-      : 0;
+    return usePage(geometry().pages[0]);
   }
   function setY(y) {
     if (gsap?.set) gsap.set(list, { y });
     else if (list?.style) list.style.transform = `translateY(${y}px)`;
   }
-  function move(y, phase) {
+  function move(y, phase, onComplete, options = {}) {
     onPhase(phase);
+    const expected = generation;
+    const complete = () => {
+      if (destroyed || suspended || generation !== expected) return;
+      if (phase === 'printing') onPhase('latest');
+      onComplete?.();
+    };
     if (!reduced && gsap?.to) {
-      const expected = generation;
       tween = gsap.to(list, {
         y,
-        duration: phase === 'printing' ? 0.5 : 0.4,
-        ease: 'power2.inOut',
+        duration: options.duration ?? (phase === 'printing' ? 0.5 : 0.4),
+        ease: options.ease ?? 'power2.inOut',
         overwrite: true,
-        onComplete: () => {
-          if (!destroyed && generation === expected && phase === 'printing')
-            onPhase('latest');
-        },
+        onComplete: complete,
       });
-    } else setY(y);
+    } else {
+      setY(y);
+      complete();
+    }
   }
   function later(callback, milliseconds) {
     const expected = generation;
@@ -79,45 +102,51 @@ export function createReceiptMotionController({
     }, milliseconds);
   }
   function scheduleReview() {
-    const { capacity } = geometry();
     if (
       destroyed ||
       suspended ||
       !frame ||
       settings.receiptReview !== 'on' ||
-      frame.history.length <= capacity
+      geometry().pages.length < 2
     )
       return;
     later(startReview, settings.receiptReviewInterval * 1000);
   }
   function startReview() {
-    const { rowHeight, capacity } = geometry();
-    const pages = receiptPageStarts(
-      frame.history.length,
-      capacity,
-      settings.receiptDirection,
-    );
+    const { pages, rowHeight, totalHeight } = geometry();
     if (pages.length < 2) return;
     reviewing = true;
     const start = reviewCursor >= pages.length ? 1 : reviewCursor;
-    let index = start;
-    let shown = 0;
-    const next = () => {
-      if (index >= pages.length || shown >= 3) {
-        reviewCursor = index >= pages.length ? 1 : index;
-        reviewing = false;
-        // Reset directly at the boundary, never run backwards across the whole roll.
-        setY(latestY());
-        onPhase('latest');
-        scheduleReview();
-        return;
-      }
-      move(-pages[index] * rowHeight, 'reviewing');
-      index += 1;
-      shown += 1;
-      later(next, 6000);
-    };
-    next();
+    const end = Math.min(start + 2, pages.length - 1);
+    const latest = pages[0];
+    const minimumY = Math.min(0, latest.height - totalHeight);
+    const target = Math.min(0, Math.max(minimumY, pages[end].y));
+    const duration = Math.min(
+      6,
+      Math.max(0.8, Math.abs(target - latest.y) / (rowHeight * 1.5)),
+    );
+    const options = { duration, ease: 'none' };
+    // Keep the same rows and viewport throughout both continuous passes.
+    move(
+      target,
+      'reviewing',
+      () => {
+        later(() => {
+          move(
+            latest.y,
+            'returning',
+            () => {
+              reviewCursor = end === pages.length - 1 ? 1 : end + 1;
+              reviewing = false;
+              onPhase('latest');
+              scheduleReview();
+            },
+            options,
+          );
+        }, 1000);
+      },
+      options,
+    );
   }
   function settle() {
     cancel();
@@ -147,10 +176,10 @@ export function createReceiptMotionController({
       if (advanced && !recovering && !suspended && !reduced) {
         // Reposition to the latest edge first if a review was interrupted.
         if (wasReviewing) setY(target);
-        const { rowHeight } = geometry();
+        const { feedHeight } = geometry();
         setY(
           target +
-            (settings.receiptDirection === 'up' ? rowHeight : -rowHeight),
+            (settings.receiptDirection === 'up' ? feedHeight : -feedHeight),
         );
         move(target, 'printing');
       } else {
@@ -164,8 +193,8 @@ export function createReceiptMotionController({
         receiptDirection: next.receiptDirection === 'up' ? 'up' : 'down',
         receiptReview: next.receiptReview === 'off' ? 'off' : 'on',
         receiptReviewInterval: Number.isFinite(next.receiptReviewInterval)
-          ? Math.min(180, Math.max(30, next.receiptReviewInterval))
-          : 60,
+          ? Math.min(60, Math.max(5, next.receiptReviewInterval))
+          : 15,
       };
       if (JSON.stringify(configured) === JSON.stringify(settings)) return;
       settings = configured;

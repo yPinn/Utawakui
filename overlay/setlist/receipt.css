@@ -40,25 +40,36 @@
   pointer-events: none;
   transform: scaleX(1.1);
 }
+.receipt-setlist__paper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('./receipt-grain.png') center / 100% 100% no-repeat;
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+  mask-image: url('./receipt-paper.png');
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+}
 .receipt-setlist[data-direction='up'] .receipt-setlist__paper {
   transform: rotate(180deg) scaleX(1.1);
 }
 .receipt-setlist__body {
   position: absolute;
-  inset: calc(42 * var(--receipt-pixel)) calc(40 * var(--receipt-pixel))
+  inset: calc(76 * var(--receipt-pixel)) calc(40 * var(--receipt-pixel))
     calc(26 * var(--receipt-pixel));
   display: grid;
   grid-template-rows:
-    calc(88 * var(--receipt-pixel) * var(--receipt-type-scale))
-    calc(144 * var(--receipt-pixel) * var(--receipt-type-scale)) minmax(0, 1fr);
+    calc(44 * var(--receipt-pixel) * var(--receipt-type-scale))
+    auto minmax(0, 1fr);
   gap: calc(8 * var(--receipt-pixel));
 }
 .receipt-setlist[data-direction='up'] .receipt-setlist__body {
   inset-block-start: calc(26 * var(--receipt-pixel));
-  inset-block-end: calc(42 * var(--receipt-pixel));
+  inset-block-end: calc(76 * var(--receipt-pixel));
   grid-template-rows:
-    calc(88 * var(--receipt-pixel) * var(--receipt-type-scale))
-    minmax(0, 1fr) calc(144 * var(--receipt-pixel) * var(--receipt-type-scale));
+    calc(44 * var(--receipt-pixel) * var(--receipt-type-scale))
+    minmax(0, 1fr) auto;
 }
 .receipt-setlist__header {
   grid-row: 1;
@@ -71,30 +82,11 @@
   font-family: var(--receipt-mono);
 }
 .receipt-setlist__heading {
-  font-size: calc(24 * var(--receipt-pixel) * var(--receipt-type-scale));
-  line-height: calc(32 * var(--receipt-pixel) * var(--receipt-type-scale));
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-.receipt-setlist__metadata {
-  display: flex;
-  gap: calc(12 * var(--receipt-pixel));
-  justify-content: space-between;
-  margin-block-start: calc(8 * var(--receipt-pixel));
-  color: var(--receipt-secondary);
-  font-size: calc(16 * var(--receipt-pixel) * var(--receipt-type-scale));
-  line-height: calc(22 * var(--receipt-pixel) * var(--receipt-type-scale));
-}
-.receipt-setlist__source {
-  min-inline-size: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.receipt-setlist__count {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+  font-size: calc(22 * var(--receipt-pixel) * var(--receipt-type-scale));
+  line-height: calc(30 * var(--receipt-pixel) * var(--receipt-type-scale));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 .receipt-setlist__current {
   grid-row: 2;
@@ -103,9 +95,7 @@
   display: grid;
   grid-template-rows:
     calc(22 * var(--receipt-pixel) * var(--receipt-type-scale))
-    calc(72 * var(--receipt-pixel) * var(--receipt-type-scale)) calc(
-      20 * var(--receipt-pixel) * var(--receipt-type-scale)
-    );
+    auto calc(22 * var(--receipt-pixel) * var(--receipt-type-scale));
   gap: calc(4 * var(--receipt-pixel) * var(--receipt-type-scale));
   padding-block: calc(8 * var(--receipt-pixel) * var(--receipt-type-scale));
   border-block-end: calc(3 * var(--receipt-pixel)) double var(--receipt-ink);
@@ -134,8 +124,9 @@
   font-weight: 600;
 }
 .receipt-setlist__current-title {
-  font-size: calc(28 * var(--receipt-pixel) * var(--receipt-type-scale));
-  line-height: calc(36 * var(--receipt-pixel) * var(--receipt-type-scale));
+  max-block-size: calc(68 * var(--receipt-pixel) * var(--receipt-type-scale));
+  font-size: calc(26 * var(--receipt-pixel) * var(--receipt-type-scale));
+  line-height: calc(34 * var(--receipt-pixel) * var(--receipt-type-scale));
 }
 .receipt-setlist__current-artist,
 .receipt-setlist__artist {
@@ -145,8 +136,8 @@
   text-overflow: ellipsis;
   color: var(--receipt-secondary);
   font-weight: 400;
-  font-size: calc(16 * var(--receipt-pixel) * var(--receipt-type-scale));
-  line-height: calc(20 * var(--receipt-pixel) * var(--receipt-type-scale));
+  font-size: calc(18 * var(--receipt-pixel) * var(--receipt-type-scale));
+  line-height: calc(22 * var(--receipt-pixel) * var(--receipt-type-scale));
 }
 .receipt-setlist__history {
   grid-row: 3;
@@ -171,14 +162,19 @@
   list-style: none;
 }
 .receipt-setlist__row {
+  --receipt-ordinal-width: calc(
+    28 * var(--receipt-pixel) * var(--receipt-type-scale)
+  );
+  --receipt-ordinal-gap: calc(12 * var(--receipt-pixel));
+  --receipt-text-inset: calc(
+    var(--receipt-ordinal-width) + var(--receipt-ordinal-gap)
+  );
   position: relative;
-  block-size: calc(96 * var(--receipt-pixel) * var(--receipt-type-scale));
   display: grid;
-  grid-template-columns: calc(28 * var(--receipt-pixel)) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows:
-    calc(52 * var(--receipt-pixel) * var(--receipt-type-scale))
-    calc(20 * var(--receipt-pixel) * var(--receipt-type-scale));
-  column-gap: calc(12 * var(--receipt-pixel));
+    auto
+    calc(22 * var(--receipt-pixel) * var(--receipt-type-scale));
   row-gap: calc(4 * var(--receipt-pixel) * var(--receipt-type-scale));
   padding-block: calc(10 * var(--receipt-pixel) * var(--receipt-type-scale));
 }
@@ -190,23 +186,33 @@
   border-block-end: 1px dotted var(--receipt-rule);
 }
 .receipt-setlist__ordinal {
-  grid-column: 1;
-  grid-row: 1 / span 2;
+  display: inline-block;
+  inline-size: var(--receipt-ordinal-width);
+  margin-inline-end: var(--receipt-ordinal-gap);
+  text-indent: 0;
+  text-align: end;
+  vertical-align: baseline;
   font-family: var(--receipt-mono);
   font-size: calc(16 * var(--receipt-pixel) * var(--receipt-type-scale));
-  line-height: calc(26 * var(--receipt-pixel) * var(--receipt-type-scale));
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--receipt-secondary);
 }
 .receipt-setlist__track {
-  grid-column: 2;
+  max-block-size: calc(52 * var(--receipt-pixel) * var(--receipt-type-scale));
+  grid-column: 1;
   grid-row: 1;
+  padding-inline-start: var(--receipt-text-inset);
+  text-indent: calc(-1 * var(--receipt-text-inset));
   font-size: calc(20 * var(--receipt-pixel) * var(--receipt-type-scale));
   line-height: calc(26 * var(--receipt-pixel) * var(--receipt-type-scale));
+  font-weight: 400;
 }
 .receipt-setlist__artist {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
+  margin-inline-start: var(--receipt-text-inset);
+  align-self: stretch;
 }
 .receipt-setlist__empty {
   margin: 0;

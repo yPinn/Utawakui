@@ -1625,10 +1625,10 @@
           "order": 20,
           "label": "回顧間隔",
           "control": "range",
-          "defaultValue": 60,
-          "min": 30,
-          "max": 180,
-          "step": 15,
+          "defaultValue": 15,
+          "min": 5,
+          "max": 60,
+          "step": 5,
           "unit": " 秒",
           "group": "motion",
           "groupLabel": "動態",
@@ -1637,7 +1637,7 @@
       ],
       "timing": null,
       "lockedInvariants": [
-        "fixed-two-line-slots",
+        "single-line-first-two-line-limit",
         "completion-driven-feed",
         "bounded-timed-review"
       ],

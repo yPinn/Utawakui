@@ -235,6 +235,41 @@ describe('Setlist GSAP motion', () => {
     expect(toVars).not.toHaveProperty('y');
   });
 
+  it('supports a fade-only receipt handoff for title/artist targets with content identity', () => {
+    const { gsap, timelines } = gsapHarness();
+    const commitFrame = vi.fn();
+    const targets = [{}, {}];
+    const motion = createSetlistCurrentMotionController({
+      gsap,
+      current: targets,
+      commitFrame,
+      root: { dataset: {} },
+      fadeOnly: true,
+      identity: (value) => JSON.stringify(value.current),
+    });
+    motion.update(frame('a'));
+    const renamed = frame('a', {
+      current: { trackId: 'a', title: 'Revised title', artist: 'Singer' },
+    });
+    motion.update(renamed);
+    expect(timelines).toHaveLength(1);
+    const exit = timelines[0].to.mock.calls[0];
+    expect(exit[0]).toBe(targets);
+    expect(exit[1]).toMatchObject({ autoAlpha: 0, duration: 0.16 });
+    expect(exit[1]).not.toHaveProperty('y');
+    expect(commitFrame).toHaveBeenLastCalledWith(frame('a'));
+    timelines[0].runCalls();
+    expect(commitFrame).toHaveBeenLastCalledWith(renamed);
+    const [, from, to] = timelines[0].fromTo.mock.calls[0];
+    expect(from).not.toHaveProperty('y');
+    expect(to).toMatchObject({ autoAlpha: 1, duration: 0.26 });
+    expect(to).not.toHaveProperty('y');
+    timelines[0].complete();
+    motion.update({ ...renamed, revision: 99 });
+    expect(timelines).toHaveLength(1);
+    motion.destroy();
+  });
+
   it('cycles overflowing history by readable pages and fades before reset', () => {
     const elements = historyScene();
     const { gsap, timelines } = gsapHarness();

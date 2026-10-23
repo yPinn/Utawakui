@@ -44,7 +44,7 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 ## 收據歌單資料
 
-V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount（0至1000000的安全整數）及history（最多100筆ordinal／track）。ordinal須大於零、嚴格遞增且不超過completedCount；track只保留原有公開id／title／artist，拒絕額外receipt／row欄位。一般queue.items的100筆額度不受影響；receipt明細只來自演出安排確認completed的項目，與一般含切歌的播放歷史分開。Main驗證、相容snapshot與Browser Source split assembler均保留該欄位；舊來源可不提供，收據改標播放紀錄且不觸發完成送紙。詳見[外觀契約](output-appearance.md#收據歌單)。
+V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount（0至1000000的安全整數）及history（最多100筆ordinal／track）。ordinal須大於零、嚴格遞增且不超過completedCount；track只保留原有公開id／title／artist，拒絕額外receipt／row欄位。一般queue.items的100筆額度不受影響；receipt明細只來自演出安排確認completed的項目，與一般含切歌的播放歷史分開。Main驗證、相容snapshot與Browser Source split assembler均保留該欄位；舊來源可不提供，收據仍可顯示播放歷史但不觸發完成送紙。完成總數保留供內部判斷，不顯示於模板。詳見[外觀契約](output-appearance.md#收據歌單)。
 
 ## 只讀輸出視窗
 

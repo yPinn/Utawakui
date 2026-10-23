@@ -51,6 +51,40 @@ export function receiptPageStarts(count, capacity, direction = 'down') {
   return pages;
 }
 
+export function receiptPageLayout(heights, available, direction = 'down') {
+  const offsets = [0];
+  for (const height of heights) offsets.push(offsets.at(-1) + height);
+  const pages = [];
+  const add = (start, end) =>
+    pages.push({
+      y: offsets[start] === 0 ? 0 : -offsets[start],
+      height: Math.min(available, offsets[end] - offsets[start]),
+    });
+  if (direction === 'up') {
+    let end = heights.length;
+    while (end > 0) {
+      let start = end - 1;
+      while (start > 0 && offsets[end] - offsets[start - 1] <= available + 0.5)
+        start -= 1;
+      add(start, end);
+      end = start;
+    }
+  } else {
+    let start = 0;
+    while (start < heights.length) {
+      let end = start + 1;
+      while (
+        end < heights.length &&
+        offsets[end + 1] - offsets[start] <= available + 0.5
+      )
+        end += 1;
+      add(start, end);
+      start = end;
+    }
+  }
+  return pages.length ? pages : [{ y: 0, height: 0 }];
+}
+
 export function receiptHistoryIdentity(frame) {
   return JSON.stringify([
     frame?.sourceName,

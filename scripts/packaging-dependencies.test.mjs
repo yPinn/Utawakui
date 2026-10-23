@@ -289,6 +289,7 @@ describe('packaged dependency boundary', () => {
       ['overlay/setlist/receiptMotion.mjs', true],
       ['overlay/setlist/receipt.css', true],
       ['overlay/setlist/receipt-paper.png', true],
+      ['overlay/setlist/receipt-grain.png', true],
       ['overlay/setlist/receiptMotion.test.js', false],
       ['shared/presentation/receiptSetlist.mjs', true],
       ['shared/presentation/receiptSetlist.test.js', false],

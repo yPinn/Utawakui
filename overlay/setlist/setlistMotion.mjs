@@ -83,6 +83,8 @@ export function createSetlistCurrentMotionController({
   current,
   gsap,
   root,
+  fadeOnly = false,
+  identity = currentTrackIdentity,
 } = {}) {
   let destroyed = false;
   let displayedTrackIdentity = '';
@@ -113,7 +115,7 @@ export function createSetlistCurrentMotionController({
     const frame = pendingFrame;
     pendingFrame = null;
     commitFrame(frame);
-    displayedTrackIdentity = currentTrackIdentity(frame);
+    displayedTrackIdentity = identity(frame);
     targetTrackIdentity = displayedTrackIdentity;
   }
 
@@ -143,7 +145,7 @@ export function createSetlistCurrentMotionController({
       setMotionState('idle');
       return;
     }
-    const nextTrackIdentity = currentTrackIdentity(frame);
+    const nextTrackIdentity = identity(frame);
 
     if (!presented) {
       presented = true;
@@ -181,7 +183,10 @@ export function createSetlistCurrentMotionController({
         : CURRENT_EXIT_SECONDS
       : 0;
     setMotionState('switching');
-    gsap.set(current, { willChange: 'opacity, transform' });
+    const spatialMotion = !reducedMotion && !fadeOnly;
+    gsap.set(current, {
+      willChange: spatialMotion ? 'opacity, transform' : 'opacity',
+    });
     transition = gsap.timeline({ onComplete: settle });
 
     if (hasOutgoingTrack) {
@@ -193,7 +198,7 @@ export function createSetlistCurrentMotionController({
             ? REDUCED_CURRENT_EXIT_SECONDS
             : CURRENT_EXIT_SECONDS,
           ease: 'power2.in',
-          ...(reducedMotion ? {} : { y: -6 }),
+          ...(spatialMotion ? { y: -6 } : {}),
         },
         0,
       );
@@ -204,7 +209,7 @@ export function createSetlistCurrentMotionController({
     if (hasIncomingTrack) {
       const fromVars = {
         autoAlpha: 0,
-        ...(reducedMotion ? {} : { y: 8 }),
+        ...(spatialMotion ? { y: 8 } : {}),
       };
       const toVars = {
         autoAlpha: 1,
@@ -214,7 +219,7 @@ export function createSetlistCurrentMotionController({
           : CURRENT_ENTER_SECONDS,
         ease: 'power3.out',
         immediateRender: false,
-        ...(reducedMotion ? {} : { y: 0 }),
+        ...(spatialMotion ? { y: 0 } : {}),
       };
       transition.fromTo(current, fromVars, toVars, handoffAt);
     }

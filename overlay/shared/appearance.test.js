@@ -134,7 +134,7 @@ describe('overlay appearance', () => {
       ovlKineticArrangement: 'straight',
       ovlReceiptDirection: 'down',
       ovlReceiptReview: 'on',
-      ovlReceiptReviewInterval: '60',
+      ovlReceiptReviewInterval: '15',
       ovlContrast: 'balanced',
       ovlDensity: 'normal',
       ovlContentWidth: 'standard',

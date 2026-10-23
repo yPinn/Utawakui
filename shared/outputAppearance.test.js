@@ -152,7 +152,7 @@ describe('output appearance schema', () => {
       contentWidth: 'standard',
       receiptDirection: 'down',
       receiptReview: 'on',
-      receiptReviewInterval: 60,
+      receiptReviewInterval: 15,
     });
 
     expect(

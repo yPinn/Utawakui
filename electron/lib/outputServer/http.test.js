@@ -211,6 +211,11 @@ describe('output HTTP delivery', () => {
 
   it('serves only exact static routes with browser-source security headers', async () => {
     const { overlayRoot, sharedRoot } = createFixtureRoots();
+    const grainBytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    fs.mkdirSync(path.join(overlayRoot, 'setlist'), { recursive: true });
+    for (const file of ['receipt-grain.png', 'receipt-grain-private.png']) {
+      fs.writeFileSync(path.join(overlayRoot, 'setlist', file), grainBytes);
+    }
     const baseUrl = await startHandler({ overlayRoot, sharedRoot });
 
     const overlay = await fetch(`${baseUrl}/overlay/lyrics`);
@@ -249,6 +254,10 @@ describe('output HTTP delivery', () => {
       `${baseUrl}/shared/assets/fonts/HinaMincho-Regular.ttf`,
     );
     const unknown = await fetch(`${baseUrl}/overlay/lyrics/private.txt`);
+    const grain = await fetch(`${baseUrl}/overlay/setlist/receipt-grain.png`);
+    const privateGrain = await fetch(
+      `${baseUrl}/overlay/setlist/receipt-grain-private.png`,
+    );
 
     expect(await overlay.text()).toBe('<main>Lyrics route</main>');
     expect(overlay.headers.get('content-security-policy')).toContain(
@@ -287,6 +296,10 @@ describe('output HTTP delivery', () => {
       'text/javascript; charset=utf-8',
     );
     expect(unknown.status).toBe(404);
+    expect(grain.status).toBe(200);
+    expect(grain.headers.get('content-type')).toBe('image/png');
+    expect(Buffer.from(await grain.arrayBuffer())).toEqual(grainBytes);
+    expect(privateGrain.status).toBe(404);
   });
 
   it('revalidates unchanged static assets with their strong ETag', async () => {

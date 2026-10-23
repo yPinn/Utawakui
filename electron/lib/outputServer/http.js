@@ -67,6 +67,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/setlist/receiptView.mjs': ['setlist', 'receiptView.mjs'],
   '/overlay/setlist/receiptMotion.mjs': ['setlist', 'receiptMotion.mjs'],
   '/overlay/setlist/receipt-paper.png': ['setlist', 'receipt-paper.png'],
+  '/overlay/setlist/receipt-grain.png': ['setlist', 'receipt-grain.png'],
   '/overlay/shared/appearance.css': ['shared', 'appearance.css'],
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/lifecycle.mjs': ['shared', 'lifecycle.mjs'],

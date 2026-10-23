@@ -35,7 +35,7 @@
 
 `alignment`、`contentWidth` 存在於 schema，但九個模板都未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
 
-`receipt-setlist` 另提供 `receiptDirection`（down／up，預設down）、`receiptReview`（on／off，預設on）與 `receiptReviewInterval`（30–180秒、step15，預設60）；只公開這三項與字級，不顯示未消費的Look或背景控制。外觀schema為6，舊欄位相容。
+`receipt-setlist` 另提供 `receiptDirection`（down／up，預設down）、`receiptReview`（on／off，預設on）與 `receiptReviewInterval`（5–60秒、step5，預設15）；只公開這三項與字級，不顯示未消費的Look或背景控制。外觀schema為6，舊欄位相容；既存間隔以新範圍正規化。
 
 ## 九模板
 
@@ -44,7 +44,7 @@
 | 模板／capture              | 可選與初始值                                                   | Invariant                                                    |
 | -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
 | queue-board／480×810       | 字型 sans、字重 semibold、背景 solid、密度 normal              | current／played membership、history 分頁接續                 |
-| receipt-setlist／480×810   | 字級medium、向下出紙、回顧開啟／60秒                           | 兩行曲名省略、完成才送紙、最近100筆回顧                      |
+| receipt-setlist／480×810   | 字級medium、向下出紙、回顧開啟／15秒                           | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
 | karaoke-stack／1920×1080   | 只有共用 Look／字級                                            | 雙 lane、count-in、timing mask、字型角色                     |
 | kinetic-pop／1920×1080     | 材料 candy-rim、排列 straight                                  | 三層 paint order、phrase source boundaries                   |
 | ornate-vertical／1920×1080 | 字型 ornate／antique；兩色與右側位置                           | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
@@ -117,8 +117,14 @@ Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.jso
 
 ## 收據歌單
 
-`receipt-setlist` 使用480×810透明外圍與無字熱感紙底圖。SETLIST、來源／計數與NOW PLAYING為固定區塊；向下為預設，向上另選。曲名最多兩行、第二行末省略，原唱一行；每項預留同樣槽位，字級變動後重新量測完整可見列數。一般播放歷史顯示「播放紀錄」，不假稱確認完成。演出安排只以completed項目產生已唱總數與明細；略過、中止不列印，最後一首已完成但沒有下一首仍可顯示。
+`receipt-setlist` 使用480×810透明外圍與無字熱感紙底圖。SETLIST與NOW PLAYING為固定區塊，不顯示播放清單名稱或曲目計數；向下為預設，向上另選。紙卷側保留76px安全區，文字避開陰影。短曲名自然一行，長曲名最多兩行、第二行末省略，原唱一行緊接下方；缺原唱保留該行。最新端依實際列高取完整可見項目，不為短曲名保留空白第二行。一般播放歷史可顯示但不視為確認完成。演出安排只以completed項目產生內部已唱總數與明細；略過、中止不列印，最後一首已完成但沒有下一首仍可顯示。
 
-完成一項僅將該項從固定印字邊界送入歷史，不重印整張。定時回顧僅於溢位時啟動，預設60秒後按完整列分段、每段停6秒、每輪最多3段後直接回最新端；長歷史下輪接續。新完成優先取消回顧，回到最新端送紙並重設計時。Reduced-motion直接安置；inactive／dispose取消timer與tween，恢復或切方向不補播舊列印。
+完成一項僅將該項從固定印字邊界送入歷史，不重印整張，送紙距離使用該項實際高度。定時回顧僅於溢位時啟動，預設15秒。回顧期間同一DOM清單在固定viewport內連續位移，不切頁、不改裁切高度或重建項目；內部有界分段只用來選更舊的終點，每輪最多推進三段，長歷史下輪接續。每程依距離0.8–6秒勻速移動，抵達後停1秒，再反向連續捲回最新端；回程完成才重設間隔。新完成優先取消去程／停留／回程，回到最新端送紙並重設計時。Reduced-motion直接安置；inactive／dispose取消timer與tween，恢復或切方向不補播舊列印。
 
 Browser Source與Vue預覽共用receiptView、receiptMotion與receipt.css。正式回顧最多最近100筆來源確認明細，來源總數另計；不是無界整場歷史瀏覽。實機OBS alpha與使用者視覺驗收另記，不以單測／截圖代替。
+
+紙面採已確認的淡紙紋：`receipt-grain.png`以0.32圖層opacity、multiply輕疊，並以既有`receipt-paper.png`的alpha作mask；單次覆蓋、不重複接縫。紋理在文字下方且不隨歷史捲動改變，紙邊輪廓與排版維持原樣。
+
+切歌文字共用`createSetlistCurrentMotionController`的fade-only交接，只作用於曲名與原唱：160ms淡出後才commit新frame，再260ms淡入；NOW PLAYING標籤與紙面不位移。交接時一併commit該frame的歷史，避免先換文再補動畫。一般播放時鐘更新不重播；快速連切保留最新pending frame，recovery／停用直接安置，reduced-motion改為120／180ms淡出淡入。
+
+字體與對齊以480px寬度為基準：SETLIST採等寬22／30px、600字重、0.04em字距並置中；NOW PLAYING維持16／22px靠左。目前曲名26／34px、600字重，明細曲名20／26px、400字重，原唱18／22px。序號欄右對齊並與曲名第一行共用基線，續行與原唱保留同一文字起點；列高仍依實際字型量測，不固定回兩行槽位。
