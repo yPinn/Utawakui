@@ -31,6 +31,7 @@ const props = defineProps({
   hasSelectedSource: { type: Boolean, default: false },
   lines: { type: Array, default: () => [] },
   activeLineIndex: { type: Number, default: -1 },
+  positionedLineIndex: { type: Number, default: null },
   fontSizeClass: { type: String, default: '' },
   showsReadingAid: { type: Boolean, default: false },
   readingVariant: { type: String, default: 'off' },
@@ -77,10 +78,12 @@ const readerHeight = shallowRef('0px');
 let readerObserver;
 let readerFrame = 0;
 
-const activeLineId = computed(() => {
-  if (props.activeLineIndex < 0) return null;
-  return props.lines[props.activeLineIndex]?.lineId ?? null;
-});
+const locatedLineIndex = computed(
+  () => props.positionedLineIndex ?? props.activeLineIndex,
+);
+const activeLineId = computed(
+  () => props.lines[locatedLineIndex.value]?.lineId ?? null,
+);
 const showsFurigana = computed(
   () => props.showsReadingAid && props.readingVariant === 'furigana',
 );
@@ -104,42 +107,6 @@ const activeTimingFrame = computed(() => {
     frame.text === line.text
     ? frame
     : null;
-});
-const activePaintFrame = computed(() => {
-  const frame = activeTimingFrame.value;
-  return (frame?.paintTiming?.units ?? frame?.fineTiming?.units)?.length
-    ? frame
-    : null;
-});
-const experimentalReadingSegments = computed(() => {
-  const frame = props.experimentalFrame;
-  const line = props.lines[props.activeLineIndex];
-  const segments = props.readingLines[props.activeLineIndex]?.segments ?? [];
-  if (
-    !frame ||
-    frame.lineId !== line?.lineId ||
-    frame.text !== line.text ||
-    segments.map((segment) => segment.t).join('') !== line.text
-  )
-    return new Set();
-  let cursor = 0,
-    activeStart = -1,
-    activeEnd = -1;
-  for (const chunk of frame.chunks) {
-    if (chunk.state === 'active') {
-      activeStart = cursor;
-      activeEnd = cursor + chunk.text.length;
-    }
-    cursor += chunk.text.length;
-  }
-  cursor = 0;
-  const selected = new Set();
-  segments.forEach((segment, index) => {
-    const end = cursor + segment.t.length;
-    if (cursor < activeEnd && end > activeStart) selected.add(index);
-    cursor = end;
-  });
-  return selected;
 });
 // Sheet readings float over their word, so neighbours get explicit room.
 const rubyGaps = computed(() =>
@@ -369,10 +336,9 @@ watch(
           :key="line.lineId"
           class="lyrics-line"
           :class="{
-            'lyrics-line--active': index === activeLineIndex,
-            'lyrics-line--past': index < activeLineIndex,
+            'lyrics-line--active': index === locatedLineIndex,
+            'lyrics-line--past': index < locatedLineIndex,
             'lyrics-line--ruby': showsFurigana,
-            'lyrics-line--fine': activePaintFrame && index === activeLineIndex,
           }"
         >
           <div
@@ -432,8 +398,8 @@ watch(
                 <span class="lyrics-line__text"
                   ><span class="lyrics-line__ink">
                     <LyricsFineText
-                      v-if="activePaintFrame && index === activeLineIndex"
-                      :frame="activePaintFrame"
+                      v-if="activeTimingFrame && index === activeLineIndex"
+                      :frame="activeTimingFrame"
                       :presentation="presentation"
                       :reading-gaps="rubyGaps[index]"
                       :reading-segments="
@@ -452,49 +418,17 @@ watch(
                       >
                         <ruby
                           v-if="segment.r"
-                          :class="
-                            index === activeLineIndex &&
-                            experimentalReadingSegments.has(segmentIndex)
-                              ? 'lyrics-line__experimental-active'
-                              : undefined
-                          "
                           :style="rubyGapStyle(index, segmentIndex)"
                           >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
                         >
                         <span
-                          v-else-if="
-                            rubyGapStyle(index, segmentIndex) ||
-                            (index === activeLineIndex &&
-                              experimentalReadingSegments.has(segmentIndex))
-                          "
+                          v-else-if="rubyGapStyle(index, segmentIndex)"
                           class="lyrics-line__ruby-gap"
-                          :class="{
-                            'lyrics-line__experimental-active':
-                              index === activeLineIndex &&
-                              experimentalReadingSegments.has(segmentIndex),
-                          }"
                           :style="rubyGapStyle(index, segmentIndex)"
                           >{{ segment.t }}</span
                         >
                         <template v-else>{{ segment.t }}</template>
                       </template>
-                    </template>
-                    <template
-                      v-else-if="
-                        experimentalFrame?.lineId === line.lineId &&
-                        experimentalFrame.text === line.text &&
-                        index === activeLineIndex
-                      "
-                    >
-                      <span
-                        v-for="chunk in experimentalFrame.chunks"
-                        :key="chunk.chunkId"
-                        :class="{
-                          'lyrics-line__experimental-active':
-                            chunk.state === 'active',
-                        }"
-                        >{{ chunk.text }}</span
-                      >
                     </template>
                     <template v-else>{{ line.text }}</template>
                   </span></span
@@ -548,11 +482,6 @@ watch(
 </template>
 
 <style scoped>
-.lyrics-line__experimental-active {
-  text-decoration: underline;
-  text-decoration-color: var(--ui-color-accent);
-  text-underline-offset: 0.15em;
-}
 .lyrics-document {
   position: relative;
   min-width: 0;
@@ -664,12 +593,6 @@ watch(
 }
 .lyrics-line--active .lyrics-line__row {
   background: transparent;
-}
-.lyrics-line--fine .lyrics-line__row {
-  background: transparent;
-}
-.lyrics-line--fine {
-  color: var(--ui-color-text);
 }
 .lyrics-line__time {
   font-size: var(--ui-font-size-sm);

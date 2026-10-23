@@ -15,6 +15,7 @@ defineProps({
   hasSelectedSource: { type: Boolean, default: false },
   lines: { type: Array, default: () => [] },
   activeLineIndex: { type: Number, default: -1 },
+  positionedLineIndex: { type: Number, default: null },
   fontSizeClass: { type: String, default: '' },
   showsReadingAid: { type: Boolean, default: false },
   readingVariant: { type: String, default: 'off' },
@@ -60,6 +61,7 @@ const emit = defineEmits([
       :has-selected-source="hasSelectedSource"
       :lines="lines"
       :active-line-index="activeLineIndex"
+      :positioned-line-index="positionedLineIndex"
       :font-size-class="fontSizeClass"
       :shows-reading-aid="showsReadingAid"
       :reading-variant="readingVariant"

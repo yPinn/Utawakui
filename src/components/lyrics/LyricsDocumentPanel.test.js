@@ -3,6 +3,7 @@ import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
+import LyricsFineText from './LyricsFineText.vue';
 
 const source = readFileSync(
   new URL('./LyricsDocumentPanel.vue', import.meta.url),
@@ -36,6 +37,114 @@ function render(props) {
 
 describe('LyricsDocumentPanel presentation', () => {
   it.each(['list', 'sheet'])(
+    'preserves whitespace without underlining it in %s, with and without readings',
+    async (presentation) => {
+      for (const word of [
+        ' 僕',
+        '僕 の',
+        ' 僕  の ',
+        '僕\u3000の',
+        '僕\tの\n',
+        ' \u00a0\u3000',
+      ]) {
+        for (const reading of [false, true]) {
+          const text = `前${word}後`;
+          const html = await renderToString(
+            createSSRApp({
+              render: () =>
+                h(LyricsFineText, {
+                  frame: {
+                    text,
+                    chunks: [
+                      { text: '前', state: 'past' },
+                      { text: word, state: 'active' },
+                      { text: '後', state: 'upcoming' },
+                    ],
+                  },
+                  presentation,
+                  readingSegments: reading
+                    ? [{ t: '前' }, { t: word, r: 'ぼく' }, { t: '後' }]
+                    : null,
+                }),
+            }),
+          );
+          const cues = [
+            ...html.matchAll(
+              /<span[^>]*class="[^"]*lyrics-fine-text__cue[^"]*"[^>]*>([^<]*)<\/span>/gu,
+            ),
+          ].map((match) => match[1]);
+          expect(cues.every((cue) => !/\s/u.test(cue))).toBe(true);
+          expect(cues.join('')).toBe(word.replace(/\s/gu, ''));
+          expect(
+            html
+              .replace(/<rt[^>]*>[\s\S]*?<\/rt>/gu, '')
+              .replace(/<[^>]*>/gu, ''),
+          ).toBe(text);
+        }
+      }
+    },
+  );
+  it.each(['list', 'sheet'])(
+    'underlines exactly the active T2 chunk across furigana groups in %s',
+    async (presentation) => {
+      const frame = {
+        text: '歩き出した僕の未来',
+        chunks: [
+          { text: '歩き', state: 'past' },
+          { text: '出し', state: 'active' },
+          { text: 'た僕の未来', state: 'upcoming' },
+        ],
+        fineTiming: { units: [{ from: 2, to: 4, startMs: 1000, endMs: 2000 }] },
+      };
+      const readingSegments = [
+        { t: '歩', r: 'ある' },
+        { t: 'き' },
+        { t: '出', r: 'だ' },
+        { t: 'した' },
+        { t: '僕', r: 'ぼく' },
+        { t: 'の' },
+        { t: '未来', r: 'みらい' },
+      ];
+      const renderCue = (chunks, readings = readingSegments) =>
+        renderToString(
+          createSSRApp({
+            render: () =>
+              h(LyricsFineText, {
+                frame: { ...frame, chunks },
+                readingSegments: readings,
+                presentation,
+              }),
+          }),
+        );
+      const activeText = (html) =>
+        [
+          ...html.matchAll(
+            /<span[^>]*class="[^"]*lyrics-fine-text__cue[^"]*"[^>]*>([^<]*)<\/span>/gu,
+          ),
+        ]
+          .map((m) => m[1])
+          .join('');
+      const html = await renderCue(frame.chunks);
+      expect(activeText(html)).toBe('出し');
+      expect(activeText(await renderCue(frame.chunks, null))).toBe('出し');
+      expect(
+        activeText(await renderCue(frame.chunks, [{ t: 'wrong', r: 'だ' }])),
+      ).toBe('出し');
+      expect(html.match(/<rt/g)).toHaveLength(4);
+      expect(html).not.toContain('data-lyrics-fine-unit');
+      expect(
+        activeText(
+          await renderCue(
+            frame.chunks.map((c) => ({
+              ...c,
+              state: c.state === 'active' ? 'past' : c.state,
+            })),
+          ),
+        ),
+      ).toBe('');
+    },
+  );
+  it.each(['list', 'sheet'])(
     'keeps the highlighter and timed underline in %s without replacing the layout',
     async (presentation) => {
       const html = await render({
@@ -59,116 +168,32 @@ describe('LyricsDocumentPanel presentation', () => {
     },
   );
   it.each(['list', 'sheet'])(
-    'uses the same local ink in %s for starts-only estimates',
+    'keeps the located marker in %s while waiting without an old word cue',
     async (presentation) => {
       const html = await render({
         presentation,
+        activeLineIndex: -1,
+        positionedLineIndex: 0,
         experimentalFrame: {
-          lineId: 'b',
-          text: '汚れたい',
-          chunks: [{ text: '汚れたい', state: 'active' }],
-          paintTiming: {
-            version: 1,
-            units: [
-              {
-                unitId: 'coarse-paint',
-                from: 0,
-                to: 4,
-                startMs: 5000,
-                endMs: 7000,
-                timingSource: 'display-estimate',
-              },
-            ],
-          },
-          paintClock: { positionMs: 5250, rate: 1, playing: false },
+          lineId: 'a',
+          text: '雨晒し',
+          chunks: [{ text: '雨晒し', state: 'active' }],
         },
       });
-      expect(html).toContain('lyrics-line--fine');
-      expect(html).toContain('data-lyrics-paint-source="display-estimate"');
-      expect(html).toContain('--lyrics-fine-progress:50%');
-      expect(html).toContain('lyrics-fine-text__cue');
+      expect(html).toMatch(/lyrics-line--active[\s\S]*?雨晒し/u);
+      expect(html.match(/lyrics-line--active/g)).toHaveLength(1);
+      expect(html).not.toContain('lyrics-line__experimental-active');
+      const next = await render({
+        presentation,
+        activeLineIndex: 1,
+        positionedLineIndex: 1,
+      });
+      expect(next).toMatch(/lyrics-line--active[\s\S]*?汚れたい/u);
+      expect(
+        await render({ activeLineIndex: -1, positionedLineIndex: -1 }),
+      ).not.toContain('lyrics-line--active');
     },
   );
-  it('renders fine text ink separately from the instantaneous onset cue and keeps ruby intact', async () => {
-    const frame = {
-      lineId: 'b',
-      text: '汚れたい',
-      chunks: [
-        { chunkId: 'a', text: '汚れ', state: 'active' },
-        { chunkId: 'b', text: 'たい', state: 'upcoming' },
-      ],
-      fineTiming: {
-        version: 1,
-        units: [
-          { unitId: 'fine-a', from: 0, to: 2, startMs: 5000, endMs: 6000 },
-          { unitId: 'fine-b', from: 2, to: 4, startMs: 6100, endMs: 7000 },
-        ],
-      },
-      paintClock: { positionMs: 5250, rate: 1, playing: false },
-    };
-    const html = await render({
-      experimentalFrame: frame,
-      showsReadingAid: true,
-      readingVariant: 'furigana',
-      readingLines: [
-        null,
-        { segments: [{ t: '汚れ', r: 'よごれ' }, { t: 'たい' }] },
-      ],
-    });
-    expect(html).toContain('data-lyrics-fine-unit="fine-a"');
-    expect(html).toContain('--lyrics-fine-progress:50%');
-    expect(html).toMatch(/<rt[^>]*>よごれ<\/rt>/u);
-    expect(html).toContain('lyrics-fine-text__cue');
-    const fineSource = readFileSync(
-      new URL('./LyricsFineText.vue', import.meta.url),
-      'utf8',
-    );
-    expect(fineSource).not.toContain('text-fill-color: transparent');
-    expect(fineSource).toContain('@media (forced-colors: active)');
-    expect(fineSource).toContain('inherits: true;');
-    expect(html).toContain('lyrics-line--fine');
-    expect(rule('.lyrics-line--fine .lyrics-line__row')).toContain(
-      'background: transparent',
-    );
-    expect(rule('.lyrics-line--fine')).toContain('color: var(--ui-color-text)');
-  });
-  it('renders a missing first glyph from explicitly separate display paint timing', async () => {
-    const actual = {
-      unitId: 'actual',
-      from: 1,
-      to: 2,
-      startMs: 6000,
-      endMs: 7000,
-    };
-    const html = await render({
-      lines: [{ lineId: 'b', text: '花開', start: 5 }],
-      activeLineIndex: 0,
-      experimentalFrame: {
-        lineId: 'b',
-        text: '花開',
-        chunks: [{ text: '花開', state: 'active' }],
-        fineTiming: { version: 1, units: [actual] },
-        paintTiming: {
-          version: 1,
-          units: [
-            {
-              unitId: 'paint-gap-0-1',
-              from: 0,
-              to: 1,
-              startMs: 5000,
-              endMs: 6000,
-              timingSource: 'display-estimate',
-            },
-            actual,
-          ],
-        },
-        paintClock: { positionMs: 5500, rate: 1, playing: false },
-      },
-    });
-    expect(html).toContain('data-lyrics-fine-unit="paint-gap-0-1"');
-    expect(html).toContain('data-lyrics-paint-source="display-estimate"');
-    expect(html).toContain('--lyrics-fine-progress:50%');
-  });
   it('renders manually applied starts only on the matching active line and preserves normal text on mismatch', async () => {
     const frame = {
       lineId: 'b',
@@ -247,19 +272,15 @@ describe('LyricsDocumentPanel presentation', () => {
     );
   });
 
-  it('uses continuous blue underlines instead of a second text color for fine progress', () => {
-    const fineSource = readFileSync(
+  it('uses one non-skipping cue underline without cumulative paint or animation', () => {
+    const cueSource = readFileSync(
       new URL('./LyricsFineText.vue', import.meta.url),
       'utf8',
     );
-    const ink = fineSource.slice(
-      fineSource.indexOf('.lyrics-fine-text__ink::after {'),
-    );
-    expect(ink).toContain('color: transparent;');
-    expect(ink).toContain('text-decoration: underline;');
-    expect(ink).toContain('text-decoration-color: var(--ui-color-accent);');
-    expect(ink).toContain('var(--lyrics-fine-progress)');
-    expect(ink).toContain('text-decoration-thickness: 0.12em;');
+    expect(cueSource).toContain('text-decoration-skip-ink: none;');
+    expect(cueSource).not.toContain('::after');
+    expect(cueSource).not.toContain('--lyrics-fine-progress');
+    expect(cueSource).not.toContain('paintLyricsFineUnit');
   });
 
   it('prints readings above the lyric in full ink', () => {

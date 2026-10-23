@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   deriveLyricsPlaybackState,
+  deriveLyricsPositionLineIndex,
   normalizeLyricsDocument,
   projectLegacyLyricLines,
 } from './lyricsDocument.js';
@@ -13,6 +14,44 @@ const SOURCE = {
 };
 const SOURCE_FINGERPRINT = 'a'.repeat(64);
 const NORMALIZER_PROFILE_ID = 'lyrics-source-v2';
+
+describe('local lyrics reading position', () => {
+  const document = {
+    lines: [
+      { lineId: 'a', startMs: 1000, endMs: 2000 },
+      { lineId: 'untimed', startMs: null, endMs: null },
+      { lineId: 'b', startMs: 4000, endMs: 5000 },
+    ],
+  };
+  it.each([
+    [999, -1],
+    [1000, 0],
+    [2000, 0],
+    [3999, 0],
+    [4000, 2],
+    [6000, 2],
+    [1500, 0],
+    [0, -1],
+  ])(
+    'locates the latest started line at %s ms without extending sung activity',
+    (position, expected) => {
+      expect(deriveLyricsPositionLineIndex(document, position)).toBe(expected);
+      if (position === 2000 || position === 3999 || position === 6000)
+        expect(
+          deriveLyricsPlaybackState(document, position).activeLineIndex,
+        ).toBe(-1);
+    },
+  );
+  it('clears location for missing clock, empty or replaced documents', () => {
+    for (const position of [null, undefined, NaN, Infinity])
+      expect(deriveLyricsPositionLineIndex(document, position)).toBe(-1);
+    expect(deriveLyricsPositionLineIndex(null, 3000)).toBe(-1);
+    expect(deriveLyricsPositionLineIndex({ lines: [] }, 3000)).toBe(-1);
+    expect(
+      deriveLyricsPositionLineIndex({ lines: [{ startMs: 7000 }] }, 3000),
+    ).toBe(-1);
+  });
+});
 
 function normalize(text, options = {}) {
   return normalizeLyricsDocument({

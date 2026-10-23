@@ -13,6 +13,7 @@ import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
   deriveLyricsPlaybackState,
+  deriveLyricsPositionLineIndex,
   normalizeLyricsDocument,
   projectLegacyLyricLines,
 } from '../utils/lyricsDocument.js';
@@ -240,6 +241,12 @@ function setLyricsTextVariant(variant) {
   return true;
 }
 const activeLineIndex = computed(() => playbackState.value.activeLineIndex);
+const positionedLineIndex = computed(() =>
+  deriveLyricsPositionLineIndex(
+    displayLyricsDocument.value,
+    currentLyricsPositionMs.value,
+  ),
+);
 const localLyricsFrame = computed(() => {
   const estimated = experimentalLyrics.frame.value;
   if (estimated) return estimated;
@@ -492,6 +499,7 @@ export function useLyrics() {
     lyricLines,
     activeLine,
     activeLineIndex,
+    positionedLineIndex,
     activeLineId,
     activeSegmentId,
     playbackState,

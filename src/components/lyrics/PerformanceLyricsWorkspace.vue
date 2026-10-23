@@ -24,6 +24,7 @@ const {
   lyricsDocument,
   lyricLines,
   activeLineIndex,
+  positionedLineIndex,
   initialize,
   adjustOffset,
   resetOffset,
@@ -161,6 +162,7 @@ onMounted(initialize);
       :has-selected-source="Boolean(selectedSource)"
       :lines="lyricLines"
       :active-line-index="activeLineIndex"
+      :positioned-line-index="positionedLineIndex"
       :font-size-class="lyricsFontSizeClass"
       :shows-reading-aid="showsReadingAid"
       :reading-variant="readingVariant"

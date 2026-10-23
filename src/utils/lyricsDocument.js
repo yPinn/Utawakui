@@ -128,6 +128,14 @@ function emptyPlaybackState() {
   };
 }
 
+// Local reading location survives silence; sung activity keeps its real end.
+export function deriveLyricsPositionLineIndex(document, positionMs) {
+  if (!Number.isFinite(positionMs)) return -1;
+  return (document?.lines ?? []).findLastIndex(
+    (line) => Number.isFinite(line.startMs) && line.startMs <= positionMs,
+  );
+}
+
 export function deriveLyricsPlaybackState(
   document,
   positionMs,

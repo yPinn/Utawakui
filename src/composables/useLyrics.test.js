@@ -299,6 +299,7 @@ describe('useLyrics', () => {
         'lyricsTiming',
         'playFromLine',
         'playbackState',
+        'positionedLineIndex',
         'probeMusixmatch',
         'refresh',
         'resetOffset',
@@ -1043,9 +1044,32 @@ describe('useLyrics', () => {
     expect(lyrics.state.selectedTrackId).toBe(trackB.id);
     expect(lyrics.activeLineIndex.value).toBe(-1);
     expect(lyrics.activeLine.value).toBe(null);
+    expect(lyrics.positionedLineIndex.value).toBe(-1);
     // currentTrackId tracks playback, not selection — trackA stays "playing"
     // even once trackB becomes the manually selected (lyrics-open) track.
     expect(lyrics.currentTrackId.value).toBe(trackA.id);
+  });
+
+  it('keeps local reading location across silence and recomputes it after seeks', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    playerState.currentTime = 20;
+    await flushPromises();
+    expect(lyrics.activeLineIndex.value).toBe(-1);
+    expect(lyrics.positionedLineIndex.value).toBe(0);
+    playerState.currentTime = 40;
+    await flushPromises();
+    expect(lyrics.positionedLineIndex.value).toBe(1);
+    expect(lyrics.activeLineIndex.value).toBe(1);
+    playerState.currentTime = 60;
+    await flushPromises();
+    expect(lyrics.activeLineIndex.value).toBe(-1);
+    expect(lyrics.positionedLineIndex.value).toBe(1);
+    playerState.currentTime = 20;
+    await flushPromises();
+    expect(lyrics.positionedLineIndex.value).toBe(0);
+    playerState.currentTime = 0;
+    await flushPromises();
+    expect(lyrics.positionedLineIndex.value).toBe(-1);
   });
 
   it('owns one canonical document and derives the active stable line id', async () => {

@@ -1,10 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
-import { fineTextParts } from '../../../shared/presentation/lyricsFineFrame.mjs';
-import {
-  cancelLyricsFinePaint,
-  paintLyricsFineUnit,
-} from '../../../shared/browser/lyricsFinePaint.mjs';
+import { computed } from 'vue';
 
 const props = defineProps({
   frame: { type: Object, required: true },
@@ -12,17 +7,15 @@ const props = defineProps({
   readingGaps: { type: Array, default: () => [] },
   presentation: { type: String, default: 'list' },
 });
-const root = useTemplateRef('root');
-const paintUnits = computed(
-  () => props.frame.paintTiming?.units ?? props.frame.fineTiming?.units ?? [],
-);
+// Reading and timing partitions may cross. Slice their text intersections only;
+// the original chunks remain the sole authority for the active word cue.
 const groups = computed(() => {
   const frame = props.frame;
   let cursor = 0;
-  const coarse = frame.chunks.map((chunk) => {
+  const chunks = frame.chunks.map((chunk) => {
     const from = cursor;
     cursor += chunk.text.length;
-    return { from, to: cursor, state: chunk.state };
+    return { from, to: cursor, active: chunk.state === 'active' };
   });
   const readings =
     props.readingSegments?.map((s) => s.t).join('') === frame.text
@@ -32,65 +25,42 @@ const groups = computed(() => {
   return readings.map((reading, index) => {
     const from = cursor;
     cursor += reading.t.length;
+    const to = cursor;
+    const cuts = [
+      ...new Set([
+        from,
+        to,
+        ...Array.from(reading.t.matchAll(/\s+/gu), (match) => [
+          from + match.index,
+          from + match.index + match[0].length,
+        ]).flat(),
+        ...chunks
+          .flatMap((chunk) => [chunk.from, chunk.to])
+          .filter((cut) => cut > from && cut < to),
+      ]),
+    ].sort((a, b) => a - b);
     return {
       from,
       index,
       reading: reading.r,
-      parts: fineTextParts(frame.text, paintUnits.value, from, cursor).map(
-        (part) => ({
-          ...part,
-          cue: coarse.some(
+      parts: cuts.slice(0, -1).map((start, i) => ({
+        from: start,
+        to: cuts[i + 1],
+        text: frame.text.slice(start, cuts[i + 1]),
+        cue:
+          /\S/u.test(frame.text.slice(start, cuts[i + 1])) &&
+          chunks.some(
             (chunk) =>
-              chunk.state === 'active' &&
-              chunk.from < part.to &&
-              chunk.to > part.from,
+              chunk.active && chunk.from < cuts[i + 1] && chunk.to > start,
           ),
-          progress: part.unitId
-            ? Math.max(
-                0,
-                Math.min(
-                  1,
-                  (((frame.paintClock?.positionMs ?? 0) - part.startMs) /
-                    (part.endMs - part.startMs) -
-                    part.paintFrom) /
-                    (part.paintTo - part.paintFrom),
-                ),
-              )
-            : null,
-        }),
-      ),
+      })),
     };
   });
 });
-let painted = [];
-function clearPaint() {
-  for (const node of painted) cancelLyricsFinePaint(node);
-  painted = [];
-}
-function paint() {
-  clearPaint();
-  const clock = props.frame.paintClock;
-  if (!clock || !root.value) return;
-  const units = new Map(paintUnits.value.map((unit) => [unit.unitId, unit]));
-  const reducedMotion =
-    globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ===
-    true;
-  painted = Array.from(root.value.querySelectorAll('[data-lyrics-fine-unit]'));
-  for (const node of painted)
-    paintLyricsFineUnit(node, units.get(node.dataset.lyricsFineUnit), clock, {
-      reducedMotion,
-      paintFrom: Number(node.dataset.lyricsFineFrom),
-      paintTo: Number(node.dataset.lyricsFineTo),
-    });
-}
-watch(() => [props.frame, props.readingSegments], paint, { flush: 'post' });
-onMounted(paint);
-onUnmounted(clearPaint);
 </script>
 
 <template>
   <span
-    ref="root"
     class="lyrics-fine-text"
     :class="{ 'lyrics-fine-text--sheet': presentation === 'sheet' }"
   >
@@ -107,44 +77,22 @@ onUnmounted(clearPaint);
     >
       <span
         v-for="part in group.parts"
-        :key="`${part.from}:${part.to}`"
+        :key="part.from"
         :class="{
           'lyrics-fine-text__cue lyrics-line__experimental-active': part.cue,
-          'lyrics-fine-text__ink': part.unitId,
         }"
-        :data-lyrics-fine-unit="part.unitId"
-        :data-lyrics-paint-source="
-          part.unitId
-            ? (part.timingSource ??
-              (frame.timingSource === 't2' ? 'native' : 'model'))
-            : undefined
-        "
-        :data-lyrics-fine-from="part.unitId ? part.paintFrom : undefined"
-        :data-lyrics-fine-to="part.unitId ? part.paintTo : undefined"
-        :data-text="part.unitId ? part.text : undefined"
-        :style="
-          part.unitId
-            ? { '--lyrics-fine-progress': `${part.progress * 100}%` }
-            : undefined
-        "
         >{{ part.text }}</span
       ><rt v-if="group.reading">{{ group.reading }}</rt>
     </component>
   </span>
 </template>
 
-<style>
-@property --lyrics-fine-progress {
-  syntax: '<percentage>';
-  inherits: true;
-  initial-value: 0%;
-}
-</style>
 <style scoped>
 .lyrics-fine-text__cue {
   text-decoration: underline;
   text-decoration-color: var(--ui-color-accent);
   text-underline-offset: 0.15em;
+  text-decoration-skip-ink: none;
 }
 .lyrics-fine-text rt {
   font-size: var(--ui-lyrics-ruby-font-size);
@@ -167,30 +115,5 @@ onUnmounted(clearPaint);
   display: block;
   white-space: nowrap;
   transform: translateX(-50%);
-}
-.lyrics-fine-text__ink {
-  position: relative;
-  display: inline-block;
-  max-inline-size: 100%;
-  color: var(--ui-color-text);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.lyrics-fine-text__ink::after {
-  position: absolute;
-  inset: 0;
-  content: attr(data-text) / '';
-  color: transparent;
-  text-decoration: underline;
-  text-decoration-color: var(--ui-color-accent);
-  text-decoration-thickness: 0.12em;
-  text-underline-offset: 0.15em;
-  clip-path: inset(-0.3em calc(100% - var(--lyrics-fine-progress)) -0.3em 0);
-  pointer-events: none;
-}
-@media (forced-colors: active) {
-  .lyrics-fine-text__ink::after {
-    content: none;
-  }
 }
 </style>
