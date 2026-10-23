@@ -81,6 +81,51 @@ function setup(bridge, clockOptions = {}) {
   };
 }
 describe('manual experimental lyric application', () => {
+  it('holds the original coarse cue except inside an evidenced internal pause, including after seek', async () => {
+    let release;
+    const input = setup({
+      getExperimentalLyricsEstimate: () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    });
+    const value = structuredClone(input.estimate);
+    value.preview.lines[0].fineTiming = {
+      version: 1,
+      units: [
+        { unitId: 'fine-a', from: 0, to: 1, startMs: 1100, endMs: 1200 },
+        { unitId: 'fine-b', from: 1, to: 2, startMs: 1700, endMs: 2000 },
+        { unitId: 'fine-c', from: 2, to: 4, startMs: 3000, endMs: 3500 },
+      ],
+    };
+    const original = structuredClone(value);
+    release(value);
+    await nextTick();
+    input.owner.setApplied(true);
+    for (const [position, visible] of [
+      [1000, true],
+      [1199, true],
+      [1200, false],
+      [1699, false],
+      [1700, true],
+      [1500, false],
+      [1000, true],
+    ]) {
+      input.positionMs.value = position;
+      const frame = input.owner.frame.value;
+      expect(frame.chunks[0].state).toBe('active');
+      expect(frame.chunks[0].cueActive !== false, `cue at ${position}`).toBe(
+        visible,
+      );
+      expect(frame.chunks.map((c) => c.text).join('')).toBe('今天唱歌');
+      expect(frame.chunks[0].startMs).toBe(1000);
+    }
+    expect(
+      input.owner.outputDocument.value.lines[0].estimatedFineTiming,
+    ).toEqual(original.preview.lines[0].fineTiming);
+    expect(value).toEqual(original);
+    input.scope.stop();
+  });
   it('keeps a coarse onset immediate when contradictory fine completion predates that onset', async () => {
     let release;
     const input = setup({

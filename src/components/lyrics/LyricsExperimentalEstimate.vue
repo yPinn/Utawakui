@@ -25,7 +25,7 @@ defineProps({ disabled: { type: Boolean, default: false } });
       experiment.needsReanalysis.value
         ? '校時已變更，請重新分析；目前沿用原歌詞。'
         : experiment.prepared.value.status === 'ready'
-          ? `分析${experiment.applied.value ? '已套用' : '未套用'} · ${summary.fineLines ? `${summary.fineLines} 句含掃字時間` : '僅分段提示'}`
+          ? `分析${experiment.applied.value ? '已套用' : '未套用'} · ${summary.fineLines ? `${summary.fineLines} 句含細時間` : '僅分段提示'}`
           : '分析目前不可用，沿用原歌詞。'
     }}</UiHint>
     <UiButton

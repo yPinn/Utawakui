@@ -313,7 +313,7 @@ describe('selected source analysis in available lyrics', () => {
       ],
     };
     await flush();
-    expect(textContent(mounted.root)).toContain('1 句含掃字時間');
+    expect(textContent(mounted.root)).toContain('1 句含細時間');
     owner.needsReanalysis.value = true;
     owner.prepared.value = { status: 'stale' };
     await flush();

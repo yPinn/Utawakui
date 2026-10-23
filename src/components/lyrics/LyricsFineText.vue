@@ -15,7 +15,11 @@ const groups = computed(() => {
   const chunks = frame.chunks.map((chunk) => {
     const from = cursor;
     cursor += chunk.text.length;
-    return { from, to: cursor, active: chunk.state === 'active' };
+    return {
+      from,
+      to: cursor,
+      active: chunk.state === 'active' && chunk.cueActive !== false,
+    };
   });
   const readings =
     props.readingSegments?.map((s) => s.t).join('') === frame.text

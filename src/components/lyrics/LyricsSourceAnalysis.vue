@@ -152,7 +152,7 @@ const statusMessage = computed(() => {
       (experiment.applied.value ? '已套用' : '未套用') +
       ' · ' +
       (summary.value.fineLines
-        ? `${summary.value.fineLines} 句含掃字時間`
+        ? `${summary.value.fineLines} 句含細時間`
         : '僅分段提示') +
       '；未涵蓋部分沿用原歌詞。' +
       (experiment.estimate.value.validation?.missingLyrics
@@ -282,8 +282,8 @@ onScopeDispose(() => clearInterval(timer));
       <UiHint
         >依目前校時逐句分流中／日／英，提示只作用本次；句內混語或證據不足沿用
         T1。變更來源或校時後需重新分析。來源 T2 優先，未通過的句子沿用
-        T1。缺字可依分段時間估計填色；有細時間的文字沿用原區間。本地、Focus
-        與卡拉 OK 支援掃字，外觀依畫面而定。分析時間仍需人工確認。</UiHint
+        T1。本地以底線提示當前詞塊，已知停頓暫隱底線；Focus 與卡拉 OK
+        支援連續填色。顯示估計不改分析時間，仍需人工確認。</UiHint
       >
     </UiDisclosure>
     <LyricsPhrasePreview

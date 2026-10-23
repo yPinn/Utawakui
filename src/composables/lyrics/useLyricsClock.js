@@ -1,5 +1,6 @@
 import { computed, toValue, watch } from 'vue';
 import { prepareLocalLyricsPaintFrame } from '../../../shared/presentation/lyricsFineFrame.mjs';
+import { prepareLocalLyricsCuePauses } from '../../utils/lyricsLocalCues.js';
 
 // A display deadline is only a reason to read the audio element again. It is
 // never evidence that media has actually reached that deadline.
@@ -20,6 +21,8 @@ export function useLyricsClock({
       for (const segment of line.estimatedStarts?.segments ?? [])
         values.push(segment.startMs);
       values.push(...(prepareLocalLyricsPaintFrame(line)?.cueEnds ?? []));
+      for (const pause of prepareLocalLyricsCuePauses(line))
+        values.push(pause.startMs, pause.endMs);
     }
     return [...new Set(values.filter(Number.isFinite))].sort((a, b) => a - b);
   });

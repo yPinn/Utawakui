@@ -63,6 +63,45 @@ function setup() {
 }
 
 describe('lyrics boundary clock', () => {
+  it('samples both edges of an evidenced internal pause without timeupdate or an added wait', async () => {
+    const c = setup();
+    c.document.value = {
+      lines: [
+        {
+          lineId: 'l',
+          text: '甲乙丙',
+          startMs: 1000,
+          endMs: 5000,
+          estimatedStarts: {
+            version: 1,
+            segments: [
+              { text: '甲乙', startMs: 1000 },
+              { text: '丙', startMs: 3000 },
+            ],
+          },
+          estimatedFineTiming: {
+            version: 1,
+            units: [
+              { unitId: 'a', from: 0, to: 1, startMs: 1000, endMs: 1200 },
+              { unitId: 'b', from: 1, to: 2, startMs: 1700, endMs: 2000 },
+              { unitId: 'c', from: 2, to: 3, startMs: 3000, endMs: 3500 },
+            ],
+          },
+        },
+      ],
+    };
+    c.media(1000);
+    await nextTick();
+    c.samplePlaybackClock.mockClear();
+    c.media(1200);
+    vi.advanceTimersByTime(200);
+    expect(c.positionMs.value).toBe(1200);
+    c.media(1700);
+    vi.advanceTimersByTime(500);
+    expect(c.positionMs.value).toBe(1700);
+    expect(c.samplePlaybackClock).toHaveBeenCalledTimes(2);
+    expect(c.player.currentTime).toBe(0);
+  });
   it('samples a paint completion while holding the canonical line to its original next onset', async () => {
     const c = setup();
     c.document.value = {

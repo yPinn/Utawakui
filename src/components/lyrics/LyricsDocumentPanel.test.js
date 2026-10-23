@@ -37,6 +37,27 @@ function render(props) {
 
 describe('LyricsDocumentPanel presentation', () => {
   it.each(['list', 'sheet'])(
+    'keeps the full text and ruby during an evidenced cue pause in %s',
+    async (presentation) => {
+      const html = await renderToString(
+        createSSRApp({
+          render: () =>
+            h(LyricsFineText, {
+              frame: {
+                text: '今日',
+                chunks: [{ text: '今日', state: 'active', cueActive: false }],
+              },
+              readingSegments: [{ t: '今日', r: 'きょう' }],
+              presentation,
+            }),
+        }),
+      );
+      expect(html).not.toContain('lyrics-fine-text__cue');
+      expect(html).toContain('今日');
+      expect(html).toContain('きょう');
+    },
+  );
+  it.each(['list', 'sheet'])(
     'preserves whitespace without underlining it in %s, with and without readings',
     async (presentation) => {
       for (const word of [

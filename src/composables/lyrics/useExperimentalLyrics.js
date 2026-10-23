@@ -5,6 +5,7 @@ import {
 } from '../../../shared/presentation/lyricsAcousticPreview.mjs';
 import { useExperimentalLyricsQueue } from './useExperimentalLyricsQueue.js';
 import { lyricsTextVariantLoader } from '../../utils/lyricsTextVariantLoader.js';
+import { localLyricsCuePaused } from '../../utils/lyricsLocalCues.js';
 import {
   mapLyricsFineText,
   prepareLocalLyricsPaintFrame,
@@ -231,6 +232,10 @@ export function useExperimentalLyrics({
       chunks: value.chunks.map((chunk, index) => ({
         ...chunk,
         text: line?.estimatedStarts?.segments[index]?.text ?? chunk.text,
+        ...(chunk.state === 'active' &&
+        localLyricsCuePaused(line, index, toValue(positionMs))
+          ? { cueActive: false }
+          : {}),
         ...(Number.isFinite(paintTiming?.cueEnds[index]) &&
         paintTiming.cueEnds[index] > chunk.startMs &&
         toValue(positionMs) >= paintTiming.cueEnds[index] &&
