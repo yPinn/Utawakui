@@ -79,7 +79,7 @@ describe('SettingsView document composition', () => {
     expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
     expect(optionalSource).not.toContain('LyricsResearchSettingsBlock');
-    expect(researchSource).toContain('title="歌詞分段提示（實驗性）"');
+    expect(researchSource).toContain('title="歌詞時間分析（實驗）"');
     expect(researchSource).toContain('<LyricsExperimentalQueueSettings />');
     expect(viewSource).not.toContain('LyricsExperimentalQueueSettings');
     expect(supportSource).toContain('title="支援與維護"');

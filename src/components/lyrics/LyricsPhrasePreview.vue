@@ -57,11 +57,7 @@ watch(
 </script>
 
 <template>
-  <UiDisclosure
-    v-if="candidates.length"
-    v-model:open="open"
-    label="長句分段預覽（實驗性）"
-  >
+  <UiDisclosure v-if="candidates.length" v-model:open="open" label="長句預覽">
     <div v-if="open" class="lyrics-phrase-preview">
       <UiSelect
         v-if="candidates.length > 1"
@@ -89,9 +85,7 @@ watch(
         <p class="lyrics-phrase-preview__text">
           {{ active?.text ?? candidate.plan.pages[0].text }}
         </p>
-        <UiHint
-          >文字分組示意；實際行／頁依模板尺寸決定，估計時間不改變來源層級。</UiHint
-        >
+        <UiHint>僅示意換行與分頁，實際顯示依模板尺寸調整。</UiHint>
       </template>
       <template v-else>
         <UiHint>目前沒有可用的分頁時間；以下僅為文字分組。</UiHint>

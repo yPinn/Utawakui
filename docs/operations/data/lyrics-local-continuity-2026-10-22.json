@@ -1,0 +1,3380 @@
+{
+  "date": "2026-10-22",
+  "metric": "rAF DOM onset observation vs native media crossing interpolated between adjacent local samples; not paint/hardware/audio truth",
+  "case": "Actual saved source; separate in-memory starts-only copy removes optional fine; silent PCM proxy media12..24s,offset0,displayDelay0,pause/resume/seek/rate",
+  "cohort": "2 cold plus1 warm per variant/data mode; cold1 Focus,cold2 KTV,warm1 KTV; no removal of complete slow observations",
+  "runs": [
+    {
+      "cohort": "saved-formal-after",
+      "id": "cold-1",
+      "template": "focus-line",
+      "variant": "after",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792665983683.0312,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665983692.7,
+          "outputObservedAt": 1792665983700.7002,
+          "localLateMs": 9.668701171875,
+          "outputLateMs": 17.6689453125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792665988222.5,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792665988226.6,
+          "outputObservedAt": 1792665988226.6,
+          "localLateMs": 4.10009765625,
+          "outputLateMs": 4.10009765625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792665988520.2021,
+          "referenceBracketMs": 4.60009765625,
+          "localObservedAt": 1792665988527,
+          "outputObservedAt": 1792665988522.9001,
+          "localLateMs": 6.7978515625,
+          "outputLateMs": 2.697998046875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792665988652.1,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792665988656.4,
+          "outputObservedAt": 1792665988657.2002,
+          "localLateMs": 4.2998046875,
+          "outputLateMs": 5.10009765625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792665988683.259,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665988689.6,
+          "outputObservedAt": 1792665988685.4001,
+          "localLateMs": 6.341064453125,
+          "outputLateMs": 2.14111328125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792665989606.7476,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792665989611.3,
+          "outputObservedAt": 1792665989615.5,
+          "localLateMs": 4.552490234375,
+          "outputLateMs": 8.75244140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792665990008.076,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665990011.7,
+          "outputObservedAt": 1792665990015.9001,
+          "localLateMs": 3.6240234375,
+          "outputLateMs": 7.82421875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792665990433.7605,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665990441.4,
+          "outputObservedAt": 1792665990437.1,
+          "localLateMs": 7.639404296875,
+          "outputLateMs": 3.339599609375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792665990601.9607,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792665990608.2,
+          "outputObservedAt": 1792665990608.2002,
+          "localLateMs": 6.2392578125,
+          "outputLateMs": 6.239501953125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792665995662.1946,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665995671.9,
+          "outputObservedAt": 1792665995671.8,
+          "localLateMs": 9.705322265625,
+          "outputLateMs": 9.60546875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792665995962.2817,
+          "referenceBracketMs": 4,
+          "localObservedAt": 1792665995972.2,
+          "outputObservedAt": 1792665995951.2002,
+          "localLateMs": 9.918212890625,
+          "outputLateMs": -11.08154296875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792665996078.3462,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792665996085,
+          "outputObservedAt": 1792665996076.4001,
+          "localLateMs": 6.65380859375,
+          "outputLateMs": -1.946044921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792665996091.8743,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792665996102.1,
+          "outputObservedAt": 1792665996105.5,
+          "localLateMs": 10.225830078125,
+          "outputLateMs": 13.625732421875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792665996355.5493,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792665996360,
+          "outputObservedAt": 1792665996360.1,
+          "localLateMs": 4.45068359375,
+          "outputLateMs": 4.55078125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792665996677.4448,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665996681.2,
+          "outputObservedAt": 1792665996681.2002,
+          "localLateMs": 3.755126953125,
+          "outputLateMs": 3.75537109375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792665997005.658,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792665997006.5,
+          "outputObservedAt": 1792665997006.5,
+          "localLateMs": 0.842041015625,
+          "outputLateMs": 0.842041015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792665997150.387,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665997156.8,
+          "outputObservedAt": 1792665997156.7002,
+          "localLateMs": 6.4130859375,
+          "outputLateMs": 6.313232421875
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666000572.2896,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666000576.9,
+          "outputObservedAt": 1792666000577.1,
+          "localLateMs": 4.6103515625,
+          "outputLateMs": 4.810546875
+        }
+      ]
+    },
+    {
+      "cohort": "saved-formal-after",
+      "id": "cold-2-retry",
+      "template": "karaoke-stack",
+      "variant": "after",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666280256.9548,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666280264.2002,
+          "outputObservedAt": 1792666280270.6,
+          "localLateMs": 7.245361328125,
+          "outputLateMs": 13.645263671875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666284792.3223,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666284797.3,
+          "outputObservedAt": 1792666284801.5,
+          "localLateMs": 4.977783203125,
+          "outputLateMs": 9.177734375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666285090.951,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666285093.4001,
+          "outputObservedAt": 1792666285089.3,
+          "localLateMs": 2.44921875,
+          "outputLateMs": -1.65087890625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666285227.8606,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666285235.3,
+          "outputObservedAt": 1792666285229.4001,
+          "localLateMs": 7.439453125,
+          "outputLateMs": 1.53955078125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666285255.6516,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666285260.2002,
+          "outputObservedAt": 1792666285256.1,
+          "localLateMs": 4.548583984375,
+          "outputLateMs": 0.448486328125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666286183.651,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666286186.3,
+          "outputObservedAt": 1792666286190.4001,
+          "localLateMs": 2.649169921875,
+          "outputLateMs": 6.749267578125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666286586.0242,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666286590.8,
+          "outputObservedAt": 1792666286586.7,
+          "localLateMs": 4.77587890625,
+          "outputLateMs": 0.67578125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666287001.1768,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666287012.1,
+          "outputObservedAt": 1792666287008,
+          "localLateMs": 10.92333984375,
+          "outputLateMs": 6.8232421875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666287174.4924,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666287178.9001,
+          "outputObservedAt": 1792666287179,
+          "localLateMs": 4.40771484375,
+          "outputLateMs": 4.507568359375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666292230,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666292234.1,
+          "outputObservedAt": 1792666292234.2,
+          "localLateMs": 4.10009765625,
+          "outputLateMs": 4.199951171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666292523.2969,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666292534.5,
+          "outputObservedAt": 1792666292513.7,
+          "localLateMs": 11.203125,
+          "outputLateMs": -9.596923828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666292634.0947,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666292647.1,
+          "outputObservedAt": 1792666292650.9001,
+          "localLateMs": 13.00537109375,
+          "outputLateMs": 16.805419921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666292666.1265,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666292667.9001,
+          "outputObservedAt": 1792666292660.8,
+          "localLateMs": 1.773681640625,
+          "outputLateMs": -5.326416015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666292912.9368,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666292914,
+          "outputObservedAt": 1792666292918.2,
+          "localLateMs": 1.063232421875,
+          "outputLateMs": 5.26318359375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666293231.5571,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666293239.4001,
+          "outputObservedAt": 1792666293239.3,
+          "localLateMs": 7.843017578125,
+          "outputLateMs": 7.742919921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666293567.844,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666293581.4001,
+          "outputObservedAt": 1792666293581.5,
+          "localLateMs": 13.55615234375,
+          "outputLateMs": 13.656005859375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666293712.1636,
+          "referenceBracketMs": 5.5,
+          "localObservedAt": 1792666293716.2002,
+          "outputObservedAt": 1792666293707.6,
+          "localLateMs": 4.03662109375,
+          "outputLateMs": -4.5634765625
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666297147.1887,
+          "referenceBracketMs": 5.199951171875,
+          "localObservedAt": 1792666297149.5,
+          "outputObservedAt": 1792666297155,
+          "localLateMs": 2.311279296875,
+          "outputLateMs": 7.811279296875
+        }
+      ]
+    },
+    {
+      "cohort": "saved-formal-after",
+      "id": "warm-1",
+      "template": "karaoke-stack",
+      "variant": "after",
+      "warm": true,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 86,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666045672.1443,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666045678.1,
+          "outputObservedAt": 1792666045673.8,
+          "localLateMs": 5.955810546875,
+          "outputLateMs": 1.65576171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666050211.3235,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666050216.2002,
+          "outputObservedAt": 1792666050216.4,
+          "localLateMs": 4.876708984375,
+          "outputLateMs": 5.076416015625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666050508.8806,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666050516.5,
+          "outputObservedAt": 1792666050508,
+          "localLateMs": 7.619384765625,
+          "outputLateMs": -0.880615234375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666050641.5,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666050646.9001,
+          "outputObservedAt": 1792666050646.9,
+          "localLateMs": 5.400146484375,
+          "outputLateMs": 5.39990234375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666050672.7083,
+          "referenceBracketMs": 4.2998046875,
+          "localObservedAt": 1792666050679.1,
+          "outputObservedAt": 1792666050674.9,
+          "localLateMs": 6.391845703125,
+          "outputLateMs": 2.191650390625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666051590.3599,
+          "referenceBracketMs": 4.89990234375,
+          "localObservedAt": 1792666051600.8,
+          "outputObservedAt": 1792666051588.2,
+          "localLateMs": 10.440185546875,
+          "outputLateMs": -2.159912109375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666051991.0635,
+          "referenceBracketMs": 4.2998046875,
+          "localObservedAt": 1792666051997,
+          "outputObservedAt": 1792666051992.8,
+          "localLateMs": 5.9365234375,
+          "outputLateMs": 1.736572265625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666052413.022,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666052418.4001,
+          "outputObservedAt": 1792666052414.0999,
+          "localLateMs": 5.378173828125,
+          "outputLateMs": 1.077880859375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666052585.7078,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666052593.7002,
+          "outputObservedAt": 1792666052585,
+          "localLateMs": 7.992431640625,
+          "outputLateMs": -0.707763671875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666057631.9731,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666057644.6,
+          "outputObservedAt": 1792666057645.3,
+          "localLateMs": 12.626953125,
+          "outputLateMs": 13.326904296875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666057930.0786,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666057932.6,
+          "outputObservedAt": 1792666057924,
+          "localLateMs": 2.521484375,
+          "outputLateMs": -6.07861328125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666058041.0173,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666058045.1,
+          "outputObservedAt": 1792666058048.8,
+          "localLateMs": 4.082763671875,
+          "outputLateMs": 7.78271484375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666058071.094,
+          "referenceBracketMs": 4.800048828125,
+          "localObservedAt": 1792666058074.9001,
+          "outputObservedAt": 1792666058070,
+          "localLateMs": 3.80615234375,
+          "outputLateMs": -1.093994140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666058317.8606,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666058328.7002,
+          "outputObservedAt": 1792666058332.7,
+          "localLateMs": 10.839599609375,
+          "outputLateMs": 14.83935546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666058638.6704,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666058645.7002,
+          "outputObservedAt": 1792666058645.5999,
+          "localLateMs": 7.02978515625,
+          "outputLateMs": 6.929443359375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666058985.4543,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666058991.9001,
+          "outputObservedAt": 1792666058983.4,
+          "localLateMs": 6.44580078125,
+          "outputLateMs": -2.054443359375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666059112.661,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666059121.2002,
+          "outputObservedAt": 1792666059121.0999,
+          "localLateMs": 8.539306640625,
+          "outputLateMs": 8.43896484375
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666062551.0947,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666062558.1,
+          "outputObservedAt": 1792666062549.9,
+          "localLateMs": 7.00537109375,
+          "outputLateMs": -1.19482421875
+        }
+      ]
+    },
+    {
+      "cohort": "saved-formal-before",
+      "id": "cold-1",
+      "template": "focus-line",
+      "variant": "before",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 87,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792665963645.856,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665963655.3,
+          "outputObservedAt": 1792665963662.4001,
+          "localLateMs": 9.444091796875,
+          "outputLateMs": 16.544189453125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792665968185,
+          "referenceBracketMs": 4,
+          "localObservedAt": 1792665968193.3,
+          "outputObservedAt": 1792665968193.3,
+          "localLateMs": 8.300048828125,
+          "outputLateMs": 8.300048828125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792665968486.5334,
+          "referenceBracketMs": 3.60009765625,
+          "localObservedAt": 1792665968493.8,
+          "outputObservedAt": 1792665968489.5,
+          "localLateMs": 7.2666015625,
+          "outputLateMs": 2.966552734375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792665968614.9,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792665968618.9,
+          "outputObservedAt": 1792665968620.4001,
+          "localLateMs": 4,
+          "outputLateMs": 5.500244140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792665968646.256,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792665968652.8,
+          "outputObservedAt": 1792665968647.9001,
+          "localLateMs": 6.5439453125,
+          "outputLateMs": 1.64404296875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792665969569.7559,
+          "referenceBracketMs": 3.900146484375,
+          "localObservedAt": 1792665969578.2,
+          "outputObservedAt": 1792665969578.1,
+          "localLateMs": 8.444091796875,
+          "outputLateMs": 8.34423828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792665969971.9114,
+          "referenceBracketMs": 5.10009765625,
+          "localObservedAt": 1792665969975.3,
+          "outputObservedAt": 1792665969974.9001,
+          "localLateMs": 3.388671875,
+          "outputLateMs": 2.98876953125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792665970396.7551,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792665970404,
+          "outputObservedAt": 1792665970399.8,
+          "localLateMs": 7.244873046875,
+          "outputLateMs": 3.044921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792665970565.152,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792665970570.9,
+          "outputObservedAt": 1792665970570.8,
+          "localLateMs": 5.747802734375,
+          "outputLateMs": 5.64794921875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792665975626,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665975630.2,
+          "outputObservedAt": 1792665975630.1,
+          "localLateMs": 4.199951171875,
+          "outputLateMs": 4.10009765625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792665975928.0215,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792665975934.7,
+          "outputObservedAt": 1792665975913.7,
+          "localLateMs": 6.678466796875,
+          "outputLateMs": -14.321533203125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792665976042.487,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665976047.3,
+          "outputObservedAt": 1792665976039,
+          "localLateMs": 4.81298828125,
+          "outputLateMs": -3.487060546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792665976055.3262,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665976068.0999,
+          "outputObservedAt": 1792665976068,
+          "localLateMs": 12.773681640625,
+          "outputLateMs": 12.673828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792665976320.1409,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665976326.8,
+          "outputObservedAt": 1792665976326.7,
+          "localLateMs": 6.6591796875,
+          "outputLateMs": 6.55908203125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792665976640.53,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792665976647.9,
+          "outputObservedAt": 1792665976647.8,
+          "localLateMs": 7.369873046875,
+          "outputLateMs": 7.27001953125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792665976968.6423,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665976973.3,
+          "outputObservedAt": 1792665976977.4001,
+          "localLateMs": 4.65771484375,
+          "outputLateMs": 8.7578125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792665977114.4243,
+          "referenceBracketMs": 5.39990234375,
+          "localObservedAt": 1792665977119.3,
+          "outputObservedAt": 1792665977119.2,
+          "localLateMs": 4.875732421875,
+          "outputLateMs": 4.775634765625
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792665980538.1345,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792665980543.5999,
+          "outputObservedAt": 1792665980543.6,
+          "localLateMs": 5.46533203125,
+          "outputLateMs": 5.465576171875
+        }
+      ]
+    },
+    {
+      "cohort": "saved-formal-before",
+      "id": "cold-2",
+      "template": "karaoke-stack",
+      "variant": "before",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666305424.4062,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666305431.4,
+          "outputObservedAt": 1792666305441.9,
+          "localLateMs": 6.99365234375,
+          "outputLateMs": 17.49365234375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666309959.7874,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666309969.5,
+          "outputObservedAt": 1792666309969.4,
+          "localLateMs": 9.712646484375,
+          "outputLateMs": 9.612548828125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666310258.3223,
+          "referenceBracketMs": 4.5,
+          "localObservedAt": 1792666310261.6,
+          "outputObservedAt": 1792666310258.7,
+          "localLateMs": 3.27783203125,
+          "outputLateMs": 0.377685546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666310399,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666310403.1,
+          "outputObservedAt": 1792666310395.6,
+          "localLateMs": 4.10009765625,
+          "outputLateMs": -3.39990234375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666310422.2642,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666310428.2,
+          "outputObservedAt": 1792666310424,
+          "localLateMs": 5.935791015625,
+          "outputLateMs": 1.73583984375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666311350.4663,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666311354.2,
+          "outputObservedAt": 1792666311350.5,
+          "localLateMs": 3.733642578125,
+          "outputLateMs": 0.03369140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666311753.3381,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666311754.6,
+          "outputObservedAt": 1792666311750.4,
+          "localLateMs": 1.261962890625,
+          "outputLateMs": -2.938232421875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666312168.5842,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666312175.9,
+          "outputObservedAt": 1792666312175.8,
+          "localLateMs": 7.315673828125,
+          "outputLateMs": 7.2158203125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666312341.5925,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666312346.9,
+          "outputObservedAt": 1792666312347.4,
+          "localLateMs": 5.307373046875,
+          "outputLateMs": 5.807373046875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666317377.1,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666317385.4,
+          "outputObservedAt": 1792666317388.3,
+          "localLateMs": 8.2998046875,
+          "outputLateMs": 11.199951171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666317678.5251,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666317681.6,
+          "outputObservedAt": 1792666317664.9,
+          "localLateMs": 3.074951171875,
+          "outputLateMs": -13.625244140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666317789.3938,
+          "referenceBracketMs": 6.599853515625,
+          "localObservedAt": 1792666317792.4,
+          "outputObservedAt": 1792666317797.9,
+          "localLateMs": 3.006103515625,
+          "outputLateMs": 8.506103515625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666317813.0085,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666317819.2,
+          "outputObservedAt": 1792666317816.6,
+          "localLateMs": 6.19140625,
+          "outputLateMs": 3.591552734375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666318067.7163,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666318073.7,
+          "outputObservedAt": 1792666318073.6,
+          "localLateMs": 5.983642578125,
+          "outputLateMs": 5.8837890625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666318389.0227,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666318394.9,
+          "outputObservedAt": 1792666318394.8,
+          "localLateMs": 5.877197265625,
+          "outputLateMs": 5.77734375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666318719.1697,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666318728.5,
+          "outputObservedAt": 1792666318728.5,
+          "localLateMs": 9.330322265625,
+          "outputLateMs": 9.330322265625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666318861.8318,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666318867.1,
+          "outputObservedAt": 1792666318870.3,
+          "localLateMs": 5.268310546875,
+          "outputLateMs": 8.46826171875
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666322293.9695,
+          "referenceBracketMs": 6.39990234375,
+          "localObservedAt": 1792666322296.9,
+          "outputObservedAt": 1792666322298.8,
+          "localLateMs": 2.930419921875,
+          "outputLateMs": 4.83056640625
+        }
+      ]
+    },
+    {
+      "cohort": "saved-formal-before",
+      "id": "warm-1",
+      "template": "karaoke-stack",
+      "variant": "before",
+      "warm": true,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 86,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666067161.1006,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666067175.3,
+          "outputObservedAt": 1792666067163.1,
+          "localLateMs": 14.199462890625,
+          "outputLateMs": 1.99951171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666071705,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666071709.2,
+          "outputObservedAt": 1792666071709.2,
+          "localLateMs": 4.199951171875,
+          "outputLateMs": 4.199951171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666071997.3528,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666072001.0999,
+          "outputObservedAt": 1792666071997.8,
+          "localLateMs": 3.7470703125,
+          "outputLateMs": 0.447265625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666072134.5999,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666072138.9,
+          "outputObservedAt": 1792666072136.4,
+          "localLateMs": 4.300048828125,
+          "outputLateMs": 1.800048828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666072160.4807,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666072167.9,
+          "outputObservedAt": 1792666072167.9,
+          "localLateMs": 7.419189453125,
+          "outputLateMs": 7.419189453125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666073099.073,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666073106.5,
+          "outputObservedAt": 1792666073093.9,
+          "localLateMs": 7.427001953125,
+          "outputLateMs": -5.173095703125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666073501.0435,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666073506.8,
+          "outputObservedAt": 1792666073502.7,
+          "localLateMs": 5.756591796875,
+          "outputLateMs": 1.656494140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666073916.9373,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666073929,
+          "outputObservedAt": 1792666073928.3,
+          "localLateMs": 12.062744140625,
+          "outputLateMs": 11.36279296875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666074089.2854,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666074095,
+          "outputObservedAt": 1792666074090.8,
+          "localLateMs": 5.714599609375,
+          "outputLateMs": 1.5146484375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666079142.8977,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666079150.2,
+          "outputObservedAt": 1792666079150.2,
+          "localLateMs": 7.30224609375,
+          "outputLateMs": 7.30224609375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666079438.6184,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666079450.5999,
+          "outputObservedAt": 1792666079429.6,
+          "localLateMs": 11.9814453125,
+          "outputLateMs": -9.018310546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666079549.9956,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666079554.8,
+          "outputObservedAt": 1792666079557.9,
+          "localLateMs": 4.804443359375,
+          "outputLateMs": 7.904296875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666079581.6348,
+          "referenceBracketMs": 4.5,
+          "localObservedAt": 1792666079584.3,
+          "outputObservedAt": 1792666079575.8,
+          "localLateMs": 2.665283203125,
+          "outputLateMs": -5.834716796875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666079828.7786,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666079838.5,
+          "outputObservedAt": 1792666079840.3,
+          "localLateMs": 9.721435546875,
+          "outputLateMs": 11.521484375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666080147.1682,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666080151.2,
+          "outputObservedAt": 1792666080151.2,
+          "localLateMs": 4.03173828125,
+          "outputLateMs": 4.03173828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666080482.4956,
+          "referenceBracketMs": 4,
+          "localObservedAt": 1792666080497.4,
+          "outputObservedAt": 1792666080489.1,
+          "localLateMs": 14.904296875,
+          "outputLateMs": 6.6044921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666080624.5159,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666080630.9,
+          "outputObservedAt": 1792666080635.1,
+          "localLateMs": 6.384033203125,
+          "outputLateMs": 10.584228515625
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666084061.1084,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666084067.9,
+          "outputObservedAt": 1792666084069.8,
+          "localLateMs": 6.79150390625,
+          "outputLateMs": 8.691650390625
+        }
+      ]
+    },
+    {
+      "cohort": "starts-only-formal-after",
+      "id": "cold-1",
+      "template": "focus-line",
+      "variant": "after",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666024195.5706,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666024205.7998,
+          "outputObservedAt": 1792666024210.3,
+          "localLateMs": 10.229248046875,
+          "outputLateMs": 14.7294921875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666028735.4,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666028739.5999,
+          "outputObservedAt": 1792666028739.6,
+          "localLateMs": 4.199951171875,
+          "outputLateMs": 4.2001953125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666029032.2173,
+          "referenceBracketMs": 4.2998046875,
+          "localObservedAt": 1792666029039.9,
+          "outputObservedAt": 1792666029035.7,
+          "localLateMs": 7.6826171875,
+          "outputLateMs": 3.482666015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666029165.0999,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666029169.2,
+          "outputObservedAt": 1792666029169.2,
+          "localLateMs": 4.10009765625,
+          "outputLateMs": 4.10009765625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666029192.9885,
+          "referenceBracketMs": 4,
+          "localObservedAt": 1792666029198.5,
+          "outputObservedAt": 1792666029196.1,
+          "localLateMs": 5.511474609375,
+          "outputLateMs": 3.111572265625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666030113.3286,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666030120.2,
+          "outputObservedAt": 1792666030120.1,
+          "localLateMs": 6.871337890625,
+          "outputLateMs": 6.771484375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666030514.5398,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666030520.5999,
+          "outputObservedAt": 1792666030520.6,
+          "localLateMs": 6.06005859375,
+          "outputLateMs": 6.060302734375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666030934.82,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666030941.9,
+          "outputObservedAt": 1792666030946.1,
+          "localLateMs": 7.079833984375,
+          "outputLateMs": 11.280029296875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666031107.799,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666031112.7998,
+          "outputObservedAt": 1792666031112.8,
+          "localLateMs": 5.000732421875,
+          "outputLateMs": 5.0009765625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666036143.2,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666036147.2998,
+          "outputObservedAt": 1792666036143.4,
+          "localLateMs": 4.099853515625,
+          "outputLateMs": 0.199951171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666036439.4707,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666036452,
+          "outputObservedAt": 1792666036430.9,
+          "localLateMs": 12.529296875,
+          "outputLateMs": -8.57080078125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666036554.2915,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666036564.5,
+          "outputObservedAt": 1792666036556.1,
+          "localLateMs": 10.20849609375,
+          "outputLateMs": 1.80859375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666036572.3145,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666036576.9,
+          "outputObservedAt": 1792666036576.9,
+          "localLateMs": 4.58544921875,
+          "outputLateMs": 4.58544921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666036833.2832,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666036839.7,
+          "outputObservedAt": 1792666036827.7,
+          "localLateMs": 6.416748046875,
+          "outputLateMs": -5.583251953125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666037154.5496,
+          "referenceBracketMs": 4,
+          "localObservedAt": 1792666037165,
+          "outputObservedAt": 1792666037165,
+          "localLateMs": 10.450439453125,
+          "outputLateMs": 10.450439453125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666037485.1003,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666037490.2998,
+          "outputObservedAt": 1792666037494.6,
+          "localLateMs": 5.199462890625,
+          "outputLateMs": 9.499755859375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666037632.3406,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666037640.5,
+          "outputObservedAt": 1792666037627.9,
+          "localLateMs": 8.159423828125,
+          "outputLateMs": -4.440673828125
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666041055.8647,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666041060.7,
+          "outputObservedAt": 1792666041060.7,
+          "localLateMs": 4.835205078125,
+          "outputLateMs": 4.835205078125
+        }
+      ]
+    },
+    {
+      "cohort": "starts-only-formal-after",
+      "id": "cold-2",
+      "template": "karaoke-stack",
+      "variant": "after",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666325637.166,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666325644,
+          "outputObservedAt": 1792666325641.0999,
+          "localLateMs": 6.833984375,
+          "outputLateMs": 3.933837890625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666330169.5493,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666330177.7,
+          "outputObservedAt": 1792666330177.8,
+          "localLateMs": 8.150634765625,
+          "outputLateMs": 8.250732421875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666330470.9604,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666330474.1,
+          "outputObservedAt": 1792666330470.5,
+          "localLateMs": 3.1396484375,
+          "outputLateMs": -0.46044921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666330602.3389,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666330611.6,
+          "outputObservedAt": 1792666330611.9,
+          "localLateMs": 9.26123046875,
+          "outputLateMs": 9.56103515625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666330635.4756,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666330640.8,
+          "outputObservedAt": 1792666330633.4,
+          "localLateMs": 5.324462890625,
+          "outputLateMs": -2.07568359375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666331559.9194,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666331570.9001,
+          "outputObservedAt": 1792666331562.9,
+          "localLateMs": 10.980712890625,
+          "outputLateMs": 2.98046875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666331960.8982,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666331967.2,
+          "outputObservedAt": 1792666331967.2,
+          "localLateMs": 6.3017578125,
+          "outputLateMs": 6.3017578125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666332381.261,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666332388.5,
+          "outputObservedAt": 1792666332388.4,
+          "localLateMs": 7.239013671875,
+          "outputLateMs": 7.138916015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666332555.237,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666332559.4001,
+          "outputObservedAt": 1792666332559.5,
+          "localLateMs": 4.1630859375,
+          "outputLateMs": 4.262939453125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666337601.7322,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666337610.6,
+          "outputObservedAt": 1792666337610.5999,
+          "localLateMs": 8.867919921875,
+          "outputLateMs": 8.86767578125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666337911.0251,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666337915,
+          "outputObservedAt": 1792666337890.4,
+          "localLateMs": 3.974853515625,
+          "outputLateMs": -20.625244140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666338019.6685,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666338023.5,
+          "outputObservedAt": 1792666338015.2,
+          "localLateMs": 3.83154296875,
+          "outputLateMs": -4.468505859375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666338041.3708,
+          "referenceBracketMs": 4.39990234375,
+          "localObservedAt": 1792666338044.5,
+          "outputObservedAt": 1792666338048.5,
+          "localLateMs": 3.129150390625,
+          "outputLateMs": 7.129150390625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666338297.5205,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666338302.9001,
+          "outputObservedAt": 1792666338302.8,
+          "localLateMs": 5.379638671875,
+          "outputLateMs": 5.279541015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666338618.7896,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666338624,
+          "outputObservedAt": 1792666338624.0999,
+          "localLateMs": 5.21044921875,
+          "outputLateMs": 5.310302734375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666338956.1008,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666338961.9001,
+          "outputObservedAt": 1792666338961.9,
+          "localLateMs": 5.79931640625,
+          "outputLateMs": 5.799072265625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666339091.521,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666339095.4001,
+          "outputObservedAt": 1792666339099.5999,
+          "localLateMs": 3.879150390625,
+          "outputLateMs": 8.078857421875
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666342521.5515,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666342532.3,
+          "outputObservedAt": 1792666342533.8,
+          "localLateMs": 10.74853515625,
+          "outputLateMs": 12.24853515625
+        }
+      ]
+    },
+    {
+      "cohort": "starts-only-formal-after",
+      "id": "warm-1",
+      "template": "karaoke-stack",
+      "variant": "after",
+      "warm": true,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 85,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666088421.215,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666088426.5999,
+          "outputObservedAt": 1792666088426.5,
+          "localLateMs": 5.384765625,
+          "outputLateMs": 5.284912109375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666092960.4,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666092964.7,
+          "outputObservedAt": 1792666092964.5,
+          "localLateMs": 4.300048828125,
+          "outputLateMs": 4.10009765625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666093261.055,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666093265,
+          "outputObservedAt": 1792666093262.3,
+          "localLateMs": 3.945068359375,
+          "outputLateMs": 1.2451171875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666093390,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666093394.2,
+          "outputObservedAt": 1792666093395.5,
+          "localLateMs": 4.199951171875,
+          "outputLateMs": 5.5
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666093421.3818,
+          "referenceBracketMs": 3.800048828125,
+          "localObservedAt": 1792666093427.5,
+          "outputObservedAt": 1792666093422.1,
+          "localLateMs": 6.1181640625,
+          "outputLateMs": 0.71826171875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666094342.1501,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666094349.2998,
+          "outputObservedAt": 1792666094337.9,
+          "localLateMs": 7.149658203125,
+          "outputLateMs": -4.250244140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666094740.0457,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666094745.5999,
+          "outputObservedAt": 1792666094741.4,
+          "localLateMs": 5.55419921875,
+          "outputLateMs": 1.354248046875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666095163.0461,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666095166.9,
+          "outputObservedAt": 1792666095166.9,
+          "localLateMs": 3.853759765625,
+          "outputLateMs": 3.853759765625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666095335.1746,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666095342,
+          "outputObservedAt": 1792666095333.9,
+          "localLateMs": 6.825439453125,
+          "outputLateMs": -1.274658203125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666100380.5999,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666100384.7998,
+          "outputObservedAt": 1792666100380.6,
+          "localLateMs": 4.199951171875,
+          "outputLateMs": 0.000244140625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666100672.703,
+          "referenceBracketMs": 4.2998046875,
+          "localObservedAt": 1792666100685.2,
+          "outputObservedAt": 1792666100669.3,
+          "localLateMs": 12.4970703125,
+          "outputLateMs": -3.40283203125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666100782.8977,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666100793.5999,
+          "outputObservedAt": 1792666100795.5,
+          "localLateMs": 10.7021484375,
+          "outputLateMs": 12.602294921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666100816.1738,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666100818.5,
+          "outputObservedAt": 1792666100810.2,
+          "localLateMs": 2.326171875,
+          "outputLateMs": -5.973876953125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666101063.682,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666101073,
+          "outputObservedAt": 1792666101064.7,
+          "localLateMs": 9.318115234375,
+          "outputLateMs": 1.01806640625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666101382.1614,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666101390,
+          "outputObservedAt": 1792666101385.9,
+          "localLateMs": 7.838623046875,
+          "outputLateMs": 3.738525390625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666101719.2983,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666101727.7998,
+          "outputObservedAt": 1792666101727.8,
+          "localLateMs": 8.50146484375,
+          "outputLateMs": 8.501708984375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666101859.4941,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666101865.9,
+          "outputObservedAt": 1792666101861.4,
+          "localLateMs": 6.40576171875,
+          "outputLateMs": 1.90576171875
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666105297.1672,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666105306.5,
+          "outputObservedAt": 1792666105298.3,
+          "localLateMs": 9.332763671875,
+          "outputLateMs": 1.1328125
+        }
+      ]
+    },
+    {
+      "cohort": "starts-only-formal-before",
+      "id": "cold-1",
+      "template": "focus-line",
+      "variant": "before",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666003744.999,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666003755.3,
+          "outputObservedAt": 1792666003762.7998,
+          "localLateMs": 10.301025390625,
+          "outputLateMs": 17.80078125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666008281.142,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666008293.3,
+          "outputObservedAt": 1792666008293.2998,
+          "localLateMs": 12.157958984375,
+          "outputLateMs": 12.15771484375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666008581.8042,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666008589.4,
+          "outputObservedAt": 1792666008585.2998,
+          "localLateMs": 7.595703125,
+          "outputLateMs": 3.49560546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666008712.0044,
+          "referenceBracketMs": 3.89990234375,
+          "localObservedAt": 1792666008714.5,
+          "outputObservedAt": 1792666008716.7998,
+          "localLateMs": 2.49560546875,
+          "outputLateMs": 4.79541015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666008742.1973,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666008748.2,
+          "outputObservedAt": 1792666008747.9,
+          "localLateMs": 6.002685546875,
+          "outputLateMs": 5.70263671875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666009662.6587,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666009665.5,
+          "outputObservedAt": 1792666009661.2998,
+          "localLateMs": 2.84130859375,
+          "outputLateMs": -1.35888671875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666010063.7441,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666010074.2,
+          "outputObservedAt": 1792666010074.2,
+          "localLateMs": 10.455810546875,
+          "outputLateMs": 10.455810546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666010484.5293,
+          "referenceBracketMs": 3.699951171875,
+          "localObservedAt": 1792666010491.4,
+          "outputObservedAt": 1792666010487.2,
+          "localLateMs": 6.87060546875,
+          "outputLateMs": 2.670654296875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666010657.0735,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666010662.3,
+          "outputObservedAt": 1792666010658.2,
+          "localLateMs": 5.2265625,
+          "outputLateMs": 1.12646484375
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666015692.6,
+          "referenceBracketMs": 3.7001953125,
+          "localObservedAt": 1792666015696.7,
+          "outputObservedAt": 1792666015696.7998,
+          "localLateMs": 4.099853515625,
+          "outputLateMs": 4.19970703125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666015989.2249,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666016001.2,
+          "outputObservedAt": 1792666015984.5999,
+          "localLateMs": 11.97509765625,
+          "outputLateMs": -4.625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666016103.534,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666016113.9,
+          "outputObservedAt": 1792666016113.7998,
+          "localLateMs": 10.365966796875,
+          "outputLateMs": 10.265869140625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666016123.3176,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666016130.5,
+          "outputObservedAt": 1792666016126.4,
+          "localLateMs": 7.182373046875,
+          "outputLateMs": 3.082275390625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666016382.4785,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666016389.2,
+          "outputObservedAt": 1792666016385,
+          "localLateMs": 6.721435546875,
+          "outputLateMs": 2.521484375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666016703.9211,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666016710.4,
+          "outputObservedAt": 1792666016706.2,
+          "localLateMs": 6.478759765625,
+          "outputLateMs": 2.27880859375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666017035.0999,
+          "referenceBracketMs": 4.300048828125,
+          "localObservedAt": 1792666017048.2,
+          "outputObservedAt": 1792666017048.2,
+          "localLateMs": 13.10009765625,
+          "outputLateMs": 13.10009765625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666017180.4436,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666017181.7,
+          "outputObservedAt": 1792666017177.5999,
+          "localLateMs": 1.25634765625,
+          "outputLateMs": -2.84375
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666020604.9885,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666020618.5,
+          "outputObservedAt": 1792666020618.5,
+          "localLateMs": 13.511474609375,
+          "outputLateMs": 13.511474609375
+        }
+      ]
+    },
+    {
+      "cohort": "starts-only-formal-before",
+      "id": "cold-2",
+      "template": "karaoke-stack",
+      "variant": "before",
+      "warm": false,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 88,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666345612.931,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666345618.9001,
+          "outputObservedAt": 1792666345624.0999,
+          "localLateMs": 5.96923828125,
+          "outputLateMs": 11.1689453125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666350148.046,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666350156.9001,
+          "outputObservedAt": 1792666350156.7998,
+          "localLateMs": 8.854248046875,
+          "outputLateMs": 8.75390625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666350447.7444,
+          "referenceBracketMs": 2.800048828125,
+          "localObservedAt": 1792666350453.1,
+          "outputObservedAt": 1792666350447,
+          "localLateMs": 5.355712890625,
+          "outputLateMs": -0.744384765625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666350586.6,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666350590.8,
+          "outputObservedAt": 1792666350583.4,
+          "localLateMs": 4.199951171875,
+          "outputLateMs": -3.2001953125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666350612.4355,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666350615.8,
+          "outputObservedAt": 1792666350611.5,
+          "localLateMs": 3.364501953125,
+          "outputLateMs": -0.935546875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666351547.1953,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666351550.2,
+          "outputObservedAt": 1792666351541.5999,
+          "localLateMs": 3.004638671875,
+          "outputLateMs": -5.595458984375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666351948.152,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666351950.5,
+          "outputObservedAt": 1792666351950.4,
+          "localLateMs": 2.347900390625,
+          "outputLateMs": 2.247802734375
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666352368.6777,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666352371.8,
+          "outputObservedAt": 1792666352375.9,
+          "localLateMs": 3.122314453125,
+          "outputLateMs": 7.22216796875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666352541.5598,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666352542.8,
+          "outputObservedAt": 1792666352538.5,
+          "localLateMs": 1.240234375,
+          "outputLateMs": -3.059814453125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666357577.1,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666357581.5,
+          "outputObservedAt": 1792666357577.0999,
+          "localLateMs": 4.39990234375,
+          "outputLateMs": -0.000244140625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666357869.801,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666357881.8,
+          "outputObservedAt": 1792666357860.7998,
+          "localLateMs": 11.9990234375,
+          "outputLateMs": -9.001220703125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666357987.1228,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666357990.1,
+          "outputObservedAt": 1792666357992.7998,
+          "localLateMs": 2.977294921875,
+          "outputLateMs": 5.677001953125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666358012.4275,
+          "referenceBracketMs": 5.699951171875,
+          "localObservedAt": 1792666358019.4001,
+          "outputObservedAt": 1792666358003.9,
+          "localLateMs": 6.97265625,
+          "outputLateMs": -8.527587890625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666358265.8076,
+          "referenceBracketMs": 4.2998046875,
+          "localObservedAt": 1792666358269.7,
+          "outputObservedAt": 1792666358265.2998,
+          "localLateMs": 3.892333984375,
+          "outputLateMs": -0.5078125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666358584.6638,
+          "referenceBracketMs": 6,
+          "localObservedAt": 1792666358594.9001,
+          "outputObservedAt": 1792666358590.7,
+          "localLateMs": 10.236328125,
+          "outputLateMs": 6.0361328125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666358914.3928,
+          "referenceBracketMs": 4.89990234375,
+          "localObservedAt": 1792666358928.6,
+          "outputObservedAt": 1792666358932.5999,
+          "localLateMs": 14.207275390625,
+          "outputLateMs": 18.20703125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666359060.4768,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666359062,
+          "outputObservedAt": 1792666359057.7998,
+          "localLateMs": 1.523193359375,
+          "outputLateMs": -2.677001953125
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666362493.297,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666362499,
+          "outputObservedAt": 1792666362499.2,
+          "localLateMs": 5.702880859375,
+          "outputLateMs": 5.90283203125
+        }
+      ]
+    },
+    {
+      "cohort": "starts-only-formal-before",
+      "id": "warm-1",
+      "template": "karaoke-stack",
+      "variant": "before",
+      "warm": true,
+      "sourcesStable": true,
+      "errors": [],
+      "fatal": null,
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "publicationCount": 85,
+      "publicationRejected": 0,
+      "observations": [
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 12750,
+          "phase": "normal",
+          "deadlineAt": 1792666109688.075,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666109698.5999,
+          "outputObservedAt": 1792666109698.7998,
+          "localLateMs": 10.52490234375,
+          "outputLateMs": 10.724853515625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "normal",
+          "deadlineAt": 1792666114232.5,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666114236.5999,
+          "outputObservedAt": 1792666114236.7,
+          "localLateMs": 4.099853515625,
+          "outputLateMs": 4.199951171875
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "normal",
+          "deadlineAt": 1792666114524.2273,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666114532.9,
+          "outputObservedAt": 1792666114532.9,
+          "localLateMs": 8.672607421875,
+          "outputLateMs": 8.672607421875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "normal",
+          "deadlineAt": 1792666114662.0999,
+          "referenceBracketMs": 4.099853515625,
+          "localObservedAt": 1792666114666.3,
+          "outputObservedAt": 1792666114667.0999,
+          "localLateMs": 4.2001953125,
+          "outputLateMs": 5
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "normal",
+          "deadlineAt": 1792666114686.5234,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666114695.5,
+          "outputObservedAt": 1792666114695.5999,
+          "localLateMs": 8.9765625,
+          "outputLateMs": 9.076416015625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "resume",
+          "deadlineAt": 1792666115624.6328,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666115630.8,
+          "outputObservedAt": 1792666115621.5,
+          "localLateMs": 6.167236328125,
+          "outputLateMs": -3.1328125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "resume",
+          "deadlineAt": 1792666116026.703,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666116034.4,
+          "outputObservedAt": 1792666116034.5999,
+          "localLateMs": 7.697021484375,
+          "outputLateMs": 7.89697265625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "resume",
+          "deadlineAt": 1792666116443.1663,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666116455.7,
+          "outputObservedAt": 1792666116455.7998,
+          "localLateMs": 12.53369140625,
+          "outputLateMs": 12.633544921875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "resume",
+          "deadlineAt": 1792666116616.0105,
+          "referenceBracketMs": 4.2001953125,
+          "localObservedAt": 1792666116622.5999,
+          "outputObservedAt": 1792666116622.7,
+          "localLateMs": 6.58935546875,
+          "outputLateMs": 6.689453125
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17288,
+          "phase": "seek",
+          "deadlineAt": 1792666121670.7,
+          "referenceBracketMs": 5.5,
+          "localObservedAt": 1792666121673.5,
+          "outputObservedAt": 1792666121672.2998,
+          "localLateMs": 2.800048828125,
+          "outputLateMs": 1.599853515625
+        },
+        {
+          "lineIndex": 0,
+          "sourceStartMs": 17585,
+          "phase": "rate",
+          "deadlineAt": 1792666121971.6187,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666121978.3,
+          "outputObservedAt": 1792666121965.5999,
+          "localLateMs": 6.681396484375,
+          "outputLateMs": -6.018798828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17720,
+          "phase": "rate",
+          "deadlineAt": 1792666122085.1057,
+          "referenceBracketMs": 4.2998046875,
+          "localObservedAt": 1792666122094.9,
+          "outputObservedAt": 1792666122086.7,
+          "localLateMs": 9.794189453125,
+          "outputLateMs": 1.59423828125
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 17749,
+          "phase": "rate",
+          "deadlineAt": 1792666122104.0815,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666122107.4,
+          "outputObservedAt": 1792666122107.7998,
+          "localLateMs": 3.318359375,
+          "outputLateMs": 3.71826171875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18067,
+          "phase": "rate",
+          "deadlineAt": 1792666122363.7808,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666122370.2,
+          "outputObservedAt": 1792666122366.0999,
+          "localLateMs": 6.419189453125,
+          "outputLateMs": 2.319091796875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18469,
+          "phase": "rate",
+          "deadlineAt": 1792666122682.0522,
+          "referenceBracketMs": 4,
+          "localObservedAt": 1792666122691.3,
+          "outputObservedAt": 1792666122691.4,
+          "localLateMs": 9.247802734375,
+          "outputLateMs": 9.34765625
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 18889,
+          "phase": "rate",
+          "deadlineAt": 1792666123016.241,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666123020.8,
+          "outputObservedAt": 1792666123025.0999,
+          "localLateMs": 4.55908203125,
+          "outputLateMs": 8.85888671875
+        },
+        {
+          "lineIndex": 1,
+          "sourceStartMs": 19060,
+          "phase": "rate",
+          "deadlineAt": 1792666123158.8494,
+          "referenceBracketMs": 4.199951171875,
+          "localObservedAt": 1792666123166.8,
+          "outputObservedAt": 1792666123158.5,
+          "localLateMs": 7.95068359375,
+          "outputLateMs": -0.349365234375
+        },
+        {
+          "lineIndex": 2,
+          "sourceStartMs": 23350,
+          "phase": "rate",
+          "deadlineAt": 1792666126584.9302,
+          "referenceBracketMs": 4.10009765625,
+          "localObservedAt": 1792666126591.3,
+          "outputObservedAt": 1792666126592.9,
+          "localLateMs": 6.369873046875,
+          "outputLateMs": 7.9697265625
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "cohort": "saved-formal-after",
+      "warm": false,
+      "runs": 2,
+      "firstOnset": {
+        "local": {
+          "n": 2,
+          "min": 7.245361328125,
+          "median": 9.668701171875,
+          "p95": 9.668701171875,
+          "max": 9.668701171875,
+          "all": [7.245361328125, 9.668701171875]
+        },
+        "output": {
+          "n": 2,
+          "min": 13.645263671875,
+          "median": 17.6689453125,
+          "p95": 17.6689453125,
+          "max": 17.6689453125,
+          "all": [13.645263671875, 17.6689453125]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 36,
+          "min": 0.842041015625,
+          "median": 4.977783203125,
+          "p95": 13.00537109375,
+          "max": 13.55615234375,
+          "all": [
+            0.842041015625, 1.063232421875, 1.773681640625, 2.311279296875,
+            2.44921875, 2.649169921875, 3.6240234375, 3.755126953125,
+            4.03662109375, 4.10009765625, 4.10009765625, 4.2998046875,
+            4.40771484375, 4.45068359375, 4.548583984375, 4.552490234375,
+            4.6103515625, 4.77587890625, 4.977783203125, 6.2392578125,
+            6.341064453125, 6.4130859375, 6.65380859375, 6.7978515625,
+            7.245361328125, 7.439453125, 7.639404296875, 7.843017578125,
+            9.668701171875, 9.705322265625, 9.918212890625, 10.225830078125,
+            10.92333984375, 11.203125, 13.00537109375, 13.55615234375
+          ]
+        },
+        "output": {
+          "n": 36,
+          "min": -11.08154296875,
+          "median": 4.810546875,
+          "p95": 16.805419921875,
+          "max": 17.6689453125,
+          "all": [
+            -11.08154296875, -9.596923828125, -5.326416015625, -4.5634765625,
+            -1.946044921875, -1.65087890625, 0.448486328125, 0.67578125,
+            0.842041015625, 1.53955078125, 2.14111328125, 2.697998046875,
+            3.339599609375, 3.75537109375, 4.10009765625, 4.199951171875,
+            4.507568359375, 4.55078125, 4.810546875, 5.10009765625,
+            5.26318359375, 6.239501953125, 6.313232421875, 6.749267578125,
+            6.8232421875, 7.742919921875, 7.811279296875, 7.82421875,
+            8.75244140625, 9.177734375, 9.60546875, 13.625732421875,
+            13.645263671875, 13.656005859375, 16.805419921875, 17.6689453125
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "saved-formal-after",
+      "warm": true,
+      "runs": 1,
+      "firstOnset": {
+        "local": {
+          "n": 1,
+          "min": 5.955810546875,
+          "median": 5.955810546875,
+          "p95": 5.955810546875,
+          "max": 5.955810546875,
+          "all": [5.955810546875]
+        },
+        "output": {
+          "n": 1,
+          "min": 1.65576171875,
+          "median": 1.65576171875,
+          "p95": 1.65576171875,
+          "max": 1.65576171875,
+          "all": [1.65576171875]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 18,
+          "min": 2.521484375,
+          "median": 6.44580078125,
+          "p95": 12.626953125,
+          "max": 12.626953125,
+          "all": [
+            2.521484375, 3.80615234375, 4.082763671875, 4.876708984375,
+            5.378173828125, 5.400146484375, 5.9365234375, 5.955810546875,
+            6.391845703125, 6.44580078125, 7.00537109375, 7.02978515625,
+            7.619384765625, 7.992431640625, 8.539306640625, 10.440185546875,
+            10.839599609375, 12.626953125
+          ]
+        },
+        "output": {
+          "n": 18,
+          "min": -6.07861328125,
+          "median": 1.736572265625,
+          "p95": 14.83935546875,
+          "max": 14.83935546875,
+          "all": [
+            -6.07861328125, -2.159912109375, -2.054443359375, -1.19482421875,
+            -1.093994140625, -0.880615234375, -0.707763671875, 1.077880859375,
+            1.65576171875, 1.736572265625, 2.191650390625, 5.076416015625,
+            5.39990234375, 6.929443359375, 7.78271484375, 8.43896484375,
+            13.326904296875, 14.83935546875
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "saved-formal-before",
+      "warm": false,
+      "runs": 2,
+      "firstOnset": {
+        "local": {
+          "n": 2,
+          "min": 6.99365234375,
+          "median": 9.444091796875,
+          "p95": 9.444091796875,
+          "max": 9.444091796875,
+          "all": [6.99365234375, 9.444091796875]
+        },
+        "output": {
+          "n": 2,
+          "min": 16.544189453125,
+          "median": 17.49365234375,
+          "p95": 17.49365234375,
+          "max": 17.49365234375,
+          "all": [16.544189453125, 17.49365234375]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 36,
+          "min": 1.261962890625,
+          "median": 5.935791015625,
+          "p95": 9.712646484375,
+          "max": 12.773681640625,
+          "all": [
+            1.261962890625, 2.930419921875, 3.006103515625, 3.074951171875,
+            3.27783203125, 3.388671875, 3.733642578125, 4, 4.10009765625,
+            4.199951171875, 4.65771484375, 4.81298828125, 4.875732421875,
+            5.268310546875, 5.307373046875, 5.46533203125, 5.747802734375,
+            5.877197265625, 5.935791015625, 5.983642578125, 6.19140625,
+            6.5439453125, 6.6591796875, 6.678466796875, 6.99365234375,
+            7.244873046875, 7.2666015625, 7.315673828125, 7.369873046875,
+            8.2998046875, 8.300048828125, 8.444091796875, 9.330322265625,
+            9.444091796875, 9.712646484375, 12.773681640625
+          ]
+        },
+        "output": {
+          "n": 36,
+          "min": -14.321533203125,
+          "median": 5.64794921875,
+          "p95": 16.544189453125,
+          "max": 17.49365234375,
+          "all": [
+            -14.321533203125, -13.625244140625, -3.487060546875, -3.39990234375,
+            -2.938232421875, 0.03369140625, 0.377685546875, 1.64404296875,
+            1.73583984375, 2.966552734375, 2.98876953125, 3.044921875,
+            3.591552734375, 4.10009765625, 4.775634765625, 4.83056640625,
+            5.465576171875, 5.500244140625, 5.64794921875, 5.77734375,
+            5.807373046875, 5.8837890625, 6.55908203125, 7.2158203125,
+            7.27001953125, 8.300048828125, 8.34423828125, 8.46826171875,
+            8.506103515625, 8.7578125, 9.330322265625, 9.612548828125,
+            11.199951171875, 12.673828125, 16.544189453125, 17.49365234375
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "saved-formal-before",
+      "warm": true,
+      "runs": 1,
+      "firstOnset": {
+        "local": {
+          "n": 1,
+          "min": 14.199462890625,
+          "median": 14.199462890625,
+          "p95": 14.199462890625,
+          "max": 14.199462890625,
+          "all": [14.199462890625]
+        },
+        "output": {
+          "n": 1,
+          "min": 1.99951171875,
+          "median": 1.99951171875,
+          "p95": 1.99951171875,
+          "max": 1.99951171875,
+          "all": [1.99951171875]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 18,
+          "min": 2.665283203125,
+          "median": 6.79150390625,
+          "p95": 14.904296875,
+          "max": 14.904296875,
+          "all": [
+            2.665283203125, 3.7470703125, 4.03173828125, 4.199951171875,
+            4.300048828125, 4.804443359375, 5.714599609375, 5.756591796875,
+            6.384033203125, 6.79150390625, 7.30224609375, 7.419189453125,
+            7.427001953125, 9.721435546875, 11.9814453125, 12.062744140625,
+            14.199462890625, 14.904296875
+          ]
+        },
+        "output": {
+          "n": 18,
+          "min": -9.018310546875,
+          "median": 4.199951171875,
+          "p95": 11.521484375,
+          "max": 11.521484375,
+          "all": [
+            -9.018310546875, -5.834716796875, -5.173095703125, 0.447265625,
+            1.5146484375, 1.656494140625, 1.800048828125, 1.99951171875,
+            4.03173828125, 4.199951171875, 6.6044921875, 7.30224609375,
+            7.419189453125, 7.904296875, 8.691650390625, 10.584228515625,
+            11.36279296875, 11.521484375
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "starts-only-formal-after",
+      "warm": false,
+      "runs": 2,
+      "firstOnset": {
+        "local": {
+          "n": 2,
+          "min": 6.833984375,
+          "median": 10.229248046875,
+          "p95": 10.229248046875,
+          "max": 10.229248046875,
+          "all": [6.833984375, 10.229248046875]
+        },
+        "output": {
+          "n": 2,
+          "min": 3.933837890625,
+          "median": 14.7294921875,
+          "p95": 14.7294921875,
+          "max": 14.7294921875,
+          "all": [3.933837890625, 14.7294921875]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 36,
+          "min": 3.129150390625,
+          "median": 6.06005859375,
+          "p95": 10.980712890625,
+          "max": 12.529296875,
+          "all": [
+            3.129150390625, 3.1396484375, 3.83154296875, 3.879150390625,
+            3.974853515625, 4.099853515625, 4.10009765625, 4.1630859375,
+            4.199951171875, 4.58544921875, 4.835205078125, 5.000732421875,
+            5.199462890625, 5.21044921875, 5.324462890625, 5.379638671875,
+            5.511474609375, 5.79931640625, 6.06005859375, 6.3017578125,
+            6.416748046875, 6.833984375, 6.871337890625, 7.079833984375,
+            7.239013671875, 7.6826171875, 8.150634765625, 8.159423828125,
+            8.867919921875, 9.26123046875, 10.20849609375, 10.229248046875,
+            10.450439453125, 10.74853515625, 10.980712890625, 12.529296875
+          ]
+        },
+        "output": {
+          "n": 36,
+          "min": -20.625244140625,
+          "median": 5.0009765625,
+          "p95": 12.24853515625,
+          "max": 14.7294921875,
+          "all": [
+            -20.625244140625, -8.57080078125, -5.583251953125, -4.468505859375,
+            -4.440673828125, -2.07568359375, -0.46044921875, 0.199951171875,
+            1.80859375, 2.98046875, 3.111572265625, 3.482666015625,
+            3.933837890625, 4.10009765625, 4.2001953125, 4.262939453125,
+            4.58544921875, 4.835205078125, 5.0009765625, 5.279541015625,
+            5.310302734375, 5.799072265625, 6.060302734375, 6.3017578125,
+            6.771484375, 7.129150390625, 7.138916015625, 8.078857421875,
+            8.250732421875, 8.86767578125, 9.499755859375, 9.56103515625,
+            10.450439453125, 11.280029296875, 12.24853515625, 14.7294921875
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "starts-only-formal-after",
+      "warm": true,
+      "runs": 1,
+      "firstOnset": {
+        "local": {
+          "n": 1,
+          "min": 5.384765625,
+          "median": 5.384765625,
+          "p95": 5.384765625,
+          "max": 5.384765625,
+          "all": [5.384765625]
+        },
+        "output": {
+          "n": 1,
+          "min": 5.284912109375,
+          "median": 5.284912109375,
+          "p95": 5.284912109375,
+          "max": 5.284912109375,
+          "all": [5.284912109375]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 18,
+          "min": 2.326171875,
+          "median": 6.40576171875,
+          "p95": 12.4970703125,
+          "max": 12.4970703125,
+          "all": [
+            2.326171875, 3.853759765625, 3.945068359375, 4.199951171875,
+            4.199951171875, 4.300048828125, 5.384765625, 5.55419921875,
+            6.1181640625, 6.40576171875, 6.825439453125, 7.149658203125,
+            7.838623046875, 8.50146484375, 9.318115234375, 9.332763671875,
+            10.7021484375, 12.4970703125
+          ]
+        },
+        "output": {
+          "n": 18,
+          "min": -5.973876953125,
+          "median": 1.354248046875,
+          "p95": 12.602294921875,
+          "max": 12.602294921875,
+          "all": [
+            -5.973876953125, -4.250244140625, -3.40283203125, -1.274658203125,
+            0.000244140625, 0.71826171875, 1.01806640625, 1.1328125,
+            1.2451171875, 1.354248046875, 1.90576171875, 3.738525390625,
+            3.853759765625, 4.10009765625, 5.284912109375, 5.5, 8.501708984375,
+            12.602294921875
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "starts-only-formal-before",
+      "warm": false,
+      "runs": 2,
+      "firstOnset": {
+        "local": {
+          "n": 2,
+          "min": 5.96923828125,
+          "median": 10.301025390625,
+          "p95": 10.301025390625,
+          "max": 10.301025390625,
+          "all": [5.96923828125, 10.301025390625]
+        },
+        "output": {
+          "n": 2,
+          "min": 11.1689453125,
+          "median": 17.80078125,
+          "p95": 17.80078125,
+          "max": 17.80078125,
+          "all": [11.1689453125, 17.80078125]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 36,
+          "min": 1.240234375,
+          "median": 6.002685546875,
+          "p95": 13.511474609375,
+          "max": 14.207275390625,
+          "all": [
+            1.240234375, 1.25634765625, 1.523193359375, 2.347900390625,
+            2.49560546875, 2.84130859375, 2.977294921875, 3.004638671875,
+            3.122314453125, 3.364501953125, 3.892333984375, 4.099853515625,
+            4.199951171875, 4.39990234375, 5.2265625, 5.355712890625,
+            5.702880859375, 5.96923828125, 6.002685546875, 6.478759765625,
+            6.721435546875, 6.87060546875, 6.97265625, 7.182373046875,
+            7.595703125, 8.854248046875, 10.236328125, 10.301025390625,
+            10.365966796875, 10.455810546875, 11.97509765625, 11.9990234375,
+            12.157958984375, 13.10009765625, 13.511474609375, 14.207275390625
+          ]
+        },
+        "output": {
+          "n": 36,
+          "min": -9.001220703125,
+          "median": 3.082275390625,
+          "p95": 17.80078125,
+          "max": 18.20703125,
+          "all": [
+            -9.001220703125, -8.527587890625, -5.595458984375, -4.625,
+            -3.2001953125, -3.059814453125, -2.84375, -2.677001953125,
+            -1.35888671875, -0.935546875, -0.744384765625, -0.5078125,
+            -0.000244140625, 1.12646484375, 2.247802734375, 2.27880859375,
+            2.521484375, 2.670654296875, 3.082275390625, 3.49560546875,
+            4.19970703125, 4.79541015625, 5.677001953125, 5.70263671875,
+            5.90283203125, 6.0361328125, 7.22216796875, 8.75390625,
+            10.265869140625, 10.455810546875, 11.1689453125, 12.15771484375,
+            13.10009765625, 13.511474609375, 17.80078125, 18.20703125
+          ]
+        }
+      },
+      "missing": []
+    },
+    {
+      "cohort": "starts-only-formal-before",
+      "warm": true,
+      "runs": 1,
+      "firstOnset": {
+        "local": {
+          "n": 1,
+          "min": 10.52490234375,
+          "median": 10.52490234375,
+          "p95": 10.52490234375,
+          "max": 10.52490234375,
+          "all": [10.52490234375]
+        },
+        "output": {
+          "n": 1,
+          "min": 10.724853515625,
+          "median": 10.724853515625,
+          "p95": 10.724853515625,
+          "max": 10.724853515625,
+          "all": [10.724853515625]
+        }
+      },
+      "allOnsets": {
+        "local": {
+          "n": 18,
+          "min": 2.800048828125,
+          "median": 6.681396484375,
+          "p95": 12.53369140625,
+          "max": 12.53369140625,
+          "all": [
+            2.800048828125, 3.318359375, 4.099853515625, 4.2001953125,
+            4.55908203125, 6.167236328125, 6.369873046875, 6.419189453125,
+            6.58935546875, 6.681396484375, 7.697021484375, 7.95068359375,
+            8.672607421875, 8.9765625, 9.247802734375, 9.794189453125,
+            10.52490234375, 12.53369140625
+          ]
+        },
+        "output": {
+          "n": 18,
+          "min": -6.018798828125,
+          "median": 6.689453125,
+          "p95": 12.633544921875,
+          "max": 12.633544921875,
+          "all": [
+            -6.018798828125, -3.1328125, -0.349365234375, 1.59423828125,
+            1.599853515625, 2.319091796875, 3.71826171875, 4.199951171875, 5,
+            6.689453125, 7.89697265625, 7.9697265625, 8.672607421875,
+            8.85888671875, 9.076416015625, 9.34765625, 10.724853515625,
+            12.633544921875
+          ]
+        }
+      },
+      "missing": []
+    }
+  ],
+  "incomplete": [
+    {
+      "cohort": "saved-formal-after",
+      "id": "cold-2",
+      "variant": "after",
+      "warm": false,
+      "reason": "TypeError: Object has been destroyed",
+      "publicationCount": 55,
+      "publicationRejected": 0
+    }
+  ],
+  "functional": [
+    {
+      "id": "saved-list",
+      "variant": "after",
+      "template": "focus-line",
+      "errors": [],
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "sourceStable": true,
+      "audioCount": 1,
+      "staticFallback": null,
+      "local": {
+        "intermediateSamples": 2502,
+        "firstGlyphIntermediateValues": 401,
+        "firstGlyphRange": [0.42573, 99.8976],
+        "sources": ["display-estimate", "model"],
+        "pauseSampleCount": 55,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 1
+      },
+      "output": {
+        "intermediateSamples": 2516,
+        "firstGlyphIntermediateValues": 396,
+        "firstGlyphRange": [1.13163, 99.6962],
+        "sources": [],
+        "pauseSampleCount": 55,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 216,
+        "knownHoldInkStates": 1
+      },
+      "stage": "initial-before-static-cue"
+    },
+    {
+      "id": "starts-before",
+      "variant": "before",
+      "template": "focus-line",
+      "errors": [],
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "sourceStable": true,
+      "audioCount": 1,
+      "staticFallback": null,
+      "local": {
+        "intermediateSamples": 0,
+        "firstGlyphIntermediateValues": 0,
+        "firstGlyphRange": null,
+        "sources": [],
+        "pauseSampleCount": 57,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 1
+      },
+      "output": {
+        "intermediateSamples": 0,
+        "firstGlyphIntermediateValues": 0,
+        "firstGlyphRange": null,
+        "sources": [],
+        "pauseSampleCount": 57,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 1
+      },
+      "stage": "baseline"
+    },
+    {
+      "id": "starts-final",
+      "variant": "after",
+      "template": "karaoke-stack",
+      "errors": [],
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "sourceStable": true,
+      "audioCount": 1,
+      "staticFallback": {
+        "index": 14,
+        "startMs": 96870,
+        "fineCells": 0,
+        "backgroundImage": "none",
+        "textColor": "rgb(39, 41, 40)"
+      },
+      "local": {
+        "intermediateSamples": 4169,
+        "firstGlyphIntermediateValues": 402,
+        "firstGlyphRange": [0.350022, 73.983],
+        "sources": ["display-estimate"],
+        "pauseSampleCount": 56,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 216,
+        "knownHoldInkStates": 216
+      },
+      "output": {
+        "intermediateSamples": 0,
+        "firstGlyphIntermediateValues": 0,
+        "firstGlyphRange": null,
+        "sources": [],
+        "pauseSampleCount": 56,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 216,
+        "knownHoldInkStates": 1
+      },
+      "stage": "final"
+    },
+    {
+      "id": "starts-list",
+      "variant": "after",
+      "template": "focus-line",
+      "errors": [],
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "sourceStable": true,
+      "audioCount": 1,
+      "staticFallback": {
+        "index": 14,
+        "startMs": 96870,
+        "fineCells": 0,
+        "backgroundImage": "none",
+        "textColor": "rgb(39, 41, 40)"
+      },
+      "local": {
+        "intermediateSamples": 4168,
+        "firstGlyphIntermediateValues": 397,
+        "firstGlyphRange": [0.493257, 73.8078],
+        "sources": ["display-estimate"],
+        "pauseSampleCount": 58,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 217
+      },
+      "output": {
+        "intermediateSamples": 0,
+        "firstGlyphIntermediateValues": 0,
+        "firstGlyphRange": null,
+        "sources": [],
+        "pauseSampleCount": 58,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 1
+      },
+      "stage": "initial-before-static-cue"
+    },
+    {
+      "id": "starts-settled",
+      "variant": "after",
+      "template": "karaoke-stack",
+      "errors": [],
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "sourceStable": true,
+      "audioCount": 1,
+      "staticFallback": {
+        "index": 14,
+        "startMs": 96870,
+        "fineCells": 0,
+        "backgroundImage": "none",
+        "decoration": "underline",
+        "textColor": "rgb(39, 41, 40)",
+        "rectTop": 182
+      },
+      "local": {
+        "intermediateSamples": 4172,
+        "firstGlyphIntermediateValues": 401,
+        "firstGlyphRange": [0.176289, 73.6633],
+        "sources": ["display-estimate"],
+        "pauseSampleCount": 55,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 217
+      },
+      "output": {
+        "intermediateSamples": 0,
+        "firstGlyphIntermediateValues": 0,
+        "firstGlyphRange": null,
+        "sources": [],
+        "pauseSampleCount": 55,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 215,
+        "knownHoldInkStates": 1
+      },
+      "stage": "final"
+    },
+    {
+      "id": "starts-sheet",
+      "variant": "after",
+      "template": "karaoke-stack",
+      "errors": [],
+      "visible": {
+        "local": true,
+        "output": true,
+        "localDocument": "visible",
+        "outputDocument": "visible"
+      },
+      "sourceStable": true,
+      "audioCount": 1,
+      "staticFallback": null,
+      "local": {
+        "intermediateSamples": 4171,
+        "firstGlyphIntermediateValues": 401,
+        "firstGlyphRange": [0.449097, 73.9481],
+        "sources": ["display-estimate"],
+        "pauseSampleCount": 56,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 217,
+        "knownHoldInkStates": 217
+      },
+      "output": {
+        "intermediateSamples": 0,
+        "firstGlyphIntermediateValues": 0,
+        "firstGlyphRange": null,
+        "sources": [],
+        "pauseSampleCount": 56,
+        "pauseMovingInkStates": 1,
+        "knownHoldSampleCount": 215,
+        "knownHoldInkStates": 1
+      },
+      "stage": "initial-before-static-cue"
+    }
+  ],
+  "source": {
+    "lines": 32,
+    "coarse": 157,
+    "fine": 216,
+    "caseAssetsUnchanged": true,
+    "manifestUnchangedSincePreviousReceipt": false
+  },
+  "outputEquivalence": {
+    "compared": 1536,
+    "mismatches": []
+  },
+  "snapshotManifestSha256": {
+    "before-manifest.json": "f0755d74aa9f8c21b630b2ebda165f0ee31a80862c8fd77628b35a411e580aa4",
+    "after-initial-manifest.json": "a6271a25674dd1ac8561b9cc5c519ae2b4ca7ac3688818e11436230465608d6b",
+    "after-manifest.json": "01df5627b0a23547f5bcadcbafb98958710f5342fa5e940158a9f991e9caeb86"
+  },
+  "limits": [
+    "Window-destroyed failed attempt retained separately; missing renderer observations cannot be reconstructed.",
+    "Formal DOM active latency is distinct from nonzero ink,paint,natural voice,hardware and OBS.",
+    "Starts-only cannot identify pauses absent from its data.",
+    "Output starts-only behavior unchanged; known KTV secondary overflow unresolved."
+  ],
+  "latestReadOnly": {
+    "separateFromFormalCase": true,
+    "selectedSourceDifferent": true,
+    "versions": {
+      "node": "24.21.0",
+      "icu": "78.2",
+      "electron": "43.7.8"
+    },
+    "loadStatus": "ready",
+    "prepareStatus": "ready",
+    "lines": 36,
+    "ready": 28,
+    "fineUnits": 225,
+    "localFrameAllFineLines": true,
+    "publishedFineUnits": 225,
+    "focusAllFineLines": true,
+    "readHashesUnchanged": true,
+    "liveApplicationFlagNotObserved": true
+  }
+}

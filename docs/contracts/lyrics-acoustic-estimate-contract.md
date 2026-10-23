@@ -153,12 +153,33 @@ evidence is removed while preserving valid coarse chunks. Schema-one loads remai
 available; old files do not acquire invented ends.
 
 The local document reader and Output Focus use an immediate coarse underline cue
-plus continuous fine ink. Each unit's progress is visually interpolated linearly,
+plus continuous fine ink. Output KTV uses its own role colors and strokes, with
+continuous glyph fill and no underline. Each unit's progress is interpolated linearly,
 at its actual duration. Multi-grapheme units have display-only clipping cells so
 they wrap and fill in reading order; cell fractions are never saved or transported
 as character alignment. Completed ink holds across gaps. Missing evidence retains
 onset cues. This is model-estimated unit timing, not validated per-character singing
-accuracy. Other templates and Self-View retain their existing presentation.
+accuracy. For partial fine coverage, bounded missing text may receive separately
+marked display-only paint intervals between the unchanged coarse onset, neighboring
+actual fine intervals and the existing coarse/line display boundary. Unknown or
+non-positive bounds remain cue-only. These intervals never enter canonical or
+stored fine evidence, never move actual fine times, and never upgrade T1 to T2.
+The first glyph starts filling at the existing onset without a smoothing wait.
+Other templates and Self-View retain their existing presentation.
+
+The local reader also accepts valid applied starts-only results through a separate
+local paint adapter. Bounded coarse starts and the existing line boundary supply
+display-estimated intervals; no singing ends or extra evidence are published.
+Unknown final boundaries stay cue-only. Valid fine intervals and their known pauses
+take priority unchanged; starts-only data cannot identify pauses within a chunk.
+List and sheet always retain the same current-line highlighter, including
+unsupported/unapplied analysis. Timed chunks add immediate thin blue onset
+underlines and continuous thicker blue progress underlines without recoloring
+the glyphs. Whole-line-only timing does not invent word underlines; forced colors
+retain a system-color whole-line outline when background images are removed. Transport
+updates sample the existing media clock and locate paint directly, without an
+extra tick, minimum animation duration or catch-up wait. Output starts-only
+behavior and all template styling remain unchanged by this local fallback.
 
 Chinese display conversion may apply only with verified original-to-display
 range mapping. An unsafe mapping declines the estimate for that display variant;
@@ -332,7 +353,7 @@ application also reaches supporting Output templates through the optional starts
 extension below. T2 and declined T1 retain their behavior. Chinese conversion reuses segment text projection; text
 mismatches retain normal display. Furigana retains its existing reading layout.
 Canonical progress and T2 remain unchanged. Optional actual model intervals may
-drive continuous fine ink in the local reader and Focus, as specified above;
+drive continuous fine ink in the local reader, Focus and KTV, as specified above;
 adjacent starts are never used to infer a singing end.
 
 ### Experimental Output application
@@ -359,14 +380,14 @@ content. The existing legacy v2 compatibility projection remains T1-only.
 The publisher uses existing content revisions and content-before-state ordering,
 including reconnect. Browser Source assembly preserves the validated extension.
 Shared presentation frames use internal `model-starts` provenance and preserve
-immediate coarse cues; canonical active progress/remaining stay null. Focus may
+immediate coarse cues; canonical active progress/remaining stay null. Focus and KTV may
 also consume `estimatedFineTiming: { version: 1, units }` as a separate sibling.
 Main validates its exact fields, source ranges, intervals and shared budget after
 reserving all coarse IDs/counts; invalid fine is discarded without losing coarse
 content. The publisher strips optional fine if it would exceed document bytes.
 Old readers ignore the sibling and keep starts. No private model context or phones
 are published. The split Browser Source assembler preserves the validated sibling.
-The local reader and Focus share pure fine projection and a browser paint adapter,
+The local reader, Focus and KTV share pure fine projection and a browser paint adapter,
 with no per-frame IPC, text conversion or geometry reads. Paint accounts for commit
 cost and the existing intentional Output display-delay hold, cancels on transport
 updates and directly locates current progress instead of replaying missed animation.

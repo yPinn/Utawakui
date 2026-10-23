@@ -9,6 +9,7 @@ import UiProgress from '../ui/UiProgress.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import LyricsPhrasePreview from './LyricsPhrasePreview.vue';
+import { summarizeAcousticPreview } from '../../../shared/presentation/lyricsAcousticPreview.mjs';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -82,6 +83,9 @@ const canAnalyze = computed(
     queue.state.value.allowed &&
     !['missing', 'damaged'].includes(queue.state.value.environmentStatus),
 );
+const summary = computed(() =>
+  summarizeAcousticPreview(experiment.prepared.value),
+);
 const availability = computed(() => {
   if (nativeOnly.value) return '來源 T2 已提供逐字時間，直接沿用，不需要分析。';
   if (!hasT1.value) return '目前來源沒有可分析的整句時間，請先準備時間歌詞。';
@@ -144,11 +148,13 @@ const statusMessage = computed(() => {
   if (busy.value) return '';
   if (readyCount.value)
     return (
-      'T1+ · ' +
-      (experiment.applied.value ? '使用中' : '未套用') +
+      '分析' +
+      (experiment.applied.value ? '已套用' : '未套用') +
       ' · ' +
-      readyCount.value +
-      ' 句模型詞塊，其餘沿用來源時間。' +
+      (summary.value.fineLines
+        ? `${summary.value.fineLines} 句含掃字時間`
+        : '僅分段提示') +
+      '；未涵蓋部分沿用原歌詞。' +
       (experiment.estimate.value.validation?.missingLyrics
         ? ` 疑似漏詞 ${experiment.estimate.value.validation.missingLyrics} 句，套用前請確認。`
         : '')
@@ -215,7 +221,7 @@ onScopeDispose(() => clearInterval(timer));
     aria-label="目前來源的詞塊分析"
   >
     <div class="lyrics-source-analysis__heading">
-      <strong>詞塊分析（實驗性）</strong>
+      <strong>歌詞時間分析（實驗）</strong>
       <span>目前來源：{{ sourceLabel }}</span>
     </div>
     <UiHint v-if="queue.error.value" tone="danger" role="alert">{{
@@ -254,7 +260,7 @@ onScopeDispose(() => clearInterval(timer));
           :disabled="!canAnalyze"
           variant="secondary"
           @click="analyze"
-          >{{ hasPrevious ? '重新分析' : '分析詞塊' }}</UiButton
+          >{{ hasPrevious ? '重新分析' : '分析歌詞' }}</UiButton
         >
         <UiButton
           v-if="readyCount"
@@ -267,16 +273,17 @@ onScopeDispose(() => clearInterval(timer));
           :active="experiment.applied.value"
           :aria-pressed="experiment.applied.value"
           @click="experiment.setApplied(!experiment.applied.value)"
-          >{{ experiment.applied.value ? '停用詞塊' : '套用詞塊' }}</UiButton
+          >{{ experiment.applied.value ? '停用分析' : '套用分析' }}</UiButton
         >
       </div>
     </div>
-    <UiHint v-if="hasT1">完成後手動套用；T1+ 時間仍待人工驗收。</UiHint>
+    <UiHint v-if="hasT1">分析完成後可手動套用。</UiHint>
     <UiDisclosure v-if="hasT1" v-model:open="detailsOpen" label="分析說明">
       <UiHint
         >依目前校時逐句分流中／日／英，提示只作用本次；句內混語或證據不足沿用
         T1。變更來源或校時後需重新分析。來源 T2 優先，未通過的句子沿用
-        T1；套用同步至支援詞塊的 Output 模板。</UiHint
+        T1。缺字可依分段時間估計填色；有細時間的文字沿用原區間。本地、Focus
+        與卡拉 OK 支援掃字，外觀依畫面而定。分析時間仍需人工確認。</UiHint
       >
     </UiDisclosure>
     <LyricsPhrasePreview

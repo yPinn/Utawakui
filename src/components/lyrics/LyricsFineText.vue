@@ -13,6 +13,9 @@ const props = defineProps({
   presentation: { type: String, default: 'list' },
 });
 const root = useTemplateRef('root');
+const paintUnits = computed(
+  () => props.frame.paintTiming?.units ?? props.frame.fineTiming?.units ?? [],
+);
 const groups = computed(() => {
   const frame = props.frame;
   let cursor = 0;
@@ -33,32 +36,29 @@ const groups = computed(() => {
       from,
       index,
       reading: reading.r,
-      parts: fineTextParts(
-        frame.text,
-        frame.fineTiming.units,
-        from,
-        cursor,
-      ).map((part) => ({
-        ...part,
-        cue: coarse.some(
-          (chunk) =>
-            chunk.state === 'active' &&
-            chunk.from < part.to &&
-            chunk.to > part.from,
-        ),
-        progress: part.unitId
-          ? Math.max(
-              0,
-              Math.min(
-                1,
-                (((frame.paintClock?.positionMs ?? 0) - part.startMs) /
-                  (part.endMs - part.startMs) -
-                  part.paintFrom) /
-                  (part.paintTo - part.paintFrom),
-              ),
-            )
-          : null,
-      })),
+      parts: fineTextParts(frame.text, paintUnits.value, from, cursor).map(
+        (part) => ({
+          ...part,
+          cue: coarse.some(
+            (chunk) =>
+              chunk.state === 'active' &&
+              chunk.from < part.to &&
+              chunk.to > part.from,
+          ),
+          progress: part.unitId
+            ? Math.max(
+                0,
+                Math.min(
+                  1,
+                  (((frame.paintClock?.positionMs ?? 0) - part.startMs) /
+                    (part.endMs - part.startMs) -
+                    part.paintFrom) /
+                    (part.paintTo - part.paintFrom),
+                ),
+              )
+            : null,
+        }),
+      ),
     };
   });
 });
@@ -71,9 +71,7 @@ function paint() {
   clearPaint();
   const clock = props.frame.paintClock;
   if (!clock || !root.value) return;
-  const units = new Map(
-    props.frame.fineTiming.units.map((unit) => [unit.unitId, unit]),
-  );
+  const units = new Map(paintUnits.value.map((unit) => [unit.unitId, unit]));
   const reducedMotion =
     globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ===
     true;
@@ -115,6 +113,12 @@ onUnmounted(clearPaint);
           'lyrics-fine-text__ink': part.unitId,
         }"
         :data-lyrics-fine-unit="part.unitId"
+        :data-lyrics-paint-source="
+          part.unitId
+            ? (part.timingSource ??
+              (frame.timingSource === 't2' ? 'native' : 'model'))
+            : undefined
+        "
         :data-lyrics-fine-from="part.unitId ? part.paintFrom : undefined"
         :data-lyrics-fine-to="part.unitId ? part.paintTo : undefined"
         :data-text="part.unitId ? part.text : undefined"
@@ -176,8 +180,12 @@ onUnmounted(clearPaint);
   position: absolute;
   inset: 0;
   content: attr(data-text) / '';
-  color: var(--ui-color-accent);
-  clip-path: inset(-0.2em calc(100% - var(--lyrics-fine-progress)) -0.2em 0);
+  color: transparent;
+  text-decoration: underline;
+  text-decoration-color: var(--ui-color-accent);
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.15em;
+  clip-path: inset(-0.3em calc(100% - var(--lyrics-fine-progress)) -0.3em 0);
   pointer-events: none;
 }
 @media (forced-colors: active) {

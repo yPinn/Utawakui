@@ -5,6 +5,33 @@ import {
 } from './lyrics.mjs';
 
 describe('opt-in lyric performance trace', () => {
+  it('drains bounded diagnostic batches without losing identities, anchors or drop counts', () => {
+    let at = 10;
+    const trace = createLyricsPerformanceTrace({
+      location: { search: '?lyricsTrace=1' },
+      now: () => at++,
+      wallNow: () => 1000,
+      capacity: 2,
+    });
+    trace.mark('receive', { deliveryId: 7 });
+    trace.mark('commit', { cycleId: 8, deliveryId: 7, pass: 0 });
+    trace.mark('prepare', { cycleId: 9 });
+    const first = trace.read({ clear: true });
+    expect(first.dropped).toBe(1);
+    expect(first.events).toHaveLength(2);
+    expect(trace.read()).toMatchObject({ events: [], dropped: 0 });
+    trace.mark('commit', { cycleId: 10, deliveryId: 11, pass: 0 });
+    const second = trace.read({ clear: true });
+    expect(second.events).toEqual([
+      expect.objectContaining({ cycleId: 10, deliveryId: 11 }),
+    ]);
+    expect(second.wallAnchorMs).toBe(first.wallAnchorMs);
+    expect(second.performanceAnchorMs).toBe(first.performanceAnchorMs);
+    expect(second.timeOriginMs).toBe(first.timeOriginMs);
+    expect(second.events[0].at).toBeGreaterThan(first.events.at(-1).at);
+    first.events[0].deliveryId = 999;
+    expect(trace.read().events).toEqual([]);
+  });
   it('links finite scheduler and delivery identities to timeline commit marks without private strings', () => {
     const markTimeline = vi.fn();
     const trace = createLyricsPerformanceTrace({

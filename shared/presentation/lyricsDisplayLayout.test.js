@@ -17,6 +17,20 @@ const fits = (text) =>
     .length <= 18;
 
 describe('bounded lyric display pages', () => {
+  it('keeps all text without stranding punctuation or opening brackets at a page edge', () => {
+    const text = '他說【今晚，明天】我們一起走，回家。';
+    for (const capacity of [5, 7, 10, 12]) {
+      const result = planLyricsDisplay(line(text), {
+        fits: (value) => [...value].length <= capacity,
+      });
+      expect(result.status).toBe('ready');
+      expect(result.pages.map((page) => page.text).join('')).toBe(text);
+      for (const page of result.pages) {
+        expect(page.text).not.toMatch(/^[，。！？、】」』）]/u);
+        expect(page.text).not.toMatch(/[【「『（]$/u);
+      }
+    }
+  });
   it.each([
     [{}, 'line-estimate', 'layout-estimate', 1000, 25000],
     [{ startMs: null, endMs: null }, 'line-estimate', null, null, null],

@@ -330,11 +330,62 @@ Paused, buffering, seeking and ended samples do not schedule further deadlines;
 resume resamples. Module disposal stops the watcher and timer. This reduces the
 wait for the next `timeupdate` without a global frame ticker or a second clock.
 T1+ retains its entire active chunk's immediate onset cue. The local document
-reader and Output Focus may add continuous ink from separately retained actual
+reader and Output Focus/KTV may add continuous ink from separately retained actual
 model unit intervals. A unit's visual interpolation never supplies canonical
 T2, a guessed end, or additional smoothing delay. Paint cells only divide its
 display progress, preserving wrap and reading order without asserting character
 timestamps. Pause, seek, rate and offset updates cancel obsolete paint.
+The local document reader always marks the current line with its highlighter,
+including unapplied, unavailable and unsupported analysis. Only timed chunks
+add blue underlines: the thin onset cue remains immediate, while a thicker
+clipped underline shows continuous fine progress without recoloring the glyphs.
+Forced colors use a system-color whole-line outline when background images are
+removed. This outline does not imply word timing.
+Local native T2 uses the same progress renderer only for explicitly provided valid
+segment ends; missing native ends remain cue-only. List and sheet keep their
+respective layouts. Output keeps each template's styling: KTV uses glyph fill
+without underlines. Partial model coverage may add explicitly marked display
+estimates bounded by existing coarse/fine times; these remain paint-only and
+never become acoustic evidence or canonical T2.
+Applied starts-only results may use the same local ink renderer with separate
+display estimates between existing coarse starts and a bounded line end. Missing
+final bounds remain static; no fine evidence is manufactured or published.
+Known fine pauses remain holds, while pauses absent from starts-only data are
+unknown. Unapplied/unsupported lines keep the same highlighter with no invented
+word underline.
+Output retains its existing starts-only path and each template's appearance.
+
+Paint completion is separate from source-line ownership. Prepared T1+ paint
+plans expose a display-only `paintEndMs`, `holdUntilMs`, per-coarse `cueEnds`
+and diagnostic `quality` reasons. A complete covered range can stop its active
+cue at its paint end; its full text remains available through the original
+source-line boundary. Missing coverage stays unknown rather than forcing a
+completion. Local and Output deadlines sample their existing media clock at
+these completion boundaries, without an extra tick, silence wait or catch-up
+animation. KTV retains its existing lane/pre-roll/hold presentation and has no
+underline; this does not make paint completion own lane switching.
+Capacity pages render the logically active KTV lane, whether its physical node
+is current or next. The companion is hidden only for this existing capacity
+mode; the normal two-lane template, role colors and lack of underline remain.
+
+An uncovered final range whose line end was inferred from the next onset may
+use a bounded local-cadence display estimate. The median of the last five usable
+unit durations per spoken grapheme is used when at least two exist; otherwise
+at least two coarse onset intervals are required. Usable observations are
+80–1000 ms per letter/number/symbol grapheme, excluding whitespace and punctuation.
+These bounds select a display cadence, not alignment confidence or vocal activity.
+The estimated end is capped by the existing source upper bound; insufficient
+evidence leaves that range cue-only. Explicit line bounds retain their existing
+paint policy. Existing fine starts/ends, gaps, native T2 and source text are never
+retimed, merged or rewritten. A crossing fine unit is retained intact while
+uncovered edges can still receive independently bounded paint estimates.
+Cadence cannot establish an unrecorded breath or a true sung end, and cannot
+guarantee that a missing-tail estimate avoids an unrecorded pause.
+
+Short units, long units and long gaps are diagnostic reasons only. They do not
+authorize retiming a suspicious model interval. Song sections and singing
+activity remain offline evidence evaluation; no BPM, live VAD gate, new model
+dependency or wait for background analysis is introduced by this fallback.
 
 `lyricsDisplayLayout.mjs` owns bounded single-language and mixed-script display
 pages. It accepts a surface's measured capacity, preserves UTF-16 source ranges
@@ -369,6 +420,29 @@ intentional. Page packing adds no content removal or two-page limit. Partial rub
 words do not receive a falsely aligned whole-word reading. Where only whole-line
 romaji exists, Performer preserves it as explicitly labelled whole-line reading
 and reserves its height rather than inventing a syllable mapping.
+
+## Measurement safety and frame diagnostics
+
+Capacity preparation retains the complete original measurement render before
+DOM measurement. It must preserve complete live text, coarse onset hints, fine
+ink and entrance-animation identity if the scheduler yields while catching up.
+A temporarily empty live frame is not a valid measurement shortcut. No readiness
+wait, new timer, geometry cache or source/model retiming is introduced.
+
+The opt-in `lyricsTrace=1` buffer remains bounded. The diagnostic module's
+`readLyricsPerformanceTrace({ clear: true })` returns a copied batch and its
+drop count, then clears only buffered events and that count. Clock anchors and
+scheduler/delivery identities continue across batches. An ordinary read does
+not clear anything. Full-playback diagnostics can drain at existing observation
+checkpoints without growing a per-frame log or changing playback scheduling.
+
+DOM commit, rAF observation, compositor submission, acknowledgement and
+presentation are distinct observations. Cross-process traces must verify the
+actual PID/anchor coverage and join explicit flow/frame identities without
+rounding 64-bit trace ids. Acknowledgement events without a frame token remain
+unassigned; a nearby timestamp is insufficient. Chromium-reported presentation
+feedback is not an OBS capture or physical-display acceptance result. Diagnostic
+tracing and trace-disabled playback comparisons are reported separately.
 
 ## Deferred decisions
 

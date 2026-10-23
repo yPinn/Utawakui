@@ -201,20 +201,25 @@ export function createLyricsPerformanceTrace(options = {}) {
       )
         markTimeline?.(`lyrics-${event}-${row.cycleId}-${row.pass ?? 0}`);
     },
-    read() {
-      return {
+    read({ clear = false } = {}) {
+      const batch = {
         wallAnchorMs,
         performanceAnchorMs,
         timeOriginMs: globalThis.performance?.timeOrigin ?? null,
         dropped,
         events: events.map((row) => ({ ...row })),
       };
+      if (clear === true) {
+        events.length = 0;
+        dropped = 0;
+      }
+      return batch;
     },
   };
 }
 
-export function readLyricsPerformanceTrace() {
-  return pagePerformanceTrace?.read() ?? null;
+export function readLyricsPerformanceTrace(options) {
+  return pagePerformanceTrace?.read(options) ?? null;
 }
 
 function boundedDiagnosticText(value, maximumLength) {
@@ -446,6 +451,7 @@ function secondaryKtvFrame(frame) {
     ...frame,
     currentText: frame.nextText,
     currentSegments: frame.nextSegments,
+    currentFineTiming: frame.nextFineTiming,
     currentVisibleLineIndex: frame.nextVisibleLineIndex,
     currentLaneIndex: frame.nextLaneIndex,
     currentRole: frame.ktvNextRole,
@@ -756,7 +762,8 @@ function renderCurrentLyrics(element, frame, options) {
 
   clearKtvFallbackProgress(element);
   const fine =
-    templateId === 'focus-line' && frame.currentFineTiming?.units?.length
+    ['focus-line', 'karaoke-stack'].includes(templateId) &&
+    frame.currentFineTiming?.units?.length
       ? frame.currentFineTiming
       : null;
   const structureKey = `${lineKey}\0${segmentStructureKey(segments)}\0${fine ? 'fine' : ''}`;

@@ -23,6 +23,27 @@ const plan = {
   ],
 };
 describe('capacity pages keep existing template projections', () => {
+  it('keeps only complete fine units within a KTV page and clears the other lane', () => {
+    const base = {
+      currentText: line.text,
+      currentTimingSource: 'model-starts',
+      currentFineTiming: {
+        units: [
+          { unitId: 'cross', from: 5, to: 8, startMs: 1000, endMs: 4000 },
+          { unitId: 'last', from: 8, to: 12, startMs: 4000, endMs: 5000 },
+        ],
+      },
+      nextFineTiming: { units: [{ unitId: 'other' }] },
+    };
+    const result = projectLyricsDisplayFrame({ ktv: base }, line, plan, 4500, {
+      templateId: 'karaoke-stack',
+    }).ktv;
+    expect(result.currentFineTiming.units).toEqual([
+      { unitId: 'last', from: 2, to: 6, startMs: 4000, endMs: 5000 },
+    ]);
+    expect(result.nextFineTiming).toBeUndefined();
+    expect(result.nextText).toBe('');
+  });
   it.each([
     'focus-line',
     'karaoke-stack',

@@ -95,6 +95,22 @@ const lyricsLang = computed(() =>
 const romanizationLang = computed(() =>
   lyricsLang.value ? `${lyricsLang.value}-Latn` : undefined,
 );
+const activeTimingFrame = computed(() => {
+  const frame = props.experimentalFrame;
+  const line = props.lines[props.activeLineIndex];
+  return frame &&
+    line &&
+    frame.lineId === line.lineId &&
+    frame.text === line.text
+    ? frame
+    : null;
+});
+const activePaintFrame = computed(() => {
+  const frame = activeTimingFrame.value;
+  return (frame?.paintTiming?.units ?? frame?.fineTiming?.units)?.length
+    ? frame
+    : null;
+});
 const experimentalReadingSegments = computed(() => {
   const frame = props.experimentalFrame;
   const line = props.lines[props.activeLineIndex];
@@ -356,11 +372,7 @@ watch(
             'lyrics-line--active': index === activeLineIndex,
             'lyrics-line--past': index < activeLineIndex,
             'lyrics-line--ruby': showsFurigana,
-            'lyrics-line--fine':
-              experimentalFrame?.fineTiming &&
-              experimentalFrame.lineId === line.lineId &&
-              experimentalFrame.text === line.text &&
-              index === activeLineIndex,
+            'lyrics-line--fine': activePaintFrame && index === activeLineIndex,
           }"
         >
           <div
@@ -420,13 +432,8 @@ watch(
                 <span class="lyrics-line__text"
                   ><span class="lyrics-line__ink">
                     <LyricsFineText
-                      v-if="
-                        experimentalFrame?.fineTiming &&
-                        experimentalFrame.lineId === line.lineId &&
-                        experimentalFrame.text === line.text &&
-                        index === activeLineIndex
-                      "
-                      :frame="experimentalFrame"
+                      v-if="activePaintFrame && index === activeLineIndex"
+                      :frame="activePaintFrame"
                       :presentation="presentation"
                       :reading-gaps="rubyGaps[index]"
                       :reading-segments="
@@ -542,8 +549,8 @@ watch(
 
 <style scoped>
 .lyrics-line__experimental-active {
-  background: var(--ui-color-accent-soft);
   text-decoration: underline;
+  text-decoration-color: var(--ui-color-accent);
   text-underline-offset: 0.15em;
 }
 .lyrics-document {
@@ -652,11 +659,11 @@ watch(
   opacity: var(--ui-opacity-muted);
 }
 .lyrics-line--active {
-  color: var(--ui-color-accent-contrast);
+  color: var(--ui-color-text);
   opacity: 1;
 }
 .lyrics-line--active .lyrics-line__row {
-  background: var(--ui-color-accent);
+  background: transparent;
 }
 .lyrics-line--fine .lyrics-line__row {
   background: transparent;
@@ -700,28 +707,14 @@ watch(
   line-height: var(--ui-lyrics-romaji-line-height);
   overflow-wrap: anywhere;
 }
-/* Sheet: ink on paper, readings printed above, highlighter on the sung line. */
-.lyrics-preview--sheet .lyrics-line {
-  color: var(--ui-color-text);
-}
-.lyrics-preview--sheet .lyrics-line__button {
-  align-items: last baseline;
-}
-.lyrics-preview--sheet .lyrics-line__time {
-  color: var(--ui-color-text-muted);
-}
-.lyrics-preview--sheet .lyrics-line--active .lyrics-line__row {
-  background: transparent;
-}
-/* Reserve the same fragment geometry before and during the current line.
-   Only paint changes, so marker activation cannot change wrapping. */
-.lyrics-preview--sheet .lyrics-line__ink {
+/* The current line always keeps its marker, independent of timing tier. */
+.lyrics-line__ink {
   padding-inline: var(--ui-space-3);
   margin-inline: calc(-1 * var(--ui-space-3));
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.lyrics-preview--sheet .lyrics-line--active .lyrics-line__ink {
+.lyrics-line--active .lyrics-line__ink {
   background-image: linear-gradient(
     104deg,
     transparent var(--ui-lyrics-marker-cut),
@@ -734,6 +727,25 @@ watch(
   background-position: 0 calc(100% - var(--ui-lyrics-marker-bottom));
   background-size: 100% var(--ui-lyrics-marker-height);
   background-repeat: no-repeat;
+}
+@media (forced-colors: active) {
+  .lyrics-line--active .lyrics-line__ink {
+    outline: var(--ui-border-width) solid Highlight;
+    outline-offset: var(--ui-border-width);
+  }
+}
+/* Sheet: ink on paper, readings printed above. */
+.lyrics-preview--sheet .lyrics-line {
+  color: var(--ui-color-text);
+}
+.lyrics-preview--sheet .lyrics-line__button {
+  align-items: last baseline;
+}
+.lyrics-preview--sheet .lyrics-line__time {
+  color: var(--ui-color-text-muted);
+}
+.lyrics-preview--sheet .lyrics-line--active .lyrics-line__row {
+  background: transparent;
 }
 .lyrics-preview--sheet .lyrics-line__text rt,
 .lyrics-preview--sheet .lyrics-line__romaji,

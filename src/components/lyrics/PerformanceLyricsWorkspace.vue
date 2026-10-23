@@ -147,7 +147,9 @@ onMounted(initialize);
 
     <LyricsExperimentalEstimate />
     <LyricsLiveTool
-      :experimental-frame="lyrics.experimentalLyrics?.frame.value"
+      :experimental-frame="
+        lyrics.localLyricsFrame?.value ?? lyrics.experimentalLyrics?.frame.value
+      "
       class="performance-lyrics-workspace__reader"
       :document-id="lyricsDocument.documentId"
       :error="state.error || ''"

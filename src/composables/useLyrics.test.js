@@ -291,6 +291,7 @@ describe('useLyrics', () => {
         'isReloading',
         'isSelectedTrackPlaying',
         'lyricLines',
+        'localLyricsFrame',
         'lyricsAcousticEstimate',
         'lyricsDocument',
         'lyricsTextProcessing',

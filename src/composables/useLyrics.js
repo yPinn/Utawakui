@@ -21,6 +21,7 @@ import {
   LYRICS_TEXT_VARIANTS,
 } from '../utils/lyricsTextVariantValues.js';
 import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
+import { projectNativeLyricsFrame } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
@@ -239,6 +240,27 @@ function setLyricsTextVariant(variant) {
   return true;
 }
 const activeLineIndex = computed(() => playbackState.value.activeLineIndex);
+const localLyricsFrame = computed(() => {
+  const estimated = experimentalLyrics.frame.value;
+  if (estimated) return estimated;
+  const line = displayLyricsDocument.value.lines[activeLineIndex.value];
+  const frame = projectNativeLyricsFrame(line, currentLyricsPositionMs.value);
+  if (!frame?.fineTiming) return frame;
+  const sample = samplePlaybackClock();
+  const transport = playerState;
+  return {
+    ...frame,
+    paintClock: {
+      positionMs: sample
+        ? sample.positionMs + state.offsetSeconds * 1000
+        : currentLyricsPositionMs.value,
+      sampledAtMs: sample ? Date.parse(sample.sampledAt) : Date.now(),
+      rate: sample?.rate ?? 1,
+      playing: sample?.phase === 'playing',
+      revision: `${transport.playbackRevision}:${transport.continuityRevision}:${transport.playbackPhase}:${transport.tempoRate}`,
+    },
+  };
+});
 const activeLine = computed(() =>
   activeLineIndex.value >= 0 ? lyricLines.value[activeLineIndex.value] : null,
 );
@@ -466,6 +488,7 @@ export function useLyrics() {
     lyricsTextProcessing,
     experimentalLyrics,
     lyricsTextVariant: readonly(lyricsTextVariant),
+    localLyricsFrame,
     lyricLines,
     activeLine,
     activeLineIndex,

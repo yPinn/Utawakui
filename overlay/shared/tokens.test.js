@@ -2,6 +2,31 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('overlay CSS tokens', () => {
+  it('keeps either active KTV lane visible when capacity pages replace the companion lane', () => {
+    const lyrics = fs.readFileSync(
+      new URL('../lyrics/lyrics.css', import.meta.url),
+      'utf8',
+    );
+    expect(lyrics).toMatch(
+      /:root\[data-ovl-template='karaoke-stack'\]\s*\.lyrics-overlay\[data-fit-active='true'\]\s*\[data-ktv-active='true'\]\s*\{[^}]*display: block;[^}]*grid-row: 1;/u,
+    );
+    expect(lyrics).toMatch(
+      /\.lyrics-overlay__current:not\(\[data-ktv-active='true'\]\)\s*\{\s*display: none;/u,
+    );
+  });
+  it('keeps KTV fine fill free of the Focus onset underline', () => {
+    const lyrics = fs.readFileSync(
+      new URL('../lyrics/lyrics.css', import.meta.url),
+      'utf8',
+    );
+    expect(lyrics).toMatch(
+      /\.lyrics-overlay__segment\[data-fine-timing='true'\]\[data-segment-state='active'\]\s*\{\s*text-decoration: underline;/,
+    );
+    expect(lyrics).toMatch(
+      /:root\[data-ovl-template='karaoke-stack'\]\s*\.lyrics-overlay__segment\[data-fine-timing='true'\]\[data-segment-state='active'\]\s*\{\s*text-decoration: none;/,
+    );
+  });
+
   it('keeps fallback primitive, semantic, and template tokens outside the UI system', () => {
     const fallback = fs.readFileSync(
       new URL('./fallback.css', import.meta.url),

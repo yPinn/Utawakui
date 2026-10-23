@@ -9,6 +9,7 @@ import {
 } from './lyrics.mjs';
 import { ORNATE_VERTICAL_EXIT_DURATION_SECONDS } from '../../shared/presentation/ornateVerticalMotion.mjs';
 import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
+import { createLyricsFitController } from './lyricsFit.mjs';
 
 function gsapHarness() {
   const timelines = [];
@@ -134,9 +135,241 @@ function kineticLineTracks(line) {
   return line.children.flatMap((row) => row.children);
 }
 
+it('retains Focus fine ink and suppresses extra line entrances across cold fit and same-line invalidation', () => {
+  const elements = domElements();
+  const frame = {
+    visible: true,
+    lineIndex: 0,
+    currentText: '今日',
+    nextText: '次句',
+    currentTimingSource: 'model-starts',
+    currentSegments: [
+      { segmentId: 'a', text: '今日', state: 'active', progress: null },
+    ],
+    currentFineTiming: {
+      positionMs: 1200,
+      rate: 1,
+      playing: false,
+      units: [{ unitId: 'u', from: 0, to: 2, startMs: 1000, endMs: 1800 }],
+    },
+  };
+  const snapshot = {
+    playback: { status: 'paused', positionMs: 1200 },
+    lyrics: { lines: [{ text: '今日', startMs: 1000, endMs: 2000 }] },
+  };
+  const controller = createLyricsFitController({
+    elements,
+    measure: () => ({ fits: () => true, rows: (text) => [{ text }] }),
+    renderForMeasurement: (f) =>
+      renderLyricsFrame(elements, f, {
+        templateId: 'focus-line',
+        reducedMotion: true,
+      }),
+  });
+  for (const reason of [null, 1, 2, 3]) {
+    if (reason !== null) controller.invalidate(reason);
+    const prepared = controller.prepare(snapshot, frame, {
+      templateId: 'focus-line',
+      nowMs: 0,
+    });
+    // The scheduler can yield here. The original prepared ink must stay present.
+    expect(elements.current.textContent).toBe('今日');
+    expect(elements.current.dataset.currentText).toBe('今日');
+    expect(
+      elements.current.children[0].children[0].style.values[
+        '--lyrics-fine-progress'
+      ],
+    ).toBe('50%');
+    renderLyricsFrame(elements, prepared.frame, { templateId: 'focus-line' });
+    expect(elements.current.animate).not.toHaveBeenCalled();
+  }
+  controller.stop();
+});
+
+it('keeps complete Focus measurement ink when two boundary crossings yield before final commit', () => {
+  const elements = domElements(),
+    jobs = [],
+    commits = [];
+  const base = Date.parse('2026-10-23T00:00:00Z');
+  let now = base,
+    prepared = 0;
+  const snapshot = {
+    revision: 1,
+    generatedAt: new Date(base).toISOString(),
+    displayDelayMs: 0,
+    playback: {
+      status: 'playing',
+      positionMs: 0,
+      rate: 1,
+      durationMs: 2000,
+      track: { id: 't' },
+    },
+    lyrics: {
+      trackId: 't',
+      synced: true,
+      offsetMs: 0,
+      lines: [
+        {
+          lineId: 'line',
+          text: '甲乙',
+          startMs: 0,
+          endMs: 1000,
+          estimatedStarts: {
+            version: 1,
+            segments: [
+              { segmentId: 'a', text: '甲', startMs: 100 },
+              { segmentId: 'b', text: '乙', startMs: 200 },
+            ],
+          },
+        },
+      ],
+    },
+  };
+  const fit = createLyricsFitController({
+    elements,
+    measure: () => ({ fits: () => true, rows: (text) => [{ text }] }),
+    renderForMeasurement: (f) =>
+      renderLyricsFrame(elements, f, {
+        templateId: 'focus-line',
+        reducedMotion: true,
+      }),
+  });
+  const scheduler = createLyricsFrameScheduler({
+    templateId: 'focus-line',
+    now: () => now,
+    schedule: (callback, delay) => {
+      jobs.push({ callback, delay });
+      return jobs.length;
+    },
+    cancelSchedule: () => {},
+    prepareFrame: (s, f, options) => {
+      fit.invalidate();
+      const value = fit.prepare(s, f, options);
+      if (prepared++ < 2) now += 150;
+      return value;
+    },
+    onFrame: (f) => {
+      commits.push(f);
+      renderLyricsFrame(elements, f, { templateId: 'focus-line' });
+    },
+  });
+  scheduler.update(snapshot);
+  expect(commits).toHaveLength(0);
+  expect(jobs[0].delay).toBe(0);
+  expect(elements.current.textContent).toBe('甲乙');
+  expect(
+    elements.current.children.find((n) => n.dataset.segmentState === 'active')
+      ?.textContent,
+  ).toBe('甲');
+  jobs[0].callback();
+  expect(commits).toHaveLength(1);
+  expect(elements.current.textContent).toBe('甲乙');
+  expect(
+    elements.current.children.find((n) => n.dataset.segmentState === 'active')
+      ?.textContent,
+  ).toBe('乙');
+  expect(elements.current.animate).not.toHaveBeenCalled();
+  scheduler.stop();
+  fit.stop();
+});
+
 function kineticLineUnits(line) {
   return kineticLineTracks(line).flatMap((track) => track.children);
 }
+
+it('renders KTV fine ink in its lane without consuming the coarse progress or altering the next lane', () => {
+  const elements = domElements();
+  const frame = {
+    visible: true,
+    ktv: {
+      visible: true,
+      currentText: '今日',
+      nextText: '次句',
+      currentVisibleLineIndex: 0,
+      currentLaneIndex: 0,
+      nextVisibleLineIndex: 1,
+      nextLaneIndex: 1,
+      currentRole: 'female',
+      nextRole: 'solo',
+      currentTimingSource: 'model-starts',
+      currentSegments: [
+        {
+          segmentId: 'a',
+          text: '今日',
+          state: 'active',
+          progress: null,
+          remainingMs: null,
+        },
+      ],
+      currentFineTiming: {
+        positionMs: 1200,
+        rate: 1,
+        playing: false,
+        units: [{ unitId: 'u', from: 0, to: 2, startMs: 1000, endMs: 1800 }],
+      },
+    },
+  };
+  renderLyricsFrame(elements, frame, {
+    templateId: 'karaoke-stack',
+    reducedMotion: true,
+  });
+  const coarse = elements.current.children[0];
+  expect(coarse.dataset.fineTiming).toBe('true');
+  expect(coarse.dataset.segmentState).toBe('active');
+  expect(coarse.children[0].style.values['--lyrics-fine-progress']).toBe('50%');
+  expect(elements.current.textContent).toBe('今日');
+  expect(elements.next.textContent).toBe('次句');
+  expect(elements.next.dataset.fineTiming).toBeUndefined();
+  renderLyricsFrame(
+    elements,
+    {
+      ...frame,
+      ktv: {
+        ...frame.ktv,
+        currentFineTiming: {
+          ...frame.ktv.currentFineTiming,
+          units: [
+            { unitId: 'partial', from: 1, to: 2, startMs: 1400, endMs: 1800 },
+          ],
+        },
+      },
+    },
+    { templateId: 'karaoke-stack', reducedMotion: true },
+  );
+  const partial = elements.current.children[0];
+  expect(partial.children[0].className).toContain('lyrics-overlay__fine-gap');
+  expect(partial.children[0].textContent).toBe('今');
+  expect(partial.children[0].dataset.lyricsFineUnit).toBeUndefined();
+  expect(partial.dataset.segmentState).toBe('active');
+  expect(partial.children[1].style.values['--lyrics-fine-progress']).toBe('0%');
+  renderLyricsFrame(
+    elements,
+    {
+      ...frame,
+      ktv: {
+        ...frame.ktv,
+        currentFineTiming: {
+          ...frame.ktv.currentFineTiming,
+          units: [
+            {
+              unitId: 'paint-first',
+              from: 0,
+              to: 1,
+              startMs: 1000,
+              endMs: 1400,
+              timingSource: 'display-estimate',
+            },
+            { unitId: 'actual', from: 1, to: 2, startMs: 1400, endMs: 1800 },
+          ],
+        },
+      },
+    },
+    { templateId: 'karaoke-stack', reducedMotion: true },
+  );
+  const firstPaint = elements.current.children[0].children[0];
+  expect(firstPaint.dataset.lyricsPaintSource).toBe('display-estimate');
+  expect(firstPaint.style.values['--lyrics-fine-progress']).toBe('50%');
+});
 
 describe('lyrics overlay renderer', () => {
   it('reuses fine structure across clock updates and DOM reset, invalidating changed text and times', () => {

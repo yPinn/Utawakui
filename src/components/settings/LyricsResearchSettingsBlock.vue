@@ -70,13 +70,13 @@ onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
-  <SettingsSection title="歌詞分段提示（實驗性）">
+  <SettingsSection title="歌詞時間分析（實驗）">
     <UiHint class="lyrics-settings__notice">
       僅供本機研究試用。時間精度尚待人工驗證；模型權重及字典之使用與散布授權範圍尚待釐清。
     </UiHint>
     <SettingsDocumentItem
       :icon="Captions"
-      title="歌詞分析工具"
+      title="歌詞時間分析（實驗）"
       description="估算中文、日文與英文歌詞的分段時間。"
       guidance="下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 可用空間。"
       :status="statusLabel"

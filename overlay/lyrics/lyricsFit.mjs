@@ -16,7 +16,7 @@ function fineMeasurementSource(line, frame, templateId) {
   const units = frame.currentFineTiming?.units;
   const segments = frame.currentSegments;
   if (
-    templateId !== 'focus-line' ||
+    !['focus-line', 'karaoke-stack'].includes(templateId) ||
     !units?.length ||
     !Array.isArray(segments) ||
     frame.currentText !== line.text ||
@@ -32,6 +32,7 @@ function fineMeasurementSource(line, frame, templateId) {
   let index = 0;
   return {
     text: line.text,
+    ...(templateId === 'karaoke-stack' ? { ranges } : {}),
     units: units.filter((unit) => {
       while (index < ranges.length && ranges[index].to <= unit.from) index++;
       const range = ranges[index];
@@ -187,26 +188,40 @@ function createMeasurement(
       const from = range?.sourceStart ?? 0;
       const to = range?.sourceEnd ?? text.length;
       if (fineSource?.units.length) {
-        const parts = fineTextParts(
-          fineSource.text,
-          fineSource.units,
-          from,
-          to,
-        );
+        const nodes = (start, end) =>
+          fineTextParts(fineSource.text, fineSource.units, start, end).map(
+            (part) => {
+              if (!part.unitId) return document.createTextNode(part.text);
+              const cell = document.createElement('span');
+              cell.textContent = part.text;
+              // Match only the live ink cell's layout. No pseudo copy or animation.
+              Object.assign(cell.style, {
+                display: 'inline-block',
+                maxInlineSize: '100%',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+              });
+              return cell;
+            },
+          );
         wrapped.replaceChildren(
-          ...parts.map((part) => {
-            if (!part.unitId) return document.createTextNode(part.text);
-            const cell = document.createElement('span');
-            cell.textContent = part.text;
-            // Match only the live ink cell's layout. No pseudo copy or animation.
-            Object.assign(cell.style, {
-              display: 'inline-block',
-              maxInlineSize: '100%',
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'anywhere',
-            });
-            return cell;
-          }),
+          ...(fineSource.ranges
+            ? fineSource.ranges
+                .filter((r) => r.to > from && r.from < to)
+                .map((r) => {
+                  const span = document.createElement('span');
+                  Object.assign(span.style, {
+                    display: 'inline-block',
+                    maxInlineSize: '100%',
+                    whiteSpace: 'pre-wrap',
+                    overflowWrap: 'anywhere',
+                  });
+                  span.replaceChildren(
+                    ...nodes(Math.max(from, r.from), Math.min(to, r.to)),
+                  );
+                  return span;
+                })
+            : nodes(from, to)),
         );
       } else wrapped.textContent = text;
       if (counters) counters.probeCount++;
@@ -328,6 +343,30 @@ export function createLyricsFitController(options = {}) {
           ? snapshot.playback.durationMs + (snapshot.lyrics.offsetMs ?? 0)
           : null),
     };
+    if (settings.templateId === 'karaoke-stack' && base.currentSourceRange) {
+      const { from, to, startMs, endMs } = base.currentSourceRange;
+      if (canonical.text.slice(from, to) !== base.currentText)
+        return { frame, delayMs: null };
+      line.text = base.currentText;
+      line.startMs = startMs;
+      line.endMs = endMs;
+      let cursor = 0;
+      line.estimatedStarts = {
+        version: 1,
+        segments: (canonical.estimatedStarts?.segments ?? []).flatMap((s) => {
+          const start = cursor;
+          cursor += s.text.length;
+          const a = Math.max(start, from),
+            b = Math.min(cursor, to);
+          return a < b
+            ? [{ ...s, text: s.text.slice(a - start, b - start) }]
+            : [];
+        }),
+      };
+      // Page timing follows the KTV cadence. Fine paint retains the actual
+      // canonical intervals separately, including ends beyond that cadence.
+      delete line.estimatedFineTiming;
+    }
     // Apply the existing content policy once, before paging. Punctuation/whitespace
     // changes mean exact source offsets are unavailable, so retain layout provenance.
     if (settings.templateId === 'live-stage') {
@@ -348,6 +387,7 @@ export function createLyricsFitController(options = {}) {
       settings.kineticMaterial,
       settings.lyricsPresentationPolicyId,
       line,
+      canonical.estimatedFineTiming,
       rate,
       base.currentReading,
     ]);

@@ -1,8 +1,13 @@
 <script setup>
+import { computed } from 'vue';
+import { summarizeAcousticPreview } from '../../../shared/presentation/lyricsAcousticPreview.mjs';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 const experiment = useLyrics().experimentalLyrics;
+const summary = computed(() =>
+  summarizeAcousticPreview(experiment?.prepared.value),
+);
 defineProps({ disabled: { type: Boolean, default: false } });
 </script>
 
@@ -18,19 +23,17 @@ defineProps({ disabled: { type: Boolean, default: false } });
   >
     <UiHint>{{
       experiment.needsReanalysis.value
-        ? '校時已變更，請至可用歌詞重新分析；目前沿用來源時間。'
+        ? '校時已變更，請重新分析；目前沿用原歌詞。'
         : experiment.prepared.value.status === 'ready'
-          ? '實驗詞塊已產生；尚未通過人工時間驗收。套用至歌詞與支援詞塊的 Output 模板，來源 T2 優先，無可用詞塊時沿用 T1。'
-          : '實驗詞塊目前不可用，沿用原有歌詞。'
+          ? `分析${experiment.applied.value ? '已套用' : '未套用'} · ${summary.fineLines ? `${summary.fineLines} 句含掃字時間` : '僅分段提示'}`
+          : '分析目前不可用，沿用原歌詞。'
     }}</UiHint>
     <UiButton
       :active="experiment.applied.value"
       :aria-pressed="experiment.applied.value"
       :disabled="disabled || experiment.prepared.value.status !== 'ready'"
       @click="experiment.setApplied(!experiment.applied.value)"
-      >{{
-        experiment.applied.value ? '停用實驗詞塊' : '套用實驗詞塊'
-      }}</UiButton
+      >{{ experiment.applied.value ? '停用分析' : '套用分析' }}</UiButton
     >
   </div>
 </template>

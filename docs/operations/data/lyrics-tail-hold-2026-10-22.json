@@ -1,0 +1,1000 @@
+{
+  "kind": "diagnostic-not-human-vocal-truth-or-performance-gate",
+  "windowMs": [65000, 115500],
+  "natural": [
+    {
+      "case": "final-before-0",
+      "source": "LRCLIB",
+      "ok": true,
+      "errors": [],
+      "rejected": 0,
+      "cycles": [
+        {
+          "label": "cold",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12116,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 9.33299999999872,
+                "p95": 10.33299999999872,
+                "max": 13
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12115,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 29.699951171875
+              },
+              "probeCostMs": {
+                "n": 12124,
+                "p50": 0.10000002384185791,
+                "p95": 0.30000001192092896,
+                "max": 0.699999988079071
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12115,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 4.10009765625,
+                "p95": 12.5,
+                "max": 13.66700000000128
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12114,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 30.89990234375
+              },
+              "probeCostMs": {
+                "n": 12134,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1.199999988079071
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12111,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 3806,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 15,
+                "p50": 4.2001953125,
+                "p95": 13.800048828125,
+                "max": 13.800048828125
+              },
+              "missingCue": 15,
+              "frameGapMs": {
+                "n": 12110,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 27.099853515625
+              },
+              "probeCostMs": {
+                "n": 12130,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 2
+              }
+            }
+          ]
+        },
+        {
+          "label": "warm",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12110,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 2.3329999999987194,
+                "p95": 12.33299999999872,
+                "max": 12.33299999999872
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12109,
+                "p50": 4.199951171875,
+                "p95": 4.39990234375,
+                "max": 9.599853515625
+              },
+              "probeCostMs": {
+                "n": 12112,
+                "p50": 0.10000002384185791,
+                "p95": 0.30000001192092896,
+                "max": 1.199999988079071
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12109,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 5.232902343763271,
+                "p95": 14.671000000002095,
+                "max": 16.055048828115105
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12108,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 6.199951171875
+              },
+              "probeCostMs": {
+                "n": 12112,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1.2000000178813934
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12109,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 3797,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 15,
+                "p50": 3.800048828125,
+                "p95": 13.886097656242782,
+                "max": 13.886097656242782
+              },
+              "missingCue": 15,
+              "frameGapMs": {
+                "n": 12108,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 7
+              },
+              "probeCostMs": {
+                "n": 12112,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "final-after-0",
+      "source": "LRCLIB",
+      "ok": true,
+      "errors": [],
+      "rejected": 0,
+      "cycles": [
+        {
+          "label": "cold",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12115,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 2.3329999999987194,
+                "p95": 11.726999999998952,
+                "max": 11.919000000008964
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12114,
+                "p50": 4.199951171875,
+                "p95": 4.400146484375,
+                "max": 37
+              },
+              "probeCostMs": {
+                "n": 12125,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 3.699999988079071
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12114,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 4.89990234375,
+                "p95": 9.403146484371973,
+                "max": 10.865951171872439
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12115,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 34.599853515625
+              },
+              "probeCostMs": {
+                "n": 12142,
+                "p50": 0.19999998807907104,
+                "p95": 0.4000000059604645,
+                "max": 1.0999999940395355
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12110,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 3.60009765625,
+                "p95": 13.373097656251048,
+                "max": 13.93309765624872
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12111,
+                "p50": 4.199951171875,
+                "p95": 4.39990234375,
+                "max": 35.39990234375
+              },
+              "probeCostMs": {
+                "n": 12138,
+                "p50": 0.19999998807907104,
+                "p95": 0.4000000059604645,
+                "max": 2.2999999821186066
+              }
+            }
+          ]
+        },
+        {
+          "label": "warm",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12117,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 2.3329999999987194,
+                "p95": 11.642000000007101,
+                "max": 12.33299999999872
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12116,
+                "p50": 4.199951171875,
+                "p95": 4.39990234375,
+                "max": 8.800048828125
+              },
+              "probeCostMs": {
+                "n": 12119,
+                "p50": 0.10000002384185791,
+                "p95": 0.30000001192092896,
+                "max": 1.199999988079071
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12116,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 5.19990234375291,
+                "p95": 9.452000000004773,
+                "max": 10.695000000006985
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12115,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 6.7998046875
+              },
+              "probeCostMs": {
+                "n": 12120,
+                "p50": 0.19999998807907104,
+                "p95": 0.4000000059604645,
+                "max": 1
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12116,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 30,
+                "p50": 5.19990234375291,
+                "p95": 11.788048828122555,
+                "max": 14.795097656256985
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12115,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 7.800048828125
+              },
+              "probeCostMs": {
+                "n": 12119,
+                "p50": 0.19999998807907104,
+                "p95": 0.4000000059604645,
+                "max": 3.300000011920929
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "final-after-1",
+      "source": "NetEase",
+      "ok": true,
+      "errors": [],
+      "rejected": 0,
+      "cycles": [
+        {
+          "label": "cold",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12108,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 9.33299999999872,
+                "p95": 10.33299999999872,
+                "max": 10.66700000000128
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12107,
+                "p50": 4.199951171875,
+                "p95": 4.39990234375,
+                "max": 45.5
+              },
+              "probeCostMs": {
+                "n": 12116,
+                "p50": 0.10000002384185791,
+                "p95": 0.30000001192092896,
+                "max": 3.0999999940395355
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12100,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 3.8671953125012806,
+                "p95": 10.144048828122322,
+                "max": 12.196951171878027
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12100,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 58.300048828125
+              },
+              "probeCostMs": {
+                "n": 12120,
+                "p50": 0.19999998807907104,
+                "p95": 0.3999999761581421,
+                "max": 3.0999999940395355
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12103,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 3.89990234375,
+                "p95": 12.46704882812628,
+                "max": 13.43285351562372
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12104,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 44.5
+              },
+              "probeCostMs": {
+                "n": 12124,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 2.5999999940395355
+              }
+            }
+          ]
+        },
+        {
+          "label": "warm",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12115,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 2.3329999999987194,
+                "p95": 11.482999999992899,
+                "max": 12
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12114,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 10.7001953125
+              },
+              "probeCostMs": {
+                "n": 12116,
+                "p50": 0.09999999403953552,
+                "p95": 0.30000001192092896,
+                "max": 0.699999988079071
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12116,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 4.224000000001979,
+                "p95": 12.10009765625,
+                "max": 12.53319531249872
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12115,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 6.5
+              },
+              "probeCostMs": {
+                "n": 12118,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1.0999999940395355
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12116,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 4.997902343748137,
+                "p95": 11.01790234373766,
+                "max": 16
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12115,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 7
+              },
+              "probeCostMs": {
+                "n": 12118,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 0.699999988079071
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "final-before-1",
+      "source": "NetEase",
+      "ok": true,
+      "errors": [],
+      "rejected": 0,
+      "cycles": [
+        {
+          "label": "cold",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12109,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 9.33299999999872,
+                "p95": 10.33299999999872,
+                "max": 12
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12108,
+                "p50": 4.199951171875,
+                "p95": 4.39990234375,
+                "max": 47.199951171875
+              },
+              "probeCostMs": {
+                "n": 12116,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1.699999988079071
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12109,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 4.0022441406181315,
+                "p95": 12.504951171868015,
+                "max": 13.68414648437465
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12108,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 41.60009765625
+              },
+              "probeCostMs": {
+                "n": 12130,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 2.300000011920929
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12106,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 3325,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 16,
+                "p50": 9.43285351562372,
+                "p95": 11.800048828125,
+                "max": 11.800048828125
+              },
+              "missingCue": 16,
+              "frameGapMs": {
+                "n": 12104,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 42.39990234375
+              },
+              "probeCostMs": {
+                "n": 12126,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 2
+              }
+            }
+          ]
+        },
+        {
+          "label": "warm",
+          "textMismatches": 0,
+          "surfaces": [
+            {
+              "surface": "local",
+              "n": 12115,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": null,
+              "hiddenWithText": null,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 2.6670000000012806,
+                "p95": 11.186000000001513,
+                "max": 11.66700000000128
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12114,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 8
+              },
+              "probeCostMs": {
+                "n": 12117,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1.7999999821186066
+              }
+            },
+            {
+              "surface": "focus-line",
+              "n": 12113,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 0,
+              "coarseCueLatencyMs": {
+                "n": 32,
+                "p50": 6.332999999998719,
+                "p95": 13.40004882813082,
+                "max": 14.288097656244645
+              },
+              "missingCue": 0,
+              "frameGapMs": {
+                "n": 12112,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 7.300048828125
+              },
+              "probeCostMs": {
+                "n": 12116,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 1
+              }
+            },
+            {
+              "surface": "karaoke-stack",
+              "n": 12115,
+              "backwardJumps": 0,
+              "horizontalOverflow": 0,
+              "verticalOverflow": 0,
+              "hiddenWithText": 3309,
+              "underline": 0,
+              "coarseCueLatencyMs": {
+                "n": 16,
+                "p50": 5.733146484373719,
+                "p95": 11.79995117188082,
+                "max": 11.79995117188082
+              },
+              "missingCue": 16,
+              "frameGapMs": {
+                "n": 12114,
+                "p50": 4.199951171875,
+                "p95": 4.300048828125,
+                "max": 7.60009765625
+              },
+              "probeCostMs": {
+                "n": 12117,
+                "p50": 0.19999998807907104,
+                "p95": 0.30000001192092896,
+                "max": 0.800000011920929
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "offline": {
+    "ok": true,
+    "sections": 0,
+    "groups": [
+      {
+        "kind": "mix",
+        "startMs": 71000,
+        "endMs": 74000,
+        "n": 94,
+        "median": 0.15049681067466736,
+        "activeFraction": 0
+      },
+      {
+        "kind": "mix",
+        "startMs": 74000,
+        "endMs": 85000,
+        "n": 344,
+        "median": 0.006804101634770632,
+        "activeFraction": 0
+      },
+      {
+        "kind": "mix",
+        "startMs": 85000,
+        "endMs": 90000,
+        "n": 156,
+        "median": 0.011017934419214725,
+        "activeFraction": 0
+      },
+      {
+        "kind": "mix",
+        "startMs": 91000,
+        "endMs": 94000,
+        "n": 93,
+        "median": 0.001492327661253512,
+        "activeFraction": 0
+      },
+      {
+        "kind": "mix",
+        "startMs": 103000,
+        "endMs": 106000,
+        "n": 93,
+        "median": 0.000020025208868901245,
+        "activeFraction": 0
+      },
+      {
+        "kind": "mix",
+        "startMs": 106000,
+        "endMs": 110000,
+        "n": 125,
+        "median": 0.00000208687720260059,
+        "activeFraction": 0
+      },
+      {
+        "kind": "guide",
+        "startMs": 71000,
+        "endMs": 74000,
+        "n": 94,
+        "median": 0.7899724245071411,
+        "activeFraction": 1
+      },
+      {
+        "kind": "guide",
+        "startMs": 74000,
+        "endMs": 85000,
+        "n": 344,
+        "median": 0.00484615471214056,
+        "activeFraction": 0.014534883720930232
+      },
+      {
+        "kind": "guide",
+        "startMs": 85000,
+        "endMs": 90000,
+        "n": 156,
+        "median": 0.4563553035259247,
+        "activeFraction": 0.46794871794871795
+      },
+      {
+        "kind": "guide",
+        "startMs": 91000,
+        "endMs": 94000,
+        "n": 93,
+        "median": 0.994855523109436,
+        "activeFraction": 0.8387096774193549
+      },
+      {
+        "kind": "guide",
+        "startMs": 103000,
+        "endMs": 106000,
+        "n": 93,
+        "median": 0.9599226117134094,
+        "activeFraction": 0.8387096774193549
+      },
+      {
+        "kind": "guide",
+        "startMs": 106000,
+        "endMs": 110000,
+        "n": 125,
+        "median": 0.0003610731801018119,
+        "activeFraction": 0
+      }
+    ],
+    "candidates": [
+      {
+        "kind": "mix",
+        "offStartMs": 60736,
+        "offEndMs": 60896,
+        "guardedCandidateMs": 60896
+      },
+      {
+        "kind": "mix",
+        "offStartMs": 61120,
+        "offEndMs": 61888,
+        "guardedCandidateMs": 61280
+      },
+      {
+        "kind": "mix",
+        "offStartMs": 61920,
+        "offEndMs": 62400,
+        "guardedCandidateMs": 62080
+      },
+      {
+        "kind": "mix",
+        "offStartMs": 62688,
+        "offEndMs": 90000,
+        "guardedCandidateMs": 62848
+      },
+      {
+        "kind": "mix",
+        "offStartMs": 90000,
+        "offEndMs": 116000,
+        "guardedCandidateMs": 90160
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 63456,
+        "offEndMs": 64480,
+        "guardedCandidateMs": 63616
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 66176,
+        "offEndMs": 66336,
+        "guardedCandidateMs": 66336
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 66688,
+        "offEndMs": 66880,
+        "guardedCandidateMs": 66848
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 67328,
+        "offEndMs": 67488,
+        "guardedCandidateMs": 67488
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 67840,
+        "offEndMs": 68000,
+        "guardedCandidateMs": 68000
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 68480,
+        "offEndMs": 70656,
+        "guardedCandidateMs": 68640
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 70688,
+        "offEndMs": 70848,
+        "guardedCandidateMs": 70848
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 74176,
+        "offEndMs": 85664,
+        "guardedCandidateMs": 74336
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 87968,
+        "offEndMs": 88192,
+        "guardedCandidateMs": 88128
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 88224,
+        "offEndMs": 90000,
+        "guardedCandidateMs": 88384
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 90000,
+        "offEndMs": 91056,
+        "guardedCandidateMs": 90160
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 93552,
+        "offEndMs": 98288,
+        "guardedCandidateMs": 93712
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 99664,
+        "offEndMs": 101456,
+        "guardedCandidateMs": 99824
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 101584,
+        "offEndMs": 103344,
+        "guardedCandidateMs": 101744
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 105840,
+        "offEndMs": 111184,
+        "guardedCandidateMs": 106000
+      },
+      {
+        "kind": "guide",
+        "offStartMs": 113712,
+        "offEndMs": 114032,
+        "guardedCandidateMs": 113872
+      }
+    ],
+    "frameMs": 32,
+    "pcmGain": 0.5,
+    "qualityScored": false,
+    "liveAdoption": false,
+    "reason": "No independent sung endpoint labels; speech posterior and leaked guide are advisory only. Empty M2 prevents section ablation. Frozen fixed headroom retry after PCM range failure, not threshold tuning."
+  },
+  "validation": {
+    "focusedFiles": 24,
+    "focusedTests": 322,
+    "coreLines": 97.83,
+    "coreBranches": 92.75,
+    "lint": true,
+    "build": true,
+    "fullSuite": "not-green-filesystem-errors",
+    "committed": false,
+    "pushed": false,
+    "fullFinal": {
+      "files": 1007,
+      "passed": 9612,
+      "failed": 3,
+      "skipped": 1,
+      "workers": 2,
+      "failureClass": "Windows directory rename EPERM in unmodified modules; exact cause unknown"
+    }
+  }
+}

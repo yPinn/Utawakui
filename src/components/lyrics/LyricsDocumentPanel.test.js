@@ -35,6 +35,60 @@ function render(props) {
 }
 
 describe('LyricsDocumentPanel presentation', () => {
+  it.each(['list', 'sheet'])(
+    'keeps the highlighter and timed underline in %s without replacing the layout',
+    async (presentation) => {
+      const html = await render({
+        presentation,
+        experimentalFrame: {
+          lineId: 'b',
+          text: '汚れたい',
+          chunks: [{ text: '汚れたい', state: 'active' }],
+        },
+      });
+      expect(html).toContain('lyrics-line__experimental-active');
+      expect(rule('.lyrics-line--active .lyrics-line__row')).toContain(
+        'background: transparent',
+      );
+      expect(rule('.lyrics-line__experimental-active')).not.toContain(
+        'background: var(',
+      );
+      expect(rule('.lyrics-line--active .lyrics-line__ink')).toContain(
+        'var(--ui-lyrics-highlight)',
+      );
+    },
+  );
+  it.each(['list', 'sheet'])(
+    'uses the same local ink in %s for starts-only estimates',
+    async (presentation) => {
+      const html = await render({
+        presentation,
+        experimentalFrame: {
+          lineId: 'b',
+          text: '汚れたい',
+          chunks: [{ text: '汚れたい', state: 'active' }],
+          paintTiming: {
+            version: 1,
+            units: [
+              {
+                unitId: 'coarse-paint',
+                from: 0,
+                to: 4,
+                startMs: 5000,
+                endMs: 7000,
+                timingSource: 'display-estimate',
+              },
+            ],
+          },
+          paintClock: { positionMs: 5250, rate: 1, playing: false },
+        },
+      });
+      expect(html).toContain('lyrics-line--fine');
+      expect(html).toContain('data-lyrics-paint-source="display-estimate"');
+      expect(html).toContain('--lyrics-fine-progress:50%');
+      expect(html).toContain('lyrics-fine-text__cue');
+    },
+  );
   it('renders fine text ink separately from the instantaneous onset cue and keeps ruby intact', async () => {
     const frame = {
       lineId: 'b',
@@ -77,6 +131,43 @@ describe('LyricsDocumentPanel presentation', () => {
       'background: transparent',
     );
     expect(rule('.lyrics-line--fine')).toContain('color: var(--ui-color-text)');
+  });
+  it('renders a missing first glyph from explicitly separate display paint timing', async () => {
+    const actual = {
+      unitId: 'actual',
+      from: 1,
+      to: 2,
+      startMs: 6000,
+      endMs: 7000,
+    };
+    const html = await render({
+      lines: [{ lineId: 'b', text: '花開', start: 5 }],
+      activeLineIndex: 0,
+      experimentalFrame: {
+        lineId: 'b',
+        text: '花開',
+        chunks: [{ text: '花開', state: 'active' }],
+        fineTiming: { version: 1, units: [actual] },
+        paintTiming: {
+          version: 1,
+          units: [
+            {
+              unitId: 'paint-gap-0-1',
+              from: 0,
+              to: 1,
+              startMs: 5000,
+              endMs: 6000,
+              timingSource: 'display-estimate',
+            },
+            actual,
+          ],
+        },
+        paintClock: { positionMs: 5500, rate: 1, playing: false },
+      },
+    });
+    expect(html).toContain('data-lyrics-fine-unit="paint-gap-0-1"');
+    expect(html).toContain('data-lyrics-paint-source="display-estimate"');
+    expect(html).toContain('--lyrics-fine-progress:50%');
   });
   it('renders manually applied starts only on the matching active line and preserves normal text on mismatch', async () => {
     const frame = {
@@ -123,17 +214,52 @@ describe('LyricsDocumentPanel presentation', () => {
     const sheet = await render({ presentation: 'sheet' });
     expect(sheet).toContain('lyrics-preview--sheet');
     expect(sheet).toMatch(
-      /lyrics-line--active[\s\S]*?<span class="lyrics-line__ink"/u,
+      /lyrics-line--active[\s\S]*?<span class="lyrics-line__ink\b/u,
     );
   });
 
-  it('marks the sung line with a highlighter, not an accent row', () => {
+  it('keeps static fallback and painted lines on the same highlighter base', () => {
     expect(
       rule('.lyrics-preview--sheet .lyrics-line--active .lyrics-line__row'),
     ).toContain('background: transparent;');
-    expect(
-      rule('.lyrics-preview--sheet .lyrics-line--active .lyrics-line__ink'),
-    ).toContain('var(--ui-lyrics-highlight)');
+    expect(rule('.lyrics-line--active .lyrics-line__ink')).toContain(
+      'var(--ui-lyrics-highlight)',
+    );
+    expect(rule('.lyrics-line__ink')).toContain('box-decoration-break: clone');
+  });
+  it('does not invent a word underline on a plain unsupported line', async () => {
+    const html = await render({ presentation: 'sheet' });
+    expect(html).not.toContain('lyrics-line__ink--cue');
+    const painted = await render({
+      experimentalFrame: {
+        lineId: 'b',
+        text: '汚れたい',
+        chunks: [{ text: '汚れたい', state: 'active' }],
+      },
+    });
+    expect(painted).not.toContain('lyrics-line__ink--cue');
+    expect(painted).toContain('lyrics-line__experimental-active');
+  });
+
+  it('keeps a whole-line cue when forced colors remove the marker image', () => {
+    expect(source).toMatch(
+      /@media \(forced-colors: active\)\s*\{\s*\.lyrics-line--active \.lyrics-line__ink\s*\{\s*outline: var\(--ui-border-width\) solid Highlight;/u,
+    );
+  });
+
+  it('uses continuous blue underlines instead of a second text color for fine progress', () => {
+    const fineSource = readFileSync(
+      new URL('./LyricsFineText.vue', import.meta.url),
+      'utf8',
+    );
+    const ink = fineSource.slice(
+      fineSource.indexOf('.lyrics-fine-text__ink::after {'),
+    );
+    expect(ink).toContain('color: transparent;');
+    expect(ink).toContain('text-decoration: underline;');
+    expect(ink).toContain('text-decoration-color: var(--ui-color-accent);');
+    expect(ink).toContain('var(--lyrics-fine-progress)');
+    expect(ink).toContain('text-decoration-thickness: 0.12em;');
   });
 
   it('prints readings above the lyric in full ink', () => {

@@ -63,6 +63,39 @@ function setup() {
 }
 
 describe('lyrics boundary clock', () => {
+  it('samples a paint completion while holding the canonical line to its original next onset', async () => {
+    const c = setup();
+    c.document.value = {
+      lines: [
+        {
+          lineId: 'l',
+          text: '甲乙丙',
+          startMs: 1000,
+          endMs: 15000,
+          endInferred: true,
+          estimatedStarts: {
+            version: 1,
+            segments: [
+              { text: '甲', startMs: 1000 },
+              { text: '乙', startMs: 1500 },
+              { text: '丙', startMs: 2000 },
+            ],
+          },
+        },
+      ],
+    };
+    c.media(2000);
+    await nextTick();
+    c.samplePlaybackClock.mockClear();
+    c.media(2501);
+    vi.advanceTimersByTime(500);
+    expect(c.samplePlaybackClock).toHaveBeenCalledTimes(1);
+    expect(c.positionMs.value).toBe(2501);
+    expect(c.document.value.lines[0].endMs).toBe(15000);
+    c.media(15001);
+    vi.advanceTimersByTime(12499);
+    expect(c.positionMs.value).toBe(15001);
+  });
   it('reads media at T1 and applied T1+ boundaries without waiting for timeupdate', () => {
     const c = setup();
     c.media(101);

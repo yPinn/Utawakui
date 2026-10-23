@@ -2,7 +2,7 @@ import { effectScope, nextTick, shallowRef } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import { useExperimentalLyrics } from './useExperimentalLyrics.js';
 import { useExperimentalLyricsQueue } from './useExperimentalLyricsQueue.js';
-function setup(bridge) {
+function setup(bridge, clockOptions = {}) {
   const document = shallowRef({
     documentId: 'doc',
     normalizerProfileId: 'v1',
@@ -66,6 +66,7 @@ function setup(bridge) {
       positionMs,
       offsetMs,
       getBridge,
+      ...clockOptions,
     }),
   );
   return {
@@ -80,6 +81,30 @@ function setup(bridge) {
   };
 }
 describe('manual experimental lyric application', () => {
+  it('keeps a coarse onset immediate when contradictory fine completion predates that onset', async () => {
+    let release;
+    const input = setup({
+      getExperimentalLyricsEstimate: () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    });
+    const value = structuredClone(input.estimate);
+    value.preview.lines[0].fineTiming = {
+      version: 1,
+      units: [
+        { unitId: 'first', from: 0, to: 2, startMs: 1000, endMs: 1500 },
+        { unitId: 'early', from: 2, to: 4, startMs: 2000, endMs: 2500 },
+      ],
+    };
+    release(value);
+    await nextTick();
+    input.owner.setApplied(true);
+    input.positionMs.value = 3000;
+    expect(input.owner.frame.value.chunks[1].state).toBe('active');
+    expect(input.owner.frame.value.fineTiming.units[1].startMs).toBe(2000);
+    input.scope.stop();
+  });
   it('clears offset invalidation only when a newly completed current-source result is usable', async () => {
     let response;
     const input = setup({
@@ -239,6 +264,38 @@ describe('manual experimental lyric application', () => {
       input.scope.stop();
     }
   });
+  it('uses separate local paint timing and samples transport for starts-only data without publishing estimates', async () => {
+    const sample = vi.fn(() => ({
+      positionMs: 1500,
+      sampledAt: '2026-10-22T00:00:00Z',
+      rate: 2,
+      phase: 'playing',
+    }));
+    const input = setup(undefined, { samplePlaybackClock: sample });
+    await nextTick();
+    input.owner.setApplied(true);
+    const frame = input.owner.frame.value;
+    expect(frame.paintTiming.units).toHaveLength(2);
+    expect(frame.paintTiming.units[0]).toMatchObject({
+      startMs: 1000,
+      endMs: 3000,
+      timingSource: 'display-estimate',
+    });
+    expect(frame.paintClock).toMatchObject({
+      positionMs: 1500,
+      rate: 2,
+      playing: true,
+    });
+    expect(frame).not.toHaveProperty('fineTiming');
+    const published = input.owner.outputDocument.value.lines[0];
+    expect(published).not.toHaveProperty('estimatedFineTiming');
+    expect(published).not.toHaveProperty('paintTiming');
+    expect(published.estimatedStarts.segments[0].startMs).toBe(1000);
+    input.owner.setApplied(false);
+    expect(input.owner.frame.value).toBeNull();
+    expect(input.owner.outputDocument.value).toBeNull();
+    input.scope.stop();
+  });
   it('carries independent fine ranges to both displays while keeping the coarse onset unchanged', async () => {
     const unit = { unitId: 'fine', from: 0, to: 1, startMs: 1200, endMs: 1600 };
     const input = setup();
@@ -255,8 +312,16 @@ describe('manual experimental lyric application', () => {
     expect(owner.frame.value.chunks[0].state).toBe('active');
     expect(owner.frame.value.fineTiming.units).toEqual([unit]);
     expect(
+      owner.frame.value.paintTiming.units.some(
+        (u) => u.timingSource === 'display-estimate',
+      ),
+    ).toBe(true);
+    expect(
       owner.outputDocument.value.lines[0].estimatedFineTiming.units,
     ).toEqual([unit]);
+    expect(owner.outputDocument.value.lines[0]).not.toHaveProperty(
+      'paintTiming',
+    );
     expect(
       owner.outputDocument.value.lines[0].estimatedStarts.segments[0].startMs,
     ).toBe(1000);

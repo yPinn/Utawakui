@@ -5,7 +5,11 @@ import {
 } from '../../../shared/presentation/lyricsAcousticPreview.mjs';
 import { useExperimentalLyricsQueue } from './useExperimentalLyricsQueue.js';
 import { lyricsTextVariantLoader } from '../../utils/lyricsTextVariantLoader.js';
-import { mapLyricsFineText } from '../../../shared/presentation/lyricsFineFrame.mjs';
+import {
+  mapLyricsFineText,
+  prepareLocalLyricsPaintFrame,
+  projectLyricsPaintLifecycle,
+} from '../../../shared/presentation/lyricsFineFrame.mjs';
 
 export function useExperimentalLyrics({
   document,
@@ -215,21 +219,32 @@ export function useExperimentalLyrics({
       (entry) => entry.lineId === value.lineId,
     );
     const fine = line?.estimatedFineTiming;
+    const paintTiming = prepareLocalLyricsPaintFrame(line);
     const state = toValue(playbackState);
     // Depend on transport revisions as well as lyric boundaries; pause/seek/rate
     // must cancel paint even when the sampled lyric position is unchanged.
     const revision = `${state?.playbackRevision ?? ''}:${state?.continuityRevision ?? ''}:${state?.playbackPhase ?? ''}:${state?.tempoRate ?? ''}`;
-    const sample = fine ? samplePlaybackClock?.() : null;
+    const sample = paintTiming ? samplePlaybackClock?.() : null;
     return {
       ...value,
       text: line?.text ?? value.text,
       chunks: value.chunks.map((chunk, index) => ({
         ...chunk,
         text: line?.estimatedStarts?.segments[index]?.text ?? chunk.text,
+        ...(Number.isFinite(paintTiming?.cueEnds[index]) &&
+        paintTiming.cueEnds[index] > chunk.startMs &&
+        toValue(positionMs) >= paintTiming.cueEnds[index] &&
+        toValue(positionMs) >= chunk.startMs
+          ? { state: 'past' }
+          : {}),
       })),
-      ...(fine
+      lifecycle: projectLyricsPaintLifecycle(line, toValue(positionMs), {
+        local: true,
+      }),
+      ...(fine ? { fineTiming: fine } : {}),
+      ...(paintTiming
         ? {
-            fineTiming: fine,
+            paintTiming,
             paintClock: {
               positionMs: sample
                 ? sample.positionMs + toValue(offsetMs)

@@ -15,17 +15,27 @@ function prepareContext(text, frame, cost) {
   if (previous?.text === text) return previous.context;
   const key = JSON.stringify([
     text,
-    frame.units.map((u) => [u.unitId, u.from, u.to, u.startMs, u.endMs]),
+    frame.units.map((u) => [
+      u.unitId,
+      u.from,
+      u.to,
+      u.startMs,
+      u.endMs,
+      u.timingSource,
+    ]),
   ]);
   let context = structures.get(key);
   if (!context) {
-    const units = frame.units.map(({ unitId, from, to, startMs, endMs }) => ({
-      unitId,
-      from,
-      to,
-      startMs,
-      endMs,
-    }));
+    const units = frame.units.map(
+      ({ unitId, from, to, startMs, endMs, timingSource }) => ({
+        unitId,
+        from,
+        to,
+        startMs,
+        endMs,
+        timingSource,
+      }),
+    );
     context = {
       text,
       units,
@@ -68,6 +78,7 @@ function rangeParts(context, from, to, cost) {
 
 function markInk(node, part) {
   node.dataset.lyricsFineUnit = part.unitId;
+  node.dataset.lyricsPaintSource = part.timingSource ?? 'model';
   node.dataset.lyricsFineFrom = String(part.paintFrom);
   node.dataset.lyricsFineTo = String(part.paintTo);
   node.dataset.text = part.text;
@@ -83,6 +94,7 @@ export function clearFineLyricsText(element, cost) {
       .filter((name) => name !== 'lyrics-overlay__fine-ink')
       .join(' ');
     delete element.dataset.lyricsFineUnit;
+    delete element.dataset.lyricsPaintSource;
     delete element.dataset.lyricsFineFrom;
     delete element.dataset.lyricsFineTo;
     element.style.removeProperty('--lyrics-fine-progress');
@@ -135,6 +147,8 @@ export function renderFineLyricsText(
         node.textContent = part.text;
         if (part.unitId) {
           markInk(node, part);
+        } else {
+          node.className = 'lyrics-overlay__fine-gap';
         }
         element.append(node);
         return node;

@@ -1,6 +1,17 @@
 import { validateAcousticEstimateLines } from '../lyricsAcousticEstimate.mjs';
 import { presentationLineSegments } from './state.mjs';
 
+export function summarizeAcousticPreview(prepared) {
+  const ready =
+    prepared?.status === 'ready'
+      ? prepared.lines.filter((line) => line.status === 'ready')
+      : [];
+  return {
+    readyLines: ready.length,
+    fineLines: ready.filter((line) => line.fineTiming?.units?.length).length,
+  };
+}
+
 // Validate immutable estimate content once per source/offset revision, never per tick.
 export function prepareAcousticPreview(document, estimate, offsetMs = 0) {
   if (estimate?.status !== 'ready')

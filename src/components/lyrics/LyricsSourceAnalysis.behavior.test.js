@@ -184,10 +184,10 @@ describe('selected source analysis in available lyrics', () => {
       ],
     };
     await flush();
-    expect(button('分析詞塊').props.disabled).toBe(false);
+    expect(button('分析歌詞').props.disabled).toBe(false);
     expect(button('取消分析')).toBeUndefined();
     expect(findAll(mounted.root, (n) => n.type === 'progress')).toHaveLength(0);
-    trigger(button('分析詞塊'), 'onClick');
+    trigger(button('分析歌詞'), 'onClick');
     await flush();
     expect(mocks.queue.retry).toHaveBeenCalledWith(
       'song',
@@ -204,7 +204,7 @@ describe('selected source analysis in available lyrics', () => {
       target: { value: 'en' },
     });
     await flush();
-    trigger(button('分析詞塊'), 'onClick');
+    trigger(button('分析歌詞'), 'onClick');
     await flush();
     expect(mocks.queue.retry).toHaveBeenCalledWith('song', 'en', 'active.lrc');
     mocks.queue.state.value = {
@@ -269,7 +269,7 @@ describe('selected source analysis in available lyrics', () => {
       target: { value: 'ja' },
     });
     await flush();
-    trigger(button('分析詞塊'), 'onClick');
+    trigger(button('分析歌詞'), 'onClick');
     await flush();
     expect(mocks.queue.retry).toHaveBeenCalledWith('song', 'ja', 'active.lrc');
     expect(JSON.stringify(mocks.domain.state)).toBe(before);
@@ -294,20 +294,31 @@ describe('selected source analysis in available lyrics', () => {
     };
     setup();
     await flush();
-    expect(textContent(mounted.root)).toContain('T1+');
-    expect(textContent(mounted.root)).toContain('1 句模型詞塊');
-    expect(textContent(mounted.root)).toContain('其餘沿用來源');
+    expect(textContent(mounted.root)).toContain('分析未套用');
+    expect(textContent(mounted.root)).toContain('僅分段提示');
+    expect(textContent(mounted.root)).toContain('未涵蓋部分沿用原歌詞');
     expect(owner.setApplied).not.toHaveBeenCalled();
-    trigger(button('套用詞塊'), 'onClick');
+    trigger(button('套用分析'), 'onClick');
     await flush();
     expect(owner.setApplied).toHaveBeenCalledWith(true);
-    trigger(button('停用詞塊'), 'onClick');
+    trigger(button('停用分析'), 'onClick');
     expect(owner.setApplied).toHaveBeenLastCalledWith(false);
+    owner.prepared.value = {
+      status: 'ready',
+      lines: [
+        {
+          status: 'ready',
+          fineTiming: { version: 1, units: [{ unitId: 'fine' }] },
+        },
+      ],
+    };
+    await flush();
+    expect(textContent(mounted.root)).toContain('1 句含掃字時間');
     owner.needsReanalysis.value = true;
     owner.prepared.value = { status: 'stale' };
     await flush();
     expect(textContent(mounted.root)).toContain('校時已變更，請重新分析');
-    expect(button('套用詞塊')).toBeUndefined();
+    expect(button('套用分析')).toBeUndefined();
   });
   it('cancels the source job, preserves the old estimate after failure, and stops polling on close', async () => {
     const props = setup();
@@ -343,7 +354,7 @@ describe('selected source analysis in available lyrics', () => {
     owner.prepared.value = { status: 'ready', lines: [{ status: 'ready' }] };
     await flush();
     expect(textContent(mounted.root)).toContain('原有歌詞與伴奏仍可使用');
-    expect(button('套用詞塊').props.disabled).toBe(false);
+    expect(button('套用分析').props.disabled).toBe(false);
     props.active = false;
     await flush();
     const count = mocks.queue.refresh.mock.calls.length;
@@ -355,21 +366,21 @@ describe('selected source analysis in available lyrics', () => {
     await flush();
     mocks.domain.state.offsetSave.isSaving = true;
     await flush();
-    expect(button('分析詞塊').props.disabled).toBe(true);
+    expect(button('分析歌詞').props.disabled).toBe(true);
     mocks.domain.state.offsetSave.isSaving = false;
     mocks.queue.state.value = {
       ...mocks.queue.state.value,
       environmentStatus: 'missing',
     };
     await flush();
-    expect(button('分析詞塊').props.disabled).toBe(true);
+    expect(button('分析歌詞').props.disabled).toBe(true);
     expect(textContent(mounted.root)).toContain('設定');
     mocks.domain.lyricsDocument.value = {
       lines: [{ startMs: 1000, endMs: 5000, segments: [{}] }],
     };
     await flush();
     expect(textContent(mounted.root)).toContain('來源 T2');
-    expect(button('分析詞塊')).toBeUndefined();
+    expect(button('分析歌詞')).toBeUndefined();
     expect(mocks.queue.retry).not.toHaveBeenCalled();
     expect(owner.setApplied).not.toHaveBeenCalled();
   });
@@ -391,6 +402,6 @@ describe('selected source analysis in available lyrics', () => {
     owner.prepared.value = { status: 'stale' };
     await flush();
     expect(textContent(mounted.root)).toContain('校時已變更，請重新分析');
-    expect(button('套用詞塊')).toBeUndefined();
+    expect(button('套用分析')).toBeUndefined();
   });
 });

@@ -8,7 +8,10 @@ import {
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 import { estimatedLyricsTextUnits } from './lyricsTimingUnits.mjs';
-import { projectLyricsFineFrame } from './lyricsFineFrame.mjs';
+import {
+  projectLyricsFineFrame,
+  prepareLyricsPaintFrame,
+} from './lyricsFineFrame.mjs';
 import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
 import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
@@ -221,16 +224,22 @@ function projectSegmentStates(
   positionMs,
   fallbackEndMs,
   startsOnly = false,
+  cueEnds = [],
 ) {
   const rate = playbackRate(snapshot);
   const isPlaying = snapshot?.playback?.status === 'playing';
   return segments.map((segment, index) => {
     const nextStartMs = segments[index + 1]?.startMs;
-    const endMs = Number.isFinite(segment.endMs)
+    const sourceEndMs = Number.isFinite(segment.endMs)
       ? segment.endMs
       : Number.isFinite(nextStartMs)
         ? nextStartMs
         : fallbackEndMs;
+    const cueEnd = cueEnds[index];
+    const endMs =
+      startsOnly && Number.isFinite(cueEnd) && cueEnd > segment.startMs
+        ? Math.min(sourceEndMs ?? Infinity, cueEnd)
+        : sourceEndMs;
     const progress = boundedProgress(positionMs, segment.startMs, endMs);
     const state =
       positionMs < segment.startMs
@@ -272,6 +281,7 @@ function projectCurrentSegments(snapshot, lines, lineIndex, nowMs) {
       positionMs,
       lineEndMs,
       projection.timingSource === 'model-starts',
+      prepareLyricsPaintFrame(lines[lineIndex])?.cueEnds,
     ),
   };
 }
@@ -1000,6 +1010,8 @@ function projectKtvDisplayTimeline(
           displayUnitIndex: units.length,
           sourceLineIndex,
           phraseIndex,
+          sourceStart: phrase.sourceStart,
+          sourceEnd: phrase.sourceEnd,
           text: phrase.text,
           role: presentation.role,
           startMs,
@@ -1178,6 +1190,22 @@ function presentationKtvSegments(unit) {
 
 function projectKtvSegments(snapshot, unit, positionMs) {
   const segments = presentationKtvSegments(unit);
+  const line = snapshot.lyrics.lines[unit?.sourceLineIndex];
+  const plan = prepareLyricsPaintFrame(line);
+  let cursor = 0;
+  const ends =
+    line?.estimatedStarts?.segments?.map((chunk, index) => {
+      const from = cursor;
+      cursor += chunk.text.length;
+      return { from, to: cursor, end: plan?.cueEnds[index] };
+    }) ?? [];
+  cursor = unit?.sourceStart ?? 0;
+  const cueEnds = segments?.map((segment) => {
+    const from = cursor;
+    cursor += segment.text.length;
+    return ends.find((entry) => entry.from === from && entry.to === cursor)
+      ?.end;
+  });
   return segments
     ? projectSegmentStates(
         snapshot,
@@ -1185,8 +1213,50 @@ function projectKtvSegments(snapshot, unit, positionMs) {
         positionMs,
         unit.endMs,
         unit.timingSource === 'model-starts',
+        cueEnds,
       )
     : null;
+}
+
+function finePaintFrame(snapshot, line, positionMs, nowMs, range) {
+  const frame = projectLyricsFineFrame(line, positionMs, {
+    rate: playbackRate(snapshot),
+    playing: snapshot?.playback?.status === 'playing',
+  });
+  if (!frame) return null;
+  const units = range
+    ? frame.units
+        .filter((u) => u.from >= range.from && u.to <= range.to)
+        .map((u) => ({
+          ...u,
+          from: u.from - range.from,
+          to: u.to - range.from,
+        }))
+    : frame.units;
+  if (!units.length) return null;
+  return {
+    ...frame,
+    units,
+    sampledAtMs: nowMs,
+    advanceAtMs: Math.max(
+      nowMs,
+      Date.parse(snapshot.generatedAt) +
+        (Number.isSafeInteger(snapshot.displayDelayMs)
+          ? snapshot.displayDelayMs
+          : 0),
+    ),
+  };
+}
+
+function ktvFineFrame(snapshot, unit, positionMs, nowMs) {
+  if (unit?.timingSource !== 'model-starts') return null;
+  const line = snapshot.lyrics.lines[unit.sourceLineIndex];
+  if (line?.text.slice(unit.sourceStart, unit.sourceEnd) !== unit.text)
+    return null;
+  return finePaintFrame(snapshot, line, positionMs, nowMs, {
+    from: unit.sourceStart,
+    to: unit.sourceEnd,
+  });
 }
 
 function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
@@ -1204,6 +1274,18 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
       : boundedProgress(positionMs, unit.startMs, unit.endMs);
   const currentSegments = projectKtvSegments(snapshot, unit, positionMs);
   const nextSegments = projectKtvSegments(snapshot, secondaryUnit, positionMs);
+  const currentFineTiming = ktvFineFrame(
+    snapshot,
+    unit,
+    positionMs,
+    options.nowMs,
+  );
+  const nextFineTiming = ktvFineFrame(
+    snapshot,
+    secondaryUnit,
+    positionMs,
+    options.nowMs,
+  );
   return {
     revision: revision(snapshot),
     visible: true,
@@ -1227,6 +1309,18 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
     nextRole: secondaryUnit?.role ?? 'solo',
     nextHeld: companionUnit !== null,
     currentTimingSource: unit.timingSource,
+    ...(currentFineTiming
+      ? {
+          currentFineTiming,
+          currentSourceRange: {
+            from: unit.sourceStart,
+            to: unit.sourceEnd,
+            startMs: unit.startMs,
+            endMs: unit.endMs,
+          },
+        }
+      : {}),
+    ...(nextFineTiming ? { nextFineTiming } : {}),
     ...(currentSegments ? { currentSegments } : {}),
     ...(nextSegments ? { nextSegments } : {}),
     ...(Number.isFinite(options.laneReplacementDelayMs)
@@ -1265,6 +1359,7 @@ function selectKtvLyricsFrame(
         ? entrance
         : null;
     return ktvFrameForUnit(snapshot, units, activeUnit, positionMs, {
+      nowMs,
       ...(overlappingEntrance
         ? {
             nextUnit: overlappingEntrance.unit,
@@ -1277,6 +1372,7 @@ function selectKtvLyricsFrame(
   if (entrance) {
     const previousUnit = units[entrance.unit.displayUnitIndex - 1] ?? null;
     return ktvFrameForUnit(snapshot, units, entrance.unit, positionMs, {
+      nowMs,
       preRoll: true,
       laneReplacementDelayMs: Number.isFinite(entrance.previousEndMs)
         ? Math.max(
@@ -1297,6 +1393,7 @@ function selectKtvLyricsFrame(
   );
   return completedUnit
     ? ktvFrameForUnit(snapshot, units, completedUnit, positionMs, {
+        nowMs,
         completed: true,
         companionUnit: ktvTailCompanionUnit(units, completedUnit),
         nextUnit: nextKtvDisplayUnit(units, completedUnit),
@@ -1334,14 +1431,20 @@ function nextKtvBoundaryDelayMs(
       ...segments.flatMap((segment) => [segment.startMs, segment.endMs]),
     ];
   });
+  const activeSources = new Set(
+    units
+      .filter((unit) => unit.startMs <= positionMs && unit.endMs > positionMs)
+      .map((unit) => unit.sourceLineIndex),
+  );
+  for (const index of activeSources)
+    boundaries.push(...(prepareLyricsPaintFrame(lines[index])?.cueEnds ?? []));
   for (const entrance of ktvEntrances(snapshot, units)) {
     boundaries.push(entrance.visibleStartMs, ...entrance.boundaries);
   }
-  const nextBoundaryMs = Math.min(
-    ...boundaries.filter(
-      (boundaryMs) => Number.isFinite(boundaryMs) && boundaryMs > positionMs,
-    ),
-  );
+  let nextBoundaryMs = Infinity;
+  for (const boundaryMs of boundaries)
+    if (Number.isFinite(boundaryMs) && boundaryMs > positionMs)
+      nextBoundaryMs = Math.min(nextBoundaryMs, boundaryMs);
   return Number.isFinite(nextBoundaryMs)
     ? Math.max(
         1,
@@ -1374,6 +1477,9 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
       return [
         line?.startMs,
         line?.endMs,
+        ...(line?.startMs <= lyricPositionMs && line?.endMs > lyricPositionMs
+          ? (prepareLyricsPaintFrame(line)?.cueEnds ?? [])
+          : []),
         ...(projection?.segments.flatMap((segment) => [
           segment.startMs,
           segment.endMs,

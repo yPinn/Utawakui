@@ -421,6 +421,49 @@
   }
 
   :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment[data-fine-timing='true']:not(
+      .lyrics-overlay__fine-ink
+    )::after {
+    content: none;
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment[data-fine-timing='true'] {
+    max-inline-size: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__fine-ink {
+    color: var(--ovl-ktv-fill-unsung);
+    -webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-unsung);
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment:is(
+      [data-segment-state='active'],
+      [data-segment-state='past']
+    )
+    .lyrics-overlay__fine-gap {
+    color: var(--ovl-ktv-fill-sung);
+    -webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);
+  }
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__fine-ink::after {
+    clip-path: inset(-0.2em calc(100% - var(--lyrics-fine-progress)) -0.2em 0);
+    color: var(--ovl-ktv-fill-sung);
+    -webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);
+    content: attr(data-text) / '';
+    white-space: pre-wrap;
+    paint-order: stroke fill;
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment[data-fine-timing='true'][data-segment-state='active'] {
+    text-decoration: none;
+  }
+  @media (forced-colors: active) {
+    :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__fine-ink::after {
+      content: none;
+    }
+  }
+
+  :root[data-ovl-template='karaoke-stack']
     .lyrics-overlay__segment[data-segment-state='past'],
   :root[data-ovl-template='karaoke-stack']
     .lyrics-overlay__segment[data-segment-state='active'],
@@ -1190,9 +1233,25 @@
   }
   :root[data-ovl-template='karaoke-stack']
     .lyrics-overlay[data-fit-active='true']
-    .lyrics-overlay__current {
+    .lyrics-overlay__current:not([data-ktv-active='true']) {
+    display: none;
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay[data-fit-active='true']
+    [data-ktv-active='true'] {
+    display: block;
     grid-row: 1;
     max-inline-size: 100%;
+    overflow: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-wrap: wrap;
+  }
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay[data-fit-active='true']
+    .lyrics-overlay__ktv-count-in[data-ktv-lane='b'] {
+    inset-block-start: -2.55em;
+    grid-row: 1;
   }
 }
 @layer components {

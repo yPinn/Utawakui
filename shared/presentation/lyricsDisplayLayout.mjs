@@ -1,4 +1,5 @@
 import { lyricsDisplayBreakCandidates } from './lyricsPresentation.mjs';
+import { isSafeLyricsBreak } from './lyricsTextProcessing.mjs';
 
 const MAX_TEXT = 2000;
 const MIN_DWELL_MS = 1200;
@@ -78,6 +79,8 @@ function partition(
         low = middle + 1;
       } else high = middle - 1;
     }
+    if (best === index) return null;
+    while (best > index && !isSafeLyricsBreak(text, boundaries[best])) best--;
     if (best === index) return null;
     let end = boundaries[best];
     if (preferNatural && end !== text.length) {

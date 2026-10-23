@@ -55,6 +55,7 @@ export function projectLyricsDisplayFrame(
     currentText: page.text,
     nextText: '',
     nextSegments: undefined,
+    nextFineTiming: undefined,
     nextReading: null,
     currentReading: reading,
     currentSegments: pageSegments(

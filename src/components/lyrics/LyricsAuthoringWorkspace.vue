@@ -421,7 +421,10 @@ async function commitTimingDocument() {
       </div>
       <LyricsLiveTool
         :experimental-frame="
-          editMode === 'preview' ? lyrics.experimentalLyrics?.frame.value : null
+          editMode === 'preview'
+            ? (lyrics.localLyricsFrame?.value ??
+              lyrics.experimentalLyrics?.frame.value)
+            : null
         "
         class="lyrics-stage__live-tool"
         :document-id="lyricsDocument.documentId"
