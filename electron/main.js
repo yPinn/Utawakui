@@ -651,28 +651,19 @@ if (!gotSingleInstanceLock) {
         ipcMain,
         queue: experimentalLyricsQueue,
         recordDiagnostic,
-        loadEstimate: async (trackId, filename) => {
-          if (
-            !configState.getConfig().experimentalLyricsAfterSeparation ||
-            !isFeatureGateEnabled(
-              configState.getConfig(),
-              FEATURE_IDS.AUDIO_PROCESSING_FLOW,
-            )
-          )
-            return { status: 'disabled' };
-          const input =
-            await require('./lib/lyricsResearch/input').loadResearchInput(
-              configState.resolveDownloadDir(configState.getConfig()),
-              { trackId, language: 'zh', lineIndex: 0 },
-              { filename },
-            );
-          return {
-            ...require('./lib/lyricsResearch/estimates').loadExperimentalEstimate(
-              input,
-            ),
-            sourceRevision: input.sourceRevision,
-          };
-        },
+        loadEstimate:
+          require('./lib/lyricsResearch/estimateReader').createExperimentalEstimateReader(
+            {
+              getLibraryDir: () =>
+                configState.resolveDownloadDir(configState.getConfig()),
+              isEnabled: () =>
+                configState.getConfig().experimentalLyricsAfterSeparation &&
+                isFeatureGateEnabled(
+                  configState.getConfig(),
+                  FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+                ),
+            },
+          ),
       },
     );
     registerLyricsResearchHandlers({

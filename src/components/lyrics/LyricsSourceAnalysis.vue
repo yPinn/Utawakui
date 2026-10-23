@@ -155,6 +155,10 @@ const statusMessage = computed(() => {
         ? `${summary.value.fineLines} 句含細時間`
         : '僅分段提示') +
       '；未涵蓋部分沿用原歌詞。' +
+      (experiment.estimate.value.compatibility?.rule ===
+      'normalizer-v2-v3-exact-v1'
+        ? ' 沿用既有分析，時間未變。'
+        : '') +
       (experiment.estimate.value.validation?.missingLyrics
         ? ` 疑似漏詞 ${experiment.estimate.value.validation.missingLyrics} 句，套用前請確認。`
         : '')

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { atomicWriteText } = require('../atomicWrite');
+const { compatibleEstimate } = require('./estimateCompatibility');
 const { contained } = require('../lyricsAcoustic/integrity');
 const {
   prepareAcousticEstimateContext,
@@ -185,21 +186,50 @@ async function saveExperimentalEstimate(input, result, isCurrent) {
   return preview(estimate, validation);
 }
 function loadExperimentalEstimate(input) {
-  let raw;
+  let raw, file, stamp, contentSha;
+  const signature = (stat) =>
+    [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs]
+      .map(String)
+      .join(':');
   try {
-    const file = location(input);
+    file = location(input);
     const fd = fs.openSync(file, 'r');
     try {
+      stamp = signature(fs.fstatSync(fd, { bigint: true }));
       const buffer = Buffer.alloc(2097153);
       const length = fs.readSync(fd, buffer, 0, buffer.length, 0);
       if (length > 2097152) throw Error('experimental estimate budget');
-      raw = JSON.parse(buffer.subarray(0, length).toString('utf8'));
+      const bytes = buffer.subarray(0, length);
+      contentSha = createHash('sha256').update(bytes).digest('hex');
+      raw = JSON.parse(bytes.toString('utf8'));
+      if (stamp !== signature(fs.fstatSync(fd, { bigint: true })))
+        return { status: 'stale', reason: 'result-changed' };
     } finally {
       fs.closeSync(fd);
     }
   } catch (error) {
     return { status: error.code === 'ENOENT' ? 'missing' : 'corrupt' };
   }
+  const original = validateStoredEstimate(input, raw);
+  let value = original;
+  if (original.status === 'stale' && !original.reason) {
+    try {
+      value =
+        compatibleEstimate(input, raw, validateStoredEstimate, contentSha) ??
+        original;
+    } catch {
+      value = original;
+    }
+  }
+  try {
+    if (stamp !== signature(fs.statSync(file, { bigint: true })))
+      return { status: 'stale', reason: 'result-changed' };
+  } catch {
+    return { status: 'stale', reason: 'result-changed' };
+  }
+  return value;
+}
+function validateStoredEstimate(input, raw) {
   try {
     if (
       ![1, 2, 3, 4, 5].includes(raw.version) ||

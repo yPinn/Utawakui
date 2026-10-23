@@ -314,6 +314,14 @@ describe('selected source analysis in available lyrics', () => {
     };
     await flush();
     expect(textContent(mounted.root)).toContain('1 句含細時間');
+    const previousApplyCalls = owner.setApplied.mock.calls.length;
+    owner.estimate.value = {
+      ...owner.estimate.value,
+      compatibility: { rule: 'normalizer-v2-v3-exact-v1' },
+    };
+    await flush();
+    expect(textContent(mounted.root)).toContain('沿用既有分析，時間未變');
+    expect(owner.setApplied).toHaveBeenCalledTimes(previousApplyCalls);
     owner.needsReanalysis.value = true;
     owner.prepared.value = { status: 'stale' };
     await flush();
