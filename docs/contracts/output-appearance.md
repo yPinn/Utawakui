@@ -30,7 +30,7 @@
 | kineticMaterial／kineticArrangement              | opt；candy-rim／straight          | 三個既有材料或 cycle；straight／subtle-offset                                         |
 | textColor／accentColor                           | advanced；#fff8ec／#ffffff        | Ornate 的六位 Hex，拒絕 CSS 函式與路徑                                                |
 | positionAnchor／positionOffsetX／positionOffsetY | opt／advanced；center-right／0／0 | Ornate 只開右上／右中／右下，X −12%～12%、Y −25%～25%                                 |
-| lyricsPresentationPolicyId                       | opt；broadcast-compact            | Live Stage 的 broadcast-compact／balanced／literal，屬內容呈現 policy                 |
+| lyricsPresentationPolicyId                       | opt；balanced                     | Live Stage 的 broadcast-compact／balanced／literal，獨立列在模板進階顯示              |
 | captureSize                                      | 依 registry                       | 只開放各模板支援的尺寸                                                                |
 
 `alignment`、`contentWidth` 存在於 schema，但八個模板都未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。

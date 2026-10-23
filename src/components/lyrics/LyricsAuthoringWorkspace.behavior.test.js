@@ -799,6 +799,12 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
         selectedLyrics: ref({ status: 'available', sources: [source] }),
         selectedSource: selectedSourceRef,
         lyricsDocument: lyricsDocumentRef,
+        lyricsTextProcessing: {
+          candidates: ref([]),
+          hiddenLineIds: ref([]),
+          setHidden: vi.fn(),
+          restore: vi.fn(),
+        },
         lyricsTextVariant,
         lyricLines: lyricLinesRef,
         activeLineIndex: ref(-1),

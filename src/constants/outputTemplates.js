@@ -1,7 +1,6 @@
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import {
   OUTPUT_APPEARANCE_DEFAULTS,
-  OUTPUT_APPEARANCE_GROUPS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   outputAppearanceFieldsForTemplate,
 } from '../../shared/outputAppearance.mjs';
@@ -229,9 +228,11 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
 ];
 
 const EMPTY_PRESENTATION_FIELDS = Object.freeze([]);
-const CONTENT_CONFIGURATION_GROUP = OUTPUT_APPEARANCE_GROUPS.find(
-  (group) => group.id === 'content',
-);
+const CONTENT_CONFIGURATION_GROUP = Object.freeze({
+  id: 'template-presentation',
+  label: '模板進階顯示',
+  order: 90,
+});
 
 function presentationFieldsForTemplate(templateId) {
   const options = lyricsPresentationPolicyOptionsForTemplate(templateId);

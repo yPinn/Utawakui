@@ -6,6 +6,11 @@ import {
 } from './ornateVerticalPresentation.mjs';
 import { lyricsPresentationPolicyForTemplate } from './lyricsPresentationPolicies.mjs';
 import { outputAppearanceFieldKeysForTemplate } from '../outputAppearance.mjs';
+import {
+  analyzeLyricsText,
+  isProtectedLyricsBreak,
+  isSafeLyricsBreak,
+} from './lyricsTextProcessing.mjs';
 
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
 export const MAX_LIVE_STAGE_CAPTION_LINES = 2;
@@ -343,6 +348,7 @@ function semanticUnit(sourceText, kind, start, end, breakBefore = null) {
 }
 
 function splitMainRange(sourceText, start, end, initialBreak = null) {
+  const textAnalysis = analyzeLyricsText(sourceText);
   const units = [];
   let unitStart = null;
   let breakBefore = initialBreak;
@@ -369,7 +375,12 @@ function splitMainRange(sourceText, start, end, initialBreak = null) {
       continue;
     }
     if (unitStart === null && !/\s/u.test(character)) unitStart = index;
-    if (unitStart !== null && SEMANTIC_PUNCTUATION_RE.test(character)) {
+    if (
+      unitStart !== null &&
+      SEMANTIC_PUNCTUATION_RE.test(character) &&
+      !isProtectedLyricsBreak(textAnalysis, index + 1) &&
+      isSafeLyricsBreak(sourceText, index + 1)
+    ) {
       pushUnit(index + 1);
       breakBefore = 'punctuation';
     }
@@ -1274,10 +1285,16 @@ function splitCaptionRowsAtCjkWordBoundaries(text, rowCount, startRowIndex) {
 // acoustic evidence. Grapheme fallbacks are supplied by the capacity planner.
 export function lyricsDisplayBreakCandidates(value) {
   const text = String(value ?? '');
+  const analysis = analyzeLyricsText(text);
   const result = new Map();
   const add = (offset, priority, basis) => {
     while (offset < text.length && /\s/u.test(text[offset])) offset++;
     if (offset <= 0 || offset >= text.length) return;
+    if (
+      !isSafeLyricsBreak(text, offset) ||
+      isProtectedLyricsBreak(analysis, offset)
+    )
+      return;
     if ((result.get(offset)?.priority ?? -1) < priority)
       result.set(offset, { offset, priority, basis });
   };

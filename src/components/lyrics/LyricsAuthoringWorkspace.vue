@@ -19,6 +19,7 @@ import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
+import LyricsTextProcessing from './LyricsTextProcessing.vue';
 
 const lyrics = useLyrics();
 const reading = useLyricsReading();
@@ -367,6 +368,7 @@ async function commitTimingDocument() {
           />
         </template>
       </LyricsWorkspaceHeader>
+      <LyricsTextProcessing />
       <LyricsExperimentalEstimate
         :disabled="isEditingLocked || editMode !== 'preview'"
       />

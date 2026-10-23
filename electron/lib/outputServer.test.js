@@ -564,6 +564,7 @@ describe('outputServer', () => {
       expect.arrayContaining([
         '/shared/presentation/lyricsPhraseBreaks.mjs',
         '/shared/presentation/lyricsDisplayLayout.mjs',
+        '/shared/presentation/lyricsTextProcessing.mjs',
         '/shared/presentation/lyricsDisplayFrame.mjs',
         '/shared/presentation/lyricsFineFrame.mjs',
         '/shared/lyricsFineTiming.mjs',

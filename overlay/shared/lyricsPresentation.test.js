@@ -24,7 +24,10 @@ function visibleMangaBubbles(text, options = {}) {
 }
 
 function liveStagePresentation(text, options = {}) {
-  return adaptLiveStageLyricsPresentation(analyzeLyricsSource(text), options);
+  return adaptLiveStageLyricsPresentation(analyzeLyricsSource(text), {
+    lyricsPresentationPolicyId: 'broadcast-compact',
+    ...options,
+  });
 }
 
 function liveStageVisualWidth(value) {
@@ -210,6 +213,7 @@ describe('lyrics presentation profiles', () => {
   it('compiles the selected Live Stage presentation policy without changing the source', () => {
     const compact = compileLyricsPresentationDocument(document, {
       templateId: 'live-stage',
+      lyricsPresentationPolicyId: 'broadcast-compact',
     });
     const balanced = compileLyricsPresentationDocument(document, {
       lyricsPresentationPolicyId: 'balanced',
@@ -701,6 +705,16 @@ describe('lyrics presentation preprocessing', () => {
 });
 
 describe('Live Stage caption preprocessing', () => {
+  it('preserves sung repeats and parenthetical harmonies by default', () => {
+    const sourceText = 'Oh, Kitsch, kitsch (oh oh)';
+    const result = adaptLiveStageLyricsPresentation(
+      analyzeLyricsSource(sourceText),
+    );
+    expect(result.presentationPolicy.id).toBe('balanced');
+    expect(result.pages.flatMap((page) => page.lines).join(' ')).toBe(
+      sourceText,
+    );
+  });
   it('keeps content handling selectable without changing timing or source text', () => {
     const sourceText = 'Oh, Kitsch, kitsch';
     const compact = liveStagePresentation(sourceText);

@@ -95,8 +95,10 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
 
     expect(html).toContain('歌詞呈現');
     expect(html).toContain('歌詞呈現策略');
+    expect(html).toContain('模板進階顯示');
+    expect(html).toContain('製作資訊請在歌詞的「共用文字處理」逐行確認');
     expect(html).toMatch(
-      /<select id="output-appearance-lyricsPresentationPolicyId"[^>]*value="broadcast-compact"/,
+      /<select id="output-appearance-lyricsPresentationPolicyId"[^>]*value="balanced"/,
     );
     expect(html).toContain('轉播精簡');
     expect(html).toContain('平衡分行');

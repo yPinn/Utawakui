@@ -67,7 +67,7 @@ export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
     music: { cadence: false, beatPhase: false, sections: false },
     scheduler: ['lyrics-lines', 'live-stage-card', 'live-stage-captions'],
     presentationPolicyIds: ['broadcast-compact', 'balanced', 'literal'],
-    defaultPresentationPolicyId: 'broadcast-compact',
+    defaultPresentationPolicyId: 'balanced',
   }),
 });
 

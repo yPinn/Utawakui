@@ -1,17 +1,13 @@
 // Conservative display candidates, not a semantic model or a pause detector.
+import {
+  analyzeLyricsText,
+  isProtectedLyricsBreak,
+  isSafeLyricsBreak,
+} from './lyricsTextProcessing.mjs';
 let glyphs = null;
 const latin = /\p{Script=Latin}/u;
 const cjk =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
-const openings = new Map([
-  ['(', ')'],
-  ['（', '）'],
-  ['「', '」'],
-  ['『', '』'],
-  ['“', '”'],
-  ['[', ']'],
-]);
-const closings = new Set(openings.values());
 const width = (value) =>
   [...glyphs.segment(value)].reduce(
     (sum, { segment }) =>
@@ -29,15 +25,18 @@ function candidateRanges(text) {
   }
   if (total < 36) return null;
   const safe = new Set([0]),
-    stack = [],
     candidates = new Map();
+  const analysis = analyzeLyricsText(text);
+  if (analysis.malformedPairs) return null;
   for (const part of glyphs.segment(text)) {
     const ch = part.segment;
-    if (openings.has(ch)) stack.push(openings.get(ch));
-    else if (closings.has(ch) && stack.pop() !== ch) return null;
-    if (!stack.length) safe.add(part.index + ch.length);
+    const offset = part.index + ch.length;
+    if (
+      !isProtectedLyricsBreak(analysis, offset) &&
+      isSafeLyricsBreak(text, offset)
+    )
+      safe.add(offset);
   }
-  if (stack.length) return null;
   const add = (at, basis, rank) => {
     while (at < text.length && /\s/u.test(text[at])) at++;
     if (!safe.has(at) || at <= 0 || at >= text.length) return;

@@ -9,6 +9,7 @@ import { useLyricsAcquisition } from './lyrics/useLyricsAcquisition.js';
 import { useLyricsSourceDocuments } from './lyrics/useLyricsSourceDocuments.js';
 import { useExperimentalLyrics } from './lyrics/useExperimentalLyrics.js';
 import { useLyricsClock } from './lyrics/useLyricsClock.js';
+import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
   deriveLyricsPlaybackState,
@@ -190,6 +191,11 @@ const displayLyricsDocument = computed(() =>
     variant: lyricsTextVariant.value,
   }),
 );
+const lyricsTextProcessing = useLyricsTextProcessing({
+  document: lyricsDocument,
+  sourceKey: () =>
+    `${state.selectedTrackId ?? ''}/${state.selectedSourceFilename ?? ''}`,
+});
 const lyricLines = computed(() =>
   projectLegacyLyricLines(displayLyricsDocument.value),
 );
@@ -457,6 +463,7 @@ export function useLyrics() {
     lyricsAcousticEstimate: readonly(lyricsAcousticEstimate),
     lyricsDocument,
     displayLyricsDocument,
+    lyricsTextProcessing,
     experimentalLyrics,
     lyricsTextVariant: readonly(lyricsTextVariant),
     lyricLines,

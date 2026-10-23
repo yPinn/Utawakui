@@ -21,6 +21,7 @@ import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -324,6 +325,17 @@ function resetAppearance() {
         class="obs-slot-workbench__section"
       >
         <h3 class="obs-slot-workbench__section-title">{{ group.label }}</h3>
+        <UiHint v-if="group.id === 'template-presentation'">
+          只調整此模板的歌詞呈現。製作資訊請在歌詞的「共用文字處理」逐行確認；來源、對唱與和聲不會在此處改寫。
+        </UiHint>
+        <UiHint
+          v-if="
+            group.id === 'template-presentation' &&
+            draft.lyricsPresentationPolicyId === 'broadcast-compact'
+          "
+        >
+          轉播精簡會省略部分重複詞與語助詞。需要保留實唱與和聲文字時，請選擇平衡分行或忠實原文。
+        </UiHint>
         <div class="obs-slot-workbench__fields">
           <ObsAppearanceField
             v-for="field in group.fields"

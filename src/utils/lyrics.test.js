@@ -45,10 +45,13 @@ Second line`),
 
 00:00:05.000 --> 00:00:06.000
 Real lyric`),
-    ).toEqual([{ start: 5, end: 6, text: 'Real lyric' }]);
+    ).toEqual([
+      { start: 3, end: 4, text: '(instrumental)' },
+      { start: 5, end: 6, text: 'Real lyric' },
+    ]);
   });
 
-  it('filters YouTube CC stage directions and strips music-note decorations', () => {
+  it('preserves unknown uppercase CC text while stripping music-note decorations', () => {
     expect(
       parseVtt(
         `WEBVTT
@@ -68,6 +71,8 @@ OF THE SILENCE THAT ALLOWS ♪`,
         { source: { kind: 'youtube-cc', language: 'en' } },
       ),
     ).toEqual([
+      { start: 20, end: 21, text: '[MANUAL WINDING]' },
+      { start: 23, end: 24, text: '[TURNING ON BIT]' },
       { start: 35, end: 38, text: '(LOOK OUT FOR YOURSELF)' },
       {
         start: 39,
@@ -94,7 +99,7 @@ OF THE SILENCE THAT ALLOWS ♪`,
       ),
     ).toEqual([{ start: 5, end: 6, text: '真正的歌詞' }]);
   });
-  it('dedupes nearby rolling YouTube CC lyric cues', () => {
+  it('preserves repeated and cumulative CC rows without explicit duplication evidence', () => {
     expect(
       parseVtt(
         `WEBVTT
@@ -119,8 +124,18 @@ OF THE SILENCE THAT ALLOWS ♪`,
       ),
     ).toEqual([
       { start: 20, end: 23, text: '\u7a7a\u306e\u9752\u3055' },
-      { start: 23, end: 28, text: '\u306b\u76ee\u3092\u596a\u308f\u308c' },
-      { start: 28, end: 33, text: '\u3066\u8db3\u3082\u5143\u306e\u82b1' },
+      { start: 23, end: 25, text: '\u7a7a\u306e\u9752\u3055' },
+      {
+        start: 23,
+        end: 28,
+        text: '\u7a7a\u306e\u9752\u3055\n\u306b\u76ee\u3092\u596a\u308f\u308c',
+      },
+      { start: 28, end: 30, text: '\u306b\u76ee\u3092\u596a\u308f\u308c' },
+      {
+        start: 28,
+        end: 33,
+        text: '\u306b\u76ee\u3092\u596a\u308f\u308c\n\u3066\u8db3\u3082\u5143\u306e\u82b1',
+      },
     ]);
   });
 
@@ -142,7 +157,7 @@ Stay with me`,
     ]);
   });
 
-  it('removes nearby repeated rolling captions before keeping the new suffix', () => {
+  it('preserves repeated text across a gap without rolling overlap evidence', () => {
     expect(
       parseVtt(
         `WEBVTT
@@ -166,13 +181,18 @@ Stay with me`,
       },
       {
         start: 69,
+        end: 71,
+        text: '\u3042\u3063\u3066\u601d\u3044\u51fa\u3059\u8272\u306e\u306a\u3044\u4e16\u754c\u6b8b\u308b\u9999\u308a\u306b\u4f1a',
+      },
+      {
+        start: 69,
         end: 75,
-        text: '\u3070\u304b\u308a\u304c\u52df\u3063\u3066',
+        text: '\u3042\u3063\u3066\u601d\u3044\u51fa\u3059\u8272\u306e\u306a\u3044\u4e16\u754c\u6b8b\u308b\u9999\u308a\u306b\u4f1a\n\u3070\u304b\u308a\u304c\u52df\u3063\u3066',
       },
     ]);
   });
 
-  it('keeps the richest cue when nearby captions share a start time', () => {
+  it('preserves distinct cues sharing a start instead of choosing one voice', () => {
     expect(
       parseVtt(
         `WEBVTT
@@ -185,7 +205,10 @@ Line one
 Line two`,
         { source: { kind: 'youtube-cc', language: 'en' } },
       ),
-    ).toEqual([{ start: 10, end: 13, text: 'Line one\nLine two' }]);
+    ).toEqual([
+      { start: 10, end: 11, text: 'Line one' },
+      { start: 10, end: 13, text: 'Line one\nLine two' },
+    ]);
   });
 });
 
@@ -367,7 +390,7 @@ First line`);
 describe('isNonLyricCue', () => {
   it('detects bracketed music and sound-effect cues', () => {
     expect(isNonLyricCue('[Music]')).toBe(true);
-    expect(isNonLyricCue('(music)')).toBe(true);
+    expect(isNonLyricCue('(music)')).toBe(false);
     expect(isNonLyricCue('[APPLAUSE]')).toBe(true);
     expect(isNonLyricCue('[音樂]', { language: 'zh-TW' })).toBe(true);
     expect(isNonLyricCue('[拍手]', { language: 'zh-TW' })).toBe(true);

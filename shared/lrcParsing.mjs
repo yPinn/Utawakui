@@ -1,4 +1,3 @@
-const LRC_TAG_RE = /\[([^\]]+)\]/gu;
 const LRC_TIME_RE = /^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/u;
 const LRC_METADATA_KEYS = new Set([
   'al',
@@ -20,21 +19,38 @@ export function parseLrcTimestamp(value) {
   if (!match) return null;
   const minutes = Number(match[1]);
   const seconds = Number(match[2]);
+  if (seconds > 59) return null;
   const fraction = match[3] || '';
   const millis = fraction ? Number(fraction.padEnd(3, '0').slice(0, 3)) : 0;
   return minutes * 60 + seconds + millis / 1000;
 }
 
 export function lrcTimestamps(value) {
-  return [...String(value ?? '').matchAll(LRC_TAG_RE)]
-    .map((match) => parseLrcTimestamp(match[1]))
-    .filter((timestamp) => timestamp !== null);
+  return leadingLrcTags(value).timestamps;
 }
 
 export function stripLrcTimestampTags(value) {
-  return String(value ?? '').replace(LRC_TAG_RE, (tag, content) =>
-    parseLrcTimestamp(content) === null ? tag : '',
-  );
+  return leadingLrcTags(value).text;
+}
+
+function leadingLrcTags(value) {
+  let text = String(value ?? '').trimStart();
+  const timestamps = [];
+  while (text.startsWith('[')) {
+    const end = text.indexOf(']');
+    if (end === -1) break;
+    const timestamp = parseLrcTimestamp(text.slice(1, end));
+    if (timestamp === null) break;
+    timestamps.push(timestamp);
+    text = text.slice(end + 1).trimStart();
+  }
+  return { timestamps, text };
+}
+
+export function normalizeLyricsNewlines(value) {
+  return String(value ?? '')
+    .replace(/^\uFEFF/u, '')
+    .replace(/\r\n?|\u2028|\u2029/gu, '\n');
 }
 
 export function isLrcMetadataLine(value) {

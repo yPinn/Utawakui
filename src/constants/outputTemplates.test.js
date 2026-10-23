@@ -249,9 +249,9 @@ describe('output template registry', () => {
       expect.objectContaining({
         key: 'lyricsPresentationPolicyId',
         label: '歌詞呈現策略',
-        groupLabel: '內容顯示',
-        groupOrder: 80,
-        defaultValue: 'broadcast-compact',
+        groupLabel: '模板進階顯示',
+        groupOrder: 90,
+        defaultValue: 'balanced',
         options: [
           { id: 'broadcast-compact', label: '轉播精簡' },
           { id: 'balanced', label: '平衡分行' },

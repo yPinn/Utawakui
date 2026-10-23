@@ -110,6 +110,13 @@ Normalizer profile `lyrics-source-v2` adds converter-end provenance. A saved v1
 sidecar is therefore reported as stale and regenerated from its unchanged source;
 schema version 1 remains unchanged because the new field is optional.
 
+The current fallback profile is `lyrics-source-v3`, which bounds source syntax
+consumption and preserves ambiguous sung text. Validated v2 timing sidecars with
+the same source SHA remain authoritative and editable with their original ids,
+text and timing; they are not automatically rewritten. Unknown profiles and v1
+remain stale. Source text rules and explicit Output exclusions live in the
+[text processing contract](lyrics-text-processing.md).
+
 ```json
 {
   "schemaVersion": 1,

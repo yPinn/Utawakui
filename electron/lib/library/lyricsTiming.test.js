@@ -178,8 +178,47 @@ describe('lyrics timing sidecars', () => {
     expect(loadTrackLyricsTiming(trackDir, 'main.lrc')).toMatchObject({
       status: 'stale',
       sourceFingerprint: sourceSha256,
-      normalizerProfileId: 'lyrics-source-v2',
+      normalizerProfileId: LYRICS_NORMALIZER_PROFILE_ID,
     });
+  });
+
+  it('retains authoritative v2 timing and ids after parser upgrade without rewriting the sidecar', () => {
+    const sourceSha256 = computeLyricsSourceFingerprint(trackDir, 'main.lrc');
+    const sidecarPath = timingSidecarPath(trackDir, 'main.lrc');
+    const document = createDocument(sourceSha256, {
+      normalizerProfileId: 'lyrics-source-v2',
+      granularity: 'T2',
+      lines: [
+        {
+          lineId: 'voice',
+          text: '[女]Hello（和聲）',
+          startMs: 1000,
+          endMs: 3000,
+          segments: [
+            {
+              segmentId: 'voice-1',
+              text: '[女]Hello（和聲）',
+              startMs: 1200,
+              endMs: 2800,
+            },
+          ],
+        },
+      ],
+    });
+    fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+    const original = JSON.stringify(document);
+    fs.writeFileSync(sidecarPath, original);
+    expect(LYRICS_NORMALIZER_PROFILE_ID).toBe('lyrics-source-v3');
+    expect(loadTrackLyricsTiming(trackDir, 'main.lrc')).toMatchObject({
+      status: 'current',
+      normalizerProfileId: 'lyrics-source-v2',
+      document,
+    });
+    expect(fs.readFileSync(sidecarPath, 'utf8')).toBe(original);
+    expect(
+      saveTrackLyricsTiming(trackDir, 'main.lrc', sourceSha256, document)
+        .document,
+    ).toEqual(document);
   });
 
   it('retains timing and reports unavailable when the source disappears', () => {
@@ -279,7 +318,7 @@ describe('validateLyricsTimingDocument', () => {
   const options = {
     sourceFilename: 'main.lrc',
     sourceSha256,
-    normalizerProfileId: 'lyrics-source-v2',
+    normalizerProfileId: LYRICS_NORMALIZER_PROFILE_ID,
   };
 
   it('derives T0, T1, and T2 granularity from validated content', () => {

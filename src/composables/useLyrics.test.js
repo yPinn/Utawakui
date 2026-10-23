@@ -293,6 +293,7 @@ describe('useLyrics', () => {
         'lyricLines',
         'lyricsAcousticEstimate',
         'lyricsDocument',
+        'lyricsTextProcessing',
         'lyricsTextVariant',
         'lyricsTiming',
         'playFromLine',

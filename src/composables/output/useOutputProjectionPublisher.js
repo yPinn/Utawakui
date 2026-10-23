@@ -57,6 +57,7 @@ export function useOutputProjectionPublisher({
     selectedSource: lyricsSource,
     displayLyricsDocument,
     experimentalLyrics,
+    lyricsTextProcessing,
     activeLineId,
     activeSegmentId,
   } = useLyrics();
@@ -97,13 +98,16 @@ export function useOutputProjectionPublisher({
   const projectedLyricsDocument = computed(() => {
     const trackId = playerState.track?.id ?? null;
     if (!trackId || lyricsTrack.value?.id !== trackId) return null;
-    return projectLyricsOutputDocument({
+    const document = projectLyricsOutputDocument({
       trackId,
       source: lyricsSource.value,
       document:
         experimentalLyrics?.outputDocument.value ?? displayLyricsDocument.value,
       readingDocument: getReadingDoc(trackId, lyricsSource.value?.filename),
     });
+    return lyricsTextProcessing
+      ? lyricsTextProcessing.project(document)
+      : document;
   });
 
   const projectedQueueDocument = computed(() =>
@@ -139,7 +143,7 @@ export function useOutputProjectionPublisher({
     const active =
       sample && !manual && lyricsTrack.value?.id === player.track?.id
         ? deriveLyricsPlaybackState(
-            displayLyricsDocument.value,
+            projectedLyricsDocument.value,
             sample.positionMs + lyricsState.offsetSeconds * 1000,
             player.duration * 1000 || null,
           )
@@ -147,6 +151,15 @@ export function useOutputProjectionPublisher({
             activeLineId: activeLineId.value,
             activeSegmentId: activeSegmentId.value,
           };
+    if (
+      active.activeLineId &&
+      !projectedLyricsDocument.value?.lines.some(
+        (line) => line.lineId === active.activeLineId,
+      )
+    ) {
+      active.activeLineId = null;
+      active.activeSegmentId = null;
+    }
     return projectDynamicOutputState(
       {
         player,

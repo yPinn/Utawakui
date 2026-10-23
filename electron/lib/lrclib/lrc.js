@@ -2,14 +2,15 @@
 
 const {
   lrcTimestamps,
+  normalizeLyricsNewlines,
   parseLrcTimestamp,
   stripLrcTimestampTags,
 } = require('../../../shared/lrcParsing.mjs');
 
 function parseLrcLines(text) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];
-  return text
-    .split(/\r?\n/u)
+  return normalizeLyricsNewlines(text)
+    .split('\n')
     .flatMap((line) => {
       const timestamps = lrcTimestamps(line);
       if (timestamps.length === 0) return [];

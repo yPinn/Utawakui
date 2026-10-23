@@ -1,6 +1,9 @@
 import {
   isLrcMetadataLine,
+  lrcTimestamps,
+  normalizeLyricsNewlines,
   parseLrcTimestamp,
+  stripLrcTimestampTags,
 } from '../../shared/lrcParsing.mjs';
 const TIME_RE = /(?:(\d+):)?(\d{2}):(\d{2})(?:[.,](\d{1,3}))?/;
 const LRC_SPEAKER_CUE_RE = /^\[[^\]\r\n]{1,40}\][ \t]*/u;
@@ -35,7 +38,6 @@ const LANGUAGE_NOISE_TERMS = {
   ja: ['音楽', '拍手'],
   ko: ['음악', '박수'],
 };
-const YOUTUBE_CC_DEDUP_WINDOW_SECONDS = 12;
 
 function parseTime(value) {
   const match = TIME_RE.exec(value);
@@ -49,7 +51,12 @@ function parseTime(value) {
 
 function decodeCueText(value) {
   return value
-    .replace(/<[^>]+>/g, '')
+    .replace(/<v(?:\.[\w-]+)*[ \t]+([^<>]+)>/gu, '[$1] ')
+    .replace(
+      /<\/?(?:b|i|u|ruby|rt|v|c(?:\.[\w-]+)*|lang(?:[ \t]+[\w-]+)?)>/gu,
+      '',
+    )
+    .replace(/<\d{2}:\d{2}(?::\d{2})?\.\d{3}>/gu, '')
     .replaceAll('&amp;', '&')
     .replaceAll('&lt;', '<')
     .replaceAll('&gt;', '>')
@@ -123,16 +130,9 @@ function unwrapWholeCue(text) {
   return null;
 }
 
-function isAllCapsStageDirection(text) {
-  const letters = String(text || '').match(/[A-Za-z]/g);
-  if (!letters || /[a-z]/.test(text)) return false;
-  const words = text.split(/[^A-Za-z0-9]+/).filter(Boolean);
-  return words.length > 0 && words.length <= 6;
-}
-
 function isKnownNoiseCue(text, options = {}) {
   const normalized = normalizeCueForMatch(text);
-  if (!normalized) return true;
+  if (!normalized) return false;
   return cueNoiseTerms(languageFromOptions(options)).some(
     (term) => normalizeCueForMatch(term) === normalized,
   );
@@ -146,14 +146,11 @@ function isYoutubeCcNonLyricCue(text, options = {}) {
     .filter(Boolean)
     .join(' ');
   if (!normalized) return true;
-  if (isKnownNoiseCue(normalized, options)) return true;
+  if (/^[\s♪♫♬♩🎵🎶]+$/u.test(normalized)) return true;
 
   const wrapped = unwrapWholeCue(normalized);
   if (!wrapped) return false;
-  return (
-    isKnownNoiseCue(wrapped.inner, options) ||
-    (wrapped.type === 'square' && isAllCapsStageDirection(wrapped.inner))
-  );
+  return wrapped.type === 'square' && isKnownNoiseCue(wrapped.inner, options);
 }
 
 export function isNonLyricCue(text, options = {}) {
@@ -191,107 +188,18 @@ export function preprocessLyricCueText(linesOrText, options = {}) {
     .join('\n');
 }
 
-function normalizeLyricForDedup(text) {
-  return String(text || '')
-    .normalize('NFKC')
-    .replace(MUSIC_NOTE_RE, '')
-    .replace(/\s+/g, '')
-    .trim()
-    .toLocaleLowerCase();
-}
-
-function lyricLines(text) {
-  return String(text || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
-
-function cuesAreNear(previousCue, cue) {
-  return cue.start - previousCue.start <= YOUTUBE_CC_DEDUP_WINDOW_SECONDS;
-}
-
-function richerCue(first, second) {
-  return normalizeLyricForDedup(second.text).length >
-    normalizeLyricForDedup(first.text).length
-    ? second
-    : { ...first, end: Math.max(first.end, second.end) };
-}
-
-function removeTextPrefix(previousText, text) {
-  const previous = String(previousText || '').trim();
-  const current = String(text || '').trim();
-  if (!previous || !current) return null;
-  if (normalizeLyricForDedup(previous) === normalizeLyricForDedup(current)) {
-    return '';
-  }
-  if (current.startsWith(previous)) {
-    return current.slice(previous.length).trim();
-  }
-  return null;
-}
-
-function removeLeadingLineOverlap(previousText, text) {
-  const previousLines = lyricLines(previousText);
-  const currentLines = lyricLines(text);
-  const maxOverlap = Math.min(previousLines.length, currentLines.length);
-
-  for (let count = maxOverlap; count > 0; count -= 1) {
-    const previousTail = previousLines
-      .slice(previousLines.length - count)
-      .map(normalizeLyricForDedup);
-    const currentHead = currentLines
-      .slice(0, count)
-      .map(normalizeLyricForDedup);
-    if (
-      previousTail.length === currentHead.length &&
-      previousTail.every((line, index) => line && line === currentHead[index])
-    ) {
-      return currentLines.slice(count).join('\n').trim();
-    }
-  }
-
-  return null;
-}
-
 function dedupYoutubeCcCues(cues) {
-  const deduped = [];
-
-  for (const cue of cues) {
-    const previous = deduped[deduped.length - 1];
-    if (!previous) {
-      deduped.push(cue);
-      continue;
-    }
-
-    if (previous.start === cue.start) {
-      deduped[deduped.length - 1] = richerCue(previous, cue);
-      continue;
-    }
-
-    if (!cuesAreNear(previous, cue)) {
-      deduped.push(cue);
-      continue;
-    }
-
-    const normalizedPrevious = normalizeLyricForDedup(previous.text);
-    const normalizedCue = normalizeLyricForDedup(cue.text);
-    if (normalizedPrevious && normalizedPrevious === normalizedCue) continue;
-
-    const withoutPrefix =
-      removeTextPrefix(previous.text, cue.text) ??
-      removeLeadingLineOverlap(previous.text, cue.text);
-    if (withoutPrefix !== null) {
-      if (withoutPrefix.length > 0) {
-        deduped.push({ ...cue, text: withoutPrefix });
-      }
-      continue;
-    }
-
-    deduped.push(cue);
-  }
-
-  return deduped;
+  // Proximity, overlap and a common prefix cannot distinguish repeated singing
+  // or another voice from rolling subtitles. Only collapse exact duplicates.
+  return cues.filter((cue, index) => {
+    const previous = cues[index - 1];
+    return (
+      !previous ||
+      cue.start !== previous.start ||
+      cue.end !== previous.end ||
+      cue.text !== previous.text
+    );
+  });
 }
 
 function dedupLyricCues(cues, options = {}) {
@@ -304,8 +212,7 @@ function dedupLyricCues(cues, options = {}) {
 export function parseVtt(text, options = {}) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];
 
-  const cues = text
-    .replace(/^\uFEFF/, '')
+  const cues = normalizeLyricsNewlines(text)
     .split(/\r?\n\r?\n+/)
     .map((block) => block.split(/\r?\n/).filter(Boolean))
     .filter((lines) => lines.length > 0)
@@ -332,8 +239,14 @@ export function parseLrc(text) {
   return parseEnhancedLrc(text);
 }
 
+function enhancedTimestamps(sourceText) {
+  return [...sourceText.matchAll(/<(\d{1,2}:\d{2}(?:[.:]\d{1,3})?)>/gu)].filter(
+    (match) => parseLrcTimestamp(match[1]) !== null,
+  );
+}
+
 function parseEnhancedSegments(sourceText, lineStart, lineEnd) {
-  const matches = [...sourceText.matchAll(/<([^>]+)>/g)];
+  const matches = enhancedTimestamps(sourceText);
   if (matches.length === 0) return null;
 
   const timestamps = matches.map((match) => parseLrcTimestamp(match[1]));
@@ -384,22 +297,21 @@ function parseEnhancedSegments(sourceText, lineStart, lineEnd) {
 export function parseEnhancedLrc(text) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];
 
-  const rawLines = text.split(/\r?\n/);
+  const rawLines = normalizeLyricsNewlines(text).split('\n');
   const starts = rawLines
     .flatMap((line) => {
-      const matches = [...line.matchAll(/\[([^\]]+)\]/g)];
-      if (matches.length === 0) return [];
-      const sourceText = line
-        .replace(/\[([^\]]+)\]/g, (tag, value) =>
-          parseLrcTimestamp(value) === null ? tag : '',
-        )
-        .trim();
-      const lyricText = sourceText.replace(/<[^>]+>/g, '').trim();
+      const starts = lrcTimestamps(line);
+      if (starts.length === 0) return [];
+      const sourceText = stripLrcTimestampTags(line).trim();
+      let lyricText = sourceText;
+      for (const match of enhancedTimestamps(sourceText).reverse()) {
+        lyricText =
+          lyricText.slice(0, match.index) +
+          lyricText.slice(match.index + match[0].length);
+      }
+      lyricText = lyricText.trim();
       if (!lyricText) return [];
-      return matches
-        .map((match) => parseLrcTimestamp(match[1]))
-        .filter((start) => start !== null)
-        .map((start) => ({ start, text: lyricText, sourceText }));
+      return starts.map((start) => ({ start, text: lyricText, sourceText }));
     })
     .sort((a, b) => a.start - b.start);
 

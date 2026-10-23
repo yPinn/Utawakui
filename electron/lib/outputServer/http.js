@@ -154,6 +154,10 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'presentation',
     'lyricsDisplayLayout.mjs',
   ],
+  '/shared/presentation/lyricsTextProcessing.mjs': [
+    'presentation',
+    'lyricsTextProcessing.mjs',
+  ],
   '/shared/presentation/lyricsDisplayFrame.mjs': [
     'presentation',
     'lyricsDisplayFrame.mjs',

@@ -990,7 +990,7 @@
         },
         "scheduler": ["lyrics-lines", "live-stage-card", "live-stage-captions"],
         "presentationPolicyIds": ["broadcast-compact", "balanced", "literal"],
-        "defaultPresentationPolicyId": "broadcast-compact"
+        "defaultPresentationPolicyId": "balanced"
       },
       "lockedInvariants": [
         "title-card-time-window",

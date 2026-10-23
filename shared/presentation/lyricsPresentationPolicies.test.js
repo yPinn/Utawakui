@@ -45,18 +45,16 @@ describe('lyrics presentation policies', () => {
   });
 
   it('uses the template default for missing or invalid persisted values', () => {
-    expect(normalizeLyricsPresentationPolicyId('live-stage')).toBe(
-      'broadcast-compact',
-    );
+    expect(normalizeLyricsPresentationPolicyId('live-stage')).toBe('balanced');
     expect(
       normalizeLyricsPresentationPolicyId('live-stage', 'unknown-policy'),
-    ).toBe('broadcast-compact');
+    ).toBe('balanced');
     expect(
       normalizeLyricsPresentationPolicyId('focus-line', 'literal'),
     ).toBeNull();
     expect(lyricsPresentationPolicyForTemplate('live-stage')).toMatchObject({
-      id: 'broadcast-compact',
-      contentMode: 'compact',
+      id: 'balanced',
+      contentMode: 'preserve',
     });
   });
 });

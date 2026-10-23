@@ -1,5 +1,6 @@
 import { reactive, shallowRef } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { projectLyricsTextSelection } from '../../shared/presentation/lyricsTextProcessing.mjs';
 
 function deferred() {
   let resolve;
@@ -40,10 +41,12 @@ let arrangementActive;
 let arrangementCurrent;
 let arrangementPlanState;
 let experimentalLyrics;
+let hiddenCreditIds;
 let mediaPositionMs;
 let samplePlaybackClock;
 
 beforeEach(() => {
+  hiddenCreditIds = shallowRef([]);
   mediaPositionMs = null;
   samplePlaybackClock = vi.fn(({ now }) => ({
     trackId: playerState.track?.id ?? null,
@@ -216,6 +219,10 @@ beforeEach(() => {
       lyricsDocument,
       displayLyricsDocument,
       experimentalLyrics,
+      lyricsTextProcessing: {
+        project: (document) =>
+          projectLyricsTextSelection(document, hiddenCreditIds.value),
+      },
       lyricLines: { value: [] },
       activeLineIndex: { value: -1 },
       activeLineId,
@@ -313,6 +320,59 @@ it('deduplicates concurrent UI opens while the main operation is pending', async
 });
 
 describe('output source handshake', () => {
+  it('publishes confirmed credit exclusions and restores without changing source text or singing times', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    playerState.currentTime = 0.5;
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    selectedLyricsSource.value = { filename: 'manual.lrc', language: 'zh' };
+    const document = {
+      documentId: 'source-text',
+      granularity: 'T1',
+      lines: [
+        { lineId: 'credit', text: '作詞：測試', startMs: 0, endMs: 1000 },
+        {
+          lineId: 'voice',
+          text: '[女]一起唱（和聲）',
+          startMs: 1000,
+          endMs: 4000,
+        },
+      ],
+    };
+    lyricsDocument.value = document;
+    activeLineId.value = 'credit';
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    bridge.publishOutputSnapshot.mockClear();
+    hiddenCreditIds.value = ['credit'];
+    await flushMicrotasks();
+    await flushMicrotasks();
+    const messages = bridge.publishOutputSnapshot.mock.calls.map(
+      ([message]) => message,
+    );
+    const projected = messages
+      .filter((message) => message.stream === 'lyrics.document')
+      .at(-1).payload.document;
+    expect(projected.lines).toEqual([document.lines[1]]);
+    expect(projected.documentId).not.toBe(document.documentId);
+    expect(
+      messages.filter((message) => message.stream === 'state.snapshot').at(-1)
+        .payload.lyrics.activeLineId,
+    ).toBeNull();
+    expect(lyricsDocument.value).toEqual(document);
+    hiddenCreditIds.value = [];
+    await flushMicrotasks();
+    await flushMicrotasks();
+    const restored = bridge.publishOutputSnapshot.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.stream === 'lyrics.document')
+      .at(-1).payload.document;
+    expect(restored.lines).toEqual(document.lines);
+    expect(restored.documentId).toBe(document.documentId);
+  });
   async function initializePlaying() {
     playerState.track = { id: 'a', title: 'A', url: 'media://a' };
     playerState.playbackPhase = 'playing';

@@ -213,7 +213,7 @@ describe('Output F1 acceptance foundation', () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: 'lyricsPresentationPolicyId',
-          defaultValue: 'broadcast-compact',
+          defaultValue: 'balanced',
         }),
       ]),
     );

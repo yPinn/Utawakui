@@ -400,6 +400,13 @@ separate display-time provenance and local font/container measurement, with no
 new model, dependency or unpacked payload. Co-located tests remain excluded;
 the closed module-graph delivery test covers all three routes.
 
+Shared text annotations add `shared/presentation/lyricsTextProcessing.mjs`
+under the existing `shared/**/*` package rule and an exact HTTP module route.
+The route is included in the closed Browser Source graph test; adjacent tests
+remain excluded. Renderer source-selection controls compile into `dist/` with no
+new dependency, worker, model or unpacked payload. The `lyrics-source-v3` fallback
+profile preserves validated v2 timing sidecars in place.
+
 Continuous T1+ ink adds `shared/lyricsFineTiming.mjs`,
 `shared/presentation/lyricsFineFrame.mjs`, `shared/browser/lyricsFinePaint.mjs`
 and `overlay/lyrics/lyricsFine.mjs` under the existing package globs. Their exact

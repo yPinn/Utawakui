@@ -3356,6 +3356,7 @@ describe('lyrics overlay renderer', () => {
         revision: 2,
         visible: true,
         currentText: "[아사]\nBut if you're killing my mood\nGood riddance",
+        lyricsPresentationPolicyId: 'broadcast-compact',
         currentSegments: [
           {
             segmentId: 'segment-1',
@@ -5278,7 +5279,7 @@ describe('lyrics overlay renderer', () => {
 
     scheduler.setTemplateId('live-stage');
     expect(frames.at(-1).liveStage).toMatchObject({ active: true });
-    expect(frames.at(-1).lyricsPresentationPolicyId).toBe('broadcast-compact');
+    expect(frames.at(-1).lyricsPresentationPolicyId).toBe('balanced');
     expect(frames.at(-1)).not.toHaveProperty('ktv');
 
     const framesBeforePolicyChange = frames.length;

@@ -10,6 +10,12 @@ const { isLyricsSubtitleFilename } = require('./paths');
 
 const LYRICS_TIMING_SCHEMA_VERSION = timingValues.schemaVersion;
 const LYRICS_NORMALIZER_PROFILE_ID = timingValues.normalizerProfileId;
+// A validated saved document is authoritative, not parser output. Preserve v2
+// authoring/provider timing; only newly parsed fallback documents use v3.
+const CURRENT_TIMING_PROFILES = new Set([
+  LYRICS_NORMALIZER_PROFILE_ID,
+  'lyrics-source-v2',
+]);
 const TIMING_DIRNAME = 'timing';
 const HASH_BUFFER_BYTES = 64 * 1024;
 const MAX_SOURCE_FILENAME_LENGTH = 240;
@@ -352,11 +358,14 @@ function loadTrackLyricsTiming(trackDir, sourceFilename) {
   }
   if (
     document.source.sha256 !== sourceFingerprint ||
-    document.normalizerProfileId !== LYRICS_NORMALIZER_PROFILE_ID
+    !CURRENT_TIMING_PROFILES.has(document.normalizerProfileId)
   ) {
     return timingStatus('stale', sourceFingerprint);
   }
-  return timingStatus('current', sourceFingerprint, { document });
+  return timingStatus('current', sourceFingerprint, {
+    document,
+    normalizerProfileId: document.normalizerProfileId,
+  });
 }
 
 function saveTrackLyricsTiming(
@@ -375,15 +384,21 @@ function saveTrackLyricsTiming(
   if (!currentFingerprint || currentFingerprint !== expectedSourceFingerprint) {
     throw new Error('lyrics source changed before timing could be saved');
   }
+  if (!CURRENT_TIMING_PROFILES.has(rawDocument?.normalizerProfileId)) {
+    throw new Error('lyrics normalizer profile is unsupported');
+  }
   const document = validateLyricsTimingDocument(rawDocument, {
     sourceFilename,
     sourceSha256: currentFingerprint,
-    normalizerProfileId: LYRICS_NORMALIZER_PROFILE_ID,
+    normalizerProfileId: rawDocument.normalizerProfileId,
   });
   const sidecarPath = timingSidecarPath(trackDir, sourceFilename);
   fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
   atomicWriteJson(sidecarPath, document);
-  return timingStatus('current', currentFingerprint, { document });
+  return timingStatus('current', currentFingerprint, {
+    document,
+    normalizerProfileId: document.normalizerProfileId,
+  });
 }
 
 function deleteTrackLyricsTiming(trackDir, sourceFilename) {
