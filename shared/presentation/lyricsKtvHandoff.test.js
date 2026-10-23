@@ -154,6 +154,22 @@ describe('KTV pending evidence protects presentation handoff only', () => {
     };
     expect(ktvHandoffEndMs(line(), u, 16000, 3000)).toBe(2000);
   });
+  it('retains a rejected fast static tail until the original source boundary without creating fine', () => {
+    const value = snapshot(15975),
+      l = value.lyrics.lines[0];
+    l.estimatedFineTiming.units.pop();
+    l.estimatedFineTiming.units[2].startMs = 13000;
+    l.estimatedFineTiming.units[2].endMs = 15950;
+    const before = structuredClone(value);
+    const frame = selectLyricsOverlayFrame(value, options);
+    expect(frame.ktv.lineIndex).toBe(0);
+    expect(frame.ktv.currentText).toBe(l.text);
+    expect(frame.ktv.currentFineTiming.units).toHaveLength(3);
+    expect(nextPresentationBoundaryDelayMs(value, options)).toBe(25);
+    expect(value).toEqual(before);
+    value.playback.positionMs = 16000;
+    expect(selectLyricsOverlayFrame(value, options).ktv.lineIndex).toBe(1);
+  });
   it('declines range crossings, invalid evidence and conflicting next-onset protection', () => {
     const l = line(),
       u = unit();

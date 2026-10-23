@@ -229,4 +229,91 @@ describe('paint completion and source hold are separate', () => {
     s.playback.positionMs = 3000;
     expect(nextLyricsBoundaryDelayMs(s, options)).toBe(12000);
   });
+
+  it.each([
+    { tail: '丁戊', budget: 90 },
+    { tail: '丁戊', budget: 21 },
+    { tail: '丁', budget: 61 },
+    { tail: '丁戊', budget: 121 },
+  ])(
+    'keeps a $budget ms missing tail static instead of compressing a new sweep',
+    ({ tail, budget }) => {
+      const l = line();
+      l.text = '甲乙丙' + tail;
+      l.estimatedStarts.segments[1].text = '丙' + tail;
+      l.endMs = 2500 + budget;
+      const before = structuredClone(l),
+        plan = prepareLyricsPaintFrame(l);
+      expect(plan.units).toEqual(l.estimatedFineTiming.units);
+      expect(plan.cueEnds).toEqual([1800, null]);
+      expect(plan.paintEndMs).toBeNull();
+      expect(plan.quality).toEqual(
+        expect.arrayContaining(['tail-too-fast', 'tail-unknown']),
+      );
+      expect(projectLyricsPaintLifecycle(l, l.endMs - 1).phase).toBe('unknown');
+      expect(l).toEqual(before);
+      const value = snapshot(l, l.endMs - 1);
+      value.lyrics.lines[1].startMs = l.endMs;
+      const frame = selectLyricsOverlayFrame(value, {
+        nowMs: Date.parse(value.generatedAt),
+        templateId: 'focus-line',
+      });
+      expect(frame.currentText).toBe(l.text);
+      expect(frame.currentFineTiming.units).toHaveLength(3);
+      value.playback.positionMs = l.endMs;
+      expect(
+        selectLyricsOverlayFrame(value, {
+          nowMs: Date.parse(value.generatedAt),
+          templateId: 'focus-line',
+        }).lineIndex,
+      ).toBe(1);
+    },
+  );
+  it.each([79, 80])(
+    'uses the existing 80 ms visible-grapheme floor at %s ms',
+    (budget) => {
+      const l = line();
+      l.endMs = 2500 + budget;
+      const plan = prepareLyricsPaintFrame(l);
+      expect(
+        plan.units.filter((u) => u.timingSource === 'display-estimate'),
+      ).toHaveLength(budget === 80 ? 1 : 0);
+      expect(plan.paintEndMs).toBe(budget === 80 ? 2580 : null);
+    },
+  );
+  it('handles trailing whitespace and punctuation without counting them as sung weight', () => {
+    const l = line();
+    l.text += '? \t';
+    l.estimatedStarts.segments[1].text += '? \t';
+    l.endMs = 2579;
+    const plan = prepareLyricsPaintFrame(l);
+    expect(plan.units).toEqual(l.estimatedFineTiming.units);
+    expect(plan.quality).toContain('tail-too-fast');
+    expect(l.text).toBe('甲乙丙丁? \t');
+    const punctuation = line();
+    punctuation.text = '甲乙丙?';
+    punctuation.estimatedStarts.segments[1].text = '丙?';
+    punctuation.endMs = 2579;
+    const punctuationPlan = prepareLyricsPaintFrame(punctuation);
+    expect(punctuationPlan.units).toEqual(
+      punctuation.estimatedFineTiming.units,
+    );
+    expect(punctuationPlan.quality).not.toContain('tail-too-fast');
+    expect(punctuationPlan.paintEndMs).toBeNull();
+  });
+  it('does not apply the display floor to actual 19 ms or 9.338 s fine, or fill their known pause', () => {
+    const l = line();
+    l.estimatedFineTiming.units = [
+      { unitId: 'a', from: 0, to: 1, startMs: 1000, endMs: 1019 },
+      { unitId: 'b', from: 1, to: 2, startMs: 1300, endMs: 1600 },
+      { unitId: 'c', from: 2, to: 3, startMs: 2000, endMs: 2500 },
+      { unitId: 'd', from: 3, to: 4, startMs: 5000, endMs: 14338 },
+    ];
+    const before = structuredClone(l),
+      plan = prepareLyricsPaintFrame(l);
+    expect(plan.units).toEqual(l.estimatedFineTiming.units);
+    expect(plan.quality).not.toContain('tail-too-fast');
+    expect(plan.cueEnds).toEqual([1600, 14338]);
+    expect(l).toEqual(before);
+  });
 });

@@ -8,6 +8,7 @@ const glyphs = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 const nativePrepared = new WeakMap();
 const paintPrepared = new WeakMap();
 const localPaintPrepared = new WeakMap();
+const MIN_DISPLAY_GRAPHEME_MS = 80;
 
 // A local paint adapter, never model evidence. Missing ends stay cue-only.
 export function projectNativeLyricsFrame(line, positionMs) {
@@ -161,7 +162,9 @@ function tailCadence(line, evidence) {
   const usable = (duration, text) => {
     const weight = textWeight(text);
     const speed = duration / weight;
-    return weight > 0 && speed >= 80 && speed <= 1000 ? speed : null;
+    return weight > 0 && speed >= MIN_DISPLAY_GRAPHEME_MS && speed <= 1000
+      ? speed
+      : null;
   };
   let values = evidence.units
     .map((u) => usable(u.endMs - u.startMs, line.text.slice(u.from, u.to)))
@@ -246,6 +249,19 @@ function buildPaintTiming(line, evidence) {
             if (paintEnd < next.startMs) quality.add('tail-capped');
           } else {
             paintEnd = null;
+            quality.add('tail-unknown');
+          }
+          const weight = textWeight(line.text.slice(gapFrom, gapTo));
+          if (
+            weight > 0 &&
+            Number.isFinite(paintEnd) &&
+            paintEnd > gapStart &&
+            paintEnd - gapStart < MIN_DISPLAY_GRAPHEME_MS * weight
+          ) {
+            // A source boundary must not compress a new tail into a flash.
+            // Keep its full text/coarse cue; actual fine remains untouched.
+            paintEnd = null;
+            quality.add('tail-too-fast');
             quality.add('tail-unknown');
           }
         }

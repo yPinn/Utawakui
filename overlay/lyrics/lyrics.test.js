@@ -277,75 +277,96 @@ function kineticLineUnits(line) {
   return kineticLineTracks(line).flatMap((track) => track.children);
 }
 
-it('keeps pending KTV ink in a distinct lane through the real renderer', () => {
-  const elements = domElements();
-  const nowMs = Date.now();
-  const value = {
-    generatedAt: new Date(nowMs).toISOString(),
-    playback: {
-      track: { id: 'song' },
-      status: 'playing',
-      positionMs: 12500,
-      rate: 1,
-    },
-    lyrics: {
-      trackId: 'song',
-      synced: true,
-      offsetMs: 0,
-      lines: [
-        {
-          text: '今日',
-          startMs: 1000,
-          endMs: 16000,
-          endInferred: true,
-          estimatedStarts: {
-            version: 1,
-            segments: [{ segmentId: 'old', text: '今日', startMs: 1000 }],
+it.each([false, true])(
+  'keeps pending KTV ink/static tail in a distinct lane through the real renderer (static=%s)',
+  (staticTail) => {
+    const elements = domElements();
+    const nowMs = Date.now();
+    const value = {
+      generatedAt: new Date(nowMs).toISOString(),
+      playback: {
+        track: { id: 'song' },
+        status: 'playing',
+        positionMs: 12500,
+        rate: 1,
+      },
+      lyrics: {
+        trackId: 'song',
+        synced: true,
+        offsetMs: 0,
+        lines: [
+          {
+            text: '今日',
+            startMs: 1000,
+            endMs: 16000,
+            endInferred: true,
+            estimatedStarts: {
+              version: 1,
+              segments: [{ segmentId: 'old', text: '今日', startMs: 1000 }],
+            },
+            estimatedFineTiming: {
+              version: 1,
+              units: [
+                {
+                  unitId: 'pending',
+                  from: 0,
+                  to: 2,
+                  startMs: 13000,
+                  endMs: 14800,
+                },
+              ],
+            },
           },
-          estimatedFineTiming: {
-            version: 1,
-            units: [
-              {
-                unitId: 'pending',
-                from: 0,
-                to: 2,
-                startMs: 13000,
-                endMs: 14800,
-              },
-            ],
-          },
-        },
-        ...[16000, 20000, 24000, 28000].map((startMs) => ({
-          text: '下一句',
-          startMs,
-          endMs: startMs + 4000,
-          endInferred: true,
-        })),
-      ],
-    },
-  };
-  const options = { templateId: 'karaoke-stack', nowMs, reducedMotion: true };
-  const frame = selectLyricsOverlayFrame(value, options);
-  expect(frame.ktv.lineIndex).toBe(0);
-  expect(frame.ktv.currentLaneIndex % 2).not.toBe(frame.ktv.nextLaneIndex % 2);
-  renderLyricsFrame(elements, frame, options);
-  const active = [elements.current, elements.next].find(
-    (n) => n.dataset.ktvActive === 'true',
-  );
-  expect(active.textContent).toBe('今日');
-  expect(elements.ktvCountIn.dataset.ktvLane).not.toBe(active.dataset.ktvLane);
-  value.playback.positionMs = 16000;
-  renderLyricsFrame(
-    elements,
-    selectLyricsOverlayFrame(value, options),
-    options,
-  );
-  expect(
-    [elements.current, elements.next].find(
+          ...[16000, 20000, 24000, 28000].map((startMs) => ({
+            text: '下一句',
+            startMs,
+            endMs: startMs + 4000,
+            endInferred: true,
+          })),
+        ],
+      },
+    };
+    const options = { templateId: 'karaoke-stack', nowMs, reducedMotion: true };
+    if (staticTail) {
+      const old = value.lyrics.lines[0];
+      old.text = '今日唱歌';
+      old.estimatedStarts.segments = [
+        { segmentId: 'a', text: '今日', startMs: 1000 },
+        { segmentId: 'b', text: '唱歌', startMs: 3000 },
+      ];
+      old.estimatedFineTiming.units = [
+        { unitId: 'a', from: 0, to: 1, startMs: 1000, endMs: 1200 },
+        { unitId: 'b', from: 1, to: 2, startMs: 1300, endMs: 1600 },
+        { unitId: 'c', from: 2, to: 3, startMs: 13000, endMs: 15950 },
+      ];
+      value.playback.positionMs = 15975;
+    }
+    const frame = selectLyricsOverlayFrame(value, options);
+    expect(frame.ktv.lineIndex).toBe(0);
+    expect(frame.ktv.currentLaneIndex % 2).not.toBe(
+      frame.ktv.nextLaneIndex % 2,
+    );
+    renderLyricsFrame(elements, frame, options);
+    const active = [elements.current, elements.next].find(
       (n) => n.dataset.ktvActive === 'true',
-    ).textContent,
-  ).toBe('下一句');
-});
+    );
+    expect(active.textContent).toBe(staticTail ? '今日唱歌' : '今日');
+    expect(elements.ktvCountIn.dataset.ktvLane).not.toBe(
+      active.dataset.ktvLane,
+    );
+    value.playback.positionMs = 16000;
+    renderLyricsFrame(
+      elements,
+      selectLyricsOverlayFrame(value, options),
+      options,
+    );
+    expect(
+      [elements.current, elements.next].find(
+        (n) => n.dataset.ktvActive === 'true',
+      ).textContent,
+    ).toBe('下一句');
+  },
+);
 
 it('renders KTV fine ink in its lane without consuming the coarse progress or altering the next lane', () => {
   const elements = domElements();
