@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   OUTPUT_APPEARANCE_DEFAULTS,
@@ -14,6 +14,9 @@ import { parseOutputMessage } from '../../overlay/shared/runtime.mjs';
 import { buildOutputSlotPayload } from '../../src/utils/outputSlotPayload.js';
 import { createOutputServer } from './outputServer.js';
 import { upsertOutputSlot } from './outputSlots.js';
+
+// Real atomic renames require workspace scratch in the Windows sandbox.
+const testTmpRoot = fileURLToPath(new URL('../../.tmp/', import.meta.url));
 
 const DATASET_TARGETS = Object.freeze({
   receiptDirection: 'ovlReceiptDirection',
@@ -89,6 +92,7 @@ describe('Output settings path', () => {
 
   afterEach(() => {
     for (const directory of temporaryDirectories.splice(0)) {
+      expect(path.dirname(directory)).toBe(path.resolve(testTmpRoot));
       fs.rmSync(directory, { recursive: true, force: true });
     }
   });
@@ -96,8 +100,9 @@ describe('Output settings path', () => {
   it.each(Object.entries(OUTPUT_TEMPLATE_VALUES.templateKinds))(
     'carries bounded %s settings through persistence, config transport, and its template contract',
     (templateId, kind) => {
+      fs.mkdirSync(testTmpRoot, { recursive: true });
       const directory = fs.mkdtempSync(
-        path.join(os.tmpdir(), 'utawakui-output-settings-path-'),
+        path.join(testTmpRoot, 'utawakui-output-settings-path-'),
       );
       temporaryDirectories.push(directory);
       const settings = {
