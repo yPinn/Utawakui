@@ -676,7 +676,7 @@ describe('Now Playing artwork motion', () => {
         elements.exchangeRecord,
         elements.incomingSleeve,
       ]),
-      { clearProps: 'all' },
+      { clearProps: 'opacity,transform,visibility' },
     );
   });
 
@@ -738,7 +738,7 @@ describe('Now Playing artwork motion', () => {
         elements.incomingSleeve,
         elements.tonearmAssembly,
       ]),
-      { clearProps: 'all' },
+      { clearProps: 'opacity,transform,visibility' },
     );
     expect(spinTween.play).toHaveBeenCalledOnce();
   });

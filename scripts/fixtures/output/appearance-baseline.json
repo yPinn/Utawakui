@@ -17,6 +17,10 @@
     "full": {
       "width": 1920,
       "height": 1080
+    },
+    "portrait": {
+      "width": 480,
+      "height": 640
     }
   },
   "interpretation": {
@@ -1557,8 +1561,8 @@
       "id": "cover-player",
       "kind": "now-playing",
       "capture": {
-        "default": "medium",
-        "supported": ["medium"]
+        "default": "portrait",
+        "supported": ["portrait"]
       },
       "fields": [
         {

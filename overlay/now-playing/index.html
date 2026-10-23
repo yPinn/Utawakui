@@ -222,12 +222,9 @@
           <span id="artwork-remaining">-0:00</span>
         </div>
         <div class="artwork-overlay__transport">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="m4 7 5 5-5 5m5-5h2.5c4.5 0 4.5-5 8.5-5m0 0-2-2m2 2-2 2M9 12h2.5c4.5 0 4.5 5 8.5 5m0 0-2-2m2 2-2 2"
-            />
+          <svg class="artwork-overlay__skip" viewBox="0 0 24 24">
+            <path d="M12 5.5v13L2 12Zm10 0v13L12 12Z" />
           </svg>
-          <svg viewBox="0 0 24 24"><path d="M6 5v14M19 6l-9 6 9 6Z" /></svg>
           <span class="artwork-overlay__play-state">
             <svg class="artwork-overlay__play" viewBox="0 0 24 24">
               <path d="m8 5 11 7-11 7Z" />
@@ -236,12 +233,17 @@
               <path d="M8 5v14M16 5v14" />
             </svg>
           </span>
-          <svg viewBox="0 0 24 24"><path d="M18 5v14M5 6l9 6-9 6Z" /></svg>
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M5 8h12l2 2m0 0-2 2m2-2-2-2M19 16H7l-2-2m0 0 2-2m-2 2 2 2"
-            />
+          <svg class="artwork-overlay__skip" viewBox="0 0 24 24">
+            <path d="M2 5.5v13L12 12Zm10 0v13L22 12Z" />
           </svg>
+        </div>
+        <div class="artwork-overlay__volume">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 9h4l5-4v14l-5-4H3Z" />
+            <path class="artwork-overlay__volume-wave" d="M16 8q4 4 0 8" />
+            <path class="artwork-overlay__volume-mute" d="m16 9 6 6m0-6-6 6" />
+          </svg>
+          <span class="artwork-overlay__volume-track"></span>
         </div>
       </div>
     </main>

@@ -68,8 +68,8 @@
       "supported": ["small"]
     },
     "cover-player": {
-      "default": "medium",
-      "supported": ["medium"]
+      "default": "portrait",
+      "supported": ["portrait"]
     }
   }
 }

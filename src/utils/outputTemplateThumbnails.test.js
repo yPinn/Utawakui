@@ -31,10 +31,15 @@ describe('bundled output template thumbnails', () => {
         blocked.push(preset.id);
         expect(record.delivery).toBe('blocked-G01');
         expect(record.rights).toBe('unverified');
-      } else if (preset.id === 'receipt-setlist') {
+      } else if (['receipt-setlist', 'cover-player'].includes(preset.id)) {
         expect(record.content).toBe('current-runtime-capture');
         expect(record.delivery).toBe('pending-user-visual-acceptance');
-        expect(record.rights).toBe('project-owned-runtime-and-generated-paper');
+        expect(record.rights).toBe(
+          preset.id === 'receipt-setlist'
+            ? 'project-owned-runtime-and-generated-paper'
+            : 'project-owned-synthetic-artwork',
+        );
+        expect(record.origin).toBeTruthy();
       } else {
         expect(record.content).toBe('legacy-programmatic-capture');
         expect(record.delivery).toBe('pending-current-runtime-review');

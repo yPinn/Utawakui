@@ -16,6 +16,8 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 - 未知 epoch 的 update 不能初始化狀態；未知 contract version fail closed。Main 在快取或廣播前重新驗證每個投影。
 - Payload 只含 canonical id 與 scalar 顯示資料，不含路徑、credential 或 vendor 物件。
 
+`state.snapshot.playback` 可攜帶選用的 `volume`（有限數字0–1）與 `muted`（boolean），來自 `usePlayer` 的主音量／靜音狀態。手動演出曲目仍取相同音量owner；音量改變即發布state，不重發內容document。Main及snapshot相容組裝皆驗證並保留欄位；舊來源未提供時仍可接受，Output不假設固定音量。這是既有v3／snapshot v2的選用scalar延伸，無新增控制通道，公開WebSocket維持只讀。
+
 ## 狀態
 
 - **Service**：`stopped → starting → listening → stopping → stopped`，任一操作可進 `error`。`listening` 只表示 loopback socket 可接受請求。
@@ -54,7 +56,7 @@ V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount�
 | ------ | --------------------- | -------------------------------------- |
 | 歌詞   | Utawakui 輸出｜歌詞   | 1920×1080                              |
 | 歌單   | Utawakui 輸出｜歌單   | 480×810                                |
-| 播放中 | Utawakui 輸出｜播放中 | Art Card 480×270；Cover Player 480×540 |
+| 播放中 | Utawakui 輸出｜播放中 | Art Card 480×270；Cover Player 480×640 |
 
 `electron/main/windows/outputWindow.js` 每種最多保留一窗；重複開啟會 restore／show／focus。名稱不隨頁面 title、曲名或模板變更，slot 更新依既有尺寸契約調整內容；Windows 建窗可能先依 work area 裁小，建立後再明確設定 content size。原生框架只供移動、最小化與關閉，不允許手動 resize／最大化／全螢幕；FHD 加上框架可能超出目前螢幕工作區，OBS 應擷取 client area。
 

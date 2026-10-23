@@ -13,7 +13,7 @@ describe('Now Playing artwork layouts', () => {
     expect(html).toContain('id="artwork-image"');
     expect(html).toContain('class="artwork-overlay__timeline"');
     expect(html).toContain('class="artwork-overlay__transport"');
-    expect(html).not.toContain('artwork-overlay__volume');
+    expect(html).toContain('artwork-overlay__volume');
     expect(html).toContain('/overlay/now-playing/artwork.css');
   });
 

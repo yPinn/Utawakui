@@ -840,10 +840,24 @@
     }
   }
 
+  .artwork-overlay__volume {
+    display: none;
+  }
+
   :root[data-ovl-template='cover-player'] .artwork-overlay {
-    --ovl-template-artwork-title-size: 1em;
-    --ovl-template-player-inline: var(--ovl-primitive-space-4);
+    --ovl-template-artwork-title-size: 1.375em;
     --ovl-template-player-track-size: calc(var(--ovl-primitive-space-1) * 0.75);
+    --ovl-template-player-ink: var(--ovl-primitive-color-paper);
+    --ovl-template-player-muted: color-mix(
+      in srgb,
+      var(--ovl-template-player-ink) 76%,
+      transparent
+    );
+    --ovl-template-player-base: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 48%,
+      var(--ovl-color-vinyl-ink)
+    );
     --ovl-artwork-progress: 0%;
     --ovl-artwork-progress-scale: 0;
 
@@ -851,17 +865,44 @@
     inset-inline-end: auto;
     inset-block-start: 50%;
     inset-block-end: auto;
-    inline-size: calc(100% - 2 * var(--ovl-safe-inline));
-    block-size: calc(100% - 2 * var(--ovl-safe-block));
+    inline-size: 100%;
+    block-size: 100%;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
     gap: 0;
     overflow: hidden;
-    padding: 0;
+    padding: 1.5rem;
     border: 0;
-    background: var(--ovl-user-surface);
+    border-radius: 0.75rem;
+    background:
+      radial-gradient(
+        ellipse at 10% 100%,
+        color-mix(in srgb, var(--ovl-color-artwork-secondary) 26%, transparent),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse at 100% 90%,
+        color-mix(in srgb, var(--ovl-color-artwork-tertiary) 30%, transparent),
+        transparent 65%
+      ),
+      var(--ovl-template-player-base);
+    color: var(--ovl-template-player-ink);
     text-align: start;
     transform: translate(-50%, -50%);
+  }
+
+  :root[data-ovl-template='cover-player'][data-ovl-surface='transparent']
+    .artwork-overlay {
+    background: transparent;
+  }
+
+  :root[data-ovl-template='cover-player'][data-ovl-surface='soft']
+    .artwork-overlay {
+    background-color: color-mix(
+      in srgb,
+      var(--ovl-template-player-base) 78%,
+      transparent
+    );
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__vinyl-stage {
@@ -921,10 +962,21 @@
     position: relative;
     inset: auto;
     display: grid;
-    gap: calc(var(--ovl-primitive-space-1) / 2);
-    padding: var(--ovl-primitive-space-3) var(--ovl-template-player-inline)
-      var(--ovl-primitive-space-2);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 1rem 0 0.8125rem;
     background: transparent;
+    color: var(--ovl-template-player-ink);
+    text-shadow: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__mark {
+    aspect-ratio: 1;
+    block-size: min(100%, 27rem);
+    border-radius: 0.625rem;
+    overflow: hidden;
+    box-shadow: 0 0.5625rem 1.25rem
+      color-mix(in srgb, var(--ovl-color-vinyl-ink) 14%, transparent);
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__title,
@@ -934,6 +986,8 @@
     font-family: var(--ovl-font-ui);
     text-overflow: ellipsis;
     white-space: nowrap;
+    grid-column: 1;
+    color: inherit;
   }
 
   /* Element scale never shrinks text below the constraints floor or its default size. */
@@ -950,7 +1004,7 @@
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__artist {
-    --ovl-template-artwork-artist-size: 0.8125em;
+    --ovl-template-artwork-artist-size: 1.125em;
 
     margin-block-start: 0;
     font-size: max(
@@ -961,7 +1015,8 @@
       )
     );
     font-weight: var(--ovl-el-artist-font-weight, 500);
-    line-height: 1.25;
+    line-height: 1.333333;
+    color: var(--ovl-template-player-muted);
   }
 
   :root[data-ovl-template='cover-player'][data-ovl-el-artist-visible='hidden']
@@ -972,6 +1027,8 @@
     .artwork-overlay__timeline,
   :root[data-ovl-template='cover-player'][data-ovl-el-transport-visible='hidden']
     .artwork-overlay__transport,
+  :root[data-ovl-template='cover-player'][data-ovl-el-transport-visible='hidden']
+    .artwork-overlay__volume,
   :root[data-ovl-template='cover-player'][data-ovl-el-progress-visible='hidden'][data-ovl-el-transport-visible='hidden']
     .artwork-overlay__player {
     display: none;
@@ -979,11 +1036,13 @@
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__player {
     min-block-size: 0;
+    inline-size: 100%;
+    justify-self: stretch;
     display: grid;
     align-content: center;
     gap: 0;
-    padding: 0 var(--ovl-template-player-inline) var(--ovl-primitive-space-3);
-    color: var(--ovl-color-text-primary);
+    padding: 0;
+    color: var(--ovl-template-player-ink);
     font-family: var(--ovl-font-ui);
   }
 
@@ -992,7 +1051,11 @@
     height: var(--ovl-template-player-track-size);
     display: block;
     border-radius: var(--ovl-primitive-radius-md);
-    background: var(--ovl-color-stroke-soft);
+    background: color-mix(
+      in srgb,
+      var(--ovl-template-player-ink) 36%,
+      transparent
+    );
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber-fill {
@@ -1000,7 +1063,7 @@
     height: 100%;
     display: block;
     border-radius: inherit;
-    background: var(--ovl-color-text-primary);
+    background: var(--ovl-template-player-ink);
     transform: scaleX(var(--ovl-artwork-progress-scale));
     transform-origin: left center;
     transition: transform var(--ovl-motion-line-duration) linear;
@@ -1017,7 +1080,7 @@
     width: var(--ovl-primitive-space-2);
     height: var(--ovl-primitive-space-2);
     border-radius: 50%;
-    background: var(--ovl-color-text-primary);
+    background: var(--ovl-template-player-ink);
     content: '';
     transform: translate(-50%, -50%);
   }
@@ -1025,20 +1088,23 @@
   :root[data-ovl-template='cover-player'] .artwork-overlay__timeline {
     display: flex;
     justify-content: space-between;
-    margin-block-start: var(--ovl-primitive-space-1);
-    color: var(--ovl-color-text-secondary);
+    margin-block-start: 0.375rem;
+    color: var(--ovl-template-player-muted);
     font-size: 0.75em;
     font-variant-numeric: tabular-nums;
-    line-height: 1;
+    line-height: 1.333333;
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__transport {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    display: flex;
+    justify-content: center;
     align-items: center;
     justify-items: center;
-    margin-block-start: var(--ovl-primitive-space-3);
-    padding-block: var(--ovl-primitive-space-2) var(--ovl-primitive-space-1);
+    margin-block-start: 0.5625rem;
+    gap: 1.875rem;
+    block-size: 2.75rem;
+    padding-block: 0;
+    color: var(--ovl-template-player-muted);
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__transport svg {
@@ -1057,11 +1123,88 @@
     height: 2.75rem;
     display: grid;
     place-items: center;
+    color: var(--ovl-template-player-ink);
+  }
+
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay__transport
+    .artwork-overlay__skip {
+    inline-size: 1.8125rem;
+    block-size: 1.8125rem;
+    fill: currentColor;
+    stroke: none;
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__play-state svg {
     width: 2.5rem;
     height: 2.5rem;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__volume {
+    block-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block-start: 0.9375rem;
+    color: var(--ovl-template-player-muted);
+  }
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-volume-known='false']
+    .artwork-overlay__volume {
+    visibility: hidden;
+  }
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay__volume
+    .artwork-overlay__volume-mute {
+    display: none;
+  }
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-volume-muted='true']
+    .artwork-overlay__volume-wave {
+    display: none;
+  }
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-volume-muted='true']
+    .artwork-overlay__volume-mute {
+    display: block;
+  }
+  :root[data-ovl-template='cover-player'] .artwork-overlay__volume svg {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    fill: currentColor;
+    stroke: currentColor;
+  }
+  :root[data-ovl-template='cover-player'] .artwork-overlay__volume-track {
+    position: relative;
+    flex: 1;
+    block-size: 0.1875rem;
+    border-radius: 0.5rem;
+    background: color-mix(
+      in srgb,
+      var(--ovl-template-player-ink) 32%,
+      transparent
+    );
+  }
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay__volume-track::before {
+    content: '';
+    display: block;
+    inline-size: var(--ovl-artwork-volume, 0%);
+    block-size: 100%;
+    border-radius: inherit;
+    background: currentColor;
+  }
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay__volume-track::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: var(--ovl-artwork-volume, 0%);
+    inset-block-start: 50%;
+    inline-size: 0.5625rem;
+    block-size: 0.5625rem;
+    border-radius: 50%;
+    background: var(--ovl-template-player-ink);
+    transform: translate(-50%, -50%);
   }
 
   :root[data-ovl-template='cover-player'] .artwork-overlay__play path {
@@ -1083,18 +1226,6 @@
     .artwork-overlay[data-playback-status='playing']
     .artwork-overlay__pause {
     display: block;
-  }
-
-  @media (max-width: 32rem) {
-    :root[data-ovl-template='cover-player'] .artwork-overlay {
-      --ovl-template-player-inline: var(--ovl-primitive-space-3);
-    }
-  }
-
-  @media (max-height: 42rem) {
-    :root[data-ovl-template='cover-player'] .artwork-overlay__transport {
-      padding-block: 0;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {

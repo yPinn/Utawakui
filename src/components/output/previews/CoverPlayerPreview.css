@@ -1,9 +1,27 @@
-/* Mirrors overlay/now-playing/artwork.css cover-player as it renders in the
-  480×540 capture: 1rem safe area, the max-width 32rem player inset and the
-  max-height 42rem transport rule apply; runtime rem -> canvas rem. */
+/* Mirrors the 480x640 cover-player surface using canvas-scaled units. */
 .obs-template-mockup .obs-template-mockup__cover-player {
+  --obs-cover-player-muted: color-mix(
+    in srgb,
+    var(--obs-preview-ink) 76%,
+    transparent
+  );
+  --obs-cover-player-secondary: color-mix(
+    in srgb,
+    var(--obs-preview-accent) 68%,
+    var(--obs-preview-ink)
+  );
+  --obs-cover-player-tertiary: color-mix(
+    in srgb,
+    var(--obs-preview-accent) 58%,
+    var(--ui-output-preview-user-surface)
+  );
+  --obs-cover-player-base: color-mix(
+    in srgb,
+    var(--obs-preview-accent) 48%,
+    var(--ui-output-preview-user-surface)
+  );
   position: absolute;
-  inset: calc(1 * var(--obs-canvas-rem));
+  inset: 0;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -11,18 +29,49 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 0;
-  padding: 0;
-  background: var(--obs-user-surface);
+  padding: calc(1.5 * var(--obs-canvas-rem));
+  border-radius: calc(0.75 * var(--obs-canvas-rem));
+  background:
+    radial-gradient(
+      ellipse at 10% 100%,
+      color-mix(in srgb, var(--obs-cover-player-secondary) 26%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse at 100% 90%,
+      color-mix(in srgb, var(--obs-cover-player-tertiary) 30%, transparent),
+      transparent 65%
+    ),
+    var(--obs-cover-player-base);
   font-size: var(--obs-canvas-rem);
+  font-family: var(--ui-output-preview-font-ui);
   text-align: start;
+}
+
+.obs-template-mockup[data-appearance-surface='transparent']
+  .obs-template-mockup__cover-player {
+  background: transparent;
+}
+.obs-template-mockup[data-appearance-surface='soft']
+  .obs-template-mockup__cover-player {
+  background-color: color-mix(
+    in srgb,
+    var(--obs-cover-player-base) 78%,
+    transparent
+  );
 }
 
 .obs-template-mockup__cover-player-art {
   min-width: 0;
   min-height: 0;
   max-inline-size: 100%;
-  block-size: 100%;
+  block-size: min(100%, calc(27 * var(--obs-canvas-rem)));
   aspect-ratio: 1;
+  border-radius: calc(0.625 * var(--obs-canvas-rem));
+  overflow: hidden;
+  box-shadow: 0 calc(0.5625 * var(--obs-canvas-rem))
+    calc(1.25 * var(--obs-canvas-rem))
+    color-mix(in srgb, var(--ui-output-preview-user-surface) 14%, transparent);
   display: grid;
   place-items: center;
   justify-self: center;
@@ -36,9 +85,9 @@
 .obs-template-mockup__cover-player-copy {
   min-width: 0;
   display: grid;
-  gap: calc(0.125 * var(--obs-canvas-rem));
-  padding: calc(0.75 * var(--obs-canvas-rem)) calc(0.75 * var(--obs-canvas-rem))
-    calc(0.5 * var(--obs-canvas-rem));
+  gap: 0;
+  padding: calc(1 * var(--obs-canvas-rem)) 0
+    calc(0.8125 * var(--obs-canvas-rem));
 }
 
 .obs-template-mockup__cover-player-title,
@@ -50,15 +99,15 @@
 }
 
 .obs-template-mockup__cover-player-title {
-  font-size: 1em;
+  font-size: 1.375em;
   font-weight: var(--obs-user-font-weight);
   line-height: 1.2;
 }
 
 .obs-template-mockup__cover-player-artist {
-  color: var(--obs-preview-muted);
-  font-size: 0.8125em;
-  line-height: 1.25;
+  color: var(--obs-cover-player-muted);
+  font-size: 1.125em;
+  line-height: 1.333333;
 }
 
 .obs-template-mockup__cover-player-controls {
@@ -66,8 +115,7 @@
   display: grid;
   align-content: center;
   gap: 0;
-  padding: 0 calc(0.75 * var(--obs-canvas-rem))
-    calc(0.75 * var(--obs-canvas-rem));
+  padding: 0;
 }
 
 .obs-template-mockup__progress {
@@ -75,36 +123,53 @@
   height: calc(0.1875 * var(--obs-canvas-rem));
   display: block;
   border-radius: calc(0.5 * var(--obs-canvas-rem));
-  background: var(--ui-output-preview-surface-muted);
+  background: color-mix(in srgb, var(--obs-preview-ink) 36%, transparent);
 }
 
 .obs-template-mockup__progress-fill {
-  width: 62%;
+  width: var(--obs-cover-player-progress, 0%);
   height: 100%;
   display: block;
   border-radius: inherit;
   background: var(--obs-preview-ink);
-  transform-origin: left;
+}
+
+.obs-template-mockup__progress::after {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: clamp(
+    calc(0.25 * var(--obs-canvas-rem)),
+    var(--obs-cover-player-progress, 0%),
+    calc(100% - 0.25 * var(--obs-canvas-rem))
+  );
+  inline-size: calc(0.5 * var(--obs-canvas-rem));
+  block-size: calc(0.5 * var(--obs-canvas-rem));
+  border-radius: 50%;
+  background: var(--obs-preview-ink);
+  content: '';
+  transform: translate(-50%, -50%);
 }
 
 .obs-template-mockup__timeline {
   display: flex;
   justify-content: space-between;
-  margin-block-start: calc(0.25 * var(--obs-canvas-rem));
-  color: var(--obs-preview-muted);
+  margin-block-start: calc(0.375 * var(--obs-canvas-rem));
+  color: var(--obs-cover-player-muted);
   font-size: 0.75em;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.333333;
 }
 
 .obs-template-mockup__transport {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  justify-content: center;
+  gap: calc(1.875 * var(--obs-canvas-rem));
+  block-size: calc(2.75 * var(--obs-canvas-rem));
   align-items: center;
   justify-items: center;
-  margin-block-start: calc(0.75 * var(--obs-canvas-rem));
+  margin-block-start: calc(0.5625 * var(--obs-canvas-rem));
   padding-block: 0;
-  color: var(--obs-preview-ink);
+  color: var(--obs-cover-player-muted);
   font-size: calc(1.125 * var(--obs-canvas-rem));
   line-height: 1;
 }
@@ -114,23 +179,67 @@
   block-size: calc(2.75 * var(--obs-canvas-rem));
   display: grid;
   place-items: center;
+  color: var(--obs-preview-ink);
   font-size: calc(2.5 * var(--obs-canvas-rem));
 }
 
-.obs-template-mockup[data-motion='playing']
-  .obs-template-mockup__progress-fill {
-  animation: obs-preview-progress-cycle var(--ui-output-preview-cycle-duration)
-    linear infinite;
+.obs-template-mockup__transport svg {
+  width: calc(1.8125 * var(--obs-canvas-rem));
+  height: calc(1.8125 * var(--obs-canvas-rem));
+  fill: currentColor;
+  stroke: none;
+}
+.obs-template-mockup__transport-play svg {
+  width: calc(2.5 * var(--obs-canvas-rem));
+  height: calc(2.5 * var(--obs-canvas-rem));
+}
+.obs-template-mockup__transport-play .obs-template-mockup__pause {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
 }
 
-@keyframes obs-preview-progress-cycle {
-  0%,
-  12% {
-    transform: scaleX(0.08);
-  }
-
-  76%,
-  100% {
-    transform: scaleX(1);
-  }
+.obs-template-mockup__volume {
+  display: flex;
+  align-items: center;
+  gap: calc(0.5 * var(--obs-canvas-rem));
+  block-size: calc(1.125 * var(--obs-canvas-rem));
+  margin-block-start: calc(0.9375 * var(--obs-canvas-rem));
+  color: var(--obs-cover-player-muted);
+}
+.obs-template-mockup__cover-player[data-volume-known='false']
+  .obs-template-mockup__volume {
+  visibility: hidden;
+}
+.obs-template-mockup__volume svg {
+  width: calc(0.75 * var(--obs-canvas-rem));
+  height: calc(0.75 * var(--obs-canvas-rem));
+  fill: currentColor;
+  stroke: currentColor;
+}
+.obs-template-mockup__volume-track {
+  position: relative;
+  flex: 1;
+  block-size: calc(0.1875 * var(--obs-canvas-rem));
+  border-radius: calc(0.5 * var(--obs-canvas-rem));
+  background: color-mix(in srgb, var(--obs-preview-ink) 32%, transparent);
+}
+.obs-template-mockup__volume-track::before {
+  content: '';
+  display: block;
+  inline-size: var(--obs-cover-player-volume, 0%);
+  block-size: 100%;
+  background: currentColor;
+  border-radius: inherit;
+}
+.obs-template-mockup__volume-track::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--obs-cover-player-volume, 0%);
+  inset-block-start: 50%;
+  width: calc(0.5625 * var(--obs-canvas-rem));
+  height: calc(0.5625 * var(--obs-canvas-rem));
+  border-radius: 50%;
+  background: var(--obs-preview-ink);
+  transform: translate(-50%, -50%);
 }

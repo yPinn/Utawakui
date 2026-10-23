@@ -467,7 +467,7 @@ describe('outputSlots', () => {
     upsertOutputSlot(dir, 'now-playing', {
       templateId: 'cover-player',
       styleSetIds: ['runtime-source'],
-      settings: { surface: 'soft', alignment: 'left' },
+      settings: { surface: 'soft', alignment: 'left', captureSize: 'medium' },
     });
 
     expect(loadOutputSlots(dir).slots['now-playing']).toEqual({
@@ -476,7 +476,7 @@ describe('outputSlots', () => {
       settings: {
         surface: 'soft',
         alignment: 'left',
-        captureSize: 'medium',
+        captureSize: 'portrait',
       },
     });
   });

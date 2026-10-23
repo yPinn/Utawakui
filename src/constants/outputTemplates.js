@@ -231,8 +231,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     availability: {
       summary: '使用本機封面與播放時間，缺少時改用替代顯示。',
     },
-    summary: '大封面與播放進度構成的直式節目卡。',
-    detail: '大幅封面置於上方，曲目與進度排列在下方，像一張安靜的播放器卡片。',
+    summary: '封面取色背景搭配大封面與播放進度。',
+    detail:
+      '480 × 640 直式播放器，封面、靠左曲目與細進度條；三個播放圖示及音量列保留播放器外觀。',
     preview: {
       layoutLabel: '直式封面卡',
       motionLabel: '進度同步',

@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { h } from 'vue';
+import { renderToString } from '@vue/server-renderer';
+import CoverPlayerPreview from './previews/CoverPlayerPreview.vue';
+import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 import {
   readObsTemplateMockupSource,
   readObsTemplatePreviewSource,
@@ -57,7 +61,7 @@ describe('Widget gallery mockups', () => {
 });
 
 describe('Cover Player gallery mockup', () => {
-  it('sizes the card from the 480×540 runtime rules', () => {
+  it('uses the AM portrait capture and matches the runtime metadata and timeline proportions', () => {
     const artworkCss = readFileSync(
       fileURLToPath(
         new URL('../../../overlay/now-playing/artwork.css', import.meta.url),
@@ -69,22 +73,16 @@ describe('Cover Player gallery mockup', () => {
       ' ',
     );
 
-    // max-width 32rem narrows the player inset to space-3 in this capture.
-    expect(artworkCss).toContain(
-      '--ovl-template-player-inline: var(--ovl-primitive-space-3);',
-    );
-    expect(source).toContain(
-      `padding: 0 ${canvasRem(0.75)} ${canvasRem(0.75)};`,
-    );
-    // Runtime keeps the artist size in a custom property so element scaling can read it.
-    expect(artworkCss).toContain(
-      '--ovl-template-artwork-artist-size: 0.8125em;',
-    );
-    expect(source).toContain('font-size: 0.8125em;');
+    expect(
+      captureSizeForKind('now-playing', null, 'cover-player'),
+    ).toMatchObject({ width: 480, height: 640 });
+    expect(artworkCss).toContain('padding: 1.5rem;');
+    expect(source).toContain(`padding: ${canvasRem(1.5)};`);
     for (const declaration of [
       'font-size: 7em;',
       'font-size: 0.75em;',
-      'grid-template-columns: repeat(5, 1fr);',
+      'line-height: 1.333333;',
+      'aspect-ratio: 1;',
     ]) {
       expect(artworkCss).toContain(declaration);
       expect(source).toContain(declaration);
@@ -93,4 +91,19 @@ describe('Cover Player gallery mockup', () => {
     expect(source).not.toContain('obs-template-mockup__title');
     expect(source).not.toContain('obs-template-mockup__secondary');
   });
+
+  it.each([
+    [-1, '0%'],
+    [0.25, '25%'],
+    [2, '100%'],
+  ])(
+    'keeps the fill and marker at the same bounded progress for %s',
+    async (progress, expected) => {
+      const html = await renderToString(
+        h(CoverPlayerPreview, { scene: { playback: { progress } } }),
+      );
+      expect(html).toContain(`--obs-cover-player-progress:${expected}`);
+      expect(html).not.toContain('width:62%');
+    },
+  );
 });

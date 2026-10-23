@@ -23,6 +23,7 @@ describe('output capture size contract', () => {
       { id: 'small', label: '小', width: 480, height: 270, rows: 1 },
       { id: 'medium', label: '中', width: 480, height: 540, rows: 2 },
       { id: 'large', label: '大', width: 480, height: 810, rows: 3 },
+      { id: 'portrait', label: '直式', width: 480, height: 640 },
     ]);
   });
 
@@ -110,7 +111,7 @@ describe('output capture size contract', () => {
     ).toEqual(['small']);
     expect(
       supportedCaptureSizeIdsForTemplate('cover-player', 'now-playing'),
-    ).toEqual(['medium']);
+    ).toEqual(['portrait']);
     expect(normalizeCaptureSizeId('lyrics', 'small', 'focus-line')).toBe(
       'full',
     );
@@ -118,7 +119,7 @@ describe('output capture size contract', () => {
       'small',
     );
     expect(normalizeCaptureSizeId('now-playing', 'large', 'cover-player')).toBe(
-      'medium',
+      'portrait',
     );
     expect(
       captureSizeForKind('setlist', 'medium', 'queue-board'),
@@ -127,5 +128,8 @@ describe('output capture size contract', () => {
       width: 480,
       height: 810,
     });
+    expect(
+      captureSizeForKind('now-playing', 'medium', 'cover-player'),
+    ).toMatchObject({ id: 'portrait', width: 480, height: 640 });
   });
 });

@@ -248,7 +248,7 @@ describe('OBS output workspace layout contract', () => {
     expect(mockupSource).not.toContain('obs-template-mockup__artwork');
     expect(mockupSource).toContain('obs-template-mockup__transport');
     expect(mockupSource).toContain('obs-template-mockup__timeline');
-    expect(mockupSource).not.toContain('obs-template-mockup__volume');
+    expect(mockupSource).toContain('obs-template-mockup__volume');
     expect(mockupSource).toContain('obs-template-mockup__manga-bubble');
     expect(mockupSource).toContain(
       "import MangaFrameSvg from '../MangaFrameSvg.vue'",

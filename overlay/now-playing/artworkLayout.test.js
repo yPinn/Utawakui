@@ -45,6 +45,35 @@ function sleeveElements(presentationCache) {
 }
 
 describe('Now Playing artwork layouts', () => {
+  it('updates effective volume on the same track, restores after mute and clears unavailable state', () => {
+    const view = elements();
+    const frame = {
+      visible: true,
+      trackId: 'a',
+      title: 'A',
+      volume: 0.72,
+      muted: false,
+    };
+    renderArtworkFrame(view, frame);
+    expect(view.root.style.setProperty).toHaveBeenCalledWith(
+      '--ovl-artwork-volume',
+      '72%',
+    );
+    expect(view.root.dataset.volumeKnown).toBe('true');
+    renderArtworkFrame(view, { ...frame, muted: true });
+    expect(view.root.style.setProperty).toHaveBeenLastCalledWith(
+      '--ovl-artwork-volume',
+      '0%',
+    );
+    expect(view.root.dataset.volumeMuted).toBe('true');
+    renderArtworkFrame(view, frame);
+    expect(view.root.style.setProperty).toHaveBeenLastCalledWith(
+      '--ovl-artwork-volume',
+      '72%',
+    );
+    renderArtworkFrame(view, { ...frame, volume: null });
+    expect(view.root.dataset.volumeKnown).toBe('false');
+  });
   it('warms the next allowlisted artwork before a sleeve exchange', () => {
     class PreviewImage {
       src = '';

@@ -66,11 +66,12 @@
     },
     "cover-player": {
       "file": "cover-player.jpg",
-      "sha256": "8ab4d890bec4ae9edc3466e384af0b24ec4b769e542bef96f0c5087deae0beff",
-      "content": "legacy-programmatic-capture",
-      "rights": "derived-project-artwork-per-legacy-readme",
-      "delivery": "pending-current-runtime-review",
-      "humanReview": "not-tested"
+      "sha256": "9099e6edbad8cfaef8015309eb4e9c4f22e86a5ab201296232ab35b551ce115f",
+      "content": "current-runtime-capture",
+      "rights": "project-owned-synthetic-artwork",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "Visible Electron Browser Source; 480x640 cover-player scaled0.85 on1280x720; synthetic artwork/text; tasks/am-player-adoption-20261023/visual-report.json, 2026-10-23"
     },
     "receipt-setlist": {
       "file": "receipt-setlist.jpg",

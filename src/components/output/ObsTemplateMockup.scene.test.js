@@ -13,6 +13,34 @@ import {
 import { createOutputScenario } from '../../../scripts/outputAppearanceBaseline.mjs';
 
 describe('F3 Gallery projected scene', () => {
+  it.each([
+    [0.38, false, '38%', 'false'],
+    [1, false, '100%', 'false'],
+    [0.72, true, '0%', 'true'],
+    [0, false, '0%', 'true'],
+  ])(
+    'shows projected volume %s and mute %s in the cover preview',
+    async (volume, muted, effective, mutedIcon) => {
+      const scene = createOutputPreviewScene({
+        kind: 'now-playing',
+        templateId: 'cover-player',
+      });
+      scene.snapshot.playback.volume = volume;
+      scene.snapshot.playback.muted = muted;
+      const html = await renderToString(
+        createSSRApp({
+          render: () =>
+            h(Mockup, {
+              preset: { id: 'cover-player', kind: 'now-playing' },
+              scene,
+            }),
+        }),
+      );
+      expect(html).toContain(`--obs-cover-player-volume:${effective}`);
+      expect(html).toContain('data-volume-known="true"');
+      expect(html).toContain(`data-volume-muted="${mutedIcon}"`);
+    },
+  );
   it('preserves an explicitly supplied empty snapshot instead of showing a sample', async () => {
     const input = createOutputScenario('empty');
     const scene = createOutputPreviewScene({

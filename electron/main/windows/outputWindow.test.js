@@ -95,7 +95,7 @@ describe('read-only output windows', () => {
         settings: { captureSize: 'medium' },
       },
     });
-    expect(Window.windows[0].size).toEqual([480, 540]);
+    expect(Window.windows[0].size).toEqual([480, 640]);
     const copy = runtime.getOverlaySlot('now-playing');
     copy.settings.captureSize = 'full';
     expect(runtime.getOverlaySlot('now-playing').settings.captureSize).toBe(
@@ -232,7 +232,7 @@ describe('read-only output windows', () => {
     manager.syncSlots();
     expect(Window.windows[0].setContentSize).toHaveBeenLastCalledWith(
       480,
-      540,
+      640,
       false,
     );
     expect(Window.windows[0].loadURL).toHaveBeenCalledTimes(1);

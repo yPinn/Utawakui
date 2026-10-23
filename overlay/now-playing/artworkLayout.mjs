@@ -881,7 +881,18 @@ export function renderArtworkFrame(elements, frame) {
     `${progress * 100}%`,
   );
   elements.root.style.setProperty('--ovl-artwork-progress-scale', progress);
+  const volumeKnown = Number.isFinite(frame.volume);
+  const effectiveVolume =
+    volumeKnown && !frame.muted ? Math.max(0, Math.min(1, frame.volume)) : 0;
+  elements.root.dataset.volumeKnown = String(volumeKnown);
+  elements.root.dataset.volumeMuted = String(
+    frame.muted === true || (volumeKnown && frame.volume === 0),
+  );
   renderSleeveContent(elements, frame);
+  elements.root.style.setProperty(
+    '--ovl-artwork-volume',
+    `${effectiveVolume * 100}%`,
+  );
   elements.elapsed.textContent = formatTime(positionMs);
   elements.remaining.textContent = `-${formatTime(
     Math.max(0, durationMs - positionMs),

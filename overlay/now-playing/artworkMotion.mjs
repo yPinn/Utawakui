@@ -1,6 +1,9 @@
 const VINYL_SPIN_DURATION_SECONDS = 18;
 const TRANSIENT_PLAYBACK_STATUSES = new Set(['buffering', 'seeking']);
 const EXCHANGE_RECORD_CLEAR_PROPS = 'height,opacity,transform,visibility,width';
+// Presentation owns palette/progress custom properties on the same elements.
+// Only remove properties written by scene motion when leaving the vinyl view.
+const SCENE_CLEAR_PROPS = 'opacity,transform,visibility';
 const SLEEVE_HANDOFF_OFFSET_RATIO = 0.08;
 const SLEEVE_HANDOFF_OFFSET_MIN_PX = 12;
 const SLEEVE_HANDOFF_OFFSET_MAX_PX = 18;
@@ -712,7 +715,7 @@ export function createArtworkMotionController({
           incomingSleeve,
           tonearmAssembly,
         ],
-        { clearProps: 'all' },
+        { clearProps: SCENE_CLEAR_PROPS },
       );
       setMotionState('hidden');
       bloomTarget = 0;
@@ -791,7 +794,7 @@ export function createArtworkMotionController({
     resetExchangeRecord();
     resetIncomingSleeve();
     if (sceneElements.length > 0)
-      gsap?.set?.(sceneElements, { clearProps: 'all' });
+      gsap?.set?.(sceneElements, { clearProps: SCENE_CLEAR_PROPS });
   }
 
   return { destroy, setReducedMotion, suspend, update };
