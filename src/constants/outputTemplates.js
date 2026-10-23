@@ -40,7 +40,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'receipt-setlist',
     kind: 'setlist',
     order: 30,
-    name: '歌回收據',
+    name: '票據歌單',
     availability: { summary: '演出安排提供已唱明細；一般播放顯示播放紀錄。' },
     summary: '黑白熱感紙呈現目前曲目與已唱紀錄。',
     detail:
@@ -58,7 +58,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'queue-board',
     kind: 'setlist',
     order: 20,
-    name: '黑幕歌單',
+    name: '夜色歌單',
     availability: {
       summary: '只需要目前曲目與已唱紀錄。',
     },
@@ -80,7 +80,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'karaoke-stack',
     kind: 'lyrics',
     order: 10,
-    name: '經典伴唱',
+    name: '經典字幕',
     availability: {
       summary: '有逐字資料時精確掃色，否則依行長平順估算。',
     },
@@ -105,7 +105,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'manga-frame',
     kind: 'lyrics',
     order: 30,
-    name: '漫畫對白',
+    name: '分格對白',
     availability: {
       summary: '只需要目前行；有日文讀音時可顯示假名。',
     },
@@ -129,7 +129,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'kinetic-pop',
     kind: 'lyrics',
     order: 25,
-    name: '霓彩跳字',
+    name: '躍動字幕',
     availability: {
       summary: '逐行歌詞即可；每段歌詞自動交錯跳入。',
     },
@@ -154,7 +154,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'ornate-vertical',
     kind: 'lyrics',
     order: 28,
-    name: '華綴直書',
+    name: '和風直書',
     availability: {
       summary: '只需要逐行歌詞；日文漢字會自動成組。',
     },
@@ -180,7 +180,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'live-stage',
     kind: 'lyrics',
     order: 20,
-    name: '舞台轉播',
+    name: '舞台字幕',
     availability: {
       summary: '需要逐行時間；曲目資訊用於開場字卡。',
     },
@@ -204,7 +204,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'art-card',
     kind: 'now-playing',
     order: 10,
-    name: '星染黑膠',
+    name: '星空黑膠',
     availability: {
       summary: '優先使用本機封面，缺圖時顯示曲名首字。',
     },
@@ -226,7 +226,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'cover-player',
     kind: 'now-playing',
     order: 30,
-    name: '封面播放卡',
+    name: '封面電台',
     availability: {
       summary: '使用本機封面與播放時間，缺少時改用替代顯示。',
     },

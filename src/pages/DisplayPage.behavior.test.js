@@ -61,7 +61,7 @@ describe('DisplayPage', () => {
         'u',
       ),
     );
-    expect(html).toContain('經典伴唱');
+    expect(html).toContain('經典字幕');
     expect(
       html.match(/class="[^"\n]*\bobs-template-gallery__grid\b[^"\n]*"/gu),
     ).toHaveLength(1);

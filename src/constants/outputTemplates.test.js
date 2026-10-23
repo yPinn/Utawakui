@@ -12,15 +12,15 @@ import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
-  'receipt-setlist': '歌回收據',
-  'queue-board': '黑幕歌單',
-  'karaoke-stack': '經典伴唱',
-  'live-stage': '舞台轉播',
-  'kinetic-pop': '霓彩跳字',
-  'ornate-vertical': '華綴直書',
-  'manga-frame': '漫畫對白',
-  'art-card': '星染黑膠',
-  'cover-player': '封面播放卡',
+  'receipt-setlist': '票據歌單',
+  'queue-board': '夜色歌單',
+  'karaoke-stack': '經典字幕',
+  'live-stage': '舞台字幕',
+  'kinetic-pop': '躍動字幕',
+  'ornate-vertical': '和風直書',
+  'manga-frame': '分格對白',
+  'art-card': '星空黑膠',
+  'cover-player': '封面電台',
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
@@ -392,7 +392,7 @@ describe('output template registry', () => {
       lyricsGroup.templates.find((template) => template.id === 'karaoke-stack'),
     ).toMatchObject({
       id: 'karaoke-stack',
-      name: '經典伴唱',
+      name: '經典字幕',
       kind: 'lyrics',
       preview: {
         layoutLabel: '錯位雙行',
@@ -438,7 +438,7 @@ describe('output template registry', () => {
       lyricsGroup.templates.find((template) => template.id === 'kinetic-pop'),
     ).toMatchObject({
       id: 'kinetic-pop',
-      name: '霓彩跳字',
+      name: '躍動字幕',
       kind: 'lyrics',
       preview: {
         layoutLabel: '底部跳字',
@@ -458,7 +458,7 @@ describe('output template registry', () => {
       ),
     ).toMatchObject({
       id: 'ornate-vertical',
-      name: '華綴直書',
+      name: '和風直書',
       kind: 'lyrics',
       preview: {
         layoutLabel: '華麗直書',
@@ -505,8 +505,8 @@ describe('output template registry', () => {
         order,
       })),
     ).toEqual([
-      { id: 'art-card', name: '星染黑膠', order: 10 },
-      { id: 'cover-player', name: '封面播放卡', order: 30 },
+      { id: 'art-card', name: '星空黑膠', order: 10 },
+      { id: 'cover-player', name: '封面電台', order: 30 },
     ]);
     expect(
       nowPlayingGroup.templates.find(

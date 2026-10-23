@@ -417,7 +417,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
           h(ObsSlotWorkbench, {
             preset: {
               id: 'ornate-vertical',
-              name: '華綴直書',
+              name: '和風直書',
               kind: 'lyrics',
               appearanceFields:
                 outputAppearanceFieldsForTemplate('ornate-vertical'),
