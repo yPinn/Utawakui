@@ -41,16 +41,49 @@ function resolvePackagedUpdateConfigPath({
   return path.join(resourcesPath, 'app-update.yml');
 }
 
-function readDeveloperOptions(argv = []) {
+// A packaged install must not be switchable onto the dev-server renderer,
+// which would hand the full preload bridge to whatever serves localhost.
+function readDeveloperOptions(argv = [], { isPackagedRuntime = false } = {}) {
   const values = Array.isArray(argv) ? argv : [];
-  const isDev = values.includes('--dev');
+  const isDev = !isPackagedRuntime && values.includes('--dev');
   return {
     isDev,
     openDevTools: isDev && values.includes('--devtools'),
   };
 }
 
+// Development-only overrides: feedback relay target and the executable yt-dlp
+// runs as its JavaScript runtime.
+const DEVELOPMENT_ENV_OVERRIDES = Object.freeze([
+  'UTAWAKUI_FEEDBACK_ENDPOINT',
+  'UTAWAKUI_YTDLP_JS_RUNTIME',
+]);
+// Chromium honors these in packaged builds; CDP would bypass every IPC check.
+const REMOTE_DEBUGGING_SWITCHES = Object.freeze([
+  'remote-debugging-port',
+  'remote-debugging-pipe',
+]);
+
+// Strips development overrides from env (so child processes never inherit
+// them) and reports a remote-debugging switch the caller must refuse.
+function applyPackagedRuntimeRestrictions({
+  isPackagedRuntime,
+  commandLine,
+  env = process.env,
+}) {
+  if (!isPackagedRuntime) return { allowed: true };
+  for (const name of DEVELOPMENT_ENV_OVERRIDES) delete env[name];
+  const debuggingSwitch = REMOTE_DEBUGGING_SWITCHES.find((name) =>
+    commandLine?.hasSwitch?.(name),
+  );
+  return debuggingSwitch
+    ? { allowed: false, refusedSwitch: debuggingSwitch }
+    : { allowed: true };
+}
+
 module.exports = {
+  DEVELOPMENT_ENV_OVERRIDES,
+  applyPackagedRuntimeRestrictions,
   detectPackagedRuntime,
   readDeveloperOptions,
   resolvePackagedUpdateConfigPath,

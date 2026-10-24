@@ -34,6 +34,7 @@ app.setName(APP_NAME);
 app.setAppLogsPath();
 
 const {
+  applyPackagedRuntimeRestrictions,
   detectPackagedRuntime,
   resolvePackagedUpdateConfigPath,
 } = require('./main/runtimeEnvironment');
@@ -41,6 +42,17 @@ const isPackagedRuntime = detectPackagedRuntime({
   appPath: app.getAppPath(),
   resourcesPath: process.resourcesPath,
 });
+const runtimeRestriction = applyPackagedRuntimeRestrictions({
+  isPackagedRuntime,
+  commandLine: app.commandLine,
+});
+if (!runtimeRestriction.allowed) {
+  // Exits before any window, session or IPC handler exists.
+  console.error(
+    `Refusing packaged launch with --${runtimeRestriction.refusedSwitch}`,
+  );
+  process.exit(1);
+}
 const packagedUpdateConfigPath = resolvePackagedUpdateConfigPath({
   isPackagedRuntime,
   isElectronPackaged: app.isPackaged,

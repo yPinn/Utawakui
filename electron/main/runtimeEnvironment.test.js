@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import runtimeEnvironmentModule from './runtimeEnvironment.js';
 
 const {
+  DEVELOPMENT_ENV_OVERRIDES,
+  applyPackagedRuntimeRestrictions,
   detectPackagedRuntime,
   readDeveloperOptions,
   resolvePackagedUpdateConfigPath,
@@ -105,4 +107,61 @@ describe('developer options', () => {
       openDevTools: false,
     });
   });
+
+  it('ignores development flags in a packaged runtime', () => {
+    expect(
+      readDeveloperOptions(['electron.exe', '--dev', '--devtools'], {
+        isPackagedRuntime: true,
+      }),
+    ).toEqual({ isDev: false, openDevTools: false });
+  });
+});
+
+describe('packaged runtime restrictions', () => {
+  const commandLine = (...switches) => ({
+    hasSwitch: (name) => switches.includes(name),
+  });
+
+  it('strips development env overrides only in a packaged runtime', () => {
+    const overrides = Object.fromEntries(
+      DEVELOPMENT_ENV_OVERRIDES.map((name) => [name, 'override']),
+    );
+    const sourceEnv = { ...overrides, UTAWAKUI_YTDLP_PO_TOKEN: 'kept' };
+    applyPackagedRuntimeRestrictions({
+      isPackagedRuntime: false,
+      commandLine: commandLine(),
+      env: sourceEnv,
+    });
+    expect(sourceEnv).toMatchObject(overrides);
+
+    const packagedEnv = { ...overrides, UTAWAKUI_YTDLP_PO_TOKEN: 'kept' };
+    expect(
+      applyPackagedRuntimeRestrictions({
+        isPackagedRuntime: true,
+        commandLine: commandLine(),
+        env: packagedEnv,
+      }),
+    ).toEqual({ allowed: true });
+    expect(packagedEnv).toEqual({ UTAWAKUI_YTDLP_PO_TOKEN: 'kept' });
+  });
+
+  it.each(['remote-debugging-port', 'remote-debugging-pipe'])(
+    'refuses a packaged launch with --%s',
+    (name) => {
+      expect(
+        applyPackagedRuntimeRestrictions({
+          isPackagedRuntime: true,
+          commandLine: commandLine(name),
+          env: {},
+        }),
+      ).toEqual({ allowed: false, refusedSwitch: name });
+      expect(
+        applyPackagedRuntimeRestrictions({
+          isPackagedRuntime: false,
+          commandLine: commandLine(name),
+          env: {},
+        }),
+      ).toEqual({ allowed: true });
+    },
+  );
 });

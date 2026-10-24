@@ -71,7 +71,10 @@ async function loadWindowState({ isDev = false, openDevTools = false } = {}) {
     if (request === 'electron') return electron;
     if (request === '../../lib/thumbarIcons') return { renderGlyphPng };
     if (request === '../runtimeEnvironment') {
-      return { readDeveloperOptions: () => ({ isDev, openDevTools }) };
+      return {
+        detectPackagedRuntime: () => false,
+        readDeveloperOptions: () => ({ isDev, openDevTools }),
+      };
     }
     return originalModuleLoad.call(this, request, parent, isMain);
   };

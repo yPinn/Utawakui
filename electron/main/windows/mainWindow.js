@@ -15,7 +15,10 @@ const { normalizeAudioPreferences } = require('../../lib/config');
 const {
   projectSeparationTaskbarProgress,
 } = require('../separationTaskbarProgress');
-const { readDeveloperOptions } = require('../runtimeEnvironment');
+const {
+  detectPackagedRuntime,
+  readDeveloperOptions,
+} = require('../runtimeEnvironment');
 const { DEV_SERVER_ORIGIN } = require('../../lib/devServer');
 const { hardenWebContentsNavigation } = require('../webContentsSecurity');
 const { forwardHistoryAppCommands } = require('../appCommands');
@@ -28,7 +31,12 @@ const rendererEntries = require('../../../shared/rendererEntries.json');
 const { getWindowIdentity } = require('./windowIdentity');
 const UI_DENSITY_COMPACT = 'compact';
 const UI_DENSITY_STANDARD = 'standard';
-const { isDev, openDevTools } = readDeveloperOptions(process.argv);
+const { isDev, openDevTools } = readDeveloperOptions(process.argv, {
+  isPackagedRuntime: detectPackagedRuntime({
+    appPath: app.getAppPath(),
+    resourcesPath: process.resourcesPath,
+  }),
+});
 
 const { icon: iconPath } = getWindowIdentity('main');
 
