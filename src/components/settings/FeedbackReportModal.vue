@@ -16,7 +16,9 @@ import {
   MAX_TRACK_LABEL_LENGTH,
 } from '../../constants/feedback.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
+import { summarizeFeedbackDiagnostics } from '../../utils/feedbackDiagnosticsSummary.js';
 import UiButton from '../ui/UiButton.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiModal from '../ui/UiModal.vue';
@@ -34,6 +36,10 @@ const {
   submitReport,
   exportFallback,
 } = useFeedbackReport();
+
+const diagnosticsSummary = computed(() =>
+  summarizeFeedbackDiagnostics(state.previewPayload?.diagnostics),
+);
 
 const descriptionField = useTemplateRef('descriptionField');
 const previewSummary = useTemplateRef('previewSummary');
@@ -247,6 +253,20 @@ const descriptionPlaceholder = computed(
               已附上最近
               {{ state.previewPayload.diagnostics.eventCount }}
               筆事件記錄
+              <UiDisclosure
+                v-if="diagnosticsSummary.length"
+                class="feedback-report__events"
+                label="查看內容"
+              >
+                <ol class="feedback-report__event-list">
+                  <li v-for="row in diagnosticsSummary" :key="row.key">
+                    <span class="feedback-report__event-meta"
+                      >{{ row.time }}・{{ row.level }}</span
+                    >
+                    {{ row.message }}
+                  </li>
+                </ol>
+              </UiDisclosure>
             </dd>
           </div>
         </dl>
@@ -315,6 +335,25 @@ const descriptionPlaceholder = computed(
 
 .feedback-report__description {
   white-space: pre-wrap;
+}
+
+.feedback-report__events {
+  margin-top: var(--ui-space-2);
+}
+
+.feedback-report__event-list {
+  display: grid;
+  gap: var(--ui-space-1);
+  max-height: 12rem;
+  margin: 0;
+  padding-left: var(--ui-space-4);
+  overflow-y: auto;
+  font-size: var(--ui-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.feedback-report__event-meta {
+  color: var(--ui-color-text-muted);
 }
 
 .feedback-report__report-id {

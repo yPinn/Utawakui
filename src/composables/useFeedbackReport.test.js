@@ -27,13 +27,16 @@ describe('useFeedbackReport', () => {
         environment: { appVersion: '0.4.0', platform: 'win32' },
       });
     let exported;
-    const buildFeedbackPreview = vi.fn(async (input) => ({
-      ok: true,
-      payload: build(input).payload,
-    }));
+    let previewed;
+    // Mirrors main: preview is held by reportId; submit/export reuse it.
+    const buildFeedbackPreview = vi.fn(async (input) => {
+      previewed = build(input).payload;
+      return { ok: true, payload: previewed };
+    });
     const submitFeedback = vi.fn(async () => ({ ok: false }));
-    const exportFeedbackFallback = vi.fn(async (input) => {
-      exported = JSON.parse(JSON.stringify(build(input).payload));
+    const exportFeedbackFallback = vi.fn(async ({ previewId }) => {
+      expect(previewId).toBe(previewed.reportId);
+      exported = JSON.parse(JSON.stringify(previewed));
       return { ok: true, cancelled: false };
     });
     stubBridge({
@@ -71,6 +74,29 @@ describe('useFeedbackReport', () => {
     expect(exported.description).toContain('50 秒');
     expect(JSON.stringify(exported)).not.toContain('private.lrc');
     expect(JSON.stringify(context)).toBe(original);
+  });
+  it('submits by preview id and returns to compose when the preview expired', async () => {
+    const submitFeedback = vi.fn(async () => ({
+      ok: false,
+      errorCode: 'FEEDBACK_PREVIEW_EXPIRED',
+    }));
+    stubBridge({
+      buildFeedbackPreview: vi.fn(async () => ({
+        ok: true,
+        payload: { reportId: 'r-1', kind: 'bug' },
+      })),
+      submitFeedback,
+    });
+    const feedback = await loadFeedbackReport();
+    feedback.updateDraft({ description: '播放時卡住' });
+    await feedback.goToPreview();
+
+    await expect(feedback.submitReport()).resolves.toBe(false);
+
+    expect(submitFeedback).toHaveBeenCalledWith({ previewId: 'r-1' });
+    expect(feedback.state.step).toBe('compose');
+    expect(feedback.state.previewPayload).toBeNull();
+    expect(feedback.state.notice.title).toBe('預覽已逾時');
   });
   it('opens a bounded editable prefill without preview, sending, exporting or stale fields', async () => {
     const methods = {

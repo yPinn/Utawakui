@@ -17,6 +17,14 @@ function bugInput(overrides = {}) {
   return { kind: 'bug', description: '整首歌卡住', ...overrides };
 }
 
+async function previewed(ipcMain, input = bugInput()) {
+  const preview = await ipcMain.handlers.get('feedback:build-preview')(
+    null,
+    input,
+  );
+  return { previewId: preview.payload.reportId };
+}
+
 describe('registerFeedbackHandlers', () => {
   it('registers exactly the three feedback intents', () => {
     const ipcMain = createIpcMain();
@@ -128,7 +136,7 @@ describe('registerFeedbackHandlers', () => {
 
     const result = await ipcMain.handlers.get('feedback:submit')(
       null,
-      bugInput(),
+      await previewed(ipcMain),
     );
     expect(result).toEqual({ ok: true, reportId: 'r-42' });
     expect(client.submit).toHaveBeenCalledTimes(1);
@@ -148,7 +156,7 @@ describe('registerFeedbackHandlers', () => {
 
     const result = await ipcMain.handlers.get('feedback:submit')(
       null,
-      bugInput(),
+      await previewed(ipcMain),
     );
     expect(result).toEqual({
       ok: false,
@@ -163,32 +171,40 @@ describe('registerFeedbackHandlers', () => {
       submit: vi.fn().mockResolvedValue({ status: 'ok', reportId: 'r' }),
     };
     let currentTime = 0;
+    let id = 0;
     registerFeedbackHandlers({
       ipcMain,
       service: createService(),
       client,
       dialog: {},
       now: () => currentTime,
+      idGenerator: () => `report-${(id += 1)}`,
       maxSubmissionsPerWindow: 2,
     });
     const submit = ipcMain.handlers.get('feedback:submit');
 
-    await expect(submit(null, bugInput())).resolves.toMatchObject({
-      ok: true,
-    });
-    await expect(submit(null, bugInput())).resolves.toMatchObject({
-      ok: true,
-    });
-    await expect(submit(null, bugInput())).resolves.toEqual({
+    await expect(submit(null, await previewed(ipcMain))).resolves.toMatchObject(
+      {
+        ok: true,
+      },
+    );
+    await expect(submit(null, await previewed(ipcMain))).resolves.toMatchObject(
+      {
+        ok: true,
+      },
+    );
+    await expect(submit(null, await previewed(ipcMain))).resolves.toEqual({
       ok: false,
       errorCode: 'FEEDBACK_RATE_LIMITED',
     });
 
     // Advancing past the window resets the counter.
     currentTime += 10 * 60 * 1000 + 1;
-    await expect(submit(null, bugInput())).resolves.toMatchObject({
-      ok: true,
-    });
+    await expect(submit(null, await previewed(ipcMain))).resolves.toMatchObject(
+      {
+        ok: true,
+      },
+    );
   });
 
   it('treats a cancelled export-fallback dialog as success with no write', async () => {
@@ -208,7 +224,7 @@ describe('registerFeedbackHandlers', () => {
 
     const result = await ipcMain.handlers.get('feedback:export-fallback')(
       null,
-      bugInput(),
+      await previewed(ipcMain),
     );
     expect(result).toEqual({ ok: true, cancelled: true });
     expect(writeExportFile).not.toHaveBeenCalled();
@@ -233,11 +249,100 @@ describe('registerFeedbackHandlers', () => {
 
     const result = await ipcMain.handlers.get('feedback:export-fallback')(
       null,
-      bugInput(),
+      await previewed(ipcMain),
     );
     expect(result).toEqual({ ok: true, cancelled: false });
     expect(writeExportFile).toHaveBeenCalledTimes(1);
     expect(writeExportFile.mock.calls[0][0]).toBe('C:/tmp/out.json');
     expect(writeExportFile.mock.calls[0][1]).toMatchObject({ kind: 'bug' });
+  });
+
+  it('sends exactly the previewed payload even if diagnostics change later', async () => {
+    const ipcMain = createIpcMain();
+    const events = [{ level: 'error', message: 'first' }];
+    const client = {
+      submit: vi.fn().mockResolvedValue({ status: 'ok', reportId: 'p-1' }),
+    };
+    registerFeedbackHandlers({
+      ipcMain,
+      service: createService(events),
+      client,
+      dialog: {},
+      idGenerator: () => 'p-1',
+    });
+    const preview = await ipcMain.handlers.get('feedback:build-preview')(
+      null,
+      bugInput({ includeDiagnostics: true }),
+    );
+    events.push({ level: 'error', message: 'arrived after preview' });
+
+    await ipcMain.handlers.get('feedback:submit')(null, { previewId: 'p-1' });
+
+    expect(client.submit.mock.calls[0][0]).toBe(preview.payload);
+    expect(JSON.stringify(client.submit.mock.calls[0][0])).not.toContain(
+      'arrived after preview',
+    );
+  });
+
+  it('rejects a missing, expired or already submitted preview', async () => {
+    const ipcMain = createIpcMain();
+    let currentTime = 0;
+    const client = {
+      submit: vi.fn().mockResolvedValue({ status: 'ok', reportId: 'p-1' }),
+    };
+    registerFeedbackHandlers({
+      ipcMain,
+      service: createService(),
+      client,
+      dialog: {},
+      now: () => currentTime,
+      idGenerator: () => 'p-1',
+    });
+    const submit = ipcMain.handlers.get('feedback:submit');
+    const expired = { ok: false, errorCode: 'FEEDBACK_PREVIEW_EXPIRED' };
+
+    await expect(submit(null, bugInput())).resolves.toEqual(expired);
+    await previewed(ipcMain);
+    currentTime += 10 * 60 * 1000 + 1;
+    await expect(submit(null, { previewId: 'p-1' })).resolves.toEqual(expired);
+
+    await previewed(ipcMain);
+    await expect(submit(null, { previewId: 'p-1' })).resolves.toMatchObject({
+      ok: true,
+    });
+    await expect(submit(null, { previewId: 'p-1' })).resolves.toEqual(expired);
+    expect(client.submit).toHaveBeenCalledOnce();
+  });
+
+  it('records submission outcomes locally under the report id', async () => {
+    const ipcMain = createIpcMain();
+    const service = { ...createService(), record: vi.fn() };
+    const client = {
+      submit: vi
+        .fn()
+        .mockResolvedValueOnce({ status: 'error', reason: 'offline' })
+        .mockResolvedValueOnce({ status: 'ok', reportId: 'p-1' }),
+    };
+    registerFeedbackHandlers({
+      ipcMain,
+      service,
+      client,
+      dialog: {},
+      idGenerator: () => 'p-1',
+    });
+    const submit = ipcMain.handlers.get('feedback:submit');
+
+    await submit(null, await previewed(ipcMain));
+    await submit(null, { previewId: 'p-1' });
+
+    expect(service.record.mock.calls.map(([event]) => event)).toMatchObject([
+      {
+        level: 'warning',
+        code: 'FEEDBACK_SUBMIT_FAILED',
+        correlationId: 'p-1',
+        context: { reason: 'offline' },
+      },
+      { level: 'info', code: 'FEEDBACK_SUBMITTED', correlationId: 'p-1' },
+    ]);
   });
 });

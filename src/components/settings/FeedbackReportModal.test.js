@@ -110,6 +110,45 @@ describe('FeedbackReportModal', () => {
     );
   });
 
+  it('lets the user inspect attached events without codes or stacks', async () => {
+    const feedback = useFeedbackReport();
+    feedback.openReport({ kind: 'bug' });
+    feedback.updateDraft({ description: '整首歌卡住' });
+    vi.stubGlobal('window', {
+      Utawakui: {
+        buildFeedbackPreview: vi.fn().mockResolvedValue({
+          ok: true,
+          payload: {
+            kind: 'bug',
+            description: '整首歌卡住',
+            environment: { appVersion: '1.0.0', platform: 'win32' },
+            diagnostics: {
+              eventCount: 1,
+              events: [
+                {
+                  id: 'e-1',
+                  timestamp: '2026-10-24T01:05:00.000Z',
+                  level: 'error',
+                  code: 'RENDER_PROCESS_GONE',
+                  message: 'Renderer process terminated unexpectedly',
+                  stack: 'at app:electron/main.js:1:2',
+                },
+              ],
+            },
+          },
+        }),
+      },
+    });
+
+    await feedback.goToPreview();
+    const html = await renderModal();
+
+    expect(html).toContain('查看內容');
+    expect(html).toContain('Renderer process terminated unexpectedly');
+    expect(html).not.toContain('RENDER_PROCESS_GONE');
+    expect(html).not.toContain('app:electron');
+  });
+
   it('renders a compact report reference while retaining the full submitted id', async () => {
     const reportId = 'aeb6ab26-f40b-4671-a3bc-996fd802503f';
     const feedback = useFeedbackReport();

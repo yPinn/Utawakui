@@ -36,6 +36,11 @@ backend of its own; this is the app's first user-initiated network upload.
 - Every submission requires an explicit, user-reviewed preview
   (`feedback:build-preview`) before `feedback:submit` can send it. There is no
   automatic or background upload of any kind.
+- Main holds each previewed payload by its `reportId` for 10 minutes; submit
+  and export send exactly that payload, so diagnostics recorded after the
+  preview never join it. The preview can expand the attached events (time,
+  level and message; no codes or stacks). Submission outcomes are recorded
+  locally under the same `reportId` (amended 2026-10-24).
 - `electron/lib/feedback/payload.js` builds the payload in main, reusing the
   existing diagnostics primitives (`buildDiagnosticsSupportBundle`,
   `service.listRecent`) instead of re-implementing them. User-authored text

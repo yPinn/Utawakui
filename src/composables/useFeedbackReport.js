@@ -132,6 +132,22 @@ function updateDraft(patch) {
   }
 }
 
+// Main sends or saves exactly the payload it previewed under this id.
+function previewedInput() {
+  return { previewId: state.previewPayload?.reportId ?? '' };
+}
+
+function returnToComposeForExpiredPreview() {
+  state.step = 'compose';
+  state.previewPayload = null;
+  state.notice = failureNotice({
+    title: '預覽已逾時',
+    message: '請重新建立預覽後再送出。',
+    actionLabel: '',
+    operation: 'preview',
+  });
+}
+
 function currentInput() {
   return {
     kind: state.kind,
@@ -208,8 +224,12 @@ async function submitReport() {
   state.isLoading = true;
   state.notice = null;
   try {
-    const result = await submit(currentInput());
+    const result = await submit(previewedInput());
     if (current !== requestRevision) return false;
+    if (result?.errorCode === 'FEEDBACK_PREVIEW_EXPIRED') {
+      returnToComposeForExpiredPreview();
+      return false;
+    }
     if (!result?.ok) {
       const message =
         result?.errorCode === 'FEEDBACK_RATE_LIMITED'
@@ -256,8 +276,12 @@ async function exportFallback() {
   state.isLoading = true;
   state.notice = null;
   try {
-    const result = await exportFn(currentInput());
+    const result = await exportFn(previewedInput());
     if (current !== requestRevision) return false;
+    if (result?.errorCode === 'FEEDBACK_PREVIEW_EXPIRED') {
+      returnToComposeForExpiredPreview();
+      return false;
+    }
     // A cancelled save dialog is expected control flow, matching
     // usePersistentDiagnostics.js's exportBundle().
     if (result?.cancelled) {
