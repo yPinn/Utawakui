@@ -72,6 +72,9 @@ const DEFAULTS = {
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
+  // Explicit opt-in: a failed provider download may retry with the YouTube
+  // sign-in of a local browser profile (yt-dlp --cookies-from-browser).
+  youtubeBrowserCookies: false,
   experimentalLyricsAfterSeparation: false,
   // Whether quick/general separation tries the DirectML execution provider
   // before CPU. See ADR 0017 — this is a boolean product intent, not a
@@ -362,6 +365,7 @@ function loadConfigSnapshot(configPath) {
         typeof data.autoAnalyzeMusicStructure === 'boolean'
           ? data.autoAnalyzeMusicStructure
           : DEFAULTS.autoAnalyzeMusicStructure,
+      youtubeBrowserCookies: data.youtubeBrowserCookies === true,
       separationGpuAcceleration:
         typeof data.separationGpuAcceleration === 'boolean'
           ? data.separationGpuAcceleration

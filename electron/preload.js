@@ -442,6 +442,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-auto-music-analysis'),
   setAutoMusicAnalysis: (enabled) =>
     ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
+  getYoutubeBrowserCookies: () =>
+    ipcRenderer.invoke('config:get-youtube-browser-cookies'),
+  setYoutubeBrowserCookies: (enabled) =>
+    ipcRenderer.invoke('config:set-youtube-browser-cookies', enabled),
   getSeparationGpuAcceleration: () =>
     ipcRenderer.invoke('config:get-separation-gpu-acceleration'),
   setSeparationGpuAcceleration: (enabled) =>

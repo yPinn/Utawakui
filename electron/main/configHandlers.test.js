@@ -152,6 +152,8 @@ describe('registerConfigHandlers', () => {
       'config:set-audio-preferences',
       'config:get-auto-music-analysis',
       'config:set-auto-music-analysis',
+      'config:get-youtube-browser-cookies',
+      'config:set-youtube-browser-cookies',
       'config:get-separation-gpu-acceleration',
       'config:set-separation-gpu-acceleration',
       'config:get-app-update-auto-check',
@@ -549,6 +551,37 @@ describe('registerConfigHandlers', () => {
       expect(thrown.message).toContain('AUTO_MUSIC_ANALYSIS_INVALID');
       expect(updateConfig).not.toHaveBeenCalled();
       expect(recordDiagnostic).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([true, false])(
+    'persists the browser-cookie opt-in as %s',
+    async (enabled) => {
+      const { ipcMain, updateConfig } = register();
+
+      await expect(
+        ipcMain.handlers.get('config:set-youtube-browser-cookies')(
+          null,
+          enabled,
+        ),
+      ).resolves.toBe(enabled);
+      expect(updateConfig).toHaveBeenCalledWith({
+        youtubeBrowserCookies: enabled,
+      });
+    },
+  );
+
+  it.each([null, 0, 'true', {}])(
+    'rejects invalid browser-cookie opt-in value %j',
+    async (enabled) => {
+      const { ipcMain, updateConfig } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-youtube-browser-cookies')(null, enabled)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('YOUTUBE_BROWSER_COOKIES_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
     },
   );
 

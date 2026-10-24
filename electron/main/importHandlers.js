@@ -313,6 +313,7 @@ function registerImportHandlers({
           return downloadTrackAudio(videoId, destDir, {
             runner,
             signal,
+            allowBrowserCookies: getConfig().youtubeBrowserCookies === true,
             ...(runImport
               ? { runImport, onTrackCommitted: commitMetadata }
               : {}),

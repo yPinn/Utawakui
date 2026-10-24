@@ -213,17 +213,33 @@ describe('CLIENT_FALLBACK_YOUTUBE_PHASES', () => {
 });
 
 describe('getAuthenticatedYoutubePhases', () => {
-  it('matches the default authenticated phases when no PO token env is configured', () => {
-    expect(getAuthenticatedYoutubePhases({}).map((phase) => phase.id)).toEqual(
-      AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id),
+  it('omits browser-cookie phases unless the user opted in', () => {
+    const ids = getAuthenticatedYoutubePhases({}).map((phase) => phase.id);
+    expect(ids).toEqual(
+      AUTHENTICATED_YOUTUBE_PHASES.filter(
+        (phase) => !phase.options.cookiesFromBrowser,
+      ).map((phase) => phase.id),
     );
+    expect(ids.some((id) => id.startsWith('cookies-'))).toBe(false);
+    expect(ids).toContain('impersonate');
+  });
+
+  it('matches the default authenticated phases when no PO token env is configured', () => {
+    expect(
+      getAuthenticatedYoutubePhases({}, { allowBrowserCookies: true }).map(
+        (phase) => phase.id,
+      ),
+    ).toEqual(AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id));
   });
 
   it('adds one redacted manual PO-token phase before browser-cookie phases', () => {
-    const phases = getAuthenticatedYoutubePhases({
-      UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN_VALUE',
-      UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
-    });
+    const phases = getAuthenticatedYoutubePhases(
+      {
+        UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN_VALUE',
+        UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
+      },
+      { allowBrowserCookies: true },
+    );
     const ids = phases.map((phase) => phase.id);
     const poTokenIndex = ids.indexOf('po-token-mweb-gvs');
 
@@ -252,10 +268,13 @@ describe('getAuthenticatedYoutubePhases', () => {
   });
 
   it('ignores unsafe PO-token env values instead of injecting malformed extractor args', () => {
-    const phases = getAuthenticatedYoutubePhases({
-      UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN;player_client=all',
-      UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
-    });
+    const phases = getAuthenticatedYoutubePhases(
+      {
+        UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN;player_client=all',
+        UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
+      },
+      { allowBrowserCookies: true },
+    );
 
     expect(phases.map((phase) => phase.id)).toEqual(
       AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id),

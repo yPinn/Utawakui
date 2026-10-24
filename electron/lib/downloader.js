@@ -330,8 +330,11 @@ function buildAudioDownloadOptionAttempts(
   );
 }
 
-function buildAudioDownloadAttempts(baseOptions, info = null) {
-  const phases = getAuthenticatedYoutubePhases();
+function buildAudioDownloadAttempts(
+  baseOptions,
+  info = null,
+  phases = getAuthenticatedYoutubePhases(),
+) {
   const optionsList = buildAudioDownloadOptionAttempts(
     baseOptions,
     info,
@@ -442,10 +445,13 @@ async function downloadAudio(videoId, destDir, options = {}) {
   const trackDir = fs.mkdtempSync(path.join(stagingRoot, 'track-'));
   try {
     const outputTemplate = path.join(trackDir, 'audio.%(ext)s');
-    // Same cookie database the download attempts below will read anyway — a
-    // transient failure here used to permanently record "no lyrics found".
+    const phases = getAuthenticatedYoutubePhases(process.env, {
+      allowBrowserCookies: options.allowBrowserCookies === true,
+    });
+    // Same phases the download attempts below use — a transient failure
+    // here used to permanently record "no lyrics found".
     const info = await fetchVideoInfo(videoId, {
-      phases: getAuthenticatedYoutubePhases(),
+      phases,
       runner,
       signal: options.signal,
     });
@@ -471,6 +477,7 @@ async function downloadAudio(videoId, destDir, options = {}) {
           writeThumbnail: true,
         },
         info,
+        phases,
       ),
       runAndVerifyAudioOutput,
     );

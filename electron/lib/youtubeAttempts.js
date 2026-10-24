@@ -169,20 +169,27 @@ function buildManualPoTokenPhase(env = process.env) {
   };
 }
 
-function getAuthenticatedYoutubePhases(env = process.env) {
+// Browser-cookie phases read the user's signed-in browser profile, so they
+// run only when the user has opted in (config youtubeBrowserCookies).
+function getAuthenticatedYoutubePhases(
+  env = process.env,
+  { allowBrowserCookies = false } = {},
+) {
   const poTokenPhase = buildManualPoTokenPhase(env);
   const cookieIndex = AUTHENTICATED_YOUTUBE_PHASES.findIndex((phase) =>
     phase.id.startsWith('cookies-'),
   );
-  if (!poTokenPhase || cookieIndex === -1) {
-    return AUTHENTICATED_YOUTUBE_PHASES.slice();
-  }
-
-  return [
-    ...AUTHENTICATED_YOUTUBE_PHASES.slice(0, cookieIndex),
-    poTokenPhase,
-    ...AUTHENTICATED_YOUTUBE_PHASES.slice(cookieIndex),
-  ];
+  const phases =
+    !poTokenPhase || cookieIndex === -1
+      ? AUTHENTICATED_YOUTUBE_PHASES.slice()
+      : [
+          ...AUTHENTICATED_YOUTUBE_PHASES.slice(0, cookieIndex),
+          poTokenPhase,
+          ...AUTHENTICATED_YOUTUBE_PHASES.slice(cookieIndex),
+        ];
+  return allowBrowserCookies
+    ? phases
+    : phases.filter((phase) => !phase.options.cookiesFromBrowser);
 }
 
 // Splits "worth escalating" (caller-supplied) from "did this phase's own

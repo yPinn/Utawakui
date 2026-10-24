@@ -83,6 +83,23 @@ describe('import clipboard suggestion boundary', () => {
     expect(runImport).toHaveBeenCalledOnce();
     expect(saveProviderIndexEntry).toHaveBeenCalledOnce();
   });
+  it.each([
+    [{}, false],
+    [{ youtubeBrowserCookies: true }, true],
+  ])(
+    'passes the browser-cookie opt-in from %j to provider downloads',
+    async (config, expected) => {
+      const downloadTrackAudio = vi.fn().mockResolvedValue({ title: 'Song' });
+      const view = registerDownload({
+        getConfig: () => config,
+        downloadTrackAudio,
+      });
+      await view.handlers.get('yt:download-audio')({}, 'abcdefghijk');
+      expect(downloadTrackAudio.mock.calls[0][2].allowBrowserCookies).toBe(
+        expected,
+      );
+    },
+  );
   function clipboardHarness(value) {
     const sender = { mainFrame: {} };
     const readClipboardText = vi.fn().mockResolvedValue(value);

@@ -15,6 +15,7 @@ import {
   readTrackInfoMetadata,
   readTrackSidecarState,
 } from './downloader.js';
+import { getAuthenticatedYoutubePhases } from './youtubeAttempts.js';
 
 describe('downloadAudio cancellation', () => {
   let dir;
@@ -96,6 +97,33 @@ describe('downloadAudio cancellation', () => {
     );
     expect(fs.readdirSync(path.join(dir, '.download-staging'))).toEqual([]);
   });
+
+  it.each([
+    [undefined, false],
+    [true, true],
+  ])(
+    'reads browser cookies only after opt-in (allowBrowserCookies=%s)',
+    async (allowBrowserCookies, expectsCookies) => {
+      const forbidden = Object.assign(new Error('403'), {
+        stderr:
+          'ERROR: unable to download video data: HTTP Error 403: Forbidden',
+      });
+      const attempts = [];
+      const runner = vi.fn(async (_url, options) => {
+        attempts.push(options);
+        if (options.skipDownload) return {};
+        throw forbidden;
+      });
+
+      await expect(
+        downloadAudio('abc12345678', dir, { runner, allowBrowserCookies }),
+      ).rejects.toThrow('403');
+
+      expect(
+        attempts.some((options) => Boolean(options.cookiesFromBrowser)),
+      ).toBe(expectsCookies);
+    },
+  );
 });
 
 describe('applySubtitleOptions', () => {
@@ -144,6 +172,9 @@ describe('buildAudioDownloadOptionAttempts', () => {
           title: 'あたらよ',
           subtitles: { ja: [{ ext: 'vtt' }] },
         },
+        getAuthenticatedYoutubePhases(process.env, {
+          allowBrowserCookies: true,
+        }),
       ),
     ).toEqual([
       {

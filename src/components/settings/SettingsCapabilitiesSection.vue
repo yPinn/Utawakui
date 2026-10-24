@@ -17,9 +17,11 @@ import { useMusicAnalysisSettings } from '../../composables/useMusicAnalysisSett
 import { useObsIntegrationSettings } from '../../composables/useObsIntegrationSettings.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
+import { useYoutubeBrowserCookieSettings } from '../../composables/useYoutubeBrowserCookieSettings.js';
 import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
 import SettingsSection from './SettingsSection.vue';
 import MusicAnalysisPreferenceRow from './MusicAnalysisPreferenceRow.vue';
+import YoutubeBrowserCookiesRow from './YoutubeBrowserCookiesRow.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import FfmpegSourceModal from './FfmpegSourceModal.vue';
@@ -89,6 +91,7 @@ const lyricsToolNeedsAttention = computed(() =>
   ),
 );
 const separationSettings = useSeparationSettings();
+const youtubeBrowserCookieSettings = useYoutubeBrowserCookieSettings();
 const obsIntegrationSettings = useObsIntegrationSettings();
 const obsSessionExport = useObsSessionExport();
 const { confirm: confirmAction } = useAppConfirmation();
@@ -316,6 +319,7 @@ onMounted(() => {
   musicAnalysisSettings.initialize();
   lyricsAcousticCapability.refresh();
   separationSettings.refreshPreference();
+  youtubeBrowserCookieSettings.refreshPreference();
   obsIntegrationSettings.refreshSettings();
 });
 </script>
@@ -415,6 +419,25 @@ onMounted(() => {
             @item-advanced-action="handleWorkflowItemAdvancedAction"
           >
             <template #settings>
+              <YoutubeBrowserCookiesRow
+                v-if="gate.id === FEATURE_IDS.PROVIDER_FLOW && gate.enabled"
+                :allow-browser-cookies="
+                  youtubeBrowserCookieSettings.allowBrowserCookies.value
+                "
+                :busy="youtubeBrowserCookieSettings.preferenceBusy.value"
+                :reading="youtubeBrowserCookieSettings.preferenceReading.value"
+                :loaded="youtubeBrowserCookieSettings.preferenceLoaded.value"
+                :error="youtubeBrowserCookieSettings.preferenceSaveError.value"
+                :read-error="
+                  youtubeBrowserCookieSettings.preferenceReadError.value
+                "
+                @refresh-preference="
+                  youtubeBrowserCookieSettings.refreshPreference
+                "
+                @set-allow-browser-cookies="
+                  youtubeBrowserCookieSettings.setAllowBrowserCookies
+                "
+              />
               <MusicAnalysisPreferenceRow
                 v-if="
                   gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled

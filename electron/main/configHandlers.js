@@ -365,6 +365,45 @@ function registerConfigHandlers({
     );
   });
 
+  ipcMain.handle('config:get-youtube-browser-cookies', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-youtube-browser-cookies',
+        code: 'YOUTUBE_BROWSER_COOKIES_READ_FAILED',
+        title: '無法讀取登入資料設定',
+        message: '目前無法讀取瀏覽器登入資料設定。',
+      },
+      () => getConfig().youtubeBrowserCookies,
+    ),
+  );
+
+  ipcMain.handle(
+    'config:set-youtube-browser-cookies',
+    async (event, enabled) => {
+      if (typeof enabled !== 'boolean') {
+        throw createValidationError(
+          'YOUTUBE_BROWSER_COOKIES_INVALID',
+          '無法套用登入資料設定',
+          '指定的瀏覽器登入資料設定無效。',
+        );
+      }
+      return runConfigOperation(
+        {
+          recordDiagnostic,
+          operation: 'set-youtube-browser-cookies',
+          code: 'YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED',
+          title: '無法套用登入資料設定',
+          message: '目前無法套用瀏覽器登入資料設定，請稍後再試。',
+        },
+        () => {
+          updateConfig({ youtubeBrowserCookies: enabled });
+          return getConfig().youtubeBrowserCookies;
+        },
+      );
+    },
+  );
+
   ipcMain.handle('config:get-separation-gpu-acceleration', async () =>
     runConfigOperation(
       {
