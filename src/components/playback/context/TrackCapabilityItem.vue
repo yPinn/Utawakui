@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { AudioWaveform, Captions, Info } from '../../../icons/index.js';
+import { MicAudioLines, Captions, Info } from '../../../icons/index.js';
 import UiStatusIcon from '../../ui/UiStatusIcon.vue';
 import UiTooltipSurface from '../../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../../ui/useTooltip.js';
@@ -11,7 +11,7 @@ const props = defineProps({
 
 const icons = {
   lyrics: Captions,
-  separation: AudioWaveform,
+  separation: MicAudioLines,
 };
 const icon = computed(() => icons[props.item?.id] ?? Info);
 const tooltipText = computed(() => `${props.item.label}：${props.item.status}`);

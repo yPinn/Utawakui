@@ -708,9 +708,9 @@ describe('formatLyricsSourceOffset', () => {
 
 describe('formatLyricsSourceTier', () => {
   it.each([
-    ['T0', 'T0'],
-    ['T1', 'T1'],
-    ['T2', 'T2'],
+    ['T0', '純文字'],
+    ['T1', '逐行同步'],
+    ['T2', '逐字同步'],
     [undefined, '—'],
     ['unsupported', '—'],
   ])('formats source tier %s as %s', (tier, expected) => {
@@ -718,10 +718,10 @@ describe('formatLyricsSourceTier', () => {
   });
 
   it.each([
-    ['T0', 'T0｜無時間資料，不能自動跟隨播放'],
-    ['T1', 'T1｜逐行時間'],
-    ['T2', 'T2｜行內片段時間；文件可能只有部分行具備'],
-    [undefined, '時間層級未知'],
+    ['T0', '沒有同步時間，無法跟隨播放。'],
+    ['T1', '歌詞可逐行跟隨播放。'],
+    ['T2', '含歌詞分段時間，部分句子可能仍按整句顯示。'],
+    [undefined, '尚未確認同步方式。'],
   ])(
     'describes source tier %s without implying a display style',
     (tier, expected) => {

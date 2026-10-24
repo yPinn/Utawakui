@@ -12,6 +12,7 @@ import { useReleaseOrganization } from '../../composables/useReleaseOrganization
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { TRACK_MENU_ACTIONS } from '../../utils/playlistMenu.js';
+import { collectionForSource } from '../../utils/collectionIdentity.js';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
 import QueueSection from './QueueSection.vue';
@@ -90,11 +91,7 @@ const upcomingSourceLabel = computed(() => state.sourceName || '目前佇列');
 // entry is worth making the section title jump to.
 const upcomingSourcePlaylist = computed(() => {
   if (!state.sourceId) return null;
-  return (
-    playlistState.playlists.find(
-      (playlist) => playlist.id === state.sourceId,
-    ) ?? null
-  );
+  return collectionForSource(playlistState.playlists, state.sourceId) ?? null;
 });
 const upcomingSourceLinkLabel = computed(() => {
   const kindLabel =

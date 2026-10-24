@@ -25,7 +25,7 @@ defineProps({ disabled: { type: Boolean, default: false } });
       experiment.needsReanalysis.value
         ? '校時已變更，請重新分析；目前沿用原歌詞。'
         : experiment.prepared.value.status === 'ready'
-          ? `分析${experiment.applied.value ? '已套用' : '未套用'} · ${summary.fineLines ? `${summary.fineLines} 句含細時間` : '僅分段提示'}${experiment.estimate.value.compatibility?.rule === 'normalizer-v2-v3-exact-v1' ? ' · 沿用既有分析，時間未變' : ''}`
+          ? `分析${experiment.applied.value ? '已套用' : '未套用'} · ${summary.fineLines ? `${summary.fineLines} 句有分段時間` : '僅分段提示'}${experiment.estimate.value.compatibility?.rule === 'normalizer-v2-v3-exact-v1' ? ' · 沿用既有分析，時間未變' : ''}`
           : '分析目前不可用，沿用原歌詞。'
     }}</UiHint>
     <UiButton

@@ -11,6 +11,8 @@ defineProps({
   isLoadingLyrics: { type: Boolean, default: false },
   trackCount: { type: Number, default: 0 },
   hasSelectedTrack: { type: Boolean, default: false },
+  selectionHint: { type: String, default: '請先選擇曲目。' },
+  uncheckedHint: { type: String, default: '尚未檢查歌詞。' },
   lyricsStatus: { type: String, default: 'unchecked' },
   hasSelectedSource: { type: Boolean, default: false },
   lines: { type: Array, default: () => [] },
@@ -57,6 +59,8 @@ const emit = defineEmits([
       :is-loading-lyrics="isLoadingLyrics"
       :track-count="trackCount"
       :has-selected-track="hasSelectedTrack"
+      :selection-hint="selectionHint"
+      :unchecked-hint="uncheckedHint"
       :lyrics-status="lyricsStatus"
       :has-selected-source="hasSelectedSource"
       :lines="lines"

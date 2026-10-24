@@ -4,6 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
 import LyricsFineText from './LyricsFineText.vue';
+import LyricsLiveTool from './LyricsLiveTool.vue';
 
 const source = readFileSync(
   new URL('./LyricsDocumentPanel.vue', import.meta.url),
@@ -36,6 +37,46 @@ function render(props) {
 }
 
 describe('LyricsDocumentPanel presentation', () => {
+  it.each([
+    {
+      selectionHint: '從「編輯 → 選擇曲目」開始。',
+      uncheckedHint: '從「編輯 → 重新掃描歌詞」檢查歌詞。',
+    },
+    {
+      selectionHint: '從曲庫播放曲目，即可查看歌詞。',
+      uncheckedHint: '按「編輯歌詞」，從「編輯」重新掃描。',
+    },
+  ])(
+    'forwards caller-owned guidance without mixing unavailable actions: %j',
+    async (hints) => {
+      const renderTool = (state) =>
+        renderToString(
+          createSSRApp({
+            render: () =>
+              h(LyricsLiveTool, {
+                trackCount: 1,
+                hasSelectedTrack: false,
+                offsetLabel: '0.0s',
+                ...hints,
+                ...state,
+              }),
+          }),
+        );
+      const selection = await renderTool({});
+      expect(selection).toContain(hints.selectionHint);
+      expect(selection).not.toContain(hints.uncheckedHint);
+      const unchecked = await renderTool({ hasSelectedTrack: true });
+      expect(unchecked).toContain(hints.uncheckedHint);
+      expect(unchecked).not.toContain(hints.selectionHint);
+      const loading = await renderTool({ isLoading: true });
+      expect(loading).toContain('正在讀取曲庫…');
+      expect(loading).not.toContain(hints.selectionHint);
+      const failed = await renderTool({ error: '讀取失敗' });
+      expect(failed).toContain('讀取失敗');
+      expect(failed).not.toContain(hints.selectionHint);
+    },
+  );
+
   it.each(['list', 'sheet'])(
     'keeps the full text and ruby during an evidenced cue pause in %s',
     async (presentation) => {

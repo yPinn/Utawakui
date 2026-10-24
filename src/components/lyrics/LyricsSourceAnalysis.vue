@@ -87,8 +87,8 @@ const summary = computed(() =>
   summarizeAcousticPreview(experiment.prepared.value),
 );
 const availability = computed(() => {
-  if (nativeOnly.value) return '來源 T2 已提供逐字時間，直接沿用，不需要分析。';
-  if (!hasT1.value) return '目前來源沒有可分析的整句時間，請先準備時間歌詞。';
+  if (nativeOnly.value) return '已有逐字時間，不需分析。';
+  if (!hasT1.value) return '請先加入含同步時間的歌詞。';
   if (!queue.state.value) return '正在確認分析設定。';
   if (!queue.state.value.allowed) return '請先至設定啟用音訊處理功能。';
   if (!queue.state.value.enabled)
@@ -97,8 +97,7 @@ const availability = computed(() => {
     return '請先至設定準備或修復歌詞分析工具。';
   if (lyrics.state.offsetSave?.isSaving)
     return '正在儲存校時，完成後才能分析。';
-  if (lyrics.state.offsetSave?.error)
-    return '校時尚未儲存，請先重試校時，再分析。';
+  if (lyrics.state.offsetSave?.error) return '請先重試儲存校時，再分析。';
   return '';
 });
 const jobDescription = computed(() => {
@@ -110,24 +109,23 @@ const jobDescription = computed(() => {
   if (currentItem.value?.status !== 'skipped') return '';
   return (
     {
-      'source-changed': '選用來源已變更，請確認目前來源後重新分析。',
+      'source-changed': '歌詞來源已變更，請重新分析。',
       'language-unknown':
-        '尚無可可靠分流的句子；可指定主要語言提示後重試，混語句仍沿用 T1。',
-      'language-unsupported':
-        '目前支援中文、日文與英文，請確認後指定分析語言。',
-      'lyrics-missing': '沒有歌詞來源，請先加入時間歌詞。',
-      'untimed-lyrics': '目前來源沒有可分析的整句時間。',
-      'native-t2': '來源 T2 已提供逐字時間，直接沿用。',
-      'unsupported-lyrics': '目前沒有可分析的單語句；句內混語沿用 T1。',
+        '無法確認語言。請選擇主要語言後重試；混合語言的句子保留原有逐行時間。',
+      'language-unsupported': '支援中文、日文與英文。請選擇分析語言。',
+      'lyrics-missing': '請先加入含同步時間的歌詞。',
+      'untimed-lyrics': '這份歌詞沒有可分析的逐行時間。',
+      'native-t2': '沿用原有逐字時間。',
+      'unsupported-lyrics': '沒有可分析的單一語言句子，保留原有逐行時間。',
       'environment-missing': '請先至設定準備歌詞分析工具。',
-    }[currentItem.value.reason] ?? '目前來源無法分析，請確認語言與整句時間。'
+    }[currentItem.value.reason] ?? '無法分析，請確認歌詞語言與同步時間。'
   );
 });
 const stageLabels = {
   verify: '檢查環境',
   load: '載入模型',
-  alignment: '對齊詞塊',
-  hubertfa: '對齊詞塊',
+  alignment: '分析歌詞時間',
+  hubertfa: '分析歌詞時間',
   content: '查核歌詞內容',
   small: '載入內容檢查',
 };
@@ -152,7 +150,7 @@ const statusMessage = computed(() => {
       (experiment.applied.value ? '已套用' : '未套用') +
       ' · ' +
       (summary.value.fineLines
-        ? `${summary.value.fineLines} 句含細時間`
+        ? `${summary.value.fineLines} 句有分段時間`
         : '僅分段提示') +
       '；未涵蓋部分沿用原歌詞。' +
       (experiment.estimate.value.compatibility?.rule ===
@@ -164,7 +162,7 @@ const statusMessage = computed(() => {
         : '')
     );
   if (!['missing', 'disabled'].includes(experiment.estimate.value.status))
-    return '目前沒有可套用的詞塊，沿用來源時間；請重新分析。';
+    return '沒有可套用的分段時間，保留原有時間；可重新分析。';
   return '';
 });
 const hasPrevious = computed(
@@ -247,7 +245,7 @@ onScopeDispose(() => clearInterval(timer));
         v-if="hasT1"
         :id="languageId"
         v-model="language"
-        label="主要語言提示"
+        label="主要語言"
         :options="languageOptions"
         :disabled="blocked || busy"
       />
@@ -284,10 +282,9 @@ onScopeDispose(() => clearInterval(timer));
     <UiHint v-if="hasT1">分析完成後可手動套用。</UiHint>
     <UiDisclosure v-if="hasT1" v-model:open="detailsOpen" label="分析說明">
       <UiHint
-        >依目前校時逐句分流中／日／英，提示只作用本次；句內混語或證據不足沿用
-        T1。變更來源或校時後需重新分析。來源 T2 優先，未通過的句子沿用
-        T1。本地以底線提示當前詞塊，已知停頓暫隱底線；Focus 與卡拉 OK
-        支援連續填色。顯示估計不改分析時間，仍需人工確認。</UiHint
+        >分析中文、日文或英文歌詞，優先沿用原有逐字時間；無法分析的句子保留逐行時間。
+        更換來源或校時後需重新分析，結果請播放確認。閱讀畫面以底線提示目前分段；Focus
+        與卡拉 OK 支援連續填色。</UiHint
       >
     </UiDisclosure>
     <LyricsPhrasePreview

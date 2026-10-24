@@ -217,7 +217,7 @@ function cancelEditing() {
             id="performance-session-track-filter"
             v-model="trackFilter"
             label="搜尋曲庫"
-            placeholder="曲名、演出者或 track id"
+            placeholder="搜尋曲名或演出者"
           />
           <UiSelect
             id="performance-session-track-link"

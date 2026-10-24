@@ -184,7 +184,7 @@ async function changeTrack(trackId) {
           </UiTooltip>
           <UiPopover
             v-model:open="pickerExpanded"
-            aria-label="更換 BGM"
+            aria-label="更換場間音樂"
             placement="top-end"
             focus-on-open
             :panel-style="{ inlineSize: 'var(--ui-bgm-player-inline-size)' }"
@@ -223,8 +223,8 @@ async function changeTrack(trackId) {
       :icon="compact ? ChevronUp : ChevronDown"
       :label="
         compact
-          ? `展開 BGM 控制${error ? `：${operationalStatus.accessibleLabel}` : ''}`
-          : '收合 BGM 控制'
+          ? `展開場間音樂${error ? `：${operationalStatus.accessibleLabel}` : ''}`
+          : '收合場間音樂'
       "
       :intent="error ? 'danger' : 'neutral'"
       :aria-expanded="!compact"

@@ -12,6 +12,7 @@ import { usePlaylists } from '../composables/usePlaylists.js';
 import { isArtistSourceId } from '../utils/artistPage.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { playlistDisplayName } from '../utils/playlistMenu.js';
+import { collectionForSource } from '../utils/collectionIdentity.js';
 import {
   createLocalArtistSummary,
   createTrackReadiness,
@@ -76,9 +77,7 @@ const {
 });
 
 const queueSourcePlaylist = computed(() =>
-  playlistsState.playlists.find(
-    (candidate) => candidate.id === queueState.sourceId,
-  ),
+  collectionForSource(playlistsState.playlists, queueState.sourceId),
 );
 const queueSourceName = computed(
   () =>

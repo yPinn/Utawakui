@@ -66,7 +66,7 @@ describe('collection menu items', () => {
     expect(albumItems.at(-1).label).toBe('移除');
     expect(
       albumItems.find((item) => item.id === 'edit-release-info').label,
-    ).toBe('發行資訊');
+    ).toBe('編輯發行資訊');
     expect(albumItems.find((item) => item.id === 'convert-kind').label).toBe(
       '轉為播放清單',
     );

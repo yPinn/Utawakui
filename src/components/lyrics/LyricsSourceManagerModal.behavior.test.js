@@ -165,8 +165,8 @@ describe('local lyrics collection modal navigation', () => {
     await nextTick();
     await nextTick();
     await nextTick();
-    expect(textContent(root)).toContain('T1+');
-    expect(textContent(root)).toContain('來源 T2');
+    expect(textContent(root)).toContain('分析估計時間');
+    expect(textContent(root)).toContain('原有逐字時間');
     expect(textContent(root)).toContain('-0.5s');
     expect(
       findAll(root, (n) => n.props['data-analysis-active'] === true),

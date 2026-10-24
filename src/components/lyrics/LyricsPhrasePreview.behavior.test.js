@@ -124,7 +124,7 @@ describe('source-bound mixed phrase preview', () => {
       target: { value: '1' },
     });
     await nextTick();
-    expect(textContent(mounted.root)).toContain('已套用 T1+');
+    expect(textContent(mounted.root)).toContain('已套用分析時間');
     expect(textContent(mounted.root)).toContain('播放此句時切換');
     props.positionMs = 26500;
     await nextTick();

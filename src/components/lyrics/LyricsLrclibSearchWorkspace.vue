@@ -431,7 +431,7 @@ function reportCandidate(candidate) {
         />
       </UiSurface>
 
-      <UiHint v-else-if="!hasSearched" padded> 請輸入歌曲名稱後搜尋。 </UiHint>
+      <UiHint v-else-if="!hasSearched" padded>輸入歌名開始搜尋。</UiHint>
       <template v-else-if="silentProviderMiss">
         <!-- A normal Better Lyrics miss is intentionally silent. -->
       </template>
@@ -452,12 +452,12 @@ function reportCandidate(candidate) {
         compact
       />
       <UiHint v-else-if="!hasResults" role="status" padded>
-        沒有找到候選歌詞。
+        找不到歌詞。試試其他關鍵字。
       </UiHint>
 
       <template v-else>
         <UiHint v-if="resultRecordingGroups.best.length === 0" padded>
-          沒有較符合的版本；以下結果可能是不同版本，請先確認。
+          以下可能是不同版本，請先確認。
         </UiHint>
 
         <section

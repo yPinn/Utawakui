@@ -18,12 +18,12 @@ const emit = defineEmits(['update:searchQuery', 'select']);
 <template>
   <section
     class="bgm-track-picker"
-    aria-label="更換 BGM"
+    aria-label="更換場間音樂"
     :aria-busy="isLoading || isSaving"
   >
     <UiSearchBox
       :model-value="searchQuery"
-      label="搜尋本機曲庫以更換 BGM"
+      label="搜尋場間音樂"
       placeholder="搜尋本機曲庫"
       :disabled="isSaving"
       @update:model-value="emit('update:searchQuery', $event)"
@@ -37,7 +37,7 @@ const emit = defineEmits(['update:searchQuery', 'select']);
       class="bgm-track-picker__results-scroll"
       axis="vertical"
       scrollbar-visibility="auto"
-      aria-label="BGM 搜尋結果"
+      aria-label="場間音樂搜尋結果"
       tabindex="0"
     >
       <ul class="bgm-track-picker__results">

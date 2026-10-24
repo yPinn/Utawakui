@@ -6,7 +6,7 @@ import UiTooltip from '../ui/UiTooltip.vue';
 import {
   Cpu,
   ICON_SIZE,
-  ListChecks,
+  Download,
   MemoryStick,
   Moon,
   PictureInPicture2,
@@ -141,10 +141,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
          presentation-location decision this row implements — PlayerBar had
          no room left, so this moved to the titlebar instead. -->
     <div class="app-title-bar__status">
-      <UiTooltip
-        text="僅 Utawakui 自身（人聲分離執行中含子程序），非整台電腦"
-        placement="bottom"
-      >
+      <UiTooltip text="Utawakui 的資源用量" placement="bottom">
         <template #trigger="{ triggerProps }">
           <div
             v-bind="triggerProps"
@@ -231,7 +228,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           data-app-preparation-trigger
           class="app-title-bar__preparation"
           :class="`app-title-bar__preparation--${preparationTone}`"
-          :icon="ListChecks"
+          :icon="Download"
           :label="preparationActionLabel"
           :tooltip-suffix="preparationTooltipSuffix"
           variant="ghost"

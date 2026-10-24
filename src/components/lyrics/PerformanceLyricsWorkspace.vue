@@ -158,6 +158,8 @@ onMounted(initialize);
       :is-loading-lyrics="state.isLoadingLyrics"
       :track-count="state.tracks.length"
       :has-selected-track="Boolean(selectedTrack)"
+      selection-hint="從曲庫播放曲目，即可查看歌詞。"
+      unchecked-hint="按「編輯歌詞」，從「編輯」重新掃描。"
       :lyrics-status="selectedLyrics.status"
       :has-selected-source="Boolean(selectedSource)"
       :lines="lyricLines"

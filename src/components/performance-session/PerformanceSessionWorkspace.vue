@@ -440,7 +440,7 @@ async function selectWorkspaceAction(action) {
                 @row-click="addLibraryTrack(track.id)"
               />
             </UiScrollLayout>
-            <UiHint v-else>曲庫中沒有符合的歌曲。</UiHint>
+            <UiHint v-else>找不到符合的曲目。</UiHint>
           </template>
         </template>
         <template #pending>
@@ -460,7 +460,7 @@ async function selectWorkspaceAction(action) {
             @skip="playback.skip"
           />
           <UiHint v-else padded center
-            >搜尋曲庫加入演出待唱，從待唱開始播放才會留下演出紀錄；外部伴奏可用「新增手動項目」。</UiHint
+            >搜尋並加入待唱；從待唱播放才會留下演出紀錄。自行伴奏或外部播放可用「新增手動項目」。</UiHint
           >
         </template>
       </PerformanceSessionBoard>

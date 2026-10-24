@@ -434,6 +434,8 @@ async function commitTimingDocument() {
         :is-loading-lyrics="state.isLoadingLyrics"
         :track-count="state.tracks.length"
         :has-selected-track="Boolean(selectedTrack)"
+        selection-hint="從「編輯 → 選擇曲目」開始。"
+        unchecked-hint="從「編輯 → 重新掃描歌詞」檢查歌詞。"
         :lyrics-status="selectedLyrics.status"
         :has-selected-source="Boolean(selectedSource)"
         :lines="lyricLines"

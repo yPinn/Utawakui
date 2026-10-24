@@ -9,7 +9,7 @@ const source = fs.readFileSync(
 describe('AppTitleBar', () => {
   it('uses one controlled preparation disclosure before the other global tools', () => {
     expect(source).not.toContain('SeparationToolbarPopover');
-    expect(source).toContain('ListChecks,');
+    expect(source).toContain('Download,');
     expect(source).toContain("'togglePreparation'");
     expect(source).toContain("'togglePerformer'");
     expect(source).toContain("'toggleSettings'");
@@ -17,7 +17,7 @@ describe('AppTitleBar', () => {
     const controlsStart = source.indexOf('class="app-title-bar__controls"');
     const controlsEnd = source.indexOf('</div>', controlsStart);
     const controlsSource = source.slice(controlsStart, controlsEnd);
-    const preparationIndex = controlsSource.indexOf(':icon="ListChecks"');
+    const preparationIndex = controlsSource.indexOf(':icon="Download"');
     const performerIndex = controlsSource.indexOf(':icon="PictureInPicture2"');
     const themeIndex = controlsSource.indexOf(':icon="isLight ? Moon : Sun"');
     const resourcesIndex = source.indexOf('class="app-title-bar__resources"');
@@ -36,7 +36,7 @@ describe('AppTitleBar', () => {
   });
 
   it('keeps only live/global utilities in the titlebar', () => {
-    const preparationIndex = source.indexOf(':icon="ListChecks"');
+    const preparationIndex = source.indexOf(':icon="Download"');
     const performerIndex = source.indexOf(':icon="PictureInPicture2"');
     const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
     const settingsIndex = source.indexOf(':icon="Settings"');
@@ -61,7 +61,7 @@ describe('AppTitleBar', () => {
 
   it('opens Import and accompaniment work through one controlled preparation toggle', () => {
     expect(source).not.toContain('ArrowDownToLine,');
-    expect(source).toContain('ListChecks,');
+    expect(source).toContain('Download,');
     expect(source).toContain(
       'preparationActive: { type: Boolean, default: false }',
     );
@@ -120,7 +120,7 @@ describe('AppTitleBar', () => {
     const recordIndex = source.indexOf(
       '<span class="app-title-bar__obs-label">REC</span>',
     );
-    const preparationIndex = source.indexOf(':icon="ListChecks"');
+    const preparationIndex = source.indexOf(':icon="Download"');
     const performerIndex = source.indexOf(':icon="PictureInPicture2"');
     const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
     const settingsIndex = source.indexOf(':icon="Settings"');

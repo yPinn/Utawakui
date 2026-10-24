@@ -31,8 +31,8 @@ describe('shared text processing controls', () => {
       createSSRApp({ render: () => h(LyricsTextProcessing) }),
     );
     expect(html).toContain('共用文字處理');
-    expect(html).toContain('預設全部保留');
-    expect(html).toContain('本機原文與校時保留');
+    expect(html).toContain('預設保留所有文字');
+    expect(html).toContain('原歌詞與校時不變');
     expect(html).toContain('&lt;script&gt;一起唱&lt;/script&gt;');
     expect(html).not.toContain('<script>');
     expect(html).toContain('type="checkbox"');

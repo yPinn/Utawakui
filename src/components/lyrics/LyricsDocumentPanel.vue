@@ -27,6 +27,8 @@ const props = defineProps({
   isLoadingLyrics: { type: Boolean, default: false },
   trackCount: { type: Number, default: 0 },
   hasSelectedTrack: { type: Boolean, default: false },
+  selectionHint: { type: String, default: '請先選擇曲目。' },
+  uncheckedHint: { type: String, default: '尚未檢查歌詞。' },
   lyricsStatus: { type: String, default: 'unchecked' },
   hasSelectedSource: { type: Boolean, default: false },
   lines: { type: Array, default: () => [] },
@@ -315,20 +317,20 @@ watch(
         :message="error"
         compact
       />
-      <UiHint v-else-if="isLoading" padded>載入中</UiHint>
+      <UiHint v-else-if="isLoading" padded>正在讀取曲庫…</UiHint>
       <UiHint v-else-if="trackCount === 0" padded>
-        曲庫還沒有任何曲目。請從曲庫的「匯入曲目」加入本機音訊。
+        曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。
       </UiHint>
-      <UiHint v-else-if="!hasSelectedTrack" padded>請選擇歌詞曲目。</UiHint>
-      <UiHint v-else-if="isLoadingLyrics" padded>載入歌詞中</UiHint>
-      <UiHint v-else-if="lyricsStatus === 'missing'" padded
-        >目前沒有可用歌詞</UiHint
-      >
+      <UiHint v-else-if="!hasSelectedTrack" padded>{{ selectionHint }}</UiHint>
+      <UiHint v-else-if="isLoadingLyrics" padded>正在讀取歌詞…</UiHint>
+      <UiHint v-else-if="lyricsStatus === 'missing'" padded>
+        還沒有歌詞。從「顯示 → 管理來源」搜尋或匯入。
+      </UiHint>
       <UiHint v-else-if="lyricsStatus === 'unchecked'" padded>
-        請按 reload 掃描歌詞來源
+        {{ uncheckedHint }}
       </UiHint>
       <UiHint v-else-if="hasSelectedSource && lines.length === 0" padded>
-        歌詞檔無可顯示內容
+        這份歌詞沒有文字。從「顯示 → 管理來源」更換歌詞。
       </UiHint>
       <ol v-else class="lyrics-lines">
         <li

@@ -134,7 +134,7 @@ describe('completed arrangement uses the Recent list recipe', () => {
   it('uses completion-specific empty copy', async () => {
     const html = await render();
     expect(html).toContain(
-      '尚無完成紀錄。請先加入演出待唱，再從待唱開始播放；完成後會列在這裡。',
+      '還沒有完成紀錄。從演出待唱播放並完成的曲目會顯示在這裡。',
     );
     expect(html).not.toContain('尚無最近播放紀錄');
     expect(html).not.toContain('ui-skeleton');
@@ -195,7 +195,7 @@ describe('completed arrangement uses the Recent list recipe', () => {
     const html = await render();
     expect(html).toContain('讀取演出紀錄…');
     expect(html).toContain('ui-skeleton--text');
-    expect(html).not.toContain('尚無完成紀錄');
+    expect(html).not.toContain('還沒有完成紀錄');
     expect(html).not.toContain('performance-session-completed-list__day');
   });
 });

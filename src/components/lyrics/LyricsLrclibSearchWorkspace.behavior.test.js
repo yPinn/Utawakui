@@ -500,7 +500,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       expect(searchLyricsProviderCandidates).toHaveBeenCalledOnce(),
     );
     await vi.waitFor(() =>
-      expect(nodeText(root)).toContain('沒有找到候選歌詞'),
+      expect(nodeText(root)).toContain('找不到歌詞。試試其他關鍵字。'),
     );
 
     expect(nodeText(root)).not.toContain('部分來源沒有結果');
@@ -508,7 +508,9 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).not.toContain('Better Lyrics 公開快取');
     expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('找到 0 個版本');
-    expect(nodeText(root).match(/沒有找到候選歌詞/g)).toHaveLength(1);
+    expect(nodeText(root).match(/找不到歌詞。試試其他關鍵字。/g)).toHaveLength(
+      1,
+    );
 
     app.unmount();
   });
@@ -565,7 +567,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     await nextTick();
 
     expect(nodeText(root)).not.toContain('目前找不到可用的候選歌詞');
-    expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
+    expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     expect(nodeText(root)).not.toContain('公開快取');
 
     app.unmount();
@@ -620,7 +622,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     expect(nodeText(root)).toContain('Better Lyrics 回應逾時');
     expect(nodeText(root)).not.toContain('部分來源未完成');
-    expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
+    expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
 
     app.unmount();
   });
@@ -744,7 +746,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     expect(nodeText(root).match(/歌詞搜尋未完成/g)).toHaveLength(1);
     expect(nodeText(root)).not.toContain('部分來源未完成');
-    expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
+    expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     app.unmount();
   });
 
@@ -870,7 +872,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     await nextTick();
 
     expect(searchLyricsCandidates).not.toHaveBeenCalled();
-    expect(nodeText(root)).toContain('請輸入歌曲名稱後搜尋');
+    expect(nodeText(root)).toContain('輸入歌名開始搜尋');
 
     findByProp(root, 'id', 'lrclib-track-title').props.onInput({
       target: { value: 'Manual title' },
@@ -1091,7 +1093,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     );
 
     expect(nodeText(root)).toContain('沒有可用的歌詞結果');
-    expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
+    expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     app.unmount();
   });
 

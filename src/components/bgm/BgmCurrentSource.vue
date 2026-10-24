@@ -13,10 +13,10 @@ const emit = defineEmits(['activate']);
 <template>
   <PlaybackTrackIdentity
     class="bgm-current-source"
-    aria-label="目前 BGM"
+    aria-label="目前場間音樂"
     :track="track"
     artwork-size="var(--ui-track-row-thumb-size)"
-    empty-label="尚未選擇 BGM"
+    empty-label="尚未選擇場間音樂"
     data-artwork-reveal-scope="focus-within"
   >
     <template v-if="playbackAction && track" #artwork>

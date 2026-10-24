@@ -70,9 +70,9 @@ watch(
         <UiHint
           >{{
             candidate.plan.pageTiming === 't2'
-              ? '來源 T2'
+              ? '原有逐字時間'
               : candidate.plan.pageTiming === 'model-starts'
-                ? '已套用 T1+'
+                ? '已套用分析時間'
                 : '顯示時間估計'
           }}
           ·

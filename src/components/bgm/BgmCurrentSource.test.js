@@ -19,7 +19,7 @@ describe('BgmCurrentSource', () => {
       }),
     );
 
-    expect(html).toContain('目前 BGM');
+    expect(html).toContain('目前場間音樂');
     expect(html).toContain('Quiet Room');
     expect(html).toContain('Local Artist');
     expect(html).not.toContain('<input');
@@ -34,7 +34,7 @@ describe('BgmCurrentSource', () => {
   it('makes the unavailable source state explicit', async () => {
     const html = await renderToString(createSSRApp(BgmCurrentSource));
 
-    expect(html).toContain('尚未選擇 BGM');
+    expect(html).toContain('尚未選擇場間音樂');
     expect(html).not.toContain('從本機曲庫選擇背景音樂');
   });
   it('reuses the artwork overlay and accessible play action while retaining canonical metadata', async () => {

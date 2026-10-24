@@ -75,7 +75,7 @@ describe('four-destination cutover contract', () => {
       '../components/lyrics/LyricsDocumentPanel.vue',
     );
 
-    expect(lyricsPanel).toContain('請從曲庫的「匯入曲目」加入本機音訊');
+    expect(lyricsPanel).toContain('從頂部開啟「匯入」加入音訊檔');
     expect(lyricsPanel).not.toContain('請先到 Import');
   });
 });

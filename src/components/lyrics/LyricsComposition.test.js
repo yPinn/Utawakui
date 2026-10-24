@@ -27,6 +27,10 @@ describe('lyrics contextual compositions', () => {
     expect(source).toContain('<LyricsLiveTool');
     expect(source).not.toContain("from './LyricsDocumentPanel.vue'");
     expect(source).not.toContain("from './LyricsLiveControls.vue'");
+    expect(source).toContain('selection-hint="從「編輯 → 選擇曲目」開始。"');
+    expect(source).toContain(
+      'unchecked-hint="從「編輯 → 重新掃描歌詞」檢查歌詞。"',
+    );
   });
 
   it('owns the reader and synchronization controls in a reusable live tool', () => {
@@ -44,6 +48,15 @@ describe('lyrics contextual compositions', () => {
     expect(source).not.toContain('LyricsPreparationBar');
     expect(source).not.toContain('LyricsSourceManagerModal');
     expect(source).not.toContain('LyricsTimingToolbar');
+  });
+
+  it('keeps performance guidance on the available authoring entry instead of an absent edit menu', () => {
+    const source = readComponent('./PerformanceLyricsWorkspace.vue');
+    expect(source).toContain('selection-hint="從曲庫播放曲目，即可查看歌詞。"');
+    expect(source).toContain(
+      'unchecked-hint="按「編輯歌詞」，從「編輯」重新掃描。"',
+    );
+    expect(source).toContain('@click="openLyricsAuthoring"');
   });
 
   it('uses the shared library scope vocabulary in the track picker', () => {

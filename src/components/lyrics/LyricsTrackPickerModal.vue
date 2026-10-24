@@ -143,7 +143,7 @@ function handleTrackSelect(track) {
         尚未選擇播放清單。
       </UiHint>
       <UiHint v-else-if="visibleTracks.length === 0" padded>
-        找不到符合條件的曲目。
+        找不到符合的曲目。
       </UiHint>
 
       <UiScrollRegion

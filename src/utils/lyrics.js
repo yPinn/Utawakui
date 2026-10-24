@@ -500,12 +500,15 @@ export function formatLyricsSourceOffset(offsetMs) {
 }
 
 export function formatLyricsSourceTier(tier) {
-  return ['T0', 'T1', 'T2'].includes(tier) ? tier : '—';
+  if (tier === 'T0') return '純文字';
+  if (tier === 'T1') return '逐行同步';
+  if (tier === 'T2') return '逐字同步';
+  return '—';
 }
 
 export function describeLyricsSourceTier(tier) {
-  if (tier === 'T0') return 'T0｜無時間資料，不能自動跟隨播放';
-  if (tier === 'T1') return 'T1｜逐行時間';
-  if (tier === 'T2') return 'T2｜行內片段時間；文件可能只有部分行具備';
-  return '時間層級未知';
+  if (tier === 'T0') return '沒有同步時間，無法跟隨播放。';
+  if (tier === 'T1') return '歌詞可逐行跟隨播放。';
+  if (tier === 'T2') return '含歌詞分段時間，部分句子可能仍按整句顯示。';
+  return '尚未確認同步方式。';
 }

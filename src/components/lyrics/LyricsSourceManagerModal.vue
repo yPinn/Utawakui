@@ -194,8 +194,8 @@ async function loadSourceTiers(requestId) {
 
 function sourceTierLabel(source) {
   const tier = sourceTiers.value.get(source.filename);
-  if (tier === 'T2') return '來源 T2';
-  if (tier === 'T1' && hasModelChunks(source)) return 'T1+';
+  if (tier === 'T2') return '原有逐字時間';
+  if (tier === 'T1' && hasModelChunks(source)) return '分析估計時間';
   return formatLyricsSourceTier(tier);
 }
 
@@ -211,7 +211,7 @@ function hasModelChunks(source) {
 
 function sourceTierDescription(source) {
   return hasModelChunks(source)
-    ? `${describeLyricsSourceTier(sourceTiers.value.get(source.filename))}；T1+ 模型估計，${experimentalLyrics.applied.value ? '使用中' : '未套用'}，未通過人工時間驗收`
+    ? `${describeLyricsSourceTier(sourceTiers.value.get(source.filename))}；分析估計時間，${experimentalLyrics.applied.value ? '使用中' : '未套用'}，尚未人工確認`
     : describeLyricsSourceTier(sourceTiers.value.get(source.filename));
 }
 

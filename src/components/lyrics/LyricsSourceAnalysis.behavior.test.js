@@ -155,10 +155,10 @@ describe('selected source analysis in available lyrics', () => {
       ],
     };
     await flush();
-    expect(textContent(mounted.root)).toContain('目前沒有可分析的單語句');
+    expect(textContent(mounted.root)).toContain('沒有可分析的單一語言句子');
     owner.estimate.value = { status: 'missing', sourceRevision: 'v2' };
     await flush();
-    expect(textContent(mounted.root)).not.toContain('目前沒有可分析的單語句');
+    expect(textContent(mounted.root)).not.toContain('沒有可分析的單一語言句子');
   });
   it('permits another source to queue and ignores stale-version progress', async () => {
     setup();
@@ -199,7 +199,7 @@ describe('selected source analysis in available lyrics', () => {
     setup();
     await flush();
     expect(textContent(mounted.root)).toContain('英文');
-    expect(textContent(mounted.root)).toContain('主要語言提示');
+    expect(textContent(mounted.root)).toContain('主要語言');
     trigger(findAll(mounted.root, (n) => n.type === 'select')[0], 'onChange', {
       target: { value: 'en' },
     });
@@ -313,7 +313,7 @@ describe('selected source analysis in available lyrics', () => {
       ],
     };
     await flush();
-    expect(textContent(mounted.root)).toContain('1 句含細時間');
+    expect(textContent(mounted.root)).toContain('1 句有分段時間');
     const previousApplyCalls = owner.setApplied.mock.calls.length;
     owner.estimate.value = {
       ...owner.estimate.value,
@@ -387,7 +387,7 @@ describe('selected source analysis in available lyrics', () => {
       lines: [{ startMs: 1000, endMs: 5000, segments: [{}] }],
     };
     await flush();
-    expect(textContent(mounted.root)).toContain('來源 T2');
+    expect(textContent(mounted.root)).toContain('已有逐字時間');
     expect(button('分析歌詞')).toBeUndefined();
     expect(mocks.queue.retry).not.toHaveBeenCalled();
     expect(owner.setApplied).not.toHaveBeenCalled();

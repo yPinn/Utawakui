@@ -95,7 +95,7 @@ export function collectionManageMenuItems(playlist) {
           {
             id: 'edit-release-info',
             kind: 'action',
-            label: '發行資訊',
+            label: '編輯發行資訊',
             icon: Disc3,
             value: {
               action: PLAYLIST_MENU_ACTIONS.editReleaseInfo,

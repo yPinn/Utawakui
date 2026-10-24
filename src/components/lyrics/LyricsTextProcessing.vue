@@ -18,14 +18,11 @@ const id = useId();
     label="共用文字處理"
   >
     <div class="lyrics-text-processing__body">
+      <UiHint>預設保留所有文字，不自動隱藏對唱、和聲或括號內歌詞。</UiHint>
       <UiHint
-        >製作資訊僅列為候選，預設全部保留。對唱、和聲與括號內的歌詞不自動隱藏。</UiHint
+        >勾選後會在所有畫面輸出模板隱藏該行；原歌詞與校時不變。更換或修改歌詞後會重設。</UiHint
       >
-      <UiHint
-        >勾選後僅在所有 Output
-        模板隱藏這一行；本機原文與校時保留。切換來源或原文變更後重設。</UiHint
-      >
-      <UiHint v-if="!candidates.length">此來源沒有製作資訊候選。</UiHint>
+      <UiHint v-if="!candidates.length">未找到可隱藏的製作資訊。</UiHint>
       <UiCheckbox
         v-for="(line, index) in candidates"
         :id="`${id}-credit-${index}`"
