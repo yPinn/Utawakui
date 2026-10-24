@@ -36,7 +36,7 @@ function updateValue(value) {
     :disabled="disabled"
     :editable="false"
     label-hidden
-    placeholder="選擇 Look"
+    placeholder="選擇配色風格"
     @update:model-value="updateValue"
   >
     <template #value="{ item, placeholder }">

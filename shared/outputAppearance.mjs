@@ -105,7 +105,7 @@ const FIELD_DEFINITIONS = [
     tier: 'basic',
     reflow: false,
     order: 10,
-    label: 'Look',
+    label: '配色風格',
     control: 'select',
     editor: 'look',
     defaultValue: 'original',

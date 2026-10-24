@@ -407,7 +407,7 @@ describe('output appearance schema', () => {
       editor: 'look',
       group: 'color-treatment',
       groupLabel: '色彩處理',
-      label: 'Look',
+      label: '配色風格',
       defaultValue: 'original',
       options: [
         { id: 'original', label: '模板原色' },

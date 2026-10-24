@@ -31,7 +31,7 @@ const controlHintId = computed(() => `${controlId.value}-hint`);
 const editor = computed(() => props.field.editor ?? props.field.control);
 const disabledHint = computed(() =>
   props.disabled && props.field.key === 'lookAmount'
-    ? '選擇 Look 後可調整'
+    ? '選擇配色風格後可調整'
     : '',
 );
 const selectOptions = computed(() =>

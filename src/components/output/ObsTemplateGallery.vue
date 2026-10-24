@@ -166,11 +166,11 @@ function applyPreset(preset) {
               class="obs-template-gallery__empty"
               role="status"
             >
-              找不到符合的模板
+              找不到符合的模板。
             </UiHint>
           </UiScrollLayout>
           <UiHint v-else class="obs-template-gallery__empty" role="status">
-            尚無可用模板
+            目前沒有可用模板。
           </UiHint>
         </div>
       </template>
@@ -183,7 +183,7 @@ function applyPreset(preset) {
             </h2>
           </div>
         </div>
-        <UiHint v-else class="obs-template-gallery__empty">尚未選擇模板</UiHint>
+        <UiHint v-else class="obs-template-gallery__empty">請選擇模板。</UiHint>
       </template>
 
       <template #side>

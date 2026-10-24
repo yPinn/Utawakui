@@ -302,7 +302,7 @@ describe('ObsAppearanceField', () => {
     expect(range.props['aria-describedby']).toBe(
       'output-appearance-lookAmount-hint',
     );
-    expect(textContent(root)).toContain('選擇 Look 後可調整');
+    expect(textContent(root)).toContain('選擇配色風格後可調整');
     const hint = findAll(
       root,
       (node) => node.props?.id === 'output-appearance-lookAmount-hint',
