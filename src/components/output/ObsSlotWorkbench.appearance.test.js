@@ -121,7 +121,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const artCard = await renderRegisteredTemplate('art-card');
 
     expect(coverPlayer).toContain('調整對象');
-    for (const label of ['整個模板', '曲名', '藝人', '進度', '播放鍵']) {
+    for (const label of ['整個模板', '曲名', '藝人', '進度', '播放控制']) {
       expect(coverPlayer).toContain(label);
     }
     expect(artCard).not.toContain('調整對象');

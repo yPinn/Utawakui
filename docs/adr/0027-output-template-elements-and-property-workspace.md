@@ -179,6 +179,9 @@ supports:
   changes rendered output and must be reviewed against the appearance baseline.
 - Geometry is stored as fractions of the capture canvas so it survives capture
   size changes. Snapping and guides are editor behavior, not stored data.
+  Fractions carry directly only between sizes with the same aspect ratio, such
+  as Cover Player's 360×480 and 480×640; a template whose sizes differ in aspect
+  must declare how geometry maps between them before adopting `frame`.
 - A `frame` element must declare its overflow rule (fit, shrink to minimum, then
   truncate or page). Content never escapes the capture canvas or the safe area.
 - Geometry reaches the page as validated custom properties on the element's
@@ -238,17 +241,17 @@ because slot saves merge into existing settings.
 
 Derived from reading the runtime; not verified.
 
-| Template        | Candidate targets                          | Most permissive layout                      | Invariants kept                                            |
-| --------------- | ------------------------------------------ | ------------------------------------------- | ---------------------------------------------------------- |
-| queue-board     | current track, history rows, labels        | `fixed`                                     | section split, history paging                              |
-| receipt-setlist | header, now playing, history window, paper | `fixed`; feed direction is a layout variant | two-line title slots, print on completion, 100-item review |
-| karaoke-stack   | current／next lanes, count-in              | `fixed`                                     | dual lanes, timing mask, part colors                       |
-| kinetic-pop     | lyric line                                 | later `anchored` on block axis              | canvas-centered inline axis, paint tracks                  |
-| ornate-vertical | column                                     | `anchored`, later `frame` height            | at most two columns, grapheme grouping                     |
-| live-stage      | caption, title card, brand                 | caption `frame` candidate                   | brand mark, title-card window                              |
-| manga-frame     | bubble stage                               | `fixed`                                     | bubble safe layout, ruby atomicity                         |
-| art-card        | turntable group, title, artist             | group `anchored`                            | group internals and exchange choreography                  |
-| cover-player    | artwork, copy, progress                    | `frame` candidate, to confirm               | shared structure with art-card                             |
+| Template        | Candidate targets                           | Most permissive layout                      | Invariants kept                                                        |
+| --------------- | ------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------- |
+| queue-board     | current track, history rows, labels         | `fixed`                                     | section split, history paging                                          |
+| receipt-setlist | header, now playing, history window, paper  | `fixed`; feed direction is a layout variant | two-line title slots, print on completion, 100-item review             |
+| karaoke-stack   | current／next lanes, count-in               | `fixed`                                     | dual lanes, timing mask, part colors                                   |
+| kinetic-pop     | lyric line                                  | later `anchored` on block axis              | canvas-centered inline axis, paint tracks                              |
+| ornate-vertical | column                                      | `anchored`, later `frame` height            | at most two columns, grapheme grouping                                 |
+| live-stage      | caption, title card, brand                  | caption `frame` candidate                   | brand mark, title-card window                                          |
+| manga-frame     | bubble stage                                | `fixed`                                     | bubble safe layout, ruby atomicity                                     |
+| art-card        | turntable group, title, artist              | group `anchored`                            | group internals and exchange choreography                              |
+| cover-player    | artwork, copy group (title, artist), player | artwork and copy group `frame` candidates   | shared structure with art-card; motion fades artwork and copy as units |
 
 Lyric templates mostly gain element-scoped character, legibility, fill and
 visibility. Free layout is expected mainly in the Now Playing family and Live
@@ -289,7 +292,10 @@ layout only after its own verification, not as a fleet-wide switch.
 - Whether the Workbench may offer explicit synthetic scenarios (empty, long
   line, seek, track change) for preview. The current contract keeps demo data
   out of the Workbench.
-- Whether Cover Player's artwork, copy and progress are independent enough for
-  `frame`, or must form a group like Art Card.
+- Cover Player's layout for P5. Its track-change motion fades the artwork and
+  the copy container as units (opacity only), so title and artist must move
+  together as a copy group, while the artwork and the player row can be
+  separate targets. Whether the artwork becomes a selectable element, and with
+  which property, is decided with P4.
 - The user image pipeline's scope, rights handling and which templates declare a
   brand or image slot.

@@ -50,12 +50,12 @@
 
 外觀 schema 為 7。元素宣告在 [outputTemplateElements.mjs](../../shared/outputTemplateElements.mjs)，目前只有 cover-player；其他模板沒有元素層級設定。
 
-| 元素      | 屬性                               | 備註                                     |
-| --------- | ---------------------------------- | ---------------------------------------- |
-| title     | fontWeight、fontSizeScale          | 不可隱藏                                 |
-| artist    | fontWeight、fontSizeScale、visible |                                          |
-| progress  | visible                            | 進度條與時間                             |
-| transport | visible                            | 播放鍵；與 progress 都隱藏時收起整個區塊 |
+| 元素      | 屬性                               | 備註                                                         |
+| --------- | ---------------------------------- | ------------------------------------------------------------ |
+| title     | fontWeight、fontSizeScale          | 不可隱藏                                                     |
+| artist    | fontWeight、fontSizeScale、visible |                                                              |
+| progress  | visible                            | 進度條與時間                                                 |
+| transport | visible                            | 播放控制（播放鍵與音量列）；與 progress 都隱藏時收起整個區塊 |
 
 - fontWeight：inherit（跟隨模板）／regular／semibold／bold，預設 inherit；fontSizeScale：80–125% step 5，預設 100；visible：shown／hidden，預設 shown。
 - 儲存為 `element.<元素>.<屬性>` 扁平鍵，值存完整而非差異。Main 只保留該模板宣告的鍵；換到未宣告該元素的模板時清除。

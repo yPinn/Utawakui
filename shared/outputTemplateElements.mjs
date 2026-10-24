@@ -23,7 +23,7 @@ export const OUTPUT_TEMPLATE_ELEMENTS = Object.freeze({
     Object.freeze({
       id: 'transport',
       kind: 'graphic',
-      label: '播放鍵',
+      label: '播放控制',
       properties: Object.freeze(['visible']),
     }),
   ]),
