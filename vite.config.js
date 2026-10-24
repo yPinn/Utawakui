@@ -23,6 +23,7 @@ const RUNTIME_TEST_PATTERNS = [
   'electron/lib/vocalSeparation.test.js',
   'electron/lib/lyricsAcoustic/artifacts.test.js',
   'electron/lib/lyricsAcoustic/probe.test.js',
+  'electron/lib/featureDependencies/archive.runtime.test.js',
 ];
 const TEST_EXCLUDE = ['coverage/**', 'dist/**', '**/node_modules/**'];
 // Istanbul instrumentation slows every test 2-3x; scale budgets, not hang checks.

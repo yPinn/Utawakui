@@ -197,7 +197,7 @@ describe('expandZipArchive', () => {
     expect(proc.kill).toHaveBeenCalledOnce();
   });
 
-  it('passes paths as named PowerShell parameters and resolves on success', async () => {
+  it('passes paths through the environment and resolves on success', async () => {
     const proc = createProcessDouble();
     const spawnImpl = vi.fn(() => proc);
     const pending = expandZipArchive(
@@ -210,14 +210,15 @@ describe('expandZipArchive', () => {
     proc.emit('close', 0);
     await expect(pending).resolves.toBeUndefined();
 
-    const [command, args] = spawnImpl.mock.calls[0];
+    const [command, args, spawnOptions] = spawnImpl.mock.calls[0];
     expect(path.basename(command).toLowerCase()).toBe('powershell.exe');
     expect(args).toContain('-NoProfile');
-    expect(args[args.indexOf('-Command') + 1]).toContain(
-      'param([string]$ArchivePath, [string]$DestinationPath)',
-    );
-    expect(args.at(-2)).toBe('C:\\cache\\tool.zip');
-    expect(args.at(-1)).toBe('C:\\managed\\tool');
+    expect(args.at(-1)).toContain('$env:UTAWAKUI_ARCHIVE_PATH');
+    expect(args).not.toContain('C:\\cache\\tool.zip');
+    expect(spawnOptions.env).toMatchObject({
+      UTAWAKUI_ARCHIVE_PATH: 'C:\\cache\\tool.zip',
+      UTAWAKUI_ARCHIVE_DESTINATION: 'C:\\managed\\tool',
+    });
   });
 
   it('uses the Windows PowerShell executable when it exists', async () => {

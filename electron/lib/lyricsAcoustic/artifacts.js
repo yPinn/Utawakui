@@ -74,9 +74,9 @@ async function extractArtifact(
   const abort = () => child?.kill();
   try {
     await expandZipArchive(archive, destination, artifact, {
-      spawnImpl(exe, args) {
+      spawnImpl(exe, args, spawnOptions) {
         signal?.throwIfAborted();
-        child = spawnImpl(exe, args, { windowsHide: true, shell: false });
+        child = spawnImpl(exe, args, spawnOptions);
         closePromise = new Promise((resolve) =>
           child.once('close', () => {
             closed = true;

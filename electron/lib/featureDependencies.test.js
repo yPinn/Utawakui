@@ -282,7 +282,7 @@ function makeModelDependency(modelBuffer) {
 }
 
 describe('ensureFfmpegDependency', () => {
-  it('passes archive and destination paths to PowerShell through named script parameters', async () => {
+  it('passes archive and destination paths to PowerShell through the environment', async () => {
     const userDataDir = makeTempDir();
     const archive = createStoredZip([
       {
@@ -296,13 +296,13 @@ describe('ensureFfmpegDependency', () => {
       arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
     });
     const spawnCalls = [];
-    const spawnImpl = vi.fn((_command, args) => {
-      spawnCalls.push(args);
+    const spawnImpl = vi.fn((_command, args, { env }) => {
+      spawnCalls.push({ args, env });
       const proc = new EventEmitter();
       proc.stderr = new EventEmitter();
       queueMicrotask(() => {
-        const archivePath = args.at(-2);
-        const destinationDir = args.at(-1);
+        const archivePath = env.UTAWAKUI_ARCHIVE_PATH;
+        const destinationDir = env.UTAWAKUI_ARCHIVE_DESTINATION;
         expect(fs.readFileSync(archivePath)).toEqual(archive);
         const exeDir = path.join(
           destinationDir,
@@ -324,16 +324,16 @@ describe('ensureFfmpegDependency', () => {
       now: () => new Date('2026-08-21T01:00:00.000Z'),
     });
 
-    const args = spawnCalls[0];
-    expect(args).toContain('-Command');
-    const command = args[args.indexOf('-Command') + 1];
-    expect(command).toContain('param([string]$ArchivePath');
+    const { args, env } = spawnCalls[0];
+    expect(args.at(-2)).toBe('-Command');
+    const command = args.at(-1);
+    expect(command).toContain('$ArchivePath = $env:UTAWAKUI_ARCHIVE_PATH');
     expect(command).toContain("$ErrorActionPreference = 'Stop'\nAdd-Type");
     expect(command).toContain('ZipFile]::OpenRead');
     expect(command).toContain('$inputStream.CopyTo($outputStream)');
     expect(command).not.toContain('$args');
-    expect(args.at(-2)).toMatch(/ffmpeg\.zip$/);
-    expect(args.at(-1)).toContain('.ffmpeg-');
+    expect(env.UTAWAKUI_ARCHIVE_PATH).toMatch(/ffmpeg\.zip$/);
+    expect(env.UTAWAKUI_ARCHIVE_DESTINATION).toContain('.ffmpeg-');
   });
 
   it('rejects archive entries that would extract outside the destination', async () => {
