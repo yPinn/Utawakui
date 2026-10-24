@@ -8,7 +8,7 @@
       "platform": "win32",
       "arch": "x64",
       "name": "線上來源下載工具",
-      "version": "python-3.14.7-ytdlp-2026.08.19-ytmusicapi-1.12.3-bgutil-rs-0.8.1",
+      "version": "python-3.14.7-ytdlp-2026.08.19-ytmusicapi-1.12.3-bgutil-rs-0.8.1-certifi-2026.10.19",
       "displayVersion": "yt-dlp 2026.08.19 + YT Music 1.12.3 + bgutil 0.8.1",
       "license": "Python Software Foundation License + Unlicense + MIT + Apache-2.0 + BSD-3-Clause + MPL-2.0 + GPL-3.0-or-later provider",
       "licenseUrl": "https://github.com/yt-dlp/yt-dlp#licensing",
@@ -78,14 +78,14 @@
         {
           "role": "certifi-wheel",
           "name": "certifi Python wheel",
-          "version": "2026.7.22",
+          "version": "2026.10.19",
           "sourceUrl": "https://github.com/certifi/python-certifi",
-          "downloadUrl": "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl",
-          "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
-          "expectedSize": 136983,
+          "downloadUrl": "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl",
+          "sha256": "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b",
+          "expectedSize": 136464,
           "maxDownloadSize": 1048576,
           "license": "MPL-2.0",
-          "licenseUrl": "https://github.com/certifi/python-certifi/blob/2026.07.22/LICENSE"
+          "licenseUrl": "https://github.com/certifi/python-certifi/blob/2026.10.19/LICENSE"
         },
         {
           "role": "charset-normalizer-wheel",
