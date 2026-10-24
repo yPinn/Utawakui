@@ -65,7 +65,8 @@ describe('online lyrics search modal contract', () => {
   it('keeps source tier left and signed offset right in a compact divided slot', () => {
     const manager = source('./LyricsSourceManagerModal.vue');
 
-    expect(manager).toContain('normalizeLyricsDocument');
+    expect(manager).toContain('availableSources');
+    expect(manager).toContain('lyricsSourceDisplayTier');
     expect(manager).toContain('function sourceTierLabel(source)');
     expect(manager).toContain('formatLyricsSourceOffset');
     expect(manager).toContain('class="lyrics-source-manager__row-meta"');

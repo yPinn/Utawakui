@@ -11,6 +11,7 @@ const props = defineProps({
   invalid: { type: Boolean, default: false },
   inline: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  group: { type: Boolean, default: false },
 });
 
 const errorId = computed(() => (props.error ? `${props.id}-error` : ''));
@@ -33,19 +34,24 @@ const fieldDescribedBy = computed(() =>
   <div
     class="ui-field"
     :class="{ 'ui-field--inline': inline, 'is-invalid': fieldInvalid }"
+    :role="group ? 'group' : undefined"
+    :aria-labelledby="group ? `${id}-label` : undefined"
+    :aria-describedby="group ? fieldDescribedBy || undefined : undefined"
   >
     <div class="ui-field__main">
-      <label
+      <component
+        :is="group ? 'span' : 'label'"
         v-if="!inline"
+        :id="group ? `${id}-label` : undefined"
         class="ui-field__label"
         :class="{ 'ui-field__label--hidden': labelHidden }"
-        :for="id"
+        :for="group ? undefined : id"
       >
         {{ label }}
         <span v-if="required" class="ui-field__required" aria-hidden="true"
           >＊</span
         >
-      </label>
+      </component>
 
       <div class="ui-field__control">
         <slot
@@ -55,17 +61,19 @@ const fieldDescribedBy = computed(() =>
         />
       </div>
 
-      <label
+      <component
+        :is="group ? 'span' : 'label'"
         v-if="inline"
+        :id="group ? `${id}-label` : undefined"
         class="ui-field__label ui-field__label--inline"
         :class="{ 'ui-field__label--hidden': labelHidden }"
-        :for="id"
+        :for="group ? undefined : id"
       >
         {{ label }}
         <span v-if="required" class="ui-field__required" aria-hidden="true"
           >＊</span
         >
-      </label>
+      </component>
     </div>
 
     <p

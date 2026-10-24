@@ -80,6 +80,7 @@ function updateColumn(column, visible) {
     v-model:open="open"
     aria-label="顯示欄位"
     placement="bottom-end"
+    :close-on-scroll="false"
     scroll-axis="vertical"
   >
     <template #trigger="{ triggerProps }">

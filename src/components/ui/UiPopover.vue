@@ -21,6 +21,7 @@ const overlayHost = useUiOverlayHost();
 const props = defineProps({
   open: { type: Boolean, default: false },
   focusOnOpen: { type: Boolean, default: false },
+  closeOnScroll: { type: Boolean, default: true },
   ariaLabel: { type: String, required: true },
   placement: {
     type: String,
@@ -134,7 +135,13 @@ function handleScroll(event) {
   ) {
     return;
   }
-  requestClose('external-scroll');
+  if (props.closeOnScroll) requestClose('external-scroll');
+  else if (
+    event.target === window ||
+    event.target === document ||
+    event.target?.contains?.(anchorRef.value)
+  )
+    updatePosition();
 }
 
 function openPanel() {

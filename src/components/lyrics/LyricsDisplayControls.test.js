@@ -10,6 +10,8 @@ describe('shared display controls composition', () => {
       'UiSelect',
       'UiSegmentedControl',
       'UiIconButton',
+      'UiField',
+      'UiButtonGroup',
       'UiHint',
       'UiNotice',
     ])
@@ -19,7 +21,7 @@ describe('shared display controls composition', () => {
     expect(source).not.toMatch(
       /(?:#[a-f0-9]{3,8}\b|font-size:\s*\d|font-weight:\s*\d)/i,
     );
-    expect(source).toContain('var(--ui-type-label-size)');
+    expect(source).not.toContain('lyrics-display-controls__label');
     const tokens = read('../../styles/features/lyrics.css');
     for (const [family, tiers] of [
       ['font-size', ['lg', 'xl', '2xl']],

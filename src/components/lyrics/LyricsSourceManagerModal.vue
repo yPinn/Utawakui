@@ -17,8 +17,8 @@ import {
   formatLyricsSourceLabel,
   formatLyricsSourceOffset,
   formatLyricsSourceTier,
+  lyricsSourceDisplayTier,
 } from '../../utils/lyrics.js';
-import { normalizeLyricsDocument } from '../../utils/lyricsDocument.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -45,6 +45,8 @@ const {
   deleteSource,
   backfillSourceLabels,
   experimentalLyrics,
+  availableSources,
+  refreshSourceDetails,
 } = useLyrics();
 const feedback = useFeedbackReport();
 
@@ -62,8 +64,9 @@ const labelDraft = ref('');
 const sourceLabelId = `lyrics-source-label-${useId()}`;
 const pendingDeleteSource = ref(null);
 const isDeletingSource = ref(false);
-const sourceTiers = ref(new Map());
-let sourceTierRequestId = 0;
+const displaySources = computed(
+  () => availableSources?.value ?? selectedLyrics.value.sources,
+);
 const modalTitle = computed(() =>
   activeView.value === 'search' ? '搜尋歌詞' : '可用歌詞',
 );
@@ -78,16 +81,10 @@ watch(
   },
 );
 
-const sourceFilenames = computed(() =>
-  selectedLyrics.value.sources.map((source) => source.filename).join('\0'),
-);
-
 watch(
-  [() => props.open, () => state.selectedTrackId, sourceFilenames],
-  ([open]) => {
-    sourceTierRequestId += 1;
-    sourceTiers.value = new Map();
-    if (open) void loadSourceTiers(sourceTierRequestId);
+  () => props.open,
+  (open) => {
+    if (open) void refreshSourceDetails?.();
   },
   { immediate: true },
 );
@@ -160,59 +157,16 @@ function sourceOffsetMs(source) {
     : source.offsetMs;
 }
 
-async function loadSourceTiers(requestId) {
-  const trackId = state.selectedTrackId;
-  const sources = [...selectedLyrics.value.sources];
-  if (!trackId || typeof window.Utawakui?.getTrackLyrics !== 'function') return;
-
-  const tiers = await Promise.all(
-    sources.map(async (source) => {
-      try {
-        const result = await window.Utawakui.getTrackLyrics(
-          trackId,
-          source.filename,
-        );
-        const document = normalizeLyricsDocument({
-          text: result?.text ?? '',
-          source: result?.source ?? source,
-          sourceFingerprint: result?.timing?.sourceFingerprint,
-          normalizerProfileId: result?.timing?.normalizerProfileId,
-          timing: result?.timing,
-        });
-        return [source.filename, document.granularity];
-      } catch {
-        return [source.filename, null];
-      }
-    }),
-  );
-
-  if (requestId !== sourceTierRequestId || state.selectedTrackId !== trackId) {
-    return;
-  }
-  sourceTiers.value = new Map(tiers.filter(([, tier]) => tier));
-}
-
 function sourceTierLabel(source) {
-  const tier = sourceTiers.value.get(source.filename);
-  if (tier === 'T2') return '原有逐字時間';
-  if (tier === 'T1' && hasModelChunks(source)) return '分析估計時間';
-  return formatLyricsSourceTier(tier);
-}
-
-function hasModelChunks(source) {
-  return (
-    source.filename === state.selectedSourceFilename &&
-    experimentalLyrics?.prepared.value.status === 'ready' &&
-    experimentalLyrics.prepared.value.lines.some(
-      (line) => line.status === 'ready',
-    )
-  );
+  return formatLyricsSourceTier(lyricsSourceDisplayTier(source));
 }
 
 function sourceTierDescription(source) {
-  return hasModelChunks(source)
-    ? `${describeLyricsSourceTier(sourceTiers.value.get(source.filename))}；分析估計時間，${experimentalLyrics.applied.value ? '使用中' : '未套用'}，尚未人工確認`
-    : describeLyricsSourceTier(sourceTiers.value.get(source.filename));
+  const tier = lyricsSourceDisplayTier(source);
+  const description = describeLyricsSourceTier(tier);
+  return tier === 'T1+'
+    ? `${description} ${source.filename === state.selectedSourceFilename && experimentalLyrics?.applied.value ? '已套用' : '未套用'}。`
+    : description;
 }
 
 function reportSource(source) {
@@ -221,7 +175,7 @@ function reportSource(source) {
     buildLyricsIssueReport({
       track: selectedTrack.value,
       source,
-      tier: sourceTiers.value.get(source.filename),
+      tier: source.timingTier,
       offsetMs: sourceOffsetMs(source),
     }),
   );
@@ -285,7 +239,7 @@ function reportSource(source) {
         </UiHint>
         <ul v-else class="lyrics-source-manager__list">
           <UiSurface
-            v-for="source in selectedLyrics.sources"
+            v-for="source in displaySources"
             :key="source.filename"
             tag="li"
             tone="surface"

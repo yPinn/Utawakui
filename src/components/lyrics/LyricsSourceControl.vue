@@ -1,6 +1,11 @@
 <script setup>
 import { computed, useId } from 'vue';
-import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
+import {
+  formatLyricsSourceLabel,
+  formatLyricsSourceTier,
+  lyricsSourceDisplayTier,
+  sortLyricsSources,
+} from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 
@@ -15,9 +20,10 @@ const emit = defineEmits(['sourceChange', 'manageSources']);
 const selectId = `lyrics-source-${useId()}`;
 const options = computed(() => [
   { value: '', label: props.sources.length ? '不顯示歌詞' : '尚無歌詞來源' },
-  ...props.sources.map((source) => ({
+  ...sortLyricsSources(props.sources).map((source) => ({
     value: source.filename,
     label: formatLyricsSourceLabel(source),
+    tierLabel: formatLyricsSourceTier(lyricsSourceDisplayTier(source)),
   })),
 ]);
 
@@ -41,9 +47,15 @@ function manageSources() {
       :model-value="selectedSourceFilename"
       :items="options"
       :editable="false"
+      :close-on-scroll="false"
       :disabled="!hasSelectedTrack || isLoading || sources.length === 0"
       @update:model-value="changeSource"
-    />
+    >
+      <template #option="{ item }">
+        <template v-if="item.tierLabel">{{ item.tierLabel }} · </template
+        >{{ item.label }}
+      </template>
+    </UiCombobox>
     <UiButton
       class="lyrics-source-control__manage"
       variant="secondary"

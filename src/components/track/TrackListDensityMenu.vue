@@ -30,7 +30,6 @@ const densityOptions = Object.freeze([
 function updateDensity(value) {
   if (!TRACK_LIST_DENSITIES.includes(value)) return;
   emit('updateDensity', value);
-  open.value = false;
 }
 </script>
 
@@ -39,6 +38,7 @@ function updateDensity(value) {
     v-model:open="open"
     aria-label="曲目顯示密度"
     placement="bottom-end"
+    :close-on-scroll="false"
   >
     <template #trigger="{ triggerProps }">
       <UiIconButton

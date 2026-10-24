@@ -98,6 +98,33 @@ function groups() {
 }
 
 describe('UiCombobox', () => {
+  it.each([true, false])(
+    'uses closeOnScroll=%s without changing source selection',
+    async (closeOnScroll) => {
+      window.addEventListener = vi.fn();
+      const change = vi.fn();
+      const { app, root } = mount(UiCombobox, {
+        id: 'persistent-source',
+        label: '歌詞來源',
+        editable: false,
+        items: ITEMS,
+        modelValue: 'lrclib',
+        closeOnScroll,
+        'onUpdate:modelValue': change,
+      });
+      const control = input(root);
+      trigger(control, 'onClick');
+      await nextTick();
+      const onScroll = window.addEventListener.mock.calls.find(
+        ([name]) => name === 'scroll',
+      )[1];
+      onScroll({ target: hostNode('playing-lyrics') });
+      await nextTick();
+      expect(control.props['aria-expanded']).toBe(!closeOnScroll);
+      expect(change).not.toHaveBeenCalled();
+      app.unmount();
+    },
+  );
   it('tracks the control width while open and disconnects its resize observer', async () => {
     const observers = [];
     vi.stubGlobal(

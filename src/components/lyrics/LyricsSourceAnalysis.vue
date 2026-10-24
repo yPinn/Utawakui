@@ -64,6 +64,11 @@ const readyCount = computed(() =>
         .length
     : 0,
 );
+const displayActionDescription = computed(() =>
+  experiment.applied.value
+    ? '關閉分析顯示，恢復原歌詞時間。'
+    : '開啟分析顯示，使用已產生的歌詞時間提示。',
+);
 const blocked = computed(() =>
   Boolean(
     props.disabled ||
@@ -274,12 +279,14 @@ onScopeDispose(() => clearInterval(timer));
           "
           :active="experiment.applied.value"
           :aria-pressed="experiment.applied.value"
+          :title="displayActionDescription"
+          :aria-description="displayActionDescription"
           @click="experiment.setApplied(!experiment.applied.value)"
-          >{{ experiment.applied.value ? '停用分析' : '套用分析' }}</UiButton
+          >分析顯示</UiButton
         >
       </div>
     </div>
-    <UiHint v-if="hasT1">分析完成後可手動套用。</UiHint>
+    <UiHint v-if="hasT1">分析完成後，可開啟「分析顯示」。</UiHint>
     <UiDisclosure v-if="hasT1" v-model:open="detailsOpen" label="分析說明">
       <UiHint
         >分析中文、日文或英文歌詞，優先沿用原有逐字時間；無法分析的句子保留逐行時間。

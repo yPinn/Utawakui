@@ -20,6 +20,7 @@ const {
   state,
   selectedTrack,
   selectedLyrics,
+  availableSources,
   selectedSource,
   lyricsDocument,
   lyricLines,
@@ -44,6 +45,7 @@ onUnmounted(() => {
 const displayMenuOpen = shallowRef(false);
 const isSourceManagerOpen = shallowRef(false);
 let displayTriggerElement = null;
+let restoreDisplayAfterManager = false;
 
 function toggleDisplayMenu(event) {
   displayTriggerElement = event.currentTarget;
@@ -51,13 +53,24 @@ function toggleDisplayMenu(event) {
 }
 
 async function openSourceManager() {
+  restoreDisplayAfterManager = displayMenuOpen.value;
   displayMenuOpen.value = false;
   await nextTick();
-  if (disposed || !selectedTrack.value) return;
+  if (disposed || !selectedTrack.value) {
+    restoreDisplayAfterManager = false;
+    return;
+  }
   // The management button was inside the now-unmounted popover. Give UiModal
   // a persistent return-focus target before it captures document.activeElement.
   displayTriggerElement?.focus();
   isSourceManagerOpen.value = true;
+}
+async function closeSourceManager() {
+  const restore = restoreDisplayAfterManager;
+  restoreDisplayAfterManager = false;
+  isSourceManagerOpen.value = false;
+  await nextTick();
+  if (restore && !disposed && selectedTrack.value) displayMenuOpen.value = true;
 }
 const {
   lyricsScript,
@@ -99,6 +112,7 @@ onMounted(initialize);
           v-model:open="displayMenuOpen"
           aria-label="歌詞顯示設定"
           placement="bottom-end"
+          :close-on-scroll="false"
           focus-on-open
         >
           <template #trigger="{ triggerProps }">
@@ -113,7 +127,7 @@ onMounted(initialize);
           </template>
           <LyricsDisplayControls
             class="performance-lyrics-workspace__display"
-            :sources="selectedLyrics.sources"
+            :sources="availableSources ?? selectedLyrics.sources"
             :selected-source-filename="selectedSource?.filename ?? ''"
             :has-selected-track="Boolean(selectedTrack)"
             :is-loading-sources="state.isLoadingLyrics"
@@ -128,12 +142,15 @@ onMounted(initialize);
             :can-decrease-font-size="canDecreaseLyricsFontSize"
             :can-increase-font-size="canIncreaseLyricsFontSize"
             @source-change="selectSource"
+            @request-sources="lyrics.refreshSourceDetails?.()"
             @manage-sources="openSourceManager"
             @reading-variant-change="selectReadingVariant"
             @lyrics-text-variant-change="setLyricsTextVariant"
             @decrease-font-size="decreaseLyricsFontSize"
             @increase-font-size="increaseLyricsFontSize"
-          />
+          >
+            <template #font-actions><LyricsExperimentalEstimate /></template>
+          </LyricsDisplayControls>
         </UiPopover>
         <UiButton
           v-if="selectedTrack"
@@ -146,7 +163,6 @@ onMounted(initialize);
       </template>
     </AppFolderWorkspaceToolbar>
 
-    <LyricsExperimentalEstimate />
     <LyricsLiveTool
       :experimental-frame="
         lyrics.localLyricsFrame?.value ?? lyrics.experimentalLyrics?.frame.value
@@ -181,7 +197,7 @@ onMounted(initialize);
     />
     <LyricsSourceManagerModal
       :open="isSourceManagerOpen"
-      @close="isSourceManagerOpen = false"
+      @close="closeSourceManager"
     />
   </section>
 </template>

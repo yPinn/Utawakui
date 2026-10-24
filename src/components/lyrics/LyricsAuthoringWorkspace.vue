@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
@@ -28,6 +28,7 @@ const {
   state,
   selectedTrack,
   selectedLyrics,
+  availableSources,
   selectedSource,
   lyricsDocument,
   lyricsTextVariant,
@@ -129,11 +130,25 @@ function setEditMode(mode) {
     void setReadingVariant(lyricsScript.value === 'ja' ? 'furigana' : 'romaji');
   }
 }
-async function openSourceManager(closeDisplay) {
+let restoreDisplayAfterManager = null;
+let disposed = false;
+onUnmounted(() => {
+  disposed = true;
+  restoreDisplayAfterManager = null;
+});
+async function openSourceManager(closeDisplay, restoreDisplay) {
   if (isEditingLocked.value) return;
   await closeDisplay();
-  if (isEditingLocked.value || !selectedTrack.value) return;
+  if (disposed || isEditingLocked.value || !selectedTrack.value) return;
+  restoreDisplayAfterManager = restoreDisplay;
   isSourceManagerOpen.value = true;
+}
+async function closeSourceManager() {
+  const restore = restoreDisplayAfterManager;
+  restoreDisplayAfterManager = null;
+  isSourceManagerOpen.value = false;
+  await nextTick();
+  if (!disposed && !isEditingLocked.value && selectedTrack.value) restore?.();
 }
 
 const offsetLabel = computed(() => {
@@ -344,9 +359,9 @@ async function commitTimingDocument() {
         @refresh="refresh"
         @edit-mode-change="setEditMode"
       >
-        <template #display="{ closeDisplay }">
+        <template #display="{ closeDisplay, restoreDisplay }">
           <LyricsPreparationBar
-            :sources="selectedLyrics.sources"
+            :sources="availableSources ?? selectedLyrics.sources"
             :selected-source-filename="state.selectedSourceFilename || ''"
             :has-selected-track="Boolean(selectedTrack)"
             :is-loading-sources="state.isLoadingLyrics"
@@ -361,18 +376,22 @@ async function commitTimingDocument() {
             :can-decrease-font-size="canDecreaseLyricsFontSize"
             :can-increase-font-size="canIncreaseLyricsFontSize"
             @source-change="selectSource"
-            @manage-sources="openSourceManager(closeDisplay)"
+            @request-sources="lyrics.refreshSourceDetails?.()"
+            @manage-sources="openSourceManager(closeDisplay, restoreDisplay)"
             @reading-variant-change="setReadingVariant"
             @lyrics-text-variant-change="setLyricsTextVariant"
             @decrease-font-size="decreaseLyricsFontSize"
             @increase-font-size="increaseLyricsFontSize"
-          />
+          >
+            <template #font-actions>
+              <LyricsExperimentalEstimate
+                :disabled="isEditingLocked || editMode !== 'preview'"
+              />
+            </template>
+          </LyricsPreparationBar>
         </template>
       </LyricsWorkspaceHeader>
       <LyricsTextProcessing />
-      <LyricsExperimentalEstimate
-        :disabled="isEditingLocked || editMode !== 'preview'"
-      />
       <div v-if="editMode !== 'preview'" class="lyrics-edit-context">
         <UiHint role="status">{{ editingHelp }}</UiHint>
         <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')"
@@ -481,7 +500,7 @@ async function commitTimingDocument() {
     <LyricsSourceManagerModal
       :analysis-disabled="isEditingLocked || editMode !== 'preview'"
       :open="isSourceManagerOpen"
-      @close="isSourceManagerOpen = false"
+      @close="closeSourceManager"
     />
   </div>
 </template>

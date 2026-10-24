@@ -40,6 +40,7 @@ Pure frame 對目前與下一句一併套用選項：關閉時不顯示讀音也
 底部 `PerformerActionBar` 使用正式 `UiButtonGroup` 組合播放控制、歌詞同步及顯示工具，三區間使用垂直 `UiSeparator`。
 播放／暫停各自只發出固定 `play`／`pause` intent，仍由主 renderer 的 HTML audio element 與 `usePlayer` 執行，不提供切歌、seek 或第二個播放狀態。
 讀音與閱讀距離收在「顯示設定」`UiPopover`；讀音選擇使用 `reading-off`／`reading-furigana`／`reading-romaji` action 回到同一個主 renderer owner。
+顯示設定使用 `closeOnScroll: false`：snapshot、讀音準備狀態、背景捲動及讀音／閱讀距離變更均保留展開；外部 pointer、trigger toggle 與 Escape 才關閉。這與控制台的歌詞、欄位及密度設定採相同策略，不改變共用 Popover 的預設或 Action Menu 契約。
 新的固定 `performer-view:control` 僅授予 Performer main frame，preload 只傳 action、revision 與 track id；main 驗證後轉送主 renderer。
 播放操作驗證最近發布的 revision 與目前曲目，讀音操作另外驗證目前歌詞曲目、來源及可用選項；視窗關閉後拒絕新操作。
 讀音準備沿用 `useLyricsDisplay`，其 detached scope 由提詞器生命週期擁有，讓主頁不在歌詞頁時仍能載入／缺檔才產生；關閉時停止該 scope，不建立第二份偏好或文件。

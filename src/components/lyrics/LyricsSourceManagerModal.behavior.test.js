@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, nextTick, reactive } from 'vue';
+import { sortLyricsSources } from '../../utils/lyrics.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import Modal from './LyricsSourceManagerModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -109,6 +110,8 @@ beforeEach(() => {
       offsetSeconds: 0,
     }),
     selectedLyrics: computed(() => ({ sources: sources.items })),
+    availableSources: computed(() => sortLyricsSources(sources.items)),
+    refreshSourceDetails: vi.fn(),
     selectedTrack: computed(() => ({
       id: 'track',
       title: 'Test song',
@@ -141,8 +144,14 @@ function setup() {
 describe('local lyrics collection modal navigation', () => {
   it('distinguishes selected model chunks from canonical T1 and source T2 without changing sources', async () => {
     sources.items = [
-      { filename: 'active.lrc', kind: 'lrclib', offsetMs: -500 },
-      { filename: 'native.lrc', kind: 'manual', offsetMs: 0 },
+      {
+        filename: 'active.lrc',
+        kind: 'lrclib',
+        offsetMs: -500,
+        timingTier: 'T1',
+        hasEstimatedTiming: true,
+      },
+      { filename: 'native.lrc', kind: 'manual', offsetMs: 0, timingTier: 'T2' },
     ];
     domain.state.selectedSourceFilename = 'active.lrc';
     domain.state.offsetSeconds = -0.5;
@@ -165,8 +174,12 @@ describe('local lyrics collection modal navigation', () => {
     await nextTick();
     await nextTick();
     await nextTick();
-    expect(textContent(root)).toContain('分析估計時間');
-    expect(textContent(root)).toContain('原有逐字時間');
+    expect(textContent(root)).toContain('T1+ 估計');
+    expect(textContent(root)).toContain('T2 逐字');
+    const rows = findAll(root, (node) => node.type === 'li');
+    expect(textContent(rows[0])).toContain('T2 逐字');
+    expect(textContent(rows[1])).toContain('使用中');
+    expect(domain.refreshSourceDetails).toHaveBeenCalledOnce();
     expect(textContent(root)).toContain('-0.5s');
     expect(
       findAll(root, (n) => n.props['data-analysis-active'] === true),

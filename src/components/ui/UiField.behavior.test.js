@@ -11,6 +11,29 @@ import {
 attachClientRender(UiField, './UiField.vue', import.meta.url);
 
 describe('UiField description and label recovery', () => {
+  it('labels grouped controls without associating a label with a non-labelable element', () => {
+    const { app, root } = mount(
+      UiField,
+      {
+        id: 'font-size',
+        label: '字級',
+        group: true,
+        hint: '調整閱讀大小',
+      },
+      { default: () => [h('button', null, '縮小'), h('button', null, '放大')] },
+    );
+    const group = findAll(root, (node) => node.props.role === 'group')[0];
+    expect(group.props['aria-labelledby']).toBe('font-size-label');
+    expect(group.props['aria-describedby']).toBe('font-size-hint');
+    expect(
+      textContent(
+        findAll(root, (node) => node.props.id === 'font-size-label')[0],
+      ).trim(),
+    ).toBe('字級');
+    expect(findAll(root, (node) => node.type === 'label')).toHaveLength(0);
+    expect(findAll(root, (node) => node.type === 'button')).toHaveLength(2);
+    app.unmount();
+  });
   it('updates slot identity, deduplicates descriptions, and restores hint after error', async () => {
     const props = reactive({
       id: 'title',

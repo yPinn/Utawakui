@@ -881,7 +881,11 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
 
     vm.isTrackPickerOpen = true;
     vm.refresh();
-    await vm.openSourceManager(async () => {});
+    const restoreDisplay = vi.fn();
+    await vm.openSourceManager(async () => {}, restoreDisplay);
+    await vm.closeSourceManager();
+    expect(restoreDisplay).toHaveBeenCalledOnce();
+    await vm.openSourceManager(async () => {}, restoreDisplay);
     vm.selectSource('main.lrc');
     await vm.setReadingVariant('romaji');
     expect(generateReading).toHaveBeenCalledOnce();

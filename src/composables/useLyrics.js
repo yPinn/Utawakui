@@ -10,6 +10,7 @@ import { useLyricsSourceDocuments } from './lyrics/useLyricsSourceDocuments.js';
 import { useExperimentalLyrics } from './lyrics/useExperimentalLyrics.js';
 import { useLyricsClock } from './lyrics/useLyricsClock.js';
 import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
+import { useLyricsSourcePresentation } from './lyrics/useLyricsSourcePresentation.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
   deriveLyricsPlaybackState,
@@ -225,6 +226,14 @@ const experimentalLyrics = useExperimentalLyrics({
   positionMs: currentLyricsPositionMs,
   variant: lyricsTextVariant,
 });
+const sourcePresentation = useLyricsSourcePresentation({
+  trackId: () => state.selectedTrackId,
+  sources: () => selectedLyrics.value.sources,
+  selectedFilename: () => state.selectedSourceFilename,
+  document: () =>
+    state.isLoadingLyrics || !state.lyricSource ? null : lyricsDocument.value,
+  experiment: experimentalLyrics,
+});
 const lyricsClock = useLyricsClock({
   playerState,
   samplePlaybackClock,
@@ -327,12 +336,14 @@ function applyLibraryTracks() {
     clearCandidateSearch();
   }
   const currentFilename =
-    previousTrackId === state.selectedTrackId
-      ? state.selectedSourceFilename
-      : null;
+    previousTrackId === nextTrackId ? state.selectedSourceFilename : null;
+  const preferredSource = pickPreferredLyricsSource(
+    selectedTrack.value,
+    currentFilename,
+    sourcePresentation.availableSources.value,
+  );
   state.selectedSourceFilename =
-    pickPreferredLyricsSource(selectedTrack.value, currentFilename)?.filename ??
-    null;
+    currentFilename === '' ? '' : (preferredSource?.filename ?? null);
   loadSelectedLyrics();
 }
 
@@ -474,6 +485,7 @@ if (
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     lyricsClock.stop();
+    sourcePresentation.stop();
     stopPlayerSync();
     stopLibrarySync();
     stopLibraryErrorSync();
@@ -487,6 +499,8 @@ export function useLyrics() {
     tracksById,
     selectedTrack,
     selectedLyrics,
+    availableSources: sourcePresentation.availableSources,
+    refreshSourceDetails: sourcePresentation.refresh,
     selectedSource,
     lyricsTiming: readonly(lyricsTiming),
     lyricsAcousticEstimate: readonly(lyricsAcousticEstimate),

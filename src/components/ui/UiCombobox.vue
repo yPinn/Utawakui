@@ -44,6 +44,7 @@ const props = defineProps({
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
   editable: { type: Boolean, default: true },
+  closeOnScroll: { type: Boolean, default: true },
   noResultsText: { type: String, default: '沒有符合的結果' },
 });
 
@@ -393,7 +394,13 @@ function onOutsideScroll(event) {
   ) {
     return;
   }
-  closeList({ revertQuery: true });
+  if (props.closeOnScroll) closeList({ revertQuery: true });
+  else if (
+    event.target === window ||
+    event.target === document ||
+    event.target?.contains?.(controlRef.value)
+  )
+    updatePosition();
 }
 
 function onResize() {

@@ -117,6 +117,23 @@ it('does not open source management after the selected track disappears', async 
   expect(vm.isSourceManagerOpen).toBe(false);
 });
 
+it('restores the expanded display settings after returning from source management', async () => {
+  vm.toggleDisplayMenu({ currentTarget: { focus: vi.fn() } });
+  await vm.openSourceManager();
+  expect(vm.displayMenuOpen).toBe(false);
+  await vm.closeSourceManager();
+  expect(vm.isSourceManagerOpen).toBe(false);
+  expect(vm.displayMenuOpen).toBe(true);
+});
+
+it('does not reopen display settings after a track disappears during source management', async () => {
+  vm.toggleDisplayMenu({ currentTarget: { focus: vi.fn() } });
+  await vm.openSourceManager();
+  owners.lyrics.selectedTrack.value = null;
+  await vm.closeSourceManager();
+  expect(vm.displayMenuOpen).toBe(false);
+});
+
 describe('Performance lyrics single reading entry', () => {
   it('switches directly to a cached matching reading without generating', async () => {
     docs.set(key('track-a', 'a.lrc'), matchingDoc());

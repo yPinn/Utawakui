@@ -298,10 +298,18 @@ describe('selected source analysis in available lyrics', () => {
     expect(textContent(mounted.root)).toContain('僅分段提示');
     expect(textContent(mounted.root)).toContain('未涵蓋部分沿用原歌詞');
     expect(owner.setApplied).not.toHaveBeenCalled();
-    trigger(button('套用分析'), 'onClick');
+    expect(button('分析顯示').props['aria-pressed']).toBe(false);
+    expect(button('分析顯示').props['aria-description']).toContain(
+      '開啟分析顯示',
+    );
+    trigger(button('分析顯示'), 'onClick');
     await flush();
     expect(owner.setApplied).toHaveBeenCalledWith(true);
-    trigger(button('停用分析'), 'onClick');
+    expect(button('分析顯示').props['aria-pressed']).toBe(true);
+    expect(button('分析顯示').props['aria-description']).toContain(
+      '關閉分析顯示',
+    );
+    trigger(button('分析顯示'), 'onClick');
     expect(owner.setApplied).toHaveBeenLastCalledWith(false);
     owner.prepared.value = {
       status: 'ready',
@@ -326,7 +334,7 @@ describe('selected source analysis in available lyrics', () => {
     owner.prepared.value = { status: 'stale' };
     await flush();
     expect(textContent(mounted.root)).toContain('校時已變更，請重新分析');
-    expect(button('套用分析')).toBeUndefined();
+    expect(button('分析顯示')).toBeUndefined();
   });
   it('cancels the source job, preserves the old estimate after failure, and stops polling on close', async () => {
     const props = setup();
@@ -362,7 +370,7 @@ describe('selected source analysis in available lyrics', () => {
     owner.prepared.value = { status: 'ready', lines: [{ status: 'ready' }] };
     await flush();
     expect(textContent(mounted.root)).toContain('原有歌詞與伴奏仍可使用');
-    expect(button('套用分析').props.disabled).toBe(false);
+    expect(button('分析顯示').props.disabled).toBe(false);
     props.active = false;
     await flush();
     const count = mocks.queue.refresh.mock.calls.length;
@@ -410,6 +418,6 @@ describe('selected source analysis in available lyrics', () => {
     owner.prepared.value = { status: 'stale' };
     await flush();
     expect(textContent(mounted.root)).toContain('校時已變更，請重新分析');
-    expect(button('套用分析')).toBeUndefined();
+    expect(button('分析顯示')).toBeUndefined();
   });
 });

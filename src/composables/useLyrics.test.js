@@ -277,6 +277,7 @@ describe('useLyrics', () => {
         'activeLineIndex',
         'activeSegmentId',
         'adjustOffset',
+        'availableSources',
         'backfillSourceLabels',
         'clearCandidateSearch',
         'currentLyricsPositionMs',
@@ -302,6 +303,7 @@ describe('useLyrics', () => {
         'positionedLineIndex',
         'probeMusixmatch',
         'refresh',
+        'refreshSourceDetails',
         'resetOffset',
         'retryOffsetSave',
         'saveLyricsCandidate',
@@ -321,6 +323,58 @@ describe('useLyrics', () => {
         'tracksById',
       ].sort(),
     );
+  });
+
+  it('loads source ranks only on request and keeps the current or hidden source through refresh', async () => {
+    const rankedTrack = {
+      ...trackA,
+      lyrics: {
+        ...trackA.lyrics,
+        sources: [
+          trackA.lyrics.sources[0],
+          { filename: 'native.lrc', kind: 'manual', language: 'en' },
+        ],
+      },
+    };
+    listTracksMock.mockResolvedValue([rankedTrack]);
+    const lyrics = await loadLyrics();
+    expect(getTrackLyricsMock).not.toHaveBeenCalledWith(
+      'track-a',
+      'native.lrc',
+    );
+    getTrackLyricsMock.mockImplementation(async (_id, filename) => ({
+      source: rankedTrack.lyrics.sources.find(
+        (source) => source.filename === filename,
+      ),
+      text:
+        filename === 'native.lrc'
+          ? '[00:01.00]<00:01.00>first<00:02.00>second\n[00:04.00]last'
+          : 'WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nfirst line',
+    }));
+    await lyrics.refreshSourceDetails();
+    expect(
+      lyrics.availableSources.value.map((source) => source.filename),
+    ).toEqual(['native.lrc', 'en.vtt']);
+    expect(lyrics.state.selectedSourceFilename).toBe('en.vtt');
+    expect(setLyricsSourcePreferenceMock).not.toHaveBeenCalled();
+    const remaining = [
+      { filename: 'plain.lrc', kind: 'manual', language: 'en' },
+      rankedTrack.lyrics.sources[1],
+    ];
+    listTracksMock.mockResolvedValue([
+      { ...rankedTrack, lyrics: { sources: remaining } },
+    ]);
+    deleteLyricsSourceMock.mockResolvedValue({ sources: remaining });
+    await lyrics.deleteSource('en.vtt');
+    await flushPromises();
+    expect(lyrics.state.selectedSourceFilename).toBe('native.lrc');
+    lyrics.selectSource('');
+    listTracksMock.mockResolvedValue([structuredClone(rankedTrack)]);
+    await lyrics.refresh();
+    await flushPromises();
+    expect(lyrics.state.selectedSourceFilename).toBe('');
+    expect(lyrics.selectedSource.value).toBeNull();
+    expect(setLyricsSourcePreferenceMock).not.toHaveBeenCalled();
   });
 
   it('defaults Chinese lyrics from any source to Taiwan Traditional and can show the canonical original', async () => {

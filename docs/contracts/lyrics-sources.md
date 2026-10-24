@@ -57,6 +57,15 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 - `lyrics/lyrics.json` 可存 `{ filename, origin }` 偏好，`origin` 為 `user` 或 `automatic`；使用者選擇不被自動偏好覆寫，偏好來源刪除時一併清除。Renderer 選擇順序：目前有效的畫面選擇 → 持久化偏好 → 語言推測 → 第一筆來源。
 - Timing metric 只記 provider、cache hit、duration、候選數與 status，不記曲名、歌手或歌詞。
 
+## 本機來源清單與顯示設定
+
+- 可用歌詞 Modal 與來源選單共用唯讀排序：T2 逐字 → T1+ 估計 → T1 逐行 → T0 文字 → 待確認；同級保留原順序。代號表示時間細度，不表示正確率；T2 可為部分涵蓋，T1+ 只表示有效的實驗分析，不改寫 canonical T1。
+- `useLyricsSourcePresentation` 只在開啟來源／顯示介面後讀取本機來源與已存分析，以來源 fingerprint、normalizer、逐行 identity 與 offset 驗證估計。讀取失敗保持待確認，舊曲目／舊來源回應不更新新清單；不執行模型、不下載或自動套用。
+- 顯示排序不切換目前來源，也不保存新的偏好；來源閉合控制只顯示名稱，展開選單才補短等級。使用者明確選擇不顯示歌詞時，同曲目的曲庫刷新保留此選擇。
+- 顯示 Popover 由上到下為來源與管理入口、文字、支援的讀音、字級，DOM／鍵盤順序一致。來源使用 select-only `UiCombobox`，文字使用 `UiSelect`，讀音使用 `UiSegmentedControl`；群組標籤使用 `UiField group`，字級由 `UiButtonGroup` 與中性 `UiIconButton` 組合。第一次 Escape 關閉來源選單，第二次才關閉 Popover。
+- 歌詞顯示 Popover 與來源 Combobox 使用 `closeOnScroll: false`；背景播放、歌詞自動捲動與來源／文字／讀音／字級操作都保持展開，與 anchor 無關的捲動不重新量測。外部 pointer、再次點擊「顯示」與 Escape 仍明確關閉；開啟管理來源時暫時讓位給 Modal，返回後恢復設定面板，已卸載或無選定曲目時不重開。共用 primitive 的其他 caller 維持原本捲動關閉預設。
+- 演唱與歌詞編輯頁的實驗分析開關收在顯示 Popover 字級旁，不在歌詞上方另占狀態列。按鈕固定命名「分析顯示」，以 active／aria-pressed 表示開關狀態，管理來源內的同一開關也採相同名稱；開啟使用已產生的時間提示，關閉恢復原歌詞時間，不啟動分析任務。共用 Tooltip 與 accessible description 保留下一步操作、沿用既有分析及需重新分析的原因；不可用或編輯鎖定時按鈕可聚焦查看原因，但不可啟動。顯示面板只提供操作插槽，分析仍由原歌詞 owner 管理，不因展開、重掛或狀態更新自動套用或切換來源。
+
 ## 各來源
 
 ### LRCLIB

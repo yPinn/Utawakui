@@ -445,9 +445,14 @@ function pickSourceByLanguage(sources, preferences) {
   return bestSource;
 }
 
-export function pickPreferredLyricsSource(track, currentFilename = null) {
-  const sources = track?.lyrics?.sources ?? [];
+export function pickPreferredLyricsSource(
+  track,
+  currentFilename = null,
+  sourceProjection = track?.lyrics?.sources ?? [],
+) {
+  const sources = sortLyricsSources(sourceProjection);
   if (sources.length === 0) return null;
+  if (currentFilename === '') return null;
   if (
     currentFilename &&
     sources.some((source) => source.filename === currentFilename)
@@ -500,15 +505,35 @@ export function formatLyricsSourceOffset(offsetMs) {
 }
 
 export function formatLyricsSourceTier(tier) {
-  if (tier === 'T0') return '純文字';
-  if (tier === 'T1') return '逐行同步';
-  if (tier === 'T2') return '逐字同步';
-  return '—';
+  if (tier === 'T0') return 'T0 文字';
+  if (tier === 'T1') return 'T1 逐行';
+  if (tier === 'T1+') return 'T1+ 估計';
+  if (tier === 'T2') return 'T2 逐字';
+  return '待確認';
+}
+
+export function lyricsSourceDisplayTier(source) {
+  return source.timingTier === 'T1' && source.hasEstimatedTiming
+    ? 'T1+'
+    : source.timingTier;
+}
+
+export function sortLyricsSources(sources) {
+  const ranks = new Map([
+    ['T2', 4],
+    ['T1+', 3],
+    ['T1', 2],
+    ['T0', 1],
+  ]);
+  const rank = (source) => ranks.get(lyricsSourceDisplayTier(source)) ?? 0;
+  return [...sources].sort((a, b) => rank(b) - rank(a));
 }
 
 export function describeLyricsSourceTier(tier) {
   if (tier === 'T0') return '沒有同步時間，無法跟隨播放。';
   if (tier === 'T1') return '歌詞可逐行跟隨播放。';
+  if (tier === 'T1+')
+    return '依逐行時間分析的句內估計，尚未人工確認；未涵蓋部分沿用逐行時間。';
   if (tier === 'T2') return '含歌詞分段時間，部分句子可能仍按整句顯示。';
   return '尚未確認同步方式。';
 }

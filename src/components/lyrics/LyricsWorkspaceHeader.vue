@@ -77,6 +77,9 @@ async function closeDisplay() {
   await nextTick();
   displayTrigger?.focus();
 }
+function restoreDisplay() {
+  if (props.track && !props.isLocked) displayOpen.value = true;
+}
 function openMenu(event) {
   displayOpen.value = false;
   menuElement.value = event.currentTarget;
@@ -104,6 +107,7 @@ function selectAction(item) {
           v-model:open="displayOpen"
           aria-label="歌詞顯示設定"
           placement="bottom-end"
+          :close-on-scroll="false"
           focus-on-open
         >
           <template #trigger="{ triggerProps }">
@@ -116,7 +120,11 @@ function selectAction(item) {
               >顯示</UiButton
             >
           </template>
-          <slot name="display" :close-display="closeDisplay" />
+          <slot
+            name="display"
+            :close-display="closeDisplay"
+            :restore-display="restoreDisplay"
+          />
         </UiPopover>
         <UiButton
           :icon="Pencil"

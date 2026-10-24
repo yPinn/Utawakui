@@ -44,7 +44,11 @@ const popoverOpen = ref(false);
       </div>
 
       <div v-else-if="section.key === 'popover'" class="demo-overlay-sample">
-        <UiPopover v-model:open="popoverOpen" aria-label="外觀快速選項">
+        <UiPopover
+          v-model:open="popoverOpen"
+          aria-label="外觀快速選項"
+          :close-on-scroll="false"
+        >
           <template #trigger="{ triggerProps }">
             <UiButton v-bind="triggerProps" @click="popoverOpen = !popoverOpen">
               外觀快速選項

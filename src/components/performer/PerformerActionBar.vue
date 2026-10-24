@@ -42,6 +42,7 @@ const playing = computed(() =>
       v-model:open="displayOpen"
       aria-label="提詞器顯示設定"
       placement="top-end"
+      :close-on-scroll="false"
       focus-on-open
       :panel-style="{
         inlineSize: 'var(--ui-performer-settings-inline-size)',

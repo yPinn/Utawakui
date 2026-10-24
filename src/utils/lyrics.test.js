@@ -14,6 +14,8 @@ import {
   parseLyricsText,
   parseVtt,
   pickPreferredLyricsSource,
+  sortLyricsSources,
+  lyricsSourceDisplayTier,
   preprocessLyricCueText,
 } from './lyrics.js';
 
@@ -571,6 +573,29 @@ describe('alignReadings', () => {
 });
 
 describe('pickPreferredLyricsSource', () => {
+  it('uses projected source tiers while retaining current and saved choices', () => {
+    const original = [
+      { filename: 'line', timingTier: 'T1' },
+      { filename: 'native' },
+    ];
+    const projected = original.map((source) =>
+      source.filename === 'native' ? { ...source, timingTier: 'T2' } : source,
+    );
+    const track = { lyrics: { sources: original } };
+    expect(pickPreferredLyricsSource(track, null, projected)).toBe(
+      projected[1],
+    );
+    expect(pickPreferredLyricsSource(track, 'line', projected)).toBe(
+      projected[0],
+    );
+    track.lyrics.preferredSourceFilename = 'line';
+    expect(pickPreferredLyricsSource(track, null, projected)).toBe(
+      projected[0],
+    );
+    expect(pickPreferredLyricsSource(track, '', projected)).toBeNull();
+    expect(track.lyrics.sources).toBe(original);
+    expect(original[1].timingTier).toBeUndefined();
+  });
   const sources = [
     { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
     { filename: 'zh-Hant.vtt', language: 'zh-Hant', kind: 'youtube-cc' },
@@ -708,11 +733,12 @@ describe('formatLyricsSourceOffset', () => {
 
 describe('formatLyricsSourceTier', () => {
   it.each([
-    ['T0', '純文字'],
-    ['T1', '逐行同步'],
-    ['T2', '逐字同步'],
-    [undefined, '—'],
-    ['unsupported', '—'],
+    ['T0', 'T0 文字'],
+    ['T1', 'T1 逐行'],
+    ['T1+', 'T1+ 估計'],
+    ['T2', 'T2 逐字'],
+    [undefined, '待確認'],
+    ['unsupported', '待確認'],
   ])('formats source tier %s as %s', (tier, expected) => {
     expect(formatLyricsSourceTier(tier)).toBe(expected);
   });
@@ -728,4 +754,47 @@ describe('formatLyricsSourceTier', () => {
       expect(describeLyricsSourceTier(tier)).toBe(expected);
     },
   );
+});
+
+describe('lyrics source presentation order', () => {
+  it('sorts by timing detail with stable ties, without mutating sources', () => {
+    const sources = [
+      { filename: 'unknown', timingTier: 'constructor' },
+      { filename: 'plain', timingTier: 'T0' },
+      { filename: 'line-a', timingTier: 'T1' },
+      { filename: 'estimate', timingTier: 'T1', hasEstimatedTiming: true },
+      { filename: 'partial-native', timingTier: 'T2' },
+      { filename: 'line-b', timingTier: 'T1' },
+      { filename: 'native', timingTier: 'T2', hasEstimatedTiming: true },
+    ];
+    const before = structuredClone(sources);
+    expect(sortLyricsSources(sources).map((s) => s.filename)).toEqual([
+      'partial-native',
+      'native',
+      'estimate',
+      'line-a',
+      'line-b',
+      'plain',
+      'unknown',
+    ]);
+    expect(sources).toEqual(before);
+    expect(lyricsSourceDisplayTier(sources[3])).toBe('T1+');
+    expect(sources[3].timingTier).toBe('T1');
+    expect(lyricsSourceDisplayTier(sources[6])).toBe('T2');
+  });
+
+  it('retains current, saved and hidden choices before ranked automatic fallback', () => {
+    const plain = { filename: 'plain', timingTier: 'T0', language: 'en' };
+    const line = { filename: 'line', timingTier: 'T1', language: 'ja' };
+    const native = { filename: 'native', timingTier: 'T2', language: 'ja' };
+    const track = {
+      title: 'あした',
+      lyrics: { sources: [plain, line, native] },
+    };
+    expect(pickPreferredLyricsSource(track, 'plain')).toBe(plain);
+    expect(pickPreferredLyricsSource(track, '')).toBeNull();
+    expect(pickPreferredLyricsSource(track)).toBe(native);
+    track.lyrics.preferredSourceFilename = 'line';
+    expect(pickPreferredLyricsSource(track)).toBe(line);
+  });
 });

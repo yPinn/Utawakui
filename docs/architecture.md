@@ -98,6 +98,7 @@
 - `usePlayer.samplePlaybackClock()` 同步唯讀採樣 audio 位置、實際倍率、phase、identity 與配對時間，不回寫 transport state。`useLyrics` 內部的 `lyrics/useLyricsClock.js` 在既有 timeupdate／控制事件與 T1／T2／已套用 T1+ 起點期限重新讀取媒體，只更新歌詞顯示位置；晚到不累加推算位置。Output publisher 在內容傳送 await 後與拒絕重試前重查文件／continuity，再採樣發布，手動演出維持其虛擬投影。細節見[歌詞時間契約](contracts/lyrics-timing-contract.md)與[Output 契約](contracts/output-runtime.md)。
 - 內部 composable 以具名依賴組合、不互相 import：`lyrics/useLyricsAcquisition.js`（手動候選搜尋，與 dormant Musixmatch probe）、`lyrics/useLyricsSourceDocuments.js`（本機來源、offset、timing、label、刪除與匯入）。Main 端行為見[歌詞來源契約](contracts/lyrics-sources.md)。
 - 演唱工具「歌詞」與曲庫歌詞編輯共用 `useLyrics`／`useLyricsReading`；`useLyricsDisplay` 協調顯示選項與讀音準備，不持有第二份讀音文件。兩頁共用 `LyricsSourceControl` 與 `LyricsSourceManagerModal`；文字、讀音修正與時間編輯只在曲庫編輯頁。逐字校時能力由 `lyricsTiming.js` 判斷。
+- `useLyrics` 內部的 `useLyricsSourcePresentation` 持有按需讀取的本機來源等級投影，供來源選單與管理 Modal 共用穩定排序；只驗證既有分析，不選來源、不套用估計，並拒絕過期讀取。顯示操作順序與簡短等級見[歌詞來源契約](contracts/lyrics-sources.md#本機來源清單與顯示設定)。
 - 讀音：`useLyricsReading` 驗證 canonical identity、合併讀取並持有產生鎖；讀取失敗不視為缺檔。Reading sidecar v3 由 main 持有 documentId、normalizer profile、來源 fingerprint 與 line identity；文字相容的 v1／v2 原子 re-key 並保留人工修正。日文 worker 先把 kuromoji 欄位轉成中立 token，再交給純 builder。
 - 提詞器 snapshot 投影同一 `useLyricsReading.variant`；main 驗證 `off`／`furigana`／`romaji`。`usePerformerSelfView` 以提詞器生命週期持有的 detached `useLyricsDisplay` scope 準備讀音，關閉時停止。見[提詞器契約](contracts/performer-prompter-contract.md)。
 - Lyrics IPC 由 `electron/main/lyricsHandlers.js` facade 註冊，實際分在 `electron/main/lyrics/` 的 `documentHandlers`、`acquisitionHandlers`、`readingHandlers`，三者不互相 import。
