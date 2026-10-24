@@ -2,16 +2,16 @@
 
 ## Status
 
-Proposed on 2026-10-22; revised the same day after a code boundary review, and
-on 2026-10-23 for the receipt setlist template and schema 6. Accepted on
-2026-10-23 with the phase plan below; P1 (definition attributes and the
-`now-next` removal) P2 (modified marks and group reset in the inspector)
-and P3 (Cover Player element settings) are implemented, later phases are not. It amends the "locked" list in
+Accepted on 2026-10-23 (proposed 2026-10-22). P1–P3 are implemented:
+definition attributes with the `now-next` removal, inspector modified marks
+and group reset, and Cover Player element settings. P4–P6 are not started.
+
+The decision amends the "locked" list in
 [ADR 0011](0011-overlay-instances-and-presentation-pack-delivery.md) and the
 [Overlay Pack contract](../contracts/overlay-pack.md) only for element geometry,
-stacking and visibility; executable layout behavior stays app-owned. The current
-field catalog in [Output appearance](../contracts/output-appearance.md) remains
-authoritative until a phase below is accepted.
+stacking and visibility; executable layout behavior stays app-owned.
+Implemented behavior is specified in
+[Output appearance](../contracts/output-appearance.md).
 
 ## Context
 
