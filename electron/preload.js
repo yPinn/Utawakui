@@ -483,6 +483,23 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-youtube-browser-cookies'),
   setYoutubeBrowserCookies: (enabled) =>
     ipcRenderer.invoke('config:set-youtube-browser-cookies', enabled),
+  getAutoErrorReporting: () =>
+    ipcRenderer.invoke('config:get-auto-error-reporting'),
+  setAutoErrorReporting: (value) =>
+    ipcRenderer.invoke('config:set-auto-error-reporting', value),
+  getPendingAutoReport: () => ipcRenderer.invoke('auto-report:get-pending'),
+  respondAutoReport: (reportId, decision) =>
+    ipcRenderer.invoke('auto-report:respond', { reportId, decision }),
+  onAutoReportPrompt: (callback) => {
+    const listener = (_event, prompt) => callback(prompt);
+    ipcRenderer.on('auto-report:prompt', listener);
+    return () => ipcRenderer.removeListener('auto-report:prompt', listener);
+  },
+  onAutoReportSent: (callback) => {
+    const listener = (_event, sent) => callback(sent);
+    ipcRenderer.on('auto-report:sent', listener);
+    return () => ipcRenderer.removeListener('auto-report:sent', listener);
+  },
   getSeparationGpuAcceleration: () =>
     ipcRenderer.invoke('config:get-separation-gpu-acceleration'),
   setSeparationGpuAcceleration: (enabled) =>

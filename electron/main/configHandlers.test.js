@@ -154,6 +154,8 @@ describe('registerConfigHandlers', () => {
       'config:set-auto-music-analysis',
       'config:get-youtube-browser-cookies',
       'config:set-youtube-browser-cookies',
+      'config:get-auto-error-reporting',
+      'config:set-auto-error-reporting',
       'config:get-separation-gpu-acceleration',
       'config:set-separation-gpu-acceleration',
       'config:get-app-update-auto-check',
@@ -581,6 +583,32 @@ describe('registerConfigHandlers', () => {
         .catch((error) => error);
 
       expect(thrown.message).toContain('YOUTUBE_BROWSER_COOKIES_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['ask', 'always', 'never'])(
+    'persists automatic error reporting as %s',
+    async (value) => {
+      const { ipcMain, updateConfig } = register();
+
+      await expect(
+        ipcMain.handlers.get('config:set-auto-error-reporting')(null, value),
+      ).resolves.toBe(value);
+      expect(updateConfig).toHaveBeenCalledWith({ autoErrorReporting: value });
+    },
+  );
+
+  it.each([null, true, 'ALWAYS', {}])(
+    'rejects invalid automatic error reporting value %j',
+    async (value) => {
+      const { ipcMain, updateConfig } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-auto-error-reporting')(null, value)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('AUTO_ERROR_REPORTING_INVALID');
       expect(updateConfig).not.toHaveBeenCalled();
     },
   );

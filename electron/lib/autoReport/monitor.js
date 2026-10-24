@@ -72,9 +72,14 @@ function createAutoReportMonitor({
     }
   }
 
+  // An early crash can arrive before config loads; fall back to asking.
   function consent() {
-    const value = getConsent();
-    return CONSENTS.has(value) ? value : 'ask';
+    try {
+      const value = getConsent();
+      return CONSENTS.has(value) ? value : 'ask';
+    } catch {
+      return 'ask';
+    }
   }
 
   async function dispatch() {
@@ -134,7 +139,9 @@ function createAutoReportMonitor({
       severity: escalated ? 'S2' : 'S1',
       escalated,
       occurrences: escalated ? occurrence.recentS2 : occurrence.occurrences,
-      environment,
+      // A getter defers values such as the locale until app ready.
+      environment:
+        typeof environment === 'function' ? environment() : environment,
       reportId: idGenerator(),
       createdAt: new Date(at).toISOString(),
     });

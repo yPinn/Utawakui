@@ -221,6 +221,11 @@ const { createRendererRecoveryController } = require('./main/rendererRecovery');
 const { registerFeedbackHandlers } = require('./main/feedbackHandlers');
 const { createFeedbackClient } = require('./lib/feedback/client');
 const { resolveFeedbackEndpoint } = require('./lib/feedback/constants');
+const { createAutoReportMonitor } = require('./lib/autoReport/monitor');
+const {
+  createAutoReportStateStore,
+  registerAutoReportHandlers,
+} = require('./main/autoReportHandlers');
 const {
   registerAudioOutputPermissions,
 } = require('./main/audioOutputPermissions');
@@ -260,6 +265,27 @@ const runtimeDiagnosticsLogger = createRuntimeDiagnosticsLogger({
 const feedbackClient = createFeedbackClient({
   baseUrl: resolveFeedbackEndpoint(),
 });
+// Subscribed before lifecycle monitoring so an early crash is still seen.
+const autoReportStore = createAutoReportStateStore(app.getPath('userData'));
+const autoReportMonitor = createAutoReportMonitor({
+  readState: autoReportStore.read,
+  writeState: autoReportStore.write,
+  getConsent: () => configState.getConfig().autoErrorReporting,
+  setConsent: (value) =>
+    configState.updateConfig({ autoErrorReporting: value }),
+  submit: (report) => feedbackClient.submit(report),
+  promptUser: (prompt) =>
+    windowState.sendToMainWindow('auto-report:prompt', prompt),
+  notifySent: (sent) => windowState.sendToMainWindow('auto-report:sent', sent),
+  environment: () => ({
+    appVersion: app.getVersion(),
+    electronVersion: process.versions.electron,
+    platform: process.platform,
+    locale: app.isReady() ? app.getLocale() : '',
+  }),
+  idGenerator: () => crypto.randomUUID(),
+});
+diagnosticsService.subscribe(autoReportMonitor.observe);
 const startupTraceOptions = readStartupTraceOptions(process.argv);
 const startupTraceFilePath = startupTraceOptions.enabled
   ? path.resolve(
@@ -1100,6 +1126,8 @@ if (!gotSingleInstanceLock) {
       electronVersion: process.versions.electron,
       locale: app.getLocale(),
     });
+    registerAutoReportHandlers({ ipcMain, monitor: autoReportMonitor });
+    autoReportMonitor.resumePending();
     registerStartupTraceHandler({
       ipcMain,
       trace: startupTrace,

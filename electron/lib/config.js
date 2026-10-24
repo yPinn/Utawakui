@@ -53,6 +53,8 @@ const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
   captureGuideVocalLevel:
     audioControlValues.captureGuideVocalLevel.defaultValue,
 });
+const AUTO_ERROR_REPORTING_VALUES = new Set(['ask', 'always', 'never']);
+
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
@@ -75,6 +77,8 @@ const DEFAULTS = {
   // Explicit opt-in: a failed provider download may retry with the YouTube
   // sign-in of a local browser profile (yt-dlp --cookies-from-browser).
   youtubeBrowserCookies: false,
+  // ADR 0029: ask before the first severe-error report, then remember.
+  autoErrorReporting: 'ask',
   experimentalLyricsAfterSeparation: false,
   // Whether quick/general separation tries the DirectML execution provider
   // before CPU. See ADR 0017 — this is a boolean product intent, not a
@@ -366,6 +370,11 @@ function loadConfigSnapshot(configPath) {
           ? data.autoAnalyzeMusicStructure
           : DEFAULTS.autoAnalyzeMusicStructure,
       youtubeBrowserCookies: data.youtubeBrowserCookies === true,
+      autoErrorReporting: AUTO_ERROR_REPORTING_VALUES.has(
+        data.autoErrorReporting,
+      )
+        ? data.autoErrorReporting
+        : DEFAULTS.autoErrorReporting,
       separationGpuAcceleration:
         typeof data.separationGpuAcceleration === 'boolean'
           ? data.separationGpuAcceleration
@@ -412,6 +421,7 @@ function saveConfig(configPath, partial) {
 }
 
 module.exports = {
+  AUTO_ERROR_REPORTING_VALUES,
   loadConfig,
   loadConfigSnapshot,
   saveConfig,

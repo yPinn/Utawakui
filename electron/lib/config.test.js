@@ -41,6 +41,7 @@ describe('config', () => {
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
       youtubeBrowserCookies: false,
+      autoErrorReporting: 'ask',
       experimentalLyricsAfterSeparation: false,
       separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
@@ -76,6 +77,17 @@ describe('config', () => {
       );
     },
   );
+
+  it.each([
+    ['always', 'always'],
+    ['never', 'never'],
+    ['ask', 'ask'],
+    ['ALWAYS', 'ask'],
+    [true, 'ask'],
+  ])('keeps automatic error reporting %j as %j', (value, expected) => {
+    fs.writeFileSync(configPath, JSON.stringify({ autoErrorReporting: value }));
+    expect(loadConfig(configPath).autoErrorReporting).toBe(expected);
+  });
 
   it('round-trips downloadDir through save/load', () => {
     saveConfig(configPath, { downloadDir: '/some/path' });
@@ -151,6 +163,7 @@ describe('config', () => {
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
       youtubeBrowserCookies: false,
+      autoErrorReporting: 'ask',
       separationGpuAcceleration: true,
       experimentalLyricsAfterSeparation: false,
       autoCheckAppUpdates: true,

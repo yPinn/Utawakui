@@ -3,6 +3,7 @@
 const { createAppError } = require('../lib/appError');
 const {
   ANNOUNCEMENT_VERSION_MAX_LENGTH,
+  AUTO_ERROR_REPORTING_VALUES,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
   SIDEBAR_WIDTH_MAX,
   SIDEBAR_WIDTH_MIN,
@@ -403,6 +404,42 @@ function registerConfigHandlers({
       );
     },
   );
+
+  ipcMain.handle('config:get-auto-error-reporting', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-auto-error-reporting',
+        code: 'AUTO_ERROR_REPORTING_READ_FAILED',
+        title: '無法讀取自動回報設定',
+        message: '目前無法讀取錯誤自動回報設定。',
+      },
+      () => getConfig().autoErrorReporting,
+    ),
+  );
+
+  ipcMain.handle('config:set-auto-error-reporting', async (event, value) => {
+    if (!AUTO_ERROR_REPORTING_VALUES.has(value)) {
+      throw createValidationError(
+        'AUTO_ERROR_REPORTING_INVALID',
+        '無法套用自動回報設定',
+        '指定的錯誤自動回報設定無效。',
+      );
+    }
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-auto-error-reporting',
+        code: 'AUTO_ERROR_REPORTING_UPDATE_FAILED',
+        title: '無法套用自動回報設定',
+        message: '目前無法套用錯誤自動回報設定，請稍後再試。',
+      },
+      () => {
+        updateConfig({ autoErrorReporting: value });
+        return getConfig().autoErrorReporting;
+      },
+    );
+  });
 
   ipcMain.handle('config:get-separation-gpu-acceleration', async () =>
     runConfigOperation(

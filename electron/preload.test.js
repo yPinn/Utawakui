@@ -36,6 +36,9 @@ const MAIN_INVOKE_CHANNELS = [
   'config:set-obs-arrangement-dock',
   'config:get-auto-music-analysis',
   'config:get-youtube-browser-cookies',
+  'config:get-auto-error-reporting',
+  'auto-report:get-pending',
+  'auto-report:respond',
   'config:get-separation-gpu-acceleration',
   'config:get-app-update-auto-check',
   'config:get-window-close-behavior',
@@ -48,6 +51,7 @@ const MAIN_INVOKE_CHANNELS = [
   'config:set-ui-theme',
   'config:set-auto-music-analysis',
   'config:set-youtube-browser-cookies',
+  'config:set-auto-error-reporting',
   'config:set-separation-gpu-acceleration',
   'config:set-app-update-auto-check',
   'config:set-window-close-behavior',
@@ -286,6 +290,8 @@ const MAIN_INVOKE_CHANNELS = [
 ].sort();
 
 const MAIN_EVENT_CHANNELS = [
+  'auto-report:prompt',
+  'auto-report:sent',
   'app:history-command',
   'app:navigate',
   'app-update:status',
