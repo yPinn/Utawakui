@@ -206,9 +206,7 @@ describe('local lyrics collection modal navigation', () => {
     const feedback = useFeedbackReport();
     const reportButtons = findAll(
       root,
-      (n) =>
-        n.type === 'button' &&
-        textContent(n).trim() === '回報這個歌詞來源的問題',
+      (n) => n.type === 'button' && textContent(n).trim() === '回報歌詞問題',
     );
     expect(reportButtons).toHaveLength(2);
     trigger(reportButtons[0], 'onClick');

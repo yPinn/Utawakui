@@ -41,6 +41,8 @@ import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useNavigationHistory } from './composables/useNavigationHistory.js';
 import { useNavigationInput } from './composables/useNavigationInput.js';
+import { useFeedbackReport } from './composables/useFeedbackReport.js';
+import { provideNoticeReporter } from './components/ui/noticeReporter.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
@@ -137,6 +139,16 @@ useMediaSession();
 useTheme();
 useUiDensity();
 const closeDecision = useWindowCloseDecision();
+const feedbackReport = useFeedbackReport();
+// Every error notice in the main window offers a prefilled bug report;
+// feedback's own failures are excluded so a report never reports itself.
+provideNoticeReporter({
+  label: '回報這個問題',
+  canReport: (notice) =>
+    notice.severity === 'error' && notice.source !== 'feedback',
+  report: (notice) =>
+    feedbackReport.openReport({ kind: 'bug', errorRecord: notice }),
+});
 const trayNavigation = useTrayNavigation();
 const playbackHistory = usePlaybackHistory();
 const performanceHistoryObserver = usePerformanceHistoryObserver();

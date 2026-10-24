@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue';
 import { formatFeedbackReportReference } from '../../shared/feedbackReference.mjs';
 import { useAppNotifications } from './useAppNotifications.js';
+import { useFeedbackReport } from './useFeedbackReport.js';
 import { useSettingsPreference } from './useSettingsPreference.js';
 
 // Module singleton: main raises at most one pending severe-error report.
@@ -13,10 +14,18 @@ function bridge() {
 
 function notifySent({ reportId } = {}) {
   if (typeof reportId !== 'string') return;
+  const reference = formatFeedbackReportReference(reportId);
   useAppNotifications().notify({
     key: 'auto-error-report',
     title: '已自動回報錯誤',
-    message: `回報編號 ${formatFeedbackReportReference(reportId)}`,
+    message: `回報碼 ${reference}`,
+    // One follow-up path for prompted and automatic sends alike.
+    actionLabel: '補充說明',
+    action: () =>
+      useFeedbackReport().openReport({
+        kind: 'bug',
+        description: `補充自動回報（回報碼 ${reference}）：\n`,
+      }),
   });
 }
 

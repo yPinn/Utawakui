@@ -4,16 +4,21 @@ async function load(bridge) {
   vi.resetModules();
   vi.stubGlobal('window', { Utawakui: bridge });
   const notify = vi.fn();
+  const openReport = vi.fn();
   vi.doMock('./useAppNotifications.js', () => ({
     useAppNotifications: () => ({ notify }),
   }));
+  vi.doMock('./useFeedbackReport.js', () => ({
+    useFeedbackReport: () => ({ openReport }),
+  }));
   const module = await import('./useAutoErrorReport.js');
-  return { ...module.useAutoErrorReport(), notify };
+  return { ...module.useAutoErrorReport(), notify, openReport };
 }
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.doUnmock('./useAppNotifications.js');
+  vi.doUnmock('./useFeedbackReport.js');
 });
 
 const prompt = {
@@ -63,5 +68,27 @@ describe('useAutoErrorReport', () => {
     onSent({ reportId: prompt.reportId });
     expect(report.notify).toHaveBeenCalledOnce();
     expect(report.state.prompt).toBeNull();
+  });
+
+  it('lets the user follow up a sent report with their own description', async () => {
+    let onSent;
+    const report = await load({
+      getPendingAutoReport: vi.fn(async () => null),
+      onAutoReportSent: (callback) => {
+        onSent = callback;
+      },
+    });
+    await report.initialize();
+    onSent({ reportId: prompt.reportId });
+
+    const notice = report.notify.mock.calls[0][0];
+    expect(notice.actionLabel).toBe('補充說明');
+    notice.action();
+    expect(report.openReport).toHaveBeenCalledWith({
+      kind: 'bug',
+      description: expect.stringContaining(
+        notice.message.replace('回報碼 ', ''),
+      ),
+    });
   });
 });

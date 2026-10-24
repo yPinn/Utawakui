@@ -6,7 +6,6 @@ import {
   FolderOpen,
   ListChecks,
   ListX,
-  MessageSquare,
   RefreshCw,
 } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
@@ -27,7 +26,6 @@ const emit = defineEmits([
   'clear',
   'export',
   'noticeAction',
-  'reportIssue',
 ]);
 
 // Export is the one action most people actually reach for (sending records
@@ -77,18 +75,6 @@ const menuContent = computed(() => ({
         },
       ],
     },
-    {
-      id: 'support',
-      items: [
-        {
-          id: 'report-issue',
-          kind: 'action',
-          value: 'report-issue',
-          label: '回報問題',
-          icon: MessageSquare,
-        },
-      ],
-    },
   ],
 }));
 
@@ -108,7 +94,6 @@ function handleMenuSelect(actionId) {
   if (actionId === 'refresh') emit('refresh');
   else if (actionId === 'open-folder') emit('openFolder');
   else if (actionId === 'clear') emit('clear');
-  else if (actionId === 'report-issue') emit('reportIssue');
 }
 </script>
 

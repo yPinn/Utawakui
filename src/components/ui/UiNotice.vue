@@ -9,6 +9,7 @@ import {
 } from '../../icons/index.js';
 import { appErrorTone } from '../../utils/appErrors.js';
 import UiButton from './UiButton.vue';
+import { injectNoticeReporter } from './noticeReporter.js';
 
 const props = defineProps({
   notice: { type: Object, default: null },
@@ -40,6 +41,11 @@ const resolvedActionLabel = computed(
   () => props.actionLabel || props.notice?.actionLabel || '',
 );
 
+const reporter = injectNoticeReporter();
+const reportable = computed(() =>
+  Boolean(reporter && props.notice && reporter.canReport(props.notice)),
+);
+
 const icon = computed(() => {
   if (resolvedTone.value === 'success') return Check;
   if (resolvedTone.value === 'danger') return CircleX;
@@ -60,7 +66,8 @@ const role = computed(() =>
       `ui-notice--${resolvedTone}`,
       {
         'ui-notice--compact': compact,
-        'ui-notice--inline-action': resolvedActionLabel && !$slots.actions,
+        'ui-notice--inline-action':
+          resolvedActionLabel && !$slots.actions && !reportable,
       },
     ]"
     :role="role"
@@ -81,8 +88,23 @@ const role = computed(() =>
         </p>
         <slot name="details" />
       </div>
-      <div v-if="$slots.actions" class="ui-notice__actions">
+      <div v-if="$slots.actions || reportable" class="ui-notice__actions">
         <slot name="actions" />
+        <UiButton
+          v-if="!$slots.actions && resolvedActionLabel"
+          variant="secondary"
+          :disabled="actionDisabled"
+          @click="!actionDisabled && emit('action')"
+        >
+          {{ resolvedActionLabel }}
+        </UiButton>
+        <UiButton
+          v-if="reportable"
+          variant="ghost"
+          @click="reporter.report(notice)"
+        >
+          {{ reporter.label }}
+        </UiButton>
       </div>
       <UiButton
         v-else-if="resolvedActionLabel"

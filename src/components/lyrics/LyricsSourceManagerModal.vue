@@ -318,7 +318,7 @@ function reportSource(source) {
               <div class="lyrics-source-manager__row-actions">
                 <UiIconButton
                   :icon="MessageSquare"
-                  label="回報這個歌詞來源的問題"
+                  label="回報歌詞問題"
                   @click="reportSource(source)"
                 />
                 <UiIconButton

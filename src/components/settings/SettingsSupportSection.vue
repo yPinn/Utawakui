@@ -3,7 +3,6 @@ import { onMounted } from 'vue';
 import { ExternalLink, Info } from '../../icons/index.js';
 import { useAppAnnouncement } from '../../composables/useAppAnnouncement.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
-import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
 import { useAutoErrorReportingSetting } from '../../composables/useAutoErrorReport.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import { usePersistentDiagnostics } from '../../composables/usePersistentDiagnostics.js';
@@ -21,7 +20,6 @@ const {
   openFolder: openDiagnosticsFolder,
   exportBundle: exportDiagnostics,
 } = usePersistentDiagnostics();
-const { recentRecords: recentDiagnosticRecords } = useAppDiagnostics();
 const { confirm: confirmAction } = useAppConfirmation();
 const feedback = useFeedbackReport();
 const autoErrorReporting = useAutoErrorReportingSetting();
@@ -58,13 +56,6 @@ function handleDiagnosticsNoticeAction(operation) {
   refreshDiagnostics();
 }
 
-function handleReportIssueFromDiagnostics() {
-  feedback.openReport({
-    kind: 'bug',
-    errorRecord: recentDiagnosticRecords.value?.[0],
-  });
-}
-
 onMounted(() => {
   refreshDiagnostics();
   autoErrorReporting.refreshPreference();
@@ -93,20 +84,6 @@ onMounted(() => {
       </template>
     </SettingsDocumentItem>
 
-    <SettingsDocumentItem
-      :icon="ExternalLink"
-      title="社群 Discord"
-      guidance="公告、交流與開發者聯絡。"
-    >
-      <template #actions>
-        <UiIconButton
-          :icon="ExternalLink"
-          label="開啟社群 Discord"
-          @click="openCommunityDiscord"
-        />
-      </template>
-    </SettingsDocumentItem>
-
     <FeedbackReportSettingsRow @open="feedback.openReport()" />
     <AutoErrorReportingSettingsRow
       :reporting="autoErrorReporting.reporting.value"
@@ -127,7 +104,20 @@ onMounted(() => {
       @clear="handleClearDiagnostics"
       @export="exportDiagnostics"
       @notice-action="handleDiagnosticsNoticeAction"
-      @report-issue="handleReportIssueFromDiagnostics"
     />
+
+    <SettingsDocumentItem
+      :icon="ExternalLink"
+      title="社群 Discord"
+      guidance="公告、交流與開發者聯絡。"
+    >
+      <template #actions>
+        <UiIconButton
+          :icon="ExternalLink"
+          label="開啟社群 Discord"
+          @click="openCommunityDiscord"
+        />
+      </template>
+    </SettingsDocumentItem>
   </SettingsSection>
 </template>
