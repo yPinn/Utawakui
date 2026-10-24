@@ -20,6 +20,10 @@ persistent identity，也不允許自動套用。
 
 ## Ownership
 
+[ADR 0028](../adr/0028-local-works-versions-and-releases.md) 的本機作品與發行資料層
+另外持有穩定作品 ID 與人工關聯。它不把本契約的 comparison keys、artwork 候選或
+版本詞直接提升為 persistent identity；共享純函式的權限不因新 store 而擴張。
+
 | Owner                           | 擁有                                                                       | 不擁有                                                   |
 | ------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------- |
 | `electron/lib/musicIdentity/`   | Provider-neutral observation、lexical keys、version signals、evidence axes | Request、cache、feature score、自動套用、filesystem      |

@@ -43,6 +43,7 @@
 - 導覽歷史由 `useNavigationHistory.js` 擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：只記目的地、Library 選取與 Settings 返回來源，不記播放、佇列、搜尋或排序。滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command` 經 `inputBindingRegistry.js`／`useNavigationInput.js` 共用同一出口。
 - `openSettings()` 首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings 目的地；Titlebar、F9、Tray 與依賴設定請求共用此 action。
 - Token：Main 與 Performer 的 `#app` 在 mount 前登記為 v2 surface，兩個 entry 只載入 `src/styles/tokens.css`。Token v1 已全部移除，source gate 禁止回流（[Token v2 替換](archive/token-v2-replacement.md)）。`overlay/` 只用 `--ovl-*`，兩者互不匯入。
+- Modal 內的動作選單由 `UiModal` 提供當前 backdrop 作為局部 floating host；`UiActionMenu` 優先 Teleport 至該 host，保持在 clipped panel 外且屬於同一 dialog 堆疊。非 modal 選單仍使用已登記的 surface overlay host，不以頁面自訂 z-index 修補遮蔽。
 - Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 以 `constants/internalTools.js` 分為 Operations（F5 音樂分析、F6 Diagnostics）與 Evaluation（Music M2、F7 歌詞 provider 語料），一次只掛載一個工作台，不改變 gate 或 IPC 邊界。
 
 ### 曲庫瀏覽
@@ -134,6 +135,10 @@
 - 開啟說明頁只提交 allowlisted target id；YT Music 探索只提交 bounded query，由 `providerDiscoveryHandlers.js` 組固定 URL 並重查 `provider-flow`。
 
 ### 曲庫與匯入
+
+- 作品與版本（[ADR 0028](adr/0028-local-works-versions-and-releases.md)）：`electron/lib/works/` 持有曲庫根目錄 `works.json`、revision、profile、Main 私有原始媒體 binding 與刪除 receipt。runtime 驗證 canonical audio、CAS／epoch 與當頁候選；正式 local／convert／provider import 的短提交及刪曲共用 service lane。`main/library/workOrganizationHost.js` 協調啟動恢復及 playlist／session／BGM 引用；固定 workOrganizationHandlers／preload intents 只投影產品資料。 逐曲連結只傳 targetTrackId，由 Main 解析目標作品並在提交前重驗兩份音源；搜尋候選不代表已確認關係。`useWorkOrganization` 持有版本／連結草稿及請求世代；`useSongEditor` 協調它與既有 `useTrackMetadataEditor`，統一開啟、分頁、儲存與關閉確認。編輯器不提供共同歌名／作品改名；逐曲連結與解除只修改關係，曲目歌名、演唱者及版本資訊獨立。既有作品識別／內部名稱及 Main 相容 API 保留，不遷移資料。App 單掛 WorkVersionEditor；TrackMetadataFields 只提供歌曲資訊及封面內容，Library／Queue／播放資訊／preview 不再各掛 metadata modal。兩領域仍各自提交，部分失敗保留未完成草稿並提示已儲存部分。作品異動使用專用事件，不啟動 provider backfill；播放與歌詞權威不變。
+- `playlists.js` 讀取 v1–v3，首次寫回舊版本先備份；v2 不重跑 kind heuristic，損壞或未來版本拒寫。`releases/schema.js` 驗證 optional `releaseInfo`，逐欄解析人工覆寫／source-bound facts，協調 revision、主打與成員 bindings；保留既有 collection UUID／kind／source／曲序。現有 playlist IPC 投影移除私有 localMemberBindings。詳見[作品與發行契約](contracts/works-versions-and-releases.md)。
+- 發行操作：`releases/runtime.js` 與作品共用 lane，`main/library/releaseHandlers.js`／preload 限定五個讀寫與驗證 intents；CAS／epoch、來源權威及 Main 私有 bindings 不跨界。列表只投影 resolvedRelease，不啟動整庫摘要；`useReleaseMembers` 在選取集合／藝人時有界驗證，播放／加入佇列另取新驗證，Main 待唱集合匯入在同 lane 驗證後同步提交。`useReleaseOrganization` 擁有 editor 草稿、專用事件及建立單首發行；App 掛載 ReleaseInfoEditor。藝人「音樂作品」沿用 LibraryAlbumSupportingContent／LibraryAlbumCard，以同一 Main 投影篩選 Album／Single／EP，未知不猜；Single 詳情在原 album＋UUID 頁面內以 releaseDetailPresentation 投影正式總數、durable 成員與驗證狀態；單首、多曲及部分收錄直接共用專輯的136px封面、TrackTable、欄位與密度設定；正常摘要不重複計數，詳情不顯示主打tag。作品分類使用內容寬度的UiTabs bar variant及中文分類，穩定tab／panel ID保留鍵盤導覽，播放／編輯沿用P3 owner。
 
 - `library:list` 是曲庫投影入口。每個曲庫目錄在單次 session 首次讀取前執行一次 `organizeTrackMetadataFromSidecars()`：以已保存的 `info.json` 整理 metadata，不連網、不改寫 sidecar、保留手動編輯；失敗只記 diagnostic。
 - 本機匯入 `library/importLocal.js` 在 library root 的隱藏 staging 非同步複製與計算 SHA-256，以 `music-metadata` 驗證容器、codec、時長與有界 tag／封面，通過後原子移入 `tracks/<trackId>/`，索引失敗即回滾。`library/constants.js` 的 direct-play registry 是 picker、allowlist、MIME 與驗證的單一來源。

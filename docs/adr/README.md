@@ -33,3 +33,4 @@
 | [0025](0025-renderer-navigation-history.md)                        | Renderer導覽歷史                    | Accepted                          |
 | [0026](0026-t1-acoustic-estimates.md)                              | T1獨立聲學估計                      | Accepted：獨立估計第一階段        |
 | [0027](0027-output-template-elements-and-property-workspace.md)    | Output元素、屬性與工作區            | Accepted：P1–P3 已實作            |
+| [0028](0028-local-works-versions-and-releases.md)                  | 本機作品、版本與發行分類            | Accepted：P3 發行操作與藝人作品區 |

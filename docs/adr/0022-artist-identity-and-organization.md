@@ -327,6 +327,10 @@ state and opaque ids.
   only after separate verification.
 - Group membership, member↔group relations and original-artist links for covers.
 
+[ADR 0028](0028-local-works-versions-and-releases.md) adds a separate local work
+relationship and version data foundation. It does not change performing-artist
+ownership or introduce original-artist entity links.
+
 ## Consequences
 
 Artist pages work offline from local data, and MusicBrainz improves them
