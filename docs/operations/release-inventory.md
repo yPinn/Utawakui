@@ -18,7 +18,7 @@ Windows packaging is configured in `electron-builder.yml`.
 - Default per-user install directory: `%LOCALAPPDATA%\Programs\Utawakui`.
 - User-facing product name: `Utawakui`.
 - App id / AUMID: `com.utawakui.app`.
-- Electron runtime: 43.7.8, pinned in both the npm lock and
+- Electron runtime: 43.8.3, pinned in both the npm lock and
   `electron-builder.yml` so packaging cannot silently reuse an older local
   distribution.
 

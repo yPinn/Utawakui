@@ -5,13 +5,13 @@
     {
       "path": "node_modules/@babel/helper-string-parser",
       "name": "@babel/helper-string-parser",
-      "version": "7.29.7",
-      "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw==",
+      "version": "7.29.11",
+      "integrity": "sha512-snZbO7MEDOof+hvNa97EjEY7qD7h2kwvQr5AJC3ZhQudKW5dnej6k3kP9NQV88hJwaS8vDqRLFo9rivLEhle2g==",
       "files": [
         {
           "path": "node_modules/@babel/helper-string-parser/LICENSE",
           "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
-          "source": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz"
+          "source": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.11.tgz"
         }
       ]
     },
@@ -31,26 +31,26 @@
     {
       "path": "node_modules/@babel/parser",
       "name": "@babel/parser",
-      "version": "7.29.9",
-      "integrity": "sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA==",
+      "version": "7.29.11",
+      "integrity": "sha512-OZ6+oaK7GMyg3IfCpj8JOmn8n+w2rJbDT0LLfVDTLb1ZFeKDh3AiNELgCMUw175IJHSkLl74hG0M0VLsvx+gag==",
       "files": [
         {
           "path": "node_modules/@babel/parser/LICENSE",
           "sha256": "2e97627cb278aa7556fb9e8817368302301a595b6c7582512b8d74c57b773652",
-          "source": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.9.tgz"
+          "source": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.11.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@babel/types",
       "name": "@babel/types",
-      "version": "7.29.8",
-      "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==",
+      "version": "7.29.11",
+      "integrity": "sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ==",
       "files": [
         {
           "path": "node_modules/@babel/types/LICENSE",
           "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
-          "source": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz"
+          "source": "https://registry.npmjs.org/@babel/types/-/types-7.29.11.tgz"
         }
       ]
     },
@@ -83,13 +83,13 @@
     {
       "path": "node_modules/@lucide/vue",
       "name": "@lucide/vue",
-      "version": "1.52.0",
-      "integrity": "sha512-Gwr6c14jhY6BscoFU+B9OKsr7lg8RTAKOLgW0e61kkFwkt9Q7CZmB9AyJcvhoqapEJgRg2bFoeAcO+cqpgKzEQ==",
+      "version": "1.61.0",
+      "integrity": "sha512-XYclbwUQ6Mvf0UskBG9gJH91BdF3VK4Tt6Pv8PSntwPwNnf357PCQnma4TrzOEdwD49UYCtsTafpfytRIxm1cQ==",
       "files": [
         {
           "path": "node_modules/@lucide/vue/LICENSE",
           "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
-          "source": "https://registry.npmjs.org/@lucide/vue/-/vue-1.52.0.tgz"
+          "source": "https://registry.npmjs.org/@lucide/vue/-/vue-1.61.0.tgz"
         }
       ]
     },
@@ -148,13 +148,13 @@
     {
       "path": "node_modules/@tokenizer/inflate",
       "name": "@tokenizer/inflate",
-      "version": "0.4.1",
-      "integrity": "sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==",
+      "version": "0.5.1",
+      "integrity": "sha512-56U2O6fDLFtqokwWh597IdeUgtM7j+TT9tb1soybhgA6cy163gAcVmoQr8H4Ud/CkgCkViwcuLyqtn6wYqw59Q==",
       "files": [
         {
           "path": "node_modules/@tokenizer/inflate/LICENSE",
           "sha256": "5bb0e8b566dee0e946cafd9bbed359eb0494580df86457876b4f41bba5c77b25",
-          "source": "https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.4.1.tgz"
+          "source": "https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.5.1.tgz"
         }
       ]
     },
@@ -174,13 +174,13 @@
     {
       "path": "node_modules/@vue/compiler-core",
       "name": "@vue/compiler-core",
-      "version": "3.5.43",
-      "integrity": "sha512-zdiLhnbe1QQqgDT8xZMpNmyqZ3qlI+/Q/FHQco57Kwl/b05HhCzN6eVGN9QU9rbga4CrS0H5SYY8VGHZCt/1Hg==",
+      "version": "3.5.44",
+      "integrity": "sha512-k34nCytbK8PQ1gR2mGROYOw6Pnv/mumqIdrZ3x2tbyXZDWm7ViKGLTfdB+DRrWqEQsLgGJvn0WN9jBif5zCTLQ==",
       "files": [
         {
           "path": "node_modules/@vue/compiler-core/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.44.tgz"
         }
       ]
     },
@@ -213,26 +213,26 @@
     {
       "path": "node_modules/@vue/compiler-dom",
       "name": "@vue/compiler-dom",
-      "version": "3.5.43",
-      "integrity": "sha512-PEZoAk3NQmsn/ejMzSOCyTYqwGqczrWm70PuhBKjjv1+TCoQAaO/zOqNwjV+honlNstT5ILxtc+8r8UUfj+iEQ==",
+      "version": "3.5.44",
+      "integrity": "sha512-W5AoBFWdw1lQAKiHowkfgFKFab82oSRT6sGsPfw/q1GRjsy/ZJFLHGhJyBRIFN9APLTUduDH9U2JAiPOIyKuYg==",
       "files": [
         {
           "path": "node_modules/@vue/compiler-dom/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.44.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@vue/compiler-sfc",
       "name": "@vue/compiler-sfc",
-      "version": "3.5.43",
-      "integrity": "sha512-FCbrG3XNCRl+js3huuKx4IVHBLTvMkJhVepjbxSPu1gn4yWLaYtGNQdjJGZaMytXB6qb76qQDDmDSLy/vkmleQ==",
+      "version": "3.5.44",
+      "integrity": "sha512-dzHmQ4jXTpdr5FjIQUeykVakN/uzqFbUo9/C5ikBFg3a3PeM6uRxeczx1ZbXBML0/zJstEh3ygYipzR5Z7b2Pw==",
       "files": [
         {
           "path": "node_modules/@vue/compiler-sfc/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.44.tgz"
         }
       ]
     },
@@ -252,78 +252,78 @@
     {
       "path": "node_modules/@vue/compiler-ssr",
       "name": "@vue/compiler-ssr",
-      "version": "3.5.43",
-      "integrity": "sha512-GF62orf7KiJX9RqrHNGrYBudsQGD0OhJ5nDs90O8UiDuS40+YMYomiXu6w6EuvtXuRDc3MSNis3EaaSKAVSWpg==",
+      "version": "3.5.44",
+      "integrity": "sha512-xr5gb1JVHlfXJwSlRz1FeP6uxoazdzHuMTVLE7up+4Vrqxk219CvxLPxD9NXBt47yvZW7+p4DXfyp4O1fkByIA==",
       "files": [
         {
           "path": "node_modules/@vue/compiler-ssr/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.44.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@vue/reactivity",
       "name": "@vue/reactivity",
-      "version": "3.5.43",
-      "integrity": "sha512-G/c9GyOZNI2jVaaS6OX1EF1SSFSv7H0ERqNTl4+DTFMlZmB5eVAB53aLQNam/7NL2NPtaDD7RdVrzf8uJzMuOA==",
+      "version": "3.5.44",
+      "integrity": "sha512-u+QJdKeBBEADkPdevsL+6E12QlYVfBD8Zcw5qjDQKtamI6l14KyqazJMobhCKelhWN5zpyKUiEDoTyHE93cqWw==",
       "files": [
         {
           "path": "node_modules/@vue/reactivity/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.44.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@vue/runtime-core",
       "name": "@vue/runtime-core",
-      "version": "3.5.43",
-      "integrity": "sha512-hU6U6VnVhBGQDpvlnnDlIB8ZGJBiOcgk2lh/0InltHiz3D8oSkluvuvY+do1G2H3+udeKFsmaBlgVYP7gXQzEw==",
+      "version": "3.5.44",
+      "integrity": "sha512-uEa/ndwjhrrhnOfb2p+sZy6zeoamJOISqaLSJGk/8R6nABT1ZldpzcJoPzKj+zHVomVBPcmQYyC2r4LtvDV6CQ==",
       "files": [
         {
           "path": "node_modules/@vue/runtime-core/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.44.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@vue/runtime-dom",
       "name": "@vue/runtime-dom",
-      "version": "3.5.43",
-      "integrity": "sha512-Bb2Jc0YjjJdMt1SJmb9b2L/IWd3I8lIT9x9eS/xvvP9CiVgna0ffua74xKRmt4/uSJ+0r4iN8ex1jrqkhQGWQw==",
+      "version": "3.5.44",
+      "integrity": "sha512-3fc4ARcXVhVBaJ3ujWiNZJARD6pkyRcwG+ZYhMzjKtKUp7MAY0HLwr7r3Smep3Li6ZaWT6ewdmx8XqdaD5oNZg==",
       "files": [
         {
           "path": "node_modules/@vue/runtime-dom/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.44.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@vue/server-renderer",
       "name": "@vue/server-renderer",
-      "version": "3.5.43",
-      "integrity": "sha512-l2Ygjv9NehV94PSBxNWsAHC0j/eIIKbn92mBuWXAPGLnn6HfJ6MH5ubsd+Nk0YoZ5FRuxWI1P2VSoh+dbPQhCQ==",
+      "version": "3.5.44",
+      "integrity": "sha512-R4S1UoH4h5Frrauv8Z5XE5TxV9oBiUSgWIC4TyVK1FK+RocRnOLwFA5Xcmo2011RlgJp+AbZCnw6afrhlgRuUQ==",
       "files": [
         {
           "path": "node_modules/@vue/server-renderer/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.44.tgz"
         }
       ]
     },
     {
       "path": "node_modules/@vue/shared",
       "name": "@vue/shared",
-      "version": "3.5.43",
-      "integrity": "sha512-uksS7YGMR5NZyr4JNq0Rp+QyLns0ueaz20KwzIPW9R0LH1Vnt4E+XUM29PNseEbf1www2gOuhuDi5AKOIXag9Q==",
+      "version": "3.5.44",
+      "integrity": "sha512-H82XLH0DjmSOdbEwO15x3QTo1f5PWEtv237eLpYKc0mqLu+B8hnq16lFWmuBmNurkeiG3wr+oM1FhOll/YVFRg==",
       "files": [
         {
           "path": "node_modules/@vue/shared/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/@vue/shared/-/shared-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/@vue/shared/-/shared-3.5.44.tgz"
         }
       ]
     },
@@ -551,13 +551,13 @@
     {
       "path": "node_modules/file-type",
       "name": "file-type",
-      "version": "22.1.1",
-      "integrity": "sha512-sEB0oStmeLGtpmSAD88RDNuLsvhv4iC3u0lE25CUvfCULvj49xoQ3l3K525Vn+ZzsZ6DOLajQCV6RmhwwhqiJg==",
+      "version": "22.2.0",
+      "integrity": "sha512-XmEVJsRpQMVYC+sWFW+FKAVo2P7/lPctDdWH4UQ1r6oxhdrTobnowdM3z+ZJ93a4J8D3yDpxX0bEvRuFev0vUQ==",
       "files": [
         {
           "path": "node_modules/file-type/license",
           "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
-          "source": "https://registry.npmjs.org/file-type/-/file-type-22.1.1.tgz"
+          "source": "https://registry.npmjs.org/file-type/-/file-type-22.2.0.tgz"
         }
       ]
     },
@@ -577,13 +577,13 @@
     {
       "path": "node_modules/global-agent",
       "name": "global-agent",
-      "version": "4.1.3",
-      "integrity": "sha512-KUJEViiuFT3I97t+GYMikLPJS2Lfo/S2F+DQuBWzuzaMPnvt5yyZePzArx36fBzpGTxZjIpDbXLeySLgh+k76g==",
+      "version": "4.1.6",
+      "integrity": "sha512-V9u791atI/bS7RryfRTK2oixDWo6/RCrIikjwuQ4kADPRZZml1C6LUJXc7y6qRhaAF8geo3bIvE/siAGJCw38A==",
       "files": [
         {
           "path": "node_modules/global-agent/LICENSE",
           "sha256": "2aabdab5d0ce03a7314def8222988c2da4ba593ae82ae312439e5e306001dbae",
-          "source": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.3.tgz"
+          "source": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.6.tgz"
         }
       ]
     },
@@ -1000,13 +1000,13 @@
     {
       "path": "node_modules/postcss",
       "name": "postcss",
-      "version": "8.5.29",
-      "integrity": "sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==",
+      "version": "8.5.31",
+      "integrity": "sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg==",
       "files": [
         {
           "path": "node_modules/postcss/LICENSE",
           "sha256": "5be1f3465bba68a626777f984878814aaf35e7ef8e9fd314d469bcf887050fb8",
-          "source": "https://registry.npmjs.org/postcss/-/postcss-8.5.29.tgz"
+          "source": "https://registry.npmjs.org/postcss/-/postcss-8.5.31.tgz"
         }
       ]
     },
@@ -1091,13 +1091,13 @@
     {
       "path": "node_modules/strtok3",
       "name": "strtok3",
-      "version": "10.4.1",
-      "integrity": "sha512-MeSp4vHXiZRXM9K0rSWqTvXMU+YzmGICc5+briMVK+RY8qQ1GRTffFYVpK6cSgV/ueImFIEh3uCJJD3xBh1TaQ==",
+      "version": "10.6.2",
+      "integrity": "sha512-BkdixFFUt7r7LsX6aGNPVyYMLjW+M1USLlKPNbZsrZEmLFh5tGqhdfckKo6xgsZIJqdDD0CZGkeCJJwNWQIKQA==",
       "files": [
         {
           "path": "node_modules/strtok3/LICENSE.txt",
           "sha256": "c33959fabde25a1b6161d8e0fdc6fdcea1fc48095fe0bd51043247bfd214287f",
-          "source": "https://registry.npmjs.org/strtok3/-/strtok3-10.4.1.tgz"
+          "source": "https://registry.npmjs.org/strtok3/-/strtok3-10.6.2.tgz"
         }
       ]
     },
@@ -1169,13 +1169,13 @@
     {
       "path": "node_modules/vue",
       "name": "vue",
-      "version": "3.5.43",
-      "integrity": "sha512-o5qZoksdnjIKvW1srZ3ab7pcDNYAerBjRe54D0LBLfRdCYFrSgBHVXokMas35czQc0//lmx4/tuY4ZNQ+Rf2Ng==",
+      "version": "3.5.44",
+      "integrity": "sha512-dvvmaOCG7lAMkJTPqPwWeGMsPS6DIsFsfZDUgBp9V6mHf9b3+/wyVwYR4Es+WV6uJC0FKRxp81Obcq0ZwUcGFQ==",
       "files": [
         {
           "path": "node_modules/vue/LICENSE",
           "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
-          "source": "https://registry.npmjs.org/vue/-/vue-3.5.43.tgz"
+          "source": "https://registry.npmjs.org/vue/-/vue-3.5.44.tgz"
         }
       ]
     },
@@ -1324,7 +1324,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "df35508bea3ad798d711f84a8b75257f1b15fe2a97b05da52f6b0152bb09306d"
+      "sha256": "19a3266d74fb4b45a663bae8b756cf5210eec1a75927a576e95de0e194062c54"
     },
     {
       "sourcePath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf",
@@ -1429,5 +1429,5 @@
       "sha256": "c971fa90cb787337e9df73773f3b43cd5621f035e53cded439bd927b3b759e0c"
     }
   ],
-  "noticeSha256": "2f13b901b80334afd1f9233d8a9c910af793a10dfdc3813804f219a3f760e299"
+  "noticeSha256": "8cbfd992c4a4e2733bd53e0b009dded77ef76122f691e21cb216a836e0cfe994"
 }

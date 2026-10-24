@@ -11,7 +11,7 @@ appId: com.utawakui.app
 productName: Utawakui
 # Keep packaging deterministic even if a developer checkout has an older
 # Electron distribution locked by a running dev session.
-electronVersion: 43.7.8
+electronVersion: 43.8.3
 afterPack: scripts/afterPackThirdPartyNotices.cjs
 # Must equal productName in shared/appIdentity.json / app.setName() — this is the
 # folder name under app.getPath('userData'). A mismatch here silently moves
