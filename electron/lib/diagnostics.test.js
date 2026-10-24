@@ -318,6 +318,29 @@ describe('createDiagnosticsService', () => {
     ]);
   });
 
+  it('notifies subscribers with stored redacted events and isolates failures', () => {
+    const service = createDiagnosticsService({ logsDir: makeTempDir() });
+    const seen = [];
+    service.subscribe(() => {
+      throw new Error('listener bug');
+    });
+    const unsubscribe = service.subscribe((event) => seen.push(event));
+
+    const result = service.record({
+      source: 'process',
+      operation: 'uncaught-exception',
+      code: 'UNCAUGHT_EXCEPTION',
+      message: 'boom C:\\Users\\Alice Smith\\x.js',
+    });
+    unsubscribe();
+    service.record({ source: 'process', operation: 'later', code: 'LATER' });
+
+    expect(result.ok).toBe(true);
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toBe(result.event);
+    expect(seen[0].message).toBe('boom [path]');
+  });
+
   it('rotates before append and keeps only the configured generations', () => {
     const logsDir = makeTempDir();
     let nextId = 0;

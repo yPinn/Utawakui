@@ -35,7 +35,8 @@ backend of its own; this is the app's first user-initiated network upload.
   what they asked for.
 - Every submission requires an explicit, user-reviewed preview
   (`feedback:build-preview`) before `feedback:submit` can send it. There is no
-  automatic or background upload of any kind.
+  automatic or background upload of any kind, except the consented severe
+  error report of [ADR 0029](0029-consented-automatic-error-reports.md).
 - Main holds each previewed payload by its `reportId` for 10 minutes; submit
   and export send exactly that payload, so diagnostics recorded after the
   preview never join it. The preview can expand the attached events (time,

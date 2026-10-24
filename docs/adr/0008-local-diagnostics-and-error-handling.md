@@ -277,6 +277,9 @@ an explicit diagnostics consent and privacy contract.
   high-volume, and unnecessary for error recovery.
 - **Upload automatically:** the product has no telemetry consent, privacy, or
   retention contract, and local media workflows can contain sensitive data.
+  [ADR 0029](0029-consented-automatic-error-reports.md) later adds that
+  contract for one bounded, consented severe-error report; general log upload
+  remains rejected.
 - **Install an `uncaughtException` handler and continue:** an uncaught fatal
   error leaves process state undefined; diagnostics must not masquerade as
   recovery.

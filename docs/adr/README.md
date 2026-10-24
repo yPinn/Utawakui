@@ -34,3 +34,4 @@
 | [0026](0026-t1-acoustic-estimates.md)                              | T1獨立聲學估計                      | Accepted                          |
 | [0027](0027-output-template-elements-and-property-workspace.md)    | Output元素、屬性與工作區            | Accepted                          |
 | [0028](0028-local-works-versions-and-releases.md)                  | 本機作品、版本與發行分類            | Accepted                          |
+| [0029](0029-consented-automatic-error-reports.md)                  | 嚴重錯誤的同意制自動回報            | Accepted                          |

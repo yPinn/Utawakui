@@ -336,6 +336,7 @@ function createDiagnosticsService(options = {}) {
   );
   const logsDir = pathApi.resolve(options.logsDir);
   const activePath = pathApi.join(logsDir, fileName);
+  const listeners = new Set();
   const parsed = pathApi.parse(fileName);
 
   function rotationPath(index) {
@@ -385,10 +386,23 @@ function createDiagnosticsService(options = {}) {
       fsApi.mkdirSync(logsDir, { recursive: true });
       rotateIfNeeded(Buffer.byteLength(line));
       fsApi.appendFileSync(activePath, line, 'utf8');
-      return { ok: true, event };
     } catch (error) {
       return { ok: false, event, errorCode: errorCode(error) };
     }
+    for (const listener of listeners) {
+      try {
+        listener(event);
+      } catch {
+        // A listener failure must never fail the record it observed.
+      }
+    }
+    return { ok: true, event };
+  }
+
+  // Observers see only stored, already-redacted events.
+  function subscribe(listener) {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
   }
 
   function listRecent(limit = 100) {
@@ -438,6 +452,7 @@ function createDiagnosticsService(options = {}) {
     getActivePath: () => activePath,
     listRecent,
     record,
+    subscribe,
   };
 }
 
