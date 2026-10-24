@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import viteConfig from '../vite.config.js';
+import rendererEntries from '../shared/rendererEntries.json' with { type: 'json' };
 
 const appSource = readFileSync(
   new URL('../src/App.vue', import.meta.url),
@@ -76,11 +77,18 @@ describe('development startup contract', () => {
   it('does not watch generated artifacts during development', () => {
     expect(viteConfig.server?.watch?.ignored).toEqual(
       expect.arrayContaining([
+        '**/tasks/**',
         '**/.tmp/**',
         '**/coverage/**',
         '**/release/**',
         '**/release-*/**',
       ]),
+    );
+  });
+
+  it('limits dependency scanning to the renderer entries', () => {
+    expect(viteConfig.optimizeDeps?.entries).toEqual(
+      Object.values(rendererEntries),
     );
   });
 

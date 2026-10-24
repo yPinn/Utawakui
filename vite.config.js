@@ -42,11 +42,15 @@ module.exports = defineConfig({
   clearScreen: false,
   // Required for Electron loadFile(); file:// cannot resolve root paths.
   base: './',
+  // Without explicit entries the dep scanner crawls every *.html in the repo,
+  // including thousands under tasks/ and .tmp/.
+  optimizeDeps: { entries: Object.values(rendererEntries) },
   server: {
     port: devServerValues.port,
     strictPort: true,
     watch: {
       ignored: [
+        '**/tasks/**',
         '**/.tmp/**',
         '**/coverage/**',
         '**/release/**',

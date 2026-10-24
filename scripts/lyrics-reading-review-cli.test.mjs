@@ -50,10 +50,19 @@ function sourceCorpus(caseCount = 105) {
   );
 }
 
+const fixtureRoots = [];
+
+afterEach(() => {
+  for (const root of fixtureRoots.splice(0)) {
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 3 });
+  }
+});
+
 function privateFixture(caseCount = 105) {
   const privateRoot = fs.mkdtempSync(
     path.join(os.tmpdir(), 'utawakui-reading-review-'),
   );
+  fixtureRoots.push(privateRoot);
   const paths = localReadingReviewPaths(privateRoot);
   const source = sourceCorpus(caseCount);
   fs.writeFileSync(paths.corpus, `${JSON.stringify(source, null, 2)}\n`, {
