@@ -1,7 +1,7 @@
 import { computed, reactive, readonly, ref, watch } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
-import { projectReleaseTrackIds } from './useReleaseMembershipProjection.js';
+import { collectionDisplayTrackIds } from '../utils/albumMembership.js';
 
 // Module-scope singleton — LibraryBrowseContent.vue and useLyrics.js (for
 // LyricsAuthoringWorkspace.vue) both need the raw track pool with metadata
@@ -29,7 +29,7 @@ const albumCoverByTrackId = computed(() => {
   const map = new Map();
   for (const playlist of playlistState.playlists) {
     if (playlist.kind !== 'album' || !playlist.coverUrl) continue;
-    const memberIds = projectReleaseTrackIds(playlist);
+    const memberIds = collectionDisplayTrackIds(playlist);
     for (const trackId of memberIds) {
       if (!map.has(trackId)) map.set(trackId, playlist.coverUrl);
     }

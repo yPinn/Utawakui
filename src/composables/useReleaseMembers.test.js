@@ -53,6 +53,34 @@ afterEach(() => {
 });
 
 describe('release membership verification', () => {
+  it('keeps scoped eligibility verification independent from newer playback admission', async () => {
+    const { createReleaseMemberResolver } =
+      await import('./useReleaseMembers.js');
+    const eligibility = createReleaseMemberResolver({
+      getBridge: () => bridge,
+      getCollection: () => collection,
+      getTracksById: () => tracks,
+    });
+    const first = deferred();
+    bridge.resolveReleaseMembers.mockReturnValueOnce(first.promise);
+    try {
+      const pending = eligibility.resolve(collection, { fresh: true });
+      expect(await resolver.resolve(collection, { fresh: true })).toEqual([
+        tracks.get('a'),
+      ]);
+      first.resolve({
+        status: 'ok',
+        libraryEpoch: 1,
+        revision: 3,
+        collectionId: 'release-a',
+        playableTrackIds: ['a'],
+        hasMore: false,
+      });
+      expect(await pending).toEqual([tracks.get('a')]);
+    } finally {
+      eligibility.dispose();
+    }
+  });
   it('distinguishes pending, failed and verified-empty states for each collection', async () => {
     expect(resolver.verificationState(collection)).toEqual({
       state: 'idle',
@@ -119,11 +147,11 @@ describe('release membership verification', () => {
     const verifying = shared.resolve(collection);
     expect(shared.isPending(collection)).toBe(true);
     await verifying;
-    expect(shared.displayTrackIds(collection)).toEqual(['a']);
+    expect(shared.admittedTrackIds(collection)).toEqual(['a']);
     shared.dispose();
   });
   it('handles absent collections, cached reads, invalid proof metadata and invalid page offsets', async () => {
-    expect(resolver.displayTrackIds(null)).toEqual([]);
+    expect(resolver.admittedTrackIds(null)).toEqual([]);
     expect(await resolver.resolve(null)).toEqual([]);
     await resolver.resolve(collection);
     expect(await resolver.resolve(collection)).toEqual([tracks.get('a')]);
@@ -152,7 +180,7 @@ describe('release membership verification', () => {
       ],
       1,
     );
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
   });
   it('does not restore revoked admission from an older in-flight member page', async () => {
     const page = deferred();
@@ -168,7 +196,7 @@ describe('release membership verification', () => {
       hasMore: false,
     });
     expect(await pending).toEqual([]);
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
   });
   it('lets fresh negative full verification supersede older partial admission', async () => {
     resolver.admitTrackReleases('a', [{ id: 'release-a', revision: 3 }], 1);
@@ -181,15 +209,15 @@ describe('release membership verification', () => {
       hasMore: false,
     });
     await resolver.resolve(collection, { fresh: true });
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
   });
   it('revokes previous full and partial membership when a fresh per-track query no longer contains it', async () => {
     await resolver.resolve(collection);
     resolver.admitTrackReleases('b', [{ id: 'release-a', revision: 3 }], 1);
     resolver.admitTrackReleases('a', [], 1);
-    expect(resolver.displayTrackIds(collection)).toEqual(['b']);
+    expect(resolver.admittedTrackIds(collection)).toEqual(['b']);
     resolver.admitTrackReleases('b', [], 1);
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
   });
   it('does not reuse a lazy request as fresh action proof or let its late result overwrite the action', async () => {
     const result = deferred();
@@ -215,13 +243,13 @@ describe('release membership verification', () => {
       hasMore: false,
     });
     await lazy;
-    expect(resolver.displayTrackIds(collection)).toEqual(['b']);
+    expect(resolver.admittedTrackIds(collection)).toEqual(['b']);
     expect(bridge.resolveReleaseMembers).toHaveBeenCalledTimes(2);
   });
   it('fails closed for unverified local members and admits only main-verified canonical tracks', async () => {
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
     expect(await resolver.resolve(collection)).toEqual([tracks.get('a')]);
-    expect(resolver.displayTrackIds(collection)).toEqual(['a']);
+    expect(resolver.admittedTrackIds(collection)).toEqual(['a']);
     expect(bridge.resolveReleaseMembers).toHaveBeenCalledWith({
       collectionId: 'release-a',
       expectedRevision: 3,
@@ -245,9 +273,9 @@ describe('release membership verification', () => {
       requiresMembershipVerification: false,
       availableTrackIds: ['b'],
     };
-    expect(resolver.displayTrackIds(ordinary)).toEqual(['b']);
+    expect(resolver.admittedTrackIds(ordinary)).toEqual(['b']);
     expect(
-      resolver.displayTrackIds({ id: 'p', kind: 'playlist', trackIds: ['a'] }),
+      resolver.admittedTrackIds({ id: 'p', kind: 'playlist', trackIds: ['a'] }),
     ).toEqual(['a']);
     expect(bridge.resolveReleaseMembers).not.toHaveBeenCalled();
   });
@@ -287,7 +315,7 @@ describe('release membership verification', () => {
         hasMore: false,
       });
       expect(await pending).toEqual([]);
-      expect(resolver.displayTrackIds(collection)).toEqual([]);
+      expect(resolver.admittedTrackIds(collection)).toEqual([]);
     },
   );
   it('clears cached admission on organization events and library changes', async () => {
@@ -299,10 +327,10 @@ describe('release membership verification', () => {
     resolver.initialize();
     await resolver.resolve(collection);
     changed({ libraryEpoch: 1, collectionIds: ['release-a'] });
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
     await resolver.resolve(collection);
     changed({ libraryEpoch: 2, collectionIds: [] });
-    expect(resolver.displayTrackIds(collection)).toEqual([]);
+    expect(resolver.admittedTrackIds(collection)).toEqual([]);
   });
   it('refuses conflict or I/O failures rather than passing through raw track IDs', async () => {
     bridge.resolveReleaseMembers.mockResolvedValueOnce({ status: 'conflict' });
@@ -313,7 +341,7 @@ describe('release membership verification', () => {
   });
   it('admits a verified track-specific membership without claiming all members are verified', () => {
     resolver.admitTrackReleases('b', [{ id: 'release-a', revision: 3 }], 1);
-    expect(resolver.displayTrackIds(collection)).toEqual(['b']);
+    expect(resolver.admittedTrackIds(collection)).toEqual(['b']);
     expect(bridge.resolveReleaseMembers).not.toHaveBeenCalled();
   });
 });

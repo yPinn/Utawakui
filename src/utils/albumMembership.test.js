@@ -2,9 +2,17 @@ import { describe, it, expect } from 'vitest';
 import {
   albumPlaylistByTrackId,
   albumPlaylistsByTrackId,
+  collectionDisplayTrackIds,
 } from './albumMembership.js';
 
 describe('albumPlaylistByTrackId', () => {
+  it('projects saved display order independently of admission and tolerates an absent collection', () => {
+    expect(collectionDisplayTrackIds(null)).toEqual([]);
+    expect(collectionDisplayTrackIds({})).toEqual([]);
+    const collection = { trackIds: ['b', 'a'], availableTrackIds: ['a'] };
+    expect(collectionDisplayTrackIds(collection)).toEqual(['b', 'a']);
+    expect(collection.trackIds).toEqual(['b', 'a']);
+  });
   it('preserves every release in stable order and prefers the current release context only for the primary destination', () => {
     const releases = [
       { id: 'a', kind: 'album', trackIds: ['t'] },
@@ -16,16 +24,17 @@ describe('albumPlaylistByTrackId', () => {
     ).toBe(releases[1]);
     expect(albumPlaylistByTrackId(releases).get('t')).toBe(releases[0]);
   });
-  it('does not expose unknown or changed local membership as a valid destination', () => {
+  it('keeps saved release destinations visible without claiming media admission', () => {
     const releases = [
       {
         id: 'a',
         kind: 'album',
         trackIds: ['t'],
         requiresMembershipVerification: true,
+        availableTrackIds: [],
       },
     ];
-    expect(albumPlaylistsByTrackId(releases).has('t')).toBe(false);
+    expect(albumPlaylistsByTrackId(releases).get('t')).toEqual(releases);
     expect(
       albumPlaylistsByTrackId(releases, {
         trackIdsForCollection: () => ['t'],

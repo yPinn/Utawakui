@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref, reactive } from 'vue';
 
 const mocks = vi.hoisted(() => ({
@@ -71,6 +71,36 @@ async function loadActions() {
   actions.openEditDetails();
   return actions;
 }
+
+afterEach(() => vi.unstubAllGlobals());
+
+describe('release display and action boundaries', () => {
+  it('shows canonical cover members before admission and retains them when queue admission fails', async () => {
+    const collection = playlists.state.playlists[0];
+    Object.assign(collection, {
+      kind: 'album',
+      trackIds: ['a', 'missing'],
+      requiresMembershipVerification: true,
+      availableTrackIds: [],
+      resolvedRelease: { revision: 2 },
+      releaseLibraryEpoch: 1,
+    });
+    const track = { id: 'a', title: 'Song', thumbnailUrl: 'local-cover' };
+    libraryTracks.value = new Map([['a', track]]);
+    const resolveReleaseMembers = vi
+      .fn()
+      .mockResolvedValue({ status: 'conflict' });
+    vi.stubGlobal('window', { Utawakui: { resolveReleaseMembers } });
+    const actions = await loadActions();
+    expect(actions.resolvePlaylistTracks(collection)).toEqual([track]);
+    expect(actions.editDetailsCoverTracks.value).toEqual([track]);
+    expect(resolveReleaseMembers).not.toHaveBeenCalled();
+    await actions.addPlaylistToQueue(collection.id);
+    expect(resolveReleaseMembers).toHaveBeenCalledOnce();
+    expect(mocks.enqueueTrack).not.toHaveBeenCalled();
+    expect(actions.editDetailsCoverTracks.value).toEqual([track]);
+  });
+});
 
 describe('queue destinations', () => {
   it('keeps ordinary queue actions separate and appends to the current performance through its explicit intent', async () => {

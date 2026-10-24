@@ -1,4 +1,4 @@
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import { deriveAlbumSupportingContent } from '../utils/albumSupportingContent.js';
 import { useArtistIndex } from './useArtistIndex.js';
 import { useLibrary } from './useLibrary.js';
@@ -11,44 +11,6 @@ const { state: libraryState } = useLibrary();
 const { resolvePlaylistTracks } = usePlaylistActions();
 const { state: playlistState, selectedPlaylist } = usePlaylists();
 const releaseMembers = useReleaseMembers();
-
-const verificationCandidates = computed(() => {
-  const selected = selectedPlaylist.value;
-  if (selected?.kind === 'album')
-    return selected.requiresMembershipVerification ? [selected] : [];
-  const artist = artistIndexState.index?.artists?.find(
-    (entry) => entry.id === playlistState.selectedArtistId,
-  );
-  if (!artist) return [];
-  const trackIds = new Set(artist.trackIds);
-  return playlistState.playlists.filter(
-    (collection) =>
-      collection.kind === 'album' &&
-      collection.requiresMembershipVerification &&
-      collection.trackIds.some((id) => trackIds.has(id)),
-  );
-});
-watch(
-  verificationCandidates,
-  (collections) => {
-    let next = 0;
-    async function worker() {
-      while (next < collections.length) {
-        const collection = collections[next++];
-        await releaseMembers.resolve(collection);
-      }
-    }
-    void Promise.all(
-      Array.from({ length: Math.min(3, collections.length) }, worker),
-    );
-  },
-  { immediate: true },
-);
-const membershipLoading = computed(() =>
-  verificationCandidates.value.some((collection) =>
-    releaseMembers.isPending(collection),
-  ),
-);
 
 const albumEntries = computed(() =>
   playlistState.playlists
@@ -78,8 +40,9 @@ export function useLibraryAlbumContext() {
   return {
     albumEntries,
     albumSupportingContent,
-    membershipLoading,
-    membershipError: computed(() => releaseMembers.state.error),
+    membershipError: computed(
+      () => releaseMembers.verificationState(selectedPlaylist.value).error,
+    ),
     selectedReleaseVerification: computed(() =>
       releaseMembers.verificationState(selectedPlaylist.value),
     ),

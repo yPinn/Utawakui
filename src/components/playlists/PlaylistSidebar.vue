@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from '../../icons/index.js';
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
+import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
@@ -24,7 +25,7 @@ import {
   orderReferenceItems,
 } from '../../utils/artistPage.js';
 import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
-import { useReleaseMembers } from '../../composables/useReleaseMembers.js';
+import { collectionDisplayTrackIds } from '../../utils/albumMembership.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import {
@@ -53,7 +54,6 @@ const props = defineProps({
 const { state, select, selectArtist, create, reorderPlaylist, refresh } =
   usePlaylists();
 const collectionPlayback = useCollectionPlayback();
-const releaseMembers = useReleaseMembers();
 const {
   state: artistIndexState,
   ensureLoaded: ensureArtistIndex,
@@ -97,16 +97,14 @@ const {
 // first 4 member tracks tile into the same UiCollageThumb collage the hero
 // shows, so the two can never show a different image.
 function coverTracksFor(playlist) {
-  return releaseMembers
-    .displayTrackIds(playlist)
-    .slice(0, 4)
+  return collectionDisplayTrackIds(playlist)
     .map((id) => props.tracksById.get(id))
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, 4);
 }
 
 function memberTracksFor(playlist) {
-  return releaseMembers
-    .displayTrackIds(playlist)
+  return collectionDisplayTrackIds(playlist)
     .map((id) => props.tracksById.get(id))
     .filter(Boolean);
 }
@@ -155,7 +153,7 @@ const initialLoading = computed(
 function subtitleFor(playlist) {
   if (playlist.kind !== 'album') return '播放清單';
   const artist = orderedPlaylists.value.albumArtistById.get(playlist.id);
-  const label = playlist.resolvedRelease?.type === 'single' ? '單曲' : '專輯';
+  const label = releaseTypeLabel(playlist.resolvedRelease?.type || 'album');
   return artist ? `${label}・${artist}` : label;
 }
 
@@ -246,8 +244,7 @@ const visibleReferenceEntries = computed(() =>
 
 function referenceSubtitle(entry) {
   if (entry.kind === 'artist') return '藝人';
-  const label =
-    entry.item?.resolvedRelease?.type === 'single' ? '單曲' : '專輯';
+  const label = releaseTypeLabel(entry.item?.resolvedRelease?.type || 'album');
   return entry.groupName ? `${label}・${entry.groupName}` : label;
 }
 
@@ -478,14 +475,14 @@ function startDrag(playlist, event) {
         <UiSearchBox
           v-model="searchQuery"
           class="playlist-sidebar__search"
-          label="搜尋歌單、專輯或曲目"
+          label="搜尋播放清單、專輯或曲目"
           placeholder="搜尋"
           icon-cell
         />
         <UiIconButton
           class="playlist-sidebar__toolbar-action"
           :icon="Plus"
-          label="新增歌單"
+          label="新增播放清單"
           variant="command"
           @click="createPlaylist"
         />
@@ -493,7 +490,7 @@ function startDrag(playlist, event) {
       <UiIconButton
         class="playlist-sidebar__toolbar-action playlist-sidebar__toolbar-action--compact"
         :icon="Plus"
-        label="新增歌單"
+        label="新增播放清單"
         variant="command"
         @click="createPlaylist"
       />
@@ -712,7 +709,7 @@ function startDrag(playlist, event) {
           v-if="!initialLoading && hasSearchQuery && !hasVisibleCollectionItems"
           class="playlist-sidebar__empty"
         >
-          沒有符合的集合
+          找不到符合的項目。
         </p>
       </div>
     </UiScrollLayout>

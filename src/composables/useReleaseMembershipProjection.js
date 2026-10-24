@@ -1,7 +1,7 @@
 import { reactive } from 'vue';
 
-// Public admission only; shared with artwork projection without importing the
-// verification owner back into useLibrary's canonical track authority.
+// Public action admission only. Presentation uses saved associations and the
+// canonical library, never this operation cache.
 export function createReleaseMembershipProjection() {
   return reactive({
     cache: new Map(),
@@ -20,7 +20,7 @@ export function releaseMembershipKey(collection) {
     collection?.trackIds ?? [],
   ]);
 }
-export function projectReleaseTrackIds(
+export function projectAdmittedReleaseTrackIds(
   collection,
   state = releaseMembershipProjection,
 ) {

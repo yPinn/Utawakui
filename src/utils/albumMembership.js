@@ -1,3 +1,9 @@
+// Saved association for presentation/navigation only. Callers join these IDs
+// against the canonical library to omit missing files; this is not media proof.
+export function collectionDisplayTrackIds(collection) {
+  return collection?.trackIds ?? [];
+}
+
 // Membership is multi-valued. The primary destination remains stable unless a
 // caller supplies the current release context; navigation never changes audio.
 export function albumPlaylistsByTrackId(
@@ -10,9 +16,7 @@ export function albumPlaylistsByTrackId(
     if (playlist.kind !== 'album') continue;
     const ids = trackIdsForCollection
       ? trackIdsForCollection(playlist)
-      : playlist.requiresMembershipVerification
-        ? []
-        : (playlist.availableTrackIds ?? playlist.trackIds ?? []);
+      : collectionDisplayTrackIds(playlist);
     for (const trackId of ids) {
       map.set(trackId, [...(map.get(trackId) ?? []), playlist]);
     }

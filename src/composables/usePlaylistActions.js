@@ -6,6 +6,7 @@ import { usePlaylists } from './usePlaylists.js';
 import { usePerformanceQueueActions } from './usePerformanceQueueActions.js';
 import { useReleaseMembers } from './useReleaseMembers.js';
 import { useReleaseOrganization } from './useReleaseOrganization.js';
+import { collectionDisplayTrackIds } from '../utils/albumMembership.js';
 import {
   PLAYLIST_MENU_ACTIONS,
   playlistDisplayName,
@@ -53,8 +54,7 @@ const editorFeedback = {
 // one) so both stay in sync with one join.
 function resolvePlaylistTracks(playlist) {
   if (!playlist) return [];
-  return useReleaseMembers()
-    .displayTrackIds(playlist)
+  return collectionDisplayTrackIds(playlist)
     .map((id) => tracksById.value.get(id))
     .filter(Boolean);
 }

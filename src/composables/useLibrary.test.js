@@ -48,7 +48,7 @@ async function importLibrary() {
 }
 
 describe('initial load', () => {
-  it('enriches a bound-local custom cover only after public membership admission', async () => {
+  it('shows a saved release cover at cold start and keeps it independent of action admission', async () => {
     const collection = {
       id: 'r',
       kind: 'album',
@@ -64,7 +64,7 @@ describe('initial load', () => {
       { id: 'a', thumbnailUrl: 'track-cover' },
     ]);
     const library = await loadLibrary();
-    expect(library.state.tracks[0].thumbnailUrl).toBe('track-cover');
+    expect(library.state.tracks[0].thumbnailUrl).toBe('release-cover');
     const { releaseMembershipProjection, releaseMembershipKey } =
       await import('./useReleaseMembershipProjection.js');
     releaseMembershipProjection.cache.set(releaseMembershipKey(collection), [
@@ -72,7 +72,7 @@ describe('initial load', () => {
     ]);
     expect(library.state.tracks[0].thumbnailUrl).toBe('release-cover');
     releaseMembershipProjection.cache.clear();
-    expect(library.state.tracks[0].thumbnailUrl).toBe('track-cover');
+    expect(library.state.tracks[0].thumbnailUrl).toBe('release-cover');
   });
   it('can finish hydration from the latest read while the superseded read is unresolved', async () => {
     const older = Promise.withResolvers();

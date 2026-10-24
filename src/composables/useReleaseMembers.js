@@ -5,7 +5,7 @@ import {
   createReleaseMembershipProjection,
   releaseMembershipProjection,
   releaseMembershipKey as keyFor,
-  projectReleaseTrackIds,
+  projectAdmittedReleaseTrackIds,
 } from './useReleaseMembershipProjection.js';
 
 // Verification belongs to explicit collection entry/actions, never list hydration.
@@ -24,8 +24,8 @@ export function createReleaseMemberResolver({
   let unsubscribe = null;
   let libraryEpoch = null;
 
-  function displayTrackIds(collection) {
-    return projectReleaseTrackIds(collection, state);
+  function admittedTrackIds(collection) {
+    return projectAdmittedReleaseTrackIds(collection, state);
   }
   function verificationState(collection) {
     const key = keyFor(collection);
@@ -200,7 +200,7 @@ export function createReleaseMemberResolver({
   }
   return {
     state: readonly(state),
-    displayTrackIds,
+    admittedTrackIds,
     verificationState,
     resolve,
     admitTrackReleases,

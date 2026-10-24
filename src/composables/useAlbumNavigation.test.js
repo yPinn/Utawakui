@@ -46,6 +46,8 @@ describe('useAlbumNavigation', () => {
             name: 'Message In A Bottle',
             kind: 'album',
             trackIds: ['track-a'],
+            requiresMembershipVerification: true,
+            availableTrackIds: [],
           },
         ]),
         onLibraryUpdated: vi.fn(),

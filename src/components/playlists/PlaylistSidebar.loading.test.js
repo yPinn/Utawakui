@@ -51,6 +51,38 @@ const render = (props = {}) =>
   renderToString(createSSRApp({ render: () => h(PlaylistSidebar, props) }));
 
 describe('Sidebar initial loading', () => {
+  it('renders member artwork on the first loaded render without verifying release playback', async () => {
+    owners.playlists.isLoading = false;
+    owners.playlists.hasLoaded = true;
+    owners.playlists.playlists = [
+      {
+        id: 'cold-album',
+        name: 'Cold album',
+        kind: 'album',
+        trackIds: ['missing', 'track-a'],
+        requiresMembershipVerification: true,
+        availableTrackIds: [],
+        resolvedRelease: { revision: 1 },
+        releaseLibraryEpoch: 1,
+      },
+    ];
+    const html = await render({
+      tracksById: new Map([
+        [
+          'track-a',
+          {
+            id: 'track-a',
+            title: 'Song',
+            thumbnailUrl: 'utawakui-media://track/track-a/thumbnail.jpg',
+          },
+        ],
+      ]),
+    });
+    expect(html).toContain(
+      'src="utawakui-media://track/track-a/thumbnail.jpg"',
+    );
+    expect(html).not.toContain('playlist-sidebar__skeleton-row');
+  });
   it('labels persistent Single releases without changing legacy album labels', async () => {
     owners.playlists.isLoading = false;
     owners.playlists.hasLoaded = true;

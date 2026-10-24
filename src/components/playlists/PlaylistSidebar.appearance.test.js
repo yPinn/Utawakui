@@ -231,7 +231,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source.match(/variant="command"/gu)).toHaveLength(2);
     expect(source).not.toContain('variant="entry"');
     expect(source.match(/:icon="Plus"/gu)).toHaveLength(2);
-    expect(source.match(/label="新增歌單"/gu)).toHaveLength(2);
+    expect(source.match(/label="新增播放清單"/gu)).toHaveLength(2);
     expect(source).not.toMatch(
       /<button[\s\S]*?class="playlist-sidebar__toolbar-action/u,
     );

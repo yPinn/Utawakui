@@ -35,12 +35,11 @@ export function deriveReleaseDetail({
     Number.isSafeInteger(release.totalTrackCount) && release.totalTrackCount > 0
       ? release.totalTrackCount
       : null;
-  const ready = verification.state === 'ready';
   const byId = new Map();
   for (const track of tracks)
     if (ids.includes(track.id) && !byId.has(track.id))
       byId.set(track.id, track);
-  const available = ready ? [...byId.values()] : [];
+  const available = [...byId.values()];
   const partial = total !== null && total > ids.length;
   const countLabel = partial
     ? `已收錄 ${ids.length}／${total} 首`
@@ -63,7 +62,7 @@ export function deriveReleaseDetail({
     : !durationsKnown
       ? `已知曲長 ${duration}`
       : available.length < ids.length
-        ? `可播放曲長 ${duration}`
+        ? `本機曲長 ${duration}`
         : partial
           ? `已收錄曲長 ${duration}`
           : duration;
@@ -72,27 +71,25 @@ export function deriveReleaseDetail({
     [countLabel, durationLabel].filter(Boolean).join('，'),
   ];
   let message = '';
-  if (!ready)
-    message =
-      verification.state === 'error'
-        ? verification.error || '發行曲目確認未完成，請重試。'
-        : '正在確認發行曲目…';
+  if (verification.state === 'error')
+    message = verification.error || '發行曲目確認未完成，請重試。';
   else if (!ids.length) message = '這份單曲發行尚未收錄本機曲目。';
   else if (!available.length)
-    message = '目前沒有可播放的曲目，請檢查音源或在發行資訊中重新確認。';
+    message = '目前找不到本機曲目，請檢查曲庫或在發行資訊中確認。';
   else if (available.length < ids.length)
-    message = `目前可播放 ${available.length} 首，其餘音源請在「發行資訊」中確認。`;
+    message = `目前本機可見 ${available.length} 首，其餘音源請在「發行資訊」中確認。`;
   return {
     isSingle: true,
     layout: 'album',
     fields: fields.filter(Boolean),
     memberCount: ids.length,
-    playableCount: available.length,
+    localTrackCount: available.length,
     totalTrackCount: total,
     state: verification.state,
     message,
-    canStart: ready && available.length > 0,
-    canShuffle: ready && available.length > 1,
+    // Enables an action intent; the action still obtains fresh Main proof.
+    canStart: verification.state !== 'pending' && available.length > 0,
+    canShuffle: verification.state !== 'pending' && available.length > 1,
     conflictMessage: release.conflicts?.length
       ? '來源發行資料與已收錄內容不一致，請在發行資訊中確認。'
       : '',

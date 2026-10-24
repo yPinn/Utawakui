@@ -78,8 +78,8 @@ describe('Single detail presentation', () => {
       collection: collection(['a', 'b'], 3),
       tracks: [track('b')],
     });
-    expect(result.fields).toEqual(['已收錄 2／3 首，可播放曲長 3 分']);
-    expect(result.message).toContain('可播放 1 首');
+    expect(result.fields).toEqual(['已收錄 2／3 首，本機曲長 3 分']);
+    expect(result.message).toContain('本機可見 1 首');
     expect(result.canStart).toBe(true);
     expect(result.canShuffle).toBe(false);
   });
@@ -105,7 +105,7 @@ describe('Single detail presentation', () => {
     expect(result.fields).toContain('2 首曲目，已知曲長 3 分');
   });
   it.each(['idle', 'pending', 'error'])(
-    'does not show unavailable members as absent while %s',
+    'keeps local metadata and the action entry visible while admission is %s',
     (state) => {
       const result = deriveReleaseDetail({
         collection: collection(['a', 'b'], 3),
@@ -113,10 +113,11 @@ describe('Single detail presentation', () => {
         verification: { state, error: state === 'error' ? '讀取未完成' : '' },
       });
       expect(result.layout).toBe('album');
-      expect(result.canStart).toBe(false);
-      expect(result.fields.join(' ')).not.toContain('可播放 0 首');
+      expect(result.canStart).toBe(state !== 'pending');
+      expect(result.fields).toEqual(['已收錄 2／3 首，本機曲長 3 分']);
+      expect(result.localTrackCount).toBe(1);
       expect(result.message).toContain(
-        state === 'error' ? '讀取未完成' : '確認',
+        state === 'error' ? '讀取未完成' : '本機可見',
       );
     },
   );
@@ -127,14 +128,14 @@ describe('Single detail presentation', () => {
     });
     expect(result.layout).toBe('album');
     expect(result.canStart).toBe(false);
-    expect(result.message).toContain('目前沒有可播放');
+    expect(result.message).toContain('目前找不到本機曲目');
   });
   it('uses only registered unique playable tracks, ignoring invalid durations', () => {
     const result = deriveReleaseDetail({
       collection: collection(['a'], 1),
       tracks: [track(), track(), track('foreign'), { id: 'a', duration: NaN }],
     });
-    expect(result.playableCount).toBe(1);
+    expect(result.localTrackCount).toBe(1);
     expect(result.fields).toContain('1 首曲目，3 分');
   });
   it('does not project lead badges or change stored designation and order', () => {
@@ -152,7 +153,7 @@ describe('Single detail presentation', () => {
       collection: input,
       tracks: [track()],
     });
-    expect(missing.message).toContain('可播放 1 首');
+    expect(missing.message).toContain('本機可見 1 首');
     expect(missing.message).not.toContain('主打');
   });
   it('does not invent a lead for missing, invalid or pending designations', () => {
