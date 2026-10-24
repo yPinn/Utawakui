@@ -8,6 +8,7 @@ import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
+import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
@@ -29,6 +30,7 @@ for (const [component, filename] of [
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiSeparator, '../ui/UiSeparator.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
   [RightDockTrackArtworkCue, './RightDockTrackArtworkCue.vue'],

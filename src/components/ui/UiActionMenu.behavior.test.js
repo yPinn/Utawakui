@@ -1,6 +1,7 @@
 import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiActionMenu from './UiActionMenu.vue';
+import { UI_MODAL_FLOATING_HOST_KEY } from '../../composables/useUiModalStack.js';
 import UiScrollRegion from './UiScrollRegion.vue';
 import UiSearchBox from './UiSearchBox.vue';
 import UiTooltip from './UiTooltip.vue';
@@ -15,6 +16,25 @@ import {
 } from './uiTestHost.js';
 
 const { nextTick } = Vue;
+
+it('teleports a modal-owned menu into its backdrop instead of behind the dialog', async () => {
+  const modalHost = hostNode('modal-backdrop');
+  const mounted = mount({
+    setup() {
+      Vue.provide(UI_MODAL_FLOATING_HOST_KEY, Vue.shallowRef(modalHost));
+      return () =>
+        Vue.h(UiActionMenu, {
+          open: true,
+          content: actions(action('a', '操作')),
+        });
+    },
+  });
+  await nextTick();
+  expect(
+    findAll(modalHost, (node) => node.props?.role === 'menu'),
+  ).toHaveLength(1);
+  mounted.app.unmount();
+});
 
 for (const [component, filename] of [
   [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],

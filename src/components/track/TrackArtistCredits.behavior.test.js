@@ -1,6 +1,6 @@
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const artistIndexState = { index: null };
 const jumpToArtist = vi.fn();
@@ -17,6 +17,19 @@ const { attachClientRender, findAll, mount, trigger } =
 const { default: TrackArtistCredits } =
   await import('./TrackArtistCredits.vue');
 const { default: UiTextButton } = await import('../ui/UiTextButton.vue');
+const { default: UiOverflowTooltip } =
+  await import('../ui/UiOverflowTooltip.vue');
+const { default: UiTooltipSurface } =
+  await import('../ui/tooltip/UiTooltipSurface.vue');
+
+for (const [component, filename] of [
+  [TrackArtistCredits, './TrackArtistCredits.vue'],
+  [UiTextButton, '../ui/UiTextButton.vue'],
+  [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+]) {
+  attachClientRender(component, filename, import.meta.url);
+}
 
 function render(props) {
   return renderToString(
@@ -35,6 +48,10 @@ beforeEach(() => {
       duet: ['artist-yoasobi', 'artist-midories'],
     },
   };
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('TrackArtistCredits', () => {
@@ -57,12 +74,6 @@ describe('TrackArtistCredits', () => {
   });
 
   it('announces navigation before opening the artist page', () => {
-    attachClientRender(
-      TrackArtistCredits,
-      './TrackArtistCredits.vue',
-      import.meta.url,
-    );
-    attachClientRender(UiTextButton, '../ui/UiTextButton.vue', import.meta.url);
     const calls = [];
     jumpToArtist.mockImplementation((id) => calls.push(`jump:${id}`));
     const { app, root } = mount(TrackArtistCredits, {
@@ -77,6 +88,58 @@ describe('TrackArtistCredits', () => {
     trigger(link, 'onClick', { stopPropagation: () => {} });
 
     expect(calls).toEqual(['navigate:artist-yoasobi', 'jump:artist-yoasobi']);
+    app.unmount();
+  });
+
+  it('retains separate navigation for later artists and isolates double clicks', () => {
+    const calls = [];
+    jumpToArtist.mockImplementation((id) => calls.push(`jump:${id}`));
+    const { app, root } = mount(TrackArtistCredits, {
+      track: { id: 'duet', artist: 'YOASOBI, ミドリーズ' },
+      onNavigate: (id) => calls.push(`navigate:${id}`),
+    });
+    const link = findAll(
+      root,
+      (node) => node.props['aria-label'] === '前往藝人：ミドリーズ',
+    )[0];
+    const stopPropagation = vi.fn();
+    trigger(link, 'onClick', { stopPropagation });
+    trigger(link, 'onDblclick', { stopPropagation });
+    expect(calls).toEqual(['navigate:artist-midories', 'jump:artist-midories']);
+    expect(stopPropagation).toHaveBeenCalledTimes(2);
+    app.unmount();
+  });
+
+  it('reveals keyboard targets and restores the prefix on exit without moving pointer targets', async () => {
+    const { app, root } = mount(TrackArtistCredits, {
+      track: { id: 'duet', artist: 'YOASOBI, ミドリーズ' },
+    });
+    const line = findAll(root, (node) =>
+      String(node.props.class).split(' ').includes('track-artist-credits'),
+    )[0];
+    const viewport = findAll(root, (node) =>
+      String(node.props.class).includes('track-artist-credits__viewport'),
+    )[0];
+    const link = findAll(
+      root,
+      (node) => node.props['aria-label'] === '前往藝人：ミドリーズ',
+    )[0];
+    viewport.scrollLeft = 0;
+    link.getBoundingClientRect = () => ({ left: 90 });
+    link.matches = () => false;
+    vi.stubGlobal('document', { activeElement: link });
+
+    trigger(line, 'onFocusin', { target: link });
+    await Promise.resolve();
+    expect(viewport.scrollLeft).toBe(0);
+
+    link.matches = () => true;
+    trigger(line, 'onFocusin', { target: link });
+    await Promise.resolve();
+    expect(viewport.scrollLeft).toBe(90);
+
+    trigger(line, 'onFocusout', { relatedTarget: null });
+    expect(viewport.scrollLeft).toBe(0);
     app.unmount();
   });
 

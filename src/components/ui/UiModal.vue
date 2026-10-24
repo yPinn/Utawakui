@@ -1,6 +1,9 @@
 <script>
 // Shared by every UiModal instance in this renderer.
-import { openModalStack } from '../../composables/useUiModalStack.js';
+import {
+  openModalStack,
+  UI_MODAL_FLOATING_HOST_KEY,
+} from '../../composables/useUiModalStack.js';
 
 function rebaseOpenModalStack() {
   openModalStack.forEach((entry, index) => {
@@ -17,7 +20,14 @@ function rebaseOpenModalStack() {
 // component otherwise owns only the overlay mechanics (teleport, locked
 // backdrop, Escape, focus). The backdrop stays inert by default because modal
 // content can contain drafts; disposable media can opt into outside dismissal.
-import { onMounted, onUnmounted, shallowRef, useTemplateRef, watch } from 'vue';
+import {
+  onMounted,
+  onUnmounted,
+  provide,
+  shallowRef,
+  useTemplateRef,
+  watch,
+} from 'vue';
 import { X } from '../../icons/index.js';
 import {
   provideUiOverlayHost,
@@ -87,6 +97,9 @@ const modalStackEntry = {
 // Teleport moves the element elsewhere in the DOM, not out of this
 // component's own template-ref tracking, so this still resolves correctly.
 const dialogRef = useTemplateRef('dialog');
+const backdropRef = useTemplateRef('backdrop');
+// Menus belong to this dialog's stacking context, outside the clipped panel.
+provide(UI_MODAL_FLOATING_HOST_KEY, backdropRef);
 let previouslyFocused = null;
 let pendingFocusRestore = null;
 let focusRevision = 0;
@@ -160,7 +173,7 @@ function getFocusableElements() {
   if (!dialog) return [];
   return Array.from(
     dialog.querySelectorAll(
-      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
     ),
   ).filter(isAvailableFocusTarget);
 }
@@ -286,6 +299,7 @@ onUnmounted(() => {
     >
       <div
         v-if="open"
+        ref="backdrop"
         class="ui-modal-backdrop"
         :style="{ '--ui-modal-stack-index': modalStackIndex }"
         :onClick="dismissOnBackdrop ? handleBackdropClick : undefined"

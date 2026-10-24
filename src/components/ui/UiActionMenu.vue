@@ -1,6 +1,7 @@
 <script setup>
 import {
   computed,
+  inject,
   nextTick,
   onMounted,
   onUnmounted,
@@ -12,6 +13,7 @@ import {
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 import { useFloatingSurfaceGate } from '../../composables/useFloatingSurfaceGate.js';
 import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
+import { UI_MODAL_FLOATING_HOST_KEY } from '../../composables/useUiModalStack.js';
 import {
   anchoredFloatingLayout,
   customLengthPixels,
@@ -22,6 +24,8 @@ import UiScrollRegion from './UiScrollRegion.vue';
 import UiSearchBox from './UiSearchBox.vue';
 
 const overlayHost = useUiOverlayHost();
+const modalHost = inject(UI_MODAL_FLOATING_HOST_KEY, null);
+const menuHost = computed(() => modalHost?.value || overlayHost);
 
 const props = defineProps({
   id: { type: String, default: '' },
@@ -707,7 +711,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport defer :to="overlayHost || undefined" :disabled="!overlayHost">
+  <Teleport defer :to="menuHost || undefined" :disabled="!menuHost">
     <div
       v-if="open"
       :id="id || undefined"

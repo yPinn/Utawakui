@@ -1,4 +1,4 @@
-import { nextTick, reactive } from 'vue';
+import { nextTick, reactive, shallowRef } from 'vue';
 import {
   afterEach,
   beforeAll,
@@ -87,6 +87,36 @@ function setOverflow(
 }
 
 describe('UiOverflowTooltip', () => {
+  it('reports trailing overflow after scroll and resize', async () => {
+    const instance = shallowRef(null);
+    const mounted = mount(UiOverflowTooltip, {
+      ref: instance,
+      text: 'First, Second, Third',
+    });
+    const root = findAll(mounted.root, (node) => node.type === 'span')[0];
+    setOverflow(root, { clientWidth: 100, scrollWidth: 240 });
+    resizeObservers[0].callback();
+    await nextTick();
+    expect(instance.value.hasInlineEndOverflow).toBe(true);
+    root.scrollLeft = 140;
+    trigger(root, 'onScroll', { currentTarget: root });
+    await nextTick();
+    expect(instance.value.hasInlineEndOverflow).toBe(false);
+    root.scrollLeft = 0;
+    trigger(root, 'onScroll', { currentTarget: root });
+    await nextTick();
+    expect(instance.value.hasInlineEndOverflow).toBe(true);
+    setOverflow(root, { clientWidth: 240, scrollWidth: 240 });
+    resizeObservers[0].callback();
+    await nextTick();
+    expect(instance.value.hasInlineEndOverflow).toBe(false);
+    setOverflow(root, { clientWidth: 239, scrollWidth: 240 });
+    resizeObservers[0].callback();
+    await nextTick();
+    expect(instance.value.hasInlineEndOverflow).toBe(true);
+    mounted.app.unmount();
+  });
+
   it('supports a partial non-DOM window without resize listener methods', () => {
     vi.stubGlobal('ResizeObserver', undefined);
     vi.stubGlobal('window', {});

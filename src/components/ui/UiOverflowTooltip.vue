@@ -25,6 +25,7 @@ const props = defineProps({
 
 const attrs = useAttrs();
 const isOverflowing = shallowRef(false);
+const hasInlineEndOverflow = shallowRef(false);
 const rootElement = shallowRef(null);
 let resizeObserver;
 let mounted = false;
@@ -45,7 +46,11 @@ const {
   describedBy: true,
 });
 
-defineExpose({ triggerProps: tooltipTriggerProps });
+defineExpose({
+  triggerProps: tooltipTriggerProps,
+  element: rootElement,
+  hasInlineEndOverflow,
+});
 
 const rootProps = computed(() => ({
   ...attrs,
@@ -67,6 +72,15 @@ function measure(element = rootElement.value) {
     element.clientHeight > 0 &&
     (element.scrollWidth > element.clientWidth ||
       element.scrollHeight > element.clientHeight),
+  );
+  hasInlineEndOverflow.value = Boolean(
+    element &&
+    element.clientWidth > 0 &&
+    element.clientHeight > 0 &&
+    element.scrollWidth -
+      element.clientWidth -
+      Math.abs(element.scrollLeft || 0) >
+      0.5,
   );
 }
 
@@ -115,7 +129,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <component :is="props.as" v-bind="rootProps">
+  <component :is="props.as" v-bind="rootProps" @scroll="remeasure">
     <slot>{{ displayText }}</slot>
   </component>
   <UiTooltipSurface

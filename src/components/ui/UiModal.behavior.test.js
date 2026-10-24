@@ -8,6 +8,7 @@ import UiModal from './UiModal.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
+import { UI_MODAL_FLOATING_HOST_KEY } from '../../composables/useUiModalStack.js';
 
 const { createRenderer, h, nextTick, ref, ssrContextKey } = Vue;
 
@@ -142,6 +143,31 @@ describe('UiModal behavior', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it('provides its own backdrop as the floating menu host', async () => {
+    let floatingHost;
+    const Probe = {
+      setup() {
+        floatingHost = Vue.inject(UI_MODAL_FLOATING_HOST_KEY);
+        return () => h('span', '選單入口');
+      },
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp({
+      render: () =>
+        h(UiModal, { open: true, title: '編輯' }, { default: () => h(Probe) }),
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.mount(root);
+    await nextTick();
+    const backdrop = findAll(
+      root,
+      (node) => node.props.class === 'ui-modal-backdrop',
+    )[0];
+    expect(floatingHost.value.props.class).toBe('ui-modal-backdrop');
+    expect(Vue.toRaw(floatingHost.value)).toBe(Vue.toRaw(backdrop));
+    app.unmount();
   });
 
   it('keeps scrolling as the default and lets a workspace own its single inner scroll region', async () => {
@@ -294,6 +320,34 @@ describe('UiModal behavior', () => {
       expect(disabled.focus).not.toHaveBeenCalled();
       expect(hidden.focus).not.toHaveBeenCalled();
       expect(event.preventDefault).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each([false, true])(
+    'keeps native disclosure summaries in the modal Tab sequence (shift=%s)',
+    async (shiftKey) => {
+      const app = renderer.createApp({
+        setup: () => () => h(UiModal, { open: true, title: '版本設定' }),
+      });
+      app.provide(ssrContextKey, { modules: new Set() });
+      app.provide(UI_OVERLAY_HOST_KEY, body);
+      app.mount(hostNode('root'));
+      await nextTick();
+      const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+      const first = { focus: vi.fn() },
+        summary = { focus: vi.fn() },
+        last = { focus: vi.fn() };
+      dialog.querySelectorAll.mockImplementation((selector) =>
+        selector.includes('summary') ? [first, summary, last] : [first, last],
+      );
+      dialog.contains = vi.fn(() => true);
+      document.activeElement = summary;
+      const event = { key: 'Tab', shiftKey, preventDefault: vi.fn() };
+      listeners.get('keydown')[0](event);
+      app.unmount();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(first.focus).not.toHaveBeenCalled();
+      expect(last.focus).not.toHaveBeenCalled();
     },
   );
 
