@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted on 2026-10-23 (proposed 2026-10-22). P1–P3 are implemented:
+Accepted on 2026-10-23 (proposed 2026-10-22). P1–P4 are implemented:
 definition attributes with the `now-next` removal, inspector modified marks
-and group reset, and Cover Player element settings. P4–P6 are not started.
+and group reset, Cover Player element settings, and canvas selection from
+Workbench-only element boxes. P5–P6 are not started.
 
 The decision amends the "locked" list in
 [ADR 0011](0011-overlay-instances-and-presentation-pack-delivery.md) and the
@@ -187,6 +188,15 @@ supports:
 - Geometry reaches the page as validated custom properties on the element's
   wrapper. No user CSS, selectors or arbitrary properties.
 - Rotation and free scale are excluded until a template demonstrates a need.
+- Geometry properties default to an explicit `auto` (template-owned layout),
+  like `inherit` for weight, because saves merge and cannot remove a key;
+  resetting writes `auto` back.
+- Canvas drag and resize are pointer shortcuts. The inspector exposes the same
+  position and size as bounded numeric fields for the selected target, which is
+  the keyboard and assistive-technology path.
+- Cover Player sizes its root type from the viewport
+  (`min(100vw / 30, 100vh / 40)`), so its container-relative refactor is the
+  first P5 step and must be reviewed against the appearance baseline.
 
 ### Stacking
 
@@ -196,6 +206,9 @@ supports:
 - Paint order inside an element or group, such as Kinetic Pop's tracks or Art
   Card's turntable, is a renderer invariant.
 - The UI shows a layer list; band ids are implementation detail.
+- Reordering and the layer list wait for a template whose elements overlap in a
+  reorderable band. Cover Player's elements do not overlap, so it pilots
+  geometry only.
 
 ### Brand and user images
 
@@ -211,7 +224,9 @@ slot that accepts one. The built-in mark remains fixed.
 The resolution order from ADR 0011 is unchanged: template fallback → Style Set
 → User Variant → mandatory constraints. Element and group overrides join the
 same settings, stored as flat `element.<elementId>.<propertyKey>` keys so the
-existing merge, autosave and key rules apply. Main drops element keys that the
+existing merge, autosave and key rules apply. Groups share the element id
+namespace and key form (for example `element.copy.<propertyKey>`), so a
+template cannot declare an element and a group with the same id. Main drops element keys that the
 slot's template does not declare, and switching to such a template clears them.
 
 P3 raises the Output appearance schema from 6, which added the receipt
@@ -259,14 +274,14 @@ Stage's caption.
 
 ## Phases
 
-| Phase | Delivers                                                                                                                                      | Exit condition                                                                            |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| P1    | Definition attributes (family, scope, tier, reflow) on every field; `now-next` configuration removed                                          | Rendered output and stored settings unchanged; baseline diff adds only the new attributes |
-| P2    | Shared property section/row components with modified mark and group reset (per-field reset only where a control already has one)              | Workbench reaches parity with today's inspector                                           |
-| P3    | Cover Player element declarations; root-level element projection; element weight, size and visibility; schema 7 element keys; text size floor | Endpoints and floor verified on the pilot; saved settings unchanged                       |
-| P4    | Preview-only box reporting, canvas selection and Elements panel                                                                               | Selection matches rendered boxes at every supported capture size                          |
-| P5    | Container-relative refactor per adopting template, then `anchored`／`frame` drag and resize, then reordering                                  | Baseline diff reviewed; min/max size and edges verified                                   |
-| P6    | Styles panel backed by Style Set and Variant storage; difference-only storage                                                                 | Depends on the pack work in ADR 0011                                                      |
+| Phase | Delivers                                                                                                                                                                                              | Exit condition                                                                            |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| P1    | Definition attributes (family, scope, tier, reflow) on every field; `now-next` configuration removed                                                                                                  | Rendered output and stored settings unchanged; baseline diff adds only the new attributes |
+| P2    | Shared property section/row components with modified mark and group reset (per-field reset only where a control already has one)                                                                      | Workbench reaches parity with today's inspector                                           |
+| P3    | Cover Player element declarations; root-level element projection; element weight, size and visibility; schema 7 element keys; text size floor                                                         | Endpoints and floor verified on the pilot; saved settings unchanged                       |
+| P4    | Preview-only box reporting and canvas selection sharing the inspector target                                                                                                                          | Selection matches rendered boxes at every supported capture size                          |
+| P5    | Container-relative refactor per adopting template, then `anchored`／`frame` geometry with canvas drag and numeric fields; reordering and the layer list only once a template has overlapping elements | Baseline diff reviewed; min/max size and edges verified                                   |
+| P6    | Styles panel backed by Style Set and Variant storage; difference-only storage                                                                                                                         | Depends on the pack work in ADR 0011                                                      |
 
 The pilot for P3 and P5 is a Now Playing template, Cover Player or Art Card,
 because both have fewer timing invariants than any lyric template. The receipt

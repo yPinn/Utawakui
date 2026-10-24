@@ -30,8 +30,16 @@
               ></span>
             </div>
             <div class="artwork-overlay__copy">
-              <h1 id="artwork-title" class="artwork-overlay__title"></h1>
-              <p id="artwork-artist" class="artwork-overlay__artist"></p>
+              <h1
+                id="artwork-title"
+                class="artwork-overlay__title"
+                data-ovl-element="title"
+              ></h1>
+              <p
+                id="artwork-artist"
+                class="artwork-overlay__artist"
+                data-ovl-element="artist"
+              ></p>
             </div>
           </div>
           <div
@@ -214,14 +222,14 @@
         </div>
       </div>
       <div class="artwork-overlay__player" aria-hidden="true">
-        <div class="artwork-overlay__scrubber">
+        <div class="artwork-overlay__scrubber" data-ovl-element="progress">
           <span class="artwork-overlay__scrubber-fill"></span>
         </div>
-        <div class="artwork-overlay__timeline">
+        <div class="artwork-overlay__timeline" data-ovl-element="progress">
           <span id="artwork-elapsed">0:00</span>
           <span id="artwork-remaining">-0:00</span>
         </div>
-        <div class="artwork-overlay__transport">
+        <div class="artwork-overlay__transport" data-ovl-element="transport">
           <svg class="artwork-overlay__skip" viewBox="0 0 24 24">
             <path d="M12 5.5v13L2 12Zm10 0v13L12 12Z" />
           </svg>
@@ -237,7 +245,7 @@
             <path d="M2 5.5v13L12 12Zm10 0v13L22 12Z" />
           </svg>
         </div>
-        <div class="artwork-overlay__volume">
+        <div class="artwork-overlay__volume" data-ovl-element="transport">
           <svg viewBox="0 0 24 24">
             <path d="M3 9h4l5-4v14l-5-4H3Z" />
             <path class="artwork-overlay__volume-wave" d="M16 8q4 4 0 8" />

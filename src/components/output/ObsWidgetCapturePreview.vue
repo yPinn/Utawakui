@@ -1,4 +1,5 @@
 <script setup>
+import ObsElementSelectionLayer from './ObsElementSelectionLayer.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import UiButton from '../ui/UiButton.vue';
 import {
@@ -14,6 +15,7 @@ import {
   calculateWidgetPreviewScale,
   OUTPUT_WIDGET_CAPTURE_SIZES,
 } from '../../constants/outputCaptureSizes.js';
+import { useOutputElementBoxes } from '../../composables/output/useOutputElementBoxes.js';
 
 const props = defineProps({
   metadataTarget: { type: Object, default: null },
@@ -25,14 +27,48 @@ const props = defineProps({
   },
   preset: { type: Object, default: null },
   backdrop: { type: String, default: 'checker' },
+  templateId: { type: String, default: null },
+  elementIds: { type: Array, default: () => [] },
+  selectedElementId: { type: String, default: 'template' },
 });
 
-const emit = defineEmits(['selectSize']);
+const emit = defineEmits(['selectSize', 'selectElement']);
 const previewGrid = useTemplateRef('previewGrid');
 const previewOptions = useTemplateRef('previewOptions');
 const previewCaptions = useTemplateRef('previewCaptions');
+const previewFrames = useTemplateRef('previewFrames');
 const previewScale = shallowRef(0.25);
 let resizeObserver = null;
+
+const previewOrigin = computed(() => {
+  try {
+    return props.inspectionUrl ? new URL(props.inspectionUrl).origin : null;
+  } catch {
+    return null;
+  }
+});
+const { boxesBySize } = useOutputElementBoxes({
+  frameWindows: () =>
+    new Map(
+      [previewFrames.value ?? []]
+        .flat()
+        .map((frame) => [frame.dataset.sizeId, frame.contentWindow]),
+    ),
+  expectedOrigin: () => previewOrigin.value,
+  templateId: () => props.templateId,
+  allowedIds: () => props.elementIds,
+});
+
+function selectionLayerFor(option) {
+  const boxes = boxesBySize.value[option.id];
+  if (!props.elementIds.length || option.id !== props.selectedSize || !boxes) {
+    return null;
+  }
+  return {
+    boxes,
+    scale: (previewScale.value * option.width) / boxes.viewport.width,
+  };
+}
 
 const supportedCaptureSizes = computed(() => {
   const allowlist = new Set(
@@ -190,7 +226,9 @@ onBeforeUnmount(() => {
         >
           <iframe
             v-if="inspectionUrl"
+            ref="previewFrames"
             class="obs-widget-capture-preview__iframe"
+            :data-size-id="option.id"
             :src="inspectionUrl"
             :style="option.canvasStyle"
             :width="option.width"
@@ -201,7 +239,17 @@ onBeforeUnmount(() => {
             sandbox="allow-scripts allow-same-origin"
             referrerpolicy="no-referrer"
           />
-          <span v-else class="obs-widget-capture-preview__fallback">
+          <ObsElementSelectionLayer
+            v-if="inspectionUrl && selectionLayerFor(option)"
+            :boxes="selectionLayerFor(option).boxes"
+            :scale="selectionLayerFor(option).scale"
+            :selected-id="selectedElementId"
+            @select="emit('selectElement', $event)"
+          />
+          <span
+            v-if="!inspectionUrl"
+            class="obs-widget-capture-preview__fallback"
+          >
             {{ preset?.preview?.title ?? 'Preview' }}
           </span>
         </span>

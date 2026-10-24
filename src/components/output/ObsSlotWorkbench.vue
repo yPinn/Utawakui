@@ -22,6 +22,7 @@ import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
+import { useOutputElementTarget } from '../../composables/output/useOutputElementTarget.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
@@ -100,14 +101,16 @@ const configurationFields = computed(() => [
   ...templateFields.value,
   ...elementTargets.value.flatMap(({ fields }) => fields),
 ]);
-const selectedTargetId = shallowRef('template');
-const selectedTarget = computed(() =>
-  elementTargets.value.find(({ id }) => id === selectedTargetId.value),
+const templateId = computed(
+  () => props.preset?.id ?? props.outputSlot?.templateId ?? null,
 );
-const targetOptions = computed(() => [
-  { value: 'template', label: '整個模板' },
-  ...elementTargets.value.map(({ id, label }) => ({ value: id, label })),
-]);
+const {
+  elementIds,
+  selectedTarget,
+  selectedTargetId,
+  selectTarget,
+  targetOptions,
+} = useOutputElementTarget({ elementTargets, templateId });
 const visibleFields = computed(() =>
   selectedTarget.value
     ? sortConfigurationFields(selectedTarget.value.fields)
@@ -127,12 +130,6 @@ const configurationFieldGroups = computed(() => {
     groups.get(id).fields.push(field);
   }
   return [...groups.values()];
-});
-const templateId = computed(
-  () => props.preset?.id ?? props.outputSlot?.templateId ?? null,
-);
-watch(templateId, () => {
-  selectedTargetId.value = 'template';
 });
 const supportedCaptureSizes = computed(() =>
   supportedCaptureSizeIdsForTemplate(templateId.value, props.activeKind),
@@ -310,10 +307,13 @@ function resetAppearance() {
             :obs-url="obsUrl"
             :preview-backdrop="previewBackdrop"
             :show-lyrics-guide="showLyricsGuide"
+            :element-ids="elementIds"
+            :selected-element-id="selectedTargetId"
             @update:capture-size="updateCaptureSize"
             @update:preview-backdrop="emit('update:previewBackdrop', $event)"
             @update:show-lyrics-guide="emit('update:showLyricsGuide', $event)"
             @refresh-projection="emit('refreshProjection')"
+            @select-element="selectTarget"
           />
         </UiScrollRegion>
       </main>
@@ -366,7 +366,7 @@ function resetAppearance() {
             :model-value="selectedTargetId"
             :options="targetOptions"
             label-hidden
-            @update:model-value="selectedTargetId = $event"
+            @update:model-value="selectTarget"
           />
         </ObsAppearanceControlRow>
       </div>

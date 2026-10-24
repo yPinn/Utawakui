@@ -26,6 +26,7 @@
 - Raw `ipcMain` 只交給 `electron/main/ipcSenderPolicy.js`。未列出的 channel 預設只接受目前主視窗的 main frame；Performer 只取得自己的視窗控制、snapshot／status、diagnostic、閱讀距離、固定 offset action 與播放／暫停／讀音 control intent。Offset 與 control intent 只帶 action、revision、track id，由 main 驗證後轉送主 renderer。驗證同時比對 `event.sender`、`senderFrame` 與 owner 的 main frame，subframe 不繼承 capability。
 - Renderer 仍由 `file://` 載入，CSP 的 `'self'` 因此涵蓋整個磁碟：`connect-src` 只列 dev server，`frame-src` 不含 `'self'`（`scripts/rendererContentSecurityPolicy.test.mjs`）。
 - Output server 的 HTTP 只接受 `Host: 127.0.0.1:<port>`，WebSocket 另要求同值 Origin，以阻擋 DNS rebinding。
+- Output 頁面與控制台之間只有一條單向訊息：Workbench 預覽（`workbench=1` 且被嵌入時）以動態 import 載入 `overlay/shared/elementReporter.mjs`，把元素矩形 `postMessage` 給 parent。Output 頁面不註冊任何 message listener；targetOrigin 為 `*`（正式控制台是不透明的 `file://` origin），可嵌入者由 CSP `frame-ancestors` 限定。控制台只接受自己預覽 iframe 的 `event.source`、預覽 URL 的 origin，並以 `shared/outputElementMessage.mjs` 驗證型別、元素 id 與數量上限（ADR 0027 P4）。
 - 這些是固定 shell 不變式，不是使用者設定。
 
 ### 視窗

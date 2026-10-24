@@ -1099,8 +1099,13 @@ groups, composed from the shared setting row and `UiSelect`. It defaults to
 `整個模板`, which shows today's template groups; choosing an element replaces
 them with that element's groups only, so the inspector never lists every
 element at once. Changing template returns the target to `整個模板`. The
-canvas selection added later sets the same target rather than adding a second
-inspector mode.
+canvas selection sets the same target rather than adding a second inspector
+mode. On the selected capture size only, a pointer layer over the preview
+hit-tests reported element boxes: the smallest box under the pointer wins, and
+anywhere else, including the cover, returns to `整個模板`. Hovered elements show
+a dashed accent outline and the selected element a solid focus-width outline.
+The layer is `aria-hidden`; the `調整對象` select remains the keyboard and
+assistive-technology path, so no focusable canvas targets are added.
 
 Live Stage alone pilots local font selection. Its font control is a searchable
 combobox: clicking the closed field opens the complete available list and highlights

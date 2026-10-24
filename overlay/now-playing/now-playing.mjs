@@ -5,6 +5,7 @@ import {
   isPreviewMode,
   withPreviewFallback,
   previewSceneForSlot,
+  startWorkbenchElementReporter,
 } from '../shared/preview.mjs';
 import { selectArtworkFrame } from '../shared/state.mjs';
 import {
@@ -136,6 +137,10 @@ function boot() {
 
   applyOverlayAppearance(document, { templateId: activeTemplateId });
   applyPreviewCanvas(document, { previewMode, location: window.location });
+  const elementReporter = startWorkbenchElementReporter(
+    window,
+    () => activeTemplateId,
+  );
   const host = createOverlayHost({
     kind: 'now-playing',
     previewMode,
@@ -174,6 +179,7 @@ function boot() {
     onDispose: () => {
       artworkMotion.destroy();
       coverMotion.destroy();
+      void elementReporter.then((reporter) => reporter?.dispose());
     },
   });
   host.start();

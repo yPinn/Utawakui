@@ -29,6 +29,16 @@ export function isWorkbenchMode(location) {
   return new URLSearchParams(location?.search ?? '').get('workbench') === '1';
 }
 
+// Workbench previews load the element reporter on demand; OBS routes never fetch it.
+export function startWorkbenchElementReporter(window, getTemplateId) {
+  if (!isWorkbenchMode(window.location) || window.parent === window) {
+    return Promise.resolve(null);
+  }
+  return import('./elementReporter.mjs').then(({ startElementReporter }) =>
+    startElementReporter({ window, document: window.document, getTemplateId }),
+  );
+}
+
 export function inspectionBackdrop(location) {
   const value = new URLSearchParams(location?.search ?? '').get('backdrop');
   return INSPECTION_BACKDROPS.has(value) ? value : '';

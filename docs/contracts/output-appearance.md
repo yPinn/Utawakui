@@ -62,6 +62,7 @@
 - Browser Source 在 root 投影 `--ovl-el-<元素>-font-weight`、`--ovl-el-<元素>-size-scale` 與 `data-ovl-el-<元素>-visible`，只由 cover-player 規則讀取，不碰動畫節點。
 - `ovl-constraints` 的 `--ovl-text-min-size`（0.75rem）為縮小下限：元素字級不低於此值與原始字級中較小者，預設輸出不變。
 - Workbench 有元素的模板在 Inspector 頂端提供「調整對象」，預設「整個模板」；選元素時只顯示該元素的屬性群組，底部「恢復模板預設」一併重設元素設定。
+- 畫布點選：Workbench 預覽 iframe 帶 `workbench=1`（複製給 OBS 的 URL 不帶），Output 頁面依 `data-ovl-element` 回報目前模板已宣告元素的矩形；同一元素多個節點取聯集，隱藏者不回報。控制台只在目前選中的擷取尺寸上疊選取層：點元素矩形選該元素（重疊時取面積最小者），點其他區域（含封面）選「整個模板」，與「調整對象」共用同一選取。選取層只處理指標，鍵盤與輔助技術使用「調整對象」。
 
 ## 九模板
 

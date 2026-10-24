@@ -148,6 +148,20 @@ describe('ObsOverlayPreview', () => {
 
     expect(html).toContain('backdrop=transparent');
   });
+
+  it('marks widget inspection iframes as Workbench previews but not the OBS URL', async () => {
+    const html = await renderPreview({
+      activeKind: 'now-playing',
+      captureSize: 'small',
+      supportedCaptureSizes: ['small'],
+      previewUrl: 'http://127.0.0.1:8700/overlay/now-playing',
+      obsUrl: 'http://127.0.0.1:8700/overlay/now-playing',
+    });
+
+    expect(html).toMatch(/src="[^"]*\/overlay\/now-playing\?workbench=1&amp;/u);
+    expect(html).not.toMatch(/href="[^"]*workbench=1/u);
+    expect(componentSource).not.toMatch(/dropUrl[^\n]*workbench/u);
+  });
   it('matches the Overlay color scheme so dark app chrome cannot force an opaque iframe canvas', () => {
     for (const [source, selector] of [
       [componentSource, 'obs-overlay-preview__iframe'],

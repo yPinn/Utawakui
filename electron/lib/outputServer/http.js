@@ -77,6 +77,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/shared/lifecycle.mjs': ['shared', 'lifecycle.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
   '/overlay/shared/fallback.css': ['shared', 'fallback.css'],
+  '/overlay/shared/elementReporter.mjs': ['shared', 'elementReporter.mjs'],
   '/overlay/shared/lyricsPresentation.mjs': [
     'shared',
     'lyricsPresentation.mjs',
@@ -111,6 +112,7 @@ const SHARED_STATIC_ROUTES = Object.freeze({
   ],
   '/shared/outputAppearance.mjs': ['outputAppearance.mjs'],
   '/shared/outputTemplateElements.mjs': ['outputTemplateElements.mjs'],
+  '/shared/outputElementMessage.mjs': ['outputElementMessage.mjs'],
   '/shared/assets/fonts/jf-open-huninn-2.1.ttf': [
     'assets',
     'fonts',

@@ -44,6 +44,8 @@ const props = defineProps({
     validator: (value) => ['checker', 'dark', 'light'].includes(value),
   },
   showLyricsGuide: { type: Boolean, default: true },
+  elementIds: { type: Array, default: () => [] },
+  selectedElementId: { type: String, default: 'template' },
 });
 
 const emit = defineEmits([
@@ -51,6 +53,7 @@ const emit = defineEmits([
   'update:previewBackdrop',
   'update:showLyricsGuide',
   'refreshProjection',
+  'selectElement',
 ]);
 
 const previewReloadToken = claimPreviewReloadToken();
@@ -75,9 +78,9 @@ const inspectionUrl = computed(() => {
   const url = new URL(props.previewUrl);
   url.search = '';
   url.hash = '';
+  url.searchParams.set('workbench', '1');
   if (isLyrics.value) {
     url.pathname = '/overlay/lyrics';
-    url.searchParams.set('workbench', '1');
     // Opt-in lyrics diagnostics: keep them out of production preview iframes.
     if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');
   }
@@ -201,7 +204,11 @@ onBeforeUnmount(() => {
         :supported-sizes="supportedCaptureSizes"
         :preset="preset"
         :backdrop="previewBackdrop"
+        :template-id="preset?.id ?? null"
+        :element-ids="elementIds"
+        :selected-element-id="selectedElementId"
         @select-size="emit('update:captureSize', $event)"
+        @select-element="emit('selectElement', $event)"
       />
     </div>
 
