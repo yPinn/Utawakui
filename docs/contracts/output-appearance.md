@@ -67,17 +67,17 @@
 
 歌單slot預設為receipt-setlist，並排列於歌單模板首位；既存合法模板選擇維持原值。共同預設為 original Look、強度 100、medium 字級；下表只列差異。
 
-| 模板／capture                  | 可選與初始值                                                   | Invariant                                                    |
-| ------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------ |
-| queue-board／480×810           | 字型 sans、字重 semibold、背景 solid、密度 normal              | current／played membership、history 分頁接續                 |
-| receipt-setlist／480×810       | 字級medium、向下出紙、回顧開啟／15秒                           | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
-| karaoke-stack／1920×1080       | 只有共用 Look／字級                                            | 雙 lane、count-in、timing mask、字型角色                     |
-| kinetic-pop／1920×1080         | 材料 candy-rim、排列 straight                                  | 三層 paint order、phrase source boundaries                   |
-| ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                           | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
-| live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 broadcast-compact | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
-| manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto    | Ruby atomicity、框內安全版面、bubble timing                  |
-| art-card／480×270              | 字型 sans、字重 bold                                           | 唱片 playhead、封套交換、驗證過的 artwork route              |
-| cover-player／360×480、480×640 | 字重 bold、背景 solid                                          | 同一 artwork route 與進度權威                                |
+| 模板／capture                  | 可選與初始值                                                | Invariant                                                    |
+| ------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------ |
+| queue-board／480×810           | 字型 sans、字重 semibold、背景 solid、密度 normal           | current／played membership、history 分頁接續                 |
+| receipt-setlist／480×810       | 字級medium、向下出紙、回顧開啟／15秒                        | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
+| karaoke-stack／1920×1080       | 只有共用 Look／字級                                         | 雙 lane、count-in、timing mask、字型角色                     |
+| kinetic-pop／1920×1080         | 材料 candy-rim、排列 straight                               | 三層 paint order、phrase source boundaries                   |
+| ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                        | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
+| live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 balanced       | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
+| manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto | Ruby atomicity、框內安全版面、bubble timing                  |
+| art-card／480×270              | 字型 sans、字重 bold                                        | 唱片 playhead、封套交換、驗證過的 artwork route              |
+| cover-player／360×480、480×640 | 字重 bold、背景 solid                                       | 同一 artwork route 與進度權威                                |
 
 Setlist 只公開目前演唱曲目與已唱紀錄，不投影待唱。480×810 是擷取尺寸而非固定版面：queue-board 以約兩成高度保留目前歌曲，其餘給已唱紀錄，兩區只以固定 spacing 分隔；最近八首依播放順序向下排列，超出時才自動垂直滾動。
 
@@ -145,7 +145,7 @@ Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.jso
 
 ## 驗證
 
-相鄰測試比較九模板 canonical frame、設定正規化、V3 讀音 document、空態、Vue reactive prop 與 URL 隔離。`createAcceptanceMatrix()` 產生逐模板的適用 case 與證據層級；純投影通過不代表 runtime 或人工驗收完成，也不代表作品可上架。真實 OBS、透明合成與長時間效能仍待驗證。
+相鄰測試比較九模板 canonical frame、設定正規化、V3 讀音 document、空態、Vue reactive prop 與 URL 隔離。`createAcceptanceMatrix()` 產生逐模板的適用 case 與證據層級；純投影通過不代表 runtime 或人工驗收完成，也不代表作品可上架。全模板的 Browser Source／透明合成與長時間效能仍待驗；W3 的有限視窗擷取結果見[驗收紀錄](../operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。
 
 ## 收據歌單
 

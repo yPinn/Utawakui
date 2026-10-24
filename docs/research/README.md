@@ -4,10 +4,10 @@
 
 ## 歌詞時間與聲學對齊
 
-入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data/)。
+入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data)。
 
 - 10-22：[offset 與內容證據收斂](lyrics-alignment/lyrics-alignment-summary.md#offset-與內容證據)：前段不足後完成內容／定位／時間分離的固定快取離線對照，仍不可校時；中後段未補測、未接產品。原方案與日期證據由研究結論追溯。
-- 10-22：[歌詞顯示階段整理](../operations/lyrics-milestone-2026-10-22.md)：長句容量、時鐘配對、中日細時間與本地／Focus 連續填色已實作；保留舊資料回退及冷暖慢值，人工時間品質未驗。
+- 10-22：[歌詞顯示階段整理](../archive/lyrics-display-performance-2026-10.md#階段總結2026-10-22)：長句容量、時鐘配對、中日細時間與本地／Focus 連續填色已實作；保留舊資料回退及冷暖慢值，人工時間品質未驗。
 - 10-22：[T1+ 細部時間與顯示時鐘](lyrics-alignment/lyrics-fine-timing-clock-2026-10-22.md)：實作前研究，確認可擷取細區間與時鐘問題；當輪未實作掃字，後續交付見階段整理。
 - 10-21：[逐句 CPU 分流方法與驗證](lyrics-alignment/lyrics-mixed-cpu-feasibility-2026-10-21.md)、[句內混語有界研究結案](lyrics-alignment/lyrics-mixed-cpu-bounded-2026-10-21.md)、[混語長句兩段顯示](lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md)；現行採用決策統一見研究結論。
 - 10-20：[純英文 T1+ 與回退](lyrics-alignment/lyrics-english-validation-2026-10-20.md)
@@ -40,5 +40,5 @@
 
 - 識別：[封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）
 - 效能與安全：[啟動與 Settings](engineering/startup-settings-profile-2026-10-18.md)、[Output 首幀](engineering/output-first-frame-profile-2026-10-18.md)、[BGM 啟動](engineering/bgm-startup-profile-2026-10-18.md)（10-18）、[依賴安全](engineering/dependency-security-review-2026-10-16.md)（10-16）
-- 視覺：[Row／Grid 收束](design/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺 foundation](design/visual-system-foundation-2026-08-28.md)、[元件 foundation](design/ui-component-foundation-2026-08-28.md)（08-28）、[方向比較](design/visual-direction-options-2026-08-25.md)、[早期探索](design/visual-system-discovery-2026-08-25.md)（08-25）、[參考網站結構](design/nintendo-wonder-reference-structure.md)
+- 視覺：[Row／Grid 收束](design/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
 - 產品：[競品調查](product/competitive-research.md)、[外觀贊助模式](product/appearance-support-models-market-plan-2026-10-20.md)（10-20）、[v0.4.0 公開網站稿](product/public-site-content-v0.4.0.md)

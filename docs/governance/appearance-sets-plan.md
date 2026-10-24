@@ -1,44 +1,13 @@
-# 外觀 set 與共用 Output 基礎計畫
+# 外觀 set 規劃與交付標準
 
-更新日期：2026-10-21。狀態：現行規劃入口；F1–F4 已完成當輪驗證，F5 本機範圍與 Live Stage 獨立補驗已完成；真實 OBS 與耐久驗收待驗，尚未收款或上架。
-已確認方向是功能免費、default set 免費、未來額外 set 個別單次取得；目前所有模板完成度均不足以作為商品，本文件不安排首發合集。
-本草案制定未來使用的產品與驗收標準，不代表既有模板、遠端 pack 系統或付款權限已完成。
-目前八個模板的逐項缺口、架構責任與改善順序，見[模板盤點報告](appearance-template-gap-audit-2026-10-20.md)。
+本文件維護額外外觀作品的取得方向、範圍與品質標準；產品現況見[規格](../spec.md)，元素工作區的實作順序見[ADR 0027](../adr/0027-output-template-elements-and-property-workspace.md#phases)，Pack 技術邊界見[契約](../contracts/overlay-pack.md)。目前沒有定價、收款或上架安排；既有模板不因共用基礎完成而取得商品驗收。
 
-## 文件分工與本輪範圍
-
-本文件收斂已確認方向、set 標準與接下來的共用基礎實作順序。產品現況仍只維護 [spec](../spec.md)；runtime 與安全契約仍依有效 ADR／contracts。
-下列階段保留共用基礎的工作拆分；本輪接續完成 F3，不改模板外觀或付款。設定可調程度與來源以[顯示契約](../contracts/output-appearance.md)為準；可見驗收依[八模板清單](../operations/output-appearance-acceptance.md)記錄，不以基線通過代替實機結果。
-
-| 要查什麼                           | 唯一主要入口                                                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 目前方向、交付標準與共用基礎下一步 | 本文件                                                                                                                               |
-| 八模板逐項問題、原始判斷與快照     | [模板盤點](appearance-template-gap-audit-2026-10-20.md)與[資料](data/appearance-template-audit-2026-10-20.json)，保留 dated evidence |
-| 元件／模型／服務適用條件與版本     | [依賴查核](community-dependency-boundaries-2026-10-20.md)，不在實作計畫複製完整清單                                                  |
-| 三種收費模式與競品／市場證據       | [市場比較](../research/product/appearance-support-models-market-plan-2026-10-20.md)，保留研究，不再作現行實作入口                    |
-| 早期功能分層的推導與未採用選項     | [歸檔提案](../archive/community-feature-tiers-plan-2026-10-20.md)，供追溯，不續寫新計畫                                              |
-
-共用基礎階段不改八模板的美術、字型選擇、配色、構圖、動態 recipe 或藝術節奏；不新增 Template／slot／instance 能力，不改 feature gate 語意。
-允許規劃的後續工作是測試資料、既有 host glue、生命週期契約、預覽資料一致性與驗收工具。若一致性問題必須改變藝術輸出才能解決，列為個別模板後續工作，不混入基礎重構。
-付款、帳號、entitlement、點數、廣告、遠端 pack updater、User Variant import 及模板重新設計均不在以下實作範圍。
+2026-10-20 的[八模板盤點](appearance-template-gap-audit-2026-10-20.md)與[原始資料](data/appearance-template-audit-2026-10-20.json)保留當時範圍。之後的模板數量、缺省值與可調項以[Output 外觀契約](../contracts/output-appearance.md)為準，不以舊盤點覆蓋現況。
 
 ## 已確認的取得方向
 
 未來每個額外 set 個別單次取得，新作品另計，已取得作品範圍內的修復不另收；純自願支持與作品取得分開。現有模板都只是待改善素材，不安排當期合集、定價或上架。
 不同取得途徑可以授予同一作品使用權，但目前不建立點數／廣告系統。Discord、充值、任務與合作贈送等比較只保留在[市場研究](../research/product/appearance-support-models-market-plan-2026-10-20.md)，不繼續擴張本輪共用基礎工作。
-
-## 實作階段與依賴順序
-
-階段順序為 F1 → F2 → F3 → F4 → F5，每階段均應可獨立審查及回復。F1–F4 已建立並驗證；F5 本機結果見下節，不因工具可產圖而勾選作品／OBS／完整耐久驗收。
-F1 完成後可分別研究 F2／F3，但整合時仍逐階段驗收，避免同時變動狀態、預覽與視覺結果後無法定位回歸。
-
-| 階段                   | 主要交付                                                                | 解決盤點問題                  | 進入下一階段的條件                                                             |
-| ---------------------- | ----------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
-| F1：情境與契約基線     | 八模板範圍表、synthetic fixtures、來源版本與比較規則                    | G03／G04／G06／G07 的驗收基礎 | 八模板與測例一一對應，可明確區分既有差異和新的回歸                             |
-| F2：共用 host 生命週期 | 最小 lifecycle adapter、font／asset 狀態契約與清理測試                  | G08，保護既有 runtime 行為    | 每個入口在斷線／重連／隱藏／關閉後符合相同資源與狀態要求，藝術 controller 未改 |
-| F3：預覽資料與一致性   | 共用安全示範場景、Gallery／Workbench／runtime adapters 及 parity checks | G03；G01 的真實預覽產生能力   | 同輸入／設定／尺寸可比較；縮略差異有明列，真實輸出不出現測試資料               |
-| F4：驗收工具與證據格式 | 可重現 capture／記錄流程、來源 manifest、八模板 acceptance matrix       | G01／G02／G04 的證據交付      | 乾淨環境可重跑並分辨通過、失敗、未測；測試圖不自動覆寫 Gallery 作品資產        |
-| F5：實機整合與基準     | 隔離 Electron／真實 OBS 驗收、長時間與效能 baseline                     | G04／G05                      | 目前已宣告範圍的結果可追溯，未完成項保留；再決定個別模板改善工作               |
 
 ## Set 的身份與範圍標準
 
@@ -82,34 +51,15 @@ F1 完成後可分別研究 F2／F3，但整合時仍逐階段驗收，避免同
 下架停止新的取得，不自動撤銷既有權利；合法退款撤銷、權利瑕疵等例外須另訂明確處理，不能口頭保證任何情況都永不撤銷。
 允許的直播／錄影／VOD、裝置／創作者使用範圍、轉讓／贈送與退款條款需在收款前明定；不能照抄 Discord 的平台帳號或點數政策。
 
-## 技術邊界與準備順序
+## 實作階段與依賴順序
 
-App-owned template 提供可執行排版與動態；Presentation Pack 仍是經驗證的宣告式外觀與資產，不能含任意 HTML／CSS／JavaScript、shader source、外部 URL 或安裝 hook。
-若外觀需要全新 renderer 能力，先以免費 App 更新交付通用能力與契約，再提供對應自有 set；不透過付費 pack 偷渡可執行程式。
-ownership 決定能否選用該作品；既有 feature gate 決定是否啟用該流程；依賴／相容性決定是否能執行。三者分開，不用點數餘額控制演出。
+2026-10-20／21 的 F1–F5 共用基礎工作已收尾：F1 建立情境與設定基線，F2 整理 host 生命週期，F3 統一預覽資料，F4 建立 capture／來源工具，F5 完成本機整合與短測。各階段結果、來源 hashes、歷史失敗及未測範圍統一見[驗收紀錄](../operations/output-appearance-acceptance.md)。這是歷史交付，不再列為下一輪 F3 計畫。
 
-以下先完成共用基礎，才另案改善 default 與代表性 set。樣本或基礎階段通過不等於作品可售；不規定新品數量、售價或月更。
-
-## 已交付與驗收邊界
-
-| 階段 | 現行模組與契約                                                                                                         | 已驗與限制                                                               |
-| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| F1   | scripts/outputAppearanceBaseline.mjs、fixtures；[顯示設定與來源契約](../contracts/output-appearance.md)                | 八模板／32情境結構與設定邊界；不能當作畫面全矩陣通過                     |
-| F2   | overlay/shared/lifecycle.mjs 與三入口；[host 契約](../contracts/output-runtime.md)                                     | 清理、重連、字型 fallback、native reduced motion；正常動畫 recipe 不變   |
-| F3   | shared/presentation/outputPreviewScene.mjs、Gallery／Workbench adapters；[預覽契約](../contracts/output-appearance.md) | 同一安全場景、設定語意與來源邊界；縮略版不是 pixel parity 或作品驗收     |
-| F4   | scripts/output-appearance-audit.mjs、capture driver、thumbnail provenance                                              | 可重跑 capture／取消／來源 hashes；不自動替換八張縮圖或核准素材權利      |
-| F5   | scripts/output-performance-probe.mjs、短測 driver、startup-performance                                                 | 八模板本機整合、封裝快照啟動、短時資源觀測；真實 OBS／安裝版／耐久仍待驗 |
-
-工具重跑、環境、逐階段驗證數據、歷史失敗與證據連結集中在[驗收 runbook](../operations/output-appearance-acceptance.md)；冷暖啟動仍以[啟動基準](../operations/startup-performance-baseline.md#f5-2026-10-20-封裝快照)為權威。版本化 JSON 保留當時 dirty-source hashes，不代表之後所有工作目錄版本都已通過。
-
-Live Stage 獨立逾時已釐清：當時共享模組新增 import 而 HTTP allowlist 尚未配套，造成入口載入 404；不是 Live Stage 專屬動畫停滯。工具已改為執行 frozen server 並先檢查 HTTP 模組圖，新來源獨立四狀態各約10秒通過；原 failed 紀錄保留。見[補驗結果](data/appearance-live-stage-f5-followup-2026-10-21.json)。
-
-初輪60分鐘連播依使用者對耗時的修正停止，保留19.62分鐘觀測，完整60分鐘未測。後續短測預設5分鐘；長測另行安排並明確指定，不從短時無 backlog 推論整場可靠性或無記憶體漏洩。
+後續依 ADR 0027 的 P4→P5→P6 分別處理畫布選取、配置操作與 Styles；個別模板的藝術改善各自驗收。相容性與功能 gate、作品取得權利分開；若新外觀需要 renderer 能力，先由 App 更新交付通用能力，再提供相容作品。Pack 不交付任意 HTML／CSS／JavaScript、shader source、外部 URL 或安裝 hook。
 
 ## 尚待完成與下一步
 
-- 真實 OBS 的 alpha／文字邊緣、正常 motion、hide/show／refresh／場景切換與 App 重啟重連；使用實際播放與錄影，記錄 OBS 自身資源與 rendering lag。
-- 安裝版 smoke、大曲庫／慢磁碟、完整演出耐久；GPU VRAM／utilization／FPS 尚未量測。其餘 fresh-process 模板比較仍按 runbook 保留未測。
-- 八模板的藝術與可讀性人工驗收、四張 reference 素材權利及 G01 真實縮圖替換。既有工具結果不消除此交付阻擋。
-
-本輪共用基礎工作已停止；下一項製作另行決定，不自動進入個別模板重畫、付款、帳號或遠端 pack。共用基礎完成表示資料／設定一致、資源可回收且可重跑驗收，不表示商品可上架。
+- W3 僅在當時使用者環境確認 Queue Board、Karaoke Stack、Art Card 的只讀視窗擷取短測；詳細通過／未驗界線見[W3 收尾](../operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。這不涵蓋其他模板、Browser Source alpha、跨環境或耐久。
+- 安裝版 smoke、大曲庫／慢磁碟、完整演出耐久及 GPU VRAM／utilization／FPS 仍缺代表性證據；本機短測不推論整場可靠性。
+- 各模板仍需藝術與可讀性驗收、逐項素材權利及真實縮圖來源紀錄；10-20 原盤點的四張 reference 缺口須依實際替換版本重新核對。
+- 付款、帳號、entitlement、復原與遠端 pack 的獨立實作範圍另行確定；不因共用基礎完成就自動開始。依賴版本與適用條件查[依賴盤點](community-dependency-boundaries-2026-10-20.md)，市場選項查[研究](../research/product/appearance-support-models-market-plan-2026-10-20.md)，早期分層提案見[歷史](../archive/community-feature-tiers-plan-2026-10-20.md)。

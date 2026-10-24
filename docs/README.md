@@ -22,30 +22,14 @@
 - 發布：[release runbook](operations/release-runbook.md)、[安裝／重裝驗證](operations/installer-maintenance-verification-2026-10-18.md)、[更新驗收範本](operations/update-acceptance-template.md)、[release notes 範本](operations/release-notes-template.md)
 - 驗證：[人工驗收](operations/manual-acceptance.md)、[Output 外觀驗收](operations/output-appearance-acceptance.md)、[CI](operations/ci-usage.md)、[啟動效能基準](operations/startup-performance-baseline.md)
 - 診斷與歌詞：[diagnostics](operations/diagnostics-rollout.md)、[歌詞對齊試用](operations/lyrics-alignment-research.md)、[歌詞問題回報](operations/lyrics-issue-feedback.md)、[provider 契約錄製](operations/lyrics-provider-contracts.md)
-- 歌詞顯示時鐘：[本地／Output 採樣配對修正與同案例對照](operations/lyrics-clock-fix-2026-10-22.md)
-- Output 顯示效能：[deadline 與首字樣式準備修正](operations/lyrics-output-tail-fix-2026-10-22.md)
-- T1+ 連續填色：[細時間保留、中日映射與兩端同案例驗證](operations/lyrics-continuous-fill-2026-10-22.md)
-- Output 細填色成本：[首字準備、commit 與冷暖重播對照](operations/lyrics-output-fine-cost-2026-10-22.md)
-- Output 冷啟動長尾：[同次事件鏈、Focus 量測與舊分組資料診斷](operations/lyrics-output-cold-max-2026-10-22.md)
-- 歌詞階段整理：[交付範圍、驗證與尚未解決的時間限制](operations/lyrics-milestone-2026-10-22.md)
-- KTV／本地填色：[實檔路徑、首字顯示估計與同案例驗證](operations/lyrics-ktv-local-fill-2026-10-22.md)
-- 本地呈現收斂：[只有分段起點的連續掃字與模型時間隔離](operations/lyrics-local-continuity-2026-10-22.md)
-- 來源分析任務：[來源版本、進度與套用隔離及文字完整性核對](operations/lyrics-source-ownership-2026-10-22.md)
-- 歌詞句尾與停留：[有界句尾、KTV 有效列與自然播放／離線活動對照](operations/lyrics-tail-hold-2026-10-22.md)
-- Focus 畫格管線：[提交關聯、容量量測與兩來源冷暖交錯對照](operations/lyrics-focus-frame-2026-10-23.md)
-- Focus GPU 與本地呈現：[有限陰影／描邊／填色拆解與螢光筆統一](operations/lyrics-focus-gpu-2026-10-23.md)
-- Focus 陰影最小候選：[兩來源冷暖對照、所有慢值與候選撤回](operations/lyrics-focus-copy-shadow-2026-10-23.md)
-- 歌詞本階段總結：[已保留、已撤回、未解與分類提交紀錄](operations/lyrics-milestone-2026-10-23.md)
-- 本地詞塊提示：[已知停頓、T1+／T2 隔離回歸與舊分析版本限制](operations/lyrics-local-cue-pauses-2026-10-23.md)
-- 舊分析唯讀相容：[v2→v3 嚴格身分證明、正式路徑驗證與保留慢值](operations/lyrics-readonly-compatibility-2026-10-23.md)
-- 句尾階段驗收：[v3 兩來源自然播放、KTV 交接原因與最小 fallback 提案](operations/lyrics-tail-acceptance-2026-10-23.md)
-- KTV 交接與補尾修正：[未完成細時間保護、靜態補尾與兩來源驗收](operations/lyrics-handoff-fallback-2026-10-23.md)
 
 ## 權利與治理（governance/）
 
 [合規參考](governance/legal-compliance.md)、[外觀 set 計畫](governance/appearance-sets-plan.md)、[依賴查核](governance/community-dependency-boundaries-2026-10-20.md)、[服務／模型／元件授權查核](governance/release-license-review-2026-10-18.md)、[功能說明查核](governance/feature-notice-review-2026-10-18.md)、[封裝 notices 補正](governance/packaged-notices-repair-2026-10-18.md)
 
 ## 發行與歷史
+
+歌詞工程結果集中於[顯示、時鐘與效能](archive/lyrics-display-performance-2026-10.md)及[來源、相容與交接](archive/lyrics-source-and-cues-2026-10.md)；現行操作仍由上列手冊與契約持有。
 
 - 發行紀錄：[v0.4.0](releases/v0.4.0.md)、[v0.3.0](releases/v0.3.0.md)、[v0.2.0](releases/v0.2.0.md)、[v0.1.2](releases/v0.1.2.md)、[v0.1.1](releases/v0.1.1.md)
 - [歷史索引](archive/README.md) 收錄已完成或已取代的計畫與交接快照，並指向現行文件；只供追溯。

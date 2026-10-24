@@ -70,7 +70,7 @@ Output 已使用時間外推與起點 deadline。64 次位於同一 timeupdate d
 
 ## 可行性與下一階段邊界
 
-後續已依本次基準實作[本地／Output 時鐘配對修正](../../operations/lyrics-clock-fix-2026-10-22.md)。以下保留研究階段的原始結論與範圍；修正後的數字另見該報告，不覆寫本次 baseline。
+後續已依本次基準實作[本地／Output 時鐘配對修正](../../archive/lyrics-display-performance-2026-10.md#時鐘採樣與發布配對2026-10-22)。以下保留研究階段的原始結論與範圍；修正後的數字另見該報告，不覆寫本次 baseline。
 
 建議先討論以下兩個獨立工作，再決定掃字：
 

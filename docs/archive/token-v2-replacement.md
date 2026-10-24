@@ -505,3 +505,71 @@ Phase 4.2 已清理 `internal-tools` 內 Music Analysis 與 Lyrics Provider Revi
 Phase 5 已將 `performer`、`performer-overlay`、window toolbar、stage、lyric cue 與 Electron native substrate 原子切為 v2。最後 3 個 production-consumed legacy names／4 files／5 pairs 已清除；40px toolbar 改用正式 `--ui-window-titlebar-block-size`，字重改用 `semibold`／`bold`，native dark／light background同步為 `#191a1e`／`#e8e4dd`。Self-View snapshot authority、window controls、track／lyrics／reading／next-track anatomy與三個 Performer feature geometry names均未變更，既有 component names 已符合 renderer／role 結構，因此沒有 cosmetic rename。
 
 Phase 6 已將 v2 graph 原子移入 `src/styles/tokens.css`，刪除 T1 stylesheet、`tokens-v2.css`、legacy manifest／invalidation、generator／readiness scripts、npm commands與 registry migration status。三個 `UiModal` migration aliases同批改為正式 `inline-size` names後移除，當時 stable graph為404個 unique names；2026-10-05 為正式 `AppFolderContentField` 新增 `--ui-folder-content-background` 與 `--ui-folder-content-state-min-block-size`，2026-10-08 為PlayerBar新增 `--ui-player-extras-inline-size` 與 `--ui-player-side-reserve-inline-size`、為Right Dock新增三個 `--ui-right-dock-section-surface-*`，並以 `--ui-track-row-selected-surface` 取代 `--ui-row-active-shadow`，現行 graph 為411個。永久 gate另修正6個既有未宣告 production references：BGM icon尺寸改用spacing foundation、Settings／Lyrics typography與muted color改用正式 semantics、Output mockup移除無owner尺寸上限。2026-10-13 cleanup 又移除已採用的 F8 final board、Studio Library Candidate 與專用 state adapters；17個`DemoCandidate*.vue`只保留尚未收斂的 component-level evidence。Candidate import boundary仍明確禁止進入production graph。下一步不再有Token migration phase，後續只依真實consumer另案審查component產品決策。
+
+## 2026-09-29 元件階段快照
+
+下表保留 owner checkpoint 當時的 Candidate／Current 判斷；「尚未採用」、
+「active／v1」與 production gap 欄位是歷史狀態，不覆蓋 2026-10-03 已完成的
+production-wide replacement。仍有效的是元件 anatomy、variant、accessibility與
+未另案核准的 View-level產品決策。
+
+- 系統預設色：中性低干擾 surface，以 Indigo 負責主題、選取、current 與 focus；內容類型／格式／來源預設維持 Neutral；仍屬候選或現行缺口：production-wide semantic mapping 尚未採用
+- Folder 色：Folder 外觀色由 layout component 擁有；`--ui-color-folder-primary` 經 `--ui-folder-layout-background` 供 tabs／rail／perimeter 共用，`--ui-folder-page-background` 維持中性 document，`--ui-folder-content-background` 提供 recessed expandable field；仍屬候選或現行缺口：第一版只採 primary material；沒有第二個真實 consumer 前不公開 secondary／tertiary variant
+- Folder page layout：`AppFolderLayout`／`AppFolderPage` 已正式接手 anatomy、fixed header、document／workspace body mode、窄版 overflow 與文字重心；`AppFolderContentField` 擁有 document 內可展開內容範圍；F8 重用同一實作；Setlist、Performance Session、Import、Lyrics、Output body／overlay 已完成 v2 cutover；仍屬候選或現行缺口：Main、Settings、development specialist 與 Performer renderer 均已切換；下一步只執行 final deletion gate
+- 狀態色：Mildliner 作色相來源而非螢光筆材質；主要訊號用原色強度，soft 只作選用背景；仍屬候選或現行缺口：Live 與 Danger 可同色但維持不同 token、形狀及標籤語法
+- 字體與文字：Electron 使用 Windows 原生字型堆疊；Display／Emphasis 暫定 28／700；長標題維持單行截斷；仍屬候選或現行缺口：Display 日後只有在具體強調情境出現時才重新評估
+- 單位：字體、spacing、radius、元件幾何及 CSS breakpoint 用 rem；hairline／focus／drag 用 CSS px；Electron window 用 DIP；raster／canvas backing 用 physical px；仍屬候選或現行缺口：不得把 16px root 下的 CSS px 等值寫成 DIP
+- 核心尺寸：一般操作 hard floor 32、Primary transport 44、緊急 48 CSS px；windowed／restored 使用 Compact，maximize／fullscreen 使用 Standard；仍屬候選或現行缺口：既有 Candidate alias 仍名為 `control-height-live`；Icon Button 不將它解讀為所有 Live action 的通則
+- Icon Button：active `sm` 已移除；`md` 32px、`lg` 44px，glyph 維持 16 unit；context-neutral primitive 與 parent-owned recipes 已分區並完成 owner 可視確認；正式 `UiIconButton` 已在 Token v2 scope 採用完整 Accent／Overlay hover／pressed，並保留 active scope 幾何；仍屬候選或現行缺口：Emergency 48px variant 未映射；Primary transport／artwork overlay／titlebar 仍由 caller recipe 擁有
+- Text Action：預設如一般文字無底線，hover／focus-visible 顯示底線；維持 caller typography、intrinsic width、`click.stop` 與 `UiMarqueeText` overflow；正式 `UiTextButton` 已在 Token v2 scope 採用 disabled 50% 與 non-selectable action chrome；仍屬候選或現行缺口：高列數 production surface 仍應明確選用 static ellipsis，避免逐列 observer／motion 成本
+- Field shell：Candidate Standard 36px／Compact 32px；現行 30px；寬度由 parent 擁有，`min-width: 0`、無 component max；readonly quiet surface 已完成跨家族候選檢查；仍屬候選或現行缺口：Candidate label／disabled select-none 與 readonly surface 尚未採用到正式 Field
+- Search Box：Candidate 已定左右各 32px slot、16-unit glyph、兩側各 4px text gap、自訂 Clear、可清除互動及完整狀態標本；仍屬候選或現行缺口：active 仍是 30px、缺整體 hover／disabled surface、Clear hit token，且 native cancel ownership 未正式落地
+- Text Field：Candidate／Current 的尺寸、寬度、單行 anatomy、內容及七種狀態已檢查；readonly 採平面 quiet surface、完整文字對比與可選取／複製；仍屬候選或現行缺口：active light placeholder 對比 4.23:1；readonly Candidate production adoption 待後續
+- Textarea：rows、hard floor、soft wrap、native overflow、vertical resize、內容與七種狀態已檢查；readonly 與 Text Field 共用 quiet surface 語法；仍屬候選或現行缺口：active hard floor 60px；readonly Candidate production adoption 待後續
+- Validation feedback：上游 issue → form controller → localized `invalid + error` → UiField；required pristine 不報錯，blur／submit 後顯示，修正後移除；Error 取代 Hint；仍屬候選或現行缺口：`auto` 是現行預設；父層 `reserved` 只是一行空間候選；未新增 Zod、正式 prop、token 或產品表單流程
+- Select：Candidate 36／32px、project-owned indicator、12px end inset、closed-lane ellipsis 與 overflow-only 完整值提示已完成 owner 視覺檢查；仍屬候選或現行缺口：native popup 尺寸／option rendering 仍由 Chromium／Windows 擁有；production adoption 待後續
+- Checkbox：Candidate／Current、36／32px full-row target、16px indicator、多行首行對齊、Boolean／mixed、validation 與 ARIA 已完成 owner 視覺檢查；仍屬候選或現行缺口：Candidate custom indicator、整列 disabled 與 `indeterminate` public contract 的 production adoption 待後續
+- Range：正式 `UiRangeControl` 擁有 native input、Token v2 6px track／fill、16px interaction thumb、optional stops 與 pointer preview；`UiRange` 組合 Field／output。Rest 隱藏 thumb，hover／drag／focus 顯示，pointer hover 依位置預覽時間或數值且不改 model；仍屬候選或現行缺口：正式 primitive 與全部 production native range sites 已 adoption；active／v1 保留 native appearance compatibility，未新增 range color aliases
+- Button：正式 `UiButton` 以 `variant` 表達 Primary／Secondary／Ghost hierarchy，另以 `intent="danger"` 表達 destructive meaning；Token v2／active scope 共用 API，F8 已補三層 destructive specimen 與 AA contrast 驗證；仍屬候選或現行缺口：仍保留 icon-only compatibility branch；只遷移已確認不可逆 consumer，新用法一律使用 `UiIconButton`
+- Tabs：Candidate／Current 36／32／30px、Panel／Bar、內容 overflow、狀態、automatic keyboard activation 與真實 tabpanel 關係已完成 owner 可視確認；仍屬候選或現行缺口：現行只管理 tab list、panel wiring 由 caller 擁有；Candidate 與 compound API 的 production adoption 待後續
+- Chip：Candidate Standard 24px／Compact 20px、靜態 badge／label 邊界、內容、8 semantic tones、recipes 與 ARIA ownership 已完成 owner 可視確認；仍屬候選或現行缺口：Current 約 21.5px 且無邊界；`background`／`color` escape hatch 與 Candidate production adoption 待後續
+- Status Icon：Candidate Standard 24px／Compact 20px、16-unit glyph、狀態／裝飾 ARIA 邊界、8 semantic tones、motion 與 recipes 已完成 owner 可視確認；仍屬候選或現行缺口：Current 固定 24px；`text`／`highlight` compatibility tones 與 Candidate production adoption 待後續
+- Hint／supporting text：Candidate／Current、Field／Notice 邊界、14px caption、內容換行、7 tones、layout／ARIA ownership 已完成 owner checkpoint；仍屬候選或現行缺口：`UiHint` 仍是 compatibility wrapper；是否保留 Vue primitive 待 migration 比較 utility／owner recipe
+- Inline notice：Candidate／Current、compound anatomy、Hint／Field／Modal／fixed host 邊界、密度、內容、tone、action、delivery 與 ARIA ownership 已完成 owner checkpoint；仍屬候選或現行缺口：Candidate 與 demo-only fixed notification recipe 的 production API／adoption 未改
+- Progress：Candidate／Current、8px track、2px Candidate radius、determinate／indeterminate、內容、motion 與 ARIA ownership 已完成 owner checkpoint；仍屬候選或現行缺口：Candidate production adoption 尚待後續；正式元件／consumer 未改
+- Marquee Text：Candidate／Current、單行 overflow、user-controlled reveal、RTL、reduced motion、selection 與 parent recipes 已完成 owner checkpoint；仍屬候選或現行缺口：Candidate production adoption 尚待後續；正式元件／consumer 未改
+- Track Thumb：Candidate／Current、單曲方形封面、四圖預設 fallback、尺寸、裁切、內容、ARIA 與 compatibility contract 已完成 owner checkpoint；仍屬候選或現行缺口：四圖 fallback 已採用；其餘 Candidate empty-state／ARIA contract 待後續
+- Collage Thumb：Candidate／Current、square output geometry、center cover crop、集合封面 precedence、0–5 首拼貼、圖片回退、實際尺寸、overlay 與 ARIA 已完成 owner checkpoint；仍屬候選或現行缺口：member fallback 已採用；其餘 Candidate presentation 與 crop selector 待後續
+- Track Row：Candidate／Current、曲目識別 anatomy、component reuse、listitem／sibling action、狀態、內容、consumer recipes 與 ARIA 已完成 owner checkpoint；仍屬候選或現行缺口：Queue 已採用正式 Standard 52／40px row；其餘 Candidate production adoption 尚待後續
+- Action Menu：正式 `UiActionMenu` 已採用 trigger-neutral ownership、semantic size、typed content recipes、menu keyboard、碰撞、內部捲動、搜尋與 ARIA 契約；仍屬候選或現行缺口：2026-10-16 完成 production consumers、F8 與 shared floating gate 收束
+- Modal：Candidate／Current、中性尺寸、fixed header／footer、body-only scroll、內容壓力、背景層級、focus／dismissal 與 ARIA 已完成 owner checkpoint；仍屬候選或現行缺口：正式 `UiModal`／consumer／active tokens 未改；Current focus／top-layer／整面捲動差距留待 production migration
+- Scrollbar appearance：`UiScrollRegion` 行為 primitive 與 `UiScrollLayout` layout composition 已採用；vertical／horizontal／both-axis、9px visual safe reserve、12px overlay hit lane、6px visual thumb、32–72px proportional thumb、native scroll projection／drag、collapsed visibility 與 forced-colors 已建立；仍屬候選或現行缺口：Sidebar／Right Dock／AppFolderPage 已遷移；其餘 production scroll owners 依各自內容邊界逐案採用，不能把 feature padding 下沉到 behavior primitive
+- F7 View：Studio Library／Controlled Dossier 已接入真實 Library／Playlist／Player／Queue 投影；Candidate 為唯一 View-level live panel，playlist workspace 與 queue metadata 分責、local search／sort／reorder、單擊選取與雙擊播放已建立；仍屬候選或現行缺口：仍待完整 owner visible acceptance；local order 不持久化，不代表正式 Setlist 或任何 Candidate component adoption
+
+這個 checkpoint 當時只有 Icon Button hard-floor 修正屬於正式 active 變更。
+日期快照保留當時的 Candidate／Current 判斷；runtime F8 已移除凍結的 v1
+Current 標本與比較 surface。尚未採用的 `DemoCandidate*` 仍受
+source-boundary gate 限制，不得進入 production graph，也不形成第二份 token
+payload。
+
+Foundation 至 UiModal 的歷史 comparison checkpoint 已完成；細節留在本文件供
+追溯，不再要求 F8 同時渲染兩個版本。正式元件由 production `Ui*` 標本回歸，
+未採用差距最多保留單一提案。Scrollbar 是該 checkpoint 後另行核准並提升的正式
+primitive；這不會自動核准其餘提案。
+
+## F7 View checkpoint（歷史）
+
+Studio Library／Controlled Dossier 保持 View-level Candidate，不是第二套元件庫，
+也不是正式 Setlist migration。F7 驗證資訊架構、layout、density、folder material、
+真實資料投影與已審查元件的組合；F8 仍是 30 個 Foundation／component contract
+的唯一權威。這個 phase 名稱不改動目前鍵盤 F7 對應的 Lyrics Provider Review。
+
+目前 F7 邊界如下：
+
+1. Studio Library Candidate 是唯一 View-level live panel；Setlist Current 比較頁已自 F8 移除，正式 Setlist View 本身維持不動。最終決策板與元件回歸目錄不重複掛載正式 Setlist 資料流，也不因 Candidate 看似可用就宣稱 production adoption。
+2. 中央 Controlled Dossier 是 selected playlist／album workspace，擁有集合 header、search、sort、local order draft 與完整 track table；右側 Context Inspector 只投影 current queue、currently playing track 與歌曲資訊，不重複集合摘要。
+3. Track table 的 pointer 單擊／Space 只選取，pointer 雙擊／Enter 才由 View 呼叫既有 queue／player owner。Selected 使用中性 playlist surface、具形狀的 inset indicator 與 `aria-pressed`；Current 使用播放 glyph、accent title 與 `aria-current`，兩者可同時存在。
+4. Playlist 在 custom order 且沒有 search／sort 時直接以專用 handle 支援 pointer drag 與 ArrowUp／ArrowDown reorder；search／sort 時 handle 明確 disabled，source-backed album 不提供 handle。順序只存在 Candidate local draft，變更後才顯示還原，不接 `usePlaylists` persistence 或 IPC。
+5. F7 feature table 的 title／artist 是 full-row CTA chrome，因此 select-none；這是 caller-owned exception，不反向改寫通用 `UiTrackRow` 的 selectable user metadata contract。Search input、說明、診斷與其他使用者資料仍依各 component owner 保持可選取。
+6. `App.vue` 的 `.shell__main` 擁有 primary／context split 與 reflow；寬版 Candidate在Inspector展開與收合時都保留`17.5rem`結構bay，collapsed restore control只佔shell右下角的按鈕局部邊界，bay上方留白不paint且不承接pointer，四邊共用`0.5rem` outer inset；`70rem`以下仍改為靠右temporary overlay、不得保留空白metadata column。`AppFolderLayout`擁有global navigation／Folder silhouette，`AppFolderPage`擁有workspace inset／page scroll mode，Sidebar與PlayerBar各自保留寬度、resize、navigation與playback ownership。Sidebar與Inspector的resize axis都支援雙擊在摺疊／上次展開寬度間切換；F7不以View CSS穿透重畫這些internals。
+7. F7 只組合正式 `Ui*` 與 feature components，不搬入 `DemoCandidate*`。尚未 adoption 的 native Modal、Action Menu keyboard／ARIA、fallback、active token 與 consumer gaps 繼續留在 migration backlog。

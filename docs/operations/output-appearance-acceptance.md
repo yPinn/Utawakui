@@ -1,11 +1,13 @@
-# 八模板 Output 驗收清單
+# Output 驗收清單
 
-更新日期：2026-10-21。F1–F5 本機範圍與 Live Stage 補驗已有紀錄；真實 OBS、完整耐久與人工作品驗收仍待完成。以下為重跑方法、驗收範圍與當輪證據，不代表八模板全矩陣通過。
+現行步驟更新於 2026-10-24；F1–F5 與 W3 的當輪日期及結果保留於各節。F1–F5 本機範圍與 Live Stage 補驗已有紀錄；全模板的 Browser Source／透明合成、完整耐久與人工作品驗收仍待完成。以下方法與局部結果不代表全矩陣通過。
 設定值域、default／opt／advanced、模板不變條件與本機來源以[顯示契約](../contracts/output-appearance.md)為準；後續階段見[現行計畫](../governance/appearance-sets-plan.md)。
 
-首次真人操作先做下節的 default pack 短輪次；其餘章節保留工程重跑與歷史證據。本節只制定步驟，尚未執行真實 OBS 驗收。
+下節保留原選定三模板的 Browser Source 短輪次；這組步驟尚未有人工結果。W3 視窗擷取已有另一組有限通過紀錄，見[收尾結果](#w3-收尾紀錄2026-10-21)，兩種擷取方式分開判讀。其餘章節保存工程重跑與歷史證據。
 
-## Default pack OBS 短輪次
+## 選定三模板的 Browser Source 短輪次
+
+這組基線固定使用 Queue Board、Karaoke Stack、Art Card。現行歌單 slot 預設已改為 Receipt Setlist；本節不表示目前的全部 default，也不把這組結果套用到 Receipt Setlist、Cover Player 或其後版本。新一輪驗收依[現行模板與設定](../contracts/output-appearance.md#九模板)另記版本、尺寸及結果。
 
 目標約10–15分鐘，先單模板再三者並用，不開直播、不做耐久測試。只使用目前版本的既有設定與正常動態；不修改模板、CSS、動畫配方或付款機制。OBS內移動來源只為避免互相遮擋，不當作模板排版修正。
 
@@ -76,34 +78,35 @@ OBS官方[Browser Source說明](https://obsproject.com/kb/browser-source)定義�
 
 結果只用「通過／失敗／未測／不適用」，不適用要附原因。一次驗收的頁首另填：日期、App版本及執行方式／commit或dirty狀態、Electron與OBS版本、CEF版本（能取得才填）、Windows／GPU／driver、OBS畫布／輸出解析度／FPS／Studio Mode、三個來源的URL／尺寸／變形／CSS／filters／兩個生命週期選項、App輸出delay／歌詞offset、測試曲A/B及來源類型。歌曲以別名記錄即可，不需交付原始音檔或本機絕對路徑。
 
-首輪完成後可回報環境頁、逐項結果表、三種背景圖，以及操作／重連的短錄影與OBS統計前後值；若有失敗先給案例ID、觸發操作、最後正確畫面、錯誤畫面與等待秒數。本節尚未有人工結果；首輪全過也只表示三個default模板的這組短情境通過，不能勾選全部八模板、長時間或付款驗收。
+首輪完成後可回報環境頁、逐項結果表、三種背景圖，以及操作／重連的短錄影與OBS統計前後值；若有失敗先給案例ID、觸發操作、最後正確畫面、錯誤畫面與等待秒數。本節尚未有人工結果；首輪全過也只表示選定三模板的這組短情境通過，不能勾選全部模板、長時間或付款驗收。
 
 ## 重跑 F1 基線
 
-執行 `npm run output:baseline`；預期 `ok: true`、`templates: 8`、`scenarios: 32`、`issues: []`。
+執行 `npm run output:baseline`；預期 `ok: true`、`templates: 9`、`scenarios: 32`、`issues: []`。
 執行 `npm exec -- vitest run scripts/outputAppearanceBaseline.test.mjs` 檢查固定資料、跨入口設定與純投影契約。
 在 Windows 受限環境遇到既有檔案 rename 的 EPERM，依既有測試慣例把 TEMP／TMP 指到工作區內獨立 tasks 目錄重跑；不要改正式存檔語意來消除環境錯誤。
 
 工具與 [fixtures](../../scripts/fixtures/output/README.md) 不讀真實曲庫、不列舉私人字型／圖片，不啟動 OBS 或驅動 UI。
-`createAcceptanceMatrix()` 提供八模板 × 32 case 的機器清單，applicability 與 evidence 分開記錄。
+`createAcceptanceMatrix()` 為每個已登錄模板提供 32 case 的機器清單，applicability 與 evidence 分開記錄。下方 F2–F5 歷史結果仍保留當時八模板的範圍。
 projection-only 不是畫面已通過；runtime-pending／manual-pending 也不是測試失敗，代表尚未執行該層驗收。
 
 ## 模板適用矩陣
 
 以下為人工驗收索引。完整案例的可見畫面與真實 OBS 仍待逐項驗收；F2 局部結果見末節。不適用須寫原因，不可當成通過數。
 
-| 模板            | 宣告 capture     | 歌詞 T0／T1／T2 | 封面故障 | 已安裝字型拒絕 | 預設之外的重點                                    |
-| --------------- | ---------------- | --------------- | -------- | -------------- | ------------------------------------------------- |
-| queue-board     | 480×810          | 不適用          | 不適用   | 不適用         | 字型／字重、surface、密度；current／played 與分頁 |
-| karaoke-stack   | 1920×1080        | 適用            | 不適用   | 不適用         | 共用 Look／字級；雙 lane 與 timing 不可由外觀改寫 |
-| kinetic-pop     | 1920×1080        | 適用            | 不適用   | 不適用         | material／cycle、arrangement；三層順序固定        |
-| ornate-vertical | 1920×1080        | T2 按行級回退   | 不適用   | 不適用         | 六位 Hex、兩種字型、右側 anchor／有界 offset      |
-| live-stage      | 1920×1080        | 適用            | 不適用   | 適用           | 本機字型描述、contrast、獨立文字 policy           |
-| manga-frame     | 1920×1080        | 適用            | 不適用   | 不適用         | 字型／字重、reading auto／off；ruby／框內安全區   |
-| art-card        | 480×270          | 不適用          | 適用     | 不適用         | 字型／字重、封套與播放位置                        |
-| cover-player    | 360×480、480×640 | 不適用          | 適用     | 不適用         | 字重、surface、封面與進度                         |
+| 模板            | 宣告 capture     | 歌詞 T0／T1／T2 | 封面故障 | 已安裝字型拒絕 | 預設之外的重點                                       |
+| --------------- | ---------------- | --------------- | -------- | -------------- | ---------------------------------------------------- |
+| queue-board     | 480×810          | 不適用          | 不適用   | 不適用         | 字型／字重、surface、密度；current／played 與分頁    |
+| receipt-setlist | 480×810          | 不適用          | 不適用   | 不適用         | 雙向出紙、完成才列印、回顧中斷、最近100筆與紙面alpha |
+| karaoke-stack   | 1920×1080        | 適用            | 不適用   | 不適用         | 共用 Look／字級；雙 lane 與 timing 不可由外觀改寫    |
+| kinetic-pop     | 1920×1080        | 適用            | 不適用   | 不適用         | material／cycle、arrangement；三層順序固定           |
+| ornate-vertical | 1920×1080        | T2 按行級回退   | 不適用   | 不適用         | 六位 Hex、兩種字型、右側 anchor／有界 offset         |
+| live-stage      | 1920×1080        | 適用            | 不適用   | 適用           | 本機字型描述、contrast、獨立文字 policy              |
+| manga-frame     | 1920×1080        | 適用            | 不適用   | 不適用         | 字型／字重、reading auto／off；ruby／框內安全區      |
+| art-card        | 480×270          | 不適用          | 適用     | 不適用         | 字型／字重、封套與播放位置                           |
+| cover-player    | 360×480、480×640 | 不適用          | 適用     | 不適用         | 字重、surface、封面與進度                            |
 
-字型缺失／延遲與 reduced motion 在八模板皆須按其實際字型／動態驗收；不能因不支援本機字型選單就略過 bundled font 失敗。
+字型缺失／延遲與 reduced motion 在全部模板皆須按其實際字型／動態驗收；不能因不支援本機字型選單就略過 bundled font 失敗。
 語言案例是中／日／韓／英壓力輸入，不因資料存在就承諾該模板已通過所有語言排版。
 
 ## 共用情境與通過條件

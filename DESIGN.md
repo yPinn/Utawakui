@@ -103,8 +103,8 @@ presenting it as production truth. The component review history and unresolved
 product-level choices remain in
 [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
 
-The adopted visual direction comes from
-[Visual System Foundation](docs/research/design/visual-system-foundation-2026-08-28.md):
+The adopted visual direction is recorded in the
+[Visual Direction History](docs/archive/visual-system-evolution.md#色彩與材質選擇):
 Direction B／Studio Library, Architectural Slate, semantic status signals and the
 Controlled Dossier folder interior. Folder exterior material remains owned by
 `AppFolderLayout`; feature surfaces own their content and approved artwork.
