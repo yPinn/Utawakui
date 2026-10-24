@@ -364,6 +364,16 @@ function createOutputServer(options = {}) {
     heartbeatTimer.unref?.();
   }
 
+  function loopbackAuthority() {
+    return `${OUTPUT_HOST}:${activePort}`;
+  }
+
+  // DNS-rebound pages reach loopback under a foreign Host; both HTTP and
+  // WebSocket entry points share this one trust rule.
+  function isLoopbackAuthority(request) {
+    return request.headers.host === loopbackAuthority();
+  }
+
   function handleUpgrade(request, socket, head) {
     let pathname;
     try {
@@ -378,8 +388,10 @@ function createOutputServer(options = {}) {
       return;
     }
 
-    const expectedOrigin = `http://${OUTPUT_HOST}:${activePort}`;
-    if (request.headers.origin !== expectedOrigin) {
+    if (
+      !isLoopbackAuthority(request) ||
+      request.headers.origin !== `http://${loopbackAuthority()}`
+    ) {
       rejectUpgrade(socket, 403, 'Forbidden');
       return;
     }
@@ -409,6 +421,10 @@ function createOutputServer(options = {}) {
     if (startingPromise) return startingPromise;
 
     const nextHttpServer = http.createServer((request, response) => {
+      if (!isLoopbackAuthority(request)) {
+        writeJson(response, 403, { error: 'forbidden' });
+        return;
+      }
       handleRequest(request, response).catch((error) => {
         logger.error?.('[output] HTTP request failed', error);
         if (!response.headersSent) {

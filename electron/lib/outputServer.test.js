@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import WebSocket from 'ws';
@@ -291,6 +292,30 @@ describe('outputServer', () => {
     });
     expect(method.status).toBe(405);
     expect(method.headers.get('allow')).toBe('GET');
+  });
+
+  it('rejects HTTP requests addressed to a foreign Host', async () => {
+    const server = createServer();
+    const status = await server.start();
+    const getStatusCode = (host) =>
+      new Promise((resolve, reject) => {
+        const request = http.get(
+          `${status.httpUrl}/api/v1/state`,
+          { headers: { Host: host } },
+          (response) => {
+            response.resume();
+            resolve(response.statusCode);
+          },
+        );
+        request.on('error', reject);
+      });
+
+    await expect(
+      getStatusCode(`attacker.example:${status.port}`),
+    ).resolves.toBe(403);
+    await expect(getStatusCode(`${OUTPUT_HOST}:${status.port}`)).resolves.toBe(
+      200,
+    );
   });
 
   it('accepts only bounded content-free startup telemetry when tracing is enabled', async () => {
