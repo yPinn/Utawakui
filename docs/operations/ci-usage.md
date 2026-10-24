@@ -77,11 +77,20 @@ Concurrency cancels only an older run for the same pull request. `main` pushes a
 manual diagnostics include the run id in their group and do not cancel one
 another. Ubuntu jobs time out after 15 minutes; Windows jobs time out after 20.
 
-`npm audit --audit-level=critical` precedes `npm ci` when selected, so a critical
-finding or registry failure stops before the more expensive install. The CI gate
-blocks critical findings; GitHub dependency vulnerability alerts remain enabled to
-surface lower severities for triage without consuming runner time. Public-test and
-release workflows still audit every candidate.
+Audits precede `npm ci`, so a finding or registry failure stops before the more
+expensive install. Every run executes `npm run audit:prod` (shipped dependencies,
+high and above), independent of the change scope, so a newly published advisory
+blocks even a documentation-only change. `npm run audit:all` (all dependencies,
+high and above) runs when the dependency audit is selected. Public-test and
+release workflows run `audit:all` for every candidate. GitHub dependency
+vulnerability alerts remain enabled for lower severities.
+
+The weekly `dependency-security.yml` schedule catches advisories published against
+an unchanged lockfile. It blocks on the app and `services/feedback-relay`, and
+only reports the NetEase evaluation runtime and the downloaded runtime components
+(`npm run audit:runtime` queries OSV for the PyPI wheels pinned in
+`shared/featureDependencies.json` and `resources/audio-processing/`, and lists
+Python, bgutil and FFmpeg for manual review).
 
 ## Artifact And Supply-Chain Policy
 
@@ -97,6 +106,9 @@ release workflows still audit every candidate.
 - External Actions are pinned to full commit SHAs and Gitleaks is pinned to an image
   digest. Enable repository SHA-pinning enforcement only after these workflow
   revisions are present on the repository's default branch.
+- Every checkout sets `persist-credentials: false`, so install scripts cannot read
+  the job token from `.git/config`; `gh` steps receive their token explicitly.
+  `scripts/dependency-security-workflow.test.mjs` enforces both rules.
 
 Existing artifacts are not deleted by this policy change. They expire according to
 the retention configured on the run that created them.

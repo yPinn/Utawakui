@@ -63,7 +63,8 @@ describe('ordinary CI workflow', () => {
     expect(commands).toEqual(
       expect.arrayContaining([
         'npm ci',
-        'npm audit --audit-level=critical',
+        'npm run audit:prod',
+        'npm run audit:all',
         'npm run license:inventory',
         'npm run lint',
         'npm run format:check',
@@ -82,14 +83,21 @@ describe('ordinary CI workflow', () => {
     expect(scopeStep?.run).toContain('$GITHUB_OUTPUT');
 
     const installStep = qualityJob.steps.find((step) => step.run === 'npm ci');
-    const auditStep = qualityJob.steps.find(
-      (step) => step.run === 'npm audit --audit-level=critical',
+    const productionAuditStep = qualityJob.steps.find(
+      (step) => step.run === 'npm run audit:prod',
     );
+    const auditStep = qualityJob.steps.find(
+      (step) => step.run === 'npm run audit:all',
+    );
+    // Shipped dependencies are audited on every run, independent of scope.
+    expect(productionAuditStep).not.toHaveProperty('if');
     expect(auditStep?.if).toContain('dependency_audit');
     expect(installStep?.if).toContain('quality');
-    expect(qualityJob.steps.indexOf(auditStep)).toBeLessThan(
-      qualityJob.steps.indexOf(installStep),
-    );
+    for (const step of [productionAuditStep, auditStep]) {
+      expect(qualityJob.steps.indexOf(step)).toBeLessThan(
+        qualityJob.steps.indexOf(installStep),
+      );
+    }
 
     const testStep = qualityJob.steps.find((step) => step.run === 'npm test');
     const coverageStep = qualityJob.steps.find(
