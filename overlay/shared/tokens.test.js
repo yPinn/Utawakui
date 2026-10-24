@@ -268,7 +268,7 @@ describe('overlay CSS tokens', () => {
     expect(mangaStyles).not.toContain('var(--ovl-color-current)');
   });
 
-  it('keeps Cover Player scoped, responsive, and token-driven', () => {
+  it('keeps the AM Cover Player scoped, token-driven, and volume-aware', () => {
     const artwork = fs.readFileSync(
       new URL('../now-playing/artwork.css', import.meta.url),
       'utf8',
@@ -281,15 +281,25 @@ describe('overlay CSS tokens', () => {
     expect(coverPlayerStart).toBeGreaterThan(-1);
     expect(coverPlayerStyles).toContain('--ovl-artwork-progress');
     expect(coverPlayerStyles).toContain('.artwork-overlay__transport');
-    expect(coverPlayerStyles).toContain('--ovl-template-player-inline');
-    expect(coverPlayerStyles).toContain('padding: 0;');
+    expect(coverPlayerStyles).toContain('--ovl-template-player-track-size');
+    expect(coverPlayerStyles).not.toContain('--ovl-template-player-inline');
+    expect(coverPlayerStyles).toMatch(
+      /\.artwork-overlay__player\s*{[^}]*inline-size: 100%;[^}]*padding: 0;/s,
+    );
     expect(coverPlayerStyles).toContain('overflow: hidden;');
-    expect(coverPlayerStyles).not.toContain('.artwork-overlay__volume');
+    expect(coverPlayerStyles).toMatch(
+      /\.artwork-overlay__volume\s*{[^}]*display: flex;/s,
+    );
+    expect(coverPlayerStyles).toMatch(
+      /\[data-volume-known='false'\]\s*\.artwork-overlay__volume\s*{[^}]*visibility: hidden;/s,
+    );
+    expect(coverPlayerStyles).toContain('--ovl-artwork-volume');
     expect(coverPlayerStyles).not.toContain(
       'box-shadow: var(--ovl-text-shadow)',
     );
-    expect(coverPlayerStyles).toContain('@media (max-width:');
-    expect(coverPlayerStyles).toContain('@media (max-height:');
+    expect(coverPlayerStyles).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*{\s*:root\[data-ovl-template='cover-player'\] \.artwork-overlay__scrubber-fill\s*{\s*transition: none;/s,
+    );
     expect(coverPlayerStyles).not.toMatch(
       /#[\da-f]{3,8}\b|\b(?:rgb|hsl|oklch)\(/i,
     );
@@ -321,7 +331,11 @@ describe('overlay CSS tokens', () => {
     expect(coverPlayer).toContain('inset-block-start: 50%;');
     expect(coverPlayer).toContain('inset-block-end: auto;');
     expect(coverPlayer).toContain('transform: translate(-50%, -50%);');
-    expect(coverPlayer).toContain('block-size: calc(100% - 2 *');
+    // AM uses a full portrait card with internal padding, rather than the
+    // external safe-area gutters used by Art Card and the setlist.
+    expect(coverPlayer).toMatch(
+      /\.artwork-overlay\s*{[^}]*inline-size: 100%;[^}]*block-size: 100%;[^}]*padding: 1\.5rem;/s,
+    );
   });
 
   it('centers every widget in its own capture canvas without tier repositioning', () => {
@@ -367,7 +381,7 @@ describe('overlay CSS tokens', () => {
     }
   });
 
-  it('fills each widget capture canvas inside the shared safe boundary', () => {
+  it('preserves safe gutters for Art Card and setlist and internal padding for AM', () => {
     const setlist = fs.readFileSync(
       new URL('../setlist/setlist.css', import.meta.url),
       'utf8',
@@ -382,7 +396,7 @@ describe('overlay CSS tokens', () => {
     const artCard = artwork.slice(0, coverPlayerStart);
     const coverPlayer = artwork.slice(coverPlayerStart);
 
-    for (const styles of [setlist, artCard, coverPlayer]) {
+    for (const styles of [setlist, artCard]) {
       expect(styles).toMatch(
         /\n\s{4}inline-size: calc\(100% - 2 \* var\(--ovl-safe-inline\)\);/,
       );
@@ -390,6 +404,10 @@ describe('overlay CSS tokens', () => {
         /\n\s{4}block-size: calc\(100% - 2 \* var\(--ovl-safe-block\)\);/,
       );
     }
+
+    expect(coverPlayer).toMatch(
+      /\.artwork-overlay\s*{[^}]*inline-size: 100%;[^}]*block-size: 100%;[^}]*overflow: hidden;[^}]*padding: 1\.5rem;/s,
+    );
 
     expect(setlist).toContain(
       'grid-template-rows: minmax(9rem, auto) minmax(0, 1fr);',
@@ -408,6 +426,9 @@ describe('overlay CSS tokens', () => {
     expect(coverPlayer).toContain('grid-template-rows: minmax(0, 1fr) auto;');
     expect(coverPlayer).toMatch(
       /\.artwork-overlay__mark\s*{[^}]*max-inline-size: 100%;[^}]*inline-size: auto;[^}]*block-size: 100%;/s,
+    );
+    expect(coverPlayer).toMatch(
+      /\.artwork-overlay__mark\s*{[^}]*aspect-ratio: 1;[^}]*block-size: min\(100%, 27rem\);/s,
     );
     expect(setlist).toMatch(
       /\.setlist-overlay__history-viewport\s*{[^}]*min-block-size:\s*0;[^}]*overflow:\s*hidden;/s,
