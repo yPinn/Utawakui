@@ -7,6 +7,7 @@ import {
   createDiagnosticsService,
   normalizeDiagnosticEvent,
   parseDiagnosticJsonLines,
+  redactText,
   serializeDiagnosticEvent,
 } from './diagnostics.js';
 
@@ -126,6 +127,27 @@ describe('normalizeDiagnosticEvent', () => {
     expect(event.message).toBe('ENOENT opening [path]');
     expect(event.message).not.toContain('My Music');
     expect(event.message).not.toContain('private song');
+  });
+
+  it.each([
+    [
+      'spawn C:\\Users\\John Doe\\Music\\My Song.mp3 ENOENT',
+      'spawn [path] ENOENT',
+    ],
+    ['failed D:\\歌曲\\周杰倫 - 晴天.flac x', 'failed [path] x'],
+    ['at load (C:\\Users\\John Doe\\app\\lib.js:10:5)', 'at load ([path])'],
+    ['copy \\\\nas\\Shared Music\\a b.wav done', 'copy [path] done'],
+  ])('redacts unquoted Windows paths with spaces: %s', (raw, expected) => {
+    expect(redactText(raw)).toBe(expected);
+  });
+
+  it('redacts bare credential assignments outside URLs', () => {
+    expect(redactText('apikey=SECRET123 rejected')).toBe(
+      'apikey=[redacted] rejected',
+    );
+    expect(redactText('Authorization: Bearer abc.def failed')).toBe(
+      'Authorization=[redacted] failed',
+    );
   });
 
   it('falls back safely for invalid identifiers, levels, and oversized text', () => {

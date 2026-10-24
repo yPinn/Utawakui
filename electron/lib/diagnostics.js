@@ -49,6 +49,19 @@ const SAFE_CODE_RE = /^[A-Z][A-Z0-9_]*$/;
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
 const SAFE_FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\.jsonl$/;
 
+const WINDOWS_PATH_SEGMENT = String.raw`[^\\\r\n"'<>:|*?]`;
+const UNQUOTED_WINDOWS_PATH_RE = new RegExp(
+  String.raw`(?:[A-Za-z]:\\|\\\\[^\\\s"'<>]+\\)` +
+    String.raw`(?:${WINDOWS_PATH_SEGMENT}*\\)*` +
+    String.raw`(?:${WINDOWS_PATH_SEGMENT}*?\.[A-Za-z0-9]{1,8}(?![A-Za-z0-9])|[^\s"'<>\\]*)` +
+    // Stack frames append :line:column.
+    String.raw`(?::\d+){0,2}`,
+  'g',
+);
+// Bare `key=value` secrets outside URLs, e.g. a provider error echoing them.
+const CREDENTIAL_ASSIGNMENT_RE =
+  /\b(api[_-]?key|access[_-]?token|token|password|passwd|secret|authorization)\s*[=:]\s*(?:Bearer\s+)?[^\s"'<>,;]+/gi;
+
 function boundedString(value, maxLength) {
   if (typeof value !== 'string') return '';
   return value.trim().slice(0, maxLength);
@@ -68,11 +81,11 @@ function redactText(value, maxLength = MAX_MESSAGE_LENGTH) {
     /(["'])(?:(?:[A-Za-z]:\\|\\\\)[^"'\r\n]*|\/(?:Users|home|var|tmp|opt|etc|mnt|media|Volumes)\/[^"'\r\n]*)\1/g,
     '[path]',
   );
-  // UNC paths first, then ordinary drive-letter paths. These intentionally
-  // stop at whitespace: logging call sites must provide categorical messages,
-  // and this remains a final defense rather than a path parser.
-  text = text.replace(/\\\\[^\\\s]+\\[^\s"'<>]+/g, '[path]');
-  text = text.replace(/[A-Za-z]:\\[^\s"'<>]+/g, '[path]');
+  // Unquoted UNC／drive-letter paths. Folder segments may contain spaces
+  // because a backslash closes them; the last segment extends through spaces
+  // only up to a file extension. A final defense, not a path parser.
+  text = text.replace(UNQUOTED_WINDOWS_PATH_RE, '[path]');
+  text = text.replace(CREDENTIAL_ASSIGNMENT_RE, '$1=[redacted]');
   // Common absolute POSIX roots. Preserve the leading delimiter so stack
   // formatting and prose remain readable.
   text = text.replace(
