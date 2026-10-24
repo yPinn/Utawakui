@@ -34,7 +34,10 @@ vi.mock('./useLibrary.js', () => ({
 }));
 
 vi.mock('./usePlaybackQueue.js', () => ({
-  usePlaybackQueue: () => ({ state: harness.queueState }),
+  usePlaybackQueue: () => ({
+    state: harness.queueState,
+    onSourceStarted: () => () => {},
+  }),
 }));
 
 vi.mock('./player/usePlayerAudioGraph.js', () => ({
@@ -200,7 +203,10 @@ describe('playback history runtime chain', () => {
           sourceName: '深夜練唱',
         },
       ],
+      // Source order is recorded when playback starts, not on qualification.
+      lastUsedAtBySourceId: {},
     });
+    expect(history.state.sourceRecency).toEqual({});
     expect(history.recentItems.value).toEqual([
       expect.objectContaining({
         trackId: 'track-a',

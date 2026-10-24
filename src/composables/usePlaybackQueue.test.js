@@ -151,6 +151,35 @@ describe('usePlaybackQueue', () => {
     expect(sourceUpcomingTracks.value.map((track) => track.id)).toEqual(['c']);
   });
 
+  it('announces a started source on setQueue but not on resume restore', async () => {
+    const { setQueue, onSourceStarted, restoreResumeState } = await loadQueue();
+    const started = vi.fn();
+    const unsubscribe = onSourceStarted(started);
+
+    restoreResumeState(
+      {
+        sourceTrackIds: ['a'],
+        queuedTrackIds: [],
+        historyEntries: [],
+        currentIsSource: true,
+        lastSourceTrackId: 'a',
+        sourceName: 'restored',
+        sourceId: 'p-restored',
+        isShuffle: false,
+        orderIds: ['a'],
+      },
+      'a',
+      tracks,
+    );
+    setQueue(tracks, 'a');
+    setQueue([], null, { sourceId: 'p-empty' });
+    setQueue(tracks, 'b', { sourceName: 'playlist #1', sourceId: 'p1' });
+    unsubscribe();
+    setQueue(tracks, 'a', { sourceId: 'p2' });
+
+    expect(started.mock.calls).toEqual([['p1']]);
+  });
+
   it('defaults sourceId to null when not given, and rejects a non-string value', async () => {
     const { state, setQueue } = await loadQueue();
 

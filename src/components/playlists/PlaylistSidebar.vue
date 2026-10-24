@@ -16,6 +16,7 @@ import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
 import {
@@ -231,6 +232,17 @@ watch(
   { immediate: true },
 );
 
+// A qualified play would move the row under the pointer; apply on leave.
+const { state: playbackHistoryState } = usePlaybackHistory();
+const pointerInside = shallowRef(false);
+const shownSourceRecency = shallowRef(playbackHistoryState.sourceRecency);
+watch(
+  [() => playbackHistoryState.sourceRecency, pointerInside],
+  ([recency, inside]) => {
+    if (!inside) shownSourceRecency.value = recency;
+  },
+);
+
 // Albums and artists share one read-only reference tier, grouped by artist.
 const visibleReferenceEntries = computed(() =>
   orderReferenceItems({
@@ -239,6 +251,7 @@ const visibleReferenceEntries = computed(() =>
     artistIndex: artistIndexState.index,
     tracksById: props.tracksById,
     fallbackAlbumArtistById: orderedPlaylists.value.albumArtistById,
+    sourceRecency: shownSourceRecency.value,
   }),
 );
 
@@ -469,7 +482,12 @@ function startDrag(playlist, event) {
 </script>
 
 <template>
-  <nav class="playlist-sidebar" aria-label="播放清單篩選與集合">
+  <nav
+    class="playlist-sidebar"
+    aria-label="播放清單篩選與集合"
+    @pointerenter="pointerInside = true"
+    @pointerleave="pointerInside = false"
+  >
     <div class="playlist-sidebar__toolbar">
       <div class="playlist-sidebar__toolbar-expanded">
         <UiSearchBox

@@ -158,15 +158,30 @@ export function artistSearchTexts(track, artistIndex) {
   return values;
 }
 
+// Newest use per source id; merged artist ids count toward their survivor.
+function sourceRecencyById(sourceRecency, artistIndex) {
+  const byId = new Map();
+  if (!sourceRecency || typeof sourceRecency !== 'object') return byId;
+  for (const [sourceId, usedAt] of Object.entries(sourceRecency)) {
+    const time = Date.parse(usedAt);
+    if (Number.isNaN(time)) continue;
+    const id = resolveArtistId(sourceId, artistIndex);
+    if (!(byId.get(id) >= time)) byId.set(id, time);
+  }
+  return byId;
+}
+
 // Sidebar reference tier (ADR 0022): albums and artists share one list keyed by
 // artist name; each artist row leads its own albums, which keep the incoming
 // (newest-first) order. Album artist names come from the index when loaded.
+// Rows played as a source lead the list individually, most recent first.
 export function orderReferenceItems({
   albumItems,
   artistItems,
   artistIndex,
   tracksById,
   fallbackAlbumArtistById,
+  sourceRecency,
 }) {
   const map = tracksById instanceof Map ? tracksById : new Map();
   const artistNameById = new Map(
@@ -196,8 +211,11 @@ export function orderReferenceItems({
       order,
     })),
   ];
+  const recency = sourceRecencyById(sourceRecency, artistIndex);
   return entries.sort(
     (a, b) =>
+      (recency.get(b.item.id) ?? -Infinity) -
+        (recency.get(a.item.id) ?? -Infinity) ||
       nameCollator.compare(a.groupName, b.groupName) ||
       a.rank - b.rank ||
       a.order - b.order,

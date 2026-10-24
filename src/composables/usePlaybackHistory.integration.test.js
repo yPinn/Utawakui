@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const harness = vi.hoisted(() => ({
   onEnded: null,
   onProgress: null,
+  onSourceStarted: null,
+  recordPlaybackSourceUse: vi.fn(),
   initializeLibrary: vi.fn(async () => {}),
   recordRecentPlayback: vi.fn(),
   clearRecentPlaybackHistory: vi.fn(),
@@ -25,6 +27,10 @@ vi.mock('./usePlaybackQueue.js', () => ({
       currentIsSource: true,
       sourceId: 'playlist-1',
       sourceName: '深夜練唱',
+    },
+    onSourceStarted: (listener) => {
+      harness.onSourceStarted = listener;
+      return vi.fn();
     },
   }),
 }));
@@ -98,6 +104,8 @@ describe('usePlaybackHistory integration', () => {
     vi.resetModules();
     harness.onEnded = null;
     harness.onProgress = null;
+    harness.onSourceStarted = null;
+    harness.recordPlaybackSourceUse.mockReset();
     harness.initializeLibrary.mockClear();
     harness.recordRecentPlayback.mockReset();
     harness.clearRecentPlaybackHistory.mockReset();
@@ -113,12 +121,34 @@ describe('usePlaybackHistory integration', () => {
         ]),
         recordRecentPlayback: harness.recordRecentPlayback,
         clearRecentPlaybackHistory: harness.clearRecentPlaybackHistory,
+        recordPlaybackSourceUse: harness.recordPlaybackSourceUse,
       },
     });
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('records source use when playback starts and resets it on clear', async () => {
+    const { usePlaybackHistory } = await import('./usePlaybackHistory.js');
+    const history = usePlaybackHistory();
+    await history.initialize();
+    harness.recordPlaybackSourceUse.mockResolvedValue({});
+
+    await harness.onSourceStarted('album-1');
+
+    expect(harness.recordPlaybackSourceUse).toHaveBeenCalledWith('album-1');
+    expect(harness.recordRecentPlayback).not.toHaveBeenCalled();
+    expect(Object.keys(history.state.sourceRecency)).toEqual(['album-1']);
+
+    harness.recordPlaybackSourceUse.mockRejectedValueOnce(Error('private'));
+    await harness.onSourceStarted('album-2');
+    expect(Object.keys(history.state.sourceRecency)).toEqual(['album-1']);
+
+    harness.clearRecentPlaybackHistory.mockResolvedValueOnce([]);
+    await history.clear();
+    expect(history.state.sourceRecency).toEqual({});
   });
 
   it('loads persisted events and resolves current library metadata', async () => {

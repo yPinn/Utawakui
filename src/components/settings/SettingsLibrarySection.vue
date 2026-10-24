@@ -90,7 +90,7 @@ function handleDownloadDirMenuSelect(actionId) {
 async function handleClearPlaybackHistory() {
   const confirmed = await confirmAction({
     title: '清除最近播放紀錄？',
-    message: '最近播放紀錄會被清除。',
+    message: '最近播放紀錄會被清除，側欄的藝人與專輯也會回到預設順序。',
     detail: '播放佇列、播放清單、OBS 場次與錯誤紀錄會保留。',
     confirmLabel: '清除播放紀錄',
     intent: 'danger',

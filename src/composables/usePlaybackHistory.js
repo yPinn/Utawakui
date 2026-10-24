@@ -9,6 +9,8 @@ const state = reactive({
   entries: [],
   // Main-owned trackId → qualified play count; null until loaded.
   playCounts: null,
+  // Main-owned sourceId → last qualified playback from that source.
+  sourceRecency: {},
   isInitialized: false,
   readError: null,
   updateError: null,
@@ -20,11 +22,12 @@ const state = reactive({
 });
 
 const { tracksById, initialize: initializeLibrary } = useLibrary();
-const { state: queueState } = usePlaybackQueue();
+const { state: queueState, onSourceStarted } = usePlaybackQueue();
 const { onEnded, onPlaybackProgress } = usePlayer();
 let initializationPromise = null;
 let unsubscribeProgress = null;
 let unsubscribeEnded = null;
+let unsubscribeSourceStarted = null;
 let historyRevision = 0;
 
 const recentItems = computed(() =>
@@ -75,6 +78,21 @@ async function recordQualifiedTrack(trackId) {
   }
 }
 
+// Sidebar order follows the start of playback, not the 10 s qualification.
+async function recordSourceUse(sourceId) {
+  if (typeof window === 'undefined' || !window.Utawakui) return;
+  try {
+    await window.Utawakui.recordPlaybackSourceUse(sourceId);
+    // Ordering only needs relative recency; mirror instead of refetching.
+    state.sourceRecency = {
+      ...state.sourceRecency,
+      [sourceId]: new Date().toISOString(),
+    };
+  } catch {
+    // An unsaved use only leaves the sidebar order unchanged.
+  }
+}
+
 const qualificationTracker = createPlaybackQualificationTracker({
   onQualified: recordQualifiedTrack,
 });
@@ -86,6 +104,7 @@ function subscribeToPlayback() {
   unsubscribeEnded ??= onEnded((event) => {
     if (event) qualificationTracker.observeEnded(event);
   });
+  unsubscribeSourceStarted ??= onSourceStarted(recordSourceUse);
 }
 
 function initialize() {
@@ -105,6 +124,10 @@ function initialize() {
       ? Promise.resolve().then(() => bridge.getPlaybackPlayCounts())
       : null;
     playCountsRequest?.catch(() => {});
+    const sourceRecencyRequest = bridge?.getPlaybackSourceRecency
+      ? Promise.resolve().then(() => bridge.getPlaybackSourceRecency())
+      : null;
+    sourceRecencyRequest?.catch(() => {});
     await initializeLibrary();
     if (bridge) {
       try {
@@ -123,6 +146,17 @@ function initialize() {
       if (playCountsRequest) state.playCounts = await playCountsRequest;
     } catch {
       state.playCounts = null;
+    }
+    try {
+      // Unreadable recency keeps the default sidebar order.
+      if (sourceRecencyRequest) {
+        const recency = await sourceRecencyRequest;
+        if (recency && typeof recency === 'object') {
+          state.sourceRecency = { ...recency, ...state.sourceRecency };
+        }
+      }
+    } catch {
+      // Keep the default order.
     }
     state.isInitialized = true;
     if (current === historyRevision) state.isReading = false;
@@ -166,6 +200,7 @@ async function clear() {
       state.readError = null;
       state.updateError = null;
     }
+    state.sourceRecency = {};
     notifications.notify({
       key: 'playback-history-clear',
       title: '播放紀錄已清除',
@@ -192,8 +227,10 @@ function playCountOf(trackId) {
 function dispose() {
   unsubscribeProgress?.();
   unsubscribeEnded?.();
+  unsubscribeSourceStarted?.();
   unsubscribeProgress = null;
   unsubscribeEnded = null;
+  unsubscribeSourceStarted = null;
   qualificationTracker.reset();
 }
 

@@ -311,6 +311,18 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).not.toMatch(/draggable[^\n]*artist/u);
   });
 
+  it('orders only the reference tier by source recency, frozen under the pointer', () => {
+    expect(source).toContain('sourceRecency: shownSourceRecency.value,');
+    expect(source).toContain(
+      'orderPlaylistsForDisplay(state.playlists, props.tracksById)',
+    );
+    expect(source).toContain('@pointerenter="pointerInside = true"');
+    expect(source).toContain('@pointerleave="pointerInside = false"');
+    expect(source).toContain(
+      'if (!inside) shownSourceRecency.value = recency;',
+    );
+  });
+
   it('does not mark a library view current while an artist page is open', () => {
     expect(source).toMatch(
       /const isLibraryViewActive = \(view\) =>\s*state\.selectedId === null &&\s*state\.selectedArtistId === null &&/u,

@@ -376,6 +376,32 @@ describe('orderReferenceItems', () => {
     });
     expect(entries[0]).toMatchObject({ kind: 'album', groupName: 'YOASOBI' });
   });
+
+  it('lifts sources played from, most recent first, ahead of the grouped rest', () => {
+    const entries = orderReferenceItems({
+      albumItems,
+      artistItems,
+      artistIndex: {
+        ...artistIndex,
+        artistRedirects: { 'artist-legacy': 'artist-yoasobi' },
+      },
+      tracksById,
+      sourceRecency: {
+        'album-book1': '2026-10-24T10:00:00.000Z',
+        'artist-legacy': '2026-10-24T12:00:00.000Z',
+        'playlist-unrelated': '2026-10-24T13:00:00.000Z',
+        'album-eve': 'not-a-date',
+      },
+    });
+    expect(entries.map((entry) => `${entry.kind}:${entry.item.id}`)).toEqual([
+      'artist:artist-yoasobi',
+      'album:album-book1',
+      'artist:artist-aimer',
+      'artist:artist-eve',
+      'album:album-eve',
+      'album:album-book3',
+    ]);
+  });
 });
 
 describe('deriveArtistPage', () => {

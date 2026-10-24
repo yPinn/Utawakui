@@ -156,6 +156,14 @@ const upcomingTracks = computed(() => [
 const canGoPrevious = computed(() => state.historyEntries.length > 0);
 const canGoNext = computed(() => upcomingTracks.value.length > 0);
 
+// setQueue is the user's "play this source" intent; resume restore is not.
+const sourceStartedListeners = new Set();
+
+function onSourceStarted(listener) {
+  sourceStartedListeners.add(listener);
+  return () => sourceStartedListeners.delete(listener);
+}
+
 function setQueue(tracks, currentTrackId = null, options = {}) {
   const normalized = normalizeTracks(tracks);
   const ids = orderedIdsForTracks(normalized);
@@ -175,6 +183,9 @@ function setQueue(tracks, currentTrackId = null, options = {}) {
     : (ids[0] ?? null);
   setActiveTrack(trackById(nextCurrentId), { source: Boolean(nextCurrentId) });
   state.lastSourceTrackId = nextCurrentId;
+  if (state.sourceId && nextCurrentId) {
+    for (const listener of sourceStartedListeners) listener(state.sourceId);
+  }
 }
 
 function setCurrentTrack(trackId, options = {}) {
@@ -459,6 +470,7 @@ export function usePlaybackQueue() {
     canGoPrevious,
     canGoNext,
     setQueue,
+    onSourceStarted,
     setCurrentTrack,
     enqueueTrack,
     interruptWithTrack,

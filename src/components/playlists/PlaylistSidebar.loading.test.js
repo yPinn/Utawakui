@@ -21,6 +21,9 @@ vi.mock('../../composables/useArtistIndex.js', () => ({
     resolvePhotos: vi.fn(),
   }),
 }));
+vi.mock('../../composables/usePlaybackHistory.js', () => ({
+  usePlaybackHistory: () => ({ state: { sourceRecency: {} } }),
+}));
 vi.mock('../../composables/useCollectionPlayback.js', () => ({
   useCollectionPlayback: () => ({
     isActiveSource: () => false,

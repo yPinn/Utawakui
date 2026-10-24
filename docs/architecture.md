@@ -55,7 +55,7 @@
 - `TrackTable` 的 profile 分開 `canReorderColumns`、`canSortTrackRows`、`canReorderPlaylistTracks`：全部曲目、本機檔案與播放清單可依可見欄排序；專輯忽略殘留排序、維持來源曲序。藝人頁由 profile 的 `defaultSort` 預設依播放次數降冪，同次數維持原順序，未載入次數置後；列表與播放佇列沿用同一排序投影。伴奏狀態是時長欄內的保留 slot，不是獨立欄。
 - 來源專輯由 `LibrarySourceTracklist` 轉接同一 album 表格、欄位偏好與密度；source-only entry 只有展示資料與 slot intent，沒有 canonical track。未下載列停用播放、選取與選單，同一狀態 slot 保留下載；本地列沿用伴奏操作／徽章。來源曲號獨立於本地 tags 的其他發行碟號；同專輯不逐列重複封面。一般頁移除行內解除關聯及曲序尾註，維護入口集中設定。
 - 專輯欄先由 `useAlbumNavigation.js` 解析來源型專輯；只有 scalar album 時，`usePlaylists.js` 持有 session-only 的 `selectedAlbumReference`，`albumReference.js` 以正規化專輯名即時推導唯讀成員，不寫 `playlists.json`。
-- Sidebar 參照區由 `orderReferenceItems()` 依藝人名混排專輯與藝人；`selectedArtistId` 與 collection 選取互斥，`artistPage.js` 推導藝人頁。曲目列、PlayerBar、Queue 以 `trackArtistIds` 投影 entity 顯示名稱，index 未載入時回退 scalar；搜尋同時接受 canonical 名稱與所有 credit。
+- Sidebar 參照區由 `orderReferenceItems()` 依藝人名混排專輯與藝人，從該來源播放過的列依 `usePlaybackHistory` 的來源時間置前；`selectedArtistId` 與 collection 選取互斥，`artistPage.js` 推導藝人頁。曲目列、PlayerBar、Queue 以 `trackArtistIds` 投影 entity 顯示名稱，index 未載入時回退 scalar；搜尋同時接受 canonical 名稱與所有 credit。
 
 ### Right Dock
 
@@ -156,7 +156,7 @@
 - 相容轉檔（[ADR 0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)）：首次選檔只把路徑放入 15 分鐘、記憶體內、one-shot 的 review session，renderer 只拿到 UUID、basename 與格式碼。確認後重查 `audio-processing-flow` 與 FFmpeg，以固定參數輸出到 staging，再走完整 FLAC 驗證與原子移入；原檔不改，`library.json` 只存原 basename、`sourceFormat` 與 `conversionFormat: flac`。
 - 媒體經 `utawakui-media:` 交付：scheme 與 handler 在 `electron/main/mediaScheme.js`／`mediaProtocol.js`，`electron/lib/` 只提供 path／range 工具；resolver 只接受 track id 與 allowlisted asset 名稱。
 - 空間：`library/storage.js` 依 allowlisted 結構掃描實際大小；`libraryStorageHandlers.js` 只有 inspect／set-policy／cleanup 固定 IPC。見[空間管理契約](contracts/library-storage-management.md)。
-- 播放紀錄：`playbackPersistence.js` 保存到 userData；同一 qualified event 也更新 main 私有的 `playback-usage.json`（去人聲 LRU 用的 `lastPlayedAt` 與只讀投影的 `playCount`）。
+- 播放紀錄：`playbackPersistence.js` 保存到 userData，歷史檔另含 Sidebar 排序用的來源時間；同一 qualified event 也更新 main 私有的 `playback-usage.json`（去人聲 LRU 用的 `lastPlayedAt` 與只讀投影的 `playCount`）。
 
 ### 藝人、照片與封面
 

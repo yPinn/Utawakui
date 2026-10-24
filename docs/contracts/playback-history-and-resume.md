@@ -24,8 +24,19 @@ session history 或 Queue 的 previous stack 合併。
   - 播放次數只存在本機 user data，不做任何雲端統計或上傳。
 - 介面不承諾固定顯示數量；main 目前保留最近 50 首 unique tracks 作為儲存防線。顯示時以
   `trackId` 向目前曲庫解析 metadata，已刪除曲目不顯示。
+- 使用者從來源開始播放（Queue `setQueue` 帶 `sourceId`）時，renderer 立即經固定 channel
+  `playback-history:record-source` 寫入 `playback-history.json` 的 `lastUsedAtBySourceId`
+  （`sourceId → 最近一次從該來源開始播放`），成功後本地同步。它不經 10 秒 qualification、
+  不寫最近播放或播放次數；啟動恢復與同來源內自動換曲不計入。不受 50 首上限影響，以最近
+  500 個來源為儲存防線；舊檔缺此欄位時視為空。整份經 `playback-history:get-source-recency`
+  讀出。
+  - 唯一用途是 Sidebar 藝人／專輯參照區排序：從該藝人或專輯開始播放過的列依最近到遠置前，
+    未使用的維持依藝人名分組；播放清單層維持手動排序。只從曲目反推所屬專輯不算使用。
+  - 已合併藝人的舊 id 經 `artistRedirects` 計入存續藝人；對不到側欄列的來源（如全部曲目、
+    已刪除歌單）直接忽略。指標停在 Sidebar 時延後套用新順序。
 - 使用者可在 Settings「曲庫與儲存」明確清除最近播放；操作位於 danger overflow
-  action 並要求確認。這不清空 Queue、歌單、OBS session history 或診斷紀錄。
+  action 並要求確認。清除同時重設來源時間，Sidebar 參照區回到預設順序；播放次數、
+  Queue、歌單、OBS session history 與診斷紀錄不受影響。
 
 ## 音量偏好
 
@@ -81,7 +92,8 @@ session history 或 Queue 的 previous stack 合併。
 ## 驗證界線
 
 - Main tests 覆蓋 schema、上限、同曲 upsert、舊檔去重、corrupt recovery、atomic persistence、
-  播放次數累加／舊檔補 1／非法次數過濾與 IPC registration。
+  播放次數累加／舊檔補 1／非法次數過濾、來源時間的上限／非法值過濾／隨清除重設與 IPC
+  registration。
 - Renderer tests 覆蓋 10 秒 qualification、seek exclusion、normal ended、source context、
   direct replay preserves Queue、missing-track filtering、paused restore、tabs／ARIA、
   read-only Recent row、Settings clear confirmation 與 sticky scroll state。另以真實 player
