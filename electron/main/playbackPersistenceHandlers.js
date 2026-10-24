@@ -9,6 +9,12 @@ function registerPlaybackPersistenceHandlers({ ipcMain, service }) {
     async (_event, trackId, sourceContext) =>
       service.recordRecentPlayback(trackId, sourceContext),
   );
+  ipcMain.handle('playback-history:get-source-recency', async () =>
+    service.getSourceRecency(),
+  );
+  ipcMain.handle('playback-history:record-source', async (_event, sourceId) =>
+    service.recordSourceUse(sourceId),
+  );
   ipcMain.handle('playback-history:clear', async () =>
     service.clearRecentHistory(),
   );

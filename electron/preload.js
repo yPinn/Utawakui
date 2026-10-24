@@ -423,6 +423,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
       trackId,
       playbackSourceIntent(sourceContext),
     ),
+  getPlaybackSourceRecency: () =>
+    ipcRenderer.invoke('playback-history:get-source-recency'),
+  recordPlaybackSourceUse: (sourceId) =>
+    ipcRenderer.invoke(
+      'playback-history:record-source',
+      typeof sourceId === 'string' ? sourceId : null,
+    ),
   clearRecentPlaybackHistory: () =>
     ipcRenderer.invoke('playback-history:clear'),
   getPlaybackPlayCounts: () =>

@@ -247,7 +247,9 @@ const MAIN_INVOKE_CHANNELS = [
   'performance-session-plan:update-item',
   'playback-history:clear',
   'playback-history:get',
+  'playback-history:get-source-recency',
   'playback-history:record',
+  'playback-history:record-source',
   'playback-resume:get',
   'playback-resume:save',
   'playback-usage:get-play-counts',
@@ -1597,6 +1599,9 @@ describe('main preload bridge', () => {
       'ignored',
     );
     bridge.getPlaybackPlayCounts('ignored');
+    bridge.getPlaybackSourceRecency('ignored');
+    bridge.recordPlaybackSourceUse('album-1', 'ignored');
+    bridge.recordPlaybackSourceUse({ privatePath: 'E:\\private.wav' });
     bridge.savePlaybackResumeSnapshot({
       currentTrackId: 'track-a',
       positionSeconds: 12,
@@ -1625,6 +1630,17 @@ describe('main preload bridge', () => {
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'playback-usage:get-play-counts',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'playback-history:get-source-recency',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'playback-history:record-source',
+      'album-1',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'playback-history:record-source',
+      null,
     );
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'playback-resume:save',

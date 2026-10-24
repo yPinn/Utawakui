@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   PLAYBACK_HISTORY_LIMIT,
+  SOURCE_RECENCY_LIMIT,
   createPlaybackPersistence,
 } from './playbackPersistence.js';
 
@@ -139,6 +140,64 @@ describe('playbackPersistence', () => {
     expect(history).toHaveLength(PLAYBACK_HISTORY_LIMIT);
     expect(history[0].trackId).toBe(`track-${PLAYBACK_HISTORY_LIMIT + 6}`);
     expect(history.at(-1).trackId).toBe('track-7');
+  });
+
+  it('records source use on its own, keeping track history untouched', () => {
+    service.recordRecentPlayback('track-a', { sourceId: 'album-1' });
+    expect(service.getSourceRecency()).toEqual({});
+
+    service.recordSourceUse('album-1');
+    clockMs += 1_000;
+    service.recordSourceUse('artist-x');
+    clockMs += 1_000;
+    expect(service.recordSourceUse('album-1')).toEqual({
+      'album-1': '2026-09-27T12:00:02.000Z',
+      'artist-x': '2026-09-27T12:00:01.000Z',
+    });
+    expect(service.getRecentHistory()).toEqual([
+      expect.objectContaining({ trackId: 'track-a', sourceId: 'album-1' }),
+    ]);
+    expect(service.getPlayCountByTrackId()).toEqual({ 'track-a': 1 });
+
+    service.recordRecentPlayback('track-b');
+    expect(Object.keys(service.getSourceRecency())).toEqual([
+      'album-1',
+      'artist-x',
+    ]);
+  });
+
+  it('rejects empty or unbounded source ids', () => {
+    expect(() => service.recordSourceUse('')).toThrow();
+    expect(() => service.recordSourceUse('x'.repeat(300))).toThrow();
+    expect(() => service.recordSourceUse(42)).toThrow();
+  });
+
+  it('bounds source recency to the newest sources and drops invalid entries', () => {
+    const lastUsedAtBySourceId = { 'bad-date': 'not-a-date' };
+    lastUsedAtBySourceId['x'.repeat(300)] = '2026-09-27T12:00:00.000Z';
+    for (let index = 0; index < SOURCE_RECENCY_LIMIT + 5; index += 1) {
+      lastUsedAtBySourceId[`source-${index}`] = new Date(
+        clockMs + index * 1_000,
+      ).toISOString();
+    }
+    fs.writeFileSync(
+      path.join(userDataDir, 'playback-history.json'),
+      JSON.stringify({ version: 1, entries: [], lastUsedAtBySourceId }),
+    );
+
+    const recency = service.getSourceRecency();
+    expect(Object.keys(recency)).toHaveLength(SOURCE_RECENCY_LIMIT);
+    expect(recency['source-0']).toBeUndefined();
+    expect(recency[`source-${SOURCE_RECENCY_LIMIT + 4}`]).toBeDefined();
+    expect(recency['bad-date']).toBeUndefined();
+  });
+
+  it('clears source recency together with recent playback', () => {
+    service.recordSourceUse('album-1');
+
+    service.clearRecentHistory();
+
+    expect(service.getSourceRecency()).toEqual({});
   });
 
   it('keeps a complete private last-played index beyond the recent UI limit', () => {

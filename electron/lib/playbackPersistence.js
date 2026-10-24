@@ -8,6 +8,7 @@ const { hasControlCharacters } = require('./textGuards');
 const limits = require('../../shared/playbackPersistenceValues.json');
 
 const PLAYBACK_HISTORY_LIMIT = 50;
+const SOURCE_RECENCY_LIMIT = 500;
 const PLAYBACK_QUEUE_LIMIT = limits.queueLimit;
 const PLAYBACK_PERSISTENCE_VERSION = 1;
 const PLAYBACK_RESUME_VERSION = 2;
@@ -85,6 +86,27 @@ function normalizeHistoryEntries(value) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+// Newest first, bounded; invalid ids or dates are dropped individually.
+function normalizeSourceRecency(value) {
+  if (!isPlainObject(value)) return {};
+  const valid = [];
+  for (const [sourceId, usedAt] of Object.entries(value)) {
+    try {
+      if (
+        optionalBoundedText(sourceId) &&
+        typeof usedAt === 'string' &&
+        !Number.isNaN(Date.parse(usedAt))
+      ) {
+        valid.push([sourceId, new Date(usedAt).toISOString()]);
+      }
+    } catch {
+      // Skip one unusable source id.
+    }
+  }
+  valid.sort((a, b) => (a[1] < b[1] ? 1 : a[1] > b[1] ? -1 : 0));
+  return Object.fromEntries(valid.slice(0, SOURCE_RECENCY_LIMIT));
 }
 
 function normalizeSourceContext(value) {
@@ -234,8 +256,9 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     fs.mkdirSync(userDataDir, { recursive: true });
   }
 
-  function getRecentHistory() {
-    return loadDocument(historyPath, [], (document) => {
+  function getHistoryDocument() {
+    const empty = { entries: [], lastUsedAtBySourceId: {} };
+    return loadDocument(historyPath, empty, (document) => {
       if (
         !document ||
         typeof document !== 'object' ||
@@ -244,15 +267,30 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
       ) {
         throw new Error('invalid playback history document');
       }
-      return normalizeHistoryEntries(document.entries);
+      return {
+        entries: normalizeHistoryEntries(document.entries),
+        // History files written before source recency existed start empty.
+        lastUsedAtBySourceId: normalizeSourceRecency(
+          document.lastUsedAtBySourceId,
+        ),
+      };
     });
   }
 
-  function writeHistory(entries) {
+  function getRecentHistory() {
+    return getHistoryDocument().entries;
+  }
+
+  function getSourceRecency() {
+    return getHistoryDocument().lastUsedAtBySourceId;
+  }
+
+  function writeHistory(entries, lastUsedAtBySourceId) {
     ensureDirectory();
     atomicWriteJson(historyPath, {
       version: PLAYBACK_PERSISTENCE_VERSION,
       entries: entries.slice(0, PLAYBACK_HISTORY_LIMIT),
+      lastUsedAtBySourceId: normalizeSourceRecency(lastUsedAtBySourceId),
     });
   }
 
@@ -324,13 +362,14 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
       playedAt: now().toISOString(),
       ...normalizeSourceContext(sourceContext),
     };
+    const history = getHistoryDocument();
     const entries = [
       entry,
-      ...getRecentHistory().filter(
+      ...history.entries.filter(
         (existingEntry) => existingEntry.trackId !== entry.trackId,
       ),
     ].slice(0, PLAYBACK_HISTORY_LIMIT);
-    writeHistory(entries);
+    writeHistory(entries, history.lastUsedAtBySourceId);
     const usage = getUsage();
     writeUsage({
       lastPlayedAtByTrackId: {
@@ -345,8 +384,21 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     return entries;
   }
 
+  // Starting playback from a source reorders it immediately, unlike history.
+  function recordSourceUse(sourceId) {
+    const id = optionalBoundedText(sourceId);
+    if (!id) throw new Error('invalid playback source context');
+    const history = getHistoryDocument();
+    const lastUsedAtBySourceId = {
+      ...history.lastUsedAtBySourceId,
+      [id]: now().toISOString(),
+    };
+    writeHistory(history.entries, lastUsedAtBySourceId);
+    return normalizeSourceRecency(lastUsedAtBySourceId);
+  }
+
   function clearRecentHistory() {
-    writeHistory([]);
+    writeHistory([], {});
     return [];
   }
 
@@ -376,6 +428,8 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
 
   return {
     getRecentHistory,
+    getSourceRecency,
+    recordSourceUse,
     recordRecentPlayback,
     clearRecentHistory,
     getLastPlayedAtByTrackId,
@@ -388,6 +442,7 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
 
 module.exports = {
   PLAYBACK_HISTORY_LIMIT,
+  SOURCE_RECENCY_LIMIT,
   PLAYBACK_PERSISTENCE_VERSION,
   PLAYBACK_RESUME_VERSION,
   createPlaybackPersistence,
