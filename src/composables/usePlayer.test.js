@@ -574,6 +574,7 @@ describe('mix and transport controls', () => {
     await player.play();
     expect(player.state.error).toBe('目前無法繼續播放，請再試一次。');
     expect(player.state.error).not.toContain('private');
+    expect(player.state.pendingStartTrackId).toBeNull();
   });
 
   it('notifies ended listeners and supports explicit unsubscription', async () => {
@@ -766,6 +767,24 @@ describe('mix and transport controls', () => {
 
     expect(player.state.track.id).toBe('track-current-after-resume');
     expect(audio.play).toHaveBeenCalledOnce();
+  });
+  it('projects a pending track while AudioContext resume has not produced a play event', async () => {
+    const player = await loadPlayer(),
+      gate = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('', gate);
+    const start = player.playTrack({
+      id: 'pending-tags',
+      title: 'Pending',
+      url: 'utawakui-media://track/pending-tags/audio.flac',
+    });
+    await vi.waitFor(() =>
+      expect(MockAudio.latest.src).toContain('pending-tags'),
+    );
+    expect(player.state.pendingStartTrackId).toBe('pending-tags');
+    expect(player.state.isPlaying).toBe(false);
+    gate.resolve();
+    await start;
+    expect(player.state.pendingStartTrackId).toBe(null);
   });
 
   it('never starts an older track after a newer pre-start request wins', async () => {

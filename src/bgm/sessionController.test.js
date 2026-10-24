@@ -184,6 +184,28 @@ function createHarness() {
 }
 
 describe('BGM session controller', () => {
+  it('projects both old and requested media while a source replacement is fading out', async () => {
+    const { controller, coordinator, plan } = createHarness();
+    await controller.initialize();
+    const gate = createDeferred();
+    let replace;
+    coordinator.replaceBgmSource.mockImplementationOnce((fn) => {
+      replace = fn;
+      return gate.promise;
+    });
+    plan.state.plan.currentTrackId = 'other-track';
+    await nextTick();
+    expect(controller.currentTrack.value.id).toBe('other-track');
+    expect(controller.sourceTrackIds.value).toEqual([
+      'bgm-track',
+      'other-track',
+    ]);
+    replace();
+    gate.resolve(true);
+    await nextTick();
+    expect(controller.sourceTrackIds.value).toEqual(['other-track']);
+    await controller.dispose();
+  });
   it('registers the player safety boundary before asynchronous data restore finishes', async () => {
     const restore = createDeferred();
     const { controller, plan, player } = createHarness();

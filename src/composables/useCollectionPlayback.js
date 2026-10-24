@@ -4,6 +4,10 @@ import { createCollectionPlaybackController } from '../utils/collectionPlaybackC
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useReleaseMembers } from './useReleaseMembers.js';
+import {
+  collectionForSource,
+  resolveCollectionSourceId,
+} from '../utils/collectionIdentity.js';
 let playbackRequest = 0;
 export function beginCollectionPlaybackRequest() {
   return ++playbackRequest;
@@ -21,6 +25,7 @@ export function useCollectionPlayback() {
     getPlaybackStartRequestRevision,
   } = usePlayer();
   const { state: queueState, setQueue, enqueueTrack } = usePlaybackQueue();
+  const { state: playlists } = usePlaylists();
 
   const controller = createCollectionPlaybackController({
     playerState,
@@ -30,14 +35,15 @@ export function useCollectionPlayback() {
     playTrack,
     setQueue,
     enqueueTrack,
+    resolveSourceId: (id) => resolveCollectionSourceId(playlists.playlists, id),
   });
-  const { state: playlists } = usePlaylists();
   const { tracksById } = useLibrary();
   const resolver = useReleaseMembers();
 
   async function verified(context) {
-    const collection = playlists.playlists.find(
-      (entry) => entry.id === context?.sourceId,
+    const collection = collectionForSource(
+      playlists.playlists,
+      context?.sourceId,
     );
     if (
       collection?.kind !== 'album' ||
@@ -53,6 +59,7 @@ export function useCollectionPlayback() {
         : (context.tracks ?? tracks);
     return {
       ...context,
+      sourceId: collection.id,
       tracks: requested
         .filter((track) => allowed.has(track.id))
         .map((track) => tracksById.value.get(track.id))

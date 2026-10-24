@@ -542,4 +542,20 @@ describe('track preview', () => {
     expect(bgm.acquirePreviewLane).not.toHaveBeenCalled();
     expect(preview.state.isOpen).toBe(false);
   });
+
+  it('never acquires or loads an external source and keeps local candidate order', async () => {
+    const { audio, bgm, preview } = createHarness();
+    const external = track('external', {
+      url: 'https://example.com/preview.mp3',
+    });
+    await expect(preview.open({ tracks: [external] })).resolves.toBe(false);
+    expect(bgm.acquirePreviewLane).not.toHaveBeenCalled();
+    await preview.open({
+      tracks: [external, track('c'), { id: 'undownloaded' }, track('a')],
+      startIndex: 3,
+    });
+    expect(preview.state.tracks.map((t) => t.id)).toEqual(['c', 'a']);
+    expect(audio.src).toBe('utawakui-media://track/a/audio.wav');
+    preview.close();
+  });
 });

@@ -54,6 +54,7 @@ function reportPlayerError(error, operation, message) {
 }
 
 const state = reactive({
+  pendingStartTrackId: null,
   track: null,
   isPlaying: false,
   playbackPhase: 'idle',
@@ -277,6 +278,7 @@ async function requestPlaybackStart({ trackId, requestRevision, resume }) {
     const allowed = await beforePlaybackStartListener?.(request);
     if (allowed === false || requestRevision !== playbackStartRequestRevision) {
       if (requestRevision === playbackStartRequestRevision) {
+        state.pendingStartTrackId = null;
         notifyStopped('start-cancelled');
       }
       return false;
@@ -284,6 +286,7 @@ async function requestPlaybackStart({ trackId, requestRevision, resume }) {
     return true;
   } catch (error) {
     if (requestRevision === playbackStartRequestRevision) {
+      state.pendingStartTrackId = null;
       state.error = reportPlayerError(
         error,
         'pre-start',
@@ -295,8 +298,34 @@ async function requestPlaybackStart({ trackId, requestRevision, resume }) {
   }
 }
 
+async function startAudio(requestRevision, operation) {
+  try {
+    await audioGraph.resume();
+    if (requestRevision !== playbackStartRequestRevision) return false;
+    await audio.play();
+    return requestRevision === playbackStartRequestRevision;
+  } catch (error) {
+    if (requestRevision === playbackStartRequestRevision) {
+      state.error = reportPlayerError(
+        error,
+        operation,
+        operation === 'resume'
+          ? '目前無法繼續播放，請再試一次。'
+          : '目前無法播放這首曲目，請再試一次。',
+      );
+      state.playbackPhase = 'error';
+      notifyStopped('error');
+    }
+    return false;
+  } finally {
+    if (requestRevision === playbackStartRequestRevision)
+      state.pendingStartTrackId = null;
+  }
+}
+
 async function playTrack(track) {
   const requestRevision = ++playbackStartRequestRevision;
+  state.pendingStartTrackId = track.id;
   terminalStopNotified = false;
   state.error = null;
   // A new explicit performance request owns a fresh, editable timeline
@@ -318,23 +347,7 @@ async function playTrack(track) {
   resetTrackAudioControls();
   routeAudioGraph(Boolean(track.usesSeparatedAudio));
   audio.src = track.url;
-  try {
-    await audioGraph.resume();
-    if (requestRevision !== playbackStartRequestRevision) return false;
-    await audio.play();
-    return requestRevision === playbackStartRequestRevision;
-  } catch (error) {
-    if (requestRevision === playbackStartRequestRevision) {
-      state.error = reportPlayerError(
-        error,
-        'play-track',
-        '目前無法播放這首曲目，請再試一次。',
-      );
-      state.playbackPhase = 'error';
-      notifyStopped('error');
-    }
-    return false;
-  }
+  return startAudio(requestRevision, 'play-track');
 }
 
 function restorePlaybackState({
@@ -344,6 +357,7 @@ function restorePlaybackState({
 } = {}) {
   if (!track) return false;
   playbackStartRequestRevision += 1;
+  state.pendingStartTrackId = null;
   state.error = null;
   state.track = track;
   terminalStopNotified = false;
@@ -364,6 +378,7 @@ function restorePlaybackState({
 async function play() {
   if (!state.track) return false;
   const requestRevision = ++playbackStartRequestRevision;
+  state.pendingStartTrackId = state.track.id;
   terminalStopNotified = false;
   state.error = null;
   const allowed = await requestPlaybackStart({
@@ -373,23 +388,7 @@ async function play() {
   });
   if (!allowed) return false;
 
-  try {
-    await audioGraph.resume();
-    if (requestRevision !== playbackStartRequestRevision) return false;
-    await audio.play();
-    return requestRevision === playbackStartRequestRevision;
-  } catch (error) {
-    if (requestRevision === playbackStartRequestRevision) {
-      state.error = reportPlayerError(
-        error,
-        'resume',
-        '目前無法繼續播放，請再試一次。',
-      );
-      state.playbackPhase = 'error';
-      notifyStopped('error');
-    }
-    return false;
-  }
+  return startAudio(requestRevision, 'resume');
 }
 
 function pause() {
@@ -399,6 +398,7 @@ function pause() {
 // Drops a start still awaiting the gate or graph resume, with no terminal stop.
 function cancelPendingStart() {
   playbackStartRequestRevision += 1;
+  state.pendingStartTrackId = null;
 }
 
 function toggle() {
@@ -421,6 +421,7 @@ function clearTrack(trackId = null) {
   if (trackId !== null && state.track?.id !== trackId) return false;
 
   playbackStartRequestRevision += 1;
+  state.pendingStartTrackId = null;
   notifyStopped('cleared');
   audio.pause();
   audio.removeAttribute('src');

@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, watch } from 'vue';
+import { computed, reactive, readonly, shallowRef, watch } from 'vue';
 
 export function createBgmSessionController({
   plan,
@@ -34,9 +34,9 @@ export function createBgmSessionController({
   });
 
   let initializationPromise = null;
-  let loadedTrackId = null;
+  const loadedTrackId = shallowRef(null);
   let loadedUrl = null;
-  let requestedTrackId = null;
+  const requestedTrackId = shallowRef(null);
   let requestedUrl = null;
   let sessionModeUpdates = Promise.resolve();
   let sourceUpdates = Promise.resolve();
@@ -52,28 +52,28 @@ export function createBgmSessionController({
     const trackId = track?.id ?? null;
     const url = track?.url ?? null;
     const matchesRequestedSource =
-      trackId === requestedTrackId && url === requestedUrl;
+      trackId === requestedTrackId.value && url === requestedUrl;
     const matchesSettledSource =
-      requestedTrackId === null &&
-      trackId === loadedTrackId &&
+      requestedTrackId.value === null &&
+      trackId === loadedTrackId.value &&
       url === loadedUrl;
     if (matchesRequestedSource || matchesSettledSource) {
       return sourceUpdates;
     }
 
-    requestedTrackId = trackId;
+    requestedTrackId.value = trackId;
     requestedUrl = url;
     const update = coordinator.replaceBgmSource(() => {
       deck.load(url ?? '', {
         ...plan.state.plan.settings,
         positionSeconds: track ? plan.state.plan.positionSeconds : 0,
       });
-      loadedTrackId = trackId;
+      loadedTrackId.value = trackId;
       loadedUrl = url;
     });
     sourceUpdates = update.then((completed) => {
-      if (requestedTrackId === trackId && requestedUrl === url) {
-        requestedTrackId = null;
+      if (requestedTrackId.value === trackId && requestedUrl === url) {
+        requestedTrackId.value = null;
         requestedUrl = null;
       }
       return completed;
@@ -232,6 +232,9 @@ export function createBgmSessionController({
     handoffState: readonly(coordinator.state),
     deckState: readonly(deck.state),
     currentTrack,
+    sourceTrackIds: computed(() => [
+      ...new Set([loadedTrackId.value, requestedTrackId.value].filter(Boolean)),
+    ]),
     settings,
     sessionIndicators,
     initialize,

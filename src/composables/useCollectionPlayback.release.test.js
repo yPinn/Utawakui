@@ -106,6 +106,27 @@ describe('collection release admission at explicit actions', () => {
     expect(mocks.playTrack).not.toHaveBeenCalled();
     expect(mocks.setQueue).not.toHaveBeenCalled();
   });
+  it('filters a complete display list through fresh admission on every play and queue action', async () => {
+    const displayTracks = [
+      mocks.tracks.get('a'),
+      { id: 'changed', title: 'Saved reference' },
+    ];
+    const playback = useCollectionPlayback();
+    await playback.togglePlayback({ sourceId: 'r', tracks: displayTracks });
+    expect(mocks.setQueue).toHaveBeenCalledWith(
+      [mocks.tracks.get('a')],
+      'a',
+      expect.objectContaining({ sourceId: 'r' }),
+    );
+    mocks.resolve.mockResolvedValue([]);
+    await playback.enqueueCollection({ sourceId: 'r', tracks: displayTracks });
+    expect(mocks.resolve).toHaveBeenCalledTimes(2);
+    expect(
+      mocks.resolve.mock.calls.every(([, options]) => options.fresh === true),
+    ).toBe(true);
+    expect(mocks.enqueueTrack).not.toHaveBeenCalled();
+    expect(displayTracks).toHaveLength(2);
+  });
   it('does not let an older different consumer steal playback after a newer intent', async () => {
     let finish;
     mocks.resolve.mockImplementationOnce(

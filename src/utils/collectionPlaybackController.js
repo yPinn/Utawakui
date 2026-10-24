@@ -13,9 +13,13 @@ export function createCollectionPlaybackController({
   setQueue,
   enqueueTrack,
   random = Math.random,
+  resolveSourceId = (id) => id,
 }) {
   function isActiveSource(sourceId) {
-    return Boolean(sourceId) && queueState.sourceId === sourceId;
+    return (
+      Boolean(sourceId) &&
+      resolveSourceId(queueState.sourceId) === resolveSourceId(sourceId)
+    );
   }
 
   function isPlaying(sourceId) {

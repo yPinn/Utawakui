@@ -415,7 +415,7 @@ describe('TrackPreviewOverlay', () => {
 
   it('shuffles only artist previews, keeping the selection first', () => {
     expect(libraryBrowseSource).toMatch(
-      /isArtistSelected\.value\s*\?\s*shufflePreviewTracks\(visibleTracks, \{ pinnedId: selectedTrackId\.value \}\)\s*:\s*visibleTracks/u,
+      /isArtistSelected\.value\s*\?\s*shufflePreviewTracks\(localTracks, \{ pinnedId: selectedTrackId\.value \}\)\s*:\s*localTracks/u,
     );
   });
 });

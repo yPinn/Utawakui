@@ -29,6 +29,7 @@ export function createBgmAudioDeck({
   Object.assign(state, {
     playbackPhase: state.playbackPhase ?? 'idle',
     isPlaying: state.isPlaying ?? false,
+    playIntentActive: false,
     currentTime: state.currentTime ?? 0,
     duration: state.duration ?? 0,
     error: state.error ?? null,
@@ -43,7 +44,6 @@ export function createBgmAudioDeck({
   let pendingPlaying = null;
   let sourceUrl = '';
   let disposed = false;
-  let playIntentActive = false;
 
   audio.crossOrigin = 'anonymous';
 
@@ -89,7 +89,7 @@ export function createBgmAudioDeck({
   }
 
   function handlePlaying() {
-    if (!playIntentActive) {
+    if (!state.playIntentActive) {
       cancelAutomation(0);
       audio.pause();
       return;
@@ -101,7 +101,7 @@ export function createBgmAudioDeck({
   }
 
   function handlePause() {
-    playIntentActive = false;
+    state.playIntentActive = false;
     state.isPlaying = false;
     state.currentTime = audio.currentTime || 0;
     state.playbackPhase = sourceUrl ? 'paused' : 'idle';
@@ -124,7 +124,7 @@ export function createBgmAudioDeck({
 
   function handleError() {
     invalidateTransition();
-    playIntentActive = false;
+    state.playIntentActive = false;
     cancelAutomation(0);
     if (!audio.paused) audio.pause();
     state.isPlaying = false;
@@ -187,7 +187,7 @@ export function createBgmAudioDeck({
   function load(url, options = {}) {
     invalidateTransition();
     settlePendingPlaying(false);
-    playIntentActive = false;
+    state.playIntentActive = false;
     if (!audio.paused) audio.pause();
     sourceUrl = typeof url === 'string' ? url : '';
     state.error = null;
@@ -210,7 +210,7 @@ export function createBgmAudioDeck({
     const activeContext = ensureGraph();
     cancelAutomation(0);
     state.error = null;
-    playIntentActive = true;
+    state.playIntentActive = true;
 
     let resolvePlaying;
     const playingPromise = new Promise((resolve) => {
@@ -221,14 +221,14 @@ export function createBgmAudioDeck({
     try {
       if (activeContext.state === 'suspended') await activeContext.resume();
       if (candidate !== transitionGeneration || disposed) {
-        playIntentActive = false;
+        state.playIntentActive = false;
         settlePendingPlaying(false);
         return false;
       }
       await audio.play();
     } catch {
       if (candidate !== transitionGeneration || disposed) return false;
-      playIntentActive = false;
+      state.playIntentActive = false;
       state.isPlaying = false;
       state.error = 'BGM 音訊無法播放。';
       state.playbackPhase = 'error';
@@ -260,7 +260,7 @@ export function createBgmAudioDeck({
     const candidate = invalidateTransition();
     settlePendingPlaying(false);
     if (!context || !gainNode || audio.paused) {
-      playIntentActive = false;
+      state.playIntentActive = false;
       if (gainNode && context) cancelAutomation(0);
       audio.pause();
       return true;
@@ -275,7 +275,7 @@ export function createBgmAudioDeck({
     await wait(duration * 1000);
     if (candidate !== transitionGeneration || disposed) return false;
     gainNode.gain.setValueAtTime(0, endTime);
-    playIntentActive = false;
+    state.playIntentActive = false;
     audio.pause();
     return true;
   }
@@ -283,7 +283,7 @@ export function createBgmAudioDeck({
   function cut() {
     invalidateTransition();
     settlePendingPlaying(false);
-    playIntentActive = false;
+    state.playIntentActive = false;
     if (gainNode && context) cancelAutomation(0);
     audio.pause();
     return true;

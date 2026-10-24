@@ -204,7 +204,9 @@ describe('BGM audio deck', () => {
 
     const playPromise = deck.startSilent();
     await vi.waitFor(() => expect(context.resume).toHaveBeenCalledOnce());
+    expect(deck.state.playIntentActive).toBe(true);
     await expect(deck.fadeOutAndPause(1)).resolves.toBe(true);
+    expect(deck.state.playIntentActive).toBe(false);
     resume.resolve();
 
     await expect(playPromise).resolves.toBe(false);

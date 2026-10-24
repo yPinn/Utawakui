@@ -5,6 +5,7 @@ import { useMetronome } from './useMetronome.js';
 import { usePlayer } from './usePlayer.js';
 import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
 import { resolvePreviewSegment } from '../utils/trackPreviewSegment.js';
+import { isLocalPreviewTrack } from '../utils/trackPreviewSource.js';
 
 async function settle(load) {
   try {
@@ -213,7 +214,7 @@ export function createTrackPreview({
   }
 
   async function open({ title = '', tracks = [], startIndex = 0 } = {}) {
-    const playable = tracks.filter((track) => track?.id && track?.url);
+    const playable = tracks.filter(isLocalPreviewTrack);
     if (playable.length === 0) return false;
     if (state.isOpen) close();
 
