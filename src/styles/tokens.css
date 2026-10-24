@@ -749,13 +749,14 @@
   --ui-notification-min-inline-size: 20rem;
   --ui-notification-preferred-inline-size: 22rem;
   --ui-notification-max-inline-size: 26rem;
-  --ui-notification-safe-inset: var(--ui-space-4);
+  --ui-notification-safe-inset: var(--ui-shell-edge-inset-inline);
   --ui-notification-block-end-offset: calc(
-    var(--ui-player-bar-height) + var(--ui-notification-safe-inset)
+    var(--ui-player-bar-height) + var(--ui-shell-content-inset-block)
   );
   --ui-notification-stack-gap: var(--ui-space-2);
   --ui-notification-motion-offset: var(--ui-space-4);
   --ui-notification-swipe-dismiss-distance: 4.5rem;
+  --ui-notification-swipe-intent-distance: var(--ui-space-3);
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: var(--ui-control-height-live);
   --ui-bgm-player-min-inline-size: 18rem;

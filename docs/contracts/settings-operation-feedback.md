@@ -10,8 +10,15 @@
 Shell 既有的表演者畫面錯誤也由同一通知 owner 呈現，不再維護另一個相同位置的固定浮層。
 通知 item 使用正式不透明 surface 承接半透明 semantic Notice 背景，避免底下的操作內容透出干擾閱讀。
 一般進出場只使用位移，item 的 opacity 全程維持 1；離場以原本距離 shelf 底部的布局位置固定，避免 bottom-anchored shelf 收縮時把通知推入播放列。
-App adapter 明確傳入既有 Dock owner 的目前寬度（224–280px），Dock 收合時仍保留這個可讀寬度；不依賴 Teleport 的 attrs fallthrough 或區域 CSS 變數繼承。
-UI host 保留 viewport 安全邊界，其他 caller 可沿用原本的通用預設尺寸。高度由內容決定，窄於 20rem 的通知將 action 排到文字下方，不固定高度或截斷恢復操作。
+App adapter 明確傳入既有 Dock owner 的目前寬度（272–280px，預設 280px），Dock 收合時仍保留這個可讀寬度；不依賴 Teleport 的 attrs fallthrough 或區域 CSS 變數繼承。
+固定通知右距共用 `--ui-shell-edge-inset-inline`，播放器上方間距共用 `--ui-shell-content-inset-block`；以展開 Dock 外框為對齊目標，現行兩者皆為 8px。UI host 保留 viewport 安全邊界，其他 caller 可沿用原本的通用預設尺寸。
+高度由內容決定；通知不顯示頂部 X 或為它保留文字寬度。操作依用途 variant 決定，不因 `dismissible` 自動插入關閉／隱藏按鈕。`result`、`recovery`、`progress` 只顯示 caller 提供的 contextual Secondary action，無操作時不產生空白操作列；`confirmation` 才有「知道了」，並保持常駐，不受 success tone 或 transient 值影響。
+未明確指定 variant 時，依 lifecycle 推導結果、復原或進度用途；tone 只控制外觀。個別通知可用 `dismissLabel` 明確加入「關閉」或「隱藏」，DOM 順序在 contextual action 之前，窄欄允許換行。隱藏進度不取消工作；完成後仍依既有 task owner 規則呈現一次結果。
+`UiNotice` 保留獨立內嵌使用與原 action 事件，依其實際內容容器寬度在 26rem 以下把單一操作排到文字下方；`actions` slot 供通知容器組合底部操作，不接管計時或關閉。
+可關閉通知支援滑鼠主鍵、觸控與筆的左右滑動。按下非互動內容即由固定的 item 外框取得 pointer capture，避免快速第一下跨出卡片後漏掉放手；觸控仍保留原生垂直捲動與 pointercancel。超過 `--ui-notification-swipe-intent-distance`（12px）且水平位移至少為垂直的 1.5 倍才起拖，起拖區不計入卡片的可見位移。
+關閉只在放手時判定：卡片可見位移須達自身寬度的 35%，且至少 `--ui-notification-swipe-dismiss-distance`（4.5rem／72px），門檻不超過卡片寬度。272／280px 卡片的可見關閉門檻為 95.2／98px，加上起拖區的指標總位移為 107.2／110px。拖曳中跨線後仍可拉回；未達門檻、取消或失去 pointer capture 都回原位並保留剩餘計時。
+列表重排與進出場只移動 item 外框，水平拖曳只移動內層 card，兩者不得共用 transform owner。卡片位移最多一個自身寬度，繪製裁切於原通知外框；成功滑動沿放手方向在該框內退出，不先跳回原位或改向下離場。按鈕／連結／輸入等互動起點、非主要指標與次按鍵不啟動滑動，拖曳後的 click 不觸發底下操作。通知內可按 Escape 關閉；無按鈕通知本身提供鍵盤焦點與可見 focus ring，並保留 focus 暫停。
+拖曳起始門檻屬正式元件 token；每次離場的 `--ui-notification-swipe-exit-x` 則是 item 內的執行時位移，區域預設為 0，由離場 hook 寫入方向及卡片寬度，取消時移除 inline 值。此位移不提升為全域設計 token。
 
 ## 第一期適用範圍
 

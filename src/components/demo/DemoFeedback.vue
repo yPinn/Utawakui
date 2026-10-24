@@ -1,7 +1,5 @@
 <script setup>
-import { shallowRef } from 'vue';
-import UiButton from '../ui/UiButton.vue';
-import UiNotificationHost from '../ui/UiNotificationHost.vue';
+import DemoNoticeNotificationRecipe from './DemoNoticeNotificationRecipe.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 import DemoProductionSample from './DemoProductionSample.vue';
@@ -14,30 +12,6 @@ import DemoStatusIconAppearance from './DemoStatusIconAppearance.vue';
 defineProps({
   sections: { type: Array, default: () => [] },
 });
-
-const notificationItems = shallowRef([]);
-let notificationSequence = 0;
-
-function showNotification() {
-  notificationSequence += 1;
-  notificationItems.value = [
-    {
-      id: `catalogue-saved-${notificationSequence}`,
-      lifecycle: 'transient',
-      announcement: 'polite',
-      tone: 'success',
-      title: '範例通知',
-      message: '這是展示訊息，不會儲存設定。',
-      dismissible: true,
-    },
-  ];
-}
-
-function dismissNotification({ id }) {
-  notificationItems.value = notificationItems.value.filter(
-    (item) => item.id !== id,
-  );
-}
 </script>
 
 <template>
@@ -75,19 +49,9 @@ function dismissNotification({ id }) {
         <p class="demo-sample-caption">顯示載入占位，並提供可讀的載入名稱。</p>
       </div>
 
-      <div
+      <DemoNoticeNotificationRecipe
         v-else-if="section.key === 'notification-host'"
-        class="demo-notification-host-sample"
-      >
-        <UiButton variant="accent" @click="showNotification">
-          顯示固定通知
-        </UiButton>
-        <p class="demo-sample-caption">通知會自動消失，也可手動關閉。</p>
-        <UiNotificationHost
-          :items="notificationItems"
-          @dismiss="dismissNotification"
-        />
-      </div>
+      />
     </DemoCatalogueSection>
   </div>
 </template>
@@ -98,8 +62,7 @@ function dismissNotification({ id }) {
   gap: var(--ui-space-4);
 }
 
-.demo-skeleton-sample,
-.demo-notification-host-sample {
+.demo-skeleton-sample {
   width: min(36rem, 100%);
   display: grid;
   justify-items: start;

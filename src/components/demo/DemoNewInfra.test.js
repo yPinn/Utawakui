@@ -77,7 +77,12 @@ describe('new shared infra catalogue registration', () => {
     ['./DemoNavigation.vue', 'UiDisclosure', 'disclosure'],
     ['./DemoNavigation.vue', 'UiBreadcrumb', 'breadcrumb'],
     ['./DemoFeedback.vue', 'UiSkeleton', 'skeleton'],
-    ['./DemoFeedback.vue', 'UiNotificationHost', 'notification-host'],
+    [
+      './DemoFeedback.vue',
+      'UiNotificationHost',
+      'notification-host',
+      'DemoNoticeNotificationRecipe',
+    ],
     ['./DemoOverlays.vue', 'UiTooltip', 'tooltip'],
     ['./DemoOverlays.vue', 'UiOverflowTooltip', 'tooltip'],
   ])(

@@ -57,6 +57,21 @@ function visibleText(html) {
   return html.replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ');
 }
 describe('DemoNoticeAppearance', () => {
+  it('uses the real notification host and shared Dock bounds in the catalogue', () => {
+    expect(notificationRecipeSource).toContain(
+      "import UiNotificationHost from '../ui/UiNotificationHost.vue';",
+    );
+    expect(notificationRecipeSource).toContain('RIGHT_DOCK_WIDTH_MIN');
+    expect(notificationRecipeSource).toContain('RIGHT_DOCK_WIDTH_MAX');
+    expect(notificationRecipeSource).toContain(':inline-size="width"');
+    expect(notificationRecipeSource).not.toContain(
+      'DemoCandidateNotificationHost',
+    );
+    expect(notificationRecipeSource).not.toContain('352');
+    expect(notificationRecipeSource).toContain(
+      'provide(UI_OVERLAY_HOST_KEY, `#${previewId}`)',
+    );
+  });
   it('replaces only the notices sample with the staged review', () => {
     expect(feedbackSource).toContain(
       "import DemoNoticeAppearance from './DemoNoticeAppearance.vue';",
@@ -264,7 +279,7 @@ describe('DemoNoticeAppearance', () => {
   it('routes bounded error guidance to the existing error record without exposing diagnostics internals', async () => {
     const html = await renderToString(createSSRApp(DemoNoticeAppearance));
     const text = visibleText(html);
-    expect(text).toContain('部分內容未能載入');
+    expect(notificationRecipeSource).toContain('部分內容未能載入');
     expect(text).toContain('查看錯誤紀錄');
     expect(text).toContain('可以立即再試時，唯一操作優先使用「重試」');
     expect(text).toContain('沒有更直接的處理方式時，才提供「查看錯誤紀錄」');

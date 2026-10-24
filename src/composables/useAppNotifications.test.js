@@ -6,6 +6,35 @@ async function load() {
 }
 
 describe('app notification owner', () => {
+  it('keeps purpose and explicit dismissal separate from tone without adding a default close action', async () => {
+    const owner = await load();
+    const result = owner.notify({ key: 'plain-result', title: '完成' });
+    const confirmation = owner.notify({
+      key: 'confirm-result',
+      title: '請確認',
+      tone: 'success',
+      variant: 'confirmation',
+    });
+    const custom = owner.notify({
+      key: 'custom-dismiss',
+      title: '進度',
+      lifecycle: 'progress',
+      dismissLabel: '隱藏',
+    });
+    expect(
+      owner.items.value.find((item) => item.id === result).dismissLabel,
+    ).toBeUndefined();
+    expect(
+      owner.items.value.find((item) => item.id === confirmation).variant,
+    ).toBe('confirmation');
+    expect(
+      owner.items.value.find((item) => item.id === confirmation).lifecycle,
+    ).toBe('persistent');
+    expect(
+      owner.items.value.find((item) => item.id === custom).dismissLabel,
+    ).toBe('隱藏');
+    for (const id of [result, confirmation, custom]) owner.dismiss(id);
+  });
   it('does not let a late failed retry replace a newer result', async () => {
     const owner = await load();
     let reject;

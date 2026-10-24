@@ -27,11 +27,17 @@ function notify({
   tone = 'success',
   actionLabel = '',
   action = null,
-  lifecycle = tone === 'success' ? 'transient' : 'persistent',
+  variant,
+  lifecycle = variant === 'confirmation'
+    ? 'persistent'
+    : tone === 'success'
+      ? 'transient'
+      : 'persistent',
   progress = null,
   priority = 0,
   announcement = 'polite',
   consumeAction = true,
+  dismissLabel = '',
 }) {
   clear(key);
   const id = `notification-${++revision}`;
@@ -52,6 +58,8 @@ function notify({
       priority,
       announcement,
       consumeAction,
+      ...(variant ? { variant } : {}),
+      ...(dismissLabel ? { dismissLabel } : {}),
       dismissible: true,
       ...(actions.has(id) ? { actionLabel } : {}),
     }),

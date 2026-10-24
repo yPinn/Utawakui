@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { nextTick, reactive } from 'vue';
+import { createSSRApp, nextTick, reactive } from 'vue';
+import { renderToString } from '@vue/server-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiButton from './UiButton.vue';
 import UiIconButton from './UiIconButton.vue';
@@ -92,6 +93,472 @@ function notifications() {
 }
 
 describe('UiNotificationHost', () => {
+  it('separates the stationary list item from its horizontally moving card', async () => {
+    mount(UiNotificationHost, {
+      items: [{ id: 'stable', title: '連續拖曳', dismissible: true }],
+    });
+    await nextTick();
+    const item = notifications()[0];
+    const cards = findAll(item, (node) =>
+      String(node.props.class ?? '')
+        .split(' ')
+        .includes('ui-notification-host__card'),
+    );
+    expect(cards).toHaveLength(1);
+    expect(cards[0].parent).toBe(item);
+    const source = readFileSync(
+      new URL('./UiNotificationHost.vue', import.meta.url),
+      'utf8',
+    );
+    const outer = source.match(
+      /\.ui-notification-host__item\s*\{([^}]+)\}/u,
+    )[1];
+    expect(outer).not.toContain('--ui-notification-drag-x');
+    expect(outer).toContain('overflow: clip');
+  });
+
+  it('captures the stationary item at press so a fast first move cannot lose the release', async () => {
+    const setPointerCapture = vi.fn();
+    mount(UiNotificationHost, {
+      items: [{ id: 'fast', title: '快速拖曳', dismissible: true }],
+    });
+    await nextTick();
+    trigger(notifications()[0], 'onPointerdown', {
+      pointerType: 'mouse',
+      pointerId: 3,
+      clientX: 0,
+      clientY: 0,
+      currentTarget: { setPointerCapture },
+    });
+    expect(setPointerCapture).toHaveBeenCalledExactlyOnceWith(3);
+  });
+
+  it.each([272, 280, 416])(
+    'uses a dead zone and a release boundary tied to the %ipx card',
+    async (width) => {
+      const onDismiss = vi.fn();
+      mount(UiNotificationHost, {
+        inlineSize: width,
+        items: [{ id: 'boundary', title: '拖曳範圍', dismissible: true }],
+        onDismiss,
+      });
+      await nextTick();
+      const item = notifications()[0];
+      const event = {
+        pointerType: 'mouse',
+        pointerId: 1,
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+      };
+      const offset = () => item.props.style['--ui-notification-drag-x'];
+      trigger(item, 'onPointerdown', event);
+      trigger(item, 'onPointermove', { ...event, clientX: 11 });
+      await nextTick();
+      expect(offset()).toBe('0px');
+      trigger(item, 'onPointermove', { ...event, clientX: 13 });
+      await nextTick();
+      expect(offset()).toBe('1px');
+      const boundary = Math.max(72, width * 0.35);
+      trigger(item, 'onPointermove', {
+        ...event,
+        clientX: 12 + boundary - 0.01,
+      });
+      trigger(item, 'onPointerup', { ...event, clientX: 12 + boundary - 0.01 });
+      await nextTick();
+      expect(onDismiss).not.toHaveBeenCalled();
+      expect(offset()).toBe('0px');
+      trigger(item, 'onPointerdown', event);
+      trigger(item, 'onPointermove', { ...event, clientX: 12 + boundary });
+      expect(onDismiss).not.toHaveBeenCalled();
+      trigger(item, 'onPointerup', {
+        ...event,
+        clientX: 12 + boundary,
+        preventDefault: vi.fn(),
+      });
+      expect(onDismiss).toHaveBeenCalledWith({
+        id: 'boundary',
+        reason: 'swipe',
+      });
+    },
+  );
+
+  it('bounds an excessive drag and lets a crossed boundary be undone before release', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      inlineSize: 280,
+      items: [{ id: 'bounds', title: '範圍', dismissible: true }],
+      onDismiss,
+    });
+    await nextTick();
+    const item = notifications()[0];
+    const event = {
+      pointerType: 'touch',
+      pointerId: 1,
+      clientX: 0,
+      clientY: 0,
+    };
+    trigger(item, 'onPointerdown', event);
+    trigger(item, 'onPointermove', { ...event, clientX: -1000 });
+    await nextTick();
+    expect(item.props.style['--ui-notification-drag-x']).toBe('-280px');
+    expect(onDismiss).not.toHaveBeenCalled();
+    trigger(item, 'onPointermove', { ...event, clientX: -20 });
+    trigger(item, 'onPointerup', { ...event, clientX: -20 });
+    await nextTick();
+    expect(onDismiss).not.toHaveBeenCalled();
+    expect(item.props.style['--ui-notification-drag-x']).toBe('0px');
+  });
+
+  it('requires horizontal intent rather than activating on a slightly diagonal gesture', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      inlineSize: 280,
+      items: [{ id: 'diagonal', title: '斜向', dismissible: true }],
+      onDismiss,
+    });
+    await nextTick();
+    const item = notifications()[0];
+    const event = {
+      pointerType: 'touch',
+      pointerId: 2,
+      clientX: 0,
+      clientY: 0,
+    };
+    trigger(item, 'onPointerdown', event);
+    trigger(item, 'onPointermove', { ...event, clientX: 100, clientY: 80 });
+    await nextTick();
+    expect(item.props.style['--ui-notification-drag-x']).toBe('0px');
+    trigger(item, 'onPointerup', { ...event, clientX: 100, clientY: 80 });
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it('renders purpose-controlled confirmation and progress without a registered overlay', async () => {
+    const html = await renderToString(
+      createSSRApp(UiNotificationHost, {
+        items: [
+          {
+            id: 'confirmed',
+            title: '請確認',
+            variant: 'confirmation',
+            dismissible: true,
+            tone: 'warning',
+          },
+          {
+            id: 'work',
+            title: '準備中',
+            lifecycle: 'progress',
+            progress: 45,
+            dismissible: true,
+            actionLabel: '查看進度',
+            actionDisabled: true,
+          },
+        ],
+      }),
+    );
+    expect(html).toContain('知道了');
+    expect(html).toContain('45%');
+    expect(html).toContain('查看進度');
+    expect(html).toContain('disabled');
+    expect(html).not.toContain('ui-notification-host__close');
+    expect(html).not.toContain('隱藏');
+  });
+  it.each([
+    ['transient', 'result', 'success'],
+    ['persistent', 'recovery', 'danger'],
+    ['progress', 'progress', 'info'],
+  ])(
+    'does not add a dismissal footer to %s notifications',
+    async (lifecycle, variant, tone) => {
+      const onDismiss = vi.fn();
+      mount(UiNotificationHost, {
+        items: [
+          { id: 'purpose', title: '通知', lifecycle, tone, dismissible: true },
+        ],
+        onDismiss,
+      });
+      await nextTick();
+      const item = notifications()[0];
+      expect(item.props['data-notification-variant']).toBe(variant);
+      expect(findAll(item, (node) => node.type === 'button')).toHaveLength(0);
+      expect(
+        findAll(item, (node) =>
+          String(node.props.class ?? '').includes('ui-notice__actions'),
+        ),
+      ).toHaveLength(0);
+      expect(item.props.tabindex).toBe(0);
+      trigger(item, 'onKeydown', { key: 'Escape', stopPropagation: vi.fn() });
+      expect(onDismiss).toHaveBeenCalledWith({
+        id: 'purpose',
+        reason: 'manual',
+      });
+    },
+  );
+
+  it('shows only the recovery action and uses confirmation semantics independently of tone', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'retry-only',
+          title: '未完成',
+          tone: 'danger',
+          actionLabel: '重試',
+          dismissible: true,
+        },
+        {
+          id: 'confirm',
+          title: '請確認',
+          variant: 'confirmation',
+          tone: 'success',
+          lifecycle: 'transient',
+          dismissible: true,
+        },
+      ],
+      onDismiss,
+    });
+    await nextTick();
+    const [recovery, confirmation] = notifications();
+    expect(
+      findAll(recovery, (node) => node.type === 'button').map(textContent),
+    ).toEqual(['重試']);
+    const button = findAll(confirmation, (node) => node.type === 'button')[0];
+    expect(textContent(button)).toBe('知道了');
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(onDismiss).not.toHaveBeenCalled();
+    trigger(button, 'onClick');
+    expect(onDismiss).toHaveBeenCalledWith({ id: 'confirm', reason: 'manual' });
+  });
+
+  it('keeps an Escape target while its only recovery action is disabled', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'disabled-retry',
+          title: '正在重試',
+          actionLabel: '重試',
+          actionDisabled: true,
+          dismissible: true,
+        },
+      ],
+      onDismiss,
+    });
+    await nextTick();
+    const item = notifications()[0];
+    expect(item.props.tabindex).toBe(0);
+    const event = { key: 'Escape', stopPropagation: vi.fn() };
+    trigger(item, 'onKeydown', event);
+    expect(event.stopPropagation).toHaveBeenCalledOnce();
+    expect(onDismiss).toHaveBeenCalledWith({
+      id: 'disabled-retry',
+      reason: 'manual',
+    });
+  });
+
+  it('keeps explicitly requested dismissal and recovery together in the footer without an icon close lane', async () => {
+    const onDismiss = vi.fn();
+    const onAction = vi.fn();
+    mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'footer',
+          title: '讀取失敗',
+          lifecycle: 'persistent',
+          dismissible: true,
+          dismissLabel: '關閉',
+          actionLabel: '重試',
+        },
+      ],
+      onDismiss,
+      onAction,
+    });
+    await nextTick();
+    const footer = findAll(body, (node) =>
+      String(node.props.class ?? '').includes('ui-notice__actions'),
+    )[0];
+    expect(footer).toBeDefined();
+    const buttons = findAll(footer, (node) => node.type === 'button');
+    expect(buttons.map(textContent)).toEqual(['關閉', '重試']);
+    trigger(buttons[1], 'onClick');
+    expect(onAction).toHaveBeenCalledWith('footer');
+    expect(onDismiss).not.toHaveBeenCalled();
+    trigger(buttons[0], 'onClick');
+    expect(onDismiss).toHaveBeenCalledWith({ id: 'footer', reason: 'manual' });
+    expect(
+      findAll(body, (node) =>
+        String(node.props.class ?? '').includes('ui-notification-host__close'),
+      ),
+    ).toEqual([]);
+  });
+
+  it('hides progress without cancelling it and does not time out persistent records', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'work',
+          title: '正在準備',
+          lifecycle: 'progress',
+          dismissible: true,
+          dismissLabel: '隱藏',
+        },
+      ],
+      onDismiss,
+    });
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(onDismiss).not.toHaveBeenCalled();
+    const hide = findAll(
+      body,
+      (node) => node.type === 'button' && textContent(node) === '隱藏',
+    )[0];
+    expect(hide).toBeDefined();
+    trigger(hide, 'onClick');
+    expect(onDismiss).toHaveBeenCalledWith({ id: 'work', reason: 'manual' });
+  });
+
+  it.each(['mouse', 'touch', 'pen'])(
+    'dismisses a persistent record by horizontal %s drag and suppresses its trailing click',
+    async (pointerType) => {
+      const onDismiss = vi.fn();
+      mount(UiNotificationHost, {
+        items: [
+          {
+            id: 'drag',
+            title: '待處理',
+            lifecycle: 'persistent',
+            dismissible: true,
+          },
+        ],
+        onDismiss,
+      });
+      await nextTick();
+      const item = notifications()[0];
+      const event = {
+        pointerType,
+        pointerId: 4,
+        button: 0,
+        clientX: 100,
+        clientY: 50,
+        currentTarget: {
+          setPointerCapture: vi.fn(),
+          releasePointerCapture: vi.fn(),
+        },
+      };
+      trigger(item, 'onPointerdown', event);
+      trigger(item, 'onPointermove', { ...event, clientX: -60 });
+      trigger(item, 'onPointerup', {
+        ...event,
+        clientX: -60,
+        preventDefault: vi.fn(),
+      });
+      expect(onDismiss).toHaveBeenCalledWith({ id: 'drag', reason: 'swipe' });
+      const click = {
+        detail: 1,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      };
+      trigger(item, 'onClickCapture', click);
+      expect(click.stopPropagation).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('leaves buttons, secondary pointers and vertical gestures alone', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'guard',
+          title: '完成',
+          lifecycle: 'transient',
+          durationMs: 1000,
+          dismissible: true,
+        },
+      ],
+      onDismiss,
+    });
+    await nextTick();
+    const item = notifications()[0];
+    const base = {
+      pointerType: 'touch',
+      pointerId: 5,
+      clientX: 0,
+      clientY: 0,
+      currentTarget: { setPointerCapture: vi.fn() },
+    };
+    for (const extra of [
+      { target: { closest: () => ({}) } },
+      { isPrimary: false },
+      { pointerType: 'mouse', button: 2 },
+    ]) {
+      trigger(item, 'onPointerdown', { ...base, ...extra });
+      trigger(item, 'onPointermove', { ...base, clientX: 100 });
+      trigger(item, 'onPointerup', base);
+    }
+    trigger(item, 'onPointerdown', base);
+    trigger(item, 'onPointermove', { ...base, clientX: 4, clientY: 30 });
+    trigger(item, 'onPointermove', { ...base, clientX: 100, clientY: 35 });
+    trigger(item, 'onPointerup', base);
+    expect(onDismiss).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(onDismiss).toHaveBeenCalledWith({ id: 'guard', reason: 'timeout' });
+  });
+
+  it('shares the Dock shell edges instead of a separate notification inset', () => {
+    const tokens = readFileSync(
+      new URL('../../styles/tokens.css', import.meta.url),
+      'utf8',
+    );
+    expect(tokens).toContain(
+      '--ui-notification-safe-inset: var(--ui-shell-edge-inset-inline);',
+    );
+    expect(tokens).toMatch(
+      /--ui-notification-block-end-offset:\s*calc\(\s*var\(--ui-player-bar-height\)\s*\+\s*var\(--ui-shell-content-inset-block\)\s*\)/u,
+    );
+  });
+
+  it('restores a short drag after lost capture while retaining the hover pause', async () => {
+    const onDismiss = vi.fn();
+    mount(UiNotificationHost, {
+      items: [
+        {
+          id: 'capture',
+          title: '完成',
+          lifecycle: 'transient',
+          durationMs: 1000,
+          dismissible: true,
+        },
+      ],
+      onDismiss,
+    });
+    await nextTick();
+    const item = notifications()[0];
+    await vi.advanceTimersByTimeAsync(400);
+    trigger(item, 'onPointerenter');
+    const event = {
+      pointerType: 'mouse',
+      pointerId: 9,
+      clientX: 0,
+      clientY: 0,
+    };
+    trigger(item, 'onPointerdown', event);
+    trigger(item, 'onPointermove', { ...event, clientX: 30 });
+    trigger(item, 'onLostpointercapture', event);
+    await nextTick();
+    expect(item.props.style['--ui-notification-drag-x']).toBe('0px');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(onDismiss).not.toHaveBeenCalled();
+    trigger(item, 'onPointerleave');
+    await vi.advanceTimersByTimeAsync(599);
+    expect(onDismiss).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(onDismiss).toHaveBeenCalledWith({
+      id: 'capture',
+      reason: 'timeout',
+    });
+  });
+
   it('keeps the remaining deadline through same-id content/tone updates and filters empty entries', async () => {
     const dismiss = vi.fn();
     const props = reactive({
@@ -212,6 +679,7 @@ describe('UiNotificationHost', () => {
           lifecycle: 'transient',
           durationMs: 1000,
           dismissible: true,
+          dismissLabel: '關閉',
         },
       ],
       onDismiss: dismiss,
@@ -427,7 +895,7 @@ describe('UiNotificationHost', () => {
       'utf8',
     );
     expect(source).toMatch(
-      /\.ui-notification-host__item\s*\{[^}]*background:\s*var\(--ui-color-surface-raised\);/su,
+      /\.ui-notification-host__card\s*\{[^}]*background:\s*var\(--ui-color-surface-raised\);/su,
     );
   });
   it('keeps shell notifications across page changes and wires timeout, close, and retry', async () => {
@@ -460,12 +928,16 @@ describe('UiNotificationHost', () => {
     await vi.advanceTimersByTimeAsync(6000);
     await nextTick();
     expect(owner.items.value).toEqual([]);
-    owner.notify({ key: 'folder', title: '資料夾未開啟', tone: 'danger' });
+    owner.notify({
+      key: 'folder',
+      title: '資料夾未開啟',
+      tone: 'danger',
+      dismissLabel: '關閉',
+    });
     await nextTick();
     const close = findAll(
       body,
-      (node) =>
-        node.type === 'button' && textContent(node).includes('關閉通知'),
+      (node) => node.type === 'button' && textContent(node) === '關閉',
     )[0];
     trigger(close, 'onClick');
     await nextTick();
@@ -602,7 +1074,7 @@ describe('UiNotificationHost', () => {
     );
     for (const tokens of [activeTokens, candidateTokens]) {
       expect(tokens).toMatch(
-        /--ui-notification-block-end-offset:\s*calc\([\s\S]*?--ui-player-bar-height[\s\S]*?--ui-notification-safe-inset[\s\S]*?\);/u,
+        /--ui-notification-block-end-offset:\s*calc\([\s\S]*?--ui-player-bar-height[\s\S]*?--ui-shell-content-inset-block[\s\S]*?\);/u,
       );
     }
   });
@@ -716,6 +1188,7 @@ describe('UiNotificationHost', () => {
           durationMs: 6000,
           title: '可關閉通知',
           dismissible: true,
+          dismissLabel: '關閉',
         },
       ],
       onDismiss,
@@ -724,7 +1197,7 @@ describe('UiNotificationHost', () => {
     const item = notifications()[0];
     const close = findAll(
       item,
-      (node) => node.type === 'button' && textContent(node) === '關閉通知',
+      (node) => node.type === 'button' && textContent(node) === '關閉',
     )[0];
 
     trigger(close, 'onClick');
@@ -742,17 +1215,17 @@ describe('UiNotificationHost', () => {
     });
     trigger(item, 'onPointermove', {
       pointerId: 7,
-      clientX: 100,
+      clientX: 180,
     });
     await nextTick();
-    expect(item.props.style['--ui-notification-drag-x']).toBe('80px');
+    expect(item.props.style['--ui-notification-drag-x']).toBe('148px');
     trigger(item, 'onPointerup', { pointerId: 7 });
     await nextTick();
     expect(onDismiss).toHaveBeenCalledWith({
       id: 'dismissible',
       reason: 'swipe',
     });
-    expect(item.props.style['--ui-notification-drag-x']).toBe('0px');
+    expect(item.props.style['--ui-notification-drag-x']).toBe('148px');
   });
 
   it('pauses transient timers while the document is hidden', async () => {

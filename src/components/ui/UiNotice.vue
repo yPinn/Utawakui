@@ -56,49 +56,77 @@ const role = computed(() =>
   <div
     v-if="resolvedTitle || resolvedMessage"
     class="ui-notice"
-    :class="[`ui-notice--${resolvedTone}`, { 'ui-notice--compact': compact }]"
+    :class="[
+      `ui-notice--${resolvedTone}`,
+      {
+        'ui-notice--compact': compact,
+        'ui-notice--inline-action': resolvedActionLabel && !$slots.actions,
+      },
+    ]"
     :role="role"
   >
-    <component
-      :is="icon"
-      class="ui-notice__icon"
-      :size="ICON_SIZE"
-      aria-hidden="true"
-    />
-    <div class="ui-notice__body">
-      <p v-if="resolvedTitle" class="ui-notice__title">
-        {{ resolvedTitle }}
-      </p>
-      <p v-if="resolvedMessage" class="ui-notice__message">
-        {{ resolvedMessage }}
-      </p>
-      <slot name="details" />
+    <div class="ui-notice__content">
+      <component
+        :is="icon"
+        class="ui-notice__icon"
+        :size="ICON_SIZE"
+        aria-hidden="true"
+      />
+      <div class="ui-notice__body">
+        <p v-if="resolvedTitle" class="ui-notice__title">
+          {{ resolvedTitle }}
+        </p>
+        <p v-if="resolvedMessage" class="ui-notice__message">
+          {{ resolvedMessage }}
+        </p>
+        <slot name="details" />
+      </div>
+      <div v-if="$slots.actions" class="ui-notice__actions">
+        <slot name="actions" />
+      </div>
+      <UiButton
+        v-else-if="resolvedActionLabel"
+        class="ui-notice__action"
+        variant="secondary"
+        :disabled="actionDisabled"
+        @click="!actionDisabled && emit('action')"
+      >
+        {{ resolvedActionLabel }}
+      </UiButton>
     </div>
-    <UiButton
-      v-if="resolvedActionLabel"
-      class="ui-notice__action"
-      variant="secondary"
-      :disabled="actionDisabled"
-      @click="!actionDisabled && emit('action')"
-    >
-      {{ resolvedActionLabel }}
-    </UiButton>
   </div>
 </template>
 
 <style scoped>
 .ui-notice {
   min-width: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) fit-content(40%);
-  align-items: start;
-  gap: var(--ui-space-2);
+  container: ui-notice / inline-size;
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface-raised);
   color: var(--ui-color-text);
   overflow-wrap: anywhere;
+}
+
+.ui-notice__content {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-space-2);
+}
+
+.ui-notice--inline-action .ui-notice__content {
+  grid-template-columns: auto minmax(0, 1fr) fit-content(40%);
+}
+
+.ui-notice__actions {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
 }
 
 .ui-notice--compact {
@@ -176,14 +204,14 @@ const role = computed(() =>
   align-self: center;
 }
 
-@media (max-width: 35rem) {
-  .ui-notice {
+@container ui-notice (max-width: 26rem) {
+  .ui-notice--inline-action .ui-notice__content {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
   .ui-notice__action {
     grid-column: 2;
-    justify-self: start;
+    justify-self: end;
   }
 }
 </style>

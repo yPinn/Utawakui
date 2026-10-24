@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { h, nextTick, reactive } from 'vue';
+import { createSSRApp, h, nextTick, reactive } from 'vue';
+import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
 import { Info } from '../../icons/index.js';
 import UiNotice from './UiNotice.vue';
@@ -26,6 +27,54 @@ for (const [component, file] of [
   attachClientRender(component, `./${file}.vue`, import.meta.url);
 const long = '中文／日本語／UnbrokenLongStatusText'.repeat(8);
 describe('feedback content and tone recovery', () => {
+  it('renders structured notice defaults and explicit recovery copy without an empty action footer', async () => {
+    const html = await renderToString(
+      createSSRApp(UiNotice, {
+        notice: {
+          severity: 'warning',
+          title: '來源尚未準備',
+          message: '請確認來源。',
+          actionLabel: '查看來源',
+        },
+        title: '來源已變更',
+        compact: true,
+      }),
+    );
+    expect(html).toContain('ui-notice--warning');
+    expect(html).toContain('ui-notice--compact');
+    expect(html).toContain('role="status"');
+    expect(html).toContain('來源已變更');
+    expect(html).not.toContain('來源尚未準備');
+    expect(html).toContain('查看來源');
+    expect(html).not.toContain('ui-notice__actions');
+    const messageOnly = await renderToString(
+      createSSRApp(UiNotice, { message: long }),
+    );
+    expect(messageOnly).toContain('ui-notice--muted');
+    expect(messageOnly).not.toContain('ui-notice__title');
+    expect(messageOnly).not.toContain('ui-notice__action');
+  });
+  it('lays out inline actions by their notice container and omits empty action tracks', () => {
+    const source = readFileSync(
+      new URL('./UiNotice.vue', import.meta.url),
+      'utf8',
+    );
+    expect(source).toContain('container: ui-notice / inline-size');
+    expect(source).toContain('@container ui-notice (max-width: 26rem)');
+    expect(source).not.toContain('@media (max-width:');
+    const { root, app } = mount(UiNotice, { title: '無操作的通知' });
+    expect(
+      findAll(root, (node) =>
+        String(node.props.class ?? '').includes('ui-notice--inline-action'),
+      ),
+    ).toHaveLength(0);
+    expect(
+      findAll(root, (node) =>
+        String(node.props.class ?? '').includes('ui-notice__actions'),
+      ),
+    ).toHaveLength(0);
+    app.unmount();
+  });
   it('updates notice tone, action availability and empty content without stale states', async () => {
     const action = vi.fn(),
       props = reactive({

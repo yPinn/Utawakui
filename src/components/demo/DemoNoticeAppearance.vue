@@ -26,6 +26,8 @@ const LAYERS = [
       靠近相關內容顯示訊息與操作；固定通知另由通知容器管理。
     </p>
 
+    <DemoNoticeNotificationRecipe />
+
     <section
       v-for="layer in LAYERS"
       :key="layer.key"
@@ -39,7 +41,6 @@ const LAYERS = [
       </header>
 
       <DemoNoticePrimitive :layer="layer" />
-      <DemoNoticeNotificationRecipe :layer="layer" />
     </section>
   </div>
 </template>
