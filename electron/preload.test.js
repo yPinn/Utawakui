@@ -98,6 +98,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:import-audio-files',
   'library:convert-local-audio-files',
   'library:list',
+  'library:get-track',
   'library:load-artist-photo-candidate-preview',
   'library:load-track-artwork-preview',
   'library:discard-track-artwork-draft',

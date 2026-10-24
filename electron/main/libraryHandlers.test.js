@@ -146,6 +146,20 @@ describe('library metadata maintenance handlers', () => {
     expect(listLibraryTracks).toHaveBeenCalledTimes(2);
   });
 
+  it('reads one track without scanning the whole library', async () => {
+    const track = { id: 'track-1', title: 'One' };
+    const listLibraryTracks = vi.fn();
+    const findLibraryTrack = vi.fn().mockReturnValue(track);
+    const handlers = registerHandlers({ listLibraryTracks, findLibraryTrack });
+
+    await expect(
+      handlers.get('library:get-track')({}, 'track-1'),
+    ).resolves.toBe(track);
+
+    expect(findLibraryTrack).toHaveBeenCalledWith('library-dir', 'track-1');
+    expect(listLibraryTracks).not.toHaveBeenCalled();
+  });
+
   it('keeps the library readable when automatic metadata organization fails', async () => {
     const recordDiagnostic = vi.fn();
     const tracks = [{ id: 'track-1', title: 'Playable track' }];

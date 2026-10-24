@@ -438,13 +438,11 @@ function clearTrack(trackId = null) {
 
 // Refresh the loaded track after library changes without making the library a
 // second transport owner. A URL swap restores the exact live mix calibration.
-async function syncCurrentTrack(options) {
-  if (!state.track) return;
-  const tracks = options
-    ? await window.Utawakui.listTracks(options)
-    : await window.Utawakui.listTracks();
-  const updated = tracks.find((track) => track.id === state.track.id);
-  if (!updated) return;
+async function syncCurrentTrack() {
+  const trackId = state.track?.id;
+  if (!trackId) return;
+  const updated = await window.Utawakui.getTrack(trackId);
+  if (!updated || state.track?.id !== trackId) return;
 
   const playable = toPlayableTrack(updated);
   const urlChanged = playable.url !== state.track.url;

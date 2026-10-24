@@ -268,6 +268,12 @@ function registerLibraryHandlers({
     return tracks;
   });
 
+  // Reads one track folder, so playback can follow library changes without
+  // a second full-library scan beside useLibrary's own refresh.
+  ipcMain.handle('library:get-track', async (event, trackId) =>
+    findLibraryTrack(resolveDownloadDir(getConfig()), trackId),
+  );
+
   ipcMain.handle('library:import-audio-files', async () => {
     const result = await dialog.showOpenDialog(getMainWindow(), {
       properties: ['openFile', 'multiSelections'],

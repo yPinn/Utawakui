@@ -888,16 +888,14 @@ describe('mix and transport controls', () => {
 describe('library synchronization', () => {
   it('refreshes metadata without reloading an unchanged playable URL', async () => {
     let libraryUpdated;
-    const listTracks = vi.fn().mockResolvedValue([
-      {
-        id: 'track-sync',
-        title: 'Updated title',
-        url: 'utawakui-media://track/track-sync/audio.wav',
-      },
-    ]);
+    const getTrack = vi.fn().mockResolvedValue({
+      id: 'track-sync',
+      title: 'Updated title',
+      url: 'utawakui-media://track/track-sync/audio.wav',
+    });
     vi.stubGlobal('window', {
       Utawakui: {
-        listTracks,
+        getTrack,
         onLibraryUpdated: vi.fn((listener) => {
           libraryUpdated = listener;
           return vi.fn();
@@ -914,24 +912,58 @@ describe('library synchronization', () => {
 
     await libraryUpdated({ sourceType: 'local-file' });
 
-    expect(listTracks).toHaveBeenCalledWith({ sourceType: 'local-file' });
+    expect(getTrack).toHaveBeenCalledWith('track-sync');
     expect(player.state.track.title).toBe('Updated title');
     expect(MockAudio.latest.play).not.toHaveBeenCalled();
+  });
+
+  it('ignores a lookup that resolves after another track was loaded', async () => {
+    let libraryUpdated;
+    const lookup = createDeferred();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getTrack: vi.fn(() => lookup.promise),
+        onLibraryUpdated: vi.fn((listener) => {
+          libraryUpdated = listener;
+          return vi.fn();
+        }),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({
+      id: 'track-sync',
+      title: 'Old title',
+      url: 'utawakui-media://track/track-sync/audio.wav',
+    });
+
+    const sync = libraryUpdated();
+    await player.playTrack({
+      id: 'track-next',
+      title: 'Next title',
+      url: 'utawakui-media://track/track-next/audio.wav',
+    });
+    lookup.resolve({
+      id: 'track-sync',
+      title: 'Updated title',
+      url: 'utawakui-media://track/track-sync/audio.wav',
+    });
+    await sync;
+
+    expect(player.state.track.id).toBe('track-next');
+    expect(player.state.track.title).toBe('Next title');
   });
 
   it('restores position and mix calibration when the playable URL changes', async () => {
     let libraryUpdated;
     vi.stubGlobal('window', {
       Utawakui: {
-        listTracks: vi.fn().mockResolvedValue([
-          {
-            id: 'track-sync',
-            title: 'Separated title',
-            url: 'utawakui-media://track/track-sync/audio.wav',
-            stemsUrl: 'utawakui-media://track/track-sync/stems.wav',
-            hasSeparation: true,
-          },
-        ]),
+        getTrack: vi.fn().mockResolvedValue({
+          id: 'track-sync',
+          title: 'Separated title',
+          url: 'utawakui-media://track/track-sync/audio.wav',
+          stemsUrl: 'utawakui-media://track/track-sync/stems.wav',
+          hasSeparation: true,
+        }),
         onLibraryUpdated: vi.fn((listener) => {
           libraryUpdated = listener;
           return vi.fn();
@@ -969,13 +1001,11 @@ describe('library synchronization', () => {
     let libraryUpdated;
     vi.stubGlobal('window', {
       Utawakui: {
-        listTracks: vi.fn().mockResolvedValue([
-          {
-            id: 'track-sync',
-            title: 'Updated title',
-            url: 'utawakui-media://track/track-sync/audio-v2.wav',
-          },
-        ]),
+        getTrack: vi.fn().mockResolvedValue({
+          id: 'track-sync',
+          title: 'Updated title',
+          url: 'utawakui-media://track/track-sync/audio-v2.wav',
+        }),
         onLibraryUpdated: vi.fn((listener) => {
           libraryUpdated = listener;
           return vi.fn();
@@ -1008,13 +1038,11 @@ describe('library synchronization', () => {
     let libraryUpdated;
     vi.stubGlobal('window', {
       Utawakui: {
-        listTracks: vi.fn().mockResolvedValue([
-          {
-            id: 'track-sync',
-            title: 'Updated title',
-            url: 'utawakui-media://track/track-sync/audio-v2.wav',
-          },
-        ]),
+        getTrack: vi.fn().mockResolvedValue({
+          id: 'track-sync',
+          title: 'Updated title',
+          url: 'utawakui-media://track/track-sync/audio-v2.wav',
+        }),
         onLibraryUpdated: vi.fn((listener) => {
           libraryUpdated = listener;
           return vi.fn();

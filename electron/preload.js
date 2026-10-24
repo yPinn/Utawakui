@@ -609,6 +609,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: (options) => ipcRenderer.invoke('library:list', options),
+  getTrack: (trackId) => ipcRenderer.invoke('library:get-track', trackId),
   getArtistIndex: () => ipcRenderer.invoke('library:get-artist-index'),
   getReleaseInfo: (value) =>
     ipcRenderer.invoke(
