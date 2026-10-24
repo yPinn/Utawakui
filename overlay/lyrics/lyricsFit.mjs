@@ -11,6 +11,7 @@ import {
 } from '../../shared/presentation/lyricsDisplayLayout.mjs';
 import { projectLyricsDisplayFrame } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import { fineTextParts } from '../../shared/presentation/lyricsFineFrame.mjs';
+import { sliceLyricsVocalParts } from '../../shared/presentation/lyricsTextProcessing.mjs';
 
 function fineMeasurementSource(line, frame, templateId) {
   const units = frame.currentFineTiming?.units;
@@ -51,6 +52,7 @@ function createMeasurement(
   counters,
   measureNow,
   fineSource,
+  literalPrefixes = false,
 ) {
   const vertical = ['manga-frame', 'ornate-vertical'].includes(templateId);
   const target =
@@ -91,25 +93,21 @@ function createMeasurement(
     window.innerHeight * 0.65,
     window.innerHeight - padding * 2,
   );
-  let rows = Math.max(1, Math.min(3, Math.floor(height / lineHeight)));
   if (templateId === 'live-stage') {
     width =
       Math.min(targetRect.width || width, window.innerWidth * 0.55) -
       padding * 2;
-    rows = 2;
-  } else if (templateId === 'kinetic-pop') rows = 2;
-  else if (templateId === 'manga-frame') {
+  } else if (templateId === 'manga-frame') {
     const bubble = target.parentElement.getBoundingClientRect();
     width = bubble.width * 0.65;
     height = bubble.height * 0.65;
-    const ruby = reading?.segments?.some((segment) => segment.reading);
-    rows = Math.max(
-      1,
-      Math.floor(width / (lineHeight + (ruby ? size * 0.45 : 0))),
-    );
-  } else if (templateId === 'ornate-vertical') {
-    rows = Math.max(1, Math.min(3, Math.floor(width / (size * 1.7))));
   }
+  // Readability is a separate ceiling from physical canvas capacity. A wide
+  // 1080p source must not pack every CJK clause onto one nearly screen-wide row.
+  if (!vertical) width = Math.min(width, size * 18);
+  // Every physical row/vertical column is an active sequential batch. Other
+  // template lanes remain previews rather than extra simultaneous current rows.
+  const rows = 1;
   if (width <= 0 || height <= 0) return null;
   const probe = document.createElement('span');
   probe.setAttribute('aria-hidden', 'true');
@@ -150,7 +148,7 @@ function createMeasurement(
     wrappedPages = new Map();
   const fitsLine = (text) => {
     if (measured.has(text)) return measured.get(text);
-    probe.textContent = text;
+    probe.textContent = text.trimEnd();
     if (counters) counters.probeCount++;
     const rect = probe.getBoundingClientRect();
     const fits =
@@ -162,7 +160,10 @@ function createMeasurement(
   const layout = (text) => {
     if (!layouts.has(text)) {
       const at = counters ? measureNow() : 0;
-      layouts.set(text, splitLyricsDisplayRows(text, fitsLine, rows));
+      layouts.set(
+        text,
+        splitLyricsDisplayRows(text, fitsLine, rows, { literalPrefixes }),
+      );
       if (counters) counters.fitRowsMs += measureNow() - at;
     }
     return layouts.get(text);
@@ -171,6 +172,7 @@ function createMeasurement(
     `${range?.sourceStart ?? 0}:${range?.sourceEnd ?? text.length}`;
   return {
     fits: (text, range) => {
+      const inkText = text.trimEnd();
       // A generous advance budget cheaply rejects obviously excessive text.
       // The actual DOM measurement remains authoritative for every accepted page.
       if (
@@ -186,7 +188,8 @@ function createMeasurement(
       if (counters && counters.fitWrappedAtMs === null)
         counters.fitWrappedAtMs = at;
       const from = range?.sourceStart ?? 0;
-      const to = range?.sourceEnd ?? text.length;
+      const to =
+        (range?.sourceEnd ?? text.length) - (text.length - inkText.length);
       if (fineSource?.units.length) {
         const nodes = (start, end) =>
           fineTextParts(fineSource.text, fineSource.units, start, end).map(
@@ -223,7 +226,7 @@ function createMeasurement(
                 })
             : nodes(from, to)),
         );
-      } else wrapped.textContent = text;
+      } else wrapped.textContent = inkText;
       if (counters) counters.probeCount++;
       const rect = wrapped.getBoundingClientRect();
       const overflow = vertical
@@ -257,6 +260,7 @@ function createMeasurement(
 }
 
 export function createLyricsFitController(options = {}) {
+  let lastPrepared = null;
   const elements = options.elements;
   const document = options.document ?? globalThis.document;
   const window = options.window ?? globalThis.window;
@@ -326,6 +330,7 @@ export function createLyricsFitController(options = {}) {
   window?.addEventListener?.('resize', resized);
   function prepare(snapshot, frame, settings = {}) {
     if (stopped || !frame.visible) {
+      lastPrepared = null;
       if (notice) notice.hidden = true;
       if (elements) elements.root.dataset.fitActive = 'false';
       return { frame, delayMs: null };
@@ -348,21 +353,24 @@ export function createLyricsFitController(options = {}) {
       if (canonical.text.slice(from, to) !== base.currentText)
         return { frame, delayMs: null };
       line.text = base.currentText;
+      if (canonical.vocalParts)
+        line.vocalParts = sliceLyricsVocalParts(canonical.vocalParts, from, to);
       line.startMs = startMs;
       line.endMs = endMs;
       let cursor = 0;
-      line.estimatedStarts = {
-        version: 1,
-        segments: (canonical.estimatedStarts?.segments ?? []).flatMap((s) => {
-          const start = cursor;
-          cursor += s.text.length;
-          const a = Math.max(start, from),
-            b = Math.min(cursor, to);
-          return a < b
-            ? [{ ...s, text: s.text.slice(a - start, b - start) }]
-            : [];
-        }),
-      };
+      if (canonical.estimatedStarts?.version === 1)
+        line.estimatedStarts = {
+          version: 1,
+          segments: (canonical.estimatedStarts?.segments ?? []).flatMap((s) => {
+            const start = cursor;
+            cursor += s.text.length;
+            const a = Math.max(start, from),
+              b = Math.min(cursor, to);
+            return a < b
+              ? [{ ...s, text: s.text.slice(a - start, b - start) }]
+              : [];
+          }),
+        };
       // Page timing follows the KTV cadence. Fine paint retains the actual
       // canonical intervals separately, including ends beyond that cadence.
       delete line.estimatedFineTiming;
@@ -370,19 +378,24 @@ export function createLyricsFitController(options = {}) {
     // Apply the existing content policy once, before paging. Punctuation/whitespace
     // changes mean exact source offsets are unavailable, so retain layout provenance.
     if (settings.templateId === 'live-stage') {
-      const display = adaptLiveStageLyricsPresentation(
-        analyzeLyricsSource(line.text),
-        settings,
-      );
-      const text = display.pages.flatMap((p) => p.lines).join(' ');
-      if (text !== line.text) {
-        line.text = text;
-        delete line.segments;
-        delete line.estimatedStarts;
+      if (settings.lyricsPresentationPolicyId === 'broadcast-compact') {
+        const display = adaptLiveStageLyricsPresentation(
+          analyzeLyricsSource(line.text, {
+            speaker: line.vocalParts === undefined,
+          }),
+          settings,
+        );
+        const text = display.pages.flatMap((p) => p.lines).join(' ');
+        if (text !== line.text) {
+          line.text = text;
+          delete line.segments;
+          delete line.estimatedStarts;
+        }
       }
     }
     const rate = snapshot.playback?.rate ?? 1;
     const key = JSON.stringify([
+      snapshot.lyrics.trackId,
       settings.templateId,
       settings.kineticMaterial,
       settings.lyricsPresentationPolicyId,
@@ -390,6 +403,7 @@ export function createLyricsFitController(options = {}) {
       canonical.estimatedFineTiming,
       rate,
       base.currentReading,
+      settings.templateId === 'karaoke-stack' ? base.nextText : null,
     ]);
     let entry = cache.get(key);
     const trace = options.onTrace
@@ -417,12 +431,17 @@ export function createLyricsFitController(options = {}) {
           }
         : null;
       if (elements) elements.root.dataset.fitActive = 'false';
-      options.renderForMeasurement?.(
-        settings.templateId === 'manga-frame'
-          ? { ...frame, mangaFit: true }
-          : frame,
-        settings,
-      );
+      // On same-source invalidation the complete committed batch already owns
+      // the live DOM. Measuring the unsplit source here would reset its entrance
+      // identity (and briefly replace its ink) before the scheduler can commit.
+      if (lastPrepared?.key !== key || !lastPrepared.batched) {
+        options.renderForMeasurement?.(
+          settings.templateId === 'manga-frame'
+            ? { ...frame, mangaFit: true }
+            : frame,
+          settings,
+        );
+      }
       trace?.('fit-render', { durationMs: measureNow() - startedAt });
       const measurement =
         options.measure?.(line, settings) ??
@@ -436,6 +455,7 @@ export function createLyricsFitController(options = {}) {
             counters,
             measureNow,
             fineMeasurementSource(line, base, settings.templateId),
+            line.vocalParts !== undefined,
           ));
       if (!measurement) return { frame, delayMs: null };
       try {
@@ -443,10 +463,17 @@ export function createLyricsFitController(options = {}) {
         const plan = planLyricsDisplay(line, {
           fits: measurement.fits,
           rate,
+          sequentialRows: true,
+          phraseRows: true,
+          language: base.language,
         });
         const multiline = [];
         entry = {
           plan,
+          nextPreview:
+            settings.templateId === 'karaoke-stack' && base.nextText
+              ? (measurement.rows(base.nextText)?.[0] ?? null)
+              : null,
           rows: plan.pages.map((p) => {
             const wrapped =
               settings.templateId === 'focus-line'
@@ -488,12 +515,29 @@ export function createLyricsFitController(options = {}) {
     }
     const rows = entry.rows[selected.index];
     const active =
-      entry.plan.pages.length > 1 || entry.multiline[selected.index] === true;
+      entry.plan.pages.length > 1 ||
+      entry.multiline[selected.index] === true ||
+      [
+        'karaoke-stack',
+        'live-stage',
+        'manga-frame',
+        'kinetic-pop',
+        'ornate-vertical',
+      ].includes(settings.templateId);
     const projected = projectLyricsDisplayFrame(frame, line, entry.plan, at, {
       ...settings,
       rows,
+      nextPreview: entry.nextPreview,
+      rate,
+      playing: snapshot.playback?.status === 'playing',
       force: active,
     });
+    lastPrepared = {
+      key,
+      batched: Boolean(
+        projected.displayBatchId ?? projected.ktv?.displayBatchId,
+      ),
+    };
     if (elements) {
       const data = elements.root.dataset;
       data.fitStatus = entry.plan.status;
@@ -521,6 +565,7 @@ export function createLyricsFitController(options = {}) {
     invalidate,
     stop() {
       stopped = true;
+      lastPrepared = null;
       cancelStylePreparation();
       notice?.remove();
       cache.clear();

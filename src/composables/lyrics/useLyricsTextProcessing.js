@@ -4,9 +4,17 @@ import {
   projectLyricsTextSelection,
 } from '../../../shared/presentation/lyricsTextProcessing.mjs';
 
-export function useLyricsTextProcessing({ document, sourceKey }) {
-  const hiddenLineIds = shallowRef([]);
-  const analysis = computed(() => preprocessLyricsDocument(toValue(document)));
+export function useLyricsTextProcessing({ document, sourceKey, performers }) {
+  const overrides = shallowRef(new Map());
+  const options = () => ({ performers: toValue(performers) ?? [] });
+  const analysis = computed(() =>
+    preprocessLyricsDocument(toValue(document), options()),
+  );
+  const hiddenLineIds = computed(() =>
+    analysis.value.outputCandidates
+      .filter((line) => overrides.value.get(line.lineId) ?? line.defaultHidden)
+      .map((line) => line.lineId),
+  );
   // Selection belongs to this exact source/text, not a track or a template.
   watch(
     () =>
@@ -17,7 +25,7 @@ export function useLyricsTextProcessing({ document, sourceKey }) {
         toValue(document)?.lines?.map((line) => [line.lineId, line.text]),
       ]),
     () => {
-      hiddenLineIds.value = [];
+      overrides.value = new Map();
     },
     { flush: 'sync' },
   );
@@ -25,23 +33,26 @@ export function useLyricsTextProcessing({ document, sourceKey }) {
   function setHidden(lineId, hidden) {
     if (
       typeof hidden !== 'boolean' ||
-      !analysis.value.creditCandidates.some((line) => line.lineId === lineId)
+      !analysis.value.outputCandidates.some((line) => line.lineId === lineId)
     )
       return false;
-    const next = new Set(hiddenLineIds.value);
-    if (hidden) next.add(lineId);
-    else next.delete(lineId);
-    hiddenLineIds.value = [...next];
+    overrides.value = new Map(overrides.value).set(lineId, hidden);
     return true;
   }
   return {
-    candidates: computed(() => analysis.value.creditCandidates),
+    candidates: computed(() => analysis.value.outputCandidates),
     hiddenLineIds: readonly(hiddenLineIds),
     setHidden,
     restore: () => {
-      hiddenLineIds.value = [];
+      overrides.value = new Map(
+        analysis.value.outputCandidates.map((line) => [line.lineId, false]),
+      );
     },
     project: (outputDocument) =>
-      projectLyricsTextSelection(outputDocument, hiddenLineIds.value),
+      projectLyricsTextSelection(
+        outputDocument,
+        hiddenLineIds.value,
+        options(),
+      ),
   };
 }

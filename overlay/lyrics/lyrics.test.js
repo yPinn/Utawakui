@@ -7,7 +7,6 @@ import {
   renderLyricsFrame,
   renderLyricsFrameSafely,
 } from './lyrics.mjs';
-import { ORNATE_VERTICAL_EXIT_DURATION_SECONDS } from '../../shared/presentation/ornateVerticalMotion.mjs';
 import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 
@@ -69,7 +68,20 @@ function element(ownerDocument = null, localName = '') {
       },
     },
     append(...children) {
+      for (const child of children) child.parentElement = this;
       this.children.push(...children);
+    },
+    cloneNode() {
+      const clone = element(ownerDocument, localName);
+      clone.className = this.className;
+      Object.assign(clone.dataset, this.dataset);
+      return clone;
+    },
+    remove() {
+      if (this.parentElement)
+        this.parentElement.children = this.parentElement.children.filter(
+          (child) => child !== this,
+        );
     },
     replaceChildren(...children) {
       ownText = '';
@@ -134,6 +146,164 @@ function domElements() {
 function kineticLineTracks(line) {
   return line.children.flatMap((row) => row.children);
 }
+
+it.each([
+  'focus-line',
+  'kinetic-pop',
+  'ornate-vertical',
+  'manga-frame',
+  'live-stage',
+])(
+  'starts a new %s batch for repeated text in a different range, but not progress ticks',
+  (templateId) => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = {
+      visible: true,
+      lineIndex: 0,
+      currentText: '同じ',
+      nextText: '',
+      displayBatchId: 'line:0:2',
+      kineticPop: {
+        text: '同じ',
+        displayText: '同じ',
+        units: [{ text: '同じ', weight: 1 }],
+      },
+      ornateVertical: {
+        text: '同じ',
+        units: [{ text: '同じ' }],
+        segments: [{ text: '同じ', units: [{ text: '同じ' }] }],
+      },
+      liveStageDisplayLines: ['同じ'],
+    };
+    renderLyricsFrame(elements, frame, {
+      templateId,
+      gsap,
+      reducedMotion: true,
+    });
+    const next = { ...frame, displayBatchId: 'line:2:4', lineProgress: 0 };
+    renderLyricsFrame(elements, next, { templateId, gsap });
+    const animationCount =
+      timelines.length + elements.current.animate.mock.calls.length;
+    expect(animationCount).toBeGreaterThan(0);
+    renderLyricsFrame(
+      elements,
+      { ...next, lineProgress: 0.2 },
+      { templateId, gsap },
+    );
+    expect(timelines.length + elements.current.animate.mock.calls.length).toBe(
+      animationCount,
+    );
+    destroyLyricsAnimations(elements, { gsap });
+  },
+);
+
+it('keeps a capacity-planned Manga batch in one column, including Japanese reading', () => {
+  const elements = domElements();
+  renderLyricsFrame(
+    elements,
+    {
+      visible: true,
+      lineIndex: 0,
+      currentText: '君と過ごした',
+      nextText: '',
+      language: 'ja',
+      mangaFit: true,
+      displayBatchId: 'line:0:6',
+      currentReading: {
+        text: '君と過ごした',
+        segments: [{ text: '君', reading: 'きみ' }, { text: 'と過ごした' }],
+      },
+    },
+    { templateId: 'manga-frame', reducedMotion: true },
+  );
+  expect(elements.mangaBubbles.children[0].dataset.mangaColumns).toBe('1');
+  expect(
+    elements.mangaBubbles.children[0].children[1].children.some(
+      (n) => n.localName === 'br',
+    ),
+  ).toBe(false);
+});
+
+it.each(['focus-line', 'live-stage'])(
+  'cancels the %s entrance when seeking or reducing motion',
+  (templateId) => {
+    const elements = domElements();
+    const cancel = vi.fn();
+    elements.current.animate.mockReturnValue({ cancel });
+    const frame = {
+      visible: true,
+      lineIndex: 0,
+      currentText: '歌うよ',
+      nextText: '',
+      displayBatchId: 'a',
+      liveStageDisplayLines: ['歌うよ'],
+    };
+    renderLyricsFrame(elements, frame, { templateId });
+    expect(elements.current.animate).toHaveBeenCalledOnce();
+    renderLyricsFrame(
+      elements,
+      { ...frame, displayBatchId: 'b', timelineDiscontinuity: true },
+      { templateId },
+    );
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(elements.current.animate).toHaveBeenCalledOnce();
+    renderLyricsFrame(
+      elements,
+      { ...frame, displayBatchId: 'c' },
+      { templateId },
+    );
+    renderLyricsFrame(
+      elements,
+      { ...frame, displayBatchId: 'c' },
+      { templateId, reducedMotion: true },
+    );
+    expect(cancel).toHaveBeenCalledTimes(2);
+    destroyLyricsAnimations(elements);
+  },
+);
+
+it('does not restart a repeated Focus batch after same-source fit invalidation', () => {
+  const elements = domElements();
+  const snapshot = {
+    playback: { status: 'paused', positionMs: 3500 },
+    lyrics: {
+      lines: [{ lineId: 'r', text: 'OH OH ', startMs: 1000, endMs: 6000 }],
+    },
+  };
+  const frame = {
+    visible: true,
+    lineIndex: 0,
+    currentText: 'OH OH ',
+    nextText: '',
+  };
+  const fit = createLyricsFitController({
+    elements,
+    measure: () => ({
+      fits: (text) => text.length <= 3,
+      rows: (text) => [{ text }],
+    }),
+    renderForMeasurement: (f) =>
+      renderLyricsFrame(elements, f, {
+        templateId: 'focus-line',
+        reducedMotion: true,
+      }),
+  });
+  renderLyricsFrame(
+    elements,
+    fit.prepare(snapshot, frame, { templateId: 'focus-line' }).frame,
+    { templateId: 'focus-line' },
+  );
+  const count = elements.current.animate.mock.calls.length;
+  fit.invalidate();
+  renderLyricsFrame(
+    elements,
+    fit.prepare(snapshot, frame, { templateId: 'focus-line' }).frame,
+    { templateId: 'focus-line' },
+  );
+  expect(elements.current.animate).toHaveBeenCalledTimes(count);
+  fit.stop();
+});
 
 it('retains Focus fine ink and suppresses extra line entrances across cold fit and same-line invalidation', () => {
   const elements = domElements();
@@ -1146,7 +1316,7 @@ describe('lyrics overlay renderer', () => {
     ]);
   });
 
-  it('hands off Ornate Vertical lines without keeping A and B visible together', () => {
+  it('overlaps Ornate Vertical exit and entrance without a blank swap', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
     const frame = (text, lineIndex) => ({
@@ -1192,14 +1362,14 @@ describe('lyrics overlay renderer', () => {
     });
 
     expect(timelines).toHaveLength(1);
-    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children).toHaveLength(2);
     expect(elements.current.children[0]).toBe(outgoing);
     expect(gsap.set).toHaveBeenCalled();
     expect(timelines[0].labelPositions).toEqual([
       { label: 'swap', position: 0 },
       {
         label: 'enter',
-        position: `swap+=${ORNATE_VERTICAL_EXIT_DURATION_SECONDS}`,
+        position: 'swap',
       },
     ]);
     expect(timelines[0].tweens[0].position).toBe('swap');
@@ -1208,7 +1378,7 @@ describe('lyrics overlay renderer', () => {
         .slice(1)
         .every((tween) => tween.position.startsWith('enter+=')),
     ).toBe(true);
-    expect(timelines[0].additionPositions).toEqual(['enter']);
+    expect(timelines[0].additionPositions).toEqual([]);
     expect(elements.root.dataset.ornatePlacement).toBe('right');
     for (const [, vars] of gsap.set.mock.calls) {
       expect(vars).not.toHaveProperty('x');
@@ -1223,9 +1393,7 @@ describe('lyrics overlay renderer', () => {
       expect(tween.vars).not.toHaveProperty('rotation');
       expect(tween.vars).not.toHaveProperty('scale');
     }
-    timelines[0].additions[0]();
-    expect(elements.current.children).toHaveLength(1);
-    expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
+    expect(elements.current.children[1].dataset.ornateText).toBe('後悔だけ');
     timelines[0].options.onComplete();
     expect(elements.current.children).toHaveLength(1);
     expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
@@ -1289,13 +1457,15 @@ describe('lyrics overlay renderer', () => {
 
     expect(timelines).toHaveLength(2);
     expect(timelines[0].kill).toHaveBeenCalledOnce();
-    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children).toHaveLength(2);
     expect(elements.current.children[0].dataset.ornateText).toBe('B');
     expect(gsap.set).toHaveBeenCalledWith(expect.any(Array), {
       clearProps: 'clipPath,opacity,visibility',
     });
 
-    timelines[1].additions[0]();
+    timelines[0].options.onComplete();
+    expect(elements.current.children[1].dataset.ornateText).toBe('C');
+    timelines[1].options.onComplete();
     expect(elements.current.children).toHaveLength(1);
     expect(elements.current.children[0].dataset.ornateText).toBe('C');
   });
@@ -3937,7 +4107,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.root.attributes['aria-label']).toBeUndefined();
   });
 
-  it('fades one Manga utterance as one whole bubble', () => {
+  it('crossfades Manga bubbles with new content mounted before the old bubble exits', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
 
@@ -3968,10 +4138,10 @@ describe('lyrics overlay renderer', () => {
       { gsap, templateId: 'manga-frame' },
     );
 
-    expect(elements.current.textContent).toBe('previous line');
+    expect(elements.current.textContent).toBe('current line');
     expect(elements.next.textContent).toBe('');
     expect(timelines).toHaveLength(1);
-    expect(timelines[0].labels).toEqual(['exit']);
+    expect(timelines[0].labels).toEqual(['exit', 'enter']);
     expect(timelines[0].tweens[0]).toMatchObject({
       target: [outgoingBubble],
       vars: {
@@ -3984,7 +4154,14 @@ describe('lyrics overlay renderer', () => {
     });
     expect(elements.current.animate).not.toHaveBeenCalled();
 
-    timelines[0].additions[0]();
+    const outgoingGroup = elements.root.children.find(
+      (child) => child.dataset.mangaOutgoing === 'true',
+    );
+    expect(outgoingGroup.children).toContain(outgoingBubble);
+    expect(timelines[0].labelPositions).toEqual([
+      { label: 'exit', position: 0 },
+      { label: 'enter', position: 0 },
+    ]);
 
     expect(elements.current.textContent).toBe('current line');
     expect(elements.next.textContent).toBe('');
@@ -4010,6 +4187,8 @@ describe('lyrics overlay renderer', () => {
     expect(bubble.dataset.mangaOrder).toBe('1');
     expect(bubble.style.values['--ovl-manga-anchor-y']).toMatch(/%$/);
     expect(bubble.style.values['--ovl-manga-inline-jitter']).toMatch(/rem$/);
+    timelines[0].options.onComplete();
+    expect(elements.root.children).not.toContain(outgoingGroup);
   });
 
   it('renders every Manga T1 phrase and parenthetical as an independent bubble', () => {
@@ -4330,8 +4509,6 @@ describe('lyrics overlay renderer', () => {
         stagger: { each: 0.06, from: 'start' },
       },
     });
-
-    timelines[0].additions[0]();
 
     const incoming = [...elements.mangaBubbles.children];
     expect(incoming.map((bubble) => bubble.textContent)).toEqual([
@@ -4826,10 +5003,8 @@ describe('lyrics overlay renderer', () => {
     );
 
     expect(timelines).toHaveLength(1);
-    expect(timelines[0].labels).toEqual(['exit']);
+    expect(timelines[0].labels).toEqual(['exit', 'enter']);
     expect(elements.root.dataset.mangaSide).toBe('right');
-
-    timelines[0].additions[0]();
 
     expect(timelines[0].labels).toEqual(['exit', 'enter']);
     expect(elements.root.dataset.mangaSide).toBe('right');
@@ -4863,7 +5038,6 @@ describe('lyrics overlay renderer', () => {
       },
       { gsap, templateId: 'manga-frame' },
     );
-    timelines[0].additions[0]();
     const enteringBubbles = [...elements.mangaBubbles.children];
 
     renderLyricsFrame(
@@ -4897,6 +5071,64 @@ describe('lyrics overlay renderer', () => {
     expect(elements.mangaBubbles.children).toEqual(enteringBubbles);
     expect(gsap.to).not.toHaveBeenCalled();
   });
+
+  it.each(['interrupt', 'seek', 'reduce', 'destroy'])(
+    'removes outgoing Manga layers on %s and ignores stale completion',
+    (action) => {
+      const elements = domElements();
+      const { gsap, timelines } = gsapHarness();
+      const frame = (text, displayBatchId) => ({
+        visible: true,
+        currentText: text,
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+        displayBatchId,
+        mangaFit: true,
+      });
+      renderLyricsFrame(elements, frame('歌う', 'a'), {
+        gsap,
+        templateId: 'manga-frame',
+        reducedMotion: true,
+      });
+      renderLyricsFrame(elements, frame('歌う', 'b'), {
+        gsap,
+        templateId: 'manga-frame',
+      });
+      expect(elements.root.children).toHaveLength(1);
+      const firstOutgoing = elements.root.children[0];
+      expect(firstOutgoing.attributes['aria-hidden']).toBe('true');
+      expect(elements.mangaBubbles.children[0]).not.toBe(
+        firstOutgoing.children[0],
+      );
+      if (action === 'destroy') destroyLyricsAnimations(elements, { gsap });
+      else
+        renderLyricsFrame(
+          elements,
+          {
+            ...frame('新しい歌詞', 'c'),
+            timelineDiscontinuity: action === 'seek',
+          },
+          {
+            gsap,
+            templateId: 'manga-frame',
+            reducedMotion: action === 'reduce',
+          },
+        );
+      expect(timelines[0].kill).toHaveBeenCalled();
+      expect(elements.root.children).not.toContain(firstOutgoing);
+      expect(elements.root.children).toHaveLength(
+        action === 'interrupt' ? 1 : 0,
+      );
+      timelines[0].options.onComplete();
+      if (action !== 'destroy')
+        expect(elements.current.dataset.currentText).toBe('新しい歌詞');
+      if (action === 'interrupt') {
+        timelines[1].options.onComplete();
+        expect(elements.root.children).toHaveLength(0);
+      }
+    },
+  );
 
   it('keeps the final Manga Frame utterance visible until its bubble fades out', () => {
     const elements = domElements();

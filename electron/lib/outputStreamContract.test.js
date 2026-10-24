@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import outputStreamContract from '../../shared/outputStreamContract.js';
+import { projectLyricsTextSelection } from '../../shared/presentation/lyricsTextProcessing.mjs';
 
 const {
   OUTPUT_V3_SUBPROTOCOL,
@@ -14,6 +15,215 @@ const identity = {
   kind: 'full',
   revision: 1,
 };
+
+describe('filtered text source boundaries', () => {
+  it('keeps derived document identity within the Main limit for maximum-length source ids', () => {
+    const value = lyricsEnvelope();
+    value.payload.document.documentId = 'd'.repeat(128);
+    value.payload.document.granularity = 'T1';
+    value.payload.document.lines = [
+      { lineId: 'v', text: '[男]一起唱', startMs: 0, endMs: 5000 },
+    ];
+    value.payload.document = projectLyricsTextSelection(
+      value.payload.document,
+      ['v'],
+    );
+    expect(value.payload.document.documentId.length).toBeLessThanOrEqual(128);
+    expect(
+      parseOutputStreamEnvelope(value, 'boot-1').payload.document.lines[0],
+    ).toMatchObject({ text: '一起唱', vocalParts: [{ role: 'male' }] });
+  });
+
+  it.each([[[]], [[{ from: 0, to: 2, label: '女', role: 'female' }]]])(
+    'preserves bounded vocal metadata %j',
+    (parts) => {
+      const value = lyricsEnvelope();
+      value.payload.document.granularity = 'T1';
+      value.payload.document.lines = [
+        {
+          lineId: 'v',
+          text: '一起唱',
+          startMs: 0,
+          endMs: 5000,
+          vocalParts: parts,
+        },
+      ];
+      expect(
+        parseOutputStreamEnvelope(value, 'boot-1').payload.document.lines[0]
+          .vocalParts,
+      ).toEqual(parts);
+    },
+  );
+  it.each(
+    [
+      [{ from: -1, to: 2, label: '男', role: 'male' }],
+      [{ from: 0, to: 4, label: '男', role: 'male' }],
+      [{ from: 0, to: 0, label: '男', role: 'male' }],
+      [{ from: 0, to: 2, label: '男', role: 'other' }],
+      [{ from: 0, to: 2, label: '', role: 'male' }],
+      [{ from: 0, to: 2, label: '男', role: 'male', extra: true }],
+      [
+        { from: 0, to: 2, label: '男', role: 'male' },
+        { from: 1, to: 3, label: '女', role: 'female' },
+      ],
+    ].map((parts) => [parts]),
+  )('rejects invalid vocal ranges %j', (parts) => {
+    const value = lyricsEnvelope();
+    value.payload.document.granularity = 'T1';
+    value.payload.document.lines = [
+      {
+        lineId: 'v',
+        text: '一起唱',
+        startMs: 0,
+        endMs: 5000,
+        vocalParts: parts,
+      },
+    ];
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow(
+      /vocalParts/,
+    );
+  });
+
+  it.each(['T2', 'T1+'])(
+    'accepts label-free %s text and aligned Japanese reading',
+    (tier) => {
+      const value = lyricsEnvelope(),
+        text = '（和聲）空へ';
+      value.payload.document.source = {
+        ...value.payload.document.source,
+        language: 'ja',
+      };
+      const line = { lineId: 'voice', text, startMs: 1000, endMs: 6000 };
+      if (tier === 'T2') {
+        value.payload.document.granularity = 'T2';
+        line.segments = [
+          { segmentId: 'cue', text: '（和聲）', startMs: 1000, endMs: 2000 },
+          { segmentId: 'body', text: '空へ', startMs: 2000, endMs: 6000 },
+        ];
+      } else {
+        value.payload.document.granularity = 'T1';
+        line.estimatedStarts = {
+          version: 1,
+          segments: [
+            { segmentId: 'cue', text: '（和聲）', startMs: 1000 },
+            { segmentId: 'body', text: '空へ', startMs: 2000 },
+          ],
+        };
+        line.estimatedFineTiming = {
+          version: 1,
+          units: [
+            { unitId: 'fine-cue', from: 0, to: 4, startMs: 1000, endMs: 1800 },
+            { unitId: 'fine-body', from: 4, to: 6, startMs: 2000, endMs: 5000 },
+          ],
+        };
+      }
+      value.payload.document.lines = [line];
+      value.payload.document.reading = {
+        lines: [
+          {
+            lineId: 'voice',
+            text,
+            segments: [
+              { text: '（和聲）', reading: 'metadata' },
+              { text: '空へ', reading: 'そらへ' },
+            ],
+          },
+        ],
+      };
+      value.payload.document = projectLyricsTextSelection(
+        value.payload.document,
+        ['voice'],
+      );
+      const parsed = parseOutputStreamEnvelope(value, 'boot-1').payload
+        .document;
+      expect(parsed.lines[0].text).toBe('空へ');
+      expect(parsed.reading.lines[0]).toEqual({
+        lineId: 'voice',
+        text: '空へ',
+        segments: [{ text: '空へ', reading: 'そらへ' }],
+      });
+      if (tier === 'T2')
+        expect(parsed.lines[0].segments[0]).toMatchObject({
+          startMs: 2000,
+          endMs: 6000,
+        });
+      else
+        expect(parsed.lines[0].estimatedFineTiming.units[0]).toEqual({
+          unitId: 'fine-body',
+          from: 0,
+          to: 2,
+          startMs: 2000,
+          endMs: 5000,
+        });
+    },
+  );
+  it.each(['（和聲）', '混音 Mixing Engineer: 王曉夫'])(
+    'accepts the original inferred boundary when the following %s is hidden',
+    (text) => {
+      const value = lyricsEnvelope();
+      value.payload.document.granularity = 'T1';
+      value.payload.document.lines = [
+        {
+          lineId: 'before',
+          text: '前句',
+          startMs: 0,
+          endMs: 1000,
+          endInferred: true,
+        },
+        {
+          lineId: 'hidden',
+          text,
+          startMs: 1000,
+          endMs: 2000,
+          endInferred: true,
+        },
+        { lineId: 'after', text: '次句', startMs: 2000, endMs: 3000 },
+      ];
+      value.payload.document = projectLyricsTextSelection(
+        value.payload.document,
+        ['hidden'],
+      );
+      const parsed = parseOutputStreamEnvelope(value, 'boot-1').payload
+        .document;
+      expect(parsed.lines[0]).toMatchObject({ endMs: 1000, endInferred: true });
+      expect(parsed.lines[1].startMs).toBe(2000);
+    },
+  );
+  it('accepts a retained inferred end before hidden trailing credits and still rejects overlap', () => {
+    const value = lyricsEnvelope();
+    value.payload.document.granularity = 'T1';
+    value.payload.document.lines = [
+      { lineId: 'before', text: '前句', startMs: 0, endMs: null },
+      {
+        lineId: 'hidden',
+        text: '母帶 Mastering Engineer: Craig J Williams',
+        startMs: 1000,
+        endMs: 2000,
+      },
+    ];
+    value.payload.document = projectLyricsTextSelection(
+      value.payload.document,
+      ['hidden'],
+    );
+    expect(
+      parseOutputStreamEnvelope(value, 'boot-1').payload.document.lines[0],
+    ).toMatchObject({ endMs: 1000, endInferred: true });
+    value.payload.document.lines.push({
+      lineId: 'next',
+      text: '次句',
+      startMs: 900,
+      endMs: 1500,
+    });
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow();
+    value.payload.document.lines.splice(1, 0, {
+      lineId: 'untimed',
+      text: '未校時文字',
+      startMs: null,
+      endMs: null,
+    });
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow();
+  });
+});
 
 describe('bounded model-start extension', () => {
   function modelEnvelope() {

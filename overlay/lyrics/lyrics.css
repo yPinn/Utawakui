@@ -1224,34 +1224,19 @@
     overflow-wrap: anywhere;
     text-wrap: wrap;
   }
-  .lyrics-overlay[data-fit-active='true'] .lyrics-overlay__next {
-    display: none;
-  }
-  :root[data-ovl-template='karaoke-stack']
-    .lyrics-overlay[data-fit-active='true'] {
-    grid-template-rows: auto;
-  }
-  :root[data-ovl-template='karaoke-stack']
+  :root:not([data-ovl-template='karaoke-stack'])
     .lyrics-overlay[data-fit-active='true']
-    .lyrics-overlay__current:not([data-ktv-active='true']) {
+    .lyrics-overlay__next {
     display: none;
   }
   :root[data-ovl-template='karaoke-stack']
     .lyrics-overlay[data-fit-active='true']
-    [data-ktv-active='true'] {
-    display: block;
-    grid-row: 1;
+    :is(.lyrics-overlay__current, .lyrics-overlay__next) {
     max-inline-size: 100%;
     overflow: visible;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     text-wrap: wrap;
-  }
-  :root[data-ovl-template='karaoke-stack']
-    .lyrics-overlay[data-fit-active='true']
-    .lyrics-overlay__ktv-count-in[data-ktv-lane='b'] {
-    inset-block-start: -2.55em;
-    grid-row: 1;
   }
 }
 @layer components {

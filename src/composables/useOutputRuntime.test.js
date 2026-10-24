@@ -1,4 +1,5 @@
-import { reactive, shallowRef } from 'vue';
+import { effectScope, reactive, shallowRef } from 'vue';
+import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectLyricsTextSelection } from '../../shared/presentation/lyricsTextProcessing.mjs';
 
@@ -42,11 +43,13 @@ let arrangementCurrent;
 let arrangementPlanState;
 let experimentalLyrics;
 let hiddenCreditIds;
+let textProcessingOverride;
 let mediaPositionMs;
 let samplePlaybackClock;
 
 beforeEach(() => {
   hiddenCreditIds = shallowRef([]);
+  textProcessingOverride = null;
   mediaPositionMs = null;
   samplePlaybackClock = vi.fn(({ now }) => ({
     trackId: playerState.track?.id ?? null,
@@ -219,7 +222,7 @@ beforeEach(() => {
       lyricsDocument,
       displayLyricsDocument,
       experimentalLyrics,
-      lyricsTextProcessing: {
+      lyricsTextProcessing: textProcessingOverride ?? {
         project: (document) =>
           projectLyricsTextSelection(document, hiddenCreditIds.value),
       },
@@ -320,6 +323,157 @@ it('deduplicates concurrent UI opens while the main operation is pending', async
 });
 
 describe('output source handshake', () => {
+  it('publishes technical credits and label-only exclusions while retaining sung T2 text and source times', async () => {
+    const scope = effectScope();
+    try {
+      playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+      selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+      const document = {
+        documentId: 'cast-label-document',
+        granularity: 'T2',
+        lines: [
+          {
+            lineId: 'credit',
+            text: '母帶 Mastering Engineer: Craig J Williams',
+            startMs: 0,
+            endMs: 1000,
+          },
+          { lineId: 'label', text: '（和聲）', startMs: 1000, endMs: 2000 },
+          {
+            lineId: 'voice',
+            text: '（和聲）[女]一起唱（啊啊）',
+            startMs: 2000,
+            endMs: 6000,
+            segments: [
+              {
+                segmentId: 'marker',
+                text: '（和聲）',
+                startMs: 2000,
+                endMs: 2200,
+              },
+              {
+                segmentId: 'sung',
+                text: '[女]一起唱（啊啊）',
+                startMs: 2200,
+                endMs: 6000,
+              },
+            ],
+          },
+        ],
+      };
+      const before = structuredClone(document);
+      lyricsDocument.value = document;
+      playerState.currentTime = 2.05;
+      activeLineId.value = 'voice';
+      activeSegmentId.value = 'marker';
+      textProcessingOverride = scope.run(() =>
+        useLyricsTextProcessing({
+          document: lyricsDocument,
+          sourceKey: () => 'track-1/source',
+        }),
+      );
+      const runtime = await loadRuntime(),
+        initialization = runtime.initialize();
+      libraryHydration.resolve();
+      playlistHydration.resolve();
+      lyricsHydration.resolve();
+      await initialization;
+      const latest = (stream) =>
+        bridge.publishOutputSnapshot.mock.calls
+          .map(([m]) => m)
+          .filter((m) => m.stream === stream)
+          .at(-1).payload;
+      expect(latest('lyrics.document').document.lines).toEqual([
+        {
+          ...document.lines[2],
+          text: '一起唱（啊啊）',
+          segments: [
+            { ...document.lines[2].segments[1], text: '一起唱（啊啊）' },
+          ],
+          vocalParts: [{ from: 0, to: 7, label: '女', role: 'female' }],
+        },
+      ]);
+      expect(latest('state.snapshot').lyrics).toMatchObject({
+        activeLineId: 'voice',
+        activeSegmentId: null,
+      });
+      textProcessingOverride.restore();
+      await flushMicrotasks();
+      await flushMicrotasks();
+      expect(latest('lyrics.document').document.lines).toMatchObject(
+        document.lines,
+      );
+      expect(latest('state.snapshot').lyrics.activeSegmentId).toBe('marker');
+      expect(lyricsDocument.value).toEqual(before);
+    } finally {
+      scope.stop();
+    }
+  });
+
+  it('publishes automatic Producer exclusions and per-line restoration through the real text owner', async () => {
+    const scope = effectScope();
+    try {
+      playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+      selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+      const document = {
+        documentId: 'producer-document',
+        granularity: 'T1',
+        lines: [
+          {
+            lineId: 'producer',
+            text: '製作人/編曲 Producer: HARIKIRI',
+            startMs: 0,
+            endMs: 21000,
+          },
+          {
+            lineId: 'voice',
+            text: '[女] Why?（啊啊和聲）',
+            startMs: 21000,
+            endMs: 26000,
+          },
+        ],
+      };
+      lyricsDocument.value = document;
+      activeLineId.value = 'producer';
+      textProcessingOverride = scope.run(() =>
+        useLyricsTextProcessing({
+          document: lyricsDocument,
+          sourceKey: () => 'track-1/source',
+        }),
+      );
+      const runtime = await loadRuntime();
+      const initialization = runtime.initialize();
+      libraryHydration.resolve();
+      playlistHydration.resolve();
+      lyricsHydration.resolve();
+      await initialization;
+      const latest = () =>
+        bridge.publishOutputSnapshot.mock.calls.map(([message]) => message);
+      expect(
+        latest()
+          .filter((m) => m.stream === 'lyrics.document')
+          .at(-1).payload.document.lines,
+      ).toMatchObject([{ ...document.lines[1], text: 'Why?（啊啊和聲）' }]);
+      expect(
+        latest()
+          .filter((m) => m.stream === 'state.snapshot')
+          .at(-1).payload.lyrics.activeLineId,
+      ).toBeNull();
+      textProcessingOverride.setHidden('producer', false);
+      textProcessingOverride.setHidden('voice', false);
+      await flushMicrotasks();
+      await flushMicrotasks();
+      expect(
+        latest()
+          .filter((m) => m.stream === 'lyrics.document')
+          .at(-1).payload.document.lines,
+      ).toMatchObject(document.lines);
+      expect(lyricsDocument.value).toEqual(document);
+    } finally {
+      scope.stop();
+    }
+  });
+
   it('publishes confirmed credit exclusions and restores without changing source text or singing times', async () => {
     playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
     playerState.currentTime = 0.5;
@@ -356,7 +510,7 @@ describe('output source handshake', () => {
     const projected = messages
       .filter((message) => message.stream === 'lyrics.document')
       .at(-1).payload.document;
-    expect(projected.lines).toEqual([document.lines[1]]);
+    expect(projected.lines).toMatchObject([document.lines[1]]);
     expect(projected.documentId).not.toBe(document.documentId);
     expect(
       messages.filter((message) => message.stream === 'state.snapshot').at(-1)
@@ -370,8 +524,8 @@ describe('output source handshake', () => {
       .map(([message]) => message)
       .filter((message) => message.stream === 'lyrics.document')
       .at(-1).payload.document;
-    expect(restored.lines).toEqual(document.lines);
-    expect(restored.documentId).toBe(document.documentId);
+    expect(restored.lines).toMatchObject(document.lines);
+    expect(restored.documentId).not.toBe(document.documentId);
   });
   async function initializePlaying() {
     playerState.track = { id: 'a', title: 'A', url: 'media://a' };

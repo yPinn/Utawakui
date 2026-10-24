@@ -2,11 +2,14 @@ import {
   adaptLiveStageLyricsPresentation,
   analyzeLyricsSource,
 } from '../shared/lyricsPresentation.mjs';
+import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
+import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
 
 const CARD_ENTER_DURATION_SECONDS = 0.22;
 const CARD_EXIT_DURATION_SECONDS = 0.18;
 const cardTransitions = new WeakMap();
 const captionRenderKeys = new WeakMap();
+const captionAnimations = new WeakMap();
 
 function resolveGsap(options) {
   return options.gsap ?? globalThis.gsap ?? null;
@@ -32,6 +35,8 @@ function clearCardTransition(elements, options = {}, clearProps = false) {
 }
 
 export function clearLiveStagePresentation(elements, options = {}) {
+  captionAnimations.get(elements.current)?.cancel?.();
+  captionAnimations.delete(elements.current);
   clearCardTransition(elements, options, true);
   captionRenderKeys.delete(elements.current);
   if (elements.liveStageChrome) elements.liveStageChrome.hidden = true;
@@ -119,7 +124,7 @@ function renderCard(elements, stage, options) {
   });
 }
 
-function renderCaption(elements, frame) {
+function renderCaption(elements, frame, options) {
   const presentation = frame.liveStageDisplayLines
     ? {
         lines: frame.liveStageDisplayLines,
@@ -136,7 +141,19 @@ function renderCaption(elements, frame) {
   const documentApi =
     elements.current.ownerDocument ?? elements.root.ownerDocument;
   delete elements.current.dataset.segmented;
-  const renderKey = presentation.lines.join('\0');
+  const renderKey = JSON.stringify([
+    lyricsDisplayBatchKey(frame),
+    presentation.lines,
+  ]);
+  const changed = captionRenderKeys.get(elements.current) !== renderKey;
+  if (
+    changed ||
+    frame.timelineDiscontinuity === true ||
+    options.reducedMotion === true
+  ) {
+    captionAnimations.get(elements.current)?.cancel?.();
+    captionAnimations.delete(elements.current);
+  }
 
   if (documentApi?.createElement) {
     const canReuse =
@@ -164,12 +181,31 @@ function renderCaption(elements, frame) {
   elements.current.hidden = presentation.lines.length === 0;
   setTextContent(elements.next, '');
   elements.next.hidden = true;
+  if (
+    changed &&
+    frame.visible &&
+    presentation.lines.length &&
+    frame.timelineDiscontinuity !== true &&
+    options.reducedMotion !== true
+  ) {
+    const animation = elements.current.animate?.(
+      [
+        { opacity: 0.35, transform: 'translateY(0.3em)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      {
+        duration: scaleLyricsMotionDuration(240, frame.lyricsRhythm),
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
+    );
+    captionAnimations.set(elements.current, animation);
+  }
   return presentation;
 }
 
 export function renderLiveStagePresentation(elements, frame, options = {}) {
   const stage = frame.liveStage ?? { active: false, cardVisible: false };
-  const presentation = renderCaption(elements, frame);
+  const presentation = renderCaption(elements, frame, options);
   elements.root.dataset.liveStage = 'true';
   if (elements.liveStageChrome) {
     elements.liveStageChrome.hidden = stage.active !== true;

@@ -7,6 +7,7 @@ defineOptions({ inheritAttrs: false });
   <section class="lyrics-preparation" aria-label="閱讀與預先設定">
     <LyricsDisplayControls v-bind="$attrs">
       <template #font-actions><slot name="font-actions" /></template>
+      <template #text-processing><slot name="text-processing" /></template>
     </LyricsDisplayControls>
   </section>
 </template>

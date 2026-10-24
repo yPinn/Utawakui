@@ -17,6 +17,7 @@ import {
   selectLyricsOverlayFrame,
 } from '../shared/state.mjs';
 import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
+import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import {
   adaptKtvLyricsPresentation,
   adaptMangaLyricsPresentation,
@@ -70,7 +71,8 @@ const ktvLanePresentations = new WeakMap();
 const lyricsRenderStates = new WeakMap();
 const segmentPaintAnimations = new WeakMap();
 const mangaTransitions = new WeakMap();
-const mangaLineIndexes = new WeakMap();
+const committedBatchKeys = new WeakMap();
+const entranceAnimations = new WeakMap();
 const mangaRenderKeys = new WeakMap();
 
 function resolveGsap(options) {
@@ -256,12 +258,7 @@ function setTextContent(element, value) {
 }
 
 function lyricLineKey(frame) {
-  const lineIndex = Number.isSafeInteger(frame.currentVisibleLineIndex)
-    ? frame.currentVisibleLineIndex
-    : Number.isSafeInteger(frame.lineIndex)
-      ? frame.lineIndex
-      : '';
-  return `${lineIndex}\0${frame.currentText ?? ''}`;
+  return lyricsDisplayBatchKey(frame);
 }
 
 function segmentStructureKey(segments) {
@@ -449,6 +446,7 @@ function clearKtvLanePresentation(root) {
 function secondaryKtvFrame(frame) {
   return {
     ...frame,
+    displayBatchId: frame.nextDisplayBatchId,
     currentText: frame.nextText,
     currentSegments: frame.nextSegments,
     currentFineTiming: frame.nextFineTiming,
@@ -484,7 +482,8 @@ function applyKtvLaneReplacementDelay(elements, frame, options, presentation) {
   }
 
   const previous = ktvLanePresentations.get(root);
-  const sameLine = previous?.currentVisibleLineIndex === currentIndex;
+  const batchKey = lyricLineKey(frame);
+  const sameLine = previous?.batchKey === batchKey;
   if (sameLine && frame.ktvNextHeld === true) {
     cancelKtvLaneHold(previous);
     previous.currentText = frame.currentText;
@@ -513,7 +512,9 @@ function applyKtvLaneReplacementDelay(elements, frame, options, presentation) {
 
   const sequentialLine =
     previous &&
-    currentIndex === previous.currentVisibleLineIndex + 1 &&
+    (currentIndex === previous.currentVisibleLineIndex + 1 ||
+      (currentIndex === previous.currentVisibleLineIndex &&
+        frame.displayFit?.pageIndex === previous.pageIndex + 1)) &&
     currentLane !== previous.currentLane;
   if (sequentialLine && !nextLane && !frame.nextText) {
     nextLane = previous.currentLane;
@@ -536,6 +537,8 @@ function applyKtvLaneReplacementDelay(elements, frame, options, presentation) {
   cancelKtvLaneHold(previous);
 
   const state = {
+    batchKey,
+    pageIndex: frame.displayFit?.pageIndex,
     currentVisibleLineIndex: currentIndex,
     currentLane,
     currentText: frame.currentText,
@@ -1080,6 +1083,7 @@ function renderMangaLyrics(elements, frame, options) {
         includeRuby: furiganaEnabled,
         readingLine: frame.currentReading,
         sourceRanges: bubblePresentation.sourceRanges,
+        singleColumn: frame.mangaFit === true,
       },
     );
     const existingBubble = canReuseBubbles ? group.children[index] : null;
@@ -1263,18 +1267,13 @@ function applyMusicStructurePresentation(elements, frame, options) {
 }
 
 function commitLyricsFrame(elements, frame, options, isMangaFrame) {
+  committedBatchKeys.set(elements.root, lyricLineKey(frame));
   if (isMangaFrame) {
     applyMangaFramePresentation(elements, frame, options);
-    if (Number.isSafeInteger(frame.lineIndex)) {
-      mangaLineIndexes.set(elements.root, frame.lineIndex);
-    } else {
-      mangaLineIndexes.delete(elements.root);
-    }
   } else {
     delete elements.root.dataset.mangaFrame;
     delete elements.root.dataset.mangaLength;
     delete elements.root.dataset.mangaSide;
-    mangaLineIndexes.delete(elements.root);
     clearMangaLyrics(elements);
   }
   const ktvPresentation = applyKtvLanePresentation(
@@ -1361,13 +1360,18 @@ function traceCommittedKtvLayout(elements, frame, options) {
 }
 
 function clearMangaTransition(root, token) {
-  if (mangaTransitions.get(root) === token) mangaTransitions.delete(root);
+  if (mangaTransitions.get(root) !== token) return;
+  if (token.outgoingTargets?.length)
+    resolveGsap(token.options)?.killTweensOf?.(token.outgoingTargets);
+  token.outgoingGroup?.remove();
+  mangaTransitions.delete(root);
 }
 
 function matchesMangaTransition(token, frame) {
   return (
     token?.targetText === frame.currentText &&
     token.targetLineIndex === frame.lineIndex &&
+    token.targetBatchKey === lyricLineKey(frame) &&
     token.visible === frame.visible
   );
 }
@@ -1412,9 +1416,10 @@ function addMangaBubbleFade(
   targets,
   direction,
   staggerEntrance = true,
+  position,
 ) {
   const entering = direction === 'enter';
-  timeline.addLabel(direction);
+  timeline.addLabel(direction, position);
 
   if (entering) {
     for (const [index, target] of targets.entries()) {
@@ -1458,7 +1463,14 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
     updateMangaTransition(activeTransition, frame, options);
     return;
   }
-  activeTransition?.timeline?.kill?.();
+  if (activeTransition) {
+    activeTransition.timeline?.kill?.();
+    if (activeTransition.incomingTargets?.length)
+      gsap.set(activeTransition.incomingTargets, {
+        clearProps: 'opacity,visibility',
+      });
+    clearMangaTransition(root, activeTransition);
+  }
 
   const token = {
     timeline: null,
@@ -1466,6 +1478,7 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
     options,
     committedFrame: null,
     targetLineIndex: frame.lineIndex,
+    targetBatchKey: lyricLineKey(frame),
     targetText: frame.currentText,
     visible: frame.visible,
   };
@@ -1483,12 +1496,43 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
       return;
     }
     const incomingBubbles = mangaEnteringBubbleTargets(elements, token.frame);
+    token.incomingTargets = incomingBubbles;
     gsap.set(incomingBubbles, { autoAlpha: 0 });
     addMangaBubbleFade(
       timeline,
       incomingBubbles,
       'enter',
       !['t2', 'model-starts'].includes(token.frame.currentTimingSource),
+    );
+    return;
+  }
+
+  if (frame.visible) {
+    // Keep the outgoing bubbles in a separate, presentation-only layer. The
+    // canonical group immediately owns the new batch, so same-batch updates
+    // cannot rebuild or count the outgoing bubbles as current content.
+    const outgoingBubbles = mangaBubbleTargets(elements);
+    const outgoingGroup = elements.mangaBubbles?.cloneNode(false);
+    if (outgoingGroup && outgoingBubbles.length > 0) {
+      outgoingGroup.removeAttribute('id');
+      outgoingGroup.setAttribute('aria-hidden', 'true');
+      outgoingGroup.dataset.mangaOutgoing = 'true';
+      outgoingGroup.append(...outgoingBubbles);
+      elements.root.append(outgoingGroup);
+      token.outgoingGroup = outgoingGroup;
+      token.outgoingTargets = outgoingBubbles;
+    }
+    commitMangaTransitionFrame(elements, token);
+    const incomingBubbles = mangaEnteringBubbleTargets(elements, token.frame);
+    token.incomingTargets = incomingBubbles;
+    gsap.set(incomingBubbles, { autoAlpha: 0 });
+    addMangaBubbleFade(timeline, outgoingBubbles, 'exit', true, 0);
+    addMangaBubbleFade(
+      timeline,
+      incomingBubbles,
+      'enter',
+      !['t2', 'model-starts'].includes(token.frame.currentTimingSource),
+      0,
     );
     return;
   }
@@ -1513,8 +1557,9 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
   const gsap = resolveGsap(options);
   const bubbleTargets = mangaBubbleTargets(elements);
   const currentChildTargets = Array.from(elements.current.children ?? []);
-  mangaTransitions.get(elements.root)?.timeline?.kill?.();
-  mangaTransitions.delete(elements.root);
+  const transition = mangaTransitions.get(elements.root);
+  transition?.timeline?.kill?.();
+  if (transition) clearMangaTransition(elements.root, transition);
   gsap?.killTweensOf?.(elements.root);
   if (elements.mangaBubbles) gsap?.killTweensOf?.(elements.mangaBubbles);
   if (bubbleTargets.length > 0) gsap?.killTweensOf?.(bubbleTargets);
@@ -1532,6 +1577,8 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 }
 
 export function destroyLyricsAnimations(elements, options = {}) {
+  entranceAnimations.get(elements.current)?.cancel?.();
+  entranceAnimations.delete(elements.current);
   stopKineticPopTransition(elements, options);
   stopOrnateVerticalTransition(elements, options);
   stopMangaAnimations(elements, options, true);
@@ -1619,6 +1666,10 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isLiveStage = templateId === 'live-stage';
   const isKineticPop = templateId === 'kinetic-pop';
   const isOrnateVertical = templateId === 'ornate-vertical';
+  if (isLiveStage || isKineticPop || isOrnateVertical) {
+    entranceAnimations.get(elements.current)?.cancel?.();
+    entranceAnimations.delete(elements.current);
+  }
   applyMusicStructurePresentation(elements, frame, renderOptions);
 
   if (templateId !== 'karaoke-stack') {
@@ -1667,11 +1718,17 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   clearOrnateVerticalPresentation(elements, renderOptions);
   const lineChanged =
     previousText !== frame.currentText ||
-    (isMangaFrame &&
-      Number.isSafeInteger(frame.lineIndex) &&
-      mangaLineIndexes.get(elements.root) !== frame.lineIndex);
+    committedBatchKeys.get(elements.root) !== lyricLineKey(frame);
   const gsap = resolveGsap(renderOptions);
   const timelineDiscontinuity = frame.timelineDiscontinuity === true;
+  if (
+    lineChanged ||
+    timelineDiscontinuity ||
+    renderOptions.reducedMotion === true
+  ) {
+    entranceAnimations.get(elements.current)?.cancel?.();
+    entranceAnimations.delete(elements.current);
+  }
   if (isMangaFrame && timelineDiscontinuity) {
     stopMangaAnimations(elements, renderOptions, true);
   }
@@ -1721,10 +1778,11 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     templateId !== 'karaoke-stack' &&
     frame.visible &&
     lineChanged &&
+    !timelineDiscontinuity &&
     renderOptions.reducedMotion !== true &&
     typeof elements.current.animate === 'function';
   if (shouldAnimate) {
-    elements.current.animate(
+    const animation = elements.current.animate(
       [
         { opacity: 0.35, transform: 'translateY(0.3em)' },
         { opacity: 1, transform: 'translateY(0)' },
@@ -1734,6 +1792,7 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
         easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
     );
+    entranceAnimations.set(elements.current, animation);
   }
 }
 

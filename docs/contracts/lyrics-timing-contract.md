@@ -417,10 +417,40 @@ at grapheme boundaries, and tries usable source-time candidates before falling
 back to display estimates. It never rewrites a source document or canonical tier.
 The existing word/particle rules supply candidates, not semantic understanding.
 
-All six Lyrics templates use this planner through the local `lyricsFit.mjs`
+All five registered Lyrics templates (and the legacy Focus compatibility path)
+use this planner through the local `lyricsFit.mjs`
 adapter. Font, appearance and viewport changes invalidate its bounded cache;
 playback updates only select a page and its next deadline on the existing clock.
 Glyphs, ruby, strokes and motion require actual visible-surface verification.
+Output opts into sequential rows: each measured horizontal row or vertical
+column is one active batch. Authored newlines remain batch boundaries even when
+the entire block fits. Separator whitespace stays in the contiguous source
+range, without becoming an empty batch. Short fitting bracketed asides move
+together where possible; oversized asides retain the grapheme fallback.
+Template adapters must not repack an accepted batch into additional columns.
+Output also opts into authored CJK phrase spaces and CJK/Latin run boundaries.
+Latin interword spaces remain inside a fitting run (for example `sing it with me`),
+and English/Korean word spacing does not create one batch per word. Speaker labels,
+paired asides and basic Japanese attachment guards remain attached. These are
+layout rules, not a semantic model. Horizontal ink has a local readable-measure
+ceiling of 18 current-font em in addition to hard canvas bounds; fitting two-row
+remainders prefer a balanced safe candidate instead of a tiny trailing fragment.
+KTV retains its two physical lanes, with one active batch and the following
+batch as a bounded preview. Preview and held outgoing text are not simultaneous
+active batches. Canonical line/visible indices remain unchanged.
+Every KTV unit exposes its source range and cadence interval, including T1 and
+native T2 without fine evidence. Capacity planning uses that unit only, never
+replans the entire source row underneath an already selected KTV phrase. Plain
+T1 does not acquire a model-starts label merely because its range is projected.
+KTV always projects its bounded preview, even if the current unit fits one row.
+
+Batch identity combines source-line identity with source ranges, independently
+of text equality. Equal adjacent text starts a new entrance/paint lifecycle;
+progress ticks within the same batch do not. T1 fallback fill uses derived page
+progress only while playing; native/coarse/fine evidence keeps its original
+intervals. Partial coarse cuts do not invent completion times. Seek and reduced
+motion settle directly and cancel active caption entrances. Live Stage's lyric
+caption entrance is independent of its title-card window.
 The local Performer uses the same pure planner with its own content-box measure
 and reading-scale invalidation. The document reader keeps canonical line identity
 and document scrolling. A source-inspector grouping example is explicitly nominal;
@@ -447,8 +477,10 @@ and reserves its height rather than inventing a syllable mapping.
 
 ## Measurement safety and frame diagnostics
 
-Capacity preparation retains the complete original measurement render before
-DOM measurement. It must preserve complete live text, coarse onset hints, fine
+Capacity preparation retains a complete measurement render before DOM measurement.
+When the same source is already displayed as a batch, invalidation measures the
+existing batch DOM rather than replacing it with the unsplit source first.
+It must preserve complete live text, coarse onset hints, fine
 ink and entrance-animation identity if the scheduler yields while catching up.
 A temporarily empty live frame is not a valid measurement shortcut. No readiness
 wait, new timer, geometry cache or source/model retiming is introduced.

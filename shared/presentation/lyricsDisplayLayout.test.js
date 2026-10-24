@@ -17,6 +17,111 @@ const fits = (text) =>
     .length <= 18;
 
 describe('bounded lyric display pages', () => {
+  it('keeps a fitting Latin phrase intact at an attached CJK boundary', () => {
+    const text = '想看見天上璀璨星光sing it with me';
+    const result = planLyricsDisplay(line(text), {
+      sequentialRows: true,
+      phraseRows: true,
+      fits: (value) => value.trimEnd().length <= 18,
+    });
+    expect(result.pages.map((p) => p.text)).toEqual([
+      '想看見天上璀璨星光',
+      'sing it with me',
+    ]);
+  });
+  it('keeps a role label attached to lyrics when authored phrase rows are enabled', () => {
+    const text = '[女] 想看見星光sing it with me（啊啊和聲）';
+    const result = planLyricsDisplay(line(text), {
+      phraseRows: true,
+      sequentialRows: true,
+      fits: () => true,
+    });
+    expect(result.status).toBe('ready');
+    expect(result.pages[0].text.trim()).toBe('[女] 想看見星光');
+    expect(result.pages.map((p) => p.text).join('')).toBe(text);
+  });
+  it('respects authored CJK spaces even when a whole block fits, without breaking English words into batches', () => {
+    const text = '把你安撫 安撫千家萬戶 我有我的版圖 從成都一直唱到曼谷';
+    const result = planLyricsDisplay(line(text), {
+      sequentialRows: true,
+      phraseRows: true,
+      fits: () => true,
+    });
+    expect(result.pages.map((p) => p.text.trim())).toEqual([
+      '把你安撫',
+      '安撫千家萬戶',
+      '我有我的版圖',
+      '從成都一直唱到曼谷',
+    ]);
+    expect(result.pages.map((p) => p.text).join('')).toBe(text);
+  });
+  it('keeps a fitting harmony aside together and never emits blank separator batches', () => {
+    const text = '一起唱吧（啊啊和聲）  \t 下一句\n\n最後';
+    const result = planLyricsDisplay(line(text), {
+      sequentialRows: true,
+      fits: (value) => [...value.trimEnd()].length <= 9,
+    });
+    expect(result.status).toBe('ready');
+    expect(result.pages.map((page) => page.text).join('')).toBe(text);
+    expect(result.pages.every((page) => page.text.trim())).toBe(true);
+    expect(
+      result.pages.some((page) => page.text.includes('（啊啊和聲）')),
+    ).toBe(true);
+  });
+
+  it('never splits a whitespace-plus-combining grapheme while attaching separators', () => {
+    const text = '前句\n \u0301後句 最後';
+    const result = planLyricsDisplay(line(text), {
+      sequentialRows: true,
+      fits: (value) =>
+        [
+          ...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(
+            value,
+          ),
+        ].length <= 5,
+    });
+    const boundaries = [
+      ...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(
+        text,
+      ),
+    ]
+      .map((s) => s.index)
+      .concat(text.length);
+    expect(result.status).toBe('ready');
+    expect(result.pages.map((page) => page.text).join('')).toBe(text);
+    expect(
+      result.pages.every((page) => boundaries.includes(page.sourceEnd)),
+    ).toBe(true);
+  });
+  it('keeps authored row breaks as sequential batches even when the whole block fits', () => {
+    const text = '第一句唱完\r\n第二句接上\n\n[合] 啊啊（和聲）';
+    const input = line(text),
+      before = structuredClone(input);
+    const result = planLyricsDisplay(input, {
+      fits: () => true,
+      sequentialRows: true,
+    });
+    expect(result.status).toBe('ready');
+    expect(result.pages.map((p) => p.text)).toEqual([
+      '第一句唱完\r\n',
+      '第二句接上\n\n',
+      '[合] 啊啊（和聲）',
+    ]);
+    expect(result.pages.map((p) => p.text).join('')).toBe(text);
+    expect(input).toEqual(before);
+  });
+
+  it('retains authored rows when dwell is insufficient instead of merging them to fit', () => {
+    const input = line('first\nsecond\nthird', { endMs: 2500 });
+    const result = planLyricsDisplay(input, {
+      fits: () => true,
+      sequentialRows: true,
+    });
+    expect(result.status).toBe('unfit');
+    expect(result.pages.map((p) => p.text).join('')).toBe(input.text);
+    expect(result.pages).toHaveLength(3);
+  });
+
   it('keeps all text without stranding punctuation or opening brackets at a page edge', () => {
     const text = '他說【今晚，明天】我們一起走，回家。';
     for (const capacity of [5, 7, 10, 12]) {
@@ -249,6 +354,37 @@ describe('bounded lyric display pages', () => {
     expect(nextLyricsDisplayBoundaryMs(plan, 1000, 2)).toBe(
       (plan.pages[1].startMs - 1000) / 2,
     );
+  });
+
+  it('treats explicit vocal changes as batch boundaries even in a fitting Latin run', () => {
+    const source = line('sing it with meStay with me', {
+      endMs: 20000,
+      vocalParts: [
+        { from: 0, to: 15, label: '男', role: 'male' },
+        { from: 15, to: 27, label: '女', role: 'female' },
+      ],
+    });
+    const plan = planLyricsDisplay(source, {
+      fits: () => true,
+      sequentialRows: true,
+    });
+    expect(plan.pages.map((p) => p.text)).toEqual([
+      'sing it with me',
+      'Stay with me',
+    ]);
+    expect(plan.pages.map((p) => p.text).join('')).toBe(source.text);
+  });
+
+  it('allows literal sung brackets to form a complete batch without a guessed speaker attachment', () => {
+    const source = line('[oh oh] stay with me（啊啊）', { vocalParts: [] });
+    const plan = planLyricsDisplay(source, {
+      fits: (text) => text.trimEnd().length <= 14,
+      phraseRows: true,
+      sequentialRows: true,
+    });
+    expect(plan.status).toBe('ready');
+    expect(plan.pages.map((p) => p.text).join('')).toBe(source.text);
+    expect(plan.pages[0].text.trim()).toBe('[oh oh]');
   });
 
   it('bounds input and layout work', () => {

@@ -2,15 +2,15 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('overlay CSS tokens', () => {
-  it('keeps either active KTV lane visible when capacity pages replace the companion lane', () => {
+  it('keeps both KTV lanes available for one active batch and its bounded preview', () => {
     const lyrics = fs.readFileSync(
       new URL('../lyrics/lyrics.css', import.meta.url),
       'utf8',
     );
     expect(lyrics).toMatch(
-      /:root\[data-ovl-template='karaoke-stack'\]\s*\.lyrics-overlay\[data-fit-active='true'\]\s*\[data-ktv-active='true'\]\s*\{[^}]*display: block;[^}]*grid-row: 1;/u,
+      /:root:not\(\[data-ovl-template='karaoke-stack'\]\)\s*\.lyrics-overlay\[data-fit-active='true'\]\s*\.lyrics-overlay__next\s*\{\s*display: none;/u,
     );
-    expect(lyrics).toMatch(
+    expect(lyrics).not.toMatch(
       /\.lyrics-overlay__current:not\(\[data-ktv-active='true'\]\)\s*\{\s*display: none;/u,
     );
   });

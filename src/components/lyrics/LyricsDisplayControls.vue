@@ -143,6 +143,7 @@ function increaseFontSize() {
       </UiField>
       <slot name="font-actions" />
     </div>
+    <slot name="text-processing" />
   </div>
 </template>
 

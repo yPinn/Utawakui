@@ -1,5 +1,12 @@
-import { lyricsDisplayBreakCandidates } from './lyricsPresentation.mjs';
-import { isSafeLyricsBreak } from './lyricsTextProcessing.mjs';
+import {
+  lyricsDisplayBreakCandidates,
+  lyricsAuthoredPhraseBreaks,
+  lyricsLatinRuns,
+} from './lyricsPresentation.mjs';
+import {
+  analyzeLyricsText,
+  isSafeLyricsBreak,
+} from './lyricsTextProcessing.mjs';
 
 const MAX_TEXT = 2000;
 const MIN_DWELL_MS = 1200;
@@ -55,17 +62,63 @@ function partition(
   preferNatural = true,
   endMs = Infinity,
   maximumPages = Infinity,
+  sequentialRows = false,
+  phraseRows = false,
+  language,
+  vocalEnds = [],
+  literalPrefixes = false,
 ) {
   const boundaries = [...glyphs.segment(text)]
     .map((p) => p.index)
     .concat(text.length);
   const candidates = lyricsDisplayBreakCandidates(text);
+  const analysis = analyzeLyricsText(text);
+  const authoredEnds = sequentialRows
+    ? [...text.matchAll(/[\r\n\u2028\u2029]\s*/gu)].map((m) =>
+        boundaries.find((offset) => offset >= m.index + m[0].length),
+      )
+    : [];
+  if (phraseRows)
+    authoredEnds.push(...lyricsAuthoredPhraseBreaks(text, { language }));
+  authoredEnds.push(...vocalEnds.filter((at) => boundaries.includes(at)));
+  authoredEnds.sort((a, b) => a - b);
+  const fittingRuns = phraseRows
+    ? lyricsLatinRuns(text).filter((run) => {
+        const sourceEnd =
+          run.sourceEnd +
+          (text.slice(run.sourceEnd).match(/^[.,!?;:，。！？、；：…]+/u)?.[0]
+            .length ?? 0);
+        return fits(text.slice(run.sourceStart, sourceEnd), {
+          sourceStart: run.sourceStart,
+          sourceEnd,
+        });
+      })
+    : [];
+  const safeBreak = (offset) =>
+    vocalEnds.includes(offset) ||
+    (isSafeLyricsBreak(text, offset) &&
+      !fittingRuns.some(
+        (run) => offset > run.sourceStart && offset < run.sourceEnd,
+      ) &&
+      !(
+        !literalPrefixes &&
+        /(?:\[[^\]\r\n]{1,12}\]|【[^】\r\n]{1,12}】)\s*$/u.test(
+          text.slice(0, offset),
+        ) &&
+        text.slice(offset).trim()
+      ));
   const pages = [];
   let index = 0;
   while (index < boundaries.length - 1) {
     const from = boundaries[index];
+    const authoredEnd = authoredEnds.find(
+      (end) => end > from && text.slice(from, end).trim(),
+    );
     let low = index + 1,
-      high = boundaries.length - 1,
+      high =
+        authoredEnd === undefined
+          ? boundaries.length - 1
+          : boundaries.indexOf(authoredEnd),
       best = index;
     while (low <= high) {
       const middle = (low + high) >>> 1;
@@ -80,13 +133,27 @@ function partition(
       } else high = middle - 1;
     }
     if (best === index) return null;
-    while (best > index && !isSafeLyricsBreak(text, boundaries[best])) best--;
+    while (best > index && !safeBreak(boundaries[best])) best--;
     if (best === index) return null;
     let end = boundaries[best];
-    if (preferNatural && end !== text.length) {
+    // Move a short, complete aside/quotation to the next row when possible.
+    // Oversized sung parentheses still use the lossless grapheme fallback.
+    const attached = analysis.pairedRanges.find(
+      (range) =>
+        from < range.sourceStart &&
+        range.sourceStart < end &&
+        end < range.sourceEnd &&
+        safeBreak(range.sourceStart) &&
+        fits(text.slice(range.sourceStart, range.sourceEnd), range),
+    );
+    if (attached) end = attached.sourceStart;
+    if (preferNatural && end !== text.length && end !== authoredEnd) {
       const possible = candidates.filter(
         (c) =>
-          c.offset > from && c.offset <= end && boundaries.includes(c.offset),
+          c.offset > from &&
+          c.offset <= end &&
+          boundaries.includes(c.offset) &&
+          safeBreak(c.offset),
       );
       const mapped = possible.filter(
         (c) =>
@@ -98,10 +165,28 @@ function partition(
       const choices = mapped.length
         ? mapped
         : possible.filter((c) => c.offset - from >= (end - from) * 0.45);
+      const balance =
+        phraseRows &&
+        end !== authoredEnd &&
+        (authoredEnd === undefined || authoredEnd === text.length) &&
+        fits(text.slice(end), { sourceStart: end, sourceEnd: text.length });
+      const target = from + (text.length - from) / 2;
       const candidate = choices.sort(
-        (a, b) => b.priority - a.priority || b.offset - a.offset,
+        (a, b) =>
+          b.priority - a.priority ||
+          (balance
+            ? Math.abs(a.offset - target) - Math.abs(b.offset - target)
+            : b.offset - a.offset),
       )[0];
       if (candidate) end = candidate.offset;
+    }
+    // Separators belong to the preceding content range, never a blank batch.
+    let endIndex = boundaries.indexOf(end);
+    while (
+      endIndex < boundaries.length - 1 &&
+      /^\s+$/u.test(text.slice(end, boundaries[endIndex + 1]))
+    ) {
+      end = boundaries[++endIndex];
     }
     pages.push({
       text: text.slice(from, end),
@@ -134,10 +219,25 @@ export function planLyricsDisplay(line, options = {}) {
   const start = line.startMs,
     end = options.endMs ?? line.endMs;
   const timing = timingMap({ ...line, endMs: end });
+  const sequentialRows = options.sequentialRows === true;
+  const vocalEnds = [
+    ...new Set(
+      (line.vocalParts ?? [])
+        .flatMap((p) => [p.from, p.to])
+        .filter((at) => at > 0 && at < text.length),
+    ),
+  ];
+  const hasAuthoredRows =
+    vocalEnds.length > 0 ||
+    (sequentialRows && /[\r\n\u2028\u2029]\s*\S/u.test(text)) ||
+    (options.phraseRows === true &&
+      lyricsAuthoredPhraseBreaks(text, { language: options.language }).length >
+        0);
   // A complete-page capacity proof needs no break candidates or prefix search.
   // Keep the same page shape and run all timing decisions below unchanged.
   let pages = text.length
-    ? options.fits(text, { sourceStart: 0, sourceEnd: text.length })
+    ? !hasAuthoredRows &&
+      options.fits(text, { sourceStart: 0, sourceEnd: text.length })
       ? [
           {
             text,
@@ -147,7 +247,20 @@ export function planLyricsDisplay(line, options = {}) {
             endMs: null,
           },
         ]
-      : partition(text, options.fits, timing.starts, minimumMs, true, end)
+      : partition(
+          text,
+          options.fits,
+          timing.starts,
+          minimumMs,
+          true,
+          end,
+          Infinity,
+          sequentialRows,
+          options.phraseRows === true,
+          options.language,
+          vocalEnds,
+          line.vocalParts !== undefined,
+        )
     : [];
   if (!pages)
     return {
@@ -164,7 +277,20 @@ export function planLyricsDisplay(line, options = {}) {
     Number.isFinite(start) &&
     end - start < pages.length * minimumMs
   )
-    pages = partition(text, options.fits, timing.starts, minimumMs, false);
+    pages = partition(
+      text,
+      options.fits,
+      timing.starts,
+      minimumMs,
+      false,
+      Infinity,
+      Infinity,
+      sequentialRows,
+      options.phraseRows === true,
+      options.language,
+      vocalEnds,
+      line.vocalParts !== undefined,
+    );
   const base = { sourceTiming: timing.source, pages, pageTiming: null };
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start)
     return { ...base, status: 'untimed' };
@@ -205,10 +331,28 @@ export function planLyricsDisplay(line, options = {}) {
   };
 }
 
-export function splitLyricsDisplayRows(text, fitsLine, maximumRows = Infinity) {
+export function splitLyricsDisplayRows(
+  text,
+  fitsLine,
+  maximumRows = Infinity,
+  options = {},
+) {
   if (!glyphs || typeof text !== 'string' || text.length > MAX_TEXT)
     return null;
-  return partition(text, fitsLine, new Map(), 0, true, Infinity, maximumRows);
+  return partition(
+    text,
+    fitsLine,
+    new Map(),
+    0,
+    true,
+    Infinity,
+    maximumRows,
+    false,
+    false,
+    undefined,
+    [],
+    options.literalPrefixes === true,
+  );
 }
 
 export function selectLyricsDisplayPage(plan, positionMs) {

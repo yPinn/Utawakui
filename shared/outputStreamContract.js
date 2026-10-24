@@ -130,6 +130,33 @@ function parseLine(value, path, usedIds, counters) {
   if (usedIds.has(lineId)) invalid(`${path}.lineId`, 'duplicate id');
   usedIds.add(lineId);
   const text = string(line.text, `${path}.text`, timingValues.maxTextLength);
+  let vocalParts;
+  if (line.vocalParts !== undefined) {
+    if (
+      !Array.isArray(line.vocalParts) ||
+      line.vocalParts.length > timingValues.maxSegmentsPerLine
+    )
+      invalid(`${path}.vocalParts`, 'expected bounded vocal parts');
+    let previousTo = 0;
+    vocalParts = line.vocalParts.map((raw, index) => {
+      const at = `${path}.vocalParts[${index}]`,
+        part = record(raw, at);
+      strictKeys(part, at, new Set(['from', 'to', 'label', 'role']));
+      const from = integer(part.from, `${at}.from`, {
+        min: previousTo,
+        max: text.length,
+      });
+      const to = integer(part.to, `${at}.to`, {
+        min: from + 1,
+        max: text.length,
+      });
+      const label = string(part.label, `${at}.label`, 40, false);
+      if (!['male', 'female', 'group', 'solo'].includes(part.role))
+        invalid(`${at}.role`, 'unsupported vocal role');
+      previousTo = to;
+      return { from, to, label, role: part.role };
+    });
+  }
   const startMs = nullableTime(line.startMs, `${path}.startMs`);
   const endMs = nullableTime(line.endMs, `${path}.endMs`);
   if (startMs === null && endMs !== null) {
@@ -243,6 +270,7 @@ function parseLine(value, path, usedIds, counters) {
   return {
     lineId,
     text,
+    ...(vocalParts ? { vocalParts } : {}),
     startMs,
     endMs,
     ...(line.endInferred === true ? { endInferred: true } : {}),
@@ -374,20 +402,23 @@ function parseLyricsDocument(value) {
       // Invalid optional fine is discarded; accepted coarse cues survive.
     }
   }
-  lines.forEach((line, index) => {
-    const nextStartMs = lines[index + 1]?.startMs;
+  let nextStartMs = null;
+  for (let index = lines.length - 1; index >= 0; index--) {
+    const line = lines[index];
+    // Filtering may remove the original successor. Its retained inferred end
+    // remains a bound, including before an untimed row or trailing credits.
     if (
       line.endInferred === true &&
       (!Number.isFinite(line.endMs) ||
-        !Number.isFinite(nextStartMs) ||
-        line.endMs !== nextStartMs)
+        (Number.isFinite(nextStartMs) && line.endMs > nextStartMs))
     ) {
       invalid(
         `payload.document.lines[${index}].endInferred`,
-        'must match the next line start',
+        'must retain a finite end no later than the next visible timed line start',
       );
     }
-  });
+    if (Number.isFinite(line.startMs)) nextStartMs = line.startMs;
+  }
   const granularity = lines.some((line) => line.segments?.length)
     ? 'T2'
     : lines.some((line) => line.startMs !== null)

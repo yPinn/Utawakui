@@ -387,6 +387,7 @@ describe('overlay WebSocket runtime', () => {
             {
               lineId: 'line-1',
               text: 'first',
+              vocalParts: [{ from: 0, to: 5, label: '男', role: 'male' }],
               startMs: 0,
               endMs: 1000,
               endInferred: true,
@@ -454,6 +455,9 @@ describe('overlay WebSocket runtime', () => {
       version: 1,
       segments: [{ segmentId: 'model-first', text: 'first', startMs: 0 }],
     });
+    expect(received[0].lyrics.lines[0].vocalParts).toEqual([
+      { from: 0, to: 5, label: '男', role: 'male' },
+    ]);
     expect(received[0].lyrics.lines[0].estimatedFineTiming).toEqual({
       version: 1,
       units: [

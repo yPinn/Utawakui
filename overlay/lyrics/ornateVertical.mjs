@@ -4,6 +4,7 @@ import {
   ornateVerticalEnterPose,
   ornateVerticalRevealDelaySeconds,
 } from '../../shared/presentation/ornateVerticalMotion.mjs';
+import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 
 const ornateVerticalTransitions = new WeakMap();
 const FINAL_CLEAR_PROPS = 'clipPath,opacity,visibility';
@@ -118,7 +119,7 @@ export function renderOrnateVerticalPresentation(
   const placement = 'right';
   const presentation = { placement, segments, text, units };
   const identity = JSON.stringify([
-    frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+    lyricsDisplayBatchKey(frame),
     text,
     placement,
     source?.keyword?.text ?? null,
@@ -168,7 +169,8 @@ export function renderOrnateVerticalPresentation(
     return;
   }
 
-  if (!previousLine) elements.current.replaceChildren(incoming.line);
+  if (previousLine) elements.current.append(incoming.line);
+  else elements.current.replaceChildren(incoming.line);
   incoming.line.dataset.ornateMotion = 'active';
 
   for (const unit of incoming.units) {
@@ -202,16 +204,9 @@ export function renderOrnateVerticalPresentation(
       'swap',
     );
   }
-  timeline.addLabel(
-    'enter',
-    previousLine ? `swap+=${ORNATE_VERTICAL_EXIT_DURATION_SECONDS}` : 'swap',
-  );
-  if (previousLine) {
-    timeline.add(() => {
-      if (ornateVerticalTransitions.get(elements.root) !== token) return;
-      elements.current.replaceChildren(incoming.line);
-    }, 'enter');
-  }
+  // The first incoming unit reveals while the previous line is still visible.
+  // Waiting for the exit to finish creates a fully transparent paint frame.
+  timeline.addLabel('enter', 'swap');
 
   for (const [index, unit] of incoming.units.entries()) {
     timeline.to(

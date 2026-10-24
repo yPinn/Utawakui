@@ -196,6 +196,7 @@ const displayLyricsDocument = computed(() =>
 );
 const lyricsTextProcessing = useLyricsTextProcessing({
   document: lyricsDocument,
+  performers: () => [selectedTrack.value?.artist],
   sourceKey: () =>
     `${state.selectedTrackId ?? ''}/${state.selectedSourceFilename ?? ''}`,
 });

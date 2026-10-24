@@ -3,6 +3,7 @@ import {
   kineticPopEnterPose,
   kineticPopRestPose,
 } from '../../shared/presentation/kineticPopMotion.mjs';
+import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 
 const kineticPopTransitions = new WeakMap();
 
@@ -200,7 +201,7 @@ export function renderKineticPopPresentation(elements, frame, options = {}) {
     units: normalizedUnits,
   };
   const identity = JSON.stringify([
-    frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+    lyricsDisplayBatchKey(frame),
     normalized.phraseIndex,
     displayText,
     material,

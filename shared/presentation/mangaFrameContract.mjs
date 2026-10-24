@@ -497,7 +497,9 @@ export function mangaFrameTextLayout(text, bubbleCount = 1, options = {}) {
   );
   let columnTokens;
 
-  if (/\r?\n/u.test(normalizedText)) {
+  if (options.singleColumn === true) {
+    columnTokens = [projectedLayoutTokens(normalizedText, options)];
+  } else if (/\r?\n/u.test(normalizedText)) {
     const tokens = projectedLayoutTokens(normalizedText, options);
     columnTokens = splitLayoutTokensAtNewlines(tokens).flatMap((column) => {
       const columnScript = mangaFrameTextScript(column.map(tokenText).join(''));

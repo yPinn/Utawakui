@@ -16,8 +16,14 @@ vi.mock('../../composables/useLyrics.js', async () => {
             sourceLineIndex: 0,
             text: '作詞：<script>一起唱</script>',
           },
+          {
+            lineId: 'label',
+            sourceLineIndex: 1,
+            text: '（和聲）一起唱（啊啊）',
+            outputLabelRanges: [{ sourceStart: 0, sourceEnd: 4 }],
+          },
         ]),
-        hiddenLineIds: shallowRef([]),
+        hiddenLineIds: shallowRef(['credit']),
         setHidden: vi.fn(),
         restore: vi.fn(),
       },
@@ -26,16 +32,19 @@ vi.mock('../../composables/useLyrics.js', async () => {
 });
 
 describe('shared text processing controls', () => {
-  it('shows exact candidate text safely, starts unchecked and names the Output-only boundary', async () => {
+  it('shows exact candidate text safely, checked state and the reversible Output-only boundary', async () => {
     const html = await renderToString(
       createSSRApp({ render: () => h(LyricsTextProcessing) }),
     );
     expect(html).toContain('共用文字處理');
-    expect(html).toContain('預設保留所有文字');
+    expect(html).toContain('明確製作欄位預設從 Output 隱藏');
     expect(html).toContain('原歌詞與校時不變');
     expect(html).toContain('&lt;script&gt;一起唱&lt;/script&gt;');
     expect(html).not.toContain('<script>');
     expect(html).toContain('type="checkbox"');
-    expect(html).not.toMatch(/\schecked(?:[\s=>])/u);
+    expect(html).toMatch(/\schecked(?:[\s=>])/u);
+    expect(html).toContain('恢復全部原文輸出');
+    expect(html).toContain('隱藏提示標記（第 2 行）');
+    expect(html).toContain('實唱、對唱與和聲唱詞保留');
   });
 });

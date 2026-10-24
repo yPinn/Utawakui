@@ -389,7 +389,7 @@ function splitMainRange(sourceText, start, end, initialBreak = null) {
   return units;
 }
 
-export function analyzeLyricsSource(value) {
+export function analyzeLyricsSource(value, options = {}) {
   const sourceText = String(value ?? '');
   const significantStart = sourceText.search(/\S/u);
   const significantEnd =
@@ -400,7 +400,8 @@ export function analyzeLyricsSource(value) {
     significantStart === -1
       ? ''
       : sourceText.slice(significantStart, significantEnd);
-  const speakerMatch = significantText.match(SPEAKER_RE);
+  const speakerMatch =
+    options.speaker === false ? null : significantText.match(SPEAKER_RE);
   const speaker = speakerMatch?.[1]?.trim() ?? '';
   const contentStart =
     significantStart === -1
@@ -475,6 +476,73 @@ function phraseFromUnit(unit) {
   };
 }
 
+// Script runs are layout groups, not semantic or acoustic evidence. Keeping a
+// fitting Latin run together prevents CJK spacing from turning it into word ticks.
+export function lyricsLatinRuns(value) {
+  const text = String(value ?? '');
+  return [
+    ...text.matchAll(
+      /[\p{Script=Latin}\p{M}\p{N}]+(?:['’.-][\p{Script=Latin}\p{M}\p{N}]+)*(?:[ \t]+[\p{Script=Latin}\p{M}\p{N}]+(?:['’.-][\p{Script=Latin}\p{M}\p{N}]+)*)*/gu,
+    ),
+  ]
+    .filter((match) => /\p{Script=Latin}/u.test(match[0]))
+    .map((match) => ({
+      sourceStart: match.index,
+      sourceEnd: match.index + match[0].length,
+    }));
+}
+
+export function lyricsAuthoredPhraseBreaks(value, options = {}) {
+  const text = String(value ?? '');
+  if (
+    !CJK_GLYPH_RE.test(text) ||
+    lineSpacingMode(text, options.language) !== 'phrase'
+  )
+    return [];
+  const runs = lyricsLatinRuns(text);
+  const analysis = analyzeLyricsText(text);
+  const breaks = new Set();
+  const speakerEnd = text.trimStart().match(SPEAKER_RE)?.[0].length ?? 0;
+  const leading = text.length - text.trimStart().length;
+  const add = (offset) => {
+    if (speakerEnd && offset <= leading + speakerEnd) return;
+    if (
+      offset > 0 &&
+      offset < text.length &&
+      isSafeLyricsBreak(text, offset) &&
+      !isProtectedLyricsBreak(analysis, offset)
+    )
+      breaks.add(offset);
+  };
+  for (const match of text.matchAll(/[ \t]+/gu)) {
+    const leftWord = text.slice(0, match.index).match(/\S+$/u)?.[0] ?? '';
+    const rightWord =
+      text.slice(match.index + match[0].length).match(/^\S+/u)?.[0] ?? '';
+    if (
+      KANA_RE.test(text) &&
+      (JAPANESE_LINE_START_BINDERS.has(rightWord) ||
+        (JAPANESE_LINE_END_BINDERS.has(leftWord) &&
+          !/(?:ない|なかった|ません(?:でした)?|ぬ)\s*と$/u.test(
+            text.slice(0, match.index),
+          )))
+    )
+      continue;
+    if (!KANA_RE.test(text) && CHINESE_LINE_END_BINDERS.has(leftWord)) continue;
+    if (
+      !runs.some(
+        (run) => match.index > run.sourceStart && match.index < run.sourceEnd,
+      )
+    )
+      add(match.index + match[0].length);
+  }
+  for (const run of runs) {
+    if (CJK_GLYPH_RE.test(text[run.sourceStart - 1] ?? ''))
+      add(run.sourceStart);
+    if (CJK_GLYPH_RE.test(text[run.sourceEnd] ?? '')) add(run.sourceEnd);
+  }
+  return [...breaks].sort((a, b) => a - b);
+}
+
 export function parseKtvDisplayPhrases(analysis, options = {}) {
   const units = Array.isArray(analysis?.units) ? analysis.units : [];
   const phrases = [];
@@ -489,19 +557,24 @@ export function parseKtvDisplayPhrases(analysis, options = {}) {
       continue;
     }
 
-    const authoredChunks = [...unit.sourceText.matchAll(/\S+/gu)];
-    if (authoredChunks.length <= 1) {
+    const breaks = lyricsAuthoredPhraseBreaks(unit.sourceText, options);
+    if (breaks.length === 0) {
       phrases.push(phraseFromUnit(unit));
       continue;
     }
 
-    for (const match of authoredChunks) {
-      const text = match[0].trim();
+    const boundaries = [0, ...breaks, unit.sourceText.length];
+    for (let index = 0; index < boundaries.length - 1; index++) {
+      const start = boundaries[index],
+        end = boundaries[index + 1];
+      const raw = unit.sourceText.slice(start, end);
+      const text = raw.trim();
       if (!text) continue;
+      const sourceStart = unit.sourceStart + start + raw.indexOf(text);
       phrases.push({
         text,
-        sourceStart: unit.sourceStart + match.index,
-        sourceEnd: unit.sourceStart + match.index + match[0].length,
+        sourceStart,
+        sourceEnd: sourceStart + text.length,
         visualWeight: Math.max(1, visualWidth(text)),
       });
     }
@@ -1856,7 +1929,9 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         'ornate-vertical',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
-        ? analyzeLyricsSource(sourceText)
+        ? analyzeLyricsSource(sourceText, {
+            speaker: line.vocalParts === undefined,
+          })
         : null;
       return {
         sourceLineIndex,

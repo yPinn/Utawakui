@@ -388,10 +388,10 @@ async function commitTimingDocument() {
                 :disabled="isEditingLocked || editMode !== 'preview'"
               />
             </template>
+            <template #text-processing><LyricsTextProcessing /></template>
           </LyricsPreparationBar>
         </template>
       </LyricsWorkspaceHeader>
-      <LyricsTextProcessing />
       <div v-if="editMode !== 'preview'" class="lyrics-edit-context">
         <UiHint role="status">{{ editingHelp }}</UiHint>
         <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')"

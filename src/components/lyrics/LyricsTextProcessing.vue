@@ -9,6 +9,10 @@ import UiButton from '../ui/UiButton.vue';
 const { lyricsTextProcessing, selectedSource, state } = useLyrics();
 const { candidates, hiddenLineIds, setHidden, restore } = lyricsTextProcessing;
 const id = useId();
+function candidateLabel(line) {
+  const action = line.outputLabelRanges?.length ? '隱藏提示標記' : '隱藏整行';
+  return `${action}（第 ${line.sourceLineIndex + 1} 行）：${line.text}`;
+}
 </script>
 
 <template>
@@ -18,16 +22,21 @@ const id = useId();
     label="共用文字處理"
   >
     <div class="lyrics-text-processing__body">
-      <UiHint>預設保留所有文字，不自動隱藏對唱、和聲或括號內歌詞。</UiHint>
       <UiHint
-        >勾選後會在所有畫面輸出模板隱藏該行；原歌詞與校時不變。更換或修改歌詞後會重設。</UiHint
+        >明確製作欄位預設從 Output
+        隱藏；明確聲部、已確認的歌手前綴與純和聲提示也預設隱藏，可取消勾選還原。其餘候選由你確認。</UiHint
       >
-      <UiHint v-if="!candidates.length">未找到可隱藏的製作資訊。</UiHint>
+      <UiHint
+        >只影響所有畫面輸出模板，原歌詞與校時不變。實唱、對唱與和聲唱詞保留，角色資訊留在內部；更換或修改歌詞後回到預設過濾。</UiHint
+      >
+      <UiHint v-if="!candidates.length"
+        >未找到可隱藏的製作資訊或提示標記。</UiHint
+      >
       <UiCheckbox
         v-for="(line, index) in candidates"
         :id="`${id}-credit-${index}`"
         :key="line.lineId"
-        :label="`隱藏第 ${line.sourceLineIndex + 1} 行：${line.text}`"
+        :label="candidateLabel(line)"
         :model-value="hiddenLineIds.includes(line.lineId)"
         :disabled="state.isLoadingLyrics"
         @update:model-value="setHidden(line.lineId, $event)"

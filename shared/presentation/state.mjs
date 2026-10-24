@@ -13,6 +13,7 @@ import {
   prepareLyricsPaintFrame,
 } from './lyricsFineFrame.mjs';
 import { ktvHandoffEndMs } from './lyricsKtvHandoff.mjs';
+import { sliceLyricsVocalParts } from './lyricsTextProcessing.mjs';
 import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
 import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
@@ -400,7 +401,9 @@ function liveStagePageTimeline(
   const presentation = adaptLiveStageLyricsPresentation(
     analysis?.sourceText === displayText
       ? analysis
-      : analyzeLyricsSource(displayText),
+      : analyzeLyricsSource(displayText, {
+          speaker: line.vocalParts === undefined,
+        }),
     { lyricsPresentationPolicyId },
   );
   if (presentation.pages.length <= 1) return null;
@@ -426,7 +429,9 @@ function mangaBubbleTimeline(snapshot, lines, lineIndex, analysis, language) {
   const presentation = adaptMangaLyricsPresentation(
     analysis?.sourceText === displayText
       ? analysis
-      : analyzeLyricsSource(displayText),
+      : analyzeLyricsSource(displayText, {
+          speaker: line.vocalParts === undefined,
+        }),
     { language },
   );
   if (presentation.bubbles.length <= 1) return null;
@@ -547,7 +552,9 @@ function nextLiveStageCaptionBoundaryDelayMs(snapshot, options = {}) {
 
   const positionMs = lyricsPositionMs(snapshot, nowMs);
   const lineProgress = boundedProgress(positionMs, line.startMs, lineEndMs);
-  const analysis = analyzeLyricsSource(text(line.text));
+  const analysis = analyzeLyricsSource(text(line.text), {
+    speaker: line.vocalParts === undefined,
+  });
   const exactTimeline = liveStagePageTimeline(
     snapshot,
     lines,
@@ -720,11 +727,50 @@ function typicalKtvLineIntervalMs(timedLines) {
 
 function ktvLinePhrases(line, language, presentationLine = null) {
   const compiledPhrases = presentationLine?.presentation?.phrases;
-  return Array.isArray(compiledPhrases)
+  const phrases = Array.isArray(compiledPhrases)
     ? compiledPhrases
-    : parseKtvDisplayPhrases(analyzeLyricsSource(text(line?.text)), {
-        language,
-      });
+    : parseKtvDisplayPhrases(
+        analyzeLyricsSource(text(line?.text), {
+          speaker: line.vocalParts === undefined,
+        }),
+        {
+          language,
+        },
+      );
+  if (!line.vocalParts?.length) return phrases;
+  const boundaries = [
+    ...new Set(line.vocalParts.flatMap((part) => [part.from, part.to])),
+  ].filter((at) => at > 0 && at < line.text.length);
+  if (!boundaries.length) return phrases;
+  return phrases.flatMap((phrase) => {
+    const cuts = [
+      phrase.sourceStart,
+      ...boundaries.filter(
+        (at) => at > phrase.sourceStart && at < phrase.sourceEnd,
+      ),
+      phrase.sourceEnd,
+    ].sort((a, b) => a - b);
+    if (cuts.length === 2) return [phrase];
+    return cuts.slice(0, -1).flatMap((from, index) => {
+      const to = cuts[index + 1],
+        value = line.text.slice(from, to);
+      return value.trim()
+        ? [
+            {
+              ...phrase,
+              text: value,
+              sourceStart: from,
+              sourceEnd: to,
+              visualWeight: Math.max(
+                1,
+                (phrase.visualWeight * (to - from)) /
+                  (phrase.sourceEnd - phrase.sourceStart),
+              ),
+            },
+          ]
+        : [];
+    });
+  });
 }
 
 function ktvLineVisualWeight(line, language, presentationLine = null) {
@@ -956,7 +1002,10 @@ function projectKtvDisplayTimeline(
   timedLines.forEach(
     ({ line, sourceLineIndex, presentationLine }, timedLineIndex) => {
       const analysis =
-        presentationLine?.analysis ?? analyzeLyricsSource(text(line.text));
+        presentationLine?.analysis ??
+        analyzeLyricsSource(text(line.text), {
+          speaker: line.vocalParts === undefined,
+        });
       const presentation =
         presentationLine?.presentation ??
         adaptKtvLyricsPresentation(analysis, { language });
@@ -1014,7 +1063,16 @@ function projectKtvDisplayTimeline(
           sourceStart: phrase.sourceStart,
           sourceEnd: phrase.sourceEnd,
           text: phrase.text,
-          role: presentation.role,
+          role:
+            line.vocalParts?.find(
+              (part) =>
+                part.from <= phrase.sourceStart && part.to > phrase.sourceStart,
+            )?.role ?? presentation.role,
+          vocalParts: sliceLyricsVocalParts(
+            line.vocalParts,
+            phrase.sourceStart,
+            phrase.sourceEnd,
+          ),
           startMs,
           endMs,
           timingSource: hasExactPhraseTiming
@@ -1321,18 +1379,22 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
         ? Math.max(0, (unit.endMs - positionMs) / playbackRate(snapshot))
         : null,
     currentRole: unit.role,
+    ...(unit.vocalParts?.length ? { currentVocalParts: unit.vocalParts } : {}),
+    ...(secondaryUnit?.vocalParts?.length
+      ? { nextVocalParts: secondaryUnit.vocalParts }
+      : {}),
     nextRole: secondaryUnit?.role ?? 'solo',
     nextHeld: companionUnit !== null,
     currentTimingSource: unit.timingSource,
+    currentSourceRange: {
+      from: unit.sourceStart,
+      to: unit.sourceEnd,
+      startMs: unit.startMs,
+      endMs: unit.endMs,
+    },
     ...(currentFineTiming
       ? {
           currentFineTiming,
-          currentSourceRange: {
-            from: unit.sourceStart,
-            to: unit.sourceEnd,
-            startMs: unit.startMs,
-            endMs: unit.endMs,
-          },
         }
       : {}),
     ...(nextFineTiming ? { nextFineTiming } : {}),
@@ -1528,7 +1590,9 @@ function nextMangaBubbleBoundaryDelayMs(snapshot, options = {}) {
   const analysis =
     cachedLine?.sourceText === displayText
       ? cachedLine.analysis
-      : analyzeLyricsSource(displayText);
+      : analyzeLyricsSource(displayText, {
+          speaker: lines[lineIndex].vocalParts === undefined,
+        });
   const timeline = mangaBubbleTimeline(
     snapshot,
     lines,
@@ -1853,6 +1917,12 @@ export function selectLyricsFrame(snapshot, options = {}) {
     visible: Boolean(currentText || nextText),
     currentText,
     nextText,
+    ...(lines[activeIndex]?.vocalParts
+      ? { currentVocalParts: lines[activeIndex].vocalParts }
+      : {}),
+    ...(lines[nextIndex]?.vocalParts
+      ? { nextVocalParts: lines[nextIndex].vocalParts }
+      : {}),
     language: text(lyrics?.source?.language),
     lineIndex: activeIndex,
     currentVisibleLineIndex: visibleLyricLineIndex(lines, activeIndex),
@@ -1911,7 +1981,9 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     ? options.presentationDocument?.lines?.[frame.lineIndex]?.sourceText ===
       frame.currentText
       ? options.presentationDocument.lines[frame.lineIndex].analysis
-      : analyzeLyricsSource(frame.currentText)
+      : analyzeLyricsSource(frame.currentText, {
+          speaker: frame.currentVocalParts === undefined,
+        })
     : null;
   const mangaBubbleTiming =
     templateId === 'manga-frame' && hasMappedTiming(frame.currentTimingSource)

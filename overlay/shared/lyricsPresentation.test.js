@@ -498,6 +498,37 @@ describe('lyrics presentation profiles', () => {
 });
 
 describe('lyrics presentation preprocessing', () => {
+  it.each([
+    [
+      '想看見天上璀璨星光sing it with me',
+      ['想看見天上璀璨星光', 'sing it with me'],
+    ],
+    [
+      '想看見天上璀璨星光 sing it with me',
+      ['想看見天上璀璨星光', 'sing it with me'],
+    ],
+    ['sing it with me一起唱', ['sing it with me', '一起唱']],
+    [
+      '[女] 想看見星光sing it with me（啊啊和聲）',
+      ['想看見星光', 'sing it with me', '（啊啊和聲）'],
+    ],
+    ['忘れられない と 泣くくらいなら', ['忘れられない と', '泣くくらいなら']],
+    ['君 と 歩いてゆく', ['君 と 歩いてゆく']],
+    [
+      '本当と嘘を混ぜた強がりは 見失った声を 隠せない',
+      ['本当と嘘を混ぜた強がりは', '見失った声を', '隠せない'],
+    ],
+    [
+      '把你安撫 安撫千家萬戶 我有我的版圖 從成都一直唱到曼谷',
+      ['把你安撫', '安撫千家萬戶', '我有我的版圖', '從成都一直唱到曼谷'],
+    ],
+  ])('keeps screenshot phrase groups intact: %s', (text, expected) => {
+    const phrases = parseKtvDisplayPhrases(analyzeLyricsSource(text));
+    expect(phrases.map((p) => p.text)).toEqual(expected);
+    expect(
+      phrases.every((p) => text.slice(p.sourceStart, p.sourceEnd) === p.text),
+    ).toBe(true);
+  });
   it('turns authored Chinese spacing into sequential KTV display phrases', () => {
     expect(
       parseKtvDisplayPhrases(

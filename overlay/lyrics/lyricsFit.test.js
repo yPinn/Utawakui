@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createLyricsFitController } from './lyricsFit.mjs';
+import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
 
 describe('lyric fit controller lifecycle', () => {
   it('prepares empty template styles once per invalidation without writing future lyrics', () => {
@@ -202,8 +203,103 @@ describe('lyric fit controller lifecycle', () => {
     s.controller.stop();
   });
 
+  it('keeps the full mixed English phrase through source → KTV state → fit, and bounds the next preview', () => {
+    const s = surface('karaoke-stack');
+    const text = '想看見天上璀璨星光sing it with me';
+    s.snapshot.playback.track = { id: 'phrase-track' };
+    s.snapshot.lyrics = {
+      trackId: 'phrase-track',
+      synced: true,
+      offsetMs: 0,
+      source: { language: 'zh-Hant' },
+      lines: [
+        { lineId: 'mixed', text, startMs: 1000, endMs: 10000 },
+        {
+          lineId: 'long',
+          text: '其實我沒有一句歌詞誰能夠做到能完全領會'.repeat(3),
+          startMs: 10000,
+          endMs: 40000,
+        },
+      ],
+    };
+    const before = structuredClone(s.snapshot.lyrics);
+    const observed = new Set();
+    for (const positionMs of [1000, 5000, 8000, 10000]) {
+      s.snapshot.playback.positionMs = positionMs;
+      const raw = selectLyricsOverlayFrame(s.snapshot, s.settings);
+      const result = s.controller.prepare(s.snapshot, raw, s.settings).frame
+        .ktv;
+      observed.add(result.currentText.trim());
+      expect(['it', 'with', 'me']).not.toContain(result.currentText.trim());
+      if (positionMs === 8000)
+        expect(result.nextText.length).toBeLessThan(
+          s.snapshot.lyrics.lines[1].text.length,
+        );
+    }
+    expect([...observed]).toContain('sing it with me');
+    expect(s.snapshot.lyrics).toEqual(before);
+    s.controller.stop();
+  });
+  it.each(['T1', 'T2', 'T1+'])(
+    'retains the KTV source range for %s without requiring fine timing',
+    (tier) => {
+      const s = surface('karaoke-stack');
+      const text = '想看見星光sing it with me';
+      const segments = [
+        { text: '想看見星光', startMs: 1000, endMs: 5000 },
+        { text: 'sing it with me', startMs: 5000, endMs: 9000 },
+      ];
+      const line = {
+        lineId: 'mixed',
+        text,
+        startMs: 1000,
+        endMs: 9000,
+        ...(tier === 'T2'
+          ? { segments }
+          : tier === 'T1+'
+            ? {
+                estimatedStarts: {
+                  version: 1,
+                  segments: segments.map(({ text, startMs }) => ({
+                    text,
+                    startMs,
+                  })),
+                },
+              }
+            : {}),
+      };
+      s.snapshot.playback = {
+        status: 'paused',
+        positionMs: 8000,
+        track: { id: 't' },
+      };
+      s.snapshot.lyrics = {
+        trackId: 't',
+        synced: true,
+        source: { language: 'zh-Hant' },
+        lines: [line],
+      };
+      const before = structuredClone(line);
+      const raw = selectLyricsOverlayFrame(s.snapshot, s.settings);
+      expect(raw.ktv.currentFineTiming).toBeUndefined();
+      expect(raw.ktv.currentSourceRange).toMatchObject({
+        from: 5,
+        to: text.length,
+      });
+      const projected = s.controller.prepare(s.snapshot, raw, s.settings).frame
+        .ktv;
+      expect(projected.currentText).toBe('sing it with me');
+      expect(projected.currentRole).toBe('solo');
+      expect(projected.displayFit.sourceTiming).toBe(
+        tier === 'T1' ? 'line-estimate' : tier === 'T2' ? 't2' : 'model-starts',
+      );
+      expect(line).toEqual(before);
+      s.controller.stop();
+    },
+  );
+
   it.each([26, 80, 150])(
-    'accepts a %i-glyph Focus page with one wrapped probe and preserves multiline projection',
+    'projects a %i-glyph Focus source as sequential single-row batches and caches the proof',
     (length) => {
       const onTrace = vi.fn();
       const s = surface('focus-line', { onTrace });
@@ -215,15 +311,17 @@ describe('lyric fit controller lifecycle', () => {
         nextSegments: [{ text: 'next line' }],
       });
       const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
-      expect(
-        onTrace.mock.calls.find(([event]) => event === 'fit-measure')[1]
-          .probeCount,
-      ).toBe(1);
-      expect(s.elements.root.dataset.fitPages).toBe('1');
-      expect(s.elements.root.dataset.fitActive).toBe(String(length > 52));
-      expect(result.frame.currentText).toBe(text);
-      expect(result.frame.nextText).toBe(length > 52 ? '' : 'next line');
-      if (length > 52) expect(result.frame.nextSegments).toBeUndefined();
+      const probes = onTrace.mock.calls.find(
+        ([event]) => event === 'fit-measure',
+      )[1].probeCount;
+      expect(probes).toBeGreaterThan(0);
+      expect(Number(s.elements.root.dataset.fitPages)).toBe(
+        length > 36 ? Math.ceil(length / 36) : 1,
+      );
+      expect(s.elements.root.dataset.fitActive).toBe(String(length > 36));
+      expect(result.frame.currentText).toBe(text.slice(0, 36));
+      expect(result.frame.nextText).toBe(length > 36 ? '' : 'next line');
+      if (length > 36) expect(result.frame.nextSegments).toBeUndefined();
       const reads = s.reads();
       s.controller.prepare(s.snapshot, s.frame, s.settings);
       expect(s.reads()).toBe(reads);
@@ -346,10 +444,10 @@ describe('lyric fit controller lifecycle', () => {
   });
 
   it.each([
-    [120, 0, true],
-    [121, 1, true],
-    [121.01, 0, false],
-    [120, 1.01, false],
+    [40, 0, true],
+    [41, 1, true],
+    [48.01, 0, false],
+    [40, 1.01, false],
   ])(
     'keeps the strict wrapped proof at height %s and width excess %s',
     (height, excess, fast) => {
@@ -366,7 +464,7 @@ describe('lyric fit controller lifecycle', () => {
       )[1].probeCount;
       if (fast) {
         expect(count).toBe(1);
-        expect(s.elements.root.dataset.fitActive).toBe('true');
+        expect(s.elements.root.dataset.fitActive).toBe('false');
       } else expect(count).toBeGreaterThan(1);
       s.controller.stop();
     },

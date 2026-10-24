@@ -10,6 +10,7 @@ import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
+import LyricsTextProcessing from './LyricsTextProcessing.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
@@ -150,6 +151,7 @@ onMounted(initialize);
             @increase-font-size="increaseLyricsFontSize"
           >
             <template #font-actions><LyricsExperimentalEstimate /></template>
+            <template #text-processing><LyricsTextProcessing /></template>
           </LyricsDisplayControls>
         </UiPopover>
         <UiButton
