@@ -22,8 +22,10 @@
 ### 安全不變式
 
 - `electron/entry.js` 是無依賴的 process dispatcher；main 與 Spout helper 在建立任何視窗前呼叫 `app.enableSandbox()`。所有視窗明確設定 `sandbox`、`contextIsolation`、`nodeIntegration: false`、`navigateOnDragDrop: false`、`webSecurity`、`allowRunningInsecureContent: false`、`webviewTag: false`。
-- `electron/main/webContentsSecurity.js` 拒絕 popup，只允許各 owner 的 exact navigation URL，redirect 同樣 fail closed。DevTools 只在明確的 development launch 對 main／Performer 開啟。
+- `electron/main/webContentsSecurity.js` 拒絕 popup，只允許各 owner 的 exact navigation URL，redirect 同樣 fail closed。DevTools 只在明確的 development launch 對 main／Performer 開啟；正式版（`detectPackagedRuntime`）忽略 `--dev`／`--devtools`，帶 remote-debugging 旗標時在建立視窗前退出，並移除開發用環境變數覆寫（`main/runtimeEnvironment.js`）。
 - Raw `ipcMain` 只交給 `electron/main/ipcSenderPolicy.js`。未列出的 channel 預設只接受目前主視窗的 main frame；Performer 只取得自己的視窗控制、snapshot／status、diagnostic、閱讀距離、固定 offset action 與播放／暫停／讀音 control intent。Offset 與 control intent 只帶 action、revision、track id，由 main 驗證後轉送主 renderer。驗證同時比對 `event.sender`、`senderFrame` 與 owner 的 main frame，subframe 不繼承 capability。
+- Renderer 仍由 `file://` 載入，CSP 的 `'self'` 因此涵蓋整個磁碟：`connect-src` 只列 dev server，`frame-src` 不含 `'self'`（`scripts/rendererContentSecurityPolicy.test.mjs`）。
+- Output server 的 HTTP 只接受 `Host: 127.0.0.1:<port>`，WebSocket 另要求同值 Origin，以阻擋 DNS rebinding。
 - 這些是固定 shell 不變式，不是使用者設定。
 
 ### 視窗
@@ -236,7 +238,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 
 - Renderer 分層：`useOutputRuntime.js` 是唯一 public facade（狀態、設定、port 復原、start／stop、slot 保存）；`output/useOutputRuntimeStatus.js` 集中狀態正規化與錯誤；`output/useOutputProjectionPublisher.js` 發布 player／queue／lyrics／讀音／音樂結構投影，負責 document-before-state 排序、`sourceEpoch` 與各 stream revision；`output/useSpoutOutput.js` 只處理 Spout 狀態、FPS 與 start／stop。後三者都以具名 callback 取得邊界。
 - 外觀：`shared/outputAppearance.mjs` 單一擁有欄位型別、預設、值域與模板相容性；元素宣告由 `shared/outputTemplateElements.mjs` 擁有（純資料，目前只有 cover-player），元素設定以 `element.<元素>.<屬性>` 鍵保存（ADR 0027）；Electron 在 slot 保存邊界驗證、renderer 依欄位 metadata 建控制、Browser Source 再正規化。`useOutputAppearanceAutosave` 以 350ms debounce、single-flight、latest-wins 保存，切頁或套用模板前 flush，失敗保留草稿。最近／常用色票是 Output workspace 的偏好，不影響模板預設。Live Stage 的本機字型只在使用者操作後經 Local Font Access 取得，permission handler 只允許可信 main frame。歌詞呈現策略由 `lyricsPresentationPolicies.mjs` 另行擁有。
-- Server：`electron/lib/outputServer.js` 持有 service API、WebSocket 與投影交付；`outputServer/http.js` 是唯讀 HTTP plane，持有 exact route、asset cache 與 security headers，只透過具名 getter 讀 snapshot，不 import `ws`。HTTP 只接受 `Host` 為 `127.0.0.1:<port>`、WebSocket 只接受同值 Origin，以阻擋 DNS rebinding。Browser Source 只讀 snapshot 與 allowlisted media；封面由 track id 經 `/media/artwork/` 解析。`shared/presentation/` 放跨 runtime 的呈現邏輯，`overlay/shared/` 只放 route adapter。
+- Server：`electron/lib/outputServer.js` 持有 service API、WebSocket 與投影交付；`outputServer/http.js` 是唯讀 HTTP plane，持有 exact route、asset cache 與 security headers，只透過具名 getter 讀 snapshot，不 import `ws`。Browser Source 只讀 snapshot 與 allowlisted media；封面由 track id 經 `/media/artwork/` 解析。`shared/presentation/` 放跨 runtime 的呈現邏輯，`overlay/shared/` 只放 route adapter。
 - 收據歌單：`shared/presentation/receiptSetlist.mjs` 持有純frame／排序／分段，`overlay/setlist/receiptView.mjs` 與 `receiptMotion.mjs` 共用於Browser Source及Vue預覽。`queue.document.receipt` 是可選的有界完成明細與來源總數；一般播放history不冒充completed。既有queue-board保留；exact routes與材質封裝見release inventory。
 - 舊 slot 的 `focus-line`／`now-next` 讀取時回退為 `karaoke-stack`／`art-card`；新套用須通過 allowlist，純 helper 保留舊 id 的相容解析。
 - 封面電台：`coverPlayerMotion.mjs` 僅協調封面／metadata切歌fade，播放器的volume／mute／progress由`artworkLayout.mjs`獨立即時呈現；reduced-motion、恢復與模板切換清除舊過場。portrait預設360×480，portrait-large保留480×640，兩者共用同一3:4設計座標。
@@ -254,12 +256,12 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 
 `diagnosticsLifecycle.js` 記錄 process／webContents 失敗；只有主視窗的致命 renderer 結束、main-frame 載入或 preload 失敗、無回應會交給 `rendererRecovery.js`，每個 process 最多一個原生對話框（重新啟動／退出）。Performer、startup probe、Spout helper 與 Chromium 子程序各自處理。
 
-使用者回饋：`electron/lib/feedback/` 是純函式與注入式 fetch client，`feedbackHandlers.js` 是唯一 IPC 邊界，沿用 `{ ok, errorCode }` 結果。Payload 重用 `buildDiagnosticsSupportBundle`，只有錯誤回報附最近 50 筆。Renderer 的 `useFeedbackReport.js` 是唯一 singleton，所有入口呼叫同一 `openReport()`；`lyricsIssueReport.js` 只投影有界的歌曲／來源資訊，不附歌詞、音訊或路徑。CSP 沒有 `connect-src`，上傳只能由 main 發出，固定送到 `https://api.utawakui.llazypilot.com/feedback/submit`。Relay（`services/feedback-relay/`）獨立部署、不在封裝內，見 [ADR 0016](adr/0016-user-feedback-intake.md)。
+使用者回饋：`electron/lib/feedback/` 是純函式與注入式 fetch client，`feedbackHandlers.js` 是唯一 IPC 邊界，沿用 `{ ok, errorCode }` 結果。Payload 重用 `buildDiagnosticsSupportBundle`，只有錯誤回報附最近 50 筆。Renderer 的 `useFeedbackReport.js` 是唯一 singleton，所有入口呼叫同一 `openReport()`；`lyricsIssueReport.js` 只投影有界的歌曲／來源資訊，不附歌詞、音訊或路徑。CSP 的 `connect-src` 只允許 dev server，上傳只能由 main 發出，固定送到 `https://api.utawakui.llazypilot.com/feedback/submit`。Relay（`services/feedback-relay/`）獨立部署、不在封裝內，見 [ADR 0016](adr/0016-user-feedback-intake.md)。
 
 ## Packaging Boundary
 
 - `dist/` 是 Vite renderer 輸出；`overlay/` 不進 Vite bundle。`electron/`、`shared/` 與內建 resources 進 `app.asar`，需外部解析或執行的檔案以明確 `asarUnpack`／`extraResources` 交付。完整對照見 [release inventory](operations/release-inventory.md)。
-- Electron 43；實際 patch 由 npm lock 與 `electron-builder.yml` 一致釘選，見 [release inventory](operations/release-inventory.md#current-build-shape)。關閉 Node options 與 inspect fuses，開啟 ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給 yt-dlp EJS runtime（ADR 0005）與 ONNX 環境 probe（ADR 0026）；`GrantFileProtocolExtraPrivileges` 保留給主 renderer 的 `file://` 載入，兩者待替代方案完成後關閉。在此之前，`file://` 上的 CSP `'self'` 涵蓋整個磁碟，因此 renderer HTML 的 `connect-src` 只列 dev server、`frame-src` 不含 `'self'`（`scripts/rendererContentSecurityPolicy.test.mjs` 鎖定）。正式版（`detectPackagedRuntime`）忽略 `--dev`／`--devtools`，帶 `--remote-debugging-port`／`--remote-debugging-pipe` 時在建立任何視窗前退出，並於啟動時移除 `UTAWAKUI_FEEDBACK_ENDPOINT`、`UTAWAKUI_YTDLP_JS_RUNTIME` 開發覆寫（`main/runtimeEnvironment.js`）。
+- Electron 43；實際 patch 由 npm lock 與 `electron-builder.yml` 一致釘選，見 [release inventory](operations/release-inventory.md#current-build-shape)。關閉 Node options 與 inspect fuses，開啟 ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給 yt-dlp EJS runtime（ADR 0005）與 ONNX 環境 probe（ADR 0026）；`GrantFileProtocolExtraPrivileges` 保留給主 renderer 的 `file://` 載入，兩者待替代方案完成後關閉；在此之前的 CSP 收斂見[安全不變式](#安全不變式)。
 - Provider、FFmpeg、models 與 Audio Python 存在 userData 依賴目錄，不綁入 installer，也不在啟動關鍵路徑。
 - 第三方授權全文 `third-party/NOTICES.txt`／`manifest.json` 經 `extraResources` 交付到 `resources/third-party/`，由 generator 與 afterPack verifier 檢查；Electron／Chromium 與字型 notices 各自保留。
 - 更新：`appUpdateService.js`／`appUpdateHandlers.js` 驅動 `electron-updater`，`useAppUpdate.js` 是唯一 renderer owner；目前為 unsigned updater。依 ADR 0002 保留 `electron.exe`，只有 `detectPackagedRuntime()` 以 `resources/app.asar` 確認為正式產物時才啟用 updater override，開發啟動不接觸公開 feed。每次 check／download 若未收到 terminal 事件一律轉為可重試錯誤；下載有 cancellation token 與 idle deadline。CI 以 `scripts/release-baselines.json` 釘選的已發布 installer（v0.4.0 每次執行）覆蓋安裝候選版並驗證資料保留、啟動與移除。

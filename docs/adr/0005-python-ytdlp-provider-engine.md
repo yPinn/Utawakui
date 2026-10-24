@@ -76,12 +76,10 @@ bounded fallback phases." Cookies stay as a later fallback, not the primary
 reliability story, because browser cookie extraction is brittle on current
 Windows browser encryption.
 
-Amendment (2026-10-24): the browser-cookie phases read the user's signed-in
-Chrome, Edge or Firefox profile and act with their YouTube account, so they run
-only after an explicit opt-in. The `youtubeBrowserCookies` config value defaults
-to `false`; Settings shows it under the enabled external-source feature, and
-`getAuthenticatedYoutubePhases` omits every `cookiesFromBrowser` phase unless
-the download caller passes the opt-in.
+Amendment (2026-10-24): browser-cookie phases read the user's signed-in Chrome,
+Edge or Firefox profile and act with their YouTube account, so they run only
+after an explicit opt-in (`youtubeBrowserCookies`, default `false`, shown under
+the enabled external-source feature in Settings).
 
 ### Provider work admission
 

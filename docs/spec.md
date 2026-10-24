@@ -122,13 +122,13 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ## 5. Feature Gates
 
-| Gate                    | 保護的動作                            | 依賴原則                                                            |
-| ----------------------- | ------------------------------------- | ------------------------------------------------------------------- |
-| `provider-flow`         | 外部候選、下載、來源匯入與 backfill   | Provider runtime 原子準備；不阻擋本機匯入。                         |
-| `lyrics-flow`           | 外部歌詞查詢與保存                    | 每次外部請求都在 main 再檢查。                                      |
-| `audio-processing-flow` | 分離、本機音樂分析與未來 pre-render   | FFmpeg 與各 model 各自管理；缺一項只影響該能力。                    |
-| `public-output-flow`    | 啟動 Output server 與發布狀態         | 內建 Overlay 不需外部 binary；stop／status 永遠可用。               |
-| `obs-integration`       | 連線 OBS 並讀取直播／錄影狀態與時間戳 | `obs-websocket-js` 隨 App 提供；密碼只進 OS-backed secure storage。 |
+| Gate                    | 保護的動作                            | 依賴原則                                                                                |
+| ----------------------- | ------------------------------------- | --------------------------------------------------------------------------------------- |
+| `provider-flow`         | 外部候選、下載、來源匯入與 backfill   | Provider runtime 原子準備；不阻擋本機匯入；瀏覽器登入資料重試另需設定同意（預設關閉）。 |
+| `lyrics-flow`           | 外部歌詞查詢與保存                    | 每次外部請求都在 main 再檢查。                                                          |
+| `audio-processing-flow` | 分離、本機音樂分析與未來 pre-render   | FFmpeg 與各 model 各自管理；缺一項只影響該能力。                                        |
+| `public-output-flow`    | 啟動 Output server 與發布狀態         | 內建 Overlay 不需外部 binary；stop／status 永遠可用。                                   |
+| `obs-integration`       | 連線 OBS 並讀取直播／錄影狀態與時間戳 | `obs-websocket-js` 隨 App 提供；密碼只進 OS-backed secure storage。                     |
 
 Gate confirmation 只保存 featureId、notice version、時間與 enabled，不保存權利判斷，也不取代 main 的 trust boundary。語意見 [PRODUCT](../PRODUCT.md#feature-gate-語意)。
 

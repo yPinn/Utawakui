@@ -77,20 +77,16 @@ Concurrency cancels only an older run for the same pull request. `main` pushes a
 manual diagnostics include the run id in their group and do not cancel one
 another. Ubuntu jobs time out after 15 minutes; Windows jobs time out after 20.
 
-Audits precede `npm ci`, so a finding or registry failure stops before the more
-expensive install. Every run executes `npm run audit:prod` (shipped dependencies,
-high and above), independent of the change scope, so a newly published advisory
-blocks even a documentation-only change. `npm run audit:all` (all dependencies,
-high and above) runs when the dependency audit is selected. Public-test and
-release workflows run `audit:all` for every candidate. GitHub dependency
-vulnerability alerts remain enabled for lower severities.
+Audits precede `npm ci`. Every run gates shipped dependencies with
+`npm run audit:prod` (high and above) regardless of scope, so a new advisory
+blocks even a docs-only change; dependency changes and every public-test or
+release candidate also run `npm run audit:all`. Lower severities stay with
+GitHub dependency alerts.
 
-The weekly `dependency-security.yml` schedule catches advisories published against
-an unchanged lockfile. It blocks on the app and `services/feedback-relay`, and
-only reports the NetEase evaluation runtime and the downloaded runtime components
-(`npm run audit:runtime` queries OSV for the PyPI wheels pinned in
-`shared/featureDependencies.json` and `resources/audio-processing/`, and lists
-Python, bgutil and FFmpeg for manual review).
+The weekly `dependency-security.yml` catches advisories against an unchanged
+lockfile. It blocks on the app and `services/feedback-relay`, and only reports
+the NetEase evaluation runtime and `npm run audit:runtime` (OSV for the pinned
+PyPI wheels; Python, bgutil and FFmpeg are listed for manual review).
 
 ## Artifact And Supply-Chain Policy
 
