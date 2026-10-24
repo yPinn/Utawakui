@@ -4,11 +4,13 @@ import { ExternalLink, Info } from '../../icons/index.js';
 import { useAppAnnouncement } from '../../composables/useAppAnnouncement.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
+import { useAutoErrorReportingSetting } from '../../composables/useAutoErrorReport.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import { usePersistentDiagnostics } from '../../composables/usePersistentDiagnostics.js';
 import SettingsSection from './SettingsSection.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import DiagnosticsSettingsRow from './DiagnosticsSettingsRow.vue';
+import AutoErrorReportingSettingsRow from './AutoErrorReportingSettingsRow.vue';
 import FeedbackReportSettingsRow from './FeedbackReportSettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
@@ -22,6 +24,7 @@ const {
 const { recentRecords: recentDiagnosticRecords } = useAppDiagnostics();
 const { confirm: confirmAction } = useAppConfirmation();
 const feedback = useFeedbackReport();
+const autoErrorReporting = useAutoErrorReportingSetting();
 const announcement = useAppAnnouncement();
 
 function openCommunityDiscord() {
@@ -62,7 +65,10 @@ function handleReportIssueFromDiagnostics() {
   });
 }
 
-onMounted(refreshDiagnostics);
+onMounted(() => {
+  refreshDiagnostics();
+  autoErrorReporting.refreshPreference();
+});
 </script>
 
 <template>
@@ -102,6 +108,16 @@ onMounted(refreshDiagnostics);
     </SettingsDocumentItem>
 
     <FeedbackReportSettingsRow @open="feedback.openReport()" />
+    <AutoErrorReportingSettingsRow
+      :reporting="autoErrorReporting.reporting.value"
+      :busy="autoErrorReporting.preferenceBusy.value"
+      :reading="autoErrorReporting.preferenceReading.value"
+      :loaded="autoErrorReporting.preferenceLoaded.value"
+      :error="autoErrorReporting.preferenceSaveError.value"
+      :read-error="autoErrorReporting.preferenceReadError.value"
+      @refresh-preference="autoErrorReporting.refreshPreference"
+      @set-reporting="autoErrorReporting.setReporting"
+    />
     <DiagnosticsSettingsRow
       :record-count="persistentDiagnosticsState.recordCount"
       :is-loading="persistentDiagnosticsState.isLoading"

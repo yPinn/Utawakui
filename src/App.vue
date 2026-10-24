@@ -17,6 +17,7 @@ import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import AppNotificationHost from './components/layout/AppNotificationHost.vue';
+import AutoErrorReportModal from './components/settings/AutoErrorReportModal.vue';
 import FeedbackReportModal from './components/settings/FeedbackReportModal.vue';
 import ObsSessionExportModal from './components/settings/ObsSessionExportModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
@@ -555,6 +556,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     />
     <AppNotificationHost />
     <FeedbackReportModal />
+    <AutoErrorReportModal />
     <ObsSessionExportModal />
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
