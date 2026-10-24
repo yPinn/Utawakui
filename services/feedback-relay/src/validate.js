@@ -1,4 +1,10 @@
 import {
+  AUTO_REPORT_KIND,
+  AUTO_REPORT_PROCESSES,
+  AUTO_REPORT_SEVERITIES,
+  MAX_AUTO_REPORT_BYTES,
+  MAX_AUTO_REPORT_FRAMES,
+  MAX_AUTO_REPORT_TEXT_LENGTH,
   FEEDBACK_KIND_VALUES,
   FEEDBACK_SCHEMA_VERSION,
   MAX_CONTACT_LENGTH,
@@ -119,4 +125,95 @@ export function validateFeedbackPayload(payload) {
     return { ok: false, reason: 'invalid-diagnostics' };
   }
   return { ok: true };
+}
+
+const AUTO_REPORT_FIELDS = new Set([
+  'schemaVersion',
+  'kind',
+  'reportId',
+  'createdAt',
+  'severity',
+  'escalated',
+  'code',
+  'source',
+  'operation',
+  'process',
+  'summary',
+  'message',
+  'appFrames',
+  'occurrences',
+  'environment',
+]);
+
+function isAppFrame(value) {
+  return (
+    isNonEmptyString(value, MAX_AUTO_REPORT_TEXT_LENGTH) &&
+    /^at .*\bapp:[^\s()]+\)?$/u.test(value)
+  );
+}
+
+// A fixed shape with no free text: an unknown field, a non-app stack frame
+// or an oversized value rejects the whole report.
+export function validateAutoReport(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { ok: false, reason: 'invalid-payload' };
+  }
+  if (Object.keys(payload).some((key) => !AUTO_REPORT_FIELDS.has(key))) {
+    return { ok: false, reason: 'unexpected-field' };
+  }
+  if (utf8ByteLength(JSON.stringify(payload)) > MAX_AUTO_REPORT_BYTES) {
+    return { ok: false, reason: 'payload-too-large' };
+  }
+  const checks = [
+    [
+      payload.schemaVersion === FEEDBACK_SCHEMA_VERSION,
+      'invalid-schema-version',
+    ],
+    [payload.kind === AUTO_REPORT_KIND, 'invalid-kind'],
+    [
+      isNonEmptyString(payload.reportId, MAX_REPORT_ID_LENGTH) &&
+        /^[A-Za-z0-9_-]+$/.test(payload.reportId),
+      'invalid-report-id',
+    ],
+    [isCanonicalIsoTimestamp(payload.createdAt), 'invalid-created-at'],
+    [AUTO_REPORT_SEVERITIES.includes(payload.severity), 'invalid-severity'],
+    [typeof payload.escalated === 'boolean', 'invalid-escalated'],
+    [
+      typeof payload.code === 'string' &&
+        /^[A-Z][A-Z0-9_]{0,79}$/.test(payload.code),
+      'invalid-code',
+    ],
+    [
+      [payload.source, payload.operation].every(
+        (value) =>
+          typeof value === 'string' && /^[a-z][a-z0-9-]{0,79}$/.test(value),
+      ),
+      'invalid-origin',
+    ],
+    [AUTO_REPORT_PROCESSES.includes(payload.process), 'invalid-process'],
+    [
+      isNonEmptyString(payload.summary, MAX_AUTO_REPORT_TEXT_LENGTH),
+      'invalid-summary',
+    ],
+    [
+      typeof payload.message === 'string' &&
+        payload.message.length <= MAX_AUTO_REPORT_TEXT_LENGTH,
+      'invalid-message',
+    ],
+    [
+      Array.isArray(payload.appFrames) &&
+        payload.appFrames.length <= MAX_AUTO_REPORT_FRAMES &&
+        payload.appFrames.every(isAppFrame),
+      'invalid-app-frames',
+    ],
+    [
+      Number.isSafeInteger(payload.occurrences) &&
+        payload.occurrences >= 1 &&
+        payload.occurrences <= 1000,
+      'invalid-occurrences',
+    ],
+    [isBoundedEnvironment(payload.environment), 'invalid-environment'],
+  ];
+  const failed = checks.find(([passed]) => !passed);
+  return failed ? { ok: false, reason: failed[1] } : { ok: true };
 }

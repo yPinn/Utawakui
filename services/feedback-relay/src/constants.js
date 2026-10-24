@@ -25,3 +25,17 @@ export const MAX_DIAGNOSTICS_EVENT_COUNT = 50;
 // A little above the app's own 256 KiB cap: the relay must never be
 // stricter than the client it trusts least, only at least as strict.
 export const MAX_PAYLOAD_BYTES = 320 * 1024;
+
+// ADR 0029 consented severe-error reports.
+export const AUTO_REPORT_KIND = 'auto';
+export const AUTO_REPORT_SEVERITIES = Object.freeze(['S1', 'S2']);
+export const AUTO_REPORT_PROCESSES = Object.freeze([
+  'main',
+  'renderer',
+  'worker',
+  'overlay',
+]);
+export const MAX_AUTO_REPORT_BYTES = 16 * 1024;
+export const MAX_AUTO_REPORT_TEXT_LENGTH = 300;
+export const MAX_AUTO_REPORT_FRAMES = 10;
+export const MAX_AUTO_REPORTS_PER_HOUR = 5;

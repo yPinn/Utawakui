@@ -118,7 +118,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ### 4.5 使用者回饋
 
-四類回報共用預覽後送出，不做背景上傳；只有錯誤回報可附最近 50 筆診斷。不受 gate 保護，強制預覽即為防護。Relay、速率限制與回報碼見 [ADR 0016](adr/0016-user-feedback-intake.md)。
+四類回報共用預覽後送出；只有錯誤回報可附最近 50 筆診斷。嚴重錯誤經使用者同意可自動回報固定格式報告（[ADR 0029](adr/0029-consented-automatic-error-reports.md)）。不受 gate 保護，強制預覽即為防護。Relay、速率限制與回報碼見 [ADR 0016](adr/0016-user-feedback-intake.md)。
 
 ## 5. Feature Gates
 

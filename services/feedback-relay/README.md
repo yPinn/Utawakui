@@ -78,6 +78,22 @@ App production build 已固定使用正式 endpoint；
 
 App 端、payload schema 都不用改。
 
+## 嚴重錯誤自動回報（ADR 0029）
+
+`kind: 'auto'` 是使用者同意後由 App 自動送出的固定格式回報，沒有任何自由文字
+欄位：`validateAutoReport` 拒絕未知欄位、非 `app:` 開頭的 stack frame 與超過
+16 KB 的內容。它在共用的每 IP 10 分鐘 20 次之外，另有每 IP 每小時 5 次的
+`auto:` 預算，不會排擠使用者手動回報。
+
+若設定選用 secret `DISCORD_AUTO_WEBHOOK_URL`，自動回報會送到該頻道；未設定時
+沿用 `DISCORD_WEBHOOK_URL`。舊版 relay 會以 `invalid-kind` 拒絕自動回報，App
+保留待送檔並在下次啟動重試，因此部署順序不影響使用者。
+
+```bash
+npm exec -- wrangler secret put DISCORD_AUTO_WEBHOOK_URL   # 選用
+npm run deploy
+```
+
 ## 測試
 
 邏輯（`validate.js`／`discordEmbed.js`／`rateLimit.js`／`index.js`）用純函式

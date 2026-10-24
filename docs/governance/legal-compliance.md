@@ -71,20 +71,21 @@ Utawakui 可以定位成「本機桌面工具」，但不能把「取得軟體�
 建議以「操作行為」分段，不以創作者身份分段。同一個人可以只是本機練習，也可以同時
 串流、錄影、顯示歌詞並保存 VOD；風險應依實際輸出決定。
 
-| 操作行為               | 對應功能/情境                                                                      | 主要風險                                                             | 建議控制                                                                                                                                            |
-| ---------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 匯入與整理素材         | 本機檔案匯入、playlist metadata                                                    | 檔案來源、provider API 條款。                                        | 預設入口；只保存必要 metadata，不宣稱取得音樂權利。                                                                                                 |
-| 查找候選來源           | Provider candidate search／藝人照片候選                                            | 使用者誤以為找到來源就等於有授權；artist 名稱在明確動作後對外查詢。  | 文案使用「候選來源」或「比對結果」，不使用「合法來源」；YT Music 頭像只在缺圖 artist 頁手動查詢、人工確認。                                         |
-| 下載或快取媒體         | Provider download path、sidecar cache                                              | 平台條款、重製、來源合法性。                                         | 非預設、feature gate、不得提供規避手段。                                                                                                            |
-| 本機播放與練習         | Library playback、pitch/tempo preview                                              | 播放內容權利不明、處理後副本。                                       | 本機限定；公開輸出前另行確認授權。                                                                                                                  |
-| 產生加工素材           | Vocal separation、stems、render cache                                              | 產生新的媒體副本或加工版本。                                         | 本機工作流；不要包裝成可公開散布素材。                                                                                                              |
-| OBS 畫面輸出           | Browser Source；實驗性 Spout2 Lyrics sender 是同一 Lyrics 內容的另一種本機傳輸路徑 | 歌詞、封面、MV、譜面的公開展示。                                     | 純 UI overlay 低風險；第三方視覺素材分開 gate。                                                                                                     |
-| OBS 狀態連線           | 唯讀 OBS WebSocket 狀態／時間戳與本機 session history                              | OBS endpoint、密碼與直播／錄影操作紀錄。                             | `obs-integration` gate；密碼經 OS-backed encryption，不進 config、diagnostics 或 export。                                                           |
-| 串流音訊               | YouTube/Twitch live output                                                         | 公開演出/公開傳輸、平台政策。                                        | 開播前提示平台與權利人授權需求。                                                                                                                    |
-| 錄影、VOD、clips、精華 | Recording / archived live / clips                                                  | 重製、同步、存檔、後續散布。                                         | 與 live 分開確認；獨立權利狀態仍在規劃，既有 session history 不代替確認。                                                                           |
-| 查詢外部歌詞來源       | LRCLIB／NetEase（實驗性）／Better Lyrics 等多來源歌詞比對與同步資料取得            | 歌詞文字著作權、來源平台條款。                                       | `lyrics-flow` gate；多來源候選並列，不稱合法來源。                                                                                                  |
-| 傳送使用者意見回饋     | 錯誤回報／功能請求／體驗意見／內容問題，強制預覽後送出至獨立部署的 relay           | 使用者輸入文字，以及僅錯誤回報可選附的最近診斷紀錄，對外傳輸的範圍。 | 不受任何 feature gate 保護；每次送出前的強制預覽才是實際防護，relay 獨立部署且不隨 App 打包（見 [ADR 0016](../adr/0016-user-feedback-intake.md)）。 |
-| 本機音樂結構／BPM 分析 | Music Analysis／BPM／節拍分析                                                      | 風險低，屬本機運算，不對外連線。                                     | `audio-processing-flow` gate 內的預設「匯入後自動分析」偏好。                                                                                       |
+| 操作行為               | 對應功能/情境                                                                      | 主要風險                                                                         | 建議控制                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 匯入與整理素材         | 本機檔案匯入、playlist metadata                                                    | 檔案來源、provider API 條款。                                                    | 預設入口；只保存必要 metadata，不宣稱取得音樂權利。                                                                                                 |
+| 查找候選來源           | Provider candidate search／藝人照片候選                                            | 使用者誤以為找到來源就等於有授權；artist 名稱在明確動作後對外查詢。              | 文案使用「候選來源」或「比對結果」，不使用「合法來源」；YT Music 頭像只在缺圖 artist 頁手動查詢、人工確認。                                         |
+| 下載或快取媒體         | Provider download path、sidecar cache                                              | 平台條款、重製、來源合法性。                                                     | 非預設、feature gate、不得提供規避手段。                                                                                                            |
+| 本機播放與練習         | Library playback、pitch/tempo preview                                              | 播放內容權利不明、處理後副本。                                                   | 本機限定；公開輸出前另行確認授權。                                                                                                                  |
+| 產生加工素材           | Vocal separation、stems、render cache                                              | 產生新的媒體副本或加工版本。                                                     | 本機工作流；不要包裝成可公開散布素材。                                                                                                              |
+| OBS 畫面輸出           | Browser Source；實驗性 Spout2 Lyrics sender 是同一 Lyrics 內容的另一種本機傳輸路徑 | 歌詞、封面、MV、譜面的公開展示。                                                 | 純 UI overlay 低風險；第三方視覺素材分開 gate。                                                                                                     |
+| OBS 狀態連線           | 唯讀 OBS WebSocket 狀態／時間戳與本機 session history                              | OBS endpoint、密碼與直播／錄影操作紀錄。                                         | `obs-integration` gate；密碼經 OS-backed encryption，不進 config、diagnostics 或 export。                                                           |
+| 串流音訊               | YouTube/Twitch live output                                                         | 公開演出/公開傳輸、平台政策。                                                    | 開播前提示平台與權利人授權需求。                                                                                                                    |
+| 錄影、VOD、clips、精華 | Recording / archived live / clips                                                  | 重製、同步、存檔、後續散布。                                                     | 與 live 分開確認；獨立權利狀態仍在規劃，既有 session history 不代替確認。                                                                           |
+| 查詢外部歌詞來源       | LRCLIB／NetEase（實驗性）／Better Lyrics 等多來源歌詞比對與同步資料取得            | 歌詞文字著作權、來源平台條款。                                                   | `lyrics-flow` gate；多來源候選並列，不稱合法來源。                                                                                                  |
+| 傳送使用者意見回饋     | 錯誤回報／功能請求／體驗意見／內容問題，強制預覽後送出至獨立部署的 relay           | 使用者輸入文字，以及僅錯誤回報可選附的最近診斷紀錄，對外傳輸的範圍。             | 不受任何 feature gate 保護；每次送出前的強制預覽才是實際防護，relay 獨立部署且不隨 App 打包（見 [ADR 0016](../adr/0016-user-feedback-intake.md)）。 |
+| 嚴重錯誤自動回報       | App 發生致命或反覆的嚴重錯誤時，經使用者同意送出固定格式報告至同一 relay           | 錯誤類型、程式內部位置與版本／平台的對外傳輸；不含曲庫、歌詞、路徑或使用者文字。 | 首次發生時詢問，設定可改為自動或不傳送；頻率與內容上限見 [ADR 0029](../adr/0029-consented-automatic-error-reports.md)。                             |
+| 本機音樂結構／BPM 分析 | Music Analysis／BPM／節拍分析                                                      | 風險低，屬本機運算，不對外連線。                                                 | `audio-processing-flow` gate 內的預設「匯入後自動分析」偏好。                                                                                       |
 
 ## 4. 影片內容驗證與勘誤
 
@@ -500,6 +501,9 @@ Utawakui 的功能會碰到公開音樂使用實務中的灰色地帶。產品�
 - 預設不將使用者媒體上傳到專案伺服器。使用者主動觸發並預覽後送出的意見回饋
   文字（與僅錯誤回報可選附的診斷紀錄）會傳送至獨立部署的 relay，這不是媒體
   上傳，但仍是本文件應揭露的對外連線範圍（見 §3、ADR 0016）。
+- 嚴重錯誤自動回報需使用者同意（首次發生時詢問，可在設定改為自動或不傳送），
+  只含錯誤類型、程式內部位置與版本／平台，不含曲庫、歌詞、檔案路徑或使用者輸入；
+  同一錯誤 24 小時 1 次、每日最多 3 筆（見 ADR 0029）。
 - Media protocol 不暴露任意本機路徑。
 - Provider module 保持可分離，讓高風險 workflow 可停用、移除或獨立散布。
 - 高風險細節留在本文件，不放在 public quickstart 主流程。

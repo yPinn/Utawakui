@@ -1,10 +1,13 @@
 import {
+  AUTO_REPORT_KIND,
   FEEDBACK_CLIENT_MARKER_HEADER,
   FEEDBACK_SUBMIT_PATH,
+  MAX_AUTO_REPORTS_PER_HOUR,
   MAX_PAYLOAD_BYTES,
 } from './constants.js';
-import { validateFeedbackPayload } from './validate.js';
+import { validateAutoReport, validateFeedbackPayload } from './validate.js';
 import {
+  buildAutoReportWebhookBody,
   buildDiscordWebhookBody,
   postToDiscordWebhook,
 } from './discordEmbed.js';
@@ -18,6 +21,8 @@ const KIND_WEBHOOK_ENV = Object.freeze({
   feature: 'DISCORD_WEBHOOK_URL',
   experience: 'DISCORD_WEBHOOK_URL',
   content: 'DISCORD_WEBHOOK_URL',
+  // Optional separate channel for ADR 0029 reports; unset falls back.
+  [AUTO_REPORT_KIND]: 'DISCORD_AUTO_WEBHOOK_URL',
 });
 
 function jsonResponse(body, status = 200, extraHeaders = {}) {
@@ -127,19 +132,43 @@ export default {
       return jsonResponse({ error: 'invalid-json' }, 400);
     }
 
-    const validation = validateFeedbackPayload(payload);
+    // Automatic reports get a second, stricter per-IP budget on top of the
+    // shared limit above, so a crash loop cannot crowd out user reports.
+    const isAutoReport = payload?.kind === AUTO_REPORT_KIND;
+    if (isAutoReport) {
+      let allowedAuto;
+      try {
+        allowedAuto = await isWithinRateLimit(
+          env.RATE_LIMIT_KV,
+          `auto:${clientIp}`,
+          MAX_AUTO_REPORTS_PER_HOUR,
+          60 * 60,
+        );
+      } catch {
+        return jsonResponse({ error: 'service-unavailable' }, 503);
+      }
+      if (!allowedAuto) {
+        return jsonResponse({ error: 'rate-limited' }, 429);
+      }
+    }
+
+    const validation = isAutoReport
+      ? validateAutoReport(payload)
+      : validateFeedbackPayload(payload);
     if (!validation.ok) {
       return jsonResponse({ error: validation.reason }, 400);
     }
 
     const webhookEnvKey =
       KIND_WEBHOOK_ENV[payload.kind] ?? 'DISCORD_WEBHOOK_URL';
-    const webhookUrl = env[webhookEnvKey];
+    const webhookUrl = env[webhookEnvKey] || env.DISCORD_WEBHOOK_URL;
     if (!webhookUrl) {
       return jsonResponse({ error: 'relay-not-configured' }, 500);
     }
 
-    const body = buildDiscordWebhookBody(payload);
+    const body = isAutoReport
+      ? buildAutoReportWebhookBody(payload)
+      : buildDiscordWebhookBody(payload);
     let discordResponse;
     try {
       discordResponse = await postToDiscordWebhook(webhookUrl, body, fetch);

@@ -10,6 +10,7 @@ export async function isWithinRateLimit(
   kv,
   key,
   maxRequestsPerWindow = DEFAULT_MAX_REQUESTS_PER_WINDOW,
+  windowSeconds = WINDOW_SECONDS,
 ) {
   const raw = await kv.get(key);
   const count = raw ? Number(raw) : 0;
@@ -17,7 +18,7 @@ export async function isWithinRateLimit(
     return false;
   }
   await kv.put(key, String((Number.isFinite(count) ? count : 0) + 1), {
-    expirationTtl: WINDOW_SECONDS,
+    expirationTtl: windowSeconds,
   });
   return true;
 }

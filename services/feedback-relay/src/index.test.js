@@ -36,6 +36,28 @@ function basePayload(overrides = {}) {
   };
 }
 
+function autoPayload(overrides = {}) {
+  return {
+    schemaVersion: 1,
+    kind: 'auto',
+    reportId: 'auto-1',
+    createdAt: '2026-10-24T03:00:00.000Z',
+    severity: 'S1',
+    escalated: false,
+    code: 'UNCAUGHT_EXCEPTION',
+    source: 'process',
+    operation: 'uncaught-exception',
+    process: 'main',
+    summary:
+      '主程序未捕捉的例外（UNCAUGHT_EXCEPTION）；App 0.4.0／win32；24 小時內第 1 次。',
+    message: 'TypeError: boom',
+    appFrames: ['at publish (app:electron/main.js:994:9)'],
+    occurrences: 1,
+    environment: { appVersion: '0.4.0', platform: 'win32' },
+    ...overrides,
+  };
+}
+
 function createKv() {
   const store = new Map();
   return {
@@ -217,6 +239,79 @@ describe('feedback relay worker', () => {
     expect(await response.json()).toEqual({ reportId: 'report-1' });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(fetchImpl.mock.calls[0][0]).toBe('https://discord.example/webhook');
+  });
+
+  it('forwards an automatic report with app frames to its own channel', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchImpl);
+    const env = createEnv({
+      DISCORD_AUTO_WEBHOOK_URL: 'https://discord.example/auto',
+    });
+
+    const response = await worker.fetch(
+      createRequest({ body: autoPayload() }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://discord.example/auto');
+    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(body.allowed_mentions).toEqual({ parse: [] });
+    const [embed] = body.embeds;
+    expect(embed.title).toContain('致命');
+    expect(JSON.stringify(embed.fields)).toContain(
+      'app:electron/main.js:994:9',
+    );
+  });
+
+  it('falls back to the shared channel when no automatic webhook is bound', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchImpl);
+
+    await worker.fetch(createRequest({ body: autoPayload() }), createEnv());
+
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://discord.example/webhook');
+  });
+
+  it.each([
+    ['an extra field', { description: 'free text' }],
+    ['a non-app stack frame', { appFrames: ['at read (C:\\Users\\x.js:1:1)'] }],
+    ['an unknown severity', { severity: 'S3' }],
+  ])('rejects an automatic report with %s', async (_label, overrides) => {
+    vi.stubGlobal('fetch', vi.fn());
+    const response = await worker.fetch(
+      createRequest({ body: autoPayload(overrides) }),
+      createEnv(),
+    );
+    expect(response.status).toBe(400);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('applies a separate hourly budget to automatic reports', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, { status: 204 })),
+    );
+    const env = createEnv();
+    const statuses = [];
+    for (let index = 0; index < 6; index += 1) {
+      const response = await worker.fetch(
+        createRequest({ body: autoPayload({ reportId: `auto-${index}` }) }),
+        env,
+      );
+      statuses.push(response.status);
+    }
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+
+    const userReport = await worker.fetch(
+      createRequest({ body: basePayload() }),
+      env,
+    );
+    expect(userReport.status).toBe(200);
   });
 
   it('reports discord-delivery-failed when Discord rejects the request', async () => {

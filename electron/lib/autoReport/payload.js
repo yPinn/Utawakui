@@ -4,12 +4,6 @@ const { appFramesOf, labelOf } = require('./severity');
 
 const AUTO_REPORT_SCHEMA_VERSION = 1;
 const MAX_MESSAGE_LENGTH = 300;
-const PROCESS_LABELS = Object.freeze({
-  main: '主程序',
-  renderer: '畫面',
-  worker: '背景工作',
-  overlay: 'Output 畫面',
-});
 
 function boundedText(value, maxLength) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -27,7 +21,8 @@ function buildAutoReport({
   reportId,
   createdAt,
 }) {
-  const processLabel = PROCESS_LABELS[event.process] ?? '應用程式';
+  // The label already names the failing part; the recording process (often
+  // main, even for renderer exits) stays in its own field.
   const platform = boundedText(environment.platform, 32);
   const appVersion = boundedText(environment.appVersion, 32);
   const window = escalated ? '1 小時內' : '24 小時內';
@@ -42,7 +37,7 @@ function buildAutoReport({
     source: event.source,
     operation: event.operation,
     process: event.process,
-    summary: `${processLabel}發生${labelOf(event.code)}（${event.code}）；App ${appVersion || '?'}／${platform || '?'}；${window}第 ${occurrences} 次。`,
+    summary: `${labelOf(event.code)}（${event.code}）；App ${appVersion || '?'}／${platform || '?'}；${window}第 ${occurrences} 次。`,
     message: boundedText(event.message, MAX_MESSAGE_LENGTH),
     appFrames: appFramesOf(event.stack),
     occurrences,

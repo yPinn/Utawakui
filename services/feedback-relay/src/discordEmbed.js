@@ -177,6 +177,74 @@ export function buildDiscordWebhookBody(payload) {
   };
 }
 
+const AUTO_SEVERITY_PRESENTATION = Object.freeze({
+  S1: { label: '自動錯誤回報 · 致命', color: 0xc62828 },
+  S2: { label: '自動錯誤回報 · 反覆發生', color: 0xe08a1e },
+});
+
+// ADR 0029 report: fixed fields only. Frames sit in a code block, so any
+// backtick is neutralised before it could close the block.
+export function buildAutoReportWebhookBody(payload) {
+  const presentation = AUTO_SEVERITY_PRESENTATION[payload.severity];
+  const environment = payload.environment || {};
+  const fields = [
+    { name: '錯誤代碼', value: `\`${payload.code}\``, inline: true },
+    {
+      name: '發生位置',
+      value: escapeAndTruncate(
+        `${payload.process} · ${payload.source}/${payload.operation}`,
+        1024,
+      ),
+      inline: true,
+    },
+  ];
+  if (payload.message) {
+    fields.push({
+      name: '訊息',
+      value: escapeAndTruncate(payload.message, 1024),
+      inline: false,
+    });
+  }
+  if (payload.appFrames.length > 0) {
+    const frames = payload.appFrames.join('\n').replaceAll('`', "'");
+    fields.push({
+      name: '程式位置',
+      value: `\`\`\`\n${truncate(frames, 1000)}\n\`\`\``,
+      inline: false,
+    });
+  }
+  fields.push(
+    {
+      name: '版本',
+      value: `Utawakui ${formatEnvironmentValue(environment.appVersion)}\nElectron ${formatEnvironmentValue(environment.electronVersion)}`,
+      inline: true,
+    },
+    {
+      name: '環境',
+      value: `${formatPlatform(environment.platform)}\n${formatEnvironmentValue(environment.locale)}`,
+      inline: true,
+    },
+  );
+  return {
+    payloadJson: {
+      allowed_mentions: { parse: [] },
+      embeds: [
+        {
+          title: truncate(presentation.label, 256),
+          color: presentation.color,
+          description: escapeAndTruncate(payload.summary, 1000),
+          fields,
+          footer: {
+            text: `回報碼 · ${formatFeedbackReportReference(payload.reportId)}`,
+          },
+          timestamp: payload.createdAt,
+        },
+      ],
+    },
+    diagnosticsAttachment: null,
+  };
+}
+
 // Discord requires multipart/form-data (payload_json field + files[n] parts)
 // only when attaching files; a plain JSON body is used otherwise, matching
 // Discord's own webhook contract rather than always paying multipart's cost.
