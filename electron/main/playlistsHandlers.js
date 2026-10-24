@@ -20,21 +20,27 @@ const {
   upsertAlbum,
 } = require('../lib/playlists');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const { createAppError } = require('../lib/appError');
 
 // Every playlists:* IPC handler pipes its result through this before
 // returning — coverImage is a bare filename in playlists.json (see
 // playlists.js's sanitizePlaylist comment), and the full utawakui-media://
 // URL is derived here at the IPC boundary rather than persisted, same rule
 // listTracks() already follows for track thumbnails.
-function withCoverUrls(playlists) {
-  return playlists.map((playlist) =>
-    playlist.coverImage
+function projectCoverUrls(playlists) {
+  return playlists.map((playlist) => {
+    const projected = playlist.coverImage
       ? {
           ...playlist,
           coverUrl: buildPlaylistCoverUrl(playlist.id, playlist.coverImage),
         }
-      : playlist,
-  );
+      : { ...playlist };
+    if (playlist.releaseInfo) {
+      projected.releaseInfo = { ...playlist.releaseInfo };
+      delete projected.releaseInfo.localMemberBindings;
+    }
+    return projected;
+  });
 }
 
 function registerPlaylistsHandlers({
@@ -65,7 +71,41 @@ function registerPlaylistsHandlers({
   setPlaylistDescriptionText = setPlaylistDescription,
   writePlaylistCoverFromFile = writePlaylistCoverFile,
   deleteFolderPageObjectsForPage = deleteFolderPageObjects,
+  projectReleaseCollections = null,
+  getReleaseScope = null,
+  onCollectionsChanged = null,
 }) {
+  const withCoverUrls = (playlists) =>
+    projectCoverUrls(
+      projectReleaseCollections
+        ? projectReleaseCollections(playlists)
+        : playlists,
+    );
+  const membershipOperations = new Set([
+    'delete',
+    'set-tracks',
+    'set-kind',
+    'upsert-album',
+  ]);
+  const membershipKey = (entry) =>
+    JSON.stringify({
+      kind: entry.kind,
+      source: entry.source,
+      trackIds: entry.trackIds,
+      revision:
+        entry.releaseInfo?.revision ?? entry.resolvedRelease?.revision ?? 0,
+    });
+  function assertScope(scope) {
+    if (!scope) return;
+    const current = getReleaseScope();
+    if (current.epoch !== scope.epoch || current.dir !== scope.dir) {
+      throw createAppError({
+        code: 'PLAYLISTS_SCOPE_CHANGED',
+        title: '曲庫位置已變更',
+        message: '曲庫位置已變更，請重新載入後再操作。',
+      });
+    }
+  }
   // Shared shape for every playlists:* diagnostic wrap below — keeps the
   // 11 handlers from repeating the same recordDiagnostic/publicError
   // boilerplate.
@@ -81,7 +121,40 @@ function registerPlaylistsHandlers({
           context: { retryable: true },
         },
       },
-      work,
+      async () => {
+        const scope = getReleaseScope?.();
+        const before =
+          onCollectionsChanged && membershipOperations.has(operation)
+            ? loadPlaylistsList(resolveDownloadDir(getConfig()))
+            : null;
+        const result = await work(() => assertScope(scope));
+        assertScope(scope);
+        if (before && Array.isArray(result)) {
+          const old = new Map(
+            before.map((entry) => [entry.id, membershipKey(entry)]),
+          );
+          const next = new Map(
+            result.map((entry) => [entry.id, membershipKey(entry)]),
+          );
+          const collectionIds = [
+            ...new Set([...old.keys(), ...next.keys()]),
+          ].filter((id) => old.get(id) !== next.get(id));
+          if (collectionIds.length) {
+            try {
+              onCollectionsChanged({ collectionIds });
+            } catch {
+              // A closing renderer does not roll back a saved collection.
+            }
+          }
+        }
+        return scope && Array.isArray(result)
+          ? result.map((entry) =>
+              entry.kind === 'album'
+                ? { ...entry, releaseLibraryEpoch: scope.epoch }
+                : entry,
+            )
+          : result;
+      },
     );
   }
 
@@ -195,7 +268,7 @@ function registerPlaylistsHandlers({
       'PLAYLISTS_UPSERT_ALBUM_FAILED',
       '專輯無法同步',
       '這張專輯目前無法同步，請再試一次。',
-      async () => {
+      async (assertCurrent) => {
         const dir = resolveDownloadDir(getConfig());
         const playlists = upsertAlbumPlaylist(dir, {
           name: payload?.name,
@@ -219,6 +292,7 @@ function registerPlaylistsHandlers({
             album.id,
             payload.thumbnailUrl,
           );
+          assertCurrent();
           if (filename) {
             return withCoverUrls(
               setPlaylistCoverFilename(dir, album.id, filename),
@@ -264,24 +338,25 @@ function registerPlaylistsHandlers({
   // Native file picker — same pattern as config:choose-download-dir. The
   // dialog itself is the image picker; no in-app cropper/uploader UI.
   ipcMain.handle('playlists:choose-cover', async (event, id) => {
-    const dir = resolveDownloadDir(getConfig());
-    const playlists = loadPlaylistsList(dir);
-    if (!playlists.some((p) => p.id === id)) return withCoverUrls(playlists);
-
-    const result = await dialog.showOpenDialog(getMainWindow(), {
-      properties: ['openFile'],
-      filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
-    });
-    if (result.canceled || !result.filePaths[0]) {
-      return withCoverUrls(playlists);
-    }
-
     return withBoundary(
       'choose-cover',
       'PLAYLISTS_CHOOSE_COVER_FAILED',
       '封面無法更新',
       '這個歌單的封面無法更新，請再試一次。',
-      () => {
+      async (assertCurrent) => {
+        const dir = resolveDownloadDir(getConfig());
+        const playlists = loadPlaylistsList(dir);
+        if (!playlists.some((p) => p.id === id))
+          return withCoverUrls(playlists);
+        const result = await dialog.showOpenDialog(getMainWindow(), {
+          properties: ['openFile'],
+          filters: [
+            { name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] },
+          ],
+        });
+        assertCurrent();
+        if (result.canceled || !result.filePaths?.[0])
+          return withCoverUrls(playlists);
         const filename = writePlaylistCoverFromFile(
           dir,
           id,

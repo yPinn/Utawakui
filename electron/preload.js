@@ -10,6 +10,27 @@ function readInitialUiTheme() {
   return theme === 'dark' ? 'dark' : 'light';
 }
 
+function releaseFieldsIntent(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  return Object.fromEntries(
+    ['type', 'date', 'totalTrackCount']
+      .filter((key) => Object.hasOwn(value, key))
+      .map((key) => [
+        key,
+        key === 'date' && value.date && typeof value.date === 'object'
+          ? { value: value.date.value, precision: value.date.precision }
+          : value[key],
+      ]),
+  );
+}
+function releaseTargetIntent(value, keys) {
+  return Object.fromEntries(
+    keys
+      .filter((key) => value?.[key] !== undefined)
+      .map((key) => [key, value[key]]),
+  );
+}
+
 // BrowserWindow starts restored, so main can synchronously seed compact before
 // the renderer's first frame; later native window-state events update it.
 function readInitialUiDensity() {
@@ -99,6 +120,28 @@ function playbackSourceIntent(value) {
     sourceId: value?.sourceId ?? null,
     sourceName: value?.sourceName ?? null,
   };
+}
+
+// Sandboxed preload owns only the fixed product-intent shape. Main performs
+// validation and derives canonical media bindings; no filesystem identity is relayed.
+function workVersionIntent(value) {
+  return Object.fromEntries(
+    ['arrangement', 'performance', 'vocal', 'label', 'note']
+      .filter((key) => value?.[key] !== undefined)
+      .map((key) => [key, value[key]]),
+  );
+}
+
+function workSelectionIntent(value) {
+  const selection = { kind: value?.kind };
+  if (value?.kind === 'existing') selection.workId = value.workId;
+  if (value?.kind === 'track') selection.targetTrackId = value.targetTrackId;
+  if (value?.kind === 'new') {
+    selection.title = value.title;
+    if (value.targetTrackId !== undefined)
+      selection.targetTrackId = value.targetTrackId;
+  }
+  return selection;
 }
 
 function playbackResumeIntent(value) {
@@ -567,6 +610,76 @@ contextBridge.exposeInMainWorld('Utawakui', {
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: (options) => ipcRenderer.invoke('library:list', options),
   getArtistIndex: () => ipcRenderer.invoke('library:get-artist-index'),
+  getReleaseInfo: (value) =>
+    ipcRenderer.invoke(
+      'library:get-release-info',
+      releaseTargetIntent(value, ['collectionId', 'offset', 'limit']),
+    ),
+  saveReleaseInfo: (value) =>
+    ipcRenderer.invoke('library:save-release-info', {
+      ...releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'remove',
+        'leadTrackId',
+        'initializeBindings',
+        'reconfirmTrackIds',
+      ]),
+      ...(value?.set !== undefined
+        ? { set: releaseFieldsIntent(value.set) }
+        : {}),
+    }),
+  createLocalRelease: (value) =>
+    ipcRenderer.invoke(
+      'library:create-local-release',
+      releaseTargetIntent(value, ['trackId', 'name', 'libraryEpoch']),
+    ),
+  getTrackReleases: (value) =>
+    ipcRenderer.invoke(
+      'library:get-track-releases',
+      releaseTargetIntent(value, ['trackId', 'offset', 'limit']),
+    ),
+  resolveReleaseMembers: (value) =>
+    ipcRenderer.invoke(
+      'library:resolve-release-members',
+      releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'offset',
+        'limit',
+      ]),
+    ),
+  getWorkOrganization: (value) =>
+    ipcRenderer.invoke('library:get-work-organization', {
+      trackId: value?.trackId,
+      ...(value?.offset !== undefined ? { offset: value.offset } : {}),
+      ...(value?.limit !== undefined ? { limit: value.limit } : {}),
+    }),
+  searchWorkOrganization: (value) =>
+    ipcRenderer.invoke('library:search-work-organization', {
+      trackId: value?.trackId,
+      query: value?.query,
+      ...(value?.limit !== undefined ? { limit: value.limit } : {}),
+    }),
+  saveWorkOrganization: (value) =>
+    ipcRenderer.invoke('library:save-work-organization', {
+      trackId: value?.trackId,
+      expectedRevision: value?.expectedRevision,
+      libraryEpoch: value?.libraryEpoch,
+      selection: workSelectionIntent(value?.selection),
+      relationship: value?.relationship,
+      versionInfo: workVersionIntent(value?.versionInfo),
+      ...(value?.reconfirm !== undefined ? { reconfirm: value.reconfirm } : {}),
+    }),
+  renameWork: (value) =>
+    ipcRenderer.invoke('library:rename-work', {
+      workId: value?.workId,
+      title: value?.title,
+      expectedRevision: value?.expectedRevision,
+      libraryEpoch: value?.libraryEpoch,
+    }),
   autoResolveArtistIdentities: () =>
     ipcRenderer.invoke('library:auto-resolve-artist-identities'),
   mergeArtists: (artistIds, expectedRevision) =>
@@ -1033,6 +1146,59 @@ contextBridge.exposeInMainWorld('Utawakui', {
     const listener = (event, options) => callback(options);
     ipcRenderer.on('library:updated', listener);
     return () => ipcRenderer.removeListener('library:updated', listener);
+  },
+  onWorkOrganizationChanged: (callback) => {
+    const listener = (_event, payload) => {
+      if (
+        !Number.isSafeInteger(payload?.libraryEpoch) ||
+        payload.libraryEpoch < 0 ||
+        !Number.isSafeInteger(payload?.revision) ||
+        payload.revision < 0
+      )
+        return;
+      callback({
+        libraryEpoch: payload.libraryEpoch,
+        revision: payload.revision,
+        ...(Array.isArray(payload.trackIds)
+          ? {
+              trackIds: payload.trackIds
+                .filter((id) => typeof id === 'string' && id.length <= 255)
+                .slice(0, 100),
+            }
+          : {}),
+      });
+    };
+    ipcRenderer.on('library:work-organization-changed', listener);
+    return () => {
+      ipcRenderer.removeListener('library:work-organization-changed', listener);
+    };
+  },
+  onReleaseOrganizationChanged: (callback) => {
+    const listener = (_event, payload) => {
+      if (
+        !Number.isSafeInteger(payload?.libraryEpoch) ||
+        payload.libraryEpoch < 0
+      )
+        return;
+      callback({
+        libraryEpoch: payload.libraryEpoch,
+        collectionIds: (Array.isArray(payload.collectionIds)
+          ? payload.collectionIds
+          : []
+        )
+          .filter(
+            (id) => typeof id === 'string' && id.length > 0 && id.length <= 255,
+          )
+          .slice(0, 100),
+      });
+    };
+    ipcRenderer.on('library:release-organization-changed', listener);
+    return () => {
+      ipcRenderer.removeListener(
+        'library:release-organization-changed',
+        listener,
+      );
+    };
   },
   onLibraryBackfillStatus: (callback) => {
     const listener = (event, payload) => callback(payload);

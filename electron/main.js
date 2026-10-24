@@ -128,6 +128,16 @@ const {
 } = require('./main/lyricsAcquisitionService');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
 const {
+  createWorkOrganizationHost,
+} = require('./main/library/workOrganizationHost');
+const {
+  registerLibraryWorkOrganizationHandlers,
+} = require('./main/library/workOrganizationHandlers');
+const { createReleaseOrganizationRuntime } = require('./lib/releases/runtime');
+const {
+  registerLibraryReleaseHandlers,
+} = require('./main/library/releaseHandlers');
+const {
   registerLibraryStorageHandlers,
 } = require('./main/libraryStorageHandlers');
 const { createLibraryStorageService } = require('./lib/library/storage');
@@ -461,6 +471,48 @@ if (!gotSingleInstanceLock) {
       libraryTrackSnapshot.invalidate();
       windowState.notifyLibraryUpdated(options);
     };
+    let workLibraryEpoch = 0;
+    const workOrganizationHost = createWorkOrganizationHost({
+      getDirectory: () => ({
+        dir: configState.resolveDownloadDir(configState.getConfig()),
+        epoch: workLibraryEpoch,
+      }),
+      notifyChanged: (payload) => {
+        const window = windowState.getMainWindow();
+        if (window && !window.isDestroyed()) {
+          window.webContents.send('library:work-organization-changed', payload);
+        }
+      },
+      notifyLibraryUpdated,
+      recordDiagnostic,
+    });
+    const createLibraryImportAdmission = () => {
+      const libraryEpoch = workLibraryEpoch;
+      return (intent, finalize) =>
+        workOrganizationHost.runtime.runImport(
+          { ...intent, libraryEpoch },
+          finalize,
+        );
+    };
+    void workOrganizationHost.recover();
+    const getReleaseScope = () => ({
+      dir: configState.resolveDownloadDir(configState.getConfig()),
+      epoch: workLibraryEpoch,
+    });
+    const publishReleaseChange = (payload) => {
+      const window = windowState.getMainWindow();
+      if (window && !window.isDestroyed()) {
+        window.webContents.send(
+          'library:release-organization-changed',
+          payload,
+        );
+      }
+    };
+    const releaseOrganizationRuntime = createReleaseOrganizationRuntime({
+      getDirectory: getReleaseScope,
+      inspectBinding: workOrganizationHost.runtime.inspectBinding,
+      notifyChanged: publishReleaseChange,
+    });
     heavyJobScheduler = createHeavyJobScheduler();
     registerHeavyJobSchedulerLifecycle({
       app,
@@ -1055,6 +1107,8 @@ if (!gotSingleInstanceLock) {
 
     registerLibraryHandlers({
       ipcMain,
+      createLibraryImportAdmission,
+      workOrganizationRuntime: workOrganizationHost.runtime,
       dialog,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
@@ -1072,6 +1126,17 @@ if (!gotSingleInstanceLock) {
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
       enforceLibraryStoragePolicy,
+      recordDiagnostic,
+    });
+
+    registerLibraryWorkOrganizationHandlers({
+      ipcMain,
+      runtime: workOrganizationHost.runtime,
+      recordDiagnostic,
+    });
+    registerLibraryReleaseHandlers({
+      ipcMain,
+      runtime: releaseOrganizationRuntime,
       recordDiagnostic,
     });
 
@@ -1104,6 +1169,10 @@ if (!gotSingleInstanceLock) {
 
     registerPlaylistsHandlers({
       ipcMain,
+      projectReleaseCollections: releaseOrganizationRuntime.projectList,
+      getReleaseScope,
+      onCollectionsChanged: (payload) =>
+        publishReleaseChange({ libraryEpoch: workLibraryEpoch, ...payload }),
       dialog,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
@@ -1128,6 +1197,8 @@ if (!gotSingleInstanceLock) {
       resolveDownloadDir: configState.resolveDownloadDir,
       recordDiagnostic,
       sessionHistoryService,
+      getReleaseScope,
+      withPlayableRelease: releaseOrganizationRuntime.withPlayableCollection,
     });
 
     registerBgmStandbyPlanHandlers({
@@ -1140,6 +1211,7 @@ if (!gotSingleInstanceLock) {
 
     registerImportHandlers({
       ipcMain,
+      createLibraryImportAdmission,
       readClipboardText: () => clipboard.readText(),
       getMainWindow: windowState.getMainWindow,
       getConfig: configState.getConfig,
@@ -1182,6 +1254,15 @@ if (!gotSingleInstanceLock) {
 
     registerConfigHandlers({
       ipcMain,
+      onLibraryDirectoryChanged: () => {
+        workLibraryEpoch += 1;
+        workOrganizationHost.invalidate();
+        releaseOrganizationRuntime.invalidate();
+        publishReleaseChange({
+          libraryEpoch: workLibraryEpoch,
+          collectionIds: [],
+        });
+      },
       dialog,
       openPath: (targetPath) => shell.openPath(targetPath),
       getConfig: configState.getConfig,

@@ -105,6 +105,24 @@ describe('library metadata maintenance handlers', () => {
     return handlers;
   }
 
+  it('routes missing-media deletion through work recovery without duplicate reference cleanup', async () => {
+    const deleteTrack = vi.fn().mockResolvedValue(true);
+    const notifyLibraryUpdated = vi.fn();
+    const removeTrackFromPlaylists = vi.fn();
+    const handlers = registerHandlers({
+      workOrganizationRuntime: { deleteTrack },
+      findLibraryTrackRecord: vi.fn().mockReturnValue(null),
+      removeTrackFromPlaylists,
+      notifyLibraryUpdated,
+    });
+    await expect(
+      handlers.get('library:delete-track')({}, 'track-a'),
+    ).resolves.toBe(true);
+    expect(deleteTrack).toHaveBeenCalledWith({ trackId: 'track-a' });
+    expect(removeTrackFromPlaylists).not.toHaveBeenCalled();
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+  });
+
   it('automatically organizes saved metadata once before exposing a library directory', async () => {
     let tracks = [{ id: 'track-1', artist: 'Old Artist' }];
     const listLibraryTracks = vi.fn(() => tracks);
@@ -1478,6 +1496,22 @@ describe('local import automatic music analysis', () => {
       dialog,
     };
   }
+
+  it('captures a separate admission before each local acquisition and conversion', async () => {
+    const runImport = vi.fn();
+    const createLibraryImportAdmission = vi.fn(() => runImport);
+    const harness = registerLocalImport({ createLibraryImportAdmission });
+    await harness.handlers.get('library:import-audio-files')();
+    await harness.handlers.get('library:convert-local-audio-files')(
+      {},
+      'session',
+    );
+    expect(createLibraryImportAdmission).toHaveBeenCalledTimes(2);
+    expect(harness.importAudioFiles.mock.calls[0][2].runImport).toBe(runImport);
+    expect(harness.convertAudioFiles.mock.calls[0][2].runImport).toBe(
+      runImport,
+    );
+  });
 
   it('uses the shared audio allowlist and records per-file failures without returning private paths', async () => {
     const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });

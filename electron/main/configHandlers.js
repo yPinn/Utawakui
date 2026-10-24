@@ -47,6 +47,7 @@ function registerConfigHandlers({
   validateDownloadDir = () => undefined,
   getMainWindow,
   notifyLibraryUpdated,
+  onLibraryDirectoryChanged = () => undefined,
   recordDiagnostic,
   titlebarColors,
   applyPerformerUiTheme = () => undefined,
@@ -117,6 +118,7 @@ function registerConfigHandlers({
         }
         validateDownloadDir(result.filePaths[0]);
         updateConfig({ downloadDir: result.filePaths[0] });
+        onLibraryDirectoryChanged();
         // Invalidates both renderer library state and the module-scope playlist
         // cache before either can write against the newly selected directory.
         notifyLibraryUpdated();
@@ -140,6 +142,7 @@ function registerConfigHandlers({
           downloadDir: null,
         });
         updateConfig({ downloadDir: null });
+        onLibraryDirectoryChanged();
         notifyLibraryUpdated();
         return defaultDir;
       },

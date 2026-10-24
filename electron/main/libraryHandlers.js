@@ -118,6 +118,8 @@ function registerLibraryHandlers({
   runLibraryBackfill = runBackfillPass,
   organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
   importAudioFiles = importLocalAudioFiles,
+  createLibraryImportAdmission = () => undefined,
+  workOrganizationRuntime = null,
   convertAudioFiles = convertLocalAudioFiles,
   getPreparedLocalConversionFfmpegPath = getPreparedFfmpegPath,
   resolveUserDataDir = () => {
@@ -281,6 +283,7 @@ function registerLibraryHandlers({
     }
 
     const conversionCandidates = [];
+    const runImport = createLibraryImportAdmission();
     const imported = await runDiagnosticIpcOperation(
       {
         recordDiagnostic,
@@ -298,6 +301,7 @@ function registerLibraryHandlers({
       },
       () =>
         importAudioFiles(resolveDownloadDir(getConfig()), result.filePaths, {
+          ...(runImport ? { runImport } : {}),
           onFailure: (failure) =>
             recordLocalImportFailure(failure, 'import-audio-file'),
           onConversionCandidate: (candidate) =>
@@ -338,6 +342,7 @@ function registerLibraryHandlers({
       }
 
       const config = getConfig();
+      const runImport = createLibraryImportAdmission();
       const ffmpegPath = getPreparedLocalConversionFfmpegPath(
         resolveUserDataDir(),
         config.systemFfmpegPath,
@@ -373,6 +378,7 @@ function registerLibraryHandlers({
         },
         () =>
           convertAudioFiles(resolveDownloadDir(config), candidates, {
+            ...(runImport ? { runImport } : {}),
             ffmpegPath,
             onFailure: (failure) =>
               recordLocalImportFailure(failure, 'convert-local-audio-file'),
@@ -385,7 +391,8 @@ function registerLibraryHandlers({
 
   ipcMain.handle('library:delete-track', async (event, trackId) => {
     const dir = resolveDownloadDir(getConfig());
-    if (!findLibraryTrackRecord(dir, trackId)) return false;
+    if (!workOrganizationRuntime && !findLibraryTrackRecord(dir, trackId))
+      return false;
     lyricsAcquisitionService.invalidateAutomaticAcquisition?.(trackId);
     const deleted = await runDiagnosticIpcOperation(
       {
@@ -403,6 +410,8 @@ function registerLibraryHandlers({
         },
       },
       () => {
+        if (workOrganizationRuntime)
+          return workOrganizationRuntime.deleteTrack({ trackId });
         const result = deleteLibraryTrack(dir, trackId);
         if (result) {
           // Cascades into any playlist that referenced this track — a

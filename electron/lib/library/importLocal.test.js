@@ -45,6 +45,46 @@ describe('importLocalAudioFiles', () => {
     fs.rmSync(dir, { recursive: true, force: true });
     fs.rmSync(sourceDir, { recursive: true, force: true });
   });
+  it('admits only staged audio and chooses the final ID inside the coordinated commit', async () => {
+    const sourcePath = path.join(sourceDir, 'song.mp3');
+    fs.writeFileSync(sourcePath, 'audio-bytes');
+    const runImport = vi.fn(async ({ dir: libraryDir }, finalize) => {
+      expect(libraryDir).toBe(dir);
+      expect(fs.readdirSync(path.join(dir, '.import-staging'))).toHaveLength(1);
+      const occupied = path.join(dir, 'tracks', 'song');
+      fs.mkdirSync(occupied, { recursive: true });
+      fs.writeFileSync(path.join(occupied, 'audio.mp3'), 'concurrent import');
+      return finalize();
+    });
+    const result = await importLocalAudioFiles(dir, [sourcePath], {
+      ...importOptions(),
+      runImport,
+    });
+    expect(result.imported[0].id).toBe('song-2');
+    expect(runImport).toHaveBeenCalledTimes(1);
+  });
+  it('does not overwrite concurrent metadata while backfilling content hashes outside admission', async () => {
+    const existing = path.join(dir, 'tracks', 'existing');
+    fs.mkdirSync(existing, { recursive: true });
+    const audioPath = path.join(existing, 'audio.mp3');
+    fs.writeFileSync(audioPath, 'old audio');
+    saveIndexEntry(dir, 'existing', {
+      title: 'Old title',
+      sourceType: 'local-file',
+      storageType: 'managed',
+    });
+    const sourcePath = path.join(sourceDir, 'incoming.mp3');
+    fs.writeFileSync(sourcePath, 'new audio');
+    const read = fs.createReadStream;
+    vi.spyOn(fs, 'createReadStream').mockImplementation((target, ...args) => {
+      const stream = read(target, ...args);
+      if (target === audioPath)
+        saveIndexEntry(dir, 'existing', { title: 'Concurrent title' });
+      return stream;
+    });
+    await importLocalAudioFiles(dir, [sourcePath], importOptions());
+    expect(loadIndex(dir).tracks.existing.title).toBe('Concurrent title');
+  });
 
   it('copies local audio into a structured track folder and records managed import metadata', async () => {
     const sourcePath = path.join(sourceDir, '夜に駆ける.mp3');

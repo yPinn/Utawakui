@@ -199,6 +199,7 @@ function registerImportHandlers({
   enqueueMusicAnalysis = () => false,
   enforceLibraryStoragePolicy = async () => undefined,
   downloadTrackAudio = downloadAudio,
+  createLibraryImportAdmission = () => undefined,
   fetchPlaylistMetadata = fetchPlaylist,
   fetchYoutubeMetadata = fetchMetadata,
   searchYoutubeCandidates = searchPlaybackCandidates,
@@ -275,15 +276,9 @@ function registerImportHandlers({
 
     const task = (async () => {
       const destDir = resolveDownloadDir(getConfig());
-      const result = await providerDownloadScheduler.schedule(
-        videoId,
-        async ({ signal }) => {
-          const runner = await getProviderRunner();
-          return downloadTrackAudio(videoId, destDir, { runner, signal });
-        },
-      );
-
-      await runLibraryFinalize(async () => {
+      const runImport = createLibraryImportAdmission();
+      let metadataCommitted = false;
+      const commitMetadata = (result) => {
         const trackDir = resolveTrackDir(destDir, videoId);
         if (result.title) {
           try {
@@ -293,8 +288,7 @@ function registerImportHandlers({
               buildProviderIndexEntry(result),
             );
           } catch {
-            // The download itself succeeded and the file is playable — a
-            // failed index write will be repaired by the next backfill pass.
+            // A playable download can repair its index through backfill.
           }
         }
         if (trackDir) {
@@ -308,9 +302,26 @@ function registerImportHandlers({
         try {
           enqueueMusicAnalysis(videoId);
         } catch {
-          // Analysis is optional background work. A playable download remains
-          // successful even if queue admission fails unexpectedly.
+          // Optional analysis must not fail an installed playable file.
         }
+        metadataCommitted = true;
+      };
+      const result = await providerDownloadScheduler.schedule(
+        videoId,
+        async ({ signal }) => {
+          const runner = await getProviderRunner();
+          return downloadTrackAudio(videoId, destDir, {
+            runner,
+            signal,
+            ...(runImport
+              ? { runImport, onTrackCommitted: commitMetadata }
+              : {}),
+          });
+        },
+      );
+
+      await runLibraryFinalize(async () => {
+        if (!metadataCommitted && !runImport) commitMetadata(result);
         await enforceLibraryStoragePolicySafely({
           enforceLibraryStoragePolicy,
           options: { protectedTrackIds: [videoId] },

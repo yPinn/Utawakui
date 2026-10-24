@@ -5,13 +5,11 @@ const path = require('path');
 const crypto = require('crypto');
 const { Transform } = require('stream');
 const { pipeline } = require('stream/promises');
-const { atomicWriteJson } = require('../atomicWrite');
 const {
   AUDIO_CONVERSION_EXTENSIONS,
   AUDIO_CONVERSION_FORMATS,
   AUDIO_EXTENSIONS,
   ARTWORK_BASENAME,
-  INDEX_FILENAME,
   STRUCTURED_AUDIO_BASENAME,
   TRACKS_DIRNAME,
 } = require('./constants');
@@ -99,10 +97,12 @@ async function uniqueLocalTrackId(dir, baseId) {
   return candidate;
 }
 
-async function buildContentHashTrackMap(dir) {
+async function buildContentHashTrackMap(
+  dir,
+  runImport = async (_intent, finalize) => finalize(),
+) {
   const index = loadIndex(dir);
   const trackIdByContentHash = new Map();
-  let changed = false;
 
   for (const record of listTrackRecords(dir)) {
     const indexed = index.tracks[record.id];
@@ -115,10 +115,31 @@ async function buildContentHashTrackMap(dir) {
       const audioPath = resolveTrackAudioPath(dir, record.id);
       if (audioPath) {
         try {
+          const initial = fs.statSync(audioPath);
           contentHash = await computeFileContentHash(audioPath);
-          index.tracks[record.id] = { ...indexed, contentHash };
-          changed = true;
-        } catch {
+          await runImport(
+            { dir, trackId: record.id },
+            (assertCurrent = () => {}) => {
+              assertCurrent();
+              const current = fs.statSync(audioPath);
+              if (
+                ['dev', 'ino', 'size', 'mtimeMs', 'ctimeMs'].some(
+                  (key) => initial[key] !== current[key],
+                )
+              ) {
+                contentHash = undefined;
+                return;
+              }
+              // Hashing is deliberately outside the admission lane. Merge only
+              // this scalar into fresh metadata; never restore a stale whole-file
+              // snapshot after a concurrent edit, deletion or replacement.
+              const latest = loadIndex(dir).tracks[record.id];
+              if (latest && !isSha256Digest(latest.contentHash))
+                saveIndexEntry(dir, record.id, { contentHash });
+            },
+          );
+        } catch (error) {
+          if (error.code === 'WORKS_SCOPE_STALE') throw error;
           contentHash = undefined;
         }
       }
@@ -129,7 +150,6 @@ async function buildContentHashTrackMap(dir) {
     }
   }
 
-  if (changed) atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
   return trackIdByContentHash;
 }
 
@@ -248,6 +268,7 @@ async function importOneLocalAudioFile({
   prepareAudio,
   sourceMetadata,
   provenance,
+  runImport = async (_intent, finalize) => finalize(),
 }) {
   if (typeof sourcePath !== 'string' || sourcePath.length === 0) {
     addSkipped(result, sourcePath, 'invalid-path');
@@ -289,14 +310,6 @@ async function importOneLocalAudioFile({
       prepareAudio,
     });
 
-    const existingTrackId = trackIdByContentHash.get(contentHash);
-    if (existingTrackId) {
-      addSkipped(result, displaySourcePath, 'duplicate-content', {
-        existingTrackId,
-      });
-      return;
-    }
-
     const outputMetadata = await readAudioMetadata(stagingAudioPath, extension);
     const metadata = sourceMetadata
       ? {
@@ -316,42 +329,65 @@ async function importOneLocalAudioFile({
       );
     }
 
-    const trackId = await uniqueLocalTrackId(
-      dir,
-      localTrackIdBaseFromFilePath(displaySourcePath),
-    );
-    finalTrackDirectory = resolveTrackDir(dir, trackId);
-    if (!finalTrackDirectory) {
-      addSkipped(result, displaySourcePath, 'invalid-track-id');
-      return;
-    }
+    await runImport({ dir }, async (assertCurrent = () => {}) => {
+      assertCurrent();
+      // Refresh scalar hashes inside the admission lane: another import/delete
+      // may have completed while this file was copying or being converted.
+      const indexed = loadIndex(dir);
+      const existingTrackId = listTrackRecords(dir).find(
+        (record) => indexed.tracks[record.id]?.contentHash === contentHash,
+      )?.id;
+      if (existingTrackId) {
+        addSkipped(result, displaySourcePath, 'duplicate-content', {
+          existingTrackId,
+        });
+        return;
+      }
+      const trackId = await uniqueLocalTrackId(
+        dir,
+        localTrackIdBaseFromFilePath(displaySourcePath),
+      );
+      assertCurrent();
+      finalTrackDirectory = resolveTrackDir(dir, trackId);
+      if (!finalTrackDirectory) {
+        addSkipped(result, displaySourcePath, 'invalid-track-id');
+        return;
+      }
 
-    await fs.promises.mkdir(path.join(dir, TRACKS_DIRNAME), {
-      recursive: true,
+      await fs.promises.mkdir(path.join(dir, TRACKS_DIRNAME), {
+        recursive: true,
+      });
+      assertCurrent();
+      // Installation and the default scalar write are synchronous after the
+      // final guard, so a configuration switch cannot interleave between them.
+      fs.renameSync(stagingDirectory, finalTrackDirectory);
+      stagingDirectory = undefined;
+
+      const indexEntry = indexMetadataForImport(
+        displaySourcePath,
+        metadata,
+        {
+          audioFilename,
+          contentHash,
+          fileSize,
+        },
+        provenance,
+      );
+      try {
+        const persisted = persistIndexEntry(dir, trackId, indexEntry);
+        if (persisted && typeof persisted.then === 'function') {
+          await persisted;
+          assertCurrent();
+        }
+      } catch (error) {
+        await removeDirectory(finalTrackDirectory);
+        finalTrackDirectory = undefined;
+        throw error;
+      }
+
+      trackIdByContentHash.set(contentHash, trackId);
+      result.imported.push({ id: trackId, title: indexEntry.title });
     });
-    await fs.promises.rename(stagingDirectory, finalTrackDirectory);
-    stagingDirectory = undefined;
-
-    const indexEntry = indexMetadataForImport(
-      displaySourcePath,
-      metadata,
-      {
-        audioFilename,
-        contentHash,
-        fileSize,
-      },
-      provenance,
-    );
-    try {
-      await persistIndexEntry(dir, trackId, indexEntry);
-    } catch (error) {
-      await removeDirectory(finalTrackDirectory);
-      finalTrackDirectory = undefined;
-      throw error;
-    }
-
-    trackIdByContentHash.set(contentHash, trackId);
-    result.imported.push({ id: trackId, title: indexEntry.title });
   } catch (error) {
     if (
       !prepareAudio &&
@@ -436,7 +472,10 @@ async function importLocalAudioFiles(dir, filePaths, options = {}) {
   const result = { imported: [], skipped: [] };
   if (!Array.isArray(filePaths)) return result;
 
-  const trackIdByContentHash = await buildContentHashTrackMap(dir);
+  const trackIdByContentHash = await buildContentHashTrackMap(
+    dir,
+    options.runImport,
+  );
   const readAudioMetadata = options.readAudioMetadata || readLocalAudioMetadata;
   const parseAudioMetadata =
     options.parseAudioMetadata || parseLocalAudioMetadata;
@@ -465,6 +504,7 @@ async function importLocalAudioFiles(dir, filePaths, options = {}) {
       persistIndexEntry,
       onFailure: options.onFailure,
       onConversionCandidate: options.onConversionCandidate,
+      runImport: options.runImport,
       result,
     });
   }
@@ -476,7 +516,10 @@ async function convertLocalAudioFiles(dir, candidates, options = {}) {
   const result = { imported: [], skipped: [] };
   if (!Array.isArray(candidates)) return result;
 
-  const trackIdByContentHash = await buildContentHashTrackMap(dir);
+  const trackIdByContentHash = await buildContentHashTrackMap(
+    dir,
+    options.runImport,
+  );
   const parseAudioMetadata =
     options.parseAudioMetadata || parseLocalAudioMetadata;
   const readAudioMetadata = options.readAudioMetadata || readLocalAudioMetadata;
@@ -533,6 +576,7 @@ async function convertLocalAudioFiles(dir, candidates, options = {}) {
         sourceFormat: expectedSourceFormat,
         conversionFormat: 'flac',
       },
+      runImport: options.runImport,
       prepareAudio: async (outputPath) => {
         try {
           await createTranscodeJob({

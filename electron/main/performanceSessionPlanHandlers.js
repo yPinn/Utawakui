@@ -100,6 +100,8 @@ function registerPerformanceSessionPlanHandlers({
     createPerformanceSessionPlanStore({ directory }),
   now = Date.now,
   sessionHistoryService = null,
+  getReleaseScope = null,
+  withPlayableRelease = null,
 }) {
   let scan = null;
   const recoveredDirectories = new Set();
@@ -192,8 +194,19 @@ function registerPerformanceSessionPlanHandlers({
       'appendFromCollection',
     ],
   ]) {
-    ipcMain.handle(channel, async (_event, intent) =>
-      run(operation, () => {
+    ipcMain.handle(channel, async (_event, intent) => {
+      const releaseScope = getReleaseScope?.();
+      return run(operation, () => {
+        if (releaseScope) {
+          const currentScope = getReleaseScope();
+          if (
+            currentScope.dir !== releaseScope.dir ||
+            currentScope.epoch !== releaseScope.epoch
+          )
+            throw new Error(
+              'Collection scope changed before session admission.',
+            );
+        }
         const { directory, store, tracksById } = operationContext();
         const playlists = loadPlaylistsList(directory);
         const collection = playlists.find(
@@ -206,18 +219,42 @@ function registerPerformanceSessionPlanHandlers({
             message: '找不到這個播放清單，曲庫可能已更新。',
           });
         }
-        return store[method]({
-          collection: {
-            id: collection.id,
-            name: collection.name,
-            kind: collection.kind,
-            trackIds: collection.trackIds,
-          },
-          tracksById,
-          replaceCurrent: intent?.replaceCurrent === true,
-        });
-      }),
-    );
+        const commit = (currentStore, currentTracks, currentCollection) =>
+          currentStore[method]({
+            collection: {
+              id: currentCollection.id,
+              name: currentCollection.name,
+              kind: currentCollection.kind,
+              trackIds: currentCollection.trackIds,
+            },
+            tracksById: currentTracks,
+            replaceCurrent: intent?.replaceCurrent === true,
+          });
+        if (collection.kind === 'album' && withPlayableRelease) {
+          return withPlayableRelease(
+            {
+              collectionId: collection.id,
+              ...(releaseScope ? { libraryEpoch: releaseScope.epoch } : {}),
+            },
+            ({ collection: verified, context }) => {
+              const currentScope = getReleaseScope?.();
+              if (
+                resolveDownloadDir(getConfig()) !== context.dir ||
+                (currentScope && currentScope.epoch !== context.epoch)
+              )
+                throw new Error(
+                  'Release scope changed before session admission.',
+                );
+              const current = operationContext();
+              return commit(current.store, current.tracksById, verified);
+            },
+          );
+        }
+        if (collection.releaseInfo?.localMemberBindings)
+          throw new Error('Release membership verification is required.');
+        return commit(store, tracksById, collection);
+      });
+    });
   }
 
   for (const [channel, operation, method, reuseRecentScan] of [

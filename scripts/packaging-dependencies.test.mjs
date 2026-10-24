@@ -76,6 +76,29 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('ships local work and release data modules without bundling their tests or library data', () => {
+    for (const file of [
+      'electron/lib/works/organization.js',
+      'electron/lib/works/trackBinding.js',
+      'electron/lib/works/service.js',
+      'electron/lib/works/runtime.js',
+      'electron/main/library/workOrganizationHandlers.js',
+      'electron/main/library/workOrganizationHost.js',
+      'electron/lib/releases/schema.js',
+      'electron/lib/releases/runtime.js',
+      'electron/main/library/releaseHandlers.js',
+    ]) {
+      expect(
+        runtimeSources.some((source) => source.file === file),
+        file,
+      ).toBe(true);
+    }
+    expect(builder.files).toContain('electron/**/*');
+    expect(builder.files).toContain('!electron/**/*.test.js');
+    expect(builder.asarUnpack).toContain('electron/lib/**/*');
+    expect(builder.files).not.toContain('works.json');
+    expect(builder.files).not.toContain('playlists.json');
+  });
   it('ships session archive/history runtime under existing boundaries while excluding their tests', () => {
     for (const file of [
       'electron/lib/performanceSessionArchive.js',

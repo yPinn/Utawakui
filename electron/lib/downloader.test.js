@@ -26,6 +26,34 @@ describe('downloadAudio cancellation', () => {
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
+  it('stages provider bytes outside the lane and persists metadata inside admission', async () => {
+    const canonical = path.join(dir, 'tracks', 'abc12345678');
+    let committed = false;
+    const onTrackCommitted = vi.fn((result) => {
+      expect(fs.readFileSync(result.filePath, 'utf8')).toBe('new-audio');
+      committed = true;
+    });
+    const runImport = vi.fn(async ({ dir: libraryDir, trackId }, finalize) => {
+      expect(libraryDir).toBe(dir);
+      expect(trackId).toBe('abc12345678');
+      expect(fs.existsSync(canonical)).toBe(false);
+      const result = await finalize();
+      expect(committed).toBe(true);
+      return result;
+    });
+    const runner = vi.fn(async (_url, options) => {
+      if (options.skipDownload) return { title: 'Song' };
+      fs.writeFileSync(options.output.replace('%(ext)s', 'mp3'), 'new-audio');
+    });
+    const result = await downloadAudio('abc12345678', dir, {
+      runner,
+      runImport,
+      onTrackCommitted,
+    });
+    expect(result.filePath).toBe(path.join(canonical, 'audio.mp3'));
+    expect(runImport).toHaveBeenCalledTimes(1);
+    expect(onTrackCommitted).toHaveBeenCalledTimes(1);
+  });
 
   it('passes the caller AbortSignal to metadata and audio attempts', async () => {
     const controller = new AbortController();
@@ -46,6 +74,27 @@ describe('downloadAudio cancellation', () => {
     ).rejects.toMatchObject({ code: 'IMPORT_DOWNLOAD_CANCELLED' });
 
     expect(runner).toHaveBeenCalledTimes(2);
+    expect(fs.readdirSync(path.join(dir, '.download-staging'))).toEqual([]);
+  });
+  it('preserves an already admitted provider original and its derived assets', async () => {
+    const canonical = path.join(dir, 'tracks', 'abc12345678');
+    fs.mkdirSync(canonical, { recursive: true });
+    fs.writeFileSync(path.join(canonical, 'audio.mp3'), 'existing original');
+    fs.writeFileSync(path.join(canonical, 'derived.json'), 'keep');
+    const result = await downloadAudio('abc12345678', dir, {
+      runner: async (_url, options) => {
+        if (options.skipDownload) return {};
+        fs.writeFileSync(
+          options.output.replace('%(ext)s', 'mp3'),
+          'new duplicate',
+        );
+      },
+    });
+    expect(fs.readFileSync(result.filePath, 'utf8')).toBe('existing original');
+    expect(fs.readFileSync(path.join(canonical, 'derived.json'), 'utf8')).toBe(
+      'keep',
+    );
+    expect(fs.readdirSync(path.join(dir, '.download-staging'))).toEqual([]);
   });
 });
 

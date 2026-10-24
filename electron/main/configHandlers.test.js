@@ -102,6 +102,22 @@ function register(overrides = {}) {
 }
 
 describe('registerConfigHandlers', () => {
+  it('invalidates library scope after each successful directory change before refresh', async () => {
+    const order = [];
+    const view = register({
+      onLibraryDirectoryChanged: () => order.push('scope'),
+      notifyLibraryUpdated: () => order.push('refresh'),
+    });
+    await view.ipcMain.handlers.get('config:choose-download-dir')();
+    await view.ipcMain.handlers.get('config:reset-download-dir')();
+    expect(order).toEqual(['scope', 'refresh', 'scope', 'refresh']);
+    view.dialog.showOpenDialog.mockResolvedValue({
+      canceled: true,
+      filePaths: [],
+    });
+    await view.ipcMain.handlers.get('config:choose-download-dir')();
+    expect(order).toHaveLength(4);
+  });
   it('validates and persists the independent OBS Dock display preference', async () => {
     const { ipcMain, updateConfig } = register();
     const get = ipcMain.handlers.get('config:get-obs-arrangement-dock');

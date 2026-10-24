@@ -88,6 +88,71 @@ function parseAppError(error) {
 }
 
 describe('registerPerformanceSessionPlanHandlers', () => {
+  it.each(['append', 'replace'])(
+    'uses Main-verified release membership before %s to session',
+    async (operation) => {
+      const collection = {
+        id: 'release',
+        name: 'Single',
+        kind: 'album',
+        trackIds: ['replacement', 'unresolved', 'current'],
+      };
+      const withPlayableRelease = vi.fn(async (_intent, work) =>
+        work({
+          collection: { ...collection, trackIds: ['current'] },
+          context: { dir: 'library-dir', epoch: 2 },
+        }),
+      );
+      const { handlers, store } = register({
+        getReleaseScope: () => ({ dir: 'library-dir', epoch: 2 }),
+        loadPlaylistsList: () => [collection],
+        withPlayableRelease,
+      });
+      await handlers.get(
+        `performance-session-plan:${operation}-from-collection`,
+      )({}, { sourceId: 'release', trackIds: ['replacement'] });
+      expect(withPlayableRelease).toHaveBeenCalledWith(
+        { collectionId: 'release', libraryEpoch: 2 },
+        expect.any(Function),
+      );
+      expect(store[`${operation}FromCollection`]).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: { ...collection, trackIds: ['current'] },
+        }),
+      );
+    },
+  );
+
+  it.each(['album', 'playlist'])(
+    'does not import a %s after a library switch while queued',
+    async (kind) => {
+      let scope = { dir: 'library-dir', epoch: 1 };
+      const collection = {
+        id: 'release',
+        name: 'Single',
+        kind,
+        trackIds: ['song'],
+      };
+      const withPlayableRelease = vi.fn(async (intent, work) => {
+        if (intent.libraryEpoch !== scope.epoch) throw new Error('Stale scope');
+        return work({ collection, context: scope });
+      });
+      const { handlers, store } = register({
+        getReleaseScope: () => scope,
+        loadPlaylistsList: () => [collection],
+        withPlayableRelease,
+      });
+      const pending = handlers.get(
+        'performance-session-plan:append-from-collection',
+      )({}, { sourceId: 'release' });
+      scope = { dir: 'library-dir', epoch: 3 };
+      await expect(pending).rejects.toThrow(
+        'PERFORMANCE_SESSION_PLAN_APPEND_FAILED',
+      );
+      expect(store.appendFromCollection).not.toHaveBeenCalled();
+    },
+  );
+
   it('resolves appended collections in main and ignores renderer-supplied membership', async () => {
     const { handlers, store } = register();
     await handlers.get('performance-session-plan:append-from-collection')(

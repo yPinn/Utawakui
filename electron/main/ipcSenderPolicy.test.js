@@ -29,6 +29,38 @@ function createEvent(webContents, frame = webContents.mainFrame) {
 }
 
 describe('trusted IPC main boundary', () => {
+  it.each([
+    'library:get-work-organization',
+    'library:search-work-organization',
+    'library:save-work-organization',
+    'library:rename-work',
+    'library:get-release-info',
+    'library:save-release-info',
+    'library:create-local-release',
+    'library:get-track-releases',
+    'library:resolve-release-members',
+  ])('restricts %s to the main window main frame', async (channel) => {
+    const raw = createIpcMainDouble();
+    const main = createWebContents('main');
+    const performer = createWebContents('performer');
+    const trusted = createTrustedIpcMain({
+      ipcMain: raw,
+      getMainWebContents: () => main,
+      getPerformerWebContents: () => performer,
+    });
+    const handler = vi.fn(() => ({ status: 'ok' }));
+    trusted.handle(channel, handler);
+    await expect(raw.handles.get(channel)(createEvent(main))).resolves.toEqual({
+      status: 'ok',
+    });
+    await expect(
+      raw.handles.get(channel)(createEvent(performer)),
+    ).rejects.toMatchObject({ code: 'IPC_SENDER_UNTRUSTED' });
+    await expect(
+      raw.handles.get(channel)(createEvent(main, {})),
+    ).rejects.toMatchObject({ code: 'IPC_SENDER_UNTRUSTED' });
+    expect(handler).toHaveBeenCalledOnce();
+  });
   it('defaults every channel to the main window main frame', async () => {
     const rawIpcMain = createIpcMainDouble();
     const main = createWebContents('main');

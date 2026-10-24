@@ -9,4 +9,8 @@ function hasControlCharacters(value) {
   return false;
 }
 
-module.exports = { hasControlCharacters };
+function hasControlCharactersExceptLineBreaks(value) {
+  return hasControlCharacters(value.replace(/\r?\n/g, ''));
+}
+
+module.exports = { hasControlCharacters, hasControlCharactersExceptLineBreaks };

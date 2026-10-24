@@ -55,6 +55,34 @@ function registerDownload(overrides = {}) {
 }
 
 describe('import clipboard suggestion boundary', () => {
+  it('commits provider metadata once inside captured import admission', async () => {
+    let inside = false;
+    const runImport = vi.fn(async (_intent, finalize) => {
+      inside = true;
+      try {
+        return await finalize();
+      } finally {
+        inside = false;
+      }
+    });
+    const createLibraryImportAdmission = vi.fn(() => runImport);
+    const saveProviderIndexEntry = vi.fn(() => expect(inside).toBe(true));
+    const view = registerDownload({
+      createLibraryImportAdmission,
+      saveProviderIndexEntry,
+      downloadTrackAudio: vi.fn(async (id, dir, options) => {
+        const result = { title: 'Song', artist: 'Artist', duration: 180 };
+        await options.runImport({ dir, trackId: id }, () =>
+          options.onTrackCommitted(result),
+        );
+        return result;
+      }),
+    });
+    await view.handlers.get('yt:download-audio')({}, 'abcdefghijk');
+    expect(createLibraryImportAdmission).toHaveBeenCalledOnce();
+    expect(runImport).toHaveBeenCalledOnce();
+    expect(saveProviderIndexEntry).toHaveBeenCalledOnce();
+  });
   function clipboardHarness(value) {
     const sender = { mainFrame: {} };
     const readClipboardText = vi.fn().mockResolvedValue(value);

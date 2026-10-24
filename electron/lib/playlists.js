@@ -3,13 +3,23 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
+const { atomicWriteJson } = require('./atomicWrite');
 const { hasControlCharacters } = require('./textGuards');
+const { isBoundedTrackId } = require('./library/paths');
+const {
+  validateReleaseInfo,
+  updateReleaseInfo,
+  reconcileReleaseMembership,
+  observeReleaseInfo,
+  createReleaseInfo,
+} = require('./releases/schema');
 
 // User-authored data: not library metadata and not machine-local config.
 // Lives beside tracks; UUID ids stay stable for future preset references.
 const PLAYLISTS_FILENAME = 'playlists.json';
-const PLAYLISTS_VERSION = 2;
+const PLAYLISTS_VERSION = 3;
+// The old kind migration must never reclassify an already-migrated v2 library.
+const PLAYLIST_KINDS_VERSION = 2;
 
 // Sanity guard for corrupted files, not a product limit.
 const MAX_NAME_LENGTH = 200;
@@ -84,7 +94,7 @@ function sanitizePlaylist(entry) {
         }
       : undefined;
 
-  return {
+  const playlist = {
     id: entry.id,
     ...(typeof entry.performanceExportKey === 'string' &&
     /^[a-f0-9]{64}$/.test(entry.performanceExportKey)
@@ -98,24 +108,27 @@ function sanitizePlaylist(entry) {
     trackIds,
     addedAt,
   };
+  if (entry.releaseInfo !== undefined) {
+    playlist.releaseInfo = validateReleaseInfo(entry.releaseInfo, playlist);
+  }
+  return playlist;
 }
 
-function loadPlaylists(dir) {
+function readPlaylistDocument(dir) {
   const filePath = path.join(dir, PLAYLISTS_FILENAME);
   let raw;
   try {
     raw = fs.readFileSync(filePath, 'utf8');
   } catch (err) {
     if (err?.code !== 'ENOENT') throw err;
-    return [];
+    return null;
   }
 
   let data;
   try {
     data = JSON.parse(raw);
-  } catch {
-    backupCorrupted(filePath);
-    return [];
+  } catch (cause) {
+    throw new Error('Invalid playlist document', { cause });
   }
 
   if (
@@ -123,11 +136,24 @@ function loadPlaylists(dir) {
     data === null ||
     !Array.isArray(data.playlists)
   ) {
-    backupCorrupted(filePath);
-    return [];
+    throw new Error('Invalid playlist document');
   }
 
-  return data.playlists
+  const version = data.version ?? 1;
+  if (
+    !Number.isInteger(version) ||
+    version < 1 ||
+    version > PLAYLISTS_VERSION
+  ) {
+    throw new Error('Unsupported playlist schema version');
+  }
+  return { data, raw, version };
+}
+
+function loadPlaylists(dir) {
+  const document = readPlaylistDocument(dir);
+  if (!document) return [];
+  return document.data.playlists
     .map(sanitizePlaylist)
     .filter((playlist) => playlist !== null)
     .slice(0, MAX_PLAYLISTS);
@@ -139,6 +165,25 @@ function loadPlaylists(dir) {
 // playlist before downloading anything), and atomicWriteJson itself does
 // not create parent directories.
 function writePlaylists(dir, playlists) {
+  // Every writer must preserve the release schema, including legacy kind and
+  // membership paths that do not enter the release editor's CAS helper.
+  for (const playlist of playlists) {
+    if (playlist.releaseInfo !== undefined) {
+      validateReleaseInfo(playlist.releaseInfo, playlist);
+    }
+  }
+  const previous = readPlaylistDocument(dir);
+  if (previous && previous.version < PLAYLISTS_VERSION) {
+    // A failed backup must not discard the only pre-migration user document.
+    fs.copyFileSync(
+      path.join(dir, PLAYLISTS_FILENAME),
+      path.join(
+        dir,
+        `${PLAYLISTS_FILENAME}.backup-v${previous.version}-${Date.now()}`,
+      ),
+      fs.constants.COPYFILE_EXCL,
+    );
+  }
   fs.mkdirSync(dir, { recursive: true });
   atomicWriteJson(path.join(dir, PLAYLISTS_FILENAME), {
     version: PLAYLISTS_VERSION,
@@ -201,7 +246,10 @@ function createPlaylist(dir, name, options = {}) {
 // update. Builds the new-collection case inline rather than delegating to
 // createPlaylist, since createPlaylist always starts trackIds at [] and
 // this needs the imported track list set atomically at creation.
-function upsertAlbum(dir, { name, source, trackIds } = {}) {
+function upsertAlbum(
+  dir,
+  { name, source, trackIds, releaseObservations } = {},
+) {
   const playlists = loadPlaylists(dir);
   const validSource =
     source &&
@@ -239,6 +287,12 @@ function upsertAlbum(dir, { name, source, trackIds } = {}) {
       trackIds: sanitizedTrackIds,
       addedAt,
     };
+    if (releaseObservations !== undefined) {
+      Object.assign(
+        playlist,
+        observeReleaseInfo(playlist, releaseObservations),
+      );
+    }
     const next = [...playlists, playlist].slice(0, MAX_PLAYLISTS);
     writePlaylists(dir, next);
     return next;
@@ -251,10 +305,15 @@ function upsertAlbum(dir, { name, source, trackIds } = {}) {
     addedAt[trackId] = previous.addedAt?.[trackId] || now;
   }
   next[existingIndex] = {
-    ...previous,
-    trackIds: sanitizedTrackIds,
+    ...reconcileReleaseMembership(previous, sanitizedTrackIds),
     addedAt,
   };
+  if (releaseObservations !== undefined) {
+    next[existingIndex] = observeReleaseInfo(
+      next[existingIndex],
+      releaseObservations,
+    );
+  }
   writePlaylists(dir, next);
   return next;
 }
@@ -262,14 +321,27 @@ function upsertAlbum(dir, { name, source, trackIds } = {}) {
 // Manual conversion between kinds — the escape hatch when the automatic
 // heuristic (albumClassifier.js) gets an existing collection wrong.
 // Deliberately does not touch name/trackIds/addedAt/source.
-function setPlaylistKind(dir, id, kind) {
+function setPlaylistKind(dir, id, kind, { bindings } = {}) {
   const playlists = loadPlaylists(dir);
   const index = playlists.findIndex((p) => p.id === id);
   if (index === -1 || !PLAYLIST_KINDS.has(kind)) return playlists;
   if (playlists[index].kind === kind) return playlists;
 
   const next = [...playlists];
-  next[index] = { ...next[index], kind };
+  const previous = next[index];
+  const releaseInfo =
+    previous.releaseInfo ??
+    createReleaseInfo(
+      previous,
+      kind === 'album' && !previous.source ? bindings : undefined,
+    );
+  next[index] = {
+    ...previous,
+    kind,
+    ...(releaseInfo
+      ? { releaseInfo: { ...releaseInfo, revision: releaseInfo.revision + 1 } }
+      : {}),
+  };
   writePlaylists(dir, next);
   return next;
 }
@@ -445,7 +517,10 @@ function setPlaylistTracks(dir, id, trackIds) {
     }
   }
 
-  next[index] = { ...previous, trackIds: sanitizedTrackIds, addedAt };
+  next[index] = {
+    ...reconcileReleaseMembership(previous, sanitizedTrackIds),
+    addedAt,
+  };
   writePlaylists(dir, next);
   return next;
 }
@@ -459,8 +534,10 @@ function removeTrackFromAllPlaylists(dir, trackId) {
     if (!playlist.trackIds.includes(trackId)) return playlist;
     changed = true;
     return {
-      ...playlist,
-      trackIds: playlist.trackIds.filter((id) => id !== trackId),
+      ...reconcileReleaseMembership(
+        playlist,
+        playlist.trackIds.filter((id) => id !== trackId),
+      ),
       addedAt: Object.fromEntries(
         Object.entries(playlist.addedAt).filter(([id]) => id !== trackId),
       ),
@@ -475,9 +552,8 @@ function removeTrackFromAllPlaylists(dir, trackId) {
 // One-time migration for collections that predate the kind field: stamps
 // kind: 'album' | 'playlist' from each collection's members' album metadata.
 // Gated on the raw on-disk version (loadPlaylists does not track it), the same
-// pattern as migrateTrackAlbumMetadata in library/metadataIndex.js. Backs up the
-// file first: not corruption, but a schema change to unrecoverable user data
-// deserves the backupCorrupted safety net. `classify` is injected
+// pattern as migrateTrackAlbumMetadata in library/metadataIndex.js. The shared
+// writer requires a pre-migration backup. `classify` is injected
 // (classifyCollectionKind) so this module holds no album-detection knowledge.
 function migratePlaylistKinds(dir, tracksById, classify) {
   const filePath = path.join(dir, PLAYLISTS_FILENAME);
@@ -499,7 +575,7 @@ function migratePlaylistKinds(dir, tracksById, classify) {
     typeof data !== 'object' ||
     data === null ||
     !Array.isArray(data.playlists) ||
-    (typeof data.version === 'number' && data.version >= PLAYLISTS_VERSION)
+    (typeof data.version === 'number' && data.version >= PLAYLIST_KINDS_VERSION)
   ) {
     return false;
   }
@@ -507,12 +583,6 @@ function migratePlaylistKinds(dir, tracksById, classify) {
   const resolvedTracksById =
     typeof tracksById === 'function' ? tracksById() : tracksById;
   if (!(resolvedTracksById instanceof Map)) return false;
-
-  try {
-    fs.copyFileSync(filePath, `${filePath}.backup-v1-${Date.now()}`);
-  } catch {
-    // best-effort — a failed backup shouldn't block the migration itself
-  }
 
   const playlists = data.playlists
     .map(sanitizePlaylist)
@@ -532,9 +602,62 @@ function migratePlaylistKinds(dir, tracksById, classify) {
   return true;
 }
 
+// Main-only data operation. IPC admission and binding resolution are separate
+// P2 responsibilities; this never accepts a renderer-provided source or path.
+function updatePlaylistReleaseInfo(dir, id, intent, options = {}) {
+  const playlists = loadPlaylists(dir);
+  const index = playlists.findIndex((playlist) => playlist.id === id);
+  if (index === -1) throw new Error('Release collection not found');
+  const previous = playlists[index];
+  const updated = updateReleaseInfo(previous, intent, options);
+  if (updated === previous) return playlists;
+  const next = [...playlists];
+  next[index] = updated;
+  writePlaylists(dir, next);
+  return next;
+}
+
+// Main-owned atomic creation: never persist an intermediate empty playlist.
+function createLocalRelease(dir, { name, trackId, binding } = {}) {
+  const invalid = () =>
+    Object.assign(new Error('Invalid local release.'), {
+      code: 'RELEASE_INFO_INVALID',
+    });
+  if (
+    typeof name !== 'string' ||
+    !name.trim() ||
+    name.length > MAX_NAME_LENGTH ||
+    hasControlCharacters(name) ||
+    !isBoundedTrackId(trackId)
+  )
+    throw invalid();
+  const playlists = loadPlaylists(dir);
+  if (playlists.length >= MAX_PLAYLISTS)
+    throw Object.assign(new Error('Release collection limit reached.'), {
+      code: 'RELEASE_LIMIT_REACHED',
+    });
+  const playlist = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    kind: 'album',
+    trackIds: [trackId],
+    addedAt: { [trackId]: new Date().toISOString() },
+  };
+  playlist.releaseInfo = {
+    ...createReleaseInfo(playlist, { [trackId]: binding }),
+    overrides: { type: 'single' },
+    leadTrackId: trackId,
+  };
+  validateReleaseInfo(playlist.releaseInfo, playlist);
+  const next = [...playlists, playlist];
+  writePlaylists(dir, next);
+  return { playlistId: playlist.id, playlists: next };
+}
+
 module.exports = {
   buildPlaylistCoverUrl,
   createPlaylist,
+  createLocalRelease,
   deletePlaylist,
   loadPlaylists,
   migratePlaylistKinds,
@@ -548,4 +671,5 @@ module.exports = {
   setPlaylistTracks,
   savePerformancePlaylist,
   upsertAlbum,
+  updatePlaylistReleaseInfo,
 };

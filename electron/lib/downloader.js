@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { compareFilenames } = require('./library/paths');
 const {
   isArtworkFilename,
   isLyricsSubtitleFilename,
@@ -434,52 +435,100 @@ async function downloadAudio(videoId, destDir, options = {}) {
     : runner;
   fs.mkdirSync(destDir, { recursive: true });
 
-  const trackDir = resolveTrackDir(destDir, videoId);
-  if (!trackDir) throw new Error('invalid video id');
-  fs.mkdirSync(trackDir, { recursive: true });
+  const canonicalTrackDir = resolveTrackDir(destDir, videoId);
+  if (!canonicalTrackDir) throw new Error('invalid video id');
+  const stagingRoot = path.join(destDir, '.download-staging');
+  fs.mkdirSync(stagingRoot, { recursive: true });
+  const trackDir = fs.mkdtempSync(path.join(stagingRoot, 'track-'));
+  try {
+    const outputTemplate = path.join(trackDir, 'audio.%(ext)s');
+    // Same cookie database the download attempts below will read anyway — a
+    // transient failure here used to permanently record "no lyrics found".
+    const info = await fetchVideoInfo(videoId, {
+      phases: getAuthenticatedYoutubePhases(),
+      runner,
+      signal: options.signal,
+    });
+    const resetLyrics = lyricsManifestNeedsRescan(trackDir);
 
-  const outputTemplate = path.join(trackDir, 'audio.%(ext)s');
-  // Same cookie database the download attempts below will read anyway — a
-  // transient failure here used to permanently record "no lyrics found".
-  const info = await fetchVideoInfo(videoId, {
-    phases: getAuthenticatedYoutubePhases(),
-    runner,
-    signal: options.signal,
-  });
-  const resetLyrics = lyricsManifestNeedsRescan(trackDir);
-
-  // Verified per attempt, not once after the whole ladder — some clients let
-  // yt-dlp exit 0 without writing a usable file, which must not stop retries.
-  async function runAndVerifyAudioOutput(url, options) {
-    const result = await execute(url, options);
-    if (!hasStructuredAudioFile(trackDir)) {
-      throw new Error(MISSING_AUDIO_OUTPUT_MESSAGE);
+    // Verified per attempt, not once after the whole ladder — some clients let
+    // yt-dlp exit 0 without writing a usable file, which must not stop retries.
+    async function runAndVerifyAudioOutput(url, options) {
+      const result = await execute(url, options);
+      if (!hasStructuredAudioFile(trackDir)) {
+        throw new Error(MISSING_AUDIO_OUTPUT_MESSAGE);
+      }
+      return result;
     }
-    return result;
-  }
 
-  await runPhasedYoutubeAttempts(
-    watchUrl(videoId),
-    buildAudioDownloadAttempts(
-      {
-        output: outputTemplate,
-        noPlaylist: true,
-        writeInfoJson: true,
-        writeThumbnail: true,
+    await runPhasedYoutubeAttempts(
+      watchUrl(videoId),
+      buildAudioDownloadAttempts(
+        {
+          output: outputTemplate,
+          noPlaylist: true,
+          writeInfoJson: true,
+          writeThumbnail: true,
+        },
+        info,
+      ),
+      runAndVerifyAudioOutput,
+    );
+
+    const { audioFilename } = finalizeDownloadedTrackFiles(trackDir, {
+      resetLyrics,
+    });
+    // Best-effort metadata extraction: a missing/corrupt info.json shouldn't
+    // fail a download that otherwise succeeded, just leave these undefined.
+    const fields = readTrackInfoMetadata(trackDir);
+
+    const runImport =
+      options.runImport || (async (_intent, finalize) => finalize());
+    return await runImport(
+      { dir: destDir, trackId: videoId },
+      async (assertCurrent = () => {}) => {
+        assertCurrent();
+        fs.mkdirSync(path.dirname(canonicalTrackDir), { recursive: true });
+        // Another acquisition may have installed this provider ID while we were
+        // downloading. Keep its canonical original and derived assets intact.
+        let filename = audioFilename;
+        let metadata = fields;
+        if (
+          fs.existsSync(canonicalTrackDir) &&
+          hasStructuredAudioFile(canonicalTrackDir)
+        ) {
+          filename = fs
+            .readdirSync(canonicalTrackDir)
+            .sort(compareFilenames)
+            .find(isStructuredAudioFilename);
+          metadata = readTrackInfoMetadata(canonicalTrackDir);
+        } else {
+          // A sidecar-only directory may remain after a failed older acquisition.
+          // Install files into that directory without deleting unrelated assets.
+          if (fs.existsSync(canonicalTrackDir)) {
+            for (const entry of fs.readdirSync(trackDir)) {
+              const target = path.join(canonicalTrackDir, entry);
+              if (!fs.existsSync(target))
+                fs.renameSync(path.join(trackDir, entry), target);
+            }
+          } else fs.renameSync(trackDir, canonicalTrackDir);
+        }
+        const result = {
+          filePath: path.join(canonicalTrackDir, filename),
+          ...metadata,
+        };
+        assertCurrent();
+        const committed = options.onTrackCommitted?.(result);
+        if (committed && typeof committed.then === 'function') {
+          await committed;
+          assertCurrent();
+        }
+        return result;
       },
-      info,
-    ),
-    runAndVerifyAudioOutput,
-  );
-
-  const { audioFilename } = finalizeDownloadedTrackFiles(trackDir, {
-    resetLyrics,
-  });
-  // Best-effort metadata extraction: a missing/corrupt info.json shouldn't
-  // fail a download that otherwise succeeded, just leave these undefined.
-  const fields = readTrackInfoMetadata(trackDir);
-
-  return { filePath: path.join(trackDir, audioFilename), ...fields };
+    );
+  } finally {
+    fs.rmSync(trackDir, { recursive: true, force: true });
+  }
 }
 
 // Backfill existing structured tracks with yt-dlp sidecars only. The audio

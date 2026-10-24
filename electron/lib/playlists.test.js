@@ -40,40 +40,36 @@ describe('loadPlaylists', () => {
     expect(() => loadPlaylists(dir)).toThrow();
   });
 
-  it('returns an empty array for corrupted JSON and backs up the original', () => {
+  it('fails closed for corrupted JSON and preserves the original', () => {
     const filePath = path.join(dir, PLAYLISTS_FILENAME);
     fs.writeFileSync(filePath, '{not valid json');
 
-    expect(loadPlaylists(dir)).toEqual([]);
-    expect(fs.existsSync(filePath)).toBe(false);
-    const backups = fs
-      .readdirSync(dir)
-      .filter((f) => f.startsWith(`${PLAYLISTS_FILENAME}.corrupted-`));
-    expect(backups).toHaveLength(1);
+    expect(() => loadPlaylists(dir)).toThrow('Invalid playlist document');
+    expect(fs.readFileSync(filePath, 'utf8')).toBe('{not valid json');
   });
 
-  it('returns an empty array and backs up when the top level has no playlists array', () => {
+  it('preserves invalid documents without a playlists array', () => {
     const filePath = path.join(dir, PLAYLISTS_FILENAME);
     fs.writeFileSync(filePath, JSON.stringify({ playlists: 'nope' }));
 
-    expect(loadPlaylists(dir)).toEqual([]);
-    expect(fs.existsSync(filePath)).toBe(false);
+    expect(() => loadPlaylists(dir)).toThrow('Invalid playlist document');
+    expect(fs.existsSync(filePath)).toBe(true);
   });
 
-  it('returns an empty array and backs up when the top level is an array', () => {
+  it('preserves invalid array documents', () => {
     const filePath = path.join(dir, PLAYLISTS_FILENAME);
     fs.writeFileSync(filePath, JSON.stringify([1, 2, 3]));
 
-    expect(loadPlaylists(dir)).toEqual([]);
-    expect(fs.existsSync(filePath)).toBe(false);
+    expect(() => loadPlaylists(dir)).toThrow('Invalid playlist document');
+    expect(fs.existsSync(filePath)).toBe(true);
   });
 
-  it('returns an empty array and backs up when the top level is null', () => {
+  it('preserves invalid null documents', () => {
     const filePath = path.join(dir, PLAYLISTS_FILENAME);
     fs.writeFileSync(filePath, JSON.stringify(null));
 
-    expect(loadPlaylists(dir)).toEqual([]);
-    expect(fs.existsSync(filePath)).toBe(false);
+    expect(() => loadPlaylists(dir)).toThrow('Invalid playlist document');
+    expect(fs.existsSync(filePath)).toBe(true);
   });
 
   it('drops a malformed entry without discarding the rest of the file', () => {

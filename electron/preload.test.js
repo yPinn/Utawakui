@@ -86,6 +86,15 @@ const MAIN_INVOKE_CHANNELS = [
   'library:clear-artist-photo',
   'library:delete-track',
   'library:get-artist-index',
+  'library:get-work-organization',
+  'library:get-release-info',
+  'library:save-release-info',
+  'library:create-local-release',
+  'library:get-track-releases',
+  'library:resolve-release-members',
+  'library:search-work-organization',
+  'library:save-work-organization',
+  'library:rename-work',
   'library:import-audio-files',
   'library:convert-local-audio-files',
   'library:list',
@@ -256,6 +265,8 @@ const MAIN_EVENT_CHANNELS = [
   'feature-dependencies:updated',
   'library:backfill-status',
   'library:updated',
+  'library:work-organization-changed',
+  'library:release-organization-changed',
   'lyrics:reading-progress',
   'lyrics-experimental:completed',
   'music-structure:analysis-progress',
@@ -309,6 +320,146 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('bounds release intents, nested overrides and private change notifications', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    bridge.getReleaseInfo({
+      collectionId: 'a',
+      offset: 0,
+      limit: 10,
+      binding: 'private',
+    });
+    bridge.saveReleaseInfo({
+      collectionId: 'a',
+      expectedRevision: 2,
+      libraryEpoch: 1,
+      set: {
+        date: { value: '2026', precision: 'year', path: 'private' },
+        type: 'single',
+        contentHash: 'private',
+      },
+      remove: ['totalTrackCount'],
+      initializeBindings: true,
+      reconfirmTrackIds: ['song'],
+      source: 'private',
+      localMemberBindings: { song: 'private' },
+    });
+    bridge.createLocalRelease({
+      trackId: 'song',
+      name: 'Song',
+      libraryEpoch: 1,
+      source: 'private',
+    });
+    bridge.getTrackReleases({ trackId: 'song', limit: 50, path: 'private' });
+    bridge.resolveReleaseMembers({
+      collectionId: 'a',
+      expectedRevision: 2,
+      libraryEpoch: 1,
+      offset: 0,
+      limit: 100,
+      binding: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:save-release-info',
+      {
+        collectionId: 'a',
+        expectedRevision: 2,
+        libraryEpoch: 1,
+        set: { date: { value: '2026', precision: 'year' }, type: 'single' },
+        remove: ['totalTrackCount'],
+        initializeBindings: true,
+        reconfirmTrackIds: ['song'],
+      },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:get-release-info',
+      { collectionId: 'a', offset: 0, limit: 10 },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:create-local-release',
+      { trackId: 'song', name: 'Song', libraryEpoch: 1 },
+    );
+    const callback = vi.fn();
+    const dispose = bridge.onReleaseOrganizationChanged(callback);
+    const listener = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'library:release-organization-changed',
+    )[1];
+    listener({}, { libraryEpoch: -1, collectionIds: ['a'] });
+    expect(callback).not.toHaveBeenCalled();
+    listener({}, { libraryEpoch: 2, collectionIds: ['a'], binding: 'private' });
+    expect(callback).toHaveBeenCalledWith({
+      libraryEpoch: 2,
+      collectionIds: ['a'],
+    });
+    expect(dispose()).toBeUndefined();
+  });
+
+  it('relays bounded work intents and disposes its change listener without returning IPC objects', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.getWorkOrganization({
+      trackId: 'song',
+      offset: 10,
+      limit: 20,
+      path: 'private',
+    });
+    await bridge.searchWorkOrganization({
+      trackId: 'song',
+      query: 'Song',
+      limit: 20,
+      url: 'private',
+    });
+    await bridge.saveWorkOrganization({
+      trackId: 'song',
+      expectedRevision: 1,
+      libraryEpoch: 0,
+      relationship: 'cover',
+      versionInfo: {
+        arrangement: 'acoustic',
+        performance: 'live',
+        vocal: 'unspecified',
+        label: 'Version',
+        note: '',
+        hash: 'private',
+      },
+      selection: {
+        kind: 'new',
+        title: 'Song',
+        targetTrackId: 'other',
+        path: 'private',
+      },
+      binding: { value: 'private' },
+    });
+    await bridge.renameWork({
+      workId: 'work-1',
+      title: 'New name',
+      expectedRevision: 1,
+      libraryEpoch: 0,
+      path: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:get-work-organization',
+      { trackId: 'song', offset: 10, limit: 20 },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:search-work-organization',
+      { trackId: 'song', query: 'Song', limit: 20 },
+    );
+    const save = electron.ipcRenderer.invoke.mock.calls.find(
+      ([channel]) => channel === 'library:save-work-organization',
+    )[1];
+    expect(JSON.stringify(save)).not.toContain('private');
+    expect(save.selection.targetTrackId).toBe('other');
+    const callback = vi.fn();
+    const dispose = bridge.onWorkOrganizationChanged(callback);
+    const listener = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'library:work-organization-changed',
+    )[1];
+    listener({ sender: 'private' }, { libraryEpoch: 0, revision: 2 });
+    expect(callback).toHaveBeenCalledWith({ libraryEpoch: 0, revision: 2 });
+    electron.ipcRenderer.removeListener.mockReturnValueOnce({
+      internal: () => {},
+    });
+    expect(dispose()).toBeUndefined();
+  });
   it('disposes the lyrics completion listener without returning an IPC object across isolation', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     const callback = vi.fn();
@@ -320,6 +471,34 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'lyrics-experimental:completed',
       expect.any(Function),
+    );
+  });
+  it('forwards only the selected track identity for individual song linking', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.saveWorkOrganization({
+      trackId: 'source',
+      expectedRevision: 1,
+      libraryEpoch: 0,
+      relationship: 'cover',
+      versionInfo: {},
+      selection: {
+        kind: 'track',
+        targetTrackId: 'target',
+        workId: 'forged',
+        title: 'forged',
+        path: 'private',
+      },
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:save-work-organization',
+      {
+        trackId: 'source',
+        expectedRevision: 1,
+        libraryEpoch: 0,
+        relationship: 'cover',
+        versionInfo: {},
+        selection: { kind: 'track', targetTrackId: 'target' },
+      },
     );
   });
   it('forwards only bounded session/export/performance intents, stripping renderer paths and forged timeline/track lists', async () => {

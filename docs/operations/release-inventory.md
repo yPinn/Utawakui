@@ -50,6 +50,17 @@ network install or signed-installer acceptance; see the
   Pure deferred-loader sources under `src/utils/` are bundled by Vite into this
   existing renderer output, including their self-hosted runtime assets.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
+- Local works/version persistence and release schemas: `electron/lib/works/`
+  and `electron/lib/releases/` use the existing recursive `electron/**/*`
+  inclusion and `electron/lib/**/*` unpack rule; adjacent tests remain excluded.
+  `works.json`, deletion receipts and `playlists.json` v3 are per-library user
+  data, never installer payload. P2 adds `works/runtime.js`, fixed Main work
+  handlers and a Main lifecycle host under the same inclusion rules; preload
+  and the Vite-bundled editor reuse existing runtimes with no new dependencies.
+  P3 adds `releases/runtime.js` and `main/library/releaseHandlers.js` under the
+  same rules. ReleaseInfoEditor, useReleaseOrganization, useReleaseMembers and
+  the shared artist discography are Vite renderer output, with no new worker,
+  dependency, provider environment or packaged library data.
   The read-only default-session preparation helper `electron/main/previewSession.js`
   uses the existing `electron/**/*` inclusion; its colocated tests remain excluded.
 - Cross-runtime JSON contracts and pure presentation projections: `shared/`,
