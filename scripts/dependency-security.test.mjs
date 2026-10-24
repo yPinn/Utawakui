@@ -69,10 +69,10 @@ describe('release dependency security contract', () => {
   });
 
   it('uses the patched Vitest 4 line without a major-version migration', () => {
-    expect(packageJson.devDependencies.vitest).toBe('^4.1.11');
-    expect(packageJson.devDependencies['@vitest/coverage-v8']).toBe('^4.1.11');
+    expect(packageJson.devDependencies.vitest).toBe('^4.1.12');
+    expect(packageJson.devDependencies['@vitest/coverage-v8']).toBe('^4.1.12');
     expect(packageJson.devDependencies['@vitest/coverage-istanbul']).toBe(
-      '^4.1.11',
+      '^4.1.12',
     );
   });
 
