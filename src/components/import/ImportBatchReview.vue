@@ -21,6 +21,17 @@ const hint = computed(() =>
   <PreparationReviewLayout
     :source="batch.title"
     :count="batch.tracks.length"
+    :entity-kind="
+      batch.kind === 'single' || batch.collectionKind === 'album'
+        ? 'album'
+        : 'playlist'
+    "
+    :release-type="
+      batch.kind === 'single' ? 'single' : batch.releaseType || 'unknown'
+    "
+    :release-date="batch.releaseDate"
+    :cover-url="batch.thumbnailUrl || ''"
+    :tracks="batch.tracks"
     :hint="hint"
     list-label="已確認的匯入曲目"
   >

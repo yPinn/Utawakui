@@ -21,6 +21,11 @@ const {
 } = require('../lib/playlists');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const { createAppError } = require('../lib/appError');
+const {
+  getYoutubeMusicRelease,
+  resolveYoutubeMusicRelease,
+  youtubeMusicReleaseObservations,
+} = require('../lib/releases/youtubeMusic');
 
 // Every playlists:* IPC handler pipes its result through this before
 // returning — coverImage is a bare filename in playlists.json (see
@@ -38,6 +43,7 @@ function projectCoverUrls(playlists) {
     if (playlist.releaseInfo) {
       projected.releaseInfo = { ...playlist.releaseInfo };
       delete projected.releaseInfo.localMemberBindings;
+      delete projected.releaseInfo.catalog;
     }
     return projected;
   });
@@ -74,6 +80,9 @@ function registerPlaylistsHandlers({
   projectReleaseCollections = null,
   getReleaseScope = null,
   onCollectionsChanged = null,
+  getProviderRelease = getYoutubeMusicRelease,
+  resolveProviderRelease = resolveYoutubeMusicRelease,
+  organizeSavedReleaseMetadata = async () => {},
 }) {
   const withCoverUrls = (playlists) =>
     projectCoverUrls(
@@ -166,7 +175,13 @@ function registerPlaylistsHandlers({
       'PLAYLISTS_LIST_FAILED',
       '無法讀取歌單',
       '目前無法讀取歌單，請稍後再試。',
-      () => withCoverUrls(loadPlaylistsList(resolveDownloadDir(getConfig()))),
+      async (assertCurrent) => {
+        await organizeSavedReleaseMetadata();
+        assertCurrent();
+        return withCoverUrls(
+          loadPlaylistsList(resolveDownloadDir(getConfig())),
+        );
+      },
     ),
   );
 
@@ -270,10 +285,35 @@ function registerPlaylistsHandlers({
       '這張專輯目前無法同步，請再試一次。',
       async (assertCurrent) => {
         const dir = resolveDownloadDir(getConfig());
+        let release = getProviderRelease(payload?.source);
+        if (
+          !release &&
+          ['youtube', 'yt-music'].includes(payload?.source?.platform) &&
+          /^OLAK5uy_[A-Za-z0-9_-]{1,120}$/.test(payload?.source?.id)
+        ) {
+          release = await resolveProviderRelease(payload.source);
+          assertCurrent();
+        }
+        const previous = release?.date
+          ? loadPlaylistsList(dir).find(
+              (collection) =>
+                collection.kind === 'album' &&
+                collection.source?.platform === payload?.source?.platform &&
+                collection.source?.id === payload?.source?.id,
+            )
+          : null;
+        const releaseObservations = youtubeMusicReleaseObservations(
+          release,
+          payload?.source,
+          previous?.releaseInfo,
+        );
         const playlists = upsertAlbumPlaylist(dir, {
           name: payload?.name,
           source: payload?.source,
           trackIds: payload?.trackIds,
+          ...(Object.keys(releaseObservations).length
+            ? { releaseObservations }
+            : {}),
         });
 
         const album = playlists.find(

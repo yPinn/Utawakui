@@ -931,6 +931,8 @@ describe('useImportSession', () => {
     resolveImportInputMock.mockResolvedValueOnce({
       kind: 'playlist',
       collectionKind: 'album',
+      releaseType: 'ep',
+      releaseDate: { value: '2026', precision: 'year' },
       title: 'Album - Example Album',
       thumbnailUrl: 'https://i.ytimg.com/example.jpg',
       source: { platform: 'yt-music', id: 'OLAK5uy_example' },
@@ -943,6 +945,11 @@ describe('useImportSession', () => {
 
     expect(session.state.sourceKind).toBe('playlist');
     expect(session.state.collectionKind).toBe('album');
+    expect(session.state.collectionReleaseType).toBe('ep');
+    expect(session.state.collectionReleaseDate).toEqual({
+      value: '2026',
+      precision: 'year',
+    });
     expect(session.state.playlistTitle).toBe('Example Album');
     expect(session.state.collectionSource).toEqual({
       platform: 'yt-music',
@@ -951,6 +958,8 @@ describe('useImportSession', () => {
     expect(session.state.collectionThumbnailUrl).toBe(
       'https://i.ytimg.com/example.jpg',
     );
+    session.setInput('next');
+    expect(session.state.collectionReleaseDate).toBeNull();
   });
 
   it('reports an empty playlist returned by the generic import bridge', async () => {

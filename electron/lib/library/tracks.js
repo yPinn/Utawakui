@@ -29,6 +29,8 @@ const {
   trackFolderNeedsMigration,
 } = require('./migrations');
 const { loadIndex, saveIndexEntry } = require('./metadataIndex');
+const { METADATA_FIELDS } = require('../reconciliation/metadata');
+const { assertNoTransaction } = require('../reconciliation/transaction');
 const {
   resolveSeparationsDir,
   loadSeparationManifest,
@@ -46,6 +48,7 @@ const {
 // when a sidecar lacks them and write thumbnailUrl into library.json, which
 // AGENTS.md reserves for scalar metadata.
 function refreshTrackMetadataFromSidecars(dir, readTrackInfo) {
+  assertNoTransaction(dir);
   const index = loadIndex(dir);
   let updatedCount = 0;
 
@@ -59,8 +62,13 @@ function refreshTrackMetadataFromSidecars(dir, readTrackInfo) {
 
     const existing = index.tracks[record.id] || {};
     const next = { ...existing };
-    if (fields.album !== undefined) next.album = fields.album;
-    if (fields.releaseYear !== undefined) next.releaseYear = fields.releaseYear;
+    if (fields.album !== undefined && existing.albumOrigin !== 'manual')
+      next.album = fields.album;
+    if (
+      fields.releaseYear !== undefined &&
+      existing.releaseYearOrigin !== 'manual'
+    )
+      next.releaseYear = fields.releaseYear;
     if (
       next.album === existing.album &&
       next.releaseYear === existing.releaseYear
@@ -89,10 +97,11 @@ function isValidDuration(value) {
 // Automatic, repeatable offline maintenance pass. Title/artist are rewritten
 // only when missing or when the current scalar still equals the provider's
 // previous projection; this lets newer normalization repair old imports without
-// trampling manual edits. Duration is fill-only, while album/year keep the
-// existing sidecar-authoritative refresh behavior. Artwork remains filesystem
+// trampling manual edits. Duration, album and year are fill-only because legacy
+// entries have no reliable provenance for edits to those fields. Artwork remains filesystem
 // state and network repair stays with runBackfillPass.
 function organizeTrackMetadataFromSidecars(dir, readTrackInfo) {
+  assertNoTransaction(dir);
   const index = loadIndex(dir);
   const updatedTrackIds = new Set();
   const normalizedTrackIds = new Set();
@@ -168,16 +177,27 @@ function organizeTrackMetadataFromSidecars(dir, readTrackInfo) {
       next.duration = fields.duration;
       enrichedChanged = true;
     }
-    if (isPresentText(fields.album) && fields.album !== existing.album) {
-      next.album = fields.album;
-      enrichedChanged = true;
-    }
-    if (
-      Number.isInteger(fields.releaseYear) &&
-      fields.releaseYear !== existing.releaseYear
-    ) {
-      next.releaseYear = fields.releaseYear;
-      enrichedChanged = true;
+    for (const field of METADATA_FIELDS.filter(
+      (field) => !['title', 'artist'].includes(field),
+    )) {
+      const proposed = fields[field];
+      const present = (value) =>
+        typeof value === 'string'
+          ? isPresentText(value)
+          : Number.isSafeInteger(value) && value > 0;
+      if (!present(proposed) || proposed === existing[field]) continue;
+      if (existing[`${field}Origin`] === 'manual') {
+        skipped = true;
+        continue;
+      }
+      if (
+        !present(existing[field]) ||
+        existing[`${field}Origin`] === 'provider'
+      ) {
+        next[field] = proposed;
+        next[`${field}Origin`] = 'provider';
+        enrichedChanged = true;
+      }
     }
 
     if (normalizedChanged || enrichedChanged) {
@@ -339,6 +359,7 @@ function listLegacyTracks(dir, structuredIds) {
 }
 
 function listTrackRecords(dir) {
+  assertNoTransaction(dir);
   migrateLibrary(dir);
   const structured = listStructuredTracks(dir);
   const structuredIds = new Set(structured.map((track) => track.id));
@@ -378,6 +399,13 @@ function buildTrack(dir, index, record) {
     // Album is optional; including it would create endless backfill loops.
     album: indexed?.album,
     releaseYear: indexed?.releaseYear,
+    ...Object.fromEntries(
+      METADATA_FIELDS.filter(
+        (field) =>
+          !['title', 'artist', 'album', 'releaseYear'].includes(field) &&
+          Object.hasOwn(indexed ?? {}, field),
+      ).map((field) => [field, indexed[field]]),
+    ),
     sourceType: indexed?.sourceType,
     storageType: indexed?.storageType,
     originalFilename: indexed?.originalFilename,
@@ -414,6 +442,7 @@ function listTracks(dir) {
 // Single-track counterpart to listTrackRecords: same migration and record
 // shape, but reads only this track's folder (or the legacy root files).
 function findTrackRecord(dir, trackId) {
+  assertNoTransaction(dir);
   if (typeof trackId !== 'string' || !trackId) return null;
   migrateLibrary(dir);
   if (isSafeTrackId(trackId)) {

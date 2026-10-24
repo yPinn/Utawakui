@@ -5,6 +5,8 @@ const path = require('path');
 const { atomicWriteJson } = require('../atomicWrite');
 const { INDEX_FILENAME, INDEX_VERSION } = require('./constants');
 const { resolveTrackDir } = require('./paths');
+const { assertNoTransaction } = require('../reconciliation/transaction');
+const { METADATA_FIELDS } = require('../reconciliation/metadata');
 
 // Filesystem is authoritative; this index only enriches discovered tracks.
 function loadIndex(dir) {
@@ -32,20 +34,39 @@ function loadIndex(dir) {
     return emptyIndex;
   }
 
-  return { version: INDEX_VERSION, tracks: data.tracks };
+  return { ...data, version: INDEX_VERSION, tracks: data.tracks };
 }
 
 // Atomic write avoids a half-written index after a crash.
 function saveIndexEntry(dir, id, entry) {
+  assertNoTransaction(dir);
   const index = loadIndex(dir);
   index.tracks[id] = { ...index.tracks[id], ...entry };
   atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
   return index;
 }
 
+function saveProviderIndexEntry(dir, id, entry) {
+  const current = loadIndex(dir).tracks[id];
+  const patch = { ...entry };
+  for (const field of METADATA_FIELDS) {
+    const origin = current?.[`${field}Origin`];
+    if (
+      origin === 'manual' ||
+      (current?.[field] !== undefined && origin !== 'provider') ||
+      (field === 'artist' && current && origin !== 'provider')
+    ) {
+      delete patch[field];
+      delete patch[`${field}Origin`];
+    }
+  }
+  return saveIndexEntry(dir, id, patch);
+}
+
 // One-time offline album/releaseYear migration from existing info.json files.
 // Reads the raw file version so loadIndex() cannot mask migration state.
 function migrateTrackAlbumMetadata(dir, readTrackInfo) {
+  assertNoTransaction(dir);
   const filePath = path.join(dir, INDEX_FILENAME);
   let raw;
   try {
@@ -80,7 +101,14 @@ function migrateTrackAlbumMetadata(dir, readTrackInfo) {
     if (fields.album === undefined && fields.releaseYear === undefined) {
       continue;
     }
-    data.tracks[id] = { ...entry, ...fields };
+    data.tracks[id] = {
+      ...entry,
+      ...Object.fromEntries(
+        Object.entries(fields).filter(
+          ([field]) => entry[`${field}Origin`] !== 'manual',
+        ),
+      ),
+    };
     changed = true;
   }
 
@@ -92,5 +120,6 @@ function migrateTrackAlbumMetadata(dir, readTrackInfo) {
 module.exports = {
   loadIndex,
   saveIndexEntry,
+  saveProviderIndexEntry,
   migrateTrackAlbumMetadata,
 };

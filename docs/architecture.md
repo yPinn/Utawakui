@@ -51,7 +51,8 @@
 ### 曲庫瀏覽
 
 - `LibraryBrowseWorkspace.vue` 持有 Library 的 Folder 頁與頁面物件；`LibraryBrowseContent.vue` 把曲庫身分與搜尋放在固定 header，其餘留在唯一 document scroll；`LibraryArtistIdentityController.vue` 單獨持有藝人整理 modal 與 mutation。
-- `TrackTable` 的 profile 分開 `canReorderColumns`、`canSortTrackRows`、`canReorderPlaylistTracks`：全部曲目、本機檔案與播放清單可依可見欄排序；專輯與藝人頁忽略殘留排序、維持 canonical 順序。伴奏狀態是時長欄內的保留 slot，不是獨立欄。
+- `TrackTable` 的 profile 分開 `canReorderColumns`、`canSortTrackRows`、`canReorderPlaylistTracks`：全部曲目、本機檔案與播放清單可依可見欄排序；專輯忽略殘留排序、維持來源曲序。藝人頁由 profile 的 `defaultSort` 預設依播放次數降冪，同次數維持原順序，未載入次數置後；列表與播放佇列沿用同一排序投影。伴奏狀態是時長欄內的保留 slot，不是獨立欄。
+- 來源專輯由 `LibrarySourceTracklist` 轉接同一 album 表格、欄位偏好與密度；source-only entry 只有展示資料與 slot intent，沒有 canonical track。未下載列停用播放、選取與選單，同一狀態 slot 保留下載；本地列沿用伴奏操作／徽章。來源曲號獨立於本地 tags 的其他發行碟號；同專輯不逐列重複封面。一般頁移除行內解除關聯及曲序尾註，維護入口集中設定。
 - 專輯欄先由 `useAlbumNavigation.js` 解析來源型專輯；只有 scalar album 時，`usePlaylists.js` 持有 session-only 的 `selectedAlbumReference`，`albumReference.js` 以正規化專輯名即時推導唯讀成員，不寫 `playlists.json`。
 - Sidebar 參照區由 `orderReferenceItems()` 依藝人名混排專輯與藝人；`selectedArtistId` 與 collection 選取互斥，`artistPage.js` 推導藝人頁。曲目列、PlayerBar、Queue 以 `trackArtistIds` 投影 entity 顯示名稱，index 未載入時回退 scalar；搜尋同時接受 canonical 名稱與所有 credit。
 
@@ -64,6 +65,7 @@
 
 ### 匯入與曲目準備
 
+- 匯入與伴奏 Modal 共用 `PreparationReviewLayout`，以既有 `LibraryEntityDossier`／`AppFolderDossier` 與 `UiCollageThumb` 顯示固定的集合簡介，下方只有一個曲目捲動區；草稿、已確認批次與伴奏選定集合各沿用原 owner 的唯讀 metadata，見[匯入 session 契約](contracts/import-task-session.md)。
 - Titlebar 只有一個「曲目準備」disclosure，開啟 shell 持有的 `PreparationDockPanel.vue`，以 tabs 切換 `ImportDockContent.vue` 與 `SeparationDockContent.vue`，不改變目前目的地。
 - `useImportSession.js` 是匯入的唯一 session owner；`import/useImportSourceResolution.js` 處理文字／URL 解析與候選，`import/useImportExecution.js` 持有已確認批次、兩路下載提交、去重、停止、重試與 collection finalize。兩者以具名依賴組合、不互相 import。Dock 與 `ImportReviewModal.vue` 投影同一批次；每批最多 500 首、保留 50 批 session 紀錄，不持久化。見[匯入 session 契約](contracts/import-task-session.md)。
 - 外部來源欄位聚焦時以 `import:clipboard-suggestion` 請 Main 讀剪貼簿；Main 驗證前景主視窗，只回傳支援的 YouTube／YT Music canonical 連結。剪貼簿與手動貼上共用 `electron/lib/importInput.js` 的 `parseImportSourceUrl`，只保留來源 id、移除追蹤參數，拒絕非 HTTP(S)、含帳密或控制字元的網址。只在使用者按「貼上連結」時填入，不持久化剪貼簿。
@@ -78,6 +80,7 @@
 - 最近播放與啟動恢復：`usePlaybackHistory.js` 依實際 progress／ended 判定 qualified event；`useRecentPlaybackActivation.js` 以插播方式播放歷史曲目，不重建來源佇列；`usePlaybackResume.js` 只投影與 paused rehydrate。演唱音量與監聽／擷取 level 由 `shared/audioControlValues.json` 定義，存於 `config.json.audioPreferences`，preload 同步 seed 第一幀，`useAudioPreferences.js` 合併寫回。見[播放紀錄契約](contracts/playback-history-and-resume.md)。
 - BGM：`src/bgm/audioDeck.js` 擁有第二個 audio element 與 logical gain bus（目前只連系統預設 monitor）；`src/bgm/handoffCoordinator.js` 仲裁 BGM request、演唱後 deferred restore、fade gate、pre-roll／post-roll 與 stale generation。`useBgmSession.js` 由 App 在啟動時初始化一次，組合 plan、library、OBS、deck、coordinator 與 player 的單一 pre-start hook；`BgmPlayer.vue` 是安排 Dock footer 的場間音樂控制組合，主頁更多選單可導向此處，mount／unmount 不改變音訊。BGM 不進 Queue、history、resume、Output、SMTC。見 [BGM 契約](contracts/bgm-standby-lane.md)與 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
 - 曲目試聽是同一 coordinator 仲裁的第三條、最低優先 lane：`acquirePreview()` 回傳可被搶占的 lease；演唱開始、BGM 播放、進入直播／錄影都會搶占試聽，直播／錄影中直接拒絕。Owner 是 `useTrackPreview.js`（自有 audio element），`TrackPreviewOverlay.vue` 只投影狀態。見[試聽契約](contracts/track-preview.md)。
+- `useTrackPreviewEligibility` 僅控制本地試聽入口：來源專輯沿用當頁 Main catalog 的全目錄可用數，其他專輯只確認目前集合；確認中／全無可用／失敗時停用，不改展示投影，也不做啟動全庫摘要。開始前仍 fresh resolve，專輯序列維持來源順序並略過無效音源；owner 拒絕非本地 media scheme，不做來源試聽。
 - 節拍器 `useMetronome.js` 使用獨立 AudioContext 與 lookahead scheduler；`useMetronomeTrackTempo.js` 只在停止且未手動覆寫時套用通過信心門檻的分析 BPM，不回寫 sidecar。
 
 ### 演出安排
@@ -139,10 +142,14 @@
 ### 曲庫與匯入
 
 - 作品與版本（[ADR 0028](adr/0028-local-works-versions-and-releases.md)）：`electron/lib/works/` 持有曲庫根目錄 `works.json`、revision、profile、Main 私有原始媒體 binding 與刪除 receipt。runtime 驗證 canonical audio、CAS／epoch 與當頁候選；正式 local／convert／provider import 的短提交及刪曲共用 service lane。`main/library/workOrganizationHost.js` 協調啟動恢復及 playlist／session／BGM 引用；固定 workOrganizationHandlers／preload intents 只投影產品資料。 逐曲連結只傳 targetTrackId，由 Main 解析目標作品並在提交前重驗兩份音源；搜尋候選不代表已確認關係。`useWorkOrganization` 持有版本／連結草稿及請求世代；`useSongEditor` 協調它與既有 `useTrackMetadataEditor`，統一開啟、分頁、儲存與關閉確認。編輯器不提供共同歌名／作品改名；逐曲連結與解除只修改關係，曲目歌名、演唱者及版本資訊獨立。既有作品識別／內部名稱及 Main 相容 API 保留，不遷移資料。App 單掛 WorkVersionEditor；TrackMetadataFields 只提供歌曲資訊及封面內容，Library／Queue／播放資訊／preview 不再各掛 metadata modal。兩領域仍各自提交，部分失敗保留未完成草稿並提示已儲存部分。作品異動使用專用事件，不啟動 provider backfill；播放與歌詞權威不變。
-- `playlists.js` 讀取 v1–v3，首次寫回舊版本先備份；v2 不重跑 kind heuristic，損壞或未來版本拒寫。`releases/schema.js` 驗證 optional `releaseInfo`，逐欄解析人工覆寫／source-bound facts，協調 revision、主打與成員 bindings；保留既有 collection UUID／kind／source／曲序。現有 playlist IPC 投影移除私有 localMemberBindings。詳見[作品與發行契約](contracts/works-versions-and-releases.md)。
-- 發行操作：`releases/runtime.js` 與作品共用 lane，`main/library/releaseHandlers.js`／preload 限定五個讀寫與驗證 intents；CAS／epoch、來源權威及 Main 私有 bindings 不跨界。列表只投影 resolvedRelease，不啟動整庫摘要；`useReleaseMembers` 在選取集合／藝人時有界驗證，播放／加入佇列另取新驗證，Main 待唱集合匯入在同 lane 驗證後同步提交。`useReleaseOrganization` 擁有 editor 草稿、專用事件及建立單首發行；App 掛載 ReleaseInfoEditor。藝人「音樂作品」沿用 LibraryAlbumSupportingContent／LibraryAlbumCard，以同一 Main 投影篩選 Album／Single／EP，未知不猜；Single 詳情在原 album＋UUID 頁面內以 releaseDetailPresentation 投影正式總數、durable 成員與驗證狀態；單首、多曲及部分收錄直接共用專輯的136px封面、TrackTable、欄位與密度設定；正常摘要不重複計數，詳情不顯示主打tag。作品分類使用內容寬度的UiTabs bar variant及中文分類，穩定tab／panel ID保留鍵盤導覽，播放／編輯沿用P3 owner。
+- `playlists.js` 讀取 v1–v4，首次寫回舊版本先備份；v2 不重跑 kind heuristic，損壞或未來版本拒寫。`releases/schema.js` 驗證 optional `releaseInfo`，逐欄解析人工覆寫／source-bound facts，協調 revision、主打與成員 bindings；保留既有 collection UUID／kind／source／曲序。現有 playlist IPC 投影移除私有 localMemberBindings。詳見[作品與發行契約](contracts/works-versions-and-releases.md)。
+- 來源母體補齊：`releases/catalogRuntime.js` 在音源匯入完成後與設定的手動舊庫更新共用單一服務；固定 `release_catalog_worker.py` 經 Provider Python 查官方音訊的正式 OLAK 曲序，catalog／links／私有 bindings 與排除記錄原子保存到 playlists v4。網路在 lane 外，短提交重驗 gate／epoch／CAS／媒體；來源集合也走 fresh membership verification。來源 rows 不建立 canonical track，停用列在伴奏操作位置提供下載入口，由 Main 導出精確目標，經 useReleaseCatalogDownloads 直接進共用下載執行器，不改 Dock 草稿；精確本地候選以獨立狀態提供離線納入，兩次媒體驗證及 CAS 後只連結選定位置；更新／本地重新讀取集中設定，頁首只顯示來源總曲數。詳見[來源曲序契約](contracts/release-source-catalog.md)。
+- 曲庫校對：`reconciliation/` 唯讀掃描既有音檔與來源證據，以 Main-private preview 提交逐欄決策或發行合併。人工清空用 scalar 欄位 origin 保護；pending 來源、略過決策、UUID 轉址與合併收據同存 playlists。跨 JSON journal 在啟動／換庫先恢復，其他相關 writer 遇未完成 journal 拒寫。Renderer 只在設定提供比較與確認；collection identity resolver 解析舊 queue／歷史來源而不重建播放。見[曲庫校對契約](contracts/library-reconciliation.md)。
+- 音檔同步：`tags/` 由 Main 持有 native FLAC comment-only adapter、正式 reader 往返、整檔 hash 修訂收據與可恢復媒體交易；明選主要發行及欄位，不改 trackId。備份／staging 在 shared lane 外，最終 fresh hash／CAS 提交；Player／BGM／預覽投影及 heavy scheduler 提供占用，等待可取消。其他格式與封面回寫未開放。見[音檔標籤回寫](contracts/audio-tag-writeback.md)。
+- 發行操作：`releases/runtime.js` 與作品共用 lane，`main/library/releaseHandlers.js`／preload 限定五個讀寫與驗證 intents；CAS／epoch、來源權威及 Main 私有 bindings 不跨界。列表只投影 resolvedRelease，不啟動整庫摘要；封面、卡片、統計與導覽透過 `collectionDisplayTrackIds` 及 canonical 曲庫 join 呈現保存關聯，不依賴操作 admission。`useLibraryAlbumContext` 不在初始化與選取頁面時觸發 admission；來源曲序頁仍由 Main 提供當頁持有／綁定狀態。`useReleaseMembers` 只持有操作 admission，播放／加入佇列取 fresh 驗證，Main 待唱集合匯入在同 lane 驗證後同步提交。`useReleaseOrganization` 擁有 editor 草稿、專用事件及建立單首發行；App 掛載 ReleaseInfoEditor，以「編輯發行資訊」進入左欄位／右曲目的獨立捲動工作區，窄內容上下排列，載入與錯誤使用固定狀態區。藝人「音樂作品」沿用 LibraryAlbumSupportingContent／LibraryAlbumCard，以同一 Main 投影篩選 Album／Single／EP，未知不猜；Single 詳情在原 album＋UUID 頁面內以 releaseDetailPresentation 投影正式總數、durable 成員與操作驗證錯誤，等待／失敗不清空曲目表或曲長；單首、多曲及部分收錄直接共用專輯的136px封面、TrackTable、欄位與密度設定；正常摘要不重複計數，詳情不顯示主打tag。作品分類使用內容寬度的UiTabs bar variant及中文分類，穩定tab／panel ID保留鍵盤導覽，播放／編輯沿用P3 owner。
 
 - `library:list` 是曲庫投影入口。每個曲庫目錄在單次 session 首次讀取前執行一次 `organizeTrackMetadataFromSidecars()`：以已保存的 `info.json` 整理 metadata，不連網、不改寫 sidecar、保留手動編輯；失敗只記 diagnostic。`library:get-track` 只讀單一曲目資料夾，供播放器在 `library:updated` 後同步目前曲目，不重複整庫掃描。
+- `releases/maintenance.js` 在 `playlists:list` 前離線重用同源已保存且無歧義的類型／日期。設定的「線上補齊」由 catalog service 補所屬發行、完整曲序與本地對照，支援取消及重新開始；「重新讀取」只刷新本地資料且不啟動 provider backfill。手動 override、更精確日期及作品關係保持。詳見[來源曲序契約](contracts/release-source-catalog.md)。
 - 本機匯入 `library/importLocal.js` 在 library root 的隱藏 staging 非同步複製與計算 SHA-256，以 `music-metadata` 驗證容器、codec、時長與有界 tag／封面，通過後原子移入 `tracks/<trackId>/`，索引失敗即回滾。`library/constants.js` 的 direct-play registry 是 picker、allowlist、MIME 與驗證的單一來源。
 - 相容轉檔（[ADR 0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)）：首次選檔只把路徑放入 15 分鐘、記憶體內、one-shot 的 review session，renderer 只拿到 UUID、basename 與格式碼。確認後重查 `audio-processing-flow` 與 FFmpeg，以固定參數輸出到 staging，再走完整 FLAC 驗證與原子移入；原檔不改，`library.json` 只存原 basename、`sourceFormat` 與 `conversionFormat: flac`。
 - 媒體經 `utawakui-media:` 交付：scheme 與 handler 在 `electron/main/mediaScheme.js`／`mediaProtocol.js`，`electron/lib/` 只提供 path／range 工具；resolver 只接受 track id 與 allowlisted asset 名稱。
@@ -156,6 +163,14 @@
 - 藝人照片：`artistPhotoService.js` 在 `provider-flow` 開啟時，以 yt-dlp 讀第一署名曲目多數非 Topic 頻道的頭像，經 `artwork/image.js` 驗證下載（只允許兩個 Google 圖片 host）寫入 `artists/<artistId>/`。明確的線上候選搜尋由 `artistPhotoCandidateService.js` 在 Provider Python 做一次匿名 YT Music 查詢，renderer 只拿到 candidate id 與驗證後的 bytes，一律由使用者確認。見[照片契約](contracts/artist-photo-provider.md)。
 - Music identity：`electron/lib/musicIdentity/` 是 provider 中立的逐軸 evidence 純 domain，不連網、不寫檔，也不決定總分或自動保存；歌詞（`lyricsProviders/recordingPolicy.js`）、匯入（`importRecordingPolicy.js`）與封面各自映射並保有自己的門檻。 Consumer 直接匯入所需子模組；跨模組驗證位於同目錄的 integration test。
 - 封面候選：`musicbrainz/`、`coverArtArchive/` adapter、`artwork/discoveryService.js` 的短期 opaque session 與 `artwork/releasePolicy.js`。Main 擁有節流、快取、redirect allowlist 與圖片驗證；renderer 以 blob URL 預覽，不 hotlink。只有曲目資訊的單一 Save 才套用，失敗即還原 `thumbnail`／`artwork.json`。見 [identity 契約](contracts/music-identity-evidence-contract.md)與[曲目編輯契約](contracts/track-editing.md)。
+
+`releases/youtubeMusic.js` 在 gated 來源解析時從固定 YouTube Music 頁面觀察發行類型、年份與封面，
+使用有界回應、來源快取與固定圖片網域。正式來源集合 upsert 只採 Main 觀測並保留人工覆寫；
+過期快取重讀後再次檢查曲庫 scope。Renderer 的發行分類文案獨立於集合 kind，
+`useLibraryArtwork` 為匯入列套用目前本機封面，UI primitives 不讀取領域狀態。
+年份只取身分相符的發行標頭，bootstrap 字串經 JSON 解析而不執行；觀測保存 year 精度，
+不降低已有日期精度或清除缺值。`releasePresentation` 共用中文類型與年份 · 類型文案，
+卡片、匯入、側欄及詳情採同一發行投影，不以個別曲目年份推測發行年。
 
 ### Folder 頁面物件
 

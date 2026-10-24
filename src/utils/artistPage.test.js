@@ -1,12 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import {
   artistCreditLinks,
+  artistTrackPreview,
   artistSearchTexts,
   deriveArtistPage,
   isArtistSourceId,
   listSidebarArtists,
   orderReferenceItems,
 } from './artistPage.js';
+import { sortPlaylistEntries } from './playlistSort.js';
+import { normalizeTrackCollectionSort } from '../components/track/trackCollectionProfiles.js';
+
+describe('artist track preview', () => {
+  it.each([0, 1, 10, 15])(
+    'shows at most ten of %i entries without changing the full collection',
+    (count) => {
+      const entries = Array.from({ length: count }, (_, playlistIndex) => ({
+        track: { id: `track-${playlistIndex}` },
+        playlistIndex,
+        playCount: playlistIndex,
+      }));
+      const sorted = sortPlaylistEntries(
+        entries,
+        normalizeTrackCollectionSort('artist'),
+      );
+      const before = [...sorted];
+      const preview = artistTrackPreview(sorted);
+      expect(preview).toEqual(before.slice(0, 10));
+      expect(preview).toHaveLength(Math.min(count, 10));
+      expect(sorted).toEqual(before);
+      expect(entries).toHaveLength(count);
+      if (count) expect(preview[0].playCount).toBe(count - 1);
+    },
+  );
+});
 
 function track(id, title, releaseYear, thumbnailUrl) {
   return { id, title, releaseYear, thumbnailUrl };

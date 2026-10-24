@@ -19,7 +19,7 @@ const workspaceDefinition = computed(() => ({
   component: LyricsAuthoringWorkspace,
   surfaceId: 'lyrics',
   title: '歌詞編輯',
-  description: '管理來源、文字、讀音與時間軸。',
+  description: '編輯歌詞、讀音與顯示時間。',
   bodyLabel: '歌詞編輯工作區',
   pageMode: 'workspace',
 }));

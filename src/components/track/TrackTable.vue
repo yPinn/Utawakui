@@ -475,30 +475,40 @@ function reorderHeaderFromKeyboard(column, event) {
         :key="
           profile.readOnly || profile.managedActions
             ? entry.key
-            : entry.track.id
+            : (entry.key ?? entry.track.id)
         "
         :data-occurrence-id="
           profile.readOnly || profile.managedActions ? entry.key : undefined
         "
         :entry="entry"
+        :data-source-slot="entry.sourceRow?.key"
         :profile="profile"
         :columns="layout.columns"
         :grid-style="gridStyle"
         :density="density"
-        :album-jumpable="albumJumpableTrackIds.has(entry.track.id)"
-        :vs-queued="vsQueuedTrackIds.has(entry.track.id)"
-        :vs-enqueue-pending="vsEnqueuePendingTrackId === entry.track.id"
+        :album-jumpable="albumJumpableTrackIds.has(entry.track?.id)"
+        :vs-queued="vsQueuedTrackIds.has(entry.track?.id)"
+        :vs-enqueue-pending="
+          Boolean(entry.track && vsEnqueuePendingTrackId === entry.track.id)
+        "
         :selected="
           profile.managedActions
             ? selectedEntryKey === entry.key
-            : !profile.readOnly && selectedTrackId === entry.track.id
+            : !profile.readOnly &&
+              Boolean(entry.track && selectedTrackId === entry.track.id)
         "
-        :current="!profile.readOnly && currentTrackId === entry.track.id"
-        :playing="!profile.readOnly && playingTrackId === entry.track.id"
+        :current="
+          !profile.readOnly &&
+          Boolean(entry.track && currentTrackId === entry.track.id)
+        "
+        :playing="
+          !profile.readOnly &&
+          Boolean(entry.track && playingTrackId === entry.track.id)
+        "
         :drag-enabled="dragEnabled"
-        :dragging="dragEnabled && draggingTrackId === entry.track.id"
+        :dragging="dragEnabled && draggingTrackId === entry.track?.id"
         :drop-position="
-          dropTargetTrackId === entry.track.id ? dropPosition : ''
+          dropTargetTrackId === entry.track?.id ? dropPosition : ''
         "
         @select-track="emit('selectTrack', $event)"
         @select-entry="emit('selectEntry', $event)"
@@ -515,6 +525,8 @@ function reorderHeaderFromKeyboard(column, event) {
         @drag-leave="forwardTrackDragLeave"
         @drop="forwardTrackDrop"
         @drag-end="emit('trackDragEnd')"
+        ><template v-if="$slots['row-status']" #status="{ entry: statusEntry }"
+          ><slot name="row-status" :entry="statusEntry" /></template
         ><template
           v-if="$slots['row-actions']"
           #actions="{ entry: actionEntry }"

@@ -671,6 +671,28 @@ describe('organizeTrackMetadataFromSidecars', () => {
     fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
   }
 
+  it('preserves existing album and year when their editing provenance is unknown', () => {
+    makeStructuredTrack('edited');
+    saveIndexEntry(dir, 'edited', {
+      title: 'Song',
+      artist: 'Artist',
+      album: 'My album',
+      releaseYear: 2024,
+    });
+    organizeTrackMetadataFromSidecars(dir, () => ({
+      normalized: {
+        title: 'Song',
+        artist: 'Artist',
+        album: 'Provider album',
+        releaseYear: 2026,
+      },
+    }));
+    expect(loadIndex(dir).tracks.edited).toMatchObject({
+      album: 'My album',
+      releaseYear: 2024,
+    });
+  });
+
   it('normalizes a previous provider projection and fills safe supplemental fields', () => {
     makeStructuredTrack('blue-blood');
     saveIndexEntry(dir, 'blue-blood', {
@@ -704,7 +726,9 @@ describe('organizeTrackMetadataFromSidecars', () => {
       artistOrigin: 'provider',
       duration: 167,
       album: "I've IVE",
+      albumOrigin: 'provider',
       releaseYear: 2023,
+      releaseYearOrigin: 'provider',
     });
     expect(organizeTrackMetadataFromSidecars(dir, reader)).toEqual({
       updated: 0,

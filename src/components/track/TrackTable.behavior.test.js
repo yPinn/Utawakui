@@ -84,6 +84,43 @@ const rowSource = readFileSync(
 );
 
 describe('initial table loading', () => {
+  it('preserves local table rows, selection and playback identity when only separation completes', async () => {
+    const props = reactive({
+      entries: tracks.map((track) => ({ track: { ...track } })),
+      collectionKind: 'album',
+      selectedTrackId: tracks[0].id,
+      currentTrackId: tracks[1].id,
+      playingTrackId: tracks[1].id,
+    });
+    const view = mount(TrackTable, props);
+    const before = findAll(view.root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    );
+    props.entries = tracks.map((track, index) => ({
+      track: { ...track, hasSeparation: index === 0 },
+    }));
+    await nextTick();
+    const after = findAll(view.root, (node) =>
+      classIncludes(node, 'library-track-row'),
+    );
+    expect(after.map((row, index) => row === before[index])).toEqual(
+      before.map(() => true),
+    );
+    expect(classIncludes(after[0], 'library-track-row--selected')).toBe(true);
+    expect(classIncludes(after[1], 'library-track-row--current')).toBe(true);
+    expect(
+      findAll(
+        view.root,
+        (node) => node.props['aria-label'] === `已有伴奏：${tracks[0].title}`,
+      ),
+    ).toHaveLength(1);
+    expect(
+      findAll(after[1], (node) =>
+        String(node.props['aria-label'] ?? '').startsWith('已有伴奏：'),
+      ),
+    ).toHaveLength(0);
+    view.app.unmount();
+  });
   it('keeps the standard album density and source order without lead badges', () => {
     const { root, app } = mount(TrackTable, {
       entries,
@@ -438,7 +475,7 @@ describe('TrackTable shared row behavior', () => {
 
   it('projects the current title cue through the marquee component boundary', () => {
     expect(rowSource).toMatch(
-      /<span class="library-track-row__title">\s*<UiMarqueeText\s+:text="entry\.track\.title"\s*\/>\s*<\/span>/u,
+      /<span class="library-track-row__title">\s*<UiMarqueeText\s+:text="displayTrack\.title"\s*\/>\s*<\/span>/u,
     );
     expect(rowSource).toMatch(
       /\.library-track-row--current\s+\.library-track-row__title\s*\{[^}]*color:\s*var\(--ui-color-current\);/su,

@@ -20,7 +20,7 @@ describe('artwork candidate display projection', () => {
     ).toEqual({
       title: 'RASEN',
       artist: '9Lana',
-      releaseMeta: '2026 · EP · 現場版',
+      releaseMeta: '2026 · 迷你專輯 · 現場版',
       decisionLabel: '建議',
       decisionTone: 'success',
       reason: '',

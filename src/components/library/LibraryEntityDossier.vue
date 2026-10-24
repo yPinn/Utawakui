@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import { FOLDER_DOSSIER_ARTWORK_SIZE } from '../../constants/ui.js';
 import { FolderOpen, Library, UserRound } from '../../icons/index.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
@@ -19,6 +20,11 @@ const props = defineProps({
   releaseType: { type: String, default: '' },
   title: { type: String, required: true },
   titleId: { type: String, default: 'collection-title' },
+  titleTag: {
+    type: String,
+    default: 'h1',
+    validator: (value) => ['h1', 'h2', 'h3'].includes(value),
+  },
   artist: { type: String, default: '' },
   artistLinkLabel: { type: String, default: '' },
   // Summary values, already formatted: ['2019', '14 首曲目，49 分'].
@@ -38,8 +44,10 @@ const MARKER_BY_KIND = Object.freeze({
 });
 
 const isLibrary = computed(() => props.entityKind === 'library');
-const isSingle = computed(
-  () => props.entityKind === 'album' && props.releaseType === 'single',
+const marker = computed(() =>
+  props.entityKind === 'album'
+    ? releaseTypeLabel(props.releaseType || 'album')
+    : MARKER_BY_KIND[props.entityKind],
 );
 const libraryIcon = computed(() =>
   props.libraryView === 'local' ? FolderOpen : Library,
@@ -56,9 +64,10 @@ const summaryFields = computed(() =>
 <template>
   <AppFolderDossier
     class="library-entity-dossier"
-    :marker="isSingle ? '單曲' : MARKER_BY_KIND[entityKind]"
+    :marker="marker"
     :title="title"
     :title-id="titleId"
+    :title-tag="titleTag"
     :title-lang="titleLang"
     :fields="summaryFields"
     :description="description"

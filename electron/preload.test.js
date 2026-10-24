@@ -100,6 +100,32 @@ const MAIN_INVOKE_CHANNELS = [
   'library:import-audio-files',
   'library:convert-local-audio-files',
   'library:list',
+  'library:refresh-release-metadata',
+  'library:release-catalog-accept',
+  'library:release-catalog-page',
+  'library:release-catalog-download',
+  'library:download-release-track',
+  'library:release-catalog-link-local',
+  'library:release-catalog-preview',
+  'library:release-catalog-refresh',
+  'library:release-catalog-search',
+  'library:release-catalog-unlink',
+  'library:cancel-release-metadata',
+  'library:reconciliation-scan',
+  'library:tags-options',
+  'library:tags-preview',
+  'library:tags-commit',
+  'library:tags-restore',
+  'library:tags-recover',
+  'library:tags-activity',
+  'library:tags-cancel',
+  'library:reconciliation-page',
+  'library:reconciliation-preview',
+  'library:reconciliation-commit',
+  'library:reconciliation-decide',
+  'library:reconciliation-undo',
+  'library:reconciliation-cancel',
+  'library:reconciliation-recover',
   'library:get-track',
   'library:load-artist-photo-candidate-preview',
   'library:load-track-artwork-preview',
@@ -270,6 +296,9 @@ const MAIN_EVENT_CHANNELS = [
   'library:updated',
   'library:work-organization-changed',
   'library:release-organization-changed',
+  'library:release-metadata-progress',
+  'library:reconciliation-progress',
+  'library:tags-progress',
   'lyrics:reading-progress',
   'lyrics-experimental:completed',
   'music-structure:analysis-progress',
@@ -323,6 +352,95 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('keeps reconciliation file details private and bounds nested decisions', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.commitLibraryReconciliation({
+      previewId: 'opaque',
+      path: 'private',
+      decisions: {
+        title: { action: 'manual', value: 'Song', path: 'private' },
+        arbitrary: { action: 'manual', value: 'bad' },
+      },
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'library:reconciliation-commit',
+      {
+        previewId: 'opaque',
+        decisions: { title: { action: 'manual', value: 'Song' } },
+      },
+    );
+    await bridge.getLibraryReconciliationPage({
+      scanId: 'opaque',
+      offset: 0,
+      limit: 10,
+      url: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'library:reconciliation-page',
+      { scanId: 'opaque', offset: 0, limit: 10 },
+    );
+  });
+  it('sends only bounded product target fields for source catalog operations', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    for (const [method, operation, allowed] of [
+      [
+        'getReleaseCatalog',
+        'page',
+        {
+          collectionId: 'a',
+          expectedRevision: 2,
+          libraryEpoch: 1,
+          offset: 0,
+          limit: 10,
+          availabilityOnly: true,
+        },
+      ],
+      ['refreshReleaseCatalog', 'refresh', { trackId: 'song' }],
+      [
+        'prepareReleaseCatalogDownload',
+        'download',
+        {
+          collectionId: 'a',
+          expectedRevision: 2,
+          libraryEpoch: 1,
+          slotKey: 'slot-5',
+        },
+      ],
+      ['searchReleaseCatalog', 'search', { trackId: 'song' }],
+      [
+        'previewReleaseCatalog',
+        'preview',
+        { candidateId: 'opaque', offset: 0, limit: 10 },
+      ],
+      [
+        'acceptReleaseCatalog',
+        'accept',
+        { candidateId: 'opaque', position: 5 },
+      ],
+      [
+        'unlinkReleaseCatalog',
+        'unlink',
+        {
+          collectionId: 'a',
+          expectedRevision: 2,
+          libraryEpoch: 1,
+          slotKey: 'slot-5',
+        },
+      ],
+    ]) {
+      await bridge[method]({
+        ...allowed,
+        url: 'https://private.test',
+        path: 'private',
+        manifest: {},
+        binding: 'private',
+      });
+      expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+        `library:release-catalog-${operation}`,
+        allowed,
+      );
+    }
+  });
   it('bounds release intents, nested overrides and private change notifications', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     bridge.getReleaseInfo({

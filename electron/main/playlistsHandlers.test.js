@@ -53,6 +53,114 @@ function register(overrides = {}) {
 }
 
 describe('registerPlaylistsHandlers', () => {
+  it('organizes saved release facts before exposing the playlist projection', async () => {
+    const order = [];
+    const handlers = register({
+      organizeSavedReleaseMetadata: async () => {
+        order.push('offline');
+      },
+      loadPlaylistsList: () => {
+        order.push('list');
+        return [];
+      },
+    });
+    expect(await handlers.get('playlists:list')({})).toEqual([]);
+    expect(order).toEqual(['offline', 'list']);
+  });
+  it('writes only Main-observed release types, ignoring renderer classifications', async () => {
+    const source = { platform: 'yt-music', id: 'OLAK5uy_observed' };
+    const upsertAlbumPlaylist = vi.fn(() => []);
+    const handlers = register({
+      getProviderRelease: () => ({
+        type: 'ep',
+        date: { value: '2026', precision: 'year' },
+      }),
+      upsertAlbumPlaylist,
+    });
+    await handlers.get('playlists:upsert-album')(
+      {},
+      {
+        name: 'RASEN',
+        source,
+        trackIds: ['song'],
+        releaseType: 'single',
+        releaseDate: { value: '1900', precision: 'year' },
+        releaseObservations: { type: 'album' },
+      },
+    );
+    expect(upsertAlbumPlaylist).toHaveBeenCalledWith('library-dir', {
+      name: 'RASEN',
+      source,
+      trackIds: ['song'],
+      releaseObservations: {
+        date: {
+          value: { value: '2026', precision: 'year' },
+          provenance: { provider: 'yt-music', sourceId: source.id },
+        },
+        type: {
+          value: 'ep',
+          provenance: { provider: 'yt-music', sourceId: source.id },
+        },
+      },
+    });
+  });
+  it('does not downgrade a recorded source date or clear it when the new source omits a year', async () => {
+    const source = { platform: 'yt-music', id: 'OLAK5uy_precise' };
+    for (const fresh of [
+      { type: 'ep', date: { value: '2026', precision: 'year' } },
+      { type: 'ep' },
+    ]) {
+      const upsertAlbumPlaylist = vi.fn(() => []);
+      const existing = playlist({
+        kind: 'album',
+        source,
+        releaseInfo: {
+          observed: {
+            date: { value: { value: '2026-07-25', precision: 'day' } },
+          },
+          overrides: { date: { value: '2026-08-01', precision: 'day' } },
+        },
+      });
+      const handlers = register({
+        getProviderRelease: () => fresh,
+        loadPlaylistsList: () => [existing],
+        upsertAlbumPlaylist,
+      });
+      await handlers.get('playlists:upsert-album')(
+        {},
+        { name: 'RASEN', source, trackIds: ['song'] },
+      );
+      expect(
+        upsertAlbumPlaylist.mock.calls[0][1].releaseObservations,
+      ).not.toHaveProperty('date');
+      expect(existing.releaseInfo.overrides.date).toEqual({
+        value: '2026-08-01',
+        precision: 'day',
+      });
+    }
+  });
+  it('refreshes expired Main observations and rejects a changed library before writing', async () => {
+    let scope = { dir: 'library-dir', epoch: 1 };
+    const upsertAlbumPlaylist = vi.fn(() => []);
+    const resolveProviderRelease = vi.fn(async () => {
+      scope = { dir: 'other', epoch: 2 };
+      return { type: 'ep' };
+    });
+    const handlers = register({
+      getReleaseScope: () => scope,
+      getProviderRelease: () => null,
+      resolveProviderRelease,
+      upsertAlbumPlaylist,
+    });
+    await expect(
+      handlers.get('playlists:upsert-album')(
+        {},
+        { source: { platform: 'yt-music', id: 'OLAK5uy_expired' } },
+      ),
+    ).rejects.toThrow();
+    expect(resolveProviderRelease).toHaveBeenCalledOnce();
+    expect(upsertAlbumPlaylist).not.toHaveBeenCalled();
+  });
   it.each([true, false])(
     'rejects an old cover picker after A→B→A (cancelled=%s)',
     async (canceled) => {

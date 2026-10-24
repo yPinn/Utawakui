@@ -185,6 +185,7 @@ function semanticColumns(...roles) {
 const PROFILES = Object.freeze({
   'performance-session': Object.freeze({
     kind: 'performance-session',
+    description: '目前場次曲目，顯示演出狀態與時長。',
     label: '目前場次',
     accessibleLabel: '目前場次曲目',
     managedActions: true,
@@ -205,6 +206,7 @@ const PROFILES = Object.freeze({
   }),
   'performance-archive': Object.freeze({
     kind: 'performance-archive',
+    description: '封存場次曲目，顯示演出狀態與時長。',
     label: '演出歌單',
     accessibleLabel: '場次原始順序',
     readOnly: true,
@@ -307,7 +309,7 @@ const PROFILES = Object.freeze({
   artist: Object.freeze({
     kind: 'artist',
     label: '藝人',
-    description: '藝人曲目，預設顯示播放次數與時長。',
+    description: '藝人曲目，依播放次數由高到低排列，顯示播放次數與時長。',
     accessibleLabel: '藝人曲目',
     showArtwork: true,
     showArtist: false,
@@ -319,6 +321,7 @@ const PROFILES = Object.freeze({
     ordinalMode: 'collection',
     albumNavigation: true,
     artistNavigation: false,
+    defaultSort: Object.freeze({ key: 'playCount', direction: 'desc' }),
     canSortTrackRows: false,
     canReorderColumns: true,
     canReorderPlaylistTracks: false,
@@ -516,7 +519,7 @@ export function normalizeTrackCollectionSort(kind, value = {}) {
     !profile.canSortTrackRows ||
     !TRACK_COLLECTION_SORT_KEYS.has(value?.key)
   ) {
-    return DEFAULT_TRACK_COLLECTION_SORT;
+    return profile.defaultSort ?? DEFAULT_TRACK_COLLECTION_SORT;
   }
   return Object.freeze({
     key: value.key,

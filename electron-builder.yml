@@ -183,6 +183,8 @@ extraResources:
     to: audio-processing/audio-python-runtime-3.14.7.json
   - from: resources/provider/artist_photo_ytmusic_worker.py
     to: provider/artist_photo_ytmusic_worker.py
+  - from: resources/provider/release_catalog_worker.py
+    to: provider/release_catalog_worker.py
 
 win:
   target:

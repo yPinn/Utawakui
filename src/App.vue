@@ -23,6 +23,7 @@ import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import WorkVersionEditor from './components/library/WorkVersionEditor.vue';
 import ReleaseInfoEditor from './components/library/ReleaseInfoEditor.vue';
+import ReleaseCatalogModal from './components/library/ReleaseCatalogModal.vue';
 import { useBgmSession } from './composables/useBgmSession.js';
 import { usePerformanceHistoryObserver } from './composables/usePerformanceHistoryObserver.js';
 import PlayerBar from './components/playback/PlayerBar.vue';
@@ -31,6 +32,8 @@ import LibraryPage from './pages/LibraryPage.vue';
 import { useAppView } from './composables/useAppView.js';
 import { usePlaybackQueue } from './composables/usePlaybackQueue.js';
 import { usePlayer } from './composables/usePlayer.js';
+import { useTrackPreview } from './composables/useTrackPreview.js';
+import { tagMediaActivity } from './utils/tagMediaActivity.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
@@ -194,6 +197,30 @@ const { currentTrack: queueCurrentTrack } = usePlaybackQueue();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
 // Audio authority outlives the session page and its Dock projection.
 const bgmSession = useBgmSession();
+const tagPreview = useTrackPreview();
+const reportTagActivity = () =>
+  window.Utawakui?.reportLibraryTagActivity?.({
+    trackIds: tagMediaActivity({
+      player: playerState,
+      bgm: bgmSession.deckState,
+      bgmTrackIds: bgmSession.sourceTrackIds.value,
+      preview: tagPreview.state,
+    }),
+  })?.catch(() => {});
+watch(
+  () =>
+    tagMediaActivity({
+      player: playerState,
+      bgm: bgmSession.deckState,
+      bgmTrackIds: bgmSession.sourceTrackIds.value,
+      preview: tagPreview.state,
+    }).join('\n'),
+  reportTagActivity,
+  { immediate: true, flush: 'sync' },
+);
+const disposeTagActivityScope =
+  window.Utawakui?.onReleaseOrganizationChanged?.(reportTagActivity);
+onUnmounted(() => disposeTagActivityScope?.());
 onMounted(bgmSession.initialize);
 
 // No router: the Electron shell has fixed sections and no deep links.
@@ -534,6 +561,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     <AppConfirmationModal />
     <WorkVersionEditor />
     <ReleaseInfoEditor />
+    <ReleaseCatalogModal />
     <WindowCloseDecisionModal
       :open="closeDecision.state.open"
       :remember="closeDecision.state.remember"

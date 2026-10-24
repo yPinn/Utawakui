@@ -12,6 +12,9 @@ const deps = vi.hoisted(() => ({
   open: vi.fn(),
   play: vi.fn(),
   closePreview: vi.fn(),
+  openPreview: vi.fn(),
+  enqueue: vi.fn(),
+  addPerformance: vi.fn(),
   releaseCreate: vi.fn(),
   releaseOpen: vi.fn(),
   playlistMenu: vi.fn(),
@@ -25,7 +28,13 @@ const deps = vi.hoisted(() => ({
   admission: 0,
   startRevision: 0,
   tracks: [
-    { id: 'a', title: 'RASEN', artist: '9Lana', sourceType: 'local-file' },
+    {
+      id: 'a',
+      title: 'RASEN',
+      artist: '9Lana',
+      sourceType: 'local-file',
+      url: 'utawakui-media://track/a/audio.wav',
+    },
   ],
 }));
 vi.mock('../../composables/useSongEditor.js', () => ({
@@ -65,6 +74,7 @@ vi.mock('../../composables/usePlaybackQueue.js', () => ({
   usePlaybackQueue: () => ({
     state: { queuedTracks: [], tracks: [] },
     setQueue: deps.setQueue,
+    enqueueTrack: deps.enqueue,
     currentTrack: { __v_isRef: true, value: deps.tracks[0] },
     queuedTracks: { __v_isRef: true, value: [] },
     sourceUpcomingTracks: { __v_isRef: true, value: [] },
@@ -90,7 +100,10 @@ vi.mock('../../composables/useTrackMetadataEditor.js', () => ({
   }),
 }));
 vi.mock('../../composables/usePerformanceQueueActions.js', () => ({
-  usePerformanceQueueActions: () => ({ state: {} }),
+  usePerformanceQueueActions: () => ({
+    state: {},
+    addTrack: deps.addPerformance,
+  }),
 }));
 vi.mock('../../composables/useArtistIndex.js', () => ({
   useArtistIndex: () => ({ state: {}, ensureLoaded: vi.fn() }),
@@ -138,7 +151,11 @@ vi.mock('../../composables/useLibraryAlbumContext.js', () => ({
   }),
 }));
 vi.mock('../../composables/useTrackPreview.js', () => ({
-  useTrackPreview: () => ({ state: { tracks: [] }, close: deps.closePreview }),
+  useTrackPreview: () => ({
+    state: { tracks: [] },
+    close: deps.closePreview,
+    open: deps.openPreview,
+  }),
 }));
 vi.mock('../../composables/useScrolledPast.js', () => ({
   useScrolledPast: () => ({ value: false }),
@@ -277,12 +294,13 @@ vi.mock('../layout/AppFolderContentField.vue', () => ({
 vi.mock('./LibraryCollectionHeader.vue', () => ({
   default: {
     props: ['fields'],
-    emits: ['menuAction'],
+    emits: ['menuAction', 'preview'],
     setup:
       (props, { emit }) =>
       () =>
         h('section', [
           h('span', props.fields.join(' / ')),
+          h('button', { onClick: () => emit('preview') }, '試聽發行'),
           h(
             'button',
             {
@@ -370,7 +388,7 @@ beforeEach(() => {
   deps.startRevision = 0;
   deps.admission = 0;
   deps.verification = reactive({ state: 'ready' });
-  deps.verify.mockResolvedValue(deps.tracks);
+  deps.verify.mockReset().mockResolvedValue(deps.tracks);
   vi.stubGlobal('window', {
     Utawakui: {},
     addEventListener: vi.fn(),
@@ -487,7 +505,7 @@ describe('real feature entry event wiring', () => {
       findAll(mounted.root, (node) => node.props['data-kind'] === 'album'),
     ).toHaveLength(1);
   });
-  it('preserves admission guards across pending/error, supports retry and rejects stale table play', async () => {
+  it('retains the displayed table across pending/error, supports retry and rejects stale table play', async () => {
     selectSingle();
     let finish;
     deps.verify.mockImplementationOnce(
@@ -501,9 +519,10 @@ describe('real feature entry event wiring', () => {
     await nextTick();
     deps.verification.state = 'pending';
     await nextTick();
-    expect(button('播放 A')).toBeUndefined();
+    expect(button('播放 A')).toBeDefined();
     deps.verification.state = 'error';
     await nextTick();
+    expect(button('播放 A')).toBeDefined();
     trigger(button('重新確認'), 'onClick');
     expect(deps.retry).toHaveBeenCalledOnce();
     deps.playlistState.selectedId = null;
@@ -512,6 +531,86 @@ describe('real feature entry event wiring', () => {
     await settleEntries();
     expect(deps.play).not.toHaveBeenCalled();
     expect(deps.setQueue).not.toHaveBeenCalled();
+  });
+  it('verifies album preview before opening audible playback while leaving display intact on rejection', async () => {
+    selectSingle();
+    deps.verify.mockResolvedValueOnce([]);
+    mounted = mount(LibraryBrowseContent);
+    await settleEntries();
+    trigger(button('試聽發行'), 'onClick');
+    await settleEntries();
+    expect(deps.verify).toHaveBeenCalledOnce();
+    expect(deps.openPreview).not.toHaveBeenCalled();
+    expect(button('播放 A')).toBeDefined();
+    deps.playlistState.playlists[0].resolvedRelease.revision = 2;
+    await settleEntries();
+    trigger(button('試聽發行'), 'onClick');
+    await settleEntries();
+    expect(deps.openPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ tracks: deps.tracks }),
+    );
+  });
+  it.each(['navigate', 'navigate-back', 'newer-start', 'newer-row'])(
+    'discards a pending album preview after %s',
+    async (kind) => {
+      selectSingle();
+      let finish;
+      deps.verify.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+      mounted = mount(LibraryBrowseContent);
+      await settleEntries();
+      trigger(button('試聽發行'), 'onClick');
+      await nextTick();
+      if (kind.startsWith('navigate')) {
+        deps.playlistState.selectedId = null;
+        await nextTick();
+        if (kind === 'navigate-back') deps.playlistState.selectedId = 'single';
+      } else if (kind === 'newer-start') deps.startRevision++;
+      else trigger(button('播放 A'), 'onClick');
+      await nextTick();
+      finish(deps.tracks);
+      await settleEntries();
+      expect(deps.openPreview).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['add-to-queue', 'add-to-performance-queue'])(
+    'freshly verifies the album row %s action instead of using display membership',
+    async (action) => {
+      selectSingle();
+      deps.action = action;
+      deps.verify.mockResolvedValueOnce([]);
+      mounted = mount(LibraryBrowseContent);
+      trigger(button('曲目選項'), 'onClick');
+      await nextTick();
+      trigger(button('整理歌曲'), 'onClick');
+      await settleEntries();
+      expect(deps.verify).toHaveBeenCalledOnce();
+      expect(deps.enqueue).not.toHaveBeenCalled();
+      expect(deps.addPerformance).not.toHaveBeenCalled();
+      expect(button('播放 A')).toBeDefined();
+      trigger(button('曲目選項'), 'onClick');
+      await nextTick();
+      trigger(button('整理歌曲'), 'onClick');
+      await settleEntries();
+      expect(deps.verify).toHaveBeenCalledTimes(2);
+      if (action === 'add-to-queue')
+        expect(deps.enqueue).toHaveBeenCalledWith(deps.tracks[0]);
+      else expect(deps.addPerformance).toHaveBeenCalledWith('a');
+    },
+  );
+  it('keeps direct library-track queue commands independent of release admission', async () => {
+    deps.action = 'add-to-queue';
+    mounted = mount(LibraryBrowseContent);
+    trigger(button('曲目選項'), 'onClick');
+    await nextTick();
+    trigger(button('整理歌曲'), 'onClick');
+    await settleEntries();
+    expect(deps.enqueue).toHaveBeenCalledWith(deps.tracks[0]);
+    expect(deps.verify).not.toHaveBeenCalled();
   });
   it.each([
     [TrackContextActions, { track: deps.tracks[0] }, '選項'],

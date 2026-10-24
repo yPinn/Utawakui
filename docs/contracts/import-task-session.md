@@ -56,6 +56,12 @@ Dock 保留所有未完成批次與最新一批成功摘要，其餘成功明細
 按 batch id 重開明細，不從目前草稿重建舊工作；關閉／Escape 只關明細，停止是獨立意圖。
 
 Modal 沿用共用 workspace shell、單一捲動 owner、select-none 與可複製 recovery notice。
+匯入與伴奏預覽的 `PreparationReviewLayout` 在曲目捲動區上方共用曲庫
+`LibraryEntityDossier`／`AppFolderDossier` 與 `UiCollageThumb`：封面、集合類型、名稱、
+專輯藝人、發行年份、曲目首數及可得簡介。僅在所有曲目都有有效時長時顯示總時長；
+播放清單不從成員藝人推測擁有者。摘要使用 Modal 內的 H3，長名稱與簡介最多顯示兩行。
+草稿使用目前解析資料，已確認明細使用 batch 的封面與發行 metadata 快照；
+伴奏預覽使用既有來源 owner 的 selected collection，不解析下拉選項的拼接文字。
 勾選入口負責批次確認；接受後的明細提供逐首停止、整批停止／重試，不改動伴奏批次入口。
 
 每批最多 500 個不同 track id，session 最多 50 批；滿額時先淘汰成功記錄，若全是執行中

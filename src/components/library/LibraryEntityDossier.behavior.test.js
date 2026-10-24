@@ -37,6 +37,15 @@ function rule(text, selector) {
 }
 
 describe('LibraryEntityDossier', () => {
+  it('uses the same Chinese release type for the detail marker', async () => {
+    const html = await renderDossier({ releaseType: 'ep' });
+    expect(
+      html.slice(
+        html.indexOf('app-folder-dossier__marker'),
+        html.indexOf('id="entity-title-test"'),
+      ),
+    ).toContain('迷你專輯');
+  });
   it('composes the shared Folder dossier on the continuous paper', () => {
     expect(source).toContain(
       "import AppFolderDossier from '../layout/AppFolderDossier.vue'",

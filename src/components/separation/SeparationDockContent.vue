@@ -47,6 +47,7 @@ const {
   selectedMode,
   modeOptions,
   selectedSourceId,
+  selectedCollection,
   sourceOptions,
   sourceTracks,
   unpreparedTracks,
@@ -62,8 +63,14 @@ const sourceLabel = computed(() => {
   const options = sourceOptions.value.flatMap(
     (option) => option.options ?? [option],
   );
+  const selectedOption = options.find(
+    ({ value }) => value === selectedSourceId.value,
+  );
   return (
-    options.find(({ value }) => value === selectedSourceId.value)?.label ?? ''
+    selectedCollection.value?.name ||
+    selectedOption?.primaryLabel ||
+    selectedOption?.label ||
+    ''
   );
 });
 
@@ -138,6 +145,14 @@ function trackFor(item) {
       <PreparationReviewLayout
         :source="sourceLabel"
         :count="sourceTracks.length"
+        :entity-kind="
+          selectedCollection?.kind === 'album' ? 'album' : 'playlist'
+        "
+        :release-type="selectedCollection?.resolvedRelease?.type || 'unknown'"
+        :release-date="selectedCollection?.resolvedRelease?.date"
+        :cover-url="selectedCollection?.coverUrl || ''"
+        :description="selectedCollection?.description || ''"
+        :tracks="sourceTracks"
         :hint="storageHint"
         list-label="伴奏處理曲目"
       >
@@ -153,8 +168,8 @@ function trackFor(item) {
         <UiHint v-else padded center>
           {{
             sourceTracks.length === 0
-              ? '此來源沒有曲目'
-              : '此來源的曲目已在處理佇列中'
+              ? '此來源沒有曲目。'
+              : '曲目已加入處理佇列。'
           }}
         </UiHint>
       </PreparationReviewLayout>
@@ -194,7 +209,7 @@ function trackFor(item) {
         />
         <UiIconButton
           :icon="Info"
-          label="預覽伴奏處理歌單"
+          label="預覽處理曲目"
           aria-haspopup="dialog"
           :aria-expanded="previewOpen"
           @click="previewOpen = true"
@@ -232,7 +247,7 @@ function trackFor(item) {
     />
 
     <UiHint v-if="sourceTracks.length === 0" padded center>
-      此來源沒有曲目
+      此來源沒有曲目。
     </UiHint>
 
     <SeparationToolbarList

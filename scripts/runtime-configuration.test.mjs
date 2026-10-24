@@ -62,6 +62,7 @@ describe('runtime configuration boundaries', () => {
       'resources/audio-processing/analysis-beat-this-py314-lock.json',
       'resources/audio-processing/audio-python-runtime-3.14.7.json',
       'resources/provider/artist_photo_ytmusic_worker.py',
+      'resources/provider/release_catalog_worker.py',
     ]);
     expect(JSON.stringify(builder.files)).not.toMatch(
       /tasks|\.models|\.tmp|\.venv|uv-cache/i,

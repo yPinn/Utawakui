@@ -200,6 +200,7 @@ export function useSeparationPreparation({
     selectedMode,
     modeOptions,
     selectedSourceId,
+    selectedCollection,
     sourceOptions,
     sourceTracks,
     unpreparedTracks,

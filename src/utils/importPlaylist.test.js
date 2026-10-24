@@ -3,6 +3,7 @@ import {
   filterPlaylistImportTracks,
   getPlaylistImportStats,
   hasImportableSelection,
+  getDominantImportFailureCode,
 } from './importPlaylist.js';
 
 const tracks = [
@@ -49,6 +50,33 @@ const tracks = [
     status: 'error',
   },
 ];
+
+describe('getDominantImportFailureCode', () => {
+  it('counts failed tracks only and preserves the first code on a tie', () => {
+    expect(
+      getDominantImportFailureCode([
+        { status: 'done', errorCode: 'ignored' },
+        { status: 'error' },
+        { status: 'error', errorCode: 'network' },
+        { status: 'error', errorCode: 'disk' },
+      ]),
+    ).toBe('network');
+    expect(
+      getDominantImportFailureCode([
+        { status: 'error', errorCode: 'network' },
+        { status: 'error', errorCode: 'disk' },
+        { status: 'error', errorCode: 'disk' },
+      ]),
+    ).toBe('disk');
+  });
+  it('returns no code for missing, empty or successful input', () => {
+    expect(getDominantImportFailureCode(null)).toBeNull();
+    expect(getDominantImportFailureCode([])).toBeNull();
+    expect(
+      getDominantImportFailureCode([{ status: 'done', errorCode: 'ignored' }]),
+    ).toBeNull();
+  });
+});
 
 describe('getPlaylistImportStats', () => {
   it('counts playlist import states for the summary bar', () => {

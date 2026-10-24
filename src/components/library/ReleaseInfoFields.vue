@@ -1,23 +1,24 @@
 <script setup>
-import { computed } from 'vue';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 const props = defineProps({
   release: { type: Object, required: true },
   draft: { type: Object, required: true },
-  tracksById: { type: Map, required: true },
   disabled: Boolean,
 });
-const emit = defineEmits(['update', 'lead']);
+const emit = defineEmits(['update']);
 const fields = [
   { key: 'type', label: '發行類型' },
   { key: 'date', label: '發行日期' },
-  { key: 'totalTrackCount', label: '正式總曲數' },
+  { key: 'totalTrackCount', label: '總曲數' },
 ];
 const typeOptions = ['unknown', 'single', 'ep', 'album'].map((value) => ({
   value,
-  label: releaseTypeLabel(value),
+  label:
+    value === 'ep'
+      ? `${releaseTypeLabel(value)}（EP）`
+      : releaseTypeLabel(value),
 }));
 const precisionOptions = [
   { value: 'year', label: '年' },
@@ -25,30 +26,21 @@ const precisionOptions = [
   { value: 'day', label: '年月日' },
 ];
 const modes = (field) => [
-  { value: 'source', label: '沿用來源資料' },
+  { value: 'source', label: `沿用來源：${sourceValue(field) || '無資料'}` },
   { value: 'manual', label: '手動設定' },
-  ...(field !== 'type' ? [{ value: 'clear', label: '明確設為未知' }] : []),
+  ...(field !== 'type' ? [{ value: 'clear', label: '設為未知' }] : []),
 ];
-function sourceHint(field) {
+function sourceValue(field) {
   const value = props.release.sourceValues?.[field];
-  if (value === undefined || value === null) return '來源沒有記錄此項資料。';
+  if (value === undefined || value === null) return '';
   const text =
     field === 'type'
       ? releaseTypeLabel(value)
       : field === 'date'
         ? value?.value
         : value;
-  return text === undefined || text === null || text === ''
-    ? '來源沒有記錄此項資料。'
-    : `來源記錄：${text}`;
+  return text === undefined || text === null || text === '' ? '' : String(text);
 }
-const leadOptions = computed(() => [
-  { value: '', label: '未指定主打曲目' },
-  ...(props.release.memberTrackIds ?? []).map((id, index) => ({
-    value: id,
-    label: props.tracksById.get(id)?.title || `無法使用的曲目 ${index + 1}`,
-  })),
-]);
 </script>
 <template>
   <section class="release-info-fields" aria-label="發行資料">
@@ -62,7 +54,6 @@ const leadOptions = computed(() => [
         :label="field.label"
         :model-value="draft[field.key].mode"
         :options="modes(field.key)"
-        :hint="sourceHint(field.key)"
         :disabled="disabled"
         @update:model-value="emit('update', field.key, 'mode', $event)"
       />
@@ -70,7 +61,7 @@ const leadOptions = computed(() => [
         <UiSelect
           v-if="field.key === 'type'"
           id="release-type-value"
-          label="手動發行類型"
+          label="類型"
           :model-value="draft.type.value"
           :options="typeOptions"
           :disabled="disabled"
@@ -79,7 +70,7 @@ const leadOptions = computed(() => [
         <div v-else-if="field.key === 'date'" class="release-info-fields__date">
           <UiSelect
             id="release-date-precision"
-            label="日期精度"
+            label="日期格式"
             :model-value="draft.date.precision"
             :options="precisionOptions"
             :disabled="disabled"
@@ -87,7 +78,7 @@ const leadOptions = computed(() => [
           />
           <UiTextField
             id="release-date-value"
-            label="手動發行日期"
+            label="日期"
             :model-value="draft.date.value"
             :placeholder="
               draft.date.precision === 'year'
@@ -104,26 +95,18 @@ const leadOptions = computed(() => [
         <UiTextField
           v-else
           id="release-count-value"
-          label="手動正式總曲數"
+          label="曲數"
           type="number"
           :min="release.memberCount || 1"
           :model-value="draft.totalTrackCount.value"
           :disabled="disabled"
-          hint="可以大於已匯入曲數，不得少於目前收錄的成員數。"
+          :hint="`至少 ${Math.max(1, release.memberCount || 0)} 首。`"
           @update:model-value="
             emit('update', 'totalTrackCount', 'value', $event)
           "
         />
       </template>
     </div>
-    <UiSelect
-      id="release-lead-track"
-      label="主打曲目"
-      :model-value="draft.leadTrackId"
-      :options="leadOptions"
-      :disabled="disabled"
-      @update:model-value="emit('lead', $event)"
-    />
   </section>
 </template>
 <style scoped>

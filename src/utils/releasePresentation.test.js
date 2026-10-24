@@ -2,12 +2,35 @@ import { describe, expect, it } from 'vitest';
 import {
   releaseCard,
   releaseTypeLabel,
+  releaseMetadataLabel,
+  releaseYearFromDate,
   filterReleases,
   createReleaseDraft,
   releaseDraftIntent,
 } from './releasePresentation.js';
 
 describe('release presentation and bounded editing', () => {
+  it('ignores unsupported date precision without treating object prototype keys as formats', () => {
+    expect(
+      releaseYearFromDate({ value: '2024', precision: 'constructor' }),
+    ).toBeUndefined();
+  });
+  it('uses one Chinese release vocabulary and year-first metadata without empty separators', () => {
+    expect(releaseTypeLabel('ep')).toBe('迷你專輯');
+    expect(releaseMetadataLabel('ep', 2026)).toBe('2026 · 迷你專輯');
+    expect(releaseMetadataLabel('album', 2024)).toBe('2024 · 專輯');
+    expect(releaseMetadataLabel('single')).toBe('單曲');
+    expect(releaseMetadataLabel('single', 0)).toBe('單曲');
+    expect(releaseYearFromDate({ value: '2024', precision: 'year' })).toBe(
+      2024,
+    );
+    expect(
+      releaseYearFromDate({ value: '2024-02-31', precision: 'day' }),
+    ).toBeUndefined();
+    expect(
+      releaseYearFromDate({ value: 2024, precision: 'year' }),
+    ).toBeUndefined();
+  });
   it('does not infer release type or date from import time, kind or scalar track metadata', () => {
     expect(
       releaseCard(

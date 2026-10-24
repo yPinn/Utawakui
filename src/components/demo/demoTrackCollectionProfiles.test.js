@@ -101,7 +101,9 @@ describe('demo track collection profiles', () => {
       'library-local': '本機曲目，預設顯示專輯與播放次數。',
       playlist: '播放清單曲目，預設只顯示必要欄位。',
       album: '專輯曲目，預設顯示播放次數與時長。',
-      artist: '藝人曲目，預設顯示播放次數與時長。',
+      artist: '藝人曲目，依播放次數由高到低排列，顯示播放次數與時長。',
+      'performance-archive': '封存場次曲目，顯示演出狀態與時長。',
+      'performance-session': '目前場次曲目，顯示演出狀態與時長。',
     });
   });
 

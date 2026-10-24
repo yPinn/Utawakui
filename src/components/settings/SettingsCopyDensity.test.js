@@ -43,9 +43,9 @@ describe('Settings copy density', () => {
 
   it('keeps decision-changing consequences while shortening routine guidance', () => {
     expect(librarySource).toContain('切換位置不會搬移既有曲目。');
-    expect(metadataSource).toContain(
-      '僅使用已儲存的資訊，不連線；無法確認的內容保留你的編輯。',
-    );
+    expect(metadataSource).toContain('啟動時整理本地資料；手動編輯會保留。');
+    expect(metadataSource).not.toContain('value="啟動時補齊曲目與發行資訊"');
+    expect(metadataSource).not.toContain('<UiHint>從來源更新會連線');
     expect(historySource).toContain('自動保存；清除不影響佇列或歌單。');
     expect(windowsSource).toContain(
       '背景執行保留播放、OBS 與輸出；最小化仍在工作列。',

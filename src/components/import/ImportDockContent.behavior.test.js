@@ -49,7 +49,7 @@ vi.mock('../ui/UiHint.vue', () => ({
 vi.mock('../ui/UiNotice.vue', () => ({ default: { setup: () => () => null } }));
 vi.mock('./ImportSourceRow.vue', () => ({
   default: {
-    props: ['actionLabel', 'actionDisabled'],
+    props: ['actionLabel', 'actionDisabled', 'track'],
     emits: ['action'],
     setup:
       (props, { emit }) =>
@@ -61,7 +61,7 @@ vi.mock('./ImportSourceRow.vue', () => ({
             disabled: props.actionDisabled,
             onClick: () => emit('action'),
           },
-          props.actionLabel,
+          [props.actionLabel, props.track?.artist],
         ),
   },
 }));
@@ -143,6 +143,17 @@ beforeEach(() => {
     }),
     getTrackStatusClass: () => 'pending',
   };
+});
+
+it('shows the same Chinese year-first release metadata in the import summary', () => {
+  Object.assign(fixture.session.state, {
+    collectionKind: 'album',
+    collectionReleaseType: 'ep',
+    collectionReleaseDate: { value: '2026', precision: 'year' },
+  });
+  const mounted = mount(Dock);
+  expect(textContent(mounted.root)).toContain('2026 · 迷你專輯');
+  mounted.app.unmount();
 });
 describe('Import Dock accepted work', () => {
   it('closes and reopens the current running batch without cancelling its work', async () => {

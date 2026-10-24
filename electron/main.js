@@ -156,6 +156,18 @@ const { createLibraryStorageService } = require('./lib/library/storage');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
 const {
+  registerLibraryMetadataHandlers,
+} = require('./main/libraryMetadataHandlers');
+const { createReconciliationService } = require('./lib/reconciliation/runtime');
+const { recoverTransaction } = require('./lib/reconciliation/transaction');
+const { createTagWritebackService } = require('./lib/tags/runtime');
+const { recoverTagFile } = require('./lib/tags/transaction');
+const { registerTagWritebackHandlers } = require('./main/tagWritebackHandlers');
+const {
+  registerReconciliationHandlers,
+  recoverReconciliations,
+} = require('./main/reconciliationHandlers');
+const {
   registerFolderPageObjectHandlers,
 } = require('./main/folderPageObjectHandlers');
 const {
@@ -168,6 +180,10 @@ const {
   registerBgmStandbyPlanHandlers,
 } = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
+const {
+  createReleaseCatalogService,
+} = require('./lib/releases/catalogRuntime');
+const { listTracks: listCatalogTracks } = require('./lib/library/tracks');
 const { registerSeparationHandlers } = require('./main/separationHandlers');
 const {
   registerFeatureDependencyHandlers,
@@ -506,6 +522,24 @@ if (!gotSingleInstanceLock) {
           finalize,
         );
     };
+    function recoverLibraryReconciliation() {
+      try {
+        recoverTagFile(configState.resolveDownloadDir(configState.getConfig()));
+        recoverTransaction(
+          configState.resolveDownloadDir(configState.getConfig()),
+        );
+      } catch (error) {
+        recordDiagnostic({
+          process: 'main',
+          level: 'error',
+          source: 'library-reconciliation',
+          operation: 'recover',
+          code: 'LIBRARY_RECONCILIATION_RECOVERY_FAILED',
+          error,
+        });
+      }
+    }
+    recoverLibraryReconciliation();
     void workOrganizationHost.recover();
     const getReleaseScope = () => ({
       dir: configState.resolveDownloadDir(configState.getConfig()),
@@ -524,6 +558,86 @@ if (!gotSingleInstanceLock) {
       getDirectory: getReleaseScope,
       inspectBinding: workOrganizationHost.runtime.inspectBinding,
       notifyChanged: publishReleaseChange,
+    });
+    const reconciliationService = createReconciliationService({
+      getDirectory: getReleaseScope,
+      notifyChanged: (payload) => {
+        publishReleaseChange(payload);
+        notifyLibraryUpdated({ allowProviderBackfill: false });
+      },
+      onProgress: (payload) => {
+        const window = windowState.getMainWindow();
+        if (window && !window.isDestroyed())
+          window.webContents.send('library:reconciliation-progress', payload);
+      },
+    });
+    registerReconciliationHandlers({
+      ipcMain,
+      service: {
+        ...reconciliationService,
+        recover: () =>
+          recoverReconciliations(tagWritebackService, reconciliationService),
+      },
+      getMainWindow: windowState.getMainWindow,
+      recordDiagnostic,
+    });
+    const tagWritebackService = createTagWritebackService({
+      getDirectory: getReleaseScope,
+      isBusy: () => heavyJobScheduler?.isBusy() ?? true,
+      onProgress: (payload) => {
+        const window = windowState.getMainWindow();
+        if (window && !window.isDestroyed())
+          window.webContents.send('library:tags-progress', payload);
+      },
+      notifyChanged: (payload) => {
+        publishReleaseChange(payload);
+        notifyLibraryUpdated({ allowProviderBackfill: false });
+      },
+    });
+    registerTagWritebackHandlers({
+      ipcMain,
+      service: tagWritebackService,
+      getMainWindow: windowState.getMainWindow,
+      recordDiagnostic,
+    });
+    app.once('before-quit', () => tagWritebackService.cancel());
+    app.once('before-quit', () => reconciliationService.cancel());
+    const releaseCatalogService = createReleaseCatalogService({
+      getDirectory: getReleaseScope,
+      requireProvider: () => requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW),
+      runWorker: (request, options) =>
+        providerRunnerManager.runReleaseCatalogWorker(request, options),
+      inspectBinding: workOrganizationHost.runtime.inspectBinding,
+      listTracks: listCatalogTracks,
+      notifyChanged: publishReleaseChange,
+      onProgress: (snapshot) => {
+        const window = windowState.getMainWindow();
+        if (window && !window.isDestroyed())
+          window.webContents.send(
+            'library:release-metadata-progress',
+            snapshot,
+          );
+      },
+      recordFailure: (error) =>
+        recordDiagnostic({
+          process: 'main',
+          level: 'warning',
+          source: 'library-metadata',
+          operation: 'release-catalog',
+          code: 'RELEASE_CATALOG_FAILED',
+          error,
+        }),
+    });
+    app.once('before-quit', () => releaseCatalogService.cancel());
+    const libraryMetadataMaintenance = registerLibraryMetadataHandlers({
+      catalogService: releaseCatalogService,
+      releaseRuntime: releaseOrganizationRuntime,
+      ipcMain,
+      getDirectory: getReleaseScope,
+      getMainWindow: windowState.getMainWindow,
+      requireProvider: () => requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW),
+      notifyChanged: publishReleaseChange,
+      recordDiagnostic,
     });
     heavyJobScheduler = createHeavyJobScheduler();
     registerHeavyJobSchedulerLifecycle({
@@ -1181,10 +1295,13 @@ if (!gotSingleInstanceLock) {
 
     registerPlaylistsHandlers({
       ipcMain,
+      organizeSavedReleaseMetadata: libraryMetadataMaintenance.organizeSaved,
       projectReleaseCollections: releaseOrganizationRuntime.projectList,
       getReleaseScope,
-      onCollectionsChanged: (payload) =>
-        publishReleaseChange({ libraryEpoch: workLibraryEpoch, ...payload }),
+      onCollectionsChanged: (payload) => {
+        publishReleaseChange({ libraryEpoch: workLibraryEpoch, ...payload });
+        releaseCatalogService.collectionsChanged(payload.collectionIds);
+      },
       dialog,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
@@ -1223,6 +1340,12 @@ if (!gotSingleInstanceLock) {
 
     registerImportHandlers({
       ipcMain,
+      prepareReleaseDownload: releaseCatalogService.prepareDownload,
+      validateReleaseDownload: releaseCatalogService.validateDownload,
+      attachReleaseDownload: releaseCatalogService.attachDownload,
+      getReleaseScope,
+      enqueueReleaseCatalog: (trackId, scope) =>
+        releaseCatalogService.enqueue(trackId, scope),
       createLibraryImportAdmission,
       readClipboardText: () => clipboard.readText(),
       getMainWindow: windowState.getMainWindow,
@@ -1267,7 +1390,11 @@ if (!gotSingleInstanceLock) {
     registerConfigHandlers({
       ipcMain,
       onLibraryDirectoryChanged: () => {
+        releaseCatalogService.cancel();
+        reconciliationService.invalidate();
+        tagWritebackService.invalidate();
         workLibraryEpoch += 1;
+        recoverLibraryReconciliation();
         workOrganizationHost.invalidate();
         releaseOrganizationRuntime.invalidate();
         publishReleaseChange({

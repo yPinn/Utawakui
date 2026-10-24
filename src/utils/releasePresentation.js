@@ -2,18 +2,32 @@ const TYPE_LABELS = {
   unknown: '未分類',
   album: '專輯',
   single: '單曲',
-  ep: 'EP',
+  ep: '迷你專輯',
 };
 export function releaseTypeLabel(type) {
-  return TYPE_LABELS[type] || TYPE_LABELS.unknown;
+  return Object.hasOwn(TYPE_LABELS, type)
+    ? TYPE_LABELS[type]
+    : TYPE_LABELS.unknown;
+}
+export function releaseYearFromDate(date) {
+  return typeof date?.value === 'string' &&
+    ['year', 'month', 'day'].includes(date.precision) &&
+    validDate(date.value, date.precision)
+    ? Number(date.value.slice(0, 4))
+    : undefined;
+}
+export function releaseMetadataLabel(type, year) {
+  return [
+    Number.isInteger(year) && year > 0 && year <= 9999 ? year : undefined,
+    releaseTypeLabel(type),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
 export function releaseCard(collection, tracks) {
   const effective = collection.resolvedRelease;
   const date = effective?.date;
-  const year =
-    typeof date?.value === 'string' && /^[0-9]{4}(?:-|$)/.test(date.value)
-      ? Number(date.value.slice(0, 4))
-      : undefined;
+  const year = releaseYearFromDate(date);
   return {
     id: collection.id,
     name: collection.name || '(未命名發行)',

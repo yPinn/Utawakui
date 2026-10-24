@@ -41,6 +41,20 @@ const source = readFileSync(
 );
 
 describe('LibraryAlbumCard', () => {
+  it('shares Chinese year-first release metadata and keeps unknown years compact', () => {
+    for (const [releaseType, releaseYear, expected] of [
+      ['ep', 2026, '2026 · 迷你專輯'],
+      ['album', 2024, '2024 · 專輯'],
+      ['single', undefined, '單曲'],
+    ]) {
+      const mounted = mount(LibraryAlbumCard, {
+        album: { ...album, releaseType, releaseYear },
+      });
+      expect(textContent(mounted.root)).toContain(expected);
+      if (!releaseYear) expect(textContent(mounted.root)).not.toContain(' · ');
+      mounted.app.unmount();
+    }
+  });
   it('presents one full-card navigation action and one artwork playback action', () => {
     const mounted = mount(LibraryAlbumCard, { album });
     const buttons = findAll(mounted.root, (node) => node.type === 'button');

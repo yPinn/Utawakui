@@ -12,10 +12,12 @@ const {
   loadPlaylists,
   updatePlaylistReleaseInfo,
   createLocalRelease,
+  resolvePlaylistId,
 } = require('../playlists');
 const { findTrackRecord } = require('../library/tracks');
 const { isBoundedTrackId } = require('../library/paths');
 const { hasControlCharacters } = require('../textGuards');
+const { publicCatalogPage, catalogMemberMatches } = require('./catalog');
 const {
   resolveReleaseInfo,
   createReleaseInfo,
@@ -66,8 +68,9 @@ function revision(collection) {
 }
 function hasBindings(collection) {
   return (
-    !collection.source &&
-    Object.hasOwn(collection.releaseInfo ?? {}, 'localMemberBindings')
+    Boolean(collection.releaseInfo?.catalog) ||
+    (!collection.source &&
+      Object.hasOwn(collection.releaseInfo ?? {}, 'localMemberBindings'))
   );
 }
 
@@ -79,6 +82,7 @@ function projectReleaseList(collections) {
     if (collection.releaseInfo) {
       projected.releaseInfo = { ...collection.releaseInfo };
       delete projected.releaseInfo.localMemberBindings;
+      delete projected.releaseInfo.catalog;
     }
     if (collection.kind === 'album') {
       projected.resolvedRelease = {
@@ -87,6 +91,7 @@ function projectReleaseList(collections) {
         leadTrackId: collection.releaseInfo?.leadTrackId ?? null,
       };
       projected.requiresMembershipVerification = hasBindings(collection);
+      projected.hasSourceCatalog = Boolean(collection.releaseInfo?.catalog);
       projected.availableTrackIds = hasBindings(collection)
         ? []
         : [...collection.trackIds];
@@ -131,6 +136,7 @@ function createReleaseOrganizationRuntime({
   }
   function load(context, id) {
     collectionId(id);
+    id = resolvePlaylistId(context.dir, id);
     available(context);
     const collection = loadPlaylists(context.dir).find(
       (entry) => entry.id === id,
@@ -207,13 +213,16 @@ function createReleaseOrganizationRuntime({
       let bindingStatus;
       if (hasBindings(collection)) {
         const resolved = await inspect(id, context);
-        const saved = collection.releaseInfo.localMemberBindings[id];
+        const saved =
+          collection.releaseInfo.catalog?.bindings[id] ??
+          collection.releaseInfo.localMemberBindings?.[id];
         bindingStatus =
           resolved.status === 'missing'
             ? 'missing'
             : !saved
               ? 'unresolved'
-              : resolved.binding.value !== EMPTY_DIGEST &&
+              : catalogMemberMatches(collection, id) &&
+                  resolved.binding.value !== EMPTY_DIGEST &&
                   bindingsEqual(saved, resolved.binding)
                 ? 'current'
                 : 'changed';
@@ -506,9 +515,11 @@ function createReleaseOrganizationRuntime({
         assertSame(collection, context, current);
         if (
           hasBindings(collection) &&
-          (binding?.value === EMPTY_DIGEST ||
+          (!catalogMemberMatches(collection, input.trackId) ||
+            binding?.value === EMPTY_DIGEST ||
             !bindingsEqual(
-              collection.releaseInfo.localMemberBindings[input.trackId],
+              collection.releaseInfo.catalog?.bindings[input.trackId] ??
+                collection.releaseInfo.localMemberBindings?.[input.trackId],
               binding,
             ))
         )
@@ -561,6 +572,83 @@ function createReleaseOrganizationRuntime({
       });
     });
   }
+  function catalogPage(input) {
+    return service.runInLibrary(async (context) => {
+      record(input, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'offset',
+        'limit',
+        'availabilityOnly',
+      ]);
+      if (
+        input.availabilityOnly !== undefined &&
+        typeof input.availabilityOnly !== 'boolean'
+      )
+        throw failure();
+      page(input);
+      checkScope(input, context);
+      const collection = load(context, input.collectionId);
+      checkRevision(input, collection);
+      const states = new Map();
+      for (let offset = 0; offset < collection.trackIds.length; offset += 100) {
+        const projected = await members(collection, context, {
+          offset,
+          limit: 100,
+        });
+        projected.members.forEach((member) =>
+          states.set(member.trackId, member.bindingStatus),
+        );
+      }
+      const localCandidates = new Set();
+      for (const slot of collection.releaseInfo?.catalog?.manifest.slots ??
+        []) {
+        if (
+          slot.videoId &&
+          !collection.releaseInfo.catalog.links[`slot-${slot.position}`] &&
+          present(slot.videoId, context)
+        )
+          localCandidates.add(slot.videoId);
+      }
+      return {
+        status: 'ok',
+        collectionId: collection.id,
+        revision: revision(collection),
+        libraryEpoch: context.epoch,
+        catalog: publicCatalogPage(collection, states, input, localCandidates),
+      };
+    });
+  }
+  function catalogDownload(input) {
+    return service.runInLibrary((context) => {
+      record(input, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'slotKey',
+      ]);
+      checkScope(input, context);
+      const collection = load(context, input.collectionId);
+      checkRevision(input, collection);
+      if (
+        typeof input.slotKey !== 'string' ||
+        !/^slot-[1-9][0-9]{0,3}$/.test(input.slotKey)
+      )
+        throw failure();
+      const slot =
+        collection.releaseInfo?.catalog?.manifest.slots[
+          Number(input.slotKey.slice(5)) - 1
+        ];
+      if (!slot?.available || !slot.videoId)
+        throw failure('RELEASE_UNAVAILABLE');
+      return {
+        status: 'ok',
+        input: `https://music.youtube.com/watch?v=${slot.videoId}`,
+        libraryEpoch: context.epoch,
+      };
+    });
+  }
   return {
     get,
     save,
@@ -568,6 +656,8 @@ function createReleaseOrganizationRuntime({
     forTrack,
     resolveMembers,
     withPlayableCollection,
+    catalogPage,
+    catalogDownload,
     projectList: projectReleaseList,
     invalidate() {
       generation++;

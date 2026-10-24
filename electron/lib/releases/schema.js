@@ -2,6 +2,7 @@
 
 const { isBoundedTrackId } = require('../library/paths');
 const { hasControlCharacters } = require('../textGuards');
+const { validateCatalog } = require('./catalog');
 
 const FIELDS = ['type', 'date', 'totalTrackCount'];
 const TYPES = new Set(['unknown', 'single', 'ep', 'album']);
@@ -129,6 +130,7 @@ function validateReleaseInfo(value, collection) {
     'overrides',
     'leadTrackId',
     'localMemberBindings',
+    'catalog',
   ]);
   const members = trackIds(collection.trackIds);
   if (!Number.isSafeInteger(value.revision) || value.revision < 0) invalid();
@@ -153,6 +155,8 @@ function validateReleaseInfo(value, collection) {
       collection.source,
     );
   }
+  if (owns(value, 'catalog'))
+    result.catalog = validateCatalog(value.catalog, collection);
   return result;
 }
 
@@ -296,6 +300,21 @@ function reconcileReleaseMembership(previous, nextTrackIds, options = {}) {
   }
   const info = currentInfo(previous);
   const nextInfo = { ...info };
+  if (info.catalog) {
+    nextInfo.catalog = {
+      ...info.catalog,
+      links: Object.fromEntries(
+        Object.entries(info.catalog.links).filter(([, link]) =>
+          members.includes(link.trackId),
+        ),
+      ),
+      bindings: Object.fromEntries(
+        Object.entries(info.catalog.bindings).filter(([id]) =>
+          members.includes(id),
+        ),
+      ),
+    };
+  }
   if (info.leadTrackId !== undefined && !members.includes(info.leadTrackId))
     delete nextInfo.leadTrackId;
   if (

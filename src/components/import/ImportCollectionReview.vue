@@ -59,6 +59,11 @@ watch(
     ref="reviewLayout"
     :source="state.playlistTitle || '未命名清單'"
     :count="playlistStats.total"
+    :entity-kind="state.collectionKind === 'album' ? 'album' : 'playlist'"
+    :release-type="state.collectionReleaseType || 'unknown'"
+    :release-date="state.collectionReleaseDate"
+    :cover-url="state.collectionThumbnailUrl || ''"
+    :tracks="state.playlistTracks || []"
     list-label="匯入曲目"
     aria-label="匯入曲目確認"
   >

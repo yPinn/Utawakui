@@ -7,6 +7,7 @@ Playlist／album／artist 的 Folder 頁可放照片與便條。資料 owner 是
 - `folder-page-assets.json` v4 以單一 `objects[]` 保存 key、`type`（`photo`／`note`）、`source`（`user` 可刪除；`derived` 只存位置）、頁面 identity、placement、Pin、rotation、同頁 layer order、依類型驗證的 payload 與時間。`pdf`／`embed` 保留給後續，目前拒絕。
 - 圖片存於 `folder-page-assets/<assetId>/`，不保存原始路徑或遠端 URL；只接受 main 驗證過的 JPEG／PNG／WebP。
 - 每頁最多 12 個使用者物件，衍生物件不計；刪除 collection 時一併清理。
+- 衍生藝人摘要 memo 的發行計數統一標示「作品」，涵蓋專輯、單曲與迷你專輯；沿用既有 `albumCount` 投影，不更改計數或保存資料。
 
 ## 新增與編輯
 
@@ -19,7 +20,7 @@ Playlist／album／artist 的 Folder 頁可放照片與便條。資料 owner 是
 - 照片、便條與衍生摘要共用一個 Folder-wide drag／Pin／stacking owner；短按或 Enter／Space 展開，拖曳不誤觸。
 - 所有物件都保存 paper／side／bottom 的 region-local placement，放開或鍵盤移動後立即貼齊；Pin 只鎖定移動。Side 空間不足時只在 render 時投影到底部，變寬即回原位；resize 不保存。
 - 版面變更以單一批次寫入；各頁獨立保存，切頁與重啟都還原。
-- 新使用者物件由 main 放在 bottom region 的 4×3 格點，加 ±0.04 normalized jitter，並隨機向左或右傾斜 0.75°–4°；重開與 render 不重新隨機。同次新增的物件由最上層往右下錯開一個最小可抓取尺寸。衍生摘要未保存時固定在 bottom 最底層。
+- 新使用者物件由 main 放在 bottom region 的 4×3 格點，加 ±0.04 normalized jitter，並隨機向左或右傾斜 0.75°–4°；重開與 render 不重新隨機。同次新增的物件由最上層往右下錯開一個最小可抓取尺寸。專輯與 Single 共用的衍生藝人摘要未保存位置時，預設在紙張右上角（paper，anchor x=1／y=0），仍位於使用者物件後方；已保存的位置、Pin 與旋轉優先，不因新預設改寫。
 
 ## 便條
 

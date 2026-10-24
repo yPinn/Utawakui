@@ -41,9 +41,9 @@ describe('LibraryBrowseContent track interaction owner', () => {
 
   it('uses one canonical table and disables custom reorder while filtering', () => {
     expect(source).toContain('<TrackTable');
-    expect(source).toMatch(
-      /:entries="[\s\S]*?singleDetail\.isSingle && singleDetail\.state !== 'ready'[\s\S]*?\? \[\][\s\S]*?: visibleTableEntries/u,
-    );
+    expect(source).toContain(':entries="displayedTableEntries"');
+    expect(source).not.toContain("singleDetail.state === 'ready'");
+    expect(source).not.toContain('albumGridLoading || membershipLoading');
     expect(source).toContain('? `library-${playlistState.libraryView}`');
     expect(source).toContain(':collection-kind="tableCollectionKind"');
     expect(source).toContain(
@@ -61,6 +61,18 @@ describe('LibraryBrowseContent track interaction owner', () => {
       ':can-reorder-playlist-tracks="canReorderPlaylistTracks"',
     );
     expect(source).not.toContain(':can-drag="canDragPlaylistRows"');
+  });
+
+  it('limits only the artist table after sorting and filtering, keeping the full queue', () => {
+    expect(source).toMatch(
+      /const displayedTableEntries = computed\(\(\) =>\s*isArtistSelected\.value\s*\? artistTrackPreview\(visibleTableEntries\.value\)\s*: visibleTableEntries\.value/u,
+    );
+    expect(source).toMatch(
+      /function currentVisibleQueueTracks\(\)[\s\S]*?visibleTableEntries\.value\.map/u,
+    );
+    expect(source).toMatch(
+      /const collectionPlaybackTracks = computed\([\s\S]*?orderedPlaylistEntries\.value\.map/u,
+    );
   });
 
   it('applies row sorting only to Library and Playlist projections', () => {

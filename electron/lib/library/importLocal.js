@@ -103,6 +103,12 @@ async function buildContentHashTrackMap(
 ) {
   const index = loadIndex(dir);
   const trackIdByContentHash = new Map();
+  let tagReceipts = [];
+  try {
+    tagReceipts = require('../tags/ledger').readTagLedger(dir).data.receipts;
+  } catch {
+    /* Unverified aliases never affect import admission. */
+  }
 
   for (const record of listTrackRecords(dir)) {
     const indexed = index.tracks[record.id];
@@ -147,6 +153,17 @@ async function buildContentHashTrackMap(
 
     if (isSha256Digest(contentHash) && !trackIdByContentHash.has(contentHash)) {
       trackIdByContentHash.set(contentHash, record.id);
+    }
+    if (isSha256Digest(contentHash)) {
+      const { tagContentAliases } = require('../tags/aliases');
+      for (const alias of await tagContentAliases(
+        dir,
+        record.id,
+        contentHash,
+        tagReceipts,
+      ))
+        if (!trackIdByContentHash.has(alias))
+          trackIdByContentHash.set(alias, record.id);
     }
   }
 
@@ -334,9 +351,29 @@ async function importOneLocalAudioFile({
       // Refresh scalar hashes inside the admission lane: another import/delete
       // may have completed while this file was copying or being converted.
       const indexed = loadIndex(dir);
-      const existingTrackId = listTrackRecords(dir).find(
+      const records = listTrackRecords(dir);
+      let existingTrackId = records.find(
         (record) => indexed.tracks[record.id]?.contentHash === contentHash,
       )?.id;
+      const candidate = trackIdByContentHash.get(contentHash);
+      if (
+        !existingTrackId &&
+        candidate &&
+        records.some((record) => record.id === candidate)
+      ) {
+        const candidateHash = indexed.tracks[candidate]?.contentHash;
+        const aliases = await require('../tags/aliases').tagContentAliases(
+          dir,
+          candidate,
+          candidateHash,
+        );
+        assertCurrent();
+        if (
+          aliases.includes(contentHash) &&
+          loadIndex(dir).tracks[candidate]?.contentHash === candidateHash
+        )
+          existingTrackId = candidate;
+      }
       if (existingTrackId) {
         addSkipped(result, displaySourcePath, 'duplicate-content', {
           existingTrackId,

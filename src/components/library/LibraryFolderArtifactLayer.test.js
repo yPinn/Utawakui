@@ -3,6 +3,7 @@ import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
+import { deriveAlbumSupportingContent } from '../../utils/albumSupportingContent.js';
 
 const source = readFileSync(
   new URL('./LibraryFolderArtifactLayer.vue', import.meta.url),
@@ -70,10 +71,54 @@ describe('LibraryFolderArtifactLayer', () => {
 
     expect(html).toContain('ui-folder-artifact__fields');
     expect(html).toMatch(/<dt[^>]*>曲目<\/dt><dd[^>]*>14 首<\/dd>/u);
-    expect(html).toMatch(/<dt[^>]*>專輯<\/dt><dd[^>]*>1 張<\/dd>/u);
+    expect(html).toMatch(/<dt[^>]*>作品<\/dt><dd[^>]*>1 張<\/dd>/u);
     expect(html).toMatch(/<dt[^>]*>年份<\/dt><dd[^>]*>2019<\/dd>/u);
     expect(html).toContain('藝人資料');
     expect(html).not.toContain('ui-folder-artifact--compact');
+  });
+
+  it('labels the total of an album, an EP and two Singles as works', async () => {
+    const types = ['album', 'ep', 'single', 'single'];
+    const tracks = types.map((_, index) => ({
+      id: `track-${index}`,
+      title: `曲目 ${index}`,
+      artist: '9Lana',
+    }));
+    const albumEntries = types.map((type, index) => ({
+      collection: {
+        id: `release-${index}`,
+        name: `作品 ${index}`,
+        kind: 'album',
+        resolvedRelease: { type },
+      },
+      tracks: [tracks[index]],
+    }));
+    const supporting = deriveAlbumSupportingContent({
+      selectedAlbumId: 'release-0',
+      selectedTracks: [tracks[0]],
+      albumEntries,
+      libraryTracks: tracks,
+      artistIndex: {
+        artists: [
+          {
+            id: 'artist-9lana',
+            name: '9Lana',
+            trackIds: tracks.map(({ id }) => id),
+          },
+        ],
+        trackArtistIds: Object.fromEntries(
+          tracks.map(({ id }) => [id, ['artist-9lana']]),
+        ),
+      },
+    });
+    expect(supporting.summary.albumCount).toBe(4);
+    const html = await render({
+      summary: { artist: supporting.artist, ...supporting.summary },
+      objects: [],
+    });
+    expect(html).toMatch(/<dt[^>]*>作品<\/dt><dd[^>]*>4 張<\/dd>/u);
+    expect(html).not.toMatch(/<dt[^>]*>專輯<\/dt>/u);
+    expect(html).toMatch(/<dt[^>]*>曲目<\/dt><dd[^>]*>4 首<\/dd>/u);
   });
 
   it('clips the data card and gives about one in three user objects stable stationery', async () => {
@@ -113,7 +158,7 @@ describe('LibraryFolderArtifactLayer', () => {
     expect(summaryIndex).toBeLessThan(photoIndex);
     expect(html).toContain('--ui-folder-artifact-rotation:-1.5deg');
     expect(source).toMatch(
-      /ARTIST_SUMMARY_PLACEMENT = Object\.freeze\(\{\s*region: 'bottom',/u,
+      /ARTIST_SUMMARY_PLACEMENT = Object\.freeze\(\{\s*region: 'paper',\s*anchor: Object\.freeze\(\{ x: 1, y: 0 \}\)/u,
     );
   });
 

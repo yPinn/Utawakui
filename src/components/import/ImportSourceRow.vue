@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useLibraryArtwork } from '../../composables/useLibraryArtwork.js';
 import {
   ArrowDownToLine,
   Check,
@@ -26,6 +27,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['action']);
+const { trackArtwork } = useLibraryArtwork();
 
 const STATUS_PRESENTATION = Object.freeze({
   pending: Object.freeze({
@@ -59,7 +61,7 @@ const hasAction = computed(() =>
 <template>
   <UiTrackRow
     class="import-source-row right-dock-track"
-    :track="track"
+    :track="trackArtwork(track)"
     :interactive="rowAction && !actionDisabled"
     :action-label="rowAction ? actionLabel : undefined"
     state-surface

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useLibraryArtwork } from '../../composables/useLibraryArtwork.js';
 import { SquareCheckBig } from '../../icons/index.js';
 import {
   identityArtistLabel,
@@ -19,6 +20,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['selectTrack', 'toggleSelectAll']);
 
+const { trackArtwork } = useLibraryArtwork();
 const sections = computed(() => {
   const missing = [];
   const local = [];
@@ -80,7 +82,7 @@ function checkboxId(trackId) {
           v-for="entry in section.entries"
           :key="entry.source.id"
           class="import-collection-selection-list__row"
-          :track="entry.track"
+          :track="trackArtwork(entry.track)"
           :active="section.id === 'missing' && entry.source.selected"
           state-surface
           hide-duration

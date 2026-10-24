@@ -113,6 +113,19 @@ afterEach(() => {
 });
 
 describe('useSeparationPreparation', () => {
+  it('exposes the selected canonical collection for the preview without copying its metadata', async () => {
+    const { preparation, playlistState } = setup();
+    expect(preparation.selectedCollection.value).toBeNull();
+    preparation.selectedSourceId.value = 'collection:album-1';
+    expect(preparation.selectedCollection.value).toBe(
+      playlistState.playlists[0],
+    );
+    playlistState.playlists[0].description = '新簡介';
+    expect(preparation.selectedCollection.value.description).toBe('新簡介');
+    preparation.selectedSourceId.value = 'playback-order';
+    await nextTick();
+    expect(preparation.selectedCollection.value).toBeNull();
+  });
   it('partitions one ordered source projection by the selected recipe', () => {
     const { preparation } = setup();
     expect(preparation.sourceTracks.value.map(({ id }) => id)).toEqual([

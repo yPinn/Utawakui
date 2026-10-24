@@ -1,5 +1,5 @@
 <script setup>
-import { AudioWaveform, BadgeCheck, RotateCcw } from '../../icons/index.js';
+import { MicAudioLines, BadgeCheck, RotateCcw } from '../../icons/index.js';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -17,8 +17,10 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
 
 <template>
   <div class="separation-preparation-list">
-    <AppRightDockSection :heading="`尚未生成 · ${unpreparedTracks.length} 首`">
-      <UiHint v-if="unpreparedTracks.length === 0">沒有尚未生成的曲目</UiHint>
+    <AppRightDockSection :heading="`尚未產生 · ${unpreparedTracks.length} 首`">
+      <UiHint v-if="unpreparedTracks.length === 0"
+        >沒有可加入處理的曲目。</UiHint
+      >
       <ul v-else class="separation-preparation-list__items">
         <TrackIdentityRow
           v-for="track in unpreparedTracks"
@@ -35,7 +37,7 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
         >
           <template #trail>
             <UiIconButton
-              :icon="AudioWaveform"
+              :icon="MicAudioLines"
               :label="`加入伴奏處理佇列：${track.title}`"
               :disabled="busy"
               @click.stop="emit('startTrack', track.id)"
@@ -50,12 +52,12 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
       <template #trailing>
         <UiIconButton
           :icon="RotateCcw"
-          label="重新準備已有伴奏"
+          label="重新產生伴奏"
           :disabled="busy || preparedTracks.length === 0"
           @click="emit('restartPrepared')"
         />
       </template>
-      <UiHint v-if="preparedTracks.length === 0">沒有已有伴奏的曲目</UiHint>
+      <UiHint v-if="preparedTracks.length === 0">沒有可重新產生的伴奏。</UiHint>
       <ul v-else class="separation-preparation-list__items">
         <TrackIdentityRow
           v-for="track in preparedTracks"

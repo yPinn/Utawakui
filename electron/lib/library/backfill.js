@@ -3,6 +3,7 @@
 const { VIDEO_ID_RE } = require('../youtube');
 const { resolveTrackDir } = require('./paths');
 const { loadIndex, saveIndexEntry } = require('./metadataIndex');
+const { METADATA_FIELDS } = require('../reconciliation/metadata');
 
 let backfillInProgress = false;
 // Session-only failure memory (not persisted) — resets on restart, so a
@@ -98,6 +99,17 @@ async function runBackfillPass(dir, tracks, fetchMetadata, onStatus = null) {
           ) {
             delete toWrite.artist;
             delete toWrite.artistOrigin;
+          }
+          for (const field of METADATA_FIELDS) {
+            if (
+              currentEntry?.[`${field}Origin`] === 'manual' ||
+              (!['title', 'artist'].includes(field) &&
+                currentEntry?.[field] != null &&
+                currentEntry?.[`${field}Origin`] !== 'provider')
+            ) {
+              delete toWrite[field];
+              delete toWrite[`${field}Origin`];
+            }
           }
           if (Object.keys(toWrite).length > 0) {
             saveIndexEntry(dir, track.id, toWrite);

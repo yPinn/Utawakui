@@ -367,6 +367,13 @@ export function useImportExecution({
         ? state.singleTrack.title
         : state.playlistTitle || '未命名清單',
       collectionKind: state.collectionKind,
+      releaseType: state.collectionReleaseType || 'unknown',
+      releaseDate: state.collectionReleaseDate
+        ? {
+            value: state.collectionReleaseDate.value,
+            precision: state.collectionReleaseDate.precision,
+          }
+        : null,
       source,
       thumbnailUrl: single
         ? state.singleTrack.thumbnailUrl || ''

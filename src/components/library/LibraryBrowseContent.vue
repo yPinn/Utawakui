@@ -27,6 +27,9 @@ import { useSeparationQueueContext } from '../../composables/useSeparationQueueC
 import { useTrackListDensity } from '../../composables/useTrackListDensity.js';
 import { useTrackSeparationAction } from '../../composables/useTrackSeparationAction.js';
 import { useTrackPreview } from '../../composables/useTrackPreview.js';
+import { useTrackPreviewEligibility } from '../../composables/useTrackPreviewEligibility.js';
+import { createReleaseMemberResolver } from '../../composables/useReleaseMembers.js';
+import { isLocalPreviewTrack } from '../../utils/trackPreviewSource.js';
 import { useSongEditor } from '../../composables/useSongEditor.js';
 import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
 import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue';
@@ -43,6 +46,7 @@ import AppFolderCompactBar from '../layout/AppFolderCompactBar.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue';
 import LibraryCollectionHeader from './LibraryCollectionHeader.vue';
+import LibraryReleaseCatalog from './LibraryReleaseCatalog.vue';
 import TrackPreviewOverlay from '../track/TrackPreviewOverlay.vue';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
@@ -62,8 +66,16 @@ import {
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
 import { deriveReleaseDetail } from '../../utils/releaseDetailPresentation.js';
+import {
+  releaseYearFromDate,
+  releaseTypeLabel,
+} from '../../utils/releasePresentation.js';
 import { deriveAlbumReference } from '../../utils/albumReference.js';
-import { artistSearchTexts, deriveArtistPage } from '../../utils/artistPage.js';
+import {
+  artistSearchTexts,
+  artistTrackPreview,
+  deriveArtistPage,
+} from '../../utils/artistPage.js';
 import { shufflePreviewTracks } from '../../utils/trackPreviewOrder.js';
 import {
   sortLibraryTracks,
@@ -132,6 +144,7 @@ const { handoffState: bgmHandoffState } = useBgmSession();
 // Transient UI mode stays local; mutations persist immediately.
 const selectedTrackId = shallowRef(null);
 let rowPlaybackRequest = 0;
+let collectionNavigationRevision = 0;
 const artistIdentityOpen = shallowRef(false);
 const searchQuery = defineModel('searchQuery', {
   type: String,
@@ -215,7 +228,6 @@ const stickyOffsetStyle = computed(() => ({
 const {
   albumEntries,
   albumSupportingContent,
-  membershipLoading,
   membershipError,
   selectedReleaseVerification,
   retrySelectedRelease,
@@ -340,6 +352,32 @@ const visibleTableEntries = computed(() =>
     ? visibleLibraryEntries.value
     : visiblePlaylistEntries.value,
 );
+const displayedTableEntries = computed(() =>
+  isArtistSelected.value
+    ? artistTrackPreview(visibleTableEntries.value)
+    : visibleTableEntries.value,
+);
+// Eligibility must not supersede an explicit playback request's resolver token.
+const previewMembers = createReleaseMemberResolver({
+  getBridge: () => window.Utawakui,
+  getCollection: (id) =>
+    selectedPlaylist.value?.id === id ? selectedPlaylist.value : null,
+  getTracksById: () => libraryTracksById.value,
+});
+const previewEligibility = useTrackPreviewEligibility({
+  collection: selectedPlaylist,
+  candidates: computed(() =>
+    visibleTableEntries.value.map(({ track }) => track),
+  ),
+  libraryIdentity: libraryTracksById,
+  resolveMembers: (collection) => {
+    previewMembers.dispose();
+    return collection.resolvedRelease &&
+      collection.releaseLibraryEpoch !== undefined
+      ? previewMembers.resolve(collection, { fresh: true })
+      : resolvePlaylistTracks(collection);
+  },
+});
 const currentTableColumnPreferences = computed(
   () => tableColumnPreferencesByKind.value[tableCollectionKind.value] ?? {},
 );
@@ -363,12 +401,7 @@ const singleDetail = computed(() =>
       : (selectedReleaseVerification?.value ?? { state: 'ready' }),
   }),
 );
-const collectionTableLoading = computed(
-  () =>
-    initialCollectionLoading.value ||
-    (singleDetail.value.isSingle &&
-      ['idle', 'pending'].includes(singleDetail.value.state)),
-);
+const collectionTableLoading = computed(() => initialCollectionLoading.value);
 const canPlayCollection = computed(() =>
   singleDetail.value.isSingle
     ? singleDetail.value.canStart ||
@@ -414,6 +447,16 @@ const albumSummary = computed(() =>
 // album or artist page.
 ensureArtistIndex();
 const headerFields = computed(() => {
+  if (selectedPlaylist.value?.hasSourceCatalog) {
+    const year = releaseYearFromDate(
+      selectedPlaylist.value.resolvedRelease?.date,
+    );
+    const total = selectedPlaylist.value.resolvedRelease?.totalTrackCount;
+    return [
+      year ? String(year) : '',
+      Number.isInteger(total) ? `${total} 首曲目` : '',
+    ].filter(Boolean);
+  }
   if (singleDetail.value.isSingle) return singleDetail.value.fields;
   const count = headerTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);
@@ -434,7 +477,7 @@ const headerFields = computed(() => {
     return fields;
   }
   const releaseYear = isAlbumSelected.value
-    ? albumSummary.value.releaseYear
+    ? releaseYearFromDate(selectedPlaylist.value?.resolvedRelease?.date)
     : undefined;
   return releaseYear ? [String(releaseYear), countLine] : [countLine];
 });
@@ -468,11 +511,11 @@ const selectedCollectionIsPlaying = computed(() =>
 );
 const playingSupportingAlbumId = computed(() => {
   if (!state.isPlaying || !queueState.sourceId) return '';
-  return albumEntries.value.some(
-    ({ collection }) => collection.id === queueState.sourceId,
-  )
-    ? queueState.sourceId
-    : '';
+  return (
+    albumEntries.value.find(({ collection }) =>
+      collectionPlayback.isActiveSource(collection.id),
+    )?.collection.id ?? ''
+  );
 });
 
 function openAlbumArtist() {
@@ -624,7 +667,7 @@ const collectionMoreContent = computed(() => {
       playlist.kind === 'album'
         ? singleDetail.value.isSingle
           ? '新增單曲發行至播放清單'
-          : '新增專輯至播放清單'
+          : `新增${playlist.resolvedRelease?.type === 'unknown' ? '發行' : releaseTypeLabel(playlist.resolvedRelease?.type || 'album')}至播放清單`
         : '新增至別的播放清單';
     groups.push({
       id: 'destinations',
@@ -672,8 +715,8 @@ const tableEmptyText = computed(() => {
   if (mode.value === 'all') return visibleTracksEmptyText.value;
   if (playlistTracks.value.length > 0) return '找不到符合搜尋的曲目。';
   if (isArtistSelected.value) return '沒有曲目。';
-  if (isAlbumSelected.value) return '這個專輯參照目前沒有曲目。';
-  return '這個歌單還沒有曲目。從任一曲目列的操作選單加入。';
+  if (isAlbumSelected.value) return '這張專輯目前沒有本機曲目。';
+  return '播放清單還沒有曲目。到「全部曲目」，從曲目選單加入播放清單。';
 });
 const contentFieldVariant = computed(() => {
   if (
@@ -688,9 +731,9 @@ const contentFieldVariant = computed(() => {
 
 // Selecting a different playlist/library-view (both now live in the shared
 // usePlaylists() state, driven by the persistent AppPlaylistSidebar) only
-// affects the search/add-menu/drag state scoped to this view's main content
-// area — it must not touch the edit-details modal, which AppPlaylistSidebar
-// owns independently.
+// resets this view's search/add-menu/drag state and discards pending row or
+// preview intents. It must not touch the edit-details modal, which
+// AppPlaylistSidebar owns independently.
 watch(
   [
     () => selectedPlaylist.value?.id,
@@ -699,6 +742,8 @@ watch(
     () => playlistState.libraryView,
   ],
   () => {
+    collectionNavigationRevision += 1;
+    rowPlaybackRequest += 1;
     if (!showTrackSearch.value) searchQuery.value = '';
     selectedTrackId.value = null;
     artistIdentityOpen.value = false;
@@ -899,13 +944,21 @@ async function confirmRemovePlaylistTrack(track, playlistId) {
 }
 
 async function applyTrackMenuAction(track, value) {
+  if (
+    [
+      TRACK_MENU_ACTIONS.addToQueue,
+      TRACK_MENU_ACTIONS.addToPerformanceQueue,
+    ].includes(value.action)
+  ) {
+    const [admitted] = await resolveCurrentCollectionActionTracks([track]);
+    if (!admitted) return;
+    if (value.action === TRACK_MENU_ACTIONS.addToQueue) enqueueTrack(admitted);
+    else await performanceQueue.addTrack(admitted.id);
+    return;
+  }
   if (value.action === TRACK_MENU_ACTIONS.createPlaylist) {
     const playlist = await createPlaylistAction();
     if (playlist) addTrackToPlaylist(playlist.id, track.id);
-  } else if (value.action === TRACK_MENU_ACTIONS.addToQueue) {
-    enqueueTrack(track);
-  } else if (value.action === TRACK_MENU_ACTIONS.addToPerformanceQueue) {
-    await performanceQueue.addTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
   } else if (
@@ -932,13 +985,46 @@ const previewMenuOptions = computed(() =>
   trackMenuOptions(trackPreview.state.tracks[trackPreview.state.index]),
 );
 
+// Display association is not action proof. Album preview and per-row queue
+// commands need the same fresh Main membership as full collection playback.
+async function resolveCurrentCollectionActionTracks(tracks) {
+  const collection = selectedPlaylist.value;
+  if (collection?.kind !== 'album') return tracks;
+  const contentKey = collectionContentKey.value;
+  const navigationRevision = collectionNavigationRevision;
+  const members = await resolvePlaylistTracksForAction(collection);
+  if (
+    collectionContentKey.value !== contentKey ||
+    collectionNavigationRevision !== navigationRevision
+  )
+    return [];
+  const admitted = new Map(members.map((track) => [track.id, track]));
+  return tracks.map((track) => admitted.get(track.id)).filter(Boolean);
+}
+
 // The preview starts at the selection and follows the visible (searched)
 // order; artist pages shuffle so they differ from the album view.
-function openTrackPreview() {
-  const visibleTracks = visibleTableEntries.value.map(({ track }) => track);
+async function openTrackPreview() {
+  if (!previewEligibility.canPreview.value) return;
+  const previewScope = previewEligibility.captureScope();
+  const request = ++rowPlaybackRequest;
+  const admission = beginCollectionPlaybackRequest();
+  const startRevision = getPlaybackStartRequestRevision?.();
+  const visibleTracks = await resolveCurrentCollectionActionTracks(
+    visibleTableEntries.value.map(({ track }) => track),
+  );
+  if (
+    request !== rowPlaybackRequest ||
+    !isCurrentCollectionPlaybackRequest(admission) ||
+    getPlaybackStartRequestRevision?.() !== startRevision
+  )
+    return;
+  if (!previewEligibility.confirm(visibleTracks, previewScope)) return;
+  const localTracks = visibleTracks.filter(isLocalPreviewTrack);
+  if (localTracks.length === 0) return;
   const tracks = isArtistSelected.value
-    ? shufflePreviewTracks(visibleTracks, { pinnedId: selectedTrackId.value })
-    : visibleTracks;
+    ? shufflePreviewTracks(localTracks, { pinnedId: selectedTrackId.value })
+    : localTracks;
   const startIndex = Math.max(
     0,
     tracks.findIndex((track) => track.id === selectedTrackId.value),
@@ -948,7 +1034,9 @@ function openTrackPreview() {
 
 // The preview lane never sounds while recording or live (track-preview contract).
 const previewBlockedReason = computed(() =>
-  bgmHandoffState.sessionMode === 'inactive' ? '' : '錄影或直播中無法使用',
+  bgmHandoffState.sessionMode === 'inactive'
+    ? previewEligibility.blockedReason.value
+    : '錄影或直播中無法使用',
 );
 
 function playFromPreview(track) {
@@ -971,6 +1059,8 @@ function handlePreviewMenuSelect(value, track) {
 }
 
 onUnmounted(() => {
+  previewMembers.dispose();
+  collectionNavigationRevision += 1;
   rowPlaybackRequest += 1;
   trackPreview.close();
 });
@@ -1125,7 +1215,11 @@ onMounted(async () => {
         <LibraryCollectionHeader
           v-model:search-query="searchQuery"
           :entity-kind="mode === 'all' ? 'library' : mode"
-          :release-type="singleDetail.isSingle ? 'single' : ''"
+          :release-type="
+            isAlbumSelected
+              ? selectedPlaylist?.resolvedRelease?.type || 'unknown'
+              : ''
+          "
           :library-view="playlistState.libraryView"
           :title="pageTitle"
           :artist="playlistArtist"
@@ -1143,7 +1237,7 @@ onMounted(async () => {
               ? singleDetail.canStart
               : headerTracks.length > 0
           "
-          :can-preview="visibleTableEntries.length > 0"
+          :can-preview="previewEligibility.canPreview.value"
           :preview-blocked-reason="previewBlockedReason"
           :can-add-to-playlist="playlistTracks.length > 0"
           :add-to-playlist-content="selectedPlaylistDestinationContent"
@@ -1210,11 +1304,12 @@ onMounted(async () => {
         <UiHint
           v-else-if="
             !singleDetail.isSingle &&
+            !selectedPlaylist?.hasSourceCatalog &&
             !initialCollectionLoading &&
             libraryState.tracks.length === 0
           "
         >
-          還沒有任何曲目——使用左側的「匯入曲目」開始建立曲庫。
+          曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。
         </UiHint>
 
         <template v-else>
@@ -1238,30 +1333,47 @@ onMounted(async () => {
             v-if="!initialCollectionLoading && isArtistSelected && !artistPage"
             role="status"
           >
-            載入中…
+            正在讀取藝人資料…
           </UiHint>
           <UiHint
             v-else-if="
               !initialCollectionLoading &&
               visibleTableEntries.length === 0 &&
+              !selectedPlaylist?.hasSourceCatalog &&
               !singleDetail.isSingle
             "
           >
             {{ tableEmptyText }}
           </UiHint>
+          <LibraryReleaseCatalog
+            v-if="selectedPlaylist?.hasSourceCatalog"
+            :collection="selectedPlaylist"
+            :tracks-by-id="libraryTracksById"
+            :selected-track-id="selectedTrackId"
+            :playing-track-id="state.isPlaying ? state.track?.id : ''"
+            :column-preferences="currentTableColumnPreferences"
+            :density="trackListDensity"
+            :current-track-id="state.track?.id ?? ''"
+            :queued-track-ids="vsQueuedTrackIds"
+            :enqueueing-track-id="vsEnqueuePendingTrackId"
+            @play="activateTrack"
+            @toggle-playback="toggleTrackPlayback"
+            @update-column-preferences="updateTableColumnPreferences"
+            @select="selectTrack"
+            @preview-availability="previewEligibility.acceptCatalog"
+            @menu="openAddMenu"
+            @separate="queueTrackForSeparation"
+          />
           <TrackTable
             v-else-if="
-              !singleDetail.isSingle ||
-              collectionTableLoading ||
-              (singleDetail.state === 'ready' && visibleTableEntries.length > 0)
+              !selectedPlaylist?.hasSourceCatalog &&
+              (!singleDetail.isSingle ||
+                collectionTableLoading ||
+                visibleTableEntries.length > 0)
             "
             :loading="collectionTableLoading"
             :content-key="collectionContentKey"
-            :entries="
-              singleDetail.isSingle && singleDetail.state !== 'ready'
-                ? []
-                : visibleTableEntries
-            "
+            :entries="displayedTableEntries"
             :collection-kind="tableCollectionKind"
             :column-preferences="currentTableColumnPreferences"
             :label="`${pageTitle}曲目`"
@@ -1319,13 +1431,11 @@ onMounted(async () => {
       <LibraryAlbumSupportingContent
         v-else-if="
           isArtistSelected &&
-          (albumGridLoading ||
-            membershipLoading ||
-            artistPage?.albums.length > 0)
+          (albumGridLoading || artistPage?.albums.length > 0)
         "
         :artist="artistPage?.name ?? pageTitle"
         :related-albums="artistPage?.albums ?? []"
-        :loading="albumGridLoading || membershipLoading"
+        :loading="albumGridLoading"
         :content-key="collectionContentKey"
         :playing-album-id="playingSupportingAlbumId"
         albums-title="音樂作品"

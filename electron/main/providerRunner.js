@@ -12,6 +12,8 @@ const {
   findAvailableLoopbackPort,
 } = require('../lib/bgutilProviderServer');
 const { createPythonYtdlpRunner } = require('../lib/pythonYtdlp');
+const path = require('node:path');
+const { runReleaseCatalogWorker } = require('../lib/releases/ytMusicRunner');
 
 const DEFAULT_BGUTIL_PROVIDER_PORT = 4417;
 
@@ -23,6 +25,7 @@ function createProviderRunnerManager({
   getRuntimePaths = getPreparedYtdlpPath,
   resolveArtistWorker = resolveArtistPhotoYtMusicWorkerPath,
   runArtistWorker = runYtMusicArtistPhotoWorker,
+  runReleaseWorker = runReleaseCatalogWorker,
   findPort = findAvailableLoopbackPort,
   createBgutilServer = createBgutilProviderServer,
   createYtdlpRunner = createPythonYtdlpRunner,
@@ -63,14 +66,20 @@ function createProviderRunnerManager({
     return runner;
   }
 
-  async function runArtistPhotoWorker(request, options = {}) {
+  async function runMetadataWorker(request, options = {}, release = false) {
     if (stopped) return { status: 'error', reason: 'cancelled' };
     const runtimePaths = getRuntimePaths(userDataDir);
-    const workerPath = resolveArtistWorker({
-      isPackaged,
-      resourcesPath,
-      appPath: app?.getAppPath?.(),
-    });
+    const workerPath = release
+      ? path.join(
+          isPackaged ? resourcesPath : path.join(app.getAppPath(), 'resources'),
+          'provider',
+          'release_catalog_worker.py',
+        )
+      : resolveArtistWorker({
+          isPackaged,
+          resourcesPath,
+          appPath: app?.getAppPath?.(),
+        });
     const controller = new AbortController();
     const abortWorker = () => controller.abort(options.signal?.reason);
     if (options.signal?.aborted) abortWorker();
@@ -79,7 +88,7 @@ function createProviderRunnerManager({
     let workerTask;
     try {
       workerTask = Promise.resolve(
-        runArtistWorker({
+        (release ? runReleaseWorker : runArtistWorker)({
           pythonPath: runtimePaths.pythonPath,
           workerPath,
           request,
@@ -94,6 +103,10 @@ function createProviderRunnerManager({
       options.signal?.removeEventListener('abort', abortWorker);
     }
   }
+  const runArtistPhotoWorker = (request, options) =>
+    runMetadataWorker(request, options);
+  const runReleaseWorkerRequest = (request, options) =>
+    runMetadataWorker(request, options, true);
 
   function stop() {
     stopped = true;
@@ -128,7 +141,12 @@ function createProviderRunnerManager({
 
   app?.on?.('before-quit', handleBeforeQuit);
 
-  return { getRunner, runArtistPhotoWorker, stop };
+  return {
+    getRunner,
+    runArtistPhotoWorker,
+    runReleaseCatalogWorker: runReleaseWorkerRequest,
+    stop,
+  };
 }
 
 module.exports = { createProviderRunnerManager };

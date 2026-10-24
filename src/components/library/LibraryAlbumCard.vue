@@ -1,7 +1,7 @@
 <script setup>
 import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
-import { releaseTypeLabel } from '../../utils/releasePresentation.js';
+import { releaseMetadataLabel } from '../../utils/releasePresentation.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -68,9 +68,7 @@ function playAlbum(event) {
           album.name
         }}</strong>
         <span>{{
-          [album.releaseYear, releaseTypeLabel(album.releaseType)]
-            .filter(Boolean)
-            .join(' · ')
+          releaseMetadataLabel(album.releaseType, album.releaseYear)
         }}</span>
       </span>
     </template>

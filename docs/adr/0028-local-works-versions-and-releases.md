@@ -69,6 +69,30 @@ IPC projects bounded product data and never exposes private bindings.
 
 ## Consequences
 
+Phase 1 source-catalog enrichment advances playlists to v4. The authoritative
+source manifest, accepted local slot relationships and private media bindings
+remain in the same collection document. Automatic parent lookup requires exact
+official audio and formal playlist identity; ambiguous local media requires an
+explicit release and position confirmation. Source-backed consumers now verify
+bindings through the same release runtime as local releases. Full behavior and
+operational bounds are in the [source catalog contract](../contracts/release-source-catalog.md).
+No artist-wide discography or missing-audio acquisition is introduced.
+
+The explicitly approved reconciliation flow (2026-10-24) permits a user to merge
+a verified local release and its complete source counterpart after a field-level
+preview. It preserves the local UUID, manual metadata and media, stores retired
+UUID redirects in the same playlists document, and keeps ambiguous imports as
+pending proposals. It never merges publications merely because they share a
+recording or title. Decision replay, metadata provenance and recoverable JSON
+transactions are defined in the [library reconciliation contract](../contracts/library-reconciliation.md).
+
+The approved file-tag follow-up is a separate, explicit preview and commit.
+Native FLAC comment edits preserve encoded audio and non-target data; only
+bindings valid for the verified previous whole-file hash may migrate. Existing
+stale bindings must not become fresh by coincidence. Primary publication choice,
+format gates, backups and recoverable media transactions are defined in the
+[audio tag writeback contract](../contracts/audio-tag-writeback.md).
+
 Artist organization, works, playable media and publication membership remain
 separate authorities. The data layer can represent Acoustic + Live + Cover
 without collapsing them into an exclusive version enum. Source reimport cannot

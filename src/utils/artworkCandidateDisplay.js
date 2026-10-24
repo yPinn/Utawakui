@@ -1,8 +1,4 @@
-const PRIMARY_TYPE_LABELS = Object.freeze({
-  single: '單曲',
-  ep: 'EP',
-  album: '專輯',
-});
+import { releaseTypeLabel } from './releasePresentation.js';
 
 const SECONDARY_TYPE_LABELS = Object.freeze({
   compilation: '合輯',
@@ -19,7 +15,10 @@ function releaseMeta(candidate) {
   if (Number.isInteger(candidate?.firstReleaseYear)) {
     values.push(String(candidate.firstReleaseYear));
   }
-  const primaryType = PRIMARY_TYPE_LABELS[normalized(candidate?.primaryType)];
+  const type = normalized(candidate?.primaryType);
+  const primaryType = ['single', 'ep', 'album'].includes(type)
+    ? releaseTypeLabel(type)
+    : '';
   if (primaryType) values.push(primaryType);
   for (const type of candidate?.secondaryTypes || []) {
     const label = SECONDARY_TYPE_LABELS[normalized(type)];

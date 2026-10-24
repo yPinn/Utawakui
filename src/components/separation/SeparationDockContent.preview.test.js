@@ -111,6 +111,17 @@ vi.mock('./SeparationPreparationList.vue', () => ({
 }));
 import SeparationDockContent from './SeparationDockContent.vue';
 import PreparationReviewLayout from '../preparation/PreparationReviewLayout.vue';
+import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
+import AppFolderDossier from '../layout/AppFolderDossier.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
+for (const [component, file] of [
+  [LibraryEntityDossier, '../library/LibraryEntityDossier.vue'],
+  [AppFolderDossier, '../layout/AppFolderDossier.vue'],
+  [UiCollageThumb, '../ui/UiCollageThumb.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
+])
+  attachClientRender(component, file, import.meta.url);
 attachClientRender(
   PreparationReviewLayout,
   '../preparation/PreparationReviewLayout.vue',
@@ -125,7 +136,7 @@ const node = (root, id) => findAll(root, (n) => n.props.id === id)[0];
 const dialogs = (root) => findAll(root, (n) => n.type === 'dialog');
 function open(root) {
   trigger(
-    findAll(root, (n) => n.props['aria-label'] === '預覽伴奏處理歌單')[0],
+    findAll(root, (n) => n.props['aria-label'] === '預覽處理曲目')[0],
     'onClick',
   );
 }
@@ -139,6 +150,7 @@ beforeEach(() => {
     selectedMode: shallowRef('general'),
     modeOptions: shallowRef([]),
     selectedSourceId: shallowRef('source'),
+    selectedCollection: shallowRef(null),
     sourceOptions: shallowRef([
       { label: '歌單', options: [{ value: 'source', label: '我的歌單' }] },
     ]),
@@ -176,7 +188,8 @@ describe('accompaniment source preview', () => {
     expect(dialog.props['data-cap']).toBe('medium');
     expect(dialog.props['data-body']).toBe('workspace');
     expect(dialog.props['data-selectable']).toBe(false);
-    expect(textContent(dialog)).toContain('我的歌單 · 20 首');
+    expect(textContent(dialog)).toContain('我的歌單');
+    expect(textContent(dialog)).toContain('20 首曲目');
     expect(textContent(dialog)).toContain('最多新增約 61 MB');
     expect(textContent(dialog)).not.toContain('1 首 · 最多新增');
     fixture.preparation.unpreparedTracks.value = [
@@ -185,6 +198,54 @@ describe('accompaniment source preview', () => {
     ];
     await nextTick();
     expect(textContent(dialogs(root)[0])).not.toContain('最多新增');
+    app.unmount();
+  });
+  it('uses the canonical album identity instead of the combined selector label', async () => {
+    fixture.preparation.selectedCollection.value = {
+      id: 'album',
+      kind: 'album',
+      name: '海螺記',
+      coverUrl: 'utawakui-media://covers/album',
+      description: '專輯簡介',
+      resolvedRelease: {
+        type: 'album',
+        date: { value: '2024', precision: 'year' },
+      },
+    };
+    fixture.preparation.sourceOptions.value = [
+      { value: 'source', label: '海螺記 · 163braces' },
+    ];
+    fixture.preparation.sourceTracks.value = [
+      { id: 'song', title: '歌', artist: '163braces', duration: 180 },
+    ];
+    const { root, app } = setup();
+    open(root);
+    await nextTick();
+    const dialog = dialogs(root)[0];
+    expect(textContent(dialog)).toContain('海螺記');
+    expect(textContent(dialog)).toContain('163braces');
+    expect(textContent(dialog)).not.toContain('海螺記 · 163braces');
+    expect(textContent(dialog)).toContain('2024');
+    expect(textContent(dialog)).toContain('1 首曲目，3 分');
+    expect(textContent(dialog)).toContain('專輯簡介');
+    expect(
+      findAll(
+        dialog,
+        (node) => node.props.src === 'utawakui-media://covers/album',
+      ),
+    ).toHaveLength(1);
+    fixture.preparation.selectedSourceId.value = 'playback-order';
+    fixture.preparation.selectedCollection.value = null;
+    fixture.preparation.sourceOptions.value = [
+      { value: 'playback-order', label: '目前播放順序' },
+    ];
+    await nextTick();
+    expect(dialogs(root)).toHaveLength(0);
+    open(root);
+    await nextTick();
+    expect(textContent(dialogs(root)[0])).toContain('目前播放順序');
+    expect(textContent(dialogs(root)[0])).not.toContain('專輯簡介');
+    expect(textContent(dialogs(root)[0])).not.toContain('163braces');
     app.unmount();
   });
   it('adds the requested preview track without closing the modal or invoking batch start', async () => {

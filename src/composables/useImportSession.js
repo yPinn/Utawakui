@@ -4,6 +4,7 @@ import {
   filterPlaylistImportTracks,
   getPlaylistImportStats,
   hasImportableSelection,
+  getDominantImportFailureCode,
 } from '../utils/importPlaylist.js';
 import { normalizeAppError } from '../utils/appErrors.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
@@ -38,6 +39,8 @@ const state = reactive({
   // from yt:fetch-playlist's classifyPlaylistKind. Drives which write path
   // syncImportedPlaylist() below takes.
   collectionKind: null,
+  collectionReleaseType: 'unknown',
+  collectionReleaseDate: null,
   collectionSource: null,
   collectionThumbnailUrl: null,
   createdPlaylistId: null,
@@ -55,22 +58,9 @@ const playlistStats = computed(() =>
 
 // A batch's failures are almost always the same underlying cause — one
 // aggregated hint beats repeating it per track.
-const dominantFailureCode = computed(() => {
-  const counts = new Map();
-  for (const track of state.playlistTracks ?? []) {
-    if (track.status !== 'error' || !track.errorCode) continue;
-    counts.set(track.errorCode, (counts.get(track.errorCode) || 0) + 1);
-  }
-  let best = null;
-  let bestCount = 0;
-  for (const [code, count] of counts) {
-    if (count > bestCount) {
-      best = code;
-      bestCount = count;
-    }
-  }
-  return best;
-});
+const dominantFailureCode = computed(() =>
+  getDominantImportFailureCode(state.playlistTracks),
+);
 
 const visiblePlaylistTracks = computed(() =>
   filterPlaylistImportTracks(state.playlistTracks, state.activeFilter),
@@ -230,6 +220,8 @@ function clearPreview() {
   state.playlistTracks = null;
   state.playlistTitle = null;
   state.collectionKind = null;
+  state.collectionReleaseType = 'unknown';
+  state.collectionReleaseDate = null;
   state.collectionSource = null;
   state.collectionThumbnailUrl = null;
   state.createdPlaylistId = null;

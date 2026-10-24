@@ -1,13 +1,53 @@
 <script setup>
-import { useTemplateRef } from 'vue';
+import { computed, useId, useTemplateRef } from 'vue';
+import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import { formatLongDuration } from '../../utils/format.js';
+import { releaseYearFromDate } from '../../utils/releasePresentation.js';
+import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 
-defineProps({
+const props = defineProps({
   source: { type: String, required: true },
   count: { type: Number, required: true },
+  entityKind: {
+    type: String,
+    default: 'playlist',
+    validator: (value) => ['album', 'playlist'].includes(value),
+  },
+  releaseType: { type: String, default: 'unknown' },
+  releaseDate: { type: Object, default: null },
+  coverUrl: { type: String, default: '' },
+  tracks: { type: Array, default: () => [] },
+  description: { type: String, default: '' },
   hint: { type: String, default: '' },
   listLabel: { type: String, default: '曲目' },
+});
+
+const titleId = useId();
+const artist = computed(() =>
+  props.entityKind === 'album'
+    ? deriveAlbumSummary(props.tracks).artist || ''
+    : '',
+);
+const fields = computed(() => {
+  const completeDuration =
+    props.tracks.length === props.count &&
+    props.count > 0 &&
+    props.tracks.every(
+      (track) => Number.isFinite(track.duration) && track.duration > 0,
+    );
+  const duration = completeDuration
+    ? formatLongDuration(
+        props.tracks.reduce((total, track) => total + track.duration, 0),
+      )
+    : '';
+  const countLine = `${props.count} 首曲目${duration ? `，${duration}` : ''}`;
+  const year =
+    props.entityKind === 'album'
+      ? releaseYearFromDate(props.releaseDate)
+      : undefined;
+  return year ? [String(year), countLine] : [countLine];
 });
 
 const scroll = useTemplateRef('scroll');
@@ -21,7 +61,18 @@ defineExpose({ scrollTo });
   <section class="preparation-review-layout">
     <header class="preparation-review-layout__summary">
       <div class="preparation-review-layout__identity">
-        <UiHint tone="text">{{ source }} · {{ count }} 首</UiHint>
+        <LibraryEntityDossier
+          :entity-kind="entityKind"
+          :release-type="releaseType"
+          :title="source"
+          :title-id="titleId"
+          title-tag="h3"
+          :artist="artist"
+          :fields="fields"
+          :cover-tracks="tracks"
+          :cover-url="coverUrl"
+          :description="description"
+        />
         <UiHint v-if="hint">{{ hint }}</UiHint>
       </div>
       <div v-if="$slots.actions" class="preparation-review-layout__actions">
@@ -65,8 +116,21 @@ defineExpose({ scrollTo });
 .preparation-review-layout__identity {
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-1);
+  flex: 1;
+  gap: var(--ui-space-2);
   font-variant-numeric: tabular-nums;
+}
+
+.preparation-review-layout__identity :deep(.app-folder-dossier__body) {
+  padding-block: 0;
+}
+
+.preparation-review-layout__identity :deep(.app-folder-dossier__title),
+.preparation-review-layout__identity :deep(.app-folder-dossier__description) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .preparation-review-layout__actions {

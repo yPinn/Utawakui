@@ -1,5 +1,10 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
+import { useLibraryArtwork } from '../../composables/useLibraryArtwork.js';
+import {
+  releaseMetadataLabel,
+  releaseYearFromDate,
+} from '../../utils/releasePresentation.js';
 import {
   Download,
   ExternalLink,
@@ -49,6 +54,7 @@ const {
 } = useImportSession();
 
 const reviewOpen = shallowRef(false);
+const { collectionArtwork } = useLibraryArtwork();
 const reviewBatchId = shallowRef(null);
 const reviewBatch = computed(
   () =>
@@ -94,12 +100,17 @@ const candidateRows = computed(() => {
     };
   });
 });
-const collectionSummary = computed(() => ({
-  id: state.collectionSource?.id || 'import-collection',
-  title: state.playlistTitle || '未命名清單',
-  artist: `${state.collectionKind === 'album' ? '專輯' : '播放清單'} · ${playlistStats.value.total} 首`,
-  thumbnailUrl: state.collectionThumbnailUrl || '',
-}));
+const collectionSummary = computed(() =>
+  collectionArtwork(
+    {
+      id: state.collectionSource?.id || 'import-collection',
+      title: state.playlistTitle || '未命名清單',
+      artist: `${state.collectionKind === 'album' ? releaseMetadataLabel(state.collectionReleaseType, releaseYearFromDate(state.collectionReleaseDate)) : '播放清單'} · ${playlistStats.value.total} 首`,
+      thumbnailUrl: state.collectionThumbnailUrl || '',
+    },
+    state.collectionSource,
+  ),
+);
 const collectionStatus = computed(() => {
   if (state.isImporting) return 'downloading';
   if (state.statusType === 'error' && playlistStats.value.error > 0) {

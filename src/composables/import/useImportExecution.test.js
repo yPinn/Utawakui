@@ -50,6 +50,31 @@ function fixture(count = 1) {
   return { state, execution, reportImportError };
 }
 
+it('retains the accepted release type in activity while the next preview changes', async () => {
+  const { state, execution } = fixture();
+  Object.assign(state, {
+    collectionKind: 'album',
+    collectionSource: { platform: 'yt-music', id: 'OLAK5uy_test' },
+    collectionReleaseType: 'ep',
+    collectionReleaseDate: { value: '2026', precision: 'year' },
+  });
+  playlists.upsertAlbum.mockResolvedValue({ id: 'saved-album' });
+  await execution.submitImport();
+  state.collectionReleaseType = 'album';
+  expect(execution.activity.batches[0].releaseType).toBe('ep');
+  state.collectionReleaseDate.value = '2024';
+  expect(execution.activity.batches[0].releaseDate).toEqual({
+    value: '2026',
+    precision: 'year',
+  });
+  await vi.waitFor(() =>
+    expect(execution.activity.batches[0].phase).toBe('completed'),
+  );
+  expect(playlists.upsertAlbum.mock.calls[0][0]).not.toHaveProperty(
+    'releaseObservations',
+  );
+});
+
 it('recovers an unexpectedly rejected collection store without downloading successes again', async () => {
   const failure = new Error('private store failure');
   playlists.create.mockRejectedValueOnce(failure);

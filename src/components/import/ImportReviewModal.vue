@@ -1,5 +1,6 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
+import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import { Download, RefreshCw, Square } from '../../icons/index.js';
 import { useImportSession } from '../../composables/useImportSession.js';
 import { isImportBatchRunning } from '../../utils/importBatch.js';
@@ -26,7 +27,7 @@ const modalTitle = computed(() =>
   props.batch?.kind === 'single'
     ? '匯入歌曲'
     : (props.batch?.collectionKind || state.collectionKind) === 'album'
-      ? '匯入專輯'
+      ? `匯入${['single', 'ep', 'album'].includes(props.batch?.releaseType || state.collectionReleaseType) ? releaseTypeLabel(props.batch?.releaseType || state.collectionReleaseType) : '作品'}`
       : '匯入播放清單',
 );
 const running = computed(() => isImportBatchRunning(props.batch));

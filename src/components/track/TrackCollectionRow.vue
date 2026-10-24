@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import {
-  AudioWaveform,
+  MicAudioLines,
   BadgeCheck,
   CircleDashed,
   Ellipsis,
@@ -75,14 +75,20 @@ const rowActionDescription = computed(() =>
     ? '單擊或空白鍵選取；雙擊或 Enter 播放；方向鍵調整順序'
     : '單擊或空白鍵選取；雙擊或 Enter 播放',
 );
-const contentLang = computed(() => trackContentLang(props.entry.track));
+const displayTrack = computed(
+  () => props.entry.track ?? props.entry.displayTrack,
+);
+const canInteract = computed(
+  () => Boolean(props.entry.track) && !props.entry.disabled,
+);
+const contentLang = computed(() => trackContentLang(displayTrack.value));
 const showArtwork = computed(
   () => props.profile.showArtwork && props.density !== 'compact',
 );
 const separationReady = computed(
   () =>
-    Boolean(props.entry.track.hasSeparation) ||
-    Object.values(props.entry.track.separation?.results ?? {}).some(Boolean),
+    Boolean(props.entry.track?.hasSeparation) ||
+    Object.values(props.entry.track?.separation?.results ?? {}).some(Boolean),
 );
 
 function hasColumn(role) {
@@ -98,6 +104,7 @@ function columnIsNumeric(role) {
 }
 
 function handleActionKeydown(event) {
+  if (!canInteract.value) return;
   if (
     props.dragEnabled &&
     (event.key === 'ArrowUp' || event.key === 'ArrowDown')
@@ -124,7 +131,7 @@ function handleActionKeydown(event) {
 }
 
 function openContextMenu(event) {
-  if (props.profile.readOnly) return;
+  if (props.profile.readOnly || !canInteract.value) return;
   event.preventDefault();
   if (props.profile.managedActions) {
     emit('openEntryMenu', props.entry, event);
@@ -139,6 +146,7 @@ function openContextMenu(event) {
     class="library-track-row"
     :class="{
       'library-track-row--readonly': profile.readOnly || profile.managedActions,
+      'library-track-row--disabled': !canInteract,
       'library-track-row--compact': density === 'compact',
       'library-track-row--selected': selected,
       'library-track-row--current': current,
@@ -149,6 +157,8 @@ function openContextMenu(event) {
     }"
     :style="gridStyle"
     role="listitem"
+    :aria-disabled="!canInteract ? 'true' : undefined"
+    :aria-description="!canInteract ? entry.sourceRow?.stateLabel : undefined"
     :aria-current="current ? 'true' : undefined"
     :draggable="dragEnabled"
     @contextmenu="openContextMenu($event)"
@@ -162,11 +172,12 @@ function openContextMenu(event) {
       v-if="!profile.readOnly && !profile.managedActions"
       type="button"
       class="library-track-row__action"
-      :aria-label="`選取：${entry.track.title}`"
+      :disabled="!canInteract"
+      :aria-label="`選取：${displayTrack.title}`"
       :aria-description="rowActionDescription"
       :aria-pressed="selected"
-      @click.stop="emit('selectTrack', entry.track)"
-      @dblclick.stop="emit('activateTrack', entry.track)"
+      @click.stop="canInteract && emit('selectTrack', entry.track)"
+      @dblclick.stop="canInteract && emit('activateTrack', entry.track)"
       @keydown="handleActionKeydown"
     ></button>
     <button
@@ -193,10 +204,10 @@ function openContextMenu(event) {
         {{ entry.ordinalText }}
       </span>
       <UiIconButton
-        v-if="!profile.readOnly && !profile.managedActions"
+        v-if="!profile.readOnly && !profile.managedActions && canInteract"
         class="library-track-row__playback-control"
         :icon="playing ? Pause : Play"
-        :label="`${playing ? '暫停' : '播放'}：${entry.track.title}`"
+        :label="`${playing ? '暫停' : '播放'}：${displayTrack.title}`"
         :fill="!playing"
         @click.stop="emit('togglePlayback', entry.track)"
         @dblclick.stop
@@ -212,20 +223,20 @@ function openContextMenu(event) {
       <UiTrackThumb
         v-if="showArtwork"
         class="library-track-row__thumb"
-        :track="entry.track"
+        :track="displayTrack"
         size="var(--ui-track-row-thumb-size)"
         loading="lazy"
         decoding="async"
       />
       <span class="library-track-row__copy" :lang="contentLang">
         <span class="library-track-row__title">
-          <UiMarqueeText :text="entry.track.title" />
+          <UiMarqueeText :text="displayTrack.title" />
         </span>
         <TrackArtistCredits
-          v-if="entry.track.artist && profile.showArtist"
+          v-if="displayTrack.artist && profile.showArtist"
           class="library-track-row__subtitle"
-          :track="entry.track"
-          :navigable="profile.artistNavigation"
+          :track="displayTrack"
+          :navigable="profile.artistNavigation && canInteract"
         />
       </span>
     </span>
@@ -277,11 +288,13 @@ function openContextMenu(event) {
         @click.stop="
           !profile.readOnly &&
           !profile.managedActions &&
+          canInteract &&
           emit('selectTrack', entry.track)
         "
         @dblclick.stop="
           !profile.readOnly &&
           !profile.managedActions &&
+          canInteract &&
           emit('activateTrack', entry.track)
         "
       >
@@ -312,32 +325,34 @@ function openContextMenu(event) {
         v-if="!profile.readOnly && !profile.managedActions"
         class="library-track-row__status"
       >
-        <UiStatusIcon
-          v-if="separationReady"
-          :icon="BadgeCheck"
-          tone="success"
-          :label="`已有伴奏：${entry.track.title}`"
-        />
-        <UiStatusIcon
-          v-else-if="vsQueued"
-          :icon="CircleDashed"
-          tone="info"
-          spinning
-          :label="`伴奏處理中：${entry.track.title}`"
-        />
-        <UiIconButton
-          v-else
-          class="library-track-row__separation-action"
-          :icon="AudioWaveform"
-          :label="`加入伴奏處理佇列：${entry.track.title}`"
-          :loading="vsEnqueuePending"
-          :loading-label="`正在加入伴奏處理佇列：${entry.track.title}`"
-          @click.stop="emit('queueSeparation', entry.track)"
-          @dblclick.stop
-        />
+        <slot name="status" :entry="entry">
+          <UiStatusIcon
+            v-if="canInteract && separationReady"
+            :icon="BadgeCheck"
+            tone="success"
+            :label="`已有伴奏：${displayTrack.title}`"
+          />
+          <UiStatusIcon
+            v-else-if="canInteract && vsQueued"
+            :icon="CircleDashed"
+            tone="info"
+            spinning
+            :label="`伴奏處理中：${displayTrack.title}`"
+          />
+          <UiIconButton
+            v-else-if="canInteract"
+            class="library-track-row__separation-action"
+            :icon="MicAudioLines"
+            :label="`加入伴奏處理佇列：${displayTrack.title}`"
+            :loading="vsEnqueuePending"
+            :loading-label="`正在加入伴奏處理佇列：${displayTrack.title}`"
+            @click.stop="emit('queueSeparation', entry.track)"
+            @dblclick.stop
+          />
+        </slot>
       </span>
       <span class="library-track-row__duration-text">
-        {{ formatDuration(entry.track.duration) }}
+        {{ formatDuration(displayTrack.duration) }}
       </span>
     </span>
 
@@ -360,11 +375,11 @@ function openContextMenu(event) {
       "
       data-column-align="end"
     >
-      <slot name="actions" :entry="entry"
+      <slot v-if="canInteract" name="actions" :entry="entry"
         ><UiIconButton
           class="library-track-row__more-action"
           :icon="Ellipsis"
-          :label="`更多：${entry.track.title}`"
+          :label="`更多：${displayTrack.title}`"
           @click.stop="emit('openMenu', entry.track, $event)"
           @dblclick.stop
       /></slot>
@@ -394,8 +409,15 @@ function openContextMenu(event) {
   user-select: none;
 }
 
-.library-track-row:hover {
+.library-track-row:not(.library-track-row--disabled):hover {
   background: var(--ui-color-surface-hover);
+}
+
+.library-track-row--disabled .library-track-row__identity,
+.library-track-row--disabled .library-track-row__ordinal,
+.library-track-row--disabled .library-track-row__semantic,
+.library-track-row--disabled .library-track-row__duration-text {
+  opacity: var(--ui-opacity-disabled);
 }
 
 .library-track-row--selected {
@@ -513,9 +535,15 @@ function openContextMenu(event) {
   pointer-events: auto;
 }
 
-.library-track-row:not(.library-track-row--readonly):hover
+.library-track-row:not(
+    .library-track-row--readonly,
+    .library-track-row--disabled
+  ):hover
   .library-track-row__ordinal-text,
-.library-track-row:not(.library-track-row--readonly):focus-within
+.library-track-row:not(
+    .library-track-row--readonly,
+    .library-track-row--disabled
+  ):focus-within
   .library-track-row__ordinal-text,
 .library-track-row--current:not(.library-track-row--readonly)
   .library-track-row__ordinal-text {

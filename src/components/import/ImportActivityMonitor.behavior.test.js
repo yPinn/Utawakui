@@ -72,6 +72,18 @@ const batch = () =>
     ],
   });
 describe('compact import monitoring', () => {
+  it('keeps accepted release year and Chinese type in completed activity', () => {
+    const source = batch();
+    Object.assign(source, {
+      phase: 'completed',
+      collectionKind: 'album',
+      releaseType: 'ep',
+      releaseDate: { value: '2026', precision: 'year' },
+    });
+    const mounted = mount(Monitor, { batch: source });
+    expect(textContent(mounted.root)).toContain('2026 · 迷你專輯');
+    mounted.app.unmount();
+  });
   it('avoids a progress flash for short jobs and retains their result', async () => {
     vi.useFakeTimers();
     const source = batch();

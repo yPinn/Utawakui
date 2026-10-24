@@ -6,6 +6,14 @@ const path = require('path');
 const { atomicWriteJson } = require('./atomicWrite');
 const { hasControlCharacters } = require('./textGuards');
 const { isBoundedTrackId } = require('./library/paths');
+const { assertNoTransaction } = require('./reconciliation/transaction');
+const {
+  reconciliationState,
+  resolveRedirect,
+} = require('./reconciliation/state');
+const {
+  needsLocalReleaseReview,
+} = require('./reconciliation/catalogAdmission');
 const {
   validateReleaseInfo,
   updateReleaseInfo,
@@ -17,7 +25,7 @@ const {
 // User-authored data: not library metadata and not machine-local config.
 // Lives beside tracks; UUID ids stay stable for future preset references.
 const PLAYLISTS_FILENAME = 'playlists.json';
-const PLAYLISTS_VERSION = 3;
+const PLAYLISTS_VERSION = 4;
 // The old kind migration must never reclassify an already-migrated v2 library.
 const PLAYLIST_KINDS_VERSION = 2;
 
@@ -153,10 +161,31 @@ function readPlaylistDocument(dir) {
 function loadPlaylists(dir) {
   const document = readPlaylistDocument(dir);
   if (!document) return [];
+  const state = reconciliationState(document.data);
   return document.data.playlists
     .map(sanitizePlaylist)
     .filter((playlist) => playlist !== null)
-    .slice(0, MAX_PLAYLISTS);
+    .slice(0, MAX_PLAYLISTS)
+    .map((playlist) => {
+      const redirectedIds = Object.keys(state.redirects).filter(
+        (id) => resolveRedirect(state.redirects, id) === playlist.id,
+      );
+      return redirectedIds.length ? { ...playlist, redirectedIds } : playlist;
+    });
+}
+
+function resolvePlaylistId(dir, id) {
+  const document = readPlaylistDocument(dir);
+  return resolveRedirect(
+    reconciliationState(document?.data ?? {}).redirects,
+    id,
+  );
+}
+
+function loadCatalogCollections(dir) {
+  const document = readPlaylistDocument(dir);
+  const pending = reconciliationState(document?.data ?? {}).pendingReleases;
+  return [...loadPlaylists(dir), ...pending.map(sanitizePlaylist)];
 }
 
 // mkdirSync first — unlike saveIndexEntry (electron/lib/library/metadataIndex.js), which only ever
@@ -164,7 +193,8 @@ function loadPlaylists(dir) {
 // be the very first write to a fresh download dir (e.g. creating a
 // playlist before downloading anything), and atomicWriteJson itself does
 // not create parent directories.
-function writePlaylists(dir, playlists) {
+function writePlaylists(dir, playlists, reconciliation) {
+  assertNoTransaction(dir);
   // Every writer must preserve the release schema, including legacy kind and
   // membership paths that do not enter the release editor's CAS helper.
   for (const playlist of playlists) {
@@ -186,9 +216,122 @@ function writePlaylists(dir, playlists) {
   }
   fs.mkdirSync(dir, { recursive: true });
   atomicWriteJson(path.join(dir, PLAYLISTS_FILENAME), {
+    ...previous?.data,
     version: PLAYLISTS_VERSION,
-    playlists,
+    ...(reconciliation ? { reconciliation } : {}),
+    playlists: playlists.map((entry) => {
+      const original = previous?.data.playlists.find(
+        (item) => item.id === entry.id,
+      );
+      const known = new Set([
+        'id',
+        'name',
+        'description',
+        'kind',
+        'source',
+        'coverImage',
+        'trackIds',
+        'addedAt',
+        'releaseInfo',
+        'performanceExportKey',
+      ]);
+      return {
+        ...Object.fromEntries(
+          Object.entries(original ?? {}).filter(([key]) => !known.has(key)),
+        ),
+        ...Object.fromEntries(
+          Object.entries(entry).filter(([key]) => key !== 'redirectedIds'),
+        ),
+      };
+    }),
   });
+}
+
+// Trusted Main-only catalog writer. All acquisition and media checks precede
+// this short CAS commit in the shared library lane.
+function writeReleaseCatalog(dir, collection, expectedRevision) {
+  assertNoTransaction(dir);
+  const playlists = loadPlaylists(dir);
+  const document = readPlaylistDocument(dir);
+  const state = reconciliationState(document?.data ?? {});
+  const pendingIndex = state.pendingReleases.findIndex(
+    (entry) => entry.id === collection.id,
+  );
+  if (pendingIndex >= 0) {
+    const previous = state.pendingReleases[pendingIndex];
+    if (
+      expectedRevision !== (previous.releaseInfo?.revision ?? 0) ||
+      JSON.stringify(collection.source) !== JSON.stringify(previous.source)
+    )
+      throw Object.assign(new Error('Release proposal changed.'), {
+        code: 'RELEASE_INFO_CONFLICT',
+      });
+    validateReleaseInfo(collection.releaseInfo, collection);
+    state.pendingReleases[pendingIndex] = {
+      ...previous,
+      ...collection,
+      name: previous.name,
+      description: previous.description,
+    };
+    writePlaylists(dir, playlists, state);
+    return collection;
+  }
+  const index = playlists.findIndex((entry) => entry.id === collection.id);
+  const invalid = () =>
+    Object.assign(new Error('Release catalog changed.'), {
+      code: 'RELEASE_INFO_CONFLICT',
+    });
+  if (index === -1) {
+    if (
+      expectedRevision !== null ||
+      playlists.length >= MAX_PLAYLISTS ||
+      playlists.some(
+        (entry) =>
+          entry.source?.id === collection.source?.id &&
+          ['youtube', 'yt-music'].includes(entry.source?.platform),
+      )
+    )
+      throw invalid();
+  } else {
+    const current = playlists[index];
+    if (
+      expectedRevision === null ||
+      current.kind !== 'album' ||
+      (current.releaseInfo?.revision ?? 0) !== expectedRevision ||
+      JSON.stringify(current.source) !== JSON.stringify(collection.source)
+    )
+      throw invalid();
+  }
+  if (collection.kind !== 'album' || !collection.releaseInfo?.catalog)
+    throw invalid();
+  validateReleaseInfo(collection.releaseInfo, collection);
+  if (index === -1 && needsLocalReleaseReview(playlists, collection)) {
+    if (
+      state.pendingReleases.length >= MAX_PLAYLISTS ||
+      state.pendingReleases.some(
+        (entry) => entry.source?.id === collection.source.id,
+      )
+    )
+      throw invalid();
+    state.pendingReleases.push(collection);
+    writePlaylists(dir, playlists, state);
+    return collection;
+  }
+  if (index === -1) playlists.push(collection);
+  else {
+    const current = playlists[index];
+    collection = {
+      ...collection,
+      name: current.name,
+      description: current.description,
+    };
+    if (Object.hasOwn(current, 'coverImage'))
+      collection.coverImage = current.coverImage;
+    else if (current.releaseInfo?.catalog) delete collection.coverImage;
+    playlists[index] = collection;
+  }
+  writePlaylists(dir, playlists);
+  return collection;
 }
 
 function nextDefaultPlaylistName(playlists) {
@@ -257,11 +400,28 @@ function upsertAlbum(
     typeof source.id === 'string'
       ? source
       : null;
+  if (
+    validSource &&
+    reconciliationState(
+      readPlaylistDocument(dir)?.data ?? {},
+    ).pendingReleases.some(
+      (entry) =>
+        entry.source?.id === validSource.id &&
+        (entry.source.platform === validSource.platform ||
+          (['youtube', 'yt-music'].includes(entry.source.platform) &&
+            ['youtube', 'yt-music'].includes(validSource.platform))),
+    )
+  )
+    return playlists;
   const existingIndex = validSource
     ? playlists.findIndex(
         (p) =>
           p.kind === 'album' &&
-          p.source?.platform === validSource.platform &&
+          (p.source?.platform === validSource.platform ||
+            (['youtube', 'yt-music'].includes(p.source?.platform) &&
+              ['youtube', 'yt-music'].includes(validSource.platform) &&
+              p.releaseInfo?.catalog?.manifest.playlistId ===
+                validSource.id)) &&
           p.source?.id === validSource.id,
       )
     : -1;
@@ -293,6 +453,28 @@ function upsertAlbum(
         observeReleaseInfo(playlist, releaseObservations),
       );
     }
+    if (
+      validSource &&
+      ['youtube', 'yt-music'].includes(validSource.platform) &&
+      /^OLAK5uy_[A-Za-z0-9_-]{1,120}$/.test(validSource.id) &&
+      sanitizedTrackIds.length &&
+      playlists.some(
+        (local) =>
+          local.kind === 'album' &&
+          !local.source &&
+          local.trackIds.length === sanitizedTrackIds.length &&
+          local.trackIds.every((id) => sanitizedTrackIds.includes(id)),
+      )
+    ) {
+      const state = reconciliationState(readPlaylistDocument(dir)?.data ?? {});
+      if (state.pendingReleases.length >= MAX_PLAYLISTS)
+        throw Object.assign(new Error('Release proposal limit reached.'), {
+          code: 'RELEASE_INFO_CONFLICT',
+        });
+      state.pendingReleases.push(playlist);
+      writePlaylists(dir, playlists, state);
+      return playlists;
+    }
     const next = [...playlists, playlist].slice(0, MAX_PLAYLISTS);
     writePlaylists(dir, next);
     return next;
@@ -300,18 +482,60 @@ function upsertAlbum(
 
   const next = [...playlists];
   const previous = next[existingIndex];
+  let memberIds = sanitizedTrackIds;
+  if (previous.releaseInfo?.catalog) {
+    const catalog = previous.releaseInfo.catalog;
+    const sourceIds = new Set(
+      catalog.manifest.slots.map((slot) => slot.videoId),
+    );
+    const merged = new Set([
+      ...previous.trackIds,
+      ...sanitizedTrackIds.filter((id) => sourceIds.has(id)),
+    ]);
+    const ordered = [
+      ...new Set(
+        catalog.manifest.slots
+          .map(
+            (slot) =>
+              catalog.links[`slot-${slot.position}`]?.trackId ?? slot.videoId,
+          )
+          .filter((id) => merged.has(id)),
+      ),
+    ];
+    memberIds = [
+      ...ordered,
+      ...[...merged].filter((id) => !ordered.includes(id)),
+    ];
+  }
   const addedAt = {};
-  for (const trackId of sanitizedTrackIds) {
+  for (const trackId of memberIds) {
     addedAt[trackId] = previous.addedAt?.[trackId] || now;
   }
   next[existingIndex] = {
-    ...reconcileReleaseMembership(previous, sanitizedTrackIds),
+    ...reconcileReleaseMembership(previous, memberIds),
     addedAt,
   };
   if (releaseObservations !== undefined) {
     next[existingIndex] = observeReleaseInfo(
       next[existingIndex],
-      releaseObservations,
+      previous.source?.platform !== validSource?.platform &&
+        previous.releaseInfo?.catalog
+        ? Object.fromEntries(
+            Object.entries(releaseObservations).map(([key, fact]) => [
+              key,
+              fact?.provenance?.provider === validSource.platform &&
+              fact.provenance.sourceId === previous.source.id
+                ? {
+                    ...fact,
+                    provenance: {
+                      ...fact.provenance,
+                      provider: previous.source.platform,
+                    },
+                  }
+                : fact,
+            ]),
+          )
+        : releaseObservations,
     );
   }
   writePlaylists(dir, next);
@@ -617,6 +841,62 @@ function updatePlaylistReleaseInfo(dir, id, intent, options = {}) {
   return next;
 }
 
+// Main-only fill operation. Re-read at commit time; source identity and manual
+// overrides win even when they changed while acquisition was running. For v3,
+// patch raw rows so maintenance cannot normalize unrelated user data.
+function fillPlaylistReleaseMetadata(dir, updates) {
+  assertNoTransaction(dir);
+  const document = readPlaylistDocument(dir);
+  if (!document) return [];
+  const raw = document.version >= 3;
+  const playlists = raw ? document.data.playlists : loadPlaylists(dir);
+  const changedIds = [];
+  const next = playlists.map((entry) => {
+    const collection = sanitizePlaylist(entry);
+    if (collection?.kind !== 'album' || !collection.source) return entry;
+    const update = updates.find(
+      (candidate) =>
+        candidate.collectionId === collection.id &&
+        candidate.source?.id === collection.source.id &&
+        candidate.source?.platform === collection.source.platform,
+    );
+    if (!update) return entry;
+    const previous = collection.releaseInfo ?? createReleaseInfo(collection);
+    const patch = {};
+    for (const field of ['type', 'date']) {
+      if (Object.hasOwn(previous.overrides, field)) continue;
+      const saved = previous.observed[field]?.value;
+      if (field === 'type' ? saved && saved !== 'unknown' : saved != null)
+        continue;
+      if (update.observed[field]) patch[field] = update.observed[field];
+    }
+    if (!Object.keys(patch).length) return entry;
+    const updated = observeReleaseInfo(collection, patch);
+    if (updated.releaseInfo.revision === previous.revision) return entry;
+    changedIds.push(collection.id);
+    return { ...entry, releaseInfo: updated.releaseInfo };
+  });
+  if (changedIds.length) {
+    if (raw) {
+      if (document.version < PLAYLISTS_VERSION)
+        fs.copyFileSync(
+          path.join(dir, PLAYLISTS_FILENAME),
+          path.join(
+            dir,
+            `${PLAYLISTS_FILENAME}.backup-v${document.version}-${Date.now()}`,
+          ),
+          fs.constants.COPYFILE_EXCL,
+        );
+      atomicWriteJson(path.join(dir, PLAYLISTS_FILENAME), {
+        ...document.data,
+        version: PLAYLISTS_VERSION,
+        playlists: next,
+      });
+    } else writePlaylists(dir, next);
+  }
+  return changedIds;
+}
+
 // Main-owned atomic creation: never persist an intermediate empty playlist.
 function createLocalRelease(dir, { name, trackId, binding } = {}) {
   const invalid = () =>
@@ -655,6 +935,9 @@ function createLocalRelease(dir, { name, trackId, binding } = {}) {
 }
 
 module.exports = {
+  loadCatalogCollections,
+  resolvePlaylistId,
+  writeReleaseCatalog,
   buildPlaylistCoverUrl,
   createPlaylist,
   createLocalRelease,
@@ -672,4 +955,5 @@ module.exports = {
   savePerformancePlaylist,
   upsertAlbum,
   updatePlaylistReleaseInfo,
+  fillPlaylistReleaseMetadata,
 };

@@ -3,6 +3,8 @@ import { computed, shallowRef, watch } from 'vue';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiChip from '../ui/UiChip.vue';
+import UiHint from '../ui/UiHint.vue';
 const props = defineProps({
   release: { type: Object, required: true },
   tracksById: { type: Map, required: true },
@@ -11,23 +13,39 @@ const props = defineProps({
 });
 const emit = defineEmits(['repair', 'initialize', 'loadMore']);
 const selected = shallowRef([]);
-const statusLabels = {
-  current: '已確認',
-  changed: '音源已變更',
-  unresolved: '待確認音源',
-  missing: '音源不存在',
-  unverified: '尚未確認',
+const statuses = {
+  current: { label: '已確認', tone: 'success' },
+  changed: { label: '音源已變更', tone: 'warning' },
+  unresolved: { label: '待確認音源', tone: 'warning' },
+  missing: { label: '音源不存在', tone: 'danger' },
+  unverified: { label: '尚未確認', tone: 'muted' },
 };
 const members = computed(() =>
-  (props.release.members ?? []).map((member, index) => ({
-    ...member,
-    track: props.tracksById.get(member.trackId) || {
-      id: member.trackId,
-      title: `無法使用的曲目 ${index + 1}`,
-    },
-  })),
+  (props.release.members ?? []).map((member, index) => {
+    const track = props.tracksById.get(member.trackId);
+    return {
+      ...member,
+      status: statuses[member.bindingStatus] || statuses.unverified,
+      canReconfirm:
+        !props.release.sourceBacked &&
+        !props.release.canInitializeBindings &&
+        ['changed', 'unresolved', 'unverified'].includes(member.bindingStatus),
+      track: {
+        ...track,
+        id: member.trackId,
+        title: track?.title || `無法使用的曲目 ${index + 1}`,
+      },
+    };
+  }),
 );
 function updateSelected(id, checked) {
+  if (
+    props.disabled ||
+    !members.value.some(
+      (member) => member.trackId === id && member.canReconfirm,
+    )
+  )
+    return;
   selected.value = checked
     ? [...new Set([...selected.value, id])].slice(0, 100)
     : selected.value.filter((entry) => entry !== id);
@@ -44,13 +62,12 @@ watch([() => props.release.id, () => props.release.revision], () => {
     <h3 id="release-members-heading" class="release-members-panel__title">
       收錄曲目
     </h3>
-    <p class="release-members-panel__hint">
-      {{ release.memberCount }} 首成員。音源變更不會自動重新綁定。
-    </p>
-    <p v-if="release.canInitializeBindings" class="release-members-panel__hint">
-      這份本機發行尚未確認音源。請先按「確認本機發行音源」，再使用一般儲存。
-    </p>
-    <ul class="release-members-panel__list">
+    <UiHint v-if="release.memberCount > 0">{{ release.memberCount }} 首</UiHint>
+    <UiHint v-if="release.canInitializeBindings">
+      首次儲存需確認本地音源。
+    </UiHint>
+    <UiHint v-if="!members.length && !release.hasMore">尚無收錄曲目。</UiHint>
+    <ul v-else class="release-members-panel__list">
       <TrackIdentityRow
         v-for="member in members"
         :key="member.trackId"
@@ -58,28 +75,25 @@ watch([() => props.release.id, () => props.release.revision], () => {
         overflow="ellipsis"
         hide-duration
       >
-        <template #trail>
-          <span class="release-members-panel__hint">{{
-            statusLabels[member.bindingStatus] || '尚未確認'
-          }}</span>
+        <template v-if="member.canReconfirm" #lead>
           <UiCheckbox
-            v-if="
-              !release.sourceBacked &&
-              !release.canInitializeBindings &&
-              ['changed', 'unresolved', 'unverified'].includes(
-                member.bindingStatus,
-              )
-            "
             :id="`release-reconfirm-${member.trackId}`"
-            label="確認目前音源"
+            :label="`確認 ${member.track.title} 的目前音源`"
+            label-hidden
             :model-value="selected.includes(member.trackId)"
             :disabled="
               disabled ||
               (!selected.includes(member.trackId) && selected.length >= 100)
             "
-            :aria-label="`確認 ${member.track.title} 的目前音源`"
             @update:model-value="updateSelected(member.trackId, $event)"
           />
+        </template>
+        <template #trail>
+          <UiChip
+            :tone="member.status.tone"
+            :aria-label="`音源狀態：${member.status.label}`"
+            >{{ member.status.label }}</UiChip
+          >
         </template>
       </TrackIdentityRow>
     </ul>
@@ -91,28 +105,31 @@ watch([() => props.release.id, () => props.release.revision], () => {
         :loading="loadingMore"
         loading-label="載入中"
         @click="emit('loadMore')"
-        >載入更多成員</UiButton
+        >載入更多</UiButton
       >
       <UiButton
         v-if="!release.sourceBacked && release.canInitializeBindings"
         variant="secondary"
         :disabled="disabled"
         @click="emit('initialize')"
-        >確認本機發行音源</UiButton
+        >確認音源並儲存</UiButton
       >
       <UiButton
         v-if="!release.sourceBacked && selected.length"
         variant="secondary"
         :disabled="disabled"
         @click="emit('repair', selected)"
-        >確認選取音源並儲存</UiButton
+        >確認選取並儲存</UiButton
       >
     </div>
   </section>
 </template>
 <style scoped>
 .release-members-panel {
+  min-inline-size: 0;
+  min-block-size: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--ui-space-3);
 }
 .release-members-panel__title {
@@ -121,13 +138,8 @@ watch([() => props.release.id, () => props.release.revision], () => {
   font-weight: var(--ui-type-title-weight);
   line-height: var(--ui-type-title-line-height);
 }
-.release-members-panel__hint {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-}
 .release-members-panel__list {
+  min-inline-size: 0;
   list-style: none;
   margin: 0;
   padding: 0;

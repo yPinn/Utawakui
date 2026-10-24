@@ -134,6 +134,8 @@ export function useImportSourceResolution({
             ? markRaw(result.source)
             : null;
           state.collectionThumbnailUrl = result.thumbnailUrl || null;
+          state.collectionReleaseType = result.releaseType || 'unknown';
+          state.collectionReleaseDate = result.releaseDate || null;
           state.playlistTracks = entries.map(createPreviewTrack);
           setStatus();
           return;
@@ -172,6 +174,8 @@ export function useImportSourceResolution({
           ? markRaw(playlistResult.source)
           : null;
         state.collectionThumbnailUrl = playlistResult.thumbnailUrl || null;
+        state.collectionReleaseType = playlistResult.releaseType || 'unknown';
+        state.collectionReleaseDate = playlistResult.releaseDate || null;
         state.playlistTracks = entries.map(createPreviewTrack);
         setStatus();
         return;

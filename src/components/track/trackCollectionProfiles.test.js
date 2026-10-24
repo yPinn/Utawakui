@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { sortPlaylistEntries } from '../../utils/playlistSort.js';
 import {
   TRACK_COLLECTION_KINDS,
   normalizeTrackCollectionSort,
@@ -301,14 +302,54 @@ describe('production track collection profiles', () => {
         direction: 'asc',
       }),
     ).toEqual({ key: 'title', direction: 'asc' });
-    for (const kind of ['album', 'artist']) {
+    expect(
+      normalizeTrackCollectionSort('album', {
+        key: 'duration',
+        direction: 'desc',
+      }),
+    ).toEqual({ key: null, direction: 'asc' });
+    expect(
+      normalizeTrackCollectionSort('artist', {
+        key: 'duration',
+        direction: 'desc',
+      }),
+    ).toEqual({ key: 'playCount', direction: 'desc' });
+  });
+
+  it('defaults artist rows to most played without changing album or playlist source order', () => {
+    const entries = [
+      { track: { id: 'zero' }, playlistIndex: 0, playCount: 0 },
+      { track: { id: 'first-tie' }, playlistIndex: 1, playCount: 8 },
+      { track: { id: 'most-played' }, playlistIndex: 2, playCount: 21 },
+      { track: { id: 'second-tie' }, playlistIndex: 3, playCount: 8 },
+      { track: { id: 'unavailable' }, playlistIndex: 4, playCount: null },
+    ];
+    const originalIds = entries.map(({ track }) => track.id);
+    expect(
+      sortPlaylistEntries(entries, normalizeTrackCollectionSort('artist')).map(
+        ({ track }) => track.id,
+      ),
+    ).toEqual([
+      'most-played',
+      'first-tie',
+      'second-tie',
+      'zero',
+      'unavailable',
+    ]);
+    for (const kind of ['album', 'playlist', 'library-all', 'library-local']) {
       expect(
-        normalizeTrackCollectionSort(kind, {
-          key: 'duration',
-          direction: 'desc',
-        }),
-      ).toEqual({ key: null, direction: 'asc' });
+        sortPlaylistEntries(entries, normalizeTrackCollectionSort(kind)).map(
+          ({ track }) => track.id,
+        ),
+      ).toEqual(originalIds);
     }
+    expect(entries.map(({ track }) => track.id)).toEqual(originalIds);
+    expect(
+      sortPlaylistEntries(
+        entries.map((entry) => ({ ...entry, playCount: null })),
+        normalizeTrackCollectionSort('artist'),
+      ).map(({ track }) => track.id),
+    ).toEqual(originalIds);
   });
 
   it('keeps playlist semantic fields opt-in while retaining every choice', () => {

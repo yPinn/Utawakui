@@ -127,7 +127,7 @@ describe('ArtistIdentityModal', () => {
     });
 
     expect(html).toContain('等待自動整理');
-    expect(html).toContain('取得足夠證據後會自動整合');
+    expect(html).toContain('找到相符資料後會自動整理');
     expect(html).not.toContain('已自動整理');
   });
 

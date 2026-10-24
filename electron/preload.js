@@ -30,6 +30,43 @@ function releaseTargetIntent(value, keys) {
       .map((key) => [key, value[key]]),
   );
 }
+function reconciliationCommitIntent(value) {
+  const bounded = releaseTargetIntent(value, ['previewId']);
+  if (
+    value?.decisions &&
+    typeof value.decisions === 'object' &&
+    !Array.isArray(value.decisions)
+  ) {
+    bounded.decisions = Object.fromEntries(
+      [
+        'title',
+        'artist',
+        'album',
+        'albumArtist',
+        'releaseDate',
+        'releaseYear',
+        'trackNumber',
+        'trackTotal',
+        'discNumber',
+        'discTotal',
+      ]
+        .filter((field) => Object.hasOwn(value.decisions, field))
+        .map((field) => [
+          field,
+          releaseTargetIntent(value.decisions[field], ['action', 'value']),
+        ]),
+    );
+  }
+  if (value?.mergeChoices !== undefined)
+    bounded.mergeChoices = releaseTargetIntent(value.mergeChoices, [
+      'name',
+      'description',
+      'type',
+      'date',
+      'totalTrackCount',
+    ]);
+  return bounded;
+}
 
 // BrowserWindow starts restored, so main can synchronously seed compact before
 // the renderer's first frame; later native window-state events update it.
@@ -996,6 +1033,168 @@ contextBridge.exposeInMainWorld('Utawakui', {
   // Every mutation below resolves to the FULL updated playlist array, so
   // callers never need a separate refetch.
   listPlaylists: () => ipcRenderer.invoke('playlists:list'),
+  getLibraryTagOptions: (value) =>
+    ipcRenderer.invoke(
+      'library:tags-options',
+      releaseTargetIntent(value, ['trackId', 'collectionId', 'position']),
+    ),
+  previewLibraryTags: (value) =>
+    ipcRenderer.invoke(
+      'library:tags-preview',
+      releaseTargetIntent(value, [
+        'trackId',
+        'collectionId',
+        'position',
+        'fields',
+      ]),
+    ),
+  commitLibraryTags: (value) =>
+    ipcRenderer.invoke(
+      'library:tags-commit',
+      releaseTargetIntent(value, ['previewId']),
+    ),
+  restoreLibraryTags: (value) =>
+    ipcRenderer.invoke(
+      'library:tags-restore',
+      releaseTargetIntent(value, ['receiptId']),
+    ),
+  recoverLibraryTags: () => ipcRenderer.invoke('library:tags-recover'),
+  cancelLibraryTags: () => ipcRenderer.invoke('library:tags-cancel'),
+  onLibraryTagProgress: (callback) => {
+    const listener = (_event, value) =>
+      callback(
+        releaseTargetIntent(value, ['libraryEpoch', 'trackId', 'phase']),
+      );
+    ipcRenderer.on('library:tags-progress', listener);
+    return () => ipcRenderer.removeListener('library:tags-progress', listener);
+  },
+  reportLibraryTagActivity: (value) =>
+    ipcRenderer.invoke(
+      'library:tags-activity',
+      releaseTargetIntent(value, ['trackIds']),
+    ),
+  scanLibraryReconciliation: () =>
+    ipcRenderer.invoke('library:reconciliation-scan'),
+  getLibraryReconciliationPage: (value) =>
+    ipcRenderer.invoke(
+      'library:reconciliation-page',
+      releaseTargetIntent(value, ['scanId', 'offset', 'limit', 'kind']),
+    ),
+  previewLibraryReconciliation: (value) =>
+    ipcRenderer.invoke(
+      'library:reconciliation-preview',
+      releaseTargetIntent(value, ['scanId', 'itemId']),
+    ),
+  commitLibraryReconciliation: (value) =>
+    ipcRenderer.invoke(
+      'library:reconciliation-commit',
+      reconciliationCommitIntent(value),
+    ),
+  decideLibraryReconciliation: (value) =>
+    ipcRenderer.invoke(
+      'library:reconciliation-decide',
+      releaseTargetIntent(value, ['scanId', 'itemId', 'action']),
+    ),
+  undoLibraryReconciliation: (value) =>
+    ipcRenderer.invoke(
+      'library:reconciliation-undo',
+      releaseTargetIntent(value, ['mergeId', 'libraryEpoch']),
+    ),
+  cancelLibraryReconciliation: () =>
+    ipcRenderer.invoke('library:reconciliation-cancel'),
+  recoverLibraryReconciliation: () =>
+    ipcRenderer.invoke('library:reconciliation-recover'),
+  onLibraryReconciliationProgress: (callback) => {
+    const listener = (_event, value) =>
+      callback(
+        releaseTargetIntent(value, ['libraryEpoch', 'completed', 'total']),
+      );
+    ipcRenderer.on('library:reconciliation-progress', listener);
+    return () =>
+      ipcRenderer.removeListener('library:reconciliation-progress', listener);
+  },
+  refreshReleaseMetadata: () =>
+    ipcRenderer.invoke('library:refresh-release-metadata'),
+  getReleaseCatalog: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-page',
+      releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'offset',
+        'limit',
+        'availabilityOnly',
+      ]),
+    ),
+  refreshReleaseCatalog: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-refresh',
+      releaseTargetIntent(value, ['trackId', 'collectionId']),
+    ),
+  prepareReleaseCatalogDownload: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-download',
+      releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'slotKey',
+      ]),
+    ),
+  downloadReleaseCatalogTrack: (value) =>
+    ipcRenderer.invoke(
+      'library:download-release-track',
+      releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'slotKey',
+      ]),
+    ),
+  linkLocalReleaseCatalogTrack: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-link-local',
+      releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'slotKey',
+      ]),
+    ),
+  searchReleaseCatalog: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-search',
+      releaseTargetIntent(value, ['trackId']),
+    ),
+  previewReleaseCatalog: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-preview',
+      releaseTargetIntent(value, ['candidateId', 'offset', 'limit']),
+    ),
+  acceptReleaseCatalog: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-accept',
+      releaseTargetIntent(value, ['candidateId', 'position']),
+    ),
+  unlinkReleaseCatalog: (value) =>
+    ipcRenderer.invoke(
+      'library:release-catalog-unlink',
+      releaseTargetIntent(value, [
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+        'slotKey',
+      ]),
+    ),
+  cancelReleaseMetadata: () =>
+    ipcRenderer.invoke('library:cancel-release-metadata'),
+  onReleaseMetadataProgress: (callback) => {
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on('library:release-metadata-progress', listener);
+    return () =>
+      ipcRenderer.removeListener('library:release-metadata-progress', listener);
+  },
   createPlaylist: (name) => ipcRenderer.invoke('playlists:create', name),
   renamePlaylist: (id, name) =>
     ipcRenderer.invoke('playlists:rename', id, name),

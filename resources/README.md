@@ -12,6 +12,7 @@
 | `audio-processing/structure_analysis_worker.py`         | 共用音樂分析 worker，已用固定 profiles 分流 Beat This! small0／final0 與 All-In-One；不用為每個模型再建一支 launcher                                      |
 | `audio-processing/lyrics_acoustic_probe.py`             | 可選聲學環境的固定 Python／套件版本及 import 路徑檢查；推論實作與此 readiness probe 分開。由 `lyricsAcoustic/catalog.js` 解析                             |
 | `provider/artist_photo_ytmusic_worker.py`               | 匿名 YT Music artist-photo 一次性查詢；使用 Provider Python，由 `providerRuntime.js` 與 artist-photo runner 管理，與 Audio Python 分屬不同 runtime family |
+| `provider/release_catalog_worker.py`                    | 匿名查詢所屬發行與正式來源曲序；沿用 Provider Python 與 manager 退出 barrier，Main 驗證來源、媒體及提交；不下載缺曲                                       |
 | `audio-processing/audio-python-runtime-3.14.7.json`     | 固定 Audio Python artifact 的 identity／大小／SHA-256／授權紀錄；不是已安裝的 Python runtime                                                              |
 | `audio-processing/analysis-beat-this-py314-lock.json`   | 固定分析環境依賴閉包、wheel hash 與 probe imports；與 interpreter、模型 manifest 各有生命週期                                                             |
 | `audio-processing/analysis-beat-this-small0-model.json` | 正式分析預設模型的固定描述；實際能力仍由 main 的 gate／readiness 控制                                                                                     |
@@ -19,6 +20,8 @@
 | `audio-processing/analysis-structure-model.json`        | All-In-One M2 的 `benchmark-only` 描述及限制；保存此檔不表示允許產品下載其權重                                                                            |
 | `audio-processing/lyrics-acoustic-catalog.json`         | 自足的聲學能力契約，包含 runtime／檔案表、環境、模型及阻擋狀態。內嵌 runtime manifest 用於完整性綁定，不能只因與 runtime JSON 部分相同就刪除              |
 | `audio-processing/lyrics_acoustic_probe_test.py`        | 相鄰 probe 的純 Python 合成測試；不在 `extraResources`，也不由 Vitest 自動收集                                                                            |
+
+來源母體 worker 與正式曲序見[來源曲序契約](../docs/contracts/release-source-catalog.md)。
 
 功能現況只在[產品規格](../docs/spec.md)維護。Runtime 分工見[架構圖](../docs/architecture.md)、[Audio Python ADR](../docs/adr/0014-audio-python-runtime-family.md)；模型與 worker 行為見[音樂分析契約](../docs/contracts/music-analysis.md)、[聲學估計契約](../docs/contracts/lyrics-acoustic-estimate-contract.md)及[Artist photo 契約](../docs/contracts/artist-photo-provider.md)。
 
@@ -32,6 +35,7 @@ python -B scripts/refined-worker-probe.test.py
 python -B scripts/beat-this-structure-worker.test.py
 python -B scripts/structure-analysis-worker.test.py
 python -B scripts/artist-photo-ytmusic-worker.test.py
+python -B resources/provider/release_catalog_worker.test.py
 ```
 
 這些測試使用合成資料與假的套件介面；artist-photo 測試另使用本機 HTTP server。

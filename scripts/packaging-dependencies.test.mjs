@@ -76,6 +76,50 @@ function bareSpecifiers() {
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 
 describe('packaged dependency boundary', () => {
+  it('ships app-owned reconciliation and FLAC writeback without test media or an extra writer runtime', () => {
+    for (const file of [
+      'electron/lib/reconciliation/runtime.js',
+      'electron/lib/tags/flac.js',
+      'electron/lib/tags/transaction.js',
+      'electron/lib/tags/runtime.js',
+      'electron/main/tagWritebackHandlers.js',
+    ])
+      expect(
+        runtimeSources.some((source) => source.file === file),
+        file,
+      ).toBe(true);
+    expect(packageJson.dependencies).not.toHaveProperty('taglib-wasm');
+    expect(builder.asarUnpack).toContain('electron/lib/**/*');
+    expect(
+      builder.files.some(
+        (glob) =>
+          !glob.startsWith('!') &&
+          path.matchesGlob('scripts/fixtures/tags/tone.flac', glob),
+      ),
+    ).toBe(false);
+  });
+  it('ships the fixed release catalog worker without its synthetic Python test or runtime installation', () => {
+    expect(builder.extraResources).toContainEqual({
+      from: 'resources/provider/release_catalog_worker.py',
+      to: 'provider/release_catalog_worker.py',
+    });
+    expect(
+      builder.extraResources.some((entry) =>
+        String(entry.from).includes('release_catalog_worker.test.py'),
+      ),
+    ).toBe(false);
+    for (const file of [
+      'catalog.js',
+      'catalogRuntime.js',
+      'ytMusicRunner.js',
+      'artwork.js',
+    ])
+      expect(
+        runtimeSources.some(
+          (source) => source.file === `electron/lib/releases/${file}`,
+        ),
+      ).toBe(true);
+  });
   it('ships local work and release data modules without bundling their tests or library data', () => {
     for (const file of [
       'electron/lib/works/organization.js',

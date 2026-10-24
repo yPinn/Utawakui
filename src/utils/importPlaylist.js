@@ -30,6 +30,23 @@ function isDownloadable(track) {
   return !isAlreadyDownloaded(track) && !isDone(track);
 }
 
+export function getDominantImportFailureCode(tracks) {
+  const counts = new Map();
+  for (const track of Array.isArray(tracks) ? tracks : []) {
+    if (!isFailed(track) || !track.errorCode) continue;
+    counts.set(track.errorCode, (counts.get(track.errorCode) || 0) + 1);
+  }
+  let best = null;
+  let bestCount = 0;
+  for (const [code, count] of counts) {
+    if (count > bestCount) {
+      best = code;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
 export function getPlaylistImportStats(tracks) {
   const source = Array.isArray(tracks) ? tracks : [];
 

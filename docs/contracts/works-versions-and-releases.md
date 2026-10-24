@@ -180,14 +180,38 @@ source、曲序及曲庫世代。所有可能失敗的音源驗證在原子寫�
 source-backed 集合允許人工欄位覆寫，但不能經發行操作改 source、曲序或 bindings。
 正式來源觀察只能由 Main 的可信 provider adapter 送入；既有 upsert-album 的
 Renderer payload 不提供 observed 權威。沒有可信來源事實時維持 unknown／null。
+YouTube Music 的 OLAK 清單由 Main 的 `releases/youtubeMusic.js` 讀取固定來源頁的
+Open Graph metadata：只有 `music.album` 且明示 Single／EP／Album 才觀測 type，
+不按曲目數或清單 ID 推測。回應限制 2 MiB、8 秒、禁止 redirect；暫存最多 100 個來源、15 分鐘。
+desktop 頁面 bootstrap 只解碼字串與 JSON，不執行來源 JavaScript。發行標頭年份必須同時
+符合 canonical 清單 ID、播放清單 ID、歌名與類型，且是該標頭 subtitle 唯一的四位年份；
+不讀影片上傳年或任意曲目年份。只取得年份時，date 保存 year 精度，不補造月日；
+year 觀測不取代既有 observed month／day，缺值不清除日期，manual overrides 仍優先。
+正式 upsert 只讀 Main 快取，過期則重新觀察並重查曲庫 scope，忽略 renderer
+傳入的分類與 observed；失敗保留未知及既有資料。同步逐欄合併，人工 overrides 仍優先。
+匯入預覽與批次記錄的 releaseType 獨立於 collectionKind；前者決定類型文案，後者只決定
+來源集合路徑。releaseDate 帶 value 與 precision，preview／activity 保留已接受批次的 scalar
+日期快照，Renderer 不將日期或 observed 當作寫入依據。卡片與匯入摘要共用
+`releaseMetadataLabel` 的年份 · 中文類型格式，沒有年份只顯示類型，不加空分隔符。
+類型統一單曲／迷你專輯／專輯；編輯選項可附「迷你專輯（EP）」而不更動 ep 代號。
+來源頁的正式封面優先於一般清單縮圖，renderer 僅准許
+YouTube 的固定圖片網域與本機媒體。曲目列由 feature adapter 使用目前曲庫封面覆寫預覽，
+不改候選曲目的身分、狀態或版本資訊。
 既有歌單標記為專輯只改集合類型及 revision，不以該操作自動接受目前音源。
 未初始化的本機集合在編輯視窗明確確認後，才建立 localMemberBindings；
 既有 changed／unresolved 成員須逐項重新確認，缺檔保留 membership 並標 missing。
 
 公開列表只加入 resolvedRelease（type、date、totalTrackCount、provenance、conflicts、
 revision、leadTrackId）、releaseLibraryEpoch 及需驗證旗標，不在啟動時掃描摘要。
-有本機 bindings 的集合在 Renderer 驗證完成前可用成員為空；選取集合與藝人區
-才以有界併發讀取當頁成員。播放及加入佇列操作重新驗證完整集合，
+封面、卡片、藝人統計、曲目表與「收錄於」導覽使用已保存的 trackIds 關聯；
+曲目展示對照 canonical 曲庫過濾缺檔，不以操作 admission cache、pending 或錯誤清空。
+這些資料只描述本機已保存的發行關聯，不宣稱當前音源已通過 binding 驗證；
+單曲頁曲長與本機曲數同樣保持可見。`useLibraryAlbumContext` 不在初始化或選取
+專輯／藝人頁時觸發操作 admission；來源曲序頁仍由 Main 提供當頁持有／綁定狀態，
+不將保存關聯當作來源列的可播放證明。
+有 bindings 的集合在操作驗證前 admitted 成員仍為空；播放、試聽與加入佇列操作
+重新驗證完整集合，專輯列的加入一般佇列／演出待唱同樣先取得 fresh admission。
+等待期間離開該集合或較新播放意圖開始，不得啟動過時試聽。
 不得把同 ID 的替代音源視為原發行；source-backed／未初始化舊集合只檢查實際檔案存在。
 加入演出待唱／從集合重建場次由 Main 在同一 lane 內驗證完整成員後同步提交，
 不接受 Renderer 傳入的曲目陣列。非同步等待期間切換曲庫、集合異動或較新的播放意圖
@@ -195,9 +219,23 @@ revision、leadTrackId）、releaseLibraryEpoch 及需驗證旗標，不在啟�
 
 `library:release-organization-changed` 僅傳 libraryEpoch 及至多 100 個 collectionIds；
 空陣列表示換庫或全面失效，不觸發 provider backfill。`useReleaseOrganization`
-持有單一 editor 草稿與請求世代，`useReleaseMembers` 持有可用成員快取。
+持有單一 editor 草稿與請求世代，`useReleaseMembers` 持有操作 admission 快取，
+`collectionDisplayTrackIds` 提供不依賴 admission 的展示關聯。驗證錯誤只附著對應集合，
+不得讓另一集合的失敗改變目前頁面的資訊。
 App 掛載共用 ReleaseInfoEditor，沿用既有 modal／fields／menu；衝突保留草稿，
 要求重載，換庫不接受舊回應。明確 null／unknown 與回到來源 remove 分開操作。
+編輯器不提供主打曲目欄位；已保存的 leadTrackId 保留，編輯其他資料不送出清除意圖。
+類型、日期與總曲數仍提供來源／手動設定；來源值集中在「沿用來源」選項顯示，
+不重複附上來源提示。設為未知保留明確 null，沿用來源仍移除 override；
+簡化說明及「儲存」按鈕不改保存內容，音源確認按鈕仍明示會一併儲存。
+集合選單以「編輯發行資訊」開啟；左側資料欄位、右側收錄曲目各自捲動，
+窄內容改為上下兩區，載入／錯誤在固定狀態區，不擠出原草稿與底部儲存入口。
+編輯使用共用 small 高度上限（35rem）與 viewport 邊界；ScrollLayout 透過公開
+padding 變數保留捲軸及 focus 空間，兩個命名 region 可由鍵盤捲動。
+右側以 UiChip 呈現成員音源綁定狀態，並非下載或伴奏處理結果；
+已確認為 success、音源變更／待確認為 warning、不存在為 danger、尚未確認為 muted。
+本機可重新確認的成員以列首 UiCheckbox 選取，來源發行與初始化前不提供個別確認，
+單次仍最多 100 首；長曲名沿共用列省略及完整文字提示，空集合提供明確提示。
 建立本機單曲使用短表單寬度與內容高度；建立成功切至發行資訊時，恢復寬版固定工作區。
 
 曲目既有選單提供建立單首發行及「收錄於」多發行導覽；現有集合操作提供發行資訊。
@@ -249,6 +287,8 @@ LibraryEntityDossier／AppFolderDossier、136px 封面、TrackTable／TrackColle
 整理歌曲仍使用原 TrackActionMenu 與 WorkVersionEditor，不複製到 releaseInfo。
 使用者入口與視窗統一稱「整理歌曲」，原「編輯歌曲」選單項目合併至同一入口。
 共用視窗以既有 UiTabs 分為歌曲資訊、版本與連結；歌曲資訊重用 TrackMetadataFields 與原封面草稿流程，來源型資訊維持唯讀。
+來源管理、音源變更、部分儲存與版本錯誤提示共用 footer 的通知區，與右側關閉／儲存操作分區，
+不插入歌曲資訊或版本設定的表單網格；版本搜尋曲目從 canonical library 補上目前封面。
 版本與連結左側設定版本，右側依「連結曲目／已連結版本」分區。
 useSongEditor 協調兩個既有 domain owner，切換分頁保留草稿；關閉或換曲只確認一次。
 一組 footer 依序提交有變更的歌曲資訊及版本／連結，不重複已成功的寫入。
@@ -295,6 +335,24 @@ Mounted 測試及可見 Electron 比較單首／多曲／部分收錄與專輯�
 驗證1280×850／960×650、深淺主題及寬窄Sidebar，正式 Main／preload 的播放、
 試聽、加入佇列／待唱、發行與作品編輯、分類切換及換庫競態維持原契約。
 本範圍不含 provider 身分補全、任意發行成員編輯或 Output／封面電台改版。
+
+## 既有曲庫資訊回填
+
+設定頁「曲庫資訊」集中顯示自動狀態與唯一「從來源更新」操作，
+以同一段說明區分啟動時離線整理與手動連線補值，保留手動編輯。
+操作進度與結果共用 feedback 區，閒置時不保留空容器；執行中另提供停止。
+「自動」是狀態說明，不是允許背景連線的開關。
+每次 session／曲庫 epoch 的首次 playlists:list 前，Main 在既有 service lane 內整理已保存的發行觀測：
+只重用 platform 與 source ID 完全相符且無歧義的 observed type／date，不取人工覆寫作為其他作品的證據。
+未保存可靠資料時維持缺值；不以曲數、任意曲目年份、上傳日期或匯入時間猜測。
+同源觀測互相矛盾時，該欄位不回填；離線讀寫失敗保留原檔，下一次讀取可重試。
+曲目既有 title／artist 的來源辨識規則保留，album／releaseYear 改為只補缺值。
+
+「從來源更新」由使用者主動發起，會連線補所屬發行、正式曲序與本地對照；
+即使類型／日期已完整的來源集合也涵蓋。單曲匯入完成後共用同一 Main service。
+設定另有離線「重新讀取」；一般發行頁不顯示這兩個維護按鈕。
+完整 v4 schema、匹配／人工候選、停止／CAS／epoch、來源列與下載操作見
+[來源曲序契約](release-source-catalog.md)。
 
 ## 刪除 journal 與恢復資料層
 

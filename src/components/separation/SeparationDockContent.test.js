@@ -37,7 +37,7 @@ describe('SeparationDockContent copy and controls', () => {
     expect(source).not.toContain('<UiButton');
     expect(source).toContain('label="加入處理佇列"');
     expect(source).not.toContain('separation-dock-content__controls');
-    expect(source).toContain('label="預覽伴奏處理歌單"');
+    expect(source).toContain('label="預覽處理曲目"');
     expect(source).toContain(':paused="isPaused"');
     expect(source).toContain(':pausing="isPausing"');
     expect(source).toContain('@pause="pause"');
@@ -76,9 +76,9 @@ describe('SeparationDockContent copy and controls', () => {
     expect(workspace).toContain(':loading="isStarting"');
     expect(workspace).toContain('加入處理佇列');
     expect(workspace.indexOf('id="separation-dock-mode"')).toBeLessThan(
-      workspace.indexOf('label="預覽伴奏處理歌單"'),
+      workspace.indexOf('label="預覽處理曲目"'),
     );
-    expect(workspace.indexOf('label="預覽伴奏處理歌單"')).toBeLessThan(
+    expect(workspace.indexOf('label="預覽處理曲目"')).toBeLessThan(
       workspace.indexOf('label="加入處理佇列"'),
     );
     expect(source).toContain('grid-template-columns: minmax(0, 1fr) auto auto');

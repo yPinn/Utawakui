@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import importHandlersModule from './importHandlers.js';
 
 const {
@@ -55,6 +57,183 @@ function registerDownload(overrides = {}) {
 }
 
 describe('import clipboard suggestion boundary', () => {
+  it('downloads an exact catalog target through the shared queue and attaches it without source discovery', async () => {
+    const webContents = { mainFrame: {} };
+    const target = { videoId: 'rgNdeflYdYw' };
+    const prepareReleaseDownload = vi.fn(() => target),
+      validateReleaseDownload = vi.fn(),
+      attachReleaseDownload = vi.fn(async () => ({
+        status: 'ok',
+        libraryEpoch: 7,
+      }));
+    const h = registerDownload({
+      getMainWindow: () => ({ isDestroyed: () => false, webContents }),
+      prepareReleaseDownload,
+      validateReleaseDownload,
+      attachReleaseDownload,
+    });
+    const handler = h.handlers.get('library:download-release-track');
+    expect(await handler({ sender: webContents, senderFrame: {} }, {})).toEqual(
+      { status: 'invalid-intent' },
+    );
+    const input = {
+      collectionId: 'album',
+      expectedRevision: 2,
+      libraryEpoch: 7,
+      slotKey: 'slot-1',
+    };
+    expect(
+      await handler(
+        { sender: webContents, senderFrame: webContents.mainFrame },
+        input,
+      ),
+    ).toMatchObject({ status: 'ok' });
+    expect(prepareReleaseDownload).toHaveBeenCalledExactlyOnceWith(input);
+    expect(validateReleaseDownload).toHaveBeenCalledWith(target);
+    expect(h.downloadTrackAudio.mock.calls[0][0]).toBe(target.videoId);
+    expect(attachReleaseDownload).toHaveBeenCalledExactlyOnceWith(target);
+    expect(h.notifyLibraryUpdated).toHaveBeenCalledWith({
+      allowProviderBackfill: false,
+    });
+  });
+
+  it('reports installed-but-unlinked audio accurately after a slot conflict', async () => {
+    const webContents = { mainFrame: {} };
+    const h = registerDownload({
+      getMainWindow: () => ({ isDestroyed: () => false, webContents }),
+      prepareReleaseDownload: () => ({ videoId: 'rgNdeflYdYw' }),
+      validateReleaseDownload: () => {},
+      attachReleaseDownload: async () => {
+        throw Error('private conflict');
+      },
+    });
+    expect(
+      await h.handlers.get('library:download-release-track')(
+        { sender: webContents, senderFrame: webContents.mainFrame },
+        {},
+      ),
+    ).toEqual({ status: 'downloaded-unlinked' });
+    expect(h.recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'RELEASE_DOWNLOAD_LINK_FAILED' }),
+    );
+  });
+  it('shares an active generic download with an album request and attaches only after installation', async () => {
+    const webContents = { mainFrame: {} };
+    let finish;
+    const downloadTrackAudio = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const attachReleaseDownload = vi.fn(async () => ({ status: 'ok' }));
+    const h = registerDownload({
+      getMainWindow: () => ({ isDestroyed: () => false, webContents }),
+      downloadTrackAudio,
+      prepareReleaseDownload: () => ({ videoId: 'rgNdeflYdYw' }),
+      validateReleaseDownload: () => {},
+      attachReleaseDownload,
+    });
+    const generic = h.handlers.get('yt:download-audio')(null, 'rgNdeflYdYw');
+    await flushAsync();
+    const album = h.handlers.get('library:download-release-track')(
+      { sender: webContents, senderFrame: webContents.mainFrame },
+      {},
+    );
+    await flushAsync();
+    expect(downloadTrackAudio).toHaveBeenCalledOnce();
+    expect(attachReleaseDownload).not.toHaveBeenCalled();
+    finish({ title: 'Song' });
+    await Promise.all([generic, album]);
+    expect(attachReleaseDownload).toHaveBeenCalledOnce();
+    expect(h.enforceLibraryStoragePolicy).toHaveBeenCalledOnce();
+  });
+  it('refuses a queued album download if the library changes while the provider runner is preparing', async () => {
+    const webContents = { mainFrame: {} };
+    let scope = { dir: 'library-dir', epoch: 7 },
+      finish;
+    const h = registerDownload({
+      getMainWindow: () => ({ isDestroyed: () => false, webContents }),
+      getReleaseScope: () => scope,
+      getProviderRunner: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      prepareReleaseDownload: () => ({ videoId: 'rgNdeflYdYw' }),
+      validateReleaseDownload: () => {},
+      attachReleaseDownload: vi.fn(),
+    });
+    const pending = h.handlers.get('library:download-release-track')(
+      { sender: webContents, senderFrame: webContents.mainFrame },
+      {},
+    );
+    await flushAsync();
+    scope = { ...scope, epoch: 8 };
+    finish({ run: true });
+    await expect(pending).rejects.toMatchObject({
+      code: 'IMPORT_LIBRARY_CHANGED',
+    });
+    expect(h.downloadTrackAudio).not.toHaveBeenCalled();
+  });
+  it('does not diagnose cancellation of a shared album download as a failure', async () => {
+    const webContents = { mainFrame: {} };
+    const downloadTrackAudio = vi.fn(
+      (_id, _dir, { signal }) =>
+        new Promise((_resolve, reject) =>
+          signal.addEventListener(
+            'abort',
+            () =>
+              reject(
+                Object.assign(Error('cancelled'), {
+                  code: 'IMPORT_DOWNLOAD_CANCELLED',
+                }),
+              ),
+            { once: true },
+          ),
+        ),
+    );
+    const attachReleaseDownload = vi.fn();
+    const h = registerDownload({
+      getMainWindow: () => ({ isDestroyed: () => false, webContents }),
+      downloadTrackAudio,
+      prepareReleaseDownload: () => ({ videoId: 'rgNdeflYdYw' }),
+      validateReleaseDownload: () => {},
+      attachReleaseDownload,
+    });
+    const pending = h.handlers.get('library:download-release-track')(
+      { sender: webContents, senderFrame: webContents.mainFrame },
+      {},
+    );
+    await flushAsync();
+    await h.handlers.get('yt:cancel-download')(null, 'rgNdeflYdYw');
+    await expect(pending).rejects.toMatchObject({
+      code: 'IMPORT_DOWNLOAD_CANCELLED',
+    });
+    expect(attachReleaseDownload).not.toHaveBeenCalled();
+    expect(h.recordDiagnostic).not.toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'DOWNLOAD_FAILED' }),
+    );
+  });
+  it('enqueues metadata after storage with captured scope without awaiting optional failure', async () => {
+    const captured = { dir: 'library-dir', epoch: 7 };
+    let finished = false;
+    const enqueueReleaseCatalog = vi.fn(() => {
+      expect(finished).toBe(true);
+      return Promise.reject(Error('metadata offline'));
+    });
+    const view = registerDownload({
+      getReleaseScope: () => captured,
+      enforceLibraryStoragePolicy: async () => {
+        finished = true;
+      },
+      enqueueReleaseCatalog,
+    });
+    await expect(
+      view.handlers.get('yt:download-audio')({}, 'abcdefghijk'),
+    ).resolves.toMatchObject({ title: 'Song' });
+    expect(enqueueReleaseCatalog).toHaveBeenCalledWith('abcdefghijk', captured);
+    await flushAsync();
+  });
   it('commits provider metadata once inside captured import admission', async () => {
     let inside = false;
     const runImport = vi.fn(async (_intent, finalize) => {
@@ -82,6 +261,46 @@ describe('import clipboard suggestion boundary', () => {
     expect(createLibraryImportAdmission).toHaveBeenCalledOnce();
     expect(runImport).toHaveBeenCalledOnce();
     expect(saveProviderIndexEntry).toHaveBeenCalledOnce();
+  });
+  it('preserves checked metadata through the default writer on repeated downloads', async () => {
+    fs.mkdirSync('.tmp', { recursive: true });
+    const dir = fs.mkdtempSync(path.resolve('.tmp/provider-checked-'));
+    const file = path.join(dir, 'library.json');
+    const checked = {
+      title: 'Checked title',
+      titleOrigin: 'manual',
+      artist: '',
+      artistOrigin: 'manual',
+      album: 'Checked album',
+      albumOrigin: 'manual',
+      releaseYear: null,
+      releaseYearOrigin: 'manual',
+    };
+    try {
+      fs.writeFileSync(
+        file,
+        JSON.stringify({ version: 2, tracks: { abcdefghijk: checked } }),
+      );
+      const view = registerDownload({
+        resolveDownloadDir: () => dir,
+        downloadTrackAudio: vi.fn().mockResolvedValue({
+          title: 'Provider title',
+          artist: 'Provider artist',
+          album: 'Provider album',
+          releaseYear: 2026,
+          duration: 180,
+        }),
+      });
+      await view.handlers.get('yt:download-audio')({}, 'abcdefghijk');
+      expect(
+        JSON.parse(fs.readFileSync(file, 'utf8')).tracks.abcdefghijk,
+      ).toMatchObject({
+        ...checked,
+        duration: 180,
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
   it.each([
     [{}, false],
@@ -247,6 +466,32 @@ describe('import clipboard suggestion boundary', () => {
 });
 
 describe('generic import source resolution', () => {
+  it.each(['music.youtube.com', 'www.youtube.com'])(
+    'projects the provider release type separately from collection kind (%s)',
+    async (host) => {
+      const view = registerDownload({
+        listLibraryTracks: () => [],
+        fetchPlaylistMetadata: async () => ({
+          title: 'RASEN',
+          releaseType: 'ep',
+          releaseDate: { value: '2026', precision: 'year' },
+          thumbnailUrl: 'https://yt3.googleusercontent.com/rasen',
+          entries: [{ id: 'abcdefghijk', title: 'RASEN' }],
+        }),
+      });
+      const result = await view.handlers.get('import:resolve-source')(
+        {},
+        `https://${host}/playlist?list=OLAK5uy_observation`,
+      );
+      expect(result).toMatchObject({
+        kind: 'playlist',
+        collectionKind: 'album',
+        releaseType: 'ep',
+        releaseDate: { value: '2026', precision: 'year' },
+        title: 'RASEN',
+      });
+    },
+  );
   it('resolves a text query through yt-dlp search and returns native candidates', async () => {
     const searchYoutubeCandidates = vi.fn().mockResolvedValue([
       {

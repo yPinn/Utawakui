@@ -15,6 +15,7 @@ import {
 } from '../playlists.js';
 import { hashAudioFile } from '../works/trackBinding.js';
 import { prepareTrackDeletion } from '../works/organization.js';
+import { reconcileCatalog } from './catalog.js';
 
 let dir, scope, workRuntime, runtime, inspectBinding, notifyChanged;
 const source = { platform: 'youtube', id: 'release-source' };
@@ -69,9 +70,141 @@ beforeEach(() => {
   audio('three');
   write([album()]);
 });
+
+it('reports an exact local excluded slot as a candidate without admitting it or changing the saved library', async () => {
+  const videoId = 'p1tsL0YmNqU';
+  audio(videoId);
+  const parent = reconcileCatalog(
+    album({
+      source: { platform: 'youtube', id: 'OLAK5uy_test' },
+      trackIds: [],
+      releaseInfo: info(),
+    }),
+    {
+      playlistId: 'OLAK5uy_test',
+      browseId: 'MPREb_test',
+      title: '15',
+      artist: 'tuki.',
+      type: 'album',
+      year: '2025',
+      reportedTotal: 1,
+      completeness: 'complete',
+      slots: [
+        {
+          position: 1,
+          videoId,
+          title: 'Bansanka',
+          artist: 'tuki.',
+          duration: 218,
+          available: true,
+        },
+      ],
+    },
+    {},
+    '2026-10-24T00:00:00Z',
+  );
+  parent.releaseInfo.catalog.rejected.push(videoId);
+  const file = path.join(dir, 'playlists.json');
+  fs.writeFileSync(file, JSON.stringify({ version: 4, playlists: [parent] }));
+  const before = fs.readFileSync(file);
+  const page = await runtime.catalogPage({
+    collectionId: parent.id,
+    expectedRevision: parent.releaseInfo.revision,
+    libraryEpoch: 1,
+  });
+  expect(page.catalog.availableCount).toBe(0);
+  expect(page.catalog.rows[0]).toMatchObject({
+    state: 'excluded',
+    localTrackId: null,
+    localCandidateTrackId: videoId,
+  });
+  expect(fs.readFileSync(file)).toEqual(before);
+});
 afterEach(() => {
   vi.restoreAllMocks();
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+it('keeps an accepted occurrence playable when another occurrence of the same source is excluded', async () => {
+  const videoId = 'p1tsL0YmNqU';
+  audio(videoId);
+  const binding = await hashAudioFile(
+    path.join(dir, 'tracks', videoId, 'audio.mp3'),
+  );
+  const parent = reconcileCatalog(
+    album({
+      source: { platform: 'youtube', id: 'OLAK5uy_test' },
+      trackIds: [],
+      releaseInfo: info(),
+    }),
+    {
+      playlistId: 'OLAK5uy_test',
+      browseId: 'MPREb_test',
+      title: '15',
+      artist: 'tuki.',
+      type: 'album',
+      year: '2025',
+      reportedTotal: 2,
+      completeness: 'complete',
+      slots: [1, 2].map((position) => ({
+        position,
+        videoId,
+        title: 'Bansanka',
+        artist: 'tuki.',
+        duration: 218,
+        available: true,
+      })),
+    },
+    { [videoId]: binding },
+    '2026-10-24T00:00:00Z',
+  );
+  delete parent.releaseInfo.catalog.links['slot-2'];
+  parent.releaseInfo.catalog.rejected.push(videoId);
+  const file = path.join(dir, 'playlists.json');
+  fs.writeFileSync(file, JSON.stringify({ version: 4, playlists: [parent] }));
+  const before = fs.readFileSync(file);
+  const page = await runtime.catalogPage({
+    collectionId: parent.id,
+    expectedRevision: parent.releaseInfo.revision,
+    libraryEpoch: 1,
+  });
+  expect(page.catalog.availableCount).toBe(1);
+  expect(page.catalog.rows).toMatchObject([
+    { state: 'available', localTrackId: videoId, localCandidateTrackId: null },
+    { state: 'excluded', localTrackId: null, localCandidateTrackId: videoId },
+  ]);
+  const intent = {
+    collectionId: parent.id,
+    expectedRevision: parent.releaseInfo.revision,
+    libraryEpoch: 1,
+    availabilityOnly: true,
+  };
+  const status = await runtime.catalogPage(intent);
+  expect(status.catalog).toMatchObject({
+    availabilityOnly: true,
+    structureVersion: page.catalog.structureVersion,
+    availableCount: 1,
+  });
+  expect(status.catalog.rows[0]).not.toHaveProperty('title');
+  audio(videoId, 'replaced media');
+  const changed = await runtime.catalogPage(intent);
+  expect(changed.catalog.availableCount).toBe(0);
+  expect(changed.catalog.structureVersion).toBe(page.catalog.structureVersion);
+  expect(changed.catalog.rows[0].state).not.toBe('available');
+  fs.unlinkSync(path.join(dir, 'tracks', videoId, 'audio.mp3'));
+  expect((await runtime.catalogPage(intent)).catalog.rows[0].state).toBe(
+    'missing',
+  );
+  await expect(
+    runtime.catalogPage({ ...intent, availabilityOnly: 'true' }),
+  ).rejects.toThrow();
+  await expect(
+    runtime.catalogPage({ ...intent, libraryEpoch: 99 }),
+  ).rejects.toThrow();
+  await expect(
+    runtime.catalogPage({ ...intent, expectedRevision: 99 }),
+  ).rejects.toThrow();
+  expect(fs.readFileSync(file)).toEqual(before);
 });
 
 describe('release organization runtime', () => {

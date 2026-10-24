@@ -50,6 +50,7 @@ export {
   Maximize2,
   MemoryStick,
   MessageSquare,
+  MicAudioLines,
   MicVocal,
   Minus,
   Minimize2,

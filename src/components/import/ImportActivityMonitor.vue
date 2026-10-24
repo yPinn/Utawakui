@@ -1,5 +1,10 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
+import { useLibraryArtwork } from '../../composables/useLibraryArtwork.js';
+import {
+  releaseMetadataLabel,
+  releaseYearFromDate,
+} from '../../utils/releasePresentation.js';
 import { Check, RefreshCw, Square, X } from '../../icons/index.js';
 import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
 import {
@@ -28,12 +33,18 @@ watch(
   { immediate: true },
 );
 const visible = computed(() => revealed.value || !running.value);
-const track = computed(() => ({
-  id: props.batch.id,
-  title: props.batch.title,
-  artist: `${props.batch.kind === 'single' ? '單曲' : props.batch.collectionKind === 'album' ? '專輯' : '播放清單'} · ${progress.value.phaseLabel}`,
-  thumbnailUrl: props.batch.thumbnailUrl,
-}));
+const { trackArtwork, collectionArtwork } = useLibraryArtwork();
+const track = computed(() => {
+  const row = {
+    id: props.batch.id,
+    title: props.batch.title,
+    artist: `${props.batch.kind === 'single' ? '單曲' : props.batch.collectionKind === 'album' ? releaseMetadataLabel(props.batch.releaseType, releaseYearFromDate(props.batch.releaseDate)) : '播放清單'} · ${progress.value.phaseLabel}`,
+    thumbnailUrl: props.batch.thumbnailUrl,
+  };
+  return props.batch.kind === 'single'
+    ? trackArtwork({ ...row, id: props.batch.tracks[0]?.id || row.id })
+    : collectionArtwork(row, props.batch.source);
+});
 </script>
 
 <template>

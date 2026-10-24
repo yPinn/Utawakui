@@ -313,6 +313,32 @@ describe('buildAudioDownloadOptionAttempts', () => {
 });
 
 describe('fetchPlaylist', () => {
+  it('preserves the explicit release type and artwork independently of selected entry count', async () => {
+    const runner = vi.fn().mockResolvedValue({
+      title: 'Album - Artist',
+      entries: [{ id: 'mv123456789', album: 'RASEN' }],
+    });
+    const fetchRelease = vi.fn(async () => ({
+      type: 'ep',
+      title: 'RASEN',
+      date: { value: '2026', precision: 'year' },
+      thumbnailUrl: 'https://yt3.googleusercontent.com/rasen',
+    }));
+    const result = await fetchPlaylist('OLAK5uy_releaseTest', {
+      runner,
+      fetchRelease,
+    });
+    expect(result).toMatchObject({
+      title: 'RASEN',
+      releaseType: 'ep',
+      releaseDate: { value: '2026', precision: 'year' },
+      thumbnailUrl: 'https://yt3.googleusercontent.com/rasen',
+    });
+    expect(result.entries).toHaveLength(1);
+    expect(fetchRelease).toHaveBeenCalledWith('OLAK5uy_releaseTest');
+    await fetchPlaylist('PL_regular', { runner, fetchRelease });
+    expect(fetchRelease).toHaveBeenCalledOnce();
+  });
   it('keeps playlist entries fast while normalizing display and identity metadata', async () => {
     const runner = vi.fn().mockResolvedValue({
       title: 'Karaoke Favorites',
@@ -398,7 +424,10 @@ describe('fetchPlaylist', () => {
       });
 
     await expect(
-      fetchPlaylist('OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo', { runner }),
+      fetchPlaylist('OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo', {
+        runner,
+        fetchRelease: async () => ({}),
+      }),
     ).resolves.toMatchObject({
       title: '海螺記',
       entries: [
@@ -433,7 +462,10 @@ describe('fetchPlaylist', () => {
       });
 
     await expect(
-      fetchPlaylist('OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo', { runner }),
+      fetchPlaylist('OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo', {
+        runner,
+        fetchRelease: async () => ({}),
+      }),
     ).resolves.toMatchObject({
       title: 'Album - Unknown Artist',
     });

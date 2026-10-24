@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useLibraryArtwork } from '../../composables/useLibraryArtwork.js';
 import { CircleX, RefreshCw, Square } from '../../icons/index.js';
 import {
   identityArtistLabel,
@@ -23,12 +24,13 @@ const props = defineProps({
 const emit = defineEmits(['cancel', 'retryFailed']);
 
 function executionTrack(source) {
-  return {
+  return trackArtwork({
     ...source,
     title: identityTitle(source.trackIdentity, source.title),
     artist: identityArtistLabel(source.trackIdentity, source.artist),
-  };
+  });
 }
+const { trackArtwork } = useLibraryArtwork();
 
 const selectedTracks = computed(() =>
   props.tracks.filter((track) => track.selected),

@@ -20,6 +20,10 @@ import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import ImportSourceRow from './ImportSourceRow.vue';
+const library = vi.hoisted(() => ({ tracks: new Map() }));
+vi.mock('../../composables/useLibrary.js', () => ({
+  useLibrary: () => ({ tracksById: { value: library.tracks } }),
+}));
 
 for (const [component, filename] of [
   [ImportSourceRow, './ImportSourceRow.vue'],
@@ -45,6 +49,18 @@ const track = {
 };
 
 describe('ImportSourceRow shared object adapter', () => {
+  it('renders local cover overrides through the shared track row', async () => {
+    library.tracks.set(track.id, {
+      ...track,
+      thumbnailUrl: 'utawakui-media://track/candidate/cover.jpg',
+    });
+    const html = await renderToString(
+      createSSRApp({ render: () => h(ImportSourceRow, { track }) }),
+    );
+    expect(html).toContain('utawakui-media://track/candidate/cover.jpg');
+    expect(html).not.toContain('https://example.test/cover.jpg');
+    library.tracks.clear();
+  });
   it('preserves a long source title while opting into the shared one-line overflow presentation', async () => {
     const longTitle =
       '林俊傑 - Always Online「變色的生活 人性的挑撥 瘋狂的冒出」完整歌詞版 Official Lyrics Video';

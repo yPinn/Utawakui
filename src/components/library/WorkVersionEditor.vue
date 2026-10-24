@@ -71,12 +71,18 @@ const related = computed(() =>
   }),
 );
 const searchResults = computed(() => ({
-  tracks: state.results.tracks.filter(
-    (track) =>
-      state.selection.kind !== 'keep' ||
-      !state.snapshot?.work ||
-      track.workId !== state.snapshot.work.id,
-  ),
+  tracks: state.results.tracks
+    .filter(
+      (track) =>
+        state.selection.kind !== 'keep' ||
+        !state.snapshot?.work ||
+        track.workId !== state.snapshot.work.id,
+    )
+    .map((track) => ({
+      ...track,
+      thumbnailUrl:
+        tracksById.value.get(track.id)?.thumbnailUrl || track.thumbnailUrl,
+    })),
 }));
 
 async function select(selection) {
@@ -172,22 +178,12 @@ onUnmounted(songEditor.dispose);
           variant="bar"
           @update:active-id="songEditor.setSection"
         />
-        <UiNotice
-          v-if="songEditor.state.partialMessage"
-          tone="warning"
-          :message="songEditor.state.partialMessage"
-        />
         <section
           v-show="songEditor.state.section === 'metadata'"
           id="song-editor-metadata-panel"
           role="tabpanel"
           aria-labelledby="song-editor-metadata-tab"
         >
-          <UiNotice
-            v-if="!songEditor.canEditMetadata.value"
-            tone="info"
-            message="歌曲資訊由來源管理。版本與連結仍可編輯。"
-          />
           <TrackMetadataFields
             :open="songEditor.state.section === 'metadata'"
             :read-only="!songEditor.canEditMetadata.value"
@@ -209,7 +205,9 @@ onUnmounted(songEditor.dispose);
             :selected-artwork-candidate-id="
               metadata.state.selectedArtworkCandidateId
             "
-            :error="metadata.state.error || ''"
+            :error="
+              metadata.state.error === '歌名必填' ? metadata.state.error : ''
+            "
             @save="songEditor.save"
             @choose-thumbnail="metadata.chooseThumbnail"
             @clear-thumbnail="metadata.clearThumbnail"
@@ -230,20 +228,7 @@ onUnmounted(songEditor.dispose);
           class="work-version-editor__organization"
         >
           <p v-if="state.loading" role="status">讀取中…</p>
-          <UiNotice
-            v-if="state.error"
-            tone="danger"
-            :message="state.error"
-            action-label="重新載入"
-            :action-disabled="songEditor.busy.value || state.loading"
-            @action="editor.reload"
-          />
           <template v-if="state.snapshot">
-            <UiNotice
-              v-if="state.snapshot.bindingStatus === 'changed'"
-              tone="warning"
-              message="音源已變更，請確認版本資料。"
-            />
             <div class="work-version-editor__layout">
               <div class="work-version-editor__version-pane">
                 <WorkVersionFields
@@ -347,30 +332,72 @@ onUnmounted(songEditor.dispose);
       </UiScrollLayout>
     </template>
     <template #footer>
-      <UiButton
-        variant="secondary"
-        :disabled="songEditor.busy.value"
-        @click="songEditor.close"
-        >關閉</UiButton
-      >
-      <UiButton
-        v-if="state.snapshot?.bindingStatus === 'changed'"
-        variant="accent"
-        :disabled="disabled"
-        :loading="songEditor.state.saving"
-        loading-label="儲存中"
-        @click="songEditor.save({ reconfirm: true })"
-        >確認音源並儲存</UiButton
-      >
-      <UiButton
-        v-else
-        variant="accent"
-        :disabled="songEditor.busy.value || !songEditor.isDirty.value"
-        :loading="songEditor.state.saving"
-        loading-label="儲存中"
-        @click="songEditor.save"
-        >儲存</UiButton
-      >
+      <div class="work-version-editor__footer">
+        <div class="work-version-editor__notices" aria-label="歌曲整理提示">
+          <UiNotice
+            v-if="metadata.state.error && metadata.state.error !== '歌名必填'"
+            compact
+            tone="danger"
+            :message="metadata.state.error"
+          />
+          <UiNotice
+            v-if="state.error"
+            compact
+            tone="danger"
+            :message="state.error"
+            action-label="重新載入"
+            :action-disabled="songEditor.busy.value || state.loading"
+            @action="editor.reload"
+          />
+          <UiNotice
+            v-if="songEditor.state.partialMessage"
+            compact
+            tone="warning"
+            :message="songEditor.state.partialMessage"
+          />
+          <UiNotice
+            v-if="state.snapshot?.bindingStatus === 'changed'"
+            compact
+            tone="warning"
+            message="音源已變更，請確認版本資料。"
+          />
+          <UiNotice
+            v-if="
+              songEditor.state.section === 'metadata' &&
+              !songEditor.canEditMetadata.value
+            "
+            compact
+            tone="info"
+            message="歌曲資訊由來源管理。版本與連結仍可編輯。"
+          />
+        </div>
+        <div class="work-version-editor__actions">
+          <UiButton
+            variant="secondary"
+            :disabled="songEditor.busy.value"
+            @click="songEditor.close"
+            >關閉</UiButton
+          >
+          <UiButton
+            v-if="state.snapshot?.bindingStatus === 'changed'"
+            variant="accent"
+            :disabled="disabled"
+            :loading="songEditor.state.saving"
+            loading-label="儲存中"
+            @click="songEditor.save({ reconfirm: true })"
+            >確認音源並儲存</UiButton
+          >
+          <UiButton
+            v-else
+            variant="accent"
+            :disabled="songEditor.busy.value || !songEditor.isDirty.value"
+            :loading="songEditor.state.saving"
+            loading-label="儲存中"
+            @click="songEditor.save"
+            >儲存</UiButton
+          >
+        </div>
+      </div>
     </template>
   </UiModal>
 </template>
@@ -441,5 +468,22 @@ onUnmounted(songEditor.dispose);
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-3);
+}
+.work-version-editor__footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.work-version-editor__notices {
+  flex: 1 1 18rem;
+  display: grid;
+  gap: var(--ui-space-2);
+  min-inline-size: 0;
+}
+.work-version-editor__actions {
+  margin-inline-start: auto;
 }
 </style>

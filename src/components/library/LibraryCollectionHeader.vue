@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import {
   ICON_SIZE,
   ImagePlus,
@@ -97,7 +98,11 @@ const isSingle = computed(
   () => props.entityKind === 'album' && props.releaseType === 'single',
 );
 const entityLabel = computed(() =>
-  isSingle.value ? '此單曲發行' : ENTITY_LABEL_BY_KIND[props.entityKind],
+  isSingle.value
+    ? '此單曲發行'
+    : props.entityKind === 'album'
+      ? `此${props.releaseType === 'unknown' ? '發行' : releaseTypeLabel(props.releaseType || 'album')}`
+      : ENTITY_LABEL_BY_KIND[props.entityKind],
 );
 // Artist pages are read-only references with no entity-specific action.
 const entityAction = computed(() => {
@@ -110,7 +115,7 @@ const entityAction = computed(() => {
       icon: ListPlus,
       label: isSingle.value
         ? '將單曲發行新增至播放清單'
-        : '將專輯新增至播放清單',
+        : `將${props.releaseType === 'unknown' ? '發行' : releaseTypeLabel(props.releaseType || 'album')}新增至播放清單`,
       disabled: !props.canAddToPlaylist || !props.addToPlaylistContent,
       menuContent: props.addToPlaylistContent,
     };

@@ -63,6 +63,12 @@ network install or signed-installer acceptance; see the
   dependency, provider environment or packaged library data.
   The read-only default-session preparation helper `electron/main/previewSession.js`
   uses the existing `electron/**/*` inclusion; its colocated tests remain excluded.
+- Library reconciliation and native FLAC tags: `electron/lib/reconciliation/`,
+  `electron/lib/tags/` and their fixed Main handlers use existing recursive JS
+  inclusion and lib unpack rules. Adjacent tests and `scripts/fixtures/tags/`
+  are not installer payload. No TagLib-Wasm, new executable, Python family or
+  runtime dependency is added. Per-library journals, `tag-writebacks.json` and
+  `.utawakui-tags/` backups are private user data, never package resources.
 - Cross-runtime JSON contracts and pure presentation projections: `shared/`,
   packaged into `app.asar`; Browser Source access is limited to exact loopback
   routes declared by `electron/lib/outputServer/http.js` and composed by
@@ -608,3 +614,17 @@ scripts/outputPerformanceProbe.mjs、scripts/output-performance-probe.mjs 與 sc
 ## Performance session archive and export runtime
 
 `electron/lib/performanceSessionArchive.js` and `electron/main/performanceSessionHistoryHandlers.js` use the existing `electron/**/*` runtime inclusion and `electron/lib/**/*` unpack boundary. No new dependency or external executable is added. `performance-session-plan.json` remains library-owned, with atomic current-session rotation and scalar archives/timelines; `playlists.json` stores populated exports and their idempotency keys. Main-only fixed IPC handles selected-session reads, archive, preview and save; the renderer never supplies storage paths or media URLs. The existing independent OBS session files remain under userData.
+
+## Release source catalog Phase 1
+
+`electron/lib/releases/catalog.js`, `catalogRuntime.js`, `artwork.js` and
+`ytMusicRunner.js` use the existing recursive Electron source inclusion and
+`electron/lib/**/*` unpack boundary. The fixed
+`resources/provider/release_catalog_worker.py` is an explicit extraResource at
+`resources/provider/release_catalog_worker.py` in the installed application.
+It reuses the separately prepared Provider Python with ytmusicapi／Requests;
+no Python installation, account, cookie, cache, Audio Python environment or
+missing audio is bundled. Its adjacent synthetic Python test is excluded.
+Verify the packaged worker exists, Main derives its fixed path, the anonymous
+source lookup terminates on cancel／quit, and persisted playlists v4 remains
+readable with the provider gate disabled. See the [contract](../contracts/release-source-catalog.md).

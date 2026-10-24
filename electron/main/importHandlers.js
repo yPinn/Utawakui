@@ -28,11 +28,10 @@ const {
   resolveYoutubeImportSource,
   resolveYoutubeSearchQuery,
 } = require('../lib/importResolver');
+const { listTracks, resolveTrackDir } = require('../lib/library');
 const {
-  listTracks,
-  resolveTrackDir,
-  saveIndexEntry,
-} = require('../lib/library');
+  saveProviderIndexEntry: saveAcquiredIndexEntry,
+} = require('../lib/library/metadataIndex');
 const {
   enforceLibraryStoragePolicySafely,
 } = require('./libraryStorageHandlers');
@@ -52,6 +51,13 @@ async function classifyingFailures(run, { recordDiagnostic } = {}) {
   try {
     return await run();
   } catch (err) {
+    if (err?.code === 'IMPORT_DOWNLOAD_CANCELLED')
+      throw createAppError({
+        code: 'IMPORT_DOWNLOAD_CANCELLED',
+        severity: 'info',
+        title: '匯入已停止',
+        message: '這首曲目已停止下載。',
+      });
     if (
       typeof err?.publicMessage === 'string' &&
       String(err?.message || '').startsWith(APP_ERROR_PREFIX)
@@ -200,6 +206,11 @@ function registerImportHandlers({
   enforceLibraryStoragePolicy = async () => undefined,
   downloadTrackAudio = downloadAudio,
   createLibraryImportAdmission = () => undefined,
+  getReleaseScope = () => null,
+  prepareReleaseDownload = null,
+  validateReleaseDownload = null,
+  attachReleaseDownload = null,
+  enqueueReleaseCatalog = () => {},
   fetchPlaylistMetadata = fetchPlaylist,
   fetchYoutubeMetadata = fetchMetadata,
   searchYoutubeCandidates = searchPlaybackCandidates,
@@ -207,7 +218,7 @@ function registerImportHandlers({
   getMainWindow = () => null,
   listLibraryTracks = listTracks,
   providerDownloadScheduler = createProviderDownloadScheduler(),
-  saveProviderIndexEntry = saveIndexEntry,
+  saveProviderIndexEntry = saveAcquiredIndexEntry,
   recordDiagnostic,
 }) {
   const providerDownloadTasks = new Map();
@@ -270,12 +281,21 @@ function registerImportHandlers({
     });
   }
 
-  function runProviderDownload(videoId) {
+  function runProviderDownload(videoId, { beforeStart = () => {} } = {}) {
+    const destDir = resolveDownloadDir(getConfig());
+    const releaseScope = getReleaseScope();
     const existing = providerDownloadTasks.get(videoId);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.dir !== destDir || existing.epoch !== releaseScope?.epoch)
+        throw createAppError({
+          code: 'IMPORT_LIBRARY_CHANGED',
+          title: '曲庫位置已變更',
+          message: '請等候原下載完成後再試。',
+        });
+      return existing.promise;
+    }
 
     const task = (async () => {
-      const destDir = resolveDownloadDir(getConfig());
       const runImport = createLibraryImportAdmission();
       let metadataCommitted = false;
       const commitMetadata = (result) => {
@@ -309,7 +329,18 @@ function registerImportHandlers({
       const result = await providerDownloadScheduler.schedule(
         videoId,
         async ({ signal }) => {
+          await beforeStart();
           const runner = await getProviderRunner();
+          await beforeStart();
+          if (
+            resolveDownloadDir(getConfig()) !== destDir ||
+            getReleaseScope()?.epoch !== releaseScope?.epoch
+          )
+            throw createAppError({
+              code: 'IMPORT_LIBRARY_CHANGED',
+              title: '曲庫位置已變更',
+              message: '請重新開始下載。',
+            });
           return downloadTrackAudio(videoId, destDir, {
             runner,
             signal,
@@ -330,12 +361,24 @@ function registerImportHandlers({
         });
       });
 
+      try {
+        Promise.resolve(enqueueReleaseCatalog(videoId, releaseScope)).catch(
+          () => {},
+        );
+      } catch {
+        /* optional metadata cannot undo installed audio */
+      }
+
       return result;
     })().finally(() => {
       providerDownloadTasks.delete(videoId);
     });
 
-    providerDownloadTasks.set(videoId, task);
+    providerDownloadTasks.set(videoId, {
+      promise: task,
+      dir: destDir,
+      epoch: releaseScope?.epoch,
+    });
     return task;
   }
 
@@ -360,16 +403,15 @@ function registerImportHandlers({
           classified.kind === 'youtube-playlist' ||
           classified.kind === 'youtube-music-album'
         ) {
-          const { title, thumbnailUrl, entries } = await fetchPlaylistMetadata(
-            classified.playlistId,
-            { runner },
-          );
+          const { title, thumbnailUrl, entries, releaseType, releaseDate } =
+            await fetchPlaylistMetadata(classified.playlistId, { runner });
           return {
             kind: 'playlist',
             title,
             thumbnailUrl,
-            collectionKind:
-              classified.kind === 'youtube-music-album' ? 'album' : 'playlist',
+            releaseType: releaseType || 'unknown',
+            releaseDate: releaseDate || null,
+            collectionKind: classifyPlaylistKind(classified.playlistId),
             source: {
               platform:
                 classified.kind === 'youtube-music-album'
@@ -425,15 +467,15 @@ function registerImportHandlers({
         const existingIds = new Set(
           listLibraryTracks(dir).map((track) => track.id),
         );
-        const { title, thumbnailUrl, entries } = await fetchPlaylistMetadata(
-          playlistId,
-          {
+        const { title, thumbnailUrl, entries, releaseType, releaseDate } =
+          await fetchPlaylistMetadata(playlistId, {
             runner,
-          },
-        );
+          });
         return {
           title,
           thumbnailUrl,
+          releaseType: releaseType || 'unknown',
+          releaseDate: releaseDate || null,
           kind: classifyPlaylistKind(playlistId),
           source: { platform: 'youtube', id: playlistId },
           entries: entries.map((entry) => ({
@@ -479,6 +521,57 @@ function registerImportHandlers({
           listLibraryTracks(dir).map((track) => track.id),
         );
         return resolveSingleSource(input, runner, existingIds);
+      },
+      { recordDiagnostic },
+    );
+  });
+
+  ipcMain.handle('library:download-release-track', async (event, input) => {
+    const window = getMainWindow();
+    if (
+      !window ||
+      window.isDestroyed() ||
+      event?.sender !== window.webContents ||
+      event?.senderFrame !== window.webContents.mainFrame
+    )
+      return { status: 'invalid-intent' };
+    requireFeatureGate(featureIds.PROVIDER_FLOW);
+    if (
+      !prepareReleaseDownload ||
+      !validateReleaseDownload ||
+      !attachReleaseDownload
+    )
+      return { status: 'unavailable' };
+    let target;
+    try {
+      target = prepareReleaseDownload(input);
+    } catch {
+      return { status: 'unavailable' };
+    }
+    return classifyingFailures(
+      async () => {
+        await runProviderDownload(target.videoId, {
+          beforeStart: () => {
+            requireFeatureGate(featureIds.PROVIDER_FLOW);
+            validateReleaseDownload(target);
+          },
+        });
+        try {
+          const result = await attachReleaseDownload(target);
+          notifyLibraryUpdated({ allowProviderBackfill: false });
+          return result;
+        } catch (error) {
+          recordSearchDiagnostic(recordDiagnostic, {
+            process: 'main',
+            level: 'warning',
+            source: 'library',
+            operation: 'download-release-track',
+            code: 'RELEASE_DOWNLOAD_LINK_FAILED',
+            error,
+          });
+          notifyLibraryUpdated({ allowProviderBackfill: false });
+          return { status: 'downloaded-unlinked' };
+        }
       },
       { recordDiagnostic },
     );

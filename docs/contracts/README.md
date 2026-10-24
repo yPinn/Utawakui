@@ -7,6 +7,8 @@
 - [匯入session與批次互動](import-task-session.md)
 - [曲庫空間管理](library-storage-management.md)
 - [曲目編輯](track-editing.md)
+- [曲庫檢查與校對](library-reconciliation.md)
+- [音檔標籤回寫](audio-tag-writeback.md)
 - [作品、版本與發行資料](works-versions-and-releases.md)
 - [Folder 頁面物件](folder-page-objects.md)
 - [曲目試聽](track-preview.md)

@@ -39,3 +39,9 @@
 - 產品狀態只改 spec；架構與行為改對應的 architecture 或契約。
 - 新研究寫日期報告與 JSON，結論併入該主題入口；舊數字不回改。
 - `tasks/` 是 ignored 的本機 scratch，不是產品狀態來源。
+
+來源母體與完整曲序的 v4 保存、Main 服務、下載與持有驗證見
+[來源曲序契約](contracts/release-source-catalog.md)。
+整庫離線檢查、逐欄校對、確認式去重及復原見
+[曲庫校對契約](contracts/library-reconciliation.md)。
+音檔同步的格式、主要發行、備份與恢復見[音檔標籤回寫契約](contracts/audio-tag-writeback.md)。

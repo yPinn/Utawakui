@@ -62,7 +62,14 @@ vi.mock('../track/TrackIdentityRow.vue', () => ({
     setup:
       (props, { slots }) =>
       () =>
-        h('div', [props.track.title, slots.trail?.()]),
+        h(
+          'div',
+          {
+            'data-track-id': props.track.id,
+            'data-thumbnail': props.track.thumbnailUrl,
+          },
+          [props.track.title, slots.trail?.()],
+        ),
   },
 }));
 vi.mock('../ui/UiButton.vue', () => ({
@@ -261,6 +268,33 @@ afterEach(() => {
 });
 
 describe('WorkVersionEditor mounted workflow', () => {
+  it('hydrates search-result artwork from the current canonical library', async () => {
+    deps.tracks.get('b').thumbnailUrl = 'utawakui-media://track/b/cover.jpg';
+    await owner.search();
+    await settle();
+    const candidate = findAll(
+      mounted.root,
+      (node) => node.props?.['data-track-id'] === 'b',
+    )[0];
+    expect(candidate.props['data-thumbnail']).toBe(
+      'utawakui-media://track/b/cover.jpg',
+    );
+  });
+  it('keeps source-managed notices in the footer and out of the metadata layout', async () => {
+    trigger(button('歌曲資訊'), 'onClick');
+    await settle();
+    const notices = findAll(
+      mounted.root,
+      (node) => node.props?.['aria-label'] === '歌曲整理提示',
+    )[0];
+    expect(textContent(notices)).toContain('歌曲資訊由來源管理');
+    const panel = findAll(
+      mounted.root,
+      (node) => node.props?.id === 'song-editor-metadata-panel',
+    )[0];
+    expect(textContent(panel)).not.toContain('歌曲資訊由來源管理');
+    expect(button('關閉')).toBeTruthy();
+  });
   it.each([false, true])(
     'submits explicit defaults for untouched choices without inferring a classification (already linked=%s)',
     async (linked) => {

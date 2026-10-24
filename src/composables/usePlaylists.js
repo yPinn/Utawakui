@@ -54,7 +54,9 @@ function applyPlaylists(playlists) {
     state.selectedId !== null &&
     !playlists.some((p) => p.id === state.selectedId)
   ) {
-    state.selectedId = null;
+    state.selectedId =
+      playlists.find((p) => p.redirectedIds?.includes(state.selectedId))?.id ??
+      null;
   }
 }
 
@@ -172,7 +174,7 @@ if (import.meta.hot) {
 }
 
 function select(id) {
-  state.selectedId = id;
+  state.selectedId = findPlaylist(id)?.id ?? id;
   state.selectedArtistId = null;
   state.selectedAlbumReference = null;
 }
@@ -331,7 +333,9 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
 }
 
 function findPlaylist(id) {
-  return state.playlists.find((p) => p.id === id);
+  return state.playlists.find(
+    (p) => p.id === id || p.redirectedIds?.includes(id),
+  );
 }
 
 // Shared by addTrack/removeTrack/moveTrack: mutates the local array

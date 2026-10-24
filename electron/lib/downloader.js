@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { fetchYoutubeMusicRelease } = require('./releases/youtubeMusic');
 const { compareFilenames } = require('./library/paths');
 const {
   isArtworkFilename,
@@ -603,6 +604,7 @@ async function fetchMetadata(videoId, options = {}) {
 // user-initiated action that should surface an error, not retry silently.
 async function fetchPlaylist(playlistId, options = {}) {
   const runner = requireYoutubeRunner(options.runner);
+  const release = options.fetchRelease || fetchYoutubeMusicRelease;
   const info = await runPhasedYoutubeAttempts(
     `https://www.youtube.com/playlist?list=${playlistId}`,
     buildPhaseAttempts(
@@ -619,18 +621,24 @@ async function fetchPlaylist(playlistId, options = {}) {
   );
 
   const entries = Array.isArray(info.entries) ? info.entries : [];
+  const musicRelease =
+    classifyPlaylistKind(playlistId) === 'album'
+      ? await release(playlistId)
+      : {};
   const albumTitle =
     classifyPlaylistKind(playlistId) === 'album'
       ? await inferAlbumTitleFromFirstEntry(entries, { runner })
       : undefined;
   return {
-    title: albumTitle || cleanMetadataString(info.title),
+    title: musicRelease.title || albumTitle || cleanMetadataString(info.title),
+    releaseType: musicRelease.type || 'unknown',
+    releaseDate: musicRelease.date || null,
     // The playlist/album's own artwork, not any individual entry's —
     // present even under flatPlaylist since it comes from the playlist
     // page's own info, not from resolving each entry. extractThumbnailUrl's
     // video-id fallback branch is inert here since a playlist id never
     // matches VIDEO_ID_RE.
-    thumbnailUrl: extractThumbnailUrl(info),
+    thumbnailUrl: musicRelease.thumbnailUrl || extractThumbnailUrl(info),
     entries: entries
       .filter((entry) => typeof entry.id === 'string')
       .map((entry) => {

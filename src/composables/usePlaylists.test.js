@@ -32,6 +32,23 @@ function createDeferred() {
   return { promise, resolve, reject };
 }
 
+it('keeps selection and resolves old source ids after a confirmed release merge', async () => {
+  listPlaylistsMock.mockResolvedValue([
+    { id: 'old', name: 'Original', trackIds: [] },
+  ]);
+  const { usePlaylists } = await import('./usePlaylists.js');
+  const collections = usePlaylists();
+  await collections.initialize();
+  collections.select('old');
+  listPlaylistsMock.mockResolvedValue([
+    { id: 'kept', name: 'Original', trackIds: [], redirectedIds: ['old'] },
+  ]);
+  await collections.refresh();
+  expect(collections.state.selectedId).toBe('kept');
+  collections.select('old');
+  expect(collections.selectedPlaylist.value.id).toBe('kept');
+});
+
 beforeEach(() => {
   vi.resetModules();
   libraryUpdatedCallback = undefined;

@@ -81,7 +81,7 @@ function search() {
         class="work-link-search__hint"
         role="status"
       >
-        找不到歌曲。
+        找不到曲目。試試其他關鍵字。
       </p>
     </template>
   </section>

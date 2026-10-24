@@ -156,6 +156,12 @@ describe('TrackMetadataFields artwork discovery contract', () => {
 
   it('allows locally-created blob URLs without permitting remote artwork hotlinks', () => {
     expect(appHtml).toMatch(/img-src [^;]*\bblob:/u);
+    expect(appHtml).toMatch(
+      /img-src [^;]*https:\/\/yt3\.googleusercontent\.com\s/u,
+    );
+    expect(appHtml).toMatch(
+      /img-src [^;]*https:\/\/lh3\.googleusercontent\.com\s/u,
+    );
     expect(appHtml).not.toMatch(/img-src [^;]*https:\/\/archive\.org/u);
     expect(appHtml).not.toMatch(/img-src [^;]*https:\/\/coverartarchive\.org/u);
   });

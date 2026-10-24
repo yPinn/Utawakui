@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { assertNoTransaction } = require('../reconciliation/transaction');
 const {
   atomicCopyFileSync,
   atomicWriteJson,
@@ -543,6 +544,7 @@ function writeManifest(directory, objects) {
 }
 
 function loadObjects(directory) {
+  assertNoTransaction(directory);
   const result = readManifest(directory);
   if (result.changed) writeManifest(directory, result.objects);
   return result.objects;

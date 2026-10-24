@@ -4,6 +4,11 @@ defineProps({
   marker: { type: String, default: '' },
   title: { type: String, required: true },
   titleId: { type: String, default: 'folder-dossier-title' },
+  titleTag: {
+    type: String,
+    default: 'h1',
+    validator: (value) => ['h1', 'h2', 'h3'].includes(value),
+  },
   titleLang: { type: String, default: undefined },
   // One-line summary values: [{ key, text, lang? }].
   fields: { type: Array, default: () => [] },
@@ -33,9 +38,14 @@ defineProps({
         <span v-if="marker" class="app-folder-dossier__marker">
           {{ marker }}
         </span>
-        <h1 :id="titleId" class="app-folder-dossier__title" :lang="titleLang">
+        <component
+          :is="titleTag"
+          :id="titleId"
+          class="app-folder-dossier__title"
+          :lang="titleLang"
+        >
           {{ title }}
-        </h1>
+        </component>
         <p
           v-if="$slots.owner || fields.length"
           class="app-folder-dossier__summary"

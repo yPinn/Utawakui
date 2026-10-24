@@ -1,6 +1,7 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
 import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
+import { useReleaseCatalog } from '../../composables/useReleaseCatalog.js';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import {
   Disc3,
@@ -192,6 +193,13 @@ const content = computed(() => {
             value: { action: TRACK_MENU_ACTIONS.workOrganization },
           },
         ];
+  metadataItems.push({
+    id: 'supplement-release',
+    kind: 'action',
+    label: '補齊專輯資料',
+    icon: Disc3,
+    value: { action: 'supplement-release' },
+  });
   if (track.sourceType === 'local-file' && props.context !== 'editor') {
     metadataItems.push({
       id: 'create-local-release',
@@ -303,6 +311,11 @@ const content = computed(() => {
 });
 
 function forwardSelect(value, item) {
+  if (value?.action === 'supplement-release') {
+    if (props.track) useReleaseCatalog().open(props.track);
+    emit('close');
+    return;
+  }
   emit('select', value, item);
 }
 </script>

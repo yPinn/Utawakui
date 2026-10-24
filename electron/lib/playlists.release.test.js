@@ -56,12 +56,12 @@ describe('release collection migration', () => {
     expect(fs.readFileSync(file(), 'utf8')).toBe(before);
   });
 
-  it('backs up v2 before the first mutation and writes v3 without losing fields', () => {
+  it('backs up v2 before the first mutation and writes v4 without losing fields', () => {
     write(2, [release()]);
     const before = fs.readFileSync(file(), 'utf8');
     renamePlaylist(dir, 'album-a', 'renamed');
     expect(raw()).toEqual({
-      version: 3,
+      version: 4,
       playlists: [release({ name: 'renamed' })],
     });
     const backups = fs
@@ -104,7 +104,7 @@ describe('release collection migration', () => {
         () => 'album',
       ),
     ).toBe(true);
-    expect(raw().version).toBe(3);
+    expect(raw().version).toBe(4);
     expect(loadPlaylists(dir)[0].kind).toBe('album');
     expect(loadPlaylists(dir)[0].releaseInfo).toBeUndefined();
   });
@@ -168,7 +168,7 @@ describe('release metadata through all collection writers', () => {
     expect(result).toMatchObject(release());
     expect(result.releaseInfo.overrides.type).toBe('single');
     expect(result.releaseInfo.revision).toBe(1);
-    expect(raw().version).toBe(3);
+    expect(raw().version).toBe(4);
     renamePlaylist(dir, 'album-a', 'renamed');
     expect(loadPlaylists(dir)[0].releaseInfo).toEqual(result.releaseInfo);
   });

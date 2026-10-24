@@ -231,6 +231,7 @@ function loadWorks(dir) {
 }
 
 function writeDocument(dir, document) {
+  require('../reconciliation/transaction').assertNoTransaction(dir);
   const normalized = validateWorksDocument(document);
   const bytes = JSON.stringify(normalized, null, 2);
   if (Buffer.byteLength(bytes) > MAX_WORKS_BYTES) fail();

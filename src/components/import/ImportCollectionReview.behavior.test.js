@@ -10,6 +10,10 @@ import {
 import { getPlaylistImportStats } from '../../utils/importPlaylist.js';
 import UiHint from '../ui/UiHint.vue';
 import PreparationReviewLayout from '../preparation/PreparationReviewLayout.vue';
+import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
+import AppFolderDossier from '../layout/AppFolderDossier.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 
 const fixture = vi.hoisted(() => ({}));
 vi.mock('../../composables/useImportSession.js', () => ({
@@ -49,6 +53,13 @@ vi.mock('./ImportCollectionExecutionList.vue', () => ({
 }));
 import Review from './ImportCollectionReview.vue';
 attachClientRender(Review, './ImportCollectionReview.vue', import.meta.url);
+for (const [component, file] of [
+  [LibraryEntityDossier, '../library/LibraryEntityDossier.vue'],
+  [AppFolderDossier, '../layout/AppFolderDossier.vue'],
+  [UiCollageThumb, '../ui/UiCollageThumb.vue'],
+  [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
+])
+  attachClientRender(component, file, import.meta.url);
 attachClientRender(UiHint, '../ui/UiHint.vue', import.meta.url);
 attachClientRender(
   PreparationReviewLayout,
@@ -92,14 +103,51 @@ beforeEach(() => {
 });
 
 describe('Import collection review lifecycle', () => {
-  it('keeps only source and total above the list, leaving selection counts to the footer', () => {
+  it('shows collection identity above the list, leaving selection counts to the footer', () => {
     const mounted = mount(Review);
     expect(textContent(mounted.root)).toContain('測試專輯');
-    expect(textContent(mounted.root)).toContain('測試專輯 · 3 首');
+    expect(textContent(mounted.root)).toContain('3 首曲目');
     expect(textContent(mounted.root)).not.toContain('專輯 · 3 首已選取');
     expect(textContent(mounted.root)).not.toContain('已選取');
     expect(has(mounted.root, 'selection')).toBe(true);
     mounted.app.unmount();
+  });
+
+  it('updates real dossier metadata and cover when the import source changes', async () => {
+    const state = fixture.session.state;
+    Object.assign(state, {
+      collectionReleaseType: 'ep',
+      collectionReleaseDate: { value: '2025', precision: 'year' },
+      collectionThumbnailUrl: 'https://example.com/album.jpg',
+      playlistTracks: [{ id: 'a', title: 'A', artist: '9Lana', duration: 240 }],
+    });
+    const { root, app } = mount(Review);
+    expect(textContent(root)).toContain('迷你專輯');
+    expect(textContent(root)).toContain('9Lana');
+    expect(textContent(root)).toContain('2025');
+    expect(textContent(root)).toContain('1 首曲目，4 分');
+    expect(
+      findAll(root, (node) => node.props.src === state.collectionThumbnailUrl),
+    ).toHaveLength(1);
+    Object.assign(state, {
+      collectionKind: 'playlist',
+      playlistTitle: '新歌單',
+      collectionThumbnailUrl: null,
+      collectionReleaseDate: null,
+      playlistTracks: [],
+    });
+    await nextTick();
+    expect(textContent(root)).toContain('新歌單');
+    expect(textContent(root)).toContain('0 首曲目');
+    expect(textContent(root)).not.toContain('9Lana');
+    expect(textContent(root)).not.toContain('2025');
+    expect(
+      findAll(
+        root,
+        (node) => node.props.src === 'https://example.com/album.jpg',
+      ),
+    ).toHaveLength(0);
+    app.unmount();
   });
 
   it('can return to selection after execution without changing unselected songs', async () => {

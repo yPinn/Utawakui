@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   loadIndex,
   saveIndexEntry,
+  saveProviderIndexEntry,
   migrateTrackAlbumMetadata,
 } from './metadataIndex.js';
 import { INDEX_FILENAME } from './constants.js';
@@ -18,6 +19,69 @@ describe('loadIndex', () => {
 
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+  it('preserves manual values, clears and legacy metadata during a repeated provider download', () => {
+    const saved = {
+      title: 'Manual title',
+      titleOrigin: 'manual',
+      artist: undefined,
+      artistOrigin: 'manual',
+      album: '',
+      albumOrigin: 'manual',
+      releaseYear: null,
+      releaseYearOrigin: 'manual',
+      trackNumber: 7,
+      trackNumberOrigin: 'manual',
+      originalFilename: 'keep.flac',
+      custom: true,
+    };
+    saveIndexEntry(dir, 'track', saved);
+    saveProviderIndexEntry(dir, 'track', {
+      title: 'Provider',
+      titleOrigin: 'provider',
+      artist: 'Provider artist',
+      artistOrigin: 'provider',
+      album: 'Provider album',
+      releaseYear: 2026,
+      trackNumber: 1,
+      duration: 180,
+    });
+    expect(loadIndex(dir).tracks.track).toEqual({
+      ...JSON.parse(JSON.stringify(saved)),
+      duration: 180,
+    });
+    saveIndexEntry(dir, 'legacy', { title: 'Legacy', album: 'Legacy album' });
+    saveProviderIndexEntry(dir, 'legacy', {
+      title: 'Provider',
+      titleOrigin: 'provider',
+      artist: 'Provider',
+      artistOrigin: 'provider',
+      album: 'Provider album',
+    });
+    expect(loadIndex(dir).tracks.legacy).toEqual({
+      title: 'Legacy',
+      album: 'Legacy album',
+    });
+  });
+  it('updates explicitly followed provider fields and initializes a new downloaded track', () => {
+    saveIndexEntry(dir, 'follow', {
+      title: 'Old',
+      titleOrigin: 'provider',
+      artistOrigin: 'provider',
+      custom: 1,
+    });
+    const incoming = {
+      title: 'New',
+      titleOrigin: 'provider',
+      artist: 'Artist',
+      artistOrigin: 'provider',
+      album: 'Album',
+      duration: 180,
+    };
+    saveProviderIndexEntry(dir, 'follow', incoming);
+    expect(loadIndex(dir).tracks.follow).toEqual({ ...incoming, custom: 1 });
+    saveProviderIndexEntry(dir, 'new', incoming);
+    expect(loadIndex(dir).tracks.new).toEqual(incoming);
   });
 
   it('returns an empty index when the file is missing', () => {

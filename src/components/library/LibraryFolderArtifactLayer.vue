@@ -16,8 +16,8 @@ import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
 
 const ARTIST_SUMMARY_KEY = 'derived:artist-summary';
 const ARTIST_SUMMARY_PLACEMENT = Object.freeze({
-  region: 'bottom',
-  anchor: Object.freeze({ x: 0.9, y: 0.85 }),
+  region: 'paper',
+  anchor: Object.freeze({ x: 1, y: 0 }),
 });
 const ARTIST_SUMMARY_ROTATION = -1.5;
 
@@ -114,7 +114,7 @@ const summaryFields = computed(() => {
   const { trackCount = 0, albumCount = 0, yearStart, yearEnd } = props.summary;
   const fields = [
     { label: '曲目', value: `${trackCount} 首` },
-    { label: '專輯', value: `${albumCount} 張` },
+    { label: '作品', value: `${albumCount} 張` },
   ];
   if (yearStart) {
     fields.push({

@@ -179,7 +179,7 @@ function applyCatalog() {
               <strong class="artist-identity-modal__status">
                 等待自動整理
               </strong>
-              <UiHint>取得足夠證據後會自動整合。</UiHint>
+              <UiHint>找到相符資料後會自動整理。</UiHint>
             </template>
           </div>
         </section>
