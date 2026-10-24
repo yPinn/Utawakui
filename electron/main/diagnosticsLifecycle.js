@@ -37,6 +37,25 @@ function registerDiagnosticsLifecycle({
     });
   };
 
+  // Electron's main process keeps unhandled rejections in warn mode, so they
+  // never reach uncaughtExceptionMonitor. The warning event observes them
+  // without the exit-semantics change an unhandledRejection listener brings.
+  const onProcessWarning = (warning) => {
+    if (warning?.name !== 'UnhandledPromiseRejectionWarning') return;
+    const text = String(warning.message ?? '');
+    // Node follows each rejection with a generic hint warning; skip it.
+    if (text.startsWith('Unhandled promise rejection.')) return;
+    service.record({
+      process: 'main',
+      level: 'error',
+      source: 'process',
+      operation: 'unhandled-rejection',
+      code: 'UNHANDLED_REJECTION',
+      error: Object.assign(new Error(text.split('\n', 1)[0]), { stack: text }),
+      context: { fatal: false },
+    });
+  };
+
   const onRenderProcessGone = (event, webContents, details = {}) => {
     const fatal = FATAL_RENDERER_REASONS.has(details.reason);
     service.record({
@@ -135,6 +154,7 @@ function registerDiagnosticsLifecycle({
   };
 
   processTarget.on('uncaughtExceptionMonitor', onUncaughtExceptionMonitor);
+  processTarget.on('warning', onProcessWarning);
   app.on('render-process-gone', onRenderProcessGone);
   app.on('child-process-gone', onChildProcessGone);
   app.on('web-contents-created', onWebContentsCreated);
@@ -144,6 +164,7 @@ function registerDiagnosticsLifecycle({
       'uncaughtExceptionMonitor',
       onUncaughtExceptionMonitor,
     );
+    processTarget.removeListener('warning', onProcessWarning);
     app.removeListener('render-process-gone', onRenderProcessGone);
     app.removeListener('child-process-gone', onChildProcessGone);
     app.removeListener('web-contents-created', onWebContentsCreated);

@@ -314,8 +314,8 @@ async function runYtMusicArtistPhotoWorker(options) {
     });
     child.on('close', (code) => {
       if (stderrBytes > 0) {
-        logger.warn?.('YT Music artist photo worker emitted stderr', {
-          stderrBytes: Math.min(stderrBytes, MAX_STDERR_BYTES),
+        logger.warn?.('[artist-photo] Worker emitted stderr', null, {
+          reason: 'stderr-output',
         });
       }
       if (settled) return;

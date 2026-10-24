@@ -101,6 +101,13 @@ function notifyLibraryUpdated(options) {
   mainWindow.webContents.send('library:updated', options);
 }
 
+// For services that outlive the window, e.g. Output stopping during quit.
+function sendToMainWindow(channel, payload) {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  mainWindow.webContents.send(channel, payload);
+  return true;
+}
+
 // Renderer-reported mirror; usePlayer.js remains the playback source of truth.
 let playbackState = { isPlaying: false, hasTrack: false, trackId: null };
 let separationTaskbarProgress = projectSeparationTaskbarProgress({
@@ -338,6 +345,7 @@ module.exports = {
   getMainWindow,
   notifyLibraryUpdated,
   sendBackfillStatus,
+  sendToMainWindow,
   setSeparationQueueStatus,
   updateThumbar,
   registerPlayerStateHandler,

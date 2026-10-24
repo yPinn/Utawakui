@@ -18,6 +18,7 @@ const { registerMediaProtocol } = mediaProtocol;
 
 function setup() {
   let handler;
+  const logger = { error: vi.fn() };
   const protocol = {
     handle: vi.fn((scheme, nextHandler) => {
       handler = nextHandler;
@@ -36,8 +37,9 @@ function setup() {
     resolveTrackPath: library.resolveTrackPath,
     resolveArtistPhotoPath: library.resolveArtistPhotoPath,
     resolveFolderPageAssetPath: library.resolveFolderPageAssetPath,
+    logger,
   });
-  return { getConfig, handler, protocol, resolveDownloadDir };
+  return { getConfig, handler, logger, protocol, resolveDownloadDir };
 }
 
 function request(url, range = null) {
@@ -196,20 +198,17 @@ describe('registerMediaProtocol', () => {
     library.buildRangeResponse.mockImplementation(() => {
       throw error;
     });
-    const consoleError = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-    const { handler } = setup();
+    const { handler, logger } = setup();
 
     const response = handler(
       request('utawakui-media://track/track-a/audio.wav'),
     );
 
     expect(response.status).toBe(404);
-    expect(consoleError).toHaveBeenCalledWith(
-      'utawakui-media: failed to serve E:\\Library\\asset.wav:',
+    // Categorical label only; the file path stays inside the error.
+    expect(logger.error).toHaveBeenCalledWith(
+      '[media] Failed to serve media',
       error,
     );
-    consoleError.mockRestore();
   });
 });

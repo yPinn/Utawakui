@@ -95,6 +95,27 @@ function redactText(value, maxLength = MAX_MESSAGE_LENGTH) {
   return text.slice(0, maxLength);
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Frames inside the app bundle carry no user data; keep them debuggable as
+// app:<relative path>:line:column before generic path redaction runs.
+function relativizeAppPaths(text, appRoot) {
+  if (typeof appRoot !== 'string' || !path.isAbsolute(appRoot)) return text;
+  const forward = appRoot.replaceAll('\\', '/').replace(/\/+$/, '');
+  const roots = [`file:///${forward.replace(/^\//, '')}`, forward];
+  if (appRoot.includes('\\')) roots.push(appRoot.replace(/\\+$/, ''));
+  let result = text;
+  for (const root of roots) {
+    result = result.replace(
+      new RegExp(`${escapeRegExp(root)}[\\\\/]([^\\s()"'<>]+)`, 'gi'),
+      (_match, rest) => `app:${rest.replaceAll('\\', '/')}`,
+    );
+  }
+  return result;
+}
+
 function safeIdentifier(value, fallback) {
   const text = boundedString(value, MAX_IDENTIFIER_LENGTH);
   return SAFE_IDENTIFIER_RE.test(text) ? text : fallback;
@@ -201,7 +222,10 @@ function normalizeDiagnosticEvent(input = {}, defaults = {}) {
   };
 
   if (typeof error?.stack === 'string') {
-    const stack = redactText(error.stack, MAX_STACK_LENGTH);
+    const stack = redactText(
+      relativizeAppPaths(error.stack, defaults.appRoot),
+      MAX_STACK_LENGTH,
+    );
     if (stack) normalized.stack = stack;
   }
   return normalized;

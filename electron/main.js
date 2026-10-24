@@ -247,6 +247,7 @@ const {
 
 const diagnosticsService = createDiagnosticsService({
   logsDir: app.getPath('logs'),
+  appRoot: app.getAppPath(),
   sessionId: crypto.randomUUID(),
   process: 'main',
   appVersion: app.getVersion(),
@@ -889,10 +890,7 @@ if (!gotSingleInstanceLock) {
       featureId: FEATURE_IDS.OBS_INTEGRATION,
       getPassword: async () => obsCredentialStore.loadPassword(),
       onStatusChange: (status) => {
-        const mainWindow = windowState.getMainWindow();
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('obs:status', status);
-        }
+        windowState.sendToMainWindow('obs:status', status);
         obsPowerSaveBlockerSync.sync(status);
       },
       logger: runtimeDiagnosticsLogger,
@@ -990,12 +988,8 @@ if (!gotSingleInstanceLock) {
           appPath: app.getAppPath(),
           packaged: isPackagedRuntime,
         }),
-      onStatusChange: (status) => {
-        const mainWindow = windowState.getMainWindow();
-        if (!mainWindow?.isDestroyed()) {
-          mainWindow.webContents.send('spout-output:status', status);
-        }
-      },
+      onStatusChange: (status) =>
+        windowState.sendToMainWindow('spout-output:status', status),
       logger: runtimeDiagnosticsLogger,
     });
     registerOutputRuntimeLifecycle({
@@ -1021,6 +1015,7 @@ if (!gotSingleInstanceLock) {
       userDataDir: app.getPath('userData'),
       isPackaged: isPackagedRuntime,
       resourcesPath: process.resourcesPath,
+      logger: runtimeDiagnosticsLogger,
     });
     const appUpdateService = createAppUpdateService({
       currentVersion: app.getVersion(),
@@ -1031,12 +1026,8 @@ if (!gotSingleInstanceLock) {
       autoCheckEnabled: configState.getConfig().autoCheckAppUpdates,
       packagedUpdateConfigPath,
       beforeInstall: () => windowsTrayController.beginQuit(),
-      publishStatus: (status) => {
-        const mainWindow = windowState.getMainWindow();
-        if (!mainWindow?.isDestroyed()) {
-          mainWindow.webContents.send('app-update:status', status);
-        }
-      },
+      publishStatus: (status) =>
+        windowState.sendToMainWindow('app-update:status', status),
       logger: {
         error: (_message, error) =>
           diagnosticsService.record({
@@ -1071,12 +1062,8 @@ if (!gotSingleInstanceLock) {
                 },
               })
           : undefined,
-      publishStatus: (status) => {
-        const mainWindow = windowState.getMainWindow();
-        if (!mainWindow?.isDestroyed()) {
-          mainWindow.webContents.send('app-usage:status', status);
-        }
-      },
+      publishStatus: (status) =>
+        windowState.sendToMainWindow('app-usage:status', status),
       logger: {
         error: (_message, error) =>
           diagnosticsService.record({
@@ -1136,6 +1123,7 @@ if (!gotSingleInstanceLock) {
       protocol,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      logger: runtimeDiagnosticsLogger,
     });
 
     registerOutputHandlers({
@@ -1187,7 +1175,7 @@ if (!gotSingleInstanceLock) {
       getDisplayWorkArea: (bounds) => {
         if (bounds) return screen.getDisplayMatching(bounds).workArea;
         const mainWindow = windowState.getMainWindow();
-        if (!mainWindow?.isDestroyed()) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
           return screen.getDisplayMatching(mainWindow.getBounds()).workArea;
         }
         return screen.getPrimaryDisplay().workArea;
@@ -1202,31 +1190,19 @@ if (!gotSingleInstanceLock) {
           error,
         }),
       getUiTheme: () => configState.getConfig().uiTheme,
-      publishStatus: (status) => {
-        const mainWindow = windowState.getMainWindow();
-        if (!mainWindow?.isDestroyed()) {
-          mainWindow.webContents.send('performer-view:status', status);
-        }
-      },
+      publishStatus: (status) =>
+        windowState.sendToMainWindow('performer-view:status', status),
     });
     registerPerformerViewHandlers({
       ipcMain,
       manager: performerWindowManager,
-      sendControlIntent: (intent) => {
-        const mainWindow = windowState.getMainWindow();
-        if (!mainWindow || mainWindow.isDestroyed()) return false;
-        mainWindow.webContents.send('performer-view:control-intent', intent);
-        return true;
-      },
-      sendLyricsOffsetIntent: (intent) => {
-        const mainWindow = windowState.getMainWindow();
-        if (!mainWindow || mainWindow.isDestroyed()) return false;
-        mainWindow.webContents.send(
+      sendControlIntent: (intent) =>
+        windowState.sendToMainWindow('performer-view:control-intent', intent),
+      sendLyricsOffsetIntent: (intent) =>
+        windowState.sendToMainWindow(
           'performer-view:lyrics-offset-intent',
           intent,
-        );
-        return true;
-      },
+        ),
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
     });

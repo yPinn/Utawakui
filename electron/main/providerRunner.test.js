@@ -45,6 +45,7 @@ describe('createProviderRunnerManager', () => {
       workerPath: 'C:\\app\\artist_worker.py',
       request,
       signal: expect.any(AbortSignal),
+      logger: expect.any(Object),
     });
     expect(runArtistWorker.mock.calls[0][0].signal).not.toBe(controller.signal);
     expect(runArtistWorker.mock.calls[0][0].signal.aborted).toBe(false);

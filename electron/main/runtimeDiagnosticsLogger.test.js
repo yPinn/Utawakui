@@ -1,9 +1,59 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import runtimeDiagnosticsLoggerModule from './runtimeDiagnosticsLogger.js';
 
-const { createRuntimeDiagnosticsLogger } = runtimeDiagnosticsLoggerModule;
+const { EVENT_DEFINITIONS, createRuntimeDiagnosticsLogger } =
+  runtimeDiagnosticsLoggerModule;
+
+function electronSources(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return electronSources(fullPath);
+    return /\.js$/.test(entry.name) && !/\.test\.js$/.test(entry.name)
+      ? [fs.readFileSync(fullPath, 'utf8')]
+      : [];
+  });
+}
 
 describe('runtime diagnostics logger', () => {
+  it('keeps every curated label in use so codes cannot silently drift', () => {
+    const sources = electronSources(path.resolve(import.meta.dirname, '..'))
+      .filter((source) => !source.includes('const EVENT_DEFINITIONS'))
+      .join('\n');
+    for (const label of EVENT_DEFINITIONS.keys()) {
+      expect(sources, label).toContain(`'${label}'`);
+    }
+  });
+
+  it('derives distinct bounded events for uncurated bracket labels', () => {
+    const service = { record: vi.fn(() => ({ ok: true })) };
+    const logger = createRuntimeDiagnosticsLogger({
+      service,
+      consoleTarget: {},
+      now: () => 1_000,
+    });
+
+    logger.error('[obs-adapter] Connect failed', new Error('refused'));
+    logger.error('[obs-adapter] Failed to publish status', new Error('gone'));
+    logger.error('plain unlabeled message', new Error('x'));
+
+    expect(service.record.mock.calls.map(([event]) => event)).toMatchObject([
+      {
+        source: 'obs-adapter',
+        operation: 'connect-failed',
+        code: 'OBS_ADAPTER_CONNECT_FAILED',
+        message: 'Connect failed',
+      },
+      {
+        source: 'obs-adapter',
+        operation: 'failed-to-publish-status',
+        code: 'OBS_ADAPTER_FAILED_TO_PUBLISH_STATUS',
+      },
+      { source: 'runtime', code: 'RUNTIME_OPERATION_FAILED' },
+    ]);
+  });
+
   it('records a categorical diagnostic while preserving the technical error', () => {
     const failure = new Error('listen EADDRINUSE at C:\\Users\\name');
     const service = { record: vi.fn(() => ({ ok: true })) };

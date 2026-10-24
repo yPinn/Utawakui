@@ -38,6 +38,33 @@ describe('registerDiagnosticsLifecycle', () => {
     });
   });
 
+  it('records warn-mode unhandled rejections from the process warning', () => {
+    const { app, processTarget, record } = createTargets();
+    registerDiagnosticsLifecycle({ app, processTarget, service: { record } });
+    const warning = (message, name = 'UnhandledPromiseRejectionWarning') =>
+      Object.assign(new Error(message), { name });
+
+    processTarget.emit(
+      'warning',
+      warning('Error: lost update\n    at publish (C:\\app\\main.js:1:2)'),
+    );
+    processTarget.emit(
+      'warning',
+      warning('Unhandled promise rejection. This error originated either …'),
+    );
+    processTarget.emit('warning', warning('deprecated', 'DeprecationWarning'));
+
+    expect(record).toHaveBeenCalledOnce();
+    expect(record.mock.calls[0][0]).toMatchObject({
+      operation: 'unhandled-rejection',
+      code: 'UNHANDLED_REJECTION',
+      context: { fatal: false },
+    });
+    expect(record.mock.calls[0][0].error.message).toBe('Error: lost update');
+    expect(record.mock.calls[0][0].error.stack).toContain('at publish');
+    expect(processTarget.listenerCount('unhandledRejection')).toBe(0);
+  });
+
   it('records renderer and child process termination without URLs or command lines', () => {
     const { app, processTarget, record } = createTargets();
     const mainWebContents = {};
@@ -173,8 +200,15 @@ describe('registerDiagnosticsLifecycle', () => {
     );
     app.emit('render-process-gone', {}, {}, { reason: 'crashed', exitCode: 1 });
     webContents.emit('unresponsive');
+    processTarget.emit(
+      'warning',
+      Object.assign(new Error('Error: late'), {
+        name: 'UnhandledPromiseRejectionWarning',
+      }),
+    );
 
     expect(record).not.toHaveBeenCalled();
+    expect(processTarget.listenerCount('warning')).toBe(0);
   });
 
   it('treats nonfatal renderer exits categorically and ignores subframe load failures', () => {

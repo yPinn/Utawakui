@@ -1,3 +1,8 @@
+const BENIGN_WINDOW_MESSAGES = new Set([
+  'ResizeObserver loop completed with undelivered notifications.',
+  'ResizeObserver loop limit exceeded',
+]);
+
 function errorDetails(value) {
   if (value && typeof value === 'object') {
     return {
@@ -44,6 +49,9 @@ export function installRendererDiagnostics({
   };
 
   const onWindowError = (event) => {
+    // Chromium reports deferred ResizeObserver notifications through
+    // window.onerror; they are layout timing notices, not failures.
+    if (!event?.error && BENIGN_WINDOW_MESSAGES.has(event?.message)) return;
     const details = errorDetails(event?.error ?? event?.message);
     safelyRecord(recordDiagnostic, {
       level: 'error',

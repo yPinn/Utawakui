@@ -201,8 +201,9 @@ describe('runYtMusicArtistPhotoWorker', () => {
     expect(result).toEqual({ status: 'error', reason: 'worker-failed' });
     expect(JSON.stringify(result)).not.toMatch(/private|secret|cookies/i);
     expect(logger.warn).toHaveBeenCalledWith(
-      'YT Music artist photo worker emitted stderr',
-      { stderrBytes: expect.any(Number) },
+      '[artist-photo] Worker emitted stderr',
+      null,
+      { reason: 'stderr-output' },
     );
   });
 

@@ -133,6 +133,27 @@ describe('installRendererDiagnostics', () => {
     );
   });
 
+  it('ignores Chromium ResizeObserver timing notices but keeps real errors', () => {
+    const app = { config: {} };
+    const windowTarget = createWindowTarget();
+    const recordDiagnostic = vi.fn();
+    installRendererDiagnostics({ app, windowTarget, recordDiagnostic });
+
+    windowTarget.emit('error', {
+      message: 'ResizeObserver loop completed with undelivered notifications.',
+    });
+    windowTarget.emit('error', {
+      message: 'ResizeObserver loop limit exceeded',
+    });
+    windowTarget.emit('error', {
+      message: 'ResizeObserver loop limit exceeded',
+      error: new TypeError('real failure'),
+    });
+
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+    expect(recordDiagnostic.mock.calls[0][0].message).toBe('real failure');
+  });
+
   it('contains synchronous bridge failures and preserves a replacement Vue handler', () => {
     const app = { config: {} };
     const recordDiagnostic = vi.fn(() => {

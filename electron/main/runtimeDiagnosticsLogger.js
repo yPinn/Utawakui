@@ -121,7 +121,7 @@ const EVENT_DEFINITIONS = new Map([
     },
   ],
   [
-    '[lyrics] LRCLIB automatic acquisition failed',
+    '[lyrics] automatic acquisition failed',
     {
       source: 'lyrics',
       operation: 'lrclib-automatic-acquisition',
@@ -146,6 +146,33 @@ const FALLBACK_DEFINITION = Object.freeze({
   code: 'RUNTIME_OPERATION_FAILED',
   message: 'Runtime operation failed',
 });
+const LABEL_RE = /^\[([a-z][a-z0-9-]*)\]\s+([A-Za-z][^\n]*)$/;
+
+// Uncurated `[source] description` labels still get their own code and
+// cooldown key; the labels are static strings, never user data.
+function definitionFor(message) {
+  const curated = EVENT_DEFINITIONS.get(message);
+  if (curated) return curated;
+  const match = typeof message === 'string' ? LABEL_RE.exec(message) : null;
+  if (!match) return FALLBACK_DEFINITION;
+  const description = match[2].replace(/:$/, '');
+  const operation = description
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  if (!operation) return FALLBACK_DEFINITION;
+  return {
+    source: match[1],
+    operation,
+    code: `${match[1]}_${operation}`
+      .toUpperCase()
+      .replace(/-/g, '_')
+      .slice(0, 80)
+      .replace(/_+$/, ''),
+    message: description,
+  };
+}
 
 function normalizeError(value) {
   if (value instanceof Error) return value;
@@ -178,7 +205,7 @@ function createRuntimeDiagnosticsLogger({
     consoleTarget?.[level]?.(message, error);
     if (typeof service?.record !== 'function') return;
 
-    const definition = EVENT_DEFINITIONS.get(message) ?? FALLBACK_DEFINITION;
+    const definition = definitionFor(message);
     const timestamp = Number(now());
     const key = `${definition.source}:${definition.operation}`;
     const previousTimestamp = lastRecordedAt.get(key);
@@ -214,5 +241,6 @@ function createRuntimeDiagnosticsLogger({
 }
 
 module.exports = {
+  EVENT_DEFINITIONS,
   createRuntimeDiagnosticsLogger,
 };

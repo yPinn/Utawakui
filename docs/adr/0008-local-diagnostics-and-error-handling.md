@@ -169,9 +169,10 @@ Redaction is centralized and defense-in-depth:
   it does not install an `uncaughtException` handler that resumes an undefined
   process state.
 - Main deliberately does not install an `unhandledRejection` listener because
-  that would suppress Node's default throw/termination behavior. Under Node's
-  default mode, an unhandled rejection promoted to an uncaught exception is
-  observed by `uncaughtExceptionMonitor`. Main also observes Electron
+  that would change rejection termination semantics. Electron's main process
+  runs rejections in warn mode, so they never reach `uncaughtExceptionMonitor`
+  (verified 2026-10-24 on Electron 43); main records them from the observe-only
+  `UnhandledPromiseRejectionWarning` process warning instead. Main also observes Electron
   `render-process-gone`, `child-process-gone`, `did-fail-load`, `preload-error`,
   and `unresponsive` events. Recovery UI/reload decisions are separate from
   recording.

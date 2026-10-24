@@ -20,6 +20,7 @@ function createWindowDouble() {
     }),
   };
   const win = {
+    isDestroyed: vi.fn(() => false),
     loadFile: vi.fn(),
     loadURL: vi.fn(),
     isFullScreen: vi.fn(() => fullScreen),
@@ -371,6 +372,24 @@ describe('windowState playback projection', () => {
       'library:backfill-status',
       { running: true },
     );
+  });
+
+  it('sends status pushes only to a live main window', async () => {
+    const { module, windowDouble } = await loadWindowState();
+    expect(module.sendToMainWindow('app-update:status', { a: 1 })).toBe(false);
+
+    module.createMainWindow();
+    expect(module.sendToMainWindow('app-update:status', { a: 2 })).toBe(true);
+    expect(windowDouble.win.webContents.send).toHaveBeenCalledWith(
+      'app-update:status',
+      { a: 2 },
+    );
+
+    windowDouble.win.isDestroyed.mockReturnValue(true);
+    expect(module.sendToMainWindow('app-update:status', { a: 3 })).toBe(false);
+    windowDouble.windowListeners.get('closed')();
+    expect(module.sendToMainWindow('app-update:status', { a: 4 })).toBe(false);
+    expect(windowDouble.win.webContents.send).toHaveBeenCalledTimes(1);
   });
 });
 

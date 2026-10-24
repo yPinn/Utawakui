@@ -29,6 +29,7 @@ function createProviderRunnerManager({
   findPort = findAvailableLoopbackPort,
   createBgutilServer = createBgutilProviderServer,
   createYtdlpRunner = createPythonYtdlpRunner,
+  logger = console,
 }) {
   let bgutilServer = null;
   let runner = null;
@@ -93,6 +94,7 @@ function createProviderRunnerManager({
           workerPath,
           request,
           signal: controller.signal,
+          logger,
         }),
       );
       activeArtistWorkerTasks.add(workerTask);

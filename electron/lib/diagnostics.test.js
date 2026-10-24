@@ -141,6 +141,30 @@ describe('normalizeDiagnosticEvent', () => {
     expect(redactText(raw)).toBe(expected);
   });
 
+  it('keeps app-bundle stack frames readable while redacting user paths', () => {
+    const appRoot =
+      'C:\\Users\\Alice Smith\\AppData\\Local\\Programs\\Utawakui\\resources\\app.asar';
+    const error = new Error('boom');
+    error.stack = [
+      'TypeError: boom',
+      `    at onStatusChange (${appRoot}\\electron\\main.js:994:9)`,
+      `    at load (file:///${appRoot.replaceAll('\\', '/')}/dist/assets/main.js:1:20)`,
+      '    at read (C:\\Users\\Alice Smith\\Music\\song.mp3)',
+    ].join('\n');
+
+    const event = normalizeDiagnosticEvent(
+      { source: 'runtime', operation: 'service', error },
+      deterministicDefaults({ appRoot }),
+    );
+
+    expect(event.stack).toContain(
+      'at onStatusChange (app:electron/main.js:994:9)',
+    );
+    expect(event.stack).toContain('at load (app:dist/assets/main.js:1:20)');
+    expect(event.stack).toContain('at read ([path])');
+    expect(event.stack).not.toContain('Alice');
+  });
+
   it('redacts bare credential assignments outside URLs', () => {
     expect(redactText('apikey=SECRET123 rejected')).toBe(
       'apikey=[redacted] rejected',

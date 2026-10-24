@@ -49,6 +49,7 @@ function registerMediaProtocol({
   resolveArtistPhotoPath: resolvePhotoPath = resolveArtistPhotoPath,
   resolveFolderPageAssetPath:
     resolveFolderAssetPath = resolveFolderPageAssetPath,
+  logger = console,
 }) {
   protocol.handle(MEDIA_SCHEME, (request) => {
     const url = new URL(request.url);
@@ -107,7 +108,7 @@ function registerMediaProtocol({
       // errors escape the handler. Logged so a genuine bug here (as
       // opposed to the expected deleted-file race) is still visible
       // instead of silently degrading to "track won't play".
-      console.error(`utawakui-media: failed to serve ${filePath}:`, error);
+      logger.error?.('[media] Failed to serve media', error);
       return notFoundResponse();
     }
   });
