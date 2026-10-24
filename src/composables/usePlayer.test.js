@@ -244,6 +244,18 @@ function createDeferred() {
 }
 
 describe('guide vocal defaults', () => {
+  it('exposes a read-only start revision before an asynchronous start gate completes', async () => {
+    const player = await loadPlayer();
+    const gate = Promise.withResolvers();
+    player.registerBeforePlaybackStart(() => gate.promise);
+    const before = player.getPlaybackStartRequestRevision();
+    const starting = player.playTrack({ id: 'intent', url: 'media:intent' });
+    expect(player.getPlaybackStartRequestRevision()).toBe(before + 1);
+    player.cancelPendingStart();
+    gate.resolve(true);
+    await starting;
+    expect(player.getPlaybackStartRequestRevision()).toBe(before + 2);
+  });
   it('hydrates persisted audio preferences before exposing the first state', async () => {
     vi.stubGlobal('window', {
       Utawakui: {
@@ -277,6 +289,7 @@ describe('guide vocal defaults', () => {
         'cancelPendingStart',
         'clearTrack',
         'cyclePlaybackMode',
+        'getPlaybackStartRequestRevision',
         'onEnded',
         'onPaused',
         'onPlaying',

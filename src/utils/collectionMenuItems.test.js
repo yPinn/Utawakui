@@ -64,10 +64,17 @@ describe('collection menu items', () => {
       intent: 'danger',
     });
     expect(albumItems.at(-1).label).toBe('移除');
-    expect(albumItems[1].label).toBe('轉為播放清單');
-    expect(albumItems[1].value).toEqual({
-      action: 'convert-kind',
-      playlistId: 'album',
-    });
+    expect(
+      albumItems.find((item) => item.id === 'edit-release-info').label,
+    ).toBe('發行資訊');
+    expect(albumItems.find((item) => item.id === 'convert-kind').label).toBe(
+      '轉為播放清單',
+    );
+    expect(albumItems.find((item) => item.id === 'convert-kind').value).toEqual(
+      {
+        action: 'convert-kind',
+        playlistId: 'album',
+      },
+    );
   });
 });

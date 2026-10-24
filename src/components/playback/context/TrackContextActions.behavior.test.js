@@ -16,9 +16,8 @@ describe('TrackContextActions', () => {
     expect(source).toContain(
       "import TrackActionMenu from '../../track/TrackActionMenu.vue';",
     );
-    expect(source).toContain(
-      "import TrackMetadataModal from '../../library/TrackMetadataModal.vue';",
-    );
+    expect(source).toContain('useSongEditor');
+    expect(source).not.toContain('TrackMetadataModal');
     expect(source).toContain('variant="overlay"');
     expect(source).toContain('label="歌曲選項"');
     expect(source).toContain(':context="context"');
@@ -33,10 +32,10 @@ describe('TrackContextActions', () => {
     );
 
     expect(source).toContain(
-      "validator: (value) => ['current', 'queued', 'source'].includes(value)",
+      "['current', 'queued', 'source', 'editor'].includes(value)",
     );
     expect(source).toContain(
-      "validator: (value) => ['overlay', 'row'].includes(value)",
+      "validator: (value) => ['overlay', 'row', 'inline'].includes(value)",
     );
     expect(source).toContain(
       "import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';",
@@ -44,6 +43,7 @@ describe('TrackContextActions', () => {
     expect(source).toContain('v-if="trigger === \'overlay\'"');
     expect(source).toContain(':menu-open="Boolean(trackMenu)"');
     expect(source).toContain('defineExpose({ open: openTrackMenu });');
+    expect(source).toContain('v-else-if="trigger === \'inline\'"');
     expect(source).toContain("emit('openChange', true)");
     expect(source).toContain("emit('openChange', false)");
   });
@@ -68,26 +68,18 @@ describe('TrackContextActions', () => {
     expect(source).toContain('usePlaybackQueue()');
     expect(source).toContain('usePlaylists()');
     expect(source).toContain('useAlbumNavigation()');
-    expect(source).toContain(
-      'useTrackMetadataEditor({ refresh: refreshLibrary })',
-    );
+    expect(source).toContain('useSongEditor()');
     expect(source).not.toMatch(/\b(?:playTrack|togglePlayerPlayback|seek)\b/u);
   });
 
-  it('binds the metadata modal to the public editor refs and readonly state contract', () => {
+  it('routes editing to the shared workspace and exposes context-specific unlink intent', () => {
     const source = readFileSync(
       new URL('./TrackContextActions.vue', import.meta.url),
       'utf8',
     );
-
-    expect(source).toContain('v-if="trackMetadataEditor.isOpen.value"');
-    expect(source).toContain(':title="trackMetadataEditor.state.titleDraft"');
-    expect(source).toContain(':artist="trackMetadataEditor.state.artistDraft"');
-    expect(source).toContain(
-      ':thumbnail-url="trackMetadataEditor.state.artworkPreviewUrl"',
-    );
-    expect(source).toContain(':saving="trackMetadataEditor.state.isSaving"');
-    expect(source).toContain(':dirty="trackMetadataEditor.isDirty.value"');
-    expect(source).not.toContain('trackMetadataEditor.state.open');
+    expect(source).not.toContain('<TrackMetadataModal');
+    expect(source).toContain('await songEditor.open(track)');
+    expect(source).toContain(':can-unlink-work="canUnlinkWork"');
+    expect(source).toContain("emit('unlinkWork')");
   });
 });

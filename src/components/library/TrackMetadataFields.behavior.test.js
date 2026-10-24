@@ -3,7 +3,11 @@ import { compileScript, compileTemplate, parse } from '@vue/compiler-sfc';
 import { describe, expect, it } from 'vitest';
 
 const modalSource = readFileSync(
-  new URL('./TrackMetadataModal.vue', import.meta.url),
+  new URL('./TrackMetadataFields.vue', import.meta.url),
+  'utf8',
+);
+const editorSource = readFileSync(
+  new URL('./WorkVersionEditor.vue', import.meta.url),
   'utf8',
 );
 const libraryBrowseSource = readFileSync(
@@ -19,14 +23,11 @@ const appHtml = readFileSync(
   'utf8',
 );
 
-describe('TrackMetadataModal artwork discovery contract', () => {
+describe('TrackMetadataFields artwork discovery contract', () => {
   it('uses explicit sibling default and footer slots that compile together', () => {
-    expect(modalSource).toContain('<template #default>');
-    expect(modalSource).toMatch(
-      /<template #default>[\s\S]*<\/template>\s*<template #footer>/u,
-    );
-
-    const filename = 'TrackMetadataModal.vue';
+    expect(modalSource).not.toContain('UiModal');
+    expect(editorSource).toContain('<template #footer>');
+    const filename = 'TrackMetadataFields.vue';
     const { descriptor, errors: parseErrors } = parse(modalSource, {
       filename,
     });
@@ -45,17 +46,14 @@ describe('TrackMetadataModal artwork discovery contract', () => {
   it('uses an image-first split workspace with stable bounded geometry', () => {
     expect(modalSource).toContain('ArtworkPreviewPane');
     expect(modalSource).toContain('ArtworkSearchResults');
-    expect(modalSource).toContain('size="wide"');
-    expect(modalSource).toContain('max-block-size="medium"');
-    expect(modalSource).toMatch(/\sfixed-height(?:\s|>)/u);
-    expect(modalSource).not.toContain(':fixed-height="artworkSearchOpen"');
+    expect(editorSource).toContain('size="wide"');
     expect(modalSource).toMatch(
       /grid-template-columns:\s*minmax\(var\(--ui-artwork-size-3xl\),\s*15rem\)\s+minmax\(\s*0,\s*1fr\s*\)/u,
     );
     expect(modalSource).toMatch(
       /\.track-metadata__preview\s*\{[^}]*position:\s*sticky/msu,
     );
-    expect(modalSource).toContain('<template #footer>');
+    expect(editorSource).toContain('<template #footer>');
     expect(modalSource).not.toMatch(
       /\.track-metadata__actions\s*\{[^}]*position:\s*sticky/msu,
     );
@@ -113,10 +111,10 @@ describe('TrackMetadataModal artwork discovery contract', () => {
 
   it('keeps background preload from locking the metadata fields', () => {
     expect(modalSource).toContain(
-      'const fieldsDisabled = computed(() => props.saving || props.artworkPreparing);',
+      'props.readOnly || props.saving || props.artworkPreparing',
     );
-    expect(modalSource).toContain(
-      'props.saving || props.artworkPreparing || props.artworkSearching',
+    expect(modalSource).toMatch(
+      /props\.readOnly\s*\|\|\s*props\.saving\s*\|\|\s*props\.artworkPreparing\s*\|\|\s*props\.artworkSearching/u,
     );
     expect(modalSource).toContain(':disabled="searchControlsDisabled"');
   });
@@ -131,29 +129,13 @@ describe('TrackMetadataModal artwork discovery contract', () => {
     expect(modalSource).not.toContain('套用這張封面');
   });
 
-  it('uses one Save action for metadata and artwork drafts', () => {
-    expect(modalSource).toMatch(/>\s*儲存\s*</u);
-    expect(modalSource).not.toContain('儲存歌曲資料');
-    expect(modalSource).toContain(':disabled="fieldsDisabled || !dirty"');
+  it('uses the common workspace save and close instead of a nested modal', () => {
+    expect(modalSource).not.toContain('UiModal');
+    expect(modalSource).not.toContain('<template #footer>');
+    expect(editorSource).toContain('@click="songEditor.save"');
+    expect(editorSource).toContain('@close="songEditor.close"');
+    expect(editorSource).toContain(':close-disabled="songEditor.busy.value"');
   });
-
-  it('offers an explicit cancel before save and locks close paths only during writes', () => {
-    const footer = modalSource.slice(modalSource.indexOf('<template #footer>'));
-    const cancelIndex = footer.indexOf('取消');
-    const saveIndex = footer.indexOf('儲存');
-
-    expect(cancelIndex).toBeGreaterThan(-1);
-    expect(saveIndex).toBeGreaterThan(cancelIndex);
-    expect(footer).toMatch(
-      /<UiButton[^>]*variant="secondary"[^>]*@click="cancel"[^>]*>\s*取消/u,
-    );
-    expect(modalSource).toContain('@close="cancel"');
-    expect(modalSource).toContain(':close-disabled="closeDisabled"');
-    expect(modalSource).toContain(
-      'const closeDisabled = computed(() => props.saving || props.artworkPreparing);',
-    );
-  });
-
   it('keeps Cancel truthful by removing the immediate artwork write disclaimer', () => {
     expect(modalSource).not.toContain('立即生效');
     expect(modalSource).not.toContain('只放棄尚未儲存');
@@ -180,13 +162,13 @@ describe('TrackMetadataModal artwork discovery contract', () => {
 
   it('wires every search intent through the editor composable', () => {
     for (const binding of [
-      ':artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"',
-      ':artwork-query="trackMetadataEditor.state.artworkQuery"',
-      ':artwork-candidates="trackMetadataEditor.state.artworkCandidates"',
-      '@open-artwork-search="trackMetadataEditor.openArtworkSearch"',
-      '@search-artwork="trackMetadataEditor.searchArtwork"',
+      ':artwork-search-open="metadata.state.artworkSearchOpen"',
+      ':artwork-query="metadata.state.artworkQuery"',
+      ':artwork-candidates="metadata.state.artworkCandidates"',
+      '@open-artwork-search="metadata.openArtworkSearch"',
+      '@search-artwork="metadata.searchArtwork"',
     ]) {
-      expect(libraryBrowseSource).toContain(binding);
+      expect(editorSource).toContain(binding);
     }
     expect(libraryBrowseSource).not.toContain('@apply-artwork');
   });

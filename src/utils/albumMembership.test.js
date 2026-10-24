@@ -1,7 +1,37 @@
 import { describe, it, expect } from 'vitest';
-import { albumPlaylistByTrackId } from './albumMembership.js';
+import {
+  albumPlaylistByTrackId,
+  albumPlaylistsByTrackId,
+} from './albumMembership.js';
 
 describe('albumPlaylistByTrackId', () => {
+  it('preserves every release in stable order and prefers the current release context only for the primary destination', () => {
+    const releases = [
+      { id: 'a', kind: 'album', trackIds: ['t'] },
+      { id: 'b', kind: 'album', trackIds: ['t'] },
+    ];
+    expect(albumPlaylistsByTrackId(releases).get('t')).toEqual(releases);
+    expect(
+      albumPlaylistByTrackId(releases, { preferredCollectionId: 'b' }).get('t'),
+    ).toBe(releases[1]);
+    expect(albumPlaylistByTrackId(releases).get('t')).toBe(releases[0]);
+  });
+  it('does not expose unknown or changed local membership as a valid destination', () => {
+    const releases = [
+      {
+        id: 'a',
+        kind: 'album',
+        trackIds: ['t'],
+        requiresMembershipVerification: true,
+      },
+    ];
+    expect(albumPlaylistsByTrackId(releases).has('t')).toBe(false);
+    expect(
+      albumPlaylistsByTrackId(releases, {
+        trackIdsForCollection: () => ['t'],
+      }).get('t'),
+    ).toEqual(releases);
+  });
   it('indexes tracks that belong to an album playlist', () => {
     const playlists = [
       { id: 'a1', kind: 'album', name: 'A1', trackIds: ['t1', 't2'] },

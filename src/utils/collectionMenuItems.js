@@ -90,6 +90,20 @@ export function addToPlaylistMenuItem(playlists, playlist, label) {
 export function collectionManageMenuItems(playlist) {
   const isAlbum = playlist.kind === 'album';
   return [
+    ...(isAlbum
+      ? [
+          {
+            id: 'edit-release-info',
+            kind: 'action',
+            label: '發行資訊',
+            icon: Disc3,
+            value: {
+              action: PLAYLIST_MENU_ACTIONS.editReleaseInfo,
+              playlistId: playlist.id,
+            },
+          },
+        ]
+      : []),
     {
       id: 'edit-details',
       kind: 'action',

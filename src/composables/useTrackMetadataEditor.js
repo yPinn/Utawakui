@@ -145,7 +145,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.error = null;
   }
 
-  function open(track) {
+  function open(track, { discoverArtwork = true } = {}) {
     const previousTrackId = state.track?.id;
     if (previousTrackId) {
       Promise.resolve(
@@ -158,7 +158,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.artistDraft = track?.artist ?? '';
     state.artworkPreviewUrl = track?.thumbnailUrl ?? '';
     state.error = null;
-    if (track && !track.thumbnailUrl) {
+    if (discoverArtwork && track && !track.thumbnailUrl) {
       openArtworkSearch({ promptForGate: false });
     }
   }
@@ -497,7 +497,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.error = null;
   }
 
-  async function save() {
+  async function save({ keepOpen = false } = {}) {
     if (!state.track) return null;
     if (state.isArtworkPreparing) return null;
     if (state.isArtworkSearching) cancelArtworkSearch();
@@ -524,7 +524,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       const result = await window.Utawakui.saveTrackEdits(state.track.id, {
         title,
         artist,
-        artwork: state.artworkDraft,
+        artwork: { ...state.artworkDraft },
       });
       if (result?.status !== 'ok' || !result.track) {
         state.error = artworkFailure(result, '歌曲變更未儲存，請再試一次。');
@@ -532,6 +532,12 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       }
       await refresh?.();
       reset();
+      if (keepOpen) {
+        state.track = result.track;
+        state.titleDraft = result.track.title ?? title;
+        state.artistDraft = result.track.artist ?? artist;
+        state.artworkPreviewUrl = result.track.thumbnailUrl ?? '';
+      }
       return result.track;
     } catch (err) {
       state.error = reportMetadataError(

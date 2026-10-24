@@ -1,7 +1,11 @@
 import { computed } from 'vue';
 import { usePlaylists } from './usePlaylists.js';
 import { useAppView } from './useAppView.js';
-import { albumPlaylistByTrackId } from '../utils/albumMembership.js';
+import {
+  albumPlaylistByTrackId,
+  albumPlaylistsByTrackId,
+} from '../utils/albumMembership.js';
+import { useReleaseMembers } from './useReleaseMembers.js';
 import { albumReferenceTitleForTrack } from '../utils/albumReference.js';
 import { isArtistSourceId } from '../utils/artistPage.js';
 
@@ -10,9 +14,13 @@ import { isArtistSourceId } from '../utils/artistPage.js';
 export function useAlbumNavigation() {
   const { state, select, selectAlbumReference, selectArtist } = usePlaylists();
   const { openLibraryContent } = useAppView();
+  const releaseMembers = useReleaseMembers();
 
   const albumByTrackId = computed(() =>
-    albumPlaylistByTrackId(state.playlists),
+    albumPlaylistByTrackId(state.playlists, {
+      preferredCollectionId: state.selectedId,
+      trackIdsForCollection: releaseMembers.displayTrackIds,
+    }),
   );
 
   function albumForTrack(track) {
@@ -54,6 +62,10 @@ export function useAlbumNavigation() {
   }
 
   return {
+    releasesForTrack: (track) =>
+      albumPlaylistsByTrackId(state.playlists, {
+        trackIdsForCollection: releaseMembers.displayTrackIds,
+      }).get(track?.id) ?? [],
     albumForTrack,
     canJumpToAlbum,
     jumpToAlbum,

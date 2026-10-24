@@ -44,11 +44,23 @@ describe('deriveAlbumSupportingContent', () => {
             kind: 'album',
             name: '最新專輯',
             coverUrl: 'utawakui-media://playlist/album-b/cover.jpg',
+            resolvedRelease: {
+              type: 'album',
+              date: { value: '2024', precision: 'year' },
+            },
           },
           tracks: otherTracks,
         },
         {
-          collection: { id: 'album-c', kind: 'album', name: '較早專輯' },
+          collection: {
+            id: 'album-c',
+            kind: 'album',
+            name: '較早專輯',
+            resolvedRelease: {
+              type: 'album',
+              date: { value: '2020', precision: 'year' },
+            },
+          },
           tracks: olderTracks,
         },
         {
@@ -76,6 +88,8 @@ describe('deriveAlbumSupportingContent', () => {
           coverUrl: 'utawakui-media://playlist/album-b/cover.jpg',
           tracks: otherTracks,
           releaseYear: 2024,
+          releaseType: 'album',
+          releaseDate: { value: '2024', precision: 'year' },
         },
         {
           id: 'album-c',
@@ -83,6 +97,8 @@ describe('deriveAlbumSupportingContent', () => {
           coverUrl: '',
           tracks: olderTracks,
           releaseYear: 2020,
+          releaseType: 'album',
+          releaseDate: { value: '2020', precision: 'year' },
         },
       ],
       summary: {

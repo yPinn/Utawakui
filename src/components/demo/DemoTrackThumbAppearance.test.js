@@ -41,7 +41,7 @@ const trackRowSource = readSource('../ui/UiTrackRow.vue');
 const queueTrackSource = readSource('../queue/QueueTrackButton.vue');
 const playerArtworkSource = readSource('../playback/PlayerBarArtwork.vue');
 const playerBarSource = readSource('../playback/PlayerBar.vue');
-const metadataSource = readSource('../library/TrackMetadataModal.vue');
+const metadataSource = readSource('../library/TrackMetadataFields.vue');
 const metadataPreviewSource = readSource('../library/ArtworkPreviewPane.vue');
 const reviewContract = readSource(
   '../../../docs/contracts/token-v2-component-review.md',

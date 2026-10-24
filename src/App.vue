@@ -21,6 +21,8 @@ import FeedbackReportModal from './components/settings/FeedbackReportModal.vue';
 import ObsSessionExportModal from './components/settings/ObsSessionExportModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
+import WorkVersionEditor from './components/library/WorkVersionEditor.vue';
+import ReleaseInfoEditor from './components/library/ReleaseInfoEditor.vue';
 import { useBgmSession } from './composables/useBgmSession.js';
 import { usePerformanceHistoryObserver } from './composables/usePerformanceHistoryObserver.js';
 import PlayerBar from './components/playback/PlayerBar.vue';
@@ -530,6 +532,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
     <AppConfirmationModal />
+    <WorkVersionEditor />
+    <ReleaseInfoEditor />
     <WindowCloseDecisionModal
       :open="closeDecision.state.open"
       :remember="closeDecision.state.remember"

@@ -112,8 +112,8 @@ describe('Library browse workspace composition', () => {
     expect(viewSource).toContain(
       "import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue'",
     );
-    expect(viewSource).toContain(
-      'const { albumEntries, albumSupportingContent } = useLibraryAlbumContext()',
+    expect(viewSource).toMatch(
+      /const\s*\{[^}]*albumEntries,[^}]*albumSupportingContent,[^}]*membershipLoading,[^}]*membershipError[^}]*\}\s*=\s*useLibraryAlbumContext\(\)/u,
     );
     expect(viewSource).toContain('<LibraryAlbumSupportingContent');
     expect(viewSource.indexOf('</AppFolderContentField>')).toBeLessThan(
@@ -219,8 +219,8 @@ describe('Library browse workspace composition', () => {
     expect(viewSource).toContain(
       "import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js'",
     );
-    expect(viewSource).toContain(
-      'const { albumEntries, albumSupportingContent } = useLibraryAlbumContext()',
+    expect(viewSource).toMatch(
+      /const\s*\{[^}]*albumEntries,[^}]*albumSupportingContent,[^}]*membershipLoading,[^}]*membershipError[^}]*\}\s*=\s*useLibraryAlbumContext\(\)/u,
     );
     expect(viewSource).toContain(
       ':related-albums="albumSupportingContent?.relatedAlbums ?? []"',

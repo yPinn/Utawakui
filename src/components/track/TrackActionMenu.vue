@@ -1,11 +1,12 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
+import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
+import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import {
   Disc3,
   ListEnd,
   ListMinus,
   ListPlus,
-  Pencil,
   Plus,
   Tickets,
   Trash2,
@@ -29,7 +30,9 @@ const props = defineProps({
     type: String,
     default: 'default',
     validator: (value) =>
-      ['default', 'current', 'queued', 'source', 'recent'].includes(value),
+      ['default', 'current', 'queued', 'source', 'recent', 'editor'].includes(
+        value,
+      ),
   },
   playlists: { type: Array, default: () => [] },
   currentTrackId: { type: String, default: '' },
@@ -38,9 +41,42 @@ const props = defineProps({
   canGoToAlbum: { type: Boolean, default: false },
   canDelete: { type: Boolean, default: false },
   performanceQueueBusy: { type: Boolean, default: false },
+  releaseContextId: { type: String, default: '' },
+  canUnlinkWork: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['select', 'close']);
+const containingReleases = shallowRef([]);
+const releaseLoading = shallowRef(false);
+const releaseError = shallowRef(false);
+watch(
+  [() => props.open, () => props.track?.id],
+  async ([open, trackId], _old, onCleanup) => {
+    let current = true;
+    onCleanup(() => {
+      current = false;
+    });
+    containingReleases.value = [];
+    releaseError.value = false;
+    if (!open || !trackId || !globalThis.window?.Utawakui?.getTrackReleases) {
+      releaseLoading.value = false;
+      return;
+    }
+    releaseLoading.value = true;
+    try {
+      const result = await useReleaseOrganization().findTrackReleases(trackId);
+      if (!current) return;
+      if (result?.status === 'ok')
+        containingReleases.value = result.releases ?? [];
+      else releaseError.value = true;
+    } catch {
+      if (current) releaseError.value = true;
+    } finally {
+      if (current) releaseLoading.value = false;
+    }
+  },
+  { immediate: true },
+);
 
 const eligiblePlaylists = computed(() =>
   addToPlaylistTargets(props.playlists, {
@@ -144,16 +180,35 @@ const content = computed(() => {
     },
   ];
 
-  const metadataItems = [];
-  if (track.sourceType === 'local-file') {
+  const metadataItems =
+    props.context === 'editor'
+      ? []
+      : [
+          {
+            id: 'work-organization',
+            kind: 'action',
+            label: '整理歌曲',
+            icon: Disc3,
+            value: { action: TRACK_MENU_ACTIONS.workOrganization },
+          },
+        ];
+  if (track.sourceType === 'local-file' && props.context !== 'editor') {
     metadataItems.push({
-      id: 'edit-metadata',
+      id: 'create-local-release',
       kind: 'action',
-      label: '編輯歌曲',
-      icon: Pencil,
-      value: { action: TRACK_MENU_ACTIONS.editMetadata },
+      label: '建立本機單曲',
+      icon: Plus,
+      value: { action: TRACK_MENU_ACTIONS.createLocalRelease },
     });
   }
+  if (props.canUnlinkWork)
+    metadataItems.push({
+      id: 'unlink-work',
+      kind: 'action',
+      label: '解除連結',
+      icon: ListMinus,
+      value: { action: TRACK_MENU_ACTIONS.unlinkWork },
+    });
   if (props.removeFromPlaylistId) {
     metadataItems.push({
       id: 'remove-from-playlist',
@@ -171,7 +226,50 @@ const content = computed(() => {
     groups.push({ id: 'metadata', items: metadataItems });
   }
 
-  if (props.canGoToAlbum) {
+  if (containingReleases.value.length) {
+    groups.push({
+      id: 'navigation',
+      items: [
+        {
+          id: 'containing-releases',
+          kind: 'submenu',
+          label: '收錄於',
+          icon: Disc3,
+          content: {
+            kind: 'actions',
+            groups: [
+              {
+                id: 'releases',
+                items: containingReleases.value.map((release) => ({
+                  id: `release:${release.id}`,
+                  kind: 'action',
+                  label: `${release.name} · ${releaseTypeLabel(release.type)}${release.id === props.releaseContextId ? '（目前發行）' : ''}`,
+                  value: {
+                    action: TRACK_MENU_ACTIONS.goToRelease,
+                    collectionId: release.id,
+                  },
+                })),
+              },
+            ],
+          },
+        },
+      ],
+    });
+  } else if (releaseLoading.value || releaseError.value) {
+    groups.push({
+      id: 'navigation',
+      items: [
+        {
+          id: 'release-status',
+          kind: 'action',
+          label: releaseLoading.value
+            ? '確認收錄發行…'
+            : '無法讀取收錄發行，請重新開啟選單',
+          disabled: true,
+        },
+      ],
+    });
+  } else if (props.canGoToAlbum) {
     groups.push({
       id: 'navigation',
       items: [

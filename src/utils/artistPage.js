@@ -1,4 +1,4 @@
-import { deriveAlbumSummary } from './albumSummary.js';
+import { releaseCard } from './releasePresentation.js';
 import { albumArtistId } from './artistCollections.js';
 
 // Artist ids come from main's derived index; queue sources and history share
@@ -47,15 +47,7 @@ function albumsByArtist(albumEntries, trackArtistIds) {
     if (entry?.collection?.kind !== 'album') continue;
     const artistId = albumArtistId(entry.tracks, trackArtistIds);
     if (!artistId) continue;
-    const album = {
-      id: entry.collection.id,
-      name: entry.collection.name || '(未命名專輯)',
-      coverUrl: entry.collection.coverUrl ?? '',
-      tracks: entry.tracks,
-      releaseYear: validReleaseYear(
-        deriveAlbumSummary(entry.tracks).releaseYear,
-      ),
-    };
+    const album = releaseCard(entry.collection, entry.tracks);
     byArtist.set(artistId, [...(byArtist.get(artistId) ?? []), album]);
   }
   for (const albums of byArtist.values()) albums.sort(compareNewestFirst);
@@ -243,8 +235,8 @@ export function deriveArtistPage({
     .sort(compareNewestFirst);
   const tracks = [...albumTracks, ...looseTracks];
 
-  const releaseYears = tracks
-    .map((track) => validReleaseYear(track.releaseYear))
+  const releaseYears = albums
+    .map((album) => validReleaseYear(album.releaseYear))
     .filter((year) => year !== undefined)
     .sort((a, b) => a - b);
 

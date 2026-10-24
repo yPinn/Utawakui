@@ -130,6 +130,92 @@ function scrollEvent(target) {
 }
 
 describe('TrackActionMenu behavior model', () => {
+  it('offers explicit local single creation and never offers it for a provider track', () => {
+    const local = mount(TrackActionMenu, { open: true, track });
+    expect(buttonByText('建立本機單曲')).toBeTruthy();
+    local.app.unmount();
+    const provider = mount(TrackActionMenu, {
+      open: true,
+      track: { ...track, sourceType: 'provider' },
+    });
+    expect(buttonByText('建立本機單曲')).toBeUndefined();
+    provider.app.unmount();
+  });
+  it('lists every verified containing release without replacing the current source', async () => {
+    window.Utawakui = {
+      getTrackReleases: vi.fn(() =>
+        Promise.resolve({
+          status: 'ok',
+          libraryEpoch: 1,
+          releases: [
+            { id: 'single', name: 'RASEN Single', type: 'single', revision: 1 },
+            { id: 'album', name: 'RASEN Album', type: 'album', revision: 2 },
+          ],
+        }),
+      ),
+    };
+    const onSelect = vi.fn();
+    const mounted = mount(TrackActionMenu, { open: true, track, onSelect });
+    await Promise.resolve();
+    await nextTick();
+    await Promise.resolve();
+    await nextTick();
+    trigger(buttonByText('收錄於'), 'onMouseenter');
+    await nextTick();
+    trigger(buttonByText('RASEN Album'), 'onClick');
+    await nextTick();
+    expect(onSelect.mock.calls[0][0]).toEqual({
+      action: 'go-to-release',
+      collectionId: 'album',
+    });
+    mounted.app.unmount();
+  });
+  it('offers one editing entry and confines unlinking to the current editor context', async () => {
+    let mounted = mount(TrackActionMenu, {
+      open: true,
+      track: { ...track, sourceType: 'local-file' },
+    });
+    expect(buttonByText('整理歌曲')).toBeTruthy();
+    expect(buttonByText('編輯歌曲')).toBeUndefined();
+    expect(buttonByText('解除連結')).toBeUndefined();
+    mounted.app.unmount();
+    const onSelect = vi.fn();
+    mounted = mount(TrackActionMenu, {
+      open: true,
+      track,
+      context: 'editor',
+      canUnlinkWork: true,
+      onSelect,
+    });
+    expect(buttonByText('整理歌曲')).toBeUndefined();
+    trigger(buttonByText('解除連結'), 'onClick');
+    await nextTick();
+    expect(onSelect).toHaveBeenCalledWith(
+      { action: 'unlink-work' },
+      expect.anything(),
+    );
+    mounted.app.unmount();
+  });
+  it.each(['local-file', 'provider'])(
+    'opens work organization for %s tracks',
+    async (sourceType) => {
+      const onSelect = vi.fn();
+      const mounted = mount(TrackActionMenu, {
+        open: true,
+        track: { ...track, sourceType },
+        onSelect,
+      });
+      const action = buttonByText('整理歌曲');
+      expect(action).toBeTruthy();
+      trigger(action, 'onClick');
+      await nextTick();
+      expect(onSelect).toHaveBeenCalledWith(
+        { action: 'work-organization' },
+        expect.anything(),
+      );
+      mounted.app.unmount();
+    },
+  );
   it.each(['default', 'current', 'queued', 'source', 'recent'])(
     'allows another performance occurrence for an already playing/queued track in %s',
     async (context) => {
@@ -309,7 +395,7 @@ describe('TrackActionMenu behavior model', () => {
       expect.arrayContaining([
         '加入一般佇列',
         '加入播放清單',
-        '編輯歌曲',
+        '整理歌曲',
         '前往專輯',
       ]),
     );

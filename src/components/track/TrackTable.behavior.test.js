@@ -84,6 +84,23 @@ const rowSource = readFileSync(
 );
 
 describe('initial table loading', () => {
+  it('keeps the standard album density and source order without lead badges', () => {
+    const { root, app } = mount(TrackTable, {
+      entries,
+      collectionKind: 'album',
+      leadTrackId: tracks[1].id,
+    });
+    const rows = findAll(root, (node) =>
+      classIncludes(node, 'library-track-row__copy'),
+    );
+    expect(rows.map(textContent)).toEqual([
+      expect.stringContaining('第一首歌'),
+      expect.stringContaining('第二首歌'),
+    ]);
+    expect(textContent(rows[0])).not.toContain('主打');
+    expect(textContent(rows[1])).not.toContain('主打');
+    app.unmount();
+  });
   afterEach(() => vi.useRealTimers());
   it('reveals delayed placeholders and keeps the existing header when content arrives', async () => {
     vi.useFakeTimers();

@@ -2,17 +2,16 @@
 import { computed, nextTick, shallowRef, useTemplateRef } from 'vue';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
-import { useLibrary } from '../../composables/useLibrary.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { usePerformanceQueueActions } from '../../composables/usePerformanceQueueActions.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import { useRecentPlaybackActivation } from '../../composables/useRecentPlaybackActivation.js';
 import { usePlayer } from '../../composables/usePlayer.js';
-import { useTrackMetadataEditor } from '../../composables/useTrackMetadataEditor.js';
+import { useSongEditor } from '../../composables/useSongEditor.js';
+import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { TRACK_MENU_ACTIONS } from '../../utils/playlistMenu.js';
-import TrackMetadataModal from '../library/TrackMetadataModal.vue';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
 import QueueSection from './QueueSection.vue';
@@ -61,9 +60,9 @@ const {
   create: createPlaylist,
   addTrack: addTrackToPlaylist,
 } = usePlaylists();
-const { refresh: refreshLibrary } = useLibrary();
 const { albumForTrack, jumpToAlbum, jumpToPlaylist } = useAlbumNavigation();
-const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
+const songEditor = useSongEditor();
+const releaseOrganization = useReleaseOrganization();
 const { state: playbackHistoryState, recentItems } = usePlaybackHistory();
 const { activateRecentEntry } = useRecentPlaybackActivation();
 const tabs = [
@@ -158,8 +157,17 @@ async function handleTrackMenuSelect(value) {
     if (selectedTrackId.value === track.id) selectedTrackId.value = null;
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
-  } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
-    trackMetadataEditor.open(track);
+  } else if (
+    [
+      TRACK_MENU_ACTIONS.editMetadata,
+      TRACK_MENU_ACTIONS.workOrganization,
+    ].includes(value.action)
+  ) {
+    await songEditor.open(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.createLocalRelease) {
+    await releaseOrganization.openCreate(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.goToRelease) {
+    jumpToPlaylist(value.collectionId);
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
     jumpToAlbum(track);
   }
@@ -263,39 +271,6 @@ const {
     @collapse="emit('collapse')"
   >
     <template #overlay>
-      <TrackMetadataModal
-        :open="trackMetadataEditor.isOpen.value"
-        :title="trackMetadataEditor.state.titleDraft"
-        :artist="trackMetadataEditor.state.artistDraft"
-        :thumbnail-url="trackMetadataEditor.state.artworkPreviewUrl"
-        :dirty="trackMetadataEditor.isDirty.value"
-        :artwork-changed="trackMetadataEditor.isArtworkDirty.value"
-        :saving="trackMetadataEditor.state.isSaving"
-        :artwork-preparing="trackMetadataEditor.state.isArtworkPreparing"
-        :artwork-searching="trackMetadataEditor.state.isArtworkSearching"
-        :artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"
-        :artwork-search-completed="
-          trackMetadataEditor.state.artworkSearchCompleted
-        "
-        :artwork-query="trackMetadataEditor.state.artworkQuery"
-        :artwork-candidates="trackMetadataEditor.state.artworkCandidates"
-        :selected-artwork-candidate-id="
-          trackMetadataEditor.state.selectedArtworkCandidateId
-        "
-        :error="trackMetadataEditor.state.error ?? ''"
-        @close="trackMetadataEditor.close"
-        @save="trackMetadataEditor.save"
-        @choose-thumbnail="trackMetadataEditor.chooseThumbnail"
-        @clear-thumbnail="trackMetadataEditor.clearThumbnail"
-        @open-artwork-search="trackMetadataEditor.openArtworkSearch"
-        @close-artwork-search="trackMetadataEditor.closeArtworkSearch"
-        @update-artwork-query="trackMetadataEditor.setArtworkQueryField"
-        @search-artwork="trackMetadataEditor.searchArtwork"
-        @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
-        @update-title="trackMetadataEditor.setTitleDraft"
-        @update-artist="trackMetadataEditor.setArtistDraft"
-      />
-
       <TrackActionMenu
         :performance-queue-busy="performanceQueue.state.isSaving"
         :open="Boolean(trackMenu)"

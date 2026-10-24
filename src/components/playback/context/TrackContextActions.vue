@@ -1,14 +1,13 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
 import { useAlbumNavigation } from '../../../composables/useAlbumNavigation.js';
-import { useLibrary } from '../../../composables/useLibrary.js';
 import { usePlaybackQueue } from '../../../composables/usePlaybackQueue.js';
 import { usePerformanceQueueActions } from '../../../composables/usePerformanceQueueActions.js';
 import { usePlaylists } from '../../../composables/usePlaylists.js';
-import { useTrackMetadataEditor } from '../../../composables/useTrackMetadataEditor.js';
+import { useSongEditor } from '../../../composables/useSongEditor.js';
+import { useReleaseOrganization } from '../../../composables/useReleaseOrganization.js';
 import { Ellipsis } from '../../../icons/index.js';
 import { TRACK_MENU_ACTIONS } from '../../../utils/playlistMenu.js';
-import TrackMetadataModal from '../../library/TrackMetadataModal.vue';
 import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';
 import TrackActionMenu from '../../track/TrackActionMenu.vue';
 import UiIconButton from '../../ui/UiIconButton.vue';
@@ -18,18 +17,20 @@ const props = defineProps({
   context: {
     type: String,
     default: 'current',
-    validator: (value) => ['current', 'queued', 'source'].includes(value),
+    validator: (value) =>
+      ['current', 'queued', 'source', 'editor'].includes(value),
   },
   trigger: {
     type: String,
     default: 'overlay',
-    validator: (value) => ['overlay', 'row'].includes(value),
+    validator: (value) => ['overlay', 'row', 'inline'].includes(value),
   },
+  beforeNavigate: { type: Function, default: null },
+  canUnlinkWork: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['openChange']);
+const emit = defineEmits(['openChange', 'unlinkWork']);
 
-const { refresh: refreshLibrary } = useLibrary();
 const performanceQueue = usePerformanceQueueActions();
 const {
   state: queueState,
@@ -42,8 +43,9 @@ const {
   create: createPlaylist,
   addTrack: addTrackToPlaylist,
 } = usePlaylists();
-const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
-const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
+const { albumForTrack, jumpToAlbum, jumpToPlaylist } = useAlbumNavigation();
+const songEditor = useSongEditor();
+const releaseOrganization = useReleaseOrganization();
 const trackMenu = shallowRef(null);
 
 const queuedTrackIds = computed(() =>
@@ -99,9 +101,35 @@ async function handleTrackMenuSelect(value) {
     removeQueuedTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
-  } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
-    trackMetadataEditor.open(track);
+  } else if (
+    [
+      TRACK_MENU_ACTIONS.editMetadata,
+      TRACK_MENU_ACTIONS.workOrganization,
+    ].includes(value.action)
+  ) {
+    await songEditor.open(track);
+  } else if (
+    value.action === TRACK_MENU_ACTIONS.unlinkWork &&
+    props.canUnlinkWork
+  ) {
+    emit('unlinkWork');
+  } else if (value.action === TRACK_MENU_ACTIONS.createLocalRelease) {
+    if (props.beforeNavigate && !(await props.beforeNavigate())) {
+      closeTrackMenu();
+      return;
+    }
+    await releaseOrganization.openCreate(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.goToRelease) {
+    if (props.beforeNavigate && !(await props.beforeNavigate())) {
+      closeTrackMenu();
+      return;
+    }
+    jumpToPlaylist(value.collectionId);
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
+    if (props.beforeNavigate && !(await props.beforeNavigate())) {
+      closeTrackMenu();
+      return;
+    }
     jumpToAlbum(track);
   }
 
@@ -121,6 +149,14 @@ async function handleTrackMenuSelect(value) {
       :aria-expanded="Boolean(trackMenu)"
       @click="openTrackMenu"
     />
+    <UiIconButton
+      v-else-if="trigger === 'inline'"
+      :icon="Ellipsis"
+      :label="`${track.title}的更多選項`"
+      aria-haspopup="menu"
+      :aria-expanded="Boolean(trackMenu)"
+      @click="openTrackMenu"
+    />
     <RightDockTrackMenuButton
       v-else
       :track-title="track.title"
@@ -135,46 +171,13 @@ async function handleTrackMenuSelect(value) {
       :anchor="trackMenu.anchor"
       :track="track"
       :context="context"
+      :can-unlink-work="canUnlinkWork"
       :playlists="playlistState.playlists"
       :current-track-id="menuCurrentTrackId"
       :queued-track-ids="queuedTrackIds"
       :can-go-to-album="canGoToAlbum"
       @select="handleTrackMenuSelect"
       @close="closeTrackMenu"
-    />
-
-    <TrackMetadataModal
-      v-if="trackMetadataEditor.isOpen.value"
-      :open="trackMetadataEditor.isOpen.value"
-      :title="trackMetadataEditor.state.titleDraft"
-      :artist="trackMetadataEditor.state.artistDraft"
-      :thumbnail-url="trackMetadataEditor.state.artworkPreviewUrl"
-      :dirty="trackMetadataEditor.isDirty.value"
-      :artwork-changed="trackMetadataEditor.isArtworkDirty.value"
-      :saving="trackMetadataEditor.state.isSaving"
-      :artwork-preparing="trackMetadataEditor.state.isArtworkPreparing"
-      :artwork-searching="trackMetadataEditor.state.isArtworkSearching"
-      :artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"
-      :artwork-search-completed="
-        trackMetadataEditor.state.artworkSearchCompleted
-      "
-      :artwork-query="trackMetadataEditor.state.artworkQuery"
-      :artwork-candidates="trackMetadataEditor.state.artworkCandidates"
-      :selected-artwork-candidate-id="
-        trackMetadataEditor.state.selectedArtworkCandidateId
-      "
-      :error="trackMetadataEditor.state.error ?? ''"
-      @close="trackMetadataEditor.close"
-      @save="trackMetadataEditor.save"
-      @choose-thumbnail="trackMetadataEditor.chooseThumbnail"
-      @clear-thumbnail="trackMetadataEditor.clearThumbnail"
-      @open-artwork-search="trackMetadataEditor.openArtworkSearch"
-      @close-artwork-search="trackMetadataEditor.closeArtworkSearch"
-      @update-artwork-query="trackMetadataEditor.setArtworkQueryField"
-      @search-artwork="trackMetadataEditor.searchArtwork"
-      @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
-      @update-title="trackMetadataEditor.setTitleDraft"
-      @update-artist="trackMetadataEditor.setArtistDraft"
     />
   </div>
 </template>

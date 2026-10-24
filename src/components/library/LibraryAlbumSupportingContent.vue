@@ -1,9 +1,12 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef, useId, watch } from 'vue';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import AppFolderSection from '../layout/AppFolderSection.vue';
 import LibraryAlbumCard from './LibraryAlbumCard.vue';
 import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
+import { filterReleases } from '../../utils/releasePresentation.js';
+import UiTabs from '../ui/UiTabs.vue';
+import UiHint from '../ui/UiHint.vue';
 import '../../styles/loading.css';
 
 const props = defineProps({
@@ -13,11 +16,33 @@ const props = defineProps({
   relatedAlbums: { type: Array, default: () => [] },
   albumsTitle: { type: String, default: '' },
   playingAlbumId: { type: String, default: '' },
+  releaseFilters: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['selectAlbum', 'playAlbum']);
+const filter = shallowRef('all');
+const filterTabsId = `music-releases-${useId()}`;
+const filterItems = [
+  { id: 'all', label: '全部' },
+  { id: 'albums', label: '專輯' },
+  { id: 'singles-ep', label: '單曲與迷你專輯' },
+];
+const visibleAlbums = computed(() =>
+  props.releaseFilters
+    ? filterReleases(props.relatedAlbums, filter.value)
+    : props.relatedAlbums,
+);
+watch(
+  () => props.contentKey || props.artist,
+  () => {
+    filter.value = 'all';
+  },
+);
 const initialLoading = computed(
   () => props.loading && props.relatedAlbums.length === 0,
+);
+const filterTabs = computed(() =>
+  filterItems.map((item) => ({ ...item, disabled: initialLoading.value })),
 );
 const { skeletonVisible, revealContent, finishReveal } = useDeferredLoading(
   initialLoading,
@@ -34,14 +59,14 @@ const sectionTitleLang = computed(() =>
   props.albumsTitle ? undefined : contentLangAttribute(props.artist),
 );
 const albumCountLabel = computed(() =>
-  initialLoading.value ? '' : `${props.relatedAlbums.length} 張`,
+  initialLoading.value ? '' : `${visibleAlbums.value.length} 張`,
 );
 </script>
 
 <template>
   <div
     class="library-album-supporting"
-    aria-label="專輯延伸內容"
+    :aria-label="releaseFilters ? '音樂作品' : '發行延伸內容'"
     :aria-busy="initialLoading || undefined"
   >
     <span v-if="initialLoading" role="status" class="ui-visually-hidden"
@@ -53,41 +78,63 @@ const albumCountLabel = computed(() =>
       :title-lang="sectionTitleLang"
       :meta="albumCountLabel"
     >
-      <ul
-        v-if="initialLoading"
-        class="library-album-supporting__albums"
-        :class="{
-          'library-album-supporting__albums--waiting': !skeletonVisible,
-        }"
-        aria-hidden="true"
+      <div v-if="releaseFilters" class="library-album-supporting__filters">
+        <UiTabs
+          v-model:active-id="filter"
+          :items="filterTabs"
+          variant="bar"
+          distribution="content"
+          aria-label="發行分類"
+          :tab-id-prefix="filterTabsId"
+          :panel-id-prefix="filterTabsId"
+        />
+      </div>
+      <div
+        :id="releaseFilters ? `${filterTabsId}-${filter}-panel` : undefined"
+        :role="releaseFilters ? 'tabpanel' : undefined"
+        :aria-labelledby="
+          releaseFilters ? `${filterTabsId}-${filter}-tab` : undefined
+        "
       >
-        <li
-          v-for="index in 4"
-          :key="index"
-          class="library-album-supporting__album-item"
+        <ul
+          v-if="initialLoading"
+          class="library-album-supporting__albums"
+          :class="{
+            'library-album-supporting__albums--waiting': !skeletonVisible,
+          }"
+          aria-hidden="true"
         >
-          <LibraryAlbumCard loading />
-        </li>
-      </ul>
-      <ul
-        v-else
-        class="library-album-supporting__albums"
-        :class="{ 'ui-loading-content-enter': revealContent }"
-        @animationend.self="finishReveal"
-      >
-        <li
-          v-for="album in relatedAlbums"
-          :key="album.id"
-          class="library-album-supporting__album-item"
+          <li
+            v-for="index in 4"
+            :key="index"
+            class="library-album-supporting__album-item"
+          >
+            <LibraryAlbumCard loading />
+          </li>
+        </ul>
+        <ul
+          v-else
+          class="library-album-supporting__albums"
+          :class="{ 'ui-loading-content-enter': revealContent }"
+          @animationend.self="finishReveal"
         >
-          <LibraryAlbumCard
-            :album="album"
-            :playing="album.id === playingAlbumId"
-            @select="emit('selectAlbum', $event)"
-            @play="emit('playAlbum', $event)"
-          />
-        </li>
-      </ul>
+          <li
+            v-for="album in visibleAlbums"
+            :key="album.id"
+            class="library-album-supporting__album-item"
+          >
+            <LibraryAlbumCard
+              :album="album"
+              :playing="album.id === playingAlbumId"
+              @select="emit('selectAlbum', $event)"
+              @play="emit('playAlbum', $event)"
+            />
+          </li>
+        </ul>
+        <UiHint v-if="!initialLoading && !visibleAlbums.length" role="status"
+          >目前沒有符合分類的發行。</UiHint
+        >
+      </div>
     </AppFolderSection>
   </div>
 </template>
@@ -108,6 +155,12 @@ const albumCountLabel = computed(() =>
   grid-template-columns: repeat(auto-fill, 10rem);
   gap: var(--ui-space-4);
   list-style: none;
+}
+
+.library-album-supporting__filters {
+  justify-self: start;
+  inline-size: fit-content;
+  max-inline-size: 100%;
 }
 
 .library-album-supporting__album-item {

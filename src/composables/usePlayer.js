@@ -561,6 +561,7 @@ if (import.meta.hot) {
 export function usePlayer() {
   return {
     state: readonly(state),
+    getPlaybackStartRequestRevision: () => playbackStartRequestRevision,
     samplePlaybackClock,
     playTrack,
     restorePlaybackState,

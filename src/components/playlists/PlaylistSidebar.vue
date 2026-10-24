@@ -24,6 +24,7 @@ import {
   orderReferenceItems,
 } from '../../utils/artistPage.js';
 import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
+import { useReleaseMembers } from '../../composables/useReleaseMembers.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import {
@@ -52,6 +53,7 @@ const props = defineProps({
 const { state, select, selectArtist, create, reorderPlaylist, refresh } =
   usePlaylists();
 const collectionPlayback = useCollectionPlayback();
+const releaseMembers = useReleaseMembers();
 const {
   state: artistIndexState,
   ensureLoaded: ensureArtistIndex,
@@ -95,14 +97,16 @@ const {
 // first 4 member tracks tile into the same UiCollageThumb collage the hero
 // shows, so the two can never show a different image.
 function coverTracksFor(playlist) {
-  return playlist.trackIds
+  return releaseMembers
+    .displayTrackIds(playlist)
     .slice(0, 4)
     .map((id) => props.tracksById.get(id))
     .filter(Boolean);
 }
 
 function memberTracksFor(playlist) {
-  return playlist.trackIds
+  return releaseMembers
+    .displayTrackIds(playlist)
     .map((id) => props.tracksById.get(id))
     .filter(Boolean);
 }
@@ -151,7 +155,8 @@ const initialLoading = computed(
 function subtitleFor(playlist) {
   if (playlist.kind !== 'album') return '播放清單';
   const artist = orderedPlaylists.value.albumArtistById.get(playlist.id);
-  return artist ? `專輯・${artist}` : '專輯';
+  const label = playlist.resolvedRelease?.type === 'single' ? '單曲' : '專輯';
+  return artist ? `${label}・${artist}` : label;
 }
 
 function searchableText(value) {
@@ -241,7 +246,9 @@ const visibleReferenceEntries = computed(() =>
 
 function referenceSubtitle(entry) {
   if (entry.kind === 'artist') return '藝人';
-  return entry.groupName ? `專輯・${entry.groupName}` : '專輯';
+  const label =
+    entry.item?.resolvedRelease?.type === 'single' ? '單曲' : '專輯';
+  return entry.groupName ? `${label}・${entry.groupName}` : label;
 }
 
 function artistTracksFor(artist) {

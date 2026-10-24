@@ -29,6 +29,7 @@ const props = defineProps({
   },
   showSearch: { type: Boolean, default: true },
   showDensity: { type: Boolean, default: true },
+  showShuffle: { type: Boolean, default: true },
   searchQuery: { type: String, default: '' },
   density: {
     type: String,
@@ -112,6 +113,7 @@ function selectMenuAction(value) {
           @click="emit('preview')"
         />
         <UiIconButton
+          v-if="showShuffle"
           :icon="Shuffle"
           :active="shuffleActive"
           :disabled="!canShuffle"

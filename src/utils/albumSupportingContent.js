@@ -1,4 +1,4 @@
-import { deriveAlbumSummary } from './albumSummary.js';
+import { releaseCard } from './releasePresentation.js';
 import { albumArtistId, albumsForArtist } from './artistCollections.js';
 
 function validReleaseYear(value) {
@@ -21,13 +21,7 @@ export function deriveAlbumSupportingContent({
     artistId,
     albumEntries,
     trackArtistIds,
-  ).map(({ collection, tracks }) => ({
-    id: collection.id,
-    name: collection.name || '(未命名專輯)',
-    coverUrl: collection.coverUrl ?? '',
-    tracks,
-    releaseYear: validReleaseYear(deriveAlbumSummary(tracks).releaseYear),
-  }));
+  ).map(({ collection, tracks }) => releaseCard(collection, tracks));
 
   const relatedAlbums = matchingAlbums
     .filter((album) => album.id !== selectedAlbumId)

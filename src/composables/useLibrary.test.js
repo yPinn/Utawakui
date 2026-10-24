@@ -48,6 +48,32 @@ async function importLibrary() {
 }
 
 describe('initial load', () => {
+  it('enriches a bound-local custom cover only after public membership admission', async () => {
+    const collection = {
+      id: 'r',
+      kind: 'album',
+      trackIds: ['a'],
+      coverUrl: 'release-cover',
+      releaseLibraryEpoch: 1,
+      requiresMembershipVerification: true,
+      availableTrackIds: [],
+      resolvedRelease: { revision: 2 },
+    };
+    listPlaylistsMock.mockResolvedValue([collection]);
+    listTracksMock.mockResolvedValue([
+      { id: 'a', thumbnailUrl: 'track-cover' },
+    ]);
+    const library = await loadLibrary();
+    expect(library.state.tracks[0].thumbnailUrl).toBe('track-cover');
+    const { releaseMembershipProjection, releaseMembershipKey } =
+      await import('./useReleaseMembershipProjection.js');
+    releaseMembershipProjection.cache.set(releaseMembershipKey(collection), [
+      'a',
+    ]);
+    expect(library.state.tracks[0].thumbnailUrl).toBe('release-cover');
+    releaseMembershipProjection.cache.clear();
+    expect(library.state.tracks[0].thumbnailUrl).toBe('track-cover');
+  });
   it('can finish hydration from the latest read while the superseded read is unresolved', async () => {
     const older = Promise.withResolvers();
     listTracksMock

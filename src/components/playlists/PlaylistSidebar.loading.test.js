@@ -51,6 +51,23 @@ const render = (props = {}) =>
   renderToString(createSSRApp({ render: () => h(PlaylistSidebar, props) }));
 
 describe('Sidebar initial loading', () => {
+  it('labels persistent Single releases without changing legacy album labels', async () => {
+    owners.playlists.isLoading = false;
+    owners.playlists.hasLoaded = true;
+    owners.playlists.playlists = [
+      {
+        id: 'single',
+        name: 'A Single',
+        kind: 'album',
+        trackIds: [],
+        resolvedRelease: { type: 'single' },
+      },
+      { id: 'legacy', name: 'An Album', kind: 'album', trackIds: [] },
+    ];
+    const html = await render();
+    expect(html).toContain('單曲');
+    expect(html).toContain('專輯');
+  });
   it('reserves collection rows while fixed navigation remains available, including compact mode', async () => {
     for (const compact of [false, true]) {
       const html = await render({ compact });

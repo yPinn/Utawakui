@@ -41,7 +41,9 @@ describe('LibraryBrowseContent track interaction owner', () => {
 
   it('uses one canonical table and disables custom reorder while filtering', () => {
     expect(source).toContain('<TrackTable');
-    expect(source).toContain(':entries="visibleTableEntries"');
+    expect(source).toMatch(
+      /:entries="[\s\S]*?singleDetail\.isSingle && singleDetail\.state !== 'ready'[\s\S]*?\? \[\][\s\S]*?: visibleTableEntries/u,
+    );
     expect(source).toContain('? `library-${playlistState.libraryView}`');
     expect(source).toContain(':collection-kind="tableCollectionKind"');
     expect(source).toContain(
@@ -87,7 +89,9 @@ describe('LibraryBrowseContent track interaction owner', () => {
   });
 
   it('routes the ordinal playback control through the audio authority', () => {
-    expect(source).toContain('const { state, playTrack, clearTrack, toggle }');
+    expect(source).toMatch(
+      /const\s*\{[^}]*state,[^}]*playTrack,[^}]*clearTrack,[^}]*toggle,[^}]*getPlaybackStartRequestRevision[^}]*\}\s*=\s*usePlayer/u,
+    );
     expect(source).toContain(
       ':playing-track-id="state.isPlaying ? state.track?.id : \'\'"',
     );
@@ -143,8 +147,8 @@ describe('LibraryBrowseContent track interaction owner', () => {
   });
 
   it('projects shared collection playback state and explicit action ownership into the header', () => {
-    expect(source).toContain(
-      "import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js'",
+    expect(source).toMatch(
+      /import\s*\{[^}]*useCollectionPlayback,[^}]*beginCollectionPlaybackRequest,[^}]*isCurrentCollectionPlaybackRequest,?\s*\}\s*from '\.\.\/\.\.\/composables\/useCollectionPlayback\.js'/u,
     );
     expect(source).toContain('<LibraryCollectionHeader');
     expect(source).toContain(':playing="selectedCollectionIsPlaying"');

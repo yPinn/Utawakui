@@ -45,7 +45,8 @@ describe('Library Token v2 surface cutover', () => {
       /<AppSurfaceBoundary[\s\S]*?surface-id="library"[\s\S]*?<LibraryBrowseWorkspace/u,
     );
     expect(pageSource).not.toContain('AppSurfaceBoundary');
-    expect(browseContentSource).toContain('<TrackMetadataModal');
+    expect(browseContentSource).not.toContain('<TrackMetadataModal');
+    expect(browseContentSource).toContain('useSongEditor');
     expect(browseContentSource).toContain('<TrackActionMenu');
     expect(browseContentSource).not.toContain('provideUiOverlayHost');
     expect(browseContentSource).not.toContain('document.body');

@@ -4,6 +4,8 @@ import { useAppConfirmation } from './useAppConfirmation.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylists } from './usePlaylists.js';
 import { usePerformanceQueueActions } from './usePerformanceQueueActions.js';
+import { useReleaseMembers } from './useReleaseMembers.js';
+import { useReleaseOrganization } from './useReleaseOrganization.js';
 import {
   PLAYLIST_MENU_ACTIONS,
   playlistDisplayName,
@@ -51,9 +53,32 @@ const editorFeedback = {
 // one) so both stay in sync with one join.
 function resolvePlaylistTracks(playlist) {
   if (!playlist) return [];
-  return playlist.trackIds
+  return useReleaseMembers()
+    .displayTrackIds(playlist)
     .map((id) => tracksById.value.get(id))
     .filter(Boolean);
+}
+
+async function resolvePlaylistTracksForAction(playlist) {
+  if (!playlist) return [];
+  if (
+    playlist.kind !== 'album' ||
+    !playlist.resolvedRelease ||
+    playlist.releaseLibraryEpoch === undefined
+  )
+    return resolvePlaylistTracks(playlist);
+  return useReleaseMembers().resolve(playlist, { fresh: true });
+}
+async function resolvePlaylistTrackIdsForCopy(playlist) {
+  if (
+    playlist?.kind === 'album' &&
+    playlist.resolvedRelease &&
+    playlist.releaseLibraryEpoch !== undefined
+  )
+    return (await resolvePlaylistTracksForAction(playlist)).map(
+      (track) => track.id,
+    );
+  return playlist?.trackIds ?? [];
 }
 
 // Deriving `open` from this existing (rather than a separate boolean) also
@@ -197,11 +222,12 @@ async function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
   removePlaylistAction(playlist.id);
 }
 
-function addPlaylistToQueue(playlistId) {
+async function addPlaylistToQueue(playlistId) {
   const playlist = playlistState.playlists.find(
     (item) => item.id === playlistId,
   );
-  for (const track of resolvePlaylistTracks(playlist)) enqueueTrack(track);
+  for (const track of await resolvePlaylistTracksForAction(playlist))
+    enqueueTrack(track);
 }
 
 async function handlePlaylistMenuAction(value) {
@@ -216,7 +242,11 @@ async function handlePlaylistMenuAction(value) {
       const source = playlistState.playlists.find(
         (item) => item.id === value.sourcePlaylistId,
       );
-      if (source) addTracksToPlaylist(created.id, source.trackIds);
+      if (source)
+        addTracksToPlaylist(
+          created.id,
+          await resolvePlaylistTrackIdsForCopy(source),
+        );
     }
     return;
   }
@@ -229,9 +259,14 @@ async function handlePlaylistMenuAction(value) {
   if (value.action === PLAYLIST_MENU_ACTIONS.addToPerformanceQueue) {
     await performanceQueue.addCollection(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.addToQueue) {
-    addPlaylistToQueue(playlist.id);
+    await addPlaylistToQueue(playlist.id);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.editReleaseInfo) {
+    await useReleaseOrganization().open(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.addToPlaylist) {
-    addTracksToPlaylist(value.targetPlaylistId, playlist.trackIds);
+    addTracksToPlaylist(
+      value.targetPlaylistId,
+      await resolvePlaylistTrackIdsForCopy(playlist),
+    );
   } else if (value.action === PLAYLIST_MENU_ACTIONS.editDetails) {
     startPlaylistEditDetails(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.delete) {
@@ -254,6 +289,7 @@ export function usePlaylistActions() {
     editDetailsIsSaving,
     editDetailsError,
     resolvePlaylistTracks,
+    resolvePlaylistTracksForAction,
     openEditDetails,
     closeEditDetailsModal,
     saveEditDetails,

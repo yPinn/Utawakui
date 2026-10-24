@@ -45,10 +45,10 @@ describe('LibraryAlbumCard', () => {
     const mounted = mount(LibraryAlbumCard, { album });
     const buttons = findAll(mounted.root, (node) => node.type === 'button');
     const openButton = buttons.find(
-      (button) => button.props['aria-label'] === '開啟專輯：chasing ghosts',
+      (button) => button.props['aria-label'] === '開啟發行：chasing ghosts',
     );
     const playButton = buttons.find((button) =>
-      textContent(button).includes('播放專輯：chasing ghosts'),
+      textContent(button).includes('播放發行：chasing ghosts'),
     );
     const thumb = findAll(mounted.root, (node) =>
       String(node.props?.class ?? '').includes('ui-collage-thumb'),
@@ -72,10 +72,10 @@ describe('LibraryAlbumCard', () => {
     const mounted = mount(LibraryAlbumCard, { album, onSelect, onPlay });
     const buttons = findAll(mounted.root, (node) => node.type === 'button');
     const openButton = buttons.find(
-      (button) => button.props['aria-label'] === '開啟專輯：chasing ghosts',
+      (button) => button.props['aria-label'] === '開啟發行：chasing ghosts',
     );
     const playButton = buttons.find((button) =>
-      textContent(button).includes('播放專輯：chasing ghosts'),
+      textContent(button).includes('播放發行：chasing ghosts'),
     );
     const playEvent = { stopPropagation: vi.fn() };
 
@@ -99,15 +99,15 @@ describe('LibraryAlbumCard', () => {
       mounted.root,
       (node) =>
         node.type === 'button' &&
-        textContent(node).includes('暫停專輯：chasing ghosts'),
+        textContent(node).includes('暫停發行：chasing ghosts'),
     )[0];
 
     expect(pauseButton).toBeDefined();
-    expect(textContent(mounted.root)).not.toContain('播放專輯：chasing ghosts');
+    expect(textContent(mounted.root)).not.toContain('播放發行：chasing ghosts');
     mounted.app.unmount();
   });
 
-  it('omits missing metadata without inventing a placeholder', () => {
+  it('marks an unknown release type without inventing a release year', () => {
     const mounted = mount(LibraryAlbumCard, {
       album: { ...album, releaseYear: null },
     });
@@ -115,7 +115,7 @@ describe('LibraryAlbumCard', () => {
       String(node.props?.class ?? '').includes('library-album-card__copy'),
     )[0];
 
-    expect(textContent(copy)).toBe('chasing ghosts');
+    expect(textContent(copy)).toBe('chasing ghosts未分類');
     mounted.app.unmount();
   });
 

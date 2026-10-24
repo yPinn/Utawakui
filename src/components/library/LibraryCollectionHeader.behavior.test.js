@@ -30,6 +30,23 @@ async function renderHeader(overrides = {}) {
 }
 
 describe('LibraryCollectionHeader', () => {
+  it('reuses the album artwork and controls for Single, changing only release wording', async () => {
+    const html = await renderHeader({
+      releaseType: 'single',
+      showSearch: false,
+      canAddToPlaylist: true,
+      addToPlaylistContent: { kind: 'actions', groups: [] },
+    });
+    expect(html).toMatch(/app-folder-dossier__marker[^>]*>\s*單曲\s*</u);
+    expect(html).not.toContain('library-entity-dossier--single');
+    expect(html).not.toContain('--ui-folder-single-artwork');
+    expect(html).toContain('width:136px;height:136px');
+    expect(html).toContain('播放此單曲發行');
+    expect(html).toContain('將單曲發行新增至播放清單');
+    expect(html).toContain('隨機播放');
+    expect(html).toContain('調整曲目顯示密度');
+    expect(html).not.toContain('搜尋曲目');
+  });
   it('composes one shared entity dossier with one collection action rail', async () => {
     const html = await renderHeader();
 
@@ -44,6 +61,8 @@ describe('LibraryCollectionHeader', () => {
     expect(html).toMatch(/app-folder-dossier__marker[^>]*>\s*專輯\s*</u);
     expect(html).toContain('艾熱');
     expect(html).toContain('9 首曲目，29 分');
+    expect(html).toContain('width:136px;height:136px');
+    expect(html).not.toContain('library-entity-dossier--single');
   });
 
   it('assigns playlist edit and album add-to-playlist as different extension actions', async () => {

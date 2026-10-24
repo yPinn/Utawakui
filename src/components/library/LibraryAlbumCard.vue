@@ -1,6 +1,7 @@
 <script setup>
 import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
+import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -44,7 +45,7 @@ function playAlbum(event) {
       <button
         type="button"
         class="library-album-card__open"
-        :aria-label="`開啟專輯：${album.name}`"
+        :aria-label="`開啟發行：${album.name}`"
         @click="selectAlbum"
       />
       <UiCollageThumb
@@ -57,8 +58,8 @@ function playAlbum(event) {
       <UiArtworkReveal class="library-album-card__play">
         <PlaybackPrimaryButton
           :playing="playing"
-          :play-label="`播放專輯：${album.name}`"
-          :pause-label="`暫停專輯：${album.name}`"
+          :play-label="`播放發行：${album.name}`"
+          :pause-label="`暫停發行：${album.name}`"
           @click="playAlbum"
         />
       </UiArtworkReveal>
@@ -66,7 +67,11 @@ function playAlbum(event) {
         <strong :lang="contentLangAttribute(album.name, album.artist)">{{
           album.name
         }}</strong>
-        <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
+        <span>{{
+          [album.releaseYear, releaseTypeLabel(album.releaseType)]
+            .filter(Boolean)
+            .join(' · ')
+        }}</span>
       </span>
     </template>
   </div>

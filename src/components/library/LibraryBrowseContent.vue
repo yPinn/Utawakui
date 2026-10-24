@@ -8,7 +8,11 @@ import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useArtistPhotoCandidates } from '../../composables/useArtistPhotoCandidates.js';
 import { useBgmSession } from '../../composables/useBgmSession.js';
-import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
+import {
+  useCollectionPlayback,
+  beginCollectionPlaybackRequest,
+  isCurrentCollectionPlaybackRequest,
+} from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePlayer } from '../../composables/usePlayer.js';
@@ -23,10 +27,10 @@ import { useSeparationQueueContext } from '../../composables/useSeparationQueueC
 import { useTrackListDensity } from '../../composables/useTrackListDensity.js';
 import { useTrackSeparationAction } from '../../composables/useTrackSeparationAction.js';
 import { useTrackPreview } from '../../composables/useTrackPreview.js';
-import { useTrackMetadataEditor } from '../../composables/useTrackMetadataEditor.js';
+import { useSongEditor } from '../../composables/useSongEditor.js';
+import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
 import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue';
 import LibraryArtistIdentityController from './LibraryArtistIdentityController.vue';
-import TrackMetadataModal from './TrackMetadataModal.vue';
 import TrackTable from '../track/TrackTable.vue';
 import { normalizeTrackCollectionSort } from '../track/trackCollectionProfiles.js';
 import {
@@ -57,6 +61,7 @@ import {
 } from '../../utils/playlistSort.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import { deriveReleaseDetail } from '../../utils/releaseDetailPresentation.js';
 import { deriveAlbumReference } from '../../utils/albumReference.js';
 import { artistSearchTexts, deriveArtistPage } from '../../utils/artistPage.js';
 import { shufflePreviewTracks } from '../../utils/trackPreviewOrder.js';
@@ -65,7 +70,13 @@ import {
   sortLocalLibraryTracks,
 } from '../../utils/trackSourceDisplay.js';
 
-const { state, playTrack, clearTrack, toggle } = usePlayer();
+const {
+  state,
+  playTrack,
+  clearTrack,
+  toggle,
+  getPlaybackStartRequestRevision,
+} = usePlayer();
 const { confirm: confirmAction } = useAppConfirmation();
 const { recordError } = useAppDiagnostics();
 const notifications = useAppNotifications();
@@ -94,12 +105,16 @@ const {
   removeTrack: removeTrackFromPlaylist,
   setTracks: setPlaylistTracksAction,
 } = usePlaylists();
-const { resolvePlaylistTracks, openEditDetails, handlePlaylistMenuAction } =
-  usePlaylistActions();
+const {
+  resolvePlaylistTracks,
+  resolvePlaylistTracksForAction,
+  openEditDetails,
+  handlePlaylistMenuAction,
+} = usePlaylistActions();
 const { playCountOf } = usePlaybackHistory();
 const collectionPlayback = useCollectionPlayback();
 const performanceQueue = usePerformanceQueueActions();
-const { canJumpToAlbum, jumpToAlbum } = useAlbumNavigation();
+const { canJumpToAlbum, jumpToAlbum, jumpToPlaylist } = useAlbumNavigation();
 const {
   state: artistIndexState,
   ensureLoaded: ensureArtistIndex,
@@ -116,6 +131,7 @@ const { handoffState: bgmHandoffState } = useBgmSession();
 
 // Transient UI mode stays local; mutations persist immediately.
 const selectedTrackId = shallowRef(null);
+let rowPlaybackRequest = 0;
 const artistIdentityOpen = shallowRef(false);
 const searchQuery = defineModel('searchQuery', {
   type: String,
@@ -125,7 +141,8 @@ const addMenu = ref(null);
 const trackRowSort = ref({ key: null, direction: 'asc' });
 const tableColumnPreferencesByKind = shallowRef({});
 
-const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
+const songEditor = useSongEditor();
+const releaseOrganization = useReleaseOrganization();
 
 const albumReference = computed(() =>
   deriveAlbumReference(
@@ -195,7 +212,14 @@ const stickyOffsetStyle = computed(() => ({
     : '0px',
 }));
 
-const { albumEntries, albumSupportingContent } = useLibraryAlbumContext();
+const {
+  albumEntries,
+  albumSupportingContent,
+  membershipLoading,
+  membershipError,
+  selectedReleaseVerification,
+  retrySelectedRelease,
+} = useLibraryAlbumContext();
 const artistPage = computed(() =>
   isArtistSelected.value
     ? deriveArtistPage({
@@ -330,6 +354,27 @@ function updateTableColumnPreferences(preferences) {
 const headerTracks = computed(() =>
   mode.value === 'all' ? libraryViewTracks.value : playlistTracks.value,
 );
+const singleDetail = computed(() =>
+  deriveReleaseDetail({
+    collection: selectedPlaylist.value,
+    tracks: playlistTracks.value,
+    verification: initialCollectionLoading.value
+      ? { state: 'pending' }
+      : (selectedReleaseVerification?.value ?? { state: 'ready' }),
+  }),
+);
+const collectionTableLoading = computed(
+  () =>
+    initialCollectionLoading.value ||
+    (singleDetail.value.isSingle &&
+      ['idle', 'pending'].includes(singleDetail.value.state)),
+);
+const canPlayCollection = computed(() =>
+  singleDetail.value.isSingle
+    ? singleDetail.value.canStart ||
+      collectionPlayback.isActiveSource(collectionSourceId.value)
+    : headerTracks.value.length > 0,
+);
 const collectionPlaybackTracks = computed(() =>
   mode.value === 'all'
     ? orderedLibraryEntries.value.map(({ track }) => track)
@@ -369,6 +414,7 @@ const albumSummary = computed(() =>
 // album or artist page.
 ensureArtistIndex();
 const headerFields = computed(() => {
+  if (singleDetail.value.isSingle) return singleDetail.value.fields;
   const count = headerTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);
   const countLine = duration
@@ -377,7 +423,7 @@ const headerFields = computed(() => {
   if (isArtistSelected.value) {
     const page = artistPage.value;
     const fields = [countLine];
-    if (page?.albums.length) fields.push(`${page.albums.length} 張專輯`);
+    if (page?.albums.length) fields.push(`${page.albums.length} 張發行`);
     if (page?.yearStart) {
       fields.push(
         page.yearEnd && page.yearEnd !== page.yearStart
@@ -575,7 +621,11 @@ const collectionMoreContent = computed(() => {
   ];
   if (playlistTracks.value.length > 0) {
     const addLabel =
-      playlist.kind === 'album' ? '新增專輯至播放清單' : '新增至別的播放清單';
+      playlist.kind === 'album'
+        ? singleDetail.value.isSingle
+          ? '新增單曲發行至播放清單'
+          : '新增專輯至播放清單'
+        : '新增至別的播放清單';
     groups.push({
       id: 'destinations',
       items: [
@@ -668,13 +718,37 @@ function selectTrack(track) {
   selectedTrackId.value = track?.id ?? null;
 }
 
-function activateTrack(track) {
-  const queueTracks = currentVisibleQueueTracks();
+async function activateTrack(track) {
+  const request = ++rowPlaybackRequest;
+  const admission = beginCollectionPlaybackRequest();
+  const startRevision = getPlaybackStartRequestRevision?.();
+  const sourceId = collectionSourceId.value;
+  const sourceName = pageTitle.value;
+  const contentKey = collectionContentKey.value;
+  const playbackRevision = state.playbackRevision;
+  let queueTracks = currentVisibleQueueTracks();
+  if (selectedPlaylist.value?.kind === 'album') {
+    const allowed = new Set(
+      (await resolvePlaylistTracksForAction(selectedPlaylist.value)).map(
+        (member) => member.id,
+      ),
+    );
+    queueTracks = queueTracks.filter((member) => allowed.has(member.id));
+  }
+  if (
+    request !== rowPlaybackRequest ||
+    !isCurrentCollectionPlaybackRequest(admission) ||
+    getPlaybackStartRequestRevision?.() !== startRevision ||
+    collectionContentKey.value !== contentKey ||
+    collectionSourceId.value !== sourceId ||
+    state.playbackRevision !== playbackRevision
+  )
+    return;
   if (!queueTracks.some(({ id }) => id === track?.id)) return;
   selectTrack(track);
   setQueue(queueTracks, track.id, {
-    sourceName: pageTitle.value,
-    sourceId: collectionSourceId.value,
+    sourceName,
+    sourceId,
   });
   playTrack(toPlayableTrack(track));
 }
@@ -834,8 +908,17 @@ async function applyTrackMenuAction(track, value) {
     await performanceQueue.addTrack(track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
-  } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
-    trackMetadataEditor.open(track);
+  } else if (
+    [
+      TRACK_MENU_ACTIONS.editMetadata,
+      TRACK_MENU_ACTIONS.workOrganization,
+    ].includes(value.action)
+  ) {
+    await songEditor.open(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.createLocalRelease) {
+    await releaseOrganization.openCreate(track);
+  } else if (value.action === TRACK_MENU_ACTIONS.goToRelease) {
+    jumpToPlaylist(value.collectionId);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromPlaylist) {
     await confirmRemovePlaylistTrack(track, value.playlistId);
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
@@ -875,6 +958,9 @@ function playFromPreview(track) {
 
 // Editing or leaving for an album needs the page underneath, not the preview.
 const PREVIEW_CLOSING_ACTIONS = new Set([
+  TRACK_MENU_ACTIONS.createLocalRelease,
+  TRACK_MENU_ACTIONS.goToRelease,
+  TRACK_MENU_ACTIONS.workOrganization,
   TRACK_MENU_ACTIONS.editMetadata,
   TRACK_MENU_ACTIONS.goToAlbum,
 ]);
@@ -884,7 +970,10 @@ function handlePreviewMenuSelect(value, track) {
   applyTrackMenuAction(track, value);
 }
 
-onUnmounted(() => trackPreview.close());
+onUnmounted(() => {
+  rowPlaybackRequest += 1;
+  trackPreview.close();
+});
 
 function reorderTrack(draggedId, targetId, position) {
   const playlist = selectedPlaylist.value;
@@ -968,39 +1057,6 @@ onMounted(async () => {
 
 <template>
   <div class="library-browse-content">
-    <TrackMetadataModal
-      :open="trackMetadataEditor.isOpen.value"
-      :title="trackMetadataEditor.state.titleDraft"
-      :artist="trackMetadataEditor.state.artistDraft"
-      :thumbnail-url="trackMetadataEditor.state.artworkPreviewUrl"
-      :dirty="trackMetadataEditor.isDirty.value"
-      :artwork-changed="trackMetadataEditor.isArtworkDirty.value"
-      :saving="trackMetadataEditor.state.isSaving"
-      :artwork-preparing="trackMetadataEditor.state.isArtworkPreparing"
-      :artwork-searching="trackMetadataEditor.state.isArtworkSearching"
-      :artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"
-      :artwork-search-completed="
-        trackMetadataEditor.state.artworkSearchCompleted
-      "
-      :artwork-query="trackMetadataEditor.state.artworkQuery"
-      :artwork-candidates="trackMetadataEditor.state.artworkCandidates"
-      :selected-artwork-candidate-id="
-        trackMetadataEditor.state.selectedArtworkCandidateId
-      "
-      :error="trackMetadataEditor.state.error ?? ''"
-      @close="trackMetadataEditor.close"
-      @save="trackMetadataEditor.save"
-      @choose-thumbnail="trackMetadataEditor.chooseThumbnail"
-      @clear-thumbnail="trackMetadataEditor.clearThumbnail"
-      @open-artwork-search="trackMetadataEditor.openArtworkSearch"
-      @close-artwork-search="trackMetadataEditor.closeArtworkSearch"
-      @update-artwork-query="trackMetadataEditor.setArtworkQueryField"
-      @search-artwork="trackMetadataEditor.searchArtwork"
-      @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
-      @update-title="trackMetadataEditor.setTitleDraft"
-      @update-artist="trackMetadataEditor.setArtistDraft"
-    />
-
     <LibraryArtistIdentityController
       :open="artistIdentityOpen"
       :artist-id="artistPage?.id ?? ''"
@@ -1054,7 +1110,7 @@ onMounted(async () => {
         <template #action>
           <PlaybackPrimaryButton
             :playing="selectedCollectionIsPlaying"
-            :disabled="headerTracks.length === 0"
+            :disabled="!canPlayCollection"
             :play-label="`播放${pageTitle}`"
             :pause-label="`暫停${pageTitle}`"
             @click="toggleSelectedCollectionPlayback"
@@ -1069,6 +1125,7 @@ onMounted(async () => {
         <LibraryCollectionHeader
           v-model:search-query="searchQuery"
           :entity-kind="mode === 'all' ? 'library' : mode"
+          :release-type="singleDetail.isSingle ? 'single' : ''"
           :library-view="playlistState.libraryView"
           :title="pageTitle"
           :artist="playlistArtist"
@@ -1079,9 +1136,13 @@ onMounted(async () => {
           :description="playlistDescription"
           :playing="selectedCollectionIsPlaying"
           :shuffle-active="queueState.isShuffle"
-          :can-play="headerTracks.length > 0"
+          :can-play="canPlayCollection"
           :can-shuffle="queueState.tracks.length > 1"
-          :can-add-to-queue="headerTracks.length > 0"
+          :can-add-to-queue="
+            singleDetail.isSingle
+              ? singleDetail.canStart
+              : headerTracks.length > 0
+          "
           :can-preview="visibleTableEntries.length > 0"
           :preview-blocked-reason="previewBlockedReason"
           :can-add-to-playlist="playlistTracks.length > 0"
@@ -1106,6 +1167,35 @@ onMounted(async () => {
         :variant="contentFieldVariant"
         aria-label="曲目清單與狀態"
       >
+        <template v-if="singleDetail.isSingle">
+          <UiHint
+            v-if="
+              singleDetail.message &&
+              ['idle', 'pending'].includes(singleDetail.state)
+            "
+            role="status"
+            >{{ singleDetail.message }}</UiHint
+          >
+          <UiNotice
+            v-else-if="singleDetail.message"
+            :tone="singleDetail.memberCount === 0 ? 'info' : 'warning'"
+            :message="singleDetail.message"
+            :action-label="singleDetail.state === 'error' ? '重新確認' : ''"
+            compact
+            @action="retrySelectedRelease?.()"
+          />
+          <UiNotice
+            v-if="singleDetail.conflictMessage"
+            tone="warning"
+            :message="singleDetail.conflictMessage"
+            compact
+          />
+        </template>
+        <UiNotice
+          v-if="membershipError && !singleDetail.isSingle"
+          tone="warning"
+          :message="membershipError"
+        />
         <UiNotice
           v-if="
             !initialCollectionLoading &&
@@ -1119,7 +1209,9 @@ onMounted(async () => {
 
         <UiHint
           v-else-if="
-            !initialCollectionLoading && libraryState.tracks.length === 0
+            !singleDetail.isSingle &&
+            !initialCollectionLoading &&
+            libraryState.tracks.length === 0
           "
         >
           還沒有任何曲目——使用左側的「匯入曲目」開始建立曲庫。
@@ -1150,16 +1242,26 @@ onMounted(async () => {
           </UiHint>
           <UiHint
             v-else-if="
-              !initialCollectionLoading && visibleTableEntries.length === 0
+              !initialCollectionLoading &&
+              visibleTableEntries.length === 0 &&
+              !singleDetail.isSingle
             "
           >
             {{ tableEmptyText }}
           </UiHint>
           <TrackTable
-            v-else
-            :loading="initialCollectionLoading"
+            v-else-if="
+              !singleDetail.isSingle ||
+              collectionTableLoading ||
+              (singleDetail.state === 'ready' && visibleTableEntries.length > 0)
+            "
+            :loading="collectionTableLoading"
             :content-key="collectionContentKey"
-            :entries="visibleTableEntries"
+            :entries="
+              singleDetail.isSingle && singleDetail.state !== 'ready'
+                ? []
+                : visibleTableEntries
+            "
             :collection-kind="tableCollectionKind"
             :column-preferences="currentTableColumnPreferences"
             :label="`${pageTitle}曲目`"
@@ -1199,7 +1301,13 @@ onMounted(async () => {
           (albumGridLoading || albumSupportingContent?.relatedAlbums.length > 0)
         "
         :artist="albumSupportingContent?.artist ?? ''"
-        :albums-title="albumSupportingContent?.artist ? '' : '相關專輯'"
+        :albums-title="
+          albumSupportingContent?.artist
+            ? ''
+            : singleDetail.isSingle
+              ? '相關發行'
+              : '相關專輯'
+        "
         :related-albums="albumSupportingContent?.relatedAlbums ?? []"
         :loading="albumGridLoading"
         :content-key="collectionContentKey"
@@ -1211,19 +1319,23 @@ onMounted(async () => {
       <LibraryAlbumSupportingContent
         v-else-if="
           isArtistSelected &&
-          (albumGridLoading || artistPage?.albums.length > 0)
+          (albumGridLoading ||
+            membershipLoading ||
+            artistPage?.albums.length > 0)
         "
         :artist="artistPage?.name ?? pageTitle"
         :related-albums="artistPage?.albums ?? []"
-        :loading="albumGridLoading"
+        :loading="albumGridLoading || membershipLoading"
         :content-key="collectionContentKey"
         :playing-album-id="playingSupportingAlbumId"
-        albums-title="專輯"
+        albums-title="音樂作品"
+        release-filters
         @select-album="selectPlaylistAction"
         @play-album="toggleSupportingAlbumPlayback"
       />
 
       <TrackActionMenu
+        :release-context-id="selectedPlaylist?.id ?? ''"
         :open="Boolean(addMenu)"
         :anchor="addMenu?.anchor"
         :track="addMenu?.track ?? null"

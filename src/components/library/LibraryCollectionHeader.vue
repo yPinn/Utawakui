@@ -22,6 +22,9 @@ const props = defineProps({
       ['library', 'playlist', 'album', 'artist'].includes(value),
   },
   libraryView: { type: String, default: 'all' },
+  releaseType: { type: String, default: '' },
+  showShuffle: { type: Boolean, default: true },
+  showDensity: { type: Boolean, default: true },
   title: { type: String, required: true },
   titleId: { type: String, default: 'collection-title' },
   artist: { type: String, default: '' },
@@ -90,7 +93,12 @@ const ENTITY_LABEL_BY_KIND = Object.freeze({
   artist: '此藝人',
   playlist: '此播放清單',
 });
-const entityLabel = computed(() => ENTITY_LABEL_BY_KIND[props.entityKind]);
+const isSingle = computed(
+  () => props.entityKind === 'album' && props.releaseType === 'single',
+);
+const entityLabel = computed(() =>
+  isSingle.value ? '此單曲發行' : ENTITY_LABEL_BY_KIND[props.entityKind],
+);
 // Artist pages are read-only references with no entity-specific action.
 const entityAction = computed(() => {
   if (!props.entityActionVisible) return null;
@@ -100,7 +108,9 @@ const entityAction = computed(() => {
   if (props.entityKind === 'album') {
     return {
       icon: ListPlus,
-      label: '將專輯新增至播放清單',
+      label: isSingle.value
+        ? '將單曲發行新增至播放清單'
+        : '將專輯新增至播放清單',
       disabled: !props.canAddToPlaylist || !props.addToPlaylistContent,
       menuContent: props.addToPlaylistContent,
     };
@@ -125,6 +135,7 @@ function handleMenuAction(value) {
   <section class="library-collection-header">
     <LibraryEntityDossier
       :entity-kind="entityKind"
+      :release-type="releaseType"
       :library-view="libraryView"
       :title="title"
       :title-id="titleId"
@@ -205,6 +216,8 @@ function handleMenuAction(value) {
       :entity-action="entityAction"
       :more-content="moreContent"
       :show-search="showSearch"
+      :show-density="showDensity"
+      :show-shuffle="showShuffle"
       :search-query="searchQuery"
       :density="density"
       @toggle-playback="emit('togglePlayback')"

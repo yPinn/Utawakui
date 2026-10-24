@@ -157,6 +157,60 @@ describe('useTrackMetadataEditor', () => {
     expect(searchTrackArtworkMock).not.toHaveBeenCalled();
   });
 
+  it.each(['keep', 'clear', 'local-draft', 'candidate'])(
+    'sends a cloneable %s artwork intent across the preload boundary',
+    async (action) => {
+      saveTrackEditsMock.mockImplementation(async (trackId, fields) => {
+        const intent = structuredClone(fields);
+        return { status: 'ok', track: { id: trackId, ...intent } };
+      });
+      const { useTrackMetadataEditor } =
+        await import('./useTrackMetadataEditor.js');
+      const editor = useTrackMetadataEditor();
+      editor.open(
+        {
+          id: 'local-1',
+          title: 'Original',
+          thumbnailUrl: 'utawakui-media://track/local-1/thumbnail.png',
+        },
+        { discoverArtwork: false },
+      );
+      if (action === 'clear') editor.clearThumbnail();
+      if (action === 'local-draft') {
+        chooseTrackArtworkDraftMock.mockResolvedValue({
+          status: 'ok',
+          mimeType: 'image/png',
+          bytes: Uint8Array.from([137, 80, 78, 71]),
+        });
+        await editor.chooseThumbnail();
+      }
+      if (action === 'candidate') {
+        searchTrackArtworkMock.mockResolvedValue({
+          status: 'ok',
+          candidates: [{ id: 'candidate-1' }],
+        });
+        loadTrackArtworkPreviewMock.mockResolvedValue({
+          status: 'error',
+          reason: 'not-found',
+        });
+        await editor.searchArtwork();
+        editor.selectArtworkCandidate('candidate-1');
+      }
+      editor.setArtistDraft('Edited artist');
+      expect(await editor.save({ keepOpen: true })).toMatchObject({
+        id: 'local-1',
+        title: 'Original',
+        artist: 'Edited artist',
+        artwork:
+          action === 'candidate'
+            ? { action, candidateId: 'candidate-1' }
+            : { action },
+      });
+      expect(editor.state.error).toBe(null);
+      expect(editor.isDirty.value).toBe(false);
+    },
+  );
+
   it('seeds drafts from the target track and saves trimmed title and artist', async () => {
     const refresh = vi.fn();
     saveTrackEditsMock.mockResolvedValue({

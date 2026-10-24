@@ -51,7 +51,15 @@ const artistIndex = {
 
 const albumEntries = [
   {
-    collection: { id: 'album-book1', kind: 'album', name: 'THE BOOK' },
+    collection: {
+      id: 'album-book1',
+      kind: 'album',
+      name: 'THE BOOK',
+      resolvedRelease: {
+        type: 'album',
+        date: { value: '2020', precision: 'year' },
+      },
+    },
     tracks: [tracksById.get('y1'), tracksById.get('y2')],
   },
   {
@@ -60,6 +68,10 @@ const albumEntries = [
       kind: 'album',
       name: 'THE BOOK 3',
       coverUrl: 'cover-book3',
+      resolvedRelease: {
+        type: 'album',
+        date: { value: '2023', precision: 'year' },
+      },
     },
     tracks: [tracksById.get('y4'), tracksById.get('y3'), tracksById.get('m1')],
   },
@@ -70,6 +82,39 @@ const albumEntries = [
 ];
 
 describe('artistCreditLinks', () => {
+  it('keeps release classification separate from kind and uses only effective release dates', () => {
+    const page = deriveArtistPage({
+      artistId: 'artist-yoasobi',
+      artistIndex,
+      tracksById,
+      albumEntries: [
+        {
+          collection: { id: 'unknown', kind: 'album', name: 'Unknown' },
+          tracks: [tracks[0]],
+        },
+        {
+          collection: {
+            id: 'single',
+            kind: 'album',
+            name: 'Single',
+            resolvedRelease: {
+              type: 'single',
+              date: { value: '2026-07-25', precision: 'day' },
+            },
+          },
+          tracks: [tracks[1]],
+        },
+      ],
+    });
+    expect(page.albums.find((item) => item.id === 'unknown')).toMatchObject({
+      releaseType: 'unknown',
+      releaseYear: undefined,
+    });
+    expect(page.albums.find((item) => item.id === 'single')).toMatchObject({
+      releaseType: 'single',
+      releaseYear: 2026,
+    });
+  });
   it('links a single credit with the canonical artist name', () => {
     expect(
       artistCreditLinks({ id: 'y1', artist: 'YOASOBI' }, artistIndex),
@@ -345,8 +390,8 @@ describe('deriveArtistPage', () => {
     expect(page).toMatchObject({
       name: 'YOASOBI',
       looseTrackCount: 1,
-      yearStart: 2019,
-      yearEnd: 2024,
+      yearStart: 2020,
+      yearEnd: 2023,
     });
   });
 

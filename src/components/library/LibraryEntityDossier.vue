@@ -16,6 +16,7 @@ const props = defineProps({
   },
   // Library pages only: which library view the icon artwork represents.
   libraryView: { type: String, default: 'all' },
+  releaseType: { type: String, default: '' },
   title: { type: String, required: true },
   titleId: { type: String, default: 'collection-title' },
   artist: { type: String, default: '' },
@@ -37,6 +38,9 @@ const MARKER_BY_KIND = Object.freeze({
 });
 
 const isLibrary = computed(() => props.entityKind === 'library');
+const isSingle = computed(
+  () => props.entityKind === 'album' && props.releaseType === 'single',
+);
 const libraryIcon = computed(() =>
   props.libraryView === 'local' ? FolderOpen : Library,
 );
@@ -52,7 +56,7 @@ const summaryFields = computed(() =>
 <template>
   <AppFolderDossier
     class="library-entity-dossier"
-    :marker="MARKER_BY_KIND[entityKind]"
+    :marker="isSingle ? '單曲' : MARKER_BY_KIND[entityKind]"
     :title="title"
     :title-id="titleId"
     :title-lang="titleLang"
