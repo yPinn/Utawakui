@@ -35,6 +35,7 @@ describe('config audio preferences', () => {
   it('round-trips valid preferences, including when no track is loaded', () => {
     const preferences = {
       performanceVolume: 0.72,
+      captureVolume: 0.3,
       performanceMuted: true,
       monitorGuideVocalLevel: 0.35,
       captureGuideVocalLevel: 0.15,
@@ -46,16 +47,40 @@ describe('config audio preferences', () => {
     expect(loadConfig(configPath).audioPreferences).toEqual(preferences);
   });
 
+  it('adds capture headroom to older config without changing stored monitor and guide values', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        version: 4,
+        audioPreferences: {
+          performanceVolume: 0.8,
+          performanceMuted: true,
+          monitorGuideVocalLevel: 0.7,
+          captureGuideVocalLevel: 1,
+        },
+      }),
+    );
+    expect(loadConfig(configPath).audioPreferences).toEqual({
+      performanceVolume: 0.8,
+      performanceMuted: true,
+      captureVolume: 0.5,
+      monitorGuideVocalLevel: 0.7,
+      captureGuideVocalLevel: 1,
+    });
+  });
+
   it('falls back per field without discarding valid neighboring preferences', () => {
     expect(
       normalizeAudioPreferences({
         performanceVolume: 0.8,
+        captureVolume: 0.5,
         performanceMuted: 'yes',
         monitorGuideVocalLevel: Number.NaN,
         captureGuideVocalLevel: 0.2,
       }),
     ).toEqual({
       performanceVolume: 0.8,
+      captureVolume: 0.5,
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0.2,
@@ -66,12 +91,14 @@ describe('config audio preferences', () => {
     expect(
       normalizeAudioPreferences({
         performanceVolume: 2,
+        captureVolume: 0.5,
         performanceMuted: true,
         monitorGuideVocalLevel: -1,
         captureGuideVocalLevel: 1.5,
       }),
     ).toEqual({
       performanceVolume: 0.5,
+      captureVolume: 0.5,
       performanceMuted: true,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,

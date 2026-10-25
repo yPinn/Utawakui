@@ -59,7 +59,7 @@ class MockAudioParam {
   }
 }
 
-function createHarness({ wait } = {}) {
+function createHarness({ wait, capture = false } = {}) {
   const audio = new MockAudio();
   const gain = { gain: new MockAudioParam(), connect: vi.fn() };
   const source = { connect: vi.fn(), disconnect: vi.fn() };
@@ -77,15 +77,116 @@ function createHarness({ wait } = {}) {
     }),
   };
   const createAudioContext = vi.fn(() => context);
+  const bridge = { stream: { getTracks: () => [] } };
+  context.createMediaStreamDestination = vi.fn(() => bridge);
+  const captureInput = { setEnabled: vi.fn(), release: vi.fn() };
+  let loseCapture;
+  const connectCaptureInput = vi.fn((_stream, onUnavailable) => {
+    loseCapture = onUnavailable;
+    return captureInput;
+  });
+  const prepareCaptureOutput = vi.fn(async () => true);
   const deck = createBgmAudioDeck({
     audio,
     createAudioContext,
     wait: wait ?? vi.fn(async () => {}),
+    ...(capture ? { connectCaptureInput, prepareCaptureOutput } : {}),
   });
-  return { audio, context, createAudioContext, deck, gain, source };
+  return {
+    audio,
+    context,
+    createAudioContext,
+    deck,
+    gain,
+    source,
+    bridge,
+    connectCaptureInput,
+    prepareCaptureOutput,
+    captureInput,
+    loseCapture: () => loseCapture?.(),
+  };
 }
 
 describe('BGM audio deck', () => {
+  it('does not let a cancelled capture preparation disable a newer start', async () => {
+    const h = createHarness({ capture: true });
+    const pending = createDeferred();
+    h.prepareCaptureOutput.mockImplementationOnce(() => pending.promise);
+    h.deck.load('utawakui-media://track/bgm/audio.wav');
+    const oldStart = h.deck.startSilent();
+    await vi.waitFor(() =>
+      expect(h.prepareCaptureOutput).toHaveBeenCalledOnce(),
+    );
+    h.deck.cut();
+    const newStart = h.deck.startSilent();
+    await vi.waitFor(() => expect(h.audio.play).toHaveBeenCalledOnce());
+    pending.resolve(true);
+    expect(await oldStart).toBe(false);
+    h.audio.dispatch('playing');
+    expect(await newStart).toBe(true);
+    expect(h.deck.state.playIntentActive).toBe(true);
+  });
+
+  it('contains capture registration errors and retries without creating another media source', async () => {
+    const h = createHarness({ capture: true });
+    h.connectCaptureInput.mockImplementationOnce(() => {
+      throw new Error('private native detail');
+    });
+    h.deck.load('utawakui-media://track/bgm/audio.wav');
+    expect(await h.deck.startSilent()).toBe(false);
+    expect(h.audio.play).not.toHaveBeenCalled();
+    expect(h.deck.state.error).toBe('BGM 音訊無法播放。');
+    const start = h.deck.startSilent();
+    await vi.waitFor(() => expect(h.audio.play).toHaveBeenCalledOnce());
+    h.audio.dispatch('playing');
+    expect(await start).toBe(true);
+    expect(h.context.createMediaElementSource).toHaveBeenCalledOnce();
+    await h.deck.dispose();
+    await h.deck.dispose();
+    expect(h.captureInput.release).toHaveBeenCalledOnce();
+  });
+  it('sends the post-fade BGM bus to shared capture and gates it synchronously on cut', async () => {
+    const h = createHarness({ capture: true });
+    h.deck.load('utawakui-media://track/bgm/audio.wav');
+    const start = h.deck.startSilent();
+    await vi.waitFor(() =>
+      expect(h.prepareCaptureOutput).toHaveBeenCalledOnce(),
+    );
+    h.audio.dispatch('playing');
+    await start;
+    await h.deck.fadeIn(0);
+    expect(h.connectCaptureInput).toHaveBeenCalledWith(
+      h.bridge.stream,
+      expect.any(Function),
+    );
+    expect(h.gain.connect).toHaveBeenCalledWith(h.bridge);
+    expect(h.captureInput.setEnabled).toHaveBeenLastCalledWith(true);
+    h.deck.cut();
+    expect(h.captureInput.setEnabled).toHaveBeenLastCalledWith(false);
+    expect(h.gain.gain.value).toBe(0);
+    expect(h.audio.paused).toBe(true);
+    await h.deck.dispose();
+    expect(h.captureInput.release).toHaveBeenCalledOnce();
+  });
+
+  it('fails closed if capture preparation fails and stops both routes on sink loss', async () => {
+    const h = createHarness({ capture: true });
+    h.deck.load('utawakui-media://track/bgm/audio.wav');
+    h.prepareCaptureOutput.mockResolvedValueOnce(false);
+    expect(await h.deck.startSilent()).toBe(false);
+    expect(h.audio.play).not.toHaveBeenCalled();
+    expect(h.deck.state.error).toContain('擷取');
+    const start = h.deck.startSilent();
+    await vi.waitFor(() => expect(h.audio.play).toHaveBeenCalledOnce());
+    h.audio.dispatch('playing');
+    await start;
+    await h.deck.fadeIn(0);
+    h.loseCapture();
+    expect(h.deck.state.error).toContain('擷取');
+    expect(h.captureInput.setEnabled).toHaveBeenLastCalledWith(false);
+    expect(h.audio.paused).toBe(true);
+  });
+
   it('starts at 25% base volume with Talk disabled', async () => {
     const { audio, deck, gain } = createHarness();
 

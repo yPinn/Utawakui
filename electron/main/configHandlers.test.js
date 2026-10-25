@@ -25,6 +25,7 @@ function register(overrides = {}) {
     captureDeviceId: null,
     audioPreferences: {
       performanceVolume: 0.5,
+      captureVolume: 0.5,
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
@@ -171,6 +172,7 @@ describe('registerConfigHandlers', () => {
     const { ipcMain, updateConfig } = register();
     const preferences = {
       performanceVolume: 0.72,
+      captureVolume: 0.5,
       performanceMuted: true,
       monitorGuideVocalLevel: 0.35,
       captureGuideVocalLevel: 0.15,
@@ -180,6 +182,7 @@ describe('registerConfigHandlers', () => {
       ipcMain.handlers.get('config:get-audio-preferences')(),
     ).resolves.toEqual({
       performanceVolume: 0.5,
+      captureVolume: 0.5,
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
@@ -191,10 +194,27 @@ describe('registerConfigHandlers', () => {
       audioPreferences: preferences,
     });
 
+    for (const captureVolume of [
+      NaN,
+      Infinity,
+      -0.01,
+      1.01,
+      '0.5',
+      undefined,
+    ]) {
+      await expect(
+        ipcMain.handlers.get('config:set-audio-preferences')(null, {
+          ...preferences,
+          captureVolume,
+        }),
+      ).rejects.toThrow(/AUDIO_PREFERENCES_INVALID/u);
+    }
+
     await expect(
       ipcMain.handlers.get('config:set-audio-preferences')(null, {
         ...preferences,
         performanceVolume: 2,
+        captureVolume: 0.5,
       }),
     ).rejects.toThrow(/AUDIO_PREFERENCES_INVALID/u);
   });

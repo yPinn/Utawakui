@@ -6,7 +6,7 @@ import SettingsSection from './SettingsSection.vue';
 import AudioOutputSettingsBlock from './AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from './CaptureDeviceModal.vue';
 
-const { state: playerState } = usePlayer();
+const { state: playerState, setCaptureVolume } = usePlayer();
 const { devices: captureOutputDevices, captureErrorNotice } = useAudioOutput();
 const isCaptureDeviceModalOpen = shallowRef(false);
 
@@ -30,6 +30,8 @@ const captureDeviceLabel = computed(() => {
       :enabled="Boolean(playerState.captureDeviceId)"
       :device-label="captureDeviceLabel"
       :error-notice="captureErrorNotice"
+      :capture-volume="playerState.captureVolume"
+      @update:capture-volume="setCaptureVolume"
       @select-device="isCaptureDeviceModalOpen = true"
     />
 

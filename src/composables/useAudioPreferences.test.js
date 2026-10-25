@@ -8,6 +8,7 @@ describe('audio preference persistence', () => {
     const playerState = reactive({
       track: null,
       volume: 0.5,
+      captureVolume: 0.5,
       isMuted: false,
       guideVocalValue: 0.5,
       captureGuideVocalValue: 0,
@@ -23,6 +24,7 @@ describe('audio preference persistence', () => {
     playerState.volume = 0.61;
     playerState.volume = 0.62;
     playerState.guideVocalValue = 0.4;
+    playerState.captureVolume = 0.3;
     await nextTick();
 
     expect(bridge.setAudioPreferences).not.toHaveBeenCalled();
@@ -31,6 +33,7 @@ describe('audio preference persistence', () => {
     expect(bridge.setAudioPreferences).toHaveBeenCalledOnce();
     expect(bridge.setAudioPreferences).toHaveBeenCalledWith({
       performanceVolume: 0.62,
+      captureVolume: 0.3,
       performanceMuted: false,
       monitorGuideVocalLevel: 0.4,
       captureGuideVocalLevel: 0,

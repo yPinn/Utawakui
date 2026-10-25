@@ -721,6 +721,7 @@ describe('main preload bridge', () => {
       // Preload relays raw values; the renderer bounds them and fills defaults.
       initialAudioPreferences: {
         performanceVolume: undefined,
+        captureVolume: undefined,
         performanceMuted: undefined,
         monitorGuideVocalLevel: -1,
         captureGuideVocalLevel: 2,
@@ -734,6 +735,7 @@ describe('main preload bridge', () => {
       '--sidebar-width=320',
       '--capture-device-id=device-1',
       '--performance-volume=0.72',
+      '--capture-volume=0.5',
       '--performance-muted=1',
       '--monitor-guide-vocal-level=0.35',
       '--capture-guide-vocal-level=0.15',
@@ -746,6 +748,7 @@ describe('main preload bridge', () => {
       initialCaptureDeviceId: 'device-1',
       initialAudioPreferences: {
         performanceVolume: 0.72,
+        captureVolume: 0.5,
         performanceMuted: true,
         monitorGuideVocalLevel: 0.35,
         captureGuideVocalLevel: 0.15,
@@ -1686,6 +1689,7 @@ describe('main preload bridge', () => {
 
     bridge.setAudioPreferences({
       performanceVolume: 0.72,
+      captureVolume: 0.5,
       performanceMuted: true,
       monitorGuideVocalLevel: 0.35,
       captureGuideVocalLevel: 0.15,
@@ -1696,6 +1700,7 @@ describe('main preload bridge', () => {
       'config:set-audio-preferences',
       {
         performanceVolume: 0.72,
+        captureVolume: 0.5,
         performanceMuted: true,
         monitorGuideVocalLevel: 0.35,
         captureGuideVocalLevel: 0.15,

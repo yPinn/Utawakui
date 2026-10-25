@@ -4,6 +4,7 @@ export { audioControlValues as AUDIO_CONTROL_VALUES };
 
 export const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
   performanceVolume: audioControlValues.performanceVolume.defaultValue,
+  captureVolume: audioControlValues.captureVolume.defaultValue,
   performanceMuted: audioControlValues.performanceMutedDefault,
   monitorGuideVocalLevel:
     audioControlValues.monitorGuideVocalLevel.defaultValue,
@@ -26,6 +27,11 @@ export function normalizeAudioPreferences(value) {
       audioControlValues.performanceVolume,
       DEFAULT_AUDIO_PREFERENCES.performanceVolume,
     ),
+    captureVolume: boundedValue(
+      source.captureVolume,
+      audioControlValues.captureVolume,
+      DEFAULT_AUDIO_PREFERENCES.captureVolume,
+    ),
     performanceMuted:
       typeof source.performanceMuted === 'boolean'
         ? source.performanceMuted
@@ -46,6 +52,7 @@ export function normalizeAudioPreferences(value) {
 export function projectAudioPreferences(playerState) {
   return normalizeAudioPreferences({
     performanceVolume: playerState.volume,
+    captureVolume: playerState.captureVolume,
     performanceMuted: playerState.isMuted,
     monitorGuideVocalLevel: playerState.guideVocalValue,
     captureGuideVocalLevel: playerState.captureGuideVocalValue,

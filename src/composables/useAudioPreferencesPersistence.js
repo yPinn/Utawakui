@@ -55,6 +55,7 @@ export function createAudioPreferencesPersistence({
     stopWatch ??= watch(
       () => [
         playerState.volume,
+        playerState.captureVolume,
         playerState.isMuted,
         playerState.guideVocalValue,
         playerState.captureGuideVocalValue,

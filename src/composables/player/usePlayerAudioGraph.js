@@ -17,6 +17,7 @@ export const GUIDE_VOCAL_LEVEL_RANGE = Object.freeze({
 
 export const PLAYER_AUDIO_DEFAULTS = Object.freeze({
   volume: AUDIO_CONTROL_VALUES.performanceVolume.defaultValue,
+  captureVolume: AUDIO_CONTROL_VALUES.captureVolume.defaultValue,
   transposeSemitones: 0,
   pitchCents: 0,
   tempoRate: 1,
@@ -72,7 +73,49 @@ export function usePlayerAudioGraph({
   let pitchProcessingError = null;
   let capturePitchProcessingError = null;
   let usesSeparatedAudioGraph = false;
+  const captureInputs = new Map();
+  let pendingCaptureSelection = null;
 
+  function connectCaptureInput(graph, key, input) {
+    const source = graph.context.createMediaStreamSource(input.stream);
+    const gate = graph.context.createGain();
+    gate.gain.value = input.enabled ? 1 : 0;
+    source.connect(gate);
+    // Programme inputs have already applied their own gain. They bypass the
+    // performance mix, guide vocal and pitch processor.
+    gate.connect(graph.output);
+    graph.inputNodes.set(key, { source, gate });
+  }
+
+  function registerCaptureInput(stream, onUnavailable = () => {}) {
+    const key = Symbol('capture-input');
+    const input = { stream, onUnavailable, enabled: false };
+    if (captureGraph && !captureGraph.disposed) {
+      connectCaptureInput(captureGraph, key, input);
+    }
+    captureInputs.set(key, input);
+    return {
+      setEnabled(enabled) {
+        if (!captureInputs.has(key)) return;
+        input.enabled = enabled === true;
+        const nodes = captureGraph?.inputNodes.get(key);
+        if (!nodes) return;
+        const context = captureGraph.context;
+        nodes.gate.gain.cancelScheduledValues(context.currentTime);
+        nodes.gate.gain.setValueAtTime(
+          input.enabled ? 1 : 0,
+          context.currentTime,
+        );
+      },
+      release() {
+        captureInputs.delete(key);
+        const nodes = captureGraph?.inputNodes.get(key);
+        nodes?.source.disconnect();
+        nodes?.gate.disconnect();
+        captureGraph?.inputNodes.delete(key);
+      },
+    };
+  }
   function handleMonitorStateChange() {
     if (isDisposed || !state.isPlaying || audioCtx?.state === 'running') return;
     if (['suspended', 'interrupted', 'closed'].includes(audioCtx?.state)) {
@@ -154,9 +197,11 @@ export function usePlayerAudioGraph({
       vocSource: context.createMediaStreamSource(vocBridgeDest.stream),
       vocalGain: context.createGain(),
       mix: context.createGain(),
+      output: context.createGain(),
       dry: context.createGain(),
       wet: context.createGain(),
       pitchNode: null,
+      inputNodes: new Map(),
       pitchNodeReady: null,
       invalidated: false,
       disposed: false,
@@ -174,8 +219,11 @@ export function usePlayerAudioGraph({
     graph.dry.gain.value = 1;
     graph.wet.gain.value = 0;
     graph.mix.connect(graph.dry);
-    graph.dry.connect(context.destination);
-    graph.wet.connect(context.destination);
+    graph.output.gain.value =
+      state.captureVolume ?? PLAYER_AUDIO_DEFAULTS.captureVolume;
+    graph.dry.connect(graph.output);
+    graph.wet.connect(graph.output);
+    graph.output.connect(context.destination);
 
     graph.handleSinkChange = () => {
       const currentSinkId =
@@ -209,7 +257,18 @@ export function usePlayerAudioGraph({
     desiredCaptureDeviceId = null;
     state.captureError = message;
     state.captureDeviceId = null;
+    notifyCaptureUnavailable();
     void disposeCaptureGraph(graph);
+  }
+
+  function notifyCaptureUnavailable() {
+    for (const input of captureInputs.values()) {
+      try {
+        input.onUnavailable();
+      } catch {
+        /* the sink still fails closed */
+      }
+    }
   }
 
   function isCaptureGraphReady(graph) {
@@ -243,8 +302,14 @@ export function usePlayerAudioGraph({
     graph.vocSource.disconnect();
     graph.vocalGain.disconnect();
     graph.mix.disconnect();
+    graph.output.disconnect();
     graph.dry.disconnect();
     graph.wet.disconnect();
+    for (const { source, gate } of graph.inputNodes.values()) {
+      source.disconnect();
+      gate.disconnect();
+    }
+    graph.inputNodes.clear();
     if (graph.pitchNode) graph.pitchNode.onprocessorerror = null;
     graph.pitchNode?.disconnect();
 
@@ -539,6 +604,20 @@ export function usePlayerAudioGraph({
     if (audioCtx) connectSourceNode();
   }
 
+  function setCaptureVolume(volume) {
+    state.captureVolume = boundedOrCurrent(
+      volume,
+      AUDIO_CONTROL_VALUES.captureVolume,
+      state.captureVolume,
+    );
+    if (captureGraph)
+      rampGain(
+        captureGraph.context,
+        captureGraph.output.gain,
+        state.captureVolume,
+      );
+  }
+
   function setVolume(volume) {
     const nextVolume = boundedOrCurrent(
       volume,
@@ -572,7 +651,7 @@ export function usePlayerAudioGraph({
     return true;
   }
 
-  async function applyCaptureDevice(deviceId) {
+  async function selectCaptureDevice(deviceId) {
     if (isDisposed) return;
     desiredCaptureDeviceId = deviceId || null;
     const selectionRevision = ++captureSelectionRevision;
@@ -587,6 +666,8 @@ export function usePlayerAudioGraph({
     let graph = null;
     try {
       graph = createCaptureGraph(deviceId);
+      for (const [key, input] of captureInputs)
+        connectCaptureInput(graph, key, input);
       await graph.context.resume();
       if (
         isDisposed ||
@@ -601,6 +682,7 @@ export function usePlayerAudioGraph({
         ) {
           desiredCaptureDeviceId = null;
           state.captureError = '擷取輸出裝置無法使用。';
+          notifyCaptureUnavailable();
         }
         return;
       }
@@ -621,7 +703,34 @@ export function usePlayerAudioGraph({
       desiredCaptureDeviceId = null;
       state.captureDeviceId = null;
       state.captureError = '擷取輸出裝置無法使用。';
+      notifyCaptureUnavailable();
     }
+  }
+
+  function applyCaptureDevice(deviceId) {
+    const operation = selectCaptureDevice(deviceId);
+    const pending = { deviceId, operation };
+    pendingCaptureSelection = pending;
+    const clear = () => {
+      if (pendingCaptureSelection === pending) pendingCaptureSelection = null;
+    };
+    operation.then(clear, clear);
+    return operation;
+  }
+
+  async function prepareCaptureOutput() {
+    const deviceId = desiredCaptureDeviceId;
+    if (!deviceId) return !state.captureError;
+    if (pendingCaptureSelection?.deviceId === deviceId) {
+      await pendingCaptureSelection.operation;
+    } else if (!captureGraph || !isCaptureGraphReady(captureGraph)) {
+      await applyCaptureDevice(deviceId);
+    }
+    return (
+      desiredCaptureDeviceId === deviceId &&
+      Boolean(captureGraph && isCaptureGraphReady(captureGraph)) &&
+      !state.captureError
+    );
   }
 
   async function resume() {
@@ -658,6 +767,7 @@ export function usePlayerAudioGraph({
     instBridgeDest?.disconnect();
     vocBridgeDest?.disconnect();
     void disposeCaptureGraph();
+    captureInputs.clear();
     void audioCtx?.close();
   }
 
@@ -675,12 +785,15 @@ export function usePlayerAudioGraph({
     setPitchCents,
     setTempoRate,
     resetPitchTempo,
+    setCaptureVolume,
     setVolume,
     setMuted,
     toggleMute,
     toggleCaptureGuideVocal,
     prepareCaptureDevice,
     applyCaptureDevice,
+    prepareCaptureOutput,
+    registerCaptureInput,
     cleanup,
   };
 }

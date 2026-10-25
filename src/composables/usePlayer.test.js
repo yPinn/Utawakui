@@ -58,6 +58,7 @@ class MockAudioParam {
 
 class MockAudioNode {
   constructor() {
+    this.connect = vi.fn(() => this);
     this.gain = new MockAudioParam();
     this.stream = {};
   }
@@ -113,6 +114,7 @@ class MockAudioContext {
       this.sinkId = deviceId;
     });
     this.createdGains = [];
+    this.createdStreamSources = [];
     this.audioWorklet = {
       addModule: vi.fn(async () => {
         const deferred = MockAudioContext.workletDeferredBySinkId.get(
@@ -149,8 +151,13 @@ class MockAudioContext {
     return new MockAudioNode();
   }
 
-  createMediaStreamSource() {
-    return new MockAudioNode();
+  createMediaStreamSource(stream) {
+    const source = new MockAudioNode();
+    source.stream = stream;
+    source.connect = vi.fn();
+    source.disconnect = vi.fn();
+    this.createdStreamSources.push(source);
+    return source;
   }
 
   addEventListener(type, listener) {
@@ -229,9 +236,10 @@ async function loadPlayer() {
 }
 
 function pitchCrossfade(context) {
+  const offset = context.options.sinkId ? 1 : 0;
   return {
-    dry: context.createdGains[2].gain.value,
-    wet: context.createdGains[3].gain.value,
+    dry: context.createdGains[2 + offset].gain.value,
+    wet: context.createdGains[3 + offset].gain.value,
   };
 }
 
@@ -244,6 +252,82 @@ function createDeferred() {
 }
 
 describe('guide vocal defaults', () => {
+  it('applies one independent capture master to performance and leased BGM inputs', async () => {
+    const player = await loadPlayer();
+    expect(player.state.captureVolume).toBe(0.5);
+    player.setCaptureVolume(0.3);
+    expect(MockAudioContext.instances).toHaveLength(0);
+    await player.applyCaptureDevice('capture-one');
+    const capture = MockAudioContext.instances.at(-1);
+    const master = capture.createdGains.find((gain) => gain.gain.value === 0.3);
+    expect(master).toBeDefined();
+    expect(master.connect).toHaveBeenCalledWith(capture.destination);
+    const stream = {};
+    player.registerCaptureInput(stream);
+    const inputSource = capture.createdStreamSources.find(
+      (node) => node.stream === stream,
+    );
+    const gate = inputSource.connect.mock.calls[0][0];
+    expect(gate.connect).toHaveBeenCalledWith(master);
+    player.setCaptureVolume(0);
+    expect(master.gain.value).toBe(0);
+    expect(player.state.volume).toBe(0.5);
+    expect(player.state.captureGuideVocalValue).toBe(0);
+    player.setCaptureVolume(2);
+    expect(player.state.captureVolume).toBe(1);
+    player.setCaptureVolume(NaN);
+    expect(player.state.captureVolume).toBe(1);
+  });
+
+  it('leases an independent PCM input through the same capture sink and keeps its silence gate across device changes', async () => {
+    const player = await loadPlayer();
+    const stream = { name: 'standby-pcm' };
+    const lost = vi.fn();
+    const input = player.registerCaptureInput(stream, lost);
+    expect(MockAudioContext.instances).toHaveLength(0);
+    player.prepareCaptureDevice('capture-one');
+    expect(await player.prepareCaptureOutput()).toBe(true);
+    expect(MockAudioContext.instances).toHaveLength(2);
+    const first = MockAudioContext.instances[1];
+    const source = first.createdStreamSources.find(
+      (node) => node.stream === stream,
+    );
+    const gate = source.connect.mock.calls[0][0];
+    expect(gate.gain.value).toBe(0);
+    input.setEnabled(true);
+    expect(gate.gain.value).toBe(1);
+    await player.setTransposeSemitones(3);
+    expect(source.connect).toHaveBeenCalledTimes(1);
+    input.setEnabled(false);
+    expect(gate.gain.value).toBe(0);
+    await player.applyCaptureDevice('capture-two');
+    const second = MockAudioContext.instances.at(-1);
+    const replacement = second.createdStreamSources.find(
+      (node) => node.stream === stream,
+    );
+    expect(replacement.connect.mock.calls[0][0].gain.value).toBe(0);
+    input.setEnabled(true);
+    second.sinkId = '';
+    second.dispatch('sinkchange');
+    expect(lost).toHaveBeenCalledOnce();
+    expect(await player.prepareCaptureOutput()).toBe(false);
+    input.release();
+    input.release();
+    expect(replacement.disconnect).toHaveBeenCalled();
+  });
+
+  it('waits for an existing capture selection rather than opening a competing output', async () => {
+    const player = await loadPlayer();
+    const pending = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('capture', pending);
+    const selection = player.applyCaptureDevice('capture');
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
+    const prepared = player.prepareCaptureOutput();
+    pending.resolve();
+    await selection;
+    expect(await prepared).toBe(true);
+    expect(MockAudioContext.instances).toHaveLength(2);
+  });
   it('exposes a read-only start revision before an asynchronous start gate completes', async () => {
     const player = await loadPlayer();
     const gate = Promise.withResolvers();
@@ -299,6 +383,8 @@ describe('guide vocal defaults', () => {
         'play',
         'playTrack',
         'prepareCaptureDevice',
+        'prepareCaptureOutput',
+        'registerCaptureInput',
         'resetPitchTempo',
         'restartTrack',
         'registerBeforePlaybackStart',
@@ -314,6 +400,7 @@ describe('guide vocal defaults', () => {
         'setTempoRate',
         'setTransposeSemitones',
         'setVolume',
+        'setCaptureVolume',
         'state',
         'toggle',
         'toggleCaptureGuideVocal',

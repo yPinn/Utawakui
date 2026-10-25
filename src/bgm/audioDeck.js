@@ -24,6 +24,8 @@ export function createBgmAudioDeck({
   createAudioContext = () => new AudioContext(),
   wait = defaultWait,
   state: suppliedState,
+  connectCaptureInput,
+  prepareCaptureOutput,
 } = {}) {
   const state = suppliedState ?? {};
   Object.assign(state, {
@@ -44,6 +46,8 @@ export function createBgmAudioDeck({
   let pendingPlaying = null;
   let sourceUrl = '';
   let disposed = false;
+  let captureBridge = null;
+  let captureInput = null;
 
   audio.crossOrigin = 'anonymous';
 
@@ -54,14 +58,30 @@ export function createBgmAudioDeck({
   }
 
   function ensureGraph() {
-    if (context) return context;
-    context = createAudioContext();
-    sourceNode = context.createMediaElementSource(audio);
-    gainNode = context.createGain();
-    sourceNode.connect(gainNode);
-    gainNode.connect(context.destination);
-    gainNode.gain.setValueAtTime(0, context.currentTime);
+    if (!context) {
+      context = createAudioContext();
+      sourceNode = context.createMediaElementSource(audio);
+      gainNode = context.createGain();
+      sourceNode.connect(gainNode);
+      gainNode.connect(context.destination);
+      gainNode.gain.setValueAtTime(0, context.currentTime);
+    }
+    if (connectCaptureInput && !captureInput) {
+      if (!captureBridge) {
+        captureBridge = context.createMediaStreamDestination();
+        gainNode.connect(captureBridge);
+      }
+      captureInput = connectCaptureInput(captureBridge.stream, () => {
+        if (state.playIntentActive || state.isPlaying) failCapture();
+      });
+    }
     return context;
+  }
+
+  function failCapture() {
+    cut();
+    state.error = 'BGM 擷取輸出中斷，請重新選擇輸出裝置。';
+    state.playbackPhase = 'error';
   }
 
   function cancelAutomation(value = gainNode?.gain.value ?? 0) {
@@ -101,6 +121,7 @@ export function createBgmAudioDeck({
   }
 
   function handlePause() {
+    captureInput?.setEnabled(false);
     state.playIntentActive = false;
     state.isPlaying = false;
     state.currentTime = audio.currentTime || 0;
@@ -108,6 +129,7 @@ export function createBgmAudioDeck({
   }
 
   function handleEnded() {
+    captureInput?.setEnabled(false);
     state.isPlaying = false;
     state.currentTime = audio.currentTime || state.currentTime;
     state.playbackPhase = 'ended';
@@ -123,6 +145,7 @@ export function createBgmAudioDeck({
   }
 
   function handleError() {
+    captureInput?.setEnabled(false);
     invalidateTransition();
     state.playIntentActive = false;
     cancelAutomation(0);
@@ -185,6 +208,7 @@ export function createBgmAudioDeck({
   }
 
   function load(url, options = {}) {
+    captureInput?.setEnabled(false);
     invalidateTransition();
     settlePendingPlaying(false);
     state.playIntentActive = false;
@@ -207,8 +231,6 @@ export function createBgmAudioDeck({
     if (!sourceUrl || disposed) return false;
     const candidate = invalidateTransition();
     settlePendingPlaying(false);
-    const activeContext = ensureGraph();
-    cancelAutomation(0);
     state.error = null;
     state.playIntentActive = true;
 
@@ -219,16 +241,22 @@ export function createBgmAudioDeck({
     pendingPlaying = { generation: candidate, resolve: resolvePlaying };
 
     try {
+      const activeContext = ensureGraph();
+      cancelAutomation(0);
       if (activeContext.state === 'suspended') await activeContext.resume();
-      if (candidate !== transitionGeneration || disposed) {
-        state.playIntentActive = false;
-        settlePendingPlaying(false);
+      if (prepareCaptureOutput && !(await prepareCaptureOutput())) {
+        if (candidate === transitionGeneration && !disposed) failCapture();
         return false;
       }
+      if (candidate !== transitionGeneration || disposed) {
+        return false;
+      }
+      captureInput?.setEnabled(true);
       await audio.play();
     } catch {
       if (candidate !== transitionGeneration || disposed) return false;
       state.playIntentActive = false;
+      captureInput?.setEnabled(false);
       state.isPlaying = false;
       state.error = 'BGM 音訊無法播放。';
       state.playbackPhase = 'error';
@@ -260,6 +288,7 @@ export function createBgmAudioDeck({
     const candidate = invalidateTransition();
     settlePendingPlaying(false);
     if (!context || !gainNode || audio.paused) {
+      captureInput?.setEnabled(false);
       state.playIntentActive = false;
       if (gainNode && context) cancelAutomation(0);
       audio.pause();
@@ -275,12 +304,14 @@ export function createBgmAudioDeck({
     await wait(duration * 1000);
     if (candidate !== transitionGeneration || disposed) return false;
     gainNode.gain.setValueAtTime(0, endTime);
+    captureInput?.setEnabled(false);
     state.playIntentActive = false;
     audio.pause();
     return true;
   }
 
   function cut() {
+    captureInput?.setEnabled(false);
     invalidateTransition();
     settlePendingPlaying(false);
     state.playIntentActive = false;
@@ -349,6 +380,7 @@ export function createBgmAudioDeck({
   }
 
   async function dispose() {
+    if (disposed) return;
     disposed = true;
     invalidateTransition();
     settlePendingPlaying(false);
@@ -360,6 +392,8 @@ export function createBgmAudioDeck({
     audio.load();
     sourceNode?.disconnect();
     gainNode?.disconnect?.();
+    captureInput?.release();
+    captureBridge?.stream.getTracks?.().forEach((track) => track.stop());
     if (context && context.state !== 'closed') await context.close();
   }
 

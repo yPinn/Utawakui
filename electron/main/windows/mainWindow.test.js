@@ -161,6 +161,7 @@ describe('windowState security boundary', () => {
           '--sidebar-width=320',
           '--capture-device-id=capture-device',
           '--performance-volume=0.5',
+          '--capture-volume=0.5',
           '--performance-muted=0',
           '--monitor-guide-vocal-level=0.5',
           '--capture-guide-vocal-level=0',

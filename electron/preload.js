@@ -109,6 +109,7 @@ function readInitialAudioPreferences() {
   const muted = mutedArgument?.slice('--performance-muted='.length);
   return {
     performanceVolume: readNumberArgument('performance-volume'),
+    captureVolume: readNumberArgument('capture-volume'),
     performanceMuted: muted === '1' ? true : muted === '0' ? false : undefined,
     monitorGuideVocalLevel: readNumberArgument('monitor-guide-vocal-level'),
     captureGuideVocalLevel: readNumberArgument('capture-guide-vocal-level'),
@@ -204,6 +205,7 @@ function playbackResumeIntent(value) {
 function audioPreferencesIntent(value) {
   return {
     performanceVolume: value?.performanceVolume,
+    captureVolume: value?.captureVolume,
     performanceMuted: value?.performanceMuted,
     monitorGuideVocalLevel: value?.monitorGuideVocalLevel,
     captureGuideVocalLevel: value?.captureGuideVocalLevel,

@@ -1,8 +1,8 @@
 # BGM 待機播放契約
 
 本契約定義 BGM standby lane 的產品行為、控制面、音訊交接與驗收邊界。本機曲庫 plan、
-單 deck monitor、互斥 handoff 與演出安排內的 BGM 控制的基礎 slice 已實作；app-owned OBS
-capture routing、confirmed-start session snapshot／公開投影、完整現場導覽與實際錄音聽感仍
+單 deck monitor／shared capture、互斥 handoff 與演出安排內的 BGM 控制的基礎 slice 已實作；
+confirmed-start session snapshot／公開投影、完整現場導覽與實際 OBS 錄音聽感仍
 是 release gate。競品證據見
 [競品調查 §5.1](../research/product/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
 
@@ -68,7 +68,7 @@ BGM 不因 OBS read-only adapter 偵測到 streaming／recording 就自動發聲
 
 | Session mode   | OBS 觀測條件                           | 控制面與 transport 行為                                    |
 | -------------- | -------------------------------------- | ---------------------------------------------------------- |
-| `inactive`     | streaming 與 recording 都確認為 false  | 展開後可明確試播；標示 monitor-only，不能代表 OBS 已收音。 |
+| `inactive`     | streaming 與 recording 都確認為 false  | 展開後可明確試播；依所選裝置送出，不能代表 OBS 已收音。    |
 | `record`       | recording 為 true、streaming 為 false  | 開啟時顯示 REC 主狀態；仍須手動開始。                      |
 | `live`         | streaming 為 true，不論 recording      | 開啟時顯示 LIVE 主狀態；若同時錄影，REC 只作次要狀態。     |
 | `reconnecting` | 作用中 session 後 OBS 狀態暫時無法確認 | 開啟時投影 reconnecting；安全狀態持續但不強制顯示 player。 |
@@ -278,7 +278,7 @@ BGM fade 至零、確認 deck paused，再完成 pre-roll。buffering／stalled�
 ## Audio routing
 
 Monitor 可繼續使用同一個系統預設 destination，因為 BGM 與演唱播放器嚴格互斥。OBS-facing
-capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
+capture 已由使用者確認採用 `shared-capture`；獨立裝置 profile 保留後續決策：
 
 - `shared-capture`：BGM 跟隨現有演唱 capture device。設定最少，也能靠前後留白剪出曲目，
   但 OBS 只看見一個音訊 source，不能只對 BGM 套 mic sidechain／ducking，也不能把 BGM 與
@@ -287,13 +287,22 @@ capture 則需要區分兩個產品 profile，實作前由 owner 確認預設：
   既有 capture。OBS 可將兩者作為不同 sources，串流時混入同一 programme mix，錄製時另分
   tracks，並只在 BGM source 套 mic ducking。這通常需要第二個虛擬音效裝置。
 
-兩個 profile 都必須遵守：
+目前 shared capture 重用演唱 capture AudioContext／所選 sink。BGM post-gain bridge 透過獨立
+gate 接入，不經演唱音量、靜音、導唱或 pitch；pause／cut／fade-out 完成時同步關閉 gate，
+避免 bridge 緩衝尾音跨越 lane。開始前等待既有裝置選擇完成，重連保留 gate 狀態。
+
+演唱與 BGM 在 capture 最後共用「直播擷取總音量」，範圍 0–100%、預設 50%（−6.02 dB），
+由 config audio preferences 保存；舊設定補 50%，不改既有監聽或導唱值。此控制不影響
+monitor，亦不提供 limiter 或 normalization。BGM 本身仍預設 25%；兩個 gain 相乘。
+
+Routing 必須遵守：
 
 - BGM mute／volume、stop 與 silence windows 在 monitor／capture 同步生效，不能只在本機
   靜音而讓 OBS-facing route 殘留。
 - capture device 遺失、sink change 或 native render error 時，關閉受影響的 capture route、
-  清除失效選擇並顯示 bounded error；保留合法 monitor playback，不 fallback 到系統預設
-  喇叭，也不自動改接另一條 capture bus。
+  清除失效選擇並顯示 bounded error；active BGM 同步停止 monitor／capture。演唱保留既有
+  monitor 復原行為。不 fallback 到系統預設喇叭，也不自動改接另一條 capture bus。
+  明確未啟用 capture 時可 monitor 試播；裝置失效後不得靜默當作 monitor-only 成功。
 - BGM graph lazy initialize；載入 module、讀取保存設定或只顯示控制面時不得建立
   `AudioContext` 或開始播放。
 

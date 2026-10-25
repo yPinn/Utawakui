@@ -18,6 +18,14 @@ async function renderBlock(props = {}) {
 }
 
 describe('AudioOutputSettingsBlock', () => {
+  it('exposes a separately labelled capture master at 50% with its canonical reset', async () => {
+    const html = await renderBlock();
+    expect(html).toContain('直播擷取總音量');
+    expect(html).toContain('50%');
+    expect(html).toContain('套用演唱與 BGM');
+    expect(html).toContain('id="capture-master-volume"');
+    expect(await renderBlock({ captureVolume: 0 })).toContain('0%');
+  });
   it('keeps the section body concise and leaves its heading to the Folder section', async () => {
     const html = await renderBlock();
 

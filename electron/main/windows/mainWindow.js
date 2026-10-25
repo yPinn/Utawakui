@@ -259,6 +259,7 @@ function createMainWindow(
         `--sidebar-width=${initialSidebarWidth}`,
         `--capture-device-id=${initialCaptureDeviceId ?? ''}`,
         `--performance-volume=${initialAudioPreferences.performanceVolume}`,
+        `--capture-volume=${initialAudioPreferences.captureVolume}`,
         `--performance-muted=${initialAudioPreferences.performanceMuted ? '1' : '0'}`,
         `--monitor-guide-vocal-level=${initialAudioPreferences.monitorGuideVocalLevel}`,
         `--capture-guide-vocal-level=${initialAudioPreferences.captureGuideVocalLevel}`,

@@ -47,6 +47,7 @@ const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
 const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
   performanceVolume: audioControlValues.performanceVolume.defaultValue,
+  captureVolume: audioControlValues.captureVolume.defaultValue,
   performanceMuted: audioControlValues.performanceMutedDefault,
   monitorGuideVocalLevel:
     audioControlValues.monitorGuideVocalLevel.defaultValue,
@@ -145,6 +146,12 @@ function normalizeAudioPreferences(value) {
     )
       ? source.performanceVolume
       : DEFAULT_AUDIO_PREFERENCES.performanceVolume,
+    captureVolume: isBoundedAudioValue(
+      source.captureVolume,
+      audioControlValues.captureVolume,
+    )
+      ? source.captureVolume
+      : DEFAULT_AUDIO_PREFERENCES.captureVolume,
     performanceMuted:
       typeof source.performanceMuted === 'boolean'
         ? source.performanceMuted
@@ -170,6 +177,10 @@ function isValidAudioPreferences(value) {
     isBoundedAudioValue(
       value.performanceVolume,
       audioControlValues.performanceVolume,
+    ) &&
+    isBoundedAudioValue(
+      value.captureVolume,
+      audioControlValues.captureVolume,
     ) &&
     typeof value.performanceMuted === 'boolean' &&
     isBoundedAudioValue(

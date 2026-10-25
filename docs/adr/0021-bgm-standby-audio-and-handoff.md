@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted; first monitor slice implemented (2026-10-02), with inactive preflight audition clarified on 2026-10-03. The implementation covers one persisted local-library BGM source, a single looping monitor deck, a logical BGM gain bus, OBS-derived session projection, cancellable handoff, and one shell-owned standalone BGM player. OBS capture routing, confirmed-performance history commit, and audible timeline acceptance remain follow-up gates.
+Accepted; first monitor slice implemented (2026-10-02), with inactive preflight audition clarified on 2026-10-03. The implementation covers one persisted local-library BGM source, a single looping monitor deck, a logical BGM gain bus, OBS-derived session projection, cancellable handoff, and one shell-owned standalone BGM player. Shared capture routing was added on 2026-10-25; confirmed-performance history commit and actual OBS audible timeline acceptance remain follow-up gates.
 
 Amended 2026-10-06: the coordinator also arbitrates a third, lowest-priority track-preview lane. Any performance start, BGM play, or active session preempts the preview lease, and no automatic BGM restore may sound while a preview holds the lane. The single pre-start hook is unchanged. See the [track preview contract](../contracts/track-preview.md).
 
@@ -63,11 +63,15 @@ Session mode is derived in this priority: `live > record > inactive`. A previous
 
 Inactive mode permits explicit monitor preflight through the real deck and handoff coordinator. Entering live or record changes the status projection but does not open the presentation or start either lane. Live↔record changes do not rebuild the deck, cancel audio, or override an explicit Titlebar close. Confirmed exit cancels pending transitions and fades BGM out; it does not stop a performance track already owned by the existing player. Repeated inactive status refreshes are not session exits and do not interrupt an explicit offline audition.
 
-### First-slice routing
+### Shared capture routing (amended 2026-10-25)
 
-The first slice routes BGM only to the system-default monitor destination. It does not modify the existing performance capture graph and does not claim that BGM reaches an app-selected OBS capture device. Operators who capture desktop audio may hear it through that external configuration, but Utawakui does not treat that as verified app-owned routing.
+The accepted profile is `shared-capture`: BGM follows the same selected capture device as performance. Its post-gain PCM bridge leases a gated input on the existing capture AudioContext, bypassing performance monitor volume, mute, guide vocal and pitch. No second BGM capture context or decoder is created. BGM volume, mute, fades and Talk act before both outputs; a capture-side gate closes synchronously on pause, cut or completed fade-out to block buffered bridge tails during handoff.
 
-This is deliberate staging, not the permanent routing decision. A later ADR amendment must select and verify `shared-capture` or `separate-bgm-capture`, including sink loss, monitor／capture gain equality, OBS ducking, and recording-track behavior. The UI must not describe monitor-only playback as an independent OBS track.
+A shared capture master follows performance dry／wet and BGM inputs, defaults to 50% (−6.02 dB), and persists independently in audio preferences. Older config receives that default without changing stored monitor or guide values. It is not a limiter or loudness normalization; the operator must still check the recording level. BGM retains its independent 25% default before this master.
+
+Capture selection and graph readiness complete before BGM starts. Device changes reuse the lease and preserve its enabled gate; sink loss or selection failure stops active BGM on both outputs with a bounded error. An intentionally disabled capture device permits monitor audition. There is no fallback to a default capture sink. Registration and saved preferences alone create no native graph.
+
+Utawakui does not modify OBS sources, filters or recording-track assignments. Both lanes reach one selected device, so a separate OBS BGM track requires a future separate-device decision. Native Electron synthetic PCM probes verify routing, relative gains and cut-to-zero; actual OBS recording and acoustic click／pop acceptance remain manual gates.
 
 ### UI placement
 
@@ -83,7 +87,7 @@ PlayerBar, keyboard Space, media keys, SMTC, taskbar thumbar, public Output, Rec
 - **Place BGM controls in PlayerBar or the shared Right Dock surface stack.** Rejected because PlayerBar must retain one transport meaning and the live safety controls must remain visible when the Dock changes surface or folds.
 - **Use CSS or renderer timers to simulate fade state.** Rejected because visual completion is not proof that the AudioParam reached zero; exact bus state gates the performance start.
 - **Implement an A／B deck now.** Rejected because the first product need is safe standby playback. The logical bus and coordinator contracts leave deck count internal so an A／B implementation can be added later without weakening cross-lane mutual exclusion.
-- **Silently reuse the existing capture sink in this slice.** Rejected until monitor／capture routing, failure behavior, and default profile receive explicit product acceptance and real OBS verification.
+- **Give BGM an independent capture device by default.** Deferred: the operator explicitly selected the shared performance device; separate OBS sources and track assignments require a later product decision.
 
 ## Consequences
 
@@ -93,7 +97,7 @@ PlayerBar, keyboard Space, media keys, SMTC, taskbar thumbar, public Output, Rec
 - BGM playback is intentionally excluded from playback history, usage LRU, Queue, resume snapshot, Output projection, and Windows media integration.
 - Restart restores the selected source, settings, and position only, keeps the deck paused, and returns Talk to disabled without starting audio.
 - Automated tests can prove state, IPC boundaries, and scheduled gain calls, but cannot prove click／pop quality, real acoustic silence, or capture routing. Those remain explicit manual acceptance items.
-- The first slice is not production-complete for app-owned OBS capture. Its monitor-only limitation must remain visible in status copy and documentation until the routing amendment ships.
+- Shared capture is implemented; release acceptance still requires a real OBS recording of both lanes, silence windows, Talk and Emergency Cut.
 
 ## Manual verification checklist
 
@@ -105,7 +109,7 @@ PlayerBar, keyboard Space, media keys, SMTC, taskbar thumbar, public Output, Rec
 6. Trigger several BGM play／pause, source-replacement, and performance-start actions quickly; confirm no stale action starts late and no two lanes are audible together.
 7. Hide and restore the main window; confirm active transport continues. Fully restart the app; confirm the selected source and settings return but audio does not start.
 8. Confirm PlayerBar, Space, media keys, SMTC, taskbar controls, Recently Played, Queue, Now Playing, and session chapters never identify or control BGM.
-9. Treat OBS capture as unverified in this slice. Do not approve release routing until the selected capture profile is tested in an actual recording.
+9. Select the shared capture device and verify both performance and BGM in an actual OBS recording. Adjust the capture master independently from monitor and guide ratio, then test Talk, mute, cut, both handoffs and device loss. Do not treat a synthetic PCM probe as recording-track acceptance.
 
 ## References
 

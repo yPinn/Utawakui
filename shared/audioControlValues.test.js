@@ -10,6 +10,7 @@ describe('audio control values', () => {
         max: 1,
         step: 0.01,
       },
+      captureVolume: { defaultValue: 0.5, min: 0, max: 1, step: 0.01 },
       performanceMutedDefault: false,
       monitorGuideVocalLevel: {
         defaultValue: 0.5,

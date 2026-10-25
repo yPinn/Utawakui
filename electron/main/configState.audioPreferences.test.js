@@ -53,10 +53,12 @@ describe('configState audio-preference initialization', () => {
     expect(
       configState.initializeAudioPreferences({
         performanceVolume: 0.72,
+        captureVolume: 0.5,
         performanceMuted: true,
       }),
     ).toEqual({
       performanceVolume: 0.72,
+      captureVolume: 0.5,
       performanceMuted: true,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
@@ -70,6 +72,7 @@ describe('configState audio-preference initialization', () => {
   it('keeps explicit config preferences ahead of a stale legacy snapshot', async () => {
     const explicitPreferences = {
       performanceVolume: 0.2,
+      captureVolume: 0.5,
       performanceMuted: false,
       monitorGuideVocalLevel: 0.3,
       captureGuideVocalLevel: 0.1,
@@ -84,6 +87,7 @@ describe('configState audio-preference initialization', () => {
     expect(
       configState.initializeAudioPreferences({
         performanceVolume: 0.9,
+        captureVolume: 0.5,
         performanceMuted: true,
       }),
     ).toEqual(explicitPreferences);

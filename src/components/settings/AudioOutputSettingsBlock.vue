@@ -3,14 +3,20 @@ import { Headphones } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import UiRange from '../ui/UiRange.vue';
+import { AUDIO_CONTROL_VALUES } from '../../utils/audioPreferences.js';
 
 defineProps({
   enabled: { type: Boolean, default: false },
   deviceLabel: { type: String, default: '未選擇' },
   errorNotice: { type: Object, default: null },
+  captureVolume: {
+    type: Number,
+    default: AUDIO_CONTROL_VALUES.captureVolume.defaultValue,
+  },
 });
 
-const emit = defineEmits(['selectDevice']);
+const emit = defineEmits(['selectDevice', 'update:captureVolume']);
 </script>
 
 <template>
@@ -32,6 +38,19 @@ const emit = defineEmits(['selectDevice']);
         />
       </template>
     </SettingsDocumentItem>
+
+    <UiRange
+      id="capture-master-volume"
+      label="直播擷取總音量"
+      :model-value="captureVolume"
+      :min="AUDIO_CONTROL_VALUES.captureVolume.min"
+      :max="AUDIO_CONTROL_VALUES.captureVolume.max"
+      :step="AUDIO_CONTROL_VALUES.captureVolume.step"
+      :default-value="AUDIO_CONTROL_VALUES.captureVolume.defaultValue"
+      :value-text="`${Math.round(captureVolume * 100)}%`"
+      hint="套用演唱與 BGM；預設 50% 保留音量餘裕，不影響監聽與導唱比例。"
+      @update:model-value="emit('update:captureVolume', $event)"
+    />
 
     <UiNotice
       v-if="errorNotice"

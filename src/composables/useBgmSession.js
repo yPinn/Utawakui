@@ -14,7 +14,11 @@ const obs = useObsIntegration();
 const player = usePlayer();
 const deckState = reactive({});
 const handoffState = reactive({});
-const deck = createBgmAudioDeck({ state: deckState });
+const deck = createBgmAudioDeck({
+  state: deckState,
+  connectCaptureInput: player.registerCaptureInput,
+  prepareCaptureOutput: player.prepareCaptureOutput,
+});
 const coordinator = createBgmHandoffCoordinator({
   deck,
   state: handoffState,
