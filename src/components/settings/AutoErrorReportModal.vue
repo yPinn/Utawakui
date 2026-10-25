@@ -17,35 +17,32 @@ onMounted(initialize);
     size="notice"
     @close="respond('dismiss')"
   >
-    <template #header-actions>
-      <UiButton variant="ghost" :disabled="state.busy" @click="respond('never')"
-        >不要</UiButton
-      >
-      <UiButton :disabled="state.busy" @click="respond('once')"
-        >傳送這次</UiButton
-      >
-      <UiButton
-        variant="accent"
-        :loading="state.busy"
-        @click="respond('always')"
-        >之後自動傳送</UiButton
-      >
-    </template>
     <div v-if="state.prompt" class="auto-error-report">
       <p class="auto-error-report__lead">
         {{ state.prompt.title
         }}<template v-if="state.prompt.occurrences > 1"
           >（{{ state.prompt.occurrences }} 次）</template
-        >。要傳送簡易報告給開發者嗎？
+        >。要回報給開發者嗎？
       </p>
       <p class="auto-error-report__scope">
-        報告只包含錯誤類型、程式位置與 App
-        版本，不含曲庫、歌詞、檔案路徑或你輸入的內容。之後可在「設定」更改。
+        只含錯誤類型、位置與版本，不含曲庫、歌詞或檔案。可在「設定」更改。
       </p>
       <UiDisclosure v-if="state.prompt.message" label="查看內容">
         <p class="auto-error-report__message">{{ state.prompt.message }}</p>
       </UiDisclosure>
     </div>
+    <template #footer>
+      <UiButton variant="ghost" :disabled="state.busy" @click="respond('never')"
+        >不要</UiButton
+      >
+      <UiButton :disabled="state.busy" @click="respond('once')">傳送</UiButton>
+      <UiButton
+        variant="accent"
+        :loading="state.busy"
+        @click="respond('always')"
+        >自動傳送</UiButton
+      >
+    </template>
   </UiModal>
 </template>
 
