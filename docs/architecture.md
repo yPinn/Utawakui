@@ -104,7 +104,7 @@
 - 讀音：`useLyricsReading` 驗證 canonical identity、合併讀取並持有產生鎖；讀取失敗不視為缺檔。Reading sidecar v3 由 main 持有 documentId、normalizer profile、來源 fingerprint 與 line identity；文字相容的 v1／v2 原子 re-key 並保留人工修正。日文 worker 先把 kuromoji 欄位轉成中立 token，再交給純 builder。
 - 提詞器 snapshot 投影同一 `useLyricsReading.variant`；main 驗證 `off`／`furigana`／`romaji`。`usePerformerSelfView` 以提詞器生命週期持有的 detached `useLyricsDisplay` scope 準備讀音，關閉時停止。見[提詞器契約](contracts/performer-prompter-contract.md)。
 - Lyrics IPC 由 `electron/main/lyricsHandlers.js` facade 註冊，實際分在 `electron/main/lyrics/` 的 `documentHandlers`、`acquisitionHandlers`、`readingHandlers`，三者不互相 import。
-- 共用文字預處理由 `shared/presentation/lyricsTextProcessing.mjs` 持有保真標註、製作欄位預設與括號禁則；`useLyrics` 內部的 `useLyricsTextProcessing` 持有每來源 session 的逐行 override，明確署名欄位與純和聲提示預設從 Output 隱藏，閱讀／編輯的顯示面板可逐行還原。Output publisher 在原讀音驗證後才投影整行／行內提示，發布獨立衍生 identity 並排除隱藏行／片段 active id；保留的片段時間不變，本機編輯／閱讀保留原索引與文字。Main 允許過濾文件承接早於下一個可見起點的來源 inferred end，仍拒絕無有限 end 或跨過下一個有時間行的邊界。疑似正文維持候選、全域標點清理未啟用。模板進階呈現仍由 profile／policy 持有，Live Stage 缺省使用保留實唱內容的 Balanced。見[文字預處理契約](contracts/lyrics-text-processing.md)。
+- 共用文字預處理由 `shared/presentation/lyricsTextProcessing.mjs` 持有保真標註、製作欄位預設與括號禁則；`useLyrics` 內部的 `useLyricsTextProcessing` 持有每來源 session 的逐行 override，明確署名欄位、純提示與已配對圓括號內整段預設從 Output 隱藏，閱讀／編輯的顯示面板可逐行還原。Output publisher 在原讀音驗證後才投影整行／行內提示，發布獨立衍生 identity 並排除隱藏行／片段 active id；保留的片段時間不變，本機編輯／閱讀保留原索引與文字。Main 允許過濾文件承接早於下一個可見起點的來源 inferred end，仍拒絕無有限 end 或跨過下一個有時間行的邊界。疑似正文維持候選、全域標點清理未啟用。模板進階呈現仍由 profile／policy 持有，Live Stage 缺省使用保留實唱內容的 Balanced。見[文字預處理契約](contracts/lyrics-text-processing.md)。
 
 ### 聲學估計與研究
 
