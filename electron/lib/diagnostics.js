@@ -102,7 +102,10 @@ function escapeRegExp(value) {
 // Frames inside the app bundle carry no user data; keep them debuggable as
 // app:<relative path>:line:column before generic path redaction runs.
 function relativizeAppPaths(text, appRoot) {
-  if (typeof appRoot !== 'string' || !path.isAbsolute(appRoot)) return text;
+  const isAbsolute =
+    typeof appRoot === 'string' &&
+    (path.win32.isAbsolute(appRoot) || path.posix.isAbsolute(appRoot));
+  if (!isAbsolute) return text;
   const forward = appRoot.replaceAll('\\', '/').replace(/\/+$/, '');
   const roots = [`file:///${forward.replace(/^\//, '')}`, forward];
   if (appRoot.includes('\\')) roots.push(appRoot.replace(/\\+$/, ''));

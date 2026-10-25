@@ -1,16 +1,17 @@
+import path from 'node:path';
 import { expect, it } from 'vitest';
 import { runOwnedJob, validateTrialCases } from './trialJobs.cjs';
 it('refuses unsupported v1 formats before any expensive inference', () => {
   const item = {
     id: 'case-a',
     filename: 'main.vtt',
-    audio: 'E:/private/audio.wav',
+    audio: path.resolve('private/audio.wav'),
     language: 'zh',
     durationMs: 30000,
   };
   expect(() => validateTrialCases([item])).not.toThrow();
   expect(() =>
-    validateTrialCases([{ ...item, audio: 'E:/private/audio.mp3' }]),
+    validateTrialCases([{ ...item, audio: path.resolve('private/audio.mp3') }]),
   ).toThrow();
   expect(() =>
     validateTrialCases([{ ...item, filename: 'main.lrc' }]),

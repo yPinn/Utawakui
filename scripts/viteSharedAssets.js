@@ -9,7 +9,7 @@ const SHARED_OUTPUT_DIR = '__shared__';
 const ASSET_OUTPUT_DIR = 'assets';
 
 function toPosix(value) {
-  return value.split(path.sep).join('/');
+  return value.replaceAll('\\', '/');
 }
 
 function sharedAssetPath(originalFileName) {

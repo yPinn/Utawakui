@@ -53,98 +53,109 @@ describe('pinned lyrics environment artifacts', () => {
       ),
     ).rejects.toThrow();
   });
-  it('validates zip traversal before extraction and extracts approved bytes', async () => {
-    const zip = new AdmZip();
-    zip.addFile('safe.txt', Buffer.from('safe'));
-    const bytes = zip.toBuffer(),
-      dir = root();
-    await extractArtifact(bytes, dir, pin(bytes));
-    expect(fs.readFileSync(path.join(dir, 'safe.txt'), 'utf8')).toBe('safe');
-    const bad = Buffer.from(bytes);
-    const name = Buffer.from('safe.txt');
-    let at = bad.indexOf(name);
-    while (at >= 0) {
-      bad.write('../x.txt', at);
-      at = bad.indexOf(name, at + name.length);
-    }
-    await expect(extractArtifact(bad, root(), pin(bad))).rejects.toThrow();
-  });
-  it('materializes only pinned runtime/model files and a separate wheel environment', async () => {
-    const r = root(),
-      staging = {
-        runtime: path.join(r, 'runtime'),
-        environment: path.join(r, 'environment'),
-        model: path.join(r, 'model'),
+  // Extraction runs through Windows PowerShell.
+  it.runIf(process.platform === 'win32')(
+    'validates zip traversal before extraction and extracts approved bytes',
+    async () => {
+      const zip = new AdmZip();
+      zip.addFile('safe.txt', Buffer.from('safe'));
+      const bytes = zip.toBuffer(),
+        dir = root();
+      await extractArtifact(bytes, dir, pin(bytes));
+      expect(fs.readFileSync(path.join(dir, 'safe.txt'), 'utf8')).toBe('safe');
+      const bad = Buffer.from(bytes);
+      const name = Buffer.from('safe.txt');
+      let at = bad.indexOf(name);
+      while (at >= 0) {
+        bad.write('../x.txt', at);
+        at = bad.indexOf(name, at + name.length);
+      }
+      await expect(extractArtifact(bad, root(), pin(bad))).rejects.toThrow();
+    },
+  );
+  // Extraction runs through Windows PowerShell.
+  it.runIf(process.platform === 'win32')(
+    'materializes only pinned runtime/model files and a separate wheel environment',
+    async () => {
+      const r = root(),
+        staging = {
+          runtime: path.join(r, 'runtime'),
+          environment: path.join(r, 'environment'),
+          model: path.join(r, 'model'),
+        };
+      const make = (entries) => {
+        const z = new AdmZip();
+        for (const [name, bytes] of Object.entries(entries))
+          z.addFile(name, Buffer.from(bytes));
+        return z.toBuffer();
       };
-    const make = (entries) => {
-      const z = new AdmZip();
-      for (const [name, bytes] of Object.entries(entries))
-        z.addFile(name, Buffer.from(bytes));
-      return z.toBuffer();
-    };
-    const runtime = make({ 'python.exe': 'exe', 'extra.txt': 'discard' }),
-      wheel = make({ 'one.py': 'module' }),
-      model = make({
-        'bundle/model.onnx': 'model',
-        'bundle/unknown.txt': 'discard',
+      const runtime = make({ 'python.exe': 'exe', 'extra.txt': 'discard' }),
+        wheel = make({ 'one.py': 'module' }),
+        model = make({
+          'bundle/model.onnx': 'model',
+          'bundle/unknown.txt': 'discard',
+        });
+      const fpRoot = path.join(r, 'expected');
+      fs.mkdirSync(fpRoot);
+      fs.writeFileSync(path.join(fpRoot, 'one.py'), 'module');
+      const filePin = (text) => ({
+        bytes: Buffer.byteLength(text),
+        sha256: crypto.createHash('sha256').update(text).digest('hex'),
       });
-    const fpRoot = path.join(r, 'expected');
-    fs.mkdirSync(fpRoot);
-    fs.writeFileSync(path.join(fpRoot, 'one.py'), 'module');
-    const filePin = (text) => ({
-      bytes: Buffer.byteLength(text),
-      sha256: crypto.createHash('sha256').update(text).digest('hex'),
-    });
-    const catalog = {
-      runtime: {
-        files: { 'python.exe': filePin('exe') },
-        artifact: pin(runtime),
-      },
-      environment: {
-        packages: [{ artifact: pin(wheel) }],
-        fingerprint: await fingerprintTree(fpRoot),
-      },
-      model: {
-        artifact: pin(model),
-        archivePrefix: 'bundle',
-        files: { 'model.onnx': filePin('model') },
-      },
-    };
-    const downloads = [runtime, wheel, model];
-    await prepareLyricsArtifacts({
-      staging,
-      installed: {},
-      catalog,
-      signal: new AbortController().signal,
-      download: async () => downloads.shift(),
-    });
-    expect(fs.readdirSync(staging.runtime)).toEqual(['python.exe']);
-    expect(fs.readdirSync(staging.model)).toEqual(['model.onnx']);
-    expect(await fingerprintTree(staging.environment)).toBe(
-      catalog.environment.fingerprint,
-    );
-    const reused = Object.fromEntries(
-      Object.keys(staging).map((name) => [name, path.join(r, 'reused', name)]),
-    );
-    const download = vi.fn();
-    await prepareLyricsArtifacts({
-      staging: reused,
-      installed: staging,
-      catalog,
-      signal: new AbortController().signal,
-      download,
-    });
-    expect(download).not.toHaveBeenCalled();
-    expect(await fingerprintTree(reused.environment)).toBe(
-      catalog.environment.fingerprint,
-    );
-    await expect(
-      prepareLyricsArtifacts({
-        staging: reused,
+      const catalog = {
+        runtime: {
+          files: { 'python.exe': filePin('exe') },
+          artifact: pin(runtime),
+        },
+        environment: {
+          packages: [{ artifact: pin(wheel) }],
+          fingerprint: await fingerprintTree(fpRoot),
+        },
+        model: {
+          artifact: pin(model),
+          archivePrefix: 'bundle',
+          files: { 'model.onnx': filePin('model') },
+        },
+      };
+      const downloads = [runtime, wheel, model];
+      await prepareLyricsArtifacts({
+        staging,
         installed: {},
-        catalog: { ...catalog, runtime: { files: catalog.runtime.files } },
+        catalog,
         signal: new AbortController().signal,
-      }),
-    ).rejects.toThrow('unavailable');
-  });
+        download: async () => downloads.shift(),
+      });
+      expect(fs.readdirSync(staging.runtime)).toEqual(['python.exe']);
+      expect(fs.readdirSync(staging.model)).toEqual(['model.onnx']);
+      expect(await fingerprintTree(staging.environment)).toBe(
+        catalog.environment.fingerprint,
+      );
+      const reused = Object.fromEntries(
+        Object.keys(staging).map((name) => [
+          name,
+          path.join(r, 'reused', name),
+        ]),
+      );
+      const download = vi.fn();
+      await prepareLyricsArtifacts({
+        staging: reused,
+        installed: staging,
+        catalog,
+        signal: new AbortController().signal,
+        download,
+      });
+      expect(download).not.toHaveBeenCalled();
+      expect(await fingerprintTree(reused.environment)).toBe(
+        catalog.environment.fingerprint,
+      );
+      await expect(
+        prepareLyricsArtifacts({
+          staging: reused,
+          installed: {},
+          catalog: { ...catalog, runtime: { files: catalog.runtime.files } },
+          signal: new AbortController().signal,
+        }),
+      ).rejects.toThrow('unavailable');
+    },
+  );
 });
