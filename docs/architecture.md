@@ -277,6 +277,10 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 
 使用者回饋：`electron/lib/feedback/` 是純函式與注入式 fetch client，`feedbackHandlers.js` 是唯一 IPC 邊界，沿用 `{ ok, errorCode }` 結果。Payload 重用 `buildDiagnosticsSupportBundle`，只有錯誤回報附最近 50 筆。Renderer 的 `useFeedbackReport.js` 是唯一 singleton，所有入口呼叫同一 `openReport()`；`lyricsIssueReport.js` 只投影有界的歌曲／來源資訊，不附歌詞、音訊或路徑。CSP 的 `connect-src` 只允許 dev server，上傳只能由 main 發出，固定送到 `https://api.utawakui.llazypilot.com/feedback/submit`。Relay（`services/feedback-relay/`）獨立部署、不在封裝內，見 [ADR 0016](adr/0016-user-feedback-intake.md)。
 
+嚴重錯誤自動回報：`electron/lib/autoReport/` 訂閱診斷紀錄，依 `severity.js` 分級、以錯誤碼加首個 `app:` 程式位置去重，`throttle.js` 限制同錯誤 24 小時 1 次、每日 3 筆；待詢問報告存於 `userData/auto-report.json`。`autoReportHandlers.js` 是唯一 IPC 邊界，renderer 的 `useAutoErrorReport.js` 只負責詢問與送出後的「補充說明」。Relay 以 `kind: 'auto'` 嚴格驗證並另計每小時額度，見 [ADR 0029](adr/0029-consented-automatic-error-reports.md)。
+
+錯誤通知的「回報這個問題」由 `App.vue` 經 `provideNoticeReporter` 注入；`UiNotice` 不讀取 feedback 狀態。
+
 ## Packaging Boundary
 
 - `dist/` 是 Vite renderer 輸出；`overlay/` 不進 Vite bundle。`electron/`、`shared/` 與內建 resources 進 `app.asar`，需外部解析或執行的檔案以明確 `asarUnpack`／`extraResources` 交付。完整對照見 [release inventory](operations/release-inventory.md)。
