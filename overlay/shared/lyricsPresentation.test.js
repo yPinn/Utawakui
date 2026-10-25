@@ -1377,3 +1377,19 @@ describe('Live Stage caption preprocessing', () => {
     expect(second).not.toHaveProperty('lengthTier');
   });
 });
+
+describe('compact screenshot phrase preservation', () => {
+  it.each([
+    ['盜竊hiphop的聲場', ['盜竊hiphop的聲場']],
+    ['林宛瑜買斷預付了五 K', ['林宛瑜買斷預付了五 K']],
+    ['We the 水碩還手低眼高', ['We the 水碩還手低眼高']],
+    ["Fuck, I'm not", ["Fuck, I'm not"]],
+    ['Oh, you ask 秋招?', ['Oh, you ask 秋招?']],
+    ['Oh, 你问秋招?', ['Oh, 你问秋招?']],
+    ['Oh, 君は聞くの?', ['Oh, 君は聞くの?']],
+  ])('keeps %s intact before fit', (text, expected) => {
+    expect(
+      parseKtvDisplayPhrases(analyzeLyricsSource(text)).map((p) => p.text),
+    ).toEqual(expected);
+  });
+});

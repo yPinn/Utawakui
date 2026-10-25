@@ -330,6 +330,8 @@ describe('lossless shared text annotations', () => {
   });
   it.each([
     '（和聲）',
+    '(和聲)',
+    '（和声）',
     '(和声)',
     '【和聲】',
     '[Backing Vocals]',

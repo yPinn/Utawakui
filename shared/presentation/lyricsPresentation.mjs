@@ -492,6 +492,11 @@ export function lyricsLatinRuns(value) {
     }));
 }
 
+function isShortEmbeddedLatinRun(text, run) {
+  const value = text.slice(run.sourceStart, run.sourceEnd);
+  return value.length <= 12 && value.split(/[ \t]+/u).length <= 2;
+}
+
 export function lyricsAuthoredPhraseBreaks(value, options = {}) {
   const text = String(value ?? '');
   if (
@@ -515,6 +520,19 @@ export function lyricsAuthoredPhraseBreaks(value, options = {}) {
       breaks.add(offset);
   };
   for (const match of text.matchAll(/[ \t]+/gu)) {
+    if (
+      runs.some(
+        (run) =>
+          isShortEmbeddedLatinRun(text, run) &&
+          (run.sourceStart === match.index + match[0].length ||
+            run.sourceEnd === match.index ||
+            (run.sourceEnd < match.index &&
+              /^[,，;；:：!?！？…]+$/u.test(
+                text.slice(run.sourceEnd, match.index),
+              ))),
+      )
+    )
+      continue;
     const leftWord = text.slice(0, match.index).match(/\S+$/u)?.[0] ?? '';
     const rightWord =
       text.slice(match.index + match[0].length).match(/^\S+/u)?.[0] ?? '';
@@ -536,6 +554,7 @@ export function lyricsAuthoredPhraseBreaks(value, options = {}) {
       add(match.index + match[0].length);
   }
   for (const run of runs) {
+    if (isShortEmbeddedLatinRun(text, run)) continue;
     if (CJK_GLYPH_RE.test(text[run.sourceStart - 1] ?? ''))
       add(run.sourceStart);
     if (CJK_GLYPH_RE.test(text[run.sourceEnd] ?? '')) add(run.sourceEnd);
@@ -545,6 +564,29 @@ export function lyricsAuthoredPhraseBreaks(value, options = {}) {
 
 export function parseKtvDisplayPhrases(analysis, options = {}) {
   const units = Array.isArray(analysis?.units) ? analysis.units : [];
+  const source = String(analysis?.sourceText ?? '');
+  const from = units[0]?.sourceStart ?? 0,
+    to = units.at(-1)?.sourceEnd ?? 0;
+  const compact = source.slice(from, to);
+  // Punctuation is a soft candidate. A short complete English/mixed cue reaches
+  // the actual capacity planner intact, rather than animate comma fragments.
+  if (
+    units.length > 1 &&
+    units.every((unit) => unit.kind === 'main') &&
+    compact.length <= 36 &&
+    !/[\r\n\u2028\u2029]/u.test(compact) &&
+    /\p{Script=Latin}/u.test(compact) &&
+    /^[\p{L}\p{M}\p{N}\s'’.,!?;:…-]+$/u.test(compact) &&
+    lyricsAuthoredPhraseBreaks(compact, options).length === 0
+  )
+    return [
+      {
+        text: compact,
+        sourceStart: from,
+        sourceEnd: to,
+        visualWeight: Math.max(1, visualWidth(compact)),
+      },
+    ];
   const phrases = [];
 
   for (const unit of units) {

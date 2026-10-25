@@ -3,6 +3,45 @@ import { describe, expect, it } from 'vitest';
 import { useLyricsTextProcessing } from './useLyricsTextProcessing.js';
 
 describe('source-owned text selections', () => {
+  it.each(['(和聲)', '（和聲）', '(和声)', '（和声）'])(
+    'defaults exact %s markers hidden in Output, preserving sung text, source times and restoration',
+    (marker) => {
+      const scope = effectScope();
+      const document = shallowRef({
+        documentId: 'backing-marker',
+        lines: [
+          { lineId: 'label', text: marker, startMs: 1000, endMs: 2000 },
+          { lineId: 'v', text: `${marker}一起唱`, startMs: 2000, endMs: 5000 },
+          {
+            lineId: 'body',
+            text: '和聲讓夜色更美',
+            startMs: 5000,
+            endMs: 8000,
+          },
+        ],
+      });
+      const before = structuredClone(document.value);
+      const owner = scope.run(() =>
+        useLyricsTextProcessing({
+          document,
+          sourceKey: () => 'backing-source',
+        }),
+      );
+      expect(owner.hiddenLineIds.value).toEqual(['label', 'v']);
+      expect(owner.project(document.value).lines).toMatchObject([
+        { lineId: 'v', text: '一起唱', startMs: 2000, endMs: 5000 },
+        before.lines[2],
+      ]);
+      owner.setHidden('label', false);
+      expect(owner.project(document.value).lines[0]).toMatchObject(
+        before.lines[0],
+      );
+      owner.setHidden('v', false);
+      expect(owner.project(document.value).lines).toMatchObject(before.lines);
+      expect(document.value).toEqual(before);
+      scope.stop();
+    },
+  );
   it('confirms artist prefixes reactively while respecting a manual restoration', () => {
     const scope = effectScope(),
       document = shallowRef({

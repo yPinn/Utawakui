@@ -14,6 +14,7 @@ import {
 } from './lyricsFineFrame.mjs';
 import { ktvHandoffEndMs } from './lyricsKtvHandoff.mjs';
 import { sliceLyricsVocalParts } from './lyricsTextProcessing.mjs';
+import { sliceLyricsReading } from './lyricsDisplayLayout.mjs';
 import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
 import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
@@ -983,7 +984,7 @@ function exactKtvPhraseSegments(line, phrase, lineEndMs, contentStart) {
   }));
 }
 
-function projectKtvDisplayTimeline(
+export function projectKtvDisplayTimeline(
   snapshot,
   lines,
   presentationDocument = null,
@@ -1237,7 +1238,10 @@ function ktvCompletedHoldMs(units, unit) {
   const nextUnit = units[unit.displayUnitIndex + 1] ?? null;
   return !nextUnit || hasKtvEntranceWindow(nextUnit.startMs, unit.endMs)
     ? KTV_SECTION_TAIL_HOLD_MS
-    : KTV_COMPLETED_HANDOFF_HOLD_MS;
+    : Math.max(
+        KTV_COMPLETED_HANDOFF_HOLD_MS,
+        nextUnit.startMs - unit.handoffEndMs,
+      );
 }
 
 function ktvTailCompanionUnit(units, unit) {
@@ -1279,7 +1283,7 @@ function projectKtvSegments(snapshot, unit, positionMs) {
     return ends.find((entry) => entry.from === from && entry.to === cursor)
       ?.end;
   });
-  return segments
+  const projected = segments
     ? projectSegmentStates(
         snapshot,
         segments,
@@ -1289,6 +1293,15 @@ function projectKtvSegments(snapshot, unit, positionMs) {
         cueEnds,
       )
     : null;
+  // Capacity cuts retain native intervals, but do not invent a partial-word
+  // sweep. Fine paint, when present, keeps its own canonical glyph intervals.
+  return (
+    projected?.map((segment, index) =>
+      segments[index].partialText
+        ? { ...segment, progress: null, remainingMs: null }
+        : segment,
+    ) ?? null
+  );
 }
 
 function finePaintFrame(snapshot, line, positionMs, nowMs, range) {
@@ -1332,7 +1345,13 @@ function ktvFineFrame(snapshot, unit, positionMs, nowMs) {
   });
 }
 
-function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
+export function ktvFrameForUnit(
+  snapshot,
+  units,
+  unit,
+  positionMs,
+  options = {},
+) {
   const nextUnit = Object.hasOwn(options, 'nextUnit')
     ? options.nextUnit
     : options.completed
@@ -1370,6 +1389,13 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
     nextVisibleLineIndex: secondaryUnit?.displayUnitIndex ?? null,
     currentLaneIndex: unit.laneIndex,
     nextLaneIndex: secondaryUnit?.laneIndex ?? null,
+    ...(unit.displayBatchId ? { displayBatchId: unit.displayBatchId } : {}),
+    ...(secondaryUnit?.displayBatchId
+      ? { nextDisplayBatchId: secondaryUnit.displayBatchId }
+      : {}),
+    ...(unit.displayFit ? { displayFit: unit.displayFit } : {}),
+    currentReading: ktvUnitReading(snapshot, unit),
+    nextReading: ktvUnitReading(snapshot, secondaryUnit),
     lineProgress,
     lineRemainingMs:
       !options.preRoll &&
@@ -1392,6 +1418,16 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
       startMs: unit.startMs,
       endMs: unit.endMs,
     },
+    ...(secondaryUnit
+      ? {
+          nextSourceRange: {
+            from: secondaryUnit.sourceStart,
+            to: secondaryUnit.sourceEnd,
+            startMs: secondaryUnit.startMs,
+            endMs: secondaryUnit.endMs,
+          },
+        }
+      : {}),
     ...(currentFineTiming
       ? {
           currentFineTiming,
@@ -1413,16 +1449,30 @@ function selectKtvLyricsFrame(
   nowMs,
   presentationDocument = null,
 ) {
+  return selectKtvTimelineFrame(
+    snapshot,
+    projectKtvDisplayTimeline(snapshot, lines, presentationDocument),
+    nowMs,
+  );
+}
+
+function ktvUnitReading(snapshot, unit) {
+  if (!unit) return null;
+  const line = snapshot.lyrics.lines[unit.sourceLineIndex];
+  const reading = snapshot.lyrics.reading?.lines?.[unit.sourceLineIndex];
+  return reading?.text === line?.text
+    ? sliceLyricsReading(reading, unit.sourceStart, unit.sourceEnd)
+    : null;
+}
+
+// Browser Source supplies a locally measured timeline. It is never published
+// back to the source document, playback authority or public state protocol.
+export function selectKtvTimelineFrame(snapshot, units, nowMs) {
   const trackId = snapshot?.playback?.track?.id;
   const lyrics = snapshot?.lyrics;
   if (!trackId || lyrics?.trackId !== trackId || lyrics?.synced !== true) {
     return hiddenKtvFrame(snapshot);
   }
-  const units = projectKtvDisplayTimeline(
-    snapshot,
-    lines,
-    presentationDocument,
-  );
   if (units.length === 0) return hiddenKtvFrame(snapshot);
   const positionMs = lyricsPositionMs(snapshot, nowMs);
   const entrance = ktvEntrances(snapshot, units).find(
@@ -1478,11 +1528,12 @@ function selectKtvLyricsFrame(
     : hiddenKtvFrame(snapshot);
 }
 
-function nextKtvBoundaryDelayMs(
+export function nextKtvBoundaryDelayMs(
   snapshot,
   lines,
   nowMs,
   presentationDocument = null,
+  preparedUnits = null,
 ) {
   if (
     snapshot?.playback?.status !== 'playing' ||
@@ -1492,11 +1543,9 @@ function nextKtvBoundaryDelayMs(
   ) {
     return null;
   }
-  const units = projectKtvDisplayTimeline(
-    snapshot,
-    lines,
-    presentationDocument,
-  );
+  const units =
+    preparedUnits ??
+    projectKtvDisplayTimeline(snapshot, lines, presentationDocument);
   if (units.length === 0) return null;
   const positionMs = lyricsPositionMs(snapshot, nowMs);
   const boundaries = units.flatMap((unit) => {

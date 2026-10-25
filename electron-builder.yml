@@ -84,7 +84,7 @@ files:
   # Independent Browser Source pages and the single inspection guide source.
   # Includes receipt setlist DOM/motion/CSS and its textless paper/grain plates;
   # shared/presentation/receiptSetlist.mjs supplies its pure frame/page rules.
-  # Includes the local lyricsFit DOM adapter; shared includes display layout/frame planners.
+  # Includes lyricsFit/ktvDisplayFit local geometry adapters; shared owns display planners.
   # Fine text paint includes lyricsFine.mjs, shared/browser/lyricsFinePaint.mjs,
   # shared/lyricsFineTiming.mjs with browser-safe, versioned bounds.
   - overlay/**/*

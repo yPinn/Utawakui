@@ -25,7 +25,6 @@ import {
 import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
 import { projectNativeLyricsFrame } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { toPlayableTrack } from '../utils/playableTrack.js';
-
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
 const lyricsTextVariant = shallowRef(DEFAULT_LYRICS_TEXT_VARIANT);
 

@@ -298,6 +298,309 @@ describe('lyric fit controller lifecycle', () => {
     },
   );
 
+  it.each([2, 3])(
+    'prepares preview before display and continues lanes after %i capacity batches, including cold seek',
+    (count) => {
+      const s = surface('karaoke-stack', {
+        measure: () => ({
+          fits: (text) => text.length <= 8,
+          rows: (text) => [{ text }],
+        }),
+      });
+      const lines = [
+        {
+          lineId: 'a',
+          text: '甲'.repeat(count * 8),
+          startMs: 1000,
+          endMs: 13000,
+        },
+        { lineId: 'b', text: '乙'.repeat(20), startMs: 13000, endMs: 25000 },
+        {
+          lineId: 'c',
+          text: 'Oh, you ask 秋招?',
+          startMs: 25000,
+          endMs: 32000,
+        },
+      ];
+      s.snapshot.playback.track = { id: 't' };
+      s.snapshot.lyrics = {
+        trackId: 't',
+        synced: true,
+        source: { language: 'zh-Hant' },
+        lines,
+      };
+      const before = structuredClone(s.snapshot.lyrics);
+      const at = (positionMs) => {
+        s.snapshot.playback.positionMs = positionMs;
+        return s.controller.prepare(
+          s.snapshot,
+          selectLyricsOverlayFrame(s.snapshot, s.settings),
+          s.settings,
+        ).frame.ktv;
+      };
+      const preview = at(12999);
+      const onset = at(13000);
+      expect(preview.nextHeld).toBe(false);
+      expect(preview.nextText).toBe(onset.currentText);
+      expect(preview.nextDisplayBatchId).toBe(onset.displayBatchId);
+      expect(onset.currentLaneIndex).toBe(preview.currentLaneIndex + 1);
+      expect(preview.nextLaneIndex).toBe(onset.currentLaneIndex);
+      expect(onset.currentLaneIndex).toBe(count);
+      s.controller.invalidate();
+      const seek = at(13000);
+      expect(seek.currentText).toBe(onset.currentText);
+      expect(seek.displayBatchId).toBe(onset.displayBatchId);
+      expect(seek.currentLaneIndex).toBe(onset.currentLaneIndex);
+      expect(s.snapshot.lyrics).toEqual(before);
+      s.controller.stop();
+    },
+  );
+
+  it.each(['T2', 'T1+'])(
+    'preplans %s preview with retained roles, reading and canonical paint intervals',
+    (tier) => {
+      const renderForMeasurement = vi.fn();
+      const s = surface('karaoke-stack', {
+        renderForMeasurement,
+        measure: () => ({ fits: (value) => value.length <= 8 }),
+      });
+      const text = '甲'.repeat(16);
+      const segments = [
+        {
+          segmentId: 'first',
+          text: text.slice(0, 8),
+          startMs: 1000,
+          endMs: 7000,
+        },
+        { segmentId: 'last', text: text.slice(8), startMs: 7000, endMs: 13000 },
+      ];
+      const line = {
+        lineId: 'a',
+        text,
+        startMs: 1000,
+        endMs: 13000,
+        vocalParts: [{ from: 0, to: 16, label: '合', role: 'group' }],
+        ...(tier === 'T2'
+          ? { segments }
+          : {
+              estimatedStarts: {
+                version: 1,
+                segments: segments.map(({ segmentId, text, startMs }) => ({
+                  segmentId,
+                  text,
+                  startMs,
+                })),
+              },
+              estimatedFineTiming: {
+                version: 1,
+                units: segments.map((segment, i) => ({
+                  unitId: segment.segmentId,
+                  from: i * 8,
+                  to: (i + 1) * 8,
+                  startMs: segment.startMs,
+                  endMs: segment.endMs,
+                })),
+              },
+            }),
+      };
+      s.snapshot.playback = {
+        status: 'paused',
+        positionMs: 1000,
+        track: { id: 't' },
+      };
+      s.snapshot.lyrics = {
+        trackId: 't',
+        synced: true,
+        lines: [line],
+        reading: {
+          lines: [
+            {
+              text,
+              segments: segments.map(({ text }) => ({ text, reading: 'あ' })),
+            },
+          ],
+        },
+      };
+      const original = structuredClone(s.snapshot.lyrics);
+      const at = (positionMs) => {
+        s.snapshot.playback.positionMs = positionMs;
+        return s.controller.prepare(
+          s.snapshot,
+          selectLyricsOverlayFrame(s.snapshot, s.settings),
+          s.settings,
+        ).frame.ktv;
+      };
+      const preview = at(1000),
+        current = at(7000);
+      expect(preview.nextDisplayBatchId).toBe(current.displayBatchId);
+      expect(preview.nextText).toBe(current.currentText);
+      expect(preview.nextRole).toBe(current.currentRole);
+      expect(current.currentRole).toBe('group');
+      expect(preview.nextReading).toEqual(current.currentReading);
+      expect(current.currentReading.text).toBe(current.currentText);
+      expect(current.currentSourceRange).toEqual({
+        from: 8,
+        to: 16,
+        startMs: 7000,
+        endMs: 13000,
+      });
+      expect(current.currentSegments[0].segmentId).toBe(
+        tier === 'T2' ? 'last' : 'last:p0',
+      );
+      if (tier === 'T1+') {
+        expect(current.currentFineTiming.units[0]).toMatchObject({
+          from: 0,
+          to: 8,
+          startMs: 7000,
+        });
+        expect(current.currentFineTiming.units.at(-1).endMs).toBe(13000);
+      }
+      expect(renderForMeasurement).not.toHaveBeenCalled();
+      expect(s.snapshot.lyrics).toEqual(original);
+      s.controller.stop();
+    },
+  );
+
+  it('keeps real section count-in resets and prepares it before canonical playback begins', () => {
+    const s = surface('karaoke-stack', {
+      measure: () => ({ fits: (text) => text.length <= 8 }),
+    });
+    s.snapshot.playback = {
+      status: 'paused',
+      positionMs: 28000,
+      track: { id: 't' },
+    };
+    s.snapshot.lyrics = {
+      trackId: 't',
+      synced: true,
+      lines: [
+        { lineId: 'a', text: '甲'.repeat(16), startMs: 1000, endMs: 13000 },
+        { lineId: 'b', text: '乙'.repeat(24), startMs: 30000, endMs: 45000 },
+      ],
+    };
+    const raw = selectLyricsOverlayFrame(s.snapshot, s.settings);
+    const entrance = s.controller.prepare(s.snapshot, raw, s.settings).frame
+      .ktv;
+    expect(entrance.visible).toBe(true);
+    expect(entrance.currentText).toBe('乙'.repeat(8));
+    expect(entrance.currentLaneIndex).toBe(0);
+    expect(entrance.countIn.laneIndex).toBe(0);
+    s.snapshot.playback.positionMs = 30000;
+    const onset = s.controller.prepare(
+      s.snapshot,
+      selectLyricsOverlayFrame(s.snapshot, s.settings),
+      s.settings,
+    ).frame.ktv;
+    expect(onset.currentText).toBe(entrance.currentText);
+    expect(onset.displayBatchId).toBe(entrance.displayBatchId);
+    expect(onset.currentLaneIndex).toBe(0);
+    expect(onset.countIn).toBeNull();
+    s.controller.stop();
+  });
+
+  it('reuses preview geometry across active-line updates and warm ticks without touching live text', () => {
+    const measure = vi.fn(() => ({ fits: (text) => text.length <= 8 }));
+    const renderForMeasurement = vi.fn();
+    const s = surface('karaoke-stack', { measure, renderForMeasurement });
+    s.snapshot.playback.track = { id: 't' };
+    s.snapshot.lyrics = {
+      trackId: 't',
+      synced: true,
+      activeLineIndex: 0,
+      lines: [
+        { lineId: 'a', text: '甲'.repeat(16), startMs: 1000, endMs: 13000 },
+        { lineId: 'b', text: '乙'.repeat(24), startMs: 13000, endMs: 30000 },
+      ],
+    };
+    const prepare = () =>
+      s.controller.prepare(
+        s.snapshot,
+        selectLyricsOverlayFrame(s.snapshot, s.settings),
+        s.settings,
+      );
+    prepare();
+    expect(measure).toHaveBeenCalledTimes(2);
+    s.snapshot.lyrics.activeLineIndex = 1;
+    s.snapshot.playback.positionMs = 13000;
+    prepare();
+    s.snapshot.playback.positionMs++;
+    prepare();
+    expect(measure).toHaveBeenCalledTimes(2);
+    expect(renderForMeasurement).not.toHaveBeenCalled();
+    s.controller.invalidate();
+    prepare();
+    expect(measure).toHaveBeenCalledTimes(4);
+    s.controller.stop();
+  });
+
+  it.each(['T1', 'T2', 'T1+'])(
+    'holds completed %s batches through a short inter-line gap without changing timestamps',
+    (tier) => {
+      const s = surface('karaoke-stack', {
+        measure: () => ({ fits: (text) => text.length <= 8 }),
+      });
+      const lines = [
+        { lineId: 'a', text: '甲'.repeat(16), startMs: 1000, endMs: 13000 },
+        { lineId: 'b', text: '乙'.repeat(24), startMs: 14000, endMs: 30000 },
+      ].map((line) => {
+        const segment = {
+          segmentId: line.lineId + '-s',
+          text: line.text,
+          startMs: line.startMs,
+          endMs: line.endMs,
+        };
+        return {
+          ...line,
+          ...(tier === 'T2'
+            ? { segments: [segment] }
+            : tier === 'T1+'
+              ? {
+                  estimatedStarts: {
+                    version: 1,
+                    segments: [
+                      {
+                        segmentId: segment.segmentId,
+                        text: segment.text,
+                        startMs: segment.startMs,
+                      },
+                    ],
+                  },
+                }
+              : {}),
+        };
+      });
+      s.snapshot.playback = {
+        status: 'paused',
+        positionMs: 13600,
+        track: { id: 't' },
+      };
+      s.snapshot.lyrics = { trackId: 't', synced: true, lines };
+      const original = structuredClone(lines);
+      const at = (positionMs) => {
+        s.snapshot.playback.positionMs = positionMs;
+        return s.controller.prepare(
+          s.snapshot,
+          selectLyricsOverlayFrame(s.snapshot, s.settings),
+          s.settings,
+        ).frame.ktv;
+      };
+      for (const position of [13600, 13999]) {
+        const held = at(position);
+        expect(held.visible).toBe(true);
+        expect(held.currentText).toBe('甲'.repeat(8));
+        expect(held.lineProgress).toBe(1);
+        expect(held.nextText).toBe('乙'.repeat(8));
+        expect(held.currentSourceRange.endMs).toBe(13000);
+      }
+      expect(at(14000)).toMatchObject({
+        currentText: '乙'.repeat(8),
+        currentLaneIndex: 2,
+      });
+      expect(lines).toEqual(original);
+      s.controller.stop();
+    },
+  );
+
   it.each([26, 80, 150])(
     'projects a %i-glyph Focus source as sequential single-row batches and caches the proof',
     (length) => {

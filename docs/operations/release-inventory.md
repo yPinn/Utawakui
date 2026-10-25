@@ -420,7 +420,7 @@ route. It has no model, worker, new dependency or additional unpacked payload;
 its tests remain excluded. The closed HTTP module-graph test checks delivery.
 
 Capacity-aware lyrics add `shared/presentation/lyricsDisplayLayout.mjs`,
-`lyricsDisplayFrame.mjs` and `overlay/lyrics/lyricsFit.mjs` under those same
+`lyricsDisplayFrame.mjs`, `overlay/lyrics/lyricsFit.mjs` and `ktvDisplayFit.mjs` under those same
 package rules and exact HTTP module routes. They provide bounded text pages,
 separate display-time provenance and local font/container measurement, with no
 new model, dependency or unpacked payload. Co-located tests remain excluded;

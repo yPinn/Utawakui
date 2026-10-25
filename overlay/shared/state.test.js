@@ -1750,7 +1750,7 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('keeps the 600ms completed hold for a continuous lyric handoff', () => {
+  it('keeps completed text until the next continuous lyric onset without a black gap', () => {
     const base = snapshot({
       lyrics: {
         ...snapshot().lyrics,
@@ -1775,10 +1775,21 @@ describe('overlay state selectors', () => {
     });
     expect(
       selectLyricsOverlayFrame(
-        { ...base, playback: { ...base.playback, positionMs: 5600 } },
+        { ...base, playback: { ...base.playback, positionMs: 6999 } },
         { nowMs },
       ).ktv,
-    ).toMatchObject({ visible: false, countIn: null });
+    ).toMatchObject({
+      visible: true,
+      currentText: '連續尾句',
+      lineProgress: 1,
+      countIn: null,
+    });
+    expect(
+      selectLyricsOverlayFrame(
+        { ...base, playback: { ...base.playback, positionMs: 7000 } },
+        { nowMs },
+      ).ktv,
+    ).toMatchObject({ visible: true, currentText: '接續歌詞' });
   });
 
   it('keeps the final track lyric for the same five-second tail', () => {

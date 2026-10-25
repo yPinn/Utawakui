@@ -12,6 +12,7 @@ import {
 import { projectLyricsDisplayFrame } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import { fineTextParts } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { sliceLyricsVocalParts } from '../../shared/presentation/lyricsTextProcessing.mjs';
+import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
 
 function fineMeasurementSource(line, frame, templateId) {
   const units = frame.currentFineTiming?.units;
@@ -75,7 +76,11 @@ function createMeasurement(
     counters.fitRootMs += measureNow() - phaseAt;
     phaseAt = counters.fitTargetAtMs = measureNow();
   }
-  if (rootRect.width <= 0 || rootRect.height <= 0) return null;
+  if (
+    (rootRect.width <= 0 || rootRect.height <= 0) &&
+    templateId !== 'karaoke-stack'
+  )
+    return null;
   const targetRect = target.getBoundingClientRect();
   if (counters) {
     counters.fitTargetMs += measureNow() - phaseAt;
@@ -265,6 +270,52 @@ export function createLyricsFitController(options = {}) {
   const document = options.document ?? globalThis.document;
   const window = options.window ?? globalThis.window;
   const cache = new Map();
+  const ktvFit = createKtvDisplayFit((line, frame, settings) => {
+    const measureNow = options.measureNow ?? (() => performance.now());
+    const startedAt = options.onTrace ? measureNow() : 0;
+    const counters = options.onTrace
+      ? {
+          probeCount: 0,
+          fitStyleMs: 0,
+          fitRootMs: 0,
+          fitTargetMs: 0,
+          fitProbeSetupMs: 0,
+          fitWrappedMs: 0,
+          fitRowsMs: 0,
+          fitWrappedAtMs: null,
+        }
+      : null;
+    const measurement =
+      options.measure?.(line, settings) ??
+      (elements &&
+        createMeasurement(
+          elements,
+          'karaoke-stack',
+          document,
+          window,
+          frame.currentReading,
+          counters,
+          measureNow,
+          fineMeasurementSource(line, frame, 'karaoke-stack'),
+          line.vocalParts !== undefined,
+        ));
+    if (!measurement) return null;
+    return {
+      ...measurement,
+      dispose() {
+        try {
+          measurement.dispose?.();
+        } finally {
+          options.onTrace?.('fit-measure', {
+            ...settings.traceContext,
+            ...counters,
+            durationMs: measureNow() - startedAt,
+            lineIndex: frame.lineIndex,
+          });
+        }
+      },
+    };
+  }, options.onTrace);
   const notice =
     options.inspection && document?.createElement
       ? document.createElement('p')
@@ -318,6 +369,7 @@ export function createLyricsFitController(options = {}) {
     cancelStylePreparation();
     stylesPrepared = false;
     cache.clear();
+    ktvFit.invalidate();
   }
   function resized() {
     if (stopped || resizeFrame !== null) return;
@@ -329,6 +381,30 @@ export function createLyricsFitController(options = {}) {
   }
   window?.addEventListener?.('resize', resized);
   function prepare(snapshot, frame, settings = {}) {
+    if (!stopped && settings.templateId === 'karaoke-stack' && frame.ktv) {
+      const result = ktvFit.prepare(snapshot, frame, settings);
+      const ktv = result.frame.ktv;
+      const fit = ktv.displayFit;
+      if (notice) {
+        notice.hidden = fit?.status !== 'unfit';
+        notice.textContent = notice.hidden
+          ? ''
+          : '目前尺寸無法完整顯示此句，請放大來源範圍或調整字級。';
+      }
+      if (elements)
+        Object.assign(elements.root.dataset, {
+          fitStatus: fit?.status ?? '',
+          fitActive: String(Boolean(fit)),
+          fitPage: String(fit?.pageIndex ?? 0),
+          fitPages: String(fit?.pageCount ?? 0),
+          fitSourceStart: String(ktv.currentSourceRange?.from ?? 0),
+          fitSourceEnd: String(ktv.currentSourceRange?.to ?? 0),
+          fitPageStartMs: String(ktv.currentSourceRange?.startMs ?? ''),
+          fitPageEndMs: String(ktv.currentSourceRange?.endMs ?? ''),
+          fitPageTiming: fit?.pageTiming ?? '',
+        });
+      return result;
+    }
     if (stopped || !frame.visible) {
       lastPrepared = null;
       if (notice) notice.hidden = true;
@@ -569,6 +645,7 @@ export function createLyricsFitController(options = {}) {
       cancelStylePreparation();
       notice?.remove();
       cache.clear();
+      ktvFit.invalidate();
       window?.removeEventListener?.('resize', resized);
       if (resizeFrame !== null) window.cancelAnimationFrame(resizeFrame);
     },

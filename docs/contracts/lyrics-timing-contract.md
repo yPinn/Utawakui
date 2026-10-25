@@ -377,6 +377,12 @@ available, but cannot displace still-protected text. A following canonical onset
 or phrase start is never postponed: conflicting/crossing protection is declined,
 without cutting a fine unit or fabricating a sub-unit time. T2 and unsupported
 T1 policies are unchanged.
+
+For continuous KTV pairs below the existing five-second entrance-gap threshold,
+the completed frame remains visible until the following original onset instead
+of clearing after a fixed 600ms. Progress stays completed and no paint interval
+is stretched. Canonical times and the long-rest count-in/tail policy remain
+unchanged; the scheduler uses the same display-hold boundary as selection.
 Capacity pages render the logically active KTV lane, whether its physical node
 is current or next. The companion is hidden only for this existing capacity
 mode; the normal two-lane template, role colors and lack of underline remain.

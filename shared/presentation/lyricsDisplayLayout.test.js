@@ -17,6 +17,23 @@ const fits = (text) =>
     .length <= 18;
 
 describe('bounded lyric display pages', () => {
+  it.each([
+    '盜竊hiphop的聲場',
+    '林宛瑜買斷預付了五 K',
+    'We the 水碩還手低眼高',
+    "Fuck, I'm not",
+  ])(
+    'keeps fitting short mixed and punctuation phrases together: %s',
+    (text) => {
+      const plan = planLyricsDisplay(line(text), {
+        fits: () => true,
+        sequentialRows: true,
+        phraseRows: true,
+      });
+      expect(plan.pages.map((p) => p.text)).toEqual([text]);
+    },
+  );
+
   it('keeps a fitting Latin phrase intact at an attached CJK boundary', () => {
     const text = '想看見天上璀璨星光sing it with me';
     const result = planLyricsDisplay(line(text), {

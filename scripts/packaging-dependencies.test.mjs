@@ -377,6 +377,7 @@ describe('packaged dependency boundary', () => {
       ['shared/presentation/lyricsFineFrame.test.js', false],
       ['overlay/lyrics/lyricsFine.mjs', true],
       ['overlay/lyrics/lyricsFit.mjs', true],
+      ['overlay/lyrics/ktvDisplayFit.mjs', true],
       ['overlay/lyrics/lyricsFit.test.js', false],
       ['shared/presentation/outputPreviewScene.test.js', false],
       ['scripts/outputAppearanceBaseline.mjs', false],
