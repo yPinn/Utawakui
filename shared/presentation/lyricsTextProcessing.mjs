@@ -1,6 +1,6 @@
 // Lossless annotations. Explicit bylines default to Output-hidden; ambiguous
 // credit-like prose remains a candidate. The source document is never filtered.
-export const LYRICS_TEXT_PROCESSING_VERSION = 4;
+export const LYRICS_TEXT_PROCESSING_VERSION = 5;
 const CREDIT_ROLE = [
   '作詞',
   '作词',
@@ -111,6 +111,9 @@ const PAIRS = new Map([
   ['〈', '〉'],
 ]);
 const CLOSINGS = new Set(PAIRS.values());
+// Sources mix full- and half-width round brackets within one pair.
+const closes = (expected, ch) =>
+  expected === ch || (/[)）]/u.test(expected) && /[)）]/u.test(ch));
 const OPENING_RE = /[(（[【{「『“‘《〈]$/u;
 const CLOSING_RE = /^[)）\]】}」』”’》〉,，、。！？!?;；:：.…‥]/u;
 const PERFORMANCE_LABEL =
@@ -149,6 +152,12 @@ const VOCAL_ROLES = new Map([
 ]);
 export function lyricsVocalRole(label) {
   return VOCAL_ROLES.get(String(label).trim().toLocaleLowerCase()) ?? null;
+}
+
+export function isLyricsVocalSection(text) {
+  return /^(?:\([^()\r\n]{1,40}\)|（[^（）\r\n]{1,40}）|\[[^\]\r\n]{1,40}\]|【[^】\r\n]{1,40}】)$/u.test(
+    String(text).trim(),
+  );
 }
 
 function vocalMarkers(text, pairedRanges, malformed, options) {
@@ -270,14 +279,15 @@ export function analyzeLyricsText(value, options = {}) {
       } else if (PAIRS.has(ch)) {
         stack.push({ start: index, close: PAIRS.get(ch) });
       } else if (CLOSINGS.has(ch)) {
-        // A curly apostrophe in a word is not a quotation delimiter.
+        // A curly apostrophe in a word, or one with no open ‘, is not a quote.
         if (
           ch === '’' &&
-          /[\p{L}\p{N}]/u.test(sourceText[index - 1] ?? '') &&
-          /[\p{L}\p{N}]/u.test(sourceText[index + 1] ?? '')
+          (!stack.some((open) => open.close === '’') ||
+            (/[\p{L}\p{N}]/u.test(sourceText[index - 1] ?? '') &&
+              /[\p{L}\p{N}]/u.test(sourceText[index + 1] ?? '')))
         )
           continue;
-        if (stack.at(-1)?.close !== ch) malformedPairs = true;
+        if (!closes(stack.at(-1)?.close, ch)) malformedPairs = true;
         else {
           const open = stack.pop();
           pairedRanges.push({ sourceStart: open.start, sourceEnd: index + 1 });
@@ -292,7 +302,8 @@ export function analyzeLyricsText(value, options = {}) {
       return (
         !malformedPairs &&
         /[(（[【]/u.test(sourceText[from]) &&
-        PERFORMANCE_LABEL.test(sourceText.slice(from + 1, to - 1).trim()) &&
+        (/[(（]/u.test(sourceText[from]) ||
+          PERFORMANCE_LABEL.test(sourceText.slice(from + 1, to - 1).trim())) &&
         !pairedRanges.some(
           (outer) => outer.sourceStart < from && outer.sourceEnd > to,
         )
@@ -457,6 +468,81 @@ function labelProjection(line, ranges) {
   };
 }
 
+// One role resolution for Output and the reading sheet: saved line/section
+// choices, confirmed markers and carried roles, in source coordinates.
+function resolveVocalLines(document, hiddenLineIds, options) {
+  const requested = new Set(hiddenLineIds);
+  const assignments = new Map(
+    (options.assignments ?? []).map((row) => [row.lineId, row]),
+  );
+  let carried = null;
+  return document.lines.map((line) => {
+    const selected = requested.has(line.lineId);
+    const analysis = analyzeLyricsText(line.text, options);
+    if (selected && analysis.kind === 'credit-candidate')
+      return { line, selected, analysis, markers: [], parts: [], manual: null };
+    const saved = assignments.get(line.lineId);
+    const manual =
+      saved &&
+      ['male', 'female', 'group'].includes(saved.role) &&
+      (saved.scope === 'line' ||
+        (saved.scope === 'section' && isLyricsVocalSection(line.text)))
+        ? saved
+        : null;
+    const markers =
+      manual?.scope === 'section'
+        ? [
+            {
+              sourceStart: 0,
+              sourceEnd: line.text.length,
+              label: line.text.trim().slice(1, -1).trim().slice(0, 40),
+              role: manual.role,
+              confirmed: true,
+            },
+          ]
+        : analysis.vocalMarkers.filter((m) => m.confirmed || selected);
+    const parts = [];
+    const addPart = (vocal, from, to) => {
+      if (vocal && from < to)
+        parts.push({ from, to, label: vocal.label, role: vocal.role });
+    };
+    addPart(carried, 0, markers[0]?.sourceStart ?? line.text.length);
+    for (let index = 0; index < markers.length; index++)
+      addPart(
+        markers[index],
+        markers[index].sourceStart,
+        markers[index + 1]?.sourceStart ?? line.text.length,
+      );
+    carried = markers.at(-1) ?? carried;
+    return { line, selected, analysis, markers, parts, manual };
+  });
+}
+
+// Whole-line role per source line; mixed or unmarked lines are omitted.
+export function lyricsLineVocalRoles(
+  document,
+  hiddenLineIds = [],
+  options = {},
+) {
+  const roles = {};
+  if (!Array.isArray(document?.lines)) return roles;
+  for (const { line, parts, manual } of resolveVocalLines(
+    document,
+    hiddenLineIds,
+    options,
+  )) {
+    const lineRoles = new Set(parts.map((part) => part.role));
+    const role =
+      manual?.scope === 'line'
+        ? manual.role
+        : lineRoles.size === 1
+          ? [...lineRoles][0]
+          : null;
+    if (['male', 'female', 'group'].includes(role)) roles[line.lineId] = role;
+  }
+  return roles;
+}
+
 // Run after Output reading validation, so filtering cannot break the source's
 // index-based editing/readings. Canonical documents and timestamps stay intact.
 export function projectLyricsTextSelection(
@@ -470,13 +556,16 @@ export function projectLyricsTextSelection(
     !Array.isArray(hiddenLineIds)
   )
     return document;
-  const requested = new Set(hiddenLineIds);
   const hidden = new Set(),
     edited = new Map();
-  let carried = null;
-  for (const line of document.lines) {
-    const selected = requested.has(line.lineId);
-    const analysis = analyzeLyricsText(line.text, options);
+  for (const {
+    line,
+    selected,
+    analysis,
+    markers,
+    parts: sourceParts,
+    manual,
+  } of resolveVocalLines(document, hiddenLineIds, options)) {
     if (selected && analysis.kind === 'credit-candidate') {
       hidden.add(line.lineId);
       continue;
@@ -487,9 +576,6 @@ export function projectLyricsTextSelection(
       if (!projection.line.text.trim()) hidden.add(line.lineId);
       else edited.set(line.lineId, projection);
     }
-    const markers = analysis.vocalMarkers.filter(
-      (m) => m.confirmed || selected,
-    );
     // Explicit empty metadata tells legacy template adapters to keep literal or
     // unconfirmed bracket text instead of independently guessing a speaker.
     if (
@@ -502,23 +588,14 @@ export function projectLyricsTextSelection(
       projection.line = { ...projection.line, vocalParts: [] };
       edited.set(line.lineId, projection);
     }
-    if (markers.length || carried) {
-      const parts = [];
-      const addPart = (vocal, from, to) => {
-        if (!vocal) return;
-        from = projection?.offsets?.[from] ?? from;
-        to = projection?.offsets?.[to] ?? to;
-        if (from < to)
-          parts.push({ from, to, label: vocal.label, role: vocal.role });
-      };
-      addPart(carried, 0, markers[0]?.sourceStart ?? line.text.length);
-      for (let index = 0; index < markers.length; index++)
-        addPart(
-          markers[index],
-          markers[index].sourceStart,
-          markers[index + 1]?.sourceStart ?? line.text.length,
-        );
-      carried = markers.at(-1) ?? carried;
+    if (sourceParts.length) {
+      const parts = sourceParts
+        .map((part) => ({
+          ...part,
+          from: projection?.offsets?.[part.from] ?? part.from,
+          to: projection?.offsets?.[part.to] ?? part.to,
+        }))
+        .filter((part) => part.from < part.to);
       if (parts.length && !hidden.has(line.lineId)) {
         if (projection)
           projection.line = { ...projection.line, vocalParts: parts };
@@ -529,6 +606,22 @@ export function projectLyricsTextSelection(
           };
         edited.set(line.lineId, projection);
       }
+    }
+    if (manual?.scope === 'line' && !hidden.has(line.lineId)) {
+      projection ??= { line: { ...line }, reading: (value) => value };
+      if (projection.line.text.length)
+        projection.line = {
+          ...projection.line,
+          vocalParts: [
+            {
+              from: 0,
+              to: projection.line.text.length,
+              label: { male: '男', female: '女', group: '合' }[manual.role],
+              role: manual.role,
+            },
+          ],
+        };
+      edited.set(line.lineId, projection);
     }
   }
   if (hidden.size + edited.size === 0) return document;
@@ -564,7 +657,7 @@ export function projectLyricsTextSelection(
   lines.reverse();
   return {
     ...document,
-    documentId: `${document.documentId.slice(0, 110)}~text-v4-${selectionHash(identity)}`,
+    documentId: `${document.documentId.slice(0, 110)}~text-v5-${selectionHash(identity)}`,
     lines,
     ...(document.granularity
       ? {

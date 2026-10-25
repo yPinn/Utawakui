@@ -145,7 +145,7 @@ describe('source-owned text selections', () => {
     );
     expect(processing.hiddenLineIds.value).toEqual(['c', 'm', 'v']);
     expect(processing.project(document.value).lines.map((l) => l.text)).toEqual(
-      ['一起唱（啊啊）'],
+      ['一起唱'],
     );
     processing.setHidden('v', false);
     expect(processing.project(document.value).lines).toMatchObject([
@@ -168,7 +168,7 @@ describe('source-owned text selections', () => {
       documentId: 'same',
       lines: [
         { lineId: 'c', text: 'Producer: HARIKIRI' },
-        { lineId: 'v', text: '一起唱（啊啊和聲）' },
+        { lineId: 'v', text: '一起唱' },
       ],
     });
     const sourceKey = shallowRef('track-a/source-a');
@@ -251,8 +251,8 @@ describe('source-owned text selections', () => {
     );
     expect(processing.hiddenLineIds.value).toEqual(['producer', 'chorus']);
     expect(processing.project(document.value).lines.at(-1)).toMatchObject({
-      text: 'Why?（啊啊和聲）',
-      vocalParts: [{ from: 0, to: 10, label: '女', role: 'female' }],
+      text: 'Why?',
+      vocalParts: [{ from: 0, to: 4, label: '女', role: 'female' }],
     });
     expect(document.value).toEqual(before);
     processing.setHidden('producer', false);

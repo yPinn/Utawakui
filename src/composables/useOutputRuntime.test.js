@@ -386,11 +386,9 @@ describe('output source handshake', () => {
       expect(latest('lyrics.document').document.lines).toEqual([
         {
           ...document.lines[2],
-          text: '一起唱（啊啊）',
-          segments: [
-            { ...document.lines[2].segments[1], text: '一起唱（啊啊）' },
-          ],
-          vocalParts: [{ from: 0, to: 7, label: '女', role: 'female' }],
+          text: '一起唱',
+          segments: [{ ...document.lines[2].segments[1], text: '一起唱' }],
+          vocalParts: [{ from: 0, to: 3, label: '女', role: 'female' }],
         },
       ]);
       expect(latest('state.snapshot').lyrics).toMatchObject({
@@ -453,7 +451,7 @@ describe('output source handshake', () => {
         latest()
           .filter((m) => m.stream === 'lyrics.document')
           .at(-1).payload.document.lines,
-      ).toMatchObject([{ ...document.lines[1], text: 'Why?（啊啊和聲）' }]);
+      ).toMatchObject([{ ...document.lines[1], text: 'Why?' }]);
       expect(
         latest()
           .filter((m) => m.stream === 'state.snapshot')

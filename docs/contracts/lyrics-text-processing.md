@@ -23,11 +23,11 @@
 
 企劃／企划、監製／监制、出品／出品人也屬製作欄位。已知職務後可接受有界的大寫 Latin 名稱接 Han 姓名，例如 `企劃：Mandy王夢帆/王子`；符合署名字形時整行預設隱藏，不能只移除職務而留下署名。正文形值仍列候選、預設保留，逐行還原恢復完整欄位與原時間。
 
-文字標註 v4 提供 `defaultHidden`：署名符合保守字形規則的單行欄位，預設從 Output 隱藏。Latin 署名須大寫開頭的姓名／handle；Han、Katakana、Hangul 署名另要求製作／錄音／混音等職務，不把短中文作詞正文直接當成人名。疑似句子、額外冒號、演唱字樣或無法判定的署名只列候選、預設保留。這是可還原的格式判斷，不聲稱已確認實際人名或理解歌詞；漏判保留給逐行確認。
+文字標註 v5 提供 `defaultHidden`：署名符合保守字形規則的單行欄位，預設從 Output 隱藏。Latin 署名須大寫開頭的姓名／handle；Han、Katakana、Hangul 署名另要求製作／錄音／混音等職務，不把短中文作詞正文直接當成人名。疑似句子、額外冒號、演唱字樣或無法判定的署名只列候選、預設保留。這是可還原的格式判斷，不聲稱已確認實際人名或理解歌詞；漏判保留給逐行確認。
 
 實唱合唱／和聲、引號內的製作字樣與無明確前綴的文字保留為 lyric。演唱／Vocal／和聲前綴不作製作資訊候選。全域標點清理尚未啟用：問號、英文撇號、歌名書名號與引用保留；不把所有逗號、句點或括號一併剝除。
 
-v4 另以 `outputLabelRanges` 標註括號、方括號或【】內完全符合已知提示詞的來源範圍，例如 `（和聲）`／`(和声)`／`[Backing Vocals]`／`（ハモリ）`／`(코러스)`。這些範圍預設只從 Output 隱藏；純提示整行可排除，與唱詞混在同一行則只去掉標記。例如 `[女]（和聲）一起唱（啊啊）` 保留 `一起唱（啊啊）`，女聲角色另存。`（啊啊）`、`(oh oh)`、`（一起唱）`、`（啊啊和聲）`、帶唱詞的 `(和聲：啊啊)`、引文內的提示字樣及不完整配對不自動刪除。這不是任意括號刪除或語意判斷。
+v5 依明確選用政策，以 `outputLabelRanges` 將已配對的 `()`／`（）` 內整段內容預設從 Output 隱藏，包含回聲唱詞、人名與提示。例如 `Everybody to the bright future (to the bright future)` 只輸出括號外正文，`一起唱（oh oh）` 只輸出 `一起唱`。此為輸出顯示選擇，來源中的實唱、對唱與和聲內容仍保留，可逐行取消勾選或全部還原；不推定括號內不是實唱。方括號或【】仍只隱藏已確認的聲部／提示，不把 `[oh oh]` 等字面唱詞一併刪除。全形與半形圓括號可互相配對（如 `（和聲)`）；沒有對應 `‘` 的 `’` 視為英文撇號，不算不完整配對。引文內及不完整配對不自動隱藏；巢狀括號以完整最外層處理，不留下殘缺閉括號。
 
 明確聲部標記同樣只從 Output 移除，例如 `[男]`／`[女]`、`【男声】`、`合唱：`、`[Male]`／`[Both]`、`[男性]`／`[女性]`／`[全員]`、`[남자]`／`[여자]`／`[합창]`。同一來源塊可交替聲部；獨立標記的角色沿用到下一段，直到下一個明確角色。原始標記、唱詞與所有時間仍在 canonical 文件。
 
@@ -39,13 +39,21 @@ v4 另以 `outputLabelRanges` 標註括號、方括號或【】內完全符合�
 
 ## 逐行確認與輸出投影
 
-`useLyrics` 組合 `lyrics/useLyricsTextProcessing.js`，持有本次來源的 session overrides。隱藏集合由明確欄位／提示預設加逐行 override 推導；「顯示 → 共用文字處理」在閱讀及編輯頁共用同一 owner，區分「隱藏整行」與「隱藏提示標記」，逐行顯示完整候選，取消勾選可還原，也可恢復全部原文輸出。只有合法 candidate lineId 可套用；時鐘或僅時間刷新不清除還原選擇。切換 track／source 或原文版本變更立即回到預設過濾，不寫來源、timing、reading、offset 或設定檔。
+`useLyrics` 組合 `lyrics/useLyricsTextProcessing.js`，持有本次來源的 session overrides。隱藏集合由明確欄位／提示預設加逐行 override 推導；「顯示 → 共用文字處理」在閱讀及編輯頁共用同一 owner，以「整行」或「片段」標示隱藏範圍，逐行顯示完整候選，取消勾選可還原，也可恢復全部原文輸出。只有合法 candidate lineId 可套用；時鐘或僅時間刷新不清除還原選擇。切換 track／source 或原文版本變更立即回到預設過濾，不寫來源、timing、reading、offset 或設定檔。
 
-Output publisher 先按原文件驗證讀音，再以 stable lineId 過濾隱藏行及其 reading projection。衍生文件依選擇後文字與角色取得不同的 `~text-v4` documentId，依可見行重新計算顯示 tier。去除行內提示只重映射文字座標：保留的 T2／T1+ segment id、起訖及 fine unit id／時間原值不變，完全屬於提示的片段排除；細時間的 UTF-16 offsets 依保留字元重映射，不插值、不借時間。未受影響的 reading 片段保留，跨提示的片段取消其不再對應的 ruby，舊整行 romaji 不帶入改變後的文字；原 reading 文件仍不變。
+Output publisher 先按原文件驗證讀音，再以 stable lineId 過濾隱藏行及其 reading projection。衍生文件依選擇後文字與角色取得不同的 `~text-v5` documentId，依可見行重新計算顯示 tier。去除行內提示只重映射文字座標：保留的 T2／T1+ segment id、起訖及 fine unit id／時間原值不變，完全屬於提示的片段排除；細時間的 UTF-16 offsets 依保留字元重映射，不插值、不借時間。未受影響的 reading 片段保留，跨提示的片段取消其不再對應的 ruby，舊整行 romaji 不帶入改變後的文字；原 reading 文件仍不變。
 
 若前一句原 end 為空而依下一個來源起點作顯示結束，且該起點所屬行被隱藏，僅在衍生 Output 文件以 `endInferred` 明示原有結束邊界，不能把前一句延長到後面的可見行；canonical end 與來源檔仍不變。恢復時還原所有原文字與時間；若仍需傳遞聲部或字面前綴資訊，維持衍生 documentId。文件與 state 仍走既有 v3 revision／epoch 協定，隱藏行／片段的 active id 不得出現在 state。
 
 本機閱讀、來源編輯及逐字校時維持原始行索引；這項選擇只影響所有 Output 模板。原文／繁中依舊是獨立文字變體，不屬模板設定。不啟動 provider 查詢、模型或任意外部腳本。
+
+## 手動聲部標註
+
+歌詞編輯的「編輯 → 標註聲部」以螢光筆選男／女／合或清除後點歌詞行，Shift＋點塗連續範圍；只標整行，不改文字。完整括號人名標記行塗色即存人名段落，角色沿用至下一個已確認或手動指定的標記；一般唱詞行只覆蓋該行，不中斷沿用。清除只移除手動標註，回到自動推得的角色。行內部分標註未提供。例如 `(Sabrina 胡恂舞)` 指定女、`(PIZZALI)` 指定男，兩個原標記及原時間留在來源，Output 預設不顯示括號行，後續唱詞帶獨立角色。
+
+Output 投影與閱讀頁共用同一份逐行角色解析；閱讀頁只取整行單一角色，同行多角色維持預設螢光筆。`useLyricsVocalRoles` 組合於既有文字 owner，依同一次選擇穩定後的 track／source／document identity 載入，來源 SHA 尚未就緒時不送出請求；塗色立即更新角色投影，保存依序執行並把保存中的後續塗色合併為最新一次；保存失敗退回最後儲存值；切來源或結束 scope 後的舊讀寫回覆不套用。失敗保留最後儲存值並提供重新載入。聲部選擇持久化，Output 隱藏／還原仍是另一份 session 選擇，恢復顯示不清除已存角色。
+
+Main 的固定 `lyrics:get-vocal-roles`／`lyrics:save-vocal-roles` 經 preload 接收 track id、已列出的來源檔名、document id、revision 及有界 `{ lineId, role, scope }` 意圖；不接收檔案路徑、時間或 fingerprint。`library/lyricsVocalRoles.js` 自行讀取目前來源 SHA 與 timing identity，限制角色、範圍、數量、ID及重複行，檢查 revision 後原子保存至 `lyrics/vocal-roles/<sourceFilename>.json`。來源 SHA 或 document identity 改變時舊標註不套用；刪來源一併刪其標註。T0／T1 fallback 的行 ID 必須屬於目前 SHA 綁定文件，已存 timing 文件另核對實際 line roster；不聲稱靠格式驗證便能自動判定人名。
 
 ## 模板進階顯示
 

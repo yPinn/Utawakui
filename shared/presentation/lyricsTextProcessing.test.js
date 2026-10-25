@@ -6,6 +6,7 @@ import {
   preprocessLyricsDocument,
   projectLyricsTextSelection,
   isSafeLyricsBreak,
+  lyricsLineVocalRoles,
 } from './lyricsTextProcessing.mjs';
 
 describe('lossless shared text annotations', () => {
@@ -156,13 +157,13 @@ describe('lossless shared text annotations', () => {
     const doc = { documentId: 'duet', lines: [line] };
     const output = projectLyricsTextSelection(doc, ['v']);
     expect(output.lines[0]).toMatchObject({
-      text: '你唱我唱一起唱（啊啊）',
+      text: '你唱我唱一起唱',
       startMs: 1000,
       endMs: 13000,
       vocalParts: [
         { from: 0, to: 2, label: '男', role: 'male' },
         { from: 2, to: 4, label: '女', role: 'female' },
-        { from: 4, to: 11, label: '合唱', role: 'group' },
+        { from: 4, to: 7, label: '合唱', role: 'group' },
       ],
     });
     expect(doc.lines[0]).toBe(line);
@@ -254,14 +255,9 @@ describe('lossless shared text annotations', () => {
     },
   );
   it.each([
-    '（啊啊）',
-    '(oh oh)',
-    '（一起唱）',
-    '（啊啊和聲）',
     '和聲讓夜色更美',
     '「（和聲）是我們的歌名」',
     '"(Backing Vocals)"',
-    '(和聲：啊啊)',
     '和聲：一起唱',
     'Guitar: I Love You',
     'Mixing Engineer: This is the night',
@@ -397,7 +393,7 @@ describe('lossless shared text annotations', () => {
       ]);
     },
   );
-  it('hides only exact inline labels, keeping sung asides, role and native timing', () => {
+  it('hides parenthetical ranges by default while retaining body, role and native timing', () => {
     const text = '[女]（和聲）一起唱（啊啊）';
     const doc = {
       documentId: 'inline',
@@ -428,11 +424,13 @@ describe('lossless shared text annotations', () => {
     const before = structuredClone(doc);
     const output = projectLyricsTextSelection(doc, ['sung']);
     expect(output.lines[0]).toMatchObject({
-      text: '一起唱（啊啊）',
+      text: '一起唱',
       startMs: 1000,
       endMs: 4000,
     });
-    expect(output.lines[0].segments).toEqual([doc.lines[0].segments[1]]);
+    expect(output.lines[0].segments).toEqual([
+      { ...doc.lines[0].segments[1], text: '一起唱' },
+    ]);
     expect(doc).toEqual(before);
     expect(projectLyricsTextSelection(doc, []).lines).toMatchObject(doc.lines);
   });
@@ -516,6 +514,20 @@ describe('lossless shared text annotations', () => {
     expect(analyzeLyricsText("don't stop, we're here").malformedPairs).toBe(
       false,
     );
+    for (const text of ['Why don’ t we', 'rockin’ all night', '’cause I'])
+      expect(analyzeLyricsText(text).malformedPairs).toBe(false);
+    expect(
+      analyzeLyricsText('‘ No friend.’（同行即对手）').pairedRanges,
+    ).toContainEqual({ sourceStart: 0, sourceEnd: 13 });
+    expect(
+      projectLyricsTextSelection(
+        {
+          documentId: 'apostrophe',
+          lines: [{ lineId: 'v', text: '所以说 Why don’ t we（为何不）' }],
+        },
+        ['v'],
+      ).lines[0].text,
+    ).toBe('所以说 Why don’ t we');
     expect(analyzeLyricsText('【未完').malformedPairs).toBe(true);
     expect(isSafeLyricsBreak('今晚，明天', 2)).toBe(false);
     expect(isSafeLyricsBreak('今晚「明天」', 3)).toBe(false);
@@ -546,9 +558,7 @@ describe('lossless shared text annotations', () => {
     expect(
       preprocessLyricsDocument(doc).creditCandidates.map((l) => l.lineId),
     ).toEqual(['a']);
-    expect(projectLyricsTextSelection(doc, ['b']).lines[1].text).toBe(
-      '一起唱（啊啊和聲）',
-    );
+    expect(projectLyricsTextSelection(doc, ['b']).lines[1].text).toBe('一起唱');
     const projected = projectLyricsTextSelection(doc, ['a']);
     expect(projected.lines).toMatchObject([doc.lines[1]]);
     expect(projected.reading.lines).toEqual([{ lineId: 'b' }]);
@@ -604,5 +614,112 @@ describe('lossless shared text annotations', () => {
     expect(result.lines[1]).toBe(document.lines[2]);
     expect(document.lines[0].endMs).toBeNull();
     expect(projectLyricsTextSelection(document, [])).toBe(document);
+  });
+});
+
+describe('reversible parenthetical default and saved manual roles', () => {
+  it.each([
+    '（啊啊）',
+    '(oh oh)',
+    '（一起唱）',
+    '（啊啊和聲）',
+    '(和聲：啊啊)',
+    '(Sabrina 胡恂舞)',
+  ])('hides complete %s only in selected Output projection', (text) => {
+    const doc = {
+        documentId: 'paren',
+        lines: [
+          { lineId: 'v', text: `唱${text}下去`, startMs: 1000, endMs: 6000 },
+        ],
+      },
+      before = structuredClone(doc);
+    expect(analyzeLyricsText(doc.lines[0].text).defaultHidden).toBe(true);
+    expect(projectLyricsTextSelection(doc, ['v']).lines[0]).toMatchObject({
+      text: '唱下去',
+      startMs: 1000,
+      endMs: 6000,
+    });
+    expect(projectLyricsTextSelection(doc, []).lines).toMatchObject(doc.lines);
+    expect(doc).toEqual(before);
+  });
+  it.each(['唱（啊啊)下去', '唱(啊啊）下去'])(
+    'pairs mixed full- and half-width round brackets: %s',
+    (text) => {
+      const doc = { documentId: 'mixed', lines: [{ lineId: 'v', text }] };
+      expect(analyzeLyricsText(text).malformedPairs).toBe(false);
+      expect(projectLyricsTextSelection(doc, ['v']).lines[0].text).toBe(
+        '唱下去',
+      );
+    },
+  );
+  it.each(['唱（不完整', '「唱（啊啊）下去」', '唱(第一(第二)第一)下去'])(
+    'keeps malformed or quoted pairs and never leaks nested closing brackets: %s',
+    (text) => {
+      const doc = { documentId: 'nested', lines: [{ lineId: 'v', text }] };
+      const result = projectLyricsTextSelection(doc, ['v']);
+      expect(result.lines[0].text).toBe(
+        text.includes('第一') ? '唱下去' : text,
+      );
+    },
+  );
+  it('carries a saved named section through hidden marker rows and supports line overrides', () => {
+    const doc = {
+      documentId: 'duet',
+      lines: [
+        { lineId: 'a', text: '(Sabrina 胡恂舞)', startMs: 0, endMs: 1000 },
+        { lineId: 'b', text: '總覺得做什麼都錯', startMs: 1000, endMs: 4000 },
+        { lineId: 'c', text: '(PIZZALI)', startMs: 4000, endMs: 5000 },
+        { lineId: 'd', text: '習慣說沒事', startMs: 5000, endMs: 9000 },
+        { lineId: 'e', text: '一起唱', startMs: 9000, endMs: 12000 },
+      ],
+    };
+    const assignments = [
+      { lineId: 'a', role: 'female', scope: 'section' },
+      { lineId: 'c', role: 'male', scope: 'section' },
+      { lineId: 'e', role: 'group', scope: 'line' },
+    ];
+    const result = projectLyricsTextSelection(doc, ['a', 'c'], { assignments });
+    expect(result.lines.map((l) => l.vocalParts[0].role)).toEqual([
+      'female',
+      'male',
+      'group',
+    ]);
+    expect(result.lines.map((l) => [l.startMs, l.endMs])).toEqual([
+      [1000, 4000],
+      [5000, 9000],
+      [9000, 12000],
+    ]);
+    expect(result.lines.map((l) => l.text)).toEqual(
+      doc.lines
+        .filter((l) => !['a', 'c'].includes(l.lineId))
+        .map((l) => l.text),
+    );
+  });
+  it('resolves whole-line roles for the reading sheet with the Output rules', () => {
+    const doc = {
+      documentId: 'sheet',
+      lines: [
+        { lineId: 'a', text: '(Sabrina 胡恂舞)' },
+        { lineId: 'b', text: '總覺得做什麼都錯' },
+        { lineId: 'c', text: '一起唱' },
+        { lineId: 'd', text: '習慣說沒事' },
+        { lineId: 'e', text: '[男]我先唱[女]換我唱' },
+        { lineId: 'f', text: '[合]一起唱' },
+      ],
+    };
+    const assignments = [
+      { lineId: 'a', role: 'female', scope: 'section' },
+      { lineId: 'c', role: 'group', scope: 'line' },
+    ];
+    // A line choice overrides one row without ending the carried section.
+    expect(lyricsLineVocalRoles(doc, [], { assignments })).toEqual({
+      a: 'female',
+      b: 'female',
+      c: 'group',
+      d: 'female',
+      f: 'group',
+    });
+    expect(lyricsLineVocalRoles(doc)).toEqual({ f: 'group' });
+    expect(lyricsLineVocalRoles(null)).toEqual({});
   });
 });
