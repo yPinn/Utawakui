@@ -115,6 +115,9 @@ OBS 章節仍是原有獨立時間標記服務，本次不遷移其歷史檔或�
 
 ## Right Dock
 
+曲庫 metadata、歌詞或封面更新不代表外部播放接手。播放器刷新同一次播放的曲目資料時保留 renderer-owned 場次 request token；以播放 request、revision 與最新讀取識別拒絕晚到結果，包含同曲重唱。EOF 仍由場次 controller 完成該 occurrence 並接續待唱項目，不因此落回一般 Queue。
+場次開始只更新一般 Queue 的目前播放投影，不消耗同名待播曲、不將場次歌曲逐首寫入一般 Queue 的上一首歷史，也不推進原來源 cursor；回到一般播放時仍保留原待播順序。一般 Queue 的明確點播／插播行為保持原規則。
+
 沿用 Queue surface，保留一般佇列／最近播放 tabs，另以 Tickets 獨立按鈕切換播放安排 variant，隨時可手動開啟。
 安排 Dock 自帶「待唱清單／演出紀錄」tabs（後者僅為 completed 子集；略過／中止在主頁演出紀錄），與一般模式 tabs 共用 Dock header 的位置，兩者都使用 UiTabs。
 兩種模式的 header 均維持單行、UiTabs 原生 12px inline padding 與 action group 12px 間距；最小寬度提高為 272px，預設／最大保留 280px，不縮小控制項或將按鈕拆到第二行。

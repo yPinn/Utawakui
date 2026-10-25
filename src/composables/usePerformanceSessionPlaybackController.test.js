@@ -76,6 +76,13 @@ function harness() {
 }
 
 describe('arrangement playback uses local audio without any OBS dependency', () => {
+  it('does not consume ordinary queued songs when starting a performance occurrence', async () => {
+    const h = harness();
+    await h.controller.start('i1');
+    expect(h.queue.interruptWithTrack).toHaveBeenCalledWith(h.tracks[0], {
+      preserveQueue: true,
+    });
+  });
   it('replays a completed result as a new occurrence without rewriting the result', async () => {
     const h = harness();
     h.plan.state.plan.items[0].progress = 'completed';

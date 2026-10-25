@@ -78,6 +78,15 @@ age/region/members-only classifications. Playback's fire-and-forget
 
 ## Remaining Verification And Scoped Follow-Up
 
+Playback now records bounded `PLAYER_AUDIO_BUFFERING`, `PLAYER_AUDIO_CONTEXT_STATE`,
+`PLAYER_AUDIO_PROCESSOR_ERROR` and numeric `PLAYER_AUDIO_MEDIA_ERROR` evidence.
+Buffering evidence starts only after confirmed playback; state changes distinguish
+monitor from capture, and processor evidence observes the corresponding worklet.
+Each event kind/reason is limited to once per 30 seconds in the renderer. Context
+contains source category and runtime state only, never media identity, device id,
+path or URL. These events do not prove audible distortion occurred, and clean
+offline decoding does not verify the live Windows output path.
+
 These are acceptance requirements, not claims that a current installed build has
 passed them. Record dated package/version and evidence separately; never commit
 an absolute user-profile path.

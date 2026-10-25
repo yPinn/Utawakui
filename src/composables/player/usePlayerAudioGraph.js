@@ -45,7 +45,12 @@ export function combinedSemitones(transposeSemitones, pitchCents) {
   return transposeSemitones + pitchCents / 100;
 }
 
-export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
+export function usePlayerAudioGraph({
+  audio,
+  state,
+  reportPlayerError,
+  recordAudioDiagnostic = () => {},
+}) {
   let audioCtx = null;
   let sourceNode = null;
   let splitter = null;
@@ -68,6 +73,15 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   let capturePitchProcessingError = null;
   let usesSeparatedAudioGraph = false;
 
+  function handleMonitorStateChange() {
+    if (isDisposed || !state.isPlaying || audioCtx?.state === 'running') return;
+    if (['suspended', 'interrupted', 'closed'].includes(audioCtx?.state)) {
+      recordAudioDiagnostic('context-state', 'monitor', {
+        status: audioCtx.state,
+      });
+    }
+  }
+
   function connectSourceNode() {
     sourceNode.disconnect();
     if (usesSeparatedAudioGraph) {
@@ -83,6 +97,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     if (isDisposed) return null;
 
     audioCtx = new AudioContext();
+    audioCtx.addEventListener?.('statechange', handleMonitorStateChange);
     sourceNode = audioCtx.createMediaElementSource(audio);
     splitter = audioCtx.createChannelSplitter(4);
     mergerInst = audioCtx.createChannelMerger(2);
@@ -171,6 +186,14 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     };
     graph.handleStateChange = () => {
       if (context.state !== undefined && context.state !== 'running') {
+        if (
+          !graph.disposed &&
+          ['suspended', 'interrupted', 'closed'].includes(context.state)
+        ) {
+          recordAudioDiagnostic('context-state', 'capture', {
+            status: context.state,
+          });
+        }
         invalidateCaptureGraph(graph, '擷取輸出已停止，請重新選擇裝置。');
       }
     };
@@ -222,6 +245,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     graph.mix.disconnect();
     graph.dry.disconnect();
     graph.wet.disconnect();
+    if (graph.pitchNode) graph.pitchNode.onprocessorerror = null;
     graph.pitchNode?.disconnect();
 
     graph.closePromise = (async () => {
@@ -346,6 +370,8 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
         const node = await SignalsmithStretch(audioCtx, {
           outputChannelCount: [2],
         });
+        node.onprocessorerror = () =>
+          recordAudioDiagnostic('processor-error', 'monitor');
         masterGain.connect(node);
         node.connect(wetGain);
         pitchNode = node;
@@ -370,6 +396,8 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
         });
         if (!isCaptureGraphReady(graph)) return null;
         graph.mix.connect(node);
+        node.onprocessorerror = () =>
+          recordAudioDiagnostic('processor-error', 'capture');
         node.connect(graph.wet);
         graph.pitchNode = node;
         return node;
@@ -613,6 +641,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
 
   function cleanup() {
     isDisposed = true;
+    audioCtx?.removeEventListener?.('statechange', handleMonitorStateChange);
     desiredCaptureDeviceId = null;
     captureSelectionRevision += 1;
     state.captureDeviceId = null;
@@ -624,6 +653,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     masterGain?.disconnect();
     dryGain?.disconnect();
     wetGain?.disconnect();
+    if (pitchNode) pitchNode.onprocessorerror = null;
     pitchNode?.disconnect();
     instBridgeDest?.disconnect();
     vocBridgeDest?.disconnect();

@@ -62,6 +62,8 @@ describe('coverage policy', () => {
       'electron/main/library/releaseHandlers.js',
       'src/composables/useReleaseOrganization.js',
       'src/composables/useReleaseMembers.js',
+      'src/composables/player/usePlayerLibrarySync.js',
+      'src/composables/player/usePlayerDiagnostics.js',
       'src/utils/releasePresentation.js',
       'electron/lib/works/organization.js',
       'electron/lib/works/trackBinding.js',

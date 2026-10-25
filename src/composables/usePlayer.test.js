@@ -398,6 +398,75 @@ describe('guide vocal defaults', () => {
 });
 
 describe('mix and transport controls', () => {
+  it('records bounded runtime audio evidence without logging media identity or repeating stalls', async () => {
+    const recordDiagnostic = vi.fn(async () => ({ ok: true }));
+    vi.stubGlobal('window', {
+      Utawakui: { recordDiagnostic, onLibraryUpdated: () => vi.fn() },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({
+      id: 'private-id',
+      title: 'private-title',
+      url: 'media:private-path',
+    });
+    const audio = MockAudio.latest;
+    audio.readyState = 2;
+    audio.networkState = 2;
+    audio.dispatch('playing');
+    audio.dispatch('waiting');
+    audio.dispatch('playing');
+    audio.dispatch('waiting');
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+    expect(recordDiagnostic.mock.calls[0][0]).toMatchObject({
+      code: 'PLAYER_AUDIO_BUFFERING',
+      context: {
+        reason: 'waiting',
+        stage: 'original',
+        status: 'ready-2-network-2',
+      },
+    });
+    const context = MockAudioContext.instances[0];
+    context.state = 'interrupted';
+    context.dispatch('statechange');
+    expect(recordDiagnostic.mock.calls[1][0]).toMatchObject({
+      code: 'PLAYER_AUDIO_CONTEXT_STATE',
+      context: { reason: 'monitor', status: 'interrupted' },
+    });
+    expect(JSON.stringify(recordDiagnostic.mock.calls)).not.toContain(
+      'private',
+    );
+    player.clearTrack();
+  });
+
+  it('observes monitor and capture worklet failures and removes observers on cleanup', async () => {
+    const recordDiagnostic = vi.fn(async () => ({ ok: true }));
+    vi.stubGlobal('window', {
+      Utawakui: { recordDiagnostic, onLibraryUpdated: () => vi.fn() },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'song', url: 'media:song' });
+    await player.applyCaptureDevice('capture-device');
+    await player.setTransposeSemitones(2);
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    for (const node of MockPitchNode.instances) node.onprocessorerror?.();
+    expect(
+      recordDiagnostic.mock.calls.map(([event]) => event.context.reason),
+    ).toEqual(['monitor', 'capture']);
+    expect(
+      recordDiagnostic.mock.calls.every(
+        ([event]) => event.code === 'PLAYER_AUDIO_PROCESSOR_ERROR',
+      ),
+    ).toBe(true);
+    const { cleanupPlayerResources } = await import('./usePlayer.js');
+    cleanupPlayerResources();
+    expect(MockAudioContext.instances[0].listeners.has('statechange')).toBe(
+      false,
+    );
+    expect(
+      MockPitchNode.instances.every((node) => node.onprocessorerror === null),
+    ).toBe(true);
+  });
+
   it('clamps public master-volume intents and ignores non-finite values', async () => {
     const player = await loadPlayer();
 
@@ -905,6 +974,123 @@ describe('mix and transport controls', () => {
 });
 
 describe('library synchronization', () => {
+  it('keeps arrangement ownership across metadata refresh and advances its next occurrence at EOF', async () => {
+    const { reactive } = await import('vue');
+    const { usePerformanceSessionPlaybackController } =
+      await import('./usePerformanceSessionPlaybackController.js');
+    let libraryUpdated;
+    const track = { id: 'song', url: 'media:song', title: 'Song' };
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getTrack: vi.fn(async () => ({ ...track, title: 'Updated' })),
+        onLibraryUpdated: (listener) => {
+          libraryUpdated = listener;
+          return vi.fn();
+        },
+      },
+    });
+    const player = await loadPlayer();
+    const plan = {
+      state: reactive({
+        plan: {
+          items: ['one', 'two'].map((itemId) => ({
+            itemId,
+            trackId: 'song',
+            mode: 'library-track',
+            ready: true,
+            progress: 'queued',
+          })),
+        },
+      }),
+      setProgress: vi.fn(async (id, progress) => {
+        plan.state.plan.items.find((item) => item.itemId === id).progress =
+          progress;
+        return true;
+      }),
+    };
+    const controller = usePerformanceSessionPlaybackController({
+      plan,
+      player,
+      queue: { interruptWithTrack: vi.fn() },
+      getTracks: () => [track],
+      toPlayableTrack: (value) => value,
+    });
+    try {
+      await controller.start('one');
+      MockAudio.latest.dispatch('playing');
+      await controller.settled();
+      await libraryUpdated();
+      expect(controller.ownsPlayback.value).toBe(true);
+      expect(
+        controller.handleEnded({
+          trackId: 'song',
+          playbackRevision: player.state.playbackRevision,
+        }),
+      ).toBe(true);
+      await controller.settled();
+      expect(plan.state.plan.items[0].progress).toBe('completed');
+      expect(controller.currentItem.value.itemId).toBe('two');
+      expect(player.state.track.arrangementRequestId).toBeTruthy();
+    } finally {
+      controller.dispose();
+      player.clearTrack();
+    }
+  });
+
+  it('ignores metadata from an earlier playback of the same track', async () => {
+    let libraryUpdated;
+    const lookup = createDeferred();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getTrack: () => lookup.promise,
+        onLibraryUpdated: (listener) => {
+          libraryUpdated = listener;
+          return vi.fn();
+        },
+      },
+    });
+    const player = await loadPlayer();
+    const track = {
+      id: 'same',
+      url: 'media:same',
+      arrangementRequestId: 'first',
+    };
+    await player.playTrack(track);
+    const sync = libraryUpdated();
+    await player.playTrack({ ...track, arrangementRequestId: 'second' });
+    lookup.resolve({ id: 'same', url: 'media:older', title: 'Stale' });
+    await sync;
+    expect(player.state.track.arrangementRequestId).toBe('second');
+    expect(MockAudio.latest.src).toBe('media:same');
+  });
+
+  it('ignores an older library lookup that completes after the latest one', async () => {
+    let libraryUpdated;
+    const old = createDeferred();
+    const fresh = createDeferred();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getTrack: vi
+          .fn()
+          .mockReturnValueOnce(old.promise)
+          .mockReturnValueOnce(fresh.promise),
+        onLibraryUpdated: (listener) => {
+          libraryUpdated = listener;
+          return vi.fn();
+        },
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'same', url: 'media:same' });
+    const earlier = libraryUpdated();
+    const later = libraryUpdated();
+    fresh.resolve({ id: 'same', url: 'media:same', title: 'Fresh' });
+    await later;
+    old.resolve({ id: 'same', url: 'media:same', title: 'Stale' });
+    await earlier;
+    expect(player.state.track.title).toBe('Fresh');
+  });
+
   it('refreshes metadata without reloading an unchanged playable URL', async () => {
     let libraryUpdated;
     const getTrack = vi.fn().mockResolvedValue({

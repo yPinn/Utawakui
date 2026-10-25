@@ -169,7 +169,7 @@ export function usePerformanceSessionPlaybackController({
       return false;
     }
     active.playbackRevision = player.state.playbackRevision;
-    queue.interruptWithTrack(track);
+    queue.interruptWithTrack(track, { preserveQueue: true });
     return true;
   }
 

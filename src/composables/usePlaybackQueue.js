@@ -233,23 +233,25 @@ function removeQueuedTrack(trackId) {
   return true;
 }
 
-function interruptWithTrack(track) {
+function interruptWithTrack(track, { preserveQueue = false } = {}) {
   const normalized = normalizeTrack(track);
   if (!normalized) return null;
   const current = currentTrack.value;
-  if (current?.id === normalized.id) {
+  if (!preserveQueue && current?.id === normalized.id) {
     setActiveTrack(normalized, { source: state.currentIsSource });
     return normalized;
   }
-  if (current) {
+  if (!preserveQueue && current) {
     state.historyEntries = [
       ...state.historyEntries,
       { track: current, source: state.currentIsSource },
     ];
   }
-  state.queuedTracks = state.queuedTracks.filter(
-    (queuedTrack) => queuedTrack.id !== normalized.id,
-  );
+  if (!preserveQueue) {
+    state.queuedTracks = state.queuedTracks.filter(
+      (queuedTrack) => queuedTrack.id !== normalized.id,
+    );
+  }
   setActiveTrack(normalized, { source: false });
   return normalized;
 }

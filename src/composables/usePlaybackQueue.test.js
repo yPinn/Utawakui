@@ -27,6 +27,20 @@ async function loadQueue() {
 }
 
 describe('usePlaybackQueue', () => {
+  it('projects arrangement playback without consuming ordinary pending tracks or writing their history', async () => {
+    const queue = await loadQueue();
+    queue.setQueue(tracks, 'a', { sourceId: 'ordinary' });
+    queue.enqueueTrack(interruptTracks[0]);
+    queue.interruptWithTrack(interruptTracks[0], { preserveQueue: true });
+    queue.interruptWithTrack(tracks[0], { preserveQueue: true });
+    expect(queue.state.queuedTracks.map((track) => track.id)).toEqual(['x']);
+    expect(queue.state.historyEntries).toEqual([]);
+    expect(queue.state.currentIsSource).toBe(false);
+    expect(queue.state.lastSourceTrackId).toBe('a');
+    expect(queue.nextTrack().id).toBe('x');
+    expect(queue.nextTrack().id).toBe('b');
+  });
+
   it('serializes only ids and bounded source state for playback resume', async () => {
     const {
       setQueue,

@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue';
-import { toPlayableTrack } from '../utils/playableTrack.js';
+import { usePlayerDiagnostics } from './player/usePlayerDiagnostics.js';
+import { usePlayerLibrarySync } from './player/usePlayerLibrarySync.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import {
   usePlayerAudioGraph,
@@ -36,6 +37,7 @@ const PLAYBACK_MODE_ORDER = Object.freeze([
 ]);
 const LOOP_WRAP_EDGE_SECONDS = 1;
 const { recordError } = useAppDiagnostics();
+
 const initialAudioPreferences = normalizeAudioPreferences(
   typeof window !== 'undefined'
     ? window.Utawakui?.initialAudioPreferences
@@ -86,10 +88,12 @@ const audio = new Audio();
 audio.crossOrigin = 'anonymous';
 const samplePlaybackClock = createPlaybackClockSampler(audio, state);
 
+const recordAudioDiagnostic = usePlayerDiagnostics(state);
 const audioGraph = usePlayerAudioGraph({
   audio,
   state,
   reportPlayerError,
+  recordAudioDiagnostic,
 });
 
 const {
@@ -97,8 +101,6 @@ const {
   prepareCaptureDevice,
   resetPitchTempo,
   resetTrackAudioControls,
-  restoreCaptureGuideVocalState,
-  restoreGuideVocalState,
   routeAudioGraph,
   setCaptureGuideVocalOn,
   setCaptureGuideVocalValue,
@@ -181,8 +183,21 @@ function handlePlaying() {
   playingListeners.forEach((listener) => listener(playingEvent));
 }
 
-function handleBuffering() {
+function handleBuffering(event) {
   if (!state.track) return;
+  if (state.playbackPhase === 'playing') {
+    const ready = Number.isInteger(audio.readyState) ? audio.readyState : 0;
+    const network = Number.isInteger(audio.networkState)
+      ? audio.networkState
+      : 0;
+    recordAudioDiagnostic(
+      'buffering',
+      event?.type === 'stalled' ? 'stalled' : 'waiting',
+      {
+        status: `ready-${ready}-network-${network}`,
+      },
+    );
+  }
   state.currentTime = audio.currentTime || 0;
   state.playbackPhase = 'buffering';
 }
@@ -249,6 +264,11 @@ function handleLoadedMetadata() {
 
 function handleError() {
   pendingRestorePosition = null;
+  if (Number.isInteger(audio.error?.code)) {
+    recordAudioDiagnostic('media-error', 'media-element', {
+      errorCode: audio.error.code,
+    });
+  }
   state.error = reportPlayerError(
     audio.error,
     'media',
@@ -439,47 +459,15 @@ function clearTrack(trackId = null) {
 
 // Refresh the loaded track after library changes without making the library a
 // second transport owner. A URL swap restores the exact live mix calibration.
-async function syncCurrentTrack() {
-  const trackId = state.track?.id;
-  if (!trackId) return;
-  const updated = await window.Utawakui.getTrack(trackId);
-  if (!updated || state.track?.id !== trackId) return;
-
-  const playable = toPlayableTrack(updated);
-  const urlChanged = playable.url !== state.track.url;
-  const resumeTime = state.currentTime;
-  const wasPlaying = state.isPlaying;
-  const guideOn = state.guideVocalOn;
-  const guideValue = state.guideVocalValue;
-  const captureGuideOn = state.captureGuideVocalOn;
-  const captureGuideValue = state.captureGuideVocalValue;
-
-  state.track = playable;
-  if (!urlChanged) return;
-
-  routeAudioGraph(Boolean(playable.usesSeparatedAudio));
-  audio.src = playable.url;
-  restoreGuideVocalState(guideOn, guideValue);
-  restoreCaptureGuideVocalState(captureGuideOn, captureGuideValue);
-  seek(resumeTime);
-  if (wasPlaying) {
-    const requestRevision = playbackStartRequestRevision;
-    try {
-      await audioGraph.resume();
-      if (requestRevision !== playbackStartRequestRevision) return;
-      await audio.play();
-    } catch (error) {
-      state.error = reportPlayerError(
-        error,
-        'reload',
-        '播放版本已更新，請重新播放。',
-      );
-      state.isPlaying = false;
-      state.playbackPhase = 'error';
-      notifyStopped('error');
-    }
-  }
-}
+const syncCurrentTrack = usePlayerLibrarySync({
+  audio,
+  state,
+  audioGraph,
+  getStartRevision: () => playbackStartRequestRevision,
+  seek,
+  reportPlayerError,
+  notifyStopped,
+});
 
 let unsubscribeLibraryUpdated = null;
 if (typeof window !== 'undefined' && window.Utawakui) {
