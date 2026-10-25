@@ -233,7 +233,11 @@ function handleMenuAction(value) {
       @menu-action="handleMenuAction"
       @update:search-query="emit('update:searchQuery', $event)"
       @update-density="emit('updateDensity', $event)"
-    />
+    >
+      <template #additional-actions
+        ><slot name="additional-actions"
+      /></template>
+    </CollectionActionRail>
   </section>
 </template>
 

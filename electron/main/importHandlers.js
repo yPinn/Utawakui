@@ -20,6 +20,9 @@ const {
   createProviderDownloadScheduler,
 } = require('../lib/providerDownloadScheduler');
 const {
+  registerReleaseDownloadBatchHandlers,
+} = require('./releaseDownloadBatches');
+const {
   extractVideoId,
   extractPlaylistId,
   classifyPlaylistKind,
@@ -210,6 +213,8 @@ function registerImportHandlers({
   prepareReleaseDownload = null,
   validateReleaseDownload = null,
   attachReleaseDownload = null,
+  getReleaseDownloadPlan = null,
+  hasReleaseDownloadAudio = null,
   enqueueReleaseCatalog = () => {},
   fetchPlaylistMetadata = fetchPlaylist,
   fetchYoutubeMetadata = fetchMetadata,
@@ -381,6 +386,34 @@ function registerImportHandlers({
     });
     return task;
   }
+
+  const batches = registerReleaseDownloadBatchHandlers({
+    ipcMain,
+    getMainWindow,
+    getScope: getReleaseScope,
+    getPlan: (input) => getReleaseDownloadPlan(input),
+    prepare: (input) => prepareReleaseDownload(input, { batch: true }),
+    validate: (target) => validateReleaseDownload(target),
+    hasAudio: (target) => hasReleaseDownloadAudio(target),
+    download: (target, beforeStart) =>
+      classifyingFailures(
+        () => runProviderDownload(target.videoId, { beforeStart }),
+        { recordDiagnostic },
+      ),
+    attach: (target) => attachReleaseDownload(target),
+    requireProvider: () => requireFeatureGate(featureIds.PROVIDER_FLOW),
+    isPending: (videoId) => providerDownloadTasks.has(videoId),
+    onChanged: () => notifyLibraryUpdated({ allowProviderBackfill: false }),
+    recordFailure: (error, operation) =>
+      recordSearchDiagnostic(recordDiagnostic, {
+        process: 'main',
+        level: 'warning',
+        source: 'library',
+        operation: `release-download-batch-${operation}`,
+        code: 'RELEASE_DOWNLOAD_BATCH_FAILED',
+        error,
+      }),
+  });
 
   ipcMain.handle('import:resolve-source', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
@@ -605,6 +638,7 @@ function registerImportHandlers({
     if (!videoId) return false;
     return providerDownloadScheduler.cancel(videoId);
   });
+  return { dispose: batches.dispose };
 }
 
 module.exports = {

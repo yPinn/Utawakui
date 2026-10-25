@@ -109,6 +109,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:release-catalog-page',
   'library:release-catalog-download',
   'library:download-release-track',
+  'library:release-download-batch',
   'library:release-catalog-link-local',
   'library:release-catalog-preview',
   'library:release-catalog-refresh',

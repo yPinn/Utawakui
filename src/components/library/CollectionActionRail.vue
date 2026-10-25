@@ -143,6 +143,7 @@ function selectMenuAction(value) {
           "
           @click="activateEntityAction"
         />
+        <slot name="additional-actions" />
         <UiIconButton
           v-if="hasMoreActions"
           :icon="Ellipsis"
@@ -197,6 +198,10 @@ function selectMenuAction(value) {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.collection-action-rail__actions {
+  flex-wrap: wrap;
 }
 
 .collection-action-rail__density {

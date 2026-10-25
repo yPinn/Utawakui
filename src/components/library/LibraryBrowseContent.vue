@@ -47,6 +47,7 @@ import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue';
 import LibraryCollectionHeader from './LibraryCollectionHeader.vue';
 import LibraryReleaseCatalog from './LibraryReleaseCatalog.vue';
+import ReleaseCatalogBatchActions from './ReleaseCatalogBatchActions.vue';
 import TrackPreviewOverlay from '../track/TrackPreviewOverlay.vue';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
@@ -1254,7 +1255,14 @@ onMounted(async () => {
           @select-artist="openAlbumArtist"
           @choose-photo="chooseSelectedArtistPhoto"
           @update-density="setTrackListDensity"
-        />
+        >
+          <template
+            v-if="selectedPlaylist?.hasSourceCatalog"
+            #additional-actions
+          >
+            <ReleaseCatalogBatchActions :collection="selectedPlaylist" />
+          </template>
+        </LibraryCollectionHeader>
       </div>
 
       <AppFolderContentField

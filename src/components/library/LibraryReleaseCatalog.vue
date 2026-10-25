@@ -1,7 +1,8 @@
 <script setup>
-import { nextTick, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useReleaseCatalog } from '../../composables/useReleaseCatalog.js';
 import { useReleaseCatalogDownloads } from '../../composables/useReleaseCatalogDownloads.js';
+import { useReleaseCatalogBatchDownloads } from '../../composables/useReleaseCatalogBatchDownloads.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import LibrarySourceTracklist from './LibrarySourceTracklist.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -28,6 +29,14 @@ const emit = defineEmits([
 ]);
 const session = useReleaseCatalog();
 const downloads = useReleaseCatalogDownloads();
+const batches = useReleaseCatalogBatchDownloads();
+const pendingSlots = computed(
+  () =>
+    new Set([
+      ...downloads.pendingSlots(props.collection),
+      ...(batches.snapshotFor(props.collection)?.pendingSlots ?? []),
+    ]),
+);
 const { refresh: refreshPlaylists } = usePlaylists();
 const catalog = ref(null),
   busy = ref(false),
@@ -181,6 +190,7 @@ watch(
   { immediate: true },
 );
 function download(row) {
+  if (pendingSlots.value.has(row.key)) return false;
   return downloads.download(props.collection, row);
 }
 </script>
@@ -206,7 +216,7 @@ function download(row) {
         :catalog="catalog"
         :tracks-by-id="tracksById"
         :busy="busy"
-        :download-pending-slots="downloads.pendingSlots(collection)"
+        :download-pending-slots="pendingSlots"
         :selected-track-id="selectedTrackId"
         :playing-track-id="playingTrackId"
         :column-preferences="columnPreferences"

@@ -50,6 +50,12 @@ network install or signed-installer acceptance; see the
   Pure deferred-loader sources under `src/utils/` are bundled by Vite into this
   existing renderer output, including their self-hosted runtime assets.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
+- Album download batches: `electron/main/releaseDownloadBatches.js` uses the
+  existing recursive `electron/**/*` inclusion; its adjacent tests stay excluded.
+  The fixed `library:release-download-batch` IPC uses the existing main preload.
+  Renderer batch controls and state are bundled into `dist/**/*`; no worker,
+  executable, dependency or new resource directory is added.
+
 - Local works/version persistence and release schemas: `electron/lib/works/`
   and `electron/lib/releases/` use the existing recursive `electron/**/*`
   inclusion and `electron/lib/**/*` unpack rule; adjacent tests remain excluded.

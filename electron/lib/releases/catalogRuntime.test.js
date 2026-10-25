@@ -45,6 +45,69 @@ beforeEach(() => {
   });
 });
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+it('builds a complete offline batch plan beyond the first page and skips held, excluded, ambiguous and locally available slots', async () => {
+  await service.refresh({ trackId: video });
+  const file = path.join(dir, 'playlists.json');
+  const document = JSON.parse(fs.readFileSync(file));
+  const saved = document.playlists[0];
+  const catalog = saved.releaseInfo.catalog;
+  for (let position = 3; position <= 120; position++)
+    catalog.manifest.slots.push({
+      position,
+      videoId: String(position).padStart(11, '0'),
+      title: 'Song',
+      artist: 'Artist',
+      duration: 10,
+      available: true,
+    });
+  catalog.manifest.reportedTotal = 120;
+  catalog.rejected.push(catalog.manifest.slots[2].videoId);
+  catalog.links['slot-4'] = {
+    trackId: video,
+    evidence: 'manual',
+    slotIdentity: 'old identity',
+  };
+  const localDir = path.join(dir, 'tracks', catalog.manifest.slots[4].videoId);
+  fs.mkdirSync(localDir, { recursive: true });
+  fs.writeFileSync(path.join(localDir, 'audio.mp3'), 'local');
+  fs.writeFileSync(file, JSON.stringify(document));
+  const runtime = createReleaseOrganizationRuntime({
+    getDirectory: () => scope,
+    inspectBinding: async (id) =>
+      tracks.some((track) => track.id === id)
+        ? { status: 'present', binding }
+        : { status: 'missing' },
+  });
+  const plan = await runtime.catalogDownloadPlan({
+    collectionId: saved.id,
+    libraryEpoch: 1,
+    expectedRevision: saved.releaseInfo.revision,
+  });
+  expect(plan.slotKeys).toHaveLength(116);
+  expect(plan.slotKeys).toContain('slot-120');
+  for (const key of ['slot-2', 'slot-3', 'slot-4', 'slot-5'])
+    expect(plan.slotKeys).not.toContain(key);
+  expect(gate).toHaveBeenCalled();
+});
+
+it('rechecks exclusion and slot ownership for batch targets after admission', async () => {
+  await service.refresh({ trackId: video });
+  const saved = loadPlaylists(dir)[0];
+  const target = service.prepareDownload(
+    {
+      collectionId: saved.id,
+      libraryEpoch: 1,
+      expectedRevision: saved.releaseInfo.revision,
+      slotKey: 'slot-1',
+    },
+    { batch: true },
+  );
+  const file = path.join(dir, 'playlists.json');
+  const document = JSON.parse(fs.readFileSync(file));
+  document.playlists[0].releaseInfo.catalog.rejected.push(second);
+  fs.writeFileSync(file, JSON.stringify(document));
+  expect(() => service.validateDownload(target)).toThrow();
+});
 it('explicitly includes held audio even when the source slot is no longer online', async () => {
   await service.refresh({ trackId: video });
   let saved = loadPlaylists(dir)[0];

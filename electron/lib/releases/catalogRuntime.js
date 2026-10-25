@@ -618,7 +618,7 @@ function createReleaseCatalogService({
       }),
     );
   }
-  function prepareDownload(request, { localOnly = false } = {}) {
+  function prepareDownload(request, { localOnly = false, batch = false } = {}) {
     intent(request, [
       'collectionId',
       'expectedRevision',
@@ -659,6 +659,7 @@ function createReleaseCatalogService({
       videoId: slot.videoId,
       revision: revision(collection),
       rejected: collection.releaseInfo.catalog.rejected.includes(slot.videoId),
+      batch,
     };
     downloadTargets.add(target);
     return target;
@@ -681,6 +682,19 @@ function createReleaseCatalogService({
       slotIdentity(slot) !== target.identity
     )
       throw failure('RELEASE_INFO_CONFLICT');
+    if (target.batch) {
+      const catalog = collection.releaseInfo.catalog;
+      const link = catalog.links[target.slotKey];
+      if (
+        !slot.available ||
+        catalog.rejected.includes(target.videoId) ||
+        (link &&
+          (link.trackId !== target.videoId ||
+            link.evidence !== 'exact-source' ||
+            link.slotIdentity !== target.identity))
+      )
+        throw failure('RELEASE_INFO_CONFLICT');
+    }
     return collection;
   }
   async function attachDownload(target) {
@@ -786,6 +800,10 @@ function createReleaseCatalogService({
     prepareDownload,
     validateDownload,
     attachDownload,
+    async hasDownloadAudio(target) {
+      validateDownload(target);
+      return Boolean(await bindingFor(target.videoId, target.scope));
+    },
     linkLocal,
     collectionsChanged(collectionIds) {
       for (const collection of loadPlaylists(capture().dir).filter(

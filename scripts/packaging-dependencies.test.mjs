@@ -131,6 +131,7 @@ describe('packaged dependency boundary', () => {
       'electron/lib/releases/schema.js',
       'electron/lib/releases/runtime.js',
       'electron/main/library/releaseHandlers.js',
+      'electron/main/releaseDownloadBatches.js',
     ]) {
       expect(
         runtimeSources.some((source) => source.file === file),

@@ -84,6 +84,24 @@ Main 以已保存曲序建立私有目標，直接交給既有 Provider download
 實際開始前及 runner 準備完成後重驗 gate／scope／來源位置；音檔安裝完成後才提交關聯。
 若下載成功但關聯衝突，返回已下載但未納入的狀態，不把已安裝音檔報成下載失敗。
 
+來源專輯頁首提供同列的批次下載 icon button，tooltip／accessible label 顯示未下載數量。
+固定 `library:release-download-batch` 只接受 `status`／`start`／`stop`／`retry` 與集合 UUID、
+revision、epoch。Main 從完整保存曲序建立最多 5000 個位置的私有計畫，不受表格分頁或搜尋影響；
+略過已持有、本地候選、已排除、待確認、來源不可用及其他下載已排隊的音源。檔案遺失僅接受
+相同精確來源的原關聯，不能用批次下載替換人工綁定。
+
+批次重用 Provider scheduler 的兩首並行與跨匯入去重，同音源只下載一次，位置逐一納入。
+逐次開始前仍驗 gate／scope／slot identity／排除狀態；自身納入造成 revision 增加可繼續，
+外部改綁、刪除、來源位置變更或換庫不能繞過驗證。單曲失敗繼續其餘項目；已下載但未納入
+獨立計數，重試可重用本地音檔。歌詞與分析沿既有匯入完成路徑觸發，不另外增加批次觸發。
+
+批次由 Main 持有，切頁後繼續；renderer 單一 session 每 500ms 讀取 active 狀態，完成後停止，
+合併一次曲庫／專輯刷新及結果通知。下載中的位置與單曲按鈕共用 pending 投影，防止重按。
+停止只阻止尚未開始的工作，已開始者可完成，不取消其他匯入共享的工作；重試只包含上一批
+失敗或尚未納入的位置。批次不跨 App 重啟自動恢復，不代表提供續傳。狀態讀取與停止可離線，
+開始／重試及實際下載皆重新驗 provider-flow。Main private errors 保留原始 context，UI 只顯示
+固定復原訊息。新增 main owner 沿既有 recursive packaging，沒有新增下載器或 provider 環境。
+
 無關聯位置若精確來源 ID 的音檔已存在，投影為本地候選，與已驗證成員狀態分開保存，
 不影響同音源其他已接受的位置。使用者明確「納入本地曲目」才解除該音源的排除紀錄，
 以兩次媒體摘要、shared lane、pending deletion、來源身分及 CAS 驗證後只寫入選定位置。

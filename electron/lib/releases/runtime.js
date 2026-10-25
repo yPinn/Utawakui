@@ -572,7 +572,7 @@ function createReleaseOrganizationRuntime({
       });
     });
   }
-  function catalogPage(input) {
+  function readCatalog(input, downloadPlan = false) {
     return service.runInLibrary(async (context) => {
       record(input, [
         'collectionId',
@@ -611,6 +611,29 @@ function createReleaseOrganizationRuntime({
         )
           localCandidates.add(slot.videoId);
       }
+      if (downloadPlan) {
+        const catalog = publicCatalogPage(
+          collection,
+          states,
+          { limit: 5000 },
+          localCandidates,
+        );
+        const slotKeys = (catalog?.rows ?? [])
+          .filter((row) => {
+            if (!row.sourceAvailable || row.localCandidateTrackId) return false;
+            if (row.state === 'not-imported') return true;
+            const link = collection.releaseInfo.catalog.links[row.key];
+            const slot =
+              collection.releaseInfo.catalog.manifest.slots[row.position - 1];
+            return (
+              row.state === 'missing' &&
+              link?.evidence === 'exact-source' &&
+              link.trackId === slot.videoId
+            );
+          })
+          .map((row) => row.key);
+        return { slotKeys };
+      }
       return {
         status: 'ok',
         collectionId: collection.id,
@@ -619,6 +642,13 @@ function createReleaseOrganizationRuntime({
         catalog: publicCatalogPage(collection, states, input, localCandidates),
       };
     });
+  }
+  function catalogPage(input) {
+    return readCatalog(input);
+  }
+  // Main-only complete plan. Renderer pagination remains capped at 100 rows.
+  function catalogDownloadPlan(input) {
+    return readCatalog(input, true);
   }
   function catalogDownload(input) {
     return service.runInLibrary((context) => {
@@ -657,6 +687,7 @@ function createReleaseOrganizationRuntime({
     resolveMembers,
     withPlayableCollection,
     catalogPage,
+    catalogDownloadPlan,
     catalogDownload,
     projectList: projectReleaseList,
     invalidate() {

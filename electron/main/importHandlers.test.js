@@ -738,6 +738,37 @@ describe('scheduleOptionalLyricsAfterImport', () => {
 });
 
 describe('provider download scheduling and automatic music analysis', () => {
+  it('routes batch intent through the shared downloader with one optional processing trigger per audio', async () => {
+    const webContents = { mainFrame: {} };
+    const h = registerDownload({
+      getMainWindow: () => ({ webContents, isDestroyed: () => false }),
+      getReleaseScope: () => ({ epoch: 1 }),
+      getReleaseDownloadPlan: async () => ({ slotKeys: ['slot-1', 'slot-2'] }),
+      prepareReleaseDownload: (value) => ({
+        ...value,
+        videoId: value.slotKey === 'slot-1' ? 'aaaaaaaaaaa' : 'bbbbbbbbbbb',
+      }),
+      validateReleaseDownload: () => {},
+      hasReleaseDownloadAudio: async () => false,
+      attachReleaseDownload: async () => ({ status: 'ok' }),
+    });
+    const call = (event, operation) =>
+      h.handlers.get('library:release-download-batch')(event, {
+        operation,
+        collectionId: 'album',
+        libraryEpoch: 1,
+        expectedRevision: 0,
+      });
+    expect(await call({}, 'start')).toEqual({ status: 'invalid-intent' });
+    const event = { sender: webContents, senderFrame: webContents.mainFrame };
+    expect((await call(event, 'start')).status).toBe('ok');
+    await vi.waitFor(async () =>
+      expect((await call(event, 'status')).snapshot.active).toBe(false),
+    );
+    expect(h.downloadTrackAudio).toHaveBeenCalledTimes(2);
+    expect(h.enqueueMusicAnalysis).toHaveBeenCalledTimes(2);
+    expect((await call(event, 'status')).snapshot.succeeded).toBe(2);
+  });
   it('admits at most two provider downloads at once', async () => {
     const gates = new Map();
     const downloadTrackAudio = vi.fn((videoId) => {

@@ -72,6 +72,7 @@ files:
   # Window owners live in electron/main/windows/; preloads remain electron/*.
   # Includes the read-only Output window owner/handler; it loads loopback HTML.
   - electron/**/*
+  # Includes Main-owned release download batches; colocated tests are excluded below.
   # Includes works/version and release runtimes, fixed Main handlers and schemas; library-root
   # works.json/playlists.json user data is never an installer asset.
   # Experimental post-separation lyrics reuses the fixed research environment;

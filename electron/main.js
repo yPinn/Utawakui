@@ -1342,11 +1342,13 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
-    registerImportHandlers({
+    const importHandlerRuntime = registerImportHandlers({
       ipcMain,
       prepareReleaseDownload: releaseCatalogService.prepareDownload,
       validateReleaseDownload: releaseCatalogService.validateDownload,
       attachReleaseDownload: releaseCatalogService.attachDownload,
+      getReleaseDownloadPlan: releaseOrganizationRuntime.catalogDownloadPlan,
+      hasReleaseDownloadAudio: releaseCatalogService.hasDownloadAudio,
       getReleaseScope,
       enqueueReleaseCatalog: (trackId, scope) =>
         releaseCatalogService.enqueue(trackId, scope),
@@ -1364,6 +1366,8 @@ if (!gotSingleInstanceLock) {
       enforceLibraryStoragePolicy,
       recordDiagnostic,
     });
+
+    app.once('before-quit', () => importHandlerRuntime.dispose());
 
     registerSeparationHandlers({
       ipcMain,

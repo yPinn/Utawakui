@@ -1195,6 +1195,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
         'slotKey',
       ]),
     ),
+  releaseCatalogDownloadBatch: (value) =>
+    ipcRenderer.invoke(
+      'library:release-download-batch',
+      releaseTargetIntent(value, [
+        'operation',
+        'collectionId',
+        'expectedRevision',
+        'libraryEpoch',
+      ]),
+    ),
   linkLocalReleaseCatalogTrack: (value) =>
     ipcRenderer.invoke(
       'library:release-catalog-link-local',
