@@ -101,6 +101,10 @@ jobs:
 
       - run: npm ci
 
+      # Electron 43 no longer downloads its binary on install; packaging reads its notices.
+      - name: Install the pinned Electron binary
+        run: npm run electron:install
+
       - name: Recheck release contract
         shell: pwsh
         run: |

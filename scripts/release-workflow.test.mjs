@@ -296,6 +296,26 @@ describe('release workflow', () => {
     );
   });
 
+  it.each([
+    ['ci.yml', 'windows-package'],
+    ['public-test-release.yml', 'package'],
+    ['release.yml', 'package'],
+  ])(
+    'installs the pinned Electron binary before packaging in %s',
+    (filename, jobName) => {
+      const steps = readWorkflow(filename).jobs[jobName].steps;
+      const indexOf = (run) => steps.findIndex((step) => step.run === run);
+
+      // Electron 43 has no install script; packaging reads dist/LICENSE.
+      expect(indexOf('npm run electron:install')).toBeGreaterThan(
+        indexOf('npm ci'),
+      );
+      expect(indexOf('npm run electron:install')).toBeLessThan(
+        indexOf('npm run dist'),
+      );
+    },
+  );
+
   it('keeps tag builds private but includes the complete updater bundle for review', () => {
     const workflow = readWorkflow('public-test-release.yml');
     const packageSteps = workflow.jobs.package.steps;

@@ -136,6 +136,10 @@ jobs:
 
       - run: npm ci
 
+      # Electron 43 no longer downloads its binary on install; packaging reads its notices.
+      - name: Install the pinned Electron binary
+        run: npm run electron:install
+
       - name: Build unsigned Windows updater bundle
         run: npm run dist
 
