@@ -209,6 +209,63 @@ function cacheWith(factsByTrackId, photoUrls = new Map(), options = {}) {
 }
 
 describe('createArtistIndexCache', () => {
+  it('refreshes missing or changed sidecars without re-reading unchanged tracks', async () => {
+    const facts = { stable: { parts: ['Aimer'] } };
+    const stamps = { stable: '1' };
+    const { cache, readFacts } = cacheWith(facts, new Map(), {
+      readStamp: async (_dir, id) => stamps[id] ?? 'missing',
+    });
+    const tracks = [
+      { id: 'new', artist: 'Aimer, Vaundy' },
+      { id: 'stable', artist: 'Aimer' },
+    ];
+    await cache.getIndex('/lib', tracks);
+    facts.new = { parts: ['Aimer', 'Vaundy'] };
+    stamps.new = '1';
+    const updated = await cache.getIndex('/lib', tracks);
+    expect(updated.artists.map((artist) => artist.name)).toEqual([
+      'Aimer',
+      'Vaundy',
+    ]);
+    expect(readFacts).toHaveBeenCalledTimes(3);
+    await cache.getIndex('/lib', tracks);
+    expect(readFacts).toHaveBeenCalledTimes(3);
+    facts.new = { parts: ['Aimer, Vaundy'] };
+    stamps.new = '2';
+    const replaced = await cache.getIndex('/lib', tracks);
+    expect(replaced.artists.map((artist) => artist.name)).toContain(
+      'Aimer, Vaundy',
+    );
+    expect(readFacts).toHaveBeenCalledTimes(4);
+  });
+
+  it('does not leak a delayed sidecar read into a different library', async () => {
+    let resolveFirst;
+    const readFacts = vi.fn((dir) =>
+      dir === '/one'
+        ? new Promise((resolve) => {
+            resolveFirst = resolve;
+          })
+        : Promise.resolve({ parts: ['Aimer', 'Vaundy'] }),
+    );
+    const cache = createArtistIndexCache({
+      readFacts,
+      readStamp: async () => '1',
+      listPhotoUrls: () => new Map(),
+    });
+    const tracks = [{ id: 'same', artist: 'Aimer, Vaundy' }];
+    const first = cache.getIndex('/one', tracks);
+    await vi.waitFor(() => expect(resolveFirst).toBeTypeOf('function'));
+    await cache.getIndex('/two', tracks);
+    resolveFirst(null);
+    await first;
+    const current = await cache.getIndex('/two', tracks);
+    expect(current.artists.map((artist) => artist.name)).toEqual([
+      'Aimer',
+      'Vaundy',
+    ]);
+  });
+
   it('reads sidecars only for new or re-credited tracks', async () => {
     const { cache, readFacts } = cacheWith({
       b: { parts: ['Kenshi Yonezu', 'Hatsune Miku'] },
@@ -567,6 +624,24 @@ describe('readSidecarTrackFacts', () => {
   afterEach(() => {
     if (dir) fs.rmSync(dir, { recursive: true, force: true });
     dir = undefined;
+  });
+
+  it('updates the live index when a missing info.json arrives after download', async () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-artist-sidecar-'));
+    const trackDir = path.join(dir, 'tracks', 'abcdefghijk');
+    fs.mkdirSync(trackDir, { recursive: true });
+    const cache = createArtistIndexCache();
+    const tracks = [{ id: 'abcdefghijk', artist: 'Aimer, Vaundy' }];
+    expect(
+      (await cache.getIndex(dir, tracks)).artists.map((artist) => artist.name),
+    ).toEqual(['Aimer, Vaundy']);
+    fs.writeFileSync(
+      path.join(trackDir, 'info.json'),
+      JSON.stringify({ artists: ['Aimer', 'Vaundy'] }),
+    );
+    expect(
+      (await cache.getIndex(dir, tracks)).artists.map((artist) => artist.name),
+    ).toEqual(['Aimer', 'Vaundy']);
   });
 
   it('projects performer parts and the uploading channel from info.json', async () => {

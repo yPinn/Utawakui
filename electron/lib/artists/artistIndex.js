@@ -224,10 +224,24 @@ function photoChannelFor(artistId, index, factsByTrackId) {
   return best && bestCount * 2 >= firstCreditTrackIds.length ? best : null;
 }
 
-// Lazy, in-memory only. Sidecar facts are cached per (track id, artist scalar),
-// so a library change re-reads only new or re-credited tracks.
+async function readSidecarTrackStamp(dir, trackId) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir) return 'missing';
+  try {
+    const stat = await fs.stat(path.join(trackDir, 'info.json'), {
+      bigint: true,
+    });
+    return `${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`;
+  } catch {
+    return 'missing';
+  }
+}
+
+// Stat sidecars without parsing unchanged files. A missing sidecar can arrive
+// after the first library projection without changing the artist scalar.
 function createArtistIndexCache({
   readFacts = readSidecarTrackFacts,
+  readStamp = readSidecarTrackStamp,
   listPhotoUrls = listArtistPhotoUrls,
   loadOrganization = loadArtistOrganization,
   isPhotoRemoved = isArtistPhotoRemoved,
@@ -241,31 +255,29 @@ function createArtistIndexCache({
       cachedDir = dir;
       factsByCacheKey = new Map();
     }
+    // Keep this read attached to its library even if another caller switches
+    // directories while the asynchronous filesystem work is pending.
+    const cache = factsByCacheKey;
     const list = Array.isArray(tracks) ? tracks : [];
-    const cacheKeyFor = (track) => `${track.id}\u0000${track.artist ?? ''}`;
-    const missing = list.filter(
-      (track) =>
-        track?.id &&
-        track.artist &&
-        (options.fresh === true || !factsByCacheKey.has(cacheKeyFor(track))),
-    );
-    for (let start = 0; start < missing.length; start += READ_CONCURRENCY) {
-      const batch = missing.slice(start, start + READ_CONCURRENCY);
-      const results = await Promise.all(
-        batch.map((track) => readFacts(dir, track.id)),
+    const factsByTrackId = new Map();
+    const live = new Set();
+    for (let start = 0; start < list.length; start += READ_CONCURRENCY) {
+      await Promise.all(
+        list.slice(start, start + READ_CONCURRENCY).map(async (track) => {
+          if (!track?.id || !track.artist) return;
+          const stamp = await readStamp(dir, track.id);
+          const key = `${track.id}\u0000${track.artist}\u0000${stamp}`;
+          live.add(key);
+          if (options.fresh === true || !cache.has(key)) {
+            cache.set(key, await readFacts(dir, track.id));
+          }
+          factsByTrackId.set(track.id, cache.get(key));
+        }),
       );
-      batch.forEach((track, index) => {
-        factsByCacheKey.set(cacheKeyFor(track), results[index]);
-      });
     }
-
-    const live = new Set(list.map(cacheKeyFor));
-    for (const key of factsByCacheKey.keys()) {
-      if (!live.has(key)) factsByCacheKey.delete(key);
+    for (const key of cache.keys()) {
+      if (!live.has(key)) cache.delete(key);
     }
-    const factsByTrackId = new Map(
-      list.map((track) => [track.id, factsByCacheKey.get(cacheKeyFor(track))]),
-    );
     const index = buildArtistIndex(
       list,
       new Map(
